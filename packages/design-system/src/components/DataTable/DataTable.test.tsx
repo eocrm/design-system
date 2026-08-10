@@ -19,6 +19,7 @@ import { DataTable } from './DataTable';
 import { useDataTable } from './useDataTable';
 import { shiftVarName } from './columnShift';
 import type { ColumnDef } from './types';
+import styles from './DataTable.module.scss';
 
 type Row = { id: string; name: string; amount: number };
 
@@ -257,6 +258,27 @@ describe('<DataTable>', () => {
     expect(table.closest('[data-collapse-below]')).not.toBe(table);
   });
 
+  it.each([
+    ['sm', styles.collapseSm],
+    ['md', styles.collapseMd],
+    ['lg', styles.collapseLg],
+  ] as const)(
+    'maps collapseBelow="%s" to its responsive CSS-module class',
+    (breakpoint, className) => {
+      function BreakpointHarness() {
+        const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+        return (
+          <DataTable instance={instance} aria-label="Responsive table" collapseBelow={breakpoint} />
+        );
+      }
+
+      const { container } = render(<BreakpointHarness />);
+      const wrapper = container.querySelector(`[data-collapse-below="${breakpoint}"]`)!;
+      expect(wrapper).toHaveClass(styles.responsiveContainer, className);
+      expect(screen.getByText('Alpha').closest('td')).toHaveClass(styles.responsiveDataCell);
+    },
+  );
+
   it('does not render a responsive wrapper unless collapseBelow is provided', () => {
     const { container } = render(<Harness />);
     expect(container.querySelector('[data-collapse-below]')).toBeNull();
@@ -312,6 +334,9 @@ describe('<DataTable>', () => {
       'data-responsive-sortable',
       'true',
     );
+    expect(screen.getByRole('columnheader', { name: /fallback/i })).not.toHaveAttribute(
+      'data-responsive-sortable',
+    );
 
     const rowCheckboxes = screen.getAllByRole('checkbox', { name: /select row/i });
     const expansionButtons = screen.getAllByRole('button', { name: /expand row/i });
@@ -326,6 +351,20 @@ describe('<DataTable>', () => {
     expect(onRowSelectionChange).toHaveBeenLastCalledWith({ r1: true });
     expect(onExpandedRowsChange).toHaveBeenLastCalledWith({ r1: true });
     expect(onAction).toHaveBeenCalledTimes(1);
+  });
+
+  it('exposes stable responsive hooks for wide-table drag and resize controls', () => {
+    render(<Harness />);
+
+    const dataHeaders = screen
+      .getAllByRole('columnheader')
+      .filter((header) => header.hasAttribute('data-dt-column-id'));
+    expect(dataHeaders).toHaveLength(2);
+    for (const header of dataHeaders) {
+      expect(header.querySelector('[data-responsive-header-content]')).not.toBeNull();
+      expect(header.querySelector('[data-responsive-drag-grip]')).not.toBeNull();
+      expect(header.querySelector('[data-responsive-resize-handle]')).not.toBeNull();
+    }
   });
 
   it('marks skeleton and empty-state cells as responsive full-width content', () => {

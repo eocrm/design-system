@@ -1,5 +1,6 @@
 @use '../../styles/mixins' as *;
 @use './DataTable.tokens';
+@use '../_internal/collapse' as bp;
 
 // Visual / behavior modifiers ONLY. No layout (Rule 4).
 
@@ -227,4 +228,206 @@
 .root .expandedDetailRow .expandedDetailCell {
   padding: var(--data-table-expanded-detail-padding);
   white-space: normal;
+}
+
+// Opt-in responsive wrapper. The table's available inline size, rather than
+// the viewport, drives the presentation switch.
+.responsiveContainer {
+  container-type: inline-size;
+}
+
+// Re-template the existing semantic table tree as cards without remounting
+// consumer cell content. Wide-table state (column sizes, order, and pins) stays
+// intact and becomes visible again when the container widens.
+@mixin stacked-presentation {
+  > * {
+    width: 100%;
+  }
+
+  .root {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .root colgroup {
+    display: none;
+  }
+
+  .root :where(caption, thead, tbody) {
+    width: 100%;
+  }
+
+  .root :where(caption, thead) {
+    display: block;
+  }
+
+  .root thead > tr {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-1);
+    width: 100%;
+    padding: var(--space-1);
+    border-bottom: var(--border-width) solid var(--table-border-color);
+    background: var(--table-header-bg);
+  }
+
+  // Ordinary header text is repeated as each card field's visual label. Keep
+  // only compact controls and sortable headers in the control strip.
+  // stylelint-disable property-disallowed-list -- Visually hidden header cells
+  // retain native table labelling for assistive technology without occupying
+  // room in the compact strip.
+  .root thead th:not(.autoCell, [data-responsive-sortable='true']) {
+    @include visually-hidden;
+
+    position: absolute !important;
+    left: auto !important;
+    right: auto !important;
+    transform: none !important;
+  }
+  // stylelint-enable property-disallowed-list
+
+  .root thead :is(.autoCell, [data-responsive-sortable='true']) {
+    display: block;
+    width: auto;
+    padding: var(--space-1) var(--space-2);
+    border: 0;
+    background: transparent;
+    white-space: normal;
+  }
+
+  .root tbody {
+    display: grid;
+    gap: var(--space-3);
+    width: 100%;
+  }
+
+  .root tbody + tbody {
+    padding-block-start: var(--space-3);
+  }
+
+  .root tbody > tr {
+    display: grid;
+    grid-template-columns: repeat(2, min-content) minmax(0, 1fr);
+    gap: var(--space-1);
+    width: 100%;
+    padding: var(--space-1);
+    border: var(--border-width) solid var(--table-border-color);
+    border-radius: var(--data-table-clickable-row-radius);
+    background: var(--table-bg);
+  }
+
+  // Pinned rows stay tinted across the Table primitive's striped, hover, and
+  // selected state selectors. Matching each state keeps the cascade explicit
+  // without making the tint globally important.
+  .root tbody > tr.pinnedRow,
+  .root tbody > tr.pinnedRow:nth-of-type(even),
+  .root tbody > tr.pinnedRow:hover,
+  .root tbody > tr.pinnedRow[aria-selected='true'],
+  .root tbody > tr.pinnedRow[aria-selected='true']:hover {
+    background: var(--data-table-pinned-row-bg);
+  }
+
+  .root tbody td {
+    border: 0;
+  }
+
+  // stylelint-disable property-disallowed-list -- Responsive card internals:
+  // field/detail cells must span the card grid, and wide-table sticky offsets
+  // are inline styles that require !important to neutralize below the query.
+  .responsiveDataCell,
+  .responsiveFullWidth,
+  .expandedDetailCell {
+    grid-column: 1 / -1;
+    width: 100%;
+  }
+
+  .root td,
+  .root thead :is(.autoCell, [data-responsive-sortable='true']) {
+    position: static !important;
+    left: auto !important;
+    right: auto !important;
+    transform: none !important;
+  }
+  // stylelint-enable property-disallowed-list
+
+  .responsiveDataCell {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+    align-items: start;
+    gap: var(--space-2);
+    overflow: visible;
+    text-align: start;
+    text-overflow: clip;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .responsiveDataCell:not([data-responsive-label]) {
+    display: block;
+  }
+
+  .responsiveDataCell[data-responsive-label]::before {
+    content: attr(data-responsive-label);
+    color: var(--table-header-fg);
+    font-weight: var(--table-header-font-weight);
+    overflow-wrap: anywhere;
+    white-space: normal;
+  }
+
+  // Auto cells remain compact, unlabelled controls. Transparent pinned-cell
+  // paint lets the row's striped, hover, selected, or pinned tone show through.
+  .root tbody .autoCell {
+    width: auto;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+    white-space: normal;
+  }
+
+  .root :is(.pinnedLeft, .pinnedRight) {
+    background: transparent;
+    box-shadow: none;
+  }
+
+  // Reordering and resizing describe the wide column layout. The elements use
+  // stable data hooks because HeaderCell's CSS-module classes are separately
+  // hashed and must never be selected across module boundaries.
+  .root :is([data-responsive-drag-grip], [data-responsive-resize-handle]) {
+    display: none;
+    pointer-events: none;
+  }
+
+  .root [data-responsive-header-content] {
+    padding-right: 0;
+  }
+
+  .root :where(.expandedDetailRow, .pinnedRow),
+  .root :where(.responsiveFullWidth, .expandedDetailCell) {
+    width: 100%;
+  }
+
+  .root :where(.responsiveFullWidth, .expandedDetailCell) {
+    overflow: visible;
+    text-overflow: clip;
+    white-space: normal;
+  }
+}
+
+@container (max-width: #{bp.$collapse-sm}) {
+  .collapseSm {
+    @include stacked-presentation;
+  }
+}
+
+@container (max-width: #{bp.$collapse-md}) {
+  .collapseMd {
+    @include stacked-presentation;
+  }
+}
+
+@container (max-width: #{bp.$collapse-lg}) {
+  .collapseLg {
+    @include stacked-presentation;
+  }
 }

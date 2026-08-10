@@ -191,6 +191,7 @@ export function HeaderCell<T>({
       {reorderable && (
         <span
           className={styles.grip}
+          data-responsive-drag-grip
           // Spread BOTH attributes (aria/role) and listeners (pointerdown etc.)
           {...attributes}
           {...listeners}
@@ -212,6 +213,7 @@ export function HeaderCell<T>({
           and center-aligned columns position their label + sort indicator the
           same way the body cells render. */}
       <div
+        data-responsive-header-content
         className={clsx(
           styles.inner,
           column.enableResize !== false && styles.innerWithResize,
@@ -244,6 +246,7 @@ export function HeaderCell<T>({
       {column.enableResize !== false && (
         <span
           className={styles.resizeHandle}
+          data-responsive-resize-handle
           onPointerDown={resize.onPointerDown}
           // Stop sort click when interacting with resize.
           onClick={(e) => e.stopPropagation()}
