@@ -295,6 +295,13 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['ColorPicker'],
   },
   {
+    to: '/components/icon-picker',
+    name: 'IconPicker',
+    description:
+      'Controlled popover grid for selecting one icon from a consumer-curated labelled catalog.',
+    preview: SCHEMATICS['IconPicker'],
+  },
+  {
     to: '/components/stack',
     name: 'Stack',
     description: 'Vertical layout with consistent gap.',

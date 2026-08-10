@@ -1101,6 +1101,16 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       </Row>
     </Panel>
   ),
+  IconPicker: (
+    <Panel w={86} h={86} style={{ padding: 10 }}>
+      <span style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 28px)', gap: 6 }}>
+        <Solid w={28} h={28} />
+        <Outline w={28} h={28} />
+        <Outline w={28} h={28} />
+        <Outline w={28} h={28} />
+      </span>
+    </Panel>
+  ),
   Stack: (
     <Col gap={8}>
       <Solid w={110} h={16} />
