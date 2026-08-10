@@ -80,7 +80,13 @@ export interface ColumnDef<T> {
    * not perform client-side sorting.
    */
   sortable?: boolean;
-  /** Label shown in the column visibility menu. Falls back to `header` if string. */
+  /**
+   * Plain-text column label. Used by the visibility menu and, when
+   * `DataTable.collapseBelow` is set, by the visual card-field label and resize
+   * separator name. Falls back to a string `header`; card fields with neither
+   * stay visually unlabelled, while the visibility menu and resize separators
+   * fall back to `id`.
+   */
   visibilityLabel?: string;
   /**
    * Initial pin side for this column. Used as the derived default for

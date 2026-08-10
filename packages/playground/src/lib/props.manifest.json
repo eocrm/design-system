@@ -1137,7 +1137,7 @@
           "type": "CollapseBreakpoint",
           "required": false,
           "default": "",
-          "description": "Stacks responsive data cells below this container-query breakpoint: `sm`\n(480px), `md` (640px), or `lg` (768px). The table keeps selection,\nexpansion, sorting, resizing, pinning, and column reordering intact.\n\nThis adds a wrapper with `container-type: inline-size`, so the breakpoint\nmeasures the table's available container width, not the viewport. Avoid an\nintrinsic-width parent such as `width: max-content`: inline-size containment\ncan make the wrapper contribute zero intrinsic width there."
+          "description": "Stacks responsive data cells below this container-query breakpoint: `sm`\n(480px), `md` (640px), or `lg` (768px). Selection, expansion, sorting,\nrow actions, and column visibility remain usable. Column sizing, pinning,\nand ordering state is retained, but resize/reorder controls and sticky pin\npresentation are unavailable while stacked and return after widening.\n\nThis adds a wrapper with `container-type: inline-size`, so the breakpoint\nmeasures the table's available container width, not the viewport. Avoid an\nintrinsic-width parent such as `width: max-content`: inline-size containment\ncan make the wrapper contribute zero intrinsic width there."
         },
         {
           "name": "aria-label",

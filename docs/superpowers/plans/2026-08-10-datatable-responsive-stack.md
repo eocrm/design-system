@@ -23,12 +23,14 @@
 ### Task 1: Public API and responsive DOM metadata
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/DataTable/DataTable.tsx`
 - Modify: `packages/design-system/src/components/DataTable/BodyRow.tsx`
 - Modify: `packages/design-system/src/components/DataTable/HeaderCell.tsx`
 - Test: `packages/design-system/src/components/DataTable/DataTable.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `CollapseBreakpoint`, `ColumnDef<T>`, `DataTableInstance<T>`.
 - Produces: `collapseBelow?: CollapseBreakpoint`; wrapper hooks `responsiveContainer`, `collapseSm|Md|Lg`; `data-responsive-label`; `data-responsive-sortable`; `responsiveDataCell` and `responsiveFullWidth`.
 
@@ -39,8 +41,13 @@ Add tests equivalent to:
 ```tsx
 const ref = createRef<HTMLTableElement>();
 const { container } = render(
-  <DataTable ref={ref} instance={instance} collapseBelow="sm"
-    data-testid="deals" className="consumer-table" />,
+  <DataTable
+    ref={ref}
+    instance={instance}
+    collapseBelow="sm"
+    data-testid="deals"
+    className="consumer-table"
+  />,
 );
 const table = screen.getByTestId('deals');
 expect(ref.current).toBe(table);
@@ -71,8 +78,10 @@ collapseBelow?: CollapseBreakpoint;
 Build the current DnD/table tree as `table`. Return it unchanged when omitted; otherwise return:
 
 ```tsx
-<div className={clsx(styles.responsiveContainer, collapseClass[collapseBelow])}
-  data-collapse-below={collapseBelow}>
+<div
+  className={clsx(styles.responsiveContainer, collapseClass[collapseBelow])}
+  data-collapse-below={collapseBelow}
+>
   {table}
 </div>
 ```
@@ -117,11 +126,13 @@ Run the focused tests and `npm run typecheck --workspace @eocrm/design-system`; 
 ### Task 2: Container-query card presentation
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/DataTable/DataTable.module.scss`
 - Modify if needed: `packages/design-system/src/components/DataTable/HeaderCell.tsx`
 - Test: `packages/design-system/src/components/DataTable/DataTable.test.tsx`
 
 **Interfaces:**
+
 - Consumes: Task 1 wrapper, breakpoint, label, sortable, data-cell, and full-width hooks.
 - Produces: three container queries and the compact header/stacked-card presentation.
 
@@ -139,20 +150,45 @@ Use the established breakpoint source:
 
 ```scss
 @use '../_internal/collapse' as bp;
-.responsiveContainer { container-type: inline-size; }
+.responsiveContainer {
+  container-type: inline-size;
+}
 @mixin stacked-presentation {
-  > * { width: 100%; }
-  .root { display: block; width: 100%; }
-  .root colgroup { display: none; }
-  .root tbody { display: grid; }
-  .root tbody > tr { display: grid; }
+  > * {
+    width: 100%;
+  }
+  .root {
+    display: block;
+    width: 100%;
+  }
+  .root colgroup {
+    display: none;
+  }
+  .root tbody {
+    display: grid;
+  }
+  .root tbody > tr {
+    display: grid;
+  }
   .responsiveDataCell[data-responsive-label]::before {
     content: attr(data-responsive-label);
   }
 }
-@container (max-width: #{bp.$collapse-sm}) { .collapseSm { @include stacked-presentation; } }
-@container (max-width: #{bp.$collapse-md}) { .collapseMd { @include stacked-presentation; } }
-@container (max-width: #{bp.$collapse-lg}) { .collapseLg { @include stacked-presentation; } }
+@container (max-width: #{bp.$collapse-sm}) {
+  .collapseSm {
+    @include stacked-presentation;
+  }
+}
+@container (max-width: #{bp.$collapse-md}) {
+  .collapseMd {
+    @include stacked-presentation;
+  }
+}
+@container (max-width: #{bp.$collapse-lg}) {
+  .collapseLg {
+    @include stacked-presentation;
+  }
+}
 ```
 
 The mixin must:
@@ -178,6 +214,7 @@ Run the focused test and `npm run stylelint`; expect PASS. Commit production, te
 ### Task 3: Playground proof and consumer guidance
 
 **Files:**
+
 - Create: `packages/playground/src/pages/components/ResizablePreview.tsx`
 - Create: `packages/playground/src/pages/components/ResizablePreview.module.scss`
 - Modify: `packages/playground/src/pages/components/DataTableDemo.tsx`
@@ -188,6 +225,7 @@ Run the focused test and `npm run stylelint`; expect PASS. Commit production, te
 - Modify: `packages/design-system/AGENTS.md`
 
 **Interfaces:**
+
 - Consumes: `<DataTable collapseBelow="sm">`.
 - Produces: shared playground resize helper, migrated existing examples, responsive DataTable example, and published agent-facing guidance.
 

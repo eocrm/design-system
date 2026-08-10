@@ -26,6 +26,8 @@ export interface HeaderCellProps<T> {
   dragWholeColumn?: boolean;
   /** A column drag is currently in progress. */
   dragActive?: boolean;
+  /** Enables responsive-only header hooks and the dedicated keyboard resize handle. */
+  responsiveEnabled?: boolean;
 }
 
 /**
@@ -37,8 +39,10 @@ export interface HeaderCellProps<T> {
  *   target — listeners are not attached to the cell or label, so clicking
  *   the label never starts a drag.
  * - **Resize handle** is a 24px hit-zone on the right edge. Disabled when
- *   `column.enableResize === false`. Also supports keyboard resize: arrow
- *   keys ±8px; Shift+arrow keys ±32px (when the handle is focused).
+ *   `column.enableResize === false`. By default, the sortable label keeps the
+ *   legacy Arrow-key resize behavior and the pointer handle is not focusable.
+ *   Responsive tables move Arrow-key resizing to the dedicated handle so CSS
+ *   can remove that focus stop together with the handle when rows stack.
  */
 /** See the `animateLayoutChanges` comment in HeaderCell. Module scope so the
  * identity is stable across renders. */
@@ -55,6 +59,7 @@ export function HeaderCell<T>({
   instance,
   dragWholeColumn,
   dragActive,
+  responsiveEnabled,
 }: HeaderCellProps<T>) {
   // Pinned columns are LOCKED in position — no drag-to-reorder grip, can't
   // be moved within or across pin groups. Sort and resize remain available
@@ -64,6 +69,10 @@ export function HeaderCell<T>({
     instance.columnPinning.left.includes(column.id) ||
     instance.columnPinning.right.includes(column.id);
   const sortable = column.sortable === true;
+  const plainHeader = typeof column.header === 'string';
+  const retainedResponsiveHeader = sortable || !plainHeader;
+  const resizeLabel =
+    column.visibilityLabel ?? (typeof column.header === 'string' ? column.header : column.id);
   const sortDir: TableSortDirection | undefined =
     instance.sort?.columnId === column.id ? instance.sort.direction : sortable ? 'none' : undefined;
 
@@ -127,7 +136,9 @@ export function HeaderCell<T>({
     if (sortable && (e.key === 'Enter' || e.key === ' ')) {
       e.preventDefault();
       instance.toggleSort(column.id);
+      return;
     }
+    if (!responsiveEnabled && column.enableResize !== false) onResizeKeyDown(e);
   };
 
   const onResizeKeyDown = (e: KeyboardEvent<HTMLSpanElement>) => {
@@ -172,8 +183,13 @@ export function HeaderCell<T>({
       // rendered rect (see `measureDragRangeX`). Declared `<col>` widths are
       // not a substitute — the table stretches past them to fill its wrap.
       data-dt-column-id={column.id}
-      data-responsive-sortable={sortable || undefined}
-      data-responsive-pinned={isPinned || undefined}
+      data-responsive-sortable={responsiveEnabled && sortable ? true : undefined}
+      data-responsive-control={responsiveEnabled && sortable ? true : undefined}
+      data-responsive-plain-label={responsiveEnabled && plainHeader ? true : undefined}
+      data-responsive-retained-header={
+        responsiveEnabled && retainedResponsiveHeader && !sortable ? true : undefined
+      }
+      data-responsive-pinned={responsiveEnabled && isPinned ? true : undefined}
       aria-sort={sortDir != null ? sortAriaMap[sortDir] : undefined}
       onClick={sortable ? () => instance.toggleSort(column.id) : undefined}
       className={clsx(
@@ -193,7 +209,7 @@ export function HeaderCell<T>({
       {reorderable && (
         <span
           className={styles.grip}
-          data-responsive-drag-grip
+          data-responsive-drag-grip={responsiveEnabled || undefined}
           // Spread BOTH attributes (aria/role) and listeners (pointerdown etc.)
           {...attributes}
           {...listeners}
@@ -215,7 +231,7 @@ export function HeaderCell<T>({
           and center-aligned columns position their label + sort indicator the
           same way the body cells render. */}
       <div
-        data-responsive-header-content
+        data-responsive-header-content={responsiveEnabled || undefined}
         className={clsx(
           styles.inner,
           column.enableResize !== false && styles.innerWithResize,
@@ -248,19 +264,22 @@ export function HeaderCell<T>({
       {column.enableResize !== false && (
         <span
           className={styles.resizeHandle}
-          data-responsive-resize-handle
+          data-responsive-resize-handle={responsiveEnabled || undefined}
           onPointerDown={resize.onPointerDown}
-          onKeyDown={onResizeKeyDown}
+          onKeyDown={responsiveEnabled ? onResizeKeyDown : undefined}
           // Stop sort click when interacting with resize.
           onClick={(e) => e.stopPropagation()}
-          role="separator"
-          aria-label={typeof column.header === 'string' ? column.header : column.id}
-          aria-orientation="vertical"
-          aria-valuemin={column.minSize ?? 40}
-          aria-valuemax={column.maxSize ?? Number.MAX_SAFE_INTEGER}
-          aria-valuenow={width}
-          aria-valuetext={`${width}px`}
-          tabIndex={0}
+          role={responsiveEnabled ? 'separator' : undefined}
+          aria-label={responsiveEnabled ? resizeLabel : undefined}
+          aria-hidden={responsiveEnabled ? undefined : true}
+          aria-orientation={responsiveEnabled ? 'vertical' : undefined}
+          aria-valuemin={responsiveEnabled ? (column.minSize ?? 40) : undefined}
+          aria-valuemax={
+            responsiveEnabled ? (column.maxSize ?? Number.MAX_SAFE_INTEGER) : undefined
+          }
+          aria-valuenow={responsiveEnabled ? width : undefined}
+          aria-valuetext={responsiveEnabled ? `${width}px` : undefined}
+          tabIndex={responsiveEnabled ? 0 : undefined}
         >
           <ChevronLeft className={styles.resizeChevron} aria-hidden="true" />
           <span className={clsx(styles.resizeBar, resize.isResizing && styles.active)} />

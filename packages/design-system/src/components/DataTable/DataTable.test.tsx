@@ -18,6 +18,7 @@ import userEvent from '@testing-library/user-event';
 import { createRef, useRef } from 'react';
 import { parse, type AtRule, type Declaration, type Root, type Rule } from 'postcss';
 import { compile } from 'sass';
+import { Table } from '../Table';
 import { DataTable } from './DataTable';
 import { useDataTable } from './useDataTable';
 import { shiftVarName } from './columnShift';
@@ -76,6 +77,18 @@ describe('DataTable responsive stylesheet', () => {
     ).toMatchObject({ value: 'inline-size' });
   });
 
+  it('keeps the always-mounted responsive label/value wrappers layout-neutral when wide', () => {
+    expect(
+      compiledDeclaration(compiledRule(stylesheet, '.responsiveVisualLabel'), 'display'),
+    ).toMatchObject({ value: 'none' });
+    expect(
+      compiledDeclaration(compiledRule(stylesheet, '.responsiveValue'), 'display'),
+    ).toMatchObject({ value: 'contents' });
+    expect(
+      compiledDeclaration(compiledRule(stylesheet, '.responsiveScrollWrap'), 'overflow-x'),
+    ).toMatchObject({ value: 'auto' });
+  });
+
   it.each([
     ['collapseSm', '480px'],
     ['collapseMd', '640px'],
@@ -88,12 +101,21 @@ describe('DataTable responsive stylesheet', () => {
     expect(queries).toHaveLength(1);
     const query = queries[0]!;
     const prefix = `.${collapseClass}`;
+    const ownedTable = `${prefix} > .responsiveScrollWrap > .root`;
 
-    const rootRule = compiledRule(query, `${prefix} .root`);
+    query.walkRules((rule) => {
+      for (const selector of rule.selectors) {
+        expect(selector).toMatch(
+          new RegExp(`^\\.${collapseClass} > \\.responsiveScrollWrap(?: > \\.root|$)`),
+        );
+      }
+    });
+
+    const rootRule = compiledRule(query, ownedTable);
     expect(compiledDeclaration(rootRule, 'display')).toMatchObject({ value: 'block' });
     expect(compiledDeclaration(rootRule, 'width')).toMatchObject({ value: '100%' });
 
-    const rowRule = compiledRule(query, `${prefix} .root tbody > tr`);
+    const rowRule = compiledRule(query, `${ownedTable} > tbody > tr`);
     expect(compiledDeclaration(rowRule, 'display')).toMatchObject({ value: 'grid' });
     expect(compiledDeclaration(rowRule, 'border')).toMatchObject({
       value: 'var(--border-width) solid var(--table-border-color)',
@@ -105,17 +127,28 @@ describe('DataTable responsive stylesheet', () => {
 
     const labelRule = compiledRule(
       query,
-      `${prefix} .responsiveDataCell[data-responsive-label]::before`,
+      `${ownedTable} > tbody > tr > .responsiveDataCell > .responsiveVisualLabel`,
     );
-    expect(compiledDeclaration(labelRule, 'content')).toMatchObject({
-      value: 'attr(data-responsive-label)',
-    });
+    expect(compiledDeclaration(labelRule, 'display')).toMatchObject({ value: 'block' });
 
-    const fullWidthRule = compiledRule(query, `${prefix} .responsiveFullWidth`);
+    const valueRule = compiledRule(
+      query,
+      `${ownedTable} > tbody > tr > .responsiveDataCell > .responsiveValue`,
+    );
+    expect(compiledDeclaration(valueRule, 'display')).toMatchObject({ value: 'block' });
+    expect(compiledDeclaration(valueRule, 'min-width')).toMatchObject({ value: '0' });
+
+    const unlabelledValueRule = compiledRule(
+      query,
+      `${ownedTable} > tbody > tr > .responsiveDataCell > .responsiveVisualLabel:empty + .responsiveValue`,
+    );
+    expect(compiledDeclaration(unlabelledValueRule, 'grid-column')?.value).toMatch(/^1\s*\/\s*-1$/);
+
+    const fullWidthRule = compiledRule(query, `${ownedTable} > tbody > tr > .responsiveFullWidth`);
     expect(compiledDeclaration(fullWidthRule, 'grid-column')?.value).toMatch(/^1\s*\/\s*-1$/);
     expect(compiledDeclaration(fullWidthRule, 'width')).toMatchObject({ value: '100%' });
 
-    const stickyResetRule = compiledRule(query, `${prefix} .root td`);
+    const stickyResetRule = compiledRule(query, `${ownedTable} > tbody > tr > td`);
     for (const [property, value] of [
       ['position', 'static'],
       ['left', 'auto'],
@@ -130,17 +163,38 @@ describe('DataTable responsive stylesheet', () => {
 
     const chromeRule = compiledRule(
       query,
-      `${prefix} .root :is([data-responsive-drag-grip], [data-responsive-resize-handle])`,
+      `${ownedTable} > thead > tr > th > span > span > :is([data-responsive-drag-grip], [data-responsive-resize-handle])`,
     );
     expect(compiledDeclaration(chromeRule, 'display')).toMatchObject({ value: 'none' });
     expect(compiledDeclaration(chromeRule, 'pointer-events')).toMatchObject({ value: 'none' });
 
-    const pinnedHeaderRule = compiledRule(query, `${prefix} .root [data-responsive-pinned=true]`);
+    const pinnedHeaderRule = compiledRule(
+      query,
+      `${ownedTable} > thead > tr > th[data-responsive-pinned=true]`,
+    );
     expect(compiledDeclaration(pinnedHeaderRule, 'background')).toMatchObject({
       value: 'transparent',
     });
     expect(compiledDeclaration(pinnedHeaderRule, 'box-shadow')).toMatchObject({ value: 'none' });
     expect(compiledDeclaration(pinnedHeaderRule, 'z-index')).toMatchObject({ value: 'auto' });
+
+    const emptyStripRule = compiledRule(
+      query,
+      `${ownedTable} > thead[data-responsive-has-items=false] > tr`,
+    );
+    expect(compiledDeclaration(emptyStripRule, 'padding')).toMatchObject({ value: '0' });
+    expect(compiledDeclaration(emptyStripRule, 'border')).toMatchObject({ value: '0' });
+    expect(compiledDeclaration(emptyStripRule, 'background')).toMatchObject({
+      value: 'transparent',
+    });
+
+    const plainHeaderRule = compiledRule(
+      query,
+      `${ownedTable} > thead > tr > th[data-responsive-plain-label=true]:not([data-responsive-sortable=true])`,
+    );
+    expect(compiledDeclaration(plainHeaderRule, 'clip-path')).toMatchObject({
+      value: 'inset(50%)',
+    });
   });
 
   it('paints a focus-visible ring on the keyboard resize handle', () => {
@@ -392,27 +446,97 @@ describe('<DataTable>', () => {
   it('does not render a responsive wrapper unless collapseBelow is provided', () => {
     const { container } = render(<Harness />);
     expect(container.querySelector('[data-collapse-below]')).toBeNull();
+    expect(screen.getByText('Alpha').tagName).toBe('TD');
+    expect(container.querySelector('[data-responsive-resize-handle]')).toBeNull();
   });
 
-  it('stamps responsive labels and preserves row controls in a responsive table', async () => {
-    const onRowSelectionChange = vi.fn();
-    const onExpandedRowsChange = vi.fn();
-    const onAction = vi.fn();
+  it('renders visual-only responsive labels and one stable value wrapper per data cell', () => {
     const responsiveColumns: ColumnDef<Row>[] = [
       {
         id: 'preferred',
         header: 'Fallback',
         visibilityLabel: 'Preferred',
-        cell: () => 'A',
+        cell: () => <span>A</span>,
       },
-      { id: 'fallback', header: 'Header label', sortable: true, cell: () => 'B' },
+      {
+        id: 'fallback',
+        header: 'Header label',
+        sortable: true,
+        cell: () => <span>B</span>,
+      },
       {
         id: 'absent',
         header: <span>Visual only</span>,
+        cell: () => <button>Action</button>,
+      },
+      {
+        id: 'siblings',
+        header: 'Multiple values',
+        cell: () => (
+          <>
+            <span>First value</span>
+            <span>Second value</span>
+          </>
+        ),
+      },
+    ];
+    function ResponsiveLabelsHarness() {
+      const instance = useDataTable<Row>({
+        data: [rows[0]!],
+        columns: responsiveColumns,
+        getRowId,
+      });
+      return <DataTable instance={instance} aria-label="Responsive labels" collapseBelow="md" />;
+    }
+
+    render(<ResponsiveLabelsHarness />);
+
+    const preferredCell = screen.getByText('A').closest('td')!;
+    expect(preferredCell.className).toMatch(/responsiveDataCell/);
+    const preferredLabel = preferredCell.querySelector(`.${styles.responsiveVisualLabel}`)!;
+    expect(preferredLabel).toHaveAttribute('aria-hidden', 'true');
+    expect(preferredLabel).toHaveTextContent('Preferred');
+    expect(preferredCell).toHaveAccessibleName('A');
+    expect(preferredCell.children).toHaveLength(2);
+    expect(preferredCell.querySelector(`.${styles.responsiveValue}`)).toContainElement(
+      screen.getByText('A'),
+    );
+
+    const fallbackCell = screen.getByText('B').closest('td')!;
+    expect(fallbackCell.querySelector(`.${styles.responsiveVisualLabel}`)).toHaveTextContent(
+      'Header label',
+    );
+    expect(fallbackCell).toHaveAccessibleName('B');
+
+    const absentCell = screen.getByRole('button', { name: 'Action' }).closest('td')!;
+    const absentLabel = absentCell.querySelector(`.${styles.responsiveVisualLabel}`)!;
+    expect(absentLabel).toHaveAttribute('aria-hidden', 'true');
+    expect(absentLabel).toBeEmptyDOMElement();
+    expect(absentCell.querySelector(`.${styles.responsiveValue}`)).toContainElement(
+      screen.getByRole('button', { name: 'Action' }),
+    );
+
+    const siblingsCell = screen.getByText('First value').closest('td')!;
+    const siblingsValue = siblingsCell.querySelector(`.${styles.responsiveValue}`)!;
+    expect(siblingsValue.children).toHaveLength(2);
+    expect(siblingsValue).toContainElement(screen.getByText('First value'));
+    expect(siblingsValue).toContainElement(screen.getByText('Second value'));
+  });
+
+  it('preserves selection, expansion, and row actions in a responsive table', async () => {
+    const onRowSelectionChange = vi.fn();
+    const onExpandedRowsChange = vi.fn();
+    const onAction = vi.fn();
+    const responsiveColumns: ColumnDef<Row>[] = [
+      { id: 'name', header: 'Name', sortable: true, cell: (row) => row.name },
+      {
+        id: 'actions',
+        header: <span>Actions</span>,
+        visibilityLabel: 'Actions',
         cell: () => <button onClick={onAction}>Action</button>,
       },
     ];
-    function ResponsiveMetadataHarness() {
+    function ResponsiveControlsHarness() {
       const instance = useDataTable<Row>({
         data: [rows[0]!],
         columns: responsiveColumns,
@@ -424,29 +548,23 @@ describe('<DataTable>', () => {
         defaultExpandedRows: {},
         onExpandedRowsChange,
       });
-      return <DataTable instance={instance} aria-label="Responsive metadata" collapseBelow="md" />;
+      return <DataTable instance={instance} aria-label="Responsive controls" collapseBelow="md" />;
     }
 
     const user = userEvent.setup();
-    render(<ResponsiveMetadataHarness />);
+    render(<ResponsiveControlsHarness />);
 
-    const preferredCell = screen.getByText('A').closest('td')!;
-    expect(preferredCell).toHaveAttribute('data-responsive-label', 'Preferred');
-    expect(preferredCell.className).toMatch(/responsiveDataCell/);
-    expect(screen.getByText('B').closest('td')).toHaveAttribute(
-      'data-responsive-label',
-      'Header label',
-    );
-    expect(screen.getByRole('button', { name: 'Action' }).closest('td')).not.toHaveAttribute(
-      'data-responsive-label',
-    );
-    expect(screen.getByRole('columnheader', { name: /header label/i })).toHaveAttribute(
+    expect(screen.getByRole('columnheader', { name: /name/i })).toHaveAttribute(
       'data-responsive-sortable',
       'true',
     );
-    expect(screen.getByRole('columnheader', { name: /fallback/i })).not.toHaveAttribute(
-      'data-responsive-sortable',
+    expect(screen.getByRole('columnheader', { name: /name/i })).toHaveAttribute(
+      'data-responsive-control',
+      'true',
     );
+    const selectAll = screen.getByRole('checkbox', { name: /select all/i });
+    expect(selectAll.closest('th')).toHaveAttribute('data-responsive-control', 'true');
+    expect(document.querySelector('thead')).toHaveAttribute('data-responsive-has-items', 'true');
 
     const rowCheckboxes = screen.getAllByRole('checkbox', { name: /select row/i });
     const expansionButtons = screen.getAllByRole('button', { name: /expand row/i });
@@ -463,8 +581,224 @@ describe('<DataTable>', () => {
     expect(onAction).toHaveBeenCalledTimes(1);
   });
 
+  it('retains rich non-sortable and render-function headers in the compact strip', () => {
+    const responsiveColumns: ColumnDef<Row>[] = [
+      {
+        id: 'plain',
+        header: 'Plain label',
+        cell: () => 'Plain value',
+        enableReorder: false,
+        enableResize: false,
+      },
+      {
+        id: 'node',
+        header: <button>Node header action</button>,
+        cell: () => 'Node value',
+        enableReorder: false,
+        enableResize: false,
+      },
+      {
+        id: 'rendered',
+        header: () => <button>Rendered header action</button>,
+        cell: () => 'Rendered value',
+        enableReorder: false,
+        enableResize: false,
+      },
+    ];
+    function RichHeadersHarness() {
+      const instance = useDataTable<Row>({
+        data: [rows[0]!],
+        columns: responsiveColumns,
+        getRowId,
+      });
+      return <DataTable instance={instance} aria-label="Rich headers" collapseBelow="sm" />;
+    }
+
+    render(<RichHeadersHarness />);
+
+    const plainHeader = screen.getByRole('columnheader', { name: 'Plain label' });
+    expect(plainHeader).toHaveAttribute('data-responsive-plain-label', 'true');
+    expect(plainHeader).not.toHaveAttribute('data-responsive-retained-header');
+
+    for (const buttonName of ['Node header action', 'Rendered header action']) {
+      const button = screen.getByRole('button', { name: buttonName });
+      expect(button.closest('th')).toHaveAttribute('data-responsive-retained-header', 'true');
+      expect(button.closest('th')).not.toHaveAttribute('data-responsive-plain-label');
+    }
+    expect(document.querySelector('thead')).toHaveAttribute('data-responsive-has-items', 'true');
+  });
+
+  it('suppresses an empty compact header band and does not retain the blank expansion header', () => {
+    const plainColumns: ColumnDef<Row>[] = [
+      {
+        id: 'name',
+        header: 'Name',
+        cell: (row) => row.name,
+        enableReorder: false,
+        enableResize: false,
+      },
+    ];
+    function EmptyStripHarness() {
+      const instance = useDataTable<Row>({
+        data: [rows[0]!],
+        columns: plainColumns,
+        getRowId,
+        renderExpandedRow: () => <div>Detail</div>,
+      });
+      return <DataTable instance={instance} aria-label="Empty compact strip" collapseBelow="sm" />;
+    }
+
+    render(<EmptyStripHarness />);
+
+    expect(document.querySelector('thead')).toHaveAttribute('data-responsive-has-items', 'false');
+    const expansionHeader = screen.getByRole('columnheader', { name: /row expansion/i });
+    expect(expansionHeader).not.toHaveAttribute('data-responsive-control');
+    expect(expansionHeader).not.toHaveAttribute('data-responsive-retained-header');
+  });
+
+  it('keeps a nested Table outside the owning responsive row selectors', () => {
+    const nestedColumns: ColumnDef<Row>[] = [
+      {
+        id: 'nested',
+        header: 'Nested table',
+        enableReorder: false,
+        enableResize: false,
+        cell: () => (
+          <Table aria-label="Nested Table">
+            <Table.Header>
+              <Table.Row>
+                <Table.HeaderCell>Nested heading</Table.HeaderCell>
+              </Table.Row>
+            </Table.Header>
+            <Table.Body>
+              <Table.Row>
+                <Table.Cell>Nested value</Table.Cell>
+              </Table.Row>
+            </Table.Body>
+          </Table>
+        ),
+      },
+    ];
+    function NestedTableHarness() {
+      const instance = useDataTable<Row>({
+        data: [rows[0]!],
+        columns: nestedColumns,
+        getRowId,
+      });
+      return <DataTable instance={instance} aria-label="Outer Table" collapseBelow="sm" />;
+    }
+
+    render(<NestedTableHarness />);
+
+    const outerTable = screen.getByRole('table', { name: 'Outer Table' }) as HTMLTableElement;
+    const nestedTable = screen.getByRole('table', { name: 'Nested Table' }) as HTMLTableElement;
+    const outerWrapper = outerTable.closest('[data-collapse-below="sm"]')!;
+    const ownedRows = outerWrapper.querySelectorAll(
+      `:scope > .${styles.responsiveScrollWrap} > .${styles.root} > tbody > tr`,
+    );
+    expect(ownedRows).toHaveLength(1);
+    expect(ownedRows[0]).toBe(outerTable.tBodies[0]!.rows[0]);
+    expect(Array.from(ownedRows)).not.toContain(nestedTable.tBodies[0]!.rows[0]);
+  });
+
+  it('keeps a nested DataTable under its own responsive wrapper and selectors', () => {
+    const innerRows: Row[] = [{ id: 'inner', name: 'Inner value', amount: 1 }];
+    const innerColumns: ColumnDef<Row>[] = [
+      {
+        id: 'name',
+        header: 'Inner name',
+        cell: (row) => row.name,
+        enableReorder: false,
+        enableResize: false,
+      },
+    ];
+    function NestedDataTable() {
+      const instance = useDataTable<Row>({
+        data: innerRows,
+        columns: innerColumns,
+        getRowId,
+      });
+      return <DataTable instance={instance} aria-label="Inner DataTable" collapseBelow="lg" />;
+    }
+    const outerColumns: ColumnDef<Row>[] = [
+      {
+        id: 'nested',
+        header: 'Nested data table',
+        enableReorder: false,
+        enableResize: false,
+        cell: () => <NestedDataTable />,
+      },
+    ];
+    function NestedDataTableHarness() {
+      const instance = useDataTable<Row>({
+        data: [rows[0]!],
+        columns: outerColumns,
+        getRowId,
+      });
+      return <DataTable instance={instance} aria-label="Outer DataTable" collapseBelow="sm" />;
+    }
+
+    render(<NestedDataTableHarness />);
+
+    const outerTable = screen.getByRole('table', { name: 'Outer DataTable' }) as HTMLTableElement;
+    const innerTable = screen.getByRole('table', { name: 'Inner DataTable' }) as HTMLTableElement;
+    const outerWrapper = outerTable.closest('[data-collapse-below="sm"]')!;
+    const ownedRows = outerWrapper.querySelectorAll(
+      `:scope > .${styles.responsiveScrollWrap} > .${styles.root} > tbody > tr`,
+    );
+    expect(ownedRows).toHaveLength(1);
+    expect(ownedRows[0]).toBe(outerTable.tBodies[0]!.rows[0]);
+    expect(Array.from(ownedRows)).not.toContain(innerTable.tBodies[0]!.rows[0]);
+    expect(innerTable.closest('[data-collapse-below]')).toHaveAttribute(
+      'data-collapse-below',
+      'lg',
+    );
+  });
+
+  it('names responsive resize separators by visibility label, string header, then id', () => {
+    const namedColumns: ColumnDef<Row>[] = [
+      {
+        id: 'preferred-id',
+        header: <span>Rich preferred</span>,
+        visibilityLabel: 'Preferred resize name',
+        cell: () => 'A',
+        enableReorder: false,
+      },
+      {
+        id: 'string-id',
+        header: 'String resize name',
+        cell: () => 'B',
+        enableReorder: false,
+      },
+      {
+        id: 'id-fallback',
+        header: <span>Rich fallback</span>,
+        cell: () => 'C',
+        enableReorder: false,
+      },
+    ];
+    function ResizeNamesHarness() {
+      const instance = useDataTable<Row>({
+        data: [rows[0]!],
+        columns: namedColumns,
+        getRowId,
+      });
+      return <DataTable instance={instance} aria-label="Resize names" collapseBelow="md" />;
+    }
+
+    render(<ResizeNamesHarness />);
+
+    expect(screen.getByRole('separator', { name: 'Preferred resize name' })).toBeInTheDocument();
+    expect(screen.getByRole('separator', { name: 'String resize name' })).toBeInTheDocument();
+    expect(screen.getByRole('separator', { name: 'id-fallback' })).toBeInTheDocument();
+  });
+
   it('exposes stable responsive hooks for wide-table drag and resize controls', () => {
-    render(<Harness />);
+    function ResponsiveHooksHarness() {
+      const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+      return <DataTable instance={instance} aria-label="Responsive hooks" collapseBelow="sm" />;
+    }
+    render(<ResponsiveHooksHarness />);
 
     const dataHeaders = screen
       .getAllByRole('columnheader')
@@ -477,22 +811,35 @@ describe('<DataTable>', () => {
     }
   });
 
-  it('does not resize a sortable column when arrow keys are pressed on its label', () => {
+  it('preserves legacy label-key resizing and a non-focusable handle by default', () => {
     const { container } = render(<Harness />);
     expect(container.querySelector('col')).toHaveStyle({ width: '120px' });
 
     fireEvent.keyDown(screen.getByRole('button', { name: 'Name' }), { key: 'ArrowRight' });
 
-    expect(container.querySelector('col')).toHaveStyle({ width: '120px' });
+    expect(container.querySelector('col')).toHaveStyle({ width: '128px' });
+    const header = screen.getByRole('columnheader', { name: /name/i });
+    expect(within(header).queryByRole('separator')).not.toBeInTheDocument();
+    const resizeHandle = header.querySelector('span[aria-hidden="true"]')!;
+    expect(resizeHandle).toHaveAttribute('aria-hidden', 'true');
+    expect(resizeHandle).not.toHaveAttribute('tabindex');
   });
 
-  it('keeps keyboard resizing available from the dedicated wide-layout handle', () => {
-    const { container } = render(<Harness />);
+  it('moves keyboard resizing to a dedicated handle only for responsive tables', () => {
+    function ResponsiveResizeHarness() {
+      const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+      return <DataTable instance={instance} aria-label="Responsive resize" collapseBelow="sm" />;
+    }
+    const { container } = render(<ResponsiveResizeHarness />);
+    const label = screen.getByRole('button', { name: 'Name' });
     const resizeHandle = within(screen.getByRole('columnheader', { name: /name/i })).getByRole(
       'separator',
       { name: 'Name' },
     );
     expect(resizeHandle).toHaveAttribute('tabindex', '0');
+
+    fireEvent.keyDown(label, { key: 'ArrowRight' });
+    expect(container.querySelector('col')).toHaveStyle({ width: '120px' });
 
     fireEvent.keyDown(resizeHandle, { key: 'ArrowRight' });
 
@@ -501,9 +848,18 @@ describe('<DataTable>', () => {
     expect(resizeHandle).toHaveAttribute('aria-valuetext', '128px');
   });
 
-  it('keeps sortable labels keyboard-accessible after resize keys move to the handle', () => {
+  it('keeps sortable labels keyboard-accessible when responsive resize uses the handle', () => {
     const onSortChange = vi.fn();
-    render(<Harness onSortChange={onSortChange} />);
+    function ResponsiveSortHarness() {
+      const instance = useDataTable<Row>({
+        data: rows,
+        columns: cols,
+        getRowId,
+        onSortChange,
+      });
+      return <DataTable instance={instance} aria-label="Responsive sort" collapseBelow="sm" />;
+    }
+    render(<ResponsiveSortHarness />);
 
     fireEvent.keyDown(screen.getByRole('button', { name: 'Name' }), { key: 'Enter' });
 
@@ -513,7 +869,14 @@ describe('<DataTable>', () => {
   it('marks skeleton and empty-state cells as responsive full-width content', () => {
     function PlaceholderHarness({ loading }: { loading?: boolean }) {
       const instance = useDataTable<Row>({ data: [], columns: cols, getRowId });
-      return <DataTable instance={instance} aria-label="Placeholder rows" loading={loading} />;
+      return (
+        <DataTable
+          instance={instance}
+          aria-label="Placeholder rows"
+          loading={loading}
+          collapseBelow="sm"
+        />
+      );
     }
 
     const { container, rerender } = render(<PlaceholderHarness loading />);
@@ -536,7 +899,16 @@ describe('<DataTable>', () => {
   });
 
   it('marks pinned headers with a stable responsive paint hook', () => {
-    render(<Harness defaultColumnPinning={{ left: ['name'], right: [] }} />);
+    function ResponsivePinnedHarness() {
+      const instance = useDataTable<Row>({
+        data: rows,
+        columns: cols,
+        getRowId,
+        defaultColumnPinning: { left: ['name'], right: [] },
+      });
+      return <DataTable instance={instance} aria-label="Pinned hooks" collapseBelow="sm" />;
+    }
+    render(<ResponsivePinnedHarness />);
     expect(screen.getByRole('columnheader', { name: /name/i })).toHaveAttribute(
       'data-responsive-pinned',
       'true',
