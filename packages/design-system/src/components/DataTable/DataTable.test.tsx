@@ -12,9 +12,12 @@
  * covered here is the styling contract (which cells carry a shift transform,
  * which must never, and which columns the driver is told about).
  */
+import { resolve } from 'node:path';
 import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, useRef } from 'react';
+import { parse, type AtRule, type Declaration, type Root, type Rule } from 'postcss';
+import { compile } from 'sass';
 import { DataTable } from './DataTable';
 import { useDataTable } from './useDataTable';
 import { shiftVarName } from './columnShift';
@@ -35,6 +38,20 @@ const rows: Row[] = [
 
 const getRowId = (r: Row) => r.id;
 
+function compiledRule(parent: Root | AtRule, selector: string): Rule | undefined {
+  let match: Rule | undefined;
+  parent.walkRules((rule) => {
+    if (rule.selectors.includes(selector)) match = rule;
+  });
+  return match;
+}
+
+function compiledDeclaration(rule: Rule | undefined, property: string): Declaration | undefined {
+  return rule?.nodes.find(
+    (node): node is Declaration => node.type === 'decl' && node.prop === property,
+  );
+}
+
 function Harness(props: Partial<Parameters<typeof useDataTable<Row>>[0]>) {
   const instance = useDataTable<Row>({
     data: rows,
@@ -44,6 +61,99 @@ function Harness(props: Partial<Parameters<typeof useDataTable<Row>>[0]>) {
   });
   return <DataTable instance={instance} aria-label="Test" />;
 }
+
+describe('DataTable responsive stylesheet', () => {
+  const stylesheet = parse(
+    compile(resolve(__dirname, 'DataTable.module.scss'), { style: 'expanded' }).css,
+  );
+  const headerStylesheet = parse(
+    compile(resolve(__dirname, 'HeaderCell.module.scss'), { style: 'expanded' }).css,
+  );
+
+  it('establishes an inline-size query container', () => {
+    expect(
+      compiledDeclaration(compiledRule(stylesheet, '.responsiveContainer'), 'container-type'),
+    ).toMatchObject({ value: 'inline-size' });
+  });
+
+  it.each([
+    ['collapseSm', '480px'],
+    ['collapseMd', '640px'],
+    ['collapseLg', '768px'],
+  ] as const)('emits the %s card presentation at %s', (collapseClass, threshold) => {
+    const queries: AtRule[] = [];
+    stylesheet.walkAtRules('container', (query) => {
+      if (query.params === `(max-width: ${threshold})`) queries.push(query);
+    });
+    expect(queries).toHaveLength(1);
+    const query = queries[0]!;
+    const prefix = `.${collapseClass}`;
+
+    const rootRule = compiledRule(query, `${prefix} .root`);
+    expect(compiledDeclaration(rootRule, 'display')).toMatchObject({ value: 'block' });
+    expect(compiledDeclaration(rootRule, 'width')).toMatchObject({ value: '100%' });
+
+    const rowRule = compiledRule(query, `${prefix} .root tbody > tr`);
+    expect(compiledDeclaration(rowRule, 'display')).toMatchObject({ value: 'grid' });
+    expect(compiledDeclaration(rowRule, 'border')).toMatchObject({
+      value: 'var(--border-width) solid var(--table-border-color)',
+    });
+    expect(compiledDeclaration(rowRule, 'border-radius')).toMatchObject({
+      value: 'var(--data-table-clickable-row-radius)',
+    });
+    expect(compiledDeclaration(rowRule, 'background')).toMatchObject({ value: 'var(--table-bg)' });
+
+    const labelRule = compiledRule(
+      query,
+      `${prefix} .responsiveDataCell[data-responsive-label]::before`,
+    );
+    expect(compiledDeclaration(labelRule, 'content')).toMatchObject({
+      value: 'attr(data-responsive-label)',
+    });
+
+    const fullWidthRule = compiledRule(query, `${prefix} .responsiveFullWidth`);
+    expect(compiledDeclaration(fullWidthRule, 'grid-column')?.value).toMatch(/^1\s*\/\s*-1$/);
+    expect(compiledDeclaration(fullWidthRule, 'width')).toMatchObject({ value: '100%' });
+
+    const stickyResetRule = compiledRule(query, `${prefix} .root td`);
+    for (const [property, value] of [
+      ['position', 'static'],
+      ['left', 'auto'],
+      ['right', 'auto'],
+      ['transform', 'none'],
+    ] as const) {
+      expect(compiledDeclaration(stickyResetRule, property)).toMatchObject({
+        value,
+        important: true,
+      });
+    }
+
+    const chromeRule = compiledRule(
+      query,
+      `${prefix} .root :is([data-responsive-drag-grip], [data-responsive-resize-handle])`,
+    );
+    expect(compiledDeclaration(chromeRule, 'display')).toMatchObject({ value: 'none' });
+    expect(compiledDeclaration(chromeRule, 'pointer-events')).toMatchObject({ value: 'none' });
+
+    const pinnedHeaderRule = compiledRule(query, `${prefix} .root [data-responsive-pinned=true]`);
+    expect(compiledDeclaration(pinnedHeaderRule, 'background')).toMatchObject({
+      value: 'transparent',
+    });
+    expect(compiledDeclaration(pinnedHeaderRule, 'box-shadow')).toMatchObject({ value: 'none' });
+    expect(compiledDeclaration(pinnedHeaderRule, 'z-index')).toMatchObject({ value: 'auto' });
+  });
+
+  it('paints a focus-visible ring on the keyboard resize handle', () => {
+    const focusRule = compiledRule(headerStylesheet, '.resizeHandle:focus-visible');
+    expect(compiledDeclaration(focusRule, 'opacity')).toMatchObject({
+      value: 'var(--data-table-header-resize-handle-opacity-visible)',
+    });
+    expect(compiledDeclaration(focusRule, 'outline')).toMatchObject({ value: 'none' });
+    expect(compiledDeclaration(focusRule, 'box-shadow')).toMatchObject({
+      value: '0 0 0 var(--ring-width) var(--ring-accent)',
+    });
+  });
+});
 
 describe('<DataTable>', () => {
   it('renders header + body rows', () => {
@@ -367,6 +477,39 @@ describe('<DataTable>', () => {
     }
   });
 
+  it('does not resize a sortable column when arrow keys are pressed on its label', () => {
+    const { container } = render(<Harness />);
+    expect(container.querySelector('col')).toHaveStyle({ width: '120px' });
+
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Name' }), { key: 'ArrowRight' });
+
+    expect(container.querySelector('col')).toHaveStyle({ width: '120px' });
+  });
+
+  it('keeps keyboard resizing available from the dedicated wide-layout handle', () => {
+    const { container } = render(<Harness />);
+    const resizeHandle = within(screen.getByRole('columnheader', { name: /name/i })).getByRole(
+      'separator',
+      { name: 'Name' },
+    );
+    expect(resizeHandle).toHaveAttribute('tabindex', '0');
+
+    fireEvent.keyDown(resizeHandle, { key: 'ArrowRight' });
+
+    expect(container.querySelector('col')).toHaveStyle({ width: '128px' });
+    expect(resizeHandle).toHaveAttribute('aria-valuenow', '128');
+    expect(resizeHandle).toHaveAttribute('aria-valuetext', '128px');
+  });
+
+  it('keeps sortable labels keyboard-accessible after resize keys move to the handle', () => {
+    const onSortChange = vi.fn();
+    render(<Harness onSortChange={onSortChange} />);
+
+    fireEvent.keyDown(screen.getByRole('button', { name: 'Name' }), { key: 'Enter' });
+
+    expect(onSortChange).toHaveBeenLastCalledWith({ columnId: 'name', direction: 'asc' });
+  });
+
   it('marks skeleton and empty-state cells as responsive full-width content', () => {
     function PlaceholderHarness({ loading }: { loading?: boolean }) {
       const instance = useDataTable<Row>({ data: [], columns: cols, getRowId });
@@ -390,6 +533,17 @@ describe('<DataTable>', () => {
     const firstBodyRow = container.querySelectorAll('tbody tr')[0]!;
     const nameCell = firstBodyRow.querySelectorAll('td')[0]!; // 'name' is first because left-pinned
     expect(nameCell).toHaveStyle({ position: 'sticky', left: '0px' });
+  });
+
+  it('marks pinned headers with a stable responsive paint hook', () => {
+    render(<Harness defaultColumnPinning={{ left: ['name'], right: [] }} />);
+    expect(screen.getByRole('columnheader', { name: /name/i })).toHaveAttribute(
+      'data-responsive-pinned',
+      'true',
+    );
+    expect(screen.getByRole('columnheader', { name: /amount/i })).not.toHaveAttribute(
+      'data-responsive-pinned',
+    );
   });
 
   it('shifts left pin offset by 44px when enableRowSelection is true', () => {

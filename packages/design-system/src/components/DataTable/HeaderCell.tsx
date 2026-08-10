@@ -36,9 +36,9 @@ export interface HeaderCellProps<T> {
  *   to `@dnd-kit/sortable`'s `useSortable`. The grip is the ONLY draggable
  *   target — listeners are not attached to the cell or label, so clicking
  *   the label never starts a drag.
- * - **Resize handle** is a 6px hit-zone on the right edge. Disabled when
+ * - **Resize handle** is a 24px hit-zone on the right edge. Disabled when
  *   `column.enableResize === false`. Also supports keyboard resize: arrow
- *   keys ±8px; Shift+arrow keys ±32px (when the label is focused).
+ *   keys ±8px; Shift+arrow keys ±32px (when the handle is focused).
  */
 /** See the `animateLayoutChanges` comment in HeaderCell. Module scope so the
  * identity is stable across renders. */
@@ -127,10 +127,11 @@ export function HeaderCell<T>({
     if (sortable && (e.key === 'Enter' || e.key === ' ')) {
       e.preventDefault();
       instance.toggleSort(column.id);
-      return;
     }
+  };
+
+  const onResizeKeyDown = (e: KeyboardEvent<HTMLSpanElement>) => {
     // Keyboard resize: ← / → for ±8px; Shift+← / Shift+→ for ±32px.
-    if (column.enableResize === false) return;
     if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
       e.preventDefault();
       const step = (e.shiftKey ? 32 : 8) * (e.key === 'ArrowRight' ? 1 : -1);
@@ -172,6 +173,7 @@ export function HeaderCell<T>({
       // not a substitute — the table stretches past them to fill its wrap.
       data-dt-column-id={column.id}
       data-responsive-sortable={sortable || undefined}
+      data-responsive-pinned={isPinned || undefined}
       aria-sort={sortDir != null ? sortAriaMap[sortDir] : undefined}
       onClick={sortable ? () => instance.toggleSort(column.id) : undefined}
       className={clsx(
@@ -248,9 +250,17 @@ export function HeaderCell<T>({
           className={styles.resizeHandle}
           data-responsive-resize-handle
           onPointerDown={resize.onPointerDown}
+          onKeyDown={onResizeKeyDown}
           // Stop sort click when interacting with resize.
           onClick={(e) => e.stopPropagation()}
-          aria-hidden="true"
+          role="separator"
+          aria-label={typeof column.header === 'string' ? column.header : column.id}
+          aria-orientation="vertical"
+          aria-valuemin={column.minSize ?? 40}
+          aria-valuemax={column.maxSize ?? Number.MAX_SAFE_INTEGER}
+          aria-valuenow={width}
+          aria-valuetext={`${width}px`}
+          tabIndex={0}
         >
           <ChevronLeft className={styles.resizeChevron} aria-hidden="true" />
           <span className={clsx(styles.resizeBar, resize.isResizing && styles.active)} />

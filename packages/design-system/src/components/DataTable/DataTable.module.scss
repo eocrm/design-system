@@ -388,6 +388,15 @@
   .root :is(.pinnedLeft, .pinnedRight) {
     background: transparent;
     box-shadow: none;
+    z-index: auto;
+  }
+
+  // HeaderCell owns separate CSS-module pin classes, so its stable DOM hook is
+  // the only safe way to neutralize header pin paint from this module.
+  .root [data-responsive-pinned='true'] {
+    background: transparent;
+    box-shadow: none;
+    z-index: auto;
   }
 
   // Reordering and resizing describe the wide column layout. The elements use
