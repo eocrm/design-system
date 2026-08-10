@@ -4,8 +4,6 @@ import { useTranslation } from '../../i18n/useTranslation';
 import { Popover, type PopoverAlign, type PopoverSide } from '../Popover';
 import styles from './IconPicker.module.scss';
 
-const COLUMNS = 4;
-
 type PopoverPlacement = 'top' | 'top-start' | 'top-end' | 'bottom' | 'bottom-start' | 'bottom-end';
 
 const PLACEMENT_MAP: Record<PopoverPlacement, { side: PopoverSide; align: PopoverAlign }> = {

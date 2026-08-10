@@ -14,6 +14,7 @@
 
 .trigger,
 .cell {
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -45,6 +46,7 @@
 }
 
 .selected {
+  border-width: var(--icon-picker-selected-border-width);
   border-color: var(--icon-picker-selected-border);
   box-shadow: inset 0 0 0 var(--border-width) var(--icon-picker-selected-ring);
 }

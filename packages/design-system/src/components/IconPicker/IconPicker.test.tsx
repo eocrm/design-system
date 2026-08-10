@@ -1,4 +1,4 @@
-import { createRef } from 'react';
+import { createRef, useState } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { IconPicker, type IconPickerOption } from './IconPicker';
@@ -8,6 +8,11 @@ const options: IconPickerOption[] = [
   { value: 'zap', label: 'Lightning', icon: <svg data-testid="zap-icon" /> },
   { value: 'flag', label: 'Flag', icon: <svg data-testid="flag-icon" /> },
 ];
+
+function ControlledIconPicker() {
+  const [value, setValue] = useState('flame');
+  return <IconPicker value={value} options={options} onChange={setValue} />;
+}
 
 it('renders the selected glyph and forwards root props and ref', () => {
   const ref = createRef<HTMLDivElement>();
@@ -43,5 +48,32 @@ it('commits a click and closes', async () => {
   await user.click(screen.getByRole('button', { name: 'Pick icon: Flame' }));
   await user.click(screen.getByRole('radio', { name: 'Lightning' }));
   expect(onChange).toHaveBeenCalledWith('zap');
+  expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();
+});
+
+it('updates the trigger from the controlled value after a selection', async () => {
+  const user = userEvent.setup();
+  render(<ControlledIconPicker />);
+  await user.click(screen.getByRole('button', { name: 'Pick icon: Flame' }));
+  await user.click(screen.getByRole('radio', { name: 'Lightning' }));
+  expect(screen.getByRole('button', { name: 'Pick icon: Lightning' })).toBeInTheDocument();
+  expect(screen.getByTestId('zap-icon')).toBeInTheDocument();
+});
+
+it('does not open when disabled', async () => {
+  const user = userEvent.setup();
+  render(<IconPicker value="flame" options={options} onChange={() => {}} disabled />);
+  const trigger = screen.getByRole('button', { name: 'Pick icon: Flame' });
+  expect(trigger).toBeDisabled();
+  await user.click(trigger);
+  expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();
+});
+
+it('does not open when no options are available', async () => {
+  const user = userEvent.setup();
+  render(<IconPicker value="flame" options={[]} onChange={() => {}} />);
+  const trigger = screen.getByRole('button', { name: 'Pick icon' });
+  expect(trigger).toBeDisabled();
+  await user.click(trigger);
   expect(screen.queryByRole('radiogroup')).not.toBeInTheDocument();
 });
