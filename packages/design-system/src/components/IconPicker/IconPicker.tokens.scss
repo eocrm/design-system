@@ -5,10 +5,20 @@
   --icon-picker-grid-padding: var(--space-1);
   --icon-picker-radius: var(--radius-sm);
   --icon-picker-border: var(--color-border);
+  --icon-picker-border-width: var(--border-width);
   --icon-picker-bg: var(--color-bg);
   --icon-picker-fg: var(--color-fg);
   --icon-picker-hover-bg: var(--color-bg-muted);
+  --icon-picker-focus-ring: var(--ring-accent);
+  --icon-picker-focus-ring-width: var(--ring-width);
   --icon-picker-selected-border: var(--color-accent);
   --icon-picker-selected-border-width: var(--border-width-emphasis);
   --icon-picker-selected-ring: var(--color-accent);
+  --icon-picker-selected-ring-width: var(--border-width);
+  --icon-picker-glyph-size: var(--font-size-lg);
+  --icon-picker-disabled-bg: var(--color-bg-subtle);
+  --icon-picker-disabled-border: var(--color-border);
+  --icon-picker-disabled-fg: var(--color-fg-disabled);
+  --icon-picker-cursor: pointer;
+  --icon-picker-cursor-disabled: not-allowed;
 }

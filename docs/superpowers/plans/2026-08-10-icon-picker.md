@@ -2,6 +2,10 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
+> **Historical note:** This is the original implementation plan. Its task scope and unchecked
+> execution record are preserved; repository paths, package-context commands, and workspace names
+> were corrected after execution where the original text had become stale.
+
 **Goal:** Ship a controlled, accessible popover grid that lets consumers choose one icon from their own labelled glyph catalog.
 
 **Architecture:** `IconPicker` is one public `forwardRef` component built on the existing controlled `Popover`. It owns open state and a roving grid index while the consumer owns the selected value and option list; consumer glyphs stay decorative and option labels carry all radio semantics.
@@ -40,7 +44,7 @@
 - `packages/design-system/src/index.ts` — public component/type exports.
 - `packages/design-system/AGENTS.md` — agent-facing usage and anti-pattern summary.
 - `packages/design-system/src/_meta/manifest.ts` and `scripts/generate-manifest.mjs` — Forms cluster membership.
-- `packages/design-system/src/_meta/component-manifest.json` — regenerated public metadata.
+- `packages/design-system/src/components.manifest.json` — regenerated public metadata.
 - `packages/playground/src/App.tsx` — demo import and route.
 - `packages/playground/src/layout/AppShell/navItems.ts` — Forms navigation item.
 - `packages/playground/src/pages/components/ComponentsIndex.tsx` — overview card.
@@ -121,7 +125,7 @@ it('commits a click and closes', async () => {
 Run:
 
 ```bash
-npx vitest run packages/design-system/src/components/IconPicker/IconPicker.test.tsx
+npm test --workspace @eocrm/design-system -- --run src/components/IconPicker/IconPicker.test.tsx
 ```
 
 Expected: FAIL because `./IconPicker` and `IconPickerOption` do not exist.
@@ -338,7 +342,7 @@ Use actual existing token names discovered in the token files; if a shown alias 
 Run:
 
 ```bash
-npx vitest run packages/design-system/src/components/IconPicker/IconPicker.test.tsx
+npm test --workspace @eocrm/design-system -- --run src/components/IconPicker/IconPicker.test.tsx
 npm run typecheck --workspace @eocrm/design-system
 ```
 
@@ -430,7 +434,7 @@ Also test Arrow Left/Up clamping, row-aware Home/End, Enter selection, Escape an
 Run:
 
 ```bash
-npx vitest run packages/design-system/src/components/IconPicker/IconPicker.test.tsx
+npm test --workspace @eocrm/design-system -- --run src/components/IconPicker/IconPicker.test.tsx
 ```
 
 Expected: FAIL on focus initialization, keyboard movement, and composed `aria-labelledby`.
@@ -486,7 +490,7 @@ Add a standard visually-hidden class using the repository's existing mixin or es
 Run:
 
 ```bash
-npx vitest run packages/design-system/src/components/IconPicker/IconPicker.test.tsx
+npm test --workspace @eocrm/design-system -- --run src/components/IconPicker/IconPicker.test.tsx
 npm run typecheck --workspace @eocrm/design-system
 npx stylelint "packages/design-system/src/components/IconPicker/*.scss"
 ```
@@ -509,7 +513,7 @@ git commit -m "feat(IconPicker): add accessible grid navigation"
 - Modify: `packages/design-system/AGENTS.md`
 - Modify: `packages/design-system/src/_meta/manifest.ts`
 - Modify: `packages/design-system/scripts/generate-manifest.mjs`
-- Modify: `packages/design-system/src/_meta/component-manifest.json`
+- Modify: `packages/design-system/src/components.manifest.json`
 
 **Interfaces:**
 
@@ -552,7 +556,7 @@ Run:
 
 ```bash
 npm run build:manifest --workspace @eocrm/design-system
-npx vitest run packages/design-system/src/_meta/manifest.test.ts
+npm test --workspace @eocrm/design-system -- --run src/_meta/manifest.test.ts
 ```
 
 Expected: generator succeeds and the manifest drift test passes.
@@ -679,8 +683,8 @@ IconPicker: (
 Run:
 
 ```bash
-npm run typecheck --workspace @eocrm/playground
-npm run build --workspace @eocrm/playground
+npm run typecheck --workspace playground
+npm run build --workspace playground
 ```
 
 Expected: PASS and `/components/icon-picker` is included in the built routes.
