@@ -2312,6 +2312,66 @@
         }
       ]
     },
+    "IconPicker": {
+      "props": [
+        {
+          "name": "value",
+          "type": "string",
+          "required": true,
+          "default": "",
+          "description": "Currently selected option value. Controlled — required."
+        },
+        {
+          "name": "options",
+          "type": "IconPickerOption[]",
+          "required": true,
+          "default": "",
+          "description": "All icons available in the single-select grid. An empty list disables the trigger."
+        },
+        {
+          "name": "onChange",
+          "type": "(value: string) => void",
+          "required": true,
+          "default": "",
+          "description": "Fires with the selected option value, then closes the popover."
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Disables the trigger and prevents the popover from opening. Defaults to `false`."
+        },
+        {
+          "name": "popoverPlacement",
+          "type": "PopoverPlacement",
+          "required": false,
+          "default": "",
+          "description": "Preferred popover placement. Defaults to `'bottom-start'`."
+        },
+        {
+          "name": "aria-label",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Accessible purpose for the trigger. Defaults to the localized\n`iconPicker.triggerLabel` value and is suffixed with the selected icon name."
+        },
+        {
+          "name": "aria-labelledby",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Id(s) of element(s) that label the trigger button."
+        },
+        {
+          "name": "aria-describedby",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Id(s) of element(s) that describe the trigger button."
+        }
+      ]
+    },
     "IconTile": {
       "props": [
         {
