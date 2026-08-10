@@ -1133,6 +1133,13 @@
           "description": "Element shown when `data` is empty and not loading. Defaults to a stock <EmptyState>."
         },
         {
+          "name": "collapseBelow",
+          "type": "CollapseBreakpoint",
+          "required": false,
+          "default": "",
+          "description": "Stacks responsive data cells below this container-query breakpoint: `sm`\n(480px), `md` (640px), or `lg` (768px). The table keeps selection,\nexpansion, sorting, resizing, pinning, and column reordering intact.\n\nThis adds a wrapper with `container-type: inline-size`, so the breakpoint\nmeasures the table's available container width, not the viewport. Avoid an\nintrinsic-width parent such as `width: max-content`: inline-size containment\ncan make the wrapper contribute zero intrinsic width there."
+        },
+        {
           "name": "aria-label",
           "type": "string",
           "required": false,

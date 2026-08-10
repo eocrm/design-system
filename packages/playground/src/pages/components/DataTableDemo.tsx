@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   Badge,
+  Button,
   Cluster,
   ColumnVisibilityTrigger,
   DataTable,
@@ -13,6 +14,7 @@ import {
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
+import { ResizablePreview } from './ResizablePreview';
 
 type Deal = {
   id: string;
@@ -46,6 +48,24 @@ const dealColumns: ColumnDef<Deal>[] = [
     size: 120,
   },
   { id: 'owner', header: 'Owner', cell: (r) => r.owner, size: 120 },
+];
+
+const responsiveDealColumns: ColumnDef<Deal>[] = [
+  ...dealColumns,
+  {
+    id: 'actions',
+    header: <span aria-hidden="true">Actions</span>,
+    visibilityLabel: 'Actions',
+    cell: (r) => (
+      <Button size="sm" variant="secondary" onClick={() => alert(`Open ${r.name}`)}>
+        Open
+      </Button>
+    ),
+    align: 'center',
+    enableReorder: false,
+    enableResize: false,
+    size: 80,
+  },
 ];
 
 function stageTone(stage: Deal['stage']) {
@@ -86,6 +106,7 @@ export function DataTableDemo() {
       files={getComponentFiles('DataTable')}
     >
       <BasicExample />
+      <ResponsiveExample />
       <BorderedExample />
       <DenseExample />
       <SortableExample />
@@ -99,6 +120,112 @@ export function DataTableDemo() {
       <WholeColumnDragExample />
       <PinnedRowsExample />
     </DemoLayout>
+  );
+}
+
+function ResponsiveExample() {
+  const [selection, setSelection] = useState<Record<string, boolean>>({});
+  const [sort, setSort] = useState<SortState | null>(null);
+  const sortedDeals = useClientSort(deals, sort);
+  const instance = useDataTable<Deal>({
+    data: sortedDeals,
+    columns: responsiveDealColumns,
+    getRowId: (r) => r.id,
+    enableRowSelection: true,
+    rowSelection: selection,
+    onRowSelectionChange: setSelection,
+    sort,
+    onSortChange: setSort,
+    renderExpandedRow: (row) => (
+      <p>
+        <strong>{row.name}</strong> is in {row.stage} and is owned by {row.owner}.
+      </p>
+    ),
+  });
+
+  return (
+    <Example
+      title="Responsive rows"
+      description="Drag this preview narrower than 480px to re-template each row as a labelled card. Sorting, selection, expansion, row actions, and the columns menu remain reachable on the same table instance."
+      code={`import { useMemo, useState } from 'react';
+import {
+  Button,
+  ColumnVisibilityTrigger,
+  DataTable,
+  useDataTable,
+  type ColumnDef,
+  type SortState,
+} from '@eocrm/design-system';
+
+type Deal = {
+  id: string;
+  name: string;
+  stage: string;
+  amount: number;
+  owner: string;
+};
+
+const columns: ColumnDef<Deal>[] = [
+  { id: 'name', header: 'Deal', cell: (row) => row.name, sortable: true },
+  { id: 'stage', header: 'Stage', cell: (row) => row.stage },
+  { id: 'amount', header: 'Amount', cell: (row) => \`$\${row.amount.toLocaleString()}\`, sortable: true },
+  { id: 'owner', header: 'Owner', cell: (row) => row.owner },
+  {
+    id: 'actions',
+    header: <span aria-hidden="true">Actions</span>,
+    visibilityLabel: 'Actions',
+    cell: (row) => <Button size="sm" variant="secondary" onClick={() => openDeal(row.id)}>Open</Button>,
+  },
+];
+
+function useClientSort(data: Deal[], sort: SortState | null) {
+  return useMemo(() => {
+    if (!sort) return data;
+    return [...data].sort((a, b) => {
+      const left = a[sort.columnId as keyof Deal];
+      const right = b[sort.columnId as keyof Deal];
+      const order =
+        typeof left === 'number' && typeof right === 'number'
+          ? left - right
+          : String(left).localeCompare(String(right));
+      return sort.direction === 'asc' ? order : -order;
+    });
+  }, [data, sort]);
+}
+
+export function DealsTable({ deals, openDeal }: { deals: Deal[]; openDeal: (id: string) => void }) {
+  const [selection, setSelection] = useState<Record<string, boolean>>({});
+  const [sort, setSort] = useState<SortState | null>(null);
+  const sortedDeals = useClientSort(deals, sort);
+  const instance = useDataTable({
+    data: sortedDeals,
+    columns,
+    getRowId: (row) => row.id,
+    enableRowSelection: true,
+    rowSelection: selection,
+    onRowSelectionChange: setSelection,
+    sort,
+    onSortChange: setSort,
+    renderExpandedRow: (row) => <p>More detail for {row.name}</p>,
+  });
+
+  return (
+    <>
+      <ColumnVisibilityTrigger instance={instance} />
+      <DataTable instance={instance} collapseBelow="sm" aria-label="Responsive deals" />
+    </>
+  );
+}`}
+    >
+      <ResizablePreview>
+        <Stack gap="sm">
+          <Cluster gap="sm">
+            <ColumnVisibilityTrigger instance={instance} />
+          </Cluster>
+          <DataTable instance={instance} collapseBelow="sm" aria-label="Responsive deals" />
+        </Stack>
+      </ResizablePreview>
+    </Example>
   );
 }
 

@@ -2,6 +2,7 @@ import { Card, Cluster, Grid, Input, Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
+import { ResizablePreview } from './ResizablePreview';
 
 export function GridDemo() {
   return (
@@ -334,7 +335,7 @@ export function Demo() {
   );
 }`}
     >
-      <div style={{ resize: 'horizontal', overflow: 'auto' }}>
+      <ResizablePreview>
         <Grid columns={12} gap="md" collapseBelow="md">
           <Grid.Item span="25%">
             <Card>KPI</Card>
@@ -352,7 +353,7 @@ export function Demo() {
             <Card>Footer row</Card>
           </Grid.Item>
         </Grid>
-      </div>
+      </ResizablePreview>
     </Example>
   );
 }
@@ -376,7 +377,7 @@ export function Demo() {
   );
 }`}
     >
-      <div style={{ resize: 'horizontal', overflow: 'auto' }}>
+      <ResizablePreview>
         <Grid columns={12} gap="md" collapseBelow={{ md: 6, sm: 1 }}>
           <Grid.Item span="25%">
             <Card>KPI</Card>
@@ -394,7 +395,7 @@ export function Demo() {
             <Card>Footer row</Card>
           </Grid.Item>
         </Grid>
-      </div>
+      </ResizablePreview>
     </Example>
   );
 }

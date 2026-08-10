@@ -3082,6 +3082,7 @@ const instance = useDataTable<Deal>({
 ```
 
 - Config-driven via `columns: ColumnDef<T>[]`. Each column has a stable `id` used as the key for all per-column state.
+- **Responsive rows:** `collapseBelow="sm" | "md" | "lg"` re-templates rows as labelled cards based on the DataTable container. Labels use `visibilityLabel`, then a string `header`; give non-text headers a `visibilityLabel` when a visible card label is required. Sorting, selection, expansion, row actions, and `ColumnVisibilityTrigger` remain available. Give the table concrete available width because inline-size containment has no intrinsic-width contribution.
 - All state pieces (column order/sizing/visibility/pinning, row selection/expansion, sort) follow the Radix controlled/uncontrolled pattern: `value` + `onValueChange`, OR `defaultValue` only, OR neither.
 - Server-driven sort/search/pagination. DataTable does NOT transform data — `data` must be the server's pre-sorted, pre-paginated slice. `onSortChange` is your trigger to refetch.
 - `enableRowSelection: true` adds a leading checkbox column with select-all (indeterminate when partial). `toggleAllOnPage` ignores `pinnedRows`.

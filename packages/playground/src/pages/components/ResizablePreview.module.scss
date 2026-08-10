@@ -1,0 +1,6 @@
+.root {
+  width: var(--resizable-preview-initial-width, 100%);
+  min-width: 0;
+  resize: horizontal;
+  overflow: auto;
+}

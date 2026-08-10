@@ -16,6 +16,7 @@ import {
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
+import { ResizablePreview } from './ResizablePreview';
 
 interface Widget {
   title: string;
@@ -399,21 +400,17 @@ import { DashboardCanvas, type DashboardCanvasValue } from '@eocrm/design-system
 
 export function Demo() {
   const [value, setValue] = useState<DashboardCanvasValue>(narrowLayout);
-  return (
-    <div style={{ resize: 'horizontal', overflow: 'auto', width: 480 }}>
-      {/* stackBelow="md" is the default; pass 'sm' or 'lg' to move the threshold */}
-      <DashboardCanvas value={value} onChange={setValue} renderItem={renderWidget} />
-    </div>
-  );
+  // stackBelow="md" is the default; pass 'sm' or 'lg' to move the threshold.
+  return <DashboardCanvas value={value} onChange={setValue} renderItem={renderWidget} />;
 }`}
       >
-        <div style={{ resize: 'horizontal', overflow: 'auto', width: 480 }}>
+        <ResizablePreview initialWidth={480}>
           <DashboardCanvas
             value={narrowValue}
             onChange={setNarrowValue}
             renderItem={renderWidget}
           />
-        </div>
+        </ResizablePreview>
       </Example>
     </DemoLayout>
   );
