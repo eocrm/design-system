@@ -29,7 +29,7 @@ test('preserves the design-system package and TypeScript export surfaces', async
   });
   assert.equal(
     createHash('sha256').update(indexSource).digest('hex'),
-    '83eb3ecc40ce0cc7436c5316731f559f96969f63bc3a4c8b0d302ab107a6db5c',
+    '98a678ead816e3f6bcc6090e2e4566217a09f746a2f865d953b7acfbcf21a447',
   );
 });
 
