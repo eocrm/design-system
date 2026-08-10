@@ -530,12 +530,10 @@ const options = [
 ];
 <IconPicker value={icon} options={options} onChange={setIcon} />;
 ```
-````
 
 - The consumer owns icon values, labels, glyphs, ordering, and controlled state.
 - Use it for compact visual choices; use `Select` when visible option text matters.
 - Labels must be human-readable and values unique. Do not pass icon codes as labels.
-
 ````
 
 Ensure the nested fence is formatted correctly in the actual Markdown.
@@ -546,7 +544,7 @@ Add the same mapping in both parallel maps, alphabetically around the other Form
 
 ```ts
 IconPicker: 'Forms',
-````
+```
 
 - [ ] **Step 3: Regenerate and verify the manifest**
 
