@@ -119,7 +119,7 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
   const selectedLabelId = `icon-picker-selected-${useId()}`;
   const selected = options.find((option) => option.value === value);
   const selectedIndex = options.findIndex((option) => option.value === value);
-  const optionValues = options.map((option) => option.value).join('\u0000');
+  const optionValues = JSON.stringify(options.map((option) => option.value));
   const unavailable = disabled || options.length === 0;
   const purpose = ariaLabel ?? t('iconPicker.triggerLabel');
   const triggerLabel = selected ? `${purpose}: ${selected.label}` : purpose;
@@ -139,7 +139,11 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
   };
 
   useLayoutEffect(() => {
-    if (!open || options.length === 0) return;
+    if (!open) return;
+    if (options.length === 0) {
+      setOpen(false);
+      return;
+    }
     const nextIndex =
       selectedIndex >= 0 ? selectedIndex : Math.min(activeIndex, options.length - 1);
     setActiveIndex(nextIndex);

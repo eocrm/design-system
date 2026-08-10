@@ -57,6 +57,7 @@ export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function 
     maxWidth,
     className,
     children,
+    'aria-labelledby': ariaLabelledBy,
     ...rest
   },
   forwardedRef,
@@ -161,7 +162,7 @@ export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function 
       id={ctx.contentId}
       role="dialog"
       aria-modal="false"
-      aria-labelledby={ctx.headingId ?? undefined}
+      aria-labelledby={ctx.headingId ?? ariaLabelledBy}
       tabIndex={-1}
       data-side={resolvedSide}
       data-popover-content=""

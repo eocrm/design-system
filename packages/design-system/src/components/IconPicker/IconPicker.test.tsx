@@ -225,6 +225,34 @@ it('composes external labels with the selected option', () => {
   expect(screen.getByRole('button', { name: 'Priority icon Flame' })).toBeInTheDocument();
 });
 
+it('uses an external label to name the trigger, dialog, and radio grid', async () => {
+  const user = userEvent.setup();
+  render(
+    <>
+      <span id="picker-label">Priority icon</span>
+      <IconPicker
+        aria-labelledby="picker-label"
+        value="flame"
+        options={options}
+        onChange={() => {}}
+      />
+    </>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Priority icon Flame' }));
+  expect(screen.getByRole('dialog', { name: 'Priority icon' })).toBeInTheDocument();
+  expect(screen.getByRole('radiogroup', { name: 'Priority icon' })).toBeInTheDocument();
+});
+
+it('closes and disables the trigger when options become empty while open', async () => {
+  const user = userEvent.setup();
+  const { rerender } = render(<IconPicker value="flame" options={options} onChange={() => {}} />);
+  await user.click(screen.getByRole('button', { name: 'Pick icon: Flame' }));
+  expect(screen.getByRole('dialog', { name: 'Pick icon' })).toBeInTheDocument();
+  rerender(<IconPicker value="flame" options={[]} onChange={() => {}} />);
+  expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Pick icon' })).toBeDisabled();
+});
+
 it('forwards trigger descriptions and hides decorative glyphs from assistive technology', () => {
   render(
     <>
