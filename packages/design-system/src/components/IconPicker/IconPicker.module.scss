@@ -61,3 +61,7 @@
   width: 1em;
   height: 1em;
 }
+
+.visuallyHidden {
+  @include visually-hidden;
+}
