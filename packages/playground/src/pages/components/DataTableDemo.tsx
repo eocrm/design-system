@@ -54,7 +54,7 @@ const responsiveDealColumns: ColumnDef<Deal>[] = [
   ...dealColumns,
   {
     id: 'actions',
-    header: <span aria-hidden="true">Actions</span>,
+    header: <span>Actions</span>,
     visibilityLabel: 'Actions',
     cell: (r) => (
       <Button size="sm" variant="secondary" onClick={() => alert(`Open ${r.name}`)}>
@@ -172,7 +172,7 @@ const columns: ColumnDef<Deal>[] = [
   { id: 'owner', header: 'Owner', cell: (row) => row.owner },
   {
     id: 'actions',
-    header: <span aria-hidden="true">Actions</span>,
+    header: <span>Actions</span>,
     visibilityLabel: 'Actions',
     cell: (row) => <Button size="sm" variant="secondary" onClick={() => openDeal(row.id)}>Open</Button>,
   },
