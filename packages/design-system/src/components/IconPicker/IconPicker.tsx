@@ -327,23 +327,20 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
     if (!Number.isInteger(current) || !options[current]) return;
 
     const lastIndex = options.length - 1;
-    const currentRow = Math.floor(current / COLUMNS);
-    const lastRow = Math.floor(lastIndex / COLUMNS);
     const rowStart = current - (current % COLUMNS);
     let nextIndex: number | undefined;
+    let selectOnMove = false;
 
     switch (event.key) {
       case 'ArrowLeft':
-        nextIndex = Math.max(0, current - 1);
+      case 'ArrowUp':
+        nextIndex = current === 0 ? lastIndex : current - 1;
+        selectOnMove = true;
         break;
       case 'ArrowRight':
-        nextIndex = Math.min(lastIndex, current + 1);
-        break;
-      case 'ArrowUp':
-        nextIndex = currentRow === 0 ? current : current - COLUMNS;
-        break;
       case 'ArrowDown':
-        nextIndex = currentRow === lastRow ? current : Math.min(lastIndex, current + COLUMNS);
+        nextIndex = current === lastIndex ? 0 : current + 1;
+        selectOnMove = true;
         break;
       case 'Home':
         nextIndex = rowStart;
@@ -364,6 +361,9 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
 
     event.preventDefault();
     focusCell(nextIndex);
+    if (selectOnMove && !unavailableRef.current) {
+      onChange(options[nextIndex].value);
+    }
   };
 
   return (
@@ -407,7 +407,7 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
             }}
             onBlurCapture={(event) => {
               if (
-                event.relatedTarget instanceof Node &&
+                !(event.relatedTarget instanceof Node) ||
                 !event.currentTarget.contains(event.relatedTarget)
               ) {
                 focusWithinGridRef.current = false;

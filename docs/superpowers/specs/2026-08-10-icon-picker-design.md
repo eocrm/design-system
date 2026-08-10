@@ -115,9 +115,10 @@ changes while the popover is closed.
 
 Keyboard behavior:
 
-- Arrow Right/Left moves one option and clamps at the collection bounds.
-- Arrow Down/Up moves one visual row using the four-column grid and
-  clamps at the collection bounds.
+- Arrow Right/Down selects and focuses the next option, wrapping from the last
+  option to the first.
+- Arrow Left/Up selects and focuses the previous option, wrapping from the
+  first option to the last.
 - Home/End moves to the first/last option in the current row.
 - Enter or Space selects the focused option and closes the popover.
 - Escape closes without changing the value.
@@ -164,7 +165,8 @@ Unit tests beside the component will verify:
 - `radiogroup`/`radio` semantics, option labels, and `aria-checked` state.
 - Click, Enter, and Space selection; `onChange`; popover closure; and focus
   restoration.
-- Arrow-key and Home/End roving navigation across the fixed grid.
+- Arrow-key selection with wrapping, plus Home/End roving within the current
+  visual row.
 - Focus reseeding from the controlled value on every open.
 - Escape/outside dismissal without selection.
 - Disabled, empty-options, and unmatched-value behavior.

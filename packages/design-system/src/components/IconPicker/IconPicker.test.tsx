@@ -1,5 +1,5 @@
 import { createRef, useState, type CSSProperties } from 'react';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { IconPicker, type IconPickerOption, type IconPickerPopoverPlacement } from './IconPicker';
 
@@ -19,8 +19,6 @@ const eightOptions: IconPickerOption[] = [
   { value: 'seven', label: 'Seven', icon: <svg /> },
   { value: 'eight', label: 'Eight', icon: <svg /> },
 ];
-
-const sixOptions = eightOptions.slice(0, 6);
 
 function ControlledIconPicker() {
   const [value, setValue] = useState('flame');
@@ -252,6 +250,29 @@ it('does not reclaim focus when the active option disappears after Tab leaves th
   expect(screen.getByRole('radio', { name: 'Three' })).toHaveAttribute('tabindex', '0');
 });
 
+it('does not reclaim focus after the grid blurs without a related target', async () => {
+  const user = userEvent.setup();
+  const { rerender } = render(
+    <IconPicker value="one" options={eightOptions} onChange={() => {}} />,
+  );
+  await user.click(screen.getByRole('button', { name: 'Pick icon: One' }));
+  await user.keyboard('{ArrowRight}');
+  const activeRadio = screen.getByRole('radio', { name: 'Two' });
+  expect(activeRadio).toHaveFocus();
+  fireEvent.blur(activeRadio, { relatedTarget: null });
+
+  rerender(
+    <IconPicker
+      value="one"
+      options={eightOptions.filter((option) => option.value !== 'two')}
+      onChange={() => {}}
+    />,
+  );
+
+  await Promise.resolve();
+  expect(screen.getByRole('radio', { name: 'Three' })).not.toHaveFocus();
+});
+
 it('preserves the roved active option by value across insertion and reordering', async () => {
   const user = userEvent.setup();
   const { rerender } = render(
@@ -297,46 +318,35 @@ it('moves focus to the next valid option when the focused option is removed', as
   expect(screen.getByRole('radio', { name: 'Three' })).toHaveAttribute('tabindex', '0');
 });
 
-it('moves spatially and selects with Space', async () => {
+it('selects and wraps with Arrow keys', async () => {
   const user = userEvent.setup();
   const onChange = vi.fn();
-  render(<IconPicker value="one" options={eightOptions} onChange={onChange} />);
-  await user.click(screen.getByRole('button', { name: 'Pick icon: One' }));
-  await user.keyboard('{ArrowRight}{ArrowDown}{Home}{End}{Space}');
-  expect(onChange).toHaveBeenCalledWith('eight');
-  expect(onChange).toHaveBeenCalledTimes(1);
-});
+  function ArrowSelectionHarness() {
+    const [value, setValue] = useState('eight');
+    return (
+      <IconPicker
+        value={value}
+        options={eightOptions}
+        onChange={(next) => {
+          onChange(next);
+          setValue(next);
+        }}
+      />
+    );
+  }
+  render(<ArrowSelectionHarness />);
+  await user.click(screen.getByRole('button', { name: 'Pick icon: Eight' }));
 
-it('clamps Left and Up navigation at the first option', async () => {
-  const user = userEvent.setup();
-  render(<IconPicker value="one" options={eightOptions} onChange={() => {}} />);
-  await user.click(screen.getByRole('button', { name: 'Pick icon: One' }));
-  await user.keyboard('{ArrowLeft}{ArrowUp}');
+  await user.keyboard('{ArrowRight}');
   expect(screen.getByRole('radio', { name: 'One' })).toHaveFocus();
-});
+  expect(screen.getByRole('radio', { name: 'One' })).toBeChecked();
 
-it('keeps ArrowUp on the current option throughout the top row', async () => {
-  const user = userEvent.setup();
-  render(<IconPicker value="three" options={eightOptions} onChange={() => {}} />);
-  await user.click(screen.getByRole('button', { name: 'Pick icon: Three' }));
-  await user.keyboard('{ArrowUp}');
-  expect(screen.getByRole('radio', { name: 'Three' })).toHaveFocus();
-});
+  await user.keyboard('{ArrowLeft}');
+  expect(screen.getByRole('radio', { name: 'Eight' })).toHaveFocus();
+  expect(screen.getByRole('radio', { name: 'Eight' })).toBeChecked();
 
-it('keeps ArrowDown on the current option throughout the bottom row', async () => {
-  const user = userEvent.setup();
-  render(<IconPicker value="six" options={eightOptions} onChange={() => {}} />);
-  await user.click(screen.getByRole('button', { name: 'Pick icon: Six' }));
-  await user.keyboard('{ArrowDown}');
-  expect(screen.getByRole('radio', { name: 'Six' })).toHaveFocus();
-});
-
-it('clamps ArrowDown to the last option in an existing ragged lower row', async () => {
-  const user = userEvent.setup();
-  render(<IconPicker value="four" options={sixOptions} onChange={() => {}} />);
-  await user.click(screen.getByRole('button', { name: 'Pick icon: Four' }));
-  await user.keyboard('{ArrowDown}');
-  expect(screen.getByRole('radio', { name: 'Six' })).toHaveFocus();
+  await user.keyboard('{ArrowDown}{ArrowUp}');
+  expect(onChange.mock.calls.map(([value]) => value)).toEqual(['one', 'eight', 'one', 'eight']);
 });
 
 it('moves Home and End within the current row', async () => {
@@ -352,9 +362,9 @@ it('moves Home and End within the current row', async () => {
 it('selects the focused icon with Enter', async () => {
   const user = userEvent.setup();
   const onChange = vi.fn();
-  render(<IconPicker value="one" options={eightOptions} onChange={onChange} />);
-  await user.click(screen.getByRole('button', { name: 'Pick icon: One' }));
-  await user.keyboard('{ArrowRight}{Enter}');
+  render(<IconPicker value="two" options={eightOptions} onChange={onChange} />);
+  await user.click(screen.getByRole('button', { name: 'Pick icon: Two' }));
+  await user.keyboard('{Enter}');
   expect(onChange).toHaveBeenCalledWith('two');
   expect(onChange).toHaveBeenCalledTimes(1);
 });
