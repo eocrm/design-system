@@ -3,7 +3,7 @@
  * useOverlayStack) have their own unit tests; these tests exercise the
  * assembled component behavior.
  */
-import { useRef, useState, type ComponentProps, type RefObject } from 'react';
+import { StrictMode, useRef, useState, type ComponentProps, type RefObject } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Modal } from './Modal';
@@ -567,6 +567,37 @@ describe('<Modal>', () => {
     const focus = vi.spyOn(trigger, 'focus');
 
     await user.click(screen.getByRole('button', { name: 'Unmount' }));
+
+    expect(document.activeElement).toBe(trigger);
+    expect(focus).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves initially-open focus restoration across StrictMode effect replay', async () => {
+    const user = userEvent.setup();
+    function StrictModeHarness() {
+      const [open, setOpen] = useState(true);
+      return (
+        <>
+          <button autoFocus data-testid="trigger">
+            Open
+          </button>
+          <Modal open={open} onOpenChange={setOpen} aria-label="x">
+            <Modal.Body>x</Modal.Body>
+          </Modal>
+        </>
+      );
+    }
+    render(
+      <StrictMode>
+        <StrictModeHarness />
+      </StrictMode>,
+    );
+    const trigger = screen.getByTestId('trigger');
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.activeElement).not.toBe(trigger);
+    const focus = vi.spyOn(trigger, 'focus');
+
+    await user.keyboard('{Escape}');
 
     expect(document.activeElement).toBe(trigger);
     expect(focus).toHaveBeenCalledTimes(1);
