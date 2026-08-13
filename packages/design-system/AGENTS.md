@@ -1316,8 +1316,9 @@ interface UseCropPreviewOptions extends ExtractCropOptions {
 
 - `fill` makes the Card fill a definite-height parent (`height: 100%`) and
   applies `min-width: 0` so it can shrink inside narrow Grid, Sortable, and
-  DashboardCanvas cells. It does not create a height by itself; bound the
-  parent (for example with `Constrain height`) when needed.
+  DashboardCanvas cells. When a direct `Card.Body` is present, it also creates
+  Card's internal column/min-height chain. It does not create a height by
+  itself; bound the parent (for example with `Constrain height`) when needed.
 
 ```tsx
 <Card padding="md">
@@ -1326,6 +1327,18 @@ interface UseCropPreviewOptions extends ExtractCropOptions {
 
 // Tone-coded stat card — 3px left-edge stripe in the tone color:
 <Card padding="md" tone="accent">Open deals</Card>
+```
+
+```tsx
+// Fixed header + scrolling body in a definite-height dashboard cell.
+<Constrain height="sm">
+  <Card fill>
+    <Card.Header>Pipeline</Card.Header>
+    <Card.Body scroll>
+      <Stack gap="sm">...</Stack>
+    </Card.Body>
+  </Card>
+</Constrain>
 ```
 
 ```tsx
@@ -1355,11 +1368,12 @@ interface UseCropPreviewOptions extends ExtractCropOptions {
 </Card>
 ```
 
-- `padding`: `none` / `sm` / `md` / `lg`. Defaults to `md` for plain content, `none` when `Card.Header` / `Card.List` / `Card.ListRow` is a direct child. Pass explicitly to override.
+- `padding`: `none` / `sm` / `md` / `lg`. Defaults to `md` for plain content, `none` when `Card.Header` / `Card.Body` / `Card.List` / `Card.ListRow` is a direct child. Pass explicitly to override.
 - `tone`: `accent` / `info` / `success` / `warning` / `danger` — draws a 3px left-edge stripe in the tone color. Default: no stripe (standard bordered look). A transparent border-left is always reserved so toggling `tone` never shifts layout.
 - `overflow`: `hidden` (default) / `visible`. The default clips children to the card's rounded border so square-cornered children (a `<Table>`'s internal scroll wrapper, an `<img>`, a full-bleed `<video>`) don't show a seam at the rounded corners. Overlay primitives in this library (DropdownMenu, Tooltip, Popover, Drawer, Modal) portal to `document.body` and are NOT clipped by this. Focus rings use CSS `outline` which is also unaffected by ancestor overflow. Pass `overflow="visible"` only when a direct child genuinely needs to overhang the card edge (decorative badges that protrude past a corner, hover-lift transforms whose shadow extends outward).
-- **Compound API** — `Card.Header` / `Card.List` / `Card.ListRow` for the section-with-list pattern (Dashboard's "Deals needing attention"). Drop `padding="none"` — the parent Card auto-detects compound children.
+- **Compound API** — `Card.Header` / `Card.Body` / `Card.List` / `Card.ListRow` for section-card patterns. Drop `padding="none"` — the parent Card auto-detects compound children.
 - `Card.Header`: title row (`h3` by default, override via `headerLevel`) with optional right-aligned `action` slot and bottom-border separator.
+- `Card.Body`: padded `<div>` content section. Add `scroll` beneath a Header in a `fill` Card to make Body the flexible vertical scroll region while Header stays fixed. Card intentionally owns this layout because it relates only its own compound pieces; the parent still owns the Card's definite outer height.
 - `Card.List`: semantic `<ul>` with list-reset styling — screen readers announce "list with N items".
 - `Card.ListRow`: `<li>` with padded content and bottom dividing border; last-child border suppressed automatically.
 - **Never nest Card in Card.**

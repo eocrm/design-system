@@ -77,6 +77,70 @@ export function Demo() {
       </Example>
 
       <Example
+        title="Fixed header with scrolling body"
+        description="Combine fill with Card.Body scroll inside a definite-height parent. Card owns the internal flex and minimum-height chain, so the header stays fixed while only the padded body scrolls."
+        code={`import { Card, Constrain, Stack } from '@eocrm/design-system';
+
+const stages = [
+  'New lead',
+  'Qualification',
+  'Discovery',
+  'Proposal',
+  'Negotiation',
+  'Legal review',
+  'Verbal commitment',
+  'Closed won',
+];
+
+export function Demo() {
+  return (
+    <Constrain height="sm" maxWidth="sm">
+      <Card fill>
+        <Card.Header>Pipeline stages</Card.Header>
+        <Card.Body scroll>
+          <Stack gap="md">
+            {stages.map((stage, index) => (
+              <div key={stage}>
+                <strong>{stage}</strong>
+                <div style={{ color: 'var(--color-fg-muted)' }}>
+                  {index + 2} active deals
+                </div>
+              </div>
+            ))}
+          </Stack>
+        </Card.Body>
+      </Card>
+    </Constrain>
+  );
+}`}
+      >
+        <Constrain height="sm" maxWidth="sm">
+          <Card fill>
+            <Card.Header>Pipeline stages</Card.Header>
+            <Card.Body scroll>
+              <Stack gap="md">
+                {[
+                  'New lead',
+                  'Qualification',
+                  'Discovery',
+                  'Proposal',
+                  'Negotiation',
+                  'Legal review',
+                  'Verbal commitment',
+                  'Closed won',
+                ].map((stage, index) => (
+                  <div key={stage}>
+                    <strong>{stage}</strong>
+                    <div style={{ color: 'var(--color-fg-muted)' }}>{index + 2} active deals</div>
+                  </div>
+                ))}
+              </Stack>
+            </Card.Body>
+          </Card>
+        </Constrain>
+      </Example>
+
+      <Example
         title="With content"
         description="The most common shape: a heading, some details, an action row at the bottom."
         code={`import { Badge, Button, Card, Cluster, Stack } from '@eocrm/design-system';

@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { resolve } from 'node:path';
 import { createRef } from 'react';
 import { compile } from 'sass';
+import { CardBody, type CardBodyProps } from '../../index';
 import { Card, type CardPadding, type CardTone } from './Card';
 
 describe('Card', () => {
@@ -195,6 +196,96 @@ describe('Card', () => {
 });
 
 describe('compound API', () => {
+  it('exports CardBody as both a named component and Card.Body', () => {
+    expect(CardBody).toBeDefined();
+    expect(Card.Body).toBe(CardBody);
+  });
+
+  it('Card.Body renders the scrolling region under a fixed header', () => {
+    const ref = createRef<HTMLDivElement>();
+    const bodyProps: CardBodyProps = {
+      scroll: true,
+      className: 'consumer-class',
+      'aria-label': 'Pipeline entries',
+    };
+    const { container } = render(
+      <Card fill>
+        <Card.Header>Pipeline</Card.Header>
+        <Card.Body ref={ref} data-testid="body" {...bodyProps}>
+          Body content
+        </Card.Body>
+      </Card>,
+    );
+
+    const card = container.firstElementChild!;
+    const body = screen.getByTestId('body');
+    expect(card.className).toMatch(/fillWithBody/);
+    expect(card.className).toMatch(/paddingNone/);
+    expect(ref.current).toBe(body);
+    expect(body.tagName).toBe('DIV');
+    expect(body.className).toMatch(/body/);
+    expect(body.className).toMatch(/scroll/);
+    expect(body.className).toMatch(/consumer-class/);
+    expect(body).toHaveAttribute('aria-label', 'Pipeline entries');
+    expect(body).not.toHaveAttribute('scroll');
+  });
+
+  it('Card.Body without scroll keeps section styling without the scroll modifier', () => {
+    const { container } = render(<Card.Body data-region="details">Details</Card.Body>);
+    const body = container.firstElementChild!;
+    expect(body.className).toMatch(/body/);
+    expect(body.className).not.toMatch(/scroll/);
+    expect(body).toHaveAttribute('data-region', 'details');
+  });
+
+  it('only establishes the internal column chain when fill and Card.Body are combined', () => {
+    const { container, rerender } = render(
+      <Card>
+        <Card.Body>Details</Card.Body>
+      </Card>,
+    );
+    expect(container.firstElementChild!.className).not.toMatch(/fillWithBody/);
+
+    rerender(<Card fill>Plain content</Card>);
+    expect(container.firstElementChild!.className).not.toMatch(/fillWithBody/);
+  });
+
+  it('owns the shrink-safe column and scrolling-body CSS contract', () => {
+    const style = document.createElement('style');
+    style.textContent = compile(resolve(__dirname, 'Card.module.scss')).css;
+    const card = document.createElement('div');
+    card.className = 'card fill fillWithBody';
+    const header = document.createElement('div');
+    header.className = 'header';
+    const body = document.createElement('div');
+    body.className = 'body scroll';
+    card.append(header, body);
+    document.head.append(style);
+    document.body.append(card);
+
+    try {
+      const cardComputed = getComputedStyle(card);
+      const headerComputed = getComputedStyle(header);
+      const bodyComputed = getComputedStyle(body);
+      expect(cardComputed.display).toBe('flex');
+      expect(cardComputed.flexDirection).toBe('column');
+      expect(cardComputed.minHeight).toBe('0px');
+      expect(headerComputed.flexShrink).toBe('0');
+      expect(bodyComputed.minHeight).toBe('0px');
+      expect(bodyComputed.flex).toBe('1 1 auto');
+      expect(bodyComputed.overflowY).toBe('auto');
+      const bodyRule = Array.from(style.sheet!.cssRules).find(
+        (rule) => rule instanceof CSSStyleRule && rule.selectorText === '.body',
+      );
+      expect((bodyRule as CSSStyleRule).style.padding).toBe(
+        'var(--card-body-padding-y) var(--card-body-padding-x)',
+      );
+    } finally {
+      card.remove();
+      style.remove();
+    }
+  });
+
   it('Card.Header renders <div> with default <h3> title', () => {
     const { container } = render(<Card.Header>Title</Card.Header>);
     expect(container.querySelector('h3')).toHaveTextContent('Title');

@@ -26,6 +26,19 @@
   min-width: 0;
 }
 
+// Card owns this layout because it relates only its own Header and Body
+// compound pieces. It activates only for `<Card fill>` with a direct Body, so
+// ordinary fill Cards keep their existing block layout.
+.fillWithBody {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.fillWithBody > .header {
+  flex-shrink: 0;
+}
+
 // Tone-coded left-stripe via inset box-shadow. Drawn inside the card on top
 // of the existing border, so untoned cards stay pixel-identical to before
 // (no layout shift, no width change). The existing --shadow-sm stays on
@@ -96,6 +109,18 @@
 
 .action {
   flex-shrink: 0;
+}
+
+.body {
+  min-height: 0;
+  padding: var(--card-body-padding-y) var(--card-body-padding-x);
+}
+
+.scroll {
+  // Intentional compound-internal layout exception: Body is the Card-owned
+  // flexible sibling beneath Header, not a consumer-positioned component.
+  flex: 1 1 auto;
+  overflow-y: auto;
 }
 
 .list {
