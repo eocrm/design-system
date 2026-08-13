@@ -1,10 +1,13 @@
-import { Button, Cluster, ErrorState, Text } from '@eocrm/design-system';
+import { useState } from 'react';
+import { Button, Card, Cluster, ErrorState, Stack, Text } from '@eocrm/design-system';
 import { Compass, TriangleAlert } from 'lucide-react';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
 
 export function ErrorStateDemo() {
+  const [failed, setFailed] = useState(false);
+
   return (
     <DemoLayout
       name="ErrorState"
@@ -82,6 +85,59 @@ export function Demo() {
             </Text>
           }
         />
+      </Example>
+
+      <Example
+        title="Loading to error"
+        description="Keep one polite status region mounted while content changes. Do not mount a live region with the error, or make this page-sized update an assertive alert."
+        code={`import { useState } from 'react';
+import { Button, Card, ErrorState, Stack, Text } from '@eocrm/design-system';
+
+export function Demo() {
+  const [failed, setFailed] = useState(false);
+
+  return (
+    <Stack gap="md">
+      <Card role="status" aria-busy={!failed}>
+        {failed ? (
+          <ErrorState
+            tone="danger"
+            role={undefined}
+            size="md"
+            headingLevel={2}
+            title="We couldn't load the account"
+            actions={<Button onClick={() => setFailed(false)}>Try again</Button>}
+          />
+        ) : (
+          <Text>Loading account details…</Text>
+        )}
+      </Card>
+      <Button variant="secondary" onClick={() => setFailed(true)}>
+        Simulate an error
+      </Button>
+    </Stack>
+  );
+}`}
+      >
+        <Stack gap="md">
+          <Card role="status" aria-busy={!failed}>
+            {failed ? (
+              <ErrorState
+                tone="danger"
+                role={undefined}
+                size="md"
+                headingLevel={2}
+                title="We couldn't load the account"
+                actions={<Button onClick={() => setFailed(false)}>Try again</Button>}
+              />
+            ) : (
+              <Text>Loading account details…</Text>
+            )}
+          </Card>
+          <Button variant="secondary" onClick={() => setFailed(true)}>
+            Simulate an error
+          </Button>
+        </Stack>
       </Example>
 
       <Example
