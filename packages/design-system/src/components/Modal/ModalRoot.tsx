@@ -205,7 +205,14 @@ export function ModalRoot({
   //
   // Source order matters: this hook MUST stay above useScrollLock(open).
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
-  const prevOpenRef = useRef<boolean>(open);
+  const prevOpenRef = useRef(false);
+  const restoreFocus = useCallback(() => {
+    const target = previouslyFocusedRef.current;
+    previouslyFocusedRef.current = null;
+    if (target && document.contains(target)) {
+      target.focus({ preventScroll: true });
+    }
+  }, []);
   useLayoutEffect(() => {
     if (open && !prevOpenRef.current) {
       // Modal is opening: snapshot the currently focused element before the
@@ -216,14 +223,17 @@ export function ModalRoot({
       // Modal is closing: restore focus to the element that triggered it.
       // preventScroll keeps the browser from scrollIntoView-ing the trigger,
       // which would fight the scroll restoration in useScrollLock's cleanup.
-      const target = previouslyFocusedRef.current;
-      if (target && document.contains(target)) {
-        target.focus({ preventScroll: true });
-      }
-      previouslyFocusedRef.current = null;
+      restoreFocus();
     }
     prevOpenRef.current = open;
-  }, [open]);
+    // Also restore if the Modal root itself is removed while still open. Defer
+    // until Content's passive focus-trap cleanup has stopped redirecting focus
+    // into the dialog that is being removed.
+    //
+    // This cleanup and the closing branch can run for the same transition;
+    // restoreFocus clears its ref first so the target is focused only once.
+    if (open) return () => queueMicrotask(restoreFocus);
+  }, [open, restoreFocus]);
 
   // Stack registration + scroll lock are driven by `open`.
   // useScrollLock MUST stay below the focus-restore useLayoutEffect above so
