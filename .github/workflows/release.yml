@@ -162,8 +162,10 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -uo pipefail
+          set +e
           npm publish 2>&1 | tee token-publish.out
           status=${PIPESTATUS[0]}
+          set -e
           if [ "$status" -eq 0 ]; then
             echo "Published @eocrm/design-tokens."
           elif grep -qiE 'E409|cannot publish over existing version|cannot publish over the previously published versions|409 Conflict' token-publish.out; then
@@ -178,8 +180,10 @@ jobs:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -uo pipefail
+          set +e
           npm publish 2>&1 | tee design-system-publish.out
           status=${PIPESTATUS[0]}
+          set -e
           if [ "$status" -eq 0 ]; then
             echo "Published @eocrm/design-system."
           elif grep -qiE 'E409|cannot publish over existing version|cannot publish over the previously published versions|409 Conflict' design-system-publish.out; then

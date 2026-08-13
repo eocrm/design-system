@@ -303,6 +303,7 @@ test('recognizes the npm 11 duplicate-version error for resumable releases', asy
     npmPublishSteps.match(/cannot publish over the previously published versions/g)?.length,
     2,
   );
+  assert.equal(npmPublishSteps.match(/set \+e/g)?.length, 2);
 });
 
 test('deploys the playground only after publish succeeds or an intentional no-change skip', async () => {
