@@ -5,8 +5,8 @@ import styles from './Constrain.module.scss';
 /** Named width step → a `--measure-*` token; `'full'` = 100%. */
 export type ConstrainWidth = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'full';
 
-/** Fixed named measure, `'full'` (containing block), or `'viewport'` (dynamic viewport). */
-export type ConstrainHeight = ConstrainWidth | 'viewport';
+/** Fixed named measure, `'full'` (containing block), or a dynamic viewport height. */
+export type ConstrainHeight = ConstrainWidth | 'viewport' | 'viewport-70';
 
 /** How the box behaves as a flex child (`Cluster`/`Stack` item). */
 export type ConstrainFlex = 'grow' | 'shrink' | 'auto' | 'none';
@@ -18,11 +18,11 @@ export interface ConstrainProps extends HTMLAttributes<HTMLDivElement> {
   minWidth?: ConstrainWidth;
   /** Maximum width cap — the common case (e.g. a search input at `'sm'`). */
   maxWidth?: ConstrainWidth;
-  /** Fixed height — a named measure, `'full'` (100%), or `'viewport'` (100dvh). */
+  /** Fixed height — a named measure, `'full'` (100%), `'viewport'` (100dvh), or `'viewport-70'` (70dvh). */
   height?: ConstrainHeight;
-  /** Minimum height floor — a named measure, `'full'`, or `'viewport'`. */
+  /** Minimum height floor — a named measure, `'full'`, `'viewport'`, or `'viewport-70'`. */
   minHeight?: ConstrainHeight;
-  /** Maximum height cap — a named measure, `'full'`, or `'viewport'`. */
+  /** Maximum height cap — a named measure, `'full'`, `'viewport'`, or `'viewport-70'`. */
   maxHeight?: ConstrainHeight;
   /**
    * Flex behavior as a child of a flex row/column.
@@ -60,8 +60,8 @@ export interface ConstrainProps extends HTMLAttributes<HTMLDivElement> {
  * </Cluster>
  *
  * @example
- * // Bound a fill-parent canvas without consumer CSS:
- * <Constrain height="lg" maxHeight="viewport">
+ * // Keep a viewport-sized canvas no taller than the large measure:
+ * <Constrain height="viewport-70" maxHeight="lg">
  *   <FlowCanvas nodes={nodes} edges={edges} />
  * </Constrain>
  *
