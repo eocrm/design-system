@@ -30,6 +30,7 @@ function RangeFilter() {
         max={100000}
         step={1000}
         label={(v) => `$${v.toLocaleString()}`}
+        thumbLabels={['Minimum price', 'Maximum price']}
         onChange={(v) => setRange(v as [number, number])}
         aria-label="Price range"
       />
@@ -168,7 +169,7 @@ export function BasicSingle() {
 
       <Example
         title="Range mode (two thumbs)"
-        description="Pass a [min, max] tuple as value → two thumbs. Range-clamp ensures value[0] ≤ value[1]. Formatted label."
+        description="Pass a [min, max] tuple as value → two thumbs. Range-clamp ensures value[0] ≤ value[1]. Use thumbLabels when the thumbs need domain-specific accessible names."
         code={`import { useState } from 'react';
 import { Code, Slider, Stack, Text } from '@eocrm/design-system';
 
@@ -182,6 +183,7 @@ export function RangeFilter() {
         max={100000}
         step={1000}
         label={(v) => \`$\${v.toLocaleString()}\`}
+        thumbLabels={['Minimum price', 'Maximum price']}
         onChange={(v) => setRange(v as [number, number])}
         aria-label="Price range"
       />

@@ -40,6 +40,10 @@ export const en: Messages = {
     strong: 'Strong',
     veryStrong: 'Very strong',
   },
+  slider: {
+    minimum: 'minimum',
+    maximum: 'maximum',
+  },
   calendar: {
     today: 'Today',
     agendaEmpty: 'No events',

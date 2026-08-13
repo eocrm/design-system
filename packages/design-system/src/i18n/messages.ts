@@ -61,6 +61,12 @@ export interface Messages {
     /** Label rendered when the strength score is "very strong". */
     veryStrong: string;
   };
+  slider: {
+    /** Accessible-name suffix for the first thumb in a range slider. */
+    minimum: string;
+    /** Accessible-name suffix for the second thumb in a range slider. */
+    maximum: string;
+  };
   calendar: {
     /** Label on the "Today" jump button in the header. */
     today: string;

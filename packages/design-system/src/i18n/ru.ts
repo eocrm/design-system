@@ -41,6 +41,10 @@ export const ru: Messages = {
     strong: 'Надёжный',
     veryStrong: 'Очень надёжный',
   },
+  slider: {
+    minimum: 'минимум',
+    maximum: 'максимум',
+  },
   calendar: {
     today: 'Сегодня',
     agendaEmpty: 'Нет событий',

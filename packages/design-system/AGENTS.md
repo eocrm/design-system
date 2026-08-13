@@ -831,6 +831,7 @@ A switch whose toggle triggers an **immediate action** — persisting to a serve
 
 - **Controlled-only.** Always pass `value` + `onChange`. No `defaultValue`. Same architecture as FileUpload, Progress, and the rest of the controlled primitives.
 - **`value: number | [number, number]`** — discriminated union. `number` for single-thumb; tuple for range (two-thumb). `onChange` mirrors the shape.
+- **Range thumb names:** every range thumb must have a distinct accessible name. A root `aria-label="Price range"` produces “Price range, minimum” and “Price range, maximum” (localized); a root `aria-labelledby` is preserved and gets an appended localized suffix. Use `thumbLabels={['Lowest price', 'Highest price']}` when the names are domain-specific — explicit tuple labels win.
 - **`onChange` fires per pointer-move tick (high frequency).** Debounce in the consumer OR use `onChangeEnd` (fires at pointerup, or at blur when the value actually changed) for server-state / expensive logic.
 - `min`/`max`/`step` default to `0`/`100`/`1`. Fractional `step` (e.g. `0.1`) is the canonical way to do zoom/opacity controls.
 - `size`: `sm` (4px track / 14px thumb) / `md` (6/18, default) / `lg` (8/22).

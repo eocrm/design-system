@@ -1,6 +1,7 @@
 import {
   forwardRef,
   useCallback,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -11,6 +12,7 @@ import {
   type ReactNode,
 } from 'react';
 import clsx from 'clsx';
+import { useTranslation } from '../../i18n/useTranslation';
 import styles from './Slider.module.scss';
 
 /** Track height + thumb size. */
@@ -88,6 +90,14 @@ export interface SliderProps extends Omit<
    *   formatter is called once per thumb.
    */
   label?: boolean | ((value: number) => ReactNode);
+  /**
+   * Explicit accessible names for the minimum and maximum thumbs in range
+   * mode. These win over a root `aria-label` or `aria-labelledby`; use them
+   * when the thumbs need domain-specific names such as `['Start date', 'End
+   * date']`. When omitted, a root label is suffixed with the localized
+   * “minimum” or “maximum” name.
+   */
+  thumbLabels?: readonly [string, string];
   /**
    * Track + thumb sizing. Defaults to `'md'`.
    * - `sm` — 4px track, 14px thumb.
@@ -167,6 +177,7 @@ function snapToStep(raw: number, min: number, step: number): number {
  *   max={100000}
  *   step={1000}
  *   onChange={(v) => setPrice(v as [number, number])}
+ *   aria-label="Price range"
  *   label={(v) => `$${v.toLocaleString()}`}
  * />
  *
@@ -213,6 +224,9 @@ function snapToStep(raw: number, min: number, step: number): number {
  *   The TypeScript `Omit` prevents the root override.
  * - ❌ Passing `value[0] > value[1]` in range mode. The component clamps but
  *   the inverted tuple is a consumer bug — fix the state shape.
+ * - ❌ Leaving range thumbs with identical names. Set the root `aria-label` /
+ *   `aria-labelledby` so Slider can add localized minimum/maximum suffixes,
+ *   or pass `thumbLabels` for domain-specific names.
  */
 export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
   {
@@ -224,22 +238,31 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
     step = 1,
     marks,
     label = false,
+    thumbLabels,
     size = 'md',
     tone = 'default',
     orientation = 'horizontal',
     disabled = false,
     name,
     className,
+    'aria-label': ariaLabel,
+    'aria-labelledby': ariaLabelledBy,
+    'aria-describedby': ariaDescribedBy,
     ...rest
   },
   ref,
 ) {
+  const t = useTranslation();
+  const reactId = useId();
   const trackRef = useRef<HTMLDivElement>(null);
   const isRange = Array.isArray(value);
   const thumbValues: number[] = isRange ? (value as [number, number]) : [value as number];
   const thumbCount = thumbValues.length;
   const marksArr = useMemo(() => normalizeMarks(marks), [marks]);
   const range = max - min;
+  const thumbSuffixes = [t('slider.minimum'), t('slider.maximum')] as const;
+  const thumbSuffixIds = [`${reactId}-minimum`, `${reactId}-maximum`] as const;
+  const rangeUsesRootLabelledBy = isRange && !thumbLabels && Boolean(ariaLabelledBy);
 
   // Latest value ref — updated on every render. Read synchronously inside
   // event handlers (e.g. onChangeEnd at pointerup) so they see the post-drag
@@ -553,6 +576,9 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
         disabled && styles.disabled,
         className,
       )}
+      aria-label={ariaLabel}
+      aria-labelledby={ariaLabelledBy}
+      aria-describedby={ariaDescribedBy}
       {...rest}
     >
       <div ref={trackRef} className={styles.track} onPointerDown={handleTrackPointerDown}>
@@ -579,19 +605,31 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
           aria-orientation={orientation}
           aria-disabled={disabled || undefined}
           aria-label={
-            // Forward the root's aria-label to each thumb so screen readers
-            // announce the slider's name when a thumb is focused (WAI-ARIA APG
-            // requires each role=slider to be labeled). Per-thumb labels for
-            // range mode (e.g. "Minimum"/"Maximum") are deferred to v2.
-            (rest as { 'aria-label'?: string })['aria-label']
+            // Each range thumb needs a distinct accessible name. Explicit
+            // tuple labels take precedence; otherwise derive from the root's
+            // aria-label + localized minimum/maximum suffix.
+            isRange
+              ? (thumbLabels?.[index] ??
+                (rangeUsesRootLabelledBy || !ariaLabel
+                  ? undefined
+                  : `${ariaLabel}, ${thumbSuffixes[index]}`))
+              : ariaLabel
           }
-          aria-labelledby={(rest as { 'aria-labelledby'?: string })['aria-labelledby']}
+          aria-labelledby={
+            isRange
+              ? thumbLabels
+                ? undefined
+                : rangeUsesRootLabelledBy
+                  ? `${ariaLabelledBy} ${thumbSuffixIds[index]}`
+                  : undefined
+              : ariaLabelledBy
+          }
           aria-describedby={
             // Forward the root's aria-describedby to each focusable thumb so a
             // <Field error/description> wrapping a Slider is announced when a
             // thumb has focus. It also remains on the root via {...rest}, which
             // is harmless — the root is non-focusable and carries no role.
-            (rest as { 'aria-describedby'?: string })['aria-describedby']
+            ariaDescribedBy
           }
           className={clsx(styles.thumb, isDragging[index] && styles.thumbDragging)}
           style={thumbStyle(thumbValue)}
@@ -610,6 +648,17 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
           {showLabelFor(index) && <span className={styles.label}>{formatLabel(thumbValue)}</span>}
         </div>
       ))}
+      {rangeUsesRootLabelledBy && (
+        <>
+          {/* Referenced hidden nodes add localized context without rendering text. */}
+          <span id={thumbSuffixIds[0]} hidden>
+            {thumbSuffixes[0]}
+          </span>
+          <span id={thumbSuffixIds[1]} hidden>
+            {thumbSuffixes[1]}
+          </span>
+        </>
+      )}
       {name &&
         !disabled &&
         (isRange ? (
