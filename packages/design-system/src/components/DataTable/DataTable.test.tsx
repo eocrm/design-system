@@ -13,7 +13,7 @@
  * which must never, and which columns the driver is told about).
  */
 import { resolve } from 'node:path';
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, useRef } from 'react';
 import { parse, type AtRule, type Declaration, type Root, type Rule } from 'postcss';
@@ -258,6 +258,132 @@ describe('<DataTable>', () => {
     // We check by tbody row count instead — most robust.
     const bodyRows = container.querySelectorAll('tbody tr');
     expect(bodyRows.length).toBe(3);
+  });
+
+  describe('skeleton timing', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+      vi.setSystemTime(new Date('2026-08-13T12:00:00Z'));
+    });
+
+    afterEach(() => {
+      vi.clearAllTimers();
+      vi.useRealTimers();
+    });
+
+    function LoadingHarness({
+      loading,
+      data = [],
+      pinnedRows,
+      skeletonDelay = 200,
+      skeletonMinDuration = 300,
+    }: {
+      loading: boolean;
+      data?: Row[];
+      pinnedRows?: Row[];
+      skeletonDelay?: number;
+      skeletonMinDuration?: number;
+    }) {
+      const instance = useDataTable<Row>({ data, pinnedRows, columns: cols, getRowId });
+      return (
+        <DataTable
+          instance={instance}
+          aria-label="Timed loading"
+          loading={loading}
+          loadingRowCount={3}
+          skeletonDelay={skeletonDelay}
+          skeletonMinDuration={skeletonMinDuration}
+        />
+      );
+    }
+
+    it('keeps a fast initial load hidden inside the skeleton delay', () => {
+      const { rerender } = render(<LoadingHarness loading />);
+
+      act(() => vi.advanceTimersByTime(100));
+      expect(screen.getByRole('table').querySelectorAll('tbody tr')).toHaveLength(0);
+
+      rerender(<LoadingHarness loading={false} data={rows} />);
+      expect(screen.getByText('Alpha')).toBeInTheDocument();
+      expect(screen.getByRole('table').querySelectorAll('tbody tr')).toHaveLength(2);
+
+      act(() => vi.advanceTimersByTime(100));
+      expect(screen.getByRole('table').querySelectorAll('tbody tr')).toHaveLength(2);
+    });
+
+    it('shows skeleton rows only after the configured delay', () => {
+      render(<LoadingHarness loading />);
+
+      act(() => vi.advanceTimersByTime(199));
+      expect(screen.getByRole('table').querySelectorAll('tbody tr')).toHaveLength(0);
+
+      act(() => vi.advanceTimersByTime(1));
+      expect(screen.getByRole('table').querySelectorAll('tbody tr')).toHaveLength(3);
+    });
+
+    it('retains skeleton rows for the configured minimum duration', () => {
+      const { rerender } = render(
+        <LoadingHarness loading skeletonDelay={100} skeletonMinDuration={300} />,
+      );
+
+      act(() => vi.advanceTimersByTime(100));
+      rerender(<LoadingHarness loading={false} skeletonDelay={100} skeletonMinDuration={300} />);
+
+      act(() => vi.advanceTimersByTime(299));
+      expect(screen.getByRole('table').querySelectorAll('tbody tr')).toHaveLength(3);
+      expect(screen.queryByText(/no data/i)).not.toBeInTheDocument();
+
+      act(() => vi.advanceTimersByTime(1));
+      expect(screen.getByText(/no data/i)).toBeInTheDocument();
+    });
+
+    it('never renders arriving rows at the same time as the skeleton tail', () => {
+      const pinnedRows = [{ id: 'p1', name: 'Pinned', amount: 30 }];
+      const { rerender } = render(
+        <LoadingHarness loading skeletonDelay={0} skeletonMinDuration={300} />,
+      );
+      expect(screen.getByRole('table').querySelectorAll('tbody tr')).toHaveLength(3);
+
+      rerender(
+        <LoadingHarness
+          loading={false}
+          data={rows}
+          pinnedRows={pinnedRows}
+          skeletonDelay={0}
+          skeletonMinDuration={300}
+        />,
+      );
+      expect(screen.queryByText('Alpha')).not.toBeInTheDocument();
+      expect(screen.queryByText('Pinned')).not.toBeInTheDocument();
+      expect(screen.getByRole('table').querySelectorAll('tbody tr')).toHaveLength(3);
+
+      act(() => vi.advanceTimersByTime(300));
+      expect(screen.getByText('Alpha')).toBeInTheDocument();
+      expect(screen.getByText('Pinned')).toBeInTheDocument();
+      expect(screen.getByRole('table').querySelectorAll('tbody tr')).toHaveLength(3);
+    });
+
+    it('keeps populated rows mounted throughout a timed refetch', () => {
+      const { rerender } = render(<LoadingHarness loading={false} data={rows} />);
+      const alphaRow = screen.getByText('Alpha').closest('tr');
+
+      rerender(<LoadingHarness loading data={rows} />);
+      act(() => vi.advanceTimersByTime(500));
+
+      expect(screen.getByText('Alpha').closest('tr')).toBe(alphaRow);
+      expect(screen.getByRole('table').querySelectorAll('tbody tr')).toHaveLength(2);
+    });
+
+    it('ties aria-busy to actual loading instead of the skeleton tail', () => {
+      const { rerender } = render(
+        <LoadingHarness loading skeletonDelay={0} skeletonMinDuration={300} />,
+      );
+      expect(screen.getByRole('table')).toHaveAttribute('aria-busy', 'true');
+
+      rerender(<LoadingHarness loading={false} skeletonDelay={0} skeletonMinDuration={300} />);
+      expect(screen.getByRole('table')).not.toHaveAttribute('aria-busy');
+      expect(screen.getByRole('table').querySelectorAll('tbody tr')).toHaveLength(3);
+    });
   });
 
   it('keeps populated rows and their focused controls mounted during a refetch', () => {

@@ -3119,6 +3119,10 @@ backgrounds → `background-image`; icons → lucide / inline SVG.
   during refetches so focused controls and row-local state survive. Skeleton
   rows are for the initial empty load only; the table exposes `aria-busy` in
   both cases.
+- For an empty initial load, `skeletonDelay` (default `0`) hides quick loads and
+  `skeletonMinDuration` (default `0`) keeps an appearing skeleton stable. The
+  table renders neither empty state nor arriving rows during the visual window;
+  `aria-busy` still follows actual `loading`, not the skeleton's visual tail.
 
 ```tsx
 const instance = useDataTable<Deal>({

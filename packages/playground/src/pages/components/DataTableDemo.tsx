@@ -762,7 +762,7 @@ function LoadingExample() {
   return (
     <Example
       title="Loading"
-      description="Pass `loading` to mark the table busy. Empty tables render skeleton rows (`loadingRowCount` defaults to 10); populated tables keep their rows mounted during refetches so keyboard focus is preserved."
+      description="Pass `loading` to mark the table busy. For empty initial loads, `skeletonDelay` avoids quick flashes and `skeletonMinDuration` gives an appearing skeleton a stable visual window. Populated tables keep their rows mounted during refetches so keyboard focus is preserved."
       code={`import { Badge, DataTable, useDataTable, type ColumnDef } from '@eocrm/design-system';
 
 type Deal = {
@@ -795,10 +795,26 @@ export function Demo() {
     columns: dealColumns,
     getRowId: (r) => r.id,
   });
-  return <DataTable instance={instance} loading loadingRowCount={4} aria-label="Deals" />;
+  return (
+    <DataTable
+      instance={instance}
+      loading
+      loadingRowCount={4}
+      skeletonDelay={200}
+      skeletonMinDuration={300}
+      aria-label="Deals"
+    />
+  );
 }`}
     >
-      <DataTable instance={instance} loading loadingRowCount={4} aria-label="Loading" />
+      <DataTable
+        instance={instance}
+        loading
+        loadingRowCount={4}
+        skeletonDelay={200}
+        skeletonMinDuration={300}
+        aria-label="Loading"
+      />
     </Example>
   );
 }
