@@ -17,6 +17,7 @@ export async function repairComposePublication({
   actor,
   token,
   fetchImpl = fetch,
+  sleepImpl = sleep,
 }) {
   const authorization = Buffer.from(`${actor}:${token}`).toString('base64');
   const base = `https://maven.pkg.github.com/${repository}/com/eocrm/design`;
@@ -26,13 +27,12 @@ export async function repairComposePublication({
 
   for (const { artifact, name, content } of files) {
     const url = `${base}/${artifact}/${version}/${name}`;
-    const response = await fetchImpl(url, {
-      method: 'PUT',
-      headers: {
-        Authorization: `Basic ${authorization}`,
-        'Content-Type': 'application/octet-stream',
-      },
-      body: content,
+    const response = await uploadWithRetry({
+      url,
+      authorization,
+      content,
+      fetchImpl,
+      sleepImpl,
     });
     if (response.ok) {
       uploaded += 1;
@@ -58,6 +58,29 @@ export async function repairComposePublication({
   }
 
   return { uploaded, alreadyPresent };
+}
+
+async function uploadWithRetry({ url, authorization, content, fetchImpl, sleepImpl }) {
+  const maximumAttempts = 3;
+  for (let attempt = 1; attempt <= maximumAttempts; attempt += 1) {
+    const response = await fetchImpl(url, {
+      method: 'PUT',
+      headers: {
+        Authorization: `Basic ${authorization}`,
+        'Content-Type': 'application/octet-stream',
+      },
+      body: content,
+    });
+    if (response.status < 500 || response.status > 599 || attempt === maximumAttempts) {
+      return response;
+    }
+    await sleepImpl(1_000 * 2 ** (attempt - 1));
+  }
+  throw new Error('unreachable');
+}
+
+function sleep(milliseconds) {
+  return new Promise((resolvePromise) => setTimeout(resolvePromise, milliseconds));
 }
 
 async function collectPublicationFiles(publicationRoot, version) {

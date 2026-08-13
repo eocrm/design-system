@@ -71,6 +71,45 @@ test('continues past an existing Maven file and uploads a later missing file', a
   }
 });
 
+test('retries a transient Maven server error before continuing publication', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'eocrm-compose-publication-'));
+  const version = '1.2.3';
+  const attempts = new Map();
+  const delays = [];
+
+  try {
+    for (const artifact of artifacts) {
+      const directory = join(root, 'com/eocrm/design', artifact, version);
+      await mkdir(directory, { recursive: true });
+      const module = Buffer.from(JSON.stringify({ component: { version }, variants: [] }));
+      await writeFile(join(directory, `${artifact}-${version}.module`), module);
+      await writeFile(join(directory, `${artifact}-${version}.pom`), '<project />');
+    }
+
+    const result = await repairComposePublication({
+      publicationRoot: root,
+      version,
+      repository: 'eocrm/design-system',
+      actor: 'actor',
+      token: 'token',
+      sleepImpl: async (milliseconds) => delays.push(milliseconds),
+      fetchImpl: async (url, options = {}) => {
+        assert.equal(options.method, 'PUT');
+        const attempt = (attempts.get(url) ?? 0) + 1;
+        attempts.set(url, attempt);
+        if (attempt === 1) return new Response('server error', { status: 500 });
+        return new Response('', { status: 201 });
+      },
+    });
+
+    assert.equal(result.uploaded, 10);
+    assert.deepEqual([...attempts.values()], Array(10).fill(2));
+    assert.deepEqual(delays, Array(10).fill(1_000));
+  } finally {
+    await rm(root, { recursive: true });
+  }
+});
+
 function sha256(content) {
   return createHash('sha256').update(content).digest('hex');
 }
