@@ -819,6 +819,7 @@ A switch whose toggle triggers an **immediate action** — persisting to a serve
   min={0} max={100000} step={1000}
   label={(v) => `$${v.toLocaleString()}`}
   onChange={(v) => setPrice(v as [number, number])}
+  aria-label="Price range"
 />
 
 <Slider
