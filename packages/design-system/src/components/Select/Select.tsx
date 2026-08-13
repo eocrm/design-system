@@ -319,6 +319,9 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
     name,
     required,
     form,
+    'aria-label': ariaLabel,
+    'aria-labelledby': ariaLabelledby,
+    'aria-describedby': ariaDescribedby,
     'aria-required': ariaRequired,
     renderOption,
     renderValue,
@@ -600,9 +603,9 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
           invalid={invalid}
           clearable={effectiveClearable}
           selectOnOpen={selectOnOpen}
-          aria-label={props['aria-label']}
-          aria-labelledby={props['aria-labelledby']}
-          aria-describedby={props['aria-describedby']}
+          aria-label={ariaLabel}
+          aria-labelledby={ariaLabelledby}
+          aria-describedby={ariaDescribedby}
           aria-required={required ? true : ariaRequired}
         />
         {state.open && <Listbox />}

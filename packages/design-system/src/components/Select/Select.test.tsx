@@ -38,6 +38,28 @@ describe('Select — single, non-searchable, sync', () => {
     // overlay clear ✕. Filter by accessible name so the trigger is unambiguous.
     expect(screen.getByRole('combobox', { name: 'Pending' })).toBeInTheDocument();
   });
+
+  it('routes explicit ARIA naming and description to the combobox, not the root wrapper', () => {
+    render(
+      <Select
+        data-testid="select-root"
+        options={STATUSES}
+        aria-label="Status"
+        aria-labelledby="status-label"
+        aria-describedby="status-description"
+      />,
+    );
+
+    const root = screen.getByTestId('select-root');
+    const trigger = screen.getByRole('combobox');
+
+    expect(root).not.toHaveAttribute('aria-label');
+    expect(root).not.toHaveAttribute('aria-labelledby');
+    expect(root).not.toHaveAttribute('aria-describedby');
+    expect(trigger).toHaveAttribute('aria-label', 'Status');
+    expect(trigger).toHaveAttribute('aria-labelledby', 'status-label');
+    expect(trigger).toHaveAttribute('aria-describedby', 'status-description');
+  });
 });
 
 describe('Select — open/close', () => {
