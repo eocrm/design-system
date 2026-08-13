@@ -657,7 +657,7 @@ import { Switch } from '@eocrm/design-system';
 
 - **Native `<input type="checkbox" role="switch">`**. Form submission works; AT announces as switch.
 - **Three tones** (`accent`/`success`/`danger`) for the checked track. Unchecked track is always neutral muted.
-- **`loading={true}`** shows a spinner inside the thumb + disables the input (sets `aria-busy`). Consumer manages the optimistic-update flow.
+- **`loading={true}`** shows a spinner inside the thumb, sets `aria-busy`, and ignores toggle attempts while keeping the input focusable. Consumer manages the optimistic-update flow.
 - **`onChange(checked, event)`** signature matches Checkbox — first arg is the next boolean, second is the raw event.
 
 #### Hard rule
