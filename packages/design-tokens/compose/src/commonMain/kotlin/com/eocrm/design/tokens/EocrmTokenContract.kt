@@ -75,9 +75,9 @@ public object EocrmLightTokens {
     public val avatarPalette: EocrmAvatarPalette = EocrmAvatarPalette(
         foreground = Color(0xFFFFFFFF),
         colors = listOf(
-            Color(0xFF00A3BF),
-            Color(0xFF36B37E),
-            Color(0xFFFF8B00),
+            Color(0xFF00758A),
+            Color(0xFF247653),
+            Color(0xFFA65A00),
             Color(0xFF6554C0),
             Color(0xFFDE350B),
             Color(0xFF0052CC),
@@ -271,9 +271,9 @@ public object EocrmDarkTokens {
     public val avatarPalette: EocrmAvatarPalette = EocrmAvatarPalette(
         foreground = Color(0xFFFFFFFF),
         colors = listOf(
-            Color(0xFF00A3BF),
-            Color(0xFF36B37E),
-            Color(0xFFFF8B00),
+            Color(0xFF00758A),
+            Color(0xFF247653),
+            Color(0xFFA65A00),
             Color(0xFF6554C0),
             Color(0xFFDE350B),
             Color(0xFF0052CC),

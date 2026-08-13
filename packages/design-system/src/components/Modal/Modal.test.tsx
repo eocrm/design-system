@@ -3,7 +3,7 @@
  * useOverlayStack) have their own unit tests; these tests exercise the
  * assembled component behavior.
  */
-import { useRef, useState, type ComponentProps, type RefObject } from 'react';
+import { StrictMode, useRef, useState, type ComponentProps, type RefObject } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Modal } from './Modal';
@@ -512,6 +512,95 @@ describe('<Modal>', () => {
     // Modal closes; focus restored to the trigger.
     await new Promise((r) => setTimeout(r, 0));
     expect(document.activeElement).toBe(trigger);
+  });
+
+  it('restores focus exactly once when an initially-open modal closes', async () => {
+    const user = userEvent.setup();
+    function InitiallyOpenHarness() {
+      const [open, setOpen] = useState(true);
+      return (
+        <>
+          <button autoFocus data-testid="trigger">
+            Open
+          </button>
+          <Modal open={open} onOpenChange={setOpen} aria-label="x">
+            <Modal.Body>x</Modal.Body>
+          </Modal>
+        </>
+      );
+    }
+    render(<InitiallyOpenHarness />);
+    const trigger = screen.getByTestId('trigger');
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.activeElement).not.toBe(trigger);
+    const focus = vi.spyOn(trigger, 'focus');
+
+    await user.keyboard('{Escape}');
+
+    expect(document.activeElement).toBe(trigger);
+    expect(focus).toHaveBeenCalledTimes(1);
+  });
+
+  it('restores focus exactly once when an initially-open modal unmounts while open', async () => {
+    const user = userEvent.setup();
+    function InitiallyOpenUnmountHarness() {
+      const [mounted, setMounted] = useState(true);
+      return (
+        <>
+          <button autoFocus data-testid="trigger">
+            Open
+          </button>
+          {mounted && (
+            <Modal open onOpenChange={() => {}} aria-label="x">
+              <Modal.Body>
+                <button onClick={() => setMounted(false)}>Unmount</button>
+              </Modal.Body>
+            </Modal>
+          )}
+        </>
+      );
+    }
+    render(<InitiallyOpenUnmountHarness />);
+    const trigger = screen.getByTestId('trigger');
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.activeElement).not.toBe(trigger);
+    const focus = vi.spyOn(trigger, 'focus');
+
+    await user.click(screen.getByRole('button', { name: 'Unmount' }));
+
+    expect(document.activeElement).toBe(trigger);
+    expect(focus).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves initially-open focus restoration across StrictMode effect replay', async () => {
+    const user = userEvent.setup();
+    function StrictModeHarness() {
+      const [open, setOpen] = useState(true);
+      return (
+        <>
+          <button autoFocus data-testid="trigger">
+            Open
+          </button>
+          <Modal open={open} onOpenChange={setOpen} aria-label="x">
+            <Modal.Body>x</Modal.Body>
+          </Modal>
+        </>
+      );
+    }
+    render(
+      <StrictMode>
+        <StrictModeHarness />
+      </StrictMode>,
+    );
+    const trigger = screen.getByTestId('trigger');
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.activeElement).not.toBe(trigger);
+    const focus = vi.spyOn(trigger, 'focus');
+
+    await user.keyboard('{Escape}');
+
+    expect(document.activeElement).toBe(trigger);
+    expect(focus).toHaveBeenCalledTimes(1);
   });
 
   it('does not throw when the previously-focused trigger is removed while modal is open', async () => {

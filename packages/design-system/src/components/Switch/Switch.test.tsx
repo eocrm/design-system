@@ -169,32 +169,43 @@ describe('<Switch>', () => {
     expect(track).toHaveAttribute('data-checked', 'true');
   });
 
-  it('Space-key does NOT toggle when loading (input is disabled)', async () => {
+  // ─── Loading ───────────────────────────────────────────────────────────
+
+  it('loading keeps an uncontrolled input focused while blocking pointer and Space changes', async () => {
     const user = userEvent.setup();
     const handleChange = vi.fn();
     render(<Switch aria-label="x" loading onChange={handleChange} />);
     const input = screen.getByRole('switch') as HTMLInputElement;
+
+    expect(input).not.toBeDisabled();
+    expect(input).toHaveAttribute('aria-busy', 'true');
+
     input.focus();
+    expect(input).toHaveFocus();
+    await user.click(input);
+    expect(input).toHaveFocus();
+    expect(input.checked).toBe(false);
+
     await user.keyboard(' ');
+    expect(input).toHaveFocus();
     expect(input.checked).toBe(false);
     expect(handleChange).not.toHaveBeenCalled();
   });
 
-  // ─── Loading ───────────────────────────────────────────────────────────
-
-  it('loading={true} sets aria-busy="true" on the input', () => {
-    render(<Switch aria-label="x" loading />);
-    const input = screen.getByRole('switch');
-    expect(input).toHaveAttribute('aria-busy', 'true');
-  });
-
-  it('loading={true} also disables the input (so clicks do not fire onChange)', async () => {
+  it('loading keeps a controlled input checked while blocking pointer and Space changes', async () => {
     const user = userEvent.setup();
     const handleChange = vi.fn();
-    render(<Switch aria-label="x" loading onChange={handleChange} />);
-    const input = screen.getByRole('switch');
-    expect(input).toBeDisabled();
+    render(<Switch aria-label="x" loading checked onChange={handleChange} />);
+    const input = screen.getByRole('switch') as HTMLInputElement;
+
+    input.focus();
     await user.click(input);
+    expect(input).toHaveFocus();
+    expect(input.checked).toBe(true);
+
+    await user.keyboard(' ');
+    expect(input).toHaveFocus();
+    expect(input.checked).toBe(true);
     expect(handleChange).not.toHaveBeenCalled();
   });
 

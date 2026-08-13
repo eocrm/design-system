@@ -47,19 +47,19 @@ export function Demo() {
 
       <Example
         title="Height bounds"
-        description="The height axis mirrors the named measure scale and adds a dynamic viewport step. Combine height with maxHeight='viewport' to bound fill-parent children without raw CSS."
+        description="The height axis mirrors the named measure scale and adds dynamic viewport steps. Use viewport-70 with maxHeight='lg' to keep a viewport-relative panel from exceeding the large measure."
         code={`import { Constrain, Text } from '@eocrm/design-system';
 
 export function Demo() {
   return (
-    <Constrain height="xs" maxHeight="viewport">
-      <Text>A child that fills its parent is bounded to 200px, or the viewport when smaller.</Text>
+    <Constrain height="viewport-70" maxHeight="lg">
+      <Text>A viewport-relative child stays at 70% of the viewport, capped at 640px.</Text>
     </Constrain>
   );
 }`}
       >
-        <Constrain height="xs" maxHeight="viewport">
-          <Text>A fill-parent child can use this bounded box without consumer CSS.</Text>
+        <Constrain height="viewport-70" maxHeight="lg">
+          <Text>A viewport-relative child stays at 70% of the viewport, capped at 640px.</Text>
         </Constrain>
       </Example>
 

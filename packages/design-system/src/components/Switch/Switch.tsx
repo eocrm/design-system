@@ -65,10 +65,9 @@ export interface SwitchProps extends Omit<
   invalid?: boolean;
 
   /**
-   * Disables interaction and shows a spinner inside the thumb. Use for
-   * toggles that persist to a server. Sets `aria-busy="true"` and
-   * `disabled` on the native input so neither click nor Space-key can
-   * fire onChange while the async operation is in flight.
+   * Shows a spinner inside the thumb and suppresses changes while a toggle
+   * persists to a server. Sets `aria-busy="true"` while keeping the native
+   * input focusable, so keyboard users retain their place in the form.
    *
    * The consumer is responsible for managing the optimistic-update flow:
    *
@@ -197,10 +196,10 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(function Switch(
   const isControlled = checked !== undefined;
   const currentChecked = isControlled ? checked : internalChecked;
 
-  // Loading implies disabled — blocks both click and Space-key toggles.
-  const isInteractionDisabled = disabled || loading;
+  const isVisuallyUnavailable = disabled || loading;
 
   const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
+    if (loading) return;
     if (!isControlled) setInternalChecked(e.target.checked);
     onChange?.(e.target.checked, e);
   };
@@ -208,7 +207,7 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(function Switch(
   return (
     <label
       className={clsx(styles.wrapper, className)}
-      data-disabled={isInteractionDisabled || undefined}
+      data-disabled={isVisuallyUnavailable || undefined}
     >
       {/* Pattern B — {...props} first so component-owned attrs (type, role, checked, disabled, aria-*, onChange, className) win. */}
       <input
@@ -217,7 +216,7 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(function Switch(
         type="checkbox"
         role="switch"
         checked={currentChecked}
-        disabled={isInteractionDisabled}
+        disabled={disabled}
         aria-invalid={invalid || undefined}
         aria-busy={loading || undefined}
         onChange={handleChange}

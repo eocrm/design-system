@@ -1,12 +1,6 @@
-import {
-  forwardRef,
-  useLayoutEffect,
-  useRef,
-  useState,
-  type CSSProperties,
-  type HTMLAttributes,
-} from 'react';
+import { forwardRef, type CSSProperties, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
+import { useSkeletonVisibility } from './useSkeletonVisibility';
 import styles from './Skeleton.module.scss';
 
 /** Shape preset. */
@@ -73,60 +67,6 @@ function toCssSize(value: number | string | undefined): string | undefined {
   return typeof value === 'number' ? `${value}px` : value;
 }
 
-function normalizeDuration(value: number): number {
-  return Number.isFinite(value) && value > 0 ? value : 0;
-}
-
-function useTimedVisibility(loading: boolean, delay: number, minDuration: number): boolean {
-  const normalizedDelay = normalizeDuration(delay);
-  const normalizedMinDuration = normalizeDuration(minDuration);
-  const [visible, setVisible] = useState(() => loading && normalizedDelay === 0);
-  const now = Date.now();
-  const shownAt = useRef<number | null>(visible ? now : null);
-  const loadingStartedAt = useRef<number | null>(loading ? now : null);
-  const wasLoading = useRef(loading);
-
-  useLayoutEffect(() => {
-    let timer: ReturnType<typeof setTimeout> | undefined;
-
-    if (loading) {
-      if (!wasLoading.current || loadingStartedAt.current === null) {
-        loadingStartedAt.current = Date.now();
-      }
-      if (!visible) {
-        const show = () => {
-          shownAt.current = Date.now();
-          setVisible(true);
-        };
-        const elapsed = Date.now() - loadingStartedAt.current;
-        const remaining = Math.max(0, normalizedDelay - elapsed);
-        if (remaining === 0) show();
-        else timer = setTimeout(show, remaining);
-      }
-    } else if (visible) {
-      const elapsed =
-        shownAt.current === null ? normalizedMinDuration : Date.now() - shownAt.current;
-      const remaining = Math.max(0, normalizedMinDuration - elapsed);
-      const hide = () => {
-        shownAt.current = null;
-        setVisible(false);
-      };
-      if (remaining === 0) hide();
-      else timer = setTimeout(hide, remaining);
-    } else {
-      loadingStartedAt.current = null;
-    }
-
-    wasLoading.current = loading;
-
-    return () => {
-      if (timer !== undefined) clearTimeout(timer);
-    };
-  }, [loading, normalizedDelay, normalizedMinDuration, visible]);
-
-  return visible;
-}
-
 /**
  * Placeholder rectangle for loading states. Consumers compose multiple
  * `<Skeleton>`s in any layout to mimic the eventual content shape.
@@ -187,7 +127,7 @@ export const Skeleton = forwardRef<HTMLSpanElement, SkeletonProps>(function Skel
   },
   ref,
 ) {
-  const visible = useTimedVisibility(loading, delay, minDuration);
+  const visible = useSkeletonVisibility(loading, { delay, minDuration });
 
   // Default height: text → 1em (sits on baseline), circular → matches width
   // (square), rectangular → undefined (consumer must size).

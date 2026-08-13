@@ -61,6 +61,12 @@ export interface Messages {
     /** Label rendered when the strength score is "very strong". */
     veryStrong: string;
   };
+  slider: {
+    /** Accessible-name suffix for the first thumb in a range slider. */
+    minimum: string;
+    /** Accessible-name suffix for the second thumb in a range slider. */
+    maximum: string;
+  };
   calendar: {
     /** Label on the "Today" jump button in the header. */
     today: string;
@@ -340,6 +346,12 @@ export interface Messages {
     presetColors: string;
     /** aria-label fallback for the default ColorPicker trigger button. */
     triggerLabel: string;
+    /**
+     * Function leaf — complete accessible-name template for the default ColorPicker
+     * trigger. `label` is the resolved trigger purpose and `value` is the normalized
+     * uppercase HEX value currently selected.
+     */
+    triggerAccessibleLabel: (params: { label: string; value: string }) => string;
   };
   iconPicker: {
     /** Default accessible purpose for the IconPicker trigger. */

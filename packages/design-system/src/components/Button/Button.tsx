@@ -63,6 +63,12 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  * HTML attributes. Defaults to `type="button"` so it won't submit ancestor
  * forms unless you explicitly pass `type="submit"`.
  *
+ * Pass `aria-disabled="true"` when an unavailable action must remain focusable
+ * (for example, so keyboard users can discover it and its explanation). This
+ * provides unavailable visual treatment without setting native `disabled`, so
+ * it does not prevent events. The consumer must suppress activation in its
+ * handler while the action is unavailable.
+ *
  * @example
  * <Button onClick={save}>Save</Button>
  *
@@ -154,6 +160,8 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  * - ❌ Assuming `selected` adds toggle semantics. It is paint only. Pass
  *   `aria-pressed` explicitly when activating the Button toggles that state;
  *   do not add it to menu or disclosure triggers.
+ * - ❌ Assuming `aria-disabled="true"` blocks activation. It preserves native
+ *   focusability and pointer events; guard the consumer's event handler.
  */
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
   {

@@ -553,14 +553,18 @@ const [phone, setPhone] = useState<string | null>(null);
 const [hex, setHex] = useState('#4F46E5');
 
 // Default popover with the built-in trigger swatch:
-<ColorPicker value={hex} onChange={setHex} triggerLabel="Brand color" />
+<Field label="Brand color">
+  <ColorPicker value={hex} onChange={setHex} />
+</Field>
 
 // Custom trigger:
-<ColorPicker value={hex} onChange={setHex}>
-  <ColorPicker.Trigger asChild>
-    <Button variant="secondary">Pick a color</Button>
-  </ColorPicker.Trigger>
-</ColorPicker>
+<Field label="Brand color" description="Used for campaign accents">
+  <ColorPicker value={hex} onChange={setHex}>
+    <ColorPicker.Trigger asChild>
+      <Button variant="secondary">Pick a color</Button>
+    </ColorPicker.Trigger>
+  </ColorPicker>
+</Field>
 
 // Inline (always-visible panel — for theme builders, settings rows):
 <ColorPicker.Panel value={hex} onChange={setHex} />
@@ -569,6 +573,7 @@ const [hex, setHex] = useState('#4F46E5');
 - **Controlled-only.** `value: string` in `#RRGGBB` form. Loose input accepted on the HEX text field (`#FFF`, `FFF`, `#ffffff`); the component always emits the canonical `#RRGGBB` (uppercase, with `#`).
 - **Two distribution shapes via the compound API.** `<ColorPicker>` is the popover-wrapped form-field-ready widget. `<ColorPicker.Panel>` is the same picker without the popover wrapping — drop it directly into a settings page or theme builder.
 - **Default trigger** is an input-field-shaped button with a 16×16 swatch + uppercase HEX text. Override via `<ColorPicker.Trigger asChild>{customNode}</ColorPicker.Trigger>` (the child must `forwardRef` because `<Popover.Trigger>` clones it).
+- **Field-ready.** `<Field label>` connects `id`, naming, description, and invalid state to either the default or custom trigger rather than the role-less picker wrapper. `required` remains a visible Field marker; native trigger buttons do not expose `aria-required` because that state is unsupported for buttons.
 - **`onChange` fires per drag/zoom tick (high frequency).** Use `onChangeEnd` for commit-style logic (network calls, history snapshots) — it fires on pointer release, slider release, HEX input blur, and preset click.
 - **Presets via `presets?: string[]`.** Invalid entries are dropped silently. The library doesn't ship a default palette — pass your own brand colors. Selected swatch gets an inset ring + check overlay.
 - **Color math is exported.** `hexToHsv(hex)`, `hsvToHex({h,s,v})`, `normalizeHex(loose)` are usable directly for downstream theme builders, contrast calculators, etc.
@@ -608,10 +613,13 @@ const options = [
   { value: 'flame', label: 'Flame', icon: <Flame /> },
   { value: 'zap', label: 'Lightning', icon: <Zap /> },
 ];
-<IconPicker value={icon} options={options} onChange={setIcon} />;
+<Field label="Priority icon">
+  <IconPicker value={icon} options={options} onChange={setIcon} />
+</Field>;
 ```
 
 - The consumer owns icon values, labels, glyphs, ordering, and controlled state.
+- `<Field label>` names the trigger with the visible label plus the selected option, and forwards description and invalid state to that button; the dialog and radiogroup use only the visible Field label. These attributes do not sit on the role-less wrapper. `required` remains a visible Field marker rather than unsupported `aria-required` on the native button.
 - Use it for compact visual choices; use `Select` when visible option text matters.
 - Labels must be human-readable and values unique. Do not pass icon codes as labels.
 
@@ -651,7 +659,7 @@ import { Switch } from '@eocrm/design-system';
 
 - **Native `<input type="checkbox" role="switch">`**. Form submission works; AT announces as switch.
 - **Three tones** (`accent`/`success`/`danger`) for the checked track. Unchecked track is always neutral muted.
-- **`loading={true}`** shows a spinner inside the thumb + disables the input (sets `aria-busy`). Consumer manages the optimistic-update flow.
+- **`loading={true}`** shows a spinner inside the thumb, sets `aria-busy`, and ignores toggle attempts while keeping the input focusable. Consumer manages the optimistic-update flow.
 - **`onChange(checked, event)`** signature matches Checkbox — first arg is the next boolean, second is the raw event.
 
 #### Hard rule
@@ -721,7 +729,7 @@ A switch whose toggle triggers an **immediate action** — persisting to a serve
   `id` / `aria-labelledby` / `aria-describedby` / `invalid` (controls map `invalid → aria-invalid`).
 - When a `label` is present, Field injects `aria-labelledby` onto the cloned child, so
   composite controls that forward ARIA props (`Select`, `Slider`, `ColorPicker`,
-  `FileUpload`, `TimeField`) get an accessible name for free. The render-prop `field`
+  `IconPicker`, `FileUpload`, `TimeField`) get an accessible name for free. The render-prop `field`
   object also carries `aria-labelledby` for wrapped/nested DOM.
 - `error` replaces `description` and flips the control invalid. `required` shows `*`;
   `optional` shows `(optional)`. `orientation="horizontal"` = label beside control.
@@ -819,6 +827,7 @@ A switch whose toggle triggers an **immediate action** — persisting to a serve
   min={0} max={100000} step={1000}
   label={(v) => `$${v.toLocaleString()}`}
   onChange={(v) => setPrice(v as [number, number])}
+  aria-label="Price range"
 />
 
 <Slider
@@ -831,6 +840,7 @@ A switch whose toggle triggers an **immediate action** — persisting to a serve
 
 - **Controlled-only.** Always pass `value` + `onChange`. No `defaultValue`. Same architecture as FileUpload, Progress, and the rest of the controlled primitives.
 - **`value: number | [number, number]`** — discriminated union. `number` for single-thumb; tuple for range (two-thumb). `onChange` mirrors the shape.
+- **Range thumb names:** every range thumb must have a distinct accessible name. A root `aria-label="Price range"` produces “Price range, minimum” and “Price range, maximum” (localized); a root `aria-labelledby` is preserved and gets an appended localized suffix. Use `thumbLabels={['Lowest price', 'Highest price']}` when the names are domain-specific — explicit tuple labels win.
 - **`onChange` fires per pointer-move tick (high frequency).** Debounce in the consumer OR use `onChangeEnd` (fires at pointerup, or at blur when the value actually changed) for server-state / expensive logic.
 - `min`/`max`/`step` default to `0`/`100`/`1`. Fractional `step` (e.g. `0.1`) is the canonical way to do zoom/opacity controls.
 - `size`: `sm` (4px track / 14px thumb) / `md` (6/18, default) / `lg` (8/22).
@@ -1308,8 +1318,9 @@ interface UseCropPreviewOptions extends ExtractCropOptions {
 
 - `fill` makes the Card fill a definite-height parent (`height: 100%`) and
   applies `min-width: 0` so it can shrink inside narrow Grid, Sortable, and
-  DashboardCanvas cells. It does not create a height by itself; bound the
-  parent (for example with `Constrain height`) when needed.
+  DashboardCanvas cells. When a direct `Card.Body` is present, it also creates
+  Card's internal column/min-height chain. It does not create a height by
+  itself; bound the parent (for example with `Constrain height`) when needed.
 
 ```tsx
 <Card padding="md">
@@ -1318,6 +1329,18 @@ interface UseCropPreviewOptions extends ExtractCropOptions {
 
 // Tone-coded stat card — 3px left-edge stripe in the tone color:
 <Card padding="md" tone="accent">Open deals</Card>
+```
+
+```tsx
+// Fixed header + scrolling body in a definite-height dashboard cell.
+<Constrain height="sm">
+  <Card fill>
+    <Card.Header>Pipeline</Card.Header>
+    <Card.Body scroll>
+      <Stack gap="sm">...</Stack>
+    </Card.Body>
+  </Card>
+</Constrain>
 ```
 
 ```tsx
@@ -1347,11 +1370,12 @@ interface UseCropPreviewOptions extends ExtractCropOptions {
 </Card>
 ```
 
-- `padding`: `none` / `sm` / `md` / `lg`. Defaults to `md` for plain content, `none` when `Card.Header` / `Card.List` / `Card.ListRow` is a direct child. Pass explicitly to override.
+- `padding`: `none` / `sm` / `md` / `lg`. Defaults to `md` for plain content, `none` when `Card.Header` / `Card.Body` / `Card.List` / `Card.ListRow` is a direct child. Pass explicitly to override.
 - `tone`: `accent` / `info` / `success` / `warning` / `danger` — draws a 3px left-edge stripe in the tone color. Default: no stripe (standard bordered look). A transparent border-left is always reserved so toggling `tone` never shifts layout.
 - `overflow`: `hidden` (default) / `visible`. The default clips children to the card's rounded border so square-cornered children (a `<Table>`'s internal scroll wrapper, an `<img>`, a full-bleed `<video>`) don't show a seam at the rounded corners. Overlay primitives in this library (DropdownMenu, Tooltip, Popover, Drawer, Modal) portal to `document.body` and are NOT clipped by this. Focus rings use CSS `outline` which is also unaffected by ancestor overflow. Pass `overflow="visible"` only when a direct child genuinely needs to overhang the card edge (decorative badges that protrude past a corner, hover-lift transforms whose shadow extends outward).
-- **Compound API** — `Card.Header` / `Card.List` / `Card.ListRow` for the section-with-list pattern (Dashboard's "Deals needing attention"). Drop `padding="none"` — the parent Card auto-detects compound children.
+- **Compound API** — `Card.Header` / `Card.Body` / `Card.List` / `Card.ListRow` for section-card patterns. Drop `padding="none"` — the parent Card auto-detects compound children.
 - `Card.Header`: title row (`h3` by default, override via `headerLevel`) with optional right-aligned `action` slot and bottom-border separator.
+- `Card.Body`: padded `<div>` content section. Add `scroll` beneath a Header in a `fill` Card to make Body the flexible vertical scroll region while Header stays fixed. Card intentionally owns this layout because it relates only its own compound pieces; the parent still owns the Card's definite outer height.
 - `Card.List`: semantic `<ul>` with list-reset styling — screen readers announce "list with N items".
 - `Card.ListRow`: `<li>` with padded content and bottom dividing border; last-child border suppressed automatically.
 - **Never nest Card in Card.**
@@ -1466,7 +1490,7 @@ Use this instead of `Card.List` + `Card.ListRow` whenever the data is genuinely 
 ```tsx
 <Constrain maxWidth="sm"><Input placeholder="Search…" /></Constrain>
 
-<Constrain height="lg" maxHeight="viewport"><FlowCanvas /></Constrain>
+<Constrain height="viewport-70" maxHeight="lg"><FlowCanvas /></Constrain>
 
 <Cluster wrap={false} gap="sm">
   <Constrain flex="grow"><Progress value={x} max={y} /></Constrain>
@@ -1476,7 +1500,7 @@ Use this instead of `Card.List` + `Card.ListRow` whenever the data is genuinely 
 
 - The one place width/height/flex sizing lives — `Stack`/`Cluster`/`Grid` are spacing-only (Rule 4). Constrain sizes its **own** box; it does not arrange children (put a `Cluster`/`Stack` inside).
 - `width` / `minWidth` / `maxWidth`: a named scale `'xs'` (200) / `'sm'` (320) / `'md'` (448) / `'lg'` (640) / `'xl'` (800) / `'full'` (100%), via `--measure-*` tokens.
-- `height` / `minHeight` / `maxHeight`: the same named scale plus `'viewport'` (100dvh). Combine a fixed `height` with `maxHeight="viewport"` to keep a fill-parent child comfortably sized without exceeding the dynamic viewport.
+- `height` / `minHeight` / `maxHeight`: the same named scale plus `'viewport'` (100dvh) and `'viewport-70'` (70dvh). Combine `height="viewport-70"` with `maxHeight="lg"` to make a viewport-relative panel that never exceeds the 640px large measure.
 - `flex`: `'grow'` (fill remaining space) / `'auto'` / `'shrink'` (no grow, may shrink — the CSS flex default) / `'none'` (fixed). Omitting `flex` applies no class; the element behaves as its flex container dictates. Use `flex="grow"` to let a child fill a `Cluster` row.
 - No padding/border/background — for those use `<Card>`; for a full-bleed shell use `<Screen>`.
 
@@ -2896,6 +2920,23 @@ rendering existing reaction counts (the consumer builds that display).
   actions={<Button>Try again</Button>}
   extra={<Text size="sm" tone="muted">Error ID: a1b2-c3d4</Text>}
 />
+
+// Page-level loading → error transition. This Card intentionally owns the
+// existing page-level status surface and stays mounted across both states.
+<Card role="status" aria-busy={!failed}>
+  {failed ? (
+    <ErrorState
+      tone="danger"
+      role={undefined}
+      size="md"
+      headingLevel={2}
+      title="We couldn't load the account"
+      actions={<Button onClick={retry}>Try again</Button>}
+    />
+  ) : (
+    <Text>Loading account details…</Text>
+  )}
+</Card>
 ```
 
 - Page-level sibling of `<EmptyState>` — the component EmptyState's docs point to for "page-level 404 / 500" and danger-tinted error states. Use `<EmptyState>` for "nothing here" inside a surface; use `<Alert tone="error">` for an in-flow banner.
@@ -2904,6 +2945,7 @@ rendering existing reaction counts (the consumer builds that display).
 - `size`: `sm` / `md` / `lg` (**default** — full-page hero). `align`: `'center'` (default) / `'start'`.
 - `headingLevel` defaults to `1` (the page h1); lower it when nested. Values outside 1–6 clamp to 1.
 - `tone="danger"` makes the wrapper `role="alert"` (announces the whole subtree assertively on mount — ideal for an error-boundary fallback). For a _standalone_ error page, pass `role={undefined}` so it isn't read as a wall of text on load. Override via `role`.
+- **Loading → error in an existing page-level surface:** the example's Card is intentionally the stable page-level transition surface, not a recommendation to nest ErrorState in arbitrary cards. Keep that one `Card role="status" aria-busy={!failed}` mounted, with either loading content or `<ErrorState role={undefined}>` inside it. A live region mounted together with the error has no mutation to announce, and a page-sized assertive alert is inappropriate for this update.
 - For `tone="neutral"`, the `<section>` is not a screen-reader landmark unless it has an accessible name — pass `aria-label` / `aria-labelledby` when it IS the page's primary region (typical for a full-page 404).
 - No automatic `aria-hidden` on the icon — pass `aria-hidden="true"` for a decorative icon. No i18n — all copy is consumer-supplied.
 
@@ -2971,10 +3013,26 @@ rendering existing reaction counts (the consumer builds that display).
 <Skeleton loading={isFetching} delay={200} minDuration={300} /> // no flash
 ```
 
+For a mutually exclusive placeholder/content branch, use the public timing hook:
+
+```tsx
+const showPlaceholder = useSkeletonVisibility(isFetching, {
+  delay: 200,
+  minDuration: 300,
+});
+
+return showPlaceholder ? (
+  <Skeleton variant="rectangular" width="100%" height={120} />
+) : isFetching ? null : (
+  <ContactList contacts={contacts} />
+);
+```
+
 - Three variants: `text` (default, inline, `height=1em`), `circular` (avatar / icon, square when only one dim set), `rectangular` (image / card / button, block).
 - `width` / `height` flow to inline style — `number` becomes `px`, `string` passes through (`'60%'`, `'12rem'`).
 - `animation`: `'pulse'` (default, opacity cycle) / `'none'` (static).
 - Timed visibility: keep Skeleton mounted, drive `loading`, and use `delay` to suppress fast-load flashes plus `minDuration` to prevent a just-shown placeholder from vanishing immediately. All three preserve legacy behavior by default (`loading=true`, both durations `0`). Do not conditionally unmount a timed Skeleton — unmounting bypasses `minDuration`.
+- `useSkeletonVisibility(loading, { delay, minDuration })` exposes the same timing semantics for composite components that must choose between placeholder and content. During the delay it returns `false`, so guard the content branch with `loading` when stale content must not render.
 - Pulse is **automatically suppressed** when the user has `prefers-reduced-motion: reduce`.
 - `aria-hidden='true'` by default — Skeleton is decorative. Communicate "loading" from a parent live region (e.g., `aria-busy='true'` on the section being filled).
 - Composes — for a list-row placeholder, render `<Skeleton variant='circular' />` + 2–3 text skeletons + a button-shaped rectangular in a Cluster.
@@ -3078,6 +3136,10 @@ backgrounds → `background-image`; icons → lucide / inline SVG.
   during refetches so focused controls and row-local state survive. Skeleton
   rows are for the initial empty load only; the table exposes `aria-busy` in
   both cases.
+- For an empty initial load, `skeletonDelay` (default `0`) hides quick loads and
+  `skeletonMinDuration` (default `0`) keeps an appearing skeleton stable. The
+  table renders neither empty state nor arriving rows during the visual window;
+  `aria-busy` still follows actual `loading`, not the skeleton's visual tail.
 
 ```tsx
 const instance = useDataTable<Deal>({

@@ -126,6 +126,14 @@ export interface IconPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, 'o
    * @default false
    */
   disabled?: boolean;
+  /** Marks the focusable trigger invalid for Field composition. @default false */
+  invalid?: boolean;
+  /**
+   * Consumed for Field composition so Field can render its visible required marker. Native
+   * buttons do not support `aria-required`, so this does not add required semantics to the
+   * trigger. @default false
+   */
+  required?: boolean;
   /**
    * Preferred popover placement. Floating UI may flip it to remain visible.
    *
@@ -146,7 +154,8 @@ export interface IconPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, 'o
   'aria-label'?: string;
   /**
    * Id(s) of external elements that provide the picker purpose. They name the dialog and
-   * radiogroup directly; the trigger also appends an internal selected-icon label when matched.
+   * radiogroup directly. The trigger also references hidden selected-option text so its name
+   * remains the visible purpose plus the current selection.
    */
   'aria-labelledby'?: string;
   /** Id(s) of element(s) that describe the trigger button. */
@@ -161,12 +170,9 @@ export interface IconPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, 'o
  * <IconPicker value={icon} options={iconOptions} onChange={setIcon} />
  *
  * @example
- * <IconPicker
- *   value={icon}
- *   options={iconOptions}
- *   onChange={setIcon}
- *   aria-label="Status icon"
- * />
+ * <Field label="Status icon">
+ *   <IconPicker value={icon} options={iconOptions} onChange={setIcon} />
+ * </Field>
  *
  * @example
  * <Cluster gap="sm" align="center">
@@ -192,10 +198,16 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
     options,
     onChange,
     disabled = false,
+    invalid = false,
+    // Consumed for Field compatibility; native button triggers do not support required state.
+    required: _required = false,
     popoverPlacement = 'bottom-start',
+    id,
     'aria-label': ariaLabel,
     'aria-labelledby': ariaLabelledBy,
     'aria-describedby': ariaDescribedBy,
+    'aria-invalid': ariaInvalid,
+    'aria-required': _ariaRequired,
     className,
     style,
     ...rest
@@ -219,7 +231,7 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
   );
   const focusWithinGridRef = useRef(false);
   const pendingOpenFocusRef = useRef<string | null>(null);
-  const selectedLabelId = `icon-picker-selected-${useId()}`;
+  const selectedLabelId = `${useId()}-selected`;
   const selected = options.find((option) => option.value === value);
   const selectedIndex = options.findIndex((option) => option.value === value);
   const optionValues = JSON.stringify(options.map((option) => option.value));
@@ -228,11 +240,8 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
   unavailableRef.current = unavailable;
   const purpose = ariaLabel ?? t('iconPicker.triggerLabel');
   const triggerLabel = selected ? `${purpose}: ${selected.label}` : purpose;
-  const labelledBy = ariaLabelledBy
-    ? selected
-      ? `${ariaLabelledBy} ${selectedLabelId}`
-      : ariaLabelledBy
-    : undefined;
+  const triggerLabelledBy =
+    ariaLabelledBy && selected ? `${ariaLabelledBy} ${selectedLabelId}` : ariaLabelledBy;
   const { side, align } = PLACEMENT_MAP[popoverPlacement];
   const purposeLabelProps = ariaLabelledBy
     ? { 'aria-labelledby': ariaLabelledBy }
@@ -383,12 +392,14 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
         <Popover.Trigger>
           <button
             ref={triggerRef}
+            id={id}
             type="button"
             className={styles.trigger}
             disabled={unavailable}
-            aria-label={labelledBy ? undefined : triggerLabel}
-            aria-labelledby={labelledBy}
+            aria-label={ariaLabelledBy ? undefined : triggerLabel}
+            aria-labelledby={triggerLabelledBy}
             aria-describedby={ariaDescribedBy}
+            aria-invalid={invalid ? true : ariaInvalid}
           >
             {selected && (
               <span className={styles.glyph} aria-hidden="true">

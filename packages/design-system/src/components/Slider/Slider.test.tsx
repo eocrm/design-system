@@ -2,6 +2,7 @@ import { render, screen, fireEvent, act } from '@testing-library/react';
 import { createRef } from 'react';
 import { Slider, type SliderOrientation, type SliderSize, type SliderTone } from './Slider';
 import { Field } from '../Field';
+import { I18nProvider } from '../../i18n/I18nProvider';
 
 // jsdom doesn't implement setPointerCapture; stub it on HTMLElement so the
 // component's try/catch fast-path is exercised (and we still get pointer
@@ -125,13 +126,11 @@ describe('Slider', () => {
       expect(ref.current).toBeInstanceOf(HTMLDivElement);
     });
 
-    it('spreads native HTML attributes (id, data-testid, aria-label)', () => {
-      render(
-        <Slider value={50} id="vol" data-testid="s" aria-label="Volume" onChange={() => {}} />,
-      );
+    it('spreads structural native HTML attributes', () => {
+      render(<Slider value={50} id="vol" data-testid="s" data-kind="volume" onChange={() => {}} />);
       const el = screen.getByTestId('s');
       expect(el).toHaveAttribute('id', 'vol');
-      expect(el).toHaveAttribute('aria-label', 'Volume');
+      expect(el).toHaveAttribute('data-kind', 'volume');
     });
   });
 
@@ -224,14 +223,96 @@ describe('Slider', () => {
       expect(thumb).toHaveAttribute('aria-describedby', 'vol-desc');
     });
 
-    it('range mode: both thumbs get the forwarded aria-label', () => {
+    it('keeps single-thumb naming and description ARIA off the role-less root', () => {
       const { container } = render(
-        <Slider value={[20, 80]} aria-label="Price range" onChange={() => {}} />,
+        <>
+          <span id="vol-desc">0 is muted</span>
+          <Slider
+            data-testid="slider-root"
+            value={50}
+            aria-label="Volume"
+            aria-describedby="vol-desc"
+            onChange={() => {}}
+          />
+        </>,
       );
-      const thumbs = container.querySelectorAll('[role="slider"]');
-      expect(thumbs).toHaveLength(2);
-      expect(thumbs[0]).toHaveAttribute('aria-label', 'Price range');
-      expect(thumbs[1]).toHaveAttribute('aria-label', 'Price range');
+
+      const root = screen.getByTestId('slider-root');
+      const thumb = container.querySelector('[role="slider"]')!;
+      expect(thumb).toHaveAttribute('aria-label', 'Volume');
+      expect(thumb).toHaveAttribute('aria-describedby', 'vol-desc');
+      expect(root).not.toHaveAttribute('aria-label');
+      expect(root).not.toHaveAttribute('aria-labelledby');
+      expect(root).not.toHaveAttribute('aria-describedby');
+    });
+
+    it('range mode: root aria-label distinguishes the minimum and maximum thumb names', () => {
+      render(<Slider value={[20, 80]} aria-label="Price range" onChange={() => {}} />);
+
+      expect(screen.getByRole('slider', { name: 'Price range, minimum' })).toBeInTheDocument();
+      expect(screen.getByRole('slider', { name: 'Price range, maximum' })).toBeInTheDocument();
+    });
+
+    it('range mode: explicit thumbLabels win over the root aria-label', () => {
+      render(
+        <Slider
+          value={[20, 80]}
+          aria-label="Price range"
+          thumbLabels={['Lowest price', 'Highest price']}
+          onChange={() => {}}
+        />,
+      );
+
+      expect(screen.getByRole('slider', { name: 'Lowest price' })).toBeInTheDocument();
+      expect(screen.getByRole('slider', { name: 'Highest price' })).toBeInTheDocument();
+    });
+
+    it('range mode: root aria-labelledby appends localized minimum and maximum suffixes', () => {
+      render(
+        <>
+          <span id="price-range-label">Price range</span>
+          <Slider value={[20, 80]} aria-labelledby="price-range-label" onChange={() => {}} />
+        </>,
+      );
+
+      expect(screen.getByRole('slider', { name: 'Price range minimum' })).toBeInTheDocument();
+      expect(screen.getByRole('slider', { name: 'Price range maximum' })).toBeInTheDocument();
+    });
+
+    it('keeps range naming and description ARIA off the role-less root', () => {
+      render(
+        <>
+          <span id="price-range-label">Price range</span>
+          <span id="price-range-description">Choose the allowed price band</span>
+          <Slider
+            data-testid="slider-root"
+            value={[20, 80]}
+            aria-labelledby="price-range-label"
+            aria-describedby="price-range-description"
+            onChange={() => {}}
+          />
+        </>,
+      );
+
+      const root = screen.getByTestId('slider-root');
+      const minimum = screen.getByRole('slider', { name: 'Price range minimum' });
+      const maximum = screen.getByRole('slider', { name: 'Price range maximum' });
+      expect(minimum).toHaveAccessibleDescription('Choose the allowed price band');
+      expect(maximum).toHaveAccessibleDescription('Choose the allowed price band');
+      expect(root).not.toHaveAttribute('aria-label');
+      expect(root).not.toHaveAttribute('aria-labelledby');
+      expect(root).not.toHaveAttribute('aria-describedby');
+    });
+
+    it('range mode: localized suffixes use the active locale', () => {
+      render(
+        <I18nProvider locale="ru">
+          <Slider value={[20, 80]} aria-label="Диапазон цен" onChange={() => {}} />
+        </I18nProvider>,
+      );
+
+      expect(screen.getByRole('slider', { name: 'Диапазон цен, минимум' })).toBeInTheDocument();
+      expect(screen.getByRole('slider', { name: 'Диапазон цен, максимум' })).toBeInTheDocument();
     });
 
     it('label as function sets aria-valuetext to the formatted output', () => {

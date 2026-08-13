@@ -121,6 +121,25 @@ function clampHeading(level: ErrorStateHeadingLevel | undefined): ErrorStateHead
  *   <ErrorState title="Page not found" actions={<Button>Go home</Button>} />
  * </Screen>
  *
+ * @example
+ * // Loading → error inside a persistently mounted surface.
+ * // The stable role="status" region observes the replacement; ErrorState
+ * // itself must not add a nested assertive alert.
+ * <Card role="status" aria-busy={!failed}>
+ *   {failed ? (
+ *     <ErrorState
+ *       tone="danger"
+ *       role={undefined}
+ *       size="md"
+ *       headingLevel={2}
+ *       title="We couldn't load the account"
+ *       actions={<Button onClick={retry}>Try again</Button>}
+ *     />
+ *   ) : (
+ *     <Text>Loading account details…</Text>
+ *   )}
+ * </Card>
+ *
  * @remarks When NOT to use
  * - **In-surface empty state** (empty table, no search results) → `<EmptyState>`.
  *   ErrorState is page-level; EmptyState lives inside a card / section.
@@ -140,6 +159,11 @@ function clampHeading(level: ErrorStateHeadingLevel | undefined): ErrorStateHead
  *   *standalone* error page (not a boundary), consider passing `role={undefined}`
  *   so the content isn't announced as a wall of text on load; the title's heading
  *   semantics suffice. Override by passing your own `role`.
+ * - For a loading-to-error transition inside an existing surface, keep one
+ *   `Card role="status" aria-busy={!failed}` mounted and replace its loading
+ *   content with `<ErrorState role={undefined}>`. Mounting a live region together
+ *   with the error leaves no mutation for assistive technology to announce; a
+ *   page-sized assertive alert is also inappropriate for this update.
  * - The icon is NOT auto-`aria-hidden` — pass `aria-hidden="true"` for a
  *   decorative icon (the title carries the meaning).
  * - For `tone="neutral"`, the `<section>` is NOT a screen-reader landmark unless

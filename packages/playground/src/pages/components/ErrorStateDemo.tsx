@@ -1,10 +1,13 @@
-import { Button, Cluster, ErrorState, Text } from '@eocrm/design-system';
+import { useState } from 'react';
+import { Button, Card, Cluster, ErrorState, Stack, Text } from '@eocrm/design-system';
 import { Compass, TriangleAlert } from 'lucide-react';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
 
 export function ErrorStateDemo() {
+  const [failed, setFailed] = useState(false);
+
   return (
     <DemoLayout
       name="ErrorState"
@@ -82,6 +85,60 @@ export function Demo() {
             </Text>
           }
         />
+      </Example>
+
+      <Example
+        title="Loading to error"
+        description="This Card intentionally remains the page-level transition surface while its loading content becomes an error. Keep that one polite status region mounted; do not mount a new live region with the error or make the page-sized update assertive."
+        code={`import { useState } from 'react';
+import { Button, Card, ErrorState, Stack, Text } from '@eocrm/design-system';
+
+export function Demo() {
+  const [failed, setFailed] = useState(false);
+
+  // The Card is the existing page-level status surface for both states.
+  return (
+    <Stack gap="md">
+      <Card role="status" aria-busy={!failed}>
+        {failed ? (
+          <ErrorState
+            tone="danger"
+            role={undefined}
+            size="md"
+            headingLevel={2}
+            title="We couldn't load the account"
+            actions={<Button onClick={() => setFailed(false)}>Try again</Button>}
+          />
+        ) : (
+          <Text>Loading account details…</Text>
+        )}
+      </Card>
+      <Button variant="secondary" onClick={() => setFailed(true)}>
+        Simulate an error
+      </Button>
+    </Stack>
+  );
+}`}
+      >
+        <Stack gap="md">
+          <Card role="status" aria-busy={!failed}>
+            {failed ? (
+              <ErrorState
+                tone="danger"
+                role={undefined}
+                size="md"
+                headingLevel={2}
+                title="We couldn't load the account"
+                actions={<Button onClick={() => setFailed(false)}>Try again</Button>}
+              />
+            ) : (
+              <Text>Loading account details…</Text>
+            )}
+          </Card>
+          <Button variant="secondary" onClick={() => setFailed(true)}>
+            Simulate an error
+          </Button>
+        </Stack>
       </Example>
 
       <Example

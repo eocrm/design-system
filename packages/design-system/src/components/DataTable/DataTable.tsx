@@ -27,7 +27,7 @@ import {
 import { Table } from '../Table';
 import type { TableDensity } from '../Table';
 import { Checkbox } from '../Checkbox';
-import { Skeleton } from '../Skeleton';
+import { Skeleton, useSkeletonVisibility } from '../Skeleton';
 import { EmptyState } from '../EmptyState';
 import { HeaderCell } from './HeaderCell';
 import { BodyRow } from './BodyRow';
@@ -67,6 +67,18 @@ export interface DataTableProps<T> {
   loading?: boolean;
   /** Number of skeleton rows when `loading`. Defaults 10. */
   loadingRowCount?: number;
+  /**
+   * Milliseconds to wait before showing skeleton rows for an empty initial
+   * load. Defaults to `0`; fast loads that finish inside the delay never show
+   * a skeleton.
+   */
+  skeletonDelay?: number;
+  /**
+   * Minimum milliseconds skeleton rows remain visible after appearing.
+   * Defaults to `0`. Arriving rows and the empty state remain hidden until the
+   * visual tail finishes.
+   */
+  skeletonMinDuration?: number;
   /** Element shown when `data` is empty and not loading. Defaults to a stock <EmptyState>. */
   emptyState?: ReactNode;
   /**
@@ -295,6 +307,8 @@ function DataTableInner<T>(
     bordered,
     loading = false,
     loadingRowCount = 10,
+    skeletonDelay = 0,
+    skeletonMinDuration = 0,
     emptyState,
     caption,
     dragWholeColumn = true,
@@ -467,9 +481,12 @@ function DataTableInner<T>(
     instance.visibleColumns.length +
     (instance.enableRowSelection ? 1 : 0) +
     (instance.hasExpansion ? 1 : 0);
-  const dataIsEmpty = !loading && instance.data.length === 0 && instance.pinnedRows.length === 0;
   const hasRenderedRows = instance.data.length > 0 || instance.pinnedRows.length > 0;
-  const showSkeletonRows = loading && !hasRenderedRows;
+  const showSkeletonRows = useSkeletonVisibility(loading && !hasRenderedRows, {
+    delay: skeletonDelay,
+    minDuration: skeletonMinDuration,
+  });
+  const dataIsEmpty = !loading && !showSkeletonRows && !hasRenderedRows;
   const responsiveEnabled = collapseBelow != null;
   const hasResponsiveHeaderItems =
     instance.enableRowSelection ||
@@ -653,7 +670,7 @@ function DataTableInner<T>(
               </Table.Row>
             </Table.Header>
 
-            {instance.pinnedRows.length > 0 && (
+            {!showSkeletonRows && instance.pinnedRows.length > 0 && (
               <Table.Body className={styles.pinnedRowsTbody} aria-label={t('dataTable.pinnedRows')}>
                 {instance.pinnedRows.map((row) => (
                   <BodyRow

@@ -304,6 +304,35 @@ export function Demo() {
           </Button>
         </Cluster>
       </Example>
+
+      <Example
+        title="ARIA-disabled (focus-preserving)"
+        description="Use aria-disabled when an unavailable action must remain keyboard-focusable. It gets unavailable paint but still receives events, so the consumer must return early from its handler while it is unavailable."
+        code={`import { Button, Cluster } from '@eocrm/design-system';
+
+export function Demo() {
+  const unavailable = true;
+
+  const handleRetry = () => {
+    if (unavailable) return;
+    retryConnection();
+  };
+
+  return (
+    <Cluster gap="sm" align="center">
+      <Button>Enabled</Button>
+      <Button aria-disabled={unavailable} onClick={handleRetry}>
+        ARIA-disabled
+      </Button>
+    </Cluster>
+  );
+}`}
+      >
+        <Cluster gap="sm" align="center">
+          <Button>Enabled</Button>
+          <Button aria-disabled="true">ARIA-disabled</Button>
+        </Cluster>
+      </Example>
     </DemoLayout>
   );
 }

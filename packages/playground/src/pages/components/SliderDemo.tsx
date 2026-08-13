@@ -40,6 +40,17 @@ function RangeFilter() {
   );
 }
 
+function ExplicitThumbLabels() {
+  const [range, setRange] = useState<[number, number]>([20, 80]);
+  return (
+    <Slider
+      value={range}
+      thumbLabels={['Lower budget', 'Upper budget']}
+      onChange={(v) => setRange(v as [number, number])}
+    />
+  );
+}
+
 function Sizes() {
   const [value, setValue] = useState(50);
   return (
@@ -168,7 +179,7 @@ export function BasicSingle() {
 
       <Example
         title="Range mode (two thumbs)"
-        description="Pass a [min, max] tuple as value → two thumbs. Range-clamp ensures value[0] ≤ value[1]. Formatted label."
+        description="Pass a [min, max] tuple as value → two thumbs. With only aria-label, Slider derives localized ‘minimum’ and ‘maximum’ names for the thumbs."
         code={`import { useState } from 'react';
 import { Code, Slider, Stack, Text } from '@eocrm/design-system';
 
@@ -193,6 +204,26 @@ export function RangeFilter() {
 }`}
       >
         <RangeFilter />
+      </Example>
+
+      <Example
+        title="Explicit range thumb labels"
+        description="Use thumbLabels to override the derived accessible names when each thumb has a domain-specific purpose."
+        code={`import { useState } from 'react';
+import { Slider } from '@eocrm/design-system';
+
+export function ExplicitThumbLabels() {
+  const [range, setRange] = useState<[number, number]>([20, 80]);
+  return (
+    <Slider
+      value={range}
+      thumbLabels={['Lower budget', 'Upper budget']}
+      onChange={(v) => setRange(v as [number, number])}
+    />
+  );
+}`}
+      >
+        <ExplicitThumbLabels />
       </Example>
 
       <Example

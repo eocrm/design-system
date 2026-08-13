@@ -6,6 +6,7 @@ import { Avatar } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
 import { Link } from '@eocrm/design-system';
 import { Constrain } from '@eocrm/design-system';
+import { Text } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -73,6 +74,72 @@ export function Demo() {
       >
         <Constrain height="xs" maxWidth="sm">
           <Card fill>Full-height widget card</Card>
+        </Constrain>
+      </Example>
+
+      <Example
+        title="Fixed header with scrolling body"
+        description="Combine fill with Card.Body scroll inside a definite-height parent. Card owns the internal flex and minimum-height chain, so the header stays fixed while only the padded body scrolls."
+        code={`import { Card, Constrain, Stack, Text } from '@eocrm/design-system';
+
+const stages = [
+  'New lead',
+  'Qualification',
+  'Discovery',
+  'Proposal',
+  'Negotiation',
+  'Legal review',
+  'Verbal commitment',
+  'Closed won',
+];
+
+export function Demo() {
+  return (
+    <Constrain height="sm" maxWidth="sm">
+      <Card fill>
+        <Card.Header>Pipeline stages</Card.Header>
+        <Card.Body scroll>
+          <Stack gap="md">
+            {stages.map((stage, index) => (
+              <Stack key={stage} gap="xs">
+                <Text weight="semibold">{stage}</Text>
+                <Text size="sm" tone="muted">
+                  {index + 2} active deals
+                </Text>
+              </Stack>
+            ))}
+          </Stack>
+        </Card.Body>
+      </Card>
+    </Constrain>
+  );
+}`}
+      >
+        <Constrain height="sm" maxWidth="sm">
+          <Card fill>
+            <Card.Header>Pipeline stages</Card.Header>
+            <Card.Body scroll>
+              <Stack gap="md">
+                {[
+                  'New lead',
+                  'Qualification',
+                  'Discovery',
+                  'Proposal',
+                  'Negotiation',
+                  'Legal review',
+                  'Verbal commitment',
+                  'Closed won',
+                ].map((stage, index) => (
+                  <Stack key={stage} gap="xs">
+                    <Text weight="semibold">{stage}</Text>
+                    <Text size="sm" tone="muted">
+                      {index + 2} active deals
+                    </Text>
+                  </Stack>
+                ))}
+              </Stack>
+            </Card.Body>
+          </Card>
         </Constrain>
       </Example>
 

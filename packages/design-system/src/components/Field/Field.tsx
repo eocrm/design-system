@@ -64,7 +64,7 @@ const MSG_SIZE: Record<FieldSize, TextSize> = { sm: 'xs', md: 'sm', lg: 'sm' };
  * `id` / `aria-labelledby` / `aria-describedby` / `aria-invalid` association by
  * construction. When a label is present, Field also injects `aria-labelledby`
  * onto the cloned child, so composite controls that forward unknown ARIA props
- * (Select, Slider, ColorPicker, FileUpload, TimeField) get an accessible name
+ * (Select, Slider, ColorPicker, IconPicker, FileUpload, TimeField) get an accessible name
  * automatically. For wrapped/nested DOM that doesn't forward props, use the
  * render-prop and spread `field` (it carries `aria-labelledby`).
  *

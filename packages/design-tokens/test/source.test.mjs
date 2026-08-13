@@ -238,6 +238,21 @@ test('loads the authoritative source with representative shared values', async (
   assert.equal(resolveTokenValue(tokens, 'size.control.medium', 'light'), '32px');
 });
 
+test('keeps every avatar background readable against the avatar foreground', async () => {
+  const tokens = await loadTokenDocument(tokenSourcePath);
+  const foreground = resolveTokenValue(tokens, 'avatar.foreground', 'light');
+  const failures = tokens.tokens
+    .filter(({ id }) => /^avatar\.palette\.\d+$/.test(id))
+    .map(({ id }) => {
+      const background = resolveTokenValue(tokens, id, 'light');
+      return { id, ratio: contrastRatio(foreground, background) };
+    })
+    .filter(({ ratio }) => ratio < 4.5)
+    .map(({ id, ratio }) => `${id}: ${ratio.toFixed(2)}:1`);
+
+  assert.deepEqual(failures, [], `Avatar contrast below 4.5:1:\n${failures.join('\n')}`);
+});
+
 test('maps every captured public variable to exactly one web output', async () => {
   const [tokens, fixture, badgeSource] = await Promise.all([
     loadTokenDocument(tokenSourcePath),
@@ -527,4 +542,24 @@ function compareCodeUnits(left, right) {
   if (left < right) return -1;
   if (left > right) return 1;
   return 0;
+}
+
+function contrastRatio(left, right) {
+  const [lighter, darker] = [relativeLuminance(left), relativeLuminance(right)].sort(
+    (a, b) => b - a,
+  );
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+function relativeLuminance(hex) {
+  const [red, green, blue] = hex
+    .slice(1)
+    .match(/.{2}/g)
+    .map((channel) => linearizeSrgbChannel(Number.parseInt(channel, 16)));
+  return 0.2126 * red + 0.7152 * green + 0.0722 * blue;
+}
+
+function linearizeSrgbChannel(channel) {
+  const normalized = channel / 255;
+  return normalized <= 0.04045 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
 }

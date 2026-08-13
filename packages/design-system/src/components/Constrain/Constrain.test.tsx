@@ -15,6 +15,9 @@ describe('Constrain', () => {
       ['h-viewport', 'height'],
       ['minH-viewport', 'min-height'],
       ['maxH-viewport', 'max-height'],
+      ['h-viewport-70', 'height'],
+      ['minH-viewport-70', 'min-height'],
+      ['maxH-viewport-70', 'max-height'],
     ] as const) {
       const className = new RegExp(`(?:^|[^\\w-])\\.${selector}(?![\\w-])`);
       const rules: Rule[] = [];
@@ -31,8 +34,8 @@ describe('Constrain', () => {
           node.type === 'decl' ? [node.prop, node.value, node.important] : [node.type],
         ),
       ).toEqual([
-        [property, '100vh', undefined],
-        [property, '100dvh', undefined],
+        [property, selector.includes('viewport-70') ? '70vh' : '100vh', undefined],
+        [property, selector.includes('viewport-70') ? '70dvh' : '100dvh', undefined],
       ]);
     }
   });
@@ -62,7 +65,7 @@ describe('Constrain', () => {
     },
   );
 
-  it.each<ConstrainHeight>(['xs', 'sm', 'md', 'lg', 'xl', 'full', 'viewport'])(
+  it.each<ConstrainHeight>(['xs', 'sm', 'md', 'lg', 'xl', 'full', 'viewport', 'viewport-70'])(
     'height="%s" applies the h- class',
     (height) => {
       const { container } = render(<Constrain height={height}>x</Constrain>);
@@ -70,7 +73,7 @@ describe('Constrain', () => {
     },
   );
 
-  it.each<ConstrainHeight>(['xs', 'sm', 'md', 'lg', 'xl', 'full', 'viewport'])(
+  it.each<ConstrainHeight>(['xs', 'sm', 'md', 'lg', 'xl', 'full', 'viewport', 'viewport-70'])(
     'minHeight="%s" applies the minH- class',
     (height) => {
       const { container } = render(<Constrain minHeight={height}>x</Constrain>);
@@ -78,7 +81,7 @@ describe('Constrain', () => {
     },
   );
 
-  it.each<ConstrainHeight>(['xs', 'sm', 'md', 'lg', 'xl', 'full', 'viewport'])(
+  it.each<ConstrainHeight>(['xs', 'sm', 'md', 'lg', 'xl', 'full', 'viewport', 'viewport-70'])(
     'maxHeight="%s" applies the maxH- class',
     (height) => {
       const { container } = render(<Constrain maxHeight={height}>x</Constrain>);

@@ -21,7 +21,7 @@ export function SwitchDemo() {
     <DemoLayout
       name="Switch"
       componentName="Switch"
-      description="Binary on/off toggle. Native checkbox with switch role + sliding thumb. Three tones, loading state with thumb-spinner, invalid parity with Input/Textarea."
+      description="Binary on/off toggle. Native checkbox with switch role + sliding thumb. Three tones, focus-preserving loading state with thumb-spinner, invalid parity with Input/Textarea."
       files={getComponentFiles('Switch')}
     >
       <Example
@@ -115,7 +115,7 @@ export function Demo() {
 
       <Example
         title="Loading (async toggle with optimistic update)"
-        description="The button fakes a 1.5s server roundtrip. The switch updates immediately (optimistic), spins while saving, and would rollback on error. loading={true} disables the input."
+        description="The button fakes a 1.5s server roundtrip. The switch updates immediately (optimistic), spins while saving, and would rollback on error. loading={true} keeps the switch focusable but ignores further changes."
         code={`import { useState } from 'react';
 import { Switch } from '@eocrm/design-system';
 

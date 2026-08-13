@@ -8,6 +8,7 @@ import {
 } from 'react';
 import clsx from 'clsx';
 import styles from './Card.module.scss';
+import { CardBody } from './CardBody';
 import { CardHeader } from './CardHeader';
 import { CardList } from './CardList';
 import { CardListRow } from './CardListRow';
@@ -34,8 +35,9 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
    * - `lg` (24px) — emphasis cards, marketing-style panels.
    *
    * When omitted, defaults to `'md'` for plain content, or `'none'` when the
-   * card contains compound subcomponents (`Card.Header` / `Card.List` /
-   * `Card.ListRow`) so the header and rows bleed to the card edge automatically.
+   * card contains compound subcomponents (`Card.Header` / `Card.Body` /
+   * `Card.List` / `Card.ListRow`) so its sections bleed to the card edge
+   * automatically.
    * Pass an explicit value to override the auto-detect.
    *
    * **Detection is shallow:** only direct children are inspected. Fragments
@@ -73,7 +75,10 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
   /**
    * Fill the containing block's height and allow the Card to shrink within a
    * narrow grid cell. Use in stretched Grid, Sortable, or DashboardCanvas
-   * cells whose wrapper already has a definite height. Defaults to `false`.
+   * cells whose wrapper already has a definite height. When a direct
+   * `Card.Body` child is present, `fill` also establishes Card's internal
+   * column and minimum-height chain; add `scroll` to the Body to keep a sibling
+   * Header fixed above a scrolling content region. Defaults to `false`.
    * @default false
    */
   fill?: boolean;
@@ -86,19 +91,36 @@ const paddingClass: Record<CardPadding, string> = {
   lg: styles.paddingLg,
 };
 
-function hasCompoundChildren(children: ReactNode): boolean {
-  return Children.toArray(children).some((child) => {
-    if (!isValidElement(child)) return false;
-    const type = child.type;
-    if (type === CardHeader || type === CardList || type === CardListRow) return true;
-    // Fragments are transparent — Children.toArray preserves them as nodes,
-    // but a consumer who wraps compound children in a `<>` (e.g. for a
-    // conditional render) clearly still wants the auto-detect to fire.
-    if (type === Fragment) {
-      return hasCompoundChildren((child.props as { children?: ReactNode }).children);
-    }
-    return false;
-  });
+interface CompoundChildrenInfo {
+  hasCompound: boolean;
+  hasBody: boolean;
+}
+
+function inspectCompoundChildren(children: ReactNode): CompoundChildrenInfo {
+  return Children.toArray(children).reduce<CompoundChildrenInfo>(
+    (info, child) => {
+      if (!isValidElement(child)) return info;
+      const type = child.type;
+      if (type === CardBody) {
+        return { hasCompound: true, hasBody: true };
+      }
+      if (type === CardHeader || type === CardList || type === CardListRow) {
+        return { ...info, hasCompound: true };
+      }
+      // Fragments are transparent — Children.toArray preserves them as nodes,
+      // but a consumer who wraps compound children in a `<>` (e.g. for a
+      // conditional render) clearly still wants the auto-detect to fire.
+      if (type === Fragment) {
+        const nested = inspectCompoundChildren((child.props as { children?: ReactNode }).children);
+        return {
+          hasCompound: info.hasCompound || nested.hasCompound,
+          hasBody: info.hasBody || nested.hasBody,
+        };
+      }
+      return info;
+    },
+    { hasCompound: false, hasBody: false },
+  );
 }
 
 /**
@@ -108,10 +130,10 @@ function hasCompoundChildren(children: ReactNode): boolean {
  * nest Card in Card** — if you need to subdivide, use spacing or a horizontal
  * rule instead. If everything on your page is a card, none of them are.
  *
- * Compound API — `Card.Header` / `Card.List` / `Card.ListRow` for the
- * "section card with a list of rows" pattern. When any of these subcomponents
- * appear as a direct child, `padding` auto-defaults to `'none'` so the header
- * and rows bleed to the card edge. Pass `padding` explicitly to override.
+ * Compound API — `Card.Header` / `Card.Body` / `Card.List` / `Card.ListRow`
+ * for section-card patterns. When any of these subcomponents appear as a
+ * direct child, `padding` auto-defaults to `'none'` so sections bleed to the
+ * card edge. Pass `padding` explicitly to override.
  *
  * @example
  * <Card padding="md">
@@ -155,10 +177,12 @@ function hasCompoundChildren(children: ReactNode): boolean {
  * </Cluster>
  *
  * @example
- * // Fill a bounded dashboard cell without consumer CSS:
+ * // Keep a header fixed over a scrolling body in a bounded dashboard cell:
  * <Card fill>
  *   <Card.Header>Pipeline</Card.Header>
- *   <Chart />
+ *   <Card.Body scroll>
+ *     <PipelineRows />
+ *   </Card.Body>
  * </Card>
  *
  * @remarks When NOT to use
@@ -178,6 +202,9 @@ function hasCompoundChildren(children: ReactNode): boolean {
  *   corner.
  * - ❌ `<Card style={{ height: '100%' }}>` — use `<Card fill>`. The modifier
  *   also applies the shrink-safe minimum width required in narrow grid cells.
+ * - ❌ Hand-rolling a flex column and scrolling body inside a Card. Use
+ *   `<Card fill>` with `<Card.Body scroll>` so Header/Body sizing stays owned
+ *   by the compound component.
  * - ❌ Adding hover shadows to make Cards "interactive". If the whole card
  *   is clickable, that's a different component (`LinkCard`, not yet shipped).
  * - ❌ Cards nested in Cards. Almost always means your information
@@ -185,17 +212,20 @@ function hasCompoundChildren(children: ReactNode): boolean {
  * - ❌ Hand-rolling a left-stripe via `className` / `style`. Use the `tone`
  *   prop — it reserves the border-left space so layout never shifts.
  * - ❌ Hand-rolling `.cardHeader` / `.list` / `.listRow` SCSS. Use the
- *   compound API (`Card.Header` / `Card.List` / `Card.ListRow`) instead.
+ *   compound API (`Card.Header` / `Card.Body` / `Card.List` /
+ *   `Card.ListRow`) instead.
  */
 const CardRoot = forwardRef<HTMLDivElement, CardProps>(function Card(
   { padding, tone, overflow = 'hidden', fill = false, className, children, ...props },
   ref,
 ) {
-  // Compound subcomponents (Card.Header / Card.List / Card.ListRow) manage
-  // their own internal padding and want to bleed to the card edge. When any
-  // are present and `padding` wasn't passed explicitly, default to 'none' so
-  // the consumer doesn't have to repeat themselves. Explicit `padding` wins.
-  const effectivePadding: CardPadding = padding ?? (hasCompoundChildren(children) ? 'none' : 'md');
+  const compoundChildren = inspectCompoundChildren(children);
+  // Compound subcomponents (Card.Header / Card.Body / Card.List /
+  // Card.ListRow) manage their own internal padding and want to bleed to the
+  // card edge. When any are present and `padding` wasn't passed explicitly,
+  // default to 'none' so the consumer doesn't have to repeat themselves.
+  // Explicit `padding` wins.
+  const effectivePadding: CardPadding = padding ?? (compoundChildren.hasCompound ? 'none' : 'md');
   // {...props} last so consumer overrides win (Pattern A).
   return (
     <div
@@ -205,6 +235,7 @@ const CardRoot = forwardRef<HTMLDivElement, CardProps>(function Card(
         paddingClass[effectivePadding],
         overflow === 'visible' && styles.overflowVisible,
         fill && styles.fill,
+        fill && compoundChildren.hasBody && styles.fillWithBody,
         className,
       )}
       data-tone={tone}
@@ -216,6 +247,7 @@ const CardRoot = forwardRef<HTMLDivElement, CardProps>(function Card(
 });
 
 export const Card = Object.assign(CardRoot, {
+  Body: CardBody,
   Header: CardHeader,
   List: CardList,
   ListRow: CardListRow,

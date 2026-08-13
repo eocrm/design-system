@@ -158,6 +158,29 @@ describe('Button', () => {
     expect(screen.getByRole('button', { name: 'Press' })).toBeDisabled();
   });
 
+  it('keeps an aria-disabled button natively enabled', () => {
+    render(<Button aria-disabled="true">Unavailable</Button>);
+
+    const button = screen.getByRole('button', { name: 'Unavailable' });
+    expect(button).toHaveAttribute('aria-disabled', 'true');
+    expect(button).not.toBeDisabled();
+  });
+
+  it('styles aria-disabled buttons as unavailable without enabling hover paint', () => {
+    const scss = readFileSync(resolve(__dirname, 'Button.module.scss'), 'utf8');
+
+    expect(scss).toMatch(
+      /&:disabled,\s*&\[aria-disabled='true'\]\s*\{[^}]*opacity:\s*var\(--button-opacity-disabled\);[^}]*cursor:\s*not-allowed;/s,
+    );
+    expect(scss).toMatch(/&:disabled\s*\{[^}]*pointer-events:\s*none;/s);
+
+    const hoverSelectors = scss.match(/&:hover[^{]*/g);
+    expect(hoverSelectors).toHaveLength(6);
+    hoverSelectors?.forEach((selector) => {
+      expect(selector).toContain(":not(:disabled, [aria-disabled='true'])");
+    });
+  });
+
   it('forwards a ref to the underlying button element', () => {
     const ref = createRef<HTMLButtonElement>();
     render(<Button ref={ref}>Hi</Button>);
