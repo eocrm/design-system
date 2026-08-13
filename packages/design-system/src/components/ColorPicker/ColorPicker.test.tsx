@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { createRef, useState } from 'react';
 import { ColorPicker, hexToHsv, hsvToHex } from './index';
 import { Field } from '../Field';
+import { I18nProvider } from '../../i18n';
 
 // jsdom doesn't implement setPointerCapture / releasePointerCapture; stub.
 function ensurePointerCaptureShim() {
@@ -318,6 +319,18 @@ describe('ColorPicker — popover', () => {
     render(<ColorPicker value="#4F46E5" onChange={() => {}} triggerLabel="Brand color" />);
     expect(
       screen.getByRole('button', { name: /Brand color, current value #4F46E5/i }),
+    ).toBeInTheDocument();
+  });
+
+  it('localizes the complete default trigger accessible name in Russian', () => {
+    render(
+      <I18nProvider locale="ru">
+        <ColorPicker value="#4F46E5" onChange={() => {}} />
+      </I18nProvider>,
+    );
+
+    expect(
+      screen.getByRole('button', { name: 'Выбрать цвет, текущее значение #4F46E5' }),
     ).toBeInTheDocument();
   });
 

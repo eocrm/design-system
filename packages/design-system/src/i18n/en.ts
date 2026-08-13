@@ -199,6 +199,8 @@ export const en: Messages = {
     hexValue: 'Hex color value',
     presetColors: 'Preset colors',
     triggerLabel: 'Pick a color',
+    triggerAccessibleLabel: ({ label, value }) =>
+      `${label as string}, current value ${value as string}`,
   },
   iconPicker: { triggerLabel: 'Pick icon' },
   drawer: {

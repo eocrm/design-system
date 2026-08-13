@@ -201,6 +201,8 @@ export const ru: Messages = {
     hexValue: 'Hex-значение цвета',
     presetColors: 'Предустановленные цвета',
     triggerLabel: 'Выбрать цвет',
+    triggerAccessibleLabel: ({ label, value }) =>
+      `${label as string}, текущее значение ${value as string}`,
   },
   iconPicker: { triggerLabel: 'Выбрать значок' },
   drawer: {

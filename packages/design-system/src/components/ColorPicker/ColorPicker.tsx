@@ -159,6 +159,7 @@ const DefaultTrigger = forwardRef<HTMLButtonElement, DefaultTriggerProps>(functi
   },
   ref,
 ) {
+  const t = useTranslation();
   const display = normalizeHex(hex) ?? FALLBACK_HEX;
   return (
     <button
@@ -169,7 +170,11 @@ const DefaultTrigger = forwardRef<HTMLButtonElement, DefaultTriggerProps>(functi
       disabled={disabled}
       // An external label (e.g. <Field label>) wins; otherwise fall back to
       // the self-describing generated label. Never set both.
-      aria-label={labelledBy ? undefined : (ariaLabel ?? `${label}, current value ${display}`)}
+      aria-label={
+        labelledBy
+          ? undefined
+          : (ariaLabel ?? t('colorPicker.triggerAccessibleLabel', { label, value: display }))
+      }
       aria-labelledby={labelledBy}
       aria-describedby={describedBy}
       aria-invalid={invalid ? true : ariaInvalid}

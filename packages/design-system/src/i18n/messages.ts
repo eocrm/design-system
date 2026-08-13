@@ -346,6 +346,12 @@ export interface Messages {
     presetColors: string;
     /** aria-label fallback for the default ColorPicker trigger button. */
     triggerLabel: string;
+    /**
+     * Function leaf — complete accessible-name template for the default ColorPicker
+     * trigger. `label` is the resolved trigger purpose and `value` is the normalized
+     * uppercase HEX value currently selected.
+     */
+    triggerAccessibleLabel: (params: { label: string; value: string }) => string;
   };
   iconPicker: {
     /** Default accessible purpose for the IconPicker trigger. */
