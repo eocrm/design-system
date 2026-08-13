@@ -11,6 +11,16 @@ const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../.
 const designSystemRoot = join(repositoryRoot, 'packages/design-system');
 const tokenRoot = join(repositoryRoot, 'packages/design-tokens');
 
+test('playground token reference reads the authoritative token package', async () => {
+  const pageSource = await readFile(
+    join(repositoryRoot, 'packages/playground/src/pages/Tokens/TokensPage.tsx'),
+    'utf8',
+  );
+
+  assert.match(pageSource, /@eocrm\/design-tokens\/styles\/tokens\.scss\?raw/);
+  assert.doesNotMatch(pageSource, /@lib-source\/styles\/tokens\.scss\?raw/);
+});
+
 test('preserves the design-system package and TypeScript export surfaces', async () => {
   const packageJson = JSON.parse(await readFile(join(designSystemRoot, 'package.json'), 'utf8'));
   const indexSource = await readFile(join(designSystemRoot, 'src/index.ts'));
