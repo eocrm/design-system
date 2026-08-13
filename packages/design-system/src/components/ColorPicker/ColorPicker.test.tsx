@@ -436,6 +436,22 @@ describe('ColorPicker — misc', () => {
 });
 
 describe('ColorPicker — labelledby / describedby forwarding', () => {
+  it('forwards an explicit aria-label to the trigger without naming the wrapper', () => {
+    const { container } = render(
+      <ColorPicker
+        className="picker-root"
+        aria-label="Brand color"
+        value="#4F46E5"
+        onChange={() => {}}
+      />,
+    );
+
+    const trigger = screen.getByRole('button', { name: 'Brand color' });
+    const root = container.querySelector('.picker-root')!;
+    expect(trigger).toHaveAttribute('aria-label', 'Brand color');
+    expect(root).not.toHaveAttribute('aria-label');
+  });
+
   it('associates a Field label with the trigger without naming the wrapper', () => {
     const { container } = render(
       <Field id="brand-color" label="Brand color" error="Choose a brand color" required>

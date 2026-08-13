@@ -149,7 +149,8 @@ export interface IconPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, 'o
   'aria-label'?: string;
   /**
    * Id(s) of external elements that provide the picker purpose. They name the dialog and
-   * radiogroup directly; the trigger also appends an internal selected-icon label when matched.
+   * radiogroup and trigger directly, suppressing the trigger's generated purpose-and-selection
+   * name.
    */
   'aria-labelledby'?: string;
   /** Id(s) of element(s) that describe the trigger button. */

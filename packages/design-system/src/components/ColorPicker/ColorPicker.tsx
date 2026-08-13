@@ -92,6 +92,11 @@ export interface ColorPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, '
   /** Marks the focusable trigger required for Field composition. @default false */
   required?: boolean;
   /**
+   * Accessible name for the default trigger. Forwarded to the focusable trigger,
+   * not the root wrapper. Ignored when `aria-labelledby` is provided.
+   */
+  'aria-label'?: string;
+  /**
    * Accessible label for the default trigger. Defaults to the i18n value at
    * `colorPicker.triggerLabel` (`'Pick a color'` in English). Ignored when
    * a custom trigger is provided via `<ColorPicker.Trigger>`.
@@ -123,6 +128,7 @@ interface DefaultTriggerProps {
   required: boolean;
   ariaInvalid?: ColorPickerProps['aria-invalid'];
   ariaRequired?: ColorPickerProps['aria-required'];
+  ariaLabel?: string;
   open: boolean;
   labelledBy?: string;
   describedBy?: string;
@@ -139,6 +145,7 @@ const DefaultTrigger = forwardRef<HTMLButtonElement, DefaultTriggerProps>(functi
     required,
     ariaInvalid,
     ariaRequired,
+    ariaLabel,
     open,
     onClick,
     labelledBy,
@@ -156,7 +163,7 @@ const DefaultTrigger = forwardRef<HTMLButtonElement, DefaultTriggerProps>(functi
       disabled={disabled}
       // An external label (e.g. <Field label>) wins; otherwise fall back to
       // the self-describing generated label. Never set both.
-      aria-label={labelledBy ? undefined : `${label}, current value ${display}`}
+      aria-label={labelledBy ? undefined : (ariaLabel ?? `${label}, current value ${display}`)}
       aria-labelledby={labelledBy}
       aria-describedby={describedBy}
       aria-invalid={invalid ? true : ariaInvalid}
@@ -234,6 +241,7 @@ const ColorPickerRoot = forwardRef<HTMLDivElement, ColorPickerProps>(function Co
     triggerLabel,
     popoverPlacement = 'bottom-start',
     id,
+    'aria-label': ariaLabel,
     'aria-invalid': ariaInvalid,
     'aria-required': ariaRequired,
     'aria-labelledby': ariaLabelledBy,
@@ -277,6 +285,7 @@ const ColorPickerRoot = forwardRef<HTMLDivElement, ColorPickerProps>(function Co
       required={required}
       ariaInvalid={ariaInvalid}
       ariaRequired={ariaRequired}
+      ariaLabel={ariaLabel}
       open={open}
       labelledBy={ariaLabelledBy}
       describedBy={ariaDescribedBy}
