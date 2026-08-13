@@ -163,6 +163,18 @@ describe('Card', () => {
     expect((container.firstChild as HTMLElement).className).toMatch(/fill/);
   });
 
+  it('applies the fill-body modifier when Card.Body is wrapped in a Fragment', () => {
+    const { container } = render(
+      <Card fill>
+        <>
+          <Card.Body>Details</Card.Body>
+        </>
+      </Card>,
+    );
+
+    expect((container.firstChild as HTMLElement).className).toMatch(/fillWithBody/);
+  });
+
   it('does not apply or forward fill by default', () => {
     const { container } = render(<Card>x</Card>);
     const card = container.firstChild as HTMLElement;
