@@ -1,4 +1,3 @@
-@use '../../styles/mixins' as *;
 @use './IconPicker.tokens';
 
 .root {
@@ -68,8 +67,4 @@
 .glyph > svg {
   width: var(--icon-picker-glyph-size);
   height: var(--icon-picker-glyph-size);
-}
-
-.visuallyHidden {
-  @include visually-hidden;
 }

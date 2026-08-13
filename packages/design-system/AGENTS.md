@@ -553,7 +553,9 @@ const [phone, setPhone] = useState<string | null>(null);
 const [hex, setHex] = useState('#4F46E5');
 
 // Default popover with the built-in trigger swatch:
-<ColorPicker value={hex} onChange={setHex} triggerLabel="Brand color" />
+<Field label="Brand color">
+  <ColorPicker value={hex} onChange={setHex} />
+</Field>
 
 // Custom trigger:
 <ColorPicker value={hex} onChange={setHex}>
@@ -569,6 +571,7 @@ const [hex, setHex] = useState('#4F46E5');
 - **Controlled-only.** `value: string` in `#RRGGBB` form. Loose input accepted on the HEX text field (`#FFF`, `FFF`, `#ffffff`); the component always emits the canonical `#RRGGBB` (uppercase, with `#`).
 - **Two distribution shapes via the compound API.** `<ColorPicker>` is the popover-wrapped form-field-ready widget. `<ColorPicker.Panel>` is the same picker without the popover wrapping — drop it directly into a settings page or theme builder.
 - **Default trigger** is an input-field-shaped button with a 16×16 swatch + uppercase HEX text. Override via `<ColorPicker.Trigger asChild>{customNode}</ColorPicker.Trigger>` (the child must `forwardRef` because `<Popover.Trigger>` clones it).
+- **Field-ready.** `<Field label>` connects `id`, naming, description, invalid, and required state to the default trigger button rather than the role-less picker wrapper.
 - **`onChange` fires per drag/zoom tick (high frequency).** Use `onChangeEnd` for commit-style logic (network calls, history snapshots) — it fires on pointer release, slider release, HEX input blur, and preset click.
 - **Presets via `presets?: string[]`.** Invalid entries are dropped silently. The library doesn't ship a default palette — pass your own brand colors. Selected swatch gets an inset ring + check overlay.
 - **Color math is exported.** `hexToHsv(hex)`, `hsvToHex({h,s,v})`, `normalizeHex(loose)` are usable directly for downstream theme builders, contrast calculators, etc.
@@ -608,10 +611,13 @@ const options = [
   { value: 'flame', label: 'Flame', icon: <Flame /> },
   { value: 'zap', label: 'Lightning', icon: <Zap /> },
 ];
-<IconPicker value={icon} options={options} onChange={setIcon} />;
+<Field label="Priority icon">
+  <IconPicker value={icon} options={options} onChange={setIcon} />
+</Field>;
 ```
 
 - The consumer owns icon values, labels, glyphs, ordering, and controlled state.
+- `<Field label>` names the trigger and forwards description, invalid, and required state to that button; those attributes do not sit on the role-less wrapper.
 - Use it for compact visual choices; use `Select` when visible option text matters.
 - Labels must be human-readable and values unique. Do not pass icon codes as labels.
 
@@ -721,7 +727,7 @@ A switch whose toggle triggers an **immediate action** — persisting to a serve
   `id` / `aria-labelledby` / `aria-describedby` / `invalid` (controls map `invalid → aria-invalid`).
 - When a `label` is present, Field injects `aria-labelledby` onto the cloned child, so
   composite controls that forward ARIA props (`Select`, `Slider`, `ColorPicker`,
-  `FileUpload`, `TimeField`) get an accessible name for free. The render-prop `field`
+  `IconPicker`, `FileUpload`, `TimeField`) get an accessible name for free. The render-prop `field`
   object also carries `aria-labelledby` for wrapped/nested DOM.
 - `error` replaces `description` and flips the control invalid. `required` shows `*`;
   `optional` shows `(optional)`. `orientation="horizontal"` = label beside control.

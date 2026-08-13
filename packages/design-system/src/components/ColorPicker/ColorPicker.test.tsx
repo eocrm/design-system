@@ -436,16 +436,31 @@ describe('ColorPicker — misc', () => {
 });
 
 describe('ColorPicker — labelledby / describedby forwarding', () => {
-  it('a Field label names the trigger button (auto-clone)', () => {
-    render(
-      <Field label="Brand color">
-        <ColorPicker value="#4F46E5" onChange={() => {}} />
+  it('associates a Field label with the trigger without naming the wrapper', () => {
+    const { container } = render(
+      <Field id="brand-color" label="Brand color" error="Choose a brand color" required>
+        <ColorPicker className="picker-root" value="#4F46E5" onChange={() => {}} />
       </Field>,
     );
+
+    const label = container.querySelector('label')!;
     const trigger = screen.getByRole('button', { name: 'Brand color' });
-    expect(trigger.tagName).toBe('BUTTON');
-    expect(trigger).toHaveAttribute('aria-labelledby');
+    const root = container.querySelector('.picker-root')!;
+
+    expect(label.htmlFor).toBe(trigger.id);
+    expect(trigger).toHaveAttribute('id', 'brand-color');
+    expect(trigger).toHaveAccessibleName('Brand color');
+    expect(trigger).toHaveAttribute('aria-describedby', 'brand-color-error');
+    expect(trigger).toHaveAttribute('aria-invalid', 'true');
+    expect(trigger).toHaveAttribute('aria-required', 'true');
     expect(trigger).not.toHaveAttribute('aria-label');
+    expect(root).not.toHaveAttribute('id');
+    expect(root).not.toHaveAttribute('required');
+    expect(root).not.toHaveAttribute('invalid');
+    expect(root).not.toHaveAttribute('aria-invalid');
+    expect(root).not.toHaveAttribute('aria-required');
+    expect(root).not.toHaveAttribute('aria-labelledby');
+    expect(root).not.toHaveAttribute('aria-describedby');
   });
 
   it('forwards aria-labelledby / aria-describedby to the trigger, not the root', () => {

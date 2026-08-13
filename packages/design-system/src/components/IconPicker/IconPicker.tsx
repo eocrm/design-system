@@ -1,6 +1,5 @@
 import {
   forwardRef,
-  useId,
   useLayoutEffect,
   useRef,
   useState,
@@ -126,6 +125,10 @@ export interface IconPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, 'o
    * @default false
    */
   disabled?: boolean;
+  /** Marks the focusable trigger invalid for Field composition. @default false */
+  invalid?: boolean;
+  /** Marks the focusable trigger required for Field composition. @default false */
+  required?: boolean;
   /**
    * Preferred popover placement. Floating UI may flip it to remain visible.
    *
@@ -161,12 +164,9 @@ export interface IconPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, 'o
  * <IconPicker value={icon} options={iconOptions} onChange={setIcon} />
  *
  * @example
- * <IconPicker
- *   value={icon}
- *   options={iconOptions}
- *   onChange={setIcon}
- *   aria-label="Status icon"
- * />
+ * <Field label="Status icon">
+ *   <IconPicker value={icon} options={iconOptions} onChange={setIcon} />
+ * </Field>
  *
  * @example
  * <Cluster gap="sm" align="center">
@@ -192,10 +192,15 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
     options,
     onChange,
     disabled = false,
+    invalid = false,
+    required = false,
     popoverPlacement = 'bottom-start',
+    id,
     'aria-label': ariaLabel,
     'aria-labelledby': ariaLabelledBy,
     'aria-describedby': ariaDescribedBy,
+    'aria-invalid': ariaInvalid,
+    'aria-required': ariaRequired,
     className,
     style,
     ...rest
@@ -219,7 +224,6 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
   );
   const focusWithinGridRef = useRef(false);
   const pendingOpenFocusRef = useRef<string | null>(null);
-  const selectedLabelId = `icon-picker-selected-${useId()}`;
   const selected = options.find((option) => option.value === value);
   const selectedIndex = options.findIndex((option) => option.value === value);
   const optionValues = JSON.stringify(options.map((option) => option.value));
@@ -228,11 +232,6 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
   unavailableRef.current = unavailable;
   const purpose = ariaLabel ?? t('iconPicker.triggerLabel');
   const triggerLabel = selected ? `${purpose}: ${selected.label}` : purpose;
-  const labelledBy = ariaLabelledBy
-    ? selected
-      ? `${ariaLabelledBy} ${selectedLabelId}`
-      : ariaLabelledBy
-    : undefined;
   const { side, align } = PLACEMENT_MAP[popoverPlacement];
   const purposeLabelProps = ariaLabelledBy
     ? { 'aria-labelledby': ariaLabelledBy }
@@ -374,21 +373,19 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
       style={style}
       {...rest}
     >
-      {ariaLabelledBy && selected && (
-        <span id={selectedLabelId} className={styles.visuallyHidden}>
-          {selected.label}
-        </span>
-      )}
       <Popover open={open} onOpenChange={handleOpenChange}>
         <Popover.Trigger>
           <button
             ref={triggerRef}
+            id={id}
             type="button"
             className={styles.trigger}
             disabled={unavailable}
-            aria-label={labelledBy ? undefined : triggerLabel}
-            aria-labelledby={labelledBy}
+            aria-label={ariaLabelledBy ? undefined : triggerLabel}
+            aria-labelledby={ariaLabelledBy}
             aria-describedby={ariaDescribedBy}
+            aria-invalid={invalid ? true : ariaInvalid}
+            aria-required={required ? true : ariaRequired}
           >
             {selected && (
               <span className={styles.glyph} aria-hidden="true">

@@ -5,6 +5,7 @@ import { Cluster } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
 import { Text } from '@eocrm/design-system';
 import { Code } from '@eocrm/design-system';
+import { Field } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -36,7 +37,9 @@ function PopoverDefaultTrigger() {
   const [hex, setHex] = useState('#10B981');
   return (
     <Stack gap="sm" align="start">
-      <ColorPicker value={hex} onChange={setHex} triggerLabel="Brand color" />
+      <Field label="Brand color" description="Used for campaign accents">
+        <ColorPicker value={hex} onChange={setHex} />
+      </Field>
       <Text size="sm" tone="muted">
         Value: <Code>{hex}</Code>
       </Text>
@@ -113,15 +116,17 @@ export function InlineNoPresets() {
 
       <Example
         title="Popover with default trigger"
-        description="The canonical CRM form-field shape. Default trigger is an input-styled button with a 16×16 color swatch and the uppercase HEX. triggerLabel customizes the accessible label."
+        description="The canonical CRM form-field shape. Field connects its visible label and description directly to the input-styled trigger button."
         code={`import { useState } from 'react';
-import { Code, ColorPicker, Stack, Text } from '@eocrm/design-system';
+import { Code, ColorPicker, Field, Stack, Text } from '@eocrm/design-system';
 
 export function PopoverDefaultTrigger() {
   const [hex, setHex] = useState('#10B981');
   return (
     <Stack gap="sm" align="start">
-      <ColorPicker value={hex} onChange={setHex} triggerLabel="Brand color" />
+      <Field label="Brand color" description="Used for campaign accents">
+        <ColorPicker value={hex} onChange={setHex} />
+      </Field>
       <Text size="sm" tone="muted">
         Value: <Code>{hex}</Code>
       </Text>

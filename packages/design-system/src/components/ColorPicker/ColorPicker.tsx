@@ -87,6 +87,10 @@ export interface ColorPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, '
   presets?: string[];
   /** Disable interaction. Trigger doesn't open; panel is non-interactive. */
   disabled?: boolean;
+  /** Marks the focusable trigger invalid for Field composition. @default false */
+  invalid?: boolean;
+  /** Marks the focusable trigger required for Field composition. @default false */
+  required?: boolean;
   /**
    * Accessible label for the default trigger. Defaults to the i18n value at
    * `colorPicker.triggerLabel` (`'Pick a color'` in English). Ignored when
@@ -111,9 +115,14 @@ export interface ColorPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, '
 }
 
 interface DefaultTriggerProps {
+  id?: string;
   hex: string;
   label: string;
   disabled: boolean;
+  invalid: boolean;
+  required: boolean;
+  ariaInvalid?: ColorPickerProps['aria-invalid'];
+  ariaRequired?: ColorPickerProps['aria-required'];
   open: boolean;
   labelledBy?: string;
   describedBy?: string;
@@ -121,13 +130,27 @@ interface DefaultTriggerProps {
 }
 
 const DefaultTrigger = forwardRef<HTMLButtonElement, DefaultTriggerProps>(function DefaultTrigger(
-  { hex, label, disabled, open, onClick, labelledBy, describedBy },
+  {
+    id,
+    hex,
+    label,
+    disabled,
+    invalid,
+    required,
+    ariaInvalid,
+    ariaRequired,
+    open,
+    onClick,
+    labelledBy,
+    describedBy,
+  },
   ref,
 ) {
   const display = normalizeHex(hex) ?? FALLBACK_HEX;
   return (
     <button
       ref={ref}
+      id={id}
       type="button"
       className={styles.trigger}
       disabled={disabled}
@@ -136,6 +159,8 @@ const DefaultTrigger = forwardRef<HTMLButtonElement, DefaultTriggerProps>(functi
       aria-label={labelledBy ? undefined : `${label}, current value ${display}`}
       aria-labelledby={labelledBy}
       aria-describedby={describedBy}
+      aria-invalid={invalid ? true : ariaInvalid}
+      aria-required={required ? true : ariaRequired}
       aria-haspopup="true"
       aria-expanded={open}
       onClick={onClick}
@@ -159,7 +184,9 @@ const DefaultTrigger = forwardRef<HTMLButtonElement, DefaultTriggerProps>(functi
  * @example
  * // Default popover with the library's trigger swatch:
  * const [hex, setHex] = useState('#4F46E5');
- * <ColorPicker value={hex} onChange={setHex} triggerLabel="Brand color" />
+ * <Field label="Brand color">
+ *   <ColorPicker value={hex} onChange={setHex} />
+ * </Field>
  *
  * @example
  * // Custom trigger via the slot-style override:
@@ -202,8 +229,13 @@ const ColorPickerRoot = forwardRef<HTMLDivElement, ColorPickerProps>(function Co
     onChangeEnd,
     presets,
     disabled = false,
+    invalid = false,
+    required = false,
     triggerLabel,
     popoverPlacement = 'bottom-start',
+    id,
+    'aria-invalid': ariaInvalid,
+    'aria-required': ariaRequired,
     'aria-labelledby': ariaLabelledBy,
     'aria-describedby': ariaDescribedBy,
     children,
@@ -237,9 +269,14 @@ const ColorPickerRoot = forwardRef<HTMLDivElement, ColorPickerProps>(function Co
     })
   ) : (
     <DefaultTrigger
+      id={id}
       hex={value}
       label={resolvedTriggerLabel}
       disabled={disabled}
+      invalid={invalid}
+      required={required}
+      ariaInvalid={ariaInvalid}
+      ariaRequired={ariaRequired}
       open={open}
       labelledBy={ariaLabelledBy}
       describedBy={ariaDescribedBy}

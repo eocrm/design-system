@@ -17,7 +17,7 @@ import {
   TriangleAlert,
   Zap,
 } from 'lucide-react';
-import { IconPicker, Stack, Text, type IconPickerOption } from '@eocrm/design-system';
+import { Field, IconPicker, Stack, Text, type IconPickerOption } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -60,7 +60,7 @@ import {
   TriangleAlert,
   Zap,
 } from 'lucide-react';
-import { IconPicker, Stack, Text, type IconPickerOption } from '@eocrm/design-system';
+import { Field, IconPicker, Stack, Text, type IconPickerOption } from '@eocrm/design-system';
 
 const priorityIcons: IconPickerOption[] = [
   { value: 'chevrons-up', label: 'Double chevron up', icon: <ChevronsUp /> },
@@ -86,7 +86,9 @@ export function Demo() {
 
   return (
     <Stack gap="sm">
-      <IconPicker value={value} options={priorityIcons} onChange={setValue} />
+      <Field label="Priority icon" description="Shown beside priority labels">
+        <IconPicker value={value} options={priorityIcons} onChange={setValue} />
+      </Field>
       <Text tone="muted">Selected: {value}</Text>
     </Stack>
   );
@@ -104,11 +106,13 @@ export function IconPickerDemo() {
     >
       <Example
         title="Task priority icon"
-        description="The consumer owns glyphs and labels."
+        description="The consumer owns glyphs and labels; Field connects the visible purpose and description to the trigger."
         code={exampleCode}
       >
         <Stack gap="sm">
-          <IconPicker value={value} options={priorityIcons} onChange={setValue} />
+          <Field label="Priority icon" description="Shown beside priority labels">
+            <IconPicker value={value} options={priorityIcons} onChange={setValue} />
+          </Field>
           <Text tone="muted">Selected: {value}</Text>
         </Stack>
       </Example>
