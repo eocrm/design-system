@@ -385,8 +385,13 @@ export type {
   CircularProgressLabel,
 } from './components/CircularProgress';
 
-export { Skeleton } from './components/Skeleton';
-export type { SkeletonProps, SkeletonVariant, SkeletonAnimation } from './components/Skeleton';
+export { Skeleton, useSkeletonVisibility } from './components/Skeleton';
+export type {
+  SkeletonProps,
+  SkeletonVariant,
+  SkeletonAnimation,
+  SkeletonVisibilityOptions,
+} from './components/Skeleton';
 
 export { Slider } from './components/Slider';
 export type {

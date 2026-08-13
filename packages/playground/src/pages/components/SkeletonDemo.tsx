@@ -1,5 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-import { Button, Card, Cluster, Skeleton, Stack, Table } from '@eocrm/design-system';
+import {
+  Button,
+  Card,
+  Cluster,
+  Skeleton,
+  Stack,
+  Table,
+  useSkeletonVisibility,
+} from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -7,6 +15,10 @@ import { getComponentFiles } from '../../lib/componentFiles';
 function TimedVisibilityExample() {
   const [loading, setLoading] = useState(false);
   const timerRef = useRef<number | undefined>(undefined);
+  const showPlaceholder = useSkeletonVisibility(loading, {
+    delay: 200,
+    minDuration: 300,
+  });
 
   useEffect(() => () => window.clearTimeout(timerRef.current), []);
 
@@ -26,7 +38,11 @@ function TimedVisibilityExample() {
           Slow load (900ms)
         </Button>
       </Cluster>
-      <Skeleton loading={loading} delay={200} minDuration={300} width={200} />
+      {showPlaceholder ? (
+        <Skeleton width={200} />
+      ) : loading ? null : (
+        <Card padding="sm">Loaded content</Card>
+      )}
     </Stack>
   );
 }
@@ -80,13 +96,22 @@ export function Demo() {
       </Example>
 
       <Example
-        title="Delayed appearance and minimum duration"
-        description="Keep Skeleton mounted and drive loading. The 100ms load finishes inside delay, so nothing flashes; the 900ms load shows after 200ms and remains visible for at least 300ms."
+        title="Mutually exclusive placeholder and content"
+        description="useSkeletonVisibility keeps the branches exclusive: the 100ms load finishes inside delay without a flash, while the 900ms load shows a placeholder after 200ms for at least 300ms."
         code={`import { useState } from 'react';
-import { Button, Skeleton, Stack } from '@eocrm/design-system';
+import {
+  Button,
+  Skeleton,
+  Stack,
+  useSkeletonVisibility,
+} from '@eocrm/design-system';
 
 export function Demo() {
   const [loading, setLoading] = useState(false);
+  const showPlaceholder = useSkeletonVisibility(loading, {
+    delay: 200,
+    minDuration: 300,
+  });
 
   const simulateLoad = (duration) => {
     setLoading(true);
@@ -96,12 +121,11 @@ export function Demo() {
   return (
     <Stack gap="md">
       <Button onClick={() => simulateLoad(900)}>Simulate load</Button>
-      <Skeleton
-        loading={loading}
-        delay={200}
-        minDuration={300}
-        width={200}
-      />
+      {showPlaceholder ? (
+        <Skeleton width={200} />
+      ) : loading ? null : (
+        <ContactList />
+      )}
     </Stack>
   );
 }`}

@@ -2,6 +2,11 @@ import { act, render } from '@testing-library/react';
 import { createRef } from 'react';
 import { Skeleton } from './Skeleton';
 
+function startFakeClock() {
+  vi.useFakeTimers();
+  vi.setSystemTime(new Date('2026-08-13T12:00:00Z'));
+}
+
 describe('Skeleton', () => {
   it('renders a span by default', () => {
     const { container } = render(<Skeleton />);
@@ -97,7 +102,7 @@ describe('Skeleton', () => {
   });
 
   it('waits for delay before rendering', () => {
-    vi.useFakeTimers();
+    startFakeClock();
     try {
       const { container } = render(<Skeleton delay={200} />);
       expect(container).toBeEmptyDOMElement();
@@ -113,7 +118,7 @@ describe('Skeleton', () => {
   });
 
   it('never renders when loading finishes inside the delay window', () => {
-    vi.useFakeTimers();
+    startFakeClock();
     try {
       const { container, rerender } = render(<Skeleton loading delay={200} />);
       act(() => vi.advanceTimersByTime(100));
@@ -127,7 +132,7 @@ describe('Skeleton', () => {
   });
 
   it('stays rendered for minDuration after becoming visible', () => {
-    vi.useFakeTimers();
+    startFakeClock();
     try {
       const { container, rerender } = render(<Skeleton loading delay={100} minDuration={300} />);
       act(() => vi.advanceTimersByTime(100));
@@ -156,7 +161,7 @@ describe('Skeleton', () => {
   });
 
   it('measures a changed delay from the start of the current load', () => {
-    vi.useFakeTimers();
+    startFakeClock();
     try {
       const { container, rerender } = render(<Skeleton delay={1000} />);
       act(() => vi.advanceTimersByTime(900));
