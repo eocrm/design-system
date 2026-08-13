@@ -292,6 +292,19 @@ test('stages Compose publications locally and repairs every Maven file', async (
   assert.doesNotMatch(composeStep, /grep -qiE '409/);
 });
 
+test('recognizes the npm 11 duplicate-version error for resumable releases', async () => {
+  const workflow = await readFile(workflowPath, 'utf8');
+  const npmPublishSteps = workflow.slice(
+    workflow.indexOf('      - name: Publish design tokens'),
+    workflow.indexOf('      - name: Publish Compose tokens'),
+  );
+
+  assert.equal(
+    npmPublishSteps.match(/cannot publish over the previously published versions/g)?.length,
+    2,
+  );
+});
+
 test('deploys the playground only after publish succeeds or an intentional no-change skip', async () => {
   const workflow = await readFile(workflowPath, 'utf8');
   const deployJob = workflow.slice(workflow.indexOf('  deploy-playground:'));

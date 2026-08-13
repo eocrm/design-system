@@ -166,7 +166,7 @@ jobs:
           status=${PIPESTATUS[0]}
           if [ "$status" -eq 0 ]; then
             echo "Published @eocrm/design-tokens."
-          elif grep -qiE 'E409|cannot publish over existing version|409 Conflict' token-publish.out; then
+          elif grep -qiE 'E409|cannot publish over existing version|cannot publish over the previously published versions|409 Conflict' token-publish.out; then
             echo "::warning::@eocrm/design-tokens already has this exact version."
           else
             exit "$status"
@@ -182,7 +182,7 @@ jobs:
           status=${PIPESTATUS[0]}
           if [ "$status" -eq 0 ]; then
             echo "Published @eocrm/design-system."
-          elif grep -qiE 'E409|cannot publish over existing version|409 Conflict' design-system-publish.out; then
+          elif grep -qiE 'E409|cannot publish over existing version|cannot publish over the previously published versions|409 Conflict' design-system-publish.out; then
             echo "::warning::@eocrm/design-system already has this exact version."
           else
             exit "$status"
