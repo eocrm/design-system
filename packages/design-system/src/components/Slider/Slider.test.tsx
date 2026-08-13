@@ -126,13 +126,11 @@ describe('Slider', () => {
       expect(ref.current).toBeInstanceOf(HTMLDivElement);
     });
 
-    it('spreads native HTML attributes (id, data-testid, aria-label)', () => {
-      render(
-        <Slider value={50} id="vol" data-testid="s" aria-label="Volume" onChange={() => {}} />,
-      );
+    it('spreads structural native HTML attributes', () => {
+      render(<Slider value={50} id="vol" data-testid="s" data-kind="volume" onChange={() => {}} />);
       const el = screen.getByTestId('s');
       expect(el).toHaveAttribute('id', 'vol');
-      expect(el).toHaveAttribute('aria-label', 'Volume');
+      expect(el).toHaveAttribute('data-kind', 'volume');
     });
   });
 
@@ -225,6 +223,29 @@ describe('Slider', () => {
       expect(thumb).toHaveAttribute('aria-describedby', 'vol-desc');
     });
 
+    it('keeps single-thumb naming and description ARIA off the role-less root', () => {
+      const { container } = render(
+        <>
+          <span id="vol-desc">0 is muted</span>
+          <Slider
+            data-testid="slider-root"
+            value={50}
+            aria-label="Volume"
+            aria-describedby="vol-desc"
+            onChange={() => {}}
+          />
+        </>,
+      );
+
+      const root = screen.getByTestId('slider-root');
+      const thumb = container.querySelector('[role="slider"]')!;
+      expect(thumb).toHaveAttribute('aria-label', 'Volume');
+      expect(thumb).toHaveAttribute('aria-describedby', 'vol-desc');
+      expect(root).not.toHaveAttribute('aria-label');
+      expect(root).not.toHaveAttribute('aria-labelledby');
+      expect(root).not.toHaveAttribute('aria-describedby');
+    });
+
     it('range mode: root aria-label distinguishes the minimum and maximum thumb names', () => {
       render(<Slider value={[20, 80]} aria-label="Price range" onChange={() => {}} />);
 
@@ -256,6 +277,31 @@ describe('Slider', () => {
 
       expect(screen.getByRole('slider', { name: 'Price range minimum' })).toBeInTheDocument();
       expect(screen.getByRole('slider', { name: 'Price range maximum' })).toBeInTheDocument();
+    });
+
+    it('keeps range naming and description ARIA off the role-less root', () => {
+      render(
+        <>
+          <span id="price-range-label">Price range</span>
+          <span id="price-range-description">Choose the allowed price band</span>
+          <Slider
+            data-testid="slider-root"
+            value={[20, 80]}
+            aria-labelledby="price-range-label"
+            aria-describedby="price-range-description"
+            onChange={() => {}}
+          />
+        </>,
+      );
+
+      const root = screen.getByTestId('slider-root');
+      const minimum = screen.getByRole('slider', { name: 'Price range minimum' });
+      const maximum = screen.getByRole('slider', { name: 'Price range maximum' });
+      expect(minimum).toHaveAccessibleDescription('Choose the allowed price band');
+      expect(maximum).toHaveAccessibleDescription('Choose the allowed price band');
+      expect(root).not.toHaveAttribute('aria-label');
+      expect(root).not.toHaveAttribute('aria-labelledby');
+      expect(root).not.toHaveAttribute('aria-describedby');
     });
 
     it('range mode: localized suffixes use the active locale', () => {

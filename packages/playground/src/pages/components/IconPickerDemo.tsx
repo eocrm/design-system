@@ -106,7 +106,7 @@ export function IconPickerDemo() {
     >
       <Example
         title="Task priority icon"
-        description="The consumer owns glyphs and labels; Field connects the visible purpose and description to the trigger."
+        description="The consumer owns glyphs and labels. Field names the trigger with the visible purpose plus its current selection, while the dialog and radio grid keep the visible Field label alone."
         code={exampleCode}
       >
         <Stack gap="sm">

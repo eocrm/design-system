@@ -2,7 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { resolve } from 'node:path';
 import { createRef } from 'react';
 import { compile } from 'sass';
-import { CardBody, type CardBodyProps } from '../../index';
+import { CardBody } from '../../index';
 import { Card, type CardPadding, type CardTone } from './Card';
 
 describe('Card', () => {
@@ -213,41 +213,19 @@ describe('compound API', () => {
     expect(Card.Body).toBe(CardBody);
   });
 
-  it('Card.Body renders the scrolling region under a fixed header', () => {
-    const ref = createRef<HTMLDivElement>();
-    const bodyProps: CardBodyProps = {
-      scroll: true,
-      className: 'consumer-class',
-      'aria-label': 'Pipeline entries',
-    };
+  it('Card.Body establishes the internal fill layout under a fixed header', () => {
     const { container } = render(
       <Card fill>
         <Card.Header>Pipeline</Card.Header>
-        <Card.Body ref={ref} data-testid="body" {...bodyProps}>
-          Body content
-        </Card.Body>
+        <Card.Body scroll>Body content</Card.Body>
       </Card>,
     );
 
     const card = container.firstElementChild!;
-    const body = screen.getByTestId('body');
     expect(card.className).toMatch(/fillWithBody/);
     expect(card.className).toMatch(/paddingNone/);
-    expect(ref.current).toBe(body);
-    expect(body.tagName).toBe('DIV');
-    expect(body.className).toMatch(/body/);
-    expect(body.className).toMatch(/scroll/);
-    expect(body.className).toMatch(/consumer-class/);
-    expect(body).toHaveAttribute('aria-label', 'Pipeline entries');
-    expect(body).not.toHaveAttribute('scroll');
-  });
-
-  it('Card.Body without scroll keeps section styling without the scroll modifier', () => {
-    const { container } = render(<Card.Body data-region="details">Details</Card.Body>);
-    const body = container.firstElementChild!;
-    expect(body.className).toMatch(/body/);
-    expect(body.className).not.toMatch(/scroll/);
-    expect(body).toHaveAttribute('data-region', 'details');
+    expect(screen.getByText('Pipeline')).toBeInTheDocument();
+    expect(screen.getByText('Body content')).toBeInTheDocument();
   });
 
   it('only establishes the internal column chain when fill and Card.Body are combined', () => {

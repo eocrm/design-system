@@ -51,11 +51,13 @@ function PopoverCustomTrigger() {
   const [hex, setHex] = useState('#F59E0B');
   return (
     <Stack gap="sm" align="start">
-      <ColorPicker value={hex} onChange={setHex}>
-        <ColorPicker.Trigger asChild>
-          <Button variant="secondary">Pick a color ({hex})</Button>
-        </ColorPicker.Trigger>
-      </ColorPicker>
+      <Field label="Campaign color" description="Used for campaign accents">
+        <ColorPicker value={hex} onChange={setHex}>
+          <ColorPicker.Trigger asChild>
+            <Button variant="secondary">Pick a color ({hex})</Button>
+          </ColorPicker.Trigger>
+        </ColorPicker>
+      </Field>
       <Text size="sm" tone="muted">
         Value: <Code>{hex}</Code>
       </Text>
@@ -139,19 +141,21 @@ export function PopoverDefaultTrigger() {
 
       <Example
         title="Popover with custom trigger"
-        description="Override the default trigger via <ColorPicker.Trigger asChild>. The child must forwardRef — <Popover.Trigger> clones it to inject the click handler + aria-*."
+        description="Override the default trigger via <ColorPicker.Trigger asChild>. Field still wires its label, description, and invalid state to the custom focusable child; that child must forwardRef."
         code={`import { useState } from 'react';
-import { Button, Code, ColorPicker, Stack, Text } from '@eocrm/design-system';
+import { Button, Code, ColorPicker, Field, Stack, Text } from '@eocrm/design-system';
 
 export function PopoverCustomTrigger() {
   const [hex, setHex] = useState('#F59E0B');
   return (
     <Stack gap="sm" align="start">
-      <ColorPicker value={hex} onChange={setHex}>
-        <ColorPicker.Trigger asChild>
-          <Button variant="secondary">Pick a color ({hex})</Button>
-        </ColorPicker.Trigger>
-      </ColorPicker>
+      <Field label="Campaign color" description="Used for campaign accents">
+        <ColorPicker value={hex} onChange={setHex}>
+          <ColorPicker.Trigger asChild>
+            <Button variant="secondary">Pick a color ({hex})</Button>
+          </ColorPicker.Trigger>
+        </ColorPicker>
+      </Field>
       <Text size="sm" tone="muted">
         Value: <Code>{hex}</Code>
       </Text>

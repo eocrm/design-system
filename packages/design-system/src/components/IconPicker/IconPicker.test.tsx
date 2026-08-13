@@ -394,7 +394,7 @@ it('dismisses with Escape or an outside click without changing the value', async
   expect(onChange).not.toHaveBeenCalled();
 });
 
-it('lets an external label suppress the generated trigger name', () => {
+it('appends the selected value to an external label only for the trigger', () => {
   render(
     <>
       <span id="field-label">Priority icon</span>
@@ -406,10 +406,10 @@ it('lets an external label suppress the generated trigger name', () => {
       />
     </>,
   );
-  expect(screen.getByRole('button', { name: 'Priority icon' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Priority icon Flame' })).toBeInTheDocument();
 });
 
-it('uses an external label to name the trigger, dialog, and radio grid', async () => {
+it('keeps the selected value out of the externally labelled dialog and radio grid', async () => {
   const user = userEvent.setup();
   render(
     <>
@@ -422,9 +422,11 @@ it('uses an external label to name the trigger, dialog, and radio grid', async (
       />
     </>,
   );
-  await user.click(screen.getByRole('button', { name: 'Priority icon' }));
+  await user.click(screen.getByRole('button', { name: 'Priority icon Flame' }));
   expect(screen.getByRole('dialog', { name: 'Priority icon' })).toBeInTheDocument();
   expect(screen.getByRole('radiogroup', { name: 'Priority icon' })).toBeInTheDocument();
+  expect(screen.queryByRole('dialog', { name: 'Priority icon Flame' })).not.toBeInTheDocument();
+  expect(screen.queryByRole('radiogroup', { name: 'Priority icon Flame' })).not.toBeInTheDocument();
 });
 
 it('associates Field label and state with the trigger without leaking them to the wrapper', () => {
@@ -435,16 +437,17 @@ it('associates Field label and state with the trigger without leaking them to th
   );
 
   const label = container.querySelector('label')!;
-  const trigger = screen.getByRole('button', { name: 'Priority icon' });
+  const trigger = screen.getByRole('button', { name: 'Priority icon Flame' });
   const root = container.querySelector('.picker-root')!;
 
   expect(label.htmlFor).toBe(trigger.id);
   expect(trigger).toHaveAttribute('id', 'priority-icon');
-  expect(trigger).toHaveAccessibleName('Priority icon');
+  expect(trigger).toHaveAccessibleName('Priority icon Flame');
   expect(trigger).toHaveAttribute('aria-describedby', 'priority-icon-error');
   expect(trigger).toHaveAttribute('aria-invalid', 'true');
-  expect(trigger).toHaveAttribute('aria-required', 'true');
+  expect(trigger).not.toHaveAttribute('aria-required');
   expect(trigger).not.toHaveAttribute('aria-label');
+  expect(screen.getByText('*')).toBeInTheDocument();
 
   expect(root).not.toHaveAttribute('id');
   expect(root).not.toHaveAttribute('required');
@@ -455,7 +458,7 @@ it('associates Field label and state with the trigger without leaking them to th
   expect(root).not.toHaveAttribute('aria-describedby');
 });
 
-it('forwards explicit ARIA state to the trigger without leaking it to the wrapper', () => {
+it('forwards explicit invalid state but consumes unsupported aria-required', () => {
   const { container } = render(
     <IconPicker
       className="picker-root"
@@ -470,7 +473,7 @@ it('forwards explicit ARIA state to the trigger without leaking it to the wrappe
   const trigger = screen.getByRole('button', { name: 'Pick icon: Flame' });
   const root = container.querySelector('.picker-root')!;
   expect(trigger).toHaveAttribute('aria-invalid', 'grammar');
-  expect(trigger).toHaveAttribute('aria-required', 'true');
+  expect(trigger).not.toHaveAttribute('aria-required');
   expect(root).not.toHaveAttribute('aria-invalid');
   expect(root).not.toHaveAttribute('aria-required');
 });

@@ -576,9 +576,6 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
         disabled && styles.disabled,
         className,
       )}
-      aria-label={ariaLabel}
-      aria-labelledby={ariaLabelledBy}
-      aria-describedby={ariaDescribedBy}
       {...rest}
     >
       <div ref={trackRef} className={styles.track} onPointerDown={handleTrackPointerDown}>
@@ -627,8 +624,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
           aria-describedby={
             // Forward the root's aria-describedby to each focusable thumb so a
             // <Field error/description> wrapping a Slider is announced when a
-            // thumb has focus. It also remains on the root via {...rest}, which
-            // is harmless — the root is non-focusable and carries no role.
+            // thumb has focus. The role-less root intentionally stays unnamed.
             ariaDescribedBy
           }
           className={clsx(styles.thumb, isDragging[index] && styles.thumbDragging)}

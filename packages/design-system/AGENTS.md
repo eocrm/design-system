@@ -558,11 +558,13 @@ const [hex, setHex] = useState('#4F46E5');
 </Field>
 
 // Custom trigger:
-<ColorPicker value={hex} onChange={setHex}>
-  <ColorPicker.Trigger asChild>
-    <Button variant="secondary">Pick a color</Button>
-  </ColorPicker.Trigger>
-</ColorPicker>
+<Field label="Brand color" description="Used for campaign accents">
+  <ColorPicker value={hex} onChange={setHex}>
+    <ColorPicker.Trigger asChild>
+      <Button variant="secondary">Pick a color</Button>
+    </ColorPicker.Trigger>
+  </ColorPicker>
+</Field>
 
 // Inline (always-visible panel — for theme builders, settings rows):
 <ColorPicker.Panel value={hex} onChange={setHex} />
@@ -571,7 +573,7 @@ const [hex, setHex] = useState('#4F46E5');
 - **Controlled-only.** `value: string` in `#RRGGBB` form. Loose input accepted on the HEX text field (`#FFF`, `FFF`, `#ffffff`); the component always emits the canonical `#RRGGBB` (uppercase, with `#`).
 - **Two distribution shapes via the compound API.** `<ColorPicker>` is the popover-wrapped form-field-ready widget. `<ColorPicker.Panel>` is the same picker without the popover wrapping — drop it directly into a settings page or theme builder.
 - **Default trigger** is an input-field-shaped button with a 16×16 swatch + uppercase HEX text. Override via `<ColorPicker.Trigger asChild>{customNode}</ColorPicker.Trigger>` (the child must `forwardRef` because `<Popover.Trigger>` clones it).
-- **Field-ready.** `<Field label>` connects `id`, naming, description, invalid, and required state to the default trigger button rather than the role-less picker wrapper.
+- **Field-ready.** `<Field label>` connects `id`, naming, description, and invalid state to either the default or custom trigger rather than the role-less picker wrapper. `required` remains a visible Field marker; native trigger buttons do not expose `aria-required` because that state is unsupported for buttons.
 - **`onChange` fires per drag/zoom tick (high frequency).** Use `onChangeEnd` for commit-style logic (network calls, history snapshots) — it fires on pointer release, slider release, HEX input blur, and preset click.
 - **Presets via `presets?: string[]`.** Invalid entries are dropped silently. The library doesn't ship a default palette — pass your own brand colors. Selected swatch gets an inset ring + check overlay.
 - **Color math is exported.** `hexToHsv(hex)`, `hsvToHex({h,s,v})`, `normalizeHex(loose)` are usable directly for downstream theme builders, contrast calculators, etc.
@@ -617,7 +619,7 @@ const options = [
 ```
 
 - The consumer owns icon values, labels, glyphs, ordering, and controlled state.
-- `<Field label>` names the trigger and forwards description, invalid, and required state to that button; those attributes do not sit on the role-less wrapper.
+- `<Field label>` names the trigger with the visible label plus the selected option, and forwards description and invalid state to that button; the dialog and radiogroup use only the visible Field label. These attributes do not sit on the role-less wrapper. `required` remains a visible Field marker rather than unsupported `aria-required` on the native button.
 - Use it for compact visual choices; use `Select` when visible option text matters.
 - Labels must be human-readable and values unique. Do not pass icon codes as labels.
 
@@ -2919,7 +2921,8 @@ rendering existing reaction counts (the consumer builds that display).
   extra={<Text size="sm" tone="muted">Error ID: a1b2-c3d4</Text>}
 />
 
-// Loading → error in an existing Card. Keep the status region mounted.
+// Page-level loading → error transition. This Card intentionally owns the
+// existing page-level status surface and stays mounted across both states.
 <Card role="status" aria-busy={!failed}>
   {failed ? (
     <ErrorState
@@ -2942,7 +2945,7 @@ rendering existing reaction counts (the consumer builds that display).
 - `size`: `sm` / `md` / `lg` (**default** — full-page hero). `align`: `'center'` (default) / `'start'`.
 - `headingLevel` defaults to `1` (the page h1); lower it when nested. Values outside 1–6 clamp to 1.
 - `tone="danger"` makes the wrapper `role="alert"` (announces the whole subtree assertively on mount — ideal for an error-boundary fallback). For a _standalone_ error page, pass `role={undefined}` so it isn't read as a wall of text on load. Override via `role`.
-- **Loading → error in an existing surface:** keep one `Card role="status" aria-busy={!failed}` mounted, with either loading content or `<ErrorState role={undefined}>` inside it. A live region mounted together with the error has no mutation to announce, and a page-sized assertive alert is inappropriate for this update.
+- **Loading → error in an existing page-level surface:** the example's Card is intentionally the stable page-level transition surface, not a recommendation to nest ErrorState in arbitrary cards. Keep that one `Card role="status" aria-busy={!failed}` mounted, with either loading content or `<ErrorState role={undefined}>` inside it. A live region mounted together with the error has no mutation to announce, and a page-sized assertive alert is inappropriate for this update.
 - For `tone="neutral"`, the `<section>` is not a screen-reader landmark unless it has an accessible name — pass `aria-label` / `aria-labelledby` when it IS the page's primary region (typical for a full-page 404).
 - No automatic `aria-hidden` on the icon — pass `aria-hidden="true"` for a decorative icon. No i18n — all copy is consumer-supplied.
 

@@ -15,6 +15,11 @@ export interface SkeletonVisibilityOptions {
   minDuration?: number;
 }
 
+function normalizeDuration(value: number | undefined): number {
+  const duration = value ?? 0;
+  return Number.isFinite(duration) ? Math.max(0, duration) : 0;
+}
+
 /**
  * Coordinates delayed placeholder visibility and a minimum visible duration.
  * Use the returned boolean to keep placeholder and content branches mutually
@@ -40,8 +45,8 @@ export function useSkeletonVisibility(
   loading: boolean,
   options: SkeletonVisibilityOptions = {},
 ): boolean {
-  const normalizedDelay = Math.max(0, options.delay ?? 0);
-  const normalizedMinDuration = Math.max(0, options.minDuration ?? 0);
+  const normalizedDelay = normalizeDuration(options.delay);
+  const normalizedMinDuration = normalizeDuration(options.minDuration);
   const [visible, setVisible] = useState(() => loading && normalizedDelay === 0);
   const now = Date.now();
   const shownAt = useRef<number | null>(visible ? now : null);

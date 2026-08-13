@@ -40,7 +40,12 @@ export interface ColorPickerTriggerProps {
    * of merging. Documented for API stability.
    */
   asChild?: boolean;
-  /** The element to render as the trigger. Must accept `ref` and `onClick`. */
+  /**
+   * The element to render as the trigger. Must accept `ref`, `onClick`, `id`, and ARIA
+   * attributes so ColorPicker can connect it to Field. Explicit child ARIA naming,
+   * description, and invalid state win over the parent values; ColorPicker's public `id`
+   * still owns the label association.
+   */
   children: ReactNode;
 }
 
@@ -89,11 +94,16 @@ export interface ColorPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, '
   disabled?: boolean;
   /** Marks the focusable trigger invalid for Field composition. @default false */
   invalid?: boolean;
-  /** Marks the focusable trigger required for Field composition. @default false */
+  /**
+   * Consumed for Field composition so Field can render its visible required marker. Native
+   * buttons do not support `aria-required`, so this does not add required semantics to the
+   * trigger. @default false
+   */
   required?: boolean;
   /**
-   * Accessible name for the default trigger. Forwarded to the focusable trigger,
-   * not the root wrapper. Ignored when `aria-labelledby` is provided.
+   * Accessible name for the focusable trigger. Forwarded to the default or custom trigger,
+   * not the root wrapper. Ignored when `aria-labelledby` is provided. An explicit name on
+   * a custom trigger child takes precedence.
    */
   'aria-label'?: string;
   /**
@@ -125,9 +135,7 @@ interface DefaultTriggerProps {
   label: string;
   disabled: boolean;
   invalid: boolean;
-  required: boolean;
   ariaInvalid?: ColorPickerProps['aria-invalid'];
-  ariaRequired?: ColorPickerProps['aria-required'];
   ariaLabel?: string;
   open: boolean;
   labelledBy?: string;
@@ -142,9 +150,7 @@ const DefaultTrigger = forwardRef<HTMLButtonElement, DefaultTriggerProps>(functi
     label,
     disabled,
     invalid,
-    required,
     ariaInvalid,
-    ariaRequired,
     ariaLabel,
     open,
     onClick,
@@ -167,7 +173,6 @@ const DefaultTrigger = forwardRef<HTMLButtonElement, DefaultTriggerProps>(functi
       aria-labelledby={labelledBy}
       aria-describedby={describedBy}
       aria-invalid={invalid ? true : ariaInvalid}
-      aria-required={required ? true : ariaRequired}
       aria-haspopup="true"
       aria-expanded={open}
       onClick={onClick}
@@ -197,11 +202,13 @@ const DefaultTrigger = forwardRef<HTMLButtonElement, DefaultTriggerProps>(functi
  *
  * @example
  * // Custom trigger via the slot-style override:
- * <ColorPicker value={hex} onChange={setHex}>
- *   <ColorPicker.Trigger asChild>
- *     <Button variant="secondary">Pick a color</Button>
- *   </ColorPicker.Trigger>
- * </ColorPicker>
+ * <Field label="Brand color" description="Used for campaign accents">
+ *   <ColorPicker value={hex} onChange={setHex}>
+ *     <ColorPicker.Trigger asChild>
+ *       <Button variant="secondary">Pick a color</Button>
+ *     </ColorPicker.Trigger>
+ *   </ColorPicker>
+ * </Field>
  *
  * @example
  * // With preset swatches:
@@ -237,13 +244,14 @@ const ColorPickerRoot = forwardRef<HTMLDivElement, ColorPickerProps>(function Co
     presets,
     disabled = false,
     invalid = false,
-    required = false,
+    // Consumed for Field compatibility; native button triggers do not support required state.
+    required: _required = false,
     triggerLabel,
     popoverPlacement = 'bottom-start',
     id,
     'aria-label': ariaLabel,
     'aria-invalid': ariaInvalid,
-    'aria-required': ariaRequired,
+    'aria-required': _ariaRequired,
     'aria-labelledby': ariaLabelledBy,
     'aria-describedby': ariaDescribedBy,
     children,
@@ -265,35 +273,50 @@ const ColorPickerRoot = forwardRef<HTMLDivElement, ColorPickerProps>(function Co
       isValidElement(c) && c.type === ColorPickerTrigger,
   );
 
-  const triggerElement = customTrigger ? (
-    // The consumer's child is cloned to inject the label/description ids so a
-    // custom trigger is named too; <Popover.Trigger> then clones it again to
-    // inject onClick + aria-* + ref. Only inject keys we actually have — passing
-    // `undefined` through cloneElement would CLOBBER any aria-labelledby /
-    // aria-describedby the consumer already set on their own trigger.
-    cloneElement(customTrigger.props.children as ReactElement<Record<string, unknown>>, {
-      ...(ariaLabelledBy !== undefined && { 'aria-labelledby': ariaLabelledBy }),
-      ...(ariaDescribedBy !== undefined && { 'aria-describedby': ariaDescribedBy }),
-    })
-  ) : (
-    <DefaultTrigger
-      id={id}
-      hex={value}
-      label={resolvedTriggerLabel}
-      disabled={disabled}
-      invalid={invalid}
-      required={required}
-      ariaInvalid={ariaInvalid}
-      ariaRequired={ariaRequired}
-      ariaLabel={ariaLabel}
-      open={open}
-      labelledBy={ariaLabelledBy}
-      describedBy={ariaDescribedBy}
-      // onClick is overridden by Popover.Trigger's cloneElement; we set a
-      // no-op here so DefaultTrigger's prop type is satisfied.
-      onClick={() => {}}
-    />
-  );
+  let triggerElement: ReactElement;
+  if (customTrigger) {
+    const customChild = customTrigger.props.children as ReactElement<Record<string, unknown>>;
+    const childProps = customChild.props;
+    const childAriaLabel = childProps['aria-label'];
+    const childAriaLabelledBy = childProps['aria-labelledby'];
+    const resolvedLabelledBy =
+      childAriaLabelledBy ?? (childAriaLabel === undefined ? ariaLabelledBy : undefined);
+    const resolvedLabel =
+      childAriaLabel ?? (resolvedLabelledBy === undefined ? ariaLabel : undefined);
+    const resolvedDescribedBy = childProps['aria-describedby'] ?? ariaDescribedBy;
+    const resolvedInvalid = childProps['aria-invalid'] ?? (invalid ? true : ariaInvalid);
+
+    // The consumer's child is cloned to receive the supported control attributes;
+    // <Popover.Trigger> clones it again to add disclosure behavior and its ref. A
+    // custom child's explicit ARIA wins, while ColorPicker's public id continues to
+    // own the Field label's htmlFor/id association.
+    triggerElement = cloneElement(customChild, {
+      ...(id !== undefined && { id }),
+      ...(resolvedLabel !== undefined && { 'aria-label': resolvedLabel }),
+      ...(resolvedLabelledBy !== undefined && { 'aria-labelledby': resolvedLabelledBy }),
+      ...(resolvedDescribedBy !== undefined && { 'aria-describedby': resolvedDescribedBy }),
+      ...(resolvedInvalid !== undefined && { 'aria-invalid': resolvedInvalid }),
+      'aria-required': undefined,
+    });
+  } else {
+    triggerElement = (
+      <DefaultTrigger
+        id={id}
+        hex={value}
+        label={resolvedTriggerLabel}
+        disabled={disabled}
+        invalid={invalid}
+        ariaInvalid={ariaInvalid}
+        ariaLabel={ariaLabel}
+        open={open}
+        labelledBy={ariaLabelledBy}
+        describedBy={ariaDescribedBy}
+        // onClick is overridden by Popover.Trigger's cloneElement; we set a
+        // no-op here so DefaultTrigger's prop type is satisfied.
+        onClick={() => {}}
+      />
+    );
+  }
 
   const handleOpenChange = useCallback(
     (next: boolean) => {

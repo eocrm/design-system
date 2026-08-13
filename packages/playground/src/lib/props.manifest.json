@@ -530,7 +530,7 @@
           "type": "CardPadding",
           "required": false,
           "default": "",
-          "description": "Inner padding.\n- `none` — use when the card contains a table or list that should bleed\n  edge-to-edge; inner sections manage their own padding.\n- `sm` (12px) — dense info cards.\n- `md` (16px) — default for plain-content cards.\n- `lg` (24px) — emphasis cards, marketing-style panels.\n\nWhen omitted, defaults to `'md'` for plain content, or `'none'` when the\ncard contains compound subcomponents (`Card.Header` / `Card.List` /\n`Card.ListRow`) so the header and rows bleed to the card edge automatically.\nPass an explicit value to override the auto-detect.\n\n**Detection is shallow:** only direct children are inspected. Fragments\n(`<>...</>`) are transparent — the detection recurses into them, so\nconditional renders that wrap compound children in a Fragment still\ntrigger the auto-detect. But wrapping a `Card.Header` in any other\nelement (`<div>`, `<Stack>`, etc.) defeats the heuristic — pass\n`padding=\"none\"` explicitly in that case."
+          "description": "Inner padding.\n- `none` — use when the card contains a table or list that should bleed\n  edge-to-edge; inner sections manage their own padding.\n- `sm` (12px) — dense info cards.\n- `md` (16px) — default for plain-content cards.\n- `lg` (24px) — emphasis cards, marketing-style panels.\n\nWhen omitted, defaults to `'md'` for plain content, or `'none'` when the\ncard contains compound subcomponents (`Card.Header` / `Card.Body` /\n`Card.List` / `Card.ListRow`) so its sections bleed to the card edge\nautomatically.\nPass an explicit value to override the auto-detect.\n\n**Detection is shallow:** only direct children are inspected. Fragments\n(`<>...</>`) are transparent — the detection recurses into them, so\nconditional renders that wrap compound children in a Fragment still\ntrigger the auto-detect. But wrapping a `Card.Header` in any other\nelement (`<div>`, `<Stack>`, etc.) defeats the heuristic — pass\n`padding=\"none\"` explicitly in that case."
         },
         {
           "name": "tone",
@@ -551,7 +551,7 @@
           "type": "boolean",
           "required": false,
           "default": "false",
-          "description": "Fill the containing block's height and allow the Card to shrink within a\nnarrow grid cell. Use in stretched Grid, Sortable, or DashboardCanvas\ncells whose wrapper already has a definite height. Defaults to `false`."
+          "description": "Fill the containing block's height and allow the Card to shrink within a\nnarrow grid cell. Use in stretched Grid, Sortable, or DashboardCanvas\ncells whose wrapper already has a definite height. When a direct\n`Card.Body` child is present, `fill` also establishes Card's internal\ncolumn and minimum-height chain; add `scroll` to the Body to keep a sibling\nHeader fixed above a scrolling content region. Defaults to `false`."
         }
       ]
     },
@@ -749,6 +749,27 @@
           "description": "Disable interaction. Trigger doesn't open; panel is non-interactive."
         },
         {
+          "name": "invalid",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "Marks the focusable trigger invalid for Field composition."
+        },
+        {
+          "name": "required",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "Consumed for Field composition so Field can render its visible required marker. Native\nbuttons do not support `aria-required`, so this does not add required semantics to the\ntrigger."
+        },
+        {
+          "name": "aria-label",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Accessible name for the focusable trigger. Forwarded to the default or custom trigger,\nnot the root wrapper. Ignored when `aria-labelledby` is provided. An explicit name on\na custom trigger child takes precedence."
+        },
+        {
           "name": "triggerLabel",
           "type": "string",
           "required": false,
@@ -915,21 +936,21 @@
           "type": "ConstrainHeight",
           "required": false,
           "default": "",
-          "description": "Fixed height — a named measure, `'full'` (100%), or `'viewport'` (100dvh)."
+          "description": "Fixed height — a named measure, `'full'` (100%), `'viewport'` (100dvh), or `'viewport-70'` (70dvh)."
         },
         {
           "name": "minHeight",
           "type": "ConstrainHeight",
           "required": false,
           "default": "",
-          "description": "Minimum height floor — a named measure, `'full'`, or `'viewport'`."
+          "description": "Minimum height floor — a named measure, `'full'`, `'viewport'`, or `'viewport-70'`."
         },
         {
           "name": "maxHeight",
           "type": "ConstrainHeight",
           "required": false,
           "default": "",
-          "description": "Maximum height cap — a named measure, `'full'`, or `'viewport'`."
+          "description": "Maximum height cap — a named measure, `'full'`, `'viewport'`, or `'viewport-70'`."
         },
         {
           "name": "flex",
@@ -1124,6 +1145,20 @@
           "required": false,
           "default": "",
           "description": "Number of skeleton rows when `loading`. Defaults 10."
+        },
+        {
+          "name": "skeletonDelay",
+          "type": "number",
+          "required": false,
+          "default": "",
+          "description": "Milliseconds to wait before showing skeleton rows for an empty initial\nload. Defaults to `0`; fast loads that finish inside the delay never show\na skeleton."
+        },
+        {
+          "name": "skeletonMinDuration",
+          "type": "number",
+          "required": false,
+          "default": "",
+          "description": "Minimum milliseconds skeleton rows remain visible after appearing.\nDefaults to `0`. Arriving rows and the empty state remain hidden until the\nvisual tail finishes."
         },
         {
           "name": "emptyState",
@@ -2343,6 +2378,20 @@
           "description": "Disables the trigger, prevents opening and selection, and closes an open picker."
         },
         {
+          "name": "invalid",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "Marks the focusable trigger invalid for Field composition."
+        },
+        {
+          "name": "required",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "Consumed for Field composition so Field can render its visible required marker. Native\nbuttons do not support `aria-required`, so this does not add required semantics to the\ntrigger."
+        },
+        {
           "name": "popoverPlacement",
           "type": "IconPickerPopoverPlacement",
           "required": false,
@@ -2361,7 +2410,7 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Id(s) of external elements that provide the picker purpose. They name the dialog and\nradiogroup directly; the trigger also appends an internal selected-icon label when matched."
+          "description": "Id(s) of external elements that provide the picker purpose. They name the dialog and\nradiogroup directly. The trigger also references hidden selected-option text so its name\nremains the visible purpose plus the current selection."
         },
         {
           "name": "aria-describedby",
@@ -4204,6 +4253,13 @@
           "description": "Value bubble on the thumb.\n- `false` (default) — no bubble.\n- `true` — show the current value (formatted via `toString()`) on hover /\n  focus / drag. Auto-hides otherwise.\n- `(value: number) => ReactNode` — custom formatter. For range mode, the\n  formatter is called once per thumb."
         },
         {
+          "name": "thumbLabels",
+          "type": "readonly [string, string]",
+          "required": false,
+          "default": "",
+          "description": "Explicit accessible names for the minimum and maximum thumbs in range\nmode. These win over a root `aria-label` or `aria-labelledby`; use them\nwhen the thumbs need domain-specific names such as `['Start date', 'End\ndate']`. When omitted, a root label is suffixed with the localized\n“minimum” or “maximum” name."
+        },
+        {
           "name": "size",
           "type": "SliderSize",
           "required": false,
@@ -4506,7 +4562,7 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Disables interaction and shows a spinner inside the thumb. Use for\ntoggles that persist to a server. Sets `aria-busy=\"true\"` and\n`disabled` on the native input so neither click nor Space-key can\nfire onChange while the async operation is in flight.\n\nThe consumer is responsible for managing the optimistic-update flow:\n\n```tsx\nconst [enabled, setEnabled] = useState(initial);\nconst [saving, setSaving] = useState(false);\n\nconst handleToggle = async (next: boolean) => {\n  setSaving(true);\n  setEnabled(next);            // optimistic\n  try { await api.save(next); }\n  catch { setEnabled(!next); } // rollback\n  finally { setSaving(false); }\n};\n\n<Switch checked={enabled} loading={saving} onChange={handleToggle} />\n```"
+          "description": "Shows a spinner inside the thumb and suppresses changes while a toggle\npersists to a server. Sets `aria-busy=\"true\"` while keeping the native\ninput focusable, so keyboard users retain their place in the form.\n\nThe consumer is responsible for managing the optimistic-update flow:\n\n```tsx\nconst [enabled, setEnabled] = useState(initial);\nconst [saving, setSaving] = useState(false);\n\nconst handleToggle = async (next: boolean) => {\n  setSaving(true);\n  setEnabled(next);            // optimistic\n  try { await api.save(next); }\n  catch { setEnabled(!next); } // rollback\n  finally { setSaving(false); }\n};\n\n<Switch checked={enabled} loading={saving} onChange={handleToggle} />\n```"
         },
         {
           "name": "children",
@@ -5061,7 +5117,7 @@
     "ClusterJustify": "\"start\" | \"end\" | \"center\" | \"between\"",
     "ClusterAlign": "\"start\" | \"end\" | \"baseline\" | \"center\"",
     "ConstrainWidth": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"full\"",
-    "ConstrainHeight": "ConstrainWidth | \"viewport\"",
+    "ConstrainHeight": "ConstrainWidth | \"viewport\" | \"viewport-70\"",
     "ConstrainFlex": "\"none\" | \"grow\" | \"shrink\" | \"auto\"",
     "IndentGutter": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"2xl\"",
     "GridGap": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"2xl\"",

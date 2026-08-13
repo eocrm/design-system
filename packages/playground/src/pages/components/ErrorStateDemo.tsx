@@ -89,13 +89,14 @@ export function Demo() {
 
       <Example
         title="Loading to error"
-        description="Keep one polite status region mounted while content changes. Do not mount a live region with the error, or make this page-sized update an assertive alert."
+        description="This Card intentionally remains the page-level transition surface while its loading content becomes an error. Keep that one polite status region mounted; do not mount a new live region with the error or make the page-sized update assertive."
         code={`import { useState } from 'react';
 import { Button, Card, ErrorState, Stack, Text } from '@eocrm/design-system';
 
 export function Demo() {
   const [failed, setFailed] = useState(false);
 
+  // The Card is the existing page-level status surface for both states.
   return (
     <Stack gap="md">
       <Card role="status" aria-busy={!failed}>

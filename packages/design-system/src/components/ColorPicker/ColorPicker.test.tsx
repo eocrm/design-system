@@ -468,8 +468,9 @@ describe('ColorPicker — labelledby / describedby forwarding', () => {
     expect(trigger).toHaveAccessibleName('Brand color');
     expect(trigger).toHaveAttribute('aria-describedby', 'brand-color-error');
     expect(trigger).toHaveAttribute('aria-invalid', 'true');
-    expect(trigger).toHaveAttribute('aria-required', 'true');
+    expect(trigger).not.toHaveAttribute('aria-required');
     expect(trigger).not.toHaveAttribute('aria-label');
+    expect(screen.getByText('*')).toBeInTheDocument();
     expect(root).not.toHaveAttribute('id');
     expect(root).not.toHaveAttribute('required');
     expect(root).not.toHaveAttribute('invalid');
@@ -498,17 +499,97 @@ describe('ColorPicker — labelledby / describedby forwarding', () => {
     expect(container.querySelector('div')).not.toHaveAttribute('aria-labelledby');
   });
 
-  it('a Field label names a custom trigger (cloneElement branch)', () => {
-    render(
-      <Field label="Brand color">
-        <ColorPicker value="#000000" onChange={() => {}}>
+  it('associates Field label, description, invalid state, and required marker with a custom trigger', () => {
+    const { container } = render(
+      <Field id="brand-color" label="Brand color" error="Choose a brand color" required>
+        <ColorPicker className="picker-root" value="#000000" onChange={() => {}}>
           <ColorPicker.Trigger asChild>
             <button type="button">Pick</button>
           </ColorPicker.Trigger>
         </ColorPicker>
       </Field>,
     );
-    expect(screen.getByRole('button', { name: 'Brand color' })).toBeInTheDocument();
+
+    const label = container.querySelector('label')!;
+    const trigger = screen.getByRole('button', { name: 'Brand color' });
+    const root = container.querySelector('.picker-root')!;
+
+    expect(label.htmlFor).toBe(trigger.id);
+    expect(trigger).toHaveAttribute('id', 'brand-color');
+    expect(trigger).toHaveAccessibleDescription('Choose a brand color');
+    expect(trigger).toHaveAttribute('aria-invalid', 'true');
+    expect(trigger).not.toHaveAttribute('aria-required');
+    expect(screen.getByText('*')).toBeInTheDocument();
+    expect(root).not.toHaveAttribute('id');
+    expect(root).not.toHaveAttribute('required');
+    expect(root).not.toHaveAttribute('invalid');
+    expect(root).not.toHaveAttribute('aria-invalid');
+    expect(root).not.toHaveAttribute('aria-required');
+    expect(root).not.toHaveAttribute('aria-labelledby');
+    expect(root).not.toHaveAttribute('aria-describedby');
+  });
+
+  it('preserves explicit custom-trigger ARIA while ColorPicker still owns its public id', () => {
+    render(
+      <>
+        <span id="picker-label">Picker label</span>
+        <span id="picker-description">Picker description</span>
+        <span id="trigger-label">Trigger label</span>
+        <span id="trigger-description">Trigger description</span>
+        <ColorPicker
+          id="picker-id"
+          value="#000000"
+          onChange={() => {}}
+          invalid
+          aria-labelledby="picker-label"
+          aria-describedby="picker-description"
+        >
+          <ColorPicker.Trigger asChild>
+            <button
+              id="trigger-id"
+              type="button"
+              aria-labelledby="trigger-label"
+              aria-describedby="trigger-description"
+              aria-invalid="grammar"
+            />
+          </ColorPicker.Trigger>
+        </ColorPicker>
+      </>,
+    );
+
+    const trigger = screen.getByRole('button', { name: 'Trigger label' });
+    expect(trigger).toHaveAttribute('id', 'picker-id');
+    expect(trigger).toHaveAttribute('aria-labelledby', 'trigger-label');
+    expect(trigger).toHaveAccessibleDescription('Trigger description');
+    expect(trigger).toHaveAttribute('aria-invalid', 'grammar');
+  });
+
+  it('consumes explicit aria-required without applying it to a button or wrapper', () => {
+    const { container } = render(
+      <ColorPicker
+        className="picker-root"
+        aria-required="true"
+        value="#000000"
+        onChange={() => {}}
+      />,
+    );
+
+    expect(screen.getByRole('button')).not.toHaveAttribute('aria-required');
+    expect(container.querySelector('.picker-root')).not.toHaveAttribute('aria-required');
+  });
+
+  it('removes unsupported aria-required from a custom trigger button', () => {
+    render(
+      <ColorPicker value="#000000" onChange={() => {}}>
+        <ColorPicker.Trigger asChild>
+          <button type="button" aria-required="true">
+            Pick
+          </button>
+        </ColorPicker.Trigger>
+      </ColorPicker>,
+    );
+
+    expect(screen.getByRole('button', { name: 'Pick' })).not.toHaveAttribute('aria-required');
   });
 
   it('does NOT clobber a consumer aria-labelledby on a custom trigger when not in a Field', () => {

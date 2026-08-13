@@ -82,6 +82,34 @@ describe('useSkeletonVisibility', () => {
     unmount();
   });
 
+  it.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
+    'normalizes a non-finite %s delay to zero',
+    (delay) => {
+      const { result, unmount } = renderHook(() => useSkeletonVisibility(true, { delay }));
+
+      expect(result.current).toBe(true);
+      expect(vi.getTimerCount()).toBe(0);
+      unmount();
+    },
+  );
+
+  it.each([Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY])(
+    'normalizes a non-finite %s minimum duration to zero',
+    (minDuration) => {
+      let loading = true;
+      const { result, rerender, unmount } = renderHook(() =>
+        useSkeletonVisibility(loading, { minDuration }),
+      );
+
+      expect(result.current).toBe(true);
+      loading = false;
+      rerender();
+      expect(result.current).toBe(false);
+      expect(vi.getTimerCount()).toBe(0);
+      unmount();
+    },
+  );
+
   it('restarts the full delay for a new loading cycle after cancellation', () => {
     let loading = true;
     const { result, rerender, unmount } = renderHook(() =>

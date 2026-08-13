@@ -6,6 +6,7 @@ import { Avatar } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
 import { Link } from '@eocrm/design-system';
 import { Constrain } from '@eocrm/design-system';
+import { Text } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -79,7 +80,7 @@ export function Demo() {
       <Example
         title="Fixed header with scrolling body"
         description="Combine fill with Card.Body scroll inside a definite-height parent. Card owns the internal flex and minimum-height chain, so the header stays fixed while only the padded body scrolls."
-        code={`import { Card, Constrain, Stack } from '@eocrm/design-system';
+        code={`import { Card, Constrain, Stack, Text } from '@eocrm/design-system';
 
 const stages = [
   'New lead',
@@ -100,12 +101,12 @@ export function Demo() {
         <Card.Body scroll>
           <Stack gap="md">
             {stages.map((stage, index) => (
-              <div key={stage}>
-                <strong>{stage}</strong>
-                <div style={{ color: 'var(--color-fg-muted)' }}>
+              <Stack key={stage} gap="xs">
+                <Text weight="semibold">{stage}</Text>
+                <Text size="sm" tone="muted">
                   {index + 2} active deals
-                </div>
-              </div>
+                </Text>
+              </Stack>
             ))}
           </Stack>
         </Card.Body>
@@ -129,10 +130,12 @@ export function Demo() {
                   'Verbal commitment',
                   'Closed won',
                 ].map((stage, index) => (
-                  <div key={stage}>
-                    <strong>{stage}</strong>
-                    <div style={{ color: 'var(--color-fg-muted)' }}>{index + 2} active deals</div>
-                  </div>
+                  <Stack key={stage} gap="xs">
+                    <Text weight="semibold">{stage}</Text>
+                    <Text size="sm" tone="muted">
+                      {index + 2} active deals
+                    </Text>
+                  </Stack>
                 ))}
               </Stack>
             </Card.Body>
