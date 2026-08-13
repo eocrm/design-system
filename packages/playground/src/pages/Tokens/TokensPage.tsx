@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Stack, Title, Text, Code, Input } from '@eocrm/design-system';
-import tokensSource from '@lib-source/styles/tokens.scss?raw';
+import tokensSource from '@eocrm/design-tokens/styles/tokens.scss?raw';
 import {
   parseTokens,
   groupTokensByCategory,
@@ -42,7 +42,7 @@ export function TokensPage() {
           <Title order={1}>Design tokens</Title>
           <Text tone="muted">
             All {allTokens.length} CSS custom properties defined in{' '}
-            <Code>packages/design-system/src/styles/tokens.scss</Code>. Click a name to copy its{' '}
+            <Code>@eocrm/design-tokens/styles/tokens.scss</Code>. Click a name to copy its{' '}
             <Code>var(--…)</Code> reference.
           </Text>
         </Stack>
