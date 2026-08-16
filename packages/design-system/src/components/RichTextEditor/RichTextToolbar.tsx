@@ -57,10 +57,21 @@ export interface RichTextToolbarProps {
   onUndo: () => void;
   /** Redo the last undone change. */
   onRedo: () => void;
-  /** When set, renders an upload button that opens a file picker. */
-  onUpload?: (files: File[]) => void;
-  /** Native file-picker `accept` filter. */
-  uploadAccept?: string;
+  /**
+   * When set, renders an upload button that opens the editor's file picker. The
+   * `<input type="file">` itself lives in the EDITOR, not here: this bar unmounts
+   * on blur under `toolbar="auto"`, which would detach a pending picker's input
+   * and silently drop the user's pick.
+   */
+  onPickFiles?: () => void;
+  /**
+   * Fired with `true` while ANY of this bar's own popovers (block type, emoji,
+   * text/highlight color) is open. `toolbar="auto"` unmounts the bar when the
+   * editable blurs — and every one of those popovers blurs it by opening, which
+   * destroyed the popover along with the bar. The editor keeps the bar mounted
+   * while this is true.
+   */
+  onOverlayOpenChange?: (open: boolean) => void;
   /** Insert an emoji at the caret. */
   onInsertEmoji: (emoji: string) => void;
 }
@@ -107,12 +118,25 @@ export function RichTextToolbar({
   canRedo = false,
   onUndo,
   onRedo,
-  onUpload,
-  uploadAccept,
+  onPickFiles,
+  onOverlayOpenChange,
   onInsertEmoji,
 }: RichTextToolbarProps) {
   const t = useTranslation();
-  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Aggregate the open state of every popover in this bar into the single flag
+  // the editor reads. Tracked as a set, not a counter, so a popover reporting
+  // the same state twice can't leave the bar pinned open. Each popover stays
+  // UNCONTROLLED — `onOpenChange` fires alongside its own state, so this only
+  // observes. Any popover added here must register the same way; the
+  // "keeps the bar mounted" test iterates all of them.
+  const openPopovers = useRef(new Set<string>());
+  const trackOpen = (key: string) => (open: boolean) => {
+    const set = openPopovers.current;
+    if (open) set.add(key);
+    else set.delete(key);
+    onOverlayOpenChange?.(set.size > 0);
+  };
 
   const blockLabel = (() => {
     if (!block) return t('richTextEditor.mixed');
@@ -160,7 +184,7 @@ export function RichTextToolbar({
         <RedoIcon />
       </Button>
       <span className={styles.toolbarSep} aria-hidden="true" />
-      <DropdownMenu>
+      <DropdownMenu onOpenChange={trackOpen('blockType')}>
         <DropdownMenu.Trigger>
           <Button
             size="sm"
@@ -241,9 +265,10 @@ export function RichTextToolbar({
           </Button>
         }
         onSelect={onInsertEmoji}
+        onOpenChange={trackOpen('emoji')}
       />
 
-      <Popover>
+      <Popover onOpenChange={trackOpen('textColor')}>
         <Popover.Trigger>
           <Button
             size="sm"
@@ -265,7 +290,7 @@ export function RichTextToolbar({
         </Popover.Content>
       </Popover>
 
-      <Popover>
+      <Popover onOpenChange={trackOpen('bgColor')}>
         <Popover.Trigger>
           <Button
             size="sm"
@@ -314,21 +339,9 @@ export function RichTextToolbar({
         <OrderedListIcon />
       </Button>
 
-      {onUpload && (
+      {onPickFiles && (
         <>
           <span className={styles.toolbarSep} aria-hidden="true" />
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            accept={uploadAccept}
-            style={{ display: 'none' }}
-            onChange={(e) => {
-              const files = Array.from(e.target.files ?? []);
-              if (files.length) onUpload(files);
-              e.target.value = ''; // allow re-picking the same file
-            }}
-          />
           <Button
             size="sm"
             variant="ghost"
@@ -336,7 +349,7 @@ export function RichTextToolbar({
             aria-label={t('richTextEditor.upload')}
             disabled={disabled}
             onMouseDown={preventSelectionLoss}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={onPickFiles}
           >
             <AttachFileIcon />
           </Button>

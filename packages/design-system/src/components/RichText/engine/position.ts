@@ -44,8 +44,8 @@ export function comparePoints(doc: RichDoc, a: Point, b: Point): -1 | 0 | 1 {
 /**
  * The marks carried by the character immediately before `point` (raw — includes
  * `mention`). Empty (`[]`) at a block start (`offset <= 0`) or when the block is
- * not found. Callers that must exclude `mention` (the typing-inheritance paths)
- * filter it out themselves — this primitive stays mark-agnostic.
+ * not found. This primitive stays mark-agnostic; typing-inheritance paths use
+ * {@link marksForTypedText}, which applies the exclusions.
  */
 export function marksBeforeCaret(doc: RichDoc, point: Point): Mark[] {
   const idx = findBlockIndex(doc, point.blockId);
@@ -57,6 +57,47 @@ export function marksBeforeCaret(doc: RichDoc, point: Point): Mark[] {
     pos = end;
   }
   return [];
+}
+
+/**
+ * The marks carried by the character immediately AFTER `point` (raw, like
+ * {@link marksBeforeCaret}). Empty (`[]`) at a block end, where no character
+ * follows. Typing-inheritance paths pair it with `marksBeforeCaret` to tell a
+ * caret INSIDE a run from one resting against its trailing edge.
+ */
+export function marksAfterCaret(doc: RichDoc, point: Point): Mark[] {
+  const idx = findBlockIndex(doc, point.blockId);
+  if (idx === -1 || point.offset < 0) return [];
+  let pos = 0;
+  for (const run of doc.blocks[idx].inlines ?? []) {
+    const end = pos + run.text.length;
+    if (point.offset >= pos && point.offset < end) return run.marks;
+    pos = end;
+  }
+  return [];
+}
+
+/**
+ * The marks text typed at `point` inherits — those of the preceding character,
+ * minus the two that must not grow when the caret merely abuts them:
+ * - `mention`, never (typed text never extends a mention chip);
+ * - `link`, unless the FOLLOWING character carries the same href, i.e. the caret
+ *   sits strictly inside the link rather than against its trailing edge.
+ *
+ * Without the `link` rule, typing after a link appends into the link's TEXT while
+ * its href stays put. Under `renderLink` that is invisible — the widget renders
+ * from the href — so the characters vanish and the caret appears frozen.
+ *
+ * The single source of this rule: both `insertText` and the editor's pending-mark
+ * staging read it, so a mark toggled at a link's edge can't reinstate the link.
+ */
+export function marksForTypedText(doc: RichDoc, point: Point): Mark[] {
+  const after = marksAfterCaret(doc, point);
+  return marksBeforeCaret(doc, point).filter((m) => {
+    if (m.type === 'mention') return false;
+    if (m.type === 'link') return after.some((a) => a.type === 'link' && a.href === m.href);
+    return true;
+  });
 }
 
 /** A collapsed range at a single point. */

@@ -10,7 +10,7 @@ import {
   orderedRange,
   isCollapsed,
   collapsedRange,
-  marksBeforeCaret,
+  marksForTypedText,
 } from './position';
 import { isVoidBlock } from './attachment';
 
@@ -52,7 +52,8 @@ function snapEndOffset(block: Block, offset: number): number {
 
 /**
  * Pure/immutable. Insert `text` at `point`, inheriting the marks of the character
- * immediately before the cursor. Returns `{ doc, selection }` with the caret
+ * immediately before the cursor (see {@link marksForTypedText} for the `mention`
+ * and `link` boundary exceptions). Returns `{ doc, selection }` with the caret
  * placed after the inserted text. No-op (returns input unchanged) when `text` is
  * empty or `point.blockId` does not exist in `doc`.
  */
@@ -68,11 +69,9 @@ export function insertText(
   // A void block (e.g. an attachment) holds no editable text — never splice the
   // typed text into it (that would corrupt the block). No-op.
   if (isVoidBlock(block)) return { doc, selection: collapsed(point) };
-  // Inherit the marks of the char before the caret (mention excluded — typed text
-  // never extends a mention chip).
   const inlines = normalizeInlines([
     ...sliceInlines(block.inlines, 0, point.offset),
-    { text, marks: marksBeforeCaret(doc, point).filter((m) => m.type !== 'mention') },
+    { text, marks: marksForTypedText(doc, point) },
     ...sliceInlines(block.inlines, point.offset, blockLength(block)),
   ]);
   return {

@@ -18,7 +18,7 @@ import {
   blockLength,
   isCollapsed,
   wholeBlockRange,
-  marksBeforeCaret,
+  marksForTypedText,
 } from '../RichText/engine/position';
 import { linkAt, setLink } from './links';
 import { applyTypeAutolink, atomicLinkDeleteRange } from './autolinkInput';
@@ -202,11 +202,6 @@ function toggleInList(marks: Mark[], mark: Mark): Mark[] {
   return hasMark(marks, mark.type) ? withoutMark(marks, mark.type) : withMark(marks, mark);
 }
 
-/** Marks inherited by text typed at the caret — the char before it, mention excluded. */
-function marksAtCaretMarks(doc: RichDoc, caret: Point): Mark[] {
-  return marksBeforeCaret(doc, caret).filter((m) => m.type !== 'mention');
-}
-
 /**
  * Controlled rich-text editor — a contentEditable surface over the in-house
  * engine. Type to edit; ⌘/Ctrl+B/I/U and ⌘/Ctrl+⇧X toggle marks over a
@@ -343,6 +338,9 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // <body>) fires a blur, so `focused` flips false there; the `showToolbar`
     // formula keeps the bar up via the overlay-open term instead.
     const [focused, setFocused] = useState(false);
+    // True while any toolbar popover is open — it blurs the editable by opening,
+    // which would otherwise unmount the bar and the popover with it.
+    const [toolbarOverlayOpen, setToolbarOverlayOpen] = useState(false);
     const autoToolbar = toolbar === 'auto';
 
     // Toolbar state: the live selection (tracked via `selectionchange`) and any
@@ -584,6 +582,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // we read the current one without re-subscribing the native paste listener.
     const uploaderRef = useRef(uploader);
     uploaderRef.current = uploader;
+    // The toolbar's Add-file button clicks this; the input is rendered by the shell.
+    const uploadInputRef = useRef<HTMLInputElement>(null);
 
     // Drop any caret-staged pending mark — the doc + caret are about to change,
     // so a mark staged at the old caret must not bleed into the next typed text.
@@ -644,7 +644,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         if (isCollapsed(range)) {
           pendingAtRef.current = range.anchor;
           setPendingMarks((prev) =>
-            toggleInList(prev ?? marksAtCaretMarks(latest.current.value, range.anchor), mark),
+            toggleInList(prev ?? marksForTypedText(latest.current.value, range.anchor), mark),
           );
         } else {
           commit(runToggleMark(latest.current.value, range, mark));
@@ -661,7 +661,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         if (isCollapsed(range)) {
           pendingAtRef.current = range.anchor;
           setPendingMarks((prev) => {
-            const base = (prev ?? marksAtCaretMarks(latest.current.value, range.anchor)).filter(
+            const base = (prev ?? marksForTypedText(latest.current.value, range.anchor)).filter(
               (m) => m.type !== type,
             );
             return key ? [...base, { type, color: key }] : base;
@@ -1604,7 +1604,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // one of the editor's own overlays is open (so opening the link editor on a
     // focused-but-empty composer keeps the bar up rather than collapsing it). The
     // overlay term is what survives the blur caused by the overlay stealing focus.
-    const overlayOpen = linkEditor != null || mention.open;
+    const overlayOpen = linkEditor != null || mention.open || toolbarOverlayOpen;
     const showToolbar =
       toolbar === true || (autoToolbar && (focused || !isEmptyDoc(value) || overlayOpen));
     // `usesShell` (the stable `.shell` gate) is declared near the top so the
@@ -1626,9 +1626,28 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         canRedo={canRedo}
         onUndo={onUndo}
         onRedo={onRedo}
-        onUpload={uploadOn ? (files) => uploaderRef.current.uploadFiles(files) : undefined}
-        uploadAccept={upload?.accept}
+        onPickFiles={uploadOn ? () => uploadInputRef.current?.click() : undefined}
+        onOverlayOpenChange={autoToolbar ? setToolbarOverlayOpen : undefined}
         onInsertEmoji={onInsertEmoji}
+      />
+    ) : null;
+
+    // The upload picker's input lives HERE, in the always-rendered shell, not in
+    // the toolbar: a native file dialog blurs the editable, and under
+    // `toolbar="auto"` on an empty doc that unmounts the bar — detaching the input
+    // mid-pick, so its `change` never reaches React and the file is silently lost.
+    const uploadInput = uploadOn ? (
+      <input
+        ref={uploadInputRef}
+        type="file"
+        multiple
+        accept={upload?.accept}
+        style={{ display: 'none' }}
+        onChange={(e) => {
+          const files = Array.from(e.target.files ?? []);
+          if (files.length) uploaderRef.current.uploadFiles(files);
+          e.target.value = ''; // allow re-picking the same file
+        }}
       />
     ) : null;
 
@@ -1644,6 +1663,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     return (
       <div className={styles.shell} ref={shellRef}>
         {toolbarBar}
+        {uploadInput}
         {editable}
         {linkBubble}
         {mentionMenu}
