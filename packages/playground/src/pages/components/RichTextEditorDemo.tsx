@@ -171,7 +171,7 @@ export function Demo() {
 
       <Example
         title='Focus-gated toolbar (toolbar="auto")'
-        description='toolbar="auto" shows the formatting bar only when the editor is focused or non-empty — ideal for a compact comment composer. Click into the empty editor below: the bar appears; click away (while still empty) and it hides. Crucially, the bar stays up while the editor’s own overlays are open — focus the empty editor, click the Link button (or ⌘/Ctrl+K): the link editor opens and the bar does NOT collapse, even though focus moved into the link popover. The editable is never remounted as the bar toggles, so there is no focus/selection loss.'
+        description='toolbar="auto" shows the formatting bar only when the editor is focused or non-empty — ideal for a compact comment composer. Click into the empty editor below: the bar appears; click away (while still empty) and it hides. Crucially, the bar stays up while ANY of the editor’s own overlays is open — each takes focus off the editable by opening, so otherwise the overlay would be destroyed along with the bar. Focus the empty editor and try the Link button (or ⌘/Ctrl+K), the block-type menu, Emoji, Text color or Highlight: every one opens and the bar does NOT collapse. The editable is never remounted as the bar toggles, so there is no focus/selection loss. The upload picker’s file input sits outside the bar for the same reason — a native file dialog blurs the editable, and an input unmounted mid-pick drops the chosen file silently.'
         code={`import { useState } from 'react';
 import { RichTextEditor, docFromText, type RichDoc } from '@eocrm/design-system';
 

@@ -40,6 +40,35 @@ describe('transforms', () => {
     expect(r.doc.blocks[0].inlines).toEqual([{ text: 'Xy', marks: [{ type: 'bold' }] }]);
   });
 
+  it('insertText after a link appends UNLINKED text, leaving the link intact', () => {
+    // The defect this pins: the typed char used to land inside the link's text
+    // while its href stayed put, so under `renderLink` (which renders from the
+    // href) it was invisible and the caret appeared frozen against the chip.
+    const href = 'https://x.test/contacts/01ab';
+    const d: RichDoc = {
+      blocks: [
+        { id: 'a', type: 'paragraph', inlines: [{ text: href, marks: [{ type: 'link', href }] }] },
+      ],
+    };
+    const r = insertText(d, at('a', href.length), 'X');
+    expect(r.doc.blocks[0].inlines).toEqual([
+      { text: href, marks: [{ type: 'link', href }] },
+      { text: 'X', marks: [] },
+    ]);
+    expect(r.selection.focus).toEqual(at('a', href.length + 1));
+  });
+
+  it('insertText inside a link still extends the link', () => {
+    const href = 'https://x.test/';
+    const d: RichDoc = {
+      blocks: [
+        { id: 'a', type: 'paragraph', inlines: [{ text: 'abc', marks: [{ type: 'link', href }] }] },
+      ],
+    };
+    const r = insertText(d, at('a', 1), 'X');
+    expect(r.doc.blocks[0].inlines).toEqual([{ text: 'aXbc', marks: [{ type: 'link', href }] }]);
+  });
+
   it('deleteRange within a block removes the span', () => {
     const r = deleteRange(doc(['abcd', 'a']), span(at('a', 1), at('a', 3)));
     expect(runsText(r.doc.blocks[0].inlines)).toBe('ad');

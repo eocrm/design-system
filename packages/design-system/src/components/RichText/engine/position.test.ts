@@ -5,6 +5,8 @@ import {
   isCollapsed,
   orderedRange,
   wholeBlockRange,
+  marksAfterCaret,
+  marksForTypedText,
 } from './position';
 import { createBlock } from './model';
 import type { RichDoc } from './model';
@@ -64,5 +66,64 @@ describe('position', () => {
       focus: { blockId: 'b', offset: blockLength(doc.blocks[1]) },
     });
     expect(wholeBlockRange(doc, 'zzz')).toBeNull();
+  });
+});
+
+describe('marksAfterCaret', () => {
+  const HREF = 'https://x.test/a';
+  const linked = (text: string, href = HREF) => ({
+    text,
+    marks: [{ type: 'link' as const, href }],
+  });
+  const linkDoc = (
+    ...runs: { text: string; marks: { type: 'link'; href: string }[] }[]
+  ): RichDoc => ({
+    blocks: [{ id: 'a', type: 'paragraph', inlines: runs }],
+  });
+
+  it('reads the marks of the character AT the offset', () => {
+    const d = linkDoc({ text: 'ab', marks: [] }, linked('cd'));
+    expect(marksAfterCaret(d, { blockId: 'a', offset: 2 })).toEqual([{ type: 'link', href: HREF }]);
+  });
+
+  it('is empty at the block end, where no character follows', () => {
+    expect(marksAfterCaret(linkDoc(linked('ab')), { blockId: 'a', offset: 2 })).toEqual([]);
+  });
+
+  it('is empty for an unknown block', () => {
+    expect(marksAfterCaret(linkDoc(linked('ab')), { blockId: 'zzz', offset: 0 })).toEqual([]);
+  });
+});
+
+describe('marksForTypedText — link is non-inclusive at its trailing edge', () => {
+  const HREF = 'https://x.test/a';
+  const OTHER = 'https://x.test/b';
+  const link = (href = HREF) => ({ type: 'link' as const, href });
+  const build = (...runs: { text: string; marks: { type: string; href?: string }[] }[]): RichDoc =>
+    ({ blocks: [{ id: 'a', type: 'paragraph', inlines: runs }] }) as RichDoc;
+
+  it('does NOT inherit the link at its trailing edge', () => {
+    const d = build({ text: 'abc', marks: [link()] });
+    expect(marksForTypedText(d, { blockId: 'a', offset: 3 })).toEqual([]);
+  });
+
+  it('DOES inherit the link strictly inside it', () => {
+    const d = build({ text: 'abc', marks: [link()] });
+    expect(marksForTypedText(d, { blockId: 'a', offset: 1 })).toEqual([link()]);
+  });
+
+  it('treats the seam between two different hrefs as a trailing edge', () => {
+    const d = build({ text: 'ab', marks: [link()] }, { text: 'cd', marks: [link(OTHER)] });
+    expect(marksForTypedText(d, { blockId: 'a', offset: 2 })).toEqual([]);
+  });
+
+  it('keeps non-link marks at a link edge', () => {
+    const d = build({ text: 'abc', marks: [link(), { type: 'bold' }] });
+    expect(marksForTypedText(d, { blockId: 'a', offset: 3 })).toEqual([{ type: 'bold' }]);
+  });
+
+  it('still never inherits a mention', () => {
+    const d = build({ text: 'Ada', marks: [{ type: 'mention' }] });
+    expect(marksForTypedText(d, { blockId: 'a', offset: 3 })).toEqual([]);
   });
 });

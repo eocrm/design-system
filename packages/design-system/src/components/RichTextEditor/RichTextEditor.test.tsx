@@ -1418,6 +1418,37 @@ describe('upload', () => {
     expect(document.querySelector('figure[data-block-id]')).toBeNull();
   });
 
+  it('the picker input survives the auto toolbar unmounting on blur', async () => {
+    // A native file dialog blurs the editable, and on an empty doc `toolbar="auto"`
+    // then unmounts the bar. When the input lived INSIDE the bar it was detached
+    // mid-pick, so the `change` never reached React and the file vanished silently.
+    const cfg = up();
+    function Harness() {
+      const [doc, setDoc] = useState(emptyDoc());
+      return <RichTextEditor value={doc} onChange={setDoc} toolbar="auto" upload={cfg} />;
+    }
+    renderEditor(<Harness />);
+    // This describe has no readSelection reset of its own; a range left by an
+    // earlier test names a block that no longer exists, and the insert would
+    // no-op on the stale caret rather than exercising the picker.
+    mockReadSelection.mockReset();
+    const box = screen.getByRole('textbox');
+    fireEvent.focus(box);
+    expect(screen.getByRole('button', { name: 'Add file' })).toBeInTheDocument();
+
+    fireEvent.blur(box);
+    expect(screen.queryByRole('button', { name: 'Add file' })).toBeNull(); // bar is gone…
+    const input = document.querySelector('input[type="file"][multiple]') as HTMLInputElement;
+    expect(input?.isConnected).toBe(true); // …the input is not
+
+    // The dialog's own delivery: files land on the input, then `change` fires.
+    // (`user.upload` clicks first, which a `display:none` input never receives.)
+    const file = new File(['x'], 'p.png', { type: 'image/png' });
+    Object.defineProperty(input, 'files', { value: [file], configurable: true });
+    fireEvent.change(input);
+    await waitFor(() => expect(cfg.onUpload).toHaveBeenCalledTimes(1));
+  });
+
   it('toolbar shows an upload button only when upload is set', () => {
     function Harness({ withUpload }: { withUpload: boolean }) {
       const [doc, setDoc] = useState(docFromText('hi'));
@@ -1804,4 +1835,32 @@ describe('attachment config', () => {
     // readOnly suppresses the gutter entirely → no ⠿ handle, hence no Configure.
     expect(screen.queryByRole('button', { name: 'Block actions' })).toBeNull();
   });
+});
+
+describe('toolbar="auto" — a popover must not take the bar down with it', () => {
+  // Every popover in the bar steals focus from the editable when it opens. On an
+  // empty doc that flipped `focused` false and unmounted the bar — destroying the
+  // popover before it could paint, so the control read as "the bar just closes".
+  // The bar reports any open popover up; this table is what keeps that list
+  // honest, so a popover added later without registering fails here.
+  it.each(['Text style', 'Emoji', 'Text color', 'Highlight'])(
+    'the %s popover keeps the bar mounted while it is open',
+    async (label) => {
+      const user = userEvent.setup();
+      function Harness() {
+        const [doc, setDoc] = useState(emptyDoc());
+        return <RichTextEditor value={doc} onChange={setDoc} toolbar="auto" />;
+      }
+      render(
+        <I18nProvider locale="en">
+          <Harness />
+        </I18nProvider>,
+      );
+      const box = screen.getByRole('textbox');
+      fireEvent.focus(box);
+      await user.click(screen.getByRole('button', { name: label }));
+      fireEvent.blur(box); // what opening the popover does in a real browser
+      expect(screen.getByRole('button', { name: label })).toBeInTheDocument();
+    },
+  );
 });
