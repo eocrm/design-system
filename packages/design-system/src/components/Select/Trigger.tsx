@@ -12,6 +12,7 @@ import clsx from 'clsx';
 import { useSelectContext } from './context';
 import { Chip } from './Chip';
 import type { SelectOption } from './Select';
+import type { FlatRow } from './utils';
 import { useTranslation } from '../../i18n/useTranslation';
 import styles from './Select.module.scss';
 
@@ -73,11 +74,47 @@ function ClearButton({ variant }: { variant: 'overlay' | 'inline' }) {
   );
 }
 
-/** Helper: does this Select currently have a non-empty selection? */
+/**
+ * Helper: would pressing "clear" change anything?
+ *
+ * Deliberately value-shaped, not lookup-shaped: clearing resets the Select
+ * to the empty value (`''` / `[]`), so the ✕ is only useful when the current
+ * value differs from that. A consumer who models "no explicit choice" as a
+ * real `value: ''` option (issue #470) is already sitting on the cleared
+ * value — there is nothing for ✕ to do, and it stays hidden.
+ */
 function selectHasValue(value: string | string[], multiple: boolean): boolean {
   return multiple
     ? Array.isArray(value) && value.length > 0
     : typeof value === 'string' && value !== '';
+}
+
+/**
+ * Resolve the selected option in single mode by looking `value` up in the
+ * supplied rows — never by treating `''` as "nothing selected" (issue #470).
+ *
+ * `''` is a legitimate option value: a common shape is one sentinel row
+ * ("Use the default scheme", `value: ''`) plus N real catalog ids. Such a
+ * row must render in the closed trigger exactly like any other option.
+ * "Nothing selected" is then simply "no row carries this value" — which is
+ * what an untouched Select (whose value is `''` with no `''` option in the
+ * list) resolves to anyway.
+ *
+ * Always searches `allRows`, never the query-filtered `rows`: the closed
+ * trigger must keep showing the selected label while the user filters the
+ * open searchable listbox down to something else.
+ *
+ * Returns `null` in multi mode, for a non-string value, or when no row
+ * matches (e.g. a stale value no longer present in `options`).
+ */
+function findSelectedOption(
+  allRows: readonly FlatRow<unknown>[],
+  value: string | string[],
+  multiple: boolean,
+): SelectOption<unknown> | null {
+  if (multiple || typeof value !== 'string') return null;
+  const row = allRows.find((r) => r.kind === 'option' && r.option.value === value);
+  return row && row.kind === 'option' ? row.option : null;
 }
 
 // ────────────────────────────────────────────────────────────────────────────
@@ -318,10 +355,11 @@ function ButtonTrigger(props: TriggerProps) {
   // labels don't drop out of the summary when the user types a filter
   // query that excludes them.
   //
-  // Single: same `allRows` lookup as before — keeps the closed-state label
-  // visible while the user is filtering in the open searchable variant
-  // (which actually renders the combobox-input trigger, but symmetry here
-  // is harmless and keeps the resolution logic in one place).
+  // Single: `allRows` lookup — keeps the closed-state label visible while
+  // the user is filtering in the open searchable variant (which actually
+  // renders the combobox-input trigger, but symmetry here is harmless and
+  // keeps the resolution logic in one place).
+  const selectedOption = findSelectedOption(ctx.allRows, ctx.value, ctx.multiple);
   const label = (() => {
     if (ctx.multiple) {
       const selectedValues = Array.isArray(ctx.value) ? ctx.value : [];
@@ -334,13 +372,12 @@ function ButtonTrigger(props: TriggerProps) {
       }
       return labels.join(', ');
     }
-    if (typeof ctx.value !== 'string' || ctx.value === '') return '';
-    const selRow = ctx.allRows.find(
-      (r) => r.kind === 'option' && r.option.value === (ctx.value as string),
-    );
-    return selRow && selRow.kind === 'option' ? selRow.option.label : '';
+    return selectedOption?.label ?? '';
   })();
-  const hasValue = label !== '';
+  // Derived from whether an option MATCHED, not from whether the resolved
+  // label happens to be non-empty — a selected `value: ''` row (issue #470)
+  // has a real label and must not render placeholder-styled.
+  const hasValue = ctx.multiple ? label !== '' : selectedOption !== null;
 
   const activeOptionId = useActiveOptionId();
 
@@ -391,7 +428,12 @@ function ButtonTrigger(props: TriggerProps) {
     }
   };
 
-  const showClear = props.clearable && hasValue;
+  // Not `hasValue`: ✕ resets to the empty value, so it's shown when the
+  // current value differs from that — including for a value with no
+  // matching option (a stale id), which the user must still be able to
+  // clear, and excluding a selected `value: ''` option, which already IS
+  // the cleared state.
+  const showClear = props.clearable && selectHasValue(ctx.value, ctx.multiple);
 
   // Resolve the visible label node. In single mode, `renderValue` (if
   // supplied) replaces the bare string with whatever the consumer returns.
@@ -477,12 +519,16 @@ function ComboboxInputTrigger(props: TriggerProps) {
   // Resolve the selected label from `allRows` (NOT `rows`). When the user
   // types "arc" and the selected option "Pending" filters out of `rows`,
   // we still need its label as the closed-state display + Escape fallback.
-  const selectedLabel = useMemo(() => {
-    if (ctx.multiple) return '';
-    if (typeof ctx.value !== 'string' || ctx.value === '') return '';
-    const row = ctx.allRows.find((r) => r.kind === 'option' && r.option.value === ctx.value);
-    return row && row.kind === 'option' ? row.option.label : '';
-  }, [ctx.multiple, ctx.value, ctx.allRows]);
+  //
+  // Lookup-driven, never `value === ''`-driven: a consumer's sentinel
+  // `value: ''` option is a real selection and must display its label
+  // (issue #470).
+  const selectedOption = useMemo(
+    () => findSelectedOption(ctx.allRows, ctx.value, ctx.multiple),
+    [ctx.allRows, ctx.value, ctx.multiple],
+  );
+  const selectedLabel = selectedOption?.label ?? '';
+  const hasSelection = selectedOption !== null;
 
   // Reset the query to '' whenever the listbox closes, so the next open
   // shows the full option list (instead of the stale filter) and the
@@ -562,7 +608,7 @@ function ComboboxInputTrigger(props: TriggerProps) {
         ref={(node) => {
           inputRefHolder.current = node;
         }}
-        className={clsx(styles.trigger, styles.triggerInput, !selectedLabel && styles.placeholder)}
+        className={clsx(styles.trigger, styles.triggerInput, !hasSelection && styles.placeholder)}
         role="combobox"
         aria-autocomplete="list"
         aria-haspopup="listbox"
@@ -580,7 +626,7 @@ function ComboboxInputTrigger(props: TriggerProps) {
         disabled={props.disabled}
         readOnly={props.readOnly}
         value={displayValue}
-        placeholder={selectedLabel === '' ? props.placeholder : undefined}
+        placeholder={hasSelection ? undefined : props.placeholder}
         onClick={() => {
           if (props.disabled || props.readOnly) return;
           // Click opens but does NOT toggle — matches Headless UI Combobox

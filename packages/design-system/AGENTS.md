@@ -2418,7 +2418,7 @@ import { Bell, Plus } from 'lucide-react';
 
 - Compound API: `<DropdownMenu>` is the provider; `<Trigger>` clones its single child to inject ARIA + handlers; `<Content>` portals to `document.body` and positions itself with Floating UI; `<Item>` renders a `menuitem`; `<Separator>` renders a divider.
 - Trigger child must accept a ref via `forwardRef`. `<Button>` does.
-- `<Item>` props: `onSelect` (required), `disabled`, `tone` (`'default'` | `'danger'`), `icon`, `shortcut`, `closeOnSelect` (default `true`; set to `false` when wrapping the Item in a `<Popover.Trigger>` or `<ConfirmationPopover>` — otherwise the menu close would unmount the popover before it can render).
+- `<Item>` props: `onSelect` (required), `disabled`, `tone` (`'default'` | `'danger'`), `icon`, `shortcut`, `meta`, `closeOnSelect` (default `true`; set to `false` when wrapping the Item in a `<Popover.Trigger>` or `<ConfirmationPopover>` — otherwise the menu close would unmount the popover before it can render).
 - `<Content>` props: `side` (`'top'` | `'bottom'`, default `'bottom'`), `align` (`'start'` | `'center'` | `'end'`, default `'start'`), `sideOffset` (default `4`), `minWidth`.
 - Keyboard: Enter/Space/ArrowDown on trigger opens with first item active; ArrowUp opens with last; Arrow/Home/End navigate skipping disabled and separators; Enter/Space activates; Escape closes and returns focus to trigger; Tab closes and returns focus to trigger (then continues normal traversal); typeahead jumps to first matching label (500ms debounce).
 - Opens with a short scale-fade from the trigger side (140 ms `ease-out`). Closes instantly by design — menu close should feel like "get out of the way", not "play a transition". Respects `prefers-reduced-motion: reduce`.
@@ -2471,6 +2471,20 @@ import { Bell, Plus } from 'lucide-react';
 - `<Sub>` + `<SubTrigger>` + `<SubContent>` — nested menu. SubTrigger registers in the parent menu; SubContent is its own portaled panel. Opens on click, hover (100ms delay), Enter, or ArrowRight. Closes on ArrowLeft (level-only), Escape (level-only), click-outside (all levels), or selecting an item with `closeOnSelect=true` (all levels — cascading close).
 - `<ItemIndicator>` — optional slot child of CheckboxItem/RadioItem that adds a custom indicator glyph alongside the tinted-row treatment. Omit entirely when the row tint is sufficient (the common case). Detection is shallow: must be a direct child.
 - Per WAI-ARIA, mixing CheckboxItem and RadioItem in the same RadioGroup is invalid; CheckboxItems live outside RadioGroup.
+- **Trailing `meta` on `Item` / `CheckboxItem` / `RadioItem`** — secondary content _about the item itself_ (a region code, a count, a `<Badge>`). `ReactNode`. It is **not** `shortcut`: `shortcut` is a keyboard hint, styled as one, and free to become a `<Kbd>` key cap. Two rows whose labels legitimately collide (two workspaces both named `demo`) are disambiguated with `meta`, not `shortcut`.
+
+  ```tsx
+  <DropdownMenu.RadioGroup value={workspace} onValueChange={setWorkspace}>
+    <DropdownMenu.RadioItem value="demo-eu" meta="EU">
+      demo
+    </DropdownMenu.RadioItem>
+    <DropdownMenu.RadioItem value="demo-ru" meta="RU">
+      demo
+    </DropdownMenu.RadioItem>
+  </DropdownMenu.RadioGroup>
+  ```
+
+  `meta` renders after the label and before `shortcut` (the keyboard hint stays rightmost). It carries no `aria-hidden`, so it **joins the accessible name** — a screen reader announces "demo RU". Because it is a prop and not a child, it stays **out of the typeahead label**: type-to-select still matches the bare label.
 
 ### `<Tooltip>` — small floating label on hover / keyboard focus
 
@@ -2808,6 +2822,21 @@ const [open, setOpen] = useState(false);
 - **Form integration**: pass `name` (and `required`/`form` if needed). Hidden inputs render so `new FormData(form)` works. Multi mode renders one hidden input per selected value; `FormData.getAll(name)` returns the array.
 - **`clearable`** is opt-in (default `false`) — pass it to show the ✕ clear button once there's a value. Always suppressed when `disabled`/`readOnly`.
 - **`onChange` signature** is `(value, option | options | null)` — the second arg is the matched option(s), saving you a lookup.
+- **`''` is a normal option value, not a reserved "unset" sentinel.** The "one sentinel row plus N catalog ids" shape works directly — no `"__default__"` workaround:
+
+  ```tsx
+  <Select
+    options={[
+      { value: '', label: 'Use the default scheme' },
+      { value: 'scheme-a', label: 'Scheme A' },
+    ]}
+    value={boundSchemeId ?? ''}
+    onChange={(v) => setBoundSchemeId(v === '' ? null : (v as string))}
+  />
+  ```
+
+  The trigger shows "Use the default scheme" (not a blank or the placeholder), and `onChange` hands you that row's `SelectOption`. "Nothing selected" is resolved by lookup — the value matches no option — so a Select with no `''` row still shows its placeholder at `value=""`. Corollary for `clearable`: ✕ means "reset to the empty value", so it is hidden when the selected option already IS `value: ''`, and shown for a stale value that matches nothing.
+
 - **Render escape hatches**: `renderOption`, `renderValue`, `renderTag`, `renderEmpty`, `renderLoading`, `renderError`. Use when defaults don't suffice; default rendering is always token-correct.
 - For **action menus** (Edit/Delete/Duplicate buttons), use `<DropdownMenu>` — Select is for value selection, not actions.
 - For **free-form text**, use `<Input>`. Select always picks from a (possibly async) set.

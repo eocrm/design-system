@@ -1351,6 +1351,95 @@ describe('Select — clearable', () => {
   });
 });
 
+describe('Select — value="" is a real option (issue #470)', () => {
+  // A common consumer shape: one sentinel row meaning "no explicit choice —
+  // follow the default" plus N real catalog ids. Before the fix, `''` was
+  // hard-coded as "nothing selected" and the trigger rendered blank.
+  const SCHEMES: SelectOption[] = [
+    { value: '', label: 'Use the default scheme' },
+    { value: 'scheme-a', label: 'Scheme A' },
+    { value: 'scheme-b', label: 'Scheme B' },
+  ];
+
+  it('button trigger renders the label of a selected value="" option', () => {
+    render(<Select options={SCHEMES} value="" placeholder="Pick one" />);
+    expect(screen.getByRole('combobox')).toHaveTextContent('Use the default scheme');
+  });
+
+  it('button trigger does NOT fall back to the placeholder for a selected value=""', () => {
+    render(<Select options={SCHEMES} value="" placeholder="Pick one" />);
+    expect(screen.getByRole('combobox')).not.toHaveTextContent('Pick one');
+  });
+
+  it('button trigger drops the placeholder styling for a selected value=""', () => {
+    render(<Select options={SCHEMES} value="" placeholder="Pick one" />);
+    expect(screen.getByRole('combobox').className).not.toContain(styles.placeholder);
+  });
+
+  it('still shows the placeholder when "" matches no option', () => {
+    render(<Select options={STATUSES} value="" placeholder="Pick one" />);
+    const trigger = screen.getByRole('combobox');
+    expect(trigger).toHaveTextContent('Pick one');
+    expect(trigger.className).toContain(styles.placeholder);
+  });
+
+  it('searchable trigger displays the label of a selected value="" option', () => {
+    render(<Select options={SCHEMES} value="" searchable placeholder="Pick one" />);
+    expect(screen.getByRole('combobox')).toHaveValue('Use the default scheme');
+  });
+
+  it('searchable trigger drops the placeholder for a selected value=""', () => {
+    render(<Select options={SCHEMES} value="" searchable placeholder="Pick one" />);
+    const input = screen.getByRole('combobox');
+    expect(input).not.toHaveAttribute('placeholder');
+    expect(input.className).not.toContain(styles.placeholder);
+  });
+
+  it('searchable trigger keeps the placeholder when "" matches no option', () => {
+    render(<Select options={STATUSES} value="" searchable placeholder="Pick one" />);
+    const input = screen.getByRole('combobox');
+    expect(input).toHaveValue('');
+    expect(input).toHaveAttribute('placeholder', 'Pick one');
+  });
+
+  it('onChange passes the matched SelectOption when "" is a real option', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<Select options={SCHEMES} defaultValue="scheme-a" onChange={onChange} />);
+    await user.click(screen.getByRole('combobox'));
+    await user.click(screen.getByRole('option', { name: 'Use the default scheme' }));
+    expect(onChange).toHaveBeenCalledWith('', { value: '', label: 'Use the default scheme' });
+  });
+
+  it('onChange still passes null when "" is NOT an option (a genuine clear)', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<Select options={STATUSES} defaultValue="pending" clearable onChange={onChange} />);
+    await user.click(screen.getByRole('button', { name: /clear selection/i }));
+    expect(onChange).toHaveBeenCalledWith('', null);
+  });
+
+  it('the listbox marks the selected value="" row as selected', async () => {
+    const user = userEvent.setup();
+    render(<Select options={SCHEMES} value="" />);
+    await user.click(screen.getByRole('combobox'));
+    expect(screen.getByRole('option', { name: 'Use the default scheme' })).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+  });
+
+  it('hides ✕ when the selected option IS the empty value — clearing is a no-op', () => {
+    render(<Select options={SCHEMES} value="" clearable />);
+    expect(screen.queryByRole('button', { name: /clear selection/i })).toBeNull();
+  });
+
+  it('shows ✕ for a stale value with no matching option, so it can be cleared', () => {
+    render(<Select options={STATUSES} value="deleted-id" clearable />);
+    expect(screen.getByRole('button', { name: /clear selection/i })).toBeInTheDocument();
+  });
+});
+
 describe('Select — render escape hatches', () => {
   it('renderOption replaces the option row content', async () => {
     const user = userEvent.setup();

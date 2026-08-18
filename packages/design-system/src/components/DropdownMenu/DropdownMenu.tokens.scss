@@ -46,6 +46,13 @@
   --dropdown-menu-shortcut-font-size: var(--font-size-sm);
   --dropdown-menu-shortcut-padding-left: var(--space-3);
 
+  // Meta label (trailing secondary text about the item itself — a region
+  // code, a count, a Badge). Deliberately NOT the shortcut treatment: the
+  // shortcut slot is free to evolve into key caps without repainting meta.
+  --dropdown-menu-meta-fg: var(--color-fg-muted);
+  --dropdown-menu-meta-font-size: var(--font-size-xs);
+  --dropdown-menu-meta-padding-left: var(--space-2);
+
   // Separator
   --dropdown-menu-separator-height: var(--space-2);
   --dropdown-menu-separator-color: var(--color-border);
