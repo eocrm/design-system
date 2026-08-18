@@ -17,7 +17,16 @@ import { WeekView } from './WeekView';
 import { DayView } from './DayView';
 import { AgendaView } from './AgendaView';
 import { ViewSwitcher } from './ViewSwitcher';
-import type { CalendarEvent, CalendarView, RenderEvent } from './types';
+import type {
+  CalendarBackgroundInterval,
+  CalendarDropResult,
+  CalendarEvent,
+  CalendarEventMove,
+  CalendarEventResize,
+  CalendarResource,
+  CalendarView,
+  RenderEvent,
+} from './types';
 import styles from './Calendar.module.scss';
 
 export interface CalendarProps extends Omit<
@@ -65,6 +74,67 @@ export interface CalendarProps extends Omit<
   /** Pixel height per hour row in week/day views. Default 48. */
   hourRowHeight?: number;
   /**
+   * Split `view="day"` into one column per bookable subject — practitioner,
+   * chair, room, bay — all sharing a single time axis and a single scroll
+   * container. This is the "resource day view" of scheduling products.
+   *
+   * Events are routed by `CalendarEvent.resourceId`. A timed event whose
+   * `resourceId` matches nothing (or is absent) lands in a trailing
+   * "unassigned" column, which is only rendered when such an event exists.
+   * All-day events without a `resourceId` are day-wide and span every column.
+   *
+   * Ignored by month, week and agenda views — those have their own column
+   * meaning.
+   */
+  resources?: readonly CalendarResource[];
+  /**
+   * Availability underlay for week/day views: non-interactive bands painted
+   * behind the events, distinguishing "closed" from "open and free". "Open
+   * and busy" already reads from the event blocks themselves.
+   *
+   * An interval list rather than a weekly-hours object, because working
+   * hours vary by day (a lunch break), by date (a holiday, a short day) and
+   * by column (per-practitioner shifts). Bands take no part in the event
+   * collision cascade and never intercept clicks — `onDayClick` still fires
+   * through them.
+   */
+  backgroundIntervals?: readonly CalendarBackgroundInterval[];
+  /**
+   * Enables drag-to-reschedule in week/day views. Called on drop with the
+   * proposed placement; the event's duration is preserved.
+   *
+   * **Nothing moves until you commit it.** `events` stays the source of
+   * truth — apply the change to your own state to make it stick. To refuse a
+   * drop (the server rejects overlaps, out-of-hours bookings, …) return
+   * `false`, or a promise that resolves `false` or rejects: the block snaps
+   * back and the preview is discarded. Prefer `canDropEvent` for rules you
+   * can evaluate synchronously — it refuses the drop *during* the drag, so
+   * the user sees it before releasing.
+   *
+   * Omit to keep today's read-only behaviour.
+   */
+  onEventMove?: (event: CalendarEvent, next: CalendarEventMove) => CalendarDropResult;
+  /**
+   * Enables drag-to-resize in week/day views (a handle on the block's bottom
+   * edge). `startsAt` is unchanged; only `endsAt` moves. Same commit and
+   * rejection semantics as `onEventMove`.
+   */
+  onEventResize?: (event: CalendarEvent, next: CalendarEventResize) => CalendarDropResult;
+  /**
+   * Synchronous veto, evaluated continuously while dragging. Return `false`
+   * and the placement renders as a refused drop and is never proposed to
+   * `onEventMove` / `onEventResize`. Use for rules you can check locally
+   * (opening hours, overlaps within the loaded event set); use the handler's
+   * own return value for rules only the server can settle.
+   */
+  canDropEvent?: (event: CalendarEvent, next: CalendarEventMove) => boolean;
+  /**
+   * Snap granularity for drags, in minutes. Default 15 — a drag lands on a
+   * quarter-hour boundary rather than an arbitrary pixel offset. Also the
+   * step size for the keyboard equivalent (Alt + arrow keys).
+   */
+  dragSnapMinutes?: number;
+  /**
    * Optional custom renderer for the inner content of every event chip
    * across views (month chips, week/day timed blocks, all-day band chips).
    * The returned ReactNode replaces the default `<time> · <title>` markup
@@ -93,8 +163,11 @@ export interface CalendarProps extends Omit<
  *   come from the i18n provider (`useTranslation`); wrap your app in
  *   `<I18nProvider locale="..." overrides={{ calendar: { today: '...' } }}>`
  *   to translate or customize them.
- * - Read-mostly: `onDayClick` and `onEventClick` callbacks; no built-in
- *   popover or modal.
+ * - Read-mostly by default: `onDayClick` and `onEventClick` callbacks; no
+ *   built-in popover or modal. Opt into editing by wiring `onEventMove` /
+ *   `onEventResize`, which turn on drag-to-reschedule in week/day views.
+ * - `resources` splits `view="day"` into one column per bookable subject;
+ *   `backgroundIntervals` paints the availability underlay behind events.
  *
  * @example
  * <Calendar events={events} defaultView="week" />
@@ -114,15 +187,41 @@ export interface CalendarProps extends Omit<
  *   />
  * </I18nProvider>;
  *
+ * @example
+ * // Booking screen: one column per practitioner, shifts shaded behind the
+ * // events, drag to reschedule with the backend allowed to refuse the drop.
+ * <Calendar
+ *   view="day"
+ *   events={appointments}
+ *   resources={[
+ *     { id: 'ana', label: 'Ana' },
+ *     { id: 'ben', label: 'Ben' },
+ *   ]}
+ *   backgroundIntervals={shifts}
+ *   canDropEvent={(ev, next) => isWithinOpeningHours(next)}
+ *   onEventMove={async (ev, next) => {
+ *     const ok = await api.reschedule(ev.id, next);
+ *     if (!ok) return false; // snaps back
+ *     setAppointments((prev) => applyMove(prev, ev.id, next));
+ *   }}
+ * />
+ *
  * @remarks When NOT to use
  * - Single-date or date-range selection → use a future `<DatePicker>`.
- * - Inline-edit calendars (drag-create, drag-reschedule) — out of scope.
+ * - Drag-to-CREATE (dragging empty grid space to draft a new event) — still
+ *   out of scope. Use `onDayClick` plus your own form.
  *
  * @remarks Anti-patterns
  * - ❌ Mounting `<Calendar>` with no `events` AND no `onDayClick` — the grid
  *   is fully inert. Provide events or a click handler.
  * - ❌ Pre-grouping events by day in the consumer. Pass the flat array; the
  *   layout algorithms group + lane internally.
+ * - ❌ Treating `onEventMove` as the thing that moves the event. It proposes;
+ *   your state disposes. Not committing means the block snaps back.
+ * - ❌ Faking the availability underlay with all-day events — that pollutes
+ *   the `events` array you also read back. Use `backgroundIntervals`.
+ * - ❌ Approximating resource columns with N side-by-side `<Calendar view="day">`.
+ *   Each brings its own header, gutter and scroll, so they drift. Use `resources`.
  */
 export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(function Calendar(
   {
@@ -140,6 +239,12 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(function Calen
     maxLanesPerWeek = 3,
     hourRange = [7, 19],
     hourRowHeight = 48,
+    resources,
+    backgroundIntervals,
+    onEventMove,
+    onEventResize,
+    canDropEvent,
+    dragSnapMinutes = 15,
     renderEvent,
     className,
     ...rest
@@ -269,8 +374,13 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(function Calen
           hourRowHeight={hourRowHeight}
           locale={locale}
           weekStartsOn={weekStartsOn}
+          backgroundIntervals={backgroundIntervals}
           onEventClick={onEventClick}
           onDayClick={onDayClick}
+          onEventMove={onEventMove}
+          onEventResize={onEventResize}
+          canDropEvent={canDropEvent}
+          dragSnapMinutes={dragSnapMinutes}
           renderEvent={renderEvent}
         />
       )}
@@ -281,8 +391,14 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(function Calen
           hourRange={hourRange}
           hourRowHeight={hourRowHeight}
           locale={locale}
+          resources={resources}
+          backgroundIntervals={backgroundIntervals}
           onEventClick={onEventClick}
           onDayClick={onDayClick}
+          onEventMove={onEventMove}
+          onEventResize={onEventResize}
+          canDropEvent={canDropEvent}
+          dragSnapMinutes={dragSnapMinutes}
           renderEvent={renderEvent}
         />
       )}

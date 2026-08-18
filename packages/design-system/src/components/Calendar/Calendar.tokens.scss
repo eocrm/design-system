@@ -136,6 +136,21 @@
   --calendar-hour-label-bg: var(--color-bg-subtle);
   --calendar-hour-day-column-bg-weekend: var(--color-bg-muted);
   --calendar-hour-separator-bg: var(--color-border);
+
+  // Availability underlay (HourGrid background bands). `unavailable` shades
+  // closed/blocked time; `available` lightly tints bookable time so a free
+  // slot reads differently from a closed one.
+  --calendar-background-band-bg-unavailable: var(--color-bg-muted);
+  --calendar-background-band-bg-available: var(--color-success-bg-subtle);
+  --calendar-background-band-opacity: var(--opacity-muted);
+
+  // Drag-to-reschedule
+  --calendar-drag-block-opacity: var(--opacity-muted);
+  --calendar-drag-block-shadow: var(--shadow-lg);
+  --calendar-drag-invalid-outline: var(--color-danger);
+  --calendar-drag-invalid-outline-width: var(--border-width-emphasis);
+  --calendar-resize-handle-height: var(--space-2);
+  --calendar-resize-handle-bg-hover: var(--color-border-strong);
   --calendar-now-line-height: var(--border-width-emphasis);
   --calendar-now-line-bg: var(--color-danger);
 

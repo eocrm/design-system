@@ -76,6 +76,9 @@ export const en: Messages = {
     viewWeek: 'Week',
     viewDay: 'Day',
     viewAgenda: 'Agenda',
+    unassigned: 'Unassigned',
+    dragInstructions:
+      'Draggable. Press Alt with the up or down arrow keys to move this event, Alt with the left or right arrow keys to move it to another column, and Alt with Shift and the up or down arrow keys to change its end time.',
   },
   datePicker: {
     today: 'Today',

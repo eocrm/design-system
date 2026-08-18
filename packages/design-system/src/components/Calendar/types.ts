@@ -14,6 +14,17 @@ export type CalendarEventTone = 'neutral' | 'accent' | 'success' | 'warning' | '
 export interface CalendarEvent {
   /** Stable unique ID. Used as React key and as the `onEventClick` argument. */
   id: string;
+  /**
+   * Which resource column this event belongs to, matched against
+   * `CalendarResource.id`. Only meaningful when `<Calendar>` is given
+   * `resources` and rendered in `view="day"` — every other view ignores it.
+   *
+   * A timed event whose `resourceId` matches no supplied resource — or that
+   * omits it entirely — lands in the trailing "unassigned" column, which is
+   * only rendered when at least one such event exists. All-day events with no
+   * `resourceId` are treated as day-wide and span every column.
+   */
+  resourceId?: string;
   /** Display title. Single line; ellipses on overflow. */
   title: string;
   /** When the event starts (local time). */
@@ -25,6 +36,93 @@ export interface CalendarEvent {
   /** Renders as a full-band, time-prefix-free bar. Defaults to false. */
   allDay?: boolean;
 }
+
+/**
+ * One bookable subject rendered as its own column in the resource day view:
+ * a practitioner, a chair, a room, a bay. Pass an array of these as
+ * `<Calendar resources={…} view="day">` to split the day into lanes that
+ * share one time axis and one scroll container.
+ */
+export interface CalendarResource {
+  /** Stable id. Matched against `CalendarEvent.resourceId`. */
+  id: string;
+  /** Column header text. Not translated by the library — pass it localized. */
+  label: string;
+}
+
+/**
+ * Shading intent for a `CalendarBackgroundInterval`.
+ *
+ * - `'unavailable'` — outside working hours / closed / blocked. Shaded, so
+ *   the user can see that the row exists and is not bookable.
+ * - `'available'` — working and free. Lightly tinted, so bookable space
+ *   reads differently from closed space.
+ */
+export type CalendarBackgroundTone = 'available' | 'unavailable';
+
+/**
+ * A non-interactive band painted behind the hour grid — the availability
+ * underlay. Use it to distinguish "closed" from "open and free"; "open and
+ * busy" is already expressed by the event blocks themselves.
+ *
+ * Intervals are an interval list rather than a weekly-hours object on
+ * purpose: working hours vary per day (a lunch break, a Tuesday late
+ * evening), per date (a public holiday, a short day) and per column (each
+ * practitioner has their own shift), and only an interval list expresses all
+ * three.
+ */
+export interface CalendarBackgroundInterval {
+  /** Start instant (local time). */
+  startsAt: Date;
+  /** End instant (local time). Must be after `startsAt`; equal/inverted intervals are dropped. */
+  endsAt: Date;
+  /**
+   * Restrict this band to one resource column. Ignored unless the view
+   * actually has resource columns; in week view and in a resource-less day
+   * view every interval applies to every column.
+   */
+  resourceId?: string;
+  /** Shading intent. Defaults to `'unavailable'`. */
+  tone?: CalendarBackgroundTone;
+}
+
+/**
+ * The new placement proposed by a drag. Passed to `onEventMove`; the event's
+ * duration is preserved, so `endsAt - startsAt` matches the original.
+ */
+export interface CalendarEventMove {
+  /** Proposed new start instant (local time), snapped to `dragSnapMinutes`. */
+  startsAt: Date;
+  /** Proposed new end instant (local time). */
+  endsAt: Date;
+  /**
+   * The resource column the event was dropped on, when the view has resource
+   * columns. `undefined` means the unassigned column (or a view without
+   * resource columns at all).
+   */
+  resourceId?: string;
+}
+
+/**
+ * The new duration proposed by a resize. Passed to `onEventResize`;
+ * `startsAt` is unchanged from the original event.
+ */
+export interface CalendarEventResize {
+  /** Unchanged start instant. */
+  startsAt: Date;
+  /** Proposed new end instant (local time), snapped to `dragSnapMinutes`. */
+  endsAt: Date;
+}
+
+/**
+ * What a drag handler may return. Returning `false` — or a promise that
+ * resolves to `false` or rejects — rejects the drop and the block snaps back
+ * to where it started. Returning nothing accepts it.
+ *
+ * Accepting does NOT move the event on its own: `events` stays the source of
+ * truth, so the consumer must commit the change to their own state.
+ */
+export type CalendarDropResult = void | boolean | Promise<void | boolean>;
 
 /**
  * Active Calendar view. Month / week / day render a grid; agenda is a
@@ -79,7 +177,11 @@ export interface MonthLayout {
  */
 export interface TimedEventBlock {
   event: CalendarEvent;
-  /** Column index within the rendered view (0..N-1; always 0 for DayView). */
+  /**
+   * Column index within the rendered view (0..N-1). One per weekday in week
+   * view; `0` in a plain day view; one per resource (plus the trailing
+   * unassigned column, when present) in a resource day view.
+   */
   dayIndex: number;
   /** Minutes from `hourRange[0] * 60`. May be negative if the event started earlier. */
   startMinutes: number;
@@ -105,6 +207,23 @@ export interface AllDayBar {
   continuesLeft: boolean;
   /** True when the event continues past the view's last day. */
   continuesRight: boolean;
+}
+
+/**
+ * One painted band of the availability underlay, positioned inside a single
+ * hour-grid column. Produced by `layoutBackgroundIntervals`.
+ */
+export interface BackgroundBlock {
+  /** Stable React key (interval index + column index). */
+  key: string;
+  /** Column index within the rendered view. */
+  dayIndex: number;
+  /** Minutes from `hourRange[0] * 60`, clamped to the visible range. */
+  startMinutes: number;
+  /** Minutes from `hourRange[0] * 60`, clamped to the visible range. */
+  endMinutes: number;
+  /** Resolved tone (defaults applied). */
+  tone: CalendarBackgroundTone;
 }
 
 /** Result of `layoutEventsForHourGrid`. */

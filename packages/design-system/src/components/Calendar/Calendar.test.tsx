@@ -189,3 +189,53 @@ describe('Calendar', () => {
     expect(next.getDate()).toBe(27);
   });
 });
+
+describe('Calendar — resource columns and underlay routing', () => {
+  const CURSOR = new Date(2026, 4, 20);
+  const RESOURCES = [
+    { id: 'ana', label: 'Ana' },
+    { id: 'ben', label: 'Ben' },
+  ];
+
+  it('splits view="day" into one column per resource', () => {
+    render(<Calendar view="day" value={CURSOR} resources={RESOURCES} />, { wrapper: wrap() });
+    expect(screen.getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Ana', 'Ben']);
+  });
+
+  it('ignores resources in week view — its columns are weekdays', () => {
+    render(<Calendar view="week" value={CURSOR} resources={RESOURCES} />, { wrapper: wrap() });
+    expect(screen.getAllByRole('columnheader')).toHaveLength(7);
+  });
+
+  it('ignores resources in month view', () => {
+    render(<Calendar view="month" value={CURSOR} resources={RESOURCES} />, { wrapper: wrap() });
+    expect(screen.queryByText('Ana')).toBeNull();
+  });
+
+  it('routes backgroundIntervals into week view', () => {
+    const { container } = render(
+      <Calendar
+        view="week"
+        value={CURSOR}
+        hourRange={[7, 19]}
+        hourRowHeight={48}
+        backgroundIntervals={[
+          { startsAt: new Date(2026, 4, 20, 9), endsAt: new Date(2026, 4, 20, 12) },
+        ]}
+      />,
+      { wrapper: wrap() },
+    );
+    const bands = Array.from(container.querySelectorAll('div')).filter(
+      (el) => el.style.height !== '' && el.style.top !== '',
+    );
+    expect(bands).toHaveLength(1);
+    expect(bands[0].style.top).toBe('96px');
+  });
+
+  it('leaves the grid read-only until a drag handler is wired', () => {
+    const { rerender } = render(<Calendar view="day" value={CURSOR} />, { wrapper: wrap() });
+    expect(screen.getByRole('grid')).toHaveAttribute('aria-readonly', 'true');
+    rerender(<Calendar view="day" value={CURSOR} onEventMove={() => {}} />);
+    expect(screen.getByRole('grid')).not.toHaveAttribute('aria-readonly');
+  });
+});

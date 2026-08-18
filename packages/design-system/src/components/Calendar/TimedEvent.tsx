@@ -1,9 +1,10 @@
-import { type CSSProperties, type MouseEvent } from 'react';
+import { type CSSProperties, type KeyboardEvent, type MouseEvent, type PointerEvent } from 'react';
 import clsx from 'clsx';
 import { useLocale } from '../../i18n/useLocale';
 import { formatTime } from '../../calendar';
 import { Tooltip } from '../Tooltip';
 import { formatEventDuration } from './utils';
+import type { DragMode, DragPreview } from './useEventDrag';
 import type {
   CalendarEvent,
   CalendarEventTone,
@@ -24,6 +25,21 @@ export interface TimedEventProps {
   renderEvent?: RenderEvent;
   /** Fires when the chip is clicked; receives the `CalendarEvent`. */
   onClick?: (event: CalendarEvent) => void;
+  /** The live drag placement for THIS block, when it is the one being dragged. */
+  preview?: DragPreview | null;
+  /** Whether the grid accepts move gestures (`onEventMove` is wired). */
+  canMove?: boolean;
+  /** Whether the grid accepts resize gestures (`onEventResize` is wired). */
+  canResize?: boolean;
+  /** Starts a pointer drag. Called from `pointerdown` on the block or its resize handle. */
+  onDragStart?: (block: TimedEventBlock, mode: DragMode, e: PointerEvent) => void;
+  /** Keyboard equivalent of a drag — whole snap steps, and whole columns for a move. */
+  onNudge?: (
+    block: TimedEventBlock,
+    delta: { mode: DragMode; steps: number; columns?: number },
+  ) => void;
+  /** `id` of the visually-hidden element describing the keyboard drag shortcuts. */
+  dragHintId?: string;
 }
 
 /**
@@ -48,12 +64,25 @@ export function TimedEvent({
   view = 'week',
   renderEvent,
   onClick,
+  preview = null,
+  canMove = false,
+  canResize = false,
+  onDragStart,
+  onNudge,
+  dragHintId,
 }: TimedEventProps) {
   const locale = useLocale();
   const tone: CalendarEventTone = block.event.tone ?? 'neutral';
+  const isDragging = preview !== null;
 
-  const top = (block.startMinutes / 60) * hourRowHeight;
-  const rawHeight = ((block.endMinutes - block.startMinutes) / 60) * hourRowHeight;
+  // While a drag is in flight the block renders at the proposed placement,
+  // not at the one its `events` entry describes — that only changes if and
+  // when the consumer commits the drop.
+  const startMinutes = preview ? preview.startMinutes : block.startMinutes;
+  const endMinutes = preview ? preview.endMinutes : block.endMinutes;
+
+  const top = (startMinutes / 60) * hourRowHeight;
+  const rawHeight = ((endMinutes - startMinutes) / 60) * hourRowHeight;
   const height = Math.max(rawHeight, MIN_BLOCK_HEIGHT_PX);
   // Google-Calendar-style cascade: each lane shifts right by a small,
   // constant step but every block still extends to the column's right edge.
@@ -61,8 +90,11 @@ export function TimedEvent({
   // partially cover the one beneath them while keeping the predecessor's
   // left edge visible. On hover, the block lifts to full width and on top
   // — see `:hover` rules in TimedEvent.module.scss.
-  const leftPercent = LANE_OFFSET_PERCENT * block.lane;
-  const zIndex = block.lane + 1;
+  //
+  // A dragging block leaves the cascade entirely: full width, top of the
+  // stack, so it reads as lifted off the grid.
+  const leftPercent = isDragging ? 0 : LANE_OFFSET_PERCENT * block.lane;
+  const zIndex = isDragging ? HOVER_Z_INDEX : block.lane + 1;
 
   const startLabel = formatTime(block.event.startsAt, locale);
   const endLabel = block.event.endsAt ? formatTime(block.event.endsAt, locale) : null;
@@ -87,6 +119,56 @@ export function TimedEvent({
     onClick?.(block.event);
   };
 
+  const handlePointerDown = (e: PointerEvent<HTMLButtonElement>) => {
+    if (!canMove) return;
+    onDragStart?.(block, 'move', e);
+  };
+
+  const handleHandlePointerDown = (e: PointerEvent<HTMLSpanElement>) => {
+    if (!canResize) return;
+    onDragStart?.(block, 'resize', e);
+  };
+
+  // Keyboard equivalent of the pointer gesture, so rescheduling isn't
+  // mouse-only. Alt is the modifier throughout: bare arrows stay free for
+  // the browser's own scrolling, and Alt+Arrow is not claimed by the grid.
+  const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
+    if (!e.altKey || !onNudge) return;
+    if (e.ctrlKey || e.metaKey) return;
+    const resize = e.shiftKey;
+    if (resize && !canResize) return;
+    if (!resize && !canMove) return;
+
+    switch (e.key) {
+      case 'ArrowUp':
+        e.preventDefault();
+        e.stopPropagation();
+        onNudge(block, { mode: resize ? 'resize' : 'move', steps: -1 });
+        break;
+      case 'ArrowDown':
+        e.preventDefault();
+        e.stopPropagation();
+        onNudge(block, { mode: resize ? 'resize' : 'move', steps: 1 });
+        break;
+      case 'ArrowLeft':
+        // Column changes are a move concept only — there is nothing to
+        // resize sideways.
+        if (resize) return;
+        e.preventDefault();
+        e.stopPropagation();
+        onNudge(block, { mode: 'move', steps: 0, columns: -1 });
+        break;
+      case 'ArrowRight':
+        if (resize) return;
+        e.preventDefault();
+        e.stopPropagation();
+        onNudge(block, { mode: 'move', steps: 0, columns: 1 });
+        break;
+      default:
+        break;
+    }
+  };
+
   // Short events use a single-line row layout (time + title side-by-side)
   // so the start time stays visible even on min-height blocks. Tall events
   // stack time above title in a column for more breathing room.
@@ -101,11 +183,20 @@ export function TimedEvent({
       })
     : null;
 
+  const draggable = canMove || canResize;
+
   return (
     <Tooltip content={tooltipContent}>
       <button
         type="button"
-        className={clsx(styles.block, styles[tone], isShort && styles.short)}
+        className={clsx(
+          styles.block,
+          styles[tone],
+          isShort && styles.short,
+          canMove && styles.movable,
+          isDragging && styles.dragging,
+          preview?.invalid && styles.invalidDrop,
+        )}
         style={
           {
             top,
@@ -116,7 +207,13 @@ export function TimedEvent({
             '--cal-block-z-hover': HOVER_Z_INDEX,
           } as CSSProperties
         }
+        // `aria-grabbed` is deprecated in ARIA 1.1 and unsupported in practice;
+        // the drag capability is announced through the description instead.
+        aria-describedby={draggable ? dragHintId : undefined}
+        data-dragging={isDragging || undefined}
         onClick={handleClick}
+        onPointerDown={handlePointerDown}
+        onKeyDown={draggable ? handleKeyDown : undefined}
       >
         {customContent !== null ? (
           customContent
@@ -125,6 +222,19 @@ export function TimedEvent({
             <span className={styles.time}>{timeLabel}</span>
             <span className={styles.title}>{block.event.title}</span>
           </>
+        )}
+        {canResize && (
+          // A span, not a nested <button> (illegal inside the block button).
+          // Keyboard users reach the same capability through Alt+Shift+Arrow
+          // on the block itself, so the handle is purely a pointer affordance.
+          <span
+            role="presentation"
+            aria-hidden="true"
+            data-testid={`resize-handle-${block.event.id}`}
+            className={styles.resizeHandle}
+            onPointerDown={handleHandlePointerDown}
+            onClick={(e) => e.stopPropagation()}
+          />
         )}
       </button>
     </Tooltip>

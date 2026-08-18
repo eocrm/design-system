@@ -2,7 +2,11 @@ import { useState } from 'react';
 import {
   Calendar,
   I18nProvider,
+  Stack,
+  type CalendarBackgroundInterval,
   type CalendarEvent,
+  type CalendarEventMove,
+  type CalendarResource,
   type CalendarView,
 } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
@@ -153,6 +157,141 @@ const MULTI_WEEK_EVENTS: CalendarEvent[] = [
 ];
 
 // ── Controlled example ──────────────────────────────────────────────────────
+
+// ── Booking-screen data (resource columns + availability + drag) ────────────
+
+const RESOURCES: CalendarResource[] = [
+  { id: 'ana', label: 'Ana' },
+  { id: 'ben', label: 'Ben' },
+  { id: 'chair-3', label: 'Chair 3' },
+];
+
+/** Opening hours per column, as [startHour, endHour). */
+const SHIFTS: Record<string, [number, number]> = {
+  ana: [9, 17],
+  ben: [8, 14],
+  'chair-3': [10, 18],
+};
+/** Ana takes lunch — the case a single flat `hourRange` cannot express. */
+const LUNCH: [number, number] = [12, 13];
+
+const INITIAL_BOOKINGS: CalendarEvent[] = [
+  {
+    id: 'b1',
+    title: 'Cut & finish',
+    startsAt: fromToday(0, 9, 0),
+    endsAt: fromToday(0, 10, 0),
+    resourceId: 'ana',
+    tone: 'accent',
+  },
+  {
+    id: 'b2',
+    title: 'Colour',
+    startsAt: fromToday(0, 10, 30),
+    endsAt: fromToday(0, 12, 0),
+    resourceId: 'ana',
+    tone: 'accent',
+  },
+  {
+    id: 'b3',
+    title: 'Consultation',
+    startsAt: fromToday(0, 9, 30),
+    endsAt: fromToday(0, 10, 0),
+    resourceId: 'ben',
+    tone: 'success',
+  },
+  {
+    id: 'b4',
+    title: 'Deep clean',
+    startsAt: fromToday(0, 11, 0),
+    endsAt: fromToday(0, 12, 30),
+    resourceId: 'chair-3',
+    tone: 'neutral',
+  },
+  {
+    // No resourceId — lands in the trailing "Unassigned" column.
+    id: 'b5',
+    title: 'Walk-in, unassigned',
+    startsAt: fromToday(0, 13, 0),
+    endsAt: fromToday(0, 14, 0),
+    tone: 'warning',
+  },
+];
+
+/** Shade closed time, tint bookable time — per column, including the lunch gap. */
+const AVAILABILITY: CalendarBackgroundInterval[] = RESOURCES.flatMap(({ id }) => {
+  const [open, close] = SHIFTS[id];
+  const bands: CalendarBackgroundInterval[] = [
+    { startsAt: fromToday(0, 8), endsAt: fromToday(0, open), resourceId: id, tone: 'unavailable' },
+    {
+      startsAt: fromToday(0, close),
+      endsAt: fromToday(0, 18),
+      resourceId: id,
+      tone: 'unavailable',
+    },
+    {
+      startsAt: fromToday(0, open),
+      endsAt: fromToday(0, close),
+      resourceId: id,
+      tone: 'available',
+    },
+  ];
+  if (id === 'ana') {
+    bands.push({
+      startsAt: fromToday(0, LUNCH[0]),
+      endsAt: fromToday(0, LUNCH[1]),
+      resourceId: id,
+      tone: 'unavailable',
+    });
+  }
+  return bands;
+});
+
+/** The synchronous half of the drop rules — refuses the drop mid-drag. */
+function withinShift(next: CalendarEventMove): boolean {
+  const shift: [number, number] = next.resourceId ? (SHIFTS[next.resourceId] ?? [8, 18]) : [8, 18];
+  const startH = next.startsAt.getHours() + next.startsAt.getMinutes() / 60;
+  const endH = next.endsAt.getHours() + next.endsAt.getMinutes() / 60;
+  if (startH < shift[0] || endH > shift[1]) return false;
+  if (next.resourceId === 'ana' && startH < LUNCH[1] && endH > LUNCH[0]) return false;
+  return true;
+}
+
+function BookingCalendarDemo() {
+  const [bookings, setBookings] = useState(INITIAL_BOOKINGS);
+  const [note, setNote] = useState(
+    'Drag a booking, or focus one and press Alt with the arrow keys.',
+  );
+
+  const apply = (id: string, startsAt: Date, endsAt: Date, resourceId?: string) =>
+    setBookings((prev) =>
+      prev.map((b) => (b.id === id ? { ...b, startsAt, endsAt, resourceId } : b)),
+    );
+
+  return (
+    <Stack gap="sm">
+      <Calendar
+        defaultValue={TODAY}
+        view="day"
+        events={bookings}
+        resources={RESOURCES}
+        backgroundIntervals={AVAILABILITY}
+        hourRange={[8, 18]}
+        dragSnapMinutes={15}
+        canDropEvent={(_event, next) => withinShift(next)}
+        onEventMove={(event, next) => {
+          apply(event.id, next.startsAt, next.endsAt, next.resourceId);
+          setNote(`Moved "${event.title}" to ${next.startsAt.toLocaleTimeString()}.`);
+        }}
+        onEventResize={(event, next) => {
+          apply(event.id, next.startsAt, next.endsAt, event.resourceId);
+          setNote(`"${event.title}" now ends at ${next.endsAt.toLocaleTimeString()}.`);
+        }}
+      />
+      <small>{note}</small>
+    </Stack>
+  );
+}
 
 function ControlledCalendarDemo() {
   const [cursor, setCursor] = useState<Date>(TODAY);
@@ -339,6 +478,90 @@ export function Demo() {
           defaultView="day"
           events={SAMPLE_EVENTS}
           hourRange={[8, 18]}
+        />
+      </Example>
+
+      <Example
+        title="Booking screen — resource columns, availability, drag"
+        description="The three pieces a scheduling screen needs, together. resources splits the day into one column per bookable subject (all sharing one time axis and one scroll). backgroundIntervals shades closed time and tints bookable time — note Ana's lunch gap, which a flat hourRange cannot express. onEventMove / onEventResize make blocks draggable; canDropEvent refuses a drop mid-drag when it would fall outside that column's shift. Keyboard: focus a block and press Alt with the arrow keys (add Shift to change the end time). The walk-in with no resourceId lands in the trailing Unassigned column."
+        code={`import { useState } from 'react';
+import { Calendar, Stack } from '@eocrm/design-system';
+
+const RESOURCES = [
+  { id: 'ana', label: 'Ana' },
+  { id: 'ben', label: 'Ben' },
+  { id: 'chair-3', label: 'Chair 3' },
+];
+
+export function BookingCalendarDemo() {
+  const [bookings, setBookings] = useState(INITIAL_BOOKINGS);
+
+  return (
+    <Stack gap="sm">
+      <Calendar
+        view="day"
+        events={bookings}
+        resources={RESOURCES}
+        backgroundIntervals={AVAILABILITY}
+        hourRange={[8, 18]}
+        dragSnapMinutes={15}
+        // Refused mid-drag — the block renders as an invalid drop and the
+        // proposal never reaches onEventMove.
+        canDropEvent={(_event, next) => withinShift(next)}
+        // A drop is PROPOSED, never applied: commit it to your own state,
+        // or return false (or a rejecting promise) to snap the block back.
+        onEventMove={(event, next) =>
+          setBookings((prev) =>
+            prev.map((b) =>
+              b.id === event.id
+                ? { ...b, startsAt: next.startsAt, endsAt: next.endsAt, resourceId: next.resourceId }
+                : b,
+            ),
+          )
+        }
+        onEventResize={(event, next) =>
+          setBookings((prev) =>
+            prev.map((b) => (b.id === event.id ? { ...b, endsAt: next.endsAt } : b)),
+          )
+        }
+      />
+    </Stack>
+  );
+}`}
+      >
+        <BookingCalendarDemo />
+      </Example>
+
+      <Example
+        title="Availability underlay in week view"
+        description="backgroundIntervals works in week view too — resourceId is simply ignored there, so every interval paints every column. Bands sit beneath the events, take no part in the collision cascade, and let clicks through to onDayClick."
+        code={`import { Calendar } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Calendar
+      defaultView="week"
+      events={SAMPLE_EVENTS}
+      hourRange={[8, 18]}
+      backgroundIntervals={[
+        { startsAt: at(8, 0), endsAt: at(9, 0), tone: 'unavailable' },
+        { startsAt: at(9, 0), endsAt: at(17, 0), tone: 'available' },
+        { startsAt: at(17, 0), endsAt: at(18, 0), tone: 'unavailable' },
+      ]}
+    />
+  );
+}`}
+      >
+        <Calendar
+          defaultValue={TODAY}
+          defaultView="week"
+          events={SAMPLE_EVENTS}
+          hourRange={[8, 18]}
+          backgroundIntervals={[
+            { startsAt: fromToday(0, 8), endsAt: fromToday(0, 9), tone: 'unavailable' },
+            { startsAt: fromToday(0, 9), endsAt: fromToday(0, 17), tone: 'available' },
+            { startsAt: fromToday(0, 17), endsAt: fromToday(0, 18), tone: 'unavailable' },
+          ]}
         />
       </Example>
 

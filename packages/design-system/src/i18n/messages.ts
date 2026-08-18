@@ -120,6 +120,10 @@ export interface Messages {
     viewDay: string;
     /** Segmented-control label for the agenda view. */
     viewAgenda: string;
+    /** Column header for the resource-day-view lane holding events with no matching resource. */
+    unassigned: string;
+    /** Description read on a draggable event block, explaining the keyboard equivalent of a drag. */
+    dragInstructions: string;
   };
   datePicker: {
     /** Visible label / aria-label for the "Today" jump button. */

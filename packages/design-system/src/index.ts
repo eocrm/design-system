@@ -666,8 +666,14 @@ export type {
 export { Calendar } from './components/Calendar';
 export type {
   CalendarProps,
+  CalendarBackgroundInterval,
+  CalendarBackgroundTone,
+  CalendarDropResult,
   CalendarEvent,
+  CalendarEventMove,
+  CalendarEventResize,
   CalendarEventTone,
+  CalendarResource,
   CalendarView,
   EventBar,
   MonthLayout,

@@ -3275,7 +3275,72 @@ const [view, setView] = useState<CalendarView>('month');
 - Locale-aware via `useLocale()`; override with `locale` prop. UI strings (`today`, `viewMonth`, etc.) are the consumer's responsibility via `labels`.
 - `maxLanesPerWeek` (default 3) caps event lanes per week in the month view. Events beyond the cap collapse into a `+N more` chip; click fires `onDayClick(date)`.
 - Read-mostly: `onDayClick` and `onEventClick` callbacks only. `onDayClick` fires across all views — month-cell click, "+N more" chip, keyboard activation (Enter/Space) on a focused cell, and (in week/day views) clicks on the empty hour-grid space of a day column. No built-in popover or modal — wire your own detail UI.
-- ARIA: month view is `role="grid" aria-readonly="true"`; arrow keys move focus, PageUp/PageDown navigates months, Enter/Space calls `onDayClick`. Week/day views are also `role="grid" aria-readonly="true"` with `role="row"` + `role="columnheader"` headers and standard sequential tab order for event blocks. Agenda view exposes the visible week as `role="list"` with each day group as a `role="listitem"` and the day label as an `<h3>` heading inside — screen readers announce the date grouping before reading each event row. **Known v3 gap:** in week/day views, `onDayClick` on empty hour-grid space is **mouse-only** (no keyboard equivalent). Consumers needing keyboard activation should drive their detail UI through the focusable event chips via `onEventClick`.
+- ARIA: month view is `role="grid" aria-readonly="true"`; arrow keys move focus, PageUp/PageDown navigates months, Enter/Space calls `onDayClick`. Week/day views are also `role="grid"` with `role="row"` + `role="columnheader"` headers and standard sequential tab order for event blocks — `aria-readonly="true"` there too, until a drag handler is wired (see below). Agenda view exposes the visible week as `role="list"` with each day group as a `role="listitem"` and the day label as an `<h3>` heading inside — screen readers announce the date grouping before reading each event row. **Known v3 gap:** in week/day views, `onDayClick` on empty hour-grid space is **mouse-only** (no keyboard equivalent). Consumers needing keyboard activation should drive their detail UI through the focusable event chips via `onEventClick`.
+
+#### Resource columns — one day, N lanes
+
+```tsx
+<Calendar
+  view="day"
+  events={appointments} // each carries resourceId
+  resources={[
+    { id: 'ana', label: 'Ana' },
+    { id: 'ben', label: 'Ben' },
+  ]}
+/>
+```
+
+- `resources` splits `view="day"` into one column per bookable subject — practitioner, chair, room, bay — sharing **one** time axis and **one** scroll container. This is the resource/day view every scheduling product ships. Don't approximate it with N side-by-side `<Calendar view="day">` in a `Split`: each brings its own header, gutter and scroll, so they drift.
+- Routing is by `CalendarEvent.resourceId`. A **timed** event whose `resourceId` matches nothing (or is absent) lands in a trailing **Unassigned** column, which is only rendered when at least one such event exists. An **all-day** event with no `resourceId` is day-wide and spans every column; with one, it pins to that column.
+- Two bookings at the same hour in _different_ columns are not a collision — each takes lane 0 and full column width. The cascade still applies within one column.
+- Month, week and agenda views ignore `resources` — their columns already mean something else.
+
+#### Availability underlay — shade closed time, tint free time
+
+```tsx
+<Calendar
+  view="day"
+  events={appointments}
+  resources={resources}
+  backgroundIntervals={[
+    { startsAt: at(7, 0), endsAt: at(9, 0), resourceId: 'ana', tone: 'unavailable' },
+    { startsAt: at(9, 0), endsAt: at(17, 0), resourceId: 'ana', tone: 'available' },
+  ]}
+/>
+```
+
+- A booking calendar has three states and `hourRange` alone expresses none of them: **closed** (rendered but greyed), **busy** (an event covers it — already works), **free** (clickable). `backgroundIntervals` paints the first and third behind the events.
+- An interval list, not a weekly-hours object, because working hours vary by day (a lunch break), by date (a holiday, a short day) and by column (per-practitioner shifts).
+- `tone`: `'unavailable'` (default) shades; `'available'` tints. `resourceId` restricts the band to one resource column and is ignored in week view (and in a resource-less day view), where every interval paints every column.
+- Bands render beneath events, take no part in the collision cascade, are `aria-hidden`, and are `pointer-events: none` — `onDayClick` still fires through them. Intervals are clipped to each column's day and to `hourRange`; ones that fall entirely outside are dropped.
+- Don't fake this with all-day events — that pollutes the `events` array you also read back.
+
+#### Drag to move and resize
+
+```tsx
+<Calendar
+  view="day"
+  events={appointments}
+  resources={resources}
+  dragSnapMinutes={15}
+  canDropEvent={(ev, next) => isWithinOpeningHours(next)}
+  onEventMove={async (ev, next) => {
+    const ok = await api.reschedule(ev.id, next);
+    if (!ok) return false; // rejected → the block snaps back
+    setAppointments((prev) => applyMove(prev, ev.id, next));
+  }}
+  onEventResize={(ev, next) => setAppointments((p) => applyResize(p, ev.id, next))}
+/>
+```
+
+- Both handlers are optional and additive — omit them and the calendar behaves exactly as before (read-only). `onEventMove` makes blocks draggable; `onEventResize` adds a handle on the block's bottom edge.
+- **A drop is proposed, never applied.** `events` stays the source of truth: commit the change to your own state or the block snaps back. `next` is `{ startsAt, endsAt, resourceId? }` for a move (duration preserved; `resourceId` is the column it landed on) and `{ startsAt, endsAt }` for a resize (`startsAt` unchanged).
+- **Two ways to refuse a drop.** `canDropEvent` is a synchronous predicate evaluated _continuously during_ the drag — the placement renders as refused and never reaches the handler. The handler itself can return `false`, or a promise resolving `false` or rejecting, for rules only the server can settle; the preview is held until the promise settles, so an accepted drop doesn't flash back mid-request.
+- `dragSnapMinutes` (default `15`) snaps the result to a boundary rather than an arbitrary pixel offset.
+- Dragging sideways crosses columns: another weekday in week view, another resource lane in the resource day view.
+- **Keyboard equivalent**, so rescheduling isn't mouse-only: on a focused block, `Alt`+`↑`/`↓` moves by one snap step, `Alt`+`←`/`→` moves a column, `Alt`+`Shift`+`↑`/`↓` changes the end time. The shortcuts are announced via `aria-describedby` on each block. With a drag handler wired, the grid drops `aria-readonly`.
+- The click that terminates a drag is swallowed, so `onEventClick` doesn't fire on a reschedule. A plain click still opens your detail UI.
+- Drag-to-**create** (dragging empty grid space to draft a new event) is still out of scope — use `onDayClick` plus your own form.
 
 ### `<DatePicker>` — single-date input + popover
 
