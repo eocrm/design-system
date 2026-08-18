@@ -79,12 +79,12 @@ export const ru: Messages = {
     viewDay: 'День',
     viewAgenda: 'Повестка',
     unassigned: 'Без назначения',
-    dragHint: 'Можно перетаскивать. Alt со стрелками — перенести.',
     dragInstructions:
-      'События в этой сетке можно переносить. Alt со стрелками вверх или вниз — перенести событие, Alt со стрелками влево или вправо — перенести в другую колонку, Alt+Shift со стрелками вверх или вниз — изменить время окончания.',
-    dragMovedTo: ({ time }) => `Перенесено на ${time as string}.`,
-    dragEndsAt: ({ time }) => `Окончание в ${time as string}.`,
-    dragRefused: 'Этот слот недоступен.',
+      'Можно перетаскивать. Alt вверх или вниз — перенести событие, Alt влево или вправо — в другую колонку, Alt+Shift вверх или вниз — изменить время окончания.',
+    dragMovedTo: ({ event, time }) => `${event as string}: перенесено на ${time as string}.`,
+    dragEndsAt: ({ event, time }) => `${event as string}: окончание в ${time as string}.`,
+    dragRefused: ({ event }) => `${event as string}: этот слот недоступен.`,
+    dragAtEdge: ({ event }) => `${event as string}: дальше переносить некуда.`,
   },
   datePicker: {
     today: 'Сегодня',

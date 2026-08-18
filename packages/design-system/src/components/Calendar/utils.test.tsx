@@ -592,6 +592,26 @@ describe('needsUnassignedColumn (issue #471)', () => {
     expect(needsUnassignedColumn([ev({ allDay: true })], date, ids)).toBe(false);
   });
 
+  it('does not add a lane for a previous-day event that only overlaps midnight', () => {
+    // Placement matches on the START day, so a 23:00-01:00 event belongs to
+    // the previous column. Counting it here would render an empty lane.
+    const overnight = ev({
+      resourceId: 'ghost',
+      startsAt: new Date(2026, 4, 19, 23),
+      endsAt: new Date(2026, 4, 20, 1),
+    });
+    expect(needsUnassignedColumn([overnight], date, ids)).toBe(false);
+  });
+
+  it('does add a lane for an event that STARTS on this day and runs past midnight', () => {
+    const overnight = ev({
+      resourceId: 'ghost',
+      startsAt: new Date(2026, 4, 20, 23),
+      endsAt: new Date(2026, 4, 21, 1),
+    });
+    expect(needsUnassignedColumn([overnight], date, ids)).toBe(true);
+  });
+
   it('ignores events on other days', () => {
     const other = ev({ startsAt: new Date(2026, 4, 21, 9), endsAt: new Date(2026, 4, 21, 10) });
     expect(needsUnassignedColumn([other], date, ids)).toBe(false);

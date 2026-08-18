@@ -5,11 +5,11 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
 import hourGridStyles from './HourGrid.module.scss';
+import { DayView } from './DayView';
+import type { CalendarEvent } from './types';
 
 /** Raw SCSS, so a CSS-only contract (pointer-events) can still be asserted. */
 const hourGridScss = readFileSync(resolve(__dirname, './HourGrid.module.scss'), 'utf8');
-import { DayView } from './DayView';
-import type { CalendarEvent } from './types';
 
 function wrap(locale = 'en-US') {
   return ({ children }: { children: ReactNode }) => (

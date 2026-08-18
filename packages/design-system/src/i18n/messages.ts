@@ -122,16 +122,16 @@ export interface Messages {
     viewAgenda: string;
     /** Column header for the resource-day-view lane holding events with no matching resource. */
     unassigned: string;
-    /** Short description read on every draggable event block. Kept terse — it repeats per event. */
-    dragHint: string;
-    /** Full keyboard drag instructions, described once on the week/day grid container. */
+    /** Keyboard drag instructions, referenced by every draggable event block. */
     dragInstructions: string;
     /** Live-region text while a drag proposes a new slot, and when a move is accepted. */
-    dragMovedTo: (params: { time: string }) => string;
+    dragMovedTo: (params: { event: string; time: string }) => string;
     /** Live-region text while a resize proposes a new end, and when one is accepted. */
-    dragEndsAt: (params: { time: string }) => string;
+    dragEndsAt: (params: { event: string; time: string }) => string;
     /** Live-region text when a placement is refused, by `canDropEvent` or by the drop handler. */
-    dragRefused: string;
+    dragRefused: (params: { event: string }) => string;
+    /** Live-region text when a keyboard nudge is already against the edge of what the grid allows. */
+    dragAtEdge: (params: { event: string }) => string;
   };
   datePicker: {
     /** Visible label / aria-label for the "Today" jump button. */
@@ -336,7 +336,7 @@ export interface Messages {
     search: string;
     /** Copy shown when the Select listbox has no options matching the filter. */
     noOptions: string;
-    /** Accessible-name prefix for a trigger whose summary text is visually truncated. */
+    /** Accessible name for a multi-select trigger, listing what is currently selected. */
     selectedPrefix: (params: { labels: string }) => string;
     /** Accessible name for a chips trigger with nothing selected yet. */
     openSelect: string;

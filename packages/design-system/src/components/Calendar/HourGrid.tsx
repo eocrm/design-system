@@ -30,15 +30,6 @@ import styles from './HourGrid.module.scss';
 /** Default hour-gutter width in pixels. */
 export const HOUR_GUTTER_WIDTH = 60;
 
-/**
- * Floor width of a day / resource column, in pixels.
- *
- * A plain expression of the grid's own geometry, alongside
- * `HOUR_GUTTER_WIDTH` — not a design token, because it is inlined into
- * `grid-template-columns` from TS rather than authored in SCSS.
- */
-export const HOUR_COLUMN_MIN_WIDTH = 96;
-
 /** One rendered column: a date (week/day) or a resource lane (resource day view). */
 export type HourGridColumn = HourGridColumnRef & { isWeekend?: boolean };
 
@@ -115,7 +106,6 @@ export function HourGrid({
   const t = useTranslation();
   const [tick, setTick] = useState(0);
   const dragHintId = useId();
-  const gridHintId = useId();
 
   useEffect(() => {
     const id = window.setInterval(() => setTick((t) => t + 1), 60_000);
@@ -155,13 +145,25 @@ export function HourGrid({
   // Alt+Arrow that lands on 9:15 — or that gets refused — is indistinguishable
   // from one that did nothing.
   const { announcement } = drag;
-  const dragMessage = announcement
-    ? announcement.refused
-      ? t('calendar.dragRefused')
-      : announcement.mode === 'resize'
-        ? t('calendar.dragEndsAt', { time: formatTime(announcement.endsAt, locale) })
-        : t('calendar.dragMovedTo', { time: formatTime(announcement.startsAt, locale) })
-    : '';
+  const dragMessage = (() => {
+    if (!announcement) return '';
+    // Every message names the event, matching how the rest of the library's
+    // drag surfaces announce (see `_internal/dragAnnouncements.ts`): with a
+    // week of blocks on screen, a bare time says nothing about which one moved.
+    const name = announcement.event.title;
+    if (announcement.atEdge) return t('calendar.dragAtEdge', { event: name });
+    if (announcement.refused) return t('calendar.dragRefused', { event: name });
+    if (announcement.mode === 'resize') {
+      return t('calendar.dragEndsAt', {
+        event: name,
+        time: formatTime(announcement.endsAt, locale),
+      });
+    }
+    // A move states the whole slot — the end moves with the start, and a
+    // receptionist needs both to know whether it still fits.
+    const range = `${formatTime(announcement.startsAt, locale)} – ${formatTime(announcement.endsAt, locale)}`;
+    return t('calendar.dragMovedTo', { event: name, time: range });
+  })();
 
   const blocksByDay = useMemo(() => {
     const m = new Map<number, TimedEventBlock[]>();
@@ -198,6 +200,10 @@ export function HourGrid({
   // the first practitioner's lane and draw the now-line only there — reading
   // as "Ana is today".
   const isTodayColumn = (i: number) => isSameDay(columns[i].date, currentTime);
+  // In a resource day view every column is today, so tinting each header says
+  // nothing — the date is already in the Calendar header. The now-line still
+  // draws in every lane, which is the part that carries information.
+  const isResourceGrid = columns.some((c) => c.resourceId !== undefined);
 
   const handleDragStart = (block: TimedEventBlock, mode: DragMode, e: PointerEvent) => {
     drag.startPointerDrag(block, mode, e);
@@ -217,19 +223,21 @@ export function HourGrid({
     >
       {draggable && (
         <>
-          {/* Split deliberately: the per-block description is a short hint,
-              because a screen-reader user tabbing a week of 30 events would
-              otherwise hear the full shortcut list after every event name.
-              The long form is announced once, on the grid itself. */}
+          {/* One description, referenced by every block. It has to live on the
+              blocks rather than on the grid: `role="grid"` here is not
+              focusable, and a description on a node that never receives focus
+              is never announced. Repeating it per draggable is also what the
+              library's dnd-kit surfaces do (`screenReaderInstructions.draggable`
+              in `_internal/dragAnnouncements.ts`), so the shortcut list stays
+              discoverable from wherever the user actually lands. */}
           <span id={dragHintId} className={styles.dragHint}>
-            {t('calendar.dragHint')}
-          </span>
-          <span id={gridHintId} className={styles.dragHint}>
             {t('calendar.dragInstructions')}
           </span>
-          {/* `key` on the seq so an identical message (two refused drops in a
-              row) is a fresh text node and gets re-announced. */}
-          <span role="status" aria-live="polite" className={styles.dragHint}>
+          {/* Assertive, matching dnd-kit's live region: during a drag the newest
+              slot supersedes the last rather than queueing behind it. `key` on
+              the seq so an identical message (two refused drops in a row) is a
+              fresh text node and still gets read. */}
+          <span role="status" aria-live="assertive" className={styles.dragHint}>
             <span key={announcement?.seq ?? 0}>{dragMessage}</span>
           </span>
         </>
@@ -238,13 +246,15 @@ export function HourGrid({
         role="grid"
         aria-readonly={draggable ? undefined : 'true'}
         aria-label={ariaLabel}
-        aria-describedby={draggable ? gridHintId : undefined}
         className={styles.grid}
         style={{
-          // `minmax(…, 1fr)` rather than `1fr`: a shop with a dozen bays
-          // should scroll horizontally in the existing `.scroll` container
-          // instead of squashing every lane to unreadable width.
-          gridTemplateColumns: `${HOUR_GUTTER_WIDTH}px repeat(${columnCount}, minmax(${HOUR_COLUMN_MIN_WIDTH}px, 1fr))`,
+          // Plain `1fr`, deliberately: `AllDayBand` is a sibling of the
+          // horizontal scroller and lays its own columns out with `1fr`, so
+          // giving the hour grid a minimum width would let the two disagree —
+          // all-day chips would sit over the wrong columns and stay put while
+          // the grid scrolled under them. Many resource lanes squash rather
+          // than scroll until both can share one scroll container.
+          gridTemplateColumns: `${HOUR_GUTTER_WIDTH}px repeat(${columnCount}, 1fr)`,
           gridTemplateRows: `auto repeat(${totalHours}, ${hourRowHeight}px)`,
         }}
       >
@@ -260,7 +270,7 @@ export function HourGrid({
               className={clsx(
                 styles.columnHeader,
                 columns[i].isWeekend && styles.weekendHeader,
-                isTodayColumn(i) && styles.todayHeader,
+                !isResourceGrid && isTodayColumn(i) && styles.todayHeader,
               )}
             >
               {header}

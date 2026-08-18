@@ -1467,6 +1467,22 @@ describe('Select — value="" is a real option (issue #470)', () => {
     expect(onChange).toHaveBeenCalledWith('scheme-a', { value: 'scheme-a', label: 'Scheme A' });
   });
 
+  it('renders a selected option whose label is empty as selected, not as a placeholder', () => {
+    // The empty LABEL case, distinct from the empty VALUE case: the row is
+    // genuinely selected, so the trigger must not claim nothing is chosen.
+    render(<Select options={[{ value: 'x', label: '' }]} value="x" placeholder="Pick one" />);
+    const trigger = screen.getByRole('combobox');
+    expect(trigger).not.toHaveTextContent('Pick one');
+    expect(trigger.className).not.toContain(styles.placeholder);
+  });
+
+  it('calls renderValue for a selected option whose label is empty', () => {
+    const renderValue = vi.fn(() => <span>decorated</span>);
+    render(<Select options={[{ value: 'x', label: '' }]} value="x" renderValue={renderValue} />);
+    expect(renderValue).toHaveBeenCalled();
+    expect(screen.getByRole('combobox')).toHaveTextContent('decorated');
+  });
+
   it('hides ✕ when the selected option IS the empty value — clearing is a no-op', () => {
     render(<Select options={SCHEMES} value="" clearable />);
     expect(screen.queryByRole('button', { name: /clear selection/i })).toBeNull();

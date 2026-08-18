@@ -389,7 +389,11 @@ function ButtonTrigger(props: TriggerProps) {
   const computedAriaLabel = (() => {
     if (props['aria-label']) return props['aria-label'];
     if (ctx.multiple && label) return t('select.selectedPrefix', { labels: label });
-    return label || props.placeholder || undefined;
+    // `hasValue` rather than a truthy `label`, for the same reason as the
+    // rendered gate below: a selected option with an empty label must not fall
+    // back to announcing the placeholder.
+    if (hasValue) return label || undefined;
+    return props.placeholder || undefined;
   })();
 
   const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {
@@ -483,7 +487,11 @@ function ButtonTrigger(props: TriggerProps) {
         }}
         onKeyDown={handleKeyDown}
       >
-        {label ? (
+        {/* Gated on `hasValue`, not on the label being truthy: an option may
+            legitimately carry an empty label, and it is still a selection —
+            rendering the placeholder there would say "nothing is selected"
+            about a row the listbox shows as checked. */}
+        {hasValue ? (
           <span>{labelNode}</span>
         ) : (
           <span className={styles.placeholder}>{props.placeholder ?? ''}</span>

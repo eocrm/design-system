@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
 import { Calendar } from './Calendar';
 import type { CalendarEvent, CalendarEventMove } from './types';
@@ -237,7 +237,9 @@ describe('Calendar drag — rejection (issue #472)', () => {
     // `events` position, so "it snapped back" alone asserts nothing.
     const refused = renderDay({ onEventMove: () => false });
     drag(block(), { dy: HOUR_ROW_HEIGHT });
-    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(/not available/i));
+    await waitFor(() =>
+      expect(screen.getByRole('status')).toHaveTextContent(/cannot be placed there/i),
+    );
     refused.unmount();
 
     renderDay({ onEventMove: () => undefined });
@@ -254,7 +256,7 @@ describe('Calendar drag — rejection (issue #472)', () => {
     expect(block().style.top).toBe('144px');
     settle(false);
     await waitFor(() => expect(block().style.top).toBe('96px'));
-    expect(screen.getByRole('status')).toHaveTextContent(/not available/i);
+    expect(screen.getByRole('status')).toHaveTextContent(/cannot be placed there/i);
   });
 
   it('snaps back when the handler’s promise rejects', async () => {
@@ -262,7 +264,7 @@ describe('Calendar drag — rejection (issue #472)', () => {
     renderDay({ onEventMove });
     drag(block(), { dy: HOUR_ROW_HEIGHT });
     await waitFor(() => expect(block().style.top).toBe('96px'));
-    expect(screen.getByRole('status')).toHaveTextContent(/not available/i);
+    expect(screen.getByRole('status')).toHaveTextContent(/cannot be placed there/i);
   });
 
   it('marks the block refused while canDropEvent says no, mid-drag', () => {
@@ -334,24 +336,77 @@ describe('Calendar drag — clamping to the grid (issue #472)', () => {
   });
 
   it('repeated Alt+ArrowUp cannot walk the event off the top of the grid', async () => {
+    // The move has to be COMMITTED each time, or every iteration re-proposes
+    // the same slot from the same starting position and the bound is never
+    // reached — the assertion would hold with the clamp deleted.
     const user = userEvent.setup();
-    const onEventMove = vi.fn();
-    renderDay({ onEventMove });
-    block().focus();
-    for (let i = 0; i < 12; i++) await user.keyboard('{Alt>}{ArrowUp}{/Alt}');
-    for (const [, next] of onEventMove.mock.calls) {
-      expect(next.startsAt.getDate()).toBe(20);
-      expect(next.startsAt.getHours()).toBeGreaterThanOrEqual(7);
+    const seen: Date[] = [];
+    function Harness() {
+      const [events, setEvents] = useState<CalendarEvent[]>([STANDUP]);
+      return (
+        <Calendar
+          view="day"
+          value={CURSOR}
+          events={events}
+          hourRange={[7, 19]}
+          hourRowHeight={HOUR_ROW_HEIGHT}
+          onEventMove={(event, next) => {
+            seen.push(next.startsAt);
+            setEvents([{ ...event, startsAt: next.startsAt, endsAt: next.endsAt }]);
+          }}
+        />
+      );
     }
+    render(<Harness />, { wrapper: wrap });
+    block().focus();
+    for (let i = 0; i < 12; i++) {
+      block().focus();
+      await user.keyboard('{Alt>}{ArrowUp}{/Alt}');
+    }
+    expect(seen.length).toBeGreaterThan(0);
+    for (const start of seen) {
+      expect(start.getDate()).toBe(20);
+      expect(start.getHours()).toBeGreaterThanOrEqual(7);
+    }
+    // It walked all the way to the top and stopped there.
+    expect(seen[seen.length - 1]).toEqual(new Date(2026, 4, 20, 7, 0));
+    // And the block never left the day.
+    expect(screen.getByRole('status')).toHaveTextContent(/cannot move any further/i);
   });
 
-  it('a resize cannot push the end into the next calendar day', () => {
+  it('a runaway resize is bounded to one day from the start', () => {
     const onEventResize = vi.fn();
     const { container } = renderDay({ onEventResize });
-    drag(resizeHandle(container), { dy: 40 * HOUR_ROW_HEIGHT });
+    drag(resizeHandle(container), { dy: 400 * HOUR_ROW_HEIGHT });
     const [, next] = onEventResize.mock.calls[0];
-    // Clamped to the column day's own midnight, not rolled into May 21.
-    expect(next.endsAt).toEqual(new Date(2026, 4, 21, 0, 0));
+    // A pointer delta that large would otherwise roll through whole dates.
+    // The bound is a day's length from the start, not the visible window —
+    // an overnight booking has to stay extendable past midnight.
+    expect(next.endsAt).toEqual(new Date(2026, 4, 21, 9, 0));
+  });
+
+  it('a resize can still extend an event past midnight', () => {
+    const onEventResize = vi.fn();
+    const { container } = render(
+      <Calendar
+        view="day"
+        value={CURSOR}
+        events={[
+          {
+            id: 'a',
+            title: 'Standup',
+            startsAt: new Date(2026, 4, 20, 22, 0),
+            endsAt: new Date(2026, 4, 20, 23, 0),
+          },
+        ]}
+        hourRange={[7, 23]}
+        hourRowHeight={HOUR_ROW_HEIGHT}
+        onEventResize={onEventResize}
+      />,
+      { wrapper: wrap },
+    );
+    drag(resizeHandle(container), { dy: 2 * HOUR_ROW_HEIGHT });
+    expect(onEventResize.mock.calls[0][1].endsAt).toEqual(new Date(2026, 4, 21, 1, 0));
   });
 });
 
@@ -534,6 +589,62 @@ describe('Calendar drag — week view columns (issue #472)', () => {
     fireEvent.pointerUp(window, { pointerId: 1, clientX: 450, clientY: 100 });
     const [, next] = onEventMove.mock.calls[0];
     expect(next.startsAt).toEqual(new Date(2026, 4, 21, 9, 0));
+  });
+});
+
+describe('Calendar drag — preview feedback (issue #472)', () => {
+  it('shows the PROPOSED time on the block while dragging, not the stored one', () => {
+    renderDay({ onEventMove: vi.fn() });
+    const el = block();
+    expect(el).toHaveTextContent(/9:00\s*AM/);
+    fireEvent.pointerDown(el, { pointerId: 1, button: 0, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(window, { pointerId: 1, clientX: 100, clientY: 100 + HOUR_ROW_HEIGHT });
+    // The label is the feedback at the moment the user decides to release —
+    // a block that has visibly moved to 10:00 must not still read 9:00.
+    expect(block()).toHaveTextContent(/10:00\s*AM/);
+    expect(block()).not.toHaveTextContent(/9:00\s*AM/);
+    fireEvent.pointerUp(window, { pointerId: 1, clientX: 100, clientY: 100 + HOUR_ROW_HEIGHT });
+  });
+
+  it('shows the proposed END while resizing, keeping the start', () => {
+    const { container } = renderDay({ onEventResize: vi.fn() });
+    fireEvent.pointerDown(resizeHandle(container), {
+      pointerId: 1,
+      button: 0,
+      clientX: 100,
+      clientY: 100,
+    });
+    fireEvent.pointerMove(window, { pointerId: 1, clientX: 100, clientY: 100 + HOUR_ROW_HEIGHT });
+    expect(block()).toHaveTextContent(/9:00\s*AM/);
+    expect(block()).toHaveTextContent(/11:00\s*AM/);
+    fireEvent.pointerUp(window, { pointerId: 1, clientX: 100, clientY: 100 + HOUR_ROW_HEIGHT });
+  });
+
+  it('names the event in every announcement', async () => {
+    const user = userEvent.setup();
+    renderDay({ onEventMove: vi.fn() });
+    block().focus();
+    await user.keyboard('{Alt>}{ArrowDown}{/Alt}');
+    // A bare time says nothing about WHICH of a week's blocks moved.
+    expect(screen.getByRole('status')).toHaveTextContent(/Standup/);
+  });
+
+  it('does not start a keyboard nudge while a pointer drag owns the grid', async () => {
+    const user = userEvent.setup();
+    const onEventMove = vi.fn();
+    renderDay({ onEventMove });
+    const el = block();
+    fireEvent.pointerDown(el, { pointerId: 1, button: 0, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(window, { pointerId: 1, clientX: 100, clientY: 148 });
+    el.focus();
+    await user.keyboard('{Alt>}{ArrowDown}{/Alt}');
+    // The nudge must not orphan the live gesture — otherwise the pointerup
+    // below would no-op and leave the grid stuck in its dragging state.
+    fireEvent.pointerUp(window, { pointerId: 1, clientX: 100, clientY: 148 });
+    expect(onEventMove).toHaveBeenCalledTimes(1);
+    // And a fresh gesture still works afterwards.
+    drag(block(), { dy: HOUR_ROW_HEIGHT });
+    expect(onEventMove).toHaveBeenCalledTimes(2);
   });
 });
 

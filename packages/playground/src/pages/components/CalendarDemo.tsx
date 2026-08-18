@@ -219,21 +219,29 @@ const INITIAL_BOOKINGS: CalendarEvent[] = [
 ];
 
 /**
+ * Day offsets covering the Sun–Sat week the week view actually renders.
+ * Anchoring on today ± 3 would be off by up to three days, leaving real
+ * columns unshaded — the very bug the per-day interval note warns about.
+ */
+function weekOffsets(): number[] {
+  const sundayOffset = -TODAY.getDay();
+  return [0, 1, 2, 3, 4, 5, 6].map((i) => sundayOffset + i);
+}
+
+/**
  * Opening hours for the WEEK view. Intervals are clipped to each column's own
  * date, so one band per day — a single 08:00-09:00 interval would shade
  * exactly one column, not the week.
  */
-const WEEK_AVAILABILITY: CalendarBackgroundInterval[] = [-3, -2, -1, 0, 1, 2, 3].flatMap(
-  (offset) => [
-    { startsAt: fromToday(offset, 8), endsAt: fromToday(offset, 9), tone: 'unavailable' as const },
-    { startsAt: fromToday(offset, 9), endsAt: fromToday(offset, 17), tone: 'available' as const },
-    {
-      startsAt: fromToday(offset, 17),
-      endsAt: fromToday(offset, 18),
-      tone: 'unavailable' as const,
-    },
-  ],
-);
+const WEEK_AVAILABILITY: CalendarBackgroundInterval[] = weekOffsets().flatMap((offset) => [
+  { startsAt: fromToday(offset, 8), endsAt: fromToday(offset, 9), tone: 'unavailable' as const },
+  { startsAt: fromToday(offset, 9), endsAt: fromToday(offset, 17), tone: 'available' as const },
+  {
+    startsAt: fromToday(offset, 17),
+    endsAt: fromToday(offset, 18),
+    tone: 'unavailable' as const,
+  },
+]);
 
 /** Shade closed time, tint bookable time — per column, including the lunch gap. */
 const AVAILABILITY: CalendarBackgroundInterval[] = RESOURCES.flatMap(({ id }) => {
@@ -305,8 +313,9 @@ function BookingCalendarDemo() {
           setNote(`"${event.title}" now ends at ${next.endsAt.toLocaleTimeString()}.`);
         }}
       />
-      {/* The only feedback for the keyboard path, so it announces. */}
-      <small role="status">{note}</small>
+      {/* Plain text: the library already exposes a live region for the drag,
+          and a second one here would duplicate every announcement. */}
+      <small>{note}</small>
     </Stack>
   );
 }
@@ -557,7 +566,9 @@ export function BookingCalendarDemo() {
 
 // One interval per day: intervals are clipped to each column's date, so a
 // single 08:00-09:00 band would shade exactly one column, not the week.
-const WEEK_AVAILABILITY = [-3, -2, -1, 0, 1, 2, 3].flatMap((offset) => [
+// Offsets are taken from the rendered week's Sunday, not from today, or the
+// bands land up to three days off the columns they are meant to shade.
+const WEEK_AVAILABILITY = weekOffsets().flatMap((offset) => [
   { startsAt: at(offset, 8), endsAt: at(offset, 9), tone: 'unavailable' },
   { startsAt: at(offset, 9), endsAt: at(offset, 17), tone: 'available' },
   { startsAt: at(offset, 17), endsAt: at(offset, 18), tone: 'unavailable' },
