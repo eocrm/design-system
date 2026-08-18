@@ -76,6 +76,15 @@ export const en: Messages = {
     viewWeek: 'Week',
     viewDay: 'Day',
     viewAgenda: 'Agenda',
+    unassigned: 'Unassigned',
+    dragInstructions:
+      'Draggable. Alt with up or down moves this event, Alt with left or right moves it to another column, Alt and Shift with up or down changes its end time.',
+    dragMovedTo: ({ event, time }) => `${event as string} moved to ${time as string}.`,
+    dragEndsAt: ({ event, time }) => `${event as string} now ends at ${time as string}.`,
+    dragRefused: ({ event }) => `${event as string} cannot be placed there.`,
+    dragAtEdge: ({ event }) => `${event as string} cannot move any further.`,
+    dragUnchanged: ({ event }) => `${event as string} is unchanged.`,
+    dragCancelled: ({ event }) => `Move cancelled. ${event as string} is back where it was.`,
   },
   datePicker: {
     today: 'Today',
@@ -186,6 +195,8 @@ export const en: Messages = {
     clear: 'Clear selection',
     search: 'Search…',
     noOptions: 'No options',
+    selectedPrefix: ({ labels }) => `Selected: ${labels as string}`,
+    openSelect: 'Open select',
   },
   phoneInput: {
     countryLabel: 'Country',

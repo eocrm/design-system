@@ -28,6 +28,21 @@ export interface DropdownMenuItemProps extends Omit<HTMLAttributes<HTMLDivElemen
   icon?: ReactNode;
   /** Trailing shortcut hint (e.g. `'⌘D'`). Visual cue only — does NOT register a global key handler. */
   shortcut?: string;
+  /**
+   * Trailing secondary content *about the item itself* — a region code, a
+   * count, a `<Badge>`. Distinct from `shortcut`, which is a keyboard hint
+   * and is styled (and free to evolve) as one.
+   *
+   * `ReactNode`, so a Badge or Dot can go here. It is NOT `aria-hidden`, so
+   * it joins the item's accessible name ("demo RU" rather than a second
+   * identical "demo") — which is the point when the label alone is
+   * ambiguous. It is a prop, not a child, so it stays out of the typeahead
+   * label; type-to-select still matches the pure label text.
+   *
+   * Renders before `shortcut` when both are present, keeping the keyboard
+   * hint rightmost.
+   */
+  meta?: ReactNode;
   /** Disabled items are skipped by keyboard nav, dimmed, and don't fire `onSelect` on click. */
   disabled?: boolean;
   /**
@@ -44,6 +59,22 @@ export interface DropdownMenuItemProps extends Omit<HTMLAttributes<HTMLDivElemen
 /**
  * A selectable menu item. Self-registers with the DropdownMenu context for
  * keyboard navigation and typeahead. Fires `onSelect` on activation.
+ *
+ * @example
+ * <DropdownMenu.Item onSelect={onRename}>Rename</DropdownMenu.Item>
+ *
+ * @example
+ * // Two trailing slots, deliberately different things:
+ * // `shortcut` is a keyboard hint; `meta` qualifies the item itself and
+ * // joins the accessible name ("Duplicate 3 files").
+ * <DropdownMenu.Item onSelect={onDuplicate} meta="3 files" shortcut="⌘D">
+ *   Duplicate
+ * </DropdownMenu.Item>
+ *
+ * @remarks Anti-patterns
+ * - ❌ Using `shortcut` to carry text that is not a keyboard hint (a region
+ *   code, a count, a status). It is styled as a key hint and may become a
+ *   `<Kbd>` key cap. Use `meta` for that.
  */
 export const Item = forwardRef<HTMLDivElement, DropdownMenuItemProps>(function Item(
   {
@@ -51,6 +82,7 @@ export const Item = forwardRef<HTMLDivElement, DropdownMenuItemProps>(function I
     tone = 'default',
     icon,
     shortcut,
+    meta,
     disabled = false,
     closeOnSelect = true,
     className,
@@ -107,6 +139,7 @@ export const Item = forwardRef<HTMLDivElement, DropdownMenuItemProps>(function I
     >
       {icon !== undefined && <span className={styles.icon}>{icon}</span>}
       <span className={styles.itemLabel}>{children}</span>
+      {meta !== undefined && <span className={styles.meta}>{meta}</span>}
       {shortcut !== undefined && <span className={styles.shortcut}>{shortcut}</span>}
     </div>
   );

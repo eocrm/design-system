@@ -50,6 +50,21 @@ export interface DropdownMenuCheckboxItemProps extends Omit<
   /** Optional trailing shortcut hint (e.g. `'⌘D'`). Visual cue only — does NOT register a global key handler. */
   shortcut?: string;
   /**
+   * Trailing secondary content *about the item itself* — a region code, a
+   * count, a `<Badge>`. Distinct from `shortcut`, which is a keyboard hint
+   * and is styled (and free to evolve) as one.
+   *
+   * `ReactNode`, so a Badge or Dot can go here. It is NOT `aria-hidden`, so
+   * it joins the item's accessible name ("demo RU" rather than a second
+   * identical "demo") — which is the point when the label alone is
+   * ambiguous. It is a prop, not a child, so it stays out of the typeahead
+   * label; type-to-select still matches the pure label text.
+   *
+   * Renders before `shortcut` when both are present, keeping the keyboard
+   * hint rightmost.
+   */
+  meta?: ReactNode;
+  /**
    * Item content. May include a `<DropdownMenu.ItemIndicator>` as a direct
    * child to provide a custom indicator glyph.
    */
@@ -107,6 +122,7 @@ export const CheckboxItem = forwardRef<HTMLDivElement, DropdownMenuCheckboxItemP
       disabled = false,
       icon,
       shortcut,
+      meta,
       className,
       children,
       ...rest
@@ -158,6 +174,7 @@ export const CheckboxItem = forwardRef<HTMLDivElement, DropdownMenuCheckboxItemP
         )}
         {icon !== undefined && <span className={styles.icon}>{icon}</span>}
         <span className={styles.itemLabel}>{labelContent}</span>
+        {meta !== undefined && <span className={styles.meta}>{meta}</span>}
         {shortcut !== undefined && <span className={styles.shortcut}>{shortcut}</span>}
       </div>
     );

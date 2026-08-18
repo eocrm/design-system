@@ -21,6 +21,14 @@ const STATUSES: SelectOption[] = [
   { value: 'archived', label: 'Archived' },
 ];
 
+const SCHEMES: SelectOption[] = [
+  // A legitimate empty-string option: "no explicit binding — follow the
+  // tenant default", alongside N real catalog ids.
+  { value: '', label: 'Use the default scheme' },
+  { value: 'scheme-a', label: 'Scheme A' },
+  { value: 'scheme-b', label: 'Scheme B' },
+];
+
 const COUNTRIES = [
   {
     label: 'Americas',
@@ -149,6 +157,45 @@ export function ClearableExample() {
       >
         <InputExample>
           <ClearableExample />
+        </InputExample>
+      </Example>
+
+      <Example
+        title={'Sentinel row — value="" is a real option'}
+        description={
+          'A value of "" is not reserved for "nothing selected". Model "no explicit choice — follow the default" as a real option with value: "" and it renders and selects like any other row. Nothing-selected is resolved by lookup instead, so a Select whose options have no "" row still shows its placeholder at value="". Note the ✕ disappears once the sentinel row is chosen: it already IS the cleared value.'
+        }
+        code={`import { useState } from 'react';
+import { Select, Stack, type SelectOption } from '@eocrm/design-system';
+
+const SCHEMES: SelectOption[] = [
+  { value: '', label: 'Use the default scheme' },
+  { value: 'scheme-a', label: 'Scheme A' },
+  { value: 'scheme-b', label: 'Scheme B' },
+];
+
+export function SentinelValueExample() {
+  // null means "follow the tenant default" — mapped to/from the "" row.
+  const [boundSchemeId, setBoundSchemeId] = useState<string | null>(null);
+
+  return (
+    <Stack gap="sm" align="start">
+      <div style={{ width: 320 }}>
+        <Select
+          options={SCHEMES}
+          value={boundSchemeId ?? ''}
+          onChange={(v) => setBoundSchemeId(v === '' ? null : (v as string))}
+          clearable
+          placeholder="Pick a scheme"
+        />
+      </div>
+      <code>boundSchemeId = {JSON.stringify(boundSchemeId)}</code>
+    </Stack>
+  );
+}`}
+      >
+        <InputExample>
+          <SentinelValueExample />
         </InputExample>
       </Example>
 
@@ -596,6 +643,26 @@ function ClearableExample() {
         placeholder="Pick a status"
       />
     </div>
+  );
+}
+
+function SentinelValueExample() {
+  // null means "follow the tenant default" — mapped to/from the "" row.
+  const [boundSchemeId, setBoundSchemeId] = useState<string | null>(null);
+
+  return (
+    <Stack gap="sm" align="start">
+      <div style={{ width: 320 }}>
+        <Select
+          options={SCHEMES}
+          value={boundSchemeId ?? ''}
+          onChange={(v) => setBoundSchemeId(v === '' ? null : (v as string))}
+          clearable
+          placeholder="Pick a scheme"
+        />
+      </div>
+      <code>boundSchemeId = {JSON.stringify(boundSchemeId)}</code>
+    </Stack>
   );
 }
 

@@ -49,6 +49,47 @@
   }
 }
 
+// Movable blocks advertise the gesture on the pointer. `touch-action: none`
+// lets a touch drag reschedule instead of scrolling the grid.
+.movable {
+  cursor: grab;
+  touch-action: none;
+}
+
+// The block currently being dragged: lifted off the grid, semi-transparent
+// so the slot it will land on stays readable underneath.
+.dragging {
+  cursor: grabbing;
+  opacity: var(--calendar-drag-block-opacity);
+  box-shadow: var(--calendar-drag-block-shadow);
+
+  // The lift is instant — animating position would lag the pointer.
+  transition: none;
+}
+
+// `canDropEvent` refused this placement. Outlined rather than recolored so
+// the event's own tone stays legible while the user hunts for a valid slot.
+.invalidDrop {
+  outline: var(--calendar-drag-invalid-outline-width) solid var(--calendar-drag-invalid-outline);
+  outline-offset: 0;
+}
+
+// Bottom-edge resize affordance. Pointer-only: keyboard users resize with
+// Alt+Shift+Arrow on the block itself, so this carries no focus behaviour.
+.resizeHandle {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: var(--calendar-resize-handle-height);
+  cursor: ns-resize;
+  touch-action: none;
+}
+
+.resizeHandle:hover {
+  background: var(--calendar-resize-handle-bg-hover);
+}
+
 // Short blocks (at min-height) use a single-line row layout so the start
 // time stays visible alongside the title in the limited vertical space.
 .short {

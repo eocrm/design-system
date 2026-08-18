@@ -1,7 +1,9 @@
-import { startOfDay, toDateKey } from '../../calendar/dateMath';
+import { addDays, startOfDay, toDateKey } from '../../calendar/dateMath';
 import type { Week } from '../../calendar/types';
 import type {
   AllDayBar,
+  BackgroundBlock,
+  CalendarBackgroundInterval,
   CalendarEvent,
   EventBar,
   HourGridLayout,
@@ -137,9 +139,51 @@ export function layoutEventsForMonth(
   return { bars, hiddenCounts };
 }
 
-interface DayRef {
+/**
+ * One column of an hour grid. A week view supplies seven, one per weekday; a
+ * plain day view supplies one; a resource day view supplies one per resource
+ * (all carrying the same `date`) plus, when needed, a trailing unassigned
+ * column.
+ */
+export interface HourGridColumnRef {
+  /** The date this column covers. Identical across every column of a resource day view. */
   date: Date;
+  /** Stable React key. */
   key: string;
+  /**
+   * Resource identity of this column:
+   * - `undefined` — the grid is not split by resource (week view, plain day view).
+   * - a string — this column belongs to that `CalendarResource`.
+   * - `null` — the trailing "unassigned" column.
+   */
+  resourceId?: string | null;
+}
+
+/** True when the supplied columns represent resource lanes rather than dates. */
+export function isResourceGrid(columns: readonly HourGridColumnRef[]): boolean {
+  return columns.some((c) => c.resourceId !== undefined);
+}
+
+/**
+ * Which column does this event belong in?
+ *
+ * Date grids match on the event's start day. Resource grids match the event's
+ * `resourceId` against the column's; anything that doesn't match — including
+ * an event with no `resourceId` at all — falls back to the unassigned column
+ * when one is rendered, and is dropped when one is not.
+ */
+function findColumnIndex(
+  columns: readonly HourGridColumnRef[],
+  eventStartDayMs: number,
+  resourceId: string | undefined,
+  resourceMode: boolean,
+): number {
+  const onDay = (c: HourGridColumnRef) => startOfDay(c.date).getTime() === eventStartDayMs;
+  if (!resourceMode) return columns.findIndex(onDay);
+  const wanted = resourceId ?? null;
+  const exact = columns.findIndex((c) => onDay(c) && c.resourceId === wanted);
+  if (exact !== -1) return exact;
+  return columns.findIndex((c) => onDay(c) && c.resourceId === null);
 }
 
 interface NormalizedTimed {
@@ -164,13 +208,14 @@ interface NormalizedTimed {
  */
 export function layoutEventsForHourGrid(
   events: readonly CalendarEvent[],
-  days: readonly DayRef[],
+  days: readonly HourGridColumnRef[],
   hourRange: readonly [number, number],
 ): HourGridLayout {
   if (events.length === 0 || days.length === 0) {
     return { timedBlocks: [], allDayBars: [] };
   }
 
+  const resourceMode = isResourceGrid(days);
   const viewStart = startOfDay(days[0].date).getTime();
   const viewEnd = startOfDay(days[days.length - 1].date).getTime() + MS_PER_DAY;
   const baseHourMinutes = hourRange[0] * 60;
@@ -187,7 +232,7 @@ export function layoutEventsForHourGrid(
       continue;
     }
     const eventStartDay = startOfDay(start).getTime();
-    const dayIndex = days.findIndex((d) => startOfDay(d.date).getTime() === eventStartDay);
+    const dayIndex = findColumnIndex(days, eventStartDay, ev.resourceId, resourceMode);
     if (dayIndex === -1) continue;
     const startMinutes = start.getHours() * 60 + start.getMinutes() - baseHourMinutes;
     // If the event ends on a later day, clamp to end-of-day so the block extends
@@ -254,15 +299,17 @@ export function layoutEventsForHourGrid(
     }
   }
 
-  const allDayBars = layoutAllDayBars(allDayInput, days);
+  const allDayBars = layoutAllDayBars(allDayInput, days, resourceMode);
   return { timedBlocks, allDayBars };
 }
 
 function layoutAllDayBars(
   events: readonly CalendarEvent[],
-  days: readonly DayRef[],
+  days: readonly HourGridColumnRef[],
+  resourceMode = false,
 ): readonly AllDayBar[] {
   if (events.length === 0) return [];
+  if (resourceMode) return layoutAllDayBarsByResource(events, days);
   const viewStartMs = startOfDay(days[0].date).getTime();
   const viewEndMs = startOfDay(days[days.length - 1].date).getTime();
 
@@ -319,6 +366,224 @@ function layoutAllDayBars(
     });
   }
   return bars;
+}
+
+/**
+ * All-day placement for a resource day view, where every column carries the
+ * same date and columns differ by resource instead.
+ *
+ * - No `resourceId` → the event is day-wide (a public holiday, a closure) and
+ *   spans every column as one bar.
+ * - `resourceId` matching a column → that column only.
+ * - `resourceId` matching nothing → the unassigned column when one is
+ *   rendered; dropped otherwise.
+ */
+function layoutAllDayBarsByResource(
+  events: readonly CalendarEvent[],
+  columns: readonly HourGridColumnRef[],
+): readonly AllDayBar[] {
+  const dayStartMs = startOfDay(columns[0].date).getTime();
+  const unassignedCol = columns.findIndex((c) => c.resourceId === null);
+
+  interface Placed {
+    event: CalendarEvent;
+    startCol: number;
+    endCol: number;
+    continuesLeft: boolean;
+    continuesRight: boolean;
+    span: number;
+  }
+  const placed: Placed[] = [];
+
+  for (const ev of events) {
+    let startMs = startOfDay(ev.startsAt).getTime();
+    let endMs = startOfDay(ev.endsAt ?? ev.startsAt).getTime();
+    if (endMs < startMs) [startMs, endMs] = [endMs, startMs];
+    if (endMs < dayStartMs || startMs > dayStartMs) continue;
+
+    let startCol: number;
+    let endCol: number;
+    if (ev.resourceId === undefined) {
+      startCol = 0;
+      endCol = columns.length - 1;
+    } else {
+      const exact = columns.findIndex((c) => c.resourceId === ev.resourceId);
+      const col = exact !== -1 ? exact : unassignedCol;
+      if (col === -1) continue;
+      startCol = col;
+      endCol = col;
+    }
+    placed.push({
+      event: ev,
+      startCol,
+      endCol,
+      // The band spans a single date here, so "continues" means the event
+      // extends beyond that date in either direction.
+      continuesLeft: startMs < dayStartMs,
+      continuesRight: endMs > dayStartMs,
+      span: endCol - startCol,
+    });
+  }
+
+  // Widest first so a day-wide bar takes lane 0 and per-resource bars stack
+  // below it, matching how the month/week bands read.
+  placed.sort((a, b) => b.span - a.span || a.startCol - b.startCol);
+
+  interface LaneSegment {
+    startCol: number;
+    endCol: number;
+  }
+  const lanes: LaneSegment[][] = [];
+  const bars: AllDayBar[] = [];
+
+  for (const p of placed) {
+    let assigned = -1;
+    for (let l = 0; l < lanes.length; l++) {
+      const conflicts = lanes[l].some(
+        (seg) => !(seg.endCol < p.startCol || seg.startCol > p.endCol),
+      );
+      if (!conflicts) {
+        assigned = l;
+        break;
+      }
+    }
+    if (assigned === -1) {
+      assigned = lanes.length;
+      lanes.push([]);
+    }
+    lanes[assigned].push({ startCol: p.startCol, endCol: p.endCol });
+    bars.push({
+      event: p.event,
+      startCol: p.startCol,
+      endCol: p.endCol,
+      lane: assigned,
+      continuesLeft: p.continuesLeft,
+      continuesRight: p.continuesRight,
+    });
+  }
+  return bars;
+}
+
+/**
+ * Does this day need a trailing "unassigned" column?
+ *
+ * True when at least one event on `date` cannot be placed in a resource
+ * column: it carries a `resourceId` that matches no supplied resource, or it
+ * is a timed event with no `resourceId` at all. All-day events with no
+ * `resourceId` do NOT count — those are day-wide and span every column, so
+ * they need no lane of their own.
+ *
+ * The column is conditional on purpose: an always-present empty lane is
+ * noise in the common case where every booking has a resource.
+ */
+export function needsUnassignedColumn(
+  events: readonly CalendarEvent[],
+  date: Date,
+  resourceIds: ReadonlySet<string>,
+): boolean {
+  const dayStartMs = startOfDay(date).getTime();
+  for (const ev of events) {
+    // Timed events are matched on their START day — the same rule
+    // `findColumnIndex` places them by. Using instant-overlap here instead
+    // would add an empty "Unassigned" column for a 23:00→01:00 event that the
+    // placement pass then drops.
+    const occupiesDay =
+      ev.allDay === true
+        ? startOfDay(ev.endsAt ?? ev.startsAt).getTime() >= dayStartMs &&
+          startOfDay(ev.startsAt).getTime() <= dayStartMs
+        : startOfDay(ev.startsAt).getTime() === dayStartMs;
+    if (!occupiesDay) continue;
+    if (ev.resourceId !== undefined) {
+      if (!resourceIds.has(ev.resourceId)) return true;
+    } else if (ev.allDay !== true) {
+      return true;
+    }
+  }
+  return false;
+}
+
+/**
+ * Clip an availability underlay onto the hour grid.
+ *
+ * Each interval is intersected with every column's own day and with the
+ * visible `hourRange`, so a shift that runs past midnight or starts before
+ * the first rendered hour is trimmed rather than dropped. That date clipping
+ * is unconditional: an interval paints only the columns whose dates it
+ * actually covers, so shading a whole week takes one interval per day.
+ *
+ * An interval carrying a `resourceId` additionally paints only its own
+ * column, and only when the grid actually has resource columns — in a week
+ * view (or a resource-less day view) `resourceId` is ignored.
+ *
+ * Intervals are laid out independently of the events and of each other: they
+ * take no part in the collision cascade, and overlapping intervals simply
+ * paint over one another in array order.
+ */
+export function layoutBackgroundIntervals(
+  intervals: readonly CalendarBackgroundInterval[],
+  columns: readonly HourGridColumnRef[],
+  hourRange: readonly [number, number],
+): readonly BackgroundBlock[] {
+  if (intervals.length === 0 || columns.length === 0) return [];
+
+  const resourceMode = isResourceGrid(columns);
+  const baseMinutes = hourRange[0] * 60;
+  const visibleMinutes = (hourRange[1] - hourRange[0]) * 60;
+  if (visibleMinutes <= 0) return [];
+
+  const blocks: BackgroundBlock[] = [];
+
+  for (let c = 0; c < columns.length; c++) {
+    const column = columns[c];
+    const dayStart = startOfDay(column.date);
+    const dayStartMs = dayStart.getTime();
+    // Next local midnight, not `+ 86_400_000` — a DST day is 23 or 25 hours.
+    const dayEndMs = startOfDay(addDays(dayStart, 1)).getTime();
+
+    for (let i = 0; i < intervals.length; i++) {
+      const interval = intervals[i];
+      if (
+        resourceMode &&
+        interval.resourceId !== undefined &&
+        column.resourceId !== interval.resourceId
+      ) {
+        continue;
+      }
+      const rawStart = interval.startsAt.getTime();
+      const rawEnd = interval.endsAt.getTime();
+      if (!(rawEnd > rawStart)) continue;
+
+      const clippedStartMs = Math.max(rawStart, dayStartMs);
+      const clippedEndMs = Math.min(rawEnd, dayEndMs);
+      if (clippedEndMs <= clippedStartMs) continue;
+
+      // Wall-clock minutes (matching how timed events are placed), with the
+      // day's own end pinned to 24:00 rather than read back as 00:00.
+      const startOfDayMinutes = minutesIntoDay(clippedStartMs, dayEndMs);
+      const endOfDayMinutes = minutesIntoDay(clippedEndMs, dayEndMs);
+
+      const startMinutes = Math.max(0, startOfDayMinutes - baseMinutes);
+      const endMinutes = Math.min(visibleMinutes, endOfDayMinutes - baseMinutes);
+      if (endMinutes <= startMinutes) continue;
+
+      blocks.push({
+        key: `bg-${i}-${c}`,
+        dayIndex: c,
+        startMinutes,
+        endMinutes,
+        tone: interval.tone ?? 'unavailable',
+      });
+    }
+  }
+
+  return blocks;
+}
+
+/** Wall-clock minutes since local midnight, with the next midnight read as 24:00. */
+function minutesIntoDay(ms: number, dayEndMs: number): number {
+  if (ms === dayEndMs) return 24 * 60;
+  const d = new Date(ms);
+  return d.getHours() * 60 + d.getMinutes();
 }
 
 /**

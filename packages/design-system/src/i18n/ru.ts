@@ -78,6 +78,15 @@ export const ru: Messages = {
     viewWeek: 'Неделя',
     viewDay: 'День',
     viewAgenda: 'Повестка',
+    unassigned: 'Без назначения',
+    dragInstructions:
+      'Можно перетаскивать. Alt вверх или вниз — перенести событие, Alt влево или вправо — в другую колонку, Alt+Shift вверх или вниз — изменить время окончания.',
+    dragMovedTo: ({ event, time }) => `${event as string}: перенесено на ${time as string}.`,
+    dragEndsAt: ({ event, time }) => `${event as string}: окончание в ${time as string}.`,
+    dragRefused: ({ event }) => `${event as string}: этот слот недоступен.`,
+    dragAtEdge: ({ event }) => `${event as string}: дальше переносить некуда.`,
+    dragUnchanged: ({ event }) => `${event as string}: без изменений.`,
+    dragCancelled: ({ event }) => `Перенос отменён. ${event as string} на прежнем месте.`,
   },
   datePicker: {
     today: 'Сегодня',
@@ -188,6 +197,8 @@ export const ru: Messages = {
     clear: 'Очистить выбор',
     search: 'Поиск…',
     noOptions: 'Нет вариантов',
+    selectedPrefix: ({ labels }) => `Выбрано: ${labels as string}`,
+    openSelect: 'Открыть список',
   },
   phoneInput: {
     countryLabel: 'Страна',

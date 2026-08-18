@@ -120,6 +120,26 @@ export interface Messages {
     viewDay: string;
     /** Segmented-control label for the agenda view. */
     viewAgenda: string;
+    /** Column header for the resource-day-view lane holding events with no matching resource. */
+    unassigned: string;
+    /** Keyboard drag instructions, referenced by every draggable event block. */
+    dragInstructions: string;
+    /**
+     * Live-region text while a drag proposes a new slot, and when a move is
+     * accepted. `time` is the whole proposed slot, already formatted as a
+     * range (e.g. "9:00 AM – 10:00 AM"), not a single instant.
+     */
+    dragMovedTo: (params: { event: string; time: string }) => string;
+    /** Live-region text while a resize proposes a new end, and when one is accepted. */
+    dragEndsAt: (params: { event: string; time: string }) => string;
+    /** Live-region text when a placement is refused, by `canDropEvent` or by the drop handler. */
+    dragRefused: (params: { event: string }) => string;
+    /** Live-region text when a gesture is already against the edge of what the bounds allow. */
+    dragAtEdge: (params: { event: string }) => string;
+    /** Live-region text when a gesture ended exactly where it started, unrefused. */
+    dragUnchanged: (params: { event: string }) => string;
+    /** Live-region text when a gesture was abandoned (pointer cancelled, window blurred). */
+    dragCancelled: (params: { event: string }) => string;
   };
   datePicker: {
     /** Visible label / aria-label for the "Today" jump button. */
@@ -324,6 +344,10 @@ export interface Messages {
     search: string;
     /** Copy shown when the Select listbox has no options matching the filter. */
     noOptions: string;
+    /** Accessible name for a multi-select trigger, listing what is currently selected. */
+    selectedPrefix: (params: { labels: string }) => string;
+    /** Accessible name for a chips trigger with nothing selected yet. */
+    openSelect: string;
   };
   phoneInput: {
     /** aria-label for the country picker Select. */

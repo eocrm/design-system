@@ -2,7 +2,11 @@ import { useState } from 'react';
 import {
   Calendar,
   I18nProvider,
+  Stack,
+  type CalendarBackgroundInterval,
   type CalendarEvent,
+  type CalendarDropCandidate,
+  type CalendarResource,
   type CalendarView,
 } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
@@ -153,6 +157,180 @@ const MULTI_WEEK_EVENTS: CalendarEvent[] = [
 ];
 
 // ── Controlled example ──────────────────────────────────────────────────────
+
+// ── Booking-screen data (resource columns + availability + drag) ────────────
+
+const RESOURCES: CalendarResource[] = [
+  { id: 'ana', label: 'Ana' },
+  { id: 'ben', label: 'Ben' },
+  { id: 'chair-3', label: 'Chair 3' },
+];
+
+/** Opening hours per column, as [startHour, endHour). */
+const SHIFTS: Record<string, [number, number]> = {
+  ana: [9, 17],
+  ben: [8, 14],
+  'chair-3': [10, 18],
+};
+/** Ana takes lunch — the case a single flat `hourRange` cannot express. */
+const LUNCH: [number, number] = [12, 13];
+
+const INITIAL_BOOKINGS: CalendarEvent[] = [
+  {
+    id: 'b1',
+    title: 'Cut & finish',
+    startsAt: fromToday(0, 9, 0),
+    endsAt: fromToday(0, 10, 0),
+    resourceId: 'ana',
+    tone: 'accent',
+  },
+  {
+    id: 'b2',
+    title: 'Colour',
+    startsAt: fromToday(0, 10, 30),
+    endsAt: fromToday(0, 12, 0),
+    resourceId: 'ana',
+    tone: 'accent',
+  },
+  {
+    id: 'b3',
+    title: 'Consultation',
+    startsAt: fromToday(0, 9, 30),
+    endsAt: fromToday(0, 10, 0),
+    resourceId: 'ben',
+    tone: 'success',
+  },
+  {
+    id: 'b4',
+    title: 'Deep clean',
+    startsAt: fromToday(0, 11, 0),
+    endsAt: fromToday(0, 12, 30),
+    resourceId: 'chair-3',
+    tone: 'neutral',
+  },
+  {
+    // No resourceId — lands in the trailing "Unassigned" column.
+    id: 'b5',
+    title: 'Walk-in, unassigned',
+    startsAt: fromToday(0, 13, 0),
+    endsAt: fromToday(0, 14, 0),
+    tone: 'warning',
+  },
+];
+
+/**
+ * Day offsets that cover whichever week the week view renders.
+ *
+ * Deliberately a fortnight rather than a computed Sun–Sat window: `Calendar`
+ * derives the first day of the week from the locale, so anchoring on Sunday
+ * would leave real columns unshaded under a Monday-first locale. Intervals
+ * that fall outside the rendered columns simply don't paint.
+ */
+function weekOffsets(): number[] {
+  return Array.from({ length: 15 }, (_, i) => i - 7);
+}
+
+/**
+ * Opening hours for the WEEK view. Intervals are clipped to each column's own
+ * date, so one band per day — a single 08:00-09:00 interval would shade
+ * exactly one column, not the week.
+ */
+const WEEK_AVAILABILITY: CalendarBackgroundInterval[] = weekOffsets().flatMap((offset) => [
+  { startsAt: fromToday(offset, 8), endsAt: fromToday(offset, 9), tone: 'unavailable' as const },
+  { startsAt: fromToday(offset, 9), endsAt: fromToday(offset, 17), tone: 'available' as const },
+  {
+    startsAt: fromToday(offset, 17),
+    endsAt: fromToday(offset, 18),
+    tone: 'unavailable' as const,
+  },
+]);
+
+/** Shade closed time, tint bookable time — per column, including the lunch gap. */
+const AVAILABILITY: CalendarBackgroundInterval[] = RESOURCES.flatMap(({ id }) => {
+  const [open, close] = SHIFTS[id];
+  const bands: CalendarBackgroundInterval[] = [
+    { startsAt: fromToday(0, 8), endsAt: fromToday(0, open), resourceId: id, tone: 'unavailable' },
+    {
+      startsAt: fromToday(0, close),
+      endsAt: fromToday(0, 18),
+      resourceId: id,
+      tone: 'unavailable',
+    },
+    {
+      startsAt: fromToday(0, open),
+      endsAt: fromToday(0, close),
+      resourceId: id,
+      tone: 'available',
+    },
+  ];
+  if (id === 'ana') {
+    bands.push({
+      startsAt: fromToday(0, LUNCH[0]),
+      endsAt: fromToday(0, LUNCH[1]),
+      resourceId: id,
+      tone: 'unavailable',
+    });
+  }
+  return bands;
+});
+
+/**
+ * The synchronous half of the drop rules — refuses the drop mid-drag.
+ *
+ * `next.mode` narrows the payload: only a move carries a `resourceId`, because
+ * only a move can change the column. This is also the rule the AVAILABILITY
+ * bands draw; both come from `SHIFTS` so the paint and the policy cannot
+ * drift apart.
+ */
+function withinShift(next: CalendarDropCandidate): boolean {
+  // Present on both branches: a move carries the lane it is going to, a resize
+  // the lane it is already in. Either way it is the shift to judge against.
+  const resourceId = next.resourceId;
+  const shift: [number, number] = resourceId ? (SHIFTS[resourceId] ?? [8, 18]) : [8, 18];
+  const startH = next.startsAt.getHours() + next.startsAt.getMinutes() / 60;
+  const endH = next.endsAt.getHours() + next.endsAt.getMinutes() / 60;
+  if (startH < shift[0] || endH > shift[1]) return false;
+  if (resourceId === 'ana' && startH < LUNCH[1] && endH > LUNCH[0]) return false;
+  return true;
+}
+
+function BookingCalendarDemo() {
+  const [bookings, setBookings] = useState(INITIAL_BOOKINGS);
+  const [note, setNote] = useState(
+    'Drag a booking, or focus one and press Alt with the arrow keys.',
+  );
+
+  const apply = (id: string, startsAt: Date, endsAt: Date, resourceId?: string) =>
+    setBookings((prev) =>
+      prev.map((b) => (b.id === id ? { ...b, startsAt, endsAt, resourceId } : b)),
+    );
+
+  return (
+    <Stack gap="sm">
+      <Calendar
+        defaultValue={TODAY}
+        defaultView="day"
+        events={bookings}
+        resources={RESOURCES}
+        backgroundIntervals={AVAILABILITY}
+        hourRange={[8, 18]}
+        dragSnapMinutes={15}
+        canDropEvent={(_event, next) => withinShift(next)}
+        onEventMove={(event, next) => {
+          apply(event.id, next.startsAt, next.endsAt, next.resourceId);
+          setNote(`Moved "${event.title}" to ${next.startsAt.toLocaleTimeString()}.`);
+        }}
+        onEventResize={(event, next) => {
+          apply(event.id, next.startsAt, next.endsAt, event.resourceId);
+          setNote(`"${event.title}" now ends at ${next.endsAt.toLocaleTimeString()}.`);
+        }}
+      />
+      {/* Plain text: the library already exposes a live region for the drag,
+          and a second one here would duplicate every announcement. */}
+      <small>{note}</small>
+    </Stack>
+  );
+}
 
 function ControlledCalendarDemo() {
   const [cursor, setCursor] = useState<Date>(TODAY);
@@ -339,6 +517,95 @@ export function Demo() {
           defaultView="day"
           events={SAMPLE_EVENTS}
           hourRange={[8, 18]}
+        />
+      </Example>
+
+      <Example
+        title="Booking screen — resource columns, availability, drag"
+        description="The three pieces a scheduling screen needs, together. resources splits the day into one column per bookable subject (all sharing one time axis and one scroll). backgroundIntervals shades closed time and tints bookable time — note Ana's lunch gap, which a flat hourRange cannot express. onEventMove / onEventResize make blocks draggable; canDropEvent refuses a drop mid-drag when it would fall outside that column's shift. Keyboard: focus a block and press Alt with the arrow keys (add Shift to change the end time). The walk-in with no resourceId lands in the trailing Unassigned column."
+        code={`import { useState } from 'react';
+import { Calendar, Stack } from '@eocrm/design-system';
+
+const RESOURCES = [
+  { id: 'ana', label: 'Ana' },
+  { id: 'ben', label: 'Ben' },
+  { id: 'chair-3', label: 'Chair 3' },
+];
+
+export function BookingCalendarDemo() {
+  const [bookings, setBookings] = useState(INITIAL_BOOKINGS);
+
+  return (
+    <Stack gap="sm">
+      <Calendar
+        defaultView="day"
+        events={bookings}
+        resources={RESOURCES}
+        backgroundIntervals={AVAILABILITY}
+        hourRange={[8, 18]}
+        dragSnapMinutes={15}
+        // Refused mid-drag — the block renders as an invalid drop and the
+        // proposal never reaches onEventMove.
+        canDropEvent={(_event, next) => withinShift(next)}
+        // A drop is PROPOSED, never applied: commit it to your own state,
+        // or return false (or a rejecting promise) to snap the block back.
+        onEventMove={(event, next) =>
+          setBookings((prev) =>
+            prev.map((b) =>
+              b.id === event.id
+                ? { ...b, startsAt: next.startsAt, endsAt: next.endsAt, resourceId: next.resourceId }
+                : b,
+            ),
+          )
+        }
+        onEventResize={(event, next) =>
+          setBookings((prev) =>
+            prev.map((b) => (b.id === event.id ? { ...b, endsAt: next.endsAt } : b)),
+          )
+        }
+      />
+    </Stack>
+  );
+}`}
+      >
+        <BookingCalendarDemo />
+      </Example>
+
+      <Example
+        title="Availability underlay in week view"
+        description="backgroundIntervals works in week view too — resourceId is simply ignored there. Intervals are still clipped to each column's own date, though, so shading opening hours across a week means one interval per day (see WEEK_AVAILABILITY below), not one that spans the columns. Bands sit beneath the events, take no part in the collision cascade, and let clicks through to onDayClick."
+        code={`import { Calendar } from '@eocrm/design-system';
+
+// One interval per day: intervals are clipped to each column's date, so a
+// single 08:00-09:00 band would shade exactly one column, not the week.
+// The offsets cover a fortnight around today because Calendar derives the
+// week's first day from the locale — intervals outside the rendered columns
+// just don't paint.
+const dayOffsets = Array.from({ length: 15 }, (_, i) => i - 7);
+
+const WEEK_AVAILABILITY = dayOffsets.flatMap((offset) => [
+  { startsAt: at(offset, 8), endsAt: at(offset, 9), tone: 'unavailable' },
+  { startsAt: at(offset, 9), endsAt: at(offset, 17), tone: 'available' },
+  { startsAt: at(offset, 17), endsAt: at(offset, 18), tone: 'unavailable' },
+]);
+
+export function Demo() {
+  return (
+    <Calendar
+      defaultView="week"
+      events={SAMPLE_EVENTS}
+      hourRange={[8, 18]}
+      backgroundIntervals={WEEK_AVAILABILITY}
+    />
+  );
+}`}
+      >
+        <Calendar
+          defaultValue={TODAY}
+          defaultView="week"
+          events={SAMPLE_EVENTS}
+          hourRange={[8, 18]}
+          backgroundIntervals={WEEK_AVAILABILITY}
         />
       </Example>
 

@@ -106,6 +106,21 @@ export interface DropdownMenuRadioItemProps extends Omit<
   /** Optional trailing shortcut hint (e.g. `'⌘N'`). Visual cue only — does NOT register a global key handler. */
   shortcut?: string;
   /**
+   * Trailing secondary content *about the item itself* — a region code, a
+   * count, a `<Badge>`. Distinct from `shortcut`, which is a keyboard hint
+   * and is styled (and free to evolve) as one.
+   *
+   * `ReactNode`, so a Badge or Dot can go here. It is NOT `aria-hidden`, so
+   * it joins the item's accessible name ("demo RU" rather than a second
+   * identical "demo") — which is the point when the label alone is
+   * ambiguous. It is a prop, not a child, so it stays out of the typeahead
+   * label; type-to-select still matches the pure label text.
+   *
+   * Renders before `shortcut` when both are present, keeping the keyboard
+   * hint rightmost.
+   */
+  meta?: ReactNode;
+  /**
    * Item content. May include a `<DropdownMenu.ItemIndicator>` as a direct
    * child to provide a custom indicator glyph.
    */
@@ -139,6 +154,15 @@ export interface DropdownMenuRadioItemProps extends Omit<
  *   Compact
  * </DropdownMenu.RadioItem>
  *
+ * @example
+ * // Disambiguate rows whose labels legitimately collide. `meta` joins the
+ * // accessible name, so a screen reader announces "demo RU", while
+ * // typeahead still matches the bare label "demo".
+ * <DropdownMenu.RadioGroup value={workspace} onValueChange={setWorkspace}>
+ *   <DropdownMenu.RadioItem value="demo-eu" meta="EU">demo</DropdownMenu.RadioItem>
+ *   <DropdownMenu.RadioItem value="demo-ru" meta="RU">demo</DropdownMenu.RadioItem>
+ * </DropdownMenu.RadioGroup>
+ *
  * @remarks When NOT to use
  * - Outside a `<DropdownMenu.RadioGroup>` — throws in dev. Wrap in RadioGroup.
  * - For multi-select. Use `<DropdownMenu.CheckboxItem>` instead.
@@ -146,9 +170,21 @@ export interface DropdownMenuRadioItemProps extends Omit<
  * @remarks Anti-patterns
  * - ❌ Nesting an `<ItemIndicator>` deeper than a direct child. Detection is
  *   shallow; deeper nesting won't render in the indicator slot.
+ * - ❌ Carrying a per-item qualifier (region, tenant, count) in `shortcut`.
+ *   That slot is a keyboard hint and is styled as one — use `meta`.
  */
 export const RadioItem = forwardRef<HTMLDivElement, DropdownMenuRadioItemProps>(function RadioItem(
-  { value, closeOnSelect = true, disabled = false, icon, shortcut, className, children, ...rest },
+  {
+    value,
+    closeOnSelect = true,
+    disabled = false,
+    icon,
+    shortcut,
+    meta,
+    className,
+    children,
+    ...rest
+  },
   forwardedRef,
 ) {
   const ctx = useDropdownMenuContext('RadioItem');
@@ -201,6 +237,7 @@ export const RadioItem = forwardRef<HTMLDivElement, DropdownMenuRadioItemProps>(
       )}
       {icon !== undefined && <span className={styles.icon}>{icon}</span>}
       <span className={styles.itemLabel}>{labelContent}</span>
+      {meta !== undefined && <span className={styles.meta}>{meta}</span>}
       {shortcut !== undefined && <span className={styles.shortcut}>{shortcut}</span>}
     </div>
   );

@@ -1,8 +1,22 @@
+@use '../../styles/mixins' as *;
 @use './Calendar.tokens';
 
 .scroll {
   overflow: auto;
   max-height: 70vh;
+}
+
+// While a drag is in flight, suppress text selection across the whole grid —
+// otherwise dragging upward selects the hour labels behind the block.
+.scrollDragging {
+  user-select: none;
+  touch-action: none;
+}
+
+// Keyboard-drag instructions: referenced by each block's aria-describedby,
+// never shown visually.
+.dragHint {
+  @include visually-hidden;
 }
 
 .grid {
@@ -65,6 +79,27 @@
 // Today's column body intentionally has NO tint — only the column header
 // (`.todayHeader`) carries the accent color. A tinted body would make
 // events with the `accent` tone vanish into the background.
+
+// Availability underlay. Painted first in DOM order and pinned to z-index 0
+// so it sits beneath the hour separators, the now-line and every event block
+// (whose z-index starts at lane + 1). `pointer-events: none` keeps the
+// column's own click handler (onDayClick) reachable through the band.
+.backgroundBand {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: var(--calendar-background-band-opacity);
+}
+
+.bandUnavailable {
+  background: var(--calendar-background-band-bg-unavailable);
+}
+
+.bandAvailable {
+  background: var(--calendar-background-band-bg-available);
+}
 
 .hourSeparator {
   position: absolute;

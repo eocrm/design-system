@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Pin, Type, Calendar, Ruler } from 'lucide-react';
+import { Badge } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
 import { DropdownMenu } from '@eocrm/design-system';
@@ -206,6 +207,56 @@ export function Demo() {
             </DropdownMenu.Content>
           </DropdownMenu>
         </Cluster>
+      </Example>
+
+      <Example
+        title="Trailing meta vs. keyboard shortcut"
+        description="Two distinct trailing slots. shortcut is a keyboard hint. meta is secondary content about the item itself — a region code, a count, a badge. meta joins the accessible name (so two workspaces both named demo are distinguishable to a screen reader) but stays out of the typeahead label, so type-to-select still matches the bare label."
+        code={`import { useState } from 'react';
+import { Badge, Button, Cluster, DropdownMenu } from '@eocrm/design-system';
+
+export function WorkspaceSwitcherExample() {
+  const [workspace, setWorkspace] = useState('demo-eu');
+
+  return (
+    <Cluster gap="sm">
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <Button variant="secondary">Workspace \u25be</Button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Group>
+            <DropdownMenu.Label>Switch workspace</DropdownMenu.Label>
+            <DropdownMenu.RadioGroup value={workspace} onValueChange={setWorkspace}>
+              <DropdownMenu.RadioItem value="acme" meta="EU">
+                acme
+              </DropdownMenu.RadioItem>
+              {/* Two rows legitimately share the slug "demo" — meta is what
+                  tells them apart, visually and to a screen reader. */}
+              <DropdownMenu.RadioItem value="demo-eu" meta="EU">
+                demo
+              </DropdownMenu.RadioItem>
+              <DropdownMenu.RadioItem value="demo-ru" meta="RU">
+                demo
+              </DropdownMenu.RadioItem>
+            </DropdownMenu.RadioGroup>
+          </DropdownMenu.Group>
+          <DropdownMenu.Separator />
+          {/* meta and shortcut coexist: meta qualifies the item, shortcut is
+              the key hint and stays rightmost. */}
+          <DropdownMenu.Item onSelect={() => {}} meta="3 files" shortcut="\u2318D">
+            Duplicate
+          </DropdownMenu.Item>
+          <DropdownMenu.Item onSelect={() => {}} meta={<Badge tone="info" size="sm">beta</Badge>}>
+            Preview export
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>
+    </Cluster>
+  );
+}`}
+      >
+        <WorkspaceSwitcherExample />
       </Example>
 
       <Example
@@ -583,6 +634,54 @@ function CustomIndicatorExample() {
             </DropdownMenu.ItemIndicator>
             Pin to top
           </DropdownMenu.CheckboxItem>
+        </DropdownMenu.Content>
+      </DropdownMenu>
+    </Cluster>
+  );
+}
+
+function WorkspaceSwitcherExample() {
+  const [workspace, setWorkspace] = useState('demo-eu');
+
+  return (
+    <Cluster gap="sm">
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <Button variant="secondary">Workspace ▾</Button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Group>
+            <DropdownMenu.Label>Switch workspace</DropdownMenu.Label>
+            <DropdownMenu.RadioGroup value={workspace} onValueChange={setWorkspace}>
+              <DropdownMenu.RadioItem value="acme" meta="EU">
+                acme
+              </DropdownMenu.RadioItem>
+              {/* Two rows legitimately share the slug "demo" — meta is what
+                  tells them apart, visually and to a screen reader. */}
+              <DropdownMenu.RadioItem value="demo-eu" meta="EU">
+                demo
+              </DropdownMenu.RadioItem>
+              <DropdownMenu.RadioItem value="demo-ru" meta="RU">
+                demo
+              </DropdownMenu.RadioItem>
+            </DropdownMenu.RadioGroup>
+          </DropdownMenu.Group>
+          <DropdownMenu.Separator />
+          {/* meta and shortcut coexist: meta qualifies the item, shortcut is
+              the key hint and stays rightmost. */}
+          <DropdownMenu.Item onSelect={() => {}} meta="3 files" shortcut="⌘D">
+            Duplicate
+          </DropdownMenu.Item>
+          <DropdownMenu.Item
+            onSelect={() => {}}
+            meta={
+              <Badge tone="info" size="sm">
+                beta
+              </Badge>
+            }
+          >
+            Preview export
+          </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu>
     </Cluster>

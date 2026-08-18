@@ -158,6 +158,13 @@ export interface SelectProps<T = unknown> extends Omit<
   /**
    * Controlled selection. `string` in single mode, `string[]` in multi.
    * Provide alongside `onChange` to drive the value externally.
+   *
+   * `''` is NOT reserved for "nothing selected". If your `options` contain
+   * an option whose `value` is `''` — the common "one sentinel row plus N
+   * catalog ids" shape — that option renders and selects like any other, and
+   * the trigger shows its label. "Nothing selected" means simply "the value
+   * matches no option", which is what an untouched Select resolves to when
+   * the list has no `''` row.
    */
   value?: string | string[];
   /**
@@ -172,6 +179,10 @@ export interface SelectProps<T = unknown> extends Omit<
    * (multi), or `null` when the selection clears in single mode. For
    * creatable rows not present in `options`, a synthetic
    * `{ value, label: value }` is supplied.
+   *
+   * The match is a lookup, not an emptiness test: an emitted `''` yields the
+   * matching `SelectOption` when your `options` contain a `value: ''` row,
+   * and `null` only when they don't (a genuine clear).
    */
   onChange?: (value: string | string[], option: SelectOption<T> | SelectOption<T>[] | null) => void;
 
@@ -203,6 +214,11 @@ export interface SelectProps<T = unknown> extends Omit<
   /**
    * Shows a `✕` button in the trigger that clears the selection. Opt-in:
    * defaults to `false`. Always forced `false` when `disabled` or `readOnly`.
+   *
+   * "Clear" means "reset to the empty value" (`''` / `[]`), so the button
+   * only appears when the current value differs from that. A Select whose
+   * selected option IS `value: ''` is already at the cleared value and shows
+   * no ✕; a value matching no option (a stale id) does show one.
    */
   clearable?: boolean;
 
@@ -352,6 +368,15 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
     [idBase],
   );
 
+  // The option set the `onChange` wrapper resolves against. It has to be
+  // `effectiveOptions` (below) rather than the `options` prop: in async mode
+  // the backend's response replaces `options` entirely, so resolving against
+  // the prop would hand every async selection a synthetic
+  // `{ value, label: value }` — and would report a server-supplied
+  // `value: ''` row as `null`, reintroducing exactly the bug #470 fixes.
+  // A ref because `effectiveOptions` is derived after this hook runs.
+  const lookupOptionsRef = useRef<SelectOptions>(options);
+
   // `onChange` is wrapped to look up the SelectOption(s) and pass them as
   // the second arg. `findOption` / `findOptions` are O(n); for the option
   // counts a Select handles in practice this is fine and keeps the public
@@ -368,17 +393,28 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
     onChange: (v) => {
       if (multiple) {
         const values = Array.isArray(v) ? v : [];
-        const found = findOptions(options, values);
+        const found = findOptions(lookupOptionsRef.current, values);
         const byValue = new Map(found.map((o) => [o.value, o]));
         const opts = values.map((val) => byValue.get(val) ?? { value: val, label: val });
         onChange?.(v, opts);
-      } else {
-        if (typeof v === 'string' && v !== '') {
-          const opt = findOption(options, v) ?? { value: v, label: v };
+      } else if (typeof v === 'string') {
+        // Look the value up rather than special-casing `''` (issue #470):
+        // `''` is a legitimate option value, and when the consumer supplied
+        // such an option its `SelectOption` is the correct payload.
+        const opt = findOption(lookupOptionsRef.current, v);
+        if (opt) {
           onChange?.(v, opt);
-        } else {
+        } else if (v === '') {
+          // Empty and NOT an option → the selection was cleared.
           onChange?.(v, null);
+        } else {
+          // Creatable: a freshly created value isn't in `options` yet (nor is
+          // an async-loaded one before its page arrives). Back-fill a
+          // synthetic option so consumers still get a stable payload.
+          onChange?.(v, { value: v, label: v });
         }
+      } else {
+        onChange?.(v, null);
       }
     },
     open: controlledOpen,
@@ -426,6 +462,7 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
   // concern — chips may temporarily render `<unknown>` while the latest
   // server response filters their option out.
   const effectiveOptions = loadOptions ? asyncResult.options : options;
+  lookupOptionsRef.current = effectiveOptions;
   const allRows = useMemo(() => flattenOptions(effectiveOptions), [effectiveOptions]);
 
   // When `searchable`, filter `allRows` by the query (case-insensitive

@@ -5,6 +5,9 @@ import { resolve } from 'node:path';
 import { createRef, useState, type ReactNode } from 'react';
 import { DropdownMenu } from './DropdownMenu';
 
+/** Raw SCSS, so a CSS-only contract can be asserted in a CSS-less DOM. */
+const dropdownScss = readFileSync(resolve(__dirname, './DropdownMenu.module.scss'), 'utf8');
+
 beforeEach(() => {
   window.ResizeObserver = class ResizeObserverMock {
     observe() {}
@@ -914,6 +917,178 @@ describe('DropdownMenu — Item variants', () => {
   });
 });
 
+describe('DropdownMenu — meta slot (issue #469)', () => {
+  it('Item renders meta after the label and before the shortcut', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={() => {}} meta="3 files" shortcut="⌘D">
+            Duplicate
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const item = screen.getByRole('menuitem', { name: /Duplicate/ });
+    const children = Array.from(item.children) as HTMLElement[];
+    const labelIdx = children.findIndex((c) => c.textContent === 'Duplicate');
+    const metaIdx = children.findIndex((c) => c.textContent === '3 files');
+    const shortcutIdx = children.findIndex((c) => c.textContent === '⌘D');
+    expect(labelIdx).toBeGreaterThanOrEqual(0);
+    // meta and shortcut are separate elements — meta must not be routed
+    // through the keyboard-hint slot.
+    expect(metaIdx).toBeGreaterThan(labelIdx);
+    expect(shortcutIdx).toBeGreaterThan(metaIdx);
+    expect(children[metaIdx].className).not.toBe(children[shortcutIdx].className);
+  });
+
+  it('separates meta from the label in the accessible name via a non-inline display', () => {
+    // jsdom applies no CSS, so accname sees two adjacent spans and glues them
+    // ("demoRU"). A real browser separates them because `.item` is
+    // `display: flex`, which blockifies every child — so the separation comes
+    // from the parent, not from `.meta`'s own `display`. Asserting `.meta` is
+    // `inline-flex` still guards the intended treatment (it is a slot, not a
+    // run of inline text), but the accessible-name space does not depend on
+    // it.
+    expect(dropdownScss).toMatch(/\.meta\s*\{[^}]*display:\s*inline-flex/s);
+  });
+
+  it('Item meta joins the accessible name (not aria-hidden)', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={() => {}} meta="3 files">
+            Duplicate
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    // The meta span carries no aria-hidden, so its text is part of the
+    // computed accessible name. The separator between the two spans is
+    // whitespace-optional here: jsdom applies no CSS, so accname sees two
+    // adjacent inline spans and concatenates them without a space; a real
+    // browser sees `.meta { display: inline-flex }` and inserts one.
+    expect(screen.getByRole('menuitem', { name: /^Duplicate\s*3 files$/ })).toBeInTheDocument();
+  });
+
+  it('RadioItem meta disambiguates two rows with identical labels', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.RadioGroup value="demo-eu" onValueChange={() => {}}>
+            <DropdownMenu.RadioItem value="demo-eu" meta="EU">
+              demo
+            </DropdownMenu.RadioItem>
+            <DropdownMenu.RadioItem value="demo-ru" meta="RU">
+              demo
+            </DropdownMenu.RadioItem>
+          </DropdownMenu.RadioGroup>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    // Without meta both rows would compute the identical accessible name
+    // "demo" — the exact failure the issue reports. (Whitespace-optional:
+    // see the note on the Item accessible-name test above.)
+    const eu = screen.getByRole('menuitemradio', { name: /^demo\s*EU$/ });
+    const ru = screen.getByRole('menuitemradio', { name: /^demo\s*RU$/ });
+    expect(eu).toHaveAttribute('aria-checked', 'true');
+    expect(ru).toHaveAttribute('aria-checked', 'false');
+  });
+
+  it('RadioItem renders meta before shortcut when both are set', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.RadioGroup value="a" onValueChange={() => {}}>
+            <DropdownMenu.RadioItem value="a" meta="RU" shortcut="⌘1">
+              demo
+            </DropdownMenu.RadioItem>
+          </DropdownMenu.RadioGroup>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const item = screen.getByRole('menuitemradio', { name: /demo/ });
+    const children = Array.from(item.children) as HTMLElement[];
+    const metaIdx = children.findIndex((c) => c.textContent === 'RU');
+    const shortcutIdx = children.findIndex((c) => c.textContent === '⌘1');
+    expect(metaIdx).toBeGreaterThanOrEqual(0);
+    expect(shortcutIdx).toBeGreaterThan(metaIdx);
+  });
+
+  it('CheckboxItem renders meta in the trailing slot', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.CheckboxItem checked onCheckedChange={() => {}} meta="12">
+            Archived
+          </DropdownMenu.CheckboxItem>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    expect(screen.getByRole('menuitemcheckbox', { name: /^Archived\s*12$/ })).toBeInTheDocument();
+  });
+
+  it('meta accepts an arbitrary ReactNode, not just a string', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={() => {}} meta={<span data-testid="badge">beta</span>}>
+            Preview
+          </DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const item = screen.getByRole('menuitem', { name: /Preview/ });
+    expect(item).toContainElement(screen.getByTestId('badge'));
+  });
+
+  it('omitting meta renders no extra slot element', async () => {
+    const user = userEvent.setup();
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={() => {}}>Rename</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const item = screen.getByRole('menuitem', { name: 'Rename' });
+    expect(item.children).toHaveLength(1);
+  });
+});
+
 describe('DropdownMenu — Group and Label', () => {
   it('Label renders as a non-interactive text row', async () => {
     const user = userEvent.setup();
@@ -1090,6 +1265,30 @@ describe('DropdownMenu — typeahead', () => {
     await user.keyboard('{ArrowDown}'); // opens; first radio active
     await user.keyboard('d'); // jumps to "Dark"
     expect(screen.getByRole('menuitemradio', { name: 'Dark' })).toHaveFocus();
+  });
+
+  it('`meta` stays out of the typeahead label (issue #469)', async () => {
+    // meta is a prop, not a child, so the typeahead label remains the pure
+    // label string. Typing 'd' must jump to the item *labelled* "Delta",
+    // not to "Alpha" (which only carries "Delta" as meta).
+    const user = userEvent.setup({ advanceTimers: (ms) => vi.advanceTimersByTime(ms) });
+    render(
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={() => {}} meta="Delta">
+            Alpha
+          </DropdownMenu.Item>
+          <DropdownMenu.Item onSelect={() => {}}>Delta</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>,
+    );
+    screen.getByRole('button', { name: 'Open' }).focus();
+    await user.keyboard('{ArrowDown}'); // opens; "Alpha Delta" active
+    await user.keyboard('d');
+    expect(screen.getByRole('menuitem', { name: 'Delta' })).toHaveFocus();
   });
 
   it('contrast: INLINING a leading icon into children breaks typeahead (the pitfall `icon` avoids)', async () => {
