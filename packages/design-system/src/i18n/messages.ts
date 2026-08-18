@@ -138,6 +138,8 @@ export interface Messages {
     dragAtEdge: (params: { event: string }) => string;
     /** Live-region text when a gesture ended exactly where it started, unrefused. */
     dragUnchanged: (params: { event: string }) => string;
+    /** Live-region text when a gesture was abandoned (pointer cancelled, window blurred). */
+    dragCancelled: (params: { event: string }) => string;
   };
   datePicker: {
     /** Visible label / aria-label for the "Today" jump button. */

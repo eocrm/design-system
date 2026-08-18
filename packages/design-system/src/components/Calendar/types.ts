@@ -145,7 +145,15 @@ export interface CalendarEventResize {
  */
 export type CalendarDropCandidate =
   | ({ mode: 'move' } & CalendarEventMove)
-  | ({ mode: 'resize' } & CalendarEventResize);
+  | ({
+      mode: 'resize';
+      /**
+       * The lane the event is already in. Present on this branch too — a
+       * resize cannot CHANGE the column, but per-resource rules ("Ben's shift
+       * ends at 14:00") still need to know which one they are judging.
+       */
+      resourceId?: string;
+    } & CalendarEventResize);
 
 /**
  * What a drag handler may return. Returning `false` — or a promise that

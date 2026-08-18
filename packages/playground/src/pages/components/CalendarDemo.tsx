@@ -283,7 +283,9 @@ const AVAILABILITY: CalendarBackgroundInterval[] = RESOURCES.flatMap(({ id }) =>
  * drift apart.
  */
 function withinShift(next: CalendarDropCandidate): boolean {
-  const resourceId = next.mode === 'move' ? next.resourceId : undefined;
+  // Present on both branches: a move carries the lane it is going to, a resize
+  // the lane it is already in. Either way it is the shift to judge against.
+  const resourceId = next.resourceId;
   const shift: [number, number] = resourceId ? (SHIFTS[resourceId] ?? [8, 18]) : [8, 18];
   const startH = next.startsAt.getHours() + next.startsAt.getMinutes() / 60;
   const endH = next.endsAt.getHours() + next.endsAt.getMinutes() / 60;

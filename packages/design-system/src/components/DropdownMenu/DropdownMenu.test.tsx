@@ -948,10 +948,12 @@ describe('DropdownMenu — meta slot (issue #469)', () => {
 
   it('separates meta from the label in the accessible name via a non-inline display', () => {
     // jsdom applies no CSS, so accname sees two adjacent spans and glues them
-    // ("demoRU"). Real browsers insert a space because `.meta` is not
-    // `display: inline`. That rule IS the contract — assert it directly, since
-    // a change to `display: inline` would silently make screen readers read
-    // "demoru" while every DOM-level test stayed green.
+    // ("demoRU"). A real browser separates them because `.item` is
+    // `display: flex`, which blockifies every child — so the separation comes
+    // from the parent, not from `.meta`'s own `display`. Asserting `.meta` is
+    // `inline-flex` still guards the intended treatment (it is a slot, not a
+    // run of inline text), but the accessible-name space does not depend on
+    // it.
     expect(dropdownScss).toMatch(/\.meta\s*\{[^}]*display:\s*inline-flex/s);
   });
 

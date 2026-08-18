@@ -68,6 +68,8 @@ export interface DragAnnouncement {
   atEdge: boolean;
   /** The gesture ended exactly where it started — nothing refused it, it simply moved nothing. */
   unchanged: boolean;
+  /** The gesture was abandoned (pointer cancelled, window blurred) and proposed nothing. */
+  cancelled: boolean;
   /** Monotonic, so an identical message still re-announces. */
   seq: number;
 }
@@ -131,8 +133,23 @@ interface DragFrame {
   columnIndex: number;
   /** Minutes from `hourRange[0] * 60` to the event's real start. May be negative. */
   startMinutes: number;
-  /** Minutes from `hourRange[0] * 60` to the event's real end. Never clipped. */
+  /**
+   * Minutes from `hourRange[0] * 60` to the event's real end, in WALL-CLOCK
+   * minutes. Never clipped. This is grid geometry — it is what the block's
+   * height is drawn from and what the bounds and the no-op check compare.
+   */
   endMinutes: number;
+  /**
+   * ELAPSED milliseconds between the event's start and end.
+   *
+   * Kept separately from the wall-clock span because on a daylight-saving day
+   * the two genuinely differ, and each is right for a different job: the grid
+   * draws wall-clock (01:00–05:00 occupies four rows even though only three
+   * hours pass), while a booking IS its elapsed time — a 30-minute
+   * appointment takes 30 real minutes on any day of the year. The proposal
+   * therefore preserves this, not the row count.
+   */
+  durationMs: number;
 }
 
 /** A Date on `day`'s calendar date, at `minutes` past local midnight. */
@@ -168,12 +185,13 @@ function frameOf(block: TimedEventBlock, baseMinutes: number): DragFrame {
   );
   const startWall = start.getHours() * 60 + start.getMinutes();
   const endWall = end.getHours() * 60 + end.getMinutes();
-  const duration = Math.max(0, dayDiff * 24 * 60 + (endWall - startWall));
+  const wallMinutes = Math.max(0, dayDiff * 24 * 60 + (endWall - startWall));
   return {
     event,
     columnIndex: block.dayIndex,
     startMinutes,
-    endMinutes: startMinutes + duration,
+    endMinutes: startMinutes + wallMinutes,
+    durationMs: Math.max(0, end.getTime() - start.getTime()),
   };
 }
 
@@ -211,17 +229,20 @@ function project(
   columnIndex: number,
   target: number,
   cfg: ProjectionConfig,
+  /** Skip snapping — the caller already decided the exact target (a pure column change). */
+  presnapped = false,
 ): DragPreview {
   const column = cfg.columns[columnIndex] ?? cfg.columns[frame.columnIndex];
   const duration = frame.endMinutes - frame.startMinutes;
 
   if (mode === 'move') {
-    const requested = snapTo(target, cfg.snap);
+    const requested = presnapped ? target : snapTo(target, cfg.snap);
     const startMinutes = clamp(
       requested,
       Math.min(0, frame.startMinutes),
       Math.max(cfg.visibleMinutes - cfg.snap, frame.startMinutes),
     );
+    const movedStart = dateAtMinutes(column.date, cfg.baseMinutes + startMinutes);
     return {
       eventId: frame.event.id,
       mode,
@@ -229,10 +250,13 @@ function project(
       startMinutes,
       endMinutes: startMinutes + duration,
       clamped: startMinutes !== requested,
-      startsAt: dateAtMinutes(column.date, cfg.baseMinutes + startMinutes),
-      // Projected from the same wall-clock origin, so the proposal's duration
-      // matches the event's even when it crosses midnight.
-      endsAt: dateAtMinutes(column.date, cfg.baseMinutes + startMinutes + duration),
+      startsAt: movedStart,
+      // Offset from the projected START by the event's ELAPSED duration, not
+      // recomputed from midnight in wall-clock minutes. Recomputing collapses
+      // on a spring-forward day — 02:00 and 03:00 are the same instant, so a
+      // 60-minute booking dragged onto the skipped hour came back with
+      // `endsAt === startsAt`, a zero-length proposal.
+      endsAt: new Date(movedStart.getTime() + frame.durationMs),
       invalid: false,
     };
   }
@@ -245,10 +269,12 @@ function project(
   // anything already that long, which — combined with the no-op check in
   // `commit` — silently swallows every attempt to lengthen a multi-day event.
   const startMinutes = frame.startMinutes;
-  const requested = snapTo(target, cfg.snap);
+  const requested = presnapped ? target : snapTo(target, cfg.snap);
   const endMinutes = clamp(
     requested,
-    Math.min(startMinutes + cfg.snap, frame.endMinutes),
+    // Symmetrical with the ceiling: a gesture may shrink by at most a day too,
+    // so a runaway delta can't collapse a three-day booking to 15 minutes.
+    Math.max(Math.min(startMinutes + cfg.snap, frame.endMinutes), frame.endMinutes - 24 * 60),
     frame.endMinutes + 24 * 60,
   );
   return {
@@ -310,7 +336,7 @@ export function useEventDrag({
     (
       event: CalendarEvent,
       p: DragPreview,
-      opts: { refused?: boolean; atEdge?: boolean; unchanged?: boolean } = {},
+      opts: { refused?: boolean; atEdge?: boolean; unchanged?: boolean; cancelled?: boolean } = {},
     ) => {
       seqRef.current += 1;
       setAnnouncement({
@@ -321,6 +347,7 @@ export function useEventDrag({
         refused: opts.refused ?? false,
         atEdge: opts.atEdge ?? false,
         unchanged: opts.unchanged ?? false,
+        cancelled: opts.cancelled ?? false,
         seq: seqRef.current,
       });
     },
@@ -380,6 +407,18 @@ export function useEventDrag({
     setPreview(next);
   }, []);
 
+  /**
+   * Mark the click that follows a gesture as one to swallow.
+   *
+   * Only pointer-derived clicks ever consume this (see `HourGrid`): a keyboard
+   * activation produces a click with no preceding `pointerdown`, so nothing
+   * would reset the flag and a gesture abandoned without a pointerup would
+   * silently eat the user's next Enter press.
+   */
+  const armClickSuppression = useCallback(() => {
+    suppressClickRef.current = true;
+  }, []);
+
   const cfg = useCallback(
     (): ProjectionConfig => ({
       columns: latest.current.columns,
@@ -409,7 +448,13 @@ export function useEventDrag({
       const candidate: CalendarDropCandidate =
         p.mode === 'move'
           ? { mode: 'move', ...move }
-          : { mode: 'resize', startsAt: move.startsAt, endsAt: move.endsAt };
+          : {
+              mode: 'resize',
+              startsAt: move.startsAt,
+              endsAt: move.endsAt,
+              // The lane it is in, not a lane it is moving to.
+              resourceId: move.resourceId,
+            };
       return check(frame.event, candidate);
     },
     [toPayload],
@@ -447,6 +492,19 @@ export function useEventDrag({
     [endGesture, clearPreview],
   );
 
+  /**
+   * A gesture thrown away rather than committed. The live region was narrating
+   * a specific new time as the user dragged; leaving that as the last thing
+   * announced tells a screen-reader user the event moved when it did not.
+   */
+  const abandon = useCallback(
+    (g: { frame: DragFrame; moved: boolean }) => {
+      const p = previewRef.current;
+      if (g.moved && p) announce(g.frame.event, p, { cancelled: true });
+    },
+    [announce],
+  );
+
   const commit = useCallback(
     (p: DragPreview, frame: DragFrame, token: number) => {
       // The gesture asked for something the bounds refused, so the proposal is
@@ -456,11 +514,18 @@ export function useEventDrag({
       //
       // Lives here rather than on the keyboard path so pointer drags get it
       // too: a fully-clamped drag is just as much a no-op as a clamped nudge.
-      if (
-        p.startMinutes === frame.startMinutes &&
-        p.endMinutes === frame.endMinutes &&
-        p.columnIndex === frame.columnIndex
-      ) {
+      const currentEnd = frame.event.endsAt ?? frame.event.startsAt;
+      const sameInstants =
+        p.startsAt.getTime() === frame.event.startsAt.getTime() &&
+        p.endsAt.getTime() === currentEnd.getTime();
+      const sameCoordinates =
+        p.startMinutes === frame.startMinutes && p.endMinutes === frame.endMinutes;
+      // Both checks, because they catch different things. Coordinates catch a
+      // clamped gesture; instants catch one whose grid coordinates moved but
+      // whose projection landed back on the very same moment — which is what a
+      // daylight-saving collapse does, and it would otherwise fire the
+      // consumer's API write proposing the value the event already has.
+      if ((sameInstants || sameCoordinates) && p.columnIndex === frame.columnIndex) {
         // Two different things end up here. `clamped` means the bounds refused
         // to go further; otherwise the user simply released where they
         // started, and telling them they "cannot move any further" would be
@@ -600,7 +665,7 @@ export function useEventDrag({
       // The click event that follows this pointerup would otherwise open the
       // consumer's detail UI — or, if the pointer ended over the column
       // background rather than the block, create a booking at that slot.
-      suppressClickRef.current = true;
+      armClickSuppression();
       commit(p, g.frame, g.token);
     };
 
@@ -608,7 +673,10 @@ export function useEventDrag({
       const g = gestureRef.current;
       if (!g || e.pointerId !== g.pointerId) return;
       // Pointer cancellation (a system gesture taking over, the element being
-      // removed) discards the drag without proposing anything.
+      // removed) discards the drag without proposing anything. Say so: the
+      // last thing announced was a specific new time, and leaving that
+      // standing tells a screen-reader user the event moved when it didn't.
+      abandon(g);
       finish(g.token);
     };
 
@@ -622,8 +690,11 @@ export function useEventDrag({
       // Arm the suppression the same way `handleUp` does. Without it the
       // `pointerup` that follows finds no gesture, its `click` reaches the
       // column, and the consumer's "create a booking here" UI opens at the
-      // spot the user was dragging to.
-      if (g.moved) suppressClickRef.current = true;
+      // spot the user was dragging to. Unlike `handleUp` there is no
+      // guarantee a click ever arrives to consume the flag, so it is armed
+      // with an expiry — see `armClickSuppression`.
+      if (g.moved) armClickSuppression();
+      abandon(g);
       finish(g.token);
     };
 
@@ -637,7 +708,17 @@ export function useEventDrag({
       window.removeEventListener('pointercancel', handleCancel);
       window.removeEventListener('blur', handleBlur);
     };
-  }, [dragging, commit, finish, setPreviewBoth, validate, cfg, announce]);
+  }, [
+    dragging,
+    commit,
+    finish,
+    setPreviewBoth,
+    validate,
+    cfg,
+    announce,
+    abandon,
+    armClickSuppression,
+  ]);
 
   const nudge = useCallback(
     (block: TimedEventBlock, delta: { mode: DragMode; steps: number; columns?: number }) => {
@@ -660,8 +741,11 @@ export function useEventDrag({
       // A pure column change must not also re-snap the time — moving a 09:07
       // booking to the next lane should leave it at 09:07.
       const base = delta.mode === 'move' ? frame.startMinutes : frame.endMinutes;
-      const target = delta.steps === 0 ? base : snapTo(base, step) + delta.steps * step;
-      const next = project(frame, delta.mode, columnIndex, target, cfg());
+      const pureColumnChange = delta.steps === 0;
+      const target = pureColumnChange ? base : snapTo(base, step) + delta.steps * step;
+      // `presnapped` for a pure column change, or `project` would re-snap the
+      // untouched time and quietly drag a 09:07 booking to 09:00.
+      const next = project(frame, delta.mode, columnIndex, target, cfg(), pureColumnChange);
 
       tokenRef.current += 1;
       // `commit` owns the no-op check, so a clamped nudge and a clamped drag

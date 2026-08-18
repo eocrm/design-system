@@ -4,6 +4,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type MouseEvent as ReactMouseEvent,
   type PointerEvent,
   type ReactNode,
 } from 'react';
@@ -152,6 +153,7 @@ export function HourGrid({
     // drag surfaces announce (see `_internal/dragAnnouncements.ts`): with a
     // week of blocks on screen, a bare time says nothing about which one moved.
     const name = announcement.event.title;
+    if (announcement.cancelled) return t('calendar.dragCancelled', { event: name });
     if (announcement.unchanged) return t('calendar.dragUnchanged', { event: name });
     if (announcement.atEdge) return t('calendar.dragAtEdge', { event: name });
     if (announcement.refused) return t('calendar.dragRefused', { event: name });
@@ -211,10 +213,17 @@ export function HourGrid({
     drag.startPointerDrag(block, mode, e);
   };
 
-  const handleEventClick = (event: CalendarEvent) => {
+  // A click with `detail === 0` came from the keyboard (Enter/Space), not from
+  // a pointer. Only pointer clicks can be the tail of a drag, and only they
+  // reset the suppression flag on their `pointerdown` — so consuming it for a
+  // keyboard activation would let a gesture abandoned without a pointerup
+  // silently eat the user's next Enter press.
+  const isPointerClick = (e: { detail: number }) => e.detail > 0;
+
+  const handleEventClick = (event: CalendarEvent, e: ReactMouseEvent<HTMLButtonElement>) => {
     // The click that terminates a drag must not also open the consumer's
     // detail UI — the user was rescheduling, not inspecting.
-    if (drag.consumeClickSuppression()) return;
+    if (isPointerClick(e) && drag.consumeClickSuppression()) return;
     onEventClick?.(event);
   };
 
@@ -299,8 +308,8 @@ export function HourGrid({
           // guard, finishing a reschedule would immediately open the
           // consumer's "create a booking at this slot" UI.
           const handleColumnClick = onDayClick
-            ? () => {
-                if (drag.consumeClickSuppression()) return;
+            ? (e: ReactMouseEvent<HTMLDivElement>) => {
+                if (isPointerClick(e) && drag.consumeClickSuppression()) return;
                 onDayClick(column.date);
               }
             : undefined;

@@ -5278,7 +5278,7 @@
     "TitleTone": "\"danger\" | \"accent\" | \"default\" | \"muted\" | \"subtle\"",
     "TitleWeight": "\"regular\" | \"medium\" | \"semibold\" | \"bold\"",
     "CalendarBackgroundInterval": "{ startsAt: Date; endsAt: Date; resourceId?: string; tone?: CalendarBackgroundTone }",
-    "CalendarDropCandidate": "({ mode: \"move\"; } & CalendarEventMove) | ({ mode: \"resize\"; } & CalendarEventResize)",
+    "CalendarDropCandidate": "({ mode: \"move\"; } & CalendarEventMove) | ({ mode: \"resize\"; resourceId?: string; } & CalendarEventResize)",
     "CalendarDropResult": "boolean | void | Promise<boolean | void>",
     "CalendarEvent": "{ id: string; resourceId?: string; title: string; startsAt: Date; endsAt?: Date; tone?: CalendarEventTone; allDay?: boolean }",
     "CalendarEventMove": "{ startsAt: Date; endsAt: Date; resourceId?: string }",

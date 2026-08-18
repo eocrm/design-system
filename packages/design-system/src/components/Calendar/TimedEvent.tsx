@@ -23,8 +23,8 @@ export interface TimedEventProps {
   view?: CalendarView;
   /** Optional custom inner content. When set, replaces the default time + title spans. */
   renderEvent?: RenderEvent;
-  /** Fires when the chip is clicked; receives the `CalendarEvent`. */
-  onClick?: (event: CalendarEvent) => void;
+  /** Fires when the chip is clicked; receives the `CalendarEvent` and the raw click. */
+  onClick?: (event: CalendarEvent, e: MouseEvent<HTMLButtonElement>) => void;
   /** The live drag placement for THIS block, when it is the one being dragged. */
   preview?: DragPreview | null;
   /** Whether the grid accepts move gestures (`onEventMove` is wired). */
@@ -124,7 +124,7 @@ export function TimedEvent({
 
   const handleClick = (e: MouseEvent<HTMLButtonElement>) => {
     e.stopPropagation();
-    onClick?.(block.event);
+    onClick?.(block.event, e);
   };
 
   const handlePointerDown = (e: PointerEvent<HTMLButtonElement>) => {

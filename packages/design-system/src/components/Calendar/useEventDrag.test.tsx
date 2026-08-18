@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { useState, type ReactNode } from 'react';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
 import { Calendar } from './Calendar';
-import type { CalendarEvent, CalendarEventMove } from './types';
+import type { CalendarDropCandidate, CalendarEvent, CalendarEventMove } from './types';
 import timedEventStyles from './TimedEvent.module.scss';
 import hourGridStyles from './HourGrid.module.scss';
 
@@ -331,13 +331,136 @@ describe('Calendar drag — rejection (issue #472)', () => {
   });
 });
 
+describe('Calendar drag — the keyboard path survives a pointer drag', () => {
+  it('still accepts a nudge after a completed pointer drag', () => {
+    // `nudge` refuses to start while a gesture is live, so a gesture that is
+    // never torn down kills the keyboard path permanently — silently, and for
+    // the rest of the component's life.
+    const onEventMove = vi.fn();
+    renderDay({ onEventMove });
+    drag(block(), { dy: HOUR_ROW_HEIGHT });
+    expect(onEventMove).toHaveBeenCalledTimes(1);
+    const el = block();
+    el.focus();
+    fireEvent.keyDown(el, { key: 'ArrowDown', altKey: true });
+    expect(onEventMove).toHaveBeenCalledTimes(2);
+  });
+
+  it('still accepts a nudge after a drag abandoned by pointercancel', () => {
+    const onEventMove = vi.fn();
+    renderDay({ onEventMove });
+    const el = block();
+    fireEvent.pointerDown(el, { pointerId: 1, button: 0, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(window, { pointerId: 1, clientX: 100, clientY: 148 });
+    fireEvent.pointerCancel(window, { pointerId: 1 });
+    block().focus();
+    fireEvent.keyDown(block(), { key: 'ArrowDown', altKey: true });
+    expect(onEventMove).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('Calendar drag — the canDropEvent candidate', () => {
+  const RESOURCES = [
+    { id: 'ana', label: 'Ana' },
+    { id: 'ben', label: 'Ben' },
+  ];
+  const BOOKING: CalendarEvent = {
+    id: 'a',
+    title: 'Standup',
+    startsAt: new Date(2026, 4, 20, 9, 0),
+    endsAt: new Date(2026, 4, 20, 10, 0),
+    resourceId: 'ben',
+  };
+
+  function renderResources(props: Record<string, unknown>) {
+    return render(
+      <Calendar
+        view="day"
+        value={CURSOR}
+        events={[BOOKING]}
+        resources={RESOURCES}
+        hourRange={[7, 19]}
+        hourRowHeight={HOUR_ROW_HEIGHT}
+        {...props}
+      />,
+      { wrapper: wrap },
+    );
+  }
+
+  it('tags a move candidate and carries the target lane', () => {
+    const canDropEvent = vi.fn((_e: CalendarEvent, _n: CalendarDropCandidate) => true);
+    renderResources({ onEventMove: vi.fn(), canDropEvent });
+    drag(block(), { dy: HOUR_ROW_HEIGHT });
+    const candidate = canDropEvent.mock.calls.at(-1)![1];
+    expect(candidate.mode).toBe('move');
+    expect(candidate.resourceId).toBe('ben');
+  });
+
+  it('tags a resize candidate and still reports the lane it is in', () => {
+    // A resize cannot CHANGE the column, but per-resource rules ("Ben's shift
+    // ends at 14:00") still have to know which shift they are judging.
+    const canDropEvent = vi.fn((_e: CalendarEvent, _n: CalendarDropCandidate) => true);
+    const { container } = renderResources({ onEventResize: vi.fn(), canDropEvent });
+    drag(resizeHandle(container), { dy: HOUR_ROW_HEIGHT });
+    const candidate = canDropEvent.mock.calls.at(-1)![1];
+    expect(candidate.mode).toBe('resize');
+    expect(candidate.resourceId).toBe('ben');
+  });
+});
+
+describe('Calendar drag — abandoned gestures', () => {
+  it('announces a cancellation instead of leaving a new time standing', () => {
+    // The live region has been narrating a slot as the user drags. Throwing
+    // the gesture away without saying so tells a screen-reader user the event
+    // moved when it did not.
+    renderDay({ onEventMove: vi.fn() });
+    fireEvent.pointerDown(block(), { pointerId: 1, button: 0, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(window, { pointerId: 1, clientX: 100, clientY: 100 + HOUR_ROW_HEIGHT });
+    expect(screen.getByRole('status')).toHaveTextContent(/moved to/i);
+    fireEvent.pointerCancel(window, { pointerId: 1 });
+    expect(screen.getByRole('status')).toHaveTextContent(/cancelled/i);
+  });
+
+  it('announces a cancellation when the window blurs mid-drag', () => {
+    renderDay({ onEventResize: vi.fn() });
+    const { container } = renderDay({ onEventResize: vi.fn() });
+    fireEvent.pointerDown(resizeHandle(container), {
+      pointerId: 1,
+      button: 0,
+      clientX: 100,
+      clientY: 100,
+    });
+    fireEvent.pointerMove(window, { pointerId: 1, clientX: 100, clientY: 100 + HOUR_ROW_HEIGHT });
+    fireEvent.blur(window);
+    expect(screen.getAllByRole('status').at(-1)).toHaveTextContent(/cancelled/i);
+  });
+
+  it('a blur-armed suppression does not swallow a later keyboard activation', () => {
+    // Blur arms the flag but no click may ever arrive to consume it. A
+    // keyboard activation produces a click with no preceding pointerdown, so
+    // nothing would reset the flag and the user's next Enter would vanish.
+    const onEventClick = vi.fn();
+    renderDay({ onEventMove: vi.fn(), onEventClick });
+    const el = block();
+    fireEvent.pointerDown(el, { pointerId: 1, button: 0, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(window, { pointerId: 1, clientX: 100, clientY: 148 });
+    fireEvent.blur(window);
+    // No pointerup inside the grid at all. Now activate from the keyboard:
+    // `detail: 0` is what a real Enter press produces.
+    fireEvent.click(el, { detail: 0 });
+    expect(onEventClick).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('Calendar drag — click interaction (issue #472)', () => {
   it('swallows the click that terminates a drag', () => {
     const onEventClick = vi.fn();
     renderDay({ onEventMove: vi.fn(), onEventClick });
     const el = block();
     drag(el, { dy: HOUR_ROW_HEIGHT });
-    fireEvent.click(el);
+    // `detail: 1` — the click a real pointer release produces. Keyboard
+    // activations carry `detail: 0` and are deliberately never swallowed.
+    fireEvent.click(el, { detail: 1 });
     expect(onEventClick).not.toHaveBeenCalled();
   });
 
@@ -477,7 +600,7 @@ describe('Calendar drag — clamping to the grid (issue #472)', () => {
     fireEvent.blur(window);
     fireEvent.pointerUp(window, { pointerId: 1, clientX: 100, clientY: 148 });
     const cols = container.querySelectorAll<HTMLElement>(`.${hourGridStyles.dayColumn}`);
-    fireEvent.click(cols[cols.length - 1]);
+    fireEvent.click(cols[cols.length - 1], { detail: 1 });
     expect(onDayClick).not.toHaveBeenCalled();
   });
 
@@ -943,14 +1066,14 @@ describe('Calendar drag — day-click interaction (issue #472)', () => {
     // column rather than on the block — which would otherwise read as "create
     // a booking in this slot" immediately after a reschedule.
     drag(block(), { dy: HOUR_ROW_HEIGHT });
-    fireEvent.click(columnOf(container));
+    fireEvent.click(columnOf(container), { detail: 1 });
     expect(onDayClick).not.toHaveBeenCalled();
   });
 
   it('still fires onDayClick on a plain click of empty grid space', () => {
     const onDayClick = vi.fn();
     const { container } = renderDay({ onEventMove: vi.fn(), onDayClick });
-    fireEvent.click(columnOf(container));
+    fireEvent.click(columnOf(container), { detail: 1 });
     expect(onDayClick).toHaveBeenCalledTimes(1);
   });
 
@@ -961,7 +1084,7 @@ describe('Calendar drag — day-click interaction (issue #472)', () => {
     // stale-suppression flag has to be cleared by the press itself.
     drag(resizeHandle(container), { dy: HOUR_ROW_HEIGHT });
     fireEvent.pointerDown(columnOf(container), { pointerId: 9, button: 0, clientX: 1, clientY: 1 });
-    fireEvent.click(columnOf(container));
+    fireEvent.click(columnOf(container), { detail: 1 });
     expect(onDayClick).toHaveBeenCalledTimes(1);
   });
 });
