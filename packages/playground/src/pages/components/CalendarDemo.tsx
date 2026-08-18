@@ -5,7 +5,7 @@ import {
   Stack,
   type CalendarBackgroundInterval,
   type CalendarEvent,
-  type CalendarEventMove,
+  type CalendarDropCandidate,
   type CalendarResource,
   type CalendarView,
 } from '@eocrm/design-system';
@@ -274,13 +274,21 @@ const AVAILABILITY: CalendarBackgroundInterval[] = RESOURCES.flatMap(({ id }) =>
   return bands;
 });
 
-/** The synchronous half of the drop rules — refuses the drop mid-drag. */
-function withinShift(next: CalendarEventMove): boolean {
-  const shift: [number, number] = next.resourceId ? (SHIFTS[next.resourceId] ?? [8, 18]) : [8, 18];
+/**
+ * The synchronous half of the drop rules — refuses the drop mid-drag.
+ *
+ * `next.mode` narrows the payload: only a move carries a `resourceId`, because
+ * only a move can change the column. This is also the rule the AVAILABILITY
+ * bands draw; both come from `SHIFTS` so the paint and the policy cannot
+ * drift apart.
+ */
+function withinShift(next: CalendarDropCandidate): boolean {
+  const resourceId = next.mode === 'move' ? next.resourceId : undefined;
+  const shift: [number, number] = resourceId ? (SHIFTS[resourceId] ?? [8, 18]) : [8, 18];
   const startH = next.startsAt.getHours() + next.startsAt.getMinutes() / 60;
   const endH = next.endsAt.getHours() + next.endsAt.getMinutes() / 60;
   if (startH < shift[0] || endH > shift[1]) return false;
-  if (next.resourceId === 'ana' && startH < LUNCH[1] && endH > LUNCH[0]) return false;
+  if (resourceId === 'ana' && startH < LUNCH[1] && endH > LUNCH[0]) return false;
   return true;
 }
 

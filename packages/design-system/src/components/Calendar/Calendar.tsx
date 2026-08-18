@@ -19,6 +19,7 @@ import { AgendaView } from './AgendaView';
 import { ViewSwitcher } from './ViewSwitcher';
 import type {
   CalendarBackgroundInterval,
+  CalendarDropCandidate,
   CalendarDropResult,
   CalendarEvent,
   CalendarEventMove,
@@ -129,8 +130,19 @@ export interface CalendarProps extends Omit<
    * `onEventMove` / `onEventResize`. Use for rules you can check locally
    * (opening hours, overlaps within the loaded event set); use the handler's
    * own return value for rules only the server can settle.
+   *
+   * `next.mode` says which gesture is being judged, and narrows the payload:
+   * `'move'` carries the target `resourceId`, `'resize'` cannot change the
+   * column so it doesn't. Rules like "shortening is always fine, relocating
+   * needs approval" are otherwise inexpressible — the predicate fires while
+   * the pointer is still at the origin, where both gestures report the
+   * event's own start.
+   *
+   * Note that `backgroundIntervals` does NOT gate drops. Shading a slot
+   * closed is presentation; enforcing it is this predicate's job. Derive both
+   * from one source so they cannot drift.
    */
-  canDropEvent?: (event: CalendarEvent, next: CalendarEventMove) => boolean;
+  canDropEvent?: (event: CalendarEvent, next: CalendarDropCandidate) => boolean;
   /**
    * Snap granularity for drags, in minutes. Default 15 — a drag lands on a
    * quarter-hour boundary rather than an arbitrary pixel offset. Also the

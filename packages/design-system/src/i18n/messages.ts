@@ -134,8 +134,10 @@ export interface Messages {
     dragEndsAt: (params: { event: string; time: string }) => string;
     /** Live-region text when a placement is refused, by `canDropEvent` or by the drop handler. */
     dragRefused: (params: { event: string }) => string;
-    /** Live-region text when a keyboard nudge is already against the edge of what the grid allows. */
+    /** Live-region text when a gesture is already against the edge of what the bounds allow. */
     dragAtEdge: (params: { event: string }) => string;
+    /** Live-region text when a gesture ended exactly where it started, unrefused. */
+    dragUnchanged: (params: { event: string }) => string;
   };
   datePicker: {
     /** Visible label / aria-label for the "Today" jump button. */

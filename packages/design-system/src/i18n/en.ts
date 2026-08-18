@@ -83,6 +83,7 @@ export const en: Messages = {
     dragEndsAt: ({ event, time }) => `${event as string} now ends at ${time as string}.`,
     dragRefused: ({ event }) => `${event as string} cannot be placed there.`,
     dragAtEdge: ({ event }) => `${event as string} cannot move any further.`,
+    dragUnchanged: ({ event }) => `${event as string} is unchanged.`,
   },
   datePicker: {
     today: 'Today',

@@ -17,6 +17,7 @@ import { useEventDrag, type DragMode } from './useEventDrag';
 import { isResourceGrid, type HourGridColumnRef } from './utils';
 import type {
   BackgroundBlock,
+  CalendarDropCandidate,
   CalendarDropResult,
   CalendarEvent,
   CalendarEventMove,
@@ -65,7 +66,7 @@ export interface HourGridProps {
   /** Enables drag-to-resize. Absent → blocks have no resize handle. */
   onEventResize?: (event: CalendarEvent, next: CalendarEventResize) => CalendarDropResult;
   /** Live veto during a drag. */
-  canDropEvent?: (event: CalendarEvent, next: CalendarEventMove) => boolean;
+  canDropEvent?: (event: CalendarEvent, next: CalendarDropCandidate) => boolean;
   /** Snap granularity for drags, in minutes. */
   dragSnapMinutes?: number;
   /** ARIA label for the outer `role="grid"` container (e.g., week range or day label). */
@@ -151,6 +152,7 @@ export function HourGrid({
     // drag surfaces announce (see `_internal/dragAnnouncements.ts`): with a
     // week of blocks on screen, a bare time says nothing about which one moved.
     const name = announcement.event.title;
+    if (announcement.unchanged) return t('calendar.dragUnchanged', { event: name });
     if (announcement.atEdge) return t('calendar.dragAtEdge', { event: name });
     if (announcement.refused) return t('calendar.dragRefused', { event: name });
     if (announcement.mode === 'resize') {

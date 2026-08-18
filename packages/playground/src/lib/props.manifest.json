@@ -526,7 +526,7 @@
           "type": "readonly CalendarBackgroundInterval[]",
           "required": false,
           "default": "",
-          "description": "Availability underlay for week/day views: non-interactive bands painted\nbehind the events, distinguishing \"closed\" from \"open and free\". \"Open\nand busy\" already reads from the event blocks themselves.\n\nAn interval list rather than a weekly-hours object, because working\nhours vary by day (a lunch break), by date (a holiday, a short day) and\nby column (per-practitioner shifts). Bands take no part in the event\ncollision cascade and never intercept clicks — `onDayClick` still fires\nthrough them."
+          "description": "Availability underlay for week/day views: non-interactive bands painted\nbehind the events, distinguishing \"closed\" from \"open and free\". \"Open\nand busy\" already reads from the event blocks themselves.\n\nAn interval list rather than a weekly-hours object, because working\nhours vary by day (a lunch break), by date (a holiday, a short day) and\nby column (per-practitioner shifts). Bands take no part in the event\ncollision cascade and never intercept clicks — `onDayClick` still fires\nthrough them.\n\nEvery interval is clipped to each column's own date, so a week view needs\none interval per day rather than one that all seven columns share."
         },
         {
           "name": "onEventMove",
@@ -544,17 +544,17 @@
         },
         {
           "name": "canDropEvent",
-          "type": "((event: CalendarEvent, next: CalendarEventMove) => boolean)",
+          "type": "((event: CalendarEvent, next: CalendarDropCandidate) => boolean)",
           "required": false,
           "default": "",
-          "description": "Synchronous veto, evaluated continuously while dragging. Return `false`\nand the placement renders as a refused drop and is never proposed to\n`onEventMove` / `onEventResize`. Use for rules you can check locally\n(opening hours, overlaps within the loaded event set); use the handler's\nown return value for rules only the server can settle."
+          "description": "Synchronous veto, evaluated continuously while dragging. Return `false`\nand the placement renders as a refused drop and is never proposed to\n`onEventMove` / `onEventResize`. Use for rules you can check locally\n(opening hours, overlaps within the loaded event set); use the handler's\nown return value for rules only the server can settle.\n\n`next.mode` says which gesture is being judged, and narrows the payload:\n`'move'` carries the target `resourceId`, `'resize'` cannot change the\ncolumn so it doesn't. Rules like \"shortening is always fine, relocating\nneeds approval\" are otherwise inexpressible — the predicate fires while\nthe pointer is still at the origin, where both gestures report the\nevent's own start.\n\nNote that `backgroundIntervals` does NOT gate drops. Shading a slot\nclosed is presentation; enforcing it is this predicate's job. Derive both\nfrom one source so they cannot drift."
         },
         {
           "name": "dragSnapMinutes",
           "type": "number",
           "required": false,
           "default": "",
-          "description": "Snap granularity for drags, in minutes. Default 15 — a drag lands on a\nquarter-hour boundary rather than an arbitrary pixel offset. Also the\nstep size for the keyboard equivalent (Alt + arrow keys)."
+          "description": "Snap granularity for drags, in minutes. Default 15 — a drag lands on a\nquarter-hour boundary rather than an arbitrary pixel offset. Also the\nstep size for the keyboard equivalent (Alt + arrow keys).\n\nValues below 1 (including 0 and negatives) are treated as 1 minute."
         },
         {
           "name": "renderEvent",
@@ -5278,6 +5278,7 @@
     "TitleTone": "\"danger\" | \"accent\" | \"default\" | \"muted\" | \"subtle\"",
     "TitleWeight": "\"regular\" | \"medium\" | \"semibold\" | \"bold\"",
     "CalendarBackgroundInterval": "{ startsAt: Date; endsAt: Date; resourceId?: string; tone?: CalendarBackgroundTone }",
+    "CalendarDropCandidate": "({ mode: \"move\"; } & CalendarEventMove) | ({ mode: \"resize\"; } & CalendarEventResize)",
     "CalendarDropResult": "boolean | void | Promise<boolean | void>",
     "CalendarEvent": "{ id: string; resourceId?: string; title: string; startsAt: Date; endsAt?: Date; tone?: CalendarEventTone; allDay?: boolean }",
     "CalendarEventMove": "{ startsAt: Date; endsAt: Date; resourceId?: string }",

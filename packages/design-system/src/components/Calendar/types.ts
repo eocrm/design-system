@@ -130,6 +130,24 @@ export interface CalendarEventResize {
 }
 
 /**
+ * The placement `canDropEvent` is asked to judge, discriminated by which
+ * gesture produced it.
+ *
+ * A move and a resize are different questions — "may this booking be
+ * relocated (possibly to another practitioner)?" versus "may it run longer?" —
+ * and ordinary rules distinguish them. Without the tag they are
+ * indistinguishable: the predicate fires continuously *during* the drag,
+ * including while the pointer is still at the origin, where both gestures
+ * report the event's own start.
+ *
+ * `mode` narrows the payload, so `resourceId` is only reachable on the branch
+ * where a drag can actually change it.
+ */
+export type CalendarDropCandidate =
+  | ({ mode: 'move' } & CalendarEventMove)
+  | ({ mode: 'resize' } & CalendarEventResize);
+
+/**
  * What a drag handler may return. Returning `false` — or a promise that
  * resolves to `false` or rejects — rejects the drop and the block snaps back
  * to where it started. Returning nothing accepts it.

@@ -4,8 +4,6 @@ import { useState, type ReactNode } from 'react';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
 import { Calendar } from './Calendar';
 import type { CalendarEvent, CalendarEventMove } from './types';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import timedEventStyles from './TimedEvent.module.scss';
 import hourGridStyles from './HourGrid.module.scss';
 
@@ -65,8 +63,8 @@ function renderDay(props: Partial<Parameters<typeof Calendar>[0]> = {}) {
 
 describe('Calendar drag — opt-in (issue #472)', () => {
   it('renders no resize handle and no drag description without the handlers', () => {
-    renderDay();
-    expect(screen.queryByTestId('resize-handle-a')).toBeNull();
+    const { container } = renderDay();
+    expect(container.querySelector(`.${timedEventStyles.resizeHandle}`)).toBeNull();
     expect(block()).not.toHaveAttribute('aria-describedby');
   });
 
@@ -216,6 +214,42 @@ describe('Calendar drag — rejection (issue #472)', () => {
     renderDay({ onEventMove, canDropEvent: () => false });
     drag(block(), { dy: HOUR_ROW_HEIGHT });
     expect(onEventMove).not.toHaveBeenCalled();
+  });
+
+  it('refuses a resize the predicate rejects', () => {
+    const onEventResize = vi.fn();
+    const { container } = renderDay({ onEventResize, canDropEvent: () => false });
+    drag(resizeHandle(container), { dy: HOUR_ROW_HEIGHT });
+    expect(onEventResize).not.toHaveBeenCalled();
+  });
+
+  it('refuses a keyboard nudge the predicate rejects', async () => {
+    const user = userEvent.setup();
+    const onEventMove = vi.fn();
+    renderDay({ onEventMove, canDropEvent: () => false });
+    block().focus();
+    await user.keyboard('{Alt>}{ArrowDown}{/Alt}');
+    expect(onEventMove).not.toHaveBeenCalled();
+    expect(screen.getByRole('status')).toHaveTextContent(/cannot be placed there/i);
+  });
+
+  it('clears the refused styling when the drag returns to a droppable slot', () => {
+    // Only 10:00 is blocked, so sweeping past it and back must not leave the
+    // block stuck in the refused state.
+    renderDay({
+      onEventMove: vi.fn(),
+      canDropEvent: (_event, next) => next.startsAt.getHours() !== 10,
+    });
+    fireEvent.pointerDown(block(), { pointerId: 1, button: 0, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(window, { pointerId: 1, clientX: 100, clientY: 100 + HOUR_ROW_HEIGHT });
+    expect(block().className).toContain(timedEventStyles.invalidDrop);
+    fireEvent.pointerMove(window, {
+      pointerId: 1,
+      clientX: 100,
+      clientY: 100 + 2 * HOUR_ROW_HEIGHT,
+    });
+    expect(block().className).not.toContain(timedEventStyles.invalidDrop);
+    fireEvent.pointerUp(window, { pointerId: 1, clientX: 100, clientY: 100 + 2 * HOUR_ROW_HEIGHT });
   });
 
   it('passes canDropEvent the same proposal the handler would receive', () => {
@@ -376,15 +410,75 @@ describe('Calendar drag — clamping to the grid (issue #472)', () => {
     expect(screen.getByRole('status')).toHaveTextContent(/cannot move any further/i);
   });
 
-  it('a runaway resize is bounded to one day from the start', () => {
+  it('a runaway resize can grow the event by at most a day', () => {
     const onEventResize = vi.fn();
     const { container } = renderDay({ onEventResize });
     drag(resizeHandle(container), { dy: 400 * HOUR_ROW_HEIGHT });
     const [, next] = onEventResize.mock.calls[0];
     // A pointer delta that large would otherwise roll through whole dates.
-    // The bound is a day's length from the start, not the visible window —
-    // an overnight booking has to stay extendable past midnight.
-    expect(next.endsAt).toEqual(new Date(2026, 4, 21, 9, 0));
+    // The bound is on the CHANGE — 10:00 plus a day — not on the absolute
+    // duration, which would collapse onto the current end for a long event
+    // and make it impossible to lengthen at all.
+    expect(next.endsAt).toEqual(new Date(2026, 4, 21, 10, 0));
+  });
+
+  it('can still lengthen an event that is already longer than a day', () => {
+    // An absolute 24h ceiling sits at or below the current end here, so every
+    // lengthening gesture clamps to a no-op and is swallowed in silence.
+    const onEventResize = vi.fn();
+    const { container } = render(
+      <Calendar
+        view="day"
+        value={CURSOR}
+        events={[
+          {
+            id: 'conf',
+            title: 'Conference',
+            startsAt: new Date(2026, 4, 20, 9, 0),
+            endsAt: new Date(2026, 4, 22, 9, 0),
+          },
+        ]}
+        hourRange={[7, 19]}
+        hourRowHeight={HOUR_ROW_HEIGHT}
+        onEventResize={onEventResize}
+      />,
+      { wrapper: wrap },
+    );
+    drag(resizeHandle(container), { dy: HOUR_ROW_HEIGHT });
+    expect(onEventResize).toHaveBeenCalledTimes(1);
+    expect(onEventResize.mock.calls[0][1].endsAt).toEqual(new Date(2026, 4, 22, 10, 0));
+  });
+
+  it('says "unchanged" — not "cannot move further" — when a drag returns to its origin', () => {
+    renderDay({ onEventMove: vi.fn() });
+    const el = block();
+    fireEvent.pointerDown(el, { pointerId: 1, button: 0, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(window, {
+      pointerId: 1,
+      clientX: 100,
+      clientY: 100 + 3 * HOUR_ROW_HEIGHT,
+    });
+    fireEvent.pointerMove(window, { pointerId: 1, clientX: 100, clientY: 100 });
+    fireEvent.pointerUp(window, { pointerId: 1, clientX: 100, clientY: 100 });
+    const status = screen.getByRole('status');
+    expect(status).toHaveTextContent(/is unchanged/i);
+    expect(status).not.toHaveTextContent(/cannot move any further/i);
+  });
+
+  it('does not fire onDayClick when the window loses focus mid-drag', () => {
+    // Blur discards the gesture; the pointerup that follows then finds no
+    // gesture, so its click would reach the column and read as "create a
+    // booking at this slot" right where the user was dropping.
+    const onDayClick = vi.fn();
+    const { container } = renderDay({ onEventMove: vi.fn(), onDayClick });
+    const el = block();
+    fireEvent.pointerDown(el, { pointerId: 1, button: 0, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(window, { pointerId: 1, clientX: 100, clientY: 148 });
+    fireEvent.blur(window);
+    fireEvent.pointerUp(window, { pointerId: 1, clientX: 100, clientY: 148 });
+    const cols = container.querySelectorAll<HTMLElement>(`.${hourGridStyles.dayColumn}`);
+    fireEvent.click(cols[cols.length - 1]);
+    expect(onDayClick).not.toHaveBeenCalled();
   });
 
   it('a resize can still extend an event past midnight', () => {
@@ -412,21 +506,16 @@ describe('Calendar drag — clamping to the grid (issue #472)', () => {
   });
 });
 
-describe('Calendar drag — the controller reads the event, never the block', () => {
-  it("never reads a block's clipped end coordinate", () => {
-    // Structural guard, not a behavioural one. `TimedEventBlock` carries
-    // RENDER coordinates: the layout clips `endMinutes` to the bottom of the
-    // column for anything ending on a later day. Every drag bug this
-    // component has had came from reading one of those for a semantic
-    // decision — a truncated overnight booking, a reversed gesture, a no-op
-    // guard that could never match. The controller derives a `DragFrame` from
-    // the CalendarEvent instead; this keeps it that way.
-    const source = readFileSync(resolve(__dirname, './useEventDrag.ts'), 'utf8');
-    const code = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
-    expect(code).not.toMatch(/\bblock\.endMinutes\b/);
-    expect(code).not.toMatch(/\bblock\.startMinutes\b/);
-  });
-
+// `useEventDrag` derives a `DragFrame` from the CalendarEvent rather than
+// reading render coordinates off the block: `TimedEventBlock.endMinutes` is
+// clipped to the bottom of the column for anything ending on a later day, and
+// every drag bug this component has had came from reading one of those for a
+// semantic decision. The invariant is enforced from the outside, by the
+// observable proposals below — each of these fails if a clipped or clamped
+// coordinate leaks back in. Deliberately NOT by grepping the source: a regex
+// can't see through destructuring, aliasing or a rename, and would trip over
+// the file's own prose about those identifiers.
+describe('Calendar drag — proposals come from the event, not the rendered block', () => {
   it('does not call the handler for a drag the bounds refused entirely', () => {
     // A fully-clamped gesture proposes exactly where the event already is.
     // The documented consumer shape is an API write, so firing it for a drag

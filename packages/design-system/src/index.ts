@@ -668,6 +668,7 @@ export type {
   CalendarProps,
   CalendarBackgroundInterval,
   CalendarBackgroundTone,
+  CalendarDropCandidate,
   CalendarDropResult,
   CalendarEvent,
   CalendarEventMove,

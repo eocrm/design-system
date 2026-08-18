@@ -7,6 +7,7 @@ import { HourGrid, HOUR_GUTTER_WIDTH, type HourGridColumn } from './HourGrid';
 import { layoutBackgroundIntervals, layoutEventsForHourGrid } from './utils';
 import type {
   CalendarBackgroundInterval,
+  CalendarDropCandidate,
   CalendarDropResult,
   CalendarEvent,
   CalendarEventMove,
@@ -43,7 +44,7 @@ export interface WeekViewProps {
   /** Enables drag-to-resize. */
   onEventResize?: (event: CalendarEvent, next: CalendarEventResize) => CalendarDropResult;
   /** Live veto during a drag. */
-  canDropEvent?: (event: CalendarEvent, next: CalendarEventMove) => boolean;
+  canDropEvent?: (event: CalendarEvent, next: CalendarDropCandidate) => boolean;
   /** Snap granularity for drags, in minutes. */
   dragSnapMinutes?: number;
   /** Optional custom event renderer (see `RenderEvent`). */

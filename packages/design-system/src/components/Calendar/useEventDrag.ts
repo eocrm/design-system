@@ -8,6 +8,7 @@ import {
 } from 'react';
 import { startOfDay } from '../../calendar/dateMath';
 import type {
+  CalendarDropCandidate,
   CalendarDropResult,
   CalendarEvent,
   CalendarEventMove,
@@ -43,6 +44,8 @@ export interface DragPreview {
   endsAt: Date;
   /** `canDropEvent` refused this placement — styled as a refused drop while the pointer rests on it. */
   invalid: boolean;
+  /** The bounds moved the requested value — the gesture asked to go further than it may. */
+  clamped: boolean;
 }
 
 /** Pixels the pointer must travel before a press becomes a drag rather than a click. */
@@ -63,6 +66,8 @@ export interface DragAnnouncement {
   refused: boolean;
   /** The gesture asked to go further than the grid allows, so nothing changed. */
   atEdge: boolean;
+  /** The gesture ended exactly where it started — nothing refused it, it simply moved nothing. */
+  unchanged: boolean;
   /** Monotonic, so an identical message still re-announces. */
   seq: number;
 }
@@ -80,7 +85,7 @@ export interface UseEventDragArgs {
   columnElements: MutableRefObject<(HTMLElement | null)[]>;
   onEventMove?: (event: CalendarEvent, next: CalendarEventMove) => CalendarDropResult;
   onEventResize?: (event: CalendarEvent, next: CalendarEventResize) => CalendarDropResult;
-  canDropEvent?: (event: CalendarEvent, next: CalendarEventMove) => boolean;
+  canDropEvent?: (event: CalendarEvent, next: CalendarDropCandidate) => boolean;
 }
 
 export interface UseEventDragResult {
@@ -154,7 +159,16 @@ function frameOf(block: TimedEventBlock, baseMinutes: number): DragFrame {
   const start = event.startsAt;
   const startMinutes = start.getHours() * 60 + start.getMinutes() - baseMinutes;
   const end = event.endsAt ?? event.startsAt;
-  const duration = Math.max(0, Math.round((end.getTime() - start.getTime()) / 60_000));
+  // Wall-clock, NOT elapsed: `dateAtMinutes` projects in wall-clock minutes,
+  // so an elapsed-ms duration disagrees with it by an hour either side of a
+  // daylight-saving transition — proposing a resize that changes nothing, or
+  // a move that silently loses an hour.
+  const dayDiff = Math.round(
+    (startOfDay(end).getTime() - startOfDay(start).getTime()) / 86_400_000,
+  );
+  const startWall = start.getHours() * 60 + start.getMinutes();
+  const endWall = end.getHours() * 60 + end.getMinutes();
+  const duration = Math.max(0, dayDiff * 24 * 60 + (endWall - startWall));
   return {
     event,
     columnIndex: block.dayIndex,
@@ -187,9 +201,9 @@ interface ProjectionConfig {
  *   upward drag goes negative and projects back into the previous calendar
  *   day — a proposal for a date the pointer never visited. The end is free to
  *   fall outside; an overnight booking must keep its duration.
- * - a resize keeps the end within a day of the start, which stops a runaway
- *   pointer delta rolling through whole dates while leaving every real
- *   duration reachable.
+ * - a resize may grow the event by at most a day per gesture, which stops a
+ *   runaway pointer delta rolling through whole dates while leaving every
+ *   duration — including a multi-day one — reachable.
  */
 function project(
   frame: DragFrame,
@@ -202,8 +216,9 @@ function project(
   const duration = frame.endMinutes - frame.startMinutes;
 
   if (mode === 'move') {
+    const requested = snapTo(target, cfg.snap);
     const startMinutes = clamp(
-      snapTo(target, cfg.snap),
+      requested,
       Math.min(0, frame.startMinutes),
       Math.max(cfg.visibleMinutes - cfg.snap, frame.startMinutes),
     );
@@ -213,6 +228,7 @@ function project(
       columnIndex,
       startMinutes,
       endMinutes: startMinutes + duration,
+      clamped: startMinutes !== requested,
       startsAt: dateAtMinutes(column.date, cfg.baseMinutes + startMinutes),
       // Projected from the same wall-clock origin, so the proposal's duration
       // matches the event's even when it crosses midnight.
@@ -223,11 +239,17 @@ function project(
 
   // Resize leaves the start alone — including when it sits above the visible
   // window (an event that began before `hourRange`).
+  //
+  // The ceiling bounds the CHANGE (a day's growth per gesture), not the
+  // absolute duration. An absolute cap collapses onto the current end for
+  // anything already that long, which — combined with the no-op check in
+  // `commit` — silently swallows every attempt to lengthen a multi-day event.
   const startMinutes = frame.startMinutes;
+  const requested = snapTo(target, cfg.snap);
   const endMinutes = clamp(
-    snapTo(target, cfg.snap),
+    requested,
     Math.min(startMinutes + cfg.snap, frame.endMinutes),
-    Math.max(startMinutes + 24 * 60, frame.endMinutes),
+    frame.endMinutes + 24 * 60,
   );
   return {
     eventId: frame.event.id,
@@ -235,6 +257,7 @@ function project(
     columnIndex,
     startMinutes,
     endMinutes,
+    clamped: endMinutes !== requested,
     startsAt: frame.event.startsAt,
     endsAt: dateAtMinutes(column.date, cfg.baseMinutes + endMinutes),
     invalid: false,
@@ -284,7 +307,11 @@ export function useEventDrag({
   const seqRef = useRef(0);
 
   const announce = useCallback(
-    (event: CalendarEvent, p: DragPreview, opts: { refused?: boolean; atEdge?: boolean } = {}) => {
+    (
+      event: CalendarEvent,
+      p: DragPreview,
+      opts: { refused?: boolean; atEdge?: boolean; unchanged?: boolean } = {},
+    ) => {
       seqRef.current += 1;
       setAnnouncement({
         event,
@@ -293,6 +320,7 @@ export function useEventDrag({
         endsAt: p.endsAt,
         refused: opts.refused ?? false,
         atEdge: opts.atEdge ?? false,
+        unchanged: opts.unchanged ?? false,
         seq: seqRef.current,
       });
     },
@@ -375,7 +403,14 @@ export function useEventDrag({
     (p: DragPreview, frame: DragFrame): boolean => {
       const check = latest.current.canDropEvent;
       if (!check) return true;
-      return check(frame.event, toPayload(p));
+      const move = toPayload(p);
+      // A resize can't change the column, so the candidate it offers doesn't
+      // carry a `resourceId` the consumer might read and act on.
+      const candidate: CalendarDropCandidate =
+        p.mode === 'move'
+          ? { mode: 'move', ...move }
+          : { mode: 'resize', startsAt: move.startsAt, endsAt: move.endsAt };
+      return check(frame.event, candidate);
     },
     [toPayload],
   );
@@ -426,7 +461,11 @@ export function useEventDrag({
         p.endMinutes === frame.endMinutes &&
         p.columnIndex === frame.columnIndex
       ) {
-        announce(frame.event, p, { atEdge: true });
+        // Two different things end up here. `clamped` means the bounds refused
+        // to go further; otherwise the user simply released where they
+        // started, and telling them they "cannot move any further" would be
+        // nonsense.
+        announce(frame.event, p, p.clamped ? { atEdge: true } : { unchanged: true });
         finish(token);
         return;
       }
@@ -579,7 +618,13 @@ export function useEventDrag({
     // forever, taking the keyboard path down with it.
     const handleBlur = () => {
       const g = gestureRef.current;
-      if (g) finish(g.token);
+      if (!g) return;
+      // Arm the suppression the same way `handleUp` does. Without it the
+      // `pointerup` that follows finds no gesture, its `click` reaches the
+      // column, and the consumer's "create a booking here" UI opens at the
+      // spot the user was dragging to.
+      if (g.moved) suppressClickRef.current = true;
+      finish(g.token);
     };
 
     window.addEventListener('pointermove', handleMove);

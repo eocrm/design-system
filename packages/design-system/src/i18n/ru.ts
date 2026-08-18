@@ -85,6 +85,7 @@ export const ru: Messages = {
     dragEndsAt: ({ event, time }) => `${event as string}: окончание в ${time as string}.`,
     dragRefused: ({ event }) => `${event as string}: этот слот недоступен.`,
     dragAtEdge: ({ event }) => `${event as string}: дальше переносить некуда.`,
+    dragUnchanged: ({ event }) => `${event as string}: без изменений.`,
   },
   datePicker: {
     today: 'Сегодня',

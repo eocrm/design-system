@@ -1419,6 +1419,35 @@ describe('Select — value="" is a real option (issue #470)', () => {
     expect(onChange).toHaveBeenCalledWith('', null);
   });
 
+  it('round-trips: picking the "" row updates the component\'s own state and the trigger', async () => {
+    // End-to-end, uncontrolled: the payload assertion and the rendered-state
+    // assertion elsewhere both pass `value=""` in from outside, so neither
+    // proves the component ACCEPTS an emitted `''` as a selection. This is
+    // the flow the issue is actually about.
+    const user = userEvent.setup();
+    render(<Select options={SCHEMES} defaultValue="scheme-a" placeholder="Pick one" />);
+    expect(screen.getByRole('combobox')).toHaveTextContent('Scheme A');
+    await user.click(screen.getByRole('combobox'));
+    await user.click(screen.getByRole('option', { name: 'Use the default scheme' }));
+    const trigger = screen.getByRole('combobox');
+    expect(trigger).toHaveTextContent('Use the default scheme');
+    expect(trigger).not.toHaveTextContent('Pick one');
+    expect(trigger.className).not.toContain(styles.placeholder);
+  });
+
+  it('clearing while a "" option exists reports that option, not null', async () => {
+    // ✕ resets to the empty value. When `''` is a real option, that value IS
+    // a selection, so the payload must be the matched option — the precise
+    // ambiguity the issue raises.
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<Select options={SCHEMES} defaultValue="scheme-a" clearable onChange={onChange} />);
+    await user.click(screen.getByRole('button', { name: /clear selection/i }));
+    expect(onChange).toHaveBeenCalledWith('', { value: '', label: 'Use the default scheme' });
+    // ...and the trigger lands on that row rather than going blank.
+    expect(screen.getByRole('combobox')).toHaveTextContent('Use the default scheme');
+  });
+
   it('the listbox marks the selected value="" row as selected', async () => {
     const user = userEvent.setup();
     render(<Select options={SCHEMES} value="" />);
