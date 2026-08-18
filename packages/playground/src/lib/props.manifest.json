@@ -515,6 +515,48 @@
           "description": "Pixel height per hour row in week/day views. Default 48."
         },
         {
+          "name": "resources",
+          "type": "readonly CalendarResource[]",
+          "required": false,
+          "default": "",
+          "description": "Split `view=\"day\"` into one column per bookable subject — practitioner,\nchair, room, bay — all sharing a single time axis and a single scroll\ncontainer. This is the \"resource day view\" of scheduling products.\n\nEvents are routed by `CalendarEvent.resourceId`. A timed event whose\n`resourceId` matches nothing (or is absent) lands in a trailing\n\"unassigned\" column, which is only rendered when such an event exists.\nAll-day events without a `resourceId` are day-wide and span every column.\n\nIgnored by month, week and agenda views — those have their own column\nmeaning."
+        },
+        {
+          "name": "backgroundIntervals",
+          "type": "readonly CalendarBackgroundInterval[]",
+          "required": false,
+          "default": "",
+          "description": "Availability underlay for week/day views: non-interactive bands painted\nbehind the events, distinguishing \"closed\" from \"open and free\". \"Open\nand busy\" already reads from the event blocks themselves.\n\nAn interval list rather than a weekly-hours object, because working\nhours vary by day (a lunch break), by date (a holiday, a short day) and\nby column (per-practitioner shifts). Bands take no part in the event\ncollision cascade and never intercept clicks — `onDayClick` still fires\nthrough them."
+        },
+        {
+          "name": "onEventMove",
+          "type": "((event: CalendarEvent, next: CalendarEventMove) => CalendarDropResult)",
+          "required": false,
+          "default": "",
+          "description": "Enables drag-to-reschedule in week/day views. Called on drop with the\nproposed placement; the event's duration is preserved.\n\n**Nothing moves until you commit it.** `events` stays the source of\ntruth — apply the change to your own state to make it stick. To refuse a\ndrop (the server rejects overlaps, out-of-hours bookings, …) return\n`false`, or a promise that resolves `false` or rejects: the block snaps\nback and the preview is discarded. Prefer `canDropEvent` for rules you\ncan evaluate synchronously — it refuses the drop *during* the drag, so\nthe user sees it before releasing.\n\nOmit to keep today's read-only behaviour."
+        },
+        {
+          "name": "onEventResize",
+          "type": "((event: CalendarEvent, next: CalendarEventResize) => CalendarDropResult)",
+          "required": false,
+          "default": "",
+          "description": "Enables drag-to-resize in week/day views (a handle on the block's bottom\nedge). `startsAt` is unchanged; only `endsAt` moves. Same commit and\nrejection semantics as `onEventMove`."
+        },
+        {
+          "name": "canDropEvent",
+          "type": "((event: CalendarEvent, next: CalendarEventMove) => boolean)",
+          "required": false,
+          "default": "",
+          "description": "Synchronous veto, evaluated continuously while dragging. Return `false`\nand the placement renders as a refused drop and is never proposed to\n`onEventMove` / `onEventResize`. Use for rules you can check locally\n(opening hours, overlaps within the loaded event set); use the handler's\nown return value for rules only the server can settle."
+        },
+        {
+          "name": "dragSnapMinutes",
+          "type": "number",
+          "required": false,
+          "default": "",
+          "description": "Snap granularity for drags, in minutes. Default 15 — a drag lands on a\nquarter-hour boundary rather than an arbitrary pixel offset. Also the\nstep size for the keyboard equivalent (Alt + arrow keys)."
+        },
+        {
           "name": "renderEvent",
           "type": "RenderEvent",
           "required": false,
@@ -3976,7 +4018,7 @@
           "type": "string | string[]",
           "required": false,
           "default": "",
-          "description": "Controlled selection. `string` in single mode, `string[]` in multi.\nProvide alongside `onChange` to drive the value externally."
+          "description": "Controlled selection. `string` in single mode, `string[]` in multi.\nProvide alongside `onChange` to drive the value externally.\n\n`''` is NOT reserved for \"nothing selected\". If your `options` contain\nan option whose `value` is `''` — the common \"one sentinel row plus N\ncatalog ids\" shape — that option renders and selects like any other, and\nthe trigger shows its label. \"Nothing selected\" means simply \"the value\nmatches no option\", which is what an untouched Select resolves to when\nthe list has no `''` row."
         },
         {
           "name": "defaultValue",
@@ -3990,7 +4032,7 @@
           "type": "((value: string | string[], option: SelectOption<T> | SelectOption<T>[] | null) => void)",
           "required": false,
           "default": "",
-          "description": "Fires when the selection changes. The first argument is the next\nvalue (`string` in single mode, `string[]` in multi). The second\nargument is the matched `SelectOption` (single), the matched array\n(multi), or `null` when the selection clears in single mode. For\ncreatable rows not present in `options`, a synthetic\n`{ value, label: value }` is supplied."
+          "description": "Fires when the selection changes. The first argument is the next\nvalue (`string` in single mode, `string[]` in multi). The second\nargument is the matched `SelectOption` (single), the matched array\n(multi), or `null` when the selection clears in single mode. For\ncreatable rows not present in `options`, a synthetic\n`{ value, label: value }` is supplied.\n\nThe match is a lookup, not an emptiness test: an emitted `''` yields the\nmatching `SelectOption` when your `options` contain a `value: ''` row,\nand `null` only when they don't (a genuine clear)."
         },
         {
           "name": "open",
@@ -4039,7 +4081,7 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Shows a `✕` button in the trigger that clears the selection. Opt-in:\ndefaults to `false`. Always forced `false` when `disabled` or `readOnly`."
+          "description": "Shows a `✕` button in the trigger that clears the selection. Opt-in:\ndefaults to `false`. Always forced `false` when `disabled` or `readOnly`.\n\n\"Clear\" means \"reset to the empty value\" (`''` / `[]`), so the button\nonly appears when the current value differs from that. A Select whose\nselected option IS `value: ''` is already at the cleared value and shows\nno ✕; a value matching no option (a stale id) does show one."
         },
         {
           "name": "disabled",
@@ -5235,7 +5277,12 @@
     "TitleSize": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"2xl\" | \"3xl\"",
     "TitleTone": "\"danger\" | \"accent\" | \"default\" | \"muted\" | \"subtle\"",
     "TitleWeight": "\"regular\" | \"medium\" | \"semibold\" | \"bold\"",
-    "CalendarEvent": "{ id: string; title: string; startsAt: Date; endsAt?: Date; tone?: CalendarEventTone; allDay?: boolean }",
+    "CalendarBackgroundInterval": "{ startsAt: Date; endsAt: Date; resourceId?: string; tone?: CalendarBackgroundTone }",
+    "CalendarDropResult": "boolean | void | Promise<boolean | void>",
+    "CalendarEvent": "{ id: string; resourceId?: string; title: string; startsAt: Date; endsAt?: Date; tone?: CalendarEventTone; allDay?: boolean }",
+    "CalendarEventMove": "{ startsAt: Date; endsAt: Date; resourceId?: string }",
+    "CalendarEventResize": "{ startsAt: Date; endsAt: Date }",
+    "CalendarResource": "{ id: string; label: string }",
     "CalendarView": "\"month\" | \"week\" | \"day\" | \"agenda\"",
     "RenderEvent": "(event: CalendarEvent, ctx: RenderEventContext) => ReactNode",
     "DatePickerSize": "\"sm\" | \"md\" | \"lg\"",

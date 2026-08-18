@@ -354,6 +354,12 @@ async function createRepository() {
   runGit(fixture, 'init', '-qb', 'main');
   runGit(fixture, 'config', 'user.email', 'test@example.com');
   runGit(fixture, 'config', 'user.name', 'Test');
+  // Neutralize signing inherited from the contributor's global git config.
+  // With `tag.gpgsign = true` set globally, the bare `git tag v1.2.3` below
+  // becomes an annotated+signed tag and dies with "no tag message?" — the
+  // fixture must not depend on whoever's machine is running the suite.
+  runGit(fixture, 'config', 'tag.gpgsign', 'false');
+  runGit(fixture, 'config', 'commit.gpgsign', 'false');
   return fixture;
 }
 
