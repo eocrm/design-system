@@ -10,7 +10,7 @@ import {
 import clsx from 'clsx';
 import { useLocale } from '../../i18n/useLocale';
 import { useTranslation } from '../../i18n/useTranslation';
-import { formatHour } from '../../calendar';
+import { formatHour, formatTime } from '../../calendar';
 import { isSameDay } from '../../calendar/dateMath';
 import { TimedEvent } from './TimedEvent';
 import { useEventDrag, type DragMode } from './useEventDrag';
@@ -29,6 +29,15 @@ import styles from './HourGrid.module.scss';
 
 /** Default hour-gutter width in pixels. */
 export const HOUR_GUTTER_WIDTH = 60;
+
+/**
+ * Floor width of a day / resource column, in pixels.
+ *
+ * A plain expression of the grid's own geometry, alongside
+ * `HOUR_GUTTER_WIDTH` — not a design token, because it is inlined into
+ * `grid-template-columns` from TS rather than authored in SCSS.
+ */
+export const HOUR_COLUMN_MIN_WIDTH = 96;
 
 /** One rendered column: a date (week/day) or a resource lane (resource day view). */
 export type HourGridColumn = HourGridColumnRef & { isWeekend?: boolean };
@@ -106,6 +115,7 @@ export function HourGrid({
   const t = useTranslation();
   const [tick, setTick] = useState(0);
   const dragHintId = useId();
+  const gridHintId = useId();
 
   useEffect(() => {
     const id = window.setInterval(() => setTick((t) => t + 1), 60_000);
@@ -141,6 +151,18 @@ export function HourGrid({
   });
   const draggable = drag.canMove || drag.canResize;
 
+  // Live-region copy for the drag. Without it the keyboard path is silent: an
+  // Alt+Arrow that lands on 9:15 — or that gets refused — is indistinguishable
+  // from one that did nothing.
+  const { announcement } = drag;
+  const dragMessage = announcement
+    ? announcement.refused
+      ? t('calendar.dragRefused')
+      : announcement.mode === 'resize'
+        ? t('calendar.dragEndsAt', { time: formatTime(announcement.endsAt, locale) })
+        : t('calendar.dragMovedTo', { time: formatTime(announcement.startsAt, locale) })
+    : '';
+
   const blocksByDay = useMemo(() => {
     const m = new Map<number, TimedEventBlock[]>();
     for (const b of timedBlocks) {
@@ -171,7 +193,11 @@ export function HourGrid({
   // Strict inequality on the upper bound so the now-line doesn't render
   // on top of the bottom border when current time hits the end of hourRange.
   const nowVisible = nowMinutesFromStart >= 0 && nowMinutesFromStart < totalHours * 60;
-  const todayColumnIndex = columns.findIndex((d) => isSameDay(d.date, currentTime));
+  // A predicate, not a findIndex: every column of a resource day view carries
+  // the SAME date, so "the first column whose date is today" would tint only
+  // the first practitioner's lane and draw the now-line only there — reading
+  // as "Ana is today".
+  const isTodayColumn = (i: number) => isSameDay(columns[i].date, currentTime);
 
   const handleDragStart = (block: TimedEventBlock, mode: DragMode, e: PointerEvent) => {
     drag.startPointerDrag(block, mode, e);
@@ -185,19 +211,40 @@ export function HourGrid({
   };
 
   return (
-    <div className={clsx(styles.scroll, drag.dragging && styles.scrollDragging)}>
+    <div
+      className={clsx(styles.scroll, drag.dragging && styles.scrollDragging)}
+      onPointerDownCapture={draggable ? drag.resetClickSuppression : undefined}
+    >
       {draggable && (
-        <span id={dragHintId} className={styles.dragHint}>
-          {t('calendar.dragInstructions')}
-        </span>
+        <>
+          {/* Split deliberately: the per-block description is a short hint,
+              because a screen-reader user tabbing a week of 30 events would
+              otherwise hear the full shortcut list after every event name.
+              The long form is announced once, on the grid itself. */}
+          <span id={dragHintId} className={styles.dragHint}>
+            {t('calendar.dragHint')}
+          </span>
+          <span id={gridHintId} className={styles.dragHint}>
+            {t('calendar.dragInstructions')}
+          </span>
+          {/* `key` on the seq so an identical message (two refused drops in a
+              row) is a fresh text node and gets re-announced. */}
+          <span role="status" aria-live="polite" className={styles.dragHint}>
+            <span key={announcement?.seq ?? 0}>{dragMessage}</span>
+          </span>
+        </>
       )}
       <div
         role="grid"
         aria-readonly={draggable ? undefined : 'true'}
         aria-label={ariaLabel}
+        aria-describedby={draggable ? gridHintId : undefined}
         className={styles.grid}
         style={{
-          gridTemplateColumns: `${HOUR_GUTTER_WIDTH}px repeat(${columnCount}, 1fr)`,
+          // `minmax(…, 1fr)` rather than `1fr`: a shop with a dozen bays
+          // should scroll horizontally in the existing `.scroll` container
+          // instead of squashing every lane to unreadable width.
+          gridTemplateColumns: `${HOUR_GUTTER_WIDTH}px repeat(${columnCount}, minmax(${HOUR_COLUMN_MIN_WIDTH}px, 1fr))`,
           gridTemplateRows: `auto repeat(${totalHours}, ${hourRowHeight}px)`,
         }}
       >
@@ -213,7 +260,7 @@ export function HourGrid({
               className={clsx(
                 styles.columnHeader,
                 columns[i].isWeekend && styles.weekendHeader,
-                todayColumnIndex === i && styles.todayHeader,
+                isTodayColumn(i) && styles.todayHeader,
               )}
             >
               {header}
@@ -235,7 +282,16 @@ export function HourGrid({
           // Background clicks on the day column fire `onDayClick`; clicks on
           // a TimedEvent button stopPropagation in TimedEvent so they don't
           // also fire this handler.
-          const handleColumnClick = onDayClick ? () => onDayClick(column.date) : undefined;
+          // A drag whose pointerup landed on the column background rather
+          // than on the block still dispatches `click` here — without the
+          // guard, finishing a reschedule would immediately open the
+          // consumer's "create a booking at this slot" UI.
+          const handleColumnClick = onDayClick
+            ? () => {
+                if (drag.consumeClickSuppression()) return;
+                onDayClick(column.date);
+              }
+            : undefined;
           return (
             <div
               key={column.key}
@@ -272,7 +328,7 @@ export function HourGrid({
                   aria-hidden="true"
                 />
               ))}
-              {nowVisible && todayColumnIndex === i && (
+              {nowVisible && isTodayColumn(i) && (
                 <div
                   className={styles.nowLine}
                   style={{ top: (nowMinutesFromStart / 60) * hourRowHeight }}

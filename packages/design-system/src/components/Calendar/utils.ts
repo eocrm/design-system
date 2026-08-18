@@ -482,17 +482,17 @@ export function needsUnassignedColumn(
   resourceIds: ReadonlySet<string>,
 ): boolean {
   const dayStartMs = startOfDay(date).getTime();
-  const dayEndMs = startOfDay(addDays(date, 1)).getTime();
   for (const ev of events) {
-    const start = ev.startsAt.getTime();
-    const end = (ev.endsAt ?? ev.startsAt).getTime();
-    // All-day events are compared by whole days; timed events by instant.
-    const overlaps =
+    // Timed events are matched on their START day — the same rule
+    // `findColumnIndex` places them by. Using instant-overlap here instead
+    // would add an empty "Unassigned" column for a 23:00→01:00 event that the
+    // placement pass then drops.
+    const occupiesDay =
       ev.allDay === true
         ? startOfDay(ev.endsAt ?? ev.startsAt).getTime() >= dayStartMs &&
           startOfDay(ev.startsAt).getTime() <= dayStartMs
-        : end >= dayStartMs && start < dayEndMs;
-    if (!overlaps) continue;
+        : startOfDay(ev.startsAt).getTime() === dayStartMs;
+    if (!occupiesDay) continue;
     if (ev.resourceId !== undefined) {
       if (!resourceIds.has(ev.resourceId)) return true;
     } else if (ev.allDay !== true) {
@@ -507,10 +507,13 @@ export function needsUnassignedColumn(
  *
  * Each interval is intersected with every column's own day and with the
  * visible `hourRange`, so a shift that runs past midnight or starts before
- * the first rendered hour is trimmed rather than dropped. An interval
- * carrying a `resourceId` only paints its own column, and only when the grid
- * actually has resource columns — in a week view (or a resource-less day
- * view) `resourceId` is ignored and every interval paints every column.
+ * the first rendered hour is trimmed rather than dropped. That date clipping
+ * is unconditional: an interval paints only the columns whose dates it
+ * actually covers, so shading a whole week takes one interval per day.
+ *
+ * An interval carrying a `resourceId` additionally paints only its own
+ * column, and only when the grid actually has resource columns — in a week
+ * view (or a resource-less day view) `resourceId` is ignored.
  *
  * Intervals are laid out independently of the events and of each other: they
  * take no part in the collision cascade, and overlapping intervals simply

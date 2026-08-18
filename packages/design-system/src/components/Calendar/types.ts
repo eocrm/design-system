@@ -78,8 +78,12 @@ export interface CalendarBackgroundInterval {
   endsAt: Date;
   /**
    * Restrict this band to one resource column. Ignored unless the view
-   * actually has resource columns; in week view and in a resource-less day
-   * view every interval applies to every column.
+   * actually has resource columns — in week view and in a resource-less day
+   * view every interval applies to whichever columns its dates cover.
+   *
+   * Note that dropping the `resourceId` filter does NOT make an interval
+   * span the week: intervals are always clipped to each column's own date,
+   * so shading 08:00–09:00 across a week takes seven intervals, one per day.
    */
   resourceId?: string;
   /** Shading intent. Defaults to `'unavailable'`. */
@@ -87,8 +91,13 @@ export interface CalendarBackgroundInterval {
 }
 
 /**
- * The new placement proposed by a drag. Passed to `onEventMove`; the event's
- * duration is preserved, so `endsAt - startsAt` matches the original.
+ * The new placement proposed by a drag. Passed to `onEventMove`.
+ *
+ * The event's wall-clock duration is preserved: a 90-minute booking stays 90
+ * minutes on the clock. On a daylight-saving transition day that is not the
+ * same as preserving elapsed time — the proposal keeps the clock duration,
+ * which is what a calendar means by "the same appointment, an hour later" —
+ * and a start that lands in a skipped hour normalizes forward (02:30 → 03:30).
  */
 export interface CalendarEventMove {
   /** Proposed new start instant (local time), snapped to `dragSnapMinutes`. */

@@ -1429,6 +1429,44 @@ describe('Select — value="" is a real option (issue #470)', () => {
     );
   });
 
+  it('resolves the payload from async loadOptions results, not the (empty) options prop', async () => {
+    // The trigger reads `ctx.allRows` (async-aware) while the onChange wrapper
+    // reads the option set — if the wrapper resolved against the `options`
+    // prop it would be empty in async mode, and a server-supplied `value: ''`
+    // row would report `null`, reinstating exactly the bug this fixes.
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <Select
+        searchable
+        onChange={onChange}
+        loadOptions={async () => [
+          { value: '', label: 'Use the default scheme' },
+          { value: 'scheme-a', label: 'Scheme A' },
+        ]}
+      />,
+    );
+    await user.click(screen.getByRole('combobox'));
+    const row = await screen.findByRole('option', { name: 'Use the default scheme' });
+    await user.click(row);
+    expect(onChange).toHaveBeenCalledWith('', { value: '', label: 'Use the default scheme' });
+  });
+
+  it('resolves a non-empty async value to its real option, not a synthetic one', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(
+      <Select
+        searchable
+        onChange={onChange}
+        loadOptions={async () => [{ value: 'scheme-a', label: 'Scheme A' }]}
+      />,
+    );
+    await user.click(screen.getByRole('combobox'));
+    await user.click(await screen.findByRole('option', { name: 'Scheme A' }));
+    expect(onChange).toHaveBeenCalledWith('scheme-a', { value: 'scheme-a', label: 'Scheme A' });
+  });
+
   it('hides ✕ when the selected option IS the empty value — clearing is a no-op', () => {
     render(<Select options={SCHEMES} value="" clearable />);
     expect(screen.queryByRole('button', { name: /clear selection/i })).toBeNull();

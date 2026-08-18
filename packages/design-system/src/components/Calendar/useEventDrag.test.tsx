@@ -4,6 +4,8 @@ import type { ReactNode } from 'react';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
 import { Calendar } from './Calendar';
 import type { CalendarEvent, CalendarEventMove } from './types';
+import timedEventStyles from './TimedEvent.module.scss';
+import hourGridStyles from './HourGrid.module.scss';
 
 function wrap({ children }: { children: ReactNode }) {
   return <LocaleProvider locale="en-US">{children}</LocaleProvider>;
@@ -20,8 +22,19 @@ const STANDUP: CalendarEvent = {
   endsAt: new Date(2026, 4, 20, 10, 0),
 };
 
-function block() {
-  return screen.getByRole('button', { name: /Standup/ });
+function block(name: RegExp = /Standup/) {
+  return screen.getByRole('button', { name });
+}
+
+/**
+ * The resize handle carries no `data-testid` — the library ships no test hooks
+ * into consumer DOM — so it is addressed the same way a consumer's stylesheet
+ * would: by its module class.
+ */
+function resizeHandle(container: HTMLElement) {
+  const el = container.querySelector(`.${timedEventStyles.resizeHandle}`);
+  if (!el) throw new Error('no resize handle rendered');
+  return el;
 }
 
 /**
@@ -63,11 +76,16 @@ describe('Calendar drag — opt-in (issue #472)', () => {
   });
 
   it('renders the resize handle only when onEventResize is wired', () => {
-    const { unmount } = renderDay({ onEventMove: vi.fn() });
-    expect(screen.queryByTestId('resize-handle-a')).toBeNull();
-    unmount();
-    renderDay({ onEventResize: vi.fn() });
-    expect(screen.getByTestId('resize-handle-a')).toBeInTheDocument();
+    const moveOnly = renderDay({ onEventMove: vi.fn() });
+    expect(moveOnly.container.querySelector(`.${timedEventStyles.resizeHandle}`)).toBeNull();
+    moveOnly.unmount();
+    const resizable = renderDay({ onEventResize: vi.fn() });
+    expect(resizable.container.querySelector(`.${timedEventStyles.resizeHandle}`)).not.toBeNull();
+  });
+
+  it('ships no data-testid into consumer DOM', () => {
+    const { container } = renderDay({ onEventMove: vi.fn(), onEventResize: vi.fn() });
+    expect(container.querySelector('[data-testid]')).toBeNull();
   });
 
   it('ignores a pointer gesture entirely when no handler is wired', () => {
@@ -164,8 +182,8 @@ describe('Calendar drag — move (issue #472)', () => {
 describe('Calendar drag — resize (issue #472)', () => {
   it('extends only the end time', () => {
     const onEventResize = vi.fn();
-    renderDay({ onEventResize });
-    drag(screen.getByTestId('resize-handle-a'), { dy: HOUR_ROW_HEIGHT });
+    const { container } = renderDay({ onEventResize });
+    drag(resizeHandle(container), { dy: HOUR_ROW_HEIGHT });
     expect(onEventResize).toHaveBeenCalledTimes(1);
     const [, next] = onEventResize.mock.calls[0];
     expect(next.startsAt).toEqual(STANDUP.startsAt);
@@ -174,17 +192,17 @@ describe('Calendar drag — resize (issue #472)', () => {
 
   it('never shrinks the event past a single snap step', () => {
     const onEventResize = vi.fn();
-    renderDay({ onEventResize });
+    const { container } = renderDay({ onEventResize });
     // A huge upward drag would put the end before the start.
-    drag(screen.getByTestId('resize-handle-a'), { dy: -10 * HOUR_ROW_HEIGHT });
+    drag(resizeHandle(container), { dy: -10 * HOUR_ROW_HEIGHT });
     expect(onEventResize.mock.calls[0][1].endsAt).toEqual(new Date(2026, 4, 20, 9, 15));
   });
 
   it('does not fire onEventMove when the gesture started on the handle', () => {
     const onEventMove = vi.fn();
     const onEventResize = vi.fn();
-    renderDay({ onEventMove, onEventResize });
-    drag(screen.getByTestId('resize-handle-a'), { dy: HOUR_ROW_HEIGHT });
+    const { container } = renderDay({ onEventMove, onEventResize });
+    drag(resizeHandle(container), { dy: HOUR_ROW_HEIGHT });
     expect(onEventResize).toHaveBeenCalledTimes(1);
     expect(onEventMove).not.toHaveBeenCalled();
   });
@@ -213,6 +231,20 @@ describe('Calendar drag — rejection (issue #472)', () => {
     await waitFor(() => expect(block().style.top).toBe('96px'));
   });
 
+  it('reports a refused drop distinctly from an accepted one', async () => {
+    // Without this the `false` return would be indistinguishable from a no-op:
+    // an accepted drop and a refused one both end with the block back at its
+    // `events` position, so "it snapped back" alone asserts nothing.
+    const refused = renderDay({ onEventMove: () => false });
+    drag(block(), { dy: HOUR_ROW_HEIGHT });
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(/not available/i));
+    refused.unmount();
+
+    renderDay({ onEventMove: () => undefined });
+    drag(block(), { dy: HOUR_ROW_HEIGHT });
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(/Moved to/i));
+  });
+
   it('holds the preview until an async verdict lands, then snaps back on rejection', async () => {
     let settle: (v: boolean) => void = () => {};
     const onEventMove = () => new Promise<boolean>((res) => (settle = res));
@@ -222,6 +254,7 @@ describe('Calendar drag — rejection (issue #472)', () => {
     expect(block().style.top).toBe('144px');
     settle(false);
     await waitFor(() => expect(block().style.top).toBe('96px'));
+    expect(screen.getByRole('status')).toHaveTextContent(/not available/i);
   });
 
   it('snaps back when the handler’s promise rejects', async () => {
@@ -229,6 +262,34 @@ describe('Calendar drag — rejection (issue #472)', () => {
     renderDay({ onEventMove });
     drag(block(), { dy: HOUR_ROW_HEIGHT });
     await waitFor(() => expect(block().style.top).toBe('96px'));
+    expect(screen.getByRole('status')).toHaveTextContent(/not available/i);
+  });
+
+  it('marks the block refused while canDropEvent says no, mid-drag', () => {
+    renderDay({ onEventMove: vi.fn(), canDropEvent: () => false });
+    fireEvent.pointerDown(block(), { pointerId: 1, button: 0, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(window, { pointerId: 1, clientX: 100, clientY: 148 });
+    expect(block().className).toContain(timedEventStyles.invalidDrop);
+    fireEvent.pointerUp(window, { pointerId: 1, clientX: 100, clientY: 148 });
+  });
+
+  it('does not tear down a second drag when a slow first commit settles', async () => {
+    let settle: (v: boolean) => void = () => {};
+    const onEventMove = vi.fn(() => new Promise<boolean>((res) => (settle = res)));
+    renderDay({ onEventMove });
+    // First drag: proposes, then hangs awaiting the server.
+    drag(block(), { dy: HOUR_ROW_HEIGHT });
+    expect(onEventMove).toHaveBeenCalledTimes(1);
+
+    // Second drag starts before the first verdict arrives.
+    fireEvent.pointerDown(block(), { pointerId: 2, button: 0, clientX: 100, clientY: 100 });
+    settle(true);
+    await waitFor(() => expect(block().style.top).toBe('96px'));
+
+    // The settling first commit must not have unsubscribed the live gesture.
+    fireEvent.pointerMove(window, { pointerId: 2, clientX: 100, clientY: 100 + HOUR_ROW_HEIGHT });
+    fireEvent.pointerUp(window, { pointerId: 2, clientX: 100, clientY: 100 + HOUR_ROW_HEIGHT });
+    expect(onEventMove).toHaveBeenCalledTimes(2);
   });
 });
 
@@ -248,6 +309,267 @@ describe('Calendar drag — click interaction (issue #472)', () => {
     renderDay({ onEventMove: vi.fn(), onEventClick });
     await user.click(block());
     expect(onEventClick).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('Calendar drag — clamping to the grid (issue #472)', () => {
+  it('an upward drag past the top stays on the same day', () => {
+    const onEventMove = vi.fn();
+    renderDay({ onEventMove });
+    // Ten rows up from 09:00 in a 07:00–19:00 window would be -60 minutes
+    // past the top; unclamped that projects into the PREVIOUS calendar day.
+    drag(block(), { dy: -10 * HOUR_ROW_HEIGHT });
+    const [, next] = onEventMove.mock.calls[0];
+    expect(next.startsAt).toEqual(new Date(2026, 4, 20, 7, 0));
+    expect(next.endsAt).toEqual(new Date(2026, 4, 20, 8, 0));
+  });
+
+  it('a downward drag past the bottom keeps the start inside the window', () => {
+    const onEventMove = vi.fn();
+    renderDay({ onEventMove });
+    drag(block(), { dy: 20 * HOUR_ROW_HEIGHT });
+    const [, next] = onEventMove.mock.calls[0];
+    // Last snap step inside a 07:00–19:00 window is 18:45.
+    expect(next.startsAt).toEqual(new Date(2026, 4, 20, 18, 45));
+  });
+
+  it('repeated Alt+ArrowUp cannot walk the event off the top of the grid', async () => {
+    const user = userEvent.setup();
+    const onEventMove = vi.fn();
+    renderDay({ onEventMove });
+    block().focus();
+    for (let i = 0; i < 12; i++) await user.keyboard('{Alt>}{ArrowUp}{/Alt}');
+    for (const [, next] of onEventMove.mock.calls) {
+      expect(next.startsAt.getDate()).toBe(20);
+      expect(next.startsAt.getHours()).toBeGreaterThanOrEqual(7);
+    }
+  });
+
+  it('a resize cannot push the end into the next calendar day', () => {
+    const onEventResize = vi.fn();
+    const { container } = renderDay({ onEventResize });
+    drag(resizeHandle(container), { dy: 40 * HOUR_ROW_HEIGHT });
+    const [, next] = onEventResize.mock.calls[0];
+    // Clamped to the column day's own midnight, not rolled into May 21.
+    expect(next.endsAt).toEqual(new Date(2026, 4, 21, 0, 0));
+  });
+});
+
+describe('Calendar drag — overnight events (issue #472)', () => {
+  // The layout clips a block that ends on a later day to the bottom of the
+  // column, so its rendered height is NOT its duration. Deriving the proposal
+  // from the block would silently shorten every overnight booking.
+  const NIGHT: CalendarEvent = {
+    id: 'n',
+    title: 'Night shift',
+    startsAt: new Date(2026, 4, 20, 20, 0),
+    endsAt: new Date(2026, 4, 21, 2, 0),
+  };
+
+  function renderNight(props: Record<string, unknown>) {
+    return render(
+      <Calendar
+        view="day"
+        value={CURSOR}
+        events={[NIGHT]}
+        hourRange={[7, 23]}
+        hourRowHeight={HOUR_ROW_HEIGHT}
+        {...props}
+      />,
+      { wrapper: wrap },
+    );
+  }
+
+  it('preserves the full six-hour duration across a move', () => {
+    const onEventMove = vi.fn();
+    renderNight({ onEventMove });
+    drag(block(/Night shift/), { dy: HOUR_ROW_HEIGHT });
+    const [, next] = onEventMove.mock.calls[0];
+    expect(next.startsAt).toEqual(new Date(2026, 4, 20, 21, 0));
+    expect(next.endsAt).toEqual(new Date(2026, 4, 21, 3, 0));
+  });
+
+  it('preserves the duration for a keyboard move too', async () => {
+    const user = userEvent.setup();
+    const onEventMove = vi.fn();
+    renderNight({ onEventMove });
+    block(/Night shift/).focus();
+    await user.keyboard('{Alt>}{ArrowDown}{/Alt}');
+    const [, next] = onEventMove.mock.calls[0];
+    expect(next.endsAt.getTime() - next.startsAt.getTime()).toBe(6 * 60 * 60 * 1000);
+  });
+});
+
+describe('Calendar drag — resource columns (issues #471 + #472)', () => {
+  const RESOURCES = [
+    { id: 'ana', label: 'Ana' },
+    { id: 'ben', label: 'Ben' },
+  ];
+  const BOOKING: CalendarEvent = {
+    id: 'a',
+    title: 'Standup',
+    startsAt: new Date(2026, 4, 20, 9, 0),
+    endsAt: new Date(2026, 4, 20, 10, 0),
+    resourceId: 'ana',
+  };
+
+  function renderResources(props: Record<string, unknown>) {
+    return render(
+      <Calendar
+        view="day"
+        value={CURSOR}
+        events={[BOOKING]}
+        resources={RESOURCES}
+        hourRange={[7, 19]}
+        hourRowHeight={HOUR_ROW_HEIGHT}
+        {...props}
+      />,
+      { wrapper: wrap },
+    );
+  }
+
+  it('reports the origin resource when the column does not change', () => {
+    const onEventMove = vi.fn();
+    renderResources({ onEventMove });
+    drag(block(), { dy: HOUR_ROW_HEIGHT });
+    expect(onEventMove.mock.calls[0][1].resourceId).toBe('ana');
+  });
+
+  it('reassigns the resource on a keyboard move to the next lane', async () => {
+    const user = userEvent.setup();
+    const onEventMove = vi.fn();
+    renderResources({ onEventMove });
+    block().focus();
+    await user.keyboard('{Alt>}{ArrowRight}{/Alt}');
+    const [, next] = onEventMove.mock.calls[0];
+    expect(next.resourceId).toBe('ben');
+    // A pure lane change must not also shift the time.
+    expect(next.startsAt).toEqual(BOOKING.startsAt);
+  });
+
+  it('reassigns the resource on a pointer drag into another lane', () => {
+    const onEventMove = vi.fn();
+    const { container } = renderResources({ onEventMove });
+    // jsdom lays nothing out, so give the columns real geometry to hit-test.
+    const columns = Array.from(
+      container.querySelectorAll<HTMLElement>(`.${hourGridStyles.dayColumn}`),
+    );
+    expect(columns).toHaveLength(2);
+    columns.forEach((col, i) => {
+      col.getBoundingClientRect = () =>
+        ({
+          left: i * 200,
+          right: (i + 1) * 200,
+          width: 200,
+          top: 0,
+          bottom: 600,
+          height: 600,
+        }) as DOMRect;
+    });
+
+    fireEvent.pointerDown(block(), { pointerId: 1, button: 0, clientX: 100, clientY: 100 });
+    fireEvent.pointerMove(window, { pointerId: 1, clientX: 300, clientY: 100 });
+    fireEvent.pointerUp(window, { pointerId: 1, clientX: 300, clientY: 100 });
+    expect(onEventMove.mock.calls[0][1].resourceId).toBe('ben');
+  });
+
+  it('reports undefined for a drop into the unassigned lane', async () => {
+    const user = userEvent.setup();
+    const onEventMove = vi.fn();
+    render(
+      <Calendar
+        view="day"
+        value={CURSOR}
+        // The second booking has no resourceId, so the unassigned lane exists.
+        events={[
+          { ...BOOKING, resourceId: 'ben' },
+          { ...STANDUP, id: 'b', title: 'Walk-in' },
+        ]}
+        resources={RESOURCES}
+        hourRange={[7, 19]}
+        hourRowHeight={HOUR_ROW_HEIGHT}
+        onEventMove={onEventMove}
+      />,
+      { wrapper: wrap },
+    );
+    block().focus(); // "Standup", in Ben's lane (index 1)
+    await user.keyboard('{Alt>}{ArrowRight}{/Alt}');
+    expect(onEventMove.mock.calls[0][1].resourceId).toBeUndefined();
+  });
+});
+
+describe('Calendar drag — week view columns (issue #472)', () => {
+  it('reassigns the day on a pointer drag into another weekday', () => {
+    const onEventMove = vi.fn();
+    const { container } = render(
+      <Calendar
+        view="week"
+        value={CURSOR}
+        events={[STANDUP]}
+        hourRange={[7, 19]}
+        hourRowHeight={HOUR_ROW_HEIGHT}
+        onEventMove={onEventMove}
+      />,
+      { wrapper: wrap },
+    );
+    const columns = Array.from(
+      container.querySelectorAll<HTMLElement>(`.${hourGridStyles.dayColumn}`),
+    );
+    expect(columns).toHaveLength(7);
+    columns.forEach((col, i) => {
+      col.getBoundingClientRect = () =>
+        ({
+          left: i * 100,
+          right: (i + 1) * 100,
+          width: 100,
+          top: 0,
+          bottom: 600,
+          height: 600,
+        }) as DOMRect;
+    });
+
+    // Wed 20 May 2026 is column index 3 in a Sunday-first week (17th = Sun).
+    fireEvent.pointerDown(block(), { pointerId: 1, button: 0, clientX: 350, clientY: 100 });
+    fireEvent.pointerMove(window, { pointerId: 1, clientX: 450, clientY: 100 });
+    fireEvent.pointerUp(window, { pointerId: 1, clientX: 450, clientY: 100 });
+    const [, next] = onEventMove.mock.calls[0];
+    expect(next.startsAt).toEqual(new Date(2026, 4, 21, 9, 0));
+  });
+});
+
+describe('Calendar drag — day-click interaction (issue #472)', () => {
+  function columnOf(container: HTMLElement) {
+    const cols = container.querySelectorAll<HTMLElement>(`.${hourGridStyles.dayColumn}`);
+    return cols[cols.length - 1];
+  }
+
+  it('does not fire onDayClick when a drag ends over the column background', () => {
+    const onDayClick = vi.fn();
+    const { container } = renderDay({ onEventMove: vi.fn(), onDayClick });
+    // The block drifts off the pointer, so the terminating click lands on the
+    // column rather than on the block — which would otherwise read as "create
+    // a booking in this slot" immediately after a reschedule.
+    drag(block(), { dy: HOUR_ROW_HEIGHT });
+    fireEvent.click(columnOf(container));
+    expect(onDayClick).not.toHaveBeenCalled();
+  });
+
+  it('still fires onDayClick on a plain click of empty grid space', () => {
+    const onDayClick = vi.fn();
+    const { container } = renderDay({ onEventMove: vi.fn(), onDayClick });
+    fireEvent.click(columnOf(container));
+    expect(onDayClick).toHaveBeenCalledTimes(1);
+  });
+
+  it('a drag released outside the grid does not swallow the NEXT click', () => {
+    const onDayClick = vi.fn();
+    const { container } = renderDay({ onEventResize: vi.fn(), onDayClick });
+    // Resize-only grid: pointerdown on the block starts no gesture, so the
+    // stale-suppression flag has to be cleared by the press itself.
+    drag(resizeHandle(container), { dy: HOUR_ROW_HEIGHT });
+    fireEvent.pointerDown(columnOf(container), { pointerId: 9, button: 0, clientX: 1, clientY: 1 });
+    fireEvent.click(columnOf(container));
+    expect(onDayClick).toHaveBeenCalledTimes(1);
   });
 });
 

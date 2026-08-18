@@ -96,15 +96,23 @@ export function TimedEvent({
   const leftPercent = isDragging ? 0 : LANE_OFFSET_PERCENT * block.lane;
   const zIndex = isDragging ? HOVER_Z_INDEX : block.lane + 1;
 
-  const startLabel = formatTime(block.event.startsAt, locale);
-  const endLabel = block.event.endsAt ? formatTime(block.event.endsAt, locale) : null;
+  // While dragging, the time label must describe the PROPOSED placement, not
+  // the one the event still has. For a snap-to-15 gesture the label is the
+  // feedback — a block that visibly slides to 11:00 while still reading
+  // "9:00 – 10:00" is telling the user the wrong thing at the moment they
+  // decide whether to release.
+  const displayStart = preview ? preview.startsAt : block.event.startsAt;
+  const displayEnd = preview ? preview.endsAt : block.event.endsAt;
+
+  const startLabel = formatTime(displayStart, locale);
+  const endLabel = displayEnd ? formatTime(displayEnd, locale) : null;
 
   // For zero-duration events the start and end times are the same (or there's
   // no endsAt) — collapse to a single time label rather than "9:30 AM – 9:30 AM".
   const isZeroDuration = !endLabel || endLabel === startLabel;
   const timeLabel = isZeroDuration ? startLabel : `${startLabel} – ${endLabel}`;
 
-  const duration = formatEventDuration(block.event.startsAt, block.event.endsAt);
+  const duration = formatEventDuration(displayStart, displayEnd);
   const tooltipContent = (
     <span className={styles.tooltipBody}>
       <span className={styles.tooltipTime}>
@@ -230,7 +238,6 @@ export function TimedEvent({
           <span
             role="presentation"
             aria-hidden="true"
-            data-testid={`resize-handle-${block.event.id}`}
             className={styles.resizeHandle}
             onPointerDown={handleHandlePointerDown}
             onClick={(e) => e.stopPropagation()}

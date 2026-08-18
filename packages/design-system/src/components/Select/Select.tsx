@@ -368,6 +368,15 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
     [idBase],
   );
 
+  // The option set the `onChange` wrapper resolves against. It has to be
+  // `effectiveOptions` (below) rather than the `options` prop: in async mode
+  // the backend's response replaces `options` entirely, so resolving against
+  // the prop would hand every async selection a synthetic
+  // `{ value, label: value }` — and would report a server-supplied
+  // `value: ''` row as `null`, reintroducing exactly the bug #470 fixes.
+  // A ref because `effectiveOptions` is derived after this hook runs.
+  const lookupOptionsRef = useRef<SelectOptions>(options);
+
   // `onChange` is wrapped to look up the SelectOption(s) and pass them as
   // the second arg. `findOption` / `findOptions` are O(n); for the option
   // counts a Select handles in practice this is fine and keeps the public
@@ -384,7 +393,7 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
     onChange: (v) => {
       if (multiple) {
         const values = Array.isArray(v) ? v : [];
-        const found = findOptions(options, values);
+        const found = findOptions(lookupOptionsRef.current, values);
         const byValue = new Map(found.map((o) => [o.value, o]));
         const opts = values.map((val) => byValue.get(val) ?? { value: val, label: val });
         onChange?.(v, opts);
@@ -392,7 +401,7 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
         // Look the value up rather than special-casing `''` (issue #470):
         // `''` is a legitimate option value, and when the consumer supplied
         // such an option its `SelectOption` is the correct payload.
-        const opt = findOption(options, v);
+        const opt = findOption(lookupOptionsRef.current, v);
         if (opt) {
           onChange?.(v, opt);
         } else if (v === '') {
@@ -453,6 +462,7 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
   // concern — chips may temporarily render `<unknown>` while the latest
   // server response filters their option out.
   const effectiveOptions = loadOptions ? asyncResult.options : options;
+  lookupOptionsRef.current = effectiveOptions;
   const allRows = useMemo(() => flattenOptions(effectiveOptions), [effectiveOptions]);
 
   // When `searchable`, filter `allRows` by the query (case-insensitive

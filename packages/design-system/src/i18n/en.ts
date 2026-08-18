@@ -77,8 +77,12 @@ export const en: Messages = {
     viewDay: 'Day',
     viewAgenda: 'Agenda',
     unassigned: 'Unassigned',
+    dragHint: 'Draggable. Use Alt with the arrow keys to reschedule.',
     dragInstructions:
-      'Draggable. Press Alt with the up or down arrow keys to move this event, Alt with the left or right arrow keys to move it to another column, and Alt with Shift and the up or down arrow keys to change its end time.',
+      'Events in this grid can be rescheduled. Press Alt with the up or down arrow keys to move an event, Alt with the left or right arrow keys to move it to another column, and Alt with Shift and the up or down arrow keys to change its end time.',
+    dragMovedTo: ({ time }) => `Moved to ${time as string}.`,
+    dragEndsAt: ({ time }) => `Ends at ${time as string}.`,
+    dragRefused: 'That slot is not available.',
   },
   datePicker: {
     today: 'Today',

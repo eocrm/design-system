@@ -28,7 +28,11 @@ export interface WeekViewProps {
   locale?: string;
   /** Override locale-derived first day of week (0=Sun..6=Sat). */
   weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
-  /** Availability underlay bands. `resourceId` is ignored — week view has no resource columns. */
+  /**
+   * Availability underlay bands. `resourceId` is ignored (week view has no
+   * resource columns), but each interval is still clipped to the column dates
+   * it covers — one interval per day to shade a whole week.
+   */
   backgroundIntervals?: readonly CalendarBackgroundInterval[];
   /** Fires when a timed-event block or all-day chip is clicked. */
   onEventClick?: (event: CalendarEvent) => void;

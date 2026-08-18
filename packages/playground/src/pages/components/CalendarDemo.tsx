@@ -218,6 +218,23 @@ const INITIAL_BOOKINGS: CalendarEvent[] = [
   },
 ];
 
+/**
+ * Opening hours for the WEEK view. Intervals are clipped to each column's own
+ * date, so one band per day — a single 08:00-09:00 interval would shade
+ * exactly one column, not the week.
+ */
+const WEEK_AVAILABILITY: CalendarBackgroundInterval[] = [-3, -2, -1, 0, 1, 2, 3].flatMap(
+  (offset) => [
+    { startsAt: fromToday(offset, 8), endsAt: fromToday(offset, 9), tone: 'unavailable' as const },
+    { startsAt: fromToday(offset, 9), endsAt: fromToday(offset, 17), tone: 'available' as const },
+    {
+      startsAt: fromToday(offset, 17),
+      endsAt: fromToday(offset, 18),
+      tone: 'unavailable' as const,
+    },
+  ],
+);
+
 /** Shade closed time, tint bookable time — per column, including the lunch gap. */
 const AVAILABILITY: CalendarBackgroundInterval[] = RESOURCES.flatMap(({ id }) => {
   const [open, close] = SHIFTS[id];
@@ -272,7 +289,7 @@ function BookingCalendarDemo() {
     <Stack gap="sm">
       <Calendar
         defaultValue={TODAY}
-        view="day"
+        defaultView="day"
         events={bookings}
         resources={RESOURCES}
         backgroundIntervals={AVAILABILITY}
@@ -288,7 +305,8 @@ function BookingCalendarDemo() {
           setNote(`"${event.title}" now ends at ${next.endsAt.toLocaleTimeString()}.`);
         }}
       />
-      <small>{note}</small>
+      {/* The only feedback for the keyboard path, so it announces. */}
+      <small role="status">{note}</small>
     </Stack>
   );
 }
@@ -499,7 +517,7 @@ export function BookingCalendarDemo() {
   return (
     <Stack gap="sm">
       <Calendar
-        view="day"
+        defaultView="day"
         events={bookings}
         resources={RESOURCES}
         backgroundIntervals={AVAILABILITY}
@@ -534,8 +552,16 @@ export function BookingCalendarDemo() {
 
       <Example
         title="Availability underlay in week view"
-        description="backgroundIntervals works in week view too — resourceId is simply ignored there, so every interval paints every column. Bands sit beneath the events, take no part in the collision cascade, and let clicks through to onDayClick."
+        description="backgroundIntervals works in week view too — resourceId is simply ignored there. Intervals are still clipped to each column's own date, though, so shading opening hours across a week means one interval per day (see WEEK_AVAILABILITY below), not one that spans the columns. Bands sit beneath the events, take no part in the collision cascade, and let clicks through to onDayClick."
         code={`import { Calendar } from '@eocrm/design-system';
+
+// One interval per day: intervals are clipped to each column's date, so a
+// single 08:00-09:00 band would shade exactly one column, not the week.
+const WEEK_AVAILABILITY = [-3, -2, -1, 0, 1, 2, 3].flatMap((offset) => [
+  { startsAt: at(offset, 8), endsAt: at(offset, 9), tone: 'unavailable' },
+  { startsAt: at(offset, 9), endsAt: at(offset, 17), tone: 'available' },
+  { startsAt: at(offset, 17), endsAt: at(offset, 18), tone: 'unavailable' },
+]);
 
 export function Demo() {
   return (
@@ -543,11 +569,7 @@ export function Demo() {
       defaultView="week"
       events={SAMPLE_EVENTS}
       hourRange={[8, 18]}
-      backgroundIntervals={[
-        { startsAt: at(8, 0), endsAt: at(9, 0), tone: 'unavailable' },
-        { startsAt: at(9, 0), endsAt: at(17, 0), tone: 'available' },
-        { startsAt: at(17, 0), endsAt: at(18, 0), tone: 'unavailable' },
-      ]}
+      backgroundIntervals={WEEK_AVAILABILITY}
     />
   );
 }`}
@@ -557,11 +579,7 @@ export function Demo() {
           defaultView="week"
           events={SAMPLE_EVENTS}
           hourRange={[8, 18]}
-          backgroundIntervals={[
-            { startsAt: fromToday(0, 8), endsAt: fromToday(0, 9), tone: 'unavailable' },
-            { startsAt: fromToday(0, 9), endsAt: fromToday(0, 17), tone: 'available' },
-            { startsAt: fromToday(0, 17), endsAt: fromToday(0, 18), tone: 'unavailable' },
-          ]}
+          backgroundIntervals={WEEK_AVAILABILITY}
         />
       </Example>
 

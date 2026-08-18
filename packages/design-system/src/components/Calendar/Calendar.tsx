@@ -97,6 +97,9 @@ export interface CalendarProps extends Omit<
    * by column (per-practitioner shifts). Bands take no part in the event
    * collision cascade and never intercept clicks — `onDayClick` still fires
    * through them.
+   *
+   * Every interval is clipped to each column's own date, so a week view needs
+   * one interval per day rather than one that all seven columns share.
    */
   backgroundIntervals?: readonly CalendarBackgroundInterval[];
   /**
@@ -132,6 +135,8 @@ export interface CalendarProps extends Omit<
    * Snap granularity for drags, in minutes. Default 15 — a drag lands on a
    * quarter-hour boundary rather than an arbitrary pixel offset. Also the
    * step size for the keyboard equivalent (Alt + arrow keys).
+   *
+   * Values below 1 (including 0 and negatives) are treated as 1 minute.
    */
   dragSnapMinutes?: number;
   /**

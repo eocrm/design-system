@@ -446,14 +446,13 @@ function ButtonTrigger(props: TriggerProps) {
   // not the rendered node, so screen readers still hear "Pending" even if
   // the consumer wraps it in decoration.
   const labelNode: React.ReactNode = (() => {
-    if (!label) return null;
-    if (!ctx.multiple && ctx.renderValue) {
-      const selRow = ctx.allRows.find(
-        (r) => r.kind === 'option' && r.option.value === (ctx.value as string),
-      );
-      if (selRow && selRow.kind === 'option') {
-        return ctx.renderValue(selRow.option as SelectOption);
-      }
+    // Gated on `hasValue`, not on `label` being truthy: an option may
+    // legitimately carry an empty label, and gating the two on different
+    // predicates would drop the placeholder styling while still rendering
+    // placeholder text.
+    if (!hasValue) return null;
+    if (!ctx.multiple && ctx.renderValue && selectedOption) {
+      return ctx.renderValue(selectedOption as SelectOption);
     }
     return label;
   })();

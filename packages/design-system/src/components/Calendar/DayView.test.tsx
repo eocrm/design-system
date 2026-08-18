@@ -1,7 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
+import hourGridStyles from './HourGrid.module.scss';
+
+/** Raw SCSS, so a CSS-only contract (pointer-events) can still be asserted. */
+const hourGridScss = readFileSync(resolve(__dirname, './HourGrid.module.scss'), 'utf8');
 import { DayView } from './DayView';
 import type { CalendarEvent } from './types';
 
@@ -240,10 +246,40 @@ describe('DayView — availability underlay (issue #473)', () => {
       />,
       { wrapper: wrap() },
     );
-    expect(bandsIn(container)).toHaveLength(1);
+    const bands = bandsIn(container);
+    expect(bands).toHaveLength(1);
+    // Length alone would pass if the band landed in Ana's column instead —
+    // assert it is inside the SECOND column body.
+    const columns = Array.from(container.querySelectorAll(`.${hourGridStyles.dayColumn}`));
+    expect(columns).toHaveLength(2);
+    expect(columns[1]).toContainElement(bands[0]);
+    expect(columns[0]).not.toContainElement(bands[0]);
   });
 
-  it('still fires onDayClick through the underlay', async () => {
+  it('declares the band non-interactive so clicks reach the column beneath', () => {
+    // jsdom does not implement `pointer-events`, so a click test here would
+    // pass whether or not the rule exists. Assert the contract that makes the
+    // click-through work instead: the band carries the class that sets
+    // `pointer-events: none`, and it is not the column's click target.
+    const { container } = render(
+      <DayView
+        cursor={cursor}
+        events={[]}
+        hourRange={[7, 19]}
+        hourRowHeight={48}
+        onDayClick={() => {}}
+        backgroundIntervals={[
+          { startsAt: new Date(2026, 4, 20, 7), endsAt: new Date(2026, 4, 20, 19) },
+        ]}
+      />,
+      { wrapper: wrap() },
+    );
+    const band = bandsIn(container)[0];
+    expect(band.className).toContain(hourGridStyles.backgroundBand);
+    expect(hourGridScss).toMatch(/\.backgroundBand[^}]*pointer-events:\s*none/s);
+  });
+
+  it('fires onDayClick when the column itself is clicked', async () => {
     const onDayClick = vi.fn();
     const user = userEvent.setup();
     const { container } = render(
@@ -259,8 +295,7 @@ describe('DayView — availability underlay (issue #473)', () => {
       />,
       { wrapper: wrap() },
     );
-    const grid = container.querySelector('[role="grid"]')!;
-    await user.click(grid.lastElementChild as HTMLElement);
-    expect(onDayClick).toHaveBeenCalled();
+    await user.click(container.querySelector(`.${hourGridStyles.dayColumn}`) as HTMLElement);
+    expect(onDayClick).toHaveBeenCalledWith(cursor);
   });
 });
