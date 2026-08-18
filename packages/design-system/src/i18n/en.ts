@@ -193,6 +193,8 @@ export const en: Messages = {
     clear: 'Clear selection',
     search: 'Search…',
     noOptions: 'No options',
+    selectedPrefix: ({ labels }) => `Selected: ${labels as string}`,
+    openSelect: 'Open select',
   },
   phoneInput: {
     countryLabel: 'Country',

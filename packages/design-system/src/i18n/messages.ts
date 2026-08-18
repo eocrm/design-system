@@ -336,6 +336,10 @@ export interface Messages {
     search: string;
     /** Copy shown when the Select listbox has no options matching the filter. */
     noOptions: string;
+    /** Accessible-name prefix for a trigger whose summary text is visually truncated. */
+    selectedPrefix: (params: { labels: string }) => string;
+    /** Accessible name for a chips trigger with nothing selected yet. */
+    openSelect: string;
   };
   phoneInput: {
     /** aria-label for the country picker Select. */

@@ -343,6 +343,7 @@ function useTriggerKeyboard(opts: { disabled?: boolean; readOnly?: boolean }) {
  */
 function ButtonTrigger(props: TriggerProps) {
   const ctx = useSelectContext('Trigger');
+  const t = useTranslation();
   const { handleNavKey, stepTypeahead } = useTriggerKeyboard({
     disabled: props.disabled,
     readOnly: props.readOnly,
@@ -387,7 +388,7 @@ function ButtonTrigger(props: TriggerProps) {
   // didn't pass their own aria-label — their string is authoritative.
   const computedAriaLabel = (() => {
     if (props['aria-label']) return props['aria-label'];
-    if (ctx.multiple && label) return `Selected: ${label}`;
+    if (ctx.multiple && label) return t('select.selectedPrefix', { labels: label });
     return label || props.placeholder || undefined;
   })();
 
@@ -816,6 +817,7 @@ function ChipsButtonTrigger(props: TriggerProps) {
     disabled: props.disabled,
     readOnly: props.readOnly,
   });
+  const t = useTranslation();
   const activeOptionId = useActiveOptionId();
 
   const selectedValues = Array.isArray(ctx.value) ? (ctx.value as string[]) : [];
@@ -853,7 +855,9 @@ function ChipsButtonTrigger(props: TriggerProps) {
   const labelForAria = selectedOptions.map((o) => o.label).join(', ');
   const computedAriaLabel =
     props['aria-label'] ??
-    (selectedOptions.length > 0 ? `Selected: ${labelForAria}` : 'Open select');
+    (selectedOptions.length > 0
+      ? t('select.selectedPrefix', { labels: labelForAria })
+      : t('select.openSelect'));
 
   const handleWrapperClick = () => {
     if (props.disabled || props.readOnly) return;

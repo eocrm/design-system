@@ -195,6 +195,8 @@ export const ru: Messages = {
     clear: 'Очистить выбор',
     search: 'Поиск…',
     noOptions: 'Нет вариантов',
+    selectedPrefix: ({ labels }) => `Выбрано: ${labels as string}`,
+    openSelect: 'Открыть список',
   },
   phoneInput: {
     countryLabel: 'Страна',
