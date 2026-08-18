@@ -160,7 +160,7 @@ export interface HourGridColumnRef {
 }
 
 /** True when the supplied columns represent resource lanes rather than dates. */
-function isResourceGrid(columns: readonly HourGridColumnRef[]): boolean {
+export function isResourceGrid(columns: readonly HourGridColumnRef[]): boolean {
   return columns.some((c) => c.resourceId !== undefined);
 }
 

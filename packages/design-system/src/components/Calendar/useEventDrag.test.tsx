@@ -4,6 +4,8 @@ import { useState, type ReactNode } from 'react';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
 import { Calendar } from './Calendar';
 import type { CalendarEvent, CalendarEventMove } from './types';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import timedEventStyles from './TimedEvent.module.scss';
 import hourGridStyles from './HourGrid.module.scss';
 
@@ -410,6 +412,117 @@ describe('Calendar drag — clamping to the grid (issue #472)', () => {
   });
 });
 
+describe('Calendar drag — the controller reads the event, never the block', () => {
+  it("never reads a block's clipped end coordinate", () => {
+    // Structural guard, not a behavioural one. `TimedEventBlock` carries
+    // RENDER coordinates: the layout clips `endMinutes` to the bottom of the
+    // column for anything ending on a later day. Every drag bug this
+    // component has had came from reading one of those for a semantic
+    // decision — a truncated overnight booking, a reversed gesture, a no-op
+    // guard that could never match. The controller derives a `DragFrame` from
+    // the CalendarEvent instead; this keeps it that way.
+    const source = readFileSync(resolve(__dirname, './useEventDrag.ts'), 'utf8');
+    const code = source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/[^\n]*/g, '');
+    expect(code).not.toMatch(/\bblock\.endMinutes\b/);
+    expect(code).not.toMatch(/\bblock\.startMinutes\b/);
+  });
+
+  it('does not call the handler for a drag the bounds refused entirely', () => {
+    // A fully-clamped gesture proposes exactly where the event already is.
+    // The documented consumer shape is an API write, so firing it for a drag
+    // that moved nothing would be a spurious server round-trip.
+    const onEventMove = vi.fn();
+    render(
+      <Calendar
+        view="day"
+        value={CURSOR}
+        events={[
+          {
+            id: 'a',
+            title: 'Standup',
+            // Already at the top of a 07:00-19:00 window: an upward drag can
+            // change nothing.
+            startsAt: new Date(2026, 4, 20, 7, 0),
+            endsAt: new Date(2026, 4, 20, 8, 0),
+          },
+        ]}
+        hourRange={[7, 19]}
+        hourRowHeight={HOUR_ROW_HEIGHT}
+        onEventMove={onEventMove}
+      />,
+      { wrapper: wrap },
+    );
+    drag(block(), { dy: -40 * HOUR_ROW_HEIGHT });
+    expect(onEventMove).not.toHaveBeenCalled();
+    expect(screen.getByRole('status')).toHaveTextContent(/cannot move any further/i);
+  });
+
+  it('refuses rather than reverses a shrink on a zero-duration event', () => {
+    // The clamp floor sits at the event's own end, so asking to shrink a
+    // zero-length event cannot answer by LENGTHENING it — the exact inversion
+    // the move branch was fixed for.
+    const onEventResize = vi.fn();
+    const { container } = render(
+      <Calendar
+        view="day"
+        value={CURSOR}
+        events={[{ id: 'z', title: 'Ping', startsAt: new Date(2026, 4, 20, 9, 0) }]}
+        hourRange={[7, 19]}
+        hourRowHeight={HOUR_ROW_HEIGHT}
+        onEventResize={onEventResize}
+      />,
+      { wrapper: wrap },
+    );
+    drag(resizeHandle(container), { dy: -4 * HOUR_ROW_HEIGHT });
+    expect(onEventResize).not.toHaveBeenCalled();
+  });
+
+  it('still lengthens a zero-duration event downward', () => {
+    const onEventResize = vi.fn();
+    const { container } = render(
+      <Calendar
+        view="day"
+        value={CURSOR}
+        events={[{ id: 'z', title: 'Ping', startsAt: new Date(2026, 4, 20, 9, 0) }]}
+        hourRange={[7, 19]}
+        hourRowHeight={HOUR_ROW_HEIGHT}
+        onEventResize={onEventResize}
+      />,
+      { wrapper: wrap },
+    );
+    drag(resizeHandle(container), { dy: HOUR_ROW_HEIGHT });
+    expect(onEventResize.mock.calls[0][1].endsAt).toEqual(new Date(2026, 4, 20, 10, 0));
+  });
+
+  it('does not drag an event that starts before the window INTO the window', () => {
+    // Its block renders clipped at the top with a negative offset; a gesture
+    // asking to move it earlier must not answer by moving it later.
+    const onEventMove = vi.fn();
+    render(
+      <Calendar
+        view="day"
+        value={CURSOR}
+        events={[
+          {
+            id: 'e',
+            title: 'Early',
+            startsAt: new Date(2026, 4, 20, 6, 0),
+            endsAt: new Date(2026, 4, 20, 7, 0),
+          },
+        ]}
+        hourRange={[8, 20]}
+        hourRowHeight={HOUR_ROW_HEIGHT}
+        onEventMove={onEventMove}
+      />,
+      { wrapper: wrap },
+    );
+    drag(block(/Early/), { dy: -HOUR_ROW_HEIGHT });
+    expect(onEventMove).not.toHaveBeenCalled();
+    drag(block(/Early/), { dy: HOUR_ROW_HEIGHT });
+    expect(onEventMove.mock.calls[0][1].startsAt).toEqual(new Date(2026, 4, 20, 7, 0));
+  });
+});
+
 describe('Calendar drag — overnight events (issue #472)', () => {
   // The layout clips a block that ends on a later day to the bottom of the
   // column, so its rendered height is NOT its duration. Deriving the proposal
@@ -452,6 +565,83 @@ describe('Calendar drag — overnight events (issue #472)', () => {
     await user.keyboard('{Alt>}{ArrowDown}{/Alt}');
     const [, next] = onEventMove.mock.calls[0];
     expect(next.endsAt.getTime() - next.startsAt.getTime()).toBe(6 * 60 * 60 * 1000);
+  });
+});
+
+describe('Calendar drag — overnight resize and edge nudges', () => {
+  /** 20:00 → 02:00 next day. Its block is CLIPPED at the bottom of the grid. */
+  const NIGHT: CalendarEvent = {
+    id: 'n',
+    title: 'Night shift',
+    startsAt: new Date(2026, 4, 20, 20, 0),
+    endsAt: new Date(2026, 4, 21, 2, 0),
+  };
+
+  function renderNight(props: Record<string, unknown>) {
+    return render(
+      <Calendar
+        view="day"
+        value={CURSOR}
+        events={[NIGHT]}
+        hourRange={[7, 23]}
+        hourRowHeight={HOUR_ROW_HEIGHT}
+        {...props}
+      />,
+      { wrapper: wrap },
+    );
+  }
+
+  it('lengthens a clipped overnight event instead of truncating it', () => {
+    // The block's rendered end is pinned to the grid bottom (23:00), two hours
+    // short of the real 02:00. Resizing from the rendered end would propose
+    // 00:00 — a silent two-hour deletion in the direction that should lengthen.
+    const onEventResize = vi.fn();
+    const { container } = renderNight({ onEventResize });
+    drag(resizeHandle(container), { dy: HOUR_ROW_HEIGHT });
+    expect(onEventResize.mock.calls[0][1].endsAt).toEqual(new Date(2026, 4, 21, 3, 0));
+  });
+
+  it('lengthens a clipped overnight event by keyboard too', async () => {
+    const user = userEvent.setup();
+    const onEventResize = vi.fn();
+    renderNight({ onEventResize });
+    block(/Night shift/).focus();
+    await user.keyboard('{Alt>}{Shift>}{ArrowDown}{/Shift}{/Alt}');
+    expect(onEventResize.mock.calls[0][1].endsAt).toEqual(new Date(2026, 4, 21, 2, 15));
+  });
+
+  it('stops proposing once a clipped block has been nudged to the edge', async () => {
+    // Guards the no-op check being semantic: compared in grid coordinates, a
+    // clipped block's end never matches and every keypress fires a proposal,
+    // including the ones that changed nothing.
+    const user = userEvent.setup();
+    const proposals: Date[] = [];
+    function Harness() {
+      const [events, setEvents] = useState<CalendarEvent[]>([NIGHT]);
+      return (
+        <Calendar
+          view="day"
+          value={CURSOR}
+          events={events}
+          hourRange={[7, 23]}
+          hourRowHeight={HOUR_ROW_HEIGHT}
+          onEventMove={(event, next) => {
+            proposals.push(next.startsAt);
+            setEvents([{ ...event, startsAt: next.startsAt, endsAt: next.endsAt }]);
+          }}
+        />
+      );
+    }
+    render(<Harness />, { wrapper: wrap });
+    for (let i = 0; i < 20; i++) {
+      block(/Night shift/).focus();
+      await user.keyboard('{Alt>}{ArrowDown}{/Alt}');
+    }
+    // It walked to the last slot the window allows and then stopped, rather
+    // than emitting twenty proposals.
+    expect(proposals.length).toBeLessThan(20);
+    expect(proposals.length).toBeGreaterThan(0);
+    expect(screen.getByRole('status')).toHaveTextContent(/cannot move any further/i);
   });
 });
 
@@ -642,6 +832,9 @@ describe('Calendar drag — preview feedback (issue #472)', () => {
     // below would no-op and leave the grid stuck in its dragging state.
     fireEvent.pointerUp(window, { pointerId: 1, clientX: 100, clientY: 148 });
     expect(onEventMove).toHaveBeenCalledTimes(1);
+    // The single commit must carry the POINTER's drop, not the swallowed
+    // nudge's — otherwise the real gesture was silently discarded.
+    expect(onEventMove.mock.calls[0][1].startsAt).toEqual(new Date(2026, 4, 20, 10, 0));
     // And a fresh gesture still works afterwards.
     drag(block(), { dy: HOUR_ROW_HEIGHT });
     expect(onEventMove).toHaveBeenCalledTimes(2);

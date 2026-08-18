@@ -1474,6 +1474,9 @@ describe('Select — value="" is a real option (issue #470)', () => {
     const trigger = screen.getByRole('combobox');
     expect(trigger).not.toHaveTextContent('Pick one');
     expect(trigger.className).not.toContain(styles.placeholder);
+    // ...but it must still HAVE an accessible name (WCAG 4.1.2). With no label
+    // to use, the placeholder remains the naming fallback.
+    expect(trigger).toHaveAccessibleName();
   });
 
   it('calls renderValue for a selected option whose label is empty', () => {

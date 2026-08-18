@@ -389,11 +389,11 @@ function ButtonTrigger(props: TriggerProps) {
   const computedAriaLabel = (() => {
     if (props['aria-label']) return props['aria-label'];
     if (ctx.multiple && label) return t('select.selectedPrefix', { labels: label });
-    // `hasValue` rather than a truthy `label`, for the same reason as the
-    // rendered gate below: a selected option with an empty label must not fall
-    // back to announcing the placeholder.
-    if (hasValue) return label || undefined;
-    return props.placeholder || undefined;
+    // An option may carry an empty label. It is still a selection — the
+    // rendered gate below uses `hasValue` so it doesn't show placeholder text
+    // over a checked row — but the trigger must not end up with NO accessible
+    // name at all, so the placeholder remains the naming fallback.
+    return label || props.placeholder || undefined;
   })();
 
   const handleKeyDown = (e: KeyboardEvent<HTMLButtonElement>) => {

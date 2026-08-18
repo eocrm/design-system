@@ -124,7 +124,11 @@ export interface Messages {
     unassigned: string;
     /** Keyboard drag instructions, referenced by every draggable event block. */
     dragInstructions: string;
-    /** Live-region text while a drag proposes a new slot, and when a move is accepted. */
+    /**
+     * Live-region text while a drag proposes a new slot, and when a move is
+     * accepted. `time` is the whole proposed slot, already formatted as a
+     * range (e.g. "9:00 AM – 10:00 AM"), not a single instant.
+     */
     dragMovedTo: (params: { event: string; time: string }) => string;
     /** Live-region text while a resize proposes a new end, and when one is accepted. */
     dragEndsAt: (params: { event: string; time: string }) => string;

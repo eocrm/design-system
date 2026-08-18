@@ -14,7 +14,7 @@ import { formatHour, formatTime } from '../../calendar';
 import { isSameDay } from '../../calendar/dateMath';
 import { TimedEvent } from './TimedEvent';
 import { useEventDrag, type DragMode } from './useEventDrag';
-import type { HourGridColumnRef } from './utils';
+import { isResourceGrid, type HourGridColumnRef } from './utils';
 import type {
   BackgroundBlock,
   CalendarDropResult,
@@ -203,7 +203,7 @@ export function HourGrid({
   // In a resource day view every column is today, so tinting each header says
   // nothing — the date is already in the Calendar header. The now-line still
   // draws in every lane, which is the part that carries information.
-  const isResourceGrid = columns.some((c) => c.resourceId !== undefined);
+  const resourceGrid = isResourceGrid(columns);
 
   const handleDragStart = (block: TimedEventBlock, mode: DragMode, e: PointerEvent) => {
     drag.startPointerDrag(block, mode, e);
@@ -270,7 +270,7 @@ export function HourGrid({
               className={clsx(
                 styles.columnHeader,
                 columns[i].isWeekend && styles.weekendHeader,
-                !isResourceGrid && isTodayColumn(i) && styles.todayHeader,
+                !resourceGrid && isTodayColumn(i) && styles.todayHeader,
               )}
             >
               {header}

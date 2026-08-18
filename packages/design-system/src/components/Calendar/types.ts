@@ -102,7 +102,13 @@ export interface CalendarBackgroundInterval {
 export interface CalendarEventMove {
   /** Proposed new start instant (local time), snapped to `dragSnapMinutes`. */
   startsAt: Date;
-  /** Proposed new end instant (local time). */
+  /**
+   * Proposed new end instant (local time). Always present, even for an event
+   * that omitted `endsAt` — such an event has zero duration, so `endsAt`
+   * equals `startsAt`. Committing the proposal verbatim therefore turns an
+   * open-ended event into an explicitly zero-length one; keep `endsAt`
+   * undefined in your own state if that distinction matters to you.
+   */
   endsAt: Date;
   /**
    * The resource column the event was dropped on, when the view has resource

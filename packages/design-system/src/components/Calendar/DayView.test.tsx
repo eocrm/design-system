@@ -85,6 +85,29 @@ describe('DayView — resource columns (issue #471)', () => {
     };
   }
 
+  it('does not tint every resource header as "today" — they all share one date', () => {
+    render(
+      <DayView
+        cursor={new Date()}
+        events={[]}
+        hourRange={[7, 19]}
+        hourRowHeight={48}
+        resources={RESOURCES}
+      />,
+      { wrapper: wrap() },
+    );
+    for (const header of screen.getAllByRole('columnheader')) {
+      expect(header.className).not.toContain(hourGridStyles.todayHeader);
+    }
+  });
+
+  it('still tints today in a plain (date-based) day view', () => {
+    render(<DayView cursor={new Date()} events={[]} hourRange={[7, 19]} hourRowHeight={48} />, {
+      wrapper: wrap(),
+    });
+    expect(screen.getByRole('columnheader').className).toContain(hourGridStyles.todayHeader);
+  });
+
   it('renders one column header per resource', () => {
     render(
       <DayView

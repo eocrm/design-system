@@ -219,13 +219,15 @@ const INITIAL_BOOKINGS: CalendarEvent[] = [
 ];
 
 /**
- * Day offsets covering the Sun–Sat week the week view actually renders.
- * Anchoring on today ± 3 would be off by up to three days, leaving real
- * columns unshaded — the very bug the per-day interval note warns about.
+ * Day offsets that cover whichever week the week view renders.
+ *
+ * Deliberately a fortnight rather than a computed Sun–Sat window: `Calendar`
+ * derives the first day of the week from the locale, so anchoring on Sunday
+ * would leave real columns unshaded under a Monday-first locale. Intervals
+ * that fall outside the rendered columns simply don't paint.
  */
 function weekOffsets(): number[] {
-  const sundayOffset = -TODAY.getDay();
-  return [0, 1, 2, 3, 4, 5, 6].map((i) => sundayOffset + i);
+  return Array.from({ length: 15 }, (_, i) => i - 7);
 }
 
 /**
@@ -566,9 +568,12 @@ export function BookingCalendarDemo() {
 
 // One interval per day: intervals are clipped to each column's date, so a
 // single 08:00-09:00 band would shade exactly one column, not the week.
-// Offsets are taken from the rendered week's Sunday, not from today, or the
-// bands land up to three days off the columns they are meant to shade.
-const WEEK_AVAILABILITY = weekOffsets().flatMap((offset) => [
+// The offsets cover a fortnight around today because Calendar derives the
+// week's first day from the locale — intervals outside the rendered columns
+// just don't paint.
+const dayOffsets = Array.from({ length: 15 }, (_, i) => i - 7);
+
+const WEEK_AVAILABILITY = dayOffsets.flatMap((offset) => [
   { startsAt: at(offset, 8), endsAt: at(offset, 9), tone: 'unavailable' },
   { startsAt: at(offset, 9), endsAt: at(offset, 17), tone: 'available' },
   { startsAt: at(offset, 17), endsAt: at(offset, 18), tone: 'unavailable' },
