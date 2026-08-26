@@ -62,14 +62,17 @@ describe('Stack', () => {
     expect(cls).toMatch(/external/);
   });
 
-  it('declares min-width: 0 on the minWidth0 class, and NOT on the base class', () => {
-    // jsdom computes no layout, so the stylesheet is the guard. Both halves
-    // matter: without the declaration a `<Text truncate>` inside can never
-    // ellipsize (#475); with it on the BASE class every Stack volunteers for
-    // shrink and non-truncatable content gets clipped instead.
+  it('declares min-width exactly once, inside the minWidth0 rule', () => {
+    // jsdom computes no layout, so the stylesheet is the guard. A whole-file
+    // count rather than a rule-scoped regex on purpose: a scoped match only
+    // finds the FIRST `.stack` block, so appending a second `.stack { min-width:
+    // 0; }` at the end of the file — exactly how someone would "add the fix
+    // back" — would restore the reverted unconditional behaviour with the test
+    // still green. Counting every occurrence cannot be fooled that way, and it
+    // also catches a `min-width` leaking in via `.inline` / `.wrap`.
     const scss = readFileSync(resolve(__dirname, 'Stack.module.scss'), 'utf8');
-    const ruleFor = (sel: string) => scss.match(new RegExp(`\\${sel}\\s*\\{[^}]*\\}`))?.[0];
-    expect(ruleFor('.minWidth0')).toMatch(/min-width:\s*0(?:px)?\s*;/);
-    expect(ruleFor('.stack')).not.toMatch(/min-width:/);
+    const declarations = scss.match(/^\s*min-width:/gm) ?? [];
+    expect(declarations).toHaveLength(1);
+    expect(scss).toMatch(/\.minWidth0\s*\{\s*min-width:\s*0(?:px)?\s*;\s*\}/);
   });
 });

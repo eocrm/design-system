@@ -1,20 +1,23 @@
 @use './Cluster.tokens';
 
+.cluster {
+  display: flex;
+  flex-direction: row;
+}
+
 // Opt-in, via the `minWidth0` prop. As a flex or grid ITEM a Cluster keeps the
 // default `min-width: auto`, which floors it at its content's min-content size —
 // so a `<Text truncate>` inside never gets the chance to ellipsize and a clipping
 // ancestor hard-cuts it instead (issue #475).
-// Deliberately NOT on the base `.cluster` class: a container that CAN shrink also
-// VOLUNTEERS for shrink, and in a `wrap={false}` row under an `overflow: hidden`
-// ancestor that clips non-truncatable content (buttons, badges) which previously
-// stayed whole. Card defaults to `overflow: hidden`, so that shape is common.
+// Deliberately NOT on the base `.cluster` class: that would let every Cluster in the
+// codebase shrink below its content, changing layout for existing consumers. It
+// was tried and reverted — measured, a between-justified `wrap={false}` Cluster of
+// filter buttons inside a Card (which defaults to `overflow: hidden`) lost 22px off
+// its trailing button that stayed whole before.
+// Declared AFTER the base rule on purpose: equal specificity, so source order is
+// what guarantees this wins if the base ever gains a competing `min-width`.
 .minWidth0 {
   min-width: 0;
-}
-
-.cluster {
-  display: flex;
-  flex-direction: row;
 }
 
 // as="span": phrasing-content contexts (inside <button>, <a>, <label>) need

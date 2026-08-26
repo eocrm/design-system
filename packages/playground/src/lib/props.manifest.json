@@ -730,8 +730,8 @@
           "name": "minWidth0",
           "type": "boolean",
           "required": false,
-          "default": "",
-          "description": "Lets the container shrink below its content's intrinsic width\n(`min-width: 0`), so a `<Text truncate>` inside can ellipsize instead of\nbeing hard-cut by a clipping ancestor. Defaults to `false`.\n\nReach for it when this Cluster is a flex or grid ITEM of a parent that\nclips (`overflow: hidden`) — a `Calendar` `renderEvent` chip, a narrow\ntable cell, a `Card` toolbar. Without it the flex default\n(`min-width: auto`) pins the container to its content's min-content width\nand the ellipsis never appears.\n\nOpt-in rather than the default on purpose: a container that CAN shrink\nalso VOLUNTEERS for shrink, so turning it on where the content is NOT\ntruncatable (buttons, badges, icons) lets that content be clipped\ninstead. Set it on the container whose text should give way, not on one\nholding controls."
+          "default": "false",
+          "description": "Lets the container shrink below its content's intrinsic width\n(`min-width: 0`), so a `<Text truncate>` inside can ellipsize instead of\nbeing hard-cut by a clipping ancestor.\n\nReach for it when this Cluster is an item of a **row** flex container (or a\ngrid item) that clips — a `Calendar` `renderEvent` chip, a `Card.Header`\nrow. Without it the flex default (`min-width: auto`) floors the\ncontainer at its content's min-content width and the ellipsis never\nappears.\n\nIt is a **no-op** inside a column `Stack`, a plain block, or a table cell:\nthe automatic minimum size applies only on the flex MAIN axis, so\n`min-width: auto` already computes to `0` in all three.\n\nOpt-in rather than the default on purpose: a container that CAN shrink\nalso VOLUNTEERS for shrink, so turning it on where the content is NOT\ntruncatable (buttons, badges, icons) lets that content be clipped\ninstead. Set it on the container whose text should give way, not on one\nholding controls."
         },
         {
           "name": "wrap",
@@ -4500,8 +4500,8 @@
           "name": "minWidth0",
           "type": "boolean",
           "required": false,
-          "default": "",
-          "description": "Lets the container shrink below its content's intrinsic width\n(`min-width: 0`), so a `<Text truncate>` inside can ellipsize instead of\nbeing hard-cut by a clipping ancestor. Defaults to `false`.\n\nReach for it when this Stack is a flex or grid ITEM of a parent that\nclips (`overflow: hidden`) — a `Calendar` `renderEvent` chip, a narrow\ntable cell, a `Card` toolbar. Without it the flex default\n(`min-width: auto`) pins the container to its content's min-content width\nand the ellipsis never appears.\n\nOpt-in rather than the default on purpose: a container that CAN shrink\nalso VOLUNTEERS for shrink, so turning it on where the content is NOT\ntruncatable (buttons, badges, icons) lets that content be clipped\ninstead. Set it on the container whose text should give way, not on one\nholding controls."
+          "default": "false",
+          "description": "Lets the container shrink below its content's intrinsic width\n(`min-width: 0`), so a `<Text truncate>` inside can ellipsize instead of\nbeing hard-cut by a clipping ancestor.\n\nA Stack is a column, so its own `min-width` is the CROSS axis — this only\nbites when the Stack is itself an item of a **row** flex container (or a\ngrid item) that clips. That is the two-line label beside a fixed badge, or\na detail column in a squeezed toolbar. Without it the flex default\n(`min-width: auto`) floors the Stack at its widest line and the ellipsis\nnever appears.\n\nIt is a **no-op** when the Stack sits in another `Stack`, a plain block, or\na table cell: the automatic minimum size applies only on the flex MAIN\naxis, so `min-width: auto` already computes to `0` in all three.\n\nOpt-in rather than the default on purpose: a container that CAN shrink\nalso VOLUNTEERS for shrink, so turning it on where the content is NOT\ntruncatable (buttons, badges, icons) lets that content be clipped\ninstead. Set it on the container whose text should give way, not on one\nholding controls."
         }
       ]
     },

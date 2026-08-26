@@ -1426,7 +1426,7 @@ Use this instead of `Card.List` + `Card.ListRow` whenever the data is genuinely 
 
 - `gap`: `xs` (4) / `sm` (8) / `md` (12, default) / `lg` (16) / `xl` (24) / `2xl` (32) — pixels
 - `align`: `start` / `center` / `end` / `stretch` (default)
-- `minWidth0`: `false` (default). Sets `min-width: 0` so the container can shrink below its content's intrinsic width, letting a `<Text truncate>` inside ellipsize instead of being hard-cut by a clipping ancestor. Turn it on when this container is a flex/grid ITEM of a parent with `overflow: hidden` — a `Calendar` `renderEvent` chip, a narrow table cell, a `Card` toolbar. **Opt-in on purpose:** a container that can shrink also _volunteers_ for shrink, so setting it where the content is NOT truncatable (buttons, badges, icons) lets that content be clipped instead. Set it on the container whose text should give way, never on one holding controls.
+- `minWidth0`: `false` (default). Sets `min-width: 0` so the Stack can shrink below its content's intrinsic width, letting a `<Text truncate>` inside ellipsize instead of being hard-cut. A Stack is a column, so its own `min-width` is the CROSS axis — this only bites when the Stack is itself an item of a **row** flex container (or a grid item) that clips: a two-line label beside a fixed badge, a detail column in a squeezed toolbar. **No-op** inside another `Stack`, a plain block, or a table cell. **Opt-in on purpose:** a container that can shrink also _volunteers_ for shrink, so setting it where the content is NOT truncatable (buttons, badges, icons) lets that content be clipped instead.
 
 ### `<Page>` — page-root layout primitive
 
@@ -1485,7 +1485,7 @@ Use this instead of `Card.List` + `Card.ListRow` whenever the data is genuinely 
 - `justify`: `start` (default) / `center` / `end` / `between`
 - `align`: `start` / `center` (default) / `end` / `baseline`
 - `wrap`: `true` (default). Set `false` only for narrow table cells where overflow is preferable to wrapping.
-- `minWidth0`: `false` (default). Sets `min-width: 0` so the container can shrink below its content's intrinsic width, letting a `<Text truncate>` inside ellipsize instead of being hard-cut by a clipping ancestor. Turn it on when this container is a flex/grid ITEM of a parent with `overflow: hidden` — a `Calendar` `renderEvent` chip, a narrow table cell, a `Card` toolbar. **Opt-in on purpose:** a container that can shrink also _volunteers_ for shrink, so setting it where the content is NOT truncatable (buttons, badges, icons) lets that content be clipped instead. Set it on the container whose text should give way, never on one holding controls.
+- `minWidth0`: `false` (default). Sets `min-width: 0` so the container can shrink below its content's intrinsic width, letting a `<Text truncate>` inside ellipsize instead of being hard-cut by a clipping ancestor. Turn it on when this Cluster is an item of a **row** flex container (or a grid item) that clips — a `Calendar` `renderEvent` chip, a `Card.Header` row. **No-op** inside a column `Stack`, a plain block, or a table cell: the automatic minimum size applies only on the flex MAIN axis, so `min-width: auto` is already `0` there. **Opt-in on purpose:** a container that can shrink also _volunteers_ for shrink, so setting it where the content is NOT truncatable (buttons, badges, icons) lets that content be clipped instead. Set it on the container whose text should give way, never on one holding controls.
 
 ```tsx
 // Custom Calendar chip content that ellipsizes instead of hard-clipping.

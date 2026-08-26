@@ -54,19 +54,25 @@ export interface ClusterProps extends HTMLAttributes<HTMLElement> {
   /**
    * Lets the container shrink below its content's intrinsic width
    * (`min-width: 0`), so a `<Text truncate>` inside can ellipsize instead of
-   * being hard-cut by a clipping ancestor. Defaults to `false`.
+   * being hard-cut by a clipping ancestor.
    *
-   * Reach for it when this Cluster is a flex or grid ITEM of a parent that
-   * clips (`overflow: hidden`) — a `Calendar` `renderEvent` chip, a narrow
-   * table cell, a `Card` toolbar. Without it the flex default
-   * (`min-width: auto`) pins the container to its content's min-content width
-   * and the ellipsis never appears.
+   * Reach for it when this Cluster is an item of a **row** flex container (or a
+   * grid item) that clips — a `Calendar` `renderEvent` chip, a `Card.Header`
+   * row. Without it the flex default (`min-width: auto`) floors the
+   * container at its content's min-content width and the ellipsis never
+   * appears.
+   *
+   * It is a **no-op** inside a column `Stack`, a plain block, or a table cell:
+   * the automatic minimum size applies only on the flex MAIN axis, so
+   * `min-width: auto` already computes to `0` in all three.
    *
    * Opt-in rather than the default on purpose: a container that CAN shrink
    * also VOLUNTEERS for shrink, so turning it on where the content is NOT
    * truncatable (buttons, badges, icons) lets that content be clipped
    * instead. Set it on the container whose text should give way, not on one
    * holding controls.
+   *
+   * @default false
    */
   minWidth0?: boolean;
   /**
