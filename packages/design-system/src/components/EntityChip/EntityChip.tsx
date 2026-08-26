@@ -76,8 +76,8 @@ interface EntityChipOwnProps {
    * show a TYPE word instead — without the state, a masked reference is
    * indistinguishable from a real entity that happens to be called
    * "Appointment". Colour alone cannot carry it, and `aria-disabled` does not
-   * either: browsers do expose it, but it carries no meaning on a role-less
-   * element, so no assistive tech conveys it to the user.
+   * either: browsers do expose it, but it carries no meaning on a
+   * non-widget role such as `generic`, so no assistive tech conveys it.
    *
    * `aria-busy` on `loading` has the same limitation and is deliberately left
    * alone: a loading chip shows the entity's REAL label, so nothing is
@@ -231,16 +231,21 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
   const bareSpan = !as && !href;
   const inert = unavailable && bareSpan;
   // The state as real text, not just muted colour. Browsers do expose
-  // `aria-disabled`, but it carries no meaning on a role-less element, so no AT
-  // conveys it — without this the state reached nobody using a screen reader,
+  // `aria-disabled`, but it carries no meaning on a non-widget role such as
+  // `generic`, so no AT conveys it — without this the state reached nobody using a screen reader,
   // and an `unavailable` chip labelled with a type word ("Appointment") was
   // indistinguishable from a real entity of that name. Rendered for linked
   // chips too: muted styling is the sole signal there as well.
   //
-  // The leading space lives INSIDE the span — never as a sibling text node,
-  // which would become an anonymous flex item and take the chip's `gap` — so
-  // the separation is deterministic rather than left to each engine's
-  // accessible-name whitespace rule. Same shape as Field's "(optional)".
+  // The leading space is for `textContent` only — it is what selection/copy
+  // yields, and what the tests assert. It reaches no accessible name in either
+  // engine: measured, the space never renders (line-leading in this block box,
+  // so it collapses — 0.000px delta), Chromium supplies its own separator
+  // between the block-level children, and `dom-accessibility-api` drops it too.
+  // A sibling text node would be equivalent and would NOT take the chip's `gap`
+  // (a whitespace-only flex item is not rendered at all); keeping it inside
+  // just leaves the chip's children all elements. Same shape as Field's
+  // "(optional)".
   //
   // Defined once, rendered in both branches so it can sit immediately after the
   // entity name. Trailing the status instead gave "Appointment In progress

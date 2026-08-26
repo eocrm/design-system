@@ -239,8 +239,9 @@ describe('<EntityChip>', () => {
   });
 
   describe('unavailable is announced, not just muted', () => {
-    // The bug: `aria-disabled` on a role-less <span> is not exposed, so the
-    // muted colour was the sole carrier of the state. The canonical use is to
+    // The bug: browsers DO expose `aria-disabled`, but it carries no meaning on
+    // a non-widget role such as `generic`, so no assistive tech conveys it —
+    // the muted colour was the sole carrier of the state. The canonical use is to
     // withhold the entity name and show a TYPE word, which made a masked
     // reference indistinguishable from a real entity of that name.
     it('renders the state word as real text on a bare-span chip', () => {

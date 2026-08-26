@@ -491,10 +491,13 @@ export interface Messages {
   };
   entityChip: {
     /**
-     * Visually-hidden state word appended to an `unavailable` chip's accessible
-     * name, so the state reaches assistive tech instead of being carried by the
-     * muted colour alone. Include the surrounding punctuation — English reads
-     * "Appointment (unavailable)"; other locales may want different marks.
+     * State word rendered visually hidden inside an `unavailable` `EntityChip`,
+     * so the state reaches assistive tech instead of being carried by the muted
+     * colour alone. It joins a LINKED chip's accessible name
+     * ("Appointment (unavailable)"); a target-less chip is `role=generic`,
+     * which has no accessible name, so there it is read as chip content.
+     * Include the surrounding punctuation — other locales may want different
+     * marks than English's parentheses.
      */
     unavailable: string;
   };
