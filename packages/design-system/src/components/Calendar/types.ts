@@ -305,19 +305,30 @@ export interface RenderEventContext {
  * tooltip, and tone background — return content with inline `background` /
  * `style` to override colors.
  *
- * Note on truncation: the wrapper is `display: flex; overflow: hidden`, and the
- * default title works because it is a DIRECT child of it. Content that needs a
- * leading element (a `Dot`, an icon) must be wrapped, and the only wrapper
- * valid inside the button is `<Cluster as="span">` — which, as a flex item of a
- * ROW parent, is floored at its content's min-content width unless you set
- * `minWidth0`. Without it a long title is hard-cut mid-word instead of
- * ellipsizing.
+ * Note on truncation. The rule, rather than the per-view markup, because the
+ * markup differs: wherever your content lands in a flex ROW, a wrapper around
+ * it is a flex item and is therefore floored at its own content's min-content
+ * width. A long `<Text truncate>` inside that wrapper then never ellipsizes.
+ * Set `minWidth0` on the wrapper to release the floor.
  *
- * That applies to the month/week chip, the agenda row, and SHORT hour-grid
- * blocks. A tall hour-grid block is `flex-direction: column` (see the layout
- * note below), where the automatic minimum size does not apply on the
- * horizontal axis at all — there `minWidth0` is a no-op and the title already
- * ellipsizes.
+ * The DS default title needs no wrapper, so it is unaffected — you only meet
+ * this when your content needs a leading element (a `Dot`, an icon) and so has
+ * to be wrapped, and the only wrapper valid inside the button is
+ * `<Cluster as="span">`:
+ *
+ * ```tsx
+ * <Cluster as="span" gap="xs" align="center" wrap={false} minWidth0>
+ * ```
+ *
+ * Where that applies: the month/week chip and short hour-grid blocks (the
+ * button itself is the row), and the agenda row (the row is an inner span, not
+ * the button). Whether the overflow is then visibly cut or merely spills
+ * depends on the view — the chip clips, the agenda row does not.
+ *
+ * Where it does NOT: a tall hour-grid block is `flex-direction: column` (see
+ * the layout note below), and the automatic minimum size applies only on the
+ * main axis, so there is no horizontal floor to release and `minWidth0` is a
+ * no-op.
  *
  * ```tsx
  * renderEvent={(event) => (

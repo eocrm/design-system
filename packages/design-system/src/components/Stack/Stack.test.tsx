@@ -74,7 +74,9 @@ describe('Stack', () => {
     //     equivalent in horizontal-tb, which a logical-properties refactor would
     //     reasonably introduce.
     // Comments must be stripped first or the prose above (which names both
-    // properties) inflates the count.
+    // properties) inflates the count. If a second horizontal min-size is ever
+    // legitimately needed on a modifier, bump this count deliberately — the
+    // failure is the prompt to think about it, not a lint to silence.
     const scss = readFileSync(resolve(__dirname, 'Stack.module.scss'), 'utf8')
       .replace(/\/\*[\s\S]*?\*\//g, '')
       .replace(/\/\/.*$/gm, '');

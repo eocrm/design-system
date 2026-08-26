@@ -16,8 +16,6 @@
 // both share: a container permitted to shrink volunteers for shrink, and any
 // non-truncatable content inside it then overflows and is clipped by the
 // nearest `overflow: hidden` ancestor.
-// Declared AFTER the base rule on purpose: equal specificity, so source order is
-// what guarantees this wins if the base ever gains a competing `min-width`.
 .minWidth0 {
   min-width: 0;
 }

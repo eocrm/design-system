@@ -62,9 +62,10 @@ export interface ClusterProps extends HTMLAttributes<HTMLElement> {
    * container at its content's min-content width and the ellipsis never
    * appears.
    *
-   * It is a **no-op** inside a column `Stack`, a plain block, or a table cell:
-   * the automatic minimum size applies only on the flex MAIN axis, so
-   * `min-width: auto` already computes to `0` in all three.
+   * It is a **no-op** inside a column `Stack` (the automatic minimum size
+   * applies only on the flex MAIN axis, so there is no horizontal floor), and
+   * inside a plain block or a table cell (the automatic minimum size applies
+   * to flex and grid ITEMS only, so `min-width: auto` is just `0` there).
    *
    * Opt-in rather than the default on purpose: a container that CAN shrink
    * also VOLUNTEERS for shrink, so turning it on where the content is NOT

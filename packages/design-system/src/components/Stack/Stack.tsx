@@ -32,9 +32,10 @@ export interface StackProps extends HTMLAttributes<HTMLDivElement> {
    * (`min-width: auto`) floors the Stack at its widest line and the ellipsis
    * never appears.
    *
-   * It is a **no-op** when the Stack sits in another `Stack`, a plain block, or
-   * a table cell: the automatic minimum size applies only on the flex MAIN
-   * axis, so `min-width: auto` already computes to `0` in all three.
+   * It is a **no-op** when the Stack sits in another `Stack` (the automatic
+   * minimum size applies only on the flex MAIN axis, so there is no horizontal
+   * floor), or in a plain block or table cell (that minimum applies to flex and
+   * grid ITEMS only, so `min-width: auto` is just `0` there).
    *
    * Opt-in rather than the default on purpose: a container that CAN shrink
    * also VOLUNTEERS for shrink, so turning it on where the content is NOT
