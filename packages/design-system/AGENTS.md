@@ -3286,8 +3286,25 @@ const [view, setView] = useState<CalendarView>('month');
 ```
 
 - Four views: `'month'` (continuous event bars across the grid), `'week'` (7 columns × hour rows + all-day band), `'day'` (single column × hour rows), `'agenda'` (chronological list of the cursor's current week, grouped by day with empty days hidden).
-- Events are `{ id, title, startsAt, endsAt?, tone?, allDay?, resourceId? }`. Multi-day events render as continuous bars in both the month grid and the week/day all-day band. `resourceId` routes a timed event to its column in the resource day view and is ignored by every other view.
-- Tones: `neutral` (default) / `accent` / `success` / `warning` / `danger`. `allDay: true` renders as a tone-filled band (no time prefix).
+- Events are `{ id, title, startsAt, endsAt?, tone?, color?, allDay?, resourceId? }`. Multi-day events render as continuous bars in both the month grid and the week/day all-day band. `resourceId` routes a timed event to its column in the resource day view and is ignored by every other view.
+- **Two colour axes, and they do not compete.** `tone` is _semantic_ — what STATE the event is in: `neutral` (default) / `accent` / `success` / `warning` / `danger`. `color` is _identity_ — WHICH category it belongs to, as one of the 30 `PaletteColor`s. Use `color` when your events belong to a colour-bearing category the tenant chose (an appointment type, a calendar, a resource class).
+- With **no** `color`, tone paints the whole block exactly as it always has, and `allDay: true` renders as a tone-filled band (no time prefix). With `color` set, `color` takes the fill (palette tint background, saturated palette colour for text and border) and a non-`neutral` `tone` moves to a saturated stripe down the event's **leading edge** — so a category-coloured event can still show a state that must not be missed. There is no precedence rule to remember because the axes occupy different pixels.
+
+  ```tsx
+  // Category only — a clean single colour.
+  { id: '1', title: 'Consultation', startsAt, color: 'violet' }
+  // Category AND state — violet block, danger stripe. Both readable.
+  { id: '2', title: 'Consultation', startsAt, color: 'violet', tone: 'danger' }
+  ```
+
+  Don't map categories onto tones instead: tones are semantic and finite, two categories would collide on one tone, and the result is wrong in both directions — a `danger` chip that is merely a category, and a genuinely urgent event that looks like one.
+
+- **This is the opposite of `Badge`**, where `color` takes precedence over `tone` and the tone is discarded. Calendar renders both, because a calendar tone can carry states closer to safety than decoration (a masked hour, a released slot) and dropping one would make a free hour read as a booked one. Don't carry the Badge rule across.
+- **Both axes are visual only** — neither sets ARIA, and a 3px band is not an accessible signal (same contract as `Badge`). If a state must reach assistive tech, keep it in the event `title`. And pick category colours that contrast with the tones you use — measured RGB distance between the band colour and the category's own saturated colour, worst pairs: `warning` + `orange` (16) / `coral` (25) / `red` (43) / `amber` (44); `success` + `mint` (18) / `emerald` (26) / `teal` (37); `danger` + `red` (36); `accent` + `blue` (40). `orange` + `warning` is effectively invisible at the rendered 4px. Nothing enforces this — keep the state in the title too when a tenant's category colour collides.
+
+- In the **agenda** view the row is never filled (a tint would clash with the today-group accent and the hover background), so `color` sets the leading dot and `tone` still gets the edge stripe.
+- A coloured **all-day** chip uses the same palette tint as a timed one rather than the tone-filled treatment: the palette ships a `bg`/`fg` pair, and a filled variant would mean inventing 30 more tokens and asserting contrast at 12px for each. **The visible consequence:** a coloured all-day event renders at _timed-chip weight_ — same tint, same border, only the time prefix missing — so in a band that mixes coloured and uncoloured all-day events, the coloured ones read lighter. Colour the whole category or none of it if that bothers you.
+- On a multi-day bar the band repeats on **every** segment, including ones that continue from a previous week. It marks the event's state, not its start.
 - Controlled cursor via `value` / `onChange`, or uncontrolled via `defaultValue`. Controlled view via `view` / `onViewChange`, or uncontrolled via `defaultView`.
 - `hourRange` (default `[7, 19]`) sets the visible hour window in week/day views. Hours outside the range are not rendered. `hourRowHeight` (default 48) is the pixel height per hour row.
 - Overlapping timed events in week/day views render as a Google-Calendar-style cascade: each lane is offset to the right by a small constant step but every block extends to the column's right edge, with later lanes overlaying earlier ones via `z-index`. Hovering or keyboard-focusing a block lifts it to full width on top of all neighbours. A horizontal "now" line marks the current time in today's column.

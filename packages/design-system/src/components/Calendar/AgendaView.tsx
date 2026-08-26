@@ -6,7 +6,8 @@ import { formatDayLong, formatTime } from '../../calendar';
 import { startOfDay } from '../../calendar/dateMath';
 import type { Day } from '../../calendar/types';
 import { formatEventDuration } from './utils';
-import type { CalendarEvent, CalendarEventTone, RenderEvent } from './types';
+import type { CalendarEvent, RenderEvent } from './types';
+import { resolveEventColor } from './eventColor';
 import styles from './AgendaView.module.scss';
 
 export interface AgendaViewProps {
@@ -111,7 +112,7 @@ interface AgendaRowItemProps {
 
 function AgendaRowItem({ row, locale, allDayLabel, onClick, renderEvent }: AgendaRowItemProps) {
   const { event, isAllDay, duration } = row;
-  const tone: CalendarEventTone = event.tone ?? 'neutral';
+  const { toneClass, hasStripe, style: colorStyle } = resolveEventColor(event);
   const startLabel = isAllDay ? undefined : formatTime(event.startsAt, locale);
   const endLabel = !isAllDay && event.endsAt ? formatTime(event.endsAt, locale) : undefined;
   const timeLabel =
@@ -132,7 +133,17 @@ function AgendaRowItem({ row, locale, allDayLabel, onClick, renderEvent }: Agend
     : null;
 
   return (
-    <button type="button" className={clsx(styles.rowButton, styles[tone])} onClick={handleClick}>
+    <button
+      type="button"
+      className={clsx(
+        styles.rowButton,
+        toneClass && styles[toneClass],
+        colorStyle && styles.colored,
+        hasStripe && styles.striped,
+      )}
+      style={colorStyle}
+      onClick={handleClick}
+    >
       <span className={styles.timeGutter}>
         {isAllDay ? <em className={styles.allDay}>{allDayLabel}</em> : timeLabel}
       </span>

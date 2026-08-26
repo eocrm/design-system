@@ -107,7 +107,12 @@
   padding: var(--calendar-agenda-row-padding);
   border: none;
   border-radius: var(--calendar-agenda-row-radius);
-  background: transparent;
+
+  // background-COLOR, not the shorthand: this is (0,1,0), the same as
+  // `.striped`, so the shorthand would reset the band's background-image and
+  // lose only by source order. The UA button style needs background-color reset
+  // anyway; background-image is already none.
+  background-color: transparent;
   font-family: inherit;
   font-size: var(--calendar-agenda-row-font-size);
   color: var(--calendar-agenda-row-fg);
@@ -116,7 +121,12 @@
   transition: background var(--calendar-agenda-row-transition-bg);
 
   &:hover:not(:disabled) {
-    background: var(--calendar-agenda-row-bg-hover);
+    // background-COLOR, not the shorthand: this rule is `.rowButton:hover:not(…)`
+    // at specificity (0,3,0), so the shorthand reset `background-image` to none
+    // and erased `.striped`'s band (0,1,0) on hover. Unlike the chip and the
+    // block, `.rowButton` has `border: none`, so there was no border left to
+    // carry even a sliver — the state signal vanished entirely.
+    background-color: var(--calendar-agenda-row-bg-hover);
   }
 
   &:focus-visible {
@@ -164,6 +174,30 @@
   white-space: nowrap;
   font-weight: var(--calendar-agenda-title-font-weight);
   color: var(--calendar-agenda-title-fg);
+}
+
+// ── Per-event palette color (CalendarEvent.color) ──────────────────────────
+// The agenda row is never filled — tinting it would clash with the today-group
+// accent and the hover background (see .toneDot above) — so `color` drives the
+// leading dot instead, and a non-neutral `tone` still gets its edge stripe.
+.colored {
+  // The agenda row is never filled, so `color` drives the leading dot (which
+  // inherits currentColor) rather than a background.
+  color: var(--calendar-event-color-fg);
+}
+
+.striped {
+  // Gradient, not an inset box-shadow: `:focus-visible` on this button owns
+  // box-shadow for the focus ring, and would have erased the stripe outright —
+  // and unlike the chip and the block, `.rowButton` has `border: none`, so
+  // there is no border left to carry a fallback sliver. Keyboard-focusing a row
+  // would have wiped the state signal completely.
+  background-image: linear-gradient(
+    to right,
+    var(--calendar-event-stripe-color) 0,
+    var(--calendar-event-stripe-color) var(--calendar-event-color-stripe-width),
+    transparent var(--calendar-event-color-stripe-width)
+  );
 }
 
 // Tone -> color of the dot (via currentColor inheritance).

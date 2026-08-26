@@ -46,6 +46,7 @@ const expectedComposeInventory = {
     'color.warning',
     'color.warning.background.subtle',
     'color.warning.foreground',
+    'color.warning.strong',
   ],
   dimensions: [
     'border.width.default',
@@ -271,8 +272,8 @@ test('maps every captured public variable to exactly one web output', async () =
   const duplicateNames = webNames.filter((name) => componentNames.has(name));
   const combinedNames = new Set([...webNames, ...componentNames]);
 
-  assert.equal(capturedNames.size, 290);
-  assert.equal(webNames.length, 234);
+  assert.equal(capturedNames.size, 291);
+  assert.equal(webNames.length, 235);
   assert.equal(componentNames.size, 56);
   assert.deepEqual(duplicateNames, []);
   assert.deepEqual([...combinedNames].sort(), [...capturedNames].sort());
@@ -341,7 +342,7 @@ test('matches the independently authored Compose inventory exactly', async () =>
   );
 
   assert.deepEqual(actualInventory, expectedComposeInventory);
-  assert.equal(Object.values(actualInventory).flat().length, 148);
+  assert.equal(Object.values(actualInventory).flat().length, 149);
 });
 
 test('keeps all twelve deprecated Badge variables as component aliases', async () => {
@@ -367,8 +368,8 @@ test('keeps all twelve deprecated Badge variables as component aliases', async (
 test('preserves the pre-migration web contract fixture with provenance and expanded dark scopes', async () => {
   const fixture = await readJson(fixturePath);
 
-  assert.equal(Object.keys(fixture.light).length, 287);
-  assert.equal(Object.keys(fixture.forcedDark).length, 115);
+  assert.equal(Object.keys(fixture.light).length, 288);
+  assert.equal(Object.keys(fixture.forcedDark).length, 116);
   assert.deepEqual(fixture.systemDark, fixture.forcedDark);
   assert.deepEqual(fixture.forcedLight, {});
   assert.deepEqual(fixture.provenance.forcedDark['--color-bg'], [

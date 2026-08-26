@@ -1,3 +1,5 @@
+import type { PaletteColor } from '../../palette';
+
 export type CalendarEventTone = 'neutral' | 'accent' | 'success' | 'warning' | 'danger';
 
 /**
@@ -31,8 +33,74 @@ export interface CalendarEvent {
   startsAt: Date;
   /** When the event ends (local time). Defaults to the start day for `allDay`, or to a point-in-time for timed events. */
   endsAt?: Date;
-  /** Visual tone of the bar. Defaults to 'neutral'. */
+  /**
+   * Semantic state of the event — what is going on with it. Defaults to
+   * `'neutral'`.
+   *
+   * Independent of `color`, and the two do not compete for the same pixels:
+   * when `color` is also set it takes the fill and `tone` moves to a stripe on
+   * the event's leading edge, so a category-coloured event can still show a
+   * state that must not be missed. See `color`.
+   */
   tone?: CalendarEventTone;
+  /**
+   * Category identity — WHICH kind of thing this event is, as one of the 30
+   * `PaletteColor`s. Use it when your events belong to a colour-bearing
+   * category the tenant chose (an appointment type, a calendar, a resource
+   * class).
+   *
+   * Paints the block itself: the palette's tinted background with its saturated
+   * colour for text and border. That is deliberate — in a calendar the natural
+   * reading is that the block IS the colour, rather than that it carries a
+   * small coloured dot.
+   *
+   * `color` and `tone` are different axes and are shown together rather than
+   * one overriding the other: `color` takes the fill, and a non-`neutral`
+   * `tone` becomes a saturated stripe down the event's leading edge. So a
+   * "consultation" that is also "masked" reads as both. With no `color`, tone
+   * behaves exactly as before and paints the whole block.
+   *
+   * In the agenda view, where the row is not filled, `color` sets the leading
+   * dot and `tone` the band.
+   *
+   * **Unlike `Badge`**, where `color` overrides `tone` entirely, Calendar
+   * renders both. The reason is that a calendar tone can carry states closer to
+   * safety than decoration — a masked hour, a released slot — and silently
+   * dropping one would make a free hour read as a booked one.
+   *
+   * **Pick category colours that contrast with the semantic tones you use.**
+   * The band and the category fill are different colours by design, but some
+   * pairs land almost on top of each other. Measured RGB distance between each
+   * band colour and the category's own saturated colour — the worst pairs, all
+   * of which read as an edge-thickness artefact rather than a state:
+   *
+   * - `tone: 'warning'` — `orange` (16), `coral` (25), `red` (43), `amber` (44)
+   * - `tone: 'success'` — `mint` (18), `emerald` (26), `teal` (37)
+   * - `tone: 'danger'` — `red` (36)
+   * - `tone: 'accent'` — `blue` (40)
+   *
+   * For scale: `orange` + `warning` is effectively invisible; `amber` +
+   * `warning` is detectable side-by-side but unreliable in isolation. Nothing
+   * enforces this — if a tenant picks `orange` for a category whose events can
+   * be `warning`, keep that state in the title too.
+   *
+   * **Both axes are visual only.** Neither sets ARIA, and a 3px band is not an
+   * accessible signal — same contract as `Badge`, whose tone is also decoration.
+   * If a state must reach assistive tech, keep it in the event `title` (or wrap
+   * your own live region); do not rely on the band alone.
+   *
+   * On a multi-day bar the band repeats on every segment, including ones that
+   * continue from a previous week. It marks the event's state, not its start.
+   *
+   * @example
+   * // A booked consultation: category violet, no special state.
+   * { id: '1', title: 'Consultation', startsAt, color: 'violet' }
+   *
+   * @example
+   * // Same category, but the slot was released — colour AND state, both visible.
+   * { id: '2', title: 'Consultation', startsAt, color: 'violet', tone: 'success' }
+   */
+  color?: PaletteColor;
   /** Renders as a full-band, time-prefix-free bar. Defaults to false. */
   allDay?: boolean;
 }

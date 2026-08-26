@@ -43,6 +43,7 @@ public object EocrmLightTokens {
         warning = Color(0xFFFF991F),
         warningBackgroundSubtle = Color(0xFFFFF7ED),
         warningForeground = Color(0xFFFFFFFF),
+        warningStrong = Color(0xFFA54800),
     )
     public val dimensions: EocrmDimensions = eocrmDimensions
     public val typography: EocrmTypography = eocrmTypography
@@ -239,6 +240,7 @@ public object EocrmDarkTokens {
         warning = Color(0xFFF5CD47),
         warningBackgroundSubtle = Color(0xFF3D3216),
         warningForeground = Color(0xFF1D2125),
+        warningStrong = Color(0xFFF5CD47),
     )
     public val dimensions: EocrmDimensions = eocrmDimensions
     public val typography: EocrmTypography = eocrmTypography

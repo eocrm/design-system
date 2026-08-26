@@ -79,6 +79,44 @@
   color: var(--calendar-event-tooltip-title-fg);
 }
 
+// ── Per-event palette color (CalendarEvent.color) ──────────────────────────
+// `color` paints the surface, so the two colour axes never fight over the same
+// pixels: a non-neutral `tone` moves to a band on the left edge instead of
+// being overridden. Both custom properties are injected inline by
+// resolveEventColor(). The band is physically left — the library has no RTL
+// support anywhere, and the two existing stripe implementations (Card, Badge)
+// are physical too.
+.colored {
+  // background-COLOR, not the shorthand: `.striped` paints its band as a
+  // background-image, and the shorthand would reset it depending on source
+  // order. Longhands compose regardless of order.
+  background-color: var(--calendar-event-color-bg);
+  color: var(--calendar-event-color-fg);
+}
+
+.striped {
+  // A background-image gradient rather than an inset box-shadow. box-shadow is
+  // NOT additive — the winning declaration replaces the whole list — and three
+  // rules on these elements already own it: `:focus-visible` (the focus ring),
+  // `.dragging` (the lift shadow), and this. Using it here made the focus ring
+  // erase the stripe and the stripe erase the drag shadow. A gradient composes
+  // with all of them, survives the hover `filter: brightness()`, and costs no
+  // geometry.
+  background-image: linear-gradient(
+    to right,
+    var(--calendar-event-stripe-color) 0,
+    var(--calendar-event-stripe-color) var(--calendar-event-color-stripe-width),
+    transparent var(--calendar-event-color-stripe-width)
+  );
+
+  // background-origin defaults to padding-box, so the gradient covers 1–4px of
+  // the border box while the 1px border sits at 0–1px. Painting the border the
+  // same colour makes the leading edge read as ONE solid 4px band instead of a
+  // sliver of tone beside the palette border. Measured — without it the band is
+  // legible but competes.
+  border-left-color: var(--calendar-event-stripe-color);
+}
+
 // Tones — non-allDay (tinted background, strong-color foreground)
 .neutral {
   background: var(--calendar-event-chip-bg-neutral);

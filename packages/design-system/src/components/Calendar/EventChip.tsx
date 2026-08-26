@@ -3,8 +3,9 @@ import clsx from 'clsx';
 import { formatTime } from '../../calendar';
 import { useLocale } from '../../i18n/useLocale';
 import { Tooltip } from '../Tooltip';
+import { resolveEventColor } from './eventColor';
 import { formatEventDuration } from './utils';
-import type { CalendarEvent, CalendarEventTone, CalendarView, RenderEvent } from './types';
+import type { CalendarEvent, CalendarView, RenderEvent } from './types';
 import styles from './EventChip.module.scss';
 
 export interface EventChipProps {
@@ -48,7 +49,9 @@ export function EventChip({
   renderEvent,
 }: EventChipProps) {
   const locale = useLocale();
-  const tone: CalendarEventTone = event.tone ?? 'neutral';
+  // `color` takes the surface and moves `tone` to a leading-edge stripe; with
+  // no `color` this resolves to the tone class alone, exactly as before.
+  const { toneClass, hasStripe, style: colorStyle } = resolveEventColor(event);
   const isAllDay = event.allDay === true;
   const time = isAllDay ? '' : formatTime(event.startsAt, locale);
   const duration = formatEventDuration(event.startsAt, event.endsAt, isAllDay);
@@ -88,11 +91,14 @@ export function EventChip({
         type="button"
         className={clsx(
           styles.chip,
-          styles[tone],
+          toneClass && styles[toneClass],
+          colorStyle && styles.colored,
+          hasStripe && styles.striped,
           isAllDay && styles.allDay,
           continuesLeft && styles.continuesLeft,
           continuesRight && styles.continuesRight,
         )}
+        style={colorStyle}
         onClick={handleClick}
       >
         {customContent !== null ? (
