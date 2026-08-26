@@ -1426,6 +1426,10 @@ Use this instead of `Card.List` + `Card.ListRow` whenever the data is genuinely 
 
 - `gap`: `xs` (4) / `sm` (8) / `md` (12, default) / `lg` (16) / `xl` (24) / `2xl` (32) — pixels
 - `align`: `start` / `center` / `end` / `stretch` (default)
+- Both `Stack` and `Cluster` set `min-width: 0`, so they can sit inside a truncating
+  flex chain: a `<Text truncate>` nested in one still ellipsizes when a clipping
+  ancestor squeezes it, instead of being hard-cut. Relevant for custom `renderEvent`
+  chip content, narrow table cells, and any `overflow: hidden` parent.
 
 ### `<Page>` — page-root layout primitive
 
@@ -1484,6 +1488,10 @@ Use this instead of `Card.List` + `Card.ListRow` whenever the data is genuinely 
 - `justify`: `start` (default) / `center` / `end` / `between`
 - `align`: `start` / `center` (default) / `end` / `baseline`
 - `wrap`: `true` (default). Set `false` only for narrow table cells where overflow is preferable to wrapping.
+- Both `Stack` and `Cluster` set `min-width: 0`, so they can sit inside a truncating
+  flex chain: a `<Text truncate>` nested in one still ellipsizes when a clipping
+  ancestor squeezes it, instead of being hard-cut. Relevant for custom `renderEvent`
+  chip content, narrow table cells, and any `overflow: hidden` parent.
 
 ### `<Constrain>` — size / flex constraint
 

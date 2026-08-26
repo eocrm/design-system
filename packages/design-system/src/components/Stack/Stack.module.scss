@@ -1,7 +1,13 @@
 @use './Stack.tokens';
 
+// min-width: 0 so the container can participate in a truncating flex chain.
+// As a flex ITEM, the default min-width: auto pins it to its content's
+// min-content size: a `<Text truncate>` inside a Stack then never gets the
+// chance to ellipsize and the clipping ancestor hard-cuts it instead.
+// Does not affect wrapping (line breaking uses content size, not min-width).
 .stack {
   display: flex;
+  min-width: 0;
   flex-direction: column;
 }
 

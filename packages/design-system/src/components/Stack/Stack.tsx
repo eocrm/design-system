@@ -63,6 +63,13 @@ const alignClass: Record<StackAlign, string> = {
  *   <section>...</section>
  * </Stack>
  *
+ * @remarks Truncation
+ * Sets `min-width: 0`, so it can participate in a truncating flex chain: a
+ * `<Text truncate>` nested inside still ellipsizes when a clipping ancestor
+ * squeezes it, rather than being hard-cut. Without this, the default
+ * `min-width: auto` on a flex item pins the container to its content's
+ * min-content width and the ellipsis never gets a chance to appear.
+ *
  * @remarks When NOT to use
  * - For tabular data — use a real `<table>` or `<Grid>`.
  * - For a list of clickable items — semantics matter. Use `<ul><li>` with

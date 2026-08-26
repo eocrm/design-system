@@ -121,6 +121,13 @@ const alignClass: Record<ClusterAlign, string> = {
  *   </Cluster>
  * </ButtonGroup.Item>
  *
+ * @remarks Truncation
+ * Sets `min-width: 0`, so it can participate in a truncating flex chain: a
+ * `<Text truncate>` nested inside still ellipsizes when a clipping ancestor
+ * squeezes it, rather than being hard-cut. Without this, the default
+ * `min-width: auto` on a flex item pins the container to its content's
+ * min-content width and the ellipsis never gets a chance to appear.
+ *
  * @remarks When NOT to use
  * - For aligned columns of equal width — use `<Grid>`. Cluster wraps
  *   unpredictably at narrow widths and isn't a column system.

@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { render, screen } from '@testing-library/react';
 import { createRef } from 'react';
 import { Stack, type StackAlign, type StackGap } from './Stack';
@@ -39,5 +41,15 @@ describe('Stack', () => {
     const ref = createRef<HTMLDivElement>();
     render(<Stack ref={ref}>x</Stack>);
     expect(ref.current).toBeInstanceOf(HTMLDivElement);
+  });
+
+  it('declares min-width: 0 so it can shrink inside a truncating flex chain', () => {
+    // jsdom computes no layout, so the guard is the stylesheet itself: without
+    // `min-width: 0` a Stack keeps min-width: auto as a flex item, refuses to
+    // shrink below its content, and a `<Text truncate>` inside it hard-clips
+    // instead of ellipsizing (issue #475).
+    const scss = readFileSync(resolve(__dirname, 'Stack.module.scss'), 'utf8');
+    const rule = scss.match(/\.stack\s*\{[^}]*\}/)?.[0];
+    expect(rule).toMatch(/min-width:\s*0\s*;/);
   });
 });

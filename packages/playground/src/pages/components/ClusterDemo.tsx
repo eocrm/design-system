@@ -3,6 +3,8 @@ import { Cluster } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
 import { Badge } from '@eocrm/design-system';
+import { Dot } from '@eocrm/design-system';
+import { Text } from '@eocrm/design-system';
 import { ButtonGroup } from '@eocrm/design-system';
 import { Kanban, List } from 'lucide-react';
 import { DemoLayout } from './DemoLayout';
@@ -31,6 +33,13 @@ function InlineClusterExample() {
     </ButtonGroup>
   );
 }
+
+// A narrow flex parent with overflow: hidden — the shape a Calendar chip, a
+// table cell, or a TopBar slot has. Cluster's min-width: 0 is what lets the
+// Text inside it ellipsize instead of being hard-cut at this boundary.
+const ClippingParent = ({ children }: { children: React.ReactNode }) => (
+  <div style={{ display: 'flex', width: 220, overflow: 'hidden' }}>{children}</div>
+);
 
 const Block = ({ children }: { children: React.ReactNode }) => (
   <div
@@ -261,6 +270,33 @@ export function Demo() {
             Revoke
           </Button>
         </Cluster>
+      </Example>
+
+      <Example
+        title="Truncating inside a clipping parent"
+        description="Cluster sets min-width: 0, so it can sit in a truncating flex chain: a Text truncate nested inside still ellipsizes when a narrow overflow: hidden ancestor squeezes it. Without that, the flex default (min-width: auto) would pin the Cluster to its content width and the text would be hard-cut mid-word."
+        code={`import { Cluster, Dot, Text } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    // A 220px-wide parent with overflow: hidden.
+    <Cluster as="span" gap="xs" align="center" wrap={false}>
+      <Dot color="violet" />
+      <Text as="span" size="sm" truncate>
+        A very long appointment title that will not fit
+      </Text>
+    </Cluster>
+  );
+}`}
+      >
+        <ClippingParent>
+          <Cluster as="span" gap="xs" align="center" wrap={false}>
+            <Dot color="violet" />
+            <Text as="span" size="sm" truncate>
+              A very long appointment title that will not fit
+            </Text>
+          </Cluster>
+        </ClippingParent>
       </Example>
     </DemoLayout>
   );
