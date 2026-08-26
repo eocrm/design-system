@@ -145,17 +145,23 @@ describe('Cluster', () => {
     expect(cls).toMatch(/external/);
   });
 
-  it('declares min-width exactly once, inside the minWidth0 rule', () => {
-    // jsdom computes no layout, so the stylesheet is the guard. A whole-file
-    // count rather than a rule-scoped regex on purpose: a scoped match only
-    // finds the FIRST `.cluster` block, so appending a second `.cluster { min-width:
-    // 0; }` at the end of the file — exactly how someone would "add the fix
-    // back" — would restore the reverted unconditional behaviour with the test
-    // still green. Counting every occurrence cannot be fooled that way, and it
-    // also catches a `min-width` leaking in via `.inline` / `.wrap`.
-    const scss = readFileSync(resolve(__dirname, 'Cluster.module.scss'), 'utf8');
-    const declarations = scss.match(/^\s*min-width:/gm) ?? [];
-    expect(declarations).toHaveLength(1);
-    expect(scss).toMatch(/\.minWidth0\s*\{\s*min-width:\s*0(?:px)?\s*;\s*\}/);
+  it('declares a horizontal min-size exactly once, inside the minWidth0 rule', () => {
+    // jsdom computes no layout, so the stylesheet is the guard — and it has to
+    // be an unanchored, comment-stripped count, because every cheaper version
+    // was defeated in review:
+    //   - a rule-scoped regex only sees the FIRST `.cluster` block, so appending a
+    //     second one at the end of the file went unnoticed;
+    //   - a `/^\s*min-width:/gm` count misses `.cluster { min-width: 0; }` written
+    //     on ONE line, which is prettier-clean inside a comment-free file;
+    //   - counting only `min-width` misses `min-inline-size`, its exact logical
+    //     equivalent in horizontal-tb, which a logical-properties refactor would
+    //     reasonably introduce.
+    // Comments must be stripped first or the prose above (which names both
+    // properties) inflates the count.
+    const scss = readFileSync(resolve(__dirname, 'Cluster.module.scss'), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/\/\/.*$/gm, '');
+    expect(scss.match(/min-(?:width|inline-size)\s*:/g) ?? []).toHaveLength(1);
+    expect(scss).toMatch(/\.minWidth0\s*\{[^}]*min-width:\s*0(?:px)?\s*;/);
   });
 });

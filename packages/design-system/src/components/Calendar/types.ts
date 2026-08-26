@@ -305,13 +305,19 @@ export interface RenderEventContext {
  * tooltip, and tone background — return content with inline `background` /
  * `style` to override colors.
  *
- * Note on truncation: the chip is `display: flex; overflow: hidden`, and the
+ * Note on truncation: the wrapper is `display: flex; overflow: hidden`, and the
  * default title works because it is a DIRECT child of it. Content that needs a
  * leading element (a `Dot`, an icon) must be wrapped, and the only wrapper
- * valid inside the chip's `<button>` is `<Cluster as="span">` — which, as a
- * flex item, is floored at its content's min-content width unless you set
+ * valid inside the button is `<Cluster as="span">` — which, as a flex item of a
+ * ROW parent, is floored at its content's min-content width unless you set
  * `minWidth0`. Without it a long title is hard-cut mid-word instead of
- * ellipsizing:
+ * ellipsizing.
+ *
+ * That applies to the month/week chip, the agenda row, and SHORT hour-grid
+ * blocks. A tall hour-grid block is `flex-direction: column` (see the layout
+ * note below), where the automatic minimum size does not apply on the
+ * horizontal axis at all — there `minWidth0` is a no-op and the title already
+ * ellipsizes.
  *
  * ```tsx
  * renderEvent={(event) => (

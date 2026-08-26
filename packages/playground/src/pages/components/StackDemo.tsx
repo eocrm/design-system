@@ -200,7 +200,7 @@ export function Demo() {
 
       <Example
         title="minWidth0 — truncating inside a clipping row"
-        description="A Stack is a column, so its own min-width only bites when the Stack is itself an item of a squeezing flex row. minWidth0 lets it shrink there so its Text truncate children ellipsize instead of the whole Stack being pinned to its widest line and hard-cut. Same opt-in trade-off as Cluster."
+        description="A Stack only needs this when it is itself an item of a squeezing flex ROW — what decides is the parent's main axis, not the Stack's own direction. minWidth0 lets it shrink there so its Text truncate children ellipsize instead of the whole Stack being pinned to its widest line and hard-cut. Same opt-in trade-off as Cluster."
         code={`import { Stack, Text } from '@eocrm/design-system';
 
 // A Stack only needs minWidth0 when it is an item of a squeezing ROW.

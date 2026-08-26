@@ -25,9 +25,9 @@ export interface StackProps extends HTMLAttributes<HTMLDivElement> {
    * (`min-width: 0`), so a `<Text truncate>` inside can ellipsize instead of
    * being hard-cut by a clipping ancestor.
    *
-   * A Stack is a column, so its own `min-width` is the CROSS axis — this only
-   * bites when the Stack is itself an item of a **row** flex container (or a
-   * grid item) that clips. That is the two-line label beside a fixed badge, or
+   * Only bites when the Stack is itself an item of a **row** flex container (or
+   * a grid item) that clips — what decides is the PARENT's main axis, not the
+   * Stack's own direction. That is the two-line label beside a fixed badge, or
    * a detail column in a squeezed toolbar. Without it the flex default
    * (`min-width: auto`) floors the Stack at its widest line and the ellipsis
    * never appears.
