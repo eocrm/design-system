@@ -727,6 +727,13 @@
           "description": "Vertical alignment.\n- `start` / `center` (default) / `end` / `baseline`."
         },
         {
+          "name": "minWidth0",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "Lets the container shrink below its content's intrinsic width\n(`min-width: 0`), so a `<Text truncate>` inside can ellipsize instead of\nbeing hard-cut by a clipping ancestor.\n\nReach for it when this Cluster is an item of a **row** flex container (or a\ngrid item) that clips — a `Calendar` `renderEvent` chip, a `Card.Header`\nrow. Without it the flex default (`min-width: auto`) floors the\ncontainer at its content's min-content width and the ellipsis never\nappears. That floor applies because a Cluster sets no `overflow` — per CSS\nFlexbox §4.5 a flex item keeps its automatic minimum size while its computed\n`overflow` is non-scrollable (`visible` or `clip`); the scrollable values\n(`hidden`/`auto`/`scroll`) drop it to `0`. That is why a `<Text truncate>`\n(overflow hidden) never needs this and a Cluster around it does.\n\nIt is a **no-op** inside a column `Stack` (the automatic minimum size\napplies only on the flex MAIN axis, so there is no horizontal floor), and\ninside a plain block or a table cell (the automatic minimum size applies\nto flex and grid ITEMS only, so `min-width: auto` is just `0` there). A table cell is\na no-op for a different reason than it looks: auto table layout floors the\ncell at its content's min-content width regardless, so what makes text\ntruncate there is `table-layout: fixed` or a `max-width` on the cell — not\nthis prop.\n\nOpt-in rather than the default on purpose: a container that CAN shrink\nalso VOLUNTEERS for shrink, so turning it on where the content is NOT\ntruncatable (buttons, badges, icons) lets that content be clipped\ninstead. Set it on the container whose text should give way, not on one\nholding controls.\n\nRelated: `<Constrain flex=\"grow\">` applies the same `min-width: 0` but\nalso forces `flex: 1 1 0`, and renders a `<div>` — reach for this prop\nwhen you want only the shrink permission, or when you are inside a\n`<button>`/`<a>`/`<label>` where a `<div>` is invalid HTML."
+        },
+        {
           "name": "wrap",
           "type": "boolean",
           "required": false,
@@ -999,7 +1006,7 @@
           "type": "ConstrainFlex",
           "required": false,
           "default": "",
-          "description": "Flex behavior as a child of a flex row/column.\n- `'grow'` — fill remaining space (`flex: 1 1 0`) and shrink below content\n  width (`min-width: 0`) so a truncating child (`<Text truncate>`) can clip.\n- `'auto'` — size to content, may grow/shrink (`flex: 1 1 auto`).\n- `'shrink'` — don't grow, may shrink (`flex: 0 1 auto`, the flex default).\n- `'none'` — fixed, never grow/shrink (`flex: 0 0 auto`)."
+          "description": "Flex behavior as a child of a flex row/column.\n- `'grow'` — fill remaining space (`flex: 1 1 0`) and shrink below content\n  width (`min-width: 0`) so a truncating child (`<Text truncate>`) can clip.\n  To opt a `Stack`/`Cluster` into that truncating chain WITHOUT also making\n  it fill the row, use their `minWidth0` prop instead — and note Constrain\n  renders a `<div>`, so it is invalid inside a `<button>`/`<a>`/`<label>`,\n  where `<Cluster as=\"span\" minWidth0>` is the only option.\n- `'auto'` — size to content, may grow/shrink (`flex: 1 1 auto`).\n- `'shrink'` — don't grow, may shrink (`flex: 0 1 auto`, the flex default).\n- `'none'` — fixed, never grow/shrink (`flex: 0 0 auto`)."
         },
         {
           "name": "children",
@@ -4488,6 +4495,13 @@
           "required": false,
           "default": "stretch",
           "description": "Cross-axis alignment.\n- `stretch` (default) — children fill the stack's horizontal width.\n- `start` / `center` / `end` — left, center, right alignment."
+        },
+        {
+          "name": "minWidth0",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "Lets the container shrink below its content's intrinsic width\n(`min-width: 0`), so a `<Text truncate>` inside can ellipsize instead of\nbeing hard-cut by a clipping ancestor.\n\nOnly bites when the Stack is itself an item of a **row** flex container (or\na grid item) that clips — what decides is the PARENT's main axis, not the\nStack's own direction. That is the two-line label beside a fixed badge, or\na detail column in a squeezed toolbar. Without it the flex default\n(`min-width: auto`) floors the Stack at its widest line and the ellipsis\nnever appears. That floor applies because a Stack sets no `overflow` — per CSS\nFlexbox §4.5 a flex item keeps its automatic minimum size while its computed\n`overflow` is non-scrollable (`visible` or `clip`); the scrollable values\n(`hidden`/`auto`/`scroll`) drop it to `0`.\n\nIt is a **no-op** when the Stack sits in another `Stack` (the automatic\nminimum size applies only on the flex MAIN axis, so there is no horizontal\nfloor), or in a plain block or table cell (that minimum applies to flex and\ngrid ITEMS only, so `min-width: auto` is just `0` there). A table cell is\na no-op for a different reason than it looks: auto table layout floors the\ncell at its content's min-content width regardless, so what makes text\ntruncate there is `table-layout: fixed` or a `max-width` on the cell — not\nthis prop.\n\nOpt-in rather than the default on purpose: a container that CAN shrink\nalso VOLUNTEERS for shrink, so turning it on where the content is NOT\ntruncatable (buttons, badges, icons) lets that content be clipped\ninstead. Set it on the container whose text should give way, not on one\nholding controls.\n\nRelated: `<Constrain flex=\"grow\">` applies the same `min-width: 0` but\nalso forces `flex: 1 1 0`, and renders a `<div>` — reach for this prop\nwhen you want only the shrink permission, or when you are inside a\n`<button>`/`<a>`/`<label>` where a `<div>` is invalid HTML."
         }
       ]
     },

@@ -5,6 +5,28 @@
   flex-direction: row;
 }
 
+// Opt-in, via the `minWidth0` prop. As a flex or grid ITEM a Cluster keeps the
+// default `min-width: auto`, which floors it at its content's min-content size —
+// so a `<Text truncate>` inside never gets the chance to ellipsize and a clipping
+// ancestor hard-cuts it instead (issue #475).
+// This only means anything while `.cluster`'s overflow is non-scrollable: per CSS
+// Flexbox §4.5 a flex item keeps its automatic minimum size until its computed
+// overflow becomes scrollable. Giving `.cluster` `overflow: hidden`/`auto`/`scroll`
+// would therefore remove the floor by itself and make this prop dead code — but
+// `overflow: clip` would NOT, because clip is non-scrollable and still floors.
+// Measured; do not assume any overflow value will do.
+// Deliberately NOT on the base `.cluster` class: that would let every Cluster in the
+// codebase shrink below its content, changing layout for existing consumers. It
+// was tried and reverted. Measured on the playground Tenants mockup, whose inner
+// filter Cluster sits in a between-justified `wrap={false}` row inside a Card
+// (Card defaults to `overflow: hidden`): forcing `min-width: 0` shrinks that inner
+// Cluster by ~3px at 1920 rising to ~46px at 820, and the Card then clips up to
+// 34px off the trailing button. The buttons themselves never shrink — they
+// overflow the shrunken container and the Card cuts them.
+.minWidth0 {
+  min-width: 0;
+}
+
 // as="span": phrasing-content contexts (inside <button>, <a>, <label>) need
 // an inline-level box — a block flex container would break inline flow and
 // is invalid HTML there; this is the reason the span variant exists.

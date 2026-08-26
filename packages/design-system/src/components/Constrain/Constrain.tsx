@@ -28,6 +28,10 @@ export interface ConstrainProps extends HTMLAttributes<HTMLDivElement> {
    * Flex behavior as a child of a flex row/column.
    * - `'grow'` — fill remaining space (`flex: 1 1 0`) and shrink below content
    *   width (`min-width: 0`) so a truncating child (`<Text truncate>`) can clip.
+   *   To opt a `Stack`/`Cluster` into that truncating chain WITHOUT also making
+   *   it fill the row, use their `minWidth0` prop instead — and note Constrain
+   *   renders a `<div>`, so it is invalid inside a `<button>`/`<a>`/`<label>`,
+   *   where `<Cluster as="span" minWidth0>` is the only option.
    * - `'auto'` — size to content, may grow/shrink (`flex: 1 1 auto`).
    * - `'shrink'` — don't grow, may shrink (`flex: 0 1 auto`, the flex default).
    * - `'none'` — fixed, never grow/shrink (`flex: 0 0 auto`).

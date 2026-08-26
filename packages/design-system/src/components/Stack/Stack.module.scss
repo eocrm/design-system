@@ -5,6 +5,27 @@
   flex-direction: column;
 }
 
+// Opt-in, via the `minWidth0` prop. As a flex or grid ITEM a Stack keeps the
+// default `min-width: auto`, which floors it at its content's min-content size —
+// so a `<Text truncate>` inside never gets the chance to ellipsize and a clipping
+// ancestor hard-cuts it instead (issue #475).
+// This only means anything while `.stack`'s overflow is non-scrollable: per CSS
+// Flexbox §4.5 a flex item keeps its automatic minimum size until its computed
+// overflow becomes scrollable. Giving `.stack` `overflow: hidden`/`auto`/`scroll`
+// would therefore remove the floor by itself and make this prop dead code — but
+// `overflow: clip` would NOT, because clip is non-scrollable and still floors.
+// Measured; do not assume any overflow value will do.
+// Deliberately NOT on the base `.stack` class: that would let every Stack in the
+// codebase shrink below its content, changing layout for existing consumers. It
+// was tried and reverted. The measurement that settled it was taken on Cluster
+// (see Cluster.module.scss) rather than here, but the mechanism is the same one
+// both share: a container permitted to shrink volunteers for shrink, and any
+// non-truncatable content inside it then overflows and is clipped by the
+// nearest `overflow: hidden` ancestor.
+.minWidth0 {
+  min-width: 0;
+}
+
 .gapXs {
   gap: var(--stack-gap-xs);
 }

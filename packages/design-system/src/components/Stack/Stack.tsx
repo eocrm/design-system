@@ -20,6 +20,44 @@ export interface StackProps extends HTMLAttributes<HTMLDivElement> {
    * - `start` / `center` / `end` — left, center, right alignment.
    */
   align?: StackAlign;
+  /**
+   * Lets the container shrink below its content's intrinsic width
+   * (`min-width: 0`), so a `<Text truncate>` inside can ellipsize instead of
+   * being hard-cut by a clipping ancestor.
+   *
+   * Only bites when the Stack is itself an item of a **row** flex container (or
+   * a grid item) that clips — what decides is the PARENT's main axis, not the
+   * Stack's own direction. That is the two-line label beside a fixed badge, or
+   * a detail column in a squeezed toolbar. Without it the flex default
+   * (`min-width: auto`) floors the Stack at its widest line and the ellipsis
+   * never appears. That floor applies because a Stack sets no `overflow` — per CSS
+   * Flexbox §4.5 a flex item keeps its automatic minimum size while its computed
+   * `overflow` is non-scrollable (`visible` or `clip`); the scrollable values
+   * (`hidden`/`auto`/`scroll`) drop it to `0`.
+   *
+   * It is a **no-op** when the Stack sits in another `Stack` (the automatic
+   * minimum size applies only on the flex MAIN axis, so there is no horizontal
+   * floor), or in a plain block or table cell (that minimum applies to flex and
+   * grid ITEMS only, so `min-width: auto` is just `0` there). A table cell is
+   * a no-op for a different reason than it looks: auto table layout floors the
+   * cell at its content's min-content width regardless, so what makes text
+   * truncate there is `table-layout: fixed` or a `max-width` on the cell — not
+   * this prop.
+   *
+   * Opt-in rather than the default on purpose: a container that CAN shrink
+   * also VOLUNTEERS for shrink, so turning it on where the content is NOT
+   * truncatable (buttons, badges, icons) lets that content be clipped
+   * instead. Set it on the container whose text should give way, not on one
+   * holding controls.
+   *
+   * Related: `<Constrain flex="grow">` applies the same `min-width: 0` but
+   * also forces `flex: 1 1 0`, and renders a `<div>` — reach for this prop
+   * when you want only the shrink permission, or when you are inside a
+   * `<button>`/`<a>`/`<label>` where a `<div>` is invalid HTML.
+   *
+   * @default false
+   */
+  minWidth0?: boolean;
 }
 
 const gapClass: Record<StackGap, string> = {
@@ -63,12 +101,26 @@ const alignClass: Record<StackAlign, string> = {
  *   <section>...</section>
  * </Stack>
  *
+ * @example
+ * // minWidth0 — lets a Stack shrink when it is itself an item of a squeezing
+ * // flex row, so its truncating children can ellipsize:
+ * <Cluster wrap={false} gap="sm">
+ *   <Stack gap="xs" minWidth0>
+ *     <Text weight="medium" truncate>{deal.name}</Text>
+ *     <Text size="xs" tone="muted" truncate>{deal.accountPath}</Text>
+ *   </Stack>
+ *   <Badge tone="success">{deal.stage}</Badge>
+ * </Cluster>
+ *
  * @remarks When NOT to use
  * - For tabular data — use a real `<table>` or `<Grid>`.
  * - For a list of clickable items — semantics matter. Use `<ul><li>` with
  *   appropriate styling.
  *
  * @remarks Anti-patterns
+ * - ❌ `minWidth0` on a Stack holding buttons or badges. It lets the container
+ *   shrink, so non-truncatable content gets clipped instead. Use it on the
+ *   container whose TEXT should give way.
  * - ❌ Nested Stacks with different gaps just to bend spacing locally.
  *   Sometimes legitimate (page sections at `xl` containing field stacks at
  *   `md`), but pause and consider — usually it signals unclear hierarchy.
@@ -76,13 +128,19 @@ const alignClass: Record<StackAlign, string> = {
  *   Inline the child.
  */
 export const Stack = forwardRef<HTMLDivElement, StackProps>(function Stack(
-  { gap = 'md', align = 'stretch', className, ...props },
+  { gap = 'md', align = 'stretch', minWidth0 = false, className, ...props },
   ref,
 ) {
   return (
     <div
       ref={ref}
-      className={clsx(styles.stack, gapClass[gap], alignClass[align], className)}
+      className={clsx(
+        styles.stack,
+        gapClass[gap],
+        alignClass[align],
+        minWidth0 && styles.minWidth0,
+        className,
+      )}
       {...props}
     />
   );

@@ -1426,6 +1426,7 @@ Use this instead of `Card.List` + `Card.ListRow` whenever the data is genuinely 
 
 - `gap`: `xs` (4) / `sm` (8) / `md` (12, default) / `lg` (16) / `xl` (24) / `2xl` (32) — pixels
 - `align`: `start` / `center` / `end` / `stretch` (default)
+- `minWidth0`: `false` (default). Sets `min-width: 0` so the Stack can shrink below its content's intrinsic width, letting a `<Text truncate>` inside ellipsize instead of being hard-cut. Only bites when the Stack is itself an item of a **row** flex container (or a grid item) that clips — what decides is the PARENT's main axis, not the Stack's own direction: a two-line label beside a fixed badge, a detail column in a squeezed toolbar. **No-op** inside another `Stack`, a plain block, or a table cell — and note a table cell is a no-op for a different reason than it looks: auto table layout floors the cell at its content's min-content width regardless, so what makes text truncate there is `table-layout: fixed` or a `max-width` on the cell (that is what `<Table.Cell truncate>` does), not this prop. **Opt-in on purpose:** a container that can shrink also _volunteers_ for shrink, so setting it where the content is NOT truncatable (buttons, badges, icons) lets that content be clipped instead.
 
 ### `<Page>` — page-root layout primitive
 
@@ -1484,6 +1485,24 @@ Use this instead of `Card.List` + `Card.ListRow` whenever the data is genuinely 
 - `justify`: `start` (default) / `center` / `end` / `between`
 - `align`: `start` / `center` (default) / `end` / `baseline`
 - `wrap`: `true` (default). Set `false` only for narrow table cells where overflow is preferable to wrapping.
+- `minWidth0`: `false` (default). Sets `min-width: 0` so the container can shrink below its content's intrinsic width, letting a `<Text truncate>` inside ellipsize instead of being hard-cut by a clipping ancestor. Turn it on when this Cluster is an item of a **row** flex container (or a grid item) that clips — a `Calendar` `renderEvent` chip, a `Card.Header` row. **No-op** inside a column `Stack` (that minimum applies only on the flex MAIN axis, so there is no horizontal floor), and inside a plain block or a table cell (it applies to flex and grid ITEMS only, so `min-width: auto` is just `0`). Note a table cell is a no-op for a different reason than it looks: auto table layout floors the cell at its content's min-content width regardless, so what makes text truncate there is `table-layout: fixed` or a `max-width` on the cell — not this prop. **Opt-in on purpose:** a container that can shrink also _volunteers_ for shrink, so setting it where the content is NOT truncatable (buttons, badges, icons) lets that content be clipped instead. Set it on the container whose text should give way, never on one holding controls.
+
+```tsx
+// Custom Calendar chip content that ellipsizes instead of hard-clipping.
+// The chip is a <button> with overflow: hidden, so the Cluster is a flex item:
+// as="span" for valid HTML, minWidth0 so it can actually shrink.
+<Calendar
+  events={events}
+  renderEvent={(event) => (
+    <Cluster as="span" gap="xs" align="center" wrap={false} minWidth0>
+      <Dot color="violet" />
+      <Text as="span" size="inherit" truncate>
+        {event.title}
+      </Text>
+    </Cluster>
+  )}
+/>
+```
 
 ### `<Constrain>` — size / flex constraint
 

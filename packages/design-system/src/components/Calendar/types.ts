@@ -305,6 +305,60 @@ export interface RenderEventContext {
  * tooltip, and tone background — return content with inline `background` /
  * `style` to override colors.
  *
+ * Note on truncation. The rule, rather than the per-view markup, because the
+ * markup differs. A flex item gets an automatic minimum size — a floor at its
+ * own content's min-content width — while its computed `overflow` is
+ * NON-SCROLLABLE (CSS Flexbox §4.5). The non-scrollable values are `visible`
+ * and `clip`, which keep the floor; the scrollable ones (`hidden` / `auto` /
+ * `scroll`) drop it to `0`. So wherever your
+ * content lands in a flex ROW, anything you put there that is not a scroll
+ * container is floored, and a long `<Text truncate>` inside it never
+ * ellipsizes.
+ *
+ * That is the whole difference between your content and the DS default title.
+ * The default title's span sets `overflow: hidden`, making it a scroll
+ * container, so it has no automatic minimum to begin with — not because it is a
+ * direct child, and not because of the `min-width: 0` it also carries. A
+ * `Cluster` sets no `overflow` at all, so it is floored, and `minWidth0` is how
+ * you release it.
+ *
+ * `<Text truncate>` sets both `overflow: hidden` and `min-width: 0`, which is
+ * why the inner text is fine either way. What it cannot do is release the floor
+ * on a WRAPPER around it — and you need a wrapper as soon as your content has a
+ * leading element (a `Dot`, an icon). Inside the button the only valid wrapper
+ * among the DS layout primitives is `<Cluster as="span">` (`Stack` and `Constrain`
+ * render a `<div>`), so that is where `minWidth0` goes:
+ *
+ * ```tsx
+ * <Cluster as="span" gap="xs" align="center" wrap={false} minWidth0>
+ * ```
+ *
+ * Where that applies: the event chip — month cells AND the all-day band, so in
+ * month, week and day — and short hour-grid blocks, where the button itself is
+ * the row; plus the agenda row, where the row is an inner span rather than the
+ * button.
+ *
+ * What happens to the overflow is decided by the ELEMENT, not the view:
+ * `EventChip`'s chip and `TimedEvent`'s block set `overflow: hidden` on
+ * themselves, so they cut it. The agenda row sets none anywhere up the tree, so
+ * an unguarded wrapper there does not clip — it widens the document and gives
+ * the whole page a horizontal scrollbar, which is the louder failure of the
+ * two.
+ *
+ * Where it does NOT: a tall hour-grid block is `flex-direction: column` (see
+ * the layout note below), and the automatic minimum size applies only on the
+ * main axis, so there is no horizontal floor to release and `minWidth0` is a
+ * no-op.
+ *
+ * ```tsx
+ * renderEvent={(event) => (
+ *   <Cluster as="span" gap="xs" align="center" wrap={false} minWidth0>
+ *     <Dot color="violet" />
+ *     <Text as="span" size="inherit" truncate>{event.title}</Text>
+ *   </Cluster>
+ * )}
+ * ```
+ *
  * Note on layout: for hour-grid blocks shorter than ~30px tall (`isShort`),
  * the wrapping `<button>` switches from `flex-direction: column` to `row`
  * to keep the start time visible alongside the title. Author your inner
