@@ -69,9 +69,20 @@ export interface CalendarEvent {
    * dropping one would make a free hour read as a booked one.
    *
    * **Pick category colours that contrast with the semantic tones you use.**
-   * A `green` category under a `success` tone (or `amber`/`gold` under
-   * `warning`) puts a band of roughly the same hue on a tint of that hue, and
-   * the state stops being legible. Nothing enforces this.
+   * The band and the category fill are different colours by design, but some
+   * pairs land almost on top of each other. Measured RGB distance between each
+   * band colour and the category's own saturated colour — the worst pairs, all
+   * of which read as an edge-thickness artefact rather than a state:
+   *
+   * - `tone: 'warning'` — `orange` (16), `coral` (25), `red` (43), `amber` (44)
+   * - `tone: 'success'` — `mint` (18), `emerald` (26), `teal` (37)
+   * - `tone: 'danger'` — `red` (36)
+   * - `tone: 'accent'` — `blue` (40)
+   *
+   * For scale: `orange` + `warning` is effectively invisible; `amber` +
+   * `warning` is detectable side-by-side but unreliable in isolation. Nothing
+   * enforces this — if a tenant picks `orange` for a category whose events can
+   * be `warning`, keep that state in the title too.
    *
    * **Both axes are visual only.** Neither sets ARIA, and a 3px band is not an
    * accessible signal — same contract as `Badge`, whose tone is also decoration.
