@@ -65,7 +65,11 @@ export interface ClusterProps extends HTMLAttributes<HTMLElement> {
    * It is a **no-op** inside a column `Stack` (the automatic minimum size
    * applies only on the flex MAIN axis, so there is no horizontal floor), and
    * inside a plain block or a table cell (the automatic minimum size applies
-   * to flex and grid ITEMS only, so `min-width: auto` is just `0` there).
+   * to flex and grid ITEMS only, so `min-width: auto` is just `0` there). A table cell is
+   * a no-op for a different reason than it looks: auto table layout floors the
+   * cell at its content's min-content width regardless, so what makes text
+   * truncate there is `table-layout: fixed` or a `max-width` on the cell — not
+   * this prop.
    *
    * Opt-in rather than the default on purpose: a container that CAN shrink
    * also VOLUNTEERS for shrink, so turning it on where the content is NOT

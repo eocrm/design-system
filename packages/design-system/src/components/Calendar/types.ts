@@ -328,10 +328,16 @@ export interface RenderEventContext {
  * ```
  *
  * Where that applies: the event chip — month cells AND the all-day band, so in
- * every view — and short hour-grid blocks, where the button itself is the row;
- * plus the agenda row, where the row is an inner span rather than the button.
- * Whether the overflow is then visibly cut or merely spills depends on the
- * view: the chip and the hour-grid block clip, the agenda row does not.
+ * month, week and day — and short hour-grid blocks, where the button itself is
+ * the row; plus the agenda row, where the row is an inner span rather than the
+ * button.
+ *
+ * What happens to the overflow is decided by the ELEMENT, not the view:
+ * `EventChip`'s chip and `TimedEvent`'s block set `overflow: hidden` on
+ * themselves, so they cut it. The agenda row sets none anywhere up the tree, so
+ * an unguarded wrapper there does not clip — it widens the document and gives
+ * the whole page a horizontal scrollbar, which is the louder failure of the
+ * two.
  *
  * Where it does NOT: a tall hour-grid block is `flex-direction: column` (see
  * the layout note below), and the automatic minimum size applies only on the
