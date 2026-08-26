@@ -283,6 +283,7 @@ export const en: Messages = {
   },
   entityChip: {
     unavailable: '(unavailable)',
+    loading: '(loading)',
   },
   statusMenu: {
     changeStatus: 'Change status',

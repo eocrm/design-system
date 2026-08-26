@@ -58,6 +58,19 @@ interface EntityChipOwnProps {
    * the DOM visually hidden so the chip keeps its accessible name. Purely
    * visual — with a link target (`href`/`as`) the chip stays a live,
    * keyboard-reachable link while loading.
+   *
+   * The state is announced: a localized word is rendered visually hidden, so a
+   * linked chip's name becomes "Appointment (loading)". `aria-busy` alone did
+   * not do this — it is a GLOBAL ARIA state so it is valid on the chip's
+   * role-less span, but it carries no weight outside a live region, and the
+   * ellipsis is `aria-hidden`, so nothing reached a screen reader at all.
+   *
+   * Know the trade: the accessible name CHANGES when loading resolves. That is
+   * unavoidable when announcing a transient state through the name, and it is
+   * why this was initially left alone. The alternative — an `aria-live` region
+   * — has to be owned by the consumer, because only the consumer knows whether
+   * a given chip resolving is worth interrupting someone for. If that fits your
+   * case better, wrap the chip yourself and override this word to `''`.
    */
   loading?: boolean;
   /**
@@ -79,13 +92,8 @@ interface EntityChipOwnProps {
    * either: browsers do expose it, but it carries no meaning on a
    * non-widget role such as `generic`, so no assistive tech conveys it.
    *
-   * `loading` is deliberately left alone. Its `aria-busy` reaches the user just
-   * as poorly, but for a different reason — `aria-busy` is a GLOBAL ARIA state,
-   * so unlike `aria-disabled` it is valid here; it simply carries no weight
-   * outside a live region, so nothing announces it. The reason not to fix it is
-   * substantive rather than technical: a loading chip shows the entity's REAL
-   * label, so nothing is misrepresented, and the state is transient — folding
-   * it into the name would make the name mutate when it resolves. See #483.
+   * `loading` is announced the same way — see that prop for why `aria-busy`
+   * alone was not enough, and for the name-mutation trade it carries.
    *
    * Do NOT put an `aria-label` on the chip. It replaces the whole name and
    * takes the state word with it; the state lives in the chip's contents.
@@ -290,6 +298,14 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
           {/* Label stays in the DOM visually hidden so a linked loading chip
               keeps its accessible name instead of being announced as "…". */}
           <span className={styles.hiddenLabel}>{label}</span>
+          {/* The busy state as real text. `aria-busy` is set below and is valid
+              here — unlike `aria-disabled` it is a GLOBAL ARIA state, so the
+              role-less span is not the problem. It simply carries no weight
+              outside a live region, so nothing announced it and the ellipsis
+              was the only signal. Placed after the label and before the
+              unavailable word so a chip carrying both reads
+              "Appointment (loading) (unavailable)". */}
+          <span className={styles.hiddenLabel}> {t('entityChip.loading')}</span>
           {stateWord}
         </>
       ) : (

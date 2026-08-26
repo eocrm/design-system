@@ -500,6 +500,17 @@ export interface Messages {
      * marks than English's parentheses.
      */
     unavailable: string;
+    /**
+     * Visually-hidden state word for a `loading` `EntityChip`. `aria-busy` is a
+     * global ARIA state so it is valid on the chip's role-less span, but it
+     * carries no weight outside a live region, so nothing announces it — the
+     * ellipsis was the only signal. Include the surrounding punctuation.
+     *
+     * Note this makes a loading chip's accessible name CHANGE when it resolves.
+     * That is the cost of announcing a transient state at all; the alternative
+     * is a consumer-owned `aria-live` region, which the chip cannot provide.
+     */
+    loading: string;
   };
   statusMenu: {
     /** aria-label prefix on the trigger, interpolated with the current status name. */
