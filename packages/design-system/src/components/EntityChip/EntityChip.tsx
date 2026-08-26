@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import clsx from 'clsx';
+import { useTranslation } from '../../i18n/useTranslation';
 import { paletteTokens, type PaletteColor } from '../../palette';
 import { resolveStatusColor, type StatusCategory } from '../_internal/statusColor';
 import styles from './EntityChip.module.scss';
@@ -64,6 +65,33 @@ interface EntityChipOwnProps {
    * the chip remains a real link — unavailable is a visual state, not a
    * disabling one. Only a target-less chip (bare span) becomes non-interactive
    * with aria-disabled.
+   *
+   * The state is also announced: a localized word is rendered visually hidden
+   * inside the chip. A linked chip's accessible name becomes
+   * "Appointment (unavailable)"; a target-less chip is `role=generic`, which
+   * has no accessible name at all, so the word is announced as part of the
+   * chip's text in reading order. Either way it reaches the user.
+   *
+   * That matters because the canonical use is to withhold the entity's name and
+   * show a TYPE word instead — without the state, a masked reference is
+   * indistinguishable from a real entity that happens to be called
+   * "Appointment". Colour alone cannot carry it, and `aria-disabled` does not
+   * either: browsers do expose it, but it carries no meaning on a
+   * non-widget role such as `generic`, so no assistive tech conveys it.
+   *
+   * `loading` is deliberately left alone. Its `aria-busy` reaches the user just
+   * as poorly, but for a different reason — `aria-busy` is a GLOBAL ARIA state,
+   * so unlike `aria-disabled` it is valid here; it simply carries no weight
+   * outside a live region, so nothing announces it. The reason not to fix it is
+   * substantive rather than technical: a loading chip shows the entity's REAL
+   * label, so nothing is misrepresented, and the state is transient — folding
+   * it into the name would make the name mutate when it resolves. See #483.
+   *
+   * Do NOT put an `aria-label` on the chip. It replaces the whole name and
+   * takes the state word with it; the state lives in the chip's contents.
+   *
+   * Override the word via the i18n provider (`entityChip.unavailable`); it
+   * carries its own punctuation so a locale can choose different marks.
    */
   unavailable?: boolean;
 }
@@ -201,9 +229,34 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
   // A link target (`as` or `href`) always wins: loading/unavailable are then
   // purely visual states on a live, keyboard-reachable link. Only a bare span
   // (no target) becomes genuinely non-interactive when unavailable.
+  const t = useTranslation();
   const Component = (as ?? (href ? 'a' : 'span')) as ElementType;
   const bareSpan = !as && !href;
   const inert = unavailable && bareSpan;
+  // The state as real text, not just muted colour. Browsers do expose
+  // `aria-disabled`, but it carries no meaning on a non-widget role such as
+  // `generic`, so no AT conveys it — without this the state reached nobody using a screen reader,
+  // and an `unavailable` chip labelled with a type word ("Appointment") was
+  // indistinguishable from a real entity of that name. Rendered for linked
+  // chips too: muted styling is the sole signal there as well.
+  //
+  // The leading space is for `textContent` only — it is what selection/copy
+  // yields, and what the tests assert. It reaches no accessible name in either
+  // engine: measured, the space never renders (line-leading in this block box,
+  // so it collapses — 0.000px delta), Chromium supplies its own separator
+  // between the block-level children, and `dom-accessibility-api` drops it too.
+  // A sibling text node would be equivalent and would NOT take the chip's `gap`
+  // (a whitespace-only flex item is not rendered at all); keeping it inside
+  // just leaves the chip's children all elements. Same shape as Field's
+  // "(optional)".
+  //
+  // Defined once, rendered in both branches so it can sit immediately after the
+  // entity name. Trailing the status instead gave "Appointment In progress
+  // (unavailable)", where the parenthetical can be heard as qualifying the
+  // STATUS rather than the entity. Out of flow, so placing it costs no layout.
+  const stateWord = unavailable ? (
+    <span className={styles.hiddenLabel}> {t('entityChip.unavailable')}</span>
+  ) : null;
   const elementProps: { href?: string; type?: string } = {};
   if (Component === 'a') elementProps.href = href;
   if (Component === 'button') elementProps.type = 'button';
@@ -237,6 +290,7 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
           {/* Label stays in the DOM visually hidden so a linked loading chip
               keeps its accessible name instead of being announced as "…". */}
           <span className={styles.hiddenLabel}>{label}</span>
+          {stateWord}
         </>
       ) : (
         <>
@@ -246,6 +300,7 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
               doesn't insert extra space inside the name. No longer scopes
               hover styling (the fake-bold rule was dropped, see #345). */}
           <span className={styles.label}>{label}</span>
+          {stateWord}
           {status && (
             <>
               {/* Separator dot is its own flex item so the chip's `gap` spaces

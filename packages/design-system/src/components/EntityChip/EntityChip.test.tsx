@@ -1,6 +1,7 @@
 import { createRef, type ComponentProps, type ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { I18nProvider } from '../../i18n/I18nProvider';
 import { EntityChip } from './EntityChip';
 
 // A stub component used to verify polymorphic `as` forwarding. Looks like
@@ -235,5 +236,107 @@ describe('<EntityChip>', () => {
   it('merges className with the internal chip class', () => {
     const { container } = render(<EntityChip label="Contact" className="external" />);
     expect(container.querySelector('.external')?.className).toMatch(/chip/);
+  });
+
+  describe('unavailable is announced, not just muted', () => {
+    // The bug: browsers DO expose `aria-disabled`, but it carries no meaning on
+    // a non-widget role such as `generic`, so no assistive tech conveys it —
+    // the muted colour was the sole carrier of the state. The canonical use is to
+    // withhold the entity name and show a TYPE word, which made a masked
+    // reference indistinguishable from a real entity of that name.
+    it('renders the state word as real text on a bare-span chip', () => {
+      // A target-less chip is role=generic, which has no accessible name at
+      // all — the word reaches the user as CONTENT in reading order, not via a
+      // name. So this asserts presence, not a name.
+      render(<EntityChip label="Appointment" unavailable />);
+      expect(screen.getByText('(unavailable)')).toBeInTheDocument();
+    });
+
+    it('puts the state in the accessible NAME of a linked chip', () => {
+      // Regex, not an exact string: jsdom's accname implementation does not
+      // insert the inter-element space a browser does, so pinning the whole
+      // string would bake a false model of the platform into the suite.
+      // Chromium computes "Appointment (unavailable)" here.
+      render(<EntityChip label="Appointment" href="/a/1" unavailable />);
+      expect(screen.getByRole('link')).toHaveAccessibleName(/\(unavailable\)$/);
+    });
+
+    it('is defeated by a consumer aria-label — which is why the docs forbid it', () => {
+      // {...rest} spreads before the component-owned ARIA, and aria-label is not
+      // reclaimed. Pinning the trap so nobody "fixes" it by accident: an
+      // aria-label replaces the whole name and takes the state word with it.
+      render(<EntityChip label="Appointment" href="/a/1" unavailable aria-label="Appointment" />);
+      const link = screen.getByRole('link');
+      expect(link).toHaveAccessibleName('Appointment');
+      // The word is still in the DOM — it just no longer contributes to the name.
+      expect(link.textContent).toContain('(unavailable)');
+    });
+
+    it('is the ONLY difference from an available chip of the same label', () => {
+      // The exact repro from the issue: same label, same icon, one flag apart.
+      const { container: off } = render(<EntityChip label="Appointment" />);
+      const { container: on } = render(<EntityChip label="Appointment" unavailable />);
+      expect(off.textContent).toBe('Appointment');
+      expect(on.textContent).toBe('Appointment (unavailable)');
+    });
+
+    it('announces it on a LINKED chip too, where the chip stays interactive', () => {
+      // Muted styling is the only signal there as well, even though the link
+      // is live and carries no aria-disabled.
+      render(<EntityChip label="Appointment" href="/appointments/7" unavailable />);
+      const link = screen.getByRole('link');
+      expect(link).not.toHaveAttribute('aria-disabled');
+      expect(link.textContent).toContain('(unavailable)');
+    });
+
+    it('announces it alongside loading, where the label is also hidden', () => {
+      render(<EntityChip label="Appointment" href="/a/1" loading unavailable />);
+      const link = screen.getByRole('link');
+      expect(link).toHaveAttribute('aria-busy', 'true');
+      expect(link.textContent).toContain('(unavailable)');
+    });
+
+    it('places the state word right after the name, before any status', () => {
+      // Trailing the status gave "Appointment In progress (unavailable)", where
+      // the parenthetical can be heard as qualifying the STATUS rather than the
+      // entity. This is the reason it is rendered in both branches rather than
+      // once after them.
+      render(
+        <EntityChip
+          label="Appointment"
+          href="/a/1"
+          status={{ label: 'In progress', category: 'in_progress' }}
+          unavailable
+        />,
+      );
+      const link = screen.getByRole('link');
+      expect(link.textContent).toBe('Appointment (unavailable)In progress');
+    });
+
+    it('adds nothing when the chip is available', () => {
+      render(<EntityChip label="Appointment" />);
+      expect(screen.queryByText('(unavailable)')).not.toBeInTheDocument();
+    });
+
+    it('renders the state word visually hidden, not on screen', () => {
+      const { container } = render(<EntityChip label="Appointment" unavailable />);
+      const word = screen.getByText('(unavailable)');
+      // Same mechanism the loading label already uses — real text in the DOM,
+      // clipped by the visually-hidden mixin rather than display:none (which
+      // would remove it from the accessible name too).
+      expect(word.className).toMatch(/hiddenLabel/);
+      expect(container.querySelector('[hidden]')).toBeNull();
+      expect(word).not.toHaveAttribute('aria-hidden');
+    });
+
+    it('takes the word from the i18n provider', () => {
+      render(
+        <I18nProvider locale="en" overrides={{ entityChip: { unavailable: '[masked]' } }}>
+          <EntityChip label="Appointment" unavailable />
+        </I18nProvider>,
+      );
+      expect(screen.getByText('[masked]')).toBeInTheDocument();
+      expect(screen.queryByText('(unavailable)')).not.toBeInTheDocument();
+    });
   });
 });

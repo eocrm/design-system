@@ -196,7 +196,7 @@ export function Demo() {
 
       <Example
         title="Loading and unavailable"
-        description="`loading` swaps the body for an aria-busy ellipsis; `unavailable` mutes the chip. Both are purely visual when the chip has a link target — it stays a live, keyboard-reachable link. Only a target-less unavailable chip goes non-interactive (aria-disabled)."
+        description="`loading` swaps the body for an aria-busy ellipsis; `unavailable` mutes the chip. Both are purely visual when the chip has a link target — it stays a live, keyboard-reachable link. Only a target-less unavailable chip goes non-interactive (aria-disabled). `unavailable` also renders a localized state word visually hidden inside the chip, so a linked chip's accessible name reads “Deleted contact (unavailable)” (a target-less chip is role=generic and has no name, so the word is announced as content instead). Colour alone cannot carry the state, and aria-disabled does not either — browsers expose it, but it carries no meaning on a non-widget role such as generic, so no assistive tech conveys it."
         code={`import { EntityChip } from '@eocrm/design-system';
 
 export function Demo() {

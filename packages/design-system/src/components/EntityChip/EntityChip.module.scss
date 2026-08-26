@@ -65,7 +65,10 @@
   font-weight: var(--entity-chip-label-font-weight);
 }
 
-// Keeps a loading chip's accessible name (the label) without showing it.
+// Text that belongs in the accessible name but not on screen: a loading
+// chip's label (so it isn't announced as just "…"), and an unavailable
+// chip's state word (aria-disabled is exposed but carries no meaning on a
+// non-widget role such as `generic`, so no assistive tech conveys it).
 .hiddenLabel {
   @include visually-hidden;
 }

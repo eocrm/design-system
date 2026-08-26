@@ -489,6 +489,18 @@ export interface Messages {
     /** aria-label fallback for the per-chip dismiss (×) button. */
     dismiss: string;
   };
+  entityChip: {
+    /**
+     * State word rendered visually hidden inside an `unavailable` `EntityChip`,
+     * so the state reaches assistive tech instead of being carried by the muted
+     * colour alone. It joins a LINKED chip's accessible name
+     * ("Appointment (unavailable)"); a target-less chip is `role=generic`,
+     * which has no accessible name, so there it is read as chip content.
+     * Include the surrounding punctuation — other locales may want different
+     * marks than English's parentheses.
+     */
+    unavailable: string;
+  };
   statusMenu: {
     /** aria-label prefix on the trigger, interpolated with the current status name. */
     changeStatus: string;
