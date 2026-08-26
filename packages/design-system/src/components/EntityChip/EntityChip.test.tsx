@@ -252,9 +252,18 @@ describe('<EntityChip>', () => {
     it('keeps the real label, which is why this was the weaker case', () => {
       // Unlike `unavailable`, a loading chip shows the entity's genuine name, so
       // the label was never misleading — only the state was missing.
-      render(<EntityChip label="Appointment" loading />);
+      const { container } = render(<EntityChip label="Appointment" loading />);
       expect(screen.getByText('Appointment')).toBeInTheDocument();
-      expect(screen.getByText('(loading)')).toBeInTheDocument();
+      const word = screen.getByText('(loading)');
+      expect(word).toBeInTheDocument();
+      // A target-less chip is role=generic and has NO accessible name, so the
+      // word reaches the user as content — which only works if it is not itself
+      // hidden from the tree. getByText alone would pass either way.
+      expect(word).not.toHaveAttribute('aria-hidden');
+      expect(word.closest('[aria-hidden="true"]')).toBeNull();
+      // Order and spacing on the bare-span form, matching the `unavailable`
+      // suite's equivalent pin. The leading `…` is the aria-hidden ellipsis.
+      expect(container.textContent).toBe('…Appointment (loading)');
     });
 
     it('announces loading BEFORE unavailable when a chip carries both', () => {
@@ -267,7 +276,7 @@ describe('<EntityChip>', () => {
       );
     });
 
-    it('adds nothing once loading resolves — the name mutates, by design', () => {
+    it('drops the word once loading resolves — the name mutates, by design', () => {
       // This is the cost the JSDoc warns about, pinned so it is a known
       // property rather than a surprise: the accessible name is not stable
       // across the transition.

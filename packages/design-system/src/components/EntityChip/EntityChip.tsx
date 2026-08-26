@@ -61,16 +61,33 @@ interface EntityChipOwnProps {
    *
    * The state is announced: a localized word is rendered visually hidden, so a
    * linked chip's name becomes "Appointment (loading)". `aria-busy` alone did
-   * not do this — it is a GLOBAL ARIA state so it is valid on the chip's
-   * role-less span, but it carries no weight outside a live region, and the
-   * ellipsis is `aria-hidden`, so nothing reached a screen reader at all.
+   * not do this. It is a GLOBAL ARIA state, so unlike `aria-disabled` it is
+   * perfectly valid on the chip's role-less span and browsers do expose it —
+   * but no mainstream screen reader conveys `busy` as a state on a non-live
+   * element, and the ellipsis is `aria-hidden`. The label reached the user
+   * fine; no signal of the LOADING STATE did.
    *
-   * Know the trade: the accessible name CHANGES when loading resolves. That is
-   * unavoidable when announcing a transient state through the name, and it is
-   * why this was initially left alone. The alternative — an `aria-live` region
-   * — has to be owned by the consumer, because only the consumer knows whether
-   * a given chip resolving is worth interrupting someone for. If that fits your
-   * case better, wrap the chip yourself and override this word to `''`.
+   * Know the trade: the accessible name CHANGES when loading resolves — and by
+   * more than this word. The loading branch renders neither `prefix` nor
+   * `status`, so a chip with both goes from "Fix login bug (loading)" to
+   * "ENG-5 Fix login bug In progress". That is unavoidable when announcing a
+   * transient state through the name, and it is why this was initially left
+   * alone. Note it also means a consumer query like
+   * `getByRole('link', { name: 'Appointment' })` no longer matches a LOADING
+   * chip.
+   *
+   * Measured, the mutation itself is benign: Chromium keeps the SAME
+   * accessibility node across the transition (same backendNodeId) and focus
+   * survives, so nothing is torn down and rebuilt — the name and `busy` simply
+   * change on the existing object.
+   *
+   * The alternative — an `aria-live` region — has to be owned by the consumer,
+   * because only the consumer knows whether a given chip resolving is worth
+   * interrupting someone for. To take that route, override this word to `''`
+   * at your TOP-LEVEL provider: the override is global to a provider subtree
+   * (there is no per-chip opt-out), `I18nProvider` requires a `locale`, and a
+   * nested provider replaces rather than extends its parent — so wrapping a
+   * single chip would silently discard every other override you have set.
    */
   loading?: boolean;
   /**
@@ -298,13 +315,13 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
           {/* Label stays in the DOM visually hidden so a linked loading chip
               keeps its accessible name instead of being announced as "…". */}
           <span className={styles.hiddenLabel}>{label}</span>
-          {/* The busy state as real text. `aria-busy` is set below and is valid
-              here — unlike `aria-disabled` it is a GLOBAL ARIA state, so the
-              role-less span is not the problem. It simply carries no weight
-              outside a live region, so nothing announced it and the ellipsis
-              was the only signal. Placed after the label and before the
-              unavailable word so a chip carrying both reads
-              "Appointment (loading) (unavailable)". */}
+          {/* The busy state as real text. `aria-busy` is set on the chip root
+              above and is valid there — unlike `aria-disabled` it is a GLOBAL
+              ARIA state, so the role-less span is not the problem. But no
+              mainstream screen reader conveys `busy` on a non-live element, so
+              the aria-hidden ellipsis was the only signal. Placed after the
+              label and before the unavailable word so a chip carrying both
+              reads "Appointment (loading) (unavailable)". */}
           <span className={styles.hiddenLabel}> {t('entityChip.loading')}</span>
           {stateWord}
         </>
