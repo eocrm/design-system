@@ -6,7 +6,7 @@ import styles from './TopBar.module.scss';
 /**
  * Tone of the optional notification-indicator dot. Selects the dot color.
  * - `'danger'` (default) — red, for unread / urgent notifications.
- * - `'warning'` — amber, for soft-warning cues (maintenance banner, etc.).
+ * - `'warning'` — dark amber, for soft-warning cues (maintenance banner, etc.).
  * - `'info'` — blue, for informational badges.
  * - `'accent'` — accent color, for "new content" cues.
  */

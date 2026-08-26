@@ -19,7 +19,12 @@
   --slider-fill-bg: var(--color-accent);
   --slider-fill-bg-tone-default: var(--color-accent);
   --slider-fill-bg-tone-success: var(--color-success);
-  --slider-fill-bg-tone-warning: var(--color-warning);
+
+  // warning uses --color-warning-strong: the bare amber measures 1.96:1 against
+  // the track, below 1.4.11's 3:1 — and it is the ONLY tone that fails there
+  // (success/danger 4.17, accent 6.25), so the fill is wrong, not the track.
+  // See #481.
+  --slider-fill-bg-tone-warning: var(--color-warning-strong);
   --slider-fill-bg-tone-danger: var(--color-danger);
   --slider-fill-radius: var(--radius-full);
 
@@ -56,7 +61,10 @@
   // Mark filled — base + tones
   --slider-mark-filled-bg: var(--color-accent);
   --slider-mark-filled-bg-tone-success: var(--color-success);
-  --slider-mark-filled-bg-tone-warning: var(--color-warning);
+
+  // Matches the filled range above, so the mark stays invisible-on-fill by
+  // design rather than by accident.
+  --slider-mark-filled-bg-tone-warning: var(--color-warning-strong);
   --slider-mark-filled-bg-tone-danger: var(--color-danger);
 
   // Mark label text

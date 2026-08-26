@@ -36,7 +36,13 @@ const DARK = readFileSync(
  */
 function tokenValue(name: string, source: string, seen: string[] = []): string {
   if (seen.includes(name)) throw new Error(`alias cycle: ${[...seen, name].join(' -> ')}`);
-  const declare = (from: string) => from.match(new RegExp(`${name}:\\s*([^;]+);`))?.[1]?.trim();
+  // Anchored on a boundary so `--foo` cannot match inside `--bar--foo:`, and
+  // the name is escaped because it reaches RegExp from a caller.
+  const pattern = new RegExp(
+    `(?:^|[^-a-z0-9])${name.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')}:\\s*([^;]+);`,
+    'm',
+  );
+  const declare = (from: string) => from.match(pattern)?.[1]?.trim();
 
   // A token not overridden in dark still has a declaration in light. Reading
   // THAT is fine — but only to learn its shape. Continuing to resolve in the
@@ -57,6 +63,9 @@ function tokenValue(name: string, source: string, seen: string[] = []): string {
 
   const alias = declaration.match(/^var\((--[a-z0-9-]+)\)$/);
   if (alias) return tokenValue(alias[1], source, [...seen, name]);
+  if (/^#[0-9a-fA-F]+$/.test(declaration)) {
+    throw new Error(`${name} is a hex of an unsupported length: "${declaration}"`);
+  }
   throw new Error(`${name} resolves to "${declaration}", which is neither a hex nor a var() alias`);
 }
 
@@ -122,10 +131,13 @@ describe.each([
   ['dark', DARK],
 ])('shipped colour pairs clear WCAG in %s theme', (_theme, source) => {
   it.each(PAIRS)('%s', (_label, fgName, bgName, minimum) => {
-    // No light-value fallback, on purpose. Every token in PAIRS is overridden in
-    // dark today, so a fallback is dead code — and if one ever stopped being
-    // overridden, falling back would compare two LIGHT values and report the
-    // dark theme green having checked nothing. Let tokenValue throw instead.
+    // No light-value fallback here. A token with no dark declaration genuinely
+    // DOES render its light value in dark (dark.scss layers overrides on :root),
+    // so a fallback would not be wrong — it would just be indistinguishable from
+    // a token nobody thought about. tokenValue still resolves alias CHAINS
+    // across scopes (that is how --color-presence-away, which has no dark
+    // declaration at all, answers correctly here); what it refuses is borrowing
+    // a light LITERAL to answer for dark. Silence is the thing to avoid.
     expect(contrast(tokenValue(fgName, source), tokenValue(bgName, source))).toBeGreaterThanOrEqual(
       minimum,
     );
@@ -140,15 +152,9 @@ describe('known sub-AA pairs are pinned so they cannot get worse (#484)', () => 
   });
 
   it('accent on its tint in DARK is the third, at 4.22', () => {
-    const read = (n: string) => {
-      try {
-        return tokenValue(n, DARK);
-      } catch {
-        return tokenValue(n, TOKENS);
-      }
-    };
+    // Both tokens are dark-overridden, so tokenValue resolves them directly.
     expect(
-      contrast(read('--color-accent'), read('--color-accent-bg-subtle')),
+      contrast(tokenValue('--color-accent', DARK), tokenValue('--color-accent-bg-subtle', DARK)),
     ).toBeGreaterThanOrEqual(4.22);
   });
 });
@@ -190,6 +196,15 @@ describe('components keep their warning slots on the strong variant', () => {
     ],
     ['../components/Text/Text.tokens.scss', ['--text-fg-warning']],
     ['../components/Card/Card.tokens.scss', ['--card-stripe-color-warning']],
+    ['../components/Progress/Progress.tokens.scss', ['--progress-fill-bg-warning']],
+    [
+      '../components/CircularProgress/CircularProgress.tokens.scss',
+      ['--circular-progress-fill-color-warning'],
+    ],
+    [
+      '../components/Slider/Slider.tokens.scss',
+      ['--slider-fill-bg-tone-warning', '--slider-mark-filled-bg-tone-warning'],
+    ],
     ['../components/TopBar/TopBar.tokens.scss', ['--topbar-indicator-bg-warning']],
     ['../components/PasswordInput/PasswordInput.tokens.scss', ['--password-input-warning-icon-fg']],
     ['../components/LiquidEditor/LiquidEditor.tokens.scss', ['--liquid-editor-token-number']],
@@ -211,6 +226,44 @@ describe('components keep their warning slots on the strong variant', () => {
       expect(declared, `${token} is declared`).toBeDefined();
       expect(declared, `${token} must not use --color-warning`).toBe('var(--color-warning-strong)');
     }
+  });
+});
+
+describe('the all-day chip keeps its amber fill and dark text', () => {
+  it('pairs the amber fill with --color-warning-fg, not the strong variant', () => {
+    // This is the pair the PR's judgement call rests on, and it is the one place
+    // --color-warning survives on purpose. Pinning both halves: darkening the
+    // FILL also cleared the bar but read as chocolate brown, and pairing the fg
+    // with --color-warning-strong measures 2.37:1 while looking plausible.
+    const scss = readFileSync(
+      resolve(__dirname, '../components/Calendar/Calendar.tokens.scss'),
+      'utf8',
+    );
+    expect(scss).toMatch(/--calendar-event-chip-all-day-bg-warning:\s*var\(--color-warning\);/);
+    expect(scss).toMatch(/--calendar-event-chip-all-day-fg-warning:\s*var\(--color-warning-fg\);/);
+  });
+});
+
+describe('rules without a token name are pinned too', () => {
+  it('Dot paints its warning tone with the strong variant', () => {
+    // Dot sets `background:` directly inside `&[data-tone='warning']`, so there
+    // is no custom property for SLOTS to assert. It was the headline fix of the
+    // sweep and had no gate at all until this.
+    const scss = readFileSync(resolve(__dirname, '../components/Dot/Dot.module.scss'), 'utf8');
+    const rule = scss.match(/\[data-tone='warning'\]\s*\{[^}]*\}/)?.[0];
+    expect(rule, "Dot's warning tone rule").toBeDefined();
+    expect(rule).toMatch(/var\(--color-warning-strong\)/);
+  });
+
+  it('RichText offers a legible amber as a text colour', () => {
+    // Assembled in TypeScript, so no SCSS grep and no token-file guard could see
+    // it — the same blind spot as the alias, one layer over.
+    const ts = readFileSync(
+      resolve(__dirname, '../components/RichText/engine/colorMarks.ts'),
+      'utf8',
+    );
+    const textVars = ts.match(/DEFAULT_TEXT_VAR[^}]*\}/)?.[0];
+    expect(textVars).toMatch(/amber: '--color-warning-strong'/);
   });
 });
 

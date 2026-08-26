@@ -92,6 +92,11 @@
   // is the only tone whose all-day pair failed; accent/success/danger are all
   // light enough for white text at 4.55-6.82:1.
   --calendar-event-chip-all-day-bg-warning: var(--color-warning);
+
+  // --color-warning-fg is calibrated against --color-warning (6.60:1) and ONLY
+  // that: on --color-warning-strong it measures 2.37:1. Pairing the two
+  // 'warning' tokens looks right and is not — keep this fg with the amber fill
+  // above.
   --calendar-event-chip-all-day-fg-warning: var(--color-warning-fg);
   --calendar-event-chip-all-day-bg-danger: var(--color-danger);
   --calendar-event-chip-all-day-fg-danger: var(--color-danger-fg);

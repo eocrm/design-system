@@ -14,7 +14,10 @@ const DEFAULT_TEXT_VAR: Record<DefaultKey, string> = {
   gray: '--color-fg-muted',
   red: '--color-danger',
   green: '--color-success',
-  amber: '--color-warning',
+  // --color-warning-strong, not --color-warning: the bare amber is 2.14:1 as
+  // text on the editor surface and 2.01:1 on the swatch's own tinted chip.
+  // red/green/blue are all legible as text; amber was the outlier. See #481.
+  amber: '--color-warning-strong',
   blue: '--color-accent',
 };
 const DEFAULT_BG_VAR: Record<DefaultKey, string> = {

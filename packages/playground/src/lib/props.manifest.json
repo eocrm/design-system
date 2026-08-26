@@ -208,7 +208,7 @@
           "type": "AvatarStatus",
           "required": false,
           "default": "",
-          "description": "Presence dot in the bottom-right.\n- `'online'`  — green.\n- `'busy'`    — red.\n- `'away'`    — amber.\n- `'offline'` — gray.\nOmit to render no dot at all."
+          "description": "Presence dot in the bottom-right.\n- `'online'`  — green.\n- `'busy'`    — red.\n- `'away'`    — amber (the categorical amber, dark enough to read at dot size).\n- `'offline'` — gray.\nOmit to render no dot at all."
         },
         {
           "name": "tooltip",
