@@ -30,7 +30,9 @@ export interface StackProps extends HTMLAttributes<HTMLDivElement> {
    * Stack's own direction. That is the two-line label beside a fixed badge, or
    * a detail column in a squeezed toolbar. Without it the flex default
    * (`min-width: auto`) floors the Stack at its widest line and the ellipsis
-   * never appears.
+   * never appears. That floor applies because a Stack's overflow is `visible` —
+   * per CSS Flexbox §4.5 a flex item has no automatic minimum size once its
+   * overflow is anything else.
    *
    * It is a **no-op** when the Stack sits in another `Stack` (the automatic
    * minimum size applies only on the flex MAIN axis, so there is no horizontal
@@ -115,6 +117,9 @@ const alignClass: Record<StackAlign, string> = {
  *   appropriate styling.
  *
  * @remarks Anti-patterns
+ * - ❌ `minWidth0` on a Stack holding buttons or badges. It lets the container
+ *   shrink, so non-truncatable content gets clipped instead. Use it on the
+ *   container whose TEXT should give way.
  * - ❌ Nested Stacks with different gaps just to bend spacing locally.
  *   Sometimes legitimate (page sections at `xl` containing field stacks at
  *   `md`), but pause and consider — usually it signals unclear hierarchy.

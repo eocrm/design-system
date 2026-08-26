@@ -306,22 +306,24 @@ export interface RenderEventContext {
  * `style` to override colors.
  *
  * Note on truncation. The rule, rather than the per-view markup, because the
- * markup differs: wherever your content lands in a flex ROW, a wrapper around
- * it is a flex item and is therefore floored at its own content's min-content
- * width. A long `<Text truncate>` inside that wrapper then never ellipsizes.
- * Set `minWidth0` on the wrapper to release the floor.
+ * markup differs. A flex item gets an automatic minimum size — a floor at its
+ * own content's min-content width — ONLY when its computed `overflow` is
+ * `visible` (CSS Flexbox §4.5). So wherever your content lands in a flex ROW,
+ * anything you put there with visible overflow is floored, and a long
+ * `<Text truncate>` inside it never ellipsizes.
  *
- * The DS default title is unaffected because its own span sets `min-width: 0` —
- * NOT because it is unwrapped. Being a direct child buys nothing: any flex item
- * left at `min-width: auto` is floored, wrapper or not, so a bare span of your
- * own with `overflow: hidden; text-overflow: ellipsis` and no `min-width: 0`
- * reproduces this exactly.
+ * That is the whole difference between your content and the DS default title.
+ * The default title's span sets `overflow: hidden`, so it has no automatic
+ * minimum to begin with — not because it is a direct child, and not because of
+ * the `min-width: 0` it also carries. A `Cluster` has visible overflow, so it
+ * IS floored, and `minWidth0` is how you release it.
  *
- * `<Text truncate>` sets it for you, which is why the example below works. What
- * a `<Text truncate>` cannot do is release the floor on a WRAPPER around it —
- * and you need a wrapper as soon as your content has a leading element (a
- * `Dot`, an icon). Inside the button the only valid wrapper is
- * `<Cluster as="span">`, so that is where `minWidth0` goes:
+ * `<Text truncate>` sets both `overflow: hidden` and `min-width: 0`, which is
+ * why the inner text is fine either way. What it cannot do is release the floor
+ * on a WRAPPER around it — and you need a wrapper as soon as your content has a
+ * leading element (a `Dot`, an icon). Inside the button the only valid wrapper
+ * among the DS primitives is `<Cluster as="span">` (`Stack` and `Constrain`
+ * render a `<div>`), so that is where `minWidth0` goes:
  *
  * ```tsx
  * <Cluster as="span" gap="xs" align="center" wrap={false} minWidth0>
