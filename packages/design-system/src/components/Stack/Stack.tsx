@@ -30,10 +30,10 @@ export interface StackProps extends HTMLAttributes<HTMLDivElement> {
    * Stack's own direction. That is the two-line label beside a fixed badge, or
    * a detail column in a squeezed toolbar. Without it the flex default
    * (`min-width: auto`) floors the Stack at its widest line and the ellipsis
-   * never appears. That floor applies because a Stack sets no `overflow`, so it is
-   * not a scroll container — per CSS Sizing §5.2.1 a flex item keeps its
-   * automatic minimum size unless it is one. `overflow: hidden`/`auto`/`scroll`
-   * remove it; `visible` and `clip` do not.
+   * never appears. That floor applies because a Stack sets no `overflow` — per CSS
+   * Flexbox §4.5 a flex item keeps its automatic minimum size while its computed
+   * `overflow` is non-scrollable (`visible` or `clip`); the scrollable values
+   * (`hidden`/`auto`/`scroll`) drop it to `0`.
    *
    * It is a **no-op** when the Stack sits in another `Stack` (the automatic
    * minimum size applies only on the flex MAIN axis, so there is no horizontal

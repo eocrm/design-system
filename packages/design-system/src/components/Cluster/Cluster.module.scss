@@ -9,11 +9,12 @@
 // default `min-width: auto`, which floors it at its content's min-content size —
 // so a `<Text truncate>` inside never gets the chance to ellipsize and a clipping
 // ancestor hard-cuts it instead (issue #475).
-// This only means anything while `.cluster` is not a scroll container: per CSS
-// Sizing §5.2.1 a flex item keeps its automatic minimum size unless it is one.
-// Giving `.cluster` `overflow: hidden`/`auto`/`scroll` would remove the floor by
-// itself and make this prop dead code — but `overflow: clip` would NOT, since
-// clip is not a scroll container. Measured; do not assume any overflow will do.
+// This only means anything while `.cluster`'s overflow is non-scrollable: per CSS
+// Flexbox §4.5 a flex item keeps its automatic minimum size until its computed
+// overflow becomes scrollable. Giving `.cluster` `overflow: hidden`/`auto`/`scroll`
+// would therefore remove the floor by itself and make this prop dead code — but
+// `overflow: clip` would NOT, because clip is non-scrollable and still floors.
+// Measured; do not assume any overflow value will do.
 // Deliberately NOT on the base `.cluster` class: that would let every Cluster in the
 // codebase shrink below its content, changing layout for existing consumers. It
 // was tried and reverted. Measured on the playground Tenants mockup, whose inner

@@ -307,9 +307,10 @@ export interface RenderEventContext {
  *
  * Note on truncation. The rule, rather than the per-view markup, because the
  * markup differs. A flex item gets an automatic minimum size — a floor at its
- * own content's min-content width — unless it is a SCROLL CONTAINER
- * (CSS Sizing §5.2.1). `overflow: hidden` / `auto` / `scroll` make one and so
- * remove the floor; `visible` and `clip` do not, and keep it. So wherever your
+ * own content's min-content width — while its computed `overflow` is
+ * NON-SCROLLABLE (CSS Flexbox §4.5). The non-scrollable values are `visible`
+ * and `clip`, which keep the floor; the scrollable ones (`hidden` / `auto` /
+ * `scroll`) drop it to `0`. So wherever your
  * content lands in a flex ROW, anything you put there that is not a scroll
  * container is floored, and a long `<Text truncate>` inside it never
  * ellipsizes.
@@ -325,7 +326,7 @@ export interface RenderEventContext {
  * why the inner text is fine either way. What it cannot do is release the floor
  * on a WRAPPER around it — and you need a wrapper as soon as your content has a
  * leading element (a `Dot`, an icon). Inside the button the only valid wrapper
- * among the DS primitives is `<Cluster as="span">` (`Stack` and `Constrain`
+ * among the DS layout primitives is `<Cluster as="span">` (`Stack` and `Constrain`
  * render a `<div>`), so that is where `minWidth0` goes:
  *
  * ```tsx
