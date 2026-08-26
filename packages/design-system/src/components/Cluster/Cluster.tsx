@@ -60,10 +60,11 @@ export interface ClusterProps extends HTMLAttributes<HTMLElement> {
    * grid item) that clips — a `Calendar` `renderEvent` chip, a `Card.Header`
    * row. Without it the flex default (`min-width: auto`) floors the
    * container at its content's min-content width and the ellipsis never
-   * appears. That floor applies because a Cluster's overflow is `visible` —
-   * per CSS Flexbox §4.5 a flex item has no automatic minimum size once its
-   * overflow is anything else, which is why a `<Text truncate>` (overflow
-   * hidden) never needs this and a Cluster around it does.
+   * appears. That floor applies because a Cluster sets no `overflow`, so it is
+   * not a scroll container — per CSS Sizing §5.2.1 a flex item keeps its
+   * automatic minimum size unless it is one. `overflow: hidden`/`auto`/`scroll`
+   * remove it; `visible` and `clip` do not. That is why a `<Text truncate>`
+   * (overflow hidden) never needs this and a Cluster around it does.
    *
    * It is a **no-op** inside a column `Stack` (the automatic minimum size
    * applies only on the flex MAIN axis, so there is no horizontal floor), and

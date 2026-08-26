@@ -9,10 +9,11 @@
 // default `min-width: auto`, which floors it at its content's min-content size —
 // so a `<Text truncate>` inside never gets the chance to ellipsize and a clipping
 // ancestor hard-cuts it instead (issue #475).
-// This only means anything while `.stack` keeps `overflow: visible`: per CSS
-// Flexbox §4.5 a flex item has an automatic minimum size ONLY when its overflow
-// is visible. Give `.stack` an `overflow` and the floor disappears on its own —
-// and this prop becomes dead code.
+// This only means anything while `.stack` is not a scroll container: per CSS
+// Sizing §5.2.1 a flex item keeps its automatic minimum size unless it is one.
+// Giving `.stack` `overflow: hidden`/`auto`/`scroll` would remove the floor by
+// itself and make this prop dead code — but `overflow: clip` would NOT, since
+// clip is not a scroll container. Measured; do not assume any overflow will do.
 // Deliberately NOT on the base `.stack` class: that would let every Stack in the
 // codebase shrink below its content, changing layout for existing consumers. It
 // was tried and reverted. The measurement that settled it was taken on Cluster

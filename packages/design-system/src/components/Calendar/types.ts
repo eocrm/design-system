@@ -307,16 +307,19 @@ export interface RenderEventContext {
  *
  * Note on truncation. The rule, rather than the per-view markup, because the
  * markup differs. A flex item gets an automatic minimum size — a floor at its
- * own content's min-content width — ONLY when its computed `overflow` is
- * `visible` (CSS Flexbox §4.5). So wherever your content lands in a flex ROW,
- * anything you put there with visible overflow is floored, and a long
- * `<Text truncate>` inside it never ellipsizes.
+ * own content's min-content width — unless it is a SCROLL CONTAINER
+ * (CSS Sizing §5.2.1). `overflow: hidden` / `auto` / `scroll` make one and so
+ * remove the floor; `visible` and `clip` do not, and keep it. So wherever your
+ * content lands in a flex ROW, anything you put there that is not a scroll
+ * container is floored, and a long `<Text truncate>` inside it never
+ * ellipsizes.
  *
  * That is the whole difference between your content and the DS default title.
- * The default title's span sets `overflow: hidden`, so it has no automatic
- * minimum to begin with — not because it is a direct child, and not because of
- * the `min-width: 0` it also carries. A `Cluster` has visible overflow, so it
- * IS floored, and `minWidth0` is how you release it.
+ * The default title's span sets `overflow: hidden`, making it a scroll
+ * container, so it has no automatic minimum to begin with — not because it is a
+ * direct child, and not because of the `min-width: 0` it also carries. A
+ * `Cluster` sets no `overflow` at all, so it is floored, and `minWidth0` is how
+ * you release it.
  *
  * `<Text truncate>` sets both `overflow: hidden` and `min-width: 0`, which is
  * why the inner text is fine either way. What it cannot do is release the floor
