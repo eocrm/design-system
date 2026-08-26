@@ -3,15 +3,10 @@ import clsx from 'clsx';
 import { useLocale } from '../../i18n/useLocale';
 import { formatTime } from '../../calendar';
 import { Tooltip } from '../Tooltip';
+import { resolveEventColor } from './eventColor';
 import { formatEventDuration } from './utils';
 import type { DragMode, DragPreview } from './useEventDrag';
-import type {
-  CalendarEvent,
-  CalendarEventTone,
-  CalendarView,
-  RenderEvent,
-  TimedEventBlock,
-} from './types';
+import type { CalendarEvent, CalendarView, RenderEvent, TimedEventBlock } from './types';
 import styles from './TimedEvent.module.scss';
 
 export interface TimedEventProps {
@@ -72,7 +67,11 @@ export function TimedEvent({
   dragHintId,
 }: TimedEventProps) {
   const locale = useLocale();
-  const tone: CalendarEventTone = block.event.tone ?? 'neutral';
+  const {
+    toneClass,
+    hasStripe,
+    style: colorStyle,
+  } = resolveEventColor(block.event, '--calendar-timed-event-fg-');
   const isDragging = preview !== null;
 
   // While a drag is in flight the block renders at the proposed placement,
@@ -199,7 +198,9 @@ export function TimedEvent({
         type="button"
         className={clsx(
           styles.block,
-          styles[tone],
+          toneClass && styles[toneClass],
+          colorStyle && styles.colored,
+          hasStripe && styles.striped,
           isShort && styles.short,
           canMove && styles.movable,
           isDragging && styles.dragging,
@@ -207,6 +208,7 @@ export function TimedEvent({
         )}
         style={
           {
+            ...colorStyle,
             top,
             height,
             '--cal-block-left': `${leftPercent}%`,

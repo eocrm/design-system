@@ -166,6 +166,19 @@
   color: var(--calendar-agenda-title-fg);
 }
 
+// ── Per-event palette color (CalendarEvent.color) ──────────────────────────
+// The agenda row is never filled — tinting it would clash with the today-group
+// accent and the hover background (see .toneDot above) — so `color` drives the
+// leading dot instead, and a non-neutral `tone` still gets its edge stripe.
+.colored {
+  color: var(--calendar-event-color-fg);
+}
+
+.striped {
+  box-shadow: inset var(--calendar-event-color-stripe-width) 0 0 0
+    var(--calendar-event-stripe-color);
+}
+
 // Tone -> color of the dot (via currentColor inheritance).
 .neutral {
   color: var(--calendar-agenda-tone-neutral);

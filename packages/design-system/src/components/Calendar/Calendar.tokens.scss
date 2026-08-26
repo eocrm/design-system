@@ -84,6 +84,12 @@
   --calendar-event-chip-all-day-bg-danger: var(--color-danger);
   --calendar-event-chip-all-day-fg-danger: var(--color-danger-fg);
 
+  // ── Per-event palette color (CalendarEvent.color) ────────────────────────
+  // The palette bg/fg pair is injected inline from paletteTokens() — there is
+  // no token per palette color here, the same as Badge/EntityChip/IconTile.
+  // These are the geometry + fallbacks the stylesheets read.
+  --calendar-event-color-stripe-width: var(--border-width-strong);
+
   // EventChip — tooltip
   --calendar-event-tooltip-gap: var(--space-1);
   --calendar-event-tooltip-time-font-size: var(--font-size-xs);

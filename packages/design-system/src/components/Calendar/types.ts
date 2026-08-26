@@ -1,3 +1,5 @@
+import type { PaletteColor } from '../../palette';
+
 export type CalendarEventTone = 'neutral' | 'accent' | 'success' | 'warning' | 'danger';
 
 /**
@@ -31,8 +33,45 @@ export interface CalendarEvent {
   startsAt: Date;
   /** When the event ends (local time). Defaults to the start day for `allDay`, or to a point-in-time for timed events. */
   endsAt?: Date;
-  /** Visual tone of the bar. Defaults to 'neutral'. */
+  /**
+   * Semantic state of the event — what is going on with it. Defaults to
+   * `'neutral'`.
+   *
+   * Independent of `color`, and the two do not compete for the same pixels:
+   * when `color` is also set it takes the fill and `tone` moves to a stripe on
+   * the event's leading edge, so a category-coloured event can still show a
+   * state that must not be missed. See `color`.
+   */
   tone?: CalendarEventTone;
+  /**
+   * Category identity — WHICH kind of thing this event is, as one of the 30
+   * `PaletteColor`s. Use it when your events belong to a colour-bearing
+   * category the tenant chose (an appointment type, a calendar, a resource
+   * class).
+   *
+   * Paints the block itself: the palette's tinted background with its saturated
+   * colour for text and border. That is deliberate — in a calendar the natural
+   * reading is that the block IS the colour, rather than that it carries a
+   * small coloured dot.
+   *
+   * `color` and `tone` are different axes and are shown together rather than
+   * one overriding the other: `color` takes the fill, and a non-`neutral`
+   * `tone` becomes a saturated stripe down the event's leading edge. So a
+   * "consultation" that is also "masked" reads as both. With no `color`, tone
+   * behaves exactly as before and paints the whole block.
+   *
+   * In the agenda view, where the row is not filled, `color` sets the leading
+   * dot and `tone` the stripe.
+   *
+   * @example
+   * // A booked consultation: category violet, no special state.
+   * { id: '1', title: 'Consultation', startsAt, color: 'violet' }
+   *
+   * @example
+   * // Same category, but the slot was released — colour AND state, both visible.
+   * { id: '2', title: 'Consultation', startsAt, color: 'violet', tone: 'success' }
+   */
+  color?: PaletteColor;
   /** Renders as a full-band, time-prefix-free bar. Defaults to false. */
   allDay?: boolean;
 }

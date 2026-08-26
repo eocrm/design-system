@@ -26,6 +26,58 @@ const M = TODAY.getMonth();
 const D = TODAY.getDate();
 
 /** A date `offset` days from today, at the given time of day. */
+/**
+ * Appointment types with a tenant-chosen palette colour, the shape `color` is
+ * for. `released` and `masked` are STATES, so they ride `tone` and show up as
+ * the edge stripe rather than stealing the category colour.
+ */
+const TYPED_EVENTS: CalendarEvent[] = [
+  {
+    id: 't1',
+    title: 'Consultation — Priya Shah',
+    startsAt: fromToday(0, 9, 0),
+    endsAt: fromToday(0, 9, 45),
+    color: 'violet',
+  },
+  {
+    id: 't2',
+    title: 'Follow-up — Sam Okonkwo',
+    startsAt: fromToday(0, 10, 0),
+    endsAt: fromToday(0, 10, 30),
+    color: 'teal',
+  },
+  {
+    id: 't3',
+    title: 'Consultation — slot released',
+    startsAt: fromToday(0, 11, 0),
+    endsAt: fromToday(0, 11, 45),
+    color: 'violet',
+    tone: 'success',
+  },
+  {
+    id: 't4',
+    title: 'Procedure — Mei Lin',
+    startsAt: fromToday(0, 13, 0),
+    endsAt: fromToday(0, 14, 30),
+    color: 'amber',
+  },
+  {
+    id: 't5',
+    title: 'Procedure — masked',
+    startsAt: fromToday(0, 15, 0),
+    endsAt: fromToday(0, 16, 0),
+    color: 'amber',
+    tone: 'danger',
+  },
+  {
+    id: 't6',
+    title: 'Follow-up — Yusuf Demir',
+    startsAt: fromToday(1, 9, 30),
+    endsAt: fromToday(1, 10, 0),
+    color: 'teal',
+  },
+];
+
 function fromToday(offset: number, hour = 0, minute = 0): Date {
   return new Date(Y, M, D + offset, hour, minute);
 }
@@ -684,6 +736,27 @@ export function ControlledCalendarDemo() {
 }`}
       >
         <ControlledCalendarDemo />
+      </Example>
+
+      <Example
+        title="Category color + semantic tone"
+        description="color is identity (WHICH appointment type) and tone is state (what is going on with it). They occupy different pixels rather than overriding each other: color takes the fill, and a non-neutral tone becomes a stripe down the leading edge. So the released consultation is still visibly a consultation, and the masked procedure is still visibly a procedure. Events with no color are unaffected — tone paints the whole block as it always has."
+        code={`import { Calendar, type CalendarEvent } from '@eocrm/design-system';
+
+// Appointment types carry a tenant-chosen PaletteColor.
+// 'released' / 'masked' are STATES, so they ride tone.
+const events: CalendarEvent[] = [
+  { id: 't1', title: 'Consultation — Priya Shah', startsAt, endsAt, color: 'violet' },
+  { id: 't3', title: 'Consultation — slot released', startsAt, endsAt, color: 'violet', tone: 'success' },
+  { id: 't4', title: 'Procedure — Mei Lin', startsAt, endsAt, color: 'amber' },
+  { id: 't5', title: 'Procedure — masked', startsAt, endsAt, color: 'amber', tone: 'danger' },
+];
+
+export function Demo() {
+  return <Calendar defaultValue={new Date()} defaultView="day" events={events} />;
+}`}
+      >
+        <Calendar defaultValue={fromToday(0)} defaultView="day" events={TYPED_EVENTS} />
       </Example>
     </DemoLayout>
   );

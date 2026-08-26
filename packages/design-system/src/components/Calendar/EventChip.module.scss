@@ -79,6 +79,29 @@
   color: var(--calendar-event-tooltip-title-fg);
 }
 
+// ── Per-event palette color (CalendarEvent.color) ──────────────────────────
+// `color` paints the surface, so the two colour axes never fight over the same
+// pixels: a non-neutral `tone` moves to a stripe on the leading edge instead of
+// being overridden. Painted with an inset box-shadow rather than a border so it
+// costs no geometry and is clipped by the existing border-radius. Both custom
+// properties are injected inline by resolveEventColor().
+.colored {
+  background: var(--calendar-event-color-bg);
+  color: var(--calendar-event-color-fg);
+  border-color: var(--calendar-event-color-fg);
+}
+
+.striped {
+  box-shadow: inset var(--calendar-event-color-stripe-width) 0 0 0
+    var(--calendar-event-stripe-color);
+
+  // The leading border takes the tone colour too, so the edge reads as ONE
+  // solid band rather than a thin sliver of tone trapped beside the palette
+  // border. Without this the stripe is legible but competes with the border at
+  // chip height.
+  border-left-color: var(--calendar-event-stripe-color);
+}
+
 // Tones — non-allDay (tinted background, strong-color foreground)
 .neutral {
   background: var(--calendar-event-chip-bg-neutral);
