@@ -67,7 +67,8 @@
 
 // Text that belongs in the accessible name but not on screen: a loading
 // chip's label (so it isn't announced as just "…"), and an unavailable
-// chip's state word (aria-disabled on a role-less span reaches nobody).
+// chip's state word (aria-disabled is exposed but carries no meaning on a
+// role-less element, so no assistive tech conveys it).
 .hiddenLabel {
   @include visually-hidden;
 }
