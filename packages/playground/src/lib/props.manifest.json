@@ -727,6 +727,13 @@
           "description": "Vertical alignment.\n- `start` / `center` (default) / `end` / `baseline`."
         },
         {
+          "name": "minWidth0",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Lets the container shrink below its content's intrinsic width\n(`min-width: 0`), so a `<Text truncate>` inside can ellipsize instead of\nbeing hard-cut by a clipping ancestor. Defaults to `false`.\n\nReach for it when this Cluster is a flex or grid ITEM of a parent that\nclips (`overflow: hidden`) — a `Calendar` `renderEvent` chip, a narrow\ntable cell, a `Card` toolbar. Without it the flex default\n(`min-width: auto`) pins the container to its content's min-content width\nand the ellipsis never appears.\n\nOpt-in rather than the default on purpose: a container that CAN shrink\nalso VOLUNTEERS for shrink, so turning it on where the content is NOT\ntruncatable (buttons, badges, icons) lets that content be clipped\ninstead. Set it on the container whose text should give way, not on one\nholding controls."
+        },
+        {
           "name": "wrap",
           "type": "boolean",
           "required": false,
@@ -4488,6 +4495,13 @@
           "required": false,
           "default": "stretch",
           "description": "Cross-axis alignment.\n- `stretch` (default) — children fill the stack's horizontal width.\n- `start` / `center` / `end` — left, center, right alignment."
+        },
+        {
+          "name": "minWidth0",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Lets the container shrink below its content's intrinsic width\n(`min-width: 0`), so a `<Text truncate>` inside can ellipsize instead of\nbeing hard-cut by a clipping ancestor. Defaults to `false`.\n\nReach for it when this Stack is a flex or grid ITEM of a parent that\nclips (`overflow: hidden`) — a `Calendar` `renderEvent` chip, a narrow\ntable cell, a `Card` toolbar. Without it the flex default\n(`min-width: auto`) pins the container to its content's min-content width\nand the ellipsis never appears.\n\nOpt-in rather than the default on purpose: a container that CAN shrink\nalso VOLUNTEERS for shrink, so turning it on where the content is NOT\ntruncatable (buttons, badges, icons) lets that content be clipped\ninstead. Set it on the container whose text should give way, not on one\nholding controls."
         }
       ]
     },

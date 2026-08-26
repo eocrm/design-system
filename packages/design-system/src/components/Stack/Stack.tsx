@@ -20,6 +20,24 @@ export interface StackProps extends HTMLAttributes<HTMLDivElement> {
    * - `start` / `center` / `end` — left, center, right alignment.
    */
   align?: StackAlign;
+  /**
+   * Lets the container shrink below its content's intrinsic width
+   * (`min-width: 0`), so a `<Text truncate>` inside can ellipsize instead of
+   * being hard-cut by a clipping ancestor. Defaults to `false`.
+   *
+   * Reach for it when this Stack is a flex or grid ITEM of a parent that
+   * clips (`overflow: hidden`) — a `Calendar` `renderEvent` chip, a narrow
+   * table cell, a `Card` toolbar. Without it the flex default
+   * (`min-width: auto`) pins the container to its content's min-content width
+   * and the ellipsis never appears.
+   *
+   * Opt-in rather than the default on purpose: a container that CAN shrink
+   * also VOLUNTEERS for shrink, so turning it on where the content is NOT
+   * truncatable (buttons, badges, icons) lets that content be clipped
+   * instead. Set it on the container whose text should give way, not on one
+   * holding controls.
+   */
+  minWidth0?: boolean;
 }
 
 const gapClass: Record<StackGap, string> = {
@@ -63,6 +81,17 @@ const alignClass: Record<StackAlign, string> = {
  *   <section>...</section>
  * </Stack>
  *
+ * @example
+ * // minWidth0 — lets a Stack shrink when it is itself an item of a squeezing
+ * // flex row, so its truncating children can ellipsize:
+ * <Cluster wrap={false} gap="sm">
+ *   <Stack gap="xs" minWidth0>
+ *     <Text weight="medium" truncate>{deal.name}</Text>
+ *     <Text size="xs" tone="muted" truncate>{deal.accountPath}</Text>
+ *   </Stack>
+ *   <Badge tone="success">{deal.stage}</Badge>
+ * </Cluster>
+ *
  * @remarks When NOT to use
  * - For tabular data — use a real `<table>` or `<Grid>`.
  * - For a list of clickable items — semantics matter. Use `<ul><li>` with
@@ -76,13 +105,19 @@ const alignClass: Record<StackAlign, string> = {
  *   Inline the child.
  */
 export const Stack = forwardRef<HTMLDivElement, StackProps>(function Stack(
-  { gap = 'md', align = 'stretch', className, ...props },
+  { gap = 'md', align = 'stretch', minWidth0 = false, className, ...props },
   ref,
 ) {
   return (
     <div
       ref={ref}
-      className={clsx(styles.stack, gapClass[gap], alignClass[align], className)}
+      className={clsx(
+        styles.stack,
+        gapClass[gap],
+        alignClass[align],
+        minWidth0 && styles.minWidth0,
+        className,
+      )}
       {...props}
     />
   );

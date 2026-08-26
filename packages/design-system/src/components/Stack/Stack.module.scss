@@ -1,5 +1,17 @@
 @use './Stack.tokens';
 
+// Opt-in, via the `minWidth0` prop. As a flex or grid ITEM a Stack keeps the
+// default `min-width: auto`, which floors it at its content's min-content size —
+// so a `<Text truncate>` inside never gets the chance to ellipsize and a clipping
+// ancestor hard-cuts it instead (issue #475).
+// Deliberately NOT on the base `.stack` class: a container that CAN shrink also
+// VOLUNTEERS for shrink, and in a `wrap={false}` row under an `overflow: hidden`
+// ancestor that clips non-truncatable content (buttons, badges) which previously
+// stayed whole. Card defaults to `overflow: hidden`, so that shape is common.
+.minWidth0 {
+  min-width: 0;
+}
+
 .stack {
   display: flex;
   flex-direction: column;

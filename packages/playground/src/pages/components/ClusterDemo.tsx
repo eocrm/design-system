@@ -3,6 +3,8 @@ import { Cluster } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
 import { Badge } from '@eocrm/design-system';
+import { Dot } from '@eocrm/design-system';
+import { Text } from '@eocrm/design-system';
 import { ButtonGroup } from '@eocrm/design-system';
 import { Kanban, List } from 'lucide-react';
 import { DemoLayout } from './DemoLayout';
@@ -31,6 +33,27 @@ function InlineClusterExample() {
     </ButtonGroup>
   );
 }
+
+// A 220px chip button with overflow: hidden — the shape Calendar's renderEvent
+// content lands in, and the reason minWidth0 exists.
+const ChipButton = ({ children }: { children: React.ReactNode }) => (
+  <button
+    type="button"
+    style={{
+      display: 'flex',
+      width: 220,
+      overflow: 'hidden',
+      padding: '4px 8px',
+      border: '1px solid var(--color-border)',
+      borderRadius: 'var(--radius-sm)',
+      background: 'var(--color-bg-subtle)',
+      font: 'inherit',
+      cursor: 'pointer',
+    }}
+  >
+    {children}
+  </button>
+);
 
 const Block = ({ children }: { children: React.ReactNode }) => (
   <div
@@ -261,6 +284,49 @@ export function Demo() {
             Revoke
           </Button>
         </Cluster>
+      </Example>
+
+      <Example
+        title="minWidth0 — truncating inside a clipping parent"
+        description="A Cluster is a flex ITEM of the chip button here, so by default min-width: auto pins it to its content's min-content width and the title is hard-cut mid-word. minWidth0 lets it shrink so the Text truncate can ellipsize. It is opt-in because a container that can shrink also volunteers for shrink — turning it on around buttons or badges would clip those instead."
+        code={`import { Cluster, Dot, Text } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    // A 220px chip <button> with overflow: hidden.
+    <Cluster as="span" gap="xs" align="center" wrap={false} minWidth0>
+      <Dot color="violet" />
+      <Text as="span" size="sm" truncate>
+        A very long appointment title that will not fit
+      </Text>
+    </Cluster>
+  );
+}`}
+      >
+        <Stack gap="sm">
+          <Text size="xs" tone="muted">
+            With minWidth0 — ellipsizes:
+          </Text>
+          <ChipButton>
+            <Cluster as="span" gap="xs" align="center" wrap={false} minWidth0>
+              <Dot color="violet" />
+              <Text as="span" size="sm" truncate>
+                A very long appointment title that will not fit
+              </Text>
+            </Cluster>
+          </ChipButton>
+          <Text size="xs" tone="muted">
+            Without it — hard-clipped mid-word:
+          </Text>
+          <ChipButton>
+            <Cluster as="span" gap="xs" align="center" wrap={false}>
+              <Dot color="violet" />
+              <Text as="span" size="sm" truncate>
+                A very long appointment title that will not fit
+              </Text>
+            </Cluster>
+          </ChipButton>
+        </Stack>
       </Example>
     </DemoLayout>
   );

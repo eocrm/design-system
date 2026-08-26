@@ -52,6 +52,24 @@ export interface ClusterProps extends HTMLAttributes<HTMLElement> {
    */
   align?: ClusterAlign;
   /**
+   * Lets the container shrink below its content's intrinsic width
+   * (`min-width: 0`), so a `<Text truncate>` inside can ellipsize instead of
+   * being hard-cut by a clipping ancestor. Defaults to `false`.
+   *
+   * Reach for it when this Cluster is a flex or grid ITEM of a parent that
+   * clips (`overflow: hidden`) — a `Calendar` `renderEvent` chip, a narrow
+   * table cell, a `Card` toolbar. Without it the flex default
+   * (`min-width: auto`) pins the container to its content's min-content width
+   * and the ellipsis never appears.
+   *
+   * Opt-in rather than the default on purpose: a container that CAN shrink
+   * also VOLUNTEERS for shrink, so turning it on where the content is NOT
+   * truncatable (buttons, badges, icons) lets that content be clipped
+   * instead. Set it on the container whose text should give way, not on one
+   * holding controls.
+   */
+  minWidth0?: boolean;
+  /**
    * Whether children wrap to additional lines when the container is narrow.
    * - `true` (default) — natural for toolbars and tag lists.
    * - `false` — use sparingly, when overflow is preferable to wrapping
@@ -121,6 +139,20 @@ const alignClass: Record<ClusterAlign, string> = {
  *   </Cluster>
  * </ButtonGroup.Item>
  *
+ * @example
+ * // minWidth0 — custom Calendar chip content that ellipsizes instead of
+ * // hard-clipping. The chip is a <button> with overflow: hidden, so the
+ * // Cluster is a flex item and needs to be allowed to shrink:
+ * <Calendar
+ *   events={events}
+ *   renderEvent={(event) => (
+ *     <Cluster as="span" gap="xs" align="center" wrap={false} minWidth0>
+ *       <Dot color="violet" />
+ *       <Text as="span" size="inherit" truncate>{event.title}</Text>
+ *     </Cluster>
+ *   )}
+ * />
+ *
  * @remarks When NOT to use
  * - For aligned columns of equal width — use `<Grid>`. Cluster wraps
  *   unpredictably at narrow widths and isn't a column system.
@@ -132,12 +164,24 @@ const alignClass: Record<ClusterAlign, string> = {
  * - ❌ Inline `style={{ marginLeft: 'auto' }}` on a child to push it right.
  *   Use `justify="between"` (with a sibling on the left) or split into two
  *   Clusters in the parent.
+ * - ❌ `minWidth0` on a Cluster holding buttons or badges. It lets the
+ *   container shrink, so non-truncatable content gets clipped instead. Use it
+ *   on the container whose TEXT should give way.
  * - ❌ `as="span"` as a general styling hook. Reach for it only when block
  *   content is invalid HTML (inside `<button>`, `<a>`, `<label>`); in normal
  *   flow, the default block `div` is what you want.
  */
 export const Cluster = forwardRef<HTMLElement, ClusterProps>(function Cluster(
-  { as = 'div', gap = 'md', justify = 'start', align = 'center', wrap = true, className, ...props },
+  {
+    as = 'div',
+    gap = 'md',
+    justify = 'start',
+    align = 'center',
+    wrap = true,
+    minWidth0 = false,
+    className,
+    ...props
+  },
   ref,
 ) {
   const Component = as;
@@ -158,6 +202,7 @@ export const Cluster = forwardRef<HTMLElement, ClusterProps>(function Cluster(
         justifyClass[justify],
         alignClass[align],
         wrap && styles.wrap,
+        minWidth0 && styles.minWidth0,
         className,
       )}
       {...props}

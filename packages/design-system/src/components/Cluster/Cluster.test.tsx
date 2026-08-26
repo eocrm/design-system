@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { render, screen } from '@testing-library/react';
 import { createRef } from 'react';
 import { Cluster, type ClusterAlign, type ClusterGap, type ClusterJustify } from './Cluster';
@@ -122,5 +124,35 @@ describe('Cluster', () => {
     expect(el.className).toMatch(/gapXs/);
     expect(el.className).toMatch(/justifyBetween/);
     expect(el.className).toMatch(/external/);
+  });
+
+  it('applies the minWidth0 class only when the prop is set', () => {
+    const { container: off } = render(<Cluster>x</Cluster>);
+    const { container: on } = render(<Cluster minWidth0>x</Cluster>);
+    expect((off.firstChild as HTMLElement).className).not.toMatch(/minWidth0/);
+    expect((on.firstChild as HTMLElement).className).toMatch(/minWidth0/);
+  });
+
+  it('keeps other variant classes and className merging with minWidth0', () => {
+    const { container } = render(
+      <Cluster minWidth0 gap="xs" className="external">
+        x
+      </Cluster>,
+    );
+    const cls = (container.firstChild as HTMLElement).className;
+    expect(cls).toMatch(/minWidth0/);
+    expect(cls).toMatch(/gapXs/);
+    expect(cls).toMatch(/external/);
+  });
+
+  it('declares min-width: 0 on the minWidth0 class, and NOT on the base class', () => {
+    // jsdom computes no layout, so the stylesheet is the guard. Both halves
+    // matter: without the declaration a `<Text truncate>` inside can never
+    // ellipsize (#475); with it on the BASE class every Cluster volunteers for
+    // shrink and non-truncatable content gets clipped instead.
+    const scss = readFileSync(resolve(__dirname, 'Cluster.module.scss'), 'utf8');
+    const ruleFor = (sel: string) => scss.match(new RegExp(`\\${sel}\\s*\\{[^}]*\\}`))?.[0];
+    expect(ruleFor('.minWidth0')).toMatch(/min-width:\s*0(?:px)?\s*;/);
+    expect(ruleFor('.cluster')).not.toMatch(/min-width:/);
   });
 });
