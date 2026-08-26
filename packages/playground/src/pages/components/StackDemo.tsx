@@ -203,17 +203,38 @@ export function Demo() {
         description="A Stack is a column, so its own min-width only bites when the Stack is itself an item of a squeezing flex row. minWidth0 lets it shrink there so its Text truncate children ellipsize instead of the whole Stack being pinned to its widest line and hard-cut. Same opt-in trade-off as Cluster."
         code={`import { Stack, Text } from '@eocrm/design-system';
 
+// A Stack only needs minWidth0 when it is an item of a squeezing ROW.
+const ClippingRow = ({ children }: { children: React.ReactNode }) => (
+  <div style={{ display: 'flex', width: 260, overflow: 'hidden', gap: 8 }}>{children}</div>
+);
+
 export function Demo() {
   return (
-    // A 260px row with overflow: hidden.
-    <Stack gap="xs" minWidth0>
-      <Text size="sm" weight="medium" truncate>
-        Quarterly business review with the Northwind account team
-      </Text>
-      <Text size="xs" tone="muted" truncate>
-        Attendees: Priya Shah, Sam Okonkwo, Mei Lin, Yusuf Demir
-      </Text>
-    </Stack>
+    <>
+      {/* With minWidth0 — both lines ellipsize. */}
+      <ClippingRow>
+        <Stack gap="xs" minWidth0>
+          <Text size="sm" weight="medium" truncate>
+            Quarterly business review with the Northwind account team
+          </Text>
+          <Text size="xs" tone="muted" truncate>
+            Attendees: Priya Shah, Sam Okonkwo, Mei Lin, Yusuf Demir
+          </Text>
+        </Stack>
+      </ClippingRow>
+
+      {/* Without it — the Stack is floored at its widest line and overflows. */}
+      <ClippingRow>
+        <Stack gap="xs">
+          <Text size="sm" weight="medium" truncate>
+            Quarterly business review with the Northwind account team
+          </Text>
+          <Text size="xs" tone="muted" truncate>
+            Attendees: Priya Shah, Sam Okonkwo, Mei Lin, Yusuf Demir
+          </Text>
+        </Stack>
+      </ClippingRow>
+    </>
   );
 }`}
       >

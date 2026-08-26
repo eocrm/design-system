@@ -48,7 +48,6 @@ const ChipButton = ({ children }: { children: React.ReactNode }) => (
       borderRadius: 'var(--radius-sm)',
       background: 'var(--color-bg-subtle)',
       font: 'inherit',
-      cursor: 'pointer',
     }}
   >
     {children}
@@ -291,15 +290,36 @@ export function Demo() {
         description="A Cluster is a flex ITEM of the chip button here, so by default min-width: auto pins it to its content's min-content width and the title is hard-cut mid-word. minWidth0 lets it shrink so the Text truncate can ellipsize. It is opt-in because a container that can shrink also volunteers for shrink — turning it on around buttons or badges would clip those instead."
         code={`import { Cluster, Dot, Text } from '@eocrm/design-system';
 
+// The clipping ancestor is the whole point: outside one, minWidth0 is a no-op.
+const ChipButton = ({ children }: { children: React.ReactNode }) => (
+  <button type="button" style={{ display: 'flex', width: 220, overflow: 'hidden' }}>
+    {children}
+  </button>
+);
+
 export function Demo() {
   return (
-    // A 220px chip <button> with overflow: hidden.
-    <Cluster as="span" gap="xs" align="center" wrap={false} minWidth0>
-      <Dot color="violet" />
-      <Text as="span" size="sm" truncate>
-        A very long appointment title that will not fit
-      </Text>
-    </Cluster>
+    <>
+      {/* With minWidth0 — the Cluster shrinks, so the Text can ellipsize. */}
+      <ChipButton>
+        <Cluster as="span" gap="xs" align="center" wrap={false} minWidth0>
+          <Dot color="violet" />
+          <Text as="span" size="sm" truncate>
+            A very long appointment title that will not fit
+          </Text>
+        </Cluster>
+      </ChipButton>
+
+      {/* Without it — min-width: auto floors the Cluster, so it is hard-cut. */}
+      <ChipButton>
+        <Cluster as="span" gap="xs" align="center" wrap={false}>
+          <Dot color="violet" />
+          <Text as="span" size="sm" truncate>
+            A very long appointment title that will not fit
+          </Text>
+        </Cluster>
+      </ChipButton>
+    </>
   );
 }`}
       >

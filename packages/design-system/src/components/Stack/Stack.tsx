@@ -42,6 +42,11 @@ export interface StackProps extends HTMLAttributes<HTMLDivElement> {
    * instead. Set it on the container whose text should give way, not on one
    * holding controls.
    *
+   * Related: `<Constrain flex="grow">` applies the same `min-width: 0` but
+   * also forces `flex: 1 1 0`, and renders a `<div>` — reach for this prop
+   * when you want only the shrink permission, or when you are inside a
+   * `<button>`/`<a>`/`<label>` where a `<div>` is invalid HTML.
+   *
    * @default false
    */
   minWidth0?: boolean;

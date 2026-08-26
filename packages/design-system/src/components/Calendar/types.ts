@@ -305,6 +305,23 @@ export interface RenderEventContext {
  * tooltip, and tone background — return content with inline `background` /
  * `style` to override colors.
  *
+ * Note on truncation: the chip is `display: flex; overflow: hidden`, and the
+ * default title works because it is a DIRECT child of it. Content that needs a
+ * leading element (a `Dot`, an icon) must be wrapped, and the only wrapper
+ * valid inside the chip's `<button>` is `<Cluster as="span">` — which, as a
+ * flex item, is floored at its content's min-content width unless you set
+ * `minWidth0`. Without it a long title is hard-cut mid-word instead of
+ * ellipsizing:
+ *
+ * ```tsx
+ * renderEvent={(event) => (
+ *   <Cluster as="span" gap="xs" align="center" wrap={false} minWidth0>
+ *     <Dot color="violet" />
+ *     <Text as="span" size="inherit" truncate>{event.title}</Text>
+ *   </Cluster>
+ * )}
+ * ```
+ *
  * Note on layout: for hour-grid blocks shorter than ~30px tall (`isShort`),
  * the wrapping `<button>` switches from `flex-direction: column` to `row`
  * to keep the start time visible alongside the title. Author your inner

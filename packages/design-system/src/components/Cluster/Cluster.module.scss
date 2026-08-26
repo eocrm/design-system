@@ -11,9 +11,12 @@
 // ancestor hard-cuts it instead (issue #475).
 // Deliberately NOT on the base `.cluster` class: that would let every Cluster in the
 // codebase shrink below its content, changing layout for existing consumers. It
-// was tried and reverted — measured, a between-justified `wrap={false}` Cluster of
-// filter buttons inside a Card (which defaults to `overflow: hidden`) lost 22px off
-// its trailing button that stayed whole before.
+// was tried and reverted. Measured on the playground Tenants mockup, whose inner
+// filter Cluster sits in a between-justified `wrap={false}` row inside a Card
+// (Card defaults to `overflow: hidden`): forcing `min-width: 0` shrinks that inner
+// Cluster by ~3px at 1920 rising to ~46px at 820, and the Card then clips up to
+// 34px off the trailing button. The buttons themselves never shrink — they
+// overflow the shrunken container and the Card cuts them.
 // Declared AFTER the base rule on purpose: equal specificity, so source order is
 // what guarantees this wins if the base ever gains a competing `min-width`.
 .minWidth0 {
