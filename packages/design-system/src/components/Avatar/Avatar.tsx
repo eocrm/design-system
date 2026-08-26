@@ -38,7 +38,7 @@ export interface AvatarProps extends HTMLAttributes<HTMLSpanElement> {
    * Presence dot in the bottom-right.
    * - `'online'`  — green.
    * - `'busy'`    — red.
-   * - `'away'`    — amber.
+   * - `'away'`    — amber (the categorical amber, dark enough to read at dot size).
    * - `'offline'` — gray.
    * Omit to render no dot at all.
    */

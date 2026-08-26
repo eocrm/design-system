@@ -153,6 +153,19 @@ const SAMPLE_EVENTS: CalendarEvent[] = [
     tone: 'success',
     allDay: true,
   },
+  // A tone-only all-day warning: the one surface that keeps the AMBER fill and
+  // pairs it with dark text (6.60:1). White on that amber was 2.14:1. Kept in
+  // the live dataset on purpose — the previous demo events for this case were
+  // pinned to a fixed 2026 month and so never rendered, which meant the one
+  // design decision here was the one nobody could look at.
+  {
+    id: 'maint',
+    title: 'Maintenance window',
+    startsAt: fromToday(4),
+    endsAt: fromToday(5),
+    tone: 'warning',
+    allDay: true,
+  },
   // Renewals & risk
   { id: 'rn1', title: 'Renewal: Beta Co.', startsAt: fromToday(12, 9, 0), tone: 'danger' },
   { id: 'rn2', title: 'Renewal: Hooli', startsAt: fromToday(14, 13, 0), tone: 'danger' },

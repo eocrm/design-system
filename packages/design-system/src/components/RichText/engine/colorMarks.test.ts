@@ -25,7 +25,9 @@ describe('colorMarks', () => {
     expect(bgColorVar('red')).toBe('var(--color-danger-bg-subtle)');
     expect(textColorVar('green')).toBe('var(--color-success)');
     expect(bgColorVar('green')).toBe('var(--color-success-bg-subtle)');
-    expect(textColorVar('amber')).toBe('var(--color-warning)');
+    // The strong variant, not --color-warning: the bare amber is 2.14:1 as text
+    // on the editor surface. red/green/blue are legible as text; amber was not.
+    expect(textColorVar('amber')).toBe('var(--color-warning-strong)');
     expect(bgColorVar('amber')).toBe('var(--color-warning-bg-subtle)');
     expect(textColorVar('blue')).toBe('var(--color-accent)');
     expect(bgColorVar('blue')).toBe('var(--color-accent-bg-subtle)');

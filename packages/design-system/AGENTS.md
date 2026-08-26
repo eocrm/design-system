@@ -3018,7 +3018,7 @@ rendering existing reaction counts (the consumer builds that display).
 ```tsx
 <Progress value={45} />                            // 45% determinate
 <Progress value={67} label />                      // shows "67%" on the right
-<Progress value={85} tone="warning" label />       // amber fill (state coding)
+<Progress value={85} tone="warning" label />       // dark-amber fill (state coding)
 <Progress />                                       // value omitted = indeterminate slide
 <Progress value={3} max={10} label={`3 of 10`} />  // custom label slot
 ```

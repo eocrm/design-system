@@ -48,7 +48,7 @@ export interface ProgressProps extends Omit<HTMLAttributes<HTMLDivElement>, 'rol
    * because state-color semantics don't apply to an unknown total.
    * - `default` — `--color-accent`
    * - `success` — `--color-success`
-   * - `warning` — `--color-warning`
+   * - `warning` — `--color-warning-strong`
    * - `danger` — `--color-danger`
    */
   tone?: ProgressTone;

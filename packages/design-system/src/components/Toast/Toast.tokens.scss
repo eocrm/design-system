@@ -36,8 +36,11 @@
 
   --toast-bg-warning: var(--color-bg);
   --toast-fg-warning: var(--color-fg);
-  --toast-icon-warning: var(--color-warning);
-  --toast-border-color-warning: var(--color-warning);
+
+  // warning uses --color-warning-strong: #ff991f measures 2.14:1 here, below
+  // WCAG AA for text and below 1.4.11's 3:1 for a graphical object. See #481.
+  --toast-icon-warning: var(--color-warning-strong);
+  --toast-border-color-warning: var(--color-warning-strong);
 
   --toast-bg-danger: var(--color-bg);
   --toast-fg-danger: var(--color-fg);

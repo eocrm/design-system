@@ -40,8 +40,13 @@
   --badge-stripe-fg-success: var(--color-success);
   --badge-stripe-border-color-success: var(--color-success);
   --badge-stripe-bg-warning: var(--color-warning-bg-subtle);
-  --badge-stripe-fg-warning: var(--color-warning);
-  --badge-stripe-border-color-warning: var(--color-warning);
+
+  // warning uses --color-warning-strong, not --color-warning: #ff991f measures
+  // 2.01:1 on the light tint (and 2.14:1 as a border on --color-bg), below WCAG AA
+  // for text and below 1.4.11's 3:1 for a graphical object. The strong variant
+  // clears both. Dark is unaffected — the two resolve to the same value there.
+  --badge-stripe-fg-warning: var(--color-warning-strong);
+  --badge-stripe-border-color-warning: var(--color-warning-strong);
   --badge-stripe-bg-danger: var(--color-danger-bg-subtle);
   --badge-stripe-fg-danger: var(--color-danger);
   --badge-stripe-border-color-danger: var(--color-danger);

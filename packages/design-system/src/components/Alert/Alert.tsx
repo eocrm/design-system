@@ -10,7 +10,7 @@ import styles from './Alert.module.scss';
  *
  * - `'info'` — blue accent. Neutral updates ("Synced 5 minutes ago").
  * - `'success'` — green accent. Confirmations ("Changes saved").
- * - `'warning'` — orange accent. Non-blocking heads-up ("Storage at 85%").
+ * - `'warning'` — dark amber accent. Non-blocking heads-up ("Storage at 85%").
  * - `'error'` — red accent. Failures. ALSO sets `role="alert"` (assertive); the
  *   other tones use `role="status"` (polite).
  */

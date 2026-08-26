@@ -68,7 +68,12 @@
   --calendar-event-chip-bg-success: var(--color-success-bg-subtle);
   --calendar-event-chip-fg-success: var(--color-success);
   --calendar-event-chip-bg-warning: var(--color-warning-bg-subtle);
-  --calendar-event-chip-fg-warning: var(--color-warning);
+
+  // warning uses --color-warning-strong, not --color-warning: #ff991f measures
+  // 2.01:1 on the light tint (and 2.14:1 as a dot on --color-bg), below WCAG AA
+  // for text and below 1.4.11's 3:1 for a graphical object. The strong variant
+  // clears both. Dark is unaffected — the two resolve to the same value there.
+  --calendar-event-chip-fg-warning: var(--color-warning-strong);
   --calendar-event-chip-bg-danger: var(--color-danger-bg-subtle);
   --calendar-event-chip-fg-danger: var(--color-danger);
 
@@ -79,7 +84,19 @@
   --calendar-event-chip-all-day-fg-accent: var(--color-accent-fg);
   --calendar-event-chip-all-day-bg-success: var(--color-success);
   --calendar-event-chip-all-day-fg-success: var(--color-success-fg);
+
+  // Keeps the AMBER fill. The failing pair here was white-on-amber (2.14:1), and
+  // the fix belongs on the text: --color-warning-fg is now #172b4d, giving
+  // 6.60:1. Darkening the FILL also passed (5.95:1) but read as chocolate brown
+  // — on a solid chip the hue IS the caution signal, so this keeps it. warning
+  // is the only tone whose all-day pair failed; accent/success/danger are all
+  // light enough for white text at 4.55-6.82:1.
   --calendar-event-chip-all-day-bg-warning: var(--color-warning);
+
+  // --color-warning-fg is calibrated against --color-warning (6.60:1) and ONLY
+  // that: on --color-warning-strong it measures 2.37:1. Pairing the two
+  // 'warning' tokens looks right and is not — keep this fg with the amber fill
+  // above.
   --calendar-event-chip-all-day-fg-warning: var(--color-warning-fg);
   --calendar-event-chip-all-day-bg-danger: var(--color-danger);
   --calendar-event-chip-all-day-fg-danger: var(--color-danger-fg);
@@ -139,7 +156,9 @@
   --calendar-timed-event-bg-success: var(--color-success-bg-subtle);
   --calendar-timed-event-fg-success: var(--color-success);
   --calendar-timed-event-bg-warning: var(--color-warning-bg-subtle);
-  --calendar-timed-event-fg-warning: var(--color-warning);
+
+  // See the chip note above — same pair, same failure.
+  --calendar-timed-event-fg-warning: var(--color-warning-strong);
   --calendar-timed-event-bg-danger: var(--color-danger-bg-subtle);
   --calendar-timed-event-fg-danger: var(--color-danger);
 
@@ -221,6 +240,8 @@
   --calendar-agenda-tone-neutral: var(--color-border-strong);
   --calendar-agenda-tone-accent: var(--color-accent);
   --calendar-agenda-tone-success: var(--color-success);
-  --calendar-agenda-tone-warning: var(--color-warning);
+
+  // The agenda tone dot is a graphical object on --color-bg: 2.14:1 -> 5.95:1.
+  --calendar-agenda-tone-warning: var(--color-warning-strong);
   --calendar-agenda-tone-danger: var(--color-danger);
 }

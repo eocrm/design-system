@@ -106,7 +106,7 @@
   --color-palette-violet-fg: #4030a6;
   --color-palette-yellow-bg: #fffacc;
   --color-palette-yellow-fg: #6b5f00;
-  --color-presence-away: var(--color-warning);
+  --color-presence-away: var(--color-palette-amber-fg);
   --color-presence-busy: var(--color-danger);
   --color-presence-offline: var(--color-fg-disabled);
   --color-presence-online: var(--color-success);
@@ -127,7 +127,7 @@
   --color-table-row-fg-selected: var(--color-fg);
   --color-warning: #ff991f;
   --color-warning-bg-subtle: #fff7ed;
-  --color-warning-fg: #ffffff;
+  --color-warning-fg: #172b4d;
   --color-warning-strong: #a54800;
   --document-background: var(--color-bg-subtle);
   --font-family-mono: ui-monospace, 'SF Mono', Menlo, Monaco, Consolas, monospace;
