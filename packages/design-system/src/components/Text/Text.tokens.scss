@@ -29,5 +29,8 @@
   --text-fg-accent: var(--color-accent);
   --text-fg-danger: var(--color-danger);
   --text-fg-success: var(--color-success);
-  --text-fg-warning: var(--color-warning);
+
+  // warning uses --color-warning-strong: #ff991f measures 2.14:1 here, below
+  // WCAG AA for text and below 1.4.11's 3:1 for a graphical object. See #481.
+  --text-fg-warning: var(--color-warning-strong);
 }

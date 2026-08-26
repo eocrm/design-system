@@ -26,7 +26,7 @@ const DARK = readFileSync(
 );
 
 function tokenValue(name: string, source: string): string {
-  const match = source.match(new RegExp(`${name}:\\s*(#[0-9a-fA-F]{3,8})\\s*;`));
+  const match = source.match(new RegExp(`${name}:\\s*(#[0-9a-fA-F]{3}|#[0-9a-fA-F]{6})\\s*;`));
   if (!match) throw new Error(`${name} is not a literal colour in the generated output`);
   return match[1];
 }
@@ -49,10 +49,11 @@ function contrast(fg: string, bg: string): number {
 type Pair = [label: string, fg: string, bg: string, minimum: number];
 
 /**
- * Every pair here is one a component genuinely renders. `-strong` entries are
- * the ones this test was written for; the rest are their siblings, included so
- * the whole tone scale is held to the same bar rather than just the one that
- * failed.
+ * Every pair here is one a component genuinely renders. The `-strong` entries
+ * are what this file was written for; the two body-text pairs are the baseline
+ * the rest of the UI rests on. The other semantic tones are deliberately NOT
+ * here: two of them sit just under AA and live in `BELOW_AA_TEXT` below, and
+ * `info` passes comfortably in both themes.
  */
 const PAIRS: Pair[] = [
   // The regression: warning as a foreground on its own subtle tint.
@@ -86,15 +87,13 @@ describe.each([
   ['dark', DARK],
 ])('shipped colour pairs clear WCAG in %s theme', (_theme, source) => {
   it.each(PAIRS)('%s', (_label, fgName, bgName, minimum) => {
-    // Dark overrides only some tokens; fall back to the light value for the rest.
-    const read = (name: string) => {
-      try {
-        return tokenValue(name, source);
-      } catch {
-        return tokenValue(name, TOKENS);
-      }
-    };
-    expect(contrast(read(fgName), read(bgName))).toBeGreaterThanOrEqual(minimum);
+    // No light-value fallback, on purpose. Every token in PAIRS is overridden in
+    // dark today, so a fallback is dead code — and if one ever stopped being
+    // overridden, falling back would compare two LIGHT values and report the
+    // dark theme green having checked nothing. Let tokenValue throw instead.
+    expect(contrast(tokenValue(fgName, source), tokenValue(bgName, source))).toBeGreaterThanOrEqual(
+      minimum,
+    );
   });
 });
 
@@ -122,8 +121,14 @@ describe('known sub-AA pairs are pinned so they cannot get worse (#484)', () => 
 /**
  * The contrast assertions above check the PRIMITIVES. They do not notice a
  * component pointing its own slot back at `--color-warning`, which is how the
- * bug got in — so pin the slots too. Verified: reverting any one of these to
- * `--color-warning` leaves every other test in the repo green.
+ * bug got in — so pin the slots too.
+ *
+ * Three of these were ALREADY covered elsewhere and are listed only so the set
+ * reads as complete: `--calendar-event-stripe-warning` is asserted by
+ * `Calendar/eventColor.test.tsx`, and the two `--badge-stripe-*` values are
+ * pinned by the design-tokens contract fixture. Every OTHER slot below had no
+ * gate at all — reverting one left the whole suite green, which is how this bug
+ * got in and stayed in.
  */
 describe('components keep their warning slots on the strong variant', () => {
   const SLOTS: [file: string, tokens: string[]][] = [
@@ -144,6 +149,19 @@ describe('components keep their warning slots on the strong variant', () => {
     [
       '../components/Alert/Alert.tokens.scss',
       ['--alert-icon-warning', '--alert-border-color-warning'],
+    ],
+    [
+      '../components/Toast/Toast.tokens.scss',
+      ['--toast-icon-warning', '--toast-border-color-warning'],
+    ],
+    ['../components/Text/Text.tokens.scss', ['--text-fg-warning']],
+    ['../components/Card/Card.tokens.scss', ['--card-stripe-color-warning']],
+    ['../components/TopBar/TopBar.tokens.scss', ['--topbar-indicator-bg-warning']],
+    ['../components/PasswordInput/PasswordInput.tokens.scss', ['--password-input-warning-icon-fg']],
+    ['../components/LiquidEditor/LiquidEditor.tokens.scss', ['--liquid-editor-token-number']],
+    [
+      '../components/PasswordStrengthMeter/PasswordStrengthMeter.tokens.scss',
+      ['--password-strength-meter-label-fg-score-2', '--password-strength-meter-label-fg-score-3'],
     ],
   ];
 

@@ -42,7 +42,7 @@
   --badge-stripe-bg-warning: var(--color-warning-bg-subtle);
 
   // warning uses --color-warning-strong, not --color-warning: #ff991f measures
-  // 2.01:1 on the light tint (and 2.14:1 as a dot on --color-bg), below WCAG AA
+  // 2.01:1 on the light tint (and 2.14:1 as a border on --color-bg), below WCAG AA
   // for text and below 1.4.11's 3:1 for a graphical object. The strong variant
   // clears both. Dark is unaffected — the two resolve to the same value there.
   --badge-stripe-fg-warning: var(--color-warning-strong);

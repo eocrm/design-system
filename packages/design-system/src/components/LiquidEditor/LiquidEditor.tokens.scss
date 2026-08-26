@@ -19,7 +19,10 @@
   --liquid-editor-token-tag: var(--color-danger);
   --liquid-editor-token-filter: var(--color-info);
   --liquid-editor-token-string: var(--color-success);
-  --liquid-editor-token-number: var(--color-warning);
+
+  // warning uses --color-warning-strong: #ff991f measures 2.14:1 here, below
+  // WCAG AA for text and below 1.4.11's 3:1 for a graphical object. See #481.
+  --liquid-editor-token-number: var(--color-warning-strong);
   --liquid-editor-token-keyword: var(--color-danger);
   --liquid-editor-token-unknown: var(--color-danger);
   --liquid-editor-token-unknown-underline: var(--color-danger);

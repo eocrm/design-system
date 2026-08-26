@@ -35,7 +35,10 @@
   --topbar-indicator-offset-top: 6px;
   --topbar-indicator-offset-right: 6px;
   --topbar-indicator-bg-danger: var(--color-danger);
-  --topbar-indicator-bg-warning: var(--color-warning);
+
+  // warning uses --color-warning-strong: #ff991f measures 2.14:1 here, below
+  // WCAG AA for text and below 1.4.11's 3:1 for a graphical object. See #481.
+  --topbar-indicator-bg-warning: var(--color-warning-strong);
   --topbar-indicator-bg-info: var(--color-info);
   --topbar-indicator-bg-accent: var(--color-accent);
 
