@@ -107,7 +107,12 @@
   padding: var(--calendar-agenda-row-padding);
   border: none;
   border-radius: var(--calendar-agenda-row-radius);
-  background: transparent;
+
+  // background-COLOR, not the shorthand: this is (0,1,0), the same as
+  // `.striped`, so the shorthand would reset the band's background-image and
+  // lose only by source order. The UA button style needs background-color reset
+  // anyway; background-image is already none.
+  background-color: transparent;
   font-family: inherit;
   font-size: var(--calendar-agenda-row-font-size);
   color: var(--calendar-agenda-row-fg);

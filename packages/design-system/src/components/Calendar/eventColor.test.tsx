@@ -202,6 +202,28 @@ describe('stripe stylesheet invariants', () => {
     expect(hover).not.toMatch(/^\s*background:/m);
   });
 
+  it('declares every tone the resolver can name', () => {
+    // resolveEventColor builds the property name by template literal, so a
+    // deleted or renamed token makes `var()` resolve to nothing, the gradient
+    // invalid at computed-value time, and background-image fall back to `none` —
+    // the band silently disappears for that tone with nothing failing.
+    const tokens = readFileSync(resolve(__dirname, 'Calendar.tokens.scss'), 'utf8');
+    for (const tone of ['accent', 'success', 'warning', 'danger']) {
+      expect(tokens, `--calendar-event-stripe-${tone} is declared`).toMatch(
+        new RegExp(`--calendar-event-stripe-${tone}:\\s*var\\(`),
+      );
+    }
+  });
+
+  it('never lets a background shorthand into .striped itself', () => {
+    // The shorthand resets background-image — including when written after the
+    // gradient in the same rule.
+    for (const file of ['EventChip', 'TimedEvent', 'AgendaView']) {
+      const striped = scssOf(file).match(/\.striped\s*\{[^}]*\}/)?.[0];
+      expect(striped).not.toMatch(/^\s*background:/m);
+    }
+  });
+
   it('never paints the warning band with --color-warning', () => {
     // #ff991f measures 1.52–2.01:1 against all 30 palette backgrounds in light
     // theme — below the 3:1 WCAG 1.4.11 bar for a graphical object, so a 3px

@@ -120,10 +120,11 @@
     transparent var(--calendar-event-color-stripe-width)
   );
 
-  // The 1px border sits at 0–1px of the border box and the gradient covers
-  // 0–3px, so painting the border with the same colour makes the leading edge
-  // read as ONE solid band instead of a sliver of tone beside the palette
-  // border. Measured — without it the stripe is legible but competes.
+  // background-origin defaults to padding-box, so the gradient covers 1–4px of
+  // the border box while the 1px border sits at 0–1px. Painting the border the
+  // same colour makes the leading edge read as ONE solid 4px band instead of a
+  // sliver of tone beside the palette border. Measured — without it the band is
+  // legible but competes.
   border-left-color: var(--calendar-event-stripe-color);
 }
 
