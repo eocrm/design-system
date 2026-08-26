@@ -1814,7 +1814,7 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Entity missing/no access: muted styling. With a link target (`href`/`as`)\nthe chip remains a real link — unavailable is a visual state, not a\ndisabling one. Only a target-less chip (bare span) becomes non-interactive\nwith aria-disabled."
+          "description": "Entity missing/no access: muted styling. With a link target (`href`/`as`)\nthe chip remains a real link — unavailable is a visual state, not a\ndisabling one. Only a target-less chip (bare span) becomes non-interactive\nwith aria-disabled.\n\nThe state is also announced: a localized word is rendered visually hidden\ninside the chip, so the accessible name reads \"Appointment (unavailable)\"\nrather than just \"Appointment\". That matters because the canonical use is\nto withhold the entity's name and show a TYPE word instead — without the\nstate, a masked reference is indistinguishable from a real entity that\nhappens to be called \"Appointment\". Colour alone could not carry it, and\n`aria-disabled` on a role-less span is not exposed by screen readers.\n\nOverride the word via the i18n provider (`entityChip.unavailable`); it\ncarries its own punctuation so a locale can choose different marks."
         },
         {
           "name": "as",
@@ -5294,7 +5294,7 @@
     "CalendarBackgroundInterval": "{ startsAt: Date; endsAt: Date; resourceId?: string; tone?: CalendarBackgroundTone }",
     "CalendarDropCandidate": "({ mode: \"move\"; } & CalendarEventMove) | ({ mode: \"resize\"; resourceId?: string; } & CalendarEventResize)",
     "CalendarDropResult": "boolean | void | Promise<boolean | void>",
-    "CalendarEvent": "{ id: string; resourceId?: string; title: string; startsAt: Date; endsAt?: Date; tone?: CalendarEventTone; allDay?: boolean }",
+    "CalendarEvent": "{ id: string; resourceId?: string; title: string; startsAt: Date; endsAt?: Date; tone?: CalendarEventTone; color?: PaletteColor; allDay?: boolean }",
     "CalendarEventMove": "{ startsAt: Date; endsAt: Date; resourceId?: string }",
     "CalendarEventResize": "{ startsAt: Date; endsAt: Date }",
     "CalendarResource": "{ id: string; label: string }",

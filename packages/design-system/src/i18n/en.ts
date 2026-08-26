@@ -281,6 +281,9 @@ export const en: Messages = {
   filterChip: {
     dismiss: 'Remove filter',
   },
+  entityChip: {
+    unavailable: '(unavailable)',
+  },
   statusMenu: {
     changeStatus: 'Change status',
   },

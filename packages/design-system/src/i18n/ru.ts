@@ -283,6 +283,9 @@ export const ru: Messages = {
   filterChip: {
     dismiss: 'Удалить фильтр',
   },
+  entityChip: {
+    unavailable: '(недоступно)',
+  },
   statusMenu: {
     changeStatus: 'Изменить статус',
   },

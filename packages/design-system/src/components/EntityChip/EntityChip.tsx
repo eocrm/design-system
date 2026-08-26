@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import clsx from 'clsx';
+import { useTranslation } from '../../i18n/useTranslation';
 import { paletteTokens, type PaletteColor } from '../../palette';
 import { resolveStatusColor, type StatusCategory } from '../_internal/statusColor';
 import styles from './EntityChip.module.scss';
@@ -64,6 +65,17 @@ interface EntityChipOwnProps {
    * the chip remains a real link — unavailable is a visual state, not a
    * disabling one. Only a target-less chip (bare span) becomes non-interactive
    * with aria-disabled.
+   *
+   * The state is also announced: a localized word is rendered visually hidden
+   * inside the chip, so the accessible name reads "Appointment (unavailable)"
+   * rather than just "Appointment". That matters because the canonical use is
+   * to withhold the entity's name and show a TYPE word instead — without the
+   * state, a masked reference is indistinguishable from a real entity that
+   * happens to be called "Appointment". Colour alone could not carry it, and
+   * `aria-disabled` on a role-less span is not exposed by screen readers.
+   *
+   * Override the word via the i18n provider (`entityChip.unavailable`); it
+   * carries its own punctuation so a locale can choose different marks.
    */
   unavailable?: boolean;
 }
@@ -201,6 +213,7 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
   // A link target (`as` or `href`) always wins: loading/unavailable are then
   // purely visual states on a live, keyboard-reachable link. Only a bare span
   // (no target) becomes genuinely non-interactive when unavailable.
+  const t = useTranslation();
   const Component = (as ?? (href ? 'a' : 'span')) as ElementType;
   const bareSpan = !as && !href;
   const inert = unavailable && bareSpan;
@@ -258,6 +271,14 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
           )}
         </>
       )}
+      {/* The state as real text, not just muted colour. `aria-disabled` is only
+          reliably exposed on something with a widget role, and a bare <span>
+          has none — so without this the state reached nobody using a screen
+          reader, and an `unavailable` chip labelled with a type word
+          ("Appointment") was indistinguishable from a real entity of that name.
+          Outside the loading branch so the two states can coexist, and rendered
+          for linked chips too: muted styling is the sole signal there as well. */}
+      {unavailable && <span className={styles.hiddenLabel}>{t('entityChip.unavailable')}</span>}
     </Component>
   );
 }) as EntityChipComponent;
