@@ -79,10 +79,13 @@ interface EntityChipOwnProps {
    * either: browsers do expose it, but it carries no meaning on a
    * non-widget role such as `generic`, so no assistive tech conveys it.
    *
-   * `aria-busy` on `loading` has the same limitation and is deliberately left
-   * alone: a loading chip shows the entity's REAL label, so nothing is
-   * misrepresented, and the state is transient — folding it into the name would
-   * make the name mutate when it resolves.
+   * `loading` is deliberately left alone. Its `aria-busy` reaches the user just
+   * as poorly, but for a different reason — `aria-busy` is a GLOBAL ARIA state,
+   * so unlike `aria-disabled` it is valid here; it simply carries no weight
+   * outside a live region, so nothing announces it. The reason not to fix it is
+   * substantive rather than technical: a loading chip shows the entity's REAL
+   * label, so nothing is misrepresented, and the state is transient — folding
+   * it into the name would make the name mutate when it resolves. See #483.
    *
    * Do NOT put an `aria-label` on the chip. It replaces the whole name and
    * takes the state word with it; the state lives in the chip's contents.
