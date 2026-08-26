@@ -3679,7 +3679,7 @@
           "type": "ProgressTone",
           "required": false,
           "default": "",
-          "description": "Fill color tone. Defaults to `'default'` (accent blue). Tone applies\nONLY to determinate mode; indeterminate always uses the accent tone\nbecause state-color semantics don't apply to an unknown total.\n- `default` — `--color-accent`\n- `success` — `--color-success`\n- `warning` — `--color-warning`\n- `danger` — `--color-danger`"
+          "description": "Fill color tone. Defaults to `'default'` (accent blue). Tone applies\nONLY to determinate mode; indeterminate always uses the accent tone\nbecause state-color semantics don't apply to an unknown total.\n- `default` — `--color-accent`\n- `success` — `--color-success`\n- `warning` — `--color-warning-strong`\n- `danger` — `--color-danger`"
         },
         {
           "name": "label",

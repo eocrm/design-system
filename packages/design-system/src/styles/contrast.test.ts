@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 /**
@@ -36,12 +36,10 @@ const DARK = readFileSync(
  */
 function tokenValue(name: string, source: string, seen: string[] = []): string {
   if (seen.includes(name)) throw new Error(`alias cycle: ${[...seen, name].join(' -> ')}`);
-  // Anchored on a boundary so `--foo` cannot match inside `--bar--foo:`, and
-  // the name is escaped because it reaches RegExp from a caller.
-  const pattern = new RegExp(
-    `(?:^|[^-a-z0-9])${name.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\\\$&')}:\\s*([^;]+);`,
-    'm',
-  );
+  // Anchored on a boundary so `--foo` cannot match inside `--bar--foo:`. No
+  // escaping: every name is a literal `--[a-z0-9-]+` from the lists below, and
+  // a half-working escape would be worse than none.
+  const pattern = new RegExp(`(?:^|[^-a-z0-9])${name}:\\s*([^;]+);`, 'm');
   const declare = (from: string) => from.match(pattern)?.[1]?.trim();
 
   // A token not overridden in dark still has a declaration in light. Reading
@@ -102,7 +100,7 @@ const PAIRS: Pair[] = [
   // amber, not the strong variant, because keeping the caution hue on a solid
   // chip is the whole point.
   ['warning-fg text on solid warning fill', '--color-warning-fg', '--color-warning', 4.5],
-  // Reached through an alias (--color-presence-away -> --color-warning-strong),
+  // Reached through an alias (--color-presence-away -> --color-palette-amber-fg),
   // which is exactly the shape a grep for `var(--color-warning)` cannot see —
   // it is how Avatar's away dot escaped the first sweep.
   ['away presence dot on page bg', '--color-presence-away', '--color-bg', 3.0],
@@ -229,6 +227,45 @@ describe('components keep their warning slots on the strong variant', () => {
   });
 });
 
+/**
+ * The allowlist above is hand-maintained, which is the exact mechanism that
+ * failed three review rounds in a row: `Dot`, `Toast`, `Text`, `Progress`,
+ * `Slider` and `CircularProgress` were all missed by someone confidently
+ * declaring the sweep complete. So this walks the tree instead of trusting a
+ * list — a new component wiring `var(--color-warning)` fails here without
+ * anyone having to remember to add a row.
+ */
+describe('nothing reaches the bare --color-warning except the one deliberate slot', () => {
+  const ALLOWED = new Set(['--calendar-event-chip-all-day-bg-warning']);
+
+  function walk(dir: string): string[] {
+    return readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const full = resolve(dir, entry.name);
+      if (entry.isDirectory()) return walk(full);
+      return /\.(scss|ts|tsx)$/.test(entry.name) && !/\.test\./.test(entry.name) ? [full] : [];
+    });
+  }
+
+  it('finds only the all-day amber fill', () => {
+    const offenders: string[] = [];
+    for (const file of walk(resolve(__dirname, '../components'))) {
+      const source = readFileSync(file, 'utf8')
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/\/\/.*$/gm, '');
+      // `--color-warning` exactly — not -strong, -bg-subtle or -fg. Matches both
+      // `var(--color-warning)` in SCSS and the quoted form assembled in TS.
+      for (const line of source.split('\n')) {
+        if (!/--color-warning(?![a-z-])/.test(line)) continue;
+        const declared = line.match(/(--[a-z0-9-]+)\s*:/)?.[1] ?? line.trim();
+        if (!ALLOWED.has(declared)) {
+          offenders.push(`${file.split('/components/')[1]}: ${line.trim()}`);
+        }
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+});
+
 describe('the all-day chip keeps its amber fill and dark text', () => {
   it('pairs the amber fill with --color-warning-fg, not the strong variant', () => {
     // This is the pair the PR's judgement call rests on, and it is the one place
@@ -264,6 +301,27 @@ describe('rules without a token name are pinned too', () => {
     );
     const textVars = ts.match(/DEFAULT_TEXT_VAR[^}]*\}/)?.[0];
     expect(textVars).toMatch(/amber: '--color-warning-strong'/);
+  });
+});
+
+describe('presence dots stay distinguishable from each other', () => {
+  // away is aria-hidden with no text alternative, so hue is the entire signal.
+  // PAIRS already gates its luminance against the page; this gates the thing
+  // that actually motivated choosing palette.amber.foreground over the warning
+  // strong variant, which held contrast while collapsing separation 107 -> 61.
+  function distance(a: string, b: string): number {
+    const channels = (hex: string) => [0, 2, 4].map((i) => parseInt(hex.slice(1 + i, 3 + i), 16));
+    const [x, y] = [channels(a), channels(b)];
+    return Math.hypot(...x.map((v, i) => v - y[i]));
+  }
+
+  it.each([
+    ['light', TOKENS],
+    ['dark', DARK],
+  ])('away is well separated from busy in %s', (_theme, source) => {
+    const away = tokenValue('--color-presence-away', source);
+    const busy = tokenValue('--color-presence-busy', source);
+    expect(distance(away, busy)).toBeGreaterThan(90);
   });
 });
 
