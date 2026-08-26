@@ -42,7 +42,7 @@ public object EocrmLightTokens {
         successHover = Color(0xFF006644),
         warning = Color(0xFFFF991F),
         warningBackgroundSubtle = Color(0xFFFFF7ED),
-        warningForeground = Color(0xFFFFFFFF),
+        warningForeground = Color(0xFF172B4D),
         warningStrong = Color(0xFFA54800),
     )
     public val dimensions: EocrmDimensions = eocrmDimensions

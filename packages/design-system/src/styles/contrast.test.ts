@@ -25,10 +25,39 @@ const DARK = readFileSync(
   'utf8',
 );
 
-function tokenValue(name: string, source: string): string {
-  const match = source.match(new RegExp(`${name}:\\s*(#[0-9a-fA-F]{3}|#[0-9a-fA-F]{6})\\s*;`));
-  if (!match) throw new Error(`${name} is not a literal colour in the generated output`);
-  return match[1];
+/**
+ * Resolves a token to a literal colour, following `var(--x)` aliases.
+ *
+ * Alias-following is not incidental: Avatar's away dot reaches the amber via
+ * `--color-presence-away -> --color-warning`, so a check that only understood
+ * literals could not see it — and a grep for `var(--color-warning)` in
+ * component source could not either. That blind spot is how it survived the
+ * first sweep of this very bug.
+ */
+function tokenValue(name: string, source: string, seen: string[] = []): string {
+  if (seen.includes(name)) throw new Error(`alias cycle: ${[...seen, name].join(' -> ')}`);
+  const declare = (from: string) => from.match(new RegExp(`${name}:\\s*([^;]+);`))?.[1]?.trim();
+
+  // A token not overridden in dark still has a declaration in light. Reading
+  // THAT is fine — but only to learn its shape. Continuing to resolve in the
+  // requested scope is what keeps the answer honest.
+  const inScope = declare(source);
+  const declaration = inScope ?? declare(TOKENS);
+  if (declaration === undefined) throw new Error(`${name} is not declared in any scope`);
+
+  const literal = declaration.match(/^(#[0-9a-fA-F]{3}|#[0-9a-fA-F]{6})$/);
+  if (literal) {
+    // The dangerous case: a LITERAL borrowed from light and reported as dark.
+    // That would pass the dark assertion having checked nothing dark.
+    if (inScope === undefined) {
+      throw new Error(`${name} is a light-only literal; it cannot answer for another theme`);
+    }
+    return literal[1];
+  }
+
+  const alias = declaration.match(/^var\((--[a-z0-9-]+)\)$/);
+  if (alias) return tokenValue(alias[1], source, [...seen, name]);
+  throw new Error(`${name} resolves to "${declaration}", which is neither a hex nor a var() alias`);
 }
 
 /** WCAG 2.1 relative luminance. */
@@ -59,9 +88,15 @@ const PAIRS: Pair[] = [
   // The regression: warning as a foreground on its own subtle tint.
   ['warning fg on warning tint', '--color-warning-strong', '--color-warning-bg-subtle', 4.5],
   ['warning graphic on page bg', '--color-warning-strong', '--color-bg', 3.0],
-  // The all-day chip inverts it — solid fill, light text — so the FILL is what
-  // had to darken.
-  ['warning-fg text on solid warning fill', '--color-warning-fg', '--color-warning-strong', 4.5],
+  // The all-day chip inverts it — a solid AMBER fill with text on top — so the
+  // fix was the text: --color-warning-fg is now dark. Asserted against the
+  // amber, not the strong variant, because keeping the caution hue on a solid
+  // chip is the whole point.
+  ['warning-fg text on solid warning fill', '--color-warning-fg', '--color-warning', 4.5],
+  // Reached through an alias (--color-presence-away -> --color-warning-strong),
+  // which is exactly the shape a grep for `var(--color-warning)` cannot see —
+  // it is how Avatar's away dot escaped the first sweep.
+  ['away presence dot on page bg', '--color-presence-away', '--color-bg', 3.0],
   ['body text on page bg', '--color-fg', '--color-bg', 4.5],
   ['muted text on page bg', '--color-fg-muted', '--color-bg', 4.5],
 ];
@@ -136,7 +171,6 @@ describe('components keep their warning slots on the strong variant', () => {
       '../components/Calendar/Calendar.tokens.scss',
       [
         '--calendar-event-chip-fg-warning',
-        '--calendar-event-chip-all-day-bg-warning',
         '--calendar-timed-event-fg-warning',
         '--calendar-agenda-tone-warning',
         '--calendar-event-stripe-warning',
@@ -161,7 +195,12 @@ describe('components keep their warning slots on the strong variant', () => {
     ['../components/LiquidEditor/LiquidEditor.tokens.scss', ['--liquid-editor-token-number']],
     [
       '../components/PasswordStrengthMeter/PasswordStrengthMeter.tokens.scss',
-      ['--password-strength-meter-label-fg-score-2', '--password-strength-meter-label-fg-score-3'],
+      [
+        '--password-strength-meter-label-fg-score-2',
+        '--password-strength-meter-label-fg-score-3',
+        '--password-strength-meter-segment-bg-score-2',
+        '--password-strength-meter-segment-bg-score-3',
+      ],
     ],
   ];
 

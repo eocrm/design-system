@@ -85,9 +85,13 @@
   --calendar-event-chip-all-day-bg-success: var(--color-success);
   --calendar-event-chip-all-day-fg-success: var(--color-success-fg);
 
-  // The all-day chip is a SOLID fill with white text, so the fix is on the
-  // background: #fff on #ff991f is 2.14:1; on the strong variant it is 5.95:1.
-  --calendar-event-chip-all-day-bg-warning: var(--color-warning-strong);
+  // Keeps the AMBER fill. The failing pair here was white-on-amber (2.14:1), and
+  // the fix belongs on the text: --color-warning-fg is now #172b4d, giving
+  // 6.60:1. Darkening the FILL also passed (5.95:1) but read as chocolate brown
+  // — on a solid chip the hue IS the caution signal, so this keeps it. warning
+  // is the only tone whose all-day pair failed; accent/success/danger are all
+  // light enough for white text at 4.55-6.82:1.
+  --calendar-event-chip-all-day-bg-warning: var(--color-warning);
   --calendar-event-chip-all-day-fg-warning: var(--color-warning-fg);
   --calendar-event-chip-all-day-bg-danger: var(--color-danger);
   --calendar-event-chip-all-day-fg-danger: var(--color-danger-fg);
