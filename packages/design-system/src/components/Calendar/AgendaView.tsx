@@ -112,11 +112,7 @@ interface AgendaRowItemProps {
 
 function AgendaRowItem({ row, locale, allDayLabel, onClick, renderEvent }: AgendaRowItemProps) {
   const { event, isAllDay, duration } = row;
-  const {
-    toneClass,
-    hasStripe,
-    style: colorStyle,
-  } = resolveEventColor(event, '--calendar-agenda-tone-');
+  const { toneClass, hasStripe, style: colorStyle } = resolveEventColor(event);
   const startLabel = isAllDay ? undefined : formatTime(event.startsAt, locale);
   const endLabel = !isAllDay && event.endsAt ? formatTime(event.endsAt, locale) : undefined;
   const timeLabel =

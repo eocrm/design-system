@@ -67,11 +67,7 @@ export function TimedEvent({
   dragHintId,
 }: TimedEventProps) {
   const locale = useLocale();
-  const {
-    toneClass,
-    hasStripe,
-    style: colorStyle,
-  } = resolveEventColor(block.event, '--calendar-timed-event-fg-');
+  const { toneClass, hasStripe, style: colorStyle } = resolveEventColor(block.event);
   const isDragging = preview !== null;
 
   // While a drag is in flight the block renders at the proposed placement,

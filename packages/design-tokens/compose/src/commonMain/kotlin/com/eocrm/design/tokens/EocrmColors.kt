@@ -37,4 +37,5 @@ public data class EocrmColors(
     public val warning: Color,
     public val warningBackgroundSubtle: Color,
     public val warningForeground: Color,
+    public val warningStrong: Color,
 )

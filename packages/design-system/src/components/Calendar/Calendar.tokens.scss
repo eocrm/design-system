@@ -85,10 +85,28 @@
   --calendar-event-chip-all-day-fg-danger: var(--color-danger-fg);
 
   // ── Per-event palette color (CalendarEvent.color) ────────────────────────
-  // The palette bg/fg pair is injected inline from paletteTokens() — there is
-  // no token per palette color here, the same as Badge/EntityChip/IconTile.
-  // These are the geometry + fallbacks the stylesheets read.
+  // The palette bg/fg pair and the resolved tone colour are injected INLINE by
+  // resolveEventColor(), the same shape EntityChip/IconTile/StatusMenu use —
+  // there is deliberately no token per palette colour here. This is the only
+  // declared token for the feature: the geometry. The three colour properties
+  // (`-color-bg`, `-color-fg`, `-stripe-color`) have no declared default, so a
+  // `.colored`/`.striped` class applied without its inline style paints
+  // nothing rather than something wrong.
   --calendar-event-color-stripe-width: var(--border-width-strong);
+
+  // One stripe scale for all three surfaces: the chip, the timed block and the
+  // agenda row already resolved the four non-neutral tones to identical values,
+  // so a per-surface prefix bought nothing and split the one place this needs
+  // to be correct. `neutral` is absent on purpose — it is the default state and
+  // never draws a stripe.
+  // warning does NOT use --color-warning. That is #ff991f, which measures
+  // 1.52–2.01:1 against all 30 palette backgrounds in light theme — below the
+  // 3:1 WCAG 1.4.11 bar for a graphical object, and unreadable as a 3px band on
+  // a tint. --color-warning-strong clears 3:1 against all 30 (min 4.25).
+  --calendar-event-stripe-accent: var(--color-accent);
+  --calendar-event-stripe-success: var(--color-success);
+  --calendar-event-stripe-warning: var(--color-warning-strong);
+  --calendar-event-stripe-danger: var(--color-danger);
 
   // EventChip — tooltip
   --calendar-event-tooltip-gap: var(--space-1);

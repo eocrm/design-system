@@ -61,7 +61,25 @@ export interface CalendarEvent {
    * behaves exactly as before and paints the whole block.
    *
    * In the agenda view, where the row is not filled, `color` sets the leading
-   * dot and `tone` the stripe.
+   * dot and `tone` the band.
+   *
+   * **Unlike `Badge`**, where `color` overrides `tone` entirely, Calendar
+   * renders both. The reason is that a calendar tone can carry states closer to
+   * safety than decoration — a masked hour, a released slot — and silently
+   * dropping one would make a free hour read as a booked one.
+   *
+   * **Pick category colours that contrast with the semantic tones you use.**
+   * A `green` category under a `success` tone (or `amber`/`gold` under
+   * `warning`) puts a band of roughly the same hue on a tint of that hue, and
+   * the state stops being legible. Nothing enforces this.
+   *
+   * **Both axes are visual only.** Neither sets ARIA, and a 3px band is not an
+   * accessible signal — same contract as `Badge`, whose tone is also decoration.
+   * If a state must reach assistive tech, keep it in the event `title` (or wrap
+   * your own live region); do not rely on the band alone.
+   *
+   * On a multi-day bar the band repeats on every segment, including ones that
+   * continue from a previous week. It marks the event's state, not its start.
    *
    * @example
    * // A booked consultation: category violet, no special state.

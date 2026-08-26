@@ -51,11 +51,7 @@ export function EventChip({
   const locale = useLocale();
   // `color` takes the surface and moves `tone` to a leading-edge stripe; with
   // no `color` this resolves to the tone class alone, exactly as before.
-  const {
-    toneClass,
-    hasStripe,
-    style: colorStyle,
-  } = resolveEventColor(event, '--calendar-event-chip-fg-');
+  const { toneClass, hasStripe, style: colorStyle } = resolveEventColor(event);
   const isAllDay = event.allDay === true;
   const time = isAllDay ? '' : formatTime(event.startsAt, locale);
   const duration = formatEventDuration(event.startsAt, event.endsAt, isAllDay);

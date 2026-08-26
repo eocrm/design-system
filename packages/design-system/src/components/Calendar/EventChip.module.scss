@@ -81,24 +81,38 @@
 
 // ── Per-event palette color (CalendarEvent.color) ──────────────────────────
 // `color` paints the surface, so the two colour axes never fight over the same
-// pixels: a non-neutral `tone` moves to a stripe on the leading edge instead of
-// being overridden. Painted with an inset box-shadow rather than a border so it
-// costs no geometry and is clipped by the existing border-radius. Both custom
-// properties are injected inline by resolveEventColor().
+// pixels: a non-neutral `tone` moves to a band on the left edge instead of
+// being overridden. Both custom properties are injected inline by
+// resolveEventColor(). The band is physically left — the library has no RTL
+// support anywhere, and the two existing stripe implementations (Card, Badge)
+// are physical too.
 .colored {
-  background: var(--calendar-event-color-bg);
+  // background-COLOR, not the shorthand: `.striped` paints its band as a
+  // background-image, and the shorthand would reset it depending on source
+  // order. Longhands compose regardless of order.
+  background-color: var(--calendar-event-color-bg);
   color: var(--calendar-event-color-fg);
-  border-color: var(--calendar-event-color-fg);
 }
 
 .striped {
-  box-shadow: inset var(--calendar-event-color-stripe-width) 0 0 0
-    var(--calendar-event-stripe-color);
+  // A background-image gradient rather than an inset box-shadow. box-shadow is
+  // NOT additive — the winning declaration replaces the whole list — and three
+  // rules on these elements already own it: `:focus-visible` (the focus ring),
+  // `.dragging` (the lift shadow), and this. Using it here made the focus ring
+  // erase the stripe and the stripe erase the drag shadow. A gradient composes
+  // with all of them, survives the hover `filter: brightness()`, and costs no
+  // geometry.
+  background-image: linear-gradient(
+    to right,
+    var(--calendar-event-stripe-color) 0,
+    var(--calendar-event-stripe-color) var(--calendar-event-color-stripe-width),
+    transparent var(--calendar-event-color-stripe-width)
+  );
 
-  // The leading border takes the tone colour too, so the edge reads as ONE
-  // solid band rather than a thin sliver of tone trapped beside the palette
-  // border. Without this the stripe is legible but competes with the border at
-  // chip height.
+  // The 1px border sits at 0–1px of the border box and the gradient covers
+  // 0–3px, so painting the border with the same colour makes the leading edge
+  // read as ONE solid band instead of a sliver of tone beside the palette
+  // border. Measured — without it the stripe is legible but competes.
   border-left-color: var(--calendar-event-stripe-color);
 }
 

@@ -76,6 +76,27 @@ const TYPED_EVENTS: CalendarEvent[] = [
     endsAt: fromToday(1, 10, 0),
     color: 'teal',
   },
+  // All-day + color takes the palette TINT, not the tone-filled band — lighter
+  // than a tone'd all-day event by design, since the palette ships only a
+  // bg/fg pair.
+  {
+    id: 't7',
+    title: 'Theatre list — all day',
+    startsAt: fromToday(2),
+    allDay: true,
+    color: 'emerald',
+  },
+  // Multi-day + color + tone: the band repeats on every segment, including
+  // continuation edges — it marks state, not the start.
+  {
+    id: 't8',
+    title: 'Locum cover — Dr Adeyemi',
+    startsAt: fromToday(3),
+    endsAt: fromToday(6),
+    allDay: true,
+    color: 'sky',
+    tone: 'warning',
+  },
 ];
 
 function fromToday(offset: number, hour = 0, minute = 0): Date {
@@ -753,10 +774,10 @@ const events: CalendarEvent[] = [
 ];
 
 export function Demo() {
-  return <Calendar defaultValue={new Date()} defaultView="day" events={events} />;
+  return <Calendar defaultValue={new Date()} defaultView="month" events={events} />;
 }`}
       >
-        <Calendar defaultValue={fromToday(0)} defaultView="day" events={TYPED_EVENTS} />
+        <Calendar defaultValue={fromToday(0)} defaultView="month" events={TYPED_EVENTS} />
       </Example>
     </DemoLayout>
   );

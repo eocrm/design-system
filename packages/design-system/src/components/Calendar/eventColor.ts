@@ -8,11 +8,14 @@ import type { CalendarEvent, CalendarEventTone } from './types';
  *
  * The axes are deliberately NOT in competition, so there is no precedence rule
  * to remember:
- * - `color` (category identity) paints the surface — the palette's tinted `bg`
- *   with its saturated `fg` for text and border.
- * - `tone` (semantic state) moves to a stripe on the leading edge, and is only
- *   drawn when it is something other than the `'neutral'` default. A state that
- *   must not be missed therefore survives being given a category colour.
+ * - `color` (category identity) wins the surface. This helper only hands out
+ *   the palette's `bg`/`fg` pair; each stylesheet decides how to spend them,
+ *   and they do NOT spend them alike — the chip and the timed block take a
+ *   tinted background with the saturated colour for text and border, while the
+ *   agenda row is never filled and spends `fg` on its leading dot alone.
+ * - `tone` (semantic state) moves to a band on the left edge, drawn only when
+ *   it is something other than the `'neutral'` default. A state therefore
+ *   survives being given a category colour instead of being overridden by it.
  *
  * With no `color` the event keeps its original behaviour exactly: the tone
  * class paints the whole surface and no stripe is drawn. That is what makes
@@ -30,17 +33,8 @@ export interface ResolvedEventColor {
   style: CSSProperties | undefined;
 }
 
-/**
- * @param event - the event being rendered.
- * @param toneVar - the surface's own per-tone custom-property prefix, to which
- * the resolved tone name is appended (e.g. `'--calendar-event-chip-fg-'` +
- * `'danger'`). Each surface has its own tone palette — the agenda's tone
- * colours are not the chip's — so the stripe has to read the caller's.
- */
-export function resolveEventColor(
-  event: CalendarEvent,
-  toneVar: `--calendar-${string}-`,
-): ResolvedEventColor {
+/** @param event - the event being rendered. */
+export function resolveEventColor(event: CalendarEvent): ResolvedEventColor {
   const tone: CalendarEventTone = event.tone ?? 'neutral';
 
   if (!event.color) {
@@ -58,7 +52,9 @@ export function resolveEventColor(
     style: {
       '--calendar-event-color-bg': bg,
       '--calendar-event-color-fg': fg,
-      ...(hasStripe ? { '--calendar-event-stripe-color': `var(${toneVar}${tone})` } : null),
+      ...(hasStripe
+        ? { '--calendar-event-stripe-color': `var(--calendar-event-stripe-${tone})` }
+        : null),
     } as CSSProperties,
   };
 }
