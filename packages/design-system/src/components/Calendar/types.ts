@@ -311,19 +311,27 @@ export interface RenderEventContext {
  * width. A long `<Text truncate>` inside that wrapper then never ellipsizes.
  * Set `minWidth0` on the wrapper to release the floor.
  *
- * The DS default title needs no wrapper, so it is unaffected — you only meet
- * this when your content needs a leading element (a `Dot`, an icon) and so has
- * to be wrapped, and the only wrapper valid inside the button is
- * `<Cluster as="span">`:
+ * The DS default title is unaffected because its own span sets `min-width: 0` —
+ * NOT because it is unwrapped. Being a direct child buys nothing: any flex item
+ * left at `min-width: auto` is floored, wrapper or not, so a bare span of your
+ * own with `overflow: hidden; text-overflow: ellipsis` and no `min-width: 0`
+ * reproduces this exactly.
+ *
+ * `<Text truncate>` sets it for you, which is why the example below works. What
+ * a `<Text truncate>` cannot do is release the floor on a WRAPPER around it —
+ * and you need a wrapper as soon as your content has a leading element (a
+ * `Dot`, an icon). Inside the button the only valid wrapper is
+ * `<Cluster as="span">`, so that is where `minWidth0` goes:
  *
  * ```tsx
  * <Cluster as="span" gap="xs" align="center" wrap={false} minWidth0>
  * ```
  *
- * Where that applies: the month/week chip and short hour-grid blocks (the
- * button itself is the row), and the agenda row (the row is an inner span, not
- * the button). Whether the overflow is then visibly cut or merely spills
- * depends on the view — the chip clips, the agenda row does not.
+ * Where that applies: the event chip — month cells AND the all-day band, so in
+ * every view — and short hour-grid blocks, where the button itself is the row;
+ * plus the agenda row, where the row is an inner span rather than the button.
+ * Whether the overflow is then visibly cut or merely spills depends on the
+ * view: the chip and the hour-grid block clip, the agenda row does not.
  *
  * Where it does NOT: a tall hour-grid block is `flex-direction: column` (see
  * the layout note below), and the automatic minimum size applies only on the

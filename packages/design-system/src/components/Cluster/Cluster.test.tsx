@@ -165,5 +165,10 @@ describe('Cluster', () => {
       .replace(/\/\/.*$/gm, '');
     expect(scss.match(/min-(?:width|inline-size)\s*:/g) ?? []).toHaveLength(1);
     expect(scss).toMatch(/\.minWidth0\s*\{[^}]*min-width:\s*0(?:px)?\s*;/);
+    // ...and the rule must not be pulled INTO the base class by composition,
+    // which would give every Cluster the floor-release while leaving the count
+    // at 1. `@extend` is the plausible one — it is what a "DRY this up"
+    // refactor reaches for.
+    expect(scss).not.toMatch(/@extend\s+\.minWidth0|composes:[^;]*\bminWidth0\b/);
   });
 });
