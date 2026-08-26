@@ -41,8 +41,13 @@
 
   --alert-bg-warning: var(--color-warning-bg-subtle);
   --alert-fg-warning: var(--color-fg);
-  --alert-icon-warning: var(--color-warning);
-  --alert-border-color-warning: var(--color-warning);
+
+  // warning uses --color-warning-strong, not --color-warning: #ff991f measures
+  // 2.01:1 on the light tint (and 2.14:1 as a dot on --color-bg), below WCAG AA
+  // for text and below 1.4.11's 3:1 for a graphical object. The strong variant
+  // clears both. Dark is unaffected — the two resolve to the same value there.
+  --alert-icon-warning: var(--color-warning-strong);
+  --alert-border-color-warning: var(--color-warning-strong);
 
   --alert-bg-danger: var(--color-danger-bg-subtle);
   --alert-fg-danger: var(--color-fg);
