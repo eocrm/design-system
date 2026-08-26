@@ -248,7 +248,9 @@ describe('nothing reaches the bare --color-warning except the one deliberate slo
 
   it('finds only the all-day amber fill', () => {
     const offenders: string[] = [];
-    for (const file of walk(resolve(__dirname, '../components'))) {
+    // '..' not '../components': app/, calendar/, palette/ and styles/ are clean
+    // today, but scoping the walk to one directory is how the last hole worked.
+    for (const file of walk(resolve(__dirname, '..'))) {
       const source = readFileSync(file, 'utf8')
         .replace(/\/\*[\s\S]*?\*\//g, '')
         .replace(/\/\/.*$/gm, '');
