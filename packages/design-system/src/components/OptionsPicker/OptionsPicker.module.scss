@@ -66,6 +66,15 @@
   flex-shrink: 0;
 }
 
+// The footer is a space-between row and `.count` above is already pinned, so
+// every bit of shrink lands on the action Cluster. Cluster sets `min-width: 0`,
+// so without this pin the Cancel/Apply buttons clip inside the panel's 280px
+// floor instead of the count text giving way.
+.footerActions {
+  // Parent-owned layout, per Rule 4.
+  flex-shrink: 0;
+}
+
 .footer {
   display: flex;
   align-items: center;

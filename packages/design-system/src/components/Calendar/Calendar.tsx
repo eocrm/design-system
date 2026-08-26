@@ -349,7 +349,7 @@ export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(function Calen
     <div ref={ref} className={clsx(styles.calendar, className)} {...rest}>
       <header className={styles.header}>
         <h2 className={styles.title}>{titleLabel}</h2>
-        <Cluster gap="sm" align="center">
+        <Cluster gap="sm" align="center" className={styles.headerActions}>
           <Cluster gap="xs" align="center">
             <Button size="xs" variant="ghost" iconOnly aria-label={prevLabel} onClick={goPrev}>
               <ChevronLeft size={14} />

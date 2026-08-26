@@ -1426,10 +1426,19 @@ Use this instead of `Card.List` + `Card.ListRow` whenever the data is genuinely 
 
 - `gap`: `xs` (4) / `sm` (8) / `md` (12, default) / `lg` (16) / `xl` (24) / `2xl` (32) — pixels
 - `align`: `start` / `center` / `end` / `stretch` (default)
-- Both `Stack` and `Cluster` set `min-width: 0`, so they can sit inside a truncating
-  flex chain: a `<Text truncate>` nested in one still ellipsizes when a clipping
-  ancestor squeezes it, instead of being hard-cut. Relevant for custom `renderEvent`
-  chip content, narrow table cells, and any `overflow: hidden` parent.
+
+**Truncation and shrink** (applies to `Stack`, `Cluster` and `Page`): all three set
+`min-width: 0`, so they can sit inside a truncating flex chain — a `<Text truncate>`
+nested in one still ellipsizes when a clipping ancestor squeezes it, instead of being
+hard-cut. This is what makes custom `Calendar` `renderEvent` content work, and it
+matters anywhere an `overflow: hidden` parent (e.g. `Card`) can squeeze the container.
+
+The trade-off: because it can now shrink, it also _volunteers_ for shrink when it is
+one of several items in a non-wrapping flex row. If its content cannot truncate
+(buttons, badges, icons) and a sibling can (a title), pin it in the parent's own
+stylesheet with `flex-shrink: 0` so the text gives way instead of the controls being
+clipped. The library does exactly this in `Calendar`'s header and `OptionsPicker`'s
+footer.
 
 ### `<Page>` — page-root layout primitive
 
@@ -1488,10 +1497,19 @@ Use this instead of `Card.List` + `Card.ListRow` whenever the data is genuinely 
 - `justify`: `start` (default) / `center` / `end` / `between`
 - `align`: `start` / `center` (default) / `end` / `baseline`
 - `wrap`: `true` (default). Set `false` only for narrow table cells where overflow is preferable to wrapping.
-- Both `Stack` and `Cluster` set `min-width: 0`, so they can sit inside a truncating
-  flex chain: a `<Text truncate>` nested in one still ellipsizes when a clipping
-  ancestor squeezes it, instead of being hard-cut. Relevant for custom `renderEvent`
-  chip content, narrow table cells, and any `overflow: hidden` parent.
+
+**Truncation and shrink** (applies to `Stack`, `Cluster` and `Page`): all three set
+`min-width: 0`, so they can sit inside a truncating flex chain — a `<Text truncate>`
+nested in one still ellipsizes when a clipping ancestor squeezes it, instead of being
+hard-cut. This is what makes custom `Calendar` `renderEvent` content work, and it
+matters anywhere an `overflow: hidden` parent (e.g. `Card`) can squeeze the container.
+
+The trade-off: because it can now shrink, it also _volunteers_ for shrink when it is
+one of several items in a non-wrapping flex row. If its content cannot truncate
+(buttons, badges, icons) and a sibling can (a title), pin it in the parent's own
+stylesheet with `flex-shrink: 0` so the text gives way instead of the controls being
+clipped. The library does exactly this in `Calendar`'s header and `OptionsPicker`'s
+footer.
 
 ### `<Constrain>` — size / flex constraint
 

@@ -652,7 +652,7 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
               <Text size="xs" tone="muted">
                 {(props.footerCount ?? defaultFooterCount)(draft.length, allOptionsForCount.length)}
               </Text>
-              <Cluster gap="sm">
+              <Cluster gap="sm" className={styles.footerActions}>
                 <Button
                   variant="secondary"
                   size="sm"

@@ -3,10 +3,18 @@ import { Cluster } from '@eocrm/design-system';
 import { Input } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
 import { Badge } from '@eocrm/design-system';
+import { Text } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import outlineStyles from './demoOutline.module.scss';
 import { getComponentFiles } from '../../lib/componentFiles';
+
+// A narrow flex ROW with overflow: hidden. Stack is a column container, so
+// its own min-width only matters here — when the Stack is itself an item of a
+// row that squeezes it. That is the subtle case the min-width: 0 covers.
+const ClippingRow = ({ children }: { children: React.ReactNode }) => (
+  <div style={{ display: 'flex', width: 260, overflow: 'hidden', gap: 8 }}>{children}</div>
+);
 
 const Block = ({ children }: { children: React.ReactNode }) => (
   <div
@@ -189,6 +197,37 @@ export function Demo() {
             </div>
           ))}
         </Cluster>
+      </Example>
+
+      <Example
+        title="Truncating inside a clipping row"
+        description="Stack sets min-width: 0, which matters when the Stack is itself an item of a squeezing flex row: its Text truncate children can then ellipsize instead of the whole Stack being pinned to its widest line and hard-cut. Note the trade-off — a Stack that can shrink also volunteers for shrink, so pin it with flex-shrink: 0 from the parent when its content cannot truncate."
+        code={`import { Stack, Text } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    // A 260px-wide row with overflow: hidden.
+    <Stack gap="xs">
+      <Text size="sm" weight="medium" truncate>
+        Quarterly business review with the Northwind account team
+      </Text>
+      <Text size="xs" tone="muted" truncate>
+        Attendees: Priya Shah, Sam Okonkwo, Mei Lin, Yusuf Demir
+      </Text>
+    </Stack>
+  );
+}`}
+      >
+        <ClippingRow>
+          <Stack gap="xs" className={outlineStyles.outlined}>
+            <Text size="sm" weight="medium" truncate>
+              Quarterly business review with the Northwind account team
+            </Text>
+            <Text size="xs" tone="muted" truncate>
+              Attendees: Priya Shah, Sam Okonkwo, Mei Lin, Yusuf Demir
+            </Text>
+          </Stack>
+        </ClippingRow>
       </Example>
     </DemoLayout>
   );

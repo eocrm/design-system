@@ -133,6 +133,6 @@ describe('Cluster', () => {
     // instead of ellipsizing (issue #475).
     const scss = readFileSync(resolve(__dirname, 'Cluster.module.scss'), 'utf8');
     const rule = scss.match(/\.cluster\s*\{[^}]*\}/)?.[0];
-    expect(rule).toMatch(/min-width:\s*0\s*;/);
+    expect(rule).toMatch(/min-(?:width|inline-size):\s*0(?:px)?\s*;/);
   });
 });

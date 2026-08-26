@@ -14,6 +14,18 @@
   gap: var(--calendar-header-gap);
 }
 
+// The header is a space-between row: the title must absorb every bit of shrink
+// so the controls stay whole. Cluster sets `min-width: 0` (so it can truncate
+// when it is the only item), which also makes it volunteer for shrink here —
+// without this pin the prev/Today/next buttons get clipped by an `overflow:
+// hidden` ancestor (Card) before the title has finished compressing.
+.headerActions {
+  // Parent-owned layout: Rule 4 puts layout on the parent, which is exactly
+  // here. Also shields the nested Cluster inside it (Calendar.tsx) — with the
+  // group pinned at max-content, no shrink pressure ever reaches it.
+  flex-shrink: 0;
+}
+
 .title {
   /* stylelint-disable-next-line property-disallowed-list -- neutralizing UA <h2> default, not component layout */
   margin: 0;

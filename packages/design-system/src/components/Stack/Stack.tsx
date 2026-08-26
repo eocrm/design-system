@@ -70,6 +70,12 @@ const alignClass: Record<StackAlign, string> = {
  * `min-width: auto` on a flex item pins the container to its content's
  * min-content width and the ellipsis never gets a chance to appear.
  *
+ * Trade-off: because it can shrink, it also *volunteers* for shrink when it is
+ * one of several items in a non-wrapping flex row. If its content cannot
+ * truncate (buttons, badges, icons) and a sibling can (a title), pin it from
+ * the parent's stylesheet with `flex-shrink: 0` so the text gives way instead
+ * of the controls being clipped.
+ *
  * @remarks When NOT to use
  * - For tabular data — use a real `<table>` or `<Grid>`.
  * - For a list of clickable items — semantics matter. Use `<ul><li>` with

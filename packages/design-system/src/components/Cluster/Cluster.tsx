@@ -128,6 +128,12 @@ const alignClass: Record<ClusterAlign, string> = {
  * `min-width: auto` on a flex item pins the container to its content's
  * min-content width and the ellipsis never gets a chance to appear.
  *
+ * Trade-off: because it can shrink, it also *volunteers* for shrink when it is
+ * one of several items in a non-wrapping flex row. If its content cannot
+ * truncate (buttons, badges, icons) and a sibling can (a title), pin it from
+ * the parent's stylesheet with `flex-shrink: 0` so the text gives way instead
+ * of the controls being clipped.
+ *
  * @remarks When NOT to use
  * - For aligned columns of equal width — use `<Grid>`. Cluster wraps
  *   unpredictably at narrow widths and isn't a column system.

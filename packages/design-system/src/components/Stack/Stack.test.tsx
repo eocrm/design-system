@@ -50,6 +50,6 @@ describe('Stack', () => {
     // instead of ellipsizing (issue #475).
     const scss = readFileSync(resolve(__dirname, 'Stack.module.scss'), 'utf8');
     const rule = scss.match(/\.stack\s*\{[^}]*\}/)?.[0];
-    expect(rule).toMatch(/min-width:\s*0\s*;/);
+    expect(rule).toMatch(/min-(?:width|inline-size):\s*0(?:px)?\s*;/);
   });
 });

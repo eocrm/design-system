@@ -1,7 +1,11 @@
 @use './Page.tokens';
 
+// Page is a Stack with a page-level gap default, so it carries Stack's
+// min-width: 0 for the same reason — as a flex item it would otherwise be
+// pinned to its content's min-content width and nothing inside could truncate.
 .root {
   display: flex;
+  min-width: 0;
   flex-direction: column;
 }
 
