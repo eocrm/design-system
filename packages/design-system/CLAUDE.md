@@ -192,13 +192,32 @@ happens while their attention is elsewhere?**
   `role="progressbar"` with `aria-valuenow`, or `role="alert"`, already carry
   the state. `Progress` and `CircularProgress` are correct as they stand — do
   not "fix" them into live regions, which would fire on every percentage tick.
+  (Precisely: `aria-valuenow` is set only when determinate. An indeterminate
+  spinner carries its meaning in its accessible name instead, which is the
+  first branch above, not a gap.)
 
-**When a component is both**, the name wins for what is true on arrival and a
+**A state that PERSISTS once entered is a property, even though you were not
+watching when it changed.** An image that fails three seconds after render
+transitioned while your attention was elsewhere, but from then on "failed" is
+simply what that element is — so it belongs in the name, and `Image` and
+`Lightbox` fold it in. The live-region branch is for states that come and go:
+saving, loading, in flight. Ask what is true a minute later, not what happened.
+
+That distinction also settles where a region is _impossible_: a tile that only
+mounts on error cannot host one, because the region would mount together with
+its text — the case forbidden above. If the only element that could carry the
+region appears at the same moment as the state, the state is a property; name
+it.
+
+**When a component is both**, the name carries what is true on arrival and a
 region carries the transitions — but only if the transitions are individually
-worth interrupting for. `FileUpload` is the live example: a row that has failed
-should say so in its name, because a user tabbing to it later gets nothing
-otherwise; twelve rows completing inside two seconds should not be twelve
-announcements. Prefer one region describing the batch over one per item.
+worth interrupting for. `FileUpload` is the open case rather than the worked
+one: it has per-file `pending`/`uploading`/`done`/`error` and today implements
+**neither** mechanism — the failure is plain text in a non-focusable row, and
+the only focusable control there is named "Remove {file}". Twelve files
+resolving inside two seconds should not be twelve announcements, so the shape
+it wants is one region describing the batch plus the per-row state reachable on
+focus. Nothing implements that yet.
 
 **If the state resolves while focus is inside the component but not on the
 thing that changed** — a `Select`'s options arriving while focus sits on the

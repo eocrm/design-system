@@ -3634,17 +3634,26 @@ The rule the library follows, so you can predict any component:
 - **Purely visual state** — `Badge` tone, `Skeleton` — is yours to announce if it matters. These are documented as visual-only.
 - **`Progress` / `CircularProgress`** carry `role="progressbar"` with `aria-valuenow`, which already exposes the value. Don't wrap them either.
 
-One known gap: **`ConfirmationPopover`'s pending state announces nothing** (tracked in #497), so that one _is_ yours for now. Everything else on this page announces itself.
+Known gaps, where announcing **is** yours for now: **`ConfirmationPopover`** while pending (#497), **`FileUpload`** per-file progress and failure, and **`Select`**'s async loading/error rows (#495). Everything else on this page announces itself.
+
+One consequence for your tests: components that own a region expose `role="status"`, so `getByRole('status')` on a page containing a `Switch`, `StatusMenu` or `DataTable` may now match more than one element. Scope the query, or select by the text you expect.
 
 What this means for you:
 
 ```tsx
-// ✅ The component already announces. Nothing to add.
-<DataTable instance={t} loading={isFetching} aria-label="Deals" />
+// ✅ First load of an empty table: the component announces it, and the
+//    outcome ("Rows loaded" / "No rows loaded"). Nothing to add.
+<DataTable instance={table} loading={isFetching} aria-label="Deals" />
 
-// ❌ Don't double up — your region and the component's both fire.
+// ⚠️ A refetch OVER rows that are already on screen is deliberately silent —
+//    nothing changes visually, so a 30s poll shouldn't interrupt a reader.
+//    If your refetch does change what's displayed and you want it announced,
+//    that region is yours to add.
+
+// ❌ Don't wrap the first-load case — your region and the component's
+//    both fire for one event.
 <div aria-live="polite">
-  <DataTable instance={t} loading={isFetching} aria-label="Deals" />
+  <DataTable instance={table} loading={isFetching} aria-label="Deals" />
 </div>
 
 // ✅ Skeleton is aria-hidden by design — this one IS yours to announce.

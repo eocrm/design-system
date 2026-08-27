@@ -106,9 +106,11 @@ function clampSiblings(siblingCount: number): number {
  * - Cursor / keyset pagination (no total page count) → use
  *   `<CursorPagination>`.
  * - "Load more" infinite scroll → just
- *   `<Button onClick={loadMore} aria-disabled={isLoading}>Load more</Button>` —
- *   `Button` has no `loading` prop, and `aria-disabled` keeps it focusable and
- *   announcing rather than dropping it out of the tab order mid-interaction.
+ *   `<Button onClick={() => !isLoading && loadMore()} aria-disabled={isLoading || undefined}>Load more</Button>`.
+ *   `Button` has no `loading` prop. `aria-disabled` keeps the control focusable
+ *   and announcing instead of dropping it out of the tab order mid-interaction —
+ *   but it does NOT block activation (see this package's Button anti-patterns),
+ *   so the handler guard is required, not optional.
  *
  * @remarks A11y
  * - Wrapper is `<nav aria-label="Pagination">` (override via `aria-label`

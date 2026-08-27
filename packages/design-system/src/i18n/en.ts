@@ -119,6 +119,7 @@ export const en: Messages = {
     empty: 'No data',
     loading: 'Loading rows…',
     loaded: 'Rows loaded',
+    loadedEmpty: 'No rows loaded',
   },
   drag: {
     instructions:

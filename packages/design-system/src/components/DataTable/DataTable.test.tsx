@@ -2036,6 +2036,16 @@ describe('loading state reaches assistive tech (#488)', () => {
     expect(ownRegion(container)[0].textContent).toBe('Rows loaded');
   });
 
+  it('announces the outcome, not just completion, when a load returns nothing', () => {
+    // "Rows loaded" over an empty table was the bug: the region said one thing
+    // and the screen said "No data".
+    const { rerender, container } = render(<Harness4 data={[]} loading={false} />);
+    rerender(<Harness4 data={[]} loading />);
+    expect(ownRegion(container)[0].textContent).toBe('Loading rows…');
+    rerender(<Harness4 data={[]} loading={false} />);
+    expect(ownRegion(container)[0].textContent).toBe('No rows loaded');
+  });
+
   it('stays silent for a refetch over rows that are already rendered', () => {
     // The table keeps existing rows mounted during a refetch and shows no
     // skeleton, so nothing changes on screen. Announcing anyway would

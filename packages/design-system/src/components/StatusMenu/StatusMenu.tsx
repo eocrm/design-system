@@ -40,6 +40,9 @@ export interface StatusMenuProps extends Omit<HTMLAttributes<HTMLElement>, 'onSe
    * also set but reaches no screen reader on its own. The trigger's accessible
    * name does not change (contrast `EntityChip`): you activated this control,
    * so the change is announced rather than folded into the name.
+   *
+   * No effect in read-only mode (no `options`), which renders no trigger and
+   * so has nothing to mark busy.
    */
   busy?: boolean;
 }

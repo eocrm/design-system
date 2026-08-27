@@ -172,13 +172,26 @@ describe('busy state reaches assistive tech (#488)', () => {
   });
 
   it('leaves the trigger name alone while busy', () => {
-    // Queried by NAME below rather than by reading aria-label — the Switch
-    // sibling of this test compared the attribute and passed vacuously.
     const { rerender, getByRole } = render(
       <StatusMenu current={inProgress} options={options} busy={false} />,
     );
     expect(getByRole('button', { name: 'Change status: In progress' })).not.toBeNull();
     rerender(<StatusMenu current={inProgress} options={options} busy />);
     expect(getByRole('button', { name: 'Change status: In progress' })).not.toBeNull();
+  });
+
+  it('keeps the region OUTSIDE the trigger', () => {
+    // The by-name assertion above cannot catch StatusMenu's actual bug. The
+    // trigger sets an explicit aria-label, which wins over name-from-content,
+    // so its name is invariant to anything nested inside it — the name test
+    // passes with the region back in the button. StatusMenu's failure mode is
+    // PRUNING, not renaming: `button` is children-presentational in ARIA, so a
+    // region nested in it is spec'd to be dropped. That has to be asserted
+    // structurally.
+    const { container, getByRole } = render(
+      <StatusMenu current={inProgress} options={options} busy />,
+    );
+    expect(getByRole('button').querySelector('[role="status"]')).toBeNull();
+    expect(container.querySelector('[role="status"]')).not.toBeNull();
   });
 });

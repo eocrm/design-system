@@ -121,6 +121,7 @@ export const ru: Messages = {
     empty: 'Нет данных',
     loading: 'Загрузка строк…',
     loaded: 'Строки загружены',
+    loadedEmpty: 'Строки не загружены',
   },
   drag: {
     instructions:

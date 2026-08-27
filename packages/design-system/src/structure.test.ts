@@ -54,24 +54,35 @@ describe('library structure', () => {
 /**
  * Hard rule 10: `aria-busy` alone never reaches a screen reader.
  *
- * This walks the tree rather than checking a list, because the list is the
- * thing that rots. The first version of this gate could not fail on ANY of the
- * four inputs its own docstring named — a conditionally-rendered region passed,
- * a region that existed only inside a JSX comment passed, an unrelated
- * `srOnlyDecorativeThing` class passed, and a region wired to the wrong state
- * passed. `ErrorState` even entered the check because of a JSDoc `@example`
- * containing `aria-busy`, then satisfied it off that same JSDoc: trigger and
- * pass both prose, zero runtime code involved.
+ * This asserts ONE thing: a file that sets `aria-busy` also carries one of the
+ * sanctioned mechanisms. It deliberately does NOT try to decide whether the
+ * mechanism is rendered unconditionally, whether it is wired to the same state,
+ * or whether it sits somewhere that would prune it.
  *
- * So: comments are stripped before anything is matched, on both sides. A
- * mechanism only counts if it is real JSX, and a live region only counts if it
- * is rendered unconditionally — a region that mounts together with its text is
- * the unreliable case the rule explicitly forbids.
+ * That restraint is the finding, not a shortcut. Two rounds of review were
+ * spent on versions that tried:
  *
- * Still deliberately coarse: it cannot tell whether the mechanism is wired to
- * the same state as the `aria-busy`, and a component whose transient state
- * never sets `aria-busy` at all is invisible to it. It closes the failure mode
- * that actually happened and stays cheap enough not to rot.
+ *   v1 matched raw text, so a token name inside a `{/* comment *\/}` satisfied
+ *      it, and `ErrorState` both entered and passed the check off a JSDoc
+ *      `@example` — trigger and pass, zero runtime code.
+ *   v2 stripped comments and rejected `cond && <span role="status">`. It caught
+ *      that literal shape and nothing else: wrapping the same conditional
+ *      region in a <div> or a fragment passed, because the attribute is no
+ *      longer in the opening tag the regex reaches. It also produced two false
+ *      alarms — one legitimate conditional region anywhere in a file poisoned
+ *      an unrelated correct one, and the natural name-fold shape
+ *      `<span className={styles.srOnly}>{loading && t('x')}</span>` was
+ *      rejected outright.
+ *
+ * Deciding "is this JSX conditional, and does it wrap that attribute" needs a
+ * parser, not a regex. A gate that answers one question correctly is worth more
+ * than one that answers two badly and cries wolf on correct code — the false
+ * alarms are the part that gets a gate deleted.
+ *
+ * So: comments stripped on both sides, mechanism must exist. Placement,
+ * conditionality and state-wiring are reviewed by humans and pinned by the
+ * per-component tests in Switch/StatusMenu/DataTable, which assert the
+ * behaviour rather than the shape.
  */
 describe('transient state does not rely on aria-busy alone', () => {
   const stripComments = (code: string) =>
@@ -97,31 +108,13 @@ describe('transient state does not rely on aria-busy alone', () => {
   });
 
   it.each(withAriaBusy.map(({ label, code }) => [label, code]))(
-    '%s pairs aria-busy with an unconditional live region or a named state word',
+    '%s carries a live region or a named state word alongside aria-busy',
     (_label, code) => {
-      // A region rendered behind `cond && <span role="status">` mounts with its
-      // text, which most screen readers do not announce. Reject it explicitly
-      // rather than counting it as a mechanism.
-      const conditionalRegion =
-        /(\?|&&)\s*\(?\s*<[A-Za-z][^>]*(role=("|')(status|alert)\3|aria-live=)/.test(code);
-      const liveRegion =
-        !conditionalRegion && /<[A-Za-z][^>]*(role=("|')(status|alert)\2|aria-live=)/.test(code);
-      // The other sanctioned mechanism: a visually-hidden span carrying a
-      // translated state word. Two things this must NOT do. It must not accept
-      // a bare class — an unrelated `srOnlyDecorativeThing` used to. And it
-      // must not accept a span that is also a live region, or a
-      // conditionally-rendered region slips through here instead: that was
-      // still an srOnly span with a t() call in it, so rejecting it on the
-      // live-region branch achieved nothing.
-      //
-      // Note the asymmetry, which is the rule and not an oversight: a live
-      // region must be UNCONDITIONAL (mounting it with its text announces
-      // nothing), while a name-folded word must be CONDITIONAL (otherwise the
-      // state is in the name permanently). Same reason, opposite shapes.
-      const namedState =
-        /<span(?![^>]*(?:role=|aria-live=))[^>]*(?:hiddenLabel|srOnly)[^>]*>\s*\{?\s*t\(/.test(
-          code,
-        );
+      const liveRegion = /role=("|')(status|alert)\1|aria-live=/.test(code);
+      // Anchored on the closing brace so `styles.srOnlyDecorativeThing` and
+      // `hiddenLabelWrapper` do not count, and required to carry a translated
+      // word — a visually-hidden span with no `t()` is decoration.
+      const namedState = /styles\.(srOnly|hiddenLabel)\}/.test(code) && /\bt\(/.test(code);
       expect(liveRegion || namedState).toBe(true);
     },
   );

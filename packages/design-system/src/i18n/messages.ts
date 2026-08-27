@@ -221,6 +221,14 @@ export interface Messages {
      * table itself.
      */
     loaded: string;
+    /**
+     * Announced when a load resolves to nothing. Distinct from `empty`, which
+     * is the VISIBLE empty-state copy: reusing that string put the same text
+     * on screen and in the live region, so a name query for the empty state
+     * matched twice. Announcing "Rows loaded" over an empty table was the bug
+     * this replaces.
+     */
+    loadedEmpty: string;
   };
   /**
    * Screen-reader copy for every dnd-kit drag surface in the library — Kanban,

@@ -496,10 +496,25 @@ function DataTableInner<T>(
   // user on every poll. And announce the resolution: going from "Loading
   // rows…" to populated in silence is the same half-finished shape this
   // region exists to fix.
-  const [loadPhase, setLoadPhase] = useState<'idle' | 'loading' | 'loaded'>('idle');
+  //
+  // Resolution announces the OUTCOME, not just "finished": landing on an empty
+  // table said "Rows loaded" while the screen read "No data". And it clears
+  // once announced — a live region only fires on change, so leaving the text
+  // in place bought nothing and left a stale node for a browse-mode reader to
+  // trip over under every loaded table.
+  const [loadPhase, setLoadPhase] = useState<'idle' | 'loading' | 'loaded' | 'empty'>('idle');
   useEffect(() => {
-    setLoadPhase((prev) => (showSkeletonRows ? 'loading' : prev === 'loading' ? 'loaded' : prev));
-  }, [showSkeletonRows]);
+    setLoadPhase((prev) => {
+      if (showSkeletonRows) return 'loading';
+      if (prev !== 'loading') return prev;
+      return hasRenderedRows ? 'loaded' : 'empty';
+    });
+  }, [showSkeletonRows, hasRenderedRows]);
+  useEffect(() => {
+    if (loadPhase !== 'loaded' && loadPhase !== 'empty') return;
+    const id = setTimeout(() => setLoadPhase('idle'), CLEAR_STATUS_MS);
+    return () => clearTimeout(id);
+  }, [loadPhase]);
   const responsiveEnabled = collapseBelow != null;
   const hasResponsiveHeaderItems =
     instance.enableRowSelection ||
@@ -738,7 +753,9 @@ function DataTableInner<T>(
             ? t('dataTable.loading')
             : loadPhase === 'loaded'
               ? t('dataTable.loaded')
-              : ''}
+              : loadPhase === 'empty'
+                ? t('dataTable.loadedEmpty')
+                : ''}
         </span>
       </SortableContext>
     </DndContext>
@@ -807,6 +824,9 @@ function EmptyRow({
  * forwardRef so we re-type via assertion. This is the standard pattern for
  * generic forwardRef components.
  */
+/** Long enough for the announcement to be picked up, short enough not to linger. */
+const CLEAR_STATUS_MS = 1000;
+
 export const DataTable = forwardRef(DataTableInner) as <T>(
   props: DataTableProps<T> & { ref?: Ref<HTMLTableElement> },
 ) => ReturnType<typeof DataTableInner>;
