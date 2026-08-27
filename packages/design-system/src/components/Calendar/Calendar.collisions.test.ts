@@ -106,9 +106,21 @@ function measured(): { tone: string; color: string; rounded: number }[] {
  * parse from wandering into unrelated prose.
  */
 function tableRegion(text: string): string {
-  const start = text.toLowerCase().indexOf('measured rgb distance');
-  const end = text.indexOf('Nothing enforces this', start);
-  if (start < 0 || end < 0) throw new Error('collision table region not found');
+  const lower = text.toLowerCase();
+  // Both markers must be UNIQUE, not merely present. indexOf takes the first
+  // occurrence, so a second "Measured RGB distance" earlier in the file widens
+  // the region upstream — and a correct-looking calibration planted up there
+  // then satisfies every check while the real table carries none. That is the
+  // same failure this region was introduced to stop, one level up.
+  const starts = [...lower.matchAll(/measured rgb distance/g)];
+  const ends = [...text.matchAll(/Nothing enforces this/g)];
+  if (starts.length !== 1 || ends.length !== 1) {
+    throw new Error(
+      `collision table markers must appear exactly once (found ${starts.length} start, ${ends.length} end)`,
+    );
+  }
+  const [start, end] = [starts[0].index!, ends[0].index!];
+  if (end < start) throw new Error('collision table markers are out of order');
   return text.slice(start, end);
 }
 
@@ -187,7 +199,10 @@ describe('the documented color/tone collision table matches the shipped tokens',
     // already does. A bare exec() over the file returns the first match
     // anywhere, so planting the correct sentence in unrelated prose (or leaving
     // a stale one above the table) decided the result instead of the real
-    // calibration. That was this check's sixth revision and its fifth hole.
+    // calibration. Every earlier version of this check located the sentence by
+    // proximity — and proximity is what an editor changes. Note the region ends
+    // at "Nothing enforces this", so a stale claim written BELOW the table is
+    // outside it and not caught; only the calibration itself is pinned.
     //
     // matchAll + exactly-one also closes the next variant: a second claim added
     // inside the region — "in dark the worst pair is …" — would otherwise be

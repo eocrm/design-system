@@ -130,8 +130,9 @@ const PAIRS: Pair[] = [
   // components paint on them: --color-bg-danger-subtle carries danger text in
   // DropdownMenu's danger item hover, Select and LiquidEditor;
   // --color-accent-subtle-bg is painted by Rail, Tabs, Select's selected option
-  // and Screen (a page gradient there, not text). Six files across the two
-  // tints. Retuning a gated twin would leave its duplicate at the stale tint
+  // and Screen. Only Rail and Tabs put --color-accent ON it: Select's selected
+  // option keeps --color-fg, and Screen's is a page gradient. Six files across
+  // the two tints, four of them rendering tone text. Retuning a gated twin would leave its duplicate at the stale tint
   // with all of them still rendering on it.
   ['danger text on the duplicate danger tint', '--color-danger', '--color-bg-danger-subtle', 4.5],
   ['accent text on the duplicate accent tint', '--color-accent', '--color-accent-subtle-bg', 4.5],
@@ -336,8 +337,12 @@ describe('a tone stays in sync with the roles derived from it', () => {
     // Ordering still held, which is why "ordering is unchanged" was the wrong
     // thing to check on its own.
     //
-    // The floor is 0.065, anchored to the SMALLEST step the library had before
-    // #484 touched it (light accent, 0.0662). That anchor is deliberate: the
+    // The floor is 0.065, anchored to the smallest step among THE THREE TONES
+    // THIS GATE COVERS, either theme, before #484 touched anything (light
+    // accent, 0.0662). Not the library's smallest and not the smallest
+    // primitive: --color-table-header-bg's light hover step is 0.0266 and
+    // --entity-chip-bg-hover is 0.0000. Two earlier versions of this sentence
+    // claimed each of those wider scopes and both were false. That anchor is deliberate: the
     // first version of this gate used 0.05, chosen as "just under the observed
     // floor of 0.058" — but 0.058 was a number #484 had itself created by
     // retuning dark accent without its hover, so the gate was calibrated to
@@ -353,10 +358,13 @@ describe('a tone stays in sync with the roles derived from it', () => {
     // the pre-existing weakest step and shrinking a step is not by itself a
     // defect — falling below what the library already shipped is.
     //
-    // This covers three primitives, not the library. Seven component-level
-    // hover pairs in light are below this floor (11 theme-instances across 8
-    // distinct pairs once dark is counted), --entity-chip-bg-hover at exactly
-    // 0.0000, all deliberately out of scope — see #490.
+    // This covers three tones, not the library. Plenty of other base/-hover
+    // pairs sit below this floor — --button-bg-secondary-hover,
+    // --color-table-header-bg, and --entity-chip-bg-hover at exactly 0.0000,
+    // where the real hover is a filter rather than the token. No count is
+    // quoted: four sweeps produced three different totals because no
+    // theme-scoping rule for component tokens is written down. Pinning that
+    // rule, and then widening this gate, is #490.
     for (const tone of ['accent', 'danger', 'success'] as const) {
       const base = tokenValue(`--color-${tone}`, source);
       const hover = tokenValue(`--color-${tone}-hover`, source);
@@ -438,7 +446,9 @@ describe('presence dots stay distinguishable from each other', () => {
   // channel. What this measures is NORMAL TRICHROMATIC separation; it is not a
   // WCAG 1.4.1 conformance claim and cannot be one, because OKLab ΔE is blind
   // to dichromacy. Under simulated protanopia light amber/busy collapses by an
-  // order of magnitude — 0.018 by Brettel 1997, 0.015 by Vienot 1999 — while
+  // order of magnitude — order 0.01-0.02 depending on the simulation; three
+  // implementations of Brettel 1997 and Vienot 1999 gave 0.018, 0.015 and
+  // 0.014, so only the magnitude is quotable, not a digit — while
   // this gate reads 0.158 and passes. (Machado 2009 at full severity gives
   // 0.076: still a collapse, but the three methods disagree enough that only
   // the direction is worth quoting.)
@@ -497,8 +507,11 @@ describe('presence dots stay distinguishable from each other', () => {
     //
     // That is the WHOLE risk along this axis, not the first step of a slide:
     // the relation is non-monotonic. Darkening success further sends it back up
-    // (0.157 at two steps, 0.211 at three) because online passes closest to
-    // amber in hue on the way past. So 0.1348 is about the worst this floor
+    // (0.157 at two steps, 0.211 at three). NOT a hue effect — the amber/online
+    // hue gap widens the whole way (84.0 -> 84.5 -> 85.3 -> 86.8 deg). It is
+    // lightness: |dL| runs 0.051 -> 0.022 -> 0.098, crossing near one step.
+    // (Hue was the first explanation written here and it was wrong, which is
+    // the same trap this block flags 60 lines down.) So 0.1348 is the worst
     // ever sees from a success retune, and it survives it. If it does fire, the
     // answer is to revisit `away`, not this number.
     for (const [i, a] of DOTS.entries()) {

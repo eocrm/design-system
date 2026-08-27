@@ -71,8 +71,7 @@ export interface CalendarEvent {
    * **Pick category colours that contrast with the semantic tones you use.**
    * The band and the category fill are different colours by design, but some
    * pairs land almost on top of each other. Measured RGB distance between each
-   * band colour and the category's own saturated colour — the worst pairs, all
-   * of which read as an edge-thickness artefact rather than a state:
+   * band colour and the category's own saturated colour, worst first:
    *
    * - `tone: 'success'` — `mint` (11), `emerald` (15), `teal` (35), `green` (41)
    * - `tone: 'danger'` — `red` (17), `coral` (44)
@@ -81,7 +80,7 @@ export interface CalendarEvent {
    *
    * Read it as a threshold, not a ranking. The worst pair is `success` +
    * `mint` at 11, and anything under about 20 is effectively invisible at the
-   * rendered 4px. The low 20s are detectable side-by-side but unreliable in
+   * rendered 4px (a 3px band plus the 1px border painted the same colour). The low 20s are detectable side-by-side but unreliable in
    * isolation, and the low 40s are where this list stops rather than where the
    * problem does: the pair just off the end of this list is no safer than the
    * last one on it. Nothing enforces this — if a tenant picks `mint` for a
