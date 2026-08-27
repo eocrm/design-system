@@ -87,9 +87,13 @@ type Pair = [label: string, fg: string, bg: string, minimum: number];
 /**
  * Every pair here is one a component genuinely renders. The `-strong` entries
  * are what this file was written for; the two body-text pairs are the baseline
- * the rest of the UI rests on. The other semantic tones are deliberately NOT
- * here: two of them sit just under AA and live in `BELOW_AA_TEXT` below, and
- * `info` passes comfortably in both themes.
+ * the rest of the UI rests on. #484 retuned the last three sub-AA tones and
+ * folded them in, retiring the ratchet that used to hold them. `info` is here
+ * too: it needed no retune, but it is a byte-exact copy of the OLD accent in
+ * both themes with no alias linking them, so this retune silently split the two
+ * blues in dark. Measured rather than assumed, it passes on its own (4.79 dark),
+ * and it is pinned so the next retune cannot quietly take it along or leave it
+ * behind.
  */
 const PAIRS: Pair[] = [
   // The regression: warning as a foreground on its own subtle tint.
@@ -100,16 +104,18 @@ const PAIRS: Pair[] = [
   // amber, not the strong variant, because keeping the caution hue on a solid
   // chip is the whole point.
   ['warning-fg text on solid warning fill', '--color-warning-fg', '--color-warning', 4.5],
-  // Reached through an alias (--color-presence-away -> --color-palette-amber-fg),
+  // Reached through an alias (--color-presence-away -> --color-palette-yellow-fg),
   // which is exactly the shape a grep for `var(--color-warning)` cannot see —
   // it is how Avatar's away dot escaped the first sweep.
   ['away presence dot on page bg', '--color-presence-away', '--color-bg', 3.0],
   ['body text on page bg', '--color-fg', '--color-bg', 4.5],
   ['muted text on page bg', '--color-fg-muted', '--color-bg', 4.5],
   // Retuned in #484 — these three were the last sub-AA text pairs. Each failed
-  // exactly one of its four roles ("as text on its own tint") and passed the
-  // other three, so only lightness moved, hue and saturation are unchanged, and
-  // the -hover/-pressed ordering still holds.
+  // as text on its own tint and passed as a solid fill, so only lightness moved
+  // and hue stays put. The interaction steps are NOT covered by ordering alone:
+  // darkening the base collapsed danger's hover step to a third of its size
+  // while leaving the order intact, which is what the hover-step gate below now
+  // measures. (Only accent has a -pressed; danger and success stop at -hover.)
   ['danger text on danger tint', '--color-danger', '--color-danger-bg-subtle', 4.5],
   ['success text on success tint', '--color-success', '--color-success-bg-subtle', 4.5],
   ['accent text on accent tint', '--color-accent', '--color-accent-bg-subtle', 4.5],
@@ -118,6 +124,7 @@ const PAIRS: Pair[] = [
   ['danger-fg on solid danger', '--color-danger-fg', '--color-danger', 4.5],
   ['success-fg on solid success', '--color-success-fg', '--color-success', 4.5],
   ['accent-fg on solid accent', '--color-accent-fg', '--color-accent', 4.5],
+  ['info text on info tint', '--color-info', '--color-info-bg-subtle', 4.5],
 ];
 
 describe.each([
@@ -138,6 +145,11 @@ describe.each([
   });
 });
 
+/**
+ * The slots below are the ones a component actually paints with. PAIRS proves
+ * the strong variant clears its bar; this proves the components are still
+ * pointed at it, so a token nobody re-aimed cannot quietly keep the old value.
+ */
 describe('components keep their warning slots on the strong variant', () => {
   const SLOTS: [file: string, tokens: string[]][] = [
     [
@@ -275,11 +287,81 @@ describe('rules without a token name are pinned too', () => {
   });
 });
 
+/**
+ * Two invariants that were invisible to this whole suite until a retune broke
+ * both of them at once. Neither is about contrast — they are about a token
+ * having MORE ROLES than the one being measured, which is the failure this file
+ * exists to catch and twice did not.
+ */
+describe('a tone stays in sync with the roles derived from it', () => {
+  /** Perceptual distance in OKLab — the right space for "can a person see this". */
+  function deltaE(a: string, b: string): number {
+    const lab = (hex: string) => {
+      const [r, g, b2] = [0, 2, 4]
+        .map((i) => parseInt(hex.slice(1 + i, 3 + i), 16) / 255)
+        .map((c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+      const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b2);
+      const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b2);
+      const s2 = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b2);
+      return [
+        0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s2,
+        1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s2,
+        0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s2,
+      ];
+    };
+    const [x, y] = [lab(a), lab(b)];
+    return Math.hypot(...x.map((v, i) => v - y[i]));
+  }
+
+  it.each([
+    ['light', TOKENS],
+    ['dark', DARK],
+  ])('every -hover is perceptibly different from its base in %s', (_theme, source) => {
+    // Darkening --color-danger collapsed its hover step to 0.025 — a third of
+    // what it was, on the DESTRUCTIVE button, where the affordance matters most.
+    // Ordering still held, which is why "ordering is unchanged" was the wrong
+    // thing to check. Every variant in the library sits in 0.058-0.102.
+    for (const tone of ['accent', 'danger', 'success'] as const) {
+      const base = tokenValue(`--color-${tone}`, source);
+      const hover = tokenValue(`--color-${tone}-hover`, source);
+      expect(deltaE(base, hover), `${tone} hover step`).toBeGreaterThanOrEqual(0.04);
+    }
+  });
+
+  it.each([
+    ['light', TOKENS],
+    ['dark', DARK],
+  ])('every --ring-* still matches the tone it was derived from in %s', (_theme, source) => {
+    // The rings are hand-written rgb() literals, so nothing links them to their
+    // primitive. Three were byte-exact decompositions of values this branch
+    // changed, leaving an invalid Input drawing its border in one red and its
+    // ring, 2px away and concentric, in another.
+    const EXEMPT = new Set(['light:accent']); // deliberately a lighter blue
+    for (const tone of ['accent', 'danger', 'success'] as const) {
+      if (EXEMPT.has(`${_theme}:${tone}`)) continue;
+      const ring = (source.match(new RegExp(`--ring-${tone}:\\s*([^;]+);`)) ??
+        TOKENS.match(new RegExp(`--ring-${tone}:\\s*([^;]+);`)))?.[1];
+      expect(ring, `--ring-${tone} is declared`).toBeDefined();
+      const channels = ring!.match(/\d+/g)!.slice(0, 3).map(Number);
+      const asHex = `#${channels.map((c) => c.toString(16).padStart(2, '0')).join('')}`;
+      expect(asHex, `--ring-${tone} vs --color-${tone}`).toBe(
+        tokenValue(`--color-${tone}`, source),
+      );
+    }
+  });
+});
+
 describe('presence dots stay distinguishable from each other', () => {
   // away is aria-hidden with no text alternative, so hue is the entire signal.
   // PAIRS already gates its luminance against the page; this gates the thing
-  // that actually motivated choosing palette.amber.foreground over the warning
-  // strong variant, which held contrast while collapsing separation 107 -> 61.
+  // that actually motivated the alias, twice. --color-warning-strong held
+  // contrast while collapsing away/busy 107 -> 61, so #481 moved away to
+  // palette.amber (105). Then #484 darkened --color-danger, which
+  // --color-presence-busy aliases, and amber fell to 86.1 — under this floor,
+  // from a change two files away that never mentioned presence. palette.yellow
+  // restores it to 104.7 light / 239.9 dark. It costs separation against ONLINE
+  // in light (154.2 -> 139.5) and gains it in dark; busy is the binding
+  // constraint, so that is the trade taken.
   function distance(a: string, b: string): number {
     const channels = (hex: string) => [0, 2, 4].map((i) => parseInt(hex.slice(1 + i, 3 + i), 16));
     const [x, y] = [channels(a), channels(b)];
