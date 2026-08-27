@@ -10,7 +10,7 @@ import { resolve } from 'node:path';
  * Then #484 raised `danger`, `success` and `accent` to clear WCAG AA, which
  * moved three of the four band colours and silently invalidated both copies in
  * the UNDER-warning direction: `success` + `mint` went 18 -> 11, becoming the
- * worst pair in the library, while the docs still rated it mid-table and still
+ * worst pair in the library (it had been second of nine), while the docs still
  * named a different pair as the worst. An agent reading that would have picked
  * `mint` for a category whose events go `success` and shipped an invisible band.
  *

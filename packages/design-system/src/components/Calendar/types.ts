@@ -85,14 +85,16 @@ export interface CalendarEvent {
    * (The agenda row has no border, so its stripe is the 3px alone.) The low 20s
    * are detectable side-by-side but unreliable in isolation, and the low 40s
    * are where this list stops rather than where the problem does: the pair just
-   * off the end is no safer than the last one on it. Nothing enforces this — if a tenant picks `mint` for a
-   * category whose events can be `success`, keep that state in the title too.
+   * off the end is no safer than the last one on it.
    *
    * These numbers moved in #484, which raised `danger`, `success`, and `accent`
    * to clear WCAG AA as text. The bands got closer to their neighbouring
    * category colours as a result: `success` + `mint` went 18 → 11 and `danger`
    * + `red` went 36 → 17. `Calendar.collisions.test.ts` recomputes this list
    * from the shipped tokens so it cannot drift again.
+   *
+   * Nothing enforces this — if a tenant picks `mint` for a category whose
+   * events can be `success`, keep that state in the title too.
    *
    * **Both axes are visual only.** Neither sets ARIA, and a 3px band is not an
    * accessible signal — same contract as `Badge`, whose tone is also decoration.

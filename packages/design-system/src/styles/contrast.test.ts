@@ -511,7 +511,9 @@ describe('presence dots stay distinguishable from each other', () => {
     // Headroom is about one retune step, and the two themes behave differently
     // enough that quoting one figure for both is how this comment was wrong
     // before. Walking --color-success (which online aliases) by its own hover
-    // delta, away/online goes:
+    // delta — repeated in sRGB channels, the space a retune is actually authored
+    // in; an OKLab-vector walk gives slightly different figures and the same
+    // verdict — away/online goes:
     //
     //   light   0.153 -> 0.135 -> 0.157 -> 0.211
     //   dark    0.199 -> 0.144 -> 0.116 -> 0.131
