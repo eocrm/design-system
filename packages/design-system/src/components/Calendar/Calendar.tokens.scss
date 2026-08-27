@@ -90,11 +90,16 @@
   // 6.60:1. Darkening the FILL also passed (5.95:1) but read as chocolate brown
   // — on a solid chip the hue IS the caution signal, so this keeps it. warning
   // is the only tone whose all-day pair failed; accent/success/danger are all
-  // light enough for white text at 4.55-6.82:1.
+  // dark enough for white text at 5.11-6.82:1 in LIGHT. (Dark pairs these fills
+  // with a dark fg instead, at 5.83-8.16:1 — the figures above are light-theme
+  // only, which the rest of this block assumes but never said.) (Was 4.55-6.82 until #484 raised
+  // danger and success; nothing measures 4.55 any more.)
   --calendar-event-chip-all-day-bg-warning: var(--color-warning);
 
   // --color-warning-fg is calibrated against --color-warning (6.60:1) and ONLY
-  // that: on --color-warning-strong it measures 2.37:1. Pairing the two
+  // that: on --color-warning-strong it measures 2.37:1 in light. (Dark is
+  // unaffected — the two warning tokens resolve to the same value there, and
+  // the pair measures 10.57:1.) Pairing the two
   // 'warning' tokens looks right and is not — keep this fg with the amber fill
   // above.
   --calendar-event-chip-all-day-fg-warning: var(--color-warning-fg);
@@ -241,7 +246,9 @@
   --calendar-agenda-tone-accent: var(--color-accent);
   --calendar-agenda-tone-success: var(--color-success);
 
-  // The agenda tone dot is a graphical object on --color-bg: 2.14:1 -> 5.95:1.
+  // The agenda tone dot is a graphical object on --color-bg: 2.14:1 -> 5.95:1
+  // in light. (Dark is unaffected — the two warning tokens are the same value
+  // there.)
   --calendar-agenda-tone-warning: var(--color-warning-strong);
   --calendar-agenda-tone-danger: var(--color-danger);
 }

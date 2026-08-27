@@ -29,7 +29,7 @@ const DARK = readFileSync(
  * Resolves a token to a literal colour, following `var(--x)` aliases.
  *
  * Alias-following is not incidental: Avatar's away dot reaches the amber via
- * `--color-presence-away -> --color-warning`, so a check that only understood
+ * `--color-presence-away -> --color-palette-amber-fg`, so a check that only understood
  * literals could not see it — and a grep for `var(--color-warning)` in
  * component source could not either. That blind spot is how it survived the
  * first sweep of this very bug.
@@ -39,7 +39,7 @@ function tokenValue(name: string, source: string, seen: string[] = []): string {
   // Anchored on a boundary so `--foo` cannot match inside `--bar--foo:`. No
   // escaping: every name is a literal `--[a-z0-9-]+` from the lists below, and
   // a half-working escape would be worse than none.
-  const pattern = new RegExp(`(?:^|[^-a-z0-9])${name}:\\s*([^;]+);`, 'm');
+  const pattern = new RegExp(`(?:^|[^-a-z0-9])${name}:\\s*([^;\n]+);`, 'm');
   const declare = (from: string) => from.match(pattern)?.[1]?.trim();
 
   // A token not overridden in dark still has a declaration in light. Reading
@@ -67,6 +67,37 @@ function tokenValue(name: string, source: string, seen: string[] = []): string {
   throw new Error(`${name} resolves to "${declaration}", which is neither a hex nor a var() alias`);
 }
 
+/** Strips comments, so prose containing a token name cannot satisfy a match. */
+function stripComments(source: string): string {
+  return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+}
+
+/**
+ * The one way this file is allowed to read a declaration.
+ *
+ * Every ad-hoc version of this has had the same two holes, and fixing one site
+ * never fixed its siblings: a bare `.match()` takes the FIRST declaration while
+ * CSS is last-wins, so a later `[data-theme='dark']` or `@media` block silently
+ * overrides it; and reading raw text lets the token name in a COMMENT satisfy
+ * the assertion while the real declaration says something else. Both shipped
+ * here more than once, in gates written to fix each other.
+ *
+ * So: strip comments, collect EVERY declaration of the name, and refuse to
+ * answer unless they agree. Stylelint's duplicate-property rule is
+ * block-scoped and does not cover the override case.
+ */
+function declaredValue(name: string, source: string): string | undefined {
+  const all = [
+    ...stripComments(source).matchAll(new RegExp(`(?:^|[^-a-z0-9])${name}:\\s*([^;\\n]+);`, 'g')),
+  ].map((m) => m[1].trim());
+  if (!all.length) return undefined;
+  const distinct = [...new Set(all)];
+  if (distinct.length > 1) {
+    throw new Error(`${name} is declared ${all.length} times with different values: ${distinct}`);
+  }
+  return distinct[0];
+}
+
 /** WCAG 2.1 relative luminance. */
 function luminance(hex: string): number {
   const h = hex.replace('#', '');
@@ -87,9 +118,13 @@ type Pair = [label: string, fg: string, bg: string, minimum: number];
 /**
  * Every pair here is one a component genuinely renders. The `-strong` entries
  * are what this file was written for; the two body-text pairs are the baseline
- * the rest of the UI rests on. The other semantic tones are deliberately NOT
- * here: two of them sit just under AA and live in `BELOW_AA_TEXT` below, and
- * `info` passes comfortably in both themes.
+ * the rest of the UI rests on. #484 retuned the last three sub-AA tones and
+ * folded them in, retiring the ratchet that used to hold them. `info` is here
+ * too: it needed no retune, but it is a byte-exact copy of the OLD accent in
+ * both themes with no alias linking them, so this retune silently split the two
+ * blues in dark. Measured rather than assumed, it passes on its own (4.79 dark),
+ * and it is pinned so the next retune cannot quietly take it along or leave it
+ * behind.
  */
 const PAIRS: Pair[] = [
   // The regression: warning as a foreground on its own subtle tint.
@@ -106,22 +141,36 @@ const PAIRS: Pair[] = [
   ['away presence dot on page bg', '--color-presence-away', '--color-bg', 3.0],
   ['body text on page bg', '--color-fg', '--color-bg', 4.5],
   ['muted text on page bg', '--color-fg-muted', '--color-bg', 4.5],
-];
-
-/**
- * Pairs that do NOT clear AA for text today, pinned at their current value so
- * they cannot quietly get worse. These are pre-existing and were surfaced by
- * this test, not introduced by it — see #484. They are all near-misses used as
- * both text and iconography; every one clears 1.4.11's 3:1 graphical bar, so
- * the exposure is text usage specifically. Raising them means retuning three
- * semantic primitives, which is a design decision rather than a bug fix.
- *
- * If you improve one, tighten its number here. If a change pushes one DOWN,
- * this fails — which is the point.
- */
-const BELOW_AA_TEXT: Pair[] = [
-  ['danger fg on danger tint (light)', '--color-danger', '--color-danger-bg-subtle', 3.95],
-  ['success fg on success tint (light)', '--color-success', '--color-success-bg-subtle', 4.2],
+  // Retuned in #484 — these three were the last sub-AA text pairs. Each failed
+  // as text on its own tint and passed as a solid fill, so only lightness moved
+  // and hue stays put. The interaction steps are NOT covered by ordering alone:
+  // darkening the base collapsed danger's hover step to a third of its size
+  // while leaving the order intact, which is what the hover-step gate below now
+  // measures. (Only accent has a -pressed; danger and success stop at -hover.)
+  ['danger text on danger tint', '--color-danger', '--color-danger-bg-subtle', 4.5],
+  ['success text on success tint', '--color-success', '--color-success-bg-subtle', 4.5],
+  ['accent text on accent tint', '--color-accent', '--color-accent-bg-subtle', 4.5],
+  // The same tones in their OTHER three roles, so a future retune cannot fix
+  // the text pair by breaking a fill.
+  ['danger-fg on solid danger', '--color-danger-fg', '--color-danger', 4.5],
+  ['success-fg on solid success', '--color-success-fg', '--color-success', 4.5],
+  ['accent-fg on solid accent', '--color-accent-fg', '--color-accent', 4.5],
+  ['info text on info tint', '--color-info', '--color-info-bg-subtle', 4.5],
+  // The --color-info shape again, one row over. These two are byte-duplicate
+  // LITERALS of the tints above with no alias tying them together, and real
+  // components paint on them: --color-bg-danger-subtle carries danger text in
+  // DropdownMenu's danger item hover and LiquidEditor;
+  // --color-accent-subtle-bg is painted by Rail, Tabs, Select's selected option
+  // and Screen. Six files across the two tints, and Screen is the only one that
+  // renders nothing in the tone on top: its use is a page gradient. Select
+  // appears on both tints and is neither simple case — its selected option
+  // keeps --color-fg on the accent tint, and on the danger tint its chip remove
+  // control pairs --color-danger with --color-bg-danger-subtle as a
+  // 10x10 stroke SVG, so that one is a graphical object at 3:1 rather than
+  // text. Retuning a gated twin would leave its duplicate at the stale tint
+  // with all of them still rendering on it.
+  ['danger text on the duplicate danger tint', '--color-danger', '--color-bg-danger-subtle', 4.5],
+  ['accent text on the duplicate accent tint', '--color-accent', '--color-accent-subtle-bg', 4.5],
 ];
 
 describe.each([
@@ -142,32 +191,10 @@ describe.each([
   });
 });
 
-describe('known sub-AA pairs are pinned so they cannot get worse (#484)', () => {
-  it.each(BELOW_AA_TEXT)('%s', (_label, fgName, bgName, floor) => {
-    expect(contrast(tokenValue(fgName, TOKENS), tokenValue(bgName, TOKENS))).toBeGreaterThanOrEqual(
-      floor,
-    );
-  });
-
-  it('accent on its tint in DARK is the third, at 4.22', () => {
-    // Both tokens are dark-overridden, so tokenValue resolves them directly.
-    expect(
-      contrast(tokenValue('--color-accent', DARK), tokenValue('--color-accent-bg-subtle', DARK)),
-    ).toBeGreaterThanOrEqual(4.22);
-  });
-});
-
 /**
- * The contrast assertions above check the PRIMITIVES. They do not notice a
- * component pointing its own slot back at `--color-warning`, which is how the
- * bug got in — so pin the slots too.
- *
- * Three of these were ALREADY covered elsewhere and are listed only so the set
- * reads as complete: `--calendar-event-stripe-warning` is asserted by
- * `Calendar/eventColor.test.tsx`, and the two `--badge-stripe-*` values are
- * pinned by the design-tokens contract fixture. Every OTHER slot below had no
- * gate at all — reverting one left the whole suite green, which is how this bug
- * got in and stayed in.
+ * The slots below are the ones a component actually paints with. PAIRS proves
+ * the strong variant clears its bar; this proves the components are still
+ * pointed at it, so a token nobody re-aimed cannot quietly keep the old value.
  */
 describe('components keep their warning slots on the strong variant', () => {
   const SLOTS: [file: string, tokens: string[]][] = [
@@ -220,7 +247,7 @@ describe('components keep their warning slots on the strong variant', () => {
   it.each(SLOTS)('%s', (file, tokens) => {
     const source = readFileSync(resolve(__dirname, file), 'utf8');
     for (const token of tokens) {
-      const declared = source.match(new RegExp(`${token}:\\s*([^;]+);`))?.[1];
+      const declared = declaredValue(token, source);
       expect(declared, `${token} is declared`).toBeDefined();
       expect(declared, `${token} must not use --color-warning`).toBe('var(--color-warning-strong)');
     }
@@ -272,14 +299,20 @@ describe('the all-day chip keeps its amber fill and dark text', () => {
   it('pairs the amber fill with --color-warning-fg, not the strong variant', () => {
     // This is the pair the PR's judgement call rests on, and it is the one place
     // --color-warning survives on purpose. Pinning both halves: darkening the
-    // FILL also cleared the bar but read as chocolate brown, and pairing the fg
-    // with --color-warning-strong measures 2.37:1 while looking plausible.
+    // FILL also cleared the bar but read as chocolate brown, and putting
+    // --color-warning-fg on a --color-warning-strong fill measures 2.37:1 while
+    // looking plausible. (The other pairing of those two names, strong-as-fg on
+    // the amber fill, is 2.79:1 — also failing, and easy to confuse.)
     const scss = readFileSync(
       resolve(__dirname, '../components/Calendar/Calendar.tokens.scss'),
       'utf8',
     );
-    expect(scss).toMatch(/--calendar-event-chip-all-day-bg-warning:\s*var\(--color-warning\);/);
-    expect(scss).toMatch(/--calendar-event-chip-all-day-fg-warning:\s*var\(--color-warning-fg\);/);
+    expect(declaredValue('--calendar-event-chip-all-day-bg-warning', scss)).toBe(
+      'var(--color-warning)',
+    );
+    expect(declaredValue('--calendar-event-chip-all-day-fg-warning', scss)).toBe(
+      'var(--color-warning-fg)',
+    );
   });
 });
 
@@ -288,10 +321,63 @@ describe('rules without a token name are pinned too', () => {
     // Dot sets `background:` directly inside `&[data-tone='warning']`, so there
     // is no custom property for SLOTS to assert. It was the headline fix of the
     // sweep and had no gate at all until this.
-    const scss = readFileSync(resolve(__dirname, '../components/Dot/Dot.module.scss'), 'utf8');
-    const rule = scss.match(/\[data-tone='warning'\]\s*\{[^}]*\}/)?.[0];
-    expect(rule, "Dot's warning tone rule").toBeDefined();
-    expect(rule).toMatch(/var\(--color-warning-strong\)/);
+    // Four separate ways this pin has been satisfied by something other than
+    // the declaration that renders, each found by mutation:
+    //   1. the rule's own comment contains "--color-warning-strong", so a bare
+    //      /var\(...\)/ over raw text passed with the declaration swapped;
+    //   2. [^}]* stops at the first '}', so a nested block carrying the right
+    //      value hid a wrong declaration after it;
+    //   3. reading only the first `background:` ignored a second one, and CSS
+    //      is last-wins — the same hole the ring gate above already closed;
+    //   4. `background:` unanchored also matches `--dot-background:`, which is
+    //      the sanctioned refactor under this package's component-token rule.
+    // So: strip comments, take the rule with balanced braces, collect EVERY
+    // anchored background declaration, and require exactly one.
+    const scss = readFileSync(resolve(__dirname, '../components/Dot/Dot.module.scss'), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/\/\/.*$/gm, '');
+    // Exactly one rule, not the first one. Deduplicating declarations INSIDE
+    // the rule while reading the first RULE with indexOf left the same
+    // last-wins hole one level up: a second `[data-tone='warning']` block later
+    // in the file is what renders. Both sibling gates in
+    // Calendar.collisions.test.ts already assert their anchor appears once.
+    const selectors = [...scss.matchAll(/\[data-tone='warning'\]/g)];
+    expect(selectors.length, 'Dot declares its warning tone exactly once').toBe(1);
+    const open = selectors[0].index!;
+    let depth = 0;
+    let end = scss.indexOf('{', open);
+    for (let i = end; i < scss.length; i += 1) {
+      if (scss[i] === '{') depth += 1;
+      else if (scss[i] === '}') {
+        depth -= 1;
+        if (depth === 0) {
+          end = i;
+          break;
+        }
+      }
+    }
+    const rule = scss.slice(open, end + 1);
+    // background-color paints over background, and the anchor that excludes
+    // --dot-background: also made background-color: invisible. Take both.
+    const backgrounds = [
+      ...rule.matchAll(/(?:^|[^-a-z0-9])background(?:-color)?:\s*([^;\n]+);/g),
+    ].map((m) => m[1].trim());
+    expect(backgrounds, "Dot's warning tone paints one background").toHaveLength(1);
+    // Follow one hop through Dot.tokens.scss. Requiring the primitive inline
+    // rejected `background: var(--dot-background)` — which is the refactor this
+    // package's component-token rule actively prefers — so a maintainer doing
+    // the sanctioned thing got a red test and no hint.
+    let painted = backgrounds[0];
+    const alias = /^var\((--dot-[a-z0-9-]+)\)$/.exec(painted)?.[1];
+    if (alias) {
+      const tokens = readFileSync(resolve(__dirname, '../components/Dot/Dot.tokens.scss'), 'utf8');
+      const resolved = declaredValue(alias, tokens);
+      expect(resolved, `${alias} is declared once in Dot.tokens.scss`).toBeDefined();
+      painted = resolved!;
+    }
+    expect(painted, "Dot's warning tone resolves to the strong variant").toBe(
+      'var(--color-warning-strong)',
+    );
   });
 
   it('RichText offers a legible amber as a text colour', () => {
@@ -306,24 +392,258 @@ describe('rules without a token name are pinned too', () => {
   });
 });
 
-describe('presence dots stay distinguishable from each other', () => {
-  // away is aria-hidden with no text alternative, so hue is the entire signal.
-  // PAIRS already gates its luminance against the page; this gates the thing
-  // that actually motivated choosing palette.amber.foreground over the warning
-  // strong variant, which held contrast while collapsing separation 107 -> 61.
-  function distance(a: string, b: string): number {
-    const channels = (hex: string) => [0, 2, 4].map((i) => parseInt(hex.slice(1 + i, 3 + i), 16));
-    const [x, y] = [channels(a), channels(b)];
-    return Math.hypot(...x.map((v, i) => v - y[i]));
-  }
+/**
+ * Perceptual distance in OKLab. Raw RGB distance rates a hue shift and a
+ * lightness shift the same way; OKLab is the space that answers "can a person
+ * tell these apart", which is the actual question everywhere it is used below.
+ */
+function deltaE(a: string, b: string): number {
+  const lab = (hex: string) => {
+    const [r, g, b2] = [0, 2, 4]
+      .map((i) => parseInt(hex.slice(1 + i, 3 + i), 16) / 255)
+      .map((c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+    const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b2);
+    const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b2);
+    const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b2);
+    return [
+      0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s,
+      1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s,
+      0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s,
+    ];
+  };
+  const [x, y] = [lab(a), lab(b)];
+  return Math.hypot(...x.map((v, i) => v - y[i]));
+}
+
+/**
+ * Two invariants that were invisible to this whole suite until a retune broke
+ * both of them at once. Neither is about contrast — they are about a token
+ * having MORE ROLES than the one being measured, which is the failure this file
+ * exists to catch and twice did not.
+ */
+describe('a tone stays in sync with the roles derived from it', () => {
+  it.each([
+    ['light', TOKENS],
+    ['dark', DARK],
+  ])('every -hover stays a visible step from its base in %s', (_theme, source) => {
+    // Darkening --color-danger collapsed its hover step to 0.025 — a third of
+    // what it was, on the DESTRUCTIVE button, where the affordance matters most.
+    // Ordering still held, which is why "ordering is unchanged" was the wrong
+    // thing to check on its own.
+    //
+    // The floor is 0.065, anchored to the smallest step among THE THREE TONES
+    // THIS GATE COVERS, either theme, before #484 touched anything (light
+    // accent, 0.0662). Not the library's smallest and not the smallest
+    // primitive: --color-table-header-bg's light hover step is 0.0266 and
+    // --entity-chip-bg-hover is 0.0000. Two earlier versions of this sentence
+    // claimed each of those wider scopes and both were false. That anchor is deliberate: the
+    // first version of this gate used 0.05, chosen as "just under the observed
+    // floor of 0.058" — but 0.058 was a number #484 had itself created by
+    // retuning dark accent without its hover, so the gate was calibrated to
+    // accept the very regression it was written to catch. Anchor to what the
+    // library managed BEFORE the change under review, never to what it manages
+    // after. Read it as a tripwire, not a floor with room: light accent sits at
+    // 0.0662, so the headroom is 0.0012 — 1.8%. Any deliberate move here is
+    // expected to fail this and be re-argued, which is the intent.
+    //
+    // #484 moved two other steps and both are recorded here rather than
+    // chased: dark accent 0.091 -> 0.058 was retuned back to 0.091, and light
+    // success 0.102 -> 0.075 was left, because 0.075 is still healthier than
+    // the pre-existing weakest step and shrinking a step is not by itself a
+    // defect — falling below what the library already shipped is.
+    //
+    // This covers three tones, not the library. Plenty of other base/-hover
+    // pairs sit below this floor — --button-bg-secondary-hover,
+    // --color-table-header-bg, and --entity-chip-bg-hover at exactly 0.0000,
+    // where the real hover is a filter rather than the token. No count is
+    // quoted: four sweeps produced three different totals because no
+    // theme-scoping rule for component tokens is written down. Pinning that
+    // rule, and then widening this gate, is #490.
+    for (const tone of ['accent', 'danger', 'success'] as const) {
+      const base = tokenValue(`--color-${tone}`, source);
+      const hover = tokenValue(`--color-${tone}-hover`, source);
+      expect(deltaE(base, hover), `${tone} hover step`).toBeGreaterThanOrEqual(0.065);
+      // Magnitude alone would pass a hover that moved the WRONG way. The
+      // direction is theme-dependent: light hovers darken, dark hovers lighten.
+      // A single "hover is darker" assertion would be wrong in half the library.
+      const moved = luminance(hover) - luminance(base);
+      expect(Math.sign(moved), `${tone} hover direction`).toBe(_theme === 'dark' ? 1 : -1);
+    }
+  });
 
   it.each([
     ['light', TOKENS],
     ['dark', DARK],
-  ])('away is well separated from busy in %s', (_theme, source) => {
-    const away = tokenValue('--color-presence-away', source);
-    const busy = tokenValue('--color-presence-busy', source);
-    expect(distance(away, busy)).toBeGreaterThan(90);
+  ])('every --ring-* still matches the tone it was derived from in %s', (_theme, source) => {
+    // The rings are hand-written rgb() literals, so nothing links them to their
+    // primitive. Three were byte-exact decompositions of values this branch
+    // changed, leaving an invalid Input drawing its border in one red and its
+    // ring, 2px away and concentric, in another.
+    //
+    // This pins RGB to the primitive exactly, which is also what forces the
+    // light-accent exemption below. If ring ALPHA is ever revisited (--ring-danger
+    // at 40% composites to 1.94:1 on white, under 1.4.11's 3:1 for a focus
+    // indicator — see #490), this gate is the thing to renegotiate first.
+    for (const tone of ['accent', 'danger', 'success'] as const) {
+      const declared = [...source.matchAll(new RegExp(`--ring-${tone}:\\s*([^;\n]+);`, 'g'))].map(
+        (m) => m[1],
+      );
+      // dark.scss declares every ring twice — once under [data-theme='dark'],
+      // once under prefers-color-scheme. Reading only the first let the second
+      // copy be mutated freely.
+      expect(new Set(declared).size, `--ring-${tone} declarations agree`).toBeLessThanOrEqual(1);
+      // Only the rings need this. tokenValue() also reads the first declaration
+      // of the two dark.scss copies, but that is covered from the other side:
+      // tokens:check diffs both forcedDark and systemDark against tokens.json
+      // and fails on a single hex digit. The rings need it here because their
+      // values are hand-written literals with no source of truth to diff.
+      const ring = declared[0];
+      // No fallback to the light source. All three are declared in both files;
+      // if one is ever dropped, failing here is better than silently comparing
+      // a light triple against a dark tone.
+      expect(ring, `--ring-${tone} is declared in ${_theme}`).toBeDefined();
+      // The reconstruction below only understands integer rgb(). An equivalent
+      // percentage form is the same COLOUR but reconstructs to garbage, so say
+      // so plainly rather than reporting a baffling colour mismatch.
+      expect(ring!.split('/')[0], `--ring-${tone} uses integer rgb()`).toMatch(
+        /^rgba?\(\s*\d{1,3}[\s,]+\d{1,3}[\s,]+\d{1,3}\s*$/,
+      );
+      const channels = ring!.match(/\d+/g)!.slice(0, 3).map(Number);
+      const asHex = `#${channels.map((c) => c.toString(16).padStart(2, '0')).join('')}`;
+      if (_theme === 'light' && tone === 'accent') {
+        // The one deliberate divergence: a lighter blue, so a focus ring reads
+        // against the accent fill it surrounds. Pinned rather than exempted —
+        // an unguarded exemption is the same hole this block was written to
+        // close, and every focus ring in the library resolves through it.
+        expect(ring, 'light --ring-accent is deliberately not --color-accent').toBe(
+          'rgb(76 154 255 / 50%)',
+        );
+        // Pinned at BOTH ends. Pinning only the ring left the direction that
+        // actually broke on this branch — the primitive moving out from under a
+        // hand-written ring — silent for the one tone every focus ring in the
+        // library resolves through.
+        expect(tokenValue('--color-accent', source), 'retuning accent must revisit its ring').toBe(
+          '#0052cc',
+        );
+        continue;
+      }
+      expect(asHex, `--ring-${tone} vs --color-${tone}`).toBe(
+        tokenValue(`--color-${tone}`, source),
+      );
+    }
+  });
+});
+
+describe('presence dots stay distinguishable from each other', () => {
+  // Every dot is aria-hidden with no text alternative (Avatar.tsx), and status
+  // never reaches the accessible name or the tooltip — colour is the entire
+  // channel. What this measures is NORMAL TRICHROMATIC separation; it is not a
+  // WCAG 1.4.1 conformance claim and cannot be one, because OKLab ΔE is blind
+  // to dichromacy. Under simulated protanopia light amber/busy collapses by an
+  // order of magnitude — order 0.01-0.02 depending on the simulation; three
+  // implementations of Brettel 1997 and Vienot 1999 disagreed in the second
+  // decimal, so treat every CVD figure in this block as an order of magnitude
+  // and not a measurement — while
+  // this gate reads 0.158 and passes. (Machado 2009 at full severity gives
+  // ~0.08: still a collapse, but the methods disagree enough that only the
+  // direction is worth quoting.)
+  //
+  // No AMBER-OR-YELLOW candidate escapes that, and `away` has to read as
+  // yellow, so within the constraint the palette is not the lever — the remedy
+  // is a second channel (text alternative or dot shape), tracked in #490.
+  //
+  // (Three successive attempts to add "and here is how much better an
+  // unconstrained hue would do" were each wrong in a different way — a
+  // borrowed figure, then a light-only one, then one measured against a
+  // different pair-set than this gate uses. No gate checks a number in a
+  // comment, so the comparison is gone rather than corrected a fourth time.
+  // If it matters, measure it in #490 where it can be asserted.)
+  //
+  // Under that same simulation the dots' own pairs go under this block's 0.13
+  // floor there — but say WHICH, because the two themes differ and an earlier
+  // version of this sentence did not:
+  //
+  //   away/online   ~0.12 light, ~0.08 dark   under the floor in BOTH
+  //   busy/online   ~0.13 light, ~0.19 dark   under in LIGHT ONLY, and only
+  //                                           just: 0.126-0.129 on Vienot and
+  //                                           Brettel, a 1-3% margin
+  //
+  // That is the stronger argument for #490 — the separation this gate enforces
+  // is not separation everyone gets, and for away/online it is not close.
+  //
+  // This gated only away/busy, and in raw RGB distance. Both were wrong, and
+  // the second one cost a bad decision inside this very PR:
+  //
+  //   Darkening --color-danger (which --color-presence-busy aliases) dropped
+  //   amber/busy from 105 to 86 RGB, tripping the old floor. The fix looked
+  //   obvious — move away to palette.yellow, which scores 105. In OKLab that
+  //   trade is backwards where it counts. Yellow buys busy (0.158 -> 0.191) by
+  //   spending online (0.153 -> 0.118), and the binding constraint is the WORST
+  //   pair, not whichever one happened to fail.
+  //
+  //   That verdict is LIGHT-THEME only, and worth stating precisely because the
+  //   next person will re-derive it: in dark, yellow is actually the better of
+  //   the two (worst pair 0.215 vs amber's 0.199). The global worst pair lives
+  //   in light, so amber wins overall — but only there.
+  //
+  //   Not a "yellow sits closer to online in hue" story, which is the tempting
+  //   explanation and the wrong one: yellow (101°) is nearly midway between
+  //   busy (34°) and online (161°), and amber (77°) leans toward busy. What
+  //   decides it is that amber's hue gap to ONLINE is the wider of the two (84°
+  //   vs yellow's 61°), while busy's much higher chroma (0.193 vs online's
+  //   0.116) inflates both busy pairings and leaves online as the binding one.
+  //
+  // So away stays palette.amber, and the metric moves to OKLab across all six
+  // pairs. The old gate would have passed yellow; this one rejects it.
+  //
+  // Derived, not listed: an allowlist here would silently ignore a fifth status,
+  // which is the mistake this file already made three review rounds in a row.
+  const DOTS = [...new Set([...TOKENS.matchAll(/--color-presence-([a-z]+):/g)].map((m) => m[1]))];
+
+  it('finds the presence tokens at all', () => {
+    // Guards the guard: a rename would make every pair below vacuously pass.
+    expect(DOTS.length).toBeGreaterThanOrEqual(4);
+  });
+
+  it.each([
+    ['light', TOKENS],
+    ['dark', DARK],
+  ])('every pair of dots is perceptibly distinct in %s', (_theme, source) => {
+    // 0.13 sits under today's tightest pair (light away/online, 0.153) and above
+    // the rejected yellow's 0.118, so the discarded option stays discarded.
+    // Headroom is about one retune step, and the two themes behave differently
+    // enough that quoting one figure for both is how this comment was wrong
+    // before. Walking --color-success (which online aliases) by its own hover
+    // delta — repeated in sRGB channels, the space a retune is actually authored
+    // in; an OKLab-vector walk gives slightly different figures and the same
+    // verdict — away/online goes:
+    //
+    //   light   0.153 -> 0.135 -> 0.157 -> 0.211
+    //   dark    0.199 -> 0.144 -> 0.115 -> 0.131
+    //
+    // Light bottoms out at 0.135 after one step and recovers. DARK KEEPS
+    // FALLING, to 0.115 at two steps, THROUGH this floor. An earlier version of
+    // this comment called the light walk "the whole risk along this axis" — it
+    // is the dark one that actually fires this gate, and the light figures were
+    // quoted as if they covered both themes.
+    //
+    // Neither dip is a hue effect: the amber/online hue gap only widens (light
+    // 84.0 -> 84.5 -> 85.3 -> 86.8 deg). It is lightness — light |dL| runs
+    // 0.051 -> 0.022 -> 0.098 -> 0.178, crossing near one step and reopening
+    // after. Hue was the first explanation written here and it was wrong, the
+    // same trap the describe-level note above flags for the amber/yellow
+    // choice.
+    //
+    // When this does fire, revisit `away`, not the floor.
+    for (const [i, a] of DOTS.entries()) {
+      for (const b of DOTS.slice(i + 1)) {
+        const separation = deltaE(
+          tokenValue(`--color-presence-${a}`, source),
+          tokenValue(`--color-presence-${b}`, source),
+        );
+        expect(separation, `${a} vs ${b}`).toBeGreaterThan(0.13);
+      }
+    }
   });
 });
 

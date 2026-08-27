@@ -71,18 +71,30 @@ export interface CalendarEvent {
    * **Pick category colours that contrast with the semantic tones you use.**
    * The band and the category fill are different colours by design, but some
    * pairs land almost on top of each other. Measured RGB distance between each
-   * band colour and the category's own saturated colour — the worst pairs, all
-   * of which read as an edge-thickness artefact rather than a state:
+   * band colour and the category's own saturated colour — the worst pairs,
+   * grouped by tone and ordered within each group:
    *
+   * - `tone: 'success'` — `mint` (11), `emerald` (15), `teal` (35), `green` (41)
+   * - `tone: 'danger'` — `red` (17), `coral` (44)
    * - `tone: 'warning'` — `orange` (16), `coral` (25), `red` (43), `amber` (44)
-   * - `tone: 'success'` — `mint` (18), `emerald` (26), `teal` (37)
-   * - `tone: 'danger'` — `red` (36)
    * - `tone: 'accent'` — `blue` (40)
    *
-   * For scale: `orange` + `warning` is effectively invisible; `amber` +
-   * `warning` is detectable side-by-side but unreliable in isolation. Nothing
-   * enforces this — if a tenant picks `orange` for a category whose events can
-   * be `warning`, keep that state in the title too.
+   * Read it as a threshold, not a ranking. The worst pair is `success` +
+   * `mint` at 11, and anything under about 20 is effectively invisible at the
+   * rendered 4px — a 3px band plus the 1px border painted the same colour.
+   * (The agenda row has no border, so its stripe is the 3px alone.) The low 20s
+   * are detectable side-by-side but unreliable in isolation, and the low 40s
+   * are where this list stops rather than where the problem does: the pair just
+   * off the end is no safer than the last one on it.
+   *
+   * These numbers moved in #484, which raised `danger`, `success`, and `accent`
+   * to clear WCAG AA as text. The bands got closer to their neighbouring
+   * category colours as a result: `success` + `mint` went 18 → 11 and `danger`
+   * + `red` went 36 → 17. `Calendar.collisions.test.ts` recomputes this list
+   * from the shipped tokens so it cannot drift again.
+   *
+   * Nothing enforces this — if a tenant picks `mint` for a category whose
+   * events can be `success`, keep that state in the title too.
    *
    * **Both axes are visual only.** Neither sets ARIA, and a 3px band is not an
    * accessible signal — same contract as `Badge`, whose tone is also decoration.

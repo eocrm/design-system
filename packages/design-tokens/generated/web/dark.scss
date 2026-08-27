@@ -4,10 +4,10 @@
 
 :root[data-theme='dark'] {
   color-scheme: dark;
-  --color-accent: #579dff;
+  --color-accent: #68a7ff;
   --color-accent-bg-subtle: #1c3a5e;
   --color-accent-fg: #1d2125;
-  --color-accent-hover: #85b8ff;
+  --color-accent-hover: #8cc4ff;
   --color-accent-pressed: #cce0ff;
   --color-accent-subtle-bg: #1c3a5e;
   --color-bg: #1d2125;
@@ -97,7 +97,7 @@
   --color-warning-bg-subtle: #3d3216;
   --color-warning-fg: #1d2125;
   --color-warning-strong: #f5cd47;
-  --ring-accent: rgb(87 157 255 / 65%);
+  --ring-accent: rgb(104 167 255 / 65%);
   --ring-danger: rgb(248 113 104 / 55%);
   --ring-success: rgb(75 206 151 / 55%);
   --shadow-lg: 0 4px 12px -2px rgb(0 0 0 / 50%), 0 0 1px rgb(0 0 0 / 56%);
@@ -113,10 +113,10 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     color-scheme: dark;
-    --color-accent: #579dff;
+    --color-accent: #68a7ff;
     --color-accent-bg-subtle: #1c3a5e;
     --color-accent-fg: #1d2125;
-    --color-accent-hover: #85b8ff;
+    --color-accent-hover: #8cc4ff;
     --color-accent-pressed: #cce0ff;
     --color-accent-subtle-bg: #1c3a5e;
     --color-bg: #1d2125;
@@ -206,7 +206,7 @@
     --color-warning-bg-subtle: #3d3216;
     --color-warning-fg: #1d2125;
     --color-warning-strong: #f5cd47;
-    --ring-accent: rgb(87 157 255 / 65%);
+    --ring-accent: rgb(104 167 255 / 65%);
     --ring-danger: rgb(248 113 104 / 55%);
     --ring-success: rgb(75 206 151 / 55%);
     --shadow-lg: 0 4px 12px -2px rgb(0 0 0 / 50%), 0 0 1px rgb(0 0 0 / 56%);
