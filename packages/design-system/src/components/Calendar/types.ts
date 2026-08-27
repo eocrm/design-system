@@ -80,7 +80,9 @@ export interface CalendarEvent {
    *
    * Read it as a threshold, not a ranking. The worst pair is `success` +
    * `mint` at 11, and anything under about 20 is effectively invisible at the
-   * rendered 4px (a 3px band plus the 1px border painted the same colour). The low 20s are detectable side-by-side but unreliable in
+   * rendered 4px — a 3px band plus the 1px border painted the same colour.
+   * (The agenda row has no border, so its stripe is the 3px alone.) The low
+   * 20s are detectable side-by-side but unreliable in
    * isolation, and the low 40s are where this list stops rather than where the
    * problem does: the pair just off the end of this list is no safer than the
    * last one on it. Nothing enforces this — if a tenant picks `mint` for a

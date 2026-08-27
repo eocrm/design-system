@@ -130,9 +130,12 @@ const PAIRS: Pair[] = [
   // components paint on them: --color-bg-danger-subtle carries danger text in
   // DropdownMenu's danger item hover, Select and LiquidEditor;
   // --color-accent-subtle-bg is painted by Rail, Tabs, Select's selected option
-  // and Screen. Only Rail and Tabs put --color-accent ON it: Select's selected
-  // option keeps --color-fg, and Screen's is a page gradient. Six files across
-  // the two tints, four of them rendering tone text. Retuning a gated twin would leave its duplicate at the stale tint
+  // and Screen. Six files across the two tints, and Screen is the only one that
+  // renders nothing in the tone on top: its use is a page gradient. Select
+  // appears on both sides — its selected option keeps --color-fg, but its chip
+  // remove control pairs --color-danger with --color-bg-danger-subtle, as a
+  // 10x10 stroke SVG, so that one is a graphical object at 3:1 rather than
+  // text. Retuning a gated twin would leave its duplicate at the stale tint
   // with all of them still rendering on it.
   ['danger text on the duplicate danger tint', '--color-danger', '--color-bg-danger-subtle', 4.5],
   ['accent text on the duplicate accent tint', '--color-accent', '--color-accent-subtle-bg', 4.5],
@@ -264,8 +267,10 @@ describe('the all-day chip keeps its amber fill and dark text', () => {
   it('pairs the amber fill with --color-warning-fg, not the strong variant', () => {
     // This is the pair the PR's judgement call rests on, and it is the one place
     // --color-warning survives on purpose. Pinning both halves: darkening the
-    // FILL also cleared the bar but read as chocolate brown, and pairing the fg
-    // with --color-warning-strong measures 2.37:1 while looking plausible.
+    // FILL also cleared the bar but read as chocolate brown, and putting
+    // --color-warning-fg on a --color-warning-strong fill measures 2.37:1 while
+    // looking plausible. (The other pairing of those two names, strong-as-fg on
+    // the amber fill, is 2.79:1 — also failing, and easy to confuse.)
     const scss = readFileSync(
       resolve(__dirname, '../components/Calendar/Calendar.tokens.scss'),
       'utf8',
@@ -447,17 +452,18 @@ describe('presence dots stay distinguishable from each other', () => {
   // WCAG 1.4.1 conformance claim and cannot be one, because OKLab ΔE is blind
   // to dichromacy. Under simulated protanopia light amber/busy collapses by an
   // order of magnitude — order 0.01-0.02 depending on the simulation; three
-  // implementations of Brettel 1997 and Vienot 1999 gave 0.018, 0.015 and
-  // 0.014, so only the magnitude is quotable, not a digit — while
+  // implementations of Brettel 1997 and Vienot 1999 disagreed in the second
+  // decimal, so treat every CVD figure in this block as an order of magnitude
+  // and not a measurement — while
   // this gate reads 0.158 and passes. (Machado 2009 at full severity gives
-  // 0.076: still a collapse, but the three methods disagree enough that only
-  // the direction is worth quoting.)
+  // ~0.08: still a collapse, but the methods disagree enough that only the
+  // direction is worth quoting.)
   //
   // No AMBER-OR-YELLOW candidate escapes that, and `away` has to read as
   // yellow, so within the constraint the palette is not the lever — the remedy
   // is a second channel (text alternative or dot shape), tracked in #490. Worth
   // being precise rather than sweeping, though: several unconstrained palette
-  // entries (blue, indigo, navy, charcoal) hold the worst pair at 0.129 under
+  // entries (blue, indigo, navy, charcoal) hold the worst pair around 0.13 under
   // the same simulation. And busy/online is itself 0.129 there, under this
   // block's own floor, which is the stronger argument for #490.
   //
@@ -509,10 +515,13 @@ describe('presence dots stay distinguishable from each other', () => {
     // the relation is non-monotonic. Darkening success further sends it back up
     // (0.157 at two steps, 0.211 at three). NOT a hue effect — the amber/online
     // hue gap widens the whole way (84.0 -> 84.5 -> 85.3 -> 86.8 deg). It is
-    // lightness: |dL| runs 0.051 -> 0.022 -> 0.098, crossing near one step.
-    // (Hue was the first explanation written here and it was wrong, which is
-    // the same trap this block flags 60 lines down.) So 0.1348 is the worst
-    // ever sees from a success retune, and it survives it. If it does fire, the
+    // lightness: |dL| runs 0.051 -> 0.022 -> 0.098 -> 0.178, crossing near one
+    // step and reopening after.
+    // (Hue was the first explanation written here and it was wrong — the same
+    // trap the presence block flags for the amber/yellow question.) So 0.1348
+    // is the worst this floor ever sees from a success retune, and it survives
+    // it — swept -3 to +4 steps across all six pairs, 0.1348 is the global
+    // minimum in both directions. If it does fire, the
     // answer is to revisit `away`, not this number.
     for (const [i, a] of DOTS.entries()) {
       for (const b of DOTS.slice(i + 1)) {

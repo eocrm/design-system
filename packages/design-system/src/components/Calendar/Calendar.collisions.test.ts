@@ -106,14 +106,16 @@ function measured(): { tone: string; color: string; rounded: number }[] {
  * parse from wandering into unrelated prose.
  */
 function tableRegion(text: string): string {
-  const lower = text.toLowerCase();
   // Both markers must be UNIQUE, not merely present. indexOf takes the first
   // occurrence, so a second "Measured RGB distance" earlier in the file widens
   // the region upstream — and a correct-looking calibration planted up there
   // then satisfies every check while the real table carries none. That is the
   // same failure this region was introduced to stop, one level up.
-  const starts = [...lower.matchAll(/measured rgb distance/g)];
-  const ends = [...text.matchAll(/Nothing enforces this/g)];
+  // Both matched against `text`, case-insensitively. Matching the start against
+  // a lowercased copy meant indexing into one string and slicing another, and
+  // toLowerCase() is not length-preserving, so the two could drift apart.
+  const starts = [...text.matchAll(/measured rgb distance/gi)];
+  const ends = [...text.matchAll(/nothing enforces this/gi)];
   if (starts.length !== 1 || ends.length !== 1) {
     throw new Error(
       `collision table markers must appear exactly once (found ${starts.length} start, ${ends.length} end)`,
@@ -201,8 +203,9 @@ describe('the documented color/tone collision table matches the shipped tokens',
     // a stale one above the table) decided the result instead of the real
     // calibration. Every earlier version of this check located the sentence by
     // proximity — and proximity is what an editor changes. Note the region ends
-    // at "Nothing enforces this", so a stale claim written BELOW the table is
-    // outside it and not caught; only the calibration itself is pinned.
+    // at "Nothing enforces this", so anything written BELOW that marker is
+    // outside the region and unchecked — a stale claim, and equally a second
+    // table of numbers. Only what sits between the two markers is pinned.
     //
     // matchAll + exactly-one also closes the next variant: a second claim added
     // inside the region — "in dark the worst pair is …" — would otherwise be
