@@ -71,7 +71,8 @@ export interface CalendarEvent {
    * **Pick category colours that contrast with the semantic tones you use.**
    * The band and the category fill are different colours by design, but some
    * pairs land almost on top of each other. Measured RGB distance between each
-   * band colour and the category's own saturated colour, worst first:
+   * band colour and the category's own saturated colour — the worst pairs,
+   * grouped by tone and ordered within each group:
    *
    * - `tone: 'success'` — `mint` (11), `emerald` (15), `teal` (35), `green` (41)
    * - `tone: 'danger'` — `red` (17), `coral` (44)
