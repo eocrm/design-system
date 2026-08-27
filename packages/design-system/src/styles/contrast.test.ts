@@ -496,8 +496,11 @@ describe('presence dots stay distinguishable from each other', () => {
   // yellow, so within the constraint the palette is not the lever — the remedy
   // is a second channel (text alternative or dot shape), tracked in #490. Worth
   // being precise rather than sweeping, though: several unconstrained palette
-  // entries (blue, indigo, navy, charcoal) hold the worst pair around 0.13 under
-  // the same simulation. And the dots' own pairs go under this block's 0.13
+  // entries hold up far better under the same simulation — blue, indigo and
+  // navy keep their worst pair above 0.21 and charcoal above 0.15, against
+  // amber's 0.015. (An earlier version of this sentence said "around 0.13",
+  // which was a reviewer's figure I quoted without re-deriving; the point it
+  // was making is stronger than the number I gave it.) And the dots' own pairs go under this block's 0.13
   // floor there — but say WHICH, because the two themes differ and an earlier
   // version of this sentence did not:
   //
@@ -557,7 +560,7 @@ describe('presence dots stay distinguishable from each other', () => {
     // verdict — away/online goes:
     //
     //   light   0.153 -> 0.135 -> 0.157 -> 0.211
-    //   dark    0.199 -> 0.144 -> 0.116 -> 0.131
+    //   dark    0.199 -> 0.144 -> 0.115 -> 0.131
     //
     // Light bottoms out at 0.135 after one step and recovers. DARK KEEPS
     // FALLING, to 0.116 at two steps, THROUGH this floor. An earlier version of
