@@ -129,7 +129,7 @@ const PAIRS: Pair[] = [
   // LITERALS of the tints above with no alias tying them together, and real
   // components paint on them: --color-bg-danger-subtle via DropdownMenu's
   // danger item hover and Select/LiquidEditor, --color-accent-subtle-bg via
-  // Rail, Tabs and Screen. Retuning the gated twin would leave these at the
+  // Rail, Tabs, Screen and Select's selected option. Retuning the gated twin would leave these at the
   // stale tint with three files still rendering tone text on it.
   ['danger text on the duplicate danger tint', '--color-danger', '--color-bg-danger-subtle', 4.5],
   ['accent text on the duplicate accent tint', '--color-accent', '--color-accent-subtle-bg', 4.5],
@@ -388,6 +388,11 @@ describe('a tone stays in sync with the roles derived from it', () => {
       // once under prefers-color-scheme. Reading only the first let the second
       // copy be mutated freely.
       expect(new Set(declared).size, `--ring-${tone} declarations agree`).toBeLessThanOrEqual(1);
+      // Only the rings need this. tokenValue() also reads the first declaration
+      // of the two dark.scss copies, but that is covered from the other side:
+      // tokens:check diffs both forcedDark and systemDark against tokens.json
+      // and fails on a single hex digit. The rings need it here because their
+      // values are hand-written literals with no source of truth to diff.
       const ring = declared[0];
       // No fallback to the light source. All three are declared in both files;
       // if one is ever dropped, failing here is better than silently comparing
@@ -485,9 +490,15 @@ describe('presence dots stay distinguishable from each other', () => {
     // 0.13 sits under today's tightest pair (light away/online, 0.153) and above
     // the rejected yellow's 0.118, so the discarded option stays discarded.
     // Headroom is roughly ONE retune step, not a comfortable margin: darkening
-    // --color-success (which online aliases) by its own hover delta lands at
-    // 0.1348 — still over, but by 0.0048. A second step of that size clears the
-    // floor entirely, and the answer then is to revisit `away`, not this number.
+    // --color-success (which online aliases) by its own hover delta lands
+    // away/online at 0.1348 — still over, but by 0.0048.
+    //
+    // That is the WHOLE risk along this axis, not the first step of a slide:
+    // the relation is non-monotonic. Darkening success further sends it back up
+    // (0.157 at two steps, 0.211 at three) because online passes closest to
+    // amber in hue on the way past. So 0.1348 is about the worst this floor
+    // ever sees from a success retune, and it survives it. If it does fire, the
+    // answer is to revisit `away`, not this number.
     for (const [i, a] of DOTS.entries()) {
       for (const b of DOTS.slice(i + 1)) {
         const separation = deltaE(

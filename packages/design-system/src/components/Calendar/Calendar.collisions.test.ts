@@ -173,23 +173,28 @@ describe('the documented color/tone collision table matches the shipped tokens',
   });
 
   it.each(sources)('%s names the actual worst pair as effectively invisible', (_label, text) => {
-    // The calibration sentence is the part a reader anchors on, and it named
-    // the wrong pair for the whole of #484 until this gate existed.
-    const worst = rows[0];
-    // Flattened first: prettier rewraps the JSDoc copy, so the phrase can land
-    // across a line break with a ` * ` in the middle of it.
+    // Assert the CLAIM, not a window around it.
+    //
+    // Three earlier versions of this check tried to isolate the calibration
+    // sentence by slicing near the phrase — 300 characters back, then to the
+    // last `)`, then to the last `.` — and each one could be widened back over
+    // the numbered table by an ordinary copy-edit. The table contains the right
+    // pair by construction, so any window that reaches it passes while the
+    // sentence names something else. Widening was never the bug; slicing was.
+    //
+    // Both copies state the claim in one fixed form, so match that form
+    // directly. It cannot be widened, cannot be stolen by an earlier occurrence
+    // of the phrase elsewhere in the file, and says what is wrong when it fails.
+    expect(rows.length, 'there is a worst pair to name').toBeGreaterThan(0);
     const flat = text.replace(/\n\s*\*?\s*/g, ' ');
-    const at = flat.indexOf('effectively invisible');
-    expect(at, 'the calibration sentence exists').toBeGreaterThan(-1);
-    // Bind to the SENTENCE. Two earlier versions of this were vacuous: a
-    // 300-character lookback reached back over the numbered table (which by
-    // construction contains the worst pair), and cutting at the table's last
-    // `)` only moved the boundary — inserting any sentence between the table
-    // and the phrase let the window keep the right pair while the calibration
-    // named a different one. A sentence boundary cannot be widened that way,
-    // and it also can't run away to the start of the file when no `)` precedes.
-    const sentence = flat.slice(flat.lastIndexOf('.', at - 1) + 1, at);
-    expect(sentence).toContain(`\`${worst.color}\``);
-    expect(sentence).toContain(`\`${worst.tone}\``);
+    expect(flat, 'the calibration sentence exists').toContain('effectively invisible');
+
+    const claim = /worst pair is `(\w+)` \+ `(\w+)` at (\d+)/.exec(flat);
+    expect(claim, 'the calibration names a worst pair in the expected form').not.toBeNull();
+    const worst = rows[0];
+    expect(
+      [claim![1], claim![2], Number(claim![3])],
+      'the calibration names the actual worst pair',
+    ).toEqual([worst.tone, worst.color, worst.rounded]);
   });
 });
