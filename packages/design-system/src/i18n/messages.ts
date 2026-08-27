@@ -502,9 +502,11 @@ export interface Messages {
     unavailable: string;
     /**
      * Visually-hidden state word for a `loading` `EntityChip`. `aria-busy` is a
-     * global ARIA state so it is valid on the chip's role-less span, but it
-     * carries no weight outside a live region, so nothing announces it — the
-     * ellipsis was the only signal. Include the surrounding punctuation.
+     * global ARIA state, so unlike `aria-disabled` it is valid on the chip's
+     * role-less span and browsers do expose it — but no mainstream screen
+     * reader reliably conveys `busy` on a non-live element, and the ellipsis is
+     * `aria-hidden`. The label reached the user; the STATE did not. Include the
+     * surrounding punctuation.
      *
      * Note this makes a loading chip's accessible name CHANGE when it resolves.
      * That is the cost of announcing a transient state at all; the alternative

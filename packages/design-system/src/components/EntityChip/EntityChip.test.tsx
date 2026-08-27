@@ -239,9 +239,10 @@ describe('<EntityChip>', () => {
   });
 
   describe('loading is announced, not just aria-busy', () => {
-    // aria-busy IS valid here (it is a global ARIA state, unlike aria-disabled),
-    // but it carries no weight outside a live region and the ellipsis is
-    // aria-hidden — so nothing reached a screen reader at all.
+    // aria-busy IS valid here (a global ARIA state, unlike aria-disabled) and
+    // browsers expose it — but no mainstream screen reader reliably conveys
+    // `busy` on a non-live element, and the ellipsis is aria-hidden. The label
+    // reached the user fine; no signal of the loading STATE did.
     it('puts the state in the accessible name of a linked chip', () => {
       render(<EntityChip label="Appointment" href="/a/1" loading />);
       const link = screen.getByRole('link');
@@ -261,6 +262,13 @@ describe('<EntityChip>', () => {
       // hidden from the tree. getByText alone would pass either way.
       expect(word).not.toHaveAttribute('aria-hidden');
       expect(word.closest('[aria-hidden="true"]')).toBeNull();
+      // ...and visually hidden rather than on screen. jsdom applies no
+      // CSS-module styles, so the class name is the only thing assertable —
+      // without this, dropping it renders a literal "(loading)" beside the
+      // ellipsis with every test still green. The `unavailable` suite already
+      // pins this; the first version of this test copied the other two halves
+      // and not this one.
+      expect(word.className).toMatch(/hiddenLabel/);
       // Order and spacing on the bare-span form, matching the `unavailable`
       // suite's equivalent pin. The leading `…` is the aria-hidden ellipsis.
       expect(container.textContent).toBe('…Appointment (loading)');
