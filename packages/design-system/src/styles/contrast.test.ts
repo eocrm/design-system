@@ -288,43 +288,55 @@ describe('rules without a token name are pinned too', () => {
 });
 
 /**
+ * Perceptual distance in OKLab. Raw RGB distance rates a hue shift and a
+ * lightness shift the same way; OKLab is the space that answers "can a person
+ * tell these apart", which is the actual question everywhere it is used below.
+ */
+function deltaE(a: string, b: string): number {
+  const lab = (hex: string) => {
+    const [r, g, b2] = [0, 2, 4]
+      .map((i) => parseInt(hex.slice(1 + i, 3 + i), 16) / 255)
+      .map((c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+    const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b2);
+    const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b2);
+    const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b2);
+    return [
+      0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s,
+      1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s,
+      0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s,
+    ];
+  };
+  const [x, y] = [lab(a), lab(b)];
+  return Math.hypot(...x.map((v, i) => v - y[i]));
+}
+
+/**
  * Two invariants that were invisible to this whole suite until a retune broke
  * both of them at once. Neither is about contrast — they are about a token
  * having MORE ROLES than the one being measured, which is the failure this file
  * exists to catch and twice did not.
  */
 describe('a tone stays in sync with the roles derived from it', () => {
-  /** Perceptual distance in OKLab — the right space for "can a person see this". */
-  function deltaE(a: string, b: string): number {
-    const lab = (hex: string) => {
-      const [r, g, b2] = [0, 2, 4]
-        .map((i) => parseInt(hex.slice(1 + i, 3 + i), 16) / 255)
-        .map((c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
-      const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b2);
-      const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b2);
-      const s2 = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b2);
-      return [
-        0.2104542553 * l + 0.793617785 * m - 0.0040720468 * s2,
-        1.9779984951 * l - 2.428592205 * m + 0.4505937099 * s2,
-        0.0259040371 * l + 0.7827717662 * m - 0.808675766 * s2,
-      ];
-    };
-    const [x, y] = [lab(a), lab(b)];
-    return Math.hypot(...x.map((v, i) => v - y[i]));
-  }
-
   it.each([
     ['light', TOKENS],
     ['dark', DARK],
-  ])('every -hover is perceptibly different from its base in %s', (_theme, source) => {
+  ])('every -hover stays a visible step from its base in %s', (_theme, source) => {
     // Darkening --color-danger collapsed its hover step to 0.025 — a third of
     // what it was, on the DESTRUCTIVE button, where the affordance matters most.
     // Ordering still held, which is why "ordering is unchanged" was the wrong
-    // thing to check. Every variant in the library sits in 0.058-0.102.
+    // thing to check on its own. These three tones span 0.058-0.095 today; the
+    // floor sits just under that, NOT at some library-wide minimum. Seven
+    // component-level hover pairs (--button-bg-secondary-hover among them) are
+    // below it and deliberately out of scope here — see #490.
     for (const tone of ['accent', 'danger', 'success'] as const) {
       const base = tokenValue(`--color-${tone}`, source);
       const hover = tokenValue(`--color-${tone}-hover`, source);
-      expect(deltaE(base, hover), `${tone} hover step`).toBeGreaterThanOrEqual(0.04);
+      expect(deltaE(base, hover), `${tone} hover step`).toBeGreaterThanOrEqual(0.05);
+      // Magnitude alone would pass a hover that moved the WRONG way. The
+      // direction is theme-dependent: light hovers darken, dark hovers lighten.
+      // A single "hover is darker" assertion would be wrong in half the library.
+      const moved = luminance(hover) - luminance(base);
+      expect(Math.sign(moved), `${tone} hover direction`).toBe(_theme === 'dark' ? 1 : -1);
     }
   });
 
@@ -336,14 +348,34 @@ describe('a tone stays in sync with the roles derived from it', () => {
     // primitive. Three were byte-exact decompositions of values this branch
     // changed, leaving an invalid Input drawing its border in one red and its
     // ring, 2px away and concentric, in another.
-    const EXEMPT = new Set(['light:accent']); // deliberately a lighter blue
+    //
+    // This pins RGB to the primitive exactly, which is also what forces the
+    // light-accent exemption below. If ring ALPHA is ever revisited (--ring-danger
+    // at 40% composites to 1.94:1 on white, under 1.4.11's 3:1 for a focus
+    // indicator — see #490), this gate is the thing to renegotiate first.
     for (const tone of ['accent', 'danger', 'success'] as const) {
-      if (EXEMPT.has(`${_theme}:${tone}`)) continue;
-      const ring = (source.match(new RegExp(`--ring-${tone}:\\s*([^;]+);`)) ??
-        TOKENS.match(new RegExp(`--ring-${tone}:\\s*([^;]+);`)))?.[1];
-      expect(ring, `--ring-${tone} is declared`).toBeDefined();
+      const ring = source.match(new RegExp(`--ring-${tone}:\\s*([^;]+);`))?.[1];
+      // No fallback to the light source. All three are declared in both files;
+      // if one is ever dropped, failing here is better than silently comparing
+      // a light triple against a dark tone.
+      expect(ring, `--ring-${tone} is declared in ${_theme}`).toBeDefined();
+      // The reconstruction below only understands integer rgb(). An equivalent
+      // percentage form is the same COLOUR but reconstructs to garbage, so say
+      // so plainly rather than reporting a baffling colour mismatch.
+      expect(ring, `--ring-${tone} uses integer rgb()`).toMatch(/^rgba?\(\s*\d/);
       const channels = ring!.match(/\d+/g)!.slice(0, 3).map(Number);
       const asHex = `#${channels.map((c) => c.toString(16).padStart(2, '0')).join('')}`;
+      if (_theme === 'light' && tone === 'accent') {
+        // The one deliberate divergence: a lighter blue, so a focus ring reads
+        // against the accent fill it surrounds. Pinned rather than exempted —
+        // an unguarded exemption is the same hole this block was written to
+        // close, and every focus ring in the library resolves through it.
+        expect(ring, 'light --ring-accent is deliberately not --color-accent').toBe(
+          'rgb(76 154 255 / 50%)',
+        );
+        expect(asHex).not.toBe(tokenValue('--color-accent', source));
+        continue;
+      }
       expect(asHex, `--ring-${tone} vs --color-${tone}`).toBe(
         tokenValue(`--color-${tone}`, source),
       );
@@ -352,29 +384,43 @@ describe('a tone stays in sync with the roles derived from it', () => {
 });
 
 describe('presence dots stay distinguishable from each other', () => {
-  // away is aria-hidden with no text alternative, so hue is the entire signal.
-  // PAIRS already gates its luminance against the page; this gates the thing
-  // that actually motivated the alias, twice. --color-warning-strong held
-  // contrast while collapsing away/busy 107 -> 61, so #481 moved away to
-  // palette.amber (105). Then #484 darkened --color-danger, which
-  // --color-presence-busy aliases, and amber fell to 86.1 — under this floor,
-  // from a change two files away that never mentioned presence. palette.yellow
-  // restores it to 104.7 light / 239.9 dark. It costs separation against ONLINE
-  // in light (154.2 -> 139.5) and gains it in dark; busy is the binding
-  // constraint, so that is the trade taken.
-  function distance(a: string, b: string): number {
-    const channels = (hex: string) => [0, 2, 4].map((i) => parseInt(hex.slice(1 + i, 3 + i), 16));
-    const [x, y] = [channels(a), channels(b)];
-    return Math.hypot(...x.map((v, i) => v - y[i]));
-  }
+  // Every dot is aria-hidden with no text alternative (Avatar.tsx), and status
+  // never reaches the accessible name or the tooltip — colour is the ENTIRE
+  // channel, so WCAG 1.4.1 applies and EVERY pair matters, not just one.
+  //
+  // This gated only away/busy, and in raw RGB distance. Both were wrong, and
+  // the second one cost a bad decision inside this very PR:
+  //
+  //   Darkening --color-danger (which --color-presence-busy aliases) dropped
+  //   amber/busy from 105 to 86 RGB, tripping the old floor. The fix looked
+  //   obvious — move away to palette.yellow, which scores 105. In OKLab that
+  //   trade is backwards. Yellow buys busy (0.158 -> 0.191) by spending ONLINE
+  //   (0.153 -> 0.118), and the binding constraint is the WORST pair, not the
+  //   one that happened to fail. Amber's worst pair is 0.153; yellow's is 0.118.
+  //   Raw RGB said otherwise only because it over-weights the red channel: in
+  //   hue, amber (77°) sits nearly midway between busy (34°) and online (161°),
+  //   and yellow (101°) leans toward online.
+  //
+  // So away stays palette.amber, and the metric moves to OKLab across all six
+  // pairs. The old gate would have passed yellow; this one rejects it.
+  const DOTS = ['online', 'away', 'busy', 'offline'] as const;
 
   it.each([
     ['light', TOKENS],
     ['dark', DARK],
-  ])('away is well separated from busy in %s', (_theme, source) => {
-    const away = tokenValue('--color-presence-away', source);
-    const busy = tokenValue('--color-presence-busy', source);
-    expect(distance(away, busy)).toBeGreaterThan(90);
+  ])('every pair of dots is perceptibly distinct in %s', (_theme, source) => {
+    // 0.13 sits under today's tightest pair (light away/online, 0.153) with
+    // enough headroom to fail on real movement rather than rounding — and above
+    // yellow's 0.118, so the rejected option stays rejected.
+    for (const [i, a] of DOTS.entries()) {
+      for (const b of DOTS.slice(i + 1)) {
+        const separation = deltaE(
+          tokenValue(`--color-presence-${a}`, source),
+          tokenValue(`--color-presence-${b}`, source),
+        );
+        expect(separation, `${a} vs ${b}`).toBeGreaterThan(0.13);
+      }
+    }
   });
 });
 
