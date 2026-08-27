@@ -128,12 +128,13 @@ const PAIRS: Pair[] = [
   // The --color-info shape again, one row over. These two are byte-duplicate
   // LITERALS of the tints above with no alias tying them together, and real
   // components paint on them: --color-bg-danger-subtle carries danger text in
-  // DropdownMenu's danger item hover, Select and LiquidEditor;
+  // DropdownMenu's danger item hover and LiquidEditor;
   // --color-accent-subtle-bg is painted by Rail, Tabs, Select's selected option
   // and Screen. Six files across the two tints, and Screen is the only one that
   // renders nothing in the tone on top: its use is a page gradient. Select
-  // appears on both sides — its selected option keeps --color-fg, but its chip
-  // remove control pairs --color-danger with --color-bg-danger-subtle, as a
+  // appears on both tints and is neither simple case — its selected option
+  // keeps --color-fg on the accent tint, and on the danger tint its chip remove
+  // control pairs --color-danger with --color-bg-danger-subtle as a
   // 10x10 stroke SVG, so that one is a graphical object at 3:1 rather than
   // text. Retuning a gated twin would leave its duplicate at the stale tint
   // with all of them still rendering on it.
@@ -464,7 +465,7 @@ describe('presence dots stay distinguishable from each other', () => {
   // is a second channel (text alternative or dot shape), tracked in #490. Worth
   // being precise rather than sweeping, though: several unconstrained palette
   // entries (blue, indigo, navy, charcoal) hold the worst pair around 0.13 under
-  // the same simulation. And busy/online is itself 0.129 there, under this
+  // the same simulation. And busy/online is itself around 0.13 there, under this
   // block's own floor, which is the stronger argument for #490.
   //
   // This gated only away/busy, and in raw RGB distance. Both were wrong, and
@@ -507,22 +508,28 @@ describe('presence dots stay distinguishable from each other', () => {
   ])('every pair of dots is perceptibly distinct in %s', (_theme, source) => {
     // 0.13 sits under today's tightest pair (light away/online, 0.153) and above
     // the rejected yellow's 0.118, so the discarded option stays discarded.
-    // Headroom is roughly ONE retune step, not a comfortable margin: darkening
-    // --color-success (which online aliases) by its own hover delta lands
-    // away/online at 0.1348 — still over, but by 0.0048.
+    // Headroom is about one retune step, and the two themes behave differently
+    // enough that quoting one figure for both is how this comment was wrong
+    // before. Walking --color-success (which online aliases) by its own hover
+    // delta, away/online goes:
     //
-    // That is the WHOLE risk along this axis, not the first step of a slide:
-    // the relation is non-monotonic. Darkening success further sends it back up
-    // (0.157 at two steps, 0.211 at three). NOT a hue effect — the amber/online
-    // hue gap widens the whole way (84.0 -> 84.5 -> 85.3 -> 86.8 deg). It is
-    // lightness: |dL| runs 0.051 -> 0.022 -> 0.098 -> 0.178, crossing near one
-    // step and reopening after.
-    // (Hue was the first explanation written here and it was wrong — the same
-    // trap the presence block flags for the amber/yellow question.) So 0.1348
-    // is the worst this floor ever sees from a success retune, and it survives
-    // it — swept -3 to +4 steps across all six pairs, 0.1348 is the global
-    // minimum in both directions. If it does fire, the
-    // answer is to revisit `away`, not this number.
+    //   light   0.153 -> 0.135 -> 0.157 -> 0.211
+    //   dark    0.199 -> 0.144 -> 0.116 -> 0.131
+    //
+    // Light bottoms out at 0.135 after one step and recovers. DARK KEEPS
+    // FALLING, to 0.116 at two steps, THROUGH this floor. An earlier version of
+    // this comment called the light walk "the whole risk along this axis" — it
+    // is the dark one that actually fires this gate, and the light figures were
+    // quoted as if they covered both themes.
+    //
+    // Neither dip is a hue effect: the amber/online hue gap only widens (light
+    // 84.0 -> 84.5 -> 85.3 -> 86.8 deg). It is lightness — light |dL| runs
+    // 0.051 -> 0.022 -> 0.098 -> 0.178, crossing near one step and reopening
+    // after. Hue was the first explanation written here and it was wrong, the
+    // same trap the describe-level note above flags for the amber/yellow
+    // choice.
+    //
+    // When this does fire, revisit `away`, not the floor.
     for (const [i, a] of DOTS.entries()) {
       for (const b of DOTS.slice(i + 1)) {
         const separation = deltaE(
