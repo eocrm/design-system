@@ -120,6 +120,7 @@ export const ru: Messages = {
     pinnedRows: 'Закреплённые строки',
     empty: 'Нет данных',
     loading: 'Загрузка строк…',
+    loaded: 'Строки загружены',
   },
   drag: {
     instructions:

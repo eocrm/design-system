@@ -204,9 +204,23 @@ export interface Messages {
      * Announced from a polite live region while `loading` is true. `aria-busy`
      * on the table is not enough on its own — no mainstream screen reader
      * speaks `busy` on a non-live element, so the table would go from silent
-     * to populated with nothing said. Clears to `''` when loading ends.
+     * to populated with nothing said.
+     *
+     * Gated on the SKELETON's visibility, not the raw `loading` prop: a table
+     * configured `skeletonDelay={300}` has decided a 200ms load is not worth
+     * showing anything for, and announcing it would be louder than the UI.
+     * Background refetches over already-rendered rows stay silent for the same
+     * reason — nothing visually changes, so nothing is announced.
      */
     loading: string;
+    /**
+     * Announced when the skeleton resolves. Without it the table goes from
+     * "Loading rows…" to populated with nothing said — the same half-finished
+     * shape `loading` exists to fix. Carries no row count on purpose: a count
+     * needs three plural forms in ru for a number the user can read off the
+     * table itself.
+     */
+    loaded: string;
   };
   /**
    * Screen-reader copy for every dnd-kit drag surface in the library — Kanban,

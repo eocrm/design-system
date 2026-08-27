@@ -2011,22 +2011,37 @@ describe('<DataTable> — drag announcements', () => {
 });
 
 describe('loading state reaches assistive tech (#488)', () => {
-  function LoadingHarness({ loading }: { loading: boolean }) {
-    const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+  // dnd-kit's portal region is the other role=status in this tree, which is
+  // why this filters by class — the same ambiguity dragLive() handles above.
+  const ownRegion = (el: HTMLElement) =>
+    [...el.querySelectorAll('[role="status"]')].filter((n) => n.className.includes('srStatus'));
+
+  function Harness4({ data, loading }: { data: Row[]; loading: boolean }) {
+    const instance = useDataTable<Row>({ data, columns: cols, getRowId });
     return <DataTable instance={instance} aria-label="t" loading={loading} />;
   }
 
-  it('announces from its own live region rather than aria-busy alone', () => {
-    // dnd-kit's portal region is the other role=status in this tree, which is
-    // why this filters by class — the same ambiguity dragLive() handles above.
-    const ownRegion = (el: HTMLElement) =>
-      [...el.querySelectorAll('[role="status"]')].filter((n) => n.className.includes('srStatus'));
-
-    const { rerender, container } = render(<LoadingHarness loading={false} />);
+  it('announces an initial empty load, and its resolution', () => {
+    const { rerender, container } = render(<Harness4 data={[]} loading={false} />);
     expect(ownRegion(container)).toHaveLength(1);
     expect(ownRegion(container)[0].textContent).toBe('');
 
-    rerender(<LoadingHarness loading />);
+    rerender(<Harness4 data={[]} loading />);
     expect(ownRegion(container)[0].textContent).toBe('Loading rows…');
+
+    // Resolution must be announced too — going straight from "Loading rows…"
+    // to populated in silence is the same half-finished shape the region
+    // exists to fix.
+    rerender(<Harness4 data={rows} loading={false} />);
+    expect(ownRegion(container)[0].textContent).toBe('Rows loaded');
+  });
+
+  it('stays silent for a refetch over rows that are already rendered', () => {
+    // The table keeps existing rows mounted during a refetch and shows no
+    // skeleton, so nothing changes on screen. Announcing anyway would
+    // interrupt a reader on every poll of a 30s-refresh table.
+    const { rerender, container } = render(<Harness4 data={rows} loading={false} />);
+    rerender(<Harness4 data={rows} loading />);
+    expect(ownRegion(container)[0].textContent).toBe('');
   });
 });

@@ -34,7 +34,13 @@ export interface StatusMenuProps extends Omit<HTMLAttributes<HTMLElement>, 'onSe
   onSelect?: (id: string | number) => void;
   /** Disables the trigger. Stays colored, dims via opacity. */
   disabled?: boolean;
-  /** Transition in flight: trigger gets `aria-busy` and is non-interactive, keeps its color. */
+  /**
+   * Transition in flight: the trigger is non-interactive and keeps its color.
+   * Announced from a polite live region the component owns — `aria-busy` is
+   * also set but reaches no screen reader on its own. The trigger's accessible
+   * name does not change (contrast `EntityChip`): you activated this control,
+   * so the change is announced rather than folded into the name.
+   */
   busy?: boolean;
 }
 
@@ -152,13 +158,6 @@ export const StatusMenu = forwardRef<HTMLElement, StatusMenuProps>(function Stat
           aria-label={`${t('statusMenu.changeStatus')}: ${current.name}`}
         >
           {current.name}
-          {/* Polite live region, text-only mutation. `aria-busy` above reaches
-              no screen reader; the trigger's NAME is deliberately left alone
-              (contrast EntityChip) because the user is focused on the control
-              they just activated. See CLAUDE.md Hard rule 10. */}
-          <span role="status" aria-live="polite" className={styles.srOnly}>
-            {busy ? t('statusMenu.busy') : ''}
-          </span>
           <svg
             width="10"
             height="6"
@@ -170,6 +169,16 @@ export const StatusMenu = forwardRef<HTMLElement, StatusMenuProps>(function Stat
           </svg>
         </button>
       </DropdownMenu.Trigger>
+      {/* OUTSIDE the <button> on purpose. `button` is Children Presentational
+          in ARIA, so a live region nested inside it is spec'd to be pruned —
+          the same argument #496 makes about the Retry button inside
+          role="img". Chrome happens to expose it, but relying on that is
+          exactly the reasoning that left `aria-busy` shipping for years. The
+          trigger also goes `disabled` while busy, which is when this needs to
+          speak. */}
+      <span role="status" aria-live="polite" className={styles.srOnly}>
+        {busy ? t('statusMenu.busy') : ''}
+      </span>
       <DropdownMenu.Content>
         {options.map((option) => (
           <DropdownMenu.Item

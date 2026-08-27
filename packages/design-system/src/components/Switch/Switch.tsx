@@ -67,8 +67,14 @@ export interface SwitchProps extends Omit<
 
   /**
    * Shows a spinner inside the thumb and suppresses changes while a toggle
-   * persists to a server. Sets `aria-busy="true"` while keeping the native
-   * input focusable, so keyboard users retain their place in the form.
+   * persists to a server, keeping the native input focusable so keyboard users
+   * retain their place in the form.
+   *
+   * Announced from a polite live region the Switch owns. `aria-busy` is set
+   * too, but nothing reads it — no mainstream screen reader conveys `busy` on
+   * a non-live element. The region sits OUTSIDE the `<label>` so it does not
+   * join the input's accessible name: the name stays stable while loading, and
+   * `getByRole('switch', { name })` keeps matching.
    *
    * The consumer is responsible for managing the optimistic-update flow:
    *
@@ -207,43 +213,49 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(function Switch(
   };
 
   return (
-    <label
-      className={clsx(styles.wrapper, className)}
-      data-disabled={isVisuallyUnavailable || undefined}
-    >
-      {/* Pattern B — {...props} first so component-owned attrs (type, role, checked, disabled, aria-*, onChange, className) win. */}
-      <input
-        {...props}
-        ref={ref}
-        type="checkbox"
-        role="switch"
-        checked={currentChecked}
-        disabled={disabled}
-        aria-invalid={invalid || undefined}
-        aria-busy={loading || undefined}
-        onChange={handleChange}
-        className={styles.input}
-      />
-      <span
-        className={clsx(styles.track, SIZE_CLASS[size])}
-        data-checked={currentChecked ? 'true' : 'false'}
-        data-tone={tone}
-        data-invalid={invalid ? 'true' : undefined}
-        aria-hidden="true"
+    <>
+      <label
+        className={clsx(styles.wrapper, className)}
+        data-disabled={isVisuallyUnavailable || undefined}
       >
-        <span className={styles.thumb}>
-          {loading && <Loader2 size={SPIN_SIZE[size]} className={styles.spin} aria-hidden="true" />}
+        {/* Pattern B — {...props} first so component-owned attrs (type, role, checked, disabled, aria-*, onChange, className) win. */}
+        <input
+          {...props}
+          ref={ref}
+          type="checkbox"
+          role="switch"
+          checked={currentChecked}
+          disabled={disabled}
+          aria-invalid={invalid || undefined}
+          aria-busy={loading || undefined}
+          onChange={handleChange}
+          className={styles.input}
+        />
+        <span
+          className={clsx(styles.track, SIZE_CLASS[size])}
+          data-checked={currentChecked ? 'true' : 'false'}
+          data-tone={tone}
+          data-invalid={invalid ? 'true' : undefined}
+          aria-hidden="true"
+        >
+          <span className={styles.thumb}>
+            {loading && (
+              <Loader2 size={SPIN_SIZE[size]} className={styles.spin} aria-hidden="true" />
+            )}
+          </span>
         </span>
-      </span>
-      {children && <span className={clsx(styles.label, LABEL_CLASS[size])}>{children}</span>}
-      {/* Polite live region, rendered unconditionally so only its text mutates.
-          `aria-busy` above is inert to screen readers, and the name is left
-          alone on purpose: the user is focused on the control they just
-          activated, so this is a change to announce rather than a property of
-          something they arrived at. See CLAUDE.md Hard rule 10. */}
+        {children && <span className={clsx(styles.label, LABEL_CLASS[size])}>{children}</span>}
+      </label>
+      {/* OUTSIDE the <label> on purpose. Inside it, this span joined the
+          input's accessible name via name-from-content — `Mute` became
+          `MuteSaving…` in dom-accessibility-api and Playwright, so
+          `getByRole('switch', { name: 'Mute' })` stopped matching mid-flight.
+          Chrome's own AX tree excluded it, but consumer tests do not run in
+          Chrome's AX tree. Renaming a focused control is what Hard rule 10
+          tells everyone else not to do. */}
       <span role="status" aria-live="polite" className={styles.srOnly}>
         {loading ? t('switch.busy') : ''}
       </span>
-    </label>
+    </>
   );
 });

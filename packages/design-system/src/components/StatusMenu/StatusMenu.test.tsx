@@ -172,11 +172,13 @@ describe('busy state reaches assistive tech (#488)', () => {
   });
 
   it('leaves the trigger name alone while busy', () => {
+    // Queried by NAME below rather than by reading aria-label — the Switch
+    // sibling of this test compared the attribute and passed vacuously.
     const { rerender, getByRole } = render(
       <StatusMenu current={inProgress} options={options} busy={false} />,
     );
-    const before = getByRole('button').getAttribute('aria-label');
+    expect(getByRole('button', { name: 'Change status: In progress' })).not.toBeNull();
     rerender(<StatusMenu current={inProgress} options={options} busy />);
-    expect(getByRole('button').getAttribute('aria-label')).toBe(before);
+    expect(getByRole('button', { name: 'Change status: In progress' })).not.toBeNull();
   });
 });

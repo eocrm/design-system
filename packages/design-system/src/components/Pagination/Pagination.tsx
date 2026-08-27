@@ -106,7 +106,9 @@ function clampSiblings(siblingCount: number): number {
  * - Cursor / keyset pagination (no total page count) → use
  *   `<CursorPagination>`.
  * - "Load more" infinite scroll → just
- *   `<Button onClick={loadMore} loading={isLoading}>Load more</Button>`.
+ *   `<Button onClick={loadMore} aria-disabled={isLoading}>Load more</Button>` —
+ *   `Button` has no `loading` prop, and `aria-disabled` keeps it focusable and
+ *   announcing rather than dropping it out of the tab order mid-interaction.
  *
  * @remarks A11y
  * - Wrapper is `<nav aria-label="Pagination">` (override via `aria-label`

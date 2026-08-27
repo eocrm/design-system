@@ -3247,7 +3247,7 @@ const [page, setPage] = useState(1);
 - Out-of-range `currentPage` / `pageCount` clamp at render time (defensive — same precedent as `<EmptyState>`'s `clampHeading`).
 - **Not bundled**: page-size selector, count caption ("Showing 11–20 of 240"). Compose those with `<Select>` and text — keeps Pagination focused on navigation. `<DataTable>` (coming) owns its own footer.
 - For streams without a total → use `<CursorPagination>`.
-- For "load more" → use `<Button>` directly. **`<Button>` has no `loading` prop** — this line used to show one. Disable it and swap the label while a page is in flight: `<Button onClick={loadMore} disabled={isLoading}>{isLoading ? 'Loading…' : 'Load more'}</Button>`, and put that label through your own i18n.
+- For "load more" → use `<Button>` directly. **`<Button>` has no `loading` prop** — this line used to show one. Use `aria-disabled` and guard the handler, keeping the label stable: `<Button onClick={() => !isLoading && loadMore()} aria-disabled={isLoading || undefined}>Load more</Button>`. Native `disabled` would drop the button out of the tab order mid-interaction, and swapping the label renames a control the user just activated — see "Transient state" below.
 - `paginationRange(currentPage, pageCount, siblingCount)` is exported as a pure utility for advanced consumers that want to compute the same item list themselves (e.g., to render a custom layout with the same windowing).
 
 ### `<CursorPagination>` — prev / next for streams without total
@@ -3631,7 +3631,10 @@ The rule the library follows, so you can predict any component:
 
 - **State you meet by arriving** — an `EntityChip` placeholder you tab onto — is folded into the **accessible name**. Its name therefore _changes_ when the state resolves, so don't select those elements by exact name in tests while a placeholder can be on screen.
 - **State that changes while you are elsewhere** — a `Switch` saving, a `DataTable` loading, a `StatusMenu` committing — is announced from a **live region the component owns**. Names stay stable.
-- **Purely visual state** — `Badge` tone, `Skeleton` — is yours to announce if it matters. These are documented as visual-only; everything else announces itself.
+- **Purely visual state** — `Badge` tone, `Skeleton` — is yours to announce if it matters. These are documented as visual-only.
+- **`Progress` / `CircularProgress`** carry `role="progressbar"` with `aria-valuenow`, which already exposes the value. Don't wrap them either.
+
+One known gap: **`ConfirmationPopover`'s pending state announces nothing** (tracked in #497), so that one _is_ yours for now. Everything else on this page announces itself.
 
 What this means for you:
 

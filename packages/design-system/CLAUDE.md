@@ -188,16 +188,43 @@ happens while their attention is elsewhere?**
 - **A change while they are elsewhere → the component owns a live region.**
   `role="status" aria-live="polite"` on a visually-hidden span, **rendered
   unconditionally** so only its _text_ mutates.
+- **A native role already exposes it → use that, and add nothing.**
+  `role="progressbar"` with `aria-valuenow`, or `role="alert"`, already carry
+  the state. `Progress` and `CircularProgress` are correct as they stand — do
+  not "fix" them into live regions, which would fire on every percentage tick.
+
+**When a component is both**, the name wins for what is true on arrival and a
+region carries the transitions — but only if the transitions are individually
+worth interrupting for. `FileUpload` is the live example: a row that has failed
+should say so in its name, because a user tabbing to it later gets nothing
+otherwise; twelve rows completing inside two seconds should not be twelve
+announcements. Prefer one region describing the batch over one per item.
+
+**If the state resolves while focus is inside the component but not on the
+thing that changed** — a `Select`'s options arriving while focus sits on the
+combobox — that is still "elsewhere". Focus being nearby is not the same as
+the user watching the thing that moved.
 
 **Render the region unconditionally.** A region that mounts together with its
 text is the unreliable case — most screen readers do not announce content that
-was already present when the region appeared. `PasswordInput`'s caps-lock
-warning and `PasswordStrengthMeter` are the reference implementations.
+was already present when the region appeared. `PasswordStrengthMeter` is the
+reference implementation: the region is always mounted and only its text
+changes. (`PasswordInput`'s caps-lock region is gated on the `capsLockWarning`
+_prop_ — that is fine, because the prop is not the transient state.)
+
+**Put the region where it cannot join a name.** Outside the `<label>` that
+names a control, and outside the `<button>` it describes: nested inside a
+label it becomes part of the accessible name via name-from-content, and nested
+inside a button ARIA specifies it as children-presentational. Both were
+shipped and caught in review on this rule's own first implementation.
 
 **`aria-busy` is never sufficient on its own.** It is a valid global attribute
-and it does appear in the accessibility tree, but no mainstream screen reader
-speaks `busy` on a non-live element. Four components shipped relying on it and
-their state reached nobody. Pair it with one of the two mechanisms above, or
+and it does appear in the accessibility tree, but it does not reliably reach a
+user — its spec purpose is to tell AT to _defer_ output, not to produce it, and
+no mainstream screen reader announces `busy` as a state change on a non-live
+element. Four components shipped relying on it alone — `EntityChip` (fixed in
+#483), then `Switch`, `StatusMenu` and `DataTable` (fixed in #488) — and their
+state reached nobody. Pair it with one of the two mechanisms above, or
 drop it.
 
 **A control the user just activated is a change, not a property.** They are

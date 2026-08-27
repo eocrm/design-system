@@ -118,6 +118,7 @@ export const en: Messages = {
     pinnedRows: 'Pinned rows',
     empty: 'No data',
     loading: 'Loading rows…',
+    loaded: 'Rows loaded',
   },
   drag: {
     instructions:

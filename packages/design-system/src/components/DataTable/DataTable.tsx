@@ -1,5 +1,6 @@
 import {
   forwardRef,
+  useEffect,
   useCallback,
   useMemo,
   useRef,
@@ -487,6 +488,18 @@ function DataTableInner<T>(
     minDuration: skeletonMinDuration,
   });
   const dataIsEmpty = !loading && !showSkeletonRows && !hasRenderedRows;
+
+  // Announce the SKELETON, not the raw `loading` prop. Tying it to `loading`
+  // meant a table with `skeletonDelay={300}` still announced a 200ms load it
+  // had deliberately decided to show nothing for, and a background refetch
+  // over rendered rows — which changes nothing on screen — interrupted the
+  // user on every poll. And announce the resolution: going from "Loading
+  // rows…" to populated in silence is the same half-finished shape this
+  // region exists to fix.
+  const [loadPhase, setLoadPhase] = useState<'idle' | 'loading' | 'loaded'>('idle');
+  useEffect(() => {
+    setLoadPhase((prev) => (showSkeletonRows ? 'loading' : prev === 'loading' ? 'loaded' : prev));
+  }, [showSkeletonRows]);
   const responsiveEnabled = collapseBelow != null;
   const hasResponsiveHeaderItems =
     instance.enableRowSelection ||
@@ -721,7 +734,11 @@ function DataTableInner<T>(
             so without this the table goes from silent to populated with
             nothing said. See CLAUDE.md Hard rule 10. */}
         <span role="status" aria-live="polite" className={styles.srStatus}>
-          {loading ? t('dataTable.loading') : ''}
+          {loadPhase === 'loading'
+            ? t('dataTable.loading')
+            : loadPhase === 'loaded'
+              ? t('dataTable.loaded')
+              : ''}
         </span>
       </SortableContext>
     </DndContext>

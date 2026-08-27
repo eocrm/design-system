@@ -254,11 +254,16 @@ describe('loading state reaches assistive tech (#488)', () => {
   });
 
   it('does not mutate the accessible name when it goes busy', () => {
+    // Queried BY NAME, not by reading aria-label. The first version of this
+    // test compared `getAttribute('aria-label')` before and after — <Switch>
+    // never sets one, so it asserted null === null and passed while the
+    // component measurably renamed itself to "MuteSaving…". Testing the
+    // mechanism instead of the outcome is how the bug shipped past its guard.
     const { rerender, getByRole } = render(<Switch loading={false}>Mute</Switch>);
-    const before = getByRole('switch').getAttribute('aria-label');
+    expect(getByRole('switch', { name: 'Mute' })).not.toBeNull();
     rerender(<Switch loading>Mute</Switch>);
     // The user is focused on the control they just activated, so this is a
     // change to announce — not a property of something they arrived at.
-    expect(getByRole('switch').getAttribute('aria-label')).toBe(before);
+    expect(getByRole('switch', { name: 'Mute' })).not.toBeNull();
   });
 });

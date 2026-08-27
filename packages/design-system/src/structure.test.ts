@@ -55,23 +55,36 @@ describe('library structure', () => {
  * Hard rule 10: `aria-busy` alone never reaches a screen reader.
  *
  * This walks the tree rather than checking a list, because the list is the
- * thing that rots — four components shipped with `aria-busy` and nothing else,
- * and each was found by a human reading rather than by a test. Any file that
- * sets `aria-busy` must also carry one of the two sanctioned mechanisms:
- * a component-owned live region, or a state word folded into the accessible
- * name via a visually-hidden span.
+ * thing that rots. The first version of this gate could not fail on ANY of the
+ * four inputs its own docstring named — a conditionally-rendered region passed,
+ * a region that existed only inside a JSX comment passed, an unrelated
+ * `srOnlyDecorativeThing` class passed, and a region wired to the wrong state
+ * passed. `ErrorState` even entered the check because of a JSDoc `@example`
+ * containing `aria-busy`, then satisfied it off that same JSDoc: trigger and
+ * pass both prose, zero runtime code involved.
  *
- * Deliberately coarse. It cannot tell whether the mechanism is wired to the
- * same state as the `aria-busy`, and a component whose transient state never
- * sets `aria-busy` at all is invisible to it. It closes the one failure mode
- * that has actually happened, and stays cheap enough not to rot.
+ * So: comments are stripped before anything is matched, on both sides. A
+ * mechanism only counts if it is real JSX, and a live region only counts if it
+ * is rendered unconditionally — a region that mounts together with its text is
+ * the unreliable case the rule explicitly forbids.
+ *
+ * Still deliberately coarse: it cannot tell whether the mechanism is wired to
+ * the same state as the `aria-busy`, and a component whose transient state
+ * never sets `aria-busy` at all is invisible to it. It closes the failure mode
+ * that actually happened and stays cheap enough not to rot.
  */
 describe('transient state does not rely on aria-busy alone', () => {
+  const stripComments = (code: string) =>
+    code.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+
   const sources = components.flatMap((name) => {
     const dir = join(componentsDir, name);
     return readdirSync(dir)
       .filter((f) => f.endsWith('.tsx') && !f.includes('.test.'))
-      .map((f) => ({ label: `${name}/${f}`, code: readFileSync(join(dir, f), 'utf-8') }));
+      .map((f) => ({
+        label: `${name}/${f}`,
+        code: stripComments(readFileSync(join(dir, f), 'utf-8')),
+      }));
   });
 
   const withAriaBusy = sources.filter(({ code }) => /aria-busy=/.test(code));
@@ -84,11 +97,32 @@ describe('transient state does not rely on aria-busy alone', () => {
   });
 
   it.each(withAriaBusy.map(({ label, code }) => [label, code]))(
-    '%s pairs aria-busy with a live region or a named state word',
+    '%s pairs aria-busy with an unconditional live region or a named state word',
     (_label, code) => {
-      const hasLiveRegion = /aria-live=|role="(status|alert)"/.test(code);
-      const hasNamedState = /hiddenLabel|srOnly|visually-?hidden/i.test(code);
-      expect(hasLiveRegion || hasNamedState).toBe(true);
+      // A region rendered behind `cond && <span role="status">` mounts with its
+      // text, which most screen readers do not announce. Reject it explicitly
+      // rather than counting it as a mechanism.
+      const conditionalRegion =
+        /(\?|&&)\s*\(?\s*<[A-Za-z][^>]*(role=("|')(status|alert)\3|aria-live=)/.test(code);
+      const liveRegion =
+        !conditionalRegion && /<[A-Za-z][^>]*(role=("|')(status|alert)\2|aria-live=)/.test(code);
+      // The other sanctioned mechanism: a visually-hidden span carrying a
+      // translated state word. Two things this must NOT do. It must not accept
+      // a bare class — an unrelated `srOnlyDecorativeThing` used to. And it
+      // must not accept a span that is also a live region, or a
+      // conditionally-rendered region slips through here instead: that was
+      // still an srOnly span with a t() call in it, so rejecting it on the
+      // live-region branch achieved nothing.
+      //
+      // Note the asymmetry, which is the rule and not an oversight: a live
+      // region must be UNCONDITIONAL (mounting it with its text announces
+      // nothing), while a name-folded word must be CONDITIONAL (otherwise the
+      // state is in the name permanently). Same reason, opposite shapes.
+      const namedState =
+        /<span(?![^>]*(?:role=|aria-live=))[^>]*(?:hiddenLabel|srOnly)[^>]*>\s*\{?\s*t\(/.test(
+          code,
+        );
+      expect(liveRegion || namedState).toBe(true);
     },
   );
 });
