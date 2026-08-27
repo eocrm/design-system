@@ -215,8 +215,13 @@ describe('the documented color/tone collision table matches the shipped tokens',
     // "worst first", "worst-first" and "worst to best" — an exact literal here
     // missed the hyphenated form, which is the form the test's OWN failure
     // message used to hand people.
+    // Generalised on BOTH alternatives and on whitespace. The first version
+    // fixed the hyphen for "worst first" and left "worst to best" literal, so
+    // "worst-to-best" slipped — the same miss, in the other half of the same
+    // alternation. Separators are [\s-]+ everywhere, and "overall"/"across"
+    // phrasings are caught too.
     expect(region, 'the docs must not claim a global order').not.toMatch(
-      /worst[\s-]?first|worst to best/i,
+      /worst[\s-]+first|worst[\s-]+to[\s-]+best|(?:first|order\w*)[\s-]+(?:overall|across)/i,
     );
   });
 

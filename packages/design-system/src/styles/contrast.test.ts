@@ -67,6 +67,37 @@ function tokenValue(name: string, source: string, seen: string[] = []): string {
   throw new Error(`${name} resolves to "${declaration}", which is neither a hex nor a var() alias`);
 }
 
+/** Strips comments, so prose containing a token name cannot satisfy a match. */
+function stripComments(source: string): string {
+  return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+}
+
+/**
+ * The one way this file is allowed to read a declaration.
+ *
+ * Every ad-hoc version of this has had the same two holes, and fixing one site
+ * never fixed its siblings: a bare `.match()` takes the FIRST declaration while
+ * CSS is last-wins, so a later `[data-theme='dark']` or `@media` block silently
+ * overrides it; and reading raw text lets the token name in a COMMENT satisfy
+ * the assertion while the real declaration says something else. Both shipped
+ * here more than once, in gates written to fix each other.
+ *
+ * So: strip comments, collect EVERY declaration of the name, and refuse to
+ * answer unless they agree. Stylelint's duplicate-property rule is
+ * block-scoped and does not cover the override case.
+ */
+function declaredValue(name: string, source: string): string | undefined {
+  const all = [
+    ...stripComments(source).matchAll(new RegExp(`(?:^|[^-a-z0-9])${name}:\\s*([^;\\n]+);`, 'g')),
+  ].map((m) => m[1].trim());
+  if (!all.length) return undefined;
+  const distinct = [...new Set(all)];
+  if (distinct.length > 1) {
+    throw new Error(`${name} is declared ${all.length} times with different values: ${distinct}`);
+  }
+  return distinct[0];
+}
+
 /** WCAG 2.1 relative luminance. */
 function luminance(hex: string): number {
   const h = hex.replace('#', '');
@@ -216,7 +247,7 @@ describe('components keep their warning slots on the strong variant', () => {
   it.each(SLOTS)('%s', (file, tokens) => {
     const source = readFileSync(resolve(__dirname, file), 'utf8');
     for (const token of tokens) {
-      const declared = source.match(new RegExp(`(?:^|[^-a-z0-9])${token}:\\s*([^;\n]+);`))?.[1];
+      const declared = declaredValue(token, source);
       expect(declared, `${token} is declared`).toBeDefined();
       expect(declared, `${token} must not use --color-warning`).toBe('var(--color-warning-strong)');
     }
@@ -276,8 +307,12 @@ describe('the all-day chip keeps its amber fill and dark text', () => {
       resolve(__dirname, '../components/Calendar/Calendar.tokens.scss'),
       'utf8',
     );
-    expect(scss).toMatch(/--calendar-event-chip-all-day-bg-warning:\s*var\(--color-warning\);/);
-    expect(scss).toMatch(/--calendar-event-chip-all-day-fg-warning:\s*var\(--color-warning-fg\);/);
+    expect(declaredValue('--calendar-event-chip-all-day-bg-warning', scss)).toBe(
+      'var(--color-warning)',
+    );
+    expect(declaredValue('--calendar-event-chip-all-day-fg-warning', scss)).toBe(
+      'var(--color-warning-fg)',
+    );
   });
 });
 
@@ -322,9 +357,11 @@ describe('rules without a token name are pinned too', () => {
       }
     }
     const rule = scss.slice(open, end + 1);
-    const backgrounds = [...rule.matchAll(/(?:^|[^-a-z0-9])background:\s*([^;\n]+);/g)].map((m) =>
-      m[1].trim(),
-    );
+    // background-color paints over background, and the anchor that excludes
+    // --dot-background: also made background-color: invisible. Take both.
+    const backgrounds = [
+      ...rule.matchAll(/(?:^|[^-a-z0-9])background(?:-color)?:\s*([^;\n]+);/g),
+    ].map((m) => m[1].trim());
     expect(backgrounds, "Dot's warning tone paints one background").toHaveLength(1);
     // Follow one hop through Dot.tokens.scss. Requiring the primitive inline
     // rejected `background: var(--dot-background)` — which is the refactor this
@@ -334,9 +371,9 @@ describe('rules without a token name are pinned too', () => {
     const alias = /^var\((--dot-[a-z0-9-]+)\)$/.exec(painted)?.[1];
     if (alias) {
       const tokens = readFileSync(resolve(__dirname, '../components/Dot/Dot.tokens.scss'), 'utf8');
-      const resolved = new RegExp(`(?:^|[^-a-z0-9])${alias}:\\s*([^;\\n]+);`).exec(tokens)?.[1];
-      expect(resolved, `${alias} is declared in Dot.tokens.scss`).toBeDefined();
-      painted = resolved!.trim();
+      const resolved = declaredValue(alias, tokens);
+      expect(resolved, `${alias} is declared once in Dot.tokens.scss`).toBeDefined();
+      painted = resolved!;
     }
     expect(painted, "Dot's warning tone resolves to the strong variant").toBe(
       'var(--color-warning-strong)',
@@ -522,7 +559,7 @@ describe('presence dots stay distinguishable from each other', () => {
   // comment, so the comparison is gone rather than corrected a fourth time.
   // If it matters, measure it in #490 where it can be asserted.)
   //
-  // The dots' own pairs go under this block's 0.13
+  // Under that same simulation the dots' own pairs go under this block's 0.13
   // floor there — but say WHICH, because the two themes differ and an earlier
   // version of this sentence did not:
   //
