@@ -301,8 +301,14 @@ describe('rules without a token name are pinned too', () => {
     const scss = readFileSync(resolve(__dirname, '../components/Dot/Dot.module.scss'), 'utf8')
       .replace(/\/\*[\s\S]*?\*\//g, '')
       .replace(/\/\/.*$/gm, '');
-    const open = scss.indexOf("[data-tone='warning']");
-    expect(open, "Dot's warning tone rule").toBeGreaterThan(-1);
+    // Exactly one rule, not the first one. Deduplicating declarations INSIDE
+    // the rule while reading the first RULE with indexOf left the same
+    // last-wins hole one level up: a second `[data-tone='warning']` block later
+    // in the file is what renders. Both sibling gates in
+    // Calendar.collisions.test.ts already assert their anchor appears once.
+    const selectors = [...scss.matchAll(/\[data-tone='warning'\]/g)];
+    expect(selectors.length, 'Dot declares its warning tone exactly once').toBe(1);
+    const open = selectors[0].index!;
     let depth = 0;
     let end = scss.indexOf('{', open);
     for (let i = end; i < scss.length; i += 1) {
@@ -319,9 +325,22 @@ describe('rules without a token name are pinned too', () => {
     const backgrounds = [...rule.matchAll(/(?:^|[^-a-z0-9])background:\s*([^;\n]+);/g)].map((m) =>
       m[1].trim(),
     );
-    expect(backgrounds, "Dot's warning tone paints one background").toEqual([
+    expect(backgrounds, "Dot's warning tone paints one background").toHaveLength(1);
+    // Follow one hop through Dot.tokens.scss. Requiring the primitive inline
+    // rejected `background: var(--dot-background)` — which is the refactor this
+    // package's component-token rule actively prefers — so a maintainer doing
+    // the sanctioned thing got a red test and no hint.
+    let painted = backgrounds[0];
+    const alias = /^var\((--dot-[a-z0-9-]+)\)$/.exec(painted)?.[1];
+    if (alias) {
+      const tokens = readFileSync(resolve(__dirname, '../components/Dot/Dot.tokens.scss'), 'utf8');
+      const resolved = new RegExp(`(?:^|[^-a-z0-9])${alias}:\\s*([^;\\n]+);`).exec(tokens)?.[1];
+      expect(resolved, `${alias} is declared in Dot.tokens.scss`).toBeDefined();
+      painted = resolved!.trim();
+    }
+    expect(painted, "Dot's warning tone resolves to the strong variant").toBe(
       'var(--color-warning-strong)',
-    ]);
+    );
   });
 
   it('RichText offers a legible amber as a text colour', () => {
@@ -494,13 +513,16 @@ describe('presence dots stay distinguishable from each other', () => {
   //
   // No AMBER-OR-YELLOW candidate escapes that, and `away` has to read as
   // yellow, so within the constraint the palette is not the lever — the remedy
-  // is a second channel (text alternative or dot shape), tracked in #490. Worth
-  // being precise rather than sweeping, though: several unconstrained palette
-  // entries hold up far better under the same simulation — blue, indigo and
-  // navy keep their worst pair above 0.21 and charcoal above 0.15, against
-  // amber's 0.015. (An earlier version of this sentence said "around 0.13",
-  // which was a reviewer's figure I quoted without re-deriving; the point it
-  // was making is stronger than the number I gave it.) And the dots' own pairs go under this block's 0.13
+  // is a second channel (text alternative or dot shape), tracked in #490.
+  //
+  // (Three successive attempts to add "and here is how much better an
+  // unconstrained hue would do" were each wrong in a different way — a
+  // borrowed figure, then a light-only one, then one measured against a
+  // different pair-set than this gate uses. No gate checks a number in a
+  // comment, so the comparison is gone rather than corrected a fourth time.
+  // If it matters, measure it in #490 where it can be asserted.)
+  //
+  // The dots' own pairs go under this block's 0.13
   // floor there — but say WHICH, because the two themes differ and an earlier
   // version of this sentence did not:
   //
@@ -563,7 +585,7 @@ describe('presence dots stay distinguishable from each other', () => {
     //   dark    0.199 -> 0.144 -> 0.115 -> 0.131
     //
     // Light bottoms out at 0.135 after one step and recovers. DARK KEEPS
-    // FALLING, to 0.116 at two steps, THROUGH this floor. An earlier version of
+    // FALLING, to 0.115 at two steps, THROUGH this floor. An earlier version of
     // this comment called the light walk "the whole risk along this axis" — it
     // is the dark one that actually fires this gate, and the light figures were
     // quoted as if they covered both themes.

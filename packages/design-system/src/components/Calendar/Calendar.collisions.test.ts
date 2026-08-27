@@ -203,10 +203,21 @@ describe('the documented color/tone collision table matches the shipped tokens',
     // "worst first" for months, which is false, and a doc-only revert to that
     // wording passes every other assertion in this file.
     const region = tableRegion(text.replace(/\s*\n\s*\*?\s*/g, ' '));
-    expect(region, 'the ordering is described as per-group').toMatch(
-      /grouped by tone|worst pairs:/,
+    // Require the promise verbatim. The first version accepted
+    // /grouped by tone|worst pairs:/ — and "worst pairs:" is the list's own
+    // header, not an ordering claim, so deleting every word about grouping
+    // still passed. Both copies now carry the same sentence so this is a real
+    // pin in each, not one copy asserting text that never changed.
+    expect(region, 'the ordering promise is stated').toContain(
+      'grouped by tone and ordered within each group',
     );
-    expect(region, 'the docs must not claim a global worst-first order').not.toMatch(/worst first/);
+    // And no global claim. Matched loosely because the old wording appears as
+    // "worst first", "worst-first" and "worst to best" — an exact literal here
+    // missed the hyphenated form, which is the form the test's OWN failure
+    // message used to hand people.
+    expect(region, 'the docs must not claim a global order').not.toMatch(
+      /worst[\s-]?first|worst to best/i,
+    );
   });
 
   it.each(sources)('%s names the actual worst pair as effectively invisible', (_label, text) => {
