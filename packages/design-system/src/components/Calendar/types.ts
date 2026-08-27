@@ -74,15 +74,21 @@ export interface CalendarEvent {
    * band colour and the category's own saturated colour — the worst pairs, all
    * of which read as an edge-thickness artefact rather than a state:
    *
+   * - `tone: 'success'` — `mint` (11), `emerald` (15), `teal` (35), `green` (41)
+   * - `tone: 'danger'` — `red` (17), `coral` (44)
    * - `tone: 'warning'` — `orange` (16), `coral` (25), `red` (43), `amber` (44)
-   * - `tone: 'success'` — `mint` (18), `emerald` (26), `teal` (37)
-   * - `tone: 'danger'` — `red` (36)
    * - `tone: 'accent'` — `blue` (40)
    *
-   * For scale: `orange` + `warning` is effectively invisible; `amber` +
-   * `warning` is detectable side-by-side but unreliable in isolation. Nothing
-   * enforces this — if a tenant picks `orange` for a category whose events can
-   * be `warning`, keep that state in the title too.
+   * For scale: `success` + `mint` and `warning` + `orange` are effectively
+   * invisible; `amber` + `warning` is detectable side-by-side but unreliable in
+   * isolation. Nothing enforces this — if a tenant picks `mint` for a category
+   * whose events can be `success`, keep that state in the title too.
+   *
+   * These numbers moved in #484, which raised `danger`, `success`, and `accent`
+   * to clear WCAG AA as text. The bands got closer to their neighbouring
+   * category colours as a result: `success` + `mint` went 18 → 11 and `danger`
+   * + `red` went 36 → 17. `Calendar.collisions.test.ts` recomputes this list
+   * from the shipped tokens so it cannot drift again.
    *
    * **Both axes are visual only.** Neither sets ARIA, and a 3px band is not an
    * accessible signal — same contract as `Badge`, whose tone is also decoration.
