@@ -24,13 +24,25 @@ const TOKENS = readFileSync(
   'utf8',
 );
 
-/** The four band colours, as `Calendar.tokens.scss` resolves them. */
-const BANDS = {
-  accent: '--color-accent',
-  success: '--color-success',
-  warning: '--color-warning-strong',
-  danger: '--color-danger',
-} as const;
+const CALENDAR_TOKENS = readFileSync(resolve(__dirname, 'Calendar.tokens.scss'), 'utf8');
+
+/**
+ * The tones a band can take, resolved THROUGH `Calendar.tokens.scss` rather
+ * than named directly. Naming the primitives would have measured the right
+ * colours today and kept measuring them after someone re-aimed
+ * `--calendar-event-stripe-danger` at a different token — publishing distances
+ * for a colour the Calendar no longer paints, which is the exact drift one
+ * indirection up from the one this file exists to catch.
+ */
+const TONES = ['accent', 'success', 'warning', 'danger'] as const;
+
+function bandToken(tone: string): string {
+  const via = new RegExp(`--calendar-event-stripe-${tone}:\\s*var\\(([^)]+)\\)`).exec(
+    CALENDAR_TOKENS,
+  )?.[1];
+  if (!via) throw new Error(`--calendar-event-stripe-${tone} is not declared as a var()`);
+  return via.trim();
+}
 
 /**
  * Only pairs at or under this distance are documented. Sits between the closest
@@ -42,9 +54,14 @@ const BANDS = {
 const CUTOFF = 44.5;
 
 function literal(name: string): string {
-  const raw = new RegExp(`(?:^|[^-a-z0-9])${name}:\\s*([^;]+);`, 'm').exec(TOKENS)?.[1]?.trim();
+  const raw = new RegExp(`(?:^|[^-a-z0-9])${name}:\\s*([^;\\n]+);`, 'm').exec(TOKENS)?.[1]?.trim();
   if (!raw) throw new Error(`${name} is not declared`);
-  return raw.startsWith('var(') ? literal(raw.slice(4, -1).split(',')[0].trim()) : raw;
+  if (raw.startsWith('var(')) return literal(raw.slice(4, -1).split(',')[0].trim());
+  // Anything that is neither an alias nor a 6-digit hex would NaN its way
+  // through distance(), drop silently out of `rows`, and leave the docs passing
+  // while describing a pair nothing measures.
+  if (!/^#[0-9a-f]{6}$/i.test(raw)) throw new Error(`${name} is not a 6-digit hex: ${raw}`);
+  return raw;
 }
 
 /**
@@ -64,14 +81,13 @@ function measured(): { tone: string; color: string; rounded: number }[] {
   const palette = [
     ...new Set([...TOKENS.matchAll(/--color-palette-([a-z]+)-fg:/g)].map((m) => m[1])),
   ];
-  return Object.entries(BANDS)
-    .flatMap(([tone, token]) =>
-      palette.map((color) => ({
-        tone,
-        color,
-        raw: distance(literal(token), literal(`--color-palette-${color}-fg`)),
-      })),
-    )
+  return TONES.flatMap((tone) =>
+    palette.map((color) => ({
+      tone,
+      color,
+      raw: distance(literal(bandToken(tone)), literal(`--color-palette-${color}-fg`)),
+    })),
+  )
     .filter((p) => p.raw <= CUTOFF)
     .sort((a, b) => a.raw - b.raw)
     .map(({ tone, color, raw }) => ({ tone, color, rounded: Math.round(raw) }));
@@ -117,24 +133,26 @@ describe('the documented color/tone collision table matches the shipped tokens',
     ['AGENTS.md', readFileSync(resolve(__dirname, '../../../AGENTS.md'), 'utf8')],
   ];
 
-  it('finds pairs to document at all', () => {
-    // Guards the guard: if the palette or the band tokens are ever renamed,
-    // every assertion below would vacuously pass on an empty list.
-    expect(rows.length).toBeGreaterThan(8);
+  it('resolves the palette and every band token', () => {
+    // Guards the guard against a RENAME, without coupling to the outcome: a
+    // retune that legitimately resolves collisions must not fail here.
+    // literal() already throws on a renamed band, and the "documented but no
+    // longer collides" loop below catches an empty `rows` from the other side.
+    expect([...TOKENS.matchAll(/--color-palette-([a-z]+)-fg:/g)].length).toBeGreaterThan(20);
+    for (const tone of TONES) expect(literal(bandToken(tone))).toMatch(/^#[0-9a-f]{6}$/i);
   });
 
   it.each(sources)('%s lists every colliding pair with the right number', (_label, text) => {
-    for (const tone of Object.keys(BANDS)) {
+    for (const tone of TONES) {
       const docs = documented(text, tone);
       const real = rows.filter((r) => r.tone === tone);
       for (const { color, rounded } of real) {
         expect(docs.get(color), `${tone} + ${color} is documented`).toBeDefined();
-        // ±1 absorbs rounding at the boundary, nothing more. #484 moved these
-        // by 5-19, which is what this needs to catch.
-        expect(
-          Math.abs((docs.get(color) ?? 0) - rounded),
-          `${tone} + ${color}`,
-        ).toBeLessThanOrEqual(1);
+        // Exact, not a tolerance. Both sides are integers derived deterministically
+        // from the same tokens, so there is no rounding to absorb — and slack here
+        // would let the two published copies sit permanently apart from each other,
+        // which is the divergence this file exists to prevent.
+        expect(docs.get(color), `${tone} + ${color}`).toBe(rounded);
       }
       for (const color of docs.keys()) {
         expect(
@@ -154,7 +172,11 @@ describe('the documented color/tone collision table matches the shipped tokens',
     const flat = text.replace(/\n\s*\*?\s*/g, ' ');
     const at = flat.indexOf('effectively invisible');
     expect(at, 'the calibration sentence exists').toBeGreaterThan(-1);
-    const sentence = flat.slice(at - 300, at + 100);
+    // Bind to the CLAUSE, not a fixed lookback. A 300-character window reached
+    // back over the numbered table, which by construction already contains the
+    // worst pair — so this passed while the sentence named a different pair
+    // entirely. Cutting at the table's last `)` leaves just the clause.
+    const sentence = flat.slice(flat.lastIndexOf(')', at) + 1, at);
     expect(sentence).toContain(`\`${worst.color}\``);
     expect(sentence).toContain(`\`${worst.tone}\``);
   });

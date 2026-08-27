@@ -79,10 +79,13 @@ export interface CalendarEvent {
    * - `tone: 'warning'` — `orange` (16), `coral` (25), `red` (43), `amber` (44)
    * - `tone: 'accent'` — `blue` (40)
    *
-   * For scale: `success` + `mint` and `warning` + `orange` are effectively
-   * invisible; `amber` + `warning` is detectable side-by-side but unreliable in
-   * isolation. Nothing enforces this — if a tenant picks `mint` for a category
-   * whose events can be `success`, keep that state in the title too.
+   * Read it as a threshold, not a ranking. The worst pair is `success` +
+   * `mint` at 11, and anything under about 20 is effectively invisible at the
+   * rendered 4px. The low 20s are detectable side-by-side but unreliable in
+   * isolation, and the low 40s are where this list stops rather than where the
+   * problem does — `warning` + `gold` at 45 is just off the end and no safer
+   * than `amber` at 44. Nothing enforces this — if a tenant picks `mint` for a
+   * category whose events can be `success`, keep that state in the title too.
    *
    * These numbers moved in #484, which raised `danger`, `success`, and `accent`
    * to clear WCAG AA as text. The bands got closer to their neighbouring

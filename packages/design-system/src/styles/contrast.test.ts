@@ -39,7 +39,7 @@ function tokenValue(name: string, source: string, seen: string[] = []): string {
   // Anchored on a boundary so `--foo` cannot match inside `--bar--foo:`. No
   // escaping: every name is a literal `--[a-z0-9-]+` from the lists below, and
   // a half-working escape would be worse than none.
-  const pattern = new RegExp(`(?:^|[^-a-z0-9])${name}:\\s*([^;]+);`, 'm');
+  const pattern = new RegExp(`(?:^|[^-a-z0-9])${name}:\\s*([^;\n]+);`, 'm');
   const declare = (from: string) => from.match(pattern)?.[1]?.trim();
 
   // A token not overridden in dark still has a declaration in light. Reading
@@ -201,7 +201,7 @@ describe('components keep their warning slots on the strong variant', () => {
   it.each(SLOTS)('%s', (file, tokens) => {
     const source = readFileSync(resolve(__dirname, file), 'utf8');
     for (const token of tokens) {
-      const declared = source.match(new RegExp(`${token}:\\s*([^;]+);`))?.[1];
+      const declared = source.match(new RegExp(`${token}:\\s*([^;\n]+);`))?.[1];
       expect(declared, `${token} is declared`).toBeDefined();
       expect(declared, `${token} must not use --color-warning`).toBe('var(--color-warning-strong)');
     }
@@ -324,16 +324,31 @@ describe('a tone stays in sync with the roles derived from it', () => {
     // Darkening --color-danger collapsed its hover step to 0.025 — a third of
     // what it was, on the DESTRUCTIVE button, where the affordance matters most.
     // Ordering still held, which is why "ordering is unchanged" was the wrong
-    // thing to check on its own. These three tones span 0.058-0.095 today; the
-    // floor sits just under that, NOT at some library-wide minimum. Seven
-    // component-level hover pairs in light (11 theme-instances across 8 pairs
-    // once dark is counted; --button-bg-secondary-hover among them, and
-    // --entity-chip-bg-hover at exactly 0.0000) are below it and deliberately
-    // out of scope here — see #490.
+    // thing to check on its own.
+    //
+    // The floor is 0.065, anchored to the SMALLEST step the library had before
+    // #484 touched it (light accent, 0.0662). That anchor is deliberate: the
+    // first version of this gate used 0.05, chosen as "just under the observed
+    // floor of 0.058" — but 0.058 was a number #484 had itself created by
+    // retuning dark accent without its hover, so the gate was calibrated to
+    // accept the very regression it was written to catch. Anchor to what the
+    // library managed BEFORE the change under review, never to what it manages
+    // after.
+    //
+    // #484 moved two other steps and both are recorded here rather than
+    // chased: dark accent 0.091 -> 0.058 was retuned back to 0.091, and light
+    // success 0.102 -> 0.075 was left, because 0.075 is still healthier than
+    // the pre-existing weakest step and shrinking a step is not by itself a
+    // defect — falling below what the library already shipped is.
+    //
+    // This covers three primitives, not the library. Seven component-level
+    // hover pairs in light are below this floor (11 theme-instances across 8
+    // distinct pairs once dark is counted), --entity-chip-bg-hover at exactly
+    // 0.0000, all deliberately out of scope — see #490.
     for (const tone of ['accent', 'danger', 'success'] as const) {
       const base = tokenValue(`--color-${tone}`, source);
       const hover = tokenValue(`--color-${tone}-hover`, source);
-      expect(deltaE(base, hover), `${tone} hover step`).toBeGreaterThanOrEqual(0.05);
+      expect(deltaE(base, hover), `${tone} hover step`).toBeGreaterThanOrEqual(0.065);
       // Magnitude alone would pass a hover that moved the WRONG way. The
       // direction is theme-dependent: light hovers darken, dark hovers lighten.
       // A single "hover is darker" assertion would be wrong in half the library.
@@ -356,7 +371,7 @@ describe('a tone stays in sync with the roles derived from it', () => {
     // at 40% composites to 1.94:1 on white, under 1.4.11's 3:1 for a focus
     // indicator — see #490), this gate is the thing to renegotiate first.
     for (const tone of ['accent', 'danger', 'success'] as const) {
-      const declared = [...source.matchAll(new RegExp(`--ring-${tone}:\\s*([^;]+);`, 'g'))].map(
+      const declared = [...source.matchAll(new RegExp(`--ring-${tone}:\\s*([^;\n]+);`, 'g'))].map(
         (m) => m[1],
       );
       // dark.scss declares every ring twice — once under [data-theme='dark'],
@@ -384,7 +399,6 @@ describe('a tone stays in sync with the roles derived from it', () => {
         expect(ring, 'light --ring-accent is deliberately not --color-accent').toBe(
           'rgb(76 154 255 / 50%)',
         );
-        expect(asHex).not.toBe(tokenValue('--color-accent', source));
         // Pinned at BOTH ends. Pinning only the ring left the direction that
         // actually broke on this branch — the primitive moving out from under a
         // hand-written ring — silent for the one tone every focus ring in the
@@ -407,11 +421,18 @@ describe('presence dots stay distinguishable from each other', () => {
   // channel. What this measures is NORMAL TRICHROMATIC separation; it is not a
   // WCAG 1.4.1 conformance claim and cannot be one, because OKLab ΔE is blind
   // to dichromacy. Under simulated protanopia light amber/busy collapses by an
-  // order of magnitude — to under 0.03 by either of two common simulation
-  // variants, which disagree on the digit but not on the verdict — while this
-  // gate reads 0.158 and passes. The real remedy is a second
-  // channel (text alternative or dot shape), tracked in #490 — every candidate
-  // colour fails this way, so it is not something a palette choice can fix.
+  // order of magnitude — 0.018 by Brettel 1997, 0.015 by Vienot 1999 — while
+  // this gate reads 0.158 and passes. (Machado 2009 at full severity gives
+  // 0.076: still a collapse, but the three methods disagree enough that only
+  // the direction is worth quoting.)
+  //
+  // No AMBER-OR-YELLOW candidate escapes that, and `away` has to read as
+  // yellow, so within the constraint the palette is not the lever — the remedy
+  // is a second channel (text alternative or dot shape), tracked in #490. Worth
+  // being precise rather than sweeping, though: several unconstrained palette
+  // entries (blue, indigo, navy, charcoal) hold the worst pair at 0.129 under
+  // the same simulation. And busy/online is itself 0.129 there, under this
+  // block's own floor, which is the stronger argument for #490.
   //
   // This gated only away/busy, and in raw RGB distance. Both were wrong, and
   // the second one cost a bad decision inside this very PR:

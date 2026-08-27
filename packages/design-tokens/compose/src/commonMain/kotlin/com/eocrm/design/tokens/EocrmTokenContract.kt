@@ -213,7 +213,7 @@ public object EocrmDarkTokens {
         accent = Color(0xFF68A7FF),
         accentBackgroundSubtle = Color(0xFF1C3A5E),
         accentForeground = Color(0xFF1D2125),
-        accentHover = Color(0xFF85B8FF),
+        accentHover = Color(0xFF8CC4FF),
         accentPressed = Color(0xFFCCE0FF),
         accentSubtleBackground = Color(0xFF1C3A5E),
         background = Color(0xFF1D2125),
