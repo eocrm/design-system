@@ -238,6 +238,75 @@ describe('<EntityChip>', () => {
     expect(container.querySelector('.external')?.className).toMatch(/chip/);
   });
 
+  describe('loading is announced, not just aria-busy', () => {
+    // aria-busy IS valid here (a global ARIA state, unlike aria-disabled) and
+    // browsers expose it — but no mainstream screen reader reliably conveys
+    // `busy` on a non-live element, and the ellipsis is aria-hidden. The label
+    // reached the user fine; no signal of the loading STATE did.
+    it('puts the state in the accessible name of a linked chip', () => {
+      render(<EntityChip label="Appointment" href="/a/1" loading />);
+      const link = screen.getByRole('link');
+      expect(link).toHaveAttribute('aria-busy', 'true');
+      expect(link).toHaveAccessibleName(/\(loading\)$/);
+    });
+
+    it('keeps the real label, which is why this was the weaker case', () => {
+      // Unlike `unavailable`, a loading chip shows the entity's genuine name, so
+      // the label was never misleading — only the state was missing.
+      const { container } = render(<EntityChip label="Appointment" loading />);
+      expect(screen.getByText('Appointment')).toBeInTheDocument();
+      const word = screen.getByText('(loading)');
+      expect(word).toBeInTheDocument();
+      // A target-less chip is role=generic and has NO accessible name, so the
+      // word reaches the user as content — which only works if it is not itself
+      // hidden from the tree. getByText alone would pass either way.
+      expect(word).not.toHaveAttribute('aria-hidden');
+      expect(word.closest('[aria-hidden="true"]')).toBeNull();
+      // ...and visually hidden rather than on screen. jsdom applies no
+      // CSS-module styles, so the class name is the only thing assertable —
+      // without this, dropping it renders a literal "(loading)" beside the
+      // ellipsis with every test still green. The `unavailable` suite already
+      // pins this; the first version of this test copied the other two halves
+      // and not this one.
+      expect(word.className).toMatch(/hiddenLabel/);
+      // Order and spacing on the bare-span form, matching the `unavailable`
+      // suite's equivalent pin. The leading `…` is the aria-hidden ellipsis.
+      expect(container.textContent).toBe('…Appointment (loading)');
+    });
+
+    it('announces loading BEFORE unavailable when a chip carries both', () => {
+      render(<EntityChip label="Appointment" href="/a/1" loading unavailable />);
+      // The accessible NAME, not textContent: the `…` is aria-hidden, so it is
+      // in the DOM but correctly absent from the name. Regex pins the ORDER
+      // without pinning whitespace, which differs between jsdom and browsers.
+      expect(screen.getByRole('link')).toHaveAccessibleName(
+        /^Appointment\s*\(loading\)\s*\(unavailable\)$/,
+      );
+    });
+
+    it('drops the word once loading resolves — the name mutates, by design', () => {
+      // This is the cost the JSDoc warns about, pinned so it is a known
+      // property rather than a surprise: the accessible name is not stable
+      // across the transition.
+      const { rerender } = render(<EntityChip label="Appointment" href="/a/1" loading />);
+      expect(screen.getByRole('link')).toHaveAccessibleName(/\(loading\)$/);
+      rerender(<EntityChip label="Appointment" href="/a/1" />);
+      expect(screen.getByRole('link')).toHaveAccessibleName('Appointment');
+      expect(screen.queryByText('(loading)')).not.toBeInTheDocument();
+    });
+
+    it('takes the word from the i18n provider, including an empty override', () => {
+      // Overriding to '' is the documented escape hatch for consumers who would
+      // rather own an aria-live region than have the name change.
+      render(
+        <I18nProvider locale="en" overrides={{ entityChip: { loading: '' } }}>
+          <EntityChip label="Appointment" href="/a/1" loading />
+        </I18nProvider>,
+      );
+      expect(screen.getByRole('link')).toHaveAccessibleName('Appointment');
+    });
+  });
+
   describe('unavailable is announced, not just muted', () => {
     // The bug: browsers DO expose `aria-disabled`, but it carries no meaning on
     // a non-widget role such as `generic`, so no assistive tech conveys it —

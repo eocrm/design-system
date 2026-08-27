@@ -285,6 +285,7 @@ export const ru: Messages = {
   },
   entityChip: {
     unavailable: '(недоступно)',
+    loading: '(загружается)',
   },
   statusMenu: {
     changeStatus: 'Изменить статус',
