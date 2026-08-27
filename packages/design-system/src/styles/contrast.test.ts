@@ -127,10 +127,12 @@ const PAIRS: Pair[] = [
   ['info text on info tint', '--color-info', '--color-info-bg-subtle', 4.5],
   // The --color-info shape again, one row over. These two are byte-duplicate
   // LITERALS of the tints above with no alias tying them together, and real
-  // components paint on them: --color-bg-danger-subtle via DropdownMenu's
-  // danger item hover and Select/LiquidEditor, --color-accent-subtle-bg via
-  // Rail, Tabs, Screen and Select's selected option. Retuning the gated twin would leave these at the
-  // stale tint with three files still rendering tone text on it.
+  // components paint on them: --color-bg-danger-subtle carries danger text in
+  // DropdownMenu's danger item hover, Select and LiquidEditor;
+  // --color-accent-subtle-bg is painted by Rail, Tabs, Select's selected option
+  // and Screen (a page gradient there, not text). Six files across the two
+  // tints. Retuning a gated twin would leave its duplicate at the stale tint
+  // with all of them still rendering on it.
   ['danger text on the duplicate danger tint', '--color-danger', '--color-bg-danger-subtle', 4.5],
   ['accent text on the duplicate accent tint', '--color-accent', '--color-accent-subtle-bg', 4.5],
 ];

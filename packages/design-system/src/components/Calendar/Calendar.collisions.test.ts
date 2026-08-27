@@ -183,17 +183,24 @@ describe('the documented color/tone collision table matches the shipped tokens',
     // sentence names something else. Widening was never the bug; slicing was.
     //
     // Both copies state the claim in one fixed form, so match that form
-    // directly. It cannot be widened, cannot be stolen by an earlier occurrence
-    // of the phrase elsewhere in the file, and says what is wrong when it fails.
+    // directly — and match it INSIDE the table region, the way documented()
+    // already does. A bare exec() over the file returns the first match
+    // anywhere, so planting the correct sentence in unrelated prose (or leaving
+    // a stale one above the table) decided the result instead of the real
+    // calibration. That was this check's sixth revision and its fifth hole.
+    //
+    // matchAll + exactly-one also closes the next variant: a second claim added
+    // inside the region — "in dark the worst pair is …" — would otherwise be
+    // silently ignored rather than flagged as ambiguous.
     expect(rows.length, 'there is a worst pair to name').toBeGreaterThan(0);
-    const flat = text.replace(/\n\s*\*?\s*/g, ' ');
-    expect(flat, 'the calibration sentence exists').toContain('effectively invisible');
+    const region = tableRegion(text.replace(/\s*\n\s*\*?\s*/g, ' '));
+    expect(region, 'the calibration sentence exists').toContain('effectively invisible');
 
-    const claim = /worst pair is `(\w+)` \+ `(\w+)` at (\d+)/.exec(flat);
-    expect(claim, 'the calibration names a worst pair in the expected form').not.toBeNull();
+    const claims = [...region.matchAll(/worst pair is `(\w+)` \+ `(\w+)` at (\d+)/g)];
+    expect(claims.length, 'exactly one calibration claim in the table region').toBe(1);
     const worst = rows[0];
     expect(
-      [claim![1], claim![2], Number(claim![3])],
+      [claims[0][1], claims[0][2], Number(claims[0][3])],
       'the calibration names the actual worst pair',
     ).toEqual([worst.tone, worst.color, worst.rounded]);
   });
