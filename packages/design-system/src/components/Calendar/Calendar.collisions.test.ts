@@ -37,11 +37,18 @@ const CALENDAR_TOKENS = readFileSync(resolve(__dirname, 'Calendar.tokens.scss'),
 const TONES = ['accent', 'success', 'warning', 'danger'] as const;
 
 function bandToken(tone: string): string {
-  const via = new RegExp(`--calendar-event-stripe-${tone}:\\s*var\\(([^)]+)\\)`).exec(
-    CALENDAR_TOKENS,
-  )?.[1];
-  if (!via) throw new Error(`--calendar-event-stripe-${tone} is not declared as a var()`);
-  return via.trim();
+  const all = [
+    ...CALENDAR_TOKENS.matchAll(
+      new RegExp(`(?:^|[^-a-z0-9])--calendar-event-stripe-${tone}:\\s*var\\(([^)]+)\\)`, 'g'),
+    ),
+  ].map((m) => m[1].trim());
+  if (!all.length) throw new Error(`--calendar-event-stripe-${tone} is not declared as a var()`);
+  // Every declaration, not the first — reading only the first is the hole the
+  // ring gate in contrast.test.ts already had to close once.
+  if (new Set(all).size > 1) {
+    throw new Error(`--calendar-event-stripe-${tone} declarations disagree: ${[...new Set(all)]}`);
+  }
+  return all[0];
 }
 
 /**
@@ -138,8 +145,10 @@ describe('the documented color/tone collision table matches the shipped tokens',
     // retune that legitimately resolves collisions must not fail here.
     // literal() already throws on a renamed band, and the "documented but no
     // longer collides" loop below catches an empty `rows` from the other side.
+    // Only the palette count is assertable here: `rows` is built during
+    // describe-body evaluation and already resolves every band, so a renamed or
+    // non-hex band token throws before this test can run.
     expect([...TOKENS.matchAll(/--color-palette-([a-z]+)-fg:/g)].length).toBeGreaterThan(20);
-    for (const tone of TONES) expect(literal(bandToken(tone))).toMatch(/^#[0-9a-f]{6}$/i);
   });
 
   it.each(sources)('%s lists every colliding pair with the right number', (_label, text) => {
@@ -172,11 +181,14 @@ describe('the documented color/tone collision table matches the shipped tokens',
     const flat = text.replace(/\n\s*\*?\s*/g, ' ');
     const at = flat.indexOf('effectively invisible');
     expect(at, 'the calibration sentence exists').toBeGreaterThan(-1);
-    // Bind to the CLAUSE, not a fixed lookback. A 300-character window reached
-    // back over the numbered table, which by construction already contains the
-    // worst pair — so this passed while the sentence named a different pair
-    // entirely. Cutting at the table's last `)` leaves just the clause.
-    const sentence = flat.slice(flat.lastIndexOf(')', at) + 1, at);
+    // Bind to the SENTENCE. Two earlier versions of this were vacuous: a
+    // 300-character lookback reached back over the numbered table (which by
+    // construction contains the worst pair), and cutting at the table's last
+    // `)` only moved the boundary — inserting any sentence between the table
+    // and the phrase let the window keep the right pair while the calibration
+    // named a different one. A sentence boundary cannot be widened that way,
+    // and it also can't run away to the start of the file when no `)` precedes.
+    const sentence = flat.slice(flat.lastIndexOf('.', at - 1) + 1, at);
     expect(sentence).toContain(`\`${worst.color}\``);
     expect(sentence).toContain(`\`${worst.tone}\``);
   });

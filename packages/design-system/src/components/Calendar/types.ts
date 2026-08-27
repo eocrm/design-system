@@ -83,8 +83,8 @@ export interface CalendarEvent {
    * `mint` at 11, and anything under about 20 is effectively invisible at the
    * rendered 4px. The low 20s are detectable side-by-side but unreliable in
    * isolation, and the low 40s are where this list stops rather than where the
-   * problem does — `warning` + `gold` at 45 is just off the end and no safer
-   * than `amber` at 44. Nothing enforces this — if a tenant picks `mint` for a
+   * problem does: the pair just off the end of this list is no safer than the
+   * last one on it. Nothing enforces this — if a tenant picks `mint` for a
    * category whose events can be `success`, keep that state in the title too.
    *
    * These numbers moved in #484, which raised `danger`, `success`, and `accent`

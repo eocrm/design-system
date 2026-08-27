@@ -125,6 +125,14 @@ const PAIRS: Pair[] = [
   ['success-fg on solid success', '--color-success-fg', '--color-success', 4.5],
   ['accent-fg on solid accent', '--color-accent-fg', '--color-accent', 4.5],
   ['info text on info tint', '--color-info', '--color-info-bg-subtle', 4.5],
+  // The --color-info shape again, one row over. These two are byte-duplicate
+  // LITERALS of the tints above with no alias tying them together, and real
+  // components paint on them: --color-bg-danger-subtle via DropdownMenu's
+  // danger item hover and Select/LiquidEditor, --color-accent-subtle-bg via
+  // Rail, Tabs and Screen. Retuning the gated twin would leave these at the
+  // stale tint with three files still rendering tone text on it.
+  ['danger text on the duplicate danger tint', '--color-danger', '--color-bg-danger-subtle', 4.5],
+  ['accent text on the duplicate accent tint', '--color-accent', '--color-accent-subtle-bg', 4.5],
 ];
 
 describe.each([
@@ -201,7 +209,7 @@ describe('components keep their warning slots on the strong variant', () => {
   it.each(SLOTS)('%s', (file, tokens) => {
     const source = readFileSync(resolve(__dirname, file), 'utf8');
     for (const token of tokens) {
-      const declared = source.match(new RegExp(`${token}:\\s*([^;\n]+);`))?.[1];
+      const declared = source.match(new RegExp(`(?:^|[^-a-z0-9])${token}:\\s*([^;\n]+);`))?.[1];
       expect(declared, `${token} is declared`).toBeDefined();
       expect(declared, `${token} must not use --color-warning`).toBe('var(--color-warning-strong)');
     }
@@ -333,7 +341,9 @@ describe('a tone stays in sync with the roles derived from it', () => {
     // retuning dark accent without its hover, so the gate was calibrated to
     // accept the very regression it was written to catch. Anchor to what the
     // library managed BEFORE the change under review, never to what it manages
-    // after.
+    // after. Read it as a tripwire, not a floor with room: light accent sits at
+    // 0.0662, so the headroom is 0.0012 — 1.8%. Any deliberate move here is
+    // expected to fail this and be re-argued, which is the intent.
     //
     // #484 moved two other steps and both are recorded here rather than
     // chased: dark accent 0.091 -> 0.058 was retuned back to 0.091, and light
@@ -476,7 +486,8 @@ describe('presence dots stay distinguishable from each other', () => {
     // the rejected yellow's 0.118, so the discarded option stays discarded.
     // Headroom is roughly ONE retune step, not a comfortable margin: darkening
     // --color-success (which online aliases) by its own hover delta lands at
-    // 0.135. If that fires, the answer is to revisit `away`, not the floor.
+    // 0.1348 — still over, but by 0.0048. A second step of that size clears the
+    // floor entirely, and the answer then is to revisit `away`, not this number.
     for (const [i, a] of DOTS.entries()) {
       for (const b of DOTS.slice(i + 1)) {
         const separation = deltaE(
