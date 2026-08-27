@@ -106,22 +106,18 @@ const PAIRS: Pair[] = [
   ['away presence dot on page bg', '--color-presence-away', '--color-bg', 3.0],
   ['body text on page bg', '--color-fg', '--color-bg', 4.5],
   ['muted text on page bg', '--color-fg-muted', '--color-bg', 4.5],
-];
-
-/**
- * Pairs that do NOT clear AA for text today, pinned at their current value so
- * they cannot quietly get worse. These are pre-existing and were surfaced by
- * this test, not introduced by it — see #484. They are all near-misses used as
- * both text and iconography; every one clears 1.4.11's 3:1 graphical bar, so
- * the exposure is text usage specifically. Raising them means retuning three
- * semantic primitives, which is a design decision rather than a bug fix.
- *
- * If you improve one, tighten its number here. If a change pushes one DOWN,
- * this fails — which is the point.
- */
-const BELOW_AA_TEXT: Pair[] = [
-  ['danger fg on danger tint (light)', '--color-danger', '--color-danger-bg-subtle', 3.95],
-  ['success fg on success tint (light)', '--color-success', '--color-success-bg-subtle', 4.2],
+  // Retuned in #484 — these three were the last sub-AA text pairs. Each failed
+  // exactly one of its four roles ("as text on its own tint") and passed the
+  // other three, so only lightness moved, hue and saturation are unchanged, and
+  // the -hover/-pressed ordering still holds.
+  ['danger text on danger tint', '--color-danger', '--color-danger-bg-subtle', 4.5],
+  ['success text on success tint', '--color-success', '--color-success-bg-subtle', 4.5],
+  ['accent text on accent tint', '--color-accent', '--color-accent-bg-subtle', 4.5],
+  // The same tones in their OTHER three roles, so a future retune cannot fix
+  // the text pair by breaking a fill.
+  ['danger-fg on solid danger', '--color-danger-fg', '--color-danger', 4.5],
+  ['success-fg on solid success', '--color-success-fg', '--color-success', 4.5],
+  ['accent-fg on solid accent', '--color-accent-fg', '--color-accent', 4.5],
 ];
 
 describe.each([
@@ -142,33 +138,6 @@ describe.each([
   });
 });
 
-describe('known sub-AA pairs are pinned so they cannot get worse (#484)', () => {
-  it.each(BELOW_AA_TEXT)('%s', (_label, fgName, bgName, floor) => {
-    expect(contrast(tokenValue(fgName, TOKENS), tokenValue(bgName, TOKENS))).toBeGreaterThanOrEqual(
-      floor,
-    );
-  });
-
-  it('accent on its tint in DARK is the third, at 4.22', () => {
-    // Both tokens are dark-overridden, so tokenValue resolves them directly.
-    expect(
-      contrast(tokenValue('--color-accent', DARK), tokenValue('--color-accent-bg-subtle', DARK)),
-    ).toBeGreaterThanOrEqual(4.22);
-  });
-});
-
-/**
- * The contrast assertions above check the PRIMITIVES. They do not notice a
- * component pointing its own slot back at `--color-warning`, which is how the
- * bug got in — so pin the slots too.
- *
- * Three of these were ALREADY covered elsewhere and are listed only so the set
- * reads as complete: `--calendar-event-stripe-warning` is asserted by
- * `Calendar/eventColor.test.tsx`, and the two `--badge-stripe-*` values are
- * pinned by the design-tokens contract fixture. Every OTHER slot below had no
- * gate at all — reverting one left the whole suite green, which is how this bug
- * got in and stayed in.
- */
 describe('components keep their warning slots on the strong variant', () => {
   const SLOTS: [file: string, tokens: string[]][] = [
     [

@@ -26,7 +26,7 @@ public object EocrmLightTokens {
         backgroundSunken = Color(0xFFEBECF0),
         border = Color(0xFFDFE1E6),
         borderStrong = Color(0xFFC1C7D0),
-        danger = Color(0xFFDE350B),
+        danger = Color(0xFFC8300A),
         dangerBackgroundSubtle = Color(0xFFFFEBE6),
         dangerForeground = Color(0xFFFFFFFF),
         dangerHover = Color(0xFFBF2600),
@@ -36,7 +36,7 @@ public object EocrmLightTokens {
         foregroundSubtle = Color(0xFF6B778C),
         info = Color(0xFF0052CC),
         infoBackgroundSubtle = Color(0xFFEBF3FF),
-        success = Color(0xFF00875A),
+        success = Color(0xFF007E54),
         successBackgroundSubtle = Color(0xFFE3FCEF),
         successForeground = Color(0xFFFFFFFF),
         successHover = Color(0xFF006644),
@@ -210,7 +210,7 @@ public object EocrmLightTokens {
 
 public object EocrmDarkTokens {
     public val colors: EocrmColors = EocrmColors(
-        accent = Color(0xFF579DFF),
+        accent = Color(0xFF68A7FF),
         accentBackgroundSubtle = Color(0xFF1C3A5E),
         accentForeground = Color(0xFF1D2125),
         accentHover = Color(0xFF85B8FF),
