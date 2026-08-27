@@ -240,3 +240,25 @@ describe('<Switch>', () => {
     expect(screen.getByRole('switch')).not.toHaveAttribute('aria-invalid');
   });
 });
+
+describe('loading state reaches assistive tech (#488)', () => {
+  it('announces from a live region rather than aria-busy alone', () => {
+    const { rerender, container } = render(<Switch loading={false}>Mute</Switch>);
+    const region = container.querySelector('[role="status"][aria-live="polite"]');
+    // Rendered unconditionally and empty, so the announcement fires on the
+    // TEXT change. Mounting region and text together is the unreliable case.
+    expect(region).not.toBeNull();
+    expect(region!.textContent).toBe('');
+    rerender(<Switch loading>Mute</Switch>);
+    expect(region!.textContent).toBe('Saving…');
+  });
+
+  it('does not mutate the accessible name when it goes busy', () => {
+    const { rerender, getByRole } = render(<Switch loading={false}>Mute</Switch>);
+    const before = getByRole('switch').getAttribute('aria-label');
+    rerender(<Switch loading>Mute</Switch>);
+    // The user is focused on the control they just activated, so this is a
+    // change to announce — not a property of something they arrived at.
+    expect(getByRole('switch').getAttribute('aria-label')).toBe(before);
+  });
+});

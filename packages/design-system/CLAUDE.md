@@ -171,6 +171,51 @@ The `labels?: Foo` / `cancelLabel?: string` per-component prop pattern is DELETE
 
 See `AGENTS.md` "Localization (i18n)" section for the consumer-facing API and how to add a new string.
 
+### 10. Transient state must reach assistive tech — and the mechanism is not a coin flip
+
+A component with a transient or async state (`loading`, `busy`, `pending`, an
+async failure) must expose it to screen readers. Which mechanism depends on one
+question:
+
+**Is this a property of the thing as the user arrives at it, or a change that
+happens while their attention is elsewhere?**
+
+- **A property they arrive at → fold it into the accessible name.** A user
+  tabbing onto an `EntityChip` placeholder needs to know it is a placeholder
+  before they act on it. Nothing will announce it later; it has to be in the
+  name. Accept that the name mutates when the state resolves — that is the
+  cost, and it is the right trade when the alternative is silence.
+- **A change while they are elsewhere → the component owns a live region.**
+  `role="status" aria-live="polite"` on a visually-hidden span, **rendered
+  unconditionally** so only its _text_ mutates.
+
+**Render the region unconditionally.** A region that mounts together with its
+text is the unreliable case — most screen readers do not announce content that
+was already present when the region appeared. `PasswordInput`'s caps-lock
+warning and `PasswordStrengthMeter` are the reference implementations.
+
+**`aria-busy` is never sufficient on its own.** It is a valid global attribute
+and it does appear in the accessibility tree, but no mainstream screen reader
+speaks `busy` on a non-live element. Four components shipped relying on it and
+their state reached nobody. Pair it with one of the two mechanisms above, or
+drop it.
+
+**A control the user just activated is a change, not a property.** They are
+already focused on it, so there is nothing to "arrive at" — `Switch` and
+`StatusMenu` announce; they do not rename themselves. Renaming a focused
+control mid-interaction is worse than announcing, because it also breaks
+name-exact queries in consumer tests. (`ConfirmationPopover` is a known gap on
+this rule: its pending state sets neither. Tracked separately.)
+
+**Visual-only is a legitimate answer, but it must be deliberate and written
+down.** `Badge`'s tone is a durable visual property with no state change to
+announce, so announcing it is the consumer's call — and `Badge`'s JSDoc says so.
+`Skeleton` is `aria-hidden` by design and documents the hand-off. Silence you
+chose and documented is fine; silence you defaulted into is the bug this rule
+exists to stop.
+
+Every string here goes through `useTranslation()` — see Rule 9.
+
 ## What does NOT belong here
 
 - Pages, layouts (`AppShell`, etc.), mock data — playground only

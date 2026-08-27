@@ -158,3 +158,25 @@ describe('StatusMenu — read-only mode', () => {
     expect(screen.getByText('Done').className).toMatch(/external/);
   });
 });
+
+describe('busy state reaches assistive tech (#488)', () => {
+  it('announces from a live region rather than aria-busy alone', () => {
+    const { rerender, container } = render(
+      <StatusMenu current={inProgress} options={options} busy={false} />,
+    );
+    const region = container.querySelector('[role="status"][aria-live="polite"]');
+    expect(region).not.toBeNull();
+    expect(region!.textContent).toBe('');
+    rerender(<StatusMenu current={inProgress} options={options} busy />);
+    expect(region!.textContent).toBe('Saving status…');
+  });
+
+  it('leaves the trigger name alone while busy', () => {
+    const { rerender, getByRole } = render(
+      <StatusMenu current={inProgress} options={options} busy={false} />,
+    );
+    const before = getByRole('button').getAttribute('aria-label');
+    rerender(<StatusMenu current={inProgress} options={options} busy />);
+    expect(getByRole('button').getAttribute('aria-label')).toBe(before);
+  });
+});

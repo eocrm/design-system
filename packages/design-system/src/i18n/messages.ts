@@ -61,6 +61,14 @@ export interface Messages {
     /** Label rendered when the strength score is "very strong". */
     veryStrong: string;
   };
+  switch: {
+    /**
+     * Announced from a polite live region while `loading` is true. Same
+     * reasoning as `statusMenu.busy` — the switch keeps its name and the
+     * change is announced instead.
+     */
+    busy: string;
+  };
   slider: {
     /** Accessible-name suffix for the first thumb in a range slider. */
     minimum: string;
@@ -192,6 +200,13 @@ export interface Messages {
     pinnedRows: string;
     /** Default empty-state copy when no rows are rendered. */
     empty: string;
+    /**
+     * Announced from a polite live region while `loading` is true. `aria-busy`
+     * on the table is not enough on its own — no mainstream screen reader
+     * speaks `busy` on a non-live element, so the table would go from silent
+     * to populated with nothing said. Clears to `''` when loading ends.
+     */
+    loading: string;
   };
   /**
    * Screen-reader copy for every dnd-kit drag surface in the library — Kanban,
@@ -517,6 +532,14 @@ export interface Messages {
   statusMenu: {
     /** aria-label prefix on the trigger, interpolated with the current status name. */
     changeStatus: string;
+    /**
+     * Announced from a polite live region while a status change is in flight.
+     * The trigger's `aria-busy` is inert to screen readers, and the name is
+     * deliberately NOT mutated here: the user is focused on the control they
+     * just activated, so this is a change to announce, not a property of the
+     * thing they arrived at.
+     */
+    busy: string;
   };
   pageHeader: {
     /** aria-label fallback for `<PageHeader.BackButton>`. */

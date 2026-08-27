@@ -714,6 +714,15 @@ function DataTableInner<T>(
             </Table.Body>
           </Table>
         </ResponsiveScrollWrap>
+        {/* Polite live region OUTSIDE the table — a <span> inside <table> is
+            invalid HTML — and AFTER the scroll wrap, so it does not displace
+            the wrapper as first child. Rendered unconditionally so only its
+            text mutates. `aria-busy` on the table is inert to screen readers,
+            so without this the table goes from silent to populated with
+            nothing said. See CLAUDE.md Hard rule 10. */}
+        <span role="status" aria-live="polite" className={styles.srStatus}>
+          {loading ? t('dataTable.loading') : ''}
+        </span>
       </SortableContext>
     </DndContext>
   );

@@ -152,6 +152,13 @@ export const StatusMenu = forwardRef<HTMLElement, StatusMenuProps>(function Stat
           aria-label={`${t('statusMenu.changeStatus')}: ${current.name}`}
         >
           {current.name}
+          {/* Polite live region, text-only mutation. `aria-busy` above reaches
+              no screen reader; the trigger's NAME is deliberately left alone
+              (contrast EntityChip) because the user is focused on the control
+              they just activated. See CLAUDE.md Hard rule 10. */}
+          <span role="status" aria-live="polite" className={styles.srOnly}>
+            {busy ? t('statusMenu.busy') : ''}
+          </span>
           <svg
             width="10"
             height="6"

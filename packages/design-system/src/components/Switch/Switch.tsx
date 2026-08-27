@@ -7,6 +7,7 @@ import {
 } from 'react';
 import { Loader2 } from 'lucide-react';
 import clsx from 'clsx';
+import { useTranslation } from '../../i18n/useTranslation';
 import styles from './Switch.module.scss';
 
 /**
@@ -192,6 +193,7 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(function Switch(
   },
   ref,
 ) {
+  const t = useTranslation();
   const [internalChecked, setInternalChecked] = useState<boolean>(defaultChecked ?? false);
   const isControlled = checked !== undefined;
   const currentChecked = isControlled ? checked : internalChecked;
@@ -234,6 +236,14 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(function Switch(
         </span>
       </span>
       {children && <span className={clsx(styles.label, LABEL_CLASS[size])}>{children}</span>}
+      {/* Polite live region, rendered unconditionally so only its text mutates.
+          `aria-busy` above is inert to screen readers, and the name is left
+          alone on purpose: the user is focused on the control they just
+          activated, so this is a change to announce rather than a property of
+          something they arrived at. See CLAUDE.md Hard rule 10. */}
+      <span role="status" aria-live="polite" className={styles.srOnly}>
+        {loading ? t('switch.busy') : ''}
+      </span>
     </label>
   );
 });

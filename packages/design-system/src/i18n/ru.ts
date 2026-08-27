@@ -41,6 +41,9 @@ export const ru: Messages = {
     strong: 'Надёжный',
     veryStrong: 'Очень надёжный',
   },
+  switch: {
+    busy: 'Сохранение…',
+  },
   slider: {
     minimum: 'минимум',
     maximum: 'максимум',
@@ -116,6 +119,7 @@ export const ru: Messages = {
     rowExpansion: 'Развёртывание строки',
     pinnedRows: 'Закреплённые строки',
     empty: 'Нет данных',
+    loading: 'Загрузка строк…',
   },
   drag: {
     instructions:
@@ -289,6 +293,7 @@ export const ru: Messages = {
   },
   statusMenu: {
     changeStatus: 'Изменить статус',
+    busy: 'Сохранение статуса…',
   },
   pageHeader: {
     back: 'Назад',

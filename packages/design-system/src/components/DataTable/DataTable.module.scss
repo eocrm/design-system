@@ -496,3 +496,7 @@
     @include stacked-presentation;
   }
 }
+
+.srStatus {
+  @include visually-hidden;
+}

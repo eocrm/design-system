@@ -50,3 +50,45 @@ describe('library structure', () => {
     expect(namedRe.test(indexContent) || starRe.test(indexContent)).toBe(true);
   });
 });
+
+/**
+ * Hard rule 10: `aria-busy` alone never reaches a screen reader.
+ *
+ * This walks the tree rather than checking a list, because the list is the
+ * thing that rots — four components shipped with `aria-busy` and nothing else,
+ * and each was found by a human reading rather than by a test. Any file that
+ * sets `aria-busy` must also carry one of the two sanctioned mechanisms:
+ * a component-owned live region, or a state word folded into the accessible
+ * name via a visually-hidden span.
+ *
+ * Deliberately coarse. It cannot tell whether the mechanism is wired to the
+ * same state as the `aria-busy`, and a component whose transient state never
+ * sets `aria-busy` at all is invisible to it. It closes the one failure mode
+ * that has actually happened, and stays cheap enough not to rot.
+ */
+describe('transient state does not rely on aria-busy alone', () => {
+  const sources = components.flatMap((name) => {
+    const dir = join(componentsDir, name);
+    return readdirSync(dir)
+      .filter((f) => f.endsWith('.tsx') && !f.includes('.test.'))
+      .map((f) => ({ label: `${name}/${f}`, code: readFileSync(join(dir, f), 'utf-8') }));
+  });
+
+  const withAriaBusy = sources.filter(({ code }) => /aria-busy=/.test(code));
+
+  it('found files to check', () => {
+    // Guards the guard: a rename of the attribute or a restructure of the tree
+    // would otherwise make every assertion below vacuously pass.
+    expect(sources.length).toBeGreaterThan(50);
+    expect(withAriaBusy.length).toBeGreaterThan(0);
+  });
+
+  it.each(withAriaBusy.map(({ label, code }) => [label, code]))(
+    '%s pairs aria-busy with a live region or a named state word',
+    (_label, code) => {
+      const hasLiveRegion = /aria-live=|role="(status|alert)"/.test(code);
+      const hasNamedState = /hiddenLabel|srOnly|visually-?hidden/i.test(code);
+      expect(hasLiveRegion || hasNamedState).toBe(true);
+    },
+  );
+});
