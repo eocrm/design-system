@@ -177,6 +177,14 @@ describe('the documented color/tone collision table matches the shipped tokens',
         // which is the divergence this file exists to prevent.
         expect(docs.get(color), `${tone} + ${color}`).toBe(rounded);
       }
+      // The ordering claim is a claim too. Review proved all three of these
+      // pass untested: scrambling a group, swapping two groups, and reverting
+      // the text to the old "worst first" — which was false for months. Within
+      // a tone group the list must ascend.
+      const listed = [...docs.values()];
+      expect(listed, `${tone} group is ordered worst-first`).toEqual(
+        [...listed].sort((a, b) => a - b),
+      );
       for (const color of docs.keys()) {
         expect(
           real.some((r) => r.color === color),

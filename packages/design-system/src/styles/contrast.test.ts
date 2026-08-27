@@ -286,10 +286,18 @@ describe('rules without a token name are pinned too', () => {
     // Dot sets `background:` directly inside `&[data-tone='warning']`, so there
     // is no custom property for SLOTS to assert. It was the headline fix of the
     // sweep and had no gate at all until this.
-    const scss = readFileSync(resolve(__dirname, '../components/Dot/Dot.module.scss'), 'utf8');
+    // Comments stripped first, and the property named in the assertion. The
+    // rule's own comment says "--color-warning-strong, not --color-warning", so
+    // a bare /var\(--color-warning-strong\)/ over the raw text was satisfied by
+    // the prose: swapping the declaration to --color-danger while leaving that
+    // sentence in place passed. The tree walk 40 lines up already strips
+    // comments for exactly this reason; this pin did not.
+    const scss = readFileSync(resolve(__dirname, '../components/Dot/Dot.module.scss'), 'utf8')
+      .replace(/\/\*[\s\S]*?\*\//g, '')
+      .replace(/\/\/.*$/gm, '');
     const rule = scss.match(/\[data-tone='warning'\]\s*\{[^}]*\}/)?.[0];
     expect(rule, "Dot's warning tone rule").toBeDefined();
-    expect(rule).toMatch(/var\(--color-warning-strong\)/);
+    expect(rule).toMatch(/background:\s*var\(--color-warning-strong\)/);
   });
 
   it('RichText offers a legible amber as a text colour', () => {
@@ -465,8 +473,11 @@ describe('presence dots stay distinguishable from each other', () => {
   // is a second channel (text alternative or dot shape), tracked in #490. Worth
   // being precise rather than sweeping, though: several unconstrained palette
   // entries (blue, indigo, navy, charcoal) hold the worst pair around 0.13 under
-  // the same simulation. And busy/online is itself around 0.13 there, under this
-  // block's own floor, which is the stronger argument for #490.
+  // the same simulation. And the dots' own pairs go under this block's 0.13
+  // floor there: away/online ~0.12 and busy/online ~0.13 (variant-dependent to
+  // the second decimal, but both below on every variant tried, and away/online
+  // is the lower of the two). That is the stronger argument for #490 — the
+  // separation this gate enforces is not separation everyone gets.
   //
   // This gated only away/busy, and in raw RGB distance. Both were wrong, and
   // the second one cost a bad decision inside this very PR:
