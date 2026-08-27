@@ -286,18 +286,42 @@ describe('rules without a token name are pinned too', () => {
     // Dot sets `background:` directly inside `&[data-tone='warning']`, so there
     // is no custom property for SLOTS to assert. It was the headline fix of the
     // sweep and had no gate at all until this.
-    // Comments stripped first, and the property named in the assertion. The
-    // rule's own comment says "--color-warning-strong, not --color-warning", so
-    // a bare /var\(--color-warning-strong\)/ over the raw text was satisfied by
-    // the prose: swapping the declaration to --color-danger while leaving that
-    // sentence in place passed. The tree walk 40 lines up already strips
-    // comments for exactly this reason; this pin did not.
+    // Four separate ways this pin has been satisfied by something other than
+    // the declaration that renders, each found by mutation:
+    //   1. the rule's own comment contains "--color-warning-strong", so a bare
+    //      /var\(...\)/ over raw text passed with the declaration swapped;
+    //   2. [^}]* stops at the first '}', so a nested block carrying the right
+    //      value hid a wrong declaration after it;
+    //   3. reading only the first `background:` ignored a second one, and CSS
+    //      is last-wins — the same hole the ring gate above already closed;
+    //   4. `background:` unanchored also matches `--dot-background:`, which is
+    //      the sanctioned refactor under this package's component-token rule.
+    // So: strip comments, take the rule with balanced braces, collect EVERY
+    // anchored background declaration, and require exactly one.
     const scss = readFileSync(resolve(__dirname, '../components/Dot/Dot.module.scss'), 'utf8')
       .replace(/\/\*[\s\S]*?\*\//g, '')
       .replace(/\/\/.*$/gm, '');
-    const rule = scss.match(/\[data-tone='warning'\]\s*\{[^}]*\}/)?.[0];
-    expect(rule, "Dot's warning tone rule").toBeDefined();
-    expect(rule).toMatch(/background:\s*var\(--color-warning-strong\)/);
+    const open = scss.indexOf("[data-tone='warning']");
+    expect(open, "Dot's warning tone rule").toBeGreaterThan(-1);
+    let depth = 0;
+    let end = scss.indexOf('{', open);
+    for (let i = end; i < scss.length; i += 1) {
+      if (scss[i] === '{') depth += 1;
+      else if (scss[i] === '}') {
+        depth -= 1;
+        if (depth === 0) {
+          end = i;
+          break;
+        }
+      }
+    }
+    const rule = scss.slice(open, end + 1);
+    const backgrounds = [...rule.matchAll(/(?:^|[^-a-z0-9])background:\s*([^;\n]+);/g)].map((m) =>
+      m[1].trim(),
+    );
+    expect(backgrounds, "Dot's warning tone paints one background").toEqual([
+      'var(--color-warning-strong)',
+    ]);
   });
 
   it('RichText offers a legible amber as a text colour', () => {
@@ -474,10 +498,16 @@ describe('presence dots stay distinguishable from each other', () => {
   // being precise rather than sweeping, though: several unconstrained palette
   // entries (blue, indigo, navy, charcoal) hold the worst pair around 0.13 under
   // the same simulation. And the dots' own pairs go under this block's 0.13
-  // floor there: away/online ~0.12 and busy/online ~0.13 (variant-dependent to
-  // the second decimal, but both below on every variant tried, and away/online
-  // is the lower of the two). That is the stronger argument for #490 — the
-  // separation this gate enforces is not separation everyone gets.
+  // floor there — but say WHICH, because the two themes differ and an earlier
+  // version of this sentence did not:
+  //
+  //   away/online   ~0.12 light, ~0.08 dark   under the floor in BOTH
+  //   busy/online   ~0.13 light, ~0.19 dark   under in LIGHT ONLY, and only
+  //                                           just: 0.126-0.129 on Vienot and
+  //                                           Brettel, a 1-3% margin
+  //
+  // That is the stronger argument for #490 — the separation this gate enforces
+  // is not separation everyone gets, and for away/online it is not close.
   //
   // This gated only away/busy, and in raw RGB distance. Both were wrong, and
   // the second one cost a bad decision inside this very PR:

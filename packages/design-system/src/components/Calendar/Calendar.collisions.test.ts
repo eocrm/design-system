@@ -177,12 +177,15 @@ describe('the documented color/tone collision table matches the shipped tokens',
         // which is the divergence this file exists to prevent.
         expect(docs.get(color), `${tone} + ${color}`).toBe(rounded);
       }
-      // The ordering claim is a claim too. Review proved all three of these
-      // pass untested: scrambling a group, swapping two groups, and reverting
-      // the text to the old "worst first" — which was false for months. Within
-      // a tone group the list must ascend.
+      // The ordering is a claim too, and scrambling a group used to pass.
+      // Within a tone group the numbers must ascend. Group ORDER is deliberately
+      // not gated: the docs only claim ordering within a group, so there is no
+      // claim to break. The sentence making that promise is pinned separately
+      // below — asserting the list without asserting the sentence let the docs
+      // be reverted to the old global "worst first", which is false and was the
+      // thing wrong for months.
       const listed = [...docs.values()];
-      expect(listed, `${tone} group is ordered worst-first`).toEqual(
+      expect(listed, `${tone} numbers ascend within the group`).toEqual(
         [...listed].sort((a, b) => a - b),
       );
       for (const color of docs.keys()) {
@@ -192,6 +195,18 @@ describe('the documented color/tone collision table matches the shipped tokens',
         ).toBe(true);
       }
     }
+  });
+
+  it.each(sources)('%s promises only the ordering it keeps', (_label, text) => {
+    // The list is grouped by tone and ascends inside each group; globally it
+    // does not (success 11, danger 17, warning 16, accent 40). Both copies said
+    // "worst first" for months, which is false, and a doc-only revert to that
+    // wording passes every other assertion in this file.
+    const region = tableRegion(text.replace(/\s*\n\s*\*?\s*/g, ' '));
+    expect(region, 'the ordering is described as per-group').toMatch(
+      /grouped by tone|worst pairs:/,
+    );
+    expect(region, 'the docs must not claim a global worst-first order').not.toMatch(/worst first/);
   });
 
   it.each(sources)('%s names the actual worst pair as effectively invisible', (_label, text) => {
