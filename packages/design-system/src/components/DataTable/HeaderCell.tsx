@@ -55,6 +55,42 @@ const sortAriaMap: Record<TableSortDirection, 'ascending' | 'descending' | 'none
   none: 'none',
 };
 
+/**
+ * Descendants that can actually BE NAMED by the attribute they carry.
+ *
+ * Narrower than "carries the attribute", and that difference has now unnamed a
+ * column header twice. `alt` names only `img`, `area` and `input[type=image]`;
+ * anywhere else it is an unknown attribute. `aria-label` is prohibited on
+ * `role="generic"` — ARIA 1.2 — so a bare `<span aria-label="Revenue">` names
+ * nothing in a browser, and counting it pointed `aria-labelledby` at a span
+ * computing to no name at all.
+ *
+ * The second is invisible to this suite: jsdom's dom-accessibility-api honours
+ * `aria-label` on a bare span, so a test asserting the accessible name would
+ * have PASSED while real users got an unnamed column. Reason from the spec
+ * here, never from `computeAccessibleName`.
+ */
+const NAMEABLE = [
+  // An explicit role that permits naming.
+  '[role]:not([role="generic"]):not([role="presentation"]):not([role="none"])',
+  // Native elements whose implicit role permits it.
+  'a[href]',
+  'button',
+  'input',
+  'select',
+  'textarea',
+  'img',
+  'area',
+  'iframe',
+]
+  .map((selector) => `${selector}[aria-label]:not([aria-label=""])`)
+  .concat([
+    'img[alt]:not([alt=""])',
+    'area[alt]:not([alt=""])',
+    'input[type="image"][alt]:not([alt=""])',
+  ])
+  .join(', ');
+
 export function HeaderCell<T>({
   column,
   instance,
@@ -168,10 +204,7 @@ export function HeaderCell<T>({
       // convenient wrong reason ("title never names") would license a bad
       // change later.
       const next =
-        (probe.textContent ?? '').trim().length > 0 ||
-        probe.querySelector(
-          '[aria-label]:not([aria-label=""]), img[alt]:not([alt=""]), area[alt]:not([alt=""]), input[type="image"][alt]:not([alt=""])',
-        ) !== null;
+        (probe.textContent ?? '').trim().length > 0 || probe.querySelector(NAMEABLE) !== null;
       setLabelHasText((prev) => (prev === next ? prev : next));
 
       // An icon-only header with no `visibilityLabel` falls back to

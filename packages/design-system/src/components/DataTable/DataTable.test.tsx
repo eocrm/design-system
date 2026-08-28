@@ -2129,6 +2129,53 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     expect(screen.queryByRole('columnheader', { name: 'select_all_col' })).toBeNull();
   });
 
+  it('ignores aria-label on a role=generic element, which browsers do not honour', () => {
+    // ARIA 1.2 prohibits naming role="generic", so a bare <span aria-label>
+    // names NOTHING in a browser. Counting it chose aria-labelledby and left
+    // real users with an unnamed column header.
+    //
+    // This case is invisible to an accessible-name assertion here: jsdom's
+    // dom-accessibility-api honours aria-label on a bare span, so such a test
+    // would pass while the browser behaviour stayed broken. The assertion is
+    // therefore on WHICH mechanism the component chose, not on the name jsdom
+    // computes from it.
+    const cols: ColumnDef<Row>[] = [
+      {
+        id: 'internal_id_col',
+        header: <span aria-label="Revenue" />,
+        visibilityLabel: 'Revenue',
+        cell: () => 'x',
+      },
+    ];
+    function Harness() {
+      const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    render(<Harness />);
+    const th = screen.getAllByRole('columnheader')[0]!;
+    expect(th.getAttribute('aria-label')).toBe('Revenue');
+    expect(th.getAttribute('aria-labelledby')).toBeNull();
+  });
+
+  it('still counts aria-label on an element whose role permits naming', () => {
+    const cols: ColumnDef<Row>[] = [
+      {
+        id: 'internal_id_col',
+        header: <span role="img" aria-label="Revenue" />,
+        visibilityLabel: 'Ignored',
+        cell: () => 'x',
+      },
+    ];
+    function Harness() {
+      const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    render(<Harness />);
+    const th = screen.getAllByRole('columnheader')[0]!;
+    expect(th.getAttribute('aria-labelledby')).not.toBeNull();
+    expect(th.getAttribute('aria-label')).toBeNull();
+  });
+
   it('ignores alt on an element that alt cannot name', () => {
     // `alt` names only img, area and input[type=image]. On a <div> it is an
     // unknown attribute, so counting it chose aria-labelledby and pointed at a
