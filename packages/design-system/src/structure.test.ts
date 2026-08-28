@@ -231,11 +231,15 @@ describe('component tokens do not shadow a semantic value', () => {
  * unless it is one of the enumerated/ID-valued ones below. A new textual ARIA
  * attribute is caught by default rather than needing to be remembered.
  *
- * Braced values are captured WHOLE and every literal inside is judged, so
- * `cond ? 'A' : 'B'` and `x ?? 'A'` are both caught. The first version anchored
- * on a quote immediately after `={`, which saw neither — and a live violation,
- * Sortable's `ariaLabel ?? 'Reorder item'`, sat in #492's own table the whole
- * time the gate reported the file clean.
+ * The value is SCANNED rather than matched by one regex, because every regex
+ * shape lost a case: anchoring on a quote after `={` missed `cond ? 'A' : 'B'`
+ * and `x ?? 'A'`; a `\{([^}]*)\}` capture fixed those but truncated a template
+ * literal at the `}` of its first `${…}` and stopped catching the plainest
+ * shape of all, `aria-label="Close dialog"`. Each of those was a version that
+ * could not fail on its own stated input. Two live violations surfaced when the
+ * scan replaced them: Sortable's `ariaLabel ?? 'Reorder item'`, which sat in
+ * #492's own table the whole time the gate reported the file clean, and a
+ * template-literal label.
  *
  * Known limits, stated rather than discovered later: it does not read JSX text
  * nodes (a separate parse, and the naive regex over-matches TypeScript
@@ -313,35 +317,64 @@ describe('user-facing strings go through the i18n provider', () => {
       .filter((l) => !/^\s*(\*|\/\/)/.test(l))
       .join('\n');
     {
-      // `(?<![-\w])` so `data-title=` / `data-alt=` do not match — `-` is a word
+      // Scanned, not matched in one regex. The one-regex version had to pick a
+      // shape for the value, and every choice lost a case: anchoring on a quote
+      // after `={` missed `cond ? 'A' : 'B'` and `x ?? 'A'`; switching to a
+      // `\{([^}]*)\}` capture fixed those, truncated a template literal at the
+      // `}` of its first `${…}`, and — because the quoted branch then yielded
+      // string CONTENT with no quotes left inside it to find — stopped catching
+      // the plainest shape of all, `aria-label="Close dialog"`. Fifth gate in
+      // this PR that could not fail on its own stated input.
+      //
+      // `(?<![-\w])` so `data-title=` / `data-alt=` do not match: `-` is a word
       // boundary, so `\b` alone flagged them and reported a false violation.
-      // The braced form captures the WHOLE expression rather than stopping at
-      // the first quote, so `cond ? 'A' : 'B'` and `x ?? 'A'` are both seen;
-      // the first version anchored on a quote right after `={` and missed both,
-      // including a live one at Sortable.tsx.
-      for (const m of body.matchAll(
-        /(?<![-\w])(aria-[a-z]+|placeholder|title|alt)=(?:\{([^}]*)\}|(["'`])((?:(?!\3).)*)\3)/gs,
-      )) {
-        const attr = m[1];
-        const value = m[2] ?? m[4] ?? '';
-        if (NON_TEXTUAL.has(attr!)) continue;
-        // Interpolations are permitted — the rule allows mixing translated
-        // text with data. What is not permitted is a fixed English phrase.
-        // Only the STRING LITERALS inside the expression are judged; a t(…)
-        // key is not user-facing text.
-        const literals = [...value.matchAll(/(["'`])((?:(?!\1).)*)\1/gs)]
-          // Not every literal in the expression is rendered. Drop comparison
-          // operands and index keys — `typeof x === 'string'`,
-          // `state === 'error'`, `props['aria-label']` — by looking at what
-          // precedes them. Without this the wider matcher reports them as
-          // English, which is the false-alarm half of a gate people delete.
-          .filter((lm) => !/[=[]\s*$/.test(value.slice(0, lm.index)))
-          .map((lm) => lm[2]!)
-          // A t() key is not user-facing text.
-          .filter((lit) => !/^[a-z][a-zA-Z]*\.[a-zA-Z.]+$/.test(lit));
-        for (const lit of literals) {
-          const bare = lit.replace(/\$\{[^}]*\}/g, '').trim();
-          if (/[A-Za-z]{3}/.test(bare)) offenders.push(`${attr}: "${lit}"`);
+      const isKey = (lit: string) => /^[a-z][a-zA-Z]*\.[a-zA-Z.]+$/.test(lit);
+      const isEnglish = (lit: string) =>
+        // Interpolations are permitted — the rule allows mixing translated text
+        // with data. A fixed English phrase around them is not.
+        /[A-Za-z]{3}/.test(lit.replace(/\$\{[^}]*\}/g, '').trim());
+      const flag = (attr: string, lit: string) => {
+        if (!isKey(lit) && isEnglish(lit)) offenders.push(`${attr}: "${lit}"`);
+      };
+
+      for (const m of body.matchAll(/(?<![-\w])(aria-[a-z]+|placeholder|title|alt)=/g)) {
+        const attr = m[1]!;
+        if (NON_TEXTUAL.has(attr)) continue;
+        const i = m.index + m[0].length;
+        const ch = body[i];
+
+        if (ch === '"' || ch === "'" || ch === '`') {
+          const close = body.indexOf(ch, i + 1);
+          if (close !== -1) flag(attr, body.slice(i + 1, close));
+          continue;
+        }
+        if (ch !== '{') continue;
+
+        // Balanced scan, so a template literal's `${…}` does not end the value
+        // at its first `}`.
+        let depth = 0;
+        let j = i;
+        for (; j < body.length; j++) {
+          if (body[j] === '{') depth++;
+          else if (body[j] === '}' && --depth === 0) break;
+        }
+        const value = body.slice(i + 1, j);
+
+        // Only the string literals inside the expression are judged, and not
+        // all of them: one preceded by `=` or `[` is a comparison operand or an
+        // index key (`typeof x === 'string'`, `props['aria-label']`,
+        // `state === 'error'`), never rendered. Without this the scan reports
+        // five, and a false alarm is what gets a gate deleted.
+        for (const lm of value.matchAll(/(["'`])((?:(?!\1).)*)\1/gs)) {
+          const before = value.slice(0, lm.index);
+          if (/[=[]\s*$/.test(before)) continue;
+          // Anything sitting directly inside `t(` is routed through the
+          // translator by definition, whatever it looks like. The dotted-key
+          // heuristic alone rejected a DYNAMIC key —
+          // t(`richTextEditor.${key}`) — because stripping the interpolation
+          // leaves a trailing dot that the pattern will not match.
+          if (/\bt\(\s*$/.test(before)) continue;
+          flag(attr, lm[2]!);
         }
       }
     }
