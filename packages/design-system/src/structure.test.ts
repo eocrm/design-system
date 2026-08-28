@@ -101,10 +101,14 @@ describe('library structure', () => {
  * tracks it. Newlines inside block comments are preserved so line numbers in
  * failure messages still point at the right place.
  *
- * Known limit: a regex literal containing a quote (`/'/g`) reads as a string
- * opener. Nothing in the library hits it, and the consequence is bounded — the
- * value walk that consumes this reports an unbalanced value rather than
- * silently swallowing the file.
+ * Known limits, both bounded and both false-alarm rather than blindness:
+ * a regex literal containing a quote (`/'/g`) reads as a string opener, though
+ * the newline rule above closes it again within the line; and the CONTENT of a
+ * template literal is scanned, so a string that itself contains
+ * `aria-label="…"` is reported. The second is arguably correct — such a string
+ * is usually generating markup — and neither can hide a real violation, since
+ * an unterminated string still emits every character it covers. Nothing in the
+ * library hits either today.
  */
 const stripComments = (code: string) => {
   let out = '';
@@ -114,6 +118,20 @@ const stripComments = (code: string) => {
     const c = code[i]!;
     const next = code[i + 1];
     if (quote) {
+      // A newline ENDS a `'` or `"` string, because neither can span lines in
+      // JavaScript — so a quote still open at one was never a string. That
+      // kills the whole phantom-string class in one rule instead of trying to
+      // recognise its causes: an apostrophe in JSX text (`<p>don't</p>`, which
+      // five components already write) and a regex literal containing a quote
+      // (`/'/g`) both opened a span that swallowed the next comment, leaking it
+      // into the scan as a FALSE ALARM on correct code. Template literals are
+      // exempt — they are the only kind that legitimately spans lines.
+      if (c === '\n' && quote !== '`') {
+        quote = '';
+        out += c;
+        i += 1;
+        continue;
+      }
       if (c === '\\') {
         out += c + (next ?? '');
         i += 2;

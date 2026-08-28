@@ -2149,6 +2149,52 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     expect(screen.getByRole('columnheader', { name: 'Revenue' })).toBeInTheDocument();
   });
 
+  it('PROBE re-measures when [hidden] is removed asynchronously', async () => {
+    function AsyncHidden() {
+      const [h, setH] = useState(true);
+      useEffect(() => {
+        const id = setTimeout(() => setH(false), 0);
+        return () => clearTimeout(id);
+      }, []);
+      return <span hidden={h}>Revenue</span>;
+    }
+    const cols: ColumnDef<Row>[] = [{ id: 'revenue_id', header: <AsyncHidden />, cell: () => 'x' }];
+    function Harness() {
+      const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    render(<Harness />);
+    await waitFor(() => {
+      expect(screen.getByText('Revenue')).not.toHaveAttribute('hidden');
+    });
+    await waitFor(() => {
+      expect(screen.getByRole('columnheader', { name: 'Revenue' })).toBeInTheDocument();
+    });
+  });
+
+  it('PROBE re-measures when [alt] is filled in asynchronously', async () => {
+    function AsyncAlt() {
+      const [a, setA] = useState('');
+      useEffect(() => {
+        const id = setTimeout(() => setA('Vendor logo'), 0);
+        return () => clearTimeout(id);
+      }, []);
+      return <img src="x.png" alt={a} />;
+    }
+    const cols: ColumnDef<Row>[] = [{ id: 'logo_id', header: <AsyncAlt />, cell: () => 'x' }];
+    function Harness() {
+      const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    render(<Harness />);
+    await waitFor(() => {
+      expect(screen.getByAltText('Vendor logo')).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(screen.getByRole('columnheader', { name: 'Vendor logo' })).toBeInTheDocument();
+    });
+  });
+
   it('re-measures a header that renders its text asynchronously', async () => {
     // A `header` ReactNode owning its own state updates its subtree WITHOUT
     // re-rendering HeaderCell, so a per-commit measurement read it once as
