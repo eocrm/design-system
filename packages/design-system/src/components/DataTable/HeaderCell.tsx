@@ -203,8 +203,23 @@ export function HeaderCell<T>({
       // not evidence for this decision. Recording the distinction because the
       // convenient wrong reason ("title never names") would license a bad
       // change later.
+      // `aria-labelledby` on a descendant is RESOLVED rather than trusted.
+      // Its presence proves nothing — #500 was caused by exactly such a
+      // reference pointing at an empty element — but a reference that resolves
+      // to real text does name the header, and ignoring it handed the column
+      // its `visibilityLabel`, or its raw id, over a name that was right there.
+      const labelledByResolves = [...el.querySelectorAll('[aria-labelledby]')].some(
+        (node) =>
+          !node.closest('[aria-hidden="true"], [hidden]') &&
+          (node.getAttribute('aria-labelledby') ?? '')
+            .split(/\s+/)
+            .filter(Boolean)
+            .some((id) => (document.getElementById(id)?.textContent ?? '').trim().length > 0),
+      );
       const next =
-        (probe.textContent ?? '').trim().length > 0 || probe.querySelector(NAMEABLE) !== null;
+        (probe.textContent ?? '').trim().length > 0 ||
+        probe.querySelector(NAMEABLE) !== null ||
+        labelledByResolves;
       setLabelHasText((prev) => (prev === next ? prev : next));
 
       // An icon-only header with no `visibilityLabel` falls back to
@@ -247,7 +262,7 @@ export function HeaderCell<T>({
       // fetch, or a `hidden` lifted at a breakpoint, changed the answer without
       // notifying — leaving the header named by its column id exactly as the
       // per-commit version did.
-      attributeFilter: ['aria-hidden', 'hidden', 'alt', 'aria-label'],
+      attributeFilter: ['aria-hidden', 'hidden', 'alt', 'aria-label', 'aria-labelledby'],
     });
     return () => observer.disconnect();
   }, [column.id, column.visibilityLabel]);

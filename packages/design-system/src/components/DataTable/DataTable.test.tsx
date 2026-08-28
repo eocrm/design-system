@@ -2129,6 +2129,40 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     expect(screen.queryByRole('columnheader', { name: 'select_all_col' })).toBeNull();
   });
 
+  it.each([
+    ['resolves to real text', 'ext-label', true],
+    ['points at nothing', 'no-such-id', false],
+  ])('descendant aria-labelledby that %s', (_what, target, shouldName) => {
+    // Presence proves nothing — #500 was caused by an aria-labelledby pointing
+    // at an EMPTY element — so the reference is resolved. One that resolves
+    // does name the header; one that does not must fall back.
+    const cols: ColumnDef<Row>[] = [
+      {
+        id: 'internal_id_col',
+        header: <span aria-labelledby={target} />,
+        visibilityLabel: 'Fallback',
+        cell: () => 'x',
+      },
+    ];
+    function Harness() {
+      const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+      return (
+        <>
+          <span id="ext-label">Revenue</span>
+          <DataTable instance={instance} aria-label="t" />
+        </>
+      );
+    }
+    render(<Harness />);
+    const th = screen.getAllByRole('columnheader')[0]!;
+    if (shouldName) {
+      expect(th.getAttribute('aria-labelledby')).not.toBeNull();
+      expect(th.getAttribute('aria-label')).toBeNull();
+    } else {
+      expect(th.getAttribute('aria-label')).toBe('Fallback');
+    }
+  });
+
   it('ignores aria-label on a role=generic element, which browsers do not honour', () => {
     // ARIA 1.2 prohibits naming role="generic", so a bare <span aria-label>
     // names NOTHING in a browser. Counting it chose aria-labelledby and left
