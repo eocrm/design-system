@@ -44,7 +44,12 @@ describe('Image', () => {
     // carries the failure.
     expect(getByRole('img', { name: 'A photo' })).not.toBeNull();
     expect(getByText('Image failed to load')).not.toBeNull();
+    // The NAME is what the concatenation bug lived in, so that is what has to
+    // be pinned — `aria-label` is an attribute, not text, so a textContent
+    // count passed identically before and after the fix. Kept alongside it to
+    // catch the other direction: a second visible copy of the sentence.
     expect(container.textContent!.match(/Image failed to load/g)).toHaveLength(1);
+    expect(getByRole('img').getAttribute('aria-label')).not.toMatch(/failed to load/i);
     expect(getByRole('button', { name: 'Retry' })).not.toBeNull();
   });
 

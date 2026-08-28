@@ -34,9 +34,9 @@ export function ErrorRow({ error: _error, onRetry }: ErrorRowProps) {
   return (
     <li className={styles.stateRow} role="presentation">
       {/* aria-hidden because the Listbox status region announces this same
-          sentence — `select.statusError` is byte-for-byte `select.loadFailed`
-          — and both sit in the tree at once, so a reader heard it twice in a
-          row. Exactly the defect removed from Image's error tile, recreated
+          sentence — the region reads `select.loadFailed`, the same key this
+          row renders — and both sit in the tree at once, so a reader heard it
+          twice in a row. Exactly the defect removed from Image's error tile, recreated
           here by the fix for Select's silence. Hiding the text alone would
           leave browse mode a bare "Retry" with no reason for it, so the button
           states the failure in its accessible name instead. */}

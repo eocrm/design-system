@@ -41,7 +41,7 @@
   --badge-stripe-border-color-success: var(--color-success);
   --badge-stripe-bg-warning: var(--color-warning-bg-subtle);
 
-  // warning uses --color-warning-strong (#a54800), not --color-warning (#ff991f), which measures
+  // warning uses --color-warning-strong, not --color-warning, which measures
   // @contrast --color-warning on --color-bg = 2.14:1 light
   // @contrast --color-warning-strong on --color-bg = 5.95:1 light
   // @contrast --color-warning on --color-warning-bg-subtle = 2.01:1 light

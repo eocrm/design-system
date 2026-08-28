@@ -317,14 +317,17 @@ describe('user-facing strings go through the i18n provider', () => {
     // so a value prettier wrapped across lines is still seen. Scanning
     // line-by-line missed those.
     const body = code
-      // `{/* … */}` first, and not line-anchored: this codebase writes
-      // single-line JSX comments constantly, and one containing an example
-      // attribute was read as live code. The line filter below only catches a
-      // comment that STARTS its line, so a trailing `//` still is not stripped
-      // — a known limit, noted in the docblock.
-      .replace(/\{\/\*[\s\S]*?\*\/\}/g, '')
+      // ALL `/* … */`, not just the `{/* … */}` JSX form. Stripping only the
+      // JSX form left `aria-label={/* don't ask */ t('a.b')}` — where the
+      // comment sits INSIDE the braces, so there is no `*/}` to match — and
+      // the apostrophe in it opened a quote the scanner never closed. This
+      // codebase writes single-line JSX comments constantly, several already
+      // quoting an attribute, so the false-alarm risk was live rather than
+      // theoretical. Stripping block comments generally also retires the
+      // `^\s*\*` JSDoc-body clause the line filter used to need.
+      .replace(/\/\*[\s\S]*?\*\//g, '')
       .split('\n')
-      .filter((l) => !/^\s*(\*|\/\/)/.test(l))
+      .filter((l) => !/^\s*\/\//.test(l))
       .join('\n');
     {
       // Scanned, not matched in one regex. The one-regex version had to pick a
@@ -356,7 +359,9 @@ describe('user-facing strings go through the i18n provider', () => {
         if (!isKey(lit) && isEnglish(lit)) offenders.push(`${attr}: "${lit}"`);
       };
 
-      for (const m of body.matchAll(/(?<![-\w])(aria-[a-z]+|placeholder|title|alt)=/g)) {
+      // `.` in the lookbehind alongside `-`: `document.title=` and
+      // `props.alt=` are property assignments, not attributes, and matched.
+      for (const m of body.matchAll(/(?<![-.\w])(aria-[a-z]+|placeholder|title|alt)=/g)) {
         const attr = m[1]!;
         if (NON_TEXTUAL.has(attr)) continue;
         const i = m.index + m[0].length;
@@ -378,7 +383,15 @@ describe('user-facing strings go through the i18n provider', () => {
         let depth = 0;
         let quote = '';
         let j = i;
-        for (; j < body.length; j++) {
+        // BOUNDED, and skipped outright if it does not balance. Chasing the
+        // lexical constructs that desync a hand-rolled scanner is a losing
+        // game — a regex literal containing a quote, `x.replace(/'/g, '')`,
+        // still defeats the quote tracking below. Capping the walk and
+        // discarding an unbalanced value retires that whole class at once: the
+        // worst case becomes one missed attribute rather than a runaway that
+        // swallows the rest of the file and reports garbage. No real attribute
+        // value approaches 400 characters.
+        for (; j < body.length && j - i < 400; j++) {
           const c = body[j]!;
           if (quote) {
             if (c === '\\') j++;
@@ -389,6 +402,7 @@ describe('user-facing strings go through the i18n provider', () => {
           else if (c === '{') depth++;
           else if (c === '}' && --depth === 0) break;
         }
+        if (depth !== 0) continue;
         const value = body.slice(i + 1, j);
 
         // Only the string literals inside the expression are judged, and not

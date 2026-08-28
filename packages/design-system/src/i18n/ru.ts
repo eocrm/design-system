@@ -223,7 +223,6 @@ export const ru: Messages = {
     retry: 'Повторить',
     noResultsFor: (params) => `Ничего не найдено по запросу «${params.query}».`,
     statusLoading: 'Загрузка вариантов…',
-    statusError: 'Не удалось загрузить варианты.',
     selectedPrefix: ({ labels }) => `Выбрано: ${labels as string}`,
     openSelect: 'Открыть список',
   },

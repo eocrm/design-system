@@ -45,7 +45,7 @@ export function Listbox() {
     // rejection and the failure was silent.
     setStatusText(
       ctx.error
-        ? t('select.statusError')
+        ? t('select.loadFailed')
         : ctx.loading && ctx.rows.length === 0
           ? t('select.statusLoading')
           : '',

@@ -1728,10 +1728,9 @@ describe('listbox state announces from one region, not three rows (#495)', () =>
     // away the only announcement Select had, and the region never carried it.
     expect(region().textContent).toBe('Failed to load options.');
 
-    // ...and announced exactly ONCE. `select.statusError` and
-    // `select.loadFailed` are the same sentence, and the region and the error
-    // row are in the tree together, so restoring the announcement recreated
-    // Image's double-speak here. The row's copy is aria-hidden; the Retry
+    // ...and announced exactly ONCE. The region and the error row render the
+    // SAME key, and both are in the tree together, so restoring the
+    // announcement recreated Image's double-speak here. The row's copy is aria-hidden; the Retry
     // button carries the failure so browse mode still explains itself.
     const row = screen.getByRole('listbox').parentElement!;
     expect(row.querySelector('[aria-hidden="true"]')!.textContent).toBe('Failed to load options.');

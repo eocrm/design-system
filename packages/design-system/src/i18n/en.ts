@@ -221,7 +221,6 @@ export const en: Messages = {
     retry: 'Retry',
     noResultsFor: (params) => `No results for "${params.query}".`,
     statusLoading: 'Loading options…',
-    statusError: 'Failed to load options.',
     selectedPrefix: ({ labels }) => `Selected: ${labels as string}`,
     openSelect: 'Open select',
   },

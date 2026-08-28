@@ -971,6 +971,10 @@ describe('aria-controls points only at a panel that exists (#501)', () => {
     );
     const tabs = screen.getAllByRole('tab');
     expect(tabs.map((t) => t.getAttribute('aria-controls'))).toEqual([null, 'demo-b-panel', null]);
+    // The no-prefix test asserts the GENERATED id needs no CSS escaping; this
+    // path builds the id from a consumer string, which is the one that could
+    // arrive with a colon in it.
+    expect(tabs[1]!.getAttribute('aria-controls')).toMatch(/^[a-zA-Z0-9_-]+$/);
   });
 
   it('stamps nothing when there is no panelIdPrefix to point at', () => {
