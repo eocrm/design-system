@@ -24,10 +24,30 @@ const TOKENS_SCSS = readFileSync(
   join(__dirname, '../../design-tokens/generated/web/tokens.scss'),
   'utf-8',
 );
-const DARK_SCSS = readFileSync(
+const DARK_SCSS_FILE = readFileSync(
   join(__dirname, '../../design-tokens/generated/web/dark.scss'),
   'utf-8',
 );
+/**
+ * Only the `:root[data-theme='dark']` block.
+ *
+ * `dark.scss` also contains a `:root[data-theme='light']` block, so resolving a
+ * dark value by taking the first match in the whole FILE was correct only
+ * because the generator happens to emit the dark selector first. Reordering it
+ * would silently resolve dark annotations against light literals — every dark
+ * `@contrast` then checked against the wrong number, with nothing failing.
+ */
+const DARK_SCSS = (() => {
+  const start = DARK_SCSS_FILE.indexOf(":root[data-theme='dark'] {");
+  if (start < 0) throw new Error("dark.scss has no :root[data-theme='dark'] block");
+  const open = DARK_SCSS_FILE.indexOf('{', start);
+  let depth = 1;
+  for (let i = open + 1; i < DARK_SCSS_FILE.length; i++) {
+    if (DARK_SCSS_FILE[i] === '{') depth++;
+    else if (DARK_SCSS_FILE[i] === '}' && --depth === 0) return DARK_SCSS_FILE.slice(open + 1, i);
+  }
+  throw new Error("dark.scss :root[data-theme='dark'] block is unterminated");
+})();
 
 describe('library structure', () => {
   it('discovered at least one component', () => {
@@ -59,6 +79,43 @@ describe('library structure', () => {
     expect(namedRe.test(indexContent) || starRe.test(indexContent)).toBe(true);
   });
 });
+
+/**
+ * Strip comments the way a reader does, LINE BY LINE rather than with one
+ * `\/\*[\s\S]*?\*\/` sweep over the file.
+ *
+ * The sweep cannot tell a comment opener from the characters `/*` inside a
+ * string, and this repo has one: `FileUpload.tsx:162` is
+ * `} else if (token.endsWith('/*'))`, testing for a wildcard MIME type. That
+ * opened a comment the regex closed at the next `*\/` — the end of a 104-line
+ * JSDoc block at line 278 — deleting the real code in between from every scan
+ * built on it. Both meta-gates below were reading a component with a hole in
+ * it and reporting the file clean.
+ *
+ * A block comment that OPENS its line is a real comment (JSDoc, `{/* … *\/}`).
+ * A `/*` appearing mid-line is only treated as one when its `*\/` is on the
+ * same line, which is true of an inline `{/* … *\/}` and false of a string.
+ */
+const stripComments = (code: string) => {
+  const out: string[] = [];
+  let inBlock = false;
+  for (const line of code.split('\n')) {
+    if (inBlock) {
+      if (line.includes('*/')) inBlock = false;
+      continue;
+    }
+    if (/^\s*[{(]?\/\*/.test(line)) {
+      if (!line.includes('*/')) {
+        inBlock = true;
+        continue;
+      }
+      out.push(line.replace(/\{?\/\*.*?\*\/\}?/g, ''));
+      continue;
+    }
+    out.push(line.replace(/\/\*.*?\*\//g, ''));
+  }
+  return out.join('\n').replace(/\/\/.*$/gm, '');
+};
 
 /**
  * Hard rule 10: `aria-busy` alone never reaches a screen reader.
@@ -94,9 +151,6 @@ describe('library structure', () => {
  * behaviour rather than the shape.
  */
 describe('transient state does not rely on aria-busy alone', () => {
-  const stripComments = (code: string) =>
-    code.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
-
   const sources = components.flatMap((name) => {
     const dir = join(componentsDir, name);
     return readdirSync(dir)
@@ -245,9 +299,17 @@ describe('component tokens do not shadow a semantic value', () => {
  * nodes (a separate parse, and the naive regex over-matches TypeScript
  * generics badly) — including inside a braced value, so `title={<b>Delete
  * row</b>}` is silent, which the "attributes are covered" reading of this
- * block would not predict. It cannot see a string assembled in a variable, and
- * a `//` comment that TRAILS code is not stripped (only one starting its own
- * line is), so an example attribute written there reads as live code. Inside a
+ * block would not predict. A template literal WRAPPING a ternary,
+ * `` aria-label={`${n === 1 ? 'item' : 'items'}`} ``, is one literal whose
+ * `${…}` is stripped before judging, so both branches are silent too. It
+ * cannot see a string assembled in a variable.
+ *
+ * The failure direction of a trailing `//` comment is worth stating precisely,
+ * because it inverted: such a comment IS stripped (`stripComments` removes
+ * `//` to end of line after handling blocks), but an apostrophe in one that
+ * sits inside a braced value used to unbalance the walk. Since an unbalanced
+ * value became an offender rather than a skip, that now REPORTS rather than
+ * silences — noisy in the right direction. Inside a
  * braced value, literals preceded by `=` or `[` are skipped as comparison
  * operands and index keys (`typeof x === 'string'`, `props['aria-label']`), so
  * a rendered literal in that position would be missed — the trade is against
@@ -316,19 +378,9 @@ describe('user-facing strings go through the i18n provider', () => {
     // Comment lines are stripped WHOLESALE and the rest scanned as one string,
     // so a value prettier wrapped across lines is still seen. Scanning
     // line-by-line missed those.
-    const body = code
-      // ALL `/* … */`, not just the `{/* … */}` JSX form. Stripping only the
-      // JSX form left `aria-label={/* don't ask */ t('a.b')}` — where the
-      // comment sits INSIDE the braces, so there is no `*/}` to match — and
-      // the apostrophe in it opened a quote the scanner never closed. This
-      // codebase writes single-line JSX comments constantly, several already
-      // quoting an attribute, so the false-alarm risk was live rather than
-      // theoretical. Stripping block comments generally also retires the
-      // `^\s*\*` JSDoc-body clause the line filter used to need.
-      .replace(/\/\*[\s\S]*?\*\//g, '')
-      .split('\n')
-      .filter((l) => !/^\s*\/\//.test(l))
-      .join('\n');
+    // Shared with the aria-busy gate above. A file-wide block-comment sweep
+    // deleted real code whenever a string contained the characters `/*`.
+    const body = stripComments(code);
     {
       // Scanned, not matched in one regex. The one-regex version had to pick a
       // shape for the value, and every choice lost a case: anchoring on a quote
@@ -383,14 +435,19 @@ describe('user-facing strings go through the i18n provider', () => {
         let depth = 0;
         let quote = '';
         let j = i;
-        // BOUNDED, and skipped outright if it does not balance. Chasing the
-        // lexical constructs that desync a hand-rolled scanner is a losing
-        // game — a regex literal containing a quote, `x.replace(/'/g, '')`,
-        // still defeats the quote tracking below. Capping the walk and
-        // discarding an unbalanced value retires that whole class at once: the
-        // worst case becomes one missed attribute rather than a runaway that
-        // swallows the rest of the file and reports garbage. No real attribute
-        // value approaches 400 characters.
+        // BOUNDED, and REPORTED rather than skipped when it does not balance.
+        // Chasing the lexical constructs that desync a hand-rolled scanner is
+        // a losing game — a regex literal containing a quote,
+        // `x.replace(/'/g, '')`, still defeats the quote tracking below — so
+        // the walk is capped and a value that does not close is surfaced
+        // instead of swallowing the rest of the file.
+        //
+        // "No real value approaches 400" was NOT true when first written: the
+        // longest braced attribute value in this library is 346 characters
+        // (DateRangePicker's `placeholder`), 86% of the cap. One more branch
+        // would have pushed it over and it would have dropped out of the scan
+        // with no output at all. A bound whose overflow is silent is the same
+        // defect as a gate that cannot fail, so overflow is now an offender.
         for (; j < body.length && j - i < 400; j++) {
           const c = body[j]!;
           if (quote) {
@@ -402,7 +459,10 @@ describe('user-facing strings go through the i18n provider', () => {
           else if (c === '{') depth++;
           else if (c === '}' && --depth === 0) break;
         }
-        if (depth !== 0) continue;
+        if (depth !== 0) {
+          offenders.push(`${attr}: <value did not close within the ${400}-char scan bound>`);
+          continue;
+        }
         const value = body.slice(i + 1, j);
 
         // Only the string literals inside the expression are judged, and not
@@ -410,13 +470,20 @@ describe('user-facing strings go through the i18n provider', () => {
         // index key (`typeof x === 'string'`, `props['aria-label']`,
         // `state === 'error'`), never rendered. Without this the scan reports
         // five, and a false alarm is what gets a gate deleted.
-        // Judged as a SET, then reported as a set. `cond ? 'Yes' : 'No'` trips
-        // the three-letter floor on 'Yes' alone, so reporting per-literal
-        // listed 'Yes' and stayed silent about 'No' — someone fixes what the
-        // failure names, re-runs, gets green, and ships the other half. A
-        // partial report certifies the remainder. Widening the floor is the
-        // wrong fix: it flags 'en-US' and 'MMM D'. So if ANY literal in one
-        // value is English, every candidate in that value is reported.
+        // Judged as a SET, then reported as a set. A per-literal report listed
+        // only the halves that individually cleared the English floor, so
+        // `cond ? 'Yes' : 'No'` named 'Yes' and stayed silent about 'No' —
+        // someone fixes what the failure names, re-runs, gets green, and ships
+        // the other half. A partial report certifies the remainder. So if ANY
+        // literal in one value is English, every candidate in that value is
+        // reported.
+        //
+        // The floor itself is TWO letters (see `isEnglish`), which is a
+        // deliberate false-alarm trade rather than a free win: `'en-US'` and
+        // `'MMM d'` both read as English at two, and neither appears in a
+        // watched attribute today. If one ever does, extend the unit-strip
+        // list — raising the floor back to three re-silences `"OK"`, `"Up"`
+        // and `"ID"`, which is the worse direction.
         const candidates: string[] = [];
         for (const lm of value.matchAll(/(["'`])((?:\\.|(?!\1).)*)\1/gs)) {
           const before = value.slice(0, lm.index);
@@ -429,8 +496,12 @@ describe('user-facing strings go through the i18n provider', () => {
           if (/\bt\(\s*$/.test(before)) continue;
           if (!isKey(lm[2]!)) candidates.push(lm[2]!);
         }
+        // Report every candidate that carries letters at all, not literally
+        // every candidate — an empty string or a bare `%s` alongside the real
+        // offender is noise in the failure message.
         if (candidates.some(isEnglish))
-          for (const lit of candidates) offenders.push(`${attr}: "${lit}"`);
+          for (const lit of candidates.filter((c) => /[A-Za-z]/.test(c)))
+            offenders.push(`${attr}: "${lit}"`);
       }
     }
     expect(
@@ -552,14 +623,31 @@ describe('stated contrast ratios still hold', () => {
     // annotation in the same file actually computes; a number no annotation
     // produces is a claim nothing checks, which is the whole point. Surplus
     // annotations and duplicates now buy nothing.
-    const lines = code.split('\n').filter((l) => /^\s*\/\//.test(l));
-    // A range states two endpoints and binds neither; exempt by design.
-    const isRange = (l: string) => /\d+\.\d+\s*[-–]\s*\d+\.\d+:1/.test(l);
+    // Per MATCH, not per line. Filtering whole lines gave three escapes: a
+    // prose ratio sharing a line with an annotation was skipped entirely, one
+    // range anywhere on a line exempted every other ratio on it, and `/* */`
+    // comments — legal in SCSS — were never read at all.
+    const lines = code.split('\n').filter((l) => /^\s*(\/\/|\/\*|\*)/.test(l));
     const ratios = (l: string) => [...l.matchAll(/(\d+\.\d+):1/g)].map((m) => m[1]!);
-    const annotated = new Set(lines.filter((l) => /@contrast/.test(l)).flatMap(ratios));
+    // Built from the ANNOTATION PATTERN, not from whole annotation lines — a
+    // bogus figure written after a real annotation on the same line otherwise
+    // landed in this set and exempted itself.
+    const ANNOTATION =
+      /@contrast\s+--[a-z0-9-]+\s+on\s+--[a-z0-9-]+\s*=\s*([\d.]+):1\s*(?:light|dark)/g;
+    const annotated = new Set(lines.flatMap((l) => [...l.matchAll(ANNOTATION)].map((m) => m[1]!)));
     const unbound = lines
-      .filter((l) => !/@contrast/.test(l) && !isRange(l))
-      .flatMap((l) => ratios(l).map((r) => ({ r, l })))
+      .flatMap((l) => {
+        // Strip the parts that are exempt BY CONSTRUCTION rather than skipping
+        // the line they sit on: the annotation's own figure, and a range,
+        // which states two endpoints and binds neither.
+        const rest = l
+          .replace(
+            /@contrast\s+--[a-z0-9-]+\s+on\s+--[a-z0-9-]+\s*=\s*[\d.]+:1\s*(light|dark)/g,
+            '',
+          )
+          .replace(/\d+\.\d+\s*[-–]\s*\d+\.\d+:1/g, '');
+        return ratios(rest).map((r) => ({ r, l }));
+      })
       .filter(({ r }) => !annotated.has(r));
     expect(
       unbound.map(({ r, l }) => `${r}:1 in "${l.trim()}"`),

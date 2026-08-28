@@ -573,21 +573,41 @@ function linearizeSrgbChannel(channel) {
 // reading, which is how the four stale ratios in #484 survived thirteen review
 // rounds.
 //
-// Resolving proves it directly: each `--badge-*` follows its var() chain to a
-// literal in each theme, and for the tone-backed ones the two literals must
-// DIFFER. If someone re-points Badge at a token that does not self-theme, dark
+// Resolving proves it directly: each of the twelve TONE-BACKED `--badge-*`
+// variables follows its var() chain to a literal in each theme, and the two
+// literals must DIFFER. The other 32 `--badge-*` are dimensions, radii and
+// font weights that resolve to no colour at all and are out of scope here. If someone re-points Badge at a token that does not self-theme, dark
 // silently collapses onto the light value and this fails.
-test('every Badge variable resolves per theme through its var() chain', async () => {
+test('every tone-backed Badge variable resolves per theme through its var() chain', async () => {
   const [badgeSource, generatedTokens, generatedDark] = await Promise.all([
     readFile(badgeTokenPath, 'utf8'),
     readFile(generatedTokensPath, 'utf8'),
     readFile(generatedDarkPath, 'utf8'),
   ]);
 
+  // Only the `:root[data-theme='dark']` block of dark.scss — that file also
+  // holds a `:root[data-theme='light']` block, so taking the first match in the
+  // whole file was correct only because the generator emits dark first.
+  const DARK_SELECTOR = `:root[data-theme=${"'"}dark${"'"}]`;
+  const darkBlock = (() => {
+    const start = generatedDark.indexOf(DARK_SELECTOR);
+    assert.ok(start >= 0, `dark.scss has no ${DARK_SELECTOR} block`);
+    const open = generatedDark.indexOf('{', start);
+    let depth = 1;
+    for (let i = open + 1; i < generatedDark.length; i += 1) {
+      if (generatedDark[i] === '{') depth += 1;
+      else if (generatedDark[i] === '}') {
+        depth -= 1;
+        if (depth === 0) return generatedDark.slice(open + 1, i);
+      }
+    }
+    throw new Error('dark.scss dark block is unterminated');
+  })();
+
   const resolve = (name, dark, seen = []) => {
     if (seen.includes(name)) return undefined;
     for (const source of dark
-      ? [generatedDark, generatedTokens, badgeSource]
+      ? [darkBlock, generatedTokens, badgeSource]
       : [generatedTokens, badgeSource]) {
       const match = new RegExp(`(?:^|[^-a-z0-9])${name}:\\s*([^;\\n]+);`, 'm').exec(source);
       if (!match) continue;

@@ -128,46 +128,57 @@ export function HeaderCell<T>({
   const warnedNoName = useRef(false);
   useEffect(() => {
     const el = labelRef.current;
-    // aria-hidden subtrees are stripped first: `textContent` counts them, but
-    // the accessible name does not, and an icon-only header is written exactly
-    // that way — `<span aria-hidden="true">★</span>` reads as text to the DOM
-    // and as nothing to a screen reader.
-    //
-    // The clone happens ONLY when something is actually hidden, which is the
-    // uncommon case. This effect has no dep array — it has to re-measure
-    // whatever rendered — so it runs on every commit, and DataTable re-renders
-    // on every pointermove during a column drag. Cloning unconditionally meant
-    // a subtree clone per header cell per frame; a plain string header now does
-    // no clone at all.
-    let next = false;
-    if (el) {
-      next = el.querySelector('[aria-hidden="true"]')
-        ? (() => {
-            const probe = el.cloneNode(true) as HTMLElement;
-            for (const hidden of probe.querySelectorAll('[aria-hidden="true"]')) hidden.remove();
-            return (probe.textContent ?? '').trim().length > 0;
-          })()
-        : (el.textContent ?? '').trim().length > 0;
-    }
-    setLabelHasText((prev) => (prev === next ? prev : next));
+    if (!el) return;
 
-    // An icon-only header with no `visibilityLabel` falls back to `column.id`,
-    // so a raw developer identifier gets read aloud. That is an authoring bug
-    // with no visible symptom — nothing looks wrong on screen — so say it once
-    // rather than leaving it to be found by a screen-reader user.
-    if (
-      process.env.NODE_ENV !== 'production' &&
-      !next &&
-      !column.visibilityLabel &&
-      !warnedNoName.current
-    ) {
-      warnedNoName.current = true;
-      console.warn(
-        `[DataTable] column "${column.id}" renders no header text and has no visibilityLabel, ` +
-          `so its column header announces as the column id. Add visibilityLabel.`,
-      );
-    }
-  });
+    const measure = () => {
+      // aria-hidden subtrees are stripped first: `textContent` counts them,
+      // but the accessible name does not, and an icon-only header is written
+      // exactly that way — `<span aria-hidden="true">★</span>` reads as text to
+      // the DOM and as nothing to a screen reader.
+      const probe = el.cloneNode(true) as HTMLElement;
+      for (const hidden of probe.querySelectorAll('[aria-hidden="true"]')) hidden.remove();
+      const next = (probe.textContent ?? '').trim().length > 0;
+      setLabelHasText((prev) => (prev === next ? prev : next));
+
+      // An icon-only header with no `visibilityLabel` falls back to
+      // `column.id`, so a raw developer identifier gets read aloud — an
+      // authoring bug with no visible symptom, since the column looks correct
+      // on screen. The latch RESETS when text appears, so a header that
+      // resolves its label asynchronously is not permanently accused of being
+      // unnamed on the strength of its first frame.
+      if (next) warnedNoName.current = false;
+      else if (
+        process.env.NODE_ENV !== 'production' &&
+        !column.visibilityLabel &&
+        !warnedNoName.current
+      ) {
+        warnedNoName.current = true;
+        console.warn(
+          `[DataTable] column "${column.id}" renders no header text and has no visibilityLabel, ` +
+            `so its column header announces as the column id. Add visibilityLabel.`,
+        );
+      }
+    };
+
+    measure();
+    // OBSERVED, not measured once per commit. A `header` ReactNode that owns
+    // its own state — a fetch, a lazily-loaded translation, an icon swapped
+    // after mount — updates its subtree WITHOUT re-rendering HeaderCell. A
+    // per-commit measurement therefore read it once as empty and never looked
+    // again: the header displayed "Revenue" and announced "revenue_id"
+    // forever, which is precisely the bug this mechanism exists to remove,
+    // resurrected for a narrower input. Observing also takes the steady-state
+    // cost to zero — the per-commit version ran on every pointermove of a
+    // column drag.
+    const observer = new MutationObserver(measure);
+    observer.observe(el, {
+      childList: true,
+      subtree: true,
+      characterData: true,
+      attributeFilter: ['aria-hidden'],
+    });
+    return () => observer.disconnect();
+  }, [column.id, column.visibilityLabel]);
 
   const sortableResult = useSortable({
     id: column.id,

@@ -13,9 +13,9 @@
  * which must never, and which columns the driver is told about).
  */
 import { resolve } from 'node:path';
-import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createRef, useRef } from 'react';
+import { createRef, useEffect, useRef, useState } from 'react';
 import { parse, type AtRule, type Declaration, type Root, type Rule } from 'postcss';
 import { compile } from 'sass';
 import { Table } from '../Table';
@@ -2105,6 +2105,36 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     }
     render(<IconHarness />);
     expect(screen.getByRole('columnheader', { name: 'Starred' })).toBeInTheDocument();
+  });
+
+  it('re-measures a header that renders its text asynchronously', async () => {
+    // A `header` ReactNode owning its own state updates its subtree WITHOUT
+    // re-rendering HeaderCell, so a per-commit measurement read it once as
+    // empty and never looked again — the header displayed "Revenue" and
+    // announced "revenue_id" forever. That is the same defect the icon-only
+    // fix introduced, resurrected for a narrower input, which is why the
+    // measurement observes the subtree instead of sampling it on commit.
+    function AsyncHeader() {
+      const [text, setText] = useState('');
+      useEffect(() => {
+        const id = setTimeout(() => setText('Revenue'), 0);
+        return () => clearTimeout(id);
+      }, []);
+      return <span>{text}</span>;
+    }
+    const asyncCols: ColumnDef<Row>[] = [
+      { id: 'revenue_id', header: <AsyncHeader />, cell: () => 'x' },
+    ];
+    function Harness() {
+      const instance = useDataTable<Row>({ data: rows, columns: asyncCols, getRowId });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    render(<Harness />);
+    await screen.findByText('Revenue');
+    await waitFor(() => {
+      expect(screen.getByRole('columnheader', { name: 'Revenue' })).toBeInTheDocument();
+    });
+    expect(screen.queryByRole('columnheader', { name: 'revenue_id' })).toBeNull();
   });
 
   it('warns in dev when a header would announce as its column id', () => {

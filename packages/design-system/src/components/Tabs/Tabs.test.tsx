@@ -971,10 +971,25 @@ describe('aria-controls points only at a panel that exists (#501)', () => {
     );
     const tabs = screen.getAllByRole('tab');
     expect(tabs.map((t) => t.getAttribute('aria-controls'))).toEqual([null, 'demo-b-panel', null]);
-    // The no-prefix test asserts the GENERATED id needs no CSS escaping; this
-    // path builds the id from a consumer string, which is the one that could
-    // arrive with a colon in it.
-    expect(tabs[1]!.getAttribute('aria-controls')).toMatch(/^[a-zA-Z0-9_-]+$/);
+  });
+
+  it('uses a consumer panelIdPrefix verbatim, including characters it would have sanitized', () => {
+    // `sanitizeId` runs on the GENERATED React id (`:r1:` needs it), never on a
+    // consumer prefix — so this documents that the consumer owns the id they
+    // supply. It is a legal HTML id and a legal IDREF; only a CSS selector
+    // would need escaping, and Tabs never selects on it. Asserting the
+    // sanitized SHAPE here would have been a tautology: the assertion above
+    // already pins the whole string to a literal.
+    render(
+      <Tabs
+        items={[{ id: 'b', label: 'B' }]}
+        activeId="b"
+        onChange={() => {}}
+        panelIdPrefix="a:b"
+        aria-label="t"
+      />,
+    );
+    expect(screen.getByRole('tab').getAttribute('aria-controls')).toBe('a:b-b-panel');
   });
 
   it('stamps nothing when there is no panelIdPrefix to point at', () => {
