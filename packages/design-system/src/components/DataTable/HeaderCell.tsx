@@ -149,14 +149,29 @@ export function HeaderCell<T>({
       // and no text at all, so measuring textContent alone renamed the column
       // to its raw id while the correct name sat in the DOM unused. Same for an
       // `<img alt>` logo header.
-      // `aria-label` and `alt` only. `title` was here too and is WRONG: it
-      // yields an empty accessible name on its own, so counting it as a name
-      // chose `aria-labelledby` and produced the unnamed columnheader this
-      // fallback exists to prevent. Measured, not assumed — `computeAccessibleName`
-      // on a `<span title="…">`-only header returns "".
+      // What can actually NAME something, which is narrower than what can
+      // carry the attribute.
+      //
+      // `alt` names only `img`, `area` and `input[type=image]`; on anything
+      // else it is an unknown attribute. A bare `<div alt="Vendor">` counted
+      // as named, so `aria-labelledby` was pointed at a span computing to
+      // nothing — the unnamed columnheader this fallback exists to prevent,
+      // reached from yet another side.
+      //
+      // `title` is excluded, but NOT because it names nothing: per accname it
+      // is a valid last-resort source and browsers do expose it. jsdom's
+      // `computeAccessibleName` returns "" for it only because
+      // dom-accessibility-api omits that step. The real reason is that
+      // last-resort means its presence does not tell you a name will be
+      // computed HERE — anything else in the subtree outranks it — so it is
+      // not evidence for this decision. Recording the distinction because the
+      // convenient wrong reason ("title never names") would license a bad
+      // change later.
       const next =
         (probe.textContent ?? '').trim().length > 0 ||
-        probe.querySelector('[aria-label]:not([aria-label=""]), [alt]:not([alt=""])') !== null;
+        probe.querySelector(
+          '[aria-label]:not([aria-label=""]), img[alt]:not([alt=""]), area[alt]:not([alt=""]), input[type="image"][alt]:not([alt=""])',
+        ) !== null;
       setLabelHasText((prev) => (prev === next ? prev : next));
 
       // An icon-only header with no `visibilityLabel` falls back to

@@ -416,12 +416,11 @@ describe('user-facing strings go through the i18n provider', () => {
           // `alt="Up"` and `placeholder="ID"` were all silent.
           .replace(/\b(px|em|rem|vh|vw|ms|fr|ch|pt|deg)\b/g, ' ')
           .trim();
-        // A URL is not prose. `title={`https://${host}/p`}` otherwise read as
-        // English on the strength of "https" — and with an unbalanced value
-        // now reported rather than skipped, that surfaced as a confident false
-        // alarm on correct code.
-        if (/[a-z][a-z0-9+.-]*:\/\//.test(bare)) return false;
-        return /[A-Za-z]{2}/.test(bare);
+        // A URL is not prose, but only the URL is exempt. Returning false for
+        // the whole literal silenced `"Open the docs at https://x.io"` — a
+        // sentence with a link in it, which is exactly a translatable string.
+        // Strip the URL, then judge what is left.
+        return /[A-Za-z]{2}/.test(bare.replace(/[a-z][a-z0-9+.-]*:\/\/\S*/g, ' ').trim());
       };
       // Measured against the real distribution: see the note on the walk below.
       const SCAN_BOUND = 2000;
@@ -648,17 +647,34 @@ describe('stated contrast ratios still hold', () => {
     // prose ratio sharing a line with an annotation was skipped entirely, one
     // range anywhere on a line exempted every other ratio on it, and `/* */`
     // comments — legal in SCSS — were never read at all.
-    // The COMMENT PORTION of every line, not only lines that begin with a
-    // marker. `.x { color: red; } // contrast is 9.99:1` escaped entirely,
-    // while the docblock claimed every ratio in the file was bound.
-    const lines = code
-      .split('\n')
-      .map((l) => {
-        const at = l.search(/\/\/|\/\*/);
-        if (at >= 0) return l.slice(at);
-        return /^\s*\*/.test(l) ? l : '';
-      })
-      .filter(Boolean);
+    // The COMMENT PORTION of every line, tracking BLOCK STATE across lines.
+    //
+    // Two escapes preceded this. Requiring a line to START with a marker let
+    // `.x { color: red; } // contrast is 9.99:1` through entirely. Slicing per
+    // line then found only a block's OPENING line: continuations were rescued
+    // solely by a `/^\s*\*/` fallback, so a block whose continuation lines do
+    // not begin with `*` was invisible — and MonthView.module.scss already
+    // writes five such lines. SCSS is not TSX, so the parser-based
+    // `stripComments` above does not apply; this tracks the state itself.
+    const lines: string[] = [];
+    let inBlock = false;
+    for (const raw of code.split('\n')) {
+      if (inBlock) {
+        const close = raw.indexOf('*/');
+        lines.push(close >= 0 ? raw.slice(0, close) : raw);
+        inBlock = close < 0;
+        continue;
+      }
+      const at = raw.search(/\/\/|\/\*/);
+      if (at < 0) continue;
+      if (raw.slice(at, at + 2) === '/*') {
+        const close = raw.indexOf('*/', at + 2);
+        lines.push(close >= 0 ? raw.slice(at, close) : raw.slice(at));
+        inBlock = close < 0;
+      } else {
+        lines.push(raw.slice(at));
+      }
+    }
     const ratios = (l: string) => [...l.matchAll(/(\d+\.\d+):1/g)].map((m) => m[1]!);
     // Built from the ANNOTATION PATTERN, not from whole annotation lines — a
     // bogus figure written after a real annotation on the same line otherwise

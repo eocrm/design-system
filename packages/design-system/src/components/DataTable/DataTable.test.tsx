@@ -2129,6 +2129,32 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     expect(screen.queryByRole('columnheader', { name: 'select_all_col' })).toBeNull();
   });
 
+  it('ignores alt on an element that alt cannot name', () => {
+    // `alt` names only img, area and input[type=image]. On a <div> it is an
+    // unknown attribute, so counting it chose aria-labelledby and pointed at a
+    // span computing to nothing — the unnamed columnheader again.
+    //
+    // Spread, because TSX rejects `<div alt="Vendor" />` outright. Worth
+    // knowing: the type system already blocks the direct form, so this only
+    // arrives via a spread of consumer props — which is exactly how `{...rest}`
+    // reaches a header in practice.
+    const spread = { alt: 'Vendor' } as Record<string, string>;
+    const cols: ColumnDef<Row>[] = [
+      {
+        id: 'vendor_col',
+        header: <div {...spread} />,
+        visibilityLabel: 'Vendor',
+        cell: () => 'x',
+      },
+    ];
+    function Harness() {
+      const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    render(<Harness />);
+    expect(screen.getByRole('columnheader', { name: 'Vendor' })).toBeInTheDocument();
+  });
+
   it('does not treat a bare title as a name — it computes to nothing', () => {
     // `title` alone yields an EMPTY accessible name, so counting it as
     // evidence the header names itself chose aria-labelledby and produced an

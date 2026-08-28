@@ -1739,8 +1739,14 @@ describe('listbox state announces from one region, not three rows (#495)', () =>
       if (!(n.parentElement as HTMLElement | null)?.closest('[aria-hidden="true"]'))
         reachable.push(n.textContent ?? '');
     }
-    for (const el of document.body.querySelectorAll<HTMLElement>('[aria-label]')) {
-      if (!el.closest('[aria-hidden="true"]')) reachable.push(el.getAttribute('aria-label') ?? '');
+    // `title` and `alt` too, not just aria-label. The comment claimed
+    // "everything a reader can reach" while a `title` carrying the same
+    // sentence escaped — and this PR treats title/alt as name sources
+    // elsewhere, so the sweep has to agree with that.
+    for (const el of document.body.querySelectorAll<HTMLElement>('[aria-label], [title], [alt]')) {
+      if (el.closest('[aria-hidden="true"]')) continue;
+      for (const attr of ['aria-label', 'title', 'alt'])
+        if (el.hasAttribute(attr)) reachable.push(el.getAttribute(attr) ?? '');
     }
     expect(reachable.filter((text) => /Failed to load options\./.test(text))).toHaveLength(1);
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
