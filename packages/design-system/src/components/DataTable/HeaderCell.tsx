@@ -1,4 +1,4 @@
-import { useId, useMemo, useRef, type KeyboardEvent } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import clsx from 'clsx';
 import {
   GripVertical,
@@ -114,6 +114,32 @@ export function HeaderCell<T>({
   const labelRef = useRef<HTMLSpanElement | null>(null);
   const dragData = useMemo(() => ({ dragNode: labelRef }), []);
 
+  // Whether the label span actually contributes text, MEASURED rather than
+  // derived. It cannot be derived: `header` may be a ReactNode rendering
+  // visible text — named fine by content — or one that is purely aria-hidden
+  // icons, which names nothing. #500 pointed `aria-labelledby` at this span
+  // unconditionally and unnamed the icon-only case; switching to `aria-label`
+  // on `plainHeader` fixed that and renamed every JSX header to its column id,
+  // so `header: <strong>Revenue</strong>` announced as "revenue" at all widths.
+  // Runs after every commit, like ButtonGroup's roving fallback, so it tracks
+  // whatever actually rendered. Starts `true` so the first paint prefers the
+  // span over a column id.
+  const [labelHasText, setLabelHasText] = useState(true);
+  useEffect(() => {
+    const el = labelRef.current;
+    // aria-hidden subtrees are stripped first: `textContent` counts them, but
+    // the accessible name does not, and an icon-only header is written exactly
+    // that way — `<span aria-hidden="true">★</span>` reads as text to the DOM
+    // and as nothing to a screen reader.
+    let next = false;
+    if (el) {
+      const probe = el.cloneNode(true) as HTMLElement;
+      for (const hidden of probe.querySelectorAll('[aria-hidden="true"]')) hidden.remove();
+      next = (probe.textContent ?? '').trim().length > 0;
+    }
+    setLabelHasText((prev) => (prev === next ? prev : next));
+  });
+
   const sortableResult = useSortable({
     id: column.id,
     data: dragData,
@@ -203,13 +229,13 @@ export function HeaderCell<T>({
       data-responsive-pinned={responsiveEnabled && isPinned ? true : undefined}
       aria-sort={sortDir != null ? sortAriaMap[sortDir] : undefined}
       // Only when the label span will actually have text. An icon-only header
-      // (a ReactNode whose content is aria-hidden) leaves that span empty, and
-      // pointing at an empty element gives the columnheader NO name at all —
-      // trading a wrong name for an unnamed header, which is a worse axe
-      // violation than the one this fixes. Fall back to name-from-content,
-      // where the handle's label is at least still a name.
-      aria-labelledby={plainHeader ? labelId : undefined}
-      aria-label={plainHeader ? undefined : columnLabel}
+      // leaves that span empty, and pointing at an empty element gives the
+      // columnheader NO name at all — trading a wrong name for an unnamed
+      // header, which is a worse axe violation than the one this fixes. Only
+      // then does `columnLabel` step in, and it is the last resort precisely
+      // because it degrades to `column.id`.
+      aria-labelledby={labelHasText ? labelId : undefined}
+      aria-label={labelHasText ? undefined : columnLabel}
       onClick={sortable ? () => instance.toggleSort(column.id) : undefined}
       className={clsx(
         styles.headerCell,

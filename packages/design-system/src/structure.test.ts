@@ -243,7 +243,11 @@ describe('component tokens do not shadow a semantic value', () => {
  *
  * Known limits, stated rather than discovered later: it does not read JSX text
  * nodes (a separate parse, and the naive regex over-matches TypeScript
- * generics badly), and it cannot see a string assembled in a variable. Inside a
+ * generics badly) — including inside a braced value, so `title={<b>Delete
+ * row</b>}` is silent, which the "attributes are covered" reading of this
+ * block would not predict. It cannot see a string assembled in a variable, and
+ * a `//` comment that TRAILS code is not stripped (only one starting its own
+ * line is), so an example attribute written there reads as live code. Inside a
  * braced value, literals preceded by `=` or `[` are skipped as comparison
  * operands and index keys (`typeof x === 'string'`, `props['aria-label']`), so
  * a rendered literal in that position would be missed — the trade is against
@@ -313,6 +317,12 @@ describe('user-facing strings go through the i18n provider', () => {
     // so a value prettier wrapped across lines is still seen. Scanning
     // line-by-line missed those.
     const body = code
+      // `{/* … */}` first, and not line-anchored: this codebase writes
+      // single-line JSX comments constantly, and one containing an example
+      // attribute was read as live code. The line filter below only catches a
+      // comment that STARTS its line, so a trailing `//` still is not stripped
+      // — a known limit, noted in the docblock.
+      .replace(/\{\/\*[\s\S]*?\*\/\}/g, '')
       .split('\n')
       .filter((l) => !/^\s*(\*|\/\/)/.test(l))
       .join('\n');
@@ -329,10 +339,19 @@ describe('user-facing strings go through the i18n provider', () => {
       // `(?<![-\w])` so `data-title=` / `data-alt=` do not match: `-` is a word
       // boundary, so `\b` alone flagged them and reported a false violation.
       const isKey = (lit: string) => /^[a-z][a-zA-Z]*\.[a-zA-Z.]+$/.test(lit);
-      const isEnglish = (lit: string) =>
+      const isEnglish = (lit: string) => {
         // Interpolations are permitted — the rule allows mixing translated text
         // with data. A fixed English phrase around them is not.
-        /[A-Za-z]{3}/.test(lit.replace(/\$\{[^}]*\}/g, '').trim());
+        const bare = lit
+          .replace(/\$\{[^}]*\}/g, ' ')
+          // CSS units are not prose. `aria-valuetext={`${width}px`}` is the
+          // only thing standing between a two-letter floor and a clean run,
+          // and the floor has to be two: at three, `aria-label="OK"`,
+          // `alt="Up"` and `placeholder="ID"` were all silent.
+          .replace(/\b(px|em|rem|vh|vw|ms|fr|ch|pt|deg)\b/g, ' ')
+          .trim();
+        return /[A-Za-z]{2}/.test(bare);
+      };
       const flag = (attr: string, lit: string) => {
         if (!isKey(lit) && isEnglish(lit)) offenders.push(`${attr}: "${lit}"`);
       };
@@ -377,7 +396,15 @@ describe('user-facing strings go through the i18n provider', () => {
         // index key (`typeof x === 'string'`, `props['aria-label']`,
         // `state === 'error'`), never rendered. Without this the scan reports
         // five, and a false alarm is what gets a gate deleted.
-        for (const lm of value.matchAll(/(["'`])((?:(?!\1).)*)\1/gs)) {
+        // Judged as a SET, then reported as a set. `cond ? 'Yes' : 'No'` trips
+        // the three-letter floor on 'Yes' alone, so reporting per-literal
+        // listed 'Yes' and stayed silent about 'No' — someone fixes what the
+        // failure names, re-runs, gets green, and ships the other half. A
+        // partial report certifies the remainder. Widening the floor is the
+        // wrong fix: it flags 'en-US' and 'MMM D'. So if ANY literal in one
+        // value is English, every candidate in that value is reported.
+        const candidates: string[] = [];
+        for (const lm of value.matchAll(/(["'`])((?:\\.|(?!\1).)*)\1/gs)) {
           const before = value.slice(0, lm.index);
           if (/[=[]\s*$/.test(before)) continue;
           // Anything sitting directly inside `t(` is routed through the
@@ -386,8 +413,10 @@ describe('user-facing strings go through the i18n provider', () => {
           // t(`richTextEditor.${key}`) — because stripping the interpolation
           // leaves a trailing dot that the pattern will not match.
           if (/\bt\(\s*$/.test(before)) continue;
-          flag(attr, lm[2]!);
+          if (!isKey(lm[2]!)) candidates.push(lm[2]!);
         }
+        if (candidates.some(isEnglish))
+          for (const lit of candidates) offenders.push(`${attr}: "${lit}"`);
       }
     }
     expect(
@@ -412,13 +441,22 @@ describe('user-facing strings go through the i18n provider', () => {
  * Both sides are resolved through the generated tokens for the named theme and
  * the ratio recomputed. A stale number fails with both figures.
  *
- * Scope, stated rather than implied: every `N.NN:1` in a `.tokens.scss` must be
- * annotated, because that is where token-pair ratios live and where the rot
- * happened. Ratios in prose elsewhere (`.ts`/`.tsx`) are not forced — binding a
- * number to its pair needs the author's help, and a gate that demands
- * annotation of arbitrary sentences would be gamed by rewording. Ranges
- * (`5.11-6.82:1`) are exempt for the same reason; annotate the endpoints
- * individually if they matter.
+ * Scope, stated rather than implied: every `N.NN:1` in a `.tokens.scss` or a
+ * `.module.scss` must be bound, because that is where token-pair ratios live
+ * and where the rot happened. The scope said `.tokens.scss` only while Dot's
+ * `2.14:1` sat in a `.module.scss` — read for annotations, exempt from the
+ * binding — so the sentence justifying the narrower scope was falsified by a
+ * file the gate was already reading. Ratios in prose elsewhere (`.ts`/`.tsx`)
+ * are not forced: binding a number to its pair needs the author's help, and a
+ * gate that demands annotation of arbitrary sentences would be gamed by
+ * rewording. Ranges (`5.11-6.82:1`) are exempt for the same reason; annotate
+ * the endpoints individually if they matter.
+ *
+ * `:1` is the opt-in marker, which makes dropping it a bypass — so a live
+ * figure must carry it. A HISTORICAL figure ("both read 4.17 until #484 raised
+ * them") is written without `:1` on purpose: no current pair computes it, so
+ * no annotation can bind it, and the omission is spelled out where it occurs
+ * rather than left to look like an oversight.
  */
 describe('stated contrast ratios still hold', () => {
   function literal(name: string, dark: boolean, seen: string[] = []): string | undefined {
@@ -475,7 +513,12 @@ describe('stated contrast ratios still hold', () => {
 
   it.each(
     files
-      .filter(({ label }) => label.endsWith('.tokens.scss'))
+      // `.module.scss` too, not just `.tokens.scss`. The docblock justified the
+      // narrower scope as "that is where token-pair ratios live" — and Dot's
+      // 2.14:1 sat in a `.module.scss`, read for annotations but exempt from
+      // the binding, falsifying the stated rationale. `.ts` prose stays exempt
+      // as documented: binding a number in a sentence needs the author's help.
+      .filter(({ label }) => label.endsWith('.tokens.scss') || label.endsWith('.module.scss'))
       .map(({ label, code }) => [label, code]),
   )('%s annotates every ratio it states', (_label, code) => {
     // COUNTED, not "does this file mention @contrast anywhere". The first
@@ -484,14 +527,29 @@ describe('stated contrast ratios still hold', () => {
     // unannotated ratios sat beside it — four were live behind that escape.
     // A gate that cannot fail on its own stated input is the exact thing this
     // suite keeps being written to stop.
+    //
+    // Counting was still not a BINDING. `annotations.length >= stated.length`
+    // leaves every file slack equal to its surplus — thirteen files carried
+    // one to three — so the first unannotated ratio added to any of them
+    // passed. Verified: appending a bare `9.99:1` claim to Text.tokens.scss
+    // left the suite green.
+    //
+    // So match on the VALUE. Every ratio stated in prose must equal one an
+    // annotation in the same file actually computes; a number no annotation
+    // produces is a claim nothing checks, which is the whole point. Surplus
+    // annotations and duplicates now buy nothing.
     const lines = code.split('\n').filter((l) => /^\s*\/\//.test(l));
     // A range states two endpoints and binds neither; exempt by design.
     const isRange = (l: string) => /\d+\.\d+\s*[-–]\s*\d+\.\d+:1/.test(l);
-    const stated = lines.filter((l) => /\d+\.\d+:1/.test(l) && !isRange(l) && !/@contrast/.test(l));
-    const annotations = lines.filter((l) => /@contrast/.test(l));
+    const ratios = (l: string) => [...l.matchAll(/(\d+\.\d+):1/g)].map((m) => m[1]!);
+    const annotated = new Set(lines.filter((l) => /@contrast/.test(l)).flatMap(ratios));
+    const unbound = lines
+      .filter((l) => !/@contrast/.test(l) && !isRange(l))
+      .flatMap((l) => ratios(l).map((r) => ({ r, l })))
+      .filter(({ r }) => !annotated.has(r));
     expect(
-      annotations.length,
-      `states ${stated.length} ratio(s) but carries ${annotations.length} @contrast annotation(s) — annotate each so it can be recomputed:\n  ${stated.map((l) => l.trim()).join('\n  ')}`,
-    ).toBeGreaterThanOrEqual(stated.length);
+      unbound.map(({ r, l }) => `${r}:1 in "${l.trim()}"`),
+      'states a ratio no @contrast annotation in this file computes — annotate the pair so it can be recomputed, or drop the number',
+    ).toEqual([]);
   });
 });

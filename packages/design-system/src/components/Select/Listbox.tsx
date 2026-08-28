@@ -50,7 +50,11 @@ export function Listbox() {
           ? t('select.statusLoading')
           : '',
     );
-  }, [ctx.loading, ctx.rows.length, t]);
+    // `ctx.error` is in the deps deliberately. It happens to work without it
+    // — a rejection also flips `loading` — but that is a coincidence of the
+    // current hook, and there is no eslint in this repo to catch the day it
+    // stops being true.
+  }, [ctx.error, ctx.loading, ctx.rows.length, t]);
   const inOverlay = useInOverlay(ctx.triggerRootRef, ctx.open);
   // #274: hosts yield Escape while we're open — our own capture/element
   // handler closes us on the same press instead of the Modal/Drawer.

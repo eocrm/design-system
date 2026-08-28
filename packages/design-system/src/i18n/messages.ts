@@ -434,6 +434,8 @@ export interface Messages {
     loadFailed: string;
     /** Retry control inside the error row. */
     retry: string;
+    /** Accessible name for that control — states the failure, which the visible row text is hidden from repeating. */
+    retryAfterError: string;
     /** Empty-state copy when a search query matched nothing. */
     noResultsFor: (params: { query: string }) => string;
     /**

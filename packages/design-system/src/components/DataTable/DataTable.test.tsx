@@ -2107,6 +2107,24 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     expect(screen.getByRole('columnheader', { name: 'Starred' })).toBeInTheDocument();
   });
 
+  it('names a JSX header by its rendered text, not by the column id', () => {
+    // The icon-only fix keyed off `typeof header === 'string'`, which made
+    // EVERY ReactNode header take `aria-label={columnLabel}` — and with no
+    // `visibilityLabel` that falls all the way back to `column.id`. So
+    // `<strong>Revenue</strong>` announced as "revenue", at every width, not
+    // just under collapseBelow. Both attributes are unconditional.
+    const jsxCols: ColumnDef<Row>[] = [
+      { id: 'revenue', header: <strong>Revenue</strong>, cell: () => 'x' },
+    ];
+    function JsxHarness() {
+      const instance = useDataTable<Row>({ data: rows, columns: jsxCols, getRowId });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    render(<JsxHarness />);
+    expect(screen.getByRole('columnheader', { name: 'Revenue' })).toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'revenue' })).toBeNull();
+  });
+
   it('still exposes the resize handle, named for what it does', () => {
     render(<NameHarness collapseBelow="md" />);
     expect(screen.getByRole('separator', { name: 'Resize Name column' })).toBeInTheDocument();

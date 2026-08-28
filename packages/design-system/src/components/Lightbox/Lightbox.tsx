@@ -371,10 +371,15 @@ export function Lightbox({
                 <div
                   className={styles.stageError}
                   role="img"
-                  /* Concatenated for the same reason as Image's error tile.
-                     `role="img"` stays on the container here because the only
-                     child is text the label repeats — unlike Image, whose tile
-                     holds a Retry button that the role pruned outright. */
+                  /* Concatenated, where Image's tile deliberately is NOT —
+                     the difference is markup, not policy. Here the text is a
+                     CHILD of `role="img"`, so children-presentational prunes
+                     it and the name is the only thing left to say it. In Image
+                     the text is a SIBLING that survives, so concatenating made
+                     a reader hear the failure twice. `role="img"` stays on the
+                     container here because the only child is that text; Image
+                     had to move it onto the icon, whose Retry button the role
+                     pruned outright. */
                   aria-label={
                     currentItem.alt
                       ? `${currentItem.alt}: ${t('image.loadError')}`

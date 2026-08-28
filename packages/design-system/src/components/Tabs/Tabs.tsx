@@ -99,8 +99,10 @@ export interface TabsProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChang
   /**
    * Optional id prefix for controlled tabpanels. When set, the ACTIVE tab gets
    * `aria-controls="${panelIdPrefix}-${itemId}-panel"` — the consumer must
-   * render the matching panel with that id. When omitted, an internal id
-   * (sanitized React `useId`) is generated.
+   * render the matching panel with that id. When omitted, NO tab carries
+   * `aria-controls` at all — the internal id (sanitized React `useId`) named
+   * below is the tab's own id, not a panel's, and pointing at it would be the
+   * dangling IDREF #501 removed.
    *
    * Only the active tab carries it, because consumers render only the active
    * panel; stamping every tab would point N-1 of them at elements that do not
@@ -479,7 +481,10 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
           const active = item.id === activeId;
           const focused = item.id === effectiveFocusedId;
           const tabId = `${prefix}-${item.id}-tab`;
-          const panelId = `${prefix}-${item.id}-panel`;
+          // Only meaningful with a consumer-supplied prefix — without one no
+          // panel carries the id, so building it would just re-create #501's
+          // dangling IDREF.
+          const panelId = panelIdPrefix ? `${prefix}-${item.id}-panel` : undefined;
           const tab = (
             <button
               key={item.id}
