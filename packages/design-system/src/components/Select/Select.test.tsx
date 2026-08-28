@@ -1728,15 +1728,22 @@ describe('listbox state announces from one region, not three rows (#495)', () =>
     // away the only announcement Select had, and the region never carried it.
     expect(region().textContent).toBe('Failed to load options.');
 
-    // ...and announced exactly ONCE. The region and the error row render the
-    // SAME key, and both are in the tree together, so restoring the
-    // announcement recreated Image's double-speak here. The row's copy is aria-hidden; the Retry
-    // button carries the failure so browse mode still explains itself.
-    const row = screen.getByRole('listbox').parentElement!;
-    expect(row.querySelector('[aria-hidden="true"]')!.textContent).toBe('Failed to load options.');
-    expect(
-      screen.getByRole('button', { name: 'Failed to load options. Retry.' }),
-    ).toBeInTheDocument();
+    // ...and reachable exactly ONCE — COUNTED, not asserted piecemeal. The
+    // region and the error row render the same key, so before the row was
+    // hidden a reader met the sentence twice; naming the Retry button with it
+    // merely MOVED the second copy rather than removing it. This gathers
+    // everything a reader can reach and requires exactly one occurrence.
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    const reachable: string[] = [];
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      if (!(n.parentElement as HTMLElement | null)?.closest('[aria-hidden="true"]'))
+        reachable.push(n.textContent ?? '');
+    }
+    for (const el of document.body.querySelectorAll<HTMLElement>('[aria-label]')) {
+      if (!el.closest('[aria-hidden="true"]')) reachable.push(el.getAttribute('aria-label') ?? '');
+    }
+    expect(reachable.filter((text) => /Failed to load options\./.test(text))).toHaveLength(1);
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
   });
 
   it('owns exactly one live region, outside the listbox', async () => {

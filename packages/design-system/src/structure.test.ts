@@ -81,75 +81,74 @@ describe('library structure', () => {
 });
 
 /**
- * Strip comments the way a reader does, LINE BY LINE rather than with one
- * `\/\*[\s\S]*?\*\/` sweep over the file.
+ * Strip comments with a character scanner that tracks string context.
  *
- * The sweep cannot tell a comment opener from the characters `/*` inside a
- * string, and this repo has one: `FileUpload.tsx:162` is
- * `} else if (token.endsWith('/*'))`, testing for a wildcard MIME type. That
- * opened a comment the regex closed at the next `*\/` — the end of a 104-line
- * JSDoc block at line 278 — deleting the real code in between from every scan
- * built on it. Both meta-gates below were reading a component with a hole in
- * it and reporting the file clean.
+ * Three heuristics were tried and each deleted or invented code:
  *
- * A block comment that OPENS its line is a real comment (JSDoc, `{/* … *\/}`).
- * A `/*` appearing mid-line is only treated as one when its `*\/` is on the
- * same line, which is true of an inline `{/* … *\/}` and false of a string.
+ *   1. One file-wide `/\*[\s\S]*?\*\/` sweep could not tell a comment opener
+ *      from the characters `/*` inside a string. `FileUpload.tsx:162` is
+ *      `} else if (token.endsWith('/*'))`, testing for a wildcard MIME type,
+ *      which opened a comment the regex closed 116 lines later at the end of a
+ *      JSDoc block — so both gates read that file with a hole in it.
+ *   2. Replacing it with a LINE-oriented pass fixed that and broke three other
+ *      things: a trailing `//.*` strip truncated any line at the `//` of a URL
+ *      inside a string, a block comment CLOSING mid-line dropped the rest of
+ *      that line, and one OPENING mid-line leaked its body into the scan as a
+ *      false alarm.
+ *
+ * Every one of those is the same root cause — deciding what is a comment
+ * without knowing whether you are inside a string — so this stops guessing and
+ * tracks it. Newlines inside block comments are preserved so line numbers in
+ * failure messages still point at the right place.
+ *
+ * Known limit: a regex literal containing a quote (`/'/g`) reads as a string
+ * opener. Nothing in the library hits it, and the consequence is bounded — the
+ * value walk that consumes this reports an unbalanced value rather than
+ * silently swallowing the file.
  */
 const stripComments = (code: string) => {
-  const out: string[] = [];
-  let inBlock = false;
-  for (const line of code.split('\n')) {
-    if (inBlock) {
-      if (line.includes('*/')) inBlock = false;
-      continue;
-    }
-    if (/^\s*[{(]?\/\*/.test(line)) {
-      if (!line.includes('*/')) {
-        inBlock = true;
+  let out = '';
+  let i = 0;
+  let quote = '';
+  while (i < code.length) {
+    const c = code[i]!;
+    const next = code[i + 1];
+    if (quote) {
+      if (c === '\\') {
+        out += c + (next ?? '');
+        i += 2;
         continue;
       }
-      out.push(line.replace(/\{?\/\*.*?\*\/\}?/g, ''));
+      if (c === quote) quote = '';
+      out += c;
+      i += 1;
       continue;
     }
-    out.push(line.replace(/\/\*.*?\*\//g, ''));
+    if (c === '"' || c === "'" || c === '`') {
+      quote = c;
+      out += c;
+      i += 1;
+      continue;
+    }
+    if (c === '/' && next === '/') {
+      while (i < code.length && code[i] !== '\n') i += 1;
+      continue;
+    }
+    if (c === '/' && next === '*') {
+      i += 2;
+      while (i < code.length && !(code[i] === '*' && code[i + 1] === '/')) {
+        if (code[i] === '\n') out += '\n';
+        i += 1;
+      }
+      i += 2;
+      continue;
+    }
+    out += c;
+    i += 1;
   }
-  return out.join('\n').replace(/\/\/.*$/gm, '');
+  return out;
 };
 
-/**
- * Hard rule 10: `aria-busy` alone never reaches a screen reader.
- *
- * This asserts ONE thing: a file that sets `aria-busy` also carries one of the
- * sanctioned mechanisms. It deliberately does NOT try to decide whether the
- * mechanism is rendered unconditionally, whether it is wired to the same state,
- * or whether it sits somewhere that would prune it.
- *
- * That restraint is the finding, not a shortcut. Two rounds of review were
- * spent on versions that tried:
- *
- *   v1 matched raw text, so a token name inside a `{/* comment *\/}` satisfied
- *      it, and `ErrorState` both entered and passed the check off a JSDoc
- *      `@example` — trigger and pass, zero runtime code.
- *   v2 stripped comments and rejected `cond && <span role="status">`. It caught
- *      that literal shape and nothing else: wrapping the same conditional
- *      region in a <div> or a fragment passed, because the attribute is no
- *      longer in the opening tag the regex reaches. It also produced two false
- *      alarms — one legitimate conditional region anywhere in a file poisoned
- *      an unrelated correct one, and the natural name-fold shape
- *      `<span className={styles.srOnly}>{loading && t('x')}</span>` was
- *      rejected outright.
- *
- * Deciding "is this JSX conditional, and does it wrap that attribute" needs a
- * parser, not a regex. A gate that answers one question correctly is worth more
- * than one that answers two badly and cries wolf on correct code — the false
- * alarms are the part that gets a gate deleted.
- *
- * So: comments stripped on both sides, mechanism must exist. Placement,
- * conditionality and state-wiring are reviewed by humans and pinned by the
- * per-component tests in Switch/StatusMenu/DataTable, which assert the
- * behaviour rather than the shape.
- */
 describe('transient state does not rely on aria-busy alone', () => {
   const sources = components.flatMap((name) => {
     const dir = join(componentsDir, name);
@@ -405,6 +404,11 @@ describe('user-facing strings go through the i18n provider', () => {
           // `alt="Up"` and `placeholder="ID"` were all silent.
           .replace(/\b(px|em|rem|vh|vw|ms|fr|ch|pt|deg)\b/g, ' ')
           .trim();
+        // A URL is not prose. `title={`https://${host}/p`}` otherwise read as
+        // English on the strength of "https" — and with an unbalanced value
+        // now reported rather than skipped, that surfaced as a confident false
+        // alarm on correct code.
+        if (/[a-z][a-z0-9+.-]*:\/\//.test(bare)) return false;
         return /[A-Za-z]{2}/.test(bare);
       };
       const flag = (attr: string, lit: string) => {
@@ -627,7 +631,17 @@ describe('stated contrast ratios still hold', () => {
     // prose ratio sharing a line with an annotation was skipped entirely, one
     // range anywhere on a line exempted every other ratio on it, and `/* */`
     // comments — legal in SCSS — were never read at all.
-    const lines = code.split('\n').filter((l) => /^\s*(\/\/|\/\*|\*)/.test(l));
+    // The COMMENT PORTION of every line, not only lines that begin with a
+    // marker. `.x { color: red; } // contrast is 9.99:1` escaped entirely,
+    // while the docblock claimed every ratio in the file was bound.
+    const lines = code
+      .split('\n')
+      .map((l) => {
+        const at = l.search(/\/\/|\/\*/);
+        if (at >= 0) return l.slice(at);
+        return /^\s*\*/.test(l) ? l : '';
+      })
+      .filter(Boolean);
     const ratios = (l: string) => [...l.matchAll(/(\d+\.\d+):1/g)].map((m) => m[1]!);
     // Built from the ANNOTATION PATTERN, not from whole annotation lines — a
     // bogus figure written after a real annotation on the same line otherwise

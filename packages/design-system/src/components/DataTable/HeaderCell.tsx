@@ -136,8 +136,23 @@ export function HeaderCell<T>({
       // exactly that way — `<span aria-hidden="true">★</span>` reads as text to
       // the DOM and as nothing to a screen reader.
       const probe = el.cloneNode(true) as HTMLElement;
-      for (const hidden of probe.querySelectorAll('[aria-hidden="true"]')) hidden.remove();
-      const next = (probe.textContent ?? '').trim().length > 0;
+      // `[hidden]` as well as aria-hidden: both count in textContent and
+      // neither counts in the accessible name, so a `<span hidden>Revenue</span>`
+      // header measured as named and then computed to nothing — the unnamed
+      // columnheader this whole mechanism exists to prevent, reached from the
+      // other side. The CSS forms (`display:none`, `visibility:hidden`) are NOT
+      // detectable here and remain a stated limit.
+      for (const hidden of probe.querySelectorAll('[aria-hidden="true"], [hidden]'))
+        hidden.remove();
+      // Text is not the only source of a name. A select-all checkbox — the
+      // commonest ReactNode header in a table — contributes its `aria-label`
+      // and no text at all, so measuring textContent alone renamed the column
+      // to its raw id while the correct name sat in the DOM unused. Same for an
+      // `<img alt>` logo header.
+      const next =
+        (probe.textContent ?? '').trim().length > 0 ||
+        probe.querySelector('[aria-label]:not([aria-label=""]), [alt]:not([alt=""]), [title]') !==
+          null;
       setLabelHasText((prev) => (prev === next ? prev : next));
 
       // An icon-only header with no `visibilityLabel` falls back to

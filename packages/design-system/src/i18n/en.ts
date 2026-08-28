@@ -217,7 +217,6 @@ export const en: Messages = {
     noOptions: 'No options',
     loading: 'Loading…',
     loadFailed: 'Failed to load options.',
-    retryAfterError: 'Failed to load options. Retry.',
     retry: 'Retry',
     noResultsFor: (params) => `No results for "${params.query}".`,
     statusLoading: 'Loading options…',

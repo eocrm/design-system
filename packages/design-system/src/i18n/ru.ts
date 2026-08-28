@@ -219,7 +219,6 @@ export const ru: Messages = {
     noOptions: 'Нет вариантов',
     loading: 'Загрузка…',
     loadFailed: 'Не удалось загрузить варианты.',
-    retryAfterError: 'Не удалось загрузить варианты. Повторить.',
     retry: 'Повторить',
     noResultsFor: (params) => `Ничего не найдено по запросу «${params.query}».`,
     statusLoading: 'Загрузка вариантов…',

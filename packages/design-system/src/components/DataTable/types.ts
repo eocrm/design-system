@@ -86,6 +86,15 @@ export interface ColumnDef<T> {
    * separator name. Falls back to a string `header`; card fields with neither
    * stay visually unlabelled, while the visibility menu and resize separators
    * fall back to `id`.
+   *
+   * It does NOT name the column header when the header already has an
+   * accessible name of its own — a ReactNode rendering text, or one labelled by
+   * a descendant's `aria-label` / `alt`, names the `<th>` by content, and this
+   * only steps in when there is nothing there to use. So the header and the
+   * resize separator can legitimately differ: `<span>Rev</span>` with a
+   * `visibilityLabel` of "Revenue (USD)" announces "Rev" as the header and
+   * "Resize Revenue (USD)" as the separator. Set it when the header is
+   * icon-only, where the alternative is the column announcing as its raw `id`.
    */
   visibilityLabel?: string;
   /**

@@ -131,7 +131,8 @@
   // warning does NOT use --color-warning. The bare amber measures
   // 1.52–2.01:1 against all 30 palette backgrounds in light theme — below the
   // 3:1 WCAG 1.4.11 bar for a graphical object, and unreadable as a 3px band on
-  // a tint. --color-warning-strong clears 3:1 against all 30 (min 4.25).
+  // a tint. --color-warning-strong clears 3:1 against all 30 (min 4.25 — no `:1`, because a minimum over 30
+  // backgrounds is not a pair any single @contrast annotation can compute).
   --calendar-event-stripe-accent: var(--color-accent);
   --calendar-event-stripe-success: var(--color-success);
   --calendar-event-stripe-warning: var(--color-warning-strong);

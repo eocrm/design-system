@@ -33,20 +33,14 @@ export function ErrorRow({ error: _error, onRetry }: ErrorRowProps) {
   const t = useTranslation();
   return (
     <li className={styles.stateRow} role="presentation">
-      {/* aria-hidden because the Listbox status region announces this same
-          sentence — the region reads `select.loadFailed`, the same key this
-          row renders — and both sit in the tree at once, so a reader heard it
-          twice in a row. Exactly the defect removed from Image's error tile, recreated
-          here by the fix for Select's silence. Hiding the text alone would
-          leave browse mode a bare "Retry" with no reason for it, so the button
-          states the failure in its accessible name instead. */}
+      {/* aria-hidden because the Listbox status region renders this same key,
+          and both sit in the tree at once, so a reader met the sentence twice.
+          Naming the Retry button with it instead only MOVED that duplicate —
+          the region still said it and the button then said it again. The
+          region's text sits immediately before this list, so browse mode reads
+          "Failed to load options." and then "Retry, button": once each. */}
       <span aria-hidden="true">{t('select.loadFailed')}</span>
-      <button
-        type="button"
-        className={styles.retryButton}
-        aria-label={t('select.retryAfterError')}
-        onClick={onRetry}
-      >
+      <button type="button" className={styles.retryButton} onClick={onRetry}>
         {t('select.retry')}
       </button>
     </li>

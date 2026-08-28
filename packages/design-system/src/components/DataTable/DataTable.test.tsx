@@ -2107,6 +2107,48 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     expect(screen.getByRole('columnheader', { name: 'Starred' })).toBeInTheDocument();
   });
 
+  it.each([
+    [
+      'a select-all checkbox',
+      <input type="checkbox" aria-label="Select all" readOnly />,
+      'Select all',
+    ],
+    ['an img with alt', <img src="x.png" alt="Vendor logo" />, 'Vendor logo'],
+  ])('names a header labelled by a descendant: %s', (_what, node, expected) => {
+    // Text is not the only source of an accessible name. Measuring textContent
+    // alone found these empty and fell back to `column.id`, so a select-all
+    // column — the commonest ReactNode header in a table — announced as
+    // "select_all_col" while the correct name sat in the DOM unused.
+    const cols: ColumnDef<Row>[] = [{ id: 'select_all_col', header: node, cell: () => 'x' }];
+    function Harness() {
+      const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    render(<Harness />);
+    expect(screen.getByRole('columnheader', { name: expected })).toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'select_all_col' })).toBeNull();
+  });
+
+  it('leaves a [hidden] header unnamed rather than falsely named', () => {
+    // `hidden` counts in textContent and not in the accessible name, so
+    // measuring text alone chose aria-labelledby and produced an EMPTY name —
+    // the unnamed columnheader the fallback exists to prevent.
+    const cols: ColumnDef<Row>[] = [
+      {
+        id: 'rev_col',
+        header: <span hidden>Revenue</span>,
+        visibilityLabel: 'Revenue',
+        cell: () => 'x',
+      },
+    ];
+    function Harness() {
+      const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    render(<Harness />);
+    expect(screen.getByRole('columnheader', { name: 'Revenue' })).toBeInTheDocument();
+  });
+
   it('re-measures a header that renders its text asynchronously', async () => {
     // A `header` ReactNode owning its own state updates its subtree WITHOUT
     // re-rendering HeaderCell, so a per-commit measurement read it once as
