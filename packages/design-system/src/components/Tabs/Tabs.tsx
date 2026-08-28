@@ -97,10 +97,15 @@ export interface TabsProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChang
   /** Called with the tab id when the user activates a different tab. Won't fire when re-clicking the already-active tab. */
   onChange: (id: string) => void;
   /**
-   * Optional id prefix for controlled tabpanels. When set, each tab gets
+   * Optional id prefix for controlled tabpanels. When set, the ACTIVE tab gets
    * `aria-controls="${panelIdPrefix}-${itemId}-panel"` — the consumer must
    * render the matching panel with that id. When omitted, an internal id
    * (sanitized React `useId`) is generated.
+   *
+   * Only the active tab carries it, because consumers render only the active
+   * panel; stamping every tab would point N-1 of them at elements that do not
+   * exist. Inactive tabs keep their own `id` for the panel's
+   * `aria-labelledby` to reference.
    */
   panelIdPrefix?: string;
   /**
@@ -490,7 +495,16 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
               type="button"
               role="tab"
               aria-selected={active}
-              aria-controls={panelId}
+              // ONLY on the active tab. Consumers render just the active
+              // panel — that is what this API's shape implies and what the
+              // docs describe — so stamping every tab shipped N-1 dangling
+              // IDREFs that no consumer could fix without eagerly mounting
+              // every panel and firing every panel's queries on first paint
+              // (#501). Inactive tabs keep their `id`, which is what the
+              // panel's `aria-labelledby` points back to, so the relationship
+              // is still expressed in both directions for the pair that
+              // actually exists.
+              aria-controls={active ? panelId : undefined}
               tabIndex={focused ? 0 : -1}
               className={clsx(styles.tab, active && styles.active)}
               // Skip the onChange call when clicking the already-active tab —

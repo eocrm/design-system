@@ -142,7 +142,7 @@ describe('Tabs', () => {
     expect(tabs.map((t) => t.getAttribute('tabindex'))).toEqual(['-1', '0', '-1']);
   });
 
-  it('points each tab at its corresponding panel via aria-controls', () => {
+  it('points the ACTIVE tab at its corresponding panel via aria-controls', () => {
     render(<Tabs items={items} activeId="a" onChange={noop} panelIdPrefix="contact" />);
     const overview = screen.getByRole('tab', { name: 'Overview' });
     expect(overview).toHaveAttribute('aria-controls', 'contact-a-panel');
@@ -946,5 +946,46 @@ describe('Tabs action', () => {
     );
     expect(screen.getByRole('button', { name: 'New deal' })).toBeInTheDocument();
     expect(screen.getAllByRole('tab')).toHaveLength(3);
+  });
+});
+
+describe('aria-controls points only at a panel that exists (#501)', () => {
+  it('stamps aria-controls on the active tab and no other', () => {
+    // Consumers render only the active panel, so stamping every tab shipped
+    // N-1 dangling IDREFs that no consumer could fix without eagerly mounting
+    // every panel — and firing every panel's queries on first paint.
+    render(
+      <Tabs
+        items={[
+          { id: 'a', label: 'A' },
+          { id: 'b', label: 'B' },
+          { id: 'c', label: 'C' },
+        ]}
+        activeId="b"
+        onChange={() => {}}
+        panelIdPrefix="demo"
+        aria-label="Sections"
+      />,
+    );
+    const tabs = screen.getAllByRole('tab');
+    expect(tabs.map((t) => t.getAttribute('aria-controls'))).toEqual([null, 'demo-b-panel', null]);
+  });
+
+  it('leaves every tab its own id, so a panel can still label itself', () => {
+    render(
+      <Tabs
+        items={[
+          { id: 'a', label: 'A' },
+          { id: 'b', label: 'B' },
+        ]}
+        activeId="a"
+        onChange={() => {}}
+        panelIdPrefix="demo"
+        aria-label="Sections"
+      />,
+    );
+    for (const tab of screen.getAllByRole('tab')) {
+      expect(tab.getAttribute('id')).toBeTruthy();
+    }
   });
 });
