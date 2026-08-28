@@ -224,3 +224,30 @@ describe('Image', () => {
     expect(getImg(container)).toBe(imgNode); // error: still the same node
   });
 });
+
+describe('the error tile does not prune its own contents (#496)', () => {
+  it('keeps role="img" on a leaf, so the Retry control stays exposed', () => {
+    // `role="img"` is Children Presentational — as a container it removed its
+    // descendants from the accessibility tree, so the Retry button was a
+    // focusable control with no role and no name. Testing Library computes
+    // roles from the DOM and does not model that pruning, which is why the
+    // existing Retry assertion passed throughout; this asserts the STRUCTURE
+    // instead, which is the part a browser acts on.
+    const { container } = render(<Image src={SRC} alt="A photo" />);
+    fireEvent.error(getImg(container));
+
+    const named = container.querySelector('[role="img"]');
+    expect(named, 'the error tile names itself').not.toBeNull();
+    expect(
+      named!.querySelector('button'),
+      'nothing interactive may sit inside the role="img" subtree',
+    ).toBeNull();
+  });
+
+  it('still names the failure, and still offers Retry', () => {
+    const { container, getByRole } = render(<Image src={SRC} alt="A photo" />);
+    fireEvent.error(getImg(container));
+    expect(getByRole('img', { name: 'A photo: Image failed to load' })).not.toBeNull();
+    expect(getByRole('button', { name: 'Retry' })).not.toBeNull();
+  });
+});

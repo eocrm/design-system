@@ -338,7 +338,17 @@ export function Lightbox({
               <div
                 className={styles.stageError}
                 role="img"
-                aria-label={`${currentItem.alt}: ${t('lightbox.previewUnavailable')}`}
+                /* Guarded, unlike before: an item with an empty `alt` produced
+                   a name of ": Preview unavailable", leading with punctuation.
+                   `role="img"` is safe HERE — the only child is text the label
+                   already repeats, so children-presentational prunes nothing a
+                   user needed. Do NOT copy this shape onto a tile containing a
+                   control: that is what broke Image's Retry button (#496). */
+                aria-label={
+                  currentItem.alt
+                    ? `${currentItem.alt}: ${t('lightbox.previewUnavailable')}`
+                    : t('lightbox.previewUnavailable')
+                }
               >
                 {t('lightbox.previewUnavailable')}
               </div>
@@ -361,9 +371,10 @@ export function Lightbox({
                 <div
                   className={styles.stageError}
                   role="img"
-                  /* Concatenated for the same reason as Image's error tile,
-                     and to match the previewUnavailable branch 25 lines up
-                     which already did this. */
+                  /* Concatenated for the same reason as Image's error tile.
+                     `role="img"` stays on the container here because the only
+                     child is text the label repeats — unlike Image, whose tile
+                     holds a Retry button that the role pruned outright. */
                   aria-label={
                     currentItem.alt
                       ? `${currentItem.alt}: ${t('image.loadError')}`
