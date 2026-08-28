@@ -2149,7 +2149,10 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     expect(screen.getByRole('columnheader', { name: 'Revenue' })).toBeInTheDocument();
   });
 
-  it('PROBE re-measures when [hidden] is removed asynchronously', async () => {
+  it('re-measures when [hidden] is lifted asynchronously', async () => {
+    // The observer watched only `aria-hidden`, but `measure` also reads
+    // `hidden` — so a header revealed at a breakpoint stayed named by its
+    // column id.
     function AsyncHidden() {
       const [h, setH] = useState(true);
       useEffect(() => {
@@ -2172,7 +2175,9 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     });
   });
 
-  it('PROBE re-measures when [alt] is filled in asynchronously', async () => {
+  it('re-measures when [alt] is filled in asynchronously', async () => {
+    // Same gap for the descendant name sources: an `alt` arriving after a
+    // fetch changed the accessible name with nothing observing it.
     function AsyncAlt() {
       const [a, setA] = useState('');
       useEffect(() => {

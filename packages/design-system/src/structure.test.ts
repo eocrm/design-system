@@ -2,6 +2,7 @@
 // is re-exported from src/index.ts" rule from packages/design-system/CLAUDE.md
 // so a missing test/export fails CI instead of being caught only at review.
 
+import ts from 'typescript';
 import { readdirSync, existsSync, readFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -81,90 +82,83 @@ describe('library structure', () => {
 });
 
 /**
- * Strip comments with a character scanner that tracks string context.
+ * Strip comments using the TypeScript PARSER.
  *
- * Three heuristics were tried and each deleted or invented code:
+ * Five hand-rolled versions preceded this and every one had a defect, none
+ * found by the gate itself:
  *
- *   1. One file-wide `/\*[\s\S]*?\*\/` sweep could not tell a comment opener
- *      from the characters `/*` inside a string. `FileUpload.tsx:162` is
- *      `} else if (token.endsWith('/*'))`, testing for a wildcard MIME type,
- *      which opened a comment the regex closed 116 lines later at the end of a
- *      JSDoc block — so both gates read that file with a hole in it.
- *   2. Replacing it with a LINE-oriented pass fixed that and broke three other
- *      things: a trailing `//.*` strip truncated any line at the `//` of a URL
- *      inside a string, a block comment CLOSING mid-line dropped the rest of
- *      that line, and one OPENING mid-line leaked its body into the scan as a
- *      false alarm.
+ *   1. A file-wide `/\*[\s\S]*?\*\/` sweep. `FileUpload.tsx:162` is
+ *      `} else if (token.endsWith('/*'))`, so a `/*` in a STRING opened a
+ *      comment closed 116 lines later — both gates read that file with a hole
+ *      in it. BLINDNESS.
+ *   2. A line-oriented pass. Fixed that, broke three: a trailing `//` strip
+ *      truncated lines at the `//` of a URL, a block comment closing mid-line
+ *      dropped the rest of that line, one opening mid-line leaked its body in.
+ *   3. A character scanner tracking quote state. An apostrophe in JSX text
+ *      (`<p>don't</p>`) opened a phantom string that swallowed the next
+ *      comment. FALSE ALARM.
+ *   4. The same plus "a newline ends a `'` or `\"` string". Fixed the
+ *      apostrophe; still could not see JSX TEXT, so `<p>https://x.com</p>`
+ *      had a `//` outside any string and the rest of that line was deleted.
+ *      BLINDNESS again, the same class as (1) by a different route.
+ *   5. `ts.createScanner`. Exact for strings and regexes, but a raw token
+ *      scanner has no JSX context — the parser drives that — so it read the
+ *      same JSX text as a comment.
  *
- * Every one of those is the same root cause — deciding what is a comment
- * without knowing whether you are inside a string — so this stops guessing and
- * tracks it. Newlines inside block comments are preserved so line numbers in
- * failure messages still point at the right place.
+ * The common thread: knowing where a comment starts requires the grammar, and
+ * each version approximated it slightly better while still guessing. The
+ * compiler is already a devDependency, so this stops guessing. The parser
+ * yields the exact spans of string literals, template parts, regex literals
+ * and JSX text; a `/` outside all of them genuinely starts a comment.
  *
- * Known limits, both bounded and both false-alarm rather than blindness:
- * a regex literal containing a quote (`/'/g`) reads as a string opener, though
- * the newline rule above closes it again within the line; and the CONTENT of a
- * template literal is scanned, so a string that itself contains
- * `aria-label="…"` is reported. The second is arguably correct — such a string
- * is usually generating markup — and neither can hide a real violation, since
- * an unterminated string still emits every character it covers. Nothing in the
- * library hits either today.
+ * Comments are blanked, not removed, so every other character keeps its offset
+ * and line numbers in failure messages still point where they should.
  */
 const stripComments = (code: string) => {
-  let out = '';
-  let i = 0;
-  let quote = '';
-  while (i < code.length) {
-    const c = code[i]!;
-    const next = code[i + 1];
-    if (quote) {
-      // A newline ENDS a `'` or `"` string, because neither can span lines in
-      // JavaScript — so a quote still open at one was never a string. That
-      // kills the whole phantom-string class in one rule instead of trying to
-      // recognise its causes: an apostrophe in JSX text (`<p>don't</p>`, which
-      // five components already write) and a regex literal containing a quote
-      // (`/'/g`) both opened a span that swallowed the next comment, leaking it
-      // into the scan as a FALSE ALARM on correct code. Template literals are
-      // exempt — they are the only kind that legitimately spans lines.
-      if (c === '\n' && quote !== '`') {
-        quote = '';
-        out += c;
-        i += 1;
-        continue;
-      }
-      if (c === '\\') {
-        out += c + (next ?? '');
-        i += 2;
-        continue;
-      }
-      if (c === quote) quote = '';
-      out += c;
-      i += 1;
-      continue;
+  const sourceFile = ts.createSourceFile(
+    'probe.tsx',
+    code,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TSX,
+  );
+  // Bytes covered by a literal or by JSX text, where `//` and `/*` are content.
+  const literal = new Uint8Array(code.length);
+  const visit = (node: ts.Node) => {
+    if (
+      ts.isStringLiteral(node) ||
+      ts.isJsxText(node) ||
+      ts.isRegularExpressionLiteral(node) ||
+      ts.isNoSubstitutionTemplateLiteral(node) ||
+      ts.isTemplateHead(node) ||
+      ts.isTemplateMiddle(node) ||
+      ts.isTemplateTail(node)
+    ) {
+      literal.fill(1, node.getStart(sourceFile), node.getEnd());
     }
-    if (c === '"' || c === "'" || c === '`') {
-      quote = c;
-      out += c;
-      i += 1;
-      continue;
+    node.forEachChild(visit);
+  };
+  visit(sourceFile);
+
+  const out = code.split('');
+  const blank = (from: number, to: number) => {
+    for (let i = from; i < to && i < out.length; i += 1) if (out[i] !== '\n') out[i] = ' ';
+  };
+  for (let i = 0; i < code.length; i += 1) {
+    if (code[i] !== '/' || literal[i]) continue;
+    if (code[i + 1] === '/') {
+      let j = i;
+      while (j < code.length && code[j] !== '\n') j += 1;
+      blank(i, j);
+      i = j;
+    } else if (code[i + 1] === '*') {
+      let j = i + 2;
+      while (j < code.length && !(code[j] === '*' && code[j + 1] === '/')) j += 1;
+      blank(i, j + 2);
+      i = j + 1;
     }
-    if (c === '/' && next === '/') {
-      while (i < code.length && code[i] !== '\n') i += 1;
-      continue;
-    }
-    if (c === '/' && next === '*') {
-      i += 2;
-      while (i < code.length && !(code[i] === '*' && code[i + 1] === '/')) {
-        if (code[i] === '\n') out += '\n';
-        i += 1;
-      }
-      i += 2;
-      continue;
-    }
-    out += c;
-    i += 1;
   }
-  return out;
+  return out.join('');
 };
 
 describe('transient state does not rely on aria-busy alone', () => {
@@ -429,6 +423,8 @@ describe('user-facing strings go through the i18n provider', () => {
         if (/[a-z][a-z0-9+.-]*:\/\//.test(bare)) return false;
         return /[A-Za-z]{2}/.test(bare);
       };
+      // Measured against the real distribution: see the note on the walk below.
+      const SCAN_BOUND = 2000;
       const flag = (attr: string, lit: string) => {
         if (!isKey(lit) && isEnglish(lit)) offenders.push(`${attr}: "${lit}"`);
       };
@@ -464,13 +460,16 @@ describe('user-facing strings go through the i18n provider', () => {
         // the walk is capped and a value that does not close is surfaced
         // instead of swallowing the rest of the file.
         //
-        // "No real value approaches 400" was NOT true when first written: the
-        // longest braced attribute value in this library is 346 characters
-        // (DateRangePicker's `placeholder`), 86% of the cap. One more branch
-        // would have pushed it over and it would have dropped out of the scan
-        // with no output at all. A bound whose overflow is silent is the same
-        // defect as a gate that cannot fail, so overflow is now an offender.
-        for (; j < body.length && j - i < 400; j++) {
+        // The bound is MEASURED, not guessed. "No real value approaches 400"
+        // was false when first written — DateRangePicker's `placeholder` was
+        // already at 346 — and blanking comments rather than deleting them
+        // (which keeps offsets, so failure line numbers stay correct) inflates
+        // every value that contains one: Slider's `aria-label` carries three
+        // comment lines and measures 472. The longest today is that 472, so
+        // 2000 leaves room without being unbounded. A bound whose overflow is
+        // silent is the same defect as a gate that cannot fail, so overflow is
+        // reported.
+        for (; j < body.length && j - i < SCAN_BOUND; j++) {
           const c = body[j]!;
           if (quote) {
             if (c === '\\') j++;
@@ -482,7 +481,7 @@ describe('user-facing strings go through the i18n provider', () => {
           else if (c === '}' && --depth === 0) break;
         }
         if (depth !== 0) {
-          offenders.push(`${attr}: <value did not close within the ${400}-char scan bound>`);
+          offenders.push(`${attr}: <value did not close within the ${SCAN_BOUND}-char scan bound>`);
           continue;
         }
         const value = body.slice(i + 1, j);

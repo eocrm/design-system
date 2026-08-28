@@ -190,7 +190,12 @@ export function HeaderCell<T>({
       childList: true,
       subtree: true,
       characterData: true,
-      attributeFilter: ['aria-hidden'],
+      // EVERY attribute `measure` reads, not just aria-hidden. It also consults
+      // `hidden` and the descendant name sources, so an `alt` filled in after a
+      // fetch, or a `hidden` lifted at a breakpoint, changed the answer without
+      // notifying — leaving the header named by its column id exactly as the
+      // per-commit version did.
+      attributeFilter: ['aria-hidden', 'hidden', 'alt', 'aria-label', 'title'],
     });
     return () => observer.disconnect();
   }, [column.id, column.visibilityLabel]);
