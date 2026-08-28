@@ -2129,6 +2129,31 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     expect(screen.queryByRole('columnheader', { name: 'select_all_col' })).toBeNull();
   });
 
+  it('does not treat a bare title as a name — it computes to nothing', () => {
+    // `title` alone yields an EMPTY accessible name, so counting it as
+    // evidence the header names itself chose aria-labelledby and produced an
+    // unnamed columnheader — the defect the fallback exists to prevent.
+    // Verified with computeAccessibleName rather than assumed.
+    const cols: ColumnDef<Row>[] = [
+      {
+        id: 'rev_internal',
+        header: (
+          <span title="Sort by revenue">
+            <i aria-hidden="true">*</i>
+          </span>
+        ),
+        visibilityLabel: 'Revenue',
+        cell: () => 'x',
+      },
+    ];
+    function Harness() {
+      const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    render(<Harness />);
+    expect(screen.getByRole('columnheader', { name: 'Revenue' })).toBeInTheDocument();
+  });
+
   it('leaves a [hidden] header unnamed rather than falsely named', () => {
     // `hidden` counts in textContent and not in the accessible name, so
     // measuring text alone chose aria-labelledby and produced an EMPTY name —

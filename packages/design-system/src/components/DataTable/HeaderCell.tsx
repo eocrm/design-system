@@ -149,10 +149,14 @@ export function HeaderCell<T>({
       // and no text at all, so measuring textContent alone renamed the column
       // to its raw id while the correct name sat in the DOM unused. Same for an
       // `<img alt>` logo header.
+      // `aria-label` and `alt` only. `title` was here too and is WRONG: it
+      // yields an empty accessible name on its own, so counting it as a name
+      // chose `aria-labelledby` and produced the unnamed columnheader this
+      // fallback exists to prevent. Measured, not assumed — `computeAccessibleName`
+      // on a `<span title="…">`-only header returns "".
       const next =
         (probe.textContent ?? '').trim().length > 0 ||
-        probe.querySelector('[aria-label]:not([aria-label=""]), [alt]:not([alt=""]), [title]') !==
-          null;
+        probe.querySelector('[aria-label]:not([aria-label=""]), [alt]:not([alt=""])') !== null;
       setLabelHasText((prev) => (prev === next ? prev : next));
 
       // An icon-only header with no `visibilityLabel` falls back to
@@ -195,7 +199,7 @@ export function HeaderCell<T>({
       // fetch, or a `hidden` lifted at a breakpoint, changed the answer without
       // notifying — leaving the header named by its column id exactly as the
       // per-commit version did.
-      attributeFilter: ['aria-hidden', 'hidden', 'alt', 'aria-label', 'title'],
+      attributeFilter: ['aria-hidden', 'hidden', 'alt', 'aria-label'],
     });
     return () => observer.disconnect();
   }, [column.id, column.visibilityLabel]);
