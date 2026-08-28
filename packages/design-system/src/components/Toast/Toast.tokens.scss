@@ -37,6 +37,7 @@
   --toast-bg-warning: var(--color-bg);
   --toast-fg-warning: var(--color-fg);
 
+  // @contrast --color-warning on --color-bg = 2.14:1 light
   // warning uses --color-warning-strong: #ff991f measures 2.14:1 here, below
   // WCAG AA for text and below 1.4.11's 3:1 for a graphical object. See #481.
   --toast-icon-warning: var(--color-warning-strong);

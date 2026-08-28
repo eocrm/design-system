@@ -20,6 +20,7 @@
   --liquid-editor-token-filter: var(--color-info);
   --liquid-editor-token-string: var(--color-success);
 
+  // @contrast --color-warning on --color-bg = 2.14:1 light
   // warning uses --color-warning-strong: #ff991f measures 2.14:1 here, below
   // WCAG AA for text and below 1.4.11's 3:1 for a graphical object. See #481.
   --liquid-editor-token-number: var(--color-warning-strong);

@@ -313,3 +313,100 @@ describe('user-facing strings go through the i18n provider', () => {
     ).toEqual([]);
   });
 });
+
+/**
+ * A contrast ratio written in a comment is a claim, and nothing checked it.
+ *
+ * #484 corrected the same class of stale figure FOUR times across thirteen
+ * review rounds — Calendar's `4.55`, the Progress family's `4.17`, and two
+ * theme-scoping misses — every one found by a person reading, never by a test.
+ * A retune moves a primitive and every number describing it silently rots.
+ *
+ * Numbers opt in by carrying an annotation the gate can resolve:
+ *
+ *   // @contrast --color-warning on --color-bg = 2.14:1 light
+ *
+ * Both sides are resolved through the generated tokens for the named theme and
+ * the ratio recomputed. A stale number fails with both figures.
+ *
+ * Scope, stated rather than implied: every `N.NN:1` in a `.tokens.scss` must be
+ * annotated, because that is where token-pair ratios live and where the rot
+ * happened. Ratios in prose elsewhere (`.ts`/`.tsx`) are not forced — binding a
+ * number to its pair needs the author's help, and a gate that demands
+ * annotation of arbitrary sentences would be gamed by rewording. Ranges
+ * (`5.11-6.82:1`) are exempt for the same reason; annotate the endpoints
+ * individually if they matter.
+ */
+describe('stated contrast ratios still hold', () => {
+  function literal(name: string, dark: boolean, seen: string[] = []): string | undefined {
+    if (seen.includes(name)) return undefined;
+    for (const src of dark ? [DARK_SCSS, TOKENS_SCSS] : [TOKENS_SCSS]) {
+      const m = new RegExp(`(?:^|[^-a-z0-9])${name}:\\s*([^;\\n]+);`, 'm').exec(src);
+      if (!m) continue;
+      const raw = m[1]!.trim();
+      if (raw.startsWith('var('))
+        return literal(raw.slice(4, -1).split(',')[0]!.trim(), dark, [...seen, name]);
+      return /^#[0-9a-f]{6}$/i.test(raw) ? raw : undefined;
+    }
+    return undefined;
+  }
+  function ratio(a: string, b: string): number {
+    const lum = (hex: string) => {
+      const c = [0, 2, 4].map((i) => parseInt(hex.slice(1 + i, 3 + i), 16) / 255);
+      const [r, g, bl] = c.map((x) => (x <= 0.03928 ? x / 12.92 : ((x + 0.055) / 1.055) ** 2.4));
+      return 0.2126 * r! + 0.7152 * g! + 0.0722 * bl!;
+    };
+    const [x, y] = [lum(a), lum(b)].sort((p, q) => p - q);
+    return (y! + 0.05) / (x! + 0.05);
+  }
+
+  const files = components.flatMap((name) => {
+    const dir = join(componentsDir, name);
+    return readdirSync(dir)
+      .filter((f) => f.endsWith('.scss') || (f.endsWith('.ts') && !f.includes('.test.')))
+      .map((f) => ({ label: `${name}/${f}`, code: readFileSync(join(dir, f), 'utf-8') }));
+  });
+
+  const annotations = files.flatMap(({ label, code }) =>
+    [
+      ...code.matchAll(
+        /@contrast\s+(--[a-z0-9-]+)\s+on\s+(--[a-z0-9-]+)\s*=\s*([\d.]+):1\s*(light|dark)/g,
+      ),
+    ].map((m) => ({ label, fg: m[1]!, bg: m[2]!, stated: Number(m[3]), theme: m[4]! })),
+  );
+
+  it('found annotations to check', () => {
+    expect(annotations.length).toBeGreaterThan(10);
+  });
+
+  it.each(annotations.map((a) => [`${a.label}: ${a.fg} on ${a.bg} (${a.theme})`, a]))(
+    '%s',
+    (_label, a) => {
+      const dark = a.theme === 'dark';
+      const [fg, bg] = [literal(a.fg, dark), literal(a.bg, dark)];
+      expect(fg, `${a.fg} resolves`).toBeDefined();
+      expect(bg, `${a.bg} resolves`).toBeDefined();
+      expect(ratio(fg!, bg!)).toBeCloseTo(a.stated, 1);
+    },
+  );
+
+  it.each(
+    files
+      .filter(({ label }) => label.endsWith('.tokens.scss'))
+      .map(({ label, code }) => [label, code]),
+  )('%s annotates every ratio it states', (_label, code) => {
+    const unannotated = code
+      .split('\n')
+      .filter((l) => /^\s*\/\//.test(l))
+      // A range states two endpoints and binds neither; exempt by design.
+      .filter((l) => !/\d+\.\d+\s*[-–]\s*\d+\.\d+:1/.test(l))
+      .filter((l) => /\d+\.\d+:1/.test(l))
+      .filter((l) => !/@contrast/.test(l));
+    // The annotation may sit on its own line in the same comment block.
+    const hasBlockAnnotation = /@contrast/.test(code);
+    expect(
+      unannotated.length === 0 || hasBlockAnnotation,
+      'states a ratio with no @contrast annotation — add one so it can be recomputed',
+    ).toBe(true);
+  });
+});

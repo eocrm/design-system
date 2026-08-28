@@ -70,6 +70,9 @@
   --calendar-event-chip-bg-warning: var(--color-warning-bg-subtle);
 
   // warning uses --color-warning-strong, not --color-warning: #ff991f measures
+  // @contrast --color-warning on --color-warning-bg-subtle = 2.01:1 light
+  // @contrast --color-warning-fg on --color-warning = 6.60:1 light
+  // @contrast --color-warning-fg on --color-warning-strong = 2.37:1 light
   // 2.01:1 on the light tint (and 2.14:1 as a dot on --color-bg), below WCAG AA
   // for text and below 1.4.11's 3:1 for a graphical object. The strong variant
   // clears both. Dark is unaffected — the two resolve to the same value there.
