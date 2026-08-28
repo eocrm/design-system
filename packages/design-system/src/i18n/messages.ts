@@ -16,6 +16,14 @@ export interface Messages {
     sidebar: string;
   };
   confirmationPopover: {
+    /**
+     * Announced from a polite live region while an async confirm is in flight.
+     *
+     * The pending state used to reach a screen reader not at all: no
+     * `aria-busy`, no region, and the spinner explicitly `aria-hidden`. The
+     * user activated Confirm and got silence until the popover closed (#497).
+     */
+    pending: string;
     /** Label on the secondary "Cancel" button inside the confirmation popover. */
     cancel: string;
     /** Label on the primary "Confirm" button inside the confirmation popover. */

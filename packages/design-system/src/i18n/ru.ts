@@ -14,6 +14,7 @@ export const ru: Messages = {
     sidebar: 'Боковая навигация',
   },
   confirmationPopover: {
+    pending: 'Выполняется…',
     cancel: 'Отмена',
     confirm: 'Подтвердить',
   },

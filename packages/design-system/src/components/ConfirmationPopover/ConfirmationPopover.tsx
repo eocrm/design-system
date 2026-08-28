@@ -216,6 +216,14 @@ export function ConfirmationPopover({
     });
   }, [open, initialFocusRef]);
 
+  // Polite live region text, computed in an effect rather than during render so
+  // a popover that opens ALREADY pending still announces — mounting the region
+  // and its text together announces nothing. See CLAUDE.md Hard rule 10.
+  const [pendingText, setPendingText] = useState('');
+  useEffect(() => {
+    setPendingText(pending ? t('confirmationPopover.pending') : '');
+  }, [pending, t]);
+
   const handleConfirm = useCallback(() => {
     if (pending) return;
     const result = onConfirm();
@@ -236,9 +244,12 @@ export function ConfirmationPopover({
   }, [pending, onConfirm, setOpen]);
 
   const handleCancel = useCallback(() => {
+    // Required now that the button is aria-disabled rather than natively
+    // disabled: aria-disabled preserves pointer events and focusability.
+    if (pending) return;
     onCancel?.();
     setOpen(false);
-  }, [onCancel, setOpen]);
+  }, [pending, onCancel, setOpen]);
 
   return (
     <Popover open={open} onOpenChange={handleOpenChange}>
@@ -256,12 +267,24 @@ export function ConfirmationPopover({
               {description}
             </p>
           )}
+          {/* Rendered unconditionally; only the text mutates. The spinner
+              below is aria-hidden and `aria-busy` alone reaches no screen
+              reader, so before this the pending state was silent from the
+              moment the user confirmed until the popover closed (#497). */}
+          <span role="status" aria-live="polite" className={styles.srOnly}>
+            {pendingText}
+          </span>
           <Cluster justify="end" gap="sm">
             <Button
               ref={cancelRef}
               variant="secondary"
               size="sm"
-              disabled={pending}
+              // aria-disabled, not native `disabled`: the latter drops the
+              // button out of the tab order the moment the user confirms,
+              // leaving focus on a detached element. aria-disabled does NOT
+              // block activation (see Button's own anti-patterns), so both
+              // handlers guard on `pending` themselves.
+              aria-disabled={pending || undefined}
               onClick={handleCancel}
             >
               {t('confirmationPopover.cancel')}
@@ -269,7 +292,7 @@ export function ConfirmationPopover({
             <Button
               variant={variant === 'danger' ? 'danger' : 'primary'}
               size="sm"
-              disabled={pending}
+              aria-disabled={pending || undefined}
               onClick={handleConfirm}
             >
               {pending && <span className={styles.spinner} aria-hidden="true" />}

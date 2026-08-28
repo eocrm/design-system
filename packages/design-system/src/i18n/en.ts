@@ -13,6 +13,7 @@ export const en: Messages = {
     sidebar: 'Sidebar navigation',
   },
   confirmationPopover: {
+    pending: 'Working…',
     cancel: 'Cancel',
     confirm: 'Confirm',
   },
