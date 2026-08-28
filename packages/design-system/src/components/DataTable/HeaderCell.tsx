@@ -125,19 +125,48 @@ export function HeaderCell<T>({
   // whatever actually rendered. Starts `true` so the first paint prefers the
   // span over a column id.
   const [labelHasText, setLabelHasText] = useState(true);
+  const warnedNoName = useRef(false);
   useEffect(() => {
     const el = labelRef.current;
     // aria-hidden subtrees are stripped first: `textContent` counts them, but
     // the accessible name does not, and an icon-only header is written exactly
     // that way — `<span aria-hidden="true">★</span>` reads as text to the DOM
     // and as nothing to a screen reader.
+    //
+    // The clone happens ONLY when something is actually hidden, which is the
+    // uncommon case. This effect has no dep array — it has to re-measure
+    // whatever rendered — so it runs on every commit, and DataTable re-renders
+    // on every pointermove during a column drag. Cloning unconditionally meant
+    // a subtree clone per header cell per frame; a plain string header now does
+    // no clone at all.
     let next = false;
     if (el) {
-      const probe = el.cloneNode(true) as HTMLElement;
-      for (const hidden of probe.querySelectorAll('[aria-hidden="true"]')) hidden.remove();
-      next = (probe.textContent ?? '').trim().length > 0;
+      next = el.querySelector('[aria-hidden="true"]')
+        ? (() => {
+            const probe = el.cloneNode(true) as HTMLElement;
+            for (const hidden of probe.querySelectorAll('[aria-hidden="true"]')) hidden.remove();
+            return (probe.textContent ?? '').trim().length > 0;
+          })()
+        : (el.textContent ?? '').trim().length > 0;
     }
     setLabelHasText((prev) => (prev === next ? prev : next));
+
+    // An icon-only header with no `visibilityLabel` falls back to `column.id`,
+    // so a raw developer identifier gets read aloud. That is an authoring bug
+    // with no visible symptom — nothing looks wrong on screen — so say it once
+    // rather than leaving it to be found by a screen-reader user.
+    if (
+      process.env.NODE_ENV !== 'production' &&
+      !next &&
+      !column.visibilityLabel &&
+      !warnedNoName.current
+    ) {
+      warnedNoName.current = true;
+      console.warn(
+        `[DataTable] column "${column.id}" renders no header text and has no visibilityLabel, ` +
+          `so its column header announces as the column id. Add visibilityLabel.`,
+      );
+    }
   });
 
   const sortableResult = useSortable({

@@ -2107,6 +2107,23 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     expect(screen.getByRole('columnheader', { name: 'Starred' })).toBeInTheDocument();
   });
 
+  it('warns in dev when a header would announce as its column id', () => {
+    // The fallback is a last resort and it degrades to a raw identifier, which
+    // has no visible symptom — the column looks fine and only a screen-reader
+    // user hears the bug. So it warns once.
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const iconOnly: ColumnDef<Row>[] = [
+      { id: 'internal_star_id', header: <span aria-hidden="true">★</span>, cell: () => 'x' },
+    ];
+    function Harness() {
+      const instance = useDataTable<Row>({ data: rows, columns: iconOnly, getRowId });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    render(<Harness />);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('internal_star_id'));
+    warn.mockRestore();
+  });
+
   it('names a JSX header by its rendered text, not by the column id', () => {
     // The icon-only fix keyed off `typeof header === 'string'`, which made
     // EVERY ReactNode header take `aria-label={columnLabel}` — and with no
