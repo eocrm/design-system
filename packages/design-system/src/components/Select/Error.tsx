@@ -1,3 +1,4 @@
+import { useTranslation } from '../../i18n/useTranslation';
 import styles from './Select.module.scss';
 
 /**
@@ -18,8 +19,10 @@ export interface ErrorRowProps {
 
 /**
  * Default error-state row, rendered inside the listbox when an async
- * `loadOptions` request rejects. Carries `role="alert"` so screen readers
- * announce the failure as soon as it appears. The Retry button calls back
+ * `loadOptions` request rejects. `role="presentation"` like its siblings —
+ * it used to carry `role="alert"`, which is an `aria-required-children`
+ * deviation inside a `role="listbox"` and was a third mechanism for one
+ * concern (#495). The Retry button calls back
  * into the async hook's `retry()`, which bumps the retry token and
  * re-fires the current query with no debounce delay.
  */
@@ -27,11 +30,12 @@ export function ErrorRow({ error: _error, onRetry }: ErrorRowProps) {
   // `error` stays on the prop surface so the props match `renderError(err,
   // retry)`. The default body intentionally doesn't show the raw error.
   void _error;
+  const t = useTranslation();
   return (
-    <li className={styles.stateRow} role="alert">
-      <span>Failed to load options.</span>
+    <li className={styles.stateRow} role="presentation">
+      <span>{t('select.loadFailed')}</span>
       <button type="button" className={styles.retryButton} onClick={onRetry}>
-        Retry
+        {t('select.retry')}
       </button>
     </li>
   );

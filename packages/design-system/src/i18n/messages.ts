@@ -412,6 +412,27 @@ export interface Messages {
     search: string;
     /** Copy shown when the Select listbox has no options matching the filter. */
     noOptions: string;
+    /** Row text while an async `loadOptions` request is in flight. */
+    loading: string;
+    /** Row text when `loadOptions` rejects. */
+    loadFailed: string;
+    /** Retry control inside the error row. */
+    retry: string;
+    /** Empty-state copy when a search query matched nothing. */
+    noResultsFor: (params: { query: string }) => string;
+    /**
+     * Announced from ONE live region the Select root owns, replacing the
+     * per-row `aria-live` the three state rows used to carry.
+     *
+     * Those rows put `aria-live` on `<li role="presentation">`. `aria-live` is
+     * a GLOBAL attribute, so ARIA's presentational-role conflict resolution
+     * discarded the `presentation` — exposing the rows as list items inside a
+     * `role="listbox"`, an `aria-required-children` deviation — and the region
+     * mounted together with its text, which most screen readers do not
+     * announce. Both defects at once, and the error row took a third route
+     * with `role="alert"` on an `<li>` (#495).
+     */
+    statusLoading: string;
     /** Accessible name for a multi-select trigger, listing what is currently selected. */
     selectedPrefix: (params: { labels: string }) => string;
     /** Accessible name for a chips trigger with nothing selected yet. */

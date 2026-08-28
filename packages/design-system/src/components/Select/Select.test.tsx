@@ -1,4 +1,5 @@
 import { act, configure, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { I18nProvider } from '../../i18n/I18nProvider';
 import userEvent from '@testing-library/user-event';
 import React, { createRef } from 'react';
 import { Select, type SelectOption } from './Select';
@@ -923,13 +924,17 @@ describe('Select — async loadOptions', () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(300);
     });
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    // Two nodes now say "loading": the visible row, and the listbox's single
+    // live region (#495). Scope to the row — the region has its own test.
+    const visibleLoading = () =>
+      screen.queryAllByText(/loading/i).filter((el) => el.closest('[role="status"]') === null);
+    expect(visibleLoading()).toHaveLength(1);
     await act(async () => {
       resolveFn([{ value: 'a', label: 'A' }]);
       await vi.runAllTimersAsync();
     });
     await waitFor(() => {
-      expect(screen.queryByText(/loading/i)).toBeNull();
+      expect(visibleLoading()).toHaveLength(0);
       expect(screen.getByRole('option', { name: 'A' })).toBeInTheDocument();
     });
   });
@@ -1615,5 +1620,92 @@ describe('Select — Field label integration', () => {
       </Field>,
     );
     expect(screen.getByRole('combobox', { name: 'Status' })).toBeInTheDocument();
+  });
+});
+
+describe('listbox state announces from one region, not three rows (#495)', () => {
+  // Same shim as the async-loadOptions block above: RTL's asyncWrapper drains
+  // with a setTimeout(0) that Vitest fake timers will not fire on their own.
+  beforeEach(() => {
+    vi.useFakeTimers();
+    configure({
+      asyncWrapper: async (cb) => {
+        const result = await cb();
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 0);
+          vi.advanceTimersByTime(0);
+        });
+        return result;
+      },
+    });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /** Rows are only reachable in their own state, so each assertion needs one. */
+  function assertRowsArePresentational() {
+    const listbox = screen.getByRole('listbox');
+    // `aria-live` is a GLOBAL attribute, so putting it on
+    // `<li role="presentation">` discarded the presentation role and exposed
+    // the row as a list item inside a listbox — an aria-required-children
+    // deviation. `role="alert"` on another row was the same deviation by a
+    // third route.
+    expect(listbox.querySelector('[aria-live]')).toBeNull();
+    expect(listbox.querySelector('[role="alert"]')).toBeNull();
+    for (const li of listbox.querySelectorAll('li')) {
+      expect(li.getAttribute('role')).toBe('presentation');
+    }
+  }
+
+  it('empty row is presentational', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(<Select searchable options={[]} />);
+    await user.click(screen.getByRole('combobox'));
+    assertRowsArePresentational();
+  });
+
+  it('LOADING row is presentational and translated', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const loadOptions = vi.fn(() => new Promise<SelectOption[]>(() => {}));
+    render(
+      <I18nProvider locale="ru">
+        <Select searchable loadOptions={loadOptions} />
+      </I18nProvider>,
+    );
+    await user.click(screen.getByRole('combobox'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+    });
+    assertRowsArePresentational();
+    // Was a hardcoded English 'Loading…' in Loading.tsx.
+    expect(screen.getByRole('listbox').textContent).not.toMatch(/Loading…/);
+  });
+
+  it('ERROR row is presentational and translated', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const loadOptions = vi.fn(() => Promise.reject(new Error('boom')));
+    render(
+      <I18nProvider locale="ru">
+        <Select searchable loadOptions={loadOptions} />
+      </I18nProvider>,
+    );
+    await user.click(screen.getByRole('combobox'));
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+    assertRowsArePresentational();
+    // Were hardcoded English in Error.tsx.
+    expect(screen.getByRole('listbox').textContent).not.toMatch(/Failed to load options|Retry/);
+  });
+
+  it('owns exactly one live region, outside the listbox', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(<Select searchable options={[]} />);
+    await user.click(screen.getByRole('combobox'));
+
+    const regions = document.body.querySelectorAll('[role="status"][aria-live="polite"]');
+    expect(regions).toHaveLength(1);
+    expect(screen.getByRole('listbox').contains(regions[0]!)).toBe(false);
   });
 });

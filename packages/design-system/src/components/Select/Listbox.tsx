@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import {
   autoUpdate,
@@ -9,6 +9,7 @@ import {
   useFloating,
 } from '@floating-ui/react-dom';
 import clsx from 'clsx';
+import { useTranslation } from '../../i18n/useTranslation';
 import { useSelectContext, type SelectContextValue } from './context';
 import { mergeRefs } from '../_internal/refs';
 import { overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
@@ -17,7 +18,6 @@ import { isCreateRow } from './utils';
 import { Empty } from './Empty';
 import { Loading } from './Loading';
 import { ErrorRow } from './Error';
-import { useTranslation } from '../../i18n/useTranslation';
 import styles from './Select.module.scss';
 
 /**
@@ -32,6 +32,14 @@ import styles from './Select.module.scss';
  */
 export function Listbox() {
   const ctx = useSelectContext('Listbox');
+  const t = useTranslation();
+
+  // Deferred by a tick so a listbox that OPENS already loading still
+  // announces — mounting region and text together announces nothing.
+  const [statusText, setStatusText] = useState('');
+  useEffect(() => {
+    setStatusText(ctx.loading && ctx.rows.length === 0 ? t('select.statusLoading') : '');
+  }, [ctx.loading, ctx.rows.length, t]);
   const inOverlay = useInOverlay(ctx.triggerRootRef, ctx.open);
   // #274: hosts yield Escape while we're open — our own capture/element
   // handler closes us on the same press instead of the Modal/Drawer.
@@ -177,6 +185,19 @@ export function Listbox() {
           with; multi-summary keeps a select-only combobox trigger that shows
           the summary, so this filter is its sibling inside the panel. */}
       {ctx.multiple && ctx.triggerDisplay === 'summary' && ctx.searchable && <InPanelSearchInput />}
+      {/* ONE live region for the whole listbox, outside the <ul>.
+          Each of the three state rows used to carry its own announcement, in
+          three different and partly invalid ways: `aria-live` on
+          `<li role="presentation">` (a global attribute, so the presentation
+          role was discarded and the row was exposed as a list item inside a
+          listbox), and `role="alert"` on another `<li>` — the same
+          required-children deviation. All three also mounted their region
+          together with its text, which most screen readers do not announce.
+          Rendered unconditionally here with the text deferred, per Hard rule
+          10. See #495. */}
+      <span role="status" aria-live="polite" className={styles.srOnly}>
+        {statusText}
+      </span>
       <ul
         id={ctx.listboxId}
         role="listbox"
