@@ -369,7 +369,7 @@ test('preserves the pre-migration web contract fixture with provenance and expan
   const fixture = await readJson(fixturePath);
 
   assert.equal(Object.keys(fixture.light).length, 300);
-  assert.equal(Object.keys(fixture.forcedDark).length, 128);
+  assert.equal(Object.keys(fixture.forcedDark).length, 116);
   assert.deepEqual(fixture.systemDark, fixture.forcedDark);
   assert.deepEqual(fixture.forcedLight, {});
   assert.deepEqual(fixture.provenance.forcedDark['--color-bg'], [

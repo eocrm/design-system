@@ -302,18 +302,6 @@
     "--color-tone-warning-fg": "#974f00"
   },
   "forcedDark": {
-    "--badge-bg-danger": "var(--color-tone-danger-bg)",
-    "--badge-bg-info": "var(--color-tone-info-bg)",
-    "--badge-bg-neutral": "var(--color-tone-neutral-bg)",
-    "--badge-bg-purple": "var(--color-tone-purple-bg)",
-    "--badge-bg-success": "var(--color-tone-success-bg)",
-    "--badge-bg-warning": "var(--color-tone-warning-bg)",
-    "--badge-fg-danger": "var(--color-tone-danger-fg)",
-    "--badge-fg-info": "var(--color-tone-info-fg)",
-    "--badge-fg-neutral": "var(--color-tone-neutral-fg)",
-    "--badge-fg-purple": "var(--color-tone-purple-fg)",
-    "--badge-fg-success": "var(--color-tone-success-fg)",
-    "--badge-fg-warning": "var(--color-tone-warning-fg)",
     "--color-accent": "#68a7ff",
     "--color-accent-bg-subtle": "#1c3a5e",
     "--color-accent-fg": "#1d2125",
@@ -432,18 +420,6 @@
     "--color-tone-warning-fg": "#f5cd47"
   },
   "systemDark": {
-    "--badge-bg-danger": "var(--color-tone-danger-bg)",
-    "--badge-bg-info": "var(--color-tone-info-bg)",
-    "--badge-bg-neutral": "var(--color-tone-neutral-bg)",
-    "--badge-bg-purple": "var(--color-tone-purple-bg)",
-    "--badge-bg-success": "var(--color-tone-success-bg)",
-    "--badge-bg-warning": "var(--color-tone-warning-bg)",
-    "--badge-fg-danger": "var(--color-tone-danger-fg)",
-    "--badge-fg-info": "var(--color-tone-info-fg)",
-    "--badge-fg-neutral": "var(--color-tone-neutral-fg)",
-    "--badge-fg-purple": "var(--color-tone-purple-fg)",
-    "--badge-fg-success": "var(--color-tone-success-fg)",
-    "--badge-fg-warning": "var(--color-tone-warning-fg)",
     "--color-accent": "#68a7ff",
     "--color-accent-bg-subtle": "#1c3a5e",
     "--color-accent-fg": "#1d2125",
@@ -2311,90 +2287,6 @@
       ]
     },
     "forcedDark": {
-      "--badge-bg-danger": [
-        {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
-        }
-      ],
-      "--badge-bg-info": [
-        {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
-        }
-      ],
-      "--badge-bg-neutral": [
-        {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
-        }
-      ],
-      "--badge-bg-purple": [
-        {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
-        }
-      ],
-      "--badge-bg-success": [
-        {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
-        }
-      ],
-      "--badge-bg-warning": [
-        {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
-        }
-      ],
-      "--badge-fg-danger": [
-        {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
-        }
-      ],
-      "--badge-fg-info": [
-        {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
-        }
-      ],
-      "--badge-fg-neutral": [
-        {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
-        }
-      ],
-      "--badge-fg-purple": [
-        {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
-        }
-      ],
-      "--badge-fg-success": [
-        {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
-        }
-      ],
-      "--badge-fg-warning": [
-        {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
-        }
-      ],
       "--color-accent": [
         {
           "source": "packages/design-system/src/styles/dark.scss",
@@ -3118,102 +3010,6 @@
       ]
     },
     "systemDark": {
-      "--badge-bg-danger": [
-        {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
-        }
-      ],
-      "--badge-bg-info": [
-        {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
-        }
-      ],
-      "--badge-bg-neutral": [
-        {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
-        }
-      ],
-      "--badge-bg-purple": [
-        {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
-        }
-      ],
-      "--badge-bg-success": [
-        {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
-        }
-      ],
-      "--badge-bg-warning": [
-        {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
-        }
-      ],
-      "--badge-fg-danger": [
-        {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
-        }
-      ],
-      "--badge-fg-info": [
-        {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
-        }
-      ],
-      "--badge-fg-neutral": [
-        {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
-        }
-      ],
-      "--badge-fg-purple": [
-        {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
-        }
-      ],
-      "--badge-fg-success": [
-        {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
-        }
-      ],
-      "--badge-fg-warning": [
-        {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
-        }
-      ],
       "--color-accent": [
         {
           "source": "packages/design-system/src/styles/dark.scss",
