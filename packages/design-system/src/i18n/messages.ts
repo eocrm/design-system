@@ -483,6 +483,23 @@ export interface Messages {
     dragHint: string;
     /** Function leaf — aria-label template for the per-row uploading `<Progress>`. */
     uploadingAriaLabel: (params: { name: string }) => string;
+    /**
+     * Batch progress, announced from ONE region the FileUpload root owns.
+     *
+     * Per-row regions were the obvious shape and the wrong one: twelve files
+     * resolving inside two seconds is twelve announcements. Counts are
+     * formatted as `n / total` rather than "n files" so neither locale needs
+     * plural agreement (#502).
+     */
+    batchUploading: (params: { done: number; total: number }) => string;
+    /** Batch outcome, announced once the last transfer settles. */
+    batchSettled: (params: { done: number; total: number; failed: number }) => string;
+    /**
+     * Remove-control name for a row that FAILED. The failure was plain text in
+     * a non-focusable `<li>`, and the row's only focusable control was named
+     * "Remove {file}" — so a user tabbing there later learned nothing about it.
+     */
+    removeFailedAriaLabel: (params: { name: string }) => string;
     /** Function leaf — aria-label template for the per-row remove (×) button. */
     removeAriaLabel: (params: { name: string }) => string;
   };

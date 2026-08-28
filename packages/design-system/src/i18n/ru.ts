@@ -240,6 +240,10 @@ export const ru: Messages = {
     upload: 'Загрузить файлы',
     dragHint: 'Перетащите файлы сюда или нажмите для выбора',
     uploadingAriaLabel: ({ name }) => `Загрузка ${name as string}`,
+    batchUploading: (params) => `Загрузка: ${params.done} / ${params.total}`,
+    batchSettled: (params) =>
+      `Загружено: ${params.done} / ${params.total}. Ошибок: ${params.failed}.`,
+    removeFailedAriaLabel: (params) => `Удалить ${params.name} — ошибка загрузки`,
     removeAriaLabel: ({ name }) => `Удалить ${name as string}`,
   },
   flowCanvas: {

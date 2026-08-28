@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { FileUpload, type FileEntry } from './FileUpload';
@@ -443,5 +443,54 @@ describe('FileUpload', () => {
       </>,
     );
     expect(screen.getByRole('button', { name: 'Attachments' })).toBeInTheDocument();
+  });
+});
+
+describe('batch progress and failed rows reach assistive tech (#502)', () => {
+  const file = (name: string) => new File(['x'], name, { type: 'text/plain' });
+  const noop = () => {};
+
+  it('announces the batch from ONE region, not one per row', async () => {
+    // Twelve files resolving inside two seconds must not be twelve
+    // announcements — that is why this is a batch region rather than per-row.
+    const files: FileEntry[] = [
+      { id: '1', file: file('a.txt'), status: 'done' },
+      { id: '2', file: file('b.txt'), status: 'uploading' },
+      { id: '3', file: file('c.txt'), status: 'pending' },
+    ];
+    const { container } = render(
+      <FileUpload files={files} onFilesAdded={noop} onFileRemove={noop} />,
+    );
+    const regions = container.querySelectorAll('[role="status"][aria-live="polite"]');
+    expect(regions).toHaveLength(1);
+    await waitFor(() => expect(regions[0]!.textContent).toBe('Uploading: 1 / 3'));
+  });
+
+  it('announces the outcome once every transfer settles', async () => {
+    const files: FileEntry[] = [
+      { id: '1', file: file('a.txt'), status: 'done' },
+      { id: '2', file: file('b.txt'), status: 'error', error: 'boom' },
+    ];
+    const { container } = render(
+      <FileUpload files={files} onFilesAdded={noop} onFileRemove={noop} />,
+    );
+    const region = container.querySelector('[role="status"]');
+    await waitFor(() => expect(region!.textContent).toBe('Uploaded: 1 / 2. Failed: 1.'));
+  });
+
+  it('names a failed row on the one control the user can reach', () => {
+    // The failure is plain text in a non-focusable <li>; the row's only
+    // focusable control was named "Remove {file}" and said nothing about it.
+    const files: FileEntry[] = [{ id: '1', file: file('a.txt'), status: 'error', error: 'boom' }];
+    render(<FileUpload files={files} onFilesAdded={noop} onFileRemove={noop} />);
+    expect(
+      screen.getByRole('button', { name: 'Remove a.txt — upload failed' }),
+    ).toBeInTheDocument();
+  });
+
+  it('leaves a healthy row named plainly', () => {
+    const files: FileEntry[] = [{ id: '1', file: file('a.txt'), status: 'done' }];
+    render(<FileUpload files={files} onFilesAdded={noop} onFileRemove={noop} />);
+    expect(screen.getByRole('button', { name: 'Remove a.txt' })).toBeInTheDocument();
   });
 });

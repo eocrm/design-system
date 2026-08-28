@@ -2,6 +2,7 @@ import {
   forwardRef,
   useCallback,
   useRef,
+  useEffect,
   useState,
   type DragEvent,
   type HTMLAttributes,
@@ -302,6 +303,25 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
   const dragCounter = useRef(0);
   const [isDragOver, setIsDragOver] = useState(false);
 
+  // Batch announcement text. Derived from the controlled `files` array, and
+  // deferred so region and text never mount together.
+  const total = files.length;
+  const settled = files.filter((f) => f.status === 'done' || f.status === 'error').length;
+  const failed = files.filter((f) => f.status === 'error').length;
+  const inFlight = total > 0 && settled < total;
+  const [batchStatus, setBatchStatus] = useState('');
+  useEffect(() => {
+    if (total === 0) {
+      setBatchStatus('');
+      return;
+    }
+    setBatchStatus(
+      inFlight
+        ? t('fileUpload.batchUploading', { done: settled, total })
+        : t('fileUpload.batchSettled', { done: total - failed, total, failed }),
+    );
+  }, [inFlight, settled, total, failed, t]);
+
   const showDropzone = multiple || files.length === 0;
   // In single mode the implicit cap is 1; multi mode uses maxFiles (Infinity if not set).
   const effectiveMaxFiles = multiple ? (maxFiles ?? Infinity) : 1;
@@ -426,6 +446,14 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
   // {...rest} last so consumer overrides win (Pattern A).
   return (
     <div ref={ref} className={clsx(styles.root, disabled && styles.disabled, className)} {...rest}>
+      {/* ONE region for the whole batch. Per-row regions were the obvious
+          shape and the wrong one: twelve files resolving inside two seconds is
+          twelve announcements. Rendered unconditionally with its text deferred
+          so a FileUpload that mounts mid-transfer still announces — see
+          CLAUDE.md Hard rule 10 and #502. */}
+      <span role="status" aria-live="polite" className={styles.srOnly}>
+        {batchStatus}
+      </span>
       {showDropzone && (
         <div
           role="button"
@@ -499,7 +527,14 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
                   iconOnly
                   onClick={() => onFileRemove(entry)}
                   disabled={disabled}
-                  aria-label={t('fileUpload.removeAriaLabel', { name: entry.file.name })}
+                  // A failed row's message is plain text in a non-focusable
+                  // <li>, so a user tabbing here later learned nothing about
+                  // it. Fold the failure into the one name they DO reach.
+                  aria-label={
+                    entry.status === 'error'
+                      ? t('fileUpload.removeFailedAriaLabel', { name: entry.file.name })
+                      : t('fileUpload.removeAriaLabel', { name: entry.file.name })
+                  }
                 >
                   <X size={16} aria-hidden />
                 </Button>

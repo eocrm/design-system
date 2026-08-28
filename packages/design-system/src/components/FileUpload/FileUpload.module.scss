@@ -1,3 +1,4 @@
+@use '../../styles/mixins' as *;
 @use './FileUpload.tokens';
 
 .root {
@@ -150,4 +151,8 @@
   cursor: not-allowed;
   opacity: var(--file-upload-opacity-disabled);
   pointer-events: none;
+}
+
+.srOnly {
+  @include visually-hidden;
 }

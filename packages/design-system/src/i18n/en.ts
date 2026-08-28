@@ -238,6 +238,10 @@ export const en: Messages = {
     upload: 'Upload files',
     dragHint: 'Drag files here, or click to browse',
     uploadingAriaLabel: ({ name }) => `Uploading ${name as string}`,
+    batchUploading: (params) => `Uploading: ${params.done} / ${params.total}`,
+    batchSettled: (params) =>
+      `Uploaded: ${params.done} / ${params.total}. Failed: ${params.failed}.`,
+    removeFailedAriaLabel: (params) => `Remove ${params.name} — upload failed`,
     removeAriaLabel: ({ name }) => `Remove ${name as string}`,
   },
   flowCanvas: {
