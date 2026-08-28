@@ -1,4 +1,5 @@
 import {
+  useEffect,
   forwardRef,
   useState,
   type ChangeEvent,
@@ -200,6 +201,16 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(function Switch(
   ref,
 ) {
   const t = useTranslation();
+  // One tick behind on purpose. Computing the text during render means a
+  // component that MOUNTS already-loading mounts region and text together —
+  // the case Hard rule 10 forbids, because most screen readers do not announce
+  // content that was already there. Deferring to an effect makes the first
+  // paint empty, so the word always arrives as a change. DataTable does the
+  // same via its loadPhase effect; these two shipped without it.
+  const [busyText, setBusyText] = useState('');
+  useEffect(() => {
+    setBusyText(loading ? t('switch.busy') : '');
+  }, [loading, t]);
   const [internalChecked, setInternalChecked] = useState<boolean>(defaultChecked ?? false);
   const isControlled = checked !== undefined;
   const currentChecked = isControlled ? checked : internalChecked;
@@ -254,7 +265,7 @@ export const Switch = forwardRef<HTMLInputElement, SwitchProps>(function Switch(
           Chrome's AX tree. Renaming a focused control is what Hard rule 10
           tells everyone else not to do. */}
       <span role="status" aria-live="polite" className={styles.srOnly}>
-        {loading ? t('switch.busy') : ''}
+        {busyText}
       </span>
     </>
   );

@@ -1,4 +1,11 @@
-import { forwardRef, useState, type CSSProperties, type HTMLAttributes, type Ref } from 'react';
+import {
+  forwardRef,
+  useEffect,
+  useState,
+  type CSSProperties,
+  type HTMLAttributes,
+  type Ref,
+} from 'react';
 import clsx from 'clsx';
 import { DropdownMenu } from '../DropdownMenu';
 import { paletteTokens, type PaletteColor } from '../../palette';
@@ -103,6 +110,13 @@ export const StatusMenu = forwardRef<HTMLElement, StatusMenuProps>(function Stat
   ref,
 ) {
   const t = useTranslation();
+  // Deferred for the same reason as Switch: a StatusMenu that mounts already
+  // busy would otherwise mount its region and text together and announce
+  // nothing. See CLAUDE.md Hard rule 10.
+  const [busyText, setBusyText] = useState('');
+  useEffect(() => {
+    setBusyText(busy ? t('statusMenu.busy') : '');
+  }, [busy, t]);
   // Component color wins over any consumer `style` — merged AFTER so its
   // `--status-menu-*` custom properties can't be shadowed by a consumer's
   // own inline style object.
@@ -180,7 +194,7 @@ export const StatusMenu = forwardRef<HTMLElement, StatusMenuProps>(function Stat
           trigger also goes `disabled` while busy, which is when this needs to
           speak. */}
       <span role="status" aria-live="polite" className={styles.srOnly}>
-        {busy ? t('statusMenu.busy') : ''}
+        {busyText}
       </span>
       <DropdownMenu.Content>
         {options.map((option) => (

@@ -797,6 +797,9 @@ function SkeletonRows({
   );
 }
 
+/** Long enough for the announcement to be picked up, short enough not to linger. */
+const CLEAR_STATUS_MS = 1000;
+
 function EmptyRow({
   totalColCount,
   content,
@@ -824,9 +827,6 @@ function EmptyRow({
  * forwardRef so we re-type via assertion. This is the standard pattern for
  * generic forwardRef components.
  */
-/** Long enough for the announcement to be picked up, short enough not to linger. */
-const CLEAR_STATUS_MS = 1000;
-
 export const DataTable = forwardRef(DataTableInner) as <T>(
   props: DataTableProps<T> & { ref?: Ref<HTMLTableElement> },
 ) => ReturnType<typeof DataTableInner>;

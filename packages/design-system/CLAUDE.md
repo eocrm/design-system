@@ -174,7 +174,9 @@ See `AGENTS.md` "Localization (i18n)" section for the consumer-facing API and ho
 ### 10. Transient state must reach assistive tech — and the mechanism is not a coin flip
 
 A component with a transient or async state (`loading`, `busy`, `pending`, an
-async failure) must expose it to screen readers. Which mechanism depends on one
+async failure) must expose it to screen readers, **or document why it doesn't**
+— see the visual-only clause at the end, which is a real answer and not a
+loophole. Which mechanism depends on one
 question:
 
 **Is this a property of the thing as the user arrives at it, or a change that
@@ -193,15 +195,23 @@ happens while their attention is elsewhere?**
   the state. `Progress` and `CircularProgress` are correct as they stand — do
   not "fix" them into live regions, which would fire on every percentage tick.
   (Precisely: `aria-valuenow` is set only when determinate. An indeterminate
-  spinner carries its meaning in its accessible name instead, which is the
-  first branch above, not a gap.)
+  spinner puts its meaning in `aria-valuetext` — a value description, not the
+  accessible name, which stays whatever the consumer passed as `aria-label`.
+  Both files fall back to a hardcoded English `'Loading…'` there, which breaches
+  Rule 9; tracked in #503.)
 
 **A state that PERSISTS once entered is a property, even though you were not
 watching when it changed.** An image that fails three seconds after render
 transitioned while your attention was elsewhere, but from then on "failed" is
 simply what that element is — so it belongs in the name, and `Image` and
-`Lightbox` fold it in. The live-region branch is for states that come and go:
-saving, loading, in flight. Ask what is true a minute later, not what happened.
+`Lightbox` fold it in. Ask what is true a minute later, not what happened.
+
+**The arrival branch wins when nothing else will ever say it.** That is the
+tiebreaker, and it is why `EntityChip`'s `loading` is name-folded even though
+loading plainly comes and goes: a placeholder chip is something you tab ONTO,
+and if the word is not in the name, arriving at it tells you nothing. Read the
+persistence clause as "persistent states are always properties", not as
+"transient states are never properties".
 
 That distinction also settles where a region is _impossible_: a tile that only
 mounts on error cannot host one, because the region would mount together with
@@ -212,12 +222,14 @@ it.
 **When a component is both**, the name carries what is true on arrival and a
 region carries the transitions — but only if the transitions are individually
 worth interrupting for. `FileUpload` is the open case rather than the worked
-one: it has per-file `pending`/`uploading`/`done`/`error` and today implements
-**neither** mechanism — the failure is plain text in a non-focusable row, and
-the only focusable control there is named "Remove {file}". Twelve files
-resolving inside two seconds should not be twelve announcements, so the shape
-it wants is one region describing the batch plus the per-row state reachable on
-focus. Nothing implements that yet.
+one, and it is genuinely split: `uploading` already uses the third branch above
+(a `Progress` with `role="progressbar"` and a name carrying the filename), and
+`done` renders a named `role="img"` a browse-mode reader reaches. The gaps are
+`error` — plain text in a non-focusable row, with the only focusable control
+there named "Remove {file}" — and `pending`, which renders nothing at all.
+Twelve files resolving inside two seconds should not be twelve announcements,
+so the shape it wants is one region describing the batch plus the per-row state
+reachable on focus. Tracked in #502.
 
 **If the state resolves while focus is inside the component but not on the
 thing that changed** — a `Select`'s options arriving while focus sits on the

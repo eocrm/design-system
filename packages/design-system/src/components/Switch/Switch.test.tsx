@@ -1,5 +1,5 @@
 import { createRef, useState } from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Switch } from './Switch';
 
@@ -266,4 +266,16 @@ describe('loading state reaches assistive tech (#488)', () => {
     // change to announce — not a property of something they arrived at.
     expect(getByRole('switch', { name: 'Mute' })).not.toBeNull();
   });
+});
+
+it('announces even when it mounts already loading', async () => {
+  // Mounting region and text together is the case Hard rule 10 forbids: most
+  // screen readers do not announce content that was already present when the
+  // region appeared. The text is deferred one tick so the word always arrives
+  // as a change, including on a route remount or a virtualized row scrolling
+  // back into view mid-flight.
+  const { container } = render(<Switch loading>Mute</Switch>);
+  const region = container.querySelector('[role="status"][aria-live="polite"]');
+  expect(region).not.toBeNull();
+  await waitFor(() => expect(region!.textContent).toBe('Saving…'));
 });

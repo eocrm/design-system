@@ -110,11 +110,18 @@ describe('transient state does not rely on aria-busy alone', () => {
   it.each(withAriaBusy.map(({ label, code }) => [label, code]))(
     '%s carries a live region or a named state word alongside aria-busy',
     (_label, code) => {
-      const liveRegion = /role=("|')(status|alert)\1|aria-live=/.test(code);
-      // Anchored on the closing brace so `styles.srOnlyDecorativeThing` and
-      // `hiddenLabelWrapper` do not count, and required to carry a translated
-      // word — a visually-hidden span with no `t()` is decoration.
-      const namedState = /styles\.(srOnly|hiddenLabel)\}/.test(code) && /\bt\(/.test(code);
+      // Anchored to an opening tag: the bare literal `[role="status"]` in a
+      // selector string satisfied this otherwise.
+      const liveRegion = /<[A-Za-z][^>]*(role=("|')(status|alert)\2|aria-live=)/.test(code);
+      // CO-LOCATED, not two file-wide tests. The `}` anchor rejects
+      // `srOnlyDecorativeThing` and `hiddenLabelWrapper`, and the `t(` must sit
+      // inside THAT span's children. Testing them separately meant the `t(`
+      // could be anywhere in the file — 70 of 190 component files have one — so
+      // EntityChip with BOTH state spans deleted still passed, carried by a
+      // decorative hiddenLabel span and an unrelated call. That is the #483
+      // regression this gate exists for, third version in a row where the
+      // comment named an input the gate could not fail on.
+      const namedState = /styles\.(srOnly|hiddenLabel)\}[^>]*>[^<]*\bt\(/.test(code);
       expect(liveRegion || namedState).toBe(true);
     },
   );

@@ -68,7 +68,7 @@ export function DealExample() {
 
       <Example
         title="Read-only, disabled, and busy"
-        description="Omitting options renders a static colored chip (no button, no menu). disabled and busy keep the trigger's color but block interaction — busy also sets aria-busy."
+        description="Omitting options renders a static colored chip (no button, no menu). disabled and busy keep the trigger's color but block interaction. busy is announced from a live region the component owns; it also sets aria-busy, but nothing reads that on its own."
         code={`import { Cluster, StatusMenu, type StatusMenuStatus } from '@eocrm/design-system';
 
 const options: StatusMenuStatus[] = [

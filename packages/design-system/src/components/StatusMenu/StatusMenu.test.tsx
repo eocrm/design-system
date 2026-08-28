@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { StatusMenu, type StatusMenuStatus } from './StatusMenu';
@@ -194,4 +194,16 @@ describe('busy state reaches assistive tech (#488)', () => {
     expect(getByRole('button').querySelector('[role="status"]')).toBeNull();
     expect(container.querySelector('[role="status"]')).not.toBeNull();
   });
+});
+
+it('announces even when it mounts already busy', async () => {
+  // Mounting region and text together is the case Hard rule 10 forbids: most
+  // screen readers do not announce content that was already present when the
+  // region appeared. The text is deferred one tick so the word always arrives
+  // as a change, including on a route remount or a virtualized row scrolling
+  // back into view mid-flight.
+  const { container } = render(<StatusMenu current={inProgress} options={options} busy />);
+  const region = container.querySelector('[role="status"][aria-live="polite"]');
+  expect(region).not.toBeNull();
+  await waitFor(() => expect(region!.textContent).toBe('Saving status…'));
 });
