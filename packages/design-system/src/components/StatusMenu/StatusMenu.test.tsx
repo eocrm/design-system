@@ -1,3 +1,4 @@
+import { renderToStaticMarkup } from 'react-dom/server';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
@@ -194,6 +195,18 @@ describe('busy state reaches assistive tech (#488)', () => {
     expect(getByRole('button').querySelector('[role="status"]')).toBeNull();
     expect(container.querySelector('[role="status"]')).not.toBeNull();
   });
+});
+
+it('mounts the region EMPTY, so the word always arrives as a change', () => {
+  // Server render runs the render pass and NOT effects, so this is literally
+  // the first-paint DOM. That is the only way to observe the deferral: RTL's
+  // render() flushes passive effects inside act(), so by the time a test reads
+  // the region the effect has landed — and the old render-time version
+  // produced the same final text. The previous version of this test passed
+  // against the exact bug it was written to pin.
+  const html = renderToStaticMarkup(<StatusMenu current={inProgress} options={options} busy />);
+  expect(html).toContain('role="status"');
+  expect(html).not.toContain('Saving status…');
 });
 
 it('announces even when it mounts already busy', async () => {

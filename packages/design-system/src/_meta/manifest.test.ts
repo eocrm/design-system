@@ -18,6 +18,22 @@ describe('components.manifest.json', () => {
     expect(generated).toEqual(committed);
   });
 
+  it('matches the generator BYTE FOR BYTE, not just structurally', () => {
+    // The check above parses both sides, so reformatting is invisible to it.
+    // The file is in .prettierignore precisely to keep it byte-identical to the
+    // generator's output — but prettier resolves .prettierignore relative to the
+    // CWD, so `prettier --write` run from inside this package silently ignores
+    // that entry and reflows the whole file. That happened on #488 and produced
+    // 366 lines of churn nothing flagged: prettier skips the file in CI, and
+    // this suite only compared parsed objects.
+    //
+    // Byte comparison is the only thing that sees it. Fix by running
+    // `node packages/design-system/scripts/generate-manifest.mjs`, never
+    // prettier.
+    const expected = `${JSON.stringify(buildManifest(), null, 2)}\n`;
+    expect(readFileSync(MANIFEST_PATH, 'utf-8')).toBe(expected);
+  });
+
   it('every component has a cluster assigned', () => {
     const manifest = buildManifest();
     const unclassified = Object.entries(manifest)

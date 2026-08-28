@@ -110,17 +110,28 @@ describe('transient state does not rely on aria-busy alone', () => {
   it.each(withAriaBusy.map(({ label, code }) => [label, code]))(
     '%s carries a live region or a named state word alongside aria-busy',
     (_label, code) => {
-      // Anchored to an opening tag: the bare literal `[role="status"]` in a
-      // selector string satisfied this otherwise.
-      const liveRegion = /<[A-Za-z][^>]*(role=("|')(status|alert)\2|aria-live=)/.test(code);
-      // CO-LOCATED, not two file-wide tests. The `}` anchor rejects
-      // `srOnlyDecorativeThing` and `hiddenLabelWrapper`, and the `t(` must sit
-      // inside THAT span's children. Testing them separately meant the `t(`
-      // could be anywhere in the file — 70 of 190 component files have one — so
+      // Anchored to an opening tag — a bare `[role="status"]` selector literal
+      // would otherwise satisfy this (no component source does that today; the
+      // anchor is defensive, not a fix for a live pass). `aria-live` must be a
+      // value that actually announces: `aria-live="off"` is the attribute
+      // present and explicitly disabled, which is not a mechanism.
+      const liveRegion =
+        /<[A-Za-z][^>]*(role=("|')(status|alert)\2|aria-live=("|')(polite|assertive)\4)/.test(code);
+      // Scoped to a qualifying span, not two file-wide tests. The `}` anchor
+      // rejects `srOnlyDecorativeThing` and `hiddenLabelWrapper`, and the `t(`
+      // must sit inside SOME visually-hidden span's children — not necessarily
+      // the state one, which a regex cannot identify. Testing them separately
+      // meant the `t(` could be anywhere in the file — 70 of 190 component
+      // files have one — so
       // EntityChip with BOTH state spans deleted still passed, carried by a
       // decorative hiddenLabel span and an unrelated call. That is the #483
       // regression this gate exists for, third version in a row where the
       // comment named an input the gate could not fail on.
+      //
+      // Known limits, none of them current shapes: the opening-tag scan stops
+      // at the first `>`, so an arrow function in the tag before the attribute
+      // would false-alarm; `t` is hardcoded as the hook's binding; and an
+      // element between the span and its `t()` would not match.
       const namedState = /styles\.(srOnly|hiddenLabel)\}[^>]*>[^<]*\bt\(/.test(code);
       expect(liveRegion || namedState).toBe(true);
     },

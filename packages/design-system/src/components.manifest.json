@@ -3,42 +3,61 @@
     "tier": "primitive",
     "cluster": "Navigation",
     "composes": [],
-    "composedBy": ["DashboardCanvas"]
+    "composedBy": [
+      "DashboardCanvas"
+    ]
   },
   "Alert": {
     "tier": "composition",
     "cluster": "Feedback",
-    "composes": ["Button"],
+    "composes": [
+      "Button"
+    ],
     "composedBy": []
   },
   "AppLayout": {
     "tier": "composition",
     "cluster": "Layout",
-    "composes": ["Drawer"],
+    "composes": [
+      "Drawer"
+    ],
     "composedBy": []
   },
   "Avatar": {
     "tier": "composition",
     "cluster": "Display",
-    "composes": ["Tooltip"],
-    "composedBy": ["PersonDisplay", "RichTextEditor"]
+    "composes": [
+      "Tooltip"
+    ],
+    "composedBy": [
+      "PersonDisplay",
+      "RichTextEditor"
+    ]
   },
   "Badge": {
     "tier": "primitive",
     "cluster": "Display",
     "composes": [],
-    "composedBy": ["Dot", "FilterChip", "OptionsPicker"]
+    "composedBy": [
+      "Dot",
+      "FilterChip",
+      "OptionsPicker"
+    ]
   },
   "BrandIcon": {
     "tier": "primitive",
     "cluster": "Display",
     "composes": [],
-    "composedBy": ["SocialButton"]
+    "composedBy": [
+      "SocialButton"
+    ]
   },
   "Breadcrumb": {
     "tier": "composition",
     "cluster": "Navigation",
-    "composes": ["Link"],
+    "composes": [
+      "Link"
+    ],
     "composedBy": []
   },
   "Button": {
@@ -69,38 +88,57 @@
   "ButtonGroup": {
     "tier": "composition",
     "cluster": "Forms",
-    "composes": ["Button"],
+    "composes": [
+      "Button"
+    ],
     "composedBy": []
   },
   "Calendar": {
     "tier": "composition",
     "cluster": "Display",
-    "composes": ["Button", "Cluster", "Tabs", "Tooltip"],
+    "composes": [
+      "Button",
+      "Cluster",
+      "Tabs",
+      "Tooltip"
+    ],
     "composedBy": []
   },
   "Card": {
     "tier": "primitive",
     "cluster": "Layout",
     "composes": [],
-    "composedBy": ["LinkCard"]
+    "composedBy": [
+      "LinkCard"
+    ]
   },
   "Checkbox": {
     "tier": "primitive",
     "cluster": "Forms",
     "composes": [],
-    "composedBy": ["DataTable", "OptionsPicker"]
+    "composedBy": [
+      "DataTable",
+      "OptionsPicker"
+    ]
   },
   "CircularProgress": {
     "tier": "primitive",
     "cluster": "Display",
     "composes": [],
-    "composedBy": ["RichTextEditor"]
+    "composedBy": [
+      "RichTextEditor"
+    ]
   },
   "Cluster": {
     "tier": "primitive",
     "cluster": "Layout",
     "composes": [],
-    "composedBy": ["Calendar", "ConfirmationPopover", "OptionsPicker", "RichTextEditor"]
+    "composedBy": [
+      "Calendar",
+      "ConfirmationPopover",
+      "OptionsPicker",
+      "RichTextEditor"
+    ]
   },
   "Code": {
     "tier": "primitive",
@@ -111,13 +149,22 @@
   "ColorPicker": {
     "tier": "composition",
     "cluster": "Forms",
-    "composes": ["Input", "Popover", "Slider"],
+    "composes": [
+      "Input",
+      "Popover",
+      "Slider"
+    ],
     "composedBy": []
   },
   "ConfirmationPopover": {
     "tier": "composition",
     "cluster": "Overlays",
-    "composes": ["Button", "Cluster", "Popover", "Stack"],
+    "composes": [
+      "Button",
+      "Cluster",
+      "Popover",
+      "Stack"
+    ],
     "composedBy": []
   },
   "Constrain": {
@@ -129,31 +176,49 @@
   "CursorPagination": {
     "tier": "composition",
     "cluster": "Display",
-    "composes": ["Pagination"],
+    "composes": [
+      "Pagination"
+    ],
     "composedBy": []
   },
   "DashboardCanvas": {
     "tier": "composition",
     "cluster": "Display",
-    "composes": ["Accordion"],
+    "composes": [
+      "Accordion"
+    ],
     "composedBy": []
   },
   "DataTable": {
     "tier": "composition",
     "cluster": "Display",
-    "composes": ["Button", "Checkbox", "DropdownMenu", "EmptyState", "Skeleton", "Table"],
+    "composes": [
+      "Button",
+      "Checkbox",
+      "DropdownMenu",
+      "EmptyState",
+      "Skeleton",
+      "Table"
+    ],
     "composedBy": []
   },
   "DatePicker": {
     "tier": "composition",
     "cluster": "Forms",
-    "composes": ["TimeField"],
-    "composedBy": ["DateRangePicker"]
+    "composes": [
+      "TimeField"
+    ],
+    "composedBy": [
+      "DateRangePicker"
+    ]
   },
   "DateRangePicker": {
     "tier": "composition",
     "cluster": "Forms",
-    "composes": ["DatePicker", "TimeField"],
+    "composes": [
+      "DatePicker",
+      "TimeField"
+    ],
     "composedBy": []
   },
   "DefinitionList": {
@@ -171,32 +236,53 @@
   "Dot": {
     "tier": "composition",
     "cluster": "Display",
-    "composes": ["Badge"],
-    "composedBy": ["FilterChip"]
+    "composes": [
+      "Badge"
+    ],
+    "composedBy": [
+      "FilterChip"
+    ]
   },
   "Drawer": {
     "tier": "composition",
     "cluster": "Overlays",
-    "composes": ["Button"],
-    "composedBy": ["AppLayout"]
+    "composes": [
+      "Button"
+    ],
+    "composedBy": [
+      "AppLayout"
+    ]
   },
   "DropdownMenu": {
     "tier": "primitive",
     "cluster": "Overlays",
     "composes": [],
-    "composedBy": ["DataTable", "LiquidEditor", "RichTextEditor", "StatusMenu"]
+    "composedBy": [
+      "DataTable",
+      "LiquidEditor",
+      "RichTextEditor",
+      "StatusMenu"
+    ]
   },
   "EmojiPicker": {
     "tier": "composition",
     "cluster": "Forms",
-    "composes": ["Input", "Popover", "Text"],
-    "composedBy": ["RichTextEditor"]
+    "composes": [
+      "Input",
+      "Popover",
+      "Text"
+    ],
+    "composedBy": [
+      "RichTextEditor"
+    ]
   },
   "EmptyState": {
     "tier": "primitive",
     "cluster": "Display",
     "composes": [],
-    "composedBy": ["DataTable"]
+    "composedBy": [
+      "DataTable"
+    ]
   },
   "EntityChip": {
     "tier": "primitive",
@@ -213,49 +299,69 @@
   "Field": {
     "tier": "composition",
     "cluster": "Forms",
-    "composes": ["Text"],
+    "composes": [
+      "Text"
+    ],
     "composedBy": []
   },
   "FileUpload": {
     "tier": "composition",
     "cluster": "Forms",
-    "composes": ["Button", "Progress"],
+    "composes": [
+      "Button",
+      "Progress"
+    ],
     "composedBy": []
   },
   "FilterChip": {
     "tier": "composition",
     "cluster": "Display",
-    "composes": ["Badge", "Dot", "Text"],
+    "composes": [
+      "Badge",
+      "Dot",
+      "Text"
+    ],
     "composedBy": []
   },
   "FlowCanvas": {
     "tier": "composition",
     "cluster": "Display",
-    "composes": ["Button"],
+    "composes": [
+      "Button"
+    ],
     "composedBy": []
   },
   "FormRow": {
     "tier": "composition",
     "cluster": "Forms",
-    "composes": ["Grid"],
+    "composes": [
+      "Grid"
+    ],
     "composedBy": []
   },
   "FormSection": {
     "tier": "composition",
     "cluster": "Forms",
-    "composes": ["Text", "Title"],
+    "composes": [
+      "Text",
+      "Title"
+    ],
     "composedBy": []
   },
   "Grid": {
     "tier": "primitive",
     "cluster": "Layout",
     "composes": [],
-    "composedBy": ["FormRow"]
+    "composedBy": [
+      "FormRow"
+    ]
   },
   "IconPicker": {
     "tier": "composition",
     "cluster": "Forms",
-    "composes": ["Popover"],
+    "composes": [
+      "Popover"
+    ],
     "composedBy": []
   },
   "IconTile": {
@@ -267,13 +373,21 @@
   "Image": {
     "tier": "composition",
     "cluster": "Display",
-    "composes": ["Button", "Skeleton"],
-    "composedBy": ["Lightbox"]
+    "composes": [
+      "Button",
+      "Skeleton"
+    ],
+    "composedBy": [
+      "Lightbox"
+    ]
   },
   "ImageCrop": {
     "tier": "composition",
     "cluster": "Forms",
-    "composes": ["Skeleton", "Slider"],
+    "composes": [
+      "Skeleton",
+      "Slider"
+    ],
     "composedBy": []
   },
   "Indent": {
@@ -286,42 +400,63 @@
     "tier": "primitive",
     "cluster": "Forms",
     "composes": [],
-    "composedBy": ["ColorPicker", "EmojiPicker", "OptionsPicker", "PhoneInput", "RichTextEditor"]
+    "composedBy": [
+      "ColorPicker",
+      "EmojiPicker",
+      "OptionsPicker",
+      "PhoneInput",
+      "RichTextEditor"
+    ]
   },
   "Kanban": {
     "tier": "composition",
     "cluster": "Forms",
-    "composes": ["Sortable"],
+    "composes": [
+      "Sortable"
+    ],
     "composedBy": []
   },
   "Kbd": {
     "tier": "primitive",
     "cluster": "Display",
     "composes": [],
-    "composedBy": ["TopBar"]
+    "composedBy": [
+      "TopBar"
+    ]
   },
   "Lightbox": {
     "tier": "composition",
     "cluster": "Overlays",
-    "composes": ["Image", "Skeleton"],
+    "composes": [
+      "Image",
+      "Skeleton"
+    ],
     "composedBy": []
   },
   "Link": {
     "tier": "primitive",
     "cluster": "Navigation",
     "composes": [],
-    "composedBy": ["Breadcrumb", "PersonDisplay"]
+    "composedBy": [
+      "Breadcrumb",
+      "PersonDisplay"
+    ]
   },
   "LinkCard": {
     "tier": "composition",
     "cluster": "Navigation",
-    "composes": ["Card"],
+    "composes": [
+      "Card"
+    ],
     "composedBy": []
   },
   "LiquidEditor": {
     "tier": "composition",
     "cluster": "Forms",
-    "composes": ["Button", "DropdownMenu"],
+    "composes": [
+      "Button",
+      "DropdownMenu"
+    ],
     "composedBy": []
   },
   "Logo": {
@@ -345,37 +480,57 @@
   "Modal": {
     "tier": "composition",
     "cluster": "Overlays",
-    "composes": ["Button"],
+    "composes": [
+      "Button"
+    ],
     "composedBy": []
   },
   "OptionsPicker": {
     "tier": "composition",
     "cluster": "Forms",
-    "composes": ["Badge", "Button", "Checkbox", "Cluster", "Input", "Popover", "Radio", "Text"],
+    "composes": [
+      "Badge",
+      "Button",
+      "Checkbox",
+      "Cluster",
+      "Input",
+      "Popover",
+      "Radio",
+      "Text"
+    ],
     "composedBy": []
   },
   "Page": {
     "tier": "composition",
     "cluster": "Layout",
-    "composes": ["Stack"],
+    "composes": [
+      "Stack"
+    ],
     "composedBy": []
   },
   "PageHeader": {
     "tier": "composition",
     "cluster": "Layout",
-    "composes": ["Title"],
+    "composes": [
+      "Title"
+    ],
     "composedBy": []
   },
   "Pagination": {
     "tier": "primitive",
     "cluster": "Display",
     "composes": [],
-    "composedBy": ["CursorPagination"]
+    "composedBy": [
+      "CursorPagination"
+    ]
   },
   "PasswordInput": {
     "tier": "composition",
     "cluster": "Forms",
-    "composes": ["Button", "Tooltip"],
+    "composes": [
+      "Button",
+      "Tooltip"
+    ],
     "composedBy": []
   },
   "PasswordStrengthMeter": {
@@ -387,13 +542,20 @@
   "PersonDisplay": {
     "tier": "composition",
     "cluster": "Display",
-    "composes": ["Avatar", "Link", "Text"],
+    "composes": [
+      "Avatar",
+      "Link",
+      "Text"
+    ],
     "composedBy": []
   },
   "PhoneInput": {
     "tier": "composition",
     "cluster": "Forms",
-    "composes": ["Input", "Select"],
+    "composes": [
+      "Input",
+      "Select"
+    ],
     "composedBy": []
   },
   "Popover": {
@@ -413,25 +575,34 @@
     "tier": "primitive",
     "cluster": "Display",
     "composes": [],
-    "composedBy": ["FileUpload"]
+    "composedBy": [
+      "FileUpload"
+    ]
   },
   "Radio": {
     "tier": "primitive",
     "cluster": "Forms",
     "composes": [],
-    "composedBy": ["OptionsPicker"]
+    "composedBy": [
+      "OptionsPicker"
+    ]
   },
   "Rail": {
     "tier": "composition",
     "cluster": "Navigation",
-    "composes": ["Button", "Tooltip"],
+    "composes": [
+      "Button",
+      "Tooltip"
+    ],
     "composedBy": []
   },
   "RichText": {
     "tier": "primitive",
     "cluster": "Display",
     "composes": [],
-    "composedBy": ["RichTextEditor"]
+    "composedBy": [
+      "RichTextEditor"
+    ]
   },
   "RichTextEditor": {
     "tier": "composition",
@@ -462,36 +633,55 @@
     "tier": "primitive",
     "cluster": "Forms",
     "composes": [],
-    "composedBy": ["PhoneInput"]
+    "composedBy": [
+      "PhoneInput"
+    ]
   },
   "Skeleton": {
     "tier": "primitive",
     "cluster": "Display",
     "composes": [],
-    "composedBy": ["DataTable", "Image", "ImageCrop", "Lightbox"]
+    "composedBy": [
+      "DataTable",
+      "Image",
+      "ImageCrop",
+      "Lightbox"
+    ]
   },
   "Slider": {
     "tier": "primitive",
     "cluster": "Forms",
     "composes": [],
-    "composedBy": ["ColorPicker", "ImageCrop", "RichTextEditor"]
+    "composedBy": [
+      "ColorPicker",
+      "ImageCrop",
+      "RichTextEditor"
+    ]
   },
   "SocialButton": {
     "tier": "composition",
     "cluster": "Forms",
-    "composes": ["BrandIcon", "Button"],
+    "composes": [
+      "BrandIcon",
+      "Button"
+    ],
     "composedBy": []
   },
   "Sortable": {
     "tier": "primitive",
     "cluster": "Forms",
     "composes": [],
-    "composedBy": ["Kanban", "SortableGroup"]
+    "composedBy": [
+      "Kanban",
+      "SortableGroup"
+    ]
   },
   "SortableGroup": {
     "tier": "composition",
     "cluster": "Forms",
-    "composes": ["Sortable"],
+    "composes": [
+      "Sortable"
+    ],
     "composedBy": []
   },
   "Split": {
@@ -504,12 +694,18 @@
     "tier": "primitive",
     "cluster": "Layout",
     "composes": [],
-    "composedBy": ["ConfirmationPopover", "Page", "RichTextEditor"]
+    "composedBy": [
+      "ConfirmationPopover",
+      "Page",
+      "RichTextEditor"
+    ]
   },
   "StatusMenu": {
     "tier": "composition",
     "cluster": "Forms",
-    "composes": ["DropdownMenu"],
+    "composes": [
+      "DropdownMenu"
+    ],
     "composedBy": []
   },
   "Sticky": {
@@ -528,13 +724,17 @@
     "tier": "primitive",
     "cluster": "Display",
     "composes": [],
-    "composedBy": ["DataTable"]
+    "composedBy": [
+      "DataTable"
+    ]
   },
   "Tabs": {
     "tier": "primitive",
     "cluster": "Navigation",
     "composes": [],
-    "composedBy": ["Calendar"]
+    "composedBy": [
+      "Calendar"
+    ]
   },
   "Text": {
     "tier": "primitive",
@@ -566,7 +766,10 @@
     "tier": "primitive",
     "cluster": "Forms",
     "composes": [],
-    "composedBy": ["DatePicker", "DateRangePicker"]
+    "composedBy": [
+      "DatePicker",
+      "DateRangePicker"
+    ]
   },
   "Timeline": {
     "tier": "primitive",
@@ -578,24 +781,37 @@
     "tier": "primitive",
     "cluster": "Display",
     "composes": [],
-    "composedBy": ["FormSection", "PageHeader"]
+    "composedBy": [
+      "FormSection",
+      "PageHeader"
+    ]
   },
   "Toast": {
     "tier": "composition",
     "cluster": "Feedback",
-    "composes": ["Button"],
+    "composes": [
+      "Button"
+    ],
     "composedBy": []
   },
   "Tooltip": {
     "tier": "primitive",
     "cluster": "Overlays",
     "composes": [],
-    "composedBy": ["Avatar", "Calendar", "PasswordInput", "Rail"]
+    "composedBy": [
+      "Avatar",
+      "Calendar",
+      "PasswordInput",
+      "Rail"
+    ]
   },
   "TopBar": {
     "tier": "composition",
     "cluster": "Navigation",
-    "composes": ["Button", "Kbd"],
+    "composes": [
+      "Button",
+      "Kbd"
+    ],
     "composedBy": []
   }
 }

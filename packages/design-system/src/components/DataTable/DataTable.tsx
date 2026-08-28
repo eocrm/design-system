@@ -64,6 +64,13 @@ export interface DataTableProps<T> {
    * Marks the table busy. Empty tables show skeleton rows; populated tables
    * keep their rows mounted during a refetch so focus and local row state are
    * preserved. Defaults to `false`.
+   *
+   * Announced from a polite live region the table owns, gated on the SKELETON
+   * rather than on this prop: a load shorter than `skeletonDelay` shows nothing
+   * and so says nothing, and a refetch over rows already on screen is silent
+   * because nothing visibly changes. The resolution is announced too — "Rows
+   * loaded" or "No rows loaded". `aria-busy` is also set, but reaches no screen
+   * reader on its own.
    */
   loading?: boolean;
   /** Number of skeleton rows when `loading`. Defaults 10. */

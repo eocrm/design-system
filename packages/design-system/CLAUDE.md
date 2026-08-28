@@ -206,12 +206,22 @@ transitioned while your attention was elsewhere, but from then on "failed" is
 simply what that element is — so it belongs in the name, and `Image` and
 `Lightbox` fold it in. Ask what is true a minute later, not what happened.
 
-**The arrival branch wins when nothing else will ever say it.** That is the
-tiebreaker, and it is why `EntityChip`'s `loading` is name-folded even though
-loading plainly comes and goes: a placeholder chip is something you tab ONTO,
-and if the word is not in the name, arriving at it tells you nothing. Read the
-persistence clause as "persistent states are always properties", not as
-"transient states are never properties".
+**Tiebreaker: can the element still be REACHED after the moment passes?** Not
+"will anything announce it" — that is circular, since it depends on the choice
+you are making. Ask instead whether a user can arrive at this element later and
+need to know. A placeholder `EntityChip` sits in a list you tab through minutes
+after it rendered, so the word must be in its name; that is why `loading` is
+name-folded there even though loading plainly comes and goes. A `Switch` you
+just toggled is not reached later in a meaningfully different state — it is
+either saved or it is not — so it announces and keeps its name.
+
+Read the persistence clause as "persistent states are always properties", not
+as "transient states are never properties".
+
+**Both can apply to the same element, and then you do both.** A `Switch` that
+MOUNTS already-saving is arrived at, not activated — which is why its region's
+text is computed in an effect rather than during render, so the word lands as a
+change even on first paint. Getting that wrong is silent, not loud.
 
 That distinction also settles where a region is _impossible_: a tile that only
 mounts on error cannot host one, because the region would mount together with
@@ -242,6 +252,13 @@ was already present when the region appeared. `PasswordStrengthMeter` is the
 reference implementation: the region is always mounted and only its text
 changes. (`PasswordInput`'s caps-lock region is gated on the `capsLockWarning`
 _prop_ — that is fine, because the prop is not the transient state.)
+
+**Gate the region on what the user can SEE change, not on the raw prop.**
+`DataTable` announces off its skeleton, not off `loading`: a table configured
+`skeletonDelay={300}` has decided a 200ms load is not worth showing anything
+for, and announcing it is louder than the UI. A refetch that leaves existing
+rows on screen changes nothing visually and stays silent. Wire a region straight
+to a `loading` prop and a 30-second poll interrupts a reader every cycle.
 
 **Put the region where it cannot join a name.** Outside the `<label>` that
 names a control, and outside the `<button>` it describes: nested inside a

@@ -1,3 +1,4 @@
+import { renderToStaticMarkup } from 'react-dom/server';
 import { createRef, useState } from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -266,6 +267,18 @@ describe('loading state reaches assistive tech (#488)', () => {
     // change to announce — not a property of something they arrived at.
     expect(getByRole('switch', { name: 'Mute' })).not.toBeNull();
   });
+});
+
+it('mounts the region EMPTY, so the word always arrives as a change', () => {
+  // Server render runs the render pass and NOT effects, so this is literally
+  // the first-paint DOM. That is the only way to observe the deferral: RTL's
+  // render() flushes passive effects inside act(), so by the time a test reads
+  // the region the effect has landed — and the old render-time version
+  // produced the same final text. The previous version of this test passed
+  // against the exact bug it was written to pin.
+  const html = renderToStaticMarkup(<Switch loading>Mute</Switch>);
+  expect(html).toContain('role="status"');
+  expect(html).not.toContain('Saving…');
 });
 
 it('announces even when it mounts already loading', async () => {

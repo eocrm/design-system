@@ -3634,7 +3634,7 @@ The rule the library follows, so you can predict any component:
 - **Purely visual state** — `Badge` tone, `Skeleton` — is yours to announce if it matters. These are documented as visual-only.
 - **`Progress` / `CircularProgress`** carry `role="progressbar"` with `aria-valuenow`, which already exposes the value. Don't wrap them either.
 
-Known gaps, where announcing **is** yours for now: **`ConfirmationPopover`** while pending (#497), **`FileUpload`** per-file failure and its `pending` state (#502; its `uploading` progress bar already announces — don't wrap that), and **`Select`**'s async loading/error rows (#495). Everything else on this page announces itself.
+Known gaps, where announcing **is** yours for now: **`ConfirmationPopover`** while pending (#497), **`FileUpload`** per-file failure and its `pending` state (#502; its `uploading` progress bar already announces — don't wrap that), and **`Select`**'s async loading/error rows (#495). Assume nothing about a component not named on this page — check its JSDoc, which is the authoritative contract. In particular **`Field` does not announce validation errors** (#494): they reach AT only through `aria-describedby`, which is read on focus, not when the error appears.
 
 One consequence for your tests: components that own a region expose `role="status"`, so `getByRole('status')` on a page containing a `Switch`, `StatusMenu` or `DataTable` may now match more than one element. Scope the query, or select by the text you expect.
 
