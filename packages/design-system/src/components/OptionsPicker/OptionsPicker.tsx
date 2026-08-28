@@ -588,7 +588,7 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
                           g.options.map((o) => o.value),
                           draft,
                         )}
-                        aria-label={`Toggle group ${g.label}`}
+                        aria-label={t('optionsPicker.toggleGroup', { label: g.label })}
                         aria-controls={g.options
                           .map((o) => `${contentId}-opt-${o.value}`)
                           .join(' ')}

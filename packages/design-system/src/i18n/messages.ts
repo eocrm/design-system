@@ -216,6 +216,12 @@ export interface Messages {
   dataTable: {
     /** aria-label for the select-all checkbox in the header. */
     selectAll: string;
+    /** aria-label for a row's selection checkbox. */
+    selectRow: (params: { row: string }) => string;
+    /** aria-label for a row's expansion toggle. */
+    expandRow: (params: { row: string }) => string;
+    /** aria-label for a column header's drag-to-reorder grip. */
+    dragReorder: (params: { name: string }) => string;
     /** Accessible label for the row-expansion toggle column header. */
     rowExpansion: string;
     /** Accessible label for the pinned-rows section / tbody. */
@@ -346,7 +352,13 @@ export interface Messages {
     /** Hint inside an empty section body while a move (drag or keyboard pick) is in flight. */
     dropHint: string;
   };
+  avatarGroup: {
+    /** aria-label on the overflow chip: how many avatars are not shown. */
+    overflow: (params: { count: number }) => string;
+  };
   optionsPicker: {
+    /** aria-label for a group's expand/collapse toggle. */
+    toggleGroup: (params: { label: string }) => string;
     /** Placeholder and aria-label for the filter (search) input. */
     filter: string;
     /** Label for the apply button. */
@@ -406,6 +418,8 @@ export interface Messages {
     currentPageAriaLabel: (params: { page: number }) => string;
   };
   select: {
+    /** aria-label on a multi-select chip's remove control. */
+    removeChip: (params: { label: string }) => string;
     /** aria-label on the clear-selection (×) button inside Select. */
     clear: string;
     /** Placeholder for the search input in searchable Selects. */
@@ -449,6 +463,12 @@ export interface Messages {
     numberPlaceholder: string;
   };
   colorPicker: {
+    /**
+     * `aria-valuetext` for the saturation/brightness square, announced on
+     * every keyboard adjustment of a `role="application"` element — so it was
+     * arguably the most-spoken untranslated string in the library (#492).
+     */
+    saturationBrightnessValue: (params: { s: number; v: number }) => string;
     /** aria-label for the SV (saturation × brightness) square. */
     saturationBrightness: string;
     /** aria-label for the hue slider. */

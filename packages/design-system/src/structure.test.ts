@@ -217,3 +217,99 @@ describe('component tokens do not shadow a semantic value', () => {
     ).toEqual([]);
   });
 });
+
+/**
+ * Hard rule 9: no inline English on a user-visible surface.
+ *
+ * Keyed off the RULE, not off a list of attributes — that enumeration is what
+ * made #492's count wrong four times running. Each fix widened one dimension
+ * and left another: excluding braces hid values starting with `${…}`; listing
+ * `aria-label|placeholder|title` hid `aria-valuetext`; being attribute-keyed at
+ * all hid JSX text nodes, which were half the real violations.
+ *
+ * So the attribute set is derived by EXCLUSION: every `aria-*` is textual
+ * unless it is one of the enumerated/ID-valued ones below. A new textual ARIA
+ * attribute is caught by default rather than needing to be remembered.
+ *
+ * Known limits, stated rather than discovered later: it does not read JSX text
+ * nodes (a separate parse, and the naive regex over-matches TypeScript
+ * generics badly), and it cannot see a string assembled in a variable.
+ */
+describe('user-facing strings go through the i18n provider', () => {
+  /** ARIA attributes whose values are ids, enums, booleans or numbers. */
+  const NON_TEXTUAL = new Set([
+    'aria-hidden',
+    'aria-expanded',
+    'aria-selected',
+    'aria-checked',
+    'aria-disabled',
+    'aria-controls',
+    'aria-labelledby',
+    'aria-describedby',
+    'aria-current',
+    'aria-orientation',
+    'aria-live',
+    'aria-atomic',
+    'aria-modal',
+    'aria-multiselectable',
+    'aria-invalid',
+    'aria-busy',
+    'aria-haspopup',
+    'aria-pressed',
+    'aria-readonly',
+    'aria-required',
+    'aria-activedescendant',
+    'aria-owns',
+    'aria-valuemin',
+    'aria-valuemax',
+    'aria-valuenow',
+    'aria-autocomplete',
+    'aria-multiline',
+    'aria-level',
+    'aria-posinset',
+    'aria-setsize',
+    'aria-colcount',
+    'aria-colindex',
+    'aria-rowcount',
+    'aria-rowindex',
+    'aria-sort',
+    'aria-relevant',
+    'aria-dropeffect',
+    'aria-grabbed',
+    'aria-flowto',
+    'aria-details',
+    'aria-errormessage',
+    'aria-keyshortcuts',
+  ]);
+
+  const sources = components.flatMap((name) => {
+    const dir = join(componentsDir, name);
+    return readdirSync(dir)
+      .filter((f) => f.endsWith('.tsx') && !f.includes('.test.'))
+      .map((f) => ({ label: `${name}/${f}`, code: readFileSync(join(dir, f), 'utf-8') }));
+  });
+
+  it('found sources to check', () => {
+    expect(sources.length).toBeGreaterThan(50);
+  });
+
+  it.each(sources.map(({ label, code }) => [label, code]))('%s', (_label, code) => {
+    const offenders: string[] = [];
+    for (const raw of code.split('\n')) {
+      // Skip JSDoc and comment lines — English in an @example is correct.
+      if (/^\s*(\*|\/\/)/.test(raw)) continue;
+      for (const m of raw.matchAll(/\b(aria-[a-z]+|placeholder|title|alt)=\{?(["'`])(.*?)\2/g)) {
+        const [, attr, , value] = m;
+        if (NON_TEXTUAL.has(attr!)) continue;
+        // Interpolations are permitted — the rule allows mixing translated
+        // text with data. What is not permitted is a fixed English phrase.
+        const literal = value!.replace(/\$\{[^}]*\}/g, '').trim();
+        if (/[A-Za-z]{3}/.test(literal)) offenders.push(`${attr}="${value}"`);
+      }
+    }
+    expect(
+      offenders,
+      'inline English on a user-facing attribute — route it through useTranslation()',
+    ).toEqual([]);
+  });
+});

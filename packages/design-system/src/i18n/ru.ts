@@ -120,6 +120,9 @@ export const ru: Messages = {
   },
   dataTable: {
     selectAll: 'Выбрать все строки на странице',
+    selectRow: (params) => `Выбрать строку ${params.row}`,
+    expandRow: (params) => `Развернуть строку ${params.row}`,
+    dragReorder: (params) => `Перетащить для изменения порядка: ${params.name}`,
     rowExpansion: 'Развёртывание строки',
     pinnedRows: 'Закреплённые строки',
     empty: 'Нет данных',
@@ -171,7 +174,11 @@ export const ru: Messages = {
     enteredTopLevel: 'Перемещено на верхний уровень',
     dropHint: 'Перетащите виджеты сюда',
   },
+  avatarGroup: {
+    overflow: (params) => `Ещё ${params.count}`,
+  },
   optionsPicker: {
+    toggleGroup: (params) => `Переключить группу ${params.label}`,
     filter: 'Фильтр…',
     apply: 'Применить',
     cancel: 'Отмена',
@@ -205,6 +212,7 @@ export const ru: Messages = {
     currentPageAriaLabel: ({ page }) => `Страница ${page as number}, текущая`,
   },
   select: {
+    removeChip: (params) => `Удалить ${params.label}`,
     clear: 'Очистить выбор',
     search: 'Поиск…',
     noOptions: 'Нет вариантов',
@@ -223,6 +231,8 @@ export const ru: Messages = {
     numberPlaceholder: 'Номер телефона',
   },
   colorPicker: {
+    saturationBrightnessValue: (params) =>
+      `насыщенность ${params.s} процентов, яркость ${params.v} процентов`,
     saturationBrightness: 'Насыщенность и яркость',
     hue: 'Оттенок',
     hexValue: 'Hex-значение цвета',

@@ -118,6 +118,9 @@ export const en: Messages = {
   },
   dataTable: {
     selectAll: 'Select all rows on page',
+    selectRow: (params) => `Select row ${params.row}`,
+    expandRow: (params) => `Expand row ${params.row}`,
+    dragReorder: (params) => `Drag to reorder ${params.name}`,
     rowExpansion: 'Row expansion',
     pinnedRows: 'Pinned rows',
     empty: 'No data',
@@ -169,7 +172,11 @@ export const en: Messages = {
     enteredTopLevel: 'Moved to the top level',
     dropHint: 'Drop widgets here',
   },
+  avatarGroup: {
+    overflow: (params) => `${params.count} more avatars`,
+  },
   optionsPicker: {
+    toggleGroup: (params) => `Toggle group ${params.label}`,
     filter: 'Filter…',
     apply: 'Apply',
     cancel: 'Cancel',
@@ -203,6 +210,7 @@ export const en: Messages = {
     currentPageAriaLabel: ({ page }) => `Page ${page as number}, current page`,
   },
   select: {
+    removeChip: (params) => `Remove ${params.label}`,
     clear: 'Clear selection',
     search: 'Search…',
     noOptions: 'No options',
@@ -221,6 +229,8 @@ export const en: Messages = {
     numberPlaceholder: 'Phone number',
   },
   colorPicker: {
+    saturationBrightnessValue: (params) =>
+      `saturation ${params.s} percent, brightness ${params.v} percent`,
     saturationBrightness: 'Saturation and brightness',
     hue: 'Hue',
     hexValue: 'Hex color value',

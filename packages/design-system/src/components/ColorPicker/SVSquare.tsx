@@ -170,7 +170,10 @@ export const SVSquare = forwardRef<HTMLDivElement, SVSquareProps>(function SVSqu
       ref={setRef}
       role="application"
       aria-label={t('colorPicker.saturationBrightness')}
-      aria-valuetext={`saturation ${Math.round(s)} percent, brightness ${Math.round(v)} percent`}
+      aria-valuetext={t('colorPicker.saturationBrightnessValue', {
+        s: Math.round(s),
+        v: Math.round(v),
+      })}
       aria-disabled={disabled || undefined}
       tabIndex={disabled ? -1 : 0}
       className={clsx(styles.svSquare, disabled && styles.svSquareDisabled, className)}

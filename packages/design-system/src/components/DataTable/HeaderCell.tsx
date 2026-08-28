@@ -225,7 +225,7 @@ export function HeaderCell<T>({
           // Spread BOTH attributes (aria/role) and listeners (pointerdown etc.)
           {...attributes}
           {...listeners}
-          aria-label={`Drag to reorder ${typeof column.header === 'string' ? column.header : column.id}`}
+          aria-label={t('dataTable.dragReorder', { name: columnLabel })}
           // tabIndex so keyboard users can focus to reveal grip + activate drag
           tabIndex={0}
           // Stop sort click from misfiring when the user clicks the grip without moving.

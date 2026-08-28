@@ -11,6 +11,7 @@ import clsx from 'clsx';
 import type { AvatarSize } from './Avatar';
 import { AvatarGroupContext, type AvatarGroupContextValue } from './AvatarGroupContext';
 import styles from './AvatarGroup.module.scss';
+import { useTranslation } from '../../i18n/useTranslation';
 
 export interface AvatarGroupProps extends HTMLAttributes<HTMLDivElement> {
   /** Avatar children. */
@@ -96,6 +97,7 @@ export const AvatarGroup = forwardRef<HTMLDivElement, AvatarGroupProps>(function
   { children, size = 'md', max = 4, tooltip = true, onOverflowClick, className, ...props },
   ref,
 ) {
+  const t = useTranslation();
   const items = Children.toArray(children).filter(isValidElement);
   const visible = items.slice(0, max);
   const hiddenCount = Math.max(0, items.length - max);
@@ -110,13 +112,17 @@ export const AvatarGroup = forwardRef<HTMLDivElement, AvatarGroupProps>(function
         <button
           type="button"
           className={overflowClass}
-          aria-label={`${hiddenCount} more avatars`}
+          aria-label={t('avatarGroup.overflow', { count: hiddenCount })}
           onClick={(e) => onOverflowClick(e, hiddenCount)}
         >
           +{hiddenCount}
         </button>
       ) : (
-        <span className={overflowClass} role="img" aria-label={`${hiddenCount} more avatars`}>
+        <span
+          className={overflowClass}
+          role="img"
+          aria-label={t('avatarGroup.overflow', { count: hiddenCount })}
+        >
           +{hiddenCount}
         </span>
       )
