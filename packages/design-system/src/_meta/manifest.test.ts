@@ -31,7 +31,12 @@ describe('components.manifest.json', () => {
     // `node packages/design-system/scripts/generate-manifest.mjs`, never
     // prettier.
     const expected = `${JSON.stringify(buildManifest(), null, 2)}\n`;
-    expect(readFileSync(MANIFEST_PATH, 'utf-8')).toBe(expected);
+    expect(
+      readFileSync(MANIFEST_PATH, 'utf-8'),
+      'Manifest bytes drifted — run `node packages/design-system/scripts/generate-manifest.mjs`. ' +
+        'Do NOT run prettier on this file: it is in .prettierignore, which prettier resolves ' +
+        'relative to its CWD, so a package-local run reflows it silently.',
+    ).toBe(expected);
   });
 
   it('every component has a cluster assigned', () => {

@@ -38,7 +38,15 @@ export interface FieldProps extends Omit<HTMLAttributes<HTMLDivElement>, 'childr
   label?: ReactNode;
   /** Helper text below the control. Hidden while `error` is present. */
   description?: ReactNode;
-  /** Error message. Replaces `description`, flips the control to `invalid`, links `aria-describedby`. */
+  /** Error message. Replaces `description`, flips the control to `invalid`, links `aria-describedby`.
+   *
+   * NOT announced. The message is linked with `aria-describedby`, which screen
+   * readers read on FOCUS — so an error appearing after a submit reaches nobody
+   * unless focus moves into the field. That is deliberate under Hard rule 10's
+   * visual-only clause (per-field regions would announce on every keystroke of
+   * a validate-on-change form), but it means a form-level summary region is the
+   * consumer's job. Tracked in #494.
+   */
   error?: ReactNode;
   /** Marks the field required: shows `*` and injects `required` onto the control. */
   required?: boolean;

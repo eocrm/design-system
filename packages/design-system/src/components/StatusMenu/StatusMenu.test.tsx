@@ -205,8 +205,12 @@ it('mounts the region EMPTY, so the word always arrives as a change', () => {
   // produced the same final text. The previous version of this test passed
   // against the exact bug it was written to pin.
   const html = renderToStaticMarkup(<StatusMenu current={inProgress} options={options} busy />);
-  expect(html).toContain('role="status"');
-  expect(html).not.toContain('Saving status…');
+  // Asserted as an EMPTY element, not as "does not contain the word". The
+  // word-based form went blind the moment anyone renamed the i18n string:
+  // review verified that reverting the deferral AND renaming `switch.busy`
+  // made this pass against the very bug it pins. This shape cannot be
+  // satisfied by a rename, and it also pins `aria-live="polite"`.
+  expect(html).toMatch(/role="status" aria-live="polite" class="[^"]*"><\/span>/);
 });
 
 it('announces even when it mounts already busy', async () => {

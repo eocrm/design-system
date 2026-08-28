@@ -3625,7 +3625,7 @@ The authoritative list of tokens per component lives in that component's `<Name>
 
 ## Transient state and screen readers
 
-Components in this library handle their own transient state (`loading`, `busy`, async failure). You do not need to wrap them in a live region to make that state reach a screen reader — and you should not, because two live regions announcing the same event talk over each other.
+Components in this library handle their own transient state (`loading`, `busy`, async failure). For the components that do, you do not need to wrap them in a live region — and you should not, because two regions announcing one event talk over each other. **But not every component does**: see Known gaps below, and check the component's own JSDoc before assuming.
 
 The rule the library follows, so you can predict any component:
 
@@ -3634,7 +3634,7 @@ The rule the library follows, so you can predict any component:
 - **Purely visual state** — `Badge` tone, `Skeleton` — is yours to announce if it matters. These are documented as visual-only.
 - **`Progress` / `CircularProgress`** carry `role="progressbar"` with `aria-valuenow`, which already exposes the value. Don't wrap them either.
 
-Known gaps, where announcing **is** yours for now: **`ConfirmationPopover`** while pending (#497), **`FileUpload`** per-file failure and its `pending` state (#502; its `uploading` progress bar already announces — don't wrap that), and **`Select`**'s async loading/error rows (#495). Assume nothing about a component not named on this page — check its JSDoc, which is the authoritative contract. In particular **`Field` does not announce validation errors** (#494): they reach AT only through `aria-describedby`, which is read on focus, not when the error appears.
+Known gaps, where announcing **is** yours for now: **`ConfirmationPopover`** while pending (#497), **`FileUpload`** per-file failure and its `pending` state (#502; its `uploading` progress bar already announces — don't wrap that), and **`Select`**'s async loading/error rows (#495). Assume nothing about a component not named in **this list** — every component appears somewhere on this page, so the list, not the page, is the boundary. Check the component's own JSDoc. In particular **`Field` does not announce validation errors** (#494): they reach AT only through `aria-describedby`, which is read on focus, not when the error appears.
 
 One consequence for your tests: components that own a region expose `role="status"`, so `getByRole('status')` on a page containing a `Switch`, `StatusMenu` or `DataTable` may now match more than one element. Scope the query, or select by the text you expect.
 

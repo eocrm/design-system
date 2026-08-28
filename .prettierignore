@@ -27,8 +27,9 @@ package-lock.json
 #
 # Two things this entry does NOT do. It is resolved relative to prettier's CWD,
 # so `prettier --write` run from inside packages/design-system ignores it
-# entirely and reflows the file — run prettier from the repo root, or name
-# files explicitly. And the drift test in src/_meta/manifest.test.ts compares
+# entirely and reflows the file. CWD is the only variable — naming the file
+# explicitly does not help. Run prettier from the repo root.
+# And the drift test in src/_meta/manifest.test.ts compares
 # PARSED objects, which is blind to formatting; the byte comparison beside it
 # is what actually catches this.
 packages/design-system/src/components.manifest.json

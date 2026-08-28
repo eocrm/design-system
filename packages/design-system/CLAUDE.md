@@ -218,10 +218,18 @@ either saved or it is not — so it announces and keeps its name.
 Read the persistence clause as "persistent states are always properties", not
 as "transient states are never properties".
 
-**Both can apply to the same element, and then you do both.** A `Switch` that
-MOUNTS already-saving is arrived at, not activated — which is why its region's
-text is computed in an effect rather than during render, so the word lands as a
-change even on first paint. Getting that wrong is silent, not loud.
+**When arrival and change coincide, the region's TIMING carries it — not a
+second mechanism.** A `Switch` that mounts already-saving is arrived at rather
+than activated, so a naive reading says name-fold. Don't: renaming a control
+mid-flight breaks the name-exact contract this rule protects elsewhere, and the
+state is short-lived. What it needs instead is for the region to still fire on
+first paint, which means computing its text in an effect rather than during
+render — otherwise region and text mount together and announce nothing.
+
+The distinguisher between this and `EntityChip` is not reachability alone but
+**how long the state lasts and how likely you are to arrive mid-state**. A
+placeholder chip can sit unresolved in a list indefinitely; a switch is saved
+or not within a moment. Getting the timing wrong here is silent, not loud.
 
 That distinction also settles where a region is _impossible_: a tile that only
 mounts on error cannot host one, because the region would mount together with

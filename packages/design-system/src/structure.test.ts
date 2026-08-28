@@ -115,8 +115,16 @@ describe('transient state does not rely on aria-busy alone', () => {
       // anchor is defensive, not a fix for a live pass). `aria-live` must be a
       // value that actually announces: `aria-live="off"` is the attribute
       // present and explicitly disabled, which is not a mechanism.
+      // The `aria-live="off"` rejection has to be a NEGATIVE lookahead, not a
+      // value match on the aria-live branch: `role="status"` implies polite, so
+      // an element carrying both `role="status"` and an explicit
+      // `aria-live="off"` matched on the role branch and never had its
+      // aria-live inspected. The comment claimed otherwise — fourth time in
+      // this PR that a comment named an input the gate could not fail on.
       const liveRegion =
-        /<[A-Za-z][^>]*(role=("|')(status|alert)\2|aria-live=("|')(polite|assertive)\4)/.test(code);
+        /<[A-Za-z](?![^>]*aria-live=("|')off\1)[^>]*(role=("|')(status|alert)\3|aria-live=("|')(polite|assertive)\5)/.test(
+          code,
+        );
       // Scoped to a qualifying span, not two file-wide tests. The `}` anchor
       // rejects `srOnlyDecorativeThing` and `hiddenLabelWrapper`, and the `t(`
       // must sit inside SOME visually-hidden span's children — not necessarily
@@ -128,7 +136,9 @@ describe('transient state does not rely on aria-busy alone', () => {
       // regression this gate exists for, third version in a row where the
       // comment named an input the gate could not fail on.
       //
-      // Known limits, none of them current shapes: the opening-tag scan stops
+      // Known limits. One IS a current shape: `aria-live={expr}` is rejected,
+      // and Toast.tsx:71 is exactly that — it does not false-alarm only because
+      // Toast sets no `aria-busy`. The rest are not current: the opening-tag scan stops
       // at the first `>`, so an arrow function in the tag before the attribute
       // would false-alarm; `t` is hardcoded as the hook's binding; and an
       // element between the span and its `t()` would not match.
