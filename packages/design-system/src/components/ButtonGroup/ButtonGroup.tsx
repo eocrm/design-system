@@ -6,6 +6,7 @@ import {
   useEffect,
   useMemo,
   useRef,
+  useState,
   type CSSProperties,
   type HTMLAttributes,
   type KeyboardEvent,
@@ -197,6 +198,21 @@ function Segmented({
     };
   }, [ariaLabel, ariaLabelledBy]);
 
+  // Which item holds the tab stop when nothing is selected. Read from the DOM
+  // after each commit so consumer-reordered children resolve in visual order,
+  // exactly like handleItemKeyDown below. Runs unconditionally but only sets
+  // state when the answer actually changes, so it cannot loop.
+  const [rovingFallbackValue, setRovingFallbackValue] = useState<string | null>(null);
+  useEffect(() => {
+    const root = groupRef.current;
+    if (!root) return;
+    const items = [...root.querySelectorAll<HTMLButtonElement>('button[role="radio"]')];
+    const anySelected = items.some((el) => el.getAttribute('aria-checked') === 'true');
+    const firstEnabled = items.find((el) => el.getAttribute('aria-disabled') !== 'true');
+    const next = anySelected ? null : (firstEnabled?.dataset.value ?? null);
+    setRovingFallbackValue((prev) => (prev === next ? prev : next));
+  });
+
   const handleItemKeyDown = useCallback(
     (e: KeyboardEvent<HTMLButtonElement>, currentValue: string) => {
       const root = groupRef.current;
@@ -255,8 +271,9 @@ function Segmented({
       size,
       disabled,
       handleItemKeyDown,
+      rovingFallbackValue,
     }),
-    [value, onValueChange, size, disabled, handleItemKeyDown],
+    [value, onValueChange, size, disabled, handleItemKeyDown, rovingFallbackValue],
   );
 
   return (
