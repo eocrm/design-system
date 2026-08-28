@@ -120,6 +120,7 @@ export const ru: Messages = {
     pinnedRows: 'Закреплённые строки',
     empty: 'Нет данных',
     loading: 'Загрузка строк…',
+    resizeColumn: (params) => `Изменить ширину столбца ${params.name}`,
     loaded: 'Строки загружены',
     loadedEmpty: 'Строки не загружены',
   },

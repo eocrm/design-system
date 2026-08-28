@@ -1,4 +1,4 @@
-import { useMemo, useRef, type KeyboardEvent } from 'react';
+import { useId, useMemo, useRef, type KeyboardEvent } from 'react';
 import clsx from 'clsx';
 import {
   GripVertical,
@@ -12,6 +12,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Table } from '../Table';
 import type { TableSortDirection } from '../Table';
+import { useTranslation } from '../../i18n/useTranslation';
 import { useResizeHandle } from './useResizeHandle';
 import type { ColumnDef, DataTableInstance } from './types';
 import { getPinStyle } from './pinStyle';
@@ -71,8 +72,18 @@ export function HeaderCell<T>({
   const sortable = column.sortable === true;
   const plainHeader = typeof column.header === 'string';
   const retainedResponsiveHeader = sortable || !plainHeader;
-  const resizeLabel =
+  const t = useTranslation();
+  const columnLabel =
     column.visibilityLabel ?? (typeof column.header === 'string' ? column.header : column.id);
+  // The handle's own name has to describe the ACTION. It used to be the column
+  // label verbatim, so a keyboard user heard "Name, separator".
+  const resizeLabel = t('dataTable.resizeColumn', { name: columnLabel });
+  // The header's name comes from this id, not from its content. The resize
+  // handle is a named, focusable descendant of the <th>, so with
+  // name-from-content the header computed as "Name Name" at every width the
+  // moment `collapseBelow` was set (#500). Pointing at the label span excludes
+  // the handle and the drag grip without hiding either from AT.
+  const labelId = `${useId()}-label`;
   const sortDir: TableSortDirection | undefined =
     instance.sort?.columnId === column.id ? instance.sort.direction : sortable ? 'none' : undefined;
 
@@ -191,6 +202,7 @@ export function HeaderCell<T>({
       }
       data-responsive-pinned={responsiveEnabled && isPinned ? true : undefined}
       aria-sort={sortDir != null ? sortAriaMap[sortDir] : undefined}
+      aria-labelledby={labelId}
       onClick={sortable ? () => instance.toggleSort(column.id) : undefined}
       className={clsx(
         styles.headerCell,
@@ -241,6 +253,7 @@ export function HeaderCell<T>({
       >
         <span
           ref={labelRef}
+          id={labelId}
           className={clsx(styles.label, sortable && styles.sortable)}
           tabIndex={sortable ? 0 : undefined}
           role={sortable ? 'button' : undefined}

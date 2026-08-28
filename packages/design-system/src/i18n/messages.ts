@@ -222,6 +222,15 @@ export interface Messages {
      */
     loaded: string;
     /**
+     * Accessible name for a column's resize handle, interpolated with the
+     * column label. The handle used to reuse the column header verbatim, which
+     * did two wrong things at once: a keyboard user tabbing to it heard
+     * "Name, separator" with no hint that it resizes, and — because the handle
+     * is a NAMED DESCENDANT of the columnheader — the header's own name
+     * computed as "Name Name".
+     */
+    resizeColumn: (params: { name: string }) => string;
+    /**
      * Announced when a load resolves to nothing. Distinct from `empty`, which
      * is the VISIBLE empty-state copy: reusing that string put the same text
      * on screen and in the live region, so a name query for the empty state

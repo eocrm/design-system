@@ -965,7 +965,12 @@ describe('<DataTable>', () => {
 
     render(<ResizeNamesHarness />);
 
-    const defaultRange = screen.getByRole('separator', { name: 'Preferred resize name' });
+    // Named for the ACTION, not the column alone — a keyboard user tabbing
+    // here used to hear "Preferred resize name, separator" with no hint that
+    // it resizes anything (#500).
+    const defaultRange = screen.getByRole('separator', {
+      name: 'Resize Preferred resize name column',
+    });
     expect(defaultRange).toHaveAttribute('aria-valuemin', '40');
     expect(defaultRange).toHaveAttribute('aria-valuenow', '120');
     expect(defaultRange).toHaveAttribute('aria-valuemax', String(Number.MAX_SAFE_INTEGER));
@@ -973,13 +978,17 @@ describe('<DataTable>', () => {
       Number(defaultRange.getAttribute('aria-valuenow')),
     );
 
-    const explicitRange = screen.getByRole('separator', { name: 'String resize name' });
+    const explicitRange = screen.getByRole('separator', {
+      name: 'Resize String resize name column',
+    });
     expect(explicitRange).toHaveAttribute('aria-valuenow', '120');
     expect(explicitRange).toHaveAttribute('aria-valuemax', '240');
     expect(Number(explicitRange.getAttribute('aria-valuemax'))).toBeGreaterThanOrEqual(
       Number(explicitRange.getAttribute('aria-valuenow')),
     );
-    expect(screen.getByRole('separator', { name: 'id-fallback' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('separator', { name: 'Resize id-fallback column' }),
+    ).toBeInTheDocument();
   });
 
   it('exposes stable responsive hooks for wide-table drag and resize controls', () => {
@@ -1027,7 +1036,7 @@ describe('<DataTable>', () => {
     const label = screen.getByRole('button', { name: 'Name' });
     const resizeHandle = within(screen.getByRole('columnheader', { name: /name/i })).getByRole(
       'separator',
-      { name: 'Name' },
+      { name: 'Resize Name column' },
     );
     expect(resizeHandle).toHaveAttribute('tabindex', '0');
 
@@ -2053,5 +2062,32 @@ describe('loading state reaches assistive tech (#488)', () => {
     const { rerender, container } = render(<Harness4 data={rows} loading={false} />);
     rerender(<Harness4 data={rows} loading />);
     expect(ownRegion(container)[0].textContent).toBe('');
+  });
+});
+
+describe('collapseBelow does not duplicate the column header name (#500)', () => {
+  function NameHarness({ collapseBelow }: { collapseBelow?: 'md' }) {
+    const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+    return <DataTable instance={instance} aria-label="t" collapseBelow={collapseBelow} />;
+  }
+
+  it('names the header once, with and without collapseBelow', () => {
+    // Setting collapseBelow flipped the resize handle from aria-hidden to a
+    // NAMED role="separator" inside the <th>, and its name was the column's
+    // own header text — so name-from-content computed "Name Name" at every
+    // width, not just while stacked. The <th> now takes its name from the
+    // label span by id, which excludes the handle and the drag grip.
+    const { unmount } = render(<NameHarness />);
+    expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument();
+    unmount();
+
+    render(<NameHarness collapseBelow="md" />);
+    expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'Name Name' })).toBeNull();
+  });
+
+  it('still exposes the resize handle, named for what it does', () => {
+    render(<NameHarness collapseBelow="md" />);
+    expect(screen.getByRole('separator', { name: 'Resize Name column' })).toBeInTheDocument();
   });
 });
