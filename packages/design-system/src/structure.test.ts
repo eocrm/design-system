@@ -351,12 +351,24 @@ describe('user-facing strings go through the i18n provider', () => {
         if (ch !== '{') continue;
 
         // Balanced scan, so a template literal's `${…}` does not end the value
-        // at its first `}`.
+        // at its first `}`. String-aware, because a brace inside a string is
+        // not structure: `aria-label={x.replace('{', '')}` would otherwise
+        // leave depth permanently above zero and run the value to the end of
+        // the file, scanning every literal after it as if it were this
+        // attribute's.
         let depth = 0;
+        let quote = '';
         let j = i;
         for (; j < body.length; j++) {
-          if (body[j] === '{') depth++;
-          else if (body[j] === '}' && --depth === 0) break;
+          const c = body[j]!;
+          if (quote) {
+            if (c === '\\') j++;
+            else if (c === quote) quote = '';
+            continue;
+          }
+          if (c === '"' || c === "'" || c === '`') quote = c;
+          else if (c === '{') depth++;
+          else if (c === '}' && --depth === 0) break;
         }
         const value = body.slice(i + 1, j);
 
