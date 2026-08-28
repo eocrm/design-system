@@ -215,3 +215,9 @@
   outline: var(--ring-width) solid var(--ring-accent);
   outline-offset: 1px;
 }
+
+// Mirrors Input's invalid treatment so a TimeField inside a Field with an
+// error reads the same as every other control (#494).
+.timeField:has(input[aria-invalid='true']) {
+  border-color: var(--date-picker-time-field-border-color-invalid);
+}

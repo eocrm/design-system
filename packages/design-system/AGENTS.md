@@ -3634,7 +3634,15 @@ The rule the library follows, so you can predict any component:
 - **Purely visual state** — `Badge` tone, `Skeleton` — is yours to announce if it matters. These are documented as visual-only.
 - **`Progress` / `CircularProgress`** carry `role="progressbar"`. A _determinate_ one exposes its value through `aria-valuenow`; an _indeterminate_ one has no `aria-valuenow` at all and puts its meaning in `aria-valuetext`, which currently falls back to a hardcoded English `'Loading…'` (#503). Don't wrap either — but do pass an `aria-label`, because that fallback is the only thing spoken if you don't.
 
-Known gaps, where announcing **is** yours for now: **`ConfirmationPopover`** while pending (#497), **`FileUpload`** per-file failure and its `pending` state (#502; its `uploading` state carries a `Progress`, which is readable on focus rather than announced — don't wrap it, but note its `progress` prop is optional, so the common path is an indeterminate bar subject to #503), and **`Select`**'s async loading/error rows (#495). Assume nothing about a component not named in **this list** — every component appears somewhere on this page, so the list, not the page, is the boundary. Check the component's own JSDoc. In particular **`Field` does not announce validation errors** (#494): they reach AT only through `aria-describedby`, which is read on focus, not when the error appears.
+**Form validation is yours to announce, and that is a decision, not a gap.** `Field` links its error with `aria-describedby`, which is read on focus — so an error appearing after a submit reaches nobody until focus arrives. A live region per `Field` would be worse: validate-on-change announces every keystroke, and a failed submit fires one announcement per field, over each other. The form knows how many failed and when the user asked; the field does not. Announce a summary on submit:
+
+```tsx
+<div role="status" aria-live="polite">
+  {submitted && errorCount > 0 ? `${errorCount} fields need attention` : ''}
+</div>
+```
+
+Known gaps, where announcing **is** yours for now: **`ConfirmationPopover`** while pending (#497), **`FileUpload`** per-file failure and its `pending` state (#502; its `uploading` state carries a `Progress`, which is readable on focus rather than announced — don't wrap it, but note its `progress` prop is optional, so the common path is an indeterminate bar subject to #503), and **`Select`**'s async loading/error rows (#495). Assume nothing about a component not named in **this list** — every component appears somewhere on this page, so the list, not the page, is the boundary. Check the component's own JSDoc. `Field`'s validation errors are covered above — documented behaviour, not an oversight.
 
 One consequence for your tests: components that own a region expose `role="status"`, so `getByRole('status')` on a page containing a `Switch`, `StatusMenu` or `DataTable` may now match more than one element. Scope the query, or select by the text you expect.
 

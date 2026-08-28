@@ -38,16 +38,31 @@ export interface FieldProps extends Omit<HTMLAttributes<HTMLDivElement>, 'childr
   label?: ReactNode;
   /** Helper text below the control. Hidden while `error` is present. */
   description?: ReactNode;
-  /** Error message. Replaces `description`, flips the control to `invalid`, links `aria-describedby`.
+  /**
+   * Error message. Replaces `description`, flips the control to `invalid`, and
+   * links it with `aria-describedby`.
    *
-   * NOT announced. The message is linked with `aria-describedby`, which screen
-   * readers read on FOCUS — so an error appearing after a submit reaches nobody
-   * unless focus moves into the field. That is deliberate under Hard rule 10's
-   * "silence you chose and documented" clause — the error IS exposed, via
-   * `aria-describedby`, so it is not visual-only. Per-field live regions would
-   * announce on every keystroke of
-   * a validate-on-change form), but it means a form-level summary region is the
-   * consumer's job. Tracked in #494.
+   * **Not announced, deliberately.** `aria-describedby` is read on FOCUS, so an
+   * error that appears after a submit reaches nobody unless focus moves into
+   * the field. Hard rule 10 permits chosen silence provided it is written down;
+   * this is that note.
+   *
+   * The alternative — a live region per Field — is worse in the common case: a
+   * validate-on-change form would announce on every keystroke, and a submit
+   * failing N fields would fire N announcements over each other. The right
+   * owner of that announcement is the FORM, which knows how many fields failed
+   * and when the user asked for the answer.
+   *
+   * So: announce a summary yourself on submit, and leave the per-field message
+   * to `aria-describedby` for when focus arrives.
+   *
+   * ```tsx
+   * <div role="status" aria-live="polite">
+   *   {submitted && errorCount > 0 ? `${errorCount} fields need attention` : ''}
+   * </div>
+   * ```
+   *
+   * See #494 for the full reasoning.
    */
   error?: ReactNode;
   /** Marks the field required: shows `*` and injects `required` onto the control. */
