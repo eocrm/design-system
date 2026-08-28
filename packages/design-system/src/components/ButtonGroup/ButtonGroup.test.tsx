@@ -353,6 +353,23 @@ describe('unselected segmented group is reachable by keyboard (#499)', () => {
     ]);
   });
 
+  it('keeps a tab stop when every item is disabled', () => {
+    // Items carry `aria-disabled`, not the native `disabled`, so they are meant
+    // to stay focusable — a user tabs in and hears why the choice is
+    // unavailable. Without the `?? items[0]` fallback there was no enabled item
+    // to hand the stop to, so the whole group dropped out of the tab order —
+    // the exact behaviour `aria-disabled` was chosen to avoid.
+    render(
+      <ButtonGroup value="" onValueChange={() => {}} aria-label="Date presets" disabled>
+        <ButtonGroup.Item value="7d">Last 7 days</ButtonGroup.Item>
+        <ButtonGroup.Item value="30d">Last 30 days</ButtonGroup.Item>
+      </ButtonGroup>,
+    );
+    const items = screen.getAllByRole('radio');
+    expect(items.every((el) => el.getAttribute('aria-disabled') === 'true')).toBe(true);
+    expect(items.map((el) => el.getAttribute('tabindex'))).toEqual(['0', '-1']);
+  });
+
   it('skips a disabled first item', () => {
     render(
       <ButtonGroup value="" onValueChange={() => {}} aria-label="Date presets">

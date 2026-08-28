@@ -2198,7 +2198,7 @@ const [tab, setTab] = useState('overview');
 - `actions` on a `TabItem` renders **interactive** control(s) (a `Switch`, a close button, a `⋯` menu) OUTSIDE that tab's `role="tab"` button — use it for anything focusable/clickable (a `Badge` or a static status dot stays in `leading`/`trailing`, which render _inside_ the button). `endContent` (a `TabsProps` slot) renders controls for the whole bar (an "add tab" button, a filter toggle) at the end of the strip, outside the tablist, so they never scroll with the tabs and aren't part of arrow-key tab navigation. Keyboard: arrows rove tabs only; `Tab` reaches a tab's `actions`, then `endContent`. Each per-tab `actions` adds a Tab stop, so they're cleanest on the active tab or a handful of tabs.
 - `activationMode`: `auto` (default — Arrow keys fire onChange) or `manual` (Arrow only focuses; Enter/Space activates). Use `manual` when panels lazy-load expensive content.
 - `orientation`: `horizontal` (default), `vertical`, or `auto`. `auto` is vertical below `autoOrientationBreakpoint` and horizontal at or above it based on the available Tabs/tab-strip width; the breakpoint defaults to 320px and can be set per Tabs instance to match the surrounding layout threshold. Use it with a collapsing `Split` so a fixed rail stays vertical until its pane stacks.
-- `panelIdPrefix`: optional. When set, each tab gets `aria-controls="${prefix}-${itemId}-panel"`. Set this if you render the panels in the DOM and want assistive tech to follow the link.
+- `panelIdPrefix`: optional. When set, the **active** tab gets `aria-controls="${prefix}-${itemId}-panel"`. Set this if you render the panels in the DOM and want assistive tech to follow the link. Only the active tab carries it because only the active panel is in the DOM — stamping it on every tab (the pre-#501 behaviour) pointed the inactive ones at ids no element had.
 - The active-tab underline slides between tabs when `activeId` changes. Respects `prefers-reduced-motion: reduce`.
 - `action?: { label, icon?, onClick, disabled? }` renders a `+ New entity`-style button-like pseudo-tab after the tab items, inside the same strip — tab-shaped but visibly muted, NOT `role="tab"`, never selected, skipped by arrow-key roving (reachable via `Tab` instead), and the sliding indicator never targets it. It only fires `onClick`; if the click should change `activeId`, do that yourself in the handler (e.g. append + select a new tab). Known, accepted a11y tradeoff: like the `TabItem.actions` button, this leaves one non-`"tab"` child in the `role="tablist"` container (an `aria-required-children` deviation) — a real `<button>` still announces correctly to assistive tech regardless of its parent's role.
 
@@ -2684,7 +2684,7 @@ const [show, setShow] = useState(true);
 - `variant`: `'default'` (Confirm is primary) | `'danger'` (Confirm is danger).
 - **Initial focus on Cancel** for both variants — keyboard Enter never accidentally confirms. Tab once to Confirm.
 - **`initialFocusRef`** (`RefObject<HTMLElement | null>`) overrides the Cancel default: directs initial focus into the `description` content instead — e.g. an `<Input>` rendered there for a rename flow. The component focuses `initialFocusRef.current` after the panel mounts (mirrors `<Modal>`'s `initialFocusRef`). Tip: add `onFocus={(e) => e.currentTarget.select()}` to a text input so its contents are selected on open and the user can type a replacement immediately.
-- **Async-aware** `onConfirm`. May return a Promise. While pending, both buttons disable, Confirm shows a spinner, and Escape / click-outside are blocked.
+- **Async-aware** `onConfirm`. May return a Promise. While pending, both buttons take `aria-disabled` (NOT the native `disabled`, which would drop them from the tab order and blow away focus mid-operation), their handlers no-op, Confirm shows a spinner, the pending state is announced, and Escape / click-outside are blocked.
 - **Failure mode**: on reject, popover stays open and buttons re-enable. Consumer surfaces the error externally — ConfirmationPopover does NOT render inline errors.
 - Anchors above the trigger by default (`side="top"`).
 - **From a DropdownMenu item (kebab Delete pattern).** Wrap a `<DropdownMenu.Item closeOnSelect={false}>` as the trigger — clicking anywhere on the row opens the confirmation. The menu stays open until the user dismisses it (Escape or click outside). To close the menu after the action resolves, drive `DropdownMenu`'s `open` state externally and call `setMenuOpen(false)` inside `onConfirm`.
@@ -3031,7 +3031,7 @@ rendering existing reaction counts (the consumer builds that display).
 - `tone`: `default | success | warning | danger`. Applies to determinate only; indeterminate is always accent (state-color semantics don't apply to an unknown total).
 - `label`: `false | true | ReactNode`. `true` shows `{n}%` (auto-suppressed when indeterminate); ReactNode renders in both modes (`label="Loading…"` is the canonical "indeterminate + text" pattern).
 - `role="progressbar"` is locked — `Omit<HTMLAttributes, 'role'>` prevents the consumer from overriding it.
-- Indeterminate `aria-valuetext` falls back to consumer-passed `aria-label`, then to `"Loading…"`.
+- Indeterminate `aria-valuetext` falls back to consumer-passed `aria-label`, then to the translated `progress.indeterminate` (#503) — not a hardcoded English string.
 
 ### `<CircularProgress>` — circular progress / spinner
 
@@ -3630,9 +3630,9 @@ Components in this library handle their own transient state (`loading`, `busy`, 
 The rule the library follows, so you can predict any component:
 
 - **State you meet by arriving** — an `EntityChip` placeholder you tab onto — is folded into the **accessible name**. Its name therefore _changes_ when the state resolves, so don't select those elements by exact name in tests while a placeholder can be on screen.
-- **State that changes while you are elsewhere** — a `Switch` saving, a `DataTable` loading, a `StatusMenu` committing — is announced from a **live region the component owns**. Names stay stable.
+- **State that changes while you are elsewhere** — a `Switch` saving, a `DataTable` loading, a `StatusMenu` committing, a `Select` resolving its async options, a `FileUpload` batch finishing, a `ConfirmationPopover` going pending — is announced from a **live region the component owns**. Names stay stable.
 - **Purely visual state** — `Badge` tone, `Skeleton` — is yours to announce if it matters. These are documented as visual-only.
-- **`Progress` / `CircularProgress`** carry `role="progressbar"`. A _determinate_ one exposes its value through `aria-valuenow`; an _indeterminate_ one has no `aria-valuenow` at all and puts its meaning in `aria-valuetext`, which currently falls back to a hardcoded English `'Loading…'` (#503). Don't wrap either — but do pass an `aria-label`, because that fallback is the only thing spoken if you don't.
+- **`Progress` / `CircularProgress`** carry `role="progressbar"`. A _determinate_ one exposes its value through `aria-valuenow`; an _indeterminate_ one has no `aria-valuenow` at all and puts its meaning in `aria-valuetext`, whose fallback is translated via `progress.indeterminate` (#503). Don't wrap either — but do pass an `aria-label`, because that fallback is the only thing spoken if you don't.
 
 **Form validation is yours to announce, and that is a decision, not a gap.** `Field` links its error with `aria-describedby`, which is read on focus — so an error appearing after a submit reaches nobody until focus arrives. A live region per `Field` would be worse: validate-on-change announces every keystroke, and a failed submit fires one announcement per field, over each other. The form knows how many failed and when the user asked; the field does not. Announce a summary on submit:
 
@@ -3642,7 +3642,7 @@ The rule the library follows, so you can predict any component:
 </div>
 ```
 
-Known gaps, where announcing **is** yours for now: **`ConfirmationPopover`** while pending (#497), **`FileUpload`** per-file failure and its `pending` state (#502; its `uploading` state carries a `Progress`, which is readable on focus rather than announced — don't wrap it, but note its `progress` prop is optional, so the common path is an indeterminate bar subject to #503), and **`Select`**'s async loading/error rows (#495). Assume nothing about a component not named in **this list** — every component appears somewhere on this page, so the list, not the page, is the boundary. Check the component's own JSDoc. `Field`'s validation errors are covered above — documented behaviour, not an oversight.
+Known gaps: **none currently open.** The three that stood here — `ConfirmationPopover` while pending (#497), `FileUpload` per-file failure and its `pending` state (#502), and `Select`'s async loading/error rows (#495) — all announce for themselves now, so do NOT wrap them. `FileUpload`'s `uploading` state still carries a `Progress` that is readable on focus rather than announced; don't wrap that either. Assume nothing about a component not named in **this list** — every component appears somewhere on this page, so the list, not the page, is the boundary. Check the component's own JSDoc. `Field`'s validation errors are covered above — documented behaviour, not an oversight.
 
 One consequence for your tests: components that own a region expose `role="status"`, so `getByRole('status')` on a page containing a `Switch`, `StatusMenu` or `DataTable` may now match more than one element. Scope the query, or select by the text you expect.
 

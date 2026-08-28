@@ -274,14 +274,18 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
                 throughout.
 
                 On a leaf there is nothing to prune, so the name survives and
-                the siblings stay reachable. Concatenated, not `alt || …`:
-                with the fallback form the failure word was dropped whenever
-                `alt` was set, i.e. in the normal case. */}
-            <ImageOff
-              size={28}
-              role="img"
-              aria-label={alt ? `${alt}: ${t('image.loadError')}` : t('image.loadError')}
-            />
+                the siblings stay reachable.
+
+                The icon carries ONLY `alt`, never the failure phrase: the
+                sibling below renders that phrase as visible text, so naming
+                the icon with it too made a reader say "Failed to load" twice
+                in a row. With no `alt` there is nothing left to name, so the
+                icon goes decorative and the text carries the message alone. */}
+            {alt ? (
+              <ImageOff size={28} role="img" aria-label={alt} />
+            ) : (
+              <ImageOff size={28} aria-hidden />
+            )}
             <span className={styles.errorText}>{t('image.loadError')}</span>
             <Button variant="secondary" size="sm" onClick={retry}>
               {t('image.retry')}

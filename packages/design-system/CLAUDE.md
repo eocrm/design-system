@@ -197,8 +197,8 @@ happens while their attention is elsewhere?**
   (Precisely: `aria-valuenow` is set only when determinate. An indeterminate
   spinner puts its meaning in `aria-valuetext` — a value description, not the
   accessible name, which stays whatever the consumer passed as `aria-label`.
-  Both files fall back to a hardcoded English `'Loading…'` there, which breaches
-  Rule 9; tracked in #503.)
+  Both files used to fall back to a hardcoded English `'Loading…'` there; #503
+  routed it through `progress.indeterminate`.)
 
 **A state that PERSISTS once entered is a property, even though you were not
 watching when it changed.** An image that fails three seconds after render
@@ -242,12 +242,13 @@ region carries the transitions — but only if the transitions are individually
 worth interrupting for. `FileUpload` is the open case rather than the worked
 one, and it is genuinely split: `uploading` already uses the third branch above
 (a `Progress` with `role="progressbar"` and a name carrying the filename), and
-`done` renders a named `role="img"` a browse-mode reader reaches. The gaps are
+`done` renders a named `role="img"` a browse-mode reader reaches. The gaps were
 `error` — plain text in a non-focusable row, with the only focusable control
-there named "Remove {file}" — and `pending`, which renders nothing at all.
+there named "Remove {file}" — and `pending`, which rendered nothing at all.
 Twelve files resolving inside two seconds should not be twelve announcements,
-so the shape it wants is one region describing the batch plus the per-row state
-reachable on focus. Tracked in #502.
+so the shape it wanted was one region describing the batch plus the per-row
+state reachable on focus. That is what #502 shipped: a single region derived
+from `files`, and error rows whose remove button names the failure.
 
 **If the state resolves while focus is inside the component but not on the
 thing that changed** — a `Select`'s options arriving while focus sits on the
@@ -287,8 +288,9 @@ drop it.
 already focused on it, so there is nothing to "arrive at" — `Switch` and
 `StatusMenu` announce; they do not rename themselves. Renaming a focused
 control mid-interaction is worse than announcing, because it also breaks
-name-exact queries in consumer tests. (`ConfirmationPopover` is a known gap on
-this rule: its pending state sets neither. Tracked separately.)
+name-exact queries in consumer tests. (`ConfirmationPopover` was a known gap on
+this rule — its pending state set neither — until #497 gave it `aria-disabled`
+plus a deferred pending announcement.)
 
 **Visual-only is a legitimate answer, but it must be deliberate and written
 down.** `Badge`'s tone is a durable visual property with no state change to

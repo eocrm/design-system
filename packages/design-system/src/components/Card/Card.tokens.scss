@@ -14,7 +14,8 @@
   --card-stripe-color-success: var(--color-success);
 
   // @contrast --color-warning on --color-bg = 2.14:1 light
-  // warning uses --color-warning-strong: #ff991f measures 2.14:1 here, below
+  // @contrast --color-warning-strong on --color-bg = 5.95:1 light
+  // warning uses --color-warning-strong (#a54800); the bare --color-warning (#ff991f) measures 2.14:1 here, below
   // WCAG AA for text and below 1.4.11's 3:1 for a graphical object. See #481.
   --card-stripe-color-warning: var(--color-warning-strong);
   --card-stripe-color-danger: var(--color-danger);

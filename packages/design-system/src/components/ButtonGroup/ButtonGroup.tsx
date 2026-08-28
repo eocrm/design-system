@@ -209,7 +209,13 @@ function Segmented({
     const items = [...root.querySelectorAll<HTMLButtonElement>('button[role="radio"]')];
     const anySelected = items.some((el) => el.getAttribute('aria-checked') === 'true');
     const firstEnabled = items.find((el) => el.getAttribute('aria-disabled') !== 'true');
-    const next = anySelected ? null : (firstEnabled?.dataset.value ?? null);
+    // `?? items[0]` for the all-disabled group. Items carry `aria-disabled`,
+    // not the native `disabled`, precisely so they STAY focusable — a user can
+    // tab to them and hear why the choice is unavailable. Falling back to null
+    // here left every item at `tabIndex={-1}`, so the group vanished from the
+    // tab order entirely, which is the behaviour `aria-disabled` was chosen to
+    // avoid.
+    const next = anySelected ? null : ((firstEnabled ?? items[0])?.dataset.value ?? null);
     setRovingFallbackValue((prev) => (prev === next ? prev : next));
   });
 

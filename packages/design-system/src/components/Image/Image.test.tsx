@@ -35,19 +35,26 @@ describe('Image', () => {
     const { container, getByRole, getByText } = render(<Image src={SRC} alt="A photo" />);
     fireEvent.error(getImg(container));
     expect(container.querySelector('[data-state="error"]')).not.toBeNull();
-    // The failure must be IN the name. This asserted `name: 'A photo'` before
-    // #488 — i.e. it pinned the bug: `alt || t(...)` dropped the error word
-    // whenever `alt` was set, so a broken image announced exactly like a
-    // loaded one.
-    expect(getByRole('img', { name: 'A photo: Image failed to load' })).not.toBeNull();
+    // The failure must be announced, but exactly ONCE. #488 put it in the
+    // icon's name because `alt || t(...)` dropped the error word whenever
+    // `alt` was set — a broken image announced exactly like a loaded one.
+    // Concatenating fixed that and introduced the opposite defect: the
+    // sibling below renders the same phrase as visible text, so a reader
+    // said it twice in a row. The icon now carries only `alt`; the text
+    // carries the failure.
+    expect(getByRole('img', { name: 'A photo' })).not.toBeNull();
     expect(getByText('Image failed to load')).not.toBeNull();
+    expect(container.textContent!.match(/Image failed to load/g)).toHaveLength(1);
     expect(getByRole('button', { name: 'Retry' })).not.toBeNull();
   });
 
-  it('still names the failure when there is no alt to prefix it with', () => {
-    const { container, getByRole } = render(<Image src={SRC} alt="" />);
+  it('goes decorative when there is no alt, leaving the text to carry the failure', () => {
+    const { container, getByText, queryByRole } = render(<Image src={SRC} alt="" />);
     fireEvent.error(getImg(container));
-    expect(getByRole('img', { name: 'Image failed to load' })).not.toBeNull();
+    // Nothing left to name, so naming it with the failure phrase would only
+    // duplicate the text node below.
+    expect(queryByRole('img')).toBeNull();
+    expect(getByText('Image failed to load')).not.toBeNull();
   });
 
   it('renders a custom fallback instead of the default placeholder on error', () => {
@@ -245,9 +252,10 @@ describe('the error tile does not prune its own contents (#496)', () => {
   });
 
   it('still names the failure, and still offers Retry', () => {
-    const { container, getByRole } = render(<Image src={SRC} alt="A photo" />);
+    const { container, getByRole, getByText } = render(<Image src={SRC} alt="A photo" />);
     fireEvent.error(getImg(container));
-    expect(getByRole('img', { name: 'A photo: Image failed to load' })).not.toBeNull();
+    expect(getByRole('img', { name: 'A photo' })).not.toBeNull();
+    expect(getByText('Image failed to load')).not.toBeNull();
     expect(getByRole('button', { name: 'Retry' })).not.toBeNull();
   });
 });
