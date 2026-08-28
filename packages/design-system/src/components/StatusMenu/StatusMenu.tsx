@@ -1,4 +1,11 @@
-import { forwardRef, useState, type CSSProperties, type HTMLAttributes, type Ref } from 'react';
+import {
+  forwardRef,
+  useEffect,
+  useState,
+  type CSSProperties,
+  type HTMLAttributes,
+  type Ref,
+} from 'react';
 import clsx from 'clsx';
 import { DropdownMenu } from '../DropdownMenu';
 import { paletteTokens, type PaletteColor } from '../../palette';
@@ -34,7 +41,16 @@ export interface StatusMenuProps extends Omit<HTMLAttributes<HTMLElement>, 'onSe
   onSelect?: (id: string | number) => void;
   /** Disables the trigger. Stays colored, dims via opacity. */
   disabled?: boolean;
-  /** Transition in flight: trigger gets `aria-busy` and is non-interactive, keeps its color. */
+  /**
+   * Transition in flight: the trigger is non-interactive and keeps its color.
+   * Announced from a polite live region the component owns — `aria-busy` is
+   * also set but reaches no screen reader on its own. The trigger's accessible
+   * name does not change (contrast `EntityChip`): you activated this control,
+   * so the change is announced rather than folded into the name.
+   *
+   * No effect in read-only mode (no `options`), which renders no trigger and
+   * so has nothing to mark busy.
+   */
   busy?: boolean;
 }
 
@@ -94,6 +110,13 @@ export const StatusMenu = forwardRef<HTMLElement, StatusMenuProps>(function Stat
   ref,
 ) {
   const t = useTranslation();
+  // Deferred for the same reason as Switch: a StatusMenu that mounts already
+  // busy would otherwise mount its region and text together and announce
+  // nothing. See CLAUDE.md Hard rule 10.
+  const [busyText, setBusyText] = useState('');
+  useEffect(() => {
+    setBusyText(busy ? t('statusMenu.busy') : '');
+  }, [busy, t]);
   // Component color wins over any consumer `style` — merged AFTER so its
   // `--status-menu-*` custom properties can't be shadowed by a consumer's
   // own inline style object.
@@ -163,6 +186,16 @@ export const StatusMenu = forwardRef<HTMLElement, StatusMenuProps>(function Stat
           </svg>
         </button>
       </DropdownMenu.Trigger>
+      {/* OUTSIDE the <button> on purpose. `button` is Children Presentational
+          in ARIA, so a live region nested inside it is spec'd to be pruned —
+          the same argument #496 makes about the Retry button inside
+          role="img". Chrome happens to expose it, but relying on that is
+          exactly the reasoning that left `aria-busy` shipping for years. The
+          trigger also goes `disabled` while busy, which is when this needs to
+          speak. */}
+      <span role="status" aria-live="polite" className={styles.srOnly}>
+        {busyText}
+      </span>
       <DropdownMenu.Content>
         {options.map((option) => (
           <DropdownMenu.Item

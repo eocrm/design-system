@@ -1,4 +1,5 @@
-import { render, screen } from '@testing-library/react';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { StatusMenu, type StatusMenuStatus } from './StatusMenu';
@@ -157,4 +158,80 @@ describe('StatusMenu — read-only mode', () => {
     render(<StatusMenu current={done} className="external" />);
     expect(screen.getByText('Done').className).toMatch(/external/);
   });
+});
+
+describe('busy state reaches assistive tech (#488)', () => {
+  it('announces from a live region rather than aria-busy alone', () => {
+    const { rerender, container } = render(
+      <StatusMenu current={inProgress} options={options} busy={false} />,
+    );
+    const region = container.querySelector('[role="status"][aria-live="polite"]');
+    expect(region).not.toBeNull();
+    expect(region!.textContent).toBe('');
+    rerender(<StatusMenu current={inProgress} options={options} busy />);
+    expect(region!.textContent).toBe('Saving status…');
+  });
+
+  it('leaves the trigger name alone while busy', () => {
+    const { rerender, getByRole } = render(
+      <StatusMenu current={inProgress} options={options} busy={false} />,
+    );
+    expect(getByRole('button', { name: 'Change status: In progress' })).not.toBeNull();
+    rerender(<StatusMenu current={inProgress} options={options} busy />);
+    expect(getByRole('button', { name: 'Change status: In progress' })).not.toBeNull();
+  });
+
+  it('keeps the region OUTSIDE the trigger', () => {
+    // The by-name assertion above cannot catch StatusMenu's actual bug. The
+    // trigger sets an explicit aria-label, which wins over name-from-content,
+    // so its name is invariant to anything nested inside it — the name test
+    // passes with the region back in the button. StatusMenu's failure mode is
+    // PRUNING, not renaming: `button` is children-presentational in ARIA, so a
+    // region nested in it is spec'd to be dropped. That has to be asserted
+    // structurally.
+    const { container, getByRole } = render(
+      <StatusMenu current={inProgress} options={options} busy />,
+    );
+    expect(getByRole('button').querySelector('[role="status"]')).toBeNull();
+    expect(container.querySelector('[role="status"]')).not.toBeNull();
+  });
+});
+
+it('mounts the region EMPTY, so the word always arrives as a change', () => {
+  // Server render runs the render pass and NOT effects, so this is literally
+  // the first-paint DOM. That is the only way to observe the deferral: RTL's
+  // render() flushes passive effects inside act(), so by the time a test reads
+  // the region the effect has landed — and the old render-time version
+  // produced the same final text. The previous version of this test passed
+  // against the exact bug it was written to pin.
+  const html = renderToStaticMarkup(<StatusMenu current={inProgress} options={options} busy />);
+  // Asserted as an EMPTY element, not as "does not contain the word". The
+  // word-based form went blind the moment anyone renamed the i18n string:
+  // review verified that reverting the deferral AND renaming `statusMenu.busy`
+  // made this pass against the very bug it pins. This shape cannot be
+  // satisfied by a rename, and it also pins `aria-live="polite"`.
+  //
+  // Load-bearing pair: this asserts the region mounts EMPTY, and the sibling
+  // test below asserts the word then arrives. Delete the text binding entirely
+  // and this one still passes — it certifies the first half only. Weaken the
+  // sibling and the pair degrades back to the vacuous state both were written
+  // to escape.
+  const region = new DOMParser()
+    .parseFromString(html, 'text/html')
+    .querySelector('[role="status"]');
+  expect(region, 'the region exists on first paint').not.toBeNull();
+  expect(region!.getAttribute('aria-live')).toBe('polite');
+  expect(region!.textContent).toBe('');
+});
+
+it('announces even when it mounts already busy', async () => {
+  // Mounting region and text together is the case Hard rule 10 forbids: most
+  // screen readers do not announce content that was already present when the
+  // region appeared. The text is deferred one tick so the word always arrives
+  // as a change, including on a route remount or a virtualized row scrolling
+  // back into view mid-flight.
+  const { container } = render(<StatusMenu current={inProgress} options={options} busy />);
+  const region = container.querySelector('[role="status"][aria-live="polite"]');
+  expect(region).not.toBeNull();
+  await waitFor(() => expect(region!.textContent).toBe('Saving status…'));
 });

@@ -262,7 +262,15 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
 
       {state === 'error' &&
         (fallback ?? (
-          <span className={styles.error} role="img" aria-label={alt || t('image.loadError')}>
+          <span
+            className={styles.error}
+            role="img"
+            /* Concatenated, not `alt || …`. With the fallback form the failure
+               word was dropped whenever `alt` was set — i.e. in the normal
+               case — so the name read as if the image had loaded. The sibling
+               branch in Lightbox already concatenates. */
+            aria-label={alt ? `${alt}: ${t('image.loadError')}` : t('image.loadError')}
+          >
             <ImageOff size={28} aria-hidden="true" />
             <span className={styles.errorText}>{t('image.loadError')}</span>
             <Button variant="secondary" size="sm" onClick={retry}>

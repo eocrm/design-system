@@ -361,7 +361,14 @@ export function Lightbox({
                 <div
                   className={styles.stageError}
                   role="img"
-                  aria-label={currentItem.alt || t('image.loadError')}
+                  /* Concatenated for the same reason as Image's error tile,
+                     and to match the previewUnavailable branch 25 lines up
+                     which already did this. */
+                  aria-label={
+                    currentItem.alt
+                      ? `${currentItem.alt}: ${t('image.loadError')}`
+                      : t('image.loadError')
+                  }
                 >
                   {t('image.loadError')}
                 </div>

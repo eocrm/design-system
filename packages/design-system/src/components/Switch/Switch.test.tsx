@@ -1,5 +1,6 @@
+import { renderToStaticMarkup } from 'react-dom/server';
 import { createRef, useState } from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Switch } from './Switch';
 
@@ -239,4 +240,70 @@ describe('<Switch>', () => {
     render(<Switch aria-label="x" />);
     expect(screen.getByRole('switch')).not.toHaveAttribute('aria-invalid');
   });
+});
+
+describe('loading state reaches assistive tech (#488)', () => {
+  it('announces from a live region rather than aria-busy alone', () => {
+    const { rerender, container } = render(<Switch loading={false}>Mute</Switch>);
+    const region = container.querySelector('[role="status"][aria-live="polite"]');
+    // Rendered unconditionally and empty, so the announcement fires on the
+    // TEXT change. Mounting region and text together is the unreliable case.
+    expect(region).not.toBeNull();
+    expect(region!.textContent).toBe('');
+    rerender(<Switch loading>Mute</Switch>);
+    expect(region!.textContent).toBe('Saving…');
+  });
+
+  it('does not mutate the accessible name when it goes busy', () => {
+    // Queried BY NAME, not by reading aria-label. The first version of this
+    // test compared `getAttribute('aria-label')` before and after — <Switch>
+    // never sets one, so it asserted null === null and passed while the
+    // component measurably renamed itself to "MuteSaving…". Testing the
+    // mechanism instead of the outcome is how the bug shipped past its guard.
+    const { rerender, getByRole } = render(<Switch loading={false}>Mute</Switch>);
+    expect(getByRole('switch', { name: 'Mute' })).not.toBeNull();
+    rerender(<Switch loading>Mute</Switch>);
+    // The user is focused on the control they just activated, so this is a
+    // change to announce — not a property of something they arrived at.
+    expect(getByRole('switch', { name: 'Mute' })).not.toBeNull();
+  });
+});
+
+it('mounts the region EMPTY, so the word always arrives as a change', () => {
+  // Server render runs the render pass and NOT effects, so this is literally
+  // the first-paint DOM. That is the only way to observe the deferral: RTL's
+  // render() flushes passive effects inside act(), so by the time a test reads
+  // the region the effect has landed — and the old render-time version
+  // produced the same final text. The previous version of this test passed
+  // against the exact bug it was written to pin.
+  const html = renderToStaticMarkup(<Switch loading>Mute</Switch>);
+  // Asserted as an EMPTY element, not as "does not contain the word". The
+  // word-based form went blind the moment anyone renamed the i18n string:
+  // review verified that reverting the deferral AND renaming `switch.busy`
+  // made this pass against the very bug it pins. This shape cannot be
+  // satisfied by a rename, and it also pins `aria-live="polite"`.
+  //
+  // Load-bearing pair: this asserts the region mounts EMPTY, and the sibling
+  // test below asserts the word then arrives. Delete the text binding entirely
+  // and this one still passes — it certifies the first half only. Weaken the
+  // sibling and the pair degrades back to the vacuous state both were written
+  // to escape.
+  const region = new DOMParser()
+    .parseFromString(html, 'text/html')
+    .querySelector('[role="status"]');
+  expect(region, 'the region exists on first paint').not.toBeNull();
+  expect(region!.getAttribute('aria-live')).toBe('polite');
+  expect(region!.textContent).toBe('');
+});
+
+it('announces even when it mounts already loading', async () => {
+  // Mounting region and text together is the case Hard rule 10 forbids: most
+  // screen readers do not announce content that was already present when the
+  // region appeared. The text is deferred one tick so the word always arrives
+  // as a change, including on a route remount or a virtualized row scrolling
+  // back into view mid-flight.
+  const { container } = render(<Switch loading>Mute</Switch>);
+  const region = container.querySelector('[role="status"][aria-live="polite"]');
+  expect(region).not.toBeNull();
+  await waitFor(() => expect(region!.textContent).toBe('Saving…'));
 });

@@ -35,9 +35,19 @@ describe('Image', () => {
     const { container, getByRole, getByText } = render(<Image src={SRC} alt="A photo" />);
     fireEvent.error(getImg(container));
     expect(container.querySelector('[data-state="error"]')).not.toBeNull();
-    expect(getByRole('img', { name: 'A photo' })).not.toBeNull();
+    // The failure must be IN the name. This asserted `name: 'A photo'` before
+    // #488 — i.e. it pinned the bug: `alt || t(...)` dropped the error word
+    // whenever `alt` was set, so a broken image announced exactly like a
+    // loaded one.
+    expect(getByRole('img', { name: 'A photo: Image failed to load' })).not.toBeNull();
     expect(getByText('Image failed to load')).not.toBeNull();
     expect(getByRole('button', { name: 'Retry' })).not.toBeNull();
+  });
+
+  it('still names the failure when there is no alt to prefix it with', () => {
+    const { container, getByRole } = render(<Image src={SRC} alt="" />);
+    fireEvent.error(getImg(container));
+    expect(getByRole('img', { name: 'Image failed to load' })).not.toBeNull();
   });
 
   it('renders a custom fallback instead of the default placeholder on error', () => {

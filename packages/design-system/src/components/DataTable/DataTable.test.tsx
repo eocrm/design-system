@@ -26,6 +26,18 @@ import type { DataTableProps } from './DataTable';
 import type { ColumnDef } from './types';
 import styles from './DataTable.module.scss';
 
+/**
+ * DataTable owns a polite live region of its own for `loading`, so
+ * `getByRole('status')` is ambiguous — it matches that region AND dnd-kit's
+ * announcement portal. These assertions are about the drag announcements, so
+ * select dnd-kit's explicitly rather than relying on there being exactly one.
+ */
+function dragLive(): HTMLElement {
+  const dnd = screen.getAllByRole('status').filter((el) => !el.className.includes('srStatus'));
+  expect(dnd).toHaveLength(1);
+  return dnd[0];
+}
+
 type Row = { id: string; name: string; amount: number };
 
 const cols: ColumnDef<Row>[] = [
@@ -1757,14 +1769,14 @@ describe('<DataTable> — a drop over a pinned column lands in the band (#383)',
     dragTo(/drag to reorder name/i, 5000);
     fireEvent.pointerUp(document);
     // Band is [name, mid]; the commit put 'name' in the last band slot.
-    expect(screen.getByRole('status').textContent).toBe('Dropped Name at position 2 of 2.');
+    expect(dragLive().textContent).toBe('Dropped Name at position 2 of 2.');
   });
 
   it('announces the slot it commits when the release resolves no target at all', () => {
     renderWithRects(pinnedRightCols, rightRects);
     dragTo(/drag to reorder name/i, 200, 5000);
     fireEvent.pointerUp(document);
-    expect(screen.getByRole('status').textContent).toBe('Dropped Name at position 2 of 2.');
+    expect(dragLive().textContent).toBe('Dropped Name at position 2 of 2.');
   });
 
   it('DOES announce "nothing moved" on the dragWholeColumn={false} path, which discards', () => {
@@ -1775,9 +1787,9 @@ describe('<DataTable> — a drop over a pinned column lands in the band (#383)',
     // Clear of the header row entirely: `over` goes non-null → null, which is
     // the one transition that fires an `onDragOver` with no target at all.
     fireEvent.pointerMove(document, { clientX: 200, clientY: 5000 });
-    expect(screen.getByRole('status').textContent).toBe('Name is not over a drop target.');
+    expect(dragLive().textContent).toBe('Name is not over a drop target.');
     fireEvent.pointerUp(document);
-    expect(screen.getByRole('status').textContent).toBe('Released Name. Nothing moved.');
+    expect(dragLive().textContent).toBe('Released Name. Nothing moved.');
   });
 
   it('does not let one drag inherit the previous drag’s target', () => {
@@ -1828,7 +1840,7 @@ describe('<DataTable> — a drop over a pinned column lands in the band (#383)',
     // `enableReorder: false` — announced "Released Name. Nothing moved." over
     // exactly this reorder. The position is 1-based in the VISIBLE unpinned
     // band, which is the order asserted on the line above.
-    expect(screen.getByRole('status').textContent).toBe('Dropped Name at position 2 of 3.');
+    expect(dragLive().textContent).toBe('Dropped Name at position 2 of 3.');
   });
 });
 
@@ -1989,13 +2001,57 @@ describe('<DataTable> — drag announcements', () => {
     fireEvent.pointerMove(document, { clientX: 30, clientY: 0 });
     fireEvent.pointerMove(document, { clientX: -130, clientY: 0 });
 
-    const live = screen.getByRole('status').textContent ?? '';
+    const live = dragLive().textContent ?? '';
     expect(live).toMatch(/^Amount due, position \d of 3\.$/);
     expect(live).not.toMatch(/col_/);
 
     fireEvent.pointerUp(document, { clientX: -130, clientY: 0 });
-    expect(screen.getByRole('status').textContent).toMatch(
-      /^Dropped Amount due at position \d of 3\.$/,
-    );
+    expect(dragLive().textContent).toMatch(/^Dropped Amount due at position \d of 3\.$/);
+  });
+});
+
+describe('loading state reaches assistive tech (#488)', () => {
+  // dnd-kit's portal region is the other role=status in this tree, which is
+  // why this filters by class — the same ambiguity dragLive() handles above.
+  const ownRegion = (el: HTMLElement) =>
+    [...el.querySelectorAll('[role="status"]')].filter((n) => n.className.includes('srStatus'));
+
+  function Harness4({ data, loading }: { data: Row[]; loading: boolean }) {
+    const instance = useDataTable<Row>({ data, columns: cols, getRowId });
+    return <DataTable instance={instance} aria-label="t" loading={loading} />;
+  }
+
+  it('announces an initial empty load, and its resolution', () => {
+    const { rerender, container } = render(<Harness4 data={[]} loading={false} />);
+    expect(ownRegion(container)).toHaveLength(1);
+    expect(ownRegion(container)[0].textContent).toBe('');
+
+    rerender(<Harness4 data={[]} loading />);
+    expect(ownRegion(container)[0].textContent).toBe('Loading rows…');
+
+    // Resolution must be announced too — going straight from "Loading rows…"
+    // to populated in silence is the same half-finished shape the region
+    // exists to fix.
+    rerender(<Harness4 data={rows} loading={false} />);
+    expect(ownRegion(container)[0].textContent).toBe('Rows loaded');
+  });
+
+  it('announces the outcome, not just completion, when a load returns nothing', () => {
+    // "Rows loaded" over an empty table was the bug: the region said one thing
+    // and the screen said "No data".
+    const { rerender, container } = render(<Harness4 data={[]} loading={false} />);
+    rerender(<Harness4 data={[]} loading />);
+    expect(ownRegion(container)[0].textContent).toBe('Loading rows…');
+    rerender(<Harness4 data={[]} loading={false} />);
+    expect(ownRegion(container)[0].textContent).toBe('No rows loaded');
+  });
+
+  it('stays silent for a refetch over rows that are already rendered', () => {
+    // The table keeps existing rows mounted during a refetch and shows no
+    // skeleton, so nothing changes on screen. Announcing anyway would
+    // interrupt a reader on every poll of a 30s-refresh table.
+    const { rerender, container } = render(<Harness4 data={rows} loading={false} />);
+    rerender(<Harness4 data={rows} loading />);
+    expect(ownRegion(container)[0].textContent).toBe('');
   });
 });

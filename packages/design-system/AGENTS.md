@@ -659,7 +659,7 @@ import { Switch } from '@eocrm/design-system';
 
 - **Native `<input type="checkbox" role="switch">`**. Form submission works; AT announces as switch.
 - **Three tones** (`accent`/`success`/`danger`) for the checked track. Unchecked track is always neutral muted.
-- **`loading={true}`** shows a spinner inside the thumb, sets `aria-busy`, and ignores toggle attempts while keeping the input focusable. Consumer manages the optimistic-update flow.
+- **`loading={true}`** shows a spinner inside the thumb, sets `aria-busy`, announces from its own polite live region, and ignores toggle attempts while keeping the input focusable. Consumer manages the optimistic-update flow. The switch's accessible **name does not change** while loading — you activated it, so the change is announced rather than renamed. `aria-busy` is set for tooling but reaches no screen reader on its own; the live region is what actually speaks.
 - **`onChange(checked, event)`** signature matches Checkbox — first arg is the next boolean, second is the raw event.
 
 #### Hard rule
@@ -1907,7 +1907,7 @@ import { Divider } from '@eocrm/design-system';
 - `dot`: `start` / `end` — adds a small filled circle in the badge's text color before or after the content. Use for Slack/GitHub-style status indicators (`<Badge tone="success" dot="start">Online</Badge>`). Decorative only (`aria-hidden`); the text is still the accessible label.
 - `align`: `baseline` (default) / `middle`. Use `align="middle"` for a badge inside a heading line (`<Title>` / `<PageHeader.Title>`) — pairs with `<Text size="inherit">` — so it centers on the line box instead of riding the heading's baseline and looking sunken next to large text.
 - **Non-interactive.** If it's clickable, use `<Button>` instead.
-- Doesn't auto-add `role="status"`. Wrap in `aria-live` if a state change should be announced.
+- Doesn't auto-add `role="status"`. Wrap in `aria-live` if a state change should be announced. **This is not an inconsistency with `EntityChip`, which announces its own state** — a Badge tone is a durable property of the row you are looking at, not a change that happens while you are elsewhere, so there is nothing for the component to announce. See "Transient state" below for the rule both follow.
 
 ### `<EntityChip>` — inline entity-link chip
 
@@ -1937,7 +1937,7 @@ import { Link as RouterLink } from 'react-router-dom';
 - **An EntityChip is always a link to its entity**: pass `href` (renders `<a href>`) or `as` (`RouterLink`, `'button'`, any component — same polymorphic contract as `<Link>`). The bare `<span>` form (no target) is for rare non-navigable contexts only.
 - Default chip fill matches RichText's `@mention` styling (`--color-accent-bg-subtle` / `--color-accent`) — a chip and a rendered mention read as the same visual object in both themes. `color?: PaletteColor` overrides the fill (same inline-injection contract as `Badge color`) — independent of `status`, which keeps its own resolved color. `unavailable` still mutes the label/status/dot over any `color`.
 - `status`: `{ label, category?, color? }`. `category` (`to_do`/`in_progress`/`open`/`done`/`won`/`lost`) resolves a default palette color; `color` (a `PaletteColor`) overrides it — same category → color mapping as `<StatusMenu>`. The separator dot between name and status takes the status's resolved color too (reads as one unit with the status label).
-- `loading`: swaps the body for an `aria-busy` ellipsis. `unavailable`: mutes the chip (entity deleted or no access). Both are purely visual when the chip has a link target — it stays a live, keyboard-reachable link. Only a target-less `unavailable` chip is non-interactive with `aria-disabled`.
+- `loading`: swaps the body for an ellipsis and sets `aria-busy` (which nothing reads on its own — the state reaches AT through the name, below). `unavailable`: mutes the chip (entity deleted or no access). Both are purely visual when the chip has a link target — it stays a live, keyboard-reachable link. Only a target-less `unavailable` chip is non-interactive with `aria-disabled`.
 - ⚠️ **On a chip with a link target, both state words change the accessible name**, so a name-exact query stops matching: `getByRole('link', { name: 'Appointment' })` misses a chip that is loading or unavailable. If your tests select chips by name over lists that render placeholders, use a regex or query before the state applies.
 - **`loading` is announced too.** Same mechanism, and `aria-busy` alone did not do it either — it is a _global_ ARIA state so it IS valid on the role-less span and browsers expose it, but no mainstream screen reader reliably conveys `busy` on a non-live element, and the `…` is `aria-hidden`. The label reached the user; the state did not. A linked chip's name becomes `"Appointment (loading)"`. **The trade:** the accessible name changes when loading resolves. Announcing a transient state through the name always costs that; the alternative is a consumer-owned `aria-live` region, since only the consumer knows whether a chip resolving is worth interrupting for. Override the word to `''` **at your top-level provider** if you'd rather handle it yourself — a nested `I18nProvider` replaces its parent rather than extending it, so wrapping a single chip would discard every other override you have set.
 - **`unavailable` is announced, not just muted.** A localized word is rendered visually hidden inside the chip. A **linked** chip's accessible name becomes `"Appointment (unavailable)"`; a **target-less** chip is `role=generic`, which has no accessible name at all, so the word is announced as part of the chip's text in reading order. Either way it reaches the user.
@@ -1967,7 +1967,7 @@ import { Link as RouterLink } from 'react-router-dom';
 - A colored pill trigger that opens a menu of transition targets, each row colored to its own status. Composes `<DropdownMenu>` internally.
 - `current` / each option: `{ id, name, category?, color? }`. `category` (`to_do` / `in_progress` / `open` / `done` / `won` / `lost`) maps to a default palette color (slate / blue / violet / green / green / red); `color` (a `PaletteColor`) overrides it per-status.
 - `options` omitted or empty → read-only mode: a static colored `<span>` chip, no button, no `aria-haspopup`. This is the read-only surface — there's no separate `readOnly` prop.
-- `disabled` blocks the trigger (dims via opacity, stays colored). `busy` sets `aria-busy` for a transition in flight — also non-interactive, no built-in spinner.
+- `disabled` blocks the trigger (dims via opacity, stays colored). `busy` marks a transition in flight — also non-interactive, no built-in spinner. It announces from the component's own polite live region and **does not change the trigger's accessible name** (contrast `EntityChip`: you activated this control, so the change is announced rather than renamed). `aria-busy` is also set, but reaches no screen reader on its own.
 - Not for a plain action menu (use `<DropdownMenu>`), a non-interactive status with no transition (use `<Badge>`), or picking from a long searchable list (use `<Select>`).
 
 ### `<Dot>` — bare palette/tone colored circle
@@ -3087,7 +3087,7 @@ return showPlaceholder ? (
 - Timed visibility: keep Skeleton mounted, drive `loading`, and use `delay` to suppress fast-load flashes plus `minDuration` to prevent a just-shown placeholder from vanishing immediately. All three preserve legacy behavior by default (`loading=true`, both durations `0`). Do not conditionally unmount a timed Skeleton — unmounting bypasses `minDuration`.
 - `useSkeletonVisibility(loading, { delay, minDuration })` exposes the same timing semantics for composite components that must choose between placeholder and content. During the delay it returns `false`, so guard the content branch with `loading` when stale content must not render.
 - Pulse is **automatically suppressed** when the user has `prefers-reduced-motion: reduce`.
-- `aria-hidden='true'` by default — Skeleton is decorative. Communicate "loading" from a parent live region (e.g., `aria-busy='true'` on the section being filled).
+- `aria-hidden='true'` by default — Skeleton is decorative. Communicate "loading" from a parent live region you own. Note `aria-busy` alone on the section will NOT do it — no mainstream screen reader speaks it on a non-live element; pair it with `role="status"` and text that changes. Skeleton is one of the few components where announcing is genuinely yours, because it has no state of its own to describe.
 - Composes — for a list-row placeholder, render `<Skeleton variant='circular' />` + 2–3 text skeletons + a button-shaped rectangular in a Cluster.
 - Use `<EmptyState>` for "nothing here yet" — Skeleton implies "loading," not "empty."
 
@@ -3188,7 +3188,8 @@ backgrounds → `background-image`; icons → lucide / inline SVG.
 - `loading` is non-destructive for populated tables: existing rows stay mounted
   during refetches so focused controls and row-local state survive. Skeleton
   rows are for the initial empty load only; the table exposes `aria-busy` in
-  both cases.
+  both cases and announces from its own polite live region — you do not need to
+  wrap it, and wrapping it means two regions fire for one event.
 - For an empty initial load, `skeletonDelay` (default `0`) hides quick loads and
   `skeletonMinDuration` (default `0`) keeps an appearing skeleton stable. The
   table renders neither empty state nor arriving rows during the visual window;
@@ -3246,7 +3247,7 @@ const [page, setPage] = useState(1);
 - Out-of-range `currentPage` / `pageCount` clamp at render time (defensive — same precedent as `<EmptyState>`'s `clampHeading`).
 - **Not bundled**: page-size selector, count caption ("Showing 11–20 of 240"). Compose those with `<Select>` and text — keeps Pagination focused on navigation. `<DataTable>` (coming) owns its own footer.
 - For streams without a total → use `<CursorPagination>`.
-- For "load more" → use `<Button>` directly (`<Button onClick={loadMore} loading={isLoading}>Load more</Button>`).
+- For "load more" → use `<Button>` directly. **`<Button>` has no `loading` prop** — this line used to show one. Use `aria-disabled` and guard the handler, keeping the label stable: `<Button onClick={() => !isLoading && loadMore()} aria-disabled={isLoading || undefined}>Load more</Button>`. Native `disabled` would drop the button out of the tab order mid-interaction, and swapping the label renames a control the user just activated — see "Transient state" below.
 - `paginationRange(currentPage, pageCount, siblingCount)` is exported as a pure utility for advanced consumers that want to compute the same item list themselves (e.g., to render a custom layout with the same windowing).
 
 ### `<CursorPagination>` — prev / next for streams without total
@@ -3621,6 +3622,50 @@ The authoritative list of tokens per component lives in that component's `<Name>
 **Deprecated:** `--color-badge-<tone>-bg/-fg` tokens are aliased to the new `--badge-bg-<tone>` / `--badge-fg-<tone>` tokens. They still work but will be removed in a future major version.
 
 ---
+
+## Transient state and screen readers
+
+Components in this library handle their own transient state (`loading`, `busy`, async failure). For the components that do, you do not need to wrap them in a live region — and you should not, because two regions announcing one event talk over each other. **But not every component does**: see Known gaps below, and check the component's own JSDoc before assuming.
+
+The rule the library follows, so you can predict any component:
+
+- **State you meet by arriving** — an `EntityChip` placeholder you tab onto — is folded into the **accessible name**. Its name therefore _changes_ when the state resolves, so don't select those elements by exact name in tests while a placeholder can be on screen.
+- **State that changes while you are elsewhere** — a `Switch` saving, a `DataTable` loading, a `StatusMenu` committing — is announced from a **live region the component owns**. Names stay stable.
+- **Purely visual state** — `Badge` tone, `Skeleton` — is yours to announce if it matters. These are documented as visual-only.
+- **`Progress` / `CircularProgress`** carry `role="progressbar"`. A _determinate_ one exposes its value through `aria-valuenow`; an _indeterminate_ one has no `aria-valuenow` at all and puts its meaning in `aria-valuetext`, which currently falls back to a hardcoded English `'Loading…'` (#503). Don't wrap either — but do pass an `aria-label`, because that fallback is the only thing spoken if you don't.
+
+Known gaps, where announcing **is** yours for now: **`ConfirmationPopover`** while pending (#497), **`FileUpload`** per-file failure and its `pending` state (#502; its `uploading` state carries a `Progress`, which is readable on focus rather than announced — don't wrap it, but note its `progress` prop is optional, so the common path is an indeterminate bar subject to #503), and **`Select`**'s async loading/error rows (#495). Assume nothing about a component not named in **this list** — every component appears somewhere on this page, so the list, not the page, is the boundary. Check the component's own JSDoc. In particular **`Field` does not announce validation errors** (#494): they reach AT only through `aria-describedby`, which is read on focus, not when the error appears.
+
+One consequence for your tests: components that own a region expose `role="status"`, so `getByRole('status')` on a page containing a `Switch`, `StatusMenu` or `DataTable` may now match more than one element. Scope the query, or select by the text you expect.
+
+What this means for you:
+
+```tsx
+// ✅ First load of an empty table: the component announces it, and the
+//    outcome ("Rows loaded" / "No rows loaded"). Nothing to add.
+<DataTable instance={table} loading={isFetching} aria-label="Deals" />
+
+// ⚠️ A refetch OVER rows that are already on screen is deliberately silent —
+//    nothing changes visually, so a 30s poll shouldn't interrupt a reader.
+//    This depends on rows STAYING on screen: if your fetch layer clears data
+//    during a refetch (react-query v5 without `placeholderData: keepPreviousData`),
+//    the skeleton returns and every poll announces — correctly, because the
+//    screen really does change.
+
+// ❌ Don't wrap the first-load case — your region and the component's
+//    both fire for one event.
+<div aria-live="polite">
+  <DataTable instance={table} loading={isFetching} aria-label="Deals" />
+</div>
+
+// ✅ Skeleton is aria-hidden by design — this one IS yours to announce.
+<div role="status" aria-live="polite">
+  {isFetching ? 'Loading contacts…' : ''}
+</div>
+{isFetching ? <Skeleton variant="text" /> : <ContactList items={items} />}
+```
+
+`aria-busy` appears on several components for tooling and testing. **Do not rely on it to inform a user** — no mainstream screen reader speaks it on a non-live element, which is why the components above carry a live region as well.
 
 ## Anti-patterns to never generate
 

@@ -40,6 +40,9 @@ export const en: Messages = {
     strong: 'Strong',
     veryStrong: 'Very strong',
   },
+  switch: {
+    busy: 'Saving…',
+  },
   slider: {
     minimum: 'minimum',
     maximum: 'maximum',
@@ -114,6 +117,9 @@ export const en: Messages = {
     rowExpansion: 'Row expansion',
     pinnedRows: 'Pinned rows',
     empty: 'No data',
+    loading: 'Loading rows…',
+    loaded: 'Rows loaded',
+    loadedEmpty: 'No rows loaded',
   },
   drag: {
     instructions:
@@ -287,6 +293,7 @@ export const en: Messages = {
   },
   statusMenu: {
     changeStatus: 'Change status',
+    busy: 'Saving status…',
   },
   pageHeader: {
     back: 'Go back',

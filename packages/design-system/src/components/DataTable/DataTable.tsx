@@ -1,5 +1,6 @@
 import {
   forwardRef,
+  useEffect,
   useCallback,
   useMemo,
   useRef,
@@ -63,6 +64,13 @@ export interface DataTableProps<T> {
    * Marks the table busy. Empty tables show skeleton rows; populated tables
    * keep their rows mounted during a refetch so focus and local row state are
    * preserved. Defaults to `false`.
+   *
+   * Announced from a polite live region the table owns, gated on the SKELETON
+   * rather than on this prop: a load shorter than `skeletonDelay` shows nothing
+   * and so says nothing, and a refetch over rows already on screen is silent
+   * because nothing visibly changes. The resolution is announced too — "Rows
+   * loaded" or "No rows loaded". `aria-busy` is also set, but reaches no screen
+   * reader on its own.
    */
   loading?: boolean;
   /** Number of skeleton rows when `loading`. Defaults 10. */
@@ -487,6 +495,33 @@ function DataTableInner<T>(
     minDuration: skeletonMinDuration,
   });
   const dataIsEmpty = !loading && !showSkeletonRows && !hasRenderedRows;
+
+  // Announce the SKELETON, not the raw `loading` prop. Tying it to `loading`
+  // meant a table with `skeletonDelay={300}` still announced a 200ms load it
+  // had deliberately decided to show nothing for, and a background refetch
+  // over rendered rows — which changes nothing on screen — interrupted the
+  // user on every poll. And announce the resolution: going from "Loading
+  // rows…" to populated in silence is the same half-finished shape this
+  // region exists to fix.
+  //
+  // Resolution announces the OUTCOME, not just "finished": landing on an empty
+  // table said "Rows loaded" while the screen read "No data". And it clears
+  // once announced — a live region only fires on change, so leaving the text
+  // in place bought nothing and left a stale node for a browse-mode reader to
+  // trip over under every loaded table.
+  const [loadPhase, setLoadPhase] = useState<'idle' | 'loading' | 'loaded' | 'empty'>('idle');
+  useEffect(() => {
+    setLoadPhase((prev) => {
+      if (showSkeletonRows) return 'loading';
+      if (prev !== 'loading') return prev;
+      return hasRenderedRows ? 'loaded' : 'empty';
+    });
+  }, [showSkeletonRows, hasRenderedRows]);
+  useEffect(() => {
+    if (loadPhase !== 'loaded' && loadPhase !== 'empty') return;
+    const id = setTimeout(() => setLoadPhase('idle'), CLEAR_STATUS_MS);
+    return () => clearTimeout(id);
+  }, [loadPhase]);
   const responsiveEnabled = collapseBelow != null;
   const hasResponsiveHeaderItems =
     instance.enableRowSelection ||
@@ -714,6 +749,21 @@ function DataTableInner<T>(
             </Table.Body>
           </Table>
         </ResponsiveScrollWrap>
+        {/* Polite live region OUTSIDE the table — a <span> inside <table> is
+            invalid HTML — and AFTER the scroll wrap, so it does not displace
+            the wrapper as first child. Rendered unconditionally so only its
+            text mutates. `aria-busy` on the table is inert to screen readers,
+            so without this the table goes from silent to populated with
+            nothing said. See CLAUDE.md Hard rule 10. */}
+        <span role="status" aria-live="polite" className={styles.srStatus}>
+          {loadPhase === 'loading'
+            ? t('dataTable.loading')
+            : loadPhase === 'loaded'
+              ? t('dataTable.loaded')
+              : loadPhase === 'empty'
+                ? t('dataTable.loadedEmpty')
+                : ''}
+        </span>
       </SortableContext>
     </DndContext>
   );
@@ -753,6 +803,9 @@ function SkeletonRows({
     </>
   );
 }
+
+/** Long enough for the announcement to be picked up, short enough not to linger. */
+const CLEAR_STATUS_MS = 1000;
 
 function EmptyRow({
   totalColCount,

@@ -1186,7 +1186,7 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Marks the table busy. Empty tables show skeleton rows; populated tables\nkeep their rows mounted during a refetch so focus and local row state are\npreserved. Defaults to `false`."
+          "description": "Marks the table busy. Empty tables show skeleton rows; populated tables\nkeep their rows mounted during a refetch so focus and local row state are\npreserved. Defaults to `false`.\n\nAnnounced from a polite live region the table owns, gated on the SKELETON\nrather than on this prop: a load shorter than `skeletonDelay` shows nothing\nand so says nothing, and a refetch over rows already on screen is silent\nbecause nothing visibly changes. The resolution is announced too — \"Rows\nloaded\" or \"No rows loaded\". `aria-busy` is also set, but reaches no screen\nreader on its own."
         },
         {
           "name": "loadingRowCount",
@@ -1913,7 +1913,7 @@
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
           "default": "",
-          "description": "Error message. Replaces `description`, flips the control to `invalid`, links `aria-describedby`."
+          "description": "Error message. Replaces `description`, flips the control to `invalid`, links `aria-describedby`.\n\nNOT announced. The message is linked with `aria-describedby`, which screen\nreaders read on FOCUS — so an error appearing after a submit reaches nobody\nunless focus moves into the field. That is deliberate under Hard rule 10's\n\"silence you chose and documented\" clause — the error IS exposed, via\n`aria-describedby`, so it is not visual-only. Per-field live regions would\nannounce on every keystroke of\na validate-on-change form), but it means a form-level summary region is the\nconsumer's job. Tracked in #494."
         },
         {
           "name": "required",
@@ -4540,7 +4540,7 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Transition in flight: trigger gets `aria-busy` and is non-interactive, keeps its color."
+          "description": "Transition in flight: the trigger is non-interactive and keeps its color.\nAnnounced from a polite live region the component owns — `aria-busy` is\nalso set but reaches no screen reader on its own. The trigger's accessible\nname does not change (contrast `EntityChip`): you activated this control,\nso the change is announced rather than folded into the name.\n\nNo effect in read-only mode (no `options`), which renders no trigger and\nso has nothing to mark busy."
         }
       ]
     },
@@ -4618,7 +4618,7 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Shows a spinner inside the thumb and suppresses changes while a toggle\npersists to a server. Sets `aria-busy=\"true\"` while keeping the native\ninput focusable, so keyboard users retain their place in the form.\n\nThe consumer is responsible for managing the optimistic-update flow:\n\n```tsx\nconst [enabled, setEnabled] = useState(initial);\nconst [saving, setSaving] = useState(false);\n\nconst handleToggle = async (next: boolean) => {\n  setSaving(true);\n  setEnabled(next);            // optimistic\n  try { await api.save(next); }\n  catch { setEnabled(!next); } // rollback\n  finally { setSaving(false); }\n};\n\n<Switch checked={enabled} loading={saving} onChange={handleToggle} />\n```"
+          "description": "Shows a spinner inside the thumb and suppresses changes while a toggle\npersists to a server, keeping the native input focusable so keyboard users\nretain their place in the form.\n\nAnnounced from a polite live region the Switch owns. `aria-busy` is set\ntoo, but nothing reads it — no mainstream screen reader conveys `busy` on\na non-live element. The region sits OUTSIDE the `<label>` so it does not\njoin the input's accessible name: the name stays stable while loading, and\n`getByRole('switch', { name })` keeps matching.\n\nThe consumer is responsible for managing the optimistic-update flow:\n\n```tsx\nconst [enabled, setEnabled] = useState(initial);\nconst [saving, setSaving] = useState(false);\n\nconst handleToggle = async (next: boolean) => {\n  setSaving(true);\n  setEnabled(next);            // optimistic\n  try { await api.save(next); }\n  catch { setEnabled(!next); } // rollback\n  finally { setSaving(false); }\n};\n\n<Switch checked={enabled} loading={saving} onChange={handleToggle} />\n```"
         },
         {
           "name": "children",

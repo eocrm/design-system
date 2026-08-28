@@ -176,3 +176,7 @@
     animation: none;
   }
 }
+
+.srOnly {
+  @include visually-hidden;
+}

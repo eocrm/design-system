@@ -66,3 +66,7 @@
   color: var(--status-menu-fg);
   filter: brightness(0.94);
 }
+
+.srOnly {
+  @include visually-hidden;
+}
