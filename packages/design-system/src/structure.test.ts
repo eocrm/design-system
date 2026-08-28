@@ -137,7 +137,7 @@ describe('transient state does not rely on aria-busy alone', () => {
       // comment named an input the gate could not fail on.
       //
       // Known limits. One IS a current shape: `aria-live={expr}` is rejected,
-      // and Toast.tsx:71 is exactly that — it does not false-alarm only because
+      // and `Toast` is exactly that — it does not false-alarm only because
       // Toast sets no `aria-busy`. The rest are not current: the opening-tag scan stops
       // at the first `>`, so an arrow function in the tag before the attribute
       // would false-alarm; `t` is hardcoded as the hook's binding; and an

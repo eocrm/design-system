@@ -43,7 +43,9 @@ export interface FieldProps extends Omit<HTMLAttributes<HTMLDivElement>, 'childr
    * NOT announced. The message is linked with `aria-describedby`, which screen
    * readers read on FOCUS — so an error appearing after a submit reaches nobody
    * unless focus moves into the field. That is deliberate under Hard rule 10's
-   * visual-only clause (per-field regions would announce on every keystroke of
+   * "silence you chose and documented" clause — the error IS exposed, via
+   * `aria-describedby`, so it is not visual-only. Per-field live regions would
+   * announce on every keystroke of
    * a validate-on-change form), but it means a form-level summary region is the
    * consumer's job. Tracked in #494.
    */

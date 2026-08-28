@@ -282,7 +282,18 @@ it('mounts the region EMPTY, so the word always arrives as a change', () => {
   // review verified that reverting the deferral AND renaming `switch.busy`
   // made this pass against the very bug it pins. This shape cannot be
   // satisfied by a rename, and it also pins `aria-live="polite"`.
-  expect(html).toMatch(/role="status" aria-live="polite" class="[^"]*"><\/span>/);
+  //
+  // Load-bearing pair: this asserts the region mounts EMPTY, and the sibling
+  // test below asserts the word then arrives. Delete the text binding entirely
+  // and this one still passes — it certifies the first half only. Weaken the
+  // sibling and the pair degrades back to the vacuous state both were written
+  // to escape.
+  const region = new DOMParser()
+    .parseFromString(html, 'text/html')
+    .querySelector('[role="status"]');
+  expect(region, 'the region exists on first paint').not.toBeNull();
+  expect(region!.getAttribute('aria-live')).toBe('polite');
+  expect(region!.textContent).toBe('');
 });
 
 it('announces even when it mounts already loading', async () => {
