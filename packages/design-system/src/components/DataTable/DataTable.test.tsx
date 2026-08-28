@@ -2086,6 +2086,27 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     expect(screen.queryByRole('columnheader', { name: 'Name Name' })).toBeNull();
   });
 
+  it('names an icon-only header instead of leaving it nameless', () => {
+    // The first fix pointed the <th> at its label span unconditionally. For a
+    // ReactNode header whose content is aria-hidden that span is empty, so the
+    // columnheader ended up with NO name — a worse axe violation than the
+    // duplicate it replaced.
+    const iconCols: ColumnDef<Row>[] = [
+      {
+        id: 'starred',
+        header: <span aria-hidden="true">★</span>,
+        visibilityLabel: 'Starred',
+        cell: () => 'x',
+      },
+    ];
+    function IconHarness() {
+      const instance = useDataTable<Row>({ data: rows, columns: iconCols, getRowId });
+      return <DataTable instance={instance} aria-label="t" collapseBelow="md" />;
+    }
+    render(<IconHarness />);
+    expect(screen.getByRole('columnheader', { name: 'Starred' })).toBeInTheDocument();
+  });
+
   it('still exposes the resize handle, named for what it does', () => {
     render(<NameHarness collapseBelow="md" />);
     expect(screen.getByRole('separator', { name: 'Resize Name column' })).toBeInTheDocument();

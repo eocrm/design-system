@@ -184,12 +184,14 @@ describe('Tabs', () => {
     render(<Tabs items={items} activeId="a" onChange={noop} />);
     const tab = screen.getByRole('tab', { name: 'Overview' });
     const tabId = tab.getAttribute('id');
-    const controls = tab.getAttribute('aria-controls');
     expect(tabId).toBeTruthy();
-    expect(controls).toBeTruthy();
     // No characters that need CSS escaping (no colons, no curly braces).
     expect(tabId).toMatch(/^[a-zA-Z0-9_-]+$/);
-    expect(controls).toMatch(/^[a-zA-Z0-9_-]+$/);
+    // aria-controls is deliberately absent without a panelIdPrefix: the
+    // generated prefix is not knowable by a consumer and Tabs renders no
+    // panel, so any id stamped here would point at nothing. This assertion
+    // used to require it to be truthy — pinning that dangling IDREF.
+    expect(tab.getAttribute('aria-controls')).toBeNull();
   });
 
   it('renders nothing inside the tablist when items is empty (no crash)', () => {
@@ -969,6 +971,27 @@ describe('aria-controls points only at a panel that exists (#501)', () => {
     );
     const tabs = screen.getAllByRole('tab');
     expect(tabs.map((t) => t.getAttribute('aria-controls'))).toEqual([null, 'demo-b-panel', null]);
+  });
+
+  it('stamps nothing when there is no panelIdPrefix to point at', () => {
+    // Without the prefix, Tabs renders no panel and the generated useId is not
+    // knowable by a consumer — so the target cannot exist at all. The first
+    // fix only covered the explicit-prefix path and left the DEFAULT
+    // configuration with the dangling IDREF.
+    render(
+      <Tabs
+        items={[
+          { id: 'a', label: 'A' },
+          { id: 'b', label: 'B' },
+        ]}
+        activeId="a"
+        onChange={() => {}}
+        aria-label="Sections"
+      />,
+    );
+    for (const tab of screen.getAllByRole('tab')) {
+      expect(tab.getAttribute('aria-controls')).toBeNull();
+    }
   });
 
   it('leaves every tab its own id, so a panel can still label itself', () => {

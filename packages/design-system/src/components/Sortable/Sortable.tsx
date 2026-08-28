@@ -32,6 +32,7 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS, type Transform } from '@dnd-kit/utilities';
 import clsx from 'clsx';
+import { useTranslation } from '../../i18n/useTranslation';
 import { mergeRefs } from '../_internal/refs';
 import { useFloatingSurface } from '../_internal/overlay';
 import {
@@ -646,6 +647,7 @@ SortableItem.displayName = 'SortableItem';
  */
 export const SortableHandle = forwardRef<HTMLButtonElement, SortableHandleProps>(
   function SortableHandle({ className, children, 'aria-label': ariaLabel, ...rest }, ref) {
+    const t = useTranslation();
     const ctx = useContext(SortableItemContext);
     if (!ctx) {
       throw new Error('<Sortable.Handle> must be rendered inside a <Sortable.Item>.');
@@ -661,7 +663,7 @@ export const SortableHandle = forwardRef<HTMLButtonElement, SortableHandleProps>
       <button
         ref={setRef}
         type="button"
-        aria-label={ariaLabel ?? 'Reorder item'}
+        aria-label={ariaLabel ?? t('drag.handleLabel')}
         className={clsx(styles.handle, className)}
         {...rest}
         // {...listeners} + {...attributes} AFTER {...rest} so consumer spread

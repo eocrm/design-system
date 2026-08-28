@@ -280,6 +280,8 @@ export interface Messages {
   drag: {
     /** Visually-hidden keyboard instructions, announced when a draggable takes focus. */
     instructions: string;
+    /** Fallback name for a `Sortable.Handle` the consumer gave no `aria-label`. */
+    handleLabel: string;
     /** Announced when a drag starts. */
     pickedUp: (params: { item: string }) => string;
     /** Announced when the drop slot changes, in a single-list component (Sortable, DataTable). */
@@ -447,6 +449,16 @@ export interface Messages {
      * with `role="alert"` on an `<li>` (#495).
      */
     statusLoading: string;
+    /**
+     * Announced when `loadOptions` rejects.
+     *
+     * Removing `role="alert"` from the error row cost a real announcement:
+     * `alert` is the one mechanism specified to announce content inserted
+     * TOGETHER with its node, so it was the row that actually worked. The
+     * replacement region only carried the loading string, so a rejection went
+     * from "announced" to silent. Regression caught in review of #495.
+     */
+    statusError: string;
     /** Accessible name for a multi-select trigger, listing what is currently selected. */
     selectedPrefix: (params: { labels: string }) => string;
     /** Accessible name for a chips trigger with nothing selected yet. */

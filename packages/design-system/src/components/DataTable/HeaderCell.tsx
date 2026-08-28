@@ -202,7 +202,14 @@ export function HeaderCell<T>({
       }
       data-responsive-pinned={responsiveEnabled && isPinned ? true : undefined}
       aria-sort={sortDir != null ? sortAriaMap[sortDir] : undefined}
-      aria-labelledby={labelId}
+      // Only when the label span will actually have text. An icon-only header
+      // (a ReactNode whose content is aria-hidden) leaves that span empty, and
+      // pointing at an empty element gives the columnheader NO name at all —
+      // trading a wrong name for an unnamed header, which is a worse axe
+      // violation than the one this fixes. Fall back to name-from-content,
+      // where the handle's label is at least still a name.
+      aria-labelledby={plainHeader ? labelId : undefined}
+      aria-label={plainHeader ? undefined : columnLabel}
       onClick={sortable ? () => instance.toggleSort(column.id) : undefined}
       className={clsx(
         styles.headerCell,

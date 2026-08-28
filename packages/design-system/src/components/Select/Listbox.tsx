@@ -38,7 +38,18 @@ export function Listbox() {
   // announces — mounting region and text together announces nothing.
   const [statusText, setStatusText] = useState('');
   useEffect(() => {
-    setStatusText(ctx.loading && ctx.rows.length === 0 ? t('select.statusLoading') : '');
+    // Error included. Dropping `role="alert"` from the error row removed the
+    // one Select announcement that actually worked — `alert` is specified to
+    // announce content inserted together with its node, so it was not one of
+    // the three broken mechanisms. Without this the region reset to '' on
+    // rejection and the failure was silent.
+    setStatusText(
+      ctx.error
+        ? t('select.statusError')
+        : ctx.loading && ctx.rows.length === 0
+          ? t('select.statusLoading')
+          : '',
+    );
   }, [ctx.loading, ctx.rows.length, t]);
   const inOverlay = useInOverlay(ctx.triggerRootRef, ctx.open);
   // #274: hosts yield Escape while we're open — our own capture/element

@@ -231,9 +231,19 @@ describe('component tokens do not shadow a semantic value', () => {
  * unless it is one of the enumerated/ID-valued ones below. A new textual ARIA
  * attribute is caught by default rather than needing to be remembered.
  *
+ * Braced values are captured WHOLE and every literal inside is judged, so
+ * `cond ? 'A' : 'B'` and `x ?? 'A'` are both caught. The first version anchored
+ * on a quote immediately after `={`, which saw neither — and a live violation,
+ * Sortable's `ariaLabel ?? 'Reorder item'`, sat in #492's own table the whole
+ * time the gate reported the file clean.
+ *
  * Known limits, stated rather than discovered later: it does not read JSX text
  * nodes (a separate parse, and the naive regex over-matches TypeScript
- * generics badly), and it cannot see a string assembled in a variable.
+ * generics badly), and it cannot see a string assembled in a variable. Inside a
+ * braced value, literals preceded by `=` or `[` are skipped as comparison
+ * operands and index keys (`typeof x === 'string'`, `props['aria-label']`), so
+ * a rendered literal in that position would be missed — the trade is against
+ * five false alarms, and a false alarm is what gets a gate deleted.
  */
 describe('user-facing strings go through the i18n provider', () => {
   /** ARIA attributes whose values are ids, enums, booleans or numbers. */
@@ -295,16 +305,44 @@ describe('user-facing strings go through the i18n provider', () => {
 
   it.each(sources.map(({ label, code }) => [label, code]))('%s', (_label, code) => {
     const offenders: string[] = [];
-    for (const raw of code.split('\n')) {
-      // Skip JSDoc and comment lines — English in an @example is correct.
-      if (/^\s*(\*|\/\/)/.test(raw)) continue;
-      for (const m of raw.matchAll(/\b(aria-[a-z]+|placeholder|title|alt)=\{?(["'`])(.*?)\2/g)) {
-        const [, attr, , value] = m;
+    // Comment lines are stripped WHOLESALE and the rest scanned as one string,
+    // so a value prettier wrapped across lines is still seen. Scanning
+    // line-by-line missed those.
+    const body = code
+      .split('\n')
+      .filter((l) => !/^\s*(\*|\/\/)/.test(l))
+      .join('\n');
+    {
+      // `(?<![-\w])` so `data-title=` / `data-alt=` do not match — `-` is a word
+      // boundary, so `\b` alone flagged them and reported a false violation.
+      // The braced form captures the WHOLE expression rather than stopping at
+      // the first quote, so `cond ? 'A' : 'B'` and `x ?? 'A'` are both seen;
+      // the first version anchored on a quote right after `={` and missed both,
+      // including a live one at Sortable.tsx.
+      for (const m of body.matchAll(
+        /(?<![-\w])(aria-[a-z]+|placeholder|title|alt)=(?:\{([^}]*)\}|(["'`])((?:(?!\3).)*)\3)/gs,
+      )) {
+        const attr = m[1];
+        const value = m[2] ?? m[4] ?? '';
         if (NON_TEXTUAL.has(attr!)) continue;
         // Interpolations are permitted — the rule allows mixing translated
         // text with data. What is not permitted is a fixed English phrase.
-        const literal = value!.replace(/\$\{[^}]*\}/g, '').trim();
-        if (/[A-Za-z]{3}/.test(literal)) offenders.push(`${attr}="${value}"`);
+        // Only the STRING LITERALS inside the expression are judged; a t(…)
+        // key is not user-facing text.
+        const literals = [...value.matchAll(/(["'`])((?:(?!\1).)*)\1/gs)]
+          // Not every literal in the expression is rendered. Drop comparison
+          // operands and index keys — `typeof x === 'string'`,
+          // `state === 'error'`, `props['aria-label']` — by looking at what
+          // precedes them. Without this the wider matcher reports them as
+          // English, which is the false-alarm half of a gate people delete.
+          .filter((lm) => !/[=[]\s*$/.test(value.slice(0, lm.index)))
+          .map((lm) => lm[2]!)
+          // A t() key is not user-facing text.
+          .filter((lit) => !/^[a-z][a-zA-Z]*\.[a-zA-Z.]+$/.test(lit));
+        for (const lit of literals) {
+          const bare = lit.replace(/\$\{[^}]*\}/g, '').trim();
+          if (/[A-Za-z]{3}/.test(bare)) offenders.push(`${attr}: "${lit}"`);
+        }
       }
     }
     expect(
@@ -395,18 +433,20 @@ describe('stated contrast ratios still hold', () => {
       .filter(({ label }) => label.endsWith('.tokens.scss'))
       .map(({ label, code }) => [label, code]),
   )('%s annotates every ratio it states', (_label, code) => {
-    const unannotated = code
-      .split('\n')
-      .filter((l) => /^\s*\/\//.test(l))
-      // A range states two endpoints and binds neither; exempt by design.
-      .filter((l) => !/\d+\.\d+\s*[-–]\s*\d+\.\d+:1/.test(l))
-      .filter((l) => /\d+\.\d+:1/.test(l))
-      .filter((l) => !/@contrast/.test(l));
-    // The annotation may sit on its own line in the same comment block.
-    const hasBlockAnnotation = /@contrast/.test(code);
+    // COUNTED, not "does this file mention @contrast anywhere". The first
+    // version fell back to a file-scoped `hasBlockAnnotation`, so any file
+    // containing one annotation satisfied the check no matter how many
+    // unannotated ratios sat beside it — four were live behind that escape.
+    // A gate that cannot fail on its own stated input is the exact thing this
+    // suite keeps being written to stop.
+    const lines = code.split('\n').filter((l) => /^\s*\/\//.test(l));
+    // A range states two endpoints and binds neither; exempt by design.
+    const isRange = (l: string) => /\d+\.\d+\s*[-–]\s*\d+\.\d+:1/.test(l);
+    const stated = lines.filter((l) => /\d+\.\d+:1/.test(l) && !isRange(l) && !/@contrast/.test(l));
+    const annotations = lines.filter((l) => /@contrast/.test(l));
     expect(
-      unannotated.length === 0 || hasBlockAnnotation,
-      'states a ratio with no @contrast annotation — add one so it can be recomputed',
-    ).toBe(true);
+      annotations.length,
+      `states ${stated.length} ratio(s) but carries ${annotations.length} @contrast annotation(s) — annotate each so it can be recomputed:\n  ${stated.map((l) => l.trim()).join('\n  ')}`,
+    ).toBeGreaterThanOrEqual(stated.length);
   });
 });

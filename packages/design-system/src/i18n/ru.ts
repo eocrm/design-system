@@ -132,6 +132,7 @@ export const ru: Messages = {
     loadedEmpty: 'Строки не загружены',
   },
   drag: {
+    handleLabel: 'Переместить элемент',
     instructions:
       'Нажмите пробел или Enter, чтобы взять элемент. Пока элемент взят, стрелки перемещают его, пробел или Enter размещает, Escape отменяет.',
     pickedUp: ({ item }) => `Взято: «${item as string}».`,
@@ -221,6 +222,7 @@ export const ru: Messages = {
     retry: 'Повторить',
     noResultsFor: (params) => `Ничего не найдено по запросу «${params.query}».`,
     statusLoading: 'Загрузка вариантов…',
+    statusError: 'Не удалось загрузить варианты.',
     selectedPrefix: ({ labels }) => `Выбрано: ${labels as string}`,
     openSelect: 'Открыть список',
   },

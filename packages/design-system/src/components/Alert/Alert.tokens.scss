@@ -43,6 +43,7 @@
   --alert-fg-warning: var(--color-fg);
 
   // warning uses --color-warning-strong, not --color-warning: #ff991f measures
+  // @contrast --color-warning on --color-bg = 2.14:1 light
   // @contrast --color-warning on --color-warning-bg-subtle = 2.01:1 light
   // 2.01:1 on the light tint (and 2.14:1 as an icon or border on --color-bg), below WCAG AA
   // for text and below 1.4.11's 3:1 for a graphical object. The strong variant

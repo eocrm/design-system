@@ -130,6 +130,7 @@ export const en: Messages = {
     loadedEmpty: 'No rows loaded',
   },
   drag: {
+    handleLabel: 'Reorder item',
     instructions:
       'Press Space or Enter to pick up. While dragging, the arrow keys move the item, Space or Enter drops it, and Escape cancels.',
     pickedUp: ({ item }) => `Picked up ${item as string}.`,
@@ -219,6 +220,7 @@ export const en: Messages = {
     retry: 'Retry',
     noResultsFor: (params) => `No results for "${params.query}".`,
     statusLoading: 'Loading options…',
+    statusError: 'Failed to load options.',
     selectedPrefix: ({ labels }) => `Selected: ${labels as string}`,
     openSelect: 'Open select',
   },

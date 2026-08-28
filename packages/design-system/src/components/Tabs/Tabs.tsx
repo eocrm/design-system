@@ -504,7 +504,12 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
               // panel's `aria-labelledby` points back to, so the relationship
               // is still expressed in both directions for the pair that
               // actually exists.
-              aria-controls={active ? panelId : undefined}
+              // Also requires panelIdPrefix. Without it the prefix is a
+              // generated useId that no consumer can know, Tabs renders no
+              // panel itself, and nothing else can — so the id is not merely
+              // absent, it CANNOT exist. Stamping it there left the default
+              // configuration with exactly the dangling IDREF this fixes.
+              aria-controls={active && panelIdPrefix ? panelId : undefined}
               tabIndex={focused ? 0 : -1}
               className={clsx(styles.tab, active && styles.active)}
               // Skip the onChange call when clicking the already-active tab —

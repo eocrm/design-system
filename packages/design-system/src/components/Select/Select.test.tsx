@@ -1699,6 +1699,32 @@ describe('listbox state announces from one region, not three rows (#495)', () =>
     expect(screen.getByRole('listbox').textContent).not.toMatch(/Failed to load options|Retry/);
   });
 
+  it('the region actually SAYS something in each state', async () => {
+    // The first version of these tests asserted only that a region existed and
+    // sat outside the <ul>. Hardwiring its text to '' passed all 5195 tests —
+    // which is exactly why the lost error announcement shipped green. Assert
+    // the content.
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    let rejectFn: (e: Error) => void = () => {};
+    const loadOptions = vi.fn(() => new Promise<SelectOption[]>((_, rej) => (rejectFn = rej)));
+    render(<Select searchable loadOptions={loadOptions} />);
+    await user.click(screen.getByRole('combobox'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+    });
+
+    const region = () => document.body.querySelector('[role="status"][aria-live="polite"]')!;
+    expect(region().textContent).toBe('Loading options…');
+
+    await act(async () => {
+      rejectFn(new Error('boom'));
+      await vi.runAllTimersAsync();
+    });
+    // Was silent before this: removing role="alert" from the error row took
+    // away the only announcement Select had, and the region never carried it.
+    expect(region().textContent).toBe('Failed to load options.');
+  });
+
   it('owns exactly one live region, outside the listbox', async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     render(<Select searchable options={[]} />);
