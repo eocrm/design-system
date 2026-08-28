@@ -20,6 +20,15 @@ const components = readdirSync(componentsDir, { withFileTypes: true })
 
 const indexContent = readFileSync(indexPath, 'utf-8');
 
+const TOKENS_SCSS = readFileSync(
+  join(__dirname, '../../design-tokens/generated/web/tokens.scss'),
+  'utf-8',
+);
+const DARK_SCSS = readFileSync(
+  join(__dirname, '../../design-tokens/generated/web/dark.scss'),
+  'utf-8',
+);
+
 describe('library structure', () => {
   it('discovered at least one component', () => {
     expect(components.length).toBeGreaterThan(0);
@@ -146,4 +155,65 @@ describe('transient state does not rely on aria-busy alone', () => {
       expect(liveRegion || namedState).toBe(true);
     },
   );
+});
+
+/**
+ * No component token may hard-code a value a semantic token already holds.
+ *
+ * This is the shape #490 asked for, and deliberately NOT another hand-written
+ * list: the two gates #484 added were enumerations of tones someone already
+ * knew to worry about, and that mechanism failed three review rounds running.
+ * It walks every `*.tokens.scss` and compares literal hexes against every
+ * generated semantic value.
+ *
+ * What it catches is the copy-by-hand shape: a component literal that equals a
+ * semantic token's value with no `var()` linking them, so the two track each
+ * other only by luck. `--color-info` and `--color-accent` were byte-identical
+ * for exactly that reason until a retune split them silently, and Badge's 36
+ * literals were the same bet at scale.
+ *
+ * Deliberately NOT flagged: values with no semantic equivalent (the categorical
+ * avatar and palette scales are meant to be independent), and anything already
+ * written as `var(...)`.
+ */
+describe('component tokens do not shadow a semantic value', () => {
+  const semanticByValue = new Map<string, string[]>();
+  for (const src of [TOKENS_SCSS, DARK_SCSS]) {
+    for (const m of src.matchAll(/(--color-[a-z0-9-]+):\s*(#[0-9a-f]{6});/gi)) {
+      const [, name, value] = m;
+      const key = value!.toLowerCase();
+      semanticByValue.set(key, [...(semanticByValue.get(key) ?? []), name!]);
+    }
+  }
+
+  // Independent by design: these scales are categorical, not semantic, so
+  // sharing a value with a tone is coincidence rather than a broken link.
+  const INDEPENDENT = /^--color-(avatar|palette)-/;
+
+  const componentTokenFiles = components.flatMap((name) => {
+    const dir = join(componentsDir, name);
+    return readdirSync(dir)
+      .filter((f) => f.endsWith('.tokens.scss'))
+      .map((f) => ({ label: `${name}/${f}`, code: readFileSync(join(dir, f), 'utf-8') }));
+  });
+
+  it('found component token files to check', () => {
+    expect(componentTokenFiles.length).toBeGreaterThan(10);
+    expect(semanticByValue.size).toBeGreaterThan(20);
+  });
+
+  it.each(componentTokenFiles.map(({ label, code }) => [label, code]))('%s', (_label, code) => {
+    const shadowed: string[] = [];
+    for (const m of code.matchAll(/^\s*(--[a-z0-9-]+):\s*(#[0-9a-f]{6});/gim)) {
+      const [, name, value] = m;
+      const owners = (semanticByValue.get(value!.toLowerCase()) ?? []).filter(
+        (owner) => !INDEPENDENT.test(owner),
+      );
+      if (owners.length > 0) shadowed.push(`${name} (${value}) === ${owners.join(' / ')}`);
+    }
+    expect(
+      shadowed,
+      'hard-coded a value a semantic token already holds — alias it with var() instead, or the two track each other only by luck',
+    ).toEqual([]);
+  });
 });
