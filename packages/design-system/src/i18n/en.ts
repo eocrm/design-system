@@ -43,6 +43,9 @@ export const en: Messages = {
   switch: {
     busy: 'Saving…',
   },
+  progress: {
+    indeterminate: 'Loading…',
+  },
   slider: {
     minimum: 'minimum',
     maximum: 'maximum',

@@ -44,6 +44,9 @@ export const ru: Messages = {
   switch: {
     busy: 'Сохранение…',
   },
+  progress: {
+    indeterminate: 'Загрузка…',
+  },
   slider: {
     minimum: 'минимум',
     maximum: 'максимум',

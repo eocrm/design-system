@@ -69,6 +69,20 @@ export interface Messages {
      */
     busy: string;
   };
+  progress: {
+    /**
+     * `aria-valuetext` for an INDETERMINATE `Progress` / `CircularProgress`
+     * when the consumer passes no `aria-label`.
+     *
+     * An indeterminate bar has no `aria-valuenow` — its meaning lives entirely
+     * in `aria-valuetext`, so this string is the only thing a screen reader
+     * has to go on. It was hardcoded English in both components, which meant a
+     * Russian consumer heard "Loading…" (#503). Note this is a value
+     * description, not the accessible name: the name is whatever `aria-label`
+     * the consumer passes, and may be absent.
+     */
+    indeterminate: string;
+  };
   slider: {
     /** Accessible-name suffix for the first thumb in a range slider. */
     minimum: string;

@@ -1,5 +1,6 @@
 import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
 import clsx from 'clsx';
+import { useTranslation } from '../../i18n/useTranslation';
 import styles from './CircularProgress.module.scss';
 
 /** Diameter + stroke pairing. */
@@ -146,8 +147,9 @@ export const CircularProgress = forwardRef<HTMLDivElement, CircularProgressProps
     // VISUAL clamp only — ARIA reports the raw `value`.
     const percent = determinate ? Math.max(0, Math.min(100, (value / max) * 100)) : 0;
     const strokeDashoffset = determinate ? CIRCUMFERENCE * (1 - percent / 100) : undefined;
+    const t = useTranslation();
     const ariaLabel = rest['aria-label'];
-    const valuetext = indeterminate ? (ariaLabel ?? 'Loading…') : undefined;
+    const valuetext = indeterminate ? (ariaLabel ?? t('progress.indeterminate')) : undefined;
 
     // {...rest} last so consumer overrides win (Pattern A).
     return (
