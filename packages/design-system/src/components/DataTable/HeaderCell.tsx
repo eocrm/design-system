@@ -58,38 +58,56 @@ const sortAriaMap: Record<TableSortDirection, 'ascending' | 'descending' | 'none
 /**
  * Descendants that can actually BE NAMED by the attribute they carry.
  *
- * Narrower than "carries the attribute", and that difference has now unnamed a
- * column header twice. `alt` names only `img`, `area` and `input[type=image]`;
- * anywhere else it is an unknown attribute. `aria-label` is prohibited on
- * `role="generic"` — ARIA 1.2 — so a bare `<span aria-label="Revenue">` names
- * nothing in a browser, and counting it pointed `aria-labelledby` at a span
- * computing to no name at all.
+ * A DENY-list, which is the point. The allow-list version shipped and
+ * immediately unnamed `<svg aria-label>` — every lucide-react icon header,
+ * since lucide forwards props onto a bare `<svg>` — because svg was not among
+ * the natives I happened to list. "Which native did I forget" is an unbounded
+ * series: svg, summary, table, output, progress, meter, details, dialog,
+ * fieldset, h1-h6, ul, li, nav, section, object, video, audio. ARIA 1.2's
+ * name-prohibited set is finite and does not grow, so inverting it cannot rot
+ * the same way.
  *
- * The second is invisible to this suite: jsdom's dom-accessibility-api honours
- * `aria-label` on a bare span, so a test asserting the accessible name would
- * have PASSED while real users got an unnamed column. Reason from the spec
- * here, never from `computeAccessibleName`.
+ * The role filter covers the `alt` clauses too. `role="presentation"` wins
+ * over `alt` — the presentational-conflict exceptions are focusability and
+ * global ARIA attributes, and `alt` is neither — so `<img alt="V"
+ * role="presentation">` names nothing, and counting it produced an unnamed
+ * header. One rule across both halves stops the next attribute hitting the
+ * same asymmetry.
+ *
+ * Deliberately not chased, both contrived: an invalid `role="zzz"` falls back
+ * to generic yet is counted, and `<input type="hidden" aria-label>` is counted.
+ *
+ * Reason from the spec here, never from `computeAccessibleName` — jsdom
+ * honours `aria-label` on a bare `<span>`, which browsers do not, so a test
+ * asserting the name would pass while real users got nothing.
  */
-const NAMEABLE = [
-  // An explicit role that permits naming.
-  '[role]:not([role="generic"]):not([role="presentation"]):not([role="none"])',
-  // Native elements whose implicit role permits it.
-  'a[href]',
-  'button',
-  'input',
-  'select',
-  'textarea',
-  'img',
-  'area',
-  'iframe',
+const NAME_PROHIBITED = [
+  'caption',
+  'code',
+  'deletion',
+  'emphasis',
+  'generic',
+  'insertion',
+  'none',
+  'paragraph',
+  'presentation',
+  'strong',
+  'subscript',
+  'superscript',
+  'term',
+  'time',
 ]
-  .map((selector) => `${selector}[aria-label]:not([aria-label=""])`)
-  .concat([
-    'img[alt]:not([alt=""])',
-    'area[alt]:not([alt=""])',
-    'input[type="image"][alt]:not([alt=""])',
-  ])
-  .join(', ');
+  .map((role) => `:not([role="${role}"])`)
+  .join('');
+/** Natives whose IMPLICIT role is name-prohibited, when no role overrides it. */
+const GENERIC_NATIVE =
+  'span,div,p,em,strong,code,b,i,u,s,q,small,sub,sup,ins,del,pre,caption,time,dfn';
+const NAMEABLE = [
+  `[aria-label]:not([aria-label=""])${NAME_PROHIBITED}:not(:is(${GENERIC_NATIVE}):not([role]))`,
+  `img[alt]:not([alt=""])${NAME_PROHIBITED}`,
+  `area[alt]:not([alt=""])${NAME_PROHIBITED}`,
+  `input[type="image"][alt]:not([alt=""])${NAME_PROHIBITED}`,
+].join(', ');
 
 export function HeaderCell<T>({
   column,
@@ -262,7 +280,18 @@ export function HeaderCell<T>({
       // fetch, or a `hidden` lifted at a breakpoint, changed the answer without
       // notifying — leaving the header named by its column id exactly as the
       // per-commit version did.
-      attributeFilter: ['aria-hidden', 'hidden', 'alt', 'aria-label', 'aria-labelledby'],
+      attributeFilter: [
+        'aria-hidden',
+        'hidden',
+        'alt',
+        'aria-label',
+        'aria-labelledby',
+        // `measure` consults these too: `role` via NAME_PROHIBITED, `type` via
+        // input[type=image], `href` via the a[href] case that preceded it.
+        'role',
+        'type',
+        'href',
+      ],
     });
     return () => observer.disconnect();
   }, [column.id, column.visibilityLabel]);
@@ -417,6 +446,12 @@ export function HeaderCell<T>({
           className={clsx(styles.label, sortable && styles.sortable)}
           tabIndex={sortable ? 0 : undefined}
           role={sortable ? 'button' : undefined}
+          // A sortable header with nothing nameable inside makes this an
+          // UNNAMED focusable button — six rounds all rescued the <th>'s name
+          // and none looked at the control the same markup creates. Only when
+          // the span names nothing itself, or this would override real header
+          // text with the column label.
+          aria-label={sortable && !labelHasText ? columnLabel : undefined}
           onKeyDown={onLabelKeyDown}
         >
           {headerContent}

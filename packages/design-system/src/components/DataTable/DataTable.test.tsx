@@ -2163,6 +2163,65 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     }
   });
 
+  it.each([
+    // svg is why the allow-list version had to go: lucide forwards props onto
+    // a bare <svg>, making this the commonest icon-only header there is.
+    ['svg with aria-label', <svg aria-label="Revenue" key="s" />, true],
+    ['summary with aria-label', <summary aria-label="Revenue" key="m" />, true],
+    ['div with role=img', <div role="img" aria-label="Revenue" key="d" />, true],
+    // role="presentation" wins over alt, so this names nothing.
+    [
+      'img alt under role=presentation',
+      <img src="x.png" alt="Revenue" role="presentation" key="p" />,
+      false,
+    ],
+    // A name-prohibited role. Invisible to jsdom, which honours it.
+    [
+      'role=paragraph with aria-label',
+      <span role="paragraph" aria-label="Revenue" key="g" />,
+      false,
+    ],
+  ])('descendant naming: %s', (_what, node, shouldName) => {
+    const cols: ColumnDef<Row>[] = [
+      { id: 'internal_id_col', header: node, visibilityLabel: 'Fallback', cell: () => 'x' },
+    ];
+    function Harness() {
+      const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    render(<Harness />);
+    const th = screen.getAllByRole('columnheader')[0]!;
+    // Asserts WHICH mechanism was chosen, not the name jsdom computes — jsdom
+    // disagrees with browsers on two of these.
+    if (shouldName) {
+      expect(th.getAttribute('aria-labelledby')).not.toBeNull();
+      expect(th.getAttribute('aria-label')).toBeNull();
+    } else {
+      expect(th.getAttribute('aria-label')).toBe('Fallback');
+    }
+  });
+
+  it('names the sort control on an icon-only header', () => {
+    // The label span is role="button" tabIndex=0 when the column is sortable.
+    // With nothing nameable inside it was a focusable button with no
+    // accessible name at all — beside a <th> six rounds had been busy naming.
+    const cols: ColumnDef<Row>[] = [
+      {
+        id: 'starred_col',
+        header: <span aria-hidden="true">★</span>,
+        visibilityLabel: 'Starred',
+        sortable: true,
+        cell: () => 'x',
+      },
+    ];
+    function Harness() {
+      const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    render(<Harness />);
+    expect(screen.getByRole('button', { name: 'Starred' })).toBeInTheDocument();
+  });
+
   it('ignores aria-label on a role=generic element, which browsers do not honour', () => {
     // ARIA 1.2 prohibits naming role="generic", so a bare <span aria-label>
     // names NOTHING in a browser. Counting it chose aria-labelledby and left
