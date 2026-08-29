@@ -87,35 +87,18 @@ describe('library structure', () => {
 /**
  * Strip comments using the TypeScript PARSER.
  *
- * Five hand-rolled versions preceded this and every one had a defect, none
- * found by the gate itself:
+ * Five hand-rolled versions preceded this and each had a defect no gate could
+ * have caught — two of them BLINDNESS, silently deleting real code from the
+ * scan. The one worth remembering: `FileUpload.tsx:162` is
+ * `} else if (token.endsWith('/*'))`, so a `/*` inside a STRING opened a
+ * comment that a file-wide regex closed 116 lines later. `ts.createScanner`
+ * does not fix it either — JSX context is parser-driven, so a raw token
+ * scanner reads JSX text as a comment.
  *
- *   1. A file-wide `/\*[\s\S]*?\*\/` sweep. `FileUpload.tsx:162` is
- *      `} else if (token.endsWith('/*'))`, so a `/*` in a STRING opened a
- *      comment closed 116 lines later — both gates read that file with a hole
- *      in it. BLINDNESS.
- *   2. A line-oriented pass. Fixed that, broke three: a trailing `//` strip
- *      truncated lines at the `//` of a URL, a block comment closing mid-line
- *      dropped the rest of that line, one opening mid-line leaked its body in.
- *   3. A character scanner tracking quote state. An apostrophe in JSX text
- *      (`<p>don't</p>`) opened a phantom string that swallowed the next
- *      comment. FALSE ALARM.
- *   4. The same plus "a newline ends a `'` or `\"` string". Fixed the
- *      apostrophe; still could not see JSX TEXT, so `<p>https://x.com</p>`
- *      had a `//` outside any string and the rest of that line was deleted.
- *      BLINDNESS again, the same class as (1) by a different route.
- *   5. `ts.createScanner`. Exact for strings and regexes, but a raw token
- *      scanner has no JSX context — the parser drives that — so it read the
- *      same JSX text as a comment.
- *
- * The common thread: knowing where a comment starts requires the grammar, and
- * each version approximated it slightly better while still guessing. The
- * compiler is already a devDependency, so this stops guessing. The parser
- * yields the exact spans of string literals, template parts, regex literals
- * and JSX text; a `/` outside all of them genuinely starts a comment.
- *
- * Comments are blanked, not removed, so every other character keeps its offset
- * and line numbers in failure messages still point where they should.
+ * The parser yields exact spans for string literals, template parts, regex
+ * literals and JSX text; a `/` outside all of them starts a comment. Comments
+ * are BLANKED rather than removed so every other character keeps its offset
+ * and failure line numbers stay right.
  */
 const stripComments = (code: string) => {
   const sourceFile = ts.createSourceFile(
@@ -314,45 +297,28 @@ describe('component tokens do not shadow a semantic value', () => {
 /**
  * Hard rule 9: no inline English on a user-visible surface.
  *
- * Keyed off the RULE, not off a list of attributes — that enumeration is what
- * made #492's count wrong four times running. Each fix widened one dimension
- * and left another: excluding braces hid values starting with `${…}`; listing
- * `aria-label|placeholder|title` hid `aria-valuetext`; being attribute-keyed at
- * all hid JSX text nodes, which were half the real violations.
+ * Walked on the TypeScript AST. Every `aria-*` is textual unless it is one of
+ * the enumerated ID- or enum-valued ones in NON_TEXTUAL below, so a NEW
+ * textual ARIA attribute is caught by default rather than needing to be
+ * remembered — that enumeration is what made #492's count wrong four times
+ * running. JSX text is read too.
  *
- * So the attribute set is derived by EXCLUSION: every `aria-*` is textual
- * unless it is one of the enumerated/ID-valued ones below. A new textual ARIA
- * attribute is caught by default rather than needing to be remembered.
+ * Six regex and hand-scanner versions preceded this, each of which could not
+ * fail on some shape of its own stated input, and each replaced after a
+ * reviewer found the shape rather than the gate finding it. They are in the
+ * git history; the lesson worth keeping in the file is that recognising where
+ * a value starts and ends needs the grammar, and the compiler is already a
+ * devDependency. Two live violations surfaced when the scan replaced the
+ * regexes, and three more when the AST replaced the scan.
  *
- * The value is SCANNED rather than matched by one regex, because every regex
- * shape lost a case: anchoring on a quote after `={` missed `cond ? 'A' : 'B'`
- * and `x ?? 'A'`; a `\{([^}]*)\}` capture fixed those but truncated a template
- * literal at the `}` of its first `${…}` and stopped catching the plainest
- * shape of all, `aria-label="Close dialog"`. Each of those was a version that
- * could not fail on its own stated input. Two live violations surfaced when the
- * scan replaced them: Sortable's `ariaLabel ?? 'Reorder item'`, which sat in
- * #492's own table the whole time the gate reported the file clean, and a
- * template-literal label.
- *
- * Known limits, stated rather than discovered later: it does not read JSX text
- * nodes (a separate parse, and the naive regex over-matches TypeScript
- * generics badly) — including inside a braced value, so `title={<b>Delete
- * row</b>}` is silent, which the "attributes are covered" reading of this
- * block would not predict. A template literal WRAPPING a ternary,
- * `` aria-label={`${n === 1 ? 'item' : 'items'}`} ``, is one literal whose
- * `${…}` is stripped before judging, so both branches are silent too. It
- * cannot see a string assembled in a variable.
- *
- * The failure direction of a trailing `//` comment is worth stating precisely,
- * because it inverted: such a comment IS stripped (`stripComments` removes
- * `//` to end of line after handling blocks), but an apostrophe in one that
- * sits inside a braced value used to unbalance the walk. Since an unbalanced
- * value became an offender rather than a skip, that now REPORTS rather than
- * silences — noisy in the right direction. Inside a
- * braced value, literals preceded by `=` or `[` are skipped as comparison
- * operands and index keys (`typeof x === 'string'`, `props['aria-label']`), so
- * a rendered literal in that position would be missed — the trade is against
- * five false alarms, and a false alarm is what gets a gate deleted.
+ * Known limits, stated rather than discovered later:
+ * - A string assembled in a variable is invisible. Only literals reachable
+ *   from the attribute or the JSX text are judged.
+ * - A template literal wrapping a ternary is one literal whose `${…}` is
+ *   blanked before judging, so both branches go unseen.
+ * - `isEnglish` is a heuristic: two letters after URLs, interpolations and CSS
+ *   units are removed. It cannot tell prose from an identifier, so a literal
+ *   like `en-US` would be reported. Nothing in the library hits that today.
  */
 describe('user-facing strings go through the i18n provider', () => {
   /** ARIA attributes whose values are ids, enums, booleans or numbers. */
@@ -529,33 +495,28 @@ describe('user-facing strings go through the i18n provider', () => {
  * A contrast ratio written in a comment is a claim, and nothing checked it.
  *
  * #484 corrected the same class of stale figure FOUR times across thirteen
- * review rounds — Calendar's `4.55`, the Progress family's `4.17`, and two
- * theme-scoping misses — every one found by a person reading, never by a test.
- * A retune moves a primitive and every number describing it silently rots.
+ * review rounds, every one found by a person reading rather than by a test. A
+ * retune moves a primitive and every number describing it silently rots.
  *
  * Numbers opt in by carrying an annotation the gate can resolve:
  *
  *   // @contrast --color-warning on --color-bg = 2.14:1 light
  *
- * Both sides are resolved through the generated tokens for the named theme and
- * the ratio recomputed. A stale number fails with both figures.
+ * Both sides resolve through the generated tokens for the named theme and the
+ * ratio is recomputed, against an ABSOLUTE bound — `toBeCloseTo(x, 1)` accepts
+ * a delta under 0.05, which is larger than the defects #484 actually had.
  *
- * Scope, stated rather than implied: every `N.NN:1` in a `.tokens.scss` or a
- * `.module.scss` must be bound, because that is where token-pair ratios live
- * and where the rot happened. The scope said `.tokens.scss` only while Dot's
- * `2.14:1` sat in a `.module.scss` — read for annotations, exempt from the
- * binding — so the sentence justifying the narrower scope was falsified by a
- * file the gate was already reading. Ratios in prose elsewhere (`.ts`/`.tsx`)
- * are not forced: binding a number to its pair needs the author's help, and a
- * gate that demands annotation of arbitrary sentences would be gamed by
- * rewording. Ranges (`5.11-6.82:1`) are exempt for the same reason; annotate
- * the endpoints individually if they matter.
+ * Every `N.NN:1` in a `.tokens.scss` or `.module.scss` must then BIND to a
+ * value some annotation in that file computes. Counting annotations instead
+ * left every file slack equal to its surplus; requiring a decimal point let
+ * integer claims rot; per-line matching made the two halves disagree about
+ * what an annotation is. Ranges bind neither endpoint and are exempt, as are
+ * WCAG's own thresholds — see the note at WCAG_THRESHOLDS for why that is a
+ * trade rather than a fix.
  *
- * `:1` is the opt-in marker, which makes dropping it a bypass — so a live
- * figure must carry it. A HISTORICAL figure ("both read 4.17 until #484 raised
- * them") is written without `:1` on purpose: no current pair computes it, so
- * no annotation can bind it, and the omission is spelled out where it occurs
- * rather than left to look like an oversight.
+ * Scope: `.tokens.scss` and `.module.scss`. Ratios in `.ts`/`.tsx` prose are
+ * not forced — binding a number to its pair needs the author's help, and a
+ * gate demanding annotation of arbitrary sentences is gamed by rewording.
  */
 describe('stated contrast ratios still hold', () => {
   function literal(name: string, dark: boolean, seen: string[] = []): string | undefined {
