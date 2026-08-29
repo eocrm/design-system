@@ -194,8 +194,15 @@ export function HeaderCell<T>({
       // neither counts in the accessible name, so a `<span hidden>Revenue</span>`
       // header measured as named and then computed to nothing — the unnamed
       // columnheader this whole mechanism exists to prevent, reached from the
-      // other side. The CSS forms (`display:none`, `visibility:hidden`) are NOT
-      // detectable here and remain a stated limit.
+      // other side.
+      //
+      // Stated limits, all CSS- or value-shaped and none detectable from
+      // markup: `display:none` and `visibility:hidden` hide text this probe
+      // still counts; `::before`/`::after` content contributes to the name
+      // (accname 2F) and is invisible to `textContent`; and an embedded
+      // control's VALUE contributes (accname 2E), so a column-filter
+      // `<input value="Revenue">` measures as nothing and the column falls
+      // back to its label. The last one is not silent — the dev warning fires.
       for (const hidden of probe.querySelectorAll('[aria-hidden="true"], [hidden]'))
         hidden.remove();
       // Text is not the only source of a name. A select-all checkbox — the

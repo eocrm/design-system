@@ -1739,10 +1739,19 @@ describe('listbox state announces from one region, not three rows (#495)', () =>
       if (!(n.parentElement as HTMLElement | null)?.closest('[aria-hidden="true"]'))
         reachable.push(n.textContent ?? '');
     }
-    // `title` and `alt` too, not just aria-label. The comment claimed
-    // "everything a reader can reach" while a `title` carrying the same
-    // sentence escaped — and this PR treats title/alt as name sources
-    // elsewhere, so the sweep has to agree with that.
+    // `title` and `alt` too, not just aria-label — a `title` carrying the same
+    // sentence escaped a sweep whose comment claimed to cover everything.
+    //
+    // NOT because they are name sources: the same commit removed `title` from
+    // HeaderCell's naming rule and narrowed `alt` there. The reason is the
+    // opposite one — this counts what a reader HEARS, and a tooltip is spoken
+    // as a description whether or not it wins the name.
+    //
+    // Still not literally everything: `placeholder`, `value`,
+    // `aria-valuetext`, `aria-roledescription` and an SVG `<title>` child are
+    // not swept, and text inside `[hidden]` is counted though no reader
+    // reaches it. Both directions over-count rather than under-count, so this
+    // can only fail loudly, never pass falsely.
     for (const el of document.body.querySelectorAll<HTMLElement>('[aria-label], [title], [alt]')) {
       if (el.closest('[aria-hidden="true"]')) continue;
       for (const attr of ['aria-label', 'title', 'alt'])

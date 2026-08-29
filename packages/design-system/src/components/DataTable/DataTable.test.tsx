@@ -2295,11 +2295,17 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     expect(screen.getByRole('columnheader', { name: 'Vendor' })).toBeInTheDocument();
   });
 
-  it('does not treat a bare title as a name — it computes to nothing', () => {
-    // `title` alone yields an EMPTY accessible name, so counting it as
-    // evidence the header names itself chose aria-labelledby and produced an
-    // unnamed columnheader — the defect the fallback exists to prevent.
-    // Verified with computeAccessibleName rather than assumed.
+  it('does not treat a bare title as evidence of a name', () => {
+    // `title` is a LAST-RESORT name source (accname step 2I), not a
+    // non-source: browsers do expose it. Two earlier versions of this comment
+    // said otherwise, generalising from jsdom returning "" — which happens
+    // because dom-accessibility-api reaches that step only for a root node,
+    // skipping it under name-from-content recursion, exactly as browsers do.
+    //
+    // The real reason to exclude it is that last-resort means its presence
+    // does not tell you a name will be computed HERE: anything else in the
+    // subtree outranks it. So it is not evidence for this decision, and the
+    // column falls back to its visibilityLabel.
     const cols: ColumnDef<Row>[] = [
       {
         id: 'rev_internal',
