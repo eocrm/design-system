@@ -409,6 +409,14 @@ describe('user-facing strings go through the i18n provider', () => {
         // Interpolations are permitted — the rule allows mixing translated text
         // with data. A fixed English phrase around them is not.
         const bare = lit
+          // URLs FIRST, while each is still one token. Running after the other
+          // strips let them punch holes in it: `${…}` split
+          // `https://${host}/path/to/page`, and the unit strip split
+          // `https://example.com/fr/docs` at `/fr/`, because `/` is a word
+          // boundary — both then read as prose and false-alarmed on correct
+          // code. `(?<![A-Za-z])` so a scheme cannot start matching mid-word
+          // and swallow the English before it.
+          .replace(/(?<![A-Za-z])[a-z][a-z0-9+.-]*:\/\/\S*/g, ' ')
           .replace(/\$\{[^}]*\}/g, ' ')
           // CSS units are not prose. `aria-valuetext={`${width}px`}` is the
           // only thing standing between a two-letter floor and a clean run,
@@ -416,11 +424,10 @@ describe('user-facing strings go through the i18n provider', () => {
           // `alt="Up"` and `placeholder="ID"` were all silent.
           .replace(/\b(px|em|rem|vh|vw|ms|fr|ch|pt|deg)\b/g, ' ')
           .trim();
-        // A URL is not prose, but only the URL is exempt. Returning false for
-        // the whole literal silenced `"Open the docs at https://x.io"` — a
-        // sentence with a link in it, which is exactly a translatable string.
-        // Strip the URL, then judge what is left.
-        return /[A-Za-z]{2}/.test(bare.replace(/[a-z][a-z0-9+.-]*:\/\/\S*/g, ' ').trim());
+        // Only the URL is exempt, not the literal containing it: returning
+        // false for the whole thing silenced `"Open the docs at https://x.io"`,
+        // a sentence with a link in it, which is exactly a translatable string.
+        return /[A-Za-z]{2}/.test(bare);
       };
       // Measured against the real distribution: see the note on the walk below.
       const SCAN_BOUND = 2000;
@@ -656,23 +663,37 @@ describe('stated contrast ratios still hold', () => {
     // not begin with `*` was invisible — and MonthView.module.scss already
     // writes five such lines. SCSS is not TSX, so the parser-based
     // `stripComments` above does not apply; this tracks the state itself.
+    // Each line scanned to its END, resuming after a closed block. Taking one
+    // slice and moving on left a third variant of the same escape alive:
+    // `/* ok */ .x { } // contrast is 9.99:1` passed, because the first closed
+    // block consumed the line and the `//` after it was never seen.
     const lines: string[] = [];
     let inBlock = false;
     for (const raw of code.split('\n')) {
-      if (inBlock) {
-        const close = raw.indexOf('*/');
-        lines.push(close >= 0 ? raw.slice(0, close) : raw);
-        inBlock = close < 0;
-        continue;
-      }
-      const at = raw.search(/\/\/|\/\*/);
-      if (at < 0) continue;
-      if (raw.slice(at, at + 2) === '/*') {
-        const close = raw.indexOf('*/', at + 2);
-        lines.push(close >= 0 ? raw.slice(at, close) : raw.slice(at));
-        inBlock = close < 0;
-      } else {
-        lines.push(raw.slice(at));
+      let rest = raw;
+      while (rest.length > 0) {
+        if (inBlock) {
+          const close = rest.indexOf('*/');
+          lines.push(close >= 0 ? rest.slice(0, close) : rest);
+          if (close < 0) break;
+          inBlock = false;
+          rest = rest.slice(close + 2);
+          continue;
+        }
+        const at = rest.search(/\/\/|\/\*/);
+        if (at < 0) break;
+        if (rest.slice(at, at + 2) === '//') {
+          lines.push(rest.slice(at));
+          break;
+        }
+        const close = rest.indexOf('*/', at + 2);
+        if (close < 0) {
+          lines.push(rest.slice(at));
+          inBlock = true;
+          break;
+        }
+        lines.push(rest.slice(at + 2, close));
+        rest = rest.slice(close + 2);
       }
     }
     const ratios = (l: string) => [...l.matchAll(/(\d+\.\d+):1/g)].map((m) => m[1]!);
@@ -681,23 +702,22 @@ describe('stated contrast ratios still hold', () => {
     // landed in this set and exempted itself.
     const ANNOTATION =
       /@contrast\s+--[a-z0-9-]+\s+on\s+--[a-z0-9-]+\s*=\s*([\d.]+):1\s*(?:light|dark)/g;
-    const annotated = new Set(lines.flatMap((l) => [...l.matchAll(ANNOTATION)].map((m) => m[1]!)));
-    const unbound = lines
-      .flatMap((l) => {
-        // Strip the parts that are exempt BY CONSTRUCTION rather than skipping
-        // the line they sit on: the annotation's own figure, and a range,
-        // which states two endpoints and binds neither.
-        const rest = l
-          .replace(
-            /@contrast\s+--[a-z0-9-]+\s+on\s+--[a-z0-9-]+\s*=\s*[\d.]+:1\s*(light|dark)/g,
-            '',
-          )
-          .replace(/\d+\.\d+\s*[-–]\s*\d+\.\d+:1/g, '');
-        return ratios(rest).map((r) => ({ r, l }));
-      })
-      .filter(({ r }) => !annotated.has(r));
+    // Matched against the JOINED comment text, with the same newline-tolerant
+    // `\s+` the value test above uses. Per-line matching made the two halves of
+    // one gate disagree about what an annotation IS: an annotation wrapped
+    // across two lines was still resolved and still recomputed correctly by
+    // the value test, while the binding half rejected the file — a verified
+    // pair failing purely on where the line broke.
+    const joined = lines.join('\n');
+    const annotated = new Set([...joined.matchAll(ANNOTATION)].map((m) => m[1]!));
+    // Strip what is exempt BY CONSTRUCTION rather than skipping the line it
+    // sits on: an annotation's own figure, and a range, which states two
+    // endpoints and binds neither.
+    const unbound = ratios(
+      joined.replace(ANNOTATION, ' ').replace(/\d+\.\d+\s*[-–]\s*\d+\.\d+:1/g, ' '),
+    ).filter((r) => !annotated.has(r));
     expect(
-      unbound.map(({ r, l }) => `${r}:1 in "${l.trim()}"`),
+      unbound.map((r) => `${r}:1`),
       'states a ratio no @contrast annotation in this file computes — annotate the pair so it can be recomputed, or drop the number',
     ).toEqual([]);
   });
