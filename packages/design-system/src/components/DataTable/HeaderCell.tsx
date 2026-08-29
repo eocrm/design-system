@@ -55,17 +55,6 @@ const sortAriaMap: Record<TableSortDirection, 'ascending' | 'descending' | 'none
   none: 'none',
 };
 
-/** One dev warning per column, not per render. */
-const warned = new Set<string>();
-function warnOnce(columnId: string) {
-  if (warned.has(columnId)) return;
-  warned.add(columnId);
-  console.warn(
-    `[DataTable] column "${columnId}" has a ReactNode header and no visibilityLabel, ` +
-      `so nothing names its column header unless the node names itself. Add visibilityLabel.`,
-  );
-}
-
 export function HeaderCell<T>({
   column,
   instance,
@@ -81,7 +70,12 @@ export function HeaderCell<T>({
     instance.columnPinning.left.includes(column.id) ||
     instance.columnPinning.right.includes(column.id);
   const sortable = column.sortable === true;
-  const plainHeader = typeof column.header === 'string';
+  // A string that actually RENDERS text. `header: ''` is a string, so the
+  // naive test treated it as self-naming, silently ignored the
+  // `visibilityLabel` beside it, and pointed `aria-labelledby` at an empty
+  // span — an unnamed column header. The playground ships three such columns
+  // (the trailing row-actions column), which is how common the shape is.
+  const plainHeader = typeof column.header === 'string' && column.header.trim() !== '';
   const retainedResponsiveHeader = sortable || !plainHeader;
   const t = useTranslation();
   const columnLabel =
@@ -128,11 +122,17 @@ export function HeaderCell<T>({
   // No DOM measurement. Seven versions of one tried to answer "will this span
   // produce an accessible name?" without computing the accessible name, and
   // each was wrong in a new way — the last three inside the commit meant to
-  // close the class. The mechanism existed to rescue ICON-ONLY headers, which
-  // `main` never named either: before #500 the `<th>` carried no
-  // `aria-labelledby` and no `aria-label` at all. So it was an unscoped second
-  // fix riding along with #500, whose actual ask was only that the resize
-  // handle stop being concatenated into the header's name.
+  // close the class. The mechanism existed to rescue ICON-ONLY headers.
+  //
+  // Precisely, because the first version of this note overstated it: before
+  // #500 the `<th>` carried no `aria-labelledby` and no `aria-label`, so it was
+  // named from CONTENT — which swept in the resize handle. An icon-only header
+  // therefore announced something like "Resize starred_col column", and a
+  // plain one announced its label twice. That second one IS #500. So the old
+  // name was not absent, it was the bug; and the only sources available for
+  // an icon-only header are `visibilityLabel`, `column.id`, or nothing.
+  // `column.id` is indefensible to speak, which leaves the author's label —
+  // and nothing when they have not given one.
   //
   // Scope note: the RESIZE HANDLE still falls back to `column.id` for a
   // column with neither a string header nor a `visibilityLabel`. That is
@@ -146,12 +146,14 @@ export function HeaderCell<T>({
   // the text, a WCAG 2.5.3 name-vs-label mismatch. That is strictly better
   // than the unnamed columnheader the measurement produced ten times over.
   const namedByLabel = !plainHeader && Boolean(column.visibilityLabel);
-  if (process.env.NODE_ENV !== 'production' && !plainHeader && !column.visibilityLabel) {
-    // Authoring bug, and a warning is the right mechanism for it: a ReactNode
-    // header that renders nothing nameable leaves the column unnamed, and no
-    // amount of runtime DOM inspection can supply a name the author never gave.
-    warnOnce(column.id);
-  }
+  // No dev warning here, deliberately. One was added and removed within the
+  // hour: having deleted the measurement, nothing static can distinguish a
+  // ReactNode header that names itself (`<strong>Revenue</strong>`) from one
+  // that names nothing (an icon), so it fired on the commonest VALID shape.
+  // A warning on correct code is the same defect as a gate that false-alarms,
+  // and this file's own history is the argument — noise gets ignored, and then
+  // the real case is ignored with it. The contract is documented in AGENTS.md
+  // instead, which is where a rule only the author can satisfy belongs.
 
   const sortableResult = useSortable({
     id: column.id,

@@ -2336,23 +2336,6 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     expect(screen.queryByRole('columnheader', { name: 'revenue_id' })).toBeNull();
   });
 
-  it('warns in dev when a header would announce as its column id', () => {
-    // The fallback is a last resort and it degrades to a raw identifier, which
-    // has no visible symptom — the column looks fine and only a screen-reader
-    // user hears the bug. So it warns once.
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const iconOnly: ColumnDef<Row>[] = [
-      { id: 'internal_star_id', header: <span aria-hidden="true">★</span>, cell: () => 'x' },
-    ];
-    function Harness() {
-      const instance = useDataTable<Row>({ data: rows, columns: iconOnly, getRowId });
-      return <DataTable instance={instance} aria-label="t" />;
-    }
-    render(<Harness />);
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('internal_star_id'));
-    warn.mockRestore();
-  });
-
   describe('the column-header naming contract (#500)', () => {
     // Seven versions of a DOM measurement tried to decide this at runtime and
     // each was wrong in a new way. The rule is now static, so the contract is
@@ -2389,6 +2372,18 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
       expect(th).toHaveAccessibleName('Revenue (USD)');
     });
 
+    it.each([
+      ['empty string', ''],
+      ['whitespace only', '   '],
+    ])('a %s header falls to visibilityLabel, not to nothing', (_what, header) => {
+      // `typeof '' === 'string'`, so the naive plainHeader test called this
+      // self-naming, ignored the label, and left the column unnamed. The
+      // trailing row-actions column is exactly this shape and ships three
+      // times in the playground.
+      const th = harness({ id: 'actions_col', header, visibilityLabel: 'Actions' });
+      expect(th).toHaveAccessibleName('Actions');
+    });
+
     it('an icon-only header is named by visibilityLabel', () => {
       const th = harness({
         id: 'starred_col',
@@ -2417,13 +2412,6 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
         expect(th.getAttribute('aria-label')).not.toBe('internal_id_col');
         expect(th.textContent).not.toContain('internal_id_col');
       }
-    });
-
-    it('warns once when a ReactNode header has no visibilityLabel', () => {
-      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-      harness({ id: 'unlabelled_col', header: <span aria-hidden="true">★</span> });
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('unlabelled_col'));
-      warn.mockRestore();
     });
   });
 
