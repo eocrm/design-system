@@ -19,71 +19,6 @@ const components = readdirSync(componentsDir, { withFileTypes: true })
   // public export and aren't subject to the four-file rule.
   .filter((name) => !name.startsWith('_'));
 
-const indexContent = readFileSync(indexPath, 'utf-8');
-
-const TOKENS_SCSS = readFileSync(
-  join(__dirname, '../../design-tokens/generated/web/tokens.scss'),
-  'utf-8',
-);
-const DARK_SCSS_FILE = readFileSync(
-  join(__dirname, '../../design-tokens/generated/web/dark.scss'),
-  'utf-8',
-);
-/**
- * Only the `:root[data-theme='dark']` block.
- *
- * `dark.scss` also contains a `:root[data-theme='light']` block, so resolving a
- * dark value by taking the first match in the whole FILE was correct only
- * because the generator happens to emit the dark selector first. Reordering it
- * would silently resolve dark annotations against light literals — every dark
- * `@contrast` then checked against the wrong number, with nothing failing.
- */
-const DARK_SCSS = (() => {
-  const start = DARK_SCSS_FILE.indexOf(":root[data-theme='dark'] {");
-  if (start < 0) throw new Error("dark.scss has no :root[data-theme='dark'] block");
-  const open = DARK_SCSS_FILE.indexOf('{', start);
-  let depth = 1;
-  for (let i = open + 1; i < DARK_SCSS_FILE.length; i++) {
-    if (DARK_SCSS_FILE[i] === '{') depth++;
-    else if (DARK_SCSS_FILE[i] === '}' && --depth === 0) return DARK_SCSS_FILE.slice(open + 1, i);
-  }
-  throw new Error("dark.scss :root[data-theme='dark'] block is unterminated");
-})();
-
-describe('library structure', () => {
-  it('discovered at least one component', () => {
-    expect(components.length).toBeGreaterThan(0);
-  });
-
-  it.each(components)(
-    '%s has all four required files (Name.tsx, Name.test.tsx, Name.module.scss, index.ts)',
-    (name) => {
-      const dir = join(componentsDir, name);
-      expect(existsSync(join(dir, `${name}.tsx`))).toBe(true);
-      expect(existsSync(join(dir, `${name}.test.tsx`))).toBe(true);
-      expect(existsSync(join(dir, `${name}.module.scss`))).toBe(true);
-      expect(existsSync(join(dir, 'index.ts'))).toBe(true);
-    },
-  );
-
-  it.each(components)('%s is re-exported from src/index.ts', (name) => {
-    // The name, case-insensitively — nothing else. The previous form allowed
-    // an uppercase continuation so that `ToastViewport` could satisfy `Toast`,
-    // and that branch let a COMPOUND export stand in for the component's own:
-    // 13 of 92 components passed without exporting themselves, so deleting
-    // `export { Button }` left `ButtonGroup` keeping the gate green while
-    // Button became unimportable. Its own comment defended only the lowercase
-    // direction while the uppercase branch it was defending opened that hole.
-    //
-    // Case-insensitivity is what the `[A-Z]` branch was really for, and it is
-    // load-bearing for exactly one component: Toast, exported as `toast`.
-    // Measured across all 92: no false alarms, no remaining holes.
-    const namedRe = new RegExp(`export\\s*\\{[^}]*\\b${name}\\b[^}]*\\}`, 'i');
-    const starRe = new RegExp(`export\\s+\\*\\s+from\\s+['"][^'"]*${name}[^'"]*['"]`);
-    expect(namedRe.test(indexContent) || starRe.test(indexContent)).toBe(true);
-  });
-});
-
 /**
  * Strip comments using the TypeScript PARSER.
  *
@@ -156,6 +91,75 @@ const stripComments = (code: string) => {
   }
   return out.join('');
 };
+
+// Comments stripped: a commented-out `export { Pagination }` satisfied the
+// re-export gate while the component was unimportable from the package
+// entry — tests green, consumer build broken, which is the exact failure
+// Hard rule 5 exists for.
+const indexContent = stripComments(readFileSync(indexPath, 'utf-8'));
+
+const TOKENS_SCSS = readFileSync(
+  join(__dirname, '../../design-tokens/generated/web/tokens.scss'),
+  'utf-8',
+);
+const DARK_SCSS_FILE = readFileSync(
+  join(__dirname, '../../design-tokens/generated/web/dark.scss'),
+  'utf-8',
+);
+/**
+ * Only the `:root[data-theme='dark']` block.
+ *
+ * `dark.scss` also contains a `:root[data-theme='light']` block, so resolving a
+ * dark value by taking the first match in the whole FILE was correct only
+ * because the generator happens to emit the dark selector first. Reordering it
+ * would silently resolve dark annotations against light literals — every dark
+ * `@contrast` then checked against the wrong number, with nothing failing.
+ */
+const DARK_SCSS = (() => {
+  const start = DARK_SCSS_FILE.indexOf(":root[data-theme='dark'] {");
+  if (start < 0) throw new Error("dark.scss has no :root[data-theme='dark'] block");
+  const open = DARK_SCSS_FILE.indexOf('{', start);
+  let depth = 1;
+  for (let i = open + 1; i < DARK_SCSS_FILE.length; i++) {
+    if (DARK_SCSS_FILE[i] === '{') depth++;
+    else if (DARK_SCSS_FILE[i] === '}' && --depth === 0) return DARK_SCSS_FILE.slice(open + 1, i);
+  }
+  throw new Error("dark.scss :root[data-theme='dark'] block is unterminated");
+})();
+
+describe('library structure', () => {
+  it('discovered at least one component', () => {
+    expect(components.length).toBeGreaterThan(0);
+  });
+
+  it.each(components)(
+    '%s has all four required files (Name.tsx, Name.test.tsx, Name.module.scss, index.ts)',
+    (name) => {
+      const dir = join(componentsDir, name);
+      expect(existsSync(join(dir, `${name}.tsx`))).toBe(true);
+      expect(existsSync(join(dir, `${name}.test.tsx`))).toBe(true);
+      expect(existsSync(join(dir, `${name}.module.scss`))).toBe(true);
+      expect(existsSync(join(dir, 'index.ts'))).toBe(true);
+    },
+  );
+
+  it.each(components)('%s is re-exported from src/index.ts', (name) => {
+    // The name, case-insensitively — nothing else. The previous form allowed
+    // an uppercase continuation so that `ToastViewport` could satisfy `Toast`,
+    // and that branch let a COMPOUND export stand in for the component's own:
+    // 13 of 92 components passed without exporting themselves, so deleting
+    // `export { Button }` left `ButtonGroup` keeping the gate green while
+    // Button became unimportable. Its own comment defended only the lowercase
+    // direction while the uppercase branch it was defending opened that hole.
+    //
+    // Case-insensitivity is what the `[A-Z]` branch was really for, and it is
+    // load-bearing for exactly one component: Toast, exported as `toast`.
+    // Measured across all 92: no false alarms, no remaining holes.
+    const namedRe = new RegExp(`export\\s*\\{[^}]*\\b${name}\\b[^}]*\\}`, 'i');
+    const starRe = new RegExp(`export\\s+\\*\\s+from\\s+['"][^'"]*${name}[^'"]*['"]`);
+    expect(namedRe.test(indexContent) || starRe.test(indexContent)).toBe(true);
+  });
+});
 
 describe('transient state does not rely on aria-busy alone', () => {
   const sources = components.flatMap((name) => {
