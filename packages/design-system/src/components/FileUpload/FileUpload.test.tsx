@@ -487,6 +487,26 @@ describe('batch progress and failed rows reach assistive tech (#502)', () => {
     await waitFor(() => expect(region!.textContent).toBe('Uploaded: 1 / 2. Failed: 1.'));
   });
 
+  it('stays silent again after a completed batch is cleared', async () => {
+    // The flag has to RESET, or every later settled array announces. Emptying
+    // the list is the reset point, which is what a controlled parent does
+    // between transfers.
+    const inFlight: FileEntry[] = [{ id: '1', file: file('a.txt'), status: 'uploading' }];
+    const done: FileEntry[] = [{ id: '1', file: file('a.txt'), status: 'done' }];
+    const other: FileEntry[] = [{ id: '9', file: file('z.txt'), status: 'done' }];
+    const { container, rerender } = render(
+      <FileUpload files={inFlight} onFilesAdded={noop} onFileRemove={noop} />,
+    );
+    const region = container.querySelector('[role="status"]');
+    rerender(<FileUpload files={done} onFilesAdded={noop} onFileRemove={noop} />);
+    await waitFor(() => expect(region!.textContent).toBe('Uploaded: 1 / 1.'));
+    rerender(<FileUpload files={[]} onFilesAdded={noop} onFileRemove={noop} />);
+    await waitFor(() => expect(region!.textContent).toBe(''));
+    rerender(<FileUpload files={other} onFilesAdded={noop} onFileRemove={noop} />);
+    await waitFor(() => expect(region).not.toBeNull());
+    expect(region!.textContent).toBe('');
+  });
+
   it('stays silent when it mounts on an already-settled batch', async () => {
     // A CRM form opened on an entity that already has attachments. Nothing
     // changed on screen, so nothing may be announced — Hard rule 10 gates the

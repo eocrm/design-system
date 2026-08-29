@@ -316,14 +316,26 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
   // settled, and the region went from '' to "Uploaded: 3 / 3" with nothing on
   // screen having changed. Hard rule 10 rules that out directly — gate the
   // region on what the user can SEE change, not on the raw prop.
+  //
+  // Tracked INSIDE the effect, not during render. Mutating a ref while
+  // rendering breaks React's purity rule and a discarded concurrent render
+  // would leave the flag set for a transfer the user never saw. In the effect
+  // the ordering still works: the in-flight pass sets it, and the pass that
+  // observes the batch settled reads what that earlier pass wrote.
+  //
+  // Known limit: a controlled parent that swaps one already-settled `files`
+  // array for another WITHOUT passing through empty or in-flight — switching
+  // entities on a shared FileUpload instance — carries the flag across and
+  // announces the new set. Key the component by entity id, which a controlled
+  // component should do anyway; `total === 0` resets it otherwise.
   const sawInFlight = useRef(false);
-  if (inFlight) sawInFlight.current = true;
   useEffect(() => {
     if (total === 0) {
       sawInFlight.current = false;
       setBatchStatus('');
       return;
     }
+    if (inFlight) sawInFlight.current = true;
     setBatchStatus(
       inFlight
         ? t('fileUpload.batchUploading', { done: settled, total })
