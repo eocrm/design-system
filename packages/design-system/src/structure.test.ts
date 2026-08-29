@@ -96,6 +96,29 @@ const stripComments = (code: string) => {
 // re-export gate while the component was unimportable from the package
 // entry — tests green, consumer build broken, which is the exact failure
 // Hard rule 5 exists for.
+/**
+ * Every `.tsx` under a component, at ANY depth.
+ *
+ * The flat `readdirSync` these gates used missed
+ * `RichText/engine/renderDoc.tsx` — 395 lines returning JSX, invisible to the
+ * Rule 9 gate, the aria-busy gate and the parse tripwire. `expect(sources.length
+ * > 50)` is a count, not a coverage check, and would never have noticed.
+ * Underscore-prefixed directories stay excluded, as they are elsewhere.
+ */
+const componentSources = (name: string): { label: string; code: string }[] => {
+  const walk = (dir: string, prefix: string): { label: string; code: string }[] =>
+    readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      if (entry.isDirectory())
+        return entry.name.startsWith('_')
+          ? []
+          : walk(join(dir, entry.name), `${prefix}${entry.name}/`);
+      return entry.name.endsWith('.tsx') && !entry.name.includes('.test.')
+        ? [{ label: `${prefix}${entry.name}`, code: readFileSync(join(dir, entry.name), 'utf-8') }]
+        : [];
+    });
+  return walk(join(componentsDir, name), `${name}/`);
+};
+
 const indexContent = stripComments(readFileSync(indexPath, 'utf-8'));
 
 const TOKENS_SCSS = readFileSync(
@@ -162,15 +185,9 @@ describe('library structure', () => {
 });
 
 describe('transient state does not rely on aria-busy alone', () => {
-  const sources = components.flatMap((name) => {
-    const dir = join(componentsDir, name);
-    return readdirSync(dir)
-      .filter((f) => f.endsWith('.tsx') && !f.includes('.test.'))
-      .map((f) => ({
-        label: `${name}/${f}`,
-        code: stripComments(readFileSync(join(dir, f), 'utf-8')),
-      }));
-  });
+  const sources = components.flatMap((name) =>
+    componentSources(name).map(({ label, code }) => ({ label, code: stripComments(code) })),
+  );
 
   const withAriaBusy = sources.filter(({ code }) => /aria-busy=/.test(code));
 
@@ -371,12 +388,7 @@ describe('user-facing strings go through the i18n provider', () => {
     'aria-keyshortcuts',
   ]);
 
-  const sources = components.flatMap((name) => {
-    const dir = join(componentsDir, name);
-    return readdirSync(dir)
-      .filter((f) => f.endsWith('.tsx') && !f.includes('.test.'))
-      .map((f) => ({ label: `${name}/${f}`, code: readFileSync(join(dir, f), 'utf-8') }));
-  });
+  const sources = components.flatMap(componentSources);
 
   it('found sources to check', () => {
     expect(sources.length).toBeGreaterThan(50);
