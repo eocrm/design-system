@@ -4710,7 +4710,7 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Optional id prefix for controlled tabpanels. When set, the ACTIVE tab gets\n`aria-controls=\"${panelIdPrefix}-${itemId}-panel\"` — the consumer must\nrender the matching panel with that id. When omitted, an internal id\n(sanitized React `useId`) is generated.\n\nOnly the active tab carries it, because consumers render only the active\npanel; stamping every tab would point N-1 of them at elements that do not\nexist. Inactive tabs keep their own `id` for the panel's\n`aria-labelledby` to reference."
+          "description": "Optional id prefix for controlled tabpanels. When set, the ACTIVE tab gets\n`aria-controls=\"${panelIdPrefix}-${itemId}-panel\"` — the consumer must\nrender the matching panel with that id. When omitted, NO tab carries\n`aria-controls` at all — the internal id (sanitized React `useId`) named\nbelow is the tab's own id, not a panel's, and pointing at it would be the\ndangling IDREF #501 removed.\n\nOnly the active tab carries it, because consumers render only the active\npanel; stamping every tab would point N-1 of them at elements that do not\nexist. Inactive tabs keep their own `id` for the panel's\n`aria-labelledby` to reference."
         },
         {
           "name": "activationMode",
