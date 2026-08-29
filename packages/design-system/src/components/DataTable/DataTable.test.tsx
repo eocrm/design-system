@@ -2398,8 +2398,13 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
       expect(th).toHaveAccessibleName('Starred');
     });
 
-    it('NEVER speaks column.id, whatever the header is', () => {
-      // The single invariant every one of the seven wrong answers violated.
+    it('never speaks column.id as the HEADER name, whatever the header is', () => {
+      // The invariant every one of the ten wrong answers violated. Scoped to
+      // the header's own name deliberately: the resize handle still falls back
+      // to `column.id` when a column has neither a string header nor a
+      // `visibilityLabel`, which is pre-existing on main and out of #500's
+      // scope. Claiming "never spoken" outright would be the kind of
+      // overstatement this PR has had to correct repeatedly.
       for (const header of [
         <span aria-hidden="true" key="a">
           ★

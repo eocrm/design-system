@@ -134,6 +134,11 @@ export function HeaderCell<T>({
   // fix riding along with #500, whose actual ask was only that the resize
   // handle stop being concatenated into the header's name.
   //
+  // Scope note: the RESIZE HANDLE still falls back to `column.id` for a
+  // column with neither a string header nor a `visibilityLabel`. That is
+  // pre-existing on main, is the same authoring bug the warning below names,
+  // and is left alone rather than quietly widened into #500's scope.
+  //
   // The rule is now static, and `column.id` is gone as a name source — a raw
   // developer identifier was never a defensible thing to speak. What remains
   // trades one bounded defect for an unbounded one: a JSX header that renders
