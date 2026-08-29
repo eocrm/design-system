@@ -467,15 +467,43 @@ describe('batch progress and failed rows reach assistive tech (#502)', () => {
   });
 
   it('announces the outcome once every transfer settles', async () => {
-    const files: FileEntry[] = [
+    // Rendered IN FLIGHT first, then settled. Asserting on a settled mount
+    // pinned the defect instead of the fix: the region has to have watched the
+    // transfer to have anything to report about it.
+    const inFlight: FileEntry[] = [
+      { id: '1', file: file('a.txt'), status: 'uploading' },
+      { id: '2', file: file('b.txt'), status: 'uploading' },
+    ];
+    const settled: FileEntry[] = [
       { id: '1', file: file('a.txt'), status: 'done' },
       { id: '2', file: file('b.txt'), status: 'error', error: 'boom' },
+    ];
+    const { container, rerender } = render(
+      <FileUpload files={inFlight} onFilesAdded={noop} onFileRemove={noop} />,
+    );
+    const region = container.querySelector('[role="status"]');
+    await waitFor(() => expect(region!.textContent).toBe('Uploading: 0 / 2'));
+    rerender(<FileUpload files={settled} onFilesAdded={noop} onFileRemove={noop} />);
+    await waitFor(() => expect(region!.textContent).toBe('Uploaded: 1 / 2. Failed: 1.'));
+  });
+
+  it('stays silent when it mounts on an already-settled batch', async () => {
+    // A CRM form opened on an entity that already has attachments. Nothing
+    // changed on screen, so nothing may be announced — Hard rule 10 gates the
+    // region on what the user can SEE change, not on the raw prop. Deriving
+    // the text from `files` alone moved the region from '' to
+    // "Uploaded: 3 / 3" on mount and fired a polite announcement for it.
+    const files: FileEntry[] = [
+      { id: '1', file: file('a.txt'), status: 'done' },
+      { id: '2', file: file('b.txt'), status: 'done' },
+      { id: '3', file: file('c.txt'), status: 'done' },
     ];
     const { container } = render(
       <FileUpload files={files} onFilesAdded={noop} onFileRemove={noop} />,
     );
     const region = container.querySelector('[role="status"]');
-    await waitFor(() => expect(region!.textContent).toBe('Uploaded: 1 / 2. Failed: 1.'));
+    await waitFor(() => expect(region).not.toBeNull());
+    expect(region!.textContent).toBe('');
   });
 
   it('names a failed row on the one control the user can reach', () => {

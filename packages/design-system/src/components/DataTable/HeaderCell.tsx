@@ -133,8 +133,10 @@ export function HeaderCell<T>({
   // Precisely, because the first version of this note overstated it: before
   // #500 the `<th>` carried no `aria-labelledby` and no `aria-label`, so it was
   // named from CONTENT — which swept in the resize handle. An icon-only header
-  // therefore announced something like "Resize starred_col column", and a
-  // plain one announced its label twice. That second one IS #500. So the old
+  // therefore announced the handle's label, which was the bare `column.id`
+  // when the column had nothing better; the "Resize … column" wrapper came
+  // with #500 itself. A plain header announced its label twice. That second
+  // one IS #500. So the old
   // name was not absent, it was the bug; and the only sources available for
   // an icon-only header are `visibilityLabel`, `column.id`, or nothing.
   // `column.id` is indefensible to speak, which leaves the author's label —

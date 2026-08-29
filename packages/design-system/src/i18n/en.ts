@@ -253,7 +253,9 @@ export const en: Messages = {
     uploadingAriaLabel: ({ name }) => `Uploading ${name as string}`,
     batchUploading: (params) => `Uploading: ${params.done} / ${params.total}`,
     batchSettled: (params) =>
-      `Uploaded: ${params.done} / ${params.total}. Failed: ${params.failed}.`,
+      Number(params.failed) > 0
+        ? `Uploaded: ${params.done} / ${params.total}. Failed: ${params.failed}.`
+        : `Uploaded: ${params.done} / ${params.total}.`,
     removeFailedAriaLabel: (params) => `Remove ${params.name} — upload failed`,
     removeAriaLabel: ({ name }) => `Remove ${name as string}`,
   },

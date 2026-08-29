@@ -2329,6 +2329,28 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     expect(screen.queryByRole('columnheader', { name: 'revenue_id' })).toBeNull();
   });
 
+  it('keeps an empty-string header hidden in the compact strip', () => {
+    // PINS THE SEPARATION of `plainHeader` (layout) from `rendersText`
+    // (naming). Conflating them shipped a regression: the trailing
+    // row-actions column — `header: ''`, which the playground has three of —
+    // started rendering an empty padded block in the stacked strip instead of
+    // being hidden, because narrowing the naming test also flipped
+    // `data-responsive-plain-label` and `retainedResponsiveHeader`.
+    //
+    // Until this test the separation was guarded only by a comment, and a
+    // reviewer verified that merging the two booleans back together left the
+    // whole suite green.
+    const cols: ColumnDef<Row>[] = [{ id: 'actions', header: '', cell: () => 'x' }];
+    function Harness() {
+      const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+      return <DataTable instance={instance} aria-label="t" collapseBelow="md" />;
+    }
+    render(<Harness />);
+    const th = screen.getAllByRole('columnheader')[0]!;
+    expect(th.getAttribute('data-responsive-plain-label')).toBe('true');
+    expect(th.getAttribute('data-responsive-retained-header')).toBeNull();
+  });
+
   describe('the column-header naming contract (#500)', () => {
     // Seven versions of a DOM measurement tried to decide this at runtime and
     // each was wrong in a new way. The rule is now static, so the contract is

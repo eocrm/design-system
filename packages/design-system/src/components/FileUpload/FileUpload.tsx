@@ -310,15 +310,26 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
   const failed = files.filter((f) => f.status === 'error').length;
   const inFlight = total > 0 && settled < total;
   const [batchStatus, setBatchStatus] = useState('');
+  // A settled batch is only announced if this component SAW it in flight.
+  // Deriving it from `files` alone announced a batch that never happened: a
+  // form opened on an entity with three existing attachments mounted already
+  // settled, and the region went from '' to "Uploaded: 3 / 3" with nothing on
+  // screen having changed. Hard rule 10 rules that out directly — gate the
+  // region on what the user can SEE change, not on the raw prop.
+  const sawInFlight = useRef(false);
+  if (inFlight) sawInFlight.current = true;
   useEffect(() => {
     if (total === 0) {
+      sawInFlight.current = false;
       setBatchStatus('');
       return;
     }
     setBatchStatus(
       inFlight
         ? t('fileUpload.batchUploading', { done: settled, total })
-        : t('fileUpload.batchSettled', { done: total - failed, total, failed }),
+        : sawInFlight.current
+          ? t('fileUpload.batchSettled', { done: total - failed, total, failed })
+          : '',
     );
   }, [inFlight, settled, total, failed, t]);
 

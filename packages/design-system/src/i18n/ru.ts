@@ -255,7 +255,9 @@ export const ru: Messages = {
     uploadingAriaLabel: ({ name }) => `Загрузка ${name as string}`,
     batchUploading: (params) => `Загрузка: ${params.done} / ${params.total}`,
     batchSettled: (params) =>
-      `Загружено: ${params.done} / ${params.total}. Ошибок: ${params.failed}.`,
+      Number(params.failed) > 0
+        ? `Загружено: ${params.done} / ${params.total}. Ошибок: ${params.failed}.`
+        : `Загружено: ${params.done} / ${params.total}.`,
     removeFailedAriaLabel: (params) => `Удалить ${params.name} — ошибка загрузки`,
     removeAriaLabel: ({ name }) => `Удалить ${name as string}`,
   },
