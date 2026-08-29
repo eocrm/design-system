@@ -426,6 +426,11 @@ describe('user-facing strings go through the i18n provider', () => {
     };
 
     const literalsIn = (node: ts.Node, out: string[]) => {
+      // Stop at a nested JSX boundary — `visit` walks the whole tree anyway,
+      // so descending collected the nested element's PROP VALUES ('ghost',
+      // 'xs') as if they were rendered text, failing 30 files at once.
+      if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node) || ts.isJsxFragment(node))
+        return;
       if (
         (ts.isStringLiteral(node) ||
           ts.isNoSubstitutionTemplateLiteral(node) ||
@@ -449,6 +454,46 @@ describe('user-facing strings go through the i18n provider', () => {
         if (!isOperand) out.push(node.text);
       }
       node.forEachChild((child) => literalsIn(child, out));
+    };
+
+    /**
+     * Literals a child expression can actually RENDER.
+     *
+     * Narrower than `literalsIn` on purpose. An attribute value is judged by
+     * walking everything inside it, but a child expression holds arbitrary
+     * code — `.map()` callbacks, CSS template literals, option objects — and
+     * walking all of it reported `translateX(var(` as visible text. Only
+     * positions whose value becomes the child are followed.
+     */
+    const renderedLiterals = (node: ts.Node, out: string[]) => {
+      if (ts.isParenthesizedExpression(node)) return renderedLiterals(node.expression, out);
+      if (ts.isConditionalExpression(node)) {
+        renderedLiterals(node.whenTrue, out);
+        renderedLiterals(node.whenFalse, out);
+        return;
+      }
+      if (
+        ts.isBinaryExpression(node) &&
+        [
+          ts.SyntaxKind.AmpersandAmpersandToken,
+          ts.SyntaxKind.BarBarToken,
+          ts.SyntaxKind.QuestionQuestionToken,
+        ].includes(node.operatorToken.kind)
+      ) {
+        renderedLiterals(node.left, out);
+        renderedLiterals(node.right, out);
+        return;
+      }
+      if (ts.isTemplateExpression(node)) {
+        out.push(node.head.text, ...node.templateSpans.map((span) => span.literal.text));
+        return;
+      }
+      if (
+        (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) &&
+        !insideTranslator(node)
+      ) {
+        out.push(node.text);
+      }
     };
 
     const visit = (node: ts.Node) => {
@@ -475,10 +520,36 @@ describe('user-facing strings go through the i18n provider', () => {
               offenders.push(`${attr}: "${lit}"`);
         }
       }
-      // JSX TEXT — the half the attribute-keyed gate never read.
+      // CHILDREN, in BOTH syntactic positions. Reading only `ts.isJsxText`
+      // read the one position this library never uses: all 24 visible-text
+      // sites render through an expression container, so the branch caught the
+      // shape the codebase had already eliminated and missed the one it
+      // universally writes — `<Button>{busy ? 'Saving…' : 'Save'}</Button>` is
+      // the most idiomatic way to inline English and it was green.
       if (ts.isJsxText(node)) {
-        const text = node.text.replace(/\{[^}]*\}/g, ' ').trim();
-        if (isEnglish(text) && /[A-Za-z]{2}/.test(text)) offenders.push(`text: "${text}"`);
+        // `node.text` is UNDECODED source, so `&nbsp;` reads as "nbsp" and
+        // `&quot;` as "quot", both clearing the two-letter floor. Not
+        // hypothetical: Select's create row carried `&quot;` until earlier in
+        // this PR, and an entity-only variant has no `t()` to route through,
+        // so the reported fix would have been impossible.
+        const text = node.text
+          .replace(/&[a-z]+;|&#\d+;/gi, ' ')
+          .replace(/\{[^}]*\}/g, ' ')
+          .trim();
+        if (isEnglish(text)) offenders.push(`text: "${text}"`);
+      }
+      if (
+        ts.isJsxExpression(node) &&
+        node.expression &&
+        node.parent &&
+        (ts.isJsxElement(node.parent) || ts.isJsxFragment(node.parent))
+      ) {
+        const found: string[] = [];
+        renderedLiterals(node.expression, found);
+        const candidates = found.filter((lit) => !isKey(lit));
+        if (candidates.some(isEnglish))
+          for (const lit of candidates.filter((c) => /[A-Za-z]/.test(c)))
+            offenders.push(`text: "${lit}"`);
       }
       node.forEachChild(visit);
     };
