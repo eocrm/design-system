@@ -143,6 +143,16 @@ const stripComments = (code: string) => {
   };
   visit(sourceFile);
 
+  // Loud on a bad parse. Without this a file the parser cannot read yields no
+  // literal spans, every `/` reads as a comment opener, and the gate degrades
+  // silently to exactly the blindness this function was written to remove.
+  // Every component source parses clean today, so this is a tripwire, not a
+  // fix — but a silent one is what the first five versions had.
+  const diagnostics = (sourceFile as unknown as { parseDiagnostics?: unknown[] }).parseDiagnostics;
+  if (diagnostics && diagnostics.length > 0) {
+    throw new Error(`stripComments: source did not parse (${diagnostics.length} diagnostics)`);
+  }
+
   const out = code.split('');
   const blank = (from: number, to: number) => {
     for (let i = from; i < to && i < out.length; i += 1) if (out[i] !== '\n') out[i] = ' ';
@@ -272,12 +282,27 @@ describe('component tokens do not shadow a semantic value', () => {
 
   it.each(componentTokenFiles.map(({ label, code }) => [label, code]))('%s', (_label, code) => {
     const shadowed: string[] = [];
-    for (const m of code.matchAll(/^\s*(--[a-z0-9-]+):\s*(#[0-9a-f]{6});/gim)) {
-      const [, name, value] = m;
-      const owners = (semanticByValue.get(value!.toLowerCase()) ?? []).filter(
+    // Not anchored to line start, `;` optional, and 3-digit hexes expanded.
+    // All three were ordinary ways to write the same shadow and all three were
+    // invisible: `#fff` is how a person hand-copying actually types the most
+    // shadowed value in the system (it is --color-bg, --color-accent-fg,
+    // --color-avatar-fg, --color-danger-fg, --color-fg-on-overlay and
+    // --color-success-fg), a final declaration often has no `;`, and two
+    // declarations on one line only ever matched the first.
+    for (const m of code.matchAll(/(--[a-z0-9-]+):\s*(#(?:[0-9a-f]{3}){1,2})\b/gi)) {
+      const [, name, raw] = m;
+      const short = raw!.length === 4;
+      const value = short
+        ? `#${raw!
+            .slice(1)
+            .split('')
+            .map((c) => c + c)
+            .join('')}`
+        : raw!;
+      const owners = (semanticByValue.get(value.toLowerCase()) ?? []).filter(
         (owner) => !INDEPENDENT.test(owner),
       );
-      if (owners.length > 0) shadowed.push(`${name} (${value}) === ${owners.join(' / ')}`);
+      if (owners.length > 0) shadowed.push(`${name} (${raw}) === ${owners.join(' / ')}`);
     }
     expect(
       shadowed,
@@ -649,8 +674,20 @@ describe('stated contrast ratios still hold', () => {
           rest = rest.slice(close + 2);
           continue;
         }
+        // A `//` inside a quoted value or a url() is content, not a comment:
+        // `content: '//x'` and `url(https://…)` both false-alarmed. SCSS has no
+        // parser here the way TSX does, so this is a targeted skip rather than
+        // a general fix, and it is stated as such.
         const at = rest.search(/\/\/|\/\*/);
         if (at < 0) break;
+        const before = rest.slice(0, at);
+        const quoted =
+          (before.match(/'/g)?.length ?? 0) % 2 === 1 ||
+          (before.match(/"/g)?.length ?? 0) % 2 === 1;
+        if (quoted || /url\([^)]*$/.test(before)) {
+          rest = rest.slice(at + 2);
+          continue;
+        }
         if (rest.slice(at, at + 2) === '//') {
           lines.push(rest.slice(at));
           break;
@@ -665,7 +702,28 @@ describe('stated contrast ratios still hold', () => {
         rest = rest.slice(close + 2);
       }
     }
-    const ratios = (l: string) => [...l.matchAll(/(\d+\.\d+):1/g)].map((m) => m[1]!);
+    // Integers included — `// white on black is 21:1` and `// this pair is 7:1`
+    // were exempt from binding entirely and rotted freely, because the pattern
+    // demanded a decimal point.
+    //
+    // WCAG's own thresholds are then exempt BY VALUE. They are normative
+    // constants, not measurements of a pair, so nobody can annotate them —
+    // and `// must clear the 4.5:1 minimum` is the commonest contrast
+    // sentence in CSS prose. Failing on it is the false alarm this file's own
+    // reasoning says gets a gate deleted.
+    // Exempt BY VALUE, and this is a trade rather than a fix. Every integer
+    // ratio written in this repo today is one of these: `3:1` cited as the
+    // 1.4.11 requirement (six files) and `1:1` meaning one-to-one alignment
+    // (two files). None is a measurement. So a claim of `7:1` or `21:1` stays
+    // unbindable — the cost of admitting integers at all, accepted because a
+    // real measured pair essentially never lands on a whole number, while
+    // `// must clear the 4.5:1 minimum` is the commonest contrast sentence in
+    // CSS prose and failing on it is the false alarm that gets a gate deleted.
+    const WCAG_THRESHOLDS = new Set(['1', '3', '4.5', '7', '21']);
+    const ratios = (l: string) =>
+      [...l.matchAll(/(\d+(?:\.\d+)?):1/g)]
+        .map((m) => m[1]!)
+        .filter((r) => !WCAG_THRESHOLDS.has(r));
     // Built from the ANNOTATION PATTERN, not from whole annotation lines — a
     // bogus figure written after a real annotation on the same line otherwise
     // landed in this set and exempted itself.
