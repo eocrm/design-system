@@ -2150,16 +2150,13 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     expect(screen.getByRole('button', { name: 'Starred' })).toBeInTheDocument();
   });
 
-  it('ignores aria-label on a role=generic element, which browsers do not honour', () => {
-    // ARIA 1.2 prohibits naming role="generic", so a bare <span aria-label>
-    // names NOTHING in a browser. Counting it chose aria-labelledby and left
-    // real users with an unnamed column header.
-    //
-    // This case is invisible to an accessible-name assertion here: jsdom's
-    // dom-accessibility-api honours aria-label on a bare span, so such a test
-    // would pass while the browser behaviour stayed broken. The assertion is
-    // therefore on WHICH mechanism the component chose, not on the name jsdom
-    // computes from it.
+  it('a bare span with aria-label still takes visibilityLabel', () => {
+    // Kept from the era of the deleted runtime measurement, which had to decide
+    // whether this span named itself and got it wrong — ARIA 1.2 prohibits
+    // naming role="generic", so it names nothing in a browser, while jsdom
+    // honours it. The static rule never asks the question: a ReactNode header
+    // with a visibilityLabel takes the label, whatever the node contains. The
+    // case is retained because it is the one jsdom would mislead you on.
     const cols: ColumnDef<Row>[] = [
       {
         id: 'internal_id_col',
@@ -2178,7 +2175,7 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     expect(th.getAttribute('aria-labelledby')).toBeNull();
   });
 
-  it('ignores alt on an element that alt cannot name', () => {
+  it('a div carrying alt still takes visibilityLabel', () => {
     // `alt` names only img, area and input[type=image]. On a <div> it is an
     // unknown attribute, so counting it chose aria-labelledby and pointed at a
     // span computing to nothing — the unnamed columnheader again.
@@ -2204,17 +2201,13 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     expect(screen.getByRole('columnheader', { name: 'Vendor' })).toBeInTheDocument();
   });
 
-  it('does not treat a bare title as evidence of a name', () => {
-    // `title` is a LAST-RESORT name source (accname step 2I), not a
-    // non-source: browsers do expose it. Two earlier versions of this comment
-    // said otherwise, generalising from jsdom returning "" — which happens
-    // because dom-accessibility-api reaches that step only for a root node,
-    // skipping it under name-from-content recursion, exactly as browsers do.
-    //
-    // The real reason to exclude it is that last-resort means its presence
-    // does not tell you a name will be computed HERE: anything else in the
-    // subtree outranks it. So it is not evidence for this decision, and the
-    // column falls back to its visibilityLabel.
+  it('a title-only header still takes visibilityLabel', () => {
+    // `title` is a LAST-RESORT name source (accname step 2I) that browsers do
+    // expose — two earlier comments here claimed otherwise, generalising from
+    // jsdom returning "", which it does only because dom-accessibility-api
+    // skips that step under name-from-content recursion, exactly as browsers
+    // do. None of that matters to the static rule; the case is kept because
+    // it is where the reasoning went wrong twice.
     const cols: ColumnDef<Row>[] = [
       {
         id: 'rev_internal',
@@ -2235,7 +2228,7 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     expect(screen.getByRole('columnheader', { name: 'Revenue' })).toBeInTheDocument();
   });
 
-  it('leaves a [hidden] header unnamed rather than falsely named', () => {
+  it('a [hidden] header takes visibilityLabel rather than its hidden text', () => {
     // `hidden` counts in textContent and not in the accessible name, so
     // measuring text alone chose aria-labelledby and produced an EMPTY name —
     // the unnamed columnheader the fallback exists to prevent.
@@ -2255,7 +2248,7 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     expect(screen.getByRole('columnheader', { name: 'Revenue' })).toBeInTheDocument();
   });
 
-  it('re-measures when [hidden] is lifted asynchronously', async () => {
+  it('a [hidden] header that is later revealed keeps its visibilityLabel', async () => {
     // The observer watched only `aria-hidden`, but `measure` also reads
     // `hidden` — so a header revealed at a breakpoint stayed named by its
     // column id.
@@ -2281,7 +2274,7 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     });
   });
 
-  it('re-measures when [alt] is filled in asynchronously', async () => {
+  it('an [alt] filled in asynchronously does not change the header name', async () => {
     // Same gap for the descendant name sources: an `alt` arriving after a
     // fetch changed the accessible name with nothing observing it.
     function AsyncAlt() {
@@ -2306,7 +2299,7 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     });
   });
 
-  it('re-measures a header that renders its text asynchronously', async () => {
+  it('a header whose text arrives asynchronously is named by its content', async () => {
     // A `header` ReactNode owning its own state updates its subtree WITHOUT
     // re-rendering HeaderCell, so a per-commit measurement read it once as
     // empty and never looked again — the header displayed "Revenue" and
@@ -2361,9 +2354,16 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
       );
     });
 
-    it('visibilityLabel overrides a ReactNode header — the documented 2.5.3 trade', () => {
-      // A name-vs-label mismatch, accepted deliberately: the alternative was a
-      // runtime measurement that produced UNNAMED headers ten times over.
+    it('visibilityLabel overrides a ReactNode header', () => {
+      // Accepted deliberately: the alternative was a runtime measurement that
+      // produced UNNAMED headers ten times over.
+      //
+      // NOT itself a 2.5.3 violation, though an earlier version of this
+      // comment claimed it was. 2.5.3 is scoped to user interface components,
+      // so it engages only when `sortable` makes the span a button, and it
+      // requires the name to CONTAIN the visible text — "Revenue (USD)"
+      // contains "Revenue", so this shape passes. The violating shape is a
+      // label that does not contain the text, on a sortable column.
       const th = harness({
         id: 'rev_id',
         header: <strong>Revenue</strong>,

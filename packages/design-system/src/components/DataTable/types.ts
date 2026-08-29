@@ -87,14 +87,23 @@ export interface ColumnDef<T> {
    * stay visually unlabelled, while the visibility menu and resize separators
    * fall back to `id`.
    *
-   * It does NOT name the column header when the header already has an
-   * accessible name of its own — a ReactNode rendering text, or one labelled by
-   * a descendant's `aria-label` / `alt`, names the `<th>` by content, and this
-   * only steps in when there is nothing there to use. So the header and the
-   * resize separator can legitimately differ: `<span>Rev</span>` with a
-   * `visibilityLabel` of "Revenue (USD)" announces "Rev" as the header and
-   * "Resize Revenue (USD)" as the separator. Set it when the header is
-   * icon-only, where the alternative is the column announcing as its raw `id`.
+   * It also NAMES the column header, but only when `header` is not a
+   * text-rendering string — i.e. a ReactNode, a render function, or `''`. So
+   * `<span>Rev</span>` with `visibilityLabel: "Revenue (USD)"` announces
+   * "Revenue (USD)", NOT "Rev". A string header always names itself and this
+   * never overrides it.
+   *
+   * That override is deliberate. Deciding at runtime whether a ReactNode names
+   * itself needs the accessible name, and seven attempts to approximate that
+   * from the DOM each shipped either a raw `column.id` in the announcement or
+   * an unnamed column header. The rule is static instead, and the cost is that
+   * a node which DOES name itself is overridden when you also set this.
+   *
+   * Set it on every non-text header. Without it such a column has no
+   * accessible name at all — the component will not invent one, because the
+   * only candidate left is `column.id`, and a developer identifier is not
+   * something to read aloud. Your axe run flags this as `empty-table-header`,
+   * which computes the real accessible name rather than guessing at it.
    */
   visibilityLabel?: string;
   /**

@@ -70,12 +70,18 @@ export function HeaderCell<T>({
     instance.columnPinning.left.includes(column.id) ||
     instance.columnPinning.right.includes(column.id);
   const sortable = column.sortable === true;
-  // A string that actually RENDERS text. `header: ''` is a string, so the
-  // naive test treated it as self-naming, silently ignored the
-  // `visibilityLabel` beside it, and pointed `aria-labelledby` at an empty
-  // span — an unnamed column header. The playground ships three such columns
-  // (the trailing row-actions column), which is how common the shape is.
-  const plainHeader = typeof column.header === 'string' && column.header.trim() !== '';
+  // TWO separate questions, kept separate. `plainHeader` is a LAYOUT input —
+  // it drives `retainedResponsiveHeader` below and `data-responsive-plain-label`
+  // on the cell, which decide whether the compact strip hides the header or
+  // renders it as a padded block. Narrowing it for the naming fix flipped both
+  // for `header: ''`, so the playground's three row-actions columns rendered an
+  // empty padded block in the stacked strip instead of being hidden.
+  const plainHeader = typeof column.header === 'string';
+  // Whether the header actually renders TEXT, which is the naming question.
+  // `header: ''` is a string, so treating it as self-naming silently ignored
+  // the `visibilityLabel` beside it and pointed `aria-labelledby` at an empty
+  // span — an unnamed column header.
+  const rendersText = typeof column.header === 'string' && column.header.trim() !== '';
   const retainedResponsiveHeader = sortable || !plainHeader;
   const t = useTranslation();
   const columnLabel =
@@ -140,12 +146,25 @@ export function HeaderCell<T>({
   // and is left alone rather than quietly widened into #500's scope.
   //
   // The rule is now static, and `column.id` is gone as a name source — a raw
-  // developer identifier was never a defensible thing to speak. What remains
-  // trades one bounded defect for an unbounded one: a JSX header that renders
-  // visible text AND sets `visibilityLabel` announces the label rather than
-  // the text, a WCAG 2.5.3 name-vs-label mismatch. That is strictly better
-  // than the unnamed columnheader the measurement produced ten times over.
-  const namedByLabel = !plainHeader && Boolean(column.visibilityLabel);
+  // developer identifier was never a defensible thing to speak.
+  //
+  // Two residuals, stated precisely because the first draft of this note
+  // overstated one and omitted the worse one:
+  //
+  //   1. A ReactNode header that renders visible text AND sets
+  //      `visibilityLabel` announces the label rather than the text. This is
+  //      a WCAG 2.5.3 concern ONLY when `sortable` makes the label span a
+  //      button — 2.5.3 is scoped to user interface components, and a
+  //      non-sortable `<th>` is not one. It also only VIOLATES 2.5.3 when the
+  //      label does not contain the visible text: "Revenue (USD)" over
+  //      `<strong>Revenue</strong>` passes, `'Status'` over
+  //      `<Badge>Active</Badge>` does not.
+  //   2. The harder one: sortable + a header that names nothing + no
+  //      `visibilityLabel` leaves an unnamed focusable `role="button"` — WCAG
+  //      4.1.2, axe `button-name`. Not a regression (main's span had no name
+  //      either), and not fixable here: the only remaining name source is
+  //      `column.id`. Set `visibilityLabel` on non-text headers.
+  const namedByLabel = !rendersText && Boolean(column.visibilityLabel);
   // No dev warning here, deliberately. One was added and removed within the
   // hour: having deleted the measurement, nothing static can distinguish a
   // ReactNode header that names itself (`<strong>Revenue</strong>`) from one

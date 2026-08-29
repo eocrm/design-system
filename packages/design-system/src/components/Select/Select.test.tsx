@@ -1754,12 +1754,14 @@ describe('listbox state announces from one region, not three rows (#495)', () =>
     // the count at 1 and the test PASSES, which is precisely the escape it
     // exists to close. Under-counting is the dangerous direction here.
     //
-    // Still not literally everything — an SVG `<title>` child is not swept —
-    // and text inside `[hidden]` IS counted though no reader reaches it. The
-    // second is over-counting and merely noisy; the first is the residual
-    // risk, recorded rather than claimed away.
+    // Still not literally everything, recorded rather than claimed away: an
+    // SVG `<title>` child is not swept, and the `[aria-hidden]` guard skips a
+    // subtree that an `aria-labelledby` or `aria-describedby` elsewhere may
+    // reference — referenced text is spoken regardless of aria-hidden, so a
+    // duplicate hidden there would escape. Text inside `[hidden]` IS counted
+    // though no reader reaches it, which merely over-counts.
     for (const el of document.body.querySelectorAll<HTMLElement>(
-      '[aria-label], [title], [alt], [placeholder], [aria-valuetext], [aria-roledescription]',
+      '[aria-label], [title], [alt], [placeholder], [aria-valuetext], [aria-roledescription], [aria-description]',
     )) {
       if (el.closest('[aria-hidden="true"]')) continue;
       for (const attr of [
@@ -1769,6 +1771,7 @@ describe('listbox state announces from one region, not three rows (#495)', () =>
         'placeholder',
         'aria-valuetext',
         'aria-roledescription',
+        'aria-description',
       ])
         if (el.hasAttribute(attr)) reachable.push(el.getAttribute(attr) ?? '');
     }
