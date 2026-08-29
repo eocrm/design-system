@@ -84,11 +84,21 @@ export function HeaderCell<T>({
   const rendersText = typeof column.header === 'string' && column.header.trim() !== '';
   const retainedResponsiveHeader = sortable || !plainHeader;
   const t = useTranslation();
+  // NO `column.id` fallback. It used to end here, so a column with neither a
+  // string header nor a `visibilityLabel` gave its grip the name "Drag to
+  // reorder starred_col" and its resize handle "Resize starred_col column" —
+  // a raw developer identifier read aloud to a keyboard user. Whether the
+  // `<th>` itself then inherits that through name-from-content is disputed
+  // (two reviewers measured Chromium and disagreed), but the CONTROLS speak it
+  // either way, so the identifier is removed at the source and the question
+  // stops mattering for the harmful part.
   const columnLabel =
-    column.visibilityLabel ?? (typeof column.header === 'string' ? column.header : column.id);
+    column.visibilityLabel ?? (typeof column.header === 'string' ? column.header : undefined);
   // The handle's own name has to describe the ACTION. It used to be the column
   // label verbatim, so a keyboard user heard "Name, separator".
-  const resizeLabel = t('dataTable.resizeColumn', { name: columnLabel });
+  const resizeLabel = columnLabel
+    ? t('dataTable.resizeColumn', { name: columnLabel })
+    : t('dataTable.resizeColumnUnnamed');
   // The header's name comes from this id, not from its content. The resize
   // handle is a named, focusable descendant of the <th>, so with
   // name-from-content the header computed as "Name Name" at every width the
@@ -292,7 +302,11 @@ export function HeaderCell<T>({
           // Spread BOTH attributes (aria/role) and listeners (pointerdown etc.)
           {...attributes}
           {...listeners}
-          aria-label={t('dataTable.dragReorder', { name: columnLabel })}
+          aria-label={
+            columnLabel
+              ? t('dataTable.dragReorder', { name: columnLabel })
+              : t('dataTable.dragReorderUnnamed')
+          }
           // tabIndex so keyboard users can focus to reveal grip + activate drag
           tabIndex={0}
           // Stop sort click from misfiring when the user clicks the grip without moving.

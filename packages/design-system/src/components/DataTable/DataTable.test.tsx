@@ -931,7 +931,7 @@ describe('<DataTable>', () => {
     );
   });
 
-  it('names responsive resize separators by visibility label, string header, then id', () => {
+  it('names responsive resize separators by visibility label, string header, then generically', () => {
     const namedColumns: ColumnDef<Row>[] = [
       {
         id: 'preferred-id',
@@ -986,9 +986,12 @@ describe('<DataTable>', () => {
     expect(Number(explicitRange.getAttribute('aria-valuemax'))).toBeGreaterThanOrEqual(
       Number(explicitRange.getAttribute('aria-valuenow')),
     );
-    expect(
-      screen.getByRole('separator', { name: 'Resize id-fallback column' }),
-    ).toBeInTheDocument();
+    // NOT "Resize id-fallback column". A column with neither a string header
+    // nor a visibilityLabel has no name a user would recognise, and the old
+    // fallback read its raw `column.id` aloud. The generic phrase says what
+    // the control does without inventing a name for the column.
+    expect(screen.getByRole('separator', { name: 'Resize this column' })).toBeInTheDocument();
+    expect(screen.queryByRole('separator', { name: /id-fallback/ })).toBeNull();
   });
 
   it('exposes stable responsive hooks for wide-table drag and resize controls', () => {

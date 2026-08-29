@@ -224,6 +224,8 @@ export interface Messages {
     expandRow: (params: { row: string }) => string;
     /** aria-label for a column header's drag-to-reorder grip. */
     dragReorder: (params: { name: string }) => string;
+    /** Same control on a column with no label of its own — never speaks `column.id`. */
+    dragReorderUnnamed: string;
     /** Accessible label for the row-expansion toggle column header. */
     rowExpansion: string;
     /** Accessible label for the pinned-rows section / tbody. */
@@ -260,6 +262,8 @@ export interface Messages {
      * computed as "Name Name".
      */
     resizeColumn: (params: { name: string }) => string;
+    /** Same control on a column with no label of its own — never speaks `column.id`. */
+    resizeColumnUnnamed: string;
     /**
      * Announced when a load resolves to nothing. Distinct from `empty`, which
      * is the VISIBLE empty-state copy: reusing that string put the same text
