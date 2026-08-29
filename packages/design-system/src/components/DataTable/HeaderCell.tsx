@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useId, useMemo, useRef, type KeyboardEvent } from 'react';
 import clsx from 'clsx';
 import {
   GripVertical,
@@ -55,59 +55,16 @@ const sortAriaMap: Record<TableSortDirection, 'ascending' | 'descending' | 'none
   none: 'none',
 };
 
-/**
- * Descendants that can actually BE NAMED by the attribute they carry.
- *
- * A DENY-list, which is the point. The allow-list version shipped and
- * immediately unnamed `<svg aria-label>` — every lucide-react icon header,
- * since lucide forwards props onto a bare `<svg>` — because svg was not among
- * the natives I happened to list. "Which native did I forget" is an unbounded
- * series: svg, summary, table, output, progress, meter, details, dialog,
- * fieldset, h1-h6, ul, li, nav, section, object, video, audio. ARIA 1.2's
- * name-prohibited set is finite and does not grow, so inverting it cannot rot
- * the same way.
- *
- * The role filter covers the `alt` clauses too. `role="presentation"` wins
- * over `alt` — the presentational-conflict exceptions are focusability and
- * global ARIA attributes, and `alt` is neither — so `<img alt="V"
- * role="presentation">` names nothing, and counting it produced an unnamed
- * header. One rule across both halves stops the next attribute hitting the
- * same asymmetry.
- *
- * Deliberately not chased, both contrived: an invalid `role="zzz"` falls back
- * to generic yet is counted, and `<input type="hidden" aria-label>` is counted.
- *
- * Reason from the spec here, never from `computeAccessibleName` — jsdom
- * honours `aria-label` on a bare `<span>`, which browsers do not, so a test
- * asserting the name would pass while real users got nothing.
- */
-const NAME_PROHIBITED = [
-  'caption',
-  'code',
-  'deletion',
-  'emphasis',
-  'generic',
-  'insertion',
-  'none',
-  'paragraph',
-  'presentation',
-  'strong',
-  'subscript',
-  'superscript',
-  'term',
-  'time',
-]
-  .map((role) => `:not([role="${role}"])`)
-  .join('');
-/** Natives whose IMPLICIT role is name-prohibited, when no role overrides it. */
-const GENERIC_NATIVE =
-  'span,div,p,em,strong,code,b,i,u,s,q,small,sub,sup,ins,del,pre,caption,time,dfn';
-const NAMEABLE = [
-  `[aria-label]:not([aria-label=""])${NAME_PROHIBITED}:not(:is(${GENERIC_NATIVE}):not([role]))`,
-  `img[alt]:not([alt=""])${NAME_PROHIBITED}`,
-  `area[alt]:not([alt=""])${NAME_PROHIBITED}`,
-  `input[type="image"][alt]:not([alt=""])${NAME_PROHIBITED}`,
-].join(', ');
+/** One dev warning per column, not per render. */
+const warned = new Set<string>();
+function warnOnce(columnId: string) {
+  if (warned.has(columnId)) return;
+  warned.add(columnId);
+  console.warn(
+    `[DataTable] column "${columnId}" has a ReactNode header and no visibilityLabel, ` +
+      `so nothing names its column header unless the node names itself. Add visibilityLabel.`,
+  );
+}
 
 export function HeaderCell<T>({
   column,
@@ -168,140 +125,28 @@ export function HeaderCell<T>({
   const labelRef = useRef<HTMLSpanElement | null>(null);
   const dragData = useMemo(() => ({ dragNode: labelRef }), []);
 
-  // Whether the label span actually contributes text, MEASURED rather than
-  // derived. It cannot be derived: `header` may be a ReactNode rendering
-  // visible text — named fine by content — or one that is purely aria-hidden
-  // icons, which names nothing. #500 pointed `aria-labelledby` at this span
-  // unconditionally and unnamed the icon-only case; switching to `aria-label`
-  // on `plainHeader` fixed that and renamed every JSX header to its column id,
-  // so `header: <strong>Revenue</strong>` announced as "revenue" at all widths.
-  // Runs after every commit, like ButtonGroup's roving fallback, so it tracks
-  // whatever actually rendered. Starts `true` so the first paint prefers the
-  // span over a column id.
-  const [labelHasText, setLabelHasText] = useState(true);
-  const warnedNoName = useRef(false);
-  useEffect(() => {
-    const el = labelRef.current;
-    if (!el) return;
-
-    const measure = () => {
-      // aria-hidden subtrees are stripped first: `textContent` counts them,
-      // but the accessible name does not, and an icon-only header is written
-      // exactly that way — `<span aria-hidden="true">★</span>` reads as text to
-      // the DOM and as nothing to a screen reader.
-      const probe = el.cloneNode(true) as HTMLElement;
-      // `[hidden]` as well as aria-hidden: both count in textContent and
-      // neither counts in the accessible name, so a `<span hidden>Revenue</span>`
-      // header measured as named and then computed to nothing — the unnamed
-      // columnheader this whole mechanism exists to prevent, reached from the
-      // other side.
-      //
-      // Stated limits, all CSS- or value-shaped and none detectable from
-      // markup: `display:none` and `visibility:hidden` hide text this probe
-      // still counts; `::before`/`::after` content contributes to the name
-      // (accname 2F) and is invisible to `textContent`; and an embedded
-      // control's VALUE contributes (accname 2E), so a column-filter
-      // `<input value="Revenue">` measures as nothing and the column falls
-      // back to its label. The last one is not silent — the dev warning fires.
-      for (const hidden of probe.querySelectorAll('[aria-hidden="true"], [hidden]'))
-        hidden.remove();
-      // Text is not the only source of a name. A select-all checkbox — the
-      // commonest ReactNode header in a table — contributes its `aria-label`
-      // and no text at all, so measuring textContent alone renamed the column
-      // to its raw id while the correct name sat in the DOM unused. Same for an
-      // `<img alt>` logo header.
-      // What can actually NAME something, which is narrower than what can
-      // carry the attribute.
-      //
-      // `alt` names only `img`, `area` and `input[type=image]`; on anything
-      // else it is an unknown attribute. A bare `<div alt="Vendor">` counted
-      // as named, so `aria-labelledby` was pointed at a span computing to
-      // nothing — the unnamed columnheader this fallback exists to prevent,
-      // reached from yet another side.
-      //
-      // `title` is excluded, but NOT because it names nothing: per accname it
-      // is a valid last-resort source and browsers do expose it. jsdom's
-      // `computeAccessibleName` returns "" for it only because
-      // dom-accessibility-api omits that step. The real reason is that
-      // last-resort means its presence does not tell you a name will be
-      // computed HERE — anything else in the subtree outranks it — so it is
-      // not evidence for this decision. Recording the distinction because the
-      // convenient wrong reason ("title never names") would license a bad
-      // change later.
-      // `aria-labelledby` on a descendant is RESOLVED rather than trusted.
-      // Its presence proves nothing — #500 was caused by exactly such a
-      // reference pointing at an empty element — but a reference that resolves
-      // to real text does name the header, and ignoring it handed the column
-      // its `visibilityLabel`, or its raw id, over a name that was right there.
-      const labelledByResolves = [...el.querySelectorAll('[aria-labelledby]')].some(
-        (node) =>
-          !node.closest('[aria-hidden="true"], [hidden]') &&
-          (node.getAttribute('aria-labelledby') ?? '')
-            .split(/\s+/)
-            .filter(Boolean)
-            .some((id) => (document.getElementById(id)?.textContent ?? '').trim().length > 0),
-      );
-      const next =
-        (probe.textContent ?? '').trim().length > 0 ||
-        probe.querySelector(NAMEABLE) !== null ||
-        labelledByResolves;
-      setLabelHasText((prev) => (prev === next ? prev : next));
-
-      // An icon-only header with no `visibilityLabel` falls back to
-      // `column.id`, so a raw developer identifier gets read aloud — an
-      // authoring bug with no visible symptom, since the column looks correct
-      // on screen. The latch RESETS when text appears, so a header that
-      // resolves its label asynchronously is not permanently accused of being
-      // unnamed on the strength of its first frame.
-      if (next) warnedNoName.current = false;
-      else if (
-        process.env.NODE_ENV !== 'production' &&
-        !column.visibilityLabel &&
-        !warnedNoName.current
-      ) {
-        warnedNoName.current = true;
-        console.warn(
-          `[DataTable] column "${column.id}" renders no header text and has no visibilityLabel, ` +
-            `so its column header announces as the column id. Add visibilityLabel.`,
-        );
-      }
-    };
-
-    measure();
-    // OBSERVED, not measured once per commit. A `header` ReactNode that owns
-    // its own state — a fetch, a lazily-loaded translation, an icon swapped
-    // after mount — updates its subtree WITHOUT re-rendering HeaderCell. A
-    // per-commit measurement therefore read it once as empty and never looked
-    // again: the header displayed "Revenue" and announced "revenue_id"
-    // forever, which is precisely the bug this mechanism exists to remove,
-    // resurrected for a narrower input. Observing also takes the steady-state
-    // cost to zero — the per-commit version ran on every pointermove of a
-    // column drag.
-    const observer = new MutationObserver(measure);
-    observer.observe(el, {
-      childList: true,
-      subtree: true,
-      characterData: true,
-      // EVERY attribute `measure` reads, not just aria-hidden. It also consults
-      // `hidden` and the descendant name sources, so an `alt` filled in after a
-      // fetch, or a `hidden` lifted at a breakpoint, changed the answer without
-      // notifying — leaving the header named by its column id exactly as the
-      // per-commit version did.
-      attributeFilter: [
-        'aria-hidden',
-        'hidden',
-        'alt',
-        'aria-label',
-        'aria-labelledby',
-        // `measure` consults these too: `role` via NAME_PROHIBITED, `type` via
-        // input[type=image], `href` via the a[href] case that preceded it.
-        'role',
-        'type',
-        'href',
-      ],
-    });
-    return () => observer.disconnect();
-  }, [column.id, column.visibilityLabel]);
+  // No DOM measurement. Seven versions of one tried to answer "will this span
+  // produce an accessible name?" without computing the accessible name, and
+  // each was wrong in a new way — the last three inside the commit meant to
+  // close the class. The mechanism existed to rescue ICON-ONLY headers, which
+  // `main` never named either: before #500 the `<th>` carried no
+  // `aria-labelledby` and no `aria-label` at all. So it was an unscoped second
+  // fix riding along with #500, whose actual ask was only that the resize
+  // handle stop being concatenated into the header's name.
+  //
+  // The rule is now static, and `column.id` is gone as a name source — a raw
+  // developer identifier was never a defensible thing to speak. What remains
+  // trades one bounded defect for an unbounded one: a JSX header that renders
+  // visible text AND sets `visibilityLabel` announces the label rather than
+  // the text, a WCAG 2.5.3 name-vs-label mismatch. That is strictly better
+  // than the unnamed columnheader the measurement produced ten times over.
+  const namedByLabel = !plainHeader && Boolean(column.visibilityLabel);
+  if (process.env.NODE_ENV !== 'production' && !plainHeader && !column.visibilityLabel) {
+    // Authoring bug, and a warning is the right mechanism for it: a ReactNode
+    // header that renders nothing nameable leaves the column unnamed, and no
+    // amount of runtime DOM inspection can supply a name the author never gave.
+    warnOnce(column.id);
+  }
 
   const sortableResult = useSortable({
     id: column.id,
@@ -391,14 +236,12 @@ export function HeaderCell<T>({
       }
       data-responsive-pinned={responsiveEnabled && isPinned ? true : undefined}
       aria-sort={sortDir != null ? sortAriaMap[sortDir] : undefined}
-      // Only when the label span will actually have text. An icon-only header
-      // leaves that span empty, and pointing at an empty element gives the
-      // columnheader NO name at all — trading a wrong name for an unnamed
-      // header, which is a worse axe violation than the one this fixes. Only
-      // then does `columnLabel` step in, and it is the last resort precisely
-      // because it degrades to `column.id`.
-      aria-labelledby={labelHasText ? labelId : undefined}
-      aria-label={labelHasText ? undefined : columnLabel}
+      // #500's actual fix, and the only part of it that was ever in question:
+      // point at the label span so the resize handle is not concatenated into
+      // the name. `visibilityLabel` overrides it only for a ReactNode header,
+      // where the author has explicitly supplied the text they want spoken.
+      aria-labelledby={namedByLabel ? undefined : labelId}
+      aria-label={namedByLabel ? column.visibilityLabel : undefined}
       onClick={sortable ? () => instance.toggleSort(column.id) : undefined}
       className={clsx(
         styles.headerCell,
@@ -453,12 +296,11 @@ export function HeaderCell<T>({
           className={clsx(styles.label, sortable && styles.sortable)}
           tabIndex={sortable ? 0 : undefined}
           role={sortable ? 'button' : undefined}
-          // A sortable header with nothing nameable inside makes this an
-          // UNNAMED focusable button — six rounds all rescued the <th>'s name
-          // and none looked at the control the same markup creates. Only when
-          // the span names nothing itself, or this would override real header
-          // text with the column label.
-          aria-label={sortable && !labelHasText ? columnLabel : undefined}
+          // The span is a focusable button when sortable, so it needs a name of
+          // its own on the one path where its content supplies none. Mirrors
+          // the plain-text case, where the <th> and this button both take the
+          // header text.
+          aria-label={sortable && namedByLabel ? column.visibilityLabel : undefined}
           onKeyDown={onLabelKeyDown}
         >
           {headerContent}

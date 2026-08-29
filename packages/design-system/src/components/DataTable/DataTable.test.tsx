@@ -2129,78 +2129,6 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     expect(screen.queryByRole('columnheader', { name: 'select_all_col' })).toBeNull();
   });
 
-  it.each([
-    ['resolves to real text', 'ext-label', true],
-    ['points at nothing', 'no-such-id', false],
-  ])('descendant aria-labelledby that %s', (_what, target, shouldName) => {
-    // Presence proves nothing — #500 was caused by an aria-labelledby pointing
-    // at an EMPTY element — so the reference is resolved. One that resolves
-    // does name the header; one that does not must fall back.
-    const cols: ColumnDef<Row>[] = [
-      {
-        id: 'internal_id_col',
-        header: <span aria-labelledby={target} />,
-        visibilityLabel: 'Fallback',
-        cell: () => 'x',
-      },
-    ];
-    function Harness() {
-      const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
-      return (
-        <>
-          <span id="ext-label">Revenue</span>
-          <DataTable instance={instance} aria-label="t" />
-        </>
-      );
-    }
-    render(<Harness />);
-    const th = screen.getAllByRole('columnheader')[0]!;
-    if (shouldName) {
-      expect(th.getAttribute('aria-labelledby')).not.toBeNull();
-      expect(th.getAttribute('aria-label')).toBeNull();
-    } else {
-      expect(th.getAttribute('aria-label')).toBe('Fallback');
-    }
-  });
-
-  it.each([
-    // svg is why the allow-list version had to go: lucide forwards props onto
-    // a bare <svg>, making this the commonest icon-only header there is.
-    ['svg with aria-label', <svg aria-label="Revenue" key="s" />, true],
-    ['summary with aria-label', <summary aria-label="Revenue" key="m" />, true],
-    ['div with role=img', <div role="img" aria-label="Revenue" key="d" />, true],
-    // role="presentation" wins over alt, so this names nothing.
-    [
-      'img alt under role=presentation',
-      <img src="x.png" alt="Revenue" role="presentation" key="p" />,
-      false,
-    ],
-    // A name-prohibited role. Invisible to jsdom, which honours it.
-    [
-      'role=paragraph with aria-label',
-      <span role="paragraph" aria-label="Revenue" key="g" />,
-      false,
-    ],
-  ])('descendant naming: %s', (_what, node, shouldName) => {
-    const cols: ColumnDef<Row>[] = [
-      { id: 'internal_id_col', header: node, visibilityLabel: 'Fallback', cell: () => 'x' },
-    ];
-    function Harness() {
-      const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
-      return <DataTable instance={instance} aria-label="t" />;
-    }
-    render(<Harness />);
-    const th = screen.getAllByRole('columnheader')[0]!;
-    // Asserts WHICH mechanism was chosen, not the name jsdom computes — jsdom
-    // disagrees with browsers on two of these.
-    if (shouldName) {
-      expect(th.getAttribute('aria-labelledby')).not.toBeNull();
-      expect(th.getAttribute('aria-label')).toBeNull();
-    } else {
-      expect(th.getAttribute('aria-label')).toBe('Fallback');
-    }
-  });
-
   it('names the sort control on an icon-only header', () => {
     // The label span is role="button" tabIndex=0 when the column is sortable.
     // With nothing nameable inside it was a focusable button with no
@@ -2248,25 +2176,6 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     const th = screen.getAllByRole('columnheader')[0]!;
     expect(th.getAttribute('aria-label')).toBe('Revenue');
     expect(th.getAttribute('aria-labelledby')).toBeNull();
-  });
-
-  it('still counts aria-label on an element whose role permits naming', () => {
-    const cols: ColumnDef<Row>[] = [
-      {
-        id: 'internal_id_col',
-        header: <span role="img" aria-label="Revenue" />,
-        visibilityLabel: 'Ignored',
-        cell: () => 'x',
-      },
-    ];
-    function Harness() {
-      const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
-      return <DataTable instance={instance} aria-label="t" />;
-    }
-    render(<Harness />);
-    const th = screen.getAllByRole('columnheader')[0]!;
-    expect(th.getAttribute('aria-labelledby')).not.toBeNull();
-    expect(th.getAttribute('aria-label')).toBeNull();
   });
 
   it('ignores alt on an element that alt cannot name', () => {
@@ -2442,6 +2351,75 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     render(<Harness />);
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('internal_star_id'));
     warn.mockRestore();
+  });
+
+  describe('the column-header naming contract (#500)', () => {
+    // Seven versions of a DOM measurement tried to decide this at runtime and
+    // each was wrong in a new way. The rule is now static, so the contract is
+    // small enough to state exhaustively — which is the point of stating it
+    // exhaustively.
+    function harness(column: Partial<ColumnDef<Row>> & { id: string }) {
+      const cols = [{ cell: () => 'x', ...column }] as ColumnDef<Row>[];
+      function H() {
+        const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+        return <DataTable instance={instance} aria-label="t" />;
+      }
+      render(<H />);
+      return screen.getAllByRole('columnheader')[0]!;
+    }
+
+    it('a string header is named by its own text', () => {
+      expect(harness({ id: 'rev_id', header: 'Revenue' })).toHaveAccessibleName('Revenue');
+    });
+
+    it('a ReactNode header with no visibilityLabel is named by its content', () => {
+      expect(harness({ id: 'rev_id', header: <strong>Revenue</strong> })).toHaveAccessibleName(
+        'Revenue',
+      );
+    });
+
+    it('visibilityLabel overrides a ReactNode header — the documented 2.5.3 trade', () => {
+      // A name-vs-label mismatch, accepted deliberately: the alternative was a
+      // runtime measurement that produced UNNAMED headers ten times over.
+      const th = harness({
+        id: 'rev_id',
+        header: <strong>Revenue</strong>,
+        visibilityLabel: 'Revenue (USD)',
+      });
+      expect(th).toHaveAccessibleName('Revenue (USD)');
+    });
+
+    it('an icon-only header is named by visibilityLabel', () => {
+      const th = harness({
+        id: 'starred_col',
+        header: <span aria-hidden="true">★</span>,
+        visibilityLabel: 'Starred',
+      });
+      expect(th).toHaveAccessibleName('Starred');
+    });
+
+    it('NEVER speaks column.id, whatever the header is', () => {
+      // The single invariant every one of the seven wrong answers violated.
+      for (const header of [
+        <span aria-hidden="true" key="a">
+          ★
+        </span>,
+        <span key="b" />,
+        <div key="c" />,
+      ]) {
+        cleanup();
+        const th = harness({ id: 'internal_id_col', header });
+        expect(th.getAttribute('aria-label')).not.toBe('internal_id_col');
+        expect(th.textContent).not.toContain('internal_id_col');
+      }
+    });
+
+    it('warns once when a ReactNode header has no visibilityLabel', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      harness({ id: 'unlabelled_col', header: <span aria-hidden="true">★</span> });
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('unlabelled_col'));
+      warn.mockRestore();
+    });
   });
 
   it('names a JSX header by its rendered text, not by the column id', () => {
