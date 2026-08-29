@@ -1747,14 +1747,29 @@ describe('listbox state announces from one region, not three rows (#495)', () =>
     // opposite one — this counts what a reader HEARS, and a tooltip is spoken
     // as a description whether or not it wins the name.
     //
-    // Still not literally everything: `placeholder`, `value`,
-    // `aria-valuetext`, `aria-roledescription` and an SVG `<title>` child are
-    // not swept, and text inside `[hidden]` is counted though no reader
-    // reaches it. Both directions over-count rather than under-count, so this
-    // can only fail loudly, never pass falsely.
-    for (const el of document.body.querySelectorAll<HTMLElement>('[aria-label], [title], [alt]')) {
+    // The attribute list is what makes this sound, so it is deliberately
+    // wide. An earlier version of this comment claimed the sweep "can only
+    // fail loudly, never pass falsely" — that was backwards. The assertion is
+    // toHaveLength(1), so an unswept attribute carrying a second copy leaves
+    // the count at 1 and the test PASSES, which is precisely the escape it
+    // exists to close. Under-counting is the dangerous direction here.
+    //
+    // Still not literally everything — an SVG `<title>` child is not swept —
+    // and text inside `[hidden]` IS counted though no reader reaches it. The
+    // second is over-counting and merely noisy; the first is the residual
+    // risk, recorded rather than claimed away.
+    for (const el of document.body.querySelectorAll<HTMLElement>(
+      '[aria-label], [title], [alt], [placeholder], [aria-valuetext], [aria-roledescription]',
+    )) {
       if (el.closest('[aria-hidden="true"]')) continue;
-      for (const attr of ['aria-label', 'title', 'alt'])
+      for (const attr of [
+        'aria-label',
+        'title',
+        'alt',
+        'placeholder',
+        'aria-valuetext',
+        'aria-roledescription',
+      ])
         if (el.hasAttribute(attr)) reachable.push(el.getAttribute(attr) ?? '');
     }
     expect(reachable.filter((text) => /Failed to load options\./.test(text))).toHaveLength(1);

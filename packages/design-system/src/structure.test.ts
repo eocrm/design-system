@@ -713,11 +713,16 @@ describe('stated contrast ratios still hold', () => {
     // Strip what is exempt BY CONSTRUCTION rather than skipping the line it
     // sits on: an annotation's own figure, and a range, which states two
     // endpoints and binds neither.
-    const unbound = ratios(
-      joined.replace(ANNOTATION, ' ').replace(/\d+\.\d+\s*[-–]\s*\d+\.\d+:1/g, ' '),
-    ).filter((r) => !annotated.has(r));
+    // Per line, so the message still says WHERE. The joined-text refactor
+    // reported a bare "9.99:1" with no location, which in a file with five
+    // block-comment lines is a number and nowhere to look.
+    const stripped = joined.replace(ANNOTATION, ' ').replace(/\d+\.\d+\s*[-–]\s*\d+\.\d+:1/g, ' ');
+    const unbound = stripped
+      .split('\n')
+      .flatMap((line) => ratios(line).map((r) => ({ r, line })))
+      .filter(({ r }) => !annotated.has(r));
     expect(
-      unbound.map((r) => `${r}:1`),
+      unbound.map(({ r, line }) => `${r}:1 in "${line.trim()}"`),
       'states a ratio no @contrast annotation in this file computes — annotate the pair so it can be recomputed, or drop the number',
     ).toEqual([]);
   });
