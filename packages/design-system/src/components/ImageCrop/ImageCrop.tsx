@@ -518,7 +518,9 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
         onKeyDown={handleKeyDown}
       >
         {loadState === 'loading' && <Skeleton variant="rectangular" className={styles.skeleton} />}
-        {loadState === 'error' && <div className={styles.errorState}>Couldn't load image</div>}
+        {loadState === 'error' && (
+          <div className={styles.errorState}>{t('imageCrop.loadError')}</div>
+        )}
         {resolvedSrc && (
           /* eslint-disable-next-line jsx-a11y/alt-text -- alt is intentionally empty; the cropping interaction IS the meaning, consumer overrides via rest if needed. */
           <img

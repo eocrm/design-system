@@ -81,6 +81,7 @@ export const ru: Messages = {
     nextAgenda: 'Следующая неделя',
     moreEvents: ({ count }) =>
       `ещё ${count as number} ${ruPlural(count as number, ['событие', 'события', 'событий'])}`,
+    moreEventsShort: ({ count }) => `+${count as number}`,
     viewMonth: 'Месяц',
     viewWeek: 'Неделя',
     viewDay: 'День',
@@ -213,6 +214,7 @@ export const ru: Messages = {
     currentPageAriaLabel: ({ page }) => `Страница ${page as number}, текущая`,
   },
   select: {
+    createOption: (params) => `+ Создать «${params.label as string}»`,
     removeChip: (params) => `Удалить ${params.label}`,
     clear: 'Очистить выбор',
     search: 'Поиск…',
@@ -295,6 +297,7 @@ export const ru: Messages = {
     restored: 'Холст свёрнут',
   },
   imageCrop: {
+    loadError: 'Не удалось загрузить изображение',
     zoom: 'Масштаб',
   },
   kanban: {

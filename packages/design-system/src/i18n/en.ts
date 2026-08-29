@@ -79,6 +79,7 @@ export const en: Messages = {
     previousAgenda: 'Previous week',
     nextAgenda: 'Next week',
     moreEvents: ({ count }) => `${count as number} more events`,
+    moreEventsShort: ({ count }) => `+${count as number} more`,
     viewMonth: 'Month',
     viewWeek: 'Week',
     viewDay: 'Day',
@@ -211,6 +212,7 @@ export const en: Messages = {
     currentPageAriaLabel: ({ page }) => `Page ${page as number}, current page`,
   },
   select: {
+    createOption: ({ label }) => `+ Create "${label as string}"`,
     removeChip: (params) => `Remove ${params.label}`,
     clear: 'Clear selection',
     search: 'Search…',
@@ -293,6 +295,7 @@ export const en: Messages = {
     restored: 'Canvas restored',
   },
   imageCrop: {
+    loadError: "Couldn't load image",
     zoom: 'Zoom',
   },
   kanban: {

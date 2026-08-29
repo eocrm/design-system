@@ -283,7 +283,7 @@ export function MonthView({
                       }}
                       aria-label={moreEventsLabel(hiddenCount)}
                     >
-                      +{hiddenCount} more
+                      {t('calendar.moreEventsShort', { count: hiddenCount })}
                     </button>
                   </div>
                 );

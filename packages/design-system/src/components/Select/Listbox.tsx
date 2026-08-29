@@ -222,7 +222,7 @@ export function Listbox() {
         data-in-overlay={inOverlay ? '' : undefined}
         className={styles.listboxBody}
       >
-        {renderListboxBody(ctx)}
+        {renderListboxBody(ctx, t)}
       </ul>
     </div>,
     document.body,
@@ -242,7 +242,10 @@ export function Listbox() {
  * Each branch consults the consumer's `renderLoading` / `renderError` /
  * `renderEmpty` first, falling back to the bundled defaults.
  */
-function renderListboxBody<T>(ctx: SelectContextValue<T>): ReactNode {
+function renderListboxBody<T>(
+  ctx: SelectContextValue<T>,
+  t: ReturnType<typeof useTranslation>,
+): ReactNode {
   const showLoading = ctx.loading && ctx.rows.length === 0;
   const showError = !!ctx.error && !ctx.loading;
   const showEmpty = !ctx.loading && !ctx.error && ctx.rows.length === 0;
@@ -304,7 +307,7 @@ function renderListboxBody<T>(ctx: SelectContextValue<T>): ReactNode {
           ? (ctx.value as string[]).includes(optRow.option.value)
           : ctx.value === optRow.option.value;
         const active = ctx.activeIndex === j;
-        groupChildren.push(renderOptionRow(optRow.option, j, selected, active, ctx));
+        groupChildren.push(renderOptionRow(optRow.option, j, selected, active, ctx, t));
         j++;
       }
       nodes.push(
@@ -323,7 +326,7 @@ function renderListboxBody<T>(ctx: SelectContextValue<T>): ReactNode {
       ? (ctx.value as string[]).includes(optRow.option.value)
       : ctx.value === optRow.option.value;
     const active = ctx.activeIndex === i;
-    nodes.push(renderOptionRow(optRow.option, i, selected, active, ctx));
+    nodes.push(renderOptionRow(optRow.option, i, selected, active, ctx, t));
     i++;
   }
   return nodes;
@@ -344,6 +347,8 @@ function renderOptionRow<T>(
   selected: boolean,
   active: boolean,
   ctx: SelectContextValue<T>,
+  // Threaded rather than hooked: these are plain functions, not components.
+  t: ReturnType<typeof useTranslation>,
 ): ReactNode {
   // Creatable "+ Create <query>" row. Rendered distinctly (italic + accent
   // colour via `.optionCreate`) and dispatches `onCreate` plus the same
@@ -370,7 +375,7 @@ function renderOptionRow<T>(
         }}
         onMouseEnter={() => ctx.setActiveIndex(i)}
       >
-        + Create &quot;{opt.label}&quot;
+        {t('select.createOption', { label: opt.label })}
       </li>
     );
   }

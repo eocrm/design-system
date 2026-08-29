@@ -142,6 +142,8 @@ export interface Messages {
     nextAgenda: string;
     /** Function leaf — `aria-label` template for the "+N more events" overflow chip. */
     moreEvents: (params: { count: number }) => string;
+    /** VISIBLE overflow chip text, distinct from `moreEvents`, which names it for AT. */
+    moreEventsShort: (params: { count: number }) => string;
     /** Segmented-control label for the month view. */
     viewMonth: string;
     /** Segmented-control label for the week view. */
@@ -420,6 +422,8 @@ export interface Messages {
     currentPageAriaLabel: (params: { page: number }) => string;
   };
   select: {
+    /** Visible text of the create-new row in a creatable Select. */
+    createOption: (params: { label: string }) => string;
     /** aria-label on a multi-select chip's remove control. */
     removeChip: (params: { label: string }) => string;
     /** aria-label on the clear-selection (×) button inside Select. */
@@ -587,6 +591,8 @@ export interface Messages {
     restored: string;
   };
   imageCrop: {
+    /** Shown in place of the image when it fails to load. */
+    loadError: string;
     /** aria-label for the zoom slider. */
     zoom: string;
   };

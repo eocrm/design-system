@@ -67,15 +67,18 @@ describe('library structure', () => {
   );
 
   it.each(components)('%s is re-exported from src/index.ts', (name) => {
-    // Match `<Name>` followed by a word boundary OR an uppercase letter.
-    // The word-boundary branch catches the exact name (e.g. `Toast` as a
-    // standalone export). The uppercase branch allows compound exports whose
-    // name starts with `<Name>` (e.g. `ToastViewport` satisfies `Toast`).
-    // Crucially, a purely lowercase continuation is NOT matched, so `Button`
-    // does NOT accidentally satisfy itself via a hypothetical `Buttons` export,
-    // and `Toast` does NOT satisfy `Toasty`. This tightens the earlier
-    // `\b${name}[^}]*` form which was over-permissive.
-    const namedRe = new RegExp(`export\\s*\\{[^}]*\\b${name}(\\b|[A-Z])[^}]*\\}`);
+    // The name, case-insensitively — nothing else. The previous form allowed
+    // an uppercase continuation so that `ToastViewport` could satisfy `Toast`,
+    // and that branch let a COMPOUND export stand in for the component's own:
+    // 13 of 92 components passed without exporting themselves, so deleting
+    // `export { Button }` left `ButtonGroup` keeping the gate green while
+    // Button became unimportable. Its own comment defended only the lowercase
+    // direction while the uppercase branch it was defending opened that hole.
+    //
+    // Case-insensitivity is what the `[A-Z]` branch was really for, and it is
+    // load-bearing for exactly one component: Toast, exported as `toast`.
+    // Measured across all 92: no false alarms, no remaining holes.
+    const namedRe = new RegExp(`export\\s*\\{[^}]*\\b${name}\\b[^}]*\\}`, 'i');
     const starRe = new RegExp(`export\\s+\\*\\s+from\\s+['"][^'"]*${name}[^'"]*['"]`);
     expect(namedRe.test(indexContent) || starRe.test(indexContent)).toBe(true);
   });
@@ -386,154 +389,113 @@ describe('user-facing strings go through the i18n provider', () => {
 
   it.each(sources.map(({ label, code }) => [label, code]))('%s', (_label, code) => {
     const offenders: string[] = [];
-    // Comment lines are stripped WHOLESALE and the rest scanned as one string,
-    // so a value prettier wrapped across lines is still seen. Scanning
-    // line-by-line missed those.
-    // Shared with the aria-busy gate above. A file-wide block-comment sweep
-    // deleted real code whenever a string contained the characters `/*`.
-    const body = stripComments(code);
-    {
-      // Scanned, not matched in one regex. The one-regex version had to pick a
-      // shape for the value, and every choice lost a case: anchoring on a quote
-      // after `={` missed `cond ? 'A' : 'B'` and `x ?? 'A'`; switching to a
-      // `\{([^}]*)\}` capture fixed those, truncated a template literal at the
-      // `}` of its first `${…}`, and — because the quoted branch then yielded
-      // string CONTENT with no quotes left inside it to find — stopped catching
-      // the plainest shape of all, `aria-label="Close dialog"`. Fifth gate in
-      // this PR that could not fail on its own stated input.
-      //
-      // `(?<![-\w])` so `data-title=` / `data-alt=` do not match: `-` is a word
-      // boundary, so `\b` alone flagged them and reported a false violation.
-      const isKey = (lit: string) => /^[a-z][a-zA-Z]*\.[a-zA-Z.]+$/.test(lit);
-      const isEnglish = (lit: string) => {
-        // Interpolations are permitted — the rule allows mixing translated text
-        // with data. A fixed English phrase around them is not.
-        const bare = lit
-          // URLs FIRST, while each is still one token. Running after the other
-          // strips let them punch holes in it: `${…}` split
-          // `https://${host}/path/to/page`, and the unit strip split
-          // `https://example.com/fr/docs` at `/fr/`, because `/` is a word
-          // boundary — both then read as prose and false-alarmed on correct
-          // code. `(?<![A-Za-z])` so a scheme cannot start matching mid-word
-          // and swallow the English before it.
-          .replace(/(?<![A-Za-z])[a-z][a-z0-9+.-]*:\/\/\S*/g, ' ')
-          .replace(/\$\{[^}]*\}/g, ' ')
-          // CSS units are not prose. `aria-valuetext={`${width}px`}` is the
-          // only thing standing between a two-letter floor and a clean run,
-          // and the floor has to be two: at three, `aria-label="OK"`,
-          // `alt="Up"` and `placeholder="ID"` were all silent.
-          .replace(/\b(px|em|rem|vh|vw|ms|fr|ch|pt|deg)\b/g, ' ')
-          .trim();
-        // Only the URL is exempt, not the literal containing it: returning
-        // false for the whole thing silenced `"Open the docs at https://x.io"`,
-        // a sentence with a link in it, which is exactly a translatable string.
-        return /[A-Za-z]{2}/.test(bare);
-      };
-      // Measured against the real distribution: see the note on the walk below.
-      const SCAN_BOUND = 2000;
-      const flag = (attr: string, lit: string) => {
-        if (!isKey(lit) && isEnglish(lit)) offenders.push(`${attr}: "${lit}"`);
-      };
+    // Walked on the AST, not scanned. `stripComments` already builds a full
+    // SourceFile for this file and threw it away, while ~90 lines below it
+    // hand-rolled a brace walk, quote tracking, a length bound, and heuristics
+    // for "is this literal an operand" and "is this inside t()" — all of which
+    // the parser answers exactly. Deleting them also closed the hole those
+    // heuristics existed to paper over: JSX TEXT, which the previous docblock
+    // conceded it never read while claiming the exclusion-derived attribute
+    // set had addressed it.
+    const sourceFile = ts.createSourceFile(
+      'probe.tsx',
+      code,
+      ts.ScriptTarget.Latest,
+      true,
+      ts.ScriptKind.TSX,
+    );
 
-      // `.` in the lookbehind alongside `-`: `document.title=` and
-      // `props.alt=` are property assignments, not attributes, and matched.
-      for (const m of body.matchAll(/(?<![-.\w])(aria-[a-z]+|placeholder|title|alt)=/g)) {
-        const attr = m[1]!;
-        if (NON_TEXTUAL.has(attr)) continue;
-        const i = m.index + m[0].length;
-        const ch = body[i];
+    const isKey = (lit: string) => /^[a-z][a-zA-Z]*\.[a-zA-Z.]+$/.test(lit);
+    const isEnglish = (lit: string) => {
+      const bare = lit
+        // URLs first, while each is still one token: the interpolation and
+        // unit strips below both split one and leave prose-looking remnants.
+        .replace(/(?<![A-Za-z])[a-z][a-z0-9+.-]*:\/\/\S*/g, ' ')
+        .replace(/\$\{[^}]*\}/g, ' ')
+        // TWO forms. A digit-attached unit needs the digits in the pattern —
+        // `\b` finds no boundary between `0` and `p`, so the bare shape this
+        // was written for, "100px", was flagged as English while only the
+        // interpolated form was exempt. The standalone form is kept for what
+        // interpolation-blanking leaves behind (`${w}px` -> " px"). NOT solved
+        // by dropping the leading boundary: `(em)\b` alone would strip the tail
+        // of "them" and "problem".
+        .replace(/\b\d+(?:px|em|rem|vh|vw|ms|fr|ch|pt|deg)\b/g, ' ')
+        .replace(/\b(px|em|rem|vh|vw|ms|fr|ch|pt|deg)\b/g, ' ')
+        .trim();
+      return /[A-Za-z]{2}/.test(bare);
+    };
 
-        if (ch === '"' || ch === "'" || ch === '`') {
-          const close = body.indexOf(ch, i + 1);
-          if (close !== -1) flag(attr, body.slice(i + 1, close));
-          continue;
-        }
-        if (ch !== '{') continue;
-
-        // Balanced scan, so a template literal's `${…}` does not end the value
-        // at its first `}`. String-aware, because a brace inside a string is
-        // not structure: `aria-label={x.replace('{', '')}` would otherwise
-        // leave depth permanently above zero and run the value to the end of
-        // the file, scanning every literal after it as if it were this
-        // attribute's.
-        let depth = 0;
-        let quote = '';
-        let j = i;
-        // BOUNDED, and REPORTED rather than skipped when it does not balance.
-        // Chasing the lexical constructs that desync a hand-rolled scanner is
-        // a losing game — a regex literal containing a quote,
-        // `x.replace(/'/g, '')`, still defeats the quote tracking below — so
-        // the walk is capped and a value that does not close is surfaced
-        // instead of swallowing the rest of the file.
-        //
-        // The bound is MEASURED, not guessed. "No real value approaches 400"
-        // was false when first written — DateRangePicker's `placeholder` was
-        // already at 346 — and blanking comments rather than deleting them
-        // (which keeps offsets, so failure line numbers stay correct) inflates
-        // every value that contains one: Slider's `aria-label` carries three
-        // comment lines and measures 472. The longest today is that 472, so
-        // 2000 leaves room without being unbounded. A bound whose overflow is
-        // silent is the same defect as a gate that cannot fail, so overflow is
-        // reported.
-        for (; j < body.length && j - i < SCAN_BOUND; j++) {
-          const c = body[j]!;
-          if (quote) {
-            if (c === '\\') j++;
-            else if (c === quote) quote = '';
-            continue;
-          }
-          if (c === '"' || c === "'" || c === '`') quote = c;
-          else if (c === '{') depth++;
-          else if (c === '}' && --depth === 0) break;
-        }
-        if (depth !== 0) {
-          offenders.push(`${attr}: <value did not close within the ${SCAN_BOUND}-char scan bound>`);
-          continue;
-        }
-        const value = body.slice(i + 1, j);
-
-        // Only the string literals inside the expression are judged, and not
-        // all of them: one preceded by `=` or `[` is a comparison operand or an
-        // index key (`typeof x === 'string'`, `props['aria-label']`,
-        // `state === 'error'`), never rendered. Without this the scan reports
-        // five, and a false alarm is what gets a gate deleted.
-        // Judged as a SET, then reported as a set. A per-literal report listed
-        // only the halves that individually cleared the English floor, so
-        // `cond ? 'Yes' : 'No'` named 'Yes' and stayed silent about 'No' —
-        // someone fixes what the failure names, re-runs, gets green, and ships
-        // the other half. A partial report certifies the remainder. So if ANY
-        // literal in one value is English, every candidate in that value is
-        // reported.
-        //
-        // The floor itself is TWO letters (see `isEnglish`), which is a
-        // deliberate false-alarm trade rather than a free win: `'en-US'` and
-        // `'MMM d'` both read as English at two, and neither appears in a
-        // watched attribute today. If one ever does, extend the unit-strip
-        // list — raising the floor back to three re-silences `"OK"`, `"Up"`
-        // and `"ID"`, which is the worse direction.
-        const candidates: string[] = [];
-        for (const lm of value.matchAll(/(["'`])((?:\\.|(?!\1).)*)\1/gs)) {
-          const before = value.slice(0, lm.index);
-          if (/[=[]\s*$/.test(before)) continue;
-          // Anything sitting directly inside `t(` is routed through the
-          // translator by definition, whatever it looks like. The dotted-key
-          // heuristic alone rejected a DYNAMIC key —
-          // t(`richTextEditor.${key}`) — because stripping the interpolation
-          // leaves a trailing dot that the pattern will not match.
-          if (/\bt\(\s*$/.test(before)) continue;
-          if (!isKey(lm[2]!)) candidates.push(lm[2]!);
-        }
-        // Report every candidate that carries letters at all, not literally
-        // every candidate — an empty string or a bare `%s` alongside the real
-        // offender is noise in the failure message.
-        if (candidates.some(isEnglish))
-          for (const lit of candidates.filter((c) => /[A-Za-z]/.test(c)))
-            offenders.push(`${attr}: "${lit}"`);
+    /** True when this node sits inside a `t(...)` call — routed by definition. */
+    const insideTranslator = (node: ts.Node) => {
+      for (let n: ts.Node | undefined = node.parent; n; n = n.parent) {
+        if (ts.isCallExpression(n) && ts.isIdentifier(n.expression) && n.expression.text === 't')
+          return true;
       }
-    }
+      return false;
+    };
+
+    const literalsIn = (node: ts.Node, out: string[]) => {
+      if (
+        (ts.isStringLiteral(node) ||
+          ts.isNoSubstitutionTemplateLiteral(node) ||
+          ts.isTemplateHead(node) ||
+          ts.isTemplateMiddle(node) ||
+          ts.isTemplateTail(node)) &&
+        !insideTranslator(node)
+      ) {
+        // A comparison operand or an index key is never rendered. The parser
+        // says which, where the old scanner guessed from the preceding char.
+        const parent = node.parent;
+        const isOperand =
+          (ts.isBinaryExpression(parent) &&
+            [
+              ts.SyntaxKind.EqualsEqualsEqualsToken,
+              ts.SyntaxKind.ExclamationEqualsEqualsToken,
+              ts.SyntaxKind.EqualsEqualsToken,
+              ts.SyntaxKind.ExclamationEqualsToken,
+            ].includes(parent.operatorToken.kind)) ||
+          ts.isElementAccessExpression(parent);
+        if (!isOperand) out.push(node.text);
+      }
+      node.forEachChild((child) => literalsIn(child, out));
+    };
+
+    const visit = (node: ts.Node) => {
+      if (ts.isJsxAttribute(node) && ts.isIdentifier(node.name)) {
+        const attr = node.name.text;
+        // Every `aria-*` is textual unless enumerated below, so a new textual
+        // ARIA attribute is caught by default rather than needing to be
+        // remembered. `data-*` never matches: it is not a JsxAttribute name we
+        // watch, which the old regex could only approximate with a lookbehind.
+        const watched =
+          (attr.startsWith('aria-') && !NON_TEXTUAL.has(attr)) ||
+          attr === 'placeholder' ||
+          attr === 'title' ||
+          attr === 'alt';
+        if (watched && node.initializer) {
+          const found: string[] = [];
+          literalsIn(node.initializer, found);
+          const candidates = found.filter((lit) => !isKey(lit));
+          // Judged as a SET: reporting per-literal named only the halves that
+          // individually cleared the floor, so `cond ? 'Yes' : 'No'` listed
+          // 'Yes' and stayed silent about 'No'.
+          if (candidates.some(isEnglish))
+            for (const lit of candidates.filter((c) => /[A-Za-z]/.test(c)))
+              offenders.push(`${attr}: "${lit}"`);
+        }
+      }
+      // JSX TEXT — the half the attribute-keyed gate never read.
+      if (ts.isJsxText(node)) {
+        const text = node.text.replace(/\{[^}]*\}/g, ' ').trim();
+        if (isEnglish(text) && /[A-Za-z]{2}/.test(text)) offenders.push(`text: "${text}"`);
+      }
+      node.forEachChild(visit);
+    };
+    visit(sourceFile);
+
     expect(
       offenders,
-      'inline English on a user-facing attribute — route it through useTranslation()',
+      'inline English on a user-facing surface — route it through useTranslation()',
     ).toEqual([]);
   });
 });
@@ -619,7 +581,14 @@ describe('stated contrast ratios still hold', () => {
       const [fg, bg] = [literal(a.fg, dark), literal(a.bg, dark)];
       expect(fg, `${a.fg} resolves`).toBeDefined();
       expect(bg, `${a.bg} resolves`).toBeDefined();
-      expect(ratio(fg!, bg!)).toBeCloseTo(a.stated, 1);
+      // An ABSOLUTE bound, not `toBeCloseTo(stated, 1)`, which accepts a delta
+      // under 0.05 — ten times the slack an honestly-rounded 2dp figure needs
+      // (the worst of the live annotations is off by 0.0049) and enough to
+      // hide a wrong second decimal, which is the only error class this gate
+      // exists for. #484's real defects — Calendar's 4.55, the Progress
+      // family's 4.17 — were exactly this magnitude, so the gate written to
+      // catch them could not have.
+      expect(Math.abs(ratio(fg!, bg!) - a.stated)).toBeLessThan(0.006);
     },
   );
 
