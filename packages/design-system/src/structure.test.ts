@@ -695,12 +695,22 @@ describe('stated contrast ratios still hold', () => {
     return (y! + 0.05) / (x! + 0.05);
   }
 
-  const files = components.flatMap((name) => {
-    const dir = join(componentsDir, name);
-    return readdirSync(dir)
-      .filter((f) => f.endsWith('.scss') || (f.endsWith('.ts') && !f.includes('.test.')))
-      .map((f) => ({ label: `${name}/${f}`, code: readFileSync(join(dir, f), 'utf-8') }));
-  });
+  // The SAME recursive walk the other gates use. A flat readdir per component
+  // never reached `RichText/engine/colorMarks.ts`, which #493 names by path as
+  // one of the files still stating an unscoped ratio — so the gate written to
+  // close that issue could not see one of the files the issue lists.
+  const files = allSources()
+    .filter(({ label }) => /\.(tokens|module)\.scss$|\.ts$/.test(label))
+    .concat(
+      components.flatMap((name) =>
+        readdirSync(join(componentsDir, name))
+          .filter((f) => f.endsWith('.scss'))
+          .map((f) => ({
+            label: `${name}/${f}`,
+            code: readFileSync(join(componentsDir, name, f), 'utf-8'),
+          })),
+      ),
+    );
 
   const annotations = files.flatMap(({ label, code }) =>
     [
@@ -739,7 +749,9 @@ describe('stated contrast ratios still hold', () => {
       // 2.14:1 sat in a `.module.scss`, read for annotations but exempt from
       // the binding, falsifying the stated rationale. `.ts` prose stays exempt
       // as documented: binding a number in a sentence needs the author's help.
-      .filter(({ label }) => label.endsWith('.tokens.scss') || label.endsWith('.module.scss'))
+      .filter(
+        ({ label }) => /\.(tokens|module)\.scss$|\.ts$/.test(label) && !label.includes('.test.'),
+      )
       .map(({ label, code }) => [label, code]),
   )('%s annotates every ratio it states', (_label, code) => {
     // COUNTED, not "does this file mention @contrast anywhere". The first
@@ -835,8 +847,12 @@ describe('stated contrast ratios still hold', () => {
     // `// must clear the 4.5:1 minimum` is the commonest contrast sentence in
     // CSS prose and failing on it is the false alarm that gets a gate deleted.
     const WCAG_THRESHOLDS = new Set(['1', '3', '4.5', '7', '21']);
+    // Bounded on BOTH sides. Without the trailing `\b`, `14:15` — a TIME in
+    // DatePicker's prose — matched as "4:1", which surfaced the moment the
+    // scan reached `.ts` files. Without the leading one, any `N` ending in the
+    // digits of a ratio would match too.
     const ratios = (l: string) =>
-      [...l.matchAll(/(\d+(?:\.\d+)?):1/g)]
+      [...l.matchAll(/\b(\d+(?:\.\d+)?):1\b/g)]
         .map((m) => m[1]!)
         .filter((r) => !WCAG_THRESHOLDS.has(r));
     // Built from the ANNOTATION PATTERN, not from whole annotation lines — a
