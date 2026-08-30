@@ -487,6 +487,27 @@ describe('batch progress and failed rows reach assistive tech (#502)', () => {
     await waitFor(() => expect(region!.textContent).toBe('Uploaded: 1 / 2. Failed: 1.'));
   });
 
+  it('stays silent when the batch is swapped for another entity without emptying', async () => {
+    // A form switching entity on a shared FileUpload instance. Entity B's
+    // files were never in flight here, so nothing may be announced — a boolean
+    // flag reset only on empty carried across the swap and announced B's
+    // pre-existing attachments.
+    const aInFlight: FileEntry[] = [{ id: 'a1', file: file('a.txt'), status: 'uploading' }];
+    const aDone: FileEntry[] = [{ id: 'a1', file: file('a.txt'), status: 'done' }];
+    const bDone: FileEntry[] = [
+      { id: 'b1', file: file('b.txt'), status: 'done' },
+      { id: 'b2', file: file('c.txt'), status: 'done' },
+    ];
+    const { container, rerender } = render(
+      <FileUpload files={aInFlight} onFilesAdded={noop} onFileRemove={noop} />,
+    );
+    const region = container.querySelector('[role="status"]');
+    rerender(<FileUpload files={aDone} onFilesAdded={noop} onFileRemove={noop} />);
+    await waitFor(() => expect(region!.textContent).toBe('Uploaded: 1 / 1.'));
+    rerender(<FileUpload files={bDone} onFilesAdded={noop} onFileRemove={noop} />);
+    await waitFor(() => expect(region!.textContent).toBe(''));
+  });
+
   it('stays silent again after a completed batch is cleared', async () => {
     // The flag has to RESET, or every later settled array announces. Emptying
     // the list is the reset point, which is what a controlled parent does

@@ -24,7 +24,8 @@ export interface ErrorRowProps {
  * deviation inside a `role="listbox"` and was a third mechanism for one
  * concern (#495). The Retry button calls back
  * into the async hook's `retry()`, which bumps the retry token and
- * re-fires the current query with no debounce delay.
+ * re-enters the debounced effect, so the refetch waits `debounceMs` like any
+ * other query — the branch's own test has to advance timers after clicking it.
  */
 export function ErrorRow({ error: _error, onRetry }: ErrorRowProps) {
   // `error` stays on the prop surface so the props match `renderError(err,

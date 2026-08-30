@@ -323,27 +323,34 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
   // the ordering still works: the in-flight pass sets it, and the pass that
   // observes the batch settled reads what that earlier pass wrote.
   //
-  // Known limit: a controlled parent that swaps one already-settled `files`
-  // array for another WITHOUT passing through empty or in-flight — switching
-  // entities on a shared FileUpload instance — carries the flag across and
-  // announces the new set. Key the component by entity id, which a controlled
-  // component should do anyway; `total === 0` resets it otherwise.
-  const sawInFlight = useRef(false);
+  // The IDS seen in flight, not a boolean. A boolean was reset only when the
+  // list emptied, so a controlled parent swapping one already-settled `files`
+  // array for another — switching entities on a shared instance after any
+  // upload — carried it across and announced the new entity's pre-existing
+  // attachments. That is the same defect this guard exists to close, surviving
+  // on the prop-change path. Announcing requires the batch on screen to be one
+  // this component actually watched.
+  const seenInFlight = useRef<Set<string>>(new Set());
+  const ids = files.map((f) => f.id).join('\u0000');
   useEffect(() => {
     if (total === 0) {
-      sawInFlight.current = false;
+      seenInFlight.current = new Set();
       setBatchStatus('');
       return;
     }
-    if (inFlight) sawInFlight.current = true;
+    if (inFlight) for (const f of files) seenInFlight.current.add(f.id);
+    const watched = files.some((f) => seenInFlight.current.has(f.id));
     setBatchStatus(
       inFlight
         ? t('fileUpload.batchUploading', { done: settled, total })
-        : sawInFlight.current
+        : watched
           ? t('fileUpload.batchSettled', { done: total - failed, total, failed })
           : '',
     );
-  }, [inFlight, settled, total, failed, t]);
+    // `ids` rather than `files`: a controlled parent commonly passes a new
+    // array identity for the same batch on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inFlight, settled, total, failed, ids, t]);
 
   const showDropzone = multiple || files.length === 0;
   // In single mode the implicit cap is 1; multi mode uses maxFiles (Infinity if not set).

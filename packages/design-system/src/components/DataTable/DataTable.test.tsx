@@ -2418,25 +2418,52 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
       expect(th).toHaveAccessibleName('Starred');
     });
 
-    it('never speaks column.id as the HEADER name, whatever the header is', () => {
-      // The invariant every one of the ten wrong answers violated. Scoped to
-      // the header's own name deliberately: the resize handle still falls back
-      // to `column.id` when a column has neither a string header nor a
-      // `visibilityLabel`, which is pre-existing on main and out of #500's
-      // scope. Claiming "never spoken" outright would be the kind of
-      // overstatement this PR has had to correct repeatedly.
-      for (const header of [
+    it.each([
+      [
+        'aria-hidden glyph',
         <span aria-hidden="true" key="a">
           ★
         </span>,
-        <span key="b" />,
-        <div key="c" />,
-      ]) {
-        cleanup();
-        const th = harness({ id: 'internal_id_col', header });
-        expect(th.getAttribute('aria-label')).not.toBe('internal_id_col');
-        expect(th.textContent).not.toContain('internal_id_col');
+      ],
+      ['empty span', <span key="b" />],
+      ['empty div', <div key="c" />],
+      ['empty string', ''],
+    ])('never speaks column.id anywhere in the header: %s', (_what, header) => {
+      // The invariant every one of the ten wrong answers violated.
+      //
+      // The previous version could not fail. It asserted `aria-label` is not
+      // the id — but on this path `namedByLabel` is false, so the attribute is
+      // `null` by construction — and that `textContent` does not contain the
+      // id, which it never could. Both held regardless of what the header
+      // announced. It also rendered ONE column, so `unpinnedColumns.length > 1`
+      // was false and the drag grip never rendered: the very control that used
+      // to speak the id was absent from the fixture guarding against it.
+      //
+      // Two columns, reorderable, responsive — so the grip AND the resize
+      // separator both exist — and the assertion is on every accessible name
+      // in the cell, not on one attribute.
+      const cols: ColumnDef<Row>[] = [
+        { id: 'internal_id_col', header, cell: () => 'x' },
+        { id: 'other_col', header: 'Other', cell: () => 'y' },
+      ];
+      function Harness() {
+        const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+        return <DataTable instance={instance} aria-label="t" collapseBelow="md" />;
       }
+      render(<Harness />);
+      const th = screen.getAllByRole('columnheader')[0]!;
+      const spoken = [
+        th.getAttribute('aria-label') ?? '',
+        th.textContent ?? '',
+        ...[...th.querySelectorAll<HTMLElement>('[aria-label], [aria-valuetext], [title]')].flatMap(
+          (el) => [
+            el.getAttribute('aria-label') ?? '',
+            el.getAttribute('aria-valuetext') ?? '',
+            el.getAttribute('title') ?? '',
+          ],
+        ),
+      ];
+      expect(spoken.filter((text) => text.includes('internal_id_col'))).toEqual([]);
     });
   });
 

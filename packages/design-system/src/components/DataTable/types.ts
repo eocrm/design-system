@@ -99,11 +99,17 @@ export interface ColumnDef<T> {
    * an unnamed column header. The rule is static instead, and the cost is that
    * a node which DOES name itself is overridden when you also set this.
    *
-   * Set it on every non-text header. Without it such a column has no
-   * accessible name at all — the component will not invent one, because the
-   * only candidate left is `column.id`, and a developer identifier is not
-   * something to read aloud. Your axe run flags this as `empty-table-header`,
-   * which computes the real accessible name rather than guessing at it.
+   * Set it on every non-text header. Without it the component will not invent
+   * a name: `column.id` is the only candidate left and a developer identifier
+   * is not something to read aloud, so it is used for nothing — not the
+   * header, not the drag grip, not the resize handle.
+   *
+   * What the header then announces is NOT something this library can promise.
+   * `aria-labelledby` pointing at a span that computes to nothing may leave the
+   * header unnamed, or may fall through to name-from-content and pick up the
+   * cell's controls, depending on the engine — three reviewers measured it and
+   * disagreed. Either way it is not a name you chose. Let your axe run tell
+   * you: `empty-table-header` computes the real accessible name.
    */
   visibilityLabel?: string;
   /**

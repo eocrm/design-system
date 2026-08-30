@@ -157,7 +157,10 @@ export function HeaderCell<T>({
   // pre-existing on main, is the same authoring bug the warning below names,
   // and is left alone rather than quietly widened into #500's scope.
   //
-  // The rule is now static, and `column.id` is gone as a name source — a raw
+  // The rule is now static, and `column.id` is gone as a name source
+  // everywhere a user can hear it: the header, the grip and the resize
+  // handle. Whether an unnamed header then falls through to name-from-content
+  // is engine-dependent and deliberately not claimed either way here — a raw
   // developer identifier was never a defensible thing to speak.
   //
   // Two residuals, stated precisely because the first draft of this note
