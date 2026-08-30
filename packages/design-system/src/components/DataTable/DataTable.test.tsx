@@ -2253,10 +2253,13 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     expect(screen.getByRole('columnheader', { name: 'Revenue' })).toBeInTheDocument();
   });
 
-  it('a [hidden] header that is later revealed keeps its visibilityLabel', async () => {
-    // The observer watched only `aria-hidden`, but `measure` also reads
-    // `hidden` — so a header revealed at a breakpoint stayed named by its
-    // column id.
+  it('a [hidden] header that is later revealed is named by the revealed text', async () => {
+    // Written against the runtime measurement that 46493117 deleted, and kept
+    // because the SHAPE still has to work: `aria-labelledby` points at a live
+    // node, so the name tracks whatever the subtree does asynchronously. True
+    // by construction now rather than by an observer — which is the point.
+    // (The old title claimed it "keeps its visibilityLabel"; the fixture never
+    // had one.)
     function AsyncHidden() {
       const [h, setH] = useState(true);
       useEffect(() => {
@@ -2280,8 +2283,9 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
   });
 
   it('an [alt] filled in asynchronously does not change the header name', async () => {
-    // Same gap for the descendant name sources: an `alt` arriving after a
-    // fetch changed the accessible name with nothing observing it.
+    // Also from the deleted-measurement era. Now true by construction: the
+    // name is computed from the live node, so an `alt` arriving late needs
+    // nothing to observe it.
     function AsyncAlt() {
       const [a, setA] = useState('');
       useEffect(() => {
@@ -2306,11 +2310,11 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
 
   it('a header whose text arrives asynchronously is named by its content', async () => {
     // A `header` ReactNode owning its own state updates its subtree WITHOUT
-    // re-rendering HeaderCell, so a per-commit measurement read it once as
+    // re-rendering HeaderCell, so the per-commit measurement read it once as
     // empty and never looked again — the header displayed "Revenue" and
-    // announced "revenue_id" forever. That is the same defect the icon-only
-    // fix introduced, resurrected for a narrower input, which is why the
-    // measurement observes the subtree instead of sampling it on commit.
+    // announced "revenue_id" forever. That measurement is gone; the static
+    // rule points `aria-labelledby` at the live node, so this now holds
+    // without anything observing anything. Kept as the regression fixture.
     function AsyncHeader() {
       const [text, setText] = useState('');
       useEffect(() => {

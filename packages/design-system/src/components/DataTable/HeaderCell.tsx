@@ -152,33 +152,33 @@ export function HeaderCell<T>({
   // `column.id` is indefensible to speak, which leaves the author's label —
   // and nothing when they have not given one.
   //
-  // Scope note: the RESIZE HANDLE still falls back to `column.id` for a
-  // column with neither a string header nor a `visibilityLabel`. That is
-  // pre-existing on main, is the same authoring bug the warning below names,
-  // and is left alone rather than quietly widened into #500's scope.
+  // The rule is static, and `column.id` is spoken NOWHERE a user can hear it:
+  // not the header, not the grip, not the resize handle. (An earlier scope
+  // note here said the handle still fell back to it. True when written, and
+  // falsified by the commit that removed the fallback — two commits after the
+  // doc-correction pass that was supposed to catch exactly this.)
   //
-  // The rule is now static, and `column.id` is gone as a name source
-  // everywhere a user can hear it: the header, the grip and the resize
-  // handle. Whether an unnamed header then falls through to name-from-content
-  // is engine-dependent and deliberately not claimed either way here — a raw
-  // developer identifier was never a defensible thing to speak.
+  // What an unnamed header then announces is MEASURED, not guessed: Chromium
+  // marks an `aria-labelledby` resolving to no text `invalid` and falls
+  // through to name-from-content, so the cell's own controls name it. That is
+  // why `header: ''` is special-cased below.
   //
-  // Two residuals, stated precisely because the first draft of this note
-  // overstated one and omitted the worse one:
+  // Two residuals:
   //
   //   1. A ReactNode header that renders visible text AND sets
-  //      `visibilityLabel` announces the label rather than the text. This is
-  //      a WCAG 2.5.3 concern ONLY when `sortable` makes the label span a
-  //      button — 2.5.3 is scoped to user interface components, and a
-  //      non-sortable `<th>` is not one. It also only VIOLATES 2.5.3 when the
-  //      label does not contain the visible text: "Revenue (USD)" over
-  //      `<strong>Revenue</strong>` passes, `'Status'` over
+  //      `visibilityLabel` announces the label rather than the text. A WCAG
+  //      2.5.3 concern ONLY when `sortable` makes the label span a button —
+  //      2.5.3 is scoped to user interface components — and only a violation
+  //      when the label does not CONTAIN the visible text: "Revenue (USD)"
+  //      over `<strong>Revenue</strong>` passes, `'Status'` over
   //      `<Badge>Active</Badge>` does not.
-  //   2. The harder one: sortable + a header that names nothing + no
-  //      `visibilityLabel` leaves an unnamed focusable `role="button"` — WCAG
-  //      4.1.2, axe `button-name`. Not a regression (main's span had no name
-  //      either), and not fixable here: the only remaining name source is
-  //      `column.id`. Set `visibilityLabel` on non-text headers.
+  //   2. A ReactNode header that names nothing, with no `visibilityLabel`,
+  //      leaves an unnamed focusable `role="button"` when sortable — WCAG
+  //      4.1.2. Unfixable HERE because nothing static distinguishes it from a
+  //      ReactNode that names itself. `header: ''` IS distinguishable and is
+  //      fixed; an earlier version of this note said the whole case was
+  //      unfixable "because the only remaining name source is `column.id`",
+  //      which the fix for it disproved.
   const namedByLabel = !rendersText && Boolean(column.visibilityLabel);
   /** A string header that renders nothing — the one no-content case we can prove. */
   const emptyStringHeader = plainHeader && !rendersText && !column.visibilityLabel;
