@@ -470,13 +470,18 @@ describe('batch progress and failed rows reach assistive tech (#502)', () => {
     // Rendered IN FLIGHT first, then settled. Asserting on a settled mount
     // pinned the defect instead of the fix: the region has to have watched the
     // transfer to have anything to report about it.
+    // The SAME File objects across both states. A controlled consumer updates
+    // `status` on entries it already holds; it does not re-read the file. The
+    // guard keys on the File instance, so a test that rebuilt them was
+    // modelling something no consumer does.
+    const [fa, fb] = [file('a.txt'), file('b.txt')];
     const inFlight: FileEntry[] = [
-      { id: '1', file: file('a.txt'), status: 'uploading' },
-      { id: '2', file: file('b.txt'), status: 'uploading' },
+      { id: '1', file: fa, status: 'uploading' },
+      { id: '2', file: fb, status: 'uploading' },
     ];
     const settled: FileEntry[] = [
-      { id: '1', file: file('a.txt'), status: 'done' },
-      { id: '2', file: file('b.txt'), status: 'error', error: 'boom' },
+      { id: '1', file: fa, status: 'done' },
+      { id: '2', file: fb, status: 'error', error: 'boom' },
     ];
     const { container, rerender } = render(
       <FileUpload files={inFlight} onFilesAdded={noop} onFileRemove={noop} />,
@@ -487,16 +492,37 @@ describe('batch progress and failed rows reach assistive tech (#502)', () => {
     await waitFor(() => expect(region!.textContent).toBe('Uploaded: 1 / 2. Failed: 1.'));
   });
 
+  it('stays silent when the next entity reuses the same file ids', async () => {
+    // Ids belong to the consumer, and one numbering them per entity hands the
+    // next entity the same ones. Keying the guard on ids let entity B inherit
+    // entity A's flag and announce its pre-existing attachments — the fourth
+    // defect in this guard and the third of that shape. It keys on the File
+    // instance instead, which a consumer cannot collide.
+    const fa = file('a.txt');
+    const up: FileEntry[] = [{ id: 'f1', file: fa, status: 'uploading' }];
+    const done: FileEntry[] = [{ id: 'f1', file: fa, status: 'done' }];
+    const nextEntity: FileEntry[] = [{ id: 'f1', file: file('z.txt'), status: 'done' }];
+    const { container, rerender } = render(
+      <FileUpload files={up} onFilesAdded={noop} onFileRemove={noop} />,
+    );
+    const region = container.querySelector('[role="status"]');
+    rerender(<FileUpload files={done} onFilesAdded={noop} onFileRemove={noop} />);
+    await waitFor(() => expect(region!.textContent).toBe('Uploaded: 1 / 1.'));
+    rerender(<FileUpload files={nextEntity} onFilesAdded={noop} onFileRemove={noop} />);
+    await waitFor(() => expect(region!.textContent).toBe(''));
+  });
+
   it('does not report an upload outcome when the last in-flight row is removed', async () => {
     // A deletion is not a completed transfer. Recording the whole batch as
     // "seen" meant the settled sibling kept the flag alive, so removing the
     // uploading row announced "Uploaded: 1 / 1" for something that never
     // finished.
+    const fa = file('a.txt');
     const mixed: FileEntry[] = [
-      { id: 'a', file: file('a.txt'), status: 'done' },
+      { id: 'a', file: fa, status: 'done' },
       { id: 'b', file: file('b.txt'), status: 'uploading' },
     ];
-    const afterRemoval: FileEntry[] = [{ id: 'a', file: file('a.txt'), status: 'done' }];
+    const afterRemoval: FileEntry[] = [{ id: 'a', file: fa, status: 'done' }];
     const { container, rerender } = render(
       <FileUpload files={mixed} onFilesAdded={noop} onFileRemove={noop} />,
     );
@@ -511,8 +537,9 @@ describe('batch progress and failed rows reach assistive tech (#502)', () => {
     // files were never in flight here, so nothing may be announced — a boolean
     // flag reset only on empty carried across the swap and announced B's
     // pre-existing attachments.
-    const aInFlight: FileEntry[] = [{ id: 'a1', file: file('a.txt'), status: 'uploading' }];
-    const aDone: FileEntry[] = [{ id: 'a1', file: file('a.txt'), status: 'done' }];
+    const fa = file('a.txt');
+    const aInFlight: FileEntry[] = [{ id: 'a1', file: fa, status: 'uploading' }];
+    const aDone: FileEntry[] = [{ id: 'a1', file: fa, status: 'done' }];
     const bDone: FileEntry[] = [
       { id: 'b1', file: file('b.txt'), status: 'done' },
       { id: 'b2', file: file('c.txt'), status: 'done' },
@@ -531,8 +558,9 @@ describe('batch progress and failed rows reach assistive tech (#502)', () => {
     // The flag has to RESET, or every later settled array announces. Emptying
     // the list is the reset point, which is what a controlled parent does
     // between transfers.
-    const inFlight: FileEntry[] = [{ id: '1', file: file('a.txt'), status: 'uploading' }];
-    const done: FileEntry[] = [{ id: '1', file: file('a.txt'), status: 'done' }];
+    const fa = file('a.txt');
+    const inFlight: FileEntry[] = [{ id: '1', file: fa, status: 'uploading' }];
+    const done: FileEntry[] = [{ id: '1', file: fa, status: 'done' }];
     const other: FileEntry[] = [{ id: '9', file: file('z.txt'), status: 'done' }];
     const { container, rerender } = render(
       <FileUpload files={inFlight} onFilesAdded={noop} onFileRemove={noop} />,

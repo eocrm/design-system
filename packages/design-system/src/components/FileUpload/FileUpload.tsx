@@ -330,11 +330,26 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
   // attachments. That is the same defect this guard exists to close, surviving
   // on the prop-change path. Announcing requires the batch on screen to be one
   // this component actually watched.
-  const seenInFlight = useRef<Set<string>>(new Set());
-  const ids = files.map((f) => f.id).join('\u0000');
+  // Keyed on the FILE OBJECT, not the id. Ids are the consumer's, and a
+  // consumer numbering them per entity — `f1`, `f2` — hands the next entity
+  // the same ones, which inherited the flag and announced its pre-existing
+  // attachments. That is the fourth defect in this guard and the third of the
+  // same shape, so it now keys on something the consumer cannot collide: the
+  // `File` instance itself. A WeakSet also fails SAFE — a consumer that
+  // rebuilds `File` objects per render simply never matches, and silence is
+  // the harmless direction.
+  const seenInFlight = useRef<WeakSet<File>>(new WeakSet());
+  // A signature that actually changes when the BATCH changes. Ids alone did
+  // not: swapping to another entity whose file has the same id, count and
+  // status left every dependency identical, so the effect never re-ran and the
+  // region kept the previous entity's text — the guard was correct and never
+  // got to run. Name and size distinguish the files behind equal ids.
+  const signature = files
+    .map((f) => `${f.id}:${f.file.name}:${f.file.size}:${f.status}`)
+    .join('\u0000');
   useEffect(() => {
     if (total === 0) {
-      seenInFlight.current = new Set();
+      seenInFlight.current = new WeakSet();
       setBatchStatus('');
       return;
     }
@@ -345,8 +360,8 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
     // region stays silent.
     if (inFlight)
       for (const f of files)
-        if (f.status !== 'done' && f.status !== 'error') seenInFlight.current.add(f.id);
-    const watched = files.some((f) => seenInFlight.current.has(f.id));
+        if (f.status !== 'done' && f.status !== 'error') seenInFlight.current.add(f.file);
+    const watched = files.some((f) => seenInFlight.current.has(f.file));
     setBatchStatus(
       inFlight
         ? t('fileUpload.batchUploading', { done: settled, total })
@@ -354,10 +369,10 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
           ? t('fileUpload.batchSettled', { done: total - failed, total, failed })
           : '',
     );
-    // `ids` rather than `files`: a controlled parent commonly passes a new
-    // array identity for the same batch on every render.
+    // `signature` rather than `files`: a controlled parent commonly passes a
+    // new array identity for the same batch on every render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [inFlight, settled, total, failed, ids, t]);
+  }, [inFlight, settled, total, failed, signature, t]);
 
   const showDropzone = multiple || files.length === 0;
   // In single mode the implicit cap is 1; multi mode uses maxFiles (Infinity if not set).
