@@ -46,13 +46,17 @@ const components = allComponentDirs.filter((name) => !name.startsWith('_'));
  * are BLANKED rather than removed so every other character keeps its offset
  * and failure line numbers stay right.
  */
-const stripComments = (code: string) => {
+const stripComments = (code: string, tsx = true) => {
   const sourceFile = ts.createSourceFile(
     'probe.tsx',
     code,
     ts.ScriptTarget.Latest,
     true,
-    ts.ScriptKind.TSX,
+    // A `.ts` file parsed as TSX makes `<T>(x: T) => x` a syntax error, and
+    // the parse tripwire then fails the whole file with three diagnostics and
+    // no filename. Red rather than silent, but a cryptic outage for whoever
+    // writes the next generic helper.
+    tsx ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
   );
   // Bytes covered by a literal or by JSX text, where `//` and `/*` are content.
   const literal = new Uint8Array(code.length);
@@ -203,7 +207,7 @@ describe('library structure', () => {
 describe('transient state does not rely on aria-busy alone', () => {
   const sources = allSources().map(({ label, code }) => ({
     label,
-    code: stripComments(code),
+    code: stripComments(code, label.endsWith('.tsx')),
   }));
 
   const withAriaBusy = sources.filter(({ code }) => /aria-busy=/.test(code));
@@ -219,6 +223,12 @@ describe('transient state does not rely on aria-busy alone', () => {
     // what must be reachable instead.
     const labels = sources.map((s) => s.label);
     expect(labels).toContain('RichText/engine/renderDoc.tsx'); // nested directory
+    // A `.ts` file too. Reverting the scope to `.tsx` dropped 399 tests
+    // SILENTLY — every `.ts` case of this gate and of the contrast binding —
+    // because all three coverage guards named only `.tsx` paths. Exactly the
+    // failure the "name files, not counts" note claims to have solved; the
+    // guard never followed the scope it guards.
+    expect(labels).toContain('Select/emptyStateText.ts');
     expect(labels).toContain('Badge/Badge.tsx'); // ordinary component
     expect(labels.every((l) => !l.includes('.test.'))).toBe(true);
     expect(sources.length).toBeGreaterThan(50);
@@ -433,6 +443,12 @@ describe('user-facing strings go through the i18n provider', () => {
     // what must be reachable instead.
     const labels = sources.map((s) => s.label);
     expect(labels).toContain('RichText/engine/renderDoc.tsx'); // nested directory
+    // A `.ts` file too. Reverting the scope to `.tsx` dropped 399 tests
+    // SILENTLY — every `.ts` case of this gate and of the contrast binding —
+    // because all three coverage guards named only `.tsx` paths. Exactly the
+    // failure the "name files, not counts" note claims to have solved; the
+    // guard never followed the scope it guards.
+    expect(labels).toContain('Select/emptyStateText.ts');
     expect(labels).toContain('Badge/Badge.tsx'); // ordinary component
     expect(labels.every((l) => !l.includes('.test.'))).toBe(true);
     expect(sources.length).toBeGreaterThan(50);
@@ -448,12 +464,15 @@ describe('user-facing strings go through the i18n provider', () => {
     // heuristics existed to paper over: JSX TEXT, which the previous docblock
     // conceded it never read while claiming the exclusion-derived attribute
     // set had addressed it.
+    // ScriptKind by extension, for the same reason `stripComments` does it: a
+    // `.ts` file parsed as TSX turns `<T>(x: T) => x` into a syntax error.
+    const isTsx = _label.endsWith('.tsx');
     const sourceFile = ts.createSourceFile(
-      'probe.tsx',
+      isTsx ? 'probe.tsx' : 'probe.ts',
       code,
       ts.ScriptTarget.Latest,
       true,
-      ts.ScriptKind.TSX,
+      isTsx ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
     );
 
     const isKey = (lit: string) => /^[a-z][a-zA-Z]*\.[a-zA-Z.]+$/.test(lit);
@@ -615,10 +634,21 @@ describe('user-facing strings go through the i18n provider', () => {
         // terminal `.`/`!`/`?`/`…` is what a rendered sentence has and a
         // format string, token list or CSS value does not — it also makes the
         // leading-letter and call-shape clauses unnecessary.
-        for (const lit of found.filter(
-          (l) => !isKey(l) && /[.!?…]$/.test(l.trim()) && /\s/.test(l.trim()),
-        ))
-          if (isEnglish(lit)) offenders.push(`return: "${lit}"`);
+        // Judged as a SET, like the attribute and children paths. Per-literal
+        // reporting named only the half clearing the bar, so
+        // `c ? 'No results found.' : 'Nothing at all'` listed the first and
+        // said nothing about the second — route that one through `t()` and the
+        // gate goes green with the other still shipped. Same defect the
+        // children path already had fixed.
+        //
+        // No whitespace requirement: `'Loading…'` and `'Saving…'` carry the
+        // stop and no space, and "default messages for loading" is #492's own
+        // named surface. Three letters instead, which also picks up the tail
+        // of an interpolated sentence.
+        const copy = found.filter(
+          (l) => !isKey(l) && /[.!?…]$/.test(l.trim()) && /[A-Za-z]{3}/.test(l),
+        );
+        if (copy.some(isEnglish)) for (const lit of copy) offenders.push(`return: "${lit}"`);
       }
       // CHILDREN, in BOTH syntactic positions. Reading only `ts.isJsxText`
       // read the one position this library never uses: all 24 visible-text
@@ -685,9 +715,11 @@ describe('user-facing strings go through the i18n provider', () => {
  * WCAG's own thresholds — see the note at WCAG_THRESHOLDS for why that is a
  * trade rather than a fix.
  *
- * Scope: `.tokens.scss` and `.module.scss`. Ratios in `.ts`/`.tsx` prose are
- * not forced — binding a number to its pair needs the author's help, and a
- * gate demanding annotation of arbitrary sentences is gamed by rewording.
+ * Scope: `.tokens.scss`, `.module.scss` and `.ts` — the last because #493
+ * names `RichText/engine/colorMarks.ts` by path, so the gate written to close
+ * that issue could not read one of the files it lists. `.tsx` prose stays
+ * unforced: binding a number to its pair needs the author's help, and a gate
+ * demanding annotation of arbitrary sentences is gamed by rewording.
  */
 describe('stated contrast ratios still hold', () => {
   function literal(name: string, dark: boolean, seen: string[] = []): string | undefined {
