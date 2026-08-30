@@ -111,6 +111,19 @@ const stripComments = (code: string, tsx = true) => {
 // re-export gate while the component was unimportable from the package
 // entry — tests green, consumer build broken, which is the exact failure
 // Hard rule 5 exists for.
+/** Every non-test file under a directory, at any depth. */
+const allFilesUnder = (root: string): { label: string; code: string }[] => {
+  const walk = (dir: string, prefix: string): { label: string; code: string }[] =>
+    readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) return walk(full, `${prefix}${entry.name}/`);
+      return entry.name.includes('.test.')
+        ? []
+        : [{ label: `${prefix}${entry.name}`, code: readFileSync(full, 'utf-8') }];
+    });
+  return walk(root, '');
+};
+
 /**
  * Every non-test `.tsx` under `components/`, at any depth, in ONE pass.
  *
@@ -748,18 +761,13 @@ describe('stated contrast ratios still hold', () => {
   // never reached `RichText/engine/colorMarks.ts`, which #493 names by path as
   // one of the files still stating an unscoped ratio — so the gate written to
   // close that issue could not see one of the files the issue lists.
-  const files = allSources()
-    .filter(({ label }) => /\.(tokens|module)\.scss$|\.ts$/.test(label))
-    .concat(
-      components.flatMap((name) =>
-        readdirSync(join(componentsDir, name))
-          .filter((f) => f.endsWith('.scss'))
-          .map((f) => ({
-            label: `${name}/${f}`,
-            code: readFileSync(join(componentsDir, name, f), 'utf-8'),
-          })),
-      ),
-    );
+  // ONE walk for both halves. The comment above used to claim "the SAME
+  // recursive walk the other gates use", true only of the `.ts` half — the
+  // `.scss` half kept a flat per-component readdir, so `_internal/*.scss` was
+  // invisible to it, the same blind spot closed twice already elsewhere.
+  const files = allFilesUnder(componentsDir).filter(({ label }) =>
+    /\.(tokens|module)\.scss$|\.ts$/.test(label),
+  );
 
   const annotations = files.flatMap(({ label, code }) =>
     [
@@ -878,9 +886,15 @@ describe('stated contrast ratios still hold', () => {
         rest = rest.slice(close + 2);
       }
     }
-    // Integers included — `// white on black is 21:1` and `// this pair is 7:1`
-    // were exempt from binding entirely and rotted freely, because the pattern
-    // demanded a decimal point.
+    // A DECIMAL POINT is required again. Admitting integers was right while
+    // the scan was `.scss` only, where every integer ratio in the repo is a
+    // WCAG threshold or `1:1` alignment. Extending to `.ts` multiplied the
+    // comment surface roughly tenfold and brought ordinary prose with it:
+    // `// the tile keeps a 2:1 aspect` and a `Foo.tsx:12:1` line reference both
+    // demand "annotate the pair". A measured contrast figure essentially never
+    // lands on a whole number, so the integer half was buying binding for
+    // claims that do not exist while charging false alarms for prose that
+    // does.
     //
     // WCAG's own thresholds are then exempt BY VALUE. They are normative
     // constants, not measurements of a pair, so nobody can annotate them —
@@ -901,9 +915,7 @@ describe('stated contrast ratios still hold', () => {
     // scan reached `.ts` files. Without the leading one, any `N` ending in the
     // digits of a ratio would match too.
     const ratios = (l: string) =>
-      [...l.matchAll(/\b(\d+(?:\.\d+)?):1\b/g)]
-        .map((m) => m[1]!)
-        .filter((r) => !WCAG_THRESHOLDS.has(r));
+      [...l.matchAll(/\b(\d+\.\d+):1\b/g)].map((m) => m[1]!).filter((r) => !WCAG_THRESHOLDS.has(r));
     // Built from the ANNOTATION PATTERN, not from whole annotation lines — a
     // bogus figure written after a real annotation on the same line otherwise
     // landed in this set and exempted itself.
