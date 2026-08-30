@@ -139,6 +139,9 @@ const countTsxOnDisk = (dir: string = componentsDir): number =>
 const componentSources = (name: string): { label: string; code: string }[] => {
   const walk = (dir: string, prefix: string): { label: string; code: string }[] =>
     readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+      // The `_` check is defensive: no component has an underscore-prefixed
+      // SUBdirectory today. `_internal` is a top-level entry the callers now
+      // pass in deliberately.
       if (entry.isDirectory())
         return entry.name.startsWith('_')
           ? []
@@ -507,9 +510,12 @@ describe('user-facing strings go through the i18n provider', () => {
     };
 
     const literalsIn = (node: ts.Node, out: string[]) => {
-      // Stop at a nested JSX boundary — `visit` walks the whole tree anyway,
-      // so descending collected the nested element's PROP VALUES ('ghost',
-      // 'xs') as if they were rendered text, failing 30 files at once.
+      // Defensive only, and currently UNREACHABLE: `literalsIn` has one caller,
+      // a watched attribute's initializer, and none of `aria-*`/`placeholder`/
+      // `title`/`alt` can hold JSX. The "failing 30 files at once" it used to
+      // cite happened in an intermediate where this also served the child
+      // branch; `renderedLiterals` took that job. Kept because giving it back
+      // a JSX-bearing caller is a one-line change.
       if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node) || ts.isJsxFragment(node))
         return;
       if (

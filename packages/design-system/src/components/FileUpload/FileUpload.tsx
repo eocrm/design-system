@@ -338,7 +338,14 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
       setBatchStatus('');
       return;
     }
-    if (inFlight) for (const f of files) seenInFlight.current.add(f.id);
+    // Only the files actually IN FLIGHT, not the whole batch. Recording all of
+    // them meant removing the last uploading row left a settled sibling still
+    // "seen", so a deletion announced "Uploaded: 1 / 1" for a transfer that
+    // never finished. Now the removal takes the watched id with it and the
+    // region stays silent.
+    if (inFlight)
+      for (const f of files)
+        if (f.status !== 'done' && f.status !== 'error') seenInFlight.current.add(f.id);
     const watched = files.some((f) => seenInFlight.current.has(f.id));
     setBatchStatus(
       inFlight

@@ -487,6 +487,25 @@ describe('batch progress and failed rows reach assistive tech (#502)', () => {
     await waitFor(() => expect(region!.textContent).toBe('Uploaded: 1 / 2. Failed: 1.'));
   });
 
+  it('does not report an upload outcome when the last in-flight row is removed', async () => {
+    // A deletion is not a completed transfer. Recording the whole batch as
+    // "seen" meant the settled sibling kept the flag alive, so removing the
+    // uploading row announced "Uploaded: 1 / 1" for something that never
+    // finished.
+    const mixed: FileEntry[] = [
+      { id: 'a', file: file('a.txt'), status: 'done' },
+      { id: 'b', file: file('b.txt'), status: 'uploading' },
+    ];
+    const afterRemoval: FileEntry[] = [{ id: 'a', file: file('a.txt'), status: 'done' }];
+    const { container, rerender } = render(
+      <FileUpload files={mixed} onFilesAdded={noop} onFileRemove={noop} />,
+    );
+    const region = container.querySelector('[role="status"]');
+    await waitFor(() => expect(region!.textContent).toBe('Uploading: 1 / 2'));
+    rerender(<FileUpload files={afterRemoval} onFilesAdded={noop} onFileRemove={noop} />);
+    await waitFor(() => expect(region!.textContent).toBe(''));
+  });
+
   it('stays silent when the batch is swapped for another entity without emptying', async () => {
     // A form switching entity on a shared FileUpload instance. Entity B's
     // files were never in flight here, so nothing may be announced — a boolean
