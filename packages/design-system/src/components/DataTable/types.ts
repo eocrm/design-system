@@ -104,12 +104,16 @@ export interface ColumnDef<T> {
    * is not something to read aloud, so it is used for nothing — not the
    * header, not the drag grip, not the resize handle.
    *
-   * What the header then announces is NOT something this library can promise.
-   * `aria-labelledby` pointing at a span that computes to nothing may leave the
-   * header unnamed, or may fall through to name-from-content and pick up the
-   * cell's controls, depending on the engine — three reviewers measured it and
-   * disagreed. Either way it is not a name you chose. Let your axe run tell
-   * you: `empty-table-header` computes the real accessible name.
+   * What such a header announces, measured off Chromium's AX tree: it falls
+   * through to NAME-FROM-CONTENT, because an `aria-labelledby` resolving to no
+   * text is marked invalid rather than treated as a name. So the cell's own
+   * controls name it — "Drag to reorder this column", or under `collapseBelow`
+   * the resize handle's live pixel width. `header: ''` is special-cased to a
+   * generic label so the width cannot win; a ReactNode that renders nothing is
+   * indistinguishable from one that names itself, so it is not.
+   *
+   * None of those is a name you chose. Set this prop on every text-less
+   * header; your axe run flags what is left via `empty-table-header`.
    */
   visibilityLabel?: string;
   /**

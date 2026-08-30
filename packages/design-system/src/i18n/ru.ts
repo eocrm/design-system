@@ -131,6 +131,7 @@ export const ru: Messages = {
     loading: 'Загрузка строк…',
     resizeColumn: (params) => `Изменить ширину столбца ${params.name}`,
     resizeColumnUnnamed: 'Изменить ширину этого столбца',
+    unlabelledColumn: 'Столбец без названия',
     loaded: 'Строки загружены',
     loadedEmpty: 'Строки не загружены',
   },

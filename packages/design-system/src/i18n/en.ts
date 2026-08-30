@@ -129,6 +129,7 @@ export const en: Messages = {
     loading: 'Loading rows…',
     resizeColumn: (params) => `Resize ${params.name} column`,
     resizeColumnUnnamed: 'Resize this column',
+    unlabelledColumn: 'Unlabelled column',
     loaded: 'Rows loaded',
     loadedEmpty: 'No rows loaded',
   },

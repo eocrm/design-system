@@ -2411,6 +2411,26 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
       expect(th).toHaveAccessibleName('Actions');
     });
 
+    it('names an empty-string header rather than letting the resize width win', () => {
+      // Chromium treats an `aria-labelledby` resolving to no text as INVALID
+      // and falls back to contents — so under `collapseBelow` this column
+      // announced "200px", the resize handle's aria-valuetext, and changed as
+      // the user dragged. Measured off Chromium's AX tree via CDP; Playwright
+      // and jsdom each compute names differently and neither shows it.
+      const cols: ColumnDef<Row>[] = [
+        { id: 'actions', header: '', cell: () => 'x' },
+        { id: 'other', header: 'Other', cell: () => 'y' },
+      ];
+      function Harness() {
+        const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+        return <DataTable instance={instance} aria-label="t" collapseBelow="md" />;
+      }
+      render(<Harness />);
+      const th = screen.getAllByRole('columnheader')[0]!;
+      expect(th.getAttribute('aria-label')).toBe('Unlabelled column');
+      expect(th.getAttribute('aria-labelledby')).toBeNull();
+    });
+
     it('an icon-only header is named by visibilityLabel', () => {
       const th = harness({
         id: 'starred_col',

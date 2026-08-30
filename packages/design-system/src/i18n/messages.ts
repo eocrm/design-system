@@ -264,6 +264,8 @@ export interface Messages {
     resizeColumn: (params: { name: string }) => string;
     /** Same control on a column with no label of its own — never speaks `column.id`. */
     resizeColumnUnnamed: string;
+    /** Accessible name for a column header whose author gave it no label. */
+    unlabelledColumn: string;
     /**
      * Announced when a load resolves to nothing. Distinct from `empty`, which
      * is the VISIBLE empty-state copy: reusing that string put the same text

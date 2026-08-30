@@ -180,6 +180,8 @@ export function HeaderCell<T>({
   //      either), and not fixable here: the only remaining name source is
   //      `column.id`. Set `visibilityLabel` on non-text headers.
   const namedByLabel = !rendersText && Boolean(column.visibilityLabel);
+  /** A string header that renders nothing — the one no-content case we can prove. */
+  const emptyStringHeader = plainHeader && !rendersText && !column.visibilityLabel;
   // No dev warning here, deliberately. One was added and removed within the
   // hour: having deleted the measurement, nothing static can distinguish a
   // ReactNode header that names itself (`<strong>Revenue</strong>`) from one
@@ -281,8 +283,33 @@ export function HeaderCell<T>({
       // point at the label span so the resize handle is not concatenated into
       // the name. `visibilityLabel` overrides it only for a ReactNode header,
       // where the author has explicitly supplied the text they want spoken.
-      aria-labelledby={namedByLabel ? undefined : labelId}
-      aria-label={namedByLabel ? column.visibilityLabel : undefined}
+      // `aria-labelledby` pointing at a span that resolves to no text is NOT a
+      // way to leave a header unnamed: Chromium marks that source `invalid`
+      // and hands naming back to CONTENTS, which in this cell means the drag
+      // grip and the resize handle. Measured off Chromium's own AX tree via
+      // CDP — and the reason three reviewers got three answers is that
+      // Playwright and jsdom each ship their own accname implementation, so
+      // `getByRole({ name })` does not measure the browser.
+      //
+      // Contents winning is CORRECT for a ReactNode that names itself, which
+      // is how a select-all checkbox header works. It is wrong only where we
+      // know statically there is no content to win with — `header: ''` — and
+      // there a `collapseBelow` table announced "200px", the resize handle's
+      // `aria-valuetext`, changing as the user dragged. That case takes an
+      // explicit name, which wins in every implementation and makes the fix
+      // engine-independent even though the bug was not.
+      //
+      // A ReactNode that names NOTHING is the residual: indistinguishable from
+      // one that names itself without the runtime measurement this component
+      // deleted, so it still falls to contents. Set `visibilityLabel`.
+      aria-labelledby={namedByLabel || emptyStringHeader ? undefined : labelId}
+      aria-label={
+        namedByLabel
+          ? column.visibilityLabel
+          : emptyStringHeader
+            ? t('dataTable.unlabelledColumn')
+            : undefined
+      }
       onClick={sortable ? () => instance.toggleSort(column.id) : undefined}
       className={clsx(
         styles.headerCell,
