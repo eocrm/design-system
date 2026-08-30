@@ -10,6 +10,7 @@ import {
 } from '@floating-ui/react-dom';
 import clsx from 'clsx';
 import { useTranslation } from '../../i18n/useTranslation';
+import { emptyStateText } from './emptyStateText';
 import { useSelectContext, type SelectContextValue } from './context';
 import { mergeRefs } from '../_internal/refs';
 import { overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
@@ -64,9 +65,7 @@ export function Listbox() {
         : ctx.loading && ctx.rows.length === 0
           ? t('select.statusLoading')
           : ctx.rows.length === 0 && emptyIsSettled
-            ? ctx.query && ctx.query.trim() !== ''
-              ? t('select.noResultsFor', { query: ctx.query })
-              : `${t('select.noOptions')}.`
+            ? emptyStateText(t, ctx.query)
             : '',
     );
     // `ctx.error` is in the deps deliberately. It happens to work without it

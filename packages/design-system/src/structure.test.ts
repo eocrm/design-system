@@ -211,11 +211,6 @@ describe('transient state does not rely on aria-busy alone', () => {
   it('found files to check', () => {
     // Guards the guard: a rename of the attribute or a restructure of the tree
     // would otherwise make every assertion below vacuously pass.
-    // COVERAGE, not a count. `> 50` is what the flat-readdir version passed
-    // while missing a nested directory entirely — this file's own docblock
-    // says so, and then kept the count. These two labels are the ones the
-    // recursion and the `_internal` inclusion exist for: reverting either
-    // leaves 90+ sources and a green count.
     // COVERAGE by naming files, not by counting them. A count needed a second
     // walker to compare against, and the two disagreed on `_`-prefixed
     // subdirectories and on files directly under `components/` — rejecting
@@ -423,11 +418,6 @@ describe('user-facing strings go through the i18n provider', () => {
   const sources = allSources();
 
   it('found sources to check', () => {
-    // COVERAGE, not a count. `> 50` is what the flat-readdir version passed
-    // while missing a nested directory entirely — this file's own docblock
-    // says so, and then kept the count. These two labels are the ones the
-    // recursion and the `_internal` inclusion exist for: reverting either
-    // leaves 90+ sources and a green count.
     // COVERAGE by naming files, not by counting them. A count needed a second
     // walker to compare against, and the two disagreed on `_`-prefixed
     // subdirectories and on files directly under `components/` — rejecting

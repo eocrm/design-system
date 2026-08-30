@@ -1,4 +1,5 @@
 import { useTranslation } from '../../i18n/useTranslation';
+import { emptyStateText } from './emptyStateText';
 import styles from './Select.module.scss';
 
 /**
@@ -32,11 +33,7 @@ export function Empty({ query }: EmptyProps) {
     <li className={styles.stateRow} role="presentation">
       {/* aria-hidden for the same reason as the error row: the Listbox status
           region renders this same text, and both are in the tree at once. */}
-      <span aria-hidden="true">
-        {query && query.trim() !== ''
-          ? t('select.noResultsFor', { query })
-          : `${t('select.noOptions')}.`}
-      </span>
+      <span aria-hidden="true">{emptyStateText(t, query)}</span>
     </li>
   );
 }
