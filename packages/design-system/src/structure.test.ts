@@ -108,49 +108,31 @@ const stripComments = (code: string) => {
 // entry — tests green, consumer build broken, which is the exact failure
 // Hard rule 5 exists for.
 /**
- * Every non-test `.tsx` under `components/`, counted straight off the disk.
+ * Every non-test `.tsx` under `components/`, at any depth, in ONE pass.
  *
- * Deliberately does NOT share a code path with `componentSources`, so it fails
- * if that walker stops recursing OR stops reading a directory. A coverage
- * check built from the thing it checks is not one.
- */
-const countTsxOnDisk = (dir: string = componentsDir): number =>
-  readdirSync(dir, { withFileTypes: true }).reduce(
-    (n, e) =>
-      n +
-      (e.isDirectory()
-        ? countTsxOnDisk(join(dir, e.name))
-        : e.name.endsWith('.tsx') && !e.name.includes('.test.')
-          ? 1
-          : 0),
-    0,
-  );
-
-/**
- * Every `.tsx` under a component, at ANY depth.
+ * Previously two walkers had to agree on skip rules by hand — one driven off a
+ * caller-supplied directory list, one counting straight off the disk — and
+ * they diverged in two ways that made the count gate reject CORRECT code: a
+ * `_`-prefixed SUBdirectory holding a `.tsx` (skipped by one, counted by the
+ * other), and a `.tsx` sitting directly under `components/` (counted, never
+ * walked). Both produced `expected 191 to be 192` naming neither the file nor
+ * the cause.
  *
- * The flat `readdirSync` these gates used missed
- * `RichText/engine/renderDoc.tsx` — 395 lines returning JSX, invisible to the
- * Rule 9 gate, the aria-busy gate and the parse tripwire. `expect(sources.length
- * > 50)` is a count, not a coverage check, and would never have noticed.
- * Underscore-prefixed SUBdirectories are still skipped — no component has one
- * — but the callers pass `allComponentDirs`, so `_internal` itself is read.
+ * One pass removes the disagreement rather than patching it. `_internal` is
+ * READ — it is shipped library code and Hard rules 9 and 10 apply to it — and
+ * the underscore filter survives only on `components`, which serves the
+ * structural four-file rules where a private helper genuinely owes nothing.
  */
-const componentSources = (name: string): { label: string; code: string }[] => {
+const allSources = (): { label: string; code: string }[] => {
   const walk = (dir: string, prefix: string): { label: string; code: string }[] =>
     readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
-      // The `_` check is defensive: no component has an underscore-prefixed
-      // SUBdirectory today. `_internal` is a top-level entry the callers now
-      // pass in deliberately.
-      if (entry.isDirectory())
-        return entry.name.startsWith('_')
-          ? []
-          : walk(join(dir, entry.name), `${prefix}${entry.name}/`);
+      const full = join(dir, entry.name);
+      if (entry.isDirectory()) return walk(full, `${prefix}${entry.name}/`);
       return entry.name.endsWith('.tsx') && !entry.name.includes('.test.')
-        ? [{ label: `${prefix}${entry.name}`, code: readFileSync(join(dir, entry.name), 'utf-8') }]
+        ? [{ label: `${prefix}${entry.name}`, code: readFileSync(full, 'utf-8') }]
         : [];
     });
-  return walk(join(componentsDir, name), `${name}/`);
+  return walk(componentsDir, '');
 };
 
 const indexContent = stripComments(readFileSync(indexPath, 'utf-8'));
@@ -219,9 +201,10 @@ describe('library structure', () => {
 });
 
 describe('transient state does not rely on aria-busy alone', () => {
-  const sources = allComponentDirs.flatMap((name) =>
-    componentSources(name).map(({ label, code }) => ({ label, code: stripComments(code) })),
-  );
+  const sources = allSources().map(({ label, code }) => ({
+    label,
+    code: stripComments(code),
+  }));
 
   const withAriaBusy = sources.filter(({ code }) => /aria-busy=/.test(code));
 
@@ -233,19 +216,17 @@ describe('transient state does not rely on aria-busy alone', () => {
     // says so, and then kept the count. These two labels are the ones the
     // recursion and the `_internal` inclusion exist for: reverting either
     // leaves 90+ sources and a green count.
-    // COVERAGE, counted INDEPENDENTLY of the code under test. A `> 50` count
-    // is what the flat-readdir version passed while missing a whole directory,
-    // and asserting `allComponentDirs` contains `_internal` was no better — it
-    // reads a constant rather than what `sources` was built from, and stayed
-    // green when the inclusion was reverted to check.
-    //
-    // Precisely: this catches the recursion regression today, because
-    // `RichText/engine` has a file. It does NOT yet catch removing `_internal`
-    // from the scan, because that directory holds no `.tsx` — both sides of
-    // the count are equal and nothing can distinguish them. It starts catching
-    // it the moment `_internal` gains one, which is exactly when it matters.
-    expect(sources.length).toBe(countTsxOnDisk());
-    expect(sources.map((s) => s.label)).toContain('RichText/engine/renderDoc.tsx');
+    // COVERAGE by naming files, not by counting them. A count needed a second
+    // walker to compare against, and the two disagreed on `_`-prefixed
+    // subdirectories and on files directly under `components/` — rejecting
+    // correct code twice with a message naming neither the file nor the cause.
+    // With one walker there is nothing to disagree with, so the check names
+    // what must be reachable instead.
+    const labels = sources.map((s) => s.label);
+    expect(labels).toContain('RichText/engine/renderDoc.tsx'); // nested directory
+    expect(labels).toContain('Badge/Badge.tsx'); // ordinary component
+    expect(labels.every((l) => !l.includes('.test.'))).toBe(true);
+    expect(sources.length).toBeGreaterThan(50);
     expect(withAriaBusy.length).toBeGreaterThan(0);
   });
 
@@ -439,7 +420,7 @@ describe('user-facing strings go through the i18n provider', () => {
     'aria-keyshortcuts',
   ]);
 
-  const sources = allComponentDirs.flatMap(componentSources);
+  const sources = allSources();
 
   it('found sources to check', () => {
     // COVERAGE, not a count. `> 50` is what the flat-readdir version passed
@@ -447,19 +428,17 @@ describe('user-facing strings go through the i18n provider', () => {
     // says so, and then kept the count. These two labels are the ones the
     // recursion and the `_internal` inclusion exist for: reverting either
     // leaves 90+ sources and a green count.
-    // COVERAGE, counted INDEPENDENTLY of the code under test. A `> 50` count
-    // is what the flat-readdir version passed while missing a whole directory,
-    // and asserting `allComponentDirs` contains `_internal` was no better — it
-    // reads a constant rather than what `sources` was built from, and stayed
-    // green when the inclusion was reverted to check.
-    //
-    // Precisely: this catches the recursion regression today, because
-    // `RichText/engine` has a file. It does NOT yet catch removing `_internal`
-    // from the scan, because that directory holds no `.tsx` — both sides of
-    // the count are equal and nothing can distinguish them. It starts catching
-    // it the moment `_internal` gains one, which is exactly when it matters.
-    expect(sources.length).toBe(countTsxOnDisk());
-    expect(sources.map((s) => s.label)).toContain('RichText/engine/renderDoc.tsx');
+    // COVERAGE by naming files, not by counting them. A count needed a second
+    // walker to compare against, and the two disagreed on `_`-prefixed
+    // subdirectories and on files directly under `components/` — rejecting
+    // correct code twice with a message naming neither the file nor the cause.
+    // With one walker there is nothing to disagree with, so the check names
+    // what must be reachable instead.
+    const labels = sources.map((s) => s.label);
+    expect(labels).toContain('RichText/engine/renderDoc.tsx'); // nested directory
+    expect(labels).toContain('Badge/Badge.tsx'); // ordinary component
+    expect(labels.every((l) => !l.includes('.test.'))).toBe(true);
+    expect(sources.length).toBeGreaterThan(50);
   });
 
   it.each(sources.map(({ label, code }) => [label, code]))('%s', (_label, code) => {

@@ -20,9 +20,11 @@ export interface ErrorRowProps {
 /**
  * Default error-state row, rendered inside the listbox when an async
  * `loadOptions` request rejects. `role="presentation"` like its siblings —
- * it used to carry `role="alert"`, which is an `aria-required-children`
- * deviation inside a `role="listbox"` and was a third mechanism for one
- * concern (#495). The Retry button calls back
+ * it used to carry `role="alert"`, a third mechanism for one concern (#495).
+ * The `aria-required-children` framing that used to be here is dropped: see
+ * `messages.ts` — Chromium ignores these rows inside a `role="listbox"`
+ * regardless, so the argument rests on the region-and-text mounting together,
+ * which is enough on its own. The Retry button calls back
  * into the async hook's `retry()`, which bumps the retry token and
  * re-enters the debounced effect, so the refetch waits `debounceMs` like any
  * other query — the branch's own test has to advance timers after clicking it.

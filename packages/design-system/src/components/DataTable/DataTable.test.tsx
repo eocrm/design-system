@@ -2411,6 +2411,23 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
       expect(th).toHaveAccessibleName('Actions');
     });
 
+    it('names the sort control on an empty-string header too', () => {
+      // The `<th>` took "Unlabelled column" while the button INSIDE it stayed
+      // nameless — a focusable role="button" with no accessible name, and the
+      // span's own comment claimed it is named "on the one path where its
+      // content supplies none". This diff created a second such path.
+      const cols: ColumnDef<Row>[] = [
+        { id: 'actions', header: '', sortable: true, cell: () => 'x' },
+        { id: 'other', header: 'Other', cell: () => 'y' },
+      ];
+      function Harness() {
+        const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+        return <DataTable instance={instance} aria-label="t" />;
+      }
+      render(<Harness />);
+      expect(screen.getByRole('button', { name: 'Unlabelled column' })).toBeInTheDocument();
+    });
+
     it('names an empty-string header rather than letting the resize width win', () => {
       // Chromium treats an `aria-labelledby` resolving to no text as INVALID
       // and falls back to contents — so under `collapseBelow` this column

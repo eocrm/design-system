@@ -35,6 +35,8 @@ export interface UseAsyncOptionsReturn<T = unknown> {
   options: SelectOptions<T>;
   loading: boolean;
   error: Error | null;
+  /** The query `options` belongs to; `null` until the first request settles. */
+  loadedQuery: string | null;
   retry: () => void;
 }
 
@@ -60,6 +62,10 @@ export function useAsyncOptions<T = unknown>(
 
   const [options, setOptions] = useState<SelectOptions<T>>([] as SelectOptions<T>);
   const [loading, setLoading] = useState<boolean>(false);
+  // The query `options` actually belongs to, or null before the first settle.
+  // Callers cannot infer this from `loading`: it is false for the whole
+  // debounce window, during which `options` is still the PREVIOUS query's.
+  const [loadedQuery, setLoadedQuery] = useState<string | null>(null);
   const [error, setError] = useState<Error | null>(null);
   const [retryToken, setRetryToken] = useState<number>(0);
 
@@ -83,11 +89,13 @@ export function useAsyncOptions<T = unknown>(
         .then((next) => {
           if (ac.signal.aborted) return;
           setOptions(next);
+          setLoadedQuery(q);
           setLoading(false);
         })
         .catch((err) => {
           if (ac.signal.aborted) return;
           setError(err instanceof Error ? err : new Error(String(err)));
+          setLoadedQuery(q);
           setLoading(false);
         });
     },
@@ -120,5 +128,5 @@ export function useAsyncOptions<T = unknown>(
     setRetryToken((n) => n + 1);
   }, []);
 
-  return { options, loading, error, retry };
+  return { options, loading, error, retry, loadedQuery };
 }

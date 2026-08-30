@@ -8,9 +8,10 @@ import styles from './Select.module.scss';
  *
  * Non-interactive `<li role="presentation">` — purely visual. The
  * announcement comes from ONE live region the Select root owns; carrying
- * `aria-live` here discarded the `presentation` role (it is a global
- * attribute, so ARIA's conflict resolution wins) and exposed the row as a
- * list item inside a `role="listbox"`. See #495.
+ * `aria-live` here mounted the region together with its text, which most
+ * screen readers do not announce. See #495, and `messages.ts` for why the
+ * conflict-resolution half of the original explanation was dropped — it was
+ * spec-arguable but is not what Chromium does inside a `role="listbox"`.
  */
 export function Loading() {
   const t = useTranslation();

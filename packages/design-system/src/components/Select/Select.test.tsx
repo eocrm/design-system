@@ -968,6 +968,23 @@ describe('Select — async loadOptions', () => {
     });
   });
 
+  it('says nothing about emptiness before the first fetch has run', async () => {
+    // The debounce window is 300ms during which `loading` is FALSE and rows
+    // are []. Announcing on that said "No options." on every open, before
+    // loadOptions had been called even once, and "No results for X" about a
+    // search that had not run.
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const loadOptions = vi.fn(async () => [{ value: 'a', label: 'A' }]);
+    render(<Select searchable loadOptions={loadOptions} />);
+    await user.click(screen.getByRole('combobox'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(10);
+    });
+    const region = document.body.querySelector('[role="status"][aria-live="polite"]')!;
+    expect(loadOptions).not.toHaveBeenCalled();
+    expect(region.textContent).not.toMatch(/no options|no results/i);
+  });
+
   it('shows empty state when async result is []', async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     const loadOptions = vi.fn(async () => []);
@@ -1662,11 +1679,12 @@ describe('listbox state announces from one region, not three rows (#495)', () =>
   /** Rows are only reachable in their own state, so each assertion needs one. */
   function assertRowsArePresentational() {
     const listbox = screen.getByRole('listbox');
-    // `aria-live` is a GLOBAL attribute, so putting it on
-    // `<li role="presentation">` discarded the presentation role and exposed
-    // the row as a list item inside a listbox — an aria-required-children
-    // deviation. `role="alert"` on another row was the same deviation by a
-    // third route.
+    // ONE mechanism, not three. The rows used to carry `aria-live`, and one
+    // carried `role="alert"` — a region mounting together with its text, which
+    // most screen readers do not announce. (An earlier version of this comment
+    // added an `aria-required-children` argument; it was dropped after a
+    // reviewer measured Chromium ignoring these rows inside a `role="listbox"`
+    // either way. See messages.ts.)
     expect(listbox.querySelector('[aria-live]')).toBeNull();
     expect(listbox.querySelector('[role="alert"]')).toBeNull();
     for (const li of listbox.querySelectorAll('li')) {

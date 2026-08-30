@@ -492,6 +492,31 @@ describe('batch progress and failed rows reach assistive tech (#502)', () => {
     await waitFor(() => expect(region!.textContent).toBe('Uploaded: 1 / 2. Failed: 1.'));
   });
 
+  it('does not report an outcome when a SETTLED row is deleted', async () => {
+    // The sibling of the in-flight-removal case, and it survived that fix: a
+    // watched file remained, so the counts simply recomputed and deleting one
+    // of two finished uploads announced "Uploaded: 1 / 1." Nothing settled —
+    // the array just got shorter.
+    const [fx, fy] = [file('x.txt'), file('y.txt')];
+    const up: FileEntry[] = [
+      { id: 'x', file: fx, status: 'uploading' },
+      { id: 'y', file: fy, status: 'uploading' },
+    ];
+    const done: FileEntry[] = [
+      { id: 'x', file: fx, status: 'done' },
+      { id: 'y', file: fy, status: 'done' },
+    ];
+    const afterDelete: FileEntry[] = [{ id: 'y', file: fy, status: 'done' }];
+    const { container, rerender } = render(
+      <FileUpload files={up} onFilesAdded={noop} onFileRemove={noop} />,
+    );
+    const region = container.querySelector('[role="status"]');
+    rerender(<FileUpload files={done} onFilesAdded={noop} onFileRemove={noop} />);
+    await waitFor(() => expect(region!.textContent).toBe('Uploaded: 2 / 2.'));
+    rerender(<FileUpload files={afterDelete} onFilesAdded={noop} onFileRemove={noop} />);
+    await waitFor(() => expect(region!.textContent).toBe(''));
+  });
+
   it('stays silent when the next entity reuses the same file ids', async () => {
     // Ids belong to the consumer, and one numbering them per entity hands the
     // next entity the same ones. Keying the guard on ids let entity B inherit
@@ -561,7 +586,13 @@ describe('batch progress and failed rows reach assistive tech (#502)', () => {
     const fa = file('a.txt');
     const inFlight: FileEntry[] = [{ id: '1', file: fa, status: 'uploading' }];
     const done: FileEntry[] = [{ id: '1', file: fa, status: 'done' }];
-    const other: FileEntry[] = [{ id: '9', file: file('z.txt'), status: 'done' }];
+    // The SAME File, deliberately: re-added after the list was cleared. Two
+    // earlier versions of this test could not fail — one used an id never in
+    // the set, and once the guard keyed on File instances rather than ids, a
+    // different file made the reset irrelevant too. Only a file the component
+    // genuinely watched, returning already-settled, makes the reset the one
+    // thing standing between this and a false announcement.
+    const other: FileEntry[] = [{ id: '1', file: fa, status: 'done' }];
     const { container, rerender } = render(
       <FileUpload files={inFlight} onFilesAdded={noop} onFileRemove={noop} />,
     );

@@ -37,14 +37,24 @@ export function Listbox() {
   // Deferred by a tick so a listbox that OPENS already loading still
   // announces — mounting region and text together announces nothing.
   const [statusText, setStatusText] = useState('');
+  // Synchronous Select: emptiness is always a result. Async: only once the
+  // settled query matches the one on screen.
+  const emptyIsSettled = ctx.loadedQuery === undefined || ctx.loadedQuery === ctx.query;
   useEffect(() => {
     // Error included. Dropping `role="alert"` from the error row removed the
     // one Select announcement that actually worked — `alert` is specified to
     // announce content inserted together with its node, so it was not one of
     // the three broken mechanisms. Without this the region reset to '' on
     // rejection and the failure was silent.
-    // Empty included. "Nothing matched" is the most useful thing a Select can
-    // say — a keyboard user typing into a combobox gets no other signal that
+    // Empty included, but only once the emptiness is a RESULT. For an async
+    // Select, `loading` is false for the entire debounce window while the rows
+    // are still the previous query's — so this announced "No options." on every
+    // open before the first fetch started, and "No results for X" about a
+    // search that had not run, re-firing per keystroke because the
+    // interpolated query made each string distinct. A synchronous Select has
+    // no such window and announces immediately.
+    //
+    // "Nothing matched" is the most useful thing a Select can say — a keyboard user typing into a combobox gets no other signal that
     // the list went empty — and it was announced by nothing: the row carries
     // no live region and this one did not cover the state. Hard rule 10 wants
     // chosen silence written down, and this silence was not chosen.
@@ -53,7 +63,7 @@ export function Listbox() {
         ? t('select.loadFailed')
         : ctx.loading && ctx.rows.length === 0
           ? t('select.statusLoading')
-          : ctx.rows.length === 0
+          : ctx.rows.length === 0 && emptyIsSettled
             ? ctx.query && ctx.query.trim() !== ''
               ? t('select.noResultsFor', { query: ctx.query })
               : `${t('select.noOptions')}.`
@@ -63,7 +73,7 @@ export function Listbox() {
     // — a rejection also flips `loading` — but that is a coincidence of the
     // current hook, and there is no eslint in this repo to catch the day it
     // stops being true.
-  }, [ctx.error, ctx.loading, ctx.rows.length, ctx.query, t]);
+  }, [ctx.error, ctx.loading, ctx.rows.length, ctx.query, emptyIsSettled, t]);
   const inOverlay = useInOverlay(ctx.triggerRootRef, ctx.open);
   // #274: hosts yield Escape while we're open — our own capture/element
   // handler closes us on the same press instead of the Modal/Drawer.

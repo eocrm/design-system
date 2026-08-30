@@ -339,6 +339,8 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
   // rebuilds `File` objects per render simply never matches, and silence is
   // the harmless direction.
   const seenInFlight = useRef<WeakSet<File>>(new WeakSet());
+  /** Last counts this region reported, to tell a completion from a deletion. */
+  const lastAnnounced = useRef({ total: 0, settled: 0, failed: 0 });
   // A signature that actually changes when the BATCH changes. Ids alone did
   // not: swapping to another entity whose file has the same id, count and
   // status left every dependency identical, so the effect never re-ran and the
@@ -362,6 +364,23 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
       for (const f of files)
         if (f.status !== 'done' && f.status !== 'error') seenInFlight.current.add(f.file);
     const watched = files.some((f) => seenInFlight.current.has(f.file));
+    // A SHRINKING batch is a deletion, not a completion. Removing the last
+    // in-flight row was fixed by tracking only in-flight files; removing a
+    // SETTLED sibling survived that, because a watched file remained and the
+    // counts simply recomputed — so deleting one of two finished uploads
+    // announced "Uploaded: 1 / 1." The premise was right and applied one row
+    // too narrowly: nothing settled, the array just got shorter.
+    const shrank = total < lastAnnounced.current.total;
+    const progressed =
+      settled > lastAnnounced.current.settled || failed > lastAnnounced.current.failed;
+    lastAnnounced.current = { total, settled, failed };
+    if (shrank && !progressed) {
+      // Cleared, not left alone: a deletion has nothing to report, and keeping
+      // the previous text would leave "Uploading: 1 / 2" describing a batch
+      // that no longer exists. Emptying a live region announces nothing.
+      setBatchStatus('');
+      return;
+    }
     setBatchStatus(
       inFlight
         ? t('fileUpload.batchUploading', { done: settled, total })

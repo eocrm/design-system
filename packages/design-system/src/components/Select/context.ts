@@ -33,6 +33,16 @@ export interface SelectContextValue<T = unknown> {
   allRows: FlatRow<T>[];
   loading: boolean;
   error: Error | null;
+  /**
+   * For an async Select, the query its current rows belong to; `null` before
+   * the first settle. `undefined` when there is no `loadOptions` at all.
+   *
+   * The empty-state announcement needs this: `loading` is FALSE for the whole
+   * debounce window, during which the rows are still the previous query's — so
+   * announcing on `!loading && rows.length === 0` said "No options." before the
+   * first fetch started, and "No results for X" about a search never run.
+   */
+  loadedQuery?: string | null;
 
   // ─── value ────────────────────────────────────────────────────────────────
   value: string | string[];

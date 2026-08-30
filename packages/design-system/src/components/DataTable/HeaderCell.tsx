@@ -372,7 +372,13 @@ export function HeaderCell<T>({
           // its own on the one path where its content supplies none. Mirrors
           // the plain-text case, where the <th> and this button both take the
           // header text.
-          aria-label={sortable && namedByLabel ? column.visibilityLabel : undefined}
+          aria-label={
+            sortable && namedByLabel
+              ? column.visibilityLabel
+              : sortable && emptyStringHeader
+                ? t('dataTable.unlabelledColumn')
+                : undefined
+          }
           onKeyDown={onLabelKeyDown}
         >
           {headerContent}
