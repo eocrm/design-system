@@ -128,7 +128,7 @@ const allSources = (): { label: string; code: string }[] => {
     readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
       const full = join(dir, entry.name);
       if (entry.isDirectory()) return walk(full, `${prefix}${entry.name}/`);
-      return entry.name.endsWith('.tsx') && !entry.name.includes('.test.')
+      return /\.tsx?$/.test(entry.name) && !entry.name.includes('.test.')
         ? [{ label: `${prefix}${entry.name}`, code: readFileSync(full, 'utf-8') }]
         : [];
     });
@@ -360,12 +360,12 @@ describe('component tokens do not shadow a semantic value', () => {
  * regexes, and three more when the AST replaced the scan.
  *
  * Known limits, stated rather than discovered later:
- * - Display copy returned by a plain FUNCTION is invisible: the visitor fires
- *   on JSX nodes, and a helper like `Select/emptyStateText.ts` has none. A
- *   `ts.isReturnStatement` rule was tried and reverted — it flagged `'loading'`,
- *   `'top'`, `'md'` and three other internal values across five files, and a
- *   false alarm is what gets a gate deleted. Such helpers are pinned by a
- *   direct unit test instead.
+ * - Display copy returned by a function IS covered, but only when it reads
+ *   like copy: starts with a letter, and contains a space or sentence
+ *   punctuation. A bare return rule flagged `'loading'`, `'top'`, `'md'`,
+ *   `'cap'` and two more across five files; the narrowed one flags nothing in
+ *   the library and still catches a hardcoded sentence in a helper. A
+ *   single-word English return — `return 'Save'` — is therefore missed.
  * - A string assembled in a variable is invisible. Only literals reachable
  *   from the attribute or the JSX text are judged.
  * - A template literal wrapping a ternary is one literal whose `${…}` is
@@ -581,6 +581,27 @@ describe('user-facing strings go through the i18n provider', () => {
             for (const lit of candidates.filter((c) => /[A-Za-z]/.test(c)))
               offenders.push(`${attr}: "${lit}"`);
         }
+      }
+      // A function RETURNING display copy — #492's fourth named surface,
+      // "default messages for loading / empty / no matches states". Moving the
+      // Select empty-state sentence into a `.ts` helper put it where a
+      // JSX-only visitor could not see it at all.
+      //
+      // Narrowed to literals containing a SPACE or sentence punctuation. A
+      // bare return rule flagged `'loading'`, `'top'`, `'md'`, `'cap'` and two
+      // more across five files — internal values are single words, display
+      // copy is not. That distinction is what makes the rule payable.
+      if (ts.isReturnStatement(node) && node.expression) {
+        const found: string[] = [];
+        renderedLiterals(node.expression, found);
+        // Starts with a letter, and contains a space or sentence punctuation.
+        // Display copy does both; a CSS fragment like `", minmax(0, 1fr))"`
+        // has the space but opens with a comma, which is the last false alarm
+        // the space rule alone left behind.
+        for (const lit of found.filter(
+          (l) => !isKey(l) && /^[A-Za-z]/.test(l.trim()) && /[ .!?…]/.test(l.trim()),
+        ))
+          if (isEnglish(lit)) offenders.push(`return: "${lit}"`);
       }
       // CHILDREN, in BOTH syntactic positions. Reading only `ts.isJsxText`
       // read the one position this library never uses: all 24 visible-text
