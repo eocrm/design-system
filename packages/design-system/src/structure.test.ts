@@ -360,12 +360,13 @@ describe('component tokens do not shadow a semantic value', () => {
  * regexes, and three more when the AST replaced the scan.
  *
  * Known limits, stated rather than discovered later:
- * - Display copy returned by a function IS covered, but only when it reads
- *   like copy: starts with a letter, and contains a space or sentence
- *   punctuation. A bare return rule flagged `'loading'`, `'top'`, `'md'`,
- *   `'cap'` and two more across five files; the narrowed one flags nothing in
- *   the library and still catches a hardcoded sentence in a helper. A
- *   single-word English return — `return 'Save'` — is therefore missed.
+ * - Display copy returned by a function IS covered, but only when it ENDS in
+ *   sentence punctuation and contains a space. Two looser cuts preceded that:
+ *   a bare return rule flagged `'loading'`, `'top'`, `'md'` and three more,
+ *   and "starts with a letter, has a space" flagged `'MMM d, yyyy'` and
+ *   `'button link menuitem'` while missing `'3 items selected.'`. Copy without
+ *   a terminal stop — `return 'Save changes'` — is therefore missed, and copy
+ *   assembled in a variable or nested in an object literal is missed too.
  * - A string assembled in a variable is invisible. Only literals reachable
  *   from the attribute or the JSX text are judged.
  * - A template literal wrapping a ternary is one literal whose `${…}` is
@@ -607,16 +608,15 @@ describe('user-facing strings go through the i18n provider', () => {
         // Display copy does both; a CSS fragment like `", minmax(0, 1fr))"`
         // has the space but opens with a comma, which is the last false alarm
         // the space rule alone left behind.
+        // ENDS in sentence punctuation, and has a space. "Starts with a letter
+        // and contains a space" was the first cut and it was both leakier and
+        // noisier: it flagged `'MMM d, yyyy'` and `'button link menuitem'`,
+        // and missed `'3 items selected.'` for opening with a digit. A
+        // terminal `.`/`!`/`?`/`…` is what a rendered sentence has and a
+        // format string, token list or CSS value does not — it also makes the
+        // leading-letter and call-shape clauses unnecessary.
         for (const lit of found.filter(
-          (l) =>
-            !isKey(l) &&
-            /^[A-Za-z]/.test(l.trim()) &&
-            /[ .!?…]/.test(l.trim()) &&
-            // Not a CSS value. `repeat(2, minmax(0, 1fr))` starts with a
-            // letter and has spaces, so the copy heuristic alone flags it. A
-            // call-shaped `name(...)` with no space before the paren is CSS or
-            // code; display copy writes "Revenue (USD)" with the space.
-            !/\w\([^)]*\)/.test(l),
+          (l) => !isKey(l) && /[.!?…]$/.test(l.trim()) && /\s/.test(l.trim()),
         ))
           if (isEnglish(lit)) offenders.push(`return: "${lit}"`);
       }
