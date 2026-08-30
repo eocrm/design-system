@@ -2268,7 +2268,16 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
       }, []);
       return <span hidden={h}>Revenue</span>;
     }
-    const cols: ColumnDef<Row>[] = [{ id: 'revenue_id', header: <AsyncHidden />, cell: () => 'x' }];
+    // TWO columns, deliberately. With one, `unpinnedColumns.length > 1` is
+    // false so no drag grip renders and the resize handle is aria-hidden — the
+    // cell's only content is the label span, so `aria-labelledby` and
+    // name-from-content resolve to the identical string and the assertion
+    // cannot discriminate. A second column makes the grip real, and deleting
+    // the `aria-labelledby` then yields "Drag to reorder this column Revenue".
+    const cols: ColumnDef<Row>[] = [
+      { id: 'revenue_id', header: <AsyncHidden />, cell: () => 'x' },
+      { id: 'other_col', header: 'Other', cell: () => 'y' },
+    ];
     function Harness() {
       const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
       return <DataTable instance={instance} aria-label="t" />;
@@ -2280,6 +2289,17 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     await waitFor(() => {
       expect(screen.getByRole('columnheader', { name: 'Revenue' })).toBeInTheDocument();
     });
+    {
+      const th = screen.getAllByRole('columnheader')[0]!;
+      // MECHANISM as well as name. Asserting the name alone cannot fail here:
+      // jsdom's name-from-content for a `<th>` yields the label span's text,
+      // which is the same string `aria-labelledby` produces — verified by
+      // dumping `computeAccessibleName` with the attribute deleted and a drag
+      // grip rendering, which still returned "Revenue". (Chromium DOES absorb
+      // the grip, which is why the attribute matters; jsdom cannot see the
+      // difference, so the test asserts the wiring directly.)
+      expect(th.getAttribute('aria-labelledby')).not.toBeNull();
+    }
   });
 
   it('an [alt] filled in asynchronously does not change the header name', async () => {
@@ -2294,7 +2314,10 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
       }, []);
       return <img src="x.png" alt={a} />;
     }
-    const cols: ColumnDef<Row>[] = [{ id: 'logo_id', header: <AsyncAlt />, cell: () => 'x' }];
+    const cols: ColumnDef<Row>[] = [
+      { id: 'logo_id', header: <AsyncAlt />, cell: () => 'x' },
+      { id: 'other_col', header: 'Other', cell: () => 'y' },
+    ];
     function Harness() {
       const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
       return <DataTable instance={instance} aria-label="t" />;
@@ -2306,6 +2329,8 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     await waitFor(() => {
       expect(screen.getByRole('columnheader', { name: 'Vendor logo' })).toBeInTheDocument();
     });
+    // Mechanism too — see the note on the [hidden] case above.
+    expect(screen.getAllByRole('columnheader')[0]!.getAttribute('aria-labelledby')).not.toBeNull();
   });
 
   it('a header whose text arrives asynchronously is named by its content', async () => {
@@ -2325,6 +2350,7 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     }
     const asyncCols: ColumnDef<Row>[] = [
       { id: 'revenue_id', header: <AsyncHeader />, cell: () => 'x' },
+      { id: 'other_col', header: 'Other', cell: () => 'y' },
     ];
     function Harness() {
       const instance = useDataTable<Row>({ data: rows, columns: asyncCols, getRowId });
@@ -2335,7 +2361,21 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
     await waitFor(() => {
       expect(screen.getByRole('columnheader', { name: 'Revenue' })).toBeInTheDocument();
     });
-    expect(screen.queryByRole('columnheader', { name: 'revenue_id' })).toBeNull();
+    {
+      const th = screen.getAllByRole('columnheader')[0]!;
+      // MECHANISM as well as name. Asserting the name alone cannot fail here:
+      // jsdom's name-from-content for a `<th>` yields the label span's text,
+      // which is the same string `aria-labelledby` produces — verified by
+      // dumping `computeAccessibleName` with the attribute deleted and a drag
+      // grip rendering, which still returned "Revenue". (Chromium DOES absorb
+      // the grip, which is why the attribute matters; jsdom cannot see the
+      // difference, so the test asserts the wiring directly.)
+      expect(th.getAttribute('aria-labelledby')).not.toBeNull();
+    }
+    // Reachable only through the grip's old `column.id` fallback, which
+    // f36a7d8a removed — so with a grip now rendering this asserts something
+    // that can actually be violated.
+    expect(screen.queryByRole('columnheader', { name: /revenue_id/ })).toBeNull();
   });
 
   it('keeps an empty-string header hidden in the compact strip', () => {

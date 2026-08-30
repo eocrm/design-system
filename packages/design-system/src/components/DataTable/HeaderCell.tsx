@@ -152,8 +152,12 @@ export function HeaderCell<T>({
   // `column.id` is indefensible to speak, which leaves the author's label —
   // and nothing when they have not given one.
   //
-  // The rule is static, and `column.id` is spoken NOWHERE a user can hear it:
-  // not the header, not the grip, not the resize handle. (An earlier scope
+  // The rule is static, and `column.id` is spoken nowhere IN THIS CELL: not
+  // the header, not the grip, not the resize handle. Scoped deliberately —
+  // `ColumnVisibilityTrigger` still renders it as the visible label of a
+  // menu item for a ReactNode-header column with no `visibilityLabel`, which
+  // is a documented residual rather than an oversight, and the note this
+  // replaced existed precisely to flag surviving fallbacks. (An earlier scope
   // note here said the handle still fell back to it. True when written, and
   // falsified by the commit that removed the fallback — two commits after the
   // doc-correction pass that was supposed to catch exactly this.)

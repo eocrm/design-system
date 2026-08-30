@@ -84,8 +84,9 @@ export interface ColumnDef<T> {
    * Plain-text column label. Used by the visibility menu and, when
    * `DataTable.collapseBelow` is set, by the visual card-field label and resize
    * separator name. Falls back to a string `header`; card fields with neither
-   * stay visually unlabelled, while the visibility menu and resize separators
-   * fall back to `id`.
+   * stay visually unlabelled, and the visibility menu falls back to `id` —
+   * that menu is the one place a column's raw id can still reach a user.
+   * Resize separators do NOT: they take a generic "Resize this column".
    *
    * It also NAMES the column header, but only when `header` is not a
    * text-rendering string — i.e. a ReactNode, a render function, or `''`. So

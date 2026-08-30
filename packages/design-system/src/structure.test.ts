@@ -360,6 +360,12 @@ describe('component tokens do not shadow a semantic value', () => {
  * regexes, and three more when the AST replaced the scan.
  *
  * Known limits, stated rather than discovered later:
+ * - Display copy returned by a plain FUNCTION is invisible: the visitor fires
+ *   on JSX nodes, and a helper like `Select/emptyStateText.ts` has none. A
+ *   `ts.isReturnStatement` rule was tried and reverted — it flagged `'loading'`,
+ *   `'top'`, `'md'` and three other internal values across five files, and a
+ *   false alarm is what gets a gate deleted. Such helpers are pinned by a
+ *   direct unit test instead.
  * - A string assembled in a variable is invisible. Only literals reachable
  *   from the attribute or the JSX text are judged.
  * - A template literal wrapping a ternary is one literal whose `${…}` is
