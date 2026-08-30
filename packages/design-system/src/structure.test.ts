@@ -591,15 +591,32 @@ describe('user-facing strings go through the i18n provider', () => {
       // bare return rule flagged `'loading'`, `'top'`, `'md'`, `'cap'` and two
       // more across five files — internal values are single words, display
       // copy is not. That distinction is what makes the rule payable.
-      if (ts.isReturnStatement(node) && node.expression) {
+      // Both return forms. `ts.isReturnStatement` misses a concise arrow body,
+      // and `() => 'Delete this row.'` is the shorter way to write exactly the
+      // thing this rule exists to catch.
+      const returned =
+        ts.isReturnStatement(node) && node.expression
+          ? node.expression
+          : ts.isArrowFunction(node) && !ts.isBlock(node.body)
+            ? node.body
+            : undefined;
+      if (returned) {
         const found: string[] = [];
-        renderedLiterals(node.expression, found);
+        renderedLiterals(returned, found);
         // Starts with a letter, and contains a space or sentence punctuation.
         // Display copy does both; a CSS fragment like `", minmax(0, 1fr))"`
         // has the space but opens with a comma, which is the last false alarm
         // the space rule alone left behind.
         for (const lit of found.filter(
-          (l) => !isKey(l) && /^[A-Za-z]/.test(l.trim()) && /[ .!?…]/.test(l.trim()),
+          (l) =>
+            !isKey(l) &&
+            /^[A-Za-z]/.test(l.trim()) &&
+            /[ .!?…]/.test(l.trim()) &&
+            // Not a CSS value. `repeat(2, minmax(0, 1fr))` starts with a
+            // letter and has spaces, so the copy heuristic alone flags it. A
+            // call-shaped `name(...)` with no space before the paren is CSS or
+            // code; display copy writes "Revenue (USD)" with the space.
+            !/\w\([^)]*\)/.test(l),
         ))
           if (isEnglish(lit)) offenders.push(`return: "${lit}"`);
       }
