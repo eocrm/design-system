@@ -2206,11 +2206,13 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
 
   it('a title-only header still takes visibilityLabel', () => {
     // `title` is a LAST-RESORT name source (accname step 2I) that browsers do
-    // expose — two earlier comments here claimed otherwise, generalising from
-    // jsdom returning "", which it does only because dom-accessibility-api
-    // skips that step under name-from-content recursion, exactly as browsers
-    // do. None of that matters to the static rule; the case is kept because
-    // it is where the reasoning went wrong twice.
+    // expose. Three earlier versions of this comment explained jsdom's `""`
+    // differently and all three were wrong — the last claimed browsers skip
+    // step 2I under name-from-content recursion, and a reviewer measured
+    // Chromium computing "Sort by revenue" through exactly that path. The
+    // honest statement is that jsdom and Chromium disagree here and the
+    // static rule does not consult either; the case is kept because it is
+    // where the reasoning went wrong three times.
     const cols: ColumnDef<Row>[] = [
       {
         id: 'rev_internal',

@@ -977,9 +977,21 @@ describe('Select — async loadOptions', () => {
       await vi.advanceTimersByTimeAsync(300);
       await vi.runAllTimersAsync();
     });
+    // Two copies by design — the visible row and the status region — so the
+    // singular query throws "found multiple elements". The row's copy is
+    // aria-hidden, so a reader still meets the sentence once.
     await waitFor(() => {
-      expect(screen.getByText(/no options/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/no options/i).length).toBeGreaterThan(0);
     });
+    const region = document.body.querySelector('[role="status"][aria-live="polite"]')!;
+    expect(region.textContent).toMatch(/no options/i);
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    const reachable: string[] = [];
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      if (!(n.parentElement as HTMLElement | null)?.closest('[aria-hidden="true"]'))
+        reachable.push(n.textContent ?? '');
+    }
+    expect(reachable.filter((text) => /no options/i.test(text))).toHaveLength(1);
   });
 
   it('does not call loadOptions before the popover opens (loadOnOpen)', async () => {

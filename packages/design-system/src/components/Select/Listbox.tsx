@@ -43,18 +43,27 @@ export function Listbox() {
     // announce content inserted together with its node, so it was not one of
     // the three broken mechanisms. Without this the region reset to '' on
     // rejection and the failure was silent.
+    // Empty included. "Nothing matched" is the most useful thing a Select can
+    // say — a keyboard user typing into a combobox gets no other signal that
+    // the list went empty — and it was announced by nothing: the row carries
+    // no live region and this one did not cover the state. Hard rule 10 wants
+    // chosen silence written down, and this silence was not chosen.
     setStatusText(
       ctx.error
         ? t('select.loadFailed')
         : ctx.loading && ctx.rows.length === 0
           ? t('select.statusLoading')
-          : '',
+          : ctx.rows.length === 0
+            ? ctx.query && ctx.query.trim() !== ''
+              ? t('select.noResultsFor', { query: ctx.query })
+              : `${t('select.noOptions')}.`
+            : '',
     );
     // `ctx.error` is in the deps deliberately. It happens to work without it
     // — a rejection also flips `loading` — but that is a coincidence of the
     // current hook, and there is no eslint in this repo to catch the day it
     // stops being true.
-  }, [ctx.error, ctx.loading, ctx.rows.length, t]);
+  }, [ctx.error, ctx.loading, ctx.rows.length, ctx.query, t]);
   const inOverlay = useInOverlay(ctx.triggerRootRef, ctx.open);
   // #274: hosts yield Escape while we're open — our own capture/element
   // handler closes us on the same press instead of the Modal/Drawer.

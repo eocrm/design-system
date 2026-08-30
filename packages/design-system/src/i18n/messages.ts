@@ -448,12 +448,19 @@ export interface Messages {
      * Announced from ONE live region the Select root owns, replacing the
      * per-row `aria-live` the three state rows used to carry.
      *
-     * Those rows put `aria-live` on `<li role="presentation">`. `aria-live` is
-     * a GLOBAL attribute, so ARIA's presentational-role conflict resolution
-     * discarded the `presentation` — exposing the rows as list items inside a
-     * `role="listbox"`, an `aria-required-children` deviation — and the region
-     * mounted together with its text, which most screen readers do not
-     * announce. Both defects at once, and the error row took a third route
+     * Those rows put `aria-live` on `<li role="presentation">`, and the region
+     * mounted together with its text — which most screen readers do not
+     * announce. That is the defect, and it stands on its own.
+     *
+     * A previous version of this note added that ARIA's presentational-role
+     * conflict resolution would discard the `presentation` and expose the rows
+     * as list items, an `aria-required-children` deviation. Spec-wise that is
+     * arguable and axe-core flags it statically, but a reviewer measured
+     * Chromium and it does NOT happen inside a `role="listbox"`: every such
+     * `<li>` is exposed as role=none and ignored, with `aria-live`, with
+     * `aria-label`, even with `tabindex`. Conflict resolution does fire in a
+     * plain `<ul>`. Stated precisely rather than dropped, because the wrong
+     * version was cited in four other files. The error row took a third route
      * with `role="alert"` on an `<li>` (#495).
      */
     statusLoading: string;

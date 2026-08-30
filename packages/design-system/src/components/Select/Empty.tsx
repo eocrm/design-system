@@ -22,15 +22,21 @@ export interface EmptyProps {
  *
  * Rendered as a non-interactive `<li role="presentation">` so it occupies
  * a row visually but isn't reachable by keyboard or counted in the option
- * walk. No `aria-live` — see #495 and Loading's note.
+ * walk. No `aria-live` of its own — the Listbox's single status region
+ * announces this state, and the visible copy is hidden from AT so a reader
+ * does not meet the sentence twice.
  */
 export function Empty({ query }: EmptyProps) {
   const t = useTranslation();
   return (
     <li className={styles.stateRow} role="presentation">
-      {query && query.trim() !== ''
-        ? t('select.noResultsFor', { query })
-        : `${t('select.noOptions')}.`}
+      {/* aria-hidden for the same reason as the error row: the Listbox status
+          region renders this same text, and both are in the tree at once. */}
+      <span aria-hidden="true">
+        {query && query.trim() !== ''
+          ? t('select.noResultsFor', { query })
+          : `${t('select.noOptions')}.`}
+      </span>
     </li>
   );
 }
