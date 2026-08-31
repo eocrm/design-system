@@ -47,6 +47,11 @@
   cursor: var(--icon-picker-cursor-disabled);
 }
 
+// Stays a box-shadow rather than moving to the focus-ring mixin (#505). The
+// cells are a scrolling grid, and an outset ring on a cell flush with the
+// scroller's edge loses that band — which is exactly how Tabs, TimedEvent and
+// DayCell broke when they were migrated, and how EmojiPicker's cells already
+// clip. Migrating this wants the geometry sweep in #512 first, not a guess.
 .trigger:focus-visible,
 .cell:focus-visible {
   outline: none;

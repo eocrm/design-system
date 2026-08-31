@@ -1351,9 +1351,9 @@ describe('a component hover is a visible step from what it replaces', () => {
     ['light', TOKENS],
     ['dark', DARK],
   ])('every measurable component hover clears the floor in %s', (_theme, source) => {
-    // 0.04 sits under the tightest measurable step the library now has, 0.0453
+    // 0.04 sits under the tightest measurable step the library now has (0.0453
     // in both themes — the muted-surface hovers in light, Switch's track hover
-    // in dark and above every value this change replaced —
+    // in dark) and above every value this change replaced:
     // --button-bg-secondary-hover at 0.0125 on the second-most-used button,
     // --options-picker-group-header-bg-hover at 0.0177 AND moving the wrong way
     // in light, and the 0.0266-0.0302 cluster. So the state being fixed cannot

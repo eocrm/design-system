@@ -3577,6 +3577,31 @@ All available as CSS custom properties after you import `global.scss`:
 | Motion          | `--transition-fast` (100ms) / `--transition-base` (140ms)                                                                                                                                           |
 | Layer (z-index) | `--z-app-chrome` / `--z-dropdown` / `--z-popover` / `--z-flowcanvas-maximized` / `--z-modal` / `--z-overlay-floating` / `--z-toast` / `--z-tooltip`                                                 |
 
+**Focus rings are an `outline`, not a `box-shadow`.** Use the mixin —
+`@include focus-ring;` or `@include focus-ring(var(--your-ring));` — which emits
+`outline: var(--ring-width) solid <colour>` plus `outline-offset:
+var(--ring-offset)`. Do **not** hand-roll `box-shadow: 0 0 0 var(--ring-width)
+…`; three surviving instances in the library each carry a written reason for
+being the exception, and pattern-matching off them will produce a ring that does
+not match the rest of the system.
+
+Two things follow from the mechanism:
+
+- **The offset gap shows whatever is actually behind the element**, which is what
+  lets one ring colour work against both a page surface and the element's own
+  fill. It is why `--ring-accent` can equal `--color-accent` and still be visible
+  around a focused primary Button.
+- **An outset ring needs room.** If the focusable sits flush against an ancestor
+  with `overflow` other than `visible`, the ring clips — invisibly to the test
+  suite, which checks ring colour but not geometry (#512). Where that applies,
+  draw it inset: `outline-offset: calc(-1 * var(--ring-offset));`. Accordion,
+  Table, DataTable, HeaderCell, Tabs, Calendar's `TimedEvent` and `DayCell` all
+  do.
+
+`--ring-on-scrim` is for chrome painted on a surface that is dark in **both**
+themes (Lightbox). The tone rings fail WCAG 1.4.11 there in light theme, because
+the surface does not follow the theme and they do.
+
 ---
 
 ## Theming via component tokens

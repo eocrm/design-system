@@ -87,6 +87,13 @@
     color: var(--avatar-overflow-fg-hover);
   }
 
+  // Stays a two-layer box-shadow rather than moving to the focus-ring mixin
+  // (#505). The inner layer is --color-bg and is doing the same job
+  // outline-offset does elsewhere — separating the ring from the chip — but it
+  // also has to sit between the chip and the OVERLAPPING avatars beside it,
+  // which an offset gap showing the real surface would not do, because the real
+  // surface there is another avatar. It picked up the opaque --ring-accent for
+  // free, so the conformance fix reached it anyway.
   &:is(button):focus-visible {
     outline: none;
     box-shadow:

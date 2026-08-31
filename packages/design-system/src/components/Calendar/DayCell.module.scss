@@ -8,6 +8,10 @@
 
   &:focus-visible {
     @include focus-ring;
+
+    // INSET: the month grid clips, and the first column's cell is flush with its left
+    // edge, so an outset ring loses that band (#505).
+    outline-offset: calc(-1 * var(--ring-offset));
   }
 }
 

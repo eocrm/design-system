@@ -27,10 +27,14 @@
 // and inside every Modal.
 // "Whatever is behind" is not always a page surface: joined siblings (a visual
 // ButtonGroup of primary Buttons) put the NEIGHBOUR'S fill in the gap, where an
-// accent ring on an accent fill reads 1:1 along the shared edge. The focused
-// child is lifted with z-index so the ring wins, and the other three edges
-// still land on the page — but the four-surface gate cannot see that case, and
-// it is the one place this mechanism does not fully solve.
+// accent ring on an accent fill reads 1:1 along the shared edge. The other three
+// edges still land on the page, so the indicator is perceivable — but that one
+// edge is not, the four-surface gate cannot see it, and it is the one place this
+// mechanism does not fully solve.
+// A z-index lift does NOT help and was briefly added on the belief that it did:
+// within a stacking context an outline paints after all descendant backgrounds,
+// so the ring already draws over a joined neighbour with no lift at all. The
+// problem there is contrast, not paint order.
 // Outline also follows border-radius, is not clipped the way a spread shadow is,
 // and leaves box-shadow free for the element's own elevation, which this mixin
 // used to overwrite on focus. Five call sites already set `outline-offset` next
