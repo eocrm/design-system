@@ -96,9 +96,12 @@ function declaredValue(name: string, source: string): string | undefined {
   // undefined for it, so the token resolved `absent` and dropped out of the
   // hover gate entirely while its base stayed opaque — escaping both the
   // exclusion justification and the measurement floor. Values are `;`-terminated
-  // in every file this reads, so `;` is the right terminator.
+  // in every file this reads, so `;` is the right terminator — and `}` is
+  // excluded from the value so a declaration that omits its trailing semicolon
+  // (legal as the last one in a block) stops at the block end rather than
+  // swallowing everything up to the next `;` anywhere in the file.
   const all = [
-    ...stripComments(source).matchAll(new RegExp(`(?:^|[^-a-z0-9])${name}:\\s*([^;]+);`, 'g')),
+    ...stripComments(source).matchAll(new RegExp(`(?:^|[^-a-z0-9])${name}:\\s*([^;}]+);`, 'g')),
   ].map((m) => m[1].replace(/\s+/g, ' ').trim());
   if (!all.length) return undefined;
   const distinct = [...new Set(all)];
