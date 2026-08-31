@@ -272,8 +272,9 @@ test('maps every captured public variable to exactly one web output', async () =
   const duplicateNames = webNames.filter((name) => componentNames.has(name));
   const combinedNames = new Set([...webNames, ...componentNames]);
 
-  assert.equal(capturedNames.size, 303);
-  assert.equal(webNames.length, 247);
+  // +2 from #504: --color-bg-hover and --color-bg-muted-hover.
+  assert.equal(capturedNames.size, 305);
+  assert.equal(webNames.length, 249);
   assert.equal(componentNames.size, 56);
   assert.deepEqual(duplicateNames, []);
   assert.deepEqual([...combinedNames].sort(), [...capturedNames].sort());
@@ -368,8 +369,8 @@ test('keeps all twelve deprecated Badge variables as component aliases', async (
 test('preserves the pre-migration web contract fixture with provenance and expanded dark scopes', async () => {
   const fixture = await readJson(fixturePath);
 
-  assert.equal(Object.keys(fixture.light).length, 300);
-  assert.equal(Object.keys(fixture.forcedDark).length, 116);
+  assert.equal(Object.keys(fixture.light).length, 302);
+  assert.equal(Object.keys(fixture.forcedDark).length, 118);
   assert.deepEqual(fixture.systemDark, fixture.forcedDark);
   assert.deepEqual(fixture.forcedLight, {});
   // Provenance now names the GENERATED files, because capture-web-contract.mjs

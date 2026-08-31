@@ -11,7 +11,7 @@ const tokenSourcePath = fileURLToPath(new URL('../src/tokens.json', import.meta.
 test('validates the authoritative token source through the exported API', async () => {
   const document = await validateTokenSource(tokenSourcePath);
 
-  assert.equal(document.tokens.length, 247);
+  assert.equal(document.tokens.length, 249);
 });
 
 test('exported validation rejects an invalid source', async () => {

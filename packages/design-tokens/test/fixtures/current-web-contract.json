@@ -78,7 +78,9 @@
     "--color-badge-warning-fg": "var(--badge-fg-warning)",
     "--color-bg": "#ffffff",
     "--color-bg-danger-subtle": "#ffebe6",
+    "--color-bg-hover": "var(--color-bg-sunken)",
     "--color-bg-muted": "#f4f5f7",
+    "--color-bg-muted-hover": "#e4e6eb",
     "--color-bg-overlay": "rgb(15 23 42 / 35%)",
     "--color-bg-overlay-blur": "rgb(255 255 255 / 30%)",
     "--color-bg-overlay-strong": "rgb(15 23 42 / 92%)",
@@ -171,7 +173,7 @@
     "--color-table-caption-fg": "var(--color-fg-muted)",
     "--color-table-fg": "var(--color-fg)",
     "--color-table-header-bg": "var(--color-bg-muted)",
-    "--color-table-header-bg-hover": "var(--color-bg-sunken)",
+    "--color-table-header-bg-hover": "var(--color-bg-muted-hover)",
     "--color-table-header-fg": "var(--color-fg-muted)",
     "--color-table-row-bg-hover": "var(--color-info-bg-subtle)",
     "--color-table-row-bg-selected": "var(--color-accent-bg-subtle)",
@@ -310,7 +312,9 @@
     "--color-accent-subtle-bg": "#1c3a5e",
     "--color-bg": "#1d2125",
     "--color-bg-danger-subtle": "#42201d",
+    "--color-bg-hover": "var(--color-bg-muted)",
     "--color-bg-muted": "#282e33",
+    "--color-bg-muted-hover": "#343c42",
     "--color-bg-overlay": "rgb(0 0 0 / 55%)",
     "--color-bg-overlay-blur": "rgb(0 0 0 / 45%)",
     "--color-bg-subtle": "#22272b",
@@ -428,7 +432,9 @@
     "--color-accent-subtle-bg": "#1c3a5e",
     "--color-bg": "#1d2125",
     "--color-bg-danger-subtle": "#42201d",
+    "--color-bg-hover": "var(--color-bg-muted)",
     "--color-bg-muted": "#282e33",
+    "--color-bg-muted-hover": "#343c42",
     "--color-bg-overlay": "rgb(0 0 0 / 55%)",
     "--color-bg-overlay-blur": "rgb(0 0 0 / 45%)",
     "--color-bg-subtle": "#22272b",
@@ -1031,7 +1037,19 @@
           "selector": ":root"
         }
       ],
+      "--color-bg-hover": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
       "--color-bg-muted": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
+      "--color-bg-muted-hover": [
         {
           "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
@@ -2413,7 +2431,19 @@
           "selector": ":root[data-theme='dark']"
         }
       ],
+      "--color-bg-hover": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
+        }
+      ],
       "--color-bg-muted": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
+        }
+      ],
+      "--color-bg-muted-hover": [
         {
           "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root[data-theme='dark']"
@@ -3119,7 +3149,21 @@
           "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
+      "--color-bg-hover": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root:not([data-theme='light'])",
+          "atRule": "@media (prefers-color-scheme: dark)"
+        }
+      ],
       "--color-bg-muted": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root:not([data-theme='light'])",
+          "atRule": "@media (prefers-color-scheme: dark)"
+        }
+      ],
+      "--color-bg-muted-hover": [
         {
           "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",

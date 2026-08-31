@@ -26,7 +26,9 @@
   --color-avatar-fg: #ffffff;
   --color-bg: #ffffff;
   --color-bg-danger-subtle: #ffebe6;
+  --color-bg-hover: var(--color-bg-sunken);
   --color-bg-muted: #f4f5f7;
+  --color-bg-muted-hover: #e4e6eb;
   --color-bg-overlay: rgb(15 23 42 / 35%);
   --color-bg-overlay-blur: rgb(255 255 255 / 30%);
   --color-bg-overlay-strong: rgb(15 23 42 / 92%);
@@ -119,7 +121,7 @@
   --color-table-caption-fg: var(--color-fg-muted);
   --color-table-fg: var(--color-fg);
   --color-table-header-bg: var(--color-bg-muted);
-  --color-table-header-bg-hover: var(--color-bg-sunken);
+  --color-table-header-bg-hover: var(--color-bg-muted-hover);
   --color-table-header-fg: var(--color-fg-muted);
   --color-table-row-bg-hover: var(--color-info-bg-subtle);
   --color-table-row-bg-selected: var(--color-accent-bg-subtle);

@@ -12,7 +12,9 @@
   --color-accent-subtle-bg: #1c3a5e;
   --color-bg: #1d2125;
   --color-bg-danger-subtle: #42201d;
+  --color-bg-hover: var(--color-bg-muted);
   --color-bg-muted: #282e33;
+  --color-bg-muted-hover: #343c42;
   --color-bg-overlay: rgb(0 0 0 / 55%);
   --color-bg-overlay-blur: rgb(0 0 0 / 45%);
   --color-bg-subtle: #22272b;
@@ -133,7 +135,9 @@
     --color-accent-subtle-bg: #1c3a5e;
     --color-bg: #1d2125;
     --color-bg-danger-subtle: #42201d;
+    --color-bg-hover: var(--color-bg-muted);
     --color-bg-muted: #282e33;
+    --color-bg-muted-hover: #343c42;
     --color-bg-overlay: rgb(0 0 0 / 55%);
     --color-bg-overlay-blur: rgb(0 0 0 / 45%);
     --color-bg-subtle: #22272b;

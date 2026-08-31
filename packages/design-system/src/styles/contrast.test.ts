@@ -665,3 +665,253 @@ describe('the warning regression specifically', () => {
     expect(tokenValue('--color-warning-strong', DARK)).toBe(tokenValue('--color-warning', DARK));
   });
 });
+
+/**
+ * #504. Component-level hover steps, which the tone gate above explicitly does
+ * not cover and says so.
+ *
+ * THE THEME-SCOPING RULE, written down here because its absence is why four
+ * sweeps of this produced three different totals. A component `-hover` token is
+ * IN SCOPE when the token it replaces — the same name minus `-hover` — resolves
+ * to an opaque colour in both themes. That is the only case where a step is
+ * measurable at all, because it is the only case where the token graph records
+ * what the hover replaces.
+ *
+ * Everything else is excluded, and the exclusion is DERIVED rather than listed:
+ * each excluded token has to prove its reason below, so a new one cannot join
+ * the excluded set by nobody noticing. The reasons are
+ *
+ *   absent      — no base token. The hover paints onto whatever surface is
+ *                 behind the element (menu items, ghost buttons).
+ *   transparent — the base is literally `transparent`. Same situation, stated.
+ *   translucent — the base carries alpha, so it composites over a surface the
+ *                 token graph does not name (Lightbox controls over its scrim).
+ *   noncolour   — the token is not a colour. --slider-thumb-shadow-hover
+ *                 resolves to a box-shadow list; a `-hover` suffix does not
+ *                 make a token a colour.
+ *
+ * In all three the step depends on a runtime surface, and any number this gate
+ * printed for them would be measuring the wrong pair.
+ */
+describe('a component hover is a visible step from what it replaces', () => {
+  const COMPONENTS_DIR = resolve(__dirname, '../components');
+
+  const componentDirs = readdirSync(COMPONENTS_DIR, { withFileTypes: true })
+    .filter((entry) => entry.isDirectory() && !entry.name.startsWith('_'))
+    .map((entry) => entry.name)
+    .sort();
+
+  const tokenFiles = componentDirs.flatMap((dir) =>
+    readdirSync(resolve(COMPONENTS_DIR, dir))
+      .filter((file) => file.endsWith('.tokens.scss'))
+      .map((file) => ({
+        dir,
+        name: file,
+        source: stripComments(readFileSync(resolve(COMPONENTS_DIR, dir, file), 'utf8')),
+      })),
+  );
+  // Component tokens resolve through each other as well as through the
+  // generated scopes, so the whole set is one more place to look.
+  const COMPONENT_SOURCE = tokenFiles.map((file) => file.source).join('\n');
+
+  type Resolved =
+    | { kind: 'opaque'; hex: string }
+    | { kind: 'translucent' }
+    | { kind: 'absent' }
+    | { kind: 'transparent' }
+    | { kind: 'noncolour'; value: string };
+
+  /**
+   * Like tokenValue(), but it CLASSIFIES instead of throwing — the excluded
+   * cases are the point here, not an error. Goes through declaredValue() for
+   * the same two reasons that helper exists: comments must not satisfy a match,
+   * and a name declared twice with different values must refuse to answer
+   * rather than report whichever came first.
+   */
+  function resolveColour(name: string, theme: string, seen: string[] = []): Resolved {
+    if (seen.includes(name)) throw new Error(`alias cycle: ${[...seen, name].join(' -> ')}`);
+    const declaration =
+      declaredValue(name, theme) ??
+      declaredValue(name, TOKENS) ??
+      declaredValue(name, COMPONENT_SOURCE);
+    if (declaration === undefined) return { kind: 'absent' };
+    if (declaration === 'transparent') return { kind: 'transparent' };
+
+    const alias = declaration.match(/^var\((--[a-z0-9-]+)\)$/);
+    if (alias) return resolveColour(alias[1], theme, [...seen, name]);
+
+    const hex = declaration.match(/^#([0-9a-fA-F]{6})$/);
+    if (hex) return { kind: 'opaque', hex: `#${hex[1].toLowerCase()}` };
+    // `rgb(r g b / a%)` and friends. Alpha is what matters, not the notation.
+    if (/^(rgba?|hsla?|hwb|lab|lch|oklab|oklch)\(/.test(declaration)) {
+      return declaration.includes('/') || /^rgba\(|^hsla\(/.test(declaration)
+        ? { kind: 'translucent' }
+        : { kind: 'opaque', hex: rgbToHex(declaration) };
+    }
+    // Not a colour at all — --slider-thumb-shadow-hover resolves to a box-shadow
+    // list. A `-hover` suffix does not make a token a colour, and measuring a
+    // perceptual step between two shadow lists is meaningless.
+    return { kind: 'noncolour', value: declaration };
+  }
+
+  function rgbToHex(value: string): string {
+    const channels = value.match(/\d+/g)!.slice(0, 3).map(Number);
+    return `#${channels.map((c) => c.toString(16).padStart(2, '0')).join('')}`;
+  }
+
+  /** The body of every rule block whose selector or body mentions `needle`. */
+  function blocksMentioning(source: string, needle: string): string[] {
+    const bodies: string[] = [];
+    for (let i = 0; i < source.length; i += 1) {
+      if (source[i] !== '{') continue;
+      let depth = 1;
+      let j = i + 1;
+      for (; j < source.length && depth > 0; j += 1) {
+        if (source[j] === '{') depth += 1;
+        else if (source[j] === '}') depth -= 1;
+      }
+      const body = source.slice(i + 1, j - 1);
+      if (body.includes(needle)) bodies.push(body);
+    }
+    return bodies;
+  }
+
+  /**
+   * The `filter: brightness()` pattern, endorsed rather than replaced.
+   *
+   * EntityChip's real hover is a filter and `--entity-chip-bg-hover` measures
+   * exactly 0.0000, so any gate reading tokens alone scores it broken on day
+   * one. Replacing it would mean a per-colour hover token for each of the 81
+   * palette colours the chip can take, and `brightness()` also dims the text and
+   * border with the background, which re-pointing a background token does not.
+   * So the filter stays, and the gate is taught to read it.
+   *
+   * The filter has to appear in the SAME rule block that sets the token. A
+   * file-wide search for `filter: brightness(` would let an unrelated filter
+   * elsewhere in the stylesheet excuse a dead hover token — which is the shape
+   * of hole this whole file keeps closing.
+   */
+  function hoverIsAFilter(dir: string, token: string): boolean {
+    let module = '';
+    for (const file of readdirSync(resolve(COMPONENTS_DIR, dir))) {
+      if (file.endsWith('.module.scss')) {
+        module += `\n${stripComments(readFileSync(resolve(COMPONENTS_DIR, dir, file), 'utf8'))}`;
+      }
+    }
+    return blocksMentioning(module, `var(${token})`).some((body) =>
+      /filter:[^;]*brightness\(/.test(body),
+    );
+  }
+
+  const candidates = tokenFiles.flatMap(({ dir, source }) =>
+    [...source.matchAll(/^\s*(--[a-z0-9-]+-hover)\s*:/gm)].map((match) => ({
+      dir,
+      token: match[1],
+      base: match[1].replace(/-hover$/, ''),
+    })),
+  );
+
+  it('finds the component hover tokens at all', () => {
+    // Guards the guard: a rename or a moved directory would make every
+    // assertion below vacuously pass.
+    expect(tokenFiles.length).toBeGreaterThanOrEqual(81);
+    expect(candidates.length).toBeGreaterThanOrEqual(60);
+  });
+
+  it('every excluded hover proves why it is out of scope', () => {
+    // The exclusion list is not written down anywhere — it is recomputed here
+    // and each member has to justify itself. An excluded token whose base turns
+    // out to resolve to an opaque colour after all is a token that quietly left
+    // the gate, and it fails here rather than going unmeasured.
+    const unjustified: string[] = [];
+    for (const { dir, token, base } of candidates) {
+      const light = resolveColour(base, TOKENS);
+      const dark = resolveColour(base, DARK);
+      if (light.kind === 'opaque' && dark.kind === 'opaque') continue;
+      if (light.kind === 'opaque' || dark.kind === 'opaque') {
+        unjustified.push(`${dir}/${token}: base differs by theme (${light.kind} / ${dark.kind})`);
+        continue;
+      }
+      const allowed = ['absent', 'transparent', 'translucent', 'noncolour'];
+      if (!allowed.includes(light.kind) || !allowed.includes(dark.kind)) {
+        unjustified.push(`${dir}/${token}: base is ${light.kind} / ${dark.kind}`);
+      }
+    }
+    expect(unjustified).toEqual([]);
+  });
+
+  it.each([
+    ['light', TOKENS],
+    ['dark', DARK],
+  ])('every measurable component hover clears the floor in %s', (_theme, source) => {
+    // 0.04 sits under the tightest measurable step the library now has (0.0453,
+    // the muted-surface hovers) and above every value this change replaced —
+    // --button-bg-secondary-hover at 0.0125 on the second-most-used button,
+    // --options-picker-group-header-bg-hover at 0.0177 AND moving the wrong way
+    // in light, and the 0.0266-0.0302 cluster. So the state being fixed cannot
+    // come back, which is the same shape as the presence gate's floor sitting
+    // above the rejected yellow.
+    //
+    // It is deliberately NOT the tone gate's 0.065. That floor is anchored to
+    // saturated fills, where a step of the same size reads much more strongly
+    // than it does between two near-white neutrals. The light neutral surface
+    // scale is compressed enough that 0.065 is not reachable from a muted base
+    // without inventing a surface darker than --color-bg-sunken; 0.04 is what
+    // the scale supports with headroom, and that limit is a property of the
+    // scale rather than of this gate.
+    //
+    // Anchored to what the library manages AFTER a deliberate raise, which is
+    // the one case #484's anchoring rule permits: that rule exists to stop a
+    // gate being calibrated to accept a regression it was written to catch, and
+    // every number here moved up.
+    const failures: string[] = [];
+    for (const { dir, token, base } of candidates) {
+      const from = resolveColour(base, source);
+      const to = resolveColour(token, source);
+      if (from.kind !== 'opaque' || to.kind !== 'opaque') continue;
+
+      if (hoverIsAFilter(dir, token)) {
+        // Endorsed, but not unchecked. A filter hover means the TOKEN is doing
+        // nothing, so it must equal its base — if it carries a value, the
+        // component is painting a step and dimming it as well, and whichever
+        // one was intended, one of them is unintentional.
+        // Not a rule invented for this gate. EntityChip's own colorStyle()
+        // injects `--entity-chip-bg-hover` pointing at the SAME palette
+        // background as `--entity-chip-bg`, with the comment "so the hover
+        // brightness filter works on any palette color" — so the equality
+        // asserted here is the contract the component already runs on, and
+        // asserting it statically is what keeps the two from drifting apart.
+        if (from.hex !== to.hex) {
+          failures.push(
+            `${dir}/${token}: filter hover, but the token also moves ${from.hex} -> ${to.hex}`,
+          );
+        }
+        continue;
+      }
+
+      const step = deltaE(from.hex, to.hex);
+      if (step < 0.04) failures.push(`${dir}/${token}: ${step.toFixed(4)}`);
+
+      // Magnitude alone would pass a hover that moved the WRONG way, which is
+      // exactly what --options-picker-group-header-bg-hover did: it LIGHTENED a
+      // muted surface in light theme. Direction is theme-dependent — light
+      // hovers darken, dark hovers lighten.
+      //
+      // SURFACES ONLY. The first version of this applied the rule to every
+      // token and failed --link-fg-subtle-hover, correctly measured and not a
+      // bug: subtle link text hovers from near-black to the accent blue, which
+      // LIGHTENS in light theme, and muted link text does the same in dark.
+      // A foreground hover moves toward a tone, not along a lightness ramp, so
+      // it has no correct direction to assert; the floor above already requires
+      // it to move perceptibly. `-bg` is the marker, taken from the name rather
+      // than a list of tokens.
+      if (!token.includes('-bg')) continue;
+      const moved = luminance(to.hex) - luminance(from.hex);
+      const expected = _theme === 'dark' ? 1 : -1;
+      if (Math.sign(moved) !== expected) {
+        failures.push(`${dir}/${token}: moves the wrong way (${from.hex} -> ${to.hex})`);
+      }
+    }
+    expect(failures).toEqual([]);
+  });
+});
