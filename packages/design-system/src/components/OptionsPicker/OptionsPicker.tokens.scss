@@ -37,7 +37,9 @@
   // on hover mirrors --table-header-fg-hover and --avatar-overflow-fg-hover, the
   // other two consumers of this surface.
   // @contrast --color-fg-subtle on --color-bg-muted-hover = 3.62:1 light
+  // @contrast --color-fg-subtle on --color-bg-muted-hover = 3.23:1 dark
   // @contrast --color-fg on --color-bg-muted-hover = 11.29:1 light
+  // @contrast --color-fg on --color-bg-muted-hover = 8.76:1 dark
   // THE REST STATE IS STILL UNDER AA and this does not fix it: the hint is
   // <Text size="xs">, --font-size-xs is 11px, so 4.5:1 applies, and
   // --color-fg-subtle on the resting --color-bg-muted reads 4.15:1 light /

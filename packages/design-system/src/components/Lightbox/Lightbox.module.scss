@@ -219,12 +219,13 @@
 
 // An idle thumbnail renders at --opacity-thumb-idle, and opacity fades the whole
 // subtree INCLUDING the focus ring, so a keyboard-focused idle thumb would show
-// a faded indicator. LAST of the four rules setting opacity on this element, on
+// a faded indicator. LAST of the three rules that decide the focused case, on
 // purpose: `:hover` and `:focus-within` are both (0,2,0), so order decides, and
 // above `:hover` a thumbnail that was focused AND hovered took the 0.85 value.
-// (`.thumbActive` is the fourth and is only (0,1,0), so hovering the CURRENT
-// thumbnail dims it 1 -> 0.85 — pre-existing, unchanged by this ordering, and
-// noted so the next reader does not think three rules is the whole picture.)
+// (A fourth rule, `.thumbActive`, also sets opacity but is only (0,1,0), so
+// hovering the CURRENT thumbnail dims it 1 -> 0.85 whatever the order —
+// pre-existing, unchanged here, and noted so the next reader does not read
+// three as the whole picture.)
 // The faded case is now unreachable FOR THE RING: Image paints it on
 // `.wrapper:has(.trigger:focus-visible)`, and this rule matches whenever that
 // trigger has focus, so a visible ring always coincides with full opacity. What

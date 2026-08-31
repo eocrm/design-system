@@ -511,7 +511,7 @@ describe('a tone stays in sync with the roles derived from it', () => {
     // background, and no longer tracking the tone it belongs to — not because
     // no such colour exists. The conclusion held; the proof did not, which is
     // the failure mode this file's own prose keeps warning about. The old ring
-    // measured 1.65:1 composited on white — the worst of the three, on the tone
+    // measured 1.64:1 composited on white — the worst of the three, on the tone
     // every focus ring in the library resolves through, and #490 did not catch
     // it because it only measured danger and success.
     //
@@ -578,8 +578,9 @@ describe('a tone stays in sync with the roles derived from it', () => {
     // --color-bg-overlay-strong, which is 92% opaque and therefore does NOT let
     // the page through the way --color-bg-overlay does. That chrome is dark in
     // both themes, so in LIGHT theme the tone rings measured 1.03-3.30:1 across
-    // its four surfaces — 10 of 12 cells under 3:1, and --ring-accent, which
-    // every focus ring resolves through, under it on all four (1.03-2.47) — on it
+    // its four surfaces: 10 of those 12 cells under 3:1, and --ring-accent —
+    // which every focus ring in the library resolves through — under it on all
+    // four, 1.03-2.47
     // — failing 1.4.11 on a branch whose gate claimed to certify exactly that.
     //
     // Not an it.each over themes, deliberately. A theme-independent surface
@@ -684,8 +685,21 @@ describe('a tone stays in sync with the roles derived from it', () => {
                     ),
                   );
             // Declarations belonging to THIS rule, not to its nested children.
-            if (!conditional)
-              found.push({ selectors, body: body.replace(/[^{}]*\{[^{}]*\}/g, '') });
+            // `[^{};]*` and a fixpoint, not one pass of `[^{}]*`: the greedy form
+            // swallowed the parent's OWN declarations whenever they preceded a
+            // nested child (false fail), and left a grandchild's declarations
+            // attributed to the parent when nesting went two deep (false pass —
+            // a `--image-ring` on `.thumb .inner` satisfied `.thumb`). Stopping
+            // at `;` keeps sibling declarations, and iterating strips each layer
+            // of nesting rather than only the innermost.
+            if (!conditional) {
+              let own = body;
+              for (let previous = ''; own !== previous; ) {
+                previous = own;
+                own = own.replace(/[^{};]*\{[^{}]*\}/g, '');
+              }
+              found.push({ selectors, body: own });
+            }
             walk(body, selectors, conditional);
           }
           index = close;
@@ -881,9 +895,14 @@ describe('presence dots stay distinguishable from each other', () => {
   //   pair, not whichever one happened to fail.
   //
   //   That verdict is LIGHT-THEME only, and worth stating precisely because the
-  //   next person will re-derive it: in dark, yellow is actually the better of
-  //   the two (worst pair 0.215 vs amber's 0.199). The global worst pair lives
-  //   in light, so amber wins overall — but only there.
+  //   next person will re-derive it: in dark, yellow's worst AWAY-pair is the
+  //   better of the two (0.215 vs amber's 0.199). Worst away-pair, not worst
+  //   pair — #506 re-pointed offline to --color-fg-subtle and online/offline
+  //   became the binding pair in dark too, where amber and yellow TIE at 0.196
+  //   because neither is in it. An earlier version of this sentence said "worst
+  //   pair" and was right when written, then the same branch invalidated it two
+  //   commits later. The global worst pair still lives in light, so amber wins
+  //   overall — but the dark comparison is now a tie, not a loss.
   //
   //   Not a "yellow sits closer to online in hue" story, which is the tempting
   //   explanation and the wrong one: yellow (101°) is nearly midway between
@@ -1089,15 +1108,26 @@ describe('a component hover is a visible step from what it replaces', () => {
         return alias ? resolveColour(alias[1], theme, [...seen, name]) : undefined;
       });
       if (left?.kind === 'opaque' && right?.kind === 'opaque') {
-        // All four percentage forms, per CSS Color 5. The last two are the ones
-        // that bite: with BOTH given, the percentages are SCALED to sum to 100
-        // rather than taken literally — `A 30%, B 30%` is a 50/50 mix, not
-        // 70/30 — and if they sum to LESS than 100 the result also carries
+        // All four PERCENTAGE-AFTER-COLOUR forms, per CSS Color 5. (The
+        // percentage-BEFORE-colour form is equally legal and falls through to
+        // `noncolour` — fail-safe, since the token then shows up in
+        // EXCLUDED_HOVERS rather than being mixed wrongly.) The last two forms
+        // are the ones that bite: with BOTH given, the percentages are SCALED to
+        // sum to 100 rather than taken literally — `A 80%, B 80%` is a 50/50
+        // mix, not 80/20 — and if they sum to LESS than 100 the result carries
         // alpha = sum/100, so `A 20%, B 20%` is a translucent 50/50. Reporting
         // that as opaque would be worse than a wrong hex: it would pull a
         // token CSS makes translucent INTO the gate, where every other
         // alpha-carrying base is excluded.
         const [p1, p2] = [mix[2], mix[4]].map((v) => (v === undefined ? undefined : Number(v)));
+        // Out-of-range percentages are invalid CSS, and without this the share
+        // goes negative or past 1 and the mix produces a NINE-character hex that
+        // deltaE and luminance both slice happily and answer a plausible wrong
+        // number for. The only path where this resolver is confidently wrong
+        // rather than falling through, so it is closed rather than documented.
+        if ([p1, p2].some((p) => p !== undefined && (p < 0 || p > 100))) {
+          return { kind: 'noncolour', value: declaration };
+        }
         if (p1 !== undefined && p2 !== undefined && p1 + p2 < 100) return { kind: 'translucent' };
         const rightShare =
           p1 === undefined && p2 === undefined
@@ -1321,8 +1351,9 @@ describe('a component hover is a visible step from what it replaces', () => {
     ['light', TOKENS],
     ['dark', DARK],
   ])('every measurable component hover clears the floor in %s', (_theme, source) => {
-    // 0.04 sits under the tightest measurable step the library now has (0.0453,
-    // the muted-surface hovers) and above every value this change replaced —
+    // 0.04 sits under the tightest measurable step the library now has, 0.0453
+    // in both themes — the muted-surface hovers in light, Switch's track hover
+    // in dark and above every value this change replaced —
     // --button-bg-secondary-hover at 0.0125 on the second-most-used button,
     // --options-picker-group-header-bg-hover at 0.0177 AND moving the wrong way
     // in light, and the 0.0266-0.0302 cluster. So the state being fixed cannot
