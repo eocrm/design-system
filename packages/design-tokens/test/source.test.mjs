@@ -710,10 +710,14 @@ test('no component token file declares an opaque colour literal', async () => {
   // true, so alpha is what the rule keys on — no component names appear here.
   const offenders = [];
   for (const { path, content } of files) {
-    // `[;{]` rather than a line anchor: `:root { --x: #fff; --y: #000; }` on one
-    // line hid every declaration but the first from the `^\s*` form.
+    // Lookbehind, so the boundary is NOT consumed. A line anchor missed ALL of
+    // them on `:root { --a: #fff; --b: #000; }` — not merely the ones after the
+    // first — and the obvious repair, `(?:^|[;{])`, then ate the `;` that would
+    // have started the next match, so it saw only the odd-numbered ones. Half a
+    // fix reads exactly like a whole one here, which is why this is asserted
+    // against a shared-line case rather than trusted.
     for (const [, name, value] of content.matchAll(
-      /(?:^|[;{])\s*(--[a-z0-9-]+)\s*:\s*([^;\n]+);/gm,
+      /(?<=^|[;{])\s*(--[a-z0-9-]+)\s*:\s*([^;\n]+);/gm,
     )) {
       const raw = value.trim();
       const isHex = /^#[0-9a-f]{3,8}$/i.test(raw);

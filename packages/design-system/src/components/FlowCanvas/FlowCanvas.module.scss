@@ -21,8 +21,9 @@
   // whole role=application canvas. Suppress it in every focus state.
   outline: none;
 
-  // Canvas keyboard-focus ring. The `focus-ring` mixin also sets `outline:
-  // none`, which kills the raw UA focus outline whenever the canvas is focused.
+  // Canvas keyboard-focus ring. Since #505 the mixin PAINTS an outline rather
+  // than suppressing one — the raw UA outline is killed by the unconditional
+  // `outline: none` above instead, which applies in every focus state.
   &:focus-visible {
     @include focus-ring;
   }

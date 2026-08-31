@@ -87,8 +87,11 @@
   // and the ring read as one continuous hole rather than as a second colour.
   // That matches the surface exactly only ON --color-bg; on a sunken panel or a
   // selected row the dot sits on its own slightly-off chip, which the pre-existing
-  // ring did too. The channel does not depend on the match: cut-vs-fill measures
-  // 5-12:1, so the silhouette survives greyscale and every dichromacy either way.
+  // ring did too. The channel does not depend on the match: cut-vs-fill runs
+  // 4.52-11.86:1, so the silhouette survives greyscale and every dichromacy
+  // either way. (The 4.52 is offline, the status this branch re-pointed — an
+  // earlier version of this line said "5-12:1" and excluded the one value the
+  // same commit had just changed.)
   &[data-status='online'] {
     background: var(--avatar-presence-bg-online);
   }

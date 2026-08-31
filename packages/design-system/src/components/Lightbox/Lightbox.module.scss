@@ -196,12 +196,25 @@
   border-radius: var(--lightbox-radius);
 }
 
+// Thumbnails are <Image interactive>, which draws its own ring — so the scrim
+// ring has to be handed to it, or it defaults to --ring-accent and lands under
+// 1.4.11's 3:1 on the strip in light theme (#505).
 .thumb {
+  --image-ring: var(--lightbox-ring);
+
   flex: 0 0 auto;
   width: var(--lightbox-thumb-size);
   border-radius: var(--radius-sm);
   opacity: var(--opacity-thumb-idle);
   transition: opacity var(--transition-base);
+}
+
+// An idle thumbnail renders at --opacity-thumb-idle, and opacity fades the whole
+// subtree INCLUDING the focus ring — a keyboard-focused idle thumb would show a
+// faded indicator. Focus makes it fully opaque, which is also what the user
+// expects to see.
+.thumb:focus-within {
+  opacity: var(--opacity-visible);
 }
 
 .thumb:hover {

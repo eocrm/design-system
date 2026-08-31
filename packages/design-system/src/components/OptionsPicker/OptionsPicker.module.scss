@@ -95,6 +95,13 @@
   background: var(--options-picker-group-header-bg);
 }
 
+// Overrides the tone token the nested <Text tone="subtle"> resolves through,
+// rather than changing its prop — the hint stays subtle at rest and only
+// strengthens where the surface demands it.
+.groupHeader:hover {
+  --text-fg-subtle: var(--options-picker-group-header-hint-fg-hover);
+}
+
 // Bottom border in the namespace's palette color. The width + style come
 // from these rules; the actual `border-bottom-color` is injected inline
 // from the React layer (using --color-palette-<name>-fg). Applied only

@@ -586,7 +586,41 @@ describe('a tone stays in sync with the roles derived from it', () => {
         .join('')}`;
     };
 
+    // Resolved from the COMPONENT files, not from --ring-on-scrim directly.
+    // Asserting the token in isolation proves only that a safe colour exists —
+    // it stays green if Lightbox re-points --lightbox-ring back at
+    // --ring-accent, which is precisely how the image thumbnails kept the
+    // failing ring through the first fix for this. Every ring that lands on the
+    // scrim has to be named here and resolved through the component's own
+    // aliases, so the gate fails when the COMPONENT changes, not only when the
+    // token does.
+    const lightbox = stripComments(
+      readFileSync(resolve(COMPONENTS_DIR_FOR_SCRIM, 'Lightbox/Lightbox.tokens.scss'), 'utf8'),
+    );
+    const scrimRings = ['--lightbox-ring', '--lightbox-thumb-active-ring'] as const;
+    for (const name of scrimRings) {
+      const declared = declaredValue(name, lightbox);
+      expect(declared, `${name} is declared`).toBe('var(--ring-on-scrim)');
+    }
+    // The thumbnails are <Image interactive>, which paints its OWN ring from
+    // --image-ring; Lightbox has to hand it the scrim ring or the default
+    // --ring-accent comes back at 2.47:1 on the strip.
+    expect(
+      stripComments(
+        readFileSync(resolve(COMPONENTS_DIR_FOR_SCRIM, 'Lightbox/Lightbox.module.scss'), 'utf8'),
+      ),
+      'the thumbnails must hand Image the scrim ring',
+    ).toMatch(/--image-ring:\s*var\(--lightbox-ring\)/);
+
     const ring = tokenValue('--ring-on-scrim', TOKENS);
+
+    // Read from the token rather than transcribed. A designer nudging the scrim
+    // to 88% would otherwise leave this certifying a surface that no longer
+    // exists — the failure this whole file keeps closing.
+    const overlay = declaredValue('--color-bg-overlay-strong', TOKENS)!;
+    const [or, og, ob, oa] = overlay.match(/[\d.]+/g)!.map(Number);
+    const overlayHex = `#${[or, og, ob].map((c) => c.toString(16).padStart(2, '0')).join('')}`;
+
     // Both themes' page colours, because the scrim composites over whichever
     // one is behind it — and light is the worse of the two, which is the case
     // that was failing.
@@ -594,11 +628,25 @@ describe('a tone stays in sync with the roles derived from it', () => {
       ['light', TOKENS],
       ['dark', DARK],
     ] as const) {
-      const scrim = composite('#0f172a', 0.92, tokenValue('--color-bg', source));
+      const scrim = composite(overlayHex, oa / 100, tokenValue('--color-bg', source));
+      // Both layered ON the scrim, and both read from Lightbox's own tokens for
+      // the same reason the scrim is: a transcribed alpha keeps certifying a
+      // surface that has since moved.
+      const layer = (name: string) => {
+        const raw = declaredValue(name, lightbox)!;
+        const [r, g, b, a] = raw.match(/[\d.]+/g)!.map(Number);
+        return composite(
+          `#${[r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('')}`,
+          a / 100,
+          scrim,
+        );
+      };
       const surfaces: [string, string][] = [
         ['the scrim', scrim],
-        ['the thumb strip', composite('#000000', 0.3, scrim)],
-        ['a control fill', composite('#ffffff', 0.14, scrim)],
+        ['the thumb strip', layer('--lightbox-thumb-strip-bg')],
+        ['a control fill', layer('--lightbox-control-bg')],
+        // The hover fill is a distinct surface a focused control can sit on.
+        ['a hovered control fill', layer('--lightbox-control-bg-hover')],
       ];
       for (const [label, surface] of surfaces) {
         expect(
@@ -609,6 +657,8 @@ describe('a tone stays in sync with the roles derived from it', () => {
     }
   });
 });
+
+const COMPONENTS_DIR_FOR_SCRIM = resolve(__dirname, '../components');
 
 describe('presence dots stay distinguishable from each other', () => {
   // Every dot is aria-hidden with no text alternative (Avatar.tsx), and status
@@ -695,8 +745,19 @@ describe('presence dots stay distinguishable from each other', () => {
     ['light', TOKENS],
     ['dark', DARK],
   ])('every pair of dots is perceptibly distinct in %s', (_theme, source) => {
-    // 0.13 sits under today's tightest pair (light away/online, 0.153) and above
-    // the rejected yellow's 0.118, so the discarded option stays discarded.
+    // 0.13 sits under today's tightest pair and above the rejected yellow's
+    // 0.118, so the discarded option stays discarded.
+    //
+    // THE BINDING PAIR MOVED in #506. It was light away/online at 0.153; it is
+    // now light online/offline at 0.1344, because re-pointing
+    // --color-presence-offline to --color-fg-subtle (to get its own silhouette
+    // above 3:1 against the cut — it was 2.26:1) brought it closer to the
+    // others. Margin over the floor went 17.8% -> 3.4%. That is a real cost and
+    // it was worth paying: the shape channel now carries the separation this
+    // gate cannot see, and ΔE here is redundancy rather than the only defence.
+    // Walking --color-success by its own hover delta, online/offline opens up
+    // immediately (light 0.1344 -> 0.1604 -> 0.2137; dark 0.1958 -> 0.2381), so
+    // the thinner margin is not fragile along the axis the walk below explores.
     // Headroom is about one retune step, and the two themes behave differently
     // enough that quoting one figure for both is how this comment was wrong
     // before. Walking --color-success (which online aliases) by its own hover
@@ -836,7 +897,11 @@ describe('a component hover is a visible step from what it replaces', () => {
       // another package and neither references the other, so this stands on its
       // own.
       if (theme !== TOKENS && declaredValue(name, theme) === undefined) {
-        throw new Error(`${name} is a light-only literal; it cannot answer for another theme`);
+        throw new Error(
+          `${name} is declared only in the light scope. If that is deliberate — a ` +
+            `theme-independent value like --color-fg-on-overlay or --ring-on-scrim — ` +
+            `read it through TOKENS explicitly rather than per theme.`,
+        );
       }
       return { kind: 'opaque', hex: `#${hex[1].toLowerCase()}` };
     }
@@ -909,8 +974,13 @@ describe('a component hover is a visible step from what it replaces', () => {
     );
   }
 
+  // Lookbehind rather than a line anchor, matching the design-tokens sweep:
+  // `:root { --a-hover: …; --b-hover: …; }` on one line would otherwise
+  // contribute only its first token, and the `>= 39` floor is the only thing
+  // that would notice. No live case — every *.tokens.scss is one declaration
+  // per line — but the two files fix the same class of bug and should agree.
   const candidates = tokenFiles.flatMap(({ dir, source }) =>
-    [...source.matchAll(/^\s*(--[a-z0-9-]+-hover)\s*:/gm)].map((match) => ({
+    [...source.matchAll(/(?<=^|[;{])\s*(--[a-z0-9-]+-hover)\s*:/gm)].map((match) => ({
       dir,
       token: match[1],
       base: match[1].replace(/-hover$/, ''),
@@ -1045,13 +1115,15 @@ describe('a component hover is a visible step from what it replaces', () => {
     // stops resolveColour resolving — a refactor of declaredValue, a moved
     // generated file, a renamed token — makes this whole block iterate over
     // nothing and pass. Verified: hard-wiring resolveColour to return `absent`
-    // left all 62 tests in this file green.
+    // left every test in this file green.
     //
-    // 37 is what the library measures today. Deliberately not `> 0`: losing 30
-    // of 37 is the same class of failure as losing all 37, and a floor of one
-    // would not see it. Raise this when the number legitimately grows.
+    // 39 is what the library measures today — read off the gate, not estimated.
+    // An earlier version of this said 37 and left two silent slots, which is the
+    // same mistake in miniature: a floor below the real number cannot see a
+    // partial loss. Deliberately not `> 0`, because losing 30 of 39 is the same
+    // class of failure as losing all 39. Raise this when the number grows.
     expect(measured, 'the gate measured nothing — resolveColour is broken').toBeGreaterThanOrEqual(
-      37,
+      39,
     );
   });
 });

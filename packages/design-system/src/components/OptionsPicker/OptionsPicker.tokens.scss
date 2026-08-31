@@ -30,6 +30,15 @@
   --options-picker-group-header-padding-x: var(--space-2);
   --options-picker-group-header-bg: var(--color-bg-muted);
   --options-picker-group-header-bg-hover: var(--color-bg-muted-hover);
+
+  // The header's hint is <Text size="xs" tone="subtle">, and #504 darkened the
+  // surface under it — --color-fg-subtle reads 3.62:1 there, worse than it had
+  // on the old (lighter, wrong-direction) hover. Strengthening it
+  // on hover mirrors --table-header-fg-hover and --avatar-overflow-fg-hover, the
+  // other two consumers of this surface.
+  // @contrast --color-fg-subtle on --color-bg-muted-hover = 3.62:1 light
+  // @contrast --color-fg on --color-bg-muted-hover = 11.29:1 light
+  --options-picker-group-header-hint-fg-hover: var(--color-fg);
   --options-picker-group-header-border-width: var(--border-width-emphasis);
 
   // Group dot

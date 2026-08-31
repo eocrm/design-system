@@ -13,6 +13,11 @@
 // tone it belongs to, which is the relationship the ring gate exists to hold.
 // So the constraint is not literally unsatisfiable, but it is unsatisfiable by
 // any colour that is still a ring, and the colour was never the lever.
+// That argument is over OPAQUE rings. A translucent one composites to two
+// different effective colours over the two backdrops, so the single-luminance
+// reasoning does not reach it — but a sweep of alpha against an RGB grid over
+// both backdrops returns the same single answer, opaque black. Alpha was the
+// thing #490 proposed raising, so it is worth saying it was checked.
 // `outline-offset` is, and it is the native one. The gap shows whatever is
 // actually painted behind the element, so the ring is separated from the fill
 // it surrounds without the library naming that surface in a token — which a
