@@ -54,11 +54,12 @@
 // commit later, and every round of review caught one.
 // That trade is not free either. An inset ring paints over the element's
 // outermost pixels, including its own border, so check what that border
-// carries. Two live cases: Calendar's TimedEvent, where the ring covers the 1px
-// tone border and 1px of the 3px stripe gradient, and OptionsPicker's group
-// header, where the border is 2px and the band is 2px, so it is covered
-// completely. Each records its own reasoning; do not assume from one that the
-// other is partial.
+// carries, and record what you find — the severity is not uniform, so do not
+// reason from one site to another. Calendar's TimedEvent loses the 1px tone
+// border and 1px of its 3px stripe gradient; OptionsPicker's group header, and
+// Table's `.th`, have borders exactly as wide as the band and lose them
+// entirely. Each site that matters documents its own case; grep as above for
+// the current set rather than trusting an enumeration here.
 @mixin focus-ring($color: var(--ring-accent)) {
   outline: var(--ring-width) solid #{$color};
   outline-offset: var(--ring-offset);

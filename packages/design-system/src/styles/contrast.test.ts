@@ -1205,7 +1205,7 @@ describe('a component hover is a visible step from what it replaces', () => {
    *
    * EntityChip's real hover is a filter and `--entity-chip-bg-hover` measures
    * exactly 0.0000, so any gate reading tokens alone scores it broken on day
-   * one. Replacing it would mean a per-colour hover token for each of the 81
+   * one. Replacing it would mean a per-colour hover token for each of the 30
    * palette colours the chip can take, and `brightness()` also dims the text and
    * border with the background, which re-pointing a background token does not.
    * So the filter stays, and the gate is taught to read it.
