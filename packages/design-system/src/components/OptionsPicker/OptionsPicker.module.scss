@@ -175,8 +175,14 @@ button.groupHeader {
     // INSET. `.list` above is `overflow-y: auto` — which computes `overflow-x`
     // to `auto` — with no padding, and this header is `width: 100%`, so an
     // outset ring loses both vertical bands on every group header, always.
-    // Third instance of the same shape after Tabs and TimeField (#505); the
-    // gate below the mixin now looks for it.
+    // Third instance of that shape after Tabs and TimeField (#505), and NO GATE
+    // DETECTS IT: two static rules were measured and both were mostly false
+    // positives, so none shipped. A browser sweep found all three; #512 carries
+    // the signature so the next one is looked for rather than stumbled on.
+    // The trade, since the mixin says to record it: this paints over the
+    // header's outermost 2px, which on `.groupHeaderWithBorder` includes the 1px
+    // group-colour `border-bottom`. Transient occlusion of a decorative border
+    // against a permanently missing indicator.
     outline-offset: calc(-1 * var(--ring-offset));
   }
 }

@@ -659,7 +659,7 @@ test('every tone-backed Badge variable resolves per theme through its var() chai
 // used for Badge — assert the property directly — so it is generalised here
 // instead, and stated as two invariants rather than a list of names.
 //
-// Neither of these is live today: all 81 files pass as written. They guard the
+// Neither of these is live today: every component token file passes as written. They guard the
 // NEXT component, which is the whole point — the failure mode is a new file, and
 // a fixture cannot fail on a file nobody added to it.
 const componentsDir = new URL('../../design-system/src/components/', import.meta.url);
@@ -747,7 +747,7 @@ test('no component token file declares an opaque colour literal', async () => {
 });
 
 test('the opaque-literal scan sees every declaration on a shared line', () => {
-  // The claim the test above cannot make for itself. All 81 component files are
+  // The claim the test above cannot make for itself. Every component file is
   // one declaration per line, so they are exactly the input on which a
   // half-working boundary looks identical to a working one: the line-anchored
   // form finds NOTHING here (`:root {` precedes the first declaration), and the
