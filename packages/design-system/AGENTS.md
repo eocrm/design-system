@@ -1372,7 +1372,7 @@ interface UseCropPreviewOptions extends ExtractCropOptions {
 
 - `padding`: `none` / `sm` / `md` / `lg`. Defaults to `md` for plain content, `none` when `Card.Header` / `Card.Body` / `Card.List` / `Card.ListRow` is a direct child. Pass explicitly to override.
 - `tone`: `accent` / `info` / `success` / `warning` / `danger` — draws a 3px left-edge stripe in the tone color. Default: no stripe (standard bordered look). A transparent border-left is always reserved so toggling `tone` never shifts layout.
-- `overflow`: `hidden` (default) / `visible`. The default clips children to the card's rounded border so square-cornered children (a `<Table>`'s internal scroll wrapper, an `<img>`, a full-bleed `<video>`) don't show a seam at the rounded corners. Overlay primitives in this library (DropdownMenu, Tooltip, Popover, Drawer, Modal) portal to `document.body` and are NOT clipped by this. Focus rings use CSS `outline` which is also unaffected by ancestor overflow. Pass `overflow="visible"` only when a direct child genuinely needs to overhang the card edge (decorative badges that protrude past a corner, hover-lift transforms whose shadow extends outward).
+- `overflow`: `hidden` (default) / `visible`. The default clips children to the card's rounded border so square-cornered children (a `<Table>`'s internal scroll wrapper, an `<img>`, a full-bleed `<video>`) don't show a seam at the rounded corners. Overlay primitives in this library (DropdownMenu, Tooltip, Popover, Drawer, Modal) portal to `document.body` and are NOT clipped by this. Focus rings are NOT exempt: an `outline` is clipped by an ancestor's overflow exactly as a spread shadow is, so a focusable flush against the card edge loses that band — draw its ring inset (`outline-offset: calc(-1 * var(--ring-offset))`) as Tabs, Accordion, Table, DataTable, TimeField and Calendar do. Pass `overflow="visible"` only when a direct child genuinely needs to overhang the card edge (decorative badges that protrude past a corner, hover-lift transforms whose shadow extends outward).
 - **Compound API** — `Card.Header` / `Card.Body` / `Card.List` / `Card.ListRow` for section-card patterns. Drop `padding="none"` — the parent Card auto-detects compound children.
 - `Card.Header`: title row (`h3` by default, override via `headerLevel`) with optional right-aligned `action` slot and bottom-border separator.
 - `Card.Body`: padded `<div>` content section. Add `scroll` beneath a Header in a `fill` Card to make Body the flexible vertical scroll region while Header stays fixed. Card intentionally owns this layout because it relates only its own compound pieces; the parent still owns the Card's definite outer height. `scroll` also sets `tabIndex={0}`, because a scroll container with no focusable descendant is unreachable by keyboard (axe `scrollable-region-focusable`) — pair it with `role="group"` and an `aria-label` when the content is worth naming, and pass `tabIndex={-1}` to opt out if the body already contains something focusable.
@@ -3581,12 +3581,21 @@ All available as CSS custom properties after you import `global.scss`:
 `@include focus-ring;` or `@include focus-ring(var(--your-ring));` — which emits
 `outline: var(--ring-width) solid <colour>` plus `outline-offset:
 var(--ring-offset)`. Do **not** hand-roll `box-shadow: 0 0 0 var(--ring-width)
-…`. Two components still hand-roll a focus ring — `AvatarGroup`'s overflow chip
-and `IconPicker` — and each carries a written reason; both have a component-scoped
-ring-width token the mixin cannot take. (Three further `box-shadow: 0 0 0
-var(--ring-width) …` instances exist in `FlowCanvas`, `Lightbox` and
-`RichTextEditor`, but those are decorative markers, not focus rings, so they are
-not examples of this rule at all.)
+…`.
+
+Ten components predate the mixin and still hand-roll a ring — `ColorPicker`,
+`DashboardCanvas`, `DropdownMenu`, `FileUpload`, `IconPicker`, `ImageCrop`,
+`LinkCard`, `Rail`, `Slider`, `AvatarGroup` — and `TimeField` and Calendar's
+`TimedEvent` do both. **They are not the pattern to copy.** Two have a stated
+reason (`AvatarGroup` needs an inner layer between the chip and the overlapping
+avatars; `IconPicker` has a component-scoped ring-width token the mixin cannot
+take); the rest are simply older than the convention, and three of them —
+`FileUpload`, `Slider`, `Rail` — are tracked in #513 because their focus state
+is weaker than the library ring or indistinguishable from hover.
+
+Separately, `FlowCanvas`, `Lightbox` and `RichTextEditor` each carry a
+`box-shadow: 0 0 0 var(--ring-width) …` that is a decorative marker, not a focus
+ring — they look like the anti-pattern and are not examples of this rule at all.
 
 Two things follow from the mechanism:
 
@@ -3597,9 +3606,11 @@ Two things follow from the mechanism:
 - **An outset ring needs room.** If the focusable sits flush against an ancestor
   with `overflow` other than `visible`, the ring clips — invisibly to the test
   suite, which checks ring colour but not geometry (#512). Where that applies,
-  draw it inset: `outline-offset: calc(-1 * var(--ring-offset));`. Accordion,
-  Table, DataTable, HeaderCell, Tabs, Calendar's `TimedEvent` and `DayCell` all
-  do.
+  draw it inset: `outline-offset: calc(-1 * var(--ring-offset));`. Grep that
+  string for the current set — Accordion, Table, DataTable, HeaderCell, Tabs,
+  TimeField, Rail and Calendar are in it today, but do not trust a count written
+  in prose here: three files carried three different numbers for this one
+  quantity and each was stale within a commit.
 - **Inset gives the gap up.** An outset ring is bounded on both sides by the
   backdrop, which is what the contrast gate measures. An inset one touches the
   element's OWN fill, and nothing measures that side — so check it yourself

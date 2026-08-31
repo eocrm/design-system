@@ -59,7 +59,8 @@
     // element (#505). Same treatment as Accordion, Table, DataTable, HeaderCell
     // and Calendar's TimedEvent / DayCell. (`.scrollWrapVertical` sets
     // `overflow-x: visible`, so a vertical tablist has no clipping ancestor and
-    // takes the inset only by inheritance — harmless, the padding is ample.)
+    // takes the inset because this one rule matches whatever the orientation —
+    // harmless there, the padding is ample.)
     outline-offset: calc(-1 * var(--ring-offset));
     border-radius: var(--tabs-tab-radius);
   }

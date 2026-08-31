@@ -190,8 +190,9 @@
   // Gradient, not an inset box-shadow: `:focus-visible` on this button USED TO
   // own box-shadow for the focus ring, and would have erased the stripe outright —
   // (since #505 the ring is an outline and the slot is free, but the gradient
-  // stays: it also survives the hover `filter: brightness()`, and unlike
-  // TimedEvent this button's ring is outset, so nothing covers the stripe) —
+  // stays: a gradient composes with the drag shadow, which a second inset
+  // box-shadow would replace. Unlike TimedEvent this button's ring is outset —
+  // it has no clipping ancestor — so nothing covers the stripe) —
   // and unlike the chip and the block, `.rowButton` has `border: none`, so
   // there is no border left to carry a fallback sliver. Keyboard-focusing a row
   // would have wiped the state signal completely.

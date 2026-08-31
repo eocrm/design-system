@@ -573,7 +573,7 @@ describe('a tone stays in sync with the roles derived from it', () => {
   });
 
   it('an inset ring stays inside the border box', () => {
-    // Seven call sites draw the ring inset with `calc(-1 * var(--ring-offset))`,
+    // Several call sites draw the ring inset with `calc(-1 * var(--ring-offset))`,
     // because their focusable sits flush against a clipping ancestor. That puts
     // the band at [border-box - offset, border-box - offset + width], so it is
     // fully inside ONLY while width <= offset. Nothing asserted the relation,
