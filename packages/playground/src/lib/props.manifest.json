@@ -1913,7 +1913,7 @@
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
           "default": "",
-          "description": "Error message. Replaces `description`, flips the control to `invalid`, links `aria-describedby`.\n\nNOT announced. The message is linked with `aria-describedby`, which screen\nreaders read on FOCUS — so an error appearing after a submit reaches nobody\nunless focus moves into the field. That is deliberate under Hard rule 10's\n\"silence you chose and documented\" clause — the error IS exposed, via\n`aria-describedby`, so it is not visual-only. Per-field live regions would\nannounce on every keystroke of\na validate-on-change form), but it means a form-level summary region is the\nconsumer's job. Tracked in #494."
+          "description": "Error message. Replaces `description`, flips the control to `invalid`, and\nlinks it with `aria-describedby`.\n\n**Not announced, deliberately.** `aria-describedby` is read on FOCUS, so an\nerror that appears after a submit reaches nobody unless focus moves into\nthe field. Hard rule 10 permits chosen silence provided it is written down;\nthis is that note.\n\nThe alternative — a live region per Field — is worse in the common case: a\nvalidate-on-change form would announce on every keystroke, and a submit\nfailing N fields would fire N announcements over each other. The right\nowner of that announcement is the FORM, which knows how many fields failed\nand when the user asked for the answer.\n\nSo: announce a summary yourself on submit, and leave the per-field message\nto `aria-describedby` for when focus arrives.\n\n```tsx\n<div role=\"status\" aria-live=\"polite\">\n  {submitted && errorCount > 0 ? `${errorCount} fields need attention` : ''}\n</div>\n```\n\nSee #494 for the full reasoning."
         },
         {
           "name": "required",
@@ -4710,7 +4710,7 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Optional id prefix for controlled tabpanels. When set, each tab gets\n`aria-controls=\"${panelIdPrefix}-${itemId}-panel\"` — the consumer must\nrender the matching panel with that id. When omitted, an internal id\n(sanitized React `useId`) is generated."
+          "description": "Optional id prefix for controlled tabpanels. When set, the ACTIVE tab gets\n`aria-controls=\"${panelIdPrefix}-${itemId}-panel\"` — the consumer must\nrender the matching panel with that id. When omitted, NO tab carries\n`aria-controls` at all — the internal id (sanitized React `useId`) named\nbelow is the tab's own id, not a panel's, and pointing at it would be the\ndangling IDREF #501 removed.\n\nOnly the active tab carries it, because consumers render only the active\npanel; stamping every tab would point N-1 of them at elements that do not\nexist. Inactive tabs keep their own `id` for the panel's\n`aria-labelledby` to reference."
         },
         {
           "name": "activationMode",
@@ -4979,6 +4979,13 @@
           "required": false,
           "default": "",
           "description": "Disables the input + popover trigger."
+        },
+        {
+          "name": "invalid",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Toggles the error visual and sets `aria-invalid=\"true\"` on the text input.\nPair with a visible message and `aria-describedby` pointing at its id,\nexactly like `Input` / `Textarea` / `Select`.\n\nTimeField was the only form control in the library without this — 15 other\ncontrols set `aria-invalid` and it set nothing, so a TimeField inside a\n`<Field error=…>` looked wrong and announced valid (#494)."
         },
         {
           "name": "id",

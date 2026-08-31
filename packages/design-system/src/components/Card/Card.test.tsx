@@ -351,3 +351,37 @@ describe('compound API', () => {
     expect(header.className).toMatch(/custom/);
   });
 });
+
+describe('Card.Body scroll is keyboard-reachable (#491)', () => {
+  it('makes a scrolling body focusable', () => {
+    // `scroll` is what creates the overflow container, so it is what has to
+    // create the keyboard route. axe: scrollable-region-focusable, WCAG 2.1.1.
+    const { container } = render(
+      <Card fill>
+        <Card.Body scroll>content</Card.Body>
+      </Card>,
+    );
+    expect(container.querySelector('[tabindex="0"]')).not.toBeNull();
+  });
+
+  it('leaves a non-scrolling body out of the tab order', () => {
+    const { container } = render(
+      <Card>
+        <Card.Body>content</Card.Body>
+      </Card>,
+    );
+    expect(container.querySelector('[tabindex]')).toBeNull();
+  });
+
+  it('lets a consumer opt out, since props spread last', () => {
+    // A body whose content is already focusable does not need its own stop.
+    const { container } = render(
+      <Card fill>
+        <Card.Body scroll tabIndex={-1}>
+          <button type="button">Reachable</button>
+        </Card.Body>
+      </Card>,
+    );
+    expect(container.querySelector('[tabindex="-1"]')).not.toBeNull();
+  });
+});

@@ -592,6 +592,7 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
     allRows,
     loading: loadOptions ? asyncResult.loading : false,
     error: loadOptions ? asyncResult.error : null,
+    loadedQuery: loadOptions ? asyncResult.loadedQuery : undefined,
     value: state.value,
     setValue: state.setValue,
     toggleValue: state.toggleValue,

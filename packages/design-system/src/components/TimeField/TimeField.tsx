@@ -97,6 +97,16 @@ export interface TimeFieldProps extends Omit<
   'aria-describedby'?: string;
   /** Disables the input + popover trigger. */
   disabled?: boolean;
+  /**
+   * Toggles the error visual and sets `aria-invalid="true"` on the text input.
+   * Pair with a visible message and `aria-describedby` pointing at its id,
+   * exactly like `Input` / `Textarea` / `Select`.
+   *
+   * TimeField was the only form control in the library without this — 15 other
+   * controls set `aria-invalid` and it set nothing, so a TimeField inside a
+   * `<Field error=…>` looked wrong and announced valid (#494).
+   */
+  invalid?: boolean;
   /** Stable id for the input (so an external `<label htmlFor>` can target it). */
   id?: string;
   /** Additional className on the wrapper. */
@@ -172,6 +182,7 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
     'aria-labelledby': ariaLabelledBy,
     'aria-describedby': ariaDescribedBy,
     disabled = false,
+    invalid = false,
     id: idProp,
     className,
     ...rest
@@ -603,6 +614,7 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
         ref={inputRef}
         id={inputId}
         type="text"
+        aria-invalid={invalid || undefined}
         className={styles.timeInputCore}
         placeholder={placeholder}
         inputMode="numeric"

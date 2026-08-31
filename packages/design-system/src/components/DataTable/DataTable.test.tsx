@@ -13,9 +13,9 @@
  * which must never, and which columns the driver is told about).
  */
 import { resolve } from 'node:path';
-import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createRef, useRef } from 'react';
+import { createRef, useEffect, useRef, useState } from 'react';
 import { parse, type AtRule, type Declaration, type Root, type Rule } from 'postcss';
 import { compile } from 'sass';
 import { Table } from '../Table';
@@ -931,7 +931,7 @@ describe('<DataTable>', () => {
     );
   });
 
-  it('names responsive resize separators by visibility label, string header, then id', () => {
+  it('names responsive resize separators by visibility label, string header, then generically', () => {
     const namedColumns: ColumnDef<Row>[] = [
       {
         id: 'preferred-id',
@@ -965,7 +965,12 @@ describe('<DataTable>', () => {
 
     render(<ResizeNamesHarness />);
 
-    const defaultRange = screen.getByRole('separator', { name: 'Preferred resize name' });
+    // Named for the ACTION, not the column alone — a keyboard user tabbing
+    // here used to hear "Preferred resize name, separator" with no hint that
+    // it resizes anything (#500).
+    const defaultRange = screen.getByRole('separator', {
+      name: 'Resize Preferred resize name column',
+    });
     expect(defaultRange).toHaveAttribute('aria-valuemin', '40');
     expect(defaultRange).toHaveAttribute('aria-valuenow', '120');
     expect(defaultRange).toHaveAttribute('aria-valuemax', String(Number.MAX_SAFE_INTEGER));
@@ -973,13 +978,20 @@ describe('<DataTable>', () => {
       Number(defaultRange.getAttribute('aria-valuenow')),
     );
 
-    const explicitRange = screen.getByRole('separator', { name: 'String resize name' });
+    const explicitRange = screen.getByRole('separator', {
+      name: 'Resize String resize name column',
+    });
     expect(explicitRange).toHaveAttribute('aria-valuenow', '120');
     expect(explicitRange).toHaveAttribute('aria-valuemax', '240');
     expect(Number(explicitRange.getAttribute('aria-valuemax'))).toBeGreaterThanOrEqual(
       Number(explicitRange.getAttribute('aria-valuenow')),
     );
-    expect(screen.getByRole('separator', { name: 'id-fallback' })).toBeInTheDocument();
+    // NOT "Resize id-fallback column". A column with neither a string header
+    // nor a visibilityLabel has no name a user would recognise, and the old
+    // fallback read its raw `column.id` aloud. The generic phrase says what
+    // the control does without inventing a name for the column.
+    expect(screen.getByRole('separator', { name: 'Resize this column' })).toBeInTheDocument();
+    expect(screen.queryByRole('separator', { name: /id-fallback/ })).toBeNull();
   });
 
   it('exposes stable responsive hooks for wide-table drag and resize controls', () => {
@@ -1027,7 +1039,7 @@ describe('<DataTable>', () => {
     const label = screen.getByRole('button', { name: 'Name' });
     const resizeHandle = within(screen.getByRole('columnheader', { name: /name/i })).getByRole(
       'separator',
-      { name: 'Name' },
+      { name: 'Resize Name column' },
     );
     expect(resizeHandle).toHaveAttribute('tabindex', '0');
 
@@ -2053,5 +2065,511 @@ describe('loading state reaches assistive tech (#488)', () => {
     const { rerender, container } = render(<Harness4 data={rows} loading={false} />);
     rerender(<Harness4 data={rows} loading />);
     expect(ownRegion(container)[0].textContent).toBe('');
+  });
+});
+
+describe('collapseBelow does not duplicate the column header name (#500)', () => {
+  function NameHarness({ collapseBelow }: { collapseBelow?: 'md' }) {
+    const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+    return <DataTable instance={instance} aria-label="t" collapseBelow={collapseBelow} />;
+  }
+
+  it('names the header once, with and without collapseBelow', () => {
+    // Setting collapseBelow flipped the resize handle from aria-hidden to a
+    // NAMED role="separator" inside the <th>, and its name was the column's
+    // own header text — so name-from-content computed "Name Name" at every
+    // width, not just while stacked. The <th> now takes its name from the
+    // label span by id, which excludes the handle and the drag grip.
+    const { unmount } = render(<NameHarness />);
+    expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument();
+    unmount();
+
+    render(<NameHarness collapseBelow="md" />);
+    expect(screen.getByRole('columnheader', { name: 'Name' })).toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'Name Name' })).toBeNull();
+  });
+
+  it('names an icon-only header instead of leaving it nameless', () => {
+    // The first fix pointed the <th> at its label span unconditionally. For a
+    // ReactNode header whose content is aria-hidden that span is empty, so the
+    // columnheader ended up with NO name — a worse axe violation than the
+    // duplicate it replaced.
+    const iconCols: ColumnDef<Row>[] = [
+      {
+        id: 'starred',
+        header: <span aria-hidden="true">★</span>,
+        visibilityLabel: 'Starred',
+        cell: () => 'x',
+      },
+    ];
+    function IconHarness() {
+      const instance = useDataTable<Row>({ data: rows, columns: iconCols, getRowId });
+      return <DataTable instance={instance} aria-label="t" collapseBelow="md" />;
+    }
+    render(<IconHarness />);
+    expect(screen.getByRole('columnheader', { name: 'Starred' })).toBeInTheDocument();
+  });
+
+  it.each([
+    [
+      'a select-all checkbox',
+      <input type="checkbox" aria-label="Select all" readOnly />,
+      'Select all',
+    ],
+    ['an img with alt', <img src="x.png" alt="Vendor logo" />, 'Vendor logo'],
+  ])('names a header labelled by a descendant: %s', (_what, node, expected) => {
+    // Text is not the only source of an accessible name. Measuring textContent
+    // alone found these empty and fell back to `column.id`, so a select-all
+    // column — the commonest ReactNode header in a table — announced as
+    // "select_all_col" while the correct name sat in the DOM unused.
+    const cols: ColumnDef<Row>[] = [{ id: 'select_all_col', header: node, cell: () => 'x' }];
+    function Harness() {
+      const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    render(<Harness />);
+    expect(screen.getByRole('columnheader', { name: expected })).toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'select_all_col' })).toBeNull();
+  });
+
+  it('names the sort control on an icon-only header', () => {
+    // The label span is role="button" tabIndex=0 when the column is sortable.
+    // With nothing nameable inside it was a focusable button with no
+    // accessible name at all — beside a <th> six rounds had been busy naming.
+    const cols: ColumnDef<Row>[] = [
+      {
+        id: 'starred_col',
+        header: <span aria-hidden="true">★</span>,
+        visibilityLabel: 'Starred',
+        sortable: true,
+        cell: () => 'x',
+      },
+    ];
+    function Harness() {
+      const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    render(<Harness />);
+    expect(screen.getByRole('button', { name: 'Starred' })).toBeInTheDocument();
+  });
+
+  it('a bare span with aria-label still takes visibilityLabel', () => {
+    // Kept from the era of the deleted runtime measurement, which had to decide
+    // whether this span named itself and got it wrong — ARIA 1.2 prohibits
+    // naming role="generic", so it names nothing in a browser, while jsdom
+    // honours it. The static rule never asks the question: a ReactNode header
+    // with a visibilityLabel takes the label, whatever the node contains. The
+    // case is retained because it is the one jsdom would mislead you on.
+    const cols: ColumnDef<Row>[] = [
+      {
+        id: 'internal_id_col',
+        header: <span aria-label="Revenue" />,
+        visibilityLabel: 'Revenue',
+        cell: () => 'x',
+      },
+    ];
+    function Harness() {
+      const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    render(<Harness />);
+    const th = screen.getAllByRole('columnheader')[0]!;
+    expect(th.getAttribute('aria-label')).toBe('Revenue');
+    expect(th.getAttribute('aria-labelledby')).toBeNull();
+  });
+
+  it('a div carrying alt still takes visibilityLabel', () => {
+    // `alt` names only img, area and input[type=image]. On a <div> it is an
+    // unknown attribute, so counting it chose aria-labelledby and pointed at a
+    // span computing to nothing — the unnamed columnheader again.
+    //
+    // Spread, because TSX rejects `<div alt="Vendor" />` outright. Worth
+    // knowing: the type system already blocks the direct form, so this only
+    // arrives via a spread of consumer props — which is exactly how `{...rest}`
+    // reaches a header in practice.
+    const spread = { alt: 'Vendor' } as Record<string, string>;
+    const cols: ColumnDef<Row>[] = [
+      {
+        id: 'vendor_col',
+        header: <div {...spread} />,
+        visibilityLabel: 'Vendor',
+        cell: () => 'x',
+      },
+    ];
+    function Harness() {
+      const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    render(<Harness />);
+    expect(screen.getByRole('columnheader', { name: 'Vendor' })).toBeInTheDocument();
+  });
+
+  it('a title-only header still takes visibilityLabel', () => {
+    // `title` is a LAST-RESORT name source (accname step 2I) that browsers do
+    // expose. Three earlier versions of this comment explained jsdom's `""`
+    // differently and all three were wrong — the last claimed browsers skip
+    // step 2I under name-from-content recursion, and a reviewer measured
+    // Chromium computing "Sort by revenue" through exactly that path. The
+    // honest statement is that jsdom and Chromium disagree here and the
+    // static rule does not consult either; the case is kept because it is
+    // where the reasoning went wrong three times.
+    const cols: ColumnDef<Row>[] = [
+      {
+        id: 'rev_internal',
+        header: (
+          <span title="Sort by revenue">
+            <i aria-hidden="true">*</i>
+          </span>
+        ),
+        visibilityLabel: 'Revenue',
+        cell: () => 'x',
+      },
+    ];
+    function Harness() {
+      const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    render(<Harness />);
+    expect(screen.getByRole('columnheader', { name: 'Revenue' })).toBeInTheDocument();
+  });
+
+  it('a [hidden] header takes visibilityLabel rather than its hidden text', () => {
+    // `hidden` counts in textContent and not in the accessible name, so
+    // measuring text alone chose aria-labelledby and produced an EMPTY name —
+    // the unnamed columnheader the fallback exists to prevent.
+    const cols: ColumnDef<Row>[] = [
+      {
+        id: 'rev_col',
+        header: <span hidden>Revenue</span>,
+        visibilityLabel: 'Revenue',
+        cell: () => 'x',
+      },
+    ];
+    function Harness() {
+      const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    render(<Harness />);
+    expect(screen.getByRole('columnheader', { name: 'Revenue' })).toBeInTheDocument();
+  });
+
+  it('a [hidden] header that is later revealed is named by the revealed text', async () => {
+    // Written against the runtime measurement that 46493117 deleted, and kept
+    // because the SHAPE still has to work: `aria-labelledby` points at a live
+    // node, so the name tracks whatever the subtree does asynchronously. True
+    // by construction now rather than by an observer — which is the point.
+    // (The old title claimed it "keeps its visibilityLabel"; the fixture never
+    // had one.)
+    function AsyncHidden() {
+      const [h, setH] = useState(true);
+      useEffect(() => {
+        const id = setTimeout(() => setH(false), 0);
+        return () => clearTimeout(id);
+      }, []);
+      return <span hidden={h}>Revenue</span>;
+    }
+    // TWO columns, deliberately. With one, `unpinnedColumns.length > 1` is
+    // false so no drag grip renders and the resize handle is aria-hidden — the
+    // cell's only content is the label span, so `aria-labelledby` and
+    // name-from-content resolve to the identical string and the assertion
+    // cannot discriminate. A second column makes the grip real, and deleting
+    // the `aria-labelledby` then yields "Drag to reorder this column Revenue".
+    const cols: ColumnDef<Row>[] = [
+      { id: 'revenue_id', header: <AsyncHidden />, cell: () => 'x' },
+      { id: 'other_col', header: 'Other', cell: () => 'y' },
+    ];
+    function Harness() {
+      const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    render(<Harness />);
+    await waitFor(() => {
+      expect(screen.getByText('Revenue')).not.toHaveAttribute('hidden');
+    });
+    await waitFor(() => {
+      expect(screen.getByRole('columnheader', { name: 'Revenue' })).toBeInTheDocument();
+    });
+    {
+      const th = screen.getAllByRole('columnheader')[0]!;
+      // MECHANISM as well as name. Asserting the name alone cannot fail here:
+      // jsdom's name-from-content for a `<th>` yields the label span's text,
+      // which is the same string `aria-labelledby` produces — verified by
+      // dumping `computeAccessibleName` with the attribute deleted and a drag
+      // grip rendering, which still returned "Revenue". (Chromium DOES absorb
+      // the grip, which is why the attribute matters; jsdom cannot see the
+      // difference, so the test asserts the wiring directly.)
+      expect(th.getAttribute('aria-labelledby')).not.toBeNull();
+    }
+  });
+
+  it('an [alt] filled in asynchronously does not change the header name', async () => {
+    // Also from the deleted-measurement era. Now true by construction: the
+    // name is computed from the live node, so an `alt` arriving late needs
+    // nothing to observe it.
+    function AsyncAlt() {
+      const [a, setA] = useState('');
+      useEffect(() => {
+        const id = setTimeout(() => setA('Vendor logo'), 0);
+        return () => clearTimeout(id);
+      }, []);
+      return <img src="x.png" alt={a} />;
+    }
+    const cols: ColumnDef<Row>[] = [
+      { id: 'logo_id', header: <AsyncAlt />, cell: () => 'x' },
+      { id: 'other_col', header: 'Other', cell: () => 'y' },
+    ];
+    function Harness() {
+      const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    render(<Harness />);
+    await waitFor(() => {
+      expect(screen.getByAltText('Vendor logo')).toBeInTheDocument();
+    });
+    await waitFor(() => {
+      expect(screen.getByRole('columnheader', { name: 'Vendor logo' })).toBeInTheDocument();
+    });
+    // Mechanism too — see the note on the [hidden] case above.
+    expect(screen.getAllByRole('columnheader')[0]!.getAttribute('aria-labelledby')).not.toBeNull();
+  });
+
+  it('a header whose text arrives asynchronously is named by its content', async () => {
+    // A `header` ReactNode owning its own state updates its subtree WITHOUT
+    // re-rendering HeaderCell, so the per-commit measurement read it once as
+    // empty and never looked again — the header displayed "Revenue" and
+    // announced "revenue_id" forever. That measurement is gone; the static
+    // rule points `aria-labelledby` at the live node, so this now holds
+    // without anything observing anything. Kept as the regression fixture.
+    function AsyncHeader() {
+      const [text, setText] = useState('');
+      useEffect(() => {
+        const id = setTimeout(() => setText('Revenue'), 0);
+        return () => clearTimeout(id);
+      }, []);
+      return <span>{text}</span>;
+    }
+    const asyncCols: ColumnDef<Row>[] = [
+      { id: 'revenue_id', header: <AsyncHeader />, cell: () => 'x' },
+      { id: 'other_col', header: 'Other', cell: () => 'y' },
+    ];
+    function Harness() {
+      const instance = useDataTable<Row>({ data: rows, columns: asyncCols, getRowId });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    render(<Harness />);
+    await screen.findByText('Revenue');
+    await waitFor(() => {
+      expect(screen.getByRole('columnheader', { name: 'Revenue' })).toBeInTheDocument();
+    });
+    {
+      const th = screen.getAllByRole('columnheader')[0]!;
+      // MECHANISM as well as name. Asserting the name alone cannot fail here:
+      // jsdom's name-from-content for a `<th>` yields the label span's text,
+      // which is the same string `aria-labelledby` produces — verified by
+      // dumping `computeAccessibleName` with the attribute deleted and a drag
+      // grip rendering, which still returned "Revenue". (Chromium DOES absorb
+      // the grip, which is why the attribute matters; jsdom cannot see the
+      // difference, so the test asserts the wiring directly.)
+      expect(th.getAttribute('aria-labelledby')).not.toBeNull();
+    }
+    // Reachable only through the grip's old `column.id` fallback, which
+    // f36a7d8a removed — so with a grip now rendering this asserts something
+    // that can actually be violated.
+    expect(screen.queryByRole('columnheader', { name: /revenue_id/ })).toBeNull();
+  });
+
+  it('keeps an empty-string header hidden in the compact strip', () => {
+    // PINS THE SEPARATION of `plainHeader` (layout) from `rendersText`
+    // (naming). Conflating them shipped a regression: the trailing
+    // row-actions column — `header: ''`, which the playground has three of —
+    // started rendering an empty padded block in the stacked strip instead of
+    // being hidden, because narrowing the naming test also flipped
+    // `data-responsive-plain-label` and `retainedResponsiveHeader`.
+    //
+    // Until this test the separation was guarded only by a comment, and a
+    // reviewer verified that merging the two booleans back together left the
+    // whole suite green.
+    const cols: ColumnDef<Row>[] = [{ id: 'actions', header: '', cell: () => 'x' }];
+    function Harness() {
+      const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+      return <DataTable instance={instance} aria-label="t" collapseBelow="md" />;
+    }
+    render(<Harness />);
+    const th = screen.getAllByRole('columnheader')[0]!;
+    expect(th.getAttribute('data-responsive-plain-label')).toBe('true');
+    expect(th.getAttribute('data-responsive-retained-header')).toBeNull();
+  });
+
+  describe('the column-header naming contract (#500)', () => {
+    // Seven versions of a DOM measurement tried to decide this at runtime and
+    // each was wrong in a new way. The rule is now static, so the contract is
+    // small enough to state exhaustively — which is the point of stating it
+    // exhaustively.
+    function harness(column: Partial<ColumnDef<Row>> & { id: string }) {
+      const cols = [{ cell: () => 'x', ...column }] as ColumnDef<Row>[];
+      function H() {
+        const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+        return <DataTable instance={instance} aria-label="t" />;
+      }
+      render(<H />);
+      return screen.getAllByRole('columnheader')[0]!;
+    }
+
+    it('a string header is named by its own text', () => {
+      expect(harness({ id: 'rev_id', header: 'Revenue' })).toHaveAccessibleName('Revenue');
+    });
+
+    it('a ReactNode header with no visibilityLabel is named by its content', () => {
+      expect(harness({ id: 'rev_id', header: <strong>Revenue</strong> })).toHaveAccessibleName(
+        'Revenue',
+      );
+    });
+
+    it('visibilityLabel overrides a ReactNode header', () => {
+      // Accepted deliberately: the alternative was a runtime measurement that
+      // produced UNNAMED headers ten times over.
+      //
+      // NOT itself a 2.5.3 violation, though an earlier version of this
+      // comment claimed it was. 2.5.3 is scoped to user interface components,
+      // so it engages only when `sortable` makes the span a button, and it
+      // requires the name to CONTAIN the visible text — "Revenue (USD)"
+      // contains "Revenue", so this shape passes. The violating shape is a
+      // label that does not contain the text, on a sortable column.
+      const th = harness({
+        id: 'rev_id',
+        header: <strong>Revenue</strong>,
+        visibilityLabel: 'Revenue (USD)',
+      });
+      expect(th).toHaveAccessibleName('Revenue (USD)');
+    });
+
+    it.each([
+      ['empty string', ''],
+      ['whitespace only', '   '],
+    ])('a %s header falls to visibilityLabel, not to nothing', (_what, header) => {
+      // `typeof '' === 'string'`, so the naive plainHeader test called this
+      // self-naming, ignored the label, and left the column unnamed. The
+      // trailing row-actions column is exactly this shape and ships three
+      // times in the playground.
+      const th = harness({ id: 'actions_col', header, visibilityLabel: 'Actions' });
+      expect(th).toHaveAccessibleName('Actions');
+    });
+
+    it('names the sort control on an empty-string header too', () => {
+      // The `<th>` took "Unlabelled column" while the button INSIDE it stayed
+      // nameless — a focusable role="button" with no accessible name, and the
+      // span's own comment claimed it is named "on the one path where its
+      // content supplies none". This diff created a second such path.
+      const cols: ColumnDef<Row>[] = [
+        { id: 'actions', header: '', sortable: true, cell: () => 'x' },
+        { id: 'other', header: 'Other', cell: () => 'y' },
+      ];
+      function Harness() {
+        const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+        return <DataTable instance={instance} aria-label="t" />;
+      }
+      render(<Harness />);
+      expect(screen.getByRole('button', { name: 'Unlabelled column' })).toBeInTheDocument();
+    });
+
+    it('names an empty-string header rather than letting the resize width win', () => {
+      // Chromium treats an `aria-labelledby` resolving to no text as INVALID
+      // and falls back to contents — so under `collapseBelow` this column
+      // announced "200px", the resize handle's aria-valuetext, and changed as
+      // the user dragged. Measured off Chromium's AX tree via CDP; Playwright
+      // and jsdom each compute names differently and neither shows it.
+      const cols: ColumnDef<Row>[] = [
+        { id: 'actions', header: '', cell: () => 'x' },
+        { id: 'other', header: 'Other', cell: () => 'y' },
+      ];
+      function Harness() {
+        const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+        return <DataTable instance={instance} aria-label="t" collapseBelow="md" />;
+      }
+      render(<Harness />);
+      const th = screen.getAllByRole('columnheader')[0]!;
+      expect(th.getAttribute('aria-label')).toBe('Unlabelled column');
+      expect(th.getAttribute('aria-labelledby')).toBeNull();
+    });
+
+    it('an icon-only header is named by visibilityLabel', () => {
+      const th = harness({
+        id: 'starred_col',
+        header: <span aria-hidden="true">★</span>,
+        visibilityLabel: 'Starred',
+      });
+      expect(th).toHaveAccessibleName('Starred');
+    });
+
+    it.each([
+      [
+        'aria-hidden glyph',
+        <span aria-hidden="true" key="a">
+          ★
+        </span>,
+      ],
+      ['empty span', <span key="b" />],
+      ['empty div', <div key="c" />],
+      ['empty string', ''],
+    ])('never speaks column.id anywhere in the header: %s', (_what, header) => {
+      // The invariant every one of the ten wrong answers violated.
+      //
+      // The previous version could not fail. It asserted `aria-label` is not
+      // the id — but on this path `namedByLabel` is false, so the attribute is
+      // `null` by construction — and that `textContent` does not contain the
+      // id, which it never could. Both held regardless of what the header
+      // announced. It also rendered ONE column, so `unpinnedColumns.length > 1`
+      // was false and the drag grip never rendered: the very control that used
+      // to speak the id was absent from the fixture guarding against it.
+      //
+      // Two columns, reorderable, responsive — so the grip AND the resize
+      // separator both exist — and the assertion is on every accessible name
+      // in the cell, not on one attribute.
+      const cols: ColumnDef<Row>[] = [
+        { id: 'internal_id_col', header, cell: () => 'x' },
+        { id: 'other_col', header: 'Other', cell: () => 'y' },
+      ];
+      function Harness() {
+        const instance = useDataTable<Row>({ data: rows, columns: cols, getRowId });
+        return <DataTable instance={instance} aria-label="t" collapseBelow="md" />;
+      }
+      render(<Harness />);
+      const th = screen.getAllByRole('columnheader')[0]!;
+      const spoken = [
+        th.getAttribute('aria-label') ?? '',
+        th.textContent ?? '',
+        ...[...th.querySelectorAll<HTMLElement>('[aria-label], [aria-valuetext], [title]')].flatMap(
+          (el) => [
+            el.getAttribute('aria-label') ?? '',
+            el.getAttribute('aria-valuetext') ?? '',
+            el.getAttribute('title') ?? '',
+          ],
+        ),
+      ];
+      expect(spoken.filter((text) => text.includes('internal_id_col'))).toEqual([]);
+    });
+  });
+
+  it('names a JSX header by its rendered text, not by the column id', () => {
+    // The icon-only fix keyed off `typeof header === 'string'`, which made
+    // EVERY ReactNode header take `aria-label={columnLabel}` — and with no
+    // `visibilityLabel` that falls all the way back to `column.id`. So
+    // `<strong>Revenue</strong>` announced as "revenue", at every width, not
+    // just under collapseBelow. Both attributes are unconditional.
+    const jsxCols: ColumnDef<Row>[] = [
+      { id: 'revenue', header: <strong>Revenue</strong>, cell: () => 'x' },
+    ];
+    function JsxHarness() {
+      const instance = useDataTable<Row>({ data: rows, columns: jsxCols, getRowId });
+      return <DataTable instance={instance} aria-label="t" />;
+    }
+    render(<JsxHarness />);
+    expect(screen.getByRole('columnheader', { name: 'Revenue' })).toBeInTheDocument();
+    expect(screen.queryByRole('columnheader', { name: 'revenue' })).toBeNull();
+  });
+
+  it('still exposes the resize handle, named for what it does', () => {
+    render(<NameHarness collapseBelow="md" />);
+    expect(screen.getByRole('separator', { name: 'Resize Name column' })).toBeInTheDocument();
   });
 });

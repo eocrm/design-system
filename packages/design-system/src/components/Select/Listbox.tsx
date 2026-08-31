@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import {
   autoUpdate,
@@ -9,6 +9,8 @@ import {
   useFloating,
 } from '@floating-ui/react-dom';
 import clsx from 'clsx';
+import { useTranslation } from '../../i18n/useTranslation';
+import { emptyStateText } from './emptyStateText';
 import { useSelectContext, type SelectContextValue } from './context';
 import { mergeRefs } from '../_internal/refs';
 import { overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
@@ -17,7 +19,6 @@ import { isCreateRow } from './utils';
 import { Empty } from './Empty';
 import { Loading } from './Loading';
 import { ErrorRow } from './Error';
-import { useTranslation } from '../../i18n/useTranslation';
 import styles from './Select.module.scss';
 
 /**
@@ -32,6 +33,46 @@ import styles from './Select.module.scss';
  */
 export function Listbox() {
   const ctx = useSelectContext('Listbox');
+  const t = useTranslation();
+
+  // Deferred by a tick so a listbox that OPENS already loading still
+  // announces — mounting region and text together announces nothing.
+  const [statusText, setStatusText] = useState('');
+  // Synchronous Select: emptiness is always a result. Async: only once the
+  // settled query matches the one on screen.
+  const emptyIsSettled = ctx.loadedQuery === undefined || ctx.loadedQuery === ctx.query;
+  useEffect(() => {
+    // Error included. Dropping `role="alert"` from the error row removed the
+    // one Select announcement that actually worked — `alert` is specified to
+    // announce content inserted together with its node, so it was not one of
+    // the three broken mechanisms. Without this the region reset to '' on
+    // rejection and the failure was silent.
+    // Empty included, but only once the emptiness is a RESULT. For an async
+    // Select, `loading` is false for the entire debounce window while the rows
+    // are still the previous query's — so this announced "No options." on every
+    // open before the first fetch started, and "No results for X" about a
+    // search that had not run, re-firing per keystroke because the
+    // interpolated query made each string distinct. A synchronous Select has
+    // no such window and announces immediately.
+    //
+    // "Nothing matched" is the most useful thing a Select can say — a keyboard user typing into a combobox gets no other signal that
+    // the list went empty — and it was announced by nothing: the row carries
+    // no live region and this one did not cover the state. Hard rule 10 wants
+    // chosen silence written down, and this silence was not chosen.
+    setStatusText(
+      ctx.error
+        ? t('select.loadFailed')
+        : ctx.loading && ctx.rows.length === 0
+          ? t('select.statusLoading')
+          : ctx.rows.length === 0 && emptyIsSettled
+            ? emptyStateText(t, ctx.query)
+            : '',
+    );
+    // `ctx.error` is in the deps deliberately. It happens to work without it
+    // — a rejection also flips `loading` — but that is a coincidence of the
+    // current hook, and there is no eslint in this repo to catch the day it
+    // stops being true.
+  }, [ctx.error, ctx.loading, ctx.rows.length, ctx.query, emptyIsSettled, t]);
   const inOverlay = useInOverlay(ctx.triggerRootRef, ctx.open);
   // #274: hosts yield Escape while we're open — our own capture/element
   // handler closes us on the same press instead of the Modal/Drawer.
@@ -177,6 +218,19 @@ export function Listbox() {
           with; multi-summary keeps a select-only combobox trigger that shows
           the summary, so this filter is its sibling inside the panel. */}
       {ctx.multiple && ctx.triggerDisplay === 'summary' && ctx.searchable && <InPanelSearchInput />}
+      {/* ONE live region for the whole listbox, outside the <ul>.
+          Each of the three state rows used to carry its own announcement, in
+          three different and partly invalid ways: `aria-live` on
+          `<li role="presentation">` (a global attribute, so the presentation
+          role was discarded and the row was exposed as a list item inside a
+          listbox), and `role="alert"` on another `<li>` — the same
+          required-children deviation. All three also mounted their region
+          together with its text, which most screen readers do not announce.
+          Rendered unconditionally here with the text deferred, per Hard rule
+          10. See #495. */}
+      <span role="status" aria-live="polite" className={styles.srOnly}>
+        {statusText}
+      </span>
       <ul
         id={ctx.listboxId}
         role="listbox"
@@ -186,7 +240,7 @@ export function Listbox() {
         data-in-overlay={inOverlay ? '' : undefined}
         className={styles.listboxBody}
       >
-        {renderListboxBody(ctx)}
+        {renderListboxBody(ctx, t)}
       </ul>
     </div>,
     document.body,
@@ -206,7 +260,10 @@ export function Listbox() {
  * Each branch consults the consumer's `renderLoading` / `renderError` /
  * `renderEmpty` first, falling back to the bundled defaults.
  */
-function renderListboxBody<T>(ctx: SelectContextValue<T>): ReactNode {
+function renderListboxBody<T>(
+  ctx: SelectContextValue<T>,
+  t: ReturnType<typeof useTranslation>,
+): ReactNode {
   const showLoading = ctx.loading && ctx.rows.length === 0;
   const showError = !!ctx.error && !ctx.loading;
   const showEmpty = !ctx.loading && !ctx.error && ctx.rows.length === 0;
@@ -268,7 +325,7 @@ function renderListboxBody<T>(ctx: SelectContextValue<T>): ReactNode {
           ? (ctx.value as string[]).includes(optRow.option.value)
           : ctx.value === optRow.option.value;
         const active = ctx.activeIndex === j;
-        groupChildren.push(renderOptionRow(optRow.option, j, selected, active, ctx));
+        groupChildren.push(renderOptionRow(optRow.option, j, selected, active, ctx, t));
         j++;
       }
       nodes.push(
@@ -287,7 +344,7 @@ function renderListboxBody<T>(ctx: SelectContextValue<T>): ReactNode {
       ? (ctx.value as string[]).includes(optRow.option.value)
       : ctx.value === optRow.option.value;
     const active = ctx.activeIndex === i;
-    nodes.push(renderOptionRow(optRow.option, i, selected, active, ctx));
+    nodes.push(renderOptionRow(optRow.option, i, selected, active, ctx, t));
     i++;
   }
   return nodes;
@@ -308,6 +365,8 @@ function renderOptionRow<T>(
   selected: boolean,
   active: boolean,
   ctx: SelectContextValue<T>,
+  // Threaded rather than hooked: these are plain functions, not components.
+  t: ReturnType<typeof useTranslation>,
 ): ReactNode {
   // Creatable "+ Create <query>" row. Rendered distinctly (italic + accent
   // colour via `.optionCreate`) and dispatches `onCreate` plus the same
@@ -334,7 +393,7 @@ function renderOptionRow<T>(
         }}
         onMouseEnter={() => ctx.setActiveIndex(i)}
       >
-        + Create &quot;{opt.label}&quot;
+        {t('select.createOption', { label: opt.label })}
       </li>
     );
   }

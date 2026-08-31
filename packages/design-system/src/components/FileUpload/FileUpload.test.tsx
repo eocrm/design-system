@@ -1,4 +1,4 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { FileUpload, type FileEntry } from './FileUpload';
@@ -443,5 +443,201 @@ describe('FileUpload', () => {
       </>,
     );
     expect(screen.getByRole('button', { name: 'Attachments' })).toBeInTheDocument();
+  });
+});
+
+describe('batch progress and failed rows reach assistive tech (#502)', () => {
+  const file = (name: string) => new File(['x'], name, { type: 'text/plain' });
+  const noop = () => {};
+
+  it('announces the batch from ONE region, not one per row', async () => {
+    // Twelve files resolving inside two seconds must not be twelve
+    // announcements — that is why this is a batch region rather than per-row.
+    const files: FileEntry[] = [
+      { id: '1', file: file('a.txt'), status: 'done' },
+      { id: '2', file: file('b.txt'), status: 'uploading' },
+      { id: '3', file: file('c.txt'), status: 'pending' },
+    ];
+    const { container } = render(
+      <FileUpload files={files} onFilesAdded={noop} onFileRemove={noop} />,
+    );
+    const regions = container.querySelectorAll('[role="status"][aria-live="polite"]');
+    expect(regions).toHaveLength(1);
+    await waitFor(() => expect(regions[0]!.textContent).toBe('Uploading: 1 / 3'));
+  });
+
+  it('announces the outcome once every transfer settles', async () => {
+    // Rendered IN FLIGHT first, then settled. Asserting on a settled mount
+    // pinned the defect instead of the fix: the region has to have watched the
+    // transfer to have anything to report about it.
+    // The SAME File objects across both states. A controlled consumer updates
+    // `status` on entries it already holds; it does not re-read the file. The
+    // guard keys on the File instance, so a test that rebuilt them was
+    // modelling something no consumer does.
+    const [fa, fb] = [file('a.txt'), file('b.txt')];
+    const inFlight: FileEntry[] = [
+      { id: '1', file: fa, status: 'uploading' },
+      { id: '2', file: fb, status: 'uploading' },
+    ];
+    const settled: FileEntry[] = [
+      { id: '1', file: fa, status: 'done' },
+      { id: '2', file: fb, status: 'error', error: 'boom' },
+    ];
+    const { container, rerender } = render(
+      <FileUpload files={inFlight} onFilesAdded={noop} onFileRemove={noop} />,
+    );
+    const region = container.querySelector('[role="status"]');
+    await waitFor(() => expect(region!.textContent).toBe('Uploading: 0 / 2'));
+    rerender(<FileUpload files={settled} onFilesAdded={noop} onFileRemove={noop} />);
+    await waitFor(() => expect(region!.textContent).toBe('Uploaded: 1 / 2. Failed: 1.'));
+  });
+
+  it('does not report an outcome when a SETTLED row is deleted', async () => {
+    // The sibling of the in-flight-removal case, and it survived that fix: a
+    // watched file remained, so the counts simply recomputed and deleting one
+    // of two finished uploads announced "Uploaded: 1 / 1." Nothing settled —
+    // the array just got shorter.
+    const [fx, fy] = [file('x.txt'), file('y.txt')];
+    const up: FileEntry[] = [
+      { id: 'x', file: fx, status: 'uploading' },
+      { id: 'y', file: fy, status: 'uploading' },
+    ];
+    const done: FileEntry[] = [
+      { id: 'x', file: fx, status: 'done' },
+      { id: 'y', file: fy, status: 'done' },
+    ];
+    const afterDelete: FileEntry[] = [{ id: 'y', file: fy, status: 'done' }];
+    const { container, rerender } = render(
+      <FileUpload files={up} onFilesAdded={noop} onFileRemove={noop} />,
+    );
+    const region = container.querySelector('[role="status"]');
+    rerender(<FileUpload files={done} onFilesAdded={noop} onFileRemove={noop} />);
+    await waitFor(() => expect(region!.textContent).toBe('Uploaded: 2 / 2.'));
+    rerender(<FileUpload files={afterDelete} onFilesAdded={noop} onFileRemove={noop} />);
+    await waitFor(() => expect(region!.textContent).toBe(''));
+  });
+
+  it('stays silent when the next entity reuses the same file ids', async () => {
+    // Ids belong to the consumer, and one numbering them per entity hands the
+    // next entity the same ones. Keying the guard on ids let entity B inherit
+    // entity A's flag and announce its pre-existing attachments — the fourth
+    // defect in this guard and the third of that shape. It keys on the File
+    // instance instead, which a consumer cannot collide.
+    const fa = file('a.txt');
+    const up: FileEntry[] = [{ id: 'f1', file: fa, status: 'uploading' }];
+    const done: FileEntry[] = [{ id: 'f1', file: fa, status: 'done' }];
+    const nextEntity: FileEntry[] = [{ id: 'f1', file: file('z.txt'), status: 'done' }];
+    const { container, rerender } = render(
+      <FileUpload files={up} onFilesAdded={noop} onFileRemove={noop} />,
+    );
+    const region = container.querySelector('[role="status"]');
+    rerender(<FileUpload files={done} onFilesAdded={noop} onFileRemove={noop} />);
+    await waitFor(() => expect(region!.textContent).toBe('Uploaded: 1 / 1.'));
+    rerender(<FileUpload files={nextEntity} onFilesAdded={noop} onFileRemove={noop} />);
+    await waitFor(() => expect(region!.textContent).toBe(''));
+  });
+
+  it('does not report an upload outcome when the last in-flight row is removed', async () => {
+    // A deletion is not a completed transfer. Recording the whole batch as
+    // "seen" meant the settled sibling kept the flag alive, so removing the
+    // uploading row announced "Uploaded: 1 / 1" for something that never
+    // finished.
+    const fa = file('a.txt');
+    const mixed: FileEntry[] = [
+      { id: 'a', file: fa, status: 'done' },
+      { id: 'b', file: file('b.txt'), status: 'uploading' },
+    ];
+    const afterRemoval: FileEntry[] = [{ id: 'a', file: fa, status: 'done' }];
+    const { container, rerender } = render(
+      <FileUpload files={mixed} onFilesAdded={noop} onFileRemove={noop} />,
+    );
+    const region = container.querySelector('[role="status"]');
+    await waitFor(() => expect(region!.textContent).toBe('Uploading: 1 / 2'));
+    rerender(<FileUpload files={afterRemoval} onFilesAdded={noop} onFileRemove={noop} />);
+    await waitFor(() => expect(region!.textContent).toBe(''));
+  });
+
+  it('stays silent when the batch is swapped for another entity without emptying', async () => {
+    // A form switching entity on a shared FileUpload instance. Entity B's
+    // files were never in flight here, so nothing may be announced — a boolean
+    // flag reset only on empty carried across the swap and announced B's
+    // pre-existing attachments.
+    const fa = file('a.txt');
+    const aInFlight: FileEntry[] = [{ id: 'a1', file: fa, status: 'uploading' }];
+    const aDone: FileEntry[] = [{ id: 'a1', file: fa, status: 'done' }];
+    const bDone: FileEntry[] = [
+      { id: 'b1', file: file('b.txt'), status: 'done' },
+      { id: 'b2', file: file('c.txt'), status: 'done' },
+    ];
+    const { container, rerender } = render(
+      <FileUpload files={aInFlight} onFilesAdded={noop} onFileRemove={noop} />,
+    );
+    const region = container.querySelector('[role="status"]');
+    rerender(<FileUpload files={aDone} onFilesAdded={noop} onFileRemove={noop} />);
+    await waitFor(() => expect(region!.textContent).toBe('Uploaded: 1 / 1.'));
+    rerender(<FileUpload files={bDone} onFilesAdded={noop} onFileRemove={noop} />);
+    await waitFor(() => expect(region!.textContent).toBe(''));
+  });
+
+  it('stays silent again after a completed batch is cleared', async () => {
+    // The flag has to RESET, or every later settled array announces. Emptying
+    // the list is the reset point, which is what a controlled parent does
+    // between transfers.
+    const fa = file('a.txt');
+    const inFlight: FileEntry[] = [{ id: '1', file: fa, status: 'uploading' }];
+    const done: FileEntry[] = [{ id: '1', file: fa, status: 'done' }];
+    // The SAME File, deliberately: re-added after the list was cleared. Two
+    // earlier versions of this test could not fail — one used an id never in
+    // the set, and once the guard keyed on File instances rather than ids, a
+    // different file made the reset irrelevant too. Only a file the component
+    // genuinely watched, returning already-settled, makes the reset the one
+    // thing standing between this and a false announcement.
+    const other: FileEntry[] = [{ id: '1', file: fa, status: 'done' }];
+    const { container, rerender } = render(
+      <FileUpload files={inFlight} onFilesAdded={noop} onFileRemove={noop} />,
+    );
+    const region = container.querySelector('[role="status"]');
+    rerender(<FileUpload files={done} onFilesAdded={noop} onFileRemove={noop} />);
+    await waitFor(() => expect(region!.textContent).toBe('Uploaded: 1 / 1.'));
+    rerender(<FileUpload files={[]} onFilesAdded={noop} onFileRemove={noop} />);
+    await waitFor(() => expect(region!.textContent).toBe(''));
+    rerender(<FileUpload files={other} onFilesAdded={noop} onFileRemove={noop} />);
+    await waitFor(() => expect(region).not.toBeNull());
+    expect(region!.textContent).toBe('');
+  });
+
+  it('stays silent when it mounts on an already-settled batch', async () => {
+    // A CRM form opened on an entity that already has attachments. Nothing
+    // changed on screen, so nothing may be announced — Hard rule 10 gates the
+    // region on what the user can SEE change, not on the raw prop. Deriving
+    // the text from `files` alone moved the region from '' to
+    // "Uploaded: 3 / 3" on mount and fired a polite announcement for it.
+    const files: FileEntry[] = [
+      { id: '1', file: file('a.txt'), status: 'done' },
+      { id: '2', file: file('b.txt'), status: 'done' },
+      { id: '3', file: file('c.txt'), status: 'done' },
+    ];
+    const { container } = render(
+      <FileUpload files={files} onFilesAdded={noop} onFileRemove={noop} />,
+    );
+    const region = container.querySelector('[role="status"]');
+    await waitFor(() => expect(region).not.toBeNull());
+    expect(region!.textContent).toBe('');
+  });
+
+  it('names a failed row on the one control the user can reach', () => {
+    // The failure is plain text in a non-focusable <li>; the row's only
+    // focusable control was named "Remove {file}" and said nothing about it.
+    const files: FileEntry[] = [{ id: '1', file: file('a.txt'), status: 'error', error: 'boom' }];
+    render(<FileUpload files={files} onFilesAdded={noop} onFileRemove={noop} />);
+    expect(
+      screen.getByRole('button', { name: 'Remove a.txt — upload failed' }),
+    ).toBeInTheDocument();
+  });
+
+  it('leaves a healthy row named plainly', () => {
+    const files: FileEntry[] = [{ id: '1', file: file('a.txt'), status: 'done' }];
+    render(<FileUpload files={files} onFilesAdded={noop} onFileRemove={noop} />);
+    expect(screen.getByRole('button', { name: 'Remove a.txt' })).toBeInTheDocument();
   });
 });

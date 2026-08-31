@@ -1,5 +1,6 @@
 import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
 import clsx from 'clsx';
+import { useTranslation } from '../../i18n/useTranslation';
 import styles from './Progress.module.scss';
 
 /** Visual size — controls the track height. */
@@ -149,10 +150,13 @@ export const Progress = forwardRef<HTMLDivElement, ProgressProps>(function Progr
   const indeterminate = !determinate;
   // VISUAL clamp only — ARIA reports the raw `value` via aria-valuenow below.
   const percent = determinate ? Math.max(0, Math.min(100, (value / max) * 100)) : 0;
-  // For indeterminate mode, fall back to consumer-passed aria-label (or "Loading…")
-  // so screen readers have something to announce in place of the missing valuenow.
+  // Indeterminate has no aria-valuenow, so aria-valuetext is the only thing a
+  // screen reader has. Prefer the consumer's aria-label; the translated
+  // fallback is what it hears when there isn't one. This was hardcoded English
+  // in both progress components (#503).
+  const t = useTranslation();
   const ariaLabel = rest['aria-label'];
-  const valuetext = indeterminate ? (ariaLabel ?? 'Loading…') : undefined;
+  const valuetext = indeterminate ? (ariaLabel ?? t('progress.indeterminate')) : undefined;
 
   // {...rest} last so consumer overrides win (Pattern A).
   return (

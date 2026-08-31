@@ -1,4 +1,5 @@
 import { useTranslation } from '../../i18n/useTranslation';
+import { emptyStateText } from './emptyStateText';
 import styles from './Select.module.scss';
 
 /**
@@ -22,14 +23,17 @@ export interface EmptyProps {
  *
  * Rendered as a non-interactive `<li role="presentation">` so it occupies
  * a row visually but isn't reachable by keyboard or counted in the option
- * walk. Carries `aria-live="polite"` so screen readers announce the empty
- * state when it appears mid-session.
+ * walk. No `aria-live` of its own — the Listbox's single status region
+ * announces this state, and the visible copy is hidden from AT so a reader
+ * does not meet the sentence twice.
  */
 export function Empty({ query }: EmptyProps) {
   const t = useTranslation();
   return (
-    <li className={styles.stateRow} role="presentation" aria-live="polite">
-      {query && query.trim() !== '' ? `No results for "${query}".` : `${t('select.noOptions')}.`}
+    <li className={styles.stateRow} role="presentation">
+      {/* aria-hidden for the same reason as the error row: the Listbox status
+          region renders this same text, and both are in the tree at once. */}
+      <span aria-hidden="true">{emptyStateText(t, query)}</span>
     </li>
   );
 }

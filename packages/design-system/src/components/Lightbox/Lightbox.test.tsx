@@ -170,6 +170,29 @@ describe('Lightbox', () => {
     expect(screen.getByText('Preview unavailable')).toBeInTheDocument();
   });
 
+  it.each([
+    ['with an alt', 'Quarterly report', 'Quarterly report: Preview unavailable'],
+    ['with an empty alt', '', 'Preview unavailable'],
+  ])('names the unavailable-preview tile %s', (_what, alt, expected) => {
+    // The branch's only Lightbox behaviour change and it was unpinned: the
+    // empty-`alt` guard stops the name being ": Preview unavailable". Both the
+    // pre-fix unconditional concat AND forcing the other branch left this file
+    // green, because its only related assertion reads the visible child and is
+    // blind to `aria-label`.
+    //
+    // Concatenated here where Image deliberately is NOT: the text is a CHILD
+    // of this `role="img"`, so children-presentational prunes it and the name
+    // is all that is left. In Image it is a sibling that survives.
+    render(
+      <Lightbox
+        open
+        onOpenChange={() => {}}
+        items={[{ src: 'javascript:alert(1)', alt, kind: 'pdf' }]}
+      />,
+    );
+    expect(screen.getByRole('img')).toHaveAccessibleName(expected);
+  });
+
   it('blocks data: and blob: PDF srcs too', () => {
     for (const src of ['data:text/html,<script>1</script>', 'blob:https://x/abc']) {
       const { unmount } = render(

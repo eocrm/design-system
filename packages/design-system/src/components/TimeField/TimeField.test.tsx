@@ -990,3 +990,22 @@ describe('TimeField — scroll box axes (#375)', () => {
     expect(scss).toMatch(/^\.timeColumn\s*\{[^}]*overflow-x:\s*hidden/m);
   });
 });
+
+describe('invalid state matches every other form control (#494)', () => {
+  it('sets aria-invalid on the text input', () => {
+    // TimeField was the ONLY form control in the library without this — 15
+    // others set aria-invalid and it set nothing, so a TimeField inside a
+    // <Field error=…> looked wrong and announced valid.
+    const { container } = render(
+      <TimeField value={{ hours: 9, minutes: 30 }} onChange={() => {}} invalid />,
+    );
+    expect(container.querySelector('input[aria-invalid="true"]')).not.toBeNull();
+  });
+
+  it('omits the attribute when valid, rather than setting false', () => {
+    const { container } = render(
+      <TimeField value={{ hours: 9, minutes: 30 }} onChange={() => {}} />,
+    );
+    expect(container.querySelector('input[aria-invalid]')).toBeNull();
+  });
+});

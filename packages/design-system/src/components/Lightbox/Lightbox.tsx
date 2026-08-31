@@ -338,7 +338,17 @@ export function Lightbox({
               <div
                 className={styles.stageError}
                 role="img"
-                aria-label={`${currentItem.alt}: ${t('lightbox.previewUnavailable')}`}
+                /* Guarded, unlike before: an item with an empty `alt` produced
+                   a name of ": Preview unavailable", leading with punctuation.
+                   `role="img"` is safe HERE — the only child is text the label
+                   already repeats, so children-presentational prunes nothing a
+                   user needed. Do NOT copy this shape onto a tile containing a
+                   control: that is what broke Image's Retry button (#496). */
+                aria-label={
+                  currentItem.alt
+                    ? `${currentItem.alt}: ${t('lightbox.previewUnavailable')}`
+                    : t('lightbox.previewUnavailable')
+                }
               >
                 {t('lightbox.previewUnavailable')}
               </div>
@@ -361,9 +371,15 @@ export function Lightbox({
                 <div
                   className={styles.stageError}
                   role="img"
-                  /* Concatenated for the same reason as Image's error tile,
-                     and to match the previewUnavailable branch 25 lines up
-                     which already did this. */
+                  /* Concatenated, where Image's tile deliberately is NOT —
+                     the difference is markup, not policy. Here the text is a
+                     CHILD of `role="img"`, so children-presentational prunes
+                     it and the name is the only thing left to say it. In Image
+                     the text is a SIBLING that survives, so concatenating made
+                     a reader hear the failure twice. `role="img"` stays on the
+                     container here because the only child is that text; Image
+                     had to move it onto the icon, whose Retry button the role
+                     pruned outright. */
                   aria-label={
                     currentItem.alt
                       ? `${currentItem.alt}: ${t('image.loadError')}`

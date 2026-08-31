@@ -16,6 +16,14 @@ export interface Messages {
     sidebar: string;
   };
   confirmationPopover: {
+    /**
+     * Announced from a polite live region while an async confirm is in flight.
+     *
+     * The pending state used to reach a screen reader not at all: no
+     * `aria-busy`, no region, and the spinner explicitly `aria-hidden`. The
+     * user activated Confirm and got silence until the popover closed (#497).
+     */
+    pending: string;
     /** Label on the secondary "Cancel" button inside the confirmation popover. */
     cancel: string;
     /** Label on the primary "Confirm" button inside the confirmation popover. */
@@ -69,6 +77,20 @@ export interface Messages {
      */
     busy: string;
   };
+  progress: {
+    /**
+     * `aria-valuetext` for an INDETERMINATE `Progress` / `CircularProgress`
+     * when the consumer passes no `aria-label`.
+     *
+     * An indeterminate bar has no `aria-valuenow` — its meaning lives entirely
+     * in `aria-valuetext`, so this string is the only thing a screen reader
+     * has to go on. It was hardcoded English in both components, which meant a
+     * Russian consumer heard "Loading…" (#503). Note this is a value
+     * description, not the accessible name: the name is whatever `aria-label`
+     * the consumer passes, and may be absent.
+     */
+    indeterminate: string;
+  };
   slider: {
     /** Accessible-name suffix for the first thumb in a range slider. */
     minimum: string;
@@ -120,6 +142,8 @@ export interface Messages {
     nextAgenda: string;
     /** Function leaf — `aria-label` template for the "+N more events" overflow chip. */
     moreEvents: (params: { count: number }) => string;
+    /** VISIBLE overflow chip text, distinct from `moreEvents`, which names it for AT. */
+    moreEventsShort: (params: { count: number }) => string;
     /** Segmented-control label for the month view. */
     viewMonth: string;
     /** Segmented-control label for the week view. */
@@ -194,6 +218,14 @@ export interface Messages {
   dataTable: {
     /** aria-label for the select-all checkbox in the header. */
     selectAll: string;
+    /** aria-label for a row's selection checkbox. */
+    selectRow: (params: { row: string }) => string;
+    /** aria-label for a row's expansion toggle. */
+    expandRow: (params: { row: string }) => string;
+    /** aria-label for a column header's drag-to-reorder grip. */
+    dragReorder: (params: { name: string }) => string;
+    /** Same control on a column with no label of its own — never speaks `column.id`. */
+    dragReorderUnnamed: string;
     /** Accessible label for the row-expansion toggle column header. */
     rowExpansion: string;
     /** Accessible label for the pinned-rows section / tbody. */
@@ -222,6 +254,19 @@ export interface Messages {
      */
     loaded: string;
     /**
+     * Accessible name for a column's resize handle, interpolated with the
+     * column label. The handle used to reuse the column header verbatim, which
+     * did two wrong things at once: a keyboard user tabbing to it heard
+     * "Name, separator" with no hint that it resizes, and — because the handle
+     * is a NAMED DESCENDANT of the columnheader — the header's own name
+     * computed as "Name Name".
+     */
+    resizeColumn: (params: { name: string }) => string;
+    /** Same control on a column with no label of its own — never speaks `column.id`. */
+    resizeColumnUnnamed: string;
+    /** Accessible name for a column header whose author gave it no label. */
+    unlabelledColumn: string;
+    /**
      * Announced when a load resolves to nothing. Distinct from `empty`, which
      * is the VISIBLE empty-state copy: reusing that string put the same text
      * on screen and in the live region, so a name query for the empty state
@@ -243,6 +288,8 @@ export interface Messages {
   drag: {
     /** Visually-hidden keyboard instructions, announced when a draggable takes focus. */
     instructions: string;
+    /** Fallback name for a `Sortable.Handle` the consumer gave no `aria-label`. */
+    handleLabel: string;
     /** Announced when a drag starts. */
     pickedUp: (params: { item: string }) => string;
     /** Announced when the drop slot changes, in a single-list component (Sortable, DataTable). */
@@ -315,7 +362,13 @@ export interface Messages {
     /** Hint inside an empty section body while a move (drag or keyboard pick) is in flight. */
     dropHint: string;
   };
+  avatarGroup: {
+    /** aria-label on the overflow chip: how many avatars are not shown. */
+    overflow: (params: { count: number }) => string;
+  };
   optionsPicker: {
+    /** aria-label for a group's expand/collapse toggle. */
+    toggleGroup: (params: { label: string }) => string;
     /** Placeholder and aria-label for the filter (search) input. */
     filter: string;
     /** Label for the apply button. */
@@ -375,12 +428,44 @@ export interface Messages {
     currentPageAriaLabel: (params: { page: number }) => string;
   };
   select: {
+    /** Visible text of the create-new row in a creatable Select. */
+    createOption: (params: { label: string }) => string;
+    /** aria-label on a multi-select chip's remove control. */
+    removeChip: (params: { label: string }) => string;
     /** aria-label on the clear-selection (×) button inside Select. */
     clear: string;
     /** Placeholder for the search input in searchable Selects. */
     search: string;
     /** Copy shown when the Select listbox has no options matching the filter. */
     noOptions: string;
+    /** Row text while an async `loadOptions` request is in flight. */
+    loading: string;
+    /** Row text when `loadOptions` rejects. */
+    loadFailed: string;
+    /** Retry control inside the error row. */
+    retry: string;
+    /** Empty-state copy when a search query matched nothing. */
+    noResultsFor: (params: { query: string }) => string;
+    /**
+     * Announced from ONE live region the Select root owns, replacing the
+     * per-row `aria-live` the three state rows used to carry.
+     *
+     * Those rows put `aria-live` on `<li role="presentation">`, and the region
+     * mounted together with its text — which most screen readers do not
+     * announce. That is the defect, and it stands on its own.
+     *
+     * A previous version of this note added that ARIA's presentational-role
+     * conflict resolution would discard the `presentation` and expose the rows
+     * as list items, an `aria-required-children` deviation. Spec-wise that is
+     * arguable and axe-core flags it statically, but a reviewer measured
+     * Chromium and it does NOT happen inside a `role="listbox"`: every such
+     * `<li>` is exposed as role=none and ignored, with `aria-live`, with
+     * `aria-label`, even with `tabindex`. Conflict resolution does fire in a
+     * plain `<ul>`. Stated precisely rather than dropped, because the wrong
+     * version was cited in four other files. The error row took a third route
+     * with `role="alert"` on an `<li>` (#495).
+     */
+    statusLoading: string;
     /** Accessible name for a multi-select trigger, listing what is currently selected. */
     selectedPrefix: (params: { labels: string }) => string;
     /** Accessible name for a chips trigger with nothing selected yet. */
@@ -397,6 +482,12 @@ export interface Messages {
     numberPlaceholder: string;
   };
   colorPicker: {
+    /**
+     * `aria-valuetext` for the saturation/brightness square, announced on
+     * every keyboard adjustment of a `role="application"` element — so it was
+     * arguably the most-spoken untranslated string in the library (#492).
+     */
+    saturationBrightnessValue: (params: { s: number; v: number }) => string;
     /** aria-label for the SV (saturation × brightness) square. */
     saturationBrightness: string;
     /** aria-label for the hue slider. */
@@ -431,6 +522,23 @@ export interface Messages {
     dragHint: string;
     /** Function leaf — aria-label template for the per-row uploading `<Progress>`. */
     uploadingAriaLabel: (params: { name: string }) => string;
+    /**
+     * Batch progress, announced from ONE region the FileUpload root owns.
+     *
+     * Per-row regions were the obvious shape and the wrong one: twelve files
+     * resolving inside two seconds is twelve announcements. Counts are
+     * formatted as `n / total` rather than "n files" so neither locale needs
+     * plural agreement (#502).
+     */
+    batchUploading: (params: { done: number; total: number }) => string;
+    /** Batch outcome, announced once the last transfer settles. */
+    batchSettled: (params: { done: number; total: number; failed: number }) => string;
+    /**
+     * Remove-control name for a row that FAILED. The failure was plain text in
+     * a non-focusable `<li>`, and the row's only focusable control was named
+     * "Remove {file}" — so a user tabbing there later learned nothing about it.
+     */
+    removeFailedAriaLabel: (params: { name: string }) => string;
     /** Function leaf — aria-label template for the per-row remove (×) button. */
     removeAriaLabel: (params: { name: string }) => string;
   };
@@ -496,6 +604,8 @@ export interface Messages {
     restored: string;
   };
   imageCrop: {
+    /** Shown in place of the image when it fails to load. */
+    loadError: string;
     /** aria-label for the zoom slider. */
     zoom: string;
   };

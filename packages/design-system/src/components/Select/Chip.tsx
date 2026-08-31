@@ -1,5 +1,6 @@
 import clsx from 'clsx';
 import styles from './Select.module.scss';
+import { useTranslation } from '../../i18n/useTranslation';
 
 /**
  * Internal subcomponent rendered inside chips-mode Select triggers
@@ -20,13 +21,14 @@ export interface ChipProps {
 }
 
 export function Chip({ label, onRemove, disabled }: ChipProps) {
+  const t = useTranslation();
   return (
     <span className={clsx(styles.chip, disabled && styles.chipDisabled)}>
       <span className={styles.chipLabel}>{label}</span>
       <button
         type="button"
         className={styles.chipRemove}
-        aria-label={`Remove ${label}`}
+        aria-label={t('select.removeChip', { label })}
         disabled={disabled}
         onClick={(e) => {
           e.stopPropagation();

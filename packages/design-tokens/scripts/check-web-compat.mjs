@@ -36,10 +36,17 @@ export function parseGeneratedWebContract(tokensScss, darkScss, componentScss = 
     forcedLight: declarations(blockBody(darkScss, ":root[data-theme='light']")),
   };
   if (!componentScss) return generated;
+  // Only `:root` is required of a component file. The theme blocks are
+  // optional because a component that aliases self-theming semantic tokens has
+  // nothing to redeclare per theme — custom properties resolve at use time, so
+  // `--badge-bg-danger: var(--color-tone-danger-bg)` in `:root` already follows
+  // the theme. Badge was the last component carrying such a block, and after it
+  // was aliased the block restated `:root` verbatim; requiring the selector
+  // meant deleting 24 provably dead lines threw `missing selector` instead.
   const component = {
     light: declarations(blockBody(componentScss, ':root')),
-    forcedDark: declarations(blockBody(componentScss, ":root[data-theme='dark']")),
-    systemDark: declarations(blockBody(componentScss, ":root:not([data-theme='light'])")),
+    forcedDark: declarations(blockBody(componentScss, ":root[data-theme='dark']", true)),
+    systemDark: declarations(blockBody(componentScss, ":root:not([data-theme='light'])", true)),
     forcedLight: {},
   };
   return Object.fromEntries(
@@ -57,9 +64,12 @@ function mergeDeclarations(generated, component, scope) {
   return { ...generated, ...component };
 }
 
-function blockBody(source, selector) {
+function blockBody(source, selector, optional = false) {
   const start = source.indexOf(`${selector} {`);
-  if (start < 0) throw new Error(`missing selector ${selector}`);
+  if (start < 0) {
+    if (optional) return '';
+    throw new Error(`missing selector ${selector}`);
+  }
   const open = source.indexOf('{', start);
   let depth = 1;
   for (let index = open + 1; index < source.length; index += 1) {

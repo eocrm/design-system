@@ -7,6 +7,7 @@ import { AUTO_CELL_WIDTH, getPinStyle } from './pinStyle';
 import { shiftVarName } from './columnShift';
 import type { DataTableInstance, ColumnDef } from './types';
 import styles from './DataTable.module.scss';
+import { useTranslation } from '../../i18n/useTranslation';
 
 export interface BodyRowProps<T> {
   row: T;
@@ -44,6 +45,7 @@ export function BodyRow<T>({
   dragActive,
   responsiveEnabled,
 }: BodyRowProps<T>) {
+  const t = useTranslation();
   const rowId = instance.getRowId(row);
   const selected = instance.rowSelection[rowId] === true;
   const expanded = instance.expandedRows[rowId] === true;
@@ -106,7 +108,7 @@ export function BodyRow<T>({
             <Checkbox
               checked={selected}
               onChange={() => instance.toggleRowSelection(rowId)}
-              aria-label={`Select row ${rowId}`}
+              aria-label={t('dataTable.selectRow', { row: String(rowId) })}
             />
           </Table.Cell>
         )}
@@ -122,7 +124,7 @@ export function BodyRow<T>({
               className={styles.expandButton}
               aria-expanded={expanded}
               aria-controls={detailRowId}
-              aria-label={`Expand row ${rowId}`}
+              aria-label={t('dataTable.expandRow', { row: String(rowId) })}
               onClick={() => instance.toggleRowExpanded(rowId)}
             >
               {expanded ? (

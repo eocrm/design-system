@@ -1,5 +1,5 @@
 import { useRef, useState, type RefObject } from 'react';
-import { act, configure, render, screen } from '@testing-library/react';
+import { act, configure, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ConfirmationPopover } from './ConfirmationPopover';
 import { I18nProvider } from '../../i18n/I18nProvider';
@@ -217,8 +217,14 @@ describe('ConfirmationPopover — async onConfirm', () => {
     await user.click(screen.getByRole('button', { name: 'Confirm' }));
 
     expect(onConfirm).toHaveBeenCalledTimes(1);
-    expect(screen.getByRole('button', { name: 'Cancel' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Confirm' })).toBeDisabled();
+    // aria-disabled, not native `disabled` — native would drop both buttons
+    // out of the tab order the moment the user confirms, leaving focus on a
+    // detached element (#497).
+    expect(screen.getByRole('button', { name: 'Cancel' })).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('button', { name: 'Confirm' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
     expect(screen.getByRole('dialog')).toBeInTheDocument();
 
     await act(async () => {
@@ -252,8 +258,8 @@ describe('ConfirmationPopover — async onConfirm', () => {
     });
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Cancel' })).not.toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Confirm' })).not.toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Cancel' })).not.toHaveAttribute('aria-disabled');
+    expect(screen.getByRole('button', { name: 'Confirm' })).not.toHaveAttribute('aria-disabled');
     expect(onCancel).not.toHaveBeenCalled();
   });
 
@@ -337,5 +343,77 @@ describe('ConfirmationPopover — async onConfirm', () => {
     await act(async () => {
       resolveFn();
     });
+  });
+});
+
+describe('pending state reaches assistive tech (#497)', () => {
+  // Same harness as the async-onConfirm block above: this component's open
+  // path uses queueMicrotask + timers for focus, so real timers deadlock.
+  beforeEach(() => {
+    vi.useFakeTimers();
+    configure({
+      asyncWrapper: async (cb) => {
+        const result = await cb();
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 0);
+          vi.advanceTimersByTime(0);
+        });
+        return result;
+      },
+    });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('announces from a live region, and keeps both buttons focusable', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    let resolveFn: () => void = () => {};
+    const onConfirm = vi.fn(() => new Promise<void>((r) => (resolveFn = r)));
+
+    render(
+      <ConfirmationPopover title="Confirm?" onConfirm={onConfirm}>
+        <button type="button">Open</button>
+      </ConfirmationPopover>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+
+    // Popover.Content renders in a portal, so query the document, not the
+    // render container.
+    const region = document.body.querySelector('[role="status"][aria-live="polite"]');
+    expect(region, 'region is rendered unconditionally').not.toBeNull();
+    expect(region!.textContent).toBe('');
+
+    await user.click(screen.getByRole('button', { name: 'Confirm' }));
+    await waitFor(() => expect(region!.textContent).toBe('Working…'));
+
+    // Neither button leaves the tab order: native `disabled` would have.
+    expect(screen.getByRole('button', { name: 'Cancel' })).not.toHaveAttribute('disabled');
+    expect(screen.getByRole('button', { name: 'Confirm' })).not.toHaveAttribute('disabled');
+
+    await act(async () => {
+      resolveFn();
+    });
+  });
+
+  it('guards both handlers, since aria-disabled does not block activation', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const onCancel = vi.fn();
+    const onConfirm = vi.fn(() => new Promise<void>(() => {}));
+
+    render(
+      <ConfirmationPopover title="Confirm?" onConfirm={onConfirm} onCancel={onCancel}>
+        <button type="button">Open</button>
+      </ConfirmationPopover>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm' }));
+
+    // Both are still clickable — that is the point of aria-disabled — so the
+    // handlers themselves must refuse.
+    await user.click(screen.getByRole('button', { name: 'Confirm' }));
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+    expect(onCancel).not.toHaveBeenCalled();
   });
 });

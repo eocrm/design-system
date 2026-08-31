@@ -2,6 +2,7 @@ import {
   forwardRef,
   useCallback,
   useRef,
+  useEffect,
   useState,
   type DragEvent,
   type HTMLAttributes,
@@ -302,6 +303,96 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
   const dragCounter = useRef(0);
   const [isDragOver, setIsDragOver] = useState(false);
 
+  // Batch announcement text. Derived from the controlled `files` array, and
+  // deferred so region and text never mount together.
+  const total = files.length;
+  const settled = files.filter((f) => f.status === 'done' || f.status === 'error').length;
+  const failed = files.filter((f) => f.status === 'error').length;
+  const inFlight = total > 0 && settled < total;
+  const [batchStatus, setBatchStatus] = useState('');
+  // A settled batch is only announced if this component SAW it in flight.
+  // Deriving it from `files` alone announced a batch that never happened: a
+  // form opened on an entity with three existing attachments mounted already
+  // settled, and the region went from '' to "Uploaded: 3 / 3" with nothing on
+  // screen having changed. Hard rule 10 rules that out directly — gate the
+  // region on what the user can SEE change, not on the raw prop.
+  //
+  // Tracked INSIDE the effect, not during render. Mutating a ref while
+  // rendering breaks React's purity rule and a discarded concurrent render
+  // would leave the flag set for a transfer the user never saw. In the effect
+  // the ordering still works: the in-flight pass sets it, and the pass that
+  // observes the batch settled reads what that earlier pass wrote.
+  //
+  // The IDS seen in flight, not a boolean. A boolean was reset only when the
+  // list emptied, so a controlled parent swapping one already-settled `files`
+  // array for another — switching entities on a shared instance after any
+  // upload — carried it across and announced the new entity's pre-existing
+  // attachments. That is the same defect this guard exists to close, surviving
+  // on the prop-change path. Announcing requires the batch on screen to be one
+  // this component actually watched.
+  // Keyed on the FILE OBJECT, not the id. Ids are the consumer's, and a
+  // consumer numbering them per entity — `f1`, `f2` — hands the next entity
+  // the same ones, which inherited the flag and announced its pre-existing
+  // attachments. That is the fourth defect in this guard and the third of the
+  // same shape, so it now keys on something the consumer cannot collide: the
+  // `File` instance itself. A WeakSet also fails SAFE — a consumer that
+  // rebuilds `File` objects per render simply never matches, and silence is
+  // the harmless direction.
+  const seenInFlight = useRef<WeakSet<File>>(new WeakSet());
+  /** Last counts this region reported, to tell a completion from a deletion. */
+  const lastAnnounced = useRef({ total: 0, settled: 0, failed: 0 });
+  // A signature that actually changes when the BATCH changes. Ids alone did
+  // not: swapping to another entity whose file has the same id, count and
+  // status left every dependency identical, so the effect never re-ran and the
+  // region kept the previous entity's text — the guard was correct and never
+  // got to run. Name and size distinguish the files behind equal ids.
+  const signature = files
+    .map((f) => `${f.id}:${f.file.name}:${f.file.size}:${f.status}`)
+    .join('\u0000');
+  useEffect(() => {
+    if (total === 0) {
+      seenInFlight.current = new WeakSet();
+      setBatchStatus('');
+      return;
+    }
+    // Only the files actually IN FLIGHT, not the whole batch. Recording all of
+    // them meant removing the last uploading row left a settled sibling still
+    // "seen", so a deletion announced "Uploaded: 1 / 1" for a transfer that
+    // never finished. Now the removal takes the watched id with it and the
+    // region stays silent.
+    if (inFlight)
+      for (const f of files)
+        if (f.status !== 'done' && f.status !== 'error') seenInFlight.current.add(f.file);
+    const watched = files.some((f) => seenInFlight.current.has(f.file));
+    // A SHRINKING batch is a deletion, not a completion. Removing the last
+    // in-flight row was fixed by tracking only in-flight files; removing a
+    // SETTLED sibling survived that, because a watched file remained and the
+    // counts simply recomputed — so deleting one of two finished uploads
+    // announced "Uploaded: 1 / 1." The premise was right and applied one row
+    // too narrowly: nothing settled, the array just got shorter.
+    const shrank = total < lastAnnounced.current.total;
+    const progressed =
+      settled > lastAnnounced.current.settled || failed > lastAnnounced.current.failed;
+    lastAnnounced.current = { total, settled, failed };
+    if (shrank && !progressed) {
+      // Cleared, not left alone: a deletion has nothing to report, and keeping
+      // the previous text would leave "Uploading: 1 / 2" describing a batch
+      // that no longer exists. Emptying a live region announces nothing.
+      setBatchStatus('');
+      return;
+    }
+    setBatchStatus(
+      inFlight
+        ? t('fileUpload.batchUploading', { done: settled, total })
+        : watched
+          ? t('fileUpload.batchSettled', { done: total - failed, total, failed })
+          : '',
+    );
+    // `signature` rather than `files`: a controlled parent commonly passes a
+    // new array identity for the same batch on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inFlight, settled, total, failed, signature, t]);
+
   const showDropzone = multiple || files.length === 0;
   // In single mode the implicit cap is 1; multi mode uses maxFiles (Infinity if not set).
   const effectiveMaxFiles = multiple ? (maxFiles ?? Infinity) : 1;
@@ -426,6 +517,14 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
   // {...rest} last so consumer overrides win (Pattern A).
   return (
     <div ref={ref} className={clsx(styles.root, disabled && styles.disabled, className)} {...rest}>
+      {/* ONE region for the whole batch. Per-row regions were the obvious
+          shape and the wrong one: twelve files resolving inside two seconds is
+          twelve announcements. Rendered unconditionally with its text deferred
+          so a FileUpload that mounts mid-transfer still announces — see
+          CLAUDE.md Hard rule 10 and #502. */}
+      <span role="status" aria-live="polite" className={styles.srOnly}>
+        {batchStatus}
+      </span>
       {showDropzone && (
         <div
           role="button"
@@ -499,7 +598,14 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
                   iconOnly
                   onClick={() => onFileRemove(entry)}
                   disabled={disabled}
-                  aria-label={t('fileUpload.removeAriaLabel', { name: entry.file.name })}
+                  // A failed row's message is plain text in a non-focusable
+                  // <li>, so a user tabbing here later learned nothing about
+                  // it. Fold the failure into the one name they DO reach.
+                  aria-label={
+                    entry.status === 'error'
+                      ? t('fileUpload.removeFailedAriaLabel', { name: entry.file.name })
+                      : t('fileUpload.removeAriaLabel', { name: entry.file.name })
+                  }
                 >
                   <X size={16} aria-hidden />
                 </Button>

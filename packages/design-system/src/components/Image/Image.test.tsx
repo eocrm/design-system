@@ -35,19 +35,31 @@ describe('Image', () => {
     const { container, getByRole, getByText } = render(<Image src={SRC} alt="A photo" />);
     fireEvent.error(getImg(container));
     expect(container.querySelector('[data-state="error"]')).not.toBeNull();
-    // The failure must be IN the name. This asserted `name: 'A photo'` before
-    // #488 — i.e. it pinned the bug: `alt || t(...)` dropped the error word
-    // whenever `alt` was set, so a broken image announced exactly like a
-    // loaded one.
-    expect(getByRole('img', { name: 'A photo: Image failed to load' })).not.toBeNull();
+    // The failure must be announced, but exactly ONCE. #488 put it in the
+    // icon's name because `alt || t(...)` dropped the error word whenever
+    // `alt` was set — a broken image announced exactly like a loaded one.
+    // Concatenating fixed that and introduced the opposite defect: the
+    // sibling below renders the same phrase as visible text, so a reader
+    // said it twice in a row. The icon now carries only `alt`; the text
+    // carries the failure.
+    expect(getByRole('img', { name: 'A photo' })).not.toBeNull();
     expect(getByText('Image failed to load')).not.toBeNull();
+    // The NAME is what the concatenation bug lived in, so that is what has to
+    // be pinned — `aria-label` is an attribute, not text, so a textContent
+    // count passed identically before and after the fix. Kept alongside it to
+    // catch the other direction: a second visible copy of the sentence.
+    expect(container.textContent!.match(/Image failed to load/g)).toHaveLength(1);
+    expect(getByRole('img').getAttribute('aria-label')).not.toMatch(/failed to load/i);
     expect(getByRole('button', { name: 'Retry' })).not.toBeNull();
   });
 
-  it('still names the failure when there is no alt to prefix it with', () => {
-    const { container, getByRole } = render(<Image src={SRC} alt="" />);
+  it('goes decorative when there is no alt, leaving the text to carry the failure', () => {
+    const { container, getByText, queryByRole } = render(<Image src={SRC} alt="" />);
     fireEvent.error(getImg(container));
-    expect(getByRole('img', { name: 'Image failed to load' })).not.toBeNull();
+    // Nothing left to name, so naming it with the failure phrase would only
+    // duplicate the text node below.
+    expect(queryByRole('img')).toBeNull();
+    expect(getByText('Image failed to load')).not.toBeNull();
   });
 
   it('renders a custom fallback instead of the default placeholder on error', () => {
@@ -222,5 +234,33 @@ describe('Image', () => {
     expect(getImg(container)).toBe(imgNode); // loaded: same DOM node
     fireEvent.error(getImg(container));
     expect(getImg(container)).toBe(imgNode); // error: still the same node
+  });
+});
+
+describe('the error tile does not prune its own contents (#496)', () => {
+  it('keeps role="img" on a leaf, so the Retry control stays exposed', () => {
+    // `role="img"` is Children Presentational — as a container it removed its
+    // descendants from the accessibility tree, so the Retry button was a
+    // focusable control with no role and no name. Testing Library computes
+    // roles from the DOM and does not model that pruning, which is why the
+    // existing Retry assertion passed throughout; this asserts the STRUCTURE
+    // instead, which is the part a browser acts on.
+    const { container } = render(<Image src={SRC} alt="A photo" />);
+    fireEvent.error(getImg(container));
+
+    const named = container.querySelector('[role="img"]');
+    expect(named, 'the error tile names itself').not.toBeNull();
+    expect(
+      named!.querySelector('button'),
+      'nothing interactive may sit inside the role="img" subtree',
+    ).toBeNull();
+  });
+
+  it('still names the failure, and still offers Retry', () => {
+    const { container, getByRole, getByText } = render(<Image src={SRC} alt="A photo" />);
+    fireEvent.error(getImg(container));
+    expect(getByRole('img', { name: 'A photo' })).not.toBeNull();
+    expect(getByText('Image failed to load')).not.toBeNull();
+    expect(getByRole('button', { name: 'Retry' })).not.toBeNull();
   });
 });

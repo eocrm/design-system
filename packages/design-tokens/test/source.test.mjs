@@ -272,8 +272,8 @@ test('maps every captured public variable to exactly one web output', async () =
   const duplicateNames = webNames.filter((name) => componentNames.has(name));
   const combinedNames = new Set([...webNames, ...componentNames]);
 
-  assert.equal(capturedNames.size, 291);
-  assert.equal(webNames.length, 235);
+  assert.equal(capturedNames.size, 303);
+  assert.equal(webNames.length, 247);
   assert.equal(componentNames.size, 56);
   assert.deepEqual(duplicateNames, []);
   assert.deepEqual([...combinedNames].sort(), [...capturedNames].sort());
@@ -368,7 +368,7 @@ test('keeps all twelve deprecated Badge variables as component aliases', async (
 test('preserves the pre-migration web contract fixture with provenance and expanded dark scopes', async () => {
   const fixture = await readJson(fixturePath);
 
-  assert.equal(Object.keys(fixture.light).length, 288);
+  assert.equal(Object.keys(fixture.light).length, 300);
   assert.equal(Object.keys(fixture.forcedDark).length, 116);
   assert.deepEqual(fixture.systemDark, fixture.forcedDark);
   assert.deepEqual(fixture.forcedLight, {});
@@ -564,3 +564,76 @@ function linearizeSrgbChannel(channel) {
   const normalized = channel / 255;
   return normalized <= 0.04045 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
 }
+
+// The invariant the Badge dark-block deletion actually rests on, which nothing
+// asserted before or after it. Removing that block was justified by "custom
+// properties resolve at use time, so the `:root` alias already follows the
+// theme" — a claim the contract fixture cannot express, because it records
+// DECLARATIONS per scope rather than resolved values. So it was checked by
+// reading, which is how the four stale ratios in #484 survived thirteen review
+// rounds.
+//
+// Resolving proves it directly: each of the twelve TONE-BACKED `--badge-*`
+// variables follows its var() chain to a literal in each theme, and the two
+// literals must DIFFER. The other 32 `--badge-*` are dimensions, radii and
+// font weights that resolve to no colour at all and are out of scope here. If someone re-points Badge at a token that does not self-theme, dark
+// silently collapses onto the light value and this fails.
+test('every tone-backed Badge variable resolves per theme through its var() chain', async () => {
+  const [badgeSource, generatedTokens, generatedDark] = await Promise.all([
+    readFile(badgeTokenPath, 'utf8'),
+    readFile(generatedTokensPath, 'utf8'),
+    readFile(generatedDarkPath, 'utf8'),
+  ]);
+
+  // Only the `:root[data-theme='dark']` block of dark.scss — that file also
+  // holds a `:root[data-theme='light']` block, so taking the first match in the
+  // whole file was correct only because the generator emits dark first.
+  const DARK_SELECTOR = `:root[data-theme=${"'"}dark${"'"}]`;
+  const darkBlock = (() => {
+    const start = generatedDark.indexOf(DARK_SELECTOR);
+    assert.ok(start >= 0, `dark.scss has no ${DARK_SELECTOR} block`);
+    const open = generatedDark.indexOf('{', start);
+    let depth = 1;
+    for (let i = open + 1; i < generatedDark.length; i += 1) {
+      if (generatedDark[i] === '{') depth += 1;
+      else if (generatedDark[i] === '}') {
+        depth -= 1;
+        if (depth === 0) return generatedDark.slice(open + 1, i);
+      }
+    }
+    throw new Error('dark.scss dark block is unterminated');
+  })();
+
+  const resolve = (name, dark, seen = []) => {
+    if (seen.includes(name)) return undefined;
+    for (const source of dark
+      ? [darkBlock, generatedTokens, badgeSource]
+      : [generatedTokens, badgeSource]) {
+      const match = new RegExp(`(?:^|[^-a-z0-9])${name}:\\s*([^;\\n]+);`, 'm').exec(source);
+      if (!match) continue;
+      const raw = match[1].trim();
+      if (raw.startsWith('var('))
+        return resolve(raw.slice(4, -1).split(',')[0].trim(), dark, [...seen, name]);
+      return /^#[0-9a-f]{6}$/i.test(raw) ? raw.toLowerCase() : undefined;
+    }
+    return undefined;
+  };
+
+  const toneBacked = [
+    ...badgeSource.matchAll(/^\s*(--badge-[a-z0-9-]+):\s*var\((--color-tone-[a-z0-9-]+)\)/gm),
+  ];
+  assert.equal(toneBacked.length, 12, 'expected the 12 tone-backed Badge variables');
+
+  const collapsed = [];
+  for (const [, name] of toneBacked) {
+    const [light, dark] = [resolve(name, false), resolve(name, true)];
+    assert.match(light ?? '', /^#[0-9a-f]{6}$/, `${name} resolves in light`);
+    assert.match(dark ?? '', /^#[0-9a-f]{6}$/, `${name} resolves in dark`);
+    if (light === dark) collapsed.push(`${name} (${light})`);
+  }
+  assert.deepEqual(
+    collapsed,
+    [],
+    'these resolve identically in both themes — the :root alias is NOT following the theme, so deleting the dark block did change behaviour',
+  );
+});

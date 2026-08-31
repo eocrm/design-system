@@ -13,6 +13,7 @@ export const en: Messages = {
     sidebar: 'Sidebar navigation',
   },
   confirmationPopover: {
+    pending: 'Working…',
     cancel: 'Cancel',
     confirm: 'Confirm',
   },
@@ -42,6 +43,9 @@ export const en: Messages = {
   },
   switch: {
     busy: 'Saving…',
+  },
+  progress: {
+    indeterminate: 'Loading…',
   },
   slider: {
     minimum: 'minimum',
@@ -75,6 +79,7 @@ export const en: Messages = {
     previousAgenda: 'Previous week',
     nextAgenda: 'Next week',
     moreEvents: ({ count }) => `${count as number} more events`,
+    moreEventsShort: ({ count }) => `+${count as number} more`,
     viewMonth: 'Month',
     viewWeek: 'Week',
     viewDay: 'Day',
@@ -114,14 +119,22 @@ export const en: Messages = {
   },
   dataTable: {
     selectAll: 'Select all rows on page',
+    selectRow: (params) => `Select row ${params.row}`,
+    expandRow: (params) => `Expand row ${params.row}`,
+    dragReorder: (params) => `Drag to reorder ${params.name}`,
+    dragReorderUnnamed: 'Drag to reorder this column',
     rowExpansion: 'Row expansion',
     pinnedRows: 'Pinned rows',
     empty: 'No data',
     loading: 'Loading rows…',
+    resizeColumn: (params) => `Resize ${params.name} column`,
+    resizeColumnUnnamed: 'Resize this column',
+    unlabelledColumn: 'Unlabelled column',
     loaded: 'Rows loaded',
     loadedEmpty: 'No rows loaded',
   },
   drag: {
+    handleLabel: 'Reorder item',
     instructions:
       'Press Space or Enter to pick up. While dragging, the arrow keys move the item, Space or Enter drops it, and Escape cancels.',
     pickedUp: ({ item }) => `Picked up ${item as string}.`,
@@ -164,7 +177,11 @@ export const en: Messages = {
     enteredTopLevel: 'Moved to the top level',
     dropHint: 'Drop widgets here',
   },
+  avatarGroup: {
+    overflow: (params) => `${params.count} more avatars`,
+  },
   optionsPicker: {
+    toggleGroup: (params) => `Toggle group ${params.label}`,
     filter: 'Filter…',
     apply: 'Apply',
     cancel: 'Cancel',
@@ -198,9 +215,16 @@ export const en: Messages = {
     currentPageAriaLabel: ({ page }) => `Page ${page as number}, current page`,
   },
   select: {
+    createOption: ({ label }) => `+ Create "${label as string}"`,
+    removeChip: (params) => `Remove ${params.label}`,
     clear: 'Clear selection',
     search: 'Search…',
     noOptions: 'No options',
+    loading: 'Loading…',
+    loadFailed: 'Failed to load options.',
+    retry: 'Retry',
+    noResultsFor: (params) => `No results for "${params.query}".`,
+    statusLoading: 'Loading options…',
     selectedPrefix: ({ labels }) => `Selected: ${labels as string}`,
     openSelect: 'Open select',
   },
@@ -211,6 +235,8 @@ export const en: Messages = {
     numberPlaceholder: 'Phone number',
   },
   colorPicker: {
+    saturationBrightnessValue: (params) =>
+      `saturation ${params.s} percent, brightness ${params.v} percent`,
     saturationBrightness: 'Saturation and brightness',
     hue: 'Hue',
     hexValue: 'Hex color value',
@@ -228,6 +254,12 @@ export const en: Messages = {
     upload: 'Upload files',
     dragHint: 'Drag files here, or click to browse',
     uploadingAriaLabel: ({ name }) => `Uploading ${name as string}`,
+    batchUploading: (params) => `Uploading: ${params.done} / ${params.total}`,
+    batchSettled: (params) =>
+      Number(params.failed) > 0
+        ? `Uploaded: ${params.done} / ${params.total}. Failed: ${params.failed}.`
+        : `Uploaded: ${params.done} / ${params.total}.`,
+    removeFailedAriaLabel: (params) => `Remove ${params.name} — upload failed`,
     removeAriaLabel: ({ name }) => `Remove ${name as string}`,
   },
   flowCanvas: {
@@ -268,6 +300,7 @@ export const en: Messages = {
     restored: 'Canvas restored',
   },
   imageCrop: {
+    loadError: "Couldn't load image",
     zoom: 'Zoom',
   },
   kanban: {

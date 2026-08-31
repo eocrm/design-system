@@ -1,17 +1,17 @@
 // Badge.tokens.scss — React-owned component tokens for <Badge>.
 :root {
-  --badge-bg-danger: #ffebe6;
-  --badge-bg-info: #deebff;
-  --badge-bg-neutral: #f4f5f7;
-  --badge-bg-purple: #eae6ff;
-  --badge-bg-success: #e3fcef;
-  --badge-bg-warning: #fffae6;
-  --badge-fg-danger: #bf2600;
-  --badge-fg-info: #0747a6;
-  --badge-fg-neutral: #42526e;
-  --badge-fg-purple: #403294;
-  --badge-fg-success: #006644;
-  --badge-fg-warning: #974f00;
+  --badge-bg-danger: var(--color-tone-danger-bg);
+  --badge-bg-info: var(--color-tone-info-bg);
+  --badge-bg-neutral: var(--color-tone-neutral-bg);
+  --badge-bg-purple: var(--color-tone-purple-bg);
+  --badge-bg-success: var(--color-tone-success-bg);
+  --badge-bg-warning: var(--color-tone-warning-bg);
+  --badge-fg-danger: var(--color-tone-danger-fg);
+  --badge-fg-info: var(--color-tone-info-fg);
+  --badge-fg-neutral: var(--color-tone-neutral-fg);
+  --badge-fg-purple: var(--color-tone-purple-fg);
+  --badge-fg-success: var(--color-tone-success-fg);
+  --badge-fg-warning: var(--color-tone-warning-fg);
 
   --badge-radius: var(--radius-sm);
   --badge-font-size: var(--font-size-xs);
@@ -41,7 +41,11 @@
   --badge-stripe-border-color-success: var(--color-success);
   --badge-stripe-bg-warning: var(--color-warning-bg-subtle);
 
-  // warning uses --color-warning-strong, not --color-warning: #ff991f measures
+  // warning uses --color-warning-strong, not --color-warning, which measures
+  // @contrast --color-warning on --color-bg = 2.14:1 light
+  // @contrast --color-warning-strong on --color-bg = 5.95:1 light
+  // @contrast --color-warning on --color-warning-bg-subtle = 2.01:1 light
+  // @contrast --color-warning-strong on --color-warning-bg-subtle = 5.61:1 light
   // 2.01:1 on the light tint (and 2.14:1 as a border on --color-bg), below WCAG AA
   // for text and below 1.4.11's 3:1 for a graphical object. The strong variant
   // clears both. Dark is unaffected — the two resolve to the same value there.
@@ -67,36 +71,4 @@
   --color-badge-success-fg: var(--badge-fg-success);
   --color-badge-warning-bg: var(--badge-bg-warning);
   --color-badge-warning-fg: var(--badge-fg-warning);
-}
-
-:root[data-theme='dark'] {
-  --badge-bg-danger: #42201d;
-  --badge-bg-info: #16324f;
-  --badge-bg-neutral: #2c333a;
-  --badge-bg-purple: #2b2c4d;
-  --badge-bg-success: #1c3d31;
-  --badge-bg-warning: #3d3216;
-  --badge-fg-danger: #ff9c8f;
-  --badge-fg-info: #9dc3ff;
-  --badge-fg-neutral: #c7d1db;
-  --badge-fg-purple: #b8acf6;
-  --badge-fg-success: #7ee2b8;
-  --badge-fg-warning: #f5cd47;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme='light']) {
-    --badge-bg-danger: #42201d;
-    --badge-bg-info: #16324f;
-    --badge-bg-neutral: #2c333a;
-    --badge-bg-purple: #2b2c4d;
-    --badge-bg-success: #1c3d31;
-    --badge-bg-warning: #3d3216;
-    --badge-fg-danger: #ff9c8f;
-    --badge-fg-info: #9dc3ff;
-    --badge-fg-neutral: #c7d1db;
-    --badge-fg-purple: #b8acf6;
-    --badge-fg-success: #7ee2b8;
-    --badge-fg-warning: #f5cd47;
-  }
 }

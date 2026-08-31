@@ -1,4 +1,4 @@
-import { useMemo, useRef, type KeyboardEvent } from 'react';
+import { useId, useMemo, useRef, type KeyboardEvent } from 'react';
 import clsx from 'clsx';
 import {
   GripVertical,
@@ -12,6 +12,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Table } from '../Table';
 import type { TableSortDirection } from '../Table';
+import { useTranslation } from '../../i18n/useTranslation';
 import { useResizeHandle } from './useResizeHandle';
 import type { ColumnDef, DataTableInstance } from './types';
 import { getPinStyle } from './pinStyle';
@@ -69,10 +70,41 @@ export function HeaderCell<T>({
     instance.columnPinning.left.includes(column.id) ||
     instance.columnPinning.right.includes(column.id);
   const sortable = column.sortable === true;
+  // TWO separate questions, kept separate. `plainHeader` is a LAYOUT input —
+  // it drives `retainedResponsiveHeader` below and `data-responsive-plain-label`
+  // on the cell, which decide whether the compact strip hides the header or
+  // renders it as a padded block. Narrowing it for the naming fix flipped both
+  // for `header: ''`, so the playground's three row-actions columns rendered an
+  // empty padded block in the stacked strip instead of being hidden.
   const plainHeader = typeof column.header === 'string';
+  // Whether the header actually renders TEXT, which is the naming question.
+  // `header: ''` is a string, so treating it as self-naming silently ignored
+  // the `visibilityLabel` beside it and pointed `aria-labelledby` at an empty
+  // span — an unnamed column header.
+  const rendersText = typeof column.header === 'string' && column.header.trim() !== '';
   const retainedResponsiveHeader = sortable || !plainHeader;
-  const resizeLabel =
-    column.visibilityLabel ?? (typeof column.header === 'string' ? column.header : column.id);
+  const t = useTranslation();
+  // NO `column.id` fallback. It used to end here, so a column with neither a
+  // string header nor a `visibilityLabel` gave its grip the name "Drag to
+  // reorder starred_col" and its resize handle "Resize starred_col column" —
+  // a raw developer identifier read aloud to a keyboard user. Whether the
+  // `<th>` itself then inherits that through name-from-content is disputed
+  // (two reviewers measured Chromium and disagreed), but the CONTROLS speak it
+  // either way, so the identifier is removed at the source and the question
+  // stops mattering for the harmful part.
+  const columnLabel =
+    column.visibilityLabel ?? (typeof column.header === 'string' ? column.header : undefined);
+  // The handle's own name has to describe the ACTION. It used to be the column
+  // label verbatim, so a keyboard user heard "Name, separator".
+  const resizeLabel = columnLabel
+    ? t('dataTable.resizeColumn', { name: columnLabel })
+    : t('dataTable.resizeColumnUnnamed');
+  // The header's name comes from this id, not from its content. The resize
+  // handle is a named, focusable descendant of the <th>, so with
+  // name-from-content the header computed as "Name Name" at every width the
+  // moment `collapseBelow` was set (#500). Pointing at the label span excludes
+  // the handle and the drag grip without hiding either from AT.
+  const labelId = `${useId()}-label`;
   const sortDir: TableSortDirection | undefined =
     instance.sort?.columnId === column.id ? instance.sort.direction : sortable ? 'none' : undefined;
 
@@ -102,6 +134,66 @@ export function HeaderCell<T>({
   // stay out of it. Ref identity is stable, so the memo never re-runs.
   const labelRef = useRef<HTMLSpanElement | null>(null);
   const dragData = useMemo(() => ({ dragNode: labelRef }), []);
+
+  // No DOM measurement. Seven versions of one tried to answer "will this span
+  // produce an accessible name?" without computing the accessible name, and
+  // each was wrong in a new way — the last three inside the commit meant to
+  // close the class. The mechanism existed to rescue ICON-ONLY headers.
+  //
+  // Precisely, because the first version of this note overstated it: before
+  // #500 the `<th>` carried no `aria-labelledby` and no `aria-label`, so it was
+  // named from CONTENT — which swept in the resize handle. An icon-only header
+  // therefore announced the handle's label, which was the bare `column.id`
+  // when the column had nothing better; the "Resize … column" wrapper came
+  // with #500 itself. A plain header announced its label twice. That second
+  // one IS #500. So the old
+  // name was not absent, it was the bug; and the only sources available for
+  // an icon-only header are `visibilityLabel`, `column.id`, or nothing.
+  // `column.id` is indefensible to speak, which leaves the author's label —
+  // and nothing when they have not given one.
+  //
+  // The rule is static, and `column.id` is spoken nowhere IN THIS CELL: not
+  // the header, not the grip, not the resize handle. Scoped deliberately —
+  // `ColumnVisibilityTrigger` still renders it as the visible label of a
+  // menu item for a ReactNode-header column with no `visibilityLabel`, which
+  // is a documented residual rather than an oversight, and the note this
+  // replaced existed precisely to flag surviving fallbacks. (An earlier scope
+  // note here said the handle still fell back to it. True when written, and
+  // falsified by the commit that removed the fallback — two commits after the
+  // doc-correction pass that was supposed to catch exactly this.)
+  //
+  // What an unnamed header then announces is MEASURED, not guessed: Chromium
+  // marks an `aria-labelledby` resolving to no text `invalid` and falls
+  // through to name-from-content, so the cell's own controls name it. That is
+  // why `header: ''` is special-cased below.
+  //
+  // Two residuals:
+  //
+  //   1. A ReactNode header that renders visible text AND sets
+  //      `visibilityLabel` announces the label rather than the text. A WCAG
+  //      2.5.3 concern ONLY when `sortable` makes the label span a button —
+  //      2.5.3 is scoped to user interface components — and only a violation
+  //      when the label does not CONTAIN the visible text: "Revenue (USD)"
+  //      over `<strong>Revenue</strong>` passes, `'Status'` over
+  //      `<Badge>Active</Badge>` does not.
+  //   2. A ReactNode header that names nothing, with no `visibilityLabel`,
+  //      leaves an unnamed focusable `role="button"` when sortable — WCAG
+  //      4.1.2. Unfixable HERE because nothing static distinguishes it from a
+  //      ReactNode that names itself. `header: ''` IS distinguishable and is
+  //      fixed; an earlier version of this note said the whole case was
+  //      unfixable "because the only remaining name source is `column.id`",
+  //      which the fix for it disproved.
+  const namedByLabel = !rendersText && Boolean(column.visibilityLabel);
+  /** A string header that renders nothing — the one no-content case we can prove. */
+  const emptyStringHeader = plainHeader && !rendersText && !column.visibilityLabel;
+  // No dev warning here, deliberately. One was added and removed within the
+  // hour: having deleted the measurement, nothing static can distinguish a
+  // ReactNode header that names itself (`<strong>Revenue</strong>`) from one
+  // that names nothing (an icon), so it fired on the commonest VALID shape.
+  // A warning on correct code is the same defect as a gate that false-alarms,
+  // and this file's own history is the argument — noise gets ignored, and then
+  // the real case is ignored with it. The contract is documented in AGENTS.md
+  // instead, which is where a rule only the author can satisfy belongs.
 
   const sortableResult = useSortable({
     id: column.id,
@@ -191,6 +283,37 @@ export function HeaderCell<T>({
       }
       data-responsive-pinned={responsiveEnabled && isPinned ? true : undefined}
       aria-sort={sortDir != null ? sortAriaMap[sortDir] : undefined}
+      // #500's actual fix, and the only part of it that was ever in question:
+      // point at the label span so the resize handle is not concatenated into
+      // the name. `visibilityLabel` overrides it only for a ReactNode header,
+      // where the author has explicitly supplied the text they want spoken.
+      // `aria-labelledby` pointing at a span that resolves to no text is NOT a
+      // way to leave a header unnamed: Chromium marks that source `invalid`
+      // and hands naming back to CONTENTS, which in this cell means the drag
+      // grip and the resize handle. Measured off Chromium's own AX tree via
+      // CDP — and the reason three reviewers got three answers is that
+      // Playwright and jsdom each ship their own accname implementation, so
+      // `getByRole({ name })` does not measure the browser.
+      //
+      // Contents winning is CORRECT for a ReactNode that names itself, which
+      // is how a select-all checkbox header works. It is wrong only where we
+      // know statically there is no content to win with — `header: ''` — and
+      // there a `collapseBelow` table announced "200px", the resize handle's
+      // `aria-valuetext`, changing as the user dragged. That case takes an
+      // explicit name, which wins in every implementation and makes the fix
+      // engine-independent even though the bug was not.
+      //
+      // A ReactNode that names NOTHING is the residual: indistinguishable from
+      // one that names itself without the runtime measurement this component
+      // deleted, so it still falls to contents. Set `visibilityLabel`.
+      aria-labelledby={namedByLabel || emptyStringHeader ? undefined : labelId}
+      aria-label={
+        namedByLabel
+          ? column.visibilityLabel
+          : emptyStringHeader
+            ? t('dataTable.unlabelledColumn')
+            : undefined
+      }
       onClick={sortable ? () => instance.toggleSort(column.id) : undefined}
       className={clsx(
         styles.headerCell,
@@ -213,7 +336,11 @@ export function HeaderCell<T>({
           // Spread BOTH attributes (aria/role) and listeners (pointerdown etc.)
           {...attributes}
           {...listeners}
-          aria-label={`Drag to reorder ${typeof column.header === 'string' ? column.header : column.id}`}
+          aria-label={
+            columnLabel
+              ? t('dataTable.dragReorder', { name: columnLabel })
+              : t('dataTable.dragReorderUnnamed')
+          }
           // tabIndex so keyboard users can focus to reveal grip + activate drag
           tabIndex={0}
           // Stop sort click from misfiring when the user clicks the grip without moving.
@@ -241,9 +368,21 @@ export function HeaderCell<T>({
       >
         <span
           ref={labelRef}
+          id={labelId}
           className={clsx(styles.label, sortable && styles.sortable)}
           tabIndex={sortable ? 0 : undefined}
           role={sortable ? 'button' : undefined}
+          // The span is a focusable button when sortable, so it needs a name of
+          // its own on the one path where its content supplies none. Mirrors
+          // the plain-text case, where the <th> and this button both take the
+          // header text.
+          aria-label={
+            sortable && namedByLabel
+              ? column.visibilityLabel
+              : sortable && emptyStringHeader
+                ? t('dataTable.unlabelledColumn')
+                : undefined
+          }
           onKeyDown={onLabelKeyDown}
         >
           {headerContent}

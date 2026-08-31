@@ -1,4 +1,5 @@
 import { act, configure, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { I18nProvider } from '../../i18n/I18nProvider';
 import userEvent from '@testing-library/user-event';
 import React, { createRef } from 'react';
 import { Select, type SelectOption } from './Select';
@@ -923,13 +924,17 @@ describe('Select — async loadOptions', () => {
     await act(async () => {
       await vi.advanceTimersByTimeAsync(300);
     });
-    expect(screen.getByText(/loading/i)).toBeInTheDocument();
+    // Two nodes now say "loading": the visible row, and the listbox's single
+    // live region (#495). Scope to the row — the region has its own test.
+    const visibleLoading = () =>
+      screen.queryAllByText(/loading/i).filter((el) => el.closest('[role="status"]') === null);
+    expect(visibleLoading()).toHaveLength(1);
     await act(async () => {
       resolveFn([{ value: 'a', label: 'A' }]);
       await vi.runAllTimersAsync();
     });
     await waitFor(() => {
-      expect(screen.queryByText(/loading/i)).toBeNull();
+      expect(visibleLoading()).toHaveLength(0);
       expect(screen.getByRole('option', { name: 'A' })).toBeInTheDocument();
     });
   });
@@ -947,7 +952,11 @@ describe('Select — async loadOptions', () => {
       await vi.runAllTimersAsync();
     });
     await waitFor(() => {
-      expect(screen.getByText(/failed to load/i)).toBeInTheDocument();
+      // getAllByText: the sentence is deliberately in TWO places now — the
+      // aria-hidden row text and the live region that announces it — so the
+      // singular query throws "found multiple elements" and waitFor retries
+      // until it times out.
+      expect(screen.getAllByText(/failed to load/i).length).toBeGreaterThan(0);
     });
     await user.click(screen.getByRole('button', { name: /retry/i }));
     await act(async () => {
@@ -959,6 +968,23 @@ describe('Select — async loadOptions', () => {
     });
   });
 
+  it('says nothing about emptiness before the first fetch has run', async () => {
+    // The debounce window is 300ms during which `loading` is FALSE and rows
+    // are []. Announcing on that said "No options." on every open, before
+    // loadOptions had been called even once, and "No results for X" about a
+    // search that had not run.
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const loadOptions = vi.fn(async () => [{ value: 'a', label: 'A' }]);
+    render(<Select searchable loadOptions={loadOptions} />);
+    await user.click(screen.getByRole('combobox'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(10);
+    });
+    const region = document.body.querySelector('[role="status"][aria-live="polite"]')!;
+    expect(loadOptions).not.toHaveBeenCalled();
+    expect(region.textContent).not.toMatch(/no options|no results/i);
+  });
+
   it('shows empty state when async result is []', async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     const loadOptions = vi.fn(async () => []);
@@ -968,9 +994,21 @@ describe('Select — async loadOptions', () => {
       await vi.advanceTimersByTimeAsync(300);
       await vi.runAllTimersAsync();
     });
+    // Two copies by design — the visible row and the status region — so the
+    // singular query throws "found multiple elements". The row's copy is
+    // aria-hidden, so a reader still meets the sentence once.
     await waitFor(() => {
-      expect(screen.getByText(/no options/i)).toBeInTheDocument();
+      expect(screen.getAllByText(/no options/i).length).toBeGreaterThan(0);
     });
+    const region = document.body.querySelector('[role="status"][aria-live="polite"]')!;
+    expect(region.textContent).toMatch(/no options/i);
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    const reachable: string[] = [];
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      if (!(n.parentElement as HTMLElement | null)?.closest('[aria-hidden="true"]'))
+        reachable.push(n.textContent ?? '');
+    }
+    expect(reachable.filter((text) => /no options/i.test(text))).toHaveLength(1);
   });
 
   it('does not call loadOptions before the popover opens (loadOnOpen)', async () => {
@@ -1615,5 +1653,169 @@ describe('Select — Field label integration', () => {
       </Field>,
     );
     expect(screen.getByRole('combobox', { name: 'Status' })).toBeInTheDocument();
+  });
+});
+
+describe('listbox state announces from one region, not three rows (#495)', () => {
+  // Same shim as the async-loadOptions block above: RTL's asyncWrapper drains
+  // with a setTimeout(0) that Vitest fake timers will not fire on their own.
+  beforeEach(() => {
+    vi.useFakeTimers();
+    configure({
+      asyncWrapper: async (cb) => {
+        const result = await cb();
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 0);
+          vi.advanceTimersByTime(0);
+        });
+        return result;
+      },
+    });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /** Rows are only reachable in their own state, so each assertion needs one. */
+  function assertRowsArePresentational() {
+    const listbox = screen.getByRole('listbox');
+    // ONE mechanism, not three. The rows used to carry `aria-live`, and one
+    // carried `role="alert"` — a region mounting together with its text, which
+    // most screen readers do not announce. (An earlier version of this comment
+    // added an `aria-required-children` argument; it was dropped after a
+    // reviewer measured Chromium ignoring these rows inside a `role="listbox"`
+    // either way. See messages.ts.)
+    expect(listbox.querySelector('[aria-live]')).toBeNull();
+    expect(listbox.querySelector('[role="alert"]')).toBeNull();
+    for (const li of listbox.querySelectorAll('li')) {
+      expect(li.getAttribute('role')).toBe('presentation');
+    }
+  }
+
+  it('empty row is presentational', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(<Select searchable options={[]} />);
+    await user.click(screen.getByRole('combobox'));
+    assertRowsArePresentational();
+  });
+
+  it('LOADING row is presentational and translated', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const loadOptions = vi.fn(() => new Promise<SelectOption[]>(() => {}));
+    render(
+      <I18nProvider locale="ru">
+        <Select searchable loadOptions={loadOptions} />
+      </I18nProvider>,
+    );
+    await user.click(screen.getByRole('combobox'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+    });
+    assertRowsArePresentational();
+    // Was a hardcoded English 'Loading…' in Loading.tsx.
+    expect(screen.getByRole('listbox').textContent).not.toMatch(/Loading…/);
+  });
+
+  it('ERROR row is presentational and translated', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    const loadOptions = vi.fn(() => Promise.reject(new Error('boom')));
+    render(
+      <I18nProvider locale="ru">
+        <Select searchable loadOptions={loadOptions} />
+      </I18nProvider>,
+    );
+    await user.click(screen.getByRole('combobox'));
+    await act(async () => {
+      await vi.runAllTimersAsync();
+    });
+    assertRowsArePresentational();
+    // Were hardcoded English in Error.tsx.
+    expect(screen.getByRole('listbox').textContent).not.toMatch(/Failed to load options|Retry/);
+  });
+
+  it('the region actually SAYS something in each state', async () => {
+    // The first version of these tests asserted only that a region existed and
+    // sat outside the <ul>. Hardwiring its text to '' passed all 5195 tests —
+    // which is exactly why the lost error announcement shipped green. Assert
+    // the content.
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    let rejectFn: (e: Error) => void = () => {};
+    const loadOptions = vi.fn(() => new Promise<SelectOption[]>((_, rej) => (rejectFn = rej)));
+    render(<Select searchable loadOptions={loadOptions} />);
+    await user.click(screen.getByRole('combobox'));
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(300);
+    });
+
+    const region = () => document.body.querySelector('[role="status"][aria-live="polite"]')!;
+    expect(region().textContent).toBe('Loading options…');
+
+    await act(async () => {
+      rejectFn(new Error('boom'));
+      await vi.runAllTimersAsync();
+    });
+    // Was silent before this: removing role="alert" from the error row took
+    // away the only announcement Select had, and the region never carried it.
+    expect(region().textContent).toBe('Failed to load options.');
+
+    // ...and reachable exactly ONCE — COUNTED, not asserted piecemeal. The
+    // region and the error row render the same key, so before the row was
+    // hidden a reader met the sentence twice; naming the Retry button with it
+    // merely MOVED the second copy rather than removing it. This gathers
+    // everything a reader can reach and requires exactly one occurrence.
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    const reachable: string[] = [];
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      if (!(n.parentElement as HTMLElement | null)?.closest('[aria-hidden="true"]'))
+        reachable.push(n.textContent ?? '');
+    }
+    // `title` and `alt` too, not just aria-label — a `title` carrying the same
+    // sentence escaped a sweep whose comment claimed to cover everything.
+    //
+    // NOT because they are name sources: the same commit removed `title` from
+    // HeaderCell's naming rule and narrowed `alt` there. The reason is the
+    // opposite one — this counts what a reader HEARS, and a tooltip is spoken
+    // as a description whether or not it wins the name.
+    //
+    // The attribute list is what makes this sound, so it is deliberately
+    // wide. An earlier version of this comment claimed the sweep "can only
+    // fail loudly, never pass falsely" — that was backwards. The assertion is
+    // toHaveLength(1), so an unswept attribute carrying a second copy leaves
+    // the count at 1 and the test PASSES, which is precisely the escape it
+    // exists to close. Under-counting is the dangerous direction here.
+    //
+    // Still not literally everything, recorded rather than claimed away: an
+    // SVG `<title>` child is not swept, and the `[aria-hidden]` guard skips a
+    // subtree that an `aria-labelledby` or `aria-describedby` elsewhere may
+    // reference — referenced text is spoken regardless of aria-hidden, so a
+    // duplicate hidden there would escape. Text inside `[hidden]` IS counted
+    // though no reader reaches it, which merely over-counts.
+    for (const el of document.body.querySelectorAll<HTMLElement>(
+      '[aria-label], [title], [alt], [placeholder], [aria-valuetext], [aria-roledescription], [aria-description]',
+    )) {
+      if (el.closest('[aria-hidden="true"]')) continue;
+      for (const attr of [
+        'aria-label',
+        'title',
+        'alt',
+        'placeholder',
+        'aria-valuetext',
+        'aria-roledescription',
+        'aria-description',
+      ])
+        if (el.hasAttribute(attr)) reachable.push(el.getAttribute(attr) ?? '');
+    }
+    expect(reachable.filter((text) => /Failed to load options\./.test(text))).toHaveLength(1);
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+  });
+
+  it('owns exactly one live region, outside the listbox', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(<Select searchable options={[]} />);
+    await user.click(screen.getByRole('combobox'));
+
+    const regions = document.body.querySelectorAll('[role="status"][aria-live="polite"]');
+    expect(regions).toHaveLength(1);
+    expect(screen.getByRole('listbox').contains(regions[0]!)).toBe(false);
   });
 });

@@ -262,16 +262,30 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
 
       {state === 'error' &&
         (fallback ?? (
-          <span
-            className={styles.error}
-            role="img"
-            /* Concatenated, not `alt || …`. With the fallback form the failure
-               word was dropped whenever `alt` was set — i.e. in the normal
-               case — so the name read as if the image had loaded. The sibling
-               branch in Lightbox already concatenates. */
-            aria-label={alt ? `${alt}: ${t('image.loadError')}` : t('image.loadError')}
-          >
-            <ImageOff size={28} aria-hidden="true" />
+          <span className={styles.error}>
+            {/* `role="img"` moved off the container and onto the ICON.
+                `img` is Children Presentational, so as a container it pruned
+                its own descendants from the accessibility tree — the visible
+                error text and, worse, the Retry button were not exposed at
+                all: a focusable control with no role and no name (#496).
+                Testing Library computes roles from the DOM rather than
+                modelling children-presentational, which is why the existing
+                `getByRole('button', { name: 'Retry' })` assertion passed
+                throughout.
+
+                On a leaf there is nothing to prune, so the name survives and
+                the siblings stay reachable.
+
+                The icon carries ONLY `alt`, never the failure phrase: the
+                sibling below renders that phrase as visible text, so naming
+                the icon with it too made a reader say "Failed to load" twice
+                in a row. With no `alt` there is nothing left to name, so the
+                icon goes decorative and the text carries the message alone. */}
+            {alt ? (
+              <ImageOff size={28} role="img" aria-label={alt} />
+            ) : (
+              <ImageOff size={28} aria-hidden />
+            )}
             <span className={styles.errorText}>{t('image.loadError')}</span>
             <Button variant="secondary" size="sm" onClick={retry}>
               {t('image.retry')}

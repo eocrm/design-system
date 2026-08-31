@@ -142,7 +142,7 @@ describe('Tabs', () => {
     expect(tabs.map((t) => t.getAttribute('tabindex'))).toEqual(['-1', '0', '-1']);
   });
 
-  it('points each tab at its corresponding panel via aria-controls', () => {
+  it('points the ACTIVE tab at its corresponding panel via aria-controls', () => {
     render(<Tabs items={items} activeId="a" onChange={noop} panelIdPrefix="contact" />);
     const overview = screen.getByRole('tab', { name: 'Overview' });
     expect(overview).toHaveAttribute('aria-controls', 'contact-a-panel');
@@ -184,12 +184,14 @@ describe('Tabs', () => {
     render(<Tabs items={items} activeId="a" onChange={noop} />);
     const tab = screen.getByRole('tab', { name: 'Overview' });
     const tabId = tab.getAttribute('id');
-    const controls = tab.getAttribute('aria-controls');
     expect(tabId).toBeTruthy();
-    expect(controls).toBeTruthy();
     // No characters that need CSS escaping (no colons, no curly braces).
     expect(tabId).toMatch(/^[a-zA-Z0-9_-]+$/);
-    expect(controls).toMatch(/^[a-zA-Z0-9_-]+$/);
+    // aria-controls is deliberately absent without a panelIdPrefix: the
+    // generated prefix is not knowable by a consumer and Tabs renders no
+    // panel, so any id stamped here would point at nothing. This assertion
+    // used to require it to be truthy — pinning that dangling IDREF.
+    expect(tab.getAttribute('aria-controls')).toBeNull();
   });
 
   it('renders nothing inside the tablist when items is empty (no crash)', () => {
@@ -946,5 +948,86 @@ describe('Tabs action', () => {
     );
     expect(screen.getByRole('button', { name: 'New deal' })).toBeInTheDocument();
     expect(screen.getAllByRole('tab')).toHaveLength(3);
+  });
+});
+
+describe('aria-controls points only at a panel that exists (#501)', () => {
+  it('stamps aria-controls on the active tab and no other', () => {
+    // Consumers render only the active panel, so stamping every tab shipped
+    // N-1 dangling IDREFs that no consumer could fix without eagerly mounting
+    // every panel — and firing every panel's queries on first paint.
+    render(
+      <Tabs
+        items={[
+          { id: 'a', label: 'A' },
+          { id: 'b', label: 'B' },
+          { id: 'c', label: 'C' },
+        ]}
+        activeId="b"
+        onChange={() => {}}
+        panelIdPrefix="demo"
+        aria-label="Sections"
+      />,
+    );
+    const tabs = screen.getAllByRole('tab');
+    expect(tabs.map((t) => t.getAttribute('aria-controls'))).toEqual([null, 'demo-b-panel', null]);
+  });
+
+  it('uses a consumer panelIdPrefix verbatim, including characters it would have sanitized', () => {
+    // `sanitizeId` runs on the GENERATED React id (`:r1:` needs it), never on a
+    // consumer prefix — so this documents that the consumer owns the id they
+    // supply. It is a legal HTML id and a legal IDREF; only a CSS selector
+    // would need escaping, and Tabs never selects on it. Asserting the
+    // sanitized SHAPE here would have been a tautology: the assertion above
+    // already pins the whole string to a literal.
+    render(
+      <Tabs
+        items={[{ id: 'b', label: 'B' }]}
+        activeId="b"
+        onChange={() => {}}
+        panelIdPrefix="a:b"
+        aria-label="t"
+      />,
+    );
+    expect(screen.getByRole('tab').getAttribute('aria-controls')).toBe('a:b-b-panel');
+  });
+
+  it('stamps nothing when there is no panelIdPrefix to point at', () => {
+    // Without the prefix, Tabs renders no panel and the generated useId is not
+    // knowable by a consumer — so the target cannot exist at all. The first
+    // fix only covered the explicit-prefix path and left the DEFAULT
+    // configuration with the dangling IDREF.
+    render(
+      <Tabs
+        items={[
+          { id: 'a', label: 'A' },
+          { id: 'b', label: 'B' },
+        ]}
+        activeId="a"
+        onChange={() => {}}
+        aria-label="Sections"
+      />,
+    );
+    for (const tab of screen.getAllByRole('tab')) {
+      expect(tab.getAttribute('aria-controls')).toBeNull();
+    }
+  });
+
+  it('leaves every tab its own id, so a panel can still label itself', () => {
+    render(
+      <Tabs
+        items={[
+          { id: 'a', label: 'A' },
+          { id: 'b', label: 'B' },
+        ]}
+        activeId="a"
+        onChange={() => {}}
+        panelIdPrefix="demo"
+        aria-label="Sections"
+      />,
+    );
+    for (const tab of screen.getAllByRole('tab')) {
+      expect(tab.getAttribute('id')).toBeTruthy();
+    }
   });
 });

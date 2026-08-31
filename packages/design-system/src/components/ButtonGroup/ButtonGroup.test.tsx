@@ -323,3 +323,65 @@ describe('<ButtonGroup> TypeScript-level', () => {
     expect(B).toBeDefined();
   });
 });
+
+describe('unselected segmented group is reachable by keyboard (#499)', () => {
+  it('gives the first item the tab stop when value matches nothing', () => {
+    // The initial state of a single-select group with nothing chosen. Before
+    // #499 every item was tabIndex={-1} and the radiogroup itself had none, so
+    // Tab skipped the control entirely — and because the arrow keys live on
+    // the items, roving navigation could never be entered either.
+    render(
+      <ButtonGroup value="" onValueChange={() => {}} aria-label="Date presets">
+        <ButtonGroup.Item value="7d">Last 7 days</ButtonGroup.Item>
+        <ButtonGroup.Item value="30d">Last 30 days</ButtonGroup.Item>
+      </ButtonGroup>,
+    );
+    const items = screen.getAllByRole('radio');
+    expect(items.map((el) => el.getAttribute('tabindex'))).toEqual(['0', '-1']);
+  });
+
+  it('hands the tab stop back to the selection once there is one', () => {
+    render(
+      <ButtonGroup value="30d" onValueChange={() => {}} aria-label="Date presets">
+        <ButtonGroup.Item value="7d">Last 7 days</ButtonGroup.Item>
+        <ButtonGroup.Item value="30d">Last 30 days</ButtonGroup.Item>
+      </ButtonGroup>,
+    );
+    expect(screen.getAllByRole('radio').map((el) => el.getAttribute('tabindex'))).toEqual([
+      '-1',
+      '0',
+    ]);
+  });
+
+  it('keeps a tab stop when every item is disabled', () => {
+    // Items carry `aria-disabled`, not the native `disabled`, so they are meant
+    // to stay focusable — a user tabs in and hears why the choice is
+    // unavailable. Without the `?? items[0]` fallback there was no enabled item
+    // to hand the stop to, so the whole group dropped out of the tab order —
+    // the exact behaviour `aria-disabled` was chosen to avoid.
+    render(
+      <ButtonGroup value="" onValueChange={() => {}} aria-label="Date presets" disabled>
+        <ButtonGroup.Item value="7d">Last 7 days</ButtonGroup.Item>
+        <ButtonGroup.Item value="30d">Last 30 days</ButtonGroup.Item>
+      </ButtonGroup>,
+    );
+    const items = screen.getAllByRole('radio');
+    expect(items.every((el) => el.getAttribute('aria-disabled') === 'true')).toBe(true);
+    expect(items.map((el) => el.getAttribute('tabindex'))).toEqual(['0', '-1']);
+  });
+
+  it('skips a disabled first item', () => {
+    render(
+      <ButtonGroup value="" onValueChange={() => {}} aria-label="Date presets">
+        <ButtonGroup.Item value="7d" disabled>
+          Last 7 days
+        </ButtonGroup.Item>
+        <ButtonGroup.Item value="30d">Last 30 days</ButtonGroup.Item>
+      </ButtonGroup>,
+    );
+    expect(screen.getAllByRole('radio').map((el) => el.getAttribute('tabindex'))).toEqual([
+      '-1',
+      '0',
+    ]);
+  });
+});

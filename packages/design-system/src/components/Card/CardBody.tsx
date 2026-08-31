@@ -41,6 +41,11 @@ export interface CardBodyProps extends HTMLAttributes<HTMLDivElement> {
  *   compound structure.
  * - For page-level scrolling. Let the page or AppLayout own that scroll area.
  *
+ * @remarks Keyboard
+ * `scroll` sets `tabIndex={0}` so the region is reachable without a mouse.
+ * Give it a name too when its content is meaningful — `role="group"` plus
+ * `aria-label` — since the component cannot know what it holds.
+ *
  * @remarks Anti-patterns
  * - ❌ Adding consumer CSS for `flex: 1`, `min-height: 0`, or
  *   `overflow-y: auto`. Use `<Card fill>` with `<Card.Body scroll>`.
@@ -53,8 +58,25 @@ export const CardBody = forwardRef<HTMLDivElement, CardBodyProps>(function CardB
   { scroll = false, className, ...props },
   ref,
 ) {
-  // {...props} last so consumer overrides win (Pattern A).
+  // {...props} last so consumer overrides win (Pattern A) — including
+  // tabIndex, so a consumer that gives the region a focusable descendant, or
+  // wants to manage focus itself, can opt out with tabIndex={-1}.
   return (
-    <div ref={ref} className={clsx(styles.body, scroll && styles.scroll, className)} {...props} />
+    <div
+      ref={ref}
+      // `scroll` is what makes this an overflow container, so `scroll` is what
+      // has to make it keyboard-reachable. Without it, content that overflows
+      // is unreachable for a keyboard-only user whenever it has no focusable
+      // descendant — axe `scrollable-region-focusable`, WCAG 2.1.1. The
+      // sharpest case is a loading body full of `Skeleton`s, every one of
+      // which is aria-hidden: a scrollable region with nothing in it to reach.
+      //
+      // The NAME still has to come from the consumer — the DS cannot know what
+      // the region holds — so pair this with `role="group"` and an
+      // `aria-label` when the content warrants announcing.
+      tabIndex={scroll ? 0 : undefined}
+      className={clsx(styles.body, scroll && styles.scroll, className)}
+      {...props}
+    />
   );
 });

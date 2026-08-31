@@ -15,13 +15,24 @@
   --progress-fill-radius: var(--radius-full);
   --progress-fill-bg-success: var(--color-success);
 
+  // @contrast --color-warning on --color-bg-muted = 1.96:1 light
+  // @contrast --color-warning-strong on --color-bg-muted = 5.46:1 light
+  // @contrast --color-success on --color-bg-muted = 4.68:1 light
+  // @contrast --color-danger on --color-bg-muted = 4.96:1 light
+  // @contrast --color-accent on --color-bg-muted = 6.25:1 light
+  // @contrast --color-warning on --color-bg-muted = 8.97:1 dark
+  // @contrast --color-success on --color-bg-muted = 6.92:1 dark
+  // @contrast --color-danger on --color-bg-muted = 4.94:1 dark
+  // @contrast --color-accent on --color-bg-muted = 5.60:1 dark
   // warning uses --color-warning-strong: the bare amber measures 1.96:1 against
   // the track, below 1.4.11's 3:1 — and it is the ONLY tone that fails there
-  // (success 4.68, danger 4.96, accent 6.25), so the fill is wrong, not the
+  // (success 4.68:1, danger 4.96:1, accent 6.25:1), so the fill is wrong, not the
   // track. Every figure above is LIGHT theme, and the rationale is a
-  // light-theme rationale: in dark the amber measures 8.97 against the track
-  // and nothing fails here at all (success 6.92, danger 4.94, accent 5.60).
-  // Light success and danger both read 4.17 until #484 raised them — one
+  // light-theme rationale: in dark the amber measures 8.97:1 against the track
+  // and nothing fails here at all (success 6.92:1, danger 4.94:1, accent 5.60:1).
+  // Light success and danger both read 4.17 (no `:1` — that is a HISTORICAL
+  // figure no current pair computes, so no annotation can bind it) until #484
+  // raised them — one
   // number by coincidence, not by construction. Their dark values never moved.
   // See #481.
   --progress-fill-bg-warning: var(--color-warning-strong);

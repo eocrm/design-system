@@ -14,6 +14,7 @@ export const ru: Messages = {
     sidebar: 'Боковая навигация',
   },
   confirmationPopover: {
+    pending: 'Выполняется…',
     cancel: 'Отмена',
     confirm: 'Подтвердить',
   },
@@ -43,6 +44,9 @@ export const ru: Messages = {
   },
   switch: {
     busy: 'Сохранение…',
+  },
+  progress: {
+    indeterminate: 'Загрузка…',
   },
   slider: {
     minimum: 'минимум',
@@ -77,6 +81,7 @@ export const ru: Messages = {
     nextAgenda: 'Следующая неделя',
     moreEvents: ({ count }) =>
       `ещё ${count as number} ${ruPlural(count as number, ['событие', 'события', 'событий'])}`,
+    moreEventsShort: ({ count }) => `+${count as number}`,
     viewMonth: 'Месяц',
     viewWeek: 'Неделя',
     viewDay: 'День',
@@ -116,14 +121,22 @@ export const ru: Messages = {
   },
   dataTable: {
     selectAll: 'Выбрать все строки на странице',
+    selectRow: (params) => `Выбрать строку ${params.row}`,
+    expandRow: (params) => `Развернуть строку ${params.row}`,
+    dragReorder: (params) => `Перетащить для изменения порядка: ${params.name}`,
+    dragReorderUnnamed: 'Перетащить для изменения порядка столбца',
     rowExpansion: 'Развёртывание строки',
     pinnedRows: 'Закреплённые строки',
     empty: 'Нет данных',
     loading: 'Загрузка строк…',
+    resizeColumn: (params) => `Изменить ширину столбца ${params.name}`,
+    resizeColumnUnnamed: 'Изменить ширину этого столбца',
+    unlabelledColumn: 'Столбец без названия',
     loaded: 'Строки загружены',
     loadedEmpty: 'Строки не загружены',
   },
   drag: {
+    handleLabel: 'Переместить элемент',
     instructions:
       'Нажмите пробел или Enter, чтобы взять элемент. Пока элемент взят, стрелки перемещают его, пробел или Enter размещает, Escape отменяет.',
     pickedUp: ({ item }) => `Взято: «${item as string}».`,
@@ -166,7 +179,11 @@ export const ru: Messages = {
     enteredTopLevel: 'Перемещено на верхний уровень',
     dropHint: 'Перетащите виджеты сюда',
   },
+  avatarGroup: {
+    overflow: (params) => `Ещё ${params.count}`,
+  },
   optionsPicker: {
+    toggleGroup: (params) => `Переключить группу ${params.label}`,
     filter: 'Фильтр…',
     apply: 'Применить',
     cancel: 'Отмена',
@@ -200,9 +217,16 @@ export const ru: Messages = {
     currentPageAriaLabel: ({ page }) => `Страница ${page as number}, текущая`,
   },
   select: {
+    createOption: (params) => `+ Создать «${params.label as string}»`,
+    removeChip: (params) => `Удалить ${params.label}`,
     clear: 'Очистить выбор',
     search: 'Поиск…',
     noOptions: 'Нет вариантов',
+    loading: 'Загрузка…',
+    loadFailed: 'Не удалось загрузить варианты.',
+    retry: 'Повторить',
+    noResultsFor: (params) => `Ничего не найдено по запросу «${params.query}».`,
+    statusLoading: 'Загрузка вариантов…',
     selectedPrefix: ({ labels }) => `Выбрано: ${labels as string}`,
     openSelect: 'Открыть список',
   },
@@ -213,6 +237,8 @@ export const ru: Messages = {
     numberPlaceholder: 'Номер телефона',
   },
   colorPicker: {
+    saturationBrightnessValue: (params) =>
+      `насыщенность ${params.s} процентов, яркость ${params.v} процентов`,
     saturationBrightness: 'Насыщенность и яркость',
     hue: 'Оттенок',
     hexValue: 'Hex-значение цвета',
@@ -230,6 +256,12 @@ export const ru: Messages = {
     upload: 'Загрузить файлы',
     dragHint: 'Перетащите файлы сюда или нажмите для выбора',
     uploadingAriaLabel: ({ name }) => `Загрузка ${name as string}`,
+    batchUploading: (params) => `Загрузка: ${params.done} / ${params.total}`,
+    batchSettled: (params) =>
+      Number(params.failed) > 0
+        ? `Загружено: ${params.done} / ${params.total}. Ошибок: ${params.failed}.`
+        : `Загружено: ${params.done} / ${params.total}.`,
+    removeFailedAriaLabel: (params) => `Удалить ${params.name} — ошибка загрузки`,
     removeAriaLabel: ({ name }) => `Удалить ${name as string}`,
   },
   flowCanvas: {
@@ -270,6 +302,7 @@ export const ru: Messages = {
     restored: 'Холст свёрнут',
   },
   imageCrop: {
+    loadError: 'Не удалось загрузить изображение',
     zoom: 'Масштаб',
   },
   kanban: {

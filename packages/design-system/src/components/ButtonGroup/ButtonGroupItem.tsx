@@ -47,7 +47,10 @@ export function ButtonGroupItem({
       role="radio"
       aria-checked={isSelected}
       aria-disabled={effectiveDisabled || undefined}
-      tabIndex={isSelected ? 0 : -1}
+      // Selected item holds the tab stop; when NOTHING is selected the group
+      // would otherwise have no tab stop at all and be unreachable by keyboard
+      // (#499). APG: the first radio takes focus when none is checked.
+      tabIndex={isSelected || ctx.rovingFallbackValue === value ? 0 : -1}
       data-selected={isSelected ? '' : undefined}
       data-value={value}
       onClick={() => {

@@ -84,8 +84,37 @@ export interface ColumnDef<T> {
    * Plain-text column label. Used by the visibility menu and, when
    * `DataTable.collapseBelow` is set, by the visual card-field label and resize
    * separator name. Falls back to a string `header`; card fields with neither
-   * stay visually unlabelled, while the visibility menu and resize separators
-   * fall back to `id`.
+   * stay visually unlabelled, and the visibility menu falls back to `id` —
+   * that menu is the one place a column's raw id can still reach a user.
+   * Resize separators do NOT: they take a generic "Resize this column".
+   *
+   * It also NAMES the column header, but only when `header` is not a
+   * text-rendering string — i.e. a ReactNode, a render function, or `''`. So
+   * `<span>Rev</span>` with `visibilityLabel: "Revenue (USD)"` announces
+   * "Revenue (USD)", NOT "Rev". A string header always names itself and this
+   * never overrides it.
+   *
+   * That override is deliberate. Deciding at runtime whether a ReactNode names
+   * itself needs the accessible name, and seven attempts to approximate that
+   * from the DOM each shipped either a raw `column.id` in the announcement or
+   * an unnamed column header. The rule is static instead, and the cost is that
+   * a node which DOES name itself is overridden when you also set this.
+   *
+   * Set it on every non-text header. Without it the component will not invent
+   * a name: `column.id` is the only candidate left and a developer identifier
+   * is not something to read aloud, so it is used for nothing — not the
+   * header, not the drag grip, not the resize handle.
+   *
+   * What such a header announces, measured off Chromium's AX tree: it falls
+   * through to NAME-FROM-CONTENT, because an `aria-labelledby` resolving to no
+   * text is marked invalid rather than treated as a name. So the cell's own
+   * controls name it — "Drag to reorder this column", or under `collapseBelow`
+   * the resize handle's live pixel width. `header: ''` is special-cased to a
+   * generic label so the width cannot win; a ReactNode that renders nothing is
+   * indistinguishable from one that names itself, so it is not.
+   *
+   * None of those is a name you chose. Set this prop on every text-less
+   * header; your axe run flags what is left via `empty-table-header`.
    */
   visibilityLabel?: string;
   /**

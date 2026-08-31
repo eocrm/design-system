@@ -28,6 +28,12 @@ Imports tests DO need:
 
 Run with `make test` (single run) or `make test-watch`. Tests run as part of the publish workflow before npm publish — a failing test blocks the release.
 
+`make test` runs `npm test`, which covers **every workspace** — design-system's
+vitest suite AND design-tokens' `node --test`. Read its EXIT CODE, not a
+filtered pipeline: `make test | grep …` reports grep's status, so a red
+design-tokens run looks green while the CI gate fails on it. The same mistake
+in `;`-chained gate commands has now shipped twice on this repo.
+
 ### 2. Every component has a playground demo
 
 When adding `src/components/<Name>/`, the same change must add `packages/playground/src/pages/demo/<Name>Demo.tsx` and wire it into the playground's nav. Components without demos are invisible to the team and accumulate inconsistency.
@@ -197,14 +203,21 @@ happens while their attention is elsewhere?**
   (Precisely: `aria-valuenow` is set only when determinate. An indeterminate
   spinner puts its meaning in `aria-valuetext` — a value description, not the
   accessible name, which stays whatever the consumer passed as `aria-label`.
-  Both files fall back to a hardcoded English `'Loading…'` there, which breaches
-  Rule 9; tracked in #503.)
+  Both files used to fall back to a hardcoded English `'Loading…'` there; #503
+  routed it through `progress.indeterminate`.)
 
 **A state that PERSISTS once entered is a property, even though you were not
 watching when it changed.** An image that fails three seconds after render
 transitioned while your attention was elsewhere, but from then on "failed" is
-simply what that element is — so it belongs in the name, and `Image` and
-`Lightbox` fold it in. Ask what is true a minute later, not what happened.
+simply what that element is — so it belongs in the name, and `Lightbox` folds
+it in. Ask what is true a minute later, not what happened.
+
+`Image` is the instructive exception, and it shows the rule has a second half.
+Its error tile renders the failure as VISIBLE TEXT beside the icon, so folding
+the same sentence into the icon's name made a reader hear it twice in a row.
+Where the state is already in the accessible tree as content, the name must not
+repeat it — `Lightbox` folds it in precisely because its text is a CHILD of the
+`role="img"`, which children-presentational prunes. Same rule, opposite markup.
 
 **Tiebreaker: can the element still be REACHED after the moment passes?** Not
 "will anything announce it" — that is circular, since it depends on the choice
@@ -239,15 +252,16 @@ it.
 
 **When a component is both**, the name carries what is true on arrival and a
 region carries the transitions — but only if the transitions are individually
-worth interrupting for. `FileUpload` is the open case rather than the worked
-one, and it is genuinely split: `uploading` already uses the third branch above
+worth interrupting for. `FileUpload` was the open case and is now a worked one;
+it was genuinely split: `uploading` already uses the third branch above
 (a `Progress` with `role="progressbar"` and a name carrying the filename), and
-`done` renders a named `role="img"` a browse-mode reader reaches. The gaps are
+`done` renders a named `role="img"` a browse-mode reader reaches. The gaps were
 `error` — plain text in a non-focusable row, with the only focusable control
-there named "Remove {file}" — and `pending`, which renders nothing at all.
+there named "Remove {file}" — and `pending`, which rendered nothing at all.
 Twelve files resolving inside two seconds should not be twelve announcements,
-so the shape it wants is one region describing the batch plus the per-row state
-reachable on focus. Tracked in #502.
+so the shape it wanted was one region describing the batch plus the per-row
+state reachable on focus. That is what #502 shipped: a single region derived
+from `files`, and error rows whose remove button names the failure.
 
 **If the state resolves while focus is inside the component but not on the
 thing that changed** — a `Select`'s options arriving while focus sits on the
@@ -287,8 +301,9 @@ drop it.
 already focused on it, so there is nothing to "arrive at" — `Switch` and
 `StatusMenu` announce; they do not rename themselves. Renaming a focused
 control mid-interaction is worse than announcing, because it also breaks
-name-exact queries in consumer tests. (`ConfirmationPopover` is a known gap on
-this rule: its pending state sets neither. Tracked separately.)
+name-exact queries in consumer tests. (`ConfirmationPopover` was a known gap on
+this rule — its pending state set neither — until #497 gave it `aria-disabled`
+plus a deferred pending announcement.)
 
 **Visual-only is a legitimate answer, but it must be deliberate and written
 down.** `Badge`'s tone is a durable visual property with no state change to
