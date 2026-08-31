@@ -38,6 +38,22 @@
   // other two consumers of this surface.
   // @contrast --color-fg-subtle on --color-bg-muted-hover = 3.62:1 light
   // @contrast --color-fg on --color-bg-muted-hover = 11.29:1 light
+  // THE REST STATE IS STILL UNDER AA and this does not fix it: the hint is
+  // <Text size="xs">, --font-size-xs is 11px, so 4.5:1 applies, and
+  // --color-fg-subtle on the resting --color-bg-muted reads 4.15:1 light /
+  // 3.96:1 dark. That predates #504 — the hover fix above is scoped to the
+  // regression #504 caused, not to the pre-existing pair — but a hover-only
+  // patch would otherwise read as if the whole thing were sound, and hover
+  // ending up 2.7x more legible than rest inverts the usual relationship.
+  // The base is declared so the pair is MEASURED. Without it resolveColour
+  // classifies the hover as `absent` and the #504 gate waves it through under a
+  // reason that is factually wrong here — the hover does not paint onto an
+  // unknown surface, it swaps a known --color-fg-subtle for --color-fg. Its two
+  // named siblings, --table-header-fg-hover and --avatar-overflow-fg-hover, both
+  // have bases and are measured; this one should be too.
+  // @contrast --color-fg-subtle on --color-bg-muted = 4.15:1 light
+  // @contrast --color-fg-subtle on --color-bg-muted = 3.96:1 dark
+  --options-picker-group-header-hint-fg: var(--color-fg-subtle);
   --options-picker-group-header-hint-fg-hover: var(--color-fg);
   --options-picker-group-header-border-width: var(--border-width-emphasis);
 

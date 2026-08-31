@@ -54,7 +54,11 @@ function tokenValue(name: string, source: string, seen: string[] = []): string {
     // The dangerous case: a LITERAL borrowed from light and reported as dark.
     // That would pass the dark assertion having checked nothing dark.
     if (inScope === undefined) {
-      throw new Error(`${name} is a light-only literal; it cannot answer for another theme`);
+      throw new Error(
+        `${name} is declared only in the light scope. If that is deliberate — a ` +
+          `theme-independent value like --color-fg-on-overlay or --ring-on-scrim — ` +
+          `read it through TOKENS explicitly rather than per theme.`,
+      );
     }
     return literal[1];
   }
@@ -605,12 +609,43 @@ describe('a tone stays in sync with the roles derived from it', () => {
     // The thumbnails are <Image interactive>, which paints its OWN ring from
     // --image-ring; Lightbox has to hand it the scrim ring or the default
     // --ring-accent comes back at 2.47:1 on the strip.
+    const lightboxCss = stripComments(
+      readFileSync(resolve(COMPONENTS_DIR_FOR_SCRIM, 'Lightbox/Lightbox.module.scss'), 'utf8'),
+    );
+    // EVERY include, not just the tokens. .close / .download / .chev /
+    // .thumbDoc reach the mixin directly through one grouped selector, and
+    // reverting it to a bare `@include focus-ring` put all four back on
+    // --ring-accent at 1.03-2.47:1 with the whole suite green — the two token
+    // bindings above cannot see a call site. Asserted over every include rather
+    // than that one, so a fifth ring added later cannot skip the token.
+    // To the statement end, not to the first `)` — that one closes `var(`.
+    const includes = [...lightboxCss.matchAll(/@include\s+focus-ring([^;]*);/g)].map((m) =>
+      m[1].trim(),
+    );
+    expect(includes.length, 'Lightbox paints focus rings').toBeGreaterThanOrEqual(1);
+    for (const arg of includes) {
+      expect(arg, 'every Lightbox focus ring takes the scrim ring').toBe('(var(--lightbox-ring))');
+    }
+    // Scoped to the block that owns it, not the file. A file-wide match is
+    // satisfied by a declaration on a selector nothing renders — verified: move
+    // it to a dead rule and the suite stays green while the thumbnails go back
+    // to --ring-accent. blocksMentioning() further down exists for exactly this
+    // reason; the same care belongs here.
+    const thumbBlock = /\.thumb\s*\{([^}]*)\}/.exec(lightboxCss)?.[1];
+    expect(thumbBlock, '.thumb is declared').toBeDefined();
+    expect(thumbBlock, 'the thumbnails must hand Image the scrim ring').toMatch(
+      /--image-ring:\s*var\(--lightbox-ring\)/,
+    );
+    // BOTH ends of the handoff. Asserting only the sending side left the
+    // receiving line unbound: reverting Image to a bare `@include focus-ring`
+    // put the thumbnails back on --ring-accent with the whole suite green —
+    // the round-2 failure relocated by one file rather than closed.
     expect(
       stripComments(
-        readFileSync(resolve(COMPONENTS_DIR_FOR_SCRIM, 'Lightbox/Lightbox.module.scss'), 'utf8'),
+        readFileSync(resolve(COMPONENTS_DIR_FOR_SCRIM, 'Image/Image.module.scss'), 'utf8'),
       ),
-      'the thumbnails must hand Image the scrim ring',
-    ).toMatch(/--image-ring:\s*var\(--lightbox-ring\)/);
+      'Image must actually consume --image-ring',
+    ).toMatch(/focus-ring\(\s*var\(--image-ring\)\s*\)/);
 
     const ring = tokenValue('--ring-on-scrim', TOKENS);
 
@@ -634,6 +669,11 @@ describe('a tone stays in sync with the roles derived from it', () => {
       // surface that has since moved.
       const layer = (name: string) => {
         const raw = declaredValue(name, lightbox)!;
+        // Percentage alpha only. `rgb(0 0 0 / 0.3)` is legal CSS and would parse
+        // to 0.003 here, compositing to something indistinguishable from the
+        // bare scrim — the assertion would then pass having measured the wrong
+        // surface. Fail loudly on the notation instead of quietly on the value.
+        expect(raw, `${name} states alpha as a percentage`).toMatch(/\/\s*[\d.]+%\s*\)/);
         const [r, g, b, a] = raw.match(/[\d.]+/g)!.map(Number);
         return composite(
           `#${[r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('')}`,
@@ -974,11 +1014,18 @@ describe('a component hover is a visible step from what it replaces', () => {
     );
   }
 
-  // Lookbehind rather than a line anchor, matching the design-tokens sweep:
-  // `:root { --a-hover: …; --b-hover: …; }` on one line would otherwise
-  // contribute only its first token, and the `>= 39` floor is the only thing
-  // that would notice. No live case — every *.tokens.scss is one declaration
-  // per line — but the two files fix the same class of bug and should agree.
+  // Lookbehind rather than a line anchor, matching the design-tokens sweep.
+  // On `:root { --a-hover: …; --b-hover: …; }` the anchored form contributes
+  // NOTHING — `:root {` precedes the first declaration, so no match starts a
+  // line — rather than contributing only the first, which an earlier version of
+  // this comment claimed and the sibling file correctly denies.
+  //
+  // The lookbehind is belt-and-braces here, not a fix: this regex terminates at
+  // `:` and never eats the `;` the next match needs, so `(?:^|[;{])` finds all
+  // of them too. That consuming hazard is real only in source.test.mjs, whose
+  // pattern runs through the `;`. No live case either way — every *.tokens.scss
+  // is one declaration per line — but the two files answer the same question
+  // and should not answer it differently.
   const candidates = tokenFiles.flatMap(({ dir, source }) =>
     [...source.matchAll(/(?<=^|[;{])\s*(--[a-z0-9-]+-hover)\s*:/gm)].map((match) => ({
       dir,
@@ -1117,13 +1164,15 @@ describe('a component hover is a visible step from what it replaces', () => {
     // nothing and pass. Verified: hard-wiring resolveColour to return `absent`
     // left every test in this file green.
     //
-    // 39 is what the library measures today — read off the gate, not estimated.
-    // An earlier version of this said 37 and left two silent slots, which is the
-    // same mistake in miniature: a floor below the real number cannot see a
-    // partial loss. Deliberately not `> 0`, because losing 30 of 39 is the same
-    // class of failure as losing all 39. Raise this when the number grows.
+    // 40 is what the library measures today — instrumented, not estimated. It
+    // has been wrong twice: 37 when the real count was 39, then 39 on the same
+    // commit that declared --options-picker-group-header-hint-fg and made it 40.
+    // A floor below the real number cannot see a partial loss, which is the
+    // whole job here. Deliberately not `> 0`, because losing 30 of 40 is the
+    // same class of failure as losing all 40. Re-instrument when it changes;
+    // guessing the delta is how it went stale both times.
     expect(measured, 'the gate measured nothing — resolveColour is broken').toBeGreaterThanOrEqual(
-      39,
+      40,
     );
   });
 });

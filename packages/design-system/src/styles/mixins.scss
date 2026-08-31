@@ -16,8 +16,10 @@
 // That argument is over OPAQUE rings. A translucent one composites to two
 // different effective colours over the two backdrops, so the single-luminance
 // reasoning does not reach it — but a sweep of alpha against an RGB grid over
-// both backdrops returns the same single answer, opaque black. Alpha was the
-// thing #490 proposed raising, so it is worth saying it was checked.
+// both backdrops returns only near-blacks, and only at alpha 0.95 and above —
+// the same answer the opaque case gives, arrived at from the other direction.
+// Alpha was the thing #490 proposed raising, so it is worth saying it was
+// checked rather than assumed.
 // `outline-offset` is, and it is the native one. The gap shows whatever is
 // actually painted behind the element, so the ring is separated from the fill
 // it surrounds without the library naming that surface in a token — which a

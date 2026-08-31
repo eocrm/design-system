@@ -209,16 +209,20 @@
   transition: opacity var(--transition-base);
 }
 
-// An idle thumbnail renders at --opacity-thumb-idle, and opacity fades the whole
-// subtree INCLUDING the focus ring — a keyboard-focused idle thumb would show a
-// faded indicator. Focus makes it fully opaque, which is also what the user
-// expects to see.
-.thumb:focus-within {
-  opacity: var(--opacity-visible);
-}
-
 .thumb:hover {
   opacity: var(--opacity-thumb-hover);
+}
+
+// An idle thumbnail renders at --opacity-thumb-idle, and opacity fades the whole
+// subtree INCLUDING the focus ring, so a keyboard-focused idle thumb would show
+// a faded indicator. LAST of the three opacity rules on purpose: `:hover` and
+// `:focus-within` are both (0,2,0), so order decides, and above `:hover` a
+// thumbnail that was focused AND hovered took the 0.85 hover value instead.
+// Not a conformance issue at any of the three values — the scrim ring clears
+// the 3:1 floor several times over faded or not, which contrast.test.ts
+// measures — this is about the indicator looking the same however you got there.
+.thumb:focus-within {
+  opacity: var(--opacity-visible);
 }
 
 .thumbActive {

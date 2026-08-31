@@ -714,8 +714,9 @@ test('no component token file declares an opaque colour literal', async () => {
     // them on `:root { --a: #fff; --b: #000; }` — not merely the ones after the
     // first — and the obvious repair, `(?:^|[;{])`, then ate the `;` that would
     // have started the next match, so it saw only the odd-numbered ones. Half a
-    // fix reads exactly like a whole one here, which is why this is asserted
-    // against a shared-line case rather than trusted.
+    // fix reads exactly like a whole one here — and every real *.tokens.scss is
+    // one declaration per line, so the files this walks cannot tell the two
+    // apart. The shared-line case is asserted directly, just below.
     for (const [, name, value] of content.matchAll(
       /(?<=^|[;{])\s*(--[a-z0-9-]+)\s*:\s*([^;\n]+);/gm,
     )) {
@@ -731,6 +732,20 @@ test('no component token file declares an opaque colour literal', async () => {
     [],
     'component tokens must reach colour through var() so the value follows the theme',
   );
+});
+
+test('the opaque-literal scan sees every declaration on a shared line', () => {
+  // The claim the test above cannot make for itself. All 81 component files are
+  // one declaration per line, so they are exactly the input on which a
+  // half-working boundary looks identical to a working one: the line-anchored
+  // form finds NOTHING here (`:root {` precedes the first declaration), and the
+  // obvious repair `(?:^|[;{])` consumes the `;` the next match needs and finds
+  // only the odd-numbered ones. Both would pass the real sweep unchanged.
+  const line = ':root { --a: #ffffff; --b: #000000; --c: rgb(1 2 3); }';
+  const found = [...line.matchAll(/(?<=^|[;{])\s*(--[a-z0-9-]+)\s*:\s*([^;\n]+);/gm)].map(
+    ([, name]) => name,
+  );
+  assert.deepEqual(found, ['--a', '--b', '--c']);
 });
 
 test('every var() a component token file reaches for is actually declared', async () => {
