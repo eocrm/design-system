@@ -171,6 +171,13 @@ button.groupHeader {
 
   &:focus-visible {
     @include focus-ring;
+
+    // INSET. `.list` above is `overflow-y: auto` — which computes `overflow-x`
+    // to `auto` — with no padding, and this header is `width: 100%`, so an
+    // outset ring loses both vertical bands on every group header, always.
+    // Third instance of the same shape after Tabs and TimeField (#505); the
+    // gate below the mixin now looks for it.
+    outline-offset: calc(-1 * var(--ring-offset));
   }
 }
 

@@ -3612,11 +3612,13 @@ Two things follow from the mechanism:
 - **An outset ring needs room.** If the focusable sits flush against an ancestor
   with `overflow` other than `visible`, the ring clips — invisibly to the test
   suite, which checks ring colour but not geometry (#512). Where that applies,
-  draw it inset: `outline-offset: calc(-1 * var(--ring-offset));`. Grep that
-  string for the current set — Accordion, Table, DataTable, HeaderCell, Tabs,
-  TimeField, Rail and Calendar are in it today, but do not trust a count written
-  in prose here: three files carried three different numbers for this one
-  quantity and each was stale within a commit.
+  draw it inset: `outline-offset: calc(-1 * var(--ring-offset));`. For the
+  current set run `grep -rn "outline-offset" src/components` and read the
+  negative ones — grepping the `calc()` form alone misses the sites that predate
+  the token and still write `-2px`, `-1px` or their own `calc()`. Do not trust a
+  count or a list written in prose here: three files carried three different
+  numbers for this one quantity, each was stale within a commit, and the
+  replacement list went stale in the commit that wrote it.
 - **Inset gives the gap up.** An outset ring is bounded on both sides by the
   backdrop, which is what the contrast gate measures. An inset one touches the
   element's OWN fill, and nothing measures that side — so check it yourself
