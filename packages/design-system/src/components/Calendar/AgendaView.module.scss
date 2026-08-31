@@ -192,13 +192,15 @@
   // outright — and unlike the chip and the block, `.rowButton` has
   // `border: none`, so there is no border left to carry a fallback sliver.
   // Keyboard-focusing a row would have wiped the state signal completely.
-  // Since #505 the ring is an outline, so the box-shadow slot is free and this
-  // row's ring is outset (nothing here clips), which means the stripe survives
-  // focus intact — unlike TimedEvent, where the inset ring covers 2px of it.
-  // The gradient stays anyway: nothing has changed about the reason above.
-  // (Two earlier versions of this note justified it by borrowing TimedEvent's
+  // Since #505 the ring is an outline, so the box-shadow slot is FREE and the
+  // reason above is no longer forcing. This row's ring is also outset (nothing
+  // here clips), so the stripe survives focus intact — unlike TimedEvent, where
+  // the inset ring covers the outer 2px of its 4px tone band. The gradient
+  // stays because nothing requires changing it, not because anything still
+  // demands it; say that rather than inventing a live reason.
+  // (Two earlier versions of this note did exactly that, borrowing TimedEvent's
   // reasons — surviving a hover `filter: brightness()`, then composing with a
-  // drag shadow. This file has neither. Its own reason was always sufficient.)
+  // drag shadow. This file has neither.)
   background-image: linear-gradient(
     to right,
     var(--calendar-event-stripe-color) 0,
