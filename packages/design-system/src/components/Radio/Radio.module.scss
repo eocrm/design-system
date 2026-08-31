@@ -1,3 +1,4 @@
+@use '../../styles/mixins' as *;
 @use './Radio.tokens';
 
 .radio {
@@ -120,7 +121,7 @@
 
 // Focus ring on the ring (sibling selector picks up native input focus).
 .input:focus-visible + .ring {
-  box-shadow: 0 0 0 var(--ring-width) var(--radio-ring-focus);
+  @include focus-ring(var(--radio-ring-focus));
 }
 
 // Disabled — muted bg + border + dot.
@@ -164,7 +165,7 @@
 }
 
 .invalid .input:focus-visible + .ring {
-  box-shadow: 0 0 0 var(--ring-width) var(--radio-ring-focus-invalid);
+  @include focus-ring(var(--radio-ring-focus-invalid));
 }
 
 .labelText {

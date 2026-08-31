@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import { I18nProvider } from '../../i18n';
 import { RichTextAttachment } from './RichTextAttachment';
-import type { Block } from '../RichText/engine/model';
+import type { Block } from './engine/model';
 
 const att = (over: Partial<Block>): Block => ({
   id: 'a',

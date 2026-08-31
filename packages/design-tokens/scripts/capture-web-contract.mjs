@@ -3,9 +3,15 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
+// The generated files, not the design-system re-exports. `src/styles/tokens.scss`
+// used to hold the `:root` block; it is now a bare `@forward` of this package's
+// generated entry point, so capturing from it threw `no :root token scope found`
+// and this script had been unrunnable — the fixture it writes was hand-edited
+// instead. check-web-compat.mjs already reads these same generated paths, so
+// capture and check now agree on their input by construction.
 const sourcePaths = {
-  tokens: 'packages/design-system/src/styles/tokens.scss',
-  dark: 'packages/design-system/src/styles/dark.scss',
+  tokens: 'packages/design-tokens/generated/web/tokens.scss',
+  dark: 'packages/design-tokens/generated/web/dark.scss',
   badge: 'packages/design-system/src/components/Badge/Badge.tokens.scss',
 };
 const fixturePath = 'packages/design-tokens/test/fixtures/current-web-contract.json';
@@ -38,12 +44,14 @@ export function captureWebContractFromSources(sources) {
   }
 
   const darkBlocks = findBlocks(sources.dark.content);
-  const mixin = requireSingleBlock(
-    darkBlocks,
-    ({ header }) => header === '@mixin dark-tokens',
-    '@mixin dark-tokens',
-    sources.dark.source,
-  );
+  // Optional. The design-system dark.scss this parser was written against
+  // factored its declarations into `@mixin dark-tokens` and `@include`d it from
+  // both dark scopes; the generated dark.scss this now reads writes the
+  // declarations into each scope directly instead. Requiring the mixin made
+  // captureWebContract() throw on the only input it is ever pointed at, which
+  // is why the fixture ended up hand-maintained. Both layouts stay supported:
+  // the synthetic sources in source.test.mjs still exercise the mixin path.
+  const mixin = darkBlocks.find(({ header }) => header === '@mixin dark-tokens');
   const forcedDark = requireSingleBlock(
     darkBlocks,
     ({ header, ancestors }) => header === ":root[data-theme='dark']" && ancestors.length === 0,
@@ -65,29 +73,35 @@ export function captureWebContractFromSources(sources) {
     sources.dark.source,
   );
 
-  requireMixinInclude(forcedDark.body, 'dark-tokens', forcedDark.header);
-  requireMixinInclude(systemDark.body, 'dark-tokens', systemDark.header);
+  if (mixin) {
+    requireMixinInclude(forcedDark.body, 'dark-tokens', forcedDark.header);
+    requireMixinInclude(systemDark.body, 'dark-tokens', systemDark.header);
+  }
 
   addBlockDeclarations(contract, 'forcedDark', forcedDark.body, {
     source: sources.dark.source,
     selector: forcedDark.header,
   });
-  addBlockDeclarations(contract, 'forcedDark', mixin.body, {
-    source: sources.dark.source,
-    selector: forcedDark.header,
-    mixin: 'dark-tokens',
-  });
+  if (mixin) {
+    addBlockDeclarations(contract, 'forcedDark', mixin.body, {
+      source: sources.dark.source,
+      selector: forcedDark.header,
+      mixin: 'dark-tokens',
+    });
+  }
   addBlockDeclarations(contract, 'systemDark', systemDark.body, {
     source: sources.dark.source,
     selector: systemDark.header,
     atRule: '@media (prefers-color-scheme: dark)',
   });
-  addBlockDeclarations(contract, 'systemDark', mixin.body, {
-    source: sources.dark.source,
-    selector: systemDark.header,
-    atRule: '@media (prefers-color-scheme: dark)',
-    mixin: 'dark-tokens',
-  });
+  if (mixin) {
+    addBlockDeclarations(contract, 'systemDark', mixin.body, {
+      source: sources.dark.source,
+      selector: systemDark.header,
+      atRule: '@media (prefers-color-scheme: dark)',
+      mixin: 'dark-tokens',
+    });
+  }
   addBlockDeclarations(contract, 'forcedLight', forcedLight.body, {
     source: sources.dark.source,
     selector: forcedLight.header,

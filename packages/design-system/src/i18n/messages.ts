@@ -362,6 +362,20 @@ export interface Messages {
     /** Hint inside an empty section body while a move (drag or keyboard pick) is in flight. */
     dropHint: string;
   };
+  avatar: {
+    /**
+     * Presence status, folded into the avatar's accessible name (#506).
+     * Colour alone carried this before, which WCAG 1.4.1 does not allow —
+     * and OKLab separation, which the token gate measures, is blind to
+     * colour-vision deficiency.
+     */
+    presence: {
+      online: string;
+      busy: string;
+      away: string;
+      offline: string;
+    };
+  };
   avatarGroup: {
     /** aria-label on the overflow chip: how many avatars are not shown. */
     overflow: (params: { count: number }) => string;

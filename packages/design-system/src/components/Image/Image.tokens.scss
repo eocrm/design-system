@@ -1,4 +1,12 @@
 :root {
+  // Overridable so a consumer painting Image on a non-page surface can supply a
+  // ring that actually contrasts with it. Lightbox does exactly that: its
+  // thumbnails sit on a scrim that is dark in BOTH themes, where the light
+  // --ring-accent falls under 1.4.11's 3:1 (#505). No ratio quoted: the surface
+  // is a composite of --color-bg-overlay-strong, not a token, so no @contrast
+  // annotation could recompute it — contrast.test.ts composites and asserts it.
+  --image-ring: var(--ring-accent);
+
   --image-radius-none: 0;
   --image-radius-sm: var(--radius-sm);
   --image-radius-md: var(--radius-md);

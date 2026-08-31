@@ -179,6 +179,17 @@ export const ru: Messages = {
     enteredTopLevel: 'Перемещено на верхний уровень',
     dropHint: 'Перетащите виджеты сюда',
   },
+  avatar: {
+    presence: {
+      // Gender-neutral by construction. `занят` / `отошёл` are masculine-inflected
+      // and would misgender roughly half of any user list; these forms inflect
+      // for nothing.
+      online: 'в сети',
+      busy: 'не беспокоить',
+      away: 'нет на месте',
+      offline: 'не в сети',
+    },
+  },
   avatarGroup: {
     overflow: (params) => `Ещё ${params.count}`,
   },

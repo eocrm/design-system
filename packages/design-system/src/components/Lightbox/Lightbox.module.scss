@@ -1,3 +1,4 @@
+@use '../../styles/mixins' as *;
 @use './Lightbox.tokens';
 
 // stylelint-disable property-disallowed-list -- internal overlay positioning, not consumer layout
@@ -95,12 +96,19 @@
 
 // Keyboard focus ring on the dark scrim (Rule 3a) — the chevrons/close are bare
 // <button>s, so the UA default outline is low-contrast here; use the DS ring.
+// --lightbox-ring, NOT --ring-accent. The scrim is dark in both themes, so in
+// LIGHT theme the tone rings composite against it at 1.03-3.30:1 across the
+// scrim, the thumb strip and the two control fills — 10 of those 12 cells under
+// 1.4.11's 3:1, and the two that clear it are danger and success on the strip,
+// not the ring that matters: --ring-accent, which every focus ring in the
+// library resolves through, fails on all four surfaces (1.03-2.47).
+// Outside what the page-surface gate checks, too, because that gate walks the
+// four PAGE surfaces and this chrome is on none of them (#505).
 .close:focus-visible,
 .download:focus-visible,
 .chev:focus-visible,
 .thumbDoc:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px var(--ring-accent);
+  @include focus-ring(var(--lightbox-ring));
 }
 
 .chevPrev {
@@ -192,7 +200,12 @@
   border-radius: var(--lightbox-radius);
 }
 
+// Thumbnails are <Image interactive>, which draws its own ring — so the scrim
+// ring has to be handed to it, or it defaults to --ring-accent and lands under
+// 1.4.11's 3:1 on the strip in light theme (#505).
 .thumb {
+  --image-ring: var(--lightbox-ring);
+
   flex: 0 0 auto;
   width: var(--lightbox-thumb-size);
   border-radius: var(--radius-sm);
@@ -204,9 +217,29 @@
   opacity: var(--opacity-thumb-hover);
 }
 
+// An idle thumbnail renders at --opacity-thumb-idle, and opacity fades the whole
+// subtree INCLUDING the focus ring, so a keyboard-focused idle thumb would show
+// a faded indicator. LAST of the three rules that decide the focused case, on
+// purpose: `:hover` and `:focus-within` are both (0,2,0), so order decides, and
+// above `:hover` a thumbnail that was focused AND hovered took the 0.85 value.
+// (A fourth rule, `.thumbActive`, also sets opacity but is only (0,1,0), so
+// hovering the CURRENT thumbnail dims it 1 -> 0.85 whatever the order —
+// pre-existing, unchanged here, and noted so the next reader does not read
+// three as the whole picture.)
+// The faded case is now unreachable FOR THE RING: Image paints it on
+// `.wrapper:has(.trigger:focus-visible)`, and this rule matches whenever that
+// trigger has focus, so a visible ring always coincides with full opacity. What
+// is left is the indicator looking the same however you got there.
+// contrast.test.ts measures the scrim ring at FULL opacity only; nothing in the
+// suite applies this opacity to it. Lowering --opacity-thumb-idle would not
+// fail any gate, so do not read the green suite as covering that.
+.thumb:focus-within {
+  opacity: var(--opacity-visible);
+}
+
 .thumbActive {
   opacity: var(--opacity-visible);
-  box-shadow: 0 0 0 2px var(--lightbox-thumb-active-ring);
+  box-shadow: 0 0 0 var(--ring-width) var(--lightbox-thumb-active-ring);
 }
 
 // Placeholder thumbnail for a document without its own image — centered icon on

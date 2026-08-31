@@ -17,8 +17,6 @@
 
   &:focus-visible {
     @include focus-ring;
-
-    outline: none;
   }
 
   // When the Link contains an icon (SVG), switch to inline-flex so the icon

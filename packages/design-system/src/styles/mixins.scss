@@ -1,9 +1,68 @@
 // Mixins for use inside component .module.scss files via `@use '@styles/mixins' as *;`
 // NEVER includes raw colors or sizes — only structural patterns using tokens.
 
+// `outline`, not `box-shadow` (#505). The ring has to clear 3:1 against BOTH
+// things it touches — the surface outside it and the element fill inside it.
+// Against white and --color-accent that leaves almost nothing: 3:1 on white
+// caps relative luminance at 0.300, while 3:1 on #0052cc (L 0.1039) needs
+// L >= 0.412 to be the LIGHTER of the pair. Nothing satisfies both.
+// The one escape is the other side of that comparison — a ring DARKER than the
+// accent, L <= 0.0013 — and it is not a real option: that is black to three
+// decimal places (#000000 scores 21:1 and 3.08:1), it reads as 1.30:1 against
+// the dark theme's own background, and a black focus ring no longer tracks the
+// tone it belongs to, which is the relationship the ring gate exists to hold.
+// So the constraint is not literally unsatisfiable, but it is unsatisfiable by
+// any colour that is still a ring, and the colour was never the lever.
+// That argument is over OPAQUE rings. A translucent one composites to two
+// different effective colours over the two backdrops, so the single-luminance
+// reasoning does not reach it — but a sweep of alpha against an RGB grid over
+// both backdrops returns only near-blacks, and only at alpha 0.95 and above —
+// the same answer the opaque case gives, arrived at from the other direction.
+// Alpha was the thing #490 proposed raising, so it is worth saying it was
+// checked rather than assumed.
+// `outline-offset` is, and it is the native one. The gap shows whatever is
+// actually painted behind the element, so the ring is separated from the fill
+// it surrounds without the library naming that surface in a token — which a
+// two-layer box-shadow would have to, and would get wrong on every sunken panel
+// and inside every Modal.
+// "Whatever is behind" is not always a page surface: joined siblings (a visual
+// ButtonGroup of primary Buttons) put the NEIGHBOUR'S fill in the gap, where an
+// accent ring on an accent fill reads 1:1 along the shared edge. The other three
+// edges still land on the page, so the indicator is perceivable — but that one
+// edge is not, the four-surface gate cannot see it, and it is the one place this
+// mechanism does not fully solve.
+// A z-index lift does NOT help and was briefly added on the belief that it did:
+// within a stacking context an outline paints after all descendant backgrounds,
+// so the ring already draws over a joined neighbour with no lift at all. The
+// problem there is contrast, not paint order.
+// Outline also follows border-radius and leaves box-shadow free for the
+// element's own elevation, which this mixin
+// used to overwrite on focus. DataTable and HeaderCell ALREADY set
+// `outline-offset` next to this include before #505, and two DataTable rules —
+// the clickable row and the expand button — also wrote `outline: none`. All of
+// it inert against a box-shadow ring.
+// They were written expecting an outline; now they get one.
+// An outline IS clipped by an ancestor's overflow, exactly as a spread shadow
+// is — an earlier version of this comment claimed otherwise and the migration
+// then lost bands in three components before a browser sweep caught it. Where
+// the focusable sits flush against a clipping ancestor, draw the ring inset:
+// `outline-offset: calc(-1 * var(--ring-offset))`. For the current set, grep
+// `outline-offset` under src/components and read the negative ones — the calc
+// form alone misses sites predating the token that still write `-2px` or
+// `-1px`. No count is written here on purpose: three documents carried three
+// different numbers for this one quantity, each right when written and stale a
+// commit later, and every round of review caught one.
+// That trade is not free either. An inset ring paints over the element's
+// outermost pixels, including its own border, so check what that border
+// carries, and record what you find — the severity is not uniform, so do not
+// reason from one site to another. Calendar's TimedEvent loses the 1px tone
+// border and 1px of its 3px stripe gradient; OptionsPicker's group header has a
+// border exactly as wide as the band and loses it entirely. Both record their
+// own case in situ. Grep as above for the current set rather than trusting an
+// enumeration here.
 @mixin focus-ring($color: var(--ring-accent)) {
-  outline: none;
-  box-shadow: 0 0 0 var(--ring-width) #{$color};
+  outline: var(--ring-width) solid #{$color};
+  outline-offset: var(--ring-offset);
 }
 
 @mixin visually-hidden {

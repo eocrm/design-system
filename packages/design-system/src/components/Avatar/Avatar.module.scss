@@ -70,6 +70,28 @@
   border-radius: var(--avatar-presence-radius);
   box-shadow: 0 0 0 var(--avatar-presence-ring-width) var(--avatar-presence-ring-color);
 
+  // Each status carries a distinct SILHOUETTE as well as a colour (#506).
+  // Colour was the entire channel, and OKLab separation — what the presence
+  // gate in contrast.test.ts measures — is blind to colour-vision deficiency:
+  // light away/busy collapses from 0.158 to roughly 0.015 under simulated
+  // protanopia while that gate passes. No palette choice fixes it, because
+  // `away` has to read as yellow and no amber-or-yellow candidate separates
+  // from `busy`. A second channel is the only lever, so:
+  //   online   filled disc
+  //   away     half disc, the cut edge vertical through the centre
+  //   busy     filled disc with a bar across it
+  //   offline  hollow ring
+  // Filled / half / barred / hollow stay distinguishable at --size-presence-sm,
+  // which is 8px, and none of them depend on hue. Each cut is painted in
+  // --color-bg — the same colour as the ring the dot already carries, so the cut
+  // and the ring read as one continuous hole rather than as a second colour.
+  // That matches the surface exactly only ON --color-bg; on a sunken panel or a
+  // selected row the dot sits on its own slightly-off chip, which the pre-existing
+  // ring did too. The channel does not depend on the match: cut-vs-fill runs
+  // 4.52-11.86:1, so the silhouette survives greyscale and every dichromacy
+  // either way. (The 4.52 is offline, the status this branch re-pointed — an
+  // earlier version of this line said "5-12:1" and excluded the one value the
+  // same commit had just changed.)
   &[data-status='online'] {
     background: var(--avatar-presence-bg-online);
   }
@@ -78,12 +100,32 @@
     background: var(--avatar-presence-bg-busy);
   }
 
-  &[data-status='away'] {
-    background: var(--avatar-presence-bg-away);
+  // The bar. `inset` keeps it centred at every dot size without a per-size
+  // rule, and it is painted in the surface colour so it reads as a cut.
+  &[data-status='busy']::after {
+    position: absolute;
+    inset: calc(50% - (var(--avatar-presence-bar-height) / 2)) 20%;
+    background: var(--avatar-presence-glyph-color);
+    content: '';
   }
 
+  // Half disc. A hard-stop gradient rather than a pseudo-element, so the shape
+  // survives the border-radius clip at any size.
+  &[data-status='away'] {
+    background-image: linear-gradient(
+      to right,
+      var(--avatar-presence-bg-away) 0 50%,
+      var(--avatar-presence-glyph-color) 50% 100%
+    );
+  }
+
+  // Hollow. The inset shadow draws the stroke inside the same circle, so the
+  // outer ring against the avatar is unaffected.
   &[data-status='offline'] {
-    background: var(--avatar-presence-bg-offline);
+    background: var(--avatar-presence-glyph-color);
+    box-shadow:
+      0 0 0 var(--avatar-presence-ring-width) var(--avatar-presence-ring-color),
+      inset 0 0 0 var(--avatar-presence-hollow-width) var(--avatar-presence-bg-offline);
   }
 }
 

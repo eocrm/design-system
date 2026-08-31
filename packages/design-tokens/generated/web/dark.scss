@@ -12,7 +12,9 @@
   --color-accent-subtle-bg: #1c3a5e;
   --color-bg: #1d2125;
   --color-bg-danger-subtle: #42201d;
+  --color-bg-hover: var(--color-bg-muted);
   --color-bg-muted: #282e33;
+  --color-bg-muted-hover: #343c42;
   --color-bg-overlay: rgb(0 0 0 / 55%);
   --color-bg-overlay-blur: rgb(0 0 0 / 45%);
   --color-bg-subtle: #22272b;
@@ -109,9 +111,9 @@
   --color-warning-bg-subtle: #3d3216;
   --color-warning-fg: #1d2125;
   --color-warning-strong: #f5cd47;
-  --ring-accent: rgb(104 167 255 / 65%);
-  --ring-danger: rgb(248 113 104 / 55%);
-  --ring-success: rgb(75 206 151 / 55%);
+  --ring-accent: #68a7ff;
+  --ring-danger: #f87168;
+  --ring-success: #4bce97;
   --shadow-lg: 0 4px 12px -2px rgb(0 0 0 / 50%), 0 0 1px rgb(0 0 0 / 56%);
   --shadow-md: 0 2px 4px rgb(0 0 0 / 40%), 0 0 1px rgb(0 0 0 / 56%);
   --shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);
@@ -133,7 +135,9 @@
     --color-accent-subtle-bg: #1c3a5e;
     --color-bg: #1d2125;
     --color-bg-danger-subtle: #42201d;
+    --color-bg-hover: var(--color-bg-muted);
     --color-bg-muted: #282e33;
+    --color-bg-muted-hover: #343c42;
     --color-bg-overlay: rgb(0 0 0 / 55%);
     --color-bg-overlay-blur: rgb(0 0 0 / 45%);
     --color-bg-subtle: #22272b;
@@ -230,9 +234,9 @@
     --color-warning-bg-subtle: #3d3216;
     --color-warning-fg: #1d2125;
     --color-warning-strong: #f5cd47;
-    --ring-accent: rgb(104 167 255 / 65%);
-    --ring-danger: rgb(248 113 104 / 55%);
-    --ring-success: rgb(75 206 151 / 55%);
+    --ring-accent: #68a7ff;
+    --ring-danger: #f87168;
+    --ring-success: #4bce97;
     --shadow-lg: 0 4px 12px -2px rgb(0 0 0 / 50%), 0 0 1px rgb(0 0 0 / 56%);
     --shadow-md: 0 2px 4px rgb(0 0 0 / 40%), 0 0 1px rgb(0 0 0 / 56%);
     --shadow-sm: 0 1px 2px rgb(0 0 0 / 40%);

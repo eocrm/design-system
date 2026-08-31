@@ -114,13 +114,6 @@ export function GripIcon() {
     </svg>
   );
 }
-export function AttachFileIcon() {
-  return (
-    <svg {...base}>
-      <path d="M21.44 11.05l-9.19 9.19a5 5 0 0 1-7.07-7.07l9.19-9.19a3 3 0 0 1 4.24 4.24l-9.2 9.19a1 1 0 0 1-1.41-1.41l8.49-8.49" />
-    </svg>
-  );
-}
 export function SmileIcon() {
   return (
     <svg {...base}>
@@ -152,3 +145,8 @@ export function HighlightIcon() {
     </svg>
   );
 }
+
+// Lives in RichText because RichTextAttachment — which renders in the read-only
+// viewer too — needs it, and RichText must not import from RichTextEditor
+// (#509). Re-exported here so the toolbar's import site is unchanged.
+export { AttachFileIcon } from '../RichText/attachmentIcon';

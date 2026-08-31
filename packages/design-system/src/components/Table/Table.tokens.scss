@@ -15,6 +15,15 @@
   --table-header-bg: var(--color-table-header-bg);
   --table-header-bg-hover: var(--color-table-header-bg-hover);
   --table-header-fg: var(--color-table-header-fg);
+
+  // The hovered header strengthens its text, mirroring what
+  // --avatar-overflow-fg-hover already does on the same surface. Not cosmetic:
+  // #504 moved the hover surface from --color-bg-sunken to
+  // --color-bg-muted-hover, and the muted foreground falls under AA there while
+  // --color-fg clears it comfortably.
+  // @contrast --color-fg-muted on --color-bg-muted-hover = 4.25:1 light
+  // @contrast --color-fg on --color-bg-muted-hover = 11.29:1 light
+  --table-header-fg-hover: var(--color-fg);
   --table-header-font-weight: var(--font-weight-semibold);
   --table-footer-bg: var(--color-table-header-bg);
 

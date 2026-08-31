@@ -1,3 +1,4 @@
+@use '../../styles/mixins' as *;
 @use './Tabs.tokens';
 
 // The outer wrapper handles horizontal scrolling. Putting overflow here
@@ -49,8 +50,18 @@
   }
 
   &:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 var(--ring-width) var(--tabs-tab-ring);
+    @include focus-ring(var(--tabs-tab-ring));
+
+    // INSET. `.scrollWrap` is `overflow-x: auto`, which computes `overflow-y:
+    // auto` too, so it clips vertically — and both the tab and the action are
+    // flush with its top edge and 2px from its bottom. An outset ring loses BOTH
+    // horizontal bands and renders as two floating vertical bars flanking the
+    // element (#505). Same treatment as Accordion, Table, DataTable, HeaderCell
+    // and Calendar's TimedEvent / DayCell. (`.scrollWrapVertical` sets
+    // `overflow-x: visible`, so a vertical tablist has no clipping ancestor and
+    // takes the inset because this one rule matches whatever the orientation —
+    // harmless there, the padding is ample.)
+    outline-offset: calc(-1 * var(--ring-offset));
     border-radius: var(--tabs-tab-radius);
   }
 }
@@ -82,8 +93,11 @@
   }
 
   &:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 var(--ring-width) var(--tabs-tab-ring);
+    @include focus-ring(var(--tabs-tab-ring));
+
+    // INSET, for the reason given on `.tab` above — `.action` is a
+    // stretch-aligned sibling inside the same clipping `.scrollWrap`.
+    outline-offset: calc(-1 * var(--ring-offset));
     border-radius: var(--tabs-tab-radius);
   }
 

@@ -67,8 +67,10 @@
   &:focus-visible {
     @include focus-ring;
 
-    outline: none;
-    outline-offset: -2px;
+    // Inset: the row's ring must sit inside the row box, not overlap its
+    // neighbour. (`outline: none` used to sit here too — written for an outline
+    // that the box-shadow mixin never emitted, and it would now erase the ring.)
+    outline-offset: calc(-1 * var(--ring-offset));
     border-radius: var(--data-table-clickable-row-radius);
   }
 }
@@ -189,8 +191,6 @@
 
   &:focus-visible {
     @include focus-ring;
-
-    outline: none;
   }
 }
 

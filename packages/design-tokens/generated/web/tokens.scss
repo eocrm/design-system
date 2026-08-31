@@ -26,7 +26,9 @@
   --color-avatar-fg: #ffffff;
   --color-bg: #ffffff;
   --color-bg-danger-subtle: #ffebe6;
+  --color-bg-hover: var(--color-bg-sunken);
   --color-bg-muted: #f4f5f7;
+  --color-bg-muted-hover: #e4e6eb;
   --color-bg-overlay: rgb(15 23 42 / 35%);
   --color-bg-overlay-blur: rgb(255 255 255 / 30%);
   --color-bg-overlay-strong: rgb(15 23 42 / 92%);
@@ -108,7 +110,7 @@
   --color-palette-yellow-fg: #6b5f00;
   --color-presence-away: var(--color-palette-amber-fg);
   --color-presence-busy: var(--color-danger);
-  --color-presence-offline: var(--color-fg-disabled);
+  --color-presence-offline: var(--color-fg-subtle);
   --color-presence-online: var(--color-success);
   --color-success: #007e54;
   --color-success-bg-subtle: #e3fcef;
@@ -119,7 +121,7 @@
   --color-table-caption-fg: var(--color-fg-muted);
   --color-table-fg: var(--color-fg);
   --color-table-header-bg: var(--color-bg-muted);
-  --color-table-header-bg-hover: var(--color-bg-sunken);
+  --color-table-header-bg-hover: var(--color-bg-muted-hover);
   --color-table-header-fg: var(--color-fg-muted);
   --color-table-row-bg-hover: var(--color-info-bg-subtle);
   --color-table-row-bg-selected: var(--color-accent-bg-subtle);
@@ -178,9 +180,11 @@
   --radius-lg: 8px;
   --radius-md: 4px;
   --radius-sm: 3px;
-  --ring-accent: rgb(76 154 255 / 50%);
-  --ring-danger: rgb(200 48 10 / 40%);
-  --ring-success: rgb(0 126 84 / 40%);
+  --ring-accent: #0052cc;
+  --ring-danger: #c8300a;
+  --ring-offset: 2px;
+  --ring-on-scrim: #ffffff;
+  --ring-success: #007e54;
   --ring-width: 2px;
   --shadow-lg: 0 4px 8px -2px rgb(9 30 66 / 25%), 0 0 1px rgb(9 30 66 / 31%);
   --shadow-md: 0 2px 4px rgb(9 30 66 / 8%), 0 0 1px rgb(9 30 66 / 31%);

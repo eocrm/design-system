@@ -1372,7 +1372,7 @@ interface UseCropPreviewOptions extends ExtractCropOptions {
 
 - `padding`: `none` / `sm` / `md` / `lg`. Defaults to `md` for plain content, `none` when `Card.Header` / `Card.Body` / `Card.List` / `Card.ListRow` is a direct child. Pass explicitly to override.
 - `tone`: `accent` / `info` / `success` / `warning` / `danger` — draws a 3px left-edge stripe in the tone color. Default: no stripe (standard bordered look). A transparent border-left is always reserved so toggling `tone` never shifts layout.
-- `overflow`: `hidden` (default) / `visible`. The default clips children to the card's rounded border so square-cornered children (a `<Table>`'s internal scroll wrapper, an `<img>`, a full-bleed `<video>`) don't show a seam at the rounded corners. Overlay primitives in this library (DropdownMenu, Tooltip, Popover, Drawer, Modal) portal to `document.body` and are NOT clipped by this. Focus rings use CSS `outline` which is also unaffected by ancestor overflow. Pass `overflow="visible"` only when a direct child genuinely needs to overhang the card edge (decorative badges that protrude past a corner, hover-lift transforms whose shadow extends outward).
+- `overflow`: `hidden` (default) / `visible`. The default clips children to the card's rounded border so square-cornered children (a `<Table>`'s internal scroll wrapper, an `<img>`, a full-bleed `<video>`) don't show a seam at the rounded corners. Overlay primitives in this library (DropdownMenu, Tooltip, Popover, Drawer, Modal) portal to `document.body` and are NOT clipped by this. Focus rings are NOT exempt: an `outline` is clipped by an ancestor's overflow exactly as a spread shadow is, so a focusable flush against the card edge loses that band — draw its ring inset (`outline-offset: calc(-1 * var(--ring-offset))`) as Tabs, Accordion, Table, DataTable, TimeField, Rail, OptionsPicker and Calendar do. Pass `overflow="visible"` only when a direct child genuinely needs to overhang the card edge (decorative badges that protrude past a corner, hover-lift transforms whose shadow extends outward).
 - **Compound API** — `Card.Header` / `Card.Body` / `Card.List` / `Card.ListRow` for section-card patterns. Drop `padding="none"` — the parent Card auto-detects compound children.
 - `Card.Header`: title row (`h3` by default, override via `headerLevel`) with optional right-aligned `action` slot and bottom-border separator.
 - `Card.Body`: padded `<div>` content section. Add `scroll` beneath a Header in a `fill` Card to make Body the flexible vertical scroll region while Header stays fixed. Card intentionally owns this layout because it relates only its own compound pieces; the parent still owns the Card's definite outer height. `scroll` also sets `tabIndex={0}`, because a scroll container with no focusable descendant is unreachable by keyboard (axe `scrollable-region-focusable`) — pair it with `role="group"` and an `aria-label` when the content is worth naming, and pass `tabIndex={-1}` to opt out if the body already contains something focusable.
@@ -1829,7 +1829,7 @@ import { Divider } from '@eocrm/design-system';
 - `name` (required) — alt/aria-label, initials source, and color seed. Same name → same color, always.
 - `src` — image URL. Empty/whitespace = no image. Falls back to initials on load failure.
 - `size`: `sm` (24) / `md` (32, default) / `lg` (40) / `xl` (80, member-card popovers / profile headers)
-- `status?` — presence dot in the bottom-right corner. `'online' | 'busy' | 'away' | 'offline'`. Omit to render no dot.
+- `status?` — presence dot in the bottom-right corner. `'online' | 'busy' | 'away' | 'offline'`. Omit to render no dot. **Setting `status` changes the accessible name**: it becomes `"{name}, {status}"` (localized), because colour alone cannot carry the status — WCAG 1.4.1. Query with `getByRole('img', { name: 'Alex, online' })`, not `{ name: 'Alex' }`. Each status also renders a distinct **shape** (filled / half / barred / hollow), so it survives colour-vision deficiency and greyscale; the dot itself stays `aria-hidden` so nothing is announced twice.
 - `tooltip?` — wraps the avatar in `<Tooltip>` with `content={name}`. Defaults to `false` standalone (back-compat). Inside `<AvatarGroup>`, the group's `tooltip` becomes the default (which itself defaults to `true`); explicit per-child still wins.
 - Inside `<AvatarGroup>`, the group's `size` and `tooltip` become defaults — explicit per-child props still win. The avatar also picks up a `--color-bg` ring so stacked siblings read as distinct.
 - Use `avatarColorIndex(name)` if you need to match an avatar's color elsewhere (e.g. a chart segment).
@@ -3557,25 +3557,80 @@ const isOverlay = useBelowBreakpoint('lg'); // true at ≤768px viewport width
 
 All available as CSS custom properties after you import `global.scss`:
 
-| Family          | Tokens                                                                                                                                                                                              |
-| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Neutral colors  | `--color-bg`, `--color-bg-subtle`, `--color-bg-muted`, `--color-bg-sunken`, `--color-border`, `--color-border-strong`, `--color-fg`, `--color-fg-muted`, `--color-fg-subtle`, `--color-fg-disabled` |
-| Accent colors   | `--color-accent`, `--color-accent-hover`, `--color-accent-pressed`, `--color-accent-fg`, `--color-accent-subtle-bg`                                                                                 |
-| Semantic colors | `--color-danger`, `--color-danger-hover`, `--color-danger-fg`, `--color-bg-danger-subtle`, `--color-success`, `--color-success-hover`, `--color-success-fg`, `--color-warning`, `--color-info`      |
-| Badge palette   | `--badge-{bg,fg}-{neutral,info,success,warning,danger,purple}` (was `--color-badge-<tone>-{bg,fg}`, kept as deprecated aliases)                                                                     |
-| Avatar palette  | `--color-avatar-fg`, `--color-avatar-1` through `--color-avatar-6`                                                                                                                                  |
-| Spacing         | `--space-0` `--space-1` (4) `--space-2` (8) `--space-3` (12) `--space-4` (16) `--space-5` (20) `--space-6` (24) `--space-8` (32) `--space-10` (40) `--space-12` (48) `--space-16` (64)              |
-| Radii           | `--radius-sm` (3) / `--radius-md` (4) / `--radius-lg` (8) / `--radius-full`                                                                                                                         |
-| Font sizes      | `--font-size-xs/sm/md/lg/xl/2xl/3xl`, `--font-size-code` (0.92em for inline mono)                                                                                                                   |
-| Font weights    | `--font-weight-regular/medium/semibold/bold`                                                                                                                                                        |
-| Line heights    | `--line-height-tight` / `--line-height-normal` / `--line-height-none` (1)                                                                                                                           |
-| Control sizes   | `--size-sm/md/lg` (heights), `--size-badge` (20), `--size-badge-sm` (16), `--size-chip` (18), `--size-dropdown-min-width` (160), `--size-popover-min-width` (220), `--size-dropdown-indicator` (16) |
-| Borders         | `--border-width` (1) / `--border-width-emphasis` (2) / `--border-width-strong` (3)                                                                                                                  |
-| Letter spacing  | `--letter-spacing-caps` (0.03em)                                                                                                                                                                    |
-| Shadows         | `--shadow-sm` / `--shadow-md` / `--shadow-lg`                                                                                                                                                       |
-| Focus rings     | `--ring-accent` / `--ring-danger` / `--ring-success` / `--ring-width`                                                                                                                               |
-| Motion          | `--transition-fast` (100ms) / `--transition-base` (140ms)                                                                                                                                           |
-| Layer (z-index) | `--z-app-chrome` / `--z-dropdown` / `--z-popover` / `--z-flowcanvas-maximized` / `--z-modal` / `--z-overlay-floating` / `--z-toast` / `--z-tooltip`                                                 |
+| Family          | Tokens                                                                                                                                                                                                                                                                                                                                                                      |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Neutral colors  | `--color-bg`, `--color-bg-subtle`, `--color-bg-muted`, `--color-bg-sunken`, `--color-border`, `--color-border-strong`, `--color-fg`, `--color-fg-muted`, `--color-fg-subtle`, `--color-fg-disabled` / `--color-bg-hover` / `--color-bg-muted-hover` (hover surfaces — use these, NOT `--color-bg-subtle`, which is only one step and moves the wrong way from a muted base) |
+| Accent colors   | `--color-accent`, `--color-accent-hover`, `--color-accent-pressed`, `--color-accent-fg`, `--color-accent-subtle-bg`                                                                                                                                                                                                                                                         |
+| Semantic colors | `--color-danger`, `--color-danger-hover`, `--color-danger-fg`, `--color-bg-danger-subtle`, `--color-success`, `--color-success-hover`, `--color-success-fg`, `--color-warning`, `--color-info`                                                                                                                                                                              |
+| Badge palette   | `--badge-{bg,fg}-{neutral,info,success,warning,danger,purple}` (was `--color-badge-<tone>-{bg,fg}`, kept as deprecated aliases)                                                                                                                                                                                                                                             |
+| Avatar palette  | `--color-avatar-fg`, `--color-avatar-1` through `--color-avatar-6`                                                                                                                                                                                                                                                                                                          |
+| Spacing         | `--space-0` `--space-1` (4) `--space-2` (8) `--space-3` (12) `--space-4` (16) `--space-5` (20) `--space-6` (24) `--space-8` (32) `--space-10` (40) `--space-12` (48) `--space-16` (64)                                                                                                                                                                                      |
+| Radii           | `--radius-sm` (3) / `--radius-md` (4) / `--radius-lg` (8) / `--radius-full`                                                                                                                                                                                                                                                                                                 |
+| Font sizes      | `--font-size-xs/sm/md/lg/xl/2xl/3xl`, `--font-size-code` (0.92em for inline mono)                                                                                                                                                                                                                                                                                           |
+| Font weights    | `--font-weight-regular/medium/semibold/bold`                                                                                                                                                                                                                                                                                                                                |
+| Line heights    | `--line-height-tight` / `--line-height-normal` / `--line-height-none` (1)                                                                                                                                                                                                                                                                                                   |
+| Control sizes   | `--size-sm/md/lg` (heights), `--size-badge` (20), `--size-badge-sm` (16), `--size-chip` (18), `--size-dropdown-min-width` (160), `--size-popover-min-width` (220), `--size-dropdown-indicator` (16)                                                                                                                                                                         |
+| Borders         | `--border-width` (1) / `--border-width-emphasis` (2) / `--border-width-strong` (3)                                                                                                                                                                                                                                                                                          |
+| Letter spacing  | `--letter-spacing-caps` (0.03em)                                                                                                                                                                                                                                                                                                                                            |
+| Shadows         | `--shadow-sm` / `--shadow-md` / `--shadow-lg`                                                                                                                                                                                                                                                                                                                               |
+| Focus rings     | `--ring-accent` / `--ring-danger` / `--ring-success` / `--ring-width` / `--ring-offset` / `--ring-on-scrim`                                                                                                                                                                                                                                                                 |
+| Motion          | `--transition-fast` (100ms) / `--transition-base` (140ms)                                                                                                                                                                                                                                                                                                                   |
+| Layer (z-index) | `--z-app-chrome` / `--z-dropdown` / `--z-popover` / `--z-flowcanvas-maximized` / `--z-modal` / `--z-overlay-floating` / `--z-toast` / `--z-tooltip`                                                                                                                                                                                                                         |
+
+**Focus rings are an `outline`, not a `box-shadow`.** Use the mixin —
+`@include focus-ring;` or `@include focus-ring(var(--your-ring));` — which emits
+`outline: var(--ring-width) solid <colour>` plus `outline-offset:
+var(--ring-offset)`. Do **not** hand-roll `box-shadow: 0 0 0 var(--ring-width)
+…`.
+
+Some components predate the mixin. **They are not the pattern to copy**, and
+they fall into two different groups — grep `:focus-visible` alongside `outline:`
+or `box-shadow: 0 0 0` for the current set rather than trusting a list here:
+
+- **Hand-rolled but real** — `AvatarGroup`, `ColorPicker`, `DashboardCanvas`,
+  `IconPicker`, `ImageCrop`, `LinkCard`, `Rail`, `TopBar`, `TimeField`. Two have
+  a stated reason (`AvatarGroup` needs an inner layer between the chip and the
+  overlapping avatars; `IconPicker` has a component-scoped ring-width token the
+  mixin cannot take); the rest are just older than the convention.
+- **Suppressed, not hand-rolled** — `DropdownMenu`, `FileUpload` and `Slider`
+  set `outline: none` and substitute a background or border change shared with
+  `:hover`, so the focused state is not distinguishable from the hovered one.
+  That is the defect tracked in #513, along with `Rail`'s remaining sites.
+
+Separately, `FlowCanvas`, `Lightbox`, `RichTextEditor` and Calendar's
+`TimedEvent` each carry an `outline:` or `box-shadow: 0 0 0 var(--ring-width) …`
+that is a decorative or state marker — an active chip, a connect target, a
+drag-refusal outline — not a focus ring. They look like the anti-pattern and are
+not examples of this rule at all.
+
+Two things follow from the mechanism:
+
+- **The offset gap shows whatever is actually behind the element**, which is what
+  lets one ring colour work against both a page surface and the element's own
+  fill. It is why `--ring-accent` can equal `--color-accent` and still be visible
+  around a focused primary Button.
+- **An outset ring needs room.** If the focusable sits flush against an ancestor
+  with `overflow` other than `visible`, the ring clips — invisibly to the test
+  suite, which checks ring colour but not geometry (#512). Where that applies,
+  draw it inset: `outline-offset: calc(-1 * var(--ring-offset));`. For the
+  current set run `grep -rn "outline-offset" src/components` and read the
+  negative ones — grepping the `calc()` form alone misses the sites that predate
+  the token and still write `-2px`, `-1px` or their own `calc()`. Do not trust a
+  count or a list written in prose here: three files carried three different
+  numbers for this one quantity, each was stale within a commit, and the
+  replacement list went stale in the commit that wrote it.
+- **Inset gives the gap up.** An outset ring is bounded on both sides by the
+  backdrop, which is what the contrast gate measures. An inset one touches the
+  element's OWN fill, and nothing measures that side — so check it yourself
+  against the fills the component can take. Today's worst case is a `.colored`
+  Calendar event at 3.95:1 in dark, comfortably over 1.4.11's 3:1, but a darker
+  fill would erode it silently (#512).
+
+`--ring-on-scrim` is for chrome painted on a surface that is dark in **both**
+themes (Lightbox), because the surface does not follow the theme and the tone
+rings do. Mostly a light-theme failure — 10 of the 12 tone/surface pairs there
+are under 1.4.11's 3:1 — but not exclusively: `--ring-danger` on a hovered
+control fill reads 2.95:1 in dark.
 
 ---
 

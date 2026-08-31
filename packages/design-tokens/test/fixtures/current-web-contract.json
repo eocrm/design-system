@@ -78,7 +78,9 @@
     "--color-badge-warning-fg": "var(--badge-fg-warning)",
     "--color-bg": "#ffffff",
     "--color-bg-danger-subtle": "#ffebe6",
+    "--color-bg-hover": "var(--color-bg-sunken)",
     "--color-bg-muted": "#f4f5f7",
+    "--color-bg-muted-hover": "#e4e6eb",
     "--color-bg-overlay": "rgb(15 23 42 / 35%)",
     "--color-bg-overlay-blur": "rgb(255 255 255 / 30%)",
     "--color-bg-overlay-strong": "rgb(15 23 42 / 92%)",
@@ -160,7 +162,7 @@
     "--color-palette-yellow-fg": "#6b5f00",
     "--color-presence-away": "var(--color-palette-amber-fg)",
     "--color-presence-busy": "var(--color-danger)",
-    "--color-presence-offline": "var(--color-fg-disabled)",
+    "--color-presence-offline": "var(--color-fg-subtle)",
     "--color-presence-online": "var(--color-success)",
     "--color-success": "#007e54",
     "--color-success-bg-subtle": "#e3fcef",
@@ -171,12 +173,24 @@
     "--color-table-caption-fg": "var(--color-fg-muted)",
     "--color-table-fg": "var(--color-fg)",
     "--color-table-header-bg": "var(--color-bg-muted)",
-    "--color-table-header-bg-hover": "var(--color-bg-sunken)",
+    "--color-table-header-bg-hover": "var(--color-bg-muted-hover)",
     "--color-table-header-fg": "var(--color-fg-muted)",
     "--color-table-row-bg-hover": "var(--color-info-bg-subtle)",
     "--color-table-row-bg-selected": "var(--color-accent-bg-subtle)",
     "--color-table-row-bg-striped": "var(--color-bg-subtle)",
     "--color-table-row-fg-selected": "var(--color-fg)",
+    "--color-tone-danger-bg": "#ffebe6",
+    "--color-tone-danger-fg": "#bf2600",
+    "--color-tone-info-bg": "#deebff",
+    "--color-tone-info-fg": "#0747a6",
+    "--color-tone-neutral-bg": "#f4f5f7",
+    "--color-tone-neutral-fg": "#42526e",
+    "--color-tone-purple-bg": "#eae6ff",
+    "--color-tone-purple-fg": "#403294",
+    "--color-tone-success-bg": "#e3fcef",
+    "--color-tone-success-fg": "#006644",
+    "--color-tone-warning-bg": "#fffae6",
+    "--color-tone-warning-fg": "#974f00",
     "--color-warning": "#ff991f",
     "--color-warning-bg-subtle": "#fff7ed",
     "--color-warning-fg": "#172b4d",
@@ -217,9 +231,11 @@
     "--radius-lg": "8px",
     "--radius-md": "4px",
     "--radius-sm": "3px",
-    "--ring-accent": "rgb(76 154 255 / 50%)",
-    "--ring-danger": "rgb(200 48 10 / 40%)",
-    "--ring-success": "rgb(0 126 84 / 40%)",
+    "--ring-accent": "#0052cc",
+    "--ring-danger": "#c8300a",
+    "--ring-offset": "2px",
+    "--ring-on-scrim": "#ffffff",
+    "--ring-success": "#007e54",
     "--ring-width": "2px",
     "--shadow-lg": "0 4px 8px -2px rgb(9 30 66 / 25%), 0 0 1px rgb(9 30 66 / 31%)",
     "--shadow-md": "0 2px 4px rgb(9 30 66 / 8%), 0 0 1px rgb(9 30 66 / 31%)",
@@ -287,19 +303,7 @@
     "--z-overlay-floating": "1190",
     "--z-popover": "1050",
     "--z-toast": "1200",
-    "--z-tooltip": "1300",
-    "--color-tone-danger-bg": "#ffebe6",
-    "--color-tone-danger-fg": "#bf2600",
-    "--color-tone-info-bg": "#deebff",
-    "--color-tone-info-fg": "#0747a6",
-    "--color-tone-neutral-bg": "#f4f5f7",
-    "--color-tone-neutral-fg": "#42526e",
-    "--color-tone-purple-bg": "#eae6ff",
-    "--color-tone-purple-fg": "#403294",
-    "--color-tone-success-bg": "#e3fcef",
-    "--color-tone-success-fg": "#006644",
-    "--color-tone-warning-bg": "#fffae6",
-    "--color-tone-warning-fg": "#974f00"
+    "--z-tooltip": "1300"
   },
   "forcedDark": {
     "--color-accent": "#68a7ff",
@@ -310,7 +314,9 @@
     "--color-accent-subtle-bg": "#1c3a5e",
     "--color-bg": "#1d2125",
     "--color-bg-danger-subtle": "#42201d",
+    "--color-bg-hover": "var(--color-bg-muted)",
     "--color-bg-muted": "#282e33",
+    "--color-bg-muted-hover": "#343c42",
     "--color-bg-overlay": "rgb(0 0 0 / 55%)",
     "--color-bg-overlay-blur": "rgb(0 0 0 / 45%)",
     "--color-bg-subtle": "#22272b",
@@ -391,21 +397,6 @@
     "--color-success-bg-subtle": "#1c3d31",
     "--color-success-fg": "#1d2125",
     "--color-success-hover": "#7ee2b8",
-    "--color-warning": "#f5cd47",
-    "--color-warning-bg-subtle": "#3d3216",
-    "--color-warning-fg": "#1d2125",
-    "--color-warning-strong": "#f5cd47",
-    "--ring-accent": "rgb(104 167 255 / 65%)",
-    "--ring-danger": "rgb(248 113 104 / 55%)",
-    "--ring-success": "rgb(75 206 151 / 55%)",
-    "--shadow-lg": "0 4px 12px -2px rgb(0 0 0 / 50%), 0 0 1px rgb(0 0 0 / 56%)",
-    "--shadow-md": "0 2px 4px rgb(0 0 0 / 40%), 0 0 1px rgb(0 0 0 / 56%)",
-    "--shadow-sm": "0 1px 2px rgb(0 0 0 / 40%)",
-    "--shadow-table-pinned-edge": "4px 0 8px -4px rgb(0 0 0 / 50%)",
-    "--shadow-table-pinned-edge-right": "-4px 0 8px -4px rgb(0 0 0 / 50%)",
-    "--tooltip-arrow-bg": "#39424b",
-    "--tooltip-bg": "#39424b",
-    "--tooltip-fg": "#f0f3f6",
     "--color-tone-danger-bg": "#42201d",
     "--color-tone-danger-fg": "#ff9c8f",
     "--color-tone-info-bg": "#16324f",
@@ -417,7 +408,22 @@
     "--color-tone-success-bg": "#1c3d31",
     "--color-tone-success-fg": "#7ee2b8",
     "--color-tone-warning-bg": "#3d3216",
-    "--color-tone-warning-fg": "#f5cd47"
+    "--color-tone-warning-fg": "#f5cd47",
+    "--color-warning": "#f5cd47",
+    "--color-warning-bg-subtle": "#3d3216",
+    "--color-warning-fg": "#1d2125",
+    "--color-warning-strong": "#f5cd47",
+    "--ring-accent": "#68a7ff",
+    "--ring-danger": "#f87168",
+    "--ring-success": "#4bce97",
+    "--shadow-lg": "0 4px 12px -2px rgb(0 0 0 / 50%), 0 0 1px rgb(0 0 0 / 56%)",
+    "--shadow-md": "0 2px 4px rgb(0 0 0 / 40%), 0 0 1px rgb(0 0 0 / 56%)",
+    "--shadow-sm": "0 1px 2px rgb(0 0 0 / 40%)",
+    "--shadow-table-pinned-edge": "4px 0 8px -4px rgb(0 0 0 / 50%)",
+    "--shadow-table-pinned-edge-right": "-4px 0 8px -4px rgb(0 0 0 / 50%)",
+    "--tooltip-arrow-bg": "#39424b",
+    "--tooltip-bg": "#39424b",
+    "--tooltip-fg": "#f0f3f6"
   },
   "systemDark": {
     "--color-accent": "#68a7ff",
@@ -428,7 +434,9 @@
     "--color-accent-subtle-bg": "#1c3a5e",
     "--color-bg": "#1d2125",
     "--color-bg-danger-subtle": "#42201d",
+    "--color-bg-hover": "var(--color-bg-muted)",
     "--color-bg-muted": "#282e33",
+    "--color-bg-muted-hover": "#343c42",
     "--color-bg-overlay": "rgb(0 0 0 / 55%)",
     "--color-bg-overlay-blur": "rgb(0 0 0 / 45%)",
     "--color-bg-subtle": "#22272b",
@@ -509,21 +517,6 @@
     "--color-success-bg-subtle": "#1c3d31",
     "--color-success-fg": "#1d2125",
     "--color-success-hover": "#7ee2b8",
-    "--color-warning": "#f5cd47",
-    "--color-warning-bg-subtle": "#3d3216",
-    "--color-warning-fg": "#1d2125",
-    "--color-warning-strong": "#f5cd47",
-    "--ring-accent": "rgb(104 167 255 / 65%)",
-    "--ring-danger": "rgb(248 113 104 / 55%)",
-    "--ring-success": "rgb(75 206 151 / 55%)",
-    "--shadow-lg": "0 4px 12px -2px rgb(0 0 0 / 50%), 0 0 1px rgb(0 0 0 / 56%)",
-    "--shadow-md": "0 2px 4px rgb(0 0 0 / 40%), 0 0 1px rgb(0 0 0 / 56%)",
-    "--shadow-sm": "0 1px 2px rgb(0 0 0 / 40%)",
-    "--shadow-table-pinned-edge": "4px 0 8px -4px rgb(0 0 0 / 50%)",
-    "--shadow-table-pinned-edge-right": "-4px 0 8px -4px rgb(0 0 0 / 50%)",
-    "--tooltip-arrow-bg": "#39424b",
-    "--tooltip-bg": "#39424b",
-    "--tooltip-fg": "#f0f3f6",
     "--color-tone-danger-bg": "#42201d",
     "--color-tone-danger-fg": "#ff9c8f",
     "--color-tone-info-bg": "#16324f",
@@ -535,7 +528,22 @@
     "--color-tone-success-bg": "#1c3d31",
     "--color-tone-success-fg": "#7ee2b8",
     "--color-tone-warning-bg": "#3d3216",
-    "--color-tone-warning-fg": "#f5cd47"
+    "--color-tone-warning-fg": "#f5cd47",
+    "--color-warning": "#f5cd47",
+    "--color-warning-bg-subtle": "#3d3216",
+    "--color-warning-fg": "#1d2125",
+    "--color-warning-strong": "#f5cd47",
+    "--ring-accent": "#68a7ff",
+    "--ring-danger": "#f87168",
+    "--ring-success": "#4bce97",
+    "--shadow-lg": "0 4px 12px -2px rgb(0 0 0 / 50%), 0 0 1px rgb(0 0 0 / 56%)",
+    "--shadow-md": "0 2px 4px rgb(0 0 0 / 40%), 0 0 1px rgb(0 0 0 / 56%)",
+    "--shadow-sm": "0 1px 2px rgb(0 0 0 / 40%)",
+    "--shadow-table-pinned-edge": "4px 0 8px -4px rgb(0 0 0 / 50%)",
+    "--shadow-table-pinned-edge-right": "-4px 0 8px -4px rgb(0 0 0 / 50%)",
+    "--tooltip-arrow-bg": "#39424b",
+    "--tooltip-bg": "#39424b",
+    "--tooltip-fg": "#f0f3f6"
   },
   "forcedLight": {},
   "selectors": {
@@ -565,25 +573,25 @@
     "light": {
       "--avatar-overlap-lg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--avatar-overlap-md": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--avatar-overlap-sm": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--avatar-overlap-xl": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
@@ -853,1435 +861,1537 @@
       ],
       "--border-width": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--border-width-emphasis": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--border-width-strong": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-accent": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-accent-bg-subtle": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-accent-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-accent-hover": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-accent-pressed": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-accent-subtle-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-avatar-1": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-avatar-2": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-avatar-3": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-avatar-4": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-avatar-5": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-avatar-6": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-avatar-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-badge-danger-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-system/src/components/Badge/Badge.tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-badge-danger-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-system/src/components/Badge/Badge.tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-badge-info-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-system/src/components/Badge/Badge.tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-badge-info-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-system/src/components/Badge/Badge.tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-badge-neutral-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-system/src/components/Badge/Badge.tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-badge-neutral-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-system/src/components/Badge/Badge.tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-badge-purple-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-system/src/components/Badge/Badge.tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-badge-purple-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-system/src/components/Badge/Badge.tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-badge-success-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-system/src/components/Badge/Badge.tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-badge-success-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-system/src/components/Badge/Badge.tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-badge-warning-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-system/src/components/Badge/Badge.tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-badge-warning-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-system/src/components/Badge/Badge.tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-bg-danger-subtle": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
+      "--color-bg-hover": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-bg-muted": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
+      "--color-bg-muted-hover": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-bg-overlay": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-bg-overlay-blur": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-bg-overlay-strong": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-bg-row-pinned": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-bg-subtle": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-bg-sunken": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-border": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-border-strong": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-danger": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-danger-bg-subtle": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-danger-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-danger-hover": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-fg-disabled": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-fg-muted": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-fg-on-overlay": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-fg-subtle": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-info": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-info-bg-subtle": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-amber-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-amber-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-blue-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-blue-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-brown-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-brown-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-charcoal-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-charcoal-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-coral-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-coral-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-cyan-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-cyan-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-emerald-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-emerald-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-fuchsia-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-fuchsia-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-gold-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-gold-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-green-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-green-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-indigo-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-indigo-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-lavender-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-lavender-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-lime-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-lime-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-magenta-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-magenta-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-mint-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-mint-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-navy-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-navy-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-olive-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-olive-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-orange-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-orange-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-pink-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-pink-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-plum-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-plum-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-purple-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-purple-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-red-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-red-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-rose-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-rose-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-sky-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-sky-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-slate-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-slate-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-stone-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-stone-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-taupe-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-taupe-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-teal-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-teal-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-violet-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-violet-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-yellow-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-palette-yellow-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-presence-away": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-presence-busy": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-presence-offline": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-presence-online": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-success": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-success-bg-subtle": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-success-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-success-hover": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-table-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-table-border": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-table-caption-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-table-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-table-header-bg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-table-header-bg-hover": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-table-header-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-table-row-bg-hover": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-table-row-bg-selected": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-table-row-bg-striped": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-table-row-fg-selected": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
+      "--color-tone-danger-bg": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
+      "--color-tone-danger-fg": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
+      "--color-tone-info-bg": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
+      "--color-tone-info-fg": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
+      "--color-tone-neutral-bg": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
+      "--color-tone-neutral-fg": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
+      "--color-tone-purple-bg": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
+      "--color-tone-purple-fg": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
+      "--color-tone-success-bg": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
+      "--color-tone-success-fg": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
+      "--color-tone-warning-bg": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
+      "--color-tone-warning-fg": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-warning": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-warning-bg-subtle": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--color-warning-fg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
+      "--color-warning-strong": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--document-background": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--font-family-mono": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--font-family-sans": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--font-size-2xl": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--font-size-3xl": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--font-size-code": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--font-size-lg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--font-size-md": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--font-size-sm": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--font-size-xl": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--font-size-xs": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--font-weight-bold": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--font-weight-medium": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--font-weight-regular": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--font-weight-semibold": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--letter-spacing-caps": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--line-height-none": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--line-height-normal": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--line-height-tight": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--measure-lg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--measure-md": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--measure-sm": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--measure-xl": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--measure-xs": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--opacity-disabled": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--opacity-dragging": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--opacity-hidden": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--opacity-muted": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--opacity-subtle": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--opacity-thumb-hover": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--opacity-thumb-idle": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--opacity-visible": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--radius-full": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--radius-lg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--radius-md": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--radius-sm": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--ring-accent": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--ring-danger": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
+      "--ring-offset": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
+      "--ring-on-scrim": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--ring-success": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--ring-width": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--shadow-lg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--shadow-md": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--shadow-sm": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--shadow-table-pinned-edge": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--shadow-table-pinned-edge-right": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-badge": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-badge-dot": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-badge-sm": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-calendar-agenda-gutter": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-calendar-day-cell-min-height": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-checkbox-lg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-checkbox-md": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-checkbox-sm": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-chip": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-control-country": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-datepicker-cell": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-datepicker-popover-width": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-daterange-popover-width": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-drawer-lg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-drawer-md": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-drawer-sm": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-dropdown-indicator": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-dropdown-min-width": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-lg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-listbox-max-height": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-md": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-modal-lg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-modal-md": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-modal-sm": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-popover-max-width": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-popover-min-width": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-presence-lg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-presence-md": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-presence-sm": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-presence-xl": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-radio-dot-lg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-radio-dot-md": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-radio-dot-sm": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-radio-lg": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-radio-md": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-radio-sm": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-sm": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-spinner": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-xl": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--size-xs": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--space-0": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--space-05": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--space-1": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--space-10": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--space-12": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--space-16": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--space-2": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--space-3": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--space-4": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--space-5": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--space-6": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--space-8": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--transition-base": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--transition-fast": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--z-app-chrome": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--z-dropdown": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--z-flowcanvas-maximized": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--z-modal": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--z-overlay-floating": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--z-popover": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--z-toast": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ],
       "--z-tooltip": [
         {
-          "source": "packages/design-system/src/styles/tokens.scss",
+          "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
         }
       ]
@@ -2289,1549 +2399,1538 @@
     "forcedDark": {
       "--color-accent": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-accent-bg-subtle": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-accent-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-accent-hover": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-accent-pressed": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-accent-subtle-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-bg-danger-subtle": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
+        }
+      ],
+      "--color-bg-hover": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-bg-muted": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
+        }
+      ],
+      "--color-bg-muted-hover": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-bg-overlay": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-bg-overlay-blur": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-bg-subtle": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-bg-sunken": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-border": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-border-strong": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-danger": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-danger-bg-subtle": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-danger-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-danger-hover": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-fg-disabled": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-fg-muted": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-fg-subtle": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-info": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-info-bg-subtle": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-amber-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-amber-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-blue-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-blue-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-brown-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-brown-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-charcoal-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-charcoal-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-coral-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-coral-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-cyan-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-cyan-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-emerald-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-emerald-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-fuchsia-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-fuchsia-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-gold-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-gold-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-green-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-green-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-indigo-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-indigo-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-lavender-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-lavender-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-lime-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-lime-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-magenta-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-magenta-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-mint-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-mint-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-navy-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-navy-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-olive-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-olive-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-orange-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-orange-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-pink-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-pink-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-plum-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-plum-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-purple-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-purple-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-red-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-red-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-rose-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-rose-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-sky-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-sky-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-slate-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-slate-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-stone-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-stone-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-taupe-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-taupe-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-teal-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-teal-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-violet-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-violet-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-yellow-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-palette-yellow-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-success": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-success-bg-subtle": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-success-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-success-hover": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
+        }
+      ],
+      "--color-tone-danger-bg": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
+        }
+      ],
+      "--color-tone-danger-fg": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
+        }
+      ],
+      "--color-tone-info-bg": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
+        }
+      ],
+      "--color-tone-info-fg": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
+        }
+      ],
+      "--color-tone-neutral-bg": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
+        }
+      ],
+      "--color-tone-neutral-fg": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
+        }
+      ],
+      "--color-tone-purple-bg": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
+        }
+      ],
+      "--color-tone-purple-fg": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
+        }
+      ],
+      "--color-tone-success-bg": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
+        }
+      ],
+      "--color-tone-success-fg": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
+        }
+      ],
+      "--color-tone-warning-bg": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
+        }
+      ],
+      "--color-tone-warning-fg": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-warning": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-warning-bg-subtle": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--color-warning-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
+        }
+      ],
+      "--color-warning-strong": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--ring-accent": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--ring-danger": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--ring-success": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--shadow-lg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--shadow-md": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--shadow-sm": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--shadow-table-pinned-edge": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--shadow-table-pinned-edge-right": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--tooltip-arrow-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--tooltip-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ],
       "--tooltip-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
-          "selector": ":root[data-theme='dark']",
-          "mixin": "dark-tokens"
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
         }
       ]
     },
     "systemDark": {
       "--color-accent": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-accent-bg-subtle": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-accent-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-accent-hover": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-accent-pressed": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-accent-subtle-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-bg-danger-subtle": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
+        }
+      ],
+      "--color-bg-hover": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root:not([data-theme='light'])",
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-bg-muted": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
+        }
+      ],
+      "--color-bg-muted-hover": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root:not([data-theme='light'])",
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-bg-overlay": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-bg-overlay-blur": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-bg-subtle": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-bg-sunken": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-border": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-border-strong": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-danger": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-danger-bg-subtle": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-danger-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-danger-hover": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-fg-disabled": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-fg-muted": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-fg-subtle": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-info": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-info-bg-subtle": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-amber-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-amber-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-blue-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-blue-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-brown-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-brown-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-charcoal-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-charcoal-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-coral-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-coral-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-cyan-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-cyan-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-emerald-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-emerald-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-fuchsia-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-fuchsia-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-gold-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-gold-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-green-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-green-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-indigo-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-indigo-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-lavender-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-lavender-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-lime-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-lime-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-magenta-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-magenta-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-mint-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-mint-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-navy-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-navy-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-olive-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-olive-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-orange-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-orange-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-pink-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-pink-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-plum-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-plum-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-purple-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-purple-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-red-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-red-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-rose-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-rose-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-sky-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-sky-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-slate-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-slate-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-stone-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-stone-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-taupe-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-taupe-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-teal-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-teal-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-violet-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-violet-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-yellow-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-palette-yellow-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-success": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-success-bg-subtle": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-success-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-success-hover": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
+        }
+      ],
+      "--color-tone-danger-bg": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root:not([data-theme='light'])",
+          "atRule": "@media (prefers-color-scheme: dark)"
+        }
+      ],
+      "--color-tone-danger-fg": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root:not([data-theme='light'])",
+          "atRule": "@media (prefers-color-scheme: dark)"
+        }
+      ],
+      "--color-tone-info-bg": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root:not([data-theme='light'])",
+          "atRule": "@media (prefers-color-scheme: dark)"
+        }
+      ],
+      "--color-tone-info-fg": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root:not([data-theme='light'])",
+          "atRule": "@media (prefers-color-scheme: dark)"
+        }
+      ],
+      "--color-tone-neutral-bg": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root:not([data-theme='light'])",
+          "atRule": "@media (prefers-color-scheme: dark)"
+        }
+      ],
+      "--color-tone-neutral-fg": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root:not([data-theme='light'])",
+          "atRule": "@media (prefers-color-scheme: dark)"
+        }
+      ],
+      "--color-tone-purple-bg": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root:not([data-theme='light'])",
+          "atRule": "@media (prefers-color-scheme: dark)"
+        }
+      ],
+      "--color-tone-purple-fg": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root:not([data-theme='light'])",
+          "atRule": "@media (prefers-color-scheme: dark)"
+        }
+      ],
+      "--color-tone-success-bg": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root:not([data-theme='light'])",
+          "atRule": "@media (prefers-color-scheme: dark)"
+        }
+      ],
+      "--color-tone-success-fg": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root:not([data-theme='light'])",
+          "atRule": "@media (prefers-color-scheme: dark)"
+        }
+      ],
+      "--color-tone-warning-bg": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root:not([data-theme='light'])",
+          "atRule": "@media (prefers-color-scheme: dark)"
+        }
+      ],
+      "--color-tone-warning-fg": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root:not([data-theme='light'])",
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-warning": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-warning-bg-subtle": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--color-warning-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
+        }
+      ],
+      "--color-warning-strong": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root:not([data-theme='light'])",
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--ring-accent": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--ring-danger": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--ring-success": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--shadow-lg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--shadow-md": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--shadow-sm": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--shadow-table-pinned-edge": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--shadow-table-pinned-edge-right": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--tooltip-arrow-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--tooltip-bg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ],
       "--tooltip-fg": [
         {
-          "source": "packages/design-system/src/styles/dark.scss",
+          "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",
-          "atRule": "@media (prefers-color-scheme: dark)",
-          "mixin": "dark-tokens"
+          "atRule": "@media (prefers-color-scheme: dark)"
         }
       ]
     },

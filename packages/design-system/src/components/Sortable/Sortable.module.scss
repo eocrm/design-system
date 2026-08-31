@@ -1,3 +1,4 @@
+@use '../../styles/mixins' as *;
 @use './Sortable.tokens';
 @use '../_internal/collapse' as bp;
 
@@ -74,9 +75,9 @@
   }
 
   &:focus-visible {
-    outline: none;
     border-color: var(--sortable-handle-border-color-focus);
-    box-shadow: 0 0 0 var(--ring-width) var(--sortable-handle-ring-focus);
+
+    @include focus-ring(var(--sortable-handle-ring-focus));
   }
 }
 

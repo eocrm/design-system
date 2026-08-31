@@ -115,7 +115,7 @@
 
 // The wrapper has overflow:hidden, which would clip a ring drawn on the inner
 // button — so render the focus ring on the wrapper (its own overflow does not clip
-// its own box-shadow). Follows the wrapper's border-radius.
+// its own outline). Follows the wrapper's border-radius.
 .wrapper:has(.trigger:focus-visible) {
-  @include focus-ring;
+  @include focus-ring(var(--image-ring));
 }

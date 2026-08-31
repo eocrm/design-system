@@ -1,3 +1,4 @@
+@use '../../styles/mixins' as *;
 @use './Checkbox.tokens';
 
 .checkbox {
@@ -102,7 +103,7 @@
 
 // Focus ring on the box (sibling selector picks up native input focus).
 .input:focus-visible + .box {
-  box-shadow: 0 0 0 var(--ring-width) var(--checkbox-ring);
+  @include focus-ring(var(--checkbox-ring));
 }
 
 // Disabled — muted bg + border. The input still receives `disabled`
@@ -130,7 +131,7 @@
 }
 
 .invalid .input:focus-visible + .box {
-  box-shadow: 0 0 0 var(--ring-width) var(--checkbox-ring-invalid);
+  @include focus-ring(var(--checkbox-ring-invalid));
 }
 
 .invalid .input:checked + .box,

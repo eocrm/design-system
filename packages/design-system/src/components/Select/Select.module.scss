@@ -37,15 +37,15 @@
   cursor: pointer;
 
   &:focus-visible {
-    outline: none;
     border-color: var(--select-trigger-border-color-focus);
-    box-shadow: 0 0 0 var(--ring-width) var(--select-trigger-ring-focus);
+
+    @include focus-ring(var(--select-trigger-ring-focus));
   }
 
   &:has(> .chipsInput:focus-visible) {
-    outline: none;
     border-color: var(--select-trigger-border-color-focus);
-    box-shadow: 0 0 0 var(--ring-width) var(--select-trigger-ring-focus);
+
+    @include focus-ring(var(--select-trigger-ring-focus));
   }
 
   &[disabled] {
@@ -455,7 +455,7 @@
   border-color: var(--select-trigger-border-color-invalid);
 
   &:focus-visible {
-    box-shadow: 0 0 0 var(--ring-width) var(--select-trigger-ring-invalid);
+    @include focus-ring(var(--select-trigger-ring-invalid));
   }
 }
 

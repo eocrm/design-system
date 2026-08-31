@@ -1,3 +1,4 @@
+@use '../../styles/mixins' as *;
 @use './Table.tokens';
 
 // Scroll wrapper — horizontal overflow context for wide tables AND the
@@ -161,11 +162,15 @@
 
   &:hover {
     background: var(--table-header-bg-hover);
+    color: var(--table-header-fg-hover);
   }
 
   &:focus-visible {
-    outline: none;
-    box-shadow: inset 0 0 0 var(--ring-width) var(--table-sortable-ring);
+    @include focus-ring(var(--table-sortable-ring));
+
+    // Inset: the ring sits inside the cell box rather than
+    // overlapping its neighbour.
+    outline-offset: calc(-1 * var(--ring-offset));
   }
 }
 

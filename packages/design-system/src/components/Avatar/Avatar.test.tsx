@@ -1,7 +1,32 @@
+import { resolve } from 'node:path';
+import { parse, type Declaration, type Root, type Rule } from 'postcss';
+import { compile } from 'sass';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { Avatar, avatarColorIndex } from './Avatar';
+
+// The presence shapes are pure CSS and jsdom computes no styles, so they are
+// asserted against the compiled stylesheet — the same way DataTable checks its
+// responsive rules.
+const stylesheet: Root = parse(compile(resolve(__dirname, './Avatar.module.scss')).css);
+
+// Selectors are matched against the COMPILED output, where Sass has dropped the
+// quotes from `[data-status='away']`. Writing them quoted here matches nothing
+// and every assertion below passes vacuously.
+function compiledRule(parent: Root, selector: string): Rule | undefined {
+  let match: Rule | undefined;
+  parent.walkRules((rule) => {
+    if (rule.selectors.some((candidate) => candidate.endsWith(selector))) match = rule;
+  });
+  return match;
+}
+
+function compiledDeclaration(rule: Rule | undefined, property: string): Declaration | undefined {
+  return rule?.nodes.find(
+    (node): node is Declaration => node.type === 'decl' && node.prop === property,
+  );
+}
 
 describe('Avatar', () => {
   it('renders the initials when no src is provided', () => {
@@ -172,6 +197,81 @@ describe('Avatar', () => {
   it('does NOT wrap in Tooltip by default (tooltip is opt-in)', () => {
     render(<Avatar name="Alex" />);
     expect(screen.queryByRole('tooltip')).toBeNull();
+  });
+
+  // #506. Presence was colour-only: the dot is decorative and `status` reached
+  // neither the accessible name nor the tooltip, so colour was the entire
+  // channel and WCAG 1.4.1 applied. Two channels were added — the name below,
+  // and a per-status silhouette asserted after it.
+  describe('presence reaches more than the eye', () => {
+    it.each([
+      ['online', 'online'],
+      ['busy', 'busy'],
+      ['away', 'away'],
+      ['offline', 'offline'],
+    ] as const)('folds %s into the accessible name', (status, label) => {
+      render(<Avatar name="Alex" status={status} />);
+      expect(screen.getByRole('img', { name: `Alex, ${label}` })).toBeInTheDocument();
+    });
+
+    it('folds the status into the img alt when a src is present', () => {
+      // The two branches render different markup — a bare wrapper around an
+      // <img> here, a role="img" wrapper there — and the status has to survive
+      // both. Folding rather than a hidden child is what makes that possible:
+      // the role="img" branch prunes its children as presentational, so a
+      // visually-hidden span would be silent in exactly half the cases.
+      render(<Avatar name="Alex" src="https://example.com/a.jpg" status="busy" />);
+      expect(screen.getByRole('img', { name: 'Alex, busy' })).toBeInTheDocument();
+    });
+
+    it('leaves the name alone when no status is set', () => {
+      render(<Avatar name="Alex" />);
+      expect(screen.getByRole('img', { name: 'Alex' })).toBeInTheDocument();
+    });
+
+    it('keeps the dot itself out of the accessible tree', () => {
+      // Otherwise the status is announced twice — once from the folded name and
+      // once from the dot.
+      const { container } = render(<Avatar name="Alex" status="away" />);
+      expect(container.querySelector('[data-status="away"]')).toHaveAttribute(
+        'aria-hidden',
+        'true',
+      );
+    });
+
+    it('gives every status its own silhouette, not just its own colour', () => {
+      // The shape channel is what survives colour-vision deficiency, and the
+      // gate in contrast.test.ts cannot see it: OKLab ΔE is blind to
+      // dichromacy, so it reads light away/busy as 0.158 and passes while a
+      // protanope sees roughly 0.015.
+      //
+      // Asserted against the COMPILED stylesheet, because the shapes live
+      // entirely in CSS — jsdom computes no styles, so a DOM-level check could
+      // only compare four identical class names and would pass whatever the
+      // rules said. Each status must contribute geometry, not just a fill.
+      for (const [status, property] of [
+        ['away', 'background-image'],
+        ['offline', 'box-shadow'],
+      ] as const) {
+        const rule = compiledRule(stylesheet, `[data-status=${status}]`);
+        expect(compiledDeclaration(rule, property), `${status} carries ${property}`).toBeDefined();
+      }
+      // busy's bar is a pseudo-element, so its geometry lives in the ::after.
+      const busyBar = compiledRule(stylesheet, '[data-status=busy]::after');
+      expect(compiledDeclaration(busyBar, 'content'), 'busy draws a bar').toBeDefined();
+
+      // online is the one status with no added geometry — a plain filled disc
+      // is a distinct silhouette precisely because the other three are not.
+      //
+      // The rule has to be asserted present FIRST. Both checks below are
+      // toBeUndefined(), and compiledDeclaration(undefined, …) is undefined, so
+      // without this line they pass when the selector matches nothing — which
+      // is every way this test could actually break.
+      const online = compiledRule(stylesheet, '[data-status=online]');
+      expect(online, 'the online rule exists at all').toBeDefined();
+      expect(compiledDeclaration(online, 'background-image')).toBeUndefined();
+      expect(compiledDeclaration(online, 'box-shadow')).toBeUndefined();
+    });
   });
 
   it('wraps in Tooltip when tooltip prop is true (visible on hover)', async () => {

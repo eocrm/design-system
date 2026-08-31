@@ -21,8 +21,9 @@
   // whole role=application canvas. Suppress it in every focus state.
   outline: none;
 
-  // Canvas keyboard-focus ring. The `focus-ring` mixin also sets `outline:
-  // none`, which kills the raw UA focus outline whenever the canvas is focused.
+  // Canvas keyboard-focus ring. Since #505 the mixin PAINTS an outline rather
+  // than suppressing one — the raw UA outline is killed by the unconditional
+  // `outline: none` above instead, which applies in every focus state.
   &:focus-visible {
     @include focus-ring;
   }
@@ -33,13 +34,16 @@
   // would wrap the WHOLE canvas in a loose rounded box that reads as a giant
   // selection frame around the selected item. That item already shows its own
   // highlight (node accent border / edge recolor), so drop the redundant ring
-  // whenever a selection is present. `outline: none` from the mixin still
-  // applies, so the raw UA outline never reappears either. The attribute is
-  // gated on the selection resolving to a rendered item (see FlowCanvas.tsx),
-  // so a dangling selection keeps the ring — the focused-but-empty state stays
-  // visible for keyboard users (WCAG 2.4.7).
+  // whenever a selection is present. The attribute is gated on the selection
+  // resolving to a rendered item (see FlowCanvas.tsx), so a dangling selection
+  // keeps the ring — the focused-but-empty state stays visible for keyboard
+  // users (WCAG 2.4.7).
+  // `outline: none`, not `box-shadow: none`: the focus-ring mixin paints an
+  // outline since #505, so cancelling box-shadow cancels nothing and the whole
+  // canvas got its giant frame back. This also suppresses the UA outline, which
+  // the old wording credited to the mixin.
   &[data-flow-has-selection]:focus-visible {
-    box-shadow: none;
+    outline: none;
   }
 }
 
@@ -212,6 +216,8 @@ g:has(> .edgeHit:focus-visible) > .edgePath {
   box-shadow: var(--shadow-lg);
 }
 
+// Decorative — marks a valid connection drop target, not focus. Stays a
+// box-shadow so it cannot suppress a real focus indicator (#505).
 .node[data-connect-target='true'] {
   box-shadow: 0 0 0 var(--ring-width) var(--ring-success);
 }

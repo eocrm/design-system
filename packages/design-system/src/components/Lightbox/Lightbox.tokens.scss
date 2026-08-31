@@ -11,7 +11,17 @@
 
   --lightbox-thumb-size: 56px;
   --lightbox-thumb-strip-bg: rgb(0 0 0 / 30%);
-  --lightbox-thumb-active-ring: var(--ring-accent);
+  --lightbox-thumb-active-ring: var(--ring-on-scrim);
+
+  // The focus ring for the chrome that sits ON the scrim. It cannot be
+  // --ring-accent: the scrim is dark in BOTH themes, so in light theme the tone
+  // rings land on it well under 1.4.11's 3:1 (#505). A theme-independent surface
+  // needs a theme-independent ring.
+  // No ratio is quoted here on purpose. The surfaces are composites of
+  // --color-bg-overlay-strong over the page, not tokens, so no @contrast
+  // annotation could recompute them — contrast.test.ts composites them and
+  // asserts the 3:1 directly instead.
+  --lightbox-ring: var(--ring-on-scrim);
 
   // Document (PDF) preview surfaces.
   --lightbox-doc-bg: var(--color-bg);

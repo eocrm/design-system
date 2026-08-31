@@ -5,11 +5,11 @@
 // its action buttons simply have no editor delegate.
 import { CircularProgress } from '../CircularProgress';
 import { useTranslation } from '../../i18n';
-import type { Block } from '../RichText/engine/model';
-import { safeHref } from '../RichText/engine/safeHref';
-import { attachmentIsImage } from '../RichText/engine/attachment';
-import { AttachFileIcon } from './icons';
-import styles from './RichTextEditor.module.scss';
+import type { Block } from './engine/model';
+import { safeHref } from './engine/safeHref';
+import { attachmentIsImage } from './engine/attachment';
+import { AttachFileIcon } from './attachmentIcon';
+import styles from './RichTextAttachment.module.scss';
 
 export function RichTextAttachment({ block }: { block: Block }) {
   const t = useTranslation();

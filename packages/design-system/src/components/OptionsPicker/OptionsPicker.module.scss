@@ -93,6 +93,12 @@
   gap: var(--options-picker-group-header-gap);
   padding: var(--options-picker-group-header-padding-y) var(--options-picker-group-header-padding-x);
   background: var(--options-picker-group-header-bg);
+
+  // Overrides the tone token the nested <Text tone="subtle"> resolves through,
+  // rather than changing its prop, so the hint has a real base token for the
+  // #504 hover gate to measure against. Resolves to --color-fg-subtle, which is
+  // exactly Text's own default, so resting appearance is unchanged.
+  --text-fg-subtle: var(--options-picker-group-header-hint-fg);
 }
 
 // Bottom border in the namespace's palette color. The width + style come
@@ -150,12 +156,38 @@ button.groupHeader {
   width: 100%;
   text-align: left;
 
+  // Scoped to the BUTTON, and kept with the background it compensates for. In
+  // single mode the header renders as a <div role="presentation"> with no hover
+  // background and no cursor change; an unscoped selector popped the hint to
+  // full strength there — a hover affordance on something you cannot click.
+  // AvatarGroup's `&:is(button):hover` and Table's `.sortable` scope the same way.
   &:hover {
     background: var(--options-picker-group-header-bg-hover);
+
+    // --color-bg-muted-hover is dark enough that the subtle hint falls under AA
+    // on it (#504); see the token's own @contrast annotations.
+    --text-fg-subtle: var(--options-picker-group-header-hint-fg-hover);
   }
 
   &:focus-visible {
     @include focus-ring;
+
+    // INSET. `.list` above is `overflow-y: auto` — which computes `overflow-x`
+    // to `auto` — with no padding, and this header is `width: 100%`, so an
+    // outset ring loses both vertical bands on every group header, always.
+    // Same shape as Tabs and TimeField (#505), and NO GATE
+    // DETECTS IT: two static rules were measured and both were mostly false
+    // positives, so none shipped. A browser sweep found all three; #512 carries
+    // the signature so the next one is looked for rather than stumbled on.
+    // The trade, since the mixin says to record it, and it is the worst one in
+    // the library: `--options-picker-group-header-border-width` is
+    // --border-width-emphasis = 2px, and the inset band is also 2px, so while
+    // focused this covers the group's colour-identity `border-bottom`
+    // COMPLETELY — not partially, as on TimedEvent. Accepted because the colour
+    // is also carried by the GroupDot beside the label, which the ring does not
+    // touch, so the identity survives the focus; and because the alternative is
+    // an indicator that is permanently absent rather than briefly redundant.
+    outline-offset: calc(-1 * var(--ring-offset));
   }
 }
 

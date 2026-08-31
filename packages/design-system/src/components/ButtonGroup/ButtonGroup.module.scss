@@ -41,7 +41,12 @@
   border-bottom-right-radius: var(--button-group-radius);
 }
 
-// Lift on hover/focus so the focus ring isn't clipped by neighbors.
+// Lift on hover/focus. NOT for the ring — an outline paints after every
+// descendant background in its stacking context, so it already draws over a
+// joined sibling unlifted, and the segmented lift added on that false premise
+// was removed. This is for the BORDER: these children collapse their borders
+// with `margin-left: -1px`, so without the lift the later sibling's left border
+// paints over the hovered button's right one.
 .group[data-mode='visual'] > button:hover,
 .group[data-mode='visual'] > button:focus-visible {
   position: relative;
@@ -95,8 +100,6 @@
 
 .item:focus-visible {
   @include focus-ring;
-
-  outline: none;
 }
 
 // Size variants — match Button's --size-* scale for visual consistency.
