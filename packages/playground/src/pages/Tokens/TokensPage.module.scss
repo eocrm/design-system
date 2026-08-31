@@ -83,9 +83,7 @@
 
 .copyButton:focus-visible {
   outline: var(--border-width-emphasis) solid var(--color-accent);
-
-  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- focus-ring offset, no token equivalent
-  outline-offset: 2px;
+  outline-offset: var(--ring-offset);
   border-radius: var(--radius-sm);
 }
 

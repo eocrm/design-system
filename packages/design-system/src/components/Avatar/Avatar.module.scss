@@ -82,9 +82,13 @@
   //   busy     filled disc with a bar across it
   //   offline  hollow ring
   // Filled / half / barred / hollow stay distinguishable at --size-presence-sm,
-  // which is 8px, and none of them depend on hue. Every cut is painted in the
-  // surface behind the avatar, so each dot reads as a silhouette rather than as
-  // two colours — which is also what survives a greyscale print.
+  // which is 8px, and none of them depend on hue. Each cut is painted in
+  // --color-bg — the same colour as the ring the dot already carries, so the cut
+  // and the ring read as one continuous hole rather than as a second colour.
+  // That matches the surface exactly only ON --color-bg; on a sunken panel or a
+  // selected row the dot sits on its own slightly-off chip, which the pre-existing
+  // ring did too. The channel does not depend on the match: cut-vs-fill measures
+  // 5-12:1, so the silhouette survives greyscale and every dichromacy either way.
   &[data-status='online'] {
     background: var(--avatar-presence-bg-online);
   }

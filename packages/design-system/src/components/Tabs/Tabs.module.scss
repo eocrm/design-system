@@ -50,8 +50,6 @@
   }
 
   &:focus-visible {
-    outline: none;
-
     @include focus-ring(var(--tabs-tab-ring));
 
     border-radius: var(--tabs-tab-radius);
@@ -85,8 +83,6 @@
   }
 
   &:focus-visible {
-    outline: none;
-
     @include focus-ring(var(--tabs-tab-ring));
 
     border-radius: var(--tabs-tab-radius);

@@ -181,9 +181,12 @@ export const ru: Messages = {
   },
   avatar: {
     presence: {
+      // Gender-neutral by construction. `занят` / `отошёл` are masculine-inflected
+      // and would misgender roughly half of any user list; these forms inflect
+      // for nothing.
       online: 'в сети',
-      busy: 'занят',
-      away: 'отошёл',
+      busy: 'не беспокоить',
+      away: 'нет на месте',
       offline: 'не в сети',
     },
   },

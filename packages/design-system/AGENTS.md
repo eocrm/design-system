@@ -3573,7 +3573,7 @@ All available as CSS custom properties after you import `global.scss`:
 | Borders         | `--border-width` (1) / `--border-width-emphasis` (2) / `--border-width-strong` (3)                                                                                                                  |
 | Letter spacing  | `--letter-spacing-caps` (0.03em)                                                                                                                                                                    |
 | Shadows         | `--shadow-sm` / `--shadow-md` / `--shadow-lg`                                                                                                                                                       |
-| Focus rings     | `--ring-accent` / `--ring-danger` / `--ring-success` / `--ring-width`                                                                                                                               |
+| Focus rings     | `--ring-accent` / `--ring-danger` / `--ring-success` / `--ring-width` / `--ring-offset` / `--ring-on-scrim`                                                                                         |
 | Motion          | `--transition-fast` (100ms) / `--transition-base` (140ms)                                                                                                                                           |
 | Layer (z-index) | `--z-app-chrome` / `--z-dropdown` / `--z-popover` / `--z-flowcanvas-maximized` / `--z-modal` / `--z-overlay-floating` / `--z-toast` / `--z-tooltip`                                                 |
 

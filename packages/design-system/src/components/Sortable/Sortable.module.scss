@@ -75,7 +75,6 @@
   }
 
   &:focus-visible {
-    outline: none;
     border-color: var(--sortable-handle-border-color-focus);
 
     @include focus-ring(var(--sortable-handle-ring-focus));

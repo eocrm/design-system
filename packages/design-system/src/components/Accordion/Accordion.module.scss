@@ -115,8 +115,6 @@
   // Hover background lives on `.header` (the full row) so it spans full width even
   // when an actions slot shortens this button. The trigger stays transparent.
   &:focus-visible {
-    outline: none;
-
     @include focus-ring(var(--accordion-trigger-ring));
 
     // Inset: the ring sits inside the cell box rather than

@@ -96,13 +96,15 @@
 
 // Keyboard focus ring on the dark scrim (Rule 3a) — the chevrons/close are bare
 // <button>s, so the UA default outline is low-contrast here; use the DS ring.
+// --lightbox-ring, NOT --ring-accent. The scrim is dark in both themes, so in
+// LIGHT theme the tone rings composite against it at 1.35-2.81:1 — under
+// 1.4.11's 3:1, and outside what the ring gate checks, because that gate walks
+// the four page surfaces and this chrome is on none of them (#505).
 .close:focus-visible,
 .download:focus-visible,
 .chev:focus-visible,
 .thumbDoc:focus-visible {
-  outline: none;
-
-  @include focus-ring(var(--ring-accent));
+  @include focus-ring(var(--lightbox-ring));
 }
 
 .chevPrev {
@@ -208,7 +210,7 @@
 
 .thumbActive {
   opacity: var(--opacity-visible);
-  box-shadow: 0 0 0 2px var(--lightbox-thumb-active-ring);
+  box-shadow: 0 0 0 var(--ring-width) var(--lightbox-thumb-active-ring);
 }
 
 // Placeholder thumbnail for a document without its own image — centered icon on

@@ -37,14 +37,12 @@
   cursor: pointer;
 
   &:focus-visible {
-    outline: none;
     border-color: var(--select-trigger-border-color-focus);
 
     @include focus-ring(var(--select-trigger-ring-focus));
   }
 
   &:has(> .chipsInput:focus-visible) {
-    outline: none;
     border-color: var(--select-trigger-border-color-focus);
 
     @include focus-ring(var(--select-trigger-ring-focus));

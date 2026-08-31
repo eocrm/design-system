@@ -60,10 +60,15 @@ function compiledRule(parent: Root | AtRule, selector: string): Rule | undefined
   return match;
 }
 
+// LAST match, not first. CSS is last-wins, and the focus-ring mixin now emits
+// `outline-offset` that several call sites deliberately override on the next
+// line — `.find` returned the mixin's value and reported a ring at +2px while
+// the rule actually renders it inset. That is the same hole declaredValue() in
+// contrast.test.ts exists to close (see its docblock); this file had it too.
 function compiledDeclaration(rule: Rule | undefined, property: string): Declaration | undefined {
-  return rule?.nodes.find(
-    (node): node is Declaration => node.type === 'decl' && node.prop === property,
-  );
+  return rule?.nodes
+    .filter((node): node is Declaration => node.type === 'decl' && node.prop === property)
+    .at(-1);
 }
 
 function Harness(props: Partial<Parameters<typeof useDataTable<Row>>[0]>) {
@@ -217,14 +222,16 @@ describe('DataTable responsive stylesheet', () => {
     expect(compiledDeclaration(focusRule, 'opacity')).toMatchObject({
       value: 'var(--data-table-header-resize-handle-opacity-visible)',
     });
-    // The focus-ring mixin paints an outline with an offset gap, not a spread
-    // box-shadow (#505). The gap is what separates the ring from the element it
-    // surrounds, using whatever surface is actually behind it.
+    // The focus-ring mixin paints an outline, not a spread box-shadow (#505).
+    // The resize handle takes the ring INSET — it sits between two header cells,
+    // so an outset ring would overlap its neighbour. So the effective offset is
+    // the negated token, written after the include; asserting the mixin's own
+    // `var(--ring-offset)` here would document a gap this rule does not have.
     expect(compiledDeclaration(focusRule, 'outline')).toMatchObject({
       value: 'var(--ring-width) solid var(--ring-accent)',
     });
     expect(compiledDeclaration(focusRule, 'outline-offset')).toMatchObject({
-      value: 'var(--ring-offset)',
+      value: 'calc(-1 * var(--ring-offset))',
     });
   });
 });

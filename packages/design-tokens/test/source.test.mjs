@@ -272,9 +272,10 @@ test('maps every captured public variable to exactly one web output', async () =
   const duplicateNames = webNames.filter((name) => componentNames.has(name));
   const combinedNames = new Set([...webNames, ...componentNames]);
 
-  // +2 from #504: --color-bg-hover and --color-bg-muted-hover.
-  assert.equal(capturedNames.size, 306);
-  assert.equal(webNames.length, 250);
+  // +3: --color-bg-hover and --color-bg-muted-hover (#504), --ring-offset (#505).
+  // --ring-on-scrim adds one more; forcedDark gains only the two that theme.
+  assert.equal(capturedNames.size, 307);
+  assert.equal(webNames.length, 251);
   assert.equal(componentNames.size, 56);
   assert.deepEqual(duplicateNames, []);
   assert.deepEqual([...combinedNames].sort(), [...capturedNames].sort());
@@ -369,7 +370,7 @@ test('keeps all twelve deprecated Badge variables as component aliases', async (
 test('preserves the pre-migration web contract fixture with provenance and expanded dark scopes', async () => {
   const fixture = await readJson(fixturePath);
 
-  assert.equal(Object.keys(fixture.light).length, 303);
+  assert.equal(Object.keys(fixture.light).length, 304);
   assert.equal(Object.keys(fixture.forcedDark).length, 118);
   assert.deepEqual(fixture.systemDark, fixture.forcedDark);
   assert.deepEqual(fixture.forcedLight, {});
@@ -709,7 +710,11 @@ test('no component token file declares an opaque colour literal', async () => {
   // true, so alpha is what the rule keys on — no component names appear here.
   const offenders = [];
   for (const { path, content } of files) {
-    for (const [, name, value] of content.matchAll(/^\s*(--[a-z0-9-]+)\s*:\s*([^;\n]+);/gm)) {
+    // `[;{]` rather than a line anchor: `:root { --x: #fff; --y: #000; }` on one
+    // line hid every declaration but the first from the `^\s*` form.
+    for (const [, name, value] of content.matchAll(
+      /(?:^|[;{])\s*(--[a-z0-9-]+)\s*:\s*([^;\n]+);/gm,
+    )) {
       const raw = value.trim();
       const isHex = /^#[0-9a-f]{3,8}$/i.test(raw);
       const isOpaqueFunction =
@@ -726,6 +731,9 @@ test('no component token file declares an opaque colour literal', async () => {
 
 test('every var() a component token file reaches for is actually declared', async () => {
   const files = await readComponentTokenFiles();
+  // Guards the guard, same as the sibling test above: a moved directory would
+  // leave nothing to walk and this would pass having checked nothing.
+  assert.ok(files.length >= 81, `expected the component token files, found ${files.length}`);
   const [generatedTokens, generatedDark] = await Promise.all([
     readFile(generatedTokensPath, 'utf8'),
     readFile(generatedDarkPath, 'utf8'),

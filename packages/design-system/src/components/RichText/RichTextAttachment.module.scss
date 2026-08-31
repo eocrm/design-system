@@ -3,9 +3,14 @@
 // — renderDoc calls it — so it belongs to the lower of the two layers. Living in
 // the editor's stylesheet was the same inversion as the import that created the
 // dependency cycle.
-// The `figure[data-attachment]` wrapper rules stay in RichTextEditor.module.scss:
-// they are scoped to the editor's own `.root` / `.shell` containers, so they
-// describe the editor's chrome rather than the attachment itself.
+// The `.root` / `.shell` scoped `figure[data-attachment]` rules stay in
+// RichTextEditor.module.scss — those describe the editor's chrome. The GLOBAL
+// `data-align` rules below came with the move: they are not editor-scoped, and
+// the read-only viewer reached them only because RichTextAttachment used to
+// import the editor's stylesheet. With that import gone, a consumer rendering
+// <RichText> without ever mounting <RichTextEditor> would have lost centre and
+// right alignment entirely — the editor's stylesheet is tree-shakeable along
+// with the component.
 
 // The attachment image preview. `inline-block` lets the figure's `text-align`
 // (data-align) position it (left/center/right); `width` attr + `height: auto`
@@ -47,4 +52,19 @@
 
 .attachmentLabel {
   color: var(--color-danger);
+}
+
+// Image alignment within the attachment figure. `text-align` aligns the inline
+// <img> child — an allowed property (not the forbidden margin/position/flex/width).
+// These are intentionally GLOBAL (attribute selectors, not CSS-module classes):
+// `data-align` is a DOM attribute set by renderDoc, and the rules must apply in
+// BOTH the editor and the read-only `<RichText>` viewer, which render the same
+// `figure[data-attachment]` markup. Scoped only to aligned figures so the
+// (unaligned) spinner/error/chip states keep their own inline-flex layout.
+figure[data-attachment][data-align='center'] {
+  text-align: center;
+}
+
+figure[data-attachment][data-align='right'] {
+  text-align: right;
 }

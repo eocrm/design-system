@@ -162,11 +162,10 @@
 
   &:hover {
     background: var(--table-header-bg-hover);
+    color: var(--table-header-fg-hover);
   }
 
   &:focus-visible {
-    outline: none;
-
     @include focus-ring(var(--table-sortable-ring));
 
     // Inset: the ring sits inside the cell box rather than

@@ -484,9 +484,18 @@ describe('a tone stays in sync with the roles derived from it', () => {
     // gone. The rings are opaque now and the separation from the fill comes
     // from `outline-offset` in the focus-ring mixin, which shows the real
     // surface behind the element instead of asking one colour to contrast with
-    // two things at once. It could never have done both: 3:1 on white caps a
-    // colour's luminance at 0.30 and 3:1 on #0052cc floors it at 0.337, so no
-    // opaque value satisfies both and no alpha does either. The old ring
+    // two things at once. No ring could have done both: 3:1 on white caps
+    // luminance at 0.300, and 3:1 on #0052cc (L 0.1039) needs L >= 0.412 to be
+    // the lighter of the pair.
+    //
+    // An earlier version of this comment quoted 0.337 for that floor and called
+    // the constraint impossible full stop. Both were wrong — the floor is
+    // 0.412, and the comparison is two-sided, so a ring DARKER than the accent
+    // (L <= 0.0013) also clears 3:1; #000000 scores 21:1 on white and 3.08:1 on
+    // the fill. It is excluded because it is black — 1.30:1 on the dark theme's
+    // background, and no longer tracking the tone it belongs to — not because
+    // no such colour exists. The conclusion held; the proof did not, which is
+    // the failure mode this file's own prose keeps warning about. The old ring
     // measured 1.65:1 composited on white — the worst of the three, on the tone
     // every focus ring in the library resolves through, and #490 did not catch
     // it because it only measured danger and success.
@@ -542,6 +551,60 @@ describe('a tone stays in sync with the roles derived from it', () => {
         // meant to stay real — the tightest pair here is 4.33:1, so this is not
         // a tripwire sitting on the current value the way the hover floors are.
         expect(ratio, `--ring-${tone} on ${surface}`).toBeGreaterThanOrEqual(3.0);
+      }
+    }
+  });
+
+  it('the scrim ring clears 1.4.11 on chrome that is dark in both themes', () => {
+    // The four page surfaces above are not every surface a ring lands on, and
+    // the gap is not hypothetical: Lightbox paints its chrome on
+    // --color-bg-overlay-strong, which is 92% opaque and therefore does NOT let
+    // the page through the way --color-bg-overlay does. That chrome is dark in
+    // both themes, so in LIGHT theme the tone rings measured 1.35-2.81:1 on it
+    // — failing 1.4.11 on a branch whose gate claimed to certify exactly that.
+    //
+    // Not an it.each over themes, deliberately. A theme-independent surface
+    // needs a theme-independent ring, so the FIRST thing asserted is that the
+    // ring has no dark override at all; tokenValue() refuses to read a
+    // light-only literal for dark, and that refusal is correct in general, so
+    // the exception is stated here rather than worked around.
+    expect(
+      declaredValue('--ring-on-scrim', DARK),
+      '--ring-on-scrim must not be themed — the surface it lands on is not',
+    ).toBeUndefined();
+
+    const composite = (over: string, alpha: number, base: string) => {
+      const [x, y] = [over, base].map((h) =>
+        [0, 2, 4].map((i) => parseInt(h.slice(1 + i, 3 + i), 16)),
+      );
+      return `#${x
+        .map((c, i) =>
+          Math.round(c * alpha + y[i] * (1 - alpha))
+            .toString(16)
+            .padStart(2, '0'),
+        )
+        .join('')}`;
+    };
+
+    const ring = tokenValue('--ring-on-scrim', TOKENS);
+    // Both themes' page colours, because the scrim composites over whichever
+    // one is behind it — and light is the worse of the two, which is the case
+    // that was failing.
+    for (const [theme, source] of [
+      ['light', TOKENS],
+      ['dark', DARK],
+    ] as const) {
+      const scrim = composite('#0f172a', 0.92, tokenValue('--color-bg', source));
+      const surfaces: [string, string][] = [
+        ['the scrim', scrim],
+        ['the thumb strip', composite('#000000', 0.3, scrim)],
+        ['a control fill', composite('#ffffff', 0.14, scrim)],
+      ];
+      for (const [label, surface] of surfaces) {
+        expect(
+          contrast(ring, surface),
+          `--ring-on-scrim on ${label} in ${theme}`,
+        ).toBeGreaterThanOrEqual(3.0);
       }
     }
   });
@@ -764,7 +827,19 @@ describe('a component hover is a visible step from what it replaces', () => {
     if (alias) return resolveColour(alias[1], theme, [...seen, name]);
 
     const hex = declaration.match(/^#([0-9a-fA-F]{6})$/);
-    if (hex) return { kind: 'opaque', hex: `#${hex[1].toLowerCase()}` };
+    if (hex) {
+      // The same guard tokenValue() carries, for the same reason: a literal read
+      // out of the LIGHT source and reported as dark would pass the dark
+      // assertion having checked nothing dark. No live instance today — the
+      // component token files declare no opaque literals at all, which the
+      // design-tokens suite now asserts separately — but that gate lives in
+      // another package and neither references the other, so this stands on its
+      // own.
+      if (theme !== TOKENS && declaredValue(name, theme) === undefined) {
+        throw new Error(`${name} is a light-only literal; it cannot answer for another theme`);
+      }
+      return { kind: 'opaque', hex: `#${hex[1].toLowerCase()}` };
+    }
     // `rgb(r g b / a%)` and friends. Alpha is what matters, not the notation.
     if (/^(rgba?|hsla?|hwb|lab|lch|oklab|oklch)\(/.test(declaration)) {
       return declaration.includes('/') || /^rgba\(|^hsla\(/.test(declaration)
@@ -782,7 +857,15 @@ describe('a component hover is a visible step from what it replaces', () => {
     return `#${channels.map((c) => c.toString(16).padStart(2, '0')).join('')}`;
   }
 
-  /** The body of every rule block whose selector or body mentions `needle`. */
+  /**
+   * The body of every INNERMOST rule block mentioning `needle`.
+   *
+   * Innermost matters. A brace scan that returns every enclosing block would let
+   * a `filter: brightness()` anywhere in an ANCESTOR excuse a dead hover token,
+   * which is the opposite of what the exemption below promises — it says "the
+   * same rule block". Nesting is how SCSS is written here, so an ancestor match
+   * is not a hypothetical.
+   */
   function blocksMentioning(source: string, needle: string): string[] {
     const bodies: string[] = [];
     for (let i = 0; i < source.length; i += 1) {
@@ -794,7 +877,7 @@ describe('a component hover is a visible step from what it replaces', () => {
         else if (source[j] === '}') depth -= 1;
       }
       const body = source.slice(i + 1, j - 1);
-      if (body.includes(needle)) bodies.push(body);
+      if (!body.includes('{') && body.includes(needle)) bodies.push(body);
     }
     return bodies;
   }
@@ -855,9 +938,28 @@ describe('a component hover is a visible step from what it replaces', () => {
         unjustified.push(`${dir}/${token}: base differs by theme (${light.kind} / ${dark.kind})`);
         continue;
       }
-      const allowed = ['absent', 'transparent', 'translucent', 'noncolour'];
-      if (!allowed.includes(light.kind) || !allowed.includes(dark.kind)) {
-        unjustified.push(`${dir}/${token}: base is ${light.kind} / ${dark.kind}`);
+      // Each excluded base has to land on one of the four reasons. This is a
+      // TYPE-level check, not a runtime one, and deliberately so: after the two
+      // `opaque` branches above, the Resolved union leaves exactly these four,
+      // so a runtime `allowed.includes(...)` could never fire and would be a
+      // dead assertion wearing a docblock. Adding a fifth kind to Resolved
+      // without deciding whether it justifies exclusion fails the build here
+      // instead — which is the check that was actually wanted.
+      for (const resolved of [light, dark]) {
+        switch (resolved.kind) {
+          case 'absent':
+          case 'transparent':
+          case 'translucent':
+          case 'noncolour':
+            break;
+          default: {
+            // Binding to `never` is what makes this a compile-time check: it
+            // type-errors the moment Resolved gains a kind the four cases above
+            // do not handle.
+            const unhandled: never = resolved;
+            unjustified.push(`${dir}/${token}: base is ${JSON.stringify(unhandled)}`);
+          }
+        }
       }
     }
     expect(unjustified).toEqual([]);
@@ -888,10 +990,12 @@ describe('a component hover is a visible step from what it replaces', () => {
     // gate being calibrated to accept a regression it was written to catch, and
     // every number here moved up.
     const failures: string[] = [];
+    let measured = 0;
     for (const { dir, token, base } of candidates) {
       const from = resolveColour(base, source);
       const to = resolveColour(token, source);
       if (from.kind !== 'opaque' || to.kind !== 'opaque') continue;
+      measured += 1;
 
       if (hoverIsAFilter(dir, token)) {
         // Endorsed, but not unchecked. A filter hover means the TOKEN is doing
@@ -936,5 +1040,18 @@ describe('a component hover is a visible step from what it replaces', () => {
       }
     }
     expect(failures).toEqual([]);
+    // THE GATE'S OWN GUARD, and the reason it is a count rather than a boolean.
+    // Every assertion above is inside `if (kind === 'opaque')`, so anything that
+    // stops resolveColour resolving — a refactor of declaredValue, a moved
+    // generated file, a renamed token — makes this whole block iterate over
+    // nothing and pass. Verified: hard-wiring resolveColour to return `absent`
+    // left all 62 tests in this file green.
+    //
+    // 37 is what the library measures today. Deliberately not `> 0`: losing 30
+    // of 37 is the same class of failure as losing all 37, and a floor of one
+    // would not see it. Raise this when the number legitimately grows.
+    expect(measured, 'the gate measured nothing — resolveColour is broken').toBeGreaterThanOrEqual(
+      37,
+    );
   });
 });

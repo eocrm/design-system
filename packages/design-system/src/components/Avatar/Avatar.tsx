@@ -134,7 +134,8 @@ function hasOwnProps(obj: object | undefined): obj is object {
  * - ❌ Using Avatar to show a non-person icon. Use an icon component instead.
  * - ❌ Wrapping the result with `role="img"` again. The component already
  *   handles ARIA: with `src` set, the inner `<img>` is the labeled image;
- *   without `src`, the wrapper has `role="img" aria-label={name}`.
+ *   without `src`, the wrapper has `role="img" aria-label={name}` — plus the
+ *   localized `status` when one is set, so the name reads "Alex, online".
  */
 export const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(function Avatar(
   { name, src, size, status, tooltip, className, style, ...props },

@@ -24,7 +24,6 @@
   }
 
   &:focus-visible {
-    outline: none;
     border-color: var(--textarea-border-color-focus);
 
     @include focus-ring(var(--textarea-ring-focus));

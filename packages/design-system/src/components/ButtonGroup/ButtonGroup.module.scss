@@ -93,7 +93,14 @@
   opacity: var(--button-group-item-opacity-disabled);
 }
 
+// Lift, matching what visual mode already does for its joined children. The
+// ring extends offset + width = 4px since #505, where the old box-shadow spread
+// 2px, and segmented items sit --space-05 (2px) apart — so without a stacking
+// lift the next item's opaque background paints over the ring on that side.
 .item:focus-visible {
+  position: relative;
+  z-index: 1;
+
   @include focus-ring;
 }
 

@@ -262,7 +262,13 @@ describe('Avatar', () => {
 
       // online is the one status with no added geometry — a plain filled disc
       // is a distinct silhouette precisely because the other three are not.
+      //
+      // The rule has to be asserted present FIRST. Both checks below are
+      // toBeUndefined(), and compiledDeclaration(undefined, …) is undefined, so
+      // without this line they pass when the selector matches nothing — which
+      // is every way this test could actually break.
       const online = compiledRule(stylesheet, '[data-status=online]');
+      expect(online, 'the online rule exists at all').toBeDefined();
       expect(compiledDeclaration(online, 'background-image')).toBeUndefined();
       expect(compiledDeclaration(online, 'box-shadow')).toBeUndefined();
     });
