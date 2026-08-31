@@ -91,9 +91,15 @@ function stripComments(source: string): string {
  * block-scoped and does not cover the override case.
  */
 function declaredValue(name: string, source: string): string | undefined {
+  // `[^;]` not `[^;\n]`: a value may span lines, and --button-bg-selected-hover
+  // does (a four-line color-mix). Stopping at the newline made this return
+  // undefined for it, so the token resolved `absent` and dropped out of the
+  // hover gate entirely while its base stayed opaque — escaping both the
+  // exclusion justification and the measurement floor. Values are `;`-terminated
+  // in every file this reads, so `;` is the right terminator.
   const all = [
-    ...stripComments(source).matchAll(new RegExp(`(?:^|[^-a-z0-9])${name}:\\s*([^;\\n]+);`, 'g')),
-  ].map((m) => m[1].trim());
+    ...stripComments(source).matchAll(new RegExp(`(?:^|[^-a-z0-9])${name}:\\s*([^;]+);`, 'g')),
+  ].map((m) => m[1].replace(/\s+/g, ' ').trim());
   if (!all.length) return undefined;
   const distinct = [...new Set(all)];
   if (distinct.length > 1) {
@@ -438,8 +444,10 @@ describe('a tone stays in sync with the roles derived from it', () => {
     // The floor is 0.065, anchored to the smallest step among THE THREE TONES
     // THIS GATE COVERS, either theme, before #484 touched anything (light
     // accent, 0.0662). Not the library's smallest and not the smallest
-    // primitive: --color-table-header-bg's light hover step is 0.0266 and
-    // --entity-chip-bg-hover is 0.0000. Two earlier versions of this sentence
+    // primitive: --entity-chip-bg-hover is 0.0000, and --color-table-header-bg's
+    // light hover step was 0.0266 until #504 re-pointed it to 0.0453 — still
+    // under this anchor, which is the point, but the old figure survived the
+    // change that made it false and is corrected here. Two earlier versions of this sentence
     // claimed each of those wider scopes and both were false. That anchor is deliberate: the
     // first version of this gate used 0.05, chosen as "just under the observed
     // floor of 0.058" — but 0.058 was a number #484 had itself created by
@@ -608,48 +616,70 @@ describe('a tone stays in sync with the roles derived from it', () => {
     }
     // The thumbnails are <Image interactive>, which paints its OWN ring from
     // --image-ring; Lightbox has to hand it the scrim ring or the default
-    // --ring-accent comes back at 2.47:1 on the strip.
+    // --ring-accent comes back at 2.47:1 on the strip in light.
+    //
+    // Every assertion below is keyed to an EXACT SELECTOR, not to text anywhere
+    // in the file. Three separate greps here were each satisfied without the
+    // behaviour being right: a `@include` count that one include anywhere
+    // contents, a file-wide match for the handoff that a dead rule contents, and
+    // a `.thumb` block regex that `.neverRendered .thumb` contents (and `exec`
+    // takes the first match, so it wins). All three are the same mistake —
+    // asserting that a string appears rather than that a rule says it — which is
+    // the mistake this whole file keeps re-learning.
+    const ruleBody = (css: string, selector: string): string | undefined => {
+      for (const match of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+        const selectors = match[1]
+          .split(',')
+          .map((part) => part.replace(/\s+/g, ' ').trim())
+          .filter(Boolean);
+        if (selectors.includes(selector)) return match[2];
+      }
+      return undefined;
+    };
+
     const lightboxCss = stripComments(
       readFileSync(resolve(COMPONENTS_DIR_FOR_SCRIM, 'Lightbox/Lightbox.module.scss'), 'utf8'),
     );
-    // EVERY include, not just the tokens. .close / .download / .chev /
-    // .thumbDoc reach the mixin directly through one grouped selector, and
-    // reverting it to a bare `@include focus-ring` put all four back on
-    // --ring-accent at 1.03-2.47:1 IN LIGHT (dark reads 2.88-6.63) with the
-    // whole suite green — the two token
-    // bindings above cannot see a call site. Asserted over every include rather
-    // than that one, so a fifth ring added later cannot skip the token.
-    // To the statement end, not to the first `)` — that one closes `var(`.
-    // Whitespace-normalised, so a correctly-written multi-line include is not
-    // reported as wrong. It failed closed rather than open, but a false alarm
-    // here trains the next reader to distrust the gate.
-    const includes = [...lightboxCss.matchAll(/@include\s+focus-ring([^;]*);/g)].map((m) =>
-      m[1].replace(/\s+/g, ''),
-    );
-    expect(includes.length, 'Lightbox paints focus rings').toBeGreaterThanOrEqual(1);
-    for (const arg of includes) {
-      expect(arg, 'every Lightbox focus ring takes the scrim ring').toBe('(var(--lightbox-ring))');
+
+    // Each of the four chrome controls by name. Asserting only "every include
+    // takes the scrim ring" bound the ARGUMENT but not the CALL SITE: narrowing
+    // the grouped selector to `.close:focus-visible`, or renaming it to
+    // something nothing renders, left the other three on the UA outline with the
+    // whole suite green.
+    for (const control of ['.close', '.download', '.chev', '.thumbDoc']) {
+      const body = ruleBody(lightboxCss, `${control}:focus-visible`);
+      expect(body, `${control} takes a focus ring`).toBeDefined();
+      expect(body!.replace(/\s+/g, ''), `${control} takes the scrim ring`).toContain(
+        '@includefocus-ring(var(--lightbox-ring))',
+      );
     }
-    // Scoped to the block that owns it, not the file. A file-wide match is
-    // satisfied by a declaration on a selector nothing renders — verified: move
-    // it to a dead rule and the suite stays green while the thumbnails go back
-    // to --ring-accent. blocksMentioning() further down exists for exactly this
-    // reason; the same care belongs here.
-    const thumbBlock = /\.thumb\s*\{([^}]*)\}/.exec(lightboxCss)?.[1];
-    expect(thumbBlock, '.thumb is declared').toBeDefined();
-    expect(thumbBlock, 'the thumbnails must hand Image the scrim ring').toMatch(
+    // And no OTHER include in the file may quietly take a different ring.
+    for (const [, arg] of lightboxCss.matchAll(/@include\s+focus-ring([^;]*);/g)) {
+      expect(arg.replace(/\s+/g, ''), 'every Lightbox focus ring takes the scrim ring').toBe(
+        '(var(--lightbox-ring))',
+      );
+    }
+
+    // `.thumb` exactly — not any selector ENDING in `.thumb`. Only `.thumb` is
+    // the Image wrapper's ancestor, so only `.thumb` can hand the property down.
+    const thumbBody = ruleBody(lightboxCss, '.thumb');
+    expect(thumbBody, '.thumb is declared').toBeDefined();
+    expect(thumbBody, 'the thumbnails must hand Image the scrim ring').toMatch(
       /--image-ring:\s*var\(--lightbox-ring\)/,
     );
-    // BOTH ends of the handoff. Asserting only the sending side left the
-    // receiving line unbound: reverting Image to a bare `@include focus-ring`
-    // put the thumbnails back on --ring-accent with the whole suite green —
-    // the round-2 failure relocated by one file rather than closed.
-    expect(
-      stripComments(
-        readFileSync(resolve(COMPONENTS_DIR_FOR_SCRIM, 'Image/Image.module.scss'), 'utf8'),
-      ),
-      'Image must actually consume --image-ring',
-    ).toMatch(/focus-ring\(\s*var\(--image-ring\)\s*\)/);
+
+    // BOTH ends of the handoff, and the receiving end keyed to the rule that
+    // actually paints. A file-wide match here was satisfied by a dead rule while
+    // the real one went back to the bare mixin — the round-2 failure relocated
+    // rather than closed, twice.
+    const imageCss = stripComments(
+      readFileSync(resolve(COMPONENTS_DIR_FOR_SCRIM, 'Image/Image.module.scss'), 'utf8'),
+    );
+    const imageRing = ruleBody(imageCss, '.wrapper:has(.trigger:focus-visible)');
+    expect(imageRing, 'Image paints a focus ring').toBeDefined();
+    expect(imageRing!.replace(/\s+/g, ''), 'Image must actually consume --image-ring').toContain(
+      '@includefocus-ring(var(--image-ring))',
+    );
 
     const ring = tokenValue('--ring-on-scrim', TOKENS);
 
@@ -663,6 +693,7 @@ describe('a tone stays in sync with the roles derived from it', () => {
       /\/\s*[\d.]+%\s*\)/,
     );
     const [or, og, ob, oa] = overlay.match(/[\d.]+/g)!.map(Number);
+    expect(oa, '--color-bg-overlay-strong has a meaningful alpha').toBeGreaterThan(5);
     const overlayHex = `#${[or, og, ob].map((c) => c.toString(16).padStart(2, '0')).join('')}`;
 
     // Both themes' page colours, because the scrim composites over whichever
@@ -684,6 +715,12 @@ describe('a tone stays in sync with the roles derived from it', () => {
         // surface. Fail loudly on the notation instead of quietly on the value.
         expect(raw, `${name} states alpha as a percentage`).toMatch(/\/\s*[\d.]+%\s*\)/);
         const [r, g, b, a] = raw.match(/[\d.]+/g)!.map(Number);
+        // The notation check alone is not enough: `rgb(0 0 0 / 0.3%)` is legal,
+        // passes it, and parses to alpha 0.003 — compositing to something
+        // indistinguishable from the bare scrim, so the assertion would certify
+        // a surface that is not there. That is verbatim the failure the notation
+        // check was added to prevent, one notation over.
+        expect(a, `${name} has a meaningful alpha`).toBeGreaterThan(5);
         return composite(
           `#${[r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('')}`,
           a / 100,
@@ -960,6 +997,36 @@ describe('a component hover is a visible step from what it replaces', () => {
         ? { kind: 'translucent' }
         : { kind: 'opaque', hex: rgbToHex(declaration) };
     }
+    // color-mix, which Button uses for its selected hover. Resolving it keeps
+    // the token IN the gate: the file's stated scoping rule says a hover whose
+    // base resolves opaque in both themes is in scope, so classifying this as
+    // noncolour would be narrowing the rule to fit the parser rather than the
+    // other way round. Only the two-colour srgb form is understood — anything
+    // else falls through and is excluded loudly rather than mixed wrongly.
+    const mix = declaration.match(
+      /^color-mix\(\s*in srgb\s*,\s*([^,]+?)\s*(?:([\d.]+)%)?\s*,\s*([^,]+?)\s*(?:([\d.]+)%)?\s*\)$/,
+    );
+    if (mix) {
+      const [left, right] = [mix[1], mix[3]].map((part) => {
+        const alias = part.match(/^var\((--[a-z0-9-]+)\)$/);
+        return alias ? resolveColour(alias[1], theme, [...seen, name]) : undefined;
+      });
+      if (left?.kind === 'opaque' && right?.kind === 'opaque') {
+        // Percentages are optional and complementary; CSS fills the missing one.
+        const rightShare =
+          mix[4] !== undefined ? Number(mix[4]) / 100 : 1 - Number(mix[2] ?? 50) / 100;
+        const channels = [0, 2, 4].map((i) => {
+          const a = parseInt(left.hex.slice(1 + i, 3 + i), 16);
+          const b = parseInt(right.hex.slice(1 + i, 3 + i), 16);
+          return Math.round(a * (1 - rightShare) + b * rightShare);
+        });
+        return {
+          kind: 'opaque',
+          hex: `#${channels.map((c) => c.toString(16).padStart(2, '0')).join('')}`,
+        };
+      }
+    }
+
     // Not a colour at all — --slider-thumb-shadow-hover resolves to a box-shadow
     // list. A `-hover` suffix does not make a token a colour, and measuring a
     // perceptual step between two shadow lists is meaningless.
@@ -1133,9 +1200,20 @@ describe('a component hover is a visible step from what it replaces', () => {
     // every number here moved up.
     const failures: string[] = [];
     let measured = 0;
+    const droppedAtTheHover: string[] = [];
     for (const { dir, token, base } of candidates) {
       const from = resolveColour(base, source);
       const to = resolveColour(token, source);
+      // The scoping rule keys on the BASE, so a token whose base is opaque is in
+      // scope by that rule and has to be measured. If its HOVER will not resolve,
+      // it silently leaves through a door neither floor watches — which is what
+      // --button-bg-selected-hover did: a four-line color-mix that declaredValue
+      // could not read, so the pair was neither measured nor asked to justify
+      // itself, and both counts stayed put.
+      if (from.kind === 'opaque' && to.kind !== 'opaque') {
+        droppedAtTheHover.push(`${dir}/${token}: base opaque, hover ${to.kind}`);
+        continue;
+      }
       if (from.kind !== 'opaque' || to.kind !== 'opaque') continue;
       measured += 1;
 
@@ -1182,6 +1260,8 @@ describe('a component hover is a visible step from what it replaces', () => {
       }
     }
     expect(failures).toEqual([]);
+    // Named, not counted. A count would let one token leave as another arrives.
+    expect(droppedAtTheHover, 'in scope by the base rule, but unmeasurable').toEqual([]);
     // THE GATE'S OWN GUARD, and the reason it is a count rather than a boolean.
     // Every assertion above is inside `if (kind === 'opaque')`, so anything that
     // stops resolveColour resolving — a refactor of declaredValue, a moved
@@ -1189,15 +1269,15 @@ describe('a component hover is a visible step from what it replaces', () => {
     // nothing and pass. Verified: hard-wiring resolveColour to return `absent`
     // left every test in this file green.
     //
-    // 40 is what the library measures today — instrumented, not estimated. It
-    // has been wrong twice: 37 when the real count was 39, then 39 on the same
-    // commit that declared --options-picker-group-header-hint-fg and made it 40.
+    // 41 is what the library measures today — instrumented, not estimated. It
+    // has been wrong three times: 37 when it was 39, 39 when the same commit
+    // made it 40, and 40 until color-mix resolution brought a 41st back in.
     // A floor below the real number cannot see a partial loss, which is the
     // whole job here. Deliberately not `> 0`, because losing 30 of 40 is the
-    // same class of failure as losing all 40. Re-instrument when it changes;
+    // same class of failure as losing all 41. Re-instrument when it changes;
     // guessing the delta is how it went stale both times.
     expect(measured, 'the gate measured nothing — resolveColour is broken').toBeGreaterThanOrEqual(
-      40,
+      41,
     );
   });
 });
