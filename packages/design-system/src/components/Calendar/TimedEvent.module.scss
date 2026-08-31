@@ -117,6 +117,14 @@
   // erase the stripe and the stripe erase the drag shadow. A gradient composes
   // with all of them, survives the hover `filter: brightness()`, and costs no
   // geometry.
+  // HALF TRUE SINCE #505. The focus ring is an outline now, and an outline
+  // paints OVER the background — so it no longer competes with this for the
+  // box-shadow slot, but while focused it covers the outer 2px of the 4px tone
+  // band (the 1px `currentColor` border plus half the gradient). Two pixels of
+  // stripe still read, and the alternative is worse: this block sits flush
+  // against HourGrid's scroller, so an outset ring loses its bottom band
+  // entirely. Accepted deliberately rather than discovered — the trade is a
+  // transient partial occlusion against a permanently missing indicator.
   background-image: linear-gradient(
     to right,
     var(--calendar-event-stripe-color) 0,

@@ -57,7 +57,9 @@
     // flush with its top edge and 2px from its bottom. An outset ring loses BOTH
     // horizontal bands and renders as two floating vertical bars flanking the
     // element (#505). Same treatment as Accordion, Table, DataTable, HeaderCell
-    // and Calendar's TimedEvent / DayCell.
+    // and Calendar's TimedEvent / DayCell. (`.scrollWrapVertical` sets
+    // `overflow-x: visible`, so a vertical tablist has no clipping ancestor and
+    // takes the inset only by inheritance — harmless, the padding is ample.)
     outline-offset: calc(-1 * var(--ring-offset));
     border-radius: var(--tabs-tab-radius);
   }

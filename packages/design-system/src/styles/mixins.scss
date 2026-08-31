@@ -35,14 +35,22 @@
 // within a stacking context an outline paints after all descendant backgrounds,
 // so the ring already draws over a joined neighbour with no lift at all. The
 // problem there is contrast, not paint order.
-// Outline also follows border-radius, is not clipped the way a spread shadow is,
-// and leaves box-shadow free for the element's own elevation, which this mixin
+// Outline also follows border-radius and leaves box-shadow free for the
+// element's own elevation, which this mixin
 // used to overwrite on focus. Five call sites ALREADY set `outline-offset` next
 // to this include before #505 (DataTable, HeaderCell x3, and DataTable's
 // clickable row also wrote `outline: none`) — all of it inert against a
 // box-shadow ring. They were written expecting an outline; now they get one.
 // Nine sites set it today, the four new ones being components whose ring turned
 // out to clip.
+// An outline IS clipped by an ancestor's overflow, exactly as a spread shadow
+// is — an earlier version of this comment claimed otherwise and the migration
+// then lost bands in three components before a browser sweep caught it. Where
+// the focusable sits flush against a clipping ancestor, draw the ring inset:
+// `outline-offset: calc(-1 * var(--ring-offset))`. Nine call sites do. That
+// trade is not free either — an inset ring paints over the element's outermost
+// pixels, including its own border, so check what that border carries
+// (Calendar's TimedEvent stripe is the live case).
 @mixin focus-ring($color: var(--ring-accent)) {
   outline: var(--ring-width) solid #{$color};
   outline-offset: var(--ring-offset);
