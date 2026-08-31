@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readdir, readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { captureWebContractFromSources } from '../scripts/capture-web-contract.mjs';
 import { compareWebContracts, parseGeneratedWebContract } from '../scripts/check-web-compat.mjs';
@@ -372,19 +372,24 @@ test('preserves the pre-migration web contract fixture with provenance and expan
   assert.equal(Object.keys(fixture.forcedDark).length, 116);
   assert.deepEqual(fixture.systemDark, fixture.forcedDark);
   assert.deepEqual(fixture.forcedLight, {});
+  // Provenance now names the GENERATED files, because capture-web-contract.mjs
+  // reads them. It used to name packages/design-system/src/styles/*.scss with a
+  // `mixin: 'dark-tokens'` origin — but that stopped being true when those files
+  // became bare `@forward`s, and the script had been throwing ever since, so the
+  // fixture was hand-edited and this assertion pinned a layout nothing produced.
+  // The four VALUE scopes came through the repair byte-identical, which is what
+  // says the hand-maintained fixture had not drifted; only these origins moved.
   assert.deepEqual(fixture.provenance.forcedDark['--color-bg'], [
     {
-      source: 'packages/design-system/src/styles/dark.scss',
+      source: 'packages/design-tokens/generated/web/dark.scss',
       selector: ":root[data-theme='dark']",
-      mixin: 'dark-tokens',
     },
   ]);
   assert.deepEqual(fixture.provenance.systemDark['--color-bg'], [
     {
-      source: 'packages/design-system/src/styles/dark.scss',
+      source: 'packages/design-tokens/generated/web/dark.scss',
       selector: ":root:not([data-theme='light'])",
       atRule: '@media (prefers-color-scheme: dark)',
-      mixin: 'dark-tokens',
     },
   ]);
 });
@@ -636,4 +641,114 @@ test('every tone-backed Badge variable resolves per theme through its var() chai
     [],
     'these resolve identically in both themes — the :root alias is NOT following the theme, so deleting the dark block did change behaviour',
   );
+});
+
+// #508. The web contract reads exactly ONE component token file — Badge — and
+// the other 80 have no coverage at all. Badge is named there for a reason that
+// expired: it was the one component declaring literal per-theme hexes, so it was
+// the one that could drift, and #490 aliased those onto the self-theming
+// `--color-tone-*` scale. The mechanism stayed pointed at the file that no
+// longer needs it.
+//
+// Widening the DECLARATION fixture to 81 files was the obvious move and is the
+// wrong one: it would add ~300 keys of hand-maintained snapshot that a new
+// component satisfies by being listed, which is satisfying-by-existing rather
+// than satisfying-an-invariant. What actually guards the gap is the shape #507
+// used for Badge — assert the property directly — so it is generalised here
+// instead, and stated as two invariants rather than a list of names.
+//
+// Neither of these is live today: all 81 files pass as written. They guard the
+// NEXT component, which is the whole point — the failure mode is a new file, and
+// a fixture cannot fail on a file nobody added to it.
+const componentsDir = new URL('../../design-system/src/components/', import.meta.url);
+
+async function readComponentTokenFiles() {
+  const dirs = (await readdir(componentsDir, { withFileTypes: true }))
+    .filter((entry) => entry.isDirectory() && !entry.name.startsWith('_'))
+    .map((entry) => entry.name);
+  const files = [];
+  for (const dir of dirs) {
+    const dirUrl = new URL(`${dir}/`, componentsDir);
+    for (const name of await readdir(dirUrl)) {
+      if (!name.endsWith('.tokens.scss')) continue;
+      files.push({
+        path: `${dir}/${name}`,
+        content: stripScssComments(await readFile(new URL(name, dirUrl), 'utf8')),
+      });
+    }
+  }
+  return files.sort((left, right) => (left.path < right.path ? -1 : 1));
+}
+
+// Comment bodies mention token names and example values freely, and both checks
+// below would read those as declarations. The capture script strips comments for
+// the same reason; this is the same job on a much smaller input.
+function stripScssComments(source) {
+  return source.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/[^\n]*/g, '$1');
+}
+
+test('no component token file declares an opaque colour literal', async () => {
+  const files = await readComponentTokenFiles();
+  // Guards the guard: a moved directory would make this vacuously pass.
+  assert.ok(files.length >= 81, `expected the component token files, found ${files.length}`);
+
+  // OPAQUE is the operative word, and it is what makes this derivable instead of
+  // an allowlist. An opaque literal is a per-theme decision frozen into one
+  // value: ship `#0052cc` in a `:root` block with no dark block and the light
+  // value renders in dark theme, silently — the exact hole this closes, and one
+  // neither existing gate sees. structure.test.ts's token-shadowing gate only
+  // fires when a literal DUPLICATES a semantic token's value, and the @contrast
+  // gate only fires on a stated ratio that has rotted.
+  //
+  // Translucent literals are permitted and six exist (Lightbox controls and
+  // caption, MediaTile scrim). They are not an exception being waved through:
+  // they composite over whatever is behind them, and both components paint onto
+  // their own dark scrim rather than onto a themed surface, so they are
+  // theme-independent by construction. Alpha is the property that makes that
+  // true, so alpha is what the rule keys on — no component names appear here.
+  const offenders = [];
+  for (const { path, content } of files) {
+    for (const [, name, value] of content.matchAll(/^\s*(--[a-z0-9-]+)\s*:\s*([^;\n]+);/gm)) {
+      const raw = value.trim();
+      const isHex = /^#[0-9a-f]{3,8}$/i.test(raw);
+      const isOpaqueFunction =
+        /^(rgb|hsl|hwb|lab|lch|oklab|oklch)\(/i.test(raw) && !raw.includes('/');
+      if (isHex || isOpaqueFunction) offenders.push(`${path}: ${name}: ${raw}`);
+    }
+  }
+  assert.deepEqual(
+    offenders,
+    [],
+    'component tokens must reach colour through var() so the value follows the theme',
+  );
+});
+
+test('every var() a component token file reaches for is actually declared', async () => {
+  const files = await readComponentTokenFiles();
+  const [generatedTokens, generatedDark] = await Promise.all([
+    readFile(generatedTokensPath, 'utf8'),
+    readFile(generatedDarkPath, 'utf8'),
+  ]);
+
+  // Everything a component token may legally resolve through: the generated
+  // light and dark scopes, and every other component file (components do alias
+  // each other's tokens). Collected as declared NAMES — this asserts the chain
+  // terminates, not what it terminates in; the per-theme VALUE question is the
+  // Badge resolve test above, which this deliberately does not duplicate.
+  const declared = new Set();
+  for (const source of [generatedTokens, generatedDark, ...files.map((file) => file.content)]) {
+    for (const [, name] of source.matchAll(/(--[a-z0-9-]+)\s*:/g)) declared.add(name);
+  }
+
+  const dangling = [];
+  for (const { path, content } of files) {
+    for (const [, reference, fallback] of content.matchAll(/var\(\s*(--[a-z0-9-]+)\s*(,)?/g)) {
+      // A fallback makes an undeclared name legal by design — that is the whole
+      // point of the second argument, and several components use it for values
+      // the component sets inline at runtime.
+      if (fallback) continue;
+      if (!declared.has(reference)) dangling.push(`${path}: var(${reference})`);
+    }
+  }
+  assert.deepEqual(dangling, [], 'these resolve to nothing in either theme');
 });

@@ -32,7 +32,10 @@
   --color-picker-trigger-border-color: var(--color-border);
   --color-picker-trigger-radius: var(--radius-md);
   --color-picker-trigger-font-size: var(--font-size-sm);
-  --color-picker-trigger-border-color-hover: var(--color-border-emphasis);
+  // --color-border-emphasis has never existed; the scale is border/border-strong.
+  // An unresolvable var() with no fallback leaves border-color at its initial
+  // value, so the hover border took currentColor rather than a border tone.
+  --color-picker-trigger-border-color-hover: var(--color-border-strong);
   --color-picker-trigger-focus-color: var(--color-accent);
   --color-picker-trigger-opacity-disabled: var(--opacity-disabled);
 

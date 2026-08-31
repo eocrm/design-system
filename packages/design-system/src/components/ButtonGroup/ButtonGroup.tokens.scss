@@ -16,7 +16,10 @@
   // Segmented item — selected state
   --button-group-item-bg-selected: var(--color-bg);
   --button-group-item-fg-selected: var(--color-fg);
-  --button-group-item-shadow-selected: var(--shadow-xs);
+  // --shadow-xs has never existed; the scale is sm/md/lg, so this resolved to
+  // nothing and the selected item rendered with no shadow at all. sm is the
+  // smallest step and what "xs" was reaching for.
+  --button-group-item-shadow-selected: var(--shadow-sm);
 
   // Segmented item — disabled
   --button-group-item-opacity-disabled: var(--opacity-disabled);
