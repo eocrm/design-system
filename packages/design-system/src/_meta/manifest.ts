@@ -12,7 +12,7 @@
  * other components in this directory; "composition" otherwise.
  */
 
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -147,7 +147,11 @@ const CLUSTERS: Record<string, string> = {
   Tooltip: 'Overlays',
 };
 
-const FROM_PARENT_PATH = /from\s+['"]\.\.\/([A-Z][a-zA-Z0-9]+)(?:\/[^'"]*)?['"]/g;
+// `(?:\.\./)+`, not a single `../`, since #509 — the other half of the flat-walk
+// bug. Once nested files are read, their imports are one level deeper, so
+// `from '../../RichTextEditor/…'` inside RichText/engine/ has to match too.
+// Widening the walk without widening this pattern still sees nothing.
+const FROM_PARENT_PATH = /from\s+['"](?:\.\.\/)+([A-Z][a-zA-Z0-9]+)(?:\/[^'"]*)?['"]/g;
 
 function listComponentDirs(): string[] {
   return readdirSync(COMPONENTS_DIR, { withFileTypes: true })
@@ -158,15 +162,46 @@ function listComponentDirs(): string[] {
 }
 
 function collectSourceText(componentDir: string): string {
-  // Concatenate every non-test .tsx + .ts file in the component dir so that
-  // sub-files (e.g. SVSquare.tsx inside ColorPicker/) contribute their
-  // imports to the parent component's dependency set.
-  const files = readdirSync(componentDir).filter((f) => {
-    if (!f.endsWith('.tsx') && !f.endsWith('.ts')) return false;
-    if (f.endsWith('.test.tsx') || f.endsWith('.test.ts')) return false;
-    return statSync(join(componentDir, f)).isFile();
-  });
-  return files.map((f) => readFileSync(join(componentDir, f), 'utf-8')).join('\n');
+  // Concatenate every non-test .tsx + .ts file UNDER the component dir so that
+  // sub-files (e.g. SVSquare.tsx inside ColorPicker/) contribute their imports
+  // to the parent component's dependency set.
+  //
+  // Recursive since #509. It said "every" and read one level, so nothing in a
+  // nested directory counted — RichText/engine/ holds 20 modules and none of
+  // them were ever parsed. That hid a real bidirectional dependency between
+  // RichText and RichTextEditor for as long as the acyclic gate has been green;
+  // the gate was not wrong, it was being fed half the source. Fixing the walk
+  // without first breaking that cycle turns the gate red.
+  const out: string[] = [];
+  const walk = (dir: string) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(path);
+      } else if (
+        (entry.name.endsWith('.tsx') || entry.name.endsWith('.ts')) &&
+        !entry.name.endsWith('.test.tsx') &&
+        !entry.name.endsWith('.test.ts')
+      ) {
+        out.push(readFileSync(path, 'utf-8'));
+      }
+    }
+  };
+  walk(componentDir);
+  return out.join('\n');
+}
+
+/**
+ * The import-matching half of the walk, exposed so it can be asserted directly.
+ *
+ * The pattern has to accept more than one `../` (#509). Nothing in the tree
+ * currently exercises that — the only nested directory, RichText/engine, had
+ * its single upward import removed when the RichText <-> RichTextEditor cycle
+ * was broken — so the manifest looks the same whether the pattern is right or
+ * wrong. That is exactly the condition under which a fix rots.
+ */
+export function collectImportsFrom(lines: string[]): string[] {
+  return extractParentImports(lines.join('\n'));
 }
 
 function extractParentImports(source: string): string[] {

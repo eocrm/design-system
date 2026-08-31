@@ -1,0 +1,50 @@
+// Attachment body styles, moved out of RichTextEditor.module.scss (#509).
+// RichTextAttachment renders inside the READ-ONLY viewer as well as the editor
+// — renderDoc calls it — so it belongs to the lower of the two layers. Living in
+// the editor's stylesheet was the same inversion as the import that created the
+// dependency cycle.
+// The `figure[data-attachment]` wrapper rules stay in RichTextEditor.module.scss:
+// they are scoped to the editor's own `.root` / `.shell` containers, so they
+// describe the editor's chrome rather than the attachment itself.
+
+// The attachment image preview. `inline-block` lets the figure's `text-align`
+// (data-align) position it (left/center/right); `width` attr + `height: auto`
+// render the configured display size at natural aspect; `max-width: 100%` keeps a
+// wide image from overflowing (Rule 4: 100% allowed).
+.attachmentImg {
+  display: inline-block;
+  max-width: 100%;
+  height: auto;
+}
+
+.attachmentLoading,
+.attachmentError {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg-muted);
+  color: var(--color-fg-muted);
+}
+
+.attachmentChip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-bg);
+  color: var(--color-fg);
+  text-decoration: none;
+}
+
+.attachmentName {
+  font-weight: var(--font-weight-medium);
+}
+
+.attachmentLabel {
+  color: var(--color-danger);
+}

@@ -9,7 +9,12 @@
 // must be cycle-free.
 
 import { readFileSync } from 'node:fs';
-import { buildManifest, MANIFEST_PATH, type ComponentManifest } from './manifest';
+import {
+  buildManifest,
+  collectImportsFrom,
+  MANIFEST_PATH,
+  type ComponentManifest,
+} from './manifest';
 
 describe('components.manifest.json', () => {
   it('matches what the generator produces (regenerate if this fails)', () => {
@@ -75,6 +80,27 @@ describe('components.manifest.json', () => {
     }
 
     expect(cycles).toEqual([]);
+  });
+
+  it('reads nested files, and matches a deeper-than-one-level import', () => {
+    // #509 left both halves of this unexercised, which is why it needs a test
+    // of its own rather than being taken on trust from the graph. The walk was
+    // flat, so RichText/engine — 20 modules — was never read; and
+    // FROM_PARENT_PATH matched a single `../`, so even once read, an import
+    // from a nested file could not match. Fixing either alone changes nothing,
+    // and today the only nested directory has no upward import left (breaking
+    // the RichText -> RichTextEditor cycle is what removed it). So the graph
+    // looks identical either way and would go on looking identical if this
+    // silently reverted.
+    //
+    // Asserted against synthetic input rather than the tree, so it keeps
+    // holding when the tree's nesting changes.
+    const nested = collectImportsFrom([
+      "import { Thing } from '../../Button';",
+      "import { Other } from '../Card';",
+    ]);
+    expect(nested).toContain('Button');
+    expect(nested).toContain('Card');
   });
 
   it('every component listed in composes exists in the manifest', () => {

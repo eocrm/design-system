@@ -10,7 +10,7 @@
 // in manifest.test.ts catches drift between the committed JSON and the
 // TypeScript implementation.
 
-import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -125,7 +125,9 @@ const CLUSTERS = {
   Tooltip: 'Overlays',
 };
 
-const FROM_PARENT_PATH = /from\s+['"]\.\.\/([A-Z][a-zA-Z0-9]+)(?:\/[^'"]*)?['"]/g;
+// `(?:\.\./)+`, not a single `../`, since #509 — the other half of the flat-walk
+// bug. Once nested files are read, their imports sit one level deeper.
+const FROM_PARENT_PATH = /from\s+['"](?:\.\.\/)+([A-Z][a-zA-Z0-9]+)(?:\/[^'"]*)?['"]/g;
 
 function listComponentDirs() {
   return readdirSync(COMPONENTS_DIR, { withFileTypes: true })
@@ -135,13 +137,27 @@ function listComponentDirs() {
     .sort();
 }
 
+// Kept in sync with src/_meta/manifest.ts, deliberately. Recursive since #509:
+// the flat readdir never reached RichText/engine/, so 20 modules and the
+// imports in them were invisible to the graph.
 function collectSourceText(componentDir) {
-  const files = readdirSync(componentDir).filter((f) => {
-    if (!f.endsWith('.tsx') && !f.endsWith('.ts')) return false;
-    if (f.endsWith('.test.tsx') || f.endsWith('.test.ts')) return false;
-    return statSync(join(componentDir, f)).isFile();
-  });
-  return files.map((f) => readFileSync(join(componentDir, f), 'utf-8')).join('\n');
+  const out = [];
+  const walk = (dir) => {
+    for (const entry of readdirSync(dir, { withFileTypes: true })) {
+      const path = join(dir, entry.name);
+      if (entry.isDirectory()) {
+        walk(path);
+      } else if (
+        (entry.name.endsWith('.tsx') || entry.name.endsWith('.ts')) &&
+        !entry.name.endsWith('.test.tsx') &&
+        !entry.name.endsWith('.test.ts')
+      ) {
+        out.push(readFileSync(path, 'utf-8'));
+      }
+    }
+  };
+  walk(componentDir);
+  return out.join('\n');
 }
 
 function extractParentImports(source) {

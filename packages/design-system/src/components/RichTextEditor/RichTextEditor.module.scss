@@ -237,48 +237,6 @@ figure[data-attachment][data-align='right'] {
   text-align: right;
 }
 
-// The attachment image preview. `inline-block` lets the figure's `text-align`
-// (data-align) position it (left/center/right); `width` attr + `height: auto`
-// render the configured display size at natural aspect; `max-width: 100%` keeps a
-// wide image from overflowing (Rule 4: 100% allowed).
-.attachmentImg {
-  display: inline-block;
-  max-width: 100%;
-  height: auto;
-}
-
-.attachmentLoading,
-.attachmentError {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-2);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-bg-muted);
-  color: var(--color-fg-muted);
-}
-
-.attachmentChip {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-1);
-  padding: var(--space-1) var(--space-2);
-  border: var(--border-width) solid var(--color-border);
-  border-radius: var(--radius-md);
-  background: var(--color-bg);
-  color: var(--color-fg);
-  text-decoration: none;
-}
-
-.attachmentName {
-  font-weight: var(--font-weight-medium);
-}
-
-.attachmentLabel {
-  color: var(--color-danger);
-}
-
 // The floating attachment-config popover (RichTextAttachmentConfig). Portaled to
 // <body> and positioned by Floating UI's inline `floatingStyles` (so
 // `position`/offsets are NOT set here). Same Rule 4 note as `.linkBubble`:

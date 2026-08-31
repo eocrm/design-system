@@ -126,7 +126,7 @@
     "cluster": "Display",
     "composes": [],
     "composedBy": [
-      "RichTextEditor"
+      "RichText"
     ]
   },
   "Cluster": {
@@ -597,9 +597,11 @@
     "composedBy": []
   },
   "RichText": {
-    "tier": "primitive",
+    "tier": "composition",
     "cluster": "Display",
-    "composes": [],
+    "composes": [
+      "CircularProgress"
+    ],
     "composedBy": [
       "RichTextEditor"
     ]
@@ -610,7 +612,6 @@
     "composes": [
       "Avatar",
       "Button",
-      "CircularProgress",
       "Cluster",
       "DropdownMenu",
       "EmojiPicker",

@@ -9,7 +9,7 @@ import { isListItem, effectiveDepths } from './listDepths';
 import { MARK_ORDER, marksSignature } from './marks';
 import type { RenderLink } from './renderLink';
 import type { RenderMention } from './renderMention';
-import { RichTextAttachment } from '../../RichTextEditor/RichTextAttachment';
+import { RichTextAttachment } from '../RichTextAttachment';
 
 export interface RenderDocOptions {
   /** Editable surface: add `data-block-id` anchors + render empty blocks with a `<br>`. */
