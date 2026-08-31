@@ -693,9 +693,13 @@ async function readComponentTokenFiles() {
  * behaviour, not a string that spells it the same way.
  *
  * Lookbehind so the boundary is not consumed — see the shared-line test for what
- * each of the three candidate forms actually returns. `matchAll` builds a fresh
- * iterator per call, so sharing one `/g` literal carries no lastIndex between
- * the two call sites.
+ * each of the three candidate forms actually returns.
+ *
+ * Sharing one `/g` literal is safe here only because nothing calls `.test()` or
+ * `.exec()` on it — both leave `lastIndex` advanced, and `matchAll` SEEDS its
+ * iterator from `lastIndex` rather than resetting it, so a single stray
+ * `DECLARATION.test(x)` would silently blind the sweep below. That is this
+ * sweep's own documented failure mode, so do not add one.
  */
 const DECLARATION = /(?<=^|[;{])\s*(--[a-z0-9-]+)\s*:\s*([^;\n]+);/gm;
 

@@ -101,16 +101,6 @@
   --text-fg-subtle: var(--options-picker-group-header-hint-fg);
 }
 
-// `button.` matters. In single mode the header renders as a <div
-// role="presentation"> with no hover background and no cursor change, and the
-// unscoped selector popped its hint to full strength on hover — a hover
-// affordance on something you cannot click. The background this compensates for
-// is itself scoped to the button (see below), so this has to be too, which is
-// what AvatarGroup's `&:is(button):hover` and Table's `.sortable` already do.
-button.groupHeader:hover {
-  --text-fg-subtle: var(--options-picker-group-header-hint-fg-hover);
-}
-
 // Bottom border in the namespace's palette color. The width + style come
 // from these rules; the actual `border-bottom-color` is injected inline
 // from the React layer (using --color-palette-<name>-fg). Applied only
@@ -166,8 +156,17 @@ button.groupHeader {
   width: 100%;
   text-align: left;
 
+  // Scoped to the BUTTON, and kept with the background it compensates for. In
+  // single mode the header renders as a <div role="presentation"> with no hover
+  // background and no cursor change; an unscoped selector popped the hint to
+  // full strength there — a hover affordance on something you cannot click.
+  // AvatarGroup's `&:is(button):hover` and Table's `.sortable` scope the same way.
   &:hover {
     background: var(--options-picker-group-header-bg-hover);
+
+    // --color-bg-muted-hover is dark enough that the subtle hint falls under AA
+    // on it (#504); see the token's own @contrast annotations.
+    --text-fg-subtle: var(--options-picker-group-header-hint-fg-hover);
   }
 
   &:focus-visible {

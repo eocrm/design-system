@@ -549,7 +549,9 @@ describe('a tone stays in sync with the roles derived from it', () => {
     // inside a Modal composites differently, and sunken is consistently the
     // worst of them — light danger reads 5.41 on white but 4.58 on sunken.
     //
-    // Every page surface, not a chosen one. --color-bg-overlay is excluded on
+    // Every page surface, not a chosen one. (The note above about sunken being
+    // the worst of them is LIGHT-theme only: in dark, sunken is the BEST surface
+    // for all three rings and --color-bg-muted is the worst.) --color-bg-overlay is excluded on
     // purpose: it is translucent, so what a ring contrasts with there is the
     // page showing through it, which is already covered by the four below.
     const SURFACES = [
@@ -575,7 +577,9 @@ describe('a tone stays in sync with the roles derived from it', () => {
     // the gap is not hypothetical: Lightbox paints its chrome on
     // --color-bg-overlay-strong, which is 92% opaque and therefore does NOT let
     // the page through the way --color-bg-overlay does. That chrome is dark in
-    // both themes, so in LIGHT theme the tone rings measured 1.35-2.81:1 on it
+    // both themes, so in LIGHT theme the tone rings measured 1.03-3.30:1 across
+    // its four surfaces — 10 of 12 cells under 3:1, and --ring-accent, which
+    // every focus ring resolves through, under it on all four (1.03-2.47) — on it
     // — failing 1.4.11 on a branch whose gate claimed to certify exactly that.
     //
     // Not an it.each over themes, deliberately. A theme-independent surface
@@ -629,15 +633,85 @@ describe('a tone stays in sync with the roles derived from it', () => {
     // takes the first match, so it wins). All three are the same mistake —
     // asserting that a string appears rather than that a rule says it — which is
     // the mistake this whole file keeps re-learning.
+    // A real walker, not a regex. Three earlier versions of this binding were
+    // each defeated by the next level of indirection: a file-wide grep (any
+    // text), then an innermost-block regex (any block, at any depth, under any
+    // condition), then that plus a duplicate check. What defeats a
+    // depth-blind matcher is one line of nesting —
+    //
+    //   .neverRenderedAncestor { .thumb { --image-ring: var(--lightbox-ring) } }
+    //   @media (min-width: 99999px) { .close:focus-visible { … } }
+    //
+    // — both of which satisfied it while the live rule had nothing. So this
+    // resolves nesting the way Sass does, expanding `&` and joining descendants,
+    // and refuses anything inside an at-rule, because a conditional rule is not
+    // the rule that always applies.
+    const topLevelRules = (css: string): { selectors: string[]; body: string }[] => {
+      const found: { selectors: string[]; body: string }[] = [];
+      const walk = (text: string, parents: string[], conditional: boolean) => {
+        let index = 0;
+        let start = 0;
+        while (index < text.length) {
+          if (text[index] === ';') {
+            start = ++index;
+            continue;
+          }
+          if (text[index] !== '{') {
+            index += 1;
+            continue;
+          }
+          let depth = 1;
+          let close = index + 1;
+          for (; close < text.length && depth > 0; close += 1) {
+            if (text[close] === '{') depth += 1;
+            else if (text[close] === '}') depth -= 1;
+          }
+          const header = text.slice(start, index).trim();
+          const body = text.slice(index + 1, close - 1);
+          if (header.startsWith('@')) {
+            walk(body, parents, true);
+          } else {
+            const parts = header
+              .split(',')
+              .map((part) => part.replace(/\s+/g, ' ').trim())
+              .filter(Boolean);
+            const selectors =
+              parents.length === 0
+                ? parts
+                : parents.flatMap((parent) =>
+                    parts.map((part) =>
+                      part.includes('&') ? part.replace(/&/g, parent) : `${parent} ${part}`,
+                    ),
+                  );
+            // Declarations belonging to THIS rule, not to its nested children.
+            if (!conditional)
+              found.push({ selectors, body: body.replace(/[^{}]*\{[^{}]*\}/g, '') });
+            walk(body, selectors, conditional);
+          }
+          index = close;
+          start = close;
+        }
+      };
+      walk(css, [], false);
+      return found;
+    };
+
+    // Every rule with the selector, and it refuses to answer unless there is
+    // exactly one — returning the first was the same last-wins hole
+    // declaredValue() closes for declarations and the Dot gate closes with
+    // `expect(selectors.length).toBe(1)`. stylelint's no-duplicate-selectors is
+    // not enabled by this repo's config, so nothing else catches it.
     const ruleBody = (css: string, selector: string): string | undefined => {
-      for (const match of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
-        const selectors = match[1]
-          .split(',')
-          .map((part) => part.replace(/\s+/g, ' ').trim())
-          .filter(Boolean);
-        if (selectors.includes(selector)) return match[2];
+      const bodies = topLevelRules(css)
+        .filter((rule) => rule.selectors.includes(selector))
+        .map((rule) => rule.body);
+      if (bodies.length > 1) {
+        throw new Error(
+          `${selector} is declared ${bodies.length} times; CSS is last-wins, so this gate ` +
+            `cannot say which one applies. Merge them.`,
+        );
       }
-      return undefined;
+      return bodies[0];
     };
 
     const lightboxCss = stripComments(
@@ -1015,9 +1089,24 @@ describe('a component hover is a visible step from what it replaces', () => {
         return alias ? resolveColour(alias[1], theme, [...seen, name]) : undefined;
       });
       if (left?.kind === 'opaque' && right?.kind === 'opaque') {
-        // Percentages are optional and complementary; CSS fills the missing one.
+        // All four percentage forms, per CSS Color 5. The last two are the ones
+        // that bite: with BOTH given, the percentages are SCALED to sum to 100
+        // rather than taken literally — `A 30%, B 30%` is a 50/50 mix, not
+        // 70/30 — and if they sum to LESS than 100 the result also carries
+        // alpha = sum/100, so `A 20%, B 20%` is a translucent 50/50. Reporting
+        // that as opaque would be worse than a wrong hex: it would pull a
+        // token CSS makes translucent INTO the gate, where every other
+        // alpha-carrying base is excluded.
+        const [p1, p2] = [mix[2], mix[4]].map((v) => (v === undefined ? undefined : Number(v)));
+        if (p1 !== undefined && p2 !== undefined && p1 + p2 < 100) return { kind: 'translucent' };
         const rightShare =
-          mix[4] !== undefined ? Number(mix[4]) / 100 : 1 - Number(mix[2] ?? 50) / 100;
+          p1 === undefined && p2 === undefined
+            ? 0.5
+            : p1 === undefined
+              ? p2! / 100
+              : p2 === undefined
+                ? 1 - p1 / 100
+                : p2 / (p1 + p2);
         const channels = [0, 2, 4].map((i) => {
           const a = parseInt(left.hex.slice(1 + i, 3 + i), 16);
           const b = parseInt(right.hex.slice(1 + i, 3 + i), 16);
@@ -1120,20 +1209,67 @@ describe('a component hover is a visible step from what it replaces', () => {
     expect(candidates.length).toBeGreaterThanOrEqual(60);
   });
 
+  /**
+   * The 30 hover tokens that are OUT of the gate, listed rather than counted.
+   *
+   * 26 are `absent` (no base token at all — the hover paints onto whatever
+   * surface is behind the element), 2 are `transparent`, 1 `translucent`, 1
+   * `noncolour`. The docblock below used to say each member "has to justify
+   * itself"; what actually happens is that the KIND has to be one of the four,
+   * enforced at compile time, and the membership has to match this list. No
+   * per-token reason is recorded, and claiming otherwise overstated it.
+   *
+   * Select/--select-chip-remove-fg-hover is the one worth a note: it is a third
+   * `-fg-hover` with no base, and unlike OptionsPicker's its base genuinely
+   * cannot exist — `.chipRemove` inherits its resting colour (`color: inherit`),
+   * so there is nothing to declare. Do not "fix" it into the gate.
+   */
+  const EXCLUDED_HOVERS = [
+    'Accordion/--accordion-trigger-bg-hover',
+    'Button/--button-bg-ghost-hover',
+    'Calendar/--calendar-agenda-row-bg-hover',
+    'Calendar/--calendar-more-chip-bg-hover',
+    'Calendar/--calendar-resize-handle-bg-hover',
+    'DataTable/--data-table-expand-button-bg-hover',
+    'DataTable/--data-table-pinned-bg-row-hover',
+    'DatePicker/--date-picker-button-bg-hover',
+    'DatePicker/--date-picker-cell-bg-hover',
+    'DatePicker/--date-picker-nav-bg-hover',
+    'DatePicker/--date-picker-time-now-button-bg-hover',
+    'DatePicker/--date-picker-time-toggle-bg-hover',
+    'DateRangePicker/--date-range-picker-button-bg-hover',
+    'DateRangePicker/--date-range-picker-inline-nav-bg-hover',
+    'DateRangePicker/--date-range-picker-popover-nav-bg-hover',
+    'DropdownMenu/--dropdown-menu-item-bg-danger-hover',
+    'DropdownMenu/--dropdown-menu-item-bg-hover',
+    'FilterChip/--filter-chip-dismiss-bg-hover',
+    'Lightbox/--lightbox-control-bg-hover',
+    'OptionsPicker/--options-picker-row-bg-hover',
+    'PageHeader/--page-header-back-button-bg-hover',
+    'Rail/--rail-item-bg-hover',
+    'Select/--select-chip-remove-bg-hover',
+    'Select/--select-chip-remove-fg-hover',
+    'Select/--select-clear-bg-hover',
+    'Select/--select-retry-bg-hover',
+    'Slider/--slider-thumb-shadow-hover',
+    'Sortable/--sortable-handle-bg-hover',
+    'Table/--table-row-bg-hover',
+    'Tabs/--tabs-vertical-tab-bg-hover',
+  ];
+
   it('every excluded hover proves why it is out of scope', () => {
-    // The exclusion list is not written down anywhere — it is recomputed here
-    // and each member has to justify itself. An excluded token whose base turns
+    // The membership is recomputed here and matched against EXCLUDED_HOVERS
+    // above; the KIND of each exclusion is enforced by the exhaustiveness check
+    // below. An excluded token whose base turns
     // out to resolve to an opaque colour after all is a token that quietly left
     // the gate, and it fails here rather than going unmeasured.
     const unjustified: string[] = [];
-    let measurable = 0;
+    const excluded: string[] = [];
     for (const { dir, token, base } of candidates) {
       const light = resolveColour(base, TOKENS);
       const dark = resolveColour(base, DARK);
-      if (light.kind === 'opaque' && dark.kind === 'opaque') {
-        measurable += 1;
-        continue;
-      }
+      if (light.kind === 'opaque' && dark.kind === 'opaque') continue;
+      excluded.push(`${dir}/${token}`);
       if (light.kind === 'opaque' || dark.kind === 'opaque') {
         unjustified.push(`${dir}/${token}: base differs by theme (${light.kind} / ${dark.kind})`);
         continue;
@@ -1173,8 +1309,12 @@ describe('a component hover is a visible step from what it replaces', () => {
     // reviewer noticed. With the count pinned, a new unmeasured hover fails here
     // until someone either declares its base or comes back and says why it has
     // none.
-    const excluded = candidates.length - measurable;
-    expect(excluded, 'a hover token joined or left the excluded set').toBe(30);
+    // NAMED, not counted — the same reasoning the measurement test states two
+    // assertions later and this one did not follow. A bare count is swap-blind:
+    // declaring a base for one token while adding a brand-new orphan hover
+    // leaves it at 30, and `measured >= 41` does not notice either because
+    // measured went up. The list makes both halves of that swap visible.
+    expect(excluded.sort(), 'the excluded set changed').toEqual(EXCLUDED_HOVERS);
   });
 
   it.each([
