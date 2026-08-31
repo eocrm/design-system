@@ -682,6 +682,23 @@ async function readComponentTokenFiles() {
   return files.sort((left, right) => (left.path < right.path ? -1 : 1));
 }
 
+/**
+ * The declaration scanner, hoisted so the sweep and the test that certifies it
+ * are the SAME regex.
+ *
+ * They were two identical literals, which is not the same thing at all: changing
+ * only the sweep's copy back to the line-anchored form left the shared-line test
+ * green while the sweep went blind to every declaration in a `:root { --a: …;
+ * --b: …; }` block. An assertion that names a behaviour has to bind that
+ * behaviour, not a string that spells it the same way.
+ *
+ * Lookbehind so the boundary is not consumed — see the shared-line test for what
+ * each of the three candidate forms actually returns. `matchAll` builds a fresh
+ * iterator per call, so sharing one `/g` literal carries no lastIndex between
+ * the two call sites.
+ */
+const DECLARATION = /(?<=^|[;{])\s*(--[a-z0-9-]+)\s*:\s*([^;\n]+);/gm;
+
 // Comment bodies mention token names and example values freely, and both checks
 // below would read those as declarations. The capture script strips comments for
 // the same reason; this is the same job on a much smaller input.
@@ -710,16 +727,7 @@ test('no component token file declares an opaque colour literal', async () => {
   // true, so alpha is what the rule keys on — no component names appear here.
   const offenders = [];
   for (const { path, content } of files) {
-    // Lookbehind, so the boundary is NOT consumed. A line anchor missed ALL of
-    // them on `:root { --a: #fff; --b: #000; }` — not merely the ones after the
-    // first — and the obvious repair, `(?:^|[;{])`, then ate the `;` that would
-    // have started the next match, so it saw only the odd-numbered ones. Half a
-    // fix reads exactly like a whole one here — and every real *.tokens.scss is
-    // one declaration per line, so the files this walks cannot tell the two
-    // apart. The shared-line case is asserted directly, just below.
-    for (const [, name, value] of content.matchAll(
-      /(?<=^|[;{])\s*(--[a-z0-9-]+)\s*:\s*([^;\n]+);/gm,
-    )) {
+    for (const [, name, value] of content.matchAll(DECLARATION)) {
       const raw = value.trim();
       const isHex = /^#[0-9a-f]{3,8}$/i.test(raw);
       const isOpaqueFunction =
@@ -740,11 +748,11 @@ test('the opaque-literal scan sees every declaration on a shared line', () => {
   // half-working boundary looks identical to a working one: the line-anchored
   // form finds NOTHING here (`:root {` precedes the first declaration), and the
   // obvious repair `(?:^|[;{])` consumes the `;` the next match needs and finds
-  // only the odd-numbered ones. Both would pass the real sweep unchanged.
+  // only the odd-numbered ones. Both would pass the real sweep unchanged — so
+  // this asserts DECLARATION itself, the object the sweep runs, rather than a
+  // second literal that happens to be spelled the same.
   const line = ':root { --a: #ffffff; --b: #000000; --c: rgb(1 2 3); }';
-  const found = [...line.matchAll(/(?<=^|[;{])\s*(--[a-z0-9-]+)\s*:\s*([^;\n]+);/gm)].map(
-    ([, name]) => name,
-  );
+  const found = [...line.matchAll(DECLARATION)].map(([, name]) => name);
   assert.deepEqual(found, ['--a', '--b', '--c']);
 });
 

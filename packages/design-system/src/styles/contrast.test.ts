@@ -615,12 +615,16 @@ describe('a tone stays in sync with the roles derived from it', () => {
     // EVERY include, not just the tokens. .close / .download / .chev /
     // .thumbDoc reach the mixin directly through one grouped selector, and
     // reverting it to a bare `@include focus-ring` put all four back on
-    // --ring-accent at 1.03-2.47:1 with the whole suite green — the two token
+    // --ring-accent at 1.03-2.47:1 IN LIGHT (dark reads 2.88-6.63) with the
+    // whole suite green — the two token
     // bindings above cannot see a call site. Asserted over every include rather
     // than that one, so a fifth ring added later cannot skip the token.
     // To the statement end, not to the first `)` — that one closes `var(`.
+    // Whitespace-normalised, so a correctly-written multi-line include is not
+    // reported as wrong. It failed closed rather than open, but a false alarm
+    // here trains the next reader to distrust the gate.
     const includes = [...lightboxCss.matchAll(/@include\s+focus-ring([^;]*);/g)].map((m) =>
-      m[1].trim(),
+      m[1].replace(/\s+/g, ''),
     );
     expect(includes.length, 'Lightbox paints focus rings').toBeGreaterThanOrEqual(1);
     for (const arg of includes) {
@@ -653,6 +657,11 @@ describe('a tone stays in sync with the roles derived from it', () => {
     // to 88% would otherwise leave this certifying a surface that no longer
     // exists — the failure this whole file keeps closing.
     const overlay = declaredValue('--color-bg-overlay-strong', TOKENS)!;
+    // Same percentage-alpha guard as layer() below. Without it `rgb(15 23 42 / 0.92)`
+    // parses to alpha 0.0092 and the gate certifies a surface that is not there.
+    expect(overlay, '--color-bg-overlay-strong states alpha as a percentage').toMatch(
+      /\/\s*[\d.]+%\s*\)/,
+    );
     const [or, og, ob, oa] = overlay.match(/[\d.]+/g)!.map(Number);
     const overlayHex = `#${[or, og, ob].map((c) => c.toString(16).padStart(2, '0')).join('')}`;
 
@@ -1047,10 +1056,14 @@ describe('a component hover is a visible step from what it replaces', () => {
     // out to resolve to an opaque colour after all is a token that quietly left
     // the gate, and it fails here rather than going unmeasured.
     const unjustified: string[] = [];
+    let measurable = 0;
     for (const { dir, token, base } of candidates) {
       const light = resolveColour(base, TOKENS);
       const dark = resolveColour(base, DARK);
-      if (light.kind === 'opaque' && dark.kind === 'opaque') continue;
+      if (light.kind === 'opaque' && dark.kind === 'opaque') {
+        measurable += 1;
+        continue;
+      }
       if (light.kind === 'opaque' || dark.kind === 'opaque') {
         unjustified.push(`${dir}/${token}: base differs by theme (${light.kind} / ${dark.kind})`);
         continue;
@@ -1080,6 +1093,18 @@ describe('a component hover is a visible step from what it replaces', () => {
       }
     }
     expect(unjustified).toEqual([]);
+
+    // PIN THE EXCLUDED COUNT, not just the measured one. `measured >= 40`
+    // catches a LOSS; it cannot catch a failure to ADD. Nothing forces a
+    // `-hover` token to have a base, so shipping `--x-fg-hover` with no `--x-fg`
+    // leaves this gate silently — `absent` is an accepted reason and the
+    // measured floor does not move. That is exactly how
+    // --options-picker-group-header-hint-fg-hover went unmeasured until a
+    // reviewer noticed. With the count pinned, a new unmeasured hover fails here
+    // until someone either declares its base or comes back and says why it has
+    // none.
+    const excluded = candidates.length - measurable;
+    expect(excluded, 'a hover token joined or left the excluded set').toBe(30);
   });
 
   it.each([

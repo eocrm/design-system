@@ -93,21 +93,20 @@
   gap: var(--options-picker-group-header-gap);
   padding: var(--options-picker-group-header-padding-y) var(--options-picker-group-header-padding-x);
   background: var(--options-picker-group-header-bg);
+
+  // Overrides the tone token the nested <Text tone="subtle"> resolves through,
+  // rather than changing its prop, so the hint has a real base token for the
+  // #504 hover gate to measure against. Resolves to --color-fg-subtle, which is
+  // exactly Text's own default, so resting appearance is unchanged.
+  --text-fg-subtle: var(--options-picker-group-header-hint-fg);
 }
 
-// Overrides the tone token the nested <Text tone="subtle"> resolves through,
-// rather than changing its prop — the hint stays subtle at rest and only
-// strengthens where the surface demands it.
 // `button.` matters. In single mode the header renders as a <div
 // role="presentation"> with no hover background and no cursor change, and the
 // unscoped selector popped its hint to full strength on hover — a hover
 // affordance on something you cannot click. The background this compensates for
 // is itself scoped to the button (see below), so this has to be too, which is
 // what AvatarGroup's `&:is(button):hover` and Table's `.sortable` already do.
-.groupHeader {
-  --text-fg-subtle: var(--options-picker-group-header-hint-fg);
-}
-
 button.groupHeader:hover {
   --text-fg-subtle: var(--options-picker-group-header-hint-fg-hover);
 }

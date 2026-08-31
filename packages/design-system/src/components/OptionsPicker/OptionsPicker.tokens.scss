@@ -45,9 +45,11 @@
   // regression #504 caused, not to the pre-existing pair — but a hover-only
   // patch would otherwise read as if the whole thing were sound, and hover
   // ending up 2.7x more legible than rest inverts the usual relationship.
+  // Tracked in #511, which also asks whether this pair is the only
+  // subtle-on-muted one in the library or merely the first one found.
   // The base is declared so the pair is MEASURED. Without it resolveColour
-  // classifies the hover as `absent` and the #504 gate waves it through under a
-  // reason that is factually wrong here — the hover does not paint onto an
+  // classifies the BASE as absent — the hover itself always resolved — and the
+  // #504 gate skips the pair under a reason that is factually wrong here — the hover does not paint onto an
   // unknown surface, it swaps a known --color-fg-subtle for --color-fg. Its two
   // named siblings, --table-header-fg-hover and --avatar-overflow-fg-hover, both
   // have bases and are measured; this one should be too.

@@ -218,9 +218,13 @@
 // a faded indicator. LAST of the three opacity rules on purpose: `:hover` and
 // `:focus-within` are both (0,2,0), so order decides, and above `:hover` a
 // thumbnail that was focused AND hovered took the 0.85 hover value instead.
-// Not a conformance issue at any of the three values — the scrim ring clears
-// the 3:1 floor several times over faded or not, which contrast.test.ts
-// measures — this is about the indicator looking the same however you got there.
+// The faded case is now unreachable FOR THE RING: Image paints it on
+// `.wrapper:has(.trigger:focus-visible)`, and this rule matches whenever that
+// trigger has focus, so a visible ring always coincides with full opacity. What
+// is left is the indicator looking the same however you got there.
+// contrast.test.ts measures the scrim ring at FULL opacity only; nothing in the
+// suite applies this opacity to it. Lowering --opacity-thumb-idle would not
+// fail any gate, so do not read the green suite as covering that.
 .thumb:focus-within {
   opacity: var(--opacity-visible);
 }
