@@ -474,16 +474,26 @@ describe('a tone stays in sync with the roles derived from it', () => {
   it.each([
     ['light', TOKENS],
     ['dark', DARK],
-  ])('every --ring-* still matches the tone it was derived from in %s', (_theme, source) => {
-    // The rings are hand-written rgb() literals, so nothing links them to their
-    // primitive. Three were byte-exact decompositions of values this branch
-    // changed, leaving an invalid Input drawing its border in one red and its
-    // ring, 2px away and concentric, in another.
+  ])('every --ring-* is its tone exactly, in %s', (_theme, source) => {
+    // Rewritten for #505. The old version pinned each ring's RGB to its
+    // primitive while the rings were TRANSLUCENT rgb() literals, which is what
+    // made a light-accent exemption necessary: that ring was a deliberately
+    // lighter blue so it would read against the accent fill it surrounds.
     //
-    // This pins RGB to the primitive exactly, which is also what forces the
-    // light-accent exemption below. If ring ALPHA is ever revisited (--ring-danger
-    // at 40% composites to 1.94:1 on white, under 1.4.11's 3:1 for a focus
-    // indicator — see #490), this gate is the thing to renegotiate first.
+    // That exemption is gone, and not by widening it — the reason for it is
+    // gone. The rings are opaque now and the separation from the fill comes
+    // from `outline-offset` in the focus-ring mixin, which shows the real
+    // surface behind the element instead of asking one colour to contrast with
+    // two things at once. It could never have done both: 3:1 on white caps a
+    // colour's luminance at 0.30 and 3:1 on #0052cc floors it at 0.337, so no
+    // opaque value satisfies both and no alpha does either. The old ring
+    // measured 1.65:1 composited on white — the worst of the three, on the tone
+    // every focus ring in the library resolves through, and #490 did not catch
+    // it because it only measured danger and success.
+    //
+    // So the relationship is now exact equality with no holes, which is
+    // stronger than the hue-band #490 proposed and needs no second end pinned:
+    // there is nothing left that is allowed to differ.
     for (const tone of ['accent', 'danger', 'success'] as const) {
       const declared = [...source.matchAll(new RegExp(`--ring-${tone}:\\s*([^;\n]+);`, 'g'))].map(
         (m) => m[1],
@@ -492,44 +502,47 @@ describe('a tone stays in sync with the roles derived from it', () => {
       // once under prefers-color-scheme. Reading only the first let the second
       // copy be mutated freely.
       expect(new Set(declared).size, `--ring-${tone} declarations agree`).toBeLessThanOrEqual(1);
-      // Only the rings need this. tokenValue() also reads the first declaration
-      // of the two dark.scss copies, but that is covered from the other side:
-      // tokens:check diffs both forcedDark and systemDark against tokens.json
-      // and fails on a single hex digit. The rings need it here because their
-      // values are hand-written literals with no source of truth to diff.
       const ring = declared[0];
       // No fallback to the light source. All three are declared in both files;
       // if one is ever dropped, failing here is better than silently comparing
       // a light triple against a dark tone.
       expect(ring, `--ring-${tone} is declared in ${_theme}`).toBeDefined();
-      // The reconstruction below only understands integer rgb(). An equivalent
-      // percentage form is the same COLOUR but reconstructs to garbage, so say
-      // so plainly rather than reporting a baffling colour mismatch.
-      expect(ring!.split('/')[0], `--ring-${tone} uses integer rgb()`).toMatch(
-        /^rgba?\(\s*\d{1,3}[\s,]+\d{1,3}[\s,]+\d{1,3}\s*$/,
-      );
-      const channels = ring!.match(/\d+/g)!.slice(0, 3).map(Number);
-      const asHex = `#${channels.map((c) => c.toString(16).padStart(2, '0')).join('')}`;
-      if (_theme === 'light' && tone === 'accent') {
-        // The one deliberate divergence: a lighter blue, so a focus ring reads
-        // against the accent fill it surrounds. Pinned rather than exempted —
-        // an unguarded exemption is the same hole this block was written to
-        // close, and every focus ring in the library resolves through it.
-        expect(ring, 'light --ring-accent is deliberately not --color-accent').toBe(
-          'rgb(76 154 255 / 50%)',
-        );
-        // Pinned at BOTH ends. Pinning only the ring left the direction that
-        // actually broke on this branch — the primitive moving out from under a
-        // hand-written ring — silent for the one tone every focus ring in the
-        // library resolves through.
-        expect(tokenValue('--color-accent', source), 'retuning accent must revisit its ring').toBe(
-          '#0052cc',
-        );
-        continue;
+      // Opaque, and said plainly. A ring that regains alpha fails 1.4.11 again
+      // — 40% was what put danger at 1.94:1 and success at 1.81:1 — and it
+      // would fail here first, with a reason, rather than in the ratio check
+      // below with a baffling composite.
+      expect(ring, `--ring-${tone} is an opaque hex`).toMatch(/^#[0-9a-f]{6}$/);
+      expect(ring, `--ring-${tone} vs --color-${tone}`).toBe(tokenValue(`--color-${tone}`, source));
+    }
+  });
+
+  it.each([
+    ['light', TOKENS],
+    ['dark', DARK],
+  ])('every --ring-* clears 1.4.11 against every surface it lands on in %s', (_theme, source) => {
+    // The measurement #490 asked for and did not have: it checked the rings
+    // against WHITE only. A ring on --color-bg-subtle, on --color-bg-sunken, or
+    // inside a Modal composites differently, and sunken is consistently the
+    // worst of them — light danger reads 5.41 on white but 4.58 on sunken.
+    //
+    // Every page surface, not a chosen one. --color-bg-overlay is excluded on
+    // purpose: it is translucent, so what a ring contrasts with there is the
+    // page showing through it, which is already covered by the four below.
+    const SURFACES = [
+      '--color-bg',
+      '--color-bg-subtle',
+      '--color-bg-sunken',
+      '--color-bg-muted',
+    ] as const;
+    for (const tone of ['accent', 'danger', 'success'] as const) {
+      const ring = tokenValue(`--ring-${tone}`, source);
+      for (const surface of SURFACES) {
+        const ratio = contrast(ring, tokenValue(surface, source));
+        // 3:1 is WCAG 1.4.11 for a non-text indicator. The margin is real and
+        // meant to stay real — the tightest pair here is 4.33:1, so this is not
+        // a tripwire sitting on the current value the way the hover floors are.
+        expect(ratio, `--ring-${tone} on ${surface}`).toBeGreaterThanOrEqual(3.0);
       }
-      expect(asHex, `--ring-${tone} vs --color-${tone}`).toBe(
-        tokenValue(`--color-${tone}`, source),
-      );
     }
   });
 });

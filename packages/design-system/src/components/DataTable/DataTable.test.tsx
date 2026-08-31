@@ -217,9 +217,14 @@ describe('DataTable responsive stylesheet', () => {
     expect(compiledDeclaration(focusRule, 'opacity')).toMatchObject({
       value: 'var(--data-table-header-resize-handle-opacity-visible)',
     });
-    expect(compiledDeclaration(focusRule, 'outline')).toMatchObject({ value: 'none' });
-    expect(compiledDeclaration(focusRule, 'box-shadow')).toMatchObject({
-      value: '0 0 0 var(--ring-width) var(--ring-accent)',
+    // The focus-ring mixin paints an outline with an offset gap, not a spread
+    // box-shadow (#505). The gap is what separates the ring from the element it
+    // surrounds, using whatever surface is actually behind it.
+    expect(compiledDeclaration(focusRule, 'outline')).toMatchObject({
+      value: 'var(--ring-width) solid var(--ring-accent)',
+    });
+    expect(compiledDeclaration(focusRule, 'outline-offset')).toMatchObject({
+      value: 'var(--ring-offset)',
     });
   });
 });

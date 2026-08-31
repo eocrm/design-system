@@ -231,9 +231,10 @@
     "--radius-lg": "8px",
     "--radius-md": "4px",
     "--radius-sm": "3px",
-    "--ring-accent": "rgb(76 154 255 / 50%)",
-    "--ring-danger": "rgb(200 48 10 / 40%)",
-    "--ring-success": "rgb(0 126 84 / 40%)",
+    "--ring-accent": "#0052cc",
+    "--ring-danger": "#c8300a",
+    "--ring-offset": "2px",
+    "--ring-success": "#007e54",
     "--ring-width": "2px",
     "--shadow-lg": "0 4px 8px -2px rgb(9 30 66 / 25%), 0 0 1px rgb(9 30 66 / 31%)",
     "--shadow-md": "0 2px 4px rgb(9 30 66 / 8%), 0 0 1px rgb(9 30 66 / 31%)",
@@ -411,9 +412,9 @@
     "--color-warning-bg-subtle": "#3d3216",
     "--color-warning-fg": "#1d2125",
     "--color-warning-strong": "#f5cd47",
-    "--ring-accent": "rgb(104 167 255 / 65%)",
-    "--ring-danger": "rgb(248 113 104 / 55%)",
-    "--ring-success": "rgb(75 206 151 / 55%)",
+    "--ring-accent": "#68a7ff",
+    "--ring-danger": "#f87168",
+    "--ring-success": "#4bce97",
     "--shadow-lg": "0 4px 12px -2px rgb(0 0 0 / 50%), 0 0 1px rgb(0 0 0 / 56%)",
     "--shadow-md": "0 2px 4px rgb(0 0 0 / 40%), 0 0 1px rgb(0 0 0 / 56%)",
     "--shadow-sm": "0 1px 2px rgb(0 0 0 / 40%)",
@@ -531,9 +532,9 @@
     "--color-warning-bg-subtle": "#3d3216",
     "--color-warning-fg": "#1d2125",
     "--color-warning-strong": "#f5cd47",
-    "--ring-accent": "rgb(104 167 255 / 65%)",
-    "--ring-danger": "rgb(248 113 104 / 55%)",
-    "--ring-success": "rgb(75 206 151 / 55%)",
+    "--ring-accent": "#68a7ff",
+    "--ring-danger": "#f87168",
+    "--ring-success": "#4bce97",
     "--shadow-lg": "0 4px 12px -2px rgb(0 0 0 / 50%), 0 0 1px rgb(0 0 0 / 56%)",
     "--shadow-md": "0 2px 4px rgb(0 0 0 / 40%), 0 0 1px rgb(0 0 0 / 56%)",
     "--shadow-sm": "0 1px 2px rgb(0 0 0 / 40%)",
@@ -1962,6 +1963,12 @@
         }
       ],
       "--ring-danger": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
+      "--ring-offset": [
         {
           "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"

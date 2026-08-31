@@ -95,8 +95,6 @@
 
 .item:focus-visible {
   @include focus-ring;
-
-  outline: none;
 }
 
 // Size variants — match Button's --size-* scale for visual consistency.

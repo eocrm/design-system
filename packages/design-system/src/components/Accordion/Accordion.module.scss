@@ -116,7 +116,12 @@
   // when an actions slot shortens this button. The trigger stays transparent.
   &:focus-visible {
     outline: none;
-    box-shadow: inset 0 0 0 var(--ring-width) var(--accordion-trigger-ring);
+
+    @include focus-ring(var(--accordion-trigger-ring));
+
+    // Inset: the ring sits inside the cell box rather than
+    // overlapping its neighbour.
+    outline-offset: calc(-1 * var(--ring-offset));
   }
 
   &:disabled {

@@ -213,7 +213,7 @@ g:has(> .edgeHit:focus-visible) > .edgePath {
 }
 
 .node[data-connect-target='true'] {
-  box-shadow: 0 0 0 var(--ring-width) var(--ring-success);
+  @include focus-ring(var(--ring-success));
 }
 
 .nodeLabel {

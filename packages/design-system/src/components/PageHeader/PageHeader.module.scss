@@ -89,8 +89,6 @@
 
 .backButton:focus-visible {
   @include focus-ring;
-
-  outline: none;
 }
 
 .backButton:disabled {

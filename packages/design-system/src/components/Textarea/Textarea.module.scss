@@ -1,3 +1,4 @@
+@use '../../styles/mixins' as *;
 @use './Textarea.tokens';
 
 .wrapper {
@@ -25,7 +26,8 @@
   &:focus-visible {
     outline: none;
     border-color: var(--textarea-border-color-focus);
-    box-shadow: 0 0 0 var(--ring-width) var(--textarea-ring-focus);
+
+    @include focus-ring(var(--textarea-ring-focus));
   }
 
   &:disabled {
@@ -74,7 +76,8 @@
 
   &:focus-visible {
     border-color: var(--textarea-border-color-invalid);
-    box-shadow: 0 0 0 var(--ring-width) var(--textarea-ring-invalid);
+
+    @include focus-ring(var(--textarea-ring-invalid));
   }
 }
 

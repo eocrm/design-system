@@ -1,9 +1,25 @@
 // Mixins for use inside component .module.scss files via `@use '@styles/mixins' as *;`
 // NEVER includes raw colors or sizes — only structural patterns using tokens.
 
+// `outline`, not `box-shadow` (#505). The ring has to clear 3:1 against BOTH
+// things it touches — the surface outside it and the element fill inside it —
+// and no single opaque blue can do that against white and --color-accent at
+// once: 3:1 on white caps luminance at 0.30, 3:1 on #0052cc floors it at 0.337.
+// The windows do not overlap, so the colour was never the lever.
+// `outline-offset` is, and it is the native one. The gap shows the REAL surface
+// behind the element, whatever that happens to be, so the ring is separated
+// from the fill it surrounds without the library having to name that surface in
+// a token — which a two-layer box-shadow would have to, and would get wrong on
+// every sunken panel and inside every Modal.
+// Outline also follows border-radius, is not clipped the way a spread shadow is,
+// and leaves box-shadow free for the element's own elevation, which this mixin
+// used to overwrite on focus. Five call sites already set `outline-offset` next
+// to this include (DataTable, HeaderCell x3, and DataTable's clickable row also
+// wrote `outline: none`) — all of it inert against a box-shadow ring. Those were
+// written expecting an outline; now they get one.
 @mixin focus-ring($color: var(--ring-accent)) {
-  outline: none;
-  box-shadow: 0 0 0 var(--ring-width) #{$color};
+  outline: var(--ring-width) solid #{$color};
+  outline-offset: var(--ring-offset);
 }
 
 @mixin visually-hidden {

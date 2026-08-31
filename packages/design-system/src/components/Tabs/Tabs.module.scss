@@ -1,3 +1,4 @@
+@use '../../styles/mixins' as *;
 @use './Tabs.tokens';
 
 // The outer wrapper handles horizontal scrolling. Putting overflow here
@@ -50,7 +51,9 @@
 
   &:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 var(--ring-width) var(--tabs-tab-ring);
+
+    @include focus-ring(var(--tabs-tab-ring));
+
     border-radius: var(--tabs-tab-radius);
   }
 }
@@ -83,7 +86,9 @@
 
   &:focus-visible {
     outline: none;
-    box-shadow: 0 0 0 var(--ring-width) var(--tabs-tab-ring);
+
+    @include focus-ring(var(--tabs-tab-ring));
+
     border-radius: var(--tabs-tab-radius);
   }
 

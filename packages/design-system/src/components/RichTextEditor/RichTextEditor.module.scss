@@ -1,3 +1,4 @@
+@use '../../styles/mixins' as *;
 @use '../RichText/prose';
 
 .root {
@@ -16,7 +17,8 @@
 
 .root:focus-visible {
   border-color: var(--color-accent);
-  box-shadow: 0 0 0 var(--ring-width) var(--ring-accent);
+
+  @include focus-ring(var(--ring-accent));
 }
 
 .root[data-empty]::before {
@@ -136,7 +138,7 @@
 // The active chip gets a ring (same tokens as the editor's focus ring) so the
 // current color reads at a glance.
 .colorBadgeActive {
-  box-shadow: 0 0 0 var(--ring-width) var(--ring-accent);
+  @include focus-ring(var(--ring-accent));
 }
 
 // The Default/clear chip: a neutral surface (no palette fill) reading as

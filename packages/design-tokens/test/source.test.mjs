@@ -273,8 +273,8 @@ test('maps every captured public variable to exactly one web output', async () =
   const combinedNames = new Set([...webNames, ...componentNames]);
 
   // +2 from #504: --color-bg-hover and --color-bg-muted-hover.
-  assert.equal(capturedNames.size, 305);
-  assert.equal(webNames.length, 249);
+  assert.equal(capturedNames.size, 306);
+  assert.equal(webNames.length, 250);
   assert.equal(componentNames.size, 56);
   assert.deepEqual(duplicateNames, []);
   assert.deepEqual([...combinedNames].sort(), [...capturedNames].sort());
@@ -369,7 +369,7 @@ test('keeps all twelve deprecated Badge variables as component aliases', async (
 test('preserves the pre-migration web contract fixture with provenance and expanded dark scopes', async () => {
   const fixture = await readJson(fixturePath);
 
-  assert.equal(Object.keys(fixture.light).length, 302);
+  assert.equal(Object.keys(fixture.light).length, 303);
   assert.equal(Object.keys(fixture.forcedDark).length, 118);
   assert.deepEqual(fixture.systemDark, fixture.forcedDark);
   assert.deepEqual(fixture.forcedLight, {});

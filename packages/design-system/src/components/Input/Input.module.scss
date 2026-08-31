@@ -1,3 +1,4 @@
+@use '../../styles/mixins' as *;
 @use './Input.tokens';
 
 .input {
@@ -20,7 +21,8 @@
   &:focus-visible {
     outline: none;
     border-color: var(--input-border-color-focus);
-    box-shadow: 0 0 0 var(--ring-width) var(--input-ring-focus);
+
+    @include focus-ring(var(--input-ring-focus));
   }
 
   &:disabled {
@@ -55,6 +57,7 @@
 
   &:focus-visible {
     border-color: var(--input-border-color-invalid);
-    box-shadow: 0 0 0 var(--ring-width) var(--input-ring-invalid);
+
+    @include focus-ring(var(--input-ring-invalid));
   }
 }

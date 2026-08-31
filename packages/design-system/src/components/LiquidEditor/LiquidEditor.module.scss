@@ -1,3 +1,4 @@
+@use '../../styles/mixins' as *;
 @use './LiquidEditor.tokens';
 
 // ─── Root container ────────────────────────────────────────────────────────────
@@ -44,7 +45,8 @@
 // ─── Focus ring on the outer shell (drawn on .root so it encloses gutter too) ─
 .root:focus-within {
   border-color: var(--liquid-editor-border-focus);
-  box-shadow: 0 0 0 var(--ring-width) var(--liquid-editor-ring);
+
+  @include focus-ring(var(--liquid-editor-ring));
 }
 
 // ─── Toolbar ───────────────────────────────────────────────────────────────────
