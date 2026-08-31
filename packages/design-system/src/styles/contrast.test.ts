@@ -563,7 +563,17 @@ describe('presence dots stay distinguishable from each other', () => {
   //
   // No AMBER-OR-YELLOW candidate escapes that, and `away` has to read as
   // yellow, so within the constraint the palette is not the lever — the remedy
-  // is a second channel (text alternative or dot shape), tracked in #490.
+  // is a second channel (text alternative or dot shape).
+  //
+  // BOTH SHIPPED IN #506, which is why this block is still worth keeping and
+  // still not a 1.4.1 claim. Avatar now folds `status` into the accessible name
+  // and gives each status its own silhouette (filled / half / barred / hollow),
+  // asserted in Avatar.test.tsx against the compiled stylesheet — a check that
+  // has to live there because the channel is a SHAPE and nothing measurable
+  // from a token can see it. What remains below is the trichromatic floor:
+  // still worth holding so the dots do not collapse for users who rely on
+  // colour, but no longer the only thing standing between this component and
+  // 1.4.1.
   //
   // (Three successive attempts to add "and here is how much better an
   // unconstrained hue would do" were each wrong in a different way — a

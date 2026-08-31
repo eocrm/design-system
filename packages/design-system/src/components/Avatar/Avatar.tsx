@@ -1,6 +1,7 @@
 import { forwardRef, useEffect, useState, type CSSProperties, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
 import { Tooltip } from '../Tooltip';
+import { useTranslation } from '../../i18n';
 import { useAvatarGroup } from './AvatarGroupContext';
 import styles from './Avatar.module.scss';
 
@@ -120,6 +121,16 @@ function hasOwnProps(obj: object | undefined): obj is object {
  *
  * @remarks Anti-patterns
  * - ❌ `<Avatar name="" />` — `name` is required and is the accessible label.
+ * - ❌ Querying a status-bearing avatar by the bare name. `status` is folded
+ *   into the accessible name (`"Alex, online"`), because colour alone cannot
+ *   carry it — WCAG 1.4.1. Use `getByRole('img', { name: 'Alex, online' })`.
+ * - ❌ Relying on the dot's colour to distinguish statuses in your own UI, or
+ *   re-tinting it. Each status also renders a distinct shape (filled / half /
+ *   barred / hollow); that shape is the channel that survives colour-vision
+ *   deficiency, and `away` vs `busy` collapses without it.
+ * - ❌ Adding your own visually-hidden status text next to the avatar. It would
+ *   be announced twice, and inside the no-`src` branch — a `role="img"` — ARIA
+ *   prunes children as presentational, so it would be silent there anyway.
  * - ❌ Using Avatar to show a non-person icon. Use an icon component instead.
  * - ❌ Wrapping the result with `role="img"` again. The component already
  *   handles ARIA: with `src` set, the inner `<img>` is the labeled image;
@@ -129,6 +140,7 @@ export const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(function Avatar(
   { name, src, size, status, tooltip, className, style, ...props },
   ref,
 ) {
+  const t = useTranslation();
   const group = useAvatarGroup();
   const resolvedSize: AvatarSize = size ?? group?.size ?? 'md';
   const resolvedTooltip: boolean = tooltip ?? group?.tooltip ?? false;
@@ -141,6 +153,24 @@ export const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(function Avatar(
   const hasImage = typeof src === 'string' && src.trim() !== '' && !imageBroken;
   const trimmedName = name.trim();
   const accessibleName = trimmedName === '' ? '?' : trimmedName;
+
+  // #506. Presence was colour-only: the dot is decorative, and `status` reached
+  // neither the accessible name nor the tooltip, so WCAG 1.4.1 applied and the
+  // library did not meet it. The OKLab separation the token gate measures is
+  // blind to dichromacy — under simulated protanopia light away/busy collapses
+  // by an order of magnitude while that gate reads 0.158 and passes.
+  //
+  // FOLDED INTO THE NAME rather than announced from the dot, for two reasons.
+  // Rule 10: presence is a property you ARRIVE at — an avatar sits in a list you
+  // browse minutes after it rendered — and arrived-at properties belong in the
+  // name. And mechanically, the no-image branch is `role="img"`, whose children
+  // ARIA prunes as presentational: a visually-hidden span inside it would be
+  // silent in exactly half the cases, which is the trap Rule 10 records for
+  // Lightbox. Folding works identically in both branches.
+  //
+  // The dot itself stays aria-hidden, so nothing is announced twice.
+  const statusLabel = status ? t(`avatar.presence.${status}` as const) : undefined;
+  const labelledName = statusLabel ? `${accessibleName}, ${statusLabel}` : accessibleName;
 
   const fallbackStyle: StyleWithVars | undefined = hasImage
     ? undefined
@@ -160,7 +190,7 @@ export const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(function Avatar(
   // .presence dot, which lives as a sibling outside .crop.
   const cropInner = hasImage ? (
     <span className={styles.crop}>
-      <img src={src} alt={accessibleName} onError={() => setImageBroken(true)} />
+      <img src={src} alt={labelledName} onError={() => setImageBroken(true)} />
     </span>
   ) : (
     <span className={styles.crop}>
@@ -183,7 +213,7 @@ export const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(function Avatar(
       {...props}
       ref={ref}
       role="img"
-      aria-label={accessibleName}
+      aria-label={labelledName}
       className={wrapperClass}
       style={mergedStyle}
     >

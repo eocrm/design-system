@@ -1829,7 +1829,7 @@ import { Divider } from '@eocrm/design-system';
 - `name` (required) — alt/aria-label, initials source, and color seed. Same name → same color, always.
 - `src` — image URL. Empty/whitespace = no image. Falls back to initials on load failure.
 - `size`: `sm` (24) / `md` (32, default) / `lg` (40) / `xl` (80, member-card popovers / profile headers)
-- `status?` — presence dot in the bottom-right corner. `'online' | 'busy' | 'away' | 'offline'`. Omit to render no dot.
+- `status?` — presence dot in the bottom-right corner. `'online' | 'busy' | 'away' | 'offline'`. Omit to render no dot. **Setting `status` changes the accessible name**: it becomes `"{name}, {status}"` (localized), because colour alone cannot carry the status — WCAG 1.4.1. Query with `getByRole('img', { name: 'Alex, online' })`, not `{ name: 'Alex' }`. Each status also renders a distinct **shape** (filled / half / barred / hollow), so it survives colour-vision deficiency and greyscale; the dot itself stays `aria-hidden` so nothing is announced twice.
 - `tooltip?` — wraps the avatar in `<Tooltip>` with `content={name}`. Defaults to `false` standalone (back-compat). Inside `<AvatarGroup>`, the group's `tooltip` becomes the default (which itself defaults to `true`); explicit per-child still wins.
 - Inside `<AvatarGroup>`, the group's `size` and `tooltip` become defaults — explicit per-child props still win. The avatar also picks up a `--color-bg` ring so stacked siblings read as distinct.
 - Use `avatarColorIndex(name)` if you need to match an avatar's color elsewhere (e.g. a chart segment).

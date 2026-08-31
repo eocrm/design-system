@@ -179,6 +179,14 @@ export const ru: Messages = {
     enteredTopLevel: 'Перемещено на верхний уровень',
     dropHint: 'Перетащите виджеты сюда',
   },
+  avatar: {
+    presence: {
+      online: 'в сети',
+      busy: 'занят',
+      away: 'отошёл',
+      offline: 'не в сети',
+    },
+  },
   avatarGroup: {
     overflow: (params) => `Ещё ${params.count}`,
   },

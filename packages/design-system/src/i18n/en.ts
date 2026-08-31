@@ -177,6 +177,14 @@ export const en: Messages = {
     enteredTopLevel: 'Moved to the top level',
     dropHint: 'Drop widgets here',
   },
+  avatar: {
+    presence: {
+      online: 'online',
+      busy: 'busy',
+      away: 'away',
+      offline: 'offline',
+    },
+  },
   avatarGroup: {
     overflow: (params) => `${params.count} more avatars`,
   },
