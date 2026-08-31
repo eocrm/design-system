@@ -572,6 +572,21 @@ describe('a tone stays in sync with the roles derived from it', () => {
     }
   });
 
+  it('an inset ring stays inside the border box', () => {
+    // Seven call sites draw the ring inset with `calc(-1 * var(--ring-offset))`,
+    // because their focusable sits flush against a clipping ancestor. That puts
+    // the band at [border-box - offset, border-box - offset + width], so it is
+    // fully inside ONLY while width <= offset. Nothing asserted the relation,
+    // and raising --ring-width to 3px — a plausible 1.4.11 tweak — would push
+    // every one of them 1px back outside and start the clipping again, with no
+    // gate to notice. That is the failure this branch already shipped once.
+    const px = (name: string) =>
+      Number(/^(\d+(?:\.\d+)?)px$/.exec(declaredValue(name, TOKENS)!)![1]);
+    expect(px('--ring-width'), 'an inset ring leaks outside the border box').toBeLessThanOrEqual(
+      px('--ring-offset'),
+    );
+  });
+
   it('the scrim ring clears 1.4.11 on chrome that is dark in both themes', () => {
     // The four page surfaces above are not every surface a ring lands on, and
     // the gap is not hypothetical: Lightbox paints its chrome on

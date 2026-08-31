@@ -53,10 +53,11 @@
     @include focus-ring(var(--tabs-tab-ring));
 
     // INSET. `.scrollWrap` is `overflow-x: auto`, which computes `overflow-y:
-    // auto` too, so it clips vertically — and the tab is flush with its top edge
-    // and 2px from its bottom. An outset ring loses BOTH horizontal bands and
-    // renders as two floating vertical bars flanking the tab (#505). Same
-    // treatment as Accordion, Table, DataTable and HeaderCell.
+    // auto` too, so it clips vertically — and both the tab and the action are
+    // flush with its top edge and 2px from its bottom. An outset ring loses BOTH
+    // horizontal bands and renders as two floating vertical bars flanking the
+    // element (#505). Same treatment as Accordion, Table, DataTable, HeaderCell
+    // and Calendar's TimedEvent / DayCell.
     outline-offset: calc(-1 * var(--ring-offset));
     border-radius: var(--tabs-tab-radius);
   }
@@ -91,11 +92,8 @@
   &:focus-visible {
     @include focus-ring(var(--tabs-tab-ring));
 
-    // INSET. `.scrollWrap` is `overflow-x: auto`, which computes `overflow-y:
-    // auto` too, so it clips vertically — and the tab is flush with its top edge
-    // and 2px from its bottom. An outset ring loses BOTH horizontal bands and
-    // renders as two floating vertical bars flanking the tab (#505). Same
-    // treatment as Accordion, Table, DataTable and HeaderCell.
+    // INSET, for the reason given on `.tab` above — `.action` is a
+    // stretch-aligned sibling inside the same clipping `.scrollWrap`.
     outline-offset: calc(-1 * var(--ring-offset));
     border-radius: var(--tabs-tab-radius);
   }

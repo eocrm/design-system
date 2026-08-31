@@ -3581,9 +3581,12 @@ All available as CSS custom properties after you import `global.scss`:
 `@include focus-ring;` or `@include focus-ring(var(--your-ring));` — which emits
 `outline: var(--ring-width) solid <colour>` plus `outline-offset:
 var(--ring-offset)`. Do **not** hand-roll `box-shadow: 0 0 0 var(--ring-width)
-…`; three surviving instances in the library each carry a written reason for
-being the exception, and pattern-matching off them will produce a ring that does
-not match the rest of the system.
+…`. Two components still hand-roll a focus ring — `AvatarGroup`'s overflow chip
+and `IconPicker` — and each carries a written reason; both have a component-scoped
+ring-width token the mixin cannot take. (Three further `box-shadow: 0 0 0
+var(--ring-width) …` instances exist in `FlowCanvas`, `Lightbox` and
+`RichTextEditor`, but those are decorative markers, not focus rings, so they are
+not examples of this rule at all.)
 
 Two things follow from the mechanism:
 
@@ -3597,10 +3600,18 @@ Two things follow from the mechanism:
   draw it inset: `outline-offset: calc(-1 * var(--ring-offset));`. Accordion,
   Table, DataTable, HeaderCell, Tabs, Calendar's `TimedEvent` and `DayCell` all
   do.
+- **Inset gives the gap up.** An outset ring is bounded on both sides by the
+  backdrop, which is what the contrast gate measures. An inset one touches the
+  element's OWN fill, and nothing measures that side — so check it yourself
+  against the fills the component can take. Today's worst case is a `.colored`
+  Calendar event at 3.95:1 in dark, comfortably over 1.4.11's 3:1, but a darker
+  fill would erode it silently (#512).
 
 `--ring-on-scrim` is for chrome painted on a surface that is dark in **both**
-themes (Lightbox). The tone rings fail WCAG 1.4.11 there in light theme, because
-the surface does not follow the theme and they do.
+themes (Lightbox), because the surface does not follow the theme and the tone
+rings do. Mostly a light-theme failure — 10 of the 12 tone/surface pairs there
+are under 1.4.11's 3:1 — but not exclusively: `--ring-danger` on a hovered
+control fill reads 2.95:1 in dark.
 
 ---
 

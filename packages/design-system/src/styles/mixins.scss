@@ -37,10 +37,12 @@
 // problem there is contrast, not paint order.
 // Outline also follows border-radius, is not clipped the way a spread shadow is,
 // and leaves box-shadow free for the element's own elevation, which this mixin
-// used to overwrite on focus. Five call sites already set `outline-offset` next
-// to this include (DataTable, HeaderCell x3, and DataTable's clickable row also
-// wrote `outline: none`) — all of it inert against a box-shadow ring. Those were
-// written expecting an outline; now they get one.
+// used to overwrite on focus. Five call sites ALREADY set `outline-offset` next
+// to this include before #505 (DataTable, HeaderCell x3, and DataTable's
+// clickable row also wrote `outline: none`) — all of it inert against a
+// box-shadow ring. They were written expecting an outline; now they get one.
+// Nine sites set it today, the four new ones being components whose ring turned
+// out to clip.
 @mixin focus-ring($color: var(--ring-accent)) {
   outline: var(--ring-width) solid #{$color};
   outline-offset: var(--ring-offset);

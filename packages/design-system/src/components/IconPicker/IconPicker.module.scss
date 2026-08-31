@@ -47,15 +47,21 @@
   cursor: var(--icon-picker-cursor-disabled);
 }
 
-// Stays a box-shadow rather than moving to the focus-ring mixin (#505). The
-// cells are a scrolling grid, and an outset ring on a cell flush with the
-// scroller's edge loses that band — which is exactly how Tabs, TimedEvent and
-// DayCell broke when they were migrated, and how EmojiPicker's cells already
-// clip. Migrating this wants the geometry sweep in #512 first, not a guess.
+// The focus-ring mechanism (outline + offset, #505), spelled out rather than
+// via the mixin: the mixin takes a colour and hard-codes `--ring-width`, and
+// `--icon-picker-focus-ring-width` is a documented consumer override
+// (IconPicker.tsx's token list), so calling the mixin would silently stop that
+// override working. Same emission, one token deeper.
+// Outset is correct here — nothing in IconPicker scrolls or clips. There is no
+// `overflow` or `max-height` anywhere in the component, and its container,
+// Popover.Content, declares only `padding` (12px), which with the grid's own 4px
+// leaves every cell 16px clear of the nearest boundary. An earlier version of
+// this comment called the grid a scroller and used that to hold the component
+// back from the migration; it was simply false.
 .trigger:focus-visible,
 .cell:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 var(--icon-picker-focus-ring-width) var(--icon-picker-focus-ring);
+  outline: var(--icon-picker-focus-ring-width) solid var(--icon-picker-focus-ring);
+  outline-offset: var(--ring-offset);
 }
 
 .selected {
