@@ -946,3 +946,59 @@ describe('stated contrast ratios still hold', () => {
     ).toEqual([]);
   });
 });
+
+/**
+ * A focus ring may not be suppressed by a rule it SHARES with `:hover`.
+ *
+ * This is the shape behind two live defects, not a style preference.
+ * `FileUpload`'s `.dropzone:hover, .dropzone:focus-visible { outline: none }`
+ * left the dropzone with NO focus indicator at all — a WCAG 2.4.7 failure —
+ * because the only remaining feedback was a border tint identical to hover.
+ * `Slider`'s `.thumb` had the same rule with a visible substitute, which is
+ * better and still wrong: the focused state cannot be told apart from the
+ * hovered one.
+ *
+ * Deliberately NOT "any `outline: none` under `:focus-visible`". Three sites
+ * do that legitimately and stay: `AvatarGroup` draws a box-shadow ring on
+ * purpose (an offset gap there would reveal another avatar, not a surface),
+ * `FlowCanvas` suppresses a frame it does not want, and `LiquidEditor`'s
+ * textarea delegates the ring to `.root:focus-within`. A broader rule would
+ * fail all three and get waived, which is how a gate stops meaning anything.
+ * The SHARING is the defect; the suppression alone is not.
+ */
+describe('a focus ring is not suppressed by a rule shared with :hover', () => {
+  const styleFiles = allFilesUnder(componentsDir).filter(({ label }) =>
+    /\.module\.scss$/.test(label),
+  );
+
+  it('found stylesheets to check', () => {
+    expect(styleFiles.length).toBeGreaterThan(50);
+  });
+
+  it.each(styleFiles.map(({ label, code }) => [label, code]))('%s', (_label, code) => {
+    // Selector list = everything from the previous `}`/`{`/start up to the `{`
+    // that opens this block. Nesting is handled by the same scan: an SCSS
+    // `&:hover, &:focus-visible` block has both pseudos in its own selector
+    // list, so it is caught without resolving the parent.
+    const offenders: string[] = [];
+    // Lookbehind, not a consuming group: matchAll advances lastIndex past
+    // each full match, so a consuming `(^|[{};])` eats the `}` that closes
+    // one top-level sibling block and leaves it unavailable as the prefix
+    // for the very next one. That silently dropped `.thumb:hover, .thumb
+    // :focus-visible` in Slider — immediately after another closed sibling
+    // block — from the scan entirely: the engine, unable to start there,
+    // hunted forward and landed on a `;` *inside* the block's own body,
+    // which cannot be resolved either, so the whole block fell through the
+    // gap between matches. Nested cases (FileUpload's `&:hover` inside a
+    // still-open `.dropzone`) never hit this, because their prefix is an
+    // interior `;` that no earlier match ever consumed. A lookbehind lets
+    // the same character close one block and open the next.
+    for (const m of code.matchAll(/(?<=^|[{};])([^{};]*?)\{([^{}]*)\}/g)) {
+      const selector = m[1]!;
+      const body = m[2]!;
+      if (!/:hover/.test(selector) || !/:focus-visible/.test(selector)) continue;
+      if (/(^|[;\s])outline:\s*none/.test(body)) offenders.push(selector.trim());
+    }
+    expect(offenders, 'shares outline:none between :hover and :focus-visible').toEqual([]);
+  });
+});

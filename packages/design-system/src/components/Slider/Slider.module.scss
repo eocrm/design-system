@@ -1,3 +1,4 @@
+@use '../../styles/mixins' as *;
 @use './Slider.tokens';
 
 .root {
@@ -131,13 +132,20 @@
   height: var(--slider-thumb-size-lg);
 }
 
-.thumb:hover,
+.thumb:hover {
+  border-color: var(--slider-thumb-border-color-hover);
+  box-shadow: var(--slider-thumb-shadow-hover);
+}
+
+// Split from `:hover` above. The shared rule suppressed the ring and offered
+// the HOVER treatment as its substitute, so focus and hover looked identical.
+// The border/shadow change is kept on focus as well — it reads as "active
+// thumb" — but the ring is what makes it a focus indicator.
 .thumb:focus-visible {
   border-color: var(--slider-thumb-border-color-hover);
   box-shadow: var(--slider-thumb-shadow-hover);
 
-  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
-  outline: none;
+  @include focus-ring;
 }
 
 .thumbDragging {

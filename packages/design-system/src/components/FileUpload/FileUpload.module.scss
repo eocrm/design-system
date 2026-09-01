@@ -24,11 +24,16 @@
     border-color var(--transition-base),
     background var(--transition-base);
 
-  &:hover,
-  &:focus-visible {
+  &:hover {
     border-color: var(--file-upload-dropzone-border-color-hover);
     color: var(--file-upload-dropzone-fg-hover);
-    outline: none;
+  }
+
+  // Split from `:hover` above, which set `outline: none` for both and left a
+  // keyboard user with no indicator at all — the border tint it kept is the
+  // hover tint, so focused and hovered were indistinguishable. WCAG 2.4.7.
+  &:focus-visible {
+    @include focus-ring;
   }
 }
 
