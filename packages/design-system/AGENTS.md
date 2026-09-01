@@ -3588,14 +3588,15 @@ they fall into two different groups — grep `:focus-visible` alongside `outline
 or `box-shadow: 0 0 0` for the current set rather than trusting a list here:
 
 - **Hand-rolled but real** — `AvatarGroup`, `ColorPicker`, `DashboardCanvas`,
-  `IconPicker`, `ImageCrop`, `LinkCard`, `Rail`, `TopBar`, `TimeField`. Two have
-  a stated reason (`AvatarGroup` needs an inner layer between the chip and the
-  overlapping avatars; `IconPicker` has a component-scoped ring-width token the
-  mixin cannot take); the rest are just older than the convention.
-- **Suppressed, not hand-rolled** — `DropdownMenu`, `FileUpload` and `Slider`
-  set `outline: none` and substitute a background or border change shared with
-  `:hover`, so the focused state is not distinguishable from the hovered one.
-  That is the defect tracked in #513, along with `Rail`'s remaining sites.
+  `IconPicker`, `ImageCrop`. `AvatarGroup` needs an inner layer between the
+  chip and the overlapping avatars; the other four use a component-scoped
+  ring-width token the mixin cannot take — tracked in **#515**.
+- **Suppressed, not hand-rolled** — nothing, as of this PR. Three components
+  legitimately set `outline: none` under `:focus-visible` and stay:
+  `AvatarGroup` (box-shadow ring — an offset gap there would reveal another
+  avatar, not a surface), `FlowCanvas` (deliberate) and `LiquidEditor`
+  (delegates to `.root:focus-within`). A `structure.test.ts` gate now bans the
+  hover-shared form outright, so a fourth one won't ship silently.
 
 Separately, `FlowCanvas`, `Lightbox`, `RichTextEditor` and Calendar's
 `TimedEvent` each carry an `outline:` or `box-shadow: 0 0 0 var(--ring-width) …`
