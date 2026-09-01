@@ -107,6 +107,66 @@ const stripComments = (code: string, tsx = true) => {
   return out.join('');
 };
 
+/**
+ * SCSS with `//` and `/* *\/` comments blanked to spaces (newlines kept, so
+ * line numbers survive). `stripComments` above is TypeScript-parser-driven
+ * and does not apply to `.scss`; this reuses the same boundary-tracking
+ * approach as the "stated contrast ratios still hold" gate below, run in
+ * reverse — that gate extracts the COMMENT text to check it; this blanks the
+ * comment and keeps the CODE, for gates that scan the code for `:hover`,
+ * `:focus-visible` or `outline: none` and must not read a comment describing
+ * that shape as an instance of it.
+ */
+const stripScssComments = (code: string): string => {
+  let out = '';
+  let inBlock = false;
+  for (const raw of code.split('\n')) {
+    let rest = raw;
+    let line = '';
+    while (rest.length > 0) {
+      if (inBlock) {
+        const close = rest.indexOf('*/');
+        if (close < 0) {
+          rest = '';
+          break;
+        }
+        inBlock = false;
+        rest = rest.slice(close + 2);
+        continue;
+      }
+      // Same quoted/url() exception as the ratio gate: `content: '//x'` and
+      // `url(https://…)` are content, not a comment opener.
+      const at = rest.search(/\/\/|\/\*/);
+      if (at < 0) {
+        line += rest;
+        break;
+      }
+      const before = rest.slice(0, at);
+      const quoted =
+        (before.match(/'/g)?.length ?? 0) % 2 === 1 || (before.match(/"/g)?.length ?? 0) % 2 === 1;
+      if (quoted || /url\([^)]*$/.test(before)) {
+        line += rest.slice(0, at + 2);
+        rest = rest.slice(at + 2);
+        continue;
+      }
+      line += before;
+      if (rest.slice(at, at + 2) === '//') {
+        rest = '';
+        break;
+      }
+      const close = rest.indexOf('*/', at + 2);
+      if (close < 0) {
+        inBlock = true;
+        rest = '';
+        break;
+      }
+      rest = rest.slice(close + 2);
+    }
+    out += `${line}\n`;
+  }
+  return out;
+};
+
 // Comments stripped: a commented-out `export { Pagination }` satisfied the
 // re-export gate while the component was unimportable from the package
 // entry — tests green, consumer build broken, which is the exact failure
@@ -970,11 +1030,10 @@ describe('stated contrast ratios still hold', () => {
  * `:hover, :focus-visible` block whose BODY contains a nested block is
  * missed, because `[^{}]*` cannot span into it; `outline: 0` and
  * `outline-style: none` are both missed, since only the `outline: none`
- * spelling is matched. This gate also does not strip comments first, unlike
- * the "stated contrast ratios still hold" gate above — a `// outline: none`
- * inside a block carrying both pseudos would false-positive. `DataTable.
- * module.scss:71` has exactly such a comment and is harmless only because
- * that selector is `:focus-visible` alone, without `:hover`.
+ * spelling is matched. Comments are stripped before the scan (via
+ * `stripScssComments`), so a `// outline: none` inside a block carrying both
+ * pseudos — `DataTable.module.scss:71` has exactly such a comment — no
+ * longer false-positives.
  *
  * The gate also cannot see `outline: none` sitting in a BASE rule while a
  * separate, later rule shares a background between `:hover` and
@@ -1011,7 +1070,7 @@ describe('a focus ring is not suppressed by a rule shared with :hover', () => {
     // still-open `.dropzone`) never hit this, because their prefix is an
     // interior `;` that no earlier match ever consumed. A lookbehind lets
     // the same character close one block and open the next.
-    for (const m of code.matchAll(/(?<=^|[{};])([^{};]*?)\{([^{}]*)\}/g)) {
+    for (const m of stripScssComments(code).matchAll(/(?<=^|[{};])([^{};]*?)\{([^{}]*)\}/g)) {
       const selector = m[1]!;
       const body = m[2]!;
       if (!/:hover/.test(selector) || !/:focus-visible/.test(selector)) continue;
@@ -1047,8 +1106,15 @@ describe('a focus ring is not suppressed by a rule shared with :hover', () => {
  * parameter (`@include focus-ring($offset: …)`), added alongside this PR so
  * the conversion is a real drop-in rather than a separate override
  * declaration layered on top of the mixin's own.
+ *
+ * Also misses the `outline-width` / `outline-color` longhand form of the
+ * same literal — no instance exists in the tree today, so widening the
+ * regex to catch it is deferred rather than done speculatively.
+ *
+ * Comments are stripped before the scan (via `stripScssComments`), same as
+ * gate 1 above, so documenting this pattern in a comment does not fail it.
  */
-describe('focus rings are drawn by the mixin, not hand-rolled', () => {
+describe('no component writes the literal `outline: var(--ring-width)` form', () => {
   const styleFiles = allFilesUnder(componentsDir).filter(({ label }) =>
     /\.(module|tokens)\.scss$/.test(label),
   );
@@ -1058,7 +1124,9 @@ describe('focus rings are drawn by the mixin, not hand-rolled', () => {
   });
 
   it.each(styleFiles.map(({ label, code }) => [label, code]))('%s', (_label, code) => {
-    const literals = [...code.matchAll(/outline:\s*var\(--ring-width\)[^;]*/g)].map((m) => m[0]);
+    const literals = [
+      ...stripScssComments(code).matchAll(/outline:\s*var\(--ring-width\)[^;]*/g),
+    ].map((m) => m[0]);
     expect(literals, 'use @include focus-ring instead').toEqual([]);
   });
 });
