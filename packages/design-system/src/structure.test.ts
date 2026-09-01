@@ -975,6 +975,14 @@ describe('stated contrast ratios still hold', () => {
  * inside a block carrying both pseudos would false-positive. `DataTable.
  * module.scss:71` has exactly such a comment and is harmless only because
  * that selector is `:focus-visible` alone, without `:hover`.
+ *
+ * The gate also cannot see `outline: none` sitting in a BASE rule while a
+ * separate, later rule shares a background between `:hover` and
+ * `:focus-visible` for the same selector — that shape needs cross-rule
+ * analysis a regex will get wrong. `DropdownMenu` had exactly this: `.item`'s
+ * base rule set `outline: none`, and `.item:hover, .item:focus-visible`
+ * shared a background one rule down, so the gate never saw both pieces
+ * together. Fixed by hand; not by widening this gate.
  */
 describe('a focus ring is not suppressed by a rule shared with :hover', () => {
   const styleFiles = allFilesUnder(componentsDir).filter(({ label }) =>

@@ -1,3 +1,4 @@
+@use '../../styles/mixins' as *;
 @use './DropdownMenu.tokens';
 
 // `.content` carries both the visual chrome and the open-only entrance
@@ -60,12 +61,20 @@
   color: var(--dropdown-menu-item-fg);
   cursor: pointer;
   user-select: none;
-  outline: none;
 }
 
 .item:hover:not([aria-disabled='true']),
 .item:focus-visible:not([aria-disabled='true']) {
   background: var(--dropdown-menu-item-bg-hover);
+}
+
+// Same defect as FileUpload/Slider (#513): the rule above shared its
+// background between :hover and :focus-visible, and the base rule's
+// `outline: none` (removed) suppressed the ring entirely. Inset — `.content`
+// is `overflow-y: auto; overflow-x: hidden`, so an outset ring would clip on
+// both horizontal bands and on the first and last item.
+.item:focus-visible:not([aria-disabled='true']) {
+  @include focus-ring($offset: calc(-1 * var(--ring-offset)));
 }
 
 .item[data-tone='danger'] {
