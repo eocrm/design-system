@@ -1,3 +1,4 @@
+@use '../../styles/mixins' as *;
 @use './DropdownMenu.tokens';
 
 // `.content` carries both the visual chrome and the open-only entrance
@@ -60,12 +61,31 @@
   color: var(--dropdown-menu-item-fg);
   cursor: pointer;
   user-select: none;
-  outline: none;
 }
 
 .item:hover:not([aria-disabled='true']),
 .item:focus-visible:not([aria-disabled='true']) {
   background: var(--dropdown-menu-item-bg-hover);
+}
+
+// Same defect as FileUpload/Slider (#513): the rule above shared its
+// background between :hover and :focus-visible, and the base rule's
+// `outline: none` (removed) suppressed the ring entirely.
+// INSET, but not because an outset ring would clip at rest: --dropdown-menu-
+// padding is 4px and an outset ring extends offset 2px + width 2px = 4px, so
+// at rest it fits exactly inside `.content`'s clip edge (overflow-y: auto;
+// overflow-x: hidden), first and last item included. The real reason is
+// --dropdown-menu-gap is 0 — items are flush, so an OUTSET ring would paint
+// over the item above and below. (A *scrolled* menu still clips whichever
+// item straddles the scrollport edge, same as any inset call site.)
+// What the inset ring covers: a checked item's left accent bar below
+// (box-shadow: inset ...-accent-width-checked, = --border-width-emphasis =
+// 2px) sits in exactly the same outermost 2px the ring occupies, and outline
+// paints above box-shadow — so a focused checked item loses its accent bar
+// completely. Acceptable: the checked background tint and `aria-checked`
+// both survive, so the state is still legible without it.
+.item:focus-visible:not([aria-disabled='true']) {
+  @include focus-ring($offset: calc(-1 * var(--ring-offset)));
 }
 
 .item[data-tone='danger'] {

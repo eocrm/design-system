@@ -24,11 +24,29 @@
     border-color var(--transition-base),
     background var(--transition-base);
 
-  &:hover,
-  &:focus-visible {
+  &:hover {
     border-color: var(--file-upload-dropzone-border-color-hover);
     color: var(--file-upload-dropzone-fg-hover);
-    outline: none;
+  }
+
+  // Split from `:hover` above, which set `outline: none` for both. Focus DID
+  // change the border and text colour pre-fix — a real visible change, so
+  // 2.4.7 Focus Visible was technically satisfied — but it was the SAME
+  // change `:hover` made, so a keyboard user could not tell focused from
+  // hovered, and the ring mechanism was suppressed entirely.
+  // The tint is deliberately not repeated here on focus, unlike Slider's:
+  // splitting the rule means this block no longer sets `border-color`, which
+  // lets `.dragOver` (specificity 0,1,0) win the border while the dropzone is
+  // focused. Before the split, `:focus-visible` (0,2,0) always beat it, so
+  // dragging a file over a focused dropzone showed no drag state. Restoring
+  // the tint here would reintroduce that.
+  // Clipping check (mixin's own requirement for a new call site): neither
+  // `.root` nor `.dropzone` sets `overflow`, so nothing in this component
+  // clips the outset ring. A consumer that scrolls this in a padding-less
+  // container (a `Card` with `overflow: hidden`, a Modal body) could still
+  // clip it — that's #512's territory, not a reason to go inset here.
+  &:focus-visible {
+    @include focus-ring;
   }
 }
 

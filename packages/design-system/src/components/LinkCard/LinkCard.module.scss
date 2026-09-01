@@ -1,3 +1,4 @@
+@use '../../styles/mixins' as *;
 @use './LinkCard.tokens';
 
 .linkCard {
@@ -27,9 +28,11 @@
   text-decoration: none;
 }
 
+// --link-card-focus-offset used to override this to 2px, identical to the
+// mixin's own --ring-offset default — a no-op token, deleted along with the
+// override.
 .linkCard:focus-visible {
-  outline: var(--ring-width) solid var(--ring-accent);
-  outline-offset: var(--link-card-focus-offset);
+  @include focus-ring;
 }
 
 @media (prefers-reduced-motion: reduce) {

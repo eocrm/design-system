@@ -42,9 +42,8 @@
   }
 
   &:focus-visible {
-    @include focus-ring;
+    @include focus-ring($offset: calc(-1 * var(--ring-offset)));
 
-    outline-offset: calc(-1 * var(--ring-offset));
     border-radius: var(--data-table-header-grip-focus-radius);
   }
 }
@@ -104,9 +103,8 @@
   }
 
   &.sortable:focus-visible {
-    @include focus-ring;
+    @include focus-ring($offset: calc(-1 * var(--ring-offset)));
 
-    outline-offset: calc(-1 * var(--ring-offset));
     border-radius: var(--data-table-header-label-focus-radius);
   }
 }
@@ -146,10 +144,9 @@
   }
 
   &:focus-visible {
-    @include focus-ring;
+    @include focus-ring($offset: calc(-1 * var(--ring-offset)));
 
     opacity: var(--data-table-header-resize-handle-opacity-visible);
-    outline-offset: calc(-1 * var(--ring-offset));
   }
 }
 

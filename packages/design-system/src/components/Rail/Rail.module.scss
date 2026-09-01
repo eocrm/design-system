@@ -1,3 +1,4 @@
+@use '../../styles/mixins' as *;
 @use './Rail.tokens';
 
 // ─── Root ───────────────────────────────────────────────────────────────
@@ -219,9 +220,11 @@
   text-decoration: none;
 }
 
+// Inset: `.item` renders both in the rail body (an overflow scroller) and,
+// portaled, inside a flyout header — its clipping ancestor is `.body` in the
+// rail, `.flyout` when portaled. Either way an outset ring loses a band.
 .item:focus-visible {
-  outline: var(--ring-width) solid var(--ring-accent);
-  outline-offset: -2px;
+  @include focus-ring($offset: calc(-1 * var(--ring-offset)));
 }
 
 // Active-state styling. Two selectors so we catch both shapes:
@@ -308,8 +311,7 @@
 // specificity, won — and left the correct -2px rule further up dead while the
 // ring clipped against `.body`'s overflow on both sides. One rule now.
 .groupTrigger:focus-visible {
-  outline: var(--ring-width) solid var(--ring-accent);
-  outline-offset: calc(-1 * var(--ring-offset));
+  @include focus-ring($offset: calc(-1 * var(--ring-offset)));
 }
 
 // Parent-active styling: the group's trigger picks up the active accent
@@ -357,9 +359,10 @@
   background: var(--rail-item-bg-hover);
 }
 
+// Inset: the rail body is an overflow scroller, so an outset ring loses its
+// outer bands.
 .groupChevronButton:focus-visible {
-  outline: var(--ring-width) solid var(--ring-accent);
-  outline-offset: -2px;
+  @include focus-ring($offset: calc(-1 * var(--ring-offset)));
 }
 
 .groupChevron {
@@ -449,9 +452,11 @@
   color: var(--rail-item-fg-active);
 }
 
+// Inset: the flyout is `createPortal(..., document.body)` (RailGroup.tsx), so
+// this link is not a descendant of `.body` — its clipping ancestor is
+// `.flyout` itself, which sets `overflow: hidden`.
 .flyoutHeaderLink:focus-visible {
-  outline: var(--ring-width) solid var(--ring-accent);
-  outline-offset: -2px;
+  @include focus-ring($offset: calc(-1 * var(--ring-offset)));
 }
 
 .flyoutBody {

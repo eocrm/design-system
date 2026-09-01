@@ -107,6 +107,96 @@ const stripComments = (code: string, tsx = true) => {
   return out.join('');
 };
 
+/**
+ * SCSS with `//` and `/* *\/` comments removed (newlines kept, so LINE
+ * numbers survive — columns do not, since the comment text itself is gone,
+ * not blanked). `stripComments` above is TypeScript-parser-driven and does
+ * not apply to `.scss`; this reuses the same boundary-tracking approach as
+ * the "stated contrast ratios still hold" gate below, run in reverse — that
+ * gate extracts the COMMENT text to check it; this removes the comment and
+ * keeps the CODE, for gates that scan the code for `:hover`,
+ * `:focus-visible` or `outline: none` and must not read a comment describing
+ * that shape as an instance of it.
+ *
+ * Not a full tokenizer: `quoted` is computed from `rest`, the remainder of
+ * the CURRENT scan position, not the start of the line, so the quote count
+ * resets after skipping a quoted `//`. A line like
+ * `content: "//a"; /* real *\/ color: red;` would leave that block comment
+ * unstripped. This can only under-strip — a spurious gate failure, never a
+ * missed defect — and no such line exists in the tree today, so it is
+ * recorded here rather than fixed.
+ */
+const stripScssComments = (code: string): string => {
+  let out = '';
+  let inBlock = false;
+  for (const raw of code.split('\n')) {
+    let rest = raw;
+    let line = '';
+    while (rest.length > 0) {
+      if (inBlock) {
+        const close = rest.indexOf('*/');
+        if (close < 0) {
+          rest = '';
+          break;
+        }
+        inBlock = false;
+        rest = rest.slice(close + 2);
+        continue;
+      }
+      // Same quoted/url() exception as the ratio gate: `content: '//x'` and
+      // `url(https://…)` are content, not a comment opener.
+      const at = rest.search(/\/\/|\/\*/);
+      if (at < 0) {
+        line += rest;
+        break;
+      }
+      const before = rest.slice(0, at);
+      const quoted =
+        (before.match(/'/g)?.length ?? 0) % 2 === 1 || (before.match(/"/g)?.length ?? 0) % 2 === 1;
+      if (quoted || /url\([^)]*$/.test(before)) {
+        line += rest.slice(0, at + 2);
+        rest = rest.slice(at + 2);
+        continue;
+      }
+      line += before;
+      if (rest.slice(at, at + 2) === '//') {
+        rest = '';
+        break;
+      }
+      const close = rest.indexOf('*/', at + 2);
+      if (close < 0) {
+        inBlock = true;
+        rest = '';
+        break;
+      }
+      rest = rest.slice(close + 2);
+    }
+    out += `${line}\n`;
+  }
+  return out;
+};
+
+// 60 lines of state machine feeding both focus-ring gates below, with no
+// test of its own until this — covering the three edge cases it deliberately
+// handles.
+describe('stripScssComments', () => {
+  it('does not treat // inside a quoted string as a comment opener', () => {
+    expect(stripScssComments(`.a { content: '//x'; color: red; }`)).toContain('color: red');
+  });
+
+  it('does not treat // inside a url() as a comment opener', () => {
+    expect(stripScssComments(`.a { background: url(https://example.com/x.png); }`)).toContain(
+      'background: url(https://example.com/x.png)',
+    );
+  });
+
+  it('strips a /* */ block comment spanning multiple lines', () => {
+    const stripped = stripScssComments('.a {\n  /* one\n  two */\n  color: red;\n}');
+    expect(stripped).not.toMatch(/one|two/);
+    expect(stripped).toContain('color: red');
+  });
+});
+
 // Comments stripped: a commented-out `export { Pagination }` satisfied the
 // re-export gate while the component was unimportable from the package
 // entry — tests green, consumer build broken, which is the exact failure
@@ -943,6 +1033,178 @@ describe('stated contrast ratios still hold', () => {
     expect(
       unbound.map(({ r, line }) => `${r}:1 in "${line.trim()}"`),
       'states a ratio no @contrast annotation in this file computes — annotate the pair so it can be recomputed, or drop the number',
+    ).toEqual([]);
+  });
+});
+
+/**
+ * A focus ring may not be suppressed by a rule it SHARES with `:hover`.
+ *
+ * This is the shape behind two live defects, not a style preference.
+ * `FileUpload`'s `.dropzone:hover, .dropzone:focus-visible { outline: none }`
+ * DID change the border and text colour on focus — a real visible change, so
+ * 2.4.7 Focus Visible was technically satisfied. But it was the SAME change
+ * `:hover` made, so a keyboard user could not tell focused from hovered, and
+ * the ring mechanism was suppressed entirely. `Slider`'s `.thumb` had the
+ * identical rule; same defect.
+ *
+ * Deliberately NOT "any `outline: none` under `:focus-visible`". Three sites
+ * do that legitimately and stay: `AvatarGroup` draws a box-shadow ring on
+ * purpose (an offset gap there would reveal another avatar, not a surface),
+ * `FlowCanvas` suppresses a frame it does not want, and `LiquidEditor`'s
+ * textarea delegates the ring to `.root:focus-within`. A broader rule would
+ * fail all three and get waived, which is how a gate stops meaning anything.
+ * The SHARING is the defect; the suppression alone is not.
+ *
+ * Known blind spots, none of which exist in the tree today: a shared
+ * `:hover, :focus-visible` block whose BODY contains a nested block is
+ * missed, because `[^{}]*` cannot span into it; `outline: 0` and
+ * `outline-style: none` are both missed, since only the `outline: none`
+ * spelling is matched. Comments are stripped before the scan (via
+ * `stripScssComments`), so a `// outline: none` inside a shared block would
+ * no longer false-positive — `DataTable.module.scss:68` has such a comment,
+ * harmless only because that selector is `:focus-visible` alone, without
+ * `:hover`, so it was never actually at risk.
+ *
+ * The gate also cannot see `outline: none` sitting in a BASE rule while a
+ * separate, later rule shares a background between `:hover` and
+ * `:focus-visible` for the same selector — that shape needs cross-rule
+ * analysis a regex will get wrong. `DropdownMenu` had exactly this: `.item`'s
+ * base rule set `outline: none`, and `.item:hover, .item:focus-visible`
+ * shared a background one rule down, so the gate never saw both pieces
+ * together. Fixed by hand; not by widening this gate.
+ */
+describe('a focus ring is not suppressed by a rule shared with :hover', () => {
+  const styleFiles = allFilesUnder(componentsDir).filter(({ label }) =>
+    /\.module\.scss$/.test(label),
+  );
+
+  it('found stylesheets to check', () => {
+    expect(styleFiles.length).toBeGreaterThan(50);
+  });
+
+  it.each(styleFiles.map(({ label, code }) => [label, code]))('%s', (_label, code) => {
+    // Selector list = everything from the previous `}`/`{`/start up to the `{`
+    // that opens this block. Nesting is handled by the same scan: an SCSS
+    // `&:hover, &:focus-visible` block has both pseudos in its own selector
+    // list, so it is caught without resolving the parent.
+    const offenders: string[] = [];
+    // Lookbehind, not a consuming group: matchAll advances lastIndex past
+    // each full match, so a consuming `(^|[{};])` eats the `}` that closes
+    // one top-level sibling block and leaves it unavailable as the prefix
+    // for the very next one. That silently dropped `.thumb:hover, .thumb
+    // :focus-visible` in Slider — immediately after another closed sibling
+    // block — from the scan entirely: the engine, unable to start there,
+    // hunted forward and landed on a `;` *inside* the block's own body,
+    // which cannot be resolved either, so the whole block fell through the
+    // gap between matches. Nested cases (FileUpload's `&:hover` inside a
+    // still-open `.dropzone`) never hit this, because their prefix is an
+    // interior `;` that no earlier match ever consumed. A lookbehind lets
+    // the same character close one block and open the next.
+    for (const m of stripScssComments(code).matchAll(/(?<=^|[{};])([^{};]*?)\{([^{}]*)\}/g)) {
+      const selector = m[1]!;
+      const body = m[2]!;
+      if (!/:hover/.test(selector) || !/:focus-visible/.test(selector)) continue;
+      if (/(^|[;\s])outline:\s*none/.test(body)) offenders.push(selector.trim());
+    }
+    expect(offenders, 'shares outline:none between :hover and :focus-visible').toEqual([]);
+  });
+});
+
+/**
+ * Bans the literal `outline: var(--ring-width) ...` form — not "every
+ * hand-rolled ring". A different width token passes this gate untouched: six
+ * live `:focus-visible` sites do exactly that today (`ColorPicker.module.scss
+ * :60,:157,:219`, `ImageCrop.module.scss:26`, `DashboardCanvas.module.scss
+ * :167`, `IconPicker.module.scss:63` — the last is the mixin with its tokens
+ * renamed). Out of scope for this gate; tracked as a follow-up issue.
+ *
+ * Run before any fix, this gate fails on FOUR files, not one: `Rail` wrote
+ * the literal form at four sites; `LinkCard`, `TimeField` and `TopBar` each
+ * hand-rolled it at one more. Emission is identical today in all four, so
+ * nothing was visibly broken — which is exactly why it survived. The cost is
+ * that a change to the mixin does not reach them, and #510 already paid it
+ * on Rail: `.groupTrigger:focus-visible` was declared TWICE at different
+ * offsets, the later `+2px` won on equal specificity, and the correct rule
+ * 84 lines above was dead code while the ring clipped on both sides. A
+ * single mixin call cannot be silently duplicated at two geometries.
+ * `TimeField` already imports the mixin and hand-rolled the ring anyway —
+ * the strongest evidence here that these are drift, not intent.
+ *
+ * Some of Rail's sites also hard-coded `outline-offset: -2px`, a raw value
+ * where `calc(-1 * var(--ring-offset))` is the token form. Every site that
+ * needs a non-default offset now passes it through the mixin's `$offset`
+ * parameter (`@include focus-ring($offset: …)`), added alongside this PR,
+ * instead of layering a separate `outline-offset` declaration after the
+ * `@include` — the shape the gate below this one now bans outright. Grep
+ * `@include focus-ring(` under `src/components` for the current set rather
+ * than trusting a list here.
+ *
+ * Also misses the `outline-width` / `outline-color` longhand form of the
+ * same literal — no instance exists in the tree today, so widening the
+ * regex to catch it is deferred rather than done speculatively.
+ *
+ * Comments are stripped before the scan (via `stripScssComments`), same as
+ * gate 1 above, so documenting this pattern in a comment does not fail it.
+ */
+describe('no component writes the literal `outline: var(--ring-width)` form', () => {
+  const styleFiles = allFilesUnder(componentsDir).filter(({ label }) =>
+    /\.(module|tokens)\.scss$/.test(label),
+  );
+
+  it('found stylesheets to check', () => {
+    expect(styleFiles.length).toBeGreaterThan(50);
+  });
+
+  it.each(styleFiles.map(({ label, code }) => [label, code]))('%s', (_label, code) => {
+    const literals = [
+      ...stripScssComments(code).matchAll(/outline:\s*var\(--ring-width\)[^;]*/g),
+    ].map((m) => m[0]);
+    expect(literals, 'use @include focus-ring instead').toEqual([]);
+  });
+});
+
+/**
+ * An `outline-offset` declaration may not sit in the same rule as
+ * `@include focus-ring` — pass the offset as `$offset` instead. Order
+ * doesn't matter: a declaration before the `@include` is just as dead as one
+ * after it, so this bans either.
+ *
+ * This exact shape produced a review finding in every round of #513/#514,
+ * shipped at call sites a prior round's pass had missed each time, including
+ * once in the docs that told the next agent to write it. That repetition is
+ * this repo's own stated trigger for a gate instead of another round of
+ * review catching another instance. Nothing before this enforced it as an
+ * INVARIANT — the `structure.test.ts` prose above is a snapshot of today's
+ * tree, not a check that stops someone re-adding the shape tomorrow.
+ *
+ * Same brace-scan as the two gates above (lookbehind prefix, comments
+ * stripped first), so it shares their blind spot: a shared rule whose body
+ * contains a NESTED block is invisible, since `[^{}]*` cannot span into it.
+ * Does not evaluate whether the offset value itself is correct — only that it
+ * arrives through the mixin's parameter, not a second declaration.
+ */
+describe('an outline-offset declaration does not sit in the same rule as @include focus-ring', () => {
+  const styleFiles = allFilesUnder(componentsDir).filter(({ label }) =>
+    /\.module\.scss$/.test(label),
+  );
+
+  it('found stylesheets to check', () => {
+    expect(styleFiles.length).toBeGreaterThan(50);
+  });
+
+  it.each(styleFiles.map(({ label, code }) => [label, code]))('%s', (_label, code) => {
+    const offenders: string[] = [];
+    for (const m of stripScssComments(code).matchAll(/(?<=^|[{};])([^{};]*?)\{([^{}]*)\}/g)) {
+      const selector = m[1]!;
+      const body = m[2]!;
+      if (/@include\s+focus-ring/.test(body) && /(^|[;\s])outline-offset\s*:/.test(body)) {
+        offenders.push(selector.trim());
+      }
+    }
+    expect(
+      offenders,
+      'pass the offset via focus-ring($offset: …) instead of a separate outline-offset declaration',
     ).toEqual([]);
   });
 });

@@ -1,3 +1,4 @@
+@use '../../styles/mixins' as *;
 @use './Slider.tokens';
 
 .root {
@@ -131,13 +132,33 @@
   height: var(--slider-thumb-size-lg);
 }
 
-.thumb:hover,
+.thumb:hover {
+  border-color: var(--slider-thumb-border-color-hover);
+  box-shadow: var(--slider-thumb-shadow-hover);
+}
+
+// Split from `:hover` above. The shared rule suppressed the ring and offered
+// the HOVER treatment as its substitute, so focus and hover looked identical.
+// The border/shadow change is kept on focus as well, unlike FileUpload's
+// dropzone: nothing else here competes for the thumb's border, so the tint
+// stays as a secondary affordance — it just means a focused-and-hovered thumb
+// paints two concentric accent rings (the border tint and the focus ring).
+// Left as is; not a defect worth chasing for one pixel of visual overlap.
+// Clipping check (mixin's own requirement for a new call site): `.track`
+// declares `overflow: visible` and `.root` sets none, so nothing inside this
+// component clips the outset ring.
+// `--ring-accent` and `--slider-fill-bg` resolve to the same colour in both
+// themes (#0052cc light, #68a7ff dark). On the thumb's leading edge the
+// filled track runs under the ring's offset gap, so ring and fill meet at
+// 1:1 there — the joined-siblings hazard mixins.scss documents. The other
+// edges land on the page background and stay perceivable, so this is not a
+// 1.4.11 failure; recorded as a known instance of that hazard, not fixed,
+// since it is a contrast question and #512's sweep is geometry.
 .thumb:focus-visible {
   border-color: var(--slider-thumb-border-color-hover);
   box-shadow: var(--slider-thumb-shadow-hover);
 
-  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
-  outline: none;
+  @include focus-ring;
 }
 
 .thumbDragging {

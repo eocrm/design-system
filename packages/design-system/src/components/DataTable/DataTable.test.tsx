@@ -60,11 +60,12 @@ function compiledRule(parent: Root | AtRule, selector: string): Rule | undefined
   return match;
 }
 
-// LAST match, not first. CSS is last-wins, and the focus-ring mixin now emits
-// `outline-offset` that several call sites deliberately override on the next
-// line — `.find` returned the mixin's value and reported a ring at +2px while
-// the rule actually renders it inset. That is the same hole declaredValue() in
-// contrast.test.ts exists to close (see its docblock); this file had it too.
+// LAST match, not first. CSS is last-wins, and a rule can legitimately
+// declare the same property twice (a fallback value, then an override). A
+// `.find`-style first match would report whichever came first regardless of
+// which one the browser actually renders. That is the same hole
+// declaredValue() in contrast.test.ts exists to close (see its docblock);
+// this file had it too.
 function compiledDeclaration(rule: Rule | undefined, property: string): Declaration | undefined {
   return rule?.nodes
     .filter((node): node is Declaration => node.type === 'decl' && node.prop === property)
@@ -224,9 +225,9 @@ describe('DataTable responsive stylesheet', () => {
     });
     // The focus-ring mixin paints an outline, not a spread box-shadow (#505).
     // The resize handle takes the ring INSET — it sits between two header cells,
-    // so an outset ring would overlap its neighbour. So the effective offset is
-    // the negated token, written after the include; asserting the mixin's own
-    // `var(--ring-offset)` here would document a gap this rule does not have.
+    // so an outset ring would overlap its neighbour — passed as the mixin's
+    // own `$offset` argument, so this asserts what the mixin actually emits
+    // rather than a separate override on top of it.
     expect(compiledDeclaration(focusRule, 'outline')).toMatchObject({
       value: 'var(--ring-width) solid var(--ring-accent)',
     });
