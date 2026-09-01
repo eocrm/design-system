@@ -1,0 +1,22 @@
+[
+  {
+    "route": "/components/datatable",
+    "key": "button.Button-module__button.Button-module__ghost.Button-module__sm",
+    "band": "top"
+  },
+  {
+    "route": "/components/datatable",
+    "key": "button.Button-module__button.Button-module__ghost.Button-module__sm",
+    "band": "left"
+  },
+  {
+    "route": "/components/emoji-picker",
+    "key": "button.EmojiPicker-module__cell",
+    "band": "left"
+  },
+  {
+    "route": "/components/emoji-picker",
+    "key": "button.EmojiPicker-module__cell",
+    "band": "right"
+  }
+]
