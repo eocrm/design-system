@@ -147,9 +147,11 @@
 }
 
 // The textarea text is transparent, so the placeholder (which inherits `color`)
-// would be invisible too — restore a muted color explicitly.
+// would be invisible too — restore a subtle color explicitly. Own token as of
+// #511 (was --liquid-editor-gutter-fg) so retuning the gutter for its own
+// surface can't silently retone this one too.
 .textarea::placeholder {
-  color: var(--liquid-editor-gutter-fg);
+  color: var(--liquid-editor-placeholder-fg);
 }
 
 .textarea:focus-visible {

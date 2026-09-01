@@ -14,13 +14,19 @@
   // content), but 1.4.3 still applies: the digits are visually read by
   // sighted users regardless of what the accessibility tree exposes. #511:
   // was --color-fg-subtle, which fails on --liquid-editor-gutter-bg;
-  // --color-fg-muted clears it. Also reused by .textarea::placeholder, which
-  // paints on --liquid-editor-bg (--color-bg, certified either value) — no
-  // regression there, just a stronger placeholder.
+  // --color-fg-muted clears it.
   // @contrast --color-fg-muted on --color-bg-muted = 4.87:1 light
   // @contrast --color-fg-muted on --color-bg-muted = 5.60:1 dark
   --liquid-editor-gutter-bg: var(--color-bg-muted);
   --liquid-editor-gutter-fg: var(--color-fg-muted);
+
+  // .textarea::placeholder used to read this same --liquid-editor-gutter-fg
+  // token, which silently retoned the placeholder to --color-fg-muted when
+  // the gutter's fix (above) moved it -- the only placeholder in the library
+  // that wasn't --color-fg-subtle, next to Input's and Textarea's. Split per
+  // Rule 3: its own surface is --liquid-editor-bg (--color-bg), certified for
+  // --color-fg-subtle, so it stays there independently of the gutter.
+  --liquid-editor-placeholder-fg: var(--color-fg-subtle);
 
   // Syntax-highlight token colours
   --liquid-editor-token-variable: var(--color-accent);
