@@ -3589,23 +3589,34 @@ or `box-shadow: 0 0 0` for the current set rather than trusting a list here:
 
 - **Hand-rolled but real** — `AvatarGroup`, `ColorPicker`, `DashboardCanvas`,
   `IconPicker`, `ImageCrop`. `AvatarGroup` needs an inner layer between the
-  chip and the overlapping avatars; the other four hand-roll with a width
+  chip and the overlapping avatars. The other four hand-roll with a width
   token other than `--ring-width` — which is what the `structure.test.ts`
-  gate keys on, and why it doesn't reach them — tracked in **#515**.
-  `IconPicker`'s token resolves to `--ring-width` and `DashboardCanvas` uses
-  only global tokens, so both could migrate today; `ColorPicker` and
-  `ImageCrop` use `--border-width-emphasis`, also global, not
-  component-scoped.
+  gate keys on, and why it doesn't reach them — tracked in **#515**, but that
+  is not the same thing as "can't migrate": `ColorPicker`, `ImageCrop` and
+  `DashboardCanvas` all use `--border-width-emphasis` for that width, which is
+  `--ring-width`'s own value (2px) under a global-primitive name, their
+  offsets already match `--ring-offset` (2px, outset for the first two, inset
+  for `DashboardCanvas`), and their component-scoped ring COLOUR tokens pass
+  straight into the mixin's first argument — so all three are exact drop-ins
+  today, #515 is simply unstarted for them, and migrating deletes the four
+  `stylelint-disable-next-line` comments their raw `2px` offsets currently
+  need. `IconPicker` is the one that genuinely cannot: its width token,
+  `--icon-picker-focus-ring-width`, is a documented public override in
+  `IconPicker.tsx`'s consumer-facing token list, and the mixin has no width
+  parameter — migrating would silently delete that override surface, a
+  breaking change, not a refactor.
 - **Suppressed, not hand-rolled** — nothing, as of this PR. Three components
   legitimately set `outline: none` under `:focus-visible` and stay:
   `AvatarGroup` (box-shadow ring — an offset gap there would reveal another
   avatar, not a surface), `FlowCanvas` (deliberate) and `LiquidEditor`
   (delegates to `.root:focus-within`) — plus `TopBar`'s `.searchInput`, which
   sets it under plain `:focus` and delegates the same way, to
-  `.search:focus-within`. A `structure.test.ts` gate now bans the SAME-RULE
-  hover-shared form outright; a suppression sitting in a separate base rule
-  from the shared block — `DropdownMenu`'s shape before this PR — still needs
-  a human to catch it.
+  `.search:focus-within`. A `structure.test.ts` gate now bans the same-rule
+  `outline: none` spelling shared between `:hover` and `:focus-visible`; it
+  does not catch `outline: 0`, `outline-style: none`, a shared block whose
+  body contains a nested block, or a suppression sitting in a separate base
+  rule from the shared block — `DropdownMenu`'s shape before this PR — all of
+  which still need a human to catch.
 
 Separately, `FlowCanvas`, `Lightbox`, `RichTextEditor` and Calendar's
 `TimedEvent` each carry an `outline:` or `box-shadow: 0 0 0 var(--ring-width) …`

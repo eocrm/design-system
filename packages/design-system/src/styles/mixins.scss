@@ -45,13 +45,17 @@
 // An outline IS clipped by an ancestor's overflow, exactly as a spread shadow
 // is — an earlier version of this comment claimed otherwise and the migration
 // then lost bands in three components before a browser sweep caught it. Where
-// the focusable sits flush against a clipping ancestor, draw the ring inset:
-// `outline-offset: calc(-1 * var(--ring-offset))`. For the current set, grep
-// `outline-offset` under src/components and read the negative ones — the calc
-// form alone misses sites predating the token that still write `-2px` or
-// `-1px`. No count is written here on purpose: three documents carried three
-// different numbers for this one quantity, each right when written and stale a
-// commit later, and every round of review caught one.
+// the focusable sits flush against a clipping ancestor, draw the ring inset by
+// passing `$offset: calc(-1 * var(--ring-offset))` to the mixin — NOT a
+// separate `outline-offset` declaration after the `@include`, which only
+// re-adds the dead-declaration shape a `structure.test.ts` gate now bans (a
+// standalone `outline-offset` override used to be the pattern here; #513's
+// batch deleted it from every call site once `$offset` existed to replace it).
+// For the current set, grep `@include focus-ring(` under src/components and
+// read the `$offset` arguments — verified 18 sites today. No count is written
+// in prose here on purpose: three documents carried three different numbers
+// for this one quantity, each right when written and stale a commit later,
+// and every round of review caught one.
 // That trade is not free either. An inset ring paints over the element's
 // outermost pixels, including its own border, so check what that border
 // carries, and record what you find — the severity is not uniform, so do not

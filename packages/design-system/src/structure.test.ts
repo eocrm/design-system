@@ -1061,9 +1061,10 @@ describe('stated contrast ratios still hold', () => {
  * missed, because `[^{}]*` cannot span into it; `outline: 0` and
  * `outline-style: none` are both missed, since only the `outline: none`
  * spelling is matched. Comments are stripped before the scan (via
- * `stripScssComments`), so a `// outline: none` inside a block carrying both
- * pseudos — `DataTable.module.scss:71` has exactly such a comment — no
- * longer false-positives.
+ * `stripScssComments`), so a `// outline: none` inside a shared block would
+ * no longer false-positive — `DataTable.module.scss:68` has such a comment,
+ * harmless only because that selector is `:focus-visible` alone, without
+ * `:hover`, so it was never actually at risk.
  *
  * The gate also cannot see `outline: none` sitting in a BASE rule while a
  * separate, later rule shares a background between `:hover` and
