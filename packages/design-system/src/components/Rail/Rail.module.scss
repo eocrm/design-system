@@ -223,8 +223,10 @@
 .item:focus-visible {
   @include focus-ring;
 
-  // Inset: the rail body is an overflow scroller, so an outset ring loses its
-  // outer bands. Was a raw -2px.
+  // Inset: `.item` renders both in the rail body (an overflow scroller) and,
+  // portaled, inside a flyout header — its clipping ancestor is `.body` in
+  // the rail, `.flyout` when portaled. Either way an outset ring loses a
+  // band. Was a raw -2px.
   outline-offset: calc(-1 * var(--ring-offset));
 }
 
@@ -460,8 +462,9 @@
 .flyoutHeaderLink:focus-visible {
   @include focus-ring;
 
-  // Inset: the rail body is an overflow scroller, so an outset ring loses its
-  // outer bands. Was a raw -2px.
+  // Inset: the flyout is `createPortal(..., document.body)` (RailGroup.tsx),
+  // so this link is not a descendant of `.body` — its clipping ancestor is
+  // `.flyout` itself, which sets `overflow: hidden`. Was a raw -2px.
   outline-offset: calc(-1 * var(--ring-offset));
 }
 

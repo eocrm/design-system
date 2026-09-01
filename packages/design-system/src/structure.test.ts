@@ -952,11 +952,11 @@ describe('stated contrast ratios still hold', () => {
  *
  * This is the shape behind two live defects, not a style preference.
  * `FileUpload`'s `.dropzone:hover, .dropzone:focus-visible { outline: none }`
- * left the dropzone with NO focus indicator at all — a WCAG 2.4.7 failure —
- * because the only remaining feedback was a border tint identical to hover.
- * `Slider`'s `.thumb` had the same rule with a visible substitute, which is
- * better and still wrong: the focused state cannot be told apart from the
- * hovered one.
+ * DID change the border and text colour on focus — a real visible change, so
+ * 2.4.7 Focus Visible was technically satisfied. But it was the SAME change
+ * `:hover` made, so a keyboard user could not tell focused from hovered, and
+ * the ring mechanism was suppressed entirely. `Slider`'s `.thumb` had the
+ * identical rule; same defect.
  *
  * Deliberately NOT "any `outline: none` under `:focus-visible`". Three sites
  * do that legitimately and stay: `AvatarGroup` draws a box-shadow ring on

@@ -574,8 +574,11 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
                 // The width is load-bearing, not decorative: #510 gave the
                 // header an INSET focus ring (the list is a padding-less
                 // scroller, so an outset ring lost both vertical bands), and
-                // the inset band is --ring-width, also 2px. A focused header
-                // therefore covers this border completely. That trade is only
+                // the inset band is --ring-width, also 2px. In multi mode,
+                // where the header is a focusable <button>, a focused header
+                // therefore covers this border completely — single mode's
+                // header is a <div role="presentation">, which never takes a
+                // ring and never occludes anything. That trade is only
                 // acceptable because the GroupDot beside the label carries the
                 // same --color-palette-<name>-fg and the ring does not touch
                 // it. Reasoning from the old "1px" gave a partial occlusion
