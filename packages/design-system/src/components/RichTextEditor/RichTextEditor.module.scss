@@ -33,6 +33,18 @@
   background: var(--color-bg-muted);
 }
 
+// #511: readOnly and placeholder are independent props (e.g. a read-only
+// notes field with no content), so the empty-state placeholder above can
+// land on readOnly's --color-bg-muted, where --color-fg-subtle fails AA.
+// Scoped to the combination rather than retuning the base rule, which stays
+// --color-fg-subtle on the certified --color-bg for the ordinary editable
+// empty case.
+// @contrast --color-fg-muted on --color-bg-muted = 4.87:1 light
+// @contrast --color-fg-muted on --color-bg-muted = 5.60:1 dark
+.root.readOnly[data-empty]::before {
+  color: var(--color-fg-muted);
+}
+
 // The component's own internal wrapper when `toolbar` and/or `blockControls` is
 // set: stacks the toolbar above the editable surface as one bordered control and
 // anchors the absolutely-positioned block gutter (`.gutter`).

@@ -41,8 +41,15 @@
   --dropdown-menu-icon-size: var(--space-4);
   --dropdown-menu-icon-fg: var(--color-fg-subtle);
 
-  // Shortcut label
-  --dropdown-menu-shortcut-fg: var(--color-fg-subtle);
+  // Shortcut label. Not aria-hidden (typeahead needs the plain-text label
+  // separate from it, but the shortcut itself renders as real content) and
+  // painted inside .item with no hover override, so it inherits
+  // --dropdown-menu-item-bg-hover (--color-bg-muted) on hover. #511: was
+  // --color-fg-subtle, which fails there; --color-fg-muted clears it, same as
+  // --dropdown-menu-meta-fg two lines below.
+  // @contrast --color-fg-muted on --color-bg-muted = 4.87:1 light
+  // @contrast --color-fg-muted on --color-bg-muted = 5.60:1 dark
+  --dropdown-menu-shortcut-fg: var(--color-fg-muted);
   --dropdown-menu-shortcut-font-size: var(--font-size-sm);
   --dropdown-menu-shortcut-padding-left: var(--space-3);
 

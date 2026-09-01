@@ -9,9 +9,18 @@
   --liquid-editor-font: var(--font-family-mono);
   --liquid-editor-font-size: var(--font-size-sm);
 
-  // Gutter (line numbers)
+  // Gutter (line numbers). aria-hidden on the gutter itself (the numbers are
+  // decorative for AT — LiquidEditor.tsx's textarea carries the real
+  // content), but 1.4.3 still applies: the digits are visually read by
+  // sighted users regardless of what the accessibility tree exposes. #511:
+  // was --color-fg-subtle, which fails on --liquid-editor-gutter-bg;
+  // --color-fg-muted clears it. Also reused by .textarea::placeholder, which
+  // paints on --liquid-editor-bg (--color-bg, certified either value) — no
+  // regression there, just a stronger placeholder.
+  // @contrast --color-fg-muted on --color-bg-muted = 4.87:1 light
+  // @contrast --color-fg-muted on --color-bg-muted = 5.60:1 dark
   --liquid-editor-gutter-bg: var(--color-bg-muted);
-  --liquid-editor-gutter-fg: var(--color-fg-subtle);
+  --liquid-editor-gutter-fg: var(--color-fg-muted);
 
   // Syntax-highlight token colours
   --liquid-editor-token-variable: var(--color-accent);
