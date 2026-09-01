@@ -65,8 +65,9 @@
   cursor: pointer;
 
   // Inset: the row's ring must sit inside the row box, not overlap its
-  // neighbour. (`outline: none` used to sit here too — written for an outline
-  // that the box-shadow mixin never emitted, and it would now erase the ring.)
+  // neighbour. (`outline: none` used to sit below too — written for an
+  // outline that the box-shadow mixin never emitted, and it would now erase
+  // the ring.)
   &:focus-visible {
     @include focus-ring($offset: calc(-1 * var(--ring-offset)));
 

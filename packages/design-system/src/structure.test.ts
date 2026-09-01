@@ -108,14 +108,23 @@ const stripComments = (code: string, tsx = true) => {
 };
 
 /**
- * SCSS with `//` and `/* *\/` comments blanked to spaces (newlines kept, so
- * line numbers survive). `stripComments` above is TypeScript-parser-driven
- * and does not apply to `.scss`; this reuses the same boundary-tracking
- * approach as the "stated contrast ratios still hold" gate below, run in
- * reverse — that gate extracts the COMMENT text to check it; this blanks the
- * comment and keeps the CODE, for gates that scan the code for `:hover`,
+ * SCSS with `//` and `/* *\/` comments removed (newlines kept, so LINE
+ * numbers survive — columns do not, since the comment text itself is gone,
+ * not blanked). `stripComments` above is TypeScript-parser-driven and does
+ * not apply to `.scss`; this reuses the same boundary-tracking approach as
+ * the "stated contrast ratios still hold" gate below, run in reverse — that
+ * gate extracts the COMMENT text to check it; this removes the comment and
+ * keeps the CODE, for gates that scan the code for `:hover`,
  * `:focus-visible` or `outline: none` and must not read a comment describing
  * that shape as an instance of it.
+ *
+ * Not a full tokenizer: `quoted` is computed from `rest`, the remainder of
+ * the CURRENT scan position, not the start of the line, so the quote count
+ * resets after skipping a quoted `//`. A line like
+ * `content: "//a"; /* real *\/ color: red;` would leave that block comment
+ * unstripped. This can only under-strip — a spurious gate failure, never a
+ * missed defect — and no such line exists in the tree today, so it is
+ * recorded here rather than fixed.
  */
 const stripScssComments = (code: string): string => {
   let out = '';
@@ -166,6 +175,27 @@ const stripScssComments = (code: string): string => {
   }
   return out;
 };
+
+// 60 lines of state machine feeding both focus-ring gates below, with no
+// test of its own until this — covering the three edge cases it deliberately
+// handles.
+describe('stripScssComments', () => {
+  it('does not treat // inside a quoted string as a comment opener', () => {
+    expect(stripScssComments(`.a { content: '//x'; color: red; }`)).toContain('color: red');
+  });
+
+  it('does not treat // inside a url() as a comment opener', () => {
+    expect(stripScssComments(`.a { background: url(https://example.com/x.png); }`)).toContain(
+      'background: url(https://example.com/x.png)',
+    );
+  });
+
+  it('strips a /* */ block comment spanning multiple lines', () => {
+    const stripped = stripScssComments('.a {\n  /* one\n  two */\n  color: red;\n}');
+    expect(stripped).not.toMatch(/one|two/);
+    expect(stripped).toContain('color: red');
+  });
+});
 
 // Comments stripped: a commented-out `export { Pagination }` satisfied the
 // re-export gate while the component was unimportable from the package
