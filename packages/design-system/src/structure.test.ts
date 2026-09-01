@@ -1131,14 +1131,14 @@ describe('a focus ring is not suppressed by a rule shared with :hover', () => {
  * `TimeField` already imports the mixin and hand-rolled the ring anyway —
  * the strongest evidence here that these are drift, not intent.
  *
- * Three of Rail's four sites also hard-coded `outline-offset: -2px`, a raw
- * value where `calc(-1 * var(--ring-offset))` is the token form. `LinkCard`,
- * `TimeField` and `TopBar` keep their own offsets via the mixin's `$offset`
- * parameter (`@include focus-ring($offset: …)`), added alongside this PR.
- * Every other call site that layered a later `outline-offset` override on
- * top of the mixin's own default — Accordion, Table, Tabs (×2), Calendar's
- * DayCell and TimedEvent, and a second TimeField site — was converted the
- * same way in this PR, so none of them still carry the dead declaration.
+ * Some of Rail's sites also hard-coded `outline-offset: -2px`, a raw value
+ * where `calc(-1 * var(--ring-offset))` is the token form. Every site that
+ * needs a non-default offset now passes it through the mixin's `$offset`
+ * parameter (`@include focus-ring($offset: …)`), added alongside this PR,
+ * instead of layering a separate `outline-offset` declaration after the
+ * `@include` — the shape the gate below this one now bans outright. Grep
+ * `@include focus-ring(` under `src/components` for the current set rather
+ * than trusting a list here.
  *
  * Also misses the `outline-width` / `outline-color` longhand form of the
  * same literal — no instance exists in the tree today, so widening the
@@ -1165,17 +1165,18 @@ describe('no component writes the literal `outline: var(--ring-width)` form', ()
 });
 
 /**
- * An `outline-offset` declaration may not follow `@include focus-ring` in the
- * same rule — pass the offset as `$offset` instead.
+ * An `outline-offset` declaration may not sit in the same rule as
+ * `@include focus-ring` — pass the offset as `$offset` instead. Order
+ * doesn't matter: a declaration before the `@include` is just as dead as one
+ * after it, so this bans either.
  *
- * This exact shape produced a finding in all three review rounds of #513/#514:
- * round 1 shipped it at ten call sites (the mixin's own default plus a later
- * override), round 2 found six more the round-1 pass had missed, and round 3
- * corrected the docs that told the next agent to write it. Three rounds of the
- * same review comment is this repo's own stated trigger for a gate instead of
- * a fourth round. Nothing before this enforced it as an INVARIANT — the
- * `structure.test.ts` prose above is a snapshot of today's tree, not a check
- * that stops someone re-adding the shape tomorrow.
+ * This exact shape produced a review finding in every round of #513/#514,
+ * shipped at call sites a prior round's pass had missed each time, including
+ * once in the docs that told the next agent to write it. That repetition is
+ * this repo's own stated trigger for a gate instead of another round of
+ * review catching another instance. Nothing before this enforced it as an
+ * INVARIANT — the `structure.test.ts` prose above is a snapshot of today's
+ * tree, not a check that stops someone re-adding the shape tomorrow.
  *
  * Same brace-scan as the two gates above (lookbehind prefix, comments
  * stripped first), so it shares their blind spot: a shared rule whose body
@@ -1183,7 +1184,7 @@ describe('no component writes the literal `outline: var(--ring-width)` form', ()
  * Does not evaluate whether the offset value itself is correct — only that it
  * arrives through the mixin's parameter, not a second declaration.
  */
-describe('an outline-offset declaration does not follow @include focus-ring in the same rule', () => {
+describe('an outline-offset declaration does not sit in the same rule as @include focus-ring', () => {
   const styleFiles = allFilesUnder(componentsDir).filter(({ label }) =>
     /\.module\.scss$/.test(label),
   );
