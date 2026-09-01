@@ -67,6 +67,31 @@ jobs:
       - name: Build playground (smoke-tests the library inside a real consumer)
         run: npm run build
 
+      - name: Install Chromium for the focus-ring sweep
+        run: npx playwright install --with-deps chromium
+
+      # Ring COLOUR is gated in packages/design-system/src/styles/contrast.test.ts.
+      # This gates its GEOMETRY: since #505 the ring is an outline at a positive
+      # offset, so a focusable flush against an overflow ancestor loses whole
+      # bands, and jsdom computes no layout so the vitest suite cannot see it.
+      # Needs a real browser; there is no cheaper place to put it.
+      #
+      # It covers outset rings against non-scrolling clip axes on statically
+      # rendered demo content. It does NOT open overlays, so menus, listboxes,
+      # dialogs and pickers are unswept, and it is silent on scroll extremes and
+      # on ancestors that clip with a border. A green run here is not the whole
+      # class — playwright.config.ts states the scope in full.
+      - name: Focus-ring geometry sweep
+        run: npm run test:focus-geometry
+
+      - name: Upload sweep report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
+
       - name: Verify tarball contents
         run: |
           set -euo pipefail
