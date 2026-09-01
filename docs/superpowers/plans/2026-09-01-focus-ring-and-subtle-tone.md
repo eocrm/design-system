@@ -190,7 +190,7 @@ describe('a focus ring is not suppressed by a rule shared with :hover', () => {
     // `&:hover, &:focus-visible` block has both pseudos in its own selector
     // list, so it is caught without resolving the parent.
     const offenders: string[] = [];
-    for (const m of code.matchAll(/(^|[};])([^{};]*?)\{([^{}]*)\}/g)) {
+    for (const m of code.matchAll(/(^|[{};])([^{};]*?)\{([^{}]*)\}/g)) {
       const selector = m[2]!;
       const body = m[3]!;
       if (!/:hover/.test(selector) || !/:focus-visible/.test(selector)) continue;
@@ -692,14 +692,20 @@ Expected: PASS — 4.78/5.06, 4.61/4.71 and 4.87/5.60 all clear 4.5.
 
 - [ ] **Step 3: Sanity-check the pins would have caught the old values**
 
+Task 5 has already COMMITTED the new token, so there is nothing in the working
+tree to stash. Restore the pre-fix generated CSS from the commit before it, run
+the pin, then restore:
+
 ```bash
 cd /home/dpws/projects/design-system
-git stash push packages/design-tokens
-cd packages/design-system && npx vitest run src/styles/contrast.test.ts -t "subtle text on subtle bg"
-cd /home/dpws/projects/design-system && git stash pop
+TOKENS_COMMIT=$(git log -1 --format=%H -- packages/design-tokens/src/tokens.json)
+git checkout "$TOKENS_COMMIT^" -- packages/design-tokens/generated
+(cd packages/design-system && npx vitest run src/styles/contrast.test.ts -t "subtle text on subtle bg")
+git checkout "$TOKENS_COMMIT" -- packages/design-tokens/generated
+git status --short   # must be clean
 ```
 
-Expected: FAIL at 4.37 with the old token, PASS after the stash pop. A pin that passes against the pre-fix value is pinning nothing.
+Expected: FAIL at 4.37 with the old generated values, PASS again after the second checkout. A pin that passes against the pre-fix value is pinning nothing. Leave the tree clean before continuing — the `git status --short` is part of the step, not a suggestion.
 
 - [ ] **Step 4: Re-point the OptionsPicker hint**
 
