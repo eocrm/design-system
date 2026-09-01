@@ -965,6 +965,16 @@ describe('stated contrast ratios still hold', () => {
  * textarea delegates the ring to `.root:focus-within`. A broader rule would
  * fail all three and get waived, which is how a gate stops meaning anything.
  * The SHARING is the defect; the suppression alone is not.
+ *
+ * Known blind spots, none of which exist in the tree today: a shared
+ * `:hover, :focus-visible` block whose BODY contains a nested block is
+ * missed, because `[^{}]*` cannot span into it; `outline: 0` and
+ * `outline-style: none` are both missed, since only the `outline: none`
+ * spelling is matched. This gate also does not strip comments first, unlike
+ * the "stated contrast ratios still hold" gate above — a `// outline: none`
+ * inside a block carrying both pseudos would false-positive. `DataTable.
+ * module.scss:71` has exactly such a comment and is harmless only because
+ * that selector is `:focus-visible` alone, without `:hover`.
  */
 describe('a focus ring is not suppressed by a rule shared with :hover', () => {
   const styleFiles = allFilesUnder(componentsDir).filter(({ label }) =>
@@ -1000,5 +1010,51 @@ describe('a focus ring is not suppressed by a rule shared with :hover', () => {
       if (/(^|[;\s])outline:\s*none/.test(body)) offenders.push(selector.trim());
     }
     expect(offenders, 'shares outline:none between :hover and :focus-visible').toEqual([]);
+  });
+});
+
+/**
+ * Bans the literal `outline: var(--ring-width) ...` form — not "every
+ * hand-rolled ring". A different width token passes this gate untouched: six
+ * live `:focus-visible` sites do exactly that today (`ColorPicker.module.scss
+ * :60,:157,:219`, `ImageCrop.module.scss:26`, `DashboardCanvas.module.scss
+ * :167`, `IconPicker.module.scss:63` — the last is the mixin with its tokens
+ * renamed). Out of scope for this gate; tracked as a follow-up issue.
+ *
+ * Run before any fix, this gate fails on FOUR files, not one: `Rail` wrote
+ * the literal form at four sites; `LinkCard`, `TimeField` and `TopBar` each
+ * hand-rolled it at one more. Emission is identical today in all four, so
+ * nothing was visibly broken — which is exactly why it survived. The cost is
+ * that a change to the mixin does not reach them, and #510 already paid it
+ * on Rail: `.groupTrigger:focus-visible` was declared TWICE at different
+ * offsets, the later `+2px` won on equal specificity, and the correct rule
+ * 84 lines above was dead code while the ring clipped on both sides. A
+ * single mixin call cannot be silently duplicated at two geometries.
+ * `TimeField` already imports the mixin and hand-rolled the ring anyway —
+ * the strongest evidence here that these are drift, not intent.
+ *
+ * Three of Rail's four sites also hard-coded `outline-offset: -2px`, a raw
+ * value where `calc(-1 * var(--ring-offset))` is the token form. `LinkCard`,
+ * `TimeField` and `TopBar` keep their own pre-existing offsets: the mixin
+ * takes a `$color` argument, but always writes its own `outline-offset: var(
+ * --ring-offset)` too, so a site that layers a later `outline-offset` now
+ * carries a dead declaration immediately above its override. The computed
+ * value is unchanged — a block's last declaration for a property wins the
+ * cascade — but the emitted CSS is not byte-identical, and stylelint cannot
+ * see the duplication, since it only exists after Sass compiles the
+ * `@include` away.
+ */
+describe('focus rings are drawn by the mixin, not hand-rolled', () => {
+  const styleFiles = allFilesUnder(componentsDir).filter(({ label }) =>
+    /\.(module|tokens)\.scss$/.test(label),
+  );
+
+  it('found stylesheets to check', () => {
+    expect(styleFiles.length).toBeGreaterThan(50);
+  });
+
+  it.each(styleFiles.map(({ label, code }) => [label, code]))('%s', (_label, code) => {
+    const literals = [...code.matchAll(/outline:\s*var\(--ring-width\)[^;]*/g)].map((m) => m[0]);
+    expect(literals, 'use @include focus-ring instead').toEqual([]);
   });
 });

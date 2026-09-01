@@ -1,3 +1,4 @@
+@use '../../styles/mixins' as *;
 @use './LinkCard.tokens';
 
 .linkCard {
@@ -28,7 +29,8 @@
 }
 
 .linkCard:focus-visible {
-  outline: var(--ring-width) solid var(--ring-accent);
+  @include focus-ring;
+
   outline-offset: var(--link-card-focus-offset);
 }
 

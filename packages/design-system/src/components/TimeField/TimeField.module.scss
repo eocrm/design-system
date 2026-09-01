@@ -218,7 +218,8 @@
 }
 
 .timeNowButton:focus-visible {
-  outline: var(--ring-width) solid var(--ring-accent);
+  @include focus-ring;
+
   outline-offset: 1px;
 }
 

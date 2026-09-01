@@ -1,3 +1,4 @@
+@use '../../styles/mixins' as *;
 @use './TopBar.tokens';
 
 // ─── Root ───────────────────────────────────────────────────────────────
@@ -61,7 +62,7 @@
 // stylelint-enable property-disallowed-list
 
 .search:focus-within {
-  outline: var(--ring-width) solid var(--topbar-search-ring-focus);
+  @include focus-ring(var(--topbar-search-ring-focus));
   // stylelint-disable-next-line declaration-property-value-disallowed-list -- pull the focus ring inward by 1px so it sits ON the surface edge instead of outside it
   outline-offset: -1px;
 }
