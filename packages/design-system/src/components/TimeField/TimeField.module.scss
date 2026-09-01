@@ -153,14 +153,12 @@
     background: var(--date-picker-time-popover-row-hover-bg);
   }
 
+  // INSET. `.timeColumn` above is `overflow-x: hidden`, and this row is
+  // `width: 100%`, so an outset ring puts both vertical bands outside the
+  // scrollport on every option — always, not at some size. Same signature as
+  // Tabs (#505); found by a browser sweep, not by any gate.
   &:focus-visible {
-    @include focus-ring;
-
-    // INSET. `.timeColumn` above is `overflow-x: hidden`, and this row is
-    // `width: 100%`, so an outset ring puts both vertical bands outside the
-    // scrollport on every option — always, not at some size. Same signature as
-    // Tabs (#505); found by a browser sweep, not by any gate.
-    outline-offset: calc(-1 * var(--ring-offset));
+    @include focus-ring($offset: calc(-1 * var(--ring-offset)));
   }
 }
 

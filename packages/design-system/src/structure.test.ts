@@ -1103,9 +1103,11 @@ describe('a focus ring is not suppressed by a rule shared with :hover', () => {
  * Three of Rail's four sites also hard-coded `outline-offset: -2px`, a raw
  * value where `calc(-1 * var(--ring-offset))` is the token form. `LinkCard`,
  * `TimeField` and `TopBar` keep their own offsets via the mixin's `$offset`
- * parameter (`@include focus-ring($offset: …)`), added alongside this PR so
- * the conversion is a real drop-in rather than a separate override
- * declaration layered on top of the mixin's own.
+ * parameter (`@include focus-ring($offset: …)`), added alongside this PR.
+ * Every other call site that layered a later `outline-offset` override on
+ * top of the mixin's own default — Accordion, Table, Tabs (×2), Calendar's
+ * DayCell and TimedEvent, and a second TimeField site — was converted the
+ * same way in this PR, so none of them still carry the dead declaration.
  *
  * Also misses the `outline-width` / `outline-color` longhand form of the
  * same literal — no instance exists in the tree today, so widening the

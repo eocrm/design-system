@@ -44,12 +44,10 @@
     filter: brightness(0.95);
   }
 
+  // INSET: HourGrid scrolls, and a timed event sits flush against its bottom edge, so
+  // an outset ring loses that band entirely (#505).
   &:focus-visible {
-    @include focus-ring;
-
-    // INSET: HourGrid scrolls, and a timed event sits flush against its bottom edge, so
-    // an outset ring loses that band entirely (#505).
-    outline-offset: calc(-1 * var(--ring-offset));
+    @include focus-ring($offset: calc(-1 * var(--ring-offset)));
   }
 }
 
