@@ -1372,7 +1372,7 @@ interface UseCropPreviewOptions extends ExtractCropOptions {
 
 - `padding`: `none` / `sm` / `md` / `lg`. Defaults to `md` for plain content, `none` when `Card.Header` / `Card.Body` / `Card.List` / `Card.ListRow` is a direct child. Pass explicitly to override.
 - `tone`: `accent` / `info` / `success` / `warning` / `danger` — draws a 3px left-edge stripe in the tone color. Default: no stripe (standard bordered look). A transparent border-left is always reserved so toggling `tone` never shifts layout.
-- `overflow`: `hidden` (default) / `visible`. The default clips children to the card's rounded border so square-cornered children (a `<Table>`'s internal scroll wrapper, an `<img>`, a full-bleed `<video>`) don't show a seam at the rounded corners. Overlay primitives in this library (DropdownMenu, Tooltip, Popover, Drawer, Modal) portal to `document.body` and are NOT clipped by this. Focus rings are NOT exempt: an `outline` is clipped by an ancestor's overflow exactly as a spread shadow is, so a focusable flush against the card edge loses that band — draw its ring inset (`outline-offset: calc(-1 * var(--ring-offset))`) as Tabs, Accordion, Table, DataTable, TimeField, Rail, OptionsPicker and Calendar do. Pass `overflow="visible"` only when a direct child genuinely needs to overhang the card edge (decorative badges that protrude past a corner, hover-lift transforms whose shadow extends outward).
+- `overflow`: `hidden` (default) / `visible`. The default clips children to the card's rounded border so square-cornered children (a `<Table>`'s internal scroll wrapper, an `<img>`, a full-bleed `<video>`) don't show a seam at the rounded corners. Overlay primitives in this library (DropdownMenu, Tooltip, Popover, Drawer, Modal) portal to `document.body` and are NOT clipped by this. Focus rings are NOT exempt: an `outline` is clipped by an ancestor's overflow exactly as a spread shadow is, so a focusable flush against the card edge loses that band — draw its ring inset by passing `$offset: calc(-1 * var(--ring-offset))` to the `focus-ring` mixin, not a separate `outline-offset` declaration after the `@include` (a `structure.test.ts` gate fails the build on that shape). Pass `overflow="visible"` only when a direct child genuinely needs to overhang the card edge (decorative badges that protrude past a corner, hover-lift transforms whose shadow extends outward).
 - **Compound API** — `Card.Header` / `Card.Body` / `Card.List` / `Card.ListRow` for section-card patterns. Drop `padding="none"` — the parent Card auto-detects compound children.
 - `Card.Header`: title row (`h3` by default, override via `headerLevel`) with optional right-aligned `action` slot and bottom-border separator.
 - `Card.Body`: padded `<div>` content section. Add `scroll` beneath a Header in a `fill` Card to make Body the flexible vertical scroll region while Header stays fixed. Card intentionally owns this layout because it relates only its own compound pieces; the parent still owns the Card's definite outer height. `scroll` also sets `tabIndex={0}`, because a scroll container with no focusable descendant is unreachable by keyboard (axe `scrollable-region-focusable`) — pair it with `role="group"` and an `aria-label` when the content is worth naming, and pass `tabIndex={-1}` to opt out if the body already contains something focusable.
@@ -3594,13 +3594,16 @@ or `box-shadow: 0 0 0` for the current set rather than trusting a list here:
   gate keys on, and why it doesn't reach them — tracked in **#515**, but that
   is not the same thing as "can't migrate": `ColorPicker`, `ImageCrop` and
   `DashboardCanvas` all use `--border-width-emphasis` for that width, which is
-  `--ring-width`'s own value (2px) under a global-primitive name, their
-  offsets already match `--ring-offset` (2px, outset for the first two, inset
-  for `DashboardCanvas`), and their component-scoped ring COLOUR tokens pass
-  straight into the mixin's first argument — so all three are exact drop-ins
-  today, #515 is simply unstarted for them, and migrating deletes the four
-  `stylelint-disable-next-line` comments their raw `2px` offsets currently
-  need. `IconPicker` is the one that genuinely cannot: its width token,
+  `--ring-width`'s own value under a global-primitive name, and their offsets
+  already match `--ring-offset` (outset for the first two, inset for
+  `DashboardCanvas`) — so all three are exact drop-ins today, #515 is simply
+  unstarted for them, and migrating also lets them drop the
+  `stylelint-disable-next-line` comments their raw offsets currently need.
+  `ColorPicker` and `ImageCrop`'s ring colour is component-scoped and passes
+  straight into the mixin's first argument; `DashboardCanvas`'s is
+  `--color-accent`, a global primitive identical to `--ring-accent` in both
+  themes, so it needs no colour argument at all. `IconPicker` is the one that
+  genuinely cannot migrate: its width token,
   `--icon-picker-focus-ring-width`, is a documented public override in
   `IconPicker.tsx`'s consumer-facing token list, and the mixin has no width
   parameter — migrating would silently delete that override surface, a
@@ -3633,13 +3636,13 @@ Two things follow from the mechanism:
 - **An outset ring needs room.** If the focusable sits flush against an ancestor
   with `overflow` other than `visible`, the ring clips — invisibly to the test
   suite, which checks ring colour but not geometry (#512). Where that applies,
-  draw it inset: `outline-offset: calc(-1 * var(--ring-offset));`. For the
-  current set run `grep -rn "outline-offset" src/components` and read the
-  negative ones — grepping the `calc()` form alone misses the sites that predate
-  the token and still write `-2px`, `-1px` or their own `calc()`. Do not trust a
-  count or a list written in prose here: three files carried three different
-  numbers for this one quantity, each was stale within a commit, and the
-  replacement list went stale in the commit that wrote it.
+  draw it inset by passing `$offset: calc(-1 * var(--ring-offset))` to the
+  mixin — NOT a separate `outline-offset` declaration after the `@include`,
+  which a `structure.test.ts` gate now fails the build on. For the current
+  set run `grep -rn "@include focus-ring(" src/components` and read the
+  `$offset` arguments. Do not trust a count or a list written in prose here:
+  every attempt at one in this file has gone stale within the same PR that
+  wrote it.
 - **Inset gives the gap up.** An outset ring is bounded on both sides by the
   backdrop, which is what the contrast gate measures. An inset one touches the
   element's OWN fill, and nothing measures that side — so check it yourself

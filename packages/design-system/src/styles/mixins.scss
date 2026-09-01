@@ -52,10 +52,9 @@
 // standalone `outline-offset` override used to be the pattern here; #513's
 // batch deleted it from every call site once `$offset` existed to replace it).
 // For the current set, grep `@include focus-ring(` under src/components and
-// read the `$offset` arguments — verified 18 sites today. No count is written
-// in prose here on purpose: three documents carried three different numbers
-// for this one quantity, each right when written and stale a commit later,
-// and every round of review caught one.
+// read the `$offset` arguments. No count is written in prose here on
+// purpose: every attempt at one in this area has gone stale before the PR
+// that wrote it even shipped.
 // That trade is not free either. An inset ring paints over the element's
 // outermost pixels, including its own border, so check what that border
 // carries, and record what you find — the severity is not uniform, so do not
