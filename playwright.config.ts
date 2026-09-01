@@ -17,9 +17,12 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * - Closed overlays. The sweep loads a route, presses Tab once, and opens
  *   nothing, so every menu, listbox, dialog and picker is absent from the DOM —
- *   the densest population of this defect class is unswept. In particular this
- *   gate does NOT certify the `IconPicker` `box-shadow` migration that #512
- *   describes as waiting on it.
+ *   the densest population of this defect class is unswept. `IconPicker`'s cells
+ *   are an example: they only exist while the popover is open, so its rings are
+ *   never measured here. (It is already on `outline` as of #510; the
+ *   `box-shadow` left at `IconPicker.module.scss:70` is the selected-state ring,
+ *   a different mechanism, and #512's "blocked on this sweep" note was stale
+ *   when it was written.)
  * - Losses at either end of a scroll range (see the scroll-axis rule in
  *   `tests/focus-ring-geometry.spec.ts`, which explains why that leniency is
  *   load-bearing).

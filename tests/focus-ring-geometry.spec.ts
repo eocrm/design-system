@@ -137,6 +137,14 @@ const sweepScript = `
     // reports rings that are plainly on screen, and a false positive is how a
     // gate gets switched off. Dormant today only because every floating surface
     // here portals to <body>.
+    //
+    // position !== 'static' is a PROXY for "is the containing block", not a
+    // synonym: transform / filter / will-change / contain / perspective
+    // establish one too. Accordion's .inner is exactly that (overflow: hidden
+    // with transform: translateZ(0)), so an absolutely positioned focusable in
+    // an open panel is skipped where it used to be measured. That trades a
+    // false-positive class for a narrower false-negative one, which is the
+    // right way round for a gate.
     let inContainingBlock = cs.position !== 'absolute';
     // Starts at the ring's parent: an element's own overflow never clips its
     // own outline.
@@ -204,6 +212,14 @@ const sweepScript = `
 
 for (const route of routes) {
   test(`focus rings survive their clip ancestors on ${route}`, async ({ page }) => {
+    // packages/playground/index.html pulls Outfit from Google Fonts, so an
+    // unintercepted run makes 186 requests to an external CDN. Not a speed
+    // concern: this job has retries: 0 and release.yml chains it, so one stalled
+    // request times out goto and reddens a PR that changed nothing. Blocking it
+    // also fixes the font, which decides text width and therefore whether a tab
+    // strip overflows.
+    await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.abort());
+
     // CalendarDemo and the four date-picker demos build their fixtures from
     // `new Date()`, so month length, leading blanks, and which cells land flush
     // against the month grid's edges all move with the wall clock. Unpinned,
