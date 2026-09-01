@@ -21,7 +21,9 @@ export default defineConfig({
   // Baseline generation is a read-modify-write of one JSON file, so it has to
   // be serial; parallel workers would lose each other's routes.
   workers: process.env.UPDATE_FOCUS_BASELINE ? 1 : undefined,
-  reporter: process.env.CI ? 'github' : 'list',
+  // In CI, both: 'github' annotates the failing lines in the PR, 'html' writes
+  // the playwright-report/ directory that quality.yml uploads on failure.
+  reporter: process.env.CI ? [['github'], ['html', { open: 'never' }]] : 'list',
   use: { baseURL: 'http://localhost:8090' },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
