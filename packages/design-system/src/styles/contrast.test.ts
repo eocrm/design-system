@@ -187,18 +187,23 @@ const PAIRS: Pair[] = [
   // #511. --color-fg-subtle is certified for these two surfaces and no others.
   // It is NOT pinned against --color-bg-muted, and that omission is the rule
   // rather than an oversight: at 4.38/4.29 it would fail. This is a decline,
-  // not a fix — no value clears --color-bg-muted without collapsing the tone.
-  // #511 moved --color-fg-subtle one notch darker, taking its perceptual
-  // distance from --color-fg-muted (ΔE, OKLab) from 0.0387 to 0.0261 in light
-  // and 0.0913 to 0.0707 in dark; the light figure was already thin before
-  // this PR touched it. 0.0261 still reads as a residual step; the darkest
-  // value that clears --color-bg-muted (#667186, contrast 4.507) does not —
-  // it lands at ΔE 0.0194, collapsing subtle into muted. The cost lands in
-  // light only: at 11px on --color-bg-muted the two tones are now visually
-  // indistinguishable there, while dark (0.0707) still reads as a real step.
-  // #521 tracks the design decision that follows (move --color-fg-muted,
-  // split the retune per theme, or retire the subtle tone) — not resolved
-  // here. So the rule stands: text on --color-bg-muted uses tone="muted",
+  // not a fix — no neutral on this ramp clears --color-bg-muted without
+  // collapsing the tone (a saturated hue could clear it at a large ΔE, but
+  // that isn't a subtle neutral any more). #511 moved --color-fg-subtle one
+  // notch darker, taking its perceptual distance from --color-fg-muted (ΔE,
+  // OKLab) from 0.0387 to 0.0261 in light and 0.0913 to 0.0707 in dark; the
+  // light figure was already thin before this PR touched it. 0.0261 still
+  // reads as a residual step at larger sizes and on lighter surfaces; the
+  // LIGHTEST value that clears --color-bg-muted (#667186, contrast 4.507)
+  // does not — a darker foreground gets more contrast on a light surface, so
+  // #667186 is the boundary case, and it lands at ΔE 0.0194, collapsing
+  // subtle into muted. The cost lands in light only, and it is real: at 11px
+  // specifically on --color-bg-muted, the shipped 0.0261 step is ALSO
+  // visually indistinguishable in a browser, while dark (0.0707) still reads
+  // as a real step there. #521 tracks the design decision that follows (move
+  // --color-fg-muted, split the retune per theme, or retire the subtle tone)
+  // — not resolved here. So the rule stands: text on --color-bg-muted uses
+  // tone="muted",
   // whose row is directly below.
   ['subtle text on page bg', '--color-fg-subtle', '--color-bg', 4.5],
   ['subtle text on subtle bg', '--color-fg-subtle', '--color-bg-subtle', 4.5],
