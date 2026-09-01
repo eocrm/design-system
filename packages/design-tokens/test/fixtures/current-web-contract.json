@@ -97,7 +97,7 @@
     "--color-fg-disabled": "#a5adba",
     "--color-fg-muted": "#5e6c84",
     "--color-fg-on-overlay": "#ffffff",
-    "--color-fg-subtle": "#6b778c",
+    "--color-fg-subtle": "#687388",
     "--color-info": "#0052cc",
     "--color-info-bg-subtle": "#ebf3ff",
     "--color-palette-amber-bg": "#fff7d6",
@@ -162,7 +162,7 @@
     "--color-palette-yellow-fg": "#6b5f00",
     "--color-presence-away": "var(--color-palette-amber-fg)",
     "--color-presence-busy": "var(--color-danger)",
-    "--color-presence-offline": "var(--color-fg-subtle)",
+    "--color-presence-offline": "#6b778c",
     "--color-presence-online": "var(--color-success)",
     "--color-success": "#007e54",
     "--color-success-bg-subtle": "#e3fcef",
@@ -330,7 +330,7 @@
     "--color-fg": "#dee4ea",
     "--color-fg-disabled": "#5a6472",
     "--color-fg-muted": "#9aa7b5",
-    "--color-fg-subtle": "#7e8b9a",
+    "--color-fg-subtle": "#8591a0",
     "--color-info": "#579dff",
     "--color-info-bg-subtle": "#16324f",
     "--color-palette-amber-bg": "#483919",
@@ -393,6 +393,7 @@
     "--color-palette-violet-fg": "#b0a8e6",
     "--color-palette-yellow-bg": "#484219",
     "--color-palette-yellow-fg": "#f9ee94",
+    "--color-presence-offline": "#7e8b9a",
     "--color-success": "#4bce97",
     "--color-success-bg-subtle": "#1c3d31",
     "--color-success-fg": "#1d2125",
@@ -450,7 +451,7 @@
     "--color-fg": "#dee4ea",
     "--color-fg-disabled": "#5a6472",
     "--color-fg-muted": "#9aa7b5",
-    "--color-fg-subtle": "#7e8b9a",
+    "--color-fg-subtle": "#8591a0",
     "--color-info": "#579dff",
     "--color-info-bg-subtle": "#16324f",
     "--color-palette-amber-bg": "#483919",
@@ -513,6 +514,7 @@
     "--color-palette-violet-fg": "#b0a8e6",
     "--color-palette-yellow-bg": "#484219",
     "--color-palette-yellow-fg": "#f9ee94",
+    "--color-presence-offline": "#7e8b9a",
     "--color-success": "#4bce97",
     "--color-success-bg-subtle": "#1c3d31",
     "--color-success-fg": "#1d2125",
@@ -2919,6 +2921,12 @@
           "selector": ":root[data-theme='dark']"
         }
       ],
+      "--color-presence-offline": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root[data-theme='dark']"
+        }
+      ],
       "--color-success": [
         {
           "source": "packages/design-tokens/generated/web/dark.scss",
@@ -3710,6 +3718,13 @@
         }
       ],
       "--color-palette-yellow-fg": [
+        {
+          "source": "packages/design-tokens/generated/web/dark.scss",
+          "selector": ":root:not([data-theme='light'])",
+          "atRule": "@media (prefers-color-scheme: dark)"
+        }
+      ],
+      "--color-presence-offline": [
         {
           "source": "packages/design-tokens/generated/web/dark.scss",
           "selector": ":root:not([data-theme='light'])",

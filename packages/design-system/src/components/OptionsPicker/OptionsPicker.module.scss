@@ -96,8 +96,9 @@
 
   // Overrides the tone token the nested <Text tone="subtle"> resolves through,
   // rather than changing its prop, so the hint has a real base token for the
-  // #504 hover gate to measure against. Resolves to --color-fg-subtle, which is
-  // exactly Text's own default, so resting appearance is unchanged.
+  // #504 hover gate to measure against. Resolves to --color-fg-muted as of
+  // #511 (was --color-fg-subtle, Text's own default) — the resting appearance
+  // is exactly what #511 changed; see OptionsPicker.tokens.scss for why.
   --text-fg-subtle: var(--options-picker-group-header-hint-fg);
 }
 
@@ -164,7 +165,7 @@ button.groupHeader {
   &:hover {
     background: var(--options-picker-group-header-bg-hover);
 
-    // --color-bg-muted-hover is dark enough that the subtle hint falls under AA
+    // --color-bg-muted-hover is dark enough that the muted hint falls under AA
     // on it (#504); see the token's own @contrast annotations.
     --text-fg-subtle: var(--options-picker-group-header-hint-fg-hover);
   }
