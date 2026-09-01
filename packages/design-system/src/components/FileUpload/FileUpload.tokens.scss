@@ -26,7 +26,10 @@
   // .dropzoneHint declares its own colour, so it wins over .dragOver's
   // inherited --file-upload-dragover-fg -- the hint stays this colour through
   // drag-over, whose --file-upload-dragover-bg is --color-accent-bg-subtle.
-  // #511: was --color-fg-subtle, below AA there; --color-fg-muted clears it.
+  // #511: was --color-fg-subtle, well below AA there (3.97/3.61).
+  // --color-fg-muted is a substantial improvement but still misses AA in
+  // light (4.41, needs 4.5); dark clears (4.72). Out of #511's scope --
+  // #522 tracks light --color-fg-muted on --color-accent-bg-subtle.
   // --file-upload-icon-fg above is unaffected (icon, not text; separate
   // token; not re-pointed).
   // @contrast --color-fg-subtle on --color-accent-bg-subtle = 3.97:1 light

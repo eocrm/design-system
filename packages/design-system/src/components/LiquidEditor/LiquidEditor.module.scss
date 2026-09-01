@@ -299,10 +299,13 @@
 // #511: this class is shared across two contexts. InsertVariableMenu.tsx puts
 // it inside a plain <DropdownMenu.Item>, whose hover background is
 // --color-bg-muted -- a selector scoped to .menuItemActive (AutocompleteMenu
-// only) cannot reach that. --color-fg-muted clears all three surfaces this
-// class actually paints on (--color-bg at rest, --color-accent-bg-subtle when
-// .menuItemActive, --color-bg-muted on DropdownMenu.Item hover), so the base
-// rule moves rather than adding a second scoped override.
+// only) cannot reach that. On --color-bg-muted, --color-fg-muted clears AA in
+// both themes. On --color-accent-bg-subtle (below, via .menuItemActive's
+// --liquid-editor-token-variable-bg alias), it is a substantial improvement
+// over --color-fg-subtle but still misses AA in light (4.41, needs 4.5);
+// dark clears (4.72). That miss is out of #511's scope -- #522 tracks it.
+// The base rule moves rather than adding a second scoped override, since
+// --color-bg-muted is the surface that must clear.
 // @contrast --color-fg-muted on --color-bg-muted = 4.87:1 light
 // @contrast --color-fg-muted on --color-bg-muted = 5.60:1 dark
 // @contrast --color-fg-muted on --color-accent-bg-subtle = 4.41:1 light
@@ -313,9 +316,15 @@
 }
 
 // .menuItemType, unlike .menuItemDesc, is only ever rendered inside
-// AutocompleteMenu, so its only tinted surface is .menuItemActive
-// (--color-accent-bg-subtle) -- the base rule above stays --color-fg-subtle
-// on the menu's certified default --color-bg.
+// AutocompleteMenu, so its only tinted surface is .menuItemActive's
+// background -- --liquid-editor-token-variable-bg, which aliases
+// --color-accent-bg-subtle today but is a documented theming surface a
+// consumer can re-point, so it's named by its own token here rather than by
+// the primitive it currently resolves to. --color-fg-muted is a substantial
+// improvement over --color-fg-subtle there but still misses AA in light
+// (4.41, needs 4.5); dark clears (4.72) -- out of #511's scope, #522 tracks
+// it. The base rule above stays --color-fg-subtle on the menu's certified
+// default --color-bg.
 // @contrast --color-fg-muted on --color-accent-bg-subtle = 4.41:1 light
 // @contrast --color-fg-muted on --color-accent-bg-subtle = 4.72:1 dark
 .menuItemActive .menuItemType {
