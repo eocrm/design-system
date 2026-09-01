@@ -566,10 +566,20 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
             {hasAnyVisible &&
               isGrouped(props) &&
               visibleGroups.map((g) => {
-                // When the group has a palette color, draw a 1px bottom
+                // When the group has a palette color, draw a 2px bottom
                 // border on the header in that color — visually carries
                 // the namespace identity from the dot across the full
                 // header width, separating each group's options.
+                //
+                // The width is load-bearing, not decorative: #510 gave the
+                // header an INSET focus ring (the list is a padding-less
+                // scroller, so an outset ring lost both vertical bands), and
+                // the inset band is --ring-width, also 2px. A focused header
+                // therefore covers this border completely. That trade is only
+                // acceptable because the GroupDot beside the label carries the
+                // same --color-palette-<name>-fg and the ring does not touch
+                // it. Reasoning from the old "1px" gave a partial occlusion
+                // and a different verdict on whether the trade is sound.
                 const headerClassName = clsx(
                   styles.groupHeader,
                   g.color && styles.groupHeaderWithBorder,
