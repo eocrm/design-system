@@ -294,9 +294,30 @@
   flex-direction: column;
 }
 
+// #511: this class is shared across two contexts. InsertVariableMenu.tsx puts
+// it inside a plain <DropdownMenu.Item>, whose hover background is
+// --color-bg-muted -- a selector scoped to .menuItemActive (AutocompleteMenu
+// only) cannot reach that. --color-fg-muted clears all three surfaces this
+// class actually paints on (--color-bg at rest, --color-accent-bg-subtle when
+// .menuItemActive, --color-bg-muted on DropdownMenu.Item hover), so the base
+// rule moves rather than adding a second scoped override.
+// @contrast --color-fg-muted on --color-bg-muted = 4.87:1 light
+// @contrast --color-fg-muted on --color-bg-muted = 5.60:1 dark
+// @contrast --color-fg-muted on --color-accent-bg-subtle = 4.41:1 light
+// @contrast --color-fg-muted on --color-accent-bg-subtle = 4.72:1 dark
 .menuItemDesc {
-  color: var(--color-fg-subtle);
+  color: var(--color-fg-muted);
   font-size: var(--font-size-xs);
+}
+
+// .menuItemType, unlike .menuItemDesc, is only ever rendered inside
+// AutocompleteMenu, so its only tinted surface is .menuItemActive
+// (--color-accent-bg-subtle) -- the base rule above stays --color-fg-subtle
+// on the menu's certified default --color-bg.
+// @contrast --color-fg-muted on --color-accent-bg-subtle = 4.41:1 light
+// @contrast --color-fg-muted on --color-accent-bg-subtle = 4.72:1 dark
+.menuItemActive .menuItemType {
+  color: var(--color-fg-muted);
 }
 
 .menuItemTags {

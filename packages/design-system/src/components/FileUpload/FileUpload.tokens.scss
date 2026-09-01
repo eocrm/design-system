@@ -22,7 +22,18 @@
   --file-upload-icon-fg: var(--color-fg-subtle);
   --file-upload-label-font-size: var(--font-size-md);
   --file-upload-hint-font-size: var(--font-size-sm);
-  --file-upload-hint-fg: var(--color-fg-subtle);
+
+  // .dropzoneHint declares its own colour, so it wins over .dragOver's
+  // inherited --file-upload-dragover-fg -- the hint stays this colour through
+  // drag-over, whose --file-upload-dragover-bg is --color-accent-bg-subtle.
+  // #511: was --color-fg-subtle, below AA there; --color-fg-muted clears it.
+  // --file-upload-icon-fg above is unaffected (icon, not text; separate
+  // token; not re-pointed).
+  // @contrast --color-fg-subtle on --color-accent-bg-subtle = 3.97:1 light
+  // @contrast --color-fg-subtle on --color-accent-bg-subtle = 3.61:1 dark
+  // @contrast --color-fg-muted on --color-accent-bg-subtle = 4.41:1 light
+  // @contrast --color-fg-muted on --color-accent-bg-subtle = 4.72:1 dark
+  --file-upload-hint-fg: var(--color-fg-muted);
 
   // File list
   --file-upload-list-gap: var(--space-2);
