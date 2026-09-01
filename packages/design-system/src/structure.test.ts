@@ -1163,3 +1163,47 @@ describe('no component writes the literal `outline: var(--ring-width)` form', ()
     expect(literals, 'use @include focus-ring instead').toEqual([]);
   });
 });
+
+/**
+ * An `outline-offset` declaration may not follow `@include focus-ring` in the
+ * same rule — pass the offset as `$offset` instead.
+ *
+ * This exact shape produced a finding in all three review rounds of #513/#514:
+ * round 1 shipped it at ten call sites (the mixin's own default plus a later
+ * override), round 2 found six more the round-1 pass had missed, and round 3
+ * corrected the docs that told the next agent to write it. Three rounds of the
+ * same review comment is this repo's own stated trigger for a gate instead of
+ * a fourth round. Nothing before this enforced it as an INVARIANT — the
+ * `structure.test.ts` prose above is a snapshot of today's tree, not a check
+ * that stops someone re-adding the shape tomorrow.
+ *
+ * Same brace-scan as the two gates above (lookbehind prefix, comments
+ * stripped first), so it shares their blind spot: a shared rule whose body
+ * contains a NESTED block is invisible, since `[^{}]*` cannot span into it.
+ * Does not evaluate whether the offset value itself is correct — only that it
+ * arrives through the mixin's parameter, not a second declaration.
+ */
+describe('an outline-offset declaration does not follow @include focus-ring in the same rule', () => {
+  const styleFiles = allFilesUnder(componentsDir).filter(({ label }) =>
+    /\.module\.scss$/.test(label),
+  );
+
+  it('found stylesheets to check', () => {
+    expect(styleFiles.length).toBeGreaterThan(50);
+  });
+
+  it.each(styleFiles.map(({ label, code }) => [label, code]))('%s', (_label, code) => {
+    const offenders: string[] = [];
+    for (const m of stripScssComments(code).matchAll(/(?<=^|[{};])([^{};]*?)\{([^{}]*)\}/g)) {
+      const selector = m[1]!;
+      const body = m[2]!;
+      if (/@include\s+focus-ring/.test(body) && /(^|[;\s])outline-offset\s*:/.test(body)) {
+        offenders.push(selector.trim());
+      }
+    }
+    expect(
+      offenders,
+      'pass the offset via focus-ring($offset: …) instead of a separate outline-offset declaration',
+    ).toEqual([]);
+  });
+});
