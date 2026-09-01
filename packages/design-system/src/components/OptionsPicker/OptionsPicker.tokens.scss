@@ -36,16 +36,16 @@
   // It was tone="subtle" and failed AA at rest: --color-fg-subtle read below
   // 4.5:1 both themes on --color-bg-muted. #511 resolved that at the
   // primitive — one notch darker, certified for --color-bg and
-  // --color-bg-subtle only — which does NOT reach this surface, deliberately:
-  // the value that would have collapsed subtle into muted. So this is the
-  // consumer half of that fix. The hint is now tone="muted", which the pinned
-  // 'muted text on muted bg' row in contrast.test.ts holds at 4.5:1. The JSX
-  // prop stays tone="subtle" — the colour never came from Text's TONE_CLASS
-  // lookup, only from this token overriding --text-fg-subtle underneath it,
-  // so retuning here is the whole fix.
-  // Hover keeps --color-fg from #510. The gap between rest and hover is now
-  // 4.87 -> 11.29 rather than 4.15 -> 11.29; still wide, but rest is
-  // conformant, which is what made the old spread worth flagging.
+  // --color-bg-subtle only. That certification deliberately does NOT reach
+  // this surface: the value that would have reached it collapses subtle into
+  // muted. So this is the consumer half of that fix. The hint now resolves to
+  // --color-fg-muted, which the pinned 'muted text on muted bg' row in
+  // contrast.test.ts holds at 4.5:1. The JSX prop stays tone="subtle" — the
+  // colour never came from Text's TONE_CLASS lookup, only from this token
+  // overriding --text-fg-subtle underneath it, so retuning here is the whole
+  // fix.
+  // Hover keeps --color-fg from #510. Rest is now conformant at 4.87, closing
+  // the old spread against the unchanged 11.29 hover value.
   // @contrast --color-fg-muted on --color-bg-muted = 4.87:1 light
   // @contrast --color-fg-muted on --color-bg-muted = 5.60:1 dark
   // @contrast --color-fg on --color-bg-muted-hover = 11.29:1 light
