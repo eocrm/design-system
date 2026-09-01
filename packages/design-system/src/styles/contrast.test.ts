@@ -186,12 +186,20 @@ const PAIRS: Pair[] = [
   ['accent text on the duplicate accent tint', '--color-accent', '--color-accent-subtle-bg', 4.5],
   // #511. --color-fg-subtle is certified for these two surfaces and no others.
   // It is NOT pinned against --color-bg-muted, and that omission is the rule
-  // rather than an oversight: at 4.38/4.29 it would fail, and the value that
-  // would fix it collapses the tone into --color-fg-muted (dE <= 0.019, under
-  // the 0.065 floor the hover-step gate below pins) while dropping the
-  // presence online/offline pair under its own 0.13 floor. So the rule is that
-  // the PAIRING does not occur: text on --color-bg-muted or darker uses
-  // tone="muted", whose row is directly below.
+  // rather than an oversight: at 4.38/4.29 it would fail. This is a decline,
+  // not a fix — no value clears --color-bg-muted without collapsing the tone.
+  // #511 moved --color-fg-subtle one notch darker, taking its perceptual
+  // distance from --color-fg-muted (ΔE, OKLab) from 0.0387 to 0.0261 in light
+  // and 0.0913 to 0.0707 in dark; the light figure was already thin before
+  // this PR touched it. 0.0261 still reads as a residual step; the darkest
+  // value that clears --color-bg-muted (#667186, contrast 4.507) does not —
+  // it lands at ΔE 0.0194, collapsing subtle into muted. The cost lands in
+  // light only: at 11px on --color-bg-muted the two tones are now visually
+  // indistinguishable there, while dark (0.0707) still reads as a real step.
+  // #521 tracks the design decision that follows (move --color-fg-muted,
+  // split the retune per theme, or retire the subtle tone) — not resolved
+  // here. So the rule stands: text on --color-bg-muted uses tone="muted",
+  // whose row is directly below.
   ['subtle text on page bg', '--color-fg-subtle', '--color-bg', 4.5],
   ['subtle text on subtle bg', '--color-fg-subtle', '--color-bg-subtle', 4.5],
   ['muted text on muted bg', '--color-fg-muted', '--color-bg-muted', 4.5],
@@ -928,7 +936,10 @@ describe('presence dots stay distinguishable from each other', () => {
   //   because neither is in it. An earlier version of this sentence said "worst
   //   pair" and was right when written, then the same branch invalidated it two
   //   commits later. The global worst pair still lives in light, so amber wins
-  //   overall — but the dark comparison is now a tie, not a loss.
+  //   overall — but the dark comparison is now a tie, not a loss. (#511
+  //   de-aliased --color-presence-offline to the literal it rendered at the
+  //   time, severing this — offline no longer tracks --color-fg-subtle at
+  //   all, so this paragraph is the #506 record, not a live coupling.)
   //
   //   Not a "yellow sits closer to online in hue" story, which is the tempting
   //   explanation and the wrong one: yellow (101°) is nearly midway between
@@ -963,6 +974,15 @@ describe('presence dots stay distinguishable from each other', () => {
     // others. Margin over the floor went 17.8% -> 3.4%. That is a real cost and
     // it was worth paying: the shape channel now carries the separation this
     // gate cannot see, and ΔE here is redundancy rather than the only defence.
+    //
+    // #511 de-aliased --color-presence-offline to a literal (the exact value
+    // it rendered at that moment), so this is no longer a live coupling: a
+    // future --color-fg-subtle retune moves nothing here, and offline only
+    // moves again if someone edits its own literal directly. That is the
+    // single most load-bearing consequence of #511 for THIS gate — it changes
+    // nothing numerically below, only what a --color-fg-subtle retuner needs
+    // to re-check (nothing, here).
+    //
     // Walking --color-success by its own hover delta, online/offline opens up
     // immediately (light 0.1344 -> 0.1604 -> 0.2137; dark 0.1958 -> 0.2381), so
     // the thinner margin is not fragile along the axis the walk below explores.
