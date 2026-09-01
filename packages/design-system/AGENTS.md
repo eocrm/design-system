@@ -3589,14 +3589,23 @@ or `box-shadow: 0 0 0` for the current set rather than trusting a list here:
 
 - **Hand-rolled but real** — `AvatarGroup`, `ColorPicker`, `DashboardCanvas`,
   `IconPicker`, `ImageCrop`. `AvatarGroup` needs an inner layer between the
-  chip and the overlapping avatars; the other four use a component-scoped
-  ring-width token the mixin cannot take — tracked in **#515**.
+  chip and the overlapping avatars; the other four hand-roll with a width
+  token other than `--ring-width` — which is what the `structure.test.ts`
+  gate keys on, and why it doesn't reach them — tracked in **#515**.
+  `IconPicker`'s token resolves to `--ring-width` and `DashboardCanvas` uses
+  only global tokens, so both could migrate today; `ColorPicker` and
+  `ImageCrop` use `--border-width-emphasis`, also global, not
+  component-scoped.
 - **Suppressed, not hand-rolled** — nothing, as of this PR. Three components
   legitimately set `outline: none` under `:focus-visible` and stay:
   `AvatarGroup` (box-shadow ring — an offset gap there would reveal another
   avatar, not a surface), `FlowCanvas` (deliberate) and `LiquidEditor`
-  (delegates to `.root:focus-within`). A `structure.test.ts` gate now bans the
-  hover-shared form outright, so a fourth one won't ship silently.
+  (delegates to `.root:focus-within`) — plus `TopBar`'s `.searchInput`, which
+  sets it under plain `:focus` and delegates the same way, to
+  `.search:focus-within`. A `structure.test.ts` gate now bans the SAME-RULE
+  hover-shared form outright; a suppression sitting in a separate base rule
+  from the shared block — `DropdownMenu`'s shape before this PR — still needs
+  a human to catch it.
 
 Separately, `FlowCanvas`, `Lightbox`, `RichTextEditor` and Calendar's
 `TimedEvent` each carry an `outline:` or `box-shadow: 0 0 0 var(--ring-width) …`
