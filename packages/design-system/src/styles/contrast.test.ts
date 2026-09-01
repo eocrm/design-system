@@ -184,6 +184,17 @@ const PAIRS: Pair[] = [
   // with all of them still rendering on it.
   ['danger text on the duplicate danger tint', '--color-danger', '--color-bg-danger-subtle', 4.5],
   ['accent text on the duplicate accent tint', '--color-accent', '--color-accent-subtle-bg', 4.5],
+  // #511. --color-fg-subtle is certified for these two surfaces and no others.
+  // It is NOT pinned against --color-bg-muted, and that omission is the rule
+  // rather than an oversight: at 4.38/4.29 it would fail, and the value that
+  // would fix it collapses the tone into --color-fg-muted (dE <= 0.019, under
+  // the 0.065 floor the hover-step gate below pins) while dropping the
+  // presence online/offline pair under its own 0.13 floor. So the rule is that
+  // the PAIRING does not occur: text on --color-bg-muted or darker uses
+  // tone="muted", whose row is directly below.
+  ['subtle text on page bg', '--color-fg-subtle', '--color-bg', 4.5],
+  ['subtle text on subtle bg', '--color-fg-subtle', '--color-bg-subtle', 4.5],
+  ['muted text on muted bg', '--color-fg-muted', '--color-bg-muted', 4.5],
 ];
 
 describe.each([
