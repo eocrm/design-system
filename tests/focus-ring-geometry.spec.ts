@@ -24,10 +24,12 @@ const routes = [
 type Band = 'top' | 'right' | 'bottom' | 'left';
 type Finding = { route: string; key: string; band: Band };
 
-// Guards the regex above, not the page count: if App.tsx stops matching it,
-// every per-route test below silently disappears and the suite still goes green.
+// A floor, not a presence check. If the regex degrades from 93 matches to a
+// handful, most per-route tests below silently disappear and the suite still
+// goes green — which is the failure this guard exists to catch, and `> 0` does
+// not catch it.
 test('found the demo routes', () => {
-  expect(routes.length).toBeGreaterThan(0);
+  expect(routes.length).toBeGreaterThan(80);
 });
 
 /**
@@ -45,9 +47,15 @@ test('found the demo routes', () => {
  *    it on programmatic focus — the negative case is a *pointer* interaction,
  *    which this sweep never performs.
  *
- * `preventScroll` keeps the measurement independent of where a scroll happened
- * to land, which is what made the first draft of this sweep report a third of
- * the library.
+ * `preventScroll` only stops the sweep perturbing scroll state as it walks; it
+ * is not what makes the result deterministic. Running the shipped sweep with it
+ * off produces byte-identical output. Determinism comes from not seeding the
+ * clip with the viewport, and from the scroll-axis rule below.
+ *
+ * What this does NOT see, so nobody reads a green run as more than it is:
+ * closed overlays (it presses Tab once and opens nothing, so every menu,
+ * listbox, dialog and picker is absent from the DOM), losses at either end of a
+ * scroll range, and clips produced by an ancestor's border or border-radius.
  */
 const sweepScript = `
 (() => {
@@ -124,21 +132,43 @@ const sweepScript = `
     let clip = { top: -Infinity, left: -Infinity, right: Infinity, bottom: Infinity };
     let scrollsX = false;
     let scrollsY = false;
+    // A fixed element is clipped by none of its overflow ancestors, and an
+    // absolute one only from its containing block outward. Climbing regardless
+    // reports rings that are plainly on screen, and a false positive is how a
+    // gate gets switched off. Dormant today only because every floating surface
+    // here portals to <body>.
+    let inContainingBlock = cs.position !== 'absolute';
     // Starts at the ring's parent: an element's own overflow never clips its
     // own outline.
-    for (let p = ring.parentElement; p; p = p.parentElement) {
+    for (let p = cs.position === 'fixed' ? null : ring.parentElement; p; p = p.parentElement) {
       const pcs = getComputedStyle(p);
+      if (!inContainingBlock) {
+        if (pcs.position === 'static') continue;
+        inContainingBlock = true;
+      }
       if (pcs.overflowX === 'visible' && pcs.overflowY === 'visible') continue;
+      // Border box, where overflow actually clips at the padding box, tighter
+      // still with a border-radius. The clip is therefore too generous by the
+      // ancestor's border width: a systematic bias toward passing.
       const r = p.getBoundingClientRect();
       // An axis that scrolls constrains nothing, here or further out: once
-      // something between the element and this ancestor can scroll, the
-      // element can be moved anywhere along that axis, so a band outside it is
-      // one scroll away rather than lost. What stays is the axis nothing can
-      // scroll — which is the shape of all three clips #510 fixed.
-      scrollsY = scrollsY || p.scrollHeight > p.clientHeight;
-      scrollsX = scrollsX || p.scrollWidth > p.clientWidth;
-      if (!scrollsY) clip = intersect(clip, { ...clip, top: r.top, bottom: r.bottom });
-      if (!scrollsX) clip = intersect(clip, { ...clip, left: r.left, right: r.right });
+      // something between the ring and this ancestor can scroll that axis, a
+      // band outside it is usually one scroll away rather than lost. What stays
+      // is the axis nothing can scroll — the shape of all three clips #510
+      // fixed.
+      //
+      // Usually, not always, and this is the gate's largest blind spot: at
+      // either end of the range the band really is lost, since scrollTop cannot
+      // go below 0. The top band of a scroller's first child is permanently
+      // clipped and this sweep stays silent on it. The leniency is load-bearing
+      // rather than sloppy — without it the Rail fires on all 93 routes — so
+      // tightening it is its own change with its own baseline.
+      //
+      // an 'overflow: clip' ancestor never scrolls, whatever scrollHeight reports for it.
+      scrollsY = scrollsY || (pcs.overflowY !== 'clip' && p.scrollHeight > p.clientHeight);
+      scrollsX = scrollsX || (pcs.overflowX !== 'clip' && p.scrollWidth > p.clientWidth);
+      if (!scrollsY) { clip.top = Math.max(clip.top, r.top); clip.bottom = Math.min(clip.bottom, r.bottom); }
+      if (!scrollsX) { clip.left = Math.max(clip.left, r.left); clip.right = Math.min(clip.right, r.right); }
     }
 
     // A focusable that is itself wholly outside its clip — inside a collapsed
@@ -174,6 +204,17 @@ const sweepScript = `
 
 for (const route of routes) {
   test(`focus rings survive their clip ancestors on ${route}`, async ({ page }) => {
+    // CalendarDemo and the four date-picker demos build their fixtures from
+    // `new Date()`, so month length, leading blanks, and which cells land flush
+    // against the month grid's edges all move with the wall clock. Unpinned,
+    // this gate reddens a PR that changed nothing — and `release.yml` chains the
+    // job it lives in, so it would block a release too.
+    //
+    // 2025-03-15 is deliberate: March 2025 needs six rows whether the week
+    // starts on Sunday or Monday, so the sweep always exercises the denser grid
+    // instead of a lucky five-row month. Pinned here rather than in the demos so
+    // the gallery stays live-dated for humans.
+    await page.clock.setFixedTime(new Date('2025-03-15T12:00:00Z'));
     await page.goto(route);
     await page.waitForLoadState('networkidle');
     // One real keypress, so the page is in keyboard modality before anything
