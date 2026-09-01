@@ -75,6 +75,12 @@ jobs:
       # offset, so a focusable flush against an overflow ancestor loses whole
       # bands, and jsdom computes no layout so the vitest suite cannot see it.
       # Needs a real browser; there is no cheaper place to put it.
+      #
+      # It covers outset rings against non-scrolling clip axes on statically
+      # rendered demo content. It does NOT open overlays, so menus, listboxes,
+      # dialogs and pickers are unswept, and it is silent on scroll extremes and
+      # on ancestors that clip with a border. A green run here is not the whole
+      # class — playwright.config.ts states the scope in full.
       - name: Focus-ring geometry sweep
         run: npm run test:focus-geometry
 

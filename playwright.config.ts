@@ -10,8 +10,28 @@ import { defineConfig, devices } from '@playwright/test';
  * cannot see it either — the clipping ancestor is routinely in a different
  * file from the focusable.
  *
+ * SCOPE — what a green run does and does not mean. It checks outset rings
+ * against non-scrolling clip axes on statically rendered demo content, which is
+ * the exact shape of all three defects #505 shipped and #510 fixed. It is
+ * silent on:
+ *
+ * - Closed overlays. The sweep loads a route, presses Tab once, and opens
+ *   nothing, so every menu, listbox, dialog and picker is absent from the DOM —
+ *   the densest population of this defect class is unswept. In particular this
+ *   gate does NOT certify the `IconPicker` `box-shadow` migration that #512
+ *   describes as waiting on it.
+ * - Losses at either end of a scroll range (see the scroll-axis rule in
+ *   `tests/focus-ring-geometry.spec.ts`, which explains why that leniency is
+ *   load-bearing).
+ * - Clips produced by a clipping ancestor's border or border-radius, since the
+ *   sweep compares against its border box.
+ * - Rings drawn with anything but `outline` — `box-shadow` is invisible to it.
+ *
  * Port 8090, never 8080: the playground's own dev server binds 8080
  * (`packages/playground/vite.config.ts`) and a developer usually has it running.
+ * Two concurrent local runs share that one port and clobber each other's preview
+ * server; the symptom is ERR_CONNECTION_REFUSED on a spread of routes, not a
+ * flake worth chasing.
  */
 export default defineConfig({
   testDir: './tests',
