@@ -61,10 +61,10 @@
 }
 // stylelint-enable property-disallowed-list
 
+// Offset pulls the ring inward by 1px so it sits ON the surface edge instead
+// of outside it.
 .search:focus-within {
-  @include focus-ring(var(--topbar-search-ring-focus));
-  // stylelint-disable-next-line declaration-property-value-disallowed-list -- pull the focus ring inward by 1px so it sits ON the surface edge instead of outside it
-  outline-offset: -1px;
+  @include focus-ring(var(--topbar-search-ring-focus), -1px);
 }
 
 .searchIcon {

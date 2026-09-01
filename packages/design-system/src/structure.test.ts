@@ -1035,14 +1035,10 @@ describe('a focus ring is not suppressed by a rule shared with :hover', () => {
  *
  * Three of Rail's four sites also hard-coded `outline-offset: -2px`, a raw
  * value where `calc(-1 * var(--ring-offset))` is the token form. `LinkCard`,
- * `TimeField` and `TopBar` keep their own pre-existing offsets: the mixin
- * takes a `$color` argument, but always writes its own `outline-offset: var(
- * --ring-offset)` too, so a site that layers a later `outline-offset` now
- * carries a dead declaration immediately above its override. The computed
- * value is unchanged — a block's last declaration for a property wins the
- * cascade — but the emitted CSS is not byte-identical, and stylelint cannot
- * see the duplication, since it only exists after Sass compiles the
- * `@include` away.
+ * `TimeField` and `TopBar` keep their own offsets via the mixin's `$offset`
+ * parameter (`@include focus-ring($offset: …)`), added alongside this PR so
+ * the conversion is a real drop-in rather than a separate override
+ * declaration layered on top of the mixin's own.
  */
 describe('focus rings are drawn by the mixin, not hand-rolled', () => {
   const styleFiles = allFilesUnder(componentsDir).filter(({ label }) =>

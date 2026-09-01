@@ -218,9 +218,7 @@
 }
 
 .timeNowButton:focus-visible {
-  @include focus-ring;
-
-  outline-offset: 1px;
+  @include focus-ring($offset: 1px);
 }
 
 // Mirrors Input's invalid treatment so a TimeField inside a Field with an

@@ -169,25 +169,23 @@ button.groupHeader {
     --text-fg-subtle: var(--options-picker-group-header-hint-fg-hover);
   }
 
+  // INSET. `.list` above is `overflow-y: auto` — which computes `overflow-x`
+  // to `auto` — with no padding, and this header is `width: 100%`, so an
+  // outset ring loses both vertical bands on every group header, always.
+  // Same shape as Tabs and TimeField (#505), and NO GATE
+  // DETECTS IT: two static rules were measured and both were mostly false
+  // positives, so none shipped. A browser sweep found all three; #512 carries
+  // the signature so the next one is looked for rather than stumbled on.
+  // The trade, since the mixin says to record it, and it is the worst one in
+  // the library: `--options-picker-group-header-border-width` is
+  // --border-width-emphasis = 2px, and the inset band is also 2px, so while
+  // focused this covers the group's colour-identity `border-bottom`
+  // COMPLETELY — not partially, as on TimedEvent. Accepted because the colour
+  // is also carried by the GroupDot beside the label, which the ring does not
+  // touch, so the identity survives the focus; and because the alternative is
+  // an indicator that is permanently absent rather than briefly redundant.
   &:focus-visible {
-    @include focus-ring;
-
-    // INSET. `.list` above is `overflow-y: auto` — which computes `overflow-x`
-    // to `auto` — with no padding, and this header is `width: 100%`, so an
-    // outset ring loses both vertical bands on every group header, always.
-    // Same shape as Tabs and TimeField (#505), and NO GATE
-    // DETECTS IT: two static rules were measured and both were mostly false
-    // positives, so none shipped. A browser sweep found all three; #512 carries
-    // the signature so the next one is looked for rather than stumbled on.
-    // The trade, since the mixin says to record it, and it is the worst one in
-    // the library: `--options-picker-group-header-border-width` is
-    // --border-width-emphasis = 2px, and the inset band is also 2px, so while
-    // focused this covers the group's colour-identity `border-bottom`
-    // COMPLETELY — not partially, as on TimedEvent. Accepted because the colour
-    // is also carried by the GroupDot beside the label, which the ring does not
-    // touch, so the identity survives the focus; and because the alternative is
-    // an indicator that is permanently absent rather than briefly redundant.
-    outline-offset: calc(-1 * var(--ring-offset));
+    @include focus-ring($offset: calc(-1 * var(--ring-offset)));
   }
 }
 

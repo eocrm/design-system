@@ -60,9 +60,9 @@
 // border exactly as wide as the band and loses it entirely. Both record their
 // own case in situ. Grep as above for the current set rather than trusting an
 // enumeration here.
-@mixin focus-ring($color: var(--ring-accent)) {
+@mixin focus-ring($color: var(--ring-accent), $offset: var(--ring-offset)) {
   outline: var(--ring-width) solid #{$color};
-  outline-offset: var(--ring-offset);
+  outline-offset: #{$offset};
 }
 
 @mixin visually-hidden {
