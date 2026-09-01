@@ -33,9 +33,9 @@ export interface TitleProps extends HTMLAttributes<HTMLHeadingElement> {
    * - `muted` — `--color-fg-muted`
    * - `subtle` — `--color-fg-subtle`. Certified for AA text contrast on
    *   `--color-bg` and `--color-bg-subtle` ONLY (#511). Never use on
-   *   `--color-bg-muted` or a darker surface — it falls below 4.5:1 there,
-   *   and no darker value fixes it without collapsing into `tone="muted"`.
-   *   Use `tone="muted"` on those surfaces instead.
+   *   `--color-bg-muted` — it falls below 4.5:1 there in both themes, and no
+   *   neutral tone on this ramp clears it without collapsing into
+   *   `tone="muted"`. Use `tone="muted"` on `--color-bg-muted` instead.
    * - `accent` — `--color-accent`
    * - `danger` — `--color-danger`
    */

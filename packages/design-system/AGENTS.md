@@ -197,7 +197,7 @@ Each component is fully JSDoc'd. Hover any usage in your editor for inline docs 
 
 - `order: 1 | 2 | 3 | 4 | 5 | 6` — required. Renders `<h1>` … `<h6>` AND drives the default visual size.
 - Default size map: `1→3xl`, `2→2xl`, `3→xl`, `4→lg`, `5→md`, `6→sm`. Override with `size` (same vocab: `xs | sm | md | lg | xl | 2xl | 3xl`).
-- `tone`: `default | muted | subtle | accent | danger`.
+- `tone`: `default | muted | subtle | accent | danger`. `subtle` is `--color-bg`/`--color-bg-subtle` text ONLY — fails AA on `--color-bg-muted`; use `muted` there (#511).
 - `weight`: `regular | medium | semibold | bold` (default `semibold`).
 - `truncate`: single-line ellipsis.
 - **Use `<Title>` for every heading in your UI.** Raw `<h1>` / `<h2>` is forbidden.
@@ -214,7 +214,7 @@ Each component is fully JSDoc'd. Hover any usage in your editor for inline docs 
 
 - `as: 'p' | 'span' | 'div' | 'label'` (default `'p'`). Constrained string union — no polymorphic generic.
 - `size: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'inherit'` (default `'md'`).
-- `tone`: `default | muted | subtle | accent | danger | success | warning`.
+- `tone`: `default | muted | subtle | accent | danger | success | warning`. `subtle` is `--color-bg`/`--color-bg-subtle` text ONLY — fails AA on `--color-bg-muted`; use `muted` there (#511).
 - `weight`: `regular | medium | semibold | bold` (default `regular`).
 - `align`: `left | center | right` (default `left`).
 - `truncate`: single-line ellipsis. `lineClamp: number`: multi-line ellipsis. `lineClamp` overrides `truncate`.
@@ -3559,7 +3559,7 @@ All available as CSS custom properties after you import `global.scss`:
 
 | Family          | Tokens                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   |
 | --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Neutral colors  | `--color-bg`, `--color-bg-subtle`, `--color-bg-muted`, `--color-bg-sunken`, `--color-border`, `--color-border-strong`, `--color-fg`, `--color-fg-muted`, `--color-fg-subtle` (text, `--color-bg`/`--color-bg-subtle` ONLY — fails AA on `--color-bg-muted` or darker; use `--color-fg-muted` there, #511), `--color-fg-disabled` / `--color-bg-hover` / `--color-bg-muted-hover` (hover surfaces — use these, NOT `--color-bg-subtle`, which is only one step and moves the wrong way from a muted base) |
+| Neutral colors  | `--color-bg`, `--color-bg-subtle`, `--color-bg-muted`, `--color-bg-sunken`, `--color-border`, `--color-border-strong`, `--color-fg`, `--color-fg-muted`, `--color-fg-subtle` (text, `--color-bg`/`--color-bg-subtle` ONLY — fails AA on `--color-bg-muted` in both themes; use `--color-fg-muted` there, #511), `--color-fg-disabled` / `--color-bg-hover` / `--color-bg-muted-hover` (hover surfaces — use these, NOT `--color-bg-subtle`, which is only one step and moves the wrong way from a muted base) |
 | Accent colors   | `--color-accent`, `--color-accent-hover`, `--color-accent-pressed`, `--color-accent-fg`, `--color-accent-subtle-bg`                                                                                                                                                                                                                                                                                                                                                                                      |
 | Semantic colors | `--color-danger`, `--color-danger-hover`, `--color-danger-fg`, `--color-bg-danger-subtle`, `--color-success`, `--color-success-hover`, `--color-success-fg`, `--color-warning`, `--color-info`                                                                                                                                                                                                                                                                                                           |
 | Badge palette   | `--badge-{bg,fg}-{neutral,info,success,warning,danger,purple}` (was `--color-badge-<tone>-{bg,fg}`, kept as deprecated aliases)                                                                                                                                                                                                                                                                                                                                                                          |

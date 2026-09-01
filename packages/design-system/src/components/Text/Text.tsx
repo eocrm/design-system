@@ -57,9 +57,9 @@ export interface TextProps extends HTMLAttributes<HTMLElement> {
    * - `muted` — `--color-fg-muted` (for secondary copy)
    * - `subtle` — `--color-fg-subtle` (for tertiary metadata). Certified for
    *   AA text contrast on `--color-bg` and `--color-bg-subtle` ONLY (#511).
-   *   Never use on `--color-bg-muted` or a darker surface — it falls below
-   *   4.5:1 there, and no darker value fixes it without collapsing into
-   *   `tone="muted"`. Use `tone="muted"` on those surfaces instead.
+   *   Never use on `--color-bg-muted` — it falls below 4.5:1 there in both
+   *   themes, and no neutral tone on this ramp clears it without collapsing
+   *   into `tone="muted"`. Use `tone="muted"` on `--color-bg-muted` instead.
    * - `accent` — `--color-accent`
    * - `danger` / `success` / `warning` — state-coded text
    */
