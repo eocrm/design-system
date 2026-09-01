@@ -211,14 +211,20 @@ const sweepScript = `
 `;
 
 for (const route of routes) {
-  test(`focus rings survive their clip ancestors on ${route}`, async ({ page }) => {
-    // packages/playground/index.html pulls Outfit from Google Fonts, so an
-    // unintercepted run makes 186 requests to an external CDN. Not a speed
-    // concern: this job has retries: 0 and release.yml chains it, so one stalled
-    // request times out goto and reddens a PR that changed nothing. Blocking it
-    // also fixes the font, which decides text width and therefore whether a tab
-    // strip overflows.
-    await page.route(/fonts\.(googleapis|gstatic)\.com/, (r) => r.abort());
+  test(`focus rings survive their clip ancestors on ${route}`, async ({ page, baseURL }) => {
+    // Nothing off-origin. The demos hotlink Google Fonts, Unsplash, pravatar
+    // and picsum, and networkidle waits on every one of them: this job has
+    // retries: 0 and release.yml chains it, so one stalled request times out
+    // goto and reddens a PR that changed nothing.
+    //
+    // It is not only a stall risk — these move geometry. With the image hosts
+    // unreachable the Image/Masonry/MediaTile demos render their error state
+    // instead, which changes what there is to measure. Blocking everything makes
+    // that state the constant one, rather than letting the gate's input depend
+    // on Unsplash's uptime and the runner's egress rules.
+    await page.route('**/*', (r) =>
+      r.request().url().startsWith(baseURL!) ? r.continue() : r.abort(),
+    );
 
     // CalendarDemo and the four date-picker demos build their fixtures from
     // `new Date()`, so month length, leading blanks, and which cells land flush

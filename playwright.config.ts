@@ -29,6 +29,11 @@ import { defineConfig, devices } from '@playwright/test';
  * - Clips produced by a clipping ancestor's border or border-radius, since the
  *   sweep compares against its border box.
  * - Rings drawn with anything but `outline` — `box-shadow` is invisible to it.
+ * - The 19 `/mockups/*` routes. Only `/components/*` is swept, and the mockups
+ *   are the repo's densest real clip ancestors — composed app shells with
+ *   nested scrollers, sticky headers and dense tables.
+ * - Every viewport but one. `devices['Desktop Chrome']` pins 1280x720, and
+ *   overflow clipping is a responsive defect by nature.
  *
  * Port 8090, never 8080: the playground's own dev server binds 8080
  * (`packages/playground/vite.config.ts`) and a developer usually has it running.
