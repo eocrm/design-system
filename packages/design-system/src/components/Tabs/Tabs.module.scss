@@ -59,7 +59,7 @@
   // takes the inset because this one rule matches whatever the orientation —
   // harmless there, the padding is ample.)
   &:focus-visible {
-    @include focus-ring(var(--tabs-tab-ring), calc(-1 * var(--ring-offset)));
+    @include focus-ring(var(--tabs-tab-ring), $offset: calc(-1 * var(--ring-offset)));
 
     border-radius: var(--tabs-tab-radius);
   }
@@ -94,7 +94,7 @@
   // INSET, for the reason given on `.tab` above — `.action` is a
   // stretch-aligned sibling inside the same clipping `.scrollWrap`.
   &:focus-visible {
-    @include focus-ring(var(--tabs-tab-ring), calc(-1 * var(--ring-offset)));
+    @include focus-ring(var(--tabs-tab-ring), $offset: calc(-1 * var(--ring-offset)));
 
     border-radius: var(--tabs-tab-radius);
   }
