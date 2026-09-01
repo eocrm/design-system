@@ -4777,7 +4777,7 @@
           "type": "TextTone",
           "required": false,
           "default": "",
-          "description": "Color tone. Defaults to `'default'`.\n- `default` — `--color-fg`\n- `muted` — `--color-fg-muted` (for secondary copy)\n- `subtle` — `--color-fg-subtle` (for tertiary metadata)\n- `accent` — `--color-accent`\n- `danger` / `success` / `warning` — state-coded text"
+          "description": "Color tone. Defaults to `'default'`.\n- `default` — `--color-fg`\n- `muted` — `--color-fg-muted` (for secondary copy)\n- `subtle` — `--color-fg-subtle` (for tertiary metadata). Certified for\n  AA text contrast on `--color-bg` and `--color-bg-subtle` ONLY (#511).\n  Never use on `--color-bg-muted` or a darker surface — it falls below\n  4.5:1 there, and no darker value fixes it without collapsing into\n  `tone=\"muted\"`. Use `tone=\"muted\"` on those surfaces instead.\n- `accent` — `--color-accent`\n- `danger` / `success` / `warning` — state-coded text"
         },
         {
           "name": "weight",
@@ -5042,7 +5042,7 @@
           "type": "TitleTone",
           "required": false,
           "default": "",
-          "description": "Color tone. Defaults to `'default'` (full foreground).\n- `default` — `--color-fg`\n- `muted` — `--color-fg-muted`\n- `subtle` — `--color-fg-subtle`\n- `accent` — `--color-accent`\n- `danger` — `--color-danger`"
+          "description": "Color tone. Defaults to `'default'` (full foreground).\n- `default` — `--color-fg`\n- `muted` — `--color-fg-muted`\n- `subtle` — `--color-fg-subtle`. Certified for AA text contrast on\n  `--color-bg` and `--color-bg-subtle` ONLY (#511). Never use on\n  `--color-bg-muted` or a darker surface — it falls below 4.5:1 there,\n  and no darker value fixes it without collapsing into `tone=\"muted\"`.\n  Use `tone=\"muted\"` on those surfaces instead.\n- `accent` — `--color-accent`\n- `danger` — `--color-danger`"
         },
         {
           "name": "weight",
