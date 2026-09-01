@@ -29,9 +29,14 @@ import { defineConfig, devices } from '@playwright/test';
  * - Clips produced by a clipping ancestor's border or border-radius, since the
  *   sweep compares against its border box.
  * - Rings drawn with anything but `outline` — `box-shadow` is invisible to it.
- * - The 19 `/mockups/*` routes. Only `/components/*` is swept, and the mockups
- *   are the repo's densest real clip ancestors — composed app shells with
- *   nested scrollers, sticky headers and dense tables.
+ * - The `/mockups/*` routes. Only `/components/*` is swept, and the mockups are
+ *   the repo's densest real clip ancestors — composed app shells with nested
+ *   scrollers, sticky headers and dense tables.
+ * - Every route's loaded-image state. All off-origin traffic is aborted, so the
+ *   remote images on `/components/{image,image-crop,lightbox,masonry,media-tile}`
+ *   are only ever swept broken — the error placeholder is what gets measured,
+ *   never the loaded layout. The `Image` baseline entry exists only because of
+ *   it.
  * - Every viewport but one. `devices['Desktop Chrome']` pins 1280x720, and
  *   overflow clipping is a responsive defect by nature.
  *
