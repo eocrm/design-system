@@ -8,7 +8,13 @@ import { getComponentFiles } from '../../lib/componentFiles';
 const VARS: LiquidVariable[] = [
   { code: 'first_name', label: 'First name', type: 'text', group: 'Built-in fields' },
   { code: 'last_name', label: 'Last name', type: 'text', group: 'Built-in fields' },
-  { code: 'email', label: 'Email', type: 'text', group: 'Built-in fields' },
+  {
+    code: 'email',
+    label: 'Email',
+    type: 'text',
+    group: 'Built-in fields',
+    description: "The contact's primary email address",
+  },
   { code: 'job_title', label: 'Job title', type: 'text', group: 'Custom fields' },
   { code: 'join_date', label: 'Join date', type: 'date', group: 'Custom fields' },
 ];
