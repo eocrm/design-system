@@ -547,7 +547,7 @@ const [code, setCode] = useState('');
 - `invalid` sets the error chrome and `aria-invalid` on every box; `aria-describedby` is applied to every box too, so the error is heard wherever focus lands. Inside `<Field error>` this is wired for you.
 - Roving tabindex — the whole group is one Tab stop. Arrows / Home / End move between boxes; Backspace on an empty box steps back. Deleting mid-code clears from that box onward, keeping the value contiguous.
 - Never masks. For a secret the user must not see → `<PasswordInput>`.
-- Not a native form control — it renders no named field, so nothing reaches `FormData`. Read the code from `onChange` / `onComplete` and submit it yourself. `required` sets `aria-required` on the group only (a per-cell `required` would pass a 1-of-`length` code as valid); validating completeness is yours.
+- Not a native form control — it renders no named field, so nothing reaches `FormData`. Read the code from `onChange` / `onComplete` and submit it yourself. `required` sets `aria-required` on every box, not the group (`role="group"` doesn't support `aria-required`; a per-cell native `required` would instead pass a 1-of-`length` code as valid); validating completeness is yours.
 
 ### `<Checkbox>` — checkbox with native input + custom paint
 

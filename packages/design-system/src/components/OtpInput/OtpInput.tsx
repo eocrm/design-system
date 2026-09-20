@@ -81,12 +81,15 @@ export interface OtpInputProps extends Omit<
   /** Disable every cell. */
   disabled?: boolean;
   /**
-   * Marks the field required. There is no single native input to attach
-   * `required` to — a per-cell `required` would let the browser block submit
-   * on an empty first cell while accepting a 1-of-`length` code as complete,
-   * which is worse than no native gate at all. Sets `aria-required="true"` on
-   * the `role="group"` wrapper instead; validating completeness is the
-   * consumer's job (pair with `invalid` + `onComplete`).
+   * Marks the field required. There is no single native input to attach the
+   * native `required` attribute to — a per-cell `required` would let the
+   * browser block submit on an empty first cell while accepting a
+   * 1-of-`length` code as complete, which is worse than no native gate at
+   * all. Sets `aria-required="true"` on every cell instead (the group's
+   * `role="group"` does not support `aria-required` per ARIA 1.2 — only
+   * `textbox` and a handful of other roles do), the same way `aria-invalid`
+   * and `aria-describedby` are already repeated on every cell. Validating
+   * completeness is the consumer's job (pair with `invalid` + `onComplete`).
    */
   required?: boolean;
   /** Focus the first cell on mount. */
@@ -157,9 +160,12 @@ export interface OtpInputProps extends Omit<
  * - The wrapper is a `role="group"`, named by `aria-labelledby`, then
  *   `aria-label`, then the localized default. Each cell is named by position
  *   ("Digit 3 of 6").
- * - `aria-describedby` is set on EVERY cell, not just the first. A user who
- *   arrows to cell 4 and hears the error message again is a smaller failure
- *   than one who lands there and never hears it at all.
+ * - `aria-describedby` and `aria-required` are set on EVERY cell, not just the
+ *   first — `role="group"` does not support `aria-required` at all (ARIA 1.2
+ *   only allows it on `textbox` and a few other roles), and repeating it is
+ *   the same trade already made for `aria-describedby`: a user who arrows to
+ *   cell 4 and hears the error message (or "required") again is a smaller
+ *   failure than one who lands there and never hears it at all.
  * - Roving tabindex: the group is a single Tab stop. Arrow keys, Home and End
  *   move between cells; Backspace on an empty cell steps back.
  * - Per Hard rule 10 this component has **no transient state**. `invalid` is a
@@ -264,9 +270,13 @@ export const OtpInput = forwardRef<HTMLDivElement, OtpInputProps>(function OtpIn
   const handleChange = (index: number) => (event: ChangeEvent<HTMLInputElement>) => {
     const chars = sanitize(event.target.value);
     if (chars.length === 0) {
-      // The cell was emptied. Truncate rather than leave a hole, so `value`
-      // stays a contiguous string that maps 1:1 onto the cells.
-      commit(code.slice(0, index));
+      // "Sanitizes to empty" also happens when the sanitizer REJECTS a
+      // character (a letter in numeric mode) typed over a filled, selected
+      // cell — that must be a no-op, not a truncation. Only a genuinely
+      // emptied cell (raw value itself is '') truncates the code from here
+      // on, so `value` stays a contiguous string that maps 1:1 onto the
+      // cells. React restores the cell's committed character on its own.
+      if (event.target.value === '') commit(code.slice(0, index));
       return;
     }
     commit((code.slice(0, index) + chars + code.slice(index + chars.length)).slice(0, length));
@@ -302,6 +312,17 @@ export const OtpInput = forwardRef<HTMLDivElement, OtpInputProps>(function OtpIn
         focusCell(lastReachable);
         break;
       default:
+        // A keystroke that reproduces the character already in the cell
+        // leaves the DOM value byte-identical, so React's value tracker
+        // fires no change event at all — `handleChange` never runs, nothing
+        // re-selects, and the caret is left collapsed. Every keystroke after
+        // that would then append instead of replace and get sliced back off
+        // by the length cap, bricking the cell. Select on the keystroke
+        // itself so the next character always lands on a selected cell
+        // regardless of whether this one produced a change event.
+        if (event.key.length === 1 && !event.ctrlKey && !event.metaKey && !event.altKey) {
+          event.currentTarget.select();
+        }
         break;
     }
   };
@@ -342,7 +363,6 @@ export const OtpInput = forwardRef<HTMLDivElement, OtpInputProps>(function OtpIn
       role="group"
       aria-label={ariaLabelledby ? undefined : (ariaLabel ?? t('otpInput.groupLabel'))}
       aria-labelledby={ariaLabelledby}
-      aria-required={required || undefined}
       className={clsx(styles.root, className)}
     >
       {Array.from({ length }, (_unused, index) => (
@@ -370,6 +390,7 @@ export const OtpInput = forwardRef<HTMLDivElement, OtpInputProps>(function OtpIn
           spellCheck={false}
           aria-label={t(cellLabel, { index: index + 1, total: length })}
           aria-invalid={invalid || undefined}
+          aria-required={required || undefined}
           aria-describedby={ariaDescribedby}
           className={clsx(styles.cell, styles[`size-${size}`], invalid && styles.invalid)}
         />

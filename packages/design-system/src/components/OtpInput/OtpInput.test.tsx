@@ -106,12 +106,16 @@ describe('OtpInput', () => {
     for (const box of boxes()) expect(box).toHaveAttribute('aria-describedby', 'err');
   });
 
-  it('puts id on the first cell only, and aria-required on the group', () => {
+  it('puts id on the first cell only, and aria-required on every cell', () => {
     const { container } = render(<OtpInput length={3} id="code" required />);
     const [first, second] = boxes();
     expect(first).toHaveAttribute('id', 'code');
     expect(second).not.toHaveAttribute('id');
-    expect(container.firstChild).toHaveAttribute('aria-required', 'true');
+    // role="group" does not support aria-required (ARIA 1.2 permits it only
+    // on textbox and a few other roles), so it goes on the cells instead —
+    // same placement as aria-invalid and aria-describedby.
+    expect(container.firstChild).not.toHaveAttribute('aria-required');
+    for (const box of boxes()) expect(box).toHaveAttribute('aria-required', 'true');
   });
 
   it('seeds the boxes from defaultValue', () => {
@@ -146,6 +150,17 @@ describe('OtpInput', () => {
     expect(codeOf()).toBe('1');
   });
 
+  it('leaves a filled code alone when a rejected character overtypes a cell', async () => {
+    // Regression: "sanitizes to empty" was treated as "the cell was
+    // cleared", but a character the sanitizer rejects also sanitizes to
+    // empty. A rejected keystroke must be a no-op, not a truncation.
+    const user = userEvent.setup();
+    render(<OtpInput length={4} defaultValue="1234" />);
+    await user.click(boxes()[1]!);
+    await user.keyboard('a');
+    expect(codeOf()).toBe('1234');
+  });
+
   it('accepts and uppercases letters in alphanumeric mode', async () => {
     const user = userEvent.setup();
     render(<OtpInput length={4} type="alphanumeric" />);
@@ -176,6 +191,21 @@ describe('OtpInput', () => {
     await user.keyboard('9');
     expect(codeOf()).toBe('1239');
     expect(boxes()[3]).toHaveFocus();
+  });
+
+  it('stays receptive after retyping the character a cell already holds', async () => {
+    // Regression: retyping the same character leaves the DOM value
+    // byte-identical, so React's value tracker fires no change event —
+    // nothing re-selects, and the caret is left collapsed. Every keystroke
+    // after that must still land rather than silently appending and being
+    // sliced back off.
+    const user = userEvent.setup();
+    render(<OtpInput length={4} defaultValue="1234" />);
+    await user.click(boxes()[3]!);
+    await user.keyboard('4');
+    expect(codeOf()).toBe('1234');
+    await user.keyboard('9');
+    expect(codeOf()).toBe('1239');
   });
 
   it('replaces on every keystroke in a row when overtyping, even when sanitizing transforms the character', async () => {
@@ -360,5 +390,17 @@ describe('OtpInput', () => {
     rerender(<OtpInput length={5} value="1" onChange={() => {}} />);
     expect(tabbable()).toHaveLength(1);
     expect(tabbable()[0]).toBe(boxes()[1]);
+    // Load-bearing: the newly-active cell must land SELECTED, not just
+    // focused, so the very next keystroke replaces its content instead of
+    // appending. This is what makes "parent clears the code after a failed
+    // check" land the user ready to retype rather than fighting the caret.
+    const active = boxes()[1]!;
+    expect(active.selectionStart).toBe(0);
+    expect(active.selectionEnd).toBe(active.value.length);
+  });
+
+  it('focuses the first box on mount when autoFocus is set', () => {
+    render(<OtpInput length={4} autoFocus />);
+    expect(boxes()[0]).toHaveFocus();
   });
 });
