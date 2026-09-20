@@ -312,14 +312,15 @@ export const OtpInput = forwardRef<HTMLDivElement, OtpInputProps>(function OtpIn
   };
 
   const handleKeyDown = (rawIndex: number) => (event: ReactKeyboardEvent<HTMLInputElement>) => {
-    // Same stranding as handleChange's clamp: a controlled `value` shrink
-    // can leave DOM focus past the code's contiguous end, and every case
-    // below steps focus from the raw index. Unlike handleChange's clamp
-    // (which only ever redirects focus — see its comment), this one changes
-    // what gets committed: only Backspace reads `code`, and at an
-    // out-of-range index `code.slice(0, index - 1)` is a REAL out-of-range
-    // read (`'1'.slice(0, 4) === '1'`, not a no-op) — so an unclamped index
-    // would leave Backspace from a stranded cell silently doing nothing.
+    // Same stranding as handleChange's clamp: a controlled `value` shrink can
+    // leave DOM focus past the code's contiguous end. Unlike that clamp, which
+    // only ever redirects focus (see its comment), this one changes what gets
+    // committed. Backspace is the only case that reads `code`, and at an
+    // out-of-range index `code.slice(0, index - 1)` returns the whole string
+    // (`'1'.slice(0, 4) === '1'`), so the commit is a no-op and Backspace
+    // silently deletes nothing. Backspace and ArrowLeft are also the only
+    // cases that step focus from this index — Home and End ignore it, and
+    // ArrowRight is already bounded by lastReachable.
     const index = Math.min(rawIndex, code.length);
     switch (event.key) {
       case 'Backspace':
