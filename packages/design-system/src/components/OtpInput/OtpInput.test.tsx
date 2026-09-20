@@ -390,13 +390,27 @@ describe('OtpInput', () => {
     rerender(<OtpInput length={5} value="1" onChange={() => {}} />);
     expect(tabbable()).toHaveLength(1);
     expect(tabbable()[0]).toBe(boxes()[1]);
-    // Load-bearing: the newly-active cell must land SELECTED, not just
-    // focused, so the very next keystroke replaces its content instead of
-    // appending. This is what makes "parent clears the code after a failed
-    // check" land the user ready to retype rather than fighting the caret.
+  });
+
+  it('re-selects a focused cell when a controlled value changes externally', async () => {
+    // Load-bearing: a parent that rewrites `value` (e.g. correcting a digit
+    // after a failed check) must land the focused cell SELECTED, not just
+    // focused, so the next keystroke replaces its content instead of
+    // appending onto it. Deliberately lands the rerender on a FILLED cell —
+    // an empty cell's selectionStart/selectionEnd are both 0 regardless of
+    // whether select() ever ran, which is exactly the shape of vacuous
+    // assertion that let the rejected-character truncation bug ship.
+    const user = userEvent.setup();
+    const { rerender } = render(<OtpInput length={4} value="1234" onChange={() => {}} />);
+    await user.click(boxes()[1]!);
+
+    // Parent corrects a digit externally while box 1 stays focused and filled.
+    rerender(<OtpInput length={4} value="1934" onChange={() => {}} />);
     const active = boxes()[1]!;
+    expect(active).toHaveFocus();
+    expect(active.value).toBe('9');
     expect(active.selectionStart).toBe(0);
-    expect(active.selectionEnd).toBe(active.value.length);
+    expect(active.selectionEnd).toBe(1);
   });
 
   it('focuses the first box on mount when autoFocus is set', () => {
