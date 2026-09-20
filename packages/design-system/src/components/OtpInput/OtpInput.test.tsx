@@ -178,6 +178,22 @@ describe('OtpInput', () => {
     expect(boxes()[3]).toHaveFocus();
   });
 
+  it('replaces on every keystroke in a row when overtyping, even when sanitizing transforms the character', async () => {
+    // Regression: sanitizing (uppercasing here) makes the committed value
+    // differ from the raw DOM value, so React DOES write node.value on the
+    // next render and collapses whatever selection was made before that
+    // commit. A second overtype keystroke right after the first must still
+    // land — select-before-commit alone survives only when the sanitized
+    // value happens to equal the raw keystroke.
+    const user = userEvent.setup();
+    render(<OtpInput length={4} type="alphanumeric" defaultValue="ABCD" />);
+    await user.click(boxes()[3]!);
+    await user.keyboard('b');
+    expect(codeOf()).toBe('ABCB');
+    await user.keyboard('c');
+    expect(codeOf()).toBe('ABCC');
+  });
+
   it('distributes a pasted code across the boxes and lands on the last one', async () => {
     const user = userEvent.setup();
     render(<OtpInput length={6} />);

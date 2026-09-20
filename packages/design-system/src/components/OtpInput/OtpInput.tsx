@@ -1,6 +1,7 @@
 import {
   forwardRef,
   useCallback,
+  useLayoutEffect,
   useRef,
   useState,
   type ChangeEvent,
@@ -213,6 +214,25 @@ export const OtpInput = forwardRef<HTMLDivElement, OtpInputProps>(function OtpIn
   const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   // Standard roving tabindex: the group remembers where focus left it.
   const activeIndex = Math.min(focusedIndex ?? lastReachable, lastReachable);
+
+  // The select() calls in focusCell/onClick/handleFocus run BEFORE the
+  // commit they're reacting to has rendered. That's durable only when React's
+  // controlled-input diff then skips writing `node.value` — true when the
+  // sanitized commit equals the raw keystroke, but false the moment
+  // sanitizing actually transforms the character (alphanumeric mode
+  // uppercasing a lowercase letter, for instance): React DOES write
+  // node.value on that render and collapses whatever was selected before it,
+  // so a second overtype keystroke right behind the first gets appended
+  // instead of replacing, and is silently sliced back off. Re-select after
+  // every commit, once React has actually written the DOM, so the selection
+  // this render leaves behind is the one the NEXT keystroke will see —
+  // regardless of whether sanitizing changed anything. A no-op on an empty
+  // cell, and skipped entirely when focus isn't on the active cell (Tab,
+  // Arrow, Home/End, and click already select correctly on their own).
+  useLayoutEffect(() => {
+    const cell = cellsRef.current[activeIndex];
+    if (cell && document.activeElement === cell) cell.select();
+  }, [code, activeIndex]);
 
   const focusCell = useCallback((index: number) => {
     const cell = cellsRef.current[index];
