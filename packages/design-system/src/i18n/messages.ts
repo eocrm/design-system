@@ -49,6 +49,20 @@ export interface Messages {
     /** Stage message when a document's source can't be safely previewed. */
     previewUnavailable: string;
   };
+  otpInput: {
+    /**
+     * Default accessible name for the whole `role="group"` wrapper, used when
+     * the consumer supplies neither `aria-label` nor `aria-labelledby`.
+     * Unlike PhoneInput, a default is supplied deliberately: six boxes each
+     * named "Digit 1 of 6" inside an unnamed group is not usable, and there
+     * is one obvious name for this control.
+     */
+    groupLabel: string;
+    /** Per-box accessible name in `numeric` mode. */
+    digit: (params: { index: number; total: number }) => string;
+    /** Per-box accessible name in `alphanumeric` mode. */
+    character: (params: { index: number; total: number }) => string;
+  };
   passwordInput: {
     /** aria-label on the show-password toggle when the password is hidden. */
     show: string;

@@ -500,6 +500,12 @@
     ],
     "composedBy": []
   },
+  "OtpInput": {
+    "tier": "primitive",
+    "cluster": "Forms",
+    "composes": [],
+    "composedBy": []
+  },
   "Page": {
     "tier": "composition",
     "cluster": "Layout",

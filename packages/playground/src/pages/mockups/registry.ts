@@ -59,6 +59,7 @@ export type ComponentName =
   | 'Logo'
   | 'Modal'
   | 'OptionsPicker'
+  | 'OtpInput'
   | 'Page'
   | 'PageHeader'
   | 'Pagination'

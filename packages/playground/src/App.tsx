@@ -32,6 +32,7 @@ import { InputDemo } from './pages/components/InputDemo';
 import { LiquidEditorDemo } from './pages/components/LiquidEditorDemo';
 import { KanbanDemo } from './pages/components/KanbanDemo';
 import { KbdDemo } from './pages/components/KbdDemo';
+import { OtpInputDemo } from './pages/components/OtpInputDemo';
 import { PasswordInputDemo } from './pages/components/PasswordInputDemo';
 import { PasswordStrengthMeterDemo } from './pages/components/PasswordStrengthMeterDemo';
 import { PhoneInputDemo } from './pages/components/PhoneInputDemo';
@@ -159,6 +160,7 @@ export default function App() {
             <Route path="/components/person-display" element={<PersonDisplayDemo />} />
             <Route path="/components/progress" element={<ProgressDemo />} />
             <Route path="/components/circular-progress" element={<CircularProgressDemo />} />
+            <Route path="/components/otp-input" element={<OtpInputDemo />} />
             <Route path="/components/password-input" element={<PasswordInputDemo />} />
             <Route
               path="/components/password-strength-meter"

@@ -1,0 +1,63 @@
+@use '../../styles/mixins' as *;
+@use './OtpInput.tokens';
+
+.root {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: var(--otp-input-gap);
+}
+
+.cell {
+  padding: 0;
+  border: var(--border-width) solid var(--otp-input-border-color);
+  border-radius: var(--otp-input-radius);
+  background: var(--otp-input-bg);
+  color: var(--otp-input-fg);
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  transition:
+    border-color var(--transition-fast),
+    outline-color var(--transition-fast);
+
+  &:focus-visible {
+    border-color: var(--otp-input-border-color-focus);
+
+    @include focus-ring(var(--otp-input-ring-focus));
+  }
+
+  &:disabled {
+    background: var(--otp-input-bg-disabled);
+    border-color: var(--otp-input-border-color-disabled);
+    color: var(--otp-input-fg-disabled);
+    cursor: not-allowed;
+  }
+}
+
+.size-sm {
+  width: var(--otp-input-cell-size-sm);
+  height: var(--otp-input-cell-size-sm);
+  font-size: var(--otp-input-font-size-sm);
+}
+
+.size-md {
+  width: var(--otp-input-cell-size-md);
+  height: var(--otp-input-cell-size-md);
+  font-size: var(--otp-input-font-size-md);
+}
+
+.size-lg {
+  width: var(--otp-input-cell-size-lg);
+  height: var(--otp-input-cell-size-lg);
+  font-size: var(--otp-input-font-size-lg);
+}
+
+.invalid {
+  border-color: var(--otp-input-border-color-invalid);
+
+  &:focus-visible {
+    border-color: var(--otp-input-border-color-invalid);
+
+    @include focus-ring(var(--otp-input-ring-invalid));
+  }
+}
