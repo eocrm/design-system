@@ -278,11 +278,13 @@ export const OtpInput = forwardRef<HTMLDivElement, OtpInputProps>(function OtpIn
     // A controlled `value` can shrink out from under a focused cell — the
     // standard "clear the code after a failed check" reset — leaving DOM
     // focus on a cell past the contiguous range while `lastReachable` has
-    // already moved. At an out-of-range rawIndex, the splice/truncation
-    // below is already a no-op on the VALUE (`code.slice(0, rawIndex) ===
-    // code`), so this clamp doesn't change what gets committed — its only
-    // effect is the `focusCell` target a few lines down, which is what
-    // pulls focus back into range.
+    // already moved. At an out-of-range rawIndex this clamp doesn't change
+    // what the splice below commits: `code.slice(0, rawIndex) === code`
+    // (slicing past the end returns the whole string) AND the tail slice
+    // `code.slice(rawIndex + chars.length)` is also `''`, so the splice
+    // computes the same value whether or not the index is clamped. The
+    // clamp's only observable effect is the `focusCell` target a few lines
+    // down, which is what pulls focus back into range.
     const index = Math.min(rawIndex, code.length);
     const chars = sanitize(event.target.value);
     if (chars.length === 0) {
@@ -311,12 +313,13 @@ export const OtpInput = forwardRef<HTMLDivElement, OtpInputProps>(function OtpIn
 
   const handleKeyDown = (rawIndex: number) => (event: ReactKeyboardEvent<HTMLInputElement>) => {
     // Same stranding as handleChange's clamp: a controlled `value` shrink
-    // can leave DOM focus past the code's contiguous end. Backspace and
-    // ArrowLeft both read `code` and step focus from the raw index, and
-    // `code.slice(0, index - 1)` at an out-of-range index is a REAL
-    // out-of-range read (unlike handleChange's splice, it doesn't collapse
-    // to a no-op value change) — so this clamp changes what Backspace
-    // commits, not just where focus lands.
+    // can leave DOM focus past the code's contiguous end, and every case
+    // below steps focus from the raw index. Unlike handleChange's clamp
+    // (which only ever redirects focus — see its comment), this one changes
+    // what gets committed: only Backspace reads `code`, and at an
+    // out-of-range index `code.slice(0, index - 1)` is a REAL out-of-range
+    // read (`'1'.slice(0, 4) === '1'`, not a no-op) — so an unclamped index
+    // would leave Backspace from a stranded cell silently doing nothing.
     const index = Math.min(rawIndex, code.length);
     switch (event.key) {
       case 'Backspace':

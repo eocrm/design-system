@@ -446,8 +446,9 @@ describe('OtpInput', () => {
     // focus. A keystroke from that stranded cell must pull focus back into
     // range, not stay stuck outputting into the wrong box forever. The
     // `codeOf()` assertion below is a regression guard, not the proof: at an
-    // out-of-range index the splice is already a value no-op, so only the
-    // focus assertion can fail without the clamp.
+    // out-of-range index the clamp itself is already a value no-op (see
+    // handleChange's comment), so only the focus assertion can fail without
+    // it.
     function Controlled() {
       const [code, setCode] = useState('123456');
       return (
