@@ -30,6 +30,12 @@ const SANITIZE: Record<OtpInputType, (raw: string) => string> = {
   alphanumeric: (raw) => raw.replace(/[^0-9a-z]/gi, '').toUpperCase(),
 };
 
+/**
+ * Props for {@link OtpInput}. Extends `HTMLAttributes<HTMLDivElement>` (minus
+ * `onChange` and `defaultValue`, which are redeclared below with
+ * component-specific signatures) since the group `<div>` is the element a
+ * consumer ultimately controls.
+ */
 export interface OtpInputProps extends Omit<
   HTMLAttributes<HTMLDivElement>,
   'onChange' | 'defaultValue'
@@ -71,7 +77,14 @@ export interface OtpInputProps extends Omit<
   invalid?: boolean;
   /** Disable every cell. */
   disabled?: boolean;
-  /** Mark the field required. Lands on the first cell, for form semantics. */
+  /**
+   * Marks the field required. There is no single native input to attach
+   * `required` to — a per-cell `required` would let the browser block submit
+   * on an empty first cell while accepting a 1-of-`length` code as complete,
+   * which is worse than no native gate at all. Sets `aria-required="true"` on
+   * the `role="group"` wrapper instead; validating completeness is the
+   * consumer's job (pair with `invalid` + `onComplete`).
+   */
   required?: boolean;
   /** Focus the first cell on mount. */
   autoFocus?: boolean;
@@ -114,8 +127,8 @@ export interface OtpInputProps extends Omit<
  * </Field>
  *
  * @example
- * // Uncontrolled, in a form:
- * <OtpInput id="otp" name="otp" defaultValue="" required />
+ * // Uncontrolled, reading the code from onComplete:
+ * <OtpInput id="otp" defaultValue="" required onComplete={verify} />
  *
  * @remarks When NOT to use
  * - A code the user copies rather than reads — a plain `<Input>` pastes just
@@ -133,6 +146,9 @@ export interface OtpInputProps extends Omit<
  * - ❌ Validating inside `onChange` and rejecting characters. The component
  *   already sanitizes; your form layer owns whether the code is *correct*.
  * - ❌ Reading the code out of the DOM. It arrives in `onChange` / `onComplete`.
+ * - ❌ Expecting the value in `FormData` on submit — the component renders no
+ *   named field, so nothing reaches a native form post. Read the code from
+ *   `onChange` / `onComplete` and submit it yourself.
  *
  * @remarks Accessibility
  * - The wrapper is a `role="group"`, named by `aria-labelledby`, then
@@ -199,7 +215,14 @@ export const OtpInput = forwardRef<HTMLDivElement, OtpInputProps>(function OtpIn
   const activeIndex = Math.min(focusedIndex ?? lastReachable, lastReachable);
 
   const focusCell = useCallback((index: number) => {
-    cellsRef.current[index]?.focus();
+    const cell = cellsRef.current[index];
+    // `focus()` on an already-focused cell fires no focus event, so
+    // `handleFocus`'s select() below never runs — select here too, so
+    // overtyping the cell the user is already sitting in (fixing the last
+    // digit typed) replaces it instead of silently appending and truncating
+    // back to the same value.
+    cell?.focus();
+    cell?.select();
   }, []);
 
   const commit = useCallback(
@@ -274,6 +297,12 @@ export const OtpInput = forwardRef<HTMLDivElement, OtpInputProps>(function OtpIn
     event.target.select();
   };
 
+  // Re-clicking a cell that already has focus moves the caret but fires no
+  // focus event, so it needs its own select — same reasoning as `focusCell`.
+  const handleClick = (event: ReactMouseEvent<HTMLInputElement>) => {
+    event.currentTarget.select();
+  };
+
   const cellLabel = type === 'numeric' ? 'otpInput.digit' : 'otpInput.character';
 
   return (
@@ -285,6 +314,7 @@ export const OtpInput = forwardRef<HTMLDivElement, OtpInputProps>(function OtpIn
       role="group"
       aria-label={ariaLabelledby ? undefined : (ariaLabel ?? t('otpInput.groupLabel'))}
       aria-labelledby={ariaLabelledby}
+      aria-required={required || undefined}
       className={clsx(styles.root, className)}
     >
       {Array.from({ length }, (_unused, index) => (
@@ -299,8 +329,8 @@ export const OtpInput = forwardRef<HTMLDivElement, OtpInputProps>(function OtpIn
           onKeyDown={handleKeyDown(index)}
           onMouseDown={handleMouseDown(index)}
           onFocus={handleFocus(index)}
+          onClick={handleClick}
           id={index === 0 ? id : undefined}
-          required={index === 0 ? required : undefined}
           autoFocus={autoFocus && index === 0}
           disabled={disabled}
           tabIndex={index === activeIndex ? 0 : -1}

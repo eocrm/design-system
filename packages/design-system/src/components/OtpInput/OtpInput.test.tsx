@@ -39,11 +39,10 @@ describe('OtpInput', () => {
   });
 
   it('applies the size class to every cell', () => {
-    const { container } = render(<OtpInput length={2} size="lg" />);
+    render(<OtpInput length={2} size="lg" />);
     for (const box of boxes()) {
       expect(box.className).toMatch(/size-lg/);
     }
-    expect(container.firstChild).toBeInstanceOf(HTMLDivElement);
   });
 
   it('marks every cell invalid', () => {
@@ -107,13 +106,12 @@ describe('OtpInput', () => {
     for (const box of boxes()) expect(box).toHaveAttribute('aria-describedby', 'err');
   });
 
-  it('puts id and required on the first cell only', () => {
-    render(<OtpInput length={3} id="code" required />);
+  it('puts id on the first cell only, and aria-required on the group', () => {
+    const { container } = render(<OtpInput length={3} id="code" required />);
     const [first, second] = boxes();
     expect(first).toHaveAttribute('id', 'code');
-    expect(first).toBeRequired();
     expect(second).not.toHaveAttribute('id');
-    expect(second).not.toBeRequired();
+    expect(container.firstChild).toHaveAttribute('aria-required', 'true');
   });
 
   it('seeds the boxes from defaultValue', () => {
@@ -162,6 +160,22 @@ describe('OtpInput', () => {
     await user.click(boxes()[1]!);
     await user.keyboard('9');
     expect(codeOf()).toBe('1934');
+  });
+
+  it('replaces rather than swallows when overtyping the box focus just landed on', async () => {
+    // Regression: focus() on an already-focused cell fires no focus event, so
+    // the select-on-focus that turns a keystroke into a replacement has to
+    // come from somewhere else too, or the very next keystroke into the cell
+    // typing just advanced into gets silently absorbed and discarded.
+    const user = userEvent.setup();
+    render(<OtpInput length={4} />);
+    await user.click(boxes()[0]!);
+    await user.keyboard('1234');
+    expect(codeOf()).toBe('1234');
+    expect(boxes()[3]).toHaveFocus();
+    await user.keyboard('9');
+    expect(codeOf()).toBe('1239');
+    expect(boxes()[3]).toHaveFocus();
   });
 
   it('distributes a pasted code across the boxes and lands on the last one', async () => {
@@ -286,5 +300,23 @@ describe('OtpInput', () => {
     await user.click(boxes()[0]!);
     expect(tabbable()).toHaveLength(1);
     expect(tabbable()[0]).toBe(boxes()[0]);
+  });
+
+  it('clamps the roving tabindex when a controlled value shrinks without moving focus', async () => {
+    // No Tab/Arrow/click moves focus here — the DOM focus stays on box 4
+    // throughout. This isolates the `Math.min(focusedIndex, lastReachable)`
+    // clamp itself: nothing else in the component could make it pass.
+    const user = userEvent.setup();
+    const { container, rerender } = render(
+      <OtpInput length={5} value="1234" onChange={() => {}} />,
+    );
+    const tabbable = () => container.querySelectorAll('input[tabindex="0"]');
+    await user.click(boxes()[4]!);
+    expect(tabbable()[0]).toBe(boxes()[4]);
+
+    // Parent resets the code externally (e.g. after a failed verification).
+    rerender(<OtpInput length={5} value="1" onChange={() => {}} />);
+    expect(tabbable()).toHaveLength(1);
+    expect(tabbable()[0]).toBe(boxes()[1]);
   });
 });
