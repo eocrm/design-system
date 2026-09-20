@@ -29,6 +29,11 @@ export const en: Messages = {
     download: 'Download',
     previewUnavailable: 'Preview unavailable',
   },
+  otpInput: {
+    groupLabel: 'Verification code',
+    digit: ({ index, total }) => `Digit ${index} of ${total}`,
+    character: ({ index, total }) => `Character ${index} of ${total}`,
+  },
   passwordInput: {
     show: 'Show password',
     hide: 'Hide password',

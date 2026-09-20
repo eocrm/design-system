@@ -75,6 +75,7 @@ const CLUSTERS: Record<string, string> = {
   Input: 'Forms',
   Kanban: 'Forms',
   LiquidEditor: 'Forms',
+  OtpInput: 'Forms',
   PasswordInput: 'Forms',
   PasswordStrengthMeter: 'Forms',
   PhoneInput: 'Forms',

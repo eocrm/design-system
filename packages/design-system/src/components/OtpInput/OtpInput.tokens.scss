@@ -1,0 +1,38 @@
+// OtpInput.tokens.scss — component-scoped tokens for <OtpInput>. Every value
+// aliases the <Input> family or a primitive, so a code field sits flush with a
+// same-size Input or Button without visual drift.
+:root {
+  // Group
+  --otp-input-gap: var(--space-2);
+
+  // Cell surface
+  --otp-input-bg: var(--input-bg);
+  --otp-input-fg: var(--input-fg);
+  --otp-input-border-color: var(--input-border-color);
+  --otp-input-radius: var(--input-radius);
+
+  // Focus
+  --otp-input-border-color-focus: var(--input-border-color-focus);
+  --otp-input-ring-focus: var(--input-ring-focus);
+
+  // Disabled
+  --otp-input-bg-disabled: var(--input-bg-disabled);
+  --otp-input-border-color-disabled: var(--input-border-color-disabled);
+  --otp-input-fg-disabled: var(--input-fg-disabled);
+
+  // Invalid
+  --otp-input-border-color-invalid: var(--input-border-color-invalid);
+  --otp-input-ring-invalid: var(--input-ring-invalid);
+
+  // Size — square cell, matching the <Input> height scale so an OtpInput
+  // lines up with the fields around it.
+  --otp-input-cell-size-sm: var(--size-sm);
+  --otp-input-cell-size-md: var(--size-md);
+  --otp-input-cell-size-lg: var(--size-lg);
+
+  // Size — a code is read back character by character, so the glyph runs one
+  // step larger than the equivalent <Input>.
+  --otp-input-font-size-sm: var(--font-size-md);
+  --otp-input-font-size-md: var(--font-size-lg);
+  --otp-input-font-size-lg: var(--font-size-xl);
+}

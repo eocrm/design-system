@@ -323,6 +323,9 @@ export type {
   RadioGroupOrientation,
 } from './components/Radio';
 
+export { OtpInput } from './components/OtpInput';
+export type { OtpInputProps, OtpInputSize, OtpInputType } from './components/OtpInput';
+
 export { PasswordInput } from './components/PasswordInput';
 export type { PasswordInputProps, PasswordInputSize } from './components/PasswordInput';
 

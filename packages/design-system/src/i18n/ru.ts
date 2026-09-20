@@ -30,6 +30,11 @@ export const ru: Messages = {
     download: 'Скачать',
     previewUnavailable: 'Предпросмотр недоступен',
   },
+  otpInput: {
+    groupLabel: 'Код подтверждения',
+    digit: ({ index, total }) => `Цифра ${index} из ${total}`,
+    character: ({ index, total }) => `Символ ${index} из ${total}`,
+  },
   passwordInput: {
     show: 'Показать пароль',
     hide: 'Скрыть пароль',
