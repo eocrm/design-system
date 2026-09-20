@@ -145,8 +145,9 @@ group once and leaves it once, instead of stepping through six boxes. `tabIndex`
   `t('otpInput.groupLabel')`. Unlike `PhoneInput`, a default is supplied: six
   boxes named "Digit 1 of 6" with no group name is not usable, and there is a
   single obvious name for this control.
-- Each box: `aria-label = t('otpInput.digit')(i + 1, length)` for `numeric`,
-  `t('otpInput.character')(i + 1, length)` for `alphanumeric`.
+- Each box: `aria-label = t('otpInput.digit', { index: i + 1, total: length })`
+  for `numeric`, `t('otpInput.character', …)` for `alphanumeric` — parameterized
+  message leaves, the shape `t()` already supports.
 - `aria-invalid` and `aria-describedby` are set on **every** box. Repeating the
   error while arrowing between cells is a smaller failure than a user landing on
   box 4 and never hearing it. Documented in the JSDoc as a deliberate trade.
