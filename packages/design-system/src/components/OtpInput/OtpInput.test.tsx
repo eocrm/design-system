@@ -439,13 +439,15 @@ describe('OtpInput', () => {
     expect(tabbable()[0]).toBe(boxes()[1]);
   });
 
-  it('lands the keystroke in range and pulls focus back after a controlled value shrinks under a focused cell', async () => {
+  it('pulls focus back into range after a controlled value shrinks under a focused cell', async () => {
     // B1 regression: the standard "clear the code after a failed
     // verification" reset shrinks `value` while DOM focus stays on whatever
     // cell the user was on — `lastReachable` moves but nothing moves DOM
-    // focus. A keystroke from that stranded cell must land where the shrunk
-    // code actually ends, and focus must follow it back into range, not stay
-    // stuck outputting into the wrong box forever.
+    // focus. A keystroke from that stranded cell must pull focus back into
+    // range, not stay stuck outputting into the wrong box forever. The
+    // `codeOf()` assertion below is a regression guard, not the proof: at an
+    // out-of-range index the splice is already a value no-op, so only the
+    // focus assertion can fail without the clamp.
     function Controlled() {
       const [code, setCode] = useState('123456');
       return (
@@ -472,6 +474,37 @@ describe('OtpInput', () => {
     await user.keyboard('7');
     expect(codeOf()).toBe('7');
     expect(boxes()[1]).toHaveFocus();
+  });
+
+  it('clamps Backspace to where the code actually ends after a controlled value shrinks under a focused cell', async () => {
+    // B1 sibling: the handleChange clamp above doesn't cover handleKeyDown.
+    // Backspace reads `code` at the raw stranded index, and unlike the
+    // splice in handleChange, `code.slice(0, index - 1)` at an out-of-range
+    // index is a REAL out-of-range read that returns the whole code
+    // unchanged — so without a matching clamp here, Backspace on a stranded
+    // cell is a no-op that only steps focus back one dead cell at a time.
+    function Controlled() {
+      const [code, setCode] = useState('123456');
+      return (
+        <div
+          onKeyDownCapture={(event) => {
+            if (event.key === 'F2') setCode('1');
+          }}
+        >
+          <OtpInput length={6} value={code} onChange={setCode} />
+        </div>
+      );
+    }
+    const user = userEvent.setup();
+    render(<Controlled />);
+    await user.click(boxes()[5]!);
+    await user.keyboard('{F2}');
+    expect(codeOf()).toBe('1');
+    expect(boxes()[5]).toHaveFocus();
+
+    await user.keyboard('{Backspace}');
+    expect(codeOf()).toBe('');
+    expect(boxes()[0]).toHaveFocus();
   });
 
   it('re-selects a focused cell when a controlled value changes externally', async () => {

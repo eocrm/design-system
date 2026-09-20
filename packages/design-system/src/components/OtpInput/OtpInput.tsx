@@ -278,9 +278,11 @@ export const OtpInput = forwardRef<HTMLDivElement, OtpInputProps>(function OtpIn
     // A controlled `value` can shrink out from under a focused cell — the
     // standard "clear the code after a failed check" reset — leaving DOM
     // focus on a cell past the contiguous range while `lastReachable` has
-    // already moved. Clamp to where the code actually ends so the keystroke
-    // lands there instead of at the stale DOM position, and `focusCell`
-    // below pulls focus back into range along with it.
+    // already moved. At an out-of-range rawIndex, the splice/truncation
+    // below is already a no-op on the VALUE (`code.slice(0, rawIndex) ===
+    // code`), so this clamp doesn't change what gets committed — its only
+    // effect is the `focusCell` target a few lines down, which is what
+    // pulls focus back into range.
     const index = Math.min(rawIndex, code.length);
     const chars = sanitize(event.target.value);
     if (chars.length === 0) {
@@ -307,7 +309,15 @@ export const OtpInput = forwardRef<HTMLDivElement, OtpInputProps>(function OtpIn
     focusCell(Math.min(index + chars.length, length - 1));
   };
 
-  const handleKeyDown = (index: number) => (event: ReactKeyboardEvent<HTMLInputElement>) => {
+  const handleKeyDown = (rawIndex: number) => (event: ReactKeyboardEvent<HTMLInputElement>) => {
+    // Same stranding as handleChange's clamp: a controlled `value` shrink
+    // can leave DOM focus past the code's contiguous end. Backspace and
+    // ArrowLeft both read `code` and step focus from the raw index, and
+    // `code.slice(0, index - 1)` at an out-of-range index is a REAL
+    // out-of-range read (unlike handleChange's splice, it doesn't collapse
+    // to a no-op value change) — so this clamp changes what Backspace
+    // commits, not just where focus lands.
+    const index = Math.min(rawIndex, code.length);
     switch (event.key) {
       case 'Backspace':
         // A filled cell is handled natively: focus selected its content, so
