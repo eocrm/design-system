@@ -38,6 +38,13 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          # The v3 default is `tools platform-tools`, but Google removed the
+          # obsolete `tools` package from the SDK repository, so sdkmanager
+          # exits 1 with "Failed to find package 'tools'" on every run. Only
+          # platform-tools is needed here — the platform itself is installed
+          # by the next step.
+          packages: platform-tools
 
       - name: Install Android SDK 36
         run: sdkmanager "platforms;android-36"
