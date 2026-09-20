@@ -159,7 +159,16 @@ group once and leaves it once, instead of stepping through six boxes. `tabIndex`
 - `aria-invalid` and `aria-describedby` are set on **every** box. Repeating the
   error while arrowing between cells is a smaller failure than a user landing on
   box 4 and never hearing it. Documented in the JSDoc as a deliberate trade.
-- `disabled` disables every box; `required` is forwarded to the first box.
+- `disabled` disables every box; `required` sets `aria-required="true"` on the group wrapper.
+
+**Amended during implementation:** the spec originally said `required` is forwarded
+to the first box, but the shipped component sets `aria-required="true"` on the
+`role="group"` wrapper instead. A per-cell `required` would let the browser block
+submit on an empty first cell while accepting a 1-of-`length` code as complete —
+worse than no native gate. Since `OtpInput` renders no named fields and nothing
+reaches `FormData`, validating completeness is the consumer's job. See
+`packages/design-system/src/components/OtpInput/OtpInput.tsx`'s `required` JSDoc
+for the current contract.
 
 ### Hard rule 10
 
