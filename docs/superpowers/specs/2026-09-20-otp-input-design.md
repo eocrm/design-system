@@ -81,13 +81,23 @@ dumping the entire SMS code into a single field:
 onChange(i, raw):
   chars = sanitize(raw)
   if chars is empty:            // deletion
-    next = value with index i cleared
+    next = code.slice(0, i)     // truncate — keeps the code contiguous
     setValue(next); stay on i
   else:
-    next = splice(value, at=i, chars), truncated to length
+    next = (code.slice(0, i) + chars + code.slice(i + chars.length)).slice(0, length)
     setValue(next)
     focus box min(i + chars.length, length - 1)
 ```
+
+**The code is always contiguous**, so `value[i]` is box `i` with no holes. A
+deleted middle character therefore truncates from that position rather than
+leaving a gap the string cannot express. Typing over a box replaces just that
+character, which is the actual repair path users take.
+
+Contiguity also means the only reachable boxes are the filled ones plus the
+first empty one. Clicking past it redirects to it — handled on `mousedown`,
+where the rendered `code` is still current; doing it in `onFocus` would race
+the component's own programmatic focus calls and bounce focus back to box 0.
 
 **No `maxLength={1}`.** It would truncate an autofilled 6-character code down to
 one character and break the primary feature the issue asks for. There is also no
@@ -117,13 +127,12 @@ in the component JSDoc so the next reader does not re-derive it.
 
 ## Keyboard
 
-| key               | behavior                                                                                          |
-| ----------------- | ------------------------------------------------------------------------------------------------- |
-| character         | replaces the current box, focus advances                                                          |
-| `Backspace`       | on a **filled** box: native clear, stay. On an **empty** box: clear the previous box and focus it |
-| `Delete`          | clear the current box, stay                                                                       |
-| `ArrowLeft/Right` | move focus one box (no wrap)                                                                      |
-| `Home` / `End`    | focus the first / last box                                                                        |
+| key                    | behavior                                                                                                                                                                 |
+| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| character              | replaces the current box, focus advances                                                                                                                                 |
+| `Backspace` / `Delete` | on a **filled** box: native (focus selected the content), which clears the code from this box onward and stays. On an **empty** box: clear the previous box and focus it |
+| `ArrowLeft/Right`      | move focus one box, clamped to the first empty box (no wrap)                                                                                                             |
+| `Home` / `End`         | focus the first box / the last reachable box                                                                                                                             |
 
 **Roving tabindex.** `tabIndex={0}` on the active box — the focused one, or the
 first empty one when focus is outside — and `-1` on the rest. Tab enters the
