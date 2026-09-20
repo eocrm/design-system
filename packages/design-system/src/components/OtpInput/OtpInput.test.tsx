@@ -213,8 +213,11 @@ describe('OtpInput', () => {
     // differ from the raw DOM value, so React DOES write node.value on the
     // next render and collapses whatever selection was made before that
     // commit. A second overtype keystroke right after the first must still
-    // land — select-before-commit alone survives only when the sanitized
-    // value happens to equal the raw keystroke.
+    // land. Coverage note: `handleKeyDown`'s own select-on-every-printable-
+    // keydown already makes this pass even with the `useLayoutEffect`
+    // re-select deleted — that effect's unique coverage is the
+    // external-controlled-value case in "re-selects a focused cell when a
+    // controlled value changes externally" below, not this test.
     const user = userEvent.setup();
     render(<OtpInput length={4} type="alphanumeric" defaultValue="ABCD" />);
     await user.click(boxes()[3]!);
@@ -239,6 +242,23 @@ describe('OtpInput', () => {
     await user.click(boxes()[2]!);
     await user.paste('34567890');
     expect(codeOf()).toBe('123456');
+  });
+
+  it('replaces the whole value when a full-length delivery lands in a non-first box', async () => {
+    // B2 regression: SMS/email autofill fills whichever box happens to be
+    // focused, not necessarily box 0. A user who started typing before the
+    // message arrived must not get the delivered code spliced into their
+    // partial entry at that position — a delivery of exactly `length`
+    // characters IS the code, arriving wherever the platform decided to
+    // drop it.
+    const onComplete = vi.fn();
+    const user = userEvent.setup();
+    render(<OtpInput length={6} defaultValue="123" onComplete={onComplete} />);
+    await user.click(boxes()[3]!);
+    await user.paste('987654');
+    expect(codeOf()).toBe('987654');
+    expect(boxes()[5]).toHaveFocus();
+    expect(onComplete).toHaveBeenCalledWith('987654');
   });
 
   it('round-trips a controlled value', async () => {
@@ -282,13 +302,40 @@ describe('OtpInput', () => {
     expect(onComplete).toHaveBeenCalledWith('923');
   });
 
-  it('does not re-fire onComplete when overtyping a full code with the same value', async () => {
+  it('does not re-fire onComplete when the sanitized value matches even though the raw keystroke differs', async () => {
+    // Regression: the previous version of this test retyped the exact same
+    // character over a selected cell, which fires ZERO change events (React's
+    // value tracker sees no DOM diff) — `commit` never runs, so it can't
+    // exercise the `next !== code` guard at all. This one reaches `commit`
+    // with a raw keystroke ('a') that differs from the DOM value ('A') but
+    // sanitizes back to the same code, so the guard is what suppresses it.
+    const onChange = vi.fn();
     const onComplete = vi.fn();
     const user = userEvent.setup();
-    render(<OtpInput length={3} defaultValue="123" onComplete={onComplete} />);
+    render(
+      <OtpInput
+        length={3}
+        type="alphanumeric"
+        defaultValue="ABC"
+        onChange={onChange}
+        onComplete={onComplete}
+      />,
+    );
     await user.click(boxes()[0]!);
-    await user.keyboard('1');
-    expect(codeOf()).toBe('123');
+    await user.keyboard('a');
+    expect(onChange).toHaveBeenCalledWith('ABC');
+    expect(onComplete).not.toHaveBeenCalled();
+  });
+
+  it('does not re-fire onComplete when pasting the code already there', async () => {
+    // Same guard, reached via the paste path instead of a keystroke.
+    const onChange = vi.fn();
+    const onComplete = vi.fn();
+    const user = userEvent.setup();
+    render(<OtpInput length={3} defaultValue="123" onChange={onChange} onComplete={onComplete} />);
+    await user.click(boxes()[0]!);
+    await user.paste('123');
+    expect(onChange).toHaveBeenCalledWith('123');
     expect(onComplete).not.toHaveBeenCalled();
   });
 
@@ -392,6 +439,41 @@ describe('OtpInput', () => {
     expect(tabbable()[0]).toBe(boxes()[1]);
   });
 
+  it('lands the keystroke in range and pulls focus back after a controlled value shrinks under a focused cell', async () => {
+    // B1 regression: the standard "clear the code after a failed
+    // verification" reset shrinks `value` while DOM focus stays on whatever
+    // cell the user was on — `lastReachable` moves but nothing moves DOM
+    // focus. A keystroke from that stranded cell must land where the shrunk
+    // code actually ends, and focus must follow it back into range, not stay
+    // stuck outputting into the wrong box forever.
+    function Controlled() {
+      const [code, setCode] = useState('123456');
+      return (
+        // Fires the reset from a keydown on the field itself (capture phase,
+        // so it runs before OtpInput's own handler) rather than a click on a
+        // separate button, so DOM focus is left exactly where a real
+        // parent-driven reset would leave it: on the cell the user was on.
+        <div
+          onKeyDownCapture={(event) => {
+            if (event.key === 'F2') setCode('');
+          }}
+        >
+          <OtpInput length={6} value={code} onChange={setCode} />
+        </div>
+      );
+    }
+    const user = userEvent.setup();
+    render(<Controlled />);
+    await user.click(boxes()[5]!);
+    await user.keyboard('{F2}');
+    expect(codeOf()).toBe('');
+    expect(boxes()[5]).toHaveFocus();
+
+    await user.keyboard('7');
+    expect(codeOf()).toBe('7');
+    expect(boxes()[1]).toHaveFocus();
+  });
+
   it('re-selects a focused cell when a controlled value changes externally', async () => {
     // Load-bearing: a parent that rewrites `value` (e.g. correcting a digit
     // after a failed check) must land the focused cell SELECTED, not just
@@ -411,6 +493,13 @@ describe('OtpInput', () => {
     expect(active.value).toBe('9');
     expect(active.selectionStart).toBe(0);
     expect(active.selectionEnd).toBe(1);
+  });
+
+  it('does not let a consumer-supplied role clobber the group role', () => {
+    // {...rest} is spread before role="group" specifically so the structural
+    // ARIA contract can't be overridden — see the comment at the JSX root.
+    const { container } = render(<OtpInput length={2} role="presentation" />);
+    expect(container.firstChild).toHaveAttribute('role', 'group');
   });
 
   it('focuses the first box on mount when autoFocus is set', () => {

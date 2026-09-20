@@ -172,6 +172,13 @@ export interface OtpInputProps extends Omit<
  *   durable property the consumer supplies and is already carried by
  *   `aria-invalid`, so there is deliberately no live region here — announcing
  *   the outcome of a code check is the consumer's job.
+ * - A paste or autofill that delivers the whole code at once fills every box
+ *   in a single update; a screen reader announces only the cell focus lands
+ *   on ("Digit 6 of 6"), not the five it silently filled behind it. This is a
+ *   deliberate choice, not an oversight — it's a content change rather than
+ *   the transient/async state Rule 10 governs, and the code's correctness is
+ *   the consumer's to confirm. Announce the result yourself (e.g. off
+ *   `onComplete`) if silent multi-box fills would confuse your users.
  *
  * @remarks Known limitations
  * - The WebOTP API (`navigator.credentials.get({ otp })`) is not used. It is
@@ -267,7 +274,14 @@ export const OtpInput = forwardRef<HTMLDivElement, OtpInputProps>(function OtpIn
     [setRawValue, length, code, onComplete],
   );
 
-  const handleChange = (index: number) => (event: ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (rawIndex: number) => (event: ChangeEvent<HTMLInputElement>) => {
+    // A controlled `value` can shrink out from under a focused cell — the
+    // standard "clear the code after a failed check" reset — leaving DOM
+    // focus on a cell past the contiguous range while `lastReachable` has
+    // already moved. Clamp to where the code actually ends so the keystroke
+    // lands there instead of at the stale DOM position, and `focusCell`
+    // below pulls focus back into range along with it.
+    const index = Math.min(rawIndex, code.length);
     const chars = sanitize(event.target.value);
     if (chars.length === 0) {
       // "Sanitizes to empty" also happens when the sanitizer REJECTS a
@@ -279,7 +293,17 @@ export const OtpInput = forwardRef<HTMLDivElement, OtpInputProps>(function OtpIn
       if (event.target.value === '') commit(code.slice(0, index));
       return;
     }
-    commit((code.slice(0, index) + chars + code.slice(index + chars.length)).slice(0, length));
+    // A delivery of exactly `length` characters IS the whole code — the
+    // platform dumps it into whichever cell happens to be focused, not
+    // necessarily the first — so it replaces the value outright rather than
+    // splicing in at that position, which would scatter it across two spots.
+    // A shorter (or over-long, uncommon) delivery keeps the splice-and-slice
+    // behavior, unchanged.
+    const next =
+      chars.length === length
+        ? chars
+        : (code.slice(0, index) + chars + code.slice(index + chars.length)).slice(0, length);
+    commit(next);
     focusCell(Math.min(index + chars.length, length - 1));
   };
 

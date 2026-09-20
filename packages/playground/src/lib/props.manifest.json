@@ -3381,7 +3381,7 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Marks the field required. There is no single native input to attach\n`required` to — a per-cell `required` would let the browser block submit\non an empty first cell while accepting a 1-of-`length` code as complete,\nwhich is worse than no native gate at all. Sets `aria-required=\"true\"` on\nthe `role=\"group\"` wrapper instead; validating completeness is the\nconsumer's job (pair with `invalid` + `onComplete`)."
+          "description": "Marks the field required. There is no single native input to attach the\nnative `required` attribute to — a per-cell `required` would let the\nbrowser block submit on an empty first cell while accepting a\n1-of-`length` code as complete, which is worse than no native gate at\nall. Sets `aria-required=\"true\"` on every cell instead (the group's\n`role=\"group\"` does not support `aria-required` per ARIA 1.2 — only\n`textbox` and a handful of other roles do), the same way `aria-invalid`\nand `aria-describedby` are already repeated on every cell. Validating\ncompleteness is the consumer's job (pair with `invalid` + `onComplete`)."
         },
         {
           "name": "autoFocus",

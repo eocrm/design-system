@@ -99,6 +99,7 @@ Grouped for navigation. Every prop and variant is JSDoc'd at the source — hove
 
 - `Input` — single-line text
 - `Textarea` — multi-line text
+- `OtpInput` — one-time-code entry, single-character boxes
 - `PasswordInput` — password field with eye toggle + optional warnings
 - `PasswordStrengthMeter` — 4-segment strength visualization
 - `Select` — value picker (single, multi, searchable, async, creatable)

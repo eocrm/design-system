@@ -135,12 +135,13 @@ in the component JSDoc so the next reader does not re-derive it.
 
 ## Keyboard
 
-| key                    | behavior                                                                                                                                                                 |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| character              | replaces the current box, focus advances                                                                                                                                 |
-| `Backspace` / `Delete` | on a **filled** box: native (focus selected the content), which clears the code from this box onward and stays. On an **empty** box: clear the previous box and focus it |
-| `ArrowLeft/Right`      | move focus one box, clamped to the first empty box (no wrap)                                                                                                             |
-| `Home` / `End`         | focus the first box / the last reachable box                                                                                                                             |
+| key               | behavior                                                                                                                                                                                    |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| character         | replaces the current box, focus advances                                                                                                                                                    |
+| `Backspace`       | on a **filled** box: native (focus selected the content), which clears the code from this box onward and stays. On an **empty** box: clear the previous box and focus it                    |
+| `Delete`          | on a **filled** box: native (focus selected the content), which clears the code from this box onward and stays. On an **empty** box: no-op — forward-deleting backwards would be surprising |
+| `ArrowLeft/Right` | move focus one box, clamped to the first empty box (no wrap)                                                                                                                                |
+| `Home` / `End`    | focus the first box / the last reachable box                                                                                                                                                |
 
 **Roving tabindex.** `tabIndex={0}` on the active box — the focused one, or the
 first empty one when focus is outside — and `-1` on the rest. Tab enters the
