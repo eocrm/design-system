@@ -3311,6 +3311,115 @@
         }
       ]
     },
+    "OtpInput": {
+      "props": [
+        {
+          "name": "length",
+          "type": "number",
+          "required": false,
+          "default": "",
+          "description": "How many boxes to render. Default `6`."
+        },
+        {
+          "name": "value",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Controlled code. Sanitized and truncated to `length` on render, so a\nconsumer echoing back a dirty string sees it cleaned rather than\nmis-sliced. Pair with `onChange`."
+        },
+        {
+          "name": "defaultValue",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Uncontrolled seed. Ignored when `value` is supplied."
+        },
+        {
+          "name": "onChange",
+          "type": "((value: string) => void)",
+          "required": false,
+          "default": "",
+          "description": "Fires on every edit with the whole code so far — always sanitized, never\nlonger than `length`, and never with a gap in the middle."
+        },
+        {
+          "name": "onComplete",
+          "type": "((value: string) => void)",
+          "required": false,
+          "default": "",
+          "description": "Fires when the code becomes full, once per transition — not on every\nkeystroke while it is full. Use it to submit; replacing a character\ninside an already-full code does not re-fire, clearing and refilling does."
+        },
+        {
+          "name": "type",
+          "type": "OtpInputType",
+          "required": false,
+          "default": "",
+          "description": "Character set. Default `'numeric'`. See `OtpInputType`."
+        },
+        {
+          "name": "size",
+          "type": "OtpInputSize",
+          "required": false,
+          "default": "",
+          "description": "Cell size. Default `'md'`.\n- `'sm'` — 24px cells; dense admin screens.\n- `'md'` — 32px cells (default); most forms.\n- `'lg'` — 40px cells; a dedicated verification screen."
+        },
+        {
+          "name": "invalid",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Error visual on every cell plus `aria-invalid=\"true\"`. Pair with a visible\nmessage and point `aria-describedby` at it (or wrap in `<Field error>`)."
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Disable every cell."
+        },
+        {
+          "name": "required",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Marks the field required. There is no single native input to attach\n`required` to — a per-cell `required` would let the browser block submit\non an empty first cell while accepting a 1-of-`length` code as complete,\nwhich is worse than no native gate at all. Sets `aria-required=\"true\"` on\nthe `role=\"group\"` wrapper instead; validating completeness is the\nconsumer's job (pair with `invalid` + `onComplete`)."
+        },
+        {
+          "name": "autoFocus",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Focus the first cell on mount."
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Id for the first cell, so an external `<label htmlFor>` focuses the field."
+        },
+        {
+          "name": "aria-label",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Accessible name for the group. Defaults to the localized\n`otpInput.groupLabel` (\"Verification code\") so a standalone OtpInput is\nnever an unnamed group."
+        },
+        {
+          "name": "aria-labelledby",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Ids of elements naming the group. Injected by `<Field>`; wins over `aria-label`."
+        },
+        {
+          "name": "aria-describedby",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Ids of description / error elements. Set on EVERY cell — see the remarks."
+        }
+      ]
+    },
     "Page": {
       "props": [
         {
@@ -5235,6 +5344,8 @@
     "DrawerSize": "\"sm\" | \"md\" | \"lg\"",
     "DrawerOverlayVariant": "\"solid\" | \"blur\"",
     "RadioSize": "\"sm\" | \"md\" | \"lg\"",
+    "OtpInputSize": "\"sm\" | \"md\" | \"lg\"",
+    "OtpInputType": "\"numeric\" | \"alphanumeric\"",
     "PasswordInputSize": "\"sm\" | \"md\" | \"lg\"",
     "PasswordStrengthScore": "0 | 1 | 2 | 3 | 4",
     "PhoneInputSize": "\"sm\" | \"md\" | \"lg\"",

@@ -650,6 +650,32 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       <Bar w={78} />
     </Outline>
   ),
+  OtpInput: (
+    <Row gap={6}>
+      <Outline
+        w={26}
+        h={30}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      >
+        <Bar w={8} />
+      </Outline>
+      <Outline
+        w={26}
+        h={30}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      >
+        <Bar w={8} />
+      </Outline>
+      <Outline
+        w={26}
+        h={30}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      >
+        <Bar w={8} />
+      </Outline>
+      <Outline w={26} h={30} />
+    </Row>
+  ),
   Progress: (
     <Col gap={8} style={{ alignItems: 'flex-start' }}>
       <Outline w={180} h={10} style={{ borderRadius: 999, overflow: 'hidden', display: 'flex' }}>

@@ -158,6 +158,13 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['PhoneInput'],
   },
   {
+    to: '/components/otp-input',
+    name: 'OtpInput',
+    description:
+      'One-time-code field — a box per character, mobile SMS autofill, focus that advances as you type.',
+    preview: SCHEMATICS['OtpInput'],
+  },
+  {
     to: '/components/progress',
     name: 'Progress',
     description:

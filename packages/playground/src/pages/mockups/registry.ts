@@ -63,6 +63,7 @@ export type ComponentName =
   | 'PageHeader'
   | 'Pagination'
   | 'Palette'
+  | 'OtpInput'
   | 'PasswordInput'
   | 'PasswordStrengthMeter'
   | 'PhoneInput'
