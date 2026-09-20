@@ -241,14 +241,40 @@ describe('OtpInput', () => {
     expect(onComplete).toHaveBeenCalledWith('123');
   });
 
-  it('does not re-fire onComplete when a character inside a full code is replaced', async () => {
+  it('re-fires onComplete when correcting a character inside a full code changes it', async () => {
     const onComplete = vi.fn();
     const user = userEvent.setup();
     render(<OtpInput length={3} defaultValue="123" onComplete={onComplete} />);
     await user.click(boxes()[0]!);
     await user.keyboard('9');
     expect(codeOf()).toBe('923');
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(onComplete).toHaveBeenCalledWith('923');
+  });
+
+  it('does not re-fire onComplete when overtyping a full code with the same value', async () => {
+    const onComplete = vi.fn();
+    const user = userEvent.setup();
+    render(<OtpInput length={3} defaultValue="123" onComplete={onComplete} />);
+    await user.click(boxes()[0]!);
+    await user.keyboard('1');
+    expect(codeOf()).toBe('123');
     expect(onComplete).not.toHaveBeenCalled();
+  });
+
+  it('re-fires onComplete when fixing the last digit of a wrong full code', async () => {
+    const onComplete = vi.fn();
+    const user = userEvent.setup();
+    render(<OtpInput length={6} onComplete={onComplete} />);
+    await user.click(boxes()[0]!);
+    await user.keyboard('123455');
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(onComplete).toHaveBeenCalledWith('123455');
+    await user.click(boxes()[5]!);
+    await user.keyboard('6');
+    expect(codeOf()).toBe('123456');
+    expect(onComplete).toHaveBeenCalledTimes(2);
+    expect(onComplete).toHaveBeenLastCalledWith('123456');
   });
 
   it('clears from the focused box onward when its content is deleted', async () => {

@@ -3346,7 +3346,7 @@
           "type": "((value: string) => void)",
           "required": false,
           "default": "",
-          "description": "Fires when the code becomes full, once per transition — not on every\nkeystroke while it is full. Use it to submit; replacing a character\ninside an already-full code does not re-fire, clearing and refilling does."
+          "description": "Fires whenever the code becomes full with a value different from the\nlast one — not on every keystroke while it is full. Use it to submit.\nCorrecting a wrong character inside an already-full code re-fires with\nthe corrected value; retyping the same character does not, since\nnothing changed."
         },
         {
           "name": "type",

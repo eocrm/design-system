@@ -22,7 +22,6 @@ function CompleteDemo() {
   return (
     <Stack gap="xs">
       <OtpInput
-        length={6}
         onChange={() => setStatus(null)}
         onComplete={(code) => setStatus(code === '123456' ? 'Verified' : 'Wrong code')}
         invalid={status === 'Wrong code'}
@@ -68,7 +67,9 @@ export function Demo() {
   return (
     <Stack gap="xs">
       <OtpInput value={code} onChange={setCode} aria-label="Verification code" />
-      <code>value = {code || '(empty)'}</code>
+      <code style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-fg-muted)' }}>
+        value = {code || '(empty)'}
+      </code>
     </Stack>
   );
 }`}
@@ -80,7 +81,7 @@ export function Demo() {
 
       <Example
         title="onComplete"
-        description="Fires once when the last character lands, so you can verify without diffing lengths on every keystroke."
+        description="Fires whenever the code becomes full with a new value — including a corrected digit inside an already-full code — so you can verify without diffing lengths on every keystroke. Try typing 123455, then fixing the last digit to 6."
         code={`import { useState } from 'react';
 import { OtpInput, Stack, Text } from '@eocrm/design-system';
 

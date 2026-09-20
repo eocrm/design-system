@@ -65,6 +65,14 @@ dirty `value` sees it sanitized on render, not silently mis-sliced.
 while full. Replacing a character inside an already-full code does not re-fire;
 clearing a box and refilling it does.
 
+**Amended during implementation:** the shipped guard is
+`next.length === length && next !== prev`, not `prev.length !== length`. A
+mistyped code corrected in place (`123455` → fix the last digit → `123456`)
+is a real completion a consumer must hear about, so it now re-fires;
+retyping the same value over a full code still does not, since nothing
+changed. See `packages/design-system/src/components/OtpInput/OtpInput.tsx`'s
+`onComplete` JSDoc for the current contract.
+
 ## The single input path
 
 Every box carries `onFocus={(e) => e.target.select()}`. Consequences:

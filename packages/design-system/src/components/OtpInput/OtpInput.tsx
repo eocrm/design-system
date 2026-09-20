@@ -57,9 +57,11 @@ export interface OtpInputProps extends Omit<
    */
   onChange?: (value: string) => void;
   /**
-   * Fires when the code becomes full, once per transition — not on every
-   * keystroke while it is full. Use it to submit; replacing a character
-   * inside an already-full code does not re-fire, clearing and refilling does.
+   * Fires whenever the code becomes full with a value different from the
+   * last one — not on every keystroke while it is full. Use it to submit.
+   * Correcting a wrong character inside an already-full code re-fires with
+   * the corrected value; retyping the same character does not, since
+   * nothing changed.
    */
   onComplete?: (value: string) => void;
   /** Character set. Default `'numeric'`. See `OtpInputType`. */
@@ -248,9 +250,15 @@ export const OtpInput = forwardRef<HTMLDivElement, OtpInputProps>(function OtpIn
   const commit = useCallback(
     (next: string) => {
       setRawValue(next);
-      if (next.length === length && code.length !== length) onComplete?.(next);
+      // Fire on any transition INTO a full-and-different code, not just the
+      // empty→full one: a corrected digit inside an already-full code (mistype,
+      // then fix the last character) is a real completion the consumer must
+      // hear about. Guarding on the value rather than just the length also
+      // means a same-value overtype (retyping the digit already there) does
+      // NOT re-fire — nothing about the code actually changed.
+      if (next.length === length && next !== code) onComplete?.(next);
     },
-    [setRawValue, length, code.length, onComplete],
+    [setRawValue, length, code, onComplete],
   );
 
   const handleChange = (index: number) => (event: ChangeEvent<HTMLInputElement>) => {
