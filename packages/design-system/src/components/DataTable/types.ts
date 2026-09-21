@@ -116,8 +116,18 @@ export interface ColumnDef<T> {
    * None of those is a name you chose. Set this prop on every text-less
    * header; your axe run flags what is left via `empty-table-header`.
    *
-   * An EMPTY string counts as unset, not as an explicit name: it falls back to
-   * a string `header` rather than discarding it.
+   * An EMPTY string counts as unset, not as an explicit name, in ALL THREE
+   * places that read this prop — the column header (`HeaderCell`), the
+   * responsive card's field label (`BodyRow`) and the visibility menu row
+   * (`ColumnVisibilityTrigger`). Each falls back to a string `header` rather
+   * than discarding it, and the menu falls on past that to `id`. #534
+   * converted only the first, which left one prop meaning "unset" in the
+   * header and "render nothing" two files over; #536 made them agree.
+   *
+   * There is deliberately no way to blank a column's label with `''`. The menu
+   * row is the case that decides it: a blank checkbox row is unidentifiable,
+   * which is strictly worse than the raw `id` the fallback chain already
+   * treats as a last resort.
    */
   visibilityLabel?: string;
   /**

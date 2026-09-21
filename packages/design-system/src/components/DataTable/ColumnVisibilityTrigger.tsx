@@ -110,8 +110,16 @@ function ColumnVisibilityTriggerInner<T>(
         {hidableCols.map((col) => {
           const visible = instance.columnVisibility[col.id] !== false;
           const isLastVisible = visible && visibleHidableCount === 1;
+          // Truthiness at BOTH steps, not `??`. The `col.id` tail exists so a
+          // column with a non-string header still gets something readable in
+          // the menu; `visibilityLabel: ''` — or `header: ''`, equally a string
+          // — defeated it and rendered a blank, unidentifiable checkbox row,
+          // strictly worse than the raw identifier the code falls back to
+          // (#536). `.trim()` matches HeaderCell's `rendersText`: a
+          // whitespace-only header renders no text either.
           const itemLabel =
-            col.visibilityLabel ?? (typeof col.header === 'string' ? col.header : col.id);
+            col.visibilityLabel ||
+            (typeof col.header === 'string' && col.header.trim() ? col.header : col.id);
           return (
             <DropdownMenu.CheckboxItem
               key={col.id}

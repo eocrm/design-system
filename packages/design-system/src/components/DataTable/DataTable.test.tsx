@@ -651,6 +651,37 @@ describe('<DataTable>', () => {
     expect(container.querySelector('[data-responsive-resize-handle]')).toBeNull();
   });
 
+  // One prop, one meaning. #534 converted HeaderCell alone, so `''` was
+  // "unset" in the header and "render a blank label" in the card two files
+  // over (#536). Asserts the EXACT header text, not merely a non-empty label —
+  // the sibling cells' labels are non-empty and would satisfy a loose check.
+  it('treats visibilityLabel="" as unset for the responsive card label too', () => {
+    const emptyLabelColumns: ColumnDef<Row>[] = [
+      {
+        id: 'empty-label',
+        header: 'Header label',
+        // `visibilityLabel={col.title ?? ''}` is ordinary consumer code.
+        visibilityLabel: '',
+        cell: () => <span>A</span>,
+      },
+    ];
+    function EmptyCardLabelHarness() {
+      const instance = useDataTable<Row>({
+        data: [rows[0]!],
+        columns: emptyLabelColumns,
+        getRowId,
+      });
+      return <DataTable instance={instance} aria-label="Empty card label" collapseBelow="md" />;
+    }
+
+    render(<EmptyCardLabelHarness />);
+
+    const cell = screen.getByText('A').closest('td')!;
+    expect(cell.querySelector(`.${styles.responsiveVisualLabel}`)).toHaveTextContent(
+      'Header label',
+    );
+  });
+
   it('renders visual-only responsive labels and one stable value wrapper per data cell', () => {
     const responsiveColumns: ColumnDef<Row>[] = [
       {

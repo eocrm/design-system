@@ -137,8 +137,12 @@ export function BodyRow<T>({
         )}
         {renderColumns.map((col) => {
           const pin = getPinStyle(col.id, instance);
+          // `||`, not `??`, and IDENTICAL to HeaderCell's `columnLabel`: one
+          // prop must not mean two things inside one component. `''` is unset
+          // everywhere, so it falls back to a string header rather than
+          // discarding it for a blank card label (#536).
           const responsiveLabel =
-            col.visibilityLabel ?? (typeof col.header === 'string' ? col.header : undefined);
+            col.visibilityLabel || (typeof col.header === 'string' ? col.header : undefined);
           const cellContent = col.cell(row, { row, rowId, column: col, instance });
           // The shift variable is applied only while a drag is running: a
           // permanent `translateX(0px)` on every cell would establish a
