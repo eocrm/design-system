@@ -73,6 +73,16 @@ for (const route of routes) {
     // If the library ever stops declaring rings the way this sweep recognises
     // — a switch to box-shadow, say — every route would measure nothing and
     // the gate would pass forever without anyone noticing.
+    //
+    // DELIBERATELY COARSE, and the cost is stated rather than hidden: `> 0` is
+    // per route, so one component whose state stopped rendering leaves its
+    // route green with its element absent, hidden behind everything else on
+    // the page that still measures. Closing it means a per-route floor, and
+    // 93 hand-maintained numbers that move whenever a demo gains an example is
+    // a maintenance surface that gets deleted rather than updated.
+    // `focus-ring-geometry-overlays.spec.ts` DOES carry floors, because there
+    // the count is per OVERLAY and an overlay that stops opening is exactly
+    // the regression that spec exists to notice.
     expect(swept.measured, 'focusables whose ring this sweep could measure').toBeGreaterThan(0);
     const found: Finding[] = swept.findings.map((h) => ({ route, ...h }));
 

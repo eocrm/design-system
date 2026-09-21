@@ -673,10 +673,22 @@ describe('Slider dragging shadow (source-level, #517)', () => {
   });
 
   it('places the dragging rule below both rules it ties with on specificity', () => {
+    // Source ORDER is the whole mechanism here: all three selectors are 0,2,0,
+    // so the last one in the file wins and nothing but this test stops the
+    // dragging rule being moved back above `:hover`. Two things that would
+    // have satisfied an `indexOf` over raw source without the cascade being
+    // right, both shapes this repo has been bitten by before:
+    //   - the selector appearing in a COMMENT rather than as a rule, and
+    //   - the selector being declared TWICE, where `indexOf` takes the first
+    //     and CSS takes the last.
+    // So: comments stripped, and each selector required to be unique.
+    const stripped = scss.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
     const at = (selector: string) => {
-      const i = scss.indexOf(`\n${selector} {`);
-      expect(i, `${selector} not found`).toBeGreaterThan(-1);
-      return i;
+      const found = [
+        ...stripped.matchAll(new RegExp(`^${selector.replace(/[.:]/g, '\\$&')} \\{`, 'gm')),
+      ];
+      expect(found.length, `${selector} is declared exactly once`).toBe(1);
+      return found[0]!.index;
     };
     expect(at('.thumb.thumbDragging')).toBeGreaterThan(at('.thumb:hover'));
     expect(at('.thumb.thumbDragging')).toBeGreaterThan(at('.thumb:focus-visible'));

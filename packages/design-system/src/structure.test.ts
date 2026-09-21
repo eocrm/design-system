@@ -211,8 +211,22 @@ describe('stripScssComments', () => {
  * block, so a rule whose own body contains one is skipped — its declarations
  * are invisible, and the scan says nothing when it skips a rule. The nested
  * block is matched as a rule in its own right and IS scanned, which is why the
- * hole is narrower than it sounds. `Button.module.scss`'s `.button { … }` is
- * exactly this shape today.
+ * hole is narrower than it sounds.
+ *
+ * The shape that matters is a rule whose OWN selector spells focus and whose
+ * body also contains a nested block:
+ *
+ *   .item:focus-visible {
+ *     outline: 2px solid …;   // invisible to every gate below
+ *     .icon { color: … }
+ *   }
+ *
+ * — there the hand-rolled ring is in the skipped rule, not in the nested one.
+ * `Button.module.scss`'s `.button { … }` has the same structure and is the
+ * usual thing pointed at, but it is the HARMLESS version: its selector names
+ * no focus pseudo, so an `outline` in it was never in scope anyway. Nothing of
+ * the dangerous shape exists in the tree today; closing it needs a real SCSS
+ * parser rather than a brace scan.
  */
 const scssRules = (stripped: string): [selector: string, body: string][] =>
   [...stripped.matchAll(/(?<=^|[{};])([^{};]*?)\{([^{}]*)\}/g)].map((m) => [
@@ -220,8 +234,32 @@ const scssRules = (stripped: string): [selector: string, body: string][] =>
     m[2]!,
   ]);
 
-/** A rule whose SELECTOR spells focus, so the rule applies in a focus state. */
-const namesFocusPseudo = (selector: string) => /:focus(-visible|-within)?\b/.test(selector);
+/**
+ * A rule whose SELECTOR spells focus, so the rule applies in a focus state.
+ *
+ * `:not()` is stripped first, because a rule that spells focus ONLY inside a
+ * negation applies precisely when the element is NOT focused:
+ * `.x:hover:not(:focus-visible) { outline: none }` is the documented way to
+ * keep a hover treatment off a focused element, and reading it as focus-scoped
+ * reports it as a suppressed ring. No such rule exists in the tree today, so
+ * this is a false positive waiting to happen rather than one being fixed — but
+ * a gate that fails the correct spelling of a rule is a gate that gets waived.
+ *
+ * `:has()` is deliberately NOT stripped: `Image`'s
+ * `.wrapper:has(.trigger:focus-visible)` really does paint a ring when the
+ * trigger is focused, and is in scope on purpose.
+ *
+ * The strip iterates because `:not()` nests. It cannot span a `:not()` that
+ * contains an unbalanced paren, which is not valid CSS.
+ */
+const namesFocusPseudo = (selector: string) => {
+  let stripped = selector;
+  for (let previous = ''; stripped !== previous; ) {
+    previous = stripped;
+    stripped = stripped.replace(/:not\([^()]*\)/g, '');
+  }
+  return /:focus(-visible|-within)?\b/.test(stripped);
+};
 
 /** Every `outline` / `outline-{width,color,style}` declaration in a rule body. */
 const outlineDeclarations = (body: string): [property: string, value: string][] =>
@@ -230,8 +268,17 @@ const outlineDeclarations = (body: string): [property: string, value: string][] 
     m[2]!,
   ]);
 
-/** `none` / `0` suppress a ring; anything else paints one. */
-const paints = (value: string) => !/^(none|0(px)?)$/.test(value.trim());
+/**
+ * `none` / `0` suppress a ring; anything else paints one.
+ *
+ * `!important` is part of neither: `outline: none !important` suppresses just
+ * as `outline: none` does, and reading it as a PAINTED ring reported the
+ * component that suppresses hardest as the one hand-rolling a ring. It failed
+ * safe and no instance exists in the tree, but the doc for the gate above
+ * says `outline: none` is permitted, and this is what makes that true for
+ * every spelling of it.
+ */
+const paints = (value: string) => !/^(none|0(px)?)(\s*!important)?$/.test(value.trim());
 
 // Comments stripped: a commented-out `export { Pagination }` satisfied the
 // re-export gate while the component was unimportable from the package
@@ -1253,6 +1300,22 @@ describe('a focus ring goes through the focus-ring mixin', () => {
   const waived = (file: string, offender: string) =>
     waivers.some((w) => w.file === file && offender.startsWith(`${w.selector} {`));
 
+  it('the scan itself can fail', () => {
+    // Guards the guard, and pins the two edges the shared helpers handle.
+    expect(offendersIn('.a:focus-visible { outline: 2px solid red; }')).toEqual([
+      '.a:focus-visible { outline: 2px solid red }',
+    ]);
+    // Suppression belongs to the gate below, not this one.
+    expect(offendersIn('.a:focus-visible { outline: none; }')).toEqual([]);
+    expect(offendersIn('.a:focus-visible { outline: none !important; }')).toEqual([]);
+    // "when NOT focused" is not a focus rule.
+    expect(offendersIn('.a:hover:not(:focus-visible) { outline: 2px solid red; }')).toEqual([]);
+    // `:has()` IS in scope — Image paints a real ring through one.
+    expect(offendersIn('.w:has(.t:focus-visible) { outline: 2px solid red; }')).toEqual([
+      '.w:has(.t:focus-visible) { outline: 2px solid red }',
+    ]);
+  });
+
   it.each(styleFiles.map(({ label, code }) => [label, code]))('%s', (label, code) => {
     expect(
       offendersIn(code).filter((o) => !waived(label, o)),
@@ -1380,6 +1443,13 @@ describe('a focus ring is not suppressed without a recorded reason', () => {
     expect(suppressionsIn('.a:focus-visible { outline: 2px solid red; }')).toEqual([]);
     // No focus pseudo, so out of scope — and stated in the docblock as such.
     expect(suppressionsIn('.a { outline: none; }')).toEqual([]);
+    // `!important` is not part of the value: this suppresses, it does not paint.
+    expect(suppressionsIn('.a:focus-visible { outline: none !important; }')).toEqual([
+      '.a:focus-visible { outline: none !important }',
+    ]);
+    // Focus spelled ONLY inside `:not()` means "when NOT focused", so the rule
+    // is out of scope entirely — for this gate and for the mixin gate.
+    expect(suppressionsIn('.a:hover:not(:focus-visible) { outline: none; }')).toEqual([]);
   });
 
   it.each(styleFiles.map(({ label, code }) => [label, code]))('%s', (label, code) => {
@@ -1451,6 +1521,128 @@ describe('an outline-offset declaration does not sit in the same rule as @includ
     expect(
       offenders,
       'pass the offset via focus-ring($offset: …) instead of a separate outline-offset declaration',
+    ).toEqual([]);
+  });
+});
+
+/**
+ * Every custom property a stylesheet READS is one something DECLARES.
+ *
+ * CSS does not error on an undefined `var()`. The declaration is invalid at
+ * computed-value time, the property falls back to its inherited or initial
+ * value, and nothing anywhere reports it — not the browser, not stylelint, not
+ * a jsdom test, which computes no styles at all. So the failure mode is a rule
+ * that silently stops doing anything, which is the hardest kind of defect to
+ * notice and the easiest kind to introduce: renaming a token is a
+ * find-and-replace, and any site the replace misses goes quiet rather than
+ * red.
+ *
+ * It is not hypothetical in either direction. `ColorPicker`'s hex label read
+ * `var(--font-mono)`, a token that has never existed — the label rendered in
+ * the inherited sans face and every gate in this repo was green. And
+ * `Image.module.scss` deliberately reads `--button-ring`, a token `Button`
+ * owns, so Image's Retry ring follows a consumer's Button override; renaming
+ * that token in `Button.tokens.scss` would leave Image's ring invalid with no
+ * error and no failure, just a ring that stops painting.
+ *
+ * WHAT COUNTS AS A DECLARATION:
+ *
+ * - any `--name:` in the generated light or dark token files,
+ * - any `--name:` in any `.scss` under `src` — component tokens, module-local
+ *   declarations, the handoffs one component makes to another,
+ * - any `'--name'` string literal in a `.ts`/`.tsx` under `src`, which is how
+ *   an inline `style={{ ['--dc-col' as string]: … }}` stamps one,
+ * - a template PREFIX, `` `--grid-columns-${b}` ``, matched as a prefix
+ *   because the suffix is a runtime value. Only prefixes of two or more
+ *   segments count: `` `--ring-${tone}` `` would otherwise license every
+ *   `--ring-*` reference in the library and the gate would stop meaning
+ *   anything.
+ *
+ * WHAT IT PROVABLY CANNOT CATCH:
+ *
+ * - **A property declared somewhere that never renders.** Any `--name:` in
+ *   any `.scss` counts, including one inside a rule nothing matches, an
+ *   `@media` block that never applies, or a `:root` override in a file no
+ *   component imports. This proves the NAME exists, not that it is in scope
+ *   where it is read.
+ * - **SCOPE, which is the larger half of the same point.** A property
+ *   declared on `.thumb` and read on an element outside `.thumb` resolves
+ *   here and is invalid in the browser. CSS custom properties inherit, so
+ *   deciding this statically means resolving the DOM tree, which a stylesheet
+ *   does not contain.
+ * - **A string literal in TS that is READ rather than written.** A
+ *   `getPropertyValue('--x')` counts as a declaration. Deliberate: the
+ *   alternative is following the value through the AST, and the cost of the
+ *   trade is a missed offender rather than a false alarm.
+ * - **Anything under a template prefix.** `` `--icon-picker-${part}` ``
+ *   licenses every `--icon-picker-*` reference whether or not the runtime
+ *   ever produces that suffix.
+ * - **A `var()` with a FALLBACK.** `var(--x, 1px)` is exempt: a fallback is
+ *   how a consumer override hook is spelled, and the declaration is optional
+ *   by construction.
+ * - **The playground and the CRM.** Scoped to `src`. A consumer reading a
+ *   token this library renamed is exactly this defect one repo over, and
+ *   nothing here sees it.
+ */
+describe('every custom property a stylesheet reads is declared somewhere', () => {
+  const files = allFilesUnder(__dirname);
+
+  const declared = new Set<string>();
+  /** Template-literal prefixes, `--grid-columns-` from `` `--grid-columns-${b}` ``. */
+  const prefixes: string[] = [];
+
+  for (const source of [TOKENS_SCSS, DARK_SCSS]) {
+    for (const m of source.matchAll(/(--[a-z0-9-]+)\s*:/g)) declared.add(m[1]!);
+  }
+  for (const { label, code } of files) {
+    if (/\.scss$/.test(label)) {
+      for (const m of stripScssComments(code).matchAll(/(--[a-z0-9-]+)\s*:/g)) declared.add(m[1]!);
+      continue;
+    }
+    if (!/\.tsx?$/.test(label)) continue;
+    // Comments NOT stripped, and that is the safe direction here: a token name
+    // quoted in a comment adds a spurious declaration, which can only hide an
+    // offender, never invent one. Stripping would need the TSX parser for a
+    // gate whose whole subject is string literals.
+    for (const m of code.matchAll(/['"`](--[a-z0-9-]+)['"`]/g)) declared.add(m[1]!);
+    for (const m of code.matchAll(/`(--[a-z0-9-]+)\$\{/g)) {
+      if (m[1]!.slice(2).split('-').filter(Boolean).length >= 2) prefixes.push(m[1]!);
+    }
+  }
+
+  const resolves = (name: string) =>
+    declared.has(name) || prefixes.some((prefix) => name.startsWith(prefix));
+
+  const stylesheets = files.filter(({ label }) => /\.scss$/.test(label));
+
+  it('found the stylesheets and the declarations', () => {
+    // Guards the guard. Without a floor, a walk that returned nothing — or a
+    // regex that matched nothing — would make every assertion below pass
+    // having read no files at all.
+    expect(stylesheets.length).toBeGreaterThan(100);
+    expect(declared.size).toBeGreaterThan(1000);
+  });
+
+  it('the scan itself can fail', () => {
+    expect(resolves('--color-fg')).toBe(true);
+    expect(resolves('--no-such-token-anywhere')).toBe(false);
+    // A cross-component read that is deliberate still has to resolve, and does.
+    expect(resolves('--button-ring')).toBe(true);
+  });
+
+  it.each(stylesheets.map(({ label, code }) => [label, code]))('%s', (_label, code) => {
+    // `var(--x)` with no fallback only — see the docblock for why a fallback
+    // is exempt.
+    const unresolved = [
+      ...new Set(
+        [...stripScssComments(code).matchAll(/var\(\s*(--[a-z0-9-]+)\s*\)/g)]
+          .map((m) => m[1]!)
+          .filter((name) => !resolves(name)),
+      ),
+    ];
+    expect(
+      unresolved,
+      'reads a custom property nothing declares — the declaration is invalid at computed-value time and the browser reports nothing',
     ).toEqual([]);
   });
 });
