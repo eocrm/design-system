@@ -125,6 +125,27 @@ function contrast(fg: string, bg: string): number {
   return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
 }
 
+/**
+ * `over` at `alpha` laid on `base`, both opaque hex, result opaque hex.
+ *
+ * Module scope because two gates need it: the scrim gate composites
+ * Lightbox's chrome over `--color-bg-overlay-strong`, and the AGENTS.md gate
+ * has to reach the same surfaces to recompute the figures the prose states
+ * about them. A second copy would track the tokens just as well but could
+ * drift from THIS one, and the two would then certify different surfaces
+ * under the same name.
+ */
+const composite = (over: string, alpha: number, base: string) => {
+  const [x, y] = [over, base].map((h) => [0, 2, 4].map((i) => parseInt(h.slice(1 + i, 3 + i), 16)));
+  return `#${x
+    .map((c, i) =>
+      Math.round(c * alpha + y[i]! * (1 - alpha))
+        .toString(16)
+        .padStart(2, '0'),
+    )
+    .join('')}`;
+};
+
 /** 4.5 for body text, 3.0 for a graphical object or large text (WCAG 1.4.3 / 1.4.11). */
 type Pair = [label: string, fg: string, bg: string, minimum: number];
 
@@ -740,19 +761,6 @@ describe('a tone stays in sync with the roles derived from it', () => {
       '--ring-on-scrim must not be themed — the surface it lands on is not',
     ).toBeUndefined();
 
-    const composite = (over: string, alpha: number, base: string) => {
-      const [x, y] = [over, base].map((h) =>
-        [0, 2, 4].map((i) => parseInt(h.slice(1 + i, 3 + i), 16)),
-      );
-      return `#${x
-        .map((c, i) =>
-          Math.round(c * alpha + y[i] * (1 - alpha))
-            .toString(16)
-            .padStart(2, '0'),
-        )
-        .join('')}`;
-    };
-
     // Resolved from the COMPONENT files, not from --ring-on-scrim directly.
     // Asserting the token in isolation proves only that a safe colour exists —
     // it stays green if Lightbox re-points --lightbox-ring back at
@@ -921,58 +929,11 @@ describe('a tone stays in sync with the roles derived from it', () => {
 
     const ring = tokenValue('--ring-on-scrim', TOKENS);
 
-    // Read from the token rather than transcribed. A designer nudging the scrim
-    // to 88% would otherwise leave this certifying a surface that no longer
-    // exists — the failure this whole file keeps closing.
-    const overlay = declaredValue('--color-bg-overlay-strong', TOKENS)!;
-    // Same percentage-alpha guard as layer() below. Without it `rgb(15 23 42 / 0.92)`
-    // parses to alpha 0.0092 and the gate certifies a surface that is not there.
-    expect(overlay, '--color-bg-overlay-strong states alpha as a percentage').toMatch(
-      /\/\s*[\d.]+%\s*\)/,
-    );
-    const [or, og, ob, oa] = overlay.match(/[\d.]+/g)!.map(Number);
-    expect(oa, '--color-bg-overlay-strong has a meaningful alpha').toBeGreaterThan(5);
-    const overlayHex = `#${[or, og, ob].map((c) => c.toString(16).padStart(2, '0')).join('')}`;
-
     // Both themes' page colours, because the scrim composites over whichever
     // one is behind it — and light is the worse of the two, which is the case
     // that was failing.
-    for (const [theme, source] of [
-      ['light', TOKENS],
-      ['dark', DARK],
-    ] as const) {
-      const scrim = composite(overlayHex, oa / 100, tokenValue('--color-bg', source));
-      // Both layered ON the scrim, and both read from Lightbox's own tokens for
-      // the same reason the scrim is: a transcribed alpha keeps certifying a
-      // surface that has since moved.
-      const layer = (name: string) => {
-        const raw = declaredValue(name, lightbox)!;
-        // Percentage alpha only. `rgb(0 0 0 / 0.3)` is legal CSS and would parse
-        // to 0.003 here, compositing to something indistinguishable from the
-        // bare scrim — the assertion would then pass having measured the wrong
-        // surface. Fail loudly on the notation instead of quietly on the value.
-        expect(raw, `${name} states alpha as a percentage`).toMatch(/\/\s*[\d.]+%\s*\)/);
-        const [r, g, b, a] = raw.match(/[\d.]+/g)!.map(Number);
-        // The notation check alone is not enough: `rgb(0 0 0 / 0.3%)` is legal,
-        // passes it, and parses to alpha 0.003 — compositing to something
-        // indistinguishable from the bare scrim, so the assertion would certify
-        // a surface that is not there. That is verbatim the failure the notation
-        // check was added to prevent, one notation over.
-        expect(a, `${name} has a meaningful alpha`).toBeGreaterThan(5);
-        return composite(
-          `#${[r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('')}`,
-          a / 100,
-          scrim,
-        );
-      };
-      const surfaces: [string, string][] = [
-        ['the scrim', scrim],
-        ['the thumb strip', layer('--lightbox-thumb-strip-bg')],
-        ['a control fill', layer('--lightbox-control-bg')],
-        // The hover fill is a distinct surface a focused control can sit on.
-        ['a hovered control fill', layer('--lightbox-control-bg-hover')],
-      ];
-      for (const [label, surface] of surfaces) {
+    for (const theme of ['light', 'dark'] as const) {
+      for (const [label, surface] of lightboxSurfaces(theme)) {
         expect(
           contrast(ring, surface),
           `--ring-on-scrim on ${label} in ${theme}`,
@@ -983,6 +944,217 @@ describe('a tone stays in sync with the roles derived from it', () => {
 });
 
 const COMPONENTS_DIR_FOR_SCRIM = resolve(__dirname, '../components');
+
+/**
+ * The four surfaces a focus ring can land on inside `Lightbox`, as opaque hex.
+ *
+ * None of them is a token: each is `--color-bg-overlay-strong` composited over
+ * the page colour, and three of them a further `rgb(… / …%)` layer on top of
+ * that. So no `@contrast` annotation can express them and no reader can
+ * reproduce them by eye — which is exactly why the figures AGENTS.md states
+ * about them were challenged as unreproducible in #518. They reproduce; the
+ * arithmetic just lives here.
+ *
+ * Every input is READ, never transcribed: a designer nudging the scrim to 88%
+ * or the control fill to 20% moves these, and a copied number would keep
+ * certifying a surface that no longer exists — the failure this file keeps
+ * closing. Alphas must be stated as PERCENTAGES, because `rgb(0 0 0 / 0.3)` is
+ * legal CSS that parses to 0.003 here and composites to something
+ * indistinguishable from the bare scrim, so an assertion would pass having
+ * measured the wrong surface. `0.3%` is legal too and passes the notation
+ * check, hence the second guard on the value.
+ */
+function lightboxSurfaces(theme: 'light' | 'dark'): [label: string, hex: string][] {
+  const lightbox = stripComments(
+    readFileSync(resolve(COMPONENTS_DIR_FOR_SCRIM, 'Lightbox/Lightbox.tokens.scss'), 'utf8'),
+  );
+  const alpha = (raw: string, name: string) => {
+    if (!/\/\s*[\d.]+%\s*\)/.test(raw)) throw new Error(`${name} must state alpha as a percentage`);
+    const parts = raw.match(/[\d.]+/g)!.map(Number);
+    const a = parts[3]!;
+    if (a <= 5) throw new Error(`${name} has no meaningful alpha (${a}%)`);
+    return {
+      hex: `#${parts
+        .slice(0, 3)
+        .map((c) => c.toString(16).padStart(2, '0'))
+        .join('')}`,
+      a: a / 100,
+    };
+  };
+  const overlay = alpha(
+    declaredValue('--color-bg-overlay-strong', TOKENS)!,
+    '--color-bg-overlay-strong',
+  );
+  const scrim = composite(
+    overlay.hex,
+    overlay.a,
+    tokenValue('--color-bg', theme === 'dark' ? DARK : TOKENS),
+  );
+  const layer = (name: string) => {
+    const { hex, a } = alpha(declaredValue(name, lightbox)!, name);
+    return composite(hex, a, scrim);
+  };
+  return [
+    ['the scrim', scrim],
+    ['the thumb strip', layer('--lightbox-thumb-strip-bg')],
+    ['a control fill', layer('--lightbox-control-bg')],
+    // The hover fill is a distinct surface a focused control can sit on.
+    ['a hovered control fill', layer('--lightbox-control-bg-hover')],
+  ];
+}
+
+/** Every `--color-palette-<name>-bg`, which is what a `.colored` event is filled with. */
+const PALETTE_EVENT_FILLS = [...TOKENS.matchAll(/--color-palette-([a-z]+)-bg:/g)].map(
+  (m) => `--color-palette-${m[1]!}-bg`,
+);
+
+/**
+ * An INSET ring is bounded on one side by the element's own fill, and the only
+ * fills in the library a consumer picks freely are the palette ones a
+ * `.colored` Calendar event takes (`resolveEventColor` hands
+ * `--color-palette-<color>-bg` to `EventChip`, `TimedEvent` and `AgendaView`,
+ * all three of which draw their focus ring inset because they sit flush
+ * against a scrolling grid).
+ *
+ * PAIRS above cannot express this: it is one ring against thirty surfaces, and
+ * what matters is the WORST of them, which moves when the palette is retuned.
+ * AGENTS.md states that worst case as prose, and #518's whole complaint is
+ * that the prose named no pair — so this both names it and holds a floor under
+ * it. 1.4.11's 3:1, not 4.5: a focus ring is a graphical object.
+ *
+ * Bounds the ring against the FILL only. The other side of an inset ring is
+ * the same fill, so there is nothing else to measure; an OUTSET ring's outer
+ * side is the page surface, which the four-surface gate above covers.
+ */
+describe('an inset ring stays legible against every fill a .colored event can take', () => {
+  it.each(['light', 'dark'] as const)('%s', (theme) => {
+    const source = theme === 'dark' ? DARK : TOKENS;
+    const ring = tokenValue('--ring-accent', source);
+    expect(PALETTE_EVENT_FILLS.length, 'found the palette fills').toBeGreaterThan(20);
+    for (const fill of PALETTE_EVENT_FILLS) {
+      expect(contrast(ring, tokenValue(fill, source)), `--ring-accent on ${fill}`).toBeGreaterThan(
+        3.0,
+      );
+    }
+  });
+});
+
+/**
+ * Every contrast figure `AGENTS.md` states in ENGLISH PROSE, recomputed.
+ *
+ * `structure.test.ts`'s "stated contrast ratios still hold" gate binds every
+ * `N.NN:1` in a `.tokens.scss` / `.module.scss` / `.ts` file to a `@contrast`
+ * annotation sitting beside it. `AGENTS.md` is outside that gate and has to
+ * stay outside it: Markdown has no comment syntax to hide an annotation in, so
+ * the annotation would have to be prose too, and this file ships in the
+ * published tarball as the agent-facing primer — a number in it is read and
+ * copied, not skimmed.
+ *
+ * #518 challenged three of its figures as unreproducible. All three reproduce.
+ * What made them uncheckable was not the arithmetic but the prose: none named
+ * the pair it measured, so a reader guessing at "a hovered control fill" tried
+ * five neutral tokens and matched none of them (it is Lightbox's
+ * `--lightbox-control-bg-hover`, composited over the scrim). The prose now
+ * names every pair, and the binding runs in the opposite direction from the
+ * annotation gate — THIS FILE owns the computation, and the doc must agree
+ * with it:
+ *
+ *  - every entry in `FIGURES` appears in `AGENTS.md` at the stated precision,
+ *    so a retune that moves one reddens CI instead of rotting the sentence;
+ *  - every `N.NN:1` and every `N of the M` in `AGENTS.md` is a figure
+ *    `FIGURES` produces, so a number added to the prose later cannot arrive
+ *    unbound — which is what let this sweep itself ship two stale sentences
+ *    that only human review caught.
+ *
+ * WHAT IT PROVABLY CANNOT CATCH:
+ *
+ * - **A claim with no number in one of the two matched shapes.** "half as
+ *   legible", "fails AA on three surfaces", "comfortably over" — the gate
+ *   binds a NOTATION, and no scan of English can do better. Prose that states
+ *   a measurement must state it as `N.NN:1` or `N of the M` to be bound at
+ *   all, and nothing forces an author to.
+ * - **The sentence around the number.** `4.45:1` is bound to
+ *   `--color-fg-muted` on `--color-bg-muted-hover` in light; that the prose
+ *   says it FAILS rather than passes is not checked, and moving a figure into
+ *   the wrong sentence leaves it matching. Only the digits are bound.
+ * - **Which occurrence.** A figure is matched anywhere in the file, so two
+ *   sentences quoting the same number are indistinguishable, as are two
+ *   different pairs that happen to round to the same two decimals.
+ * - **Every other Markdown file.** Scoped to `AGENTS.md` alone — the one doc
+ *   that ships to consumers. `README.md`, `guidance.md` and the three
+ *   `CLAUDE.md` files state ratios too and nothing binds them.
+ * - **Integer ratios.** `3:1` and `4.5:1` are WCAG's own thresholds, cited
+ *   throughout, and are not measurements of a pair. Same trade as the
+ *   annotation gate's `WCAG_THRESHOLDS`, for the same reason: failing on
+ *   `must clear the 4.5:1 minimum` is the false alarm that gets a gate
+ *   deleted.
+ */
+describe('AGENTS.md states no contrast figure this file cannot recompute', () => {
+  const AGENTS = readFileSync(resolve(__dirname, '../../AGENTS.md'), 'utf8');
+
+  /**
+   * Each figure is `[what it measures, the digits AGENTS.md must contain]`.
+   * Built lazily so a resolution failure surfaces as a test failure with a
+   * token name in it rather than as a module-load crash.
+   */
+  const figures = (): [label: string, stated: string][] => {
+    const worstEventFill = PALETTE_EVENT_FILLS.map(
+      (fill) =>
+        [fill, contrast(tokenValue('--ring-accent', DARK), tokenValue(fill, DARK))] as const,
+    ).sort((a, b) => a[1] - b[1])[0]!;
+
+    const light = lightboxSurfaces('light');
+    const dark = lightboxSurfaces('dark');
+    const tones = ['accent', 'danger', 'success'] as const;
+    const belowInLight = tones
+      .flatMap((tone) =>
+        light.map(([, surface]) => contrast(tokenValue(`--ring-${tone}`, TOKENS), surface)),
+      )
+      .filter((r) => r < 3);
+    const hoveredControlFill = dark.find(([label]) => label === 'a hovered control fill')![1];
+
+    return [
+      [
+        '--color-fg-muted on --color-bg-muted-hover, light',
+        contrast(
+          tokenValue('--color-fg-muted', TOKENS),
+          tokenValue('--color-bg-muted-hover', TOKENS),
+        ).toFixed(2),
+      ],
+      [
+        `--ring-accent on ${worstEventFill[0]}, dark — the tightest .colored event fill`,
+        worstEventFill[1].toFixed(2),
+      ],
+      [
+        '--ring-danger on --lightbox-control-bg-hover over the scrim, dark',
+        contrast(tokenValue('--ring-danger', DARK), hoveredControlFill).toFixed(2),
+      ],
+      [
+        'Lightbox tone/surface pairs under 1.4.11 in light',
+        `${belowInLight.length} of the ${tones.length * light.length}`,
+      ],
+    ];
+  };
+
+  it.each(figures().map((f) => [f[0], f[1]]))('%s = %s', (_label, stated) => {
+    // A boolean, not `toContain`. The failure diff for a miss on a 3900-line
+    // Markdown file is the whole file, which buries the one line that says
+    // which figure moved.
+    expect(AGENTS.includes(stated), `AGENTS.md no longer states ${stated}`).toBe(true);
+  });
+
+  it('states no ratio or count these figures do not produce', () => {
+    const produced = new Set(figures().map(([, stated]) => stated));
+    const claims = [
+      ...[...AGENTS.matchAll(/\b(\d+\.\d+):1\b/g)].map((m) => m[1]!),
+      ...[...AGENTS.matchAll(/\b(\d+ of the \d+)\b/g)].map((m) => m[1]!),
+    ];
+    expect(
+      claims.filter((c) => !produced.has(c)),
+      'AGENTS.md states a measured figure nothing recomputes — add it to FIGURES with the pair it measures, or drop the number',
+    ).toEqual([]);
+  });
+});
 
 describe('presence dots stay distinguishable from each other', () => {
   // Every dot is aria-hidden with no text alternative (Avatar.tsx), and status

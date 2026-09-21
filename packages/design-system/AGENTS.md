@@ -3708,16 +3708,29 @@ Two things follow from the mechanism:
   wrote it.
 - **Inset gives the gap up.** An outset ring is bounded on both sides by the
   backdrop, which is what the contrast gate measures. An inset one touches the
-  element's OWN fill, and nothing measures that side — so check it yourself
-  against the fills the component can take. Today's worst case is a `.colored`
-  Calendar event at 3.95:1 in dark, comfortably over 1.4.11's 3:1, but a darker
-  fill would erode it silently (#512).
+  element's OWN fill, so check it against the fills the component can take. The
+  only fills a consumer picks freely are the palette ones a `.colored` Calendar
+  event takes, and the worst of those thirty is `--ring-accent` on
+  `--color-palette-olive-bg` at 3.95:1 in dark — comfortably over 1.4.11's 3:1.
+  `contrast.test.ts` now recomputes that figure AND holds a 3:1 floor under
+  every palette fill, so a darker one reddens CI instead of eroding it silently
+  (#512, #518). No such floor exists for a component-specific fill an inset
+  ring lands on: that side is still yours to check.
 
 `--ring-on-scrim` is for chrome painted on a surface that is dark in **both**
 themes (Lightbox), because the surface does not follow the theme and the tone
-rings do. Mostly a light-theme failure — 10 of the 12 tone/surface pairs there
-are under 1.4.11's 3:1 — but not exclusively: `--ring-danger` on a hovered
-control fill reads 2.95:1 in dark.
+rings do. The twelve pairs are `--ring-accent` / `--ring-danger` /
+`--ring-success` against the four surfaces Lightbox chrome sits on — the scrim
+itself, and `--lightbox-thumb-strip-bg` / `--lightbox-control-bg` /
+`--lightbox-control-bg-hover` composited over it. Mostly a light-theme failure
+— 10 of the 12 are under 1.4.11's 3:1 there — but not exclusively:
+`--ring-danger` on `--lightbox-control-bg-hover` reads 2.95:1 in dark.
+
+Every figure in this section is recomputed by `contrast.test.ts`, which also
+refuses any `N.NN:1` or `N of the M` written anywhere in this file that it
+cannot reproduce from the generated tokens. What it cannot check is a
+measurement phrased without one of those two shapes — read its docblock before
+adding a number here.
 
 ---
 
