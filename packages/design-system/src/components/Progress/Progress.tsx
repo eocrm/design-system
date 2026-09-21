@@ -156,7 +156,7 @@ export const Progress = forwardRef<HTMLDivElement, ProgressProps>(function Progr
   // in both progress components (#503).
   const t = useTranslation();
   const ariaLabel = rest['aria-label'];
-  const valuetext = indeterminate ? (ariaLabel ?? t('progress.indeterminate')) : undefined;
+  const valuetext = indeterminate ? ariaLabel || t('progress.indeterminate') : undefined;
 
   // {...rest} last so consumer overrides win (Pattern A).
   return (

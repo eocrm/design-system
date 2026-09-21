@@ -1864,3 +1864,10 @@ describe('toolbar="auto" — a popover must not take the bar down with it', () =
     },
   );
 });
+
+describe('RichTextEditor — empty aria-label', () => {
+  it('falls back to the default name when aria-label is an empty string', () => {
+    renderEditor(<RichTextEditor value={emptyDoc()} onChange={() => {}} aria-label="" />);
+    expect(screen.getByRole('textbox')).toHaveAccessibleName('Rich text editor');
+  });
+});

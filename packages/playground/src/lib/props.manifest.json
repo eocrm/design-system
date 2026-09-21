@@ -311,7 +311,7 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Visible label for the `<nav>` element. Defaults to the i18n value at\n`breadcrumb.ariaLabel` (`'Breadcrumb'` in English). Override when\nmultiple breadcrumb instances coexist on the same page."
+          "description": "Visible label for the `<nav>` element. Defaults to the i18n value at\n`breadcrumb.ariaLabel` (`'Breadcrumb'` in English) when omitted OR empty —\nan empty string is not an explicit name, so it takes the default too.\nOverride when multiple breadcrumb instances coexist on the same page."
         },
         {
           "name": "className",
@@ -816,14 +816,14 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Accessible name for the focusable trigger. Forwarded to the default or custom trigger,\nnot the root wrapper. Ignored when `aria-labelledby` is provided. An explicit name on\na custom trigger child takes precedence."
+          "description": "Accessible name for the focusable trigger. Forwarded to the default or custom trigger,\nnot the root wrapper. Ignored when `aria-labelledby` is provided. An explicit name on\na custom trigger child takes precedence — but an EMPTY one on that child does not, since\nan empty string names nothing."
         },
         {
           "name": "triggerLabel",
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Accessible label for the default trigger. Defaults to the i18n value at\n`colorPicker.triggerLabel` (`'Pick a color'` in English). Ignored when\na custom trigger is provided via `<ColorPicker.Trigger>`."
+          "description": "Accessible label for the default trigger. Defaults to the i18n value at\n`colorPicker.triggerLabel` (`'Pick a color'` in English) when omitted OR\nempty — an empty string is not an explicit name, so it takes the default\ntoo. Ignored when\na custom trigger is provided via `<ColorPicker.Trigger>`."
         },
         {
           "name": "aria-labelledby",
@@ -1080,7 +1080,7 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Accessible name for the wrapper `<nav>`. Defaults to the i18n value at\n`pagination.ariaLabel` (`'Pagination'` in English)."
+          "description": "Accessible name for the wrapper `<nav>`. Defaults to the i18n value at\n`pagination.ariaLabel` (`'Pagination'` in English) when omitted OR empty —\nan empty string is not an explicit name, so it takes the default too."
         }
       ]
     },
@@ -2075,7 +2075,7 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Override the dismiss button's `aria-label`. Defaults to the i18n value\nat `filterChip.dismiss` (`'Remove filter'` in English). Pass a\ncontextual label (e.g., `'Remove Event: auth.* filter'`) when the\nchip's filter category isn't obvious from the surrounding\nscreen-reader context."
+          "description": "Override the dismiss button's `aria-label`. Defaults to the i18n value\nat `filterChip.dismiss` (`'Remove filter'` in English) when omitted OR\nempty — an empty string is not an explicit name, so it takes the default\ntoo. Pass a\ncontextual label (e.g., `'Remove Event: auth.* filter'`) when the\nchip's filter category isn't obvious from the surrounding\nscreen-reader context."
         },
         {
           "name": "onActivate",
@@ -2452,7 +2452,7 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Accessible picker purpose. It names the trigger with the selected icon appended and names\nthe dialog plus radiogroup without that suffix. Defaults to the localized\n`iconPicker.triggerLabel` value."
+          "description": "Accessible picker purpose. It names the trigger with the selected icon appended and names\nthe dialog plus radiogroup without that suffix. Defaults to the localized\n`iconPicker.triggerLabel` value when omitted OR empty — an empty string is\nnot an explicit name, so it takes the default too."
         },
         {
           "name": "aria-labelledby",
@@ -2586,7 +2586,7 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Accessible label for the interactive trigger — action-oriented, e.g.\n`\"Preview report.png\"`. Defaults to `alt`. Only used when interactive. Note:\na native `aria-label` passed via `{...rest}` lands on the `<img>`, not the\ntrigger button — use `ariaLabel` to name the trigger."
+          "description": "Accessible label for the interactive trigger — action-oriented, e.g.\n`\"Preview report.png\"`. Defaults to `alt` when omitted OR empty — an empty\nstring is not an explicit name, so it takes the default too. Only used when\ninteractive. Note:\na native `aria-label` passed via `{...rest}` lands on the `<img>`, not the\ntrigger button — use `ariaLabel` to name the trigger."
         }
       ]
     },
@@ -2739,7 +2739,7 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Accessible label for the whole shortcut, read as a single phrase by\nscreen readers. Defaults to `keys.join(' + ')` (e.g. `'⌘ + K'`).\nOverride when the raw keys are unintuitive — e.g. `keys={['⌘', 'K']}`\nwith `aria-label=\"Open command palette\"`."
+          "description": "Accessible label for the whole shortcut, read as a single phrase by\nscreen readers. Defaults to `keys.join(' + ')` (e.g. `'⌘ + K'`) when\nomitted OR empty — an empty string is not an explicit name, so it takes\nthe default too. Override when the raw keys are unintuitive — e.g. `keys={['⌘', 'K']}`\nwith `aria-label=\"Open command palette\"`."
         }
       ]
     },
@@ -2806,7 +2806,7 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Accessible label for the dialog. Defaults to the i18n \"Image gallery\"."
+          "description": "Accessible label for the dialog. Defaults to the i18n \"Image gallery\" when\nomitted OR empty — an empty string is not an explicit name, so it takes\nthe default too."
         }
       ]
     },
@@ -3014,7 +3014,7 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Accessible label (defaults to the i18n `liquidEditor.editorLabel`)."
+          "description": "Accessible label (defaults to the i18n `liquidEditor.editorLabel` when\nomitted OR empty — an empty string is not an explicit name)."
         },
         {
           "name": "aria-labelledby",
@@ -3402,7 +3402,7 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Accessible name for the group. Defaults to the localized\n`otpInput.groupLabel` (\"Verification code\") so a standalone OtpInput is\nnever an unnamed group."
+          "description": "Accessible name for the group. Defaults to the localized\n`otpInput.groupLabel` (\"Verification code\") when omitted OR empty — an\nempty string is not an explicit name — so a standalone OtpInput is never\nan unnamed group."
         },
         {
           "name": "aria-labelledby",
@@ -3498,7 +3498,7 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Accessible name for the `<nav>` wrapper. Defaults to `'Pagination'`.\nOverride when multiple paginations appear on the same page (e.g.,\n`'Top pagination'` / `'Bottom pagination'`)."
+          "description": "Accessible name for the `<nav>` wrapper. Defaults to `'Pagination'` when\nomitted OR empty — an empty string is not an explicit name, so it takes\nthe default too. Override when multiple paginations appear on the same page (e.g.,\n`'Top pagination'` / `'Bottom pagination'`)."
         }
       ]
     },
@@ -3912,7 +3912,7 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Accessible label for the wrapping `<nav>` landmark. Defaults to\n`t('rail.navigation')` so screen readers always announce a name for the\nregion. Override when the page has multiple navigation rails."
+          "description": "Accessible label for the wrapping `<nav>` landmark. Defaults to\n`t('rail.navigation')` when omitted OR empty — an empty string is not an\nexplicit name — so screen readers always announce a name for the region.\nOverride when the page has multiple navigation rails."
         },
         {
           "name": "children",
@@ -4440,7 +4440,7 @@
           "type": "readonly [string, string]",
           "required": false,
           "default": "",
-          "description": "Explicit accessible names for the minimum and maximum thumbs in range\nmode. These win over a root `aria-label` or `aria-labelledby`; use them\nwhen the thumbs need domain-specific names such as `['Start date', 'End\ndate']`. When omitted, a root label is suffixed with the localized\n“minimum” or “maximum” name."
+          "description": "Explicit accessible names for the minimum and maximum thumbs in range\nmode. These win over a root `aria-label` or `aria-labelledby`; use them\nwhen the thumbs need domain-specific names such as `['Start date', 'End\ndate']`. When an entry is omitted OR empty — an empty string is not an\nexplicit name — that thumb falls back to a root label suffixed with the\nlocalized “minimum” or “maximum” name. The two entries are resolved\nindependently, so `['', 'End date']` names only the maximum thumb."
         },
         {
           "name": "size",
@@ -5282,7 +5282,7 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Accessible label for the bar's landmark. Defaults to `t('topBar.label')`\nso screen readers always announce a name for the region. Override when a\npage has multiple bars to disambiguate them."
+          "description": "Accessible label for the bar's landmark. Defaults to `t('topBar.label')`\nwhen omitted OR empty — an empty string is not an explicit name — so screen\nreaders always announce a name for the region. Override when a page has\nmultiple bars to disambiguate them."
         },
         {
           "name": "children",

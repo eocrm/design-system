@@ -76,3 +76,13 @@ describe('Kbd', () => {
     expect(container.firstChild?.nodeName).toBe('SPAN');
   });
 });
+
+describe('Kbd — empty aria-label', () => {
+  // Every child is aria-hidden — the <kbd> elements as well as the separators
+  // — so an empty aria-label leaves the span with no name at all, not a
+  // squashed "⌘K" from content.
+  it('falls back to keys.join(" + ") when aria-label is an empty string', () => {
+    render(<Kbd keys={['⌘', 'K']} aria-label="" />);
+    expect(screen.getByLabelText('⌘ + K')).toBeInTheDocument();
+  });
+});

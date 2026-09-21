@@ -94,8 +94,10 @@ export interface SliderProps extends Omit<
    * Explicit accessible names for the minimum and maximum thumbs in range
    * mode. These win over a root `aria-label` or `aria-labelledby`; use them
    * when the thumbs need domain-specific names such as `['Start date', 'End
-   * date']`. When omitted, a root label is suffixed with the localized
-   * “minimum” or “maximum” name.
+   * date']`. When an entry is omitted OR empty — an empty string is not an
+   * explicit name — that thumb falls back to a root label suffixed with the
+   * localized “minimum” or “maximum” name. The two entries are resolved
+   * independently, so `['', 'End date']` names only the maximum thumb.
    */
   thumbLabels?: readonly [string, string];
   /**
@@ -262,7 +264,18 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
   const range = max - min;
   const thumbSuffixes = [t('slider.minimum'), t('slider.maximum')] as const;
   const thumbSuffixIds = [`${reactId}-minimum`, `${reactId}-maximum`] as const;
-  const rangeUsesRootLabelledBy = isRange && !thumbLabels && Boolean(ariaLabelledBy);
+  // Per INDEX, not per array. `thumbLabels={[min ?? '', max ?? '']}` is ordinary
+  // consumer code, and an empty entry names that thumb no better than a missing
+  // tuple does — so it has to fall back down the SAME two paths a missing tuple
+  // takes, aria-labelledby included. Gating on `thumbLabels`'s mere existence
+  // left a <Field>-wrapped range thumb with neither attribute set.
+  const ownThumbLabel = (index: number) => thumbLabels?.[index] || undefined;
+  const thumbUsesRootLabelledBy = (index: number) =>
+    isRange && !ownThumbLabel(index) && Boolean(ariaLabelledBy);
+  // The hidden suffix nodes are shared, so render them if ANY thumb points at one.
+  const rangeUsesRootLabelledBy = thumbValues.some((_unused, index) =>
+    thumbUsesRootLabelledBy(index),
+  );
 
   // Latest value ref — updated on every render. Read synchronously inside
   // event handlers (e.g. onChangeEnd at pointerup) so they see the post-drag
@@ -606,19 +619,17 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
             // tuple labels take precedence; otherwise derive from the root's
             // aria-label + localized minimum/maximum suffix.
             isRange
-              ? (thumbLabels?.[index] ??
-                (rangeUsesRootLabelledBy || !ariaLabel
+              ? ownThumbLabel(index) ||
+                (thumbUsesRootLabelledBy(index) || !ariaLabel
                   ? undefined
-                  : `${ariaLabel}, ${thumbSuffixes[index]}`))
+                  : `${ariaLabel}, ${thumbSuffixes[index]}`)
               : ariaLabel
           }
           aria-labelledby={
             isRange
-              ? thumbLabels
-                ? undefined
-                : rangeUsesRootLabelledBy
-                  ? `${ariaLabelledBy} ${thumbSuffixIds[index]}`
-                  : undefined
+              ? thumbUsesRootLabelledBy(index)
+                ? `${ariaLabelledBy} ${thumbSuffixIds[index]}`
+                : undefined
               : ariaLabelledBy
           }
           aria-describedby={

@@ -12,7 +12,8 @@ export interface RailCollapseToggleProps extends Omit<
 > {
   /**
    * Override the auto-generated aria-label (defaults to `t('rail.expand')` /
-   * `t('rail.collapse')` depending on the current state).
+   * `t('rail.collapse')` depending on the current state, when omitted OR
+   * empty — an empty string is not an explicit name).
    */
   'aria-label'?: string;
 }
@@ -49,7 +50,7 @@ export const RailCollapseToggle = forwardRef<HTMLButtonElement, RailCollapseTogg
         variant="ghost"
         size="sm"
         iconOnly
-        aria-label={ariaLabel ?? (collapsed ? t('rail.expand') : t('rail.collapse'))}
+        aria-label={ariaLabel || (collapsed ? t('rail.expand') : t('rail.collapse'))}
         onClick={(e) => {
           onClick?.(e);
           if (!e.defaultPrevented) setCollapsed((prev) => !prev);

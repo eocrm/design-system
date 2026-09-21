@@ -102,7 +102,11 @@ export const TopBarSearch = forwardRef<HTMLInputElement, TopBarSearchProps>(func
         ref={ref}
         type="search"
         placeholder={placeholder}
-        aria-label={ariaLabel ?? placeholder ?? t('topBar.search')}
+        // `||` on BOTH links, not `??`: an empty string is never a meaningful
+        // explicit name — it contributes nothing and lets the computation fall
+        // through — so an empty `aria-label` must reach `placeholder`, and an
+        // empty `placeholder` must reach the translation.
+        aria-label={ariaLabel || placeholder || t('topBar.search')}
         className={styles.searchInput}
         // Password managers (1Password, Bitwarden) and browser autofill
         // shouldn't try to fill a free-text search box. The data attrs

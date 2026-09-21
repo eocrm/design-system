@@ -533,3 +533,10 @@ it('disables an empty picker and tolerates an unmatched value', () => {
   rerender(<IconPicker value="missing" options={options} onChange={() => {}} />);
   expect(screen.getByRole('button', { name: 'Pick icon' })).toBeEnabled();
 });
+
+describe('IconPicker — empty aria-label', () => {
+  it('falls back to the default purpose when aria-label is an empty string', () => {
+    render(<IconPicker value="flame" options={options} onChange={() => {}} aria-label="" />);
+    expect(screen.getByRole('button', { name: 'Pick icon: Flame' })).toBeInTheDocument();
+  });
+});

@@ -103,12 +103,15 @@ export interface ColorPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, '
   /**
    * Accessible name for the focusable trigger. Forwarded to the default or custom trigger,
    * not the root wrapper. Ignored when `aria-labelledby` is provided. An explicit name on
-   * a custom trigger child takes precedence.
+   * a custom trigger child takes precedence — but an EMPTY one on that child does not, since
+   * an empty string names nothing.
    */
   'aria-label'?: string;
   /**
    * Accessible label for the default trigger. Defaults to the i18n value at
-   * `colorPicker.triggerLabel` (`'Pick a color'` in English). Ignored when
+   * `colorPicker.triggerLabel` (`'Pick a color'` in English) when omitted OR
+   * empty — an empty string is not an explicit name, so it takes the default
+   * too. Ignored when
    * a custom trigger is provided via `<ColorPicker.Trigger>`.
    */
   triggerLabel?: string;
@@ -173,7 +176,7 @@ const DefaultTrigger = forwardRef<HTMLButtonElement, DefaultTriggerProps>(functi
       aria-label={
         labelledBy
           ? undefined
-          : (ariaLabel ?? t('colorPicker.triggerAccessibleLabel', { label, value: display }))
+          : ariaLabel || t('colorPicker.triggerAccessibleLabel', { label, value: display })
       }
       aria-labelledby={labelledBy}
       aria-describedby={describedBy}
@@ -268,7 +271,7 @@ const ColorPickerRoot = forwardRef<HTMLDivElement, ColorPickerProps>(function Co
   const t = useTranslation();
   const [open, setOpen] = useState(false);
   const { side, align } = PLACEMENT_MAP[popoverPlacement];
-  const resolvedTriggerLabel = triggerLabel ?? t('colorPicker.triggerLabel');
+  const resolvedTriggerLabel = triggerLabel || t('colorPicker.triggerLabel');
 
   // Find a <ColorPicker.Trigger> marker child if present; extract its
   // children to use as the popover trigger element. Other children types
@@ -284,10 +287,13 @@ const ColorPickerRoot = forwardRef<HTMLDivElement, ColorPickerProps>(function Co
     const childProps = customChild.props;
     const childAriaLabel = childProps['aria-label'];
     const childAriaLabelledBy = childProps['aria-labelledby'];
-    const resolvedLabelledBy =
-      childAriaLabelledBy ?? (childAriaLabel === undefined ? ariaLabelledBy : undefined);
-    const resolvedLabel =
-      childAriaLabel ?? (resolvedLabelledBy === undefined ? ariaLabel : undefined);
+    // Truthiness, not `!== undefined`: `aria-label={row.name ?? ''}` is
+    // ordinary consumer code, and an empty aria-label does not name the child
+    // — it contributes nothing and drops the computation through. So an empty
+    // one must neither win over the picker's own label nor suppress its
+    // aria-labelledby.
+    const resolvedLabelledBy = childAriaLabelledBy || (childAriaLabel ? undefined : ariaLabelledBy);
+    const resolvedLabel = childAriaLabel || (resolvedLabelledBy ? undefined : ariaLabel);
     const resolvedDescribedBy = childProps['aria-describedby'] ?? ariaDescribedBy;
     const resolvedInvalid = childProps['aria-invalid'] ?? (invalid ? true : ariaInvalid);
 

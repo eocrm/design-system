@@ -192,3 +192,12 @@ describe('Pagination', () => {
     }
   });
 });
+
+describe('Pagination — empty aria-label', () => {
+  it('falls back to the default nav name when aria-label is an empty string', () => {
+    const { container } = render(
+      <Pagination currentPage={1} pageCount={5} onPageChange={() => {}} aria-label="" />,
+    );
+    expect(container.querySelector('nav')).toHaveAttribute('aria-label', 'Pagination');
+  });
+});

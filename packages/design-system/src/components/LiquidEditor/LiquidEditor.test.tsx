@@ -459,3 +459,10 @@ describe('footer caret description (#304)', () => {
     expect(footer.className).toMatch(/footer/);
   });
 });
+
+describe('LiquidEditor — empty aria-label', () => {
+  it('falls back to the default name when aria-label is an empty string', () => {
+    renderEditor(<LiquidEditor value="" onChange={() => {}} aria-label="" />);
+    expect(screen.getByRole('combobox')).toHaveAccessibleName('Liquid template');
+  });
+});

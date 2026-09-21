@@ -966,6 +966,16 @@ describe('<DataTable>', () => {
         cell: () => 'C',
         enableReorder: false,
       },
+      {
+        id: 'empty-label-id',
+        header: 'Empty label header',
+        // `visibilityLabel={col.title ?? ''}` is ordinary consumer code. An
+        // empty one is not an explicit name, so it must not discard the string
+        // header below it.
+        visibilityLabel: '',
+        cell: () => 'D',
+        enableReorder: false,
+      },
     ];
     function ResizeNamesHarness() {
       const instance = useDataTable<Row>({
@@ -1005,6 +1015,11 @@ describe('<DataTable>', () => {
     // the control does without inventing a name for the column.
     expect(screen.getByRole('separator', { name: 'Resize this column' })).toBeInTheDocument();
     expect(screen.queryByRole('separator', { name: /id-fallback/ })).toBeNull();
+    // An empty visibilityLabel falls through to the string header rather than
+    // discarding it for the generic copy.
+    expect(
+      screen.getByRole('separator', { name: 'Resize Empty label header column' }),
+    ).toBeInTheDocument();
   });
 
   it('exposes stable responsive hooks for wide-table drag and resize controls', () => {

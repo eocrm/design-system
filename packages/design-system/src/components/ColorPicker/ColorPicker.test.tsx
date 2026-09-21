@@ -640,3 +640,32 @@ describe('round-trip', () => {
     }
   });
 });
+
+describe('ColorPicker — empty label strings', () => {
+  it('falls back to the generated trigger name when aria-label is an empty string', () => {
+    render(<ColorPicker value="#ff0000" onChange={() => {}} aria-label="" />);
+    expect(
+      screen.getByRole('button', { name: 'Pick a color, current value #FF0000' }),
+    ).toBeInTheDocument();
+  });
+
+  it('falls back to the default trigger label when triggerLabel is an empty string', () => {
+    render(<ColorPicker value="#ff0000" onChange={() => {}} triggerLabel="" />);
+    expect(
+      screen.getByRole('button', { name: 'Pick a color, current value #FF0000' }),
+    ).toBeInTheDocument();
+  });
+
+  it("a custom trigger child's empty aria-label falls through to the picker's", () => {
+    render(
+      <ColorPicker value="#ff0000" onChange={() => {}} aria-label="Brand color">
+        <ColorPicker.Trigger>
+          <button type="button" aria-label="">
+            <span aria-hidden="true">◆</span>
+          </button>
+        </ColorPicker.Trigger>
+      </ColorPicker>,
+    );
+    expect(screen.getByRole('button', { name: 'Brand color' })).toBeInTheDocument();
+  });
+});

@@ -307,3 +307,14 @@ it('without onActivate there is NO body button (backward compat)', () => {
   expect(buttons).toHaveLength(1);
   expect(buttons[0]).toHaveAttribute('aria-label', 'Remove filter');
 });
+
+it('dismiss button falls back to the default name when dismissLabel is an empty string', () => {
+  render(
+    <FilterChip onDismiss={() => {}} dismissLabel="">
+      <FilterChip.Label>Event</FilterChip.Label>
+      <FilterChip.Value>auth.*</FilterChip.Value>
+    </FilterChip>,
+  );
+  // The X glyph is aria-hidden, so an empty aria-label leaves no name at all.
+  expect(screen.getByRole('button', { name: 'Remove filter' })).toBeInTheDocument();
+});

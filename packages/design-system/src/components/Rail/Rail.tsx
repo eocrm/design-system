@@ -131,8 +131,9 @@ export interface RailProps extends Omit<HTMLAttributes<HTMLElement>, 'aria-label
   collapseBelow?: CollapseBreakpoint;
   /**
    * Accessible label for the wrapping `<nav>` landmark. Defaults to
-   * `t('rail.navigation')` so screen readers always announce a name for the
-   * region. Override when the page has multiple navigation rails.
+   * `t('rail.navigation')` when omitted OR empty — an empty string is not an
+   * explicit name — so screen readers always announce a name for the region.
+   * Override when the page has multiple navigation rails.
    */
   'aria-label'?: string;
   /**
@@ -343,7 +344,7 @@ const RailRoot = forwardRef<HTMLElement, RailProps>(function Rail(
     <RailContext.Provider value={ctx}>
       <nav
         ref={ref}
-        aria-label={ariaLabel ?? t('rail.navigation')}
+        aria-label={ariaLabel || t('rail.navigation')}
         data-collapsed={collapsed ? '' : undefined}
         className={clsx(styles.rail, collapsed && styles.collapsed, className)}
         // {...props} last so consumer overrides win (Pattern A).

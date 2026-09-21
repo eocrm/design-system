@@ -663,7 +663,7 @@ export const SortableHandle = forwardRef<HTMLButtonElement, SortableHandleProps>
       <button
         ref={setRef}
         type="button"
-        aria-label={ariaLabel ?? t('drag.handleLabel')}
+        aria-label={ariaLabel || t('drag.handleLabel')}
         className={clsx(styles.handle, className)}
         {...rest}
         // {...listeners} + {...attributes} AFTER {...rest} so consumer spread

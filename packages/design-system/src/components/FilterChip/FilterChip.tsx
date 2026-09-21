@@ -23,7 +23,9 @@ export interface FilterChipProps extends Omit<HTMLAttributes<HTMLDivElement>, 'r
 
   /**
    * Override the dismiss button's `aria-label`. Defaults to the i18n value
-   * at `filterChip.dismiss` (`'Remove filter'` in English). Pass a
+   * at `filterChip.dismiss` (`'Remove filter'` in English) when omitted OR
+   * empty — an empty string is not an explicit name, so it takes the default
+   * too. Pass a
    * contextual label (e.g., `'Remove Event: auth.* filter'`) when the
    * chip's filter category isn't obvious from the surrounding
    * screen-reader context.
@@ -204,7 +206,7 @@ const FilterChipRoot = forwardRef<HTMLDivElement, FilterChipProps>(function Filt
             e.stopPropagation();
             onDismiss();
           }}
-          aria-label={dismissLabel ?? t('filterChip.dismiss')}
+          aria-label={dismissLabel || t('filterChip.dismiss')}
         >
           <X size={12} aria-hidden="true" />
         </button>

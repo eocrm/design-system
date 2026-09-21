@@ -167,3 +167,10 @@ describe('indeterminate aria-valuetext goes through the provider (#503)', () => 
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuetext', 'Импорт');
   });
 });
+
+describe('Progress — empty aria-label', () => {
+  it('indeterminate aria-valuetext falls back to the default when aria-label is empty', () => {
+    const { container } = render(<Progress aria-label="" />);
+    expect(container.firstElementChild).toHaveAttribute('aria-valuetext', 'Loading…');
+  });
+});

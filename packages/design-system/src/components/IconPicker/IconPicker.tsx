@@ -149,7 +149,8 @@ export interface IconPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, 'o
   /**
    * Accessible picker purpose. It names the trigger with the selected icon appended and names
    * the dialog plus radiogroup without that suffix. Defaults to the localized
-   * `iconPicker.triggerLabel` value.
+   * `iconPicker.triggerLabel` value when omitted OR empty — an empty string is
+   * not an explicit name, so it takes the default too.
    */
   'aria-label'?: string;
   /**
@@ -238,7 +239,7 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
   const unavailable = disabled || options.length === 0;
   const unavailableRef = useRef(unavailable);
   unavailableRef.current = unavailable;
-  const purpose = ariaLabel ?? t('iconPicker.triggerLabel');
+  const purpose = ariaLabel || t('iconPicker.triggerLabel');
   const triggerLabel = selected ? `${purpose}: ${selected.label}` : purpose;
   const triggerLabelledBy =
     ariaLabelledBy && selected ? `${ariaLabelledBy} ${selectedLabelId}` : ariaLabelledBy;

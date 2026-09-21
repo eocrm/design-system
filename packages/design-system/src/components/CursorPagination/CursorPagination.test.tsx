@@ -115,3 +115,18 @@ describe('CursorPagination', () => {
     expect(container.querySelector('nav')).toHaveAttribute('aria-label', 'Feed pagination');
   });
 });
+
+describe('CursorPagination — empty aria-label', () => {
+  it('falls back to the default nav name when aria-label is an empty string', () => {
+    const { container } = render(
+      <CursorPagination
+        hasPrevious
+        hasNext
+        onPrevious={() => {}}
+        onNext={() => {}}
+        aria-label=""
+      />,
+    );
+    expect(container.querySelector('nav')).toHaveAttribute('aria-label', 'Pagination');
+  });
+});

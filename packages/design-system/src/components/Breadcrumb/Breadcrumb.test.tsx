@@ -186,3 +186,19 @@ describe('<Breadcrumb>', () => {
     expect(node).toHaveAttribute('aria-current', 'page');
   });
 });
+
+// `ariaLabel={crumbs.title ?? ''}` is ordinary consumer code. An empty
+// aria-label does not remove the name — it drops the computation through, and
+// a <nav> has no name-from-content, so the landmark ends up unnamed. `||` is
+// what stops that; `??` would not.
+describe('<Breadcrumb> — empty ariaLabel', () => {
+  it('falls back to the default name when ariaLabel is an empty string', () => {
+    render(
+      <Breadcrumb ariaLabel="">
+        <Breadcrumb.Item href="/a">A</Breadcrumb.Item>
+        <Breadcrumb.Item>B</Breadcrumb.Item>
+      </Breadcrumb>,
+    );
+    expect(screen.getByRole('navigation', { name: 'Breadcrumb' })).toBeInTheDocument();
+  });
+});

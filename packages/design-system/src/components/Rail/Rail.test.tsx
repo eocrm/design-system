@@ -1399,3 +1399,29 @@ describe('Rail — linkable Group (#377)', () => {
     expect(document.body).toHaveFocus();
   });
 });
+
+describe('Rail — empty aria-label', () => {
+  it('falls back to the default nav name when aria-label is an empty string', () => {
+    render(
+      <Rail aria-label="">
+        <Rail.Section title="Main">
+          <Rail.Item href="/">Dashboard</Rail.Item>
+        </Rail.Section>
+      </Rail>,
+    );
+    expect(screen.getByRole('navigation', { name: 'Main navigation' })).toBeInTheDocument();
+  });
+
+  it('CollapseToggle falls back to the default name when aria-label is an empty string', () => {
+    render(
+      <Rail aria-label="Nav">
+        <Rail.Section title="Main">
+          <Rail.Item href="/">Dashboard</Rail.Item>
+        </Rail.Section>
+        <Rail.CollapseToggle aria-label="" />
+      </Rail>,
+    );
+    // The icon is aria-hidden, so an empty aria-label leaves no name at all.
+    expect(screen.getByRole('button', { name: 'Collapse navigation' })).toBeInTheDocument();
+  });
+});

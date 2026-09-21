@@ -52,8 +52,9 @@ export interface PaginationProps extends Omit<HTMLAttributes<HTMLElement>, 'onCh
   disabled?: boolean;
 
   /**
-   * Accessible name for the `<nav>` wrapper. Defaults to `'Pagination'`.
-   * Override when multiple paginations appear on the same page (e.g.,
+   * Accessible name for the `<nav>` wrapper. Defaults to `'Pagination'` when
+   * omitted OR empty — an empty string is not an explicit name, so it takes
+   * the default too. Override when multiple paginations appear on the same page (e.g.,
    * `'Top pagination'` / `'Bottom pagination'`).
    */
   'aria-label'?: string;
@@ -147,7 +148,7 @@ export const Pagination = forwardRef<HTMLElement, PaginationProps>(function Pagi
   return (
     <nav
       ref={ref}
-      aria-label={ariaLabel ?? t('pagination.ariaLabel')}
+      aria-label={ariaLabel || t('pagination.ariaLabel')}
       className={clsx(styles.pagination, styles[`size-${size}`], className)}
       {...props}
     >

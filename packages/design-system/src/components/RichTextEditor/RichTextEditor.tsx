@@ -1446,7 +1446,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         aria-controls={mention.open ? mention.listboxId : undefined}
         aria-activedescendant={mention.open ? mention.activeOptionId : undefined}
         aria-label={
-          rest['aria-label'] ??
+          rest['aria-label'] ||
           (rest['aria-labelledby'] ? undefined : t('richTextEditor.editorLabel'))
         }
         data-empty={isEmptyDoc(value) ? '' : undefined}

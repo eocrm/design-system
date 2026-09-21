@@ -36,7 +36,7 @@ in `;`-chained gate commands has now shipped twice on this repo.
 
 ### 2. Every component has a playground demo
 
-When adding `src/components/<Name>/`, the same change must add `packages/playground/src/pages/demo/<Name>Demo.tsx` and wire it into the playground's nav. Components without demos are invisible to the team and accumulate inconsistency.
+When adding `src/components/<Name>/`, the same change must add `packages/playground/src/pages/components/<Name>Demo.tsx` and wire it into the playground's nav (see `packages/playground/CLAUDE.md` Hard rule 4 for the four files). Components without demos are invisible to the team and accumulate inconsistency.
 
 ### 3. No raw values in `.module.scss`
 

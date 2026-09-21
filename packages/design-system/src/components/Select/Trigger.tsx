@@ -862,7 +862,7 @@ function ChipsButtonTrigger(props: TriggerProps) {
   // readers hear the full list even when chips overflow visually.
   const labelForAria = selectedOptions.map((o) => o.label).join(', ');
   const computedAriaLabel =
-    props['aria-label'] ??
+    props['aria-label'] ||
     (selectedOptions.length > 0
       ? t('select.selectedPrefix', { labels: labelForAria })
       : t('select.openSelect'));

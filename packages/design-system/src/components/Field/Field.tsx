@@ -186,12 +186,20 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
     } else {
       injected = {
         id: controlId,
-        'aria-describedby': childProps['aria-describedby'] ?? describedBy,
+        // `||`, not `??`, on both ARIA id references: `aria-labelledby={sectionId ?? ''}`
+        // is ordinary consumer code, and an empty id list references nothing — it
+        // contributes no name and lets the computation fall through, exactly like an
+        // empty `aria-label`. Treating it as an explicit override would suppress
+        // `labelId` and leave the control anonymous, which matters more here than
+        // anywhere else: Field names every input in the library through
+        // `aria-labelledby` rather than `<label for>`. `invalid` / `required` keep `??`
+        // — those are booleans, where `false` is a meaningful explicit value.
+        'aria-describedby': childProps['aria-describedby'] || describedBy,
         invalid: childProps.invalid ?? invalid,
         required: childProps.required ?? requiredBool,
       };
       if (label != null) {
-        injected['aria-labelledby'] = childProps['aria-labelledby'] ?? labelId;
+        injected['aria-labelledby'] = childProps['aria-labelledby'] || labelId;
       }
     }
     control = cloneElement(child, injected);

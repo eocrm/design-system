@@ -177,3 +177,10 @@ describe('indeterminate aria-valuetext goes through the provider (#503)', () => 
     expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuetext', 'Импорт');
   });
 });
+
+describe('CircularProgress — empty aria-label', () => {
+  it('indeterminate aria-valuetext falls back to the default when aria-label is empty', () => {
+    const { container } = render(<CircularProgress aria-label="" />);
+    expect(container.firstElementChild).toHaveAttribute('aria-valuetext', 'Loading…');
+  });
+});

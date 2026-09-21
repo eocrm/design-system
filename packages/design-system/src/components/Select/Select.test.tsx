@@ -1819,3 +1819,10 @@ describe('listbox state announces from one region, not three rows (#495)', () =>
     expect(screen.getByRole('listbox').contains(regions[0]!)).toBe(false);
   });
 });
+
+describe('Select — empty aria-label', () => {
+  it('chips trigger falls back to the default name when aria-label is an empty string', () => {
+    render(<Select multiple triggerDisplay="chips" options={STATUSES} aria-label="" />);
+    expect(screen.getByRole('combobox', { name: 'Open select' })).toBeInTheDocument();
+  });
+});
