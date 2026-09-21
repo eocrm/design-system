@@ -35,8 +35,11 @@ import { defineConfig, devices } from '@playwright/test';
  * - Every route's loaded-image state. All off-origin traffic is aborted, so the
  *   remote images on `/components/{image,image-crop,lightbox,masonry,media-tile}`
  *   are only ever swept broken — the error placeholder is what gets measured,
- *   never the loaded layout. The `Image` baseline entry exists only because of
- *   it.
+ *   never the loaded layout. That is a limit in one direction and the reason
+ *   this sweep works in the other: it is how #524's clipped Retry ring became
+ *   measurable at all, since the error state is invisible whenever the CDN is
+ *   healthy. Its baseline entry was deleted when #524 was fixed, so a return
+ *   of that clip is a fresh finding.
  * - Every viewport but one. `devices['Desktop Chrome']` pins 1280x720, and
  *   overflow clipping is a responsive defect by nature.
  *

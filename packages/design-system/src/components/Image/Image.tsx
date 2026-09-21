@@ -289,7 +289,10 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
               <ImageOff size={28} aria-hidden />
             )}
             <span className={styles.errorText}>{t('image.loadError')}</span>
-            <Button variant="secondary" size="sm" onClick={retry}>
+            {/* `.retry` exists only to carry the inset focus ring — see the
+                rule in Image.module.scss for why an outset one cannot survive
+                this wrapper. */}
+            <Button variant="secondary" size="sm" onClick={retry} className={styles.retry}>
               {t('image.retry')}
             </Button>
           </span>

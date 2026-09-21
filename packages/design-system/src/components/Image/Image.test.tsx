@@ -221,6 +221,19 @@ describe('Image', () => {
     expect(trigger.contains(retry)).toBe(false); // retry is a sibling, not nested
   });
 
+  it('keeps the .retry class on the Retry button (its inset focus ring hangs off it)', () => {
+    // `.error .retry:focus-visible` in Image.module.scss draws the ring INSET,
+    // because the wrapper's `overflow: hidden` clips the outset one's whole
+    // bottom band in a small square box (#524). Drop this className and the
+    // rule stops matching and the clip returns — silently, since jsdom paints
+    // nothing. The browser gate (tests/focus-ring-geometry.spec.ts) is what
+    // measures the ring; this only pins the hook it hangs off, so a break
+    // names the cause instead of a hashed Button class on an unrelated route.
+    const { container, getByRole } = render(<Image src={SRC} alt="A photo" />);
+    fireEvent.error(getImg(container));
+    expect(getByRole('button', { name: 'Retry' }).className).toMatch(/retry/);
+  });
+
   it('forwards ref to the <img> even when interactive', () => {
     const ref = createRef<HTMLImageElement>();
     const { container } = render(<Image src={SRC} alt="A photo" interactive ref={ref} />);

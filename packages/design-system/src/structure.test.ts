@@ -1140,11 +1140,14 @@ describe('a focus ring is not suppressed by a rule shared with :hover', () => {
  *
  * WHAT IT PROVABLY CANNOT CATCH — a static scan of SCSS text, so:
  *
- * - **A rule whose body contains a NESTED block is skipped entirely.** The
- *   brace scan's `[^{}]*` body cannot span into one, so `&:focus-visible { …
- *   @media … { … } }` is invisible. Shared with both sibling gates. No such
- *   rule exists in the tree today; if one is added, this gate goes quiet on it
- *   without saying so.
+ * - **A rule whose own body contains a NESTED block is skipped entirely.**
+ *   The brace scan's `[^{}]*` body cannot span into one. Shared with both
+ *   sibling gates, and live: `Button.module.scss`'s `.button { … }` is exactly
+ *   this shape, so an `outline` written in ITS body would not be seen. The
+ *   nested `&:focus-visible { … }` inside it is matched as a rule in its own
+ *   right and IS scanned, which is why the blind spot is narrower than it
+ *   sounds — but an `outline` in the outer rule alongside a nested block is
+ *   invisible, and the gate says nothing when it skips one.
  * - **A ring painted from a rule that does not name a focus pseudo.** A class
  *   toggled from JS (`.isFocused`), an attribute selector (`[data-focused]`),
  *   or a ring drawn by a parent whose selector spells focus some other way.
