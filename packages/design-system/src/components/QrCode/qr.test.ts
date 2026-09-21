@@ -1,5 +1,5 @@
 import qrcode from 'qrcode-generator';
-import { cssUrl, encodeQr, toByteString } from './qr';
+import { cssUrl, encodeQr, snapWidth, toByteString } from './qr';
 
 const URL_VALUE = 'https://example.com/invoice/42';
 
@@ -118,5 +118,48 @@ describe('encodeQr', () => {
       expect((punch * punch) / (count * count)).toBeLessThan(0.1);
       expect(punch % 2).toBe(1);
     }
+  });
+});
+
+describe('snapWidth', () => {
+  it('paints the largest exact multiple that fits', () => {
+    // 41 modules in a 320px box at dpr 1: 7px/module fits (287), 8 would not.
+    expect(snapWidth(320, 41, 1)).toBe(287);
+    expect(snapWidth(200, 41, 1)).toBe(164); // 4px/module
+  });
+
+  it('never paints wider than the box it was given', () => {
+    for (const available of [120, 199.5, 200, 321.7, 480]) {
+      for (const side of [21, 41, 57, 177]) {
+        const painted = snapWidth(available, side, 1);
+        if (painted !== null) expect(painted).toBeLessThanOrEqual(available);
+      }
+    }
+  });
+
+  it('counts DEVICE pixels, not CSS pixels', () => {
+    // At dpr 2 a 320px box holds 640 device px: 15px/module = 615 device px
+    // = 307.5 CSS px. A dpr-blind implementation would answer 287.
+    expect(snapWidth(320, 41, 2)).toBe(307.5);
+  });
+
+  it('gives every module a whole number of device pixels', () => {
+    for (const dpr of [1, 1.5, 2, 3]) {
+      for (const side of [21, 41, 57, 177]) {
+        const painted = snapWidth(320, side, dpr);
+        if (painted === null) continue;
+        const devicePxPerModule = (painted * dpr) / side;
+        expect(devicePxPerModule).toBe(Math.round(devicePxPerModule));
+      }
+    }
+  });
+
+  it('returns null when it cannot measure or cannot fit a single pixel', () => {
+    expect(snapWidth(0, 41, 1)).toBeNull(); // SSR / jsdom report 0
+    expect(snapWidth(40, 41, 1)).toBeNull(); // under 1 device px per module
+    expect(snapWidth(-10, 41, 1)).toBeNull();
+    expect(snapWidth(320, 0, 1)).toBeNull();
+    expect(snapWidth(320, 41, 0)).toBeNull();
+    expect(snapWidth(Number.NaN, 41, 1)).toBeNull();
   });
 });

@@ -26,7 +26,7 @@ export function QrCodeDemo() {
 
 export function Demo() {
   return (
-    <Constrain maxWidth="xs">
+    <Constrain maxWidth="sm">
       <QrCode
         value="https://eocrm.example.com/invoice/INV-2026-0042"
         aria-label="QR code for invoice INV-2026-0042"
@@ -35,7 +35,7 @@ export function Demo() {
   );
 }`}
       >
-        <Constrain maxWidth="xs">
+        <Constrain maxWidth="sm">
           <QrCode value={URL_VALUE} aria-label="QR code for invoice INV-2026-0042" />
         </Constrain>
       </Example>
@@ -50,13 +50,13 @@ const inviteUrl = 'https://eocrm.example.com/invoice/INV-2026-0042';
 
 export function Demo() {
   return (
-    <Constrain maxWidth="xs">
+    <Constrain maxWidth="sm">
       <QrCode value={inviteUrl} logo={logoUrl} aria-label="Invite link" />
     </Constrain>
   );
 }`}
       >
-        <Constrain maxWidth="xs">
+        <Constrain maxWidth="sm">
           <QrCode value={URL_VALUE} logo={logoUrl} aria-label="Invite link" />
         </Constrain>
       </Example>
@@ -72,13 +72,13 @@ const inviteUrl =
 
 export function Demo() {
   return (
-    <Constrain maxWidth="xs">
+    <Constrain maxWidth="sm">
       <QrCode value={inviteUrl} logo={logoUrl} aria-label="Invite link for Acme Industries" />
     </Constrain>
   );
 }`}
       >
-        <Constrain maxWidth="xs">
+        <Constrain maxWidth="sm">
           <QrCode
             value={LONG_URL_VALUE}
             logo={logoUrl}
@@ -100,7 +100,7 @@ export function Demo() {
       {(['L', 'M', 'Q', 'H'] as const).map((level) => (
         <Stack key={level} gap="xs" align="center">
           {/* There is no size prop — the parent owns the box. */}
-          <div style={{ width: 120 }}>
+          <div style={{ width: 196 }}>
             <QrCode value={url} level={level} aria-label={\`Level \${level}\`} />
           </div>
           <Text size="sm" tone="muted">
@@ -118,7 +118,7 @@ export function Demo() {
               {/* A plain sized box — four 200px codes will not sit in one row,
                   and this doubles as the demonstration that the parent, not the
                   component, owns the box. */}
-              <div style={{ width: 120 }}>
+              <div style={{ width: 196 }}>
                 <QrCode value={URL_VALUE} level={level} aria-label={`Level ${level}`} />
               </div>
               <Text size="sm" tone="muted">
@@ -136,13 +136,13 @@ export function Demo() {
 
 export function Demo() {
   return (
-    <Constrain maxWidth="xs">
+    <Constrain maxWidth="sm">
       <QrCode value="Привет, мир! Это тестовая строка." aria-label="Тестовый QR-код" />
     </Constrain>
   );
 }`}
       >
-        <Constrain maxWidth="xs">
+        <Constrain maxWidth="sm">
           <QrCode value="Привет, мир! Это тестовая строка." aria-label="Тестовый QR-код" />
         </Constrain>
       </Example>
@@ -154,13 +154,13 @@ export function Demo() {
 
 export function Demo() {
   return (
-    <Constrain maxWidth="xs">
+    <Constrain maxWidth="sm">
       <QrCode value={'x'.repeat(5000)} aria-label="QR code for invoice INV-2026-0042" />
     </Constrain>
   );
 }`}
       >
-        <Constrain maxWidth="xs">
+        <Constrain maxWidth="sm">
           <QrCode value={'x'.repeat(5000)} aria-label="QR code for invoice INV-2026-0042" />
         </Constrain>
       </Example>

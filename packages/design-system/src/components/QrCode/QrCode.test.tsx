@@ -143,17 +143,23 @@ describe('QrCode', () => {
   });
 
   it('renders the logo overlay and its punch-out only when logo is set', () => {
+    // Queried by class, not by position: the painted frame is also a
+    // `button > span`, so a structural selector would match it instead and the
+    // no-logo assertion would fail for the wrong reason.
+    const overlayIn = (root: HTMLElement) =>
+      [...root.querySelectorAll('span')].find((el) => /logo/.test(el.className)) ?? null;
+
     const withoutLogo = render(<QrCode value={VALUE} />).container;
     expect(withoutLogo.querySelectorAll('rect')).toHaveLength(1); // paper only
-    expect(withoutLogo.querySelector('button > span')).toBeNull();
+    expect(overlayIn(withoutLogo)).toBeNull();
 
     const withLogo = render(<QrCode value={VALUE} logo="/logo.svg" />).container;
     expect(withLogo.querySelectorAll('rect')).toHaveLength(2); // paper + punch
 
     // The overlay <span> is the element that actually paints the mark; the
     // rect count above only proves the hole was punched.
-    const overlay = withLogo.querySelector('button > span')!;
-    expect(overlay.className).toMatch(/logo/);
+    const overlay = overlayIn(withLogo)!;
+    expect(overlay).not.toBeNull();
     expect(overlay).toHaveAttribute('aria-hidden', 'true');
   });
 

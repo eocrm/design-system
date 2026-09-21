@@ -116,3 +116,24 @@ export function encodeQr(value: string, level: QrCodeLevel): QrMatrix | null {
     return null;
   }
 }
+
+/**
+ * The largest painted width, in CSS pixels, that gives every module a whole
+ * number of DEVICE pixels — or `null` when that is impossible.
+ *
+ * A QR symbol only looks sharp at an integer scale. Off it, both rendering
+ * modes lose: `shape-rendering: crispEdges` rounds each module's edges to the
+ * pixel grid independently, so neighbours come out different widths (a measured
+ * 4.878px/module rendered as a mix of 4px and 5px), while default antialiasing
+ * keeps the geometry even but spends most of a pixel blending every edge.
+ *
+ * Returns `null` when there is nothing to measure (`available` of 0, as SSR and
+ * jsdom report) or when the box cannot fit even one device pixel per module. In
+ * both cases the caller should fall back to fluid width WITHOUT `crispEdges` —
+ * unsnapped, `crispEdges` is the worse of the two.
+ */
+export function snapWidth(available: number, side: number, dpr: number): number | null {
+  if (!(available > 0) || !(side > 0) || !(dpr > 0)) return null;
+  const scale = Math.floor((available * dpr) / side);
+  return scale >= 1 ? (side * scale) / dpr : null;
+}

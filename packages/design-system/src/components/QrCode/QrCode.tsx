@@ -1,13 +1,17 @@
 import {
   forwardRef,
+  useLayoutEffect,
   useMemo,
+  useRef,
   useState,
   type ButtonHTMLAttributes,
   type CSSProperties,
+  type Ref,
 } from 'react';
 import clsx from 'clsx';
+import { mergeRefs } from '../_internal/refs';
 import { useTranslation } from '../../i18n';
-import { cssUrl, encodeQr, type QrCodeLevel } from './qr';
+import { cssUrl, encodeQr, snapWidth, type QrCodeLevel } from './qr';
 import styles from './QrCode.module.scss';
 
 export type { QrCodeLevel };
@@ -102,6 +106,71 @@ export interface QrCodeProps extends Omit<
  *   button with a localized "unavailable" message in place of the symbol. If
  *   the value comes from a free-text field, budget for that state.
  */
+/**
+ * Snap the painted width down to a whole number of DEVICE pixels per module.
+ *
+ * A QR symbol only looks sharp when one module maps to an integer number of
+ * device pixels. It otherwise loses either way: `shape-rendering: crispEdges`
+ * snaps alternate modules to different widths (measured 4.878px/module
+ * rendering as a mix of 4px and 5px — a 20% jitter across the grid), while
+ * default antialiasing keeps the geometry even but spends most of a pixel
+ * blending every edge. Both read as a blurry code.
+ *
+ * So the component measures the box the parent gave it and paints the largest
+ * exact multiple that fits, letting the leftover fraction of a pixel show as
+ * quiet zone. The parent still owns the box — this only decides how much of it
+ * the symbol inks.
+ *
+ * Returns `null` when it cannot measure (SSR, jsdom, a zero-width container,
+ * or a box too small for even 1px per module); callers fall back to fluid
+ * `width: 100%` without `crispEdges`, which is the correct behaviour when the
+ * premise does not hold.
+ */
+function useSnappedWidth(side: number): [Ref<HTMLButtonElement>, number | null] {
+  const hostRef = useRef<HTMLButtonElement | null>(null);
+  const [width, setWidth] = useState<number | null>(null);
+  // Tracked in state so a zoom change re-runs the effect and re-subscribes the
+  // media query below to the NEW ratio.
+  const [dpr, setDpr] = useState(1);
+
+  useLayoutEffect(() => {
+    const host = hostRef.current;
+    if (!host || side <= 0) return;
+
+    const recompute = () => {
+      const ratio = window.devicePixelRatio || 1;
+      setDpr(ratio);
+      // The arithmetic lives in `snapWidth` so it can be unit-tested: jsdom
+      // has no layout, so every test here takes the unmeasurable path.
+      setWidth(snapWidth(host.getBoundingClientRect().width, side, ratio));
+    };
+
+    recompute();
+
+    const cleanups: Array<() => void> = [];
+
+    if (typeof ResizeObserver !== 'undefined') {
+      const observer = new ResizeObserver(recompute);
+      observer.observe(host);
+      cleanups.push(() => observer.disconnect());
+    }
+
+    // Zooming changes devicePixelRatio WITHOUT changing our CSS width, so the
+    // ResizeObserver never fires for it. This does.
+    if (typeof window.matchMedia === 'function') {
+      const query = window.matchMedia(`(resolution: ${dpr}dppx)`);
+      query.addEventListener('change', recompute);
+      cleanups.push(() => query.removeEventListener('change', recompute));
+    }
+
+    return () => {
+      for (const cleanup of cleanups) cleanup();
+    };
+  }, [side, dpr]);
+
+  return [hostRef, width];
+}
+
 export const QrCode = forwardRef<HTMLButtonElement, QrCodeProps>(function QrCode(
   { value, logo, level, className, style, onClick, title, 'aria-label': ariaLabel, ...props },
   ref,
@@ -118,6 +187,13 @@ export const QrCode = forwardRef<HTMLButtonElement, QrCodeProps>(function QrCode
   const resolvedLevel: QrCodeLevel = level ?? (hasLogo ? 'H' : 'M');
   const matrix = useMemo(() => encodeQr(value, resolvedLevel), [value, resolvedLevel]);
 
+  // Called unconditionally, before the error branch returns. `0` parks the hook
+  // when there is no symbol to measure for.
+  const [hostRef, snappedWidth] = useSnappedWidth(matrix?.side ?? 0);
+  // Memoized so the merged callback ref keeps its identity across renders —
+  // a fresh function would detach and reattach the node on every render.
+  const rootRef = useMemo(() => mergeRefs(ref, hostRef), [ref, hostRef]);
+
   // {...props} first so the ARIA contract below cannot be clobbered — the
   // component owns `type`, `aria-pressed` and the toggle. `aria-label` and
   // `title` are destructured out instead, so the consumer's value is a
@@ -126,7 +202,7 @@ export const QrCode = forwardRef<HTMLButtonElement, QrCodeProps>(function QrCode
     return (
       <button
         {...props}
-        ref={ref}
+        ref={rootRef}
         type="button"
         disabled
         className={clsx(styles.root, styles.error, className)}
@@ -155,7 +231,7 @@ export const QrCode = forwardRef<HTMLButtonElement, QrCodeProps>(function QrCode
   return (
     <button
       {...props}
-      ref={ref}
+      ref={rootRef}
       type="button"
       aria-pressed={inverted}
       // `||`, not `??`, on both: `aria-label={row.name ?? ''}` is ordinary
@@ -174,20 +250,31 @@ export const QrCode = forwardRef<HTMLButtonElement, QrCodeProps>(function QrCode
         onClick?.(event);
       }}
     >
-      <svg
-        className={styles.svg}
-        viewBox={`0 0 ${side} ${side}`}
-        shapeRendering="crispEdges"
-        aria-hidden="true"
-        focusable="false"
-      >
-        <rect className={styles.paper} width={side} height={side} />
-        <path className={styles.ink} d={path} />
-        {hasLogo && (
-          <rect className={styles.paper} x={offset} y={offset} width={punch} height={punch} />
-        )}
-      </svg>
-      {hasLogo && <span className={styles.logo} aria-hidden="true" />}
+      {/* The painted box, which may be a fraction of a pixel narrower than the
+          button so the symbol lands on an exact module grid. It also anchors
+          the logo overlay, whose size is a percentage of the SYMBOL — not of
+          the button, which is why the anchor moved here. */}
+      <span className={styles.frame} style={{ width: snappedWidth ?? '100%' }}>
+        <svg
+          className={styles.svg}
+          viewBox={`0 0 ${side} ${side}`}
+          // `crispEdges` ONLY once the width is snapped. Unsnapped it is
+          // actively worse than antialiasing: it rounds each module's edges to
+          // the pixel grid independently, so adjacent modules come out
+          // different widths. Snapped, every module is the same whole number of
+          // device pixels and the symbol is pixel-exact.
+          shapeRendering={snappedWidth === null ? undefined : 'crispEdges'}
+          aria-hidden="true"
+          focusable="false"
+        >
+          <rect className={styles.paper} width={side} height={side} />
+          <path className={styles.ink} d={path} />
+          {hasLogo && (
+            <rect className={styles.paper} x={offset} y={offset} width={punch} height={punch} />
+          )}
+        </svg>
+        {hasLogo && <span className={styles.logo} aria-hidden="true" />}
+      </span>
     </button>
   );
 });

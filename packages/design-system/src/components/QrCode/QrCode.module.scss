@@ -2,10 +2,11 @@
 @use './QrCode.tokens';
 
 .root {
-  // `relative` anchors the logo overlay — the one internal-anchor exception
-  // Rule 4 allows. No margin, no offsets on the root itself.
-  position: relative;
-  display: block;
+  // Centres the painted frame, which is up to a pixel narrower than the button
+  // once the symbol snaps to a whole number of device pixels per module. The
+  // leftover shows as paper, reading as a slightly wider quiet zone.
+  display: flex;
+  justify-content: center;
   width: 100%;
   padding: 0;
   border: 0;
@@ -22,6 +23,15 @@
 .root.inverted {
   --qr-ink: var(--color-bg);
   --qr-paper: var(--color-fg);
+}
+
+// The painted box. `relative` anchors the logo overlay — the one internal-anchor
+// exception Rule 4 allows; it lives here rather than on `.root` so the overlay's
+// percentage size resolves against the SYMBOL, not against the button.
+.frame {
+  position: relative;
+  display: block;
+  max-width: 100%;
 }
 
 .svg {
