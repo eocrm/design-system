@@ -19,6 +19,9 @@ import { createRef, useEffect, useRef, useState } from 'react';
 import { parse, type AtRule, type Declaration, type Root, type Rule } from 'postcss';
 import { compile } from 'sass';
 import { Table } from '../Table';
+import { Badge } from '../Badge';
+import { Button } from '../Button';
+import { Text } from '../Text';
 import { DataTable } from './DataTable';
 import { useDataTable } from './useDataTable';
 import { shiftVarName } from './columnShift';
@@ -158,18 +161,11 @@ describe('DataTable responsive stylesheet', () => {
     );
     expect(compiledDeclaration(valueRule, 'display')).toMatchObject({ value: 'block' });
     expect(compiledDeclaration(valueRule, 'min-width')).toMatchObject({ value: '0' });
-    // #527: a descendant declaring its own `white-space: nowrap`
-    // (PersonDisplay's description) is un-declared inside the card, so the
-    // inherited `overflow-wrap: anywhere` can break it. Without this the
-    // descendant painted outside the card, since the stacked value wrapper
-    // deliberately keeps `overflow: visible` (a clipping context would shave
-    // the focus ring of a control inside the value).
+    // #527: the value wrapper keeps `overflow: visible` — a clipping context
+    // here would shave the focus ring of a control inside the value (#524).
+    // Containment is the job of whatever declares its own nowrap; see the
+    // "never restyles cell content" test below for the rule that is NOT here.
     expect(compiledDeclaration(valueRule, 'overflow')).toMatchObject({ value: 'visible' });
-    const nowrapResetRule = compiledRule(
-      query,
-      `${ownedTable} > tbody > tr > .responsiveDataCell > .responsiveValue :where(*)`,
-    );
-    expect(compiledDeclaration(nowrapResetRule, 'white-space')).toMatchObject({ value: 'normal' });
 
     const unlabelledValueRule = compiledRule(
       query,
@@ -2642,5 +2638,86 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
   it('still exposes the resize handle, named for what it does', () => {
     render(<NameHarness collapseBelow="md" />);
     expect(screen.getByRole('separator', { name: 'Resize Name column' })).toBeInTheDocument();
+  });
+});
+
+describe('DataTable stacked cards never restyle cell content (#527)', () => {
+  const stylesheet = parse(
+    compile(resolve(__dirname, 'DataTable.module.scss'), { style: 'expanded' }).css,
+  );
+
+  type ContentRow = { id: string; label: string };
+  const contentRows: ContentRow[] = [{ id: 'r1', label: 'a-very-long-unbroken-value' }];
+  const contentCols: ColumnDef<ContentRow>[] = [
+    { id: 'status', header: 'Status', cell: () => <Badge tone="warning">Provisioning</Badge> },
+    {
+      id: 'value',
+      header: 'Value',
+      cell: (r) => <Text truncate>{r.label}</Text>,
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      cell: () => (
+        <Button size="sm" variant="secondary">
+          Resend
+        </Button>
+      ),
+    },
+  ];
+
+  function ContentTable() {
+    const instance = useDataTable<ContentRow>({
+      data: contentRows,
+      columns: contentCols,
+      getRowId: (r) => r.id,
+    });
+    return <DataTable instance={instance} collapseBelow="sm" aria-label="Content" />;
+  }
+
+  // The first attempt at #527 neutralised `white-space` on every descendant of
+  // a stacked cell. `overflow-wrap: anywhere` on the value wrapper is
+  // inherited, so that broke each of these mid-word: a Badge rendered as
+  // "PROVISIONIN/G", and `<Text truncate>` — a public prop — silently stopped
+  // truncating, because the reset outweighed `.truncate`. Selectors are mapped
+  // to the module's hashed class names and matched against the real elements,
+  // so this fails on ANY rule of ours that reaches into cell content, not just
+  // on the one shape that was shipped.
+  it('no rule of this module matches a Badge, a Button or a truncated Text inside a cell', () => {
+    render(<ContentTable />);
+    const targets = [
+      screen.getByText('Provisioning'),
+      screen.getByText('a-very-long-unbroken-value'),
+      screen.getByRole('button', { name: 'Resend' }),
+    ];
+    for (const el of targets) {
+      expect(el.closest(`.${styles.responsiveValue}`)).not.toBeNull();
+    }
+
+    const hashed = (selector: string) =>
+      selector.replace(/\.([A-Za-z_][\w-]*)/g, (whole, name: string) =>
+        styles[name] ? `.${styles[name]}` : whole,
+      );
+
+    const offenders: string[] = [];
+    stylesheet.walkRules((rule) => {
+      for (const selector of rule.selectors) {
+        // A selector whose own class names are all unknown to the module map
+        // would silently match nothing; skip those rather than pretend to
+        // check them.
+        const mapped = hashed(selector);
+        for (const el of targets) {
+          if (el.matches(mapped))
+            offenders.push(`${selector} matches <${el.tagName.toLowerCase()}>`);
+        }
+      }
+    });
+    expect(offenders).toEqual([]);
+  });
+
+  it('the truncated Text keeps its own class, so its nowrap still applies', () => {
+    render(<ContentTable />);
+    const text = screen.getByText('a-very-long-unbroken-value');
+    expect(text.className).toMatch(/truncate/);
   });
 });

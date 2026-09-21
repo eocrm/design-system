@@ -1,5 +1,8 @@
 import { createRef } from 'react';
+import { resolve } from 'node:path';
 import { render, screen } from '@testing-library/react';
+import { parse, type Declaration, type Rule } from 'postcss';
+import { compile } from 'sass';
 import { PersonDisplay } from './PersonDisplay';
 
 it('renders Avatar + Name + Description together', () => {
@@ -227,4 +230,38 @@ it('shrink composes with a consumer className', () => {
   );
   expect(container.firstElementChild).toHaveClass('custom-root');
   expect(container.firstElementChild?.className).toMatch(/shrink/);
+});
+
+describe('PersonDisplay stylesheet — self-containment (#527)', () => {
+  const stylesheet = parse(compile(resolve(__dirname, './PersonDisplay.module.scss')).css);
+
+  function rule(selector: string): Rule | undefined {
+    let match: Rule | undefined;
+    stylesheet.walkRules((r) => {
+      if (r.selectors.includes(selector)) match = r;
+    });
+    return match;
+  }
+  function decl(r: Rule | undefined, property: string): Declaration | undefined {
+    let match: Declaration | undefined;
+    r?.walkDecls(property, (d) => {
+      match = d;
+    });
+    return match;
+  }
+
+  // An inline-flex box is sized shrink-to-fit, whose floor is its min-content
+  // width — which a nowrap Description makes as wide as the whole line. Both
+  // halves are load-bearing: measured in Chromium, dropping either one puts
+  // ~204px of a long email outside a DataTable stacked card.
+  it('the root clamps to its container', () => {
+    expect(decl(rule('.root'), 'max-width')).toMatchObject({ value: '100%' });
+  });
+
+  it('the nowrap description clips itself rather than painting outside', () => {
+    const description = rule('.description');
+    expect(decl(description, 'white-space')).toMatchObject({ value: 'nowrap' });
+    expect(decl(description, 'overflow')).toMatchObject({ value: 'hidden' });
+    expect(decl(description, 'min-width')).toMatchObject({ value: '0' });
+  });
 });

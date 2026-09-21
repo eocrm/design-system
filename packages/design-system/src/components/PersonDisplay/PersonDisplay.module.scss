@@ -5,6 +5,16 @@
   align-items: center;
   gap: var(--person-display-gap);
 
+  // An inline-flex box is sized shrink-to-fit, whose floor is its MIN-CONTENT
+  // width — and a Description that declares `white-space: nowrap` (below) has a
+  // min-content width of the whole unbroken line. So a long email made this box
+  // 426px wide inside a 209px column and painted straight out of a DataTable
+  // stacked card (#527). Clamping to the container is the only place the chain
+  // can be bounded: `overflow` does not reduce an intrinsic contribution, and
+  // `min-width: 0` on the inner column does not either. `.shrink` below already
+  // carried this for the case it names; every PersonDisplay needs it.
+  max-width: 100%;
+
   // Size-keyed gap — descriptive text doesn't need to crowd the avatar.
   // sm tightens; md and lg share the same outer gap.
   &[data-size='sm'] {
@@ -50,5 +60,15 @@
   // Descriptions for additional lines. `nowrap` keeps atomic inline children
   // (e.g., a Badge inside the audit "impersonating Sarah Lin" marker) on the
   // same row as their surrounding text, even when the cell is narrow.
+  // A line that declares its own `nowrap` must also contain itself: nothing
+  // outside can make it wrap, so a container that does not clip — a DataTable
+  // stacked card — wears the overflow instead (#527). The root's `max-width`
+  // bounds the box; this clips what is too long for it. Both are required:
+  // measured in Chromium, either one alone still overflows the card by ~204px.
+  // No `text-overflow: ellipsis`: this is a flex container, where the UA does
+  // not paint one (verified against a screenshot — identical with `clip`). The
+  // wide table already hard-clipped this line for the same reason, so nothing
+  // regresses; an ellipsis would need the text in a block container.
+  overflow: hidden;
   white-space: nowrap;
 }
