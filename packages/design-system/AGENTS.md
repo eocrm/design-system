@@ -133,6 +133,27 @@ An unnamed container falls back to its position ("column 2 of 3").
 
 ---
 
+## An empty label prop means _unset_, never _blank_
+
+Every label-ish prop in this library — `aria-label`, `previousLabel`, `confirmLabel`, `dropzoneLabel`, `visibilityLabel`, `emptyState`, a `LiquidVariable`'s `label` — treats `''` exactly like omitting it. You cannot use one to blank out a name or suppress default copy. That is deliberate:
+
+```tsx
+// ✅ Fine. `row.title` missing → the component's own default copy.
+<CursorPagination previousLabel={row.title ?? ''} … />
+
+// ❌ Not a way to hide the label. It renders "Previous" all the same.
+<CursorPagination previousLabel="" … />
+```
+
+If you are writing a component _in_ this library, the rule behind that is an operator choice, and it is not optional:
+
+- **Use `||`, never `??`, for any fallback that produces an accessible name** — whether the name comes from an attribute (`aria-label={x || t('key')}`) or from content (`<span>{label || t('key')}</span>`). `??` falls back only on `null`/`undefined`, so `''` reaches the DOM. Per the accname spec an empty `aria-label` contributes no name, so the computation does not stop there — it continues to name-from-content and then to `title`, and where the siblings are `aria-hidden` (a chevron, a spinner) the control ends up anonymous (#534, #535).
+- The same applies to a fallback that exists so there is _always_ something readable — `col.visibilityLabel || header || col.id`, `v.label || v.code`. An empty string defeats the safeguard and renders a blank, unidentifiable row.
+
+Two tests in `structure.test.ts` gate parts of this: one rejects `??` in `aria-label` / `aria-valuetext`, the other rejects `{x ?? t(…)}` in JSX children. **Neither implements the rule.** They cannot see whether an element is a control, whether its siblings are hidden, or that `{v.label ?? v.code}` is the same defect with a non-`t()` fallback. A green run is not coverage — the rule above is, and it is enforced by review.
+
+---
+
 ## Dark theme
 
 The library ships a full dark palette, driven entirely by CSS. There is **no theme component, no React context, no JS API** — you control it with one attribute on `<html>`:

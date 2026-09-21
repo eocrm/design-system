@@ -4,7 +4,12 @@ import type { ReactNode } from 'react';
 export interface LiquidVariable {
   /** Token inserted and matched, e.g. `"first_name"` → referenced as `{{ first_name }}`. */
   code: string;
-  /** Human label shown in the picker + autocomplete. Defaults to `code`. */
+  /**
+   * Human label shown in the picker + autocomplete. Defaults to `code`.
+   *
+   * An EMPTY string counts as unset: the label is a menu item's only name
+   * source, and `code` is here precisely so every item has something readable.
+   */
   label?: string;
   /** Optional type hint rendered as a muted tag in suggestions, e.g. `"text"` | `"date"`. */
   type?: string;

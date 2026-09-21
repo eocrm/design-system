@@ -347,7 +347,9 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
     const footer =
       footerWarning ??
       (caretVar?.description
-        ? `${caretVar.label ?? caretVar.code} — ${caretVar.description}`
+        ? // `||` for the same reason as InsertVariableMenu: `label: ''` must
+          // fall back to `code`, not render a dangling " — description".
+          `${caretVar.label || caretVar.code} — ${caretVar.description}`
         : null);
     const footerIsInfo = footerWarning == null && footer != null;
     // Associate the footer line (error / unknown-variable warning / caret-variable

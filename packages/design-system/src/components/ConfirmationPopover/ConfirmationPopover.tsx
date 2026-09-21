@@ -42,6 +42,10 @@ export interface ConfirmationPopoverProps {
   /**
    * Confirm button label. Defaults to the i18n value at
    * `confirmationPopover.confirm` (`'Confirm'` in English).
+   *
+   * An EMPTY string counts as unset, not as an explicit blank: this label is
+   * the confirm button's only name source (the pending spinner beside it is
+   * `aria-hidden`), so an empty one would leave the button anonymous.
    */
   confirmLabel?: string;
 
@@ -296,7 +300,10 @@ export function ConfirmationPopover({
               onClick={handleConfirm}
             >
               {pending && <span className={styles.spinner} aria-hidden="true" />}
-              {confirmLabel ?? t('confirmationPopover.confirm')}
+              {/* `||`, not `??`: the spinner beside it is aria-hidden, so this
+                  is the confirm button's only name source and `confirmLabel=""`
+                  would leave it with no accessible name (#535). */}
+              {confirmLabel || t('confirmationPopover.confirm')}
             </Button>
           </Cluster>
         </Stack>

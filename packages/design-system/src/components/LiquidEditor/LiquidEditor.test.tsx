@@ -375,6 +375,19 @@ describe('insert menu with grouped palette (#304)', () => {
     expect(onChange).toHaveBeenCalledWith('{{ event.type }}');
   });
 
+  // `code` is the fallback precisely so every menu item has something
+  // readable; `label: ''` used to defeat it and render a blank menuitem whose
+  // only name came from the description line beside it. Exact name, since a
+  // description-only name is non-empty and would pass a loose assertion.
+  it('treats an empty variable label as unset in the insert menu', async () => {
+    const user = userEvent.setup();
+    render(
+      <LiquidEditor value="" onChange={() => {}} variables={[{ code: 'blank_one', label: '' }]} />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Insert variable' }));
+    expect(screen.getByRole('menuitem', { name: /blank_one/ })).toHaveAccessibleName('blank_one');
+  });
+
   it('shows the description line in the insert menu', async () => {
     const user = userEvent.setup();
     render(<LiquidEditor value="" onChange={() => {}} variables={VARS} />);

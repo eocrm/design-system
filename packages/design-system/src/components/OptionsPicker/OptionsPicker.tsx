@@ -102,6 +102,10 @@ type SharedContentProps = {
   /**
    * Rendered when search produces zero matches. Defaults to the
    * `optionsPicker.noMatches` i18n string (en: `'No matches'`).
+   *
+   * An EMPTY string counts as unset, matching every other label override in
+   * the library. There is no way to suppress the message entirely — a blank
+   * listbox reads as a broken filter rather than as a deliberate silence.
    */
   emptyState?: ReactNode;
   /** Footer count formatter (multi only). Default `'${selected} of ${total}'`. */
@@ -560,7 +564,7 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
           >
             {!hasAnyVisible && (
               <Text size="sm" tone="muted" className={styles.empty}>
-                {props.emptyState ?? t('optionsPicker.noMatches')}
+                {props.emptyState || t('optionsPicker.noMatches')}
               </Text>
             )}
             {hasAnyVisible &&

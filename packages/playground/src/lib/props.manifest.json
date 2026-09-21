@@ -890,7 +890,7 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Confirm button label. Defaults to the i18n value at\n`confirmationPopover.confirm` (`'Confirm'` in English)."
+          "description": "Confirm button label. Defaults to the i18n value at\n`confirmationPopover.confirm` (`'Confirm'` in English).\n\nAn EMPTY string counts as unset, not as an explicit blank: this label is\nthe confirm button's only name source (the pending spinner beside it is\n`aria-hidden`), so an empty one would leave the button anonymous."
         },
         {
           "name": "variant",
@@ -1059,14 +1059,14 @@
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
           "default": "",
-          "description": "Label for the previous button. Defaults to the i18n value at\n`pagination.previous` (`'Previous'` in English). Override for domain\nphrasing (`'Newer'` in a reverse-chronological feed)."
+          "description": "Label for the previous button. Defaults to the i18n value at\n`pagination.previous` (`'Previous'` in English). Override for domain\nphrasing (`'Newer'` in a reverse-chronological feed).\n\nAn EMPTY string counts as unset, not as an explicit blank: this label is\nthe button's only name source (the chevron is `aria-hidden`), so an empty\none would leave the button anonymous rather than merely unlabelled."
         },
         {
           "name": "nextLabel",
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
           "default": "",
-          "description": "Label for the next button. Defaults to the i18n value at\n`pagination.next` (`'Next'` in English)."
+          "description": "Label for the next button. Defaults to the i18n value at\n`pagination.next` (`'Next'` in English).\n\nAn EMPTY string counts as unset, for the same reason as `previousLabel`."
         },
         {
           "name": "size",
@@ -2050,7 +2050,7 @@
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
           "default": "",
-          "description": "Override the dropzone's main label. Default: the i18n value at\n`fileUpload.dragHint`. Pass a ReactNode for richer content (e.g. with a\n`<Code>` for accepted extensions).\n\n**A11y note:** when `dropzoneLabel` is a plain string, the component\nuses it as `aria-label` on the dropzone. When it's a ReactNode, the\ncomponent falls back to the i18n value at `fileUpload.upload` and the\nrich content is visible-only. To give screen readers the equivalent\ntext, pass `aria-label` via the spread (e.g. `aria-label=\"Upload CSV\nor Excel files\"`)."
+          "description": "Override the dropzone's main label. Default: the i18n value at\n`fileUpload.dragHint`. Pass a ReactNode for richer content (e.g. with a\n`<Code>` for accepted extensions).\n\n**A11y note:** when `dropzoneLabel` is a plain string, the component\nuses it as `aria-label` on the dropzone. When it's a ReactNode, the\ncomponent falls back to the i18n value at `fileUpload.upload` and the\nrich content is visible-only. To give screen readers the equivalent\ntext, pass `aria-label` via the spread (e.g. `aria-label=\"Upload CSV\nor Excel files\"`).\n\nAn EMPTY string counts as unset, not as an explicit blank — it drives both\nthe visible label and the dropzone's `aria-label`, so an empty one left a\n`role=\"button\"` with no accessible name."
         },
         {
           "name": "dropzoneIcon",

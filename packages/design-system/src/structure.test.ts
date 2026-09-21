@@ -1388,3 +1388,112 @@ describe('an accessible name is never built with ??', () => {
     },
   );
 });
+
+/**
+ * A translated default is never introduced with `??` in JSX children.
+ *
+ * Sibling of the `aria-label` gate above, for the shape it cannot see. Where
+ * `{label ?? t('key')}` is a control's only non-`aria-hidden` child, the name
+ * comes from CONTENT rather than from an attribute — so `label=""`, ordinary
+ * consumer code, renders an empty element and leaves the control with no
+ * accessible name at all (#535). The attribute gate scans ARIA attributes and
+ * never looks at children, so all five live sites passed it.
+ *
+ * Scoped deliberately to `{x ?? t(…)}` in CHILD position, which is exactly
+ * "fall back to library copy when the consumer gave none". It does NOT
+ * implement the rule it serves — "a consumer string that is a control's sole
+ * visible content" — and cannot:
+ *  - whether the element is a control is unknowable here (`<Button>` and
+ *    `<div role="button">` are both controls; `<Text>` is not, and resolving a
+ *    capitalised tag needs cross-file type information),
+ *  - whether the siblings are `aria-hidden` is visible in the AST, but only
+ *    for literal siblings — a component that hides its own root is not,
+ *  - a fallback to something other than `t()` (`{v.label ?? v.code}`) is the
+ *    same defect and is NOT caught, because "a variable" cannot be told from
+ *    "a default" without following the value.
+ * So it is a tripwire on the commonest form, not the rule. The rule itself is
+ * prose in `AGENTS.md`; do not read a green run here as coverage of it.
+ */
+describe('a translated default is never introduced with ?? in JSX children', () => {
+  /**
+   * Every `{… ?? t(…)}` written as an element's CHILD in `code`, as source
+   * text. Attribute position is excluded — that is the gate above's job, and
+   * it judges `aria-label` rather than the `t()` on the right.
+   */
+  const childTranslationFallbacks = (label: string, code: string): string[] => {
+    const isTsx = label.endsWith('.tsx');
+    const sourceFile = ts.createSourceFile(
+      isTsx ? 'probe.tsx' : 'probe.ts',
+      code,
+      ts.ScriptTarget.Latest,
+      true,
+      isTsx ? ts.ScriptKind.TSX : ts.ScriptKind.TS,
+    );
+    const out: string[] = [];
+    const scan = (node: ts.Node, inJsxChild: boolean) => {
+      // A JsxExpression is a child when its parent is the element itself; in
+      // attribute position the parent is the JsxAttribute.
+      const child =
+        inJsxChild ||
+        (ts.isJsxExpression(node) &&
+          node.parent !== undefined &&
+          (ts.isJsxElement(node.parent) || ts.isJsxFragment(node.parent)));
+      if (
+        child &&
+        ts.isBinaryExpression(node) &&
+        node.operatorToken.kind === ts.SyntaxKind.QuestionQuestionToken &&
+        ts.isCallExpression(node.right) &&
+        ts.isIdentifier(node.right.expression) &&
+        node.right.expression.text === 't'
+      ) {
+        out.push(node.getText().replace(/\s+/g, ' ').trim());
+      }
+      // Reset inside a nested attribute: `{cond ? <i title={a ?? t('k')}/> : …}`
+      // is an attribute of an element that happens to sit in child position.
+      ts.forEachChild(node, (c) =>
+        scan(c, child && !ts.isJsxAttributes(c) && !ts.isJsxAttribute(c)),
+      );
+    };
+    scan(sourceFile, false);
+    return out;
+  };
+
+  const sources = allSources();
+
+  it('the scan itself can fail', () => {
+    // Guards the guard: without this a walker typo makes every case below
+    // vacuously pass.
+    expect(childTranslationFallbacks('p.tsx', `const A = () => <b>{x ?? t('k')}</b>;`)).toEqual([
+      `x ?? t('k')`,
+    ]);
+    // `||` is the fix, so it must not be reported.
+    expect(childTranslationFallbacks('p.tsx', `const A = () => <b>{x || t('k')}</b>;`)).toEqual([]);
+    // Attribute position belongs to the aria-label gate, not this one.
+    expect(
+      childTranslationFallbacks('p.tsx', `const A = () => <b title={x ?? t('k')} />;`),
+    ).toEqual([]);
+    // A nested attribute inside a child expression is still an attribute.
+    expect(
+      childTranslationFallbacks(
+        'p.tsx',
+        `const A = () => <b>{c ? <i title={x ?? t('k')} /> : n}</b>;`,
+      ),
+    ).toEqual([]);
+    // A non-`t()` right operand is out of scope, and the docblock says so.
+    expect(childTranslationFallbacks('p.tsx', `const A = () => <b>{x ?? y}</b>;`)).toEqual([]);
+  });
+
+  it('found sources to check', () => {
+    const labels = sources.map((s) => s.label);
+    expect(labels).toContain('CursorPagination/CursorPagination.tsx');
+    expect(labels).toContain('FileUpload/FileUpload.tsx');
+    expect(sources.length).toBeGreaterThan(50);
+  });
+
+  it.each(sources.map(({ label, code }) => [label, code]))(
+    '%s uses || not ?? for a translated default rendered as content',
+    (label, code) => {
+      expect(childTranslationFallbacks(label, code)).toEqual([]);
+    },
+  );
+});
