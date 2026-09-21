@@ -158,6 +158,18 @@ describe('DataTable responsive stylesheet', () => {
     );
     expect(compiledDeclaration(valueRule, 'display')).toMatchObject({ value: 'block' });
     expect(compiledDeclaration(valueRule, 'min-width')).toMatchObject({ value: '0' });
+    // #527: a descendant declaring its own `white-space: nowrap`
+    // (PersonDisplay's description) is un-declared inside the card, so the
+    // inherited `overflow-wrap: anywhere` can break it. Without this the
+    // descendant painted outside the card, since the stacked value wrapper
+    // deliberately keeps `overflow: visible` (a clipping context would shave
+    // the focus ring of a control inside the value).
+    expect(compiledDeclaration(valueRule, 'overflow')).toMatchObject({ value: 'visible' });
+    const nowrapResetRule = compiledRule(
+      query,
+      `${ownedTable} > tbody > tr > .responsiveDataCell > .responsiveValue :where(*)`,
+    );
+    expect(compiledDeclaration(nowrapResetRule, 'white-space')).toMatchObject({ value: 'normal' });
 
     const unlabelledValueRule = compiledRule(
       query,

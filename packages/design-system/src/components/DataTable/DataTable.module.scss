@@ -416,6 +416,23 @@
     white-space: normal;
   }
 
+  // #527: `white-space: normal` above neutralizes the cell's OWN nowrap but
+  // cannot reach a descendant that declares `white-space: nowrap` on itself —
+  // PersonDisplay's description line does, deliberately, to keep atomic inline
+  // children on one row. In the wide table the cell's `overflow: hidden` clips
+  // that descendant; the card has no clipping context, so its ink escaped the
+  // grid track and inflated the scroll wrapper's scrollWidth (measured 8px at
+  // a 390px viewport). Un-declaring the nowrap is what the card wants anyway:
+  // `overflow-wrap: anywhere` is INHERITED from the value above, so the moment
+  // wrapping is allowed even an unbroken email fits the track.
+  // Clipping here instead would have worked too, and was tried — but any
+  // `overflow` other than `visible` on this wrapper shaves the focus ring of a
+  // control inside the value (#524's failure mode), which the
+  // focus-ring-geometry sweep measures and rejects.
+  > .root > tbody > tr > .responsiveDataCell > .responsiveValue :where(*) {
+    white-space: normal;
+  }
+
   > .root > tbody > tr > .responsiveDataCell > .responsiveVisualLabel:empty {
     display: none;
   }
