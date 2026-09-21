@@ -351,6 +351,13 @@
           "required": false,
           "default": "",
           "description": "Controlled persistent paint for an applied filter or toolbar value.\nSelected paint applies only to `secondary` and `ghost` Buttons;\n`primary`, `danger`, and `success` retain their intent paint. This prop is\nvisual only and does not add toggle-button semantics. Pass native\n`aria-pressed` explicitly only when activating the Button itself toggles\nthe selected state; menu and disclosure triggers keep their own semantics.\nThe consumer owns the state. Defaults to `undefined` (not selected)."
+        },
+        {
+          "name": "as",
+          "type": "C",
+          "required": false,
+          "default": "button",
+          "description": "Render a different element — the case that matters is `as=\"a\"` with\n`href`, for a link that must LOOK like a button (an external console, a\ndownload, an IdP hand-off). The element named here is what actually\nrenders, and its own attributes are typed: `href` is available when\n`as=\"a\"` and rejected otherwise.\n\nReach for `<Link>` first. `<Link>` is link-SHAPED navigation — inline text\nin a sentence, a table cell, a breadcrumb. `<Button as=\"a\">` is for a\ndestination that sits in a row of buttons and must carry their weight.\nEither way the element is a real anchor, so assistive tech announces a\nlink and the browser gives middle-click, \"open in new tab\", and the status\nbar preview — none of which a `<button onClick={() => navigate()}>` has.\n\n`type=\"button\"` is emitted only for a real `<button>`; an anchor never\ngets it. Everything else — variant, size, `iconOnly`, `selected`, the\nfocus ring — is unchanged."
         }
       ]
     },
@@ -3222,6 +3229,13 @@
           "description": "Initial focus target on open. Default: the dialog container itself.\nPass a ref to override (e.g. focus the first input in a form)."
         },
         {
+          "name": "returnFocusRef",
+          "type": "RefObject<HTMLElement | null>",
+          "required": false,
+          "default": "",
+          "description": "Where focus goes when the modal closes. Default: back to whatever was\nfocused when it opened.\n\nThat default breaks whenever the opener is gone by close time — a row's\n\"⋯\" trigger whose row was just deleted, or a button that unmounts in the\nsame commit that opens the modal (the capture then snapshots `<body>`).\nFocus lands on `<body>` and a keyboard user loses their place.\n\nThe ref is read **at close time**, not at open time, so it may be pointed\nat whatever still exists once the work is done — the next row's trigger,\nthe empty state's first button. If it is empty or its element has also\nleft the document, Modal falls back to the captured opener, and then to\ndoing nothing, exactly as before this prop existed."
+        },
+        {
           "name": "children",
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": true,
@@ -4508,6 +4522,13 @@
           "required": false,
           "default": "md",
           "description": "Control height (matches the shared `--size-*` scale used by Input and Avatar).\n- `xs` (20px) — icon-only or very dense inline actions (row controls,\n  chip-adjacent buttons). Pass `aria-label` when icon-only. Below WCAG\n  2.5.5 Level AAA touch-target guidance; reserve for desktop-first surfaces.\n- `sm` (24px) — dense toolbars, tables, inline actions.\n- `md` (32px, default) — most contexts.\n- `lg` (40px) — marketing-style empty states or emphasized primary actions."
+        },
+        {
+          "name": "as",
+          "type": "\"button\"",
+          "required": false,
+          "default": "button",
+          "description": "Render a different element — the case that matters is `as=\"a\"` with\n`href`, for a link that must LOOK like a button (an external console, a\ndownload, an IdP hand-off). The element named here is what actually\nrenders, and its own attributes are typed: `href` is available when\n`as=\"a\"` and rejected otherwise.\n\nReach for `<Link>` first. `<Link>` is link-SHAPED navigation — inline text\nin a sentence, a table cell, a breadcrumb. `<Button as=\"a\">` is for a\ndestination that sits in a row of buttons and must carry their weight.\nEither way the element is a real anchor, so assistive tech announces a\nlink and the browser gives middle-click, \"open in new tab\", and the status\nbar preview — none of which a `<button onClick={() => navigate()}>` has.\n\n`type=\"button\"` is emitted only for a real `<button>`; an anchor never\ngets it. Everything else — variant, size, `iconOnly`, `selected`, the\nfocus ring — is unchanged."
         }
       ]
     },
@@ -5309,7 +5330,7 @@
     "StackAlign": "\"start\" | \"end\" | \"center\" | \"stretch\"",
     "SwitchSize": "\"sm\" | \"md\" | \"lg\"",
     "SwitchTone": "\"success\" | \"danger\" | \"accent\"",
-    "ClusterAs": "\"div\" | \"span\" | \"section\" | \"aside\"",
+    "ClusterAs": "\"aside\" | \"div\" | \"section\" | \"span\"",
     "ClusterGap": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"2xl\"",
     "ClusterJustify": "\"start\" | \"end\" | \"center\" | \"between\"",
     "ClusterAlign": "\"start\" | \"end\" | \"baseline\" | \"center\"",
@@ -5320,7 +5341,7 @@
     "GridGap": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"2xl\"",
     "GridAlignItems": "\"start\" | \"end\" | \"center\" | \"stretch\"",
     "GridJustifyItems": "\"start\" | \"end\" | \"center\" | \"stretch\"",
-    "GridAs": "\"div\" | \"section\" | \"aside\" | \"article\" | \"footer\" | \"header\" | \"main\" | \"nav\" | \"ol\" | \"ul\"",
+    "GridAs": "\"article\" | \"aside\" | \"div\" | \"footer\" | \"header\" | \"main\" | \"nav\" | \"ol\" | \"section\" | \"ul\"",
     "SplitSide": "\"start\" | \"end\"",
     "SplitGap": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"2xl\"",
     "SplitAlign": "\"start\" | \"center\" | \"stretch\"",
@@ -5339,7 +5360,7 @@
     "BadgeAlign": "\"baseline\" | \"middle\"",
     "EntityChipStatus": "{ label: string; category?: StatusCategory; color?: PaletteColor }",
     "StatusMenuStatus": "{ id: string | number; name: string; category?: StatusCategory; color?: PaletteColor }",
-    "ThreadNodeAlign": "\"top\" | \"header\"",
+    "ThreadNodeAlign": "\"header\" | \"top\"",
     "LogoSize": "\"sm\" | \"md\" | \"lg\"",
     "LogoTextPlacement": "\"end\" | \"bottom\"",
     "FlowCanvasSelection": "{ type: \"node\" | \"edge\"; id: string; } | null",
@@ -5426,7 +5447,7 @@
     "RichDoc": "{ blocks: Block[] }",
     "RenderLink": "(link: RichTextLink, defaultNode: ReactNode) => ReactNode",
     "RenderMention": "(mention: RichTextMention, defaultNode: ReactNode) => ReactNode",
-    "TextAs": "\"div\" | \"span\" | \"label\" | \"p\"",
+    "TextAs": "\"div\" | \"label\" | \"p\" | \"span\"",
     "TextSize": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"inherit\"",
     "TextTone": "\"success\" | \"warning\" | \"danger\" | \"accent\" | \"default\" | \"muted\" | \"subtle\"",
     "TextWeight": "\"regular\" | \"medium\" | \"semibold\" | \"bold\"",

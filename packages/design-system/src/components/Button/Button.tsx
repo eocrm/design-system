@@ -1,4 +1,11 @@
-import { forwardRef, type ButtonHTMLAttributes } from 'react';
+import {
+  forwardRef,
+  type ComponentPropsWithRef,
+  type ComponentPropsWithoutRef,
+  type ElementType,
+  type ForwardedRef,
+  type ReactElement,
+} from 'react';
 import clsx from 'clsx';
 import styles from './Button.module.scss';
 
@@ -8,7 +15,7 @@ export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'succ
 /** Control height. See ButtonProps#size for when to use each. */
 export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg';
 
-export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+interface ButtonOwnProps {
   /**
    * Visual variant.
    * - `primary` (default) — the section's main action. Use **one** per page section.
@@ -59,9 +66,60 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 /**
+ * Polymorphic props helper. Intersects the component's own props with the
+ * underlying element's props (minus what we own), plus the `as` selector.
+ * Mirrors `<Link>`.
+ */
+type PolymorphicProps<C extends ElementType, P> = P & {
+  /**
+   * Render a different element — the case that matters is `as="a"` with
+   * `href`, for a link that must LOOK like a button (an external console, a
+   * download, an IdP hand-off). The element named here is what actually
+   * renders, and its own attributes are typed: `href` is available when
+   * `as="a"` and rejected otherwise.
+   *
+   * Reach for `<Link>` first. `<Link>` is link-SHAPED navigation — inline text
+   * in a sentence, a table cell, a breadcrumb. `<Button as="a">` is for a
+   * destination that sits in a row of buttons and must carry their weight.
+   * Either way the element is a real anchor, so assistive tech announces a
+   * link and the browser gives middle-click, "open in new tab", and the status
+   * bar preview — none of which a `<button onClick={() => navigate()}>` has.
+   *
+   * `type="button"` is emitted only for a real `<button>`; an anchor never
+   * gets it. Everything else — variant, size, `iconOnly`, `selected`, the
+   * focus ring — is unchanged.
+   *
+   * @default 'button'
+   */
+  as?: C;
+} & Omit<ComponentPropsWithoutRef<C>, keyof P | 'as'>;
+
+/**
+ * Public Button prop type. Generic `C` defaults to `'button'`, so a Button
+ * with no `as` accepts exactly the `<button>` attributes it always did — and
+ * still rejects `href`. With `as="a"`, the anchor's attributes (`href`,
+ * `target`, `rel`, `download`) become available instead.
+ */
+export type ButtonProps<C extends ElementType = 'button'> = PolymorphicProps<C, ButtonOwnProps>;
+
+/**
+ * Internal generic-preserving signature. React's `forwardRef` strips the
+ * generic from the returned component, so it is re-attached via the cast on
+ * the export below.
+ */
+type ButtonComponent = <C extends ElementType = 'button'>(
+  props: ButtonProps<C> & { ref?: ComponentPropsWithRef<C>['ref'] },
+) => ReactElement | null;
+
+/**
  * Action trigger. Renders a `<button type="button">` and forwards refs and
  * HTML attributes. Defaults to `type="button"` so it won't submit ancestor
  * forms unless you explicitly pass `type="submit"`.
+ *
+ * Polymorphic via `as`: `<Button as="a" href="…">` renders a real `<a>`, so it
+ * navigates and announces as a link, and `type="button"` is not emitted. Use
+ * it for a destination that must look like a button; use `<Link>` for
+ * link-shaped navigation in running text.
  *
  * Pass `aria-disabled="true"` when an unavailable action must remain focusable
  * (for example, so keyboard users can discover it and its explanation). This
@@ -82,6 +140,14 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  * // xs, 32×32 at md, etc.) and `aria-label` so screen readers announce it.
  * <Button size="xs" variant="ghost" iconOnly aria-label="Remove">
  *   <X size={12} />
+ * </Button>
+ *
+ * @example
+ * // A destination that must look like a button — renders a real <a>, so it
+ * // navigates, announces as a link, and supports middle-click / open-in-new-tab.
+ * // `rel="noreferrer"` belongs with `target="_blank"`, as on any anchor.
+ * <Button as="a" href={idpConsoleUrl} target="_blank" rel="noreferrer" variant="secondary">
+ *   Open identity console
  * </Button>
  *
  * @example
@@ -128,7 +194,9 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  * </Button>
  *
  * @remarks When NOT to use
- * - Navigation to another URL → use a router-aware `<Link>` (not yet shipped).
+ * - Navigation in running text, a table cell, or a breadcrumb → use `<Link>`
+ *   (which is itself polymorphic: `<Link as={NavLink} to="…">`). Reserve
+ *   `<Button as="a">` for a destination that belongs in a row of buttons.
  * - Toggle state (on/off) → use `Switch` or `Checkbox` (not yet shipped), not
  *   a Button with internal state.
  * - Mutually exclusive choices → use `<ButtonGroup>`, which supplies the
@@ -162,25 +230,39 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
  *   do not add it to menu or disclosure triggers.
  * - ❌ Assuming `aria-disabled="true"` blocks activation. It preserves native
  *   focusability and pointer events; guard the consumer's event handler.
+ * - ❌ `<Button onClick={() => (window.location.href = url)}>` for navigation.
+ *   It announces as a button, and there is no middle-click, no open-in-new-tab
+ *   and no status-bar preview. Use `<Button as="a" href={url}>`.
+ * - ❌ `<Button as="a">` with no `href`. An anchor without one is neither
+ *   focusable nor activatable — TypeScript cannot reject it, because `href` is
+ *   optional on every anchor.
  */
-export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+export const Button = forwardRef(function Button<C extends ElementType = 'button'>(
   {
+    as,
     variant = 'primary',
     size = 'md',
     iconOnly = false,
     selected,
     className,
-    type = 'button',
     ...props
-  },
-  ref,
+  }: ButtonProps<C>,
+  ref: ForwardedRef<Element>,
 ) {
+  const Component = (as || 'button') as ElementType;
   const paintsSelected = selected && (variant === 'secondary' || variant === 'ghost');
 
+  // `type="button"` is a <button>-only guarantee — it stops the button
+  // submitting an ancestor form. An anchor's `type` is a MIME hint, so
+  // emitting the default there would be wrong; #530 rendered a <button> with a
+  // dead `href` for the mirror-image reason. A consumer-supplied `type` still
+  // wins: it rides along in {...props}, spread last.
+  const defaultType = Component === 'button' ? { type: 'button' as const } : undefined;
+
   return (
-    <button
+    <Component
       ref={ref}
-      type={type}
+      {...defaultType}
       className={clsx(
         styles.button,
         styles[variant],
@@ -193,4 +275,4 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
       {...props}
     />
   );
-});
+}) as ButtonComponent;

@@ -11,6 +11,10 @@
   font-family: inherit;
   font-weight: var(--button-font-weight);
   cursor: pointer;
+
+  // `<Button as="a" href>` renders a real anchor (#530), which the UA
+  // underlines. A button never is, at any variant.
+  text-decoration: none;
   white-space: nowrap;
   user-select: none;
   transition:
