@@ -38,6 +38,7 @@ import { PasswordStrengthMeterDemo } from './pages/components/PasswordStrengthMe
 import { PhoneInputDemo } from './pages/components/PhoneInputDemo';
 import { PaginationDemo } from './pages/components/PaginationDemo';
 import { ProgressDemo } from './pages/components/ProgressDemo';
+import { QrCodeDemo } from './pages/components/QrCodeDemo';
 import { CircularProgressDemo } from './pages/components/CircularProgressDemo';
 import { SelectDemo } from './pages/components/SelectDemo';
 import { SkeletonDemo } from './pages/components/SkeletonDemo';
@@ -159,6 +160,7 @@ export default function App() {
             <Route path="/components/pagination" element={<PaginationDemo />} />
             <Route path="/components/person-display" element={<PersonDisplayDemo />} />
             <Route path="/components/progress" element={<ProgressDemo />} />
+            <Route path="/components/qr-code" element={<QrCodeDemo />} />
             <Route path="/components/circular-progress" element={<CircularProgressDemo />} />
             <Route path="/components/otp-input" element={<OtpInputDemo />} />
             <Route path="/components/password-input" element={<PasswordInputDemo />} />

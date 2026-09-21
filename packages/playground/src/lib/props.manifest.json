@@ -3799,6 +3799,38 @@
         }
       ]
     },
+    "QrCode": {
+      "props": [
+        {
+          "name": "value",
+          "type": "string",
+          "required": true,
+          "default": "",
+          "description": "The string to encode — a URL, an ID, a vCard. Encoded as UTF-8, so any\nscript works."
+        },
+        {
+          "name": "logo",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "URL of a **single-colour** SVG to place in the centre. It is used as a CSS\nalpha mask and filled with the code's current ink, so it recolours itself\nin both themes and in the inverted state — the file's own colours are\ndiscarded. Full-colour artwork and photographs are not supported.\n\nSetting this also raises the default `level` to `'H'`, because the\npunch-out destroys modules outright."
+        },
+        {
+          "name": "level",
+          "type": "QrCodeLevel",
+          "required": false,
+          "default": "",
+          "description": "Error-correction level — how much damage the symbol survives. `'L'` ~7%,\n`'M'` ~15%, `'Q'` ~25%, `'H'` ~30%. Higher levels need a larger symbol for\nthe same data. Defaults to `'H'` when `logo` is set, `'M'` otherwise."
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Accessible name. Defaults to a localized \"QR code\", which is rarely enough\n— a screen-reader user cannot scan the image, so pass what it points at:\n`label=\"QR code for invoice INV-123\"`."
+        }
+      ]
+    },
     "Radio": {
       "props": [
         {
@@ -5383,6 +5415,7 @@
     "ImageObjectFit": "\"fill\" | \"none\" | \"cover\" | \"contain\" | \"scale-down\"",
     "ImageRadius": "\"sm\" | \"md\" | \"lg\" | \"none\" | \"full\"",
     "ImageSize": "\"sm\" | \"md\" | \"lg\" | \"xs\"",
+    "QrCodeLevel": "\"L\" | \"M\" | \"Q\" | \"H\"",
     "MediaTileReveal": "\"visible\" | \"hover\" | \"focus\"",
     "MediaTileRadius": "\"sm\" | \"md\" | \"lg\" | \"none\"",
     "CropArea": "{ x: number; y: number; width: number; height: number }",

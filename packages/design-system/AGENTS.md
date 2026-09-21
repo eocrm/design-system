@@ -3143,6 +3143,23 @@ backgrounds → `background-image`; icons → lucide / inline SVG.
 />
 ```
 
+### `<QrCode>` — scannable QR code
+
+```tsx
+<QrCode value="https://example.com/i/42" label="QR code for invoice 42" />;
+<QrCode value={inviteUrl} logo={brandMark} label="Invite link" />;
+```
+
+- Encodes `value` as UTF-8, so Cyrillic and every other script work.
+- **Follows the theme** — dark modules on light paper in light mode, inverted in dark. Clicking the code swaps ink and paper back, for a scanner that refuses an inverted symbol. That click is the component's only interaction.
+- The whole code is a `<button>` with `aria-pressed`. **Never nest it inside another clickable element** — invalid HTML, and it swallows the outer click.
+- `logo` is a URL used as a CSS **alpha mask** filled with the current ink, so the mark recolours itself in every theme and inverted state. It keeps the silhouette and discards the file's colours — single-colour SVG only, no photographs. Setting it raises the default `level` to `'H'`.
+- `level`: `'L'` / `'M'` (default) / `'Q'` / `'H'`. Higher correction survives more damage but needs a bigger symbol for the same data.
+- **No `size` prop** — it fills its container's width; the parent owns the box. Wrap in `<Constrain>` or a sized element, and keep it above ~100px or a dense symbol stops resolving.
+- An empty `value`, or one too long to encode, renders a bordered "unavailable" plate instead of throwing — a long CRM field cannot white-screen a page.
+- Always render the underlying URL as selectable text too. The code is unusable to a screen-reader user, and to anyone reading on the device that shows it.
+- Treat the value as public. Anyone who can see the screen can scan it.
+
 ### `<MediaTile>` — media tile with revealed overlay bars
 
 `<MediaTile media title meta actions>` — a full-bleed `media` body (an `<Image>` or a file-type icon) with a top bar (`title` + `meta`) and a bottom bar (`actions`), each over a gradient gray scrim, **revealed on hover / keyboard focus**. Drop one per tile in a `<Masonry>` / `<Grid>` for a gallery or file grid. The reveal uses `opacity` (not `visibility`), so the action buttons stay tabbable — tabbing in fires `:focus-within` and reveals the bar.

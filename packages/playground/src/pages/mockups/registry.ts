@@ -70,6 +70,7 @@ export type ComponentName =
   | 'PersonDisplay'
   | 'Popover'
   | 'Progress'
+  | 'QrCode'
   | 'Radio'
   | 'RadioGroup'
   | 'Rail'
