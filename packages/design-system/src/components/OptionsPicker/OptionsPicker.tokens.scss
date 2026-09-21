@@ -40,10 +40,10 @@
   // this surface: the value that would have reached it collapses subtle into
   // muted. So this is the consumer half of that fix. The hint now resolves to
   // --color-fg-muted, which the pinned 'muted text on muted bg' row in
-  // contrast.test.ts holds at 4.5:1. The JSX prop stays tone="subtle" — the
-  // colour never came from Text's TONE_CLASS lookup, only from this token
-  // overriding --text-fg-subtle underneath it, so retuning here is the whole
-  // fix.
+  // contrast.test.ts holds at 4.5:1. #521 then made that collapse the library
+  // decision, so the JSX prop is tone="muted" and this token overrides
+  // --text-fg-muted; the rendered colour is unchanged, the indirection through
+  // a deprecated tone is gone.
   // Hover keeps --color-fg from #510. Rest is now conformant at 4.87, closing
   // the old spread against the unchanged 11.29 hover value.
   // @contrast --color-fg-muted on --color-bg-muted = 5.10:1 light

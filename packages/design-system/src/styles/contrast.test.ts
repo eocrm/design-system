@@ -482,6 +482,85 @@ function deltaE(a: string, b: string): number {
 }
 
 /**
+ * #521. The neutral FOREGROUND ramp, gated the way the hover steps and the
+ * presence dots are — because nothing measured this pair, which is exactly how
+ * it drifted.
+ *
+ * `--color-fg-subtle` and `--color-fg-muted` fell to OKLab ΔE 0.0261 in light
+ * (0.0387 before #511 moved subtle one notch darker for AA). That is a third of
+ * the 0.065 floor this file already uses, and a browser render at 11px and 14px
+ * on all four neutral surfaces confirmed the number: in light the two are
+ * indistinguishable, in dark (0.0707) they still read as a step. A tier that
+ * exists in one theme only is not a tier, so `tone="subtle"` was deprecated to
+ * resolve to `muted`.
+ *
+ * #522's retune of light `--color-fg-muted`, one commit earlier on this branch,
+ * widens that pair back to **0.0365** — it moved muted AWAY from subtle.
+ * Recorded rather than glossed, because it is the one number that could be read
+ * as undoing the case. It does not. 0.0365 is still barely over half the 0.065
+ * floor, and it sits just under the 0.0387 that #520's reviewer called a
+ * visible step at a DIFFERENT subtle value (#6b778c, since retired), so nobody
+ * has rendered today's pair and found it distinct. The systemic argument is
+ * unchanged either way: #520 had to re-point six consumers from subtle to
+ * muted, and `--color-fg-subtle` is still sub-AA on `--color-bg-muted`, so the
+ * tone could never be used on a third of the library's surfaces. If a future
+ * render disagrees, this is the number to re-open it with.
+ *
+ * So the gate has two halves, and both are needed. The first pins the tiers
+ * that DO remain, so the ramp cannot quietly lose another one. The second pins
+ * the collapse itself: `tone="subtle"` must keep resolving to the muted value,
+ * or the deprecation silently un-deprecates and the library is back to shipping
+ * two names for one tier.
+ *
+ * Read the first half as a tripwire with real headroom, unlike the hover-step
+ * floor above: the tightest remaining tier is fg→muted in dark at 0.1940, three
+ * times the floor (light is 0.2278 after #522's retune, down from 0.2385 — it
+ * spends a little of the primary/secondary gap, and 0.2278 is still ample). That is deliberate. 0.065 is the perceptibility threshold
+ * this repo has already argued for twice; anchoring tighter — to 0.19 — would
+ * fail on any legitimate retune and get the gate deleted, while anchoring to
+ * what collapsed (0.0261) would certify the defect.
+ *
+ * `--color-fg-subtle` is NOT in the first half, and its absence is the finding,
+ * not an oversight: it is no longer a distinct tier. It stays in the token file
+ * because Input's placeholder, LiquidEditor's placeholder, menu group label and
+ * menu item type, DefinitionList's icon, OptionsPicker's search icon,
+ * FileUpload's icons and row meta, DropdownMenu's icon and the scrollbar thumb
+ * still reach for it directly — retiring a primitive is a separate decision
+ * from retiring a tone.
+ */
+describe('the neutral foreground ramp keeps its remaining tiers', () => {
+  // Two pairs, not three. #522 fixed AA by MOVING --color-fg-muted rather than
+  // minting a recessive neutral beside it, so there is no third tier to gate.
+  // That is the shape this gate wants: a token ΔE 0.0109 from muted would have
+  // had to be excluded from this list by hand, which is the same claim-a-tier-
+  // you-do-not-have mistake tone="subtle" is being retired for.
+  const TIERS: [string, string][] = [
+    ['--color-fg', '--color-fg-muted'],
+    ['--color-fg-muted', '--color-fg-disabled'],
+  ];
+
+  it.each([
+    ['light', TOKENS],
+    ['dark', DARK],
+  ])('every neutral foreground tier is a perceptible step in %s', (_theme, source) => {
+    for (const [a, b] of TIERS) {
+      expect(
+        deltaE(tokenValue(a, source), tokenValue(b, source)),
+        `${a} vs ${b}`,
+      ).toBeGreaterThanOrEqual(0.065);
+    }
+  });
+
+  it.each([
+    ['../components/Text/Text.tokens.scss', '--text-fg-subtle', '--text-fg-muted'],
+    ['../components/Title/Title.tokens.scss', '--title-fg-subtle', '--title-fg-muted'],
+  ])('%s collapses the deprecated subtle tone into muted', (file, subtle, muted) => {
+    const source = readFileSync(resolve(__dirname, file), 'utf8');
+    expect(declaredValue(subtle, source), `${subtle} resolves to ${muted}`).toBe(`var(${muted})`);
+  });
+});
+
+/**
  * Two invariants that were invisible to this whole suite until a retune broke
  * both of them at once. Neither is about contrast — they are about a token
  * having MORE ROLES than the one being measured, which is the failure this file

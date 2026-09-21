@@ -94,12 +94,15 @@
   padding: var(--options-picker-group-header-padding-y) var(--options-picker-group-header-padding-x);
   background: var(--options-picker-group-header-bg);
 
-  // Overrides the tone token the nested <Text tone="subtle"> resolves through,
+  // Overrides the tone token the nested <Text tone="muted"> resolves through,
   // rather than changing its prop, so the hint has a real base token for the
-  // #504 hover gate to measure against. Resolves to --color-fg-muted as of
-  // #511 (was --color-fg-subtle, Text's own default) — the resting appearance
-  // is exactly what #511 changed; see OptionsPicker.tokens.scss for why.
-  --text-fg-subtle: var(--options-picker-group-header-hint-fg);
+  // #504 hover gate to measure against. This override is scoped to the header,
+  // so it retones the hint without touching any other muted text on the page.
+  // #521 moved both the prop and this token off `subtle`: the hint's resting
+  // value had already been --color-fg-muted since #511, and `subtle` now
+  // resolves to muted anyway, so the indirection through a deprecated tone was
+  // describing a step that no longer exists. See OptionsPicker.tokens.scss.
+  --text-fg-muted: var(--options-picker-group-header-hint-fg);
 }
 
 // Bottom border in the namespace's palette color. The width + style come
@@ -167,7 +170,7 @@ button.groupHeader {
 
     // --color-bg-muted-hover is dark enough that the muted hint falls under AA
     // on it (#504); see the token's own @contrast annotations.
-    --text-fg-subtle: var(--options-picker-group-header-hint-fg-hover);
+    --text-fg-muted: var(--options-picker-group-header-hint-fg-hover);
   }
 
   // INSET. `.list` above is `overflow-y: auto` — which computes `overflow-x`

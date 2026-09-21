@@ -612,7 +612,7 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
                           {g.label}
                         </Text>
                         {g.hint && (
-                          <Text size="xs" tone="subtle" className={styles.groupHint}>
+                          <Text size="xs" tone="muted" className={styles.groupHint}>
                             {g.hint}
                           </Text>
                         )}
@@ -624,7 +624,7 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
                           {g.label}
                         </Text>
                         {g.hint && (
-                          <Text size="xs" tone="subtle" className={styles.groupHint}>
+                          <Text size="xs" tone="muted" className={styles.groupHint}>
                             {g.hint}
                           </Text>
                         )}

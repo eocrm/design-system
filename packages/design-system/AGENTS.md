@@ -197,7 +197,7 @@ Each component is fully JSDoc'd. Hover any usage in your editor for inline docs 
 
 - `order: 1 | 2 | 3 | 4 | 5 | 6` — required. Renders `<h1>` … `<h6>` AND drives the default visual size.
 - Default size map: `1→3xl`, `2→2xl`, `3→xl`, `4→lg`, `5→md`, `6→sm`. Override with `size` (same vocab: `xs | sm | md | lg | xl | 2xl | 3xl`).
-- `tone`: `default | muted | subtle | accent | danger`. `subtle` is `--color-bg`/`--color-bg-subtle` text ONLY — fails AA on `--color-bg-muted`; use `muted` there (#511).
+- `tone`: `default | muted | subtle | accent | danger`. **`subtle` is deprecated (#521) and resolves to `muted`** — the two neutrals measured OKLab ΔE 0.0261 apart in light (0.0365 after #522's retune, still about half the 0.065 perceptibility floor) — one visible tier under two names. Use `muted`. The prop still works, so nothing breaks.
 - `weight`: `regular | medium | semibold | bold` (default `semibold`).
 - `truncate`: single-line ellipsis.
 - **Use `<Title>` for every heading in your UI.** Raw `<h1>` / `<h2>` is forbidden.
@@ -214,7 +214,7 @@ Each component is fully JSDoc'd. Hover any usage in your editor for inline docs 
 
 - `as: 'p' | 'span' | 'div' | 'label'` (default `'p'`). Constrained string union — no polymorphic generic.
 - `size: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'inherit'` (default `'md'`).
-- `tone`: `default | muted | subtle | accent | danger | success | warning`. `subtle` is `--color-bg`/`--color-bg-subtle` text ONLY — fails AA on `--color-bg-muted`; use `muted` there (#511).
+- `tone`: `default | muted | subtle | accent | danger | success | warning`. **`subtle` is deprecated (#521) and resolves to `muted`** — the two neutrals measured OKLab ΔE 0.0261 apart in light (0.0365 after #522's retune, still about half the 0.065 perceptibility floor) — one visible tier under two names. Use `muted`. The prop still works, so nothing breaks.
 - `weight`: `regular | medium | semibold | bold` (default `regular`).
 - `align`: `left | center | right` (default `left`).
 - `truncate`: single-line ellipsis. `lineClamp: number`: multi-line ellipsis. `lineClamp` overrides `truncate`.

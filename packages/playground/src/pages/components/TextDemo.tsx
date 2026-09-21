@@ -74,7 +74,7 @@ export function Demo() {
 
       <Example
         title="Tones"
-        description="Seven tones: default + muted + subtle (foreground variants), accent, plus state-coded danger / success / warning."
+        description="Seven tones: default + muted (foreground variants), accent, plus state-coded danger / success / warning. `subtle` is deprecated (#521) and resolves to `muted` — it renders identically below, which is the point: the two neutrals were one visible tier under two names."
         code={`import { Stack, Text } from '@eocrm/design-system';
 
 export function Demo() {
@@ -82,7 +82,7 @@ export function Demo() {
     <Stack gap="xs">
       <Text tone="default">default</Text>
       <Text tone="muted">muted</Text>
-      <Text tone="subtle">subtle</Text>
+      <Text tone="subtle">subtle (deprecated → muted)</Text>
       <Text tone="accent">accent</Text>
       <Text tone="danger">danger</Text>
       <Text tone="success">success</Text>
@@ -94,7 +94,7 @@ export function Demo() {
         <Stack gap="xs">
           <Text tone="default">default</Text>
           <Text tone="muted">muted</Text>
-          <Text tone="subtle">subtle</Text>
+          <Text tone="subtle">subtle (deprecated → muted)</Text>
           <Text tone="accent">accent</Text>
           <Text tone="danger">danger</Text>
           <Text tone="success">success</Text>

@@ -8,8 +8,17 @@ export type TitleOrder = 1 | 2 | 3 | 4 | 5 | 6;
 /** Visual size override. When omitted, derived from `order` (1→3xl, 2→2xl, 3→xl, 4→lg, 5→md, 6→sm). */
 export type TitleSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl';
 
-/** Color tone. Tone maps to a `--color-*` token. */
-export type TitleTone = 'default' | 'muted' | 'subtle' | 'accent' | 'danger';
+/**
+ * Color tone. Tone maps to a `--color-*` token. `'subtle'` is deprecated and
+ * resolves to `'muted'` — see {@link TitleProps.tone}.
+ */
+export type TitleTone =
+  | 'default'
+  | 'muted'
+  /** @deprecated Resolves to `muted` (#521). Use `muted`. */
+  | 'subtle'
+  | 'accent'
+  | 'danger';
 
 /** Font weight. */
 export type TitleWeight = 'regular' | 'medium' | 'semibold' | 'bold';
@@ -31,11 +40,13 @@ export interface TitleProps extends HTMLAttributes<HTMLHeadingElement> {
    * Color tone. Defaults to `'default'` (full foreground).
    * - `default` — `--color-fg`
    * - `muted` — `--color-fg-muted`
-   * - `subtle` — `--color-fg-subtle`. Certified for AA text contrast on
-   *   `--color-bg` and `--color-bg-subtle` ONLY (#511). Never use on
-   *   `--color-bg-muted` — it falls below 4.5:1 there in both themes, and no
-   *   neutral tone on this ramp clears it without collapsing into
-   *   `tone="muted"`. Use `tone="muted"` on `--color-bg-muted` instead.
+   * - `subtle` — **@deprecated (#521): resolves to `muted`. Use `muted`.**
+   *   `--color-fg-subtle` and `--color-fg-muted` measured OKLab ΔE 0.0261 apart
+   *   in light theme — 0.0365 after #522 retuned `--color-fg-muted` — against
+   *   the 0.065 floor this library's perceptual gates use. One visible tier
+   *   shipped under two names. `--title-fg-subtle` now
+   *   aliases `--title-fg-muted`, so the prop keeps working and no consumer
+   *   breaks; it just stops promising a distinction nobody can see.
    * - `accent` — `--color-accent`
    * - `danger` — `--color-danger`
    */

@@ -276,7 +276,7 @@ export function Demo() {
         <DefinitionList.Description>
           <Cluster gap="xs" align="center">
             <Badge tone="success">Active</Badge>
-            <Text as="span" size="sm" tone="subtle">since Jan 2024</Text>
+            <Text as="span" size="sm" tone="muted">since Jan 2024</Text>
           </Cluster>
         </DefinitionList.Description>
       </DefinitionList.Item>
@@ -307,7 +307,7 @@ export function Demo() {
             <DefinitionList.Description>
               <Cluster gap="xs" align="center">
                 <Badge tone="success">Active</Badge>
-                <Text as="span" size="sm" tone="subtle">
+                <Text as="span" size="sm" tone="muted">
                   since Jan 2024
                 </Text>
               </Cluster>

@@ -25,7 +25,21 @@
   // Tone foregrounds
   --text-fg-default: var(--color-fg);
   --text-fg-muted: var(--color-fg-muted);
-  --text-fg-subtle: var(--color-fg-subtle);
+
+  // DEPRECATED (#521). tone="subtle" resolves to the muted treatment: OKLab dE
+  // between --color-fg-subtle and --color-fg-muted measured 0.0261 in light
+  // (0.0365 once #522 retuned --color-fg-muted, still barely over half the
+  // 0.065 floor this repo's perceptual gates use), so the library had been
+  // shipping one visible tier under two names. Dark (0.0707) still read as a
+  // step, but a tier that exists in one theme only is not a tier.
+  // The token is kept, and kept as its OWN declaration aliasing the muted one,
+  // rather than deleting it or pointing .toneSubtle at --text-fg-muted: it is a
+  // published theming surface (OptionsPicker used to re-point it, and consumers
+  // may), so collapsing it here keeps every existing override working while the
+  // default stops claiming a distinction nobody can see. --color-fg-subtle
+  // itself is untouched -- Input's placeholder, LiquidEditor and the scrollbar
+  // still use it directly, and retiring a primitive is a separate decision.
+  --text-fg-subtle: var(--text-fg-muted);
   --text-fg-accent: var(--color-accent);
   --text-fg-danger: var(--color-danger);
   --text-fg-success: var(--color-success);

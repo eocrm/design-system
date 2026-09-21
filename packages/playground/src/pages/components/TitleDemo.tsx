@@ -69,7 +69,7 @@ export function Demo() {
 
       <Example
         title="Tones"
-        description="Five tones map to --color-fg / -muted / -subtle / --color-accent / --color-danger."
+        description="Five tones map to --color-fg / -muted / --color-accent / --color-danger. `subtle` is deprecated (#521) and resolves to `muted` — it renders identically below, which is the point: the two neutrals were one visible tier under two names."
         code={`import { Stack, Title } from '@eocrm/design-system';
 
 export function Demo() {
@@ -77,7 +77,7 @@ export function Demo() {
     <Stack gap="sm">
       <Title order={3} tone="default">default</Title>
       <Title order={3} tone="muted">muted</Title>
-      <Title order={3} tone="subtle">subtle</Title>
+      <Title order={3} tone="subtle">subtle (deprecated → muted)</Title>
       <Title order={3} tone="accent">accent</Title>
       <Title order={3} tone="danger">danger</Title>
     </Stack>
@@ -92,7 +92,7 @@ export function Demo() {
             muted
           </Title>
           <Title order={3} tone="subtle">
-            subtle
+            subtle (deprecated → muted)
           </Title>
           <Title order={3} tone="accent">
             accent

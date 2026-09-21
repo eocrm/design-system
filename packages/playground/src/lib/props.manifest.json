@@ -4911,7 +4911,7 @@
           "type": "TextTone",
           "required": false,
           "default": "",
-          "description": "Color tone. Defaults to `'default'`.\n- `default` — `--color-fg`\n- `muted` — `--color-fg-muted` (for secondary copy)\n- `subtle` — `--color-fg-subtle` (for tertiary metadata). Certified for\n  AA text contrast on `--color-bg` and `--color-bg-subtle` ONLY (#511).\n  Never use on `--color-bg-muted` — it falls below 4.5:1 there in both\n  themes, and no neutral tone on this ramp clears it without collapsing\n  into `tone=\"muted\"`. Use `tone=\"muted\"` on `--color-bg-muted` instead.\n- `accent` — `--color-accent`\n- `danger` / `success` / `warning` — state-coded text"
+          "description": "Color tone. Defaults to `'default'`.\n- `default` — `--color-fg`\n- `muted` — `--color-fg-muted` (for secondary copy)\n- `subtle` — **@deprecated (#521): resolves to `muted`. Use `muted`.**\n  `--color-fg-subtle` and `--color-fg-muted` measured OKLab ΔE 0.0261 apart\n  in light theme — 0.0365 after #522 retuned `--color-fg-muted` — against\n  the 0.065 floor this library's perceptual gates use. One visible tier\n  shipped under two names. `--text-fg-subtle` now\n  aliases `--text-fg-muted`, so the prop keeps working and no consumer\n  breaks; it just stops promising a distinction nobody can see.\n- `accent` — `--color-accent`\n- `danger` / `success` / `warning` — state-coded text"
         },
         {
           "name": "weight",
@@ -5176,7 +5176,7 @@
           "type": "TitleTone",
           "required": false,
           "default": "",
-          "description": "Color tone. Defaults to `'default'` (full foreground).\n- `default` — `--color-fg`\n- `muted` — `--color-fg-muted`\n- `subtle` — `--color-fg-subtle`. Certified for AA text contrast on\n  `--color-bg` and `--color-bg-subtle` ONLY (#511). Never use on\n  `--color-bg-muted` — it falls below 4.5:1 there in both themes, and no\n  neutral tone on this ramp clears it without collapsing into\n  `tone=\"muted\"`. Use `tone=\"muted\"` on `--color-bg-muted` instead.\n- `accent` — `--color-accent`\n- `danger` — `--color-danger`"
+          "description": "Color tone. Defaults to `'default'` (full foreground).\n- `default` — `--color-fg`\n- `muted` — `--color-fg-muted`\n- `subtle` — **@deprecated (#521): resolves to `muted`. Use `muted`.**\n  `--color-fg-subtle` and `--color-fg-muted` measured OKLab ΔE 0.0261 apart\n  in light theme — 0.0365 after #522 retuned `--color-fg-muted` — against\n  the 0.065 floor this library's perceptual gates use. One visible tier\n  shipped under two names. `--title-fg-subtle` now\n  aliases `--title-fg-muted`, so the prop keeps working and no consumer\n  breaks; it just stops promising a distinction nobody can see.\n- `accent` — `--color-accent`\n- `danger` — `--color-danger`"
         },
         {
           "name": "weight",

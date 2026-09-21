@@ -13,8 +13,16 @@ export type TextAs = 'p' | 'span' | 'div' | 'label';
 /** Visual size. `'inherit'` takes font-size and line-height from the parent (inline runs inside headings). */
 export type TextSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'inherit';
 
-/** Color tone. */
-export type TextTone = 'default' | 'muted' | 'subtle' | 'accent' | 'danger' | 'success' | 'warning';
+/** Color tone. `'subtle'` is deprecated and resolves to `'muted'` — see {@link TextProps.tone}. */
+export type TextTone =
+  | 'default'
+  | 'muted'
+  /** @deprecated Resolves to `muted` (#521). Use `muted`. */
+  | 'subtle'
+  | 'accent'
+  | 'danger'
+  | 'success'
+  | 'warning';
 
 /** Font weight. */
 export type TextWeight = 'regular' | 'medium' | 'semibold' | 'bold';
@@ -55,11 +63,13 @@ export interface TextProps extends HTMLAttributes<HTMLElement> {
    * Color tone. Defaults to `'default'`.
    * - `default` — `--color-fg`
    * - `muted` — `--color-fg-muted` (for secondary copy)
-   * - `subtle` — `--color-fg-subtle` (for tertiary metadata). Certified for
-   *   AA text contrast on `--color-bg` and `--color-bg-subtle` ONLY (#511).
-   *   Never use on `--color-bg-muted` — it falls below 4.5:1 there in both
-   *   themes, and no neutral tone on this ramp clears it without collapsing
-   *   into `tone="muted"`. Use `tone="muted"` on `--color-bg-muted` instead.
+   * - `subtle` — **@deprecated (#521): resolves to `muted`. Use `muted`.**
+   *   `--color-fg-subtle` and `--color-fg-muted` measured OKLab ΔE 0.0261 apart
+   *   in light theme — 0.0365 after #522 retuned `--color-fg-muted` — against
+   *   the 0.065 floor this library's perceptual gates use. One visible tier
+   *   shipped under two names. `--text-fg-subtle` now
+   *   aliases `--text-fg-muted`, so the prop keeps working and no consumer
+   *   breaks; it just stops promising a distinction nobody can see.
    * - `accent` — `--color-accent`
    * - `danger` / `success` / `warning` — state-coded text
    */
