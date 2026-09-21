@@ -673,8 +673,10 @@ describe('<Modal>', () => {
     const user = userEvent.setup();
     function EmptyRefHarness({ detached }: { detached: boolean }) {
       const [open, setOpen] = useState(false);
-      const returnFocusRef = useRef<HTMLElement | null>(null);
-      if (detached) returnFocusRef.current = document.createElement('button');
+      // Initialised, not mutated during render: `detached` is fixed per mount.
+      const returnFocusRef = useRef<HTMLElement | null>(
+        detached ? document.createElement('button') : null,
+      );
       return (
         <>
           <button onClick={() => setOpen(true)} data-testid="trigger">
