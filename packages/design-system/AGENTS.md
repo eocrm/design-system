@@ -418,7 +418,7 @@ import { Link as RouterLink } from 'react-router-dom';
 - **Three variants**:
   - `default`: accent color, hover-underline. Inline CTA ("View all →").
   - `muted`: muted color, hover-accent. Low-emphasis nav (breadcrumb-style).
-  - `subtle`: foreground color, hover-accent + underline. Dense-surface name links.
+  - `subtle`: foreground color, hover-accent + underline. Dense-surface name links. **Not deprecated** — this is `Link`'s own variant and is unrelated to `Text`/`Title`'s `tone="subtle"`, which #521 DID deprecate. Same word, opposite status: a grep for "subtle deprecated" will land on the tone, and `PersonDisplay.Name` uses this variant deliberately.
 - **No `disabled` state** — render `<span>` directly for non-clickable labels.
 
 #### When NOT to use
@@ -1921,7 +1921,7 @@ import { Divider } from '@eocrm/design-system';
 
 - Compound: `<PersonDisplay>` + `<PersonDisplay.Avatar>` + `<PersonDisplay.Name>` + repeating `<PersonDisplay.Description>`.
 - `size`: `'sm'` / `'md'` (default) / `'lg'`. Propagates to Avatar size and Text scales via context. Don't pass `size` to `PersonDisplay.Avatar` directly — Root controls it (the prop is omitted from `PersonDisplayAvatarProps` by type).
-- `<PersonDisplay.Name href="...">` renders the name as a `<Link variant="subtle">` (real `<a>`). Omit `href` for read-only displays (audit actor, activity timeline).
+- `<PersonDisplay.Name href="...">` renders the name as a `<Link variant="subtle">` (real `<a>`) — `Link`'s `variant="subtle"` is **not** deprecated, unlike `Text`/`Title`'s `tone="subtle"` (#521); do not "fix" it. Omit `href` for read-only displays (audit actor, activity timeline).
 - `<PersonDisplay.Description>` is muted text; repeat for additional lines. Children can be `ReactNode` — e.g. `admin@acme.com <Badge tone="warning" size="sm">impersonating</Badge>` to inline a marker.
 - **A Description clips itself on the inline axis** (`overflow-x: clip`, `white-space: nowrap`), so a long unbroken value cannot paint outside a narrow container such as a DataTable stacked card (#527). Put **interactive** content in `<PersonDisplay.Name href=…>`, which does not clip: a control flush with the Description line's left or right edge loses those bands of its focus ring, and that residual is recorded in `tests/focus-ring-geometry.baseline.json` rather than hidden. The block axis is deliberately left `visible`, so a ring is never clipped top or bottom.
 - All Avatar props (`name`, `src`, `status`, `tooltip`) flow through `<PersonDisplay.Avatar>` except `size`.

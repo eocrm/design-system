@@ -1166,31 +1166,47 @@ describe('a focus ring is not suppressed by a rule shared with :hover', () => {
     expect(styleFiles.length).toBeGreaterThan(50);
   });
 
+  // Selector list and nesting both come from `scssRules` — an SCSS
+  // `&:hover, &:focus-visible` block has both pseudos in its own selector
+  // list, so it is caught without resolving the parent. See that helper for
+  // why the prefix is a lookbehind: a consuming group silently dropped
+  // Slider's `.thumb:hover, .thumb:focus-visible` from this very scan.
+  const offendersIn = (code: string): string[] =>
+    scssRules(stripScssComments(code))
+      .filter(
+        ([selector, body]) =>
+          /:hover/.test(selector) &&
+          /:focus-visible/.test(selector) &&
+          /(^|[;\s])outline:\s*none/.test(body),
+      )
+      .map(([selector]) => selector);
+
+  it('the scan itself can fail', () => {
+    // Guards the guard. This gate had no control at all, and this package
+    // shipped `0 * minOpened` — an assertion that read correctly and checked
+    // nothing — so "the regex looks right" is not evidence any more.
+    expect(offendersIn('.a:hover, .a:focus-visible { outline: none; }')).toEqual([
+      '.a:hover, .a:focus-visible',
+    ]);
+    expect(offendersIn('.a { &:hover, &:focus-visible { outline: none; } }')).toEqual([
+      '&:hover, &:focus-visible',
+    ]);
+    // The SHARING is the defect; suppression alone is the next gate's business.
+    expect(offendersIn('.a:focus-visible { outline: none; }')).toEqual([]);
+    expect(offendersIn('.a:hover { outline: none; }')).toEqual([]);
+    // Comments are stripped first — DataTable.module.scss carries exactly this.
+    expect(offendersIn('// .a:hover, .a:focus-visible { outline: none; }')).toEqual([]);
+    // Two DOCUMENTED blind spots, pinned so the docblock cannot quietly stop
+    // being true: only the `outline: none` spelling is matched, and a rule
+    // whose body holds a nested block is skipped entirely.
+    expect(offendersIn('.a:hover, .a:focus-visible { outline: 0; }')).toEqual([]);
+    expect(offendersIn('.a:hover, .a:focus-visible { outline: none; .i { color: red; } }')).toEqual(
+      [],
+    );
+  });
+
   it.each(styleFiles.map(({ label, code }) => [label, code]))('%s', (_label, code) => {
-    // Selector list = everything from the previous `}`/`{`/start up to the `{`
-    // that opens this block. Nesting is handled by the same scan: an SCSS
-    // `&:hover, &:focus-visible` block has both pseudos in its own selector
-    // list, so it is caught without resolving the parent.
-    const offenders: string[] = [];
-    // Lookbehind, not a consuming group: matchAll advances lastIndex past
-    // each full match, so a consuming `(^|[{};])` eats the `}` that closes
-    // one top-level sibling block and leaves it unavailable as the prefix
-    // for the very next one. That silently dropped `.thumb:hover, .thumb
-    // :focus-visible` in Slider — immediately after another closed sibling
-    // block — from the scan entirely: the engine, unable to start there,
-    // hunted forward and landed on a `;` *inside* the block's own body,
-    // which cannot be resolved either, so the whole block fell through the
-    // gap between matches. Nested cases (FileUpload's `&:hover` inside a
-    // still-open `.dropzone`) never hit this, because their prefix is an
-    // interior `;` that no earlier match ever consumed. A lookbehind lets
-    // the same character close one block and open the next.
-    for (const m of stripScssComments(code).matchAll(/(?<=^|[{};])([^{};]*?)\{([^{}]*)\}/g)) {
-      const selector = m[1]!;
-      const body = m[2]!;
-      if (!/:hover/.test(selector) || !/:focus-visible/.test(selector)) continue;
-      if (/(^|[;\s])outline:\s*none/.test(body)) offenders.push(selector.trim());
-    }
-    expect(offenders, 'shares outline:none between :hover and :focus-visible').toEqual([]);
+    expect(offendersIn(code), 'shares outline:none between :hover and :focus-visible').toEqual([]);
   });
 });
 
@@ -1215,9 +1231,14 @@ describe('a focus ring is not suppressed by a rule shared with :hover', () => {
  * WHAT IT CHECKS: every rule under `src/components` whose selector names a
  * focus pseudo (`:focus`, `:focus-visible`, `:focus-within`) must not declare
  * `outline` / `outline-width` / `outline-color` / `outline-style` with a
- * PAINTING value. `outline: none` and `outline: 0` are permitted — suppression
- * is the business of the ":hover-shared" gate above, and three components
- * suppress legitimately. The literal `outline: var(--ring-width)` form is also
+ * PAINTING value. `outline: none` and `outline: 0` are permitted here, and
+ * both are handed to the "not suppressed without a recorded reason" gate
+ * BELOW — not to the ":hover-shared" gate above, which this docblock used to
+ * name and which matches the `outline: none` spelling only, so `outline: 0`
+ * would have fallen between the two. Nothing escaped: the reason-waiver gate
+ * reads `outlineDeclarations` and catches both spellings. The hand-off was
+ * addressed to the wrong gate, which is the kind of thing a reader trusts.
+ * The literal `outline: var(--ring-width)` form is also
  * banned in any rule at all, focus-scoped or not, keeping the one axis on
  * which the old gate reached further than this one.
  *
@@ -1509,17 +1530,39 @@ describe('an outline-offset declaration does not sit in the same rule as @includ
     expect(styleFiles.length).toBeGreaterThan(50);
   });
 
-  it.each(styleFiles.map(({ label, code }) => [label, code]))('%s', (_label, code) => {
-    const offenders: string[] = [];
-    for (const m of stripScssComments(code).matchAll(/(?<=^|[{};])([^{};]*?)\{([^{}]*)\}/g)) {
-      const selector = m[1]!;
-      const body = m[2]!;
-      if (/@include\s+focus-ring/.test(body) && /(^|[;\s])outline-offset\s*:/.test(body)) {
-        offenders.push(selector.trim());
-      }
-    }
+  const offendersIn = (code: string): string[] =>
+    scssRules(stripScssComments(code))
+      .filter(
+        ([, body]) =>
+          /@include\s+focus-ring/.test(body) && /(^|[;\s])outline-offset\s*:/.test(body),
+      )
+      .map(([selector]) => selector);
+
+  it('the scan itself can fail', () => {
+    // Guards the guard — see the sibling gate above for why a regex that reads
+    // correctly is no longer taken as evidence that it fires.
+    expect(offendersIn('.a:focus-visible { @include focus-ring; outline-offset: 2px; }')).toEqual([
+      '.a:focus-visible',
+    ]);
+    // Order does not matter: a declaration BEFORE the include is just as dead.
+    expect(offendersIn('.a:focus-visible { outline-offset: 2px; @include focus-ring; }')).toEqual([
+      '.a:focus-visible',
+    ]);
+    // The sanctioned spelling.
+    expect(offendersIn('.a:focus-visible { @include focus-ring($offset: 1px); }')).toEqual([]);
+    // An outline-offset with no include beside it is not this gate's business.
+    expect(offendersIn('.a:focus-visible { outline-offset: 2px; }')).toEqual([]);
+    expect(offendersIn('// @include focus-ring; outline-offset: 2px;')).toEqual([]);
+    // The DOCUMENTED blind spot, pinned: a rule whose body holds a nested
+    // block is skipped, because `[^{}]*` cannot span into one.
     expect(
-      offenders,
+      offendersIn('.a:focus-visible { @include focus-ring; outline-offset: 2px; .i { top: 0; } }'),
+    ).toEqual([]);
+  });
+
+  it.each(styleFiles.map(({ label, code }) => [label, code]))('%s', (_label, code) => {
+    expect(
+      offendersIn(code),
       'pass the offset via focus-ring($offset: …) instead of a separate outline-offset declaration',
     ).toEqual([]);
   });
@@ -1688,14 +1731,36 @@ describe('every custom property the library reads is declared somewhere', () => 
  * correct operator here and `??` never is. 24 sites were converted by hand;
  * this is what stops the 25th.
  *
- * Deliberately NOT covered, because a regex cannot follow a value:
+ * WHAT THIS GATE COVERS is the literal JSX attribute, which is where all 24
+ * conversions but four lived. Three shapes it cannot see itself, and where
+ * each of them now stands:
+ *
  *  - the computed-variable form (`const purpose = ariaLabel ?? t(…)`, later
  *    spread as a name) — `IconPicker` and `ColorPicker` both had one,
  *  - the object-property form (`{ 'aria-label': x ?? y }`),
  *  - `aria-labelledby` / `aria-describedby`, whose empty-string defect is the
  *    same but whose id-reference plumbing has legitimate `??` sites.
- * Those stay a review matter. This gate covers the literal JSX attribute, which
- * is where all 24 conversions but four lived.
+ *
+ * **The first two are CLOSED whenever the fallback is a `t(…)` call**, which
+ * is every live instance the sweep found: the sibling gate below,
+ * "a translated fallback is never introduced with ??", parses `… ?? t(…)` at
+ * ANY position, so a computed variable and an object property are both in its
+ * scope. This docblock claimed otherwise until #519's review round, which is
+ * the worse direction for a blind-spot list to be wrong in — it invites a
+ * reader to hand-check a shape a gate already holds. What stays open is a
+ * fallback to something OTHER than `t()` (`const p = ariaLabel ?? row.code`),
+ * because "a variable" cannot be told from "a default" without following the
+ * value; and `aria-labelledby` / `aria-describedby` stay a review matter
+ * whenever their right operand is not a `t()`.
+ *
+ * THE TWO GATES DOUBLE-REPORT, deliberately. A literal
+ * `aria-label={x ?? t('k')}` fails both — verified by mutation, two named
+ * failures on one line. Neither defers to the other, because a deferral makes
+ * one gate's coverage depend on the other's SCOPE: the sibling was JSX-child
+ * only until recently, and had this gate deferred to it then, narrowing it
+ * would have opened a hole in both at once with nothing red. Two failures
+ * naming the same line is the cheaper half of that trade, and it is the same
+ * reasoning that keeps this file's overlapping focus-ring gates separate.
  */
 describe('an accessible name is never built with ??', () => {
   const NAME_ATTRS = /\b(aria-label|aria-valuetext)=\{/g;
@@ -1858,7 +1923,16 @@ describe('a translated fallback is never introduced with ??', () => {
 
   it('the scan itself can fail', () => {
     // Guards the guard: without this a walker typo makes every case below
-    // vacuously pass.
+    // vacuously pass.    // The two shapes the `aria-label` gate's docblock used to list as
+    // uncovered, pinned HERE so that claim cannot silently become true again
+    // by this gate being narrowed back to JSX children.
+    expect(translationFallbacks('p.tsx', `const purpose = ariaLabel ?? t('k');`)).toEqual([
+      `ariaLabel ?? t('k')`,
+    ]);
+    expect(translationFallbacks('p.tsx', `const a = { 'aria-label': x ?? t('k') };`)).toEqual([
+      `x ?? t('k')`,
+    ]);
+
     expect(translationFallbacks('p.tsx', `const A = () => <b>{x ?? t('k')}</b>;`)).toEqual([
       `x ?? t('k')`,
     ]);

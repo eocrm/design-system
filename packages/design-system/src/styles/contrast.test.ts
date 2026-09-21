@@ -582,6 +582,131 @@ describe('the neutral foreground ramp keeps its remaining tiers', () => {
 });
 
 /**
+ * The ΔE figures the `tone="subtle"` deprecation is ARGUED FROM, recomputed.
+ *
+ * `0.0261 / 0.0365 / 0.0707` are the whole case for #521, and this branch
+ * published them in four consumer-facing places at once: `AGENTS.md` twice,
+ * `Text.tsx`'s and `Title.tsx`'s `tone` JSDoc, and the `props.manifest.json`
+ * the playground generates from that JSDoc. Nothing bound any of them. The
+ * ratio gate below binds `N.NN:1` forms only, and the ramp gate above asserts
+ * the 0.065 FLOOR without ever recomputing the numbers the prose states — so
+ * the next `--color-fg-muted` retune would have left an entire published
+ * deprecation rationale stale with CI green. That is verbatim the rot this
+ * branch added gates to stop, and this branch is what published the numbers.
+ *
+ * Bound in both directions, like the AGENTS.md ratio gate: every figure here
+ * must appear in every document, and every figure in those documents must be
+ * one of these.
+ *
+ * WHAT IS FULLY BOUND: `0.0365` and `0.0707` are ΔE between the two live
+ * tokens in each theme, read from the generated files. Move either token in
+ * either theme and both directions fail.
+ *
+ * WHAT IS ONLY HALF BOUND, and this is the honest limit: `0.0261` is a
+ * measurement of a token value that NO LONGER EXISTS — light
+ * `--color-fg-muted` before #522 retuned it. No gate can recompute a figure
+ * from a value the repo has deleted, so the pre-retune literal is frozen in
+ * `PRE_522_FG_MUTED` below. The gate therefore binds the ARITHMETIC of the
+ * historical claim — a typo'd digit, or a move in `--color-fg-subtle` that
+ * changes the comparison, both fail — but it CANNOT verify the history: that
+ * `#5e6c84` really was the value on the day #521 was filed is a fact about
+ * git, asserted here by a constant and by nothing else. The one guard against
+ * the frozen literal going meaningless is the assertion that it differs from
+ * the current value; if #522 were reverted, the whole before/after framing is
+ * wrong and that assertion says so.
+ *
+ * ALSO NOT BOUND:
+ *
+ * - **The 0.065 floor.** It is a perceptibility threshold this library chose,
+ *   not a measurement of a pair, so it cannot be recomputed — the same trade
+ *   the ratio gate makes for WCAG's thresholds. Exempt by construction rather
+ *   than by a list: the scan matches `0.0NNN` at four decimal places and
+ *   `0.065` has three. The ramp gate above is what holds the floor itself.
+ * - **The PROSE around the figures.** That 0.0707 is described as "a real
+ *   step" and 0.0365 as "indistinguishable" is not checked; only the digits
+ *   are. A figure moved into the wrong sentence still matches.
+ * - **Any ΔE figure written somewhere else.** Scoped to the four documents
+ *   below. `contrast.test.ts`'s own comments state `0.0109` and `0.0194`, and
+ *   nothing binds those.
+ * - **`props.manifest.json` being in sync with the JSDoc it is generated
+ *   from.** This checks that both state the same figures, not that the
+ *   generator ran.
+ */
+describe('the published ΔE figures for the subtle-tone deprecation still hold', () => {
+  /**
+   * Light `--color-fg-muted` as it stood when #521 was filed, before #522
+   * retuned it to `#5b6980`. Frozen because the repo no longer holds it — see
+   * "WHAT IS ONLY HALF BOUND" above for exactly what that costs.
+   */
+  const PRE_522_FG_MUTED = '#5e6c84';
+
+  /** The four places this branch published the figures. */
+  const DOCUMENTS: [label: string, path: string][] = [
+    ['AGENTS.md', '../../AGENTS.md'],
+    ['Text.tsx', '../components/Text/Text.tsx'],
+    ['Title.tsx', '../components/Title/Title.tsx'],
+    // Generated from the two JSDoc blocks above, and shipped to the gallery as
+    // the prop reference a consumer actually reads.
+    ['props.manifest.json', '../../../playground/src/lib/props.manifest.json'],
+  ];
+
+  const figures = (): [label: string, stated: string][] => [
+    [
+      'light ΔE(--color-fg-subtle, --color-fg-muted)',
+      deltaE(
+        tokenValue('--color-fg-subtle', TOKENS),
+        tokenValue('--color-fg-muted', TOKENS),
+      ).toFixed(4),
+    ],
+    [
+      'dark ΔE(--color-fg-subtle, --color-fg-muted)',
+      deltaE(tokenValue('--color-fg-subtle', DARK), tokenValue('--color-fg-muted', DARK)).toFixed(
+        4,
+      ),
+    ],
+    [
+      'light ΔE(--color-fg-subtle, the pre-#522 --color-fg-muted)',
+      deltaE(tokenValue('--color-fg-subtle', TOKENS), PRE_522_FG_MUTED).toFixed(4),
+    ],
+  ];
+
+  const read = (path: string) => readFileSync(resolve(__dirname, path), 'utf8');
+
+  // Four decimal places, which is the notation every one of these figures uses
+  // and the 0.065 floor does not. Verified against all four documents: no
+  // other number in any of them has this shape.
+  const STATED = /0\.0\d{3}/g;
+
+  it('the frozen pre-retune value is still historical', () => {
+    // If #522 were reverted, `0.0261` would stop being a BEFORE figure and the
+    // whole before/after framing in four documents would be wrong. Nothing
+    // else can notice that, because the frozen literal would still recompute.
+    expect(
+      tokenValue('--color-fg-muted', TOKENS),
+      'light --color-fg-muted is back at its pre-#522 value — the "before/after" prose is no longer true',
+    ).not.toBe(PRE_522_FG_MUTED);
+  });
+
+  it.each(
+    DOCUMENTS.flatMap(([label, path]) =>
+      figures().map(([what, stated]) => [`${label}: ${what} = ${stated}`, path, stated] as const),
+    ),
+  )('%s', (_name, path, stated) => {
+    // A boolean, not `toContain`: the failure diff for a miss on a 3,900-line
+    // document is the whole document.
+    expect(read(path).includes(stated), `no longer states ${stated}`).toBe(true);
+  });
+
+  it.each(DOCUMENTS)('%s states no ΔE figure this gate does not produce', (_label, path) => {
+    const produced = new Set(figures().map(([, stated]) => stated));
+    expect(
+      [...new Set(read(path).match(STATED) ?? [])].filter((n) => !produced.has(n)),
+      'states a four-decimal ΔE figure nothing recomputes — add it here with the pair it measures, or drop the number',
+    ).toEqual([]);
+  });
+});
+
+/**
  * Two invariants that were invisible to this whole suite until a retune broke
  * both of them at once. Neither is about contrast — they are about a token
  * having MORE ROLES than the one being measured, which is the failure this file
