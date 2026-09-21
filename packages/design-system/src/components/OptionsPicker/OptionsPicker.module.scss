@@ -96,12 +96,19 @@
 
   // Overrides the tone token the nested <Text tone="muted"> resolves through,
   // rather than changing its prop, so the hint has a real base token for the
-  // #504 hover gate to measure against. This override is scoped to the header,
-  // so it retones the hint without touching any other muted text on the page.
+  // #504 hover gate to measure against.
   // #521 moved both the prop and this token off `subtle`: the hint's resting
   // value had already been --color-fg-muted since #511, and `subtle` now
   // resolves to muted anyway, so the indirection through a deprecated tone was
   // describing a step that no longer exists. See OptionsPicker.tokens.scss.
+  // What that widened, and what actually constrains it: this custom property
+  // inherits, so it now retones EVERY tone="muted" Text in the .groupHeader
+  // subtree, not just .groupHint. Nothing else in that subtree is muted today
+  // -- .groupLabel is Text's default tone and the dot is a Badge or a span --
+  // so the effect is identical. But it is held by SELECTOR SCOPE, not by the
+  // token being specific to the hint: adding a second muted Text inside a
+  // group header would silently pick this up. If that happens, move the
+  // override onto .groupHint itself rather than widening this comment.
   --text-fg-muted: var(--options-picker-group-header-hint-fg);
 }
 
@@ -169,7 +176,13 @@ button.groupHeader {
     background: var(--options-picker-group-header-bg-hover);
 
     // --color-bg-muted-hover is dark enough that the muted hint falls under AA
-    // on it (#504); see the token's own @contrast annotations.
+    // on it (#504), and it is the one neutral surface --color-fg-muted still
+    // does not clear after #522's retune -- light misses, dark passes. So the
+    // hover strengthens to --color-fg; see the token's own @contrast
+    // annotations for that pair. Same subtree caveat as the base override
+    // above.
+    // @contrast --color-fg-muted on --color-bg-muted-hover = 4.45:1 light
+    // @contrast --color-fg-muted on --color-bg-muted-hover = 4.58:1 dark
     --text-fg-muted: var(--options-picker-group-header-hint-fg-hover);
   }
 

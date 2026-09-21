@@ -29,7 +29,8 @@
   --title-fg-muted: var(--color-fg-muted);
 
   // DEPRECATED (#521), same collapse as --text-fg-subtle: see Text.tokens.scss
-  // for the measurement and for why the token is kept rather than deleted.
+  // for the measurement, for why the token is kept rather than deleted, and
+  // for the dark-theme appearance change this carries.
   --title-fg-subtle: var(--title-fg-muted);
   --title-fg-accent: var(--color-accent);
   --title-fg-danger: var(--color-danger);

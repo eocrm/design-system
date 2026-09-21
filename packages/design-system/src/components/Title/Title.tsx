@@ -15,7 +15,7 @@ export type TitleSize = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl' | '3xl';
 export type TitleTone =
   | 'default'
   | 'muted'
-  /** @deprecated Resolves to `muted` (#521). Use `muted`. */
+  /** @deprecated Resolves to `muted` (#521) — changes dark-theme appearance. Use `muted`. */
   | 'subtle'
   | 'accent'
   | 'danger';
@@ -41,12 +41,16 @@ export interface TitleProps extends HTMLAttributes<HTMLHeadingElement> {
    * - `default` — `--color-fg`
    * - `muted` — `--color-fg-muted`
    * - `subtle` — **@deprecated (#521): resolves to `muted`. Use `muted`.**
-   *   `--color-fg-subtle` and `--color-fg-muted` measured OKLab ΔE 0.0261 apart
-   *   in light theme — 0.0365 after #522 retuned `--color-fg-muted` — against
-   *   the 0.065 floor this library's perceptual gates use. One visible tier
-   *   shipped under two names. `--title-fg-subtle` now
-   *   aliases `--title-fg-muted`, so the prop keeps working and no consumer
-   *   breaks; it just stops promising a distinction nobody can see.
+   *   In LIGHT theme the two neutrals were indistinguishable: OKLab ΔE 0.0261
+   *   when #521 was filed, 0.0365 after #522 retuned `--color-fg-muted`,
+   *   against the 0.065 floor this library's perceptual gates use. In DARK
+   *   they were 0.0707 apart — a real step — so **this deprecation changes
+   *   dark-theme appearance**: `subtle` text in dark gets lighter, moving from
+   *   `--color-fg-subtle` to `--color-fg-muted`. That is the accepted trade
+   *   (a tier that exists in one theme only is not a tier), but it is a
+   *   visual change, not the removal of a duplicate. `--title-fg-subtle` now
+   *   aliases `--title-fg-muted`, so nothing breaks at the type or build level;
+   *   if you need the old dark value back, override `--title-fg-subtle`.
    * - `accent` — `--color-accent`
    * - `danger` — `--color-danger`
    */
