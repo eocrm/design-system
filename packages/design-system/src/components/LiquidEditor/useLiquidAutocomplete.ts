@@ -124,7 +124,11 @@ export function useLiquidAutocomplete({ variables, filters, enabled }: UseLiquid
     () =>
       variables.map((v) => ({
         value: v.code,
-        label: v.label ?? v.code,
+        // `||`, not `??`. This is the SAME prop as InsertVariableMenu's, and it
+        // feeds `AutocompleteMenu`'s `<span>{item.label}</span>` — a
+        // `role="option"`'s only name source. `label: ''` rendered a blank
+        // option, and the docs in `types.ts` and AGENTS.md promise it cannot.
+        label: v.label || v.code,
         type: v.type,
         group: v.group,
         description: v.description,

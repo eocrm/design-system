@@ -28,5 +28,15 @@
     "route": "/components/lightbox",
     "key": "button.Button-module__button.Button-module__secondary.Button-module__sm.Image-module__retry",
     "band": "left"
+  },
+  {
+    "route": "/components/person-display",
+    "key": "a.Link-module__default.Link-module__link",
+    "band": "left"
+  },
+  {
+    "route": "/components/person-display",
+    "key": "a.Link-module__default.Link-module__link",
+    "band": "right"
   }
 ]

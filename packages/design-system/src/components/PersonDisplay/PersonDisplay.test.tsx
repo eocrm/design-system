@@ -258,10 +258,17 @@ describe('PersonDisplay stylesheet — self-containment (#527)', () => {
     expect(decl(rule('.root'), 'max-width')).toMatchObject({ value: '100%' });
   });
 
-  it('the nowrap description clips itself rather than painting outside', () => {
+  // The INLINE axis only, and the order matters: `overflow` is x-then-y, so
+  // `visible clip` clips the block axis instead — verified in Chromium, where
+  // it reports `overflow-x: visible`. #527 is a horizontal escape, and the
+  // block axis of a single `nowrap` line has no overflow to clip, so clipping
+  // it bought nothing and shaved the focus ring of any focusable a consumer
+  // puts in a Description (#524's failure mode). `clip` over `hidden` so the
+  // line is not a scroll container for a string nobody can scroll.
+  it('the nowrap description clips itself on the inline axis only', () => {
     const description = rule('.description');
     expect(decl(description, 'white-space')).toMatchObject({ value: 'nowrap' });
-    expect(decl(description, 'overflow')).toMatchObject({ value: 'hidden' });
+    expect(decl(description, 'overflow')).toMatchObject({ value: 'clip visible' });
     expect(decl(description, 'min-width')).toMatchObject({ value: '0' });
   });
 });

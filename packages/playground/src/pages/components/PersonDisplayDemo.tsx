@@ -1,4 +1,4 @@
-import { Badge, PersonDisplay, Stack } from '@eocrm/design-system';
+import { Badge, Link, PersonDisplay, Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
@@ -108,15 +108,17 @@ export function Demo() {
 
       <Example
         title="Multiple description lines"
-        description="Repeat <PersonDisplay.Description> for additional lines — email then role then company, etc."
-        code={`import { PersonDisplay } from '@eocrm/design-system';
+        description="Repeat <PersonDisplay.Description> for additional lines — email then role then company, etc. A Description takes arbitrary ReactNode, including a focusable one: the line clips itself so it cannot paint outside a narrow container, and re-admits the focus ring while a control inside it is focused."
+        code={`import { Link, PersonDisplay } from '@eocrm/design-system';
 
 export function Demo() {
   return (
     <PersonDisplay size="md">
       <PersonDisplay.Avatar name="Marcus Vega" />
       <PersonDisplay.Name>Marcus Vega</PersonDisplay.Name>
-      <PersonDisplay.Description>marcus@acme.com</PersonDisplay.Description>
+      <PersonDisplay.Description>
+        <Link href="mailto:marcus@acme.com">marcus@acme.com</Link>
+      </PersonDisplay.Description>
       <PersonDisplay.Description>Account Executive</PersonDisplay.Description>
     </PersonDisplay>
   );
@@ -126,7 +128,9 @@ export function Demo() {
           <PersonDisplay size="md">
             <PersonDisplay.Avatar name="Marcus Vega" />
             <PersonDisplay.Name>Marcus Vega</PersonDisplay.Name>
-            <PersonDisplay.Description>marcus@acme.com</PersonDisplay.Description>
+            <PersonDisplay.Description>
+              <Link href="mailto:marcus@acme.com">marcus@acme.com</Link>
+            </PersonDisplay.Description>
             <PersonDisplay.Description>Account Executive</PersonDisplay.Description>
           </PersonDisplay>
         </InputExample>

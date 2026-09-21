@@ -96,8 +96,14 @@ export function HeaderCell<T>({
   // code, and an empty one names the column no better than omitting it — it
   // must not discard a perfectly usable string header and drop the grip and
   // resize handle to the generic "this column" copy.
+  // `.trim()` on the header too, matching `rendersText` above and the other
+  // two readers of this prop: `header: '   '` renders no text, so accepting it
+  // named the resize handle "Resize     column" (#536 follow-up). The predicate
+  // is repeated inline rather than reusing `rendersText`, because a boolean
+  // const does not narrow `column.header` from ReactNode to string.
   const columnLabel =
-    column.visibilityLabel || (typeof column.header === 'string' ? column.header : undefined);
+    column.visibilityLabel ||
+    (typeof column.header === 'string' && column.header.trim() ? column.header : undefined);
   // The handle's own name has to describe the ACTION. It used to be the column
   // label verbatim, so a keyboard user heard "Name, separator".
   const resizeLabel = columnLabel

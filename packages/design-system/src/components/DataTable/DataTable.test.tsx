@@ -678,6 +678,32 @@ describe('<DataTable>', () => {
     );
   });
 
+  // The whitespace tail of #536: `header: '   '` is a string that renders no
+  // text, so all three readers must fall past it exactly as they do past `''`.
+  // Only `ColumnVisibilityTrigger` trimmed at first, which left `types.ts`
+  // claiming an agreement the other two did not keep.
+  it('treats a whitespace-only header as no header in the card label and the resize name', () => {
+    const blankHeaderColumns: ColumnDef<Row>[] = [
+      { id: 'blank-header', header: '   ', cell: () => <span>A</span>, enableReorder: false },
+    ];
+    function BlankHeaderHarness() {
+      const instance = useDataTable<Row>({
+        data: [rows[0]!],
+        columns: blankHeaderColumns,
+        getRowId,
+      });
+      return <DataTable instance={instance} aria-label="Blank header" collapseBelow="md" />;
+    }
+
+    render(<BlankHeaderHarness />);
+
+    // HeaderCell: the generic copy, NOT "Resize     column".
+    expect(screen.getByRole('separator', { name: 'Resize this column' })).toBeInTheDocument();
+    // BodyRow: no visual card label rather than a label of three spaces.
+    const cell = screen.getByText('A').closest('td')!;
+    expect(cell.querySelector(`.${styles.responsiveVisualLabel}`)).toBeEmptyDOMElement();
+  });
+
   it('renders visual-only responsive labels and one stable value wrapper per data cell', () => {
     const responsiveColumns: ColumnDef<Row>[] = [
       {
@@ -2702,9 +2728,13 @@ describe('DataTable stacked cards never restyle cell content (#527)', () => {
     const offenders: string[] = [];
     stylesheet.walkRules((rule) => {
       for (const selector of rule.selectors) {
-        // A selector whose own class names are all unknown to the module map
-        // would silently match nothing; skip those rather than pretend to
-        // check them.
+        // A class name the module map does not know is left as written, not
+        // skipped — `hashed` returns the original token. It then matches
+        // nothing, because every element here carries hashed class names, so
+        // the outcome is the same as skipping. Said plainly because the two
+        // are only equivalent while that stays true: the day a selector mixes
+        // a hashed class with a global one, this quietly tests the global half
+        // and reports a pass for the other.
         const mapped = hashed(selector);
         for (const el of targets) {
           if (el.matches(mapped))

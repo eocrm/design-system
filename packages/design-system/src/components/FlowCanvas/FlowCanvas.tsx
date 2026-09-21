@@ -586,8 +586,11 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     onEdgeReconnect?.(c.edgeId, newFrom, newTo);
     announce(
       t('flowCanvas.rewireDone', {
-        from: nodeById.get(newFrom)?.label ?? newFrom,
-        to: nodeById.get(newTo)?.label ?? newTo,
+        // `||` on every `node.label || id` in this file, not `??`: the id tail
+        // exists so a live-region sentence always names something, and
+        // `label: ''` — ordinary consumer code — announced "Reconnected  to ".
+        from: nodeById.get(newFrom)?.label || newFrom,
+        to: nodeById.get(newTo)?.label || newTo,
       }),
     );
     return true;
@@ -871,8 +874,8 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
         onEdgeCreate?.(connect.from, connect.target);
         announce(
           t('flowCanvas.connectDone', {
-            from: nodeById.get(connect.from)?.label ?? connect.from,
-            to: nodeById.get(connect.target)?.label ?? connect.target,
+            from: nodeById.get(connect.from)?.label || connect.from,
+            to: nodeById.get(connect.target)?.label || connect.target,
           }),
         );
       }
@@ -991,7 +994,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       const index = nodes.findIndex((n) => n.id === id);
       announce(
         t('flowCanvas.nodeFocused', {
-          label: nodeById.get(id)?.label ?? id,
+          label: nodeById.get(id)?.label || id,
           index: index + 1,
           total: nodes.length,
         }),
@@ -1017,8 +1020,8 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       if (edge) {
         announce(
           t('flowCanvas.edgeFocused', {
-            from: nodeById.get(edge.from)?.label ?? edge.from,
-            to: nodeById.get(edge.to)?.label ?? edge.to,
+            from: nodeById.get(edge.from)?.label || edge.from,
+            to: nodeById.get(edge.to)?.label || edge.to,
             index,
             total,
           }),
@@ -1137,8 +1140,8 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
           onEdgeCreate?.(connect.from, connect.target);
           announce(
             t('flowCanvas.connectDone', {
-              from: nodeById.get(connect.from)?.label ?? connect.from,
-              to: nodeById.get(connect.target)?.label ?? connect.target,
+              from: nodeById.get(connect.from)?.label || connect.from,
+              to: nodeById.get(connect.target)?.label || connect.target,
             }),
           );
         } else {
@@ -1191,7 +1194,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
           // swallowed while connecting.
           const targetRect = candidates.get(next);
           if (targetRect) revealRect(targetRect);
-          announce(t('flowCanvas.connectTarget', { label: nodeById.get(next)?.label ?? next }));
+          announce(t('flowCanvas.connectTarget', { label: nodeById.get(next)?.label || next }));
         } else {
           // Nothing valid that way — say so; a silent no-op reads as a
           // dead keyboard to a screen-reader user mid-connect.
@@ -1216,7 +1219,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       if (!nodeId) return;
       event.preventDefault();
       setConnect({ from: nodeId, mode: 'keyboard', pointerId: null, target: null, cursor: null });
-      announce(t('flowCanvas.connectStart', { label: nodeById.get(nodeId)?.label ?? nodeId }));
+      announce(t('flowCanvas.connectStart', { label: nodeById.get(nodeId)?.label || nodeId }));
       return;
     }
     // Plain R starts a keyboard rewire of the selected edge's TARGET endpoint;
@@ -1769,8 +1772,8 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
               markerId={markerId}
               markerActiveId={markerActiveId}
               ariaLabel={t('flowCanvas.edgeLabel', {
-                from: nodeById.get(edge.from)?.label ?? edge.from,
-                to: nodeById.get(edge.to)?.label ?? edge.to,
+                from: nodeById.get(edge.from)?.label || edge.from,
+                to: nodeById.get(edge.to)?.label || edge.to,
               })}
               roleDescription={t('flowCanvas.edgeRole')}
               registerEl={registerEdgeEl}

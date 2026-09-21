@@ -198,10 +198,19 @@ export const sweepScript = (rootSelector: string | null = null) => `
       revealDown = revealDown || (scrollsY && p.scrollTop < p.scrollHeight - p.clientHeight - EPS);
       revealLeft = revealLeft || (scrollsX && p.scrollLeft > EPS);
       revealRight = revealRight || (scrollsX && p.scrollLeft < p.scrollWidth - p.clientWidth - EPS);
-      if (!revealUp) clip.top = Math.max(clip.top, r.top);
-      if (!revealDown) clip.bottom = Math.min(clip.bottom, r.bottom);
-      if (!revealLeft) clip.left = Math.max(clip.left, r.left);
-      if (!revealRight) clip.right = Math.min(clip.right, r.right);
+      // PER AXIS. The guard above only skips an ancestor when BOTH axes are
+      // visible, so a mixed one — 'overflow: clip visible', a horizontal
+      // scroller with a visible block axis — used to clip all four sides here
+      // and report bands that are plainly painted. That made the sweep blind
+      // to the narrowest real remedy for a clip: stop clipping the axis that
+      // never overflowed. PersonDisplay's Description is the live case.
+      // Exact, not a leniency: an inline-axis clip does not clip vertically.
+      const clipsX = pcs.overflowX !== 'visible';
+      const clipsY = pcs.overflowY !== 'visible';
+      if (clipsY && !revealUp) clip.top = Math.max(clip.top, r.top);
+      if (clipsY && !revealDown) clip.bottom = Math.min(clip.bottom, r.bottom);
+      if (clipsX && !revealLeft) clip.left = Math.max(clip.left, r.left);
+      if (clipsX && !revealRight) clip.right = Math.min(clip.right, r.right);
     }
 
     // A focusable that is itself wholly outside its clip — inside a collapsed

@@ -135,7 +135,7 @@ An unnamed container falls back to its position ("column 2 of 3").
 
 ## An empty label prop means _unset_, never _blank_
 
-Every label-ish prop in this library — `aria-label`, `previousLabel`, `confirmLabel`, `dropzoneLabel`, `visibilityLabel`, `emptyState`, a `LiquidVariable`'s `label` — treats `''` exactly like omitting it. You cannot use one to blank out a name or suppress default copy. That is deliberate:
+Label props in this library treat `''` exactly like omitting it — `aria-label` everywhere, `previousLabel`, `nextLabel`, `confirmLabel`, `dropzoneLabel`, `label` on `ColumnVisibilityTrigger`, `visibilityLabel`, `emptyState`, a `LiquidVariable`'s `label`, a `SortableGroup.Container`'s or `Kanban.Column`'s `aria-label`, a `FlowCanvas` node's `label`. You cannot use one to blank out a name or suppress default copy. That is deliberate:
 
 ```tsx
 // ✅ Fine. `row.title` missing → the component's own default copy.
@@ -145,12 +145,14 @@ Every label-ish prop in this library — `aria-label`, `previousLabel`, `confirm
 <CursorPagination previousLabel="" … />
 ```
 
+**Two exceptions, both because the empty string already has a meaning of its own there.** An `<img>`'s `alt` — a RichText attachment block's `alt` field — is honoured when empty, because `alt=""` is HTML's marker for a decorative image. And a text input's `placeholder` (`DatePicker`, `DateRangePicker`) is honoured when empty, because wanting no placeholder is a real request and a placeholder is not an accessible name. Nothing else.
+
 If you are writing a component _in_ this library, the rule behind that is an operator choice, and it is not optional:
 
 - **Use `||`, never `??`, for any fallback that produces an accessible name** — whether the name comes from an attribute (`aria-label={x || t('key')}`) or from content (`<span>{label || t('key')}</span>`). `??` falls back only on `null`/`undefined`, so `''` reaches the DOM. Per the accname spec an empty `aria-label` contributes no name, so the computation does not stop there — it continues to name-from-content and then to `title`, and where the siblings are `aria-hidden` (a chevron, a spinner) the control ends up anonymous (#534, #535).
 - The same applies to a fallback that exists so there is _always_ something readable — `col.visibilityLabel || header || col.id`, `v.label || v.code`. An empty string defeats the safeguard and renders a blank, unidentifiable row.
 
-Two tests in `structure.test.ts` gate parts of this: one rejects `??` in `aria-label` / `aria-valuetext`, the other rejects `{x ?? t(…)}` in JSX children. **Neither implements the rule.** They cannot see whether an element is a control, whether its siblings are hidden, or that `{v.label ?? v.code}` is the same defect with a non-`t()` fallback. A green run is not coverage — the rule above is, and it is enforced by review.
+Two tests in `structure.test.ts` gate parts of this: one rejects `??` in `aria-label` / `aria-valuetext`, the other rejects `x ?? t(…)` anywhere in the source. **Neither implements the rule.** They cannot see whether an element is a control, whether its siblings are hidden, or that `v.label ?? v.code` and `node.label ?? id` are the same defect with a non-`t()` fallback — every one of those had to be found by reading. A green run is not coverage; the rule above is, and it is enforced by review.
 
 ---
 
@@ -1921,6 +1923,7 @@ import { Divider } from '@eocrm/design-system';
 - `size`: `'sm'` / `'md'` (default) / `'lg'`. Propagates to Avatar size and Text scales via context. Don't pass `size` to `PersonDisplay.Avatar` directly — Root controls it (the prop is omitted from `PersonDisplayAvatarProps` by type).
 - `<PersonDisplay.Name href="...">` renders the name as a `<Link variant="subtle">` (real `<a>`). Omit `href` for read-only displays (audit actor, activity timeline).
 - `<PersonDisplay.Description>` is muted text; repeat for additional lines. Children can be `ReactNode` — e.g. `admin@acme.com <Badge tone="warning" size="sm">impersonating</Badge>` to inline a marker.
+- **A Description clips itself on the inline axis** (`overflow-x: clip`, `white-space: nowrap`), so a long unbroken value cannot paint outside a narrow container such as a DataTable stacked card (#527). Put **interactive** content in `<PersonDisplay.Name href=…>`, which does not clip: a control flush with the Description line's left or right edge loses those bands of its focus ring, and that residual is recorded in `tests/focus-ring-geometry.baseline.json` rather than hidden. The block axis is deliberately left `visible`, so a ring is never clipped top or bottom.
 - All Avatar props (`name`, `src`, `status`, `tooltip`) flow through `<PersonDisplay.Avatar>` except `size`.
 - `shrink` (boolean, default `false`): force content-width (`width: fit-content`). PersonDisplay shrink-wraps on its own, but a **stretching** flex/grid parent (`align-items: stretch` / `justify-self: stretch`) stretches it full-width, so a `Popover.Trigger`/`Tooltip` cloned onto it anchors to the wide box and centers right of the person. Add `shrink` on such an overlay trigger to re-anchor it to the avatar+name.
 - **Use for the standard "person row" — Avatar + name + 0–2 muted lines.** Not for Avatar-only badges (use `<Avatar>`), avatar stacks (use `<AvatarGroup>`), or click-anywhere row interactions (wrap PersonDisplay in your own Link).

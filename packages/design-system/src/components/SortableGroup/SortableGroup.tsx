@@ -244,8 +244,14 @@ const SortableGroupRoot = function SortableGroup({ onMove, children }: SortableG
     const cid = reg.has(id) ? id : containerOf(id);
     const rec = cid == null ? undefined : reg.get(cid);
     if (cid == null || !rec) return null;
+    // `||`, not `??`. NOT a live defect: `rec.label` is whatever
+    // `containerName` returned, and that helper already rejects a blank
+    // (`label.trim()`), so it is `string | undefined` and never `''`. The
+    // operator is aligned anyway — `||` is never wrong for a name fallback,
+    // and leaving `??` here made a reader re-derive the guarantee two files
+    // away before they could tell this apart from #535's real sites.
     const container =
-      rec.label ??
+      rec.label ||
       t('drag.unnamedContainer', { index: [...reg.keys()].indexOf(cid) + 1, total: reg.size });
     const base = sortableTarget(entry);
     // An item: dnd-kit's own sortable data already carries the slot.

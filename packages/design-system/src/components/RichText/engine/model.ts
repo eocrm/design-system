@@ -71,7 +71,12 @@ export interface Block {
   /** Natural image dimensions (layout hints). */
   width?: number;
   height?: number;
-  /** Image alt text. */
+  /**
+   * Image alt text. Unlike every label prop in this library, an EMPTY string
+   * is honoured rather than treated as unset: `alt=""` is HTML's own marker
+   * for a decorative image, so it renders literally instead of falling back to
+   * the filename.
+   */
   alt?: string;
   /** Attachment image alignment within the editor width. Absent = left. */
   align?: 'left' | 'center' | 'right';

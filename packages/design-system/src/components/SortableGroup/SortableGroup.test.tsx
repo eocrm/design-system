@@ -231,6 +231,46 @@ describe('SortableGroup', () => {
     expect(live).not.toMatch(/ in [ab]\./);
   });
 
+  it('treats aria-label="" on a container as unset, not as a nameless one', async () => {
+    // `aria-label={col.title ?? ''}` is ordinary consumer code, and the
+    // positional fallback exists precisely so the sentence always names the
+    // container. Two guards stand between them — `containerName`'s
+    // `label.trim()` test and the `||` in `describeDrag` — and this asserts the
+    // OUTCOME rather than either one, so it survives whichever of the two a
+    // later change decides is redundant. Stated plainly: removing either guard
+    // alone leaves it green; removing both makes it read "…, position 2 of 2
+    // in ." Asserts the EXACT sentence, since a trailing "in ." is non-empty
+    // and would satisfy a loose check.
+    function BlankLabelGroup() {
+      return (
+        <SortableGroup>
+          <SortableGroup.Container id="a" items={['x', 'y']} aria-label="">
+            <Sortable.Item id="x">
+              <Sortable.Handle aria-label="Reorder first" />
+              Renew Acme
+            </Sortable.Item>
+            <Sortable.Item id="y">
+              <Sortable.Handle aria-label="Reorder second" />
+              Call Globex
+            </Sortable.Item>
+          </SortableGroup.Container>
+        </SortableGroup>
+      );
+    }
+    const restore = stubStackedRects();
+    const user = userEvent.setup();
+    render(<BlankLabelGroup />);
+
+    screen.getByLabelText('Reorder first').focus();
+    await user.keyboard('[Space]');
+    await user.keyboard('[ArrowDown]');
+    const live = screen.getByRole('status').textContent ?? '';
+    await user.keyboard('[Escape]');
+    restore();
+
+    expect(live).toBe('Renew Acme, position 2 of 2 in list 1 of 1.');
+  });
+
   // NOTE: cross-container drags are NOT exercised here. dnd-kit's
   // sortableKeyboardCoordinates resolves the next droppable from real layout
   // geometry; with jsdom's synthetic stacked rects the keyboard sensor cannot

@@ -128,6 +128,11 @@ export interface ColumnDef<T> {
    * row is the case that decides it: a blank checkbox row is unidentifiable,
    * which is strictly worse than the raw `id` the fallback chain already
    * treats as a last resort.
+   *
+   * A WHITESPACE-ONLY `header` is treated the same way, in all three, for the
+   * same reason: `'   '` renders no text, so it is not a label. Only the menu
+   * trimmed at first, which left the sentence above true of `''` but not of
+   * `'   '`.
    */
   visibilityLabel?: string;
   /**

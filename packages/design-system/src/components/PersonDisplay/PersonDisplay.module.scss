@@ -69,6 +69,31 @@
   // not paint one (verified against a screenshot — identical with `clip`). The
   // wide table already hard-clipped this line for the same reason, so nothing
   // regresses; an ellipsis would need the text in a block container.
-  overflow: hidden;
+  // ONE AXIS, and `clip` rather than `hidden`. #527 is a HORIZONTAL escape — a
+  // long unbroken email — so clipping the block axis too bought nothing and
+  // cost something: `description` takes arbitrary ReactNode, and every
+  // clipping ancestor shaves a descendant's focus ring (#524's failure mode,
+  // and the reason the DataTable stacked card deliberately does not clip).
+  // `clip visible` is legal (x then y) and the block axis really does stay
+  // visible: the rule that turns `visible` into `auto` applies opposite
+  // `scroll`/`auto`/`hidden`, not opposite `clip` — verified in Chromium 151,
+  // where the shorthand written the other way round silently clips the wrong
+  // axis. `clip` over `hidden` on the inline axis so this line never
+  // becomes a scroll container for a string nobody can scroll.
+  // WHAT THIS DOES NOT FIX, stated rather than left for the next reader to
+  // measure: a control flush with the line's left or right edge still loses
+  // those two ring bands, and the two `/components/person-display` entries in
+  // `tests/focus-ring-geometry.baseline.json` are exactly that, kept measured
+  // rather than hidden. Neither remedy survived measurement.
+  // `overflow-clip-margin` would be the right tool — it widens the CLIP RECT
+  // without contributing to the scrollable overflow #527 measured — but
+  // Chromium 151 computes EVERY `calc()` form of it to `0px` (`calc(2px + 2px)`
+  // included), so it cannot be expressed in `--ring-width` + `--ring-offset`,
+  // and a raw length here breaks the tokens rule. Insetting the ring from
+  // outside (`.description :focus-visible { outline-offset: … }`) ties Link's
+  // own `.link:focus-visible` at (0,2,0) and wins only on bundle order — a
+  // specificity race over a consumer's own focus style.
+  // So: put a control in `PersonDisplay.Name`, which does not clip.
+  overflow: clip visible;
   white-space: nowrap;
 }
