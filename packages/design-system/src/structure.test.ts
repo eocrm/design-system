@@ -197,6 +197,42 @@ describe('stripScssComments', () => {
   });
 });
 
+/**
+ * Every `selector { body }` rule in a stylesheet, comments already stripped.
+ *
+ * Lookbehind prefix, not a consuming group: `matchAll` advances `lastIndex`
+ * past each full match, so a consuming `(^|[{};])` eats the `}` that closes one
+ * top-level sibling block and leaves it unavailable as the prefix for the very
+ * next one. That silently dropped `.thumb:hover, .thumb:focus-visible` in
+ * Slider from the scan entirely. A lookbehind lets the same character close one
+ * rule and open the next.
+ *
+ * SHARED BLIND SPOT of every gate built on this: `[^{}]*` cannot span a nested
+ * block, so a rule whose own body contains one is skipped — its declarations
+ * are invisible, and the scan says nothing when it skips a rule. The nested
+ * block is matched as a rule in its own right and IS scanned, which is why the
+ * hole is narrower than it sounds. `Button.module.scss`'s `.button { … }` is
+ * exactly this shape today.
+ */
+const scssRules = (stripped: string): [selector: string, body: string][] =>
+  [...stripped.matchAll(/(?<=^|[{};])([^{};]*?)\{([^{}]*)\}/g)].map((m) => [
+    m[1]!.trim().replace(/\s+/g, ' '),
+    m[2]!,
+  ]);
+
+/** A rule whose SELECTOR spells focus, so the rule applies in a focus state. */
+const namesFocusPseudo = (selector: string) => /:focus(-visible|-within)?\b/.test(selector);
+
+/** Every `outline` / `outline-{width,color,style}` declaration in a rule body. */
+const outlineDeclarations = (body: string): [property: string, value: string][] =>
+  [...body.matchAll(/(?:^|;)\s*(outline(?:-width|-color|-style)?)\s*:([^;]*)/g)].map((m) => [
+    m[1]!,
+    m[2]!,
+  ]);
+
+/** `none` / `0` suppress a ring; anything else paints one. */
+const paints = (value: string) => !/^(none|0(px)?)$/.test(value.trim());
+
 // Comments stripped: a commented-out `export { Pagination }` satisfied the
 // re-export gate while the component was unimportable from the package
 // entry — tests green, consumer build broken, which is the exact failure
@@ -1198,20 +1234,13 @@ describe('a focus ring goes through the focus-ring mixin', () => {
     expect(styleFiles.length).toBeGreaterThan(50);
   });
 
-  /** `none` / `0` suppress a ring; anything else paints one. */
-  const paints = (value: string) => !/^(none|0(px)?)$/.test(value.trim());
-
   const offendersIn = (code: string): string[] => {
     const stripped = stripScssComments(code);
     const out: string[] = [];
-    // Same lookbehind brace scan as the two sibling gates — see the
-    // ":hover-shared" gate for why the prefix cannot be a consuming group.
-    for (const m of stripped.matchAll(/(?<=^|[{};])([^{};]*?)\{([^{}]*)\}/g)) {
-      const selector = m[1]!.trim().replace(/\s+/g, ' ');
-      const body = m[2]!;
-      if (!/:focus(-visible|-within)?\b/.test(selector)) continue;
-      for (const d of body.matchAll(/(?:^|;)\s*(outline(?:-width|-color|-style)?)\s*:([^;]*)/g)) {
-        if (paints(d[2]!)) out.push(`${selector} { ${d[1]}:${d[2]!.trimEnd()} }`);
+    for (const [selector, body] of scssRules(stripped)) {
+      if (!namesFocusPseudo(selector)) continue;
+      for (const [property, value] of outlineDeclarations(body)) {
+        if (paints(value)) out.push(`${selector} { ${property}:${value.trimEnd()} }`);
       }
     }
     // Kept from the gate this replaced: the literal mixin body, in ANY rule.
@@ -1243,6 +1272,141 @@ describe('a focus ring goes through the focus-ring mixin', () => {
       stale.map((w) => `${w.file} — ${w.selector}`),
       'waived ring no longer exists; delete the waiver',
     ).toEqual([]);
+  });
+});
+
+/**
+ * A focus ring is not SUPPRESSED without a recorded reason.
+ *
+ * The other half of #519's invariant, and the half that was still open. The
+ * mixin gate above bans PAINTING an outline by hand under a focus pseudo, so
+ * "a ring that exists goes through the mixin" holds. Nothing stopped a
+ * component from having no ring at all: `.thing:focus-visible { outline: none }`
+ * with no `:hover` in the selector passed stylelint, the hover-shared gate and
+ * the mixin gate together — verified by mutation, and it is a worse outcome
+ * than a hand-rolled ring, because there is nothing on screen to notice.
+ *
+ * So suppression is now an allowlist. Four components suppress legitimately
+ * and each is named below WITH ITS REASON, which is the design caution #519
+ * asked for: adding an entry costs an argued comment in a test file, using the
+ * mixin costs one line. The staleness check makes a waiver that stops matching
+ * a failure, so the list cannot outlive the code it excuses — which is how the
+ * same four names in AGENTS.md prose went stale three times.
+ *
+ * WHAT IT PROVABLY CANNOT CATCH:
+ *
+ * - **Suppression from a rule that does not spell focus.** `FlowCanvas` sets
+ *   `outline: none` on the canvas base rule precisely so it applies in every
+ *   focus state including a plain mouse `:focus`; that rule's selector has no
+ *   focus pseudo, so this gate never sees it and no waiver covers it. Any
+ *   component can do the same, deliberately or not.
+ * - **A rule whose body contains a NESTED block**, per `scssRules`. Shared
+ *   with all three sibling gates.
+ * - **`outline-width: 0` reached through a variable**, SCSS interpolation or a
+ *   component-local mixin — a static scan reads text, not values.
+ * - **A ring suppressed by GEOMETRY rather than by a declaration.** A ring
+ *   painted at zero width, at a colour equal to its backdrop, or clipped away
+ *   entirely by an `overflow` ancestor is invisible on screen and passes here.
+ *   Colour is `src/styles/contrast.test.ts`; geometry is
+ *   `tests/focus-ring-geometry.spec.ts`.
+ * - **The absence of any focus styling whatsoever.** A component that styles
+ *   `:focus-visible` nowhere declares no outline to suppress, so it is not an
+ *   offender here. This gate bans TAKING a ring away, not FAILING to add one —
+ *   the latter needs to know which elements are focusable, which SCSS does not
+ *   say.
+ */
+describe('a focus ring is not suppressed without a recorded reason', () => {
+  /**
+   * Deliberate suppressions. Each needs a real offender to match — the
+   * staleness check below fails if one stops matching.
+   */
+  const waivers = [
+    {
+      file: 'Avatar/AvatarGroup.module.scss',
+      selector: '&:is(button):focus-visible',
+      reason:
+        'draws a box-shadow ring instead — an outline offset gap here would reveal the avatar underneath, not a surface',
+    },
+    {
+      file: 'FlowCanvas/FlowCanvas.module.scss',
+      selector: '&[data-flow-has-selection]:focus-visible',
+      reason:
+        'the canvas ring is deliberately dropped once a node is selected; the selection itself is the focus affordance',
+    },
+    {
+      file: 'LiquidEditor/LiquidEditor.module.scss',
+      selector: '.textarea:focus-visible',
+      reason: 'delegates the ring to .root:focus-within, which wraps the whole control',
+    },
+    {
+      file: 'TopBar/TopBar.module.scss',
+      selector: '.searchInput:focus',
+      reason: 'delegates the ring to .search:focus-within, which wraps the input and its icons',
+    },
+  ];
+
+  const styleFiles = allFilesUnder(componentsDir).filter(({ label }) =>
+    /\.(module|tokens)\.scss$/.test(label),
+  );
+
+  it('found stylesheets to check', () => {
+    expect(styleFiles.length).toBeGreaterThan(50);
+  });
+
+  const suppressionsIn = (code: string): string[] => {
+    const out: string[] = [];
+    for (const [selector, body] of scssRules(stripScssComments(code))) {
+      if (!namesFocusPseudo(selector)) continue;
+      for (const [property, value] of outlineDeclarations(body)) {
+        if (!paints(value)) out.push(`${selector} { ${property}:${value.trimEnd()} }`);
+      }
+    }
+    return out;
+  };
+
+  const waived = (file: string, offender: string) =>
+    waivers.some((w) => w.file === file && offender.startsWith(`${w.selector} {`));
+
+  it('the scan itself can fail', () => {
+    // Guards the guard: a regex typo here makes every assertion below pass
+    // vacuously, which is the failure mode this suite keeps re-learning.
+    expect(suppressionsIn('.a:focus-visible { outline: none; }')).toEqual([
+      '.a:focus-visible { outline: none }',
+    ]);
+    expect(suppressionsIn('.a:focus-visible { outline: 0; }')).toEqual([
+      '.a:focus-visible { outline: 0 }',
+    ]);
+    // A painting outline belongs to the mixin gate, not this one.
+    expect(suppressionsIn('.a:focus-visible { outline: 2px solid red; }')).toEqual([]);
+    // No focus pseudo, so out of scope — and stated in the docblock as such.
+    expect(suppressionsIn('.a { outline: none; }')).toEqual([]);
+  });
+
+  it.each(styleFiles.map(({ label, code }) => [label, code]))('%s', (label, code) => {
+    expect(
+      suppressionsIn(code).filter((o) => !waived(label, o)),
+      'a focus ring may not be suppressed unless the suppression is waived by name, with its reason, in this gate',
+    ).toEqual([]);
+  });
+
+  it('every waiver still matches a real suppression', () => {
+    const stale = waivers.filter(
+      (w) =>
+        !styleFiles.some(
+          ({ label, code }) =>
+            label === w.file && suppressionsIn(code).some((o) => o.startsWith(`${w.selector} {`)),
+        ),
+    );
+    expect(
+      stale.map((w) => `${w.file} — ${w.selector}`),
+      'waived suppression no longer exists; delete the waiver',
+    ).toEqual([]);
+  });
+
+  it('every waiver records why', () => {
+    // The design caution in #519: an allowlist that is cheap to append to gets
+    // appended to. An entry has to carry an argued reason, not a placeholder.
+    expect(waivers.filter((w) => w.reason.trim().length < 40).map((w) => w.selector)).toEqual([]);
   });
 });
 

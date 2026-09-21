@@ -3671,13 +3671,18 @@ or `box-shadow: 0 0 0` for the current set rather than trusting a list here:
   the default: the two tokens are identical in both themes today, but
   `buildThemeTokenCss` lets a consumer override `--color-accent` alone, and a
   bare `@include focus-ring` would stop following that override.
-- **Suppressed, not hand-rolled** — nothing, as of this PR. Three components
-  legitimately set `outline: none` under `:focus-visible` and stay:
-  `AvatarGroup` (box-shadow ring — an offset gap there would reveal another
-  avatar, not a surface), `FlowCanvas` (deliberate) and `LiquidEditor`
-  (delegates to `.root:focus-within`) — plus `TopBar`'s `.searchInput`, which
-  sets it under plain `:focus` and delegates the same way, to
-  `.search:focus-within`. A `structure.test.ts` gate now bans the same-rule
+- **Suppressed, not hand-rolled** — nothing, as of this PR. Four components
+  legitimately suppress the ring under a focus pseudo and stay: `AvatarGroup`
+  (box-shadow ring — an offset gap there would reveal another avatar, not a
+  surface), `FlowCanvas` (deliberate), `LiquidEditor` (delegates to
+  `.root:focus-within`) and `TopBar`'s `.searchInput`, which sets it under
+  plain `:focus` and delegates the same way, to `.search:focus-within`. Do not
+  trust that list: since #519 it is a waiver table in `structure.test.ts`
+  ("a focus ring is not suppressed without a recorded reason"), each entry
+  carrying its own reason, and a fifth suppression fails the build until it is
+  argued there. Read the table, not this paragraph.
+
+  A further `structure.test.ts` gate bans the same-rule
   `outline: none` spelling shared between `:hover` and `:focus-visible`; it
   does not catch `outline: 0`, `outline-style: none`, a shared block whose
   body contains a nested block, or a suppression sitting in a separate base
