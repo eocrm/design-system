@@ -151,7 +151,11 @@ URLs and in `data:` URIs.
 --qr-ink: var(--color-fg);
 --qr-paper: var(--color-bg);
 --qr-radius: var(--radius-sm);
---qr-logo-punch-radius: var(--radius-sm);
+
+--qr-error-bg: var(--color-bg-muted);
+--qr-error-fg: var(--color-fg);
+--qr-error-font-size: var(--font-size-sm);
+--qr-error-padding: var(--space-3);
 ```
 
 The inverted class swaps exactly two declarations:
@@ -259,8 +263,10 @@ using the `@lib-source/*` `?raw` pattern the other demos use.
 
 ## Files
 
-**New** — `packages/design-system/src/components/QrCode/{QrCode.tsx,
-QrCode.module.scss, QrCode.tokens.scss, QrCode.test.tsx, index.ts}`,
+**New** — `packages/design-system/src/components/QrCode/{qr.ts, qr.test.ts,
+QrCode.tsx, QrCode.module.scss, QrCode.tokens.scss, QrCode.test.tsx, index.ts}`
+— the encoding, escaping and geometry live in `qr.ts` as pure functions, so they
+carry their own test cycle and `QrCode.tsx` stays a rendering concern —
 `packages/playground/src/pages/demo/QrCodeDemo.tsx`.
 
 **Modified** — `packages/design-system/src/index.ts`, `src/i18n/{messages,en,ru}.ts`,
