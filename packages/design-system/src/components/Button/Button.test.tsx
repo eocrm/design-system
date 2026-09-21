@@ -272,7 +272,7 @@ describe('Button — polymorphic `as` (#530)', () => {
     expect(btn).toHaveAttribute('type', 'button');
   });
 
-  it('types: href is rejected without as="a", and button-only props with it', () => {
+  it('types: href is rejected without as="a", required with it, and button-only props with it', () => {
     render(
       <>
         {/* @ts-expect-error href is not a <button> attribute */}
@@ -281,6 +281,8 @@ describe('Button — polymorphic `as` (#530)', () => {
         <Button as="a" href="/x" disabled>
           Nope
         </Button>
+        {/* @ts-expect-error an anchor without href is neither focusable nor a link */}
+        <Button as="a">No href</Button>
       </>,
     );
     // Rendering is incidental here — the assertions that matter are the two

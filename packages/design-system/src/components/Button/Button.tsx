@@ -75,8 +75,9 @@ type PolymorphicProps<C extends ElementType, P> = P & {
    * Render a different element — the case that matters is `as="a"` with
    * `href`, for a link that must LOOK like a button (an external console, a
    * download, an IdP hand-off). The element named here is what actually
-   * renders, and its own attributes are typed: `href` is available when
-   * `as="a"` and rejected otherwise.
+   * renders, and its own attributes are typed: `href` is REQUIRED when
+   * `as="a"` (an anchor without one is neither focusable nor a link) and
+   * rejected otherwise.
    *
    * Reach for `<Link>` first. `<Link>` is link-SHAPED navigation — inline text
    * in a sentence, a table cell, a breadcrumb. `<Button as="a">` is for a
@@ -92,7 +93,13 @@ type PolymorphicProps<C extends ElementType, P> = P & {
    * @default 'button'
    */
   as?: C;
-} & Omit<ComponentPropsWithoutRef<C>, keyof P | 'as'>;
+} & Omit<ComponentPropsWithoutRef<C>, keyof P | 'as'> &
+  // `href` is optional on every anchor in the DOM typings, so `as="a"` alone
+  // would compile to an element that is neither focusable nor a link — the
+  // silent shape #530 is about. Required here instead. The conditional is
+  // deferred until `C` is known, so `as={RouterLink}` (which names its URL
+  // prop `to`) and every non-anchor element are untouched.
+  (C extends 'a' ? { href: string } : unknown);
 
 /**
  * Public Button prop type. Generic `C` defaults to `'button'`, so a Button
@@ -107,9 +114,13 @@ export type ButtonProps<C extends ElementType = 'button'> = PolymorphicProps<C, 
  * generic from the returned component, so it is re-attached via the cast on
  * the export below.
  */
-type ButtonComponent = <C extends ElementType = 'button'>(
-  props: ButtonProps<C> & { ref?: ComponentPropsWithRef<C>['ref'] },
-) => ReactElement | null;
+type ButtonComponent = {
+  <C extends ElementType = 'button'>(
+    props: ButtonProps<C> & { ref?: ComponentPropsWithRef<C>['ref'] },
+  ): ReactElement | null;
+  /** Kept on the type because the cast below would otherwise drop it. */
+  displayName?: string;
+};
 
 /**
  * Action trigger. Renders a `<button type="button">` and forwards refs and
@@ -233,9 +244,9 @@ type ButtonComponent = <C extends ElementType = 'button'>(
  * - ❌ `<Button onClick={() => (window.location.href = url)}>` for navigation.
  *   It announces as a button, and there is no middle-click, no open-in-new-tab
  *   and no status-bar preview. Use `<Button as="a" href={url}>`.
- * - ❌ `<Button as="a">` with no `href`. An anchor without one is neither
- *   focusable nor activatable — TypeScript cannot reject it, because `href` is
- *   optional on every anchor.
+ * - ❌ `<Button as="a">` with no `href`, for a click handler you wanted to look
+ *   like a link. An anchor without one is neither focusable nor activatable —
+ *   the type requires `href` whenever `as="a"`, so this does not compile.
  */
 export const Button = forwardRef(function Button<C extends ElementType = 'button'>(
   {
