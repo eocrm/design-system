@@ -1083,19 +1083,34 @@ describe('an inset ring stays legible against every fill a .colored event can ta
  * - **Every other Markdown file.** Scoped to `AGENTS.md` alone — the one doc
  *   that ships to consumers. `README.md`, `guidance.md` and the three
  *   `CLAUDE.md` files state ratios too and nothing binds them.
- * - **Integer ratios.** `3:1` and `4.5:1` are WCAG's own thresholds, cited
- *   throughout, and are not measurements of a pair. Same trade as the
- *   annotation gate's `WCAG_THRESHOLDS`, for the same reason: failing on
- *   `must clear the 4.5:1 minimum` is the false alarm that gets a gate
- *   deleted.
+ * - **WCAG's own thresholds.** `3:1`, `4.5:1`, `7:1`, `21:1` and `1:1` are
+ *   normative constants cited throughout the document, not measurements of a
+ *   pair, so nobody can recompute them and they are exempt BY VALUE — the same
+ *   trade, and the same list, as the annotation gate's `WCAG_THRESHOLDS`. The
+ *   docblock used to claim this while the regex matched any decimal, so
+ *   appending the commonest contrast sentence in prose — `must clear the
+ *   4.5:1 minimum` — failed the gate. That is precisely the false alarm this
+ *   file's own reasoning says gets a gate deleted, and it means a real
+ *   measured pair landing on `4.50` is unbindable. Accepted, because a
+ *   measurement essentially never lands on one of five round numbers.
+ * - **Counts other than the one it owns.** The count scan is narrowed to
+ *   `N of the M tone/surface pairs`, the exact phrase of the only count
+ *   FIGURES produces. A generic `N of the M` matched ordinary English —
+ *   `Only 2 of the 7 layout primitives own spacing` would have failed CI on a
+ *   3,900-line prose file agents are told to edit. The cost is real and is
+ *   the point of stating it: a DIFFERENT count added to AGENTS.md is not
+ *   bound, and binding it means widening this phrase deliberately.
  */
 describe('AGENTS.md states no contrast figure this file cannot recompute', () => {
   const AGENTS = readFileSync(resolve(__dirname, '../../AGENTS.md'), 'utf8');
 
   /**
    * Each figure is `[what it measures, the digits AGENTS.md must contain]`.
-   * Built lazily so a resolution failure surfaces as a test failure with a
-   * token name in it rather than as a module-load crash.
+   *
+   * A function rather than a const so a token that stops resolving throws
+   * with a token name in it. Note this is called at COLLECTION time by the
+   * `it.each` below, so such a throw still fails the file rather than one
+   * test — the function buys a readable message, not isolation.
    */
   const figures = (): [label: string, stated: string][] => {
     const worstEventFill = PALETTE_EVENT_FILLS.map(
@@ -1145,9 +1160,19 @@ describe('AGENTS.md states no contrast figure this file cannot recompute', () =>
 
   it('states no ratio or count these figures do not produce', () => {
     const produced = new Set(figures().map(([, stated]) => stated));
+    // Exempt BY VALUE, the same list the annotation gate uses: these are
+    // WCAG's normative thresholds, not measurements, so nothing can recompute
+    // them. `4.5` is the one that matters — `must clear the 4.5:1 minimum` is
+    // the commonest contrast sentence in prose and failing on it is how a gate
+    // gets deleted.
+    const WCAG_THRESHOLDS = new Set(['1', '3', '4.5', '7', '21']);
     const claims = [
-      ...[...AGENTS.matchAll(/\b(\d+\.\d+):1\b/g)].map((m) => m[1]!),
-      ...[...AGENTS.matchAll(/\b(\d+ of the \d+)\b/g)].map((m) => m[1]!),
+      ...[...AGENTS.matchAll(/\b(\d+(?:\.\d+)?):1\b/g)]
+        .map((m) => m[1]!)
+        .filter((r) => !WCAG_THRESHOLDS.has(r)),
+      // The exact phrase of the one count FIGURES produces, not a generic
+      // `N of the M` — see the docblock for what that costs.
+      ...[...AGENTS.matchAll(/\b(\d+ of the \d+) tone\/surface pairs\b/g)].map((m) => m[1]!),
     ];
     expect(
       claims.filter((c) => !produced.has(c)),

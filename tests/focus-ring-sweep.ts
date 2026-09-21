@@ -1,7 +1,81 @@
-import type { Page } from '@playwright/test';
+import { expect, type Page } from '@playwright/test';
+import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 
 export type Band = 'top' | 'right' | 'bottom' | 'left';
 export type Sweep = { measured: number; findings: { key: string; band: Band }[] };
+
+/**
+ * One accepted clip. `reason` and `issue` are not decoration: the same package
+ * that wrote this requires a 40-character argued reason on every focus-ring
+ * suppression waiver in `structure.test.ts`, and a baseline entry is the same
+ * kind of promise — "a human looked at this and decided it stays". Without one
+ * an entry reads as certified-correct rather than as a deferral.
+ */
+export type Finding = {
+  route: string;
+  key: string;
+  band: Band;
+  reason?: string;
+  issue?: number;
+};
+
+const id = (f: Finding) => `${f.route}|${f.key}|${f.band}`;
+
+/**
+ * Compares one route's findings against a baseline file, in BOTH directions.
+ *
+ * - a finding not in the baseline is a fresh clip and fails;
+ * - a baseline entry for this route that no longer occurs is STALE and fails,
+ *   the same staleness rule the focus-ring waivers carry. Without it an entry
+ *   whose defect was fixed sits in the file forever, and the next reader takes
+ *   it for a live limitation;
+ * - an entry with no argued reason fails, so the file cannot grow by
+ *   accretion.
+ *
+ * UPDATE_FOCUS_BASELINE rewrites this route's entries WHOLESALE. Two hazards
+ * follow and both are handled here rather than left implicit: a regeneration
+ * run against a broken dev server, or a route that renders nothing, empties
+ * that route's entries with no diff to notice — so the reason and issue of an
+ * entry that still occurs are CARRIED FORWARD rather than dropped, and an
+ * entry that survives a regeneration keeps its argument. What is still on the
+ * operator is reading the diff: nothing here can tell "this clip was fixed"
+ * from "this route failed to load" when the regeneration is the thing being
+ * trusted.
+ */
+export function checkBaseline(baselinePath: string, route: string, found: Finding[]): void {
+  const baseline: Finding[] = existsSync(baselinePath)
+    ? JSON.parse(readFileSync(baselinePath, 'utf8'))
+    : [];
+
+  if (process.env.UPDATE_FOCUS_BASELINE) {
+    const carried = new Map(baseline.map((b) => [id(b), b]));
+    const merged = [
+      ...baseline.filter((b) => b.route !== route),
+      ...found.map((f) => ({ ...f, ...carried.get(id(f)) })),
+    ];
+    writeFileSync(baselinePath, JSON.stringify(merged, null, 2) + '\n');
+    return;
+  }
+
+  const mine = baseline.filter((b) => b.route === route);
+  const known = new Set(mine.map(id));
+  const occurring = new Set(found.map(id));
+
+  // Compared as strings, not objects: one line per finding reads far better in
+  // the failure diff than a screenful of pretty-printed objects.
+  expect(
+    found.filter((f) => !known.has(id(f))).map(id),
+    'focus-ring bands newly lost to an overflow ancestor',
+  ).toEqual([]);
+  expect(
+    mine.filter((b) => !occurring.has(id(b))).map(id),
+    'baselined clip no longer occurs — delete the entry rather than leaving a fixed defect on record',
+  ).toEqual([]);
+  expect(
+    mine.filter((b) => (b.reason ?? '').trim().length < 40).map(id),
+    'baselined clip has no argued reason — say what it is and why it stays, as the focus-ring waivers do',
+  ).toEqual([]);
+}
 
 /**
  * Focuses every focusable on the page and measures whether an `overflow`
@@ -186,6 +260,18 @@ export const sweepScript = (rootSelector: string | null = null) => `
       //
       // The EPS is subpixel tolerance: scroll offsets are fractional, and a
       // scroller sitting 0.5px off its extreme is at the extreme.
+      //
+      // THE REMAINING LENIENCY, stated because it is not obvious from the
+      // code: the four flags are STICKY across the whole ancestor chain. Once
+      // any ancestor between the ring and here can scroll up, no outer
+      // ancestor clips the top band — including one that never scrolls at
+      // all. The chain is walked inner-to-outer and a scroll only moves the
+      // ring relative to ancestors ABOVE the scroller, so an outer clipper
+      // really can eat a band that an inner scroller could otherwise reveal.
+      // This is narrower than the whole-axis form it replaced, so it is not a
+      // regression, and no instance of the shape exists in the tree today —
+      // but it is a leniency, not an exactness, and closing it means
+      // per-ancestor clip rects rather than one accumulated one.
       //
       // An 'overflow: clip' ancestor never scrolls, whatever scrollHeight
       // reports for it. An 'overflow: hidden' one does: it cannot be scrolled

@@ -1,13 +1,10 @@
 import { test, expect } from '@playwright/test';
-import { readFileSync, existsSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { type Band, sweep } from './focus-ring-sweep';
+import { checkBaseline, type Finding, sweep } from './focus-ring-sweep';
 
 // __dirname, not import.meta.url: the root package.json has no "type":
 // "module", so Playwright transpiles this file to CJS and import.meta throws.
 const BASELINE = resolve(__dirname, 'focus-ring-geometry-overlays.baseline.json');
-
-type Finding = { route: string; key: string; band: Band };
 
 /**
  * The same geometry sweep as `focus-ring-geometry.spec.ts`, run against
@@ -129,6 +126,24 @@ const OVERLAYS = [
   { route: '/components/select', minOpened: 12, minMeasured: 0 },
 ] as const;
 
+/**
+ * The floors have to be able to fail.
+ *
+ * This shipped once with `0 * minOpened` — a calibration bypass that survived
+ * the restore because prettier had rewrapped the line the replace was keyed
+ * on. Every floor was dead, and `/components/select`, whose `minMeasured` is 0
+ * by design, asserted literally nothing: it could open no overlay, measure no
+ * ring, and stay green. A gate that looks stronger than it is, is worse than
+ * one honest about its limits, and this file exists to enforce exactly that.
+ *
+ * So: `minOpened` is never 0. It is the one assertion every route has,
+ * including the one whose rings are unmeasurable.
+ */
+test('every route carries a floor that can fail', () => {
+  expect(OVERLAYS.filter((o) => o.minOpened < 1).map((o) => o.route)).toEqual([]);
+  expect(OVERLAYS.length).toBeGreaterThan(8);
+});
+
 for (const { route, minOpened, minMeasured } of OVERLAYS) {
   test(`focus rings survive their clip ancestors in the overlays on ${route}`, async ({
     page,
@@ -246,29 +261,11 @@ for (const { route, minOpened, minMeasured } of OVERLAYS) {
       });
     }
 
-    expect(opened, `triggers on ${route} that opened an overlay`).toBeGreaterThanOrEqual(
-      0 * minOpened,
-    );
+    expect(opened, `triggers on ${route} that opened an overlay`).toBeGreaterThanOrEqual(minOpened);
     expect(measured, 'focusables whose ring this sweep could measure').toBeGreaterThanOrEqual(
       minMeasured,
     );
 
-    const baseline: Finding[] = existsSync(BASELINE)
-      ? JSON.parse(readFileSync(BASELINE, 'utf8'))
-      : [];
-    if (process.env.UPDATE_FOCUS_BASELINE) {
-      const merged = [...baseline.filter((b) => b.route !== route), ...found.values()];
-      writeFileSync(BASELINE, JSON.stringify(merged, null, 2) + '\n');
-      return;
-    }
-
-    const id = (f: Finding) => `${f.route}|${f.key}|${f.band}`;
-    const known = new Set(baseline.map(id));
-    // Compared as strings, not objects: one line per finding reads far better
-    // in the failure diff than a screenful of pretty-printed objects.
-    const fresh = [...found.values()].filter((f) => !known.has(id(f))).map(id);
-    expect(fresh, 'focus-ring bands newly lost to an overflow ancestor inside an overlay').toEqual(
-      [],
-    );
+    checkBaseline(BASELINE, route, [...found.values()]);
   });
 }

@@ -2,41 +2,57 @@
   {
     "route": "/components/datatable",
     "key": "button.Button-module__button.Button-module__ghost.Button-module__sm",
-    "band": "top"
+    "band": "top",
+    "issue": 523,
+    "reason": "A ghost sm Button flush against the top-left corner of a DataTable scroll container loses the top and left bands of its outset ring. Inherited from #523's original baseline and NOT re-investigated here: recorded as accepted state rather than as an argued exemption, so anyone closing it should measure it first."
   },
   {
     "route": "/components/datatable",
     "key": "button.Button-module__button.Button-module__ghost.Button-module__sm",
-    "band": "left"
+    "band": "left",
+    "issue": 523,
+    "reason": "A ghost sm Button flush against the top-left corner of a DataTable scroll container loses the top and left bands of its outset ring. Inherited from #523's original baseline and NOT re-investigated here: recorded as accepted state rather than as an argued exemption, so anyone closing it should measure it first."
   },
   {
     "route": "/components/emoji-picker",
     "key": "button.EmojiPicker-module__cell",
-    "band": "left"
+    "band": "left",
+    "issue": 523,
+    "reason": "EmojiPicker's grid cells sit flush against the panel's horizontal edges, so the outset ring's left band on the first column and right band on the last are eaten by a panel that does not scroll horizontally. Inherited from #523's original baseline and NOT re-investigated here: recorded as accepted state rather than as an argued exemption, so anyone closing it should measure it first."
   },
   {
     "route": "/components/emoji-picker",
     "key": "button.EmojiPicker-module__cell",
-    "band": "right"
+    "band": "right",
+    "issue": 523,
+    "reason": "EmojiPicker's grid cells sit flush against the panel's horizontal edges, so the outset ring's left band on the first column and right band on the last are eaten by a panel that does not scroll horizontally. Inherited from #523's original baseline and NOT re-investigated here: recorded as accepted state rather than as an argued exemption, so anyone closing it should measure it first."
   },
   {
     "route": "/components/image",
     "key": "button.Button-module__button.Button-module__secondary.Button-module__sm.Image-module__retry",
-    "band": "left"
+    "band": "left",
+    "issue": 538,
+    "reason": "Image's error-state Retry button is ~55px wide inside a 20-40px overflow:hidden thumbnail wrapper on the tiny-size examples, so most of the BUTTON sits outside its container and all of its inset ring's left band does, in a container that can never scroll to reveal it. Surfaced by #526's scroll-extreme tightening. The defect is a control that does not fit its container \u2014 a layout change to Image's error state, not a gate change."
   },
   {
     "route": "/components/lightbox",
     "key": "button.Button-module__button.Button-module__secondary.Button-module__sm.Image-module__retry",
-    "band": "left"
+    "band": "left",
+    "issue": 538,
+    "reason": "Image's error-state Retry button is ~55px wide inside a 20-40px overflow:hidden thumbnail wrapper on the tiny-size examples, so most of the BUTTON sits outside its container and all of its inset ring's left band does, in a container that can never scroll to reveal it. Surfaced by #526's scroll-extreme tightening. The defect is a control that does not fit its container \u2014 a layout change to Image's error state, not a gate change."
   },
   {
     "route": "/components/person-display",
     "key": "a.Link-module__default.Link-module__link",
-    "band": "left"
+    "band": "left",
+    "issue": 527,
+    "reason": "A Link that fills PersonDisplay's Description exactly (nowrap + ellipsis) has both horizontal bands of its outset ring outside the description's `overflow: clip visible`, measured at box[984.6,1091.4] inside a container at L=984.6 R=1091.4. The supported place for a control is PersonDisplay.Name, which does not clip, and that is documented on the component and in AGENTS.md (#527)."
   },
   {
     "route": "/components/person-display",
     "key": "a.Link-module__default.Link-module__link",
-    "band": "right"
+    "band": "right",
+    "issue": 527,
+    "reason": "A Link that fills PersonDisplay's Description exactly (nowrap + ellipsis) has both horizontal bands of its outset ring outside the description's `overflow: clip visible`, measured at box[984.6,1091.4] inside a container at L=984.6 R=1091.4. The supported place for a control is PersonDisplay.Name, which does not clip, and that is documented on the component and in AGENTS.md (#527)."
   }
 ]

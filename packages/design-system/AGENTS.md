@@ -3731,7 +3731,8 @@ rings do. The twelve pairs are `--ring-accent` / `--ring-danger` /
 `--ring-success` against the four surfaces Lightbox chrome sits on — the scrim
 itself, and `--lightbox-thumb-strip-bg` / `--lightbox-control-bg` /
 `--lightbox-control-bg-hover` composited over it. Mostly a light-theme failure
-— 10 of the 12 are under 1.4.11's 3:1 there — but not exclusively:
+— 10 of the 12 tone/surface pairs are under 1.4.11's 3:1 there — but not
+exclusively:
 `--ring-danger` on `--lightbox-control-bg-hover` reads 2.95:1 in dark.
 
 Every figure in this section is recomputed by `contrast.test.ts`, which also

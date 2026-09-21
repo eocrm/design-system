@@ -1526,7 +1526,8 @@ describe('an outline-offset declaration does not sit in the same rule as @includ
 });
 
 /**
- * Every custom property a stylesheet READS is one something DECLARES.
+ * Every custom property the library READS — in SCSS or in TS — is one
+ * something DECLARES.
  *
  * CSS does not error on an undefined `var()`. The declaration is invalid at
  * computed-value time, the property falls back to its inherited or initial
@@ -1574,6 +1575,9 @@ describe('an outline-offset declaration does not sit in the same rule as @includ
  *   `getPropertyValue('--x')` counts as a declaration. Deliberate: the
  *   alternative is following the value through the AST, and the cost of the
  *   trade is a missed offender rather than a false alarm.
+ * - **A `var()` built by INTERPOLATION in TS.** `` `var(--color-palette-${c}-bg)` ``
+ *   is skipped on the read side for the same reason its declaration side is a
+ *   prefix: the name is a runtime value. Only literal `var(--name)` is read.
  * - **Anything under a template prefix.** `` `--icon-picker-${part}` ``
  *   licenses every `--icon-picker-*` reference whether or not the runtime
  *   ever produces that suffix.
@@ -1583,8 +1587,17 @@ describe('an outline-offset declaration does not sit in the same rule as @includ
  * - **The playground and the CRM.** Scoped to `src`. A consumer reading a
  *   token this library renamed is exactly this defect one repo over, and
  *   nothing here sees it.
+ *
+ * READS are taken from `.scss` AND from `.ts`/`.tsx`. The first version
+ * scanned only stylesheets, which left a whole surface unchecked: a component
+ * that builds a value in JS reads tokens just as directly —
+ * `RailGroup.tsx` computes `min(var(--rail-flyout-min-width), …)` at runtime —
+ * and a rename would break it exactly as silently. TS comments are stripped
+ * before the read scan (a `var(--x)` quoted in prose is not a read) but NOT
+ * before the declaration scan, where an extra name can only hide an offender,
+ * never invent one.
  */
-describe('every custom property a stylesheet reads is declared somewhere', () => {
+describe('every custom property the library reads is declared somewhere', () => {
   const files = allFilesUnder(__dirname);
 
   const declared = new Set<string>();
@@ -1613,6 +1626,15 @@ describe('every custom property a stylesheet reads is declared somewhere', () =>
   const resolves = (name: string) =>
     declared.has(name) || prefixes.some((prefix) => name.startsWith(prefix));
 
+  /** Every file that READS a custom property — stylesheets and TS alike. */
+  const readers = files
+    .filter(({ label }) => /\.(scss|tsx?)$/.test(label))
+    .map(({ label, code }) => ({
+      label,
+      code: /\.scss$/.test(label)
+        ? stripScssComments(code)
+        : stripComments(code, label.endsWith('.tsx')),
+    }));
   const stylesheets = files.filter(({ label }) => /\.scss$/.test(label));
 
   it('found the stylesheets and the declarations', () => {
@@ -1620,7 +1642,11 @@ describe('every custom property a stylesheet reads is declared somewhere', () =>
     // regex that matched nothing — would make every assertion below pass
     // having read no files at all.
     expect(stylesheets.length).toBeGreaterThan(100);
+    expect(readers.length).toBeGreaterThan(300);
     expect(declared.size).toBeGreaterThan(1000);
+    // A TS reader specifically, so a regex that stopped matching `.tsx` cannot
+    // quietly shrink the scan back to stylesheets.
+    expect(readers.map((r) => r.label)).toContain('components/Rail/RailGroup.tsx');
   });
 
   it('the scan itself can fail', () => {
@@ -1630,12 +1656,12 @@ describe('every custom property a stylesheet reads is declared somewhere', () =>
     expect(resolves('--button-ring')).toBe(true);
   });
 
-  it.each(stylesheets.map(({ label, code }) => [label, code]))('%s', (_label, code) => {
+  it.each(readers.map(({ label, code }) => [label, code]))('%s', (_label, code) => {
     // `var(--x)` with no fallback only — see the docblock for why a fallback
     // is exempt.
     const unresolved = [
       ...new Set(
-        [...stripScssComments(code).matchAll(/var\(\s*(--[a-z0-9-]+)\s*\)/g)]
+        [...code.matchAll(/var\(\s*(--[a-z0-9-]+)\s*\)/g)]
           .map((m) => m[1]!)
           .filter((name) => !resolves(name)),
       ),

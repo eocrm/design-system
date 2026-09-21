@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
-import { readFileSync, existsSync, writeFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { type Band, sweep } from './focus-ring-sweep';
+import { checkBaseline, type Finding, sweep } from './focus-ring-sweep';
 
 // __dirname, not import.meta.url: the root package.json has no "type":
 // "module", so Playwright transpiles this file to CJS and import.meta throws.
@@ -21,8 +21,6 @@ const routes = [
     ].map((m) => m[1]!),
   ),
 ].sort();
-
-type Finding = { route: string; key: string; band: Band };
 
 // The measuring script itself lives in `./focus-ring-sweep`, shared with
 // `focus-ring-geometry-overlays.spec.ts`. Read its docblock for what a sweep
@@ -86,20 +84,6 @@ for (const route of routes) {
     expect(swept.measured, 'focusables whose ring this sweep could measure').toBeGreaterThan(0);
     const found: Finding[] = swept.findings.map((h) => ({ route, ...h }));
 
-    const baseline: Finding[] = existsSync(BASELINE)
-      ? JSON.parse(readFileSync(BASELINE, 'utf8'))
-      : [];
-    if (process.env.UPDATE_FOCUS_BASELINE) {
-      const merged = [...baseline.filter((b) => b.route !== route), ...found];
-      writeFileSync(BASELINE, JSON.stringify(merged, null, 2) + '\n');
-      return;
-    }
-
-    const id = (f: Finding) => `${f.route}|${f.key}|${f.band}`;
-    const known = new Set(baseline.map(id));
-    // Compared as strings, not objects: one line per finding reads far better
-    // in the failure diff than a screenful of pretty-printed objects.
-    const fresh = found.filter((f) => !known.has(id(f))).map(id);
-    expect(fresh, 'focus-ring bands newly lost to an overflow ancestor').toEqual([]);
+    checkBaseline(BASELINE, route, found);
   });
 }
