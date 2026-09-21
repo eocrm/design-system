@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createRef, useState, type ReactNode } from 'react';
 import { DropdownMenu } from './DropdownMenu';
+import { ConfirmationPopover } from '../ConfirmationPopover';
 
 /** Raw SCSS, so a CSS-only contract can be asserted in a CSS-less DOM. */
 const dropdownScss = readFileSync(resolve(__dirname, './DropdownMenu.module.scss'), 'utf8');
@@ -2415,5 +2416,66 @@ describe('DropdownMenu — Sub stale hover-intent timer', () => {
       vi.advanceTimersByTime(300);
     });
     expect(screen.queryByRole('button', { name: 'Pick' })).toBeNull();
+  });
+});
+
+describe('DropdownMenu — a popover opened from a menu item (#528)', () => {
+  // The popover portals its panel to document.body but stays a REACT child of
+  // Content, so React routes its key events through Content's onKeyDown.
+  // Before #528 that handler closed the menu on Tab (taking the popover with
+  // it) and preventDefault-ed Enter (cancelling the Confirm button's
+  // activation), leaving the action keyboard-unreachable.
+  function MenuWithConfirm({ onConfirm }: { onConfirm: () => void }) {
+    return (
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <button type="button">Open</button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content>
+          <DropdownMenu.Item onSelect={() => {}}>Rename</DropdownMenu.Item>
+          <ConfirmationPopover title="Delete record?" variant="danger" onConfirm={onConfirm}>
+            <DropdownMenu.Item onSelect={() => {}} closeOnSelect={false} tone="danger">
+              Delete
+            </DropdownMenu.Item>
+          </ConfirmationPopover>
+        </DropdownMenu.Content>
+      </DropdownMenu>
+    );
+  }
+
+  async function openConfirm() {
+    const user = userEvent.setup();
+    const onConfirm = vi.fn();
+    render(<MenuWithConfirm onConfirm={onConfirm} />);
+    screen.getByRole('button', { name: 'Open' }).focus();
+    await user.keyboard('{Enter}');
+    await user.keyboard('{End}');
+    await user.keyboard('{Enter}');
+    const dialog = await screen.findByRole('dialog');
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus());
+    return { user, onConfirm, dialog };
+  }
+
+  it('Tab inside the popover moves to Confirm instead of closing menu and popover', async () => {
+    const { user } = await openConfirm();
+    await user.tab();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Confirm' })).toHaveFocus();
+  });
+
+  it('Enter on the focused Confirm button confirms and closes the popover', async () => {
+    const { user, onConfirm } = await openConfirm();
+    await user.tab();
+    await user.keyboard('{Enter}');
+    expect(onConfirm).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+  });
+
+  it('Escape inside the popover closes only the popover, leaving the menu open', async () => {
+    const { user } = await openConfirm();
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    expect(screen.getByRole('menu')).toBeInTheDocument();
   });
 });
