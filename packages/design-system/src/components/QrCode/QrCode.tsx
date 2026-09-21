@@ -102,7 +102,12 @@ export const QrCode = forwardRef<HTMLButtonElement, QrCodeProps>(function QrCode
   const t = useTranslation();
   const [inverted, setInverted] = useState(false);
 
-  const resolvedLevel: QrCodeLevel = level ?? (logo ? 'H' : 'M');
+  // One truthiness rule for the whole component: an empty string is not a logo.
+  // Splitting this across `logo ?` and `logo !== undefined` punches a hole into
+  // a level-M symbol with nothing to fill it.
+  const hasLogo = Boolean(logo);
+
+  const resolvedLevel: QrCodeLevel = level ?? (hasLogo ? 'H' : 'M');
   const matrix = useMemo(() => encodeQr(value, resolvedLevel), [value, resolvedLevel]);
 
   // {...props} first so the ARIA contract below cannot be clobbered — the
@@ -125,9 +130,9 @@ export const QrCode = forwardRef<HTMLButtonElement, QrCodeProps>(function QrCode
   const { side, path, punch } = matrix;
   const offset = (side - punch) / 2;
 
-  const logoVars = logo
+  const logoVars = hasLogo
     ? ({
-        '--qr-logo-src': cssUrl(logo),
+        '--qr-logo-src': cssUrl(logo!),
         '--qr-logo-size': `${((punch * LOGO_FILL) / side) * 100}%`,
       } as CSSProperties)
     : undefined;
@@ -155,11 +160,11 @@ export const QrCode = forwardRef<HTMLButtonElement, QrCodeProps>(function QrCode
       >
         <rect className={styles.paper} width={side} height={side} />
         <path className={styles.ink} d={path} />
-        {logo !== undefined && (
+        {hasLogo && (
           <rect className={styles.paper} x={offset} y={offset} width={punch} height={punch} />
         )}
       </svg>
-      {logo !== undefined && <span className={styles.logo} aria-hidden="true" />}
+      {hasLogo && <span className={styles.logo} aria-hidden="true" />}
     </button>
   );
 });

@@ -112,6 +112,16 @@ describe('QrCode', () => {
     expect(withLogo.querySelectorAll('rect')).toHaveLength(2); // paper + punch
   });
 
+  it('treats an empty logo string as no logo at all', () => {
+    // `logo={settings.logoUrl ?? ''}` must not punch a hole with nothing in it.
+    const empty = render(<QrCode value={VALUE} logo="" />).container;
+    const absent = render(<QrCode value={VALUE} />).container;
+
+    expect(empty.querySelectorAll('rect')).toHaveLength(1); // paper only, no punch
+    expect(sideOf(empty)).toBe(sideOf(absent)); // level M, not H
+    expect(empty.querySelector('button')!.style.getPropertyValue('--qr-logo-src')).toBe('');
+  });
+
   it('exposes the logo as a CSS custom property', () => {
     render(<QrCode value={VALUE} logo="/logo.svg" />);
     const button = screen.getByRole('button');
