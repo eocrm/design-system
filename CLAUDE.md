@@ -15,8 +15,8 @@ Each package has its own `CLAUDE.md` with package-specific rules. Read them when
 Adding a component to `@eocrm/design-system` is **not complete** until:
 
 1. Unit tests exist alongside the component (`<Name>.test.tsx`)
-2. A demo page exists in the playground (`packages/playground/src/pages/demo/<Name>Demo.tsx`)
-3. The demo is wired into `App.tsx` (route), `AppShell.tsx` (sidebar nav), and `DemoIndex.tsx` (overview grid)
+2. A demo page exists in the playground (`packages/playground/src/pages/components/<Name>Demo.tsx`)
+3. The demo is wired into `packages/playground/src/App.tsx` (route), `src/layout/AppShell/navItems.ts` (sidebar nav — `componentGroups`; `AppShell.tsx` only consumes it), `src/pages/components/ComponentsIndex.tsx` (overview grid) and `src/pages/components/overviewSchematics.tsx` (its schematic preview), and the component name is added to the `ComponentName` union in `src/pages/mockups/registry.ts` — `DemoLayout`'s `componentName` prop is typed to that union, so the demo will not typecheck without it
 4. The component is re-exported from `packages/design-system/src/index.ts`
 5. "When NOT to use / anti-patterns" prose is added to the component function's JSDoc (`@remarks` blocks) AND a one-section TL;DR is added to `packages/design-system/AGENTS.md`
 
