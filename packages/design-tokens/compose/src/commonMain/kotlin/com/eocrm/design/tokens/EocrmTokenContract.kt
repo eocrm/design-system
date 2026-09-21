@@ -32,7 +32,7 @@ public object EocrmLightTokens {
         dangerHover = Color(0xFFA72808),
         foreground = Color(0xFF172B4D),
         foregroundDisabled = Color(0xFFA5ADBA),
-        foregroundMuted = Color(0xFF5E6C84),
+        foregroundMuted = Color(0xFF5B6980),
         foregroundSubtle = Color(0xFF687388),
         info = Color(0xFF0052CC),
         infoBackgroundSubtle = Color(0xFFEBF3FF),

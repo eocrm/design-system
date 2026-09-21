@@ -39,7 +39,7 @@
 // Scoped to the combination rather than retuning the base rule, which stays
 // --color-fg-subtle on the certified --color-bg for the ordinary editable
 // empty case.
-// @contrast --color-fg-muted on --color-bg-muted = 4.87:1 light
+// @contrast --color-fg-muted on --color-bg-muted = 5.10:1 light
 // @contrast --color-fg-muted on --color-bg-muted = 5.60:1 dark
 .root.readOnly[data-empty]::before {
   color: var(--color-fg-muted);

@@ -200,14 +200,43 @@ const PAIRS: Pair[] = [
   // subtle into muted. The cost lands in light only, and it is real: at 11px
   // specifically on --color-bg-muted, the shipped 0.0261 step is ALSO
   // visually indistinguishable in a browser, while dark (0.0707) still reads
-  // as a real step there. #521 tracks the design decision that follows (move
-  // --color-fg-muted, split the retune per theme, or retire the subtle tone)
-  // — not resolved here. So the rule stands: text on --color-bg-muted uses
-  // tone="muted",
-  // whose row is directly below.
+  // as a real step there. #521 tracked the design decision that follows, and
+  // it went BOTH ways at once: #522 moved light --color-fg-muted (below) and
+  // #521 retired the subtle tone. The 0.0261 above is therefore the figure as
+  // MEASURED IN #520, before #522's retune widened it to 0.0365 — still
+  // roughly half the 0.065 floor, which is why retiring the tone stood. So
+  // the rule stands: text on --color-bg-muted uses tone="muted", whose row is
+  // directly below.
   ['subtle text on page bg', '--color-fg-subtle', '--color-bg', 4.5],
   ['subtle text on subtle bg', '--color-fg-subtle', '--color-bg-subtle', 4.5],
   ['muted text on muted bg', '--color-fg-muted', '--color-bg-muted', 4.5],
+  // #522. These are the two surfaces where the neutral ramp had run out, and
+  // they are pinned because they are what the retune bought — not because a
+  // component happens to paint them today. Light --color-fg-muted read 4.4088
+  // on --color-accent-bg-subtle (FileUpload's dropzone hint at 12px,
+  // LiquidEditor's autocomplete description and type at 11px — body text, no
+  // large-text exemption) and 4.4988 on --color-bg-sunken. The second missed
+  // 4.5:1 by 0.0012, which is exactly why it went unnoticed: every rounded
+  // figure the library published called it a pass, and the annotation gate
+  // recomputes for ACCURACY without bounding CONFORMANCE, so a truthful
+  // `= 4.41:1 light` sat beside prose claiming AA with the suite green.
+  //
+  // The fix moved the primitive rather than minting a recessive neutral
+  // beside it: light --color-fg-muted #5e6c84 -> #5b6980, ΔE 0.0109 — below
+  // any perceptibility floor — which lifts every surface at once and every
+  // existing consumer with it. A new token would have sat ΔE 0.0109 from
+  // muted in light while #521, in the same breath, retired tone="subtle" for
+  // sitting 0.0261 away. Two tokens for one visible tier was the defect, not
+  // the remedy.
+  //
+  // DARK IS UNTOUCHED and that is a finding, not an omission: the surface
+  // ordering reverses by theme — sunken is the LIGHTEST neutral in light and
+  // the DARKEST in dark — so dark --color-fg-muted already cleared all five
+  // surfaces, 4.7179 at its worst. Both themes are pinned here anyway, so a
+  // future retune cannot fix one theme by breaking the other.
+  ['muted text on subtle bg', '--color-fg-muted', '--color-bg-subtle', 4.5],
+  ['muted text on sunken bg', '--color-fg-muted', '--color-bg-sunken', 4.5],
+  ['muted text on accent tint', '--color-fg-muted', '--color-accent-bg-subtle', 4.5],
 ];
 
 describe.each([
