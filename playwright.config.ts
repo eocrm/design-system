@@ -15,14 +15,17 @@ import { defineConfig, devices } from '@playwright/test';
  * the exact shape of all three defects #505 shipped and #510 fixed. It is
  * silent on:
  *
- * - Closed overlays. The sweep loads a route, presses Tab once, and opens
- *   nothing, so every menu, listbox, dialog and picker is absent from the DOM —
- *   the densest population of this defect class is unswept. `IconPicker`'s cells
- *   are an example: they only exist while the popover is open, so its rings are
- *   never measured here. (It is already on `outline` as of #510; the
- *   `box-shadow` left at `IconPicker.module.scss:70` is the selected-state ring,
- *   a different mechanism, and #512's "blocked on this sweep" note was stale
- *   when it was written.)
+ * - Closed overlays, on the STATIC sweep. It loads a route, presses Tab once
+ *   and opens nothing, so every menu, listbox, dialog and picker is absent
+ *   from its DOM. `tests/focus-ring-geometry-overlays.spec.ts` (#525) opens
+ *   them: ten routes, every visible trigger pressed with the KEYBOARD (a
+ *   click puts the page in pointer modality and no ring paints at all), the
+ *   opened surface swept alone. That leaves the overlays NOT in its table
+ *   unswept, every state an overlay reaches only after further interaction
+ *   unswept, and `Select` structurally unmeasurable — its listbox is
+ *   `aria-activedescendant`, so no option is ever DOM-focused and there is no
+ *   ring in it for any sweep to find. Read that spec's docblock, not this
+ *   bullet, for the current limits.
  * - Losses at either end of a scroll range (see the scroll-axis rule in
  *   `tests/focus-ring-geometry.spec.ts`, which explains why that leniency is
  *   load-bearing).

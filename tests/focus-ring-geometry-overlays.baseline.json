@@ -1,0 +1,12 @@
+[
+  {
+    "route": "/components/emoji-picker",
+    "key": "button.EmojiPicker-module__cell",
+    "band": "left"
+  },
+  {
+    "route": "/components/emoji-picker",
+    "key": "button.EmojiPicker-module__cell",
+    "band": "right"
+  }
+]
