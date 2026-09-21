@@ -80,9 +80,9 @@ For a new demo page to be reachable:
 1. `src/App.tsx` — add a `<Route path="/components/<name>" element={<<Name>Demo />} />`
 2. `src/layout/AppShell/navItems.ts` — add the item to the appropriate group in `componentGroups` (`Layout`, `Forms`, `Display`, `Navigation`). The groups are defined here; `AppShell.tsx` only renders them. If none of the existing groups fit, add a new group rather than stuffing the item somewhere it doesn't belong.
 3. `src/pages/components/ComponentsIndex.tsx` — add a card to the overview grid, plus a schematic preview in `overviewSchematics.tsx` (blueprint-accent vocabulary — tinted shapes, exactly one solid-accent focal element; see the SCHEMATICS record). Overview previews are schematics, not live renders.
-4. `src/pages/mockups/registry.ts` — extend the `ComponentName` union with the new name. `DemoLayout`'s `componentName` prop is typed to that union, so the demo won't typecheck without it. If the component is also used by a mockup, add its name to that mockup's `usesComponents` list.
+4. `src/pages/mockups/registry.ts` — extend the `ComponentName` union with the new name. `DemoLayout`'s `componentName` prop is typed to that union, so a demo that passes `componentName` won't typecheck without it (the prop is optional — `AppLayoutDemo` and `DatePickersDemo` omit it — but nearly every demo passes it). If the component is also used by a mockup, add its name to that mockup's `usesComponents` list.
 
-Skipping 1–3 → users can navigate to the URL but the page is unreachable through nav. Skipping 4 → the demo doesn't typecheck, and the cross-link between mockups and component demos is broken.
+Skipping 1–3 → users can navigate to the URL but the page is unreachable through nav. Skipping 4 → a demo that passes `componentName` doesn't typecheck, and the cross-link between mockups and component demos is broken.
 
 ### 5. Demo-only deps stay here
 

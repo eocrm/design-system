@@ -14,7 +14,7 @@ component, a docs change.
 
 ## Environment (verified)
 
-- **Repo:** `/Users/dpws/projects/design-system` — local path. Package
+- **Repo:** `/home/dpws/projects/design-system` — local path. Package
   `@eocrm/design-system`. GitHub repo `eocrm/design-system` (the `eocrm` org owns
   the design system; this is NOT a separate consumer app).
 - **Issues** live in `eocrm/design-system` on GitHub and are the unit of work.
@@ -41,15 +41,15 @@ Exactly ONE issue per invocation.
 
 1. **Repo sane** — clean tree on `main`:
    ```bash
-   git -C /Users/dpws/projects/design-system fetch origin -q --prune
-   git -C /Users/dpws/projects/design-system status --porcelain   # must be empty
-   git -C /Users/dpws/projects/design-system rev-parse --abbrev-ref HEAD   # main
+   git -C /home/dpws/projects/design-system fetch origin -q --prune
+   git -C /home/dpws/projects/design-system status --porcelain   # must be empty
+   git -C /home/dpws/projects/design-system rev-parse --abbrev-ref HEAD   # main
    ```
    If dirty or not on `main`, stop and ask the user to resolve it.
 2. **Hooks installed:**
    ```bash
-   git -C /Users/dpws/projects/design-system config --get core.hooksPath   # .husky/_
-   test -x /Users/dpws/projects/design-system/.husky/pre-push
+   git -C /home/dpws/projects/design-system config --get core.hooksPath   # .husky/_
+   test -x /home/dpws/projects/design-system/.husky/pre-push
    ```
    If either fails, run `npm install` in the repo and re-check; else stop.
 3. **List open issues and pick:**
@@ -72,20 +72,20 @@ Exactly ONE issue per invocation.
 2. If the issue is ambiguous or underspecified for a clean implementation, invoke
    `superpowers:brainstorming` for ONLY the open questions, then continue.
 3. **If the work adds or changes a component**, it is not done until it satisfies
-   the **Core invariant** in `/Users/dpws/projects/design-system/CLAUDE.md` and the
+   the **Core invariant** in `/home/dpws/projects/design-system/CLAUDE.md` and the
    package Hard rules in `packages/design-system/CLAUDE.md` — read both now, don't
    rely on memory. That checklist covers: tests beside the component, a playground
    demo page + wiring (route + sidebar nav + overview grid), the `src/index.ts`
-   re-export, JSDoc `@remarks` anti-patterns, and an `AGENTS.md` TL;DR. (The
-   playground demo lives at
-   `packages/playground/src/pages/components/<Name>Demo.tsx` and the overview grid
-   is `ComponentsIndex.tsx` — the root CLAUDE.md's `pages/demo/` + `DemoIndex.tsx`
-   names are stale; trust the actual tree.) **Plus one step not in CLAUDE.md:** add
-   a CLUSTERS entry in **both** parallel maps (they are kept in sync) —
+   re-export, JSDoc `@remarks` anti-patterns, an `AGENTS.md` TL;DR, and the
+   CLUSTERS manifest entry. (The root CLAUDE.md's playground paths used to be
+   stale — `pages/demo/` + `DemoIndex.tsx` — and were corrected; the demo lives
+   at `packages/playground/src/pages/components/<Name>Demo.tsx` and the overview
+   grid is `ComponentsIndex.tsx`. Trust the doc, and the tree over both.) The
+   CLUSTERS step: add the entry in **both** parallel maps (they are kept in sync) —
    `packages/design-system/src/_meta/manifest.ts` **and**
    `packages/design-system/scripts/generate-manifest.mjs` — then regenerate:
    ```bash
-   cd /Users/dpws/projects/design-system/packages/design-system && npm run build:manifest
+   cd /home/dpws/projects/design-system/packages/design-system && npm run build:manifest
    ```
    (Editing only the `.mjs` leaves `_meta/manifest.ts` stale and fails the manifest
    drift test inside `make test`.)
@@ -97,13 +97,13 @@ Exactly ONE issue per invocation.
 
 1. Branch off fresh `main` (`<kind>` = `fix` / `feat` / `docs` to match the issue):
    ```bash
-   git -C /Users/dpws/projects/design-system checkout -B <kind>/<short-desc> origin/main
+   git -C /home/dpws/projects/design-system checkout -B <kind>/<short-desc> origin/main
    ```
 2. Implement via `superpowers:writing-plans` → `superpowers:subagent-driven-development`
    (TDD per task).
 3. **Gates — all must pass:**
    ```bash
-   cd /Users/dpws/projects/design-system
+   cd /home/dpws/projects/design-system
    make test && make build-lib && make lint && npm run format:check
    npm pack --workspace @eocrm/design-system --dry-run 2>&1 \
      | grep -cE '\.test\.(t|j)sx?|\.spec\.|/types/|CLAUDE\.md|tsconfig'   # expect 0 (mirrors the CI tarball gate)
@@ -120,14 +120,14 @@ Exactly ONE issue per invocation.
 
 1. **Record the pre-merge version** (to detect whether the release bumped it):
    ```bash
-   git -C /Users/dpws/projects/design-system fetch --tags --force origin -q
-   PREV=$(git -C /Users/dpws/projects/design-system tag --list 'v*' --sort=-v:refname | head -1)
+   git -C /home/dpws/projects/design-system fetch --tags --force origin -q
+   PREV=$(git -C /home/dpws/projects/design-system tag --list 'v*' --sort=-v:refname | head -1)
    ```
 2. **Push + open the PR.** Reference the issue but do NOT use a closing keyword —
    the skill closes the issue itself in Phase 4, after the version is known:
 
    ```bash
-   git -C /Users/dpws/projects/design-system push -u origin <kind>/<short-desc>
+   git -C /home/dpws/projects/design-system push -u origin <kind>/<short-desc>
    gh pr create --repo eocrm/design-system --base main --head <kind>/<short-desc> \
      --title "<kind>: <summary> (#<N>)" \
      --body "Addresses #<N>.
@@ -168,8 +168,8 @@ Exactly ONE issue per invocation.
    list:
 
    ```bash
-   git -C /Users/dpws/projects/design-system fetch origin main -q
-   MERGE_SHA=$(git -C /Users/dpws/projects/design-system rev-parse origin/main)
+   git -C /home/dpws/projects/design-system fetch origin main -q
+   MERGE_SHA=$(git -C /home/dpws/projects/design-system rev-parse origin/main)
    RUN_ID=""
    for _ in $(seq 1 12); do
      RUN_ID=$(gh run list --repo eocrm/design-system --workflow=Release \
@@ -195,8 +195,8 @@ Exactly ONE issue per invocation.
    would read `NEW == PREV` and misreport "no bump":
 
    ```bash
-   git -C /Users/dpws/projects/design-system fetch --tags --force origin -q
-   NEW=$(git -C /Users/dpws/projects/design-system tag --list 'v*' --sort=-v:refname | head -1)
+   git -C /home/dpws/projects/design-system fetch --tags --force origin -q
+   NEW=$(git -C /home/dpws/projects/design-system tag --list 'v*' --sort=-v:refname | head -1)
    ```
 
    - **No Release run** (step 5) or **`publish: skipped`** → no new version; carry
