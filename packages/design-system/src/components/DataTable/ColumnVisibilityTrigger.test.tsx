@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { I18nProvider } from '../../i18n';
 import { ColumnVisibilityTrigger } from './ColumnVisibilityTrigger';
 import { useDataTable } from './useDataTable';
 import type { ColumnDef } from './types';
@@ -24,6 +25,16 @@ function Harness(props: {
     onColumnVisibilityChange: props.onChange,
   });
   return <ColumnVisibilityTrigger instance={instance} />;
+}
+
+function ColumnVisibilityTriggerWithLabel(props: { label?: React.ReactNode }) {
+  const instance = useDataTable<Row>({
+    data: [],
+    columns: cols,
+    getRowId: (r) => r.id,
+    columnVisibility: {},
+  });
+  return <ColumnVisibilityTrigger instance={instance} label={props.label} />;
 }
 
 describe('<ColumnVisibilityTrigger>', () => {
@@ -69,6 +80,36 @@ describe('<ColumnVisibilityTrigger>', () => {
     );
     expect(screen.getByRole('menuitemcheckbox', { name: 'b-id' })).toHaveAccessibleName('b-id');
     expect(screen.getByRole('menuitemcheckbox', { name: 'c-id' })).toHaveAccessibleName('c-id');
+  });
+
+  // `label = 'Columns'` was a default parameter — still an inlined English
+  // string under Hard rule 9, just one hiding in the signature rather than in
+  // the markup, so a ru-locale consumer who passed no label read an English
+  // trigger (#537). The ru assertion is what fails on a reverted fix; the en
+  // one alone would pass against the hardcoded default.
+  it('takes its default label from the i18n catalog, in both locales', () => {
+    render(
+      <I18nProvider locale="en">
+        <Harness />
+      </I18nProvider>,
+    );
+    expect(screen.getByRole('button')).toHaveAccessibleName('Columns');
+  });
+
+  it('renders the Russian default label under locale="ru"', () => {
+    render(
+      <I18nProvider locale="ru">
+        <Harness />
+      </I18nProvider>,
+    );
+    expect(screen.getByRole('button')).toHaveAccessibleName('Столбцы');
+  });
+
+  // Truthiness, not `??` — the icon beside it is aria-hidden, so `label=""`
+  // would otherwise leave the trigger with no accessible name (#535).
+  it('treats label="" as unset rather than as a nameless trigger', () => {
+    render(<ColumnVisibilityTriggerWithLabel label="" />);
+    expect(screen.getByRole('button')).toHaveAccessibleName('Columns');
   });
 
   it('toggle fires onColumnVisibilityChange', async () => {

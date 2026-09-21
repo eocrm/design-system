@@ -144,6 +144,7 @@ export const ru: Messages = {
     unlabelledColumn: 'Столбец без названия',
     loaded: 'Строки загружены',
     loadedEmpty: 'Строки не загружены',
+    columns: 'Столбцы',
   },
   drag: {
     handleLabel: 'Переместить элемент',
