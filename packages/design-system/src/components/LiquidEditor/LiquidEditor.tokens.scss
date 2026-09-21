@@ -15,7 +15,7 @@
   // sighted users regardless of what the accessibility tree exposes. #511:
   // was --color-fg-subtle, which fails on --liquid-editor-gutter-bg;
   // --color-fg-muted clears it.
-  // @contrast --color-fg-muted on --color-bg-muted = 4.87:1 light
+  // @contrast --color-fg-muted on --color-bg-muted = 5.10:1 light
   // @contrast --color-fg-muted on --color-bg-muted = 5.60:1 dark
   --liquid-editor-gutter-bg: var(--color-bg-muted);
   --liquid-editor-gutter-fg: var(--color-fg-muted);

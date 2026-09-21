@@ -116,6 +116,10 @@ export interface FileUploadProps extends Omit<HTMLAttributes<HTMLDivElement>, 'o
    * rich content is visible-only. To give screen readers the equivalent
    * text, pass `aria-label` via the spread (e.g. `aria-label="Upload CSV
    * or Excel files"`).
+   *
+   * An EMPTY string counts as unset, not as an explicit blank — it drives both
+   * the visible label and the dropzone's `aria-label`, so an empty one left a
+   * `role="button"` with no accessible name.
    */
   dropzoneLabel?: ReactNode;
   /**
@@ -530,7 +534,16 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
           role="button"
           tabIndex={disabled ? -1 : 0}
           aria-labelledby={ariaLabelledBy}
-          aria-label={typeof dropzoneLabel === 'string' ? dropzoneLabel : t('fileUpload.upload')}
+          // `dropzoneLabel &&`, not just the typeof: `dropzoneLabel=""` is a
+          // string, so without it the dropzone got a literal `aria-label=""`,
+          // which names nothing and falls through to name-from-content — where
+          // the label span is empty for the same reason. A role="button" with
+          // no accessible name (#535).
+          aria-label={
+            typeof dropzoneLabel === 'string' && dropzoneLabel
+              ? dropzoneLabel
+              : t('fileUpload.upload')
+          }
           aria-describedby={ariaDescribedBy}
           aria-disabled={disabled || undefined}
           className={clsx(styles.dropzone, isDragOver && styles.dragOver)}
@@ -555,7 +568,7 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
           <span className={styles.dropzoneIcon}>
             {dropzoneIcon ?? <CloudUpload size={32} aria-hidden />}
           </span>
-          <span className={styles.dropzoneLabel}>{dropzoneLabel ?? t('fileUpload.dragHint')}</span>
+          <span className={styles.dropzoneLabel}>{dropzoneLabel || t('fileUpload.dragHint')}</span>
           {dropzoneHint && <span className={styles.dropzoneHint}>{dropzoneHint}</span>}
         </div>
       )}

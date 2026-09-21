@@ -27,7 +27,11 @@
   // Tone foregrounds
   --title-fg-default: var(--color-fg);
   --title-fg-muted: var(--color-fg-muted);
-  --title-fg-subtle: var(--color-fg-subtle);
+
+  // DEPRECATED (#521), same collapse as --text-fg-subtle: see Text.tokens.scss
+  // for the measurement, for why the token is kept rather than deleted, and
+  // for the dark-theme appearance change this carries.
+  --title-fg-subtle: var(--title-fg-muted);
   --title-fg-accent: var(--color-accent);
   --title-fg-danger: var(--color-danger);
 }

@@ -207,3 +207,87 @@ describe('Button', () => {
     expect(screen.getByRole('button', { name: 'Remove' }).className).toMatch(/iconOnly/);
   });
 });
+
+describe('Button — polymorphic `as` (#530)', () => {
+  it('renders a real anchor that navigates and announces as a link', () => {
+    render(
+      <Button as="a" href="https://idp.example.com/enroll">
+        Open identity console
+      </Button>,
+    );
+    const link = screen.getByRole('link', { name: 'Open identity console' });
+    expect(link.tagName).toBe('A');
+    expect(link).toHaveAttribute('href', 'https://idp.example.com/enroll');
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  it('does not emit type="button" onto the anchor', () => {
+    render(
+      <Button as="a" href="/x">
+        Go
+      </Button>,
+    );
+    expect(screen.getByRole('link', { name: 'Go' })).not.toHaveAttribute('type');
+  });
+
+  it('keeps the button paint and forwards anchor-only attributes', () => {
+    render(
+      <Button as="a" href="/x" target="_blank" rel="noreferrer" variant="secondary" size="sm">
+        Go
+      </Button>,
+    );
+    const link = screen.getByRole('link', { name: 'Go' });
+    expect(link.className).toMatch(/secondary/);
+    expect(link.className).toMatch(/sm/);
+    expect(link).toHaveAttribute('target', '_blank');
+    expect(link).toHaveAttribute('rel', 'noreferrer');
+  });
+
+  it('forwards the ref to the rendered element', () => {
+    const ref = createRef<HTMLAnchorElement>();
+    render(
+      <Button as="a" href="/x" ref={ref}>
+        Go
+      </Button>,
+    );
+    expect(ref.current).toBeInstanceOf(HTMLAnchorElement);
+  });
+
+  it('renders any other element named by `as`, keeping type="button" off it', () => {
+    render(
+      <Button as="span" data-testid="span-button">
+        Span
+      </Button>,
+    );
+    const el = screen.getByTestId('span-button');
+    expect(el.tagName).toBe('SPAN');
+    expect(el).not.toHaveAttribute('type');
+    expect(el.className).toMatch(/primary/);
+  });
+
+  it('still renders a <button type="button"> when `as` is omitted', () => {
+    render(<Button onClick={() => {}}>Save</Button>);
+    const btn = screen.getByRole('button', { name: 'Save' });
+    expect(btn.tagName).toBe('BUTTON');
+    expect(btn).toHaveAttribute('type', 'button');
+  });
+
+  it('types: href is rejected without as="a", required with it, and button-only props with it', () => {
+    render(
+      <>
+        {/* @ts-expect-error href is not a <button> attribute */}
+        <Button href="/x">Dead link</Button>
+        {/* @ts-expect-error `disabled` is not an <a> attribute */}
+        <Button as="a" href="/x" disabled>
+          Nope
+        </Button>
+        {/* @ts-expect-error an anchor without href is neither focusable nor a link */}
+        <Button as="a">No href</Button>
+      </>,
+    );
+    // Rendering is incidental here — the assertions that matter are the two
+    // expect-error directives above, which fail `tsc --noEmit` if either
+    // constraint stops holding.
+    expect(screen.getByRole('link', { name: 'Nope' })).toBeInTheDocument();
+  });
+});

@@ -5,6 +5,16 @@
   align-items: center;
   gap: var(--person-display-gap);
 
+  // An inline-flex box is sized shrink-to-fit, whose floor is its MIN-CONTENT
+  // width — and a Description that declares `white-space: nowrap` (below) has a
+  // min-content width of the whole unbroken line. So a long email made this box
+  // 426px wide inside a 209px column and painted straight out of a DataTable
+  // stacked card (#527). Clamping to the container is the only place the chain
+  // can be bounded: `overflow` does not reduce an intrinsic contribution, and
+  // `min-width: 0` on the inner column does not either. `.shrink` below already
+  // carried this for the case it names; every PersonDisplay needs it.
+  max-width: 100%;
+
   // Size-keyed gap — descriptive text doesn't need to crowd the avatar.
   // sm tightens; md and lg share the same outer gap.
   &[data-size='sm'] {
@@ -50,5 +60,40 @@
   // Descriptions for additional lines. `nowrap` keeps atomic inline children
   // (e.g., a Badge inside the audit "impersonating Sarah Lin" marker) on the
   // same row as their surrounding text, even when the cell is narrow.
+  // A line that declares its own `nowrap` must also contain itself: nothing
+  // outside can make it wrap, so a container that does not clip — a DataTable
+  // stacked card — wears the overflow instead (#527). The root's `max-width`
+  // bounds the box; this clips what is too long for it. Both are required:
+  // measured in Chromium, either one alone still overflows the card by ~204px.
+  // No `text-overflow: ellipsis`: this is a flex container, where the UA does
+  // not paint one (verified against a screenshot — identical with `clip`). The
+  // wide table already hard-clipped this line for the same reason, so nothing
+  // regresses; an ellipsis would need the text in a block container.
+  // ONE AXIS, and `clip` rather than `hidden`. #527 is a HORIZONTAL escape — a
+  // long unbroken email — so clipping the block axis too bought nothing and
+  // cost something: `description` takes arbitrary ReactNode, and every
+  // clipping ancestor shaves a descendant's focus ring (#524's failure mode,
+  // and the reason the DataTable stacked card deliberately does not clip).
+  // `clip visible` is legal (x then y) and the block axis really does stay
+  // visible: the rule that turns `visible` into `auto` applies opposite
+  // `scroll`/`auto`/`hidden`, not opposite `clip` — verified in Chromium 151,
+  // where the shorthand written the other way round silently clips the wrong
+  // axis. `clip` over `hidden` on the inline axis so this line never
+  // becomes a scroll container for a string nobody can scroll.
+  // WHAT THIS DOES NOT FIX, stated rather than left for the next reader to
+  // measure: a control flush with the line's left or right edge still loses
+  // those two ring bands, and the two `/components/person-display` entries in
+  // `tests/focus-ring-geometry.baseline.json` are exactly that, kept measured
+  // rather than hidden. Neither remedy survived measurement.
+  // `overflow-clip-margin` would be the right tool — it widens the CLIP RECT
+  // without contributing to the scrollable overflow #527 measured — but
+  // Chromium 151 computes EVERY `calc()` form of it to `0px` (`calc(2px + 2px)`
+  // included), so it cannot be expressed in `--ring-width` + `--ring-offset`,
+  // and a raw length here breaks the tokens rule. Insetting the ring from
+  // outside (`.description :focus-visible { outline-offset: … }`) ties Link's
+  // own `.link:focus-visible` at (0,2,0) and wins only on bundle order — a
+  // specificity race over a consumer's own focus style.
+  // So: put a control in `PersonDisplay.Name`, which does not clip.
+  overflow: clip visible;
   white-space: nowrap;
 }

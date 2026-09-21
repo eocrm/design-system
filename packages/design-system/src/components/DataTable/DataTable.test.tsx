@@ -19,6 +19,9 @@ import { createRef, useEffect, useRef, useState } from 'react';
 import { parse, type AtRule, type Declaration, type Root, type Rule } from 'postcss';
 import { compile } from 'sass';
 import { Table } from '../Table';
+import { Badge } from '../Badge';
+import { Button } from '../Button';
+import { Text } from '../Text';
 import { DataTable } from './DataTable';
 import { useDataTable } from './useDataTable';
 import { shiftVarName } from './columnShift';
@@ -158,6 +161,11 @@ describe('DataTable responsive stylesheet', () => {
     );
     expect(compiledDeclaration(valueRule, 'display')).toMatchObject({ value: 'block' });
     expect(compiledDeclaration(valueRule, 'min-width')).toMatchObject({ value: '0' });
+    // #527: the value wrapper keeps `overflow: visible` — a clipping context
+    // here would shave the focus ring of a control inside the value (#524).
+    // Containment is the job of whatever declares its own nowrap; see the
+    // "never restyles cell content" test below for the rule that is NOT here.
+    expect(compiledDeclaration(valueRule, 'overflow')).toMatchObject({ value: 'visible' });
 
     const unlabelledValueRule = compiledRule(
       query,
@@ -637,6 +645,63 @@ describe('<DataTable>', () => {
     expect(container.querySelector('[data-collapse-below]')).toBeNull();
     expect(screen.getByText('Alpha').tagName).toBe('TD');
     expect(container.querySelector('[data-responsive-resize-handle]')).toBeNull();
+  });
+
+  // One prop, one meaning. #534 converted HeaderCell alone, so `''` was
+  // "unset" in the header and "render a blank label" in the card two files
+  // over (#536). Asserts the EXACT header text, not merely a non-empty label —
+  // the sibling cells' labels are non-empty and would satisfy a loose check.
+  it('treats visibilityLabel="" as unset for the responsive card label too', () => {
+    const emptyLabelColumns: ColumnDef<Row>[] = [
+      {
+        id: 'empty-label',
+        header: 'Header label',
+        // `visibilityLabel={col.title ?? ''}` is ordinary consumer code.
+        visibilityLabel: '',
+        cell: () => <span>A</span>,
+      },
+    ];
+    function EmptyCardLabelHarness() {
+      const instance = useDataTable<Row>({
+        data: [rows[0]!],
+        columns: emptyLabelColumns,
+        getRowId,
+      });
+      return <DataTable instance={instance} aria-label="Empty card label" collapseBelow="md" />;
+    }
+
+    render(<EmptyCardLabelHarness />);
+
+    const cell = screen.getByText('A').closest('td')!;
+    expect(cell.querySelector(`.${styles.responsiveVisualLabel}`)).toHaveTextContent(
+      'Header label',
+    );
+  });
+
+  // The whitespace tail of #536: `header: '   '` is a string that renders no
+  // text, so all three readers must fall past it exactly as they do past `''`.
+  // Only `ColumnVisibilityTrigger` trimmed at first, which left `types.ts`
+  // claiming an agreement the other two did not keep.
+  it('treats a whitespace-only header as no header in the card label and the resize name', () => {
+    const blankHeaderColumns: ColumnDef<Row>[] = [
+      { id: 'blank-header', header: '   ', cell: () => <span>A</span>, enableReorder: false },
+    ];
+    function BlankHeaderHarness() {
+      const instance = useDataTable<Row>({
+        data: [rows[0]!],
+        columns: blankHeaderColumns,
+        getRowId,
+      });
+      return <DataTable instance={instance} aria-label="Blank header" collapseBelow="md" />;
+    }
+
+    render(<BlankHeaderHarness />);
+
+    // HeaderCell: the generic copy, NOT "Resize     column".
+    expect(screen.getByRole('separator', { name: 'Resize this column' })).toBeInTheDocument();
+    // BodyRow: no visual card label rather than a label of three spaces.
+    const cell = screen.getByText('A').closest('td')!;
+    expect(cell.querySelector(`.${styles.responsiveVisualLabel}`)).toBeEmptyDOMElement();
   });
 
   it('renders visual-only responsive labels and one stable value wrapper per data cell', () => {
@@ -2599,5 +2664,90 @@ describe('collapseBelow does not duplicate the column header name (#500)', () =>
   it('still exposes the resize handle, named for what it does', () => {
     render(<NameHarness collapseBelow="md" />);
     expect(screen.getByRole('separator', { name: 'Resize Name column' })).toBeInTheDocument();
+  });
+});
+
+describe('DataTable stacked cards never restyle cell content (#527)', () => {
+  const stylesheet = parse(
+    compile(resolve(__dirname, 'DataTable.module.scss'), { style: 'expanded' }).css,
+  );
+
+  type ContentRow = { id: string; label: string };
+  const contentRows: ContentRow[] = [{ id: 'r1', label: 'a-very-long-unbroken-value' }];
+  const contentCols: ColumnDef<ContentRow>[] = [
+    { id: 'status', header: 'Status', cell: () => <Badge tone="warning">Provisioning</Badge> },
+    {
+      id: 'value',
+      header: 'Value',
+      cell: (r) => <Text truncate>{r.label}</Text>,
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      cell: () => (
+        <Button size="sm" variant="secondary">
+          Resend
+        </Button>
+      ),
+    },
+  ];
+
+  function ContentTable() {
+    const instance = useDataTable<ContentRow>({
+      data: contentRows,
+      columns: contentCols,
+      getRowId: (r) => r.id,
+    });
+    return <DataTable instance={instance} collapseBelow="sm" aria-label="Content" />;
+  }
+
+  // The first attempt at #527 neutralised `white-space` on every descendant of
+  // a stacked cell. `overflow-wrap: anywhere` on the value wrapper is
+  // inherited, so that broke each of these mid-word: a Badge rendered as
+  // "PROVISIONIN/G", and `<Text truncate>` — a public prop — silently stopped
+  // truncating, because the reset outweighed `.truncate`. Selectors are mapped
+  // to the module's hashed class names and matched against the real elements,
+  // so this fails on ANY rule of ours that reaches into cell content, not just
+  // on the one shape that was shipped.
+  it('no rule of this module matches a Badge, a Button or a truncated Text inside a cell', () => {
+    render(<ContentTable />);
+    const targets = [
+      screen.getByText('Provisioning'),
+      screen.getByText('a-very-long-unbroken-value'),
+      screen.getByRole('button', { name: 'Resend' }),
+    ];
+    for (const el of targets) {
+      expect(el.closest(`.${styles.responsiveValue}`)).not.toBeNull();
+    }
+
+    const hashed = (selector: string) =>
+      selector.replace(/\.([A-Za-z_][\w-]*)/g, (whole, name: string) =>
+        styles[name] ? `.${styles[name]}` : whole,
+      );
+
+    const offenders: string[] = [];
+    stylesheet.walkRules((rule) => {
+      for (const selector of rule.selectors) {
+        // A class name the module map does not know is left as written, not
+        // skipped — `hashed` returns the original token. It then matches
+        // nothing, because every element here carries hashed class names, so
+        // the outcome is the same as skipping. Said plainly because the two
+        // are only equivalent while that stays true: the day a selector mixes
+        // a hashed class with a global one, this quietly tests the global half
+        // and reports a pass for the other.
+        const mapped = hashed(selector);
+        for (const el of targets) {
+          if (el.matches(mapped))
+            offenders.push(`${selector} matches <${el.tagName.toLowerCase()}>`);
+        }
+      }
+    });
+    expect(offenders).toEqual([]);
+  });
+
+  it('the truncated Text keeps its own class, so its nowrap still applies', () => {
+    render(<ContentTable />);
+    const text = screen.getByText('a-very-long-unbroken-value');
+    expect(text.className).toMatch(/truncate/);
   });
 });

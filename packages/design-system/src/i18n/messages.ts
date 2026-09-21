@@ -311,6 +311,14 @@ export interface Messages {
      * this replaces.
      */
     loadedEmpty: string;
+    /**
+     * Visible label on `ColumnVisibilityTrigger`'s button. It was a default
+     * parameter value (`label = 'Columns'`) until #537 — still an inlined
+     * English string under Hard rule 9, just one that hides in the signature
+     * rather than in the markup, so a ru-locale consumer who passed no `label`
+     * read an English trigger.
+     */
+    columns: string;
   };
   /**
    * Screen-reader copy for every dnd-kit drag surface in the library — Kanban,

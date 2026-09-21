@@ -95,7 +95,7 @@ export function Deals() {
                     {stageDeals.length}
                   </Badge>
                 </Cluster>
-                <Text as="span" size="xs" tone="subtle">
+                <Text as="span" size="xs" tone="muted">
                   ${total.toLocaleString()}
                 </Text>
               </Cluster>

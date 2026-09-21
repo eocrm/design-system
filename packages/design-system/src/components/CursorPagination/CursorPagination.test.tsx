@@ -36,6 +36,25 @@ describe('CursorPagination', () => {
     expect(screen.getByRole('button', { name: /Older/ })).toBeInTheDocument();
   });
 
+  // Both assert the EXACT default name, not merely a non-empty one. With `??`
+  // the button renders an empty span and has NO accessible name, so a loose
+  // `/Previous/` would still have failed — but a name-from-content coincidence
+  // (the sibling button's text, a title) is exactly what let two tests pass
+  // against unfixed code during #534, so the exact string is the assertion.
+  it('treats previousLabel="" as unset rather than as a nameless button', () => {
+    render(
+      <CursorPagination hasPrevious hasNext onPrevious={noop} onNext={noop} previousLabel="" />,
+    );
+    const [previous] = screen.getAllByRole('button');
+    expect(previous).toHaveAccessibleName('Previous');
+  });
+
+  it('treats nextLabel="" as unset rather than as a nameless button', () => {
+    render(<CursorPagination hasPrevious hasNext onPrevious={noop} onNext={noop} nextLabel="" />);
+    const next = screen.getAllByRole('button')[1];
+    expect(next).toHaveAccessibleName('Next');
+  });
+
   it('disables previous when hasPrevious=false', () => {
     render(<CursorPagination hasPrevious={false} hasNext onPrevious={noop} onNext={noop} />);
     expect(screen.getByRole('button', { name: /Previous/ })).toBeDisabled();

@@ -603,6 +603,103 @@ describe('<Modal>', () => {
     expect(focus).toHaveBeenCalledTimes(1);
   });
 
+  it('returnFocusRef takes focus on close, over the captured opener (#529)', async () => {
+    const user = userEvent.setup();
+    function ReturnFocusHarness() {
+      const [open, setOpen] = useState(false);
+      const fallbackRef = useRef<HTMLElement | null>(null);
+      return (
+        <>
+          <button onClick={() => setOpen(true)} data-testid="trigger">
+            Open
+          </button>
+          <button ref={fallbackRef as RefObject<HTMLButtonElement>} data-testid="next">
+            Next row
+          </button>
+          <Modal open={open} onOpenChange={setOpen} aria-label="x" returnFocusRef={fallbackRef}>
+            <Modal.Body>x</Modal.Body>
+          </Modal>
+        </>
+      );
+    }
+    render(<ReturnFocusHarness />);
+    const trigger = screen.getByTestId('trigger');
+    trigger.focus();
+    await user.click(trigger);
+    await user.keyboard('{Escape}');
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.activeElement).toBe(screen.getByTestId('next'));
+  });
+
+  it('returnFocusRef rescues focus when the opener unmounted (#529)', async () => {
+    const user = userEvent.setup();
+    function UnmountingOpenerHarness() {
+      const [open, setOpen] = useState(false);
+      const [triggerVisible, setTriggerVisible] = useState(true);
+      const returnFocusRef = useRef<HTMLElement | null>(null);
+      return (
+        <>
+          {triggerVisible && (
+            <button
+              onClick={() => {
+                setOpen(true);
+                setTriggerVisible(false);
+              }}
+              data-testid="trigger"
+            >
+              Open
+            </button>
+          )}
+          <button ref={returnFocusRef as RefObject<HTMLButtonElement>} data-testid="survivor">
+            Survivor
+          </button>
+          <Modal open={open} onOpenChange={setOpen} aria-label="x" returnFocusRef={returnFocusRef}>
+            <Modal.Body>x</Modal.Body>
+          </Modal>
+        </>
+      );
+    }
+    render(<UnmountingOpenerHarness />);
+    const trigger = screen.getByTestId('trigger');
+    trigger.focus();
+    await user.click(trigger);
+    expect(screen.queryByTestId('trigger')).toBeNull();
+    await user.keyboard('{Escape}');
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.activeElement).toBe(screen.getByTestId('survivor'));
+  });
+
+  it('falls back to the captured opener when returnFocusRef is empty or detached (#529)', async () => {
+    const user = userEvent.setup();
+    function EmptyRefHarness({ detached }: { detached: boolean }) {
+      const [open, setOpen] = useState(false);
+      // Initialised, not mutated during render: `detached` is fixed per mount.
+      const returnFocusRef = useRef<HTMLElement | null>(
+        detached ? document.createElement('button') : null,
+      );
+      return (
+        <>
+          <button onClick={() => setOpen(true)} data-testid="trigger">
+            Open
+          </button>
+          <Modal open={open} onOpenChange={setOpen} aria-label="x" returnFocusRef={returnFocusRef}>
+            <Modal.Body>x</Modal.Body>
+          </Modal>
+        </>
+      );
+    }
+    for (const detached of [false, true]) {
+      const view = render(<EmptyRefHarness detached={detached} />);
+      const trigger = screen.getByTestId('trigger');
+      trigger.focus();
+      await user.click(trigger);
+      await user.keyboard('{Escape}');
+      await new Promise((r) => setTimeout(r, 0));
+      expect(document.activeElement).toBe(trigger);
+      view.unmount();
+    }
+  });
+
   it('does not throw when the previously-focused trigger is removed while modal is open', async () => {
     const user = userEvent.setup();
     function TriggerRemovalHarness() {

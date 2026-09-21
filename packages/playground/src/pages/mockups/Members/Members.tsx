@@ -53,11 +53,11 @@ export function Members() {
             </Text>
             <Text as="span" size="xl" weight="semibold">
               {seatsUsed}{' '}
-              <Text as="span" size="xl" tone="subtle" weight="regular">
+              <Text as="span" size="xl" tone="muted" weight="regular">
                 of {seatLimit}
               </Text>
             </Text>
-            <Text as="span" size="sm" tone="subtle">
+            <Text as="span" size="sm" tone="muted">
               {seatLimit - seatsUsed} seats remaining on your current plan.
             </Text>
           </Stack>
@@ -108,7 +108,7 @@ export function Members() {
                       </PersonDisplay>
                     </Table.Cell>
                     <Table.Cell>
-                      <Text as="span" size="sm" tone="subtle">
+                      <Text as="span" size="sm" tone="muted">
                         {m.jobTitle}
                       </Text>
                     </Table.Cell>
@@ -116,7 +116,7 @@ export function Members() {
                       <Badge tone={roleTone[m.role]}>{roleLabel[m.role]}</Badge>
                     </Table.Cell>
                     <Table.Cell>
-                      <Text as="span" size="sm" tone="subtle">
+                      <Text as="span" size="sm" tone="muted">
                         {m.lastActive}
                       </Text>
                     </Table.Cell>
@@ -192,7 +192,7 @@ export function Members() {
                     </PersonDisplay>
                   </Table.Cell>
                   <Table.Cell>
-                    <Text as="span" size="sm" tone="subtle">
+                    <Text as="span" size="sm" tone="muted">
                       {inv.invitedAt}
                     </Text>
                   </Table.Cell>

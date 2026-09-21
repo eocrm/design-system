@@ -142,6 +142,7 @@ export const en: Messages = {
     unlabelledColumn: 'Unlabelled column',
     loaded: 'Rows loaded',
     loadedEmpty: 'No rows loaded',
+    columns: 'Columns',
   },
   drag: {
     handleLabel: 'Reorder item',

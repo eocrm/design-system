@@ -163,9 +163,18 @@
 // Inset so the ring stays inside the cell's own bounds — with no
 // background/border of its own to sit against, an outer ring would visually
 // bleed into the grid gap and read as belonging to the neighboring cell.
+// `.item` is also `overflow: auto`, so an outset ring would be clipped by the
+// cell itself on top of that.
+// What the inset band covers (the mixin's own requirement at an inset call
+// site): the outermost 2px of the cell. Base `.item` has no border there, so
+// normally nothing. While `[data-dc-picked]` or `[data-dc-resizing]` is set the
+// cell carries a 1px `--dashboard-canvas-drop-preview-border`, and a picked
+// cell IS the focused one — so the ring paints over that border for the
+// duration of a keyboard move. Acceptable: the ring is the stronger of the two
+// markers and the picked state is also carried by `--dashboard-canvas-item-
+// shadow-dragging`, which sits outside the band.
 .item:focus-visible {
-  outline: var(--border-width-emphasis) solid var(--color-accent);
-  outline-offset: calc(-1 * var(--border-width-emphasis));
+  @include focus-ring(var(--color-accent), $offset: calc(-1 * var(--ring-offset)));
 }
 
 // A keyboard-picked item travels with the engine preview — mark it like an

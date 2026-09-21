@@ -333,6 +333,34 @@ export function Demo() {
           <Button aria-disabled="true">ARIA-disabled</Button>
         </Cluster>
       </Example>
+
+      <Example
+        title="Link that looks like a button"
+        description='The as prop renders the element you name, with its own attributes typed — href is available with as="a" and rejected without it. The result is a real anchor: it navigates, announces as a link, supports middle-click and open-in-new-tab, and never gets type="button". Use Link instead for link-shaped navigation in running text.'
+        code={`import { Button, Cluster } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Cluster gap="sm" align="center">
+      <Button as="a" href="https://example.com/console" target="_blank" rel="noreferrer">
+        Open identity console
+      </Button>
+      <Button as="a" href="/exports/contacts.csv" variant="secondary" download>
+        Download CSV
+      </Button>
+    </Cluster>
+  );
+}`}
+      >
+        <Cluster gap="sm" align="center">
+          <Button as="a" href="https://example.com/console" target="_blank" rel="noreferrer">
+            Open identity console
+          </Button>
+          <Button as="a" href="/exports/contacts.csv" variant="secondary" download>
+            Download CSV
+          </Button>
+        </Cluster>
+      </Example>
     </DemoLayout>
   );
 }

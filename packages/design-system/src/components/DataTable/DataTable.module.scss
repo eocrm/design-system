@@ -416,6 +416,14 @@
     white-space: normal;
   }
 
+  // Nothing here neutralizes `white-space` on arbitrary descendants, and
+  // nothing should (#527). The cell's own nowrap is undone above; a descendant
+  // that DECLARES its own — PersonDisplay's description, Badge, Text's public
+  // `truncate` prop — declares it for a reason and contains itself. A blanket
+  // `:where(*) { white-space: normal }` here reaches into every one of them and
+  // breaks them mid-word, because `overflow-wrap: anywhere` above is inherited.
+  // DataTable.test.tsx enforces this.
+
   > .root > tbody > tr > .responsiveDataCell > .responsiveVisualLabel:empty {
     display: none;
   }

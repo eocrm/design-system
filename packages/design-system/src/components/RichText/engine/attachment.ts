@@ -19,7 +19,11 @@ export interface AttachmentAttrs {
   /** Natural image dimensions (layout hints). */
   width?: number;
   height?: number;
-  /** Image alt text. */
+  /**
+   * Image alt text. An EMPTY string is honoured, not treated as unset —
+   * `alt=""` is HTML's marker for a decorative image. This is the library's
+   * one exception to "an empty label means unset".
+   */
   alt?: string;
   /** Image alignment. */
   align?: 'left' | 'center' | 'right';

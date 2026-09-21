@@ -1,5 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { I18nProvider } from '../../i18n';
 import { ColumnVisibilityTrigger } from './ColumnVisibilityTrigger';
 import { useDataTable } from './useDataTable';
 import type { ColumnDef } from './types';
@@ -26,6 +27,16 @@ function Harness(props: {
   return <ColumnVisibilityTrigger instance={instance} />;
 }
 
+function ColumnVisibilityTriggerWithLabel(props: { label?: React.ReactNode }) {
+  const instance = useDataTable<Row>({
+    data: [],
+    columns: cols,
+    getRowId: (r) => r.id,
+    columnVisibility: {},
+  });
+  return <ColumnVisibilityTrigger instance={instance} label={props.label} />;
+}
+
 describe('<ColumnVisibilityTrigger>', () => {
   it('renders one menu item per hidable column', async () => {
     const user = userEvent.setup();
@@ -34,6 +45,71 @@ describe('<ColumnVisibilityTrigger>', () => {
     expect(screen.getByRole('menuitemcheckbox', { name: 'A' })).toBeInTheDocument();
     expect(screen.getByRole('menuitemcheckbox', { name: 'B' })).toBeInTheDocument();
     expect(screen.queryByRole('menuitemcheckbox', { name: 'C' })).toBeNull();
+  });
+
+  // The `col.id` tail exists so a column with a non-string header still gets
+  // something readable here. An empty string at either step defeated it and
+  // rendered a blank, unidentifiable checkbox row — worse than the identifier
+  // the chain already treats as a last resort (#536). Each assertion names the
+  // EXACT expected label: a blank row's name is empty, but the surrounding
+  // rows' names are not, so a loose check would not separate them.
+  it('treats an empty visibilityLabel or header as unset, never as a blank row', async () => {
+    const emptyCols: ColumnDef<Row>[] = [
+      // Empty label, string header → the header names the row.
+      { id: 'a', header: 'A header', visibilityLabel: '', cell: (r) => r.id },
+      // Empty label, ReactNode header → falls all the way to the id.
+      { id: 'b-id', header: <span>B</span>, visibilityLabel: '', cell: (r) => r.id },
+      // Empty header, no label → also the id. `header: ''` is a string, so
+      // `typeof === 'string'` alone would have accepted it and blanked the row.
+      { id: 'c-id', header: '', cell: (r) => r.id },
+    ];
+    function EmptyLabelHarness() {
+      const instance = useDataTable<Row>({
+        data: [],
+        columns: emptyCols,
+        getRowId: (r) => r.id,
+        columnVisibility: {},
+      });
+      return <ColumnVisibilityTrigger instance={instance} />;
+    }
+    const user = userEvent.setup();
+    render(<EmptyLabelHarness />);
+    await user.click(screen.getByRole('button', { name: /columns/i }));
+    expect(screen.getByRole('menuitemcheckbox', { name: 'A header' })).toHaveAccessibleName(
+      'A header',
+    );
+    expect(screen.getByRole('menuitemcheckbox', { name: 'b-id' })).toHaveAccessibleName('b-id');
+    expect(screen.getByRole('menuitemcheckbox', { name: 'c-id' })).toHaveAccessibleName('c-id');
+  });
+
+  // `label = 'Columns'` was a default parameter — still an inlined English
+  // string under Hard rule 9, just one hiding in the signature rather than in
+  // the markup, so a ru-locale consumer who passed no label read an English
+  // trigger (#537). The ru assertion is what fails on a reverted fix; the en
+  // one alone would pass against the hardcoded default.
+  it('takes its default label from the i18n catalog, in both locales', () => {
+    render(
+      <I18nProvider locale="en">
+        <Harness />
+      </I18nProvider>,
+    );
+    expect(screen.getByRole('button')).toHaveAccessibleName('Columns');
+  });
+
+  it('renders the Russian default label under locale="ru"', () => {
+    render(
+      <I18nProvider locale="ru">
+        <Harness />
+      </I18nProvider>,
+    );
+    expect(screen.getByRole('button')).toHaveAccessibleName('Столбцы');
+  });
+
+  // Truthiness, not `??` — the icon beside it is aria-hidden, so `label=""`
+  // would otherwise leave the trigger with no accessible name (#535).
+  it('treats label="" as unset rather than as a nameless trigger', () => {
+    render(<ColumnVisibilityTriggerWithLabel label="" />);
+    expect(screen.getByRole('button')).toHaveAccessibleName('Columns');
   });
 
   it('toggle fires onColumnVisibilityChange', async () => {

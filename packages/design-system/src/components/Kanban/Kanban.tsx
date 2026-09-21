@@ -1011,8 +1011,11 @@ const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
   // says "Acme — 40 seats, position 2 of 3 in Qualified" rather than dnd-kit's
   // "deal-1 was moved over droppable area col-2". Slots are read from
   // `effectiveItems` — the order the user is actually looking at mid-drag.
+  // `||`, not `??`, for the reason SortableGroup's twin site states: already
+  // safe, because `containerName` rejects a blank `aria-label` itself, but
+  // aligned so the operator is not the thing a reader has to verify.
   const columnLabel = (colId: string | number): string =>
-    containerName(columnElements.get(colId)?.props ?? {}) ??
+    containerName(columnElements.get(colId)?.props ?? {}) ||
     t('kanban.unnamedColumn', {
       index: columnOrder.indexOf(colId) + 1,
       total: columnOrder.length,

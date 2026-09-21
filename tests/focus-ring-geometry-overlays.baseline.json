@@ -1,0 +1,16 @@
+[
+  {
+    "route": "/components/emoji-picker",
+    "key": "button.EmojiPicker-module__cell",
+    "band": "left",
+    "issue": 523,
+    "reason": "The same EmojiPicker cell clip as the static baseline, seen a second way: the POPOVER panel has the identical flush-against-the-edge geometry as the inline one, so opening it reproduces both bands rather than finding anything new. Inherited from #523's original baseline and NOT re-investigated here: recorded as accepted state rather than as an argued exemption, so anyone closing it should measure it first."
+  },
+  {
+    "route": "/components/emoji-picker",
+    "key": "button.EmojiPicker-module__cell",
+    "band": "right",
+    "issue": 523,
+    "reason": "The same EmojiPicker cell clip as the static baseline, seen a second way: the POPOVER panel has the identical flush-against-the-edge geometry as the inline one, so opening it reproduces both bands rather than finding anything new. Inherited from #523's original baseline and NOT re-investigated here: recorded as accepted state rather than as an argued exemption, so anyone closing it should measure it first."
+  }
+]

@@ -60,7 +60,11 @@ export function InsertVariableMenu({ variables, disabled, onInsert }: InsertVari
                     shortcut={tags || undefined}
                   >
                     <span className={styles.menuItemMain}>
-                      <span>{v.label ?? v.code}</span>
+                      {/* `||`, not `??`: `code` is here so a menu item always
+                          has SOMETHING readable, and this span is the item's
+                          only name source — `label: ''` would defeat it and
+                          render a blank menuitem (#535). */}
+                      <span>{v.label || v.code}</span>
                       {v.description ? (
                         <span className={styles.menuItemDesc}>{v.description}</span>
                       ) : null}

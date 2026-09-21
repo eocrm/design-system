@@ -39,6 +39,17 @@ describe('FileUpload', () => {
     expect(screen.getByText(/Drag files here/)).toBeInTheDocument();
   });
 
+  // `dropzoneLabel=""` is a string, so the aria-label ternary used to emit a
+  // literal `aria-label=""` AND an empty visible span — a role="button" with
+  // no accessible name. Assert the exact default on both surfaces.
+  it('treats dropzoneLabel="" as unset rather than as a nameless dropzone', () => {
+    render(
+      <FileUpload files={[]} onFilesAdded={() => {}} onFileRemove={() => {}} dropzoneLabel="" />,
+    );
+    expect(screen.getByRole('button')).toHaveAccessibleName('Upload files');
+    expect(screen.getByText('Drag files here, or click to browse')).toBeInTheDocument();
+  });
+
   it('hides the dropzone in single mode once files.length === 1', () => {
     const file = makeFile('a.txt', 100, 'text/plain');
     render(

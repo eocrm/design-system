@@ -164,7 +164,7 @@ export function Contacts() {
                       <Text as="span" weight="medium">
                         {c.company}
                       </Text>
-                      <Text as="span" size="sm" tone="subtle">
+                      <Text as="span" size="sm" tone="muted">
                         {c.email}
                       </Text>
                     </Stack>
@@ -179,7 +179,7 @@ export function Contacts() {
                     </PersonDisplay>
                   </Table.Cell>
                   <Table.Cell>
-                    <Text as="span" size="sm" tone="subtle">
+                    <Text as="span" size="sm" tone="muted">
                       {c.lastActivity}
                     </Text>
                   </Table.Cell>

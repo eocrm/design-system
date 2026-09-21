@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import { createRef } from 'react';
 import { Slider, type SliderOrientation, type SliderSize, type SliderTone } from './Slider';
@@ -635,5 +637,66 @@ describe('Slider — empty thumb label', () => {
     );
     expect(screen.getByRole('slider', { name: 'Price minimum' })).toBeInTheDocument();
     expect(screen.getByRole('slider', { name: 'Ceiling' })).toBeInTheDocument();
+  });
+});
+
+/**
+ * The dragging thumb's shadow actually reaches the screen (#517).
+ *
+ * Source-level on purpose, and this is the only honest form the check can
+ * take: jsdom resolves no cascade, so `getComputedStyle` on a `.thumbDragging`
+ * thumb returns nothing that depends on which of two competing rules wins —
+ * and CSS Modules class names are hashed at build time, so even a real
+ * stylesheet would not be loaded here. A browser-level assertion would need
+ * the Playwright suite, which sweeps focus-ring geometry and never enters a
+ * drag.
+ *
+ * What it therefore checks is the two facts that made the shadow unreachable,
+ * not the painted pixel:
+ *
+ * 1. the rule out-specifies `.thumb:hover` and `.thumb:focus-visible`, both of
+ *    which match for the whole of every drag;
+ * 2. the value it applies differs from the one those rules apply, so winning
+ *    is observable at all.
+ *
+ * It does NOT verify the shadows are perceptibly different, only that they are
+ * not the same token — a judgement no test makes.
+ */
+describe('Slider dragging shadow (source-level, #517)', () => {
+  const scss = readFileSync(resolve(__dirname, 'Slider.module.scss'), 'utf8');
+  const tokens = readFileSync(resolve(__dirname, 'Slider.tokens.scss'), 'utf8');
+
+  it('declares the dragging state on a compound selector, not a bare class', () => {
+    // A bare `.thumbDragging` is 0,1,0 and loses to both competing rules.
+    expect(scss).toMatch(/^\.thumb\.thumbDragging \{/m);
+    expect(scss).not.toMatch(/^\.thumbDragging \{/m);
+  });
+
+  it('places the dragging rule below both rules it ties with on specificity', () => {
+    // Source ORDER is the whole mechanism here: all three selectors are 0,2,0,
+    // so the last one in the file wins and nothing but this test stops the
+    // dragging rule being moved back above `:hover`. Two things that would
+    // have satisfied an `indexOf` over raw source without the cascade being
+    // right, both shapes this repo has been bitten by before:
+    //   - the selector appearing in a COMMENT rather than as a rule, and
+    //   - the selector being declared TWICE, where `indexOf` takes the first
+    //     and CSS takes the last.
+    // So: comments stripped, and each selector required to be unique.
+    const stripped = scss.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+    const at = (selector: string) => {
+      const found = [
+        ...stripped.matchAll(new RegExp(`^${selector.replace(/[.:]/g, '\\$&')} \\{`, 'gm')),
+      ];
+      expect(found.length, `${selector} is declared exactly once`).toBe(1);
+      return found[0]!.index;
+    };
+    expect(at('.thumb.thumbDragging')).toBeGreaterThan(at('.thumb:hover'));
+    expect(at('.thumb.thumbDragging')).toBeGreaterThan(at('.thumb:focus-visible'));
+  });
+
+  it('gives dragging a different shadow from hover', () => {
+    const value = (name: string) => tokens.match(new RegExp(`--${name}:\\s*([^;]+);`))?.[1];
+    expect(value('slider-thumb-shadow-dragging')).toBeDefined();
+    expect(value('slider-thumb-shadow-dragging')).not.toBe(value('slider-thumb-shadow-hover'));
   });
 });

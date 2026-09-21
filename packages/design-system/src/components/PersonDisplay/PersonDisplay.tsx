@@ -198,6 +198,15 @@ const PersonDisplayName = forwardRef<HTMLElement, PersonDisplayNameProps>(
  * <PersonDisplay.Description>
  *   admin@acme.com <Badge tone="warning" size="sm">impersonating</Badge>
  * </PersonDisplay.Description>
+ *
+ * @remarks When NOT to use
+ * - For INTERACTIVE content. A Description clips itself on the inline axis so a
+ *   long unbroken value cannot paint outside a narrow container (#527), and a
+ *   control flush with the line's left or right edge loses those bands of its
+ *   focus ring. Put a link in `<PersonDisplay.Name href=…>`, which does not
+ *   clip. The block axis is left `visible` precisely so a ring is never clipped
+ *   top or bottom; `tests/focus-ring-geometry.baseline.json` records what is
+ *   left rather than hiding it.
  */
 const PersonDisplayDescription = forwardRef<HTMLSpanElement, PersonDisplayDescriptionProps>(
   function PersonDisplayDescription({ className, children, ...rest }, ref) {

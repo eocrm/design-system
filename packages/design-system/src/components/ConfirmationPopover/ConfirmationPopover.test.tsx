@@ -44,6 +44,20 @@ describe('ConfirmationPopover — content rendering (sync)', () => {
     expect(screen.getByRole('button', { name: 'Confirm' })).toBeInTheDocument();
   });
 
+  // Exact name, not a non-empty one: the pending spinner beside the label is
+  // aria-hidden, so with `??` the confirm button has no accessible name at all
+  // and only an exact assertion distinguishes "defaulted" from "coincidence".
+  it('treats confirmLabel="" as unset rather than as a nameless button', async () => {
+    const user = userEvent.setup();
+    render(
+      <ConfirmationPopover title="Archive?" confirmLabel="" onConfirm={() => {}}>
+        <button type="button">Archive…</button>
+      </ConfirmationPopover>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Archive…' }));
+    expect(screen.getByRole('button', { name: 'Confirm' })).toHaveAccessibleName('Confirm');
+  });
+
   it('respects custom confirmLabel and i18n override for cancel', async () => {
     const user = userEvent.setup();
     render(

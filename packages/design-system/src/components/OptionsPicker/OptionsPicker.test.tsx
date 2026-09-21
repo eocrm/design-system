@@ -256,6 +256,24 @@ it('shows emptyState when all groups are filtered to nothing', async () => {
   expect(screen.getByText('No matches')).toBeInTheDocument();
 });
 
+// `''` means unset here too, matching every other label override in the
+// library — a blank listbox reads as a broken filter, not a deliberate
+// silence, and there was never a documented way to suppress the message.
+it('treats emptyState="" as unset and shows the default copy', async () => {
+  const user = userEvent.setup();
+  render(
+    <OptionsPicker selected={[]} onApply={() => {}}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" groups={groupedOptions} emptyState="" />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  await user.type(screen.getByRole('textbox'), 'zzz');
+  expect(screen.getByText('No matches')).toBeInTheDocument();
+});
+
 it('multi mode: clicking a group header selects all options in that group', async () => {
   const user = userEvent.setup();
   render(

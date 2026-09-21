@@ -51,7 +51,13 @@
   --slider-thumb-shadow: var(--shadow-sm);
   --slider-thumb-border-color-hover: var(--color-accent);
   --slider-thumb-shadow-hover: var(--shadow-md);
-  --slider-thumb-shadow-dragging: var(--shadow-md);
+
+  // One step above hover, not equal to it (#517). This was `--shadow-md` — the
+  // same value as hover — so even after the specificity fix the dragging state
+  // would have been indistinguishable from the hover state it replaces, and a
+  // drag always hovers. `--shadow-lg` is what every other dragging surface in
+  // the library lifts to (Sortable, Kanban, DashboardCanvas).
+  --slider-thumb-shadow-dragging: var(--shadow-lg);
 
   // Thumb diameter per size
   --slider-thumb-size-sm: 14px;

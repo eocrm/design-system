@@ -313,6 +313,20 @@ describe('descriptions + collection tag in autocomplete (#304)', () => {
     expect(screen.getByText('The journal event type')).toBeInTheDocument();
   });
 
+  // The autocomplete builds its items in `useLiquidAutocomplete`, a SECOND
+  // reader of the same `LiquidVariable.label` the insert menu reads. Fixing
+  // only the menu left `label: ''` rendering a blank `role="option"` here,
+  // while `types.ts` and AGENTS.md both promised `''` means unset.
+  it('treats an empty variable label as unset in the autocomplete too', async () => {
+    const user = userEvent.setup();
+    renderEditor(<Harness variables={[{ code: 'blank_one', label: '' }]} />);
+    const ta = screen.getByRole('combobox');
+    await user.click(ta);
+    await user.type(ta, '{{{{ ');
+    expect(await screen.findByRole('listbox')).toBeInTheDocument();
+    expect(screen.getByRole('option')).toHaveAccessibleName('blank_one');
+  });
+
   it('renders a "list" tag for collection variables', async () => {
     const user = userEvent.setup();
     renderEditor(<Harness variables={VARS} />);
@@ -373,6 +387,19 @@ describe('insert menu with grouped palette (#304)', () => {
     await user.click(screen.getByRole('button', { name: 'Insert variable' }));
     await user.click(screen.getByRole('menuitem', { name: /Event type/ }));
     expect(onChange).toHaveBeenCalledWith('{{ event.type }}');
+  });
+
+  // `code` is the fallback precisely so every menu item has something
+  // readable; `label: ''` used to defeat it and render a blank menuitem whose
+  // only name came from the description line beside it. Exact name, since a
+  // description-only name is non-empty and would pass a loose assertion.
+  it('treats an empty variable label as unset in the insert menu', async () => {
+    const user = userEvent.setup();
+    render(
+      <LiquidEditor value="" onChange={() => {}} variables={[{ code: 'blank_one', label: '' }]} />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Insert variable' }));
+    expect(screen.getByRole('menuitem', { name: /blank_one/ })).toHaveAccessibleName('blank_one');
   });
 
   it('shows the description line in the insert menu', async () => {

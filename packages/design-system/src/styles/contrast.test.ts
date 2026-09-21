@@ -125,6 +125,27 @@ function contrast(fg: string, bg: string): number {
   return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
 }
 
+/**
+ * `over` at `alpha` laid on `base`, both opaque hex, result opaque hex.
+ *
+ * Module scope because two gates need it: the scrim gate composites
+ * Lightbox's chrome over `--color-bg-overlay-strong`, and the AGENTS.md gate
+ * has to reach the same surfaces to recompute the figures the prose states
+ * about them. A second copy would track the tokens just as well but could
+ * drift from THIS one, and the two would then certify different surfaces
+ * under the same name.
+ */
+const composite = (over: string, alpha: number, base: string) => {
+  const [x, y] = [over, base].map((h) => [0, 2, 4].map((i) => parseInt(h.slice(1 + i, 3 + i), 16)));
+  return `#${x
+    .map((c, i) =>
+      Math.round(c * alpha + y[i]! * (1 - alpha))
+        .toString(16)
+        .padStart(2, '0'),
+    )
+    .join('')}`;
+};
+
 /** 4.5 for body text, 3.0 for a graphical object or large text (WCAG 1.4.3 / 1.4.11). */
 type Pair = [label: string, fg: string, bg: string, minimum: number];
 
@@ -200,14 +221,43 @@ const PAIRS: Pair[] = [
   // subtle into muted. The cost lands in light only, and it is real: at 11px
   // specifically on --color-bg-muted, the shipped 0.0261 step is ALSO
   // visually indistinguishable in a browser, while dark (0.0707) still reads
-  // as a real step there. #521 tracks the design decision that follows (move
-  // --color-fg-muted, split the retune per theme, or retire the subtle tone)
-  // — not resolved here. So the rule stands: text on --color-bg-muted uses
-  // tone="muted",
-  // whose row is directly below.
+  // as a real step there. #521 tracked the design decision that follows, and
+  // it went BOTH ways at once: #522 moved light --color-fg-muted (below) and
+  // #521 retired the subtle tone. The 0.0261 above is therefore the figure as
+  // MEASURED IN #520, before #522's retune widened it to 0.0365 — still
+  // roughly half the 0.065 floor, which is why retiring the tone stood. So
+  // the rule stands: text on --color-bg-muted uses tone="muted", whose row is
+  // directly below.
   ['subtle text on page bg', '--color-fg-subtle', '--color-bg', 4.5],
   ['subtle text on subtle bg', '--color-fg-subtle', '--color-bg-subtle', 4.5],
   ['muted text on muted bg', '--color-fg-muted', '--color-bg-muted', 4.5],
+  // #522. These are the two surfaces where the neutral ramp had run out, and
+  // they are pinned because they are what the retune bought — not because a
+  // component happens to paint them today. Light --color-fg-muted read 4.4088
+  // on --color-accent-bg-subtle (FileUpload's dropzone hint at 12px,
+  // LiquidEditor's autocomplete description and type at 11px — body text, no
+  // large-text exemption) and 4.4988 on --color-bg-sunken. The second missed
+  // 4.5:1 by 0.0012, which is exactly why it went unnoticed: every rounded
+  // figure the library published called it a pass, and the annotation gate
+  // recomputes for ACCURACY without bounding CONFORMANCE, so a truthful
+  // `= 4.41:1 light` sat beside prose claiming AA with the suite green.
+  //
+  // The fix moved the primitive rather than minting a recessive neutral
+  // beside it: light --color-fg-muted #5e6c84 -> #5b6980, ΔE 0.0109 — below
+  // any perceptibility floor — which lifts every surface at once and every
+  // existing consumer with it. A new token would have sat ΔE 0.0109 from
+  // muted in light while #521, in the same breath, retired tone="subtle" for
+  // sitting 0.0261 away. Two tokens for one visible tier was the defect, not
+  // the remedy.
+  //
+  // DARK IS UNTOUCHED and that is a finding, not an omission: the surface
+  // ordering reverses by theme — sunken is the LIGHTEST neutral in light and
+  // the DARKEST in dark — so dark --color-fg-muted already cleared all five
+  // surfaces, 4.7179 at its worst. Both themes are pinned here anyway, so a
+  // future retune cannot fix one theme by breaking the other.
+  ['muted text on subtle bg', '--color-fg-muted', '--color-bg-subtle', 4.5],
+  ['muted text on sunken bg', '--color-fg-muted', '--color-bg-sunken', 4.5],
+  ['muted text on accent tint', '--color-fg-muted', '--color-accent-bg-subtle', 4.5],
 ];
 
 describe.each([
@@ -453,6 +503,210 @@ function deltaE(a: string, b: string): number {
 }
 
 /**
+ * #521. The neutral FOREGROUND ramp, gated the way the hover steps and the
+ * presence dots are — because nothing measured this pair, which is exactly how
+ * it drifted.
+ *
+ * `--color-fg-subtle` and `--color-fg-muted` fell to OKLab ΔE 0.0261 in light
+ * (0.0387 before #511 moved subtle one notch darker for AA). That is a third of
+ * the 0.065 floor this file already uses, and a browser render at 11px and 14px
+ * on all four neutral surfaces confirmed the number: in light the two are
+ * indistinguishable, in dark (0.0707) they still read as a step. A tier that
+ * exists in one theme only is not a tier, so `tone="subtle"` was deprecated to
+ * resolve to `muted`.
+ *
+ * #522's retune of light `--color-fg-muted`, one commit earlier on this branch,
+ * widens that pair back to **0.0365** — it moved muted AWAY from subtle.
+ * Recorded rather than glossed, because it is the one number that could be read
+ * as undoing the case. It does not. 0.0365 is still barely over half the 0.065
+ * floor, and it sits just under the 0.0387 that #520's reviewer called a
+ * visible step at a DIFFERENT subtle value (#6b778c, since retired), so nobody
+ * has rendered today's pair and found it distinct. The systemic argument is
+ * unchanged either way: #520 had to re-point six consumers from subtle to
+ * muted, and `--color-fg-subtle` is still sub-AA on `--color-bg-muted`, so the
+ * tone could never be used on a third of the library's surfaces. If a future
+ * render disagrees, this is the number to re-open it with.
+ *
+ * So the gate has two halves, and both are needed. The first pins the tiers
+ * that DO remain, so the ramp cannot quietly lose another one. The second pins
+ * the collapse itself: `tone="subtle"` must keep resolving to the muted value,
+ * or the deprecation silently un-deprecates and the library is back to shipping
+ * two names for one tier.
+ *
+ * Read the first half as a tripwire with real headroom, unlike the hover-step
+ * floor above: the tightest remaining tier is fg→muted in dark at 0.1940, three
+ * times the floor (light is 0.2278 after #522's retune, down from 0.2385 — it
+ * spends a little of the primary/secondary gap, and 0.2278 is still ample). That is deliberate. 0.065 is the perceptibility threshold
+ * this repo has already argued for twice; anchoring tighter — to 0.19 — would
+ * fail on any legitimate retune and get the gate deleted, while anchoring to
+ * what collapsed (0.0261) would certify the defect.
+ *
+ * `--color-fg-subtle` is NOT in the first half, and its absence is the finding,
+ * not an oversight: it is no longer a distinct tier. It stays in the token file
+ * because Input's placeholder, LiquidEditor's placeholder, menu group label and
+ * menu item type, DefinitionList's icon, OptionsPicker's search icon,
+ * FileUpload's icons and row meta, DropdownMenu's icon and the scrollbar thumb
+ * still reach for it directly — retiring a primitive is a separate decision
+ * from retiring a tone.
+ */
+describe('the neutral foreground ramp keeps its remaining tiers', () => {
+  // Two pairs, not three. #522 fixed AA by MOVING --color-fg-muted rather than
+  // minting a recessive neutral beside it, so there is no third tier to gate.
+  // That is the shape this gate wants: a token ΔE 0.0109 from muted would have
+  // had to be excluded from this list by hand, which is the same claim-a-tier-
+  // you-do-not-have mistake tone="subtle" is being retired for.
+  const TIERS: [string, string][] = [
+    ['--color-fg', '--color-fg-muted'],
+    ['--color-fg-muted', '--color-fg-disabled'],
+  ];
+
+  it.each([
+    ['light', TOKENS],
+    ['dark', DARK],
+  ])('every neutral foreground tier is a perceptible step in %s', (_theme, source) => {
+    for (const [a, b] of TIERS) {
+      expect(
+        deltaE(tokenValue(a, source), tokenValue(b, source)),
+        `${a} vs ${b}`,
+      ).toBeGreaterThanOrEqual(0.065);
+    }
+  });
+
+  it.each([
+    ['../components/Text/Text.tokens.scss', '--text-fg-subtle', '--text-fg-muted'],
+    ['../components/Title/Title.tokens.scss', '--title-fg-subtle', '--title-fg-muted'],
+  ])('%s collapses the deprecated subtle tone into muted', (file, subtle, muted) => {
+    const source = readFileSync(resolve(__dirname, file), 'utf8');
+    expect(declaredValue(subtle, source), `${subtle} resolves to ${muted}`).toBe(`var(${muted})`);
+  });
+});
+
+/**
+ * The ΔE figures the `tone="subtle"` deprecation is ARGUED FROM, recomputed.
+ *
+ * `0.0261 / 0.0365 / 0.0707` are the whole case for #521, and this branch
+ * published them in four consumer-facing places at once: `AGENTS.md` twice,
+ * `Text.tsx`'s and `Title.tsx`'s `tone` JSDoc, and the `props.manifest.json`
+ * the playground generates from that JSDoc. Nothing bound any of them. The
+ * ratio gate below binds `N.NN:1` forms only, and the ramp gate above asserts
+ * the 0.065 FLOOR without ever recomputing the numbers the prose states — so
+ * the next `--color-fg-muted` retune would have left an entire published
+ * deprecation rationale stale with CI green. That is verbatim the rot this
+ * branch added gates to stop, and this branch is what published the numbers.
+ *
+ * Bound in both directions, like the AGENTS.md ratio gate: every figure here
+ * must appear in every document, and every figure in those documents must be
+ * one of these.
+ *
+ * WHAT IS FULLY BOUND: `0.0365` and `0.0707` are ΔE between the two live
+ * tokens in each theme, read from the generated files. Move either token in
+ * either theme and both directions fail.
+ *
+ * WHAT IS ONLY HALF BOUND, and this is the honest limit: `0.0261` is a
+ * measurement of a token value that NO LONGER EXISTS — light
+ * `--color-fg-muted` before #522 retuned it. No gate can recompute a figure
+ * from a value the repo has deleted, so the pre-retune literal is frozen in
+ * `PRE_522_FG_MUTED` below. The gate therefore binds the ARITHMETIC of the
+ * historical claim — a typo'd digit, or a move in `--color-fg-subtle` that
+ * changes the comparison, both fail — but it CANNOT verify the history: that
+ * `#5e6c84` really was the value on the day #521 was filed is a fact about
+ * git, asserted here by a constant and by nothing else. The one guard against
+ * the frozen literal going meaningless is the assertion that it differs from
+ * the current value; if #522 were reverted, the whole before/after framing is
+ * wrong and that assertion says so.
+ *
+ * ALSO NOT BOUND:
+ *
+ * - **The 0.065 floor.** It is a perceptibility threshold this library chose,
+ *   not a measurement of a pair, so it cannot be recomputed — the same trade
+ *   the ratio gate makes for WCAG's thresholds. Exempt by construction rather
+ *   than by a list: the scan matches `0.0NNN` at four decimal places and
+ *   `0.065` has three. The ramp gate above is what holds the floor itself.
+ * - **The PROSE around the figures.** That 0.0707 is described as "a real
+ *   step" and 0.0365 as "indistinguishable" is not checked; only the digits
+ *   are. A figure moved into the wrong sentence still matches.
+ * - **Any ΔE figure written somewhere else.** Scoped to the four documents
+ *   below. `contrast.test.ts`'s own comments state `0.0109` and `0.0194`, and
+ *   nothing binds those.
+ * - **`props.manifest.json` being in sync with the JSDoc it is generated
+ *   from.** This checks that both state the same figures, not that the
+ *   generator ran.
+ */
+describe('the published ΔE figures for the subtle-tone deprecation still hold', () => {
+  /**
+   * Light `--color-fg-muted` as it stood when #521 was filed, before #522
+   * retuned it to `#5b6980`. Frozen because the repo no longer holds it — see
+   * "WHAT IS ONLY HALF BOUND" above for exactly what that costs.
+   */
+  const PRE_522_FG_MUTED = '#5e6c84';
+
+  /** The four places this branch published the figures. */
+  const DOCUMENTS: [label: string, path: string][] = [
+    ['AGENTS.md', '../../AGENTS.md'],
+    ['Text.tsx', '../components/Text/Text.tsx'],
+    ['Title.tsx', '../components/Title/Title.tsx'],
+    // Generated from the two JSDoc blocks above, and shipped to the gallery as
+    // the prop reference a consumer actually reads.
+    ['props.manifest.json', '../../../playground/src/lib/props.manifest.json'],
+  ];
+
+  const figures = (): [label: string, stated: string][] => [
+    [
+      'light ΔE(--color-fg-subtle, --color-fg-muted)',
+      deltaE(
+        tokenValue('--color-fg-subtle', TOKENS),
+        tokenValue('--color-fg-muted', TOKENS),
+      ).toFixed(4),
+    ],
+    [
+      'dark ΔE(--color-fg-subtle, --color-fg-muted)',
+      deltaE(tokenValue('--color-fg-subtle', DARK), tokenValue('--color-fg-muted', DARK)).toFixed(
+        4,
+      ),
+    ],
+    [
+      'light ΔE(--color-fg-subtle, the pre-#522 --color-fg-muted)',
+      deltaE(tokenValue('--color-fg-subtle', TOKENS), PRE_522_FG_MUTED).toFixed(4),
+    ],
+  ];
+
+  const read = (path: string) => readFileSync(resolve(__dirname, path), 'utf8');
+
+  // Four decimal places, which is the notation every one of these figures uses
+  // and the 0.065 floor does not. Verified against all four documents: no
+  // other number in any of them has this shape.
+  const STATED = /0\.0\d{3}/g;
+
+  it('the frozen pre-retune value is still historical', () => {
+    // If #522 were reverted, `0.0261` would stop being a BEFORE figure and the
+    // whole before/after framing in four documents would be wrong. Nothing
+    // else can notice that, because the frozen literal would still recompute.
+    expect(
+      tokenValue('--color-fg-muted', TOKENS),
+      'light --color-fg-muted is back at its pre-#522 value — the "before/after" prose is no longer true',
+    ).not.toBe(PRE_522_FG_MUTED);
+  });
+
+  it.each(
+    DOCUMENTS.flatMap(([label, path]) =>
+      figures().map(([what, stated]) => [`${label}: ${what} = ${stated}`, path, stated] as const),
+    ),
+  )('%s', (_name, path, stated) => {
+    // A boolean, not `toContain`: the failure diff for a miss on a 3,900-line
+    // document is the whole document.
+    expect(read(path).includes(stated), `no longer states ${stated}`).toBe(true);
+  });
+
+  it.each(DOCUMENTS)('%s states no ΔE figure this gate does not produce', (_label, path) => {
+    const produced = new Set(figures().map(([, stated]) => stated));
+    expect(
+      [...new Set(read(path).match(STATED) ?? [])].filter((n) => !produced.has(n)),
+      'states a four-decimal ΔE figure nothing recomputes — add it here with the pair it measures, or drop the number',
+    ).toEqual([]);
+  });
+});
+
+/**
  * Two invariants that were invisible to this whole suite until a retune broke
  * both of them at once. Neither is about contrast — they are about a token
  * having MORE ROLES than the one being measured, which is the failure this file
@@ -632,19 +886,6 @@ describe('a tone stays in sync with the roles derived from it', () => {
       '--ring-on-scrim must not be themed — the surface it lands on is not',
     ).toBeUndefined();
 
-    const composite = (over: string, alpha: number, base: string) => {
-      const [x, y] = [over, base].map((h) =>
-        [0, 2, 4].map((i) => parseInt(h.slice(1 + i, 3 + i), 16)),
-      );
-      return `#${x
-        .map((c, i) =>
-          Math.round(c * alpha + y[i] * (1 - alpha))
-            .toString(16)
-            .padStart(2, '0'),
-        )
-        .join('')}`;
-    };
-
     // Resolved from the COMPONENT files, not from --ring-on-scrim directly.
     // Asserting the token in isolation proves only that a safe colour exists —
     // it stays green if Lightbox re-points --lightbox-ring back at
@@ -813,58 +1054,11 @@ describe('a tone stays in sync with the roles derived from it', () => {
 
     const ring = tokenValue('--ring-on-scrim', TOKENS);
 
-    // Read from the token rather than transcribed. A designer nudging the scrim
-    // to 88% would otherwise leave this certifying a surface that no longer
-    // exists — the failure this whole file keeps closing.
-    const overlay = declaredValue('--color-bg-overlay-strong', TOKENS)!;
-    // Same percentage-alpha guard as layer() below. Without it `rgb(15 23 42 / 0.92)`
-    // parses to alpha 0.0092 and the gate certifies a surface that is not there.
-    expect(overlay, '--color-bg-overlay-strong states alpha as a percentage').toMatch(
-      /\/\s*[\d.]+%\s*\)/,
-    );
-    const [or, og, ob, oa] = overlay.match(/[\d.]+/g)!.map(Number);
-    expect(oa, '--color-bg-overlay-strong has a meaningful alpha').toBeGreaterThan(5);
-    const overlayHex = `#${[or, og, ob].map((c) => c.toString(16).padStart(2, '0')).join('')}`;
-
     // Both themes' page colours, because the scrim composites over whichever
     // one is behind it — and light is the worse of the two, which is the case
     // that was failing.
-    for (const [theme, source] of [
-      ['light', TOKENS],
-      ['dark', DARK],
-    ] as const) {
-      const scrim = composite(overlayHex, oa / 100, tokenValue('--color-bg', source));
-      // Both layered ON the scrim, and both read from Lightbox's own tokens for
-      // the same reason the scrim is: a transcribed alpha keeps certifying a
-      // surface that has since moved.
-      const layer = (name: string) => {
-        const raw = declaredValue(name, lightbox)!;
-        // Percentage alpha only. `rgb(0 0 0 / 0.3)` is legal CSS and would parse
-        // to 0.003 here, compositing to something indistinguishable from the
-        // bare scrim — the assertion would then pass having measured the wrong
-        // surface. Fail loudly on the notation instead of quietly on the value.
-        expect(raw, `${name} states alpha as a percentage`).toMatch(/\/\s*[\d.]+%\s*\)/);
-        const [r, g, b, a] = raw.match(/[\d.]+/g)!.map(Number);
-        // The notation check alone is not enough: `rgb(0 0 0 / 0.3%)` is legal,
-        // passes it, and parses to alpha 0.003 — compositing to something
-        // indistinguishable from the bare scrim, so the assertion would certify
-        // a surface that is not there. That is verbatim the failure the notation
-        // check was added to prevent, one notation over.
-        expect(a, `${name} has a meaningful alpha`).toBeGreaterThan(5);
-        return composite(
-          `#${[r, g, b].map((c) => c.toString(16).padStart(2, '0')).join('')}`,
-          a / 100,
-          scrim,
-        );
-      };
-      const surfaces: [string, string][] = [
-        ['the scrim', scrim],
-        ['the thumb strip', layer('--lightbox-thumb-strip-bg')],
-        ['a control fill', layer('--lightbox-control-bg')],
-        // The hover fill is a distinct surface a focused control can sit on.
-        ['a hovered control fill', layer('--lightbox-control-bg-hover')],
-      ];
-      for (const [label, surface] of surfaces) {
+    for (const theme of ['light', 'dark'] as const) {
+      for (const [label, surface] of lightboxSurfaces(theme)) {
         expect(
           contrast(ring, surface),
           `--ring-on-scrim on ${label} in ${theme}`,
@@ -875,6 +1069,242 @@ describe('a tone stays in sync with the roles derived from it', () => {
 });
 
 const COMPONENTS_DIR_FOR_SCRIM = resolve(__dirname, '../components');
+
+/**
+ * The four surfaces a focus ring can land on inside `Lightbox`, as opaque hex.
+ *
+ * None of them is a token: each is `--color-bg-overlay-strong` composited over
+ * the page colour, and three of them a further `rgb(… / …%)` layer on top of
+ * that. So no `@contrast` annotation can express them and no reader can
+ * reproduce them by eye — which is exactly why the figures AGENTS.md states
+ * about them were challenged as unreproducible in #518. They reproduce; the
+ * arithmetic just lives here.
+ *
+ * Every input is READ, never transcribed: a designer nudging the scrim to 88%
+ * or the control fill to 20% moves these, and a copied number would keep
+ * certifying a surface that no longer exists — the failure this file keeps
+ * closing. Alphas must be stated as PERCENTAGES, because `rgb(0 0 0 / 0.3)` is
+ * legal CSS that parses to 0.003 here and composites to something
+ * indistinguishable from the bare scrim, so an assertion would pass having
+ * measured the wrong surface. `0.3%` is legal too and passes the notation
+ * check, hence the second guard on the value.
+ */
+function lightboxSurfaces(theme: 'light' | 'dark'): [label: string, hex: string][] {
+  const lightbox = stripComments(
+    readFileSync(resolve(COMPONENTS_DIR_FOR_SCRIM, 'Lightbox/Lightbox.tokens.scss'), 'utf8'),
+  );
+  const alpha = (raw: string, name: string) => {
+    if (!/\/\s*[\d.]+%\s*\)/.test(raw)) throw new Error(`${name} must state alpha as a percentage`);
+    const parts = raw.match(/[\d.]+/g)!.map(Number);
+    const a = parts[3]!;
+    if (a <= 5) throw new Error(`${name} has no meaningful alpha (${a}%)`);
+    return {
+      hex: `#${parts
+        .slice(0, 3)
+        .map((c) => c.toString(16).padStart(2, '0'))
+        .join('')}`,
+      a: a / 100,
+    };
+  };
+  const overlay = alpha(
+    declaredValue('--color-bg-overlay-strong', TOKENS)!,
+    '--color-bg-overlay-strong',
+  );
+  const scrim = composite(
+    overlay.hex,
+    overlay.a,
+    tokenValue('--color-bg', theme === 'dark' ? DARK : TOKENS),
+  );
+  const layer = (name: string) => {
+    const { hex, a } = alpha(declaredValue(name, lightbox)!, name);
+    return composite(hex, a, scrim);
+  };
+  return [
+    ['the scrim', scrim],
+    ['the thumb strip', layer('--lightbox-thumb-strip-bg')],
+    ['a control fill', layer('--lightbox-control-bg')],
+    // The hover fill is a distinct surface a focused control can sit on.
+    ['a hovered control fill', layer('--lightbox-control-bg-hover')],
+  ];
+}
+
+/** Every `--color-palette-<name>-bg`, which is what a `.colored` event is filled with. */
+const PALETTE_EVENT_FILLS = [...TOKENS.matchAll(/--color-palette-([a-z]+)-bg:/g)].map(
+  (m) => `--color-palette-${m[1]!}-bg`,
+);
+
+/**
+ * An INSET ring is bounded on one side by the element's own fill, and the only
+ * fills in the library a consumer picks freely are the palette ones a
+ * `.colored` Calendar event takes (`resolveEventColor` hands
+ * `--color-palette-<color>-bg` to `EventChip`, `TimedEvent` and `AgendaView`,
+ * all three of which draw their focus ring inset because they sit flush
+ * against a scrolling grid).
+ *
+ * PAIRS above cannot express this: it is one ring against thirty surfaces, and
+ * what matters is the WORST of them, which moves when the palette is retuned.
+ * AGENTS.md states that worst case as prose, and #518's whole complaint is
+ * that the prose named no pair — so this both names it and holds a floor under
+ * it. 1.4.11's 3:1, not 4.5: a focus ring is a graphical object.
+ *
+ * Bounds the ring against the FILL only. The other side of an inset ring is
+ * the same fill, so there is nothing else to measure; an OUTSET ring's outer
+ * side is the page surface, which the four-surface gate above covers.
+ */
+describe('an inset ring stays legible against every fill a .colored event can take', () => {
+  it.each(['light', 'dark'] as const)('%s', (theme) => {
+    const source = theme === 'dark' ? DARK : TOKENS;
+    const ring = tokenValue('--ring-accent', source);
+    expect(PALETTE_EVENT_FILLS.length, 'found the palette fills').toBeGreaterThan(20);
+    for (const fill of PALETTE_EVENT_FILLS) {
+      expect(contrast(ring, tokenValue(fill, source)), `--ring-accent on ${fill}`).toBeGreaterThan(
+        3.0,
+      );
+    }
+  });
+});
+
+/**
+ * Every contrast figure `AGENTS.md` states in ENGLISH PROSE, recomputed.
+ *
+ * `structure.test.ts`'s "stated contrast ratios still hold" gate binds every
+ * `N.NN:1` in a `.tokens.scss` / `.module.scss` / `.ts` file to a `@contrast`
+ * annotation sitting beside it. `AGENTS.md` is outside that gate and has to
+ * stay outside it: Markdown has no comment syntax to hide an annotation in, so
+ * the annotation would have to be prose too, and this file ships in the
+ * published tarball as the agent-facing primer — a number in it is read and
+ * copied, not skimmed.
+ *
+ * #518 challenged three of its figures as unreproducible. All three reproduce.
+ * What made them uncheckable was not the arithmetic but the prose: none named
+ * the pair it measured, so a reader guessing at "a hovered control fill" tried
+ * five neutral tokens and matched none of them (it is Lightbox's
+ * `--lightbox-control-bg-hover`, composited over the scrim). The prose now
+ * names every pair, and the binding runs in the opposite direction from the
+ * annotation gate — THIS FILE owns the computation, and the doc must agree
+ * with it:
+ *
+ *  - every entry in `FIGURES` appears in `AGENTS.md` at the stated precision,
+ *    so a retune that moves one reddens CI instead of rotting the sentence;
+ *  - every `N.NN:1` and every `N of the M` in `AGENTS.md` is a figure
+ *    `FIGURES` produces, so a number added to the prose later cannot arrive
+ *    unbound — which is what let this sweep itself ship two stale sentences
+ *    that only human review caught.
+ *
+ * WHAT IT PROVABLY CANNOT CATCH:
+ *
+ * - **A claim with no number in one of the two matched shapes.** "half as
+ *   legible", "fails AA on three surfaces", "comfortably over" — the gate
+ *   binds a NOTATION, and no scan of English can do better. Prose that states
+ *   a measurement must state it as `N.NN:1` or `N of the M` to be bound at
+ *   all, and nothing forces an author to.
+ * - **The sentence around the number.** `4.45:1` is bound to
+ *   `--color-fg-muted` on `--color-bg-muted-hover` in light; that the prose
+ *   says it FAILS rather than passes is not checked, and moving a figure into
+ *   the wrong sentence leaves it matching. Only the digits are bound.
+ * - **Which occurrence.** A figure is matched anywhere in the file, so two
+ *   sentences quoting the same number are indistinguishable, as are two
+ *   different pairs that happen to round to the same two decimals.
+ * - **Every other Markdown file.** Scoped to `AGENTS.md` alone — the one doc
+ *   that ships to consumers. `README.md`, `guidance.md` and the three
+ *   `CLAUDE.md` files state ratios too and nothing binds them.
+ * - **WCAG's own thresholds.** `3:1`, `4.5:1`, `7:1`, `21:1` and `1:1` are
+ *   normative constants cited throughout the document, not measurements of a
+ *   pair, so nobody can recompute them and they are exempt BY VALUE — the same
+ *   trade, and the same list, as the annotation gate's `WCAG_THRESHOLDS`. The
+ *   docblock used to claim this while the regex matched any decimal, so
+ *   appending the commonest contrast sentence in prose — `must clear the
+ *   4.5:1 minimum` — failed the gate. That is precisely the false alarm this
+ *   file's own reasoning says gets a gate deleted, and it means a real
+ *   measured pair landing on `4.50` is unbindable. Accepted, because a
+ *   measurement essentially never lands on one of five round numbers.
+ * - **Counts other than the one it owns.** The count scan is narrowed to
+ *   `N of the M tone/surface pairs`, the exact phrase of the only count
+ *   FIGURES produces. A generic `N of the M` matched ordinary English —
+ *   `Only 2 of the 7 layout primitives own spacing` would have failed CI on a
+ *   3,900-line prose file agents are told to edit. The cost is real and is
+ *   the point of stating it: a DIFFERENT count added to AGENTS.md is not
+ *   bound, and binding it means widening this phrase deliberately.
+ */
+describe('AGENTS.md states no contrast figure this file cannot recompute', () => {
+  const AGENTS = readFileSync(resolve(__dirname, '../../AGENTS.md'), 'utf8');
+
+  /**
+   * Each figure is `[what it measures, the digits AGENTS.md must contain]`.
+   *
+   * A function rather than a const so a token that stops resolving throws
+   * with a token name in it. Note this is called at COLLECTION time by the
+   * `it.each` below, so such a throw still fails the file rather than one
+   * test — the function buys a readable message, not isolation.
+   */
+  const figures = (): [label: string, stated: string][] => {
+    const worstEventFill = PALETTE_EVENT_FILLS.map(
+      (fill) =>
+        [fill, contrast(tokenValue('--ring-accent', DARK), tokenValue(fill, DARK))] as const,
+    ).sort((a, b) => a[1] - b[1])[0]!;
+
+    const light = lightboxSurfaces('light');
+    const dark = lightboxSurfaces('dark');
+    const tones = ['accent', 'danger', 'success'] as const;
+    const belowInLight = tones
+      .flatMap((tone) =>
+        light.map(([, surface]) => contrast(tokenValue(`--ring-${tone}`, TOKENS), surface)),
+      )
+      .filter((r) => r < 3);
+    const hoveredControlFill = dark.find(([label]) => label === 'a hovered control fill')![1];
+
+    return [
+      [
+        '--color-fg-muted on --color-bg-muted-hover, light',
+        contrast(
+          tokenValue('--color-fg-muted', TOKENS),
+          tokenValue('--color-bg-muted-hover', TOKENS),
+        ).toFixed(2),
+      ],
+      [
+        `--ring-accent on ${worstEventFill[0]}, dark — the tightest .colored event fill`,
+        worstEventFill[1].toFixed(2),
+      ],
+      [
+        '--ring-danger on --lightbox-control-bg-hover over the scrim, dark',
+        contrast(tokenValue('--ring-danger', DARK), hoveredControlFill).toFixed(2),
+      ],
+      [
+        'Lightbox tone/surface pairs under 1.4.11 in light',
+        `${belowInLight.length} of the ${tones.length * light.length}`,
+      ],
+    ];
+  };
+
+  it.each(figures().map((f) => [f[0], f[1]]))('%s = %s', (_label, stated) => {
+    // A boolean, not `toContain`. The failure diff for a miss on a 3900-line
+    // Markdown file is the whole file, which buries the one line that says
+    // which figure moved.
+    expect(AGENTS.includes(stated), `AGENTS.md no longer states ${stated}`).toBe(true);
+  });
+
+  it('states no ratio or count these figures do not produce', () => {
+    const produced = new Set(figures().map(([, stated]) => stated));
+    // Exempt BY VALUE, the same list the annotation gate uses: these are
+    // WCAG's normative thresholds, not measurements, so nothing can recompute
+    // them. `4.5` is the one that matters — `must clear the 4.5:1 minimum` is
+    // the commonest contrast sentence in prose and failing on it is how a gate
+    // gets deleted.
+    const WCAG_THRESHOLDS = new Set(['1', '3', '4.5', '7', '21']);
+    const claims = [
+      ...[...AGENTS.matchAll(/\b(\d+(?:\.\d+)?):1\b/g)]
+        .map((m) => m[1]!)
+        .filter((r) => !WCAG_THRESHOLDS.has(r)),
+      // The exact phrase of the one count FIGURES produces, not a generic
+      // `N of the M` — see the docblock for what that costs.
+      ...[...AGENTS.matchAll(/\b(\d+ of the \d+) tone\/surface pairs\b/g)].map((m) => m[1]!),
+    ];
+    expect(
+      claims.filter((c) => !produced.has(c)),
+      'AGENTS.md states a measured figure nothing recomputes — add it to FIGURES with the pair it measures, or drop the number',
+    ).toEqual([]);
+  });
+});
 
 describe('presence dots stay distinguishable from each other', () => {
   // Every dot is aria-hidden with no text alternative (Avatar.tsx), and status

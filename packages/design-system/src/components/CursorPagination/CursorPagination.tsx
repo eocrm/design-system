@@ -26,12 +26,18 @@ export interface CursorPaginationProps extends HTMLAttributes<HTMLElement> {
    * Label for the previous button. Defaults to the i18n value at
    * `pagination.previous` (`'Previous'` in English). Override for domain
    * phrasing (`'Newer'` in a reverse-chronological feed).
+   *
+   * An EMPTY string counts as unset, not as an explicit blank: this label is
+   * the button's only name source (the chevron is `aria-hidden`), so an empty
+   * one would leave the button anonymous rather than merely unlabelled.
    */
   previousLabel?: ReactNode;
 
   /**
    * Label for the next button. Defaults to the i18n value at
    * `pagination.next` (`'Next'` in English).
+   *
+   * An EMPTY string counts as unset, for the same reason as `previousLabel`.
    */
   nextLabel?: ReactNode;
 
@@ -123,7 +129,14 @@ export const CursorPagination = forwardRef<HTMLElement, CursorPaginationProps>(
           disabled={disabled || !hasPrevious}
         >
           <ChevronLeft size={16} aria-hidden />
-          <span>{previousLabel ?? t('pagination.previous')}</span>
+          {/* `||`, not `??`, on both buttons: the chevron is aria-hidden, so
+              this span is the button's ONLY name source. `previousLabel={x ??
+              ''}` is ordinary consumer code, and with `??` it renders an empty
+              span and a button with NO accessible name at all — the #534 defect
+              one layer over, via name-from-content instead of an attribute
+              (#535). An empty label is never a meaningful name, so it means
+              unset. */}
+          <span>{previousLabel || t('pagination.previous')}</span>
         </button>
 
         <button
@@ -132,7 +145,7 @@ export const CursorPagination = forwardRef<HTMLElement, CursorPaginationProps>(
           onClick={onNext}
           disabled={disabled || !hasNext}
         >
-          <span>{nextLabel ?? t('pagination.next')}</span>
+          <span>{nextLabel || t('pagination.next')}</span>
           <ChevronRight size={16} aria-hidden />
         </button>
       </nav>

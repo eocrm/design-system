@@ -264,6 +264,17 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
   }, [ctx.open, isPositioned]);
 
   const handleKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    // #528: React bubbles events through the REACT tree, so a surface opened
+    // from a menu item — ConfirmationPopover, Popover, Select, and every
+    // SubContent — delivers its key presses here even though its DOM is
+    // portaled outside this panel. Handling them stole the whole menu's
+    // keyboard: Tab closed the menu (unmounting the popover with it), Escape
+    // closed both instead of peeling one level, and Enter/Space were
+    // preventDefault-ed before the popover's own button could activate.
+    // Only keys that really happened inside this panel are ours; the deeper
+    // surface owns the rest (and its own Content, at depth+1, owns its keys).
+    if (!e.currentTarget.contains(e.target as Node)) return;
+
     if (e.key === 'Escape') {
       e.preventDefault();
       ctx.setOpen(false);

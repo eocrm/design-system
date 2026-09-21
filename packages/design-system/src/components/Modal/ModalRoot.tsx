@@ -73,6 +73,42 @@ export interface ModalProps {
    */
   initialFocusRef?: RefObject<HTMLElement | null>;
 
+  /**
+   * Where focus goes when the modal closes. Default: back to whatever was
+   * focused when it opened.
+   *
+   * That default breaks whenever the opener is gone by close time — a row's
+   * "⋯" trigger whose row was just deleted, or a button that unmounts in the
+   * same commit that opens the modal (the capture then snapshots `<body>`).
+   * Focus lands on `<body>` and a keyboard user loses their place.
+   *
+   * The ref is read **at close time**, not at open time, so it may be pointed
+   * at whatever still exists once the work is done — the next row's trigger,
+   * the empty state's first button. If it is empty or its element has also
+   * left the document, Modal falls back to the captured opener, and then to
+   * doing nothing, exactly as before this prop existed.
+   *
+   * @example
+   * // The deleted row's trigger is gone on close; aim at the next one.
+   * const returnFocusRef = useRef<HTMLElement | null>(null);
+   * <Modal open={open} onOpenChange={setOpen} returnFocusRef={returnFocusRef}>
+   *   <Modal.Header>Delete mailbox?</Modal.Header>
+   *   <Modal.Footer>
+   *     <Button
+   *       variant="danger"
+   *       onClick={async () => {
+   *         await deleteMailbox(id);
+   *         returnFocusRef.current = nextRowTriggerRef.current ?? connectButtonRef.current;
+   *         setOpen(false);
+   *       }}
+   *     >
+   *       Delete
+   *     </Button>
+   *   </Modal.Footer>
+   * </Modal>
+   */
+  returnFocusRef?: RefObject<HTMLElement | null>;
+
   /** Compound children: Header / Body / Footer / Close + any consumer JSX. */
   children: ReactNode;
 
@@ -160,6 +196,10 @@ export interface ModalProps {
  *   breaks Esc routing and z-index ordering.
  * - ❌ Passing neither a `<Modal.Header>` nor an `aria-label` — Modal will
  *   warn in development. Screen-reader users get no announcement on open.
+ * - ❌ Relying on the default focus restore when the element that opened the
+ *   modal will not survive it (a deleted row's menu trigger, a button that
+ *   unmounts in the same commit). Focus lands on `<body>`. Pass
+ *   `returnFocusRef` and point it at something that still exists on close.
  */
 export function ModalRoot({
   open,
@@ -170,6 +210,7 @@ export function ModalRoot({
   disableEscapeClose = false,
   dismissOnOverlayClick = true,
   initialFocusRef,
+  returnFocusRef,
   children,
   className,
   style,
@@ -198,13 +239,21 @@ export function ModalRoot({
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
   const prevOpenRef = useRef(false);
   const focusEffectGenerationRef = useRef(0);
+  // A consumer-named target wins over the captured opener, and is read HERE —
+  // at close time — so the consumer can aim it at whatever survived the work
+  // the modal did (#529). Both are checked against the document: the opener is
+  // commonly gone (deleted row, unmounted button), and the named target can be
+  // too, in which case the captured opener is still the better answer than
+  // nothing.
   const restoreFocus = useCallback(() => {
-    const target = previouslyFocusedRef.current;
+    const captured = previouslyFocusedRef.current;
     previouslyFocusedRef.current = null;
+    const requested = returnFocusRef?.current ?? null;
+    const target = requested && document.contains(requested) ? requested : captured;
     if (target && document.contains(target)) {
       target.focus({ preventScroll: true });
     }
-  }, []);
+  }, [returnFocusRef]);
   useLayoutEffect(() => {
     const generation = ++focusEffectGenerationRef.current;
     if (open && !prevOpenRef.current) {

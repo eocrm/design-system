@@ -58,7 +58,7 @@ function actorCell(entry: AuditEntry) {
   const i = entry.impersonator;
   if (!a) {
     return (
-      <Text size="sm" tone="subtle">
+      <Text size="sm" tone="muted">
         System
       </Text>
     );
@@ -112,7 +112,7 @@ function ExpandedPanel({ entry }: { entry: AuditEntry }) {
   return (
     <Stack gap="md">
       <Stack gap="xs">
-        <Text size="xs" tone="subtle" weight="semibold">
+        <Text size="xs" tone="muted" weight="semibold">
           Changes
         </Text>
         {entry.changes ? (
@@ -142,7 +142,7 @@ function ExpandedPanel({ entry }: { entry: AuditEntry }) {
       <Divider />
 
       <Stack gap="xs">
-        <Text size="xs" tone="subtle" weight="semibold">
+        <Text size="xs" tone="muted" weight="semibold">
           Context
         </Text>
         {Object.keys(entry.context).length === 0 ? (
@@ -250,7 +250,7 @@ export function Audit() {
         size: 160,
         cell: (r) => (
           <Stack gap="xs">
-            <Text size="xs" tone="subtle">
+            <Text size="xs" tone="muted">
               {r.entity_type ?? '—'}
             </Text>
             {r.entity_id ? <Code>{r.entity_id}</Code> : null}

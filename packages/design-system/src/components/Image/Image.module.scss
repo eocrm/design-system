@@ -119,3 +119,32 @@
 .wrapper:has(.trigger:focus-visible) {
   @include focus-ring(var(--image-ring));
 }
+
+// The error column fills the wrapper (`.error` is `inset: 0`) and centres its
+// children, so in a small square box the Retry button's bottom edge lands
+// EXACTLY on the wrapper's bottom — measured at 0.00px of clearance in the
+// 80x80 `radius` examples, where the flex items shrink to fit and the column
+// ends up exactly as tall as the box. `.wrapper` is `overflow: hidden`, so an
+// outset ring's entire bottom band (2px offset + 2px width) falls outside the
+// clip and is never painted: a keyboard user tabbing to Retry gets a ring with
+// its bottom edge missing. Pre-existing; #523's geometry sweep is what made it
+// visible, and #524 is its first catch.
+
+// Drawn inset instead — a wrapper's overflow cannot clip a ring that is inside
+// the element's own border box, at any wrapper size.
+
+// What the inset band covers (mixins.scss requires recording this at an inset
+// call site): the outermost 2px of the button — its 1px
+// `--color-border-strong` border and 1px of its `--color-bg` fill. The label
+// sits inside the button's padding and is untouched, and the border is still
+// the marker in the three unfocused states. Cheap trade for a ring that exists.
+
+// Scoped to Image's error state rather than to `Button`, which is a shared
+// primitive whose outset ring is correct everywhere else. `.error .retry` is
+// 0,3,0 against `Button`'s own `.button:focus-visible` at 0,2,0, so it wins on
+// specificity and not on stylesheet order. It passes `var(--button-ring)`
+// explicitly so the colour keeps following a consumer's Button ring override —
+// only the offset changes here.
+.error .retry:focus-visible {
+  @include focus-ring(var(--button-ring), calc(-1 * var(--ring-offset)));
+}

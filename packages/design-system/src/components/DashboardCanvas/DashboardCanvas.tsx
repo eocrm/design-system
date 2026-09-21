@@ -876,8 +876,10 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
           crossed.kind === 'top'
             ? t('dashboardCanvas.enteredTopLevel')
             : t('dashboardCanvas.enteredSection', {
+                // `||`: the id tail is here so the announcement always names
+                // something; `title: ''` would have announced "Entered ".
                 title:
-                  value.sections.find((section) => section.id === crossed.id)?.title ??
+                  value.sections.find((section) => section.id === crossed.id)?.title ||
                   String(crossed.id),
               }),
         );

@@ -125,7 +125,7 @@ export function Dashboard() {
                       </Badge>
                     ))}
                   </Cluster>
-                  <Text as="span" size="sm" tone="subtle">
+                  <Text as="span" size="sm" tone="muted">
                     {d.company} · ${d.amount.toLocaleString()}
                   </Text>
                 </Stack>
