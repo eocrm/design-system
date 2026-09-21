@@ -72,5 +72,15 @@
   color: var(--qr-error-fg);
   font-size: var(--qr-error-font-size);
   text-align: center;
+
+  // The plate's content is the consumer's name plus the message, and a name
+  // that is a URL or a bare ID is one unbreakable token — the default
+  // `overflow-wrap: normal` runs it straight out of the plate sideways.
+  // No `min-height` and no `overflow` here on purpose: `aspect-ratio` with an
+  // `auto` min-height already gives the box a content-based floor, so the
+  // square is a minimum and a wrapped name grows the plate instead of
+  // spilling. Pinning `min-height` to anything explicit REPLACES that
+  // automatic floor and reintroduces the vertical overflow.
+  overflow-wrap: anywhere;
   cursor: default;
 }

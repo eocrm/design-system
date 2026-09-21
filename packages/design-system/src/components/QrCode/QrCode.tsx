@@ -109,9 +109,10 @@ export const QrCode = forwardRef<HTMLButtonElement, QrCodeProps>(function QrCode
   const t = useTranslation();
   const [inverted, setInverted] = useState(false);
 
-  // One truthiness rule for the whole component: an empty string is not a logo.
-  // Splitting this across `logo ?` and `logo !== undefined` punches a hole into
-  // a level-M symbol with nothing to fill it.
+  // One truthiness rule for the whole component: an empty string is not a logo,
+  // not a name and not a tooltip. Splitting this across `logo ?` and
+  // `logo !== undefined` punches a hole into a level-M symbol with nothing to
+  // fill it; the same slip on the name is below, at the `||` fallbacks.
   const hasLogo = Boolean(logo);
 
   const resolvedLevel: QrCodeLevel = level ?? (hasLogo ? 'H' : 'M');
@@ -157,11 +158,15 @@ export const QrCode = forwardRef<HTMLButtonElement, QrCodeProps>(function QrCode
       ref={ref}
       type="button"
       aria-pressed={inverted}
-      aria-label={ariaLabel ?? t('qrCode.label')}
+      // `||`, not `??`, on both: `aria-label={row.name ?? ''}` is ordinary
+      // consumer code, and an empty aria-label does not remove the name — it
+      // drops the computation through to `title`, making the invert hint the
+      // name. `title=""` likewise means "no tooltip", not "empty tooltip".
+      aria-label={ariaLabel || t('qrCode.label')}
       // `title` with an aria-label present is exposed as the DESCRIPTION, not
       // the name — so it explains what pressing does without touching the
       // name-exact contract. Doubles as a tooltip for sighted mouse users.
-      title={title ?? t('qrCode.invertHint')}
+      title={title || t('qrCode.invertHint')}
       className={clsx(styles.root, inverted && styles.inverted, className)}
       style={{ ...logoVars, ...style }}
       onClick={(event) => {

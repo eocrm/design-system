@@ -202,10 +202,13 @@ Root is `<button type="button" aria-pressed={inverted}>` wrapping an
   10 is satisfied by its third branch. No live region (it would fire on every
   toggle) and no name mutation (Rule 10 forbids renaming a control the user
   just activated).
-- Accessible name from `label`, defaulting to `t('qrCode.label')` — Rule 9, no
-  inlined English. Consumers are told in JSDoc to pass something identifying
-  ("QR code for invoice INV-123"), because a screen-reader user cannot scan the
-  image to find out what it encodes.
+- Accessible name from the native `aria-label`, defaulting to `t('qrCode.label')`
+  — Rule 9, no inlined English. Consumers are told in JSDoc to pass something
+  identifying ("QR code for invoice INV-123"), because a screen-reader user
+  cannot scan the image to find out what it encodes. The fallback is `||`, not
+  `??`: with the SVG `aria-hidden`, an `aria-label=""` does not leave the name
+  empty, it drops the computation through to `title` and promotes the invert
+  hint to the name. Same for `title=""`, which means "no tooltip".
 - `aria-pressed` says the control is a toggle but not what it toggles, so the
   button carries `title={t('qrCode.invertHint')}`. With an `aria-label` present
   a `title` is exposed as the accessible DESCRIPTION, not the name, so the

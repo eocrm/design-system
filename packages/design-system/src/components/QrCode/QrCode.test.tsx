@@ -43,6 +43,20 @@ describe('QrCode', () => {
     expect(screen.getByRole('button')).toHaveAttribute('title', 'Scan me');
   });
 
+  it('treats an empty aria-label as no name at all', () => {
+    // `aria-label={row.name ?? ''}` is ordinary consumer code. An empty
+    // aria-label does not remove the name — with the SVG aria-hidden, the
+    // computation drops through to `title` and the invert hint BECOMES the
+    // name. `||` is what stops that; `??` would not.
+    render(<QrCode value={VALUE} aria-label="" title="" />);
+    const button = screen.getByRole('button', { name: 'QR code' });
+
+    expect(button).toHaveAttribute(
+      'title',
+      "Click to swap the code's colours for a scanner that won't read it",
+    );
+  });
+
   it('hides the drawing from assistive tech', () => {
     const { container } = render(<QrCode value={VALUE} />);
 
@@ -193,13 +207,18 @@ describe('QrCode', () => {
     expect(button.style.getPropertyValue('--qr-logo-src')).toBe('url("/logo.svg")');
   });
 
-  it('renders every error-correction level', () => {
-    // Q is the one the other level tests never exercise.
-    for (const level of ['L', 'M', 'Q', 'H'] as const) {
+  it('renders every error-correction level, each no smaller than the last', () => {
+    // Q is the one the other level tests never exercise. More correction for
+    // the same data can only need the same symbol or a bigger one, so a level
+    // silently resolving to the wrong one shows up as a size that goes down.
+    const sides = (['L', 'M', 'Q', 'H'] as const).map((level) => {
       const { container } = render(<QrCode value={VALUE} level={level} />);
       expect(container.querySelectorAll('path')).toHaveLength(1);
-      expect(sideOf(container)).toBeGreaterThan(8);
-    }
+      return sideOf(container);
+    });
+
+    expect(sides).toStrictEqual([...sides].sort((a, b) => a - b));
+    expect(sides[3]).toBeGreaterThan(sides[0]); // L and H are not the same symbol
   });
 
   it('percent-encodes a logo URL that would break out of the CSS declaration', () => {
