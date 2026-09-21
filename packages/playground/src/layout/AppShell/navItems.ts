@@ -93,6 +93,7 @@ import {
   Braces,
   Smile,
   Workflow,
+  QrCode,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -237,6 +238,7 @@ export const componentGroups: { heading: string; items: NavItem[] }[] = [
       { to: '/components/icon-tile', label: 'IconTile', icon: Shapes, end: false },
       { to: '/components/image', label: 'Image', icon: ImageIcon, end: false },
       { to: '/components/media-tile', label: 'MediaTile', icon: GalleryThumbnails, end: false },
+      { to: '/components/qr-code', label: 'QrCode', icon: QrCode, end: false },
       { to: '/components/kbd', label: 'Kbd', icon: Command, end: false },
       { to: '/components/pagination', label: 'Pagination', icon: ListOrdered, end: false },
       { to: '/components/palette', label: 'Palette', icon: Palette, end: false },

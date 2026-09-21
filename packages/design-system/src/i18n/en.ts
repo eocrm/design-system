@@ -52,6 +52,11 @@ export const en: Messages = {
   progress: {
     indeterminate: 'Loading…',
   },
+  qrCode: {
+    label: 'QR code',
+    invertHint: "Click to swap the code's colours for a scanner that won't read it",
+    error: 'QR code unavailable',
+  },
   slider: {
     minimum: 'minimum',
     maximum: 'maximum',

@@ -1,0 +1,17 @@
+// QrCode.tokens.scss — Component-scoped tokens for <QrCode>. Ink and paper
+// follow the theme; the `.inverted` class swaps the pair, which is why they are
+// a pair of aliases rather than fixed values. Symbol geometry (the 4-module
+// quiet zone, the punch side) is computed from the module count, not tokenised.
+:root {
+  // The code itself. Swapped wholesale by `.inverted`.
+  --qr-ink: var(--color-fg);
+  --qr-paper: var(--color-bg);
+
+  --qr-radius: var(--radius-sm);
+
+  // Error plate — shown when the value is empty or too long to encode.
+  --qr-error-bg: var(--color-bg-muted);
+  --qr-error-fg: var(--color-fg);
+  --qr-error-font-size: var(--font-size-sm);
+  --qr-error-padding: var(--space-3);
+}

@@ -470,6 +470,9 @@ export type {
 export { Image } from './components/Image';
 export type { ImageProps, ImageObjectFit, ImageRadius, ImageSize } from './components/Image';
 
+export { QrCode } from './components/QrCode';
+export type { QrCodeProps, QrCodeLevel } from './components/QrCode';
+
 export { MediaTile } from './components/MediaTile';
 export type { MediaTileProps, MediaTileReveal, MediaTileRadius } from './components/MediaTile';
 

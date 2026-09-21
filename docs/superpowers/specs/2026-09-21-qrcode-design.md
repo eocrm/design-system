@@ -50,10 +50,17 @@ export interface QrCodeProps extends Omit<
    * destroys modules) and `'M'` otherwise.
    */
   level?: QrCodeLevel;
-  /** Accessible name. Defaults to the `qrCode.label` translation. */
-  label?: string;
 }
 ```
+
+**No bespoke `label` prop.** The accessible name comes from the native
+`aria-label`, destructured out of the spread and defaulted to the `qrCode.label`
+translation. A bespoke prop alongside the inherited attribute meant the native
+one landed in `...props`, got spread first, and was then clobbered on the main
+branch while silently winning on the error branch — the same prop with opposite
+effects. Nine other components here destructure `aria-label` as a fallback and
+none omit it from their `Omit<>`; QrCode matches that. `title` is destructured
+the same way, defaulting to a `qrCode.invertHint` translation.
 
 **There is no `size` prop.** The code renders at `width: 100%` of its
 container and the parent owns the box — Rule 4's position exactly. The shared
@@ -117,9 +124,21 @@ side  = N + 2 * QUIET
 - **One** `<path>` for every dark module — `M{c+4} {r+4}h1v1h-1z` concatenated.
   One DOM node regardless of density; a 177-module code is 31k rects otherwise.
 - Logo punch-out, only when `logo` is set: a paper-filled `<rect>` of
-  `punch = Math.ceil(N * 0.24) | 1` modules, centred.
+  `punch = Math.floor(N * 0.24) | 1` modules, centred.
   `| 1` forces odd — `N` is always odd, so an odd punch keeps
-  `(side - punch) / 2` integral and the edges on module boundaries.
+  `(side - punch) / 2` integral and the edges on module boundaries. **Floor, not
+  ceil**: double-rounding up puts a v1 punch at 33% of the width. Both variants
+  are inside level H's budget — that budget is ~30% of the CODEWORDS, i.e. of
+  the area, and the realised area is 7.8% flooring against ~11% ceiling — so the
+  choice is visual, not arithmetic. A third of the width reads as a hole, not a
+  mark.
+
+  The boundary the area maths does not cover: from version 7 up (59 bytes at
+  level `'H'`, the default whenever `logo` is set) a centre alignment pattern
+  sits under the punch, and Reed–Solomon does not protect function patterns.
+  Decoders extrapolate the grid from the finder and timing patterns, which is
+  why commercial logo-QR generators work, but nothing here would detect it
+  breaking. The playground carries an over-v7 logo example for hand-scanning.
 
 The masked logo is a CSS overlay, not SVG content: absolutely positioned,
 centred with `left/top: 50%` + `translate(-50%, -50%)` (**not** `margin: auto` —
@@ -134,11 +153,15 @@ sanitise custom properties, so a value containing `")` escapes the declaration.
 Percent-encode the characters that can break out before interpolating:
 
 ```ts
-const CSS_URL_UNSAFE = /["'()\\\n\r]/g;
+const CSS_URL_UNSAFE = /["'()\\\n\r\f]/g;
 function cssUrl(src: string): string {
   return `url("${src.replace(CSS_URL_UNSAFE, (ch) => `%${ch.charCodeAt(0).toString(16).padStart(2, '0')}`)}")`;
 }
 ```
+
+`\f` (U+000C FORM FEED) is in the set because CSS input preprocessing (CSS
+Syntax Level 3 §3.3) rewrites every form feed to a line feed before tokenizing,
+so it closes the same breakout as `\n` and `\r`.
 
 `encodeURI` is the wrong tool here — it double-encodes `%` in already-encoded
 URLs and in `data:` URIs.
@@ -179,10 +202,19 @@ Root is `<button type="button" aria-pressed={inverted}>` wrapping an
   10 is satisfied by its third branch. No live region (it would fire on every
   toggle) and no name mutation (Rule 10 forbids renaming a control the user
   just activated).
-- Accessible name from `label`, defaulting to `t('qrCode.label')` — Rule 9, no
-  inlined English. Consumers are told in JSDoc to pass something identifying
-  ("QR code for invoice INV-123"), because a screen-reader user cannot scan the
-  image to find out what it encodes.
+- Accessible name from the native `aria-label`, defaulting to `t('qrCode.label')`
+  — Rule 9, no inlined English. Consumers are told in JSDoc to pass something
+  identifying ("QR code for invoice INV-123"), because a screen-reader user
+  cannot scan the image to find out what it encodes. The fallback is `||`, not
+  `??`: with the SVG `aria-hidden`, an `aria-label=""` does not leave the name
+  empty, it drops the computation through to `title` and promotes the invert
+  hint to the name. Same for `title=""`, which means "no tooltip".
+- `aria-pressed` says the control is a toggle but not what it toggles, so the
+  button carries `title={t('qrCode.invertHint')}`. With an `aria-label` present
+  a `title` is exposed as the accessible DESCRIPTION, not the name, so the
+  name-exact contract is untouched — and it doubles as a tooltip for sighted
+  mouse users. Not a live region and not a name mutation; both are forbidden
+  here.
 - Focus via `:focus-visible` (Rule 3a) using the shared focus mixin.
 - Space and Enter come free from the native button.
 
@@ -212,6 +244,13 @@ content, so name-from-content makes it the accessible name. Do **not** also set
 `aria-label` here, or a reader hears the failure twice — the same trap
 `<Image>` documents, arrived at from the other direction.
 
+A consumer-supplied `aria-label` is instead prefixed to the message as **visible
+content**: `"<their name> — <message>"`. The plate is `disabled` and so out of
+the tab order, which makes its name the only signal a browse-mode user gets; a
+page of failed codes all named "QR code unavailable" tells them nothing about
+which row broke. Name-from-content covers both needs at once and nothing is
+announced twice.
+
 Wrap both `addData` and `make` in the `try` — with auto version selection the
 capacity check happens in `make()`.
 
@@ -219,10 +258,11 @@ capacity check happens in `make()`.
 
 Added to `messages.ts`, `en.ts`, `ru.ts`:
 
-| Key            | en                    | ru                  |
-| -------------- | --------------------- | ------------------- |
-| `qrCode.label` | `QR code`             | `QR-код`            |
-| `qrCode.error` | `QR code unavailable` | `QR-код недоступен` |
+| Key                 | en                                                                  | ru                                                                      |
+| ------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `qrCode.label`      | `QR code`                                                           | `QR-код`                                                                |
+| `qrCode.invertHint` | `Click to swap the code's colours for a scanner that won't read it` | `Нажмите, чтобы поменять цвета кода местами, если сканер его не читает` |
+| `qrCode.error`      | `QR code unavailable`                                               | `QR-код недоступен`                                                     |
 
 ## Tests — `QrCode.test.tsx`
 
@@ -249,8 +289,9 @@ plus:
 
 ## Playground demo
 
-`packages/playground/src/pages/demo/QrCodeDemo.tsx` — basic, with the eocrm
-mark, the ECC levels, a Cyrillic value, and the error case. Each example is
+`packages/playground/src/pages/components/QrCodeDemo.tsx` — basic, with the eocrm
+mark, a logo code past the version-7 alignment-pattern boundary (labelled as
+the one to hand-scan), the ECC levels, a Cyrillic value, and the error case. Each example is
 wrapped in a sized container, which doubles as the demonstration that the parent
 owns the box. A line of copy tells the reader the code is clickable.
 
@@ -258,8 +299,15 @@ The demo passes the existing `packages/playground/src/assets/eocrm-logo.svg`
 **unmodified**; the mask recolours it to the QR's ink. That is the "recoloured
 logo" requirement, at the cost of zero new assets.
 
-Wired into `App.tsx` (route), `AppShell.tsx` (nav), `DemoIndex.tsx` (grid), and
-using the `@lib-source/*` `?raw` pattern the other demos use.
+Wired into `src/App.tsx` (route), `src/layout/AppShell/navItems.ts` (nav),
+`src/pages/components/ComponentsIndex.tsx` + `overviewSchematics.tsx` (grid),
+and `src/pages/mockups/registry.ts` (the `ComponentName` union), using the
+`@lib-source/*` `?raw` pattern the other demos use.
+
+Every snippet shown in an `<Example>` must mirror the container the preview
+beside it actually renders in, and must not reference undefined variables —
+this is the one component whose headline constraint is "the parent owns the
+box", so a snippet with no box teaches the opposite.
 
 ## Files
 
@@ -272,7 +320,7 @@ carry their own test cycle and `QrCode.tsx` stays a rendering concern —
 **Modified** — `packages/design-system/src/index.ts`, `src/i18n/{messages,en,ru}.ts`,
 `packages/design-system/AGENTS.md`, `packages/design-system/package.json`,
 `packages/design-system/CLAUDE.md` (dependency policy), root `package-lock.json`,
-`packages/playground/src/{App.tsx,components/AppShell.tsx,pages/DemoIndex.tsx}`.
+`packages/playground/src/{App.tsx,layout/AppShell/navItems.ts,pages/components/ComponentsIndex.tsx,pages/components/overviewSchematics.tsx,pages/mockups/registry.ts}`.
 
 ## Out of scope
 

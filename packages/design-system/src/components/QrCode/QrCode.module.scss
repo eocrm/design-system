@@ -1,0 +1,97 @@
+@use '../../styles/mixins' as *;
+@use './QrCode.tokens';
+
+.root {
+  // Centres the painted frame, which is up to ONE MODULE narrower than the
+  // button once the symbol snaps to a whole number of device pixels per module
+  // — `side / dpr` CSS px, not a fraction of a pixel. The leftover shows as
+  // paper, reading as a slightly wider quiet zone.
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: var(--qr-radius);
+  background: var(--qr-paper);
+  cursor: pointer;
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+// Swapping the pair is the whole of the inverted state.
+.root.inverted {
+  --qr-ink: var(--color-bg);
+  --qr-paper: var(--color-fg);
+}
+
+// The painted box. `relative` anchors the logo overlay — the one internal-anchor
+// exception Rule 4 allows; it lives here rather than on `.root` so the overlay's
+// percentage size resolves against the SYMBOL, not against the button.
+.frame {
+  position: relative;
+  display: block;
+  max-width: 100%;
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: inherit;
+
+  // Forced-colors mode would override ink and paper with the same pair of
+  // system colours and flatten the symbol. For a QR code that is not "looks
+  // different", it is "does not scan" — the contrast IS the content.
+  forced-color-adjust: none;
+}
+
+.paper {
+  fill: var(--qr-paper);
+}
+
+.ink {
+  fill: var(--qr-ink);
+}
+
+// The mark is a CSS alpha mask filled with the current ink, so it recolours
+// with the theme AND with the inverted state. `--qr-logo-src` / `--qr-logo-size`
+// are set inline by the component.
+.logo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--qr-logo-size);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  background: var(--qr-ink);
+  mask-image: var(--qr-logo-src);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+}
+
+// Compound selector so it wins over `.root` regardless of source order.
+.root.error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  padding: var(--qr-error-padding);
+  background: var(--qr-error-bg);
+  color: var(--qr-error-fg);
+  font-size: var(--qr-error-font-size);
+  text-align: center;
+
+  // The plate's content is the consumer's name plus the message, and a name
+  // that is a URL or a bare ID is one unbreakable token — the default
+  // `overflow-wrap: normal` runs it straight out of the plate sideways.
+  // No `min-height` and no `overflow` here on purpose: `aspect-ratio` with an
+  // `auto` min-height already gives the box a content-based floor, so the
+  // square is a minimum and a wrapped name grows the plate instead of
+  // spilling. Pinning `min-height` to anything explicit REPLACES that
+  // automatic floor and reintroduces the vertical overflow.
+  overflow-wrap: anywhere;
+  cursor: default;
+}

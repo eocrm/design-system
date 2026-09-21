@@ -99,6 +99,13 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['MediaTile'],
   },
   {
+    to: '/components/qr-code',
+    name: 'QrCode',
+    description:
+      'Scannable QR code — UTF-8 data, an optional mark masked into the centre, click to swap ink and paper.',
+    preview: SCHEMATICS['QrCode'],
+  },
+  {
     to: '/components/input',
     name: 'Input',
     description: 'Single-line text field with focus + invalid states.',

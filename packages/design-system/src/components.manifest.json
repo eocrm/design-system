@@ -585,6 +585,12 @@
       "FileUpload"
     ]
   },
+  "QrCode": {
+    "tier": "primitive",
+    "cluster": "Display",
+    "composes": [],
+    "composedBy": []
+  },
   "Radio": {
     "tier": "primitive",
     "cluster": "Forms",

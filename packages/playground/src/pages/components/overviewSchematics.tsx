@@ -434,6 +434,25 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       </Outline>
     </Row>
   ),
+  QrCode: (
+    <Col gap={4}>
+      <Row gap={4}>
+        <Outline w={12} h={12} />
+        <Box w={6} h={12} />
+        <Outline w={12} h={12} />
+      </Row>
+      <Row gap={4}>
+        <Box w={12} h={6} />
+        <Solid w={6} h={6} />
+        <Box w={12} h={6} />
+      </Row>
+      <Row gap={4}>
+        <Outline w={12} h={12} />
+        <Box w={6} h={12} />
+        <Box w={12} h={12} />
+      </Row>
+    </Col>
+  ),
   MediaTile: (
     <Row>
       <Outline w={96} h={92} style={{ position: 'relative', overflow: 'hidden' }}>
