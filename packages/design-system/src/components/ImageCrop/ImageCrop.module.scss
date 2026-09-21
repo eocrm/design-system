@@ -1,4 +1,5 @@
 @use './ImageCrop.tokens';
+@use '../../styles/mixins' as *;
 
 .root {
   display: flex;
@@ -23,11 +24,7 @@
 }
 
 .viewport:focus-visible {
-  outline: var(--border-width-emphasis) solid var(--image-crop-viewport-focus-color);
-
-  // CSS keyword; offset the outline to keep it visible.
-  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- raw px is the focus-ring offset, no token equivalent
-  outline-offset: 2px;
+  @include focus-ring(var(--image-crop-viewport-focus-color));
 }
 
 .image {

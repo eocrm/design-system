@@ -1,4 +1,5 @@
 @use './ColorPicker.tokens';
+@use '../../styles/mixins' as *;
 
 .panel {
   display: flex;
@@ -57,10 +58,7 @@
 }
 
 .svSquare:focus-visible {
-  outline: var(--border-width-emphasis) solid var(--color-picker-sv-focus-color);
-
-  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- raw px is the focus-ring offset, no token equivalent
-  outline-offset: 2px;
+  @include focus-ring(var(--color-picker-sv-focus-color));
 }
 
 .svSquareDisabled {
@@ -154,10 +152,7 @@
 }
 
 .presetSwatch:focus-visible {
-  outline: var(--border-width-emphasis) solid var(--color-picker-preset-focus-color);
-
-  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- raw px is the focus-ring offset, no token equivalent
-  outline-offset: 2px;
+  @include focus-ring(var(--color-picker-preset-focus-color));
 }
 
 .presetSwatch:disabled {
@@ -216,10 +211,7 @@
 }
 
 .trigger:focus-visible {
-  outline: var(--border-width-emphasis) solid var(--color-picker-trigger-focus-color);
-
-  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- raw px is the focus-ring offset, no token equivalent
-  outline-offset: 2px;
+  @include focus-ring(var(--color-picker-trigger-focus-color));
 }
 
 .trigger:disabled {

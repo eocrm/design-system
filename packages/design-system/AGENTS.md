@@ -197,7 +197,7 @@ Each component is fully JSDoc'd. Hover any usage in your editor for inline docs 
 
 - `order: 1 | 2 | 3 | 4 | 5 | 6` — required. Renders `<h1>` … `<h6>` AND drives the default visual size.
 - Default size map: `1→3xl`, `2→2xl`, `3→xl`, `4→lg`, `5→md`, `6→sm`. Override with `size` (same vocab: `xs | sm | md | lg | xl | 2xl | 3xl`).
-- `tone`: `default | muted | subtle | accent | danger`. **`subtle` is deprecated (#521) and resolves to `muted`** — the two neutrals measured OKLab ΔE 0.0261 apart in light (0.0365 after #522's retune, still about half the 0.065 perceptibility floor) — one visible tier under two names. Use `muted`. The prop still works, so nothing breaks.
+- `tone`: `default | muted | subtle | accent | danger`. **`subtle` is deprecated (#521) and resolves to `muted`.** In LIGHT the two neutrals were indistinguishable — OKLab ΔE 0.0261 when #521 was filed, 0.0365 after #522's retune, against a 0.065 perceptibility floor — so one visible tier shipped under two names. In DARK they were 0.0707 apart, a real step, so **this deprecation changes dark-theme appearance**: `tone="subtle"` text in dark gets lighter, moving from `--color-fg-subtle` to `--color-fg-muted`. That was the accepted trade — a tier that exists in one theme only is not a tier — but it is a visual change, not the removal of a duplicate. Use `muted`. The prop still works, so nothing breaks at the type or build level.
 - `weight`: `regular | medium | semibold | bold` (default `semibold`).
 - `truncate`: single-line ellipsis.
 - **Use `<Title>` for every heading in your UI.** Raw `<h1>` / `<h2>` is forbidden.
@@ -214,7 +214,7 @@ Each component is fully JSDoc'd. Hover any usage in your editor for inline docs 
 
 - `as: 'p' | 'span' | 'div' | 'label'` (default `'p'`). Constrained string union — no polymorphic generic.
 - `size: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | 'inherit'` (default `'md'`).
-- `tone`: `default | muted | subtle | accent | danger | success | warning`. **`subtle` is deprecated (#521) and resolves to `muted`** — the two neutrals measured OKLab ΔE 0.0261 apart in light (0.0365 after #522's retune, still about half the 0.065 perceptibility floor) — one visible tier under two names. Use `muted`. The prop still works, so nothing breaks.
+- `tone`: `default | muted | subtle | accent | danger | success | warning`. **`subtle` is deprecated (#521) and resolves to `muted`.** In LIGHT the two neutrals were indistinguishable — OKLab ΔE 0.0261 when #521 was filed, 0.0365 after #522's retune, against a 0.065 perceptibility floor — so one visible tier shipped under two names. In DARK they were 0.0707 apart, a real step, so **this deprecation changes dark-theme appearance**: `tone="subtle"` text in dark gets lighter, moving from `--color-fg-subtle` to `--color-fg-muted`. That was the accepted trade — a tier that exists in one theme only is not a tier — but it is a visual change, not the removal of a duplicate. Use `muted`. The prop still works, so nothing breaks at the type or build level.
 - `weight`: `regular | medium | semibold | bold` (default `regular`).
 - `align`: `left | center | right` (default `left`).
 - `truncate`: single-line ellipsis. `lineClamp: number`: multi-line ellipsis. `lineClamp` overrides `truncate`.
@@ -3598,7 +3598,7 @@ All available as CSS custom properties after you import `global.scss`:
 
 | Family          | Tokens                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
 | --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Neutral colors  | `--color-bg`, `--color-bg-subtle`, `--color-bg-muted`, `--color-bg-sunken`, `--color-border`, `--color-border-strong`, `--color-fg`, `--color-fg-muted` (the secondary neutral; retuned in #522 so it clears AA as text on EVERY neutral surface plus `--color-accent-bg-subtle`, in both themes — use it whenever the surface is tinted, sunken, or not known at authoring time), `--color-fg-subtle` (text, `--color-bg`/`--color-bg-subtle` ONLY — fails AA on `--color-bg-muted` in both themes; use `--color-fg-muted` there, #511), `--color-fg-disabled` / `--color-bg-hover` / `--color-bg-muted-hover` (hover surfaces — use these, NOT `--color-bg-subtle`, which is only one step and moves the wrong way from a muted base) |
+| Neutral colors  | `--color-bg`, `--color-bg-subtle`, `--color-bg-muted`, `--color-bg-sunken`, `--color-border`, `--color-border-strong`, `--color-fg`, `--color-fg-muted` (the secondary neutral; retuned in #522 so it clears AA as text on `--color-bg`, `--color-bg-subtle`, `--color-bg-muted`, `--color-bg-sunken`/`--color-bg-hover` and `--color-accent-bg-subtle`, in both themes — reach for it when the surface is tinted, sunken, or not known at authoring time. **ONE exception: `--color-bg-muted-hover`**, where it reads 4.45:1 in light and fails; put `--color-fg` on that surface, as `Table`'s hovered header and `OptionsPicker`'s hovered group header already do), `--color-fg-subtle` (text, `--color-bg`/`--color-bg-subtle` ONLY — fails AA on `--color-bg-muted` in both themes; use `--color-fg-muted` there, #511), `--color-fg-disabled` / `--color-bg-hover` / `--color-bg-muted-hover` (hover surfaces — use these, NOT `--color-bg-subtle`, which is only one step and moves the wrong way from a muted base) |
 | Accent colors   | `--color-accent`, `--color-accent-hover`, `--color-accent-pressed`, `--color-accent-fg`, `--color-accent-subtle-bg`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     |
 | Semantic colors | `--color-danger`, `--color-danger-hover`, `--color-danger-fg`, `--color-bg-danger-subtle`, `--color-success`, `--color-success-hover`, `--color-success-fg`, `--color-warning`, `--color-info`                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
 | Badge palette   | `--badge-{bg,fg}-{neutral,info,success,warning,danger,purple}` (was `--color-badge-<tone>-{bg,fg}`, kept as deprecated aliases)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
@@ -3626,27 +3626,27 @@ Some components predate the mixin. **They are not the pattern to copy**, and
 they fall into two different groups — grep `:focus-visible` alongside `outline:`
 or `box-shadow: 0 0 0` for the current set rather than trusting a list here:
 
-- **Hand-rolled but real** — `AvatarGroup`, `ColorPicker`, `DashboardCanvas`,
-  `IconPicker`, `ImageCrop`. `AvatarGroup` needs an inner layer between the
-  chip and the overlapping avatars. The other four hand-roll with a width
-  token other than `--ring-width` — which is what the `structure.test.ts`
-  gate keys on, and why it doesn't reach them — tracked in **#515**, but that
-  is not the same thing as "can't migrate": `ColorPicker`, `ImageCrop` and
-  `DashboardCanvas` all use `--border-width-emphasis` for that width, which is
-  `--ring-width`'s own value under a global-primitive name, and their offsets
-  already match `--ring-offset` (outset for the first two, inset for
-  `DashboardCanvas`) — so all three are exact drop-ins today, #515 is simply
-  unstarted for them, and migrating also lets them drop the
-  `stylelint-disable-next-line` comments their raw offsets currently need.
-  `ColorPicker` and `ImageCrop`'s ring colour is component-scoped and passes
-  straight into the mixin's first argument; `DashboardCanvas`'s is
-  `--color-accent`, a global primitive identical to `--ring-accent` in both
-  themes, so it needs no colour argument at all. `IconPicker` is the one that
-  genuinely cannot migrate: its width token,
-  `--icon-picker-focus-ring-width`, is a documented public override in
-  `IconPicker.tsx`'s consumer-facing token list, and the mixin has no width
-  parameter — migrating would silently delete that override surface, a
-  breaking change, not a refactor.
+- **Hand-rolled but real** — `AvatarGroup` and `IconPicker`, and only those
+  two, as of #515. `AvatarGroup` needs an inner layer between the chip and the
+  overlapping avatars, so its ring is a `box-shadow` on purpose.
+  `IconPicker` hand-rolls an `outline` with its own width token:
+  `--icon-picker-focus-ring-width` is a documented public override in
+  `IconPicker.tsx`'s consumer-facing token list, and `focus-ring` has no width
+  parameter — calling the mixin would silently delete that override surface, a
+  breaking change, not a refactor. Giving the mixin a `$width` argument is the
+  way to close it, and is a design decision, not cleanup. The
+  `structure.test.ts` gate carries `IconPicker` as a named waiver with that
+  reason, and fails if the waiver ever stops matching a real hand-rolled ring.
+  `ColorPicker` (x3), `ImageCrop` and `DashboardCanvas` used to be on this list
+  — they hand-rolled with `--border-width-emphasis`, `--ring-width`'s own value
+  under a global-primitive name, so the emission was identical and nothing
+  looked wrong. #515 migrated all five to `@include focus-ring(…)` (the first
+  two outset, `DashboardCanvas` inset via `$offset`) and deleted the four inert
+  `stylelint-disable-next-line` comments their raw `2px` offsets carried.
+  `DashboardCanvas` passes `var(--color-accent)` explicitly rather than taking
+  the default: the two tokens are identical in both themes today, but
+  `buildThemeTokenCss` lets a consumer override `--color-accent` alone, and a
+  bare `@include focus-ring` would stop following that override.
 - **Suppressed, not hand-rolled** — nothing, as of this PR. Three components
   legitimately set `outline: none` under `:focus-visible` and stay:
   `AvatarGroup` (box-shadow ring — an offset gap there would reveal another

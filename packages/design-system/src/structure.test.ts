@@ -1112,42 +1112,81 @@ describe('a focus ring is not suppressed by a rule shared with :hover', () => {
 });
 
 /**
- * Bans the literal `outline: var(--ring-width) ...` form — not "every
- * hand-rolled ring". A different width token passes this gate untouched: six
- * live `:focus-visible` sites do exactly that today (`ColorPicker.module.scss
- * :60,:157,:219`, `ImageCrop.module.scss:26`, `DashboardCanvas.module.scss
- * :167`, `IconPicker.module.scss:63` — the last is the mixin with its tokens
- * renamed). Out of scope for this gate; tracked as a follow-up issue.
+ * A focus ring is drawn by the `focus-ring` mixin, not by a hand-written
+ * `outline`.
  *
- * Run before any fix, this gate fails on FOUR files, not one: `Rail` wrote
- * the literal form at four sites; `LinkCard`, `TimeField` and `TopBar` each
- * hand-rolled it at one more. Emission is identical today in all four, so
- * nothing was visibly broken — which is exactly why it survived. The cost is
- * that a change to the mixin does not reach them, and #510 already paid it
- * on Rail: `.groupTrigger:focus-visible` was declared TWICE at different
- * offsets, the later `+2px` won on equal specificity, and the correct rule
- * 84 lines above was dead code while the ring clipped on both sides. A
- * single mixin call cannot be silently duplicated at two geometries.
- * `TimeField` already imports the mixin and hand-rolled the ring anyway —
- * the strongest evidence here that these are drift, not intent.
+ * Keys on the SHAPE, not on one spelling. The previous version of this gate
+ * matched the literal `outline: var(--ring-width)` string, which meant a ring
+ * hand-rolled with any OTHER width token sailed through: six live
+ * `:focus-visible` sites did exactly that (`ColorPicker` x3, `ImageCrop`,
+ * `DashboardCanvas`, `IconPicker`) while the gate reported green. Five were
+ * migrated in #515; the sixth is waived below, by name and with its reason.
  *
- * Some of Rail's sites also hard-coded `outline-offset: -2px`, a raw value
- * where `calc(-1 * var(--ring-offset))` is the token form. Every site that
- * needs a non-default offset now passes it through the mixin's `$offset`
- * parameter (`@include focus-ring($offset: …)`), added alongside this PR,
- * instead of layering a separate `outline-offset` declaration after the
- * `@include` — the shape the gate below this one now bans outright. Grep
- * `@include focus-ring(` under `src/components` for the current set rather
- * than trusting a list here.
+ * The invariant matters because a hand-rolled ring is a copy the mixin's own
+ * changes never reach, and because a mixin call cannot be silently duplicated
+ * at two different geometries the way a declaration can: #510's `Rail` defect
+ * was `.groupTrigger:focus-visible` declared TWICE at different offsets, the
+ * later `+2px` winning on equal specificity while the correct rule 84 lines
+ * above sat dead and the ring clipped on both sides.
  *
- * Also misses the `outline-width` / `outline-color` longhand form of the
- * same literal — no instance exists in the tree today, so widening the
- * regex to catch it is deferred rather than done speculatively.
+ * WHAT IT CHECKS: every rule under `src/components` whose selector names a
+ * focus pseudo (`:focus`, `:focus-visible`, `:focus-within`) must not declare
+ * `outline` / `outline-width` / `outline-color` / `outline-style` with a
+ * PAINTING value. `outline: none` and `outline: 0` are permitted — suppression
+ * is the business of the ":hover-shared" gate above, and three components
+ * suppress legitimately. The literal `outline: var(--ring-width)` form is also
+ * banned in any rule at all, focus-scoped or not, keeping the one axis on
+ * which the old gate reached further than this one.
  *
- * Comments are stripped before the scan (via `stripScssComments`), same as
- * gate 1 above, so documenting this pattern in a comment does not fail it.
+ * WHAT IT PROVABLY CANNOT CATCH — a static scan of SCSS text, so:
+ *
+ * - **A rule whose body contains a NESTED block is skipped entirely.** The
+ *   brace scan's `[^{}]*` body cannot span into one, so `&:focus-visible { …
+ *   @media … { … } }` is invisible. Shared with both sibling gates. No such
+ *   rule exists in the tree today; if one is added, this gate goes quiet on it
+ *   without saying so.
+ * - **A ring painted from a rule that does not name a focus pseudo.** A class
+ *   toggled from JS (`.isFocused`), an attribute selector (`[data-focused]`),
+ *   or a ring drawn by a parent whose selector spells focus some other way.
+ *   `Image`'s `.wrapper:has(.trigger:focus-visible)` IS in scope, because the
+ *   pseudo appears in its selector text.
+ * - **`box-shadow` rings.** Entirely invisible to it, in both directions: it
+ *   neither bans them (`AvatarGroup` draws one deliberately) nor verifies that
+ *   a component without an `outline` has any ring at all. A component that
+ *   simply never styles focus passes this gate.
+ * - **Anything about the RESULT.** A call with the wrong colour, the wrong
+ *   offset, or an outset ring flush against a clipping ancestor passes. Ring
+ *   colour is `src/styles/contrast.test.ts`; ring geometry is
+ *   `tests/focus-ring-geometry.spec.ts`, which needs a browser. This gate
+ *   certifies only that the ring goes through the shared mechanism.
+ * - **Indirection.** An outline emitted through SCSS interpolation or a
+ *   component-local mixin reads as neither an `outline:` declaration nor an
+ *   `@include focus-ring`.
+ *
+ * Comments are stripped first (`stripScssComments`), so documenting the
+ * anti-pattern in prose does not fail the gate.
  */
-describe('no component writes the literal `outline: var(--ring-width)` form', () => {
+describe('a focus ring goes through the focus-ring mixin', () => {
+  /**
+   * Hand-rolled focus rings that are deliberate and stay. Each entry must
+   * match a real offender — the staleness check below fails if one stops
+   * matching, so a waiver cannot outlive the code it excuses.
+   */
+  const waivers = [
+    {
+      file: 'IconPicker/IconPicker.module.scss',
+      selector: '.trigger:focus-visible, .cell:focus-visible',
+      // `--icon-picker-focus-ring-width` is a documented public override in
+      // IconPicker.tsx's consumer token list, and `focus-ring` has no width
+      // parameter. Calling the mixin would silently stop that override
+      // working — a breaking change for any consumer using it, not a
+      // refactor. Giving the mixin a `$width` is the way to delete this
+      // waiver; that is a design decision, deliberately not bundled with the
+      // #515 cleanup.
+      reason: 'width token is a public consumer override the mixin cannot express',
+    },
+  ];
+
   const styleFiles = allFilesUnder(componentsDir).filter(({ label }) =>
     /\.(module|tokens)\.scss$/.test(label),
   );
@@ -1156,11 +1195,51 @@ describe('no component writes the literal `outline: var(--ring-width)` form', ()
     expect(styleFiles.length).toBeGreaterThan(50);
   });
 
-  it.each(styleFiles.map(({ label, code }) => [label, code]))('%s', (_label, code) => {
-    const literals = [
-      ...stripScssComments(code).matchAll(/outline:\s*var\(--ring-width\)[^;]*/g),
-    ].map((m) => m[0]);
-    expect(literals, 'use @include focus-ring instead').toEqual([]);
+  /** `none` / `0` suppress a ring; anything else paints one. */
+  const paints = (value: string) => !/^(none|0(px)?)$/.test(value.trim());
+
+  const offendersIn = (code: string): string[] => {
+    const stripped = stripScssComments(code);
+    const out: string[] = [];
+    // Same lookbehind brace scan as the two sibling gates — see the
+    // ":hover-shared" gate for why the prefix cannot be a consuming group.
+    for (const m of stripped.matchAll(/(?<=^|[{};])([^{};]*?)\{([^{}]*)\}/g)) {
+      const selector = m[1]!.trim().replace(/\s+/g, ' ');
+      const body = m[2]!;
+      if (!/:focus(-visible|-within)?\b/.test(selector)) continue;
+      for (const d of body.matchAll(/(?:^|;)\s*(outline(?:-width|-color|-style)?)\s*:([^;]*)/g)) {
+        if (paints(d[2]!)) out.push(`${selector} { ${d[1]}:${d[2]!.trimEnd()} }`);
+      }
+    }
+    // Kept from the gate this replaced: the literal mixin body, in ANY rule.
+    for (const m of stripped.matchAll(/outline:\s*var\(--ring-width\)[^;]*/g)) {
+      out.push(m[0]);
+    }
+    return out;
+  };
+
+  const waived = (file: string, offender: string) =>
+    waivers.some((w) => w.file === file && offender.startsWith(`${w.selector} {`));
+
+  it.each(styleFiles.map(({ label, code }) => [label, code]))('%s', (label, code) => {
+    expect(
+      offendersIn(code).filter((o) => !waived(label, o)),
+      'use @include focus-ring instead of a hand-written outline',
+    ).toEqual([]);
+  });
+
+  it('every waiver still matches a real hand-rolled ring', () => {
+    const stale = waivers.filter(
+      (w) =>
+        !styleFiles.some(
+          ({ label, code }) =>
+            label === w.file && offendersIn(code).some((o) => o.startsWith(`${w.selector} {`)),
+        ),
+    );
+    expect(
+      stale.map((w) => `${w.file} — ${w.selector}`),
+      'waived ring no longer exists; delete the waiver',
+    ).toEqual([]);
   });
 });
 
