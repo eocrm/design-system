@@ -73,6 +73,7 @@ const CLUSTERS = {
   // Display
   Avatar: 'Display',
   Image: 'Display',
+  QrCode: 'Display',
   MediaTile: 'Display',
   Badge: 'Display',
   Dot: 'Display',

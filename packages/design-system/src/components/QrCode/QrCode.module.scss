@@ -1,0 +1,71 @@
+@use '../../styles/mixins' as *;
+@use './QrCode.tokens';
+
+.root {
+  // `relative` anchors the logo overlay — the one internal-anchor exception
+  // Rule 4 allows. No margin, no offsets on the root itself.
+  position: relative;
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  border-radius: var(--qr-radius);
+  background: var(--qr-paper);
+  cursor: pointer;
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+// Swapping the pair is the whole of the inverted state.
+.root.inverted {
+  --qr-ink: var(--color-bg);
+  --qr-paper: var(--color-fg);
+}
+
+.svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: inherit;
+}
+
+.paper {
+  fill: var(--qr-paper);
+}
+
+.ink {
+  fill: var(--qr-ink);
+}
+
+// The mark is a CSS alpha mask filled with the current ink, so it recolours
+// with the theme AND with the inverted state. `--qr-logo-src` / `--qr-logo-size`
+// are set inline by the component.
+.logo {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: var(--qr-logo-size);
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  background: var(--qr-ink);
+  mask-image: var(--qr-logo-src);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+}
+
+// Compound selector so it wins over `.root` regardless of source order.
+.root.error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  padding: var(--qr-error-padding);
+  background: var(--qr-error-bg);
+  color: var(--qr-error-fg);
+  font-size: var(--qr-error-font-size);
+  text-align: center;
+  cursor: default;
+}

@@ -53,6 +53,10 @@ export const ru: Messages = {
   progress: {
     indeterminate: 'Загрузка…',
   },
+  qrCode: {
+    label: 'QR-код',
+    error: 'QR-код недоступен',
+  },
   slider: {
     minimum: 'минимум',
     maximum: 'максимум',

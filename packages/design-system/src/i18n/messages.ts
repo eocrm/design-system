@@ -105,6 +105,20 @@ export interface Messages {
      */
     indeterminate: string;
   };
+  qrCode: {
+    /**
+     * Default accessible name for the code, used when the consumer passes no
+     * `label`. Deliberately generic: a screen-reader user cannot scan the
+     * image, so only the consumer knows what it points at.
+     */
+    label: string;
+    /**
+     * Shown in place of the code when the value is empty or too long to
+     * encode. Rendered as visible text AND used as the accessible name via
+     * name-from-content — do not also set `aria-label`.
+     */
+    error: string;
+  };
   slider: {
     /** Accessible-name suffix for the first thumb in a range slider. */
     minimum: string;

@@ -52,6 +52,10 @@ export const en: Messages = {
   progress: {
     indeterminate: 'Loading…',
   },
+  qrCode: {
+    label: 'QR code',
+    error: 'QR code unavailable',
+  },
   slider: {
     minimum: 'minimum',
     maximum: 'maximum',
