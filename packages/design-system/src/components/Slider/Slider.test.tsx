@@ -606,3 +606,18 @@ describe('Slider — Field label integration', () => {
     expect(thumb).toHaveAccessibleDescription('Out of range');
   });
 });
+
+describe('Slider — empty thumb label', () => {
+  it('a range thumb with an empty tuple label falls back to the derived name', () => {
+    render(
+      <Slider
+        value={[10, 90]}
+        onChange={() => {}}
+        aria-label="Price"
+        thumbLabels={['', 'Ceiling']}
+      />,
+    );
+    expect(screen.getByRole('slider', { name: 'Price, minimum' })).toBeInTheDocument();
+    expect(screen.getByRole('slider', { name: 'Ceiling' })).toBeInTheDocument();
+  });
+});

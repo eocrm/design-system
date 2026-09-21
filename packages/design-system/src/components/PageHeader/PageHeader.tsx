@@ -160,7 +160,7 @@ export function PageHeaderBackButton({
   icon = <ChevronLeft size={16} />,
 }: PageHeaderBackButtonProps) {
   const t = useTranslation();
-  const ariaLabel = ariaLabelProp ?? t('pageHeader.back');
+  const ariaLabel = ariaLabelProp || t('pageHeader.back');
   useEffect(() => {
     if (process.env.NODE_ENV !== 'production' && href && onClick) {
       // eslint-disable-next-line no-console

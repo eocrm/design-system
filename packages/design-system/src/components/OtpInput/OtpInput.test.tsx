@@ -541,3 +541,10 @@ describe('OtpInput', () => {
     expect(boxes()[0]).toHaveFocus();
   });
 });
+
+describe('OtpInput — empty aria-label', () => {
+  it('falls back to the default group name when aria-label is an empty string', () => {
+    render(<OtpInput aria-label="" />);
+    expect(screen.getByRole('group', { name: 'Verification code' })).toBeInTheDocument();
+  });
+});

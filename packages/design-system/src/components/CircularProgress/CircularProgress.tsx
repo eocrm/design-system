@@ -149,7 +149,7 @@ export const CircularProgress = forwardRef<HTMLDivElement, CircularProgressProps
     const strokeDashoffset = determinate ? CIRCUMFERENCE * (1 - percent / 100) : undefined;
     const t = useTranslation();
     const ariaLabel = rest['aria-label'];
-    const valuetext = indeterminate ? (ariaLabel ?? t('progress.indeterminate')) : undefined;
+    const valuetext = indeterminate ? ariaLabel || t('progress.indeterminate') : undefined;
 
     // {...rest} last so consumer overrides win (Pattern A).
     return (

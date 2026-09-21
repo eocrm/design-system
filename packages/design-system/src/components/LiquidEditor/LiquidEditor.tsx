@@ -398,7 +398,7 @@ export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
               autoCorrect="off"
               rows={minRows}
               aria-label={
-                aria['aria-label'] ??
+                aria['aria-label'] ||
                 (aria['aria-labelledby'] ? undefined : t('liquidEditor.editorLabel'))
               }
               aria-invalid={invalid || undefined}

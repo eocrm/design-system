@@ -274,3 +274,31 @@ describe('TopBar', () => {
     });
   });
 });
+
+// `aria-label={page.title ?? ''}` is ordinary consumer code. An empty
+// aria-label contributes no name, so the computation drops through instead of
+// stopping — `||` is what keeps the default; `??` would not.
+describe('TopBar — empty aria-label', () => {
+  it('falls back to the default banner name when aria-label is an empty string', () => {
+    render(<TopBar aria-label="" />);
+    expect(screen.getByRole('banner', { name: 'Application top bar' })).toBeInTheDocument();
+  });
+
+  it('Search falls through an empty aria-label to the placeholder', () => {
+    render(
+      <TopBar>
+        <TopBar.Search aria-label="" placeholder="Find contacts" />
+      </TopBar>,
+    );
+    expect(screen.getByRole('searchbox', { name: 'Find contacts' })).toBeInTheDocument();
+  });
+
+  it('Search falls through an empty aria-label AND placeholder to the default', () => {
+    render(
+      <TopBar>
+        <TopBar.Search aria-label="" placeholder="" />
+      </TopBar>,
+    );
+    expect(screen.getByRole('searchbox', { name: 'Search' })).toBeInTheDocument();
+  });
+});

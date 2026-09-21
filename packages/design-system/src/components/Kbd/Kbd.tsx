@@ -78,7 +78,7 @@ export const Kbd = forwardRef<HTMLSpanElement, KbdProps>(function Kbd(
     <span
       {...props}
       ref={ref}
-      aria-label={ariaLabel ?? keys.join(' + ')}
+      aria-label={ariaLabel || keys.join(' + ')}
       className={clsx(styles.kbd, sizeClass[size], className)}
     >
       {keys.map((key, i) => (

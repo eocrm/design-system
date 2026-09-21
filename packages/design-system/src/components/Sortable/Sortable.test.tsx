@@ -618,3 +618,18 @@ describe('Sortable — announcements with no resolvable target', () => {
     expect(live()).toBe('Released the item. Nothing moved.');
   });
 });
+
+describe('Sortable — empty aria-label', () => {
+  // An icon-only handle whose aria-label is empty has no content to name it
+  // either, so the drag control ends up anonymous.
+  it('Handle falls back to the default name when aria-label is an empty string', () => {
+    render(
+      <Sortable>
+        <Sortable.Item id="a">
+          <Sortable.Handle aria-label="" />
+        </Sortable.Item>
+      </Sortable>,
+    );
+    expect(screen.getByRole('button', { name: 'Reorder item' })).toBeInTheDocument();
+  });
+});

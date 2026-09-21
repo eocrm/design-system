@@ -128,7 +128,7 @@ const TopBarRoot = forwardRef<HTMLElement, TopBarProps>(function TopBar(
   return (
     <Comp
       ref={ref as never}
-      aria-label={ariaLabel ?? t('topBar.label')}
+      aria-label={ariaLabel || t('topBar.label')}
       className={clsx(styles.topBar, className)}
       // {...props} last so consumer overrides win (Pattern A).
       {...props}

@@ -152,7 +152,7 @@ function BreadcrumbRoot({
 
   return (
     <nav
-      aria-label={ariaLabel ?? t('breadcrumb.ariaLabel')}
+      aria-label={ariaLabel || t('breadcrumb.ariaLabel')}
       className={clsx(styles.nav, className)}
     >
       <ol className={styles.list}>

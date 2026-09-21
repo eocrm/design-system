@@ -606,10 +606,10 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
             // tuple labels take precedence; otherwise derive from the root's
             // aria-label + localized minimum/maximum suffix.
             isRange
-              ? (thumbLabels?.[index] ??
+              ? thumbLabels?.[index] ||
                 (rangeUsesRootLabelledBy || !ariaLabel
                   ? undefined
-                  : `${ariaLabel}, ${thumbSuffixes[index]}`))
+                  : `${ariaLabel}, ${thumbSuffixes[index]}`)
               : ariaLabel
           }
           aria-labelledby={

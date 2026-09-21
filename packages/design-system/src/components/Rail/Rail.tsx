@@ -343,7 +343,7 @@ const RailRoot = forwardRef<HTMLElement, RailProps>(function Rail(
     <RailContext.Provider value={ctx}>
       <nav
         ref={ref}
-        aria-label={ariaLabel ?? t('rail.navigation')}
+        aria-label={ariaLabel || t('rail.navigation')}
         data-collapsed={collapsed ? '' : undefined}
         className={clsx(styles.rail, collapsed && styles.collapsed, className)}
         // {...props} last so consumer overrides win (Pattern A).

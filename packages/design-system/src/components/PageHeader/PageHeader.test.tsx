@@ -324,3 +324,16 @@ describe('PageHeader — misc', () => {
     expect(h1.textContent).toBe('Findable');
   });
 });
+
+describe('PageHeader.BackButton — empty aria-label', () => {
+  it('falls back to the default name when aria-label is an empty string', () => {
+    render(
+      <PageHeader>
+        <PageHeader.BackButton href="/back" aria-label="" />
+        <PageHeader.Title>Acme</PageHeader.Title>
+      </PageHeader>,
+    );
+    // The chevron is aria-hidden, so an empty aria-label leaves no name at all.
+    expect(screen.getByRole('link', { name: 'Go back' })).toBeInTheDocument();
+  });
+});

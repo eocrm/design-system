@@ -399,7 +399,7 @@ export const OtpInput = forwardRef<HTMLDivElement, OtpInputProps>(function OtpIn
       {...rest}
       ref={ref}
       role="group"
-      aria-label={ariaLabelledby ? undefined : (ariaLabel ?? t('otpInput.groupLabel'))}
+      aria-label={ariaLabelledby ? undefined : ariaLabel || t('otpInput.groupLabel')}
       aria-labelledby={ariaLabelledby}
       className={clsx(styles.root, className)}
     >

@@ -270,7 +270,7 @@ export function Lightbox({
       ref={dialogRef}
       role="dialog"
       aria-modal="true"
-      aria-label={ariaLabel ?? t('lightbox.label')}
+      aria-label={ariaLabel || t('lightbox.label')}
       tabIndex={-1}
       className={clsx(styles.root, className)}
       style={style}

@@ -1,5 +1,5 @@
 import { createRef } from 'react';
-import { fireEvent, render } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Image } from './Image';
 
@@ -262,5 +262,20 @@ describe('the error tile does not prune its own contents (#496)', () => {
     expect(getByRole('img', { name: 'A photo' })).not.toBeNull();
     expect(getByText('Image failed to load')).not.toBeNull();
     expect(getByRole('button', { name: 'Retry' })).not.toBeNull();
+  });
+});
+
+describe('Image — empty ariaLabel', () => {
+  // `ariaLabel={row.title ?? ''}` is ordinary consumer code. An empty
+  // aria-label contributes no name, so the computation drops through to the
+  // button's content — and once the image has failed that content is an
+  // aria-hidden <img alt="">, leaving the trigger with no name at all. `||`
+  // is what keeps `alt` as the fallback; `??` would not.
+  it('interactive image falls back to alt when ariaLabel is an empty string', () => {
+    const { container } = render(<Image src={SRC} alt="A photo" onClick={() => {}} ariaLabel="" />);
+    expect(screen.getByRole('button', { name: 'A photo' })).toBeInTheDocument();
+
+    fireEvent.error(getImg(container));
+    expect(screen.getByRole('button', { name: 'A photo' })).toBeInTheDocument();
   });
 });

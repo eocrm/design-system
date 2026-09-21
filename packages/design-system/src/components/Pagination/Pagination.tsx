@@ -147,7 +147,7 @@ export const Pagination = forwardRef<HTMLElement, PaginationProps>(function Pagi
   return (
     <nav
       ref={ref}
-      aria-label={ariaLabel ?? t('pagination.ariaLabel')}
+      aria-label={ariaLabel || t('pagination.ariaLabel')}
       className={clsx(styles.pagination, styles[`size-${size}`], className)}
       {...props}
     >

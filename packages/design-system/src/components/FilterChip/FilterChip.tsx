@@ -204,7 +204,7 @@ const FilterChipRoot = forwardRef<HTMLDivElement, FilterChipProps>(function Filt
             e.stopPropagation();
             onDismiss();
           }}
-          aria-label={dismissLabel ?? t('filterChip.dismiss')}
+          aria-label={dismissLabel || t('filterChip.dismiss')}
         >
           <X size={12} aria-hidden="true" />
         </button>

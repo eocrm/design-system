@@ -290,3 +290,12 @@ describe('Lightbox — Escape yields to open floating surfaces (#274)', () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 });
+
+describe('Lightbox — empty aria-label', () => {
+  // An empty aria-label on a role="dialog" leaves the dialog unnamed; `||`
+  // keeps the default, `??` would not.
+  it('falls back to the default dialog name when aria-label is an empty string', () => {
+    open({ 'aria-label': '' });
+    expect(screen.getByRole('dialog', { name: 'Image gallery' })).toBeInTheDocument();
+  });
+});

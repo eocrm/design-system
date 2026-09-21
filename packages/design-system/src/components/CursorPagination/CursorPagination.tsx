@@ -111,7 +111,7 @@ export const CursorPagination = forwardRef<HTMLElement, CursorPaginationProps>(
     return (
       <nav
         ref={ref}
-        aria-label={ariaLabel ?? t('pagination.ariaLabel')}
+        aria-label={ariaLabel || t('pagination.ariaLabel')}
         className={clsx(styles.cursorPagination, styles[`size-${size}`], className)}
         {...props}
       >

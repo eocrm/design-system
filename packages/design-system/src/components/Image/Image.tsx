@@ -247,7 +247,7 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
           type="button"
           className={styles.trigger}
           onClick={onClick}
-          aria-label={ariaLabel ?? alt}
+          aria-label={ariaLabel || alt}
           disabled={state === 'error'}
         >
           {imgNode}

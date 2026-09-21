@@ -49,7 +49,7 @@ export const RailCollapseToggle = forwardRef<HTMLButtonElement, RailCollapseTogg
         variant="ghost"
         size="sm"
         iconOnly
-        aria-label={ariaLabel ?? (collapsed ? t('rail.expand') : t('rail.collapse'))}
+        aria-label={ariaLabel || (collapsed ? t('rail.expand') : t('rail.collapse'))}
         onClick={(e) => {
           onClick?.(e);
           if (!e.defaultPrevented) setCollapsed((prev) => !prev);
