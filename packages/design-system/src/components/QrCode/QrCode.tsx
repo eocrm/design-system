@@ -22,6 +22,11 @@ export interface QrCodeProps extends Omit<
   /**
    * The string to encode — a URL, an ID, a vCard. Encoded as UTF-8, so any
    * script works.
+   *
+   * An empty string, or one past the largest symbol's capacity at the chosen
+   * `level` (~1273 bytes at `'H'`, ~2953 at `'L'`), renders a **disabled**
+   * button carrying a localized "unavailable" message instead of a code. It
+   * never throws — a long CRM field cannot white-screen a page.
    */
   value: string;
   /**
@@ -40,12 +45,6 @@ export interface QrCodeProps extends Omit<
    * the same data. Defaults to `'H'` when `logo` is set, `'M'` otherwise.
    */
   level?: QrCodeLevel;
-  /**
-   * Accessible name. Defaults to a localized "QR code", which is rarely enough
-   * — a screen-reader user cannot scan the image, so pass what it points at:
-   * `label="QR code for invoice INV-123"`.
-   */
-  label?: string;
 }
 
 /**
@@ -60,20 +59,23 @@ export interface QrCodeProps extends Omit<
  * It has no `size` prop: the code fills its container's width and the parent
  * owns the box, like every other component here.
  *
+ * Pass `aria-label` — the default is a bare localized "QR code", which tells a
+ * screen-reader user nothing about what the code points at.
+ *
  * @example
  * // The common case — let the parent size it.
  * <Constrain maxWidth="xs">
- *   <QrCode value="https://example.com/i/42" label="QR code for invoice 42" />
+ *   <QrCode value="https://example.com/i/42" aria-label="QR code for invoice 42" />
  * </Constrain>
  *
  * @example
  * // With the brand mark. `level` rises to 'H' automatically.
- * <QrCode value={inviteUrl} logo={brandMark} label="Invite link" />
+ * <QrCode value={inviteUrl} logo={brandMark} aria-label="Invite link" />
  *
  * @example
  * // Inside a Stack, with the caption the code needs for sighted users.
  * <Stack gap="xs" align="center">
- *   <QrCode value={ticket.url} label={`Ticket ${ticket.id}`} />
+ *   <QrCode value={ticket.url} aria-label={`Ticket ${ticket.id}`} />
  *   <Text size="sm" tone="muted">Scan at the door</Text>
  * </Stack>
  *
@@ -93,10 +95,15 @@ export interface QrCodeProps extends Omit<
  *   screenshot keeps working. Treat the value as public.
  * - ❌ **Sizing it below ~100px.** Below that a dense symbol's modules fall
  *   under a camera's resolving power. Size the container generously, and
- *   remember `logo` makes the symbol larger, not smaller.
+ *   remember that `logo` raises the level to `'H'`, which packs MORE modules
+ *   into the same box — each one comes out smaller, so size up when you use it.
+ * - ❌ **Assuming a code always renders.** An empty `value`, or one over
+ *   capacity for the chosen `level` (~1273 bytes at `'H'`), renders a disabled
+ *   button with a localized "unavailable" message in place of the symbol. If
+ *   the value comes from a free-text field, budget for that state.
  */
 export const QrCode = forwardRef<HTMLButtonElement, QrCodeProps>(function QrCode(
-  { value, logo, level, label, className, style, onClick, ...props },
+  { value, logo, level, className, style, onClick, title, 'aria-label': ariaLabel, ...props },
   ref,
 ) {
   const t = useTranslation();
@@ -111,7 +118,9 @@ export const QrCode = forwardRef<HTMLButtonElement, QrCodeProps>(function QrCode
   const matrix = useMemo(() => encodeQr(value, resolvedLevel), [value, resolvedLevel]);
 
   // {...props} first so the ARIA contract below cannot be clobbered — the
-  // component owns `type`, `aria-pressed` and the toggle.
+  // component owns `type`, `aria-pressed` and the toggle. `aria-label` and
+  // `title` are destructured out instead, so the consumer's value is a
+  // FALLBACK rather than something the spread order silently eats.
   if (matrix === null) {
     return (
       <button
@@ -121,8 +130,13 @@ export const QrCode = forwardRef<HTMLButtonElement, QrCodeProps>(function QrCode
         disabled
         className={clsx(styles.root, styles.error, className)}
         style={style}
+        title={title}
       >
-        {t('qrCode.error')}
+        {/* The consumer's name goes in as CONTENT, not as a competing
+            aria-label: name-from-content then reads "<name> — <message>", so a
+            browse-mode user can tell WHICH code failed without hearing the
+            message twice. */}
+        {ariaLabel ? `${ariaLabel} — ${t('qrCode.error')}` : t('qrCode.error')}
       </button>
     );
   }
@@ -130,9 +144,9 @@ export const QrCode = forwardRef<HTMLButtonElement, QrCodeProps>(function QrCode
   const { side, path, punch } = matrix;
   const offset = (side - punch) / 2;
 
-  const logoVars = hasLogo
+  const logoVars = logo
     ? ({
-        '--qr-logo-src': cssUrl(logo!),
+        '--qr-logo-src': cssUrl(logo),
         '--qr-logo-size': `${((punch * LOGO_FILL) / side) * 100}%`,
       } as CSSProperties)
     : undefined;
@@ -143,7 +157,11 @@ export const QrCode = forwardRef<HTMLButtonElement, QrCodeProps>(function QrCode
       ref={ref}
       type="button"
       aria-pressed={inverted}
-      aria-label={label ?? t('qrCode.label')}
+      aria-label={ariaLabel ?? t('qrCode.label')}
+      // `title` with an aria-label present is exposed as the DESCRIPTION, not
+      // the name — so it explains what pressing does without touching the
+      // name-exact contract. Doubles as a tooltip for sighted mouse users.
+      title={title ?? t('qrCode.invertHint')}
       className={clsx(styles.root, inverted && styles.inverted, className)}
       style={{ ...logoVars, ...style }}
       onClick={(event) => {

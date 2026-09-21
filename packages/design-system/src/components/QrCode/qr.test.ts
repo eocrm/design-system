@@ -105,12 +105,17 @@ describe('encodeQr', () => {
     expect((side - punch) / 2).toBe(Math.floor((side - punch) / 2));
   });
 
-  it('keeps the punch inside the error-correction budget at every symbol size', () => {
+  it('keeps the punch far inside level H error-correction budget at every symbol size', () => {
+    // Level H's ~30% recovers a fraction of CODEWORDS, so the comparable
+    // quantity is the punch's share of the symbol's AREA, not of its width.
     // The short value produces a 21-module v1 symbol, the small-end case the
-    // URL never reaches — and the one where a double round-up overshoots.
+    // URL never reaches — and the one where a double round-up overshoots
+    // (ceil peaks at ~11% of the area there, flooring at 7.8%).
     for (const value of ['hi', URL_VALUE, 'x'.repeat(900)]) {
       const { side, punch } = encodeQr(value, 'H')!;
-      expect(punch / (side - 8)).toBeLessThan(0.3);
+      const count = side - 8;
+
+      expect((punch * punch) / (count * count)).toBeLessThan(0.1);
       expect(punch % 2).toBe(1);
     }
   });

@@ -54,6 +54,7 @@ export const en: Messages = {
   },
   qrCode: {
     label: 'QR code',
+    invertHint: "Click to swap the code's colours for a scanner that won't read it",
     error: 'QR code unavailable',
   },
   slider: {

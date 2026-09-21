@@ -55,6 +55,7 @@ export const ru: Messages = {
   },
   qrCode: {
     label: 'QR-код',
+    invertHint: 'Нажмите, чтобы поменять цвета кода местами, если сканер его не читает',
     error: 'QR-код недоступен',
   },
   slider: {

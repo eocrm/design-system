@@ -10,9 +10,15 @@ export type QrCodeLevel = 'L' | 'M' | 'Q' | 'H';
 const QUIET = 4;
 
 /**
- * The share of the symbol's width the centre punch-out occupies. Kept well
- * under level `'H'`'s ~30% recovery budget, since the punch destroys modules
- * outright rather than degrading them.
+ * The share of the symbol's WIDTH the centre punch-out occupies.
+ *
+ * Note the dimensions: level `'H'`'s ~30% recovery budget is a fraction of
+ * codewords, i.e. of AREA, so a width ratio is not directly comparable to it.
+ * After the odd-rounding below the realised width peaks at 28%, which is 7.8%
+ * of the area — nowhere near the limit. The real constraint on this number is
+ * visual, not arithmetic: bigger than about a quarter of the width and the
+ * mark stops reading as a mark in a code and starts reading as a hole punched
+ * through one.
  */
 const PUNCH_RATIO = 0.24;
 
@@ -91,8 +97,20 @@ export function encodeQr(value: string, level: QrCodeLevel): QrMatrix | null {
 
     // `| 1` rounds up to the next odd number. The module count is always odd,
     // so an odd punch keeps `(side - punch) / 2` integral. FLOOR, not ceil:
-    // double-rounding up puts a v1 symbol's punch at 33% of its width, past
-    // level H's budget. Flooring first caps the ratio at 28% for every version.
+    // double-rounding up puts a v1 symbol's punch at 33% of its width. Both
+    // variants sit inside level H's budget on area (7.8% flooring, ~11%
+    // ceiling, against ~30%) — flooring wins on looks, not on arithmetic. It
+    // caps the width at 28% for every version.
+    //
+    // Boundary the area maths does NOT cover: from version 7 up (59 bytes at
+    // level 'H', which is the default whenever `logo` is set) there is a centre
+    // alignment pattern, and the punch lands on it. Reed–Solomon protects data
+    // and ECC codewords, not function patterns, so no amount of budget buys
+    // that back. Decoders in practice extrapolate the module grid from the
+    // finder and timing patterns — which is why every commercial logo-QR
+    // generator gets away with it — but it is extrapolation, not recovery, and
+    // nothing here would notice it breaking. The playground demo carries an
+    // over-v7 logo example so the case is scannable by hand.
     return { side: count + QUIET * 2, path, punch: Math.floor(count * PUNCH_RATIO) | 1 };
   } catch {
     return null;

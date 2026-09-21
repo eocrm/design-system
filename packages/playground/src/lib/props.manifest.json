@@ -3806,7 +3806,7 @@
           "type": "string",
           "required": true,
           "default": "",
-          "description": "The string to encode — a URL, an ID, a vCard. Encoded as UTF-8, so any\nscript works."
+          "description": "The string to encode — a URL, an ID, a vCard. Encoded as UTF-8, so any\nscript works.\n\nAn empty string, or one past the largest symbol's capacity at the chosen\n`level` (~1273 bytes at `'H'`, ~2953 at `'L'`), renders a **disabled**\nbutton carrying a localized \"unavailable\" message instead of a code. It\nnever throws — a long CRM field cannot white-screen a page."
         },
         {
           "name": "logo",
@@ -3821,13 +3821,6 @@
           "required": false,
           "default": "",
           "description": "Error-correction level — how much damage the symbol survives. `'L'` ~7%,\n`'M'` ~15%, `'Q'` ~25%, `'H'` ~30%. Higher levels need a larger symbol for\nthe same data. Defaults to `'H'` when `logo` is set, `'M'` otherwise."
-        },
-        {
-          "name": "label",
-          "type": "string",
-          "required": false,
-          "default": "",
-          "description": "Accessible name. Defaults to a localized \"QR code\", which is rarely enough\n— a screen-reader user cannot scan the image, so pass what it points at:\n`label=\"QR code for invoice INV-123\"`."
         }
       ]
     },

@@ -108,14 +108,23 @@ export interface Messages {
   qrCode: {
     /**
      * Default accessible name for the code, used when the consumer passes no
-     * `label`. Deliberately generic: a screen-reader user cannot scan the
+     * `aria-label`. Deliberately generic: a screen-reader user cannot scan the
      * image, so only the consumer knows what it points at.
      */
     label: string;
     /**
+     * Describes what clicking the code does. Set as `title`, which with an
+     * `aria-label` present is exposed as the accessible DESCRIPTION rather
+     * than the name — so it explains the toggle without renaming the control
+     * (Rule 10 forbids that) and doubles as a tooltip for mouse users.
+     */
+    invertHint: string;
+    /**
      * Shown in place of the code when the value is empty or too long to
      * encode. Rendered as visible text AND used as the accessible name via
-     * name-from-content — do not also set `aria-label`.
+     * name-from-content — do not also set `aria-label`. A consumer-supplied
+     * `aria-label` is prefixed to it as visible content instead, so the name
+     * reads "<their name> — <this>" and identifies WHICH code failed.
      */
     error: string;
   };
