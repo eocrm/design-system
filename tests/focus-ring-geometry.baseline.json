@@ -18,5 +18,15 @@
     "route": "/components/emoji-picker",
     "key": "button.EmojiPicker-module__cell",
     "band": "right"
+  },
+  {
+    "route": "/components/image",
+    "key": "button.Button-module__button.Button-module__secondary.Button-module__sm.Image-module__retry",
+    "band": "left"
+  },
+  {
+    "route": "/components/lightbox",
+    "key": "button.Button-module__button.Button-module__secondary.Button-module__sm.Image-module__retry",
+    "band": "left"
   }
 ]

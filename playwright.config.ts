@@ -26,11 +26,12 @@ import { defineConfig, devices } from '@playwright/test';
  *   `aria-activedescendant`, so no option is ever DOM-focused and there is no
  *   ring in it for any sweep to find. Read that spec's docblock, not this
  *   bullet, for the current limits.
- * - Losses at either end of a scroll range (see the scroll-axis rule in
- *   `tests/focus-ring-geometry.spec.ts`, which explains why that leniency is
- *   load-bearing).
- * - Clips produced by a clipping ancestor's border or border-radius, since the
- *   sweep compares against its border box.
+ * - `border-radius` corners. Both leniencies #526 recorded — the border-box
+ *   clip rect and the whole-axis scroll exemption — are CLOSED as of that
+ *   issue: the clip is the ancestor's padding box, and the four scroll
+ *   directions are tracked separately so a band at a scroll extreme is
+ *   reported. A rounded corner still cuts inside the padding box and is not
+ *   modelled.
  * - Rings drawn with anything but `outline` — `box-shadow` is invisible to it.
  * - The `/mockups/*` routes. Only `/components/*` is swept, and the mockups are
  *   the repo's densest real clip ancestors — composed app shells with nested

@@ -23,10 +23,30 @@ export type Sweep = { measured: number; findings: { key: string; band: Band }[] 
  * off produces byte-identical output. Determinism comes from not seeding the
  * clip with the viewport, and from the scroll-axis rule below.
  *
- * What this does NOT see, so nobody reads a green run as more than it is:
- * closed overlays (it presses Tab once and opens nothing, so every menu,
- * listbox, dialog and picker is absent from the DOM), losses at either end of a
- * scroll range, and clips produced by an ancestor's border or border-radius.
+ * WHAT THIS DOES NOT SEE, so nobody reads a green run as more than it is:
+ *
+ * - **Whatever the caller did not put in front of it.** The script measures
+ *   the DOM it is handed. `focus-ring-geometry.spec.ts` hands it a loaded
+ *   route with nothing opened, so every closed overlay is absent;
+ *   `focus-ring-geometry-overlays.spec.ts` hands it opened surfaces on ten
+ *   routes, which is not all of them.
+ * - **`border-radius` corners.** The clip rect is the ancestor's padding box
+ *   since #526, which is where `overflow` clips — but a rounded corner cuts
+ *   further still, and a band lost only to that curve passes.
+ * - **`box-shadow` rings.** It looks for a computed `outline`, so a ring
+ *   drawn any other way is invisible to it in both directions: never
+ *   reported, never confirmed present.
+ * - **Rings on an element it cannot focus**, including every
+ *   `aria-activedescendant` list, whose rows are never DOM-focused at all.
+ * - **One viewport.** `devices['Desktop Chrome']` pins 1280x720, and overflow
+ *   clipping is a responsive defect by nature.
+ * - **Whether the ring is any GOOD.** Colour is
+ *   `packages/design-system/src/styles/contrast.test.ts`; this measures
+ *   geometry and nothing else.
+ *
+ * Two leniencies #526 recorded are CLOSED as of that issue — the border-box
+ * clip rect and the scroll extremes — and the comments at each site say what
+ * closing them cost.
  */
 export const sweepScript = (rootSelector: string | null = null) => `
 (() => {
@@ -70,7 +90,7 @@ export const sweepScript = (rootSelector: string | null = null) => `
   let measured = 0;
   const previous = document.activeElement;
 
-  // The subtree to sweep. \`null\` means the whole document, which is what the
+  // The subtree to sweep. \'null\' means the whole document, which is what the
   // static sweep passes; the overlay sweep passes the open surface, so a menu
   // is measured without re-measuring the page behind it on every trigger.
   const root = ROOT_SELECTOR ? document.querySelector(ROOT_SELECTOR) : document;
@@ -108,8 +128,10 @@ export const sweepScript = (rootSelector: string | null = null) => `
     // Only real overflow ancestors clip. NOT the viewport: what is below the
     // fold is a scroll position, not a lost ring.
     let clip = { top: -Infinity, left: -Infinity, right: Infinity, bottom: Infinity };
-    let scrollsX = false;
-    let scrollsY = false;
+    let revealUp = false;
+    let revealDown = false;
+    let revealLeft = false;
+    let revealRight = false;
     // A fixed element is clipped by none of its overflow ancestors, and an
     // absolute one only from its containing block outward. Climbing regardless
     // reports rings that are plainly on screen, and a false positive is how a
@@ -133,28 +155,53 @@ export const sweepScript = (rootSelector: string | null = null) => `
         inContainingBlock = true;
       }
       if (pcs.overflowX === 'visible' && pcs.overflowY === 'visible') continue;
-      // Border box, where overflow actually clips at the padding box, tighter
-      // still with a border-radius. The clip is therefore too generous by the
-      // ancestor's border width: a systematic bias toward passing.
-      const r = p.getBoundingClientRect();
-      // An axis that scrolls constrains nothing, here or further out: once
-      // something between the ring and this ancestor can scroll that axis, a
-      // band outside it is usually one scroll away rather than lost. What stays
-      // is the axis nothing can scroll — the shape of all three clips #510
-      // fixed.
+      // The PADDING box, which is where overflow actually clips — the border
+      // box that getBoundingClientRect returns is too generous by the
+      // ancestor's border width, a systematic bias toward passing (#526).
+      // Tightening it cost nothing: zero new findings on all 106 routes, so
+      // the leniency was buying no slack anyone was using. 'border-radius'
+      // corners cut further still and are NOT modelled; a ring lost only to
+      // the curve of a rounded corner passes.
+      const b = p.getBoundingClientRect();
+      const r = {
+        top: b.top + (parseFloat(pcs.borderTopWidth) || 0),
+        bottom: b.bottom - (parseFloat(pcs.borderBottomWidth) || 0),
+        left: b.left + (parseFloat(pcs.borderLeftWidth) || 0),
+        right: b.right - (parseFloat(pcs.borderRightWidth) || 0),
+      };
+      // A band outside a scrolling ancestor is one scroll away rather than
+      // lost — but only while there is scroll left in that DIRECTION.
+      // scrollTop cannot go below 0, so the top band of a scroller's first
+      // child is permanently unreachable, and the same holds at all four
+      // extremes. This used to drop the whole AXIS as soon as anything could
+      // scroll it, which made the sweep silent on exactly the shape it exists
+      // for: the first row of a scrollable list, the first item in a menu.
       //
-      // Usually, not always, and this is the gate's largest blind spot: at
-      // either end of the range the band really is lost, since scrollTop cannot
-      // go below 0. The top band of a scroller's first child is permanently
-      // clipped and this sweep stays silent on it. The leniency is load-bearing
-      // rather than sloppy — without it the Rail fires on all 93 routes — so
-      // tightening it is its own change with its own baseline.
+      // So the four directions are tracked separately (#526). #523 recorded a
+      // fear that tightening this would make 'Rail' fire on all 93 routes;
+      // measured, it produces TWO findings on one key, both real — Image's
+      // Retry button is wider than a 20px thumbnail wrapper, so its inset
+      // ring's left band sits outside a container that can never scroll to
+      // reveal it.
       //
-      // an 'overflow: clip' ancestor never scrolls, whatever scrollHeight reports for it.
-      scrollsY = scrollsY || (pcs.overflowY !== 'clip' && p.scrollHeight > p.clientHeight);
-      scrollsX = scrollsX || (pcs.overflowX !== 'clip' && p.scrollWidth > p.clientWidth);
-      if (!scrollsY) { clip.top = Math.max(clip.top, r.top); clip.bottom = Math.min(clip.bottom, r.bottom); }
-      if (!scrollsX) { clip.left = Math.max(clip.left, r.left); clip.right = Math.min(clip.right, r.right); }
+      // The EPS is subpixel tolerance: scroll offsets are fractional, and a
+      // scroller sitting 0.5px off its extreme is at the extreme.
+      //
+      // An 'overflow: clip' ancestor never scrolls, whatever scrollHeight
+      // reports for it. An 'overflow: hidden' one does: it cannot be scrolled
+      // by a USER, but its offsets are settable, and treating it as immovable
+      // is what would make every hidden ancestor a clipper.
+      const scrollsY = pcs.overflowY !== 'clip' && p.scrollHeight > p.clientHeight;
+      const scrollsX = pcs.overflowX !== 'clip' && p.scrollWidth > p.clientWidth;
+      const EPS = 1;
+      revealUp = revealUp || (scrollsY && p.scrollTop > EPS);
+      revealDown = revealDown || (scrollsY && p.scrollTop < p.scrollHeight - p.clientHeight - EPS);
+      revealLeft = revealLeft || (scrollsX && p.scrollLeft > EPS);
+      revealRight = revealRight || (scrollsX && p.scrollLeft < p.scrollWidth - p.clientWidth - EPS);
+      if (!revealUp) clip.top = Math.max(clip.top, r.top);
+      if (!revealDown) clip.bottom = Math.min(clip.bottom, r.bottom);
+      if (!revealLeft) clip.left = Math.max(clip.left, r.left);
+      if (!revealRight) clip.right = Math.min(clip.right, r.right);
     }
 
     // A focusable that is itself wholly outside its clip — inside a collapsed
