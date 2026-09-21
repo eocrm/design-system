@@ -89,8 +89,8 @@ function useSnappedWidth(side: number): [Ref<HTMLButtonElement>, number | null] 
     const recompute = () => {
       const ratio = window.devicePixelRatio || 1;
       setDpr(ratio);
-      // The arithmetic lives in `snapWidth` so it can be unit-tested: jsdom
-      // has no layout, so every test here takes the unmeasurable path.
+      // The arithmetic lives in `snapWidth` so it can be unit-tested directly,
+      // without a stubbed layout, across ratios jsdom cannot report.
       setWidth(snapWidth(host.getBoundingClientRect().width, side, ratio));
     };
 
