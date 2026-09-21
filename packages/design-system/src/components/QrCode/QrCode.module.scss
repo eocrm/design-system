@@ -2,9 +2,10 @@
 @use './QrCode.tokens';
 
 .root {
-  // Centres the painted frame, which is up to a pixel narrower than the button
-  // once the symbol snaps to a whole number of device pixels per module. The
-  // leftover shows as paper, reading as a slightly wider quiet zone.
+  // Centres the painted frame, which is up to ONE MODULE narrower than the
+  // button once the symbol snaps to a whole number of device pixels per module
+  // — `side / dpr` CSS px, not a fraction of a pixel. The leftover shows as
+  // paper, reading as a slightly wider quiet zone.
   display: flex;
   justify-content: center;
   width: 100%;

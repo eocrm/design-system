@@ -1,5 +1,5 @@
 import { createRef } from 'react';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { QrCode } from './QrCode';
 
@@ -8,6 +8,45 @@ const VALUE = 'https://example.com/invoice/42';
 function sideOf(container: HTMLElement): number {
   const viewBox = container.querySelector('svg')!.getAttribute('viewBox')!;
   return Number(viewBox.split(' ')[2]);
+}
+
+// The painted box, queried by class for the reason `overlayIn` gives below.
+function frameIn(container: HTMLElement): HTMLElement {
+  return container.querySelector<HTMLElement>('[class*="frame"]')!;
+}
+
+// Same shape as the Tabs test's harness: jsdom has no layout and no
+// ResizeObserver, so the only way onto the measured render path is to stub the
+// observer and hand the callback a width.
+function stubResizeObserver() {
+  let callback: ResizeObserverCallback | undefined;
+  const observed = new Set<Element>();
+  const disconnect = vi.fn();
+  class MockResizeObserver {
+    constructor(cb: ResizeObserverCallback) {
+      callback = cb;
+    }
+    observe = (target: Element) => {
+      observed.add(target);
+    };
+    disconnect = disconnect;
+    unobserve = vi.fn();
+  }
+  vi.stubGlobal('ResizeObserver', MockResizeObserver);
+
+  return {
+    disconnect,
+    resize(target: Element, width: number) {
+      if (!observed.has(target)) throw new Error('resize() called on an unobserved element');
+      vi.spyOn(target, 'getBoundingClientRect').mockReturnValue({ width } as DOMRect);
+      act(() => {
+        callback?.(
+          [{ target, contentRect: { width } } as ResizeObserverEntry],
+          null as unknown as ResizeObserver,
+        );
+      });
+    },
+  };
 }
 
 describe('QrCode', () => {
@@ -146,8 +185,7 @@ describe('QrCode', () => {
     // Queried by class, not by position: the painted frame is also a
     // `button > span`, so a structural selector would match it instead and the
     // no-logo assertion would fail for the wrong reason.
-    const overlayIn = (root: HTMLElement) =>
-      [...root.querySelectorAll('span')].find((el) => /logo/.test(el.className)) ?? null;
+    const overlayIn = (root: HTMLElement) => root.querySelector('[class*="logo"]');
 
     const withoutLogo = render(<QrCode value={VALUE} />).container;
     expect(withoutLogo.querySelectorAll('rect')).toHaveLength(1); // paper only
@@ -248,6 +286,52 @@ describe('QrCode', () => {
 
     expect(button).toHaveClass('mine');
     expect(button.className.split(' ').length).toBeGreaterThan(1);
+  });
+
+  describe('pixel snapping', () => {
+    afterEach(() => vi.unstubAllGlobals());
+
+    // The default value is a 37-module symbol (29 modules + two quiet zones).
+    // 320px / 37 -> 8 device px per module -> 296px painted, 7.5% given up.
+    it('paints the measured width on the frame and turns crispEdges on', () => {
+      const observer = stubResizeObserver();
+      const { container } = render(<QrCode value={VALUE} />);
+
+      observer.resize(screen.getByRole('button'), 320);
+
+      expect(frameIn(container).style.width).toBe('296px');
+      expect(container.querySelector('svg')).toHaveAttribute('shape-rendering', 'crispEdges');
+    });
+
+    it('stays fluid, without crispEdges, when the snap would cost too much', () => {
+      const observer = stubResizeObserver();
+      const { container } = render(<QrCode value={VALUE} />);
+
+      // 100px / 37 -> 2 device px per module -> 74px painted, 26% given up.
+      // A bigger antialiased code scans; a smaller pixel-exact one does not.
+      observer.resize(screen.getByRole('button'), 100);
+
+      expect(frameIn(container).style.width).toBe('100%');
+      expect(container.querySelector('svg')).not.toHaveAttribute('shape-rendering');
+    });
+
+    it('stays fluid, without crispEdges, when it cannot measure at all', () => {
+      stubResizeObserver();
+      const { container } = render(<QrCode value={VALUE} />);
+
+      // No resize: jsdom reports a zero-width box, as SSR does.
+      expect(frameIn(container).style.width).toBe('100%');
+      expect(container.querySelector('svg')).not.toHaveAttribute('shape-rendering');
+    });
+
+    it('disconnects the observer on unmount', () => {
+      const observer = stubResizeObserver();
+      const { unmount } = render(<QrCode value={VALUE} />);
+
+      expect(observer.disconnect).not.toHaveBeenCalled();
+      unmount();
+      expect(observer.disconnect).toHaveBeenCalled();
+    });
   });
 
   describe('when the value cannot be encoded', () => {

@@ -118,8 +118,26 @@ export function encodeQr(value: string, level: QrCodeLevel): QrMatrix | null {
 }
 
 /**
+ * How much of the available width snapping may give up.
+ *
+ * Rounding down to a whole number of device pixels per module costs up to ONE
+ * MODULE — `side / dpr` CSS px, not a fraction of a pixel — and that is a
+ * share of the box, not a constant: at 41 modules and dpr 1 a 320px box loses
+ * 10%, a 200px box 18%, a 120px box 32%; a 177-module symbol in a 320px box
+ * loses 45%.
+ *
+ * A QR code exists to be scanned, and whether a camera resolves one depends on
+ * the ABSOLUTE size of a module, not on whether its edges are crisp. Unbounded
+ * snapping therefore shrinks the symbol hardest exactly where it is already
+ * tightest, and can push it under the ~100px floor the component's own docs
+ * warn about. An eighth is the line: past that, a bigger antialiased code
+ * beats a smaller pixel-exact one.
+ */
+const MAX_SNAP_SHORTFALL = 1 / 8;
+
+/**
  * The largest painted width, in CSS pixels, that gives every module a whole
- * number of DEVICE pixels — or `null` when that is impossible.
+ * number of DEVICE pixels — or `null` when that is impossible or too costly.
  *
  * A QR symbol only looks sharp at an integer scale. Off it, both rendering
  * modes lose: `shape-rendering: crispEdges` rounds each module's edges to the
@@ -128,12 +146,16 @@ export function encodeQr(value: string, level: QrCodeLevel): QrMatrix | null {
  * keeps the geometry even but spends most of a pixel blending every edge.
  *
  * Returns `null` when there is nothing to measure (`available` of 0, as SSR and
- * jsdom report) or when the box cannot fit even one device pixel per module. In
- * both cases the caller should fall back to fluid width WITHOUT `crispEdges` —
+ * jsdom report), when the box cannot fit even one device pixel per module, or
+ * when the snap would cost more than `MAX_SNAP_SHORTFALL` of the width. In all
+ * three the caller should fall back to fluid width WITHOUT `crispEdges` —
  * unsnapped, `crispEdges` is the worse of the two.
  */
 export function snapWidth(available: number, side: number, dpr: number): number | null {
   if (!(available > 0) || !(side > 0) || !(dpr > 0)) return null;
   const scale = Math.floor((available * dpr) / side);
-  return scale >= 1 ? (side * scale) / dpr : null;
+  if (scale < 1) return null;
+
+  const painted = (side * scale) / dpr;
+  return available - painted <= available * MAX_SNAP_SHORTFALL ? painted : null;
 }

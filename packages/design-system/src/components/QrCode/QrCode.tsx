@@ -52,61 +52,6 @@ export interface QrCodeProps extends Omit<
 }
 
 /**
- * A scannable QR code. Encodes `value`, optionally masks a single-colour mark
- * into its centre, and swaps ink for paper when clicked.
- *
- * The code follows the theme — dark modules on light paper in light mode, the
- * reverse in dark mode. Inverted codes scan on modern phone cameras but not on
- * every hardware scanner, which is why clicking the code swaps the pair back.
- * That is the component's only interaction.
- *
- * It has no `size` prop: the code fills its container's width and the parent
- * owns the box, like every other component here.
- *
- * Pass `aria-label` — the default is a bare localized "QR code", which tells a
- * screen-reader user nothing about what the code points at.
- *
- * @example
- * // The common case — let the parent size it.
- * <Constrain maxWidth="xs">
- *   <QrCode value="https://example.com/i/42" aria-label="QR code for invoice 42" />
- * </Constrain>
- *
- * @example
- * // With the brand mark. `level` rises to 'H' automatically.
- * <QrCode value={inviteUrl} logo={brandMark} aria-label="Invite link" />
- *
- * @example
- * // Inside a Stack, with the caption the code needs for sighted users.
- * <Stack gap="xs" align="center">
- *   <QrCode value={ticket.url} aria-label={`Ticket ${ticket.id}`} />
- *   <Text size="sm" tone="muted">Scan at the door</Text>
- * </Stack>
- *
- * @remarks
- * **When NOT to use / anti-patterns**
- *
- * - ❌ **Nesting it inside another clickable element.** Every `<QrCode>` is a
- *   `<button>`, so putting one inside a clickable `Card` or a link produces
- *   invalid HTML and the code swallows the outer click. Put it beside the
- *   clickable surface, not inside it.
- * - ❌ **A full-colour logo.** `logo` is a mask: it keeps the silhouette and
- *   throws the colours away. A multi-colour mark comes out as one flat shape.
- * - ❌ **Relying on it as the only route.** A QR code is unusable to a
- *   screen-reader user and to anyone reading on the device that displays it.
- *   Always render the underlying URL or code as selectable text too.
- * - ❌ **Encoding a secret.** Anyone who can see the screen can scan it, and a
- *   screenshot keeps working. Treat the value as public.
- * - ❌ **Sizing it below ~100px.** Below that a dense symbol's modules fall
- *   under a camera's resolving power. Size the container generously, and
- *   remember that `logo` raises the level to `'H'`, which packs MORE modules
- *   into the same box — each one comes out smaller, so size up when you use it.
- * - ❌ **Assuming a code always renders.** An empty `value`, or one over
- *   capacity for the chosen `level` (~1273 bytes at `'H'`), renders a disabled
- *   button with a localized "unavailable" message in place of the symbol. If
- *   the value comes from a free-text field, budget for that state.
- */
-/**
  * Snap the painted width down to a whole number of DEVICE pixels per module.
  *
  * A QR symbol only looks sharp when one module maps to an integer number of
@@ -117,21 +62,25 @@ export interface QrCodeProps extends Omit<
  * blending every edge. Both read as a blurry code.
  *
  * So the component measures the box the parent gave it and paints the largest
- * exact multiple that fits, letting the leftover fraction of a pixel show as
- * quiet zone. The parent still owns the box — this only decides how much of it
- * the symbol inks.
+ * exact multiple that fits, centred, with the shortfall showing as a slightly
+ * wider quiet zone. The shortfall is up to ONE MODULE — `side / dpr` CSS px,
+ * not a fraction of a pixel — which is why `snapWidth` refuses the trade past
+ * a bounded share of the box.
  *
  * Returns `null` when it cannot measure (SSR, jsdom, a zero-width container,
- * or a box too small for even 1px per module); callers fall back to fluid
- * `width: 100%` without `crispEdges`, which is the correct behaviour when the
- * premise does not hold.
+ * a box too small for even 1px per module) or when snapping would cost more
+ * than `snapWidth`'s budget; callers fall back to fluid `width: 100%` without
+ * `crispEdges`, which is the correct behaviour when the premise does not hold.
  */
 function useSnappedWidth(side: number): [Ref<HTMLButtonElement>, number | null] {
   const hostRef = useRef<HTMLButtonElement | null>(null);
   const [width, setWidth] = useState<number | null>(null);
   // Tracked in state so a zoom change re-runs the effect and re-subscribes the
-  // media query below to the NEW ratio.
-  const [dpr, setDpr] = useState(1);
+  // media query below to the NEW ratio. Seeded from the real ratio rather than
+  // from 1: starting at 1 made the effect run twice on mount at any other dpr,
+  // and made the FIRST subscription `(resolution: 1dppx)` — a query that never
+  // matches on a 2dppx screen, so the initial zoom listener was dead.
+  const [dpr, setDpr] = useState(() => globalThis.devicePixelRatio || 1);
 
   useLayoutEffect(() => {
     const host = hostRef.current;
@@ -171,6 +120,71 @@ function useSnappedWidth(side: number): [Ref<HTMLButtonElement>, number | null] 
   return [hostRef, width];
 }
 
+/**
+ * A scannable QR code. Encodes `value`, optionally masks a single-colour mark
+ * into its centre, and swaps ink for paper when clicked.
+ *
+ * The code follows the theme — dark modules on light paper in light mode, the
+ * reverse in dark mode. Inverted codes scan on modern phone cameras but not on
+ * every hardware scanner, which is why clicking the code swaps the pair back.
+ * That is the component's only interaction.
+ *
+ * It has no `size` prop: the code fills its container's width and the parent
+ * owns the box, like every other component here. The symbol then snaps down to
+ * a whole number of device pixels per module and centres itself, so it can sit
+ * up to one module short of the box — size a container to a whole multiple of
+ * the module count and the shortfall disappears. Where snapping would cost
+ * more than an eighth of the width, it renders fluid instead: a bigger blurry
+ * code scans, a crisp tiny one does not.
+ *
+ * Pass `aria-label` — the default is a bare localized "QR code", which tells a
+ * screen-reader user nothing about what the code points at.
+ *
+ * @example
+ * // The common case — let the parent size it.
+ * <Constrain maxWidth="xs">
+ *   <QrCode value="https://example.com/i/42" aria-label="QR code for invoice 42" />
+ * </Constrain>
+ *
+ * @example
+ * // With the brand mark. `level` rises to 'H' automatically.
+ * <QrCode value={inviteUrl} logo={brandMark} aria-label="Invite link" />
+ *
+ * @example
+ * // Inside a Stack, with the caption the code needs for sighted users.
+ * <Stack gap="xs" align="center">
+ *   <QrCode value={ticket.url} aria-label={`Ticket ${ticket.id}`} />
+ *   <Text size="sm" tone="muted">Scan at the door</Text>
+ * </Stack>
+ *
+ * @remarks
+ * **When NOT to use / anti-patterns**
+ *
+ * - ❌ **Nesting it inside another clickable element.** Every `<QrCode>` is a
+ *   `<button>`, so putting one inside a clickable `Card` or a link produces
+ *   invalid HTML and the code swallows the outer click. Put it beside the
+ *   clickable surface, not inside it.
+ * - ❌ **A full-colour logo.** `logo` is a mask: it keeps the silhouette and
+ *   throws the colours away. A multi-colour mark comes out as one flat shape.
+ * - ❌ **Relying on it as the only route.** A QR code is unusable to a
+ *   screen-reader user and to anyone reading on the device that displays it.
+ *   Always render the underlying URL or code as selectable text too.
+ * - ❌ **Encoding a secret.** Anyone who can see the screen can scan it, and a
+ *   screenshot keeps working. Treat the value as public.
+ * - ❌ **Sizing it below ~100px.** Below that a dense symbol's modules fall
+ *   under a camera's resolving power. Size the container generously, and
+ *   remember that `logo` raises the level to `'H'`, which packs MORE modules
+ *   into the same box — each one comes out smaller, so size up when you use it.
+ *   The painted symbol is what has to clear that floor, not the container: it
+ *   can be up to one module narrower.
+ * - ❌ **Assuming the painted symbol fills the box exactly.** It is centred and
+ *   snapped, so measuring the button tells you the box, not the code. Give the
+ *   container a whole multiple of the module count if you need them equal.
+ * - ❌ **Assuming a code always renders.** An empty `value`, or one over
+ *   capacity for the chosen `level` (~1273 bytes at `'H'`), renders a disabled
+ *   button with a localized "unavailable" message in place of the symbol. If
+ *   the value comes from a free-text field, budget for that state.
+ */
 export const QrCode = forwardRef<HTMLButtonElement, QrCodeProps>(function QrCode(
   { value, logo, level, className, style, onClick, title, 'aria-label': ariaLabel, ...props },
   ref,
@@ -250,10 +264,10 @@ export const QrCode = forwardRef<HTMLButtonElement, QrCodeProps>(function QrCode
         onClick?.(event);
       }}
     >
-      {/* The painted box, which may be a fraction of a pixel narrower than the
-          button so the symbol lands on an exact module grid. It also anchors
-          the logo overlay, whose size is a percentage of the SYMBOL — not of
-          the button, which is why the anchor moved here. */}
+      {/* The painted box, up to one module narrower than the button so the
+          symbol lands on an exact module grid. It also anchors the logo
+          overlay, whose size is a percentage of the SYMBOL — not of the
+          button, which is why the anchor moved here. */}
       <span className={styles.frame} style={{ width: snappedWidth ?? '100%' }}>
         <svg
           className={styles.svg}

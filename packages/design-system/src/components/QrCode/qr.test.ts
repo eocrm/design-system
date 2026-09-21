@@ -125,7 +125,22 @@ describe('snapWidth', () => {
   it('paints the largest exact multiple that fits', () => {
     // 41 modules in a 320px box at dpr 1: 7px/module fits (287), 8 would not.
     expect(snapWidth(320, 41, 1)).toBe(287);
-    expect(snapWidth(200, 41, 1)).toBe(164); // 4px/module
+    expect(snapWidth(320, 21, 1)).toBe(315); // 15px/module
+  });
+
+  it('refuses a snap that would cost more than an eighth of the width', () => {
+    // Scannability tracks the ABSOLUTE module size, so the shrink is bounded.
+    // Each of these would snap happily without the budget:
+    expect(snapWidth(200, 41, 1)).toBeNull(); // would be 164 — 18% given up
+    expect(snapWidth(120, 41, 1)).toBeNull(); // would be 82 — 32%
+    expect(snapWidth(320, 177, 1)).toBeNull(); // would be 177 — 45%
+  });
+
+  it('pins the eighth from both sides', () => {
+    // 21 modules, dpr 1, scale 4 -> 84px painted. The budget allows a
+    // shortfall of exactly available/8, so the break-even box is 96px.
+    expect(snapWidth(96, 21, 1)).toBe(84); // 12 of 96 given up — exactly 1/8
+    expect(snapWidth(96.5, 21, 1)).toBeNull(); // 12.5 of 96.5 — just over
   });
 
   it('never paints wider than the box it was given', () => {
