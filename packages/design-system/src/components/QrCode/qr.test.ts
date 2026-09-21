@@ -28,6 +28,7 @@ describe('cssUrl', () => {
     expect(cssUrl('a)b')).toBe('url("a%29b")');
     expect(cssUrl('a\\b')).toBe('url("a%5cb")');
     expect(cssUrl('a\nb')).toBe('url("a%0ab")');
+    expect(cssUrl('a\fb')).toBe('url("a%0cb")');
   });
 
   it('leaves an already-encoded data URI alone', () => {

@@ -32,8 +32,13 @@ export function toByteString(value: string): string {
   return Array.from(new TextEncoder().encode(value), (byte) => String.fromCharCode(byte)).join('');
 }
 
-/** Characters that would terminate a CSS `url("…")` early. */
-const CSS_URL_UNSAFE = /["'()\\\n\r]/g;
+/**
+ * Characters that would terminate a CSS `url("…")` early. Includes `\f`
+ * (U+000C FORM FEED): CSS input preprocessing (CSS Syntax Level 3 §3.3)
+ * converts every form feed to a line feed before tokenizing, so it is a
+ * newline for this purpose and closes the same breakout as `\n` and `\r`.
+ */
+const CSS_URL_UNSAFE = /["'()\\\n\r\f]/g;
 
 /**
  * Wrap a consumer-supplied URL in a CSS `url("…")`, percent-encoding anything
