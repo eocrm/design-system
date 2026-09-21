@@ -72,7 +72,11 @@ export interface LightboxProps {
   loop?: boolean;
   /** className for the dialog container. */
   className?: string;
-  /** Accessible label for the dialog. Defaults to the i18n "Image gallery". */
+  /**
+   * Accessible label for the dialog. Defaults to the i18n "Image gallery" when
+   * omitted OR empty — an empty string is not an explicit name, so it takes
+   * the default too.
+   */
   'aria-label'?: string;
 }
 

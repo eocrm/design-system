@@ -98,8 +98,9 @@ export interface OtpInputProps extends Omit<
   id?: string;
   /**
    * Accessible name for the group. Defaults to the localized
-   * `otpInput.groupLabel` ("Verification code") so a standalone OtpInput is
-   * never an unnamed group.
+   * `otpInput.groupLabel` ("Verification code") when omitted OR empty — an
+   * empty string is not an explicit name — so a standalone OtpInput is never
+   * an unnamed group.
    */
   'aria-label'?: string;
   /** Ids of elements naming the group. Injected by `<Field>`; wins over `aria-label`. */

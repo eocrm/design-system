@@ -115,6 +115,9 @@ export interface ColumnDef<T> {
    *
    * None of those is a name you chose. Set this prop on every text-less
    * header; your axe run flags what is left via `empty-table-header`.
+   *
+   * An EMPTY string counts as unset, not as an explicit name: it falls back to
+   * a string `header` rather than discarding it.
    */
   visibilityLabel?: string;
   /**

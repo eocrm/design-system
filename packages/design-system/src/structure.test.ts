@@ -1208,3 +1208,101 @@ describe('an outline-offset declaration does not sit in the same rule as @includ
     ).toEqual([]);
   });
 });
+
+/**
+ * An accessible name is never built with `??`.
+ *
+ * `aria-label={ariaLabel ?? t('key')}` falls back only on `null`/`undefined`, so
+ * a consumer writing `aria-label={row.name ?? ''}` — ordinary code — renders a
+ * literal `aria-label=""`. Per the accname spec that contributes no name, so the
+ * computation does not STOP there; it continues to name-from-content and then
+ * `title`. Where the children are `aria-hidden` the control ends up anonymous,
+ * and where a `title` exists it becomes the name — which is how `QrCode`'s
+ * invert hint became its accessible name in review (#533).
+ *
+ * An empty string is never a meaningful explicit name, so `||` is always the
+ * correct operator here and `??` never is. 24 sites were converted by hand;
+ * this is what stops the 25th.
+ *
+ * Deliberately NOT covered, because a regex cannot follow a value:
+ *  - the computed-variable form (`const purpose = ariaLabel ?? t(…)`, later
+ *    spread as a name) — `IconPicker` and `ColorPicker` both had one,
+ *  - the object-property form (`{ 'aria-label': x ?? y }`),
+ *  - `aria-labelledby` / `aria-describedby`, whose empty-string defect is the
+ *    same but whose id-reference plumbing has legitimate `??` sites.
+ * Those stay a review matter. This gate covers the literal JSX attribute, which
+ * is where all 24 conversions but four lived.
+ */
+describe('an accessible name is never built with ??', () => {
+  const NAME_ATTRS = /\b(aria-label|aria-valuetext)=\{/g;
+
+  /**
+   * Every `aria-label={…}` / `aria-valuetext={…}` expression in `code`.
+   *
+   * Brace-MATCHED, not `[^}]*`: a nested `{}` is the common shape here — an
+   * options object inside a `t()` call, a `${}` substitution in a template —
+   * and a lazy scan truncates at the first inner `}`, so the `??` that follows
+   * is never read.
+   */
+  const nameExpressions = (code: string): string[] => {
+    const out: string[] = [];
+    let match: RegExpExecArray | null;
+    NAME_ATTRS.lastIndex = 0;
+    while ((match = NAME_ATTRS.exec(code))) {
+      const start = match.index + match[0].length;
+      let depth = 1;
+      let i = start;
+      for (; i < code.length && depth > 0; i++) {
+        if (code[i] === '{') depth++;
+        else if (code[i] === '}') depth--;
+      }
+      out.push(code.slice(start, i - 1));
+    }
+    return out;
+  };
+
+  const sources = allSources().map(({ label, code }) => ({
+    label,
+    // Comments MUST go first. Both `QrCode.tsx` and `ColorPicker.tsx` carry a
+    // comment quoting `aria-label={row.name ?? ''}` as the defect they fixed,
+    // and an unstripped scan reports the two correct files as the only
+    // offenders — a gate that fails exactly where the rule is documented.
+    code: stripComments(code, label.endsWith('.tsx')),
+  }));
+
+  const withNameAttrs = sources.filter(({ code }) => nameExpressions(code).length > 0);
+
+  it('the scan itself can fail', () => {
+    // Guards the guard, in the shape the aria-busy suite uses: without this a
+    // regex typo makes every assertion below vacuously pass.
+    expect(nameExpressions(`<i aria-label={a ?? t('k')} />`)).toEqual([`a ?? t('k')`]);
+    expect(nameExpressions(`<i aria-valuetext={a ?? t('k')} />`)).toEqual([`a ?? t('k')`]);
+    expect(nameExpressions(`<i aria-label={a || t('k')} />`)[0]).not.toContain('??');
+    // Brace matching: the inner `}` of the options object must not end the span.
+    expect(nameExpressions(`<i aria-label={t('k', { n: 1 })} title={x ?? y} />`)).toEqual([
+      `t('k', { n: 1 })`,
+    ]);
+    // aria-labelledby must not be swept in by a loose `aria-label` prefix.
+    expect(nameExpressions(`<i aria-labelledby={a ?? b} />`)).toEqual([]);
+  });
+
+  it('found the attributes to check', () => {
+    const labels = sources.map((s) => s.label);
+    expect(labels).toContain('QrCode/QrCode.tsx');
+    expect(labels).toContain('Slider/Slider.tsx');
+    expect(withNameAttrs.length).toBeGreaterThan(50);
+  });
+
+  it.each(withNameAttrs.map(({ label, code }) => [label, code]))(
+    '%s uses || not ?? for every aria-label / aria-valuetext fallback',
+    (_label, code) => {
+      // `??` anywhere in the expression, not just at the top level. A nullish
+      // fallback nested inside a `t()` interpolation reaches the rendered name
+      // just as directly as one at the root.
+      const offenders = nameExpressions(code)
+        .filter((expr) => expr.includes('??'))
+        .map((expr) => expr.replace(/\s+/g, ' ').trim());
+      expect(offenders).toEqual([]);
+    },
+  );
+});

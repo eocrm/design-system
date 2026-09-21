@@ -34,8 +34,9 @@ export interface TopBarProps extends Omit<HTMLAttributes<HTMLElement>, 'aria-lab
   as?: TopBarElement;
   /**
    * Accessible label for the bar's landmark. Defaults to `t('topBar.label')`
-   * so screen readers always announce a name for the region. Override when a
-   * page has multiple bars to disambiguate them.
+   * when omitted OR empty — an empty string is not an explicit name — so screen
+   * readers always announce a name for the region. Override when a page has
+   * multiple bars to disambiguate them.
    */
   'aria-label'?: string;
   /**

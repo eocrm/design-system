@@ -58,8 +58,9 @@ export interface BreadcrumbProps {
   separator?: ReactNode;
   /**
    * Visible label for the `<nav>` element. Defaults to the i18n value at
-   * `breadcrumb.ariaLabel` (`'Breadcrumb'` in English). Override when
-   * multiple breadcrumb instances coexist on the same page.
+   * `breadcrumb.ariaLabel` (`'Breadcrumb'` in English) when omitted OR empty —
+   * an empty string is not an explicit name, so it takes the default too.
+   * Override when multiple breadcrumb instances coexist on the same page.
    */
   ariaLabel?: string;
   /** Pass-through className applied to the `<nav>` wrapper. */

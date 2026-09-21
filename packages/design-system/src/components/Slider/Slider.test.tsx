@@ -608,6 +608,9 @@ describe('Slider — Field label integration', () => {
 });
 
 describe('Slider — empty thumb label', () => {
+  // `thumbLabels={[min ?? '', max ?? '']}` is ordinary consumer code. An empty
+  // entry names that thumb no better than a missing tuple, so it has to fall
+  // back down the same paths a missing tuple takes — both of them.
   it('a range thumb with an empty tuple label falls back to the derived name', () => {
     render(
       <Slider
@@ -618,6 +621,19 @@ describe('Slider — empty thumb label', () => {
       />,
     );
     expect(screen.getByRole('slider', { name: 'Price, minimum' })).toBeInTheDocument();
+    expect(screen.getByRole('slider', { name: 'Ceiling' })).toBeInTheDocument();
+  });
+
+  // The aria-labelledby path used to gate on the ARRAY's existence, so under a
+  // <Field> — which names the slider by id reference, not by aria-label — a
+  // thumb with an empty entry got neither attribute and went unnamed.
+  it('a <Field>-wrapped range thumb with an empty tuple label is still named', () => {
+    render(
+      <Field label="Price">
+        <Slider value={[10, 90]} onChange={() => {}} thumbLabels={['', 'Ceiling']} />
+      </Field>,
+    );
+    expect(screen.getByRole('slider', { name: 'Price minimum' })).toBeInTheDocument();
     expect(screen.getByRole('slider', { name: 'Ceiling' })).toBeInTheDocument();
   });
 });

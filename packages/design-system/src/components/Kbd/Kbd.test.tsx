@@ -78,8 +78,9 @@ describe('Kbd', () => {
 });
 
 describe('Kbd — empty aria-label', () => {
-  // With the separators aria-hidden, an empty aria-label makes the name
-  // compute from content as "⌘K" instead of the spoken "⌘ + K".
+  // Every child is aria-hidden — the <kbd> elements as well as the separators
+  // — so an empty aria-label leaves the span with no name at all, not a
+  // squashed "⌘K" from content.
   it('falls back to keys.join(" + ") when aria-label is an empty string', () => {
     render(<Kbd keys={['⌘', 'K']} aria-label="" />);
     expect(screen.getByLabelText('⌘ + K')).toBeInTheDocument();

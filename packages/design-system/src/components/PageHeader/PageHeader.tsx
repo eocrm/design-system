@@ -46,7 +46,8 @@ export interface PageHeaderBackButtonProps {
   onClick?: () => void;
   /**
    * Accessible label. Defaults to the i18n value at `pageHeader.back`
-   * (`'Go back'` in English).
+   * (`'Go back'` in English) when omitted OR empty — an empty string is not an
+   * explicit name, so it takes the default too.
    */
   'aria-label'?: string;
   /** Icon to render. Default `<ChevronLeft size={16}>` from lucide-react. */

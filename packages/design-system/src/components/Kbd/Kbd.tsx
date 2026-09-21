@@ -26,8 +26,9 @@ export interface KbdProps extends Omit<HTMLAttributes<HTMLSpanElement>, 'aria-la
   size?: KbdSize;
   /**
    * Accessible label for the whole shortcut, read as a single phrase by
-   * screen readers. Defaults to `keys.join(' + ')` (e.g. `'⌘ + K'`).
-   * Override when the raw keys are unintuitive — e.g. `keys={['⌘', 'K']}`
+   * screen readers. Defaults to `keys.join(' + ')` (e.g. `'⌘ + K'`) when
+   * omitted OR empty — an empty string is not an explicit name, so it takes
+   * the default too. Override when the raw keys are unintuitive — e.g. `keys={['⌘', 'K']}`
    * with `aria-label="Open command palette"`.
    */
   'aria-label'?: string;

@@ -77,7 +77,10 @@ export interface LiquidEditorProps {
   name?: string;
   /** Placeholder shown when empty. */
   placeholder?: string;
-  /** Accessible label (defaults to the i18n `liquidEditor.editorLabel`). */
+  /**
+   * Accessible label (defaults to the i18n `liquidEditor.editorLabel` when
+   * omitted OR empty — an empty string is not an explicit name).
+   */
   'aria-label'?: string;
   /** Id of an external label element. */
   'aria-labelledby'?: string;

@@ -86,7 +86,9 @@ export interface ImageProps extends Omit<
   onClick?: MouseEventHandler<HTMLButtonElement>;
   /**
    * Accessible label for the interactive trigger — action-oriented, e.g.
-   * `"Preview report.png"`. Defaults to `alt`. Only used when interactive. Note:
+   * `"Preview report.png"`. Defaults to `alt` when omitted OR empty — an empty
+   * string is not an explicit name, so it takes the default too. Only used when
+   * interactive. Note:
    * a native `aria-label` passed via `{...rest}` lands on the `<img>`, not the
    * trigger button — use `ariaLabel` to name the trigger.
    */

@@ -103,12 +103,15 @@ export interface ColorPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, '
   /**
    * Accessible name for the focusable trigger. Forwarded to the default or custom trigger,
    * not the root wrapper. Ignored when `aria-labelledby` is provided. An explicit name on
-   * a custom trigger child takes precedence.
+   * a custom trigger child takes precedence — but an EMPTY one on that child does not, since
+   * an empty string names nothing.
    */
   'aria-label'?: string;
   /**
    * Accessible label for the default trigger. Defaults to the i18n value at
-   * `colorPicker.triggerLabel` (`'Pick a color'` in English). Ignored when
+   * `colorPicker.triggerLabel` (`'Pick a color'` in English) when omitted OR
+   * empty — an empty string is not an explicit name, so it takes the default
+   * too. Ignored when
    * a custom trigger is provided via `<ColorPicker.Trigger>`.
    */
   triggerLabel?: string;

@@ -92,8 +92,12 @@ export function HeaderCell<T>({
   // (two reviewers measured Chromium and disagreed), but the CONTROLS speak it
   // either way, so the identifier is removed at the source and the question
   // stops mattering for the harmful part.
+  // `||`, not `??`: `visibilityLabel={col.title ?? ''}` is ordinary consumer
+  // code, and an empty one names the column no better than omitting it — it
+  // must not discard a perfectly usable string header and drop the grip and
+  // resize handle to the generic "this column" copy.
   const columnLabel =
-    column.visibilityLabel ?? (typeof column.header === 'string' ? column.header : undefined);
+    column.visibilityLabel || (typeof column.header === 'string' ? column.header : undefined);
   // The handle's own name has to describe the ACTION. It used to be the column
   // label verbatim, so a keyboard user heard "Name, separator".
   const resizeLabel = columnLabel

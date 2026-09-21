@@ -245,3 +245,61 @@ describe('Field', () => {
     expect(screen.getByTestId('control')).not.toHaveAttribute('aria-labelledby');
   });
 });
+
+// A NON-labelable control — a div with a role. This is the case Field's
+// `aria-labelledby` injection exists for: `<label for>` names only labelable
+// elements, so for these the id reference is the only naming path there is.
+function StubDivControl(props: {
+  id?: string;
+  invalid?: boolean;
+  required?: boolean;
+  'aria-labelledby'?: string;
+  'aria-describedby'?: string;
+}) {
+  return (
+    <div
+      data-testid="div-control"
+      role="textbox"
+      tabIndex={0}
+      id={props.id}
+      aria-labelledby={props['aria-labelledby']}
+      aria-describedby={props['aria-describedby']}
+    />
+  );
+}
+
+describe('Field — empty ARIA id references', () => {
+  // `aria-labelledby={sectionId ?? ''}` is ordinary consumer code. An empty id
+  // list references nothing, so it names the control no better than omitting
+  // the attribute — it must not suppress the Field's own label. `||` is what
+  // stops that; `??` would not.
+  it("an empty child aria-labelledby falls back to the Field's label", () => {
+    render(
+      <Field label="Email">
+        <StubDivControl aria-labelledby="" />
+      </Field>,
+    );
+    expect(screen.getByRole('textbox')).toHaveAccessibleName('Email');
+  });
+
+  it("an empty child aria-describedby falls back to the Field's description", () => {
+    render(
+      <Field label="Email" description="We never share it.">
+        <StubDivControl aria-describedby="" />
+      </Field>,
+    );
+    expect(screen.getByRole('textbox')).toHaveAccessibleDescription('We never share it.');
+  });
+
+  it('a non-empty child aria-labelledby still wins over the Field label', () => {
+    render(
+      <>
+        <span id="own-label">Work email</span>
+        <Field label="Email">
+          <StubDivControl aria-labelledby="own-label" />
+        </Field>
+      </>,
+    );
+    expect(screen.getByRole('textbox')).toHaveAccessibleName('Work email');
+  });
+});

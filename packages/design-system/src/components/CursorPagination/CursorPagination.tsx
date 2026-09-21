@@ -47,7 +47,8 @@ export interface CursorPaginationProps extends HTMLAttributes<HTMLElement> {
 
   /**
    * Accessible name for the wrapper `<nav>`. Defaults to the i18n value at
-   * `pagination.ariaLabel` (`'Pagination'` in English).
+   * `pagination.ariaLabel` (`'Pagination'` in English) when omitted OR empty —
+   * an empty string is not an explicit name, so it takes the default too.
    */
   'aria-label'?: string;
 }
