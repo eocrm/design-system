@@ -161,7 +161,15 @@
   @include focus-ring;
 }
 
-.thumbDragging {
+// `.thumb.thumbDragging`, not `.thumbDragging` (#517). Dragging a thumb means
+// the pointer is on it, so `.thumb:hover` matches for the whole drag, and a
+// keyboard drag holds `.thumb:focus-visible` — both 0,2,0 against a bare
+// class's 0,1,0. The dragging shadow therefore never painted; only `cursor`
+// looked like it worked, because nothing else declares `cursor` above 0,1,0.
+// The compound selector ties on specificity and wins on source order, so this
+// rule MUST stay below both. `Slider.test.tsx` asserts that ordering, since
+// jsdom resolves no cascade and would not notice it moving.
+.thumb.thumbDragging {
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
   cursor: grabbing;
   box-shadow: var(--slider-thumb-shadow-dragging);
