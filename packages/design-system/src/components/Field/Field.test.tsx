@@ -297,15 +297,54 @@ describe('Field — falsy-but-present `description`', () => {
   ])(
     'description=%s renders no description node and no aria-describedby',
     (_label, descriptionValue) => {
-      render(
+      const { container } = render(
         <Field label="Email" description={descriptionValue}>
           <StubControl />
         </Field>,
       );
       const input = screen.getByTestId('control');
       expect(input).not.toHaveAttribute('aria-describedby');
+      // Catches the RENDER gate (messageNode's description branch)
+      // independent of the wiring (hasDescription) check above: if only the
+      // render gate reverted, hasDescription stays correctly false, so
+      // aria-describedby stays unset (the check above alone would miss
+      // it) — but an orphan <Text id="…-description"> would still render.
+      expect(container.querySelector('[id$="-description"]')).not.toBeInTheDocument();
     },
   );
+});
+
+describe('Field — falsy-but-present `label`', () => {
+  // hasLabel (wiring) and the labelNode render gate compute Boolean(label)
+  // independently, same shape as the error/description gaps above.
+  // `label={cond && 'Name'}` producing `false`/`''` must render no <label>
+  // AND inject no aria-labelledby: if only the wiring broke (`!= null`),
+  // aria-labelledby would still point at a labelId whose <label> never
+  // rendered — a dangling reference, i.e. an anonymous control. If only the
+  // render gate broke, an empty <label> would exist with nothing pointing
+  // at it.
+  //
+  // StubControl (used throughout this file) does NOT forward
+  // aria-labelledby, so it can't see the wiring gate at all — using it here
+  // was tried first and silently passed against BOTH the fixed and the
+  // mutated wiring. This stub mirrors the `LabelledStub` pattern used
+  // elsewhere in this file, which does forward it.
+  function LabelledStub(props: { id?: string; 'aria-labelledby'?: string }) {
+    return <input data-testid="control" id={props.id} aria-labelledby={props['aria-labelledby']} />;
+  }
+
+  it.each([
+    ['false', false],
+    ['an empty string', ''],
+  ])('label=%s renders no <label> and injects no aria-labelledby', (_label, labelValue) => {
+    const { container } = render(
+      <Field label={labelValue}>
+        <LabelledStub />
+      </Field>,
+    );
+    expect(container.querySelector('label')).not.toBeInTheDocument();
+    expect(screen.getByTestId('control')).not.toHaveAttribute('aria-labelledby');
+  });
 });
 
 // A NON-labelable control — a div with a role. This is the case Field's

@@ -283,7 +283,7 @@ describe('SettingRow — falsy-but-present optional props (the `cond && value` i
     ['an empty string', ''],
     ['undefined', undefined],
   ])('error=%s does not flip the control invalid', (_label, errorValue) => {
-    render(
+    const { container } = render(
       <SettingRow label="Seats" description="Helper text" error={errorValue}>
         <Input type="number" />
       </SettingRow>,
@@ -293,6 +293,12 @@ describe('SettingRow — falsy-but-present optional props (the `cond && value` i
     // aria-describedby must point at the (visible) description, not a
     // present-but-empty error node.
     expect(control).toHaveAccessibleDescription('Helper text');
+    // Catches the RENDER gate specifically, independent of the wiring
+    // (hasError) check above: SettingRow renders `description` on its own,
+    // unconditional gate, so a broken error render gate wouldn't touch
+    // `toHaveAccessibleDescription` at all — description renders fine either
+    // way. Only checking for the orphan error <Text> node itself catches it.
+    expect(container.querySelector('[id$="-error"]')).not.toBeInTheDocument();
   });
 
   it.each([
@@ -330,6 +336,20 @@ describe('SettingRow — falsy-but-present optional props (the `cond && value` i
       </SettingRow>,
     );
     expect(container.querySelector('[class*="trailing"]')).not.toBeInTheDocument();
+  });
+
+  it('labelAdornment=0 renders no stray text on the label line', () => {
+    // labelAdornment was previously rendered unguarded — {labelAdornment} —
+    // so a `0` value (e.g. `count && <Badge/>` with count === 0) printed a
+    // bare "0" right after the label ("Seats0"), the likeliest slot of all
+    // for this idiom (a badge gated on a count).
+    render(
+      <SettingRow label="Seats" labelAdornment={0}>
+        <Input type="number" />
+      </SettingRow>,
+    );
+    expect(screen.getByText('Seats')).toBeInTheDocument();
+    expect(screen.queryByText('0')).not.toBeInTheDocument();
   });
 
   it('footer=0 renders nothing (not a literal "0")', () => {
