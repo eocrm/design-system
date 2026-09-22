@@ -5,6 +5,7 @@ import {
   Button,
   Card,
   Code,
+  Constrain,
   Input,
   Page,
   PageHeader,
@@ -156,16 +157,18 @@ function SectionCard({ section }: { section: (typeof settingsSections)[number] }
                 }
                 footer={
                   setting.type === 'number' && setting.used !== undefined ? (
-                    <Stack gap="xs">
-                      <Progress
-                        value={setting.used}
-                        max={Number(value)}
-                        aria-label={`${setting.label} usage`}
-                      />
-                      <Text as="span" size="xs" tone="muted">
-                        {setting.used} of {String(value)} used.
-                      </Text>
-                    </Stack>
+                    <Constrain maxWidth="sm">
+                      <Stack gap="xs">
+                        <Progress
+                          value={setting.used}
+                          max={Number(value)}
+                          aria-label={`${setting.label} usage`}
+                        />
+                        <Text as="span" size="xs" tone="muted">
+                          {setting.used} of {String(value)} used.
+                        </Text>
+                      </Stack>
+                    </Constrain>
                   ) : undefined
                 }
               >

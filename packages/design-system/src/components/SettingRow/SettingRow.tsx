@@ -5,7 +5,7 @@ import { useFieldWiring, type FieldRenderProps } from '../_internal/fieldWiring'
 import { type CollapseBreakpoint } from '../_internal/collapse';
 import styles from './SettingRow.module.scss';
 
-/** Max width applied to the control cell. Mirrors `<Constrain>`'s measure scale. */
+/** Max width applied to the control only, not its trailing adornments. Mirrors `<Constrain>`'s measure scale. */
 export type SettingRowControlWidth = 'auto' | 'xs' | 'sm' | 'md' | 'full';
 
 export interface SettingRowProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
@@ -20,7 +20,10 @@ export interface SettingRowProps extends Omit<HTMLAttributes<HTMLDivElement>, 'c
   labelAdornment?: ReactNode;
   /** Helper text under the label, in the label column. Linked via `aria-describedby`. */
   description?: ReactNode;
-  /** Max width of the control cell. Default `'auto'` — the control's intrinsic width. */
+  /**
+   * Max width of the control only — `trailing` is unaffected and stays on the
+   * same line. Default `'auto'` — the control's intrinsic width.
+   */
   controlWidth?: SettingRowControlWidth;
   /** Content after the control on the same line — a mode select, a state badge, a reset button. */
   trailing?: ReactNode;
@@ -149,8 +152,10 @@ const SettingRowRoot = forwardRef<HTMLDivElement, SettingRowProps>(function Sett
         )}
       </div>
       <div className={styles.control}>
-        <div className={styles.controlLine} data-control-width={controlWidth}>
-          {wire(children)}
+        <div className={styles.controlLine}>
+          <div className={styles.controlSlot} data-control-width={controlWidth}>
+            {wire(children)}
+          </div>
           {trailing}
         </div>
         {footer}

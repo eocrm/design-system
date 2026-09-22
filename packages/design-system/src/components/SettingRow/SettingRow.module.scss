@@ -56,22 +56,29 @@
   gap: var(--setting-row-trailing-gap);
 }
 
-// Control width caps apply to the control CELL, not a wrapper around the
-// control — wrapping the child in <Constrain> would make Constrain the
-// element cloneElement wires, silently stripping the control's id and aria-*.
-.controlLine[data-control-width='xs'] {
+// The control's own wrapper — capped by controlWidth, `trailing` sits
+// outside it on .controlLine so a cap never pulls the adornments onto a
+// second line. This wrapper is created AFTER wire() has already cloned the
+// child and injected id / aria-labelledby / aria-describedby / invalid /
+// required, so it is never the cloneElement target — that's also why a
+// consumer-side <Constrain> was ruled out in favor of controlWidth.
+.controlSlot {
+  min-width: 0;
+}
+
+.controlSlot[data-control-width='xs'] {
   max-width: var(--setting-row-control-width-xs);
 }
 
-.controlLine[data-control-width='sm'] {
+.controlSlot[data-control-width='sm'] {
   max-width: var(--setting-row-control-width-sm);
 }
 
-.controlLine[data-control-width='md'] {
+.controlSlot[data-control-width='md'] {
   max-width: var(--setting-row-control-width-md);
 }
 
-.controlLine[data-control-width='full'] {
+.controlSlot[data-control-width='full'] {
   max-width: 100%;
 }
 

@@ -4366,7 +4366,7 @@
           "type": "SettingRowControlWidth",
           "required": false,
           "default": "",
-          "description": "Max width of the control cell. Default `'auto'` — the control's intrinsic width."
+          "description": "Max width of the control only — `trailing` is unaffected and stays on the\nsame line. Default `'auto'` — the control's intrinsic width."
         },
         {
           "name": "trailing",

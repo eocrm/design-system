@@ -100,16 +100,44 @@ describe('SettingRow', () => {
     expect(screen.getByText('0 of 50 included this month')).toBeInTheDocument();
   });
 
-  it.each(['xs', 'sm', 'md', 'full'] as const)('controlWidth=%s sets the data attribute', (w) => {
-    const { container } = render(
-      <SettingRow label="Seats" controlWidth={w}>
+  it.each(['xs', 'sm', 'md', 'full'] as const)(
+    'controlWidth=%s caps the control slot only, leaving trailing on the same line',
+    (w) => {
+      const { container } = render(
+        <SettingRow
+          label="Seats"
+          controlWidth={w}
+          trailing={<span data-testid="trailing">days</span>}
+        >
+          <Input type="number" />
+        </SettingRow>,
+      );
+      const slot = container.querySelector('[data-control-width]')!;
+      expect(slot).toHaveAttribute('data-control-width', w);
+      expect(slot.querySelector('input')).toBeInTheDocument();
+      // `trailing` must be a SIBLING of the capped slot, not inside it — a
+      // regression to capping the shared line (which wraps both the control
+      // and trailing) would nest trailing inside the capped element too, and
+      // this assertion would fail.
+      const trailing = screen.getByTestId('trailing');
+      expect(slot).not.toContainElement(trailing);
+      expect(slot.parentElement).toContainElement(trailing);
+    },
+  );
+
+  it('controlWidth does not defeat field wiring — the control still carries its id and accessible name', () => {
+    // Guards the invariant the fix depends on: the controlWidth wrapper is
+    // created AFTER wire() has already cloned the child and injected id /
+    // aria-labelledby onto it, so the wrapper is never the cloneElement
+    // target. If a future "simplification" moved the wrapper outside wire(),
+    // this would fail — the control would lose its id/aria-* silently.
+    render(
+      <SettingRow label="Seats" controlWidth="xs">
         <Input type="number" />
       </SettingRow>,
     );
-    expect(container.querySelector('[data-control-width]')).toHaveAttribute(
-      'data-control-width',
-      w,
-    );
+    const control = screen.getByRole('spinbutton', { name: 'Seats' });
+    expect(control).toHaveAttribute('id');
   });
 
   it('supports the render-prop form', () => {
