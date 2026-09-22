@@ -8,15 +8,16 @@ import {
 } from 'react';
 
 /**
- * `Boolean(n)`, plus: an empty array and an empty fragment (`<></>`) count as
- * ABSENT rather than present. `Boolean(label)` alone treats `label={<></>}` /
- * `label={[]}` as truthy, so `Field`/`SettingRow` used to render a real, empty
- * `<label>` and point `aria-labelledby` at it — and a real-but-empty referent
- * is authoritative in the accname algorithm, so it silently named the control
- * `""` instead of falling through to anything else. Use this everywhere a
- * `hasX` predicate feeds BOTH a render gate (should something visible exist)
- * and an ARIA reference (does that visible thing actually name/describe the
- * control) — `hasLabel`, `hasDescription`, `hasError`.
+ * `Boolean(n)`, plus: an empty ITERABLE (array, `Set`, `Map.values()`,
+ * a generator — anything `ReactNode` legally allows besides an array) and an
+ * empty fragment (`<></>`) count as ABSENT rather than present. `Boolean(label)`
+ * alone treats all of those as truthy when empty, so `Field`/`SettingRow` used
+ * to render a real, empty `<label>` and point `aria-labelledby` at it — and a
+ * real-but-empty referent is authoritative in the accname algorithm, so it
+ * silently named the control `""` instead of falling through to anything else.
+ * Use this everywhere a `hasX` predicate feeds BOTH a render gate (should
+ * something visible exist) and an ARIA reference (does that visible thing
+ * actually name/describe the control) — `hasLabel`, `hasDescription`, `hasError`.
  *
  * Known, deliberate limit: this cannot see a REAL element with empty visual
  * content (`label={<span />}`) or a whitespace-only string (`label="   "`) —
@@ -25,7 +26,14 @@ import {
  * inspecting its content, which this predicate does not attempt.
  */
 export function hasContent(n: ReactNode): boolean {
-  if (Array.isArray(n)) return n.some(hasContent);
+  // `Array.isArray` alone missed any OTHER iterable `ReactNode` legally
+  // allows — `Set`, `Map.prototype.values()`, a generator — which typechecks
+  // with no cast and reproduced the exact empty-container bug this predicate
+  // exists to close. `Symbol.iterator in n` catches arrays too, so this
+  // subsumes the old `Array.isArray` branch rather than sitting beside it.
+  if (n != null && typeof n === 'object' && Symbol.iterator in n) {
+    return [...(n as Iterable<ReactNode>)].some(hasContent);
+  }
   if (isValidElement(n) && n.type === Fragment) {
     return hasContent((n.props as { children?: ReactNode }).children);
   }
@@ -67,6 +75,8 @@ export interface FieldWiring {
   errorId: string;
   /** The id the control's `aria-describedby` should point at — error wins over description. */
   describedBy: string | undefined;
+  /** The id the control's `aria-labelledby` should point at — set only when a label is rendered. */
+  labelledBy: string | undefined;
   invalid: boolean;
   /** Auto-wire a single element child, or invoke a render-prop with `field`. */
   wire: (children: ReactNode | ((field: FieldRenderProps) => ReactNode)) => ReactNode;
@@ -98,11 +108,12 @@ export function useFieldWiring({
   const requiredBool = Boolean(required);
   const describedBy = hasError ? errorId : hasDescription ? descriptionId : undefined;
   // Single source for the labelledby value, same shape as describedBy above —
-  // computed once and reused by both the render-prop field object and the
-  // cloneElement branch below, so they cannot recompute `hasLabel` two
-  // different ways and drift (that drift is exactly what shipped: the
-  // render-prop path and the cloneElement path used to each derive this
-  // independently).
+  // computed once and reused by the render-prop field object, the
+  // cloneElement branch below, AND returned to the caller (Field's `asGroup`
+  // wrapper reads this instead of re-deriving `hasLabel ? labelId : undefined`
+  // a third time), so none of them can recompute `hasLabel` a different way
+  // and drift (that drift is exactly what shipped: the render-prop path and
+  // the cloneElement path used to each derive this independently).
   const labelledBy = hasLabel ? labelId : undefined;
 
   const field: FieldRenderProps = {
@@ -188,6 +199,7 @@ export function useFieldWiring({
     descriptionId,
     errorId,
     describedBy,
+    labelledBy,
     invalid,
     wire,
   };

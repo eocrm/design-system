@@ -161,16 +161,15 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
   const hasError = hasContent(error);
   const hasRequired = Boolean(required);
   const hasOptional = Boolean(optional);
-  const { controlId, labelId, descriptionId, errorId, describedBy, invalid, wire } = useFieldWiring(
-    {
+  const { controlId, labelId, descriptionId, errorId, describedBy, labelledBy, invalid, wire } =
+    useFieldWiring({
       id,
       hasLabel,
       hasDescription,
       hasError,
       required: hasRequired,
       asGroup,
-    },
-  );
+    });
 
   const control = wire(children);
 
@@ -225,7 +224,7 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
   const groupAria = asGroup
     ? {
         role: 'group' as const,
-        'aria-labelledby': hasLabel ? labelId : undefined,
+        'aria-labelledby': labelledBy,
         'aria-describedby': describedBy,
         'aria-invalid': invalid || undefined,
       }

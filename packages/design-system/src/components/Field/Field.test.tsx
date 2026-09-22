@@ -465,6 +465,58 @@ describe('Field — a truthy-but-empty `label` (label={<></>} / label={[]}) — 
     expect(screen.getByTestId('control')).toHaveAccessibleName('Seats');
     expect(screen.getByTestId('control')).not.toHaveAttribute('aria-labelledby');
   });
+
+  it('an empty non-array iterable (label={new Set()}) is also absent — hasContent is not array-only', () => {
+    // round 7 shipped `Array.isArray(n)`, which is false for any OTHER
+    // `ReactNode`-legal iterable (Set, Map.values(), a generator) — all
+    // type-check with no cast, and all fell through to `Boolean(n)`,
+    // reproducing the exact empty-container bug this predicate exists to
+    // close. Round 8: broadened to any iterable.
+    render(
+      <Field label={new Set()}>
+        <NamedStub aria-label="Seats" />
+      </Field>,
+    );
+    expect(screen.getByTestId('control')).toHaveAccessibleName('Seats');
+    expect(document.querySelector('label')).not.toBeInTheDocument();
+  });
+
+  it('a fragment with real content is PRESENT — the Fragment conjunct is not just "any element recurses"', () => {
+    // Pins the `n.type === Fragment` conjunct: dropping it (so ANY element
+    // recurses into its children) is green on the whole suite without this
+    // test — round 8 review, found independently by both reviewers.
+    render(
+      <Field
+        label={
+          <>
+            Work <b>email</b>
+          </>
+        }
+      >
+        <NamedStub />
+      </Field>,
+    );
+    expect(document.querySelector('label')).toBeInTheDocument();
+    expect(screen.getByTestId('control')).toHaveAccessibleName('Work email');
+  });
+
+  it('a CHILDLESS real element (label={<span />}) is still PRESENT — hasContent only recurses into fragments, not every element', () => {
+    // Pins the same conjunct from the other side: stubbing the recursion to
+    // `return false` is also green on the whole suite without this test.
+    // This is the documented `<span />` limit from this function's own doc —
+    // previously asserted in prose only, never in a test. The control's own
+    // aria-label is present but NOT what wins: a real-but-empty aria-labelledby
+    // referent is authoritative in the accname algorithm (established in round
+    // 6/7), so the name goes empty rather than falling through to "Seats".
+    render(
+      <Field label={<span />}>
+        <NamedStub aria-label="Seats" />
+      </Field>,
+    );
+    expect(document.querySelector('label')).toBeInTheDocument();
+    expect(screen.getByTestId('control')).toHaveAttribute('aria-labelledby');
+    expect(screen.getByTestId('control')).toHaveAccessibleName('');
+  });
 });
 
 describe("Field — the ??-not-|| rule on invalid/required (the file's own comment calls it load-bearing)", () => {

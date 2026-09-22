@@ -9,7 +9,7 @@ import styles from './SettingRow.module.scss';
 export type SettingRowControlWidth = 'auto' | 'xs' | 'sm' | 'md';
 
 export interface SettingRowProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
-  /** Label text. Renders a `<label htmlFor>` that names the control. Required — a falsy value (e.g. `0`, `''`) renders no `<label>` at all; see the anti-pattern below. */
+  /** Label text. Renders a `<label htmlFor>` that names the control. Required — an empty or falsy value (e.g. `0`, `''`, `[]`, `<></>`) renders no `<label>` at all; see the anti-pattern below. */
   label: ReactNode;
   /**
    * Badges / chips on the label line, rendered as a SIBLING of the `<label>`.
