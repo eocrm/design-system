@@ -495,12 +495,14 @@ describe('SettingRow — falsy-but-present optional props (the `cond && value` i
     expect(screen.getByRole('spinbutton')).toHaveAccessibleName('Work email');
   });
 
-  it('an empty non-array iterable (label={new Set()}) is also absent — hasContent is not array-only', () => {
-    // round 7 shipped `Array.isArray(n)`, which is false for any OTHER
-    // `ReactNode`-legal iterable (Set, Map.values(), a generator) — all
-    // type-check with no cast, and all fell through to `Boolean(n)`,
-    // reproducing the exact empty-container bug this predicate exists to
-    // close. Round 8: broadened to any iterable.
+  it('an empty Set is also absent — hasContent is not array-only', () => {
+    // round 7 shipped `Array.isArray(n)`, which is false for a `Set`. Round
+    // 8 broadened the check to ANY iterable, which also caught `Set` — but
+    // it caught one-shot iterators (generator, `Map.values()`) too, and
+    // spreading those to inspect them DRAINS them before React can render
+    // them: a regression, reverted in round 9 (see the two tests below).
+    // `Set` (like Array) is RE-ITERABLE — reading it here doesn't consume
+    // what React reads later — so it's still correctly handled.
     render(
       <SettingRow label={new Set()}>
         <Input type="number" aria-label="Seats" />
@@ -508,6 +510,38 @@ describe('SettingRow — falsy-but-present optional props (the `cond && value` i
     );
     expect(screen.getByRole('spinbutton')).toHaveAccessibleName('Seats');
     expect(document.querySelector('label')).not.toBeInTheDocument();
+  });
+
+  it('a NON-EMPTY one-shot iterator (generator, Map.values()) renders correctly — round 8 regression, fixed (render-level, not predicate-level)', () => {
+    // Round 8's fix inspected a one-shot iterator by spreading it, which
+    // reads correctly at the PREDICATE level (`hasContent` returns `true`)
+    // but DRAINS the iterator — so React then rendered the same,
+    // already-exhausted object and got nothing. A predicate-only assertion
+    // cannot see this class of bug; it has to be asserted through a render.
+    function* gen() {
+      yield 'Work email';
+    }
+    render(
+      <SettingRow label={gen()}>
+        <Input type="number" aria-label="Seats" />
+      </SettingRow>,
+    );
+    expect(document.querySelector('label')).toHaveTextContent('Work email');
+    expect(screen.getByRole('spinbutton')).toHaveAccessibleName('Work email');
+  });
+
+  it('an EMPTY one-shot iterator is treated as PRESENT (not absent) — the documented, unavoidable limit', () => {
+    // You cannot ask a one-shot iterator whether it's empty without
+    // spending it, so this predicate does not try: it falls to
+    // `Boolean(n)`, `true` for any object.
+    render(
+      <SettingRow label={(function* () {})()}>
+        <Input type="number" aria-label="Seats" />
+      </SettingRow>,
+    );
+    expect(document.querySelector('label')).toBeInTheDocument();
+    expect(screen.getByRole('spinbutton')).toHaveAttribute('aria-labelledby');
+    expect(screen.getByRole('spinbutton')).toHaveAccessibleName('');
   });
 
   it('a fragment with real content is PRESENT — the Fragment conjunct is not just "any element recurses"', () => {

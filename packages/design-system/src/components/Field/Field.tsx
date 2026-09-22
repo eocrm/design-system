@@ -16,7 +16,7 @@ export type FieldSize = 'sm' | 'md' | 'lg';
 type FieldChild = ReactNode | ((field: FieldRenderProps) => ReactNode);
 
 export interface FieldProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
-  /** Label text. Renders a `<label htmlFor>` (or, in `asGroup`, a `role="group"` caption). */
+  /** Label text. Renders a `<label htmlFor>` (or, in `asGroup`, a `role="group"` caption). An empty or falsy value (e.g. `0`, `''`, `[]`, `<></>`) renders no label at all; see the anti-pattern below. */
   label?: ReactNode;
   /** Helper text below the control. Hidden while `error` is present. */
   description?: ReactNode;

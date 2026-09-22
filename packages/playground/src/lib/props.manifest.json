@@ -1906,7 +1906,7 @@
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
           "default": "",
-          "description": "Label text. Renders a `<label htmlFor>` (or, in `asGroup`, a `role=\"group\"` caption)."
+          "description": "Label text. Renders a `<label htmlFor>` (or, in `asGroup`, a `role=\"group\"` caption). An empty or falsy value (e.g. `0`, `''`, `[]`, `<></>`) renders no label at all; see the anti-pattern below."
         },
         {
           "name": "description",

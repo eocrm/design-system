@@ -8,30 +8,49 @@ import {
 } from 'react';
 
 /**
- * `Boolean(n)`, plus: an empty ITERABLE (array, `Set`, `Map.values()`,
- * a generator — anything `ReactNode` legally allows besides an array) and an
- * empty fragment (`<></>`) count as ABSENT rather than present. `Boolean(label)`
- * alone treats all of those as truthy when empty, so `Field`/`SettingRow` used
- * to render a real, empty `<label>` and point `aria-labelledby` at it — and a
+ * `Boolean(n)`, plus: an empty RE-ITERABLE container (array, `Set`, or `Map`
+ * used directly — NOT `Map.values()`/`.entries()`, see below) and an empty
+ * fragment (`<></>`) count as ABSENT rather than present. `Boolean(label)`
+ * alone treats both as truthy when empty, so `Field`/`SettingRow` used to render
+ * a real, empty `<label>` and point `aria-labelledby` at it — and a
  * real-but-empty referent is authoritative in the accname algorithm, so it
  * silently named the control `""` instead of falling through to anything else.
  * Use this everywhere a `hasX` predicate feeds BOTH a render gate (should
  * something visible exist) and an ARIA reference (does that visible thing
  * actually name/describe the control) — `hasLabel`, `hasDescription`, `hasError`.
  *
- * Known, deliberate limit: this cannot see a REAL element with empty visual
- * content (`label={<span />}`) or a whitespace-only string (`label="   "`) —
- * both are still truthy content as far as this function is concerned, same
- * as `Boolean(x)` was. Detecting those needs rendering the element and
- * inspecting its content, which this predicate does not attempt.
+ * Known, deliberate limits:
+ * - This cannot see a REAL element with empty visual content
+ *   (`label={<span />}`) or a whitespace-only string (`label="   "`) — both are
+ *   still truthy content as far as this function is concerned, same as
+ *   `Boolean(x)` was. Detecting those needs rendering the element and
+ *   inspecting its content, which this predicate does not attempt.
+ * - A one-shot iterator — `Map.prototype.values()`, a generator — always
+ *   counts as PRESENT, empty or not. Round 8 tried inspecting it (spreading
+ *   the iterator to check), which reads correctly here but then hands React
+ *   the same, now-exhausted iterator to render — React gets nothing, so a
+ *   non-empty generator silently produced an empty `<label>` and suppressed
+ *   the control's own `aria-label`: this predicate's own bug, reintroduced by
+ *   the fix for it. You cannot ask a one-shot iterator whether it is empty
+ *   without spending it, so this only inspects containers that survive being
+ *   read twice (arrays, `Set`, a `Map` itself — iterating any of them fresh
+ *   each time, unlike the iterator `.values()`/`.entries()` RETURN) and
+ *   otherwise falls back to `Boolean(n)`, which is `true` for any non-null
+ *   object — same as an untouched iterator reaching React does. Nobody
+ *   passes `label={someGenerator()}` on purpose; React itself dev-warns on
+ *   both iterator and `Map` children regardless ("Using Maps as children is
+ *   not supported").
  */
 export function hasContent(n: ReactNode): boolean {
-  // `Array.isArray` alone missed any OTHER iterable `ReactNode` legally
-  // allows — `Set`, `Map.prototype.values()`, a generator — which typechecks
-  // with no cast and reproduced the exact empty-container bug this predicate
-  // exists to close. `Symbol.iterator in n` catches arrays too, so this
-  // subsumes the old `Array.isArray` branch rather than sitting beside it.
-  if (n != null && typeof n === 'object' && Symbol.iterator in n) {
+  // Only RE-ITERABLE containers are inspected — reading them (`[...n]`) to
+  // check for content doesn't consume what React later reads to render them.
+  // A one-shot iterator (generator, `Map.values()`/`.entries()`) is
+  // deliberately NOT matched here — see the "Known, deliberate limits" doc
+  // above. `n instanceof Map` catches a Map passed DIRECTLY (its default
+  // iteration yields `[k, v]` tuples — themselves arrays of ReactNode-legal
+  // values, so this recurses into them correctly), which is a real,
+  // type-legal, re-iterable input distinct from its one-shot `.values()`.
+  if (Array.isArray(n) || n instanceof Set || n instanceof Map) {
     return [...(n as Iterable<ReactNode>)].some(hasContent);
   }
   if (isValidElement(n) && n.type === Fragment) {

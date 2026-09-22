@@ -20,41 +20,74 @@ describe('hasContent — Boolean(n) fallback (unchanged from round 7)', () => {
   });
 
   it('is true for a truthy scalar or a real element', () => {
+    // hasContent(true) === true even though React renders a bare boolean
+    // child as nothing — same as `Boolean(x)` everywhere else in this
+    // library (round-1 `error={cond && msg}` relies on the same rule the
+    // other way). Not chased: a top-level `label={true}` is not a shape
+    // anyone writes, unlike the empty-container cases this predicate exists
+    // to close.
     expect(hasContent(true)).toBe(true);
     expect(hasContent('x')).toBe(true);
-    expect(hasContent(<span />)).toBe(true);
+    expect(hasContent(<div />)).toBe(true);
   });
 });
 
-describe('hasContent — iterables (round 8: any iterable, not just Array.isArray)', () => {
-  it('is false for an empty array, and for an array of only-falsy elements', () => {
+describe('hasContent — iterables: only RE-ITERABLE containers are inspected (round 9)', () => {
+  it('is false for an empty array, Set, or Map, and for one of only-falsy elements', () => {
     expect(hasContent([])).toBe(false);
     expect(hasContent([false, false])).toBe(false);
     expect(hasContent([0, NaN, ''])).toBe(false);
+    expect(hasContent(new Set())).toBe(false);
+    expect(hasContent(new Map())).toBe(false);
   });
 
-  it('is true for an array containing one truthy element, however deep', () => {
+  it('is true for an array, Set, or Map containing one truthy element, however deep', () => {
     expect(hasContent(['x'])).toBe(true);
     expect(hasContent([false, 'x'])).toBe(true);
     expect(hasContent([[]])).toBe(false);
     expect(hasContent([['x']])).toBe(true);
+    expect(hasContent(new Set(['x']))).toBe(true);
+    // A Map used DIRECTLY (not `.values()`) is re-iterable, unlike the
+    // one-shot iterator its own `.values()`/`.entries()` returns — its
+    // default iteration yields `[k, v]` tuples, themselves arrays this
+    // recurses into. React dev-warns rendering a Map directly regardless
+    // ("Using Maps as children is not supported"), same caveat as an
+    // iterator, but it IS type-legal input and this predicate handles it
+    // correctly if it's passed.
+    expect(hasContent(new Map([['k', 'x']]))).toBe(true);
   });
 
-  it('is false for an empty non-array iterable — Set, Map values, a generator (Important 1)', () => {
-    expect(hasContent(new Set())).toBe(false);
-    expect(hasContent(new Map().values())).toBe(false);
+  it('inspecting an array or Set does not consume it — reading it twice still sees the same content', () => {
+    // The round-9 regression, at the type level this fix protects against:
+    // a re-iterable container must survive `hasContent` reading it AND React
+    // later rendering it. Assert both reads independently agree.
+    const arr = ['x'];
+    expect(hasContent(arr)).toBe(true);
+    expect(hasContent(arr)).toBe(true);
+    const set = new Set(['x']);
+    expect(hasContent(set)).toBe(true);
+    expect(hasContent(set)).toBe(true);
+  });
+
+  it('a one-shot iterator (generator, Map.values()) is ALWAYS present, empty or not — the documented, unavoidable limit', () => {
+    // Round 8 spread the iterator to inspect it, correctly detecting an
+    // EMPTY one-shot iterator as absent — but spreading DRAINS it, so React
+    // then rendered the same, now-exhausted iterator and got nothing: a
+    // non-empty generator silently produced an empty <label>. Regression,
+    // reverted. A one-shot iterator can't be probed without being spent, so
+    // it's not inspected at all here — it falls to `Boolean(n)`, `true` for
+    // any object, matching what an untouched iterator does when React reads
+    // it. See a RENDER-level (not predicate-level) test of this in
+    // Field.test.tsx / SettingRow.test.tsx — a predicate-only assertion
+    // can't see the class of bug this was.
     expect(
       hasContent(
         (function* () {
           /* empty */
         })(),
       ),
-    ).toBe(false);
-  });
-
-  it('is true for a non-empty non-array iterable', () => {
-    expect(hasContent(new Set(['x']))).toBe(true);
-    expect(hasContent(new Map([['k', 'x']]).values())).toBe(true);
+    ).toBe(true);
+    expect(hasContent(new Map().values())).toBe(true);
     expect(
       hasContent(
         (function* () {
@@ -62,14 +95,17 @@ describe('hasContent — iterables (round 8: any iterable, not just Array.isArra
         })(),
       ),
     ).toBe(true);
+    expect(hasContent(new Map([['k', 'x']]).values())).toBe(true);
   });
 });
 
 describe('hasContent — Fragment recursion (Important 2: both conjuncts pinned)', () => {
   it('is false for an empty fragment, however nested', () => {
+    // (A keyed `<Fragment key="k" />` isn't asserted separately — a key
+    // never reaches `props.children`, so it can't fail independently of the
+    // plain `<Fragment />` case above.)
     expect(hasContent(<></>)).toBe(false);
     expect(hasContent(<Fragment />)).toBe(false);
-    expect(hasContent(<Fragment key="k" />)).toBe(false);
     expect(
       hasContent(
         <>
