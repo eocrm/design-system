@@ -294,13 +294,22 @@ Create `packages/design-system/src/components/SettingRow/SettingRow.test.tsx`:
 import { createRef } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { Input } from '../Input';
 import { SettingRow } from './SettingRow';
+
+// Auto-wired cases use the DS <Input>, not a raw <input>: the wiring injects
+// the DS `invalid` prop, and it is the CONTROL that maps `invalid` →
+// `aria-invalid` (Input.tsx:111). A raw <input> would receive a literal
+// `invalid` attribute and no `aria-invalid`, so the error test would fail and
+// the rest would render a non-DOM attribute. Native elements belong in the
+// render-prop form — which is exactly what <Field> documents, and what the
+// render-prop case below exercises.
 
 describe('SettingRow', () => {
   it('renders with the minimum props', () => {
     render(
       <SettingRow label="Seats">
-        <input type="number" defaultValue={50} />
+        <Input type="number" defaultValue={50} />
       </SettingRow>,
     );
     expect(screen.getByRole('spinbutton', { name: 'Seats' })).toBeInTheDocument();
@@ -310,7 +319,7 @@ describe('SettingRow', () => {
     const user = userEvent.setup();
     render(
       <SettingRow label="Seats">
-        <input type="number" />
+        <Input type="number" />
       </SettingRow>,
     );
     await user.click(screen.getByText('Seats'));
@@ -320,7 +329,7 @@ describe('SettingRow', () => {
   it('keeps labelAdornment out of the control accessible name', () => {
     render(
       <SettingRow label="Seats" labelAdornment={<span>From plan</span>}>
-        <input type="number" />
+        <Input type="number" />
       </SettingRow>,
     );
     // The badge renders...
@@ -332,7 +341,7 @@ describe('SettingRow', () => {
   it('links the description via aria-describedby', () => {
     render(
       <SettingRow label="Seats" description="Member seats included for this tenant">
-        <input type="number" />
+        <Input type="number" />
       </SettingRow>,
     );
     expect(screen.getByRole('spinbutton')).toHaveAccessibleDescription(
@@ -343,7 +352,7 @@ describe('SettingRow', () => {
   it('error takes over aria-describedby and sets aria-invalid', () => {
     render(
       <SettingRow label="Seats" description="Helper text" error="Must be at least 1">
-        <input type="number" />
+        <Input type="number" />
       </SettingRow>,
     );
     const control = screen.getByRole('spinbutton');
@@ -360,7 +369,7 @@ describe('SettingRow', () => {
   it('required injects required onto the control', () => {
     render(
       <SettingRow label="Seats" required>
-        <input type="number" />
+        <Input type="number" />
       </SettingRow>,
     );
     expect(screen.getByRole('spinbutton')).toBeRequired();
@@ -369,7 +378,7 @@ describe('SettingRow', () => {
   it('renders trailing content after the control', () => {
     render(
       <SettingRow label="Seats" trailing={<button type="button">Reset</button>}>
-        <input type="number" />
+        <Input type="number" />
       </SettingRow>,
     );
     expect(screen.getByRole('button', { name: 'Reset' })).toBeInTheDocument();
@@ -378,7 +387,7 @@ describe('SettingRow', () => {
   it('renders footer content', () => {
     render(
       <SettingRow label="Seats" footer={<p>0 of 50 included this month</p>}>
-        <input type="number" />
+        <Input type="number" />
       </SettingRow>,
     );
     expect(screen.getByText('0 of 50 included this month')).toBeInTheDocument();
@@ -387,7 +396,7 @@ describe('SettingRow', () => {
   it.each(['xs', 'sm', 'md', 'full'] as const)('controlWidth=%s sets the data attribute', (w) => {
     const { container } = render(
       <SettingRow label="Seats" controlWidth={w}>
-        <input type="number" />
+        <Input type="number" />
       </SettingRow>,
     );
     expect(container.querySelector('[data-control-width]')).toHaveAttribute(
@@ -409,7 +418,7 @@ describe('SettingRow', () => {
   it('honours an explicit id', () => {
     render(
       <SettingRow label="Seats" id="seats-control">
-        <input type="number" />
+        <Input type="number" />
       </SettingRow>,
     );
     expect(screen.getByRole('spinbutton')).toHaveAttribute('id', 'seats-control');
@@ -419,7 +428,7 @@ describe('SettingRow', () => {
     const ref = createRef<HTMLDivElement>();
     render(
       <SettingRow ref={ref} label="Seats">
-        <input type="number" />
+        <Input type="number" />
       </SettingRow>,
     );
     expect(ref.current).toHaveAttribute('data-setting-row');
@@ -429,7 +438,7 @@ describe('SettingRow', () => {
     const ref = createRef<HTMLDivElement>();
     render(
       <SettingRow ref={ref} label="Seats" className="custom">
-        <input type="number" />
+        <Input type="number" />
       </SettingRow>,
     );
     expect(ref.current).toHaveClass('custom');
@@ -815,10 +824,10 @@ describe('SettingRow.List', () => {
     render(
       <SettingRow.List>
         <SettingRow label="Seats">
-          <input type="number" />
+          <Input type="number" />
         </SettingRow>
         <SettingRow label="API calls">
-          <input type="number" />
+          <Input type="number" />
         </SettingRow>
       </SettingRow.List>,
     );
@@ -830,7 +839,7 @@ describe('SettingRow.List', () => {
     const { container } = render(
       <SettingRow.List>
         <SettingRow label="Seats">
-          <input type="number" />
+          <Input type="number" />
         </SettingRow>
       </SettingRow.List>,
     );
@@ -843,7 +852,7 @@ describe('SettingRow.List', () => {
     const { container } = render(
       <SettingRow.List dividers>
         <SettingRow label="Seats">
-          <input type="number" />
+          <Input type="number" />
         </SettingRow>
       </SettingRow.List>,
     );
@@ -857,7 +866,7 @@ describe('SettingRow.List', () => {
     const { container } = render(
       <SettingRow.List spacing={s}>
         <SettingRow label="Seats">
-          <input type="number" />
+          <Input type="number" />
         </SettingRow>
       </SettingRow.List>,
     );
@@ -869,7 +878,7 @@ describe('SettingRow.List', () => {
     render(
       <SettingRow.List ref={ref} labelWidth="18rem">
         <SettingRow label="Seats">
-          <input type="number" />
+          <Input type="number" />
         </SettingRow>
       </SettingRow.List>,
     );
@@ -881,7 +890,7 @@ describe('SettingRow.List', () => {
     render(
       <SettingRow.List ref={ref}>
         <SettingRow label="Seats">
-          <input type="number" />
+          <Input type="number" />
         </SettingRow>
       </SettingRow.List>,
     );
@@ -893,7 +902,7 @@ describe('SettingRow.List', () => {
     render(
       <SettingRow.List ref={ref} collapseBelow={bp}>
         <SettingRow label="Seats">
-          <input type="number" />
+          <Input type="number" />
         </SettingRow>
       </SettingRow.List>,
     );
@@ -909,7 +918,7 @@ describe('SettingRow.List', () => {
     render(
       <SettingRow.List ref={ref} className="custom">
         <SettingRow label="Seats">
-          <input type="number" />
+          <Input type="number" />
         </SettingRow>
       </SettingRow.List>,
     );
@@ -1030,10 +1039,12 @@ export interface SettingRowListProps extends HTMLAttributes<HTMLDivElement> {
   children: ReactNode;
 }
 
+// Same shape as Grid's `collapseClass` (Grid.tsx:143) — no non-null
+// assertions: types/scss-modules.d.ts types a CSS-module member as `string`.
 const COLLAPSE_CLASS: Record<CollapseBreakpoint, string> = {
-  sm: styles.collapseSm!,
-  md: styles.collapseMd!,
-  lg: styles.collapseLg!,
+  sm: styles.collapseSm,
+  md: styles.collapseMd,
+  lg: styles.collapseLg,
 };
 
 /**
@@ -1083,9 +1094,10 @@ const SettingRowList = forwardRef<HTMLDivElement, SettingRowListProps>(function 
       data-spacing={spacing}
       data-dividers={dividers ? 'true' : undefined}
       className={clsx(styles.list, styles.collapsible, COLLAPSE_CLASS[collapseBelow], className)}
+      // Custom-property-in-style idiom copied from Grid.tsx:204.
       style={
         labelWidth != null
-          ? ({ ...style, '--setting-row-label-width': labelWidth } as CSSProperties)
+          ? { ...(style as CSSProperties), ['--setting-row-label-width' as string]: labelWidth }
           : style
       }
       {...rest}
@@ -1096,17 +1108,27 @@ const SettingRowList = forwardRef<HTMLDivElement, SettingRowListProps>(function 
 });
 ```
 
-Finally, attach it — place this **after** both `forwardRef` definitions, at the bottom of the file:
+Finally, attach it with `Object.assign`, which is the repo's compound-component idiom (`DefinitionList.tsx:238` attaches `.Item` / `.Term` / `.Description` exactly this way). Do NOT use a cast-and-mutate.
+
+That means Task 2's `export const SettingRow = forwardRef(...)` becomes an unexported root:
+
+1. Rename Task 2's declaration from `export const SettingRow = forwardRef<HTMLDivElement, SettingRowProps>(function SettingRow(` to `const SettingRowRoot = forwardRef<HTMLDivElement, SettingRowProps>(function SettingRow(` — drop the `export`, keep the inner function name.
+2. Add display names next to the two declarations, matching `DefinitionList`:
 
 ```tsx
-type SettingRowComponent = typeof SettingRow & { List: typeof SettingRowList };
-
-(SettingRow as SettingRowComponent).List = SettingRowList;
-
-export type { SettingRowComponent };
+SettingRowRoot.displayName = 'SettingRow';
+SettingRowList.displayName = 'SettingRowList';
 ```
 
-If that cast reads awkwardly against the repo's other compound components, check how `DefinitionList` attaches `.Term` / `.Description` (`src/components/DefinitionList/DefinitionList.tsx`) and match that pattern exactly instead — consistency beats this particular spelling.
+3. At the bottom of the file:
+
+```tsx
+export const SettingRow = Object.assign(SettingRowRoot, {
+  List: SettingRowList,
+});
+```
+
+`SettingRowList` itself stays unexported — it is reached only as `SettingRow.List`, like `DefinitionList.Term`. Its props type IS exported (`SettingRowListProps`), so consumers can type a wrapper.
 
 - [ ] **Step 5: Update the barrel**
 
