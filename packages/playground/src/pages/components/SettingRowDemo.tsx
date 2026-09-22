@@ -42,16 +42,31 @@ export function SettingRowDemo() {
       <Example
         title="A list of rows"
         description="Every row resolves the same label-column length, so the controls line up. The List owns the rhythm and the dividers."
-        code={`import { Input, Select, SettingRow } from '@eocrm/design-system';
+        code={`import { useState } from 'react';
+import { Input, Select, SettingRow } from '@eocrm/design-system';
+
+const CURRENCIES = [
+  { value: 'usd', label: 'US Dollar (USD)' },
+  { value: 'eur', label: 'Euro (EUR)' },
+  { value: 'gbp', label: 'British Pound (GBP)' },
+];
 
 export function Demo() {
+  const [seats, setSeats] = useState('50');
+  const [currency, setCurrency] = useState('usd');
+
   return (
     <SettingRow.List dividers labelWidth="18rem">
       <SettingRow label="Seats" description="Member seats included for this tenant" controlWidth="xs">
-        <Input type="number" />
+        <Input type="number" value={seats} onChange={(e) => setSeats(e.target.value)} />
       </SettingRow>
       <SettingRow label="Default currency" description="Currency preselected for new records">
-        <Select options={currencies} value={currency} onChange={setCurrency} clearable={false} />
+        <Select
+          options={CURRENCIES}
+          value={currency}
+          onChange={(v) => setCurrency(v as string)}
+          clearable={false}
+        />
       </SettingRow>
     </SettingRow.List>
   );
@@ -79,9 +94,18 @@ export function Demo() {
       <Example
         title="Adornments — label, trailing, footer"
         description="labelAdornment sits outside the <label> so the badge never joins the control's accessible name. trailing acts on the control; footer carries the usage meter."
-        code={`import { Badge, Button, Input, Progress, Select, SettingRow, Stack, Text } from '@eocrm/design-system';
+        code={`import { useState } from 'react';
+import { Badge, Button, Input, Progress, Select, SettingRow, Stack, Text } from '@eocrm/design-system';
+
+const MODES = [
+  { value: 'hard', label: 'Hard limit' },
+  { value: 'metered', label: 'Metered' },
+];
 
 export function Demo() {
+  const [seats, setSeats] = useState('50');
+  const [mode, setMode] = useState('metered');
+
   return (
     <SettingRow.List dividers labelWidth="18rem">
       <SettingRow
@@ -93,9 +117,9 @@ export function Demo() {
           <>
             <Select
               size="sm"
-              options={modes}
+              options={MODES}
               value={mode}
-              onChange={setMode}
+              onChange={(v) => setMode(v as string)}
               clearable={false}
               aria-label="Seats limit mode"
             />
@@ -112,7 +136,7 @@ export function Demo() {
           </Stack>
         }
       >
-        <Input type="number" />
+        <Input type="number" value={seats} onChange={(e) => setSeats(e.target.value)} />
       </SettingRow>
     </SettingRow.List>
   );
@@ -163,9 +187,11 @@ export function Demo() {
       <Example
         title="Required + live error"
         description="error replaces the description, links the message, and flips the control invalid — same contract as Field. Set seats to 0."
-        code={`import { Input, SettingRow } from '@eocrm/design-system';
+        code={`import { useState } from 'react';
+import { Input, SettingRow } from '@eocrm/design-system';
 
 export function Demo() {
+  const [seats, setSeats] = useState('50');
   const seatsError = Number(seats) < 1 ? 'Seats must be at least 1.' : undefined;
 
   return (
@@ -195,9 +221,12 @@ export function Demo() {
       <Example
         title="Switch as the control"
         description="A Switch self-labels, so pass it without its own label prop and let the row name it."
-        code={`import { SettingRow, Switch } from '@eocrm/design-system';
+        code={`import { useState } from 'react';
+import { SettingRow, Switch } from '@eocrm/design-system';
 
 export function Demo() {
+  const [notify, setNotify] = useState(true);
+
   return (
     <SettingRow label="Email notifications" description="Send a digest when a deal changes stage.">
       <Switch checked={notify} onChange={setNotify} />
