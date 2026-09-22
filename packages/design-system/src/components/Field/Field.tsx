@@ -133,14 +133,16 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
   ref,
 ) {
   const t = useTranslation();
-  const { controlId, labelId, descriptionId, errorId, describedBy, invalid, wire } = useFieldWiring({
-    id,
-    hasLabel: label != null,
-    hasDescription: description != null,
-    hasError: error != null,
-    required,
-    asGroup,
-  });
+  const { controlId, labelId, descriptionId, errorId, describedBy, invalid, wire } = useFieldWiring(
+    {
+      id,
+      hasLabel: label != null,
+      hasDescription: description != null,
+      hasError: error != null,
+      required,
+      asGroup,
+    },
+  );
 
   const control = wire(children);
 
