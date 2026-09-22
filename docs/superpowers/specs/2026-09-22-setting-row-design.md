@@ -96,9 +96,13 @@ export interface SettingRowProps extends Omit<HTMLAttributes<HTMLDivElement>, 'c
   /** Block under the control column — a usage meter, a caveat, a preview. */
   footer?: ReactNode;
   /**
-   * Error message. Replaces `description` in `aria-describedby` and flips the
-   * control to `invalid`. Not announced — see `Field`'s note on #494; the form
-   * owns the submit-time summary.
+   * Error message. Takes over `aria-describedby` and flips the control to
+   * `invalid`. Not announced — see `Field`'s note on #494; the form owns the
+   * submit-time summary.
+   *
+   * Unlike `Field`, the `description` stays VISIBLE alongside it: the two sit
+   * in different columns, so an invalid value is no reason to remove the
+   * explanation of what the setting is. Only the ARIA reference is replaced.
    */
   error?: ReactNode;
   /** Marks the row required: shows `*` and injects `required` onto the control. */
