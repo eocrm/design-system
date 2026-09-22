@@ -172,13 +172,19 @@ describe('SettingRow', () => {
     // can only be verified visually — see SettingRowDemo.tsx Example 2 and
     // the browser-based pre-push review.
     //
-    // What IS real and testable here: SettingRow itself must never wrap
-    // trailing's children individually. Each child stays a direct child of
-    // styles.trailing, so a consumer's own <Constrain> around ONE child
-    // governs only that child. If SettingRow ever introduced a per-child
-    // wrapper (e.g. `Children.map(trailing, (c) => <div>{c}</div>)`), this
-    // assertion would fail and a consumer's <Constrain> fix would stop
-    // working, silently.
+    // What this DOES guarantee: the two trailing children below stay direct
+    // siblings of one shared styles.trailing wrapper, rather than each being
+    // wrapped individually — so a consumer's own <Constrain> around ONE
+    // child governs only that child.
+    //
+    // What it does NOT catch: a `Children.map(trailing, c => <div>{c}</div>)`
+    // -style regression, when `trailing` is passed as a Fragment — the only
+    // pattern documented anywhere in this file, the JSDoc, and AGENTS.md.
+    // Verified directly: `Children.map`/`Children.toArray` treat a Fragment
+    // as ONE opaque child, so that mutation does not change the DOM shape
+    // this test inspects, and this assertion would still pass. Real
+    // per-adornment geometry (does trailing visually wrap internally) needs
+    // an actual layout engine — a browser, not jsdom.
     render(
       <SettingRow
         label="Seats"
