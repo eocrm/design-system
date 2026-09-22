@@ -312,11 +312,10 @@ describe('SettingRow — falsy-but-present optional props (the `cond && value` i
       // toHaveAccessibleDescription('') alone can't tell a DANGLING reference
       // (aria-describedby pointing at an id with no node) from an ABSENT one
       // — both resolve to ''. This is the assertion that actually catches
-      // the wiring (hasDescription) and the render gate (Boolean(description)
-      // at :173) drifting apart: if only the wiring reverted to
-      // `description != null`, aria-describedby would still be set here,
-      // pointing at nothing, while the accessible-description check above
-      // stays green.
+      // the wiring (hasDescription) and the description render gate
+      // drifting apart: if only the wiring reverted to `description != null`,
+      // aria-describedby would still be set here, pointing at nothing, while
+      // the accessible-description check above stays green.
       expect(screen.getByRole('spinbutton')).not.toHaveAttribute('aria-describedby');
     },
   );
@@ -331,6 +330,19 @@ describe('SettingRow — falsy-but-present optional props (the `cond && value` i
       </SettingRow>,
     );
     expect(container.querySelector('[class*="trailing"]')).not.toBeInTheDocument();
+  });
+
+  it('footer=0 renders nothing (not a literal "0")', () => {
+    // footer was previously rendered unguarded — {footer} — so a `0` value
+    // (e.g. a computed remaining-count that happens to be 0) printed a bare
+    // "0" in the control column instead of nothing, unlike every other slot
+    // here.
+    render(
+      <SettingRow label="Seats" footer={0}>
+        <Input type="number" />
+      </SettingRow>,
+    );
+    expect(screen.queryByText('0')).not.toBeInTheDocument();
   });
 });
 

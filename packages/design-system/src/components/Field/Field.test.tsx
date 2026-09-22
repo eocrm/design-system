@@ -282,6 +282,32 @@ describe('Field — falsy-but-present `error` (the `error={cond && msg}` idiom)'
   });
 });
 
+describe('Field — falsy-but-present `description`', () => {
+  // Same hole as the `error` block above, on the other predicate: the wiring
+  // (hasDescription) and the render gate (messageNode's description branch)
+  // compute Boolean(description) independently. Every existing
+  // aria-describedby assertion in this file runs with a truthy description,
+  // so nothing catches the wiring alone drifting back to `!= null` — that
+  // would still set aria-describedby to a descriptionId whose <Text> never
+  // renders, a dangling reference `toHaveAccessibleDescription` can't tell
+  // apart from "no description".
+  it.each([
+    ['false', false],
+    ['an empty string', ''],
+  ])(
+    'description=%s renders no description node and no aria-describedby',
+    (_label, descriptionValue) => {
+      render(
+        <Field label="Email" description={descriptionValue}>
+          <StubControl />
+        </Field>,
+      );
+      const input = screen.getByTestId('control');
+      expect(input).not.toHaveAttribute('aria-describedby');
+    },
+  );
+});
+
 // A NON-labelable control — a div with a role. This is the case Field's
 // `aria-labelledby` injection exists for: `<label for>` names only labelable
 // elements, so for these the id reference is the only naming path there is.
