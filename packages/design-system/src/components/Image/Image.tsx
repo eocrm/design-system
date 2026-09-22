@@ -67,8 +67,10 @@ export interface ImageProps extends Omit<
    * Custom node rendered in place of the default broken-image placeholder when
    * the image fails to load. Overrides the icon + message + retry entirely.
    * This is also the only way to put a control on a failed fixed-`size` image,
-   * whose built-in error tile is icon-only — but you then own making it fit a
-   * 20-40px square.
+   * whose built-in error tile is icon-only. At a fixed `size` the node is
+   * rendered in a slot that fills the box (so it cannot flow outside the
+   * wrapper's clip); fitting your content into those 20-40px is still yours,
+   * and a labelled button does not fit any of them.
    */
   fallback?: ReactNode;
   /**
@@ -132,13 +134,17 @@ const SIZE_CLASS: Record<ImageSize, string> = {
  * `<img>` are intrinsic-ratio hints only, not the rendered size.
  *
  * The error tile comes in two forms. A fluid image (no `size`) shows the icon,
- * a message and a **Retry** button. A fixed-`size` image — `'xs'` / `'sm'` /
+ * a message and a **Retry** button — which assumes a container wide and tall
+ * enough for an `sm` Button; in a very narrow box that button clips the same
+ * way, so give a fluid image real room. A fixed-`size` image — `'xs'` / `'sm'` /
  * `'md'` / `'lg'`, i.e. 20 / 24 / 32 / 40px — shows the **icon alone**, scaled
- * to its box, and is **not retryable**: a square that small cannot hold the
- * message or the button, and the button it used to render sat outside the
- * wrapper's clip, painted nowhere yet still in the tab order (#538). Screen
+ * to its box, and is **not retryable**: none of those squares can hold the
+ * message *and* an `sm` Button, and the button they used to render sat outside
+ * the wrapper's clip, painted nowhere yet still in the tab order (#538). Screen
  * readers still get the failure, from the icon's name. If a failed thumbnail
- * needs a control at those sizes, supply one via `fallback`.
+ * needs a control at those sizes, supply one via `fallback` — it is rendered in
+ * a slot filling the box, so it cannot escape the wrapper, but sizing it to fit
+ * 20-40px is yours.
  *
  * @example
  * // Responsive 16:9 thumbnail
@@ -277,9 +283,33 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
       )}
 
       {state === 'error' &&
-        (fallback ??
-          (size ? (
-            /* Fixed `size` is a 20/24/32/40px square, and the full tile below
+        (fallback != null ? (
+          /* A fallback stands in for the built-in tile, so wherever the box is
+             the wrapper's own it gets the slot the built-in tile has. `.error`
+             is `inset: 0`; a bare child is in FLOW, and when the image is also
+             interactive it flows after `.trigger` (height: 100%) and lands
+             WHOLLY outside the clip — measured at `size="lg"` (box 40..80,
+             fallback 80..105) and again at `aspectRatio="16 / 9"` (fallback
+             starting exactly on the wrapper's bottom edge). That is #538
+             reproduced through the very prop documented as its remedy.
+
+             The slot bounds the fallback to the box. Fitting content INSIDE
+             the box is still the consumer's job — a labelled button is wider
+             than 40px and still clips — and the prop's JSDoc says so.
+
+             Not slotted when the wrapper has NEITHER `size` nor
+             `aspectRatio`: there the wrapper takes its height FROM this child
+             (measured: a 20px-tall fallback gives a 20px-tall wrapper), so
+             pulling it out of flow would collapse the box to zero. That the
+             built-in tile already collapses in that configuration is a
+             separate open defect — not one to widen here. */
+          size !== undefined || aspectRatio !== undefined ? (
+            <span className={styles.fallback}>{fallback}</span>
+          ) : (
+            fallback
+          )
+        ) : size ? (
+          /* Fixed `size` is a 20/24/32/40px square, and the full tile below
                is over 100px tall. At EVERY one of those sizes the Retry button
                landed 23-42px past the wrapper's bottom edge: outside
                `overflow: hidden`, never painted, and still focusable and in
@@ -299,16 +329,16 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
                decorative image that breaks is discoverable there, and the
                sized branch must not be the one place a broken tile is
                silent. */
-            <span className={styles.error}>
-              <ImageOff
-                className={styles.errorIcon}
-                role="img"
-                aria-label={alt ? `${alt}: ${t('image.loadError')}` : t('image.loadError')}
-              />
-            </span>
-          ) : (
-            <span className={styles.error}>
-              {/* `role="img"` moved off the container and onto the ICON.
+          <span className={styles.error}>
+            <ImageOff
+              className={styles.errorIcon}
+              role="img"
+              aria-label={alt ? `${alt}: ${t('image.loadError')}` : t('image.loadError')}
+            />
+          </span>
+        ) : (
+          <span className={styles.error}>
+            {/* `role="img"` moved off the container and onto the ICON.
                   `img` is Children Presentational, so as a container it pruned
                   its own descendants from the accessibility tree — the visible
                   error text and, worse, the Retry button were not exposed at
@@ -328,20 +358,20 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
                   icon goes decorative and the text carries the message alone.
                   Both halves of that hold only while the text is there — see
                   the sized branch above, which has none. */}
-              {alt ? (
-                <ImageOff size={28} role="img" aria-label={alt} />
-              ) : (
-                <ImageOff size={28} aria-hidden />
-              )}
-              <span className={styles.errorText}>{t('image.loadError')}</span>
-              {/* `.retry` exists only to carry the inset focus ring — see the
+            {alt ? (
+              <ImageOff size={28} role="img" aria-label={alt} />
+            ) : (
+              <ImageOff size={28} aria-hidden />
+            )}
+            <span className={styles.errorText}>{t('image.loadError')}</span>
+            {/* `.retry` exists only to carry the inset focus ring — see the
                   rule in Image.module.scss for why an outset one cannot survive
                   this wrapper. */}
-              <Button variant="secondary" size="sm" onClick={retry} className={styles.retry}>
-                {t('image.retry')}
-              </Button>
-            </span>
-          )))}
+            <Button variant="secondary" size="sm" onClick={retry} className={styles.retry}>
+              {t('image.retry')}
+            </Button>
+          </span>
+        ))}
     </span>
   );
 });

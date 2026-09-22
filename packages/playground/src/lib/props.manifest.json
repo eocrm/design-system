@@ -2565,7 +2565,7 @@
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
           "default": "",
-          "description": "Custom node rendered in place of the default broken-image placeholder when\nthe image fails to load. Overrides the icon + message + retry entirely.\nThis is also the only way to put a control on a failed fixed-`size` image,\nwhose built-in error tile is icon-only — but you then own making it fit a\n20-40px square."
+          "description": "Custom node rendered in place of the default broken-image placeholder when\nthe image fails to load. Overrides the icon + message + retry entirely.\nThis is also the only way to put a control on a failed fixed-`size` image,\nwhose built-in error tile is icon-only. At a fixed `size` the node is\nrendered in a slot that fills the box (so it cannot flow outside the\nwrapper's clip); fitting your content into those 20-40px is still yours,\nand a labelled button does not fit any of them."
         },
         {
           "name": "loading",

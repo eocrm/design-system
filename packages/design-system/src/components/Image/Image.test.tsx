@@ -298,10 +298,21 @@ describe('Image — fixed-size error tile is icon-only (#538)', () => {
   // and `overflow: hidden`, so the Retry button was painted nowhere and stayed
   // in the tab order. jsdom paints nothing, so geometry is not assertable here
   // — the assertable invariant is that the control does not EXIST.
+  // Tabbability, not the `disabled` ATTRIBUTE: an element moved to
+  // `aria-disabled` is still in the tab order, and filtering on `disabled`
+  // would pass vacuously the day the trigger changes hands. `tabIndex < 0` is
+  // out of the tab order; `focus()` then decides the rest, so a control that
+  // only LOOKS disabled is still counted.
   function focusables(container: HTMLElement) {
     return Array.from(
-      container.querySelectorAll('a[href], button, input, select, textarea, [tabindex]'),
-    ).filter((el) => !el.hasAttribute('disabled'));
+      container.querySelectorAll<HTMLElement>(
+        'a[href], button, input, select, textarea, [tabindex]',
+      ),
+    ).filter((el) => {
+      if (el.tabIndex < 0) return false;
+      el.focus();
+      return document.activeElement === el;
+    });
   }
 
   it.each(['xs', 'sm', 'md', 'lg'] as const)(
@@ -315,11 +326,11 @@ describe('Image — fixed-size error tile is icon-only (#538)', () => {
   );
 
   it('stays free of focusable content when the sized image is also interactive', () => {
-    // The trigger still renders, but `disabled` in the error state — so the
-    // tile as a whole is still unreachable by Tab.
+    // The trigger still renders, disabled in the error state — so the tile as
+    // a whole is unreachable by Tab. `focusables` decides that by focusing,
+    // not by reading the attribute.
     const { container } = render(<Image src={SRC} alt="A photo" size="lg" onClick={() => {}} />);
     fireEvent.error(getImg(container));
-    expect((container.querySelector('button') as HTMLButtonElement).disabled).toBe(true);
     expect(focusables(container)).toHaveLength(0);
   });
 
@@ -364,12 +375,53 @@ describe('Image — fixed-size error tile is icon-only (#538)', () => {
     expect(focusables(container)).toHaveLength(1);
   });
 
-  it('a custom fallback still wins at a fixed size', () => {
+  it('a custom fallback still wins at a fixed size, inside the positioned slot', () => {
+    // The slot is what keeps a fallback from flowing after the `height: 100%`
+    // trigger and landing wholly outside the wrapper's clip — #538 reached
+    // through the very prop its docs point at. jsdom applies no CSS, so this
+    // pins the hook; the browser measurement is in the report.
     const { container, getByRole } = render(
-      <Image src={SRC} alt="A photo" size="lg" fallback={<button>Report</button>} />,
+      <Image
+        src={SRC}
+        alt="A photo"
+        size="lg"
+        onClick={() => {}}
+        fallback={<button>Report</button>}
+      />,
     );
     fireEvent.error(getImg(container));
-    expect(getByRole('button', { name: 'Report' })).not.toBeNull();
+    const report = getByRole('button', { name: 'Report' });
     expect(container.querySelector('[role="img"]')).toBeNull();
+    const slot = report.parentElement as HTMLElement;
+    expect(slot.className).toMatch(/fallback/);
+    // A sibling of the trigger, not a descendant of it — a control nested in a
+    // disabled button is unreachable, which is the opposite failure.
+    expect((container.querySelector('button') as HTMLElement).contains(report)).toBe(false);
+  });
+
+  it('slots an aspectRatio fallback too — that box is the wrapper’s own', () => {
+    // Same defect as the sized case: with `onClick`, an in-flow fallback flows
+    // after the full-height trigger and starts exactly on the wrapper's bottom
+    // edge. The aspect-ratio box does not depend on this child, so slotting it
+    // costs nothing.
+    const { container, getByRole } = render(
+      <Image src={SRC} alt="A photo" aspectRatio="16 / 9" fallback={<button>Report</button>} />,
+    );
+    fireEvent.error(getImg(container));
+    const slot = getByRole('button', { name: 'Report' }).parentElement as HTMLElement;
+    expect(slot.className).toMatch(/fallback/);
+  });
+
+  it('leaves a boxless fallback in flow, where it still gives the wrapper its height', () => {
+    // Deliberately NOT slotted: with neither `size` nor `aspectRatio` the
+    // wrapper takes its height from this child (measured: a 20px fallback
+    // gives a 20px wrapper), so absolutely positioning it would collapse the
+    // box to zero — a defect tracked separately, not one to widen here.
+    const { container, getByRole } = render(
+      <Image src={SRC} alt="A photo" fallback={<button>Report</button>} />,
+    );
+    fireEvent.error(getImg(container));
+    const slot = getByRole('button', { name: 'Report' }).parentElement as HTMLElement;
+    expect(slot.className).not.toMatch(/fallback/);
   });
 });

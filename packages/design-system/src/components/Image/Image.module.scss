@@ -108,10 +108,24 @@
 // the box it sits in rather than to lucide's attribute: a component-owned
 // intrinsic size like `.wrapper.sizeX` above, not layout (Rule 4 OK). Only the
 // sized branch renders it, so the custom property is always set by one of those
-// four rules.
+// four rules — the `100%` is what happens if that ever stops being true. Without
+// it the declaration would be invalid at computed-value time and the icon would
+// fall back to lucide's own 24px attribute, overflowing xs and sm again.
 .errorIcon {
-  width: var(--image-error-icon-size);
-  height: var(--image-error-icon-size);
+  width: var(--image-error-icon-size, 100%);
+  height: var(--image-error-icon-size, 100%);
+}
+
+// A custom `fallback` REPLACES the built-in tile, so it gets the same slot that
+// tile has. A bare child is in flow, and when the image is also interactive it
+// flows after `.trigger` (height: 100%) and lands entirely outside the
+// wrapper's clip — the #538 defect, reached through the escape hatch documented
+// for it. This bounds the fallback to the box; what the consumer puts inside
+// the box is still theirs to fit. Applied only where the wrapper's height is
+// its own (`size` or `aspectRatio`) — see the comment at the call site.
+.fallback {
+  position: absolute;
+  inset: 0;
 }
 
 // Interactive trigger — a chromeless <button> wrapping the image (interactive /
