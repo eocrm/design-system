@@ -2551,7 +2551,7 @@
           "type": "ImageSize",
           "required": false,
           "default": "",
-          "description": "Render a fixed **square** box of this size (from the shared `--size-*`\nscale: `'xs'` 20 / `'sm'` 24 / `'md'` 32 / `'lg'` 40 px) instead of filling\nthe container's width. Use for dense thumbnails (e.g. a 40px image cell in a\ntable row) so you don't need a consumer-owned fixed-width wrapper. Omit for\nthe default responsive behavior. When set, `aspectRatio` is ignored (the box\nis already square); pair with `objectFit=\"cover\"` to crop."
+          "description": "Render a fixed **square** box of this size (from the shared `--size-*`\nscale: `'xs'` 20 / `'sm'` 24 / `'md'` 32 / `'lg'` 40 px) instead of filling\nthe container's width. Use for dense thumbnails (e.g. a 40px image cell in a\ntable row) so you don't need a consumer-owned fixed-width wrapper. Omit for\nthe default responsive behavior. When set, `aspectRatio` is ignored (the box\nis already square); pair with `objectFit=\"cover\"` to crop. Note that a\nsized image's error tile is icon-only and **not retryable** — see the\ncomponent description."
         },
         {
           "name": "radius",
@@ -2565,7 +2565,7 @@
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
           "default": "",
-          "description": "Custom node rendered in place of the default broken-image placeholder when\nthe image fails to load. Overrides the icon + message + retry entirely."
+          "description": "Custom node rendered in place of the default broken-image placeholder when\nthe image fails to load. Overrides the icon + message + retry entirely.\nThis is also the only way to put a control on a failed fixed-`size` image,\nwhose built-in error tile is icon-only. At a fixed `size` the node is\nrendered in a slot that fills the box (so it cannot flow outside the\nwrapper's clip); fitting your content into those 20-40px is still yours,\nand a labelled button does not fit any of them."
         },
         {
           "name": "loading",

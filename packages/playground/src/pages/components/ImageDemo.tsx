@@ -412,22 +412,41 @@ export function InteractiveThumb() {
 
       <Example
         title="Error + retry"
-        description="A failed load shows the ImageOff placeholder with a Retry button (re-fetches the source)."
-        code={`import { Image } from '@eocrm/design-system';
+        description="A fluid image that fails shows the ImageOff placeholder with a Retry button (re-fetches the source) — assuming a box wide and tall enough for an `sm` Button; a narrow one clips it (#542). A fixed-`size` one shows the icon alone, scaled to its box: none of 20/24/32/40px holds the message *and* an `sm` Button, so the failure is not retryable there. Screen readers still get it, from the icon's name. Need a control? `fallback` replaces the tile and, at a fixed `size`, renders in a slot filling the box — an icon-only Button fits a 40px one; a labelled one does not."
+        code={`import { Image, Stack, Cluster } from '@eocrm/design-system';
 
 const BROKEN = 'https://example.com/does-not-exist.jpg';
 
 export function Demo() {
   return (
-    <div style={{ maxWidth: 360 }}>
-      <Image src={BROKEN} alt="Intentionally broken image" aspectRatio="16 / 9" />
-    </div>
+    <Stack gap="md">
+      <div style={{ maxWidth: 360 }}>
+        <Image src={BROKEN} alt="Intentionally broken image" aspectRatio="16 / 9" />
+      </div>
+      <Cluster gap="sm" align="center">
+        {(['xs', 'sm', 'md', 'lg'] as const).map((s) => (
+          <Image key={s} src={BROKEN} alt="Broken thumbnail" size={s} />
+        ))}
+      </Cluster>
+    </Stack>
   );
 }`}
       >
-        <div style={{ maxWidth: 360 }}>
-          <RetryDemo />
-        </div>
+        <Stack gap="md">
+          <div style={{ maxWidth: 360 }}>
+            <RetryDemo />
+          </div>
+          <Cluster gap="sm" align="center">
+            {(['xs', 'sm', 'md', 'lg'] as const).map((s) => (
+              <Stack key={s} gap="xs" align="center">
+                <Image src={BROKEN} alt="Broken thumbnail" size={s} />
+                <Text size="xs" tone="muted">
+                  {s}
+                </Text>
+              </Stack>
+            ))}
+          </Cluster>
+        </Stack>
       </Example>
 
       <Example

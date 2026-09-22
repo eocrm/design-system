@@ -28,20 +28,6 @@
     "reason": "EmojiPicker's grid cells sit flush against the panel's horizontal edges, so the outset ring's left band on the first column and right band on the last are eaten by a panel that does not scroll horizontally. Inherited from #523's original baseline and NOT re-investigated here: recorded as accepted state rather than as an argued exemption, so anyone closing it should measure it first."
   },
   {
-    "route": "/components/image",
-    "key": "button.Button-module__button.Button-module__secondary.Button-module__sm.Image-module__retry",
-    "band": "left",
-    "issue": 538,
-    "reason": "Image's error-state Retry button is ~55px wide inside a 20-40px overflow:hidden thumbnail wrapper on the tiny-size examples, so most of the BUTTON sits outside its container and all of its inset ring's left band does, in a container that can never scroll to reveal it. Surfaced by #526's scroll-extreme tightening. The defect is a control that does not fit its container \u2014 a layout change to Image's error state, not a gate change."
-  },
-  {
-    "route": "/components/lightbox",
-    "key": "button.Button-module__button.Button-module__secondary.Button-module__sm.Image-module__retry",
-    "band": "left",
-    "issue": 538,
-    "reason": "Image's error-state Retry button is ~55px wide inside a 20-40px overflow:hidden thumbnail wrapper on the tiny-size examples, so most of the BUTTON sits outside its container and all of its inset ring's left band does, in a container that can never scroll to reveal it. Surfaced by #526's scroll-extreme tightening. The defect is a control that does not fit its container \u2014 a layout change to Image's error state, not a gate change."
-  },
-  {
     "route": "/components/person-display",
     "key": "a.Link-module__default.Link-module__link",
     "band": "left",

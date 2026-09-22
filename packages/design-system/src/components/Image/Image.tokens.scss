@@ -27,4 +27,24 @@
   --image-error-fg: var(--color-fg-muted);
   --image-error-gap: var(--space-2);
   --image-error-font-size: var(--font-size-sm);
+
+  // Error icon in the fixed-`size` branch, where the icon IS the tile (#538):
+  // no text, no Retry, so it has to fit INSIDE a 20/24/32/40px box rather than
+  // overflow it the way the fluid tile's 28px icon did at xs and sm. ~60% of
+  // the box, rounded to an even pixel, leaving 4/5/6/8px of clearance per side.
+  // Per-size literals rather than a percentage so the icon lands on whole
+  // pixels at every size (the Switch thumb/track scale does the same).
+  // COUPLED, deliberately and not derived: these are literals while the boxes
+  // above are `var(--size-*)`, which is shared and runtime-overridable, so a
+  // theme that moves the shared scale unpicks the ~60% relationship — an icon
+  // too small on a bigger box, or overflowing a smaller one. Deriving them
+  // (`calc(var(--size-sm) * 0.6)`) would track the scale but give 14.4 / 19.2px
+  // at sm and md, losing exactly the whole-pixel property that is the reason
+  // for the literals. The trade is whole pixels on the default scale over
+  // automatic tracking of a scale nothing in this repo overrides; a theme that
+  // does override it overrides these four too.
+  --image-error-icon-xs: 12px;
+  --image-error-icon-sm: 14px;
+  --image-error-icon-md: 20px;
+  --image-error-icon-lg: 24px;
 }

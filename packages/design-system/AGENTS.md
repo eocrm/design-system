@@ -3144,7 +3144,8 @@ return showPlaceholder ? (
 ```
 
 Robust `<img>`: `Skeleton` while loading, fade-in on load, compact `ImageOff` error
-placeholder with a retry button on failure.
+placeholder on failure — with a retry button when the image is fluid, icon-only when
+it has a fixed `size`.
 
 - `src` / `alt` — required (`alt=""` for decorative).
 - `objectFit`: `cover` (default) | `contain` | `fill` | `none` | `scale-down`.
@@ -3154,10 +3155,12 @@ placeholder with a retry button on failure.
 - `fallback` — custom node shown on error instead of the default placeholder.
 - `loading` defaults to `'lazy'`; `ref` → the `<img>`; `className`/`style` → the wrapper box.
 
+**The error tile depends on `size`.** Without `size` it is icon + message + a **Retry** button — which assumes the box is wide and tall enough for an `sm` Button; squeeze a fluid `Image` into a very narrow or unreserved container and that button clips the same way (#542). With `size` (all four of `xs`/`sm`/`md`/`lg` — 20/24/32/40px) it is the **icon alone**, scaled to the box, and the failure is **not retryable**: none of those squares can hold the message _and_ an `sm` Button, and the one that used to render there sat outside the wrapper's `overflow: hidden`, painted nowhere yet still focusable (#538). A screen reader still gets the failure — the sized icon is named `"{alt}: Image failed to load"` (just the phrase when `alt=""`), where the fluid tile leaves the phrase to its visible text. Need a control on a failed thumbnail at those sizes? Pass `fallback`: at a fixed `size` it renders in a slot filling the box, so it can't escape the wrapper, but sizing it to fit 20-40px is on you.
+
 **When NOT to use:** circular avatars → `<Avatar>`; crop/zoom UI → `<ImageCrop>`; CSS
 backgrounds → `background-image`; icons → lucide / inline SVG.
 
-**Interactive (flush click target):** set `interactive` (or just `onClick`) to render the image inside a chromeless `<button>` (no padding/border/background; DS focus ring on `:focus-visible`) — a thumbnail that opens a preview/lightbox on click/Enter/Space. `ariaLabel` names the trigger (defaults to `alt`). The broken-image error state is non-interactive (its retry control takes over); `ref` still forwards to the `<img>`.
+**Interactive (flush click target):** set `interactive` (or just `onClick`) to render the image inside a chromeless `<button>` (no padding/border/background; DS focus ring on `:focus-visible`) — a thumbnail that opens a preview/lightbox on click/Enter/Space. `ariaLabel` names the trigger (defaults to `alt`). The broken-image error state is non-interactive (the fluid tile's retry control takes over; a sized tile has no control at all); `ref` still forwards to the `<img>`.
 
 ```tsx
 <Image
@@ -3808,7 +3811,7 @@ The rule the library follows, so you can predict any component:
 </div>
 ```
 
-Known gaps: **none currently open**, with one boundary case worth stating. `Image`'s error tile is DISCOVERABLE but not announced: the failure is visible text in the accessible tree, reachable in browse mode, and the icon is named by `alt` alone. It is deliberately not folded into the name — that made a reader hear the sentence twice — and deliberately not a live region, because an image failing is not worth interrupting for. If your case needs it to interrupt, that announcement is yours. The three that stood here — `ConfirmationPopover` while pending (#497), `FileUpload` per-file failure and its `pending` state (#502), and `Select`'s async loading/error rows (#495) — all announce for themselves now, so do NOT wrap them. `FileUpload`'s `uploading` state still carries a `Progress` that is readable on focus rather than announced; don't wrap that either. Assume nothing about a component not named in **this list** — every component appears somewhere on this page, so the list, not the page, is the boundary. Check the component's own JSDoc. `Field`'s validation errors are covered above — documented behaviour, not an oversight.
+Known gaps: **none currently open**, with one boundary case worth stating. A fluid `Image`'s error tile is DISCOVERABLE but not announced: the failure is visible text in the accessible tree, reachable in browse mode, and the icon is named by `alt` alone. It is deliberately not folded into the name — that made a reader hear the sentence twice — and deliberately not a live region, because an image failing is not worth interrupting for. A fixed-`size` `Image` renders no text (#538), so there the failure IS folded into the icon's name; still discoverable, still not announced. If your case needs it to interrupt, that announcement is yours. The three that stood here — `ConfirmationPopover` while pending (#497), `FileUpload` per-file failure and its `pending` state (#502), and `Select`'s async loading/error rows (#495) — all announce for themselves now, so do NOT wrap them. `FileUpload`'s `uploading` state still carries a `Progress` that is readable on focus rather than announced; don't wrap that either. Assume nothing about a component not named in **this list** — every component appears somewhere on this page, so the list, not the page, is the boundary. Check the component's own JSDoc. `Field`'s validation errors are covered above — documented behaviour, not an oversight.
 
 One consequence for your tests: components that own a region expose `role="status"`, so `getByRole('status')` on a page containing a `Switch`, `StatusMenu` or `DataTable` may now match more than one element. Scope the query, or select by the text you expect.
 

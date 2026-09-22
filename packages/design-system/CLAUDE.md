@@ -213,11 +213,21 @@ simply what that element is — so it belongs in the name, and `Lightbox` folds
 it in. Ask what is true a minute later, not what happened.
 
 `Image` is the instructive exception, and it shows the rule has a second half.
-Its error tile renders the failure as VISIBLE TEXT beside the icon, so folding
-the same sentence into the icon's name made a reader hear it twice in a row.
-Where the state is already in the accessible tree as content, the name must not
-repeat it — `Lightbox` folds it in precisely because its text is a CHILD of the
-`role="img"`, which children-presentational prunes. Same rule, opposite markup.
+A FLUID `Image`'s error tile renders the failure as VISIBLE TEXT beside the
+icon, so folding the same sentence into the icon's name made a reader hear it
+twice in a row. Where the state is already in the accessible tree as content,
+the name must not repeat it — `Lightbox` folds it in precisely because its text
+is a CHILD of the `role="img"`, which children-presentational prunes. Same rule,
+opposite markup.
+
+**The carve-out is conditioned on that text, so it inverts where the text is
+gone.** A fixed-`size` `Image` renders the icon ALONE — none of 20/24/32/40px holds the
+message AND an `sm` Button, and the button it used to render was painted outside
+the wrapper's clip while staying in the tab order (#538). With no text to carry it,
+that tile names the icon `"{alt}: {failure}"` (the phrase alone when `alt=""`),
+exactly the fold forbidden a paragraph above. Both branches follow the same
+rule: name it unless content already says it. Do not "fix" the sized fold back
+to bare `alt` — that is silence, not de-duplication.
 
 **Tiebreaker: can the element still be REACHED after the moment passes?** Not
 "will anything announce it" — that is circular, since it depends on the choice
