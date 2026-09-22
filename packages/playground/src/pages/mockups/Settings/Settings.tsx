@@ -1,15 +1,13 @@
-import { useState, type ReactNode } from 'react';
+import { useState, type ReactElement } from 'react';
 import { RotateCcw, ScrollText } from 'lucide-react';
 import {
   Badge,
   Button,
   Card,
   Code,
-  Constrain,
   Input,
   Page,
   PageHeader,
-  Progress,
   Select,
   SettingRow,
   Stack,
@@ -48,7 +46,7 @@ function controlFor(
   setting: SettingDef,
   value: unknown,
   onChange: (next: unknown) => void,
-): ReactNode {
+): ReactElement {
   switch (setting.type) {
     case 'number':
       return (
@@ -109,16 +107,7 @@ function SectionCard({ section }: { section: (typeof settingsSections)[number] }
               <SettingRow
                 key={setting.key}
                 label={setting.label}
-                labelAdornment={
-                  <>
-                    {setting.type === 'number' && setting.source && (
-                      <Badge tone="neutral" size="sm">
-                        {setting.source}
-                      </Badge>
-                    )}
-                    <Code tone="muted">{setting.key}</Code>
-                  </>
-                }
+                labelAdornment={<Code tone="muted">{setting.key}</Code>}
                 description={setting.description}
                 controlWidth={setting.type === 'number' ? 'xs' : 'auto'}
                 trailing={
@@ -154,22 +143,6 @@ function SectionCard({ section }: { section: (typeof settingsSections)[number] }
                       </>
                     )}
                   </>
-                }
-                footer={
-                  setting.type === 'number' && setting.used !== undefined ? (
-                    <Constrain maxWidth="sm">
-                      <Stack gap="xs">
-                        <Progress
-                          value={setting.used}
-                          max={Number(value)}
-                          aria-label={`${setting.label} usage`}
-                        />
-                        <Text as="span" size="xs" tone="muted">
-                          {setting.used} of {String(value)} used.
-                        </Text>
-                      </Stack>
-                    </Constrain>
-                  ) : undefined
                 }
               >
                 {controlFor(setting, value, (next) =>
