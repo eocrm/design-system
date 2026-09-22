@@ -793,7 +793,11 @@ A switch whose toggle triggers an **immediate action** — persisting to a serve
     }
     description="Member seats included for this tenant"
     controlWidth="xs"
-    trailing={<Select size="sm" options={modes} value={mode} onChange={setMode} />}
+    trailing={
+      <Constrain width="xs">
+        <Select options={modes} value={mode} onChange={setMode} />
+      </Constrain>
+    }
     footer={
       <Constrain maxWidth="sm">
         <Progress value={used} max={included} aria-label="Seats usage" />
@@ -808,8 +812,9 @@ A switch whose toggle triggers an **immediate action** — persisting to a serve
 - Label (+ `labelAdornment`) and `description` in a shared LEFT column; control (+ `trailing`) and `footer` in the right. Wiring is `<Field>`'s — same `id` / `aria-labelledby` / `aria-describedby` / `invalid`, same render-prop `field` object.
 - `error` takes over only the `aria-describedby` REFERENCE and flips the control invalid — unlike `<Field>`, the `description` stays VISIBLE, since the two sit in different columns.
 - `labelAdornment` renders OUTSIDE the `<label>` on purpose: label content becomes the control's accessible name, so a badge inside makes the input announce "Seats From plan".
-- `controlWidth` (`auto` default, `xs`/`sm`/`md`) caps the control only — `trailing` is unaffected and stays on the same line. ❌ Don't wrap the control in `<Constrain>` — that makes `Constrain` the element the row wires, silently stripping the control's `id` and `aria-*`.
-- `trailing` sizes itself against the adornment group (a `width: 100%` DS control like `Select` there no longer claims the whole row), but `footer` fills the entire control column uncapped. Wrap a meter in `<Constrain maxWidth="sm">` as shown above — safe for both `trailing` and `footer`, neither is the wired child.
+- `controlWidth` (`auto` default, `xs`/`sm`/`md`) caps the control only, and it does NOT apply to `trailing` — the two are unrelated. ❌ Don't wrap the control in `<Constrain>` — that makes `Constrain` the element the row wires, silently stripping the control's `id` and `aria-*`.
+- `trailing` is a flex group sized to its content, not the whole row — but a control that sizes ITSELF to `width: 100%` (`Select`, `Input`, `Textarea`) still fills that entire group and pushes any other adornment (a badge, a button) onto a second line. Wrap that one child in `<Constrain width="xs">` as shown above — safe here, `trailing` is not the wired child. Same idea for `footer`, which fills the whole control column uncapped: wrap a meter in `<Constrain maxWidth="sm">`.
+- ❌ Mixing control sizes in one row — a `size="sm"` adornment beside a default-`md` control renders two different heights on the same line.
 - `<SettingRow.List>` owns the shared label column (`labelWidth`, default `16rem`), `spacing` (`sm`/`md`/`lg`, default `md`), `dividers` (default `false`) and `collapseBelow` (default `'sm'` — a container query on the list's own box that stacks each row). **Collapse only works inside a List** — a standalone `<SettingRow>` never stacks at any width.
 - ❌ Read-only key/value → `<DefinitionList>`. ❌ An ordinary form field → `<Field>`. ❌ `margin` on a row to space rows → that is the List.
 

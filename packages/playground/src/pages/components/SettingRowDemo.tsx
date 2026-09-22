@@ -116,14 +116,15 @@ export function Demo() {
         controlWidth="xs"
         trailing={
           <>
-            <Select
-              size="sm"
-              options={MODES}
-              value={mode}
-              onChange={(v) => setMode(v as string)}
-              clearable={false}
-              aria-label="Seats limit mode"
-            />
+            <Constrain width="xs">
+              <Select
+                options={MODES}
+                value={mode}
+                onChange={(v) => setMode(v as string)}
+                clearable={false}
+                aria-label="Seats limit mode"
+              />
+            </Constrain>
             <Badge tone="warning" size="sm">Overridden</Badge>
             <Button variant="ghost" size="sm">Reset to default</Button>
           </>
@@ -157,14 +158,15 @@ export function Demo() {
             controlWidth="xs"
             trailing={
               <>
-                <Select
-                  size="sm"
-                  options={MODES}
-                  value={mode}
-                  onChange={(v) => setMode(v as string)}
-                  clearable={false}
-                  aria-label="Seats limit mode"
-                />
+                <Constrain width="xs">
+                  <Select
+                    options={MODES}
+                    value={mode}
+                    onChange={(v) => setMode(v as string)}
+                    clearable={false}
+                    aria-label="Seats limit mode"
+                  />
+                </Constrain>
                 <Badge tone="warning" size="sm">
                   Overridden
                 </Badge>

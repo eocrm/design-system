@@ -25,7 +25,14 @@ export interface SettingRowProps extends Omit<HTMLAttributes<HTMLDivElement>, 'c
    * same line. Default `'auto'` — the control's intrinsic width.
    */
   controlWidth?: SettingRowControlWidth;
-  /** Content after the control on the same line — a mode select, a state badge, a reset button. */
+  /**
+   * Content after the control on the same line — a mode select, a state
+   * badge, a reset button. `controlWidth` does NOT apply here — it only caps
+   * the main control. A control that sizes itself to `width: 100%` (`Select`,
+   * `Input`, `Textarea`) fills the ENTIRE trailing group and pushes any other
+   * adornment onto a second line; wrap it in `<Constrain width="xs">` (or
+   * another named step) to size it instead.
+   */
   trailing?: ReactNode;
   /**
    * Block under the control column — a usage meter, a caveat, a preview.
@@ -75,7 +82,11 @@ export interface SettingRowProps extends Omit<HTMLAttributes<HTMLDivElement>, 'c
  *     labelAdornment={<Badge tone="neutral" size="sm">From plan</Badge>}
  *     description="Member seats included for this tenant"
  *     controlWidth="xs"
- *     trailing={<Select size="sm" options={modes} value={mode} onChange={setMode} />}
+ *     trailing={
+ *       <Constrain width="xs">
+ *         <Select options={modes} value={mode} onChange={setMode} />
+ *       </Constrain>
+ *     }
  *     footer={
  *       <Constrain maxWidth="sm">
  *         <Progress value={0} max={50} aria-label="Seats usage" />
@@ -116,6 +127,8 @@ export interface SettingRowProps extends Omit<HTMLAttributes<HTMLDivElement>, 'c
  *   settings row — the first flings the control to the far edge of a wide
  *   card, the second leaves every row's control at a different x.
  * - ❌ `margin` on a row to separate rows — that is `<SettingRow.List>`'s job.
+ * - ❌ Mixing control sizes within one row — a `size="sm"` adornment beside a
+ *   default-`md` control renders two different heights on the same line.
  */
 const SettingRowRoot = forwardRef<HTMLDivElement, SettingRowProps>(function SettingRow(
   {

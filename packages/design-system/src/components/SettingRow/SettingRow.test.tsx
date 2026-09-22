@@ -157,6 +157,51 @@ describe('SettingRow', () => {
     expect(trailingWrapper.className).toMatch(/trailing/i);
   });
 
+  it("renders every trailing child as a plain, unwrapped sibling — sizing ONE of them (e.g. wrapping a Select in Constrain) is entirely the consumer's job", () => {
+    // The bug this guards: a bare width:100% control inside `trailing`
+    // (e.g. an un-Constrain'd `Select`) fills the ENTIRE .trailing flex box
+    // and pushes a second adornment onto its own line inside that box —
+    // distinct from the C1 bug above, where trailing pushed onto a line
+    // BELOW the control. Real regression proof needs a layout engine:
+    // jsdom has none, and I verified this directly — getBoundingClientRect()
+    // and offsetTop/offsetHeight return zeroed values for every element
+    // regardless of CSS, so a "do these two elements share a y" assertion
+    // would pass unconditionally here and prove nothing (same class of
+    // problem as the labelWidth-omitted test's CSSOM note above). That
+    // means the fix (wrap the offending child in `<Constrain width="xs">`)
+    // can only be verified visually — see SettingRowDemo.tsx Example 2 and
+    // the browser-based pre-push review.
+    //
+    // What IS real and testable here: SettingRow itself must never wrap
+    // trailing's children individually. Each child stays a direct child of
+    // styles.trailing, so a consumer's own <Constrain> around ONE child
+    // governs only that child. If SettingRow ever introduced a per-child
+    // wrapper (e.g. `Children.map(trailing, (c) => <div>{c}</div>)`), this
+    // assertion would fail and a consumer's <Constrain> fix would stop
+    // working, silently.
+    render(
+      <SettingRow
+        label="Seats"
+        trailing={
+          <>
+            <span data-testid="first" style={{ width: '100%' }}>
+              Select
+            </span>
+            <span data-testid="second">Badge</span>
+          </>
+        }
+      >
+        <Input type="number" />
+      </SettingRow>,
+    );
+    const first = screen.getByTestId('first');
+    const second = screen.getByTestId('second');
+    const wrapper = first.parentElement!;
+    expect(wrapper.className).toMatch(/trailing/i);
+    expect(first.parentElement).toBe(wrapper);
+    expect(second.parentElement).toBe(wrapper);
+  });
+
   it('controlWidth does not defeat field wiring — the control still carries its id and accessible name', () => {
     // Guards the invariant the fix depends on: the controlWidth wrapper is
     // created AFTER wire() has already cloned the child and injected id /

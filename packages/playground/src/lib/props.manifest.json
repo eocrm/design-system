@@ -4373,7 +4373,7 @@
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
           "default": "",
-          "description": "Content after the control on the same line — a mode select, a state badge, a reset button."
+          "description": "Content after the control on the same line — a mode select, a state\nbadge, a reset button. `controlWidth` does NOT apply here — it only caps\nthe main control. A control that sizes itself to `width: 100%` (`Select`,\n`Input`, `Textarea`) fills the ENTIRE trailing group and pushes any other\nadornment onto a second line; wrap it in `<Constrain width=\"xs\">` (or\nanother named step) to size it instead."
         },
         {
           "name": "footer",
