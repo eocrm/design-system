@@ -1,6 +1,6 @@
 // SettingRow.tokens.scss — Component-scoped tokens for <SettingRow> and
 // <SettingRow.List>. Covers the label column width, the two-column gap,
-// description typography, per-spacing row padding, and the divider color.
+// label typography, per-spacing row padding, and the divider color.
 // No hex literals here — a component token that duplicates a semantic value
 // is a structure.test.ts failure.
 :root {
@@ -21,9 +21,6 @@
   --setting-row-label-font-size: var(--font-size-sm);
   --setting-row-label-font-weight: var(--font-weight-medium);
   --setting-row-label-fg: var(--color-fg);
-
-  // Description under the label
-  --setting-row-description-fg: var(--color-fg-muted);
 
   // Spacing variants — padding-block per row, set by the List
   --setting-row-padding-y-sm: var(--space-2);

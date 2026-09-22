@@ -5,8 +5,8 @@ import { useFieldWiring, type FieldRenderProps } from '../_internal/fieldWiring'
 import { type CollapseBreakpoint } from '../_internal/collapse';
 import styles from './SettingRow.module.scss';
 
-/** Max width applied to the control only, not its trailing adornments. Mirrors `<Constrain>`'s measure scale. */
-export type SettingRowControlWidth = 'auto' | 'xs' | 'sm' | 'md' | 'full';
+/** Max width applied to the control only, not its trailing adornments. A subset of `<Constrain>`'s measure scale. */
+export type SettingRowControlWidth = 'auto' | 'xs' | 'sm' | 'md';
 
 export interface SettingRowProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
   /** Label text. Renders a `<label htmlFor>` that names the control. Required. */
@@ -27,7 +27,11 @@ export interface SettingRowProps extends Omit<HTMLAttributes<HTMLDivElement>, 'c
   controlWidth?: SettingRowControlWidth;
   /** Content after the control on the same line — a mode select, a state badge, a reset button. */
   trailing?: ReactNode;
-  /** Block under the control column — a usage meter, a caveat, a preview. */
+  /**
+   * Block under the control column — a usage meter, a caveat, a preview.
+   * Fills the control column's full width; cap a meter with `<Constrain>` —
+   * safe here, `footer` is not the wired child.
+   */
   footer?: ReactNode;
   /**
    * Error message. Takes over `aria-describedby` and flips the control to
@@ -59,6 +63,10 @@ export interface SettingRowProps extends Omit<HTMLAttributes<HTMLDivElement>, 'c
  * Wiring (`id`, `aria-labelledby`, `aria-describedby`, `invalid`) works exactly
  * as `<Field>`'s, and the render-prop receives the same `field` object.
  *
+ * Responsive collapse (stacking the label above the control at a narrow
+ * width) is provided by `<SettingRow.List>`'s container query — a standalone
+ * row does not collapse on its own.
+ *
  * @example
  * // A metered limit with provenance, a mode adornment and a usage meter:
  * <SettingRow.List dividers labelWidth="18rem">
@@ -68,7 +76,11 @@ export interface SettingRowProps extends Omit<HTMLAttributes<HTMLDivElement>, 'c
  *     description="Member seats included for this tenant"
  *     controlWidth="xs"
  *     trailing={<Select size="sm" options={modes} value={mode} onChange={setMode} />}
- *     footer={<Progress value={0} max={50} aria-label="Seats usage" />}
+ *     footer={
+ *       <Constrain maxWidth="sm">
+ *         <Progress value={0} max={50} aria-label="Seats usage" />
+ *       </Constrain>
+ *     }
  *   >
  *     <Input type="number" />
  *   </SettingRow>
@@ -156,7 +168,7 @@ const SettingRowRoot = forwardRef<HTMLDivElement, SettingRowProps>(function Sett
           <div className={styles.controlSlot} data-control-width={controlWidth}>
             {wire(children)}
           </div>
-          {trailing}
+          {trailing != null && <div className={styles.trailing}>{trailing}</div>}
         </div>
         {footer}
         {error != null && (
@@ -222,8 +234,6 @@ const COLLAPSE_CLASS: Record<CollapseBreakpoint, string> = {
  * </SettingRow.List>
  *
  * @remarks When NOT to use
- * - A single row — render the `<SettingRow>` on its own; it falls back to the
- *   `16rem` token default.
  * - Grouping rows under a heading — that is `<FormSection>`, which can wrap a
  *   `<SettingRow.List>`.
  *

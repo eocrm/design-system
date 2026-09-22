@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {
   Badge,
   Button,
+  Constrain,
   Input,
   Progress,
   Select,
@@ -95,7 +96,7 @@ export function Demo() {
         title="Adornments — label, trailing, footer"
         description="labelAdornment sits outside the <label> so the badge never joins the control's accessible name. trailing acts on the control; footer carries the usage meter."
         code={`import { useState } from 'react';
-import { Badge, Button, Input, Progress, Select, SettingRow, Stack, Text } from '@eocrm/design-system';
+import { Badge, Button, Constrain, Input, Progress, Select, SettingRow, Stack, Text } from '@eocrm/design-system';
 
 const MODES = [
   { value: 'hard', label: 'Hard limit' },
@@ -128,12 +129,14 @@ export function Demo() {
           </>
         }
         footer={
-          <Stack gap="xs">
-            <Progress value={12} max={50} aria-label="Seats usage" />
-            <Text as="span" size="xs" tone="muted">
-              12 of 50 included this month.
-            </Text>
-          </Stack>
+          <Constrain maxWidth="sm">
+            <Stack gap="xs">
+              <Progress value={12} max={50} aria-label="Seats usage" />
+              <Text as="span" size="xs" tone="muted">
+                12 of 50 included this month.
+              </Text>
+            </Stack>
+          </Constrain>
         }
       >
         <Input type="number" value={seats} onChange={(e) => setSeats(e.target.value)} />
@@ -171,12 +174,14 @@ export function Demo() {
               </>
             }
             footer={
-              <Stack gap="xs">
-                <Progress value={12} max={50} aria-label="Seats usage" />
-                <Text as="span" size="xs" tone="muted">
-                  12 of 50 included this month.
-                </Text>
-              </Stack>
+              <Constrain maxWidth="sm">
+                <Stack gap="xs">
+                  <Progress value={12} max={50} aria-label="Seats usage" />
+                  <Text as="span" size="xs" tone="muted">
+                    12 of 50 included this month.
+                  </Text>
+                </Stack>
+              </Constrain>
             }
           >
             <Input type="number" value={seats} onChange={(e) => setSeats(e.target.value)} />
@@ -186,7 +191,7 @@ export function Demo() {
 
       <Example
         title="Required + live error"
-        description="error replaces the description, links the message, and flips the control invalid — same contract as Field. Set seats to 0."
+        description="error replaces only the aria-describedby link and flips the control invalid — the description stays visible, deliberately unlike Field. Set seats to 0."
         code={`import { useState } from 'react';
 import { Input, SettingRow } from '@eocrm/design-system';
 
@@ -195,27 +200,31 @@ export function Demo() {
   const seatsError = Number(seats) < 1 ? 'Seats must be at least 1.' : undefined;
 
   return (
-    <SettingRow
-      label="Seats"
-      description="Member seats included for this tenant"
-      controlWidth="xs"
-      required
-      error={seatsError}
-    >
-      <Input type="number" value={seats} onChange={(e) => setSeats(e.target.value)} />
-    </SettingRow>
+    <SettingRow.List>
+      <SettingRow
+        label="Seats"
+        description="Member seats included for this tenant"
+        controlWidth="xs"
+        required
+        error={seatsError}
+      >
+        <Input type="number" value={seats} onChange={(e) => setSeats(e.target.value)} />
+      </SettingRow>
+    </SettingRow.List>
   );
 }`}
       >
-        <SettingRow
-          label="Seats"
-          description="Member seats included for this tenant"
-          controlWidth="xs"
-          required
-          error={seatsError}
-        >
-          <Input type="number" value={seats} onChange={(e) => setSeats(e.target.value)} />
-        </SettingRow>
+        <SettingRow.List>
+          <SettingRow
+            label="Seats"
+            description="Member seats included for this tenant"
+            controlWidth="xs"
+            required
+            error={seatsError}
+          >
+            <Input type="number" value={seats} onChange={(e) => setSeats(e.target.value)} />
+          </SettingRow>
+        </SettingRow.List>
       </Example>
 
       <Example
@@ -228,18 +237,22 @@ export function Demo() {
   const [notify, setNotify] = useState(true);
 
   return (
-    <SettingRow label="Email notifications" description="Send a digest when a deal changes stage.">
-      <Switch checked={notify} onChange={setNotify} />
-    </SettingRow>
+    <SettingRow.List>
+      <SettingRow label="Email notifications" description="Send a digest when a deal changes stage.">
+        <Switch checked={notify} onChange={setNotify} />
+      </SettingRow>
+    </SettingRow.List>
   );
 }`}
       >
-        <SettingRow
-          label="Email notifications"
-          description="Send a digest when a deal changes stage."
-        >
-          <Switch checked={notify} onChange={setNotify} />
-        </SettingRow>
+        <SettingRow.List>
+          <SettingRow
+            label="Email notifications"
+            description="Send a digest when a deal changes stage."
+          >
+            <Switch checked={notify} onChange={setNotify} />
+          </SettingRow>
+        </SettingRow.List>
       </Example>
     </DemoLayout>
   );

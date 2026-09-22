@@ -100,7 +100,7 @@ describe('SettingRow', () => {
     expect(screen.getByText('0 of 50 included this month')).toBeInTheDocument();
   });
 
-  it.each(['xs', 'sm', 'md', 'full'] as const)(
+  it.each(['xs', 'sm', 'md'] as const)(
     'controlWidth=%s caps the control slot only, leaving trailing on the same line',
     (w) => {
       const { container } = render(
@@ -124,6 +124,38 @@ describe('SettingRow', () => {
       expect(slot.parentElement).toContainElement(trailing);
     },
   );
+
+  it('wraps trailing in its own flex item, so a width:100% control (e.g. Select) does not claim the whole line', () => {
+    // jsdom has no layout engine, so this can't measure pixels or a shared
+    // `y` directly. It asserts the STRUCTURE the CSS fix depends on instead:
+    // a Select-shaped (width: 100%) trailing child must land inside a
+    // dedicated wrapper (styles.trailing — width: max-content, so a 100%
+    // child measures against the adornment group, not .controlLine's full
+    // content box), and that wrapper must be a SIBLING of .controlSlot, not
+    // nested inside it. Before this fix, `trailing` was a bare child of
+    // .controlLine, so a width:100% child spanned the entire control column
+    // at every viewport width — reproducing the exact defect (a mode Select
+    // wrapping under a number input) this component was built to fix.
+    const { container } = render(
+      <SettingRow
+        label="Seats"
+        controlWidth="xs"
+        trailing={
+          <span data-testid="trailing-select" style={{ width: '100%' }}>
+            Metered
+          </span>
+        }
+      >
+        <Input type="number" />
+      </SettingRow>,
+    );
+    const slot = container.querySelector('[data-control-width]')!;
+    const trailingChild = screen.getByTestId('trailing-select');
+    expect(slot).not.toContainElement(trailingChild);
+    const trailingWrapper = trailingChild.parentElement!;
+    expect(trailingWrapper).not.toBe(slot.parentElement);
+    expect(trailingWrapper.className).toMatch(/trailing/i);
+  });
 
   it('controlWidth does not defeat field wiring — the control still carries its id and accessible name', () => {
     // Guards the invariant the fix depends on: the controlWidth wrapper is

@@ -4380,7 +4380,7 @@
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
           "default": "",
-          "description": "Block under the control column — a usage meter, a caveat, a preview."
+          "description": "Block under the control column — a usage meter, a caveat, a preview.\nFills the control column's full width; cap a meter with `<Constrain>` —\nsafe here, `footer` is not the wired child."
         },
         {
           "name": "error",
@@ -5548,7 +5548,7 @@
     "FieldOrientation": "\"horizontal\" | \"vertical\"",
     "FieldSize": "\"sm\" | \"md\" | \"lg\"",
     "FieldRenderProps": "{ id: string; aria-describedby: string; aria-labelledby: string; aria-invalid: boolean; invalid: boolean; required: boolean; labelId: string }",
-    "SettingRowControlWidth": "\"sm\" | \"md\" | \"xs\" | \"full\" | \"auto\"",
+    "SettingRowControlWidth": "\"sm\" | \"md\" | \"xs\" | \"auto\"",
     "DashboardCanvasConstraintsProp": "Record<string, DashboardItemConstraints> | ((id: string | number) => DashboardItemConstraints)",
     "DashboardCanvasValue": "{ items: DashboardPlacement[]; sections: DashboardSection[] }"
   }
