@@ -41,6 +41,7 @@ import { ProgressDemo } from './pages/components/ProgressDemo';
 import { QrCodeDemo } from './pages/components/QrCodeDemo';
 import { CircularProgressDemo } from './pages/components/CircularProgressDemo';
 import { SelectDemo } from './pages/components/SelectDemo';
+import { SettingRowDemo } from './pages/components/SettingRowDemo';
 import { SkeletonDemo } from './pages/components/SkeletonDemo';
 import { SliderDemo } from './pages/components/SliderDemo';
 import { SortableDemo } from './pages/components/SortableDemo';
@@ -170,6 +171,7 @@ export default function App() {
             />
             <Route path="/components/phone-input" element={<PhoneInputDemo />} />
             <Route path="/components/select" element={<SelectDemo />} />
+            <Route path="/components/setting-row" element={<SettingRowDemo />} />
             <Route path="/components/skeleton" element={<SkeletonDemo />} />
             <Route path="/components/slider" element={<SliderDemo />} />
             <Route path="/components/sortable" element={<SortableDemo />} />

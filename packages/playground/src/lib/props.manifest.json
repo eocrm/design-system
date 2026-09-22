@@ -4338,6 +4338,80 @@
         }
       ]
     },
+    "SettingRow": {
+      "props": [
+        {
+          "name": "label",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": true,
+          "default": "",
+          "description": "Label text. Renders a `<label htmlFor>` that names the control. Required."
+        },
+        {
+          "name": "labelAdornment",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Badges / chips on the label line, rendered as a SIBLING of the `<label>`.\nDeliberately outside it: label content becomes the control's accessible\nname, so a provenance badge placed inside makes the input announce\n\"Seats From plan\"."
+        },
+        {
+          "name": "description",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Helper text under the label, in the label column. Linked via `aria-describedby`."
+        },
+        {
+          "name": "controlWidth",
+          "type": "SettingRowControlWidth",
+          "required": false,
+          "default": "",
+          "description": "Max width of the control cell. Default `'auto'` — the control's intrinsic width."
+        },
+        {
+          "name": "trailing",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Content after the control on the same line — a mode select, a state badge, a reset button."
+        },
+        {
+          "name": "footer",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Block under the control column — a usage meter, a caveat, a preview."
+        },
+        {
+          "name": "error",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Error message. Takes over `aria-describedby` and flips the control to\n`invalid`. Unlike `<Field>`, the `description` stays VISIBLE alongside it —\nthe two sit in different columns, so an invalid value is no reason to\nremove the explanation of what the setting is.\n\n**Not announced, deliberately** — `aria-describedby` is read on focus, so\nthe form owns the submit-time summary. Same reasoning as `<Field error>`;\nsee #494."
+        },
+        {
+          "name": "required",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Marks the row required: shows `*` and injects `required` onto the control."
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Explicit control id. The row owns the id by default so the label always matches."
+        },
+        {
+          "name": "children",
+          "type": "ReactNode | ((field: FieldRenderProps) => ReactNode)",
+          "required": true,
+          "default": "",
+          "description": "A single control element (auto-wired) or a render-prop `(field) => ReactNode`."
+        }
+      ]
+    },
     "Skeleton": {
       "props": [
         {
@@ -5474,6 +5548,7 @@
     "FieldOrientation": "\"horizontal\" | \"vertical\"",
     "FieldSize": "\"sm\" | \"md\" | \"lg\"",
     "FieldRenderProps": "{ id: string; aria-describedby: string; aria-labelledby: string; aria-invalid: boolean; invalid: boolean; required: boolean; labelId: string }",
+    "SettingRowControlWidth": "\"sm\" | \"md\" | \"xs\" | \"full\" | \"auto\"",
     "DashboardCanvasConstraintsProp": "Record<string, DashboardItemConstraints> | ((id: string | number) => DashboardItemConstraints)",
     "DashboardCanvasValue": "{ items: DashboardPlacement[]; sections: DashboardSection[] }"
   }

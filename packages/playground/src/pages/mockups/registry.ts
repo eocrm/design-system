@@ -78,6 +78,7 @@ export type ComponentName =
   | 'RichTextEditor'
   | 'Screen'
   | 'Select'
+  | 'SettingRow'
   | 'Skeleton'
   | 'Slider'
   | 'Sortable'

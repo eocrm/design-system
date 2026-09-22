@@ -169,6 +169,7 @@ export const componentGroups: { heading: string; items: NavItem[] }[] = [
       { to: '/components/social-button', label: 'SocialButton', icon: LogIn, end: false },
       { to: '/components/checkbox', label: 'Checkbox', icon: CheckSquare, end: false },
       { to: '/components/field', label: 'Field', icon: FormInput, end: false },
+      { to: '/components/setting-row', label: 'SettingRow', icon: SlidersHorizontal, end: false },
       { to: '/components/form-row', label: 'FormRow', icon: Columns2, end: false },
       { to: '/components/form-section', label: 'FormSection', icon: Group, end: false },
       { to: '/components/color-picker', label: 'ColorPicker', icon: Palette, end: false },
