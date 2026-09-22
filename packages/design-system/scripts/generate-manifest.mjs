@@ -45,6 +45,7 @@ const CLUSTERS = {
   DatePickers: 'Forms',
   DateRangePicker: 'Forms',
   Field: 'Forms',
+  SettingRow: 'Forms',
   FormRow: 'Forms',
   FormSection: 'Forms',
   FileUpload: 'Forms',

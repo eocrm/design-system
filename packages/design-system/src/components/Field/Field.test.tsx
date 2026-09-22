@@ -246,6 +246,407 @@ describe('Field', () => {
   });
 });
 
+describe('Field — falsy-but-present `error` (the `error={cond && msg}` idiom)', () => {
+  // `error?: ReactNode` accepts `false` and `''` as legal values — both are
+  // what `error={touched && errors.email}` or `error={errors.email ?? ''}`
+  // produce for "no error yet". A regression that treats them as "an error is
+  // present" (e.g. `hasError: error != null`) flips the control invalid with
+  // an empty message and hides the description — this guards against it.
+  it.each([
+    ['false', false],
+    ['an empty string', ''],
+    ['an empty fragment', <></>],
+    ['an empty array', []],
+  ])(
+    'error=%s does not flip the control invalid, and the description stays visible',
+    (_label, errorValue) => {
+      render(
+        <Field label="Email" description="We only use this for sign-in." error={errorValue}>
+          <StubControl />
+        </Field>,
+      );
+      const input = screen.getByTestId('control');
+      expect(input).not.toHaveAttribute('aria-invalid');
+      const desc = screen.getByText('We only use this for sign-in.');
+      expect(input).toHaveAttribute('aria-describedby', desc.id);
+    },
+  );
+
+  it('error=undefined behaves the same as omitting error entirely', () => {
+    render(
+      <Field label="Email" description="We only use this for sign-in." error={undefined}>
+        <StubControl />
+      </Field>,
+    );
+    const input = screen.getByTestId('control');
+    expect(input).not.toHaveAttribute('aria-invalid');
+    expect(screen.getByText('We only use this for sign-in.')).toBeInTheDocument();
+  });
+});
+
+describe('Field — falsy-but-present `description`', () => {
+  // Same hole as the `error` block above, on the other predicate: the wiring
+  // (hasDescription) and the render gate (messageNode's description branch)
+  // compute Boolean(description) independently. Every existing
+  // aria-describedby assertion in this file runs with a truthy description,
+  // so nothing catches the wiring alone drifting back to `!= null` — that
+  // would still set aria-describedby to a descriptionId whose <Text> never
+  // renders, a dangling reference `toHaveAccessibleDescription` can't tell
+  // apart from "no description".
+  it.each([
+    ['false', false],
+    ['an empty string', ''],
+    ['an empty fragment', <></>],
+    ['an empty array', []],
+  ])(
+    'description=%s renders no description node and no aria-describedby',
+    (_label, descriptionValue) => {
+      const { container } = render(
+        <Field label="Email" description={descriptionValue}>
+          <StubControl />
+        </Field>,
+      );
+      const input = screen.getByTestId('control');
+      expect(input).not.toHaveAttribute('aria-describedby');
+      // Catches the RENDER gate (messageNode's description branch)
+      // independent of the wiring (hasDescription) check above: if only the
+      // render gate reverted, hasDescription stays correctly false, so
+      // aria-describedby stays unset (the check above alone would miss
+      // it) — but an orphan <Text id="…-description"> would still render.
+      expect(container.querySelector('[id$="-description"]')).not.toBeInTheDocument();
+    },
+  );
+});
+
+describe('Field — falsy-but-present `label`', () => {
+  // hasLabel (wiring) and the labelNode render gate compute Boolean(label)
+  // independently, same shape as the error/description gaps above.
+  // `label={cond && 'Name'}` producing `false`/`''` must render no <label>
+  // AND inject no aria-labelledby: if only the wiring broke (`!= null`),
+  // aria-labelledby would still point at a labelId whose <label> never
+  // rendered — a dangling reference, i.e. an anonymous control. If only the
+  // render gate broke, an empty <label> would exist with nothing pointing
+  // at it.
+  //
+  // StubControl (used throughout this file) does NOT forward
+  // aria-labelledby, so it can't see the wiring gate at all — using it here
+  // was tried first and silently passed against BOTH the fixed and the
+  // mutated wiring. This stub mirrors the `LabelledStub` pattern used
+  // elsewhere in this file, which does forward it.
+  function LabelledStub(props: { id?: string; 'aria-labelledby'?: string }) {
+    return <input data-testid="control" id={props.id} aria-labelledby={props['aria-labelledby']} />;
+  }
+
+  it.each([
+    ['false', false],
+    ['an empty string', ''],
+  ])('label=%s renders no <label> and injects no aria-labelledby', (_label, labelValue) => {
+    const { container } = render(
+      <Field label={labelValue}>
+        <LabelledStub />
+      </Field>,
+    );
+    expect(container.querySelector('label')).not.toBeInTheDocument();
+    expect(screen.getByTestId('control')).not.toHaveAttribute('aria-labelledby');
+  });
+
+  // The Critical this round: groupAria's aria-labelledby used to recompute
+  // Boolean(label) independently of the wiring call (`hasLabel`) rather than
+  // reading the same hoisted value. Reverting only that recomputation left
+  // the whole suite green — this describe block had no asGroup case at all,
+  // so nothing exercised it. `role="group"` is the element that carries
+  // aria-labelledby in asGroup mode (not the child — see the existing
+  // "asGroup does NOT inject aria-labelledby onto the child" test above),
+  // so that's what this checks, plus no caption <span> either.
+  it.each([
+    ['false', false],
+    ['an empty string', ''],
+  ])(
+    'asGroup + label=%s renders no caption and injects no aria-labelledby on the group',
+    (_label, labelValue) => {
+      const { container } = render(
+        <Field asGroup label={labelValue}>
+          <StubControl />
+        </Field>,
+      );
+      const group = container.querySelector('[role="group"]');
+      expect(group).not.toHaveAttribute('aria-labelledby');
+      expect(container.querySelector('span[id$="-label"]')).not.toBeInTheDocument();
+    },
+  );
+});
+
+describe('Field — a truthy-but-empty `label` (label={<></>} / label={[]}) — hasContent, not Boolean', () => {
+  // hasLabel is hasContent(label), not Boolean(label) — see fieldWiring.ts's
+  // doc on hasContent. Boolean(label) treats a truthy-but-empty container as
+  // present, which is the round 5/6 bug: it rendered a real, empty <label>,
+  // and aria-labelledby pointing at a real-but-empty element is
+  // authoritative in the accname algorithm — it does NOT fall through to
+  // aria-label the way a fully dangling reference does. hasContent correctly
+  // treats it as absent, so NO <label> renders at all — same shape as the
+  // plain falsy case above, just reached via a fragment/array instead of
+  // `false`/`''`.
+  //
+  // Round 6 shipped a DIFFERENT fix for this — skip injecting
+  // aria-labelledby whenever the child has its own aria-label — and it was
+  // reverted: it created a WCAG 2.5.3 (Label in Name, Level A) failure on
+  // the ordinary path, where a control's OWN aria-label would beat a
+  // MEANINGFUL row label, not just an empty one. See the last test below.
+  function NamedStub(props: { id?: string; 'aria-label'?: string; 'aria-labelledby'?: string }) {
+    return (
+      <input
+        data-testid="control"
+        id={props.id}
+        aria-label={props['aria-label']}
+        aria-labelledby={props['aria-labelledby']}
+      />
+    );
+  }
+
+  it('label={<></>} renders no <label> at all — a control with its own aria-label keeps its name', () => {
+    render(
+      <Field label={<></>}>
+        <NamedStub aria-label="Seats" />
+      </Field>,
+    );
+    expect(screen.getByTestId('control')).toHaveAccessibleName('Seats');
+    expect(document.querySelector('label')).not.toBeInTheDocument();
+  });
+
+  it('label={[]} behaves the same as label={<></>}', () => {
+    render(
+      <Field label={[]}>
+        <NamedStub aria-label="Seats" />
+      </Field>,
+    );
+    expect(screen.getByTestId('control')).toHaveAccessibleName('Seats');
+  });
+
+  it('a NON-empty array of only falsy elements (label={[false, false]}) is also absent — hasContent checks each element, not just array length', () => {
+    render(
+      <Field label={[false, false]}>
+        <NamedStub aria-label="Seats" />
+      </Field>,
+    );
+    expect(screen.getByTestId('control')).toHaveAccessibleName('Seats');
+    expect(document.querySelector('label')).not.toBeInTheDocument();
+  });
+
+  it('label={<></>} with no fallback on the control injects no aria-labelledby (structural check — toHaveAccessibleName cannot see this gate)', () => {
+    // toHaveAccessibleName('') can't distinguish "no aria-labelledby at
+    // all" from "aria-labelledby pointing at a real-but-empty element" —
+    // both resolve to ''. That made the equivalent assertion here inert in
+    // round 6 (green on both the buggy code and the fix) — round 7 review
+    // caught it. Assert the actual DOM state instead.
+    render(
+      <Field label={<></>}>
+        <NamedStub />
+      </Field>,
+    );
+    expect(document.querySelector('label')).not.toBeInTheDocument();
+    expect(screen.getByTestId('control')).not.toHaveAttribute('aria-labelledby');
+  });
+
+  it("a MEANINGFUL label wins over a control's own aria-label — WCAG 2.5.3 Label in Name: visible text must be in the accessible name", () => {
+    render(
+      <Field label="Work email">
+        <NamedStub aria-label="Email address" />
+      </Field>,
+    );
+    expect(screen.getByTestId('control')).toHaveAccessibleName('Work email');
+  });
+
+  it('the render-prop path gets the same fix — the field object reads the same hoisted hasLabel, unlike round 6 which could not reach this path at all', () => {
+    render(
+      <Field label={<></>}>
+        {(field) => <input data-testid="control" {...field} aria-label="Seats" />}
+      </Field>,
+    );
+    expect(screen.getByTestId('control')).toHaveAccessibleName('Seats');
+    expect(screen.getByTestId('control')).not.toHaveAttribute('aria-labelledby');
+  });
+
+  it('an empty Set is also absent — hasContent is not array-only', () => {
+    // round 7 shipped `Array.isArray(n)`, which is false for a `Set`. Round
+    // 8 broadened the check to ANY iterable, which also caught `Set` — but
+    // it caught one-shot iterators (generator, `Map.values()`) too, and
+    // spreading those to inspect them DRAINS them before React can render
+    // them: a regression, reverted in round 9 (see the two tests below).
+    // `Set` (like Array) is RE-ITERABLE — reading it here doesn't consume
+    // what React reads later — so it's still correctly handled.
+    render(
+      <Field label={new Set()}>
+        <NamedStub aria-label="Seats" />
+      </Field>,
+    );
+    expect(screen.getByTestId('control')).toHaveAccessibleName('Seats');
+    expect(document.querySelector('label')).not.toBeInTheDocument();
+  });
+
+  it('a NON-EMPTY one-shot iterator (generator, Map.values()) renders correctly — round 8 regression, fixed (render-level, not predicate-level)', () => {
+    // Round 8's fix inspected a one-shot iterator by spreading it, which
+    // reads correctly at the PREDICATE level (`hasContent` returns `true`)
+    // but DRAINS the iterator — so React then rendered the same,
+    // already-exhausted object and got nothing: an empty <label>,
+    // aria-labelledby pointing at it, and the control's own aria-label
+    // suppressed. A predicate-only assertion (`fieldWiring.test.tsx`) cannot
+    // see this class of bug, because returning `true` is exactly what broke
+    // the render — this has to be asserted through an actual render.
+    function* gen() {
+      yield 'Work email';
+    }
+    render(
+      <Field label={gen()}>
+        <NamedStub aria-label="Seats" />
+      </Field>,
+    );
+    expect(document.querySelector('label')).toHaveTextContent('Work email');
+    expect(screen.getByTestId('control')).toHaveAccessibleName('Work email');
+  });
+
+  it('an EMPTY one-shot iterator is treated as PRESENT (not absent) — the documented, unavoidable limit', () => {
+    // You cannot ask a one-shot iterator whether it's empty without
+    // spending it, so this predicate does not try: it falls to
+    // `Boolean(n)`, `true` for any object. Same shape as the `<span />`
+    // limit below — a real element judged present without inspecting
+    // whether it has visible content.
+    render(
+      <Field label={(function* () {})()}>
+        <NamedStub aria-label="Seats" />
+      </Field>,
+    );
+    expect(document.querySelector('label')).toBeInTheDocument();
+    expect(screen.getByTestId('control')).toHaveAttribute('aria-labelledby');
+    expect(screen.getByTestId('control')).toHaveAccessibleName('');
+  });
+
+  it('a fragment with real content is PRESENT — the Fragment conjunct is not just "any element recurses"', () => {
+    // Pins the `n.type === Fragment` conjunct: dropping it (so ANY element
+    // recurses into its children) is green on the whole suite without this
+    // test — round 8 review, found independently by both reviewers.
+    render(
+      <Field
+        label={
+          <>
+            Work <b>email</b>
+          </>
+        }
+      >
+        <NamedStub />
+      </Field>,
+    );
+    expect(document.querySelector('label')).toBeInTheDocument();
+    expect(screen.getByTestId('control')).toHaveAccessibleName('Work email');
+  });
+
+  it('a CHILDLESS real element (label={<span />}) is still PRESENT — hasContent only recurses into fragments, not every element', () => {
+    // Pins the same conjunct from the other side: stubbing the recursion to
+    // `return false` is also green on the whole suite without this test.
+    // This is the documented `<span />` limit from this function's own doc —
+    // previously asserted in prose only, never in a test. The control's own
+    // aria-label is present but NOT what wins: a real-but-empty aria-labelledby
+    // referent is authoritative in the accname algorithm (established in round
+    // 6/7), so the name goes empty rather than falling through to "Seats".
+    render(
+      <Field label={<span />}>
+        <NamedStub aria-label="Seats" />
+      </Field>,
+    );
+    expect(document.querySelector('label')).toBeInTheDocument();
+    expect(screen.getByTestId('control')).toHaveAttribute('aria-labelledby');
+    expect(screen.getByTestId('control')).toHaveAccessibleName('');
+  });
+});
+
+describe("Field — the ??-not-|| rule on invalid/required (the file's own comment calls it load-bearing)", () => {
+  // fieldWiring.ts:107-108's comment: "`invalid` / `required` keep `??` —
+  // those are booleans, where `false` is a meaningful explicit value." That
+  // rule was untested on both the non-group AND asGroup branches — mutating
+  // `??` to `||` on either is green on the whole suite, per round 6 review.
+  // A `??`→`||` regression would make `<Input invalid={false}>` inside a
+  // Field with an active `error` silently ignore the consumer's explicit
+  // opt-out.
+  function ExplicitOverrideStub(props: { invalid?: boolean; required?: boolean }) {
+    return (
+      <input
+        data-testid="control"
+        data-invalid={String(props.invalid)}
+        data-required={String(props.required)}
+      />
+    );
+  }
+
+  it("child's explicit invalid={false} wins over Field's error-driven invalid", () => {
+    render(
+      <Field label="Email" error="bad">
+        <ExplicitOverrideStub invalid={false} />
+      </Field>,
+    );
+    expect(screen.getByTestId('control')).toHaveAttribute('data-invalid', 'false');
+  });
+
+  it("child's explicit required={false} wins over Field's required prop", () => {
+    render(
+      <Field label="Email" required>
+        <ExplicitOverrideStub required={false} />
+      </Field>,
+    );
+    expect(screen.getByTestId('control')).toHaveAttribute('data-required', 'false');
+  });
+
+  it("asGroup: child's explicit invalid={false} wins over Field's error-driven invalid", () => {
+    render(
+      <Field asGroup label="Pick one" error="bad">
+        <ExplicitOverrideStub invalid={false} />
+      </Field>,
+    );
+    expect(screen.getByTestId('control')).toHaveAttribute('data-invalid', 'false');
+  });
+
+  it("asGroup: child's explicit required={false} wins over Field's required prop", () => {
+    render(
+      <Field asGroup label="Pick one" required>
+        <ExplicitOverrideStub required={false} />
+      </Field>,
+    );
+    expect(screen.getByTestId('control')).toHaveAttribute('data-required', 'false');
+  });
+});
+
+describe('Field — render-prop aria-invalid emits no attribute when valid, not aria-invalid="false"', () => {
+  // fieldWiring.ts:80's `'aria-invalid': invalid || undefined` — mutating to
+  // bare `invalid` is green on the whole suite. React does NOT drop a
+  // `false`-valued aria-* attribute the way it drops `hidden`/`disabled`, so
+  // every render-prop control would emit a literal aria-invalid="false" on
+  // every valid render — a visible DOM change, not a behavior-neutral one.
+  it('a valid render-prop control has no aria-invalid attribute at all', () => {
+    render(<Field label="Email">{(field) => <input data-testid="control" {...field} />}</Field>);
+    expect(screen.getByTestId('control')).not.toHaveAttribute('aria-invalid');
+  });
+});
+
+describe('Field — render-prop form with no label', () => {
+  // fieldWiring.ts's field object computes `'aria-labelledby': labelledBy`
+  // (hasLabel ? labelId : undefined) as a SEPARATE piece of code from the
+  // cloneElement branch's `if (hasLabel) { ... }` gate a few lines down —
+  // two independent expressions deriving the same value. Every other
+  // render-prop test in this file passes a `label`, so nothing exercised
+  // the unlabeled case on this specific code path.
+  it('omits aria-labelledby from the field object and the rendered control when there is no label', () => {
+    let received: Record<string, unknown> = {};
+    render(
+      <Field>
+        {(field) => {
+          received = field as unknown as Record<string, unknown>;
+          return <input data-testid="control" {...field} />;
+        }}
+      </Field>,
+    );
+    expect(received['aria-labelledby']).toBeUndefined();
+    expect(screen.getByTestId('control')).not.toHaveAttribute('aria-labelledby');
+  });
+});
+
 // A NON-labelable control — a div with a role. This is the case Field's
 // `aria-labelledby` injection exists for: `<label for>` names only labelable
 // elements, so for these the id reference is the only naming path there is.

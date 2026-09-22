@@ -78,6 +78,7 @@ export type ComponentName =
   | 'RichTextEditor'
   | 'Screen'
   | 'Select'
+  | 'SettingRow'
   | 'Skeleton'
   | 'Slider'
   | 'Sortable'
@@ -346,13 +347,12 @@ export const MOCKUPS = [
       'Badge',
       'Button',
       'Card',
-      'Cluster',
       'Code',
-      'Divider',
       'Input',
       'Page',
       'PageHeader',
       'Select',
+      'SettingRow',
       'Stack',
       'Switch',
       'Text',

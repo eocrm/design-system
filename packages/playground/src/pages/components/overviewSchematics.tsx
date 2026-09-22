@@ -1102,6 +1102,25 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       <Bar w={100} />
     </Col>
   ),
+  SettingRow: (
+    <Col gap={10}>
+      <Row gap={12}>
+        <Col gap={4}>
+          <SolidBar w={54} />
+          <Bar w={80} />
+        </Col>
+        <Outline w={60} h={20} />
+      </Row>
+      <Box w={210} h={1} />
+      <Row gap={12}>
+        <Col gap={4}>
+          <Bar w={46} />
+          <Bar w={70} />
+        </Col>
+        <Outline w={60} h={20} />
+      </Row>
+    </Col>
+  ),
   FormRow: (
     <Dashed w={202} h={50} style={{ display: 'flex', gap: 10, padding: 8 }}>
       <Col style={{ gap: 4 }}>

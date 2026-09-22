@@ -1,16 +1,11 @@
-import {
-  forwardRef,
-  cloneElement,
-  isValidElement,
-  useId,
-  type HTMLAttributes,
-  type ReactElement,
-  type ReactNode,
-} from 'react';
+import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
 import clsx from 'clsx';
 import { Text, type TextSize } from '../Text';
 import { useTranslation } from '../../i18n/useTranslation';
+import { hasContent, useFieldWiring, type FieldRenderProps } from '../_internal/fieldWiring';
 import styles from './Field.module.scss';
+
+export type { FieldRenderProps };
 
 /** Label placement relative to the control. */
 export type FieldOrientation = 'vertical' | 'horizontal';
@@ -18,23 +13,10 @@ export type FieldOrientation = 'vertical' | 'horizontal';
 /** Label/message type scale; pairs with the control's own `size`. */
 export type FieldSize = 'sm' | 'md' | 'lg';
 
-/** The wiring Field hands to its control. Spread onto the control in render-prop form. */
-export interface FieldRenderProps {
-  id: string;
-  'aria-describedby': string | undefined;
-  /** Id of the label element to name the control — set only when a label is rendered. */
-  'aria-labelledby': string | undefined;
-  'aria-invalid': boolean | undefined;
-  invalid: boolean;
-  required: boolean;
-  /** Id of the label/caption element — for manual `aria-labelledby` wiring. */
-  labelId: string;
-}
-
 type FieldChild = ReactNode | ((field: FieldRenderProps) => ReactNode);
 
 export interface FieldProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
-  /** Label text. Renders a `<label htmlFor>` (or, in `asGroup`, a `role="group"` caption). */
+  /** Label text. Renders a `<label htmlFor>` (or, in `asGroup`, a `role="group"` caption). An empty or falsy value (e.g. `0`, `''`, `[]`, `<></>`) renders no label at all; see the anti-pattern below. */
   label?: ReactNode;
   /** Helper text below the control. Hidden while `error` is present. */
   description?: ReactNode;
@@ -132,6 +114,23 @@ const MSG_SIZE: Record<FieldSize, TextSize> = { sm: 'xs', md: 'sm', lg: 'sm' };
  *   the DS `invalid` prop (controls map it to `aria-invalid`). For a native element use the
  *   render-prop and spread `field` (it includes `aria-invalid`).
  * - ❌ Passing both `required` and `optional`.
+ * - ⚠️ `label` / `description` / `error` treat `0`, `NaN`, `false`, `''`, an
+ *   empty array, and an empty fragment (`<></>`) as ABSENT — not just the
+ *   falsy cases. `error={errors.map(...)}` with no errors, `label={<></>}`,
+ *   `description={[]}` all render nothing at all: no `<label>`, no
+ *   description `<Text>`, no error `<Text>` (and no `invalid` flip for
+ *   `error`) — the control falls back to its own `aria-label` if it has
+ *   one, or ends up unnamed otherwise. This can't see a REAL but
+ *   visually-empty node (`label={<span />}`, `label="   "`) — those still
+ *   count as present, and neither can it see an EMPTY one-shot iterator
+ *   (`Map.prototype.values()`, a generator) — those count as present too,
+ *   since checking would drain the very iterator React needs to render.
+ *   Pass `undefined` explicitly for "none" rather than a container that
+ *   might be empty.
+ * - ⚠️ An absent `label` also removes the `required`/`optional` marker —
+ *   both live inside the `<label>` element, which isn't rendered at all
+ *   when the label has no content. `<Field label={0} required>` shows no
+ *   `*`; `<Field label={0} optional>` shows no `(optional)` either.
  */
 export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
   {
@@ -151,61 +150,31 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
   ref,
 ) {
   const t = useTranslation();
-  const reactId = useId();
-  const controlId = id ?? reactId;
-  const labelId = `${controlId}-label`;
-  const descriptionId = `${controlId}-description`;
-  const errorId = `${controlId}-error`;
+  // Single source of truth for each "is there an X" predicate — round 5
+  // hoisted only `hasLabel` (it had THREE consumers and had already
+  // diverged); round 6 did the same for `hasDescription`/`hasError`/
+  // `hasRequired`, which were still each computed twice (once for the
+  // wiring call, once for the matching render gate). Round 7: `hasLabel`/
+  // `hasDescription`/`hasError` now use `hasContent`, not `Boolean` — see
+  // that function's doc in fieldWiring.ts. `hasRequired`/`hasOptional` stay
+  // `Boolean` since `required`/`optional` are plain booleans, not ReactNode
+  // content that can be an empty-but-truthy container.
+  const hasLabel = hasContent(label);
+  const hasDescription = hasContent(description);
+  const hasError = hasContent(error);
+  const hasRequired = Boolean(required);
+  const hasOptional = Boolean(optional);
+  const { controlId, labelId, descriptionId, errorId, describedBy, labelledBy, invalid, wire } =
+    useFieldWiring({
+      id,
+      hasLabel,
+      hasDescription,
+      hasError,
+      required: hasRequired,
+      asGroup,
+    });
 
-  const invalid = Boolean(error);
-  const requiredBool = Boolean(required);
-  const describedBy = error ? errorId : description != null ? descriptionId : undefined;
-
-  const field: FieldRenderProps = {
-    id: controlId,
-    'aria-describedby': describedBy,
-    'aria-labelledby': label != null ? labelId : undefined,
-    'aria-invalid': invalid || undefined,
-    invalid,
-    required: requiredBool,
-    labelId,
-  };
-
-  let control: ReactNode;
-  if (typeof children === 'function') {
-    control = children(field);
-  } else if (isValidElement(children)) {
-    const child = children as ReactElement<Record<string, unknown>>;
-    const childProps = child.props;
-    let injected: Record<string, unknown>;
-    if (asGroup) {
-      injected = {
-        invalid: childProps.invalid ?? invalid,
-        required: childProps.required ?? requiredBool,
-      };
-    } else {
-      injected = {
-        id: controlId,
-        // `||`, not `??`, on both ARIA id references: `aria-labelledby={sectionId ?? ''}`
-        // is ordinary consumer code, and an empty id list references nothing — it
-        // contributes no name and lets the computation fall through, exactly like an
-        // empty `aria-label`. Treating it as an explicit override would suppress
-        // `labelId` and leave the control anonymous, which matters more here than
-        // anywhere else: Field names every input in the library through
-        // `aria-labelledby` rather than `<label for>`. `invalid` / `required` keep `??`
-        // — those are booleans, where `false` is a meaningful explicit value.
-        'aria-describedby': childProps['aria-describedby'] || describedBy,
-        invalid: childProps.invalid ?? invalid,
-        required: childProps.required ?? requiredBool,
-      };
-      if (label != null) {
-        injected['aria-labelledby'] = childProps['aria-labelledby'] || labelId;
-      }
-    }
-    control = cloneElement(child, injected);
-  } else {
-    control = children;
-  }
+  const control = wire(children);
 
   const labelClassName = clsx(
     styles.label,
@@ -215,18 +184,18 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
 
   const markers = (
     <>
-      {required && (
+      {hasRequired && (
         <span aria-hidden="true" className={styles.required}>
           {' '}
           *
         </span>
       )}
-      {optional && <span className={styles.optional}> {t('field.optional')}</span>}
+      {hasOptional && <span className={styles.optional}> {t('field.optional')}</span>}
     </>
   );
 
   let labelNode: ReactNode = null;
-  if (label != null) {
+  if (hasLabel) {
     labelNode = asGroup ? (
       <span id={labelId} className={labelClassName}>
         {label}
@@ -241,13 +210,13 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
   }
 
   let messageNode: ReactNode = null;
-  if (error != null) {
+  if (hasError) {
     messageNode = (
       <Text as="div" id={errorId} size={MSG_SIZE[size]} tone="danger">
         {error}
       </Text>
     );
-  } else if (description != null) {
+  } else if (hasDescription) {
     messageNode = (
       <Text as="div" id={descriptionId} size={MSG_SIZE[size]} tone="muted">
         {description}
@@ -258,7 +227,7 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
   const groupAria = asGroup
     ? {
         role: 'group' as const,
-        'aria-labelledby': label != null ? labelId : undefined,
+        'aria-labelledby': labelledBy,
         'aria-describedby': describedBy,
         'aria-invalid': invalid || undefined,
       }

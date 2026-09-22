@@ -650,6 +650,14 @@
       "PhoneInput"
     ]
   },
+  "SettingRow": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "Text"
+    ],
+    "composedBy": []
+  },
   "Skeleton": {
     "tier": "primitive",
     "cluster": "Display",
@@ -760,7 +768,8 @@
       "FormSection",
       "OptionsPicker",
       "PersonDisplay",
-      "RichTextEditor"
+      "RichTextEditor",
+      "SettingRow"
     ]
   },
   "Textarea": {

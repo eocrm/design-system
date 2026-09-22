@@ -1,0 +1,156 @@
+@use './SettingRow.tokens';
+@use '../_internal/collapse' as bp;
+
+// Two columns: label | control. The label column is a length resolved from
+// --setting-row-label-width, so sibling rows align without a subgrid.
+// minmax(0, …) on both tracks so a long description or a wide control
+// shrinks instead of overflowing the List.
+.row {
+  display: grid;
+  grid-template-columns:
+    minmax(0, var(--setting-row-label-width))
+    minmax(0, 1fr);
+  column-gap: var(--setting-row-column-gap);
+  align-items: start;
+}
+
+.term,
+.control {
+  display: flex;
+  flex-direction: column;
+  gap: var(--setting-row-stack-gap);
+  min-width: 0;
+}
+
+// Label line — the <label> plus any adornment, which sits OUTSIDE the <label>
+// so it never joins the control's accessible name.
+.labelLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--setting-row-trailing-gap);
+}
+
+.label {
+  font-size: var(--setting-row-label-font-size);
+  font-weight: var(--setting-row-label-font-weight);
+  line-height: var(--line-height-tight);
+  color: var(--setting-row-label-fg);
+}
+
+.required {
+  color: var(--color-danger);
+}
+
+// Control + its trailing adornments on one line. wrap so a narrow row drops
+// the adornments below instead of overflowing.
+.controlLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--setting-row-trailing-gap);
+}
+
+// The control's own wrapper — capped by controlWidth, `trailing` sits
+// outside it on .controlLine so a cap never pulls the adornments onto a
+// second line. This wrapper is created AFTER wire() has already cloned the
+// child and injected id / aria-labelledby / aria-describedby / invalid /
+// required, so it is never the cloneElement target — that's also why a
+// consumer-side <Constrain> was ruled out in favor of controlWidth.
+.controlSlot {
+  min-width: 0;
+}
+
+.controlSlot[data-control-width='xs'] {
+  max-width: var(--setting-row-control-width-xs);
+}
+
+.controlSlot[data-control-width='sm'] {
+  max-width: var(--setting-row-control-width-sm);
+}
+
+.controlSlot[data-control-width='md'] {
+  max-width: var(--setting-row-control-width-md);
+}
+
+// trailing's own flex item, sized to its content rather than the shared
+// line. Most DS controls (Select included) are `width: 100%`, which would
+// otherwise resolve against .controlLine's full content box — the entire
+// control column — and force a wrap no matter how much room there is.
+// `width: max-content` makes a 100%-wide child measure against ITS OWN box
+// instead; `max-width: 100%` still lets it shrink rather than overflow.
+.trailing {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--setting-row-trailing-gap);
+  width: max-content;
+  max-width: 100%;
+  min-width: 0;
+}
+
+// --- SettingRow.List ---------------------------------------------------
+// The List owns vertical rhythm and dividers — hard rule 4 keeps them off
+// the row, which is the child.
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.list[data-spacing='sm'] > [data-setting-row] {
+  padding-block: var(--setting-row-padding-y-sm);
+}
+
+.list[data-spacing='md'] > [data-setting-row] {
+  padding-block: var(--setting-row-padding-y-md);
+}
+
+.list[data-spacing='lg'] > [data-setting-row] {
+  padding-block: var(--setting-row-padding-y-lg);
+}
+
+.list[data-dividers='true'] > [data-setting-row] + [data-setting-row] {
+  border-top: var(--border-width) solid var(--setting-row-divider-color);
+}
+
+// --- collapseBelow -----------------------------------------------------
+// Unlike Grid/Split, where collapse is opt-in, `collapseBelow` defaults to
+// 'sm' — so every List is a size container BY DEFAULT. The label track IS
+// `minmax(0, …)` like the control track (see the .row comment above) — it
+// shrinks rather than overflows — but below the collapseBelow threshold
+// (480/640/768px, see collapse.ts) that shrinking crushes the control
+// column instead of giving it room, which is a worse failure than the
+// column simply overflowing would be. Collapsing to one stacked column below
+// the threshold is the fix, and it is the right default rather than a
+// nice-to-have. `collapseBelow={false}` opts a List out of containment
+// entirely (below, .collapsible is then never applied) — the escape hatch
+// for a shrink-to-fit parent, matching Grid/Split's opt-in-by-omission
+// shape from the other direction. The cost when containment IS on (mirrors
+// Split.module.scss:86-87): container-type: inline-size zeroes the
+// element's intrinsic-width contribution. The queries target the ROWS,
+// which are descendants — an element is never matched by a query against
+// its own container (same constraint Grid and Split document).
+.collapsible {
+  container-type: inline-size;
+}
+
+@container (max-width: #{bp.$collapse-sm}) {
+  .collapsible.collapseSm > [data-setting-row] {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--setting-row-stack-gap);
+  }
+}
+
+@container (max-width: #{bp.$collapse-md}) {
+  .collapsible.collapseMd > [data-setting-row] {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--setting-row-stack-gap);
+  }
+}
+
+@container (max-width: #{bp.$collapse-lg}) {
+  .collapsible.collapseLg > [data-setting-row] {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--setting-row-stack-gap);
+  }
+}

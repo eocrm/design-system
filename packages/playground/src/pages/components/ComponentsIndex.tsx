@@ -290,6 +290,13 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['Field'],
   },
   {
+    to: '/components/setting-row',
+    name: 'SettingRow',
+    description:
+      'Settings-screen row — shared label column, control adornments, and a footer for a usage meter.',
+    preview: SCHEMATICS['SettingRow'],
+  },
+  {
     to: '/components/form-row',
     name: 'FormRow',
     description: 'Fields side by side; reflows to stacked when narrow.',

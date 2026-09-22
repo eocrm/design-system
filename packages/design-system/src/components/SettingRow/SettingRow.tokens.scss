@@ -1,0 +1,37 @@
+// SettingRow.tokens.scss — Component-scoped tokens for <SettingRow> and
+// <SettingRow.List>. Covers the label column width, the two-column gap,
+// label typography, per-spacing row padding, and the divider color.
+// No hex literals here — a component token that duplicates a semantic value
+// is a structure.test.ts failure.
+:root {
+  // Label column — a LENGTH, not max-content, so every row in a List resolves
+  // the same column without a subgrid.
+  --setting-row-label-width: 16rem;
+
+  // Gap between the label column and the control column
+  --setting-row-column-gap: var(--space-4);
+
+  // Gap between stacked pieces inside each column
+  --setting-row-stack-gap: var(--space-1);
+
+  // Gap between the control and its trailing adornments
+  --setting-row-trailing-gap: var(--space-2);
+
+  // Label typography
+  --setting-row-label-font-size: var(--font-size-sm);
+  --setting-row-label-font-weight: var(--font-weight-medium);
+  --setting-row-label-fg: var(--color-fg);
+
+  // Spacing variants — padding-block per row, set by the List
+  --setting-row-padding-y-sm: var(--space-2);
+  --setting-row-padding-y-md: var(--space-3);
+  --setting-row-padding-y-lg: var(--space-4);
+
+  // Divider between rows when the List sets dividers
+  --setting-row-divider-color: var(--color-border);
+
+  // Control cell caps — mirror Constrain's measure scale
+  --setting-row-control-width-xs: var(--measure-xs);
+  --setting-row-control-width-sm: var(--measure-sm);
+  --setting-row-control-width-md: var(--measure-md);
+}
