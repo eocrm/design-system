@@ -743,6 +743,14 @@ export { useBelowBreakpoint } from './hooks/useBelowBreakpoint';
 export { Field } from './components/Field';
 export type { FieldProps, FieldOrientation, FieldSize, FieldRenderProps } from './components/Field';
 
+export { SettingRow } from './components/SettingRow';
+export type {
+  SettingRowProps,
+  SettingRowControlWidth,
+  SettingRowListProps,
+  SettingRowListSpacing,
+} from './components/SettingRow';
+
 export { FormSection } from './components/FormSection';
 export type { FormSectionProps } from './components/FormSection';
 

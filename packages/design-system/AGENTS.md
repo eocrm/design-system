@@ -780,6 +780,34 @@ A switch whose toggle triggers an **immediate action** — persisting to a serve
 - Groups: `<Field asGroup>` around `<RadioGroup>` → label becomes a `role="group"` caption.
 - ❌ Don't wrap a single `<Checkbox>`/`<Switch>` (they self-label). ❌ No validation/state — pass `error` from your form layer.
 
+### `<SettingRow>` — one row of a settings screen
+
+```tsx
+<SettingRow.List dividers labelWidth="18rem">
+  <SettingRow
+    label="Seats"
+    labelAdornment={
+      <Badge tone="neutral" size="sm">
+        From plan
+      </Badge>
+    }
+    description="Member seats included for this tenant"
+    controlWidth="xs"
+    trailing={<Select size="sm" options={modes} value={mode} onChange={setMode} />}
+    footer={<Progress value={used} max={included} aria-label="Seats usage" />}
+  >
+    <Input type="number" />
+  </SettingRow>
+</SettingRow.List>
+```
+
+- Label (+ `labelAdornment`) and `description` in a shared LEFT column; control (+ `trailing`) and `footer` in the right. Wiring is `<Field>`'s — same `id` / `aria-labelledby` / `aria-describedby` / `invalid`, same render-prop `field` object.
+- `error` takes over `aria-describedby` and flips the control invalid, but — unlike `<Field>` — leaves the `description` VISIBLE: they sit in different columns.
+- `labelAdornment` renders OUTSIDE the `<label>` on purpose: label content becomes the control's accessible name, so a badge inside makes the input announce "Seats From plan".
+- `controlWidth` (`auto` default, `xs`/`sm`/`md`/`full`) caps the control CELL. ❌ Don't wrap the control in `<Constrain>` — that makes `Constrain` the element the row wires, silently stripping the control's `id` and `aria-*`.
+- `<SettingRow.List>` owns the shared label column (`labelWidth`, default `16rem`), `spacing` (`sm`/`md`/`lg`, default `md`), `dividers` (default `false`) and `collapseBelow` (default `'sm'` — a container query on the list's own box that stacks each row).
+- ❌ Read-only key/value → `<DefinitionList>`. ❌ An ordinary form field → `<Field>`. ❌ `margin` on a row to space rows → that is the List.
+
 ### `<FormSection>` — titled group of fields
 
 ```tsx
