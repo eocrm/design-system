@@ -114,6 +114,14 @@ const MSG_SIZE: Record<FieldSize, TextSize> = { sm: 'xs', md: 'sm', lg: 'sm' };
  *   the DS `invalid` prop (controls map it to `aria-invalid`). For a native element use the
  *   render-prop and spread `field` (it includes `aria-invalid`).
  * - ❌ Passing both `required` and `optional`.
+ * - ⚠️ `label` / `description` / `error` treat `0` and `NaN` as ABSENT — same
+ *   as `{0 && …}` anywhere else in JSX — so `<Field label={count}>` with
+ *   `count === 0` renders no `<label>` and leaves the control with no
+ *   accessible name at all. They treat an empty array or fragment
+ *   (`error={errors.map(...)}` with no errors, `error={<></>}`) as PRESENT,
+ *   which still flips the control invalid with an empty message. Pass
+ *   `undefined` explicitly for "none" rather than a container that might be
+ *   empty.
  */
 export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
   {

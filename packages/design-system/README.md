@@ -118,7 +118,7 @@ Grouped for navigation. Every prop and variant is JSDoc'd at the source — hove
 - `Field` — labeled-control unit
 - `FormSection` — titled group of fields
 - `FormRow` — fields side by side
-- `SettingRow` / `SettingRow.List` — settings-screen row with a shared label column, adornments, and a usage-meter footer
+- `SettingRow` / `SettingRow.List` — settings-screen row with a shared label column, adornments and a footer slot
 
 **Date & time**
 

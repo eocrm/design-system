@@ -129,6 +129,13 @@ export interface SettingRowProps extends Omit<HTMLAttributes<HTMLDivElement>, 'c
  * - ❌ `margin` on a row to separate rows — that is `<SettingRow.List>`'s job.
  * - ❌ Mixing control sizes within one row — a `size="sm"` adornment beside a
  *   default-`md` control renders two different heights on the same line.
+ * - ⚠️ `error` / `description` / `trailing` treat `0` and `NaN` as ABSENT —
+ *   same as `{0 && …}` anywhere else in JSX — so `description={remaining}`
+ *   with `remaining === 0` renders nothing. They treat an empty array or
+ *   fragment (`error={errors.map(...)}` with no errors, `error={<></>}`) as
+ *   PRESENT, which still flips the control invalid with an empty message.
+ *   Pass `undefined` explicitly for "none" rather than a container that
+ *   might be empty.
  */
 const SettingRowRoot = forwardRef<HTMLDivElement, SettingRowProps>(function SettingRow(
   {

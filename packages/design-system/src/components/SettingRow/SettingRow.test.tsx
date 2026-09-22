@@ -309,6 +309,15 @@ describe('SettingRow — falsy-but-present optional props (the `cond && value` i
       // No empty <Text> in the term column for a falsy description.
       expect(container.querySelector('[id$="-description"]')).not.toBeInTheDocument();
       expect(screen.getByRole('spinbutton')).toHaveAccessibleDescription('');
+      // toHaveAccessibleDescription('') alone can't tell a DANGLING reference
+      // (aria-describedby pointing at an id with no node) from an ABSENT one
+      // — both resolve to ''. This is the assertion that actually catches
+      // the wiring (hasDescription) and the render gate (Boolean(description)
+      // at :173) drifting apart: if only the wiring reverted to
+      // `description != null`, aria-describedby would still be set here,
+      // pointing at nothing, while the accessible-description check above
+      // stays green.
+      expect(screen.getByRole('spinbutton')).not.toHaveAttribute('aria-describedby');
     },
   );
 
