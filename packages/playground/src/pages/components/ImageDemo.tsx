@@ -412,7 +412,7 @@ export function InteractiveThumb() {
 
       <Example
         title="Error + retry"
-        description="A fluid image that fails shows the ImageOff placeholder with a Retry button (re-fetches the source). A fixed-`size` one shows the icon alone, scaled to its box — 20-40px cannot hold a button, and the failure is not retryable there (pass `fallback` if you need a control). Screen readers still get it, from the icon's name."
+        description="A fluid image that fails shows the ImageOff placeholder with a Retry button (re-fetches the source) — assuming a box wide and tall enough for an `sm` Button; a narrow one clips it (#542). A fixed-`size` one shows the icon alone, scaled to its box: none of 20/24/32/40px holds the message *and* an `sm` Button, so the failure is not retryable there. Screen readers still get it, from the icon's name. Need a control? `fallback` replaces the tile and, at a fixed `size`, renders in a slot filling the box — an icon-only Button fits a 40px one; a labelled one does not."
         code={`import { Image, Stack, Cluster } from '@eocrm/design-system';
 
 const BROKEN = 'https://example.com/does-not-exist.jpg';

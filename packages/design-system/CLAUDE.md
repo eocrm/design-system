@@ -221,9 +221,9 @@ is a CHILD of the `role="img"`, which children-presentational prunes. Same rule,
 opposite markup.
 
 **The carve-out is conditioned on that text, so it inverts where the text is
-gone.** A fixed-`size` `Image` renders the icon ALONE — 20/24/32/40px holds no
-message and no button, and the button it used to render was painted outside the
-wrapper's clip while staying in the tab order (#538). With no text to carry it,
+gone.** A fixed-`size` `Image` renders the icon ALONE — none of 20/24/32/40px holds the
+message AND an `sm` Button, and the button it used to render was painted outside
+the wrapper's clip while staying in the tab order (#538). With no text to carry it,
 that tile names the icon `"{alt}: {failure}"` (the phrase alone when `alt=""`),
 exactly the fold forbidden a paragraph above. Both branches follow the same
 rule: name it unless content already says it. Do not "fix" the sized fold back

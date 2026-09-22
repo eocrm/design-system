@@ -135,8 +135,8 @@ const SIZE_CLASS: Record<ImageSize, string> = {
  *
  * The error tile comes in two forms. A fluid image (no `size`) shows the icon,
  * a message and a **Retry** button — which assumes a container wide and tall
- * enough for an `sm` Button; in a very narrow box that button clips the same
- * way, so give a fluid image real room. A fixed-`size` image — `'xs'` / `'sm'` /
+ * enough for an `sm` Button; in a very narrow or unreserved box that button
+ * clips the same way (#542), so give a fluid image real room. A fixed-`size` image — `'xs'` / `'sm'` /
  * `'md'` / `'lg'`, i.e. 20 / 24 / 32 / 40px — shows the **icon alone**, scaled
  * to its box, and is **not retryable**: none of those squares can hold the
  * message *and* an `sm` Button, and the button they used to render sat outside
@@ -301,8 +301,8 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
              `aspectRatio`: there the wrapper takes its height FROM this child
              (measured: a 20px-tall fallback gives a 20px-tall wrapper), so
              pulling it out of flow would collapse the box to zero. That the
-             built-in tile already collapses in that configuration is a
-             separate open defect — not one to widen here. */
+             built-in tile already collapses in that configuration is #542 —
+             a separate defect, and not one to widen here. */
           size !== undefined || aspectRatio !== undefined ? (
             <span className={styles.fallback}>{fallback}</span>
           ) : (
