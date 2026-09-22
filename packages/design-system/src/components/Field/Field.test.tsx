@@ -255,6 +255,8 @@ describe('Field — falsy-but-present `error` (the `error={cond && msg}` idiom)'
   it.each([
     ['false', false],
     ['an empty string', ''],
+    ['an empty fragment', <></>],
+    ['an empty array', []],
   ])(
     'error=%s does not flip the control invalid, and the description stays visible',
     (_label, errorValue) => {
@@ -294,6 +296,8 @@ describe('Field — falsy-but-present `description`', () => {
   it.each([
     ['false', false],
     ['an empty string', ''],
+    ['an empty fragment', <></>],
+    ['an empty array', []],
   ])(
     'description=%s renders no description node and no aria-describedby',
     (_label, descriptionValue) => {
@@ -372,17 +376,22 @@ describe('Field — falsy-but-present `label`', () => {
   );
 });
 
-describe('Field — a truthy-but-empty `label` (round 6 Critical)', () => {
-  // hasLabel is Boolean(label) — true for a truthy-but-empty container
-  // exactly like error={errors.map(...)} with no errors (documented in the
-  // @remarks). Unlike the falsy case above, the <label> DOES render, just
-  // empty. Without the fieldWiring.ts fix, aria-labelledby pointed at that
-  // real-but-empty element, and a real-but-empty referent is authoritative
-  // in the accname algorithm — it does NOT fall through to aria-label the
-  // way a fully dangling reference does (verified by direct probe, see the
-  // isolated-wiring test's comment on SettingRow.test.tsx). So an empty
-  // label used to silently override a control's own explicit aria-label
-  // with an empty name.
+describe('Field — a truthy-but-empty `label` (label={<></>} / label={[]}) — hasContent, not Boolean', () => {
+  // hasLabel is hasContent(label), not Boolean(label) — see fieldWiring.ts's
+  // doc on hasContent. Boolean(label) treats a truthy-but-empty container as
+  // present, which is the round 5/6 bug: it rendered a real, empty <label>,
+  // and aria-labelledby pointing at a real-but-empty element is
+  // authoritative in the accname algorithm — it does NOT fall through to
+  // aria-label the way a fully dangling reference does. hasContent correctly
+  // treats it as absent, so NO <label> renders at all — same shape as the
+  // plain falsy case above, just reached via a fragment/array instead of
+  // `false`/`''`.
+  //
+  // Round 6 shipped a DIFFERENT fix for this — skip injecting
+  // aria-labelledby whenever the child has its own aria-label — and it was
+  // reverted: it created a WCAG 2.5.3 (Label in Name, Level A) failure on
+  // the ordinary path, where a control's OWN aria-label would beat a
+  // MEANINGFUL row label, not just an empty one. See the last test below.
   function NamedStub(props: { id?: string; 'aria-label'?: string; 'aria-labelledby'?: string }) {
     return (
       <input
@@ -394,14 +403,14 @@ describe('Field — a truthy-but-empty `label` (round 6 Critical)', () => {
     );
   }
 
-  it('label={<></>} still renders an empty <label>, but a control with its own aria-label keeps its name', () => {
+  it('label={<></>} renders no <label> at all — a control with its own aria-label keeps its name', () => {
     render(
       <Field label={<></>}>
         <NamedStub aria-label="Seats" />
       </Field>,
     );
     expect(screen.getByTestId('control')).toHaveAccessibleName('Seats');
-    expect(document.querySelector('label')).toBeInTheDocument();
+    expect(document.querySelector('label')).not.toBeInTheDocument();
   });
 
   it('label={[]} behaves the same as label={<></>}', () => {
@@ -413,22 +422,48 @@ describe('Field — a truthy-but-empty `label` (round 6 Critical)', () => {
     expect(screen.getByTestId('control')).toHaveAccessibleName('Seats');
   });
 
-  it('label={<></>} with no fallback on the control leaves it unnamed — a documented residual case, not fixable without walking children', () => {
+  it('a NON-empty array of only falsy elements (label={[false, false]}) is also absent — hasContent checks each element, not just array length', () => {
+    render(
+      <Field label={[false, false]}>
+        <NamedStub aria-label="Seats" />
+      </Field>,
+    );
+    expect(screen.getByTestId('control')).toHaveAccessibleName('Seats');
+    expect(document.querySelector('label')).not.toBeInTheDocument();
+  });
+
+  it('label={<></>} with no fallback on the control injects no aria-labelledby (structural check — toHaveAccessibleName cannot see this gate)', () => {
+    // toHaveAccessibleName('') can't distinguish "no aria-labelledby at
+    // all" from "aria-labelledby pointing at a real-but-empty element" —
+    // both resolve to ''. That made the equivalent assertion here inert in
+    // round 6 (green on both the buggy code and the fix) — round 7 review
+    // caught it. Assert the actual DOM state instead.
     render(
       <Field label={<></>}>
         <NamedStub />
       </Field>,
     );
-    expect(screen.getByTestId('control')).toHaveAccessibleName('');
+    expect(document.querySelector('label')).not.toBeInTheDocument();
+    expect(screen.getByTestId('control')).not.toHaveAttribute('aria-labelledby');
   });
 
-  it("a control's own aria-label wins even over a MEANINGFUL label — same 'child's explicit value wins' rule as aria-describedby's `||`", () => {
+  it("a MEANINGFUL label wins over a control's own aria-label — WCAG 2.5.3 Label in Name: visible text must be in the accessible name", () => {
     render(
-      <Field label="Row label">
-        <NamedStub aria-label="Consumer name" />
+      <Field label="Work email">
+        <NamedStub aria-label="Email address" />
       </Field>,
     );
-    expect(screen.getByTestId('control')).toHaveAccessibleName('Consumer name');
+    expect(screen.getByTestId('control')).toHaveAccessibleName('Work email');
+  });
+
+  it('the render-prop path gets the same fix — the field object reads the same hoisted hasLabel, unlike round 6 which could not reach this path at all', () => {
+    render(
+      <Field label={<></>}>
+        {(field) => <input data-testid="control" {...field} aria-label="Seats" />}
+      </Field>,
+    );
+    expect(screen.getByTestId('control')).toHaveAccessibleName('Seats');
+    expect(screen.getByTestId('control')).not.toHaveAttribute('aria-labelledby');
   });
 });
 

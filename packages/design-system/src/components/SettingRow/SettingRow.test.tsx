@@ -285,6 +285,8 @@ describe('SettingRow — falsy-but-present optional props (the `cond && value` i
     ['false', false],
     ['an empty string', ''],
     ['undefined', undefined],
+    ['an empty fragment', <></>],
+    ['an empty array', []],
   ])('error=%s does not flip the control invalid', (_label, errorValue) => {
     const { container } = render(
       <SettingRow label="Seats" description="Helper text" error={errorValue}>
@@ -307,6 +309,8 @@ describe('SettingRow — falsy-but-present optional props (the `cond && value` i
   it.each([
     ['false', false],
     ['an empty string', ''],
+    ['an empty fragment', <></>],
+    ['an empty array', []],
   ])(
     'description=%s renders no description node and no accessible description',
     (_label, descriptionValue) => {
@@ -422,22 +426,25 @@ describe('SettingRow — falsy-but-present optional props (the `cond && value` i
     expect(screen.getByRole('spinbutton')).not.toHaveAttribute('aria-labelledby');
   });
 
-  // Round 6 Critical: label={<></>} / label={[]} are TRUTHY (Boolean is true,
-  // same as any other empty-container idiom this file already documents for
-  // error/description/trailing), so hasLabel stays true and the <label>
-  // element DOES render — empty. Before fieldWiring.ts's fix, aria-labelledby
-  // pointed at that real-but-empty element, which is authoritative in the
-  // accname algorithm (unlike a fully dangling reference, it does NOT fall
-  // through to the control's own aria-label) — so this half of the "falsy
-  // label" bug survived round 5's fix, which only closed the falsy half.
-  it('label={<></>} still renders an empty <label>, but a control with its own aria-label keeps its name', () => {
+  // label={<></>} / label={[]} are TRUTHY — Boolean(label) is true for both,
+  // same as any other empty-container idiom this file documents for
+  // error/description. Round 5/6: hasLabel was Boolean(label), so it stayed
+  // true and the <label> element DID render, empty — and aria-labelledby
+  // pointing at that real-but-empty element is authoritative in the accname
+  // algorithm (unlike a fully dangling reference, it does NOT fall through
+  // to the control's own aria-label). Round 7: hasLabel is hasContent(label)
+  // — see fieldWiring.ts — which correctly treats a truthy-but-empty
+  // container as absent, so NO <label> renders at all. Same outcome as the
+  // plain falsy case above, reached via a fragment/array instead of
+  // `false`/`''`.
+  it('label={<></>} renders no <label> at all — a control with its own aria-label keeps its name', () => {
     render(
       <SettingRow label={<></>}>
         <Input type="number" aria-label="Seats" />
       </SettingRow>,
     );
     expect(screen.getByRole('spinbutton')).toHaveAccessibleName('Seats');
-    expect(document.querySelector('label')).toBeInTheDocument();
+    expect(document.querySelector('label')).not.toBeInTheDocument();
   });
 
   it('label={[]} behaves the same as label={<></>}', () => {
@@ -449,13 +456,43 @@ describe('SettingRow — falsy-but-present optional props (the `cond && value` i
     expect(screen.getByRole('spinbutton')).toHaveAccessibleName('Seats');
   });
 
-  it('label={<></>} with no fallback on the control leaves it unnamed — documented residual case', () => {
+  it('a NON-empty array of only falsy elements (label={[false, false]}) is also absent — hasContent checks each element, not just array length', () => {
+    render(
+      <SettingRow label={[false, false]}>
+        <Input type="number" aria-label="Seats" />
+      </SettingRow>,
+    );
+    expect(screen.getByRole('spinbutton')).toHaveAccessibleName('Seats');
+    expect(document.querySelector('label')).not.toBeInTheDocument();
+  });
+
+  it('label={<></>} with no fallback on the control injects no aria-labelledby (structural check — toHaveAccessibleName cannot see this gate)', () => {
+    // toHaveAccessibleName('') can't distinguish "no aria-labelledby at
+    // all" from "aria-labelledby pointing at a real-but-empty element" —
+    // both resolve to ''. That made the equivalent assertion here inert in
+    // round 6 (green on both the buggy code and the fix) — round 7 review
+    // caught it. Assert the actual DOM state instead.
     render(
       <SettingRow label={<></>}>
         <Input type="number" />
       </SettingRow>,
     );
-    expect(screen.getByRole('spinbutton')).toHaveAccessibleName('');
+    expect(document.querySelector('label')).not.toBeInTheDocument();
+    expect(screen.getByRole('spinbutton')).not.toHaveAttribute('aria-labelledby');
+  });
+
+  it("a MEANINGFUL label wins over a control's own aria-label — WCAG 2.5.3 Label in Name: visible text must be in the accessible name", () => {
+    // Round 6 shipped a fix that skipped injecting aria-labelledby whenever
+    // the child had its own aria-label — which ALSO applied to a meaningful
+    // label, not just an empty one, and made "Work email" lose to a
+    // control's own "Email address": a Level A WCAG failure on the ordinary
+    // path. Reverted in round 7; this is the antidote test.
+    render(
+      <SettingRow label="Work email">
+        <Input type="number" aria-label="Email address" />
+      </SettingRow>,
+    );
+    expect(screen.getByRole('spinbutton')).toHaveAccessibleName('Work email');
   });
 });
 

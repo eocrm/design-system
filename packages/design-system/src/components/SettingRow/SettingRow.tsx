@@ -1,7 +1,7 @@
 import { forwardRef, type CSSProperties, type HTMLAttributes, type ReactNode } from 'react';
 import clsx from 'clsx';
 import { Text } from '../Text';
-import { useFieldWiring, type FieldRenderProps } from '../_internal/fieldWiring';
+import { hasContent, useFieldWiring, type FieldRenderProps } from '../_internal/fieldWiring';
 import { type CollapseBreakpoint } from '../_internal/collapse';
 import styles from './SettingRow.module.scss';
 
@@ -129,28 +129,24 @@ export interface SettingRowProps extends Omit<HTMLAttributes<HTMLDivElement>, 'c
  * - ❌ `margin` on a row to separate rows — that is `<SettingRow.List>`'s job.
  * - ❌ Mixing control sizes within one row — a `size="sm"` adornment beside a
  *   default-`md` control renders two different heights on the same line.
- * - ⚠️ `label` / `error` / `description` / `trailing` / `footer` /
- *   `labelAdornment` treat `0` and `NaN` as ABSENT — same as `{0 && …}`
- *   anywhere else in JSX — so `description={remaining}` with
- *   `remaining === 0` renders nothing, and a falsy `label` (`0`, `''`,
- *   `false`) renders no `<label>` element at all — the control falls back
- *   to its own `aria-label` if it has one, or ends up unnamed otherwise.
- *   They all treat an empty array or fragment (`error={errors.map(...)}`
- *   with no errors, `error={<></>}`, `label={<></>}`) as PRESENT:
- *   `error`/`description`/`trailing`/`label` each have a wrapper element
- *   (for `label`, the `<label>` IS the wrapper), so they render an EMPTY
- *   node — for `error` specifically that also flips the control invalid;
- *   `footer`/`labelAdornment` have no wrapper, so they render NO node at
- *   all. An empty `label` still defers to the control's own `aria-label` if
- *   it has one (the control's explicit value always wins over the row's
- *   computed default — same rule as `aria-describedby`), but with no
- *   fallback the control still ends up unnamed. Pass `undefined` explicitly
- *   for "none" rather than a container that might be empty.
- * - ⚠️ `<SettingRow label={false} required>` renders NO `*` marker at all —
- *   the marker lives inside the `<label>`, which a falsy `label` skips
- *   rendering entirely — while `required` is still injected onto the
- *   control. Correct (a marker with nothing to mark is noise), but a
- *   surprising combination if you're not expecting it.
+ * - ⚠️ `label` / `error` / `description` treat `0`, `NaN`, `false`, `''`, an
+ *   empty array, and an empty fragment (`<></>`) as ABSENT — not just the
+ *   falsy cases. `description={remaining}` with `remaining === 0`,
+ *   `error={errors.map(...)}` with no errors, and `label={<></>}` all
+ *   render nothing at all: no `<label>`, no description `<Text>`, no error
+ *   `<Text>` (and no `invalid` flip for `error`) — a labelless control
+ *   falls back to its own `aria-label` if it has one, or ends up unnamed
+ *   otherwise. This can't see a REAL but visually-empty node
+ *   (`label={<span />}`, `label="   "`) — those still count as present.
+ * - ⚠️ `trailing` uses the plain `Boolean(x)` check, not the smarter one
+ *   above — an empty array or fragment there still counts as PRESENT and
+ *   renders an empty `.trailing` wrapper div (a stray gap).
+ *   `footer`/`labelAdornment` have no wrapper at all, so the same input
+ *   renders nothing either way. Pass `undefined` explicitly for "none"
+ *   rather than a container that might be empty.
+ * - ⚠️ An absent `label` also removes the `required` `*` marker — it lives
+ *   inside the `<label>` element, which isn't rendered at all when the
+ *   label has no content. `<SettingRow label={0} required>` shows no `*`.
  */
 const SettingRowRoot = forwardRef<HTMLDivElement, SettingRowProps>(function SettingRow(
   {
@@ -171,13 +167,16 @@ const SettingRowRoot = forwardRef<HTMLDivElement, SettingRowProps>(function Sett
 ) {
   // Single source of truth for each "is there an X" predicate — round 5
   // hoisted only `hasLabel` (it had two consumers and had already diverged);
-  // round 6 does the same for `hasDescription`/`hasError`/`hasRequired`,
+  // round 6 did the same for `hasDescription`/`hasError`/`hasRequired`,
   // still each computed twice (once for the wiring call, once for the
-  // matching render gate) — not diverged today, but the identical
-  // duplication shape that produced `hasLabel`'s bug.
-  const hasLabel = Boolean(label);
-  const hasDescription = Boolean(description);
-  const hasError = Boolean(error);
+  // matching render gate). Round 7: `hasLabel`/`hasDescription`/`hasError`
+  // now use `hasContent`, not `Boolean` — see that function's doc in
+  // fieldWiring.ts. `hasRequired` stays `Boolean` since `required` is a
+  // plain boolean, not ReactNode content that can be an empty-but-truthy
+  // container.
+  const hasLabel = hasContent(label);
+  const hasDescription = hasContent(description);
+  const hasError = hasContent(error);
   const hasRequired = Boolean(required);
   const { controlId, labelId, descriptionId, errorId, wire } = useFieldWiring({
     id,

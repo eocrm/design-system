@@ -1,4 +1,36 @@
-import { cloneElement, isValidElement, useId, type ReactElement, type ReactNode } from 'react';
+import {
+  cloneElement,
+  Fragment,
+  isValidElement,
+  useId,
+  type ReactElement,
+  type ReactNode,
+} from 'react';
+
+/**
+ * `Boolean(n)`, plus: an empty array and an empty fragment (`<></>`) count as
+ * ABSENT rather than present. `Boolean(label)` alone treats `label={<></>}` /
+ * `label={[]}` as truthy, so `Field`/`SettingRow` used to render a real, empty
+ * `<label>` and point `aria-labelledby` at it — and a real-but-empty referent
+ * is authoritative in the accname algorithm, so it silently named the control
+ * `""` instead of falling through to anything else. Use this everywhere a
+ * `hasX` predicate feeds BOTH a render gate (should something visible exist)
+ * and an ARIA reference (does that visible thing actually name/describe the
+ * control) — `hasLabel`, `hasDescription`, `hasError`.
+ *
+ * Known, deliberate limit: this cannot see a REAL element with empty visual
+ * content (`label={<span />}`) or a whitespace-only string (`label="   "`) —
+ * both are still truthy content as far as this function is concerned, same
+ * as `Boolean(x)` was. Detecting those needs rendering the element and
+ * inspecting its content, which this predicate does not attempt.
+ */
+export function hasContent(n: ReactNode): boolean {
+  if (Array.isArray(n)) return n.some(hasContent);
+  if (isValidElement(n) && n.type === Fragment) {
+    return hasContent((n.props as { children?: ReactNode }).children);
+  }
+  return Boolean(n);
+}
 
 /** The wiring a field-like component hands to its control. Spread onto the control in render-prop form. */
 export interface FieldRenderProps {
@@ -110,32 +142,42 @@ export function useFieldWiring({
         invalid: childProps.invalid ?? invalid,
         required: childProps.required ?? requiredBool,
       };
-      // CORRECTED (round 6) — the previous comment here claimed omitting this
-      // key was load-bearing because an explicit `undefined` would "overwrite"
-      // a value the child already had. That is false: the `||` on the next
-      // line already means a truthy `childProps['aria-labelledby']` survives
-      // regardless of whether the key is present or merely `undefined`, and
-      // both reviewers proved it by mutation (dropping just the `if` here is
-      // GREEN on both `Field` and `SettingRow`). Round 5's own mutation log
-      // claimed this specific revert went red — it does not reproduce; the
-      // false claim and the false log entry likely share a cause: I never
-      // actually isolated the `if` when I "verified" it.
+      // ROUND 7 — round 6 shipped `if (hasLabel && !childProps['aria-label'])`:
+      // skip injecting aria-labelledby whenever the child already carries its
+      // own aria-label, reasoning it as the same "child's explicit value wins"
+      // rule as the `||` two lines up. Both round-7 reviewers measured that
+      // this is the wrong fix, at the wrong altitude: `aria-describedby` is
+      // SUPPLEMENTARY (a consumer overriding it loses helper text — nothing
+      // breaks), but the accessible NAME is the control's identity, and WCAG
+      // 2.5.3 (Level A) requires a control's VISIBLE label text to be
+      // contained in that name. `<Field label="Work email"><Input
+      // aria-label="Email address" /></Field>` — a completely ordinary,
+      // defensive pattern an agent writes reflexively — computed name
+      // "Work email" before round 6 and "Email address" after: the visible
+      // text silently dropped out of the name on the library's single most
+      // common path. Reverted.
       //
-      // What the `if` DOES do, correctly, now: skip the injection entirely
-      // when the child supplies its OWN `aria-label`. Without this, an
-      // empty-but-truthy `label` (`label={<></>}`, `label={[]}` — `hasLabel`
-      // is `Boolean(label)`, true for both) still renders a real, empty
-      // `<label>`, and `aria-labelledby` pointing at a real-but-empty element
-      // is authoritative in the accname algorithm — it does NOT fall through
-      // to `aria-label` the way a fully dangling reference does. So the
-      // control's own explicit name got silently overridden by an empty one.
-      // Same "child's explicit value wins over Field's computed default"
-      // philosophy as the `aria-describedby` line above (and the `||`-not-`??`
-      // comment two lines up) — just extended to the `aria-label`/
-      // `aria-labelledby` pair, which had no analogous guard.
-      if (hasLabel && !childProps['aria-label']) {
-        injected['aria-labelledby'] = childProps['aria-labelledby'] || labelledBy;
-      }
+      // The REAL fix is hasLabel itself: it now reads hasContent(label), not
+      // Boolean(label) — see that function's doc. An empty label
+      // (`label={<></>}`, `label={[]}`) no longer renders a `<label>` at all,
+      // hasLabel is correctly false, and `labelledBy` above is `undefined` —
+      // on BOTH this cloneElement path AND the render-prop `field` object,
+      // which reads the same hoisted `hasLabel` (round 6's fix could not
+      // reach the render-prop path at all, since that object is built before
+      // the child is known and has no childProps to inspect — this fix has
+      // no such asymmetry).
+      //
+      // No `if (hasLabel)` guard here, on purpose, verified by mutation: one
+      // was restored in an earlier round-7 draft and stayed green with the
+      // condition hardcoded `true`, and again with the `if` deleted outright
+      // — because `labelledBy` is already `hasLabel ? labelId : undefined`,
+      // so when `!hasLabel` this line reduces to `childProps['aria-labelledby']
+      // || undefined`, and `cloneElement` receiving an explicit `undefined`
+      // for a key the child never set is indistinguishable from omitting the
+      // key — the same argument that killed round 5's and round 6's guards
+      // here. Unlike those, this isn't a wrong claim shipped with a live
+      // gate; there's no gate left to be wrong about.
+      injected['aria-labelledby'] = childProps['aria-labelledby'] || labelledBy;
     }
     return cloneElement(child, injected);
   };

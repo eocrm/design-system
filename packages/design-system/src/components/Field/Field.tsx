@@ -2,7 +2,7 @@ import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
 import clsx from 'clsx';
 import { Text, type TextSize } from '../Text';
 import { useTranslation } from '../../i18n/useTranslation';
-import { useFieldWiring, type FieldRenderProps } from '../_internal/fieldWiring';
+import { hasContent, useFieldWiring, type FieldRenderProps } from '../_internal/fieldWiring';
 import styles from './Field.module.scss';
 
 export type { FieldRenderProps };
@@ -114,19 +114,20 @@ const MSG_SIZE: Record<FieldSize, TextSize> = { sm: 'xs', md: 'sm', lg: 'sm' };
  *   the DS `invalid` prop (controls map it to `aria-invalid`). For a native element use the
  *   render-prop and spread `field` (it includes `aria-invalid`).
  * - ❌ Passing both `required` and `optional`.
- * - ⚠️ `label` / `description` / `error` treat `0` and `NaN` as ABSENT — same
- *   as `{0 && …}` anywhere else in JSX — so a falsy `label` renders no
- *   `<label>` at all, and the control falls back to its own `aria-label` if
- *   it has one, or ends up unnamed otherwise. They treat an empty array or
- *   fragment (`error={errors.map(...)}` with no errors, `error={<></>}`,
- *   `label={<></>}`) as PRESENT: `error` still flips the control invalid
- *   with an empty message; `description` renders an empty node; `label`'s
- *   `<label>` element IS the wrapper, so it renders empty too — the
- *   control's own `aria-label`, if it has one, still wins over that empty
- *   name (the child's explicit value always wins over Field's computed
- *   default, same as `aria-describedby`), but with no fallback the control
- *   still ends up unnamed. Pass `undefined` explicitly for "none" rather
- *   than a container that might be empty.
+ * - ⚠️ `label` / `description` / `error` treat `0`, `NaN`, `false`, `''`, an
+ *   empty array, and an empty fragment (`<></>`) as ABSENT — not just the
+ *   falsy cases. `error={errors.map(...)}` with no errors, `label={<></>}`,
+ *   `description={[]}` all render nothing at all: no `<label>`, no
+ *   description `<Text>`, no error `<Text>` (and no `invalid` flip for
+ *   `error`) — the control falls back to its own `aria-label` if it has
+ *   one, or ends up unnamed otherwise. This can't see a REAL but
+ *   visually-empty node (`label={<span />}`, `label="   "`) — those still
+ *   count as present. Pass `undefined` explicitly for "none" rather than a
+ *   container that might be empty.
+ * - ⚠️ An absent `label` also removes the `required`/`optional` marker —
+ *   both live inside the `<label>` element, which isn't rendered at all
+ *   when the label has no content. `<Field label={0} required>` shows no
+ *   `*`; `<Field label={0} optional>` shows no `(optional)` either.
  */
 export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
   {
@@ -148,14 +149,18 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
   const t = useTranslation();
   // Single source of truth for each "is there an X" predicate — round 5
   // hoisted only `hasLabel` (it had THREE consumers and had already
-  // diverged); round 6 does the same for `hasDescription`/`hasError`/
+  // diverged); round 6 did the same for `hasDescription`/`hasError`/
   // `hasRequired`, which were still each computed twice (once for the
-  // wiring call, once for the matching render gate) — not diverged today,
-  // but the identical duplication shape that produced `hasLabel`'s bug.
-  const hasLabel = Boolean(label);
-  const hasDescription = Boolean(description);
-  const hasError = Boolean(error);
+  // wiring call, once for the matching render gate). Round 7: `hasLabel`/
+  // `hasDescription`/`hasError` now use `hasContent`, not `Boolean` — see
+  // that function's doc in fieldWiring.ts. `hasRequired`/`hasOptional` stay
+  // `Boolean` since `required`/`optional` are plain booleans, not ReactNode
+  // content that can be an empty-but-truthy container.
+  const hasLabel = hasContent(label);
+  const hasDescription = hasContent(description);
+  const hasError = hasContent(error);
   const hasRequired = Boolean(required);
+  const hasOptional = Boolean(optional);
   const { controlId, labelId, descriptionId, errorId, describedBy, invalid, wire } = useFieldWiring(
     {
       id,
@@ -183,7 +188,7 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
           *
         </span>
       )}
-      {optional && <span className={styles.optional}> {t('field.optional')}</span>}
+      {hasOptional && <span className={styles.optional}> {t('field.optional')}</span>}
     </>
   );
 
