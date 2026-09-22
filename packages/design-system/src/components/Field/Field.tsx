@@ -122,8 +122,11 @@ const MSG_SIZE: Record<FieldSize, TextSize> = { sm: 'xs', md: 'sm', lg: 'sm' };
  *   `error`) — the control falls back to its own `aria-label` if it has
  *   one, or ends up unnamed otherwise. This can't see a REAL but
  *   visually-empty node (`label={<span />}`, `label="   "`) — those still
- *   count as present. Pass `undefined` explicitly for "none" rather than a
- *   container that might be empty.
+ *   count as present, and neither can it see an EMPTY one-shot iterator
+ *   (`Map.prototype.values()`, a generator) — those count as present too,
+ *   since checking would drain the very iterator React needs to render.
+ *   Pass `undefined` explicitly for "none" rather than a container that
+ *   might be empty.
  * - ⚠️ An absent `label` also removes the `required`/`optional` marker —
  *   both live inside the `<label>` element, which isn't rendered at all
  *   when the label has no content. `<Field label={0} required>` shows no

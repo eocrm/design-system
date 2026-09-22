@@ -137,7 +137,10 @@ export interface SettingRowProps extends Omit<HTMLAttributes<HTMLDivElement>, 'c
  *   `<Text>` (and no `invalid` flip for `error`) — a labelless control
  *   falls back to its own `aria-label` if it has one, or ends up unnamed
  *   otherwise. This can't see a REAL but visually-empty node
- *   (`label={<span />}`, `label="   "`) — those still count as present.
+ *   (`label={<span />}`, `label="   "`) — those still count as present, and
+ *   neither can it see an EMPTY one-shot iterator (`Map.prototype.values()`,
+ *   a generator) — those count as present too, since checking would drain
+ *   the very iterator React needs to render.
  * - ⚠️ `trailing` uses the plain `Boolean(x)` check, not the smarter one
  *   above — an empty array or fragment there still counts as PRESENT and
  *   renders an empty `.trailing` wrapper div (a stray gap).

@@ -99,7 +99,14 @@ describe('hasContent — iterables: only RE-ITERABLE containers are inspected (r
   });
 });
 
-describe('hasContent — Fragment recursion (Important 2: both conjuncts pinned)', () => {
+describe('hasContent — Fragment recursion (Important 2: the Fragment-type check and its recursion body are pinned)', () => {
+  // Not "both conjuncts": `isValidElement(n)` in `isValidElement(n) &&
+  // n.type === Fragment` isn't independently testable — no type-legal
+  // ReactNode other than a real element can carry `.type === Fragment`, so
+  // dropping just `isValidElement(n)` is an equivalent mutant, not a killed
+  // one (round 10 review). What IS pinned below: the `n.type === Fragment`
+  // check itself (a childless non-Fragment element stays present) and the
+  // recursion body (a Fragment WITH content stays present).
   it('is false for an empty fragment, however nested', () => {
     // (A keyed `<Fragment key="k" />` isn't asserted separately — a key
     // never reaches `props.children`, so it can't fail independently of the
