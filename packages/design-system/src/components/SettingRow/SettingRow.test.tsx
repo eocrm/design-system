@@ -219,7 +219,13 @@ describe('SettingRow.List', () => {
     expect(ref.current!.style.getPropertyValue('--setting-row-label-width')).toBe('18rem');
   });
 
-  it('omits the custom property when labelWidth is not set, so the token default applies', () => {
+  // CSSOM defines setProperty(name, '') as equivalent to removeProperty, so a
+  // getPropertyValue check can't distinguish "never set" from "always set,
+  // and this render's value happened to be undefined" — both settle to the
+  // empty string. This asserts the observable contract (no explicit value
+  // reaches the DOM, so --setting-row-label-width: 16rem in the tokens file
+  // wins), not the stronger claim, which isn't reachable in jsdom.
+  it('labelWidth unset resolves to an empty custom property, so the token default wins', () => {
     const ref = createRef<HTMLDivElement>();
     render(
       <SettingRow.List ref={ref}>
@@ -231,6 +237,10 @@ describe('SettingRow.List', () => {
     expect(ref.current!.style.getPropertyValue('--setting-row-label-width')).toBe('');
   });
 
+  // jsdom does not evaluate container queries — same as Grid's and Split's
+  // collapseBelow tests (#314, #372), the collapse contract is asserted via
+  // the emitted classes; the @container rules themselves are verified in the
+  // browser.
   it.each(['sm', 'md', 'lg'] as const)('collapseBelow=%s renders the collapse class', (bp) => {
     const ref = createRef<HTMLDivElement>();
     render(

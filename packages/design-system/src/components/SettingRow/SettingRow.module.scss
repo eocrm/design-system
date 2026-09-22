@@ -100,10 +100,15 @@
 }
 
 // --- collapseBelow -----------------------------------------------------
-// Only a List with collapseBelow becomes a size container, so existing
-// lists get no containment change. The queries target the ROWS, which are
-// descendants — an element is never matched by a query against its own
-// container (same constraint Grid and Split document).
+// Unlike Grid/Split, where collapse is opt-in, `collapseBelow` defaults to
+// 'sm' — so EVERY List is a size container, deliberately. Grid and Split
+// collapse fractional tracks, so not collapsing is merely cramped; here the
+// label column is a FIXED length (--setting-row-label-width), so a row that
+// doesn't collapse genuinely overflows below roughly 20rem rather than just
+// crowding. The cost (mirrors Split.module.scss:86-87): container-type:
+// inline-size zeroes the element's intrinsic-width contribution. The queries
+// target the ROWS, which are descendants — an element is never matched by a
+// query against its own container (same constraint Grid and Split document).
 .collapsible {
   container-type: inline-size;
 }

@@ -227,6 +227,10 @@ const COLLAPSE_CLASS: Record<CollapseBreakpoint, string> = {
  *   have no shared label-column owner and no divider rhythm.
  * - ❌ Setting `--setting-row-label-width` on individual rows — the point is
  *   one value for the whole list.
+ * - ❌ A `SettingRow.List` inside a shrink-to-fit parent (a
+ *   `width: max-content` flex item, an inline-block, a table cell) — the
+ *   List is always a size container, so its intrinsic-width contribution is
+ *   zero and it collapses.
  */
 const SettingRowList = forwardRef<HTMLDivElement, SettingRowListProps>(function SettingRowList(
   {
