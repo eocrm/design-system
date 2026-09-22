@@ -152,3 +152,111 @@ describe('SettingRow', () => {
     expect(ref.current!.className.split(' ').length).toBeGreaterThan(1);
   });
 });
+
+describe('SettingRow.List', () => {
+  it('renders its rows', () => {
+    render(
+      <SettingRow.List>
+        <SettingRow label="Seats">
+          <Input type="number" />
+        </SettingRow>
+        <SettingRow label="API calls">
+          <Input type="number" />
+        </SettingRow>
+      </SettingRow.List>,
+    );
+    expect(screen.getByRole('spinbutton', { name: 'Seats' })).toBeInTheDocument();
+    expect(screen.getByRole('spinbutton', { name: 'API calls' })).toBeInTheDocument();
+  });
+
+  it('defaults to md spacing and no dividers', () => {
+    const { container } = render(
+      <SettingRow.List>
+        <SettingRow label="Seats">
+          <Input type="number" />
+        </SettingRow>
+      </SettingRow.List>,
+    );
+    const list = container.querySelector('[data-setting-row-list]')!;
+    expect(list).toHaveAttribute('data-spacing', 'md');
+    expect(list).not.toHaveAttribute('data-dividers');
+  });
+
+  it('dividers sets the data attribute', () => {
+    const { container } = render(
+      <SettingRow.List dividers>
+        <SettingRow label="Seats">
+          <Input type="number" />
+        </SettingRow>
+      </SettingRow.List>,
+    );
+    expect(container.querySelector('[data-setting-row-list]')).toHaveAttribute(
+      'data-dividers',
+      'true',
+    );
+  });
+
+  it.each(['sm', 'md', 'lg'] as const)('spacing=%s sets the data attribute', (s) => {
+    const { container } = render(
+      <SettingRow.List spacing={s}>
+        <SettingRow label="Seats">
+          <Input type="number" />
+        </SettingRow>
+      </SettingRow.List>,
+    );
+    expect(container.querySelector('[data-setting-row-list]')).toHaveAttribute('data-spacing', s);
+  });
+
+  it('labelWidth sets the shared custom property', () => {
+    const ref = createRef<HTMLDivElement>();
+    render(
+      <SettingRow.List ref={ref} labelWidth="18rem">
+        <SettingRow label="Seats">
+          <Input type="number" />
+        </SettingRow>
+      </SettingRow.List>,
+    );
+    expect(ref.current!.style.getPropertyValue('--setting-row-label-width')).toBe('18rem');
+  });
+
+  it('omits the custom property when labelWidth is not set, so the token default applies', () => {
+    const ref = createRef<HTMLDivElement>();
+    render(
+      <SettingRow.List ref={ref}>
+        <SettingRow label="Seats">
+          <Input type="number" />
+        </SettingRow>
+      </SettingRow.List>,
+    );
+    expect(ref.current!.style.getPropertyValue('--setting-row-label-width')).toBe('');
+  });
+
+  it.each(['sm', 'md', 'lg'] as const)('collapseBelow=%s renders the collapse class', (bp) => {
+    const ref = createRef<HTMLDivElement>();
+    render(
+      <SettingRow.List ref={ref} collapseBelow={bp}>
+        <SettingRow label="Seats">
+          <Input type="number" />
+        </SettingRow>
+      </SettingRow.List>,
+    );
+    // CSS Modules hashes class names in the real build but vitest maps them to
+    // the raw name; assert on the substring so either form passes.
+    expect(ref.current!.className).toMatch(
+      new RegExp(`collapse${bp[0]!.toUpperCase()}${bp[1]}`, 'i'),
+    );
+  });
+
+  it('forwards ref and merges className', () => {
+    const ref = createRef<HTMLDivElement>();
+    render(
+      <SettingRow.List ref={ref} className="custom">
+        <SettingRow label="Seats">
+          <Input type="number" />
+        </SettingRow>
+      </SettingRow.List>,
+    );
+    expect(ref.current).toHaveClass('custom');
+    expect(ref.current).toHaveAttribute('data-setting-row-list');
+  });
+});

@@ -1,4 +1,5 @@
 @use './SettingRow.tokens';
+@use '../_internal/collapse' as bp;
 
 // Two columns: label | control. The label column is a length resolved from
 // --setting-row-label-width, so sibling rows align without a subgrid.
@@ -72,4 +73,58 @@
 
 .controlLine[data-control-width='full'] {
   max-width: 100%;
+}
+
+// --- SettingRow.List ---------------------------------------------------
+// The List owns vertical rhythm and dividers — hard rule 4 keeps them off
+// the row, which is the child.
+.list {
+  display: flex;
+  flex-direction: column;
+}
+
+.list[data-spacing='sm'] > [data-setting-row] {
+  padding-block: var(--setting-row-padding-y-sm);
+}
+
+.list[data-spacing='md'] > [data-setting-row] {
+  padding-block: var(--setting-row-padding-y-md);
+}
+
+.list[data-spacing='lg'] > [data-setting-row] {
+  padding-block: var(--setting-row-padding-y-lg);
+}
+
+.list[data-dividers='true'] > [data-setting-row] + [data-setting-row] {
+  border-top: var(--border-width) solid var(--setting-row-divider-color);
+}
+
+// --- collapseBelow -----------------------------------------------------
+// Only a List with collapseBelow becomes a size container, so existing
+// lists get no containment change. The queries target the ROWS, which are
+// descendants — an element is never matched by a query against its own
+// container (same constraint Grid and Split document).
+.collapsible {
+  container-type: inline-size;
+}
+
+@container (max-width: #{bp.$collapse-sm}) {
+  .collapsible.collapseSm > [data-setting-row] {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--setting-row-stack-gap);
+  }
+}
+
+@container (max-width: #{bp.$collapse-md}) {
+  .collapsible.collapseMd > [data-setting-row] {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--setting-row-stack-gap);
+  }
+}
+
+@container (max-width: #{bp.$collapse-lg}) {
+  .collapsible.collapseLg > [data-setting-row] {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--setting-row-stack-gap);
+  }
 }

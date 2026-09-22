@@ -1,7 +1,8 @@
-import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
+import { forwardRef, type CSSProperties, type HTMLAttributes, type ReactNode } from 'react';
 import clsx from 'clsx';
 import { Text } from '../Text';
 import { useFieldWiring, type FieldRenderProps } from '../_internal/fieldWiring';
+import { type CollapseBreakpoint } from '../_internal/collapse';
 import styles from './SettingRow.module.scss';
 
 /** Max width applied to the control cell. Mirrors `<Constrain>`'s measure scale. */
@@ -101,7 +102,7 @@ export interface SettingRowProps extends Omit<HTMLAttributes<HTMLDivElement>, 'c
  *   card, the second leaves every row's control at a different x.
  * - ❌ `margin` on a row to separate rows — that is `<SettingRow.List>`'s job.
  */
-export const SettingRow = forwardRef<HTMLDivElement, SettingRowProps>(function SettingRow(
+const SettingRowRoot = forwardRef<HTMLDivElement, SettingRowProps>(function SettingRow(
   {
     label,
     labelAdornment,
@@ -161,4 +162,106 @@ export const SettingRow = forwardRef<HTMLDivElement, SettingRowProps>(function S
       </div>
     </div>
   );
+});
+SettingRowRoot.displayName = 'SettingRow';
+
+/** Vertical padding per row: `sm` = `--space-2`, `md` = `--space-3`, `lg` = `--space-4`. */
+export type SettingRowListSpacing = 'sm' | 'md' | 'lg';
+
+export interface SettingRowListProps extends HTMLAttributes<HTMLDivElement> {
+  /**
+   * CSS length for the label column, shared by every row in the list
+   * (e.g. `'18rem'`, `'240px'`). Default `'16rem'` via the
+   * `--setting-row-label-width` token.
+   *
+   * A LENGTH, not `max-content` — rows align because they each resolve the
+   * same value, with no subgrid.
+   */
+  labelWidth?: string;
+  /** 1px border between rows. Default `false`, matching `<DefinitionList>`. */
+  dividers?: boolean;
+  /** Vertical padding per row. Default `'md'`. */
+  spacing?: SettingRowListSpacing;
+  /**
+   * Container width at or below which each row stacks its label column above
+   * its control column. `'sm'` 480px / `'md'` 640px / `'lg'` 768px, measured
+   * against the LIST's own box (a container query, like `<Grid>` and
+   * `<Split>`). Default `'sm'`.
+   */
+  collapseBelow?: CollapseBreakpoint;
+  /** The rows. */
+  children: ReactNode;
+}
+
+// Same shape as Grid's `collapseClass` (Grid.tsx:143) — no non-null
+// assertions: types/scss-modules.d.ts types a CSS-module member as `string`.
+const COLLAPSE_CLASS: Record<CollapseBreakpoint, string> = {
+  sm: styles.collapseSm,
+  md: styles.collapseMd,
+  lg: styles.collapseLg,
+};
+
+/**
+ * A list of `<SettingRow>`s. Owns the shared label column, the vertical
+ * rhythm, the optional dividers, and the narrow-container collapse — all of
+ * which are the parent's job, not the row's.
+ *
+ * @example
+ * <SettingRow.List dividers labelWidth="18rem">
+ *   <SettingRow label="Seats" description="Member seats for this tenant">
+ *     <Input type="number" />
+ *   </SettingRow>
+ *   <SettingRow label="API calls" description="Requests included per month">
+ *     <Input type="number" />
+ *   </SettingRow>
+ * </SettingRow.List>
+ *
+ * @remarks When NOT to use
+ * - A single row — render the `<SettingRow>` on its own; it falls back to the
+ *   `16rem` token default.
+ * - Grouping rows under a heading — that is `<FormSection>`, which can wrap a
+ *   `<SettingRow.List>`.
+ *
+ * @remarks Anti-patterns
+ * - ❌ A `<Stack>` of rows with ad-hoc `gap` instead of this — the rows then
+ *   have no shared label-column owner and no divider rhythm.
+ * - ❌ Setting `--setting-row-label-width` on individual rows — the point is
+ *   one value for the whole list.
+ */
+const SettingRowList = forwardRef<HTMLDivElement, SettingRowListProps>(function SettingRowList(
+  {
+    labelWidth,
+    dividers = false,
+    spacing = 'md',
+    collapseBelow = 'sm',
+    className,
+    style,
+    children,
+    ...rest
+  },
+  ref,
+) {
+  return (
+    <div
+      ref={ref}
+      data-setting-row-list=""
+      data-spacing={spacing}
+      data-dividers={dividers ? 'true' : undefined}
+      className={clsx(styles.list, styles.collapsible, COLLAPSE_CLASS[collapseBelow], className)}
+      // Custom-property-in-style idiom copied from Grid.tsx:204.
+      style={
+        labelWidth != null
+          ? { ...(style as CSSProperties), ['--setting-row-label-width' as string]: labelWidth }
+          : style
+      }
+      {...rest}
+    >
+      {children}
+    </div>
+  );
+});
+SettingRowList.displayName = 'SettingRowList';
+
+export const SettingRow = Object.assign(SettingRowRoot, {
+  List: SettingRowList,
 });
