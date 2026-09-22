@@ -82,13 +82,18 @@ describe('SettingRow', () => {
     expect(screen.getByRole('spinbutton')).toBeRequired();
   });
 
-  it('renders trailing content after the control', () => {
+  it('renders trailing content after the control, in DOM order', () => {
     render(
       <SettingRow label="Seats" trailing={<button type="button">Reset</button>}>
         <Input type="number" />
       </SettingRow>,
     );
-    expect(screen.getByRole('button', { name: 'Reset' })).toBeInTheDocument();
+    const control = screen.getByRole('spinbutton');
+    const trailing = screen.getByRole('button', { name: 'Reset' });
+    // Asserts ORDER, not just presence — the previous version of this test
+    // passed even if `trailing` rendered before the control or in the label
+    // column, since it only checked getByRole found the button somewhere.
+    expect(control.compareDocumentPosition(trailing)).toBe(Node.DOCUMENT_POSITION_FOLLOWING);
   });
 
   it('renders footer content', () => {
@@ -264,6 +269,62 @@ describe('SettingRow', () => {
   });
 });
 
+describe('SettingRow — falsy-but-present optional props (the `cond && value` idiom)', () => {
+  // `error`, `description` and `trailing` are all `ReactNode`, so
+  // `error={touched && msg}` / `description={cond && '…'}` /
+  // `trailing={isMetered && <Badge/>}` are ordinary consumer code that
+  // evaluate to `false`, not `undefined`, when the condition doesn't hold. A
+  // regression that treats `false`/`''` as "present" (`x != null` instead of
+  // `Boolean(x)`) flips the control invalid with an empty message, gives it
+  // an empty accessible description, or renders a stray `.trailing` wrapper
+  // that still eats `--setting-row-trailing-gap` with nothing inside it.
+  it.each([
+    ['false', false],
+    ['an empty string', ''],
+    ['undefined', undefined],
+  ])('error=%s does not flip the control invalid', (_label, errorValue) => {
+    render(
+      <SettingRow label="Seats" description="Helper text" error={errorValue}>
+        <Input type="number" />
+      </SettingRow>,
+    );
+    const control = screen.getByRole('spinbutton');
+    expect(control).not.toHaveAttribute('aria-invalid');
+    // aria-describedby must point at the (visible) description, not a
+    // present-but-empty error node.
+    expect(control).toHaveAccessibleDescription('Helper text');
+  });
+
+  it.each([
+    ['false', false],
+    ['an empty string', ''],
+  ])(
+    'description=%s renders no description node and no accessible description',
+    (_label, descriptionValue) => {
+      const { container } = render(
+        <SettingRow label="Seats" description={descriptionValue}>
+          <Input type="number" />
+        </SettingRow>,
+      );
+      // No empty <Text> in the term column for a falsy description.
+      expect(container.querySelector('[id$="-description"]')).not.toBeInTheDocument();
+      expect(screen.getByRole('spinbutton')).toHaveAccessibleDescription('');
+    },
+  );
+
+  it.each([
+    ['false', false],
+    ['an empty string', ''],
+  ])('trailing=%s renders no .trailing wrapper (no stray gap)', (_label, trailingValue) => {
+    const { container } = render(
+      <SettingRow label="Seats" trailing={trailingValue}>
+        <Input type="number" />
+      </SettingRow>,
+    );
+    expect(container.querySelector('[class*="trailing"]')).not.toBeInTheDocument();
+  });
+});
+
 describe('SettingRow.List', () => {
   it('renders its rows', () => {
     render(
@@ -366,6 +427,23 @@ describe('SettingRow.List', () => {
     expect(ref.current!.className).toMatch(
       new RegExp(`collapse${bp[0]!.toUpperCase()}${bp[1]}`, 'i'),
     );
+  });
+
+  it('collapseBelow={false} opts out of containment entirely — no collapsible class', () => {
+    const ref = createRef<HTMLDivElement>();
+    render(
+      <SettingRow.List ref={ref} collapseBelow={false}>
+        <SettingRow label="Seats">
+          <Input type="number" />
+        </SettingRow>
+      </SettingRow.List>,
+    );
+    // Neither the generic "collapsible" (container-type: inline-size) class
+    // nor any breakpoint-specific class should land — this is the escape
+    // hatch for a shrink-to-fit parent, where containment would otherwise
+    // zero the List's intrinsic-width contribution.
+    expect(ref.current!.className).not.toMatch(/collapsible/i);
+    expect(ref.current!.className).not.toMatch(/collapse(Sm|Md|Lg)/);
   });
 
   it('forwards ref and merges className', () => {

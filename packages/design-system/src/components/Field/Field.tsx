@@ -136,9 +136,9 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
   const { controlId, labelId, descriptionId, errorId, describedBy, invalid, wire } = useFieldWiring(
     {
       id,
-      hasLabel: label != null,
-      hasDescription: description != null,
-      hasError: error != null,
+      hasLabel: Boolean(label),
+      hasDescription: Boolean(description),
+      hasError: Boolean(error),
       required,
       asGroup,
     },
@@ -165,7 +165,7 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
   );
 
   let labelNode: ReactNode = null;
-  if (label != null) {
+  if (Boolean(label)) {
     labelNode = asGroup ? (
       <span id={labelId} className={labelClassName}>
         {label}
@@ -180,13 +180,13 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
   }
 
   let messageNode: ReactNode = null;
-  if (error != null) {
+  if (Boolean(error)) {
     messageNode = (
       <Text as="div" id={errorId} size={MSG_SIZE[size]} tone="danger">
         {error}
       </Text>
     );
-  } else if (description != null) {
+  } else if (Boolean(description)) {
     messageNode = (
       <Text as="div" id={descriptionId} size={MSG_SIZE[size]} tone="muted">
         {description}
@@ -197,7 +197,7 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
   const groupAria = asGroup
     ? {
         role: 'group' as const,
-        'aria-labelledby': label != null ? labelId : undefined,
+        'aria-labelledby': Boolean(label) ? labelId : undefined,
         'aria-describedby': describedBy,
         'aria-invalid': invalid || undefined,
       }

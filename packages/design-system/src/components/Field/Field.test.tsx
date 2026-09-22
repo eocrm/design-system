@@ -246,6 +246,42 @@ describe('Field', () => {
   });
 });
 
+describe('Field — falsy-but-present `error` (the `error={cond && msg}` idiom)', () => {
+  // `error?: ReactNode` accepts `false` and `''` as legal values — both are
+  // what `error={touched && errors.email}` or `error={errors.email ?? ''}`
+  // produce for "no error yet". A regression that treats them as "an error is
+  // present" (e.g. `hasError: error != null`) flips the control invalid with
+  // an empty message and hides the description — this guards against it.
+  it.each([
+    ['false', false],
+    ['an empty string', ''],
+  ])(
+    'error=%s does not flip the control invalid, and the description stays visible',
+    (_label, errorValue) => {
+      render(
+        <Field label="Email" description="We only use this for sign-in." error={errorValue}>
+          <StubControl />
+        </Field>,
+      );
+      const input = screen.getByTestId('control');
+      expect(input).not.toHaveAttribute('aria-invalid');
+      const desc = screen.getByText('We only use this for sign-in.');
+      expect(input).toHaveAttribute('aria-describedby', desc.id);
+    },
+  );
+
+  it('error=undefined behaves the same as omitting error entirely', () => {
+    render(
+      <Field label="Email" description="We only use this for sign-in." error={undefined}>
+        <StubControl />
+      </Field>,
+    );
+    const input = screen.getByTestId('control');
+    expect(input).not.toHaveAttribute('aria-invalid');
+    expect(screen.getByText('We only use this for sign-in.')).toBeInTheDocument();
+  });
+});
+
 // A NON-labelable control — a div with a role. This is the case Field's
 // `aria-labelledby` injection exists for: `<label for>` names only labelable
 // elements, so for these the id reference is the only naming path there is.

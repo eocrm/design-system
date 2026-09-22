@@ -36,8 +36,6 @@ export interface FieldWiring {
   /** The id the control's `aria-describedby` should point at — error wins over description. */
   describedBy: string | undefined;
   invalid: boolean;
-  required: boolean;
-  field: FieldRenderProps;
   /** Auto-wire a single element child, or invoke a render-prop with `field`. */
   wire: (children: ReactNode | ((field: FieldRenderProps) => ReactNode)) => ReactNode;
 }
@@ -119,8 +117,6 @@ export function useFieldWiring({
     errorId,
     describedBy,
     invalid,
-    required: requiredBool,
-    field,
     wire,
   };
 }

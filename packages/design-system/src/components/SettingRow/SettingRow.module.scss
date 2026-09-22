@@ -115,17 +115,21 @@
 
 // --- collapseBelow -----------------------------------------------------
 // Unlike Grid/Split, where collapse is opt-in, `collapseBelow` defaults to
-// 'sm' — so EVERY List is a size container, deliberately. The label track IS
+// 'sm' — so every List is a size container BY DEFAULT. The label track IS
 // `minmax(0, …)` like the control track (see the .row comment above) — it
 // shrinks rather than overflows — but below the collapseBelow threshold
 // (480/640/768px, see collapse.ts) that shrinking crushes the control
 // column instead of giving it room, which is a worse failure than the
 // column simply overflowing would be. Collapsing to one stacked column below
 // the threshold is the fix, and it is the right default rather than a
-// nice-to-have. The cost (mirrors Split.module.scss:86-87): container-type:
-// inline-size zeroes the element's intrinsic-width contribution. The queries
-// target the ROWS, which are descendants — an element is never matched by a
-// query against its own container (same constraint Grid and Split document).
+// nice-to-have. `collapseBelow={false}` opts a List out of containment
+// entirely (below, .collapsible is then never applied) — the escape hatch
+// for a shrink-to-fit parent, matching Grid/Split's opt-in-by-omission
+// shape from the other direction. The cost when containment IS on (mirrors
+// Split.module.scss:86-87): container-type: inline-size zeroes the
+// element's intrinsic-width contribution. The queries target the ROWS,
+// which are descendants — an element is never matched by a query against
+// its own container (same constraint Grid and Split document).
 .collapsible {
   container-type: inline-size;
 }

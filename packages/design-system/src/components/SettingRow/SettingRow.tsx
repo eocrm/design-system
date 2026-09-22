@@ -150,8 +150,8 @@ const SettingRowRoot = forwardRef<HTMLDivElement, SettingRowProps>(function Sett
   const { controlId, labelId, descriptionId, errorId, wire } = useFieldWiring({
     id,
     hasLabel: true,
-    hasDescription: description != null,
-    hasError: error != null,
+    hasDescription: Boolean(description),
+    hasError: Boolean(error),
     required,
   });
 
@@ -170,7 +170,7 @@ const SettingRowRoot = forwardRef<HTMLDivElement, SettingRowProps>(function Sett
           </label>
           {labelAdornment}
         </div>
-        {description != null && (
+        {Boolean(description) && (
           <Text as="div" id={descriptionId} size="sm" tone="muted">
             {description}
           </Text>
@@ -181,10 +181,10 @@ const SettingRowRoot = forwardRef<HTMLDivElement, SettingRowProps>(function Sett
           <div className={styles.controlSlot} data-control-width={controlWidth}>
             {wire(children)}
           </div>
-          {trailing != null && <div className={styles.trailing}>{trailing}</div>}
+          {Boolean(trailing) && <div className={styles.trailing}>{trailing}</div>}
         </div>
         {footer}
-        {error != null && (
+        {Boolean(error) && (
           <Text as="div" id={errorId} size="sm" tone="danger">
             {error}
           </Text>
@@ -217,8 +217,13 @@ export interface SettingRowListProps extends HTMLAttributes<HTMLDivElement> {
    * its control column. `'sm'` 480px / `'md'` 640px / `'lg'` 768px, measured
    * against the LIST's own box (a container query, like `<Grid>` and
    * `<Split>`). Default `'sm'`.
+   *
+   * Pass `false` to opt out of containment entirely — e.g. inside a
+   * shrink-to-fit parent (a `width: max-content` flex item, an inline-block,
+   * a table cell), where `container-type: inline-size` would otherwise zero
+   * the List's intrinsic-width contribution. See the anti-pattern below.
    */
-  collapseBelow?: CollapseBreakpoint;
+  collapseBelow?: CollapseBreakpoint | false;
   /** The rows. */
   children: ReactNode;
 }
@@ -256,9 +261,10 @@ const COLLAPSE_CLASS: Record<CollapseBreakpoint, string> = {
  * - ❌ Setting `--setting-row-label-width` on individual rows — the point is
  *   one value for the whole list.
  * - ❌ A `SettingRow.List` inside a shrink-to-fit parent (a
- *   `width: max-content` flex item, an inline-block, a table cell) — the
- *   List is always a size container, so its intrinsic-width contribution is
- *   zero and it collapses.
+ *   `width: max-content` flex item, an inline-block, a table cell) with the
+ *   default `collapseBelow` — the List is a size container by default, so
+ *   its intrinsic-width contribution is zero and it collapses. Pass
+ *   `collapseBelow={false}` there to opt out of containment.
  */
 const SettingRowList = forwardRef<HTMLDivElement, SettingRowListProps>(function SettingRowList(
   {
@@ -279,7 +285,12 @@ const SettingRowList = forwardRef<HTMLDivElement, SettingRowListProps>(function 
       data-setting-row-list=""
       data-spacing={spacing}
       data-dividers={dividers ? 'true' : undefined}
-      className={clsx(styles.list, styles.collapsible, COLLAPSE_CLASS[collapseBelow], className)}
+      className={clsx(
+        styles.list,
+        collapseBelow !== false && styles.collapsible,
+        collapseBelow !== false && COLLAPSE_CLASS[collapseBelow],
+        className,
+      )}
       // Custom-property-in-style idiom copied from Grid.tsx:204.
       style={
         labelWidth != null
