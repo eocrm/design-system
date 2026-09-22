@@ -65,11 +65,18 @@ export function useFieldWiring({
   const invalid = hasError;
   const requiredBool = Boolean(required);
   const describedBy = hasError ? errorId : hasDescription ? descriptionId : undefined;
+  // Single source for the labelledby value, same shape as describedBy above —
+  // computed once and reused by both the render-prop field object and the
+  // cloneElement branch below, so they cannot recompute `hasLabel` two
+  // different ways and drift (that drift is exactly what shipped: the
+  // render-prop path and the cloneElement path used to each derive this
+  // independently).
+  const labelledBy = hasLabel ? labelId : undefined;
 
   const field: FieldRenderProps = {
     id: controlId,
     'aria-describedby': describedBy,
-    'aria-labelledby': hasLabel ? labelId : undefined,
+    'aria-labelledby': labelledBy,
     'aria-invalid': invalid || undefined,
     invalid,
     required: requiredBool,
@@ -103,8 +110,16 @@ export function useFieldWiring({
         invalid: childProps.invalid ?? invalid,
         required: childProps.required ?? requiredBool,
       };
+      // Deliberately NOT `injected['aria-labelledby'] = childProps[...] || labelledBy`
+      // unconditionally: cloneElement merges `injected` into the child's own
+      // props, and an explicit `undefined` value there would overwrite (not
+      // preserve) a value the child already had. Omitting the key entirely
+      // when !hasLabel is what leaves the child's own prop untouched.
+      // labelledBy === labelId inside this branch (hasLabel is true here) —
+      // referencing labelledBy keeps this and the field object above sourced
+      // from the same variable rather than each recomputing `hasLabel ? labelId : …`.
       if (hasLabel) {
-        injected['aria-labelledby'] = childProps['aria-labelledby'] || labelId;
+        injected['aria-labelledby'] = childProps['aria-labelledby'] || labelledBy;
       }
     }
     return cloneElement(child, injected);

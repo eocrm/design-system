@@ -9,7 +9,7 @@ import styles from './SettingRow.module.scss';
 export type SettingRowControlWidth = 'auto' | 'xs' | 'sm' | 'md';
 
 export interface SettingRowProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
-  /** Label text. Renders a `<label htmlFor>` that names the control. Required. */
+  /** Label text. Renders a `<label htmlFor>` that names the control. Required — a falsy value (e.g. `0`, `''`) renders no `<label>` at all; see the anti-pattern below. */
   label: ReactNode;
   /**
    * Badges / chips on the label line, rendered as a SIBLING of the `<label>`.
@@ -129,17 +129,18 @@ export interface SettingRowProps extends Omit<HTMLAttributes<HTMLDivElement>, 'c
  * - ❌ `margin` on a row to separate rows — that is `<SettingRow.List>`'s job.
  * - ❌ Mixing control sizes within one row — a `size="sm"` adornment beside a
  *   default-`md` control renders two different heights on the same line.
- * - ⚠️ `error` / `description` / `trailing` / `footer` / `labelAdornment`
- *   treat `0` and `NaN` as ABSENT — same as `{0 && …}` anywhere else in JSX
- *   — so `description={remaining}` with `remaining === 0` renders nothing.
- *   They treat an empty array or fragment (`error={errors.map(...)}` with
- *   no errors, `error={<></>}`) as PRESENT — for `error` specifically that
- *   still flips the control invalid with an empty message; for the other
- *   four it renders an empty node instead. Pass `undefined` explicitly for
- *   "none" rather than a container that might be empty. (`label` is exempt
- *   — it's the one required prop, always rendered unconditionally, and a
- *   `cond && 'text'` idiom on it contradicts why you'd reach for a row that
- *   always needs a label.)
+ * - ⚠️ `label` / `error` / `description` / `trailing` / `footer` /
+ *   `labelAdornment` treat `0` and `NaN` as ABSENT — same as `{0 && …}`
+ *   anywhere else in JSX — so `description={remaining}` with
+ *   `remaining === 0` renders nothing. They treat an empty array or
+ *   fragment (`error={errors.map(...)}` with no errors, `error={<></>}`) as
+ *   PRESENT: `error`/`description`/`trailing` each have a wrapper element,
+ *   so they render an EMPTY node — for `error` specifically that also
+ *   flips the control invalid; `footer`/`labelAdornment` have no wrapper,
+ *   so they render NO node at all; a falsy `label` renders no `<label>`
+ *   element, and the control falls back to its own `aria-label` if it has
+ *   one, or ends up unnamed otherwise. Pass `undefined` explicitly for
+ *   "none" rather than a container that might be empty.
  */
 const SettingRowRoot = forwardRef<HTMLDivElement, SettingRowProps>(function SettingRow(
   {
@@ -158,9 +159,14 @@ const SettingRowRoot = forwardRef<HTMLDivElement, SettingRowProps>(function Sett
   },
   ref,
 ) {
+  // Single source of truth for "is there a label", same reasoning as
+  // Field.tsx: the old `hasLabel: true` literal here diverged from the
+  // control's own aria-label when label was falsy — see the anti-pattern
+  // note below.
+  const hasLabel = Boolean(label);
   const { controlId, labelId, descriptionId, errorId, wire } = useFieldWiring({
     id,
-    hasLabel: true,
+    hasLabel,
     hasDescription: Boolean(description),
     hasError: Boolean(error),
     required,
@@ -170,15 +176,17 @@ const SettingRowRoot = forwardRef<HTMLDivElement, SettingRowProps>(function Sett
     <div ref={ref} data-setting-row="" className={clsx(styles.row, className)} {...rest}>
       <div className={styles.term}>
         <div className={styles.labelLine}>
-          <label htmlFor={controlId} id={labelId} className={styles.label}>
-            {label}
-            {required && (
-              <span aria-hidden="true" className={styles.required}>
-                {' '}
-                *
-              </span>
-            )}
-          </label>
+          {hasLabel && (
+            <label htmlFor={controlId} id={labelId} className={styles.label}>
+              {label}
+              {required && (
+                <span aria-hidden="true" className={styles.required}>
+                  {' '}
+                  *
+                </span>
+              )}
+            </label>
+          )}
           {Boolean(labelAdornment) && labelAdornment}
         </div>
         {Boolean(description) && (

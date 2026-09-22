@@ -345,6 +345,53 @@ describe('Field — falsy-but-present `label`', () => {
     expect(container.querySelector('label')).not.toBeInTheDocument();
     expect(screen.getByTestId('control')).not.toHaveAttribute('aria-labelledby');
   });
+
+  // The Critical this round: groupAria's aria-labelledby used to recompute
+  // Boolean(label) independently of the wiring call (`hasLabel`) rather than
+  // reading the same hoisted value. Reverting only that recomputation left
+  // the whole suite green — this describe block had no asGroup case at all,
+  // so nothing exercised it. `role="group"` is the element that carries
+  // aria-labelledby in asGroup mode (not the child — see the existing
+  // "asGroup does NOT inject aria-labelledby onto the child" test above),
+  // so that's what this checks, plus no caption <span> either.
+  it.each([
+    ['false', false],
+    ['an empty string', ''],
+  ])(
+    'asGroup + label=%s renders no caption and injects no aria-labelledby on the group',
+    (_label, labelValue) => {
+      const { container } = render(
+        <Field asGroup label={labelValue}>
+          <StubControl />
+        </Field>,
+      );
+      const group = container.querySelector('[role="group"]');
+      expect(group).not.toHaveAttribute('aria-labelledby');
+      expect(container.querySelector('span[id$="-label"]')).not.toBeInTheDocument();
+    },
+  );
+});
+
+describe('Field — render-prop form with no label', () => {
+  // fieldWiring.ts's field object computes `'aria-labelledby': labelledBy`
+  // (hasLabel ? labelId : undefined) as a SEPARATE piece of code from the
+  // cloneElement branch's `if (hasLabel) { ... }` gate a few lines down —
+  // two independent expressions deriving the same value. Every other
+  // render-prop test in this file passes a `label`, so nothing exercised
+  // the unlabeled case on this specific code path.
+  it('omits aria-labelledby from the field object and the rendered control when there is no label', () => {
+    let received: Record<string, unknown> = {};
+    render(
+      <Field>
+        {(field) => {
+          received = field as unknown as Record<string, unknown>;
+          return <input data-testid="control" {...field} />;
+        }}
+      </Field>,
+    );
+    expect(received['aria-labelledby']).toBeUndefined();
+    expect(screen.getByTestId('control')).not.toHaveAttribute('aria-labelledby');
+  });
 });
 
 // A NON-labelable control — a div with a role. This is the case Field's

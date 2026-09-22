@@ -73,13 +73,16 @@ describe('SettingRow', () => {
     expect(screen.getByText('Helper text')).toBeInTheDocument();
   });
 
-  it('required injects required onto the control', () => {
+  it('required injects required onto the control and shows the * marker', () => {
     render(
       <SettingRow label="Seats" required>
         <Input type="number" />
       </SettingRow>,
     );
     expect(screen.getByRole('spinbutton')).toBeRequired();
+    // The visible marker was untested — {required && <span>*</span>} could
+    // regress to {false && ...} and 40/40 other tests would stay green.
+    expect(screen.getByText('*')).toBeInTheDocument();
   });
 
   it('renders trailing content after the control, in DOM order', () => {
@@ -363,6 +366,60 @@ describe('SettingRow — falsy-but-present optional props (the `cond && value` i
       </SettingRow>,
     );
     expect(screen.queryByText('0')).not.toBeInTheDocument();
+  });
+
+  // `label` used to be exempt from this family — hasLabel: true was
+  // hardcoded, on the (wrong, per round 5 review) theory that a falsy label
+  // was merely "milder" than Field's dangling-reference failure. Measured:
+  // label={''}/label={false} give an accessible name of "" — identical to a
+  // dangling reference, not milder — and because hasLabel was ALWAYS true,
+  // that empty name SUPPRESSED a control's own aria-label rather than
+  // falling through to it. Boolean(label) fixes both: no <label> renders,
+  // and the control's own aria-label (if any) is free to apply.
+  it.each([
+    ['false', false],
+    ['an empty string', ''],
+  ])('label=%s renders no <label> element', (_label, labelValue) => {
+    const { container } = render(
+      <SettingRow label={labelValue}>
+        <Input type="number" aria-label="fallback" />
+      </SettingRow>,
+    );
+    expect(container.querySelector('label')).not.toBeInTheDocument();
+  });
+
+  it("a falsy label no longer suppresses the control's own aria-label", () => {
+    render(
+      <SettingRow label="">
+        <Input type="number" aria-label="Seats" />
+      </SettingRow>,
+    );
+    // Before this round: hasLabel was hardcoded true, so a falsy `label`
+    // still rendered an (unconditional, empty-content) <label id=labelId>,
+    // aria-labelledby pointed at that real-but-empty element, and per the
+    // accname algorithm a REFERENCED ELEMENT THAT EXISTS wins even with
+    // empty content — it does not fall through to aria-label. Name resolved
+    // to "".
+    expect(screen.getByRole('spinbutton')).toHaveAccessibleName('Seats');
+  });
+
+  it('label=false injects no aria-labelledby onto the control at all', () => {
+    // Isolates the WIRING gate specifically, independent of the render gate
+    // and independent of accname fallback semantics: this round's render
+    // gate ({hasLabel && <label>...}) means a wiring-only regression back to
+    // `hasLabel: true` would inject aria-labelledby pointing at a labelId
+    // that now has NO element at all (dangling, not merely empty) — and per
+    // this accessibility library's accname implementation, a FULLY dangling
+    // reference (no matching id anywhere in the document) falls through to
+    // aria-label, same as the test above, so that test alone can't tell
+    // "wiring wrong, render right" apart from "both right". Checking for the
+    // attribute directly can.
+    render(
+      <SettingRow label={false}>
+        <Input type="number" />
+      </SettingRow>,
+    );
+    expect(screen.getByRole('spinbutton')).not.toHaveAttribute('aria-labelledby');
   });
 });
 

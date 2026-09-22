@@ -142,10 +142,16 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
   ref,
 ) {
   const t = useTranslation();
+  // Single source of truth for "is there a label" — `label` has THREE
+  // consumers below (the wiring call, the render gate, groupAria) and they
+  // had drifted: groupAria used to recompute Boolean(label) independently of
+  // the wiring call, which is exactly how <Field asGroup label={false}>
+  // shipped a dangling aria-labelledby with the whole suite green.
+  const hasLabel = Boolean(label);
   const { controlId, labelId, descriptionId, errorId, describedBy, invalid, wire } = useFieldWiring(
     {
       id,
-      hasLabel: Boolean(label),
+      hasLabel,
       hasDescription: Boolean(description),
       hasError: Boolean(error),
       required,
@@ -174,7 +180,7 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
   );
 
   let labelNode: ReactNode = null;
-  if (Boolean(label)) {
+  if (hasLabel) {
     labelNode = asGroup ? (
       <span id={labelId} className={labelClassName}>
         {label}
@@ -206,7 +212,7 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
   const groupAria = asGroup
     ? {
         role: 'group' as const,
-        'aria-labelledby': Boolean(label) ? labelId : undefined,
+        'aria-labelledby': hasLabel ? labelId : undefined,
         'aria-describedby': describedBy,
         'aria-invalid': invalid || undefined,
       }
