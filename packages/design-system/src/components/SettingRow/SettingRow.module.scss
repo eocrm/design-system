@@ -1,0 +1,75 @@
+@use './SettingRow.tokens';
+
+// Two columns: label | control. The label column is a length resolved from
+// --setting-row-label-width, so sibling rows align without a subgrid.
+// minmax(0, …) on both tracks so a long description or a wide control
+// shrinks instead of overflowing the List.
+.row {
+  display: grid;
+  grid-template-columns:
+    minmax(0, var(--setting-row-label-width))
+    minmax(0, 1fr);
+  column-gap: var(--setting-row-column-gap);
+  align-items: start;
+}
+
+.term,
+.control {
+  display: flex;
+  flex-direction: column;
+  gap: var(--setting-row-stack-gap);
+  min-width: 0;
+}
+
+// Label line — the <label> plus any adornment, which sits OUTSIDE the <label>
+// so it never joins the control's accessible name.
+.labelLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--setting-row-trailing-gap);
+}
+
+.label {
+  font-size: var(--setting-row-label-font-size);
+  font-weight: var(--setting-row-label-font-weight);
+  line-height: var(--line-height-tight);
+  color: var(--setting-row-label-fg);
+}
+
+.required {
+  color: var(--color-danger);
+}
+
+.description {
+  font-size: var(--font-size-sm);
+  color: var(--setting-row-description-fg);
+}
+
+// Control + its trailing adornments on one line. wrap so a narrow row drops
+// the adornments below instead of overflowing.
+.controlLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--setting-row-trailing-gap);
+}
+
+// Control width caps apply to the control CELL, not a wrapper around the
+// control — wrapping the child in <Constrain> would make Constrain the
+// element cloneElement wires, silently stripping the control's id and aria-*.
+.controlLine[data-control-width='xs'] {
+  max-width: var(--setting-row-control-width-xs);
+}
+
+.controlLine[data-control-width='sm'] {
+  max-width: var(--setting-row-control-width-sm);
+}
+
+.controlLine[data-control-width='md'] {
+  max-width: var(--setting-row-control-width-md);
+}
+
+.controlLine[data-control-width='full'] {
+  max-width: 100%;
+}
