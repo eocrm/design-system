@@ -1,35 +1,17 @@
-import {
-  forwardRef,
-  cloneElement,
-  isValidElement,
-  useId,
-  type HTMLAttributes,
-  type ReactElement,
-  type ReactNode,
-} from 'react';
+import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
 import clsx from 'clsx';
 import { Text, type TextSize } from '../Text';
 import { useTranslation } from '../../i18n/useTranslation';
+import { useFieldWiring, type FieldRenderProps } from '../_internal/fieldWiring';
 import styles from './Field.module.scss';
+
+export type { FieldRenderProps };
 
 /** Label placement relative to the control. */
 export type FieldOrientation = 'vertical' | 'horizontal';
 
 /** Label/message type scale; pairs with the control's own `size`. */
 export type FieldSize = 'sm' | 'md' | 'lg';
-
-/** The wiring Field hands to its control. Spread onto the control in render-prop form. */
-export interface FieldRenderProps {
-  id: string;
-  'aria-describedby': string | undefined;
-  /** Id of the label element to name the control — set only when a label is rendered. */
-  'aria-labelledby': string | undefined;
-  'aria-invalid': boolean | undefined;
-  invalid: boolean;
-  required: boolean;
-  /** Id of the label/caption element — for manual `aria-labelledby` wiring. */
-  labelId: string;
-}
 
 type FieldChild = ReactNode | ((field: FieldRenderProps) => ReactNode);
 
@@ -151,61 +133,16 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
   ref,
 ) {
   const t = useTranslation();
-  const reactId = useId();
-  const controlId = id ?? reactId;
-  const labelId = `${controlId}-label`;
-  const descriptionId = `${controlId}-description`;
-  const errorId = `${controlId}-error`;
+  const { controlId, labelId, descriptionId, errorId, describedBy, invalid, wire } = useFieldWiring({
+    id,
+    hasLabel: label != null,
+    hasDescription: description != null,
+    hasError: error != null,
+    required,
+    asGroup,
+  });
 
-  const invalid = Boolean(error);
-  const requiredBool = Boolean(required);
-  const describedBy = error ? errorId : description != null ? descriptionId : undefined;
-
-  const field: FieldRenderProps = {
-    id: controlId,
-    'aria-describedby': describedBy,
-    'aria-labelledby': label != null ? labelId : undefined,
-    'aria-invalid': invalid || undefined,
-    invalid,
-    required: requiredBool,
-    labelId,
-  };
-
-  let control: ReactNode;
-  if (typeof children === 'function') {
-    control = children(field);
-  } else if (isValidElement(children)) {
-    const child = children as ReactElement<Record<string, unknown>>;
-    const childProps = child.props;
-    let injected: Record<string, unknown>;
-    if (asGroup) {
-      injected = {
-        invalid: childProps.invalid ?? invalid,
-        required: childProps.required ?? requiredBool,
-      };
-    } else {
-      injected = {
-        id: controlId,
-        // `||`, not `??`, on both ARIA id references: `aria-labelledby={sectionId ?? ''}`
-        // is ordinary consumer code, and an empty id list references nothing — it
-        // contributes no name and lets the computation fall through, exactly like an
-        // empty `aria-label`. Treating it as an explicit override would suppress
-        // `labelId` and leave the control anonymous, which matters more here than
-        // anywhere else: Field names every input in the library through
-        // `aria-labelledby` rather than `<label for>`. `invalid` / `required` keep `??`
-        // — those are booleans, where `false` is a meaningful explicit value.
-        'aria-describedby': childProps['aria-describedby'] || describedBy,
-        invalid: childProps.invalid ?? invalid,
-        required: childProps.required ?? requiredBool,
-      };
-      if (label != null) {
-        injected['aria-labelledby'] = childProps['aria-labelledby'] || labelId;
-      }
-    }
-    control = cloneElement(child, injected);
-  } else {
-    control = children;
-  }
+  const control = wire(children);
 
   const labelClassName = clsx(
     styles.label,
