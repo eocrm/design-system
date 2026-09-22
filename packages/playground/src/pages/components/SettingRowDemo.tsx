@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import {
   Badge,
-  Button,
   Constrain,
   Input,
   Progress,
@@ -96,7 +95,7 @@ export function Demo() {
         title="Adornments — label, trailing, footer"
         description="labelAdornment sits outside the <label> so the badge never joins the control's accessible name. trailing acts on the control; footer carries the usage meter."
         code={`import { useState } from 'react';
-import { Badge, Button, Constrain, Input, Progress, Select, SettingRow, Stack, Text } from '@eocrm/design-system';
+import { Badge, Constrain, Input, Progress, Select, SettingRow, Stack, Text } from '@eocrm/design-system';
 
 const MODES = [
   { value: 'hard', label: 'Hard limit' },
@@ -126,7 +125,6 @@ export function Demo() {
               />
             </Constrain>
             <Badge tone="warning" size="sm">Overridden</Badge>
-            <Button variant="ghost" size="sm">Reset to default</Button>
           </>
         }
         footer={
@@ -170,9 +168,6 @@ export function Demo() {
                 <Badge tone="warning" size="sm">
                   Overridden
                 </Badge>
-                <Button variant="ghost" size="sm">
-                  Reset to default
-                </Button>
               </>
             }
             footer={
