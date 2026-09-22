@@ -13,6 +13,10 @@ export interface NumberSetting {
   unit?: string;
   min?: number;
   max?: number;
+  /** Current consumption against `currentValue`. Present = the row shows a usage meter. */
+  used?: number;
+  /** Shown as a provenance badge on the label line — e.g. 'From plan'. */
+  source?: string;
 }
 
 export interface BooleanSetting {
@@ -71,6 +75,8 @@ export const settingsSections: SettingsSection[] = [
         unit: 'days',
         min: 7,
         max: 3650,
+        used: 128,
+        source: 'From plan',
       },
       {
         key: 'notification.retention_days',
@@ -112,6 +118,7 @@ export const settingsSections: SettingsSection[] = [
         unit: 'GB',
         min: 1,
         max: 500,
+        used: 6,
       },
       {
         key: 'tenant.default_seat_limit',

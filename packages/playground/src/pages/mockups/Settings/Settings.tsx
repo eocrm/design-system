@@ -4,13 +4,13 @@ import {
   Badge,
   Button,
   Card,
-  Cluster,
   Code,
-  Divider,
   Input,
   Page,
   PageHeader,
+  Progress,
   Select,
+  SettingRow,
   Stack,
   Switch,
   Text,
@@ -40,109 +40,46 @@ function isModified(setting: SettingDef, currentValue: unknown): boolean {
   return String(currentValue) !== String(setting.defaultValue);
 }
 
-interface SettingRowProps {
-  setting: SettingDef;
-  value: unknown;
-  onChange: (next: unknown) => void;
-  onReset: () => void;
-}
-
-function SettingRow({ setting, value, onChange, onReset }: SettingRowProps) {
-  const modified = isModified(setting, value);
-
-  // Right-hand control varies by type.
-  let control: ReactNode = null;
+// The control varies by type; the row now owns everything around it
+// (label, description, adornments, footer), so this returns just the
+// control element.
+function controlFor(
+  setting: SettingDef,
+  value: unknown,
+  onChange: (next: unknown) => void,
+): ReactNode {
   switch (setting.type) {
     case 'number':
-      control = (
-        <Cluster gap="sm" align="center" wrap={false}>
-          <Input
-            type="number"
-            value={String(value)}
-            min={setting.min}
-            max={setting.max}
-            onChange={(e) => onChange(Number(e.target.value))}
-            aria-label={setting.label}
-          />
-          {setting.unit && (
-            <Text as="span" size="sm" tone="muted">
-              {setting.unit}
-            </Text>
-          )}
-        </Cluster>
-      );
-      break;
-    case 'boolean':
-      control = (
-        <Switch
-          checked={Boolean(value)}
-          onChange={(next) => onChange(next)}
-          aria-label={setting.label}
+      return (
+        <Input
+          type="number"
+          value={String(value)}
+          min={setting.min}
+          max={setting.max}
+          onChange={(e) => onChange(Number(e.target.value))}
         />
       );
-      break;
+    case 'boolean':
+      return <Switch checked={Boolean(value)} onChange={(next) => onChange(next)} />;
     case 'string':
-      control = (
+      return (
         <Input
           type="text"
           value={String(value)}
           placeholder={setting.placeholder}
           onChange={(e) => onChange(e.target.value)}
-          aria-label={setting.label}
         />
       );
-      break;
     case 'select':
-      control = (
+      return (
         <Select
           options={setting.options}
           value={String(value)}
           onChange={(next) => onChange(next)}
           clearable={false}
-          aria-label={setting.label}
         />
       );
-      break;
   }
-
-  return (
-    <Cluster justify="between" align="start" gap="lg">
-      <Stack gap="xs">
-        <Cluster gap="sm" align="center">
-          <Text as="span" weight="semibold">
-            {setting.label}
-          </Text>
-          {modified && (
-            <Tooltip content={`Default: ${String(setting.defaultValue)}`}>
-              <Badge tone="info" size="sm">
-                Modified
-              </Badge>
-            </Tooltip>
-          )}
-          <Code tone="muted">{setting.key}</Code>
-        </Cluster>
-        <Text size="sm" tone="muted">
-          {setting.description}
-        </Text>
-      </Stack>
-      <Cluster gap="sm" align="center" wrap={false}>
-        {control}
-        {modified && (
-          <Tooltip content={`Reset to ${String(setting.defaultValue)}`}>
-            <Button
-              variant="ghost"
-              size="sm"
-              iconOnly
-              aria-label={`Reset ${setting.label} to default`}
-              onClick={onReset}
-            >
-              <RotateCcw size={14} />
-            </Button>
-          </Tooltip>
-        )}
-      </Cluster>
-    </Cluster>
-  );
 }
 
 function SectionCard({ section }: { section: (typeof settingsSections)[number] }) {
@@ -163,21 +100,82 @@ function SectionCard({ section }: { section: (typeof settingsSections)[number] }
             {section.description}
           </Text>
         </Stack>
-        <Stack gap="md">
-          {section.settings.map((setting, i) => (
-            <Stack key={setting.key} gap="md">
-              {i > 0 && <Divider />}
+        <SettingRow.List dividers labelWidth="20rem">
+          {section.settings.map((setting) => {
+            const value = values[setting.key];
+            const modified = isModified(setting, value);
+            return (
               <SettingRow
-                setting={setting}
-                value={values[setting.key]}
-                onChange={(next) => setValues((prev) => ({ ...prev, [setting.key]: next }))}
-                onReset={() =>
-                  setValues((prev) => ({ ...prev, [setting.key]: setting.defaultValue }))
+                key={setting.key}
+                label={setting.label}
+                labelAdornment={
+                  <>
+                    {setting.type === 'number' && setting.source && (
+                      <Badge tone="neutral" size="sm">
+                        {setting.source}
+                      </Badge>
+                    )}
+                    <Code tone="muted">{setting.key}</Code>
+                  </>
                 }
-              />
-            </Stack>
-          ))}
-        </Stack>
+                description={setting.description}
+                controlWidth={setting.type === 'number' ? 'xs' : 'auto'}
+                trailing={
+                  <>
+                    {setting.type === 'number' && setting.unit && (
+                      <Text as="span" size="sm" tone="muted">
+                        {setting.unit}
+                      </Text>
+                    )}
+                    {modified && (
+                      <>
+                        <Tooltip content={`Default: ${String(setting.defaultValue)}`}>
+                          <Badge tone="info" size="sm">
+                            Modified
+                          </Badge>
+                        </Tooltip>
+                        <Tooltip content={`Reset to ${String(setting.defaultValue)}`}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            iconOnly
+                            aria-label={`Reset ${setting.label} to default`}
+                            onClick={() =>
+                              setValues((prev) => ({
+                                ...prev,
+                                [setting.key]: setting.defaultValue,
+                              }))
+                            }
+                          >
+                            <RotateCcw size={14} />
+                          </Button>
+                        </Tooltip>
+                      </>
+                    )}
+                  </>
+                }
+                footer={
+                  setting.type === 'number' && setting.used !== undefined ? (
+                    <Stack gap="xs">
+                      <Progress
+                        value={setting.used}
+                        max={Number(value)}
+                        aria-label={`${setting.label} usage`}
+                      />
+                      <Text as="span" size="xs" tone="muted">
+                        {setting.used} of {String(value)} used.
+                      </Text>
+                    </Stack>
+                  ) : undefined
+                }
+              >
+                {controlFor(setting, value, (next) =>
+                  setValues((prev) => ({ ...prev, [setting.key]: next })),
+                )}
+              </SettingRow>
+            );
+          })}
+        </SettingRow.List>
       </Stack>
     </Card>
   );
