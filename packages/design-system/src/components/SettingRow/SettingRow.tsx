@@ -132,15 +132,25 @@ export interface SettingRowProps extends Omit<HTMLAttributes<HTMLDivElement>, 'c
  * - ⚠️ `label` / `error` / `description` / `trailing` / `footer` /
  *   `labelAdornment` treat `0` and `NaN` as ABSENT — same as `{0 && …}`
  *   anywhere else in JSX — so `description={remaining}` with
- *   `remaining === 0` renders nothing. They treat an empty array or
- *   fragment (`error={errors.map(...)}` with no errors, `error={<></>}`) as
- *   PRESENT: `error`/`description`/`trailing` each have a wrapper element,
- *   so they render an EMPTY node — for `error` specifically that also
- *   flips the control invalid; `footer`/`labelAdornment` have no wrapper,
- *   so they render NO node at all; a falsy `label` renders no `<label>`
- *   element, and the control falls back to its own `aria-label` if it has
- *   one, or ends up unnamed otherwise. Pass `undefined` explicitly for
- *   "none" rather than a container that might be empty.
+ *   `remaining === 0` renders nothing, and a falsy `label` (`0`, `''`,
+ *   `false`) renders no `<label>` element at all — the control falls back
+ *   to its own `aria-label` if it has one, or ends up unnamed otherwise.
+ *   They all treat an empty array or fragment (`error={errors.map(...)}`
+ *   with no errors, `error={<></>}`, `label={<></>}`) as PRESENT:
+ *   `error`/`description`/`trailing`/`label` each have a wrapper element
+ *   (for `label`, the `<label>` IS the wrapper), so they render an EMPTY
+ *   node — for `error` specifically that also flips the control invalid;
+ *   `footer`/`labelAdornment` have no wrapper, so they render NO node at
+ *   all. An empty `label` still defers to the control's own `aria-label` if
+ *   it has one (the control's explicit value always wins over the row's
+ *   computed default — same rule as `aria-describedby`), but with no
+ *   fallback the control still ends up unnamed. Pass `undefined` explicitly
+ *   for "none" rather than a container that might be empty.
+ * - ⚠️ `<SettingRow label={false} required>` renders NO `*` marker at all —
+ *   the marker lives inside the `<label>`, which a falsy `label` skips
+ *   rendering entirely — while `required` is still injected onto the
+ *   control. Correct (a marker with nothing to mark is noise), but a
+ *   surprising combination if you're not expecting it.
  */
 const SettingRowRoot = forwardRef<HTMLDivElement, SettingRowProps>(function SettingRow(
   {
@@ -159,17 +169,22 @@ const SettingRowRoot = forwardRef<HTMLDivElement, SettingRowProps>(function Sett
   },
   ref,
 ) {
-  // Single source of truth for "is there a label", same reasoning as
-  // Field.tsx: the old `hasLabel: true` literal here diverged from the
-  // control's own aria-label when label was falsy — see the anti-pattern
-  // note below.
+  // Single source of truth for each "is there an X" predicate — round 5
+  // hoisted only `hasLabel` (it had two consumers and had already diverged);
+  // round 6 does the same for `hasDescription`/`hasError`/`hasRequired`,
+  // still each computed twice (once for the wiring call, once for the
+  // matching render gate) — not diverged today, but the identical
+  // duplication shape that produced `hasLabel`'s bug.
   const hasLabel = Boolean(label);
+  const hasDescription = Boolean(description);
+  const hasError = Boolean(error);
+  const hasRequired = Boolean(required);
   const { controlId, labelId, descriptionId, errorId, wire } = useFieldWiring({
     id,
     hasLabel,
-    hasDescription: Boolean(description),
-    hasError: Boolean(error),
-    required,
+    hasDescription,
+    hasError,
+    required: hasRequired,
   });
 
   return (
@@ -179,7 +194,7 @@ const SettingRowRoot = forwardRef<HTMLDivElement, SettingRowProps>(function Sett
           {hasLabel && (
             <label htmlFor={controlId} id={labelId} className={styles.label}>
               {label}
-              {required && (
+              {hasRequired && (
                 <span aria-hidden="true" className={styles.required}>
                   {' '}
                   *
@@ -189,7 +204,7 @@ const SettingRowRoot = forwardRef<HTMLDivElement, SettingRowProps>(function Sett
           )}
           {Boolean(labelAdornment) && labelAdornment}
         </div>
-        {Boolean(description) && (
+        {hasDescription && (
           <Text as="div" id={descriptionId} size="sm" tone="muted">
             {description}
           </Text>
@@ -203,7 +218,7 @@ const SettingRowRoot = forwardRef<HTMLDivElement, SettingRowProps>(function Sett
           {Boolean(trailing) && <div className={styles.trailing}>{trailing}</div>}
         </div>
         {Boolean(footer) && footer}
-        {Boolean(error) && (
+        {hasError && (
           <Text as="div" id={errorId} size="sm" tone="danger">
             {error}
           </Text>

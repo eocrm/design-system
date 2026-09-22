@@ -372,6 +372,133 @@ describe('Field — falsy-but-present `label`', () => {
   );
 });
 
+describe('Field — a truthy-but-empty `label` (round 6 Critical)', () => {
+  // hasLabel is Boolean(label) — true for a truthy-but-empty container
+  // exactly like error={errors.map(...)} with no errors (documented in the
+  // @remarks). Unlike the falsy case above, the <label> DOES render, just
+  // empty. Without the fieldWiring.ts fix, aria-labelledby pointed at that
+  // real-but-empty element, and a real-but-empty referent is authoritative
+  // in the accname algorithm — it does NOT fall through to aria-label the
+  // way a fully dangling reference does (verified by direct probe, see the
+  // isolated-wiring test's comment on SettingRow.test.tsx). So an empty
+  // label used to silently override a control's own explicit aria-label
+  // with an empty name.
+  function NamedStub(props: { id?: string; 'aria-label'?: string; 'aria-labelledby'?: string }) {
+    return (
+      <input
+        data-testid="control"
+        id={props.id}
+        aria-label={props['aria-label']}
+        aria-labelledby={props['aria-labelledby']}
+      />
+    );
+  }
+
+  it('label={<></>} still renders an empty <label>, but a control with its own aria-label keeps its name', () => {
+    render(
+      <Field label={<></>}>
+        <NamedStub aria-label="Seats" />
+      </Field>,
+    );
+    expect(screen.getByTestId('control')).toHaveAccessibleName('Seats');
+    expect(document.querySelector('label')).toBeInTheDocument();
+  });
+
+  it('label={[]} behaves the same as label={<></>}', () => {
+    render(
+      <Field label={[]}>
+        <NamedStub aria-label="Seats" />
+      </Field>,
+    );
+    expect(screen.getByTestId('control')).toHaveAccessibleName('Seats');
+  });
+
+  it('label={<></>} with no fallback on the control leaves it unnamed — a documented residual case, not fixable without walking children', () => {
+    render(
+      <Field label={<></>}>
+        <NamedStub />
+      </Field>,
+    );
+    expect(screen.getByTestId('control')).toHaveAccessibleName('');
+  });
+
+  it("a control's own aria-label wins even over a MEANINGFUL label — same 'child's explicit value wins' rule as aria-describedby's `||`", () => {
+    render(
+      <Field label="Row label">
+        <NamedStub aria-label="Consumer name" />
+      </Field>,
+    );
+    expect(screen.getByTestId('control')).toHaveAccessibleName('Consumer name');
+  });
+});
+
+describe("Field — the ??-not-|| rule on invalid/required (the file's own comment calls it load-bearing)", () => {
+  // fieldWiring.ts:107-108's comment: "`invalid` / `required` keep `??` —
+  // those are booleans, where `false` is a meaningful explicit value." That
+  // rule was untested on both the non-group AND asGroup branches — mutating
+  // `??` to `||` on either is green on the whole suite, per round 6 review.
+  // A `??`→`||` regression would make `<Input invalid={false}>` inside a
+  // Field with an active `error` silently ignore the consumer's explicit
+  // opt-out.
+  function ExplicitOverrideStub(props: { invalid?: boolean; required?: boolean }) {
+    return (
+      <input
+        data-testid="control"
+        data-invalid={String(props.invalid)}
+        data-required={String(props.required)}
+      />
+    );
+  }
+
+  it("child's explicit invalid={false} wins over Field's error-driven invalid", () => {
+    render(
+      <Field label="Email" error="bad">
+        <ExplicitOverrideStub invalid={false} />
+      </Field>,
+    );
+    expect(screen.getByTestId('control')).toHaveAttribute('data-invalid', 'false');
+  });
+
+  it("child's explicit required={false} wins over Field's required prop", () => {
+    render(
+      <Field label="Email" required>
+        <ExplicitOverrideStub required={false} />
+      </Field>,
+    );
+    expect(screen.getByTestId('control')).toHaveAttribute('data-required', 'false');
+  });
+
+  it("asGroup: child's explicit invalid={false} wins over Field's error-driven invalid", () => {
+    render(
+      <Field asGroup label="Pick one" error="bad">
+        <ExplicitOverrideStub invalid={false} />
+      </Field>,
+    );
+    expect(screen.getByTestId('control')).toHaveAttribute('data-invalid', 'false');
+  });
+
+  it("asGroup: child's explicit required={false} wins over Field's required prop", () => {
+    render(
+      <Field asGroup label="Pick one" required>
+        <ExplicitOverrideStub required={false} />
+      </Field>,
+    );
+    expect(screen.getByTestId('control')).toHaveAttribute('data-required', 'false');
+  });
+});
+
+describe('Field — render-prop aria-invalid emits no attribute when valid, not aria-invalid="false"', () => {
+  // fieldWiring.ts:80's `'aria-invalid': invalid || undefined` — mutating to
+  // bare `invalid` is green on the whole suite. React does NOT drop a
+  // `false`-valued aria-* attribute the way it drops `hidden`/`disabled`, so
+  // every render-prop control would emit a literal aria-invalid="false" on
+  // every valid render — a visible DOM change, not a behavior-neutral one.
+  it('a valid render-prop control has no aria-invalid attribute at all', () => {
+    render(<Field label="Email">{(field) => <input data-testid="control" {...field} />}</Field>);
+    expect(screen.getByTestId('control')).not.toHaveAttribute('aria-invalid');
+  });
+});
+
 describe('Field — render-prop form with no label', () => {
   // fieldWiring.ts's field object computes `'aria-labelledby': labelledBy`
   // (hasLabel ? labelId : undefined) as a SEPARATE piece of code from the

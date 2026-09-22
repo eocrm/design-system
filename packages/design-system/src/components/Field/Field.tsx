@@ -115,14 +115,18 @@ const MSG_SIZE: Record<FieldSize, TextSize> = { sm: 'xs', md: 'sm', lg: 'sm' };
  *   render-prop and spread `field` (it includes `aria-invalid`).
  * - ❌ Passing both `required` and `optional`.
  * - ⚠️ `label` / `description` / `error` treat `0` and `NaN` as ABSENT — same
- *   as `{0 && …}` anywhere else in JSX — so `<Field label={count}>` with
- *   `count === 0` renders no `<label>` and leaves the control with no
- *   accessible name at all. They treat an empty array or fragment
- *   (`error={errors.map(...)}` with no errors, `error={<></>}`) as PRESENT —
- *   for `error` specifically that still flips the control invalid with an
- *   empty message; for `label`/`description` it renders an empty node
- *   instead. Pass `undefined` explicitly for "none" rather than a container
- *   that might be empty.
+ *   as `{0 && …}` anywhere else in JSX — so a falsy `label` renders no
+ *   `<label>` at all, and the control falls back to its own `aria-label` if
+ *   it has one, or ends up unnamed otherwise. They treat an empty array or
+ *   fragment (`error={errors.map(...)}` with no errors, `error={<></>}`,
+ *   `label={<></>}`) as PRESENT: `error` still flips the control invalid
+ *   with an empty message; `description` renders an empty node; `label`'s
+ *   `<label>` element IS the wrapper, so it renders empty too — the
+ *   control's own `aria-label`, if it has one, still wins over that empty
+ *   name (the child's explicit value always wins over Field's computed
+ *   default, same as `aria-describedby`), but with no fallback the control
+ *   still ends up unnamed. Pass `undefined` explicitly for "none" rather
+ *   than a container that might be empty.
  */
 export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
   {
@@ -142,19 +146,23 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
   ref,
 ) {
   const t = useTranslation();
-  // Single source of truth for "is there a label" — `label` has THREE
-  // consumers below (the wiring call, the render gate, groupAria) and they
-  // had drifted: groupAria used to recompute Boolean(label) independently of
-  // the wiring call, which is exactly how <Field asGroup label={false}>
-  // shipped a dangling aria-labelledby with the whole suite green.
+  // Single source of truth for each "is there an X" predicate — round 5
+  // hoisted only `hasLabel` (it had THREE consumers and had already
+  // diverged); round 6 does the same for `hasDescription`/`hasError`/
+  // `hasRequired`, which were still each computed twice (once for the
+  // wiring call, once for the matching render gate) — not diverged today,
+  // but the identical duplication shape that produced `hasLabel`'s bug.
   const hasLabel = Boolean(label);
+  const hasDescription = Boolean(description);
+  const hasError = Boolean(error);
+  const hasRequired = Boolean(required);
   const { controlId, labelId, descriptionId, errorId, describedBy, invalid, wire } = useFieldWiring(
     {
       id,
       hasLabel,
-      hasDescription: Boolean(description),
-      hasError: Boolean(error),
-      required,
+      hasDescription,
+      hasError,
+      required: hasRequired,
       asGroup,
     },
   );
@@ -169,7 +177,7 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
 
   const markers = (
     <>
-      {required && (
+      {hasRequired && (
         <span aria-hidden="true" className={styles.required}>
           {' '}
           *
@@ -195,13 +203,13 @@ export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
   }
 
   let messageNode: ReactNode = null;
-  if (Boolean(error)) {
+  if (hasError) {
     messageNode = (
       <Text as="div" id={errorId} size={MSG_SIZE[size]} tone="danger">
         {error}
       </Text>
     );
-  } else if (Boolean(description)) {
+  } else if (hasDescription) {
     messageNode = (
       <Text as="div" id={descriptionId} size={MSG_SIZE[size]} tone="muted">
         {description}

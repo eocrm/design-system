@@ -421,6 +421,42 @@ describe('SettingRow — falsy-but-present optional props (the `cond && value` i
     );
     expect(screen.getByRole('spinbutton')).not.toHaveAttribute('aria-labelledby');
   });
+
+  // Round 6 Critical: label={<></>} / label={[]} are TRUTHY (Boolean is true,
+  // same as any other empty-container idiom this file already documents for
+  // error/description/trailing), so hasLabel stays true and the <label>
+  // element DOES render — empty. Before fieldWiring.ts's fix, aria-labelledby
+  // pointed at that real-but-empty element, which is authoritative in the
+  // accname algorithm (unlike a fully dangling reference, it does NOT fall
+  // through to the control's own aria-label) — so this half of the "falsy
+  // label" bug survived round 5's fix, which only closed the falsy half.
+  it('label={<></>} still renders an empty <label>, but a control with its own aria-label keeps its name', () => {
+    render(
+      <SettingRow label={<></>}>
+        <Input type="number" aria-label="Seats" />
+      </SettingRow>,
+    );
+    expect(screen.getByRole('spinbutton')).toHaveAccessibleName('Seats');
+    expect(document.querySelector('label')).toBeInTheDocument();
+  });
+
+  it('label={[]} behaves the same as label={<></>}', () => {
+    render(
+      <SettingRow label={[]}>
+        <Input type="number" aria-label="Seats" />
+      </SettingRow>,
+    );
+    expect(screen.getByRole('spinbutton')).toHaveAccessibleName('Seats');
+  });
+
+  it('label={<></>} with no fallback on the control leaves it unnamed — documented residual case', () => {
+    render(
+      <SettingRow label={<></>}>
+        <Input type="number" />
+      </SettingRow>,
+    );
+    expect(screen.getByRole('spinbutton')).toHaveAccessibleName('');
+  });
 });
 
 describe('SettingRow.List', () => {
