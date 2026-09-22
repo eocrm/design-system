@@ -292,3 +292,84 @@ describe('Image — empty ariaLabel', () => {
     expect(screen.getByRole('button', { name: 'A photo' })).toBeInTheDocument();
   });
 });
+
+describe('Image — fixed-size error tile is icon-only (#538)', () => {
+  // The defect: the error column is ~100px tall, the sized wrapper is 20-40px
+  // and `overflow: hidden`, so the Retry button was painted nowhere and stayed
+  // in the tab order. jsdom paints nothing, so geometry is not assertable here
+  // — the assertable invariant is that the control does not EXIST.
+  function focusables(container: HTMLElement) {
+    return Array.from(
+      container.querySelectorAll('a[href], button, input, select, textarea, [tabindex]'),
+    ).filter((el) => !el.hasAttribute('disabled'));
+  }
+
+  it.each(['xs', 'sm', 'md', 'lg'] as const)(
+    'renders nothing focusable inside a failed size="%s" tile',
+    (size) => {
+      const { container } = render(<Image src={SRC} alt="A photo" size={size} />);
+      fireEvent.error(getImg(container));
+      expect(container.querySelector('[data-state="error"]')).not.toBeNull();
+      expect(focusables(container)).toHaveLength(0);
+    },
+  );
+
+  it('stays free of focusable content when the sized image is also interactive', () => {
+    // The trigger still renders, but `disabled` in the error state — so the
+    // tile as a whole is still unreachable by Tab.
+    const { container } = render(<Image src={SRC} alt="A photo" size="lg" onClick={() => {}} />);
+    fireEvent.error(getImg(container));
+    expect((container.querySelector('button') as HTMLButtonElement).disabled).toBe(true);
+    expect(focusables(container)).toHaveLength(0);
+  });
+
+  it('names the icon with alt + the failure, since no visible text carries it there', () => {
+    const { container, getByRole, queryByText } = render(
+      <Image src={SRC} alt="A photo" size="lg" />,
+    );
+    fireEvent.error(getImg(container));
+    expect(getByRole('img', { name: 'A photo: Image failed to load' })).not.toBeNull();
+    // No text node and no Retry label — the tile renders no text at all, so
+    // nothing can duplicate the phrase the name now carries.
+    expect(queryByText('Image failed to load')).toBeNull();
+    expect(container.textContent).toBe('');
+  });
+
+  it('names a decorative sized tile with the failure alone', () => {
+    // alt="" goes decorative in the fluid tile because the visible text still
+    // announces the failure. Here there is no text, so silence would make the
+    // sized branch the one place a broken image is absent from the tree.
+    const { container, getByRole } = render(<Image src={SRC} alt="" size="sm" />);
+    fireEvent.error(getImg(container));
+    expect(getByRole('img', { name: 'Image failed to load' })).not.toBeNull();
+  });
+
+  it('hangs the icon off .errorIcon, which is what scales it to the box', () => {
+    // `--image-error-icon-size` is set per size class on the wrapper and read
+    // by `.errorIcon`; drop the className and lucide's own 24px attribute
+    // takes over, overflowing xs and sm again. jsdom applies no CSS, so this
+    // pins the hook — the browser gate measures the result.
+    const { container } = render(<Image src={SRC} alt="" size="xs" />);
+    fireEvent.error(getImg(container));
+    expect(container.querySelector('svg')!.getAttribute('class')).toMatch(/errorIcon/);
+  });
+
+  it('leaves the fluid tile alone — text and Retry both still render', () => {
+    const { container, getByRole, getByText } = render(<Image src={SRC} alt="A photo" />);
+    fireEvent.error(getImg(container));
+    expect(getByText('Image failed to load')).not.toBeNull();
+    expect(getByRole('button', { name: 'Retry' })).not.toBeNull();
+    // And its icon keeps the bare `alt` — the phrase must not be said twice.
+    expect(getByRole('img', { name: 'A photo' })).not.toBeNull();
+    expect(focusables(container)).toHaveLength(1);
+  });
+
+  it('a custom fallback still wins at a fixed size', () => {
+    const { container, getByRole } = render(
+      <Image src={SRC} alt="A photo" size="lg" fallback={<button>Report</button>} />,
+    );
+    fireEvent.error(getImg(container));
+    expect(getByRole('button', { name: 'Report' })).not.toBeNull();
+    expect(container.querySelector('[role="img"]')).toBeNull();
+  });
+});

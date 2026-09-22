@@ -13,25 +13,34 @@
 // compound `.wrapper.sizeX` selector beats `.wrapper` so order is irrelevant).
 // A component-owned fixed size, mirroring Avatar's size scale; `flex-shrink: 0`
 // keeps the box from squishing in a flex row / table cell.
+// Each size also picks the error icon it can hold — see `.errorIcon`.
 .wrapper.sizeXs {
+  --image-error-icon-size: var(--image-error-icon-xs);
+
   width: var(--image-size-xs);
   height: var(--image-size-xs);
   flex-shrink: 0;
 }
 
 .wrapper.sizeSm {
+  --image-error-icon-size: var(--image-error-icon-sm);
+
   width: var(--image-size-sm);
   height: var(--image-size-sm);
   flex-shrink: 0;
 }
 
 .wrapper.sizeMd {
+  --image-error-icon-size: var(--image-error-icon-md);
+
   width: var(--image-size-md);
   height: var(--image-size-md);
   flex-shrink: 0;
 }
 
 .wrapper.sizeLg {
+  --image-error-icon-size: var(--image-error-icon-lg);
+
   width: var(--image-size-lg);
   height: var(--image-size-lg);
   flex-shrink: 0;
@@ -93,6 +102,16 @@
 
 .errorText {
   font-size: var(--image-error-font-size);
+}
+
+// The sized error tile is this icon and nothing else (#538), so it is sized to
+// the box it sits in rather than to lucide's attribute: a component-owned
+// intrinsic size like `.wrapper.sizeX` above, not layout (Rule 4 OK). Only the
+// sized branch renders it, so the custom property is always set by one of those
+// four rules.
+.errorIcon {
+  width: var(--image-error-icon-size);
+  height: var(--image-error-icon-size);
 }
 
 // Interactive trigger — a chromeless <button> wrapping the image (interactive /

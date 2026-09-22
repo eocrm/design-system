@@ -27,4 +27,15 @@
   --image-error-fg: var(--color-fg-muted);
   --image-error-gap: var(--space-2);
   --image-error-font-size: var(--font-size-sm);
+
+  // Error icon in the fixed-`size` branch, where the icon IS the tile (#538):
+  // no text, no Retry, so it has to fit INSIDE a 20/24/32/40px box rather than
+  // overflow it the way the fluid tile's 28px icon did at xs and sm. ~60% of
+  // the box, rounded to an even pixel, leaving 4/5/6/8px of clearance per side.
+  // Per-size literals rather than a percentage so the icon lands on whole
+  // pixels at every size (the Switch thumb/track scale does the same).
+  --image-error-icon-xs: 12px;
+  --image-error-icon-sm: 14px;
+  --image-error-icon-md: 20px;
+  --image-error-icon-lg: 24px;
 }

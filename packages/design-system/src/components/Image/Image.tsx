@@ -53,7 +53,9 @@ export interface ImageProps extends Omit<
    * the container's width. Use for dense thumbnails (e.g. a 40px image cell in a
    * table row) so you don't need a consumer-owned fixed-width wrapper. Omit for
    * the default responsive behavior. When set, `aspectRatio` is ignored (the box
-   * is already square); pair with `objectFit="cover"` to crop.
+   * is already square); pair with `objectFit="cover"` to crop. Note that a
+   * sized image's error tile is icon-only and **not retryable** — see the
+   * component description.
    */
   size?: ImageSize;
   /**
@@ -64,6 +66,9 @@ export interface ImageProps extends Omit<
   /**
    * Custom node rendered in place of the default broken-image placeholder when
    * the image fails to load. Overrides the icon + message + retry entirely.
+   * This is also the only way to put a control on a failed fixed-`size` image,
+   * whose built-in error tile is icon-only — but you then own making it fit a
+   * 20-40px square.
    */
   fallback?: ReactNode;
   /**
@@ -125,6 +130,15 @@ const SIZE_CLASS: Record<ImageSize, string> = {
  * underlying `<img>`. The wrapper owns sizing: rendered height comes from `size`
  * or `aspectRatio` (or the container), and native `width`/`height` attrs on the
  * `<img>` are intrinsic-ratio hints only, not the rendered size.
+ *
+ * The error tile comes in two forms. A fluid image (no `size`) shows the icon,
+ * a message and a **Retry** button. A fixed-`size` image — `'xs'` / `'sm'` /
+ * `'md'` / `'lg'`, i.e. 20 / 24 / 32 / 40px — shows the **icon alone**, scaled
+ * to its box, and is **not retryable**: a square that small cannot hold the
+ * message or the button, and the button it used to render sat outside the
+ * wrapper's clip, painted nowhere yet still in the tab order (#538). Screen
+ * readers still get the failure, from the icon's name. If a failed thumbnail
+ * needs a control at those sizes, supply one via `fallback`.
  *
  * @example
  * // Responsive 16:9 thumbnail
@@ -263,40 +277,71 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
       )}
 
       {state === 'error' &&
-        (fallback ?? (
-          <span className={styles.error}>
-            {/* `role="img"` moved off the container and onto the ICON.
-                `img` is Children Presentational, so as a container it pruned
-                its own descendants from the accessibility tree — the visible
-                error text and, worse, the Retry button were not exposed at
-                all: a focusable control with no role and no name (#496).
-                Testing Library computes roles from the DOM rather than
-                modelling children-presentational, which is why the existing
-                `getByRole('button', { name: 'Retry' })` assertion passed
-                throughout.
+        (fallback ??
+          (size ? (
+            /* Fixed `size` is a 20/24/32/40px square, and the full tile below
+               is over 100px tall. At EVERY one of those sizes the Retry button
+               landed 23-42px past the wrapper's bottom edge: outside
+               `overflow: hidden`, never painted, and still focusable and in
+               the tab order (#538). There is no threshold to tune — the fluid
+               tile's 28px icon alone already overflows xs and sm — so a sized
+               error tile is the icon, scaled to its box by `.errorIcon`, and
+               contains nothing focusable at all. A consumer who needs a
+               control at this size passes `fallback`.
 
-                On a leaf there is nothing to prune, so the name survives and
-                the siblings stay reachable.
+               A11y: the "icon carries only `alt`" reasoning below is a
+               consequence of the visible text, not a rule about the icon, and
+               this branch has no visible text — so it inverts here. Nothing
+               else in the tile can carry the failure, so the icon does: `alt`
+               plus the phrase, the same fold `Lightbox` uses on its failed
+               stage. It names itself even when `alt=""`, because the fluid
+               tile renders its failure text regardless of `alt` too — a
+               decorative image that breaks is discoverable there, and the
+               sized branch must not be the one place a broken tile is
+               silent. */
+            <span className={styles.error}>
+              <ImageOff
+                className={styles.errorIcon}
+                role="img"
+                aria-label={alt ? `${alt}: ${t('image.loadError')}` : t('image.loadError')}
+              />
+            </span>
+          ) : (
+            <span className={styles.error}>
+              {/* `role="img"` moved off the container and onto the ICON.
+                  `img` is Children Presentational, so as a container it pruned
+                  its own descendants from the accessibility tree — the visible
+                  error text and, worse, the Retry button were not exposed at
+                  all: a focusable control with no role and no name (#496).
+                  Testing Library computes roles from the DOM rather than
+                  modelling children-presentational, which is why the existing
+                  `getByRole('button', { name: 'Retry' })` assertion passed
+                  throughout.
 
-                The icon carries ONLY `alt`, never the failure phrase: the
-                sibling below renders that phrase as visible text, so naming
-                the icon with it too made a reader say "Failed to load" twice
-                in a row. With no `alt` there is nothing left to name, so the
-                icon goes decorative and the text carries the message alone. */}
-            {alt ? (
-              <ImageOff size={28} role="img" aria-label={alt} />
-            ) : (
-              <ImageOff size={28} aria-hidden />
-            )}
-            <span className={styles.errorText}>{t('image.loadError')}</span>
-            {/* `.retry` exists only to carry the inset focus ring — see the
-                rule in Image.module.scss for why an outset one cannot survive
-                this wrapper. */}
-            <Button variant="secondary" size="sm" onClick={retry} className={styles.retry}>
-              {t('image.retry')}
-            </Button>
-          </span>
-        ))}
+                  On a leaf there is nothing to prune, so the name survives and
+                  the siblings stay reachable.
+
+                  The icon carries ONLY `alt`, never the failure phrase: the
+                  sibling below renders that phrase as visible text, so naming
+                  the icon with it too made a reader say "Failed to load" twice
+                  in a row. With no `alt` there is nothing left to name, so the
+                  icon goes decorative and the text carries the message alone.
+                  Both halves of that hold only while the text is there — see
+                  the sized branch above, which has none. */}
+              {alt ? (
+                <ImageOff size={28} role="img" aria-label={alt} />
+              ) : (
+                <ImageOff size={28} aria-hidden />
+              )}
+              <span className={styles.errorText}>{t('image.loadError')}</span>
+              {/* `.retry` exists only to carry the inset focus ring — see the
+                  rule in Image.module.scss for why an outset one cannot survive
+                  this wrapper. */}
+              <Button variant="secondary" size="sm" onClick={retry} className={styles.retry}>
+                {t('image.retry')}
+              </Button>
+            </span>
+          )))}
     </span>
   );
 });

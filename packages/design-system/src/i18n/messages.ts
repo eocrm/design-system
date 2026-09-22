@@ -30,9 +30,14 @@ export interface Messages {
     confirm: string;
   };
   image: {
-    /** Visible text + aria-label fallback shown when an image fails to load. */
+    /**
+     * Visible text + aria-label fallback shown when an image fails to load.
+     * Also the whole accessible name of a fixed-`size` Image's icon-only error
+     * tile, appended to `alt` as `"{alt}: {loadError}"` — that tile has no
+     * visible text to carry it (#538).
+     */
     loadError: string;
-    /** Label on the retry button in the broken-image placeholder. */
+    /** Label on the retry button in the broken-image placeholder (fluid Image only). */
     retry: string;
   };
   lightbox: {
