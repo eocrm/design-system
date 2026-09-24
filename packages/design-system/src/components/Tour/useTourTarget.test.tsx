@@ -1,4 +1,4 @@
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, cleanup, renderHook, waitFor } from '@testing-library/react';
 import { stubClientRects } from '../_internal/layoutStub.testutil';
 import { findTourTarget, useTourTarget } from './useTourTarget';
 
@@ -14,6 +14,10 @@ beforeEach(() => {
   stubClientRects();
 });
 afterEach(() => {
+  // Unmount rendered hooks (disconnecting their MutationObservers) BEFORE
+  // wiping the body — otherwise the body wipe is itself a mutation an
+  // observer picks up, driving a real `waiting` state update outside act().
+  cleanup();
   vi.restoreAllMocks();
   document.body.innerHTML = '';
 });
@@ -33,6 +37,15 @@ describe('findTourTarget', () => {
 
   it('returns null when nothing matches', () => {
     expect(findTourTarget('nope')).toBeNull();
+  });
+
+  it('returns the first of duplicate matches and warns exactly once', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const first = add('dupe-warn-once');
+    add('dupe-warn-once');
+    expect(findTourTarget('dupe-warn-once')).toBe(first);
+    expect(findTourTarget('dupe-warn-once')).toBe(first);
+    expect(warn).toHaveBeenCalledTimes(1);
   });
 });
 
