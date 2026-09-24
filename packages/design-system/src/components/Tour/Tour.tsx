@@ -3,10 +3,12 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
   type HTMLAttributes,
+  type KeyboardEvent as ReactKeyboardEvent,
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
@@ -24,6 +26,7 @@ import { Button } from '../Button';
 import { Cluster } from '../Cluster';
 import { Stack } from '../Stack';
 import { useTranslation } from '../../i18n/useTranslation';
+import { overlayStack, useFloatingSurface, useFocusTrap } from '../_internal/overlay';
 import { mergeRefs, sanitizeId } from '../_internal/refs';
 import { useControllableState } from '../_internal/useControllableState';
 import { Spotlight } from './Spotlight';
@@ -117,6 +120,8 @@ export interface TourProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title' 
 const EXIT_FALLBACK_MS = 300;
 /** Gap in px between target and card (room for the arrow). */
 const CARD_OFFSET = 12;
+/** Arrow keys inside these keep their native meaning (caret, option list). */
+const EDITABLE = 'input, textarea, select, [contenteditable]:not([contenteditable="false"])';
 
 /* JSDoc for Tour is written in Task 8. */
 export const Tour = forwardRef<HTMLDivElement, TourProps>(function Tour(props, ref) {
@@ -157,6 +162,7 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
     doneLabel,
     closing,
     onExited,
+    onKeyDown,
     className,
     style,
     ...rest
@@ -204,6 +210,50 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
   // Latest-callback ref for listeners registered in effects (advanceOn, keys).
   const goNextRef = useRef(goNext);
   goNextRef.current = goNext;
+
+  const finishRef = useRef(finish);
+  finishRef.current = finish;
+
+  // ---- Focus ----
+  // Captured before the card takes focus (effects run in declaration order).
+  const restoreRef = useRef<HTMLElement | null>(null);
+  useLayoutEffect(() => {
+    restoreRef.current = document.activeElement as HTMLElement | null;
+  }, []);
+
+  // Focus the card on open and on every step change so the new title is
+  // announced. preventScroll: the target scroll is ours to control.
+  useLayoutEffect(() => {
+    if (closing) return;
+    queueMicrotask(() => cardRef.current?.focus({ preventScroll: true }));
+  }, [index, closing]);
+
+  // Return focus on close — unless the user has already moved it elsewhere.
+  useEffect(() => {
+    if (!closing) return;
+    const active = document.activeElement;
+    if (active && active !== document.body && !cardRef.current?.contains(active)) return;
+    const el = restoreRef.current;
+    if (el?.isConnected) el.focus({ preventScroll: true });
+  }, [closing]);
+
+  useFocusTrap(cardRef, modal && !closing, modal && current?.interactive ? found : null);
+
+  // ---- Escape = skip ----
+  // Registered as a floating surface so a host Modal yields (#274), and gated
+  // on isTopFloating so a Select/Popover opened in the card closes first (#280).
+  const floatingId = useFloatingSurface(!closing);
+  useEffect(() => {
+    if (closing) return;
+    const onDocKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || !overlayStack.isTopFloating(floatingId)) return;
+      e.preventDefault();
+      overlayStack.consumeEscape(e);
+      finishRef.current('skipped');
+    };
+    document.addEventListener('keydown', onDocKeyDown, true);
+    return () => document.removeEventListener('keydown', onDocKeyDown, true);
+  }, [closing, floatingId]);
 
   // ---- Positioning ----
   const side = current?.side ?? 'bottom';
@@ -290,6 +340,16 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
     };
   }, [closing, onExited]);
 
+  const onCardKeyDown = (e: ReactKeyboardEvent<HTMLDivElement>) => {
+    onKeyDown?.(e);
+    if (e.defaultPrevented) return;
+    if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+    if ((e.target as HTMLElement).closest(EDITABLE)) return;
+    e.preventDefault();
+    if (e.key === 'ArrowLeft') goBack();
+    else if (!isLast) setIndex(index + 1);
+  };
+
   if (!current) {
     if (process.env.NODE_ENV !== 'production') {
       console.warn(`[Tour] no step at index ${index} (steps: ${total}).`);
@@ -333,6 +393,7 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
         data-glide={glide ? '' : undefined}
         className={clsx(styles.card, className)}
         style={{ ...style, ...cardStyle }}
+        onKeyDown={onCardKeyDown}
       >
         {!centered && (
           <span

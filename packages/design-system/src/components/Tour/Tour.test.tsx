@@ -3,6 +3,7 @@ import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { stubClientRects } from '../_internal/layoutStub.testutil';
 import { overlayStack } from '../_internal/overlay';
+import { Popover } from '../Popover';
 import { Tour, type TourProps, type TourStep } from './Tour';
 
 const STEPS: TourStep[] = [
@@ -340,5 +341,152 @@ describe('Tour — advanceOn', () => {
     );
     el.click();
     await waitFor(() => expect(onStepChange).toHaveBeenCalledWith(1));
+  });
+});
+
+describe('Tour — focus', () => {
+  it('focuses the card on open and again on each step change', async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    await waitFor(() => expect(screen.getByRole('dialog')).toHaveFocus());
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await waitFor(() => expect(screen.getByRole('dialog', { name: 'Filters' })).toHaveFocus());
+  });
+
+  it('restores focus to the previously focused element on close', async () => {
+    const user = userEvent.setup();
+    render(<Harness initialOpen={false} />);
+    const start = screen.getByRole('button', { name: 'Start' });
+    await user.click(start);
+    await waitFor(() => expect(screen.getByRole('dialog')).toHaveFocus());
+    await user.keyboard('{Escape}');
+    await waitFor(() => expect(start).toHaveFocus());
+  });
+
+  it('modal mode traps Tab inside the card', async () => {
+    const user = userEvent.setup();
+    render(<Harness defaultStep={1} />);
+    await waitFor(() => expect(screen.getByRole('dialog')).toHaveFocus());
+    await user.tab(); // Skip
+    await user.tab(); // Back
+    await user.tab(); // Next
+    await user.tab(); // wraps
+    expect(screen.getByRole('button', { name: 'Skip tour' })).toHaveFocus();
+  });
+
+  it('an interactive target joins the trap after the card', async () => {
+    const user = userEvent.setup();
+    const el = document.createElement('button');
+    el.dataset.tour = 'it';
+    el.textContent = 'Target';
+    document.body.appendChild(el);
+    render(
+      <Tour
+        steps={[{ target: 'it', title: 'Try it', interactive: true }, { title: 'B' }]}
+        open
+        onOpenChange={() => {}}
+      />,
+    );
+    await waitFor(() => expect(screen.getByRole('dialog')).toHaveFocus());
+    screen.getByRole('button', { name: 'Next' }).focus();
+    await user.tab();
+    expect(el).toHaveFocus();
+    // cleanup() BEFORE removing the manually-appended target: unmounts the
+    // Tour (and its useTourTarget MutationObserver) first, so the removal
+    // below isn't observed as a mutation that sets state outside act().
+    cleanup();
+    el.remove();
+  });
+
+  it('modal={false} does not trap focus', async () => {
+    const user = userEvent.setup();
+    render(<Harness modal={false} defaultStep={2} />);
+    await waitFor(() => expect(screen.getByRole('dialog')).toHaveFocus());
+    await user.tab(); // Back
+    await user.tab(); // Done
+    await user.tab(); // leaves the card
+    expect(screen.getByRole('dialog')).not.toContainElement(document.activeElement as HTMLElement);
+  });
+});
+
+describe('Tour — keyboard', () => {
+  it('Escape skips', async () => {
+    const user = userEvent.setup();
+    const onFinish = vi.fn();
+    render(<Harness onFinish={onFinish} />);
+    await user.keyboard('{Escape}');
+    expect(onFinish).toHaveBeenCalledWith('skipped');
+  });
+
+  it('ArrowRight / ArrowLeft move between steps while focus is in the card', async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    await waitFor(() => expect(screen.getByRole('dialog')).toHaveFocus());
+    await user.keyboard('{ArrowRight}');
+    expect(screen.getByRole('dialog', { name: 'Filters' })).toBeInTheDocument();
+    await user.keyboard('{ArrowLeft}');
+    expect(screen.getByRole('dialog', { name: 'Welcome' })).toBeInTheDocument();
+  });
+
+  it('ArrowRight on the last step does not close the tour', async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    render(<Tour steps={STEPS} open onOpenChange={onOpenChange} defaultStep={2} />);
+    await waitFor(() => expect(screen.getByRole('dialog')).toHaveFocus());
+    await user.keyboard('{ArrowRight}');
+    expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it('arrow keys typed into an input inside the card do not change steps', async () => {
+    const user = userEvent.setup();
+    render(
+      <Tour
+        steps={[{ title: 'Name', body: <input aria-label="name" /> }, { title: 'B' }]}
+        open
+        onOpenChange={() => {}}
+      />,
+    );
+    await user.click(screen.getByRole('textbox', { name: 'name' }));
+    await user.keyboard('ab{ArrowLeft}');
+    expect(screen.getByRole('dialog', { name: 'Name' })).toBeInTheDocument();
+  });
+
+  it('chains a consumer onKeyDown', async () => {
+    const user = userEvent.setup();
+    const onKeyDown = vi.fn();
+    render(<Harness onKeyDown={onKeyDown} />);
+    await waitFor(() => expect(screen.getByRole('dialog')).toHaveFocus());
+    await user.keyboard('x');
+    expect(onKeyDown).toHaveBeenCalled();
+  });
+
+  it('Escape closes a Popover opened inside the card first, not the tour', async () => {
+    const user = userEvent.setup();
+    const onFinish = vi.fn();
+    render(
+      <Tour
+        steps={[
+          {
+            title: 'Nested',
+            body: (
+              <Popover>
+                <Popover.Trigger>
+                  <button type="button">More</button>
+                </Popover.Trigger>
+                <Popover.Content>inner</Popover.Content>
+              </Popover>
+            ),
+          },
+        ]}
+        open
+        onOpenChange={() => {}}
+        onFinish={onFinish}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: 'More' }));
+    expect(screen.getByText('inner')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByText('inner')).not.toBeInTheDocument();
+    expect(onFinish).not.toHaveBeenCalled();
   });
 });
