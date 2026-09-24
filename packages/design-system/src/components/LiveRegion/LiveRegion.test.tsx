@@ -25,12 +25,13 @@ describe('<LiveRegion>', () => {
   });
 
   it('consumer props cannot override role / aria-live / aria-atomic', () => {
+    // Built as a separate object (rather than inline JSX attributes) so the
+    // `@ts-expect-error` directive stays pinned to this one-line statement —
+    // immune to prettier reflowing the JSX call across lines, which
+    // previously separated the directive from the line it was suppressing.
     // @ts-expect-error role / aria-live / aria-atomic are omitted from the props type
-    render(
-      <LiveRegion role="note" aria-live="off" aria-atomic="false">
-        x
-      </LiveRegion>,
-    );
+    const badProps: LiveRegionProps = { role: 'note', 'aria-live': 'off', 'aria-atomic': 'false' };
+    render(<LiveRegion {...badProps}>x</LiveRegion>);
     expect(region()).toHaveAttribute('aria-live', 'polite');
     expect(region()).toHaveAttribute('aria-atomic', 'true');
   });
