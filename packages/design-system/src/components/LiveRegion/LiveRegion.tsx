@@ -25,10 +25,11 @@ export interface LiveRegionProps extends Omit<
    * - `'assertive'` — `role="alert"` + `aria-live="assertive"`. Interrupts
    *   immediately. Reserve for errors that need immediate attention.
    *
-   * Safe to switch together with the message
-   * (`politeness={error ? 'assertive' : 'polite'}`): the role only flips while
-   * the region is empty, so the old text is never announced at the new
-   * urgency. A politeness change on its own re-announces the current message.
+   * Change politeness in the SAME render as the message
+   * (`politeness={error ? 'assertive' : 'polite'}` next to `{error ?? status}`):
+   * the role only flips while the region is empty, so the old text is never
+   * announced at the new urgency. A politeness-only change re-announces the
+   * current text at the new urgency.
    * @default 'polite'
    */
   politeness?: LiveRegionPoliteness;

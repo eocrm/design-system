@@ -52,8 +52,9 @@
 }
 
 // The control's own wrapper — sized by controlWidth, `trailing` sits
-// outside it on .controlLine so a cap never pulls the adornments onto a
-// second line. This wrapper is created AFTER wire() has already cloned the
+// outside it on .controlLine so controlWidth never sizes the adornments.
+// They share the line only while both fit: in a narrow column a wide step
+// (md) plus `trailing` wraps `trailing` onto a second line. This wrapper is created AFTER wire() has already cloned the
 // child and injected id / aria-labelledby / aria-describedby / invalid /
 // required, so it is never the cloneElement target — that's also why a
 // consumer-side <Constrain> was ruled out in favor of controlWidth.
