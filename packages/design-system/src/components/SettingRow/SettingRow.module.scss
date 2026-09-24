@@ -67,19 +67,16 @@
 }
 
 .controlSlot[data-control-width='xs'] {
-  // stylelint-disable-next-line property-disallowed-list -- the control's own slot, sized by the controlWidth prop
   width: var(--setting-row-control-width-xs);
   max-width: 100%;
 }
 
 .controlSlot[data-control-width='sm'] {
-  // stylelint-disable-next-line property-disallowed-list -- the control's own slot, sized by the controlWidth prop
   width: var(--setting-row-control-width-sm);
   max-width: 100%;
 }
 
 .controlSlot[data-control-width='md'] {
-  // stylelint-disable-next-line property-disallowed-list -- the control's own slot, sized by the controlWidth prop
   width: var(--setting-row-control-width-md);
   max-width: 100%;
 }
