@@ -447,7 +447,7 @@ describe('Tour — keyboard', () => {
       />,
     );
     await user.click(screen.getByRole('textbox', { name: 'name' }));
-    await user.keyboard('ab{ArrowLeft}');
+    await user.keyboard('ab{ArrowRight}');
     expect(screen.getByRole('dialog', { name: 'Name' })).toBeInTheDocument();
   });
 
