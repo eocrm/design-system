@@ -30,6 +30,9 @@ export type { KbdProps, KbdSize } from './components/Kbd';
 export { VisuallyHidden } from './components/VisuallyHidden';
 export type { VisuallyHiddenProps, VisuallyHiddenAs } from './components/VisuallyHidden';
 
+export { LiveRegion } from './components/LiveRegion';
+export type { LiveRegionProps, LiveRegionPoliteness } from './components/LiveRegion';
+
 export { Card, CardBody } from './components/Card';
 export type { CardProps, CardPadding, CardTone, CardOverflow } from './components/Card';
 export type { CardBodyProps } from './components/Card';
