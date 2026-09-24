@@ -1,0 +1,46 @@
+// Tour.tokens.scss — Component-scoped tokens for <Tour>. Each defaults to a
+// shared token; the two raw values are viewport/animation specifics with no
+// cross-platform counterpart (same reasoning as --modal-content-width-full).
+:root {
+  --tour-z: var(--z-tour);
+
+  // Motion: fades are quick, geometry glides are slow enough to follow.
+  --tour-fade: var(--transition-base);
+  --tour-glide: var(--transition-slow);
+  --tour-opacity-hidden: var(--opacity-hidden);
+  --tour-opacity-visible: var(--opacity-visible);
+
+  // Card opacity while a cross-page target is being waited for.
+  --tour-waiting-opacity: 0.6;
+
+  // Scrim + spotlight
+  --tour-scrim: var(--color-bg-overlay);
+
+  // Spread of the cutout's box-shadow. Must cover the viewport from any
+  // cutout position, so it is viewport-relative.
+  --tour-scrim-spread: 200vmax;
+  --tour-spotlight-radius: var(--radius-md);
+
+  // Interactive-step pulse ring
+  --tour-pulse-color: var(--color-accent);
+  --tour-pulse-width: var(--border-width);
+  --tour-pulse-spread: var(--space-2);
+  --tour-pulse-duration: 1600ms;
+
+  // Card
+  --tour-card-bg: var(--color-bg);
+  --tour-card-fg: var(--color-fg);
+  --tour-card-muted-fg: var(--color-fg-muted);
+  --tour-card-border-color: var(--color-border);
+  --tour-card-radius: var(--radius-md);
+  --tour-card-shadow: var(--shadow-lg);
+  --tour-card-padding: var(--space-4);
+  --tour-card-min-width: var(--size-popover-min-width);
+  --tour-card-max-width: var(--size-popover-max-width);
+  --tour-title-size: var(--font-size-md);
+  --tour-title-weight: var(--font-weight-semibold);
+  --tour-body-size: var(--font-size-sm);
+
+  // Arrow
+  --tour-arrow-size: var(--space-3);
+}
