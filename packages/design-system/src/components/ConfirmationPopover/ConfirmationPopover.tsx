@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   type ReactElement,
@@ -12,6 +13,7 @@ import { Button } from '../Button';
 import { Cluster } from '../Cluster';
 import { Stack } from '../Stack';
 import { Popover } from '../Popover';
+import { usePopoverContext } from '../Popover/context';
 import { sanitizeId } from '../_internal/refs';
 import { useTranslation } from '../../i18n/useTranslation';
 import styles from './ConfirmationPopover.module.scss';
@@ -80,6 +82,44 @@ export interface ConfirmationPopoverProps {
    */
   initialFocusRef?: RefObject<HTMLElement | null>;
 
+  /**
+   * Where focus goes when the popover closes. Default: back to the trigger.
+   *
+   * That default breaks whenever the trigger is gone by close time — the
+   * confirmed action deleted the row that owned it — and focus lands on
+   * `<body>`, so a keyboard user loses their place.
+   *
+   * The ref is read **at close time**, not at open time, so it may be pointed
+   * at whatever still exists once the work is done — the next row's trigger,
+   * the empty state's first button. If it is empty or its element has left
+   * the document, focus falls back to the trigger (when it still exists).
+   *
+   * It applies on EVERY close path — Confirm, Cancel, Escape, and an outside
+   * click that leaves focus nowhere (an outside click onto another focusable
+   * control keeps focus there). To return to the trigger on Cancel and only
+   * move elsewhere after a confirm, aim the ref inside `onConfirm` and clear
+   * it in `onOpenChange(true)`.
+   *
+   * The target is scrolled into view with `{ block: 'nearest' }` (a no-op
+   * when it is already visible) — it may be far from where the user was.
+   *
+   * @example
+   * const returnFocusRef = useRef<HTMLElement | null>(null);
+   * <ConfirmationPopover
+   *   title="Delete row?"
+   *   variant="danger"
+   *   returnFocusRef={returnFocusRef}
+   *   onOpenChange={(next) => { if (next) returnFocusRef.current = null; }}
+   *   onConfirm={async () => {
+   *     await deleteRow(id);
+   *     returnFocusRef.current = nextRowTriggerRef.current ?? addRowButtonRef.current;
+   *   }}
+   * >
+   *   <Button variant="danger">Delete</Button>
+   * </ConfirmationPopover>
+   */
+  returnFocusRef?: RefObject<HTMLElement | null>;
+
   /** Preferred side. Default `'top'` — confirmations anchor above the trigger by convention. */
   side?: 'top' | 'right' | 'bottom' | 'left';
 
@@ -100,6 +140,55 @@ export interface ConfirmationPopoverProps {
 }
 
 /**
+ * Returns focus when the popover closes (#552, #553). Popover itself only
+ * refocuses the trigger on Escape / `Popover.Close`; a Confirm or Cancel
+ * click unmounts the focused button and would drop focus to `<body>`.
+ * Rendered inside `<Popover>` so it can read the trigger ref from context.
+ */
+function FocusReturn({ returnFocusRef }: { returnFocusRef?: RefObject<HTMLElement | null> }) {
+  const { open, triggerRef } = usePopoverContext('FocusReturn');
+  const prevOpenRef = useRef(open);
+  const generationRef = useRef(0);
+
+  useLayoutEffect(() => {
+    const generation = ++generationRef.current;
+    const restore = () => {
+      const active = document.activeElement;
+      const trigger = triggerRef.current;
+      // An outside click onto a real control already moved focus — respect
+      // it. Focus counts as lost on <body>, on a detached node (the panel's
+      // button that was just removed), or on the trigger (Popover's Escape
+      // path refocuses it before we run, and returnFocusRef must still win).
+      const lost = !active || active === document.body || !active.isConnected || active === trigger;
+      if (!lost) return;
+      const requested = returnFocusRef?.current ?? null;
+      if (requested?.isConnected) {
+        requested.focus({ preventScroll: true });
+        requested.scrollIntoView?.({ block: 'nearest' });
+      } else if (trigger?.isConnected && active !== trigger) {
+        trigger.focus({ preventScroll: true });
+      }
+    };
+    if (!open && prevOpenRef.current) restore();
+    prevOpenRef.current = open;
+    // The whole ConfirmationPopover unmounted while open (the confirmed
+    // action removed its row): no open → closed commit will ever run, so
+    // restore from the unmount cleanup. Deferred until React finishes the
+    // teardown; a later effect run (a normal close) bumps the generation and
+    // cancels it, so focus is only moved once — same scheme as Modal.
+    if (open) {
+      return () => {
+        queueMicrotask(() => {
+          if (generationRef.current === generation) restore();
+        });
+      };
+    }
+  }, [open, triggerRef, returnFocusRef]);
+
+  return null;
+}
+
+/**
  * Opinionated "Are you sure?" preset on top of `<Popover>`. Renders a
  * compact panel with a title, optional description, Cancel button, and
  * Confirm button. Anchors above the trigger by default to keep the user's
@@ -110,6 +199,9 @@ export interface ConfirmationPopoverProps {
  *   to Confirm. Pass `initialFocusRef` to override this and focus a given
  *   element instead (e.g. an `<Input>` rendered in `description` for a
  *   rename flow).
+ * - **Focus return** on every close (Confirm, Cancel, Escape): back to the
+ *   trigger, or to `returnFocusRef` when it is set and still in the
+ *   document — pass it when the confirmed action removes the trigger.
  * - **Async-aware** `onConfirm`. While the returned Promise is in flight,
  *   both buttons disable, the Confirm shows a spinner, and Escape /
  *   click-outside dismissal is blocked.
@@ -155,6 +247,9 @@ export interface ConfirmationPopoverProps {
  *   you provide `open` / `onOpenChange`, you can force-close from outside
  *   while we're pending. Coordinate `pending` in your own code if that
  *   matters.
+ * - ❌ Letting a confirmed delete remove the trigger with no
+ *   `returnFocusRef` — focus drops to `<body>`. Aim the ref at the next
+ *   row's trigger (or the empty state) inside `onConfirm`.
  */
 export function ConfirmationPopover({
   children,
@@ -165,6 +260,7 @@ export function ConfirmationPopover({
   onConfirm,
   onCancel,
   initialFocusRef,
+  returnFocusRef,
   side = 'top',
   align = 'center',
   sideOffset = 10,
@@ -308,6 +404,10 @@ export function ConfirmationPopover({
           </Cluster>
         </Stack>
       </Popover.Content>
+      {/* Last on purpose: Popover.Trigger re-attaches triggerRef (a fresh
+          merged callback ref each render) in the layout phase, in tree
+          order — FocusReturn's layout effect must run after that. */}
+      <FocusReturn returnFocusRef={returnFocusRef} />
     </Popover>
   );
 }

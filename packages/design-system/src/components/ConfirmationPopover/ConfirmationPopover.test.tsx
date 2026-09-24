@@ -378,6 +378,7 @@ describe('pending state reaches assistive tech (#497)', () => {
   });
   afterEach(() => {
     vi.useRealTimers();
+    configure({ asyncWrapper: async (cb) => cb() });
   });
 
   it('announces from a live region, and keeps both buttons focusable', async () => {
@@ -429,5 +430,118 @@ describe('pending state reaches assistive tech (#497)', () => {
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(onConfirm).toHaveBeenCalledTimes(1);
     expect(onCancel).not.toHaveBeenCalled();
+  });
+});
+
+describe('ConfirmationPopover — focus return (#552, #553)', () => {
+  let originalScrollIntoView: typeof Element.prototype.scrollIntoView;
+  beforeEach(() => {
+    originalScrollIntoView = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = vi.fn();
+  });
+  afterEach(() => {
+    Element.prototype.scrollIntoView = originalScrollIntoView;
+  });
+
+  it('Cancel click returns focus to the trigger', async () => {
+    const user = userEvent.setup();
+    render(
+      <ConfirmationPopover title="Delete?" onConfirm={() => {}}>
+        <button>Delete</button>
+      </ConfirmationPopover>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(screen.getByRole('button', { name: 'Delete' })).toHaveFocus();
+  });
+
+  it('Confirm click returns focus to the trigger when it survives', async () => {
+    const user = userEvent.setup();
+    render(
+      <ConfirmationPopover title="Delete?" onConfirm={() => {}}>
+        <button>Delete</button>
+      </ConfirmationPopover>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm' }));
+    expect(screen.getByRole('button', { name: 'Delete' })).toHaveFocus();
+  });
+
+  it('returnFocusRef wins and is scrolled into view; the trigger unmounting does not matter', async () => {
+    const user = userEvent.setup();
+    function Row() {
+      const [present, setPresent] = useState(true);
+      const survivorRef = useRef<HTMLElement | null>(null);
+      return (
+        <>
+          <button ref={survivorRef as RefObject<HTMLButtonElement>}>Add row</button>
+          {present && (
+            <ConfirmationPopover
+              title="Delete?"
+              onConfirm={() => setPresent(false)}
+              returnFocusRef={survivorRef}
+            >
+              <button>Delete</button>
+            </ConfirmationPopover>
+          )}
+        </>
+      );
+    }
+    render(<Row />);
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm' }));
+    await new Promise((r) => setTimeout(r, 0));
+    const survivor = screen.getByRole('button', { name: 'Add row' });
+    expect(survivor).toHaveFocus();
+    expect(survivor.scrollIntoView).toHaveBeenCalledWith({ block: 'nearest' });
+  });
+
+  it('a detached / empty returnFocusRef falls back to the trigger and does not scroll', async () => {
+    const user = userEvent.setup();
+    const ref = { current: document.createElement('button') };
+    render(
+      <ConfirmationPopover title="Delete?" onConfirm={() => {}} returnFocusRef={ref}>
+        <button>Delete</button>
+      </ConfirmationPopover>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    const trigger = screen.getByRole('button', { name: 'Delete' });
+    expect(trigger).toHaveFocus();
+    expect(trigger.scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  it('Escape honours returnFocusRef too', async () => {
+    const user = userEvent.setup();
+    function H() {
+      const r = useRef<HTMLElement | null>(null);
+      return (
+        <>
+          <button ref={r as RefObject<HTMLButtonElement>}>Other</button>
+          <ConfirmationPopover title="Delete?" onConfirm={() => {}} returnFocusRef={r}>
+            <button>Delete</button>
+          </ConfirmationPopover>
+        </>
+      );
+    }
+    render(<H />);
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.keyboard('{Escape}');
+    expect(screen.getByRole('button', { name: 'Other' })).toHaveFocus();
+  });
+
+  it('an outside click onto another focusable element leaves focus there', async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <input aria-label="Elsewhere" />
+        <ConfirmationPopover title="Delete?" onConfirm={() => {}}>
+          <button>Delete</button>
+        </ConfirmationPopover>
+      </>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.click(screen.getByLabelText('Elsewhere'));
+    expect(screen.getByLabelText('Elsewhere')).toHaveFocus();
   });
 });
