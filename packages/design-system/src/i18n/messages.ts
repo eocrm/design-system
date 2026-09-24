@@ -697,6 +697,8 @@ export interface Messages {
     done: string;
     /** Visible progress line on the Tour card. `current` is 1-based. */
     progress: (params: { current: number; total: number }) => string;
+    /** Announced via a live region while a step's target hasn't mounted yet. */
+    waiting: string;
   };
   toast: {
     /** aria-label for an individual toast's dismiss button. */

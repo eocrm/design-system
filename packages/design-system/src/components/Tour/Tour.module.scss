@@ -1,3 +1,4 @@
+@use '../../styles/mixins' as *;
 @use './Tour.tokens';
 
 // Geometry (position / top / left / width / height / translate) of the
@@ -191,4 +192,10 @@
   .spotlight[data-interactive] {
     animation: none;
   }
+}
+
+// Live-region text for the "waiting on the next target" state (Hard rule 10) —
+// same recipe as Switch's .srOnly.
+.srOnly {
+  @include visually-hidden;
 }

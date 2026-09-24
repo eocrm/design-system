@@ -123,7 +123,65 @@ const CARD_OFFSET = 12;
 /** Arrow keys inside these keep their native meaning (caret, option list). */
 const EDITABLE = 'input, textarea, select, [contenteditable]:not([contenteditable="false"])';
 
-/* JSDoc for Tour is written in Task 8. */
+/**
+ * Guided tour: walks the user through `steps`, spotlighting each step's
+ * `data-tour` target and anchoring a card (title, body, "Step n of m",
+ * Skip / Back / Next) to it. Steps without a target — or whose target never
+ * appears — render as a centered card. Every transition animates; all motion
+ * drops under `prefers-reduced-motion`.
+ *
+ * Controlled `open` like `Modal`. Mount it ONCE in the app shell, above the
+ * router outlet, so a tour survives route changes; control `step` and navigate
+ * in `onStepChange` for cross-page tours — the Tour waits for the next target
+ * (`targetTimeout`). Persisting "seen" is yours: use `onFinish(reason)`.
+ *
+ * `modal` (default) dims the page, blocks clicks outside the spotlight and
+ * traps focus; `modal={false}` renders the card alone for announcements.
+ * Keyboard: Escape skips, ←/→ move between steps (not inside inputs).
+ *
+ * @example
+ * // Onboarding, first visit:
+ * <Button data-tour="deals-filter">Filter</Button>
+ * <Tour
+ *   open={open}
+ *   onOpenChange={setOpen}
+ *   onFinish={(reason) => markSeen('deals-onboarding', reason)}
+ *   steps={[
+ *     { title: 'Welcome to Deals', body: 'A 30-second tour.' },
+ *     { target: 'deals-filter', title: 'Filter', body: 'Narrow the pipeline.' },
+ *     { title: 'You're set', body: 'Replay it from Help → Tour.' },
+ *   ]}
+ * />
+ *
+ * @example
+ * // One-step feature announcement — page stays usable:
+ * <Tour open={open} onOpenChange={setOpen} modal={false} doneLabel="Got it"
+ *   steps={[{ target: 'bulk-edit', title: 'New: bulk edit', body: 'Select rows, then edit them together.' }]} />
+ *
+ * @example
+ * // Cross-page: controlled step, navigate first, Tour waits for the target.
+ * <Tour open={open} onOpenChange={setOpen} step={step}
+ *   onStepChange={(i) => { if (i === 3) navigate('/contacts'); setStep(i); }}
+ *   steps={steps} />
+ *
+ * @remarks When NOT to use
+ * - A single contextual hint on hover/focus → `<Tooltip>`.
+ * - An interactive panel the user opens themselves → `<Popover>`.
+ * - A blocking decision → `<Modal>` / `<ConfirmationPopover>`.
+ * - Persistent inline guidance that should stay on the page → `<Alert>` or `EmptyState`.
+ *
+ * @remarks Anti-patterns
+ * - ❌ Targeting by CSS selector or ref — `target` is a `data-tour` VALUE
+ *   (`target: 'bulk-edit'`, not `'#bulk-edit'` or `'[data-tour=…]'`).
+ * - ❌ Mounting `<Tour>` inside a routed page for a cross-page tour — it
+ *   unmounts on navigation. Mount it in the shell.
+ * - ❌ Two elements with the same `data-tour` value on screen — the first
+ *   rendered one wins (dev warning). Keep ids unique per screen.
+ * - ❌ `advanceOn: 'click'` without `interactive: true` in modal mode — the
+ *   target is blocked, so it can never be clicked (ignored + dev warning).
+ * - ❌ 10+ step tours. Keep onboarding to ~5–7 steps; split longer ones per page.
+ * - ❌ Auto-opening on every visit — gate on your own "seen" flag from `onFinish`.
+ */
 export const Tour = forwardRef<HTMLDivElement, TourProps>(function Tour(props, ref) {
   const { open } = props;
   const [present, setPresent] = useState(open);
@@ -197,6 +255,15 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
   const found = status === 'found' ? element : null;
   const waiting = status === 'waiting';
   const centered = !found;
+
+  // One tick behind on purpose — see Switch's busyText for why. Mounting the
+  // region and its text together on the first `waiting` render would be
+  // silent for most screen readers; deferring to an effect makes the word
+  // always arrive as a change (Hard rule 10).
+  const [waitingText, setWaitingText] = useState('');
+  useEffect(() => {
+    setWaitingText(waiting ? t('tour.waiting') : '');
+  }, [waiting, t]);
 
   const finish = (reason: TourFinishReason) => {
     if (closing) return;
@@ -440,6 +507,11 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
           </Cluster>
         </Stack>
       </div>
+      {/* OUTSIDE the dialog div on purpose — same recipe as Switch's srOnly
+          span. Rendered unconditionally so only its text mutates. */}
+      <span role="status" aria-live="polite" className={styles.srOnly}>
+        {waitingText}
+      </span>
     </>,
     document.body,
   );
