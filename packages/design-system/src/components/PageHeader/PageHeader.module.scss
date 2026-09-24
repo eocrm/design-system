@@ -11,14 +11,17 @@
     'subtitle actions'
     'meta actions';
 
-  // minmax(0, 1fr), not 1fr — 1fr alone is minmax(auto, 1fr), which can't
-  // shrink the title column below its content's min-content width.
-  // fit-content(60%), not auto — an `auto` actions track keeps its
-  // max-content width and, in a narrow CONTAINER on a desktop viewport (the
-  // 640px media query never fires), crushes the title to a few px with
-  // mid-word breaks. Capped, the actions wrap instead; a wide header still
-  // sizes them to max-content on one line (#550).
-  grid-template-columns: minmax(0, 1fr) fit-content(60%);
+  // The title column has a floor (--page-header-title-min, capped at the
+  // container width by min()), not 0: with a 0 floor an `auto` actions
+  // track keeps its max-content width in a narrow CONTAINER on a desktop
+  // viewport (the 640px media query never fires) and crushes the title to a
+  // few px with mid-word breaks. With the floor, the actions track gives way
+  // first and its buttons wrap. `auto`, not a percentage cap, so a wide
+  // header keeps all its actions on one line (#550). Known limits: a title
+  // word wider than the floor still breaks mid-word (overflow-wrap below),
+  // and a container under ~300px (with Aside; ~280px without) at a wide
+  // viewport can no longer fit floor + actions, so the actions overflow.
+  grid-template-columns: minmax(min(var(--page-header-title-min), 100%), 1fr) auto;
 
   // Column gap only. Row gap is 0 because Title/Subtitle/Meta have their
   // own line-height which naturally separates them — adding an explicit
@@ -47,10 +50,7 @@
     'aside title actions'
     'aside subtitle actions'
     'aside meta actions';
-
-  // 50%, not 60%: the aside eats into the title's share, so the actions
-  // give up more of theirs (#550).
-  grid-template-columns: auto minmax(0, 1fr) fit-content(50%);
+  grid-template-columns: auto minmax(min(var(--page-header-title-min), 100%), 1fr) auto;
 }
 
 .rootWithBorder {

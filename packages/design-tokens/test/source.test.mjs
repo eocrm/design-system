@@ -275,8 +275,9 @@ test('maps every captured public variable to exactly one web output', async () =
   // +3: --color-bg-hover and --color-bg-muted-hover (#504), --ring-offset (#505).
   // --ring-on-scrim adds one more; forcedDark gains only the two that theme.
   // +2: --transition-slow and --z-tour (non-themed tokens).
-  assert.equal(capturedNames.size, 309);
-  assert.equal(webNames.length, 253);
+  // +1: --measure-2xs (PageHeader title floor, #550; non-themed).
+  assert.equal(capturedNames.size, 310);
+  assert.equal(webNames.length, 254);
   assert.equal(componentNames.size, 56);
   assert.deepEqual(duplicateNames, []);
   assert.deepEqual([...combinedNames].sort(), [...capturedNames].sort());
@@ -371,7 +372,7 @@ test('keeps all twelve deprecated Badge variables as component aliases', async (
 test('preserves the pre-migration web contract fixture with provenance and expanded dark scopes', async () => {
   const fixture = await readJson(fixturePath);
 
-  assert.equal(Object.keys(fixture.light).length, 306);
+  assert.equal(Object.keys(fixture.light).length, 307);
   assert.equal(Object.keys(fixture.forcedDark).length, 119);
   assert.deepEqual(fixture.systemDark, fixture.forcedDark);
   assert.deepEqual(fixture.forcedLight, {});

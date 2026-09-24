@@ -332,15 +332,17 @@ describe('PageHeader — responsive shrink (#550)', () => {
     const scss = readFileSync(resolve(__dirname, 'PageHeader.module.scss'), 'utf8');
     const block = (sel: string) =>
       scss.match(new RegExp(`^${sel.replace('.', '\\.')}\\s*\\{([^}]*)\\}`, 'm'))?.[1] ?? '';
-    // The actions track is capped (fit-content), not `auto`: an `auto` track
-    // keeps max-content in a narrow container on a desktop viewport and
-    // crushes the title (#550).
-    expect(block('.root')).toMatch(
-      /grid-template-columns:\s*minmax\(0,\s*1fr\)\s+fit-content\(60%\)/,
-    );
+    // The title column has a token floor (min()-capped at the container), and
+    // the actions track stays `auto`: an `auto` actions track with a 0 title
+    // floor crushed the title in narrow containers; a percentage cap on the
+    // actions wrapped normal desktop headers (#550).
+    const floor = 'minmax\\(min\\(var\\(--page-header-title-min\\),\\s*100%\\),\\s*1fr\\)';
+    expect(block('.root')).toMatch(new RegExp(`grid-template-columns:\\s*${floor}\\s+auto;`));
     expect(block('.rootWithAside')).toMatch(
-      /grid-template-columns:\s*auto\s+minmax\(0,\s*1fr\)\s+fit-content\(50%\)/,
+      new RegExp(`grid-template-columns:\\s*auto\\s+${floor}\\s+auto;`),
     );
+    const tokens = readFileSync(resolve(__dirname, 'PageHeader.tokens.scss'), 'utf8');
+    expect(tokens).toMatch(/--page-header-title-min:\s*var\(--measure-2xs\);/);
     expect(block('.actions')).toMatch(/flex-wrap:\s*wrap/);
     expect(block('.breadcrumb')).toMatch(/flex-wrap:\s*wrap/);
     expect(block('.breadcrumb')).toMatch(/min-width:\s*0/);

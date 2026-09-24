@@ -2,6 +2,9 @@
 // token defaults to the primitive the SCSS used before this migration.
 :root {
   // Grid + spacing
+  // Floor for the title column in the two-/three-column layout: below it
+  // the actions wrap instead of crushing the title (#550).
+  --page-header-title-min: var(--measure-2xs);
   --page-header-col-gap: var(--space-3);
   --page-header-padding-block-end: var(--space-3);
   --page-header-border-color: var(--color-border);

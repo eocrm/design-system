@@ -305,7 +305,8 @@
     "--z-toast": "1200",
     "--z-tooltip": "1300",
     "--transition-slow": "260ms ease-in-out",
-    "--z-tour": "1150"
+    "--z-tour": "1150",
+    "--measure-2xs": "160px"
   },
   "forcedDark": {
     "--color-accent": "#68a7ff",
