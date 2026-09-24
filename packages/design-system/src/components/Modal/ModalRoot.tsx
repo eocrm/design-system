@@ -30,7 +30,15 @@ export interface ModalProps {
   /** Fired when Modal wants to change open state — Esc, overlay click, Close button, programmatic. */
   onOpenChange: (open: boolean) => void;
 
-  /** Size preset. Defaults to 'md'. */
+  /**
+   * Size preset. Defaults to `'md'`.
+   * - `'sm'` (400px) — confirms and short prompts.
+   * - `'md'` (560px) — the default; typical forms.
+   * - `'lg'` (800px) — wide forms, tables, previews.
+   * - `'full'` (95vw × 90dvh, fixed height) — long documents, e.g. an HTML email.
+   * See {@link ModalSize}.
+   * @default 'md'
+   */
   size?: ModalSize;
 
   /**
@@ -181,6 +189,14 @@ export interface ModalProps {
  *   <Modal.Body>The page behind is blurred instead of dimmed.</Modal.Body>
  * </Modal>
  *
+ * @example
+ * // Near-full-screen reader for a long document — Body scrolls, Header/Footer stay put.
+ * // `renderedEmail` is your own sanitized HTML, not a library component:
+ * <Modal open={open} onOpenChange={setOpen} size="full">
+ *   <Modal.Header>Re: Q3 renewal</Modal.Header>
+ *   <Modal.Body>{renderedEmail}</Modal.Body>
+ * </Modal>
+ *
  * @remarks When NOT to use
  * - For lightweight popovers anchored to a trigger — use `<Popover>` or `<DropdownMenu>`.
  * - For non-blocking notifications — use `<Toast>` (not yet shipped).
@@ -191,6 +207,9 @@ export interface ModalProps {
  *   additional sticky elements inside Body — flexbox + sticky compose badly.
  *   Either use `<Modal.Footer>` for the actions and let Body scroll, or
  *   render outside Modal.
+ * - ❌ `size="full"` for a short form or a confirm — it is a fixed 90dvh tall
+ *   regardless of content, so a two-field form floats in a mostly empty box.
+ *   Use `'md'` / `'lg'`, which size to content.
  * - ❌ Opening a modal from inside another modal without using `<Modal>` itself
  *   (e.g. a custom div with `position: fixed`). Skipping the stack registry
  *   breaks Esc routing and z-index ordering.

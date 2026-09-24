@@ -28,6 +28,11 @@
   --image-error-gap: var(--space-2);
   --image-error-font-size: var(--font-size-sm);
 
+  // Spacer height for a FAILED image with no box of its own (no `size`, no
+  // `aspectRatio`), which otherwise collapses to 0 (#542). One `lg` control
+  // high: room for the 28px error icon, not for the full tile.
+  --image-error-min-height: var(--size-lg);
+
   // Error icon in the fixed-`size` branch, where the icon IS the tile (#538):
   // no text, no Retry, so it has to fit INSIDE a 20/24/32/40px box rather than
   // overflow it the way the fluid tile's 28px icon did at xs and sm. ~60% of

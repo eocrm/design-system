@@ -9,7 +9,7 @@ export function ModalDemo() {
     <DemoLayout
       name="Modal"
       componentName="Modal"
-      description="Focus-locked, scroll-locked dialog with a compound API (Header / Body / Footer / Close). Three size presets, solid + blur overlay variants, fullscreen on mobile. Stacked-modal support: overlay mode (default) keeps the parent visible; replace mode hides it."
+      description="Focus-locked, scroll-locked dialog with a compound API (Header / Body / Footer / Close). Four size presets (incl. a near-full-screen reader), solid + blur overlay variants, fullscreen on mobile. Stacked-modal support: overlay mode (default) keeps the parent visible; replace mode hides it."
       files={getComponentFiles('Modal')}
     >
       <BasicExample />
@@ -71,36 +71,51 @@ export function BasicExample() {
 }
 
 function SizesExample() {
-  const [openSize, setOpenSize] = useState<'sm' | 'md' | 'lg' | null>(null);
+  // Size is kept apart from open so the dialog keeps its size through the close fade.
+  const [open, setOpen] = useState(false);
+  const [size, setSize] = useState<'sm' | 'md' | 'lg' | 'full'>('md');
   return (
     <Example
       title="Sizes"
-      description='`size="sm"` (400px) / `"md"` (560px, default) / `"lg"` (800px). Below 640px viewport width the modal goes fullscreen regardless.'
+      description='`size="sm"` (400px) / `"md"` (560px, default) / `"lg"` (800px) size to their content. `"full"` is a fixed 95vw × 90dvh reader for long documents: the Body scrolls between a pinned Header and Footer. Below 640px viewport width the modal goes fullscreen regardless.'
       code={`import { useState } from 'react';
-import { Button, Cluster, Modal } from '@eocrm/design-system';
+import { Button, Cluster, Modal, Stack } from '@eocrm/design-system';
 
 export function SizesExample() {
-  const [openSize, setOpenSize] = useState<'sm' | 'md' | 'lg' | null>(null);
+  // Size is kept apart from open so the dialog keeps its size through the close fade.
+  const [open, setOpen] = useState(false);
+  const [size, setSize] = useState<'sm' | 'md' | 'lg' | 'full'>('md');
   return (
     <>
       <Cluster gap="sm">
-        <Button variant="secondary" size="sm" onClick={() => setOpenSize('sm')}>
+        <Button variant="secondary" size="sm" onClick={() => { setSize('sm'); setOpen(true); }}>
           Small
         </Button>
-        <Button variant="secondary" size="sm" onClick={() => setOpenSize('md')}>
+        <Button variant="secondary" size="sm" onClick={() => { setSize('md'); setOpen(true); }}>
           Medium
         </Button>
-        <Button variant="secondary" size="sm" onClick={() => setOpenSize('lg')}>
+        <Button variant="secondary" size="sm" onClick={() => { setSize('lg'); setOpen(true); }}>
           Large
+        </Button>
+        <Button variant="secondary" size="sm" onClick={() => { setSize('full'); setOpen(true); }}>
+          Full
         </Button>
       </Cluster>
       <Modal
-        open={openSize !== null}
-        onOpenChange={(next) => !next && setOpenSize(null)}
-        size={openSize ?? 'md'}
+        open={open}
+        onOpenChange={setOpen}
+        size={size}
       >
-        <Modal.Header>Size: {openSize ?? 'md'}</Modal.Header>
-        <Modal.Body>The width is determined by the \`size\` prop.</Modal.Body>
+        <Modal.Header>Size: {size}</Modal.Header>
+        <Modal.Body>
+          <Stack gap="md">
+            <p>The width is determined by the \`size\` prop.</p>
+            {size === 'full' &&
+              Array.from({ length: 40 }, (_, i) => (
+                <p key={i}>Paragraph {i + 1} — long content scrolls inside the Body.</p>
+              ))}
+          </Stack>
+        </Modal.Body>
         <Modal.Footer>
           <Modal.Close>
             <Button>Close</Button>
@@ -112,23 +127,58 @@ export function SizesExample() {
 }`}
     >
       <Cluster gap="sm">
-        <Button variant="secondary" size="sm" onClick={() => setOpenSize('sm')}>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => {
+            setSize('sm');
+            setOpen(true);
+          }}
+        >
           Small
         </Button>
-        <Button variant="secondary" size="sm" onClick={() => setOpenSize('md')}>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => {
+            setSize('md');
+            setOpen(true);
+          }}
+        >
           Medium
         </Button>
-        <Button variant="secondary" size="sm" onClick={() => setOpenSize('lg')}>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => {
+            setSize('lg');
+            setOpen(true);
+          }}
+        >
           Large
         </Button>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={() => {
+            setSize('full');
+            setOpen(true);
+          }}
+        >
+          Full
+        </Button>
       </Cluster>
-      <Modal
-        open={openSize !== null}
-        onOpenChange={(next) => !next && setOpenSize(null)}
-        size={openSize ?? 'md'}
-      >
-        <Modal.Header>Size: {openSize ?? 'md'}</Modal.Header>
-        <Modal.Body>The width is determined by the `size` prop.</Modal.Body>
+      <Modal open={open} onOpenChange={setOpen} size={size}>
+        <Modal.Header>Size: {size}</Modal.Header>
+        <Modal.Body>
+          <Stack gap="md">
+            <p>The width is determined by the `size` prop.</p>
+            {size === 'full' &&
+              Array.from({ length: 40 }, (_, i) => (
+                <p key={i}>Paragraph {i + 1} — long content scrolls inside the Body.</p>
+              ))}
+          </Stack>
+        </Modal.Body>
         <Modal.Footer>
           <Modal.Close>
             <Button>Close</Button>

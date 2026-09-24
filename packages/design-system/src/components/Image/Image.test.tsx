@@ -425,3 +425,23 @@ describe('Image — fixed-size error tile is icon-only (#538)', () => {
     expect(slot.className).not.toMatch(/fallback/);
   });
 });
+
+describe('Image — a fluid tile with no room (#542)', () => {
+  // jsdom has no layout and no container queries, so the icon-only degrade is
+  // checked in a real browser (the playground's "Error in a tight box" demo).
+  // The geometry (Retry inside the wrapper, or absent) is asserted in a real
+  // browser by tests/image-error-tile.spec.ts. What IS assertable here: which
+  // wrapper gets the error-state spacer.
+  it('spaces only an unreserved wrapper — no size, no aspectRatio, no fallback', () => {
+    const { container, rerender } = render(<Image src={SRC} alt="x" />);
+    const wrapper = container.querySelector('span') as HTMLElement;
+    expect(wrapper.className).toMatch(/unreserved/);
+    rerender(<Image src={SRC} alt="x" aspectRatio="16 / 9" />);
+    expect(wrapper.className).not.toMatch(/unreserved/);
+    rerender(<Image src={SRC} alt="x" size="lg" />);
+    expect(wrapper.className).not.toMatch(/unreserved/);
+    // A boxless fallback is in flow and sizes the wrapper itself.
+    rerender(<Image src={SRC} alt="x" fallback={<span>nope</span>} />);
+    expect(wrapper.className).not.toMatch(/unreserved/);
+  });
+});

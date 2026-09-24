@@ -82,8 +82,8 @@ export interface ImageProps extends Omit<
    * Make the image a flush, keyboard-accessible click target — renders the image
    * inside a chromeless `<button>` (no padding/border/background; DS focus ring on
    * `:focus-visible`). Implied when `onClick` is set. Use for a thumbnail that opens
-   * a preview/lightbox. The broken-image error state is non-interactive (its retry
-   * control takes over).
+   * a preview/lightbox. The broken-image error state is non-interactive (the fluid
+   * tile's Retry takes over when its box has room; otherwise there is no control).
    */
   interactive?: boolean;
   /**
@@ -122,8 +122,8 @@ const SIZE_CLASS: Record<ImageSize, string> = {
 /**
  * Displays a remote image with built-in loading and error states. Reserves its
  * box (no layout shift), shows a `Skeleton` while loading, fades in on load, and
- * degrades to a compact, accessible broken-image placeholder (with retry) on
- * failure.
+ * degrades to a compact, accessible broken-image placeholder on failure (with
+ * Retry when the box has room for it).
  *
  * The wrapper fills its container's width — give it an `aspectRatio` (or a
  * height) so the box is reserved before the image arrives — UNLESS you pass
@@ -134,9 +134,14 @@ const SIZE_CLASS: Record<ImageSize, string> = {
  * `<img>` are intrinsic-ratio hints only, not the rendered size.
  *
  * The error tile comes in two forms. A fluid image (no `size`) shows the icon,
- * a message and a **Retry** button — which assumes a container wide and tall
- * enough for an `sm` Button; in a very narrow or unreserved box that button
- * clips the same way (#542), so give a fluid image real room. A fixed-`size` image — `'xs'` / `'sm'` /
+ * a message and a **Retry** button when its box can hold them. In a box too
+ * narrow or too short for that it drops to the icon alone — the message
+ * stays for screen readers, Retry is removed rather than left clipped yet
+ * focusable (#542) — and an unreserved box (no `size`, no `aspectRatio`) is
+ * given an icon's height on error instead of collapsing to zero (a height you
+ * set yourself still wins). So a fluid image is only retryable at roughly
+ * 96×104px or more at the default tokens; a longer custom `image.retry`
+ * label needs a wider box. A fixed-`size` image — `'xs'` / `'sm'` /
  * `'md'` / `'lg'`, i.e. 20 / 24 / 32 / 40px — shows the **icon alone**, scaled
  * to its box, and is **not retryable**: none of those squares can hold the
  * message *and* an `sm` Button, and the button they used to render sat outside
@@ -260,7 +265,17 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
 
   return (
     <span
-      className={clsx(styles.wrapper, RADIUS_CLASS[radius], size && SIZE_CLASS[size], className)}
+      className={clsx(
+        styles.wrapper,
+        RADIUS_CLASS[radius],
+        size && SIZE_CLASS[size],
+        // No box of its own: on error the image goes `display: none` and the
+        // tile is out of flow, so nothing is left to give the wrapper height
+        // (#542). `.unreserved` gives it an icon-high spacer, error state
+        // only. A boxless `fallback` is in flow and sizes the wrapper itself.
+        size === undefined && aspectRatio === undefined && fallback == null && styles.unreserved,
+        className,
+      )}
       style={wrapperStyle}
       data-state={state}
     >
@@ -300,9 +315,9 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
              Not slotted when the wrapper has NEITHER `size` nor
              `aspectRatio`: there the wrapper takes its height FROM this child
              (measured: a 20px-tall fallback gives a 20px-tall wrapper), so
-             pulling it out of flow would collapse the box to zero. That the
-             built-in tile already collapses in that configuration is #542 —
-             a separate defect, and not one to widen here. */
+             pulling it out of flow would collapse the box to zero. (The
+             built-in tile, which IS out of flow, gets `.unreserved`'s spacer
+             for the same reason — #542.) */
           size !== undefined || aspectRatio !== undefined ? (
             <span className={styles.fallback}>{fallback}</span>
           ) : (

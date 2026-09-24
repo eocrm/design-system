@@ -255,6 +255,20 @@ describe('<Modal>', () => {
     expect(screen.getByRole('dialog')).toHaveAttribute('data-size', 'lg');
   });
 
+  it('size="full" applies its class and keeps the focus trap, Esc close and focus restore (#545)', async () => {
+    const user = userEvent.setup();
+    render(<Harness size="full" />);
+    const trigger = screen.getByText('Open');
+    await user.click(trigger);
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveAttribute('data-size', 'full');
+    expect(dialog.className).toMatch(/size-full/);
+    expect(dialog.contains(document.activeElement)).toBe(true);
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(trigger).toHaveFocus();
+  });
+
   it('warns in dev when neither Header nor aria-label is provided', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     render(

@@ -151,6 +151,15 @@
   --modal-width: var(--modal-content-width-lg);
 }
 
+// Fixed height so Header/Footer stay put and Body (flex: 1 1 auto,
+// overflow-y: auto) scrolls. Same 0,1,0 specificity as `.content`, so the
+// mobile rule below (later in source) still takes it to 100dvh.
+.size-full {
+  --modal-width: var(--modal-content-width-full);
+
+  height: var(--modal-content-height-full);
+}
+
 // ─── Header ─────────────────────────────────────────────────────────────
 
 .header {

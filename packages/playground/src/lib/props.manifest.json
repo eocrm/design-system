@@ -2579,7 +2579,7 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Make the image a flush, keyboard-accessible click target — renders the image\ninside a chromeless `<button>` (no padding/border/background; DS focus ring on\n`:focus-visible`). Implied when `onClick` is set. Use for a thumbnail that opens\na preview/lightbox. The broken-image error state is non-interactive (its retry\ncontrol takes over)."
+          "description": "Make the image a flush, keyboard-accessible click target — renders the image\ninside a chromeless `<button>` (no padding/border/background; DS focus ring on\n`:focus-visible`). Implied when `onClick` is set. Use for a thumbnail that opens\na preview/lightbox. The broken-image error state is non-interactive (the fluid\ntile's Retry takes over when its box has room; otherwise there is no control)."
         },
         {
           "name": "onClick",
@@ -3190,8 +3190,8 @@
           "name": "size",
           "type": "ModalSize",
           "required": false,
-          "default": "",
-          "description": "Size preset. Defaults to 'md'."
+          "default": "md",
+          "description": "Size preset. Defaults to `'md'`.\n- `'sm'` (400px) — confirms and short prompts.\n- `'md'` (560px) — the default; typical forms.\n- `'lg'` (800px) — wide forms, tables, previews.\n- `'full'` (95vw × 90dvh, fixed height) — long documents, e.g. an HTML email.\nSee {@link ModalSize}."
         },
         {
           "name": "overlay",
@@ -5454,7 +5454,7 @@
     "TooltipSide": "\"left\" | \"right\" | \"top\" | \"bottom\"",
     "TooltipAlign": "\"start\" | \"end\" | \"center\"",
     "ConfirmationVariant": "\"danger\" | \"default\"",
-    "ModalSize": "\"sm\" | \"md\" | \"lg\"",
+    "ModalSize": "\"sm\" | \"md\" | \"lg\" | \"full\"",
     "ModalOverlayVariant": "\"solid\" | \"blur\"",
     "ModalStackMode": "\"replace\" | \"overlay\"",
     "ScreenFill": "\"viewport\" | \"block\"",
