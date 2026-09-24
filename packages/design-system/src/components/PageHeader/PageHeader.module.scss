@@ -10,7 +10,10 @@
     'title actions'
     'subtitle actions'
     'meta actions';
-  grid-template-columns: 1fr auto;
+
+  // minmax(0, 1fr), not 1fr — 1fr alone is minmax(auto, 1fr), which can't
+  // shrink the title column below its content's min-content width.
+  grid-template-columns: minmax(0, 1fr) auto;
 
   // Column gap only. Row gap is 0 because Title/Subtitle/Meta have their
   // own line-height which naturally separates them — adding an explicit
@@ -39,7 +42,7 @@
     'aside title actions'
     'aside subtitle actions'
     'aside meta actions';
-  grid-template-columns: auto 1fr auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
 }
 
 .rootWithBorder {
@@ -50,6 +53,8 @@
   grid-area: breadcrumb;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
   gap: var(--page-header-breadcrumb-gap);
 
   // Separate the breadcrumb from the title row (grid row-gap is 0).
@@ -59,6 +64,7 @@
 .breadcrumbInner {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   min-width: 0;
 }
 
@@ -107,6 +113,8 @@
 
 .title {
   grid-area: title;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .subtitle {
@@ -114,6 +122,7 @@
   font-size: var(--page-header-subtitle-font-size);
   color: var(--page-header-subtitle-fg);
   line-height: var(--page-header-subtitle-line-height);
+  overflow-wrap: anywhere;
 }
 
 .meta {
@@ -131,10 +140,15 @@
   padding-block-start: var(--page-header-meta-gap-block);
 }
 
+// #550: three actions (e.g. Cancel/Save/Delete) is wider than 320px as a
+// non-wrapping row — wrap so the actions column can shrink with the grid
+// track instead of forcing the header wider than its container.
 .actions {
   grid-area: actions;
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  min-width: 0;
   gap: var(--page-header-actions-gap);
 
   // stylelint-disable-next-line property-disallowed-list -- grid slot needs vertical centering within its cell
@@ -150,7 +164,7 @@
       'subtitle'
       'meta'
       'actions';
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .rootWithAside {
@@ -160,7 +174,7 @@
       'aside subtitle'
       'aside meta'
       'actions actions';
-    grid-template-columns: auto 1fr;
+    grid-template-columns: auto minmax(0, 1fr);
   }
 
   .actions {

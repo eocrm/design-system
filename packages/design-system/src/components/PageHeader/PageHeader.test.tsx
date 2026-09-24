@@ -1,5 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { createRef } from 'react';
 import { PageHeader } from './index';
 
@@ -322,6 +324,21 @@ describe('PageHeader — misc', () => {
     const h1 = screen.getByRole('heading', { level: 1 });
     expect(h1.tagName).toBe('H1');
     expect(h1.textContent).toBe('Findable');
+  });
+});
+
+describe('PageHeader — responsive shrink (#550)', () => {
+  it('can shrink to a 320px container (#550)', () => {
+    const scss = readFileSync(resolve(__dirname, 'PageHeader.module.scss'), 'utf8');
+    const block = (sel: string) =>
+      scss.match(new RegExp(`^${sel.replace('.', '\\.')}\\s*\\{([^}]*)\\}`, 'm'))?.[1] ?? '';
+    expect(block('.root')).toMatch(/grid-template-columns:\s*minmax\(0,\s*1fr\)\s+auto/);
+    expect(block('.rootWithAside')).toMatch(/grid-template-columns:\s*auto\s+minmax\(0,\s*1fr\)\s+auto/);
+    expect(block('.actions')).toMatch(/flex-wrap:\s*wrap/);
+    expect(block('.breadcrumb')).toMatch(/flex-wrap:\s*wrap/);
+    expect(block('.breadcrumb')).toMatch(/min-width:\s*0/);
+    expect(block('.title')).toMatch(/overflow-wrap:\s*anywhere/);
+    expect(scss).toMatch(/grid-template-columns:\s*minmax\(0,\s*1fr\);/); // narrow single column
   });
 });
 
