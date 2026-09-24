@@ -27,6 +27,7 @@ through steps, or wait for a target that has not mounted yet.
 | Routing              | Tour is router-agnostic. Consumer navigates in `onStepChange`; the Tour waits for the next target.       |
 | Persistence ("seen") | Consumer's job. `onFinish(reason)` reports `'completed'` vs `'skipped'`.                                 |
 | Motion               | Every tour action animates (open, step change, scroll, wait, close). `prefers-reduced-motion` → instant. |
+| Strings              | Through `useTranslation()` (`tour.*` keys). Only `doneLabel` is a prop — a contextual label, not i18n.   |
 | Background for SR    | `aria-modal="true"` + focus trap + pointer blockers. **No `inert`** (see Accessibility).                 |
 
 ## API
@@ -70,16 +71,32 @@ export interface TourProps {
   /** Ms to wait for a missing target before falling back to a centered card. Default `5000`. */
   targetTimeout?: number;
   onTargetMissing?: (step: TourStep, index: number) => void;
-  nextLabel?: string; // 'Next'
-  backLabel?: string; // 'Back'
-  skipLabel?: string; // 'Skip tour'
-  doneLabel?: string; // 'Done'
-  /** Default `(c, t) => \`Step ${c} of ${t}\``. `current` is 1-based. */
-  progressLabel?: (current: number, total: number) => string;
+  /**
+   * Contextual label for the last step's button (e.g. `'Got it'` for an
+   * announcement). Defaults to `t('tour.done')`. Empty string counts as unset.
+   * Same precedent as `ConfirmationPopover.confirmLabel`.
+   */
+  doneLabel?: string;
 }
+// TourProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title' | 'children'>;
+// forwardRef + rest spread land on the card (Hard rule 6). Rest is spread
+// FIRST so role / aria-* / tabIndex / data-state always win.
 ```
 
 `step` uses the existing `_internal/useControllableState`.
+
+### Strings (Hard rule 9)
+
+No per-component label props for translation. New `tour` namespace in
+`src/i18n/messages.ts`, populated in `en.ts` and `ru.ts`:
+
+| Key             | en                          | ru                         |
+| --------------- | --------------------------- | -------------------------- |
+| `tour.next`     | `Next`                      | `Далее`                    |
+| `tour.back`     | `Back`                      | `Назад`                    |
+| `tour.skip`     | `Skip tour`                 | `Пропустить`               |
+| `tour.done`     | `Done`                      | `Готово`                   |
+| `tour.progress` | `Step {current} of {total}` | `Шаг {current} из {total}` |
 
 ### Usage
 
@@ -132,16 +149,16 @@ Library `Button`s: `Skip` (ghost, left) · `Back` / `Next` (right).
 
 ## Animation
 
-| Action                       | Motion                                                                                                           |
-| ---------------------------- | ---------------------------------------------------------------------------------------------------------------- |
-| Open                         | Scrim fades in; card fades + scales from its arrow side (`@starting-style`, as Popover).                         |
-| Next / Back                  | Spotlight transitions `top/left/width/height/border-radius` to the new target; card glides; content cross-fades. |
-| Off-screen target            | `scrollIntoView({ block: 'center', behavior: 'smooth' })`; spotlight + card follow via `autoUpdate`.             |
-| To / from a centered step    | Cutout shrinks to / grows from the viewport center.                                                              |
-| Waiting for a target         | Card and cutout fade to a quiet (low-opacity) state; glide in when the target resolves.                          |
-| Interactive step             | Subtle pulsing ring on the cutout.                                                                               |
-| Close (Skip / Done / Escape) | `data-state="closed"` reverse fade; unmount on `transitionend` (with a timeout fallback).                        |
-| `prefers-reduced-motion`     | All transitions `none`; scroll uses `behavior: 'auto'`; no pulse.                                                |
+| Action                       | Motion                                                                                                                             |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Open                         | Scrim fades in; card fades + scales from its arrow side (`@starting-style`, as Popover).                                           |
+| Next / Back                  | Spotlight transitions `top/left/width/height/border-radius` to the new target; card glides; content cross-fades.                   |
+| Off-screen target            | `scrollIntoView({ block: 'center', behavior: 'smooth' })`; spotlight + card follow via `autoUpdate`.                               |
+| To / from a centered step    | Cutout shrinks to / grows from the viewport center.                                                                                |
+| Waiting for a target         | Cutout collapses to the viewport center; card moves to center and fades to low opacity; both glide to the target when it resolves. |
+| Interactive step             | Subtle pulsing ring on the cutout.                                                                                                 |
+| Close (Skip / Done / Escape) | `data-state="closed"` reverse fade; unmount on `transitionend` (with a timeout fallback).                                          |
+| `prefers-reduced-motion`     | All transitions `none`; scroll uses `behavior: 'auto'`; no pulse.                                                                  |
 
 Durations: fades use `--transition-base`; glide/resize/scroll-follow use the new
 `--transition-slow` token (see Tokens).
@@ -165,8 +182,9 @@ update internal state when uncontrolled). The consumer may navigate or open
 disclosure UI; the Tour then resolves or waits.
 
 **advanceOn: 'click'.** A `click` listener on the target (bubble phase,
-registered on the target element) that schedules the advance in a microtask, so
-the target's own handler runs first. Active whenever the target is clickable:
+registered on the target element) that schedules the advance with `setTimeout(0)`,
+so the target's own handler — including React's root-delegated `onClick`, which
+runs after a native listener on the element — has finished first. Active whenever the target is clickable:
 `interactive: true` in modal mode, or any step in `modal={false}` (where the
 target is always clickable). In modal mode without `interactive` it is ignored
 
@@ -185,7 +203,9 @@ warning.
 
 - Card: `role="dialog"`, `aria-modal={modal}`, `aria-labelledby` → title,
   `aria-describedby` → body, `tabIndex={-1}`.
-- Progress text visible: "Step 2 of 5" via `progressLabel`.
+- Progress text visible: "Step 2 of 5" via `t('tour.progress')`.
+- **Waiting state (Hard rule 10):** `aria-busy="true"` on the card while a
+  target is being waited for; removed when it resolves or times out.
 - **Focus on open:** remember `document.activeElement`, focus the card (both modes).
 - **Focus on step change:** focus the card again, so the new title is announced.
 - **Focus trap (modal only):** card + target when `interactive`, order card → target → wrap.
