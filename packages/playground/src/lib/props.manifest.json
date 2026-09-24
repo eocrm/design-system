@@ -3074,7 +3074,7 @@
           "type": "LiveRegionPoliteness",
           "required": false,
           "default": "polite",
-          "description": "How urgently the region interrupts.\n- `'polite'` (default) — `role=\"status\"` + `aria-live=\"polite\"`. Waits\n  for the screen reader to finish its current utterance. Use for routine\n  outcomes: saves, copy confirmations, background updates.\n- `'assertive'` — `role=\"alert\"` + `aria-live=\"assertive\"`. Interrupts\n  immediately. Reserve for errors that need immediate attention."
+          "description": "How urgently the region interrupts.\n- `'polite'` (default) — `role=\"status\"` + `aria-live=\"polite\"`. Waits\n  for the screen reader to finish its current utterance. Use for routine\n  outcomes: saves, copy confirmations, background updates.\n- `'assertive'` — `role=\"alert\"` + `aria-live=\"assertive\"`. Interrupts\n  immediately. Reserve for errors that need immediate attention.\n\nChange politeness in the SAME render as the message\n(`politeness={error ? 'assertive' : 'polite'}` next to `{error ?? status}`):\nthe role only flips while the region is empty, so the old text is never\nannounced at the new urgency. A politeness-only change re-announces the\ncurrent text at the new urgency."
         },
         {
           "name": "announceKey",
@@ -4405,7 +4405,7 @@
           "type": "SettingRowControlWidth",
           "required": false,
           "default": "",
-          "description": "Width of the control only — `trailing` is unaffected and stays on the\nsame line. Default `'auto'` — the control's intrinsic width. Every row\nusing the same step gets the same control width (capped at the column,\nso a narrow container still shrinks it), which is what keeps controls\naligned down a `<SettingRow.List>`."
+          "description": "Width of the control only — `trailing` is not sized by it. Default\n`'auto'` — the control's intrinsic width. Every row using the same step\ngets the same control width (capped at the column, so a narrow container\nstill shrinks it), which is what keeps controls aligned down a\n`<SettingRow.List>`. Intended for controls that stretch to `width: 100%`\n(`Input`, `Select`); a fixed-size control (`Switch`) does not grow — the\nslot just reserves the width.\n\n`trailing` stays on the control's line only while both fit: in a narrow\ncolumn a wide step (`'md'`) plus `trailing` can wrap `trailing` onto a\nsecond line. Use a smaller step if that matters."
         },
         {
           "name": "trailing",
