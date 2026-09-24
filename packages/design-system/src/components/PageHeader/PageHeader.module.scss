@@ -17,7 +17,7 @@
   // title-min, the cap makes them wrap. The cap is a fit-content() LIMIT,
   // not a floor on the title, so a single action item wider than the
   // remaining space still gets its min-content — the title shrinks instead
-  // of the header overflowing. (An `auto` track here crushed the title in a
+  // of the header overflowing (as long as that item itself fits). (An `auto` track here crushed the title in a
   // narrow container on a desktop viewport, where the 640px media query
   // never fires; a hard title floor overflowed the header, #550.)
   grid-template-columns:
@@ -160,6 +160,10 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
+
+  // Wrapped rows end at the right edge like the first one (the narrow
+  // media query below resets this to flex-start).
+  justify-content: flex-end;
   gap: var(--page-header-actions-gap);
 
   // stylelint-disable-next-line property-disallowed-list -- grid slot needs vertical centering within its cell

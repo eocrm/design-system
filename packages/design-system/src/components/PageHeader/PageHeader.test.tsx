@@ -349,6 +349,11 @@ describe('PageHeader — responsive shrink (#550)', () => {
     const tokens = readFileSync(resolve(__dirname, 'PageHeader.tokens.scss'), 'utf8');
     expect(tokens).toMatch(/--page-header-title-min:\s*var\(--measure-2xs\);/);
     expect(block('.actions')).toMatch(/flex-wrap:\s*wrap/);
+    // Wrapped rows stay right-aligned on desktop; the narrow query resets it.
+    expect(block('.actions')).toMatch(/justify-content:\s*flex-end/);
+    expect(scss).toMatch(
+      /@media \(max-width: 640px\)[\s\S]*\.actions\s*\{[^}]*justify-content:\s*flex-start/,
+    );
     expect(block('.breadcrumb')).toMatch(/flex-wrap:\s*wrap/);
     expect(block('.breadcrumb')).toMatch(/min-width:\s*0/);
     expect(block('.title')).toMatch(/overflow-wrap:\s*anywhere/);
