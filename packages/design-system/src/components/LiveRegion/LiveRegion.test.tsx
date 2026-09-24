@@ -1,6 +1,6 @@
-import { createRef } from 'react';
+import { createRef, StrictMode } from 'react';
 import { act, render, screen } from '@testing-library/react';
-import { LiveRegion } from './LiveRegion';
+import { LiveRegion, type LiveRegionProps } from './LiveRegion';
 
 describe('<LiveRegion>', () => {
   beforeEach(() => vi.useFakeTimers());
@@ -24,10 +24,25 @@ describe('<LiveRegion>', () => {
     expect(screen.getByRole('alert')).toHaveAttribute('aria-live', 'assertive');
   });
 
-  it('consumer props cannot override role / aria-live', () => {
-    // @ts-expect-error role is omitted from the props type
-    render(<LiveRegion role="note" aria-live="off">x</LiveRegion>);
+  it('consumer props cannot override role / aria-live / aria-atomic', () => {
+    // @ts-expect-error role / aria-live / aria-atomic are omitted from the props type
+    render(<LiveRegion role="note" aria-live="off" aria-atomic="false">x</LiveRegion>);
     expect(region()).toHaveAttribute('aria-live', 'polite');
+    expect(region()).toHaveAttribute('aria-atomic', 'true');
+  });
+
+  it('hidden is omitted from the props type — it would silence the region', () => {
+    // @ts-expect-error hidden is omitted from the props type
+    render(<LiveRegion hidden>x</LiveRegion>);
+  });
+
+  it('aria-hidden is omitted from the props type — it would silence the region', () => {
+    // JSX does not run excess-property checks against hyphenated attribute
+    // names (so `<LiveRegion aria-hidden="true">` type-checks regardless of
+    // the Omit below) — assert against the props type directly instead.
+    // @ts-expect-error aria-hidden is omitted from the props type
+    const props: LiveRegionProps = { 'aria-hidden': 'true' };
+    void props;
   });
 
   it('a new message clears, then writes', () => {
@@ -55,7 +70,30 @@ describe('<LiveRegion>', () => {
     expect(region()).toHaveTextContent('Saved');
   });
 
-  it('null / empty clears and stays empty', () => {
+  it('a number child compares by value — an identical number does not re-announce', () => {
+    const { rerender } = render(<LiveRegion>{3}</LiveRegion>);
+    flush();
+    rerender(<LiveRegion>{3}</LiveRegion>);
+    expect(region()).toHaveTextContent('3');
+  });
+
+  it('an array of strings/numbers compares by joined value — an identical array does not re-announce', () => {
+    const { rerender } = render(<LiveRegion>{[5, ' files uploaded']}</LiveRegion>);
+    flush();
+    rerender(<LiveRegion>{[5, ' files uploaded']}</LiveRegion>);
+    expect(region()).toHaveTextContent('5 files uploaded');
+  });
+
+  it('a changed array element re-announces (clears, then writes)', () => {
+    const { rerender } = render(<LiveRegion>{[5, ' files uploaded']}</LiveRegion>);
+    flush();
+    rerender(<LiveRegion>{[6, ' files uploaded']}</LiveRegion>);
+    expect(region().textContent).toBe('');
+    flush();
+    expect(region()).toHaveTextContent('6 files uploaded');
+  });
+
+  it('null clears and stays empty', () => {
     const { rerender } = render(<LiveRegion>Saved</LiveRegion>);
     flush();
     rerender(<LiveRegion>{null}</LiveRegion>);
@@ -63,21 +101,44 @@ describe('<LiveRegion>', () => {
     expect(region().textContent).toBe('');
   });
 
-  it('rapid changes write only the latest', () => {
-    const { rerender } = render(<LiveRegion>A</LiveRegion>);
-    rerender(<LiveRegion>B</LiveRegion>);
-    rerender(<LiveRegion>C</LiveRegion>);
+  it('empty string and false behave like null', () => {
+    const { rerender } = render(<LiveRegion>Saved</LiveRegion>);
     flush();
-    expect(region()).toHaveTextContent('C');
+    rerender(<LiveRegion>{''}</LiveRegion>);
+    flush();
+    expect(region().textContent).toBe('');
+    rerender(<LiveRegion>{false}</LiveRegion>);
+    flush();
+    expect(region().textContent).toBe('');
   });
 
-  it('unmounting with a pending write does not throw or warn', () => {
-    const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+  it('rapid changes write only the latest', () => {
+    const { rerender } = render(<LiveRegion>A</LiveRegion>);
+    act(() => vi.advanceTimersByTime(30));
+    rerender(<LiveRegion>B</LiveRegion>);
+    act(() => vi.advanceTimersByTime(30));
+    // A's pending write (scheduled for t=50) must have been cancelled by the
+    // rerender to B (whose own write is scheduled for t=80) — at t=60
+    // neither has fired, so the region is still empty.
+    expect(region().textContent).toBe('');
+    flush();
+    expect(region()).toHaveTextContent('B');
+  });
+
+  it('unmounting clears the pending timer', () => {
     const { unmount } = render(<LiveRegion>Saved</LiveRegion>);
     unmount();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('shows the message after the delay under StrictMode', () => {
+    render(
+      <StrictMode>
+        <LiveRegion>Saved</LiveRegion>
+      </StrictMode>,
+    );
     flush();
-    expect(err).not.toHaveBeenCalled();
-    err.mockRestore();
+    expect(region()).toHaveTextContent('Saved');
   });
 
   it('forwards ref to the region and merges className', () => {

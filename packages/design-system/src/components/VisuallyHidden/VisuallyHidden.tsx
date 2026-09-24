@@ -24,7 +24,7 @@ export interface VisuallyHiddenProps extends HTMLAttributes<HTMLElement> {
  * building block `LiveRegion` renders its announcement text into.
  *
  * @example
- * // Icon-only link suffix
+ * // New-tab suffix
  * <a href={href}>
  *   {label}
  *   <VisuallyHidden> (opens in a new tab)</VisuallyHidden>
@@ -36,14 +36,13 @@ export interface VisuallyHiddenProps extends HTMLAttributes<HTMLElement> {
  *   <VisuallyHidden as="div">
  *     <Title id="site-nav-heading" order={2}>Site navigation</Title>
  *   </VisuallyHidden>
- *   {...}
+ *   <NavLinks />
  * </nav>
  *
  * @example
- * // Used inside LiveRegion (LiveRegion renders one internally — shown for context)
- * <VisuallyHidden role="status" aria-live="polite" aria-atomic="true">
- *   {message}
- * </VisuallyHidden>
+ * // Announcing a message — use LiveRegion, not a hand-rolled live region.
+ * // It renders a VisuallyHidden internally with the role/aria-live wiring.
+ * <LiveRegion>{message}</LiveRegion>
  *
  * @remarks
  * **Anti-patterns:**
