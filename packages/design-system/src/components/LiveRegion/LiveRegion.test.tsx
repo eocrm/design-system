@@ -24,6 +24,25 @@ describe('<LiveRegion>', () => {
     expect(screen.getByRole('alert')).toHaveAttribute('aria-live', 'assertive');
   });
 
+  it('a politeness change flips role / aria-live only while the region is empty', () => {
+    const { rerender } = render(<LiveRegion>Saving…</LiveRegion>);
+    flush();
+    const el = region();
+    // React writes attributes via setAttribute: snapshot the region's text at
+    // the moment each live-region attribute changes.
+    const seen: string[] = [];
+    const orig = el.setAttribute.bind(el);
+    el.setAttribute = (name: string, value: string) => {
+      if (name === 'role' || name === 'aria-live')
+        seen.push(`${name}=${value}:"${el.textContent}"`);
+      orig(name, value);
+    };
+    rerender(<LiveRegion politeness="assertive">Save failed</LiveRegion>);
+    expect(seen).toEqual(['role=alert:""', 'aria-live=assertive:""']);
+    flush();
+    expect(screen.getByRole('alert')).toHaveTextContent('Save failed');
+  });
+
   it('consumer props cannot override role / aria-live / aria-atomic', () => {
     // Built as a separate object (rather than inline JSX attributes) so the
     // `@ts-expect-error` directive stays pinned to this one-line statement —

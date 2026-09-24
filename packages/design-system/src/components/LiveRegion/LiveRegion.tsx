@@ -24,6 +24,11 @@ export interface LiveRegionProps extends Omit<
    *   outcomes: saves, copy confirmations, background updates.
    * - `'assertive'` — `role="alert"` + `aria-live="assertive"`. Interrupts
    *   immediately. Reserve for errors that need immediate attention.
+   *
+   * Safe to switch together with the message
+   * (`politeness={error ? 'assertive' : 'polite'}`): the role only flips while
+   * the region is empty, so the old text is never announced at the new
+   * urgency. A politeness change on its own re-announces the current message.
    * @default 'polite'
    */
   politeness?: LiveRegionPoliteness;
@@ -86,8 +91,12 @@ function toMessage(children: ReactNode): ReactNode {
  * - ❌ Announcing text that is already visible and focused — the user hears
  *   it twice, once from the region and once from the focused element.
  * - ❌ Mounting it conditionally (`{msg && <LiveRegion>…}`) — keep it always
- *   mounted and pass an empty message instead. It still announces on mount,
- *   but a region that mounts and unmounts per message is unnecessary churn.
+ *   mounted and pass an empty message instead. A region inserted into the
+ *   page together with its message won't announce reliably: some screen
+ *   readers only watch live regions that already existed.
+ * - ❌ Changing the message faster than every ~50ms — each change restarts
+ *   the clear-then-write delay, so only the last message of a rapid burst
+ *   is announced (the ones before it are never written).
  * - ❌ Using it for a library component's own transient state — components
  *   own their own regions (Hard rule 10); `LiveRegion` is for consumer-level
  *   outcomes, not internal component state.
@@ -106,6 +115,11 @@ export const LiveRegion = forwardRef<HTMLSpanElement, LiveRegionProps>(function 
   ref,
 ) {
   const [shown, setShown] = useState<ReactNode>(null);
+  // The politeness actually on the DOM. It only changes in the same state
+  // update that empties the region, so role / aria-live never flip on a region
+  // still holding the OLD text (`politeness={error ? 'assertive' : 'polite'}`
+  // would otherwise re-announce the stale message as an alert).
+  const [applied, setApplied] = useState<LiveRegionPoliteness>(politeness);
   const message = toMessage(children);
 
   useEffect(() => {
@@ -116,9 +130,10 @@ export const LiveRegion = forwardRef<HTMLSpanElement, LiveRegionProps>(function 
     // ref written during render, so a discarded/re-run render (StrictMode,
     // concurrent features) can never write stale content.
     setShown(null);
+    setApplied(politeness);
     const id = setTimeout(() => setShown(message), ANNOUNCE_DELAY_MS);
     return () => clearTimeout(id);
-  }, [message, announceKey]);
+  }, [message, announceKey, politeness]);
 
   // {...props} first so role / aria-live / aria-atomic always win (Pattern
   // B) — including against `hidden` / `aria-hidden` arriving through an
@@ -129,8 +144,8 @@ export const LiveRegion = forwardRef<HTMLSpanElement, LiveRegionProps>(function 
     <VisuallyHidden
       {...props}
       ref={ref}
-      role={politeness === 'assertive' ? 'alert' : 'status'}
-      aria-live={politeness}
+      role={applied === 'assertive' ? 'alert' : 'status'}
+      aria-live={applied}
       aria-atomic="true"
       hidden={undefined}
       aria-hidden={undefined}
