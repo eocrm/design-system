@@ -21,11 +21,17 @@ export interface SettingRowProps extends Omit<HTMLAttributes<HTMLDivElement>, 'c
   /** Helper text under the label, in the label column. Linked via `aria-describedby`. */
   description?: ReactNode;
   /**
-   * Width of the control only — `trailing` is unaffected and stays on the
-   * same line. Default `'auto'` — the control's intrinsic width. Every row
-   * using the same step gets the same control width (capped at the column,
-   * so a narrow container still shrinks it), which is what keeps controls
-   * aligned down a `<SettingRow.List>`.
+   * Width of the control only — `trailing` is not sized by it. Default
+   * `'auto'` — the control's intrinsic width. Every row using the same step
+   * gets the same control width (capped at the column, so a narrow container
+   * still shrinks it), which is what keeps controls aligned down a
+   * `<SettingRow.List>`. Intended for controls that stretch to `width: 100%`
+   * (`Input`, `Select`); a fixed-size control (`Switch`) does not grow — the
+   * slot just reserves the width.
+   *
+   * `trailing` stays on the control's line only while both fit: in a narrow
+   * column a wide step (`'md'`) plus `trailing` can wrap `trailing` onto a
+   * second line. Use a smaller step if that matters.
    */
   controlWidth?: SettingRowControlWidth;
   /**
