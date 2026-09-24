@@ -239,9 +239,20 @@ export function Lightbox({
     return () => document.removeEventListener('keydown', onKeyDown, true);
   }, [open, isTop, n, close, goNext, goPrev]);
 
-  // Move focus into the overlay on open.
+  // Move focus into the overlay on open. Gated to the OPEN transition only
+  // (like Modal/Drawer, #551): isTop also flips false -> true when a nested
+  // overlay (e.g. a Modal opened above the Lightbox) closes, and re-running
+  // unconditionally here would steal focus back from wherever that overlay
+  // restored it.
+  const initialFocusPendingRef = useRef(true);
   useLayoutEffect(() => {
-    if (open && isTop) dialogRef.current?.focus();
+    if (!open) {
+      initialFocusPendingRef.current = true;
+      return;
+    }
+    if (!isTop || !initialFocusPendingRef.current) return;
+    initialFocusPendingRef.current = false;
+    dialogRef.current?.focus();
   }, [open, isTop]);
 
   // Keep the active thumbnail in view (guarded — jsdom has no scrollIntoView).
