@@ -13,7 +13,12 @@
 
   // minmax(0, 1fr), not 1fr — 1fr alone is minmax(auto, 1fr), which can't
   // shrink the title column below its content's min-content width.
-  grid-template-columns: minmax(0, 1fr) auto;
+  // fit-content(60%), not auto — an `auto` actions track keeps its
+  // max-content width and, in a narrow CONTAINER on a desktop viewport (the
+  // 640px media query never fires), crushes the title to a few px with
+  // mid-word breaks. Capped, the actions wrap instead; a wide header still
+  // sizes them to max-content on one line (#550).
+  grid-template-columns: minmax(0, 1fr) fit-content(60%);
 
   // Column gap only. Row gap is 0 because Title/Subtitle/Meta have their
   // own line-height which naturally separates them — adding an explicit
@@ -42,7 +47,10 @@
     'aside title actions'
     'aside subtitle actions'
     'aside meta actions';
-  grid-template-columns: auto minmax(0, 1fr) auto;
+
+  // 50%, not 60%: the aside eats into the title's share, so the actions
+  // give up more of theirs (#550).
+  grid-template-columns: auto minmax(0, 1fr) fit-content(50%);
 }
 
 .rootWithBorder {

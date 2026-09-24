@@ -1891,7 +1891,7 @@ import { Divider } from '@eocrm/design-system';
 - **`<PageHeader.Meta>`** is a flex row that wraps — good for badges + timestamps.
 - **`<PageHeader.Actions>`** is a flex row, right-aligned by default. On viewports < 640px, Actions wraps below the title block.
 - **NOT a `<header>` landmark.** PageHeader renders a `<div>` to avoid conflicting with the AppShell's app-level `<header role="banner">`.
-- **Shrinks to narrow containers (down to ~320px)** — `<PageHeader.Actions>` and `<PageHeader.Breadcrumb>` wrap and the title/subtitle columns shrink below their content width, so you don't need your own overflow workarounds around it.
+- **Shrinks to narrow containers (down to ~320px) without overflowing.** On viewports ≥ 640px the actions column is capped at 60% of the header's width (50% with an `<Aside>`); when the buttons don't fit in that, they wrap onto extra lines and the title keeps the rest. `<PageHeader.Breadcrumb>` wraps too. A wide header is unaffected — actions stay on one line to the right. At ~330px containers the title column is ~110–120px, so a long single word in the title can still break mid-word (`overflow-wrap: anywhere`) rather than overflow. You don't need your own overflow workarounds around it.
 
 #### Hard rule
 
