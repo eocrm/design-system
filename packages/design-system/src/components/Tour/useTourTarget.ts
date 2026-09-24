@@ -84,8 +84,21 @@ export function useTourTarget(
 
     check();
     // `class` / `style` / `hidden` catch targets revealed by an accordion or
-    // tab switch. querySelectorAll('[data-tour]') per mutation is cheap.
-    const observer = new MutationObserver(check);
+    // tab switch. querySelectorAll('[data-tour]') per mutation is cheap —
+    // except the Tour's own card/spotlight/blockers write inline styles every
+    // frame (positioning, glide) inside [data-tour-portal-root], which would
+    // otherwise re-run resolution on every animation tick. Skip a batch
+    // whose every record's target sits inside the tour's own portal; a
+    // batch with even one record outside it still runs check().
+    const observer = new MutationObserver((records) => {
+      const allInTourPortal = records.every((r) => {
+        const node = r.target;
+        const el = node.nodeType === Node.TEXT_NODE ? node.parentElement : (node as Element);
+        return el?.closest?.('[data-tour-portal-root]');
+      });
+      if (allInTourPortal) return;
+      check();
+    });
     observer.observe(document.body, {
       childList: true,
       subtree: true,

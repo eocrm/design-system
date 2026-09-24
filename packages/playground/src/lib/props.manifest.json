@@ -5423,7 +5423,7 @@
           "type": "((reason: TourFinishReason) => void)",
           "required": false,
           "default": "",
-          "description": "Called once per close with why it ended. Use it to persist \"seen\" state."
+          "description": "Fires once per Skip / Escape / Done. NOT called when the consumer closes\nthe tour itself by setting `open={false}` — only the tour's own end\ngestures fire it. Use it to persist \"seen\" state."
         },
         {
           "name": "step",

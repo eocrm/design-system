@@ -2804,6 +2804,11 @@ const [show, setShow] = useState(true);
 - ❌ Mounting a cross-page `<Tour>` inside a routed page — it unmounts on navigation.
 - ❌ `advanceOn: 'click'` without `interactive: true` in modal mode — the target is blocked.
 - ❌ Auto-opening every visit — gate on your own seen flag.
+- ❌ An `interactive: true` modal step whose target opens a `Modal`/`Drawer` — it
+  renders beneath the tour's scrim. End the step first (`advanceOn: 'click'`,
+  point the next step into the opened Modal/Drawer) or use `modal={false}`.
+  Library floating surfaces (menus, popovers, selects) opened from an
+  interactive target elevate above the tour automatically.
 
 ### `<Modal>` — focus-locked dialog
 

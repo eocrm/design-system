@@ -107,6 +107,27 @@ describe('useTourTarget', () => {
     await waitFor(() => expect(result.current.element).toBe(second));
   });
 
+  it("ignores a mutation batch that is entirely inside the Tour's own portal root", async () => {
+    // The Tour's card/spotlight/blockers write inline styles every frame
+    // (positioning, glide) inside [data-tour-portal-root]. Those writes must
+    // not re-run target resolution — only mutations OUTSIDE the tour's own
+    // portal should.
+    add('ignore-me');
+    const portalRoot = document.createElement('div');
+    portalRoot.setAttribute('data-tour-portal-root', '');
+    const inner = document.createElement('div');
+    portalRoot.appendChild(inner);
+    document.body.appendChild(portalRoot);
+
+    renderHook(() => useTourTarget('ignore-me', 1000, () => {}));
+    const spy = vi.spyOn(document, 'querySelectorAll');
+    act(() => {
+      inner.style.opacity = '0.5';
+    });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(spy).not.toHaveBeenCalled();
+  });
+
   it('resets when the target id changes', () => {
     add('one');
     const two = add('two');

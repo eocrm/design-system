@@ -14,22 +14,38 @@ import { useLayoutEffect, useState, type RefObject } from 'react';
 // Also the in-place maximized FlowCanvas ([data-flowcanvas-maximized]), so a
 // consumer DropdownMenu/Select/Popover opened from its controls elevates above
 // the fixed maximized surface instead of rendering behind it.
+// Also Tour's portal ([data-tour-portal-root]): a Select/Popover/DropdownMenu/
+// DatePicker opened from inside a Tour step's card body must elevate above
+// the tour (--z-tour) instead of rendering behind it.
+// Also [data-tour-active-target]: an interactive modal-tour step marks its
+// `found` target element with this attribute directly (see Tour.tsx), not a
+// wrapper around it — so unlike `data-in-overlay`, which must never sit on
+// the reference element itself (a marked reference would self-match via
+// closest() on the next recompute), this one is deliberately placed ON the
+// reference. `closest()` including the start node is exactly what's wanted:
+// the interactive target may BE a floating-surface trigger (e.g. a
+// DropdownMenu trigger button carrying `data-tour`) or contain one, and
+// either way its floating surface must elevate above the tour it was opened
+// from.
 const OVERLAY_PORTAL_SELECTOR =
-  '[data-drawer-portal-root], [data-modal-portal-root], [data-lightbox-portal-root], [data-flowcanvas-maximized], [data-popover-content], [data-dropdown-menu-content], [data-in-overlay]';
+  '[data-drawer-portal-root], [data-modal-portal-root], [data-lightbox-portal-root], [data-flowcanvas-maximized], [data-popover-content], [data-dropdown-menu-content], [data-in-overlay], [data-tour-portal-root], [data-tour-active-target]';
 
 /**
  * True when `referenceRef`'s element is rendered inside an overlay host — a
- * `Modal`/`Drawer`/`Lightbox` overlay portal, a `Popover.Content` / `DropdownMenu`
- * content panel, or ANY already-elevated surface carrying `[data-in-overlay]`
+ * `Modal`/`Drawer`/`Lightbox`/`Tour` portal, a `Popover.Content` / `DropdownMenu`
+ * content panel, an interactive `Tour` step's target (`[data-tour-active-target]`),
+ * or ANY already-elevated surface carrying `[data-in-overlay]`
  * (transitive elevation). Floating surfaces (`Select` / `Popover` /
  * `DropdownMenu` / `DatePicker` / `DateRangePicker` / `TimeField` / the
  * `Rail.Group` collapsed-mode flyout) use this
  * to elevate their portaled content above the host — their default z-index
- * sits below `--z-modal` (and at/below an open Popover), so without
- * elevation they render behind it. Covers a kebab `DropdownMenu`, nested
- * `Popover`, or `ConfirmationPopover` opened from inside a Popover panel —
- * and, via the transitive marker, the embedded `TimeField` clock inside an
- * elevated `DatePicker` calendar (#272).
+ * sits below `--z-modal` (and at/below an open Popover, and below `--z-tour`),
+ * so without elevation they render behind it. Covers a kebab `DropdownMenu`,
+ * nested `Popover`, or `ConfirmationPopover` opened from inside a Popover
+ * panel; a floating surface opened from inside a `Tour` step's card body
+ * (`[data-tour-portal-root]`) or from an interactive modal-tour step's target
+ * (`[data-tour-active-target]`); and, via the transitive marker, the embedded
+ * `TimeField` clock inside an elevated `DatePicker` calendar (#272).
  *
  * Consumers MUST place `data-in-overlay` on the portaled FLOATING element,
  * never on the reference element itself — `closest()` includes the start

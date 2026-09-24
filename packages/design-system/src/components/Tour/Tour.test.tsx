@@ -327,6 +327,124 @@ describe('Tour — portal isolation', () => {
   });
 });
 
+describe('Tour — overlay elevation', () => {
+  it('a Popover opened inside a step body elevates (data-in-overlay) above the tour', async () => {
+    const user = userEvent.setup();
+    render(
+      <Tour
+        steps={[
+          {
+            title: 'Nested',
+            body: (
+              <Popover>
+                <Popover.Trigger>
+                  <button type="button">More</button>
+                </Popover.Trigger>
+                <Popover.Content>inner</Popover.Content>
+              </Popover>
+            ),
+          },
+        ]}
+        open
+        onOpenChange={() => {}}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: 'More' }));
+    expect(document.querySelector('[data-popover-content]')).toHaveAttribute('data-in-overlay', '');
+  });
+
+  describe('interactive-target marker', () => {
+    function addTarget(id = 'it') {
+      const el = document.createElement('button');
+      el.dataset.tour = id;
+      el.textContent = id;
+      document.body.appendChild(el);
+      return el;
+    }
+    afterEach(() => {
+      cleanup();
+      document.querySelectorAll('[data-tour]').forEach((el) => el.remove());
+    });
+
+    it('marks the target while an interactive modal step is active, and unmarks after advancing', async () => {
+      const user = userEvent.setup();
+      const el = addTarget();
+      render(
+        <Tour
+          steps={[{ target: 'it', title: 'Try it', interactive: true }, { title: 'B' }]}
+          open
+          onOpenChange={() => {}}
+        />,
+      );
+      await waitFor(() => expect(el).toHaveAttribute('data-tour-active-target', ''));
+      await user.click(screen.getByRole('button', { name: 'Next' }));
+      await waitFor(() => expect(el).not.toHaveAttribute('data-tour-active-target'));
+    });
+
+    it('unmarks the target when the tour closes', async () => {
+      const user = userEvent.setup();
+      const el = addTarget();
+      render(<Harness steps={[{ target: 'it', title: 'Try it', interactive: true }]} />);
+      await waitFor(() => expect(el).toHaveAttribute('data-tour-active-target', ''));
+      await user.keyboard('{Escape}');
+      await waitFor(() => expect(el).not.toHaveAttribute('data-tour-active-target'));
+    });
+
+    it('does not mark the target on a non-interactive step', async () => {
+      const el = addTarget();
+      render(<Tour steps={[{ target: 'it', title: 'Look' }]} open onOpenChange={() => {}} />);
+      await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument());
+      expect(el).not.toHaveAttribute('data-tour-active-target');
+    });
+
+    it('does not mark the target with modal={false}', async () => {
+      const el = addTarget();
+      render(
+        <Tour
+          steps={[{ target: 'it', title: 'Look', interactive: true }]}
+          open
+          modal={false}
+          onOpenChange={() => {}}
+        />,
+      );
+      await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument());
+      expect(el).not.toHaveAttribute('data-tour-active-target');
+    });
+
+    it('elevates a Popover whose Trigger button IS the interactive target', async () => {
+      const user = userEvent.setup();
+      render(
+        <>
+          <Popover>
+            <Popover.Trigger>
+              <button type="button" data-tour="trigger-target">
+                More
+              </button>
+            </Popover.Trigger>
+            <Popover.Content>inner</Popover.Content>
+          </Popover>
+          <Tour
+            steps={[{ target: 'trigger-target', title: 'Click it', interactive: true }]}
+            open
+            onOpenChange={() => {}}
+          />
+        </>,
+      );
+      await waitFor(() =>
+        expect(screen.getByRole('button', { name: 'More' })).toHaveAttribute(
+          'data-tour-active-target',
+          '',
+        ),
+      );
+      await user.click(screen.getByRole('button', { name: 'More' }));
+      expect(document.querySelector('[data-popover-content]')).toHaveAttribute(
+        'data-in-overlay',
+        '',
+      );
+    });
+  });
+});
+
 describe('Tour — advanceOn', () => {
   const STEPS2: TourStep[] = [
     { target: 'go', title: 'Click it', interactive: true, advanceOn: 'click' },
@@ -531,6 +649,43 @@ describe('Tour — keyboard', () => {
     await waitFor(() => expect(screen.getByRole('dialog')).toHaveFocus());
     await user.keyboard('x');
     expect(onKeyDown).toHaveBeenCalled();
+  });
+
+  it('modal={false}: Escape with focus outside the card (page stays usable) does not skip the tour', async () => {
+    const user = userEvent.setup();
+    const onFinish = vi.fn();
+    render(
+      <>
+        <input aria-label="page field" />
+        <Harness modal={false} onFinish={onFinish} />
+      </>,
+    );
+    await user.click(screen.getByRole('textbox', { name: 'page field' }));
+    await user.keyboard('{Escape}');
+    expect(onFinish).not.toHaveBeenCalled();
+  });
+
+  it('modal={false}: Escape with focus inside the card still skips the tour', async () => {
+    const user = userEvent.setup();
+    const onFinish = vi.fn();
+    render(<Harness modal={false} onFinish={onFinish} />);
+    await waitFor(() => expect(screen.getByRole('dialog')).toHaveFocus());
+    await user.keyboard('{Escape}');
+    expect(onFinish).toHaveBeenCalledWith('skipped');
+  });
+
+  it('modal (default): Escape skips regardless of focus location', async () => {
+    const user = userEvent.setup();
+    const onFinish = vi.fn();
+    render(
+      <>
+        <input aria-label="page field" />
+        <Harness onFinish={onFinish} />
+      </>,
+    );
+    await user.click(screen.getByRole('textbox', { name: 'page field' }));
+    await user.keyboard('{Escape}');
+    expect(onFinish).toHaveBeenCalledWith('skipped');
   });
 
   it('Escape closes a Popover opened inside the card first, not the tour', async () => {

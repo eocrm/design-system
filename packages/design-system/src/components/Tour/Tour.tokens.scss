@@ -1,6 +1,11 @@
 // Tour.tokens.scss — Component-scoped tokens for <Tour>. Each defaults to a
-// shared token; the two raw values are viewport/animation specifics with no
-// cross-platform counterpart (same reasoning as --modal-content-width-full).
+// shared token, except two raw values with no shared-token equivalent —
+// each is Tour-local geometry/motion, not a reusable spacing/duration:
+// --tour-scrim-spread (200vmax) is the cutout's box-shadow spread, sized to
+// cover the viewport from any cutout position — inherently viewport-relative,
+// not a --space-* token. --tour-pulse-duration (1600ms) is the interactive-
+// step pulse ring's animation length — Tour-specific motion, not one of the
+// shared --transition-* durations (same reasoning as --modal-content-width-full).
 :root {
   --tour-z: var(--z-tour);
 
@@ -11,7 +16,7 @@
   --tour-opacity-visible: var(--opacity-visible);
 
   // Card opacity while a cross-page target is being waited for.
-  --tour-waiting-opacity: 0.6;
+  --tour-waiting-opacity: var(--opacity-subtle);
 
   // Scrim + spotlight
   --tour-scrim: var(--color-bg-overlay);
@@ -40,6 +45,7 @@
   --tour-title-size: var(--font-size-md);
   --tour-title-weight: var(--font-weight-semibold);
   --tour-body-size: var(--font-size-sm);
+  --tour-progress-size: var(--font-size-xs);
 
   // Arrow
   --tour-arrow-size: var(--space-3);

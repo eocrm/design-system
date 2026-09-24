@@ -83,7 +83,11 @@ export interface TourProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title' 
   open: boolean;
   /** Called with `false` on Skip, Escape and Done. */
   onOpenChange: (open: boolean) => void;
-  /** Called once per close with why it ended. Use it to persist "seen" state. */
+  /**
+   * Fires once per Skip / Escape / Done. NOT called when the consumer closes
+   * the tour itself by setting `open={false}` — only the tour's own end
+   * gestures fire it. Use it to persist "seen" state.
+   */
   onFinish?: (reason: TourFinishReason) => void;
   /**
    * Controlled step index. Control it when a step change must do something
@@ -183,6 +187,13 @@ const EDITABLE = 'input, textarea, select, [contenteditable]:not([contenteditabl
  *   target is blocked, so it can never be clicked (ignored + dev warning).
  * - ❌ 10+ step tours. Keep onboarding to ~5–7 steps; split longer ones per page.
  * - ❌ Auto-opening on every visit — gate on your own "seen" flag from `onFinish`.
+ * - ❌ An `interactive: true` step in modal mode whose target opens a
+ *   `Modal`/`Drawer` — it renders BENEATH the tour's scrim (`Modal`/`Drawer`
+ *   aren't floating surfaces the tour elevates). End the step first
+ *   (`advanceOn: 'click'`, then point the next step into the opened
+ *   `Modal`/`Drawer`) or use `modal={false}`. Library floating surfaces
+ *   (`DropdownMenu`, `Popover`, `Select`, …) opened from an interactive
+ *   target elevate above the tour automatically — no workaround needed there.
  */
 export const Tour = forwardRef<HTMLDivElement, TourProps>(function Tour(props, ref) {
   const { open } = props;
@@ -325,13 +336,19 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
     if (closing || !current) return;
     const onDocKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || !overlayStack.isTopFloating(floatingId)) return;
+      // modal={false} leaves the rest of the page usable, so Escape typed
+      // into an unrelated page control (a filter input, a form field) must
+      // not skip the tour out from under the user — only Escape while focus
+      // is actually in the card counts. Modal mode is unaffected: the page
+      // is blocked behind the scrim, so Escape always means "skip".
+      if (!modal && !cardRef.current?.contains(document.activeElement)) return;
       e.preventDefault();
       overlayStack.consumeEscape(e);
       finishRef.current('skipped');
     };
     document.addEventListener('keydown', onDocKeyDown, true);
     return () => document.removeEventListener('keydown', onDocKeyDown, true);
-  }, [closing, floatingId, !!current]);
+  }, [closing, floatingId, !!current, modal]);
 
   // ---- Positioning ----
   const side = current?.side ?? 'bottom';
@@ -409,6 +426,20 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
     found.addEventListener('click', onClick);
     return () => found.removeEventListener('click', onClick);
   }, [advanceOn, interactive, found, modal]);
+
+  // ---- Interactive-target elevation ----
+  // An interactive modal step's target stays clickable through the spotlight
+  // (see useFocusTrap above) — including opening its OWN floating surface
+  // (a DropdownMenu/Select/Popover trigger that is, or contains, the target).
+  // Mark it so useInOverlay's [data-tour-active-target] host elevates that
+  // surface above the tour instead of rendering it behind the card/scrim.
+  // Gated on !closing: once the tour starts closing the target is no longer
+  // being featured (mirrors the focus trap's own `!closing` gate).
+  useEffect(() => {
+    if (!(modal && interactive && found) || closing) return;
+    found.setAttribute('data-tour-active-target', '');
+    return () => found.removeAttribute('data-tour-active-target');
+  }, [modal, interactive, found, closing]);
 
   // ---- Exit: unmount after the fade ----
   useEffect(() => {
