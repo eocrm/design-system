@@ -160,8 +160,10 @@ const EDITABLE = 'input, textarea, select, [contenteditable]:not([contenteditabl
  *
  * @example
  * // Cross-page: controlled step, navigate first, Tour waits for the target.
+ * // Symmetric on i, not a one-shot `i === 3` — Back past step 3 must
+ * // navigate away from /contacts too, or the Tour waits on the wrong page.
  * <Tour open={open} onOpenChange={setOpen} step={step}
- *   onStepChange={(i) => { if (i === 3) navigate('/contacts'); setStep(i); }}
+ *   onStepChange={(i) => { navigate(i >= 3 ? '/contacts' : '/deals'); setStep(i); }}
  *   steps={steps} />
  *
  * @remarks When NOT to use
@@ -265,8 +267,14 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
     setWaitingText(waiting && !closing ? t('tour.waiting') : '');
   }, [waiting, closing, t]);
 
+  // Guards against a consumer whose onOpenChange ignores `false` (so `closing`
+  // never flips true) — Skip then Escape must still fire onFinish only once.
+  // Reset per session: finishedRef is fresh on every TourSession mount
+  // (key={session} in Tour).
+  const finishedRef = useRef(false);
   const finish = (reason: TourFinishReason) => {
-    if (closing) return;
+    if (closing || finishedRef.current) return;
+    finishedRef.current = true;
     onOpenChange(false);
     onFinish?.(reason);
   };
@@ -309,9 +317,12 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
   // ---- Escape = skip ----
   // Registered as a floating surface so a host Modal yields (#274), and gated
   // on isTopFloating so a Select/Popover opened in the card closes first (#280).
-  const floatingId = useFloatingSurface(!closing);
+  // Gated on `current` too: an empty/out-of-range step renders nothing (see
+  // the early return below), so it must not register as a floating surface
+  // or handle Escape.
+  const floatingId = useFloatingSurface(!closing && !!current);
   useEffect(() => {
-    if (closing) return;
+    if (closing || !current) return;
     const onDocKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || !overlayStack.isTopFloating(floatingId)) return;
       e.preventDefault();
@@ -320,7 +331,7 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
     };
     document.addEventListener('keydown', onDocKeyDown, true);
     return () => document.removeEventListener('keydown', onDocKeyDown, true);
-  }, [closing, floatingId]);
+  }, [closing, floatingId, !!current]);
 
   // ---- Positioning ----
   const side = current?.side ?? 'bottom';
@@ -372,9 +383,16 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
   }, [found]);
 
   // ---- advanceOn: 'click' ----
+  // Deps are the two primitives this effect actually reads, not the whole
+  // `current` object — a consumer passing `steps` as an inline array literal
+  // gives `current` a new identity every render even when its content is
+  // unchanged, which would re-attach the click listener on every unrelated
+  // re-render.
+  const advanceOn = current?.advanceOn;
+  const interactive = current?.interactive;
   useEffect(() => {
-    if (current?.advanceOn !== 'click') return;
-    if (modal && !current.interactive) {
+    if (advanceOn !== 'click') return;
+    if (modal && !interactive) {
       if (process.env.NODE_ENV !== 'production') {
         console.warn('[Tour] advanceOn="click" needs interactive: true in modal mode — ignored.');
       }
@@ -390,7 +408,7 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
     };
     found.addEventListener('click', onClick);
     return () => found.removeEventListener('click', onClick);
-  }, [current, found, modal]);
+  }, [advanceOn, interactive, found, modal]);
 
   // ---- Exit: unmount after the fade ----
   useEffect(() => {
@@ -417,10 +435,19 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
     else if (!isLast) setIndex(index + 1);
   };
 
-  if (!current) {
+  // Dev-only: an empty `steps` array or an out-of-range `step`/`defaultStep`.
+  // In an effect (not inline during render) so it fires once per bad
+  // index/total pair, not on every re-render, and stays above the early
+  // return below so hook order is stable.
+  useEffect(() => {
+    if (current) return;
     if (process.env.NODE_ENV !== 'production') {
       console.warn(`[Tour] no step at index ${index} (steps: ${total}).`);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on index/total only, per design; `current` is derived from both
+  }, [index, total]);
+
+  if (!current) {
     return null;
   }
 
@@ -433,7 +460,16 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
   const arrowXY = middlewareData.arrow;
 
   return createPortal(
-    <>
+    // Single body child for ALL of Tour's portaled layers (spotlight, 4
+    // blockers, card) — Modal/Drawer's Overlay inerts every body child
+    // except ones matching their PORTAL_EXEMPT_SELECTOR, and that selector
+    // exempts by matching a body-direct child, not by descendant search.
+    // Wrapping means one `[data-tour-portal-root]` entry there exempts the
+    // whole tour, instead of Modal/Drawer inerting the card that the tour
+    // is trying to keep interactive. No class/style: children are already
+    // `position: fixed` inline, and an unstyled div creates no containing
+    // block or stacking context of its own.
+    <div data-tour-portal-root="">
       {modal && (
         <Spotlight
           target={found}
@@ -514,7 +550,7 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
           {waitingText}
         </span>
       </div>
-    </>,
+    </div>,
     document.body,
   );
 });

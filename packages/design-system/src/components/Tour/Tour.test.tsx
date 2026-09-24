@@ -3,6 +3,8 @@ import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { stubClientRects } from '../_internal/layoutStub.testutil';
 import { overlayStack } from '../_internal/overlay';
+import { Drawer } from '../Drawer';
+import { Modal } from '../Modal';
 import { Popover } from '../Popover';
 import { Tour, type TourProps, type TourStep } from './Tour';
 
@@ -112,6 +114,18 @@ describe('Tour — navigation', () => {
     render(<Harness onFinish={onFinish} />);
     await user.click(screen.getByRole('button', { name: 'Skip tour' }));
     expect(onFinish).toHaveBeenCalledWith('skipped');
+  });
+
+  it('fires onFinish at most once per session even when onOpenChange ignores the close', async () => {
+    const user = userEvent.setup();
+    const onFinish = vi.fn();
+    // Consumer that never actually closes the tour (bug on their end, or a
+    // deliberate "confirm before leaving" gate) — the Tour must still not
+    // double-report the finish.
+    render(<Tour steps={STEPS} open onOpenChange={() => {}} onFinish={onFinish} />);
+    await user.click(screen.getByRole('button', { name: 'Skip tour' }));
+    await user.keyboard('{Escape}');
+    expect(onFinish).toHaveBeenCalledTimes(1);
   });
 
   it('a one-step tour shows only Done, honouring doneLabel', () => {
@@ -255,6 +269,61 @@ describe('Tour — targets', () => {
     el.scrollIntoView = scroll;
     render(<Tour steps={[{ target: 'near', title: 'Near' }]} open onOpenChange={() => {}} />);
     expect(scroll).not.toHaveBeenCalled();
+  });
+});
+
+describe('Tour — empty/out-of-range steps', () => {
+  it('does not handle Escape and warns once (not per re-render) for an empty steps array', async () => {
+    const user = userEvent.setup();
+    const onFinish = vi.fn();
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { rerender } = render(
+      <Tour steps={[]} open onOpenChange={() => {}} onFinish={onFinish} />,
+    );
+    expect(warn).toHaveBeenCalledTimes(1);
+    rerender(<Tour steps={[]} open onOpenChange={() => {}} onFinish={onFinish} />);
+    expect(warn).toHaveBeenCalledTimes(1);
+    await user.keyboard('{Escape}');
+    expect(onFinish).not.toHaveBeenCalled();
+  });
+});
+
+describe('Tour — portal isolation', () => {
+  // Modal/Drawer's Overlay sets `inert` on every body child except ones
+  // matching their PORTAL_EXEMPT_SELECTOR. Tour must be exempt too, or
+  // opening a Modal/Drawer while a Tour is open would inert the Tour.
+  it('a Modal opened while the Tour is open does not inert the Tour', async () => {
+    const user = userEvent.setup();
+    const onStepChange = vi.fn();
+    render(
+      <>
+        <Tour steps={STEPS} open onOpenChange={() => {}} onStepChange={onStepChange} />
+        <Modal open onOpenChange={() => {}} aria-label="A modal">
+          <Modal.Body>modal content</Modal.Body>
+        </Modal>
+      </>,
+    );
+    const dialog = screen.getByRole('dialog', { name: 'Welcome' });
+    expect(dialog.closest('[inert]')).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(onStepChange).toHaveBeenCalledWith(1);
+  });
+
+  it('a Drawer opened while the Tour is open does not inert the Tour', async () => {
+    const user = userEvent.setup();
+    const onStepChange = vi.fn();
+    render(
+      <>
+        <Tour steps={STEPS} open onOpenChange={() => {}} onStepChange={onStepChange} />
+        <Drawer open onOpenChange={() => {}} aria-label="A drawer">
+          <Drawer.Body>drawer content</Drawer.Body>
+        </Drawer>
+      </>,
+    );
+    const dialog = screen.getByRole('dialog', { name: 'Welcome' });
+    expect(dialog.closest('[inert]')).toBeNull();
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(onStepChange).toHaveBeenCalledWith(1);
   });
 });
 

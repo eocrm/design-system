@@ -160,13 +160,15 @@ export function TourDemo() {
 
       <Example
         title="Cross-page (controlled step, waiting for a target)"
-        description="Step 2 navigates; its target mounts 800ms later. The card waits (aria-busy), then glides to it."
+        description={`Step 2 navigates; its target mounts 800ms later. The card waits, announcing "Loading step…", then glides to it.`}
         code={`<Tour
   open={open}
   onOpenChange={setOpen}
   step={step}
   onStepChange={(i) => {
-    if (i === 1) navigate('/deals/42'); // target mounts after the fetch
+    // Symmetric on i, not a one-shot "if (i === 1)": Back past step 2 must
+    // navigate away from the detail page too, or the Tour waits on the wrong page.
+    navigate(i >= 1 ? '/deals/42' : '/deals'); // target mounts after the fetch
     setStep(i);
   }}
   steps={[
