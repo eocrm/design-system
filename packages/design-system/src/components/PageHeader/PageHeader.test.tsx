@@ -332,15 +332,20 @@ describe('PageHeader — responsive shrink (#550)', () => {
     const scss = readFileSync(resolve(__dirname, 'PageHeader.module.scss'), 'utf8');
     const block = (sel: string) =>
       scss.match(new RegExp(`^${sel.replace('.', '\\.')}\\s*\\{([^}]*)\\}`, 'm'))?.[1] ?? '';
-    // The title column has a token floor, capped at half the header so the
-    // actions keep min-content room in tiny containers, and the actions track
-    // stays `auto`: a 0 title floor crushed the title in narrow containers; a
-    // percentage cap on the actions wrapped normal desktop headers (#550).
-    const floor = 'minmax\\(min\\(var\\(--page-header-title-min\\),\\s*50%\\),\\s*1fr\\)';
-    expect(block('.root')).toMatch(new RegExp(`grid-template-columns:\\s*${floor}\\s+auto;`));
-    expect(block('.rootWithAside')).toMatch(
-      new RegExp(`grid-template-columns:\\s*auto\\s+${floor}\\s+auto;`),
+    // minmax(0, 1fr) title + an actions track capped (fit-content) at all
+    // but --page-header-title-min and the gap: wide headers keep actions on
+    // one line, narrow ones wrap them, and a single wide action shrinks the
+    // title instead of overflowing (#550).
+    const cap =
+      'fit-content\\(calc\\(100%\\s*-\\s*var\\(--page-header-title-min\\)\\s*-\\s*var\\(--page-header-col-gap\\)\\)\\)';
+    expect(block('.root')).toMatch(
+      new RegExp(`grid-template-columns:\\s*minmax\\(0,\\s*1fr\\)\\s+${cap};`),
     );
+    expect(block('.rootWithAside')).toMatch(
+      new RegExp(`grid-template-columns:\\s*auto\\s+minmax\\(0,\\s*1fr\\)\\s+${cap};`),
+    );
+    // No min-width: 0 — the track must keep the widest item's min-content.
+    expect(block('.actions')).not.toMatch(/min-width/);
     const tokens = readFileSync(resolve(__dirname, 'PageHeader.tokens.scss'), 'utf8');
     expect(tokens).toMatch(/--page-header-title-min:\s*var\(--measure-2xs\);/);
     expect(block('.actions')).toMatch(/flex-wrap:\s*wrap/);
