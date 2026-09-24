@@ -91,7 +91,8 @@
 // Smallest box the full fluid tile (icon + message + Retry) fits in — see the
 // `@container` rule below. Measured in Chromium at default tokens: icon 28 +
 // gap 8 + at most two lines of text 34 (clamped, see `.errorText`) + gap 8 +
-// `sm` Button 24 = 102px tall at most, whatever the message. The width is
+// `sm` Button 24 ≈ 103px tall at most (the line-height is 17.14px, not 17),
+// whatever the message — do not lower the height threshold below 104. The width is
 // set by the widest shipped Retry label (ru "Повторить", 85px; en 55px). SCSS
 // constants because container-query conditions can't read custom properties
 // (same as `_internal/collapse.scss`).
