@@ -2,6 +2,7 @@ import { useRef, useState, type ComponentProps, type RefObject } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Drawer } from './Drawer';
+import { Modal } from '../Modal';
 import { Select } from '../Select';
 import { overlayStack } from '../_internal/overlay';
 
@@ -376,6 +377,42 @@ describe('<Drawer>', () => {
     const overlay = document.querySelector('[data-drawer-portal-root]') as HTMLElement;
     await user.click(overlay);
     expect(onOpenChange).not.toHaveBeenCalled();
+  });
+
+  it('a nested Modal closing restores focus to its opener, not the drawer container (#551)', async () => {
+    const user = userEvent.setup();
+    function NestedHarness() {
+      const [drawerOpen, setDrawerOpen] = useState(true);
+      const [modalOpen, setModalOpen] = useState(false);
+      return (
+        <Drawer open={drawerOpen} onOpenChange={setDrawerOpen} aria-label="d">
+          <Drawer.Body>
+            <button onClick={() => setModalOpen(true)}>Open modal</button>
+            <Modal open={modalOpen} onOpenChange={setModalOpen} aria-label="m">
+              <Modal.Body>
+                <button onClick={() => setModalOpen(false)}>Done</button>
+              </Modal.Body>
+            </Modal>
+          </Drawer.Body>
+        </Drawer>
+      );
+    }
+    render(<NestedHarness />);
+    await new Promise((r) => setTimeout(r, 0));
+    const opener = screen.getByRole('button', { name: 'Open modal' });
+    opener.focus();
+    await user.click(opener);
+    await user.click(screen.getByRole('button', { name: 'Done' }));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.activeElement).toBe(opener);
+  });
+
+  it('still runs initial focus when the drawer opens (#551 guard)', async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.activeElement).toBe(screen.getByRole('dialog'));
   });
 });
 

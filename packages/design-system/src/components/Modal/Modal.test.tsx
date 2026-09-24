@@ -750,6 +750,68 @@ describe('<Modal>', () => {
     // Focus should land somewhere sensible; document.body is fine for jsdom.
     expect(document.activeElement).toBeDefined();
   });
+
+  it('a nested Modal closing restores focus to its opener, not the outer modal container (#551)', async () => {
+    const user = userEvent.setup();
+    function NestedHarness() {
+      const [outerOpen, setOuterOpen] = useState(true);
+      const [innerOpen, setInnerOpen] = useState(false);
+      return (
+        <Modal open={outerOpen} onOpenChange={setOuterOpen} aria-label="outer">
+          <Modal.Body>
+            <button onClick={() => setInnerOpen(true)}>Open inner</button>
+            <Modal open={innerOpen} onOpenChange={setInnerOpen} aria-label="inner">
+              <Modal.Body>
+                <button onClick={() => setInnerOpen(false)}>Done</button>
+              </Modal.Body>
+            </Modal>
+          </Modal.Body>
+        </Modal>
+      );
+    }
+    render(<NestedHarness />);
+    await new Promise((r) => setTimeout(r, 0));
+    const opener = screen.getByRole('button', { name: 'Open inner' });
+    opener.focus();
+    await user.click(opener);
+    await user.click(screen.getByRole('button', { name: 'Done' }));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.activeElement).toBe(opener);
+  });
+
+  it('a nested Modal with returnFocusRef sends focus there instead of the opener (#551)', async () => {
+    const user = userEvent.setup();
+    function NestedReturnFocusHarness() {
+      const [outerOpen, setOuterOpen] = useState(true);
+      const [innerOpen, setInnerOpen] = useState(false);
+      const targetRef = useRef<HTMLElement | null>(null);
+      return (
+        <Modal open={outerOpen} onOpenChange={setOuterOpen} aria-label="outer">
+          <Modal.Body>
+            <button onClick={() => setInnerOpen(true)}>Open inner</button>
+            <button ref={targetRef as RefObject<HTMLButtonElement>}>Target</button>
+            <Modal
+              open={innerOpen}
+              onOpenChange={setInnerOpen}
+              aria-label="inner"
+              returnFocusRef={targetRef}
+            >
+              <Modal.Body>
+                <button onClick={() => setInnerOpen(false)}>Done</button>
+              </Modal.Body>
+            </Modal>
+          </Modal.Body>
+        </Modal>
+      );
+    }
+    render(<NestedReturnFocusHarness />);
+    await new Promise((r) => setTimeout(r, 0));
+    const opener = screen.getByRole('button', { name: 'Open inner' });
+    await user.click(opener);
+    await user.click(screen.getByRole('button', { name: 'Done' }));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Target' }));
+  });
 });
 
 describe('Modal — Escape yields to open floating surfaces (#274)', () => {
