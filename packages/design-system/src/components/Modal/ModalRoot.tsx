@@ -16,6 +16,7 @@ import {
   type ModalSize,
 } from './context';
 import {
+  restoreFocusTo,
   useOverlayStack as useModalStack,
   type OverlayStackMode as ModalStackMode,
 } from '../_internal/overlay';
@@ -272,7 +273,7 @@ export function ModalRoot({
     previouslyFocusedRef.current = null;
     const requested = returnFocusRef?.current ?? null;
     if (requested && document.contains(requested)) {
-      requested.focus({ preventScroll: true });
+      restoreFocusTo(requested);
       // #553: a named target is usually NOT where the user was (the opener
       // unmounted), so bring it into view. 'nearest' is a no-op when visible.
       // The captured opener is not scrolled — the user was already there.
@@ -280,7 +281,7 @@ export function ModalRoot({
       return;
     }
     if (captured && document.contains(captured)) {
-      captured.focus({ preventScroll: true });
+      restoreFocusTo(captured);
     }
   }, [returnFocusRef]);
   useLayoutEffect(() => {

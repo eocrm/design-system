@@ -9,7 +9,12 @@ import {
   type ReactNode,
   type RefObject,
 } from 'react';
-import { useOverlayStack, useScrollLock, type OverlayStackMode } from '../_internal/overlay';
+import {
+  restoreFocusTo,
+  useOverlayStack,
+  useScrollLock,
+  type OverlayStackMode,
+} from '../_internal/overlay';
 import { sanitizeId } from '../_internal/refs';
 import {
   DrawerContext,
@@ -128,7 +133,7 @@ export function DrawerRoot({
     if (!open && prevOpenRef.current) {
       const target = previouslyFocusedRef.current;
       if (target && document.contains(target)) {
-        target.focus({ preventScroll: true });
+        restoreFocusTo(target);
       }
       previouslyFocusedRef.current = null;
     }

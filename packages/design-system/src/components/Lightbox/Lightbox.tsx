@@ -16,7 +16,7 @@ import { Image } from '../Image';
 import { Skeleton } from '../Skeleton';
 import { useFocusTrap } from '../_internal/overlay/useFocusTrap';
 import { useScrollLock } from '../_internal/overlay/useScrollLock';
-import { overlayStack, useOverlayStack } from '../_internal/overlay';
+import { overlayStack, restoreFocusTo, useOverlayStack } from '../_internal/overlay';
 import { useTranslation } from '../../i18n/useTranslation';
 import styles from './Lightbox.module.scss';
 
@@ -159,7 +159,7 @@ export function Lightbox({
   useEffect(() => {
     if (!open && prevOpenRef.current) {
       const target = previouslyFocusedRef.current;
-      if (target && document.contains(target)) target.focus({ preventScroll: true });
+      if (target && document.contains(target)) restoreFocusTo(target);
       previouslyFocusedRef.current = null;
     }
     prevOpenRef.current = open;

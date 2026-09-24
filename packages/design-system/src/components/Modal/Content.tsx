@@ -2,7 +2,7 @@ import { useEffect, useLayoutEffect, useRef, type CSSProperties, type ReactNode 
 import clsx from 'clsx';
 import { useModalContext } from './context';
 import { useFocusTrap } from '../_internal/overlay/useFocusTrap';
-import { overlayStack as modalStack } from '../_internal/overlay';
+import { isFocusLost, overlayStack as modalStack } from '../_internal/overlay';
 import styles from './Modal.module.scss';
 
 export interface ContentProps {
@@ -36,7 +36,16 @@ export function Content({ children, className, style }: ContentProps) {
       initialFocusPendingRef.current = true;
       return;
     }
-    if (!ctx.isTop || !initialFocusPendingRef.current) return; // lower modals are display:none — focusing them would scroll
+    if (!ctx.isTop) return; // lower modals are display:none — focusing them would scroll
+    if (!initialFocusPendingRef.current) {
+      // Regained the top after a nested overlay closed. Its restore (and that
+      // restore's own retry, queued earlier) wins; only if focus is still
+      // lost — nothing to restore to — take it into this container (#551).
+      queueMicrotask(() => {
+        if (isFocusLost()) ctx.contentRef.current?.focus({ preventScroll: true });
+      });
+      return;
+    }
     initialFocusPendingRef.current = false;
     queueMicrotask(() => {
       const target = ctx.initialFocusRef?.current ?? ctx.contentRef.current;

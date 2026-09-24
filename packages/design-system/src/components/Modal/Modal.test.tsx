@@ -924,3 +924,85 @@ describe('Modal — Escape yield is order-independent (consumed events, #274)', 
     }
   });
 });
+
+describe('Modal — replace-mode nested close restores focus (#551)', () => {
+  afterEach(() => {
+    overlayStack._reset();
+  });
+
+  // In a real browser the lower modal is still display:none when the upper
+  // one restores focus (its isTop update renders after that commit), so the
+  // first focus() no-ops. jsdom ignores display, so emulate that no-op.
+  function ReplaceHarness({
+    withReturnRef = false,
+    dropOpener = false,
+  }: {
+    withReturnRef?: boolean;
+    dropOpener?: boolean;
+  }) {
+    const [innerOpen, setInnerOpen] = useState(false);
+    const [openerShown, setOpenerShown] = useState(true);
+    const targetRef = useRef<HTMLElement | null>(null);
+    return (
+      <Modal open onOpenChange={() => {}} aria-label="outer">
+        <Modal.Body>
+          {openerShown && <button onClick={() => setInnerOpen(true)}>Open inner</button>}
+          <button ref={targetRef as RefObject<HTMLButtonElement>}>Target</button>
+          <Modal
+            open={innerOpen}
+            onOpenChange={setInnerOpen}
+            aria-label="inner"
+            stackMode="replace"
+            returnFocusRef={withReturnRef ? targetRef : undefined}
+          >
+            <Modal.Body>
+              <button
+                onClick={() => {
+                  setInnerOpen(false);
+                  if (dropOpener) setOpenerShown(false);
+                }}
+              >
+                Done
+              </button>
+            </Modal.Body>
+          </Modal>
+        </Modal.Body>
+      </Modal>
+    );
+  }
+
+  it('retries the opener once the lower modal is shown again', async () => {
+    const user = userEvent.setup();
+    render(<ReplaceHarness />);
+    await new Promise((r) => setTimeout(r, 0));
+    const opener = screen.getByRole('button', { name: 'Open inner' });
+    opener.focus();
+    await user.click(opener);
+    vi.spyOn(opener, 'focus').mockImplementationOnce(() => {});
+    await user.click(screen.getByRole('button', { name: 'Done' }));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.activeElement).toBe(opener);
+  });
+
+  it('retries returnFocusRef once the lower modal is shown again', async () => {
+    const user = userEvent.setup();
+    render(<ReplaceHarness withReturnRef />);
+    await new Promise((r) => setTimeout(r, 0));
+    await user.click(screen.getByRole('button', { name: 'Open inner' }));
+    const target = screen.getByRole('button', { name: 'Target' });
+    vi.spyOn(target, 'focus').mockImplementationOnce(() => {});
+    await user.click(screen.getByRole('button', { name: 'Done' }));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.activeElement).toBe(target);
+  });
+
+  it('focuses the lower modal container when there is nothing to restore to', async () => {
+    const user = userEvent.setup();
+    render(<ReplaceHarness dropOpener />);
+    await new Promise((r) => setTimeout(r, 0));
+    await user.click(screen.getByRole('button', { name: 'Open inner' }));
+    await user.click(screen.getByRole('button', { name: 'Done' }));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.activeElement).toBe(screen.getByRole('dialog', { name: 'outer' }));
+  });
+});

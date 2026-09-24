@@ -1,6 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 import clsx from 'clsx';
-import { useFocusTrap, overlayStack } from '../_internal/overlay';
+import { isFocusLost, useFocusTrap, overlayStack } from '../_internal/overlay';
 import { useDrawerContext } from './context';
 import styles from './Drawer.module.scss';
 
@@ -28,7 +28,16 @@ export function Content({ children, className, style }: ContentProps) {
       initialFocusPendingRef.current = true;
       return;
     }
-    if (!ctx.isTop || !initialFocusPendingRef.current) return;
+    if (!ctx.isTop) return;
+    if (!initialFocusPendingRef.current) {
+      // Regained the top after a nested overlay closed. Its restore (and that
+      // restore's own retry, queued earlier) wins; only if focus is still
+      // lost — nothing to restore to — take it into this container (#551).
+      queueMicrotask(() => {
+        if (isFocusLost()) ctx.contentRef.current?.focus({ preventScroll: true });
+      });
+      return;
+    }
     initialFocusPendingRef.current = false;
     queueMicrotask(() => {
       const target = ctx.initialFocusRef?.current ?? ctx.contentRef.current;
