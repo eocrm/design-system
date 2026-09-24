@@ -100,6 +100,9 @@ export interface ConfirmationPopoverProps {
    * move elsewhere after a confirm, aim the ref inside `onConfirm` and clear
    * it in `onOpenChange(true)`.
    *
+   * If something else has already taken focus on close (e.g. a wrapping
+   * DropdownMenu that closes and refocuses its own trigger), it is left alone.
+   *
    * The target is scrolled into view with `{ block: 'nearest' }` (a no-op
    * when it is already visible) — it may be far from where the user was.
    *
@@ -146,13 +149,41 @@ export interface ConfirmationPopoverProps {
  * Rendered inside `<Popover>` so it can read the trigger ref from context.
  */
 function FocusReturn({ returnFocusRef }: { returnFocusRef?: RefObject<HTMLElement | null> }) {
-  const { open, triggerRef } = usePopoverContext('FocusReturn');
+  const { open, triggerRef, contentRef } = usePopoverContext('FocusReturn');
   const prevOpenRef = useRef(open);
   const generationRef = useRef(0);
+  const outsidePointerRef = useRef(false);
+
+  // An outside-click dismissal commits BEFORE the browser's mousedown moves
+  // focus to what was clicked; restoring then would flash focus onto the
+  // trigger (and maybe scroll to returnFocusRef) only for the click to take
+  // it away. Flag such pointerdowns — same "outside" test as Popover.Content
+  // — so the close leaves focus to the click.
+  useEffect(() => {
+    if (!open) return;
+    outsidePointerRef.current = false;
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as Node | null;
+      if (!target) return;
+      if (contentRef.current?.contains(target) || triggerRef.current?.contains(target)) return;
+      const el = target instanceof Element ? target : target.parentElement;
+      if (el?.closest('[data-dropdown-menu-content], [data-popover-content]')) return;
+      outsidePointerRef.current = true;
+      // Only this pointerdown's own close commit (flushed in a microtask) may
+      // see the flag; a pointerdown that did NOT close (blocked while pending)
+      // must not suppress a later Confirm-resolve restore.
+      setTimeout(() => {
+        outsidePointerRef.current = false;
+      }, 0);
+    };
+    document.addEventListener('pointerdown', onPointerDown, true);
+    return () => document.removeEventListener('pointerdown', onPointerDown, true);
+  }, [open, contentRef, triggerRef]);
 
   useLayoutEffect(() => {
     const generation = ++generationRef.current;
     const restore = () => {
+      if (outsidePointerRef.current) return;
       const active = document.activeElement;
       const trigger = triggerRef.current;
       // An outside click onto a real control already moved focus — respect
