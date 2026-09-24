@@ -200,9 +200,9 @@ describe('useFocusTrap', () => {
 
     it('focus landing on the extra element is not redirected; other outside focus is', () => {
       const { container, target, other } = setup();
+      container.tabIndex = -1;
       target.focus();
       expect(document.activeElement).toBe(target);
-      container.tabIndex = -1;
       other.focus();
       expect(document.activeElement).toBe(container);
     });
