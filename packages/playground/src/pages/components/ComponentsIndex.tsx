@@ -623,6 +623,20 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     description: 'Guided onboarding walkthrough — spotlights data-tour targets step by step.',
     preview: SCHEMATICS['Tour'],
   },
+  {
+    to: '/components/visually-hidden',
+    name: 'VisuallyHidden',
+    description:
+      'Removes content from the visual layout while keeping it in the accessibility tree — link context, hidden headings, the building block LiveRegion renders into.',
+    preview: SCHEMATICS['VisuallyHidden'],
+  },
+  {
+    to: '/components/live-region',
+    name: 'LiveRegion',
+    description:
+      'Always-mounted announcement region for consumer-level outcomes with no visible text of their own. Clears then rewrites to trigger the announcement.',
+    preview: SCHEMATICS['LiveRegion'],
+  },
 ];
 
 if (import.meta.env.DEV) {

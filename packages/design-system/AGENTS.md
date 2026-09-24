@@ -812,7 +812,7 @@ A switch whose toggle triggers an **immediate action** — persisting to a serve
 - Label (+ `labelAdornment`) and `description` in a shared LEFT column; control (+ `trailing`) and `footer` in the right. Wiring is `<Field>`'s — same `id` / `aria-labelledby` / `aria-describedby` / `invalid`, same render-prop `field` object.
 - `error` takes over only the `aria-describedby` REFERENCE and flips the control invalid — unlike `<Field>`, the `description` stays VISIBLE, since the two sit in different columns.
 - `labelAdornment` renders OUTSIDE the `<label>` on purpose: label content becomes the control's accessible name, so a badge inside makes the input announce "Seats From plan".
-- `controlWidth` (`auto` default, `xs`/`sm`/`md`) caps the control only, and it does NOT apply to `trailing` — the two are unrelated. ❌ Don't wrap the control in `<Constrain>` — that makes `Constrain` the element the row wires, silently stripping the control's `id` and `aria-*`.
+- `controlWidth` (`auto` default, `xs`/`sm`/`md`) SETS the control's width, capped at the column — it's no longer just a cap, so every row in a `List` with the same step lines up. It does NOT apply to `trailing` — the two are unrelated. ❌ Don't wrap the control in `<Constrain>` — that makes `Constrain` the element the row wires, silently stripping the control's `id` and `aria-*`.
 - `trailing` is a flex group sized to its content, not the whole row — but a control that sizes ITSELF to `width: 100%` (`Select`, `Input`, `Textarea`) still fills that entire group and pushes any other adornment (a badge, a button) onto a second line. Wrap that one child in `<Constrain width="xs">` as shown above — safe here, `trailing` is not the wired child. Same idea for `footer`, which fills the whole control column uncapped: wrap a meter in `<Constrain maxWidth="sm">`.
 - ❌ Mixing control sizes in one row — a `size="sm"` adornment beside a default-`md` control renders two different heights on the same line.
 - `<SettingRow.List>` owns the shared label column (`labelWidth`, default `16rem`), `spacing` (`sm`/`md`/`lg`, default `md`), `dividers` (default `false`) and `collapseBelow` (`sm`/`md`/`lg`, default `'sm'` — a container query on the list's own box that stacks each row; pass `false` to opt out of containment entirely). **Collapse only works inside a List** — a standalone `<SettingRow>` never stacks at any width.
@@ -1891,6 +1891,7 @@ import { Divider } from '@eocrm/design-system';
 - **`<PageHeader.Meta>`** is a flex row that wraps — good for badges + timestamps.
 - **`<PageHeader.Actions>`** is a flex row, right-aligned by default. On viewports < 640px, Actions wraps below the title block.
 - **NOT a `<header>` landmark.** PageHeader renders a `<div>` to avoid conflicting with the AppShell's app-level `<header role="banner">`.
+- **Shrinks to narrow containers (down to ~320px)** — `<PageHeader.Actions>` and `<PageHeader.Breadcrumb>` wrap and the title/subtitle columns shrink below their content width, so you don't need your own overflow workarounds around it.
 
 #### Hard rule
 
@@ -2772,6 +2773,7 @@ const [show, setShow] = useState(true);
 - **`initialFocusRef`** (`RefObject<HTMLElement | null>`) overrides the Cancel default: directs initial focus into the `description` content instead — e.g. an `<Input>` rendered there for a rename flow. The component focuses `initialFocusRef.current` after the panel mounts (mirrors `<Modal>`'s `initialFocusRef`). Tip: add `onFocus={(e) => e.currentTarget.select()}` to a text input so its contents are selected on open and the user can type a replacement immediately.
 - **Async-aware** `onConfirm`. May return a Promise. While pending, both buttons take `aria-disabled` (NOT the native `disabled`, which would drop them from the tab order and blow away focus mid-operation), their handlers no-op, Confirm shows a spinner, the pending state is announced, and Escape / click-outside are blocked.
 - **Failure mode**: on reject, popover stays open and buttons re-enable. Consumer surfaces the error externally — ConfirmationPopover does NOT render inline errors.
+- **Return focus** (`returnFocusRef`), mirroring `<Modal>`'s: focus returns to the trigger on Confirm, Cancel and Escape; an outside click leaves focus wherever the user clicked. `returnFocusRef` is read at CLOSE time and wins when connected, otherwise the trigger is used. To apply it only after a successful confirm, set it in `onConfirm` and clear it in `onOpenChange(true)`. A named target is scrolled into view with `{ block: 'nearest' }`.
 - Anchors above the trigger by default (`side="top"`).
 - **From a DropdownMenu item (kebab Delete pattern).** Wrap a `<DropdownMenu.Item closeOnSelect={false}>` as the trigger — clicking anywhere on the row opens the confirmation. The menu stays open until the user dismisses it (Escape or click outside). To close the menu after the action resolves, drive `DropdownMenu`'s `open` state externally and call `setMenuOpen(false)` inside `onConfirm`.
 
@@ -2841,7 +2843,7 @@ const [open, setOpen] = useState(false);
 - **Forced step:** combine `disableEscapeClose`, `dismissOnOverlayClick={false}`, omit `<Modal.Close>`, and pass `<Modal.Header closeButton={false}>` to lock the user into the modal until they resolve it programmatically.
 - **Stacked modals.** Default `stackMode="overlay"`: the parent stays visible underneath and the inner overlay paints transparent so the parent's dim shows through (one effective dim layer for the stack). Use `stackMode="replace"` to hide the parent via `display: none` (React state preserved) — best for forced steps where the parent context is irrelevant. Escape still closes only the topmost — and yields to any open floating surface first (Select/Popover/menu/date-time popover: the first press closes the surface, the next closes the modal); body scroll stays locked across the whole stack.
 - **Initial focus:** pass `initialFocusRef` to focus a specific element (e.g. the first input). Otherwise the dialog container receives focus and the focus trap takes over.
-- **Return focus:** on close, focus goes back to whatever was focused when the modal opened. When that element will not survive the modal — a deleted row's `⋯` trigger, or a button that unmounts in the same commit that opens the modal — pass `returnFocusRef` and point it at something that still exists. It is read at CLOSE time, so you can set `returnFocusRef.current` after the work finishes (next row's trigger, or the empty state's first button). If it is empty or detached, Modal falls back to the captured opener, then to doing nothing.
+- **Return focus:** on close, focus goes back to whatever was focused when the modal opened. When that element will not survive the modal — a deleted row's `⋯` trigger, or a button that unmounts in the same commit that opens the modal — pass `returnFocusRef` and point it at something that still exists. It is read at CLOSE time, so you can set `returnFocusRef.current` after the work finishes (next row's trigger, or the empty state's first button). If it is empty or detached, Modal falls back to the captured opener, then to doing nothing. A `returnFocusRef` target is scrolled into view (`{ block: 'nearest' }`) since it may be far from where the user was; the captured opener is not scrolled.
 
 **Anti-patterns:**
 
@@ -3697,6 +3699,36 @@ const isOverlay = useBelowBreakpoint('lg'); // true at ≤768px viewport width
 - Returns `false` on the server, and stays `false` until hydration corrects it — only relevant if you server-render this. In a client-only render (no SSR — the CRM's case) the value is correct from the first render.
 - Viewport, not container — use it only where a container query would be circular, i.e. where the thing being measured is what the collapse changes: `<Rail>`'s own width (internal use) and `<AppLayout>`'s overlay-sidebar trigger (`sidebarOverlayBelow` — gate your `topBar` hamburger on this so it shows only while the overlay is active). For content that re-templates inside a box of stable width, use a `collapseBelow` prop (`<Grid>` / `<Split>` / `<Sortable>` / `<DashboardCanvas>` / `<DataTable>`) instead — those use container queries in CSS and need no hook.
 
+### `<VisuallyHidden>` — content for assistive tech only
+
+```tsx
+<VisuallyHidden>Opens in a new tab</VisuallyHidden>
+<VisuallyHidden as="div">…block content…</VisuallyHidden>
+```
+
+- `as?: 'span' | 'div'` — default `'span'`. Use `'div'` when the hidden content wraps other block elements.
+- The "clip" technique (`position: absolute`, 1×1px, clipped) — NOT `display: none` / `visibility: hidden`, which would also remove it from assistive tech.
+- `forwardRef` to the rendered element; spreads `HTMLAttributes<HTMLElement>` last (consumer wins — nothing here is semantic to protect).
+- The building block `LiveRegion` renders its own announcement text into.
+
+**When NOT to use:** to hide something from everyone, use the `hidden` attribute or a conditional render — VisuallyHidden stays reachable by assistive tech, it isn't a display toggle. On a focusable element (a skip link) — the content stays invisible even focused; there's no show-on-focus variant yet. To label a control, prefer `aria-label` or a visible `<label>` over a hidden span in the DOM flow. For announcements, use `LiveRegion` — a plain hidden span isn't live.
+
+### `<LiveRegion>` — announcement region for consumer-level outcomes
+
+```tsx
+<LiveRegion>{status}</LiveRegion>
+<LiveRegion politeness="assertive">{error}</LiveRegion>
+<LiveRegion announceKey={saveCount}>{t('saved')}</LiveRegion>
+```
+
+- `children?: ReactNode` — the message. Pass a string/number, or an array of only strings/numbers (compares by value). Anything else (JSX) compares by identity and re-announces on every parent render. Empty / `null` / `false` clears the region and announces nothing.
+- `politeness?: 'polite' | 'assertive'` — default `'polite'` (`role="status"`, waits its turn). `'assertive'` (`role="alert"`) interrupts immediately — reserve for errors. Both set `aria-atomic="true"`.
+- `announceKey?: string | number` — change it to re-announce an identical message (e.g. repeat "Saved" on every Save click).
+- **Always mount it unconditionally** — it clears then rewrites its text ~50ms later on mount and on every change, so the empty → text transition is what triggers the announcement. A conditionally-mounted region won't announce reliably.
+- Props type omits `role` / `aria-live` / `aria-atomic` / `hidden` / `aria-hidden` — it spreads the rest of `HTMLAttributes<HTMLSpanElement>` FIRST so those can't be overridden.
+
+**When NOT to use:** don't wrap a library component that already owns its own transient-state region (see "Transient state and screen readers" below) — two regions announcing one event talk over each other. Don't announce text that's already visible and focused — the user hears it twice. Don't reach for `assertive` for routine success. Prefer a string child over JSX — element children re-announce on every parent render even when the rendered text is unchanged.
+
 ---
 
 ## Tokens (the only "values" you write)
@@ -3871,6 +3903,8 @@ The authoritative list of tokens per component lives in that component's `<Name>
 ## Transient state and screen readers
 
 Components in this library handle their own transient state (`loading`, `busy`, async failure). For the components that do, you do not need to wrap them in a live region — and you should not, because two regions announcing one event talk over each other. **But not every component does**: see Known gaps below, and check the component's own JSDoc before assuming.
+
+For your OWN outcomes — a consumer-level event with no visible text of its own (e.g. "Authenticator app added") — reach for `<LiveRegion>` rather than hand-rolling a live region; see its TL;DR entry above.
 
 The rule the library follows, so you can predict any component:
 

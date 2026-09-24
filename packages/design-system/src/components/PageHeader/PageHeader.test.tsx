@@ -333,7 +333,9 @@ describe('PageHeader — responsive shrink (#550)', () => {
     const block = (sel: string) =>
       scss.match(new RegExp(`^${sel.replace('.', '\\.')}\\s*\\{([^}]*)\\}`, 'm'))?.[1] ?? '';
     expect(block('.root')).toMatch(/grid-template-columns:\s*minmax\(0,\s*1fr\)\s+auto/);
-    expect(block('.rootWithAside')).toMatch(/grid-template-columns:\s*auto\s+minmax\(0,\s*1fr\)\s+auto/);
+    expect(block('.rootWithAside')).toMatch(
+      /grid-template-columns:\s*auto\s+minmax\(0,\s*1fr\)\s+auto/,
+    );
     expect(block('.actions')).toMatch(/flex-wrap:\s*wrap/);
     expect(block('.breadcrumb')).toMatch(/flex-wrap:\s*wrap/);
     expect(block('.breadcrumb')).toMatch(/min-width:\s*0/);

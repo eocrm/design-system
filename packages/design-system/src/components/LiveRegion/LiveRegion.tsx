@@ -4,11 +4,10 @@ import { VisuallyHidden } from '../VisuallyHidden';
 /** How urgently the region interrupts the screen reader. See {@link LiveRegionProps.politeness}. */
 export type LiveRegionPoliteness = 'polite' | 'assertive';
 
-export interface LiveRegionProps
-  extends Omit<
-    HTMLAttributes<HTMLSpanElement>,
-    'children' | 'role' | 'aria-live' | 'aria-atomic' | 'hidden' | 'aria-hidden'
-  > {
+export interface LiveRegionProps extends Omit<
+  HTMLAttributes<HTMLSpanElement>,
+  'children' | 'role' | 'aria-live' | 'aria-atomic' | 'hidden' | 'aria-hidden'
+> {
   /**
    * The message. Pass a string, a number, or an array of only strings/
    * numbers (e.g. `[count, ' files uploaded']`) — these compare by value, so

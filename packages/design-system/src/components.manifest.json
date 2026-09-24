@@ -461,6 +461,14 @@
     ],
     "composedBy": []
   },
+  "LiveRegion": {
+    "tier": "composition",
+    "cluster": "Accessibility",
+    "composes": [
+      "VisuallyHidden"
+    ],
+    "composedBy": []
+  },
   "Logo": {
     "tier": "primitive",
     "cluster": "Display",
@@ -848,5 +856,13 @@
       "Stack"
     ],
     "composedBy": []
+  },
+  "VisuallyHidden": {
+    "tier": "primitive",
+    "cluster": "Accessibility",
+    "composes": [],
+    "composedBy": [
+      "LiveRegion"
+    ]
   }
 }

@@ -928,6 +928,13 @@
           "description": "Direct initial focus into the panel's content instead of the default\nCancel button — e.g. an `<Input>` rendered in `description` for a rename\nflow. When provided and its `.current` is non-null on open, the component\nfocuses this element after the panel mounts (skipping the Cancel-focus).\nTip: add `onFocus={(e) => e.currentTarget.select()}` to a text input to\nselect its contents so the user can type/replace immediately."
         },
         {
+          "name": "returnFocusRef",
+          "type": "RefObject<HTMLElement | null>",
+          "required": false,
+          "default": "",
+          "description": "Where focus goes when the popover closes. Default: back to the trigger.\n\nThat default breaks whenever the trigger is gone by close time — the\nconfirmed action deleted the row that owned it — and focus lands on\n`<body>`, so a keyboard user loses their place.\n\nThe ref is read **at close time**, not at open time, so it may be pointed\nat whatever still exists once the work is done — the next row's trigger,\nthe empty state's first button. If it is empty or its element has left\nthe document, focus falls back to the trigger (when it still exists).\n\nIt applies on EVERY close path — Confirm, Cancel, Escape, and an outside\nclick that leaves focus nowhere (an outside click onto another focusable\ncontrol keeps focus there). To return to the trigger on Cancel and only\nmove elsewhere after a confirm, aim the ref inside `onConfirm` and clear\nit in `onOpenChange(true)`.\n\nIf something else has already taken focus on close (e.g. a wrapping\nDropdownMenu that closes and refocuses its own trigger), it is left alone.\n\nThe target is scrolled into view with `{ block: 'nearest' }` (a no-op\nwhen it is already visible) — it may be far from where the user was."
+        },
+        {
           "name": "side",
           "type": "\"left\" | \"right\" | \"top\" | \"bottom\"",
           "required": false,
@@ -3053,6 +3060,31 @@
         }
       ]
     },
+    "LiveRegion": {
+      "props": [
+        {
+          "name": "children",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "The message. Pass a string, a number, or an array of only strings/\nnumbers (e.g. `[count, ' files uploaded']`) — these compare by value, so\nan unchanged value does not re-announce and a changed one does. Anything\nelse (JSX elements) compares by identity and re-announces on every\nparent render, even when the rendered text is unchanged. Empty, `null`,\nor `false` clears the region and announces nothing."
+        },
+        {
+          "name": "politeness",
+          "type": "LiveRegionPoliteness",
+          "required": false,
+          "default": "polite",
+          "description": "How urgently the region interrupts.\n- `'polite'` (default) — `role=\"status\"` + `aria-live=\"polite\"`. Waits\n  for the screen reader to finish its current utterance. Use for routine\n  outcomes: saves, copy confirmations, background updates.\n- `'assertive'` — `role=\"alert\"` + `aria-live=\"assertive\"`. Interrupts\n  immediately. Reserve for errors that need immediate attention."
+        },
+        {
+          "name": "announceKey",
+          "type": "string | number",
+          "required": false,
+          "default": "",
+          "description": "Change this (e.g. a counter) to announce the same message again. Without\nit, re-rendering with identical text is a no-op — screen readers only\nannounce a live region on a text change."
+        }
+      ]
+    },
     "Logo": {
       "props": [
         {
@@ -3240,7 +3272,7 @@
           "type": "RefObject<HTMLElement | null>",
           "required": false,
           "default": "",
-          "description": "Where focus goes when the modal closes. Default: back to whatever was\nfocused when it opened.\n\nThat default breaks whenever the opener is gone by close time — a row's\n\"⋯\" trigger whose row was just deleted, or a button that unmounts in the\nsame commit that opens the modal (the capture then snapshots `<body>`).\nFocus lands on `<body>` and a keyboard user loses their place.\n\nThe ref is read **at close time**, not at open time, so it may be pointed\nat whatever still exists once the work is done — the next row's trigger,\nthe empty state's first button. If it is empty or its element has also\nleft the document, Modal falls back to the captured opener, and then to\ndoing nothing, exactly as before this prop existed."
+          "description": "Where focus goes when the modal closes. Default: back to whatever was\nfocused when it opened.\n\nThat default breaks whenever the opener is gone by close time — a row's\n\"⋯\" trigger whose row was just deleted, or a button that unmounts in the\nsame commit that opens the modal (the capture then snapshots `<body>`).\nFocus lands on `<body>` and a keyboard user loses their place.\n\nThe ref is read **at close time**, not at open time, so it may be pointed\nat whatever still exists once the work is done — the next row's trigger,\nthe empty state's first button. If it is empty or its element has also\nleft the document, Modal falls back to the captured opener, and then to\ndoing nothing, exactly as before this prop existed.\n\nThe target is scrolled into view (`block: 'nearest'`) after focus; the\ncaptured opener is not."
         },
         {
           "name": "children",
@@ -4373,14 +4405,14 @@
           "type": "SettingRowControlWidth",
           "required": false,
           "default": "",
-          "description": "Max width of the control only — `trailing` is unaffected and stays on the\nsame line. Default `'auto'` — the control's intrinsic width."
+          "description": "Width of the control only — `trailing` is unaffected and stays on the\nsame line. Default `'auto'` — the control's intrinsic width. Every row\nusing the same step gets the same control width (capped at the column,\nso a narrow container still shrinks it), which is what keeps controls\naligned down a `<SettingRow.List>`."
         },
         {
           "name": "trailing",
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
           "default": "",
-          "description": "Content after the control on the same line — a mode select, a state\nbadge, a reset button. `controlWidth` does NOT apply here — it only caps\nthe main control. A control that sizes itself to `width: 100%` (`Select`,\n`Input`, `Textarea`) fills the ENTIRE trailing group and pushes any other\nadornment onto a second line; wrap it in `<Constrain width=\"xs\">` (or\nanother named step) to size it instead."
+          "description": "Content after the control on the same line — a mode select, a state\nbadge, a reset button. `controlWidth` does NOT apply here — it only sizes\nthe main control. A control that sizes itself to `width: 100%` (`Select`,\n`Input`, `Textarea`) fills the ENTIRE trailing group and pushes any other\nadornment onto a second line; wrap it in `<Constrain width=\"xs\">` (or\nanother named step) to size it instead."
         },
         {
           "name": "footer",
@@ -5475,6 +5507,17 @@
           "description": "Contextual label for the last step's button, e.g. `'Got it'` for a\none-step announcement. Defaults to the i18n `tour.done` (`'Done'`). An\nempty string counts as unset."
         }
       ]
+    },
+    "VisuallyHidden": {
+      "props": [
+        {
+          "name": "as",
+          "type": "VisuallyHiddenAs",
+          "required": false,
+          "default": "span",
+          "description": "Element to render. `'span'` for inline text (the common case — a link\nsuffix, a labelling phrase). `'div'` when the hidden content is itself\nblock-level (e.g. wraps other block elements)."
+        }
+      ]
     }
   },
   "types": {
@@ -5483,6 +5526,8 @@
     "InputSize": "\"sm\" | \"md\" | \"lg\"",
     "KanbanMoveEvent": "{ from: { columnId: string | number; index: number; }; to: { columnId: string | number; index: number; }; cardId: string | number }",
     "KbdSize": "\"sm\" | \"md\"",
+    "VisuallyHiddenAs": "\"div\" | \"span\"",
+    "LiveRegionPoliteness": "\"polite\" | \"assertive\"",
     "CardPadding": "\"sm\" | \"md\" | \"lg\" | \"none\"",
     "CardTone": "\"info\" | \"success\" | \"warning\" | \"danger\" | \"accent\"",
     "CardOverflow": "\"hidden\" | \"visible\"",

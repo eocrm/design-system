@@ -26,7 +26,11 @@ describe('<LiveRegion>', () => {
 
   it('consumer props cannot override role / aria-live / aria-atomic', () => {
     // @ts-expect-error role / aria-live / aria-atomic are omitted from the props type
-    render(<LiveRegion role="note" aria-live="off" aria-atomic="false">x</LiveRegion>);
+    render(
+      <LiveRegion role="note" aria-live="off" aria-atomic="false">
+        x
+      </LiveRegion>,
+    );
     expect(region()).toHaveAttribute('aria-live', 'polite');
     expect(region()).toHaveAttribute('aria-atomic', 'true');
   });
@@ -153,7 +157,11 @@ describe('<LiveRegion>', () => {
 
   it('forwards ref to the region and merges className', () => {
     const ref = createRef<HTMLSpanElement>();
-    render(<LiveRegion ref={ref} className="extra">x</LiveRegion>);
+    render(
+      <LiveRegion ref={ref} className="extra">
+        x
+      </LiveRegion>,
+    );
     expect(ref.current).toBe(region());
     expect(region()).toHaveClass('extra');
   });

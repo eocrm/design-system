@@ -2012,4 +2012,22 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       </Panel>
     </Col>
   ),
+  VisuallyHidden: (
+    <Row gap={10} style={{ alignItems: 'center' }}>
+      <Dot solid size={16} />
+      <Dashed w={90} h={16} />
+    </Row>
+  ),
+  LiveRegion: (
+    <Row gap={10} style={{ alignItems: 'center' }}>
+      <Dashed w={110} h={28} style={{ display: 'flex', alignItems: 'center', padding: '0 10px' }}>
+        <Bar w={70} />
+      </Dashed>
+      <Col gap={4} style={{ alignItems: 'flex-start' }}>
+        <Box w={16} h={3} />
+        <Solid w={22} h={3} />
+        <Box w={10} h={3} />
+      </Col>
+    </Row>
+  ),
 };

@@ -127,6 +127,10 @@ const CLUSTERS = {
   Popover: 'Overlays',
   Tooltip: 'Overlays',
   Tour: 'Overlays',
+
+  // Accessibility
+  VisuallyHidden: 'Accessibility',
+  LiveRegion: 'Accessibility',
 };
 
 // `(?:\.\./)+`, not a single `../`, since #509 — the other half of the flat-walk
