@@ -41,23 +41,45 @@ function getFocusables(container: HTMLElement): HTMLElement[] {
  * `active = false` no-ops the trap (used by Modal when not top of stack — the
  * inner modal mounts but only the topmost modal owns focus).
  *
+ * `extra` (optional) — an element outside the container that joins the Tab cycle after it (Tour's interactive target).
+ *
  * @example
  * const contentRef = useRef<HTMLDivElement | null>(null);
  * useFocusTrap(contentRef, open);
  */
-export function useFocusTrap(containerRef: RefObject<HTMLElement | null>, active: boolean): void {
+export function useFocusTrap(
+  containerRef: RefObject<HTMLElement | null>,
+  active: boolean,
+  extra: HTMLElement | null = null,
+): void {
   useEffect(() => {
     if (!active) return;
     const container = containerRef.current;
     if (!container) return;
 
+    // Tour's interactive target joins the cycle AFTER the container's
+    // focusables. Its DOM position is arbitrary, so with `extra` the cycle is
+    // driven manually instead of by native Tab order.
+    function extraFocusables(): HTMLElement[] {
+      if (!extra) return [];
+      return [extra, ...getFocusables(extra)].filter((el) => el.matches(FOCUSABLE_SELECTOR));
+    }
+
     function onKeyDown(e: KeyboardEvent) {
       if (e.key !== 'Tab') return;
-      const focusables = getFocusables(container!);
+      const focusables = [...getFocusables(container!), ...extraFocusables()];
       if (focusables.length === 0) {
         // Zero focusables: prevent Tab from escaping the container.
         e.preventDefault();
         container!.focus();
+        return;
+      }
+      if (extra) {
+        const n = focusables.length;
+        const i = focusables.indexOf(document.activeElement as HTMLElement);
+        const next = i === -1 ? (e.shiftKey ? n - 1 : 0) : (i + (e.shiftKey ? -1 : 1) + n) % n;
+        e.preventDefault();
+        focusables[next]!.focus();
         return;
       }
       const first = focusables[0]!;
@@ -76,6 +98,7 @@ export function useFocusTrap(containerRef: RefObject<HTMLElement | null>, active
       const target = e.target as HTMLElement | null;
       if (!target || !container) return;
       if (container.contains(target)) return;
+      if (extra?.contains(target)) return;
       // Allow focus to live inside floating UI surfaces that were opened
       // from within this modal (Popover, DropdownMenu, Tooltip, nested Modal).
       // Their portals are body-direct siblings of our portal — checking by
@@ -86,10 +109,12 @@ export function useFocusTrap(containerRef: RefObject<HTMLElement | null>, active
     }
 
     container.addEventListener('keydown', onKeyDown);
+    extra?.addEventListener('keydown', onKeyDown);
     document.addEventListener('focusin', onFocusIn);
     return () => {
       container.removeEventListener('keydown', onKeyDown);
+      extra?.removeEventListener('keydown', onKeyDown);
       document.removeEventListener('focusin', onFocusIn);
     };
-  }, [containerRef, active]);
+  }, [containerRef, active, extra]);
 }

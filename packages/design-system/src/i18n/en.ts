@@ -329,6 +329,14 @@ export const en: Messages = {
   modal: {
     close: 'Close dialog',
   },
+  tour: {
+    next: 'Next',
+    back: 'Back',
+    skip: 'Skip tour',
+    done: 'Done',
+    progress: ({ current, total }) => `Step ${current} of ${total}`,
+    waiting: 'Loading step…',
+  },
   toast: {
     dismiss: 'Dismiss',
     notifications: 'Notifications',

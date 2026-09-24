@@ -303,7 +303,9 @@
     "--z-overlay-floating": "1190",
     "--z-popover": "1050",
     "--z-toast": "1200",
-    "--z-tooltip": "1300"
+    "--z-tooltip": "1300",
+    "--transition-slow": "260ms ease-in-out",
+    "--z-tour": "1150"
   },
   "forcedDark": {
     "--color-accent": "#68a7ff",

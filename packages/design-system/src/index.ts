@@ -269,6 +269,9 @@ export type {
   ConfirmationVariant,
 } from './components/ConfirmationPopover';
 
+export { Tour } from './components/Tour';
+export type { TourProps, TourStep, TourSide, TourAlign, TourFinishReason } from './components/Tour';
+
 export { Modal } from './components/Modal';
 export type {
   ModalProps,

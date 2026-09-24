@@ -5394,6 +5394,87 @@
           "description": "Children of the bar — typically `<TopBar.Start>` + `<TopBar.End>`. The\nchildren area is open so consumers can render a single cluster, a\nsingle trailing element, or any other arrangement they need."
         }
       ]
+    },
+    "Tour": {
+      "props": [
+        {
+          "name": "steps",
+          "type": "TourStep[]",
+          "required": true,
+          "default": "",
+          "description": "The steps, in order. Must be non-empty."
+        },
+        {
+          "name": "open",
+          "type": "boolean",
+          "required": true,
+          "default": "",
+          "description": "Controlled open state (required — like `Modal`, there is no uncontrolled\nmode: an uncontrolled tour could not be started or replayed)."
+        },
+        {
+          "name": "onOpenChange",
+          "type": "(open: boolean) => void",
+          "required": true,
+          "default": "",
+          "description": "Called with `false` on Skip, Escape and Done."
+        },
+        {
+          "name": "onFinish",
+          "type": "((reason: TourFinishReason) => void)",
+          "required": false,
+          "default": "",
+          "description": "Fires once per Skip / Escape / Done. NOT called when the consumer closes\nthe tour itself by setting `open={false}` — only the tour's own end\ngestures fire it. Use it to persist \"seen\" state."
+        },
+        {
+          "name": "step",
+          "type": "number",
+          "required": false,
+          "default": "",
+          "description": "Controlled step index. Control it when a step change must do something\nfirst — navigate to another page, open an accordion, switch a tab — then\nthe Tour waits for the next target to mount."
+        },
+        {
+          "name": "onStepChange",
+          "type": "((index: number) => void)",
+          "required": false,
+          "default": "",
+          "description": "Fires on every step change (Next, Back, arrow keys, `advanceOn`), controlled or not."
+        },
+        {
+          "name": "defaultStep",
+          "type": "number",
+          "required": false,
+          "default": "",
+          "description": "Uncontrolled starting step. Default `0`. Every re-open starts here again."
+        },
+        {
+          "name": "modal",
+          "type": "boolean",
+          "required": false,
+          "default": "true",
+          "description": "`true` (default): dims the page with a spotlight cutout, blocks clicks\noutside it and traps focus — onboarding. `false`: card only, page stays\nusable — feature announcements."
+        },
+        {
+          "name": "targetTimeout",
+          "type": "number",
+          "required": false,
+          "default": "",
+          "description": "Ms to wait for a step's target before falling back to a centered card.\nDefault `5000` (room for a route change + data fetch). `Infinity` waits forever."
+        },
+        {
+          "name": "onTargetMissing",
+          "type": "((step: TourStep, index: number) => void)",
+          "required": false,
+          "default": "",
+          "description": "Called when a step's target didn't appear within `targetTimeout`. Log it."
+        },
+        {
+          "name": "doneLabel",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Contextual label for the last step's button, e.g. `'Got it'` for a\none-step announcement. Defaults to the i18n `tour.done` (`'Done'`). An\nempty string counts as unset."
+        }
+      ]
     }
   },
   "types": {
@@ -5461,6 +5542,7 @@
     "TooltipSide": "\"left\" | \"right\" | \"top\" | \"bottom\"",
     "TooltipAlign": "\"start\" | \"end\" | \"center\"",
     "ConfirmationVariant": "\"danger\" | \"default\"",
+    "TourFinishReason": "\"completed\" | \"skipped\"",
     "ModalSize": "\"sm\" | \"md\" | \"lg\" | \"full\"",
     "ModalOverlayVariant": "\"solid\" | \"blur\"",
     "ModalStackMode": "\"replace\" | \"overlay\"",

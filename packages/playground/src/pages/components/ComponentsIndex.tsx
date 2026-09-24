@@ -617,6 +617,12 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     description: '"Are you sure?" preset on top of Popover, with async-aware Confirm.',
     preview: SCHEMATICS['ConfirmationPopover'],
   },
+  {
+    to: '/components/tour',
+    name: 'Tour',
+    description: 'Guided onboarding walkthrough — spotlights data-tour targets step by step.',
+    preview: SCHEMATICS['Tour'],
+  },
 ];
 
 if (import.meta.env.DEV) {

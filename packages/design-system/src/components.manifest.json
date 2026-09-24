@@ -82,7 +82,8 @@
       "RichTextEditor",
       "SocialButton",
       "Toast",
-      "TopBar"
+      "TopBar",
+      "Tour"
     ]
   },
   "ButtonGroup": {
@@ -137,7 +138,8 @@
       "Calendar",
       "ConfirmationPopover",
       "OptionsPicker",
-      "RichTextEditor"
+      "RichTextEditor",
+      "Tour"
     ]
   },
   "Code": {
@@ -718,7 +720,8 @@
     "composedBy": [
       "ConfirmationPopover",
       "Page",
-      "RichTextEditor"
+      "RichTextEditor",
+      "Tour"
     ]
   },
   "StatusMenu": {
@@ -833,6 +836,16 @@
     "composes": [
       "Button",
       "Kbd"
+    ],
+    "composedBy": []
+  },
+  "Tour": {
+    "tier": "composition",
+    "cluster": "Overlays",
+    "composes": [
+      "Button",
+      "Cluster",
+      "Stack"
     ],
     "composedBy": []
   }

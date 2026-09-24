@@ -148,6 +148,7 @@ const CLUSTERS: Record<string, string> = {
   Modal: 'Overlays',
   Popover: 'Overlays',
   Tooltip: 'Overlays',
+  Tour: 'Overlays',
 };
 
 // `(?:\.\./)+`, not a single `../`, since #509 — the other half of the flat-walk

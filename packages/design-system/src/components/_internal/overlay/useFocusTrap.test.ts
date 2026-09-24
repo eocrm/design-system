@@ -17,6 +17,13 @@ function trapHook(container: HTMLElement | null, options?: { active?: boolean })
   });
 }
 
+function trapWithExtra(container: HTMLElement, extra: HTMLElement | null) {
+  return renderHook(() => {
+    const ref = useRef<HTMLElement | null>(container);
+    useFocusTrap(ref as RefObject<HTMLElement | null>, true, extra);
+  });
+}
+
 describe('useFocusTrap', () => {
   afterEach(() => {
     document.body.innerHTML = '';
@@ -147,5 +154,57 @@ describe('useFocusTrap', () => {
     container.dispatchEvent(event);
     expect(event.defaultPrevented).toBe(true);
     expect(document.activeElement).toBe(container);
+  });
+
+  describe('extra element', () => {
+    function setup() {
+      const container = makeContainer(`<button id="a">A</button><button id="b">B</button>`);
+      const outside = makeContainer(`<button id="t">Target</button><button id="o">Other</button>`);
+      const target = outside.querySelector<HTMLButtonElement>('#t')!;
+      trapWithExtra(container, target);
+      return { container, target, other: outside.querySelector<HTMLButtonElement>('#o')! };
+    }
+    const tab = (el: Element, shiftKey = false) => {
+      const e = new KeyboardEvent('keydown', {
+        key: 'Tab',
+        shiftKey,
+        bubbles: true,
+        cancelable: true,
+      });
+      el.dispatchEvent(e);
+      return e;
+    };
+
+    it('Tab from the last container focusable moves to the extra element', () => {
+      const { container, target } = setup();
+      const b = container.querySelector<HTMLButtonElement>('#b')!;
+      b.focus();
+      expect(tab(b).defaultPrevented).toBe(true);
+      expect(document.activeElement).toBe(target);
+    });
+
+    it('Tab from the extra element wraps to the first container focusable', () => {
+      const { target } = setup();
+      target.focus();
+      tab(target);
+      expect(document.activeElement?.id).toBe('a');
+    });
+
+    it('Shift+Tab from the first container focusable moves to the extra element', () => {
+      const { container, target } = setup();
+      const a = container.querySelector<HTMLButtonElement>('#a')!;
+      a.focus();
+      tab(a, true);
+      expect(document.activeElement).toBe(target);
+    });
+
+    it('focus landing on the extra element is not redirected; other outside focus is', () => {
+      const { container, target, other } = setup();
+      container.tabIndex = -1;
+      target.focus();
+      expect(document.activeElement).toBe(target);
+      other.focus();
+      expect(document.activeElement).toBe(container);
+    });
   });
 });

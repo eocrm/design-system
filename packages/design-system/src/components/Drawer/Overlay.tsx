@@ -12,7 +12,8 @@ export interface OverlayProps {
   children: ReactNode;
 }
 
-const PORTAL_EXEMPT_SELECTOR = '[data-modal-portal-root], [data-drawer-portal-root]';
+const PORTAL_EXEMPT_SELECTOR =
+  '[data-modal-portal-root], [data-drawer-portal-root], [data-tour-portal-root]';
 
 /**
  * Portaled dimming / blurred backdrop. Owns the inert-background attribute

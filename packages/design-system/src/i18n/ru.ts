@@ -334,6 +334,14 @@ export const ru: Messages = {
   modal: {
     close: 'Закрыть диалог',
   },
+  tour: {
+    next: 'Далее',
+    back: 'Назад',
+    skip: 'Пропустить',
+    done: 'Готово',
+    progress: ({ current, total }) => `Шаг ${current} из ${total}`,
+    waiting: 'Загрузка шага…',
+  },
   toast: {
     dismiss: 'Закрыть',
     notifications: 'Уведомления',

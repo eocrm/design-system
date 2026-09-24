@@ -69,6 +69,7 @@ export type ComponentName =
   | 'PhoneInput'
   | 'PersonDisplay'
   | 'Popover'
+  | 'Tour'
   | 'Progress'
   | 'QrCode'
   | 'Radio'

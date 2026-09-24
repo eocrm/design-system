@@ -4,11 +4,15 @@ import { useInOverlay } from './useInOverlay';
 
 // Probe renders a button and reflects the hook result onto a data attribute,
 // mirroring how the real floating Contents consume the hook.
-function Probe({ active }: { active: boolean }) {
+function Probe({ active, tourActiveTarget }: { active: boolean; tourActiveTarget?: boolean }) {
   const ref = useRef<HTMLButtonElement>(null);
   const inOverlay = useInOverlay(ref, active);
   return (
-    <button ref={ref} data-in-overlay={inOverlay ? '' : undefined}>
+    <button
+      ref={ref}
+      data-tour-active-target={tourActiveTarget ? '' : undefined}
+      data-in-overlay={inOverlay ? '' : undefined}
+    >
       probe
     </button>
   );
@@ -83,6 +87,23 @@ describe('useInOverlay', () => {
       </div>,
     );
     expect(screen.getByRole('button')).not.toHaveAttribute('data-in-overlay');
+  });
+
+  it('is true when the reference is inside a Tour portal root', () => {
+    render(
+      <div data-tour-portal-root="">
+        <Probe active />
+      </div>,
+    );
+    expect(screen.getByRole('button')).toHaveAttribute('data-in-overlay', '');
+  });
+
+  it('is true when the reference itself is an active Tour target', () => {
+    // Unlike data-in-overlay (never on the reference itself), this marker is
+    // deliberately placed ON the reference by Tour — the interactive target
+    // may BE a floating-surface trigger, so closest() must self-match.
+    render(<Probe active tourActiveTarget />);
+    expect(screen.getByRole('button')).toHaveAttribute('data-in-overlay', '');
   });
 
   it('resets to false when deactivated after being true', () => {

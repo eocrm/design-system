@@ -84,6 +84,7 @@ import { PageDemo } from './pages/components/PageDemo';
 import { PaletteDemo } from './pages/components/PaletteDemo';
 import { PageHeaderDemo } from './pages/components/PageHeaderDemo';
 import { PopoverDemo } from './pages/components/PopoverDemo';
+import { TourDemo } from './pages/components/TourDemo';
 import { RadioDemo } from './pages/components/RadioDemo';
 import { CalendarDemo } from './pages/components/CalendarDemo';
 import { ConfirmationPopoverDemo } from './pages/components/ConfirmationPopoverDemo';
@@ -212,6 +213,7 @@ export default function App() {
             <Route path="/components/palette" element={<PaletteDemo />} />
             <Route path="/components/page-header" element={<PageHeaderDemo />} />
             <Route path="/components/popover" element={<PopoverDemo />} />
+            <Route path="/components/tour" element={<TourDemo />} />
             <Route path="/components/radio" element={<RadioDemo />} />
             <Route path="/components/calendar" element={<CalendarDemo />} />
             <Route path="/components/confirmation-popover" element={<ConfirmationPopoverDemo />} />

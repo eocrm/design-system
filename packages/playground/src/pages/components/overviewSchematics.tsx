@@ -1903,6 +1903,29 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       </Panel>
     </Col>
   ),
+  Tour: (
+    <Col gap={6} style={{ alignItems: 'flex-start' }}>
+      <Dashed
+        w={60}
+        h={24}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+      >
+        <Outline w={44} h={14} />
+      </Dashed>
+      <Panel
+        w={124}
+        h={62}
+        style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: 8 }}
+      >
+        <Bar w={40} />
+        <Bar w={90} />
+        <Row gap={4} style={{ justifyContent: 'flex-end' }}>
+          <Outline w={26} h={12} />
+          <Solid w={26} h={12} />
+        </Row>
+      </Panel>
+    </Col>
+  ),
   Calendar: (
     <Col gap={4} style={{ position: 'relative' }}>
       <Row gap={4}>

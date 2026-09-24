@@ -245,6 +245,7 @@
   --space-8: 32px;
   --transition-base: 140ms ease-out;
   --transition-fast: 100ms ease-out;
+  --transition-slow: 260ms ease-in-out;
   --z-app-chrome: 500;
   --z-dropdown: 1000;
   --z-flowcanvas-maximized: 1090;
@@ -253,4 +254,5 @@
   --z-popover: 1050;
   --z-toast: 1200;
   --z-tooltip: 1300;
+  --z-tour: 1150;
 }

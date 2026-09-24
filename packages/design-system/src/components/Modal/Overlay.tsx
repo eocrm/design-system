@@ -8,7 +8,8 @@ import { createPortal } from 'react-dom';
 import { useModalContext } from './context';
 import styles from './Modal.module.scss';
 
-const PORTAL_EXEMPT_SELECTOR = '[data-modal-portal-root], [data-drawer-portal-root]';
+const PORTAL_EXEMPT_SELECTOR =
+  '[data-modal-portal-root], [data-drawer-portal-root], [data-tour-portal-root]';
 
 export interface OverlayProps {
   children: ReactNode;

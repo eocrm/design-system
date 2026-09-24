@@ -686,6 +686,20 @@ export interface Messages {
     /** aria-label for the Modal header's close button. */
     close: string;
   };
+  tour: {
+    /** Tour footer: advance to the next step. */
+    next: string;
+    /** Tour footer: go back one step. */
+    back: string;
+    /** Tour footer: end the tour early (`onFinish('skipped')`). */
+    skip: string;
+    /** Tour footer: last-step button, unless the consumer passes `doneLabel`. */
+    done: string;
+    /** Visible progress line on the Tour card. `current` is 1-based. */
+    progress: (params: { current: number; total: number }) => string;
+    /** Announced via a live region while a step's target hasn't mounted yet. */
+    waiting: string;
+  };
   toast: {
     /** aria-label for an individual toast's dismiss button. */
     dismiss: string;

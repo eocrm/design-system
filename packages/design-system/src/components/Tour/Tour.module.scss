@@ -1,0 +1,201 @@
+@use '../../styles/mixins' as *;
+@use './Tour.tokens';
+
+// Geometry (position / top / left / width / height / translate) of the
+// spotlight, blockers and card is set INLINE from Spotlight.tsx / Tour.tsx:
+// they are viewport overlays positioned against another element, like
+// Popover's Floating UI styles. This file owns visuals and motion only.
+
+// ---------- Spotlight + blockers (modal mode) ----------
+
+.spotlight {
+  z-index: var(--tour-z);
+  border-radius: var(--tour-spotlight-radius);
+  box-shadow: 0 0 0 var(--tour-scrim-spread) var(--tour-scrim);
+  pointer-events: auto;
+  opacity: var(--tour-opacity-visible);
+  transition: opacity var(--tour-fade);
+
+  @starting-style {
+    opacity: var(--tour-opacity-hidden);
+  }
+}
+
+// Glide only after the first placement (Tour sets data-glide), so the cutout
+// doesn't sweep in from the viewport center on open.
+.spotlight[data-glide] {
+  transition:
+    opacity var(--tour-fade),
+    top var(--tour-glide),
+    left var(--tour-glide),
+    width var(--tour-glide),
+    height var(--tour-glide);
+}
+
+// Interactive step: clicks pass through the cutout to the target; a pulsing
+// ring says "you can click this".
+.spotlight[data-interactive] {
+  pointer-events: none;
+  outline: var(--tour-pulse-width) solid var(--tour-pulse-color);
+  animation: tour-pulse var(--tour-pulse-duration) ease-out infinite;
+}
+
+@keyframes tour-pulse {
+  from {
+    outline-offset: 0;
+    outline-color: var(--tour-pulse-color);
+  }
+
+  to {
+    outline-offset: var(--tour-pulse-spread);
+    outline-color: transparent;
+  }
+}
+
+.blocker {
+  z-index: var(--tour-z);
+  pointer-events: auto;
+}
+
+.spotlight[data-state='closed'],
+.blocker[data-state='closed'] {
+  opacity: var(--tour-opacity-hidden);
+  pointer-events: none;
+}
+
+// ---------- Card ----------
+
+.card {
+  z-index: var(--tour-z);
+  box-sizing: border-box;
+  min-width: var(--tour-card-min-width);
+  max-width: var(--tour-card-max-width);
+  padding: var(--tour-card-padding);
+  background: var(--tour-card-bg);
+  color: var(--tour-card-fg);
+  border: var(--border-width) solid var(--tour-card-border-color);
+  border-radius: var(--tour-card-radius);
+  box-shadow: var(--tour-card-shadow);
+  outline: none;
+  opacity: var(--tour-opacity-visible);
+  transform: none;
+  transform-origin: center;
+  transition:
+    opacity var(--tour-fade),
+    transform var(--tour-fade);
+
+  @starting-style {
+    opacity: var(--tour-opacity-hidden);
+    transform: scale(0.95);
+  }
+}
+
+.card[data-glide] {
+  transition:
+    opacity var(--tour-fade),
+    transform var(--tour-fade),
+    top var(--tour-glide),
+    left var(--tour-glide),
+    translate var(--tour-glide);
+}
+
+.card[data-side='top'] {
+  transform-origin: bottom center;
+}
+
+.card[data-side='bottom'] {
+  transform-origin: top center;
+}
+
+.card[data-side='left'] {
+  transform-origin: right center;
+}
+
+.card[data-side='right'] {
+  transform-origin: left center;
+}
+
+.card[data-waiting] {
+  opacity: var(--tour-waiting-opacity);
+}
+
+.card[data-state='closed'] {
+  opacity: var(--tour-opacity-hidden);
+  transform: scale(0.95);
+  pointer-events: none;
+}
+
+// Step content is keyed by index → remounts → cross-fades in.
+.content {
+  transition: opacity var(--tour-fade);
+
+  @starting-style {
+    opacity: var(--tour-opacity-hidden);
+  }
+}
+
+.progress {
+  font-size: var(--tour-progress-size);
+  color: var(--tour-card-muted-fg);
+}
+
+.title {
+  font-size: var(--tour-title-size);
+  font-weight: var(--tour-title-weight);
+}
+
+.body {
+  font-size: var(--tour-body-size);
+}
+
+.arrow {
+  position: absolute;
+  width: var(--tour-arrow-size);
+  height: var(--tour-arrow-size);
+  background: var(--tour-card-bg);
+  border-right: var(--border-width) solid var(--tour-card-border-color);
+  border-bottom: var(--border-width) solid var(--tour-card-border-color);
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+
+.card[data-side='bottom'] .arrow {
+  border-top: var(--border-width) solid var(--tour-card-border-color);
+  border-left: var(--border-width) solid var(--tour-card-border-color);
+  border-right: 0;
+  border-bottom: 0;
+}
+
+.card[data-side='left'] .arrow {
+  border-top: var(--border-width) solid var(--tour-card-border-color);
+  border-right: var(--border-width) solid var(--tour-card-border-color);
+  border-bottom: 0;
+  border-left: 0;
+}
+
+.card[data-side='right'] .arrow {
+  border-bottom: var(--border-width) solid var(--tour-card-border-color);
+  border-left: var(--border-width) solid var(--tour-card-border-color);
+  border-top: 0;
+  border-right: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spotlight,
+  .spotlight[data-glide],
+  .card,
+  .card[data-glide],
+  .content {
+    transition: none;
+  }
+
+  .spotlight[data-interactive] {
+    animation: none;
+  }
+}
+
+// Live-region text for the "waiting on the next target" state (Hard rule 10) —
+// same recipe as Switch's .srOnly.
+.srOnly {
+  @include visually-hidden;
+}

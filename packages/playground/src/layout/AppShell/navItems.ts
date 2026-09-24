@@ -94,6 +94,7 @@ import {
   Smile,
   Workflow,
   QrCode,
+  Signpost,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -289,6 +290,7 @@ export const componentGroups: { heading: string; items: NavItem[] }[] = [
         icon: ShieldCheck,
         end: false,
       },
+      { to: '/components/tour', label: 'Tour', icon: Signpost, end: false },
     ],
   },
 ];
