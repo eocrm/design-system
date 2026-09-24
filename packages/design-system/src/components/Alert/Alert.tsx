@@ -61,8 +61,13 @@ export interface AlertProps extends Omit<HTMLAttributes<HTMLElement>, 'role' | '
    * semantics, so screen readers read it in place instead of announcing it.
    * N live Alerts mounting together can queue N announcements (#547).
    *
-   * The tone is visual only in both modes (the icon is decorative), so put
-   * the urgency in `title`, e.g. "Needs action", rather than relying on colour.
+   * The tone is shown by the icon's shape and the colour only; it is not
+   * exposed to assistive tech in either mode (the icon is decorative). With
+   * `live={false}`, `tone="error"` also loses the "alert" role that browse-mode
+   * readers speak. So put the urgency in `title` ("Needs action").
+   *
+   * Decide it at mount: flipping `false` → `true` on a mounted Alert turns
+   * content that is already there into a live region, which announces nothing.
    * @default true
    */
   live?: boolean;
@@ -144,7 +149,10 @@ const DEFAULT_ICONS: Record<AlertTone, ReactNode> = {
  *   opens, especially one per list item: each is a live region, and some
  *   screen readers announce every one as a queue. Pass `live={false}`.
  * - ❌ `live={false}` for a message that appears in response to an action (a
- *   failed save) — nobody hears it unless they move onto it.
+ *   failed save) — it is never announced. (A polite live Alert that mounts
+ *   together with its text is not reliably announced either; `tone="error"`'s
+ *   `role="alert"` is. For a must-hear reactive message use `tone="error"` or
+ *   a Toast.)
  * - ❌ Multiple stacked Alerts above a page — pick one (most urgent tone) or
  *   compose into the page layout with explicit hierarchy.
  */
@@ -160,6 +168,7 @@ export const Alert = forwardRef<HTMLDivElement, AlertProps>(function Alert(
     <div
       ref={ref}
       {...props}
+      // {...props} first so role / data-tone (the ARIA contract) win.
       role={role}
       data-tone={tone}
       className={clsx(styles.alert, className)}

@@ -17,7 +17,7 @@ export function AlertDemo() {
     >
       <Example
         title="Four tones"
-        description="info / success / warning / error. Default icon + accent stripe per tone. Error gets role='alert' (assertive); others use role='status' (polite)."
+        description="info / success / warning / error. Default icon + accent stripe per tone. Error gets role='alert' (assertive); others use role='status' (polite). Both only while live, the default."
         code={`import { Alert, Stack } from '@eocrm/design-system';
 
 export function Demo() {
@@ -103,7 +103,7 @@ export function Demo() {
 
       <Example
         title="Static callout (live={false})"
-        description="For a callout that is part of the page when it opens, not a status change: `role='note'`, same visuals, no live region. One per card in a list won't queue a screen-reader announcement each. The tone is visual only, so the urgency goes in `title`."
+        description="For a callout that is part of the page when it opens, not a status change: `role='note'`, same visuals, no live region. One per card in a list won't queue a screen-reader announcement each. The tone (icon + colour) is not exposed to screen readers, so the urgency goes in `title`."
         code={`import { Alert, Stack } from '@eocrm/design-system';
 
 export function Demo() {

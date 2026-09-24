@@ -44,6 +44,7 @@ describe('<Alert>', () => {
       expect(screen.getByRole('note')).toHaveAttribute('data-tone', tone);
       expect(screen.queryByRole('status')).toBeNull();
       expect(screen.queryByRole('alert')).toBeNull();
+      // Alert never sets aria-live itself; this guards a future implicit one.
       expect(container.querySelector('[aria-live]')).toBeNull();
     },
   );
