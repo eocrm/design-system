@@ -27,6 +27,9 @@ export type {
 export { Kbd } from './components/Kbd';
 export type { KbdProps, KbdSize } from './components/Kbd';
 
+export { VisuallyHidden } from './components/VisuallyHidden';
+export type { VisuallyHiddenProps, VisuallyHiddenAs } from './components/VisuallyHidden';
+
 export { Card, CardBody } from './components/Card';
 export type { CardProps, CardPadding, CardTone, CardOverflow } from './components/Card';
 export type { CardBodyProps } from './components/Card';
