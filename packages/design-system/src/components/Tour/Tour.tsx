@@ -254,6 +254,27 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
     });
   }, [found]);
 
+  // ---- advanceOn: 'click' ----
+  useEffect(() => {
+    if (current?.advanceOn !== 'click') return;
+    if (modal && !current.interactive) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('[Tour] advanceOn="click" needs interactive: true in modal mode — ignored.');
+      }
+      return;
+    }
+    if (!found) return;
+    // setTimeout(0), not a microtask: React's root-delegated onClick runs
+    // after this native listener, and must finish first. The timer is NOT
+    // cleared on cleanup — the click itself commonly unmounts the target
+    // (navigation), which re-runs this effect before the timer fires.
+    const onClick = () => {
+      setTimeout(() => goNextRef.current(), 0);
+    };
+    found.addEventListener('click', onClick);
+    return () => found.removeEventListener('click', onClick);
+  }, [current, found, modal]);
+
   // ---- Exit: unmount after the fade ----
   useEffect(() => {
     if (!closing) return;

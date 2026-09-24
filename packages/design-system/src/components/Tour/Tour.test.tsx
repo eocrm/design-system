@@ -252,3 +252,82 @@ describe('Tour — targets', () => {
     expect(scroll).not.toHaveBeenCalled();
   });
 });
+
+describe('Tour — advanceOn', () => {
+  const STEPS2: TourStep[] = [
+    { target: 'go', title: 'Click it', interactive: true, advanceOn: 'click' },
+    { title: 'Next one' },
+  ];
+  afterEach(() => {
+    // Same ordering pitfall as "Tour — targets" above: unmount before wiping
+    // the body, or the live MutationObserver sets state outside act().
+    cleanup();
+    document.querySelectorAll('[data-tour]').forEach((el) => el.remove());
+  });
+
+  function addTarget(onClick?: () => void) {
+    const el = document.createElement('button');
+    el.dataset.tour = 'go';
+    el.textContent = 'Go';
+    if (onClick) el.addEventListener('click', onClick);
+    document.body.appendChild(el);
+    return el;
+  }
+
+  it('advances after the target is clicked, after its own handler', async () => {
+    const order: string[] = [];
+    const onStepChange = vi.fn(() => order.push('advance'));
+    const el = addTarget(() => order.push('target'));
+    render(<Tour steps={STEPS2} open onOpenChange={() => {}} onStepChange={onStepChange} />);
+    el.click();
+    await waitFor(() => expect(onStepChange).toHaveBeenCalledWith(1));
+    expect(order).toEqual(['target', 'advance']);
+  });
+
+  it('advanceOn survives the target unmounting because of the click', async () => {
+    const onStepChange = vi.fn();
+    const el = addTarget(() => el.remove());
+    render(<Tour steps={STEPS2} open onOpenChange={() => {}} onStepChange={onStepChange} />);
+    el.click();
+    await waitFor(() => expect(onStepChange).toHaveBeenCalledWith(1));
+  });
+
+  it('is ignored with a dev warning on a non-interactive modal step', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const onStepChange = vi.fn();
+    const el = addTarget();
+    render(
+      <Tour
+        steps={[{ target: 'go', title: 'Look', advanceOn: 'click' }, { title: 'B' }]}
+        open
+        onOpenChange={() => {}}
+        onStepChange={onStepChange}
+      />,
+    );
+    el.click();
+    // act-wrapped: unrelated effects (glide, floating-ui autoUpdate) can
+    // flush state asynchronously during this window; a bare setTimeout
+    // wait would let that happen outside act and warn.
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 10));
+    });
+    expect(onStepChange).not.toHaveBeenCalled();
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('advanceOn'));
+  });
+
+  it('works on any step when modal={false}', async () => {
+    const onStepChange = vi.fn();
+    const el = addTarget();
+    render(
+      <Tour
+        steps={[{ target: 'go', title: 'Look', advanceOn: 'click' }, { title: 'B' }]}
+        open
+        modal={false}
+        onOpenChange={() => {}}
+        onStepChange={onStepChange}
+      />,
+    );
+    el.click();
+    await waitFor(() => expect(onStepChange).toHaveBeenCalledWith(1));
+  });
+});
