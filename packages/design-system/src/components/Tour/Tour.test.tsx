@@ -277,9 +277,20 @@ describe('Tour — advanceOn', () => {
   it('advances after the target is clicked, after its own handler', async () => {
     const order: string[] = [];
     const onStepChange = vi.fn(() => order.push('advance'));
-    const el = addTarget(() => order.push('target'));
-    render(<Tour steps={STEPS2} open onOpenChange={() => {}} onStepChange={onStepChange} />);
-    el.click();
+    // The target's click handler is registered via React's onClick prop, not
+    // addEventListener, so the ordering assertion actually exercises the
+    // setTimeout(0) race against React's root-delegated click dispatch —
+    // two native addEventListener calls would pass on DOM registration
+    // order alone and never touch that race.
+    render(
+      <>
+        <button type="button" data-tour="go" onClick={() => order.push('target')}>
+          Go
+        </button>
+        <Tour steps={STEPS2} open onOpenChange={() => {}} onStepChange={onStepChange} />
+      </>,
+    );
+    screen.getByRole('button', { name: 'Go' }).click();
     await waitFor(() => expect(onStepChange).toHaveBeenCalledWith(1));
     expect(order).toEqual(['target', 'advance']);
   });
