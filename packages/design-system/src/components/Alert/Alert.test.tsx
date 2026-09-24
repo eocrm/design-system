@@ -33,6 +33,27 @@ describe('<Alert>', () => {
     expect(screen.getByRole('alert')).toBeInTheDocument();
   });
 
+  it.each(['info', 'success', 'warning', 'error'] as const)(
+    'live={false} renders tone="%s" as a static role="note", not a live region (#547)',
+    (tone) => {
+      const { container } = render(
+        <Alert tone={tone} live={false} title="Needs action">
+          x
+        </Alert>,
+      );
+      expect(screen.getByRole('note')).toHaveAttribute('data-tone', tone);
+      expect(screen.queryByRole('status')).toBeNull();
+      expect(screen.queryByRole('alert')).toBeNull();
+      // Alert never sets aria-live itself; this guards a future implicit one.
+      expect(container.querySelector('[aria-live]')).toBeNull();
+    },
+  );
+
+  it('live={true} is the same as omitting it', () => {
+    render(<Alert live>x</Alert>);
+    expect(screen.getByRole('status')).toBeInTheDocument();
+  });
+
   it('component-owned data-tone survives consumer-passed data-tone (spread order)', () => {
     // Consumer attempts to override data-tone via a passthrough prop.
     // The component's data-tone (driven by `tone`) MUST win.

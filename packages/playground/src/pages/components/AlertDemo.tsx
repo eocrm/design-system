@@ -17,7 +17,7 @@ export function AlertDemo() {
     >
       <Example
         title="Four tones"
-        description="info / success / warning / error. Default icon + accent stripe per tone. Error gets role='alert' (assertive); others use role='status' (polite)."
+        description="info / success / warning / error. Default icon + accent stripe per tone. Error gets role='alert' (assertive); others use role='status' (polite). Both only while live, the default."
         code={`import { Alert, Stack } from '@eocrm/design-system';
 
 export function Demo() {
@@ -99,6 +99,34 @@ export function Demo() {
         >
           A new version is ready. Reload to apply the latest improvements.
         </Alert>
+      </Example>
+
+      <Example
+        title="Static callout (live={false})"
+        description="For a callout that is part of the page when it opens, not a status change: `role='note'`, same visuals, no live region. One per card in a list won't queue a screen-reader announcement each. The tone (icon + colour) is not exposed to screen readers, so the urgency goes in `title`."
+        code={`import { Alert, Stack } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Stack gap="sm">
+      <Alert tone="warning" live={false} title="Needs action">
+        The client asked for a revised quote by Friday.
+      </Alert>
+      <Alert tone="warning" live={false} title="Needs action">
+        Contract renewal is waiting on a signature.
+      </Alert>
+    </Stack>
+  );
+}`}
+      >
+        <Stack gap="sm">
+          <Alert tone="warning" live={false} title="Needs action">
+            The client asked for a revised quote by Friday.
+          </Alert>
+          <Alert tone="warning" live={false} title="Needs action">
+            Contract renewal is waiting on a signature.
+          </Alert>
+        </Stack>
       </Example>
 
       <Example
