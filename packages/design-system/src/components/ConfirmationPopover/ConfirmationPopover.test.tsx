@@ -1,4 +1,5 @@
 import { useRef, useState, type RefObject } from 'react';
+import { flushSync } from 'react-dom';
 import { act, configure, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ConfirmationPopover } from './ConfirmationPopover';
@@ -557,6 +558,50 @@ describe('ConfirmationPopover — focus return (#552, #553)', () => {
     expect(focusSpy).not.toHaveBeenCalled();
     expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
     expect(document.activeElement).toBe(document.body);
+  });
+
+  it('flags an outside pointerdown before ANY document capture listener can commit the close', async () => {
+    // Real browsers run a microtask checkpoint between listeners, so React
+    // flushes Popover.Content's close (a document capture listener) before a
+    // later document capture listener runs. Emulate that with a document
+    // capture listener registered first that commits the close synchronously:
+    // the outside-pointer flag must already be set by then (window capture).
+    const user = userEvent.setup();
+    let close!: () => void;
+    function H() {
+      const [open, setOpen] = useState(false);
+      close = () => setOpen(false);
+      return (
+        <>
+          <div data-testid="outside">Outside</div>
+          <ConfirmationPopover
+            title="Delete?"
+            onConfirm={() => {}}
+            open={open}
+            onOpenChange={setOpen}
+          >
+            <button>Delete</button>
+          </ConfirmationPopover>
+        </>
+      );
+    }
+    const outsideFirst = (e: Event) => {
+      if ((e.target as Element).getAttribute?.('data-testid') === 'outside') flushSync(close);
+    };
+    document.addEventListener('pointerdown', outsideFirst, true);
+    try {
+      render(<H />);
+      const trigger = screen.getByRole('button', { name: 'Delete' });
+      await user.click(trigger);
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus());
+      const focusSpy = vi.spyOn(trigger, 'focus');
+      fireEvent.pointerDown(screen.getByTestId('outside'));
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      await new Promise((r) => setTimeout(r, 0));
+      expect(focusSpy).not.toHaveBeenCalled();
+    } finally {
+      document.removeEventListener('pointerdown', outsideFirst, true);
+    }
   });
 
   it('an outside pointerdown that did not close (pending) does not suppress the later restore', async () => {

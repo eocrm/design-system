@@ -94,14 +94,18 @@ export interface ConfirmationPopoverProps {
    * the empty state's first button. If it is empty or its element has left
    * the document, focus falls back to the trigger (when it still exists).
    *
-   * It applies on EVERY close path — Confirm, Cancel, Escape, and an outside
-   * click that leaves focus nowhere (an outside click onto another focusable
-   * control keeps focus there). To return to the trigger on Cancel and only
-   * move elsewhere after a confirm, aim the ref inside `onConfirm` and clear
-   * it in `onOpenChange(true)`.
+   * It applies when the popover closes via Confirm, Cancel or Escape. An
+   * outside click never restores focus — focus stays wherever the click put
+   * it (on a control, or `<body>` for an inert area).
    *
-   * If something else has already taken focus on close (e.g. a wrapping
-   * DropdownMenu that closes and refocuses its own trigger), it is left alone.
+   * A ref that is set statically (not only inside `onConfirm`) ALSO fires when
+   * the user closes by clicking the trigger again, pulling focus off the
+   * trigger. To return to the trigger on Cancel / toggle and only move
+   * elsewhere after a confirm, aim the ref inside `onConfirm` and clear it in
+   * `onOpenChange(true)`.
+   *
+   * If focus is already on some other live element when the popover closes,
+   * it is left alone.
    *
    * The target is scrolled into view with `{ block: 'nearest' }` (a no-op
    * when it is already visible) — it may be far from where the user was.
@@ -176,8 +180,13 @@ function FocusReturn({ returnFocusRef }: { returnFocusRef?: RefObject<HTMLElemen
         outsidePointerRef.current = false;
       }, 0);
     };
-    document.addEventListener('pointerdown', onPointerDown, true);
-    return () => document.removeEventListener('pointerdown', onPointerDown, true);
+    // On WINDOW capture, not document: Popover.Content's dismiss listener is
+    // a document capture listener registered first, and real browsers run a
+    // microtask checkpoint between listeners — React flushes the close there,
+    // so a document listener of ours would set the flag after restore() ran.
+    // Window capture fires before any document listener.
+    window.addEventListener('pointerdown', onPointerDown, true);
+    return () => window.removeEventListener('pointerdown', onPointerDown, true);
   }, [open, contentRef, triggerRef]);
 
   useLayoutEffect(() => {
