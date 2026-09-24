@@ -121,7 +121,11 @@ export const LiveRegion = forwardRef<HTMLSpanElement, LiveRegionProps>(function 
     return () => clearTimeout(id);
   }, [message, announceKey]);
 
-  // {...props} first so role / aria-live / aria-atomic always win (Pattern B).
+  // {...props} first so role / aria-live / aria-atomic always win (Pattern
+  // B) — including against `hidden` / `aria-hidden` arriving through an
+  // untyped spread (the props type omits them, but a caller can still
+  // forward them via `{...someUntypedRest}`; either would silence the
+  // region, so both are force-cleared here too).
   return (
     <VisuallyHidden
       {...props}
@@ -129,6 +133,8 @@ export const LiveRegion = forwardRef<HTMLSpanElement, LiveRegionProps>(function 
       role={politeness === 'assertive' ? 'alert' : 'status'}
       aria-live={politeness}
       aria-atomic="true"
+      hidden={undefined}
+      aria-hidden={undefined}
     >
       {shown}
     </VisuallyHidden>

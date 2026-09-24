@@ -45,6 +45,16 @@ describe('<LiveRegion>', () => {
     void props;
   });
 
+  it('hidden / aria-hidden smuggled in through an untyped spread do not reach the DOM', () => {
+    // The type-level Omit above only stops a caller writing these props
+    // directly. An untyped `...rest` forwarded from a parent can still put
+    // them on the wire — the component must neutralize them at runtime too.
+    const extra: any = { hidden: true, 'aria-hidden': 'true' };
+    render(<LiveRegion {...extra}>x</LiveRegion>);
+    expect(region()).not.toHaveAttribute('hidden');
+    expect(region()).not.toHaveAttribute('aria-hidden');
+  });
+
   it('a new message clears, then writes', () => {
     const { rerender } = render(<LiveRegion>One</LiveRegion>);
     flush();
