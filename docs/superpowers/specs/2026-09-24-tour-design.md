@@ -97,6 +97,7 @@ No per-component label props for translation. New `tour` namespace in
 | `tour.skip`     | `Skip tour`                 | `Пропустить`               |
 | `tour.done`     | `Done`                      | `Готово`                   |
 | `tour.progress` | `Step {current} of {total}` | `Шаг {current} из {total}` |
+| `tour.waiting`  | `Loading step…`             | `Загрузка шага…`           |
 
 ### Usage
 
@@ -204,8 +205,12 @@ warning.
 - Card: `role="dialog"`, `aria-modal={modal}`, `aria-labelledby` → title,
   `aria-describedby` → body, `tabIndex={-1}`.
 - Progress text visible: "Step 2 of 5" via `t('tour.progress')`.
-- **Waiting state (Hard rule 10):** `aria-busy="true"` on the card while a
-  target is being waited for; removed when it resolves or times out.
+- **Waiting state (Hard rule 10):** a visually hidden
+  `role="status" aria-live="polite"` live region, INSIDE the card (a plain
+  child can't join its `aria-labelledby` name) and rendered unconditionally,
+  announces `t('tour.waiting')` while a step's target is being waited for and
+  clears when it resolves, times out, or the tour closes. No `aria-busy` — it
+  can suppress the region's own update and the focused dialog's announcement.
 - **Focus on open:** remember `document.activeElement`, focus the card (both modes).
 - **Focus on step change:** focus the card again, so the new title is announced.
 - **Focus trap (modal only):** card + target when `interactive`, order card → target → wrap.

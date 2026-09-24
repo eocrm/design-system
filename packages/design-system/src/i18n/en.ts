@@ -335,7 +335,7 @@ export const en: Messages = {
     skip: 'Skip tour',
     done: 'Done',
     progress: ({ current, total }) => `Step ${current} of ${total}`,
-    waiting: 'Waiting for the next step…',
+    waiting: 'Loading step…',
   },
   toast: {
     dismiss: 'Dismiss',

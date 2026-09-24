@@ -195,15 +195,18 @@ describe('Tour — targets', () => {
     expect(dialog.querySelector('[class*="arrow"]')).toBeNull();
   });
 
-  it('is aria-busy while waiting and resolves when the target mounts', async () => {
+  it('announces via the status region while waiting and clears when the target mounts', async () => {
     render(<Tour steps={[{ target: 'later', title: 'Later' }]} open onOpenChange={() => {}} />);
     const dialog = screen.getByRole('dialog');
-    expect(dialog).toHaveAttribute('aria-busy', 'true');
     expect(dialog).toHaveAttribute('data-waiting');
+    // Region is inside the dialog and deferred one tick, so the word arrives
+    // as a change rather than mounting alongside the region (Hard rule 10).
+    await waitFor(() => expect(screen.getByRole('status').textContent).toBe('Loading step…'));
     act(() => {
       addTarget('later');
     });
-    await waitFor(() => expect(dialog).not.toHaveAttribute('aria-busy'));
+    await waitFor(() => expect(screen.getByRole('status').textContent).toBe(''));
+    expect(dialog).not.toHaveAttribute('data-waiting');
     expect(dialog).not.toHaveAttribute('data-centered');
   });
 
@@ -222,8 +225,9 @@ describe('Tour — targets', () => {
     );
     await waitFor(() => expect(onTargetMissing).toHaveBeenCalledWith(step, 0));
     const dialog = screen.getByRole('dialog');
-    expect(dialog).not.toHaveAttribute('aria-busy');
+    expect(dialog).not.toHaveAttribute('data-waiting');
     expect(dialog).toHaveAttribute('data-centered');
+    await waitFor(() => expect(screen.getByRole('status').textContent).toBe(''));
     expect(warn).toHaveBeenCalled();
   });
 

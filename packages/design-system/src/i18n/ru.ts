@@ -340,7 +340,7 @@ export const ru: Messages = {
     skip: 'Пропустить',
     done: 'Готово',
     progress: ({ current, total }) => `Шаг ${current} из ${total}`,
-    waiting: 'Ожидание следующего шага…',
+    waiting: 'Загрузка шага…',
   },
   toast: {
     dismiss: 'Закрыть',

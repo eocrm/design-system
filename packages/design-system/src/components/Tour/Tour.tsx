@@ -149,7 +149,7 @@ const EDITABLE = 'input, textarea, select, [contenteditable]:not([contenteditabl
  *   steps={[
  *     { title: 'Welcome to Deals', body: 'A 30-second tour.' },
  *     { target: 'deals-filter', title: 'Filter', body: 'Narrow the pipeline.' },
- *     { title: 'You're set', body: 'Replay it from Help → Tour.' },
+ *     { title: "You're set", body: 'Replay it from Help → Tour.' },
  *   ]}
  * />
  *
@@ -262,8 +262,8 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
   // always arrive as a change (Hard rule 10).
   const [waitingText, setWaitingText] = useState('');
   useEffect(() => {
-    setWaitingText(waiting ? t('tour.waiting') : '');
-  }, [waiting, t]);
+    setWaitingText(waiting && !closing ? t('tour.waiting') : '');
+  }, [waiting, closing, t]);
 
   const finish = (reason: TourFinishReason) => {
     if (closing) return;
@@ -451,7 +451,6 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
         aria-modal={modal}
         aria-labelledby={titleId}
         aria-describedby={current.body != null ? bodyId : undefined}
-        aria-busy={waiting || undefined}
         tabIndex={-1}
         data-state={state}
         data-side={centered ? undefined : resolvedSide}
@@ -506,12 +505,15 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
             </Cluster>
           </Cluster>
         </Stack>
+        {/* INSIDE the dialog on purpose — VoiceOver prunes content outside an
+            aria-modal dialog, so a region outside this div is never reached.
+            The dialog's name comes from aria-labelledby, so a plain child
+            span can't join it. Rendered unconditionally so only its text
+            mutates; same recipe as Switch's srOnly span otherwise. */}
+        <span role="status" aria-live="polite" className={styles.srOnly}>
+          {waitingText}
+        </span>
       </div>
-      {/* OUTSIDE the dialog div on purpose — same recipe as Switch's srOnly
-          span. Rendered unconditionally so only its text mutates. */}
-      <span role="status" aria-live="polite" className={styles.srOnly}>
-        {waitingText}
-      </span>
     </>,
     document.body,
   );
