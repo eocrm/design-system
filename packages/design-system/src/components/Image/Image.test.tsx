@@ -425,3 +425,30 @@ describe('Image — fixed-size error tile is icon-only (#538)', () => {
     expect(slot.className).not.toMatch(/fallback/);
   });
 });
+
+describe('Image — a fluid tile with no room (#542)', () => {
+  // jsdom has no layout and no container queries, so the icon-only degrade is
+  // checked in a real browser (the playground's "Error in a tight box" demo).
+  // What IS assertable: which wrapper gets the error-state height floor, and
+  // that the message and Retry still carry the classes the container rule
+  // hides them by.
+  it('floors only an unreserved wrapper — no size, no aspectRatio, no fallback', () => {
+    const { container, rerender } = render(<Image src={SRC} alt="x" />);
+    const wrapper = container.querySelector('span') as HTMLElement;
+    expect(wrapper.className).toMatch(/unreserved/);
+    rerender(<Image src={SRC} alt="x" aspectRatio="16 / 9" />);
+    expect(wrapper.className).not.toMatch(/unreserved/);
+    rerender(<Image src={SRC} alt="x" size="lg" />);
+    expect(wrapper.className).not.toMatch(/unreserved/);
+    // A boxless fallback is in flow and sizes the wrapper itself.
+    rerender(<Image src={SRC} alt="x" fallback={<span>nope</span>} />);
+    expect(wrapper.className).not.toMatch(/unreserved/);
+  });
+
+  it('keeps the message as text in the tree (it is only visually hidden when compact)', () => {
+    const { container } = render(<Image src={SRC} alt="" />);
+    fireEvent.error(getImg(container));
+    expect(container.querySelector('[class*="errorText"]')).toHaveTextContent(/failed to load/i);
+    expect(screen.getByRole('button', { name: 'Retry' }).className).toMatch(/retry/);
+  });
+});

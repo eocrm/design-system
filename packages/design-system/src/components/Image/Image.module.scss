@@ -88,9 +88,26 @@
   inset: 0;
 }
 
+// Smallest box the full fluid tile (icon + message + Retry) fits in — see the
+// `@container` rule below. Measured in Chromium at default tokens: icon 28 +
+// gap 8 + one text line 17 + gap 8 + `sm` Button 24 = 85px tall, 105px wide
+// for the English message. At 128px wide the longer Russian message wraps to
+// two lines, 102px tall — so 128 × 104 holds both shipped locales. SCSS
+// constants because container-query conditions can't read custom properties
+// (same as `_internal/collapse.scss`).
+// ponytail: fixed thresholds from two locales; a new locale whose message
+// needs three lines at 128px must raise the height (≈ +17px per line).
+$error-full-min-width: 128px;
+$error-full-min-height: 104px;
+
 .error {
   position: absolute;
   inset: 0;
+
+  // A size container: the tile is `inset: 0`, so its box comes from the
+  // wrapper and never from its contents, which is what makes size containment
+  // safe here and lets its children ask how much room they got (#542).
+  container-type: size;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -102,6 +119,33 @@
 
 .errorText {
   font-size: var(--image-error-font-size);
+}
+
+// #542: in a box too narrow or short for the full tile, Retry landed past the
+// wrapper's `overflow: hidden` clip — painted nowhere, still in the tab order —
+// the #538 defect on the fluid branch. Degrade the same way the sized tile
+// does: icon only. Retry is `display: none`, so it leaves the tab order; the
+// message is visually hidden, not removed, because in this branch it is the
+// only thing naming the failure (the icon carries `alt` alone).
+// `.error .retry` / `.error .errorText` (0,2,0) beat Button's own `.button`
+// (0,1,0) on specificity, not on stylesheet order.
+@container (width < #{$error-full-min-width}) or (height < #{$error-full-min-height}) {
+  .error .errorText {
+    @include visually-hidden;
+  }
+
+  .error .retry {
+    display: none;
+  }
+}
+
+// An unreserved wrapper (no `size`, no `aspectRatio`) has no in-flow content
+// once the image fails, so it collapsed to height 0 (#542). Floor it at an
+// icon's height — error state only, so a loaded image is untouched — and the
+// rule above makes that an icon-only tile. A consumer-set height taller than
+// this still wins; `min-height` only ever raises.
+.unreserved[data-state='error'] {
+  min-height: var(--image-error-min-height);
 }
 
 // The sized error tile is this icon and nothing else (#538), so it is sized to

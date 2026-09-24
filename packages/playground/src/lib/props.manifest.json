@@ -3191,7 +3191,7 @@
           "type": "ModalSize",
           "required": false,
           "default": "",
-          "description": "Size preset. Defaults to 'md'."
+          "description": "Size preset. Defaults to 'md'. `'full'` is a near-full-screen (95vw × 90dvh) reader — see {@link ModalSize}."
         },
         {
           "name": "overlay",
@@ -5454,7 +5454,7 @@
     "TooltipSide": "\"left\" | \"right\" | \"top\" | \"bottom\"",
     "TooltipAlign": "\"start\" | \"end\" | \"center\"",
     "ConfirmationVariant": "\"danger\" | \"default\"",
-    "ModalSize": "\"sm\" | \"md\" | \"lg\"",
+    "ModalSize": "\"sm\" | \"md\" | \"lg\" | \"full\"",
     "ModalOverlayVariant": "\"solid\" | \"blur\"",
     "ModalStackMode": "\"replace\" | \"overlay\"",
     "ScreenFill": "\"viewport\" | \"block\"",

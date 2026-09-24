@@ -134,9 +134,12 @@ const SIZE_CLASS: Record<ImageSize, string> = {
  * `<img>` are intrinsic-ratio hints only, not the rendered size.
  *
  * The error tile comes in two forms. A fluid image (no `size`) shows the icon,
- * a message and a **Retry** button — which assumes a container wide and tall
- * enough for an `sm` Button; in a very narrow or unreserved box that button
- * clips the same way (#542), so give a fluid image real room. A fixed-`size` image — `'xs'` / `'sm'` /
+ * a message and a **Retry** button when its box can hold them. In a box too
+ * narrow or too short for that it drops to the icon alone — the message
+ * stays for screen readers, Retry is removed rather than left clipped yet
+ * focusable (#542) — and an unreserved box (no `size`, no `aspectRatio`) is
+ * floored at an icon's height on error instead of collapsing to zero. So a
+ * fluid image is only retryable at roughly 128×104px or more. A fixed-`size` image — `'xs'` / `'sm'` /
  * `'md'` / `'lg'`, i.e. 20 / 24 / 32 / 40px — shows the **icon alone**, scaled
  * to its box, and is **not retryable**: none of those squares can hold the
  * message *and* an `sm` Button, and the button they used to render sat outside
@@ -260,7 +263,17 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
 
   return (
     <span
-      className={clsx(styles.wrapper, RADIUS_CLASS[radius], size && SIZE_CLASS[size], className)}
+      className={clsx(
+        styles.wrapper,
+        RADIUS_CLASS[radius],
+        size && SIZE_CLASS[size],
+        // No box of its own: on error the image goes `display: none` and the
+        // tile is out of flow, so nothing is left to give the wrapper height
+        // (#542). `.unreserved` floors it at an icon's height, error state
+        // only. A boxless `fallback` is in flow and sizes the wrapper itself.
+        size === undefined && aspectRatio === undefined && fallback == null && styles.unreserved,
+        className,
+      )}
       style={wrapperStyle}
       data-state={state}
     >

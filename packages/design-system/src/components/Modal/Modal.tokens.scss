@@ -21,6 +21,12 @@
   --modal-content-width-md: var(--size-modal-md);
   --modal-content-width-lg: var(--size-modal-lg);
 
+  // `full` — near-full-screen, viewport-relative rather than a step on the
+  // width scale. A FIXED height, not a max: a document reader shouldn't resize
+  // itself to each document, and the Body scrolls inside it (#545).
+  --modal-content-width-full: 95vw;
+  --modal-content-height-full: 90dvh;
+
   // Size variants — internal padding per size (sm tightens to space-3)
   --modal-content-padding-default: var(--space-4);
   --modal-content-padding-sm: var(--space-3);

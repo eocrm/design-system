@@ -412,7 +412,7 @@ export function InteractiveThumb() {
 
       <Example
         title="Error + retry"
-        description="A fluid image that fails shows the ImageOff placeholder with a Retry button (re-fetches the source) — assuming a box wide and tall enough for an `sm` Button; a narrow one clips it (#542). A fixed-`size` one shows the icon alone, scaled to its box: none of 20/24/32/40px holds the message *and* an `sm` Button, so the failure is not retryable there. Screen readers still get it, from the icon's name. Need a control? `fallback` replaces the tile and, at a fixed `size`, renders in a slot filling the box — an icon-only Button fits a 40px one; a labelled one does not."
+        description="A fluid image that fails shows the ImageOff placeholder with a Retry button (re-fetches the source) — when its box can hold them. A narrower or shorter box gets the icon alone (see the next example). A fixed-`size` one shows the icon alone, scaled to its box: none of 20/24/32/40px holds the message *and* an `sm` Button, so the failure is not retryable there. Screen readers still get it, from the icon's name. Need a control? `fallback` replaces the tile and, at a fixed `size`, renders in a slot filling the box — an icon-only Button fits a 40px one; a labelled one does not."
         code={`import { Image, Stack, Cluster } from '@eocrm/design-system';
 
 const BROKEN = 'https://example.com/does-not-exist.jpg';
@@ -447,6 +447,59 @@ export function Demo() {
             ))}
           </Cluster>
         </Stack>
+      </Example>
+
+      <Example
+        title="Error in a tight box"
+        description="A fluid tile that has no room for the message and Retry drops to the icon alone, like the fixed-size one. Retry is removed, not left clipped yet focusable, and the message stays for screen readers. A box with no `size` and no `aspectRatio` is floored at an icon's height on error instead of collapsing to zero (#542). These are the shapes the focus-ring sweep could not reach before."
+        code={`import { Image, Cluster } from '@eocrm/design-system';
+
+const BROKEN = 'https://example.com/does-not-exist.jpg';
+
+export function Demo() {
+  return (
+    <Cluster gap="lg" align="start">
+      {/* No size, no aspectRatio: floored at an icon's height on error */}
+      <div style={{ width: 240 }}>
+        <Image src={BROKEN} alt="Unreserved broken image" />
+      </div>
+      {/* Reserved, but too narrow for the message + Retry */}
+      <div style={{ width: 60 }}>
+        <Image src={BROKEN} alt="Narrow broken image" aspectRatio="16 / 9" />
+      </div>
+      <div style={{ width: 24 }}>
+        <Image src={BROKEN} alt="Tiny broken image" aspectRatio={1} />
+      </div>
+    </Cluster>
+  );
+}`}
+      >
+        <Cluster gap="lg" align="start">
+          <Stack gap="xs">
+            <div style={{ width: 240 }}>
+              <Image src={BROKEN} alt="Unreserved broken image" />
+            </div>
+            <Text size="xs" tone="muted">
+              no size / aspectRatio
+            </Text>
+          </Stack>
+          <Stack gap="xs">
+            <div style={{ width: 60 }}>
+              <Image src={BROKEN} alt="Narrow broken image" aspectRatio="16 / 9" />
+            </div>
+            <Text size="xs" tone="muted">
+              60px, 16 / 9
+            </Text>
+          </Stack>
+          <Stack gap="xs">
+            <div style={{ width: 24 }}>
+              <Image src={BROKEN} alt="Tiny broken image" aspectRatio={1} />
+            </div>
+            <Text size="xs" tone="muted">
+              24px, 1 / 1
+            </Text>
+          </Stack>
+        </Cluster>
       </Example>
 
       <Example
