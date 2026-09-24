@@ -11,17 +11,17 @@
     'subtitle actions'
     'meta actions';
 
-  // The title column has a floor (--page-header-title-min, capped at the
-  // container width by min()), not 0: with a 0 floor an `auto` actions
-  // track keeps its max-content width in a narrow CONTAINER on a desktop
-  // viewport (the 640px media query never fires) and crushes the title to a
-  // few px with mid-word breaks. With the floor, the actions track gives way
-  // first and its buttons wrap. `auto`, not a percentage cap, so a wide
-  // header keeps all its actions on one line (#550). Known limits: a title
-  // word wider than the floor still breaks mid-word (overflow-wrap below),
-  // and a container under ~300px (with Aside; ~280px without) at a wide
-  // viewport can no longer fit floor + actions, so the actions overflow.
-  grid-template-columns: minmax(min(var(--page-header-title-min), 100%), 1fr) auto;
+  // The title column has a floor (--page-header-title-min, capped at half
+  // the header by min() so the actions keep room for their widest button in
+  // tiny containers), not 0: with a 0 floor an `auto` actions track keeps
+  // its max-content width in a narrow CONTAINER on a desktop viewport (the
+  // 640px media query never fires) and crushes the title to a few px with
+  // mid-word breaks. With the floor, the actions track gives way first and
+  // its buttons wrap. `auto`, not a percentage cap, so a wide header keeps
+  // all its actions on one line (#550). Known limits: a title word wider
+  // than the floor still breaks mid-word (overflow-wrap below); with an
+  // Aside, a ~240px container can still push the actions past the edge.
+  grid-template-columns: minmax(min(var(--page-header-title-min), 50%), 1fr) auto;
 
   // Column gap only. Row gap is 0 because Title/Subtitle/Meta have their
   // own line-height which naturally separates them — adding an explicit
@@ -50,7 +50,7 @@
     'aside title actions'
     'aside subtitle actions'
     'aside meta actions';
-  grid-template-columns: auto minmax(min(var(--page-header-title-min), 100%), 1fr) auto;
+  grid-template-columns: auto minmax(min(var(--page-header-title-min), 50%), 1fr) auto;
 }
 
 .rootWithBorder {

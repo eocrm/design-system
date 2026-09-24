@@ -332,11 +332,11 @@ describe('PageHeader — responsive shrink (#550)', () => {
     const scss = readFileSync(resolve(__dirname, 'PageHeader.module.scss'), 'utf8');
     const block = (sel: string) =>
       scss.match(new RegExp(`^${sel.replace('.', '\\.')}\\s*\\{([^}]*)\\}`, 'm'))?.[1] ?? '';
-    // The title column has a token floor (min()-capped at the container), and
-    // the actions track stays `auto`: an `auto` actions track with a 0 title
-    // floor crushed the title in narrow containers; a percentage cap on the
-    // actions wrapped normal desktop headers (#550).
-    const floor = 'minmax\\(min\\(var\\(--page-header-title-min\\),\\s*100%\\),\\s*1fr\\)';
+    // The title column has a token floor, capped at half the header so the
+    // actions keep min-content room in tiny containers, and the actions track
+    // stays `auto`: a 0 title floor crushed the title in narrow containers; a
+    // percentage cap on the actions wrapped normal desktop headers (#550).
+    const floor = 'minmax\\(min\\(var\\(--page-header-title-min\\),\\s*50%\\),\\s*1fr\\)';
     expect(block('.root')).toMatch(new RegExp(`grid-template-columns:\\s*${floor}\\s+auto;`));
     expect(block('.rootWithAside')).toMatch(
       new RegExp(`grid-template-columns:\\s*auto\\s+${floor}\\s+auto;`),
