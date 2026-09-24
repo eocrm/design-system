@@ -617,32 +617,70 @@ describe('<Modal>', () => {
     expect(focus).toHaveBeenCalledTimes(1);
   });
 
-  it('returnFocusRef takes focus on close, over the captured opener (#529)', async () => {
-    const user = userEvent.setup();
-    function ReturnFocusHarness() {
-      const [open, setOpen] = useState(false);
-      const fallbackRef = useRef<HTMLElement | null>(null);
-      return (
-        <>
-          <button onClick={() => setOpen(true)} data-testid="trigger">
-            Open
-          </button>
-          <button ref={fallbackRef as RefObject<HTMLButtonElement>} data-testid="next">
-            Next row
-          </button>
-          <Modal open={open} onOpenChange={setOpen} aria-label="x" returnFocusRef={fallbackRef}>
-            <Modal.Body>x</Modal.Body>
-          </Modal>
-        </>
-      );
-    }
-    render(<ReturnFocusHarness />);
-    const trigger = screen.getByTestId('trigger');
-    trigger.focus();
-    await user.click(trigger);
-    await user.keyboard('{Escape}');
-    await new Promise((r) => setTimeout(r, 0));
-    expect(document.activeElement).toBe(screen.getByTestId('next'));
+  describe('returnFocusRef scrollIntoView (#553)', () => {
+    let originalScrollIntoView: typeof Element.prototype.scrollIntoView;
+    beforeEach(() => {
+      originalScrollIntoView = Element.prototype.scrollIntoView;
+      Element.prototype.scrollIntoView = vi.fn();
+    });
+    afterEach(() => {
+      Element.prototype.scrollIntoView = originalScrollIntoView;
+    });
+
+    it('returnFocusRef takes focus on close, over the captured opener, and scrolls it into view (#529, #553)', async () => {
+      const user = userEvent.setup();
+      function ReturnFocusHarness() {
+        const [open, setOpen] = useState(false);
+        const fallbackRef = useRef<HTMLElement | null>(null);
+        return (
+          <>
+            <button onClick={() => setOpen(true)} data-testid="trigger">
+              Open
+            </button>
+            <button ref={fallbackRef as RefObject<HTMLButtonElement>} data-testid="next">
+              Next row
+            </button>
+            <Modal open={open} onOpenChange={setOpen} aria-label="x" returnFocusRef={fallbackRef}>
+              <Modal.Body>x</Modal.Body>
+            </Modal>
+          </>
+        );
+      }
+      render(<ReturnFocusHarness />);
+      const trigger = screen.getByTestId('trigger');
+      trigger.focus();
+      await user.click(trigger);
+      await user.keyboard('{Escape}');
+      await new Promise((r) => setTimeout(r, 0));
+      const next = screen.getByTestId('next');
+      expect(document.activeElement).toBe(next);
+      expect(next.scrollIntoView).toHaveBeenCalledWith({ block: 'nearest' });
+    });
+
+    it('no returnFocusRef: the captured opener regains focus and is not scrolled (#553)', async () => {
+      const user = userEvent.setup();
+      function NoReturnFocusHarness() {
+        const [open, setOpen] = useState(false);
+        return (
+          <>
+            <button onClick={() => setOpen(true)} data-testid="trigger">
+              Open
+            </button>
+            <Modal open={open} onOpenChange={setOpen} aria-label="x">
+              <Modal.Body>x</Modal.Body>
+            </Modal>
+          </>
+        );
+      }
+      render(<NoReturnFocusHarness />);
+      const trigger = screen.getByTestId('trigger');
+      trigger.focus();
+      await user.click(trigger);
+      await user.keyboard('{Escape}');
+      await new Promise((r) => setTimeout(r, 0));
+      expect(document.activeElement).toBe(trigger);
+      expect(trigger.scrollIntoView).not.toHaveBeenCalled();
+    });
   });
 
   it('returnFocusRef rescues focus when the opener unmounted (#529)', async () => {
