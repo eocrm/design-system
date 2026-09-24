@@ -24,6 +24,9 @@
   // `full` — near-full-screen, viewport-relative rather than a step on the
   // width scale. A FIXED height, not a max: a document reader shouldn't resize
   // itself to each document, and the Body scrolls inside it (#545).
+  // Component-local, not a `--size-modal-*` entry in tokens.json: the value
+  // is viewport-relative and web-only, with no dp counterpart for the
+  // Kotlin/Compose contract.
   --modal-content-width-full: 95vw;
   --modal-content-height-full: 90dvh;
 

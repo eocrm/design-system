@@ -461,14 +461,14 @@ export function Demo() {
     <Cluster gap="lg" align="start">
       {/* No size, no aspectRatio: floored at an icon's height on error */}
       <div style={{ width: 240 }}>
-        <Image src={BROKEN} alt="Unreserved broken image" />
+        <Image src={BROKEN} alt="Unreserved broken image" loading="eager" />
       </div>
       {/* Reserved, but too narrow for the message + Retry */}
       <div style={{ width: 60 }}>
-        <Image src={BROKEN} alt="Narrow broken image" aspectRatio="16 / 9" />
+        <Image src={BROKEN} alt="Narrow broken image" aspectRatio="16 / 9" loading="eager" />
       </div>
       <div style={{ width: 24 }}>
-        <Image src={BROKEN} alt="Tiny broken image" aspectRatio={1} />
+        <Image src={BROKEN} alt="Tiny broken image" aspectRatio={1} loading="eager" />
       </div>
     </Cluster>
   );
@@ -477,7 +477,7 @@ export function Demo() {
         <Cluster gap="lg" align="start">
           <Stack gap="xs">
             <div style={{ width: 240 }}>
-              <Image src={BROKEN} alt="Unreserved broken image" />
+              <Image src={BROKEN} alt="Unreserved broken image" loading="eager" />
             </div>
             <Text size="xs" tone="muted">
               no size / aspectRatio
@@ -485,7 +485,7 @@ export function Demo() {
           </Stack>
           <Stack gap="xs">
             <div style={{ width: 60 }}>
-              <Image src={BROKEN} alt="Narrow broken image" aspectRatio="16 / 9" />
+              <Image src={BROKEN} alt="Narrow broken image" aspectRatio="16 / 9" loading="eager" />
             </div>
             <Text size="xs" tone="muted">
               60px, 16 / 9
@@ -493,7 +493,7 @@ export function Demo() {
           </Stack>
           <Stack gap="xs">
             <div style={{ width: 24 }}>
-              <Image src={BROKEN} alt="Tiny broken image" aspectRatio={1} />
+              <Image src={BROKEN} alt="Tiny broken image" aspectRatio={1} loading="eager" />
             </div>
             <Text size="xs" tone="muted">
               24px, 1 / 1

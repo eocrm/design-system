@@ -30,7 +30,14 @@ export interface ModalProps {
   /** Fired when Modal wants to change open state — Esc, overlay click, Close button, programmatic. */
   onOpenChange: (open: boolean) => void;
 
-  /** Size preset. Defaults to 'md'. `'full'` is a near-full-screen (95vw × 90dvh) reader — see {@link ModalSize}. */
+  /**
+   * Size preset. Defaults to `'md'`.
+   * - `'sm'` (400px) — confirms and short prompts.
+   * - `'md'` (560px) — the default; typical forms.
+   * - `'lg'` (800px) — wide forms, tables, previews.
+   * - `'full'` (95vw × 90dvh by default, fixed height) — long documents, e.g. an HTML email.
+   * See {@link ModalSize}.
+   */
   size?: ModalSize;
 
   /**
@@ -182,10 +189,11 @@ export interface ModalProps {
  * </Modal>
  *
  * @example
- * // Near-full-screen reader for a long document — Body scrolls, Header/Footer stay put:
+ * // Near-full-screen reader for a long document — Body scrolls, Header/Footer stay put.
+ * // `renderedEmail` is your own sanitized HTML, not a library component:
  * <Modal open={open} onOpenChange={setOpen} size="full">
  *   <Modal.Header>Re: Q3 renewal</Modal.Header>
- *   <Modal.Body><EmailHtml html={message.html} /></Modal.Body>
+ *   <Modal.Body>{renderedEmail}</Modal.Body>
  * </Modal>
  *
  * @remarks When NOT to use

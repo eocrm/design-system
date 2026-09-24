@@ -157,6 +157,10 @@
 .size-full {
   --modal-width: var(--modal-content-width-full);
 
+  // vh first for browsers without dvh (Safari < 15.4), matching `.content`:
+  // there the var() below is invalid at computed-value time, and without the
+  // fallback the height would drop to `auto`.
+  height: 90vh;
   height: var(--modal-content-height-full);
 }
 

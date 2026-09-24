@@ -90,15 +90,17 @@
 
 // Smallest box the full fluid tile (icon + message + Retry) fits in — see the
 // `@container` rule below. Measured in Chromium at default tokens: icon 28 +
-// gap 8 + one text line 17 + gap 8 + `sm` Button 24 = 85px tall, 105px wide
-// for the English message. At 128px wide the longer Russian message wraps to
-// two lines, 102px tall — so 128 × 104 holds both shipped locales. SCSS
-// constants because container-query conditions can't read custom properties
-// (same as `_internal/collapse.scss`).
-// ponytail: fixed thresholds from two locales; a new locale whose message
-// needs three lines at 128px must raise the height (≈ +17px per line).
-$error-full-min-width: 128px;
-$error-full-min-height: 104px;
+// gap 8 + one line of text 17 (the message never wraps, see `.errorText`) +
+// gap 8 + `sm` Button 24 = 85px tall, so the height no longer varies with
+// the message. The width is set by the widest shipped Retry label (ru
+// "Повторить", 85px; en 55px). SCSS constants because container-query
+// conditions can't read custom properties (same as `_internal/collapse.scss`).
+// ponytail: fixed thresholds. They hold at default tokens for the shipped
+// Retry labels. A longer Retry label (a new locale or a consumer i18n
+// override), or larger `--image-error-gap` / `--image-error-font-size` / `sm`
+// Button tokens, needs these raised to match.
+$error-full-min-width: 96px;
+$error-full-min-height: 88px;
 
 .error {
   position: absolute;
@@ -118,7 +120,14 @@ $error-full-min-height: 104px;
 }
 
 .errorText {
+  // One line, never more: a wrapping message made the tile's height depend on
+  // the locale and on consumer i18n overrides, and so did the threshold below
+  // (#542 review). The full text stays in the DOM for screen readers.
+  max-width: 100%;
+  overflow: hidden;
   font-size: var(--image-error-font-size);
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 // #542: in a box too narrow or short for the full tile, Retry landed past the
@@ -137,15 +146,27 @@ $error-full-min-height: 104px;
   .error .retry {
     display: none;
   }
+
+  // The fluid icon is a fixed 28px; a box smaller than that clips it. Let it
+  // shrink with the tile, as the sized branch's `.errorIcon` does.
+  .error svg {
+    max-width: 100%;
+    max-height: 100%;
+  }
 }
 
 // An unreserved wrapper (no `size`, no `aspectRatio`) has no in-flow content
-// once the image fails, so it collapsed to height 0 (#542). Floor it at an
-// icon's height — error state only, so a loaded image is untouched — and the
-// rule above makes that an icon-only tile. A consumer-set height taller than
-// this still wins; `min-height` only ever raises.
-.unreserved[data-state='error'] {
-  min-height: var(--image-error-min-height);
+// once the image fails, so it collapsed to height 0 (#542). Give it an in-flow
+// spacer, error state only, so a loaded image is untouched; the rule above
+// then makes it an icon-only tile. A spacer, NOT `min-height`: `min-height`
+// beats a consumer's own `height`, so a 24px thumbnail sized by `className`
+// would grow to 40px on error. The spacer only sets the height when it is
+// `auto`. An explicit `height` or CSS `aspect-ratio` still wins, and the
+// wrapper's `overflow: hidden` clips the leftover spacer.
+.unreserved[data-state='error']::before {
+  content: '';
+  display: block;
+  height: var(--image-error-min-height);
 }
 
 // The sized error tile is this icon and nothing else (#538), so it is sized to
@@ -198,10 +219,12 @@ $error-full-min-height: 104px;
 }
 
 // The error column fills the wrapper (`.error` is `inset: 0`) and centres its
-// children, so in a small square box the Retry button's bottom edge lands
+// children, so in a small square box the Retry button's bottom edge could land
 // EXACTLY on the wrapper's bottom — measured at 0.00px of clearance in the
-// 80x80 `radius` examples, where the flex items shrink to fit and the column
-// ends up exactly as tall as the box. `.wrapper` is `overflow: hidden`, so an
+// 80x80 `radius` examples, where the flex items shrank to fit and the column
+// ended up exactly as tall as the box. Since #542 a box that short gets the
+// icon-only tile (no Retry at all); the inset ring still covers a Retry that
+// sits within a few px of the edge just above the threshold. `.wrapper` is `overflow: hidden`, so an
 // outset ring's entire bottom band (2px offset + 2px width) falls outside the
 // clip and is never painted: a keyboard user tabbing to Retry gets a ring with
 // its bottom edge missing. Pre-existing; #523's geometry sweep is what made it
