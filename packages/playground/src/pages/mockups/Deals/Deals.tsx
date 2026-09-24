@@ -69,14 +69,12 @@ export function Deals() {
         <PageHeader.Title>Deals</PageHeader.Title>
         <PageHeader.Subtitle>{totalDeals} active deals across 4 stages</PageHeader.Subtitle>
         <PageHeader.Actions>
-          <Cluster gap="sm">
-            <Button variant="secondary">
-              <Filter size={14} /> Filter
-            </Button>
-            <Button>
-              <Plus size={14} /> New deal
-            </Button>
-          </Cluster>
+          <Button variant="secondary">
+            <Filter size={14} /> Filter
+          </Button>
+          <Button>
+            <Plus size={14} /> New deal
+          </Button>
         </PageHeader.Actions>
       </PageHeader>
 
