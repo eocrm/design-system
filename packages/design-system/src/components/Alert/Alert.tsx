@@ -12,7 +12,8 @@ import styles from './Alert.module.scss';
  * - `'success'` — green accent. Confirmations ("Changes saved").
  * - `'warning'` — dark amber accent. Non-blocking heads-up ("Storage at 85%").
  * - `'error'` — red accent. Failures. ALSO sets `role="alert"` (assertive); the
- *   other tones use `role="status"` (polite).
+ *   other tones use `role="status"` (polite). With `live={false}` every tone
+ *   is a static `role="note"` instead.
  */
 export type AlertTone = 'info' | 'success' | 'warning' | 'error';
 
@@ -47,6 +48,24 @@ export interface AlertProps extends Omit<HTMLAttributes<HTMLElement>, 'role' | '
    * manage the action row's layout — pass a pre-laid-out node.
    */
   actions?: ReactNode;
+
+  /**
+   * Whether the Alert is a live region. Defaults to `true`: `role="status"`
+   * (polite), or `role="alert"` (assertive) for `tone="error"` — right for a
+   * message that APPEARS in response to something (a save failed, an update
+   * arrived).
+   *
+   * Pass `false` for a callout that is simply part of the page when it opens —
+   * a "Needs action" note in each card of a list, a standing warning in a
+   * form. It renders `role="note"` with the same visuals and no live
+   * semantics, so screen readers read it in place instead of announcing it.
+   * N live Alerts mounting together can queue N announcements (#547).
+   *
+   * The tone is visual only in both modes (the icon is decorative), so put
+   * the urgency in `title`, e.g. "Needs action", rather than relying on colour.
+   * @default true
+   */
+  live?: boolean;
 
   /**
    * Called when the user clicks the close (×) button. When set, the close
@@ -101,6 +120,12 @@ const DEFAULT_ICONS: Record<AlertTone, ReactNode> = {
  * )}
  *
  * @example
+ * // Static callout that is part of the page, not a status change — no live region:
+ * <Alert tone="warning" live={false} title="Needs action">
+ *   The client asked for a revised quote by Friday.
+ * </Alert>
+ *
+ * @example
  * // Custom icon / suppressed icon
  * <Alert tone="info" icon={<Bell size={16} />} title="New mention" />
  * <Alert tone="info" icon={null}>Quietly informative.</Alert>
@@ -115,15 +140,20 @@ const DEFAULT_ICONS: Record<AlertTone, ReactNode> = {
  * - ❌ Auto-dismissing the Alert with `setTimeout` — that's what Toast is for.
  * - ❌ `tone="error"` for non-critical warnings. Reserve `error` for genuine
  *   failures; `role="alert"` interrupts screen readers.
+ * - ❌ A live Alert (the default) for content that exists when the page
+ *   opens, especially one per list item: each is a live region, and some
+ *   screen readers announce every one as a queue. Pass `live={false}`.
+ * - ❌ `live={false}` for a message that appears in response to an action (a
+ *   failed save) — nobody hears it unless they move onto it.
  * - ❌ Multiple stacked Alerts above a page — pick one (most urgent tone) or
  *   compose into the page layout with explicit hierarchy.
  */
 export const Alert = forwardRef<HTMLDivElement, AlertProps>(function Alert(
-  { tone = 'info', title, children, icon, actions, onDismiss, className, ...props },
+  { tone = 'info', title, children, icon, actions, live = true, onDismiss, className, ...props },
   ref,
 ) {
   const t = useTranslation();
-  const role = tone === 'error' ? 'alert' : 'status';
+  const role = !live ? 'note' : tone === 'error' ? 'alert' : 'status';
   const renderedIcon = icon === null ? null : (icon ?? DEFAULT_ICONS[tone]);
 
   return (

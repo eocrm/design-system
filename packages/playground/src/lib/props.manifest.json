@@ -119,6 +119,13 @@
           "description": "Optional action row rendered below the description. Typically a single\nButton or a Cluster of two (\"Retry\", \"Dismiss\"). The component doesn't\nmanage the action row's layout — pass a pre-laid-out node."
         },
         {
+          "name": "live",
+          "type": "boolean",
+          "required": false,
+          "default": "true",
+          "description": "Whether the Alert is a live region. Defaults to `true`: `role=\"status\"`\n(polite), or `role=\"alert\"` (assertive) for `tone=\"error\"` — right for a\nmessage that APPEARS in response to something (a save failed, an update\narrived).\n\nPass `false` for a callout that is simply part of the page when it opens —\na \"Needs action\" note in each card of a list, a standing warning in a\nform. It renders `role=\"note\"` with the same visuals and no live\nsemantics, so screen readers read it in place instead of announcing it.\nN live Alerts mounting together can queue N announcements (#547).\n\nThe tone is visual only in both modes (the icon is decorative), so put\nthe urgency in `title`, e.g. \"Needs action\", rather than relying on colour."
+        },
+        {
           "name": "onDismiss",
           "type": "(() => void)",
           "required": false,

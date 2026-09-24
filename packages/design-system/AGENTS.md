@@ -2730,6 +2730,7 @@ const [show, setShow] = useState(true);
 
 - **Four tones** (`info` / `success` / `warning` / `error`). Default icon + accent stripe per tone.
 - **`role="alert"`** only for `error` (assertive, interrupts SR). Others use `role="status"` (polite).
+- **`live={false}`** for a static callout that is part of the page when it opens (a "Needs action" note in each card of a list): renders `role="note"`, the same visuals, and no live region, so N of them don't queue N announcements. Keep the default for messages that appear in response to something. The tone is visual only, so put the urgency in `title`.
 - **Persistent** — no auto-dismiss. Use Toast for transient messages.
 - **Controlled dismiss** — `onDismiss` callback fires on × click; consumer hides via conditional render.
 - **`icon={null}`** suppresses the icon entirely; any ReactNode overrides the default.
