@@ -3190,8 +3190,8 @@
           "name": "size",
           "type": "ModalSize",
           "required": false,
-          "default": "'full'",
-          "description": "Size preset. Defaults to `'md'`.\n- `'sm'` (400px) — confirms and short prompts.\n- `'md'` (560px) — the default; typical forms.\n- `'lg'` (800px) — wide forms, tables, previews.\n- `'full'` (95vw × 90dvh by default, fixed height) — long documents, e.g. an HTML email.\nSee {@link ModalSize}."
+          "default": "md",
+          "description": "Size preset. Defaults to `'md'`.\n- `'sm'` (400px) — confirms and short prompts.\n- `'md'` (560px) — the default; typical forms.\n- `'lg'` (800px) — wide forms, tables, previews.\n- `'full'` (95vw × 90dvh, fixed height) — long documents, e.g. an HTML email.\nSee {@link ModalSize}."
         },
         {
           "name": "overlay",

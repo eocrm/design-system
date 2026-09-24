@@ -140,7 +140,7 @@ const SIZE_CLASS: Record<ImageSize, string> = {
  * focusable (#542) — and an unreserved box (no `size`, no `aspectRatio`) is
  * given an icon's height on error instead of collapsing to zero (a height you
  * set yourself still wins). So a fluid image is only retryable at roughly
- * 96×88px or more at the default tokens; a longer custom `image.retry`
+ * 96×104px or more at the default tokens; a longer custom `image.retry`
  * label needs a wider box. A fixed-`size` image — `'xs'` / `'sm'` /
  * `'md'` / `'lg'`, i.e. 20 / 24 / 32 / 40px — shows the **icon alone**, scaled
  * to its box, and is **not retryable**: none of those squares can hold the

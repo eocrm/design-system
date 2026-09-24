@@ -23,11 +23,15 @@ test('failed Image tiles keep every focusable inside the wrapper (#542)', async 
   );
   await page.goto('/components/image');
   await page.waitForLoadState('networkidle');
-  // networkidle can settle before React has mounted the lazy route and the
-  // aborted images have fired `error`; wait for the tight-box tiles by state.
+  // networkidle can settle before React has mounted the route and the
+  // aborted images have fired `error`. Wait for the three tight-box tiles by
+  // name (a failed tile's icon carries `alt`), so the spec cannot pass on the
+  // page's other error tiles alone if those three stop rendering or failing.
+  const TIGHT = ['Unreserved broken image', 'Narrow broken image', 'Tiny broken image'];
   await page.waitForFunction(
-    () => document.querySelectorAll('[data-state="error"]').length >= 6,
-    undefined,
+    (names) =>
+      names.every((n) => document.querySelector(`[data-state="error"] [aria-label="${n}"]`)),
+    TIGHT,
     { timeout: 15_000 },
   );
 
@@ -36,7 +40,9 @@ test('failed Image tiles keep every focusable inside the wrapper (#542)', async 
       const r = w.getBoundingClientRect();
       const outside = [...w.querySelectorAll<HTMLElement>('button, a[href], [tabindex]')]
         .filter((el) => !(el as HTMLButtonElement).disabled && el.tabIndex >= 0)
-        .filter((el) => getComputedStyle(el).display !== 'none')
+        // Not rendered at all (itself or an ancestor `display: none`) is not
+        // focusable, and its 0x0 rect at (0,0) would read as "outside".
+        .filter((el) => el.getClientRects().length > 0)
         .map((el) => el.getBoundingClientRect())
         .filter((q) => q.top < r.top || q.bottom > r.bottom || q.left < r.left || q.right > r.right)
         .map((q) => `${Math.round(q.top - r.top)}..${Math.round(q.bottom - r.top)}`);

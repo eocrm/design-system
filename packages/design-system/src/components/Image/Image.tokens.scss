@@ -28,7 +28,7 @@
   --image-error-gap: var(--space-2);
   --image-error-font-size: var(--font-size-sm);
 
-  // Height floor for a FAILED image with no box of its own (no `size`, no
+  // Spacer height for a FAILED image with no box of its own (no `size`, no
   // `aspectRatio`), which otherwise collapses to 0 (#542). One `lg` control
   // high: room for the 28px error icon, not for the full tile.
   --image-error-min-height: var(--size-lg);

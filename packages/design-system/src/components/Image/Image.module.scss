@@ -90,17 +90,17 @@
 
 // Smallest box the full fluid tile (icon + message + Retry) fits in — see the
 // `@container` rule below. Measured in Chromium at default tokens: icon 28 +
-// gap 8 + one line of text 17 (the message never wraps, see `.errorText`) +
-// gap 8 + `sm` Button 24 = 85px tall, so the height no longer varies with
-// the message. The width is set by the widest shipped Retry label (ru
-// "Повторить", 85px; en 55px). SCSS constants because container-query
-// conditions can't read custom properties (same as `_internal/collapse.scss`).
+// gap 8 + at most two lines of text 34 (clamped, see `.errorText`) + gap 8 +
+// `sm` Button 24 = 102px tall at most, whatever the message. The width is
+// set by the widest shipped Retry label (ru "Повторить", 85px; en 55px). SCSS
+// constants because container-query conditions can't read custom properties
+// (same as `_internal/collapse.scss`).
 // ponytail: fixed thresholds. They hold at default tokens for the shipped
 // Retry labels. A longer Retry label (a new locale or a consumer i18n
 // override), or larger `--image-error-gap` / `--image-error-font-size` / `sm`
 // Button tokens, needs these raised to match.
 $error-full-min-width: 96px;
-$error-full-min-height: 88px;
+$error-full-min-height: 104px;
 
 .error {
   position: absolute;
@@ -120,14 +120,21 @@ $error-full-min-height: 88px;
 }
 
 .errorText {
-  // One line, never more: a wrapping message made the tile's height depend on
-  // the locale and on consumer i18n overrides, and so did the threshold below
-  // (#542 review). The full text stays in the DOM for screen readers.
+  // At most two lines: a message wrapping freely made the tile's height (and
+  // so the threshold below) depend on the locale and on consumer i18n
+  // overrides (#542 review). Two, not one, so the ru message is shown in full
+  // from 128px wide instead of truncated up to ~197px. The full text stays in
+  // the DOM for screen readers either way.
+  // stylelint-disable-next-line property-no-vendor-prefix, value-no-vendor-prefix -- line clamping has no unprefixed form with cross-browser support
+  display: -webkit-box;
   max-width: 100%;
   overflow: hidden;
   font-size: var(--image-error-font-size);
-  white-space: nowrap;
-  text-overflow: ellipsis;
+  text-align: center;
+  // stylelint-disable-next-line property-no-vendor-prefix -- see display above
+  -webkit-box-orient: vertical;
+  // stylelint-disable-next-line property-no-vendor-prefix -- see display above
+  -webkit-line-clamp: 2;
 }
 
 // #542: in a box too narrow or short for the full tile, Retry landed past the
@@ -224,7 +231,8 @@ $error-full-min-height: 88px;
 // 80x80 `radius` examples, where the flex items shrank to fit and the column
 // ended up exactly as tall as the box. Since #542 a box that short gets the
 // icon-only tile (no Retry at all); the inset ring still covers a Retry that
-// sits within a few px of the edge just above the threshold. `.wrapper` is `overflow: hidden`, so an
+// sits within a few px of the edge just above the threshold. `.wrapper` is
+// `overflow: hidden`, so an
 // outset ring's entire bottom band (2px offset + 2px width) falls outside the
 // clip and is never painted: a keyboard user tabbing to Retry gets a ring with
 // its bottom edge missing. Pre-existing; #523's geometry sweep is what made it

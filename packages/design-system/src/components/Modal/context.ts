@@ -6,9 +6,9 @@ export type ModalStackMode = OverlayStackMode;
 
 /**
  * Size preset. `'sm'` / `'md'` / `'lg'` are fixed widths (400 / 560 / 800px)
- * whose height grows with content. `'full'` is near-full-screen — 95vw × 90dvh by default (`--modal-content-width-full` /
- * `--modal-content-height-full`),
- * a FIXED height whatever the content, with Body scrolling between a pinned
+ * whose height grows with content. `'full'` is near-full-screen — 95vw × 90dvh
+ * unless `--modal-content-width-full` / `--modal-content-height-full` are
+ * overridden — a FIXED height whatever the content, with Body scrolling between a pinned
  * Header and Footer — for reading long documents (an HTML email, a report).
  * Every size goes full-screen below a 640px viewport.
  */

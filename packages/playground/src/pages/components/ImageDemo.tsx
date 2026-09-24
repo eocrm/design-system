@@ -451,7 +451,7 @@ export function Demo() {
 
       <Example
         title="Error in a tight box"
-        description="A fluid tile that has no room for the message and Retry drops to the icon alone, like the fixed-size one. Retry is removed, not left clipped yet focusable, and the message stays for screen readers. A box with no `size` and no `aspectRatio` is floored at an icon's height on error instead of collapsing to zero (#542). These are the shapes the focus-ring sweep could not reach before."
+        description="A fluid tile that has no room for the message and Retry drops to the icon alone, like the fixed-size one. Retry is removed, not left clipped yet focusable, and the message stays for screen readers. A box with no `size` and no `aspectRatio` gets an icon-high spacer on error instead of collapsing to zero (#542); a height you set yourself still wins. These are the shapes the focus-ring sweep could not reach before."
         code={`import { Image, Cluster } from '@eocrm/design-system';
 
 const BROKEN = 'https://example.com/does-not-exist.jpg';
@@ -459,7 +459,7 @@ const BROKEN = 'https://example.com/does-not-exist.jpg';
 export function Demo() {
   return (
     <Cluster gap="lg" align="start">
-      {/* No size, no aspectRatio: floored at an icon's height on error */}
+      {/* No size, no aspectRatio: an icon-high spacer on error */}
       <div style={{ width: 240 }}>
         <Image src={BROKEN} alt="Unreserved broken image" loading="eager" />
       </div>

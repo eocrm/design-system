@@ -35,8 +35,9 @@ export interface ModalProps {
    * - `'sm'` (400px) — confirms and short prompts.
    * - `'md'` (560px) — the default; typical forms.
    * - `'lg'` (800px) — wide forms, tables, previews.
-   * - `'full'` (95vw × 90dvh by default, fixed height) — long documents, e.g. an HTML email.
+   * - `'full'` (95vw × 90dvh, fixed height) — long documents, e.g. an HTML email.
    * See {@link ModalSize}.
+   * @default 'md'
    */
   size?: ModalSize;
 
