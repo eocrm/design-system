@@ -56,6 +56,7 @@ export type ComponentName =
   | 'LiquidEditor'
   | 'Link'
   | 'LinkCard'
+  | 'LiveRegion'
   | 'Logo'
   | 'Modal'
   | 'OptionsPicker'
@@ -99,7 +100,8 @@ export type ComponentName =
   | 'Title'
   | 'Toast'
   | 'Tooltip'
-  | 'TopBar';
+  | 'TopBar'
+  | 'VisuallyHidden';
 
 export interface MockupEntry {
   slug: string;

@@ -1,0 +1,7 @@
+@use '../../styles/mixins' as *;
+
+// The standard clip technique. Its position/margin are how the text leaves
+// the layout while staying in the accessibility tree — not component layout.
+.root {
+  @include visually-hidden;
+}

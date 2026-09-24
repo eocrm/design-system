@@ -32,6 +32,8 @@ import { InputDemo } from './pages/components/InputDemo';
 import { LiquidEditorDemo } from './pages/components/LiquidEditorDemo';
 import { KanbanDemo } from './pages/components/KanbanDemo';
 import { KbdDemo } from './pages/components/KbdDemo';
+import { VisuallyHiddenDemo } from './pages/components/VisuallyHiddenDemo';
+import { LiveRegionDemo } from './pages/components/LiveRegionDemo';
 import { OtpInputDemo } from './pages/components/OtpInputDemo';
 import { PasswordInputDemo } from './pages/components/PasswordInputDemo';
 import { PasswordStrengthMeterDemo } from './pages/components/PasswordStrengthMeterDemo';
@@ -159,6 +161,8 @@ export default function App() {
             <Route path="/components/liquid-editor" element={<LiquidEditorDemo />} />
             <Route path="/components/kanban" element={<KanbanDemo />} />
             <Route path="/components/kbd" element={<KbdDemo />} />
+            <Route path="/components/visually-hidden" element={<VisuallyHiddenDemo />} />
+            <Route path="/components/live-region" element={<LiveRegionDemo />} />
             <Route path="/components/pagination" element={<PaginationDemo />} />
             <Route path="/components/person-display" element={<PersonDisplayDemo />} />
             <Route path="/components/progress" element={<ProgressDemo />} />

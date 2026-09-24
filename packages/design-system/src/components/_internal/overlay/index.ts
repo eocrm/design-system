@@ -8,3 +8,4 @@ export {
   type OverlayStackMode,
   type OverlayStackState,
 } from './useOverlayStack';
+export { isFocusLost, restoreFocusTo } from './focusRestore';

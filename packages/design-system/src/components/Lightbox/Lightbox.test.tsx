@@ -1,8 +1,9 @@
 import { useState } from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { act, render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { overlayStack } from '../_internal/overlay';
 import { Lightbox, type LightboxItem, type LightboxProps } from './Lightbox';
+import { Modal } from '../Modal';
 
 const ITEMS: LightboxItem[] = [
   { src: 'https://x/a.jpg', alt: 'Alpha', caption: 'Cap A' },
@@ -288,6 +289,77 @@ describe('Lightbox — Escape yields to open floating surfaces (#274)', () => {
     overlayStack.unregisterFloating('probe-surface');
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+});
+
+describe('Lightbox — nested overlay does not steal focus back on release (#551)', () => {
+  afterEach(() => {
+    overlayStack._reset();
+  });
+
+  it('releasing the top slot back to the Lightbox does not re-focus its container', async () => {
+    function Harness() {
+      const [lbOpen, setLbOpen] = useState(false);
+      return (
+        <>
+          <button onClick={() => setLbOpen(true)}>trigger</button>
+          <button data-testid="inner-opener">inner opener</button>
+          <Lightbox open={lbOpen} onOpenChange={setLbOpen} items={ITEMS} />
+        </>
+      );
+    }
+    render(<Harness />);
+    await userEvent.click(screen.getByRole('button', { name: 'trigger' }));
+    expect(screen.getByRole('dialog')).toHaveFocus();
+
+    // A nested overlay (e.g. a Modal) opens above the Lightbox — its isTop flips false.
+    act(() => {
+      overlayStack.register('nested-overlay', 'overlay');
+    });
+
+    // The nested overlay restores focus to its own opener, then releases the
+    // top slot back to the Lightbox — mirrors a real Modal's close sequence
+    // (focus restore, then overlayStack.unregister).
+    const innerOpener = screen.getByTestId('inner-opener');
+    act(() => {
+      innerOpener.focus();
+      overlayStack.unregister('nested-overlay');
+    });
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(document.activeElement).toBe(innerOpener);
+  });
+});
+
+describe('Lightbox — closing over a replace-hidden overlay restores focus (#551)', () => {
+  afterEach(() => {
+    overlayStack._reset();
+  });
+
+  // Lightbox stacks in replace mode, so a Modal under it is display:none when
+  // the Lightbox closes and the first focus() of the opener no-ops in a real
+  // browser. jsdom ignores display, so emulate that no-op.
+  it('retries the opener once the lower modal is shown again', async () => {
+    function Harness() {
+      const [lbOpen, setLbOpen] = useState(false);
+      return (
+        <Modal open onOpenChange={() => {}} aria-label="outer">
+          <Modal.Body>
+            <button onClick={() => setLbOpen(true)}>View</button>
+            <Lightbox open={lbOpen} onOpenChange={setLbOpen} items={ITEMS} />
+          </Modal.Body>
+        </Modal>
+      );
+    }
+    render(<Harness />);
+    await new Promise((r) => setTimeout(r, 0));
+    const opener = screen.getByRole('button', { name: 'View' });
+    opener.focus();
+    await userEvent.click(opener);
+    vi.spyOn(opener, 'focus').mockImplementationOnce(() => {});
+    await userEvent.keyboard('{Escape}');
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.activeElement).toBe(opener);
   });
 });
 

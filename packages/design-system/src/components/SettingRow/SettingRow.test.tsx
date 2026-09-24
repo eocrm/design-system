@@ -1,4 +1,6 @@
 import { createRef } from 'react';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Input } from '../Input';
@@ -709,5 +711,18 @@ describe('SettingRow.List', () => {
     );
     expect(ref.current).toHaveClass('custom');
     expect(ref.current).toHaveAttribute('data-setting-row-list');
+  });
+
+  it('controlWidth steps set a width (capped at 100%), so rows in a List line up (#549)', () => {
+    const scss = readFileSync(resolve(__dirname, 'SettingRow.module.scss'), 'utf8');
+    for (const step of ['xs', 'sm', 'md']) {
+      const rule = scss.match(
+        new RegExp(`\\.controlSlot\\[data-control-width='${step}'\\]\\s*\\{([^}]*)\\}`),
+      )?.[1];
+      expect(rule, step).toMatch(
+        new RegExp(`(?<!max-)width:\\s*var\\(--setting-row-control-width-${step}\\)`),
+      );
+      expect(rule, step).toMatch(/max-width:\s*100%/);
+    }
   });
 });

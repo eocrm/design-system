@@ -5,7 +5,7 @@ import { hasContent, useFieldWiring, type FieldRenderProps } from '../_internal/
 import { type CollapseBreakpoint } from '../_internal/collapse';
 import styles from './SettingRow.module.scss';
 
-/** Max width applied to the control only, not its trailing adornments. A subset of `<Constrain>`'s measure scale. */
+/** Width of the control only (not its trailing adornments), capped at the column. A subset of `<Constrain>`'s measure scale. */
 export type SettingRowControlWidth = 'auto' | 'xs' | 'sm' | 'md';
 
 export interface SettingRowProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children'> {
@@ -21,13 +21,22 @@ export interface SettingRowProps extends Omit<HTMLAttributes<HTMLDivElement>, 'c
   /** Helper text under the label, in the label column. Linked via `aria-describedby`. */
   description?: ReactNode;
   /**
-   * Max width of the control only — `trailing` is unaffected and stays on the
-   * same line. Default `'auto'` — the control's intrinsic width.
+   * Width of the control only — `trailing` is not sized by it. Default
+   * `'auto'` — the control's intrinsic width. Every row using the same step
+   * gets the same control width (capped at the column, so a narrow container
+   * still shrinks it), which is what keeps controls aligned down a
+   * `<SettingRow.List>`. Intended for controls that stretch to `width: 100%`
+   * (`Input`, `Select`); a fixed-size control (`Switch`) does not grow — the
+   * slot just reserves the width.
+   *
+   * `trailing` stays on the control's line only while both fit: in a narrow
+   * column a wide step (`'md'`) plus `trailing` can wrap `trailing` onto a
+   * second line. Use a smaller step if that matters.
    */
   controlWidth?: SettingRowControlWidth;
   /**
    * Content after the control on the same line — a mode select, a state
-   * badge, a reset button. `controlWidth` does NOT apply here — it only caps
+   * badge, a reset button. `controlWidth` does NOT apply here — it only sizes
    * the main control. A control that sizes itself to `width: 100%` (`Select`,
    * `Input`, `Textarea`) fills the ENTIRE trailing group and pushes any other
    * adornment onto a second line; wrap it in `<Constrain width="xs">` (or

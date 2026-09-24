@@ -62,21 +62,19 @@ export function Tenants() {
           </Text>
         </PageHeader.Meta>
         <PageHeader.Actions>
-          <Cluster gap="sm">
-            {/*
-              aria-disabled (not disabled) so Tooltip's pointer/focus events
-              still fire — `disabled` swallows them and the "coming soon" copy
-              would never surface (anti-pattern noted in Tooltip's JSDoc).
-            */}
-            <Tooltip content="Export coming soon">
-              <Button variant="secondary" aria-disabled onClick={(e) => e.preventDefault()}>
-                <Download size={14} /> Export CSV
-              </Button>
-            </Tooltip>
-            <Button>
-              <Plus size={14} /> New tenant
+          {/*
+            aria-disabled (not disabled) so Tooltip's pointer/focus events
+            still fire — `disabled` swallows them and the "coming soon" copy
+            would never surface (anti-pattern noted in Tooltip's JSDoc).
+          */}
+          <Tooltip content="Export coming soon">
+            <Button variant="secondary" aria-disabled onClick={(e) => e.preventDefault()}>
+              <Download size={14} /> Export CSV
             </Button>
-          </Cluster>
+          </Tooltip>
+          <Button>
+            <Plus size={14} /> New tenant
+          </Button>
         </PageHeader.Actions>
       </PageHeader>
 

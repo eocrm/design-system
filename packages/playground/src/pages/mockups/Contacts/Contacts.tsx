@@ -51,14 +51,12 @@ export function Contacts() {
           </Text>
         </PageHeader.Meta>
         <PageHeader.Actions>
-          <Cluster gap="sm">
-            <Button variant="secondary">
-              <Filter size={14} /> Filter
-            </Button>
-            <Button>
-              <Plus size={14} /> Add contact
-            </Button>
-          </Cluster>
+          <Button variant="secondary">
+            <Filter size={14} /> Filter
+          </Button>
+          <Button>
+            <Plus size={14} /> Add contact
+          </Button>
         </PageHeader.Actions>
       </PageHeader>
 

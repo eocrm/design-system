@@ -447,26 +447,24 @@ export function TenantDetail() {
         </PageHeader.Meta>
 
         <PageHeader.Actions>
-          <Cluster gap="sm">
-            <Button variant="secondary">
-              <Edit3 size={14} /> Edit metadata
-            </Button>
-            <PrimaryAction state={tenant.state} />
-            <DropdownMenu>
-              <DropdownMenu.Trigger>
-                <Button variant="ghost" aria-label="More actions">
-                  <MoreHorizontal size={14} />
-                </Button>
-              </DropdownMenu.Trigger>
-              <DropdownMenu.Content align="end">
-                <DropdownMenu.Item onSelect={() => {}}>View audit log</DropdownMenu.Item>
-                <DropdownMenu.Item onSelect={() => {}}>Impersonate owner</DropdownMenu.Item>
-                <DropdownMenu.Item onSelect={() => {}} tone="danger">
-                  <X size={14} /> Archive tenant
-                </DropdownMenu.Item>
-              </DropdownMenu.Content>
-            </DropdownMenu>
-          </Cluster>
+          <Button variant="secondary">
+            <Edit3 size={14} /> Edit metadata
+          </Button>
+          <PrimaryAction state={tenant.state} />
+          <DropdownMenu>
+            <DropdownMenu.Trigger>
+              <Button variant="ghost" aria-label="More actions">
+                <MoreHorizontal size={14} />
+              </Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content align="end">
+              <DropdownMenu.Item onSelect={() => {}}>View audit log</DropdownMenu.Item>
+              <DropdownMenu.Item onSelect={() => {}}>Impersonate owner</DropdownMenu.Item>
+              <DropdownMenu.Item onSelect={() => {}} tone="danger">
+                <X size={14} /> Archive tenant
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu>
         </PageHeader.Actions>
       </PageHeader>
 

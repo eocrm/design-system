@@ -1,5 +1,6 @@
 import { useRef, useState, type RefObject } from 'react';
-import { act, configure, render, screen, waitFor } from '@testing-library/react';
+import { flushSync } from 'react-dom';
+import { act, configure, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ConfirmationPopover } from './ConfirmationPopover';
 import { I18nProvider } from '../../i18n/I18nProvider';
@@ -378,6 +379,7 @@ describe('pending state reaches assistive tech (#497)', () => {
   });
   afterEach(() => {
     vi.useRealTimers();
+    configure({ asyncWrapper: async (cb) => cb() });
   });
 
   it('announces from a live region, and keeps both buttons focusable', async () => {
@@ -429,5 +431,262 @@ describe('pending state reaches assistive tech (#497)', () => {
     await user.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(onConfirm).toHaveBeenCalledTimes(1);
     expect(onCancel).not.toHaveBeenCalled();
+  });
+});
+
+describe('ConfirmationPopover — focus return (#552, #553)', () => {
+  let originalScrollIntoView: typeof Element.prototype.scrollIntoView;
+  beforeEach(() => {
+    originalScrollIntoView = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = vi.fn();
+  });
+  afterEach(() => {
+    Element.prototype.scrollIntoView = originalScrollIntoView;
+  });
+
+  it('Cancel click returns focus to the trigger', async () => {
+    const user = userEvent.setup();
+    render(
+      <ConfirmationPopover title="Delete?" onConfirm={() => {}}>
+        <button>Delete</button>
+      </ConfirmationPopover>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(screen.getByRole('button', { name: 'Delete' })).toHaveFocus();
+  });
+
+  it('Confirm click returns focus to the trigger when it survives', async () => {
+    const user = userEvent.setup();
+    render(
+      <ConfirmationPopover title="Delete?" onConfirm={() => {}}>
+        <button>Delete</button>
+      </ConfirmationPopover>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm' }));
+    expect(screen.getByRole('button', { name: 'Delete' })).toHaveFocus();
+  });
+
+  it('returnFocusRef wins and is scrolled into view; the trigger unmounting does not matter', async () => {
+    const user = userEvent.setup();
+    function Row() {
+      const [present, setPresent] = useState(true);
+      const survivorRef = useRef<HTMLElement | null>(null);
+      return (
+        <>
+          <button ref={survivorRef as RefObject<HTMLButtonElement>}>Add row</button>
+          {present && (
+            <ConfirmationPopover
+              title="Delete?"
+              onConfirm={() => setPresent(false)}
+              returnFocusRef={survivorRef}
+            >
+              <button>Delete</button>
+            </ConfirmationPopover>
+          )}
+        </>
+      );
+    }
+    render(<Row />);
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm' }));
+    await new Promise((r) => setTimeout(r, 0));
+    const survivor = screen.getByRole('button', { name: 'Add row' });
+    expect(survivor).toHaveFocus();
+    expect(survivor.scrollIntoView).toHaveBeenCalledWith({ block: 'nearest' });
+  });
+
+  it('a detached / empty returnFocusRef falls back to the trigger and does not scroll', async () => {
+    const user = userEvent.setup();
+    const ref = { current: document.createElement('button') };
+    render(
+      <ConfirmationPopover title="Delete?" onConfirm={() => {}} returnFocusRef={ref}>
+        <button>Delete</button>
+      </ConfirmationPopover>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    const trigger = screen.getByRole('button', { name: 'Delete' });
+    expect(trigger).toHaveFocus();
+    expect(trigger.scrollIntoView).not.toHaveBeenCalled();
+  });
+
+  it('Escape honours returnFocusRef too', async () => {
+    const user = userEvent.setup();
+    function H() {
+      const r = useRef<HTMLElement | null>(null);
+      return (
+        <>
+          <button ref={r as RefObject<HTMLButtonElement>}>Other</button>
+          <ConfirmationPopover title="Delete?" onConfirm={() => {}} returnFocusRef={r}>
+            <button>Delete</button>
+          </ConfirmationPopover>
+        </>
+      );
+    }
+    render(<H />);
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.keyboard('{Escape}');
+    expect(screen.getByRole('button', { name: 'Other' })).toHaveFocus();
+  });
+
+  it('an outside pointerdown close does not steal focus or scroll (focus is moving to the click target)', async () => {
+    const user = userEvent.setup();
+    function H() {
+      const r = useRef<HTMLElement | null>(null);
+      return (
+        <>
+          <button ref={r as RefObject<HTMLButtonElement>}>Other</button>
+          <div data-testid="outside">Outside</div>
+          <ConfirmationPopover title="Delete?" onConfirm={() => {}} returnFocusRef={r}>
+            <button>Delete</button>
+          </ConfirmationPopover>
+        </>
+      );
+    }
+    render(<H />);
+    const trigger = screen.getByRole('button', { name: 'Delete' });
+    await user.click(trigger);
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus());
+    const focusSpy = vi.spyOn(trigger, 'focus');
+    // Real browsers commit the close before mousedown moves focus; fireEvent
+    // reproduces that window (focus is not moved by the pointerdown).
+    fireEvent.pointerDown(screen.getByTestId('outside'));
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(focusSpy).not.toHaveBeenCalled();
+    expect(Element.prototype.scrollIntoView).not.toHaveBeenCalled();
+    expect(document.activeElement).toBe(document.body);
+  });
+
+  it('flags an outside pointerdown before ANY document capture listener can commit the close', async () => {
+    // Real browsers run a microtask checkpoint between listeners, so React
+    // flushes Popover.Content's close (a document capture listener) before a
+    // later document capture listener runs. Emulate that with a document
+    // capture listener registered first that commits the close synchronously:
+    // the outside-pointer flag must already be set by then (window capture).
+    const user = userEvent.setup();
+    let close!: () => void;
+    function H() {
+      const [open, setOpen] = useState(false);
+      close = () => setOpen(false);
+      return (
+        <>
+          <div data-testid="outside">Outside</div>
+          <ConfirmationPopover
+            title="Delete?"
+            onConfirm={() => {}}
+            open={open}
+            onOpenChange={setOpen}
+          >
+            <button>Delete</button>
+          </ConfirmationPopover>
+        </>
+      );
+    }
+    const outsideFirst = (e: Event) => {
+      if ((e.target as Element).getAttribute?.('data-testid') === 'outside') flushSync(close);
+    };
+    document.addEventListener('pointerdown', outsideFirst, true);
+    try {
+      render(<H />);
+      const trigger = screen.getByRole('button', { name: 'Delete' });
+      await user.click(trigger);
+      await waitFor(() => expect(screen.getByRole('button', { name: 'Cancel' })).toHaveFocus());
+      const focusSpy = vi.spyOn(trigger, 'focus');
+      fireEvent.pointerDown(screen.getByTestId('outside'));
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      await new Promise((r) => setTimeout(r, 0));
+      expect(focusSpy).not.toHaveBeenCalled();
+    } finally {
+      document.removeEventListener('pointerdown', outsideFirst, true);
+    }
+  });
+
+  it('an outside pointerdown that did not close (pending) does not suppress the later restore', async () => {
+    const user = userEvent.setup();
+    let resolve!: () => void;
+    render(
+      <>
+        <div data-testid="outside">Outside</div>
+        <ConfirmationPopover
+          title="Delete?"
+          onConfirm={() => new Promise<void>((r) => (resolve = r))}
+        >
+          <button>Delete</button>
+        </ConfirmationPopover>
+      </>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm' }));
+    fireEvent.pointerDown(screen.getByTestId('outside'));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    await act(async () => resolve());
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Delete' })).toHaveFocus();
+  });
+
+  it('a normal Cancel focuses the trigger exactly once', async () => {
+    const user = userEvent.setup();
+    render(
+      <ConfirmationPopover title="Delete?" onConfirm={() => {}}>
+        <button>Delete</button>
+      </ConfirmationPopover>,
+    );
+    const trigger = screen.getByRole('button', { name: 'Delete' });
+    await user.click(trigger);
+    const focusSpy = vi.spyOn(trigger, 'focus');
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(focusSpy).toHaveBeenCalledTimes(1);
+    expect(trigger).toHaveFocus();
+  });
+
+  it('unmounting while open without returnFocusRef does not throw and focuses nothing', async () => {
+    const user = userEvent.setup();
+    function Row() {
+      const [present, setPresent] = useState(true);
+      return present ? (
+        <ConfirmationPopover title="Delete?" onConfirm={() => setPresent(false)}>
+          <button>Delete</button>
+        </ConfirmationPopover>
+      ) : null;
+    }
+    render(<Row />);
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.click(screen.getByRole('button', { name: 'Confirm' }));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(screen.queryByRole('button', { name: 'Delete' })).not.toBeInTheDocument();
+    expect(document.activeElement).toBe(document.body);
+  });
+
+  it('a { current: null } returnFocusRef falls back to the trigger', async () => {
+    const user = userEvent.setup();
+    const ref = { current: null };
+    render(
+      <ConfirmationPopover title="Delete?" onConfirm={() => {}} returnFocusRef={ref}>
+        <button>Delete</button>
+      </ConfirmationPopover>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(screen.getByRole('button', { name: 'Delete' })).toHaveFocus();
+  });
+
+  it('an outside click onto another focusable element leaves focus there', async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <input aria-label="Elsewhere" />
+        <ConfirmationPopover title="Delete?" onConfirm={() => {}}>
+          <button>Delete</button>
+        </ConfirmationPopover>
+      </>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.click(screen.getByLabelText('Elsewhere'));
+    expect(screen.getByLabelText('Elsewhere')).toHaveFocus();
   });
 });

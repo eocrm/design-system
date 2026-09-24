@@ -2,6 +2,7 @@ import { useRef, useState, type ComponentProps, type RefObject } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Drawer } from './Drawer';
+import { Modal } from '../Modal';
 import { Select } from '../Select';
 import { overlayStack } from '../_internal/overlay';
 
@@ -377,6 +378,42 @@ describe('<Drawer>', () => {
     await user.click(overlay);
     expect(onOpenChange).not.toHaveBeenCalled();
   });
+
+  it('a nested Modal closing restores focus to its opener, not the drawer container (#551)', async () => {
+    const user = userEvent.setup();
+    function NestedHarness() {
+      const [drawerOpen, setDrawerOpen] = useState(true);
+      const [modalOpen, setModalOpen] = useState(false);
+      return (
+        <Drawer open={drawerOpen} onOpenChange={setDrawerOpen} aria-label="d">
+          <Drawer.Body>
+            <button onClick={() => setModalOpen(true)}>Open modal</button>
+            <Modal open={modalOpen} onOpenChange={setModalOpen} aria-label="m">
+              <Modal.Body>
+                <button onClick={() => setModalOpen(false)}>Done</button>
+              </Modal.Body>
+            </Modal>
+          </Drawer.Body>
+        </Drawer>
+      );
+    }
+    render(<NestedHarness />);
+    await new Promise((r) => setTimeout(r, 0));
+    const opener = screen.getByRole('button', { name: 'Open modal' });
+    opener.focus();
+    await user.click(opener);
+    await user.click(screen.getByRole('button', { name: 'Done' }));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.activeElement).toBe(opener);
+  });
+
+  it('still runs initial focus when the drawer opens (#551 guard)', async () => {
+    const user = userEvent.setup();
+    render(<Harness />);
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.activeElement).toBe(screen.getByRole('dialog'));
+  });
 });
 
 describe('Drawer — Escape yields to open floating surfaces (#274)', () => {
@@ -405,5 +442,65 @@ describe('Drawer — Escape yields to open floating surfaces (#274)', () => {
     expect(screen.getByRole('dialog')).toBeInTheDocument();
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('dialog')).toBeNull();
+  });
+});
+
+describe('Drawer — replace-mode nested close restores focus (#551)', () => {
+  afterEach(() => {
+    overlayStack._reset();
+  });
+
+  // The lower drawer is still display:none when the upper one restores focus
+  // in a real browser, so the first focus() no-ops; emulate that in jsdom.
+  function ReplaceHarness({ dropOpener = false }: { dropOpener?: boolean }) {
+    const [innerOpen, setInnerOpen] = useState(false);
+    const [openerShown, setOpenerShown] = useState(true);
+    return (
+      <Drawer open onOpenChange={() => {}} aria-label="outer">
+        <Drawer.Body>
+          {openerShown && <button onClick={() => setInnerOpen(true)}>Open inner</button>}
+          <Drawer
+            open={innerOpen}
+            onOpenChange={setInnerOpen}
+            aria-label="inner"
+            stackMode="replace"
+          >
+            <Drawer.Body>
+              <button
+                onClick={() => {
+                  setInnerOpen(false);
+                  if (dropOpener) setOpenerShown(false);
+                }}
+              >
+                Done
+              </button>
+            </Drawer.Body>
+          </Drawer>
+        </Drawer.Body>
+      </Drawer>
+    );
+  }
+
+  it('retries the opener once the lower drawer is shown again', async () => {
+    const user = userEvent.setup();
+    render(<ReplaceHarness />);
+    await new Promise((r) => setTimeout(r, 0));
+    const opener = screen.getByRole('button', { name: 'Open inner' });
+    opener.focus();
+    await user.click(opener);
+    vi.spyOn(opener, 'focus').mockImplementationOnce(() => {});
+    await user.click(screen.getByRole('button', { name: 'Done' }));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.activeElement).toBe(opener);
+  });
+
+  it('focuses the lower drawer container when there is nothing to restore to', async () => {
+    const user = userEvent.setup();
+    render(<ReplaceHarness dropOpener />);
+    await new Promise((r) => setTimeout(r, 0));
+    await user.click(screen.getByRole('button', { name: 'Open inner' }));
+    await user.click(screen.getByRole('button', { name: 'Done' }));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.activeElement).toBe(screen.getByRole('dialog', { name: 'outer' }));
   });
 });

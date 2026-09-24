@@ -95,6 +95,8 @@ import {
   Workflow,
   QrCode,
   Signpost,
+  EyeOff,
+  Megaphone,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -291,6 +293,13 @@ export const componentGroups: { heading: string; items: NavItem[] }[] = [
         end: false,
       },
       { to: '/components/tour', label: 'Tour', icon: Signpost, end: false },
+    ],
+  },
+  {
+    heading: 'Accessibility',
+    items: [
+      { to: '/components/visually-hidden', label: 'VisuallyHidden', icon: EyeOff, end: false },
+      { to: '/components/live-region', label: 'LiveRegion', icon: Megaphone, end: false },
     ],
   },
 ];

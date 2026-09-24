@@ -51,26 +51,36 @@
   gap: var(--setting-row-trailing-gap);
 }
 
-// The control's own wrapper — capped by controlWidth, `trailing` sits
-// outside it on .controlLine so a cap never pulls the adornments onto a
-// second line. This wrapper is created AFTER wire() has already cloned the
-// child and injected id / aria-labelledby / aria-describedby / invalid /
-// required, so it is never the cloneElement target — that's also why a
-// consumer-side <Constrain> was ruled out in favor of controlWidth.
+// The control's own wrapper — sized by controlWidth, `trailing` sits
+// outside it on .controlLine so controlWidth never sizes the adornments.
+// They share the line only while both fit: in a narrow column a wide step
+// (md) plus `trailing` wraps `trailing` onto a second line. This wrapper
+// is created AFTER wire() has already cloned the child and injected id /
+// aria-labelledby / aria-describedby / invalid / required, so it is never
+// the cloneElement target — that's also why a consumer-side <Constrain>
+// was ruled out in favor of controlWidth.
+// controlWidth is a WIDTH, not only a cap (#549): the slot is a
+// shrink-to-fit flex item, so a max-width alone let each `width: 100%`
+// control resolve to its own intrinsic size — a number input's depends on
+// its `max` attribute in Chromium — and rows in one List came out ragged.
+// max-width: 100% still lets a narrow column shrink it.
 .controlSlot {
   min-width: 0;
 }
 
 .controlSlot[data-control-width='xs'] {
-  max-width: var(--setting-row-control-width-xs);
+  width: var(--setting-row-control-width-xs);
+  max-width: 100%;
 }
 
 .controlSlot[data-control-width='sm'] {
-  max-width: var(--setting-row-control-width-sm);
+  width: var(--setting-row-control-width-sm);
+  max-width: 100%;
 }
 
 .controlSlot[data-control-width='md'] {
-  max-width: var(--setting-row-control-width-md);
+  width: var(--setting-row-control-width-md);
+  max-width: 100%;
 }
 
 // trailing's own flex item, sized to its content rather than the shared

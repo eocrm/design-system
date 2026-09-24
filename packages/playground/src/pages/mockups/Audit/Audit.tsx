@@ -304,33 +304,21 @@ export function Audit() {
           </Text>
         </PageHeader.Meta>
         <PageHeader.Actions>
-          <Cluster gap="sm">
-            {/*
-              aria-disabled (not disabled) so Tooltip's pointer/focus events
-              still fire — `disabled` swallows them and the "coming soon" copy
-              would never surface (anti-pattern noted in Tooltip's JSDoc).
-            */}
-            <Tooltip content="Export coming soon">
-              <Button
-                variant="secondary"
-                size="sm"
-                aria-disabled
-                onClick={(e) => e.preventDefault()}
-              >
-                <Download size={14} /> Export CSV
-              </Button>
-            </Tooltip>
-            <Tooltip content="Saved views coming soon">
-              <Button
-                variant="secondary"
-                size="sm"
-                aria-disabled
-                onClick={(e) => e.preventDefault()}
-              >
-                <Bookmark size={14} /> Saved views
-              </Button>
-            </Tooltip>
-          </Cluster>
+          {/*
+            aria-disabled (not disabled) so Tooltip's pointer/focus events
+            still fire — `disabled` swallows them and the "coming soon" copy
+            would never surface (anti-pattern noted in Tooltip's JSDoc).
+          */}
+          <Tooltip content="Export coming soon">
+            <Button variant="secondary" size="sm" aria-disabled onClick={(e) => e.preventDefault()}>
+              <Download size={14} /> Export CSV
+            </Button>
+          </Tooltip>
+          <Tooltip content="Saved views coming soon">
+            <Button variant="secondary" size="sm" aria-disabled onClick={(e) => e.preventDefault()}>
+              <Bookmark size={14} /> Saved views
+            </Button>
+          </Tooltip>
         </PageHeader.Actions>
       </PageHeader>
 

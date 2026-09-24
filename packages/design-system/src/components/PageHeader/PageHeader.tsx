@@ -285,9 +285,12 @@ export function PageHeaderMeta({ children, className, ...rest }: PageHeaderMetaP
 PageHeaderMeta.displayName = 'PageHeaderMeta';
 
 /**
- * Right-aligned action cluster — typically a `<Cluster>` of `<Button>`s or
- * a `<ButtonGroup>`. Vertically centered with the title block. Wraps to a
- * new row below the title on viewports < 640px.
+ * Right-aligned action row. Put `<Button>`s (or a `<ButtonGroup>`) directly
+ * in Actions — it is already a wrapping, right-aligned flex row, so wrapped
+ * rows stay flush right. A wrapping `<Cluster>` inside it needs
+ * `justify="end"`, or its wrapped rows go ragged-left. Vertically centered
+ * with the title block. On viewports < 640px it moves to a new row below
+ * the title and becomes left-aligned.
  *
  * @example
  * <PageHeader.Actions>

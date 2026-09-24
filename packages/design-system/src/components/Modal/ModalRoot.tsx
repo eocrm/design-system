@@ -16,6 +16,7 @@ import {
   type ModalSize,
 } from './context';
 import {
+  restoreFocusTo,
   useOverlayStack as useModalStack,
   type OverlayStackMode as ModalStackMode,
 } from '../_internal/overlay';
@@ -95,6 +96,9 @@ export interface ModalProps {
    * the empty state's first button. If it is empty or its element has also
    * left the document, Modal falls back to the captured opener, and then to
    * doing nothing, exactly as before this prop existed.
+   *
+   * The target is scrolled into view (`block: 'nearest'`) after focus; the
+   * captured opener is not.
    *
    * @example
    * // The deleted row's trigger is gone on close; aim at the next one.
@@ -268,9 +272,16 @@ export function ModalRoot({
     const captured = previouslyFocusedRef.current;
     previouslyFocusedRef.current = null;
     const requested = returnFocusRef?.current ?? null;
-    const target = requested && document.contains(requested) ? requested : captured;
-    if (target && document.contains(target)) {
-      target.focus({ preventScroll: true });
+    if (requested && document.contains(requested)) {
+      restoreFocusTo(requested);
+      // #553: a named target is usually NOT where the user was (the opener
+      // unmounted), so bring it into view. 'nearest' is a no-op when visible.
+      // The captured opener is not scrolled — the user was already there.
+      requested.scrollIntoView?.({ block: 'nearest' });
+      return;
+    }
+    if (captured && document.contains(captured)) {
+      restoreFocusTo(captured);
     }
   }, [returnFocusRef]);
   useLayoutEffect(() => {

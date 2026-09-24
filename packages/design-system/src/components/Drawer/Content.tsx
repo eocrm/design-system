@@ -1,6 +1,6 @@
-import { useEffect, useLayoutEffect, type CSSProperties, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useRef, type CSSProperties, type ReactNode } from 'react';
 import clsx from 'clsx';
-import { useFocusTrap, overlayStack } from '../_internal/overlay';
+import { isFocusLost, useFocusTrap, overlayStack } from '../_internal/overlay';
 import { useDrawerContext } from './context';
 import styles from './Drawer.module.scss';
 
@@ -18,8 +18,27 @@ export interface ContentProps {
 export function Content({ children, className, style }: ContentProps) {
   const ctx = useDrawerContext('Content');
 
+  // Initial focus belongs to the OPEN transition only. isTop also flips
+  // false → true when a nested overlay (e.g. a Modal opened from this drawer)
+  // closes; re-running here would queue a focus that lands AFTER the nested
+  // overlay restored focus to its opener / returnFocusRef (#551).
+  const initialFocusPendingRef = useRef(true);
   useLayoutEffect(() => {
-    if (!ctx.open || !ctx.isTop) return;
+    if (!ctx.open) {
+      initialFocusPendingRef.current = true;
+      return;
+    }
+    if (!ctx.isTop) return;
+    if (!initialFocusPendingRef.current) {
+      // Regained the top after a nested overlay closed. Its restore (and that
+      // restore's own retry, queued earlier) wins; only if focus is still
+      // lost — nothing to restore to — take it into this container (#551).
+      queueMicrotask(() => {
+        if (isFocusLost()) ctx.contentRef.current?.focus({ preventScroll: true });
+      });
+      return;
+    }
+    initialFocusPendingRef.current = false;
     queueMicrotask(() => {
       const target = ctx.initialFocusRef?.current ?? ctx.contentRef.current;
       target?.focus({ preventScroll: true });
