@@ -100,7 +100,8 @@ export const Sticky = forwardRef<HTMLDivElement, StickyProps>(function Sticky(
   ref,
 ) {
   // {...rest} last so consumer overrides win (Pattern A) — Sticky locks no attrs.
-  // `data-sticky` is the hook a collapsed <Split> uses to unstick its aside (#558).
+  // `data-sticky` is an internal cross-component contract: Split.module.scss
+  // targets it to unstick a collapsed aside (#558). Rename both together.
   return (
     <div
       ref={ref}

@@ -1,4 +1,11 @@
-import { StrictMode, useRef, useState, type ComponentProps, type RefObject } from 'react';
+import {
+  StrictMode,
+  useEffect,
+  useRef,
+  useState,
+  type ComponentProps,
+  type RefObject,
+} from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Drawer } from './Drawer';
@@ -537,6 +544,38 @@ describe('Drawer — mounted open / unmounted while open (#557)', () => {
 
     expect(screen.queryByRole('dialog', { name: 'Task' })).toBeNull();
     expect(document.activeElement).toBe(opener);
+  });
+  it('does not steal focus back from a consumer who moved it after unmount-while-open', async () => {
+    const user = userEvent.setup();
+    function H() {
+      const [mounted, setMounted] = useState(true);
+      const nextRef = useRef<HTMLButtonElement>(null);
+      useEffect(() => {
+        if (!mounted) nextRef.current?.focus();
+      }, [mounted]);
+      return (
+        <>
+          <button autoFocus data-testid="trigger">
+            Open
+          </button>
+          <button ref={nextRef}>Next</button>
+          {mounted && (
+            <Drawer open onOpenChange={() => {}} aria-label="x">
+              <Drawer.Body>
+                <button onClick={() => setMounted(false)}>Delete</button>
+              </Drawer.Body>
+            </Drawer>
+          )}
+        </>
+      );
+    }
+    render(<H />);
+    await new Promise((r) => setTimeout(r, 0));
+
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Next' }));
   });
 });
 

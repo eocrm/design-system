@@ -10,6 +10,7 @@ import {
   type RefObject,
 } from 'react';
 import {
+  isFocusLost,
   restoreFocusTo,
   useOverlayStack,
   useScrollLock,
@@ -149,10 +150,12 @@ export function DrawerRoot({
     // Unmounted while open: defer until React tears down the dialog and its
     // focus trap. A later effect run (a normal close) bumps the generation and
     // cancels this fallback, and restoreFocus clears its ref, so focus moves once.
+    // Only when focus was actually lost — a consumer that focused something
+    // after the unmount (e.g. the next row) keeps it.
     if (open) {
       return () => {
         queueMicrotask(() => {
-          if (focusEffectGenerationRef.current === generation) restoreFocus();
+          if (focusEffectGenerationRef.current === generation && isFocusLost()) restoreFocus();
         });
       };
     }

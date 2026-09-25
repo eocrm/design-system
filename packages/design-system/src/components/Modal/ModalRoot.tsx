@@ -16,6 +16,7 @@ import {
   type ModalSize,
 } from './context';
 import {
+  isFocusLost,
   restoreFocusTo,
   useOverlayStack as useModalStack,
   type OverlayStackMode as ModalStackMode,
@@ -304,10 +305,12 @@ export function ModalRoot({
     // This cleanup and the closing branch can run for the same transition;
     // a later effect generation cancels this queued fallback, while restoreFocus
     // clears its ref first so the target is focused only once.
+    // Only when focus was actually lost — a consumer that focused something
+    // after the unmount (e.g. the next row) keeps it.
     if (open) {
       return () => {
         queueMicrotask(() => {
-          if (focusEffectGenerationRef.current === generation) restoreFocus();
+          if (focusEffectGenerationRef.current === generation && isFocusLost()) restoreFocus();
         });
       };
     }
