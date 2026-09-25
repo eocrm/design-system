@@ -1,4 +1,11 @@
-import { useRef, useState, type ComponentProps, type RefObject } from 'react';
+import {
+  StrictMode,
+  useEffect,
+  useRef,
+  useState,
+  type ComponentProps,
+  type RefObject,
+} from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Drawer } from './Drawer';
@@ -413,6 +420,162 @@ describe('<Drawer>', () => {
     await user.click(screen.getByRole('button', { name: 'Open' }));
     await new Promise((r) => setTimeout(r, 0));
     expect(document.activeElement).toBe(screen.getByRole('dialog'));
+  });
+});
+
+describe('Drawer — mounted open / unmounted while open (#557)', () => {
+  it('restores focus exactly once when an initially-open drawer closes', async () => {
+    const user = userEvent.setup();
+    function H() {
+      const [open, setOpen] = useState(true);
+      return (
+        <>
+          <button autoFocus data-testid="trigger">
+            Open
+          </button>
+          <Drawer open={open} onOpenChange={setOpen} aria-label="x">
+            <Drawer.Body>x</Drawer.Body>
+          </Drawer>
+        </>
+      );
+    }
+    render(<H />);
+    const trigger = screen.getByTestId('trigger');
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.activeElement).not.toBe(trigger);
+    const focus = vi.spyOn(trigger, 'focus');
+
+    await user.keyboard('{Escape}');
+
+    expect(document.activeElement).toBe(trigger);
+    expect(focus).toHaveBeenCalledTimes(1);
+  });
+
+  it('restores focus exactly once when an initially-open drawer unmounts while open', async () => {
+    const user = userEvent.setup();
+    function H() {
+      const [mounted, setMounted] = useState(true);
+      return (
+        <>
+          <button autoFocus data-testid="trigger">
+            Open
+          </button>
+          {mounted && (
+            <Drawer open onOpenChange={() => {}} aria-label="x">
+              <Drawer.Body>
+                <button onClick={() => setMounted(false)}>Unmount</button>
+              </Drawer.Body>
+            </Drawer>
+          )}
+        </>
+      );
+    }
+    render(<H />);
+    const trigger = screen.getByTestId('trigger');
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.activeElement).not.toBe(trigger);
+    const focus = vi.spyOn(trigger, 'focus');
+
+    await user.click(screen.getByRole('button', { name: 'Unmount' }));
+
+    expect(document.activeElement).toBe(trigger);
+    expect(focus).toHaveBeenCalledTimes(1);
+  });
+
+  it('preserves initially-open focus restoration across StrictMode effect replay', async () => {
+    const user = userEvent.setup();
+    function H() {
+      const [open, setOpen] = useState(true);
+      return (
+        <>
+          <button autoFocus data-testid="trigger">
+            Open
+          </button>
+          <Drawer open={open} onOpenChange={setOpen} aria-label="x">
+            <Drawer.Body>x</Drawer.Body>
+          </Drawer>
+        </>
+      );
+    }
+    render(
+      <StrictMode>
+        <H />
+      </StrictMode>,
+    );
+    const trigger = screen.getByTestId('trigger');
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.activeElement).not.toBe(trigger);
+    const focus = vi.spyOn(trigger, 'focus');
+
+    await user.keyboard('{Escape}');
+
+    expect(document.activeElement).toBe(trigger);
+    expect(focus).toHaveBeenCalledTimes(1);
+  });
+
+  it('a conditionally mounted nested drawer returns focus to its opener on Escape', async () => {
+    const user = userEvent.setup();
+    function H() {
+      const [seed, setSeed] = useState(false);
+      return (
+        <Drawer open onOpenChange={() => {}} aria-label="Thread">
+          <Drawer.Body>
+            <button onClick={() => setSeed(true)}>Create task</button>
+            {seed && (
+              <Drawer open onOpenChange={(next) => !next && setSeed(false)} aria-label="Task">
+                <Drawer.Body>x</Drawer.Body>
+              </Drawer>
+            )}
+          </Drawer.Body>
+        </Drawer>
+      );
+    }
+    render(<H />);
+    await new Promise((r) => setTimeout(r, 0));
+    const opener = screen.getByRole('button', { name: 'Create task' });
+    await user.click(opener);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(screen.getByRole('dialog', { name: 'Task' })).toContainElement(
+      document.activeElement as HTMLElement,
+    );
+
+    await user.keyboard('{Escape}');
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(screen.queryByRole('dialog', { name: 'Task' })).toBeNull();
+    expect(document.activeElement).toBe(opener);
+  });
+  it('does not steal focus back from a consumer who moved it after unmount-while-open', async () => {
+    const user = userEvent.setup();
+    function H() {
+      const [mounted, setMounted] = useState(true);
+      const nextRef = useRef<HTMLButtonElement>(null);
+      useEffect(() => {
+        if (!mounted) nextRef.current?.focus();
+      }, [mounted]);
+      return (
+        <>
+          <button autoFocus data-testid="trigger">
+            Open
+          </button>
+          <button ref={nextRef}>Next</button>
+          {mounted && (
+            <Drawer open onOpenChange={() => {}} aria-label="x">
+              <Drawer.Body>
+                <button onClick={() => setMounted(false)}>Delete</button>
+              </Drawer.Body>
+            </Drawer>
+          )}
+        </>
+      );
+    }
+    render(<H />);
+    await new Promise((r) => setTimeout(r, 0));
+
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Next' }));
   });
 });
 

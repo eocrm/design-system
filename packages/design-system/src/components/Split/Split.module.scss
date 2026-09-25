@@ -101,10 +101,31 @@
 // the only thing those set) for both side values at once.
 // Double class (.collapsible.collapseXx) keeps specificity above any
 // single-class consumer rule regardless of CSS bundle emission order.
+
+// A <Sticky> that IS the aside (the documented record-detail composition) is
+// neutralized to a plain block once stacked (#558): pinned + viewport-capped
+// + overscroll-contained, it would become a near-viewport-tall inner scroll
+// box on a phone that traps the swipe. Matched by Sticky's `data-sticky` hook
+// (CSS Modules hashes its class names). Direct child only — Stickies nested
+// deeper in the aside (e.g. a list's sticky header) keep working.
+@mixin unstick-aside {
+  > .aside > [data-sticky] {
+    // stylelint-disable-next-line property-disallowed-list -- undoing Sticky's own position when Split stacks, not placing a component
+    position: static;
+    max-height: none;
+    overflow-y: visible;
+    overscroll-behavior: auto;
+  }
+}
+
 @container (max-width: #{bp.$collapse-sm}) {
   .collapsible.collapseSm > * {
     // stylelint-disable-next-line property-disallowed-list -- collapse override is Split's own internal grid placement, same sanction as Grid's collapse rules
     grid-column: 1 / -1;
+  }
+
+  .collapsible.collapseSm {
+    @include unstick-aside;
   }
 }
 
@@ -113,11 +134,19 @@
     // stylelint-disable-next-line property-disallowed-list -- collapse override is Split's own internal grid placement, same sanction as Grid's collapse rules
     grid-column: 1 / -1;
   }
+
+  .collapsible.collapseMd {
+    @include unstick-aside;
+  }
 }
 
 @container (max-width: #{bp.$collapse-lg}) {
   .collapsible.collapseLg > * {
     // stylelint-disable-next-line property-disallowed-list -- collapse override is Split's own internal grid placement, same sanction as Grid's collapse rules
     grid-column: 1 / -1;
+  }
+
+  .collapsible.collapseLg {
+    @include unstick-aside;
   }
 }

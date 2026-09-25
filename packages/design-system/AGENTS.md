@@ -1763,6 +1763,7 @@ beside results).
 ```
 
 - Collapsed panes stack in **DOM order**: aside → main for `side="start"` (default), main → aside for `side="end"`. No CSS `order` flip — visual order stays in sync with tab order. Need the aside on top when stacked? Use `side="start"`.
+- A `<Sticky>` passed as `aside` becomes a plain block while collapsed (no pin, no `scroll` cap) — don't shim it.
 - ❌ A `collapseBelow` split in an intrinsic-width context (another `Split`'s default `auto` aside track, a `Cluster` item, `width: max-content`). `container-type: inline-size` makes it contribute zero intrinsic width, so it renders at width 0 — give the parent a concrete width instead. It also becomes the containing block for absolutely-positioned descendants (layout containment). Splits without the prop pay neither cost.
 
 When NOT to use: equal columns → `<Grid columns={2}>`; wrapping peer row → `<Cluster>`; app shell sidebar → `<AppLayout>`/`<Rail>`.
@@ -1792,6 +1793,7 @@ Pins its box to the top of the scroll container while the page scrolls past — 
 - `scroll`: cap the pinned box at the viewport height with internal `overflow-y:auto` + `overscroll-behavior:contain` — for a sidebar taller than the screen (pair with a non-`none` `top`). The bottom gap defaults to the selected rhythm offset; for `topbar`, it defaults to the content gap so the chrome height is not subtracted twice. Override `--sticky-bottom-gap` on the Sticky for a different bottom clearance.
 - Sticky defaults are emitted by the global token entry, so a consumer `:root` override loaded after `@eocrm/design-system/styles/tokens.scss` wins predictably. Override `--sticky-top-topbar` to match custom application chrome.
 - Inside a `<Split>` aside, pair with `align="stretch"` (else the content-height aside track gives nowhere to pin).
+- As a `<Split collapseBelow>` aside, it automatically becomes a plain block (no pin, no `scroll` cap/inner scroll) while the Split is stacked — no consumer shim needed. Applies only when the `Sticky` is the `aside` itself.
 
 When NOT to use: arranging children → `<Stack>`/`<Cluster>`; a fixed overlay above content → `position: fixed` chrome (`Popover`/`Modal`/app bar); the split itself → `<Split>`. Note: `position: sticky` breaks if a clipping ancestor (`overflow: hidden/auto`) isn't the intended scroll container.
 
@@ -2844,7 +2846,7 @@ const [open, setOpen] = useState(false);
 - **Forced step:** combine `disableEscapeClose`, `dismissOnOverlayClick={false}`, omit `<Modal.Close>`, and pass `<Modal.Header closeButton={false}>` to lock the user into the modal until they resolve it programmatically.
 - **Stacked modals.** Default `stackMode="overlay"`: the parent stays visible underneath and the inner overlay paints transparent so the parent's dim shows through (one effective dim layer for the stack). Use `stackMode="replace"` to hide the parent via `display: none` (React state preserved) — best for forced steps where the parent context is irrelevant. Escape still closes only the topmost — and yields to any open floating surface first (Select/Popover/menu/date-time popover: the first press closes the surface, the next closes the modal); body scroll stays locked across the whole stack.
 - **Initial focus:** pass `initialFocusRef` to focus a specific element (e.g. the first input). Otherwise the dialog container receives focus and the focus trap takes over.
-- **Return focus:** on close, focus goes back to whatever was focused when the modal opened. When that element will not survive the modal — a deleted row's `⋯` trigger, or a button that unmounts in the same commit that opens the modal — pass `returnFocusRef` and point it at something that still exists. It is read at CLOSE time, so you can set `returnFocusRef.current` after the work finishes (next row's trigger, or the empty state's first button). If it is empty or detached, Modal falls back to the captured opener, then to doing nothing. A `returnFocusRef` target is scrolled into view (`{ block: 'nearest' }`) since it may be far from where the user was; the captured opener is not scrolled.
+- **Return focus:** on close, focus goes back to whatever was focused when the modal opened. When that element will not survive the modal — a deleted row's `⋯` trigger, or a button that unmounts in the same commit that opens the modal — pass `returnFocusRef` and point it at something that still exists. It is read at CLOSE time, so you can set `returnFocusRef.current` after the work finishes (next row's trigger, or the empty state's first button). If it is empty or detached, Modal falls back to the captured opener, then to doing nothing. A `returnFocusRef` target is scrolled into view (`{ block: 'nearest' }`) since it may be far from where the user was; the captured opener is not scrolled. A Modal unmounted while still open (e.g. `{row && <Modal open …/>}`) restores the same way, but only if focus was lost — an element your code focused after the unmount keeps it.
 
 **Anti-patterns:**
 
@@ -2903,6 +2905,7 @@ const [open, setOpen] = useState(false);
 - **Drag-to-close** on mobile: swipe the Header in the dismiss direction (right drawer → swipe right, bottom → swipe down, etc.). Threshold: 40% of drawer size or 0.5 px/ms velocity. Opt out with `dragToClose={false}`.
 - **Overlay variants:** `overlay="solid"` (default) or `overlay="blur"` (frosted-glass with `backdrop-filter: blur(4px)`).
 - **Stacks with Modal.** Both share one overlay registry — a Drawer can open from inside a Modal (and vice versa). Escape closes the topmost regardless of type — after yielding to any open floating surface (innermost-first: the first press closes the surface, the next closes the host); body scroll lock is shared.
+- **Focus return:** the element focused before the Drawer opened gets focus back on close — also when the Drawer mounts already open (`{seed && <Drawer open …/>}`) and when it unmounts while open. On unmount it only restores if focus was actually lost, so an element your own code focused after the unmount keeps focus.
 - **Forced step:** combine `disableEscapeClose + dismissOnOverlayClick={false} + dragToClose={false}` + `<Drawer.Header closeButton={false}>` + omit `<Drawer.Close>`.
 
 **Anti-patterns:**

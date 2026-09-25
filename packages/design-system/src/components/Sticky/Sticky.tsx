@@ -45,6 +45,11 @@ export interface StickyProps extends HTMLAttributes<HTMLDivElement> {
  * nowhere to stick. It positions its OWN box only; put a layout primitive
  * (`Stack`/`Cluster`) inside when you need to arrange the pinned content.
  *
+ * As a `<Split collapseBelow>` aside it turns into a plain block (no pinning,
+ * no `scroll` height cap or inner scroll) once the Split stacks, so a phone
+ * user's swipe scrolls the page instead of getting trapped in the sidebar.
+ * Only a Sticky that is the aside itself is affected, not one nested deeper.
+ *
  * @example
  * // Detail page: the wide main column scrolls, the 320px sidebar pins.
  * // `align="stretch"` makes the aside track full-height so Sticky has a tall
@@ -95,9 +100,12 @@ export const Sticky = forwardRef<HTMLDivElement, StickyProps>(function Sticky(
   ref,
 ) {
   // {...rest} last so consumer overrides win (Pattern A) — Sticky locks no attrs.
+  // `data-sticky` is an internal cross-component contract: Split.module.scss
+  // targets it to unstick a collapsed aside (#558). Rename both together.
   return (
     <div
       ref={ref}
+      data-sticky=""
       className={clsx(styles.sticky, styles[`top-${top}`], scroll && styles.scroll, className)}
       {...rest}
     >

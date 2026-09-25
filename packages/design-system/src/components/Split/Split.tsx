@@ -58,6 +58,9 @@ export interface SplitProps extends HTMLAttributes<HTMLDivElement> {
    * visual order from tab order — an a11y defect. If you need the aside on top
    * when stacked, use `side="start"`.
    *
+   * A `<Sticky>` passed as the `aside` stops pinning (and drops its `scroll`
+   * height cap) while stacked, so it can't trap the page scroll on a phone.
+   *
    * ❌ Anti-pattern: a `collapseBelow` split must get its width from its
    * parent. `container-type: inline-size` zeroes the split's contribution to
    * intrinsic sizing, so in an intrinsic-width context (another `Split`'s

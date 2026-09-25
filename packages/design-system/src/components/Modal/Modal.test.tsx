@@ -3,7 +3,14 @@
  * useOverlayStack) have their own unit tests; these tests exercise the
  * assembled component behavior.
  */
-import { StrictMode, useRef, useState, type ComponentProps, type RefObject } from 'react';
+import {
+  StrictMode,
+  useEffect,
+  useRef,
+  useState,
+  type ComponentProps,
+  type RefObject,
+} from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Modal } from './Modal';
@@ -584,6 +591,39 @@ describe('<Modal>', () => {
 
     expect(document.activeElement).toBe(trigger);
     expect(focus).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not steal focus back from a consumer who moved it after unmount-while-open', async () => {
+    const user = userEvent.setup();
+    function H() {
+      const [mounted, setMounted] = useState(true);
+      const nextRef = useRef<HTMLButtonElement>(null);
+      useEffect(() => {
+        if (!mounted) nextRef.current?.focus();
+      }, [mounted]);
+      return (
+        <>
+          <button autoFocus data-testid="trigger">
+            Open
+          </button>
+          <button ref={nextRef}>Next</button>
+          {mounted && (
+            <Modal open onOpenChange={() => {}} aria-label="x">
+              <Modal.Body>
+                <button onClick={() => setMounted(false)}>Delete</button>
+              </Modal.Body>
+            </Modal>
+          )}
+        </>
+      );
+    }
+    render(<H />);
+    await new Promise((r) => setTimeout(r, 0));
+
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await new Promise((r) => setTimeout(r, 0));
+
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Next' }));
   });
 
   it('preserves initially-open focus restoration across StrictMode effect replay', async () => {
