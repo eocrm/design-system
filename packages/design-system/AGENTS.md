@@ -1763,6 +1763,7 @@ beside results).
 ```
 
 - Collapsed panes stack in **DOM order**: aside → main for `side="start"` (default), main → aside for `side="end"`. No CSS `order` flip — visual order stays in sync with tab order. Need the aside on top when stacked? Use `side="start"`.
+- A `<Sticky>` passed as `aside` becomes a plain block while collapsed (no pin, no `scroll` cap) — don't shim it.
 - ❌ A `collapseBelow` split in an intrinsic-width context (another `Split`'s default `auto` aside track, a `Cluster` item, `width: max-content`). `container-type: inline-size` makes it contribute zero intrinsic width, so it renders at width 0 — give the parent a concrete width instead. It also becomes the containing block for absolutely-positioned descendants (layout containment). Splits without the prop pay neither cost.
 
 When NOT to use: equal columns → `<Grid columns={2}>`; wrapping peer row → `<Cluster>`; app shell sidebar → `<AppLayout>`/`<Rail>`.
@@ -1792,6 +1793,7 @@ Pins its box to the top of the scroll container while the page scrolls past — 
 - `scroll`: cap the pinned box at the viewport height with internal `overflow-y:auto` + `overscroll-behavior:contain` — for a sidebar taller than the screen (pair with a non-`none` `top`). The bottom gap defaults to the selected rhythm offset; for `topbar`, it defaults to the content gap so the chrome height is not subtracted twice. Override `--sticky-bottom-gap` on the Sticky for a different bottom clearance.
 - Sticky defaults are emitted by the global token entry, so a consumer `:root` override loaded after `@eocrm/design-system/styles/tokens.scss` wins predictably. Override `--sticky-top-topbar` to match custom application chrome.
 - Inside a `<Split>` aside, pair with `align="stretch"` (else the content-height aside track gives nowhere to pin).
+- As a `<Split collapseBelow>` aside, it automatically becomes a plain block (no pin, no `scroll` cap/inner scroll) while the Split is stacked — no consumer shim needed. Applies only when the `Sticky` is the `aside` itself.
 
 When NOT to use: arranging children → `<Stack>`/`<Cluster>`; a fixed overlay above content → `position: fixed` chrome (`Popover`/`Modal`/app bar); the split itself → `<Split>`. Note: `position: sticky` breaks if a clipping ancestor (`overflow: hidden/auto`) isn't the intended scroll container.
 

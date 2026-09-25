@@ -22,6 +22,11 @@ describe('Sticky', () => {
     expect(container.querySelector('[data-testid="child"]')).toBeInTheDocument();
   });
 
+  it('carries the data-sticky hook a collapsed Split uses to unstick it (#558)', () => {
+    const { container } = render(<Sticky>x</Sticky>);
+    expect(container.firstChild).toHaveAttribute('data-sticky');
+  });
+
   it('always applies the base sticky class', () => {
     const { container } = render(<Sticky>x</Sticky>);
     // The base class carries position:sticky + align-self:start.

@@ -124,21 +124,39 @@ export function DrawerRoot({
   const [headingId, setHeadingId] = useState<string | null>(null);
 
   // previouslyFocused — captured in a useLayoutEffect BEFORE Content's auto-focus microtask.
+  // prevOpenRef starts false (not `open`) so mounting already open counts as an
+  // opening and captures the opener; the cleanup below restores it when the
+  // Drawer unmounts while still open (#557 — port of Modal's #450 fix).
   const previouslyFocusedRef = useRef<HTMLElement | null>(null);
-  const prevOpenRef = useRef<boolean>(open);
+  const prevOpenRef = useRef(false);
+  const focusEffectGenerationRef = useRef(0);
+  const restoreFocus = useCallback(() => {
+    const target = previouslyFocusedRef.current;
+    previouslyFocusedRef.current = null;
+    if (target && document.contains(target)) {
+      restoreFocusTo(target);
+    }
+  }, []);
   useLayoutEffect(() => {
+    const generation = ++focusEffectGenerationRef.current;
     if (open && !prevOpenRef.current) {
       previouslyFocusedRef.current = (document.activeElement as HTMLElement | null) ?? null;
     }
     if (!open && prevOpenRef.current) {
-      const target = previouslyFocusedRef.current;
-      if (target && document.contains(target)) {
-        restoreFocusTo(target);
-      }
-      previouslyFocusedRef.current = null;
+      restoreFocus();
     }
     prevOpenRef.current = open;
-  }, [open]);
+    // Unmounted while open: defer until React tears down the dialog and its
+    // focus trap. A later effect run (a normal close) bumps the generation and
+    // cancels this fallback, and restoreFocus clears its ref, so focus moves once.
+    if (open) {
+      return () => {
+        queueMicrotask(() => {
+          if (focusEffectGenerationRef.current === generation) restoreFocus();
+        });
+      };
+    }
+  }, [open, restoreFocus]);
 
   const { depth, isTop, topMode } = useOverlayStack(drawerId, open, stackMode as OverlayStackMode);
   useScrollLock(open);

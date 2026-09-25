@@ -186,7 +186,7 @@ export function Demo() {
 
       <Example
         title="Scroll-viewport mode: a sidebar taller than the screen"
-        description="With scroll, the pinned box is capped at the viewport height (minus the top offset and a bottom gap) and scrolls its own content — so a sidebar with more items than fit on screen stays fully reachable instead of running off below the fold. top='topbar' clears the pinned TopBar plus the standard content gap; its bottom gap stays at that content gap so the chrome height is not subtracted twice. Scroll the page: the sidebar pins, and once it hits the bottom its own scrollbar takes over (overscroll-behavior:contain keeps the page from scroll-chaining)."
+        description="With scroll, the pinned box is capped at the viewport height (minus the top offset and a bottom gap) and scrolls its own content — so a sidebar with more items than fit on screen stays fully reachable instead of running off below the fold. top='topbar' clears the pinned TopBar plus the standard content gap; its bottom gap stays at that content gap so the chrome height is not subtracted twice. Scroll the page: the sidebar pins, and once it hits the bottom its own scrollbar takes over (overscroll-behavior:contain keeps the page from scroll-chaining). collapseBelow='sm' stacks the Split on narrow screens — the Sticky aside then becomes a plain block (no pin, no cap, no inner scroll) so a phone swipe scrolls the page."
         code={`import { Card, Split, Stack, Sticky, Text, Title } from '@eocrm/design-system';
 
 const sidebarItems = Array.from({ length: 5 }, (_, i) => i + 1);
@@ -198,6 +198,7 @@ export function Demo() {
       asideWidth="240px"
       gap="lg"
       align="stretch"
+      collapseBelow="sm"
       aside={
         <Sticky top="topbar" scroll>
           <Stack gap="md">
@@ -233,6 +234,7 @@ export function Demo() {
           asideWidth="240px"
           gap="lg"
           align="stretch"
+          collapseBelow="sm"
           aside={
             <Sticky top="topbar" scroll>
               <Stack gap="md">

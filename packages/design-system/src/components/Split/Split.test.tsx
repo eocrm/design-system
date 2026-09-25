@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { render, screen } from '@testing-library/react';
 import { createRef } from 'react';
 import { Split } from './Split';
+import { Sticky } from '../Sticky';
 
 describe('Split', () => {
   it('renders the aside and the main (children)', () => {
@@ -220,6 +221,37 @@ describe('Split collapseBelow — the container query can actually match (#372)'
 
   it('wraps each collapse rule in a @container query', () => {
     expect(scss.match(/@container \(max-width:/g)).toHaveLength(3);
+  });
+
+  // #558: a Sticky aside must become a plain block once stacked, or a
+  // `scroll` Sticky is a near-viewport-tall inner scroll trap on a phone.
+  it.each(['Sm', 'Md', 'Lg'])('unsticks a Sticky aside at the %s breakpoint', (bp) => {
+    expect(scss).toMatch(
+      new RegExp(`\\.collapsible\\.collapse${bp}\\s*\\{\\s*@include unstick-aside;`),
+    );
+  });
+
+  it('resets every property Sticky pins or caps with', () => {
+    const mixin = scss.slice(scss.indexOf('@mixin unstick-aside'));
+    expect(mixin).toMatch(/>\s*\.aside\s*>\s*\[data-sticky\]\s*\{/);
+    for (const decl of [
+      'position: static',
+      'max-height: none',
+      'overflow-y: visible',
+      'overscroll-behavior: auto',
+    ]) {
+      expect(mixin).toContain(decl);
+    }
+  });
+
+  it('renders a Sticky aside as a direct child of the aside cell (the selector relies on it)', () => {
+    const { container } = render(
+      <Split collapseBelow="lg" aside={<Sticky scroll>side</Sticky>}>
+        main
+      </Split>,
+    );
+    const sticky = container.querySelector('[data-sticky]')!;
+    expect(sticky.parentElement!.parentElement).toBe(container.firstChild);
   });
 
   it('makes both collapsible side templates shrink-safe for pinned aside widths', () => {
