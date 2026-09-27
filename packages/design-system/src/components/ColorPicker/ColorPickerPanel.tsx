@@ -34,6 +34,19 @@ export interface ColorPickerPanelProps extends Omit<HTMLAttributes<HTMLDivElemen
   presets?: string[];
   /** Disable interaction. */
   disabled?: boolean;
+  /**
+   * Whether the panel draws its own chrome (border, shadow, padding,
+   * background, radius). Default `true` — the standalone `<ColorPicker.Panel>`
+   * needs that chrome to read as a discrete surface on a page.
+   *
+   * Set `false` when nesting the panel inside a container that already draws
+   * a frame — a `Popover.Content`, a `Card`, or your own bordered surface —
+   * so the two frames don't nest. `<ColorPicker>` renders its popover panel
+   * this way internally, for exactly this reason.
+   *
+   * @default true
+   */
+  framed?: boolean;
 }
 
 const FALLBACK_HSV: HSV = { h: 0, s: 0, v: 0 };
@@ -71,7 +84,7 @@ const FALLBACK_HEX = '#000000';
  */
 export const ColorPickerPanel = forwardRef<HTMLDivElement, ColorPickerPanelProps>(
   function ColorPickerPanel(
-    { value, onChange, onChangeEnd, presets, disabled = false, className, ...rest },
+    { value, onChange, onChangeEnd, presets, disabled = false, framed = true, className, ...rest },
     ref,
   ) {
     const t = useTranslation();
@@ -210,7 +223,12 @@ export const ColorPickerPanel = forwardRef<HTMLDivElement, ColorPickerPanelProps
     return (
       <div
         ref={ref}
-        className={clsx(styles.panel, disabled && styles.panelDisabled, className)}
+        className={clsx(
+          styles.panel,
+          !framed && styles.unframed,
+          disabled && styles.panelDisabled,
+          className,
+        )}
         {...rest}
       >
         <SVSquare

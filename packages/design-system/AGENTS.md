@@ -634,6 +634,9 @@ const [hex, setHex] = useState('#4F46E5');
 - **Keyboard (hue slider)**: inherits Slider's keyboard — arrows ±1°, PgUp/Dn ±10°, Home/End for 0°/360°.
 - **Popover placement** via `popoverPlacement?: 'bottom-start' | 'bottom' | 'top-start' | ...`. Default `'bottom-start'`.
 - **Disabled** dims the panel, sets `aria-disabled` on the SV pad, disables the slider + input, makes presets non-interactive. Trigger doesn't open.
+- **`panelFooter?: ReactNode`** — rendered inside the popover below the panel (and below presets). For live feedback about the color being picked, e.g. a contrast-ratio readout that updates as the user drags. Not available on the standalone `<ColorPicker.Panel>` (no popover to render it inside). Not an `aria-live` region by default — if the text should be announced as it changes, wrap it in your own `role="status"` span; announcing every drag tick would be disruptive by default.
+- **`<ColorPickerPanel>` (`<ColorPicker.Panel>`) takes `framed?: boolean`, default `true`.** `framed={false}` drops the panel's own chrome (border, shadow, padding, background, radius) — use it when nesting the panel inside something that already draws a frame (your own `Popover.Content`, a `Card`). `<ColorPicker>` renders its popover panel with `framed={false}` internally so the popover shows exactly one frame; a standalone `<ColorPicker.Panel>` keeps its frame by default.
+- **`invalid` now paints the default trigger's border**, not just `aria-invalid` — `.trigger[aria-invalid=true]` uses the same danger token as `Input invalid` (`--color-picker-trigger-border-color-invalid`, same primitive as `--input-border-color-invalid`), and survives `:hover`.
 
 #### Color math API
 

@@ -11,6 +11,7 @@ import {
 } from 'react';
 import clsx from 'clsx';
 import { Popover } from '../Popover';
+import { Stack } from '../Stack';
 import { useTranslation } from '../../i18n/useTranslation';
 import { ColorPickerPanel } from './ColorPickerPanel';
 import { normalizeHex } from './colorMath';
@@ -128,6 +129,26 @@ export interface ColorPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, '
   'aria-describedby'?: string;
   /** Popover placement (split internally into side + align). Default `'bottom-start'`. */
   popoverPlacement?: PopoverPlacement;
+  /**
+   * Optional content rendered inside the popover, below the panel (and below
+   * its presets grid, if any) — for live feedback about the color being
+   * picked, e.g. a contrast-ratio readout that updates as the user drags.
+   * Not available on the standalone `<ColorPicker.Panel>`, which has no
+   * popover to render it inside.
+   *
+   * Not an `aria-live` region by default — announcing every drag tick would
+   * be disruptive. If the footer's text should be announced as it settles,
+   * wire that up yourself (e.g. wrap it in your own `role="status"` span);
+   * that tradeoff is the consumer's call, not the picker's default.
+   *
+   * @example
+   * <ColorPicker
+   *   value={hex}
+   *   onChange={setHex}
+   *   panelFooter={<Text size="sm">{contrastRatio.toFixed(2)}:1 against white text</Text>}
+   * />
+   */
+  panelFooter?: ReactNode;
   /** Optional `<ColorPicker.Trigger asChild>` override for custom triggers. */
   children?: ReactNode;
 }
@@ -256,6 +277,7 @@ const ColorPickerRoot = forwardRef<HTMLDivElement, ColorPickerProps>(function Co
     required: _required = false,
     triggerLabel,
     popoverPlacement = 'bottom-start',
+    panelFooter,
     id,
     'aria-label': ariaLabel,
     'aria-invalid': ariaInvalid,
@@ -342,13 +364,17 @@ const ColorPickerRoot = forwardRef<HTMLDivElement, ColorPickerProps>(function Co
       <Popover open={open} onOpenChange={handleOpenChange}>
         <Popover.Trigger>{triggerElement}</Popover.Trigger>
         <Popover.Content side={side} align={align}>
-          <ColorPickerPanel
-            value={value}
-            onChange={onChange}
-            onChangeEnd={onChangeEnd}
-            presets={presets}
-            disabled={disabled}
-          />
+          <Stack gap="md">
+            <ColorPickerPanel
+              framed={false}
+              value={value}
+              onChange={onChange}
+              onChangeEnd={onChangeEnd}
+              presets={presets}
+              disabled={disabled}
+            />
+            {panelFooter}
+          </Stack>
         </Popover.Content>
       </Popover>
     </div>

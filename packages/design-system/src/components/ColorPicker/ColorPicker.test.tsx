@@ -1,6 +1,9 @@
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, useState } from 'react';
+import { resolve } from 'node:path';
+import { parse, type Rule } from 'postcss';
+import { compile } from 'sass';
 import { ColorPicker, hexToHsv, hsvToHex } from './index';
 import { Field } from '../Field';
 import { I18nProvider } from '../../i18n';
@@ -667,5 +670,147 @@ describe('ColorPicker — empty label strings', () => {
       </ColorPicker>,
     );
     expect(screen.getByRole('button', { name: 'Brand color' })).toBeInTheDocument();
+  });
+});
+
+describe('ColorPicker.Panel — framed', () => {
+  it('defaults to framed (chrome class present, no unframed modifier)', () => {
+    const { container } = render(<ColorPicker.Panel value="#FF0000" onChange={() => {}} />);
+    const panel = container.firstElementChild as HTMLElement;
+    expect(panel.className).toMatch(/panel/);
+    expect(panel.className).not.toMatch(/unframed/);
+  });
+
+  it('framed={false} adds the unframed modifier class', () => {
+    const { container } = render(
+      <ColorPicker.Panel value="#FF0000" onChange={() => {}} framed={false} />,
+    );
+    const panel = container.firstElementChild as HTMLElement;
+    expect(panel.className).toMatch(/panel/);
+    expect(panel.className).toMatch(/unframed/);
+  });
+});
+
+describe('ColorPicker — single popover frame (#587)', () => {
+  it('renders its popover panel unframed', async () => {
+    const user = userEvent.setup();
+    render(<ColorPicker value="#FF0000" onChange={() => {}} />);
+    await user.click(screen.getByRole('button'));
+    const panel = screen.getByRole('application').closest('[class*="panel"]') as HTMLElement;
+    expect(panel).toBeInTheDocument();
+    expect(panel.className).toMatch(/unframed/);
+  });
+
+  it('inline <ColorPicker.Panel> keeps its own frame by default', () => {
+    const { container } = render(<ColorPicker.Panel value="#FF0000" onChange={() => {}} />);
+    const panel = container.firstElementChild as HTMLElement;
+    expect(panel.className).not.toMatch(/unframed/);
+  });
+});
+
+describe('ColorPicker — panelFooter (#585a)', () => {
+  it('renders panelFooter inside the open popover content, after the panel', async () => {
+    const user = userEvent.setup();
+    render(
+      <ColorPicker
+        value="#FF0000"
+        onChange={() => {}}
+        panelFooter={<div data-testid="footer">4.48:1 against white text</div>}
+      />,
+    );
+    expect(screen.queryByTestId('footer')).not.toBeInTheDocument();
+    await user.click(screen.getByRole('button'));
+    const footer = screen.getByTestId('footer');
+    const panel = screen.getByRole('application').closest('[class*="panel"]') as HTMLElement;
+    expect(panel.compareDocumentPosition(footer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('renders nothing extra when panelFooter is omitted', async () => {
+    const user = userEvent.setup();
+    render(<ColorPicker value="#FF0000" onChange={() => {}} />);
+    await user.click(screen.getByRole('button'));
+    expect(screen.getByRole('application')).toBeInTheDocument();
+  });
+});
+
+describe('ColorPicker — invalid trigger visual (#585b)', () => {
+  it('sets aria-invalid on the default trigger when invalid', () => {
+    render(<ColorPicker value="#FF0000" onChange={() => {}} invalid />);
+    expect(screen.getByRole('button')).toHaveAttribute('aria-invalid', 'true');
+  });
+});
+
+describe('ColorPicker — invalid trigger (compiled CSS)', () => {
+  const css = compile(resolve(__dirname, 'ColorPicker.module.scss')).css;
+  const root = parse(css);
+  const allRules: Rule[] = [];
+  root.walkRules((rule) => {
+    allRules.push(rule);
+  });
+
+  // Specificity proxy: classes + pseudo-classes + attribute selectors — this
+  // file has no ids, so those three exhaust the selector-B components in play.
+  const classWeight = (selector: string) =>
+    (selector.match(/\.[a-zA-Z0-9_-]+/g)?.length ?? 0) +
+    (selector.match(/:[a-zA-Z-]+(?!\()/g)?.length ?? 0) +
+    (selector.match(/\[[^\]]+\]/g)?.length ?? 0);
+
+  it('sets border-color to the same danger token Input reuses, at rest', () => {
+    const invalidRule = allRules.find((rule) =>
+      rule.selectors.some((s) => /\.trigger\[aria-invalid=true\]$/.test(s)),
+    );
+    expect(invalidRule).toBeDefined();
+    const decl = invalidRule!.nodes.find(
+      (node) => node.type === 'decl' && node.prop === 'border-color',
+    );
+    expect(decl && decl.type === 'decl' ? decl.value : undefined).toBe(
+      'var(--color-picker-trigger-border-color-invalid)',
+    );
+  });
+
+  it('outranks :hover:not(:disabled) so hover cannot hide the invalid border', () => {
+    const hoverRule = allRules.find((rule) =>
+      rule.selectors.some((s) => /\.trigger:hover:not\(:disabled\)$/.test(s)),
+    );
+    expect(hoverRule).toBeDefined();
+    const hoverSelector = hoverRule!.selectors.find((s) => /:hover:not\(:disabled\)$/.test(s))!;
+
+    const invalidHoverRule = allRules.find((rule) =>
+      rule.selectors.some((s) => /\[aria-invalid=true\]/.test(s) && s.includes(':hover')),
+    );
+    expect(invalidHoverRule).toBeDefined();
+    const invalidHoverSelector = invalidHoverRule!.selectors.find(
+      (s) => /\[aria-invalid=true\]/.test(s) && s.includes(':hover'),
+    )!;
+    const decl = invalidHoverRule!.nodes.find(
+      (node) => node.type === 'decl' && node.prop === 'border-color',
+    );
+    expect(decl && decl.type === 'decl' ? decl.value : undefined).toBe(
+      'var(--color-picker-trigger-border-color-invalid)',
+    );
+
+    expect(classWeight(invalidHoverSelector)).toBeGreaterThan(classWeight(hoverSelector));
+  });
+});
+
+describe('ColorPicker tokens — invalid trigger reuses Input danger token', () => {
+  it('--color-picker-trigger-border-color-invalid resolves to the same primitive as Input', () => {
+    const cpCss = compile(resolve(__dirname, 'ColorPicker.tokens.scss')).css;
+    const inputCss = compile(resolve(__dirname, '../Input/Input.tokens.scss')).css;
+    const cpRoot = parse(cpCss);
+    const inputRoot = parse(inputCss);
+
+    let cpValue: string | undefined;
+    cpRoot.walkDecls('--color-picker-trigger-border-color-invalid', (decl) => {
+      cpValue = decl.value;
+    });
+    let inputValue: string | undefined;
+    inputRoot.walkDecls('--input-border-color-invalid', (decl) => {
+      inputValue = decl.value;
+    });
+
+    expect(cpValue).toBeDefined();
+    expect(inputValue).toBeDefined();
+    expect(cpValue).toBe(inputValue);
   });
 });

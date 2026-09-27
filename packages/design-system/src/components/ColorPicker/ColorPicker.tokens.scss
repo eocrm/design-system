@@ -40,6 +40,10 @@
   --color-picker-trigger-focus-color: var(--color-accent);
   --color-picker-trigger-opacity-disabled: var(--opacity-disabled);
 
+  // Same primitive as Input's --input-border-color-invalid, so an invalid
+  // ColorPicker trigger and an invalid Input show the identical danger border.
+  --color-picker-trigger-border-color-invalid: var(--color-danger);
+
   // Trigger swatch
   --color-picker-trigger-swatch-radius: var(--radius-sm);
   --color-picker-trigger-swatch-border-color: var(--color-border);

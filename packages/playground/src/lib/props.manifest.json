@@ -882,6 +882,13 @@
           "description": "Popover placement (split internally into side + align). Default `'bottom-start'`."
         },
         {
+          "name": "panelFooter",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Optional content rendered inside the popover, below the panel (and below\nits presets grid, if any) — for live feedback about the color being\npicked, e.g. a contrast-ratio readout that updates as the user drags.\nNot available on the standalone `<ColorPicker.Panel>`, which has no\npopover to render it inside.\n\nNot an `aria-live` region by default — announcing every drag tick would\nbe disruptive. If the footer's text should be announced as it settles,\nwire that up yourself (e.g. wrap it in your own `role=\"status\"` span);\nthat tradeoff is the consumer's call, not the picker's default."
+        },
+        {
           "name": "children",
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
