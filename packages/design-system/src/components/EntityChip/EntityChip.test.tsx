@@ -6,7 +6,7 @@ import userEvent from '@testing-library/user-event';
 import { parse, type Rule } from 'postcss';
 import { compile } from 'sass';
 import { I18nProvider } from '../../i18n/I18nProvider';
-import { EntityChip } from './EntityChip';
+import { EntityChip, type EntityChipSegment } from './EntityChip';
 
 // A stub component used to verify polymorphic `as` forwarding. Looks like
 // react-router-dom's <Link> — accepts `to`, optionally `replace`, etc.
@@ -595,6 +595,20 @@ describe('<EntityChip> — segments (#582)', () => {
     );
     expect(container.querySelector('[class*="segment"]')).toBeNull();
   });
+
+  it('accepts an `as const` segment array typed against `readonly EntityChipSegment[]` (type-level)', () => {
+    // Compile-time assertion: `before`/`after` are typed `readonly
+    // EntityChipSegment[]`, so a `satisfies`-checked `as const` array — the
+    // shape a consumer building a static segment list would reach for —
+    // must type-check without a cast. If either prop reverts to a mutable
+    // array type, this still compiles (readonly is the wider type); if it
+    // narrows to something incompatible with the union shape, `tsc` fails.
+    const segs = [
+      { kind: 'icon', icon: <svg data-testid="typed" />, label: 'Bug', color: 'red' },
+    ] as const satisfies readonly EntityChipSegment[];
+    render(<EntityChip href="/t" label="T" before={segs} />);
+    expect(screen.getByRole('img', { name: 'Bug' })).toBeInTheDocument();
+  });
 });
 
 describe('<EntityChip> — segmented layout CSS (#582)', () => {
@@ -627,6 +641,12 @@ describe('<EntityChip> — segmented layout CSS (#582)', () => {
     expect(decl('.segment', 'align-self')).toBe('stretch');
     expect(decl('.segmentGlyph > svg', 'width')).toBe('var(--entity-chip-segment-glyph-size)');
     expect(decl('.segmentText', 'font-size')).toBe('var(--entity-chip-segment-text-size)');
+  });
+
+  it('hovering a linked/button segmented chip brightens the core, matching the unsegmented hover token', () => {
+    expect(decl('.segmented:is(a, button):hover .core', 'background')).toBe(
+      'var(--entity-chip-bg-hover)',
+    );
   });
 });
 
@@ -676,6 +696,41 @@ describe('<EntityChip> — tooltips and labelMaxWidth (#582)', () => {
     await new Promise((r) => setTimeout(r, 600)); // past Tooltip's 400ms delay
     expect(screen.queryByRole('tooltip')).toBeNull();
     expect(label).not.toHaveAttribute('aria-describedby');
+  });
+
+  it('a segmented-only chip (no truncate, no labelMaxWidth) shows a tooltip for a clipped label on hover', async () => {
+    // The main case `clippable` has to cover on its own: only `before`/`after`
+    // set, neither of the other two clippable triggers. If `clippable` ever
+    // drops the `hasSegments` term, this label gets no Tooltip wrapper at all
+    // and this assertion fails (there is nothing to find/hover).
+    const user = userEvent.setup();
+    render(<EntityChip href="/t" label="A very long task title" before={TASK_BEFORE} />);
+    const label = screen.getByText('A very long task title');
+    fakeClip(label, true);
+    await user.hover(label);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('A very long task title');
+  });
+
+  it('an unavailable chip with `before` segments still tooltips a clipped label (no truncate, #582 review)', async () => {
+    // The bug this fixes: `segmented` is false while `unavailable`, so the old
+    // `clippable = segmented || truncate || labelMaxWidth != null` missed this
+    // case even though the chip keeps the `truncate` single-line class and can
+    // still clip. `loading` never reaches this Tooltip at all (separate branch),
+    // so only `unavailable` needed the `hasSegments` term.
+    const user = userEvent.setup();
+    render(
+      <EntityChip
+        href="/t"
+        label="A very long task title"
+        unavailable
+        before={TASK_BEFORE}
+        after={TASK_AFTER}
+      />,
+    );
+    const label = screen.getByText('A very long task title');
+    fakeClip(label, true);
+    await user.hover(label);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('A very long task title');
   });
 
   it('labelMaxWidth caps the label in ch, single-line, even without truncate/segments', () => {
@@ -765,6 +820,52 @@ describe('<EntityChip> — keyboard focus opens the clipped-label tooltip (#582 
     fakeClip(screen.getByText('A very long task title'), true);
     await user.tab();
     expect(onFocus).toHaveBeenCalledTimes(1);
+    await user.tab();
+    expect(onBlur).toHaveBeenCalledTimes(1);
+  });
+
+  it('tabbing onto a segmented-only chip (no truncate, no labelMaxWidth) opens the tooltip when clipped', async () => {
+    // Same main-case coverage as the hover test above, for the keyboard path:
+    // only `before`/`after` set. If `clippable` ever drops the `hasSegments`
+    // term this chip never chains `handleRootFocus` onto the root at all
+    // (below, #582 nice-to-have 4), so this assertion fails.
+    stubFocusVisible(true);
+    const user = userEvent.setup();
+    render(<EntityChip href="/t" label="A very long task title" before={TASK_BEFORE} />);
+    fakeClip(screen.getByText('A very long task title'), true);
+    await user.tab();
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('A very long task title');
+  });
+
+  it('does NOT open the tooltip on focus when :focus-visible is false, even past the delay', async () => {
+    // Pins the `if (!focusVisible) return;` gate in handleRootFocus: a mouse
+    // (non-keyboard) focus must not open the clipped-label tooltip.
+    stubFocusVisible(false);
+    const user = userEvent.setup();
+    render(<EntityChip href="/t" label="A very long task title" truncate />);
+    fakeClip(screen.getByText('A very long task title'), true);
+    await user.tab();
+    await new Promise((r) => setTimeout(r, 600)); // past Tooltip's 400ms delay
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
+  it('a non-clippable chip still calls a consumer onFocus/onBlur (no truncate/segments/labelMaxWidth)', async () => {
+    // With nothing that could clip the label, the root shouldn't chain in
+    // handleRootFocus/handleRootBlur at all — the consumer's own handlers
+    // (from {...rest}) must still fire on their own.
+    stubFocusVisible(true);
+    const user = userEvent.setup();
+    const onFocus = vi.fn();
+    const onBlur = vi.fn();
+    render(
+      <>
+        <EntityChip href="/t" label="Short" onFocus={onFocus} onBlur={onBlur} />
+        <a href="/next">Next</a>
+      </>,
+    );
+    await user.tab();
+    expect(onFocus).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
     await user.tab();
     expect(onBlur).toHaveBeenCalledTimes(1);
   });

@@ -34,18 +34,57 @@ export interface EntityChipStatus {
 
 /**
  * A coloured part of a segmented chip (#582), rendered before or after the
- * chip's core (icon · prefix · label · status · trailing).
- * - `icon` — a glyph on a palette colour. `label` is its accessible name (the
- *   segment is `role="img"`) and its tooltip; the glyph is sized to the text.
- * - `text` — a short value (e.g. a status) on a palette colour, same weight as
- *   the label, with an optional `tooltip`.
- * `color` defaults to `'slate'`. `size` (in em of the chip text) overrides
- * the glyph size (icon, default 0.85em) or the font size (text, default
- * 0.9em). Non-interactive: the chip is the link.
+ * chip's core (icon · prefix · label · status · trailing). Non-interactive:
+ * the chip itself is the link.
  */
 export type EntityChipSegment =
-  | { kind: 'icon'; icon: ReactNode; label: string; color?: PaletteColor; size?: number }
-  | { kind: 'text'; text: ReactNode; color?: PaletteColor; tooltip?: ReactNode; size?: number };
+  | {
+      /** Discriminant: an icon segment — a glyph on a palette colour. */
+      kind: 'icon';
+      /**
+       * The glyph, e.g. a lucide icon. `size` below sizes a direct `<svg>`
+       * child only — a wrapped icon (an `<IconTile>`, a styled span) isn't
+       * sized by it. Rendered `aria-hidden`; `label` carries the meaning.
+       */
+      icon: ReactNode;
+      /**
+       * This segment's accessible name (the segment is `role="img"`) AND its
+       * hover tooltip — it IS the segment's meaning, not decoration. An icon
+       * segment with no meaningful label is an anti-pattern; a purely
+       * decorative glyph belongs in the chip's own `icon` prop instead.
+       */
+      label: string;
+      /** Palette color for the segment's fill/fg pair. Default `'slate'`. */
+      color?: PaletteColor;
+      /**
+       * Overrides the glyph size, a positive number in em of the chip text.
+       * Default `0.85em`. Above ~1.1 makes the chip taller than a plain chip.
+       */
+      size?: number;
+    }
+  | {
+      /** Discriminant: a text segment — a short value on a palette colour. */
+      kind: 'text';
+      /**
+       * The segment's text AND its accessible name — this is what a screen
+       * reader hears, so the full meaning must live here, not in `tooltip`.
+       */
+      text: ReactNode;
+      /** Palette color for the segment's fill/fg pair. Default `'slate'`. */
+      color?: PaletteColor;
+      /**
+       * Supplementary detail shown on hover (or keyboard focus) only — never
+       * part of the accessible name. Don't put meaning here that isn't also
+       * in `text`; a screen-reader user never sees it.
+       */
+      tooltip?: ReactNode;
+      /**
+       * Overrides the segment's font size, a positive number in em of the
+       * chip text. Default `0.9em`. Above ~1.1 makes the chip taller than a
+       * plain chip.
+       */
+      size?: number;
+    };
 
 interface EntityChipOwnProps {
   /** Leading icon — consumer passes the element (e.g. a lucide icon). Rendered aria-hidden. */
@@ -91,9 +130,9 @@ interface EntityChipOwnProps {
    * Know the trade: the accessible name CHANGES when loading resolves — and by
    * more than this word. The loading branch renders neither `prefix` nor
    * `status` (nor `before`/`after` segments), so a chip with both goes from
-   * "Fix login bug (loading)" to "ENG-5 Fix login bug In progress". That is unavoidable when announcing a
-   * transient state through the name, and it is why this was initially left
-   * alone. Note it also means a consumer query like
+   * "Fix login bug (loading)" to "ENG-5 Fix login bug In progress". That is
+   * unavoidable when announcing a transient state through the name, and it is
+   * why this was initially left alone. Note it also means a consumer query like
    * `getByRole('link', { name: 'Appointment' })` no longer matches a LOADING
    * chip.
    *
@@ -170,14 +209,15 @@ interface EntityChipOwnProps {
    * joins the accessible name ("Bug ENG-15 Fix login bug Normal Reported").
    * Not rendered while `loading` or `unavailable`.
    */
-  before?: EntityChipSegment[];
+  before?: readonly EntityChipSegment[];
   /** Coloured segments after the core, in order (e.g. priority, status). See `before`. */
-  after?: EntityChipSegment[];
+  after?: readonly EntityChipSegment[];
   /**
-   * Caps the label's width, in `ch`; past it the label ellipsizes on one line
-   * (also on a chip without `truncate`). For chips in running text, where the
-   * container edge is a whole paragraph away. The full label stays in the DOM
-   * and the accessible name; hovering a clipped label shows it in a tooltip.
+   * Caps the label's width, a positive number of `ch`; past it the label
+   * ellipsizes on one line (also on a chip without `truncate`). For chips in
+   * running text, where the container edge is a whole paragraph away. The
+   * full label stays in the DOM and the accessible name; a clipped label
+   * shows it in a tooltip on hover or keyboard focus.
    */
   labelMaxWidth?: number;
 }
@@ -405,7 +445,12 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
   // tooltip and no aria-describedby (it would be announced twice).
   const labelRef = useRef<HTMLSpanElement>(null);
   const [labelTipOpen, setLabelTipOpen] = useState(false);
-  const clippable = segmented || truncate || labelMaxWidth != null;
+  // `hasSegments`, not `segmented`: a loading/unavailable chip with `before`/
+  // `after` configured still gets the `truncate` class (below) even though
+  // `segmented` itself stays gated off — its label can still be clipped, and
+  // should still get a tooltip. Safe for `loading` regardless, since that
+  // branch never renders the label Tooltip at all (#582 review).
+  const clippable = truncate || hasSegments || labelMaxWidth != null;
   const onLabelTip = (next: boolean) => {
     const el = labelRef.current;
     setLabelTipOpen(next && el != null && el.scrollWidth > el.clientWidth);
@@ -534,10 +579,12 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
       className={clsx(
         styles.chip,
         unavailable && styles.unavailable,
-        // Segments still reserve their layout while loading/unavailable drops
-        // them (a list row must not reflow from one line to wrapping) — so the
-        // single-line class applies whenever segments are configured, even
-        // though `segmented` itself stays gated to the normal state (#582 review).
+        // Only the one-line (truncate) layout is kept while loading/unavailable
+        // drops the segments themselves — nothing about the segments is
+        // reserved, but a list row must still not reflow from one line to
+        // wrapping, so the single-line class applies whenever segments are
+        // configured, even though `segmented` itself stays gated to the
+        // normal state (#582 review).
         (truncate || hasSegments) && styles.truncate,
         segmented && styles.segmented,
         className,
@@ -552,8 +599,16 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
       // via {...rest} — aria-busy/aria-disabled are the component's contract.
       aria-busy={loading || undefined}
       aria-disabled={inert || undefined}
-      onFocus={chain(restOnFocus, handleRootFocus)}
-      onBlur={chain(restOnBlur, handleRootBlur)}
+      // Only chain in the clipped-label tooltip's focus/blur handlers when the
+      // chip actually has a clippable label — otherwise {...rest} above has
+      // already passed the consumer's own onFocus/onBlur through untouched,
+      // and there is nothing here for this chip to add.
+      {...(clippable
+        ? {
+            onFocus: chain(restOnFocus, handleRootFocus),
+            onBlur: chain(restOnBlur, handleRootBlur),
+          }
+        : null)}
     >
       {segmented ? (
         <>

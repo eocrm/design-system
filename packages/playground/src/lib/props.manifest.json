@@ -1944,7 +1944,7 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Loading placeholder: icon slot + `…` body, aria-busy; the label stays in\nthe DOM visually hidden so the chip keeps its accessible name. Purely\nvisual — with a link target (`href`/`as`) the chip stays a live,\nkeyboard-reachable link while loading.\n\nThe state is announced: a localized word is rendered visually hidden, so a\nlinked chip's name becomes \"Appointment (loading)\". `aria-busy` alone did\nnot do this. It is a GLOBAL ARIA state, so unlike `aria-disabled` it is\nperfectly valid on the chip's role-less span and browsers do expose it —\nbut no mainstream screen reader conveys `busy` as a state on a non-live\nelement, and the ellipsis is `aria-hidden`. The label reached the user\nfine; no signal of the LOADING STATE did.\n\nKnow the trade: the accessible name CHANGES when loading resolves — and by\nmore than this word. The loading branch renders neither `prefix` nor\n`status`, so a chip with both goes from \"Fix login bug (loading)\" to\n\"ENG-5 Fix login bug In progress\". That is unavoidable when announcing a\ntransient state through the name, and it is why this was initially left\nalone. Note it also means a consumer query like\n`getByRole('link', { name: 'Appointment' })` no longer matches a LOADING\nchip.\n\nMeasured, the mutation itself is benign: Chromium keeps the SAME\naccessibility node across the transition (same backendNodeId) and focus\nsurvives, so nothing is torn down and rebuilt — the name and `busy` simply\nchange on the existing object.\n\nThe alternative — an `aria-live` region — has to be owned by the consumer,\nbecause only the consumer knows whether a given chip resolving is worth\ninterrupting someone for. To take that route, override this word to `''`\nat your TOP-LEVEL provider: the override is global to a provider subtree\n(there is no per-chip opt-out), `I18nProvider` requires a `locale`, and a\nnested provider replaces rather than extends its parent — so wrapping a\nsingle chip would silently discard every other override you have set."
+          "description": "Loading placeholder: icon slot + `…` body, aria-busy; the label stays in\nthe DOM visually hidden so the chip keeps its accessible name. Purely\nvisual — with a link target (`href`/`as`) the chip stays a live,\nkeyboard-reachable link while loading.\n\nThe state is announced: a localized word is rendered visually hidden, so a\nlinked chip's name becomes \"Appointment (loading)\". `aria-busy` alone did\nnot do this. It is a GLOBAL ARIA state, so unlike `aria-disabled` it is\nperfectly valid on the chip's role-less span and browsers do expose it —\nbut no mainstream screen reader conveys `busy` as a state on a non-live\nelement, and the ellipsis is `aria-hidden`. The label reached the user\nfine; no signal of the LOADING STATE did.\n\nKnow the trade: the accessible name CHANGES when loading resolves — and by\nmore than this word. The loading branch renders neither `prefix` nor\n`status` (nor `before`/`after` segments), so a chip with both goes from\n\"Fix login bug (loading)\" to \"ENG-5 Fix login bug In progress\". That is\nunavoidable when announcing a transient state through the name, and it is\nwhy this was initially left alone. Note it also means a consumer query like\n`getByRole('link', { name: 'Appointment' })` no longer matches a LOADING\nchip.\n\nMeasured, the mutation itself is benign: Chromium keeps the SAME\naccessibility node across the transition (same backendNodeId) and focus\nsurvives, so nothing is torn down and rebuilt — the name and `busy` simply\nchange on the existing object.\n\nThe alternative — an `aria-live` region — has to be owned by the consumer,\nbecause only the consumer knows whether a given chip resolving is worth\ninterrupting someone for. To take that route, override this word to `''`\nat your TOP-LEVEL provider: the override is global to a provider subtree\n(there is no per-chip opt-out), `I18nProvider` requires a `locale`, and a\nnested provider replaces rather than extends its parent — so wrapping a\nsingle chip would silently discard every other override you have set."
         },
         {
           "name": "unavailable",
@@ -1958,7 +1958,7 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Single-line mode for list rows. The chip is capped at its container's\nwidth (`max-width: 100%`, `min-width: 0`, so it also shrinks as a flex\nitem) and only the `label` ellipsizes — `icon`, `prefix`, `status` and\n`trailing` keep their full size. Default `false`: the label wraps, which\nis right for a chip inside running text.\n\nThe full label stays in the DOM, so the accessible name is unchanged; a\nsighted user sees the rest on the entity's own page (or add a `title`)."
+          "description": "Single-line mode for list rows. The chip is capped at its container's\nwidth (`max-width: 100%`, `min-width: 0`, so it also shrinks as a flex\nitem) and only the `label` ellipsizes — `icon`, `prefix`, `status` and\n`trailing` keep their full size. Default `false`: the label wraps, which\nis right for a chip inside running text.\n\nThe full label stays in the DOM, so the accessible name is unchanged. A\nclipped label shows its full text in a tooltip on hover or keyboard\nfocus — don't add a `title`, which would give a double tooltip."
         },
         {
           "name": "trailing",
@@ -1969,14 +1969,14 @@
         },
         {
           "name": "before",
-          "type": "EntityChipSegment[]",
+          "type": "readonly EntityChipSegment[]",
           "required": false,
           "default": "",
           "description": "Coloured segments before the chip's core, in order (e.g. the task type).\nAny segment turns the chip segmented: one line, only the outer corners\nrounded, only the label shrinks (as with `truncate`). Every segment's text\njoins the accessible name (\"Bug ENG-15 Fix login bug Normal Reported\").\nNot rendered while `loading` or `unavailable`."
         },
         {
           "name": "after",
-          "type": "EntityChipSegment[]",
+          "type": "readonly EntityChipSegment[]",
           "required": false,
           "default": "",
           "description": "Coloured segments after the core, in order (e.g. priority, status). See `before`."
@@ -1986,7 +1986,7 @@
           "type": "number",
           "required": false,
           "default": "",
-          "description": "Caps the label's width, in `ch`; past it the label ellipsizes on one line\n(also on a chip without `truncate`). For chips in running text, where the\ncontainer edge is a whole paragraph away. The full label stays in the DOM\nand the accessible name; hovering a clipped label shows it in a tooltip."
+          "description": "Caps the label's width, a positive number of `ch`; past it the label\nellipsizes on one line (also on a chip without `truncate`). For chips in\nrunning text, where the container edge is a whole paragraph away. The\nfull label stays in the DOM and the accessible name; a clipped label\nshows it in a tooltip on hover or keyboard focus."
         },
         {
           "name": "as",
