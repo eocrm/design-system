@@ -3975,6 +3975,13 @@
           "required": false,
           "default": "",
           "description": "Stretch the trigger (or read-only chip) to its container's width, for a\nform column of full-width controls (`Input`, `Select`, `DatePicker` in\nvertical `Field`s). Icon + name stay at the start, the chevron moves to\nthe end edge like a `Select` trigger, and the menu is at least as wide as\nthe trigger. Keeps the full-colour fill. Defaults to `false`\n(content-width pill)."
+        },
+        {
+          "name": "invalid",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Error state — sets `aria-invalid` on the trigger. `<Field error>` injects\nit for you. No visual change: the fill IS the value's colour, and the\nField's error text carries the error."
         }
       ]
     },

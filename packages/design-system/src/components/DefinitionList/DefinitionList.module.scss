@@ -9,7 +9,12 @@
 
 .list[data-layout='horizontal'] {
   display: grid;
-  grid-template-columns: var(--dl-term-width, max-content) 1fr;
+
+  // minmax(0, …), not plain `1fr` (= minmax(auto, 1fr)): with an `auto` floor
+  // the track can't go below the description's min-content, and a nowrap
+  // child (EntityChip/Text `truncate`) makes that its full one-line width —
+  // the row ran past the card instead of ellipsizing (#580).
+  grid-template-columns: var(--dl-term-width, max-content) minmax(0, 1fr);
   column-gap: var(--definition-list-column-gap);
 }
 
@@ -43,6 +48,10 @@
   gap: var(--definition-list-description-gap);
   font-size: var(--definition-list-description-font-size);
   color: var(--definition-list-description-fg);
+
+  // A grid/flex item defaults to `min-width: auto` — its content's min-content
+  // — so the <dd> itself wouldn't shrink into the track either (#580).
+  min-width: 0;
 }
 
 // Horizontal padding matches Card.ListRow's `var(--space-3) var(--space-4)`

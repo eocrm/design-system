@@ -1,5 +1,15 @@
 import { Mail, Phone, Building, MapPin, Globe, Briefcase, Cake, User } from 'lucide-react';
-import { Badge, Cluster, DefinitionList, Link, Stack, Text } from '@eocrm/design-system';
+import {
+  Badge,
+  Card,
+  Cluster,
+  Constrain,
+  DefinitionList,
+  EntityChip,
+  Link,
+  Stack,
+  Text,
+} from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -339,6 +349,67 @@ export function Demo() {
           does not render a Stack internally.
         </Text>
       </Stack>
+      <Example
+        title="Truncating values"
+        description="The description column takes whatever the term column leaves, so a truncating child (EntityChip truncate, Text truncate) ellipsizes at the card edge instead of running past it."
+        code={`import { Card, Constrain, DefinitionList, EntityChip, Text } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Constrain width="sm">
+    <Card>
+      <DefinitionList dividers>
+        <DefinitionList.Item>
+          <DefinitionList.Term>Parent</DefinitionList.Term>
+          <DefinitionList.Description>
+            <EntityChip
+              truncate
+              href="#"
+              prefix="ENG-15"
+              label="Migrate the legacy billing exports to the new reporting pipeline"
+            />
+          </DefinitionList.Description>
+        </DefinitionList.Item>
+        <DefinitionList.Item>
+          <DefinitionList.Term>Summary</DefinitionList.Term>
+          <DefinitionList.Description>
+            <Text truncate>
+              Exports time out for tenants with more than 50k invoices per month
+            </Text>
+          </DefinitionList.Description>
+        </DefinitionList.Item>
+      </DefinitionList>
+    </Card>
+  </Constrain>
+  );
+}`}
+      >
+        <Constrain width="sm">
+          <Card>
+            <DefinitionList dividers>
+              <DefinitionList.Item>
+                <DefinitionList.Term>Parent</DefinitionList.Term>
+                <DefinitionList.Description>
+                  <EntityChip
+                    truncate
+                    href="#"
+                    prefix="ENG-15"
+                    label="Migrate the legacy billing exports to the new reporting pipeline"
+                  />
+                </DefinitionList.Description>
+              </DefinitionList.Item>
+              <DefinitionList.Item>
+                <DefinitionList.Term>Summary</DefinitionList.Term>
+                <DefinitionList.Description>
+                  <Text truncate>
+                    Exports time out for tenants with more than 50k invoices per month
+                  </Text>
+                </DefinitionList.Description>
+              </DefinitionList.Item>
+            </DefinitionList>
+          </Card>
+        </Constrain>
+      </Example>
     </DemoLayout>
   );
 }

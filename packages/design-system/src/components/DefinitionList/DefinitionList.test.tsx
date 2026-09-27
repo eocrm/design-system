@@ -1,3 +1,6 @@
+import { resolve } from 'node:path';
+import { parse, type Declaration, type Rule } from 'postcss';
+import { compile } from 'sass';
 import { createRef } from 'react';
 import { render, screen } from '@testing-library/react';
 import { DefinitionList } from './DefinitionList';
@@ -222,5 +225,30 @@ describe('DefinitionList', () => {
     const terms = Array.from(container.querySelectorAll('dt')).map((dt) => dt.textContent);
     expect(terms).toEqual(['First', 'Second']);
     warn.mockRestore();
+  });
+});
+
+// jsdom has no layout, so the #580 fix is asserted on the compiled CSS.
+describe('DefinitionList — truncating values shrink instead of overflowing (#580)', () => {
+  const css = parse(compile(resolve(__dirname, './DefinitionList.module.scss')).css);
+  const decl = (selector: string, prop: string) => {
+    let value: string | undefined;
+    css.walkRules((rule: Rule) => {
+      if (rule.selector !== selector) return;
+      rule.walkDecls(prop, (d: Declaration) => {
+        value = d.value;
+      });
+    });
+    return value;
+  };
+
+  it('the description track has a 0 floor, not min-content', () => {
+    expect(decl('.list[data-layout=horizontal]', 'grid-template-columns')).toBe(
+      'var(--dl-term-width, max-content) minmax(0, 1fr)',
+    );
+  });
+
+  it('the <dd> itself can shrink below its content', () => {
+    expect(decl('.description', 'min-width')).toBe('0');
   });
 });
