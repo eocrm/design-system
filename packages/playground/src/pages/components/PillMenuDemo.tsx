@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { BookOpen, Bug, CheckSquare } from 'lucide-react';
-import { Cluster, PillMenu, type PillMenuOption } from '@eocrm/design-system';
+import { Cluster, Field, Input, PillMenu, Stack, type PillMenuOption } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -20,6 +20,26 @@ function TaskTypeExample() {
       options={TASK_TYPES.filter((t) => t.id !== type.id)}
       onSelect={(id) => setType(TASK_TYPES.find((t) => t.id === id) ?? type)}
     />
+  );
+}
+
+function FormFieldExample() {
+  const [type, setType] = useState<PillMenuOption>(TASK_TYPES[0]);
+  return (
+    <Stack gap="md">
+      <Field label="Title">
+        <Input defaultValue="Fix login redirect loop" />
+      </Field>
+      <Field label="Type">
+        <PillMenu
+          fullWidth
+          label="type"
+          current={type}
+          options={TASK_TYPES.filter((t) => t.id !== type.id)}
+          onSelect={(id) => setType(TASK_TYPES.find((t) => t.id === id) ?? type)}
+        />
+      </Field>
+    </Stack>
   );
 }
 
@@ -152,6 +172,35 @@ export function Demo() {
 }`}
       >
         <TaskTypeExample />
+      </Example>
+
+      <Example
+        title="Full width in a form"
+        description="fullWidth stretches the pill to its field like a Select trigger: icon and name at the start, chevron at the end edge, the menu at least as wide as the trigger. Keeps the full-colour fill."
+        code={`import { useState } from 'react';
+import { Field, Input, PillMenu, Stack, type PillMenuOption } from '@eocrm/design-system';
+
+export function Demo() {
+  const [type, setType] = useState<PillMenuOption>(TASK_TYPES[0]);
+  return (
+    <Stack gap="md">
+      <Field label="Title">
+        <Input defaultValue="Fix login redirect loop" />
+      </Field>
+      <Field label="Type">
+        <PillMenu
+          fullWidth
+          label="type"
+          current={type}
+          options={TASK_TYPES.filter((t) => t.id !== type.id)}
+          onSelect={(id) => setType(TASK_TYPES.find((t) => t.id === id) ?? type)}
+        />
+      </Field>
+    </Stack>
+  );
+}`}
+      >
+        <FormFieldExample />
       </Example>
     </DemoLayout>
   );

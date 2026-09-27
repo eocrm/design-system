@@ -40,6 +40,18 @@
   flex-shrink: 0;
 }
 
+// Form-column mode (#578): the pill fills the field like a Select trigger —
+// icon + name at the start, chevron at the end edge.
+.fullWidth {
+  display: flex;
+  width: 100%;
+
+  > .chevron {
+    // stylelint-disable-next-line property-disallowed-list -- internal child of the pill's OWN flex row: pushes the chevron to the end edge without wrapping icon + name (a wrapper would change what getByText(name) returns in consumer tests)
+    margin-inline-start: auto;
+  }
+}
+
 // DropdownMenu's own hover/focus-visible rule is
 // `.item:hover:not([aria-disabled='true'])` — (0,3,0): the attribute
 // selector inside `:not()` counts toward specificity. A plain

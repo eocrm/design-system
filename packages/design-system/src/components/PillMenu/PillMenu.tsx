@@ -69,6 +69,15 @@ export interface PillMenuProps extends Omit<HTMLAttributes<HTMLElement>, 'onSele
    * so has nothing to mark busy.
    */
   busy?: boolean;
+  /**
+   * Stretch the trigger (or read-only chip) to its container's width, for a
+   * form column of full-width controls (`Input`, `Select`, `DatePicker` in
+   * vertical `Field`s). Icon + name stay at the start, the chevron moves to
+   * the end edge like a `Select` trigger, and the menu is at least as wide as
+   * the trigger. Keeps the full-colour fill. Defaults to `false`
+   * (content-width pill).
+   */
+  fullWidth?: boolean;
 }
 
 /** Injectable custom-property pair for a value's resolved color. */
@@ -128,6 +137,12 @@ function OptionContent({ option }: { option: PillMenuOption }) {
  * // trigger is announced "Change type: Bug"
  *
  * @example
+ * // In a form column beside full-width Selects/Inputs
+ * <Field label="Priority">
+ *   <PillMenu fullWidth label="priority" current={priority} options={priorities} onSelect={setPriority} />
+ * </Field>
+ *
+ * @example
  * // Read-only — omit `options` for a static colored chip (no menu)
  * <PillMenu current={{ id: 'done', name: 'Done', category: 'done' }} />
  *
@@ -148,7 +163,18 @@ function OptionContent({ option }: { option: PillMenuOption }) {
  *   temporarily blocked, keep `options` and pass `disabled` instead.
  */
 export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu(
-  { current, options, onSelect, label, disabled = false, busy = false, className, style, ...rest },
+  {
+    current,
+    options,
+    onSelect,
+    label,
+    disabled = false,
+    busy = false,
+    fullWidth = false,
+    className,
+    style,
+    ...rest
+  },
   ref,
 ) {
   const t = useTranslation();
@@ -188,7 +214,7 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
       <span
         {...rest}
         ref={ref as Ref<HTMLSpanElement>}
-        className={clsx(styles.chip, className)}
+        className={clsx(styles.chip, fullWidth && styles.fullWidth, className)}
         style={mergedStyle}
       >
         <OptionContent option={current} />
@@ -210,7 +236,7 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
           {...rest}
           ref={ref as Ref<HTMLButtonElement>}
           type="button"
-          className={clsx(styles.trigger, className)}
+          className={clsx(styles.trigger, fullWidth && styles.fullWidth, className)}
           style={mergedStyle}
           disabled={isBlocked}
           aria-busy={busy || undefined}

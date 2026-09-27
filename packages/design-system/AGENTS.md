@@ -2092,6 +2092,7 @@ Renamed from `StatusMenu` (#572) — `StatusMenu` / `StatusMenuProps` / `StatusM
 ```
 
 - A coloured pill trigger that opens a menu of values, each row coloured to its own value — a workflow status, a task type, a priority. Composes `<DropdownMenu>` internally.
+- `fullWidth` (default `false`) stretches the trigger (or read-only chip) to its container, for a form column of full-width `Input`/`Select` fields. Icon + name stay at the start, the chevron moves to the end edge, and the menu is at least as wide as the trigger.
 - `label` (default: localized "status") names what the value is in the trigger's accessible name: `label="type"` → "Change type: Bug". Lower-case, in the UI language — it's data. Don't put `aria-label` on it: the trigger's name is component-owned.
 - `icon?: ReactNode` on `current` and on each option renders before the name in the pill and in its row, `aria-hidden` (decorative — the name is announced). Size it to the text (~14px, at most 16px — menu rows use a fixed 16px slot).
 - `current` / each option: `{ id, name, category?, color? }`. `category` (`to_do` / `in_progress` / `open` / `done` / `won` / `lost`) maps to a default palette color (slate / blue / violet / green / green / red); `color` (a `PaletteColor`) overrides it per-status.

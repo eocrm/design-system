@@ -299,3 +299,31 @@ describe('PillMenu — general value menu (#572)', () => {
     );
   });
 });
+
+describe('PillMenu — fullWidth (#578)', () => {
+  const CURRENT: PillMenuOption = { id: 'high', name: 'High', color: 'red' };
+  const OPTIONS: PillMenuOption[] = [{ id: 'low', name: 'Low', color: 'slate' }];
+
+  it('stretches the trigger, chevron last', () => {
+    render(<PillMenu fullWidth current={CURRENT} options={OPTIONS} />);
+    const trigger = screen.getByRole('button');
+    expect(trigger.className).toMatch(/fullWidth/);
+    expect(trigger.lastElementChild?.tagName.toLowerCase()).toBe('svg');
+  });
+
+  it('stretches the read-only chip', () => {
+    const { container } = render(<PillMenu fullWidth current={CURRENT} />);
+    expect((container.firstChild as HTMLElement).className).toMatch(/fullWidth/);
+  });
+
+  it('is content-width by default', () => {
+    render(<PillMenu current={CURRENT} options={OPTIONS} />);
+    expect(screen.getByRole('button').className).not.toMatch(/fullWidth/);
+  });
+
+  it('fills its container, chevron pushed to the end edge', () => {
+    const scss = readFileSync(resolve(__dirname, 'PillMenu.module.scss'), 'utf8');
+    expect(scss).toMatch(/\.fullWidth\s*\{[^}]*display:\s*flex;[^}]*width:\s*100%;/);
+    expect(scss).toMatch(/>\s*\.chevron\s*\{[^}]*margin-inline-start:\s*auto;/);
+  });
+});
