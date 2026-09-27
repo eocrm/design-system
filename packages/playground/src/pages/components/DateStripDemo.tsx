@@ -151,7 +151,6 @@ export function Demo() {
         description="Below 480px (a container query on the strip's own width) the per-day free-time count hides so the tiles stay legible."
         code={`import { useState } from 'react';
 import { DateStrip, type DateStripDay } from '@eocrm/design-system';
-import { ResizablePreview } from './ResizablePreview'; // playground-only sizing harness
 
 const PATTERN = [3, 1, 9, 0, 2, 0, 4];
 const addDays = (iso: string, n: number) =>
@@ -171,23 +170,21 @@ export function Demo() {
   const days = weekDays(weekStart, weekIndex);
 
   return (
-    <ResizablePreview initialWidth={320}>
-      <DateStrip
-        days={days}
-        value={day}
-        onChange={setDay}
-        onPrevious={() => {
-          setWeekStart(addDays(weekStart, -7));
-          setWeekIndex((i) => i - 1);
-        }}
-        onNext={() => {
-          setWeekStart(addDays(weekStart, 7));
-          setWeekIndex((i) => i + 1);
-        }}
-        canPrevious={weekIndex > 0}
-        canNext={weekIndex < 3}
-      />
-    </ResizablePreview>
+    <DateStrip
+      days={days}
+      value={day}
+      onChange={setDay}
+      onPrevious={() => {
+        setWeekStart(addDays(weekStart, -7));
+        setWeekIndex((i) => i - 1);
+      }}
+      onNext={() => {
+        setWeekStart(addDays(weekStart, 7));
+        setWeekIndex((i) => i + 1);
+      }}
+      canPrevious={weekIndex > 0}
+      canNext={weekIndex < 3}
+    />
   );
 }`}
       >
