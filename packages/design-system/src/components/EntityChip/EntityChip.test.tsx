@@ -671,6 +671,8 @@ describe('<EntityChip> — segmented layout CSS (#582)', () => {
     expect(decl('.segmentText', 'font-size')).toBeUndefined();
     expect(decl('.segmentText', 'line-height')).toBe('var(--entity-chip-line-height)');
     expect(decl('.segmentTextValue', 'font-size')).toBe('var(--entity-chip-segment-text-size)');
+    // Zero so the smaller text can't grow the chip past a plain chip's height.
+    expect(decl('.segmentTextValue', 'line-height')).toBe('0');
   });
 
   it('hovering a linked/button segmented chip brightens the core, matching the unsegmented hover token', () => {

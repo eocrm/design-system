@@ -230,6 +230,13 @@
 .segmentTextValue {
   font-size: var(--entity-chip-segment-text-size);
   font-weight: var(--entity-chip-label-font-weight);
+
+  // Contributes no height of its own: `line-height: 1` resolved against this
+  // smaller font sticks out of the chip's line box when baseline-aligned
+  // (measured: the chip grew 20.5px → 21.09px). At 0 the segment's strut
+  // alone sets the line — the same box as the core — and the glyphs still
+  // sit on its baseline (#591, measured equal in Chromium).
+  line-height: 0;
 }
 
 .segmentGlyph {
