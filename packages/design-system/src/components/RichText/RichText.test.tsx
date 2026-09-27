@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { render, screen } from '@testing-library/react';
 import { RichText } from './RichText';
 import { createBlock, docFromText } from './engine/model';
@@ -81,5 +83,30 @@ describe('RichText', () => {
     );
     expect(container.querySelector('[data-chip]')?.textContent).toBe('Alice');
     expect(container.querySelector('[data-mention]')).toBeNull();
+  });
+});
+
+describe('prose link styling does not override styled links (#570)', () => {
+  it('the prose anchor rule targets bare anchors only', () => {
+    const scss = readFileSync(resolve(__dirname, '_prose.scss'), 'utf8');
+    // A classed anchor (DS <Link>, EntityChip) must keep its own decoration.
+    expect(scss).toMatch(/:where\(a:not\(\[class\]\)\)\s*\{[^}]*text-decoration:\s*underline/);
+    expect(scss).not.toMatch(/:where\(a\)\s*\{/);
+  });
+
+  it('the default rendered link is a bare anchor, so it still gets prose styling', () => {
+    const doc: RichDoc = {
+      blocks: [
+        {
+          id: '1',
+          type: 'paragraph',
+          inlines: [{ text: 'site', marks: [{ type: 'link', href: 'https://a.com' }] }],
+        },
+      ],
+    };
+    const { container } = render(<RichText value={doc} />);
+    const a = container.querySelector('a');
+    expect(a).not.toBeNull();
+    expect(a).not.toHaveAttribute('class');
   });
 });

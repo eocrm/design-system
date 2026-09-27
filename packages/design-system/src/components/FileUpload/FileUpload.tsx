@@ -9,6 +9,7 @@ import {
   type KeyboardEvent,
   type ChangeEvent,
   type ReactNode,
+  type MouseEvent,
 } from 'react';
 import { CloudUpload, Check, X } from 'lucide-react';
 import clsx from 'clsx';
@@ -510,10 +511,15 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
     [disabled, processFiles],
   );
 
-  const handleClick = useCallback(() => {
-    if (disabled) return;
-    inputRef.current?.click();
-  }, [disabled]);
+  const handleClick = useCallback(
+    (e: MouseEvent<HTMLDivElement>) => {
+      // A label-for click activates the input itself and bubbles here; the
+      // picker is already opening, so don't click it a second time.
+      if (disabled || e.target === inputRef.current) return;
+      inputRef.current?.click();
+    },
+    [disabled],
+  );
 
   const handleKeyDown = useCallback(
     (e: KeyboardEvent<HTMLDivElement>) => {
@@ -540,7 +546,15 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
 
   // {...rest} last so consumer overrides win (Pattern A).
   return (
-    <div ref={ref} className={clsx(styles.root, disabled && styles.disabled, className)} {...rest}>
+    <div
+      ref={ref}
+      // The id belongs on the file input (see the prop); while the dropzone is
+      // hidden (single mode with a file) the root keeps it so scroll-to-id /
+      // focus-first-invalid still find the field.
+      id={showDropzone ? undefined : id}
+      className={clsx(styles.root, disabled && styles.disabled, className)}
+      {...rest}
+    >
       {/* ONE region for the whole batch. Per-row regions were the obvious
           shape and the wrong one: twelve files resolving inside two seconds is
           twelve announcements. Rendered unconditionally with its text deferred

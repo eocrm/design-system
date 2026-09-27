@@ -79,11 +79,15 @@ export interface TooltipProps {
 // hijacked to toggle a tooltip (#567). Ancestors count too: a Badge inside a
 // row link navigates.
 const INTERACTIVE =
-  'a[href], button, input, select, textarea, summary, [contenteditable="true"], [role="button"], [role="link"], [role="checkbox"], [role="radio"], [role="switch"], [role="tab"], [role="menuitem"], [role="option"]';
+  'a[href], button, input, select, textarea, summary, label, audio[controls], video[controls], [contenteditable="true"], [role="button"], [role="link"], [role="checkbox"], [role="radio"], [role="switch"], [role="tab"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"], [role="combobox"], [role="slider"], [role="spinbutton"], [role="treeitem"], [role="gridcell"]';
 
-/** Touch or pen contact (not a hovering pen, not a mouse). */
+/**
+ * A finger. Pens are left on the hover path: most hover, and a contact-only
+ * pen fires pointerleave right after pointerup, which would snap a
+ * tap-opened tooltip shut.
+ */
 function isTap(e: { pointerType: string }): boolean {
-  return e.pointerType === 'touch' || e.pointerType === 'pen';
+  return e.pointerType === 'touch';
 }
 
 function isInteractiveTarget(target: EventTarget | null): boolean {

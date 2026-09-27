@@ -1,3 +1,4 @@
+import { SettingRow } from '../SettingRow';
 import { Field } from '../Field';
 import { createRef } from 'react';
 import { render, screen } from '@testing-library/react';
@@ -83,7 +84,7 @@ describe('<SlotGrid>', () => {
   it('all groups empty also shows the empty state', () => {
     setup({ groups: [{ label: 'Morning', slots: [] }] });
     expect(screen.getByText('No available times')).toBeInTheDocument();
-    expect(screen.queryByRole('group')).toBeNull();
+    expect(document.querySelector('fieldset')).toBeNull(); // no day-part groups
   });
 
   it('custom empty content', () => {
@@ -130,23 +131,40 @@ function expectNoWiringLeak(container: HTMLElement, errSpy: { mock: { calls: unk
   );
 }
 
-describe('SlotGrid in Field (#568)', () => {
-  it.each([true, false])(
-    'consumes invalid/required (error=%s): native required + aria-invalid on the radios',
-    (hasError) => {
+describe('SlotGrid in Field / SettingRow (#568)', () => {
+  it.each(['Field', 'SettingRow'] as const)(
+    '%s: the group is named by the row label and described by its error; no prop leak',
+    (wrapper) => {
       const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const Wrap = wrapper === 'Field' ? Field : SettingRow;
       const { container } = render(
-        <Field label="Time" error={hasError ? 'Pick a time' : undefined} required>
-          <SlotGrid groups={GROUPS} value={null} onChange={vi.fn()} />
-        </Field>,
+        <>
+          <Wrap label="Time" error="Pick a time" required>
+            <SlotGrid groups={GROUPS} value={null} onChange={vi.fn()} />
+          </Wrap>
+        </>,
       );
       expectNoWiringLeak(container, errSpy);
+      const group = screen.getByRole('group', { name: 'Time' });
+      expect(group.tagName).toBe('DIV');
+      expect(group).toHaveAccessibleDescription('Pick a time');
+      expect(group).toHaveAttribute('aria-invalid', 'true');
       for (const radio of screen.getAllByRole('radio')) {
         expect(radio).toBeRequired();
-        if (hasError) expect(radio).toHaveAttribute('aria-invalid', 'true');
-        else expect(radio).not.toHaveAttribute('aria-invalid');
+        expect(radio).not.toHaveAttribute('aria-invalid');
       }
       errSpy.mockRestore();
     },
   );
+
+  it('without an error: no aria-invalid anywhere', () => {
+    render(
+      <>
+        <Field label="Time">
+          <SlotGrid groups={GROUPS} value={null} onChange={vi.fn()} />
+        </Field>
+      </>,
+    );
+    expect(document.querySelector('[aria-invalid]')).toBeNull();
+  });
 });

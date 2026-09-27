@@ -35,6 +35,17 @@ interface ButtonGroupBase {
    * visual mode this is a no-op — pass `disabled` per `<Button>` instead.
    */
   disabled?: boolean;
+  /**
+   * Segmented mode: `aria-invalid` on the radiogroup. Visual mode: consumed
+   * and ignored. Field / SettingRow inject it — it used to leak onto the
+   * group div as a stray attribute (#568). @default false
+   */
+  invalid?: boolean;
+  /**
+   * Segmented mode: `aria-required` on the radiogroup. Visual mode: consumed
+   * and ignored. Field / SettingRow inject it (#568). @default false
+   */
+  required?: boolean;
   className?: string;
   style?: CSSProperties;
 }
@@ -133,6 +144,9 @@ export function ButtonGroupRoot(props: ButtonGroupProps) {
 function Visual({
   size = 'md',
   disabled: _disabled,
+  // Consumed so Field-injected props never reach the div (#568).
+  invalid: _invalid,
+  required: _required,
   children,
   className,
   style,
@@ -174,6 +188,8 @@ function Segmented({
   style,
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
+  invalid = false,
+  required = false,
   ...rest
 }: ButtonGroupSegmentedProps) {
   // groupRef enables DOM-order querying for keyboard nav so that consumer-
@@ -293,6 +309,8 @@ function Segmented({
         aria-label={ariaLabel}
         aria-labelledby={ariaLabelledBy}
         aria-disabled={disabled || undefined}
+        aria-invalid={invalid || undefined}
+        aria-required={required || undefined}
         data-mode="segmented"
         className={clsx(styles.group, className)}
         style={style}

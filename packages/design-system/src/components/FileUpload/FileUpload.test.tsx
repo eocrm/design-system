@@ -700,3 +700,17 @@ describe('FileUpload in Field (#568)', () => {
     click.mockRestore();
   });
 });
+
+it('single mode with a file: the dropzone is gone, so the root keeps the id (#568)', () => {
+  const file = new File(['x'], 'logo.png', { type: 'image/png' });
+  const { container } = render(
+    <FileUpload
+      id="logo"
+      files={[{ id: '1', file, status: 'done' }]}
+      onFilesAdded={() => {}}
+      onFileRemove={() => {}}
+    />,
+  );
+  expect(container.firstElementChild).toHaveAttribute('id', 'logo');
+  expect(container.querySelectorAll('#logo')).toHaveLength(1);
+});

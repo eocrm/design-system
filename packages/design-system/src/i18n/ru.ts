@@ -111,7 +111,7 @@ export const ru: Messages = {
     nextWeek: 'Следующая неделя',
     free: ({ count }) =>
       `${count as number} ${ruPlural(count as number, ['свободное', 'свободных', 'свободных'])}`,
-    noTimes: 'Нет времени',
+    noTimes: 'Всё занято',
     day: ({ date, availability }) => `${date as string}, ${availability as string}`,
     range: ({ range }) => `${range as string}`,
   },

@@ -352,7 +352,8 @@ describe('PageHeader — responsive shrink (#550)', () => {
     // Wrapped rows stay right-aligned, and the narrow query no longer resets
     // it to flex-start — actions stay at the thumb-side edge on phones (#564).
     expect(block('.actions')).toMatch(/justify-content:\s*flex-end/);
-    expect(scss).not.toMatch(/justify-content:\s*flex-start/);
+    const narrow = scss.slice(scss.indexOf('@media (max-width: 640px)'));
+    expect(narrow).not.toMatch(/\.actions\s*\{[^}]*justify-content:\s*flex-start/);
     expect(block('.breadcrumb')).toMatch(/flex-wrap:\s*wrap/);
     expect(block('.breadcrumb')).toMatch(/min-width:\s*0/);
     expect(block('.title')).toMatch(/overflow-wrap:\s*anywhere/);

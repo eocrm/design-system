@@ -385,6 +385,20 @@
           "description": "Disabled state for the whole group. In segmented mode this is\nauthoritative (all items become aria-disabled, clicks no-op). In\nvisual mode this is a no-op — pass `disabled` per `<Button>` instead."
         },
         {
+          "name": "invalid",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "Segmented mode: `aria-invalid` on the radiogroup. Visual mode: consumed\nand ignored. Field / SettingRow inject it — it used to leak onto the\ngroup div as a stray attribute (#568)."
+        },
+        {
+          "name": "required",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "Segmented mode: `aria-required` on the radiogroup. Visual mode: consumed\nand ignored. Field / SettingRow inject it (#568)."
+        },
+        {
           "name": "className",
           "type": "string",
           "required": false,
@@ -1492,7 +1506,7 @@
           "type": "DateStripDay[]",
           "required": true,
           "default": "",
-          "description": "The days to show, in order — usually one week (7). The month heading is derived from the first and last."
+          "description": "The days to show, in order — usually one week (7); one grid column per day. The month heading is derived from the first and last."
         },
         {
           "name": "value",
@@ -1555,7 +1569,7 @@
           "type": "boolean",
           "required": false,
           "default": "false",
-          "description": "Marks every radio `aria-invalid`. Field / SettingRow inject it."
+          "description": "Marks the group `aria-invalid` (the radios themselves do not support it). Field / SettingRow inject it."
         },
         {
           "name": "required",
@@ -4141,6 +4155,20 @@
           "description": "Controlled document. Render the doc returned by `onChange` back into `value`."
         },
         {
+          "name": "invalid",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "`aria-invalid` on the textbox. Field / SettingRow inject it (#568)."
+        },
+        {
+          "name": "required",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "`aria-required` on the textbox. Field / SettingRow inject it (#568)."
+        },
+        {
           "name": "onChange",
           "type": "(doc: RichDoc) => void",
           "required": true,
@@ -4806,7 +4834,7 @@
           "type": "boolean",
           "required": false,
           "default": "false",
-          "description": "Marks every radio `aria-invalid`. Field / SettingRow inject it."
+          "description": "Marks the group `aria-invalid` (the radios themselves do not support it). Field / SettingRow inject it."
         },
         {
           "name": "required",
@@ -4962,7 +4990,7 @@
           "type": "((collapsed: boolean) => void)",
           "required": false,
           "default": "",
-          "description": "Called with `true` when a `collapseBelow` split stacks and `false` when it\ngoes back side by side — once on mount with the initial state, then on\nevery change. Ignored without `collapseBelow`.\n\nUse it to move content you own between placements so DOM order matches\nvisual order in both states, instead of CSS `order` — e.g. render a\ncomment thread at the end of `main` while side by side and after the\n`<Split>` once stacked, or a status switcher at the top of the aside vs.\nabove the split.\n\nIt measures the SPLIT'S OWN content width against the same inclusive\nthreshold its container query uses (a `ResizeObserver`, read\nsynchronously on mount so the first paint is already right), so it agrees\nwith the CSS where `useBelowBreakpoint` — which measures the viewport —\nwould not beside an app sidebar. The same state is on the root as\n`data-collapsed=\"true\" | \"false\"`."
+          "description": "Called with `true` when a `collapseBelow` split stacks and `false` when it\ngoes back side by side — on mount with the initial state (twice under\nReact StrictMode in development), then on\nevery change. Ignored without `collapseBelow`.\n\nUse it to move content you own between placements so DOM order matches\nvisual order in both states, instead of CSS `order` — e.g. render a\ncomment thread at the end of `main` while side by side and after the\n`<Split>` once stacked, or a status switcher at the top of the aside vs.\nabove the split.\n\nIt measures the SPLIT'S OWN content width against the same inclusive\nthreshold its container query uses (a `ResizeObserver`, read\nsynchronously on mount so the first paint is already right), so it agrees\nwith the CSS where `useBelowBreakpoint` — which measures the viewport —\nwould not beside an app sidebar. The same state is on the root as\n`data-collapsed=\"true\" | \"false\"`."
         }
       ]
     },

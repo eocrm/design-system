@@ -1,3 +1,4 @@
+import { Field } from '../Field';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
@@ -1869,5 +1870,19 @@ describe('RichTextEditor — empty aria-label', () => {
   it('falls back to the default name when aria-label is an empty string', () => {
     renderEditor(<RichTextEditor value={emptyDoc()} onChange={() => {}} aria-label="" />);
     expect(screen.getByRole('textbox')).toHaveAccessibleName('Rich text editor');
+  });
+});
+
+describe('RichTextEditor in Field (#568)', () => {
+  it('invalid/required become aria-invalid/aria-required on the textbox', () => {
+    const { container } = renderEditor(
+      <Field label="Notes" error="Required" required>
+        <RichTextEditor value={emptyDoc()} onChange={() => {}} />
+      </Field>,
+    );
+    const box = screen.getByRole('textbox');
+    expect(box).toHaveAttribute('aria-invalid', 'true');
+    expect(box).toHaveAttribute('aria-required', 'true');
+    expect(container.querySelectorAll('[invalid], div[required]')).toHaveLength(0);
   });
 });

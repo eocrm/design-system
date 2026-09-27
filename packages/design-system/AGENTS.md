@@ -1765,7 +1765,7 @@ beside results).
 
 - Collapsed panes stack in **DOM order**: aside → main for `side="start"` (default), main → aside for `side="end"`. No CSS `order` flip — visual order stays in sync with tab order. Need the aside on top when stacked? Use `side="start"`.
 - A `<Sticky>` passed as `aside` becomes a plain block while collapsed (no pin, no `scroll` cap) — don't shim it.
-- `onCollapsedChange(collapsed)` — fires once on mount with the initial state, then on every change; the root also carries `data-collapsed`. It measures the split's own content width against the same inclusive threshold as the container query, so it agrees with the CSS (`useBelowBreakpoint` measures the viewport and does not, beside an app sidebar). Use it to move content YOU own so DOM order = visual order in both states — never CSS `order`:
+- `onCollapsedChange(collapsed)` — fires on mount with the initial state (twice under StrictMode in dev), then on every change; the root also carries `data-collapsed`. It measures the split's own content width against the same inclusive threshold as the container query, so it agrees with the CSS (`useBelowBreakpoint` measures the viewport and does not, beside an app sidebar). Use it to move content YOU own so DOM order = visual order in both states — never CSS `order`:
 
 ```tsx
 // Comments last on the page, side by side or stacked:
@@ -2997,6 +2997,7 @@ const [open, setOpen] = useState(false);
 ```
 
 - One generalist; the mode matrix is `multiple` × `triggerDisplay: 'chips' | 'summary'` × `searchable`. See the JSDoc on `<Select>` for the matrix and anti-patterns.
+- `id` goes on the combobox trigger (the `<button>` / `<input>`), not the wrapper div, so a `<label for>` (Field / SettingRow) focuses it. Target the wrapper by `className` or a `data-*` attribute, not `#id`.
 - `triggerDisplay` defaults to `'chips'` when `multiple` is set. Use `'summary'` for table-filter UIs where chips would crowd the toolbar.
 - **Async**: pass `loadOptions(query, signal)`. Debounce (250ms default, configurable via `searchDebounceMs`) and `AbortSignal` cancellation are built-in. Do NOT debounce externally.
 - **Tag input pattern** = `multiple + searchable + creatable + triggerDisplay='chips'`. There is no separate `<Tags>` component.
@@ -3661,7 +3662,8 @@ const [day, setDay] = useState<string | null>(null);
 - `free: 0` → "No times", tile natively disabled (skipped by Tab and arrows). Keep full days in the array.
 - Native radios, one `name`: one Tab stop, arrows move AND select (so `onChange` fires per arrow press — debounce slot fetching if needed). Tiles are `role="radio"` named "Wednesday, October 7, 9 free"; query them that way in tests.
 - Controlled only. `canPrevious` / `canNext` (default `true`) disable the week buttons. `titleOrder` (default 2) sets the heading level.
-- In `<Field>` / `<SettingRow>`: `required` → native `required` on the radios, `invalid` → `aria-invalid` on them. The month heading still names the group.
+- In `<Field>` / `<SettingRow>`: the row label is merged in front of the month (group name "Day October 2026"), the error describes the group, `invalid` → `aria-invalid` on the group, `required` → native `required` on the radios. One column per day (`days.length`), so a 5-day week has 5 columns.
+- Previous/next use `aria-disabled` (not `disabled`) when `canPrevious`/`canNext` is false, so focus stays on the button that reached the boundary.
 - Changing week announces the new range politely; same-week re-renders stay silent.
 - ❌ No `aria-label` on the strip — the month heading names the group. ❌ No `Date`/`toISOString()` for `date`.
 - ❌ In an intrinsic-width context (`Split`'s default `auto` aside track, a `Cluster` item, `width: max-content`) it renders at width 0 — `container-type: inline-size` zeroes its intrinsic-width contribution; give the parent a concrete width (e.g. `asideWidth` on a Split). It is also the containing block for absolutely-positioned descendants (layout containment).
@@ -3690,7 +3692,7 @@ const [day, setDay] = useState<string | null>(null);
 - Slot `label`s are yours, formatted in the business's timezone. `key` is what `onChange` returns; keep it unique across ALL groups (one exclusive choice).
 - Native radios with one `name`: one Tab stop for the whole grid, arrows move AND select in reading order (↓ goes to the next slot, not the one below). Tiles are `role="radio"` named by their label; each group is a `<fieldset>` named by its heading (`titleOrder`, default 3).
 - Groups with no slots are skipped; if none has slots, `empty` renders (default: localized "No available times").
-- In `<Field>` / `<SettingRow>`: `required` → native `required` on the radios, `invalid` → `aria-invalid` on them.
+- The root is `role="group"`: in `<Field>` / `<SettingRow>` the row label names it and the error describes it; `invalid` → `aria-invalid` on the group, `required` → native `required` on the radios.
 - 6 columns, 3 when the grid's own width ≤ 48rem (container query).
 - ❌ No per-slot `disabled` — pass only bookable slots. ❌ Don't wrap it in your own `role="radiogroup"`.
 - ❌ In an intrinsic-width context (`Split`'s default `auto` aside track, a `Cluster` item, `width: max-content`) it renders at width 0 — `container-type: inline-size` zeroes its intrinsic-width contribution; give the parent a concrete width (e.g. `asideWidth` on a Split). It is also the containing block for absolutely-positioned descendants (layout containment).

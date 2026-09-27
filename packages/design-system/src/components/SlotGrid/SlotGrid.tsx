@@ -34,7 +34,7 @@ export interface SlotGridProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onC
   titleOrder?: TitleOrder;
   /** Radio group `name` (also submitted with a form). Default: a generated id. */
   name?: string;
-  /** Marks every radio `aria-invalid`. Field / SettingRow inject it. @default false */
+  /** Marks the group `aria-invalid` (the radios themselves do not support it). Field / SettingRow inject it. @default false */
   invalid?: boolean;
   /**
    * Native `required` on the radios (the group then fails form validation
@@ -110,7 +110,16 @@ export const SlotGrid = forwardRef<HTMLDivElement, SlotGridProps>(function SlotG
   const visible = groups.filter((g) => g.slots.length > 0);
 
   return (
-    <div ref={ref} className={clsx(styles.root, className)} {...props}>
+    // role="group" so a wrapping Field / SettingRow's injected aria-labelledby
+    // / aria-describedby / aria-invalid actually apply — on a generic div
+    // they are ignored and the radios lost the row label and error (#568).
+    <div
+      ref={ref}
+      role="group"
+      aria-invalid={invalid || undefined}
+      className={clsx(styles.root, className)}
+      {...props}
+    >
       {visible.length === 0
         ? (empty ?? <Text tone="muted">{t('slotGrid.empty')}</Text>)
         : visible.map((group, i) => (
@@ -126,7 +135,6 @@ export const SlotGrid = forwardRef<HTMLDivElement, SlotGridProps>(function SlotG
                     <input
                       type="radio"
                       required={required}
-                      aria-invalid={invalid || undefined}
                       className={styles.input}
                       name={groupName}
                       value={slot.key}

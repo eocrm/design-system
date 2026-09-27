@@ -1,3 +1,4 @@
+import { SettingRow } from '../SettingRow';
 import { Field } from '../Field';
 import { StrictMode } from 'react';
 import { createRef } from 'react';
@@ -133,8 +134,14 @@ describe('<DateStrip>', () => {
         <DateStrip {...props} canPrevious={false} canNext={false} />
       </LocaleProvider>,
     );
-    expect(screen.getByRole('button', { name: 'Previous week' })).toBeDisabled();
-    expect(screen.getByRole('button', { name: 'Next week' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Previous week' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
+    expect(screen.getByRole('button', { name: 'Next week' })).toHaveAttribute(
+      'aria-disabled',
+      'true',
+    );
   });
 
   it('all days full: every radio disabled, navigation still works', async () => {
@@ -221,7 +228,7 @@ describe('<DateStrip>', () => {
     expect(screen.getByRole('radio', { name: /3 свободных$/ })).toBeInTheDocument(); // Oct 5
     // Two days in WEEK have free: 0 (Oct 8 and Oct 10) so this regex matches
     // both — assert every "no times" radio is disabled, not just one.
-    const noTimesRadios = screen.getAllByRole('radio', { name: /Нет времени$/ });
+    const noTimesRadios = screen.getAllByRole('radio', { name: /Всё занято$/ });
     expect(noTimesRadios).toHaveLength(2);
     for (const r of noTimesRadios) expect(r).toBeDisabled();
   });
@@ -251,14 +258,45 @@ function expectNoWiringLeak(container: HTMLElement, errSpy: { mock: { calls: unk
   );
 }
 
-describe('DateStrip in Field (#568)', () => {
-  it.each([true, false])(
-    'consumes invalid/required (error=%s): native required + aria-invalid on the radios',
-    (hasError) => {
+describe('DateStrip — week buttons at a boundary keep focus', () => {
+  it('canNext=false marks Next aria-disabled (not disabled) and ignores activation', async () => {
+    const { onNext, rerender, props } = setup();
+    const next = screen.getByRole('button', { name: 'Next week' });
+    next.focus();
+    rerender(
+      <LocaleProvider locale="en-US">
+        <DateStrip {...props} canNext={false} />
+      </LocaleProvider>,
+    );
+    expect(next).toHaveAttribute('aria-disabled', 'true');
+    expect(next).not.toBeDisabled();
+    expect(next).toHaveFocus();
+    await userEvent.click(next);
+    expect(onNext).not.toHaveBeenCalled();
+  });
+
+  it('one column per day (5-day week)', () => {
+    setup({ days: WEEK.slice(0, 5) });
+    const root = screen.getByRole('group');
+    expect(root.style.getPropertyValue('--date-strip-columns')).toBe('5');
+  });
+
+  it('days=[] renders no empty heading and leaves the group unnamed', () => {
+    setup({ days: [] });
+    expect(screen.queryByRole('heading')).toBeNull();
+    expect(screen.getByRole('group')).not.toHaveAttribute('aria-labelledby');
+  });
+});
+
+describe('DateStrip in Field / SettingRow (#568)', () => {
+  it.each(['Field', 'SettingRow'] as const)(
+    '%s: the group is named by the row label and described by its error; no prop leak',
+    (wrapper) => {
       const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const Wrap = wrapper === 'Field' ? Field : SettingRow;
       const { container } = render(
         <LocaleProvider locale="en-US">
-          <Field label="Day" error={hasError ? 'Pick a day' : undefined} required>
+          <Wrap label="Day" error="Pick a day" required>
             <DateStrip
               days={WEEK}
               value={null}
@@ -266,16 +304,36 @@ describe('DateStrip in Field (#568)', () => {
               onPrevious={vi.fn()}
               onNext={vi.fn()}
             />
-          </Field>
+          </Wrap>
         </LocaleProvider>,
       );
       expectNoWiringLeak(container, errSpy);
+      const group = screen.getByRole('group', { name: /^Day\s+October 2026$/ });
+      expect(group.tagName).toBe('FIELDSET');
+      expect(group).toHaveAccessibleDescription('Pick a day');
+      expect(group).toHaveAttribute('aria-invalid', 'true');
       for (const radio of screen.getAllByRole('radio')) {
         expect(radio).toBeRequired();
-        if (hasError) expect(radio).toHaveAttribute('aria-invalid', 'true');
-        else expect(radio).not.toHaveAttribute('aria-invalid');
+        expect(radio).not.toHaveAttribute('aria-invalid');
       }
       errSpy.mockRestore();
     },
   );
+
+  it('without an error: no aria-invalid anywhere', () => {
+    render(
+      <LocaleProvider locale="en-US">
+        <Field label="Day">
+          <DateStrip
+            days={WEEK}
+            value={null}
+            onChange={vi.fn()}
+            onPrevious={vi.fn()}
+            onNext={vi.fn()}
+          />
+        </Field>
+      </LocaleProvider>,
+    );
+    expect(document.querySelector('[aria-invalid]')).toBeNull();
+  });
 });

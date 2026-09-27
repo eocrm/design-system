@@ -59,4 +59,13 @@
     opacity: $opacity-disabled;
     cursor: not-allowed;
   }
+
+  // Forced colors (Windows High Contrast) drops backgrounds, which is all
+  // that marks the checked tile — add an outline outside its border (text
+  // color, forced to a system color) so checked still reads as different.
+  @media (forced-colors: active) {
+    &:has(#{$input}:checked) {
+      outline: var(--border-width) solid currentcolor;
+    }
+  }
 }

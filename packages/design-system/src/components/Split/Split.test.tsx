@@ -266,8 +266,10 @@ describe('Split collapseBelow — the container query can actually match (#372)'
   describe('onCollapsedChange (#563)', () => {
     let resize: (width: number) => void;
     let widthPx = 1000;
+    let boxSizing = 'content-box';
     beforeEach(() => {
       widthPx = 1000;
+      boxSizing = 'content-box';
       let callback: (() => void) | undefined;
       vi.stubGlobal(
         'ResizeObserver',
@@ -281,9 +283,19 @@ describe('Split collapseBelow — the container query can actually match (#372)'
           }
         },
       );
-      vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(
-        () => ({ width: widthPx }) as DOMRect,
-      );
+      // jsdom has no layout: stub the computed width Split reads.
+      const realGetComputedStyle = window.getComputedStyle.bind(window);
+      vi.spyOn(window, 'getComputedStyle').mockImplementation((el) => {
+        const cs = realGetComputedStyle(el);
+        return new Proxy(cs, {
+          get: (target, key) =>
+            key === 'width'
+              ? `${widthPx}px`
+              : key === 'boxSizing'
+                ? boxSizing
+                : Reflect.get(target, key),
+        });
+      });
       resize = (width) => {
         widthPx = width;
         act(() => callback?.());
@@ -317,7 +329,8 @@ describe('Split collapseBelow — the container query can actually match (#372)'
 
     it('measures the content box (padding and border excluded), like the container query', () => {
       const onChange = vi.fn();
-      widthPx = 800;
+      widthPx = 800; // border-box computed width
+      boxSizing = 'border-box';
       render(
         <Split
           aside="a"
@@ -329,6 +342,22 @@ describe('Split collapseBelow — the container query can actually match (#372)'
         </Split>,
       );
       expect(onChange).toHaveBeenCalledWith(true); // 800 - 32 = 768
+    });
+
+    it('ignores CSS transforms (reads layout width, not the scaled rect)', () => {
+      const onChange = vi.fn();
+      // A Modal entrance scale(0.96) shrinks the rect to 960 * 0.96 < 1000 —
+      // irrelevant: layout width is what the container query sees.
+      vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(
+        () => ({ width: 700 }) as DOMRect,
+      );
+      widthPx = 800;
+      render(
+        <Split aside="a" collapseBelow="lg" onCollapsedChange={onChange}>
+          m
+        </Split>,
+      );
+      expect(onChange.mock.calls).toEqual([[false]]);
     });
 
     it('is inert without collapseBelow', () => {

@@ -1,4 +1,12 @@
-import { forwardRef, useEffect, useId, useRef, useState, type FieldsetHTMLAttributes } from 'react';
+import {
+  forwardRef,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  type CSSProperties,
+  type FieldsetHTMLAttributes,
+} from 'react';
 import clsx from 'clsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '../Button';
@@ -23,7 +31,7 @@ export interface DateStripProps extends Omit<
   FieldsetHTMLAttributes<HTMLFieldSetElement>,
   'onChange'
 > {
-  /** The days to show, in order — usually one week (7). The month heading is derived from the first and last. */
+  /** The days to show, in order — usually one week (7); one grid column per day. The month heading is derived from the first and last. */
   days: DateStripDay[];
   /** Selected day (`'YYYY-MM-DD'`), or `null`. A value not in `days` checks nothing. */
   value: string | null;
@@ -41,7 +49,7 @@ export interface DateStripProps extends Omit<
   titleOrder?: TitleOrder;
   /** Radio group `name` (also submitted with a form). Default: a generated id. */
   name?: string;
-  /** Marks every radio `aria-invalid`. Field / SettingRow inject it. @default false */
+  /** Marks the group `aria-invalid` (the radios themselves do not support it). Field / SettingRow inject it. @default false */
   invalid?: boolean;
   /**
    * Native `required` on the radios (the group then fails form validation
@@ -86,7 +94,8 @@ export interface DateStripProps extends Omit<
  *   ISO `'YYYY-MM-DD'` calendar day; the strip formats it.
  * - ❌ Building `date` from `toISOString()` of a local-midnight `Date` — that
  *   shifts a day west of UTC. Produce the business-timezone calendar day.
- * - ❌ An `aria-label` on the strip — the month heading names the group.
+ * - ❌ An `aria-label` on the strip — the month heading names the group (a
+ *   wrapping Field / SettingRow label is merged in front of it).
  * - ❌ Hiding days with no times instead of passing `free: 0` — the week
  *   loses its shape and the user can't see the day is full.
  * - ❌ In an intrinsic-width context (`Split`'s default `auto` aside track, a
@@ -110,6 +119,8 @@ export const DateStrip = forwardRef<HTMLFieldSetElement, DateStripProps>(functio
     invalid = false,
     required = false,
     className,
+    style,
+    'aria-labelledby': labelledBy,
     ...props
   },
   ref,
@@ -144,25 +155,36 @@ export const DateStrip = forwardRef<HTMLFieldSetElement, DateStripProps>(functio
 
   return (
     // {...props} first so the month heading always names the group (Pattern B).
+    // A wrapping Field / SettingRow's label id is MERGED in front of the month
+    // ("Day October 2026"), not replaced — replacing dropped the row label (#568).
     <fieldset
       {...props}
       ref={ref}
       className={clsx(styles.root, className)}
+      style={{ '--date-strip-columns': Math.max(days.length, 1), ...style } as CSSProperties}
       aria-label={undefined}
-      aria-labelledby={titleId}
+      aria-labelledby={
+        [labelledBy, monthLabel ? titleId : undefined].filter(Boolean).join(' ') || undefined
+      }
+      aria-invalid={invalid || undefined}
     >
       <div className={styles.header}>
-        <Title id={titleId} order={titleOrder} size="md">
-          {monthLabel}
-        </Title>
+        {monthLabel && (
+          <Title id={titleId} order={titleOrder} size="md">
+            {monthLabel}
+          </Title>
+        )}
         <Cluster gap="xs">
           <Button
             variant="secondary"
             size="lg"
             iconOnly
             aria-label={t('dateStrip.previousWeek')}
-            disabled={!canPrevious}
-            onClick={onPrevious}
+            // aria-disabled, not disabled: pressing Previous on the first
+            // allowed week would otherwise disable the FOCUSED button and drop
+            // focus to <body>.
+            aria-disabled={!canPrevious || undefined}
+            onClick={() => canPrevious && onPrevious()}
           >
             <ChevronLeft size={16} aria-hidden="true" />
           </Button>
@@ -171,8 +193,8 @@ export const DateStrip = forwardRef<HTMLFieldSetElement, DateStripProps>(functio
             size="lg"
             iconOnly
             aria-label={t('dateStrip.nextWeek')}
-            disabled={!canNext}
-            onClick={onNext}
+            aria-disabled={!canNext || undefined}
+            onClick={() => canNext && onNext()}
           >
             <ChevronRight size={16} aria-hidden="true" />
           </Button>
@@ -187,7 +209,6 @@ export const DateStrip = forwardRef<HTMLFieldSetElement, DateStripProps>(functio
               <input
                 type="radio"
                 required={required}
-                aria-invalid={invalid || undefined}
                 className={styles.input}
                 name={groupName}
                 value={day.date}

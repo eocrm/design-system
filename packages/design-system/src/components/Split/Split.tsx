@@ -81,7 +81,8 @@ export interface SplitProps extends HTMLAttributes<HTMLDivElement> {
   collapseBelow?: CollapseBreakpoint;
   /**
    * Called with `true` when a `collapseBelow` split stacks and `false` when it
-   * goes back side by side — once on mount with the initial state, then on
+   * goes back side by side — on mount with the initial state (twice under
+   * React StrictMode in development), then on
    * every change. Ignored without `collapseBelow`.
    *
    * Use it to move content you own between placements so DOM order matches
@@ -100,12 +101,19 @@ export interface SplitProps extends HTMLAttributes<HTMLDivElement> {
   onCollapsedChange?: (collapsed: boolean) => void;
 }
 
-/** Content-box inline size — what `container-type: inline-size` queries. */
+/**
+ * Content-box inline size — what `container-type: inline-size` queries. Read
+ * from the computed (layout) width, not `getBoundingClientRect()`, which a
+ * CSS transform scales: a Split inside a Modal mid-`scale(0.96)` entrance
+ * measured ~4% narrow, and a ResizeObserver never re-fires for transforms.
+ */
 function contentWidth(el: HTMLElement): number {
   const cs = getComputedStyle(el);
   const px = (v: string) => parseFloat(v) || 0;
+  const width = px(cs.width);
+  if (cs.boxSizing !== 'border-box') return width;
   return (
-    el.getBoundingClientRect().width -
+    width -
     px(cs.paddingLeft) -
     px(cs.paddingRight) -
     px(cs.borderLeftWidth) -

@@ -571,3 +571,19 @@ describe('Tooltip — tap to open on non-interactive triggers (#567)', () => {
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
   });
 });
+
+describe('Tooltip — tap exclusions (#567 review)', () => {
+  it('a tap on a trigger inside a <label> does not open it (the label activates its control)', async () => {
+    const user = userEvent.setup();
+    render(
+      <label>
+        <input type="checkbox" />
+        <Tooltip content="Why">
+          <span tabIndex={0}>info</span>
+        </Tooltip>
+      </label>,
+    );
+    await user.pointer({ keys: '[TouchA]', target: screen.getByText('info') });
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+});

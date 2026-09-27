@@ -1,3 +1,4 @@
+import { Field } from '../Field';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useState } from 'react';
@@ -383,5 +384,35 @@ describe('unselected segmented group is reachable by keyboard (#499)', () => {
       '-1',
       '0',
     ]);
+  });
+});
+
+describe('<ButtonGroup> in Field (#568)', () => {
+  it('segmented: invalid/required land on the radiogroup as ARIA, never as raw attributes', () => {
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { container } = render(
+      <Field label="View" error="Pick one" required>
+        <ButtonGroup value="a" onValueChange={() => {}} aria-label="View">
+          <ButtonGroup.Item value="a">A</ButtonGroup.Item>
+        </ButtonGroup>
+      </Field>,
+    );
+    const group = screen.getByRole('radiogroup');
+    expect(group).toHaveAttribute('aria-invalid', 'true');
+    expect(group).toHaveAttribute('aria-required', 'true');
+    expect(container.querySelectorAll('[invalid], div[required]')).toHaveLength(0);
+    expect(errSpy.mock.calls.flat().join(' ')).not.toMatch(/non-boolean attribute/);
+    errSpy.mockRestore();
+  });
+
+  it('visual: invalid/required are consumed', () => {
+    const { container } = render(
+      <Field label="Actions" error="x" required>
+        <ButtonGroup>
+          <Button>A</Button>
+        </ButtonGroup>
+      </Field>,
+    );
+    expect(container.querySelectorAll('[invalid], div[required]')).toHaveLength(0);
   });
 });
