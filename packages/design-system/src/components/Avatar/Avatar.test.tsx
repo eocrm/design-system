@@ -341,5 +341,12 @@ describe('Avatar — size="inline" (#579)', () => {
   it('sizes the presence dot with the text', () => {
     const dot = compiledRule(stylesheet, '.inline .presence');
     expect(compiledDeclaration(dot, 'width')?.value).toBe('var(--avatar-presence-size-inline)');
+    const tokens = parse(compile(resolve(__dirname, './Avatar.tokens.scss')).css);
+    let size = '';
+    tokens.walkDecls('--avatar-presence-size-inline', (d) => {
+      size = d.value;
+    });
+    // Never below the sm dot the presence shapes were checked at (#506).
+    expect(size).toBe('max(var(--size-presence-sm), 0.5em)');
   });
 });

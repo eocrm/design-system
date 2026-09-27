@@ -38,7 +38,9 @@ export interface PillMenuOption {
 }
 
 // `aria-labelledby` is omitted: the trigger's name is component-owned (see
-// `label`), and aria-labelledby would override it.
+// `label`), and aria-labelledby would override it. TS doesn't excess-check
+// hyphenated JSX attributes, so this is documentation — it's also stripped
+// at runtime.
 export interface PillMenuProps extends Omit<
   HTMLAttributes<HTMLElement>,
   'onSelect' | 'aria-labelledby'
@@ -211,13 +213,15 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
   } = props as typeof props & { required?: boolean; 'aria-labelledby'?: string };
   const t = useTranslation();
   useEffect(() => {
-    if (process.env.NODE_ENV !== 'production' && fieldLabelledBy && !label) {
+    // Trigger mode only: the read-only chip has no name for `label` to fix.
+    const hasTrigger = options != null && options.length > 0;
+    if (process.env.NODE_ENV !== 'production' && hasTrigger && fieldLabelledBy && !label) {
       // eslint-disable-next-line no-console
       console.warn(
-        '<PillMenu> received `aria-labelledby` (e.g. inside a <Field>) but no `label`. The trigger keeps its own name ("Change status: …"), so the visible field label never reaches assistive tech — pass `label` (e.g. label="priority").',
+        '<PillMenu> received `aria-labelledby` (e.g. inside a <Field>) but no `label`. `aria-labelledby` is ignored — the trigger keeps its own name ("Change status: …") — so unless the field label is "status", it doesn\'t reach assistive tech. Pass `label` (e.g. label="priority").',
       );
     }
-  }, [fieldLabelledBy, label]);
+  }, [fieldLabelledBy, label, options]);
   // Deferred for the same reason as Switch: a PillMenu that mounts already
   // busy would otherwise mount its region and text together and announce
   // nothing. See CLAUDE.md Hard rule 10.

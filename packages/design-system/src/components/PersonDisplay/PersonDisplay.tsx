@@ -36,8 +36,10 @@ export interface PersonDisplayProps extends HTMLAttributes<HTMLDivElement> {
    * (`1lh`) and the Name inherits the surrounding text's size and weight
    * (and colour, unless it has an `href` — then it's a subtle Link), so a
    * person in a `DefinitionList` value or a table cell is exactly as tall as
-   * its plain-text neighbours. The root is a `<div>`: not for inside a `<p>`. Follows the text size; no size
-   * decision per call site. Skip Descriptions — a second line defeats it.
+   * its plain-text neighbours. Follows the text size; no size decision per
+   * call site. Skip Descriptions — a second line defeats it. The root is a
+   * `<div>`, so not inside a `<p>`; in a line that also holds something
+   * taller than one line it top-aligns rather than sharing the baseline.
    */
   size?: PersonDisplaySize;
   /**

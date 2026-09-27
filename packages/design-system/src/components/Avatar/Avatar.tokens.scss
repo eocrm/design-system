@@ -14,8 +14,10 @@
   --avatar-size-inline: 1.5em;
   --avatar-font-size-inline: 0.7em;
 
-  // Scales with the text, like the tile (a fixed sm dot is half a small one).
-  --avatar-presence-size-inline: 0.5em;
+  // Scales with larger text, but never below the sm dot: #506's presence
+  // shapes (filled/half/barred/hollow, 2px strokes) are the non-colour
+  // channel and were only checked down to --size-presence-sm (8px).
+  --avatar-presence-size-inline: max(var(--size-presence-sm), 0.5em);
   --avatar-size-sm: var(--size-sm);
   --avatar-size-md: var(--size-md);
   --avatar-size-lg: var(--size-lg);

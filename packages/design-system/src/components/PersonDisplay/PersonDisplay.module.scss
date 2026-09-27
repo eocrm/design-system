@@ -17,8 +17,7 @@
 
   // Size-keyed gap — descriptive text doesn't need to crowd the avatar.
   // sm tightens; md and lg share the same outer gap.
-  &[data-size='sm'],
-  &[data-size='inline'] {
+  &[data-size='sm'] {
     gap: var(--person-display-gap-sm);
   }
 
@@ -26,6 +25,7 @@
   // line box fills it without growing it when the row sits inside text;
   // the default baseline is the avatar's and pushed it off the line.
   &[data-size='inline'] {
+    gap: var(--person-display-gap-sm);
     vertical-align: top;
   }
 }

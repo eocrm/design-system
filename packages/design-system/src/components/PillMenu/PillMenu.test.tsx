@@ -368,10 +368,17 @@ describe('PillMenu — inside a Field (#578)', () => {
       </Field>,
     );
     expect(warn).not.toHaveBeenCalled();
+    // Read-only chip: `label` changes nothing there, so no advice to pass it.
+    render(
+      <Field label="Type">
+        <PillMenu current={CURRENT} />
+      </Field>,
+    );
+    expect(warn).not.toHaveBeenCalled();
     warn.mockRestore();
   });
 
-  it('never lets aria-labelledby override the component-owned name', () => {
+  it('ignores aria-labelledby at runtime, keeping the component-owned name', () => {
     const smuggled = { 'aria-labelledby': 'elsewhere' } as object;
     render(<PillMenu label="type" current={CURRENT} options={OPTIONS} {...smuggled} />);
     const trigger = screen.getByRole('button', { name: 'Change type: Bug' });
@@ -381,5 +388,7 @@ describe('PillMenu — inside a Field (#578)', () => {
   it('stays content-width as a stretching flex item unless fullWidth', () => {
     const scss = readFileSync(resolve(__dirname, 'PillMenu.module.scss'), 'utf8');
     expect(scss).toMatch(/\.trigger,\s*\.chip\s*\{[^}]*width:\s*fit-content;/);
+    // Same specificity: .fullWidth's width: 100% only wins by coming later.
+    expect(scss.indexOf('.fullWidth {')).toBeGreaterThan(scss.search(/\.trigger,\s*\.chip\s*\{/));
   });
 });
