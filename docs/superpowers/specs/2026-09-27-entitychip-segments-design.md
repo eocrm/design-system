@@ -28,15 +28,18 @@ name carries type, key, title, priority and status.
    when the label is actually clipped. Replaces the shim's `shownLabel` /
    `maxTitle` character slicing.
 4. **Evolve EntityChip**, not a new `SegmentedChip`.
+5. After the issue update: whole-chip link kept (the issue now reads as a
+   body-only link); weights stay `medium` (issue: semibold); segment `size` in
+   `em` (issue: rem).
 
 ## API (additions only)
 
 ```ts
 export type EntityChipSegment =
   /** A glyph on a palette colour. `label` is its accessible name and tooltip. */
-  | { kind: 'icon'; icon: ReactNode; label: string; color?: PaletteColor }
+  | { kind: 'icon'; icon: ReactNode; label: string; color?: PaletteColor; size?: number }
   /** A short value (e.g. a status) on a palette colour, optional tooltip. */
-  | { kind: 'text'; text: ReactNode; color?: PaletteColor; tooltip?: ReactNode };
+  | { kind: 'text'; text: ReactNode; color?: PaletteColor; tooltip?: ReactNode; size?: number };
 
 interface EntityChipOwnProps {
   // …existing props unchanged…
@@ -52,6 +55,11 @@ interface EntityChipOwnProps {
 `labelMaxWidth` makes the label single-line: `max-width: <n>ch`, `nowrap`,
 ellipsis — also on a chip without `truncate` (a capped label that wraps would
 not be capped).
+
+`size` (issue update 2026-09-27): icon → glyph size, text → font size, **in
+`em`** of the chip text (the issue asked rem; decided em so a sized segment
+still follows the surrounding text, e.g. in a heading). Defaults: glyph
+`0.85em`, text `0.9em` (slightly smaller than the title).
 
 `color` on a segment defaults to `'slate'`; colours resolve via `paletteTokens`
 (`bg` / `fg`). `EntityChipSegment` is exported from `src/index.ts`.
@@ -79,8 +87,11 @@ apply in both modes — they only add behaviour.)
   / colour from the segment's palette tokens via `--entity-chip-segment-bg/-fg`.
   Icon glyphs: `> svg { width/height: 0.85em }` (token).
 - Weights: EntityChip's own — label `medium` (matches @mention), prefix muted.
-  Text segments use the label's weight. (The issue asked semibold; kept medium
-  so a segmented chip matches a plain chip beside it.)
+  Text segments use the label's weight. (The issue asks semibold; decided
+  medium so a segmented chip matches a plain chip / @mention beside it.)
+- Text segment font size `var(--entity-chip-segment-text-size)` (0.9em);
+  `size` overrides it inline (`font-size: <n>em`). Icon `size` overrides
+  `--entity-chip-segment-glyph-size` inline (`<n>em`).
 - Hover (interactive root): today's affordance on the whole chip
   (`filter: brightness(0.96)`); focus ring on the root (outline is not clipped by
   the root's own `overflow`).
@@ -107,7 +118,7 @@ entity has no known type/status).
 
 `--entity-chip-segment-padding-x-icon: var(--space-1)`,
 `--entity-chip-segment-padding-x-text: var(--space-2)`,
-`--entity-chip-segment-glyph-size: 0.85em`. Segment fill/fg are runtime custom
+`--entity-chip-segment-glyph-size: 0.85em`, `--entity-chip-segment-text-size: 0.9em`. Segment fill/fg are runtime custom
 properties from `paletteTokens` (not declared).
 
 ## Testing

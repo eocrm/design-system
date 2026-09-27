@@ -13,7 +13,8 @@
 ## Global Constraints
 
 - Work on branch `feat/entitychip-segments-582` (already checked out). Library root: `packages/design-system`.
-- Tokens only in `.module.scss`; new tokens go in `EntityChip.tokens.scss` (`--entity-chip-segment-padding-x-icon: var(--space-1)`, `--entity-chip-segment-padding-x-text: var(--space-2)`, `--entity-chip-segment-glyph-size: 0.85em`).
+- Tokens only in `.module.scss`; new tokens go in `EntityChip.tokens.scss` (`--entity-chip-segment-padding-x-icon: var(--space-1)`, `--entity-chip-segment-padding-x-text: var(--space-2)`, `--entity-chip-segment-glyph-size: 0.85em`, `--entity-chip-segment-text-size: 0.9em`).
+- Segment `size?: number` is in **em** (not rem): icon → glyph size, text → font size.
 - Rule 4: no layout props on the component root beyond what exists; an `align-self` on an internal child needs a `// stylelint-disable-next-line property-disallowed-list -- …` justification (precedent in `EntityChip.module.scss` `.icon`).
 - Vitest has `globals: true` — do not import `describe`/`it`/`expect`/`vi`. Run tests from `packages/design-system`: `npx vitest run src/components/EntityChip`.
 - Without `before`/`after`, EntityChip's DOM must stay byte-identical to today (Task 1 guards it).
@@ -107,8 +108,8 @@ git commit -m "test: guard EntityChip markup before segments (#582)"
 - Produces (exported from `src/index.ts`):
   ```ts
   export type EntityChipSegment =
-    | { kind: 'icon'; icon: ReactNode; label: string; color?: PaletteColor }
-    | { kind: 'text'; text: ReactNode; color?: PaletteColor; tooltip?: ReactNode };
+    | { kind: 'icon'; icon: ReactNode; label: string; color?: PaletteColor; size?: number }
+    | { kind: 'text'; text: ReactNode; color?: PaletteColor; tooltip?: ReactNode; size?: number };
   ```
   New `EntityChipOwnProps` fields: `before?: EntityChipSegment[]`, `after?: EntityChipSegment[]`.
   Internal: `function Segment({ segment }: { segment: EntityChipSegment }): ReactElement` in `EntityChip.tsx` (Task 3 adds tooltips inside it).
@@ -147,6 +148,23 @@ describe('<EntityChip> — segments (#582)', () => {
     expect(screen.getByRole('img', { name: 'Normal' }).style.getPropertyValue('--entity-chip-segment-fg')).toBe(
       'var(--color-palette-slate-fg)',
     );
+  });
+
+  it('size overrides the glyph (icon) or font size (text), in em', () => {
+    render(
+      <EntityChip
+        href="/t"
+        label="T"
+        after={[
+          { kind: 'icon', icon: <svg />, label: 'Big', size: 1.2 },
+          { kind: 'text', text: 'Small', size: 0.75 },
+        ]}
+      />,
+    );
+    expect(screen.getByRole('img', { name: 'Big' }).style.getPropertyValue('--entity-chip-segment-glyph-size')).toBe(
+      '1.2em',
+    );
+    expect(screen.getByText('Small').style.fontSize).toBe('0.75em');
   });
 
   it('keeps the core content (icon, prefix, label, status, trailing) inside .core', () => {
@@ -210,6 +228,7 @@ describe('<EntityChip> — segmented layout CSS (#582)', () => {
     expect(decl('.segment', 'flex-shrink')).toBe('0');
     expect(decl('.segment', 'align-self')).toBe('stretch');
     expect(decl('.segmentGlyph > svg', 'width')).toBe('var(--entity-chip-segment-glyph-size)');
+    expect(decl('.segmentText', 'font-size')).toBe('var(--entity-chip-segment-text-size)');
   });
 });
 ```
@@ -228,8 +247,10 @@ Expected: the new "segments" and "segmented layout CSS" tests FAIL (props ignore
   --entity-chip-segment-padding-x-icon: var(--space-1);
   --entity-chip-segment-padding-x-text: var(--space-2);
 
-  // Glyph relative to the inherited text size, like the chip itself.
+  // Relative to the inherited text size, like the chip itself; a segment's
+  // `size` prop overrides them in em.
   --entity-chip-segment-glyph-size: 0.85em;
+  --entity-chip-segment-text-size: 0.9em;
 ```
 
 - [ ] **Step 4: Implement — styles** (append to `EntityChip.module.scss`)
@@ -297,6 +318,7 @@ Expected: the new "segments" and "segmented layout CSS" tests FAIL (props ignore
 
 .segmentText {
   padding-inline: var(--entity-chip-segment-padding-x-text);
+  font-size: var(--entity-chip-segment-text-size);
   font-weight: var(--entity-chip-label-font-weight);
 }
 
@@ -322,11 +344,13 @@ Add after `EntityChipStatus`:
  *   segment is `role="img"`) and its tooltip; the glyph is sized to the text.
  * - `text` — a short value (e.g. a status) on a palette colour, same weight as
  *   the label, with an optional `tooltip`.
- * `color` defaults to `'slate'`. Non-interactive: the chip is the link.
+ * `color` defaults to `'slate'`. `size` (in em of the chip text) overrides
+ * the glyph size (icon, default 0.85em) or the font size (text, default
+ * 0.9em). Non-interactive: the chip is the link.
  */
 export type EntityChipSegment =
-  | { kind: 'icon'; icon: ReactNode; label: string; color?: PaletteColor }
-  | { kind: 'text'; text: ReactNode; color?: PaletteColor; tooltip?: ReactNode };
+  | { kind: 'icon'; icon: ReactNode; label: string; color?: PaletteColor; size?: number }
+  | { kind: 'text'; text: ReactNode; color?: PaletteColor; tooltip?: ReactNode; size?: number };
 ```
 
 Add to `EntityChipOwnProps` (after `trailing`):
@@ -347,10 +371,15 @@ Add to `EntityChipOwnProps` (after `trailing`):
 Add above the component:
 
 ```tsx
-/** Palette fill/fg for one segment, read by `.segment`. */
-function segmentStyle(color: PaletteColor = 'slate'): CSSProperties {
-  const { bg, fg } = paletteTokens(color);
-  return { '--entity-chip-segment-bg': bg, '--entity-chip-segment-fg': fg } as CSSProperties;
+/** Palette fill/fg for one segment, read by `.segment`, plus its `size` override. */
+function segmentStyle(segment: EntityChipSegment): CSSProperties {
+  const { bg, fg } = paletteTokens(segment.color ?? 'slate');
+  const style: Record<string, string> = { '--entity-chip-segment-bg': bg, '--entity-chip-segment-fg': fg };
+  if (segment.size != null) {
+    if (segment.kind === 'icon') style['--entity-chip-segment-glyph-size'] = `${segment.size}em`;
+    else style.fontSize = `${segment.size}em`;
+  }
+  return style as CSSProperties;
 }
 
 function Segment({ segment }: { segment: EntityChipSegment }) {
@@ -358,7 +387,7 @@ function Segment({ segment }: { segment: EntityChipSegment }) {
     return (
       <span
         className={clsx(styles.segment, styles.segmentIcon)}
-        style={segmentStyle(segment.color)}
+        style={segmentStyle(segment)}
         role="img"
         aria-label={segment.label}
       >
@@ -369,7 +398,7 @@ function Segment({ segment }: { segment: EntityChipSegment }) {
     );
   }
   return (
-    <span className={clsx(styles.segment, styles.segmentText)} style={segmentStyle(segment.color)}>
+    <span className={clsx(styles.segment, styles.segmentText)} style={segmentStyle(segment)}>
       {segment.text}
     </span>
   );
