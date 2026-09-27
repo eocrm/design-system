@@ -654,7 +654,7 @@ and under `@remarks Anti-patterns`:
 - [ ] **Step 2: AGENTS.md** — in the EntityChip section add a snippet (same as the JSDoc example) and a bullet:
 
 ```md
-- **Segments** (`before` / `after`, #582): coloured parts butted against the chip — `{ kind: 'icon', icon, label, color? }` (label = accessible name + tooltip) or `{ kind: 'text', text, color?, tooltip? }`. The whole chip stays one link; every segment joins its name. Any segment makes the chip one line (only the label shrinks) with only the outer corners rounded. Not rendered while `loading`/`unavailable`. `labelMaxWidth` (ch) caps the label in running text; a clipped label shows its full text in a tooltip on hover.
+- **Segments** (`before` / `after`, #582): coloured parts butted against the chip — `{ kind: 'icon', icon, label, color?, size? }` (label = accessible name + tooltip) or `{ kind: 'text', text, color?, tooltip?, size? }`; `size` is in em of the chip text (glyph default 0.85em, text default 0.9em). The whole chip stays one link; every segment joins its name. Any segment makes the chip one line (only the label shrinks) with only the outer corners rounded. Not rendered while `loading`/`unavailable`. `labelMaxWidth` (ch) caps the label in running text; a clipped label shows its full text in a tooltip on hover.
 ```
 
 - [ ] **Step 3: Playground demo** — in `EntityChipDemo.tsx` add imports `Bug`, `Equal` from `lucide-react`, then a new `<Example title="Segmented (task chip)">` before `</DemoLayout>` whose rendered JSX and `code` string are identical and self-contained:
