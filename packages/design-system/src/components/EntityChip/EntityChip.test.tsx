@@ -458,3 +458,35 @@ describe('<EntityChip>', () => {
     });
   });
 });
+
+// CSS-module class names carry a per-file hash (`_chip_08a367`); strip it so
+// the baseline survives stylesheet edits.
+function normalizeClasses(html: string): string {
+  return html.replace(/_([A-Za-z]+)_[0-9a-z]{6}/g, '$1');
+}
+
+describe('<EntityChip> — markup without segments is unchanged (#582)', () => {
+  it('renders exactly the pre-segments DOM', () => {
+    const { container } = render(
+      <EntityChip
+        href="/tasks/5"
+        icon={<svg data-testid="i" />}
+        prefix="ENG-5"
+        label="Fix login bug"
+        status={{ label: 'In progress', category: 'in_progress' }}
+        trailing={<span>High</span>}
+        truncate
+      />,
+    );
+    expect(normalizeClasses(container.innerHTML)).toBe(
+      '<a style="--entity-chip-status-fg: var(--color-palette-blue-fg);" class="chip truncate" href="/tasks/5">' +
+        '<span class="icon" aria-hidden="true"><svg data-testid="i"></svg></span>' +
+        '<span class="prefix">ENG-5</span>' +
+        '<span class="label">Fix login bug</span>' +
+        '<span class="dot" aria-hidden="true"></span>' +
+        '<span class="status">In progress</span>' +
+        '<span class="trailing"><span>High</span></span>' +
+        '</a>',
+    );
+  });
+});
