@@ -1,6 +1,13 @@
 .root {
   width: var(--resizable-preview-initial-width, 100%);
   min-width: 0;
+
+  // `resize` needs a non-visible overflow, which makes this box a clip
+  // ancestor: a focusable flush against its edge (a full-width tile, a
+  // truncating chip, a right-aligned icon button) loses the outset focus
+  // ring. Pad by exactly the ring's reach so demos show what a consumer's
+  // unclipped layout would.
+  padding: calc(var(--ring-width) + var(--ring-offset));
   resize: horizontal;
   overflow: auto;
 }
