@@ -1651,6 +1651,41 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       </Panel>
     </Row>
   ),
+  DateStrip: (
+    <Col gap={6} style={{ width: 200 }}>
+      <Bar w={90} />
+      <Row gap={4}>
+        <Outline w={22} h={28} />
+        <Outline w={22} h={28} />
+        <Outline w={22} h={28} />
+        <Solid w={22} h={28} />
+        <Outline w={22} h={28} />
+        <Outline w={22} h={28} />
+        <Outline w={22} h={28} />
+      </Row>
+    </Col>
+  ),
+  SlotGrid: (
+    <Col gap={8} style={{ width: 200 }}>
+      <Col gap={4}>
+        <Bar w={60} />
+        <Row gap={4}>
+          <Outline w={30} h={20} />
+          <Solid w={30} h={20} />
+          <Outline w={30} h={20} />
+          <Outline w={30} h={20} />
+        </Row>
+      </Col>
+      <Col gap={4}>
+        <Bar w={60} />
+        <Row gap={4}>
+          <Outline w={30} h={20} />
+          <Outline w={30} h={20} />
+          <Outline w={30} h={20} />
+        </Row>
+      </Col>
+    </Col>
+  ),
   Toast: (
     <Dashed w={200} h={92} style={{ position: 'relative' }}>
       <Panel

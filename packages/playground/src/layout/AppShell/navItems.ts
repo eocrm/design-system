@@ -209,6 +209,8 @@ export const componentGroups: { heading: string; items: NavItem[] }[] = [
       { to: '/components/switch', label: 'Switch', icon: ToggleRight, end: false },
       { to: '/components/textarea', label: 'Textarea', icon: MessageSquareText, end: false },
       { to: '/components/timefield', label: 'TimeField', icon: Clock, end: false },
+      { to: '/components/date-strip', label: 'DateStrip', icon: CalendarDays, end: false },
+      { to: '/components/slot-grid', label: 'SlotGrid', icon: LayoutGrid, end: false },
     ],
   },
   {

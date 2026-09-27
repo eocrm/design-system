@@ -533,6 +533,19 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['Toast'],
   },
   {
+    to: '/components/date-strip',
+    name: 'DateStrip',
+    description:
+      'One selectable week of day tiles under a month heading, with previous/next week buttons and a free-time count per day.',
+    preview: SCHEMATICS['DateStrip'],
+  },
+  {
+    to: '/components/slot-grid',
+    name: 'SlotGrid',
+    description: 'Selectable time-slot tiles grouped by part of the day, with an empty state.',
+    preview: SCHEMATICS['SlotGrid'],
+  },
+  {
     to: '/components/tooltip',
     name: 'Tooltip',
     description: 'Small floating label on hover/focus, with a pointer arrow.',

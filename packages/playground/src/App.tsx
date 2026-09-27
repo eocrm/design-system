@@ -53,6 +53,8 @@ import { SwitchDemo } from './pages/components/SwitchDemo';
 import { TableDemo } from './pages/components/TableDemo';
 import { TextareaDemo } from './pages/components/TextareaDemo';
 import { TimeFieldDemo } from './pages/components/TimeFieldDemo';
+import { DateStripDemo } from './pages/components/DateStripDemo';
+import { SlotGridDemo } from './pages/components/SlotGridDemo';
 import { CardDemo } from './pages/components/CardDemo';
 import { CodeDemo } from './pages/components/CodeDemo';
 import { TextDemo } from './pages/components/TextDemo';
@@ -249,6 +251,8 @@ export default function App() {
             <Route path="/components/topbar" element={<TopBarDemo />} />
             <Route path="/components/textarea" element={<TextareaDemo />} />
             <Route path="/components/timefield" element={<TimeFieldDemo />} />
+            <Route path="/components/date-strip" element={<DateStripDemo />} />
+            <Route path="/components/slot-grid" element={<SlotGridDemo />} />
             <Route path="/components/toast" element={<ToastDemo />} />
           </Routes>
         </AppShell>

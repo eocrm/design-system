@@ -1485,6 +1485,73 @@
         }
       ]
     },
+    "DateStrip": {
+      "props": [
+        {
+          "name": "days",
+          "type": "DateStripDay[]",
+          "required": true,
+          "default": "",
+          "description": "The days to show, in order — usually one week (7). The month heading is derived from the first and last."
+        },
+        {
+          "name": "value",
+          "type": "string | null",
+          "required": true,
+          "default": "",
+          "description": "Selected day (`'YYYY-MM-DD'`), or `null`. A value not in `days` checks nothing."
+        },
+        {
+          "name": "onChange",
+          "type": "(date: string) => void",
+          "required": true,
+          "default": "",
+          "description": "Called with the chosen day's `'YYYY-MM-DD'`. Controlled — update `value` yourself."
+        },
+        {
+          "name": "onPrevious",
+          "type": "() => void",
+          "required": true,
+          "default": "",
+          "description": "Previous-week button handler. Replace `days` with the earlier week."
+        },
+        {
+          "name": "onNext",
+          "type": "() => void",
+          "required": true,
+          "default": "",
+          "description": "Next-week button handler. Replace `days` with the later week."
+        },
+        {
+          "name": "canPrevious",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "`false` disables the previous-week button (e.g. the current week). Default `true`."
+        },
+        {
+          "name": "canNext",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "`false` disables the next-week button (end of the booking window). Default `true`."
+        },
+        {
+          "name": "titleOrder",
+          "type": "TitleOrder",
+          "required": false,
+          "default": "",
+          "description": "Heading level of the month label. Default `2`."
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Radio group `name` (also submitted with a form). Default: a generated id."
+        }
+      ]
+    },
     "DefinitionList": {
       "props": [
         {
@@ -4620,6 +4687,52 @@
         }
       ]
     },
+    "SlotGrid": {
+      "props": [
+        {
+          "name": "groups",
+          "type": "SlotGridGroup[]",
+          "required": true,
+          "default": "",
+          "description": "Groups in display order."
+        },
+        {
+          "name": "value",
+          "type": "string | null",
+          "required": true,
+          "default": "",
+          "description": "Selected slot `key`, or `null`. A key not in `groups` checks nothing."
+        },
+        {
+          "name": "onChange",
+          "type": "(key: string) => void",
+          "required": true,
+          "default": "",
+          "description": "Called with the chosen slot's `key`. Controlled — update `value` yourself."
+        },
+        {
+          "name": "empty",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Shown when no group has any slot. Default: the localized \"No available times\"."
+        },
+        {
+          "name": "titleOrder",
+          "type": "TitleOrder",
+          "required": false,
+          "default": "",
+          "description": "Heading level of each group label. Default `3`."
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Radio group `name` (also submitted with a form). Default: a generated id."
+        }
+      ]
+    },
     "SocialButton": {
       "props": [
         {
@@ -5695,6 +5808,8 @@
     "CalendarView": "\"month\" | \"week\" | \"day\" | \"agenda\"",
     "RenderEvent": "(event: CalendarEvent, ctx: RenderEventContext) => ReactNode",
     "DatePickerSize": "\"sm\" | \"md\" | \"lg\"",
+    "DateStripDay": "{ date: string; free: number }",
+    "SlotGridGroup": "{ label: string; slots: SlotGridSlot[] }",
     "DateRangePickerSize": "\"sm\" | \"md\" | \"lg\"",
     "DateRange": "{ start: Date; end: Date }",
     "DateTimeGranularity": "\"day\" | \"minute\"",
