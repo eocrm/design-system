@@ -550,7 +550,7 @@ describe('<EntityChip> — segments (#582)', () => {
         href="/t"
         label="T"
         after={[
-          { kind: 'icon', icon: <svg />, label: 'Big', size: 1.2 },
+          { kind: 'icon', icon: <svg />, label: 'Big', size: 0.7 },
           { kind: 'text', text: 'Small', size: 0.75 },
         ]}
       />,
@@ -559,7 +559,7 @@ describe('<EntityChip> — segments (#582)', () => {
       screen
         .getByRole('img', { name: 'Big' })
         .style.getPropertyValue('--entity-chip-segment-glyph-size'),
-    ).toBe('1.2em');
+    ).toBe('0.7em');
     // `size` sets the INNER span's font-size (#591) — the outer `.segment` box
     // keeps the chip's own font-size/line-height so the text sits on the
     // label's baseline; only the wrapped value is sized down.
@@ -571,7 +571,7 @@ describe('<EntityChip> — segments (#582)', () => {
     expect(outer.style.fontSize).toBe('');
   });
 
-  it('a text segment sized above 1 also sets inline line-height: 1 so the chip grows to fit (no clipping); at/below 1 leaves line-height alone (the CSS line-height: 0 default keeps a plain chip height, #591 follow-up)', () => {
+  it('clamps a segment `size` above 1 to 1em (text and icon) — a segment never outgrows the chip; the CSS line-height: 0 is never overridden', () => {
     render(
       <EntityChip
         href="/t"
@@ -579,16 +579,23 @@ describe('<EntityChip> — segments (#582)', () => {
         after={[
           { kind: 'text', text: 'Tall', size: 1.4 },
           { kind: 'text', text: 'Small', size: 0.8 },
+          { kind: 'icon', icon: <svg />, label: 'Huge', size: 2 },
         ]}
       />,
     );
     const tall = screen.getByText('Tall');
-    expect(tall.style.fontSize).toBe('1.4em');
-    expect(tall.style.lineHeight).toBe('1');
+    expect(tall.style.fontSize).toBe('1em');
+    expect(tall.style.lineHeight).toBe('');
 
     const small = screen.getByText('Small');
     expect(small.style.fontSize).toBe('0.8em');
     expect(small.style.lineHeight).toBe('');
+
+    expect(
+      screen
+        .getByRole('img', { name: 'Huge' })
+        .style.getPropertyValue('--entity-chip-segment-glyph-size'),
+    ).toBe('1em');
   });
 
   it('a text segment (no `size`) wraps its text in an inner span; the outer segment has no inline font-size (#591)', () => {
@@ -1045,6 +1052,27 @@ describe('<EntityChip> — clipped-label tooltip never gets stuck disabled (#592
 
     rerender(<EntityChip href="/t" label="A very long task title" truncate />);
     const label = screen.getByText('A very long task title');
+    fakeClip(label, true);
+    await user.hover(label);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('A very long task title');
+  });
+
+  // Same trap, but staying on the NON-string path (the string branch above
+  // bypasses the captured-text fallback entirely): an empty capture must fall
+  // back rather than stick as '' and disable the Tooltip.
+  it('a non-string empty label, then a non-string long clipped label, still opens the tooltip', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <EntityChip href="/t" label={<svg data-testid="icon" />} truncate />,
+    );
+    const iconLabel = screen.getByTestId('icon').parentElement as HTMLElement;
+    fakeClip(iconLabel, true);
+    await user.hover(iconLabel);
+    await new Promise((r) => setTimeout(r, 600));
+    await user.unhover(iconLabel);
+
+    rerender(<EntityChip href="/t" label={<b>A very long task title</b>} truncate />);
+    const label = screen.getByText('A very long task title').parentElement as HTMLElement;
     fakeClip(label, true);
     await user.hover(label);
     expect(await screen.findByRole('tooltip')).toHaveTextContent('A very long task title');

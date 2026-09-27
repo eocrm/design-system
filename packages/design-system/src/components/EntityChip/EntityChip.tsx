@@ -67,8 +67,9 @@ export type EntityChipSegment =
       /** Palette color for the segment's fill/fg pair. Default `'slate'`. */
       color?: PaletteColor;
       /**
-       * Overrides the glyph size, a positive number in em of the chip text.
-       * Default `0.85em`. Above ~1.1 makes the chip taller than a plain chip.
+       * Overrides the glyph size, a positive number in em of the chip text,
+       * at most `1` (larger values are clamped to 1 — a segment never makes
+       * the chip taller than a plain chip). Default `0.85em`.
        */
       size?: number;
     }
@@ -91,12 +92,10 @@ export type EntityChipSegment =
       tooltip?: ReactNode;
       /**
        * Overrides the segment's font size, a positive number in em of the
-       * chip text. Default `0.9em`. At or below 1 (including the default)
-       * the segment's inner span keeps `line-height: 0`, so it can't grow —
-       * the chip stays a plain chip's height and baseline. Above 1, the
-       * inner span also gets `line-height: 1` so its now-larger glyphs
-       * aren't clipped by `.chip.segmented`'s `overflow: hidden`, which
-       * makes the chip grow taller than a plain chip.
+       * chip text, at most `1` (larger values are clamped to 1). Default
+       * `0.9em`. The segment text always sits on the label's baseline and the
+       * chip keeps a plain chip's height; a segment larger than the chip's
+       * own text would break both, so it isn't supported.
        */
       size?: number;
     };
@@ -325,6 +324,15 @@ function rootStyle(
  * instead, so the outer box keeps the chip's own font-size/line-height and
  * its text sits on the label's baseline.
  */
+/**
+ * A segment is at most the chip's own text size (1em). Measured in Chromium:
+ * above 1, only the segment grows (the core doesn't stretch), leaving a
+ * ragged bottom edge and the segment text below the label's baseline.
+ */
+function clampSegmentSize(size: number): number {
+  return Math.min(size, 1);
+}
+
 function segmentStyle(segment: EntityChipSegment): CSSProperties {
   const { bg, fg } = paletteTokens(segment.color ?? 'slate');
   const style: Record<string, string> = {
@@ -332,7 +340,7 @@ function segmentStyle(segment: EntityChipSegment): CSSProperties {
     '--entity-chip-segment-fg': fg,
   };
   if (segment.kind === 'icon' && segment.size != null) {
-    style['--entity-chip-segment-glyph-size'] = `${segment.size}em`;
+    style['--entity-chip-segment-glyph-size'] = `${clampSegmentSize(segment.size)}em`;
   }
   return style as CSSProperties;
 }
@@ -362,21 +370,7 @@ function Segment({ segment }: { segment: EntityChipSegment }): ReactElement {
       <span
         className={styles.segmentTextValue}
         style={
-          segment.size != null
-            ? {
-                fontSize: `${segment.size}em`,
-                // Above 1, the CSS default `line-height: 0` (which keeps this
-                // span from adding any height of its own, so a plain-sized
-                // segment can't grow the chip) would clip the now-larger
-                // glyphs against `.chip.segmented`'s `overflow: hidden`
-                // instead — so let the span's line box grow to fit them, at
-                // the cost of the chip itself growing taller than a plain
-                // chip (#591 follow-up). At/below 1 (and the unset default,
-                // 0.9em) the CSS `line-height: 0` stands untouched, so a
-                // plain-sized chip keeps the SAME height/baseline as before.
-                ...(segment.size > 1 ? { lineHeight: 1 } : null),
-              }
-            : undefined
+          segment.size != null ? { fontSize: `${clampSegmentSize(segment.size)}em` } : undefined
         }
       >
         {segment.text}

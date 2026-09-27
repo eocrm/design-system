@@ -20,6 +20,10 @@ function specificity(selector: string): Specificity {
   // nothing, so removing it up front keeps the rest of the counting exactly
   // the normal CSS algorithm.
   let s = selector.replace(/:where\([^()]*\)/g, '');
+  // A nested-paren `:where(...)` isn't stripped by the regex above and would
+  // be mis-counted silently — fail loudly instead.
+  if (s.includes(':where('))
+    throw new Error(`specificity(): unsupported nested :where in ${selector}`);
 
   const ids = (s.match(/#[\w-]+/g) ?? []).length;
   s = s.replace(/#[\w-]+/g, '');
