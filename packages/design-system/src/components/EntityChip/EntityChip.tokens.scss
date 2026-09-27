@@ -47,4 +47,15 @@
   // symmetrically). A fixed size on purpose: it must not scale with the
   // inherited font and inflate the line box.
   --entity-chip-dot-size: var(--space-1);
+
+  // Segments (#582): palette-coloured parts butted against the core. The
+  // fill/fg come from the segment's PaletteColor at runtime
+  // (--entity-chip-segment-bg/-fg), so they're not declared here.
+  --entity-chip-segment-padding-x-icon: var(--space-1);
+  --entity-chip-segment-padding-x-text: var(--space-2);
+
+  // Relative to the inherited text size, like the chip itself; a segment's
+  // `size` prop overrides them in em.
+  --entity-chip-segment-glyph-size: 0.85em;
+  --entity-chip-segment-text-size: 0.9em;
 }

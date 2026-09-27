@@ -2045,6 +2045,17 @@ import { Link as RouterLink } from 'react-router-dom';
   status={{ label: 'In progress', category: 'in_progress' }}
   trailing={<ArrowUp size={14} aria-label="High priority" />}
 />
+
+// Segmented task chip — coloured `before`/`after` parts, capped label (#582):
+<EntityChip
+  as={RouterLink} to="/tasks/ENG-15"
+  prefix="ENG-15" label="Fix the login bug on Safari" labelMaxWidth={40}
+  before={[{ kind: 'icon', icon: <Bug />, label: 'Bug', color: 'red' }]}
+  after={[
+    { kind: 'icon', icon: <Equal />, label: 'Normal priority', color: 'slate' },
+    { kind: 'text', text: 'Reported', color: 'amber' },
+  ]}
+/>
 ```
 
 - Polymorphic inline chip: optional `icon` (rendered `aria-hidden`), optional muted `prefix` (e.g. a task key), the `label`, and an optional colored `status`. All inline `<span>`s inside one root — safe to drop directly inside a `<p>`/`<Text>`.
@@ -2061,8 +2072,9 @@ import { Link as RouterLink } from 'react-router-dom';
 - **`trailing`** — adornments inside the chip after `status` (a priority icon, a `<Badge>`), full size under `truncate`, not rendered while `loading`. Its text JOINS the link's name (`aria-hidden` a decorative icon). ❌ Never interactive content — the chip is a link; row actions go beside it.
 - Hover affordance on link/button chips: the background deepens a step plus a brightness dip. Never a weight change, never an underline, even under aggressive consumer link CSS.
 - Chip text inherits the surrounding font size — inside a heading it renders at heading size, by design (that's what keeps the chip box symmetric around the local text in any context).
+- **Segments** (`before` / `after`, #582): coloured parts butted against the chip — `{ kind: 'icon', icon, label, color?, size? }` (label = accessible name + tooltip) or `{ kind: 'text', text, color?, tooltip?, size? }`; `size` is in em of the chip text (glyph default 0.85em, text default 0.9em). The whole chip stays one link; every segment joins its name. Any segment makes the chip one line (only the label shrinks) with only the outer corners rounded. Not rendered while `loading`/`unavailable`. `labelMaxWidth` (ch) caps the label in running text; a clipped label shows its full text in a tooltip on hover or keyboard focus.
 - **When NOT to use**: plain status with no linked entity → `<Badge>`/`<PillMenu>`; standalone navigation with no icon/prefix/status chrome → `<Link>`; removable filter pills → `<FilterChip>`.
-- **Anti-pattern**: nesting a `<Badge>` inside another `<Badge>` to fake an entity-with-status chip — `EntityChip` replaces that composition. `status.color` and the chip's own `color` are `PaletteColor` names, never raw hex strings. Omitting a link target (`href`/`as`) is also an anti-pattern — an EntityChip should link to its entity.
+- **Anti-pattern**: nesting a `<Badge>` inside another `<Badge>` to fake an entity-with-status chip — `EntityChip` replaces that composition. `status.color` and the chip's own `color` are `PaletteColor` names, never raw hex strings. Omitting a link target (`href`/`as`) is also an anti-pattern — an EntityChip should link to its entity. Nesting `<IconTile>`/`<Badge>` in `icon`/`trailing` to fake coloured parts is also an anti-pattern — use `before`/`after` segments instead.
 
 ### `<PillMenu>` — coloured value menu (status, type, priority…)
 

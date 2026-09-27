@@ -301,9 +301,11 @@
     ]
   },
   "EntityChip": {
-    "tier": "primitive",
+    "tier": "composition",
     "cluster": "Display",
-    "composes": [],
+    "composes": [
+      "Tooltip"
+    ],
     "composedBy": []
   },
   "ErrorState": {
@@ -862,6 +864,7 @@
     "composedBy": [
       "Avatar",
       "Calendar",
+      "EntityChip",
       "PasswordInput",
       "Rail"
     ]

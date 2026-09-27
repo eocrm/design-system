@@ -135,3 +135,93 @@
     color: var(--entity-chip-unavailable-fg);
   }
 }
+
+// Segmented chip (#582): the root is only the rounded clip; the core carries
+// today's fill and padding, and palette segments butt against it. One line:
+// only the core's label gives way.
+.chip.segmented {
+  align-items: baseline;
+  gap: 0;
+  max-width: 100%;
+  min-width: 0;
+  padding: 0;
+  overflow: hidden;
+  background: none;
+  white-space: nowrap;
+
+  &:is(a, button):hover {
+    background: none;
+  }
+}
+
+.core {
+  display: inline-flex;
+  align-items: baseline;
+  gap: var(--entity-chip-gap);
+  padding: var(--entity-chip-padding-top) var(--entity-chip-padding-x)
+    var(--entity-chip-padding-bottom);
+  background: var(--entity-chip-bg);
+
+  > * {
+    flex-shrink: 0;
+  }
+
+  > .label {
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+// `.core`'s own shrink/min-width, scoped under `.segmented` so the selector
+// (0,2,0) out-specifies `.truncate > *` (0,1,0, the `*` contributes nothing)
+// regardless of which rule comes later in the stylesheet — `.core` is always
+// a direct child of the `.segmented` root, so this changes nothing visually.
+.segmented > .core {
+  flex-shrink: 1;
+  min-width: 0;
+}
+
+.segmented:is(a, button):hover .core {
+  background: var(--entity-chip-bg-hover);
+}
+
+.segment {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  // stylelint-disable-next-line property-disallowed-list -- internal child of the chip's OWN flex row: the root aligns on the core's text baseline, segments fill its height
+  align-self: stretch;
+  padding-top: var(--entity-chip-padding-top);
+  padding-bottom: var(--entity-chip-padding-bottom);
+  background: var(--entity-chip-segment-bg);
+  color: var(--entity-chip-segment-fg);
+}
+
+.segmentIcon {
+  padding-inline: var(--entity-chip-segment-padding-x-icon);
+}
+
+.segmentText {
+  padding-inline: var(--entity-chip-segment-padding-x-text);
+  font-size: var(--entity-chip-segment-text-size);
+  font-weight: var(--entity-chip-label-font-weight);
+}
+
+.segmentGlyph {
+  display: inline-flex;
+
+  > svg {
+    width: var(--entity-chip-segment-glyph-size);
+    height: var(--entity-chip-segment-glyph-size);
+  }
+}
+
+// `labelMaxWidth` (#582): the label alone is capped (max-width set inline in
+// `ch`) and ellipsizes on one line — also on a chip that otherwise wraps.
+.capped {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

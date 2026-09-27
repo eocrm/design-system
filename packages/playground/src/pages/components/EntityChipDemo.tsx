@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { ArrowDown, ArrowUp, Building2, CheckSquare, User } from 'lucide-react';
+import { ArrowDown, ArrowUp, Bug, Building2, CheckSquare, Equal, User } from 'lucide-react';
 import { Badge, Cluster, EntityChip, Stack, Text } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
@@ -288,6 +288,75 @@ export function Demo() {
             />
           </Stack>
         </ResizablePreview>
+      </Example>
+
+      <Example
+        title="Segmented (task chip)"
+        description="`before`/`after` add coloured segments butted against the chip — the whole chip stays one link and one Tab stop, and every segment's text joins its accessible name. Any segment makes the chip one line with only the outer corners rounded; `labelMaxWidth` caps the label in running text (full text on hover) while a `ResizablePreview` shows only the label shrinking as the container narrows."
+        code={`import { Bug, Building2, Equal } from 'lucide-react';
+import { EntityChip, Stack, Text } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Stack gap="md">
+      <Text>
+        Blocked by{' '}
+        <EntityChip
+          href="#"
+          prefix="ENG-15"
+          label="Fix the login bug that only happens on Safari when the session cookie expires"
+          labelMaxWidth={40}
+          before={[{ kind: 'icon', icon: <Bug />, label: 'Bug', color: 'red' }]}
+          after={[
+            { kind: 'icon', icon: <Equal />, label: 'Normal priority', color: 'slate' },
+            { kind: 'text', text: 'Reported', color: 'amber' },
+          ]}
+        />{' '}
+        and <EntityChip href="#" icon={<Building2 size={14} />} label="Acme Corp" />.
+      </Text>
+      <EntityChip
+        href="#"
+        prefix="ENG-15"
+        label="Fix the login bug that only happens on Safari when the session cookie expires"
+        before={[{ kind: 'icon', icon: <Bug />, label: 'Bug', color: 'red' }]}
+        after={[
+          { kind: 'icon', icon: <Equal />, label: 'Normal priority', color: 'slate' },
+          { kind: 'text', text: 'Reported', color: 'amber' },
+        ]}
+      />
+    </Stack>
+  );
+}`}
+      >
+        <Stack gap="md">
+          <Text>
+            Blocked by{' '}
+            <EntityChip
+              href="#"
+              prefix="ENG-15"
+              label="Fix the login bug that only happens on Safari when the session cookie expires"
+              labelMaxWidth={40}
+              before={[{ kind: 'icon', icon: <Bug />, label: 'Bug', color: 'red' }]}
+              after={[
+                { kind: 'icon', icon: <Equal />, label: 'Normal priority', color: 'slate' },
+                { kind: 'text', text: 'Reported', color: 'amber' },
+              ]}
+            />{' '}
+            and <EntityChip href="#" icon={<Building2 size={14} />} label="Acme Corp" />.
+          </Text>
+          <ResizablePreview>
+            <EntityChip
+              href="#"
+              prefix="ENG-15"
+              label="Fix the login bug that only happens on Safari when the session cookie expires"
+              before={[{ kind: 'icon', icon: <Bug />, label: 'Bug', color: 'red' }]}
+              after={[
+                { kind: 'icon', icon: <Equal />, label: 'Normal priority', color: 'slate' },
+                { kind: 'text', text: 'Reported', color: 'amber' },
+              ]}
+            />
+          </ResizablePreview>
+        </Stack>
       </Example>
     </DemoLayout>
   );

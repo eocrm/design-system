@@ -3,8 +3,10 @@ import { resolve } from 'node:path';
 import { createRef, type ComponentProps, type ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { parse, type Rule } from 'postcss';
+import { compile } from 'sass';
 import { I18nProvider } from '../../i18n/I18nProvider';
-import { EntityChip } from './EntityChip';
+import { EntityChip, type EntityChipSegment } from './EntityChip';
 
 // A stub component used to verify polymorphic `as` forwarding. Looks like
 // react-router-dom's <Link> — accepts `to`, optionally `replace`, etc.
@@ -456,5 +458,487 @@ describe('<EntityChip>', () => {
       expect(screen.getByText('[masked]')).toBeInTheDocument();
       expect(screen.queryByText('(unavailable)')).not.toBeInTheDocument();
     });
+  });
+});
+
+// CSS-module class names carry a per-file hash (`_chip_08a367`); strip it so
+// the baseline survives stylesheet edits.
+function normalizeClasses(html: string): string {
+  return html.replace(/_([A-Za-z]+)_[0-9a-z]{6}/g, '$1');
+}
+
+describe('<EntityChip> — markup without segments is unchanged (#582)', () => {
+  it('renders exactly the pre-segments DOM', () => {
+    const { container } = render(
+      <EntityChip
+        href="/tasks/5"
+        icon={<svg data-testid="i" />}
+        prefix="ENG-5"
+        label="Fix login bug"
+        status={{ label: 'In progress', category: 'in_progress' }}
+        trailing={<span>High</span>}
+        truncate
+      />,
+    );
+    expect(normalizeClasses(container.innerHTML)).toBe(
+      '<a style="--entity-chip-status-fg: var(--color-palette-blue-fg);" class="chip truncate" href="/tasks/5">' +
+        '<span class="icon" aria-hidden="true"><svg data-testid="i"></svg></span>' +
+        '<span class="prefix">ENG-5</span>' +
+        '<span class="label">Fix login bug</span>' +
+        '<span class="dot" aria-hidden="true"></span>' +
+        '<span class="status">In progress</span>' +
+        '<span class="trailing"><span>High</span></span>' +
+        '</a>',
+    );
+  });
+});
+
+const TASK_BEFORE = [
+  { kind: 'icon' as const, icon: <svg data-testid="type" />, label: 'Bug', color: 'red' as const },
+];
+const TASK_AFTER = [
+  { kind: 'icon' as const, icon: <svg data-testid="prio" />, label: 'Normal' },
+  { kind: 'text' as const, text: 'Reported', color: 'amber' as const },
+];
+
+describe('<EntityChip> — segments (#582)', () => {
+  it('renders before → core → after, the whole chip one link named by every part', () => {
+    render(
+      <EntityChip
+        href="/tasks/15"
+        prefix="ENG-15"
+        label="Fix the login bug"
+        before={TASK_BEFORE}
+        after={TASK_AFTER}
+      />,
+    );
+    // jsdom has no layout, so it doesn't separate the core's own prefix/label
+    // spans (browsers do — they're blockified flex items); the whitespace the
+    // component puts BETWEEN segments and core is what this asserts.
+    const link = screen.getByRole('link', {
+      name: /^Bug ENG-15.*Fix the login bug Normal Reported$/,
+    });
+    expect(link.className).toMatch(/segmented/);
+    const parts = Array.from(link.children).map((c) =>
+      c.className.replace(/_([A-Za-z]+)_[0-9a-z]{6}/g, '$1'),
+    );
+    expect(parts).toEqual([
+      'segment segmentIcon',
+      'core',
+      'segment segmentIcon',
+      'segment segmentText',
+    ]);
+  });
+
+  it('icon segment: role=img named by label, glyph hidden, palette colours set (slate default)', () => {
+    render(<EntityChip href="/t" label="T" before={TASK_BEFORE} after={TASK_AFTER} />);
+    const bug = screen.getByRole('img', { name: 'Bug' });
+    expect(screen.getByTestId('type').parentElement).toHaveAttribute('aria-hidden', 'true');
+    expect(bug.style.getPropertyValue('--entity-chip-segment-bg')).toBe(
+      'var(--color-palette-red-bg)',
+    );
+    expect(
+      screen
+        .getByRole('img', { name: 'Normal' })
+        .style.getPropertyValue('--entity-chip-segment-fg'),
+    ).toBe('var(--color-palette-slate-fg)');
+  });
+
+  it('size overrides the glyph (icon) or font size (text), in em', () => {
+    render(
+      <EntityChip
+        href="/t"
+        label="T"
+        after={[
+          { kind: 'icon', icon: <svg />, label: 'Big', size: 1.2 },
+          { kind: 'text', text: 'Small', size: 0.75 },
+        ]}
+      />,
+    );
+    expect(
+      screen
+        .getByRole('img', { name: 'Big' })
+        .style.getPropertyValue('--entity-chip-segment-glyph-size'),
+    ).toBe('1.2em');
+    expect(screen.getByText('Small').style.fontSize).toBe('0.75em');
+  });
+
+  it('keeps the core content (icon, prefix, label, status, trailing) inside .core', () => {
+    const { container } = render(
+      <EntityChip
+        href="/t"
+        prefix="K"
+        label="L"
+        status={{ label: 'Open', category: 'to_do' }}
+        trailing={<span>tr</span>}
+        after={TASK_AFTER}
+      />,
+    );
+    const core = container.querySelector('[class*="core"]') as HTMLElement;
+    expect(core).toHaveTextContent('KLOpentr');
+  });
+
+  it('empty segment arrays behave exactly like none', () => {
+    const { container } = render(<EntityChip href="/t" label="L" before={[]} after={[]} />);
+    expect(normalizeClasses(container.innerHTML)).toBe(
+      '<a class="chip" href="/t"><span class="label">L</span></a>',
+    );
+  });
+
+  it('loading and unavailable render no segments', () => {
+    const { container, rerender } = render(
+      <EntityChip href="/t" label="L" loading before={TASK_BEFORE} after={TASK_AFTER} />,
+    );
+    expect(container.querySelector('[class*="segment"]')).toBeNull();
+    rerender(
+      <EntityChip href="/t" label="L" unavailable before={TASK_BEFORE} after={TASK_AFTER} />,
+    );
+    expect(container.querySelector('[class*="segment"]')).toBeNull();
+  });
+
+  it('accepts an `as const` segment array typed against `readonly EntityChipSegment[]` (type-level)', () => {
+    // Compile-time assertion: `before`/`after` are typed `readonly
+    // EntityChipSegment[]`, so a `satisfies`-checked `as const` array — the
+    // shape a consumer building a static segment list would reach for —
+    // must type-check without a cast. An `as const` tuple is readonly, so if
+    // either prop reverts to a mutable `EntityChipSegment[]`, `tsc` fails
+    // (TS4104). Vitest doesn't type-check — this guard fires under
+    // `npm run typecheck` (and the pre-push hook), not `vitest run`.
+    const segs = [
+      { kind: 'icon', icon: <svg data-testid="typed" />, label: 'Bug', color: 'red' },
+    ] as const satisfies readonly EntityChipSegment[];
+    render(<EntityChip href="/t" label="T" before={segs} after={segs} />);
+    expect(screen.getAllByRole('img', { name: 'Bug' })).toHaveLength(2);
+  });
+});
+
+describe('<EntityChip> — segmented layout CSS (#582)', () => {
+  const css = parse(compile(resolve(__dirname, './EntityChip.module.scss')).css);
+  const decl = (selector: string, prop: string): string | undefined => {
+    let value: string | undefined;
+    css.walkRules((rule: Rule) => {
+      if (rule.selector !== selector) return;
+      rule.walkDecls(prop, (d) => {
+        value = d.value;
+      });
+    });
+    return value;
+  };
+
+  it('root is the rounded clip: no padding/fill, clips, baseline from the core', () => {
+    expect(decl('.chip.segmented', 'padding')).toBe('0');
+    expect(decl('.chip.segmented', 'background')).toBe('none');
+    expect(decl('.chip.segmented', 'overflow')).toBe('hidden');
+    expect(decl('.chip.segmented', 'align-items')).toBe('baseline');
+    expect(decl('.chip.segmented', 'max-width')).toBe('100%');
+    expect(decl('.chip.segmented', 'white-space')).toBe('nowrap');
+  });
+
+  it('core shrinks and ellipsizes its label; segments never shrink and stretch to the core', () => {
+    expect(decl('.segmented > .core', 'flex-shrink')).toBe('1');
+    expect(decl('.segmented > .core', 'min-width')).toBe('0');
+    expect(decl('.core > .label', 'text-overflow')).toBe('ellipsis');
+    expect(decl('.segment', 'flex-shrink')).toBe('0');
+    expect(decl('.segment', 'align-self')).toBe('stretch');
+    expect(decl('.segmentGlyph > svg', 'width')).toBe('var(--entity-chip-segment-glyph-size)');
+    expect(decl('.segmentText', 'font-size')).toBe('var(--entity-chip-segment-text-size)');
+  });
+
+  it('hovering a linked/button segmented chip brightens the core, matching the unsegmented hover token', () => {
+    expect(decl('.segmented:is(a, button):hover .core', 'background')).toBe(
+      'var(--entity-chip-bg-hover)',
+    );
+  });
+});
+
+// jsdom has no layout: fake the label's box to say whether it is clipped.
+function fakeClip(el: HTMLElement, clipped: boolean) {
+  Object.defineProperty(el, 'clientWidth', { configurable: true, value: 100 });
+  Object.defineProperty(el, 'scrollWidth', { configurable: true, value: clipped ? 300 : 100 });
+}
+
+describe('<EntityChip> — tooltips and labelMaxWidth (#582)', () => {
+  it('icon segment shows its label on hover, and only that tooltip', async () => {
+    const user = userEvent.setup();
+    render(<EntityChip href="/t" label="Fix" truncate before={TASK_BEFORE} />);
+    await user.hover(screen.getByRole('img', { name: 'Bug' }));
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Bug');
+    expect(screen.getAllByRole('tooltip')).toHaveLength(1);
+  });
+
+  it('text segment shows its tooltip when given', async () => {
+    const user = userEvent.setup();
+    render(
+      <EntityChip
+        href="/t"
+        label="Fix"
+        after={[{ kind: 'text', text: 'Reported', tooltip: 'Status: Reported' }]}
+      />,
+    );
+    await user.hover(screen.getByText('Reported'));
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Status: Reported');
+  });
+
+  it('label tooltip shows the full label only when the label is clipped', async () => {
+    const user = userEvent.setup();
+    render(<EntityChip href="/t" label="A very long task title" truncate />);
+    const label = screen.getByText('A very long task title');
+    fakeClip(label, true);
+    await user.hover(label);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('A very long task title');
+  });
+
+  it('an open label tooltip does not come back open after the chip stops and restarts being clippable', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<EntityChip href="/t" label="A very long task title" truncate />);
+    const label = screen.getByText('A very long task title');
+    fakeClip(label, true);
+    await user.hover(label);
+    expect(await screen.findByRole('tooltip')).toBeInTheDocument();
+    // Parent drops `truncate` while it's open: no Tooltip left to close it…
+    rerender(<EntityChip href="/t" label="A very long task title" />);
+    await user.unhover(screen.getByText('A very long task title'));
+    // …then clippable again: it must not mount already open.
+    rerender(<EntityChip href="/t" label="A very long task title" truncate />);
+    expect(screen.queryByRole('tooltip')).toBeNull();
+  });
+
+  it('an open label tooltip does not come back open after a loading round-trip', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<EntityChip href="/t" label="A very long task title" truncate />);
+    const label = screen.getByText('A very long task title');
+    fakeClip(label, true);
+    await user.hover(label);
+    expect(await screen.findByRole('tooltip')).toBeInTheDocument();
+    // A refetch under the pointer: the loading branch unmounts the label Tooltip…
+    rerender(<EntityChip href="/t" label="A very long task title" truncate loading />);
+    // …and when it resolves the tooltip must not remount already open.
+    rerender(<EntityChip href="/t" label="A very long task title" truncate />);
+    expect(screen.queryByRole('tooltip')).toBeNull();
+  });
+
+  it('a fully visible label gets no tooltip and no aria-describedby', async () => {
+    const user = userEvent.setup();
+    render(<EntityChip href="/t" label="Short" truncate />);
+    const label = screen.getByText('Short');
+    fakeClip(label, false);
+    await user.hover(label);
+    await new Promise((r) => setTimeout(r, 600)); // past Tooltip's 400ms delay
+    expect(screen.queryByRole('tooltip')).toBeNull();
+    expect(label).not.toHaveAttribute('aria-describedby');
+  });
+
+  it('a segmented-only chip (no truncate, no labelMaxWidth) shows a tooltip for a clipped label on hover', async () => {
+    // The main case `clippable` has to cover on its own: only `before`/`after`
+    // set, neither of the other two clippable triggers. If `clippable` ever
+    // drops the `hasSegments` term, this label gets no Tooltip wrapper at all
+    // and this assertion fails (there is nothing to find/hover).
+    const user = userEvent.setup();
+    render(<EntityChip href="/t" label="A very long task title" before={TASK_BEFORE} />);
+    const label = screen.getByText('A very long task title');
+    fakeClip(label, true);
+    await user.hover(label);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('A very long task title');
+  });
+
+  it('an unavailable chip with `before` segments still tooltips a clipped label (no truncate, #582 review)', async () => {
+    // The bug this fixes: `segmented` is false while `unavailable`, so the old
+    // `clippable = segmented || truncate || labelMaxWidth != null` missed this
+    // case even though the chip keeps the `truncate` single-line class and can
+    // still clip. `loading` never reaches this Tooltip at all (separate branch),
+    // so only `unavailable` needed the `hasSegments` term.
+    const user = userEvent.setup();
+    render(
+      <EntityChip
+        href="/t"
+        label="A very long task title"
+        unavailable
+        before={TASK_BEFORE}
+        after={TASK_AFTER}
+      />,
+    );
+    const label = screen.getByText('A very long task title');
+    fakeClip(label, true);
+    await user.hover(label);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('A very long task title');
+  });
+
+  it('labelMaxWidth caps the label in ch, single-line, even without truncate/segments', () => {
+    render(<EntityChip href="/t" label="Long title" labelMaxWidth={40} />);
+    const label = screen.getByText('Long title');
+    expect(label.style.maxWidth).toBe('40ch');
+    expect(label.className).toMatch(/capped/);
+  });
+
+  it('.capped makes the label single-line with an ellipsis', () => {
+    const scss = readFileSync(resolve(__dirname, 'EntityChip.module.scss'), 'utf8');
+    expect(scss).toMatch(
+      /\.capped\s*\{[^}]*overflow:\s*hidden;[^}]*text-overflow:\s*ellipsis;[^}]*white-space:\s*nowrap;/,
+    );
+  });
+});
+
+describe('<EntityChip> — keyboard focus opens the clipped-label tooltip (#582 review)', () => {
+  // Mirrors Tooltip.test.tsx's `stubFocusVisible`: jsdom 29's `:focus-visible`
+  // "last interaction was keyboard" heuristic flips to false once any prior
+  // test has run, so userEvent.tab() would otherwise return false here too.
+  let originalMatches: typeof Element.prototype.matches;
+  function stubFocusVisible(value: boolean) {
+    Element.prototype.matches = function (this: Element, selector: string) {
+      if (selector === ':focus-visible') return value;
+      return originalMatches.call(this, selector);
+    } as typeof Element.prototype.matches;
+  }
+  beforeEach(() => {
+    originalMatches = Element.prototype.matches;
+  });
+  afterEach(() => {
+    Element.prototype.matches = originalMatches;
+  });
+
+  it('tabbing onto the chip opens the tooltip when the label is clipped', async () => {
+    stubFocusVisible(true);
+    const user = userEvent.setup();
+    render(<EntityChip href="/t" label="A very long task title" truncate />);
+    fakeClip(screen.getByText('A very long task title'), true);
+    await user.tab();
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('A very long task title');
+  });
+
+  it('blurring the chip closes the tooltip', async () => {
+    stubFocusVisible(true);
+    const user = userEvent.setup();
+    render(
+      <>
+        <EntityChip href="/t" label="A very long task title" truncate />
+        <a href="/next">Next</a>
+      </>,
+    );
+    fakeClip(screen.getByText('A very long task title'), true);
+    await user.tab();
+    expect(await screen.findByRole('tooltip')).toBeInTheDocument();
+    await user.tab();
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
+  it('does not open a tooltip on keyboard focus when the label is not clipped', async () => {
+    stubFocusVisible(true);
+    const user = userEvent.setup();
+    render(<EntityChip href="/t" label="Short" truncate />);
+    fakeClip(screen.getByText('Short'), false);
+    await user.tab();
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
+  it('preserves a consumer onFocus/onBlur passed through the polymorphic rest props', async () => {
+    stubFocusVisible(true);
+    const user = userEvent.setup();
+    const onFocus = vi.fn();
+    const onBlur = vi.fn();
+    render(
+      <>
+        <EntityChip
+          href="/t"
+          label="A very long task title"
+          truncate
+          onFocus={onFocus}
+          onBlur={onBlur}
+        />
+        <a href="/next">Next</a>
+      </>,
+    );
+    fakeClip(screen.getByText('A very long task title'), true);
+    await user.tab();
+    expect(onFocus).toHaveBeenCalledTimes(1);
+    await user.tab();
+    expect(onBlur).toHaveBeenCalledTimes(1);
+  });
+
+  it('tabbing onto a segmented-only chip (no truncate, no labelMaxWidth) opens the tooltip when clipped', async () => {
+    // Same main-case coverage as the hover test above, for the keyboard path:
+    // only `before`/`after` set. If `clippable` ever drops the `hasSegments`
+    // term this chip never chains `handleRootFocus` onto the root at all
+    // (below, #582 nice-to-have 4), so this assertion fails.
+    stubFocusVisible(true);
+    const user = userEvent.setup();
+    render(<EntityChip href="/t" label="A very long task title" before={TASK_BEFORE} />);
+    fakeClip(screen.getByText('A very long task title'), true);
+    await user.tab();
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('A very long task title');
+  });
+
+  it('does NOT open the tooltip on focus when :focus-visible is false, even past the delay', async () => {
+    // Pins the `if (!focusVisible) return;` gate in handleRootFocus: a mouse
+    // (non-keyboard) focus must not open the clipped-label tooltip.
+    stubFocusVisible(false);
+    const user = userEvent.setup();
+    render(<EntityChip href="/t" label="A very long task title" truncate />);
+    fakeClip(screen.getByText('A very long task title'), true);
+    await user.tab();
+    await new Promise((r) => setTimeout(r, 600)); // past Tooltip's 400ms delay
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
+  it('a non-clippable chip still calls a consumer onFocus/onBlur (no truncate/segments/labelMaxWidth)', async () => {
+    // With nothing that could clip the label, the root shouldn't chain in
+    // handleRootFocus/handleRootBlur at all — the consumer's own handlers
+    // (from {...rest}) must still fire on their own.
+    stubFocusVisible(true);
+    const user = userEvent.setup();
+    const onFocus = vi.fn();
+    const onBlur = vi.fn();
+    render(
+      <>
+        <EntityChip href="/t" label="Short" onFocus={onFocus} onBlur={onBlur} />
+        <a href="/next">Next</a>
+      </>,
+    );
+    await user.tab();
+    expect(onFocus).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+    await user.tab();
+    expect(onBlur).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('<EntityChip> — truncate class applies whenever segments are present (#582 review)', () => {
+  it('an unavailable chip with segments keeps the truncate class and renders no segments', () => {
+    const { container } = render(
+      <EntityChip href="/t" label="L" unavailable before={TASK_BEFORE} after={TASK_AFTER} />,
+    );
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.className).toMatch(/truncate/);
+    expect(root.className).not.toMatch(/segmented/);
+    expect(container.querySelector('[class*="segment"]')).toBeNull();
+  });
+
+  it('a loading chip with segments keeps the truncate class and renders no segments', () => {
+    const { container } = render(
+      <EntityChip href="/t" label="L" loading before={TASK_BEFORE} after={TASK_AFTER} />,
+    );
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.className).toMatch(/truncate/);
+    expect(container.querySelector('[class*="segment"]')).toBeNull();
+  });
+
+  it('a plain chip with no segments and no truncate prop stays without the class', () => {
+    const { container } = render(<EntityChip href="/t" label="L" unavailable />);
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.className).not.toMatch(/truncate/);
+  });
+});
+
+describe('<EntityChip> — .core shrink rule outranks .truncate > * regardless of source order (#582 review)', () => {
+  const css = parse(compile(resolve(__dirname, './EntityChip.module.scss')).css);
+
+  it('the core shrink/min-width rule is scoped under .segmented, out-specificing .truncate > *', () => {
+    let found = false;
+    css.walkRules((rule: Rule) => {
+      if (rule.selector !== '.segmented > .core') return;
+      rule.walkDecls('flex-shrink', (d) => {
+        if (d.value === '1') found = true;
+      });
+    });
+    expect(found).toBe(true);
   });
 });

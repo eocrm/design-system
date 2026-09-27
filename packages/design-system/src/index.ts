@@ -148,6 +148,7 @@ export type {
   EntityChipProps,
   EntityChipAs,
   EntityChipStatus,
+  EntityChipSegment,
   StatusCategory,
 } from './components/EntityChip';
 
