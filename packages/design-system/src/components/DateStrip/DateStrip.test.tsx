@@ -1,6 +1,6 @@
 import { StrictMode } from 'react';
 import { createRef } from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { I18nProvider } from '../../i18n/I18nProvider';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
@@ -19,6 +19,17 @@ const NEXT_WEEK: DateStripDay[] = WEEK.map((d, i) => ({
   ...d,
   date: `2026-10-${String(12 + i).padStart(2, '0')}`,
 }));
+
+// LiveRegion clears then rewrites its text after a real setTimeout
+// (ANNOUNCE_DELAY_MS = 50 in LiveRegion.tsx, not exported). A synchronous
+// "the region is empty" assertion passes trivially before that timer ever
+// fires, regardless of whether the component actually stayed silent. Wait
+// past the delay first so an empty assertion only passes because nothing
+// was scheduled to be written, not because nothing has had time to write yet.
+const PAST_ANNOUNCE_DELAY_MS = 100;
+async function waitPastAnnounceDelay() {
+  await act(() => new Promise((r) => setTimeout(r, PAST_ANNOUNCE_DELAY_MS)));
+}
 
 function setup(props: Partial<DateStripProps> = {}) {
   const handlers = { onChange: vi.fn(), onPrevious: vi.fn(), onNext: vi.fn() };
@@ -121,15 +132,17 @@ describe('<DateStrip>', () => {
     expect(onNext).toHaveBeenCalled();
   });
 
-  it('empty days: no label text, no tiles, no crash', () => {
+  it('empty days: no label text, no tiles, no crash', async () => {
     setup({ days: [] });
     expect(screen.queryAllByRole('radio')).toHaveLength(0);
+    await waitPastAnnounceDelay();
     expect(screen.getByRole('status')).toHaveTextContent('');
   });
 
   describe('week-change announcement (Rule 10)', () => {
-    it('is silent on mount', () => {
+    it('is silent on mount', async () => {
       setup();
+      await waitPastAnnounceDelay();
       expect(screen.getByRole('status')).toHaveTextContent('');
     });
 
@@ -147,17 +160,18 @@ describe('<DateStrip>', () => {
       );
     });
 
-    it('does not announce when the same week re-renders with new objects', () => {
+    it('does not announce when the same week re-renders with new objects', async () => {
       const { rerender, props } = setup();
       rerender(
         <LocaleProvider locale="en-US">
           <DateStrip {...props} days={WEEK.map((d) => ({ ...d }))} />
         </LocaleProvider>,
       );
+      await waitPastAnnounceDelay();
       expect(screen.getByRole('status')).toHaveTextContent('');
     });
 
-    it('StrictMode mount stays silent', () => {
+    it('StrictMode mount stays silent', async () => {
       render(
         <StrictMode>
           <LocaleProvider locale="en-US">
@@ -171,6 +185,7 @@ describe('<DateStrip>', () => {
           </LocaleProvider>
         </StrictMode>,
       );
+      await waitPastAnnounceDelay();
       expect(screen.getByRole('status')).toHaveTextContent('');
     });
   });
