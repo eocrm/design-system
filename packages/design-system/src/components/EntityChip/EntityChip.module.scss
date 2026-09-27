@@ -156,10 +156,8 @@
 
 .core {
   display: inline-flex;
-  flex-shrink: 1;
   align-items: baseline;
   gap: var(--entity-chip-gap);
-  min-width: 0;
   padding: var(--entity-chip-padding-top) var(--entity-chip-padding-x)
     var(--entity-chip-padding-bottom);
   background: var(--entity-chip-bg);
@@ -174,6 +172,15 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
+}
+
+// `.core`'s own shrink/min-width, scoped under `.segmented` so the selector
+// (0,2,0) out-specifies `.truncate > *` (0,1,0, the `*` contributes nothing)
+// regardless of which rule comes later in the stylesheet — `.core` is always
+// a direct child of the `.segmented` root, so this changes nothing visually.
+.segmented > .core {
+  flex-shrink: 1;
+  min-width: 0;
 }
 
 .segmented:is(a, button):hover .core {

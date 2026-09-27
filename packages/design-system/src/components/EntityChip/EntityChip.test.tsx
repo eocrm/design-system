@@ -620,8 +620,8 @@ describe('<EntityChip> — segmented layout CSS (#582)', () => {
   });
 
   it('core shrinks and ellipsizes its label; segments never shrink and stretch to the core', () => {
-    expect(decl('.core', 'flex-shrink')).toBe('1');
-    expect(decl('.core', 'min-width')).toBe('0');
+    expect(decl('.segmented > .core', 'flex-shrink')).toBe('1');
+    expect(decl('.segmented > .core', 'min-width')).toBe('0');
     expect(decl('.core > .label', 'text-overflow')).toBe('ellipsis');
     expect(decl('.segment', 'flex-shrink')).toBe('0');
     expect(decl('.segment', 'align-self')).toBe('stretch');
@@ -690,5 +690,124 @@ describe('<EntityChip> — tooltips and labelMaxWidth (#582)', () => {
     expect(scss).toMatch(
       /\.capped\s*\{[^}]*overflow:\s*hidden;[^}]*text-overflow:\s*ellipsis;[^}]*white-space:\s*nowrap;/,
     );
+  });
+});
+
+describe('<EntityChip> — keyboard focus opens the clipped-label tooltip (#582 review)', () => {
+  // Mirrors Tooltip.test.tsx's `stubFocusVisible`: jsdom 29's `:focus-visible`
+  // "last interaction was keyboard" heuristic flips to false once any prior
+  // test has run, so userEvent.tab() would otherwise return false here too.
+  let originalMatches: typeof Element.prototype.matches;
+  function stubFocusVisible(value: boolean) {
+    Element.prototype.matches = function (this: Element, selector: string) {
+      if (selector === ':focus-visible') return value;
+      return originalMatches.call(this, selector);
+    } as typeof Element.prototype.matches;
+  }
+  beforeEach(() => {
+    originalMatches = Element.prototype.matches;
+  });
+  afterEach(() => {
+    Element.prototype.matches = originalMatches;
+  });
+
+  it('tabbing onto the chip opens the tooltip when the label is clipped', async () => {
+    stubFocusVisible(true);
+    const user = userEvent.setup();
+    render(<EntityChip href="/t" label="A very long task title" truncate />);
+    fakeClip(screen.getByText('A very long task title'), true);
+    await user.tab();
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('A very long task title');
+  });
+
+  it('blurring the chip closes the tooltip', async () => {
+    stubFocusVisible(true);
+    const user = userEvent.setup();
+    render(
+      <>
+        <EntityChip href="/t" label="A very long task title" truncate />
+        <a href="/next">Next</a>
+      </>,
+    );
+    fakeClip(screen.getByText('A very long task title'), true);
+    await user.tab();
+    expect(await screen.findByRole('tooltip')).toBeInTheDocument();
+    await user.tab();
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
+  it('does not open a tooltip on keyboard focus when the label is not clipped', async () => {
+    stubFocusVisible(true);
+    const user = userEvent.setup();
+    render(<EntityChip href="/t" label="Short" truncate />);
+    fakeClip(screen.getByText('Short'), false);
+    await user.tab();
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
+  it('preserves a consumer onFocus/onBlur passed through the polymorphic rest props', async () => {
+    stubFocusVisible(true);
+    const user = userEvent.setup();
+    const onFocus = vi.fn();
+    const onBlur = vi.fn();
+    render(
+      <>
+        <EntityChip
+          href="/t"
+          label="A very long task title"
+          truncate
+          onFocus={onFocus}
+          onBlur={onBlur}
+        />
+        <a href="/next">Next</a>
+      </>,
+    );
+    fakeClip(screen.getByText('A very long task title'), true);
+    await user.tab();
+    expect(onFocus).toHaveBeenCalledTimes(1);
+    await user.tab();
+    expect(onBlur).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe('<EntityChip> — truncate class applies whenever segments are present (#582 review)', () => {
+  it('an unavailable chip with segments keeps the truncate class and renders no segments', () => {
+    const { container } = render(
+      <EntityChip href="/t" label="L" unavailable before={TASK_BEFORE} after={TASK_AFTER} />,
+    );
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.className).toMatch(/truncate/);
+    expect(root.className).not.toMatch(/segmented/);
+    expect(container.querySelector('[class*="segment"]')).toBeNull();
+  });
+
+  it('a loading chip with segments keeps the truncate class and renders no segments', () => {
+    const { container } = render(
+      <EntityChip href="/t" label="L" loading before={TASK_BEFORE} after={TASK_AFTER} />,
+    );
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.className).toMatch(/truncate/);
+    expect(container.querySelector('[class*="segment"]')).toBeNull();
+  });
+
+  it('a plain chip with no segments and no truncate prop stays without the class', () => {
+    const { container } = render(<EntityChip href="/t" label="L" unavailable />);
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.className).not.toMatch(/truncate/);
+  });
+});
+
+describe('<EntityChip> — .core shrink rule outranks .truncate > * regardless of source order (#582 review)', () => {
+  const css = parse(compile(resolve(__dirname, './EntityChip.module.scss')).css);
+
+  it('the core shrink/min-width rule is scoped under .segmented, out-specificing .truncate > *', () => {
+    let found = false;
+    css.walkRules((rule: Rule) => {
+      if (rule.selector !== '.segmented > .core') return;
+      rule.walkDecls('flex-shrink', (d) => {
+        if (d.value === '1') found = true;
+      });
+    });
+    expect(found).toBe(true);
   });
 });

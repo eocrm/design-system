@@ -7,6 +7,7 @@ import {
   type ComponentPropsWithRef,
   type CSSProperties,
   type ElementType,
+  type FocusEvent as ReactFocusEvent,
   type ForwardedRef,
   type ReactElement,
   type ReactNode,
@@ -15,6 +16,7 @@ import clsx from 'clsx';
 import { useTranslation } from '../../i18n/useTranslation';
 import { paletteTokens, type PaletteColor } from '../../palette';
 import { resolveStatusColor, type StatusCategory } from '../_internal/statusColor';
+import { chain } from '../_internal/refs';
 import { Tooltip } from '../Tooltip';
 import styles from './EntityChip.module.scss';
 
@@ -88,8 +90,8 @@ interface EntityChipOwnProps {
    *
    * Know the trade: the accessible name CHANGES when loading resolves — and by
    * more than this word. The loading branch renders neither `prefix` nor
-   * `status`, so a chip with both goes from "Fix login bug (loading)" to
-   * "ENG-5 Fix login bug In progress". That is unavoidable when announcing a
+   * `status` (nor `before`/`after` segments), so a chip with both goes from
+   * "Fix login bug (loading)" to "ENG-5 Fix login bug In progress". That is unavoidable when announcing a
    * transient state through the name, and it is why this was initially left
    * alone. Note it also means a consumer query like
    * `getByRole('link', { name: 'Appointment' })` no longer matches a LOADING
@@ -145,8 +147,9 @@ interface EntityChipOwnProps {
    * `trailing` keep their full size. Default `false`: the label wraps, which
    * is right for a chip inside running text.
    *
-   * The full label stays in the DOM, so the accessible name is unchanged; a
-   * sighted user sees the rest on the entity's own page (or add a `title`).
+   * The full label stays in the DOM, so the accessible name is unchanged. A
+   * clipped label shows its full text in a tooltip on hover or keyboard
+   * focus — don't add a `title`, which would give a double tooltip.
    */
   truncate?: boolean;
   /**
@@ -395,8 +398,8 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
   const inert = unavailable && bareSpan;
   // Segments only in the normal state — like prefix/status under `loading`, a
   // not-yet-loaded or unavailable entity has no known type/status (#582).
-  const segmented =
-    !loading && !unavailable && ((before?.length ?? 0) > 0 || (after?.length ?? 0) > 0);
+  const hasSegments = (before?.length ?? 0) > 0 || (after?.length ?? 0) > 0;
+  const segmented = !loading && !unavailable && hasSegments;
   // Full label on hover, but only when it is actually clipped: a controlled
   // Tooltip that refuses to open otherwise, so a fully visible label gets no
   // tooltip and no aria-describedby (it would be announced twice).
@@ -406,6 +409,33 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
   const onLabelTip = (next: boolean) => {
     const el = labelRef.current;
     setLabelTipOpen(next && el != null && el.scrollWidth > el.clientWidth);
+  };
+  // Keyboard reachability for the clipped-label tooltip: its Tooltip trigger
+  // is the label `<span>`, which is not itself focusable — focus lands on the
+  // chip root. Chain onto the root's own onFocus/onBlur (preserving whatever
+  // the consumer passed via `...rest`) so tabbing onto the chip opens the same
+  // controlled tooltip `onLabelTip` already opens on hover — only when it is
+  // actually clipped, and only when the chip has a clippable label at all.
+  // `:focus-visible` gate mirrors Tooltip.tsx's `handleFocus` exactly,
+  // including its jsdom fallback (matches() unsupported/throwing → open).
+  const restOnFocus = (rest as { onFocus?: (e: ReactFocusEvent<Element>) => void }).onFocus;
+  const restOnBlur = (rest as { onBlur?: (e: ReactFocusEvent<Element>) => void }).onBlur;
+  const handleRootFocus = (e: ReactFocusEvent<Element>) => {
+    if (!clippable) return;
+    const node = e.currentTarget;
+    let focusVisible = true;
+    try {
+      if (typeof node.matches === 'function') {
+        focusVisible = node.matches(':focus-visible');
+      }
+    } catch {
+      focusVisible = true;
+    }
+    if (!focusVisible) return;
+    onLabelTip(true);
+  };
+  const handleRootBlur = () => {
+    if (clippable) onLabelTip(false);
   };
   // The state as real text, not just muted colour. Browsers do expose
   // `aria-disabled`, but it carries no meaning on a non-widget role such as
@@ -504,7 +534,11 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
       className={clsx(
         styles.chip,
         unavailable && styles.unavailable,
-        truncate && styles.truncate,
+        // Segments still reserve their layout while loading/unavailable drops
+        // them (a list row must not reflow from one line to wrapping) — so the
+        // single-line class applies whenever segments are configured, even
+        // though `segmented` itself stays gated to the normal state (#582 review).
+        (truncate || hasSegments) && styles.truncate,
         segmented && styles.segmented,
         className,
       )}
@@ -518,6 +552,8 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
       // via {...rest} — aria-busy/aria-disabled are the component's contract.
       aria-busy={loading || undefined}
       aria-disabled={inert || undefined}
+      onFocus={chain(restOnFocus, handleRootFocus)}
+      onBlur={chain(restOnBlur, handleRootBlur)}
     >
       {segmented ? (
         <>
