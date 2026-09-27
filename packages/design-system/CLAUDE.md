@@ -303,13 +303,13 @@ and it does appear in the accessibility tree, but it does not reliably reach a
 user — its spec purpose is to tell AT to _defer_ output, not to produce it, and
 no mainstream screen reader announces `busy` as a state change on a non-live
 element. Four components shipped relying on it alone — `EntityChip` (fixed in
-#483), then `Switch`, `StatusMenu` and `DataTable` (fixed in #488) — and their
+#483), then `Switch`, `PillMenu` and `DataTable` (fixed in #488) — and their
 state reached nobody. Pair it with one of the two mechanisms above, or
 drop it.
 
 **A control the user just activated is a change, not a property.** They are
 already focused on it, so there is nothing to "arrive at" — `Switch` and
-`StatusMenu` announce; they do not rename themselves. Renaming a focused
+`PillMenu` announce; they do not rename themselves. Renaming a focused
 control mid-interaction is worse than announcing, because it also breaks
 name-exact queries in consumer tests. (`ConfirmationPopover` was a known gap on
 this rule — its pending state set neither — until #497 gave it `aria-disabled`

@@ -1,0 +1,23 @@
+// DateStrip.tokens.scss — component tokens. Tile colors default to Button's so
+// theming Button themes the tiles. Convention: --date-strip-<part>-<state>.
+@use '../Button/Button.tokens';
+
+:root {
+  --date-strip-gap: var(--space-2);
+  --date-strip-header-gap: var(--space-3);
+  --date-strip-tile-padding-y: var(--space-2);
+  --date-strip-tile-radius: var(--button-radius);
+  --date-strip-tile-bg: var(--button-bg-secondary);
+  --date-strip-tile-bg-hover: var(--button-bg-secondary-hover);
+  --date-strip-tile-fg: var(--button-fg-secondary);
+  --date-strip-tile-border: var(--button-border-color-secondary);
+  --date-strip-tile-bg-checked: var(--button-bg);
+  --date-strip-tile-bg-checked-hover: var(--button-bg-hover);
+  --date-strip-tile-fg-checked: var(--button-fg);
+  --date-strip-tile-ring: var(--button-ring);
+  --date-strip-tile-opacity-disabled: var(--button-opacity-disabled);
+  --date-strip-dow-font-size: var(--font-size-xs);
+  --date-strip-num-font-size: var(--font-size-lg);
+  --date-strip-num-font-weight: var(--font-weight-semibold);
+  --date-strip-count-font-size: var(--font-size-xs);
+}

@@ -2,7 +2,7 @@ import { type PaletteColor } from '../../palette';
 
 /**
  * Workflow status category — maps to a default palette color. Shared by
- * `StatusMenu` and `EntityChip` so both resolve the same category → color
+ * `PillMenu` and `EntityChip` so both resolve the same category → color
  * mapping.
  */
 export type StatusCategory = 'to_do' | 'in_progress' | 'open' | 'done' | 'won' | 'lost';

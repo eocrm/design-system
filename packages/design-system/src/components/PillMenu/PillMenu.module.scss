@@ -1,5 +1,5 @@
 @use '../../styles/mixins' as *;
-@use './StatusMenu.tokens';
+@use './PillMenu.tokens';
 
 // Shared by .trigger (interactive) and .chip (read-only) — both render the
 // same colored pill; only the interaction affordances differ below.
@@ -7,14 +7,14 @@
 .chip {
   display: inline-flex;
   align-items: center;
-  gap: var(--status-menu-gap);
-  border-radius: var(--status-menu-radius);
-  padding: var(--status-menu-padding-y) var(--status-menu-padding-x);
+  gap: var(--pill-menu-gap);
+  border-radius: var(--pill-menu-radius);
+  padding: var(--pill-menu-padding-y) var(--pill-menu-padding-x);
   font-family: inherit;
-  font-size: var(--status-menu-font-size);
-  font-weight: var(--status-menu-font-weight);
-  background: var(--status-menu-bg);
-  color: var(--status-menu-fg);
+  font-size: var(--pill-menu-font-size);
+  font-weight: var(--pill-menu-font-weight);
+  background: var(--pill-menu-bg);
+  color: var(--pill-menu-fg);
   white-space: nowrap;
 }
 
@@ -27,11 +27,11 @@
   }
 
   &:focus-visible {
-    @include focus-ring(var(--status-menu-ring-focus));
+    @include focus-ring(var(--pill-menu-ring-focus));
   }
 
   &:disabled {
-    opacity: var(--status-menu-disabled-opacity);
+    opacity: var(--pill-menu-disabled-opacity);
     cursor: not-allowed;
   }
 }
@@ -51,22 +51,34 @@
 // background/color here too, since DropdownMenu's rule would otherwise be
 // the only one setting `background` at all.
 .option.option {
-  background: var(--status-menu-bg);
-  color: var(--status-menu-fg);
+  // Item's icon slot defaults to a muted grey; on a coloured row the glyph
+  // takes the row's colour, like the pill's.
+  --dropdown-menu-icon-fg: var(--pill-menu-fg);
+
+  background: var(--pill-menu-bg);
+  color: var(--pill-menu-fg);
 }
 
 .option.option:hover:not([aria-disabled='true']) {
-  background: var(--status-menu-bg);
-  color: var(--status-menu-fg);
+  background: var(--pill-menu-bg);
+  color: var(--pill-menu-fg);
   filter: brightness(0.94);
 }
 
 .option.option:focus-visible:not([aria-disabled='true']) {
-  background: var(--status-menu-bg);
-  color: var(--status-menu-fg);
+  background: var(--pill-menu-bg);
+  color: var(--pill-menu-fg);
   filter: brightness(0.94);
 }
 
 .srOnly {
   @include visually-hidden;
+}
+
+// Optional per-value glyph before the name (#572). Decorative; sized by the
+// consumer's icon. Centred on the pill's text line.
+.icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
 }

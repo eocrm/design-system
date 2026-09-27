@@ -104,7 +104,7 @@ const OVERLAYS = [
   // observed 11 / 33
   { route: '/components/dropdown-menu', minOpened: 9, minMeasured: 26 },
   // observed 4 / 11
-  { route: '/components/status-menu', minOpened: 3, minMeasured: 9 },
+  { route: '/components/pill-menu', minOpened: 3, minMeasured: 9 },
   // observed 12 / 16
   { route: '/components/popover', minOpened: 10, minMeasured: 13 },
   // observed 7 / 14

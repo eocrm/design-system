@@ -5,8 +5,8 @@ import styles from './IconTile.module.scss';
 
 type StyleWithVars = CSSProperties & { [key: `--${string}`]: string | number };
 
-/** Tile box size — `sm` 24 / `md` 32 / `lg` 40 px. Sizes the tile, not the icon. */
-export type IconTileSize = 'sm' | 'md' | 'lg';
+/** Tile box size — `xs` 20 / `sm` 24 / `md` 32 / `lg` 40 px. Sizes the tile, not the icon. */
+export type IconTileSize = 'xs' | 'sm' | 'md' | 'lg';
 
 /** Tile shape — `'square'` (radius-md, default) or `'circle'` (radius-full). */
 export type IconTileShape = 'square' | 'circle';
@@ -24,8 +24,10 @@ export interface IconTileProps extends Omit<HTMLAttributes<HTMLSpanElement>, 'co
    */
   color?: PaletteColor;
   /**
-   * Tile box size. `'sm'` 24 / `'md'` 32 (**default**) / `'lg'` 40 px. Sizes the
-   * tile box — size your icon child separately.
+   * Tile box size. `'xs'` 20 / `'sm'` 24 / `'md'` 32 (**default**) / `'lg'` 40 px.
+   * Sizes the tile box — size your icon child separately. `'xs'` brackets a
+   * 14px glyph with ~3px of padding so the tile sits inside a text / Badge /
+   * EntityChip row without growing it.
    */
   size?: IconTileSize;
   /** `'square'` (radius-md, **default**) or `'circle'` (radius-full). */

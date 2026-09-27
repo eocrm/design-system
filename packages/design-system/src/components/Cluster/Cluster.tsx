@@ -90,6 +90,23 @@ export interface ClusterProps extends HTMLAttributes<HTMLElement> {
    */
   minWidth0?: boolean;
   /**
+   * Caps the cluster at its container's width (`max-width: 100%`). Meant for
+   * `as="span"` inside running text: an inline cluster otherwise sizes to its
+   * content, so a `<Text as="span" truncate>` child with a long title makes
+   * the cluster overflow the paragraph instead of ellipsizing at the line
+   * edge. Combine with `wrap={false}` + a truncating child. The chip is one
+   * inline box: if the text before it leaves too little room on the line, the
+   * whole chip wraps to the next line, then ellipsizes at the full paragraph
+   * width. Phrasing-safe (still a span) — unlike `<Constrain maxWidth>`, which
+   * renders a `<div>` that is invalid inside `<p>` (#571).
+   *
+   * For an entity link row (icon, KEY, title, status, adornments) prefer
+   * `<EntityChip truncate trailing={…}>`, which does exactly this.
+   *
+   * @default false
+   */
+  maxWidthFull?: boolean;
+  /**
    * Whether children wrap to additional lines when the container is narrow.
    * - `true` (default) — natural for toolbars and tag lists.
    * - `false` — use sparingly, when overflow is preferable to wrapping
@@ -199,6 +216,7 @@ export const Cluster = forwardRef<HTMLElement, ClusterProps>(function Cluster(
     align = 'center',
     wrap = true,
     minWidth0 = false,
+    maxWidthFull = false,
     className,
     ...props
   },
@@ -223,6 +241,7 @@ export const Cluster = forwardRef<HTMLElement, ClusterProps>(function Cluster(
         alignClass[align],
         wrap && styles.wrap,
         minWidth0 && styles.minWidth0,
+        maxWidthFull && styles.maxWidthFull,
         className,
       )}
       {...props}

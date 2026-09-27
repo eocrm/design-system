@@ -385,6 +385,20 @@
           "description": "Disabled state for the whole group. In segmented mode this is\nauthoritative (all items become aria-disabled, clicks no-op). In\nvisual mode this is a no-op — pass `disabled` per `<Button>` instead."
         },
         {
+          "name": "invalid",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "Segmented mode: `aria-invalid` on the radiogroup. Visual mode: consumed\nand ignored. Field / SettingRow inject it — it used to leak onto the\ngroup div as a stray attribute (#568)."
+        },
+        {
+          "name": "required",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "Segmented mode: `aria-required` on the radiogroup. Visual mode: consumed\nand ignored. Field / SettingRow inject it (#568)."
+        },
+        {
           "name": "className",
           "type": "string",
           "required": false,
@@ -746,6 +760,13 @@
           "required": false,
           "default": "false",
           "description": "Lets the container shrink below its content's intrinsic width\n(`min-width: 0`), so a `<Text truncate>` inside can ellipsize instead of\nbeing hard-cut by a clipping ancestor.\n\nReach for it when this Cluster is an item of a **row** flex container (or a\ngrid item) that clips — a `Calendar` `renderEvent` chip, a `Card.Header`\nrow. Without it the flex default (`min-width: auto`) floors the\ncontainer at its content's min-content width and the ellipsis never\nappears. That floor applies because a Cluster sets no `overflow` — per CSS\nFlexbox §4.5 a flex item keeps its automatic minimum size while its computed\n`overflow` is non-scrollable (`visible` or `clip`); the scrollable values\n(`hidden`/`auto`/`scroll`) drop it to `0`. That is why a `<Text truncate>`\n(overflow hidden) never needs this and a Cluster around it does.\n\nIt is a **no-op** inside a column `Stack` (the automatic minimum size\napplies only on the flex MAIN axis, so there is no horizontal floor), and\ninside a plain block or a table cell (the automatic minimum size applies\nto flex and grid ITEMS only, so `min-width: auto` is just `0` there). A table cell is\na no-op for a different reason than it looks: auto table layout floors the\ncell at its content's min-content width regardless, so what makes text\ntruncate there is `table-layout: fixed` or a `max-width` on the cell — not\nthis prop.\n\nOpt-in rather than the default on purpose: a container that CAN shrink\nalso VOLUNTEERS for shrink, so turning it on where the content is NOT\ntruncatable (buttons, badges, icons) lets that content be clipped\ninstead. Set it on the container whose text should give way, not on one\nholding controls.\n\nRelated: `<Constrain flex=\"grow\">` applies the same `min-width: 0` but\nalso forces `flex: 1 1 0`, and renders a `<div>` — reach for this prop\nwhen you want only the shrink permission, or when you are inside a\n`<button>`/`<a>`/`<label>` where a `<div>` is invalid HTML."
+        },
+        {
+          "name": "maxWidthFull",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "Caps the cluster at its container's width (`max-width: 100%`). Meant for\n`as=\"span\"` inside running text: an inline cluster otherwise sizes to its\ncontent, so a `<Text as=\"span\" truncate>` child with a long title makes\nthe cluster overflow the paragraph instead of ellipsizing at the line\nedge. Combine with `wrap={false}` + a truncating child. The chip is one\ninline box: if the text before it leaves too little room on the line, the\nwhole chip wraps to the next line, then ellipsizes at the full paragraph\nwidth. Phrasing-safe (still a span) — unlike `<Constrain maxWidth>`, which\nrenders a `<div>` that is invalid inside `<p>` (#571).\n\nFor an entity link row (icon, KEY, title, status, adornments) prefer\n`<EntityChip truncate trailing={…}>`, which does exactly this."
         },
         {
           "name": "wrap",
@@ -1485,6 +1506,87 @@
         }
       ]
     },
+    "DateStrip": {
+      "props": [
+        {
+          "name": "days",
+          "type": "DateStripDay[]",
+          "required": true,
+          "default": "",
+          "description": "The days to show, in order — usually one week (7); one grid column per day. The month heading is derived from the first and last."
+        },
+        {
+          "name": "value",
+          "type": "string | null",
+          "required": true,
+          "default": "",
+          "description": "Selected day (`'YYYY-MM-DD'`), or `null`. A value not in `days` checks nothing."
+        },
+        {
+          "name": "onChange",
+          "type": "(date: string) => void",
+          "required": true,
+          "default": "",
+          "description": "Called with the chosen day's `'YYYY-MM-DD'`. Controlled — update `value` yourself."
+        },
+        {
+          "name": "onPrevious",
+          "type": "() => void",
+          "required": true,
+          "default": "",
+          "description": "Previous-week button handler. Replace `days` with the earlier week."
+        },
+        {
+          "name": "onNext",
+          "type": "() => void",
+          "required": true,
+          "default": "",
+          "description": "Next-week button handler. Replace `days` with the later week."
+        },
+        {
+          "name": "canPrevious",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "`false` disables the previous-week button (e.g. the current week). Default `true`."
+        },
+        {
+          "name": "canNext",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "`false` disables the next-week button (end of the booking window). Default `true`."
+        },
+        {
+          "name": "titleOrder",
+          "type": "TitleOrder",
+          "required": false,
+          "default": "",
+          "description": "Heading level of the month label. Default `2`."
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Radio group `name` (also submitted with a form). Default: a generated id."
+        },
+        {
+          "name": "invalid",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "Marks the group `aria-invalid` (the radios themselves do not support it). Field / SettingRow inject it."
+        },
+        {
+          "name": "required",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Native `required` on the radios (the group then fails form validation\nuntil one is chosen). Field / SettingRow inject it; it used to land on the\nroot as a stray attribute (#568)."
+        }
+      ]
+    },
     "DefinitionList": {
       "props": [
         {
@@ -1711,6 +1813,20 @@
     "EmojiPicker": {
       "props": [
         {
+          "name": "invalid",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Consumed so a Field / SettingRow wrapping the picker cannot leak it onto\nthe root div (#568). The picker has no value to validate, so it renders nothing."
+        },
+        {
+          "name": "required",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Consumed for Field / SettingRow composition (#568); the picker has no value, so nothing is forwarded."
+        },
+        {
           "name": "onSelect",
           "type": "(emoji: string) => void",
           "required": true,
@@ -1836,6 +1952,20 @@
           "required": false,
           "default": "",
           "description": "Entity missing/no access: muted styling. With a link target (`href`/`as`)\nthe chip remains a real link — unavailable is a visual state, not a\ndisabling one. Only a target-less chip (bare span) becomes non-interactive\nwith aria-disabled.\n\nThe state is also announced: a localized word is rendered visually hidden\ninside the chip. A linked chip's accessible name becomes\n\"Appointment (unavailable)\"; a target-less chip is `role=generic`, which\nhas no accessible name at all, so the word is announced as part of the\nchip's text in reading order. Either way it reaches the user.\n\nThat matters because the canonical use is to withhold the entity's name and\nshow a TYPE word instead — without the state, a masked reference is\nindistinguishable from a real entity that happens to be called\n\"Appointment\". Colour alone cannot carry it, and `aria-disabled` does not\neither: browsers do expose it, but it carries no meaning on a\nnon-widget role such as `generic`, so no assistive tech conveys it.\n\n`loading` is announced the same way — see that prop for why `aria-busy`\nalone was not enough, and for the name-mutation trade it carries.\n\nDo NOT put an `aria-label` on the chip. It replaces the whole name and\ntakes the state word with it; the state lives in the chip's contents.\n\nOverride the word via the i18n provider (`entityChip.unavailable`); it\ncarries its own punctuation so a locale can choose different marks."
+        },
+        {
+          "name": "truncate",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Single-line mode for list rows. The chip is capped at its container's\nwidth (`max-width: 100%`, `min-width: 0`, so it also shrinks as a flex\nitem) and only the `label` ellipsizes — `icon`, `prefix`, `status` and\n`trailing` keep their full size. Default `false`: the label wraps, which\nis right for a chip inside running text.\n\nThe full label stays in the DOM, so the accessible name is unchanged; a\nsighted user sees the rest on the entity's own page (or add a `title`)."
+        },
+        {
+          "name": "trailing",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Extra adornments inside the chip, after `status` (e.g. a priority icon or\na status `<Badge>`), kept at full size under `truncate`. Not rendered\nwhile `loading` (same as `prefix`/`status`).\n\nNon-interactive content only: the chip is itself a link, so a button or\nlink here is invalid nested interactive content. Its text JOINS the chip's\naccessible name (\"ENG-5 Fix login bug High\") — give a decorative icon\n`aria-hidden`, and a meaningful one a short text alternative."
         },
         {
           "name": "as",
@@ -1989,6 +2119,27 @@
     },
     "FileUpload": {
       "props": [
+        {
+          "name": "id",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Placed on the hidden native `<input type=\"file\">`, not the root — it is\nthe only labelable element, so a `<label for>` (Field / SettingRow wire\none) opens the file picker when clicked (#568). A `role=\"button\"` div is\nnot labelable, so the id on the dropzone would make the label click a no-op.\nWhile the dropzone is hidden (single mode with a file) the id falls back\nto the root, so scroll-to-id / focus-first-invalid still find the field."
+        },
+        {
+          "name": "invalid",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "Marks the dropzone `aria-invalid` for Field / SettingRow composition."
+        },
+        {
+          "name": "required",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Consumed for Field / SettingRow composition (they render the visible\nrequired marker). Not forwarded: `role=\"button\"` does not support\n`aria-required`, and native `required` on the hidden input would block\nform submission with an invisible bubble — your state owns the files."
+        },
         {
           "name": "files",
           "type": "FileEntry[]",
@@ -2512,7 +2663,7 @@
           "type": "IconTileSize",
           "required": false,
           "default": "",
-          "description": "Tile box size. `'sm'` 24 / `'md'` 32 (**default**) / `'lg'` 40 px. Sizes the\ntile box — size your icon child separately."
+          "description": "Tile box size. `'xs'` 20 / `'sm'` 24 / `'md'` 32 (**default**) / `'lg'` 40 px.\nSizes the tile box — size your icon child separately. `'xs'` brackets a\n14px glyph with ~3px of padding so the tile sits inside a text / Badge /\nEntityChip row without growing it."
         },
         {
           "name": "shape",
@@ -3774,6 +3925,52 @@
         }
       ]
     },
+    "PillMenu": {
+      "props": [
+        {
+          "name": "current",
+          "type": "PillMenuOption",
+          "required": true,
+          "default": "",
+          "description": "The value currently shown on the trigger (or the read-only chip)."
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "What the value IS, for the trigger's accessible name: `label=\"type\"` →\n\"Change type: Bug\". Default: the localized \"status\" (\"Change status: …\").\nPass it as it reads right after \"Change\" / \"Изменить\", lower-case, in the\nUI's language — it is data, not a translatable string. In ru that is the\naccusative: `label=\"категорию\"`, not \"категория\"."
+        },
+        {
+          "name": "options",
+          "type": "PillMenuOption[]",
+          "required": false,
+          "default": "",
+          "description": "Transition targets, offered in the dropdown. Omitted or empty renders\nread-only mode: a static colored chip with no button, no menu, no\naria-haspopup."
+        },
+        {
+          "name": "onSelect",
+          "type": "((id: string | number) => void)",
+          "required": false,
+          "default": "",
+          "description": "Fired with the chosen option's `id` when a transition target is picked."
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Disables the trigger. Stays colored, dims via opacity."
+        },
+        {
+          "name": "busy",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Transition in flight: the trigger is non-interactive and keeps its color.\nAnnounced from a polite live region the component owns — `aria-busy` is\nalso set but reaches no screen reader on its own. The trigger's accessible\nname does not change (contrast `EntityChip`): you activated this control,\nso the change is announced rather than folded into the name.\n\nNo effect in read-only mode (no `options`), which renders no trigger and\nso has nothing to mark busy."
+        }
+      ]
+    },
     "Popover": {
       "props": [
         {
@@ -3990,7 +4187,7 @@
           "type": "RenderLink",
           "required": false,
           "default": "",
-          "description": "Substitute how a link renders. Called per link with `{ href, text }` and the\ndefault `<a>` node; return your own node (e.g. a task/member chip) or the\n`defaultNode` to keep the standard anchor. Render-time only — the document\nmodel is unchanged, so serialization still emits a plain link."
+          "description": "Substitute how a link renders. Called per link with `{ href, text }` and the\ndefault `<a>` node; return your own node (e.g. a task/member chip) or the\n`defaultNode` to keep the standard anchor. Render-time only — the document\nmodel is unchanged, so serialization still emits a plain link.\n\nProse link styling (accent colour + underline) applies to BARE anchors\nonly: an `<a>` you return with any `className` — including a DS `<Link>` —\nkeeps its own decoration and colour entirely (#570)."
         },
         {
           "name": "renderMention",
@@ -4009,6 +4206,20 @@
           "required": true,
           "default": "",
           "description": "Controlled document. Render the doc returned by `onChange` back into `value`."
+        },
+        {
+          "name": "invalid",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "`aria-invalid` on the textbox. Field / SettingRow inject it (#568)."
+        },
+        {
+          "name": "required",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "`aria-required` on the textbox. Field / SettingRow inject it (#568)."
         },
         {
           "name": "onChange",
@@ -4137,6 +4348,13 @@
     },
     "Select": {
       "props": [
+        {
+          "name": "id",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Placed on the combobox trigger (the `<button>` / `<input>`), not the\nwrapper div, so a `<label for>` — Field / SettingRow wire one — focuses\nthe control when clicked (#568). Default: a generated id."
+        },
         {
           "name": "options",
           "type": "SelectOptions<T>",
@@ -4507,6 +4725,20 @@
     "Slider": {
       "props": [
         {
+          "name": "invalid",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "Marks each thumb `aria-invalid` for Field / SettingRow composition."
+        },
+        {
+          "name": "required",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Consumed for Field / SettingRow composition (they render the visible\nrequired marker). `role=\"slider\"` does not support `aria-required` and a\nslider always has a value, so nothing is forwarded (#568)."
+        },
+        {
           "name": "value",
           "type": "number | [number, number]",
           "required": true,
@@ -4603,6 +4835,66 @@
           "required": false,
           "default": "",
           "description": "Native form-input name. When set, a hidden `<input>` (or two for range,\nwith `-min`/`-max` suffixes) is rendered with the current value(s) so\nthe slider works inside uncontrolled HTML forms without consumer JS\nserialization. When the slider is `disabled`, the hidden input(s) are\nNOT rendered so the form does not submit a stale disabled value."
+        }
+      ]
+    },
+    "SlotGrid": {
+      "props": [
+        {
+          "name": "groups",
+          "type": "SlotGridGroup[]",
+          "required": true,
+          "default": "",
+          "description": "Groups in display order."
+        },
+        {
+          "name": "value",
+          "type": "string | null",
+          "required": true,
+          "default": "",
+          "description": "Selected slot `key`, or `null`. A key not in `groups` checks nothing."
+        },
+        {
+          "name": "onChange",
+          "type": "(key: string) => void",
+          "required": true,
+          "default": "",
+          "description": "Called with the chosen slot's `key`. Controlled — update `value` yourself."
+        },
+        {
+          "name": "empty",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Shown when no group has any slot. Default: the localized \"No available times\"."
+        },
+        {
+          "name": "titleOrder",
+          "type": "TitleOrder",
+          "required": false,
+          "default": "",
+          "description": "Heading level of each group label. Default `3`."
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Radio group `name` (also submitted with a form). Default: a generated id."
+        },
+        {
+          "name": "invalid",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "Marks the group `aria-invalid` (the radios themselves do not support it). Field / SettingRow inject it."
+        },
+        {
+          "name": "required",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Native `required` on the radios (the group then fails form validation\nuntil one is chosen). Field / SettingRow inject it; it used to land on the\nroot as a stray attribute (#568)."
         }
       ]
     },
@@ -4745,6 +5037,13 @@
           "required": false,
           "default": "",
           "description": "Stack the two panes vertically when the SPLIT'S OWN width (container\nquery, not viewport) drops below the preset: `sm` 480px / `md` 640px /\n`lg` 768px. Same scale as `Grid`'s `collapseBelow`. Without it a pinned\n`asideWidth` rail squeezes `main` to nothing on narrow screens.\n\nA pinned `asideWidth` is preserved while the panes are side-by-side and\nspace is available, but can shrink as the container narrows so the stacked\npanes stay within the split.\n\nCollapsed panes stack in **DOM order**, not always aside-first: with\nthe default `side=\"start\"` that's aside → main; with `side=\"end\"` it's\nmain → aside, because that's the order the panes are in the DOM. Forcing\naside-first when collapsed would need CSS `order`, which desynchronizes\nvisual order from tab order — an a11y defect. If you need the aside on top\nwhen stacked, use `side=\"start\"`.\n\nA `<Sticky>` passed as the `aside` stops pinning (and drops its `scroll`\nheight cap) while stacked, so it can't trap the page scroll on a phone.\n\n❌ Anti-pattern: a `collapseBelow` split must get its width from its\nparent. `container-type: inline-size` zeroes the split's contribution to\nintrinsic sizing, so in an intrinsic-width context (another `Split`'s\ndefault `auto` aside track, a `Cluster` item, `width: max-content`) it\nrenders at width 0 — give the parent a concrete width instead. The split\nalso becomes the containing block for absolutely-positioned descendants\n(layout containment). Splits without the prop pay none of this."
+        },
+        {
+          "name": "onCollapsedChange",
+          "type": "((collapsed: boolean) => void)",
+          "required": false,
+          "default": "",
+          "description": "Called with `true` when a `collapseBelow` split stacks and `false` when it\ngoes back side by side — on mount with the initial state (twice under\nReact StrictMode in development), then on\nevery change. Ignored without `collapseBelow`.\n\nUse it to move content you own between placements so DOM order matches\nvisual order in both states, instead of CSS `order` — e.g. render a\ncomment thread at the end of `main` while side by side and after the\n`<Split>` once stacked, or a status switcher at the top of the aside vs.\nabove the split.\n\nIt measures the SPLIT'S OWN content width against the same inclusive\nthreshold its container query uses (a `ResizeObserver`, read\nsynchronously on mount so the first paint is already right), so it agrees\nwith the CSS where `useBelowBreakpoint` — which measures the viewport —\nwould not beside an app sidebar. The same state is on the root as\n`data-collapsed=\"true\" | \"false\"`."
         }
       ]
     },
@@ -4770,45 +5069,6 @@
           "required": false,
           "default": "false",
           "description": "Lets the container shrink below its content's intrinsic width\n(`min-width: 0`), so a `<Text truncate>` inside can ellipsize instead of\nbeing hard-cut by a clipping ancestor.\n\nOnly bites when the Stack is itself an item of a **row** flex container (or\na grid item) that clips — what decides is the PARENT's main axis, not the\nStack's own direction. That is the two-line label beside a fixed badge, or\na detail column in a squeezed toolbar. Without it the flex default\n(`min-width: auto`) floors the Stack at its widest line and the ellipsis\nnever appears. That floor applies because a Stack sets no `overflow` — per CSS\nFlexbox §4.5 a flex item keeps its automatic minimum size while its computed\n`overflow` is non-scrollable (`visible` or `clip`); the scrollable values\n(`hidden`/`auto`/`scroll`) drop it to `0`.\n\nIt is a **no-op** when the Stack sits in another `Stack` (the automatic\nminimum size applies only on the flex MAIN axis, so there is no horizontal\nfloor), or in a plain block or table cell (that minimum applies to flex and\ngrid ITEMS only, so `min-width: auto` is just `0` there). A table cell is\na no-op for a different reason than it looks: auto table layout floors the\ncell at its content's min-content width regardless, so what makes text\ntruncate there is `table-layout: fixed` or a `max-width` on the cell — not\nthis prop.\n\nOpt-in rather than the default on purpose: a container that CAN shrink\nalso VOLUNTEERS for shrink, so turning it on where the content is NOT\ntruncatable (buttons, badges, icons) lets that content be clipped\ninstead. Set it on the container whose text should give way, not on one\nholding controls.\n\nRelated: `<Constrain flex=\"grow\">` applies the same `min-width: 0` but\nalso forces `flex: 1 1 0`, and renders a `<div>` — reach for this prop\nwhen you want only the shrink permission, or when you are inside a\n`<button>`/`<a>`/`<label>` where a `<div>` is invalid HTML."
-        }
-      ]
-    },
-    "StatusMenu": {
-      "props": [
-        {
-          "name": "current",
-          "type": "StatusMenuStatus",
-          "required": true,
-          "default": "",
-          "description": "The status currently shown on the trigger (or the read-only chip)."
-        },
-        {
-          "name": "options",
-          "type": "StatusMenuStatus[]",
-          "required": false,
-          "default": "",
-          "description": "Transition targets, offered in the dropdown. Omitted or empty renders\nread-only mode: a static colored chip with no button, no menu, no\naria-haspopup."
-        },
-        {
-          "name": "onSelect",
-          "type": "((id: string | number) => void)",
-          "required": false,
-          "default": "",
-          "description": "Fired with the chosen option's `id` when a transition target is picked."
-        },
-        {
-          "name": "disabled",
-          "type": "boolean",
-          "required": false,
-          "default": "",
-          "description": "Disables the trigger. Stays colored, dims via opacity."
-        },
-        {
-          "name": "busy",
-          "type": "boolean",
-          "required": false,
-          "default": "",
-          "description": "Transition in flight: the trigger is non-interactive and keeps its color.\nAnnounced from a polite live region the component owns — `aria-busy` is\nalso set but reaches no screen reader on its own. The trigger's accessible\nname does not change (contrast `EntityChip`): you activated this control,\nso the change is announced rather than folded into the name.\n\nNo effect in read-only mode (no `options`), which renders no trigger and\nso has nothing to mark busy."
         }
       ]
     },
@@ -5256,6 +5516,13 @@
           "description": "Toggles the error visual and sets `aria-invalid=\"true\"` on the text input.\nPair with a visible message and `aria-describedby` pointing at its id,\nexactly like `Input` / `Textarea` / `Select`.\n\nTimeField was the only form control in the library without this — 15 other\ncontrols set `aria-invalid` and it set nothing, so a TimeField inside a\n`<Field error=…>` looked wrong and announced valid (#494)."
         },
         {
+          "name": "required",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Sets `aria-required` on the text input. Field / SettingRow inject it; it\nused to fall through onto the wrapper div as a stray `required` attribute (#568)."
+        },
+        {
           "name": "id",
           "type": "string",
           "required": false,
@@ -5566,7 +5833,6 @@
     "BadgeVariant": "\"filled\" | \"stripe\"",
     "BadgeAlign": "\"baseline\" | \"middle\"",
     "EntityChipStatus": "{ label: string; category?: StatusCategory; color?: PaletteColor }",
-    "StatusMenuStatus": "{ id: string | number; name: string; category?: StatusCategory; color?: PaletteColor }",
     "ThreadNodeAlign": "\"header\" | \"top\"",
     "LogoSize": "\"sm\" | \"md\" | \"lg\"",
     "LogoTextPlacement": "\"end\" | \"bottom\"",
@@ -5582,7 +5848,7 @@
     "ErrorStateAlign": "\"start\" | \"center\"",
     "ErrorStateTone": "\"neutral\" | \"danger\"",
     "ErrorStateHeadingLevel": "1 | 2 | 3 | 4 | 5 | 6",
-    "IconTileSize": "\"sm\" | \"md\" | \"lg\"",
+    "IconTileSize": "\"sm\" | \"md\" | \"lg\" | \"xs\"",
     "IconTileShape": "\"circle\" | \"square\"",
     "TooltipSide": "\"left\" | \"right\" | \"top\" | \"bottom\"",
     "TooltipAlign": "\"start\" | \"end\" | \"center\"",
@@ -5674,6 +5940,8 @@
     "CalendarView": "\"month\" | \"week\" | \"day\" | \"agenda\"",
     "RenderEvent": "(event: CalendarEvent, ctx: RenderEventContext) => ReactNode",
     "DatePickerSize": "\"sm\" | \"md\" | \"lg\"",
+    "DateStripDay": "{ date: string; free: number }",
+    "SlotGridGroup": "{ label: string; slots: SlotGridSlot[] }",
     "DateRangePickerSize": "\"sm\" | \"md\" | \"lg\"",
     "DateRange": "{ start: Date; end: Date }",
     "DateTimeGranularity": "\"day\" | \"minute\"",

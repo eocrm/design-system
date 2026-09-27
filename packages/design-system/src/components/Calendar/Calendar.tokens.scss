@@ -115,7 +115,7 @@
 
   // ── Per-event palette color (CalendarEvent.color) ────────────────────────
   // The palette bg/fg pair and the resolved tone colour are injected INLINE by
-  // resolveEventColor(), the same shape EntityChip/IconTile/StatusMenu use —
+  // resolveEventColor(), the same shape EntityChip/IconTile/PillMenu use —
   // there is deliberately no token per palette colour here. This is the only
   // declared token for the feature: the geometry. The three colour properties
   // (`-color-bg`, `-color-fg`, `-stripe-color`) have no declared default, so a

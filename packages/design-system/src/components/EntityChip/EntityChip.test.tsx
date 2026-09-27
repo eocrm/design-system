@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { createRef, type ComponentProps, type ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -236,6 +238,53 @@ describe('<EntityChip>', () => {
   it('merges className with the internal chip class', () => {
     const { container } = render(<EntityChip label="Contact" className="external" />);
     expect(container.querySelector('.external')?.className).toMatch(/chip/);
+  });
+
+  describe('truncate + trailing (#565)', () => {
+    it('truncate adds the single-line class; default does not', () => {
+      const { rerender } = render(<EntityChip href="/t/1" label="Task" />);
+      expect(screen.getByRole('link').className).not.toMatch(/truncate/);
+      rerender(<EntityChip href="/t/1" label="Task" truncate />);
+      expect(screen.getByRole('link').className).toMatch(/truncate/);
+    });
+
+    it('SCSS: only the label shrinks and ellipsizes; the chip caps at its container', () => {
+      const scss = readFileSync(resolve(__dirname, 'EntityChip.module.scss'), 'utf8');
+      const block = scss.match(/^\.truncate\s*\{([\s\S]*?)^\}/m)?.[1] ?? '';
+      expect(block).toMatch(/max-width:\s*100%/);
+      expect(block).toMatch(/white-space:\s*nowrap/);
+      expect(block).toMatch(/>\s*\*\s*\{\s*flex-shrink:\s*0/);
+      expect(block).toMatch(
+        />\s*\.label\s*\{[^}]*flex-shrink:\s*1[^}]*min-width:\s*0[^}]*overflow:\s*hidden[^}]*text-overflow:\s*ellipsis/,
+      );
+    });
+
+    it('truncate keeps the full label in the accessible name', () => {
+      render(<EntityChip href="/t/1" prefix="ENG-5" label="A very long task title" truncate />);
+      // jsdom has no flex layout, so it joins the parts without separators.
+      expect(screen.getByRole('link', { name: /A very long task title$/ })).toBeInTheDocument();
+    });
+
+    it('renders trailing after the status, and its text joins the name', () => {
+      render(
+        <EntityChip
+          href="/t/1"
+          label="Fix login"
+          status={{ label: 'Open', category: 'open' }}
+          trailing={<span data-testid="adorn">High</span>}
+        />,
+      );
+      const link = screen.getByRole('link', { name: /High$/ });
+      const adorn = screen.getByTestId('adorn');
+      expect(link).toContainElement(adorn);
+      expect(adorn.parentElement?.className).toMatch(/trailing/);
+      expect(link.lastElementChild).toBe(adorn.parentElement);
+    });
+
+    it('trailing is not rendered while loading', () => {
+      render(<EntityChip href="/t/1" label="Task" loading trailing={<span>High</span>} />);
+      expect(screen.queryByText('High')).toBeNull();
+    });
   });
 
   describe('loading is announced, not just aria-busy', () => {

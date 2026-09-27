@@ -1,0 +1,74 @@
+// Shared look for DateStrip / SlotGrid tiles: a <label> wrapping a visually
+// hidden native radio. Unchecked = Button secondary, checked = Button primary.
+// Consumers of the mixin pass their component tokens so each stays themable.
+@use '../../styles/mixins' as *;
+
+@mixin choice-tile(
+  $input,
+  $bg,
+  $bg-hover,
+  $fg,
+  $border,
+  $bg-checked,
+  $bg-checked-hover,
+  $fg-checked,
+  $radius,
+  $ring,
+  $opacity-disabled
+) {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  border: var(--border-width) solid $border;
+  border-radius: $radius;
+  background: $bg;
+  color: $fg;
+  font: inherit;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+
+  #{$input} {
+    @include visually-hidden;
+  }
+
+  &:hover:not(:has(#{$input}:disabled)) {
+    background: $bg-hover;
+  }
+
+  &:has(#{$input}:checked) {
+    border-color: transparent;
+    background: $bg-checked;
+    color: $fg-checked;
+  }
+
+  &:has(#{$input}:checked):hover {
+    background: $bg-checked-hover;
+  }
+
+  &:has(#{$input}:focus-visible) {
+    @include focus-ring($ring);
+  }
+
+  &:has(#{$input}:disabled) {
+    opacity: $opacity-disabled;
+    cursor: not-allowed;
+  }
+
+  // Forced colors (Windows High Contrast) drops backgrounds, which is all
+  // that marks the checked tile — add an outline outside its border (text
+  // color, forced to a system color) so checked still reads as different.
+  // Not while focus-visible: this rule would come after the focus ring and
+  // replace it (arrows select as they move, so the focused tile is usually
+  // the checked one) — the ring is the stronger signal there.
+  @media (forced-colors: active) {
+    &:has(#{$input}:checked:not(:focus-visible)) {
+      outline: var(--border-width) solid currentcolor;
+    }
+  }
+}

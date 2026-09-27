@@ -48,11 +48,13 @@ import { SkeletonDemo } from './pages/components/SkeletonDemo';
 import { SliderDemo } from './pages/components/SliderDemo';
 import { SortableDemo } from './pages/components/SortableDemo';
 import { SortableGroupDemo } from './pages/components/SortableGroupDemo';
-import { StatusMenuDemo } from './pages/components/StatusMenuDemo';
+import { PillMenuDemo } from './pages/components/PillMenuDemo';
 import { SwitchDemo } from './pages/components/SwitchDemo';
 import { TableDemo } from './pages/components/TableDemo';
 import { TextareaDemo } from './pages/components/TextareaDemo';
 import { TimeFieldDemo } from './pages/components/TimeFieldDemo';
+import { DateStripDemo } from './pages/components/DateStripDemo';
+import { SlotGridDemo } from './pages/components/SlotGridDemo';
 import { CardDemo } from './pages/components/CardDemo';
 import { CodeDemo } from './pages/components/CodeDemo';
 import { TextDemo } from './pages/components/TextDemo';
@@ -181,7 +183,7 @@ export default function App() {
             <Route path="/components/slider" element={<SliderDemo />} />
             <Route path="/components/sortable" element={<SortableDemo />} />
             <Route path="/components/sortable-group" element={<SortableGroupDemo />} />
-            <Route path="/components/status-menu" element={<StatusMenuDemo />} />
+            <Route path="/components/pill-menu" element={<PillMenuDemo />} />
             <Route path="/components/switch" element={<SwitchDemo />} />
             <Route path="/components/table" element={<TableDemo />} />
             <Route path="/components/card" element={<CardDemo />} />
@@ -249,6 +251,8 @@ export default function App() {
             <Route path="/components/topbar" element={<TopBarDemo />} />
             <Route path="/components/textarea" element={<TextareaDemo />} />
             <Route path="/components/timefield" element={<TimeFieldDemo />} />
+            <Route path="/components/date-strip" element={<DateStripDemo />} />
+            <Route path="/components/slot-grid" element={<SlotGridDemo />} />
             <Route path="/components/toast" element={<ToastDemo />} />
           </Routes>
         </AppShell>

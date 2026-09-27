@@ -82,6 +82,35 @@
   color: var(--entity-chip-status-fg);
 }
 
+// Trailing adornments (priority icon, badge): centered on the line like the
+// icon, never shrunk.
+.trailing {
+  display: inline-flex;
+  flex-shrink: 0;
+  align-items: center;
+  // stylelint-disable-next-line property-disallowed-list -- internal child of the chip's OWN flex row, centering adornments while the chip itself aligns on text baseline
+  align-self: center;
+}
+
+// Single-line list-row mode (#565): capped at the container, only the label
+// ellipsizes; every other part keeps its size.
+.truncate {
+  max-width: 100%;
+  min-width: 0;
+  white-space: nowrap;
+
+  > * {
+    flex-shrink: 0;
+  }
+
+  > .label {
+    flex-shrink: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
 // Colored via --entity-chip-status-fg (set on the chip root when `status` is
 // present, see EntityChip.tsx) so the dot reads as one unit with the status
 // label instead of a neutral separator.

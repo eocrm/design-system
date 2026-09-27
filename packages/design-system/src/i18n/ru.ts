@@ -106,6 +106,18 @@ export const ru: Messages = {
     dragUnchanged: ({ event }) => `${event as string}: без изменений.`,
     dragCancelled: ({ event }) => `Перенос отменён. ${event as string} на прежнем месте.`,
   },
+  dateStrip: {
+    previousWeek: 'Предыдущая неделя',
+    nextWeek: 'Следующая неделя',
+    free: ({ count }) =>
+      `${count as number} ${ruPlural(count as number, ['свободное', 'свободных', 'свободных'])}`,
+    noTimes: 'Всё занято',
+    day: ({ date, availability }) => `${date as string}, ${availability as string}`,
+    range: ({ range }) => `${range as string}`,
+  },
+  slotGrid: {
+    empty: 'Нет свободного времени',
+  },
   datePicker: {
     today: 'Сегодня',
     clear: 'Очистить',
@@ -356,9 +368,10 @@ export const ru: Messages = {
     unavailable: '(недоступно)',
     loading: '(загружается)',
   },
-  statusMenu: {
-    changeStatus: 'Изменить статус',
-    busy: 'Сохранение статуса…',
+  pillMenu: {
+    change: ({ label, name }) => `Изменить ${label as string}: ${name as string}`,
+    defaultLabel: 'статус',
+    busy: 'Сохранение…',
   },
   pageHeader: {
     back: 'Назад',

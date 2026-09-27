@@ -1,0 +1,61 @@
+@use './SlotGrid.tokens';
+@use '../_internal/choiceTile' as tile;
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--slot-grid-group-gap);
+  container-type: inline-size;
+}
+
+.group {
+  // UA fieldset reset (precedent: Radio/RadioGroup.module.scss).
+  // stylelint-disable-next-line property-disallowed-list -- UA fieldset reset, not layout
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.legend {
+  // stylelint-disable-next-line property-disallowed-list -- UA legend reset + internal spacing to the tiles
+  margin: 0 0 var(--slot-grid-legend-gap);
+  padding: 0;
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: var(--slot-grid-gap);
+}
+
+@container (max-width: 48rem) {
+  .tiles {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.tile {
+  @include tile.choice-tile(
+    $input: '.input',
+    $bg: var(--slot-grid-tile-bg),
+    $bg-hover: var(--slot-grid-tile-bg-hover),
+    $fg: var(--slot-grid-tile-fg),
+    $border: var(--slot-grid-tile-border),
+    $bg-checked: var(--slot-grid-tile-bg-checked),
+    $bg-checked-hover: var(--slot-grid-tile-bg-checked-hover),
+    $fg-checked: var(--slot-grid-tile-fg-checked),
+    $radius: var(--slot-grid-tile-radius),
+    $ring: var(--slot-grid-tile-ring),
+    $opacity-disabled: var(--slot-grid-tile-opacity-disabled)
+  );
+
+  height: var(--slot-grid-tile-height);
+  font-size: var(--slot-grid-tile-font-size);
+  font-weight: var(--slot-grid-tile-font-weight);
+}
+
+// Needs a real declaration so CSS Modules emits the class the mixin targets.
+.input {
+  opacity: var(--opacity-hidden);
+}

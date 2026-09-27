@@ -93,6 +93,10 @@ export interface RichTextEditorProps extends Omit<
 > {
   /** Controlled document. Render the doc returned by `onChange` back into `value`. */
   value: RichDoc;
+  /** `aria-invalid` on the textbox. Field / SettingRow inject it (#568). @default false */
+  invalid?: boolean;
+  /** `aria-required` on the textbox. Field / SettingRow inject it (#568). @default false */
+  required?: boolean;
   /** Fires with the new document after every edit. */
   onChange: (doc: RichDoc) => void;
   /** Non-editable: renders the content read-only (prefer `<RichText>` for pure display). */
@@ -291,6 +295,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       renderLink,
       renderMention,
       upload,
+      invalid = false,
+      required = false,
       className,
       ...rest
     },
@@ -1436,6 +1442,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         role="textbox"
         aria-multiline="true"
         aria-readonly={readOnly || undefined}
+        aria-invalid={invalid || undefined}
+        aria-required={required || undefined}
         // Mentions makes the textbox an editable combobox. role stays "textbox"
         // (ARIA combobox is single-line only; this editor is multiline), with
         // aria-autocomplete + aria-controls + aria-activedescendant describing the

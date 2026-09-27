@@ -199,11 +199,11 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['Switch'],
   },
   {
-    to: '/components/status-menu',
-    name: 'StatusMenu',
+    to: '/components/pill-menu',
+    name: 'PillMenu',
     description:
-      'Status-transition dropdown — colored pill trigger, each menu row colored to its own status. Composes DropdownMenu; read-only chip when options is omitted.',
-    preview: SCHEMATICS['StatusMenu'],
+      'Coloured value menu (status, task type, priority) — coloured pill trigger, each row coloured to its own value, optional icons. Composes DropdownMenu; read-only chip when options is omitted.',
+    preview: SCHEMATICS['PillMenu'],
   },
   {
     to: '/components/skeleton',
@@ -531,6 +531,19 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     name: 'Toast',
     description: 'Imperative transient notifications.',
     preview: SCHEMATICS['Toast'],
+  },
+  {
+    to: '/components/date-strip',
+    name: 'DateStrip',
+    description:
+      'One selectable week of day tiles under a month heading, with previous/next week buttons and a free-time count per day.',
+    preview: SCHEMATICS['DateStrip'],
+  },
+  {
+    to: '/components/slot-grid',
+    name: 'SlotGrid',
+    description: 'Selectable time-slot tiles grouped by part of the day, with an empty state.',
+    preview: SCHEMATICS['SlotGrid'],
   },
   {
     to: '/components/tooltip',

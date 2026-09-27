@@ -1,19 +1,5 @@
 [
   {
-    "route": "/components/datatable",
-    "key": "button.Button-module__button.Button-module__ghost.Button-module__sm",
-    "band": "top",
-    "issue": 523,
-    "reason": "A ghost sm Button flush against the top-left corner of a DataTable scroll container loses the top and left bands of its outset ring. Inherited from #523's original baseline and NOT re-investigated here: recorded as accepted state rather than as an argued exemption, so anyone closing it should measure it first."
-  },
-  {
-    "route": "/components/datatable",
-    "key": "button.Button-module__button.Button-module__ghost.Button-module__sm",
-    "band": "left",
-    "issue": 523,
-    "reason": "A ghost sm Button flush against the top-left corner of a DataTable scroll container loses the top and left bands of its outset ring. Inherited from #523's original baseline and NOT re-investigated here: recorded as accepted state rather than as an argued exemption, so anyone closing it should measure it first."
-  },
-  {
     "route": "/components/emoji-picker",
     "key": "button.EmojiPicker-module__cell",
     "band": "left",

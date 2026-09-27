@@ -37,13 +37,14 @@ export function Demo() {
 
       <Example
         title="Sizes"
-        description="sm 24 / md 32 / lg 40 — sizes the tile box; size your icon to match."
+        description="xs 20 / sm 24 / md 32 / lg 40 — sizes the tile box; size your icon to match. xs keeps a 14px glyph and fits inside a text or Badge row without growing it."
         code={`import { Shapes } from 'lucide-react';
 import { Cluster, IconTile } from '@eocrm/design-system';
 
 export function Demo() {
   return (
     <Cluster gap="md" align="center">
+      <IconTile color="blue" size="xs" icon={<Shapes size={14} />} />
       <IconTile color="blue" size="sm" icon={<Shapes size={14} />} />
       <IconTile color="blue" size="md" icon={<Shapes size={16} />} />
       <IconTile color="blue" size="lg" icon={<Shapes size={20} />} />
@@ -52,6 +53,7 @@ export function Demo() {
 }`}
       >
         <Cluster gap="md" align="center">
+          <IconTile color="blue" size="xs" icon={<Shapes size={14} />} />
           <IconTile color="blue" size="sm" icon={<Shapes size={14} />} />
           <IconTile color="blue" size="md" icon={<Shapes size={16} />} />
           <IconTile color="blue" size="lg" icon={<Shapes size={20} />} />

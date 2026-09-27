@@ -75,6 +75,25 @@ export interface TooltipProps {
   defaultOpen?: boolean;
 }
 
+// A tap on (or inside) one of these performs an action, so it must never be
+// hijacked to toggle a tooltip (#567). Ancestors count too: a Badge inside a
+// row link navigates.
+const INTERACTIVE =
+  'a[href], button, input, select, textarea, summary, label, audio[controls], video[controls], [contenteditable="true"], [role="button"], [role="link"], [role="checkbox"], [role="radio"], [role="switch"], [role="tab"], [role="menuitem"], [role="menuitemcheckbox"], [role="menuitemradio"], [role="option"], [role="combobox"], [role="slider"], [role="spinbutton"], [role="treeitem"], [role="gridcell"]';
+
+/**
+ * A finger. Pens are left on the hover path: most hover, and a contact-only
+ * pen fires pointerleave right after pointerup, which would snap a
+ * tap-opened tooltip shut.
+ */
+function isTap(e: { pointerType: string }): boolean {
+  return e.pointerType === 'touch';
+}
+
+function isInteractiveTarget(target: EventTarget | null): boolean {
+  return target instanceof Element && target.closest(INTERACTIVE) !== null;
+}
+
 /**
  * Renders a small floating label anchored to a single trigger element. Opens
  * on hover (after `delay` ms) or immediately on keyboard focus, with a
@@ -111,7 +130,10 @@ export interface TooltipProps {
  *   tooltip body does not keep it open.
  * - For form-value selection → use Select (separate wishlist item).
  * - As the only source of essential information. Tooltips are progressive
- *   enhancement for pointer + keyboard users; touch users will not see them.
+ *   enhancement. Touch users reach them only on NON-interactive triggers: a
+ *   tap on a `Text` / `Badge` / `IconTile` trigger toggles the tooltip (a tap
+ *   elsewhere closes it), while a tap on a button, link or form control — or
+ *   on anything inside one — performs its action and shows nothing.
  *
  * @remarks Anti-patterns
  * - ❌ `<Tooltip><Button disabled>…</Button></Tooltip>` — `disabled` buttons
@@ -190,7 +212,10 @@ export function Tooltip({
   useEffect(() => cancelPendingOpen, [cancelPendingOpen]);
 
   const handlePointerEnter = useCallback(
-    (_e: ReactPointerEvent) => {
+    (e: ReactPointerEvent) => {
+      // Touch fires enter/leave around every tap; that is not hover. Taps are
+      // handled in handlePointerUp.
+      if (e.pointerType === 'touch') return;
       cancelPendingOpen();
       if (delay <= 0) {
         setOpen(true);
@@ -205,7 +230,8 @@ export function Tooltip({
   );
 
   const handlePointerLeave = useCallback(
-    (_e: ReactPointerEvent) => {
+    (e: ReactPointerEvent) => {
+      if (e.pointerType === 'touch') return;
       cancelPendingOpen();
       setOpen(false);
     },
@@ -233,6 +259,17 @@ export function Tooltip({
     [cancelPendingOpen, setOpen],
   );
 
+  // Tap to toggle on NON-interactive triggers only (#567): touch users have no
+  // hover, so without this a RelativeTime / IconTile tooltip is unreachable.
+  const handlePointerUp = useCallback(
+    (e: ReactPointerEvent) => {
+      if (!isTap(e) || isInteractiveTarget(e.target)) return;
+      cancelPendingOpen();
+      setOpen(!open);
+    },
+    [open, cancelPendingOpen, setOpen],
+  );
+
   const handleBlur = useCallback(
     (_e: ReactFocusEvent<HTMLElement>) => {
       cancelPendingOpen();
@@ -246,7 +283,17 @@ export function Tooltip({
   // tooltip's host (e.g., navigating away) still fires.
   useEffect(() => {
     if (!open) return;
-    const onPointerDown = () => {
+    const onPointerDown = (e: PointerEvent) => {
+      // A tap on a tap-toggling trigger is handled by its own pointerup —
+      // closing here would make the second tap re-open instead of close.
+      if (
+        isTap(e) &&
+        e.target instanceof Node &&
+        triggerRef.current?.contains(e.target) &&
+        !isInteractiveTarget(e.target)
+      ) {
+        return;
+      }
       cancelPendingOpen();
       setOpen(false);
     };
@@ -283,6 +330,7 @@ export function Tooltip({
     ref?: Ref<HTMLElement>;
     onPointerEnter?: (e: ReactPointerEvent) => void;
     onPointerLeave?: (e: ReactPointerEvent) => void;
+    onPointerUp?: (e: ReactPointerEvent) => void;
     onFocus?: (e: ReactFocusEvent<HTMLElement>) => void;
     onBlur?: (e: ReactFocusEvent<HTMLElement>) => void;
     'aria-describedby'?: string;
@@ -301,6 +349,7 @@ export function Tooltip({
       : childProps['aria-describedby'],
     onPointerEnter: chain(childProps.onPointerEnter, handlePointerEnter),
     onPointerLeave: chain(childProps.onPointerLeave, handlePointerLeave),
+    onPointerUp: chain(childProps.onPointerUp, handlePointerUp),
     onFocus: chain(childProps.onFocus, handleFocus),
     onBlur: chain(childProps.onBlur, handleBlur),
   } as object);

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { createPortal } from 'react-dom';
 import clsx from 'clsx';
 import { useTranslation } from '../../i18n/useTranslation';
@@ -25,7 +25,20 @@ const POSITION_CLASS: Record<ToastPosition, string> = {
   'bottom-right': styles.posBottomRight,
 };
 
-let mountedViewportCount = 0;
+// Committed viewports in mount order; the first one renders. Registered in a
+// layout effect, never during render: a render React discards (Suspense,
+// StrictMode, concurrent restarts) runs no effects, so it can't leak a slot
+// and silence every toast (#562).
+let viewports: readonly object[] = [];
+const viewportListeners = new Set<() => void>();
+function setViewports(next: readonly object[]) {
+  viewports = next;
+  viewportListeners.forEach((l) => l());
+}
+function subscribeViewports(listener: () => void) {
+  viewportListeners.add(listener);
+  return () => viewportListeners.delete(listener);
+}
 
 export interface ToastViewportProps {
   /** Default position for toasts that don't specify one. Default: 'bottom-right'. */
@@ -49,7 +62,8 @@ export interface ToastViewportProps {
  * ```
  *
  * @remarks
- * - **Mount once.** A dev-warning logs if a second one mounts; only the first renders.
+ * - **Mount once.** A dev-warning logs if a second one mounts; only the first
+ *   (in mount order) renders, and the next one takes over if it unmounts.
  * - **Mounts before consumers can fire are fine.** Toasts fired before this is in
  *   the tree sit in the store and render the moment this mounts.
  * - **Portal target is `document.body`.** Toasts are not constrained by any
@@ -63,23 +77,22 @@ export function ToastViewport({
   expand = false,
 }: ToastViewportProps) {
   const t = useTranslation();
-  // Track viewport count for dev-warning. State so React doesn't unmount us
-  // when the count flips back to 1.
-  const [isFirstViewport] = useState(() => {
-    mountedViewportCount += 1;
-    return mountedViewportCount === 1;
-  });
+  const [id] = useState(() => ({}));
+  const isFirstViewport = useSyncExternalStore(
+    subscribeViewports,
+    () => viewports[0] === id,
+    () => false,
+  );
 
-  useEffect(() => {
-    if (!isFirstViewport && process.env.NODE_ENV !== 'production') {
+  useLayoutEffect(() => {
+    setViewports([...viewports, id]);
+    if (viewports[0] !== id && process.env.NODE_ENV !== 'production') {
       console.error(
         '[ToastViewport] Multiple <ToastViewport> instances detected. Only the first one renders. Mount exactly one at your app root.',
       );
     }
-    return () => {
-      mountedViewportCount -= 1;
-    };
-  }, [isFirstViewport]);
+    return () => setViewports(viewports.filter((v) => v !== id));
+  }, [id]);
 
   useEffect(() => {
     _setViewportConfig({ position, duration });

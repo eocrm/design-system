@@ -874,6 +874,7 @@ A switch whose toggle triggers an **immediate action** — persisting to a serve
 ```
 
 - **Pure UI shell.** Consumer owns the `files: FileEntry[]` state and the network code. The component handles drag/drop + click + validation + per-row rendering ONLY.
+- **Inside `<Field>` / `<SettingRow>`:** the wired `id` goes on the hidden `<input type="file">` (the only labelable element), so clicking the row's label opens the picker; `invalid` marks the dropzone `aria-invalid`; `required` only drives the row's visible marker (a hidden native `required` would block submit invisibly — your state owns the files).
 - `FileEntry`: `{ id: string, file: File, status: 'pending' | 'uploading' | 'done' | 'error', progress?: number, error?: string }`. Consumer assigns `id` (typically `crypto.randomUUID()`); File has no stable identity in JS.
 - **Status drives the row:** `uploading` renders `<Progress size="sm" value={progress}>`; `error` renders the error string in danger color and tints the row border; `done` renders a green check icon; `pending` is neutral. The remove button (X) is always visible regardless of status.
 - **Validation pipeline** (per file, in order): type (`accept`) → size (`maxSize`) → count (`maxFiles`, multi mode only) → duplicate (name + size) → custom (`validator`). First failure fires `onFileReject(file, reason, message?)`; passing files batch into ONE `onFilesAdded(File[])` call.
@@ -1568,6 +1569,7 @@ Use this instead of `Card.List` + `Card.ListRow` whenever the data is genuinely 
 - `align`: `start` / `center` (default) / `end` / `baseline`
 - `wrap`: `true` (default). Set `false` only for narrow table cells where overflow is preferable to wrapping.
 - `minWidth0`: `false` (default). Sets `min-width: 0` so the container can shrink below its content's intrinsic width, letting a `<Text truncate>` inside ellipsize instead of being hard-cut by a clipping ancestor. Turn it on when this Cluster is an item of a **row** flex container (or a grid item) that clips — a `Calendar` `renderEvent` chip, a `Card.Header` row. **No-op** inside a column `Stack` (that minimum applies only on the flex MAIN axis, so there is no horizontal floor), and inside a plain block or a table cell (it applies to flex and grid ITEMS only, so `min-width: auto` is just `0`). Note a table cell is a no-op for a different reason than it looks: auto table layout floors the cell at its content's min-content width regardless, so what makes text truncate there is `table-layout: fixed` or a `max-width` on the cell — not this prop. **Opt-in on purpose:** a container that can shrink also _volunteers_ for shrink, so setting it where the content is NOT truncatable (buttons, badges, icons) lets that content be clipped instead. Set it on the container whose text should give way, never on one holding controls.
+- `maxWidthFull`: `false` (default). `max-width: 100%` — for `as="span"` inside running text, where an inline cluster otherwise sizes to its content and a long `<Text as="span" truncate>` child overflows the paragraph instead of ellipsizing at the line edge. Pair with `wrap={false}` (`minWidth0` is a no-op in running text — the parent is a block). The chip is one inline box: it wraps to the next line as a unit when the preceding text leaves too little room, then ellipsizes at the paragraph width. Stays a span (phrasing-safe), unlike `<Constrain maxWidth>`. For an entity link row prefer `<EntityChip truncate trailing>`.
 
 ```tsx
 // Custom Calendar chip content that ellipsizes instead of hard-clipping.
@@ -1764,6 +1766,20 @@ beside results).
 
 - Collapsed panes stack in **DOM order**: aside → main for `side="start"` (default), main → aside for `side="end"`. No CSS `order` flip — visual order stays in sync with tab order. Need the aside on top when stacked? Use `side="start"`.
 - A `<Sticky>` passed as `aside` becomes a plain block while collapsed (no pin, no `scroll` cap) — don't shim it.
+- `onCollapsedChange(collapsed)` — fires on mount with the initial state (twice under StrictMode in dev), then on every change; the root also carries `data-collapsed`. It measures the split's own content width against the same inclusive threshold as the container query, so it agrees with the CSS (`useBelowBreakpoint` measures the viewport and does not, beside an app sidebar). Use it to move content YOU own so DOM order = visual order in both states — never CSS `order`:
+
+```tsx
+// Comments last on the page, side by side or stacked:
+const [stacked, setStacked] = useState(false);
+<>
+  <Split aside={<Sidebar />} side="end" collapseBelow="lg" onCollapsedChange={setStacked}>
+    <RecordData />
+    {!stacked && <Comments />}
+  </Split>
+  {stacked && <Comments />}
+</>;
+```
+
 - ❌ A `collapseBelow` split in an intrinsic-width context (another `Split`'s default `auto` aside track, a `Cluster` item, `width: max-content`). `container-type: inline-size` makes it contribute zero intrinsic width, so it renders at width 0 — give the parent a concrete width instead. It also becomes the containing block for absolutely-positioned descendants (layout containment). Splits without the prop pay neither cost.
 
 When NOT to use: equal columns → `<Grid columns={2}>`; wrapping peer row → `<Cluster>`; app shell sidebar → `<AppLayout>`/`<Rail>`.
@@ -1891,9 +1907,9 @@ import { Divider } from '@eocrm/design-system';
 - **`<PageHeader.Title>`** passes through to `<Title order={order} size={size}>`. Default `order={1}` (renders `<h1>`); set `order={2}` for sub-page section headers.
 - **`<PageHeader.Subtitle>`** is a `<p>` with muted color.
 - **`<PageHeader.Meta>`** is a flex row that wraps — good for badges + timestamps.
-- **`<PageHeader.Actions>`** is already a wrapping, right-aligned flex row — put `<Button>`s directly in it. A wrapping `<Cluster>` inside it needs `justify="end"`, or its wrapped rows go ragged-left. On viewports < 640px, Actions moves below the title block, left-aligned.
+- **`<PageHeader.Actions>`** is already a wrapping, right-aligned flex row — put `<Button>`s directly in it. A wrapping `<Cluster>` inside it needs `justify="end"`, or its wrapped rows go ragged-left. On viewports < 640px, Actions moves below the title block and stays right-aligned (primary action at the thumb-side edge).
 - **NOT a `<header>` landmark.** PageHeader renders a `<div>` to avoid conflicting with the AppShell's app-level `<header role="banner">`.
-- **Shrinks to narrow containers without overflowing.** On viewports ≥ 640px the actions column is sized to fit its buttons on one line, capped so the title keeps about `--page-header-title-min` (160px, `--measure-2xs`; with an `<Aside>`, the aside and title share that room). A wide header keeps all its actions on one line to the right; once they'd leave the title less than that, the buttons wrap onto extra lines. Wrapped rows stay right-aligned when the buttons are direct children of `<PageHeader.Actions>` (or inside a `<Cluster justify="end">`). If a single action item is wider than the space left, the title shrinks below that instead of the header overflowing (as long as that item itself — plus the aside and gaps — fits in the container). `<PageHeader.Breadcrumb>` wraps too. A title word wider than its column breaks mid-word (`overflow-wrap: anywhere`) rather than overflowing — e.g. "Acme Corporation" beside an `<Aside>` in a narrow container. Below a 640px viewport the actions move below, left-aligned: the header becomes a single column, or two (aside + title) with an `<Aside>`, and the actions span the full width.
+- **Shrinks to narrow containers without overflowing.** On viewports ≥ 640px the actions column is sized to fit its buttons on one line, capped so the title keeps about `--page-header-title-min` (160px, `--measure-2xs`; with an `<Aside>`, the aside and title share that room). A wide header keeps all its actions on one line to the right; once they'd leave the title less than that, the buttons wrap onto extra lines. Wrapped rows stay right-aligned when the buttons are direct children of `<PageHeader.Actions>` (or inside a `<Cluster justify="end">`). If a single action item is wider than the space left, the title shrinks below that instead of the header overflowing (as long as that item itself — plus the aside and gaps — fits in the container). `<PageHeader.Breadcrumb>` wraps too. A title word wider than its column breaks mid-word (`overflow-wrap: anywhere`) rather than overflowing — e.g. "Acme Corporation" beside an `<Aside>` in a narrow container. Below a 640px viewport the actions move below, still right-aligned: the header becomes a single column, or two (aside + title) with an `<Aside>`, and the actions span the full width.
 - **Give it a stretched or definite width.** In a shrink-to-fit parent PageHeader is only as wide as its content, so the actions don't sit at the right edge. Fix it where the width comes from: as a non-growing flex item, give the PageHeader `flex: 1` (or `width: 100%`) via its `className`; inside an `inline-block` parent or an `auto` grid track that doesn't work (the percentage is cyclic, `flex` is ignored) — make the parent block-level, or use a `1fr` / `minmax(0, 1fr)` track.
 
 #### Hard rule
@@ -2018,27 +2034,42 @@ import { Link as RouterLink } from 'react-router-dom';
 
 // Chip fill override (categorical, independent of status):
 <EntityChip href="/deals/9" label="Acme Corp" color="violet" />
+
+// One-line list row: only the label ellipsizes; adornments inside the chip:
+<EntityChip
+  truncate
+  href="/tasks/5"
+  icon={<CheckSquare size={14} />}
+  prefix="ENG-5"
+  label="Fix the login bug that only happens on Safari"
+  status={{ label: 'In progress', category: 'in_progress' }}
+  trailing={<ArrowUp size={14} aria-label="High priority" />}
+/>
 ```
 
 - Polymorphic inline chip: optional `icon` (rendered `aria-hidden`), optional muted `prefix` (e.g. a task key), the `label`, and an optional colored `status`. All inline `<span>`s inside one root — safe to drop directly inside a `<p>`/`<Text>`.
 - **An EntityChip is always a link to its entity**: pass `href` (renders `<a href>`) or `as` (`RouterLink`, `'button'`, any component — same polymorphic contract as `<Link>`). The bare `<span>` form (no target) is for rare non-navigable contexts only.
 - Default chip fill matches RichText's `@mention` styling (`--color-accent-bg-subtle` / `--color-accent`) — a chip and a rendered mention read as the same visual object in both themes. `color?: PaletteColor` overrides the fill (same inline-injection contract as `Badge color`) — independent of `status`, which keeps its own resolved color. `unavailable` still mutes the label/status/dot over any `color`.
-- `status`: `{ label, category?, color? }`. `category` (`to_do`/`in_progress`/`open`/`done`/`won`/`lost`) resolves a default palette color; `color` (a `PaletteColor`) overrides it — same category → color mapping as `<StatusMenu>`. The separator dot between name and status takes the status's resolved color too (reads as one unit with the status label).
+- `status`: `{ label, category?, color? }`. `category` (`to_do`/`in_progress`/`open`/`done`/`won`/`lost`) resolves a default palette color; `color` (a `PaletteColor`) overrides it — same category → color mapping as `<PillMenu>`. The separator dot between name and status takes the status's resolved color too (reads as one unit with the status label).
 - `loading`: swaps the body for an ellipsis and sets `aria-busy` (which nothing reads on its own — the state reaches AT through the name, below). `unavailable`: mutes the chip (entity deleted or no access). Both are purely visual when the chip has a link target — it stays a live, keyboard-reachable link. Only a target-less `unavailable` chip is non-interactive with `aria-disabled`.
 - ⚠️ **On a chip with a link target, both state words change the accessible name**, so a name-exact query stops matching: `getByRole('link', { name: 'Appointment' })` misses a chip that is loading or unavailable. If your tests select chips by name over lists that render placeholders, use a regex or query before the state applies.
 - **`loading` is announced too.** Same mechanism, and `aria-busy` alone did not do it either — it is a _global_ ARIA state so it IS valid on the role-less span and browsers expose it, but no mainstream screen reader reliably conveys `busy` on a non-live element, and the `…` is `aria-hidden`. The label reached the user; the state did not. A linked chip's name becomes `"Appointment (loading)"`. **The trade:** the accessible name changes when loading resolves. Announcing a transient state through the name always costs that; the alternative is a consumer-owned `aria-live` region, since only the consumer knows whether a chip resolving is worth interrupting for. Override the word to `''` **at your top-level provider** if you'd rather handle it yourself — a nested `I18nProvider` replaces its parent rather than extending it, so wrapping a single chip would discard every other override you have set.
 - **`unavailable` is announced, not just muted.** A localized word is rendered visually hidden inside the chip. A **linked** chip's accessible name becomes `"Appointment (unavailable)"`; a **target-less** chip is `role=generic`, which has no accessible name at all, so the word is announced as part of the chip's text in reading order. Either way it reaches the user.
 - Why `aria-disabled` was not enough: browsers do expose it, but it carries no meaning on a non-widget role such as `generic`, so no assistive tech conveys it. This matters because the canonical use is to withhold the entity's name and show a TYPE word instead — without the state, a masked reference is indistinguishable from a real entity that happens to be called "Appointment".
 - ❌ Don't put an `aria-label` on the chip — it replaces the whole name and takes the state word with it. The state lives in the chip's contents. Override the word via `<I18nProvider overrides={{ entityChip: { unavailable: '…' } }}>` instead; it carries its own punctuation so a locale can pick different marks.
+- **`truncate`** — single-line mode for list rows: the chip caps at its container (`max-width: 100%`, `min-width: 0`) and only `label` ellipsizes; `icon`/`prefix`/`status`/`trailing` keep full size. The accessible name keeps the full label. Default wraps — right for chips in running text, so don't set `truncate` there.
+- **`trailing`** — adornments inside the chip after `status` (a priority icon, a `<Badge>`), full size under `truncate`, not rendered while `loading`. Its text JOINS the link's name (`aria-hidden` a decorative icon). ❌ Never interactive content — the chip is a link; row actions go beside it.
 - Hover affordance on link/button chips: the background deepens a step plus a brightness dip. Never a weight change, never an underline, even under aggressive consumer link CSS.
 - Chip text inherits the surrounding font size — inside a heading it renders at heading size, by design (that's what keeps the chip box symmetric around the local text in any context).
-- **When NOT to use**: plain status with no linked entity → `<Badge>`/`<StatusMenu>`; standalone navigation with no icon/prefix/status chrome → `<Link>`; removable filter pills → `<FilterChip>`.
+- **When NOT to use**: plain status with no linked entity → `<Badge>`/`<PillMenu>`; standalone navigation with no icon/prefix/status chrome → `<Link>`; removable filter pills → `<FilterChip>`.
 - **Anti-pattern**: nesting a `<Badge>` inside another `<Badge>` to fake an entity-with-status chip — `EntityChip` replaces that composition. `status.color` and the chip's own `color` are `PaletteColor` names, never raw hex strings. Omitting a link target (`href`/`as`) is also an anti-pattern — an EntityChip should link to its entity.
 
-### `<StatusMenu>` — status-transition dropdown
+### `<PillMenu>` — coloured value menu (status, type, priority…)
+
+Renamed from `StatusMenu` (#572) — `StatusMenu` / `StatusMenuProps` / `StatusMenuStatus` / `StatusMenuCategory` no longer exist; use `PillMenu` / `PillMenuProps` / `PillMenuOption` / `PillMenuCategory`. Component tokens are `--pill-menu-*`, the i18n namespace is `pillMenu`.
 
 ```tsx
-<StatusMenu
+<PillMenu
   current={{ id: 'todo', name: 'To do', category: 'to_do' }}
   options={[
     { id: 'in_progress', name: 'In progress', category: 'in_progress' },
@@ -2048,10 +2079,21 @@ import { Link as RouterLink } from 'react-router-dom';
 />
 
 // Read-only chip — omit `options` for a static colored chip, no menu:
-<StatusMenu current={{ id: 'won', name: 'Won', category: 'won' }} />
+<PillMenu current={{ id: 'won', name: 'Won', category: 'won' }} />
+
+// Not a status: label the trigger and add per-value icons:
+<PillMenu
+  label="type"
+  current={{ id: 'bug', name: 'Bug', color: 'red', icon: <Bug size={14} /> }}
+  options={[{ id: 'story', name: 'Story', color: 'green', icon: <BookOpen size={14} /> }]}
+  onSelect={setType}
+/>
+// → trigger announced "Change type: Bug"
 ```
 
-- A colored pill trigger that opens a menu of transition targets, each row colored to its own status. Composes `<DropdownMenu>` internally.
+- A coloured pill trigger that opens a menu of values, each row coloured to its own value — a workflow status, a task type, a priority. Composes `<DropdownMenu>` internally.
+- `label` (default: localized "status") names what the value is in the trigger's accessible name: `label="type"` → "Change type: Bug". Lower-case, in the UI language — it's data. Don't put `aria-label` on it: the trigger's name is component-owned.
+- `icon?: ReactNode` on `current` and on each option renders before the name in the pill and in its row, `aria-hidden` (decorative — the name is announced). Size it to the text (~14px, at most 16px — menu rows use a fixed 16px slot).
 - `current` / each option: `{ id, name, category?, color? }`. `category` (`to_do` / `in_progress` / `open` / `done` / `won` / `lost`) maps to a default palette color (slate / blue / violet / green / green / red); `color` (a `PaletteColor`) overrides it per-status.
 - `options` omitted or empty → read-only mode: a static colored `<span>` chip, no button, no `aria-haspopup`. This is the read-only surface — there's no separate `readOnly` prop.
 - `disabled` blocks the trigger (dims via opacity, stays colored). `busy` marks a transition in flight — also non-interactive, no built-in spinner. It announces from the component's own polite live region and **does not change the trigger's accessible name** (contrast `EntityChip`: you activated this control, so the change is announced rather than renamed). `aria-busy` is also set, but reaches no screen reader on its own.
@@ -2620,7 +2662,7 @@ import { Bell, Plus } from 'lucide-react';
 - `delay` — ms before hover opens. Default `400`. Keyboard focus is always immediate (a11y); close is always immediate.
 - `open` / `onOpenChange` / `defaultOpen` — controlled mode, same shape as DropdownMenu.
 - Dismissal: `pointerleave`, `blur`, document `pointerdown`, `Escape`. Tooltip never owns focus. On `Escape` (WCAG 1.4.13) the tooltip registers as a floating surface, so inside a `Modal`/`Drawer` the dismiss press closes only the tooltip — the host survives; the next `Escape` closes the host.
-- Touch devices: no tap-to-open. Tooltips are progressive enhancement for pointer + keyboard users; rely on the trigger's accessible name on touch.
+- Touch devices: a tap toggles the tooltip on a **non-interactive** trigger (`Text`, `Badge`, `IconTile`, a focusable `span`); a tap elsewhere closes it. A tap on a button/link/form control — or on anything inside one, e.g. a Badge in a row link — performs the action and opens nothing, so don't put supplementary info you want reachable on touch behind an interactive trigger's tooltip; rely on its accessible name.
 - Opens with a short scale-fade (140 ms) from the trigger side. Closes instantly. Respects `prefers-reduced-motion: reduce`.
 - Z-layer `--z-tooltip: 1300` is above modal and toast, so tooltips inside any host UI remain visible.
 
@@ -2969,6 +3011,7 @@ const [open, setOpen] = useState(false);
 ```
 
 - One generalist; the mode matrix is `multiple` × `triggerDisplay: 'chips' | 'summary'` × `searchable`. See the JSDoc on `<Select>` for the matrix and anti-patterns.
+- `id` goes on the combobox trigger (the `<button>` / `<input>`), not the wrapper div, so a `<label for>` (Field / SettingRow) focuses it. Target the wrapper by `className` or a `data-*` attribute, not `#id`.
 - `triggerDisplay` defaults to `'chips'` when `multiple` is set. Use `'summary'` for table-filter UIs where chips would crowd the toolbar.
 - **Async**: pass `loadOptions(query, signal)`. Debounce (250ms default, configurable via `searchDebounceMs`) and `AbortSignal` cancellation are built-in. Do NOT debounce externally.
 - **Tag input pattern** = `multiple + searchable + creatable + triggerDisplay='chips'`. There is no separate `<Tags>` component.
@@ -3140,7 +3183,7 @@ rendering existing reaction counts (the consumer builds that display).
 ```
 
 - A small decorative tile framing one icon, tinted by a **Palette** `color` (one of the 30 categorical colors; default `'slate'`). For a person use `<Avatar>`; for text/status use `<Badge>`.
-- `icon` (required ReactNode — you size it). `size`: `sm` 24 / `md` 32 (default) / `lg` 40 px (sizes the tile, not the icon). `shape`: `square` (default) / `circle`.
+- `icon` (required ReactNode — you size it). `size`: `xs` 20 / `sm` 24 / `md` 32 (default) / `lg` 40 px (sizes the tile, not the icon). `xs` + a 14px icon sits inside a text / `Badge` / `EntityChip` row without growing it. `shape`: `square` (default) / `circle`.
 - Color is categorical (visual identity), **not** semantic — use `<Badge tone>` for status.
 - A11y: decorative by default (`aria-hidden`); pass `label` to make it `role="img"` + `aria-label` when the icon is the only indicator.
 
@@ -3615,6 +3658,60 @@ const [range, setRange] = useState<DateRange | null>(null);
 - Use when the consumer wants the calendar permanently visible. For a compact form field with the same selection model, use `<DateRangePicker>`. Don't render inside containers narrower than ~32rem — the two grids need side-by-side room.
 - **Granularity.** Pass `granularity="minute"` to render dual `<TimeField>`s (start + end) below the two-month grid; the hidden form mirrors emit ISO local datetime. Defaults to `'day'`. The start/end time inputs are shown and editable below the grid even before a range is picked — defaulting to `00:00` start / `23:59` end. Times set in this empty state are applied when the range is committed (no need to seed a placeholder range), and existing times are preserved across subsequent date picks. Same-day end-time silently clamps to ≥ start-time on every commit; different-day ranges are not clamped. `timeStep` (default `15`, in minutes) applies to BOTH TimeFields, controlling each minute-list row count AND rounding typed input in the time fields on commit; set `timeStep={1}` to disable rounding. `hourCycle` (default `'auto'`) forwards to both embedded TimeFields — `'12'` / `'24'` force a cycle, `'auto'` derives from locale.
 
+### `<DateStrip>` — week of selectable day tiles
+
+```tsx
+const [day, setDay] = useState<string | null>(null);
+<DateStrip
+  days={week} // [{ date: '2026-10-05', free: 3 }, … 7 days]
+  value={day}
+  onChange={setDay}
+  onPrevious={prevWeek}
+  onNext={nextWeek}
+  canPrevious={!isCurrentWeek}
+/>;
+```
+
+- `date` is an ISO `'YYYY-MM-DD'` calendar day (the business's day, not a `Date`); the strip formats weekday / number / month through the locale in UTC, so the browser timezone never shifts it. The month heading is derived ("October 2026", "September – October 2026").
+- `free: 0` → "No times", tile natively disabled (skipped by Tab and arrows). Keep full days in the array.
+- Native radios, one `name`: one Tab stop, arrows move AND select (so `onChange` fires per arrow press — debounce slot fetching if needed). Tiles are `role="radio"` named "Wednesday, October 7, 9 free"; query them that way in tests.
+- Controlled only. `canPrevious` / `canNext` (default `true`) disable the week buttons. `titleOrder` (default 2) sets the heading level.
+- In `<Field>` / `<SettingRow>`: the row label is merged in front of the month (group name "Day October 2026"), the error describes the group, `invalid` → `aria-invalid` on the group, `required` → native `required` on the radios. One column per day (`days.length`), so a 5-day week has 5 columns.
+- Previous/next use `aria-disabled` (not `disabled`) when `canPrevious`/`canNext` is false, so focus stays on the button that reached the boundary.
+- Changing week announces the new range politely; same-week re-renders stay silent.
+- ❌ No `aria-label` on the strip — the month heading names the group. ❌ No `Date`/`toISOString()` for `date`.
+- ❌ In an intrinsic-width context (`Split`'s default `auto` aside track, a `Cluster` item, `width: max-content`) it renders at width 0 — `container-type: inline-size` zeroes its intrinsic-width contribution; give the parent a concrete width (e.g. `asideWidth` on a Split). It is also the containing block for absolutely-positioned descendants (layout containment).
+- When NOT to use: any-date picking → `<InlineDatePicker>`; events → `<Calendar>`; times → `<SlotGrid>`.
+
+### `<SlotGrid>` — grouped time-slot tiles
+
+```tsx
+<SlotGrid
+  groups={[
+    {
+      label: 'Morning',
+      slots: [
+        { key: '09:00', label: '9:00' },
+        { key: '09:30', label: '9:30' },
+      ],
+    },
+    { label: 'Afternoon', slots: [{ key: '14:00', label: '14:00' }] },
+  ]}
+  value={slot}
+  onChange={setSlot}
+  empty={<Text tone="muted">No times this day — try another.</Text>} // optional
+/>
+```
+
+- Slot `label`s are yours, formatted in the business's timezone. `key` is what `onChange` returns; keep it unique across ALL groups (one exclusive choice).
+- Native radios with one `name`: one Tab stop for the whole grid, arrows move AND select in reading order (↓ goes to the next slot, not the one below). Tiles are `role="radio"` named by their label; each group is a `<fieldset>` named by its heading (`titleOrder`, default 3).
+- Groups with no slots are skipped; if none has slots, `empty` renders (default: localized "No available times").
+- The root is `role="group"`: in `<Field>` / `<SettingRow>` the row label names it and the error describes it; `invalid` → `aria-invalid` on the group, `required` → native `required` on the radios.
+- 6 columns, 3 when the grid's own width ≤ 48rem (container query).
+- ❌ No per-slot `disabled` — pass only bookable slots. ❌ Don't wrap it in your own `role="radiogroup"`.
+- ❌ In an intrinsic-width context (`Split`'s default `auto` aside track, a `Cluster` item, `width: max-content`) it renders at width 0 — `container-type: inline-size` zeroes its intrinsic-width contribution; give the parent a concrete width (e.g. `asideWidth` on a Split). It is also the containing block for absolutely-positioned descendants (layout containment).
+- When NOT to use: free-form time → `<TimeField>`; a handful of options → `<ButtonGroup value>` / `<RadioGroup>`.
+
 ### `<TimeField>` — standalone time-of-day input
 
 ```tsx
@@ -3913,7 +4010,7 @@ For your OWN outcomes — a consumer-level event with no visible text of its own
 The rule the library follows, so you can predict any component:
 
 - **State you meet by arriving** — an `EntityChip` placeholder you tab onto — is folded into the **accessible name**. Its name therefore _changes_ when the state resolves, so don't select those elements by exact name in tests while a placeholder can be on screen.
-- **State that changes while you are elsewhere** — a `Switch` saving, a `DataTable` loading, a `StatusMenu` committing, a `Select` resolving its async options, a `FileUpload` batch finishing, a `ConfirmationPopover` going pending — is announced from a **live region the component owns**. Names stay stable.
+- **State that changes while you are elsewhere** — a `Switch` saving, a `DataTable` loading, a `PillMenu` committing, a `Select` resolving its async options, a `FileUpload` batch finishing, a `ConfirmationPopover` going pending — is announced from a **live region the component owns**. Names stay stable.
 - **Purely visual state** — `Badge` tone, `Skeleton` — is yours to announce if it matters. These are documented as visual-only.
 - **One deliberate exception to the noise rule.** `Textarea`'s character counter is an `aria-live="polite"` region that updates on every keystroke — the same per-keystroke announcing that #494 rejected for `Field`'s validation errors. It is kept because a counter is only useful while you are typing in the field it belongs to, where the user's attention already is, and because a remaining-characters count that arrives after you have run out is not a warning. If that trade is wrong for your form, `Textarea` takes `showCount={false}`. Noted here because the rule above would otherwise imply the library never announces per keystroke, and it does, once.
 - **`Progress` / `CircularProgress`** carry `role="progressbar"`. A _determinate_ one exposes its value through `aria-valuenow`; an _indeterminate_ one has no `aria-valuenow` at all and puts its meaning in `aria-valuetext`, whose fallback is translated via `progress.indeterminate` (#503). Don't wrap either — but do pass an `aria-label`, because that fallback is the only thing spoken if you don't.
@@ -3928,7 +4025,7 @@ The rule the library follows, so you can predict any component:
 
 Known gaps: **none currently open**, with one boundary case worth stating. A fluid `Image`'s error tile is DISCOVERABLE but not announced: the failure is visible text in the accessible tree, reachable in browse mode, and the icon is named by `alt` alone. It is deliberately not folded into the name — that made a reader hear the sentence twice — and deliberately not a live region, because an image failing is not worth interrupting for. A fixed-`size` `Image` renders no text (#538), so there the failure IS folded into the icon's name; still discoverable, still not announced. If your case needs it to interrupt, that announcement is yours. The three that stood here — `ConfirmationPopover` while pending (#497), `FileUpload` per-file failure and its `pending` state (#502), and `Select`'s async loading/error rows (#495) — all announce for themselves now, so do NOT wrap them. `FileUpload`'s `uploading` state still carries a `Progress` that is readable on focus rather than announced; don't wrap that either. Assume nothing about a component not named in **this list** — every component appears somewhere on this page, so the list, not the page, is the boundary. Check the component's own JSDoc. `Field`'s validation errors are covered above — documented behaviour, not an oversight.
 
-One consequence for your tests: components that own a region expose `role="status"`, so `getByRole('status')` on a page containing a `Switch`, `StatusMenu` or `DataTable` may now match more than one element. Scope the query, or select by the text you expect.
+One consequence for your tests: components that own a region expose `role="status"`, so `getByRole('status')` on a page containing a `Switch`, `PillMenu` or `DataTable` may now match more than one element. Scope the query, or select by the text you expect.
 
 What this means for you:
 

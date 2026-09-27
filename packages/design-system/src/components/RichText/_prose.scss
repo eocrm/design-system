@@ -58,7 +58,12 @@
     border-radius: var(--radius-sm);
   }
 
-  :where(a) {
+  // Bare anchors only. A styled link (a DS <Link> via renderLink, EntityChip,
+  // the attachment chip) carries a class and keeps its own decoration: this
+  // rule compiles to (0,1,0), the same as `.link`, so it used to win by
+  // source order and underline every <Link> at rest (#570). Not zero
+  // specificity — a consumer's global `a {}` reset must not strip prose links.
+  :where(a:not([class])) {
     color: var(--color-accent);
     text-decoration: underline;
   }

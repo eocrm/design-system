@@ -15,6 +15,10 @@ export interface RichTextProps extends HTMLAttributes<HTMLDivElement> {
    * `defaultNode` to keep the standard anchor. Render-time only — the document
    * model is unchanged, so serialization still emits a plain link.
    *
+   * Prose link styling (accent colour + underline) applies to BARE anchors
+   * only: an `<a>` you return with any `className` — including a DS `<Link>` —
+   * keeps its own decoration and colour entirely (#570).
+   *
    * @remarks Keep it cheap — it runs on every render. Don't block on a network
    * call inside `renderLink`; return a component that fetches/caches the lookup
    * itself (or falls back to `defaultNode` while loading).

@@ -41,6 +41,15 @@ export function SplitDemo() {
   const activeEnd = sections[sectionEnd];
   const activeCollapse = sections[sectionCollapse];
   const activeCollapseEnd = sections[sectionCollapseEnd];
+  const [stacked, setStacked] = useState(false);
+  const comments = (
+    <Card padding="md" style={{ color: 'var(--color-fg-muted)' }}>
+      <Stack gap="xs">
+        <strong style={{ color: 'var(--color-fg)' }}>Comments</strong>
+        <span>Always the last thing on the page — side by side or stacked.</span>
+      </Stack>
+    </Card>
+  );
 
   return (
     <DemoLayout
@@ -284,6 +293,56 @@ export function Demo() {
             </Split>
           </ResizablePreview>
         </Stack>
+      </Example>
+
+      <Example
+        title="onCollapsedChange — keep your own content in order when stacked"
+        description="Stacked panes follow DOM order, so on a side='end' record page a comment thread at the end of main would land between the record data and the sidebar. onCollapsedChange reports the split's own collapsed state (same threshold as its container query; once on mount, then on change) so you can render the thread after the Split once stacked — DOM order stays equal to visual order, no CSS order. Drag the resize handle below 480px."
+        code={`import { useState } from 'react';
+import { Card, Split, Stack } from '@eocrm/design-system';
+
+export function Demo() {
+  const [stacked, setStacked] = useState(false);
+  const comments = <Card padding="md">Comments</Card>;
+
+  return (
+    <Stack gap="lg">
+      <Split
+        side="end"
+        asideWidth="220px"
+        gap="lg"
+        collapseBelow="sm"
+        onCollapsedChange={setStacked}
+        aside={<Card padding="md">Sidebar cards</Card>}
+      >
+        <Stack gap="lg">
+          <Card padding="md">Record data</Card>
+          {!stacked && comments}
+        </Stack>
+      </Split>
+      {stacked && comments}
+    </Stack>
+  );
+}`}
+      >
+        <ResizablePreview>
+          <Stack gap="lg">
+            <Split
+              side="end"
+              asideWidth="220px"
+              gap="lg"
+              collapseBelow="sm"
+              onCollapsedChange={setStacked}
+              aside={<Card padding="md">Sidebar cards</Card>}
+            >
+              <Stack gap="lg">
+                <Card padding="md">Record data</Card>
+                {!stacked && comments}
+              </Stack>
+            </Split>
+            {stacked && comments}
+          </Stack>
+        </ResizablePreview>
       </Example>
     </DemoLayout>
   );

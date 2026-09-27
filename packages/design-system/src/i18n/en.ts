@@ -104,6 +104,17 @@ export const en: Messages = {
     dragUnchanged: ({ event }) => `${event as string} is unchanged.`,
     dragCancelled: ({ event }) => `Move cancelled. ${event as string} is back where it was.`,
   },
+  dateStrip: {
+    previousWeek: 'Previous week',
+    nextWeek: 'Next week',
+    free: ({ count }) => `${count as number} free`,
+    noTimes: 'No times',
+    day: ({ date, availability }) => `${date as string}, ${availability as string}`,
+    range: ({ range }) => `${range as string}`,
+  },
+  slotGrid: {
+    empty: 'No available times',
+  },
   datePicker: {
     today: 'Today',
     clear: 'Clear',
@@ -351,9 +362,10 @@ export const en: Messages = {
     unavailable: '(unavailable)',
     loading: '(loading)',
   },
-  statusMenu: {
-    changeStatus: 'Change status',
-    busy: 'Saving status…',
+  pillMenu: {
+    change: ({ label, name }) => `Change ${label as string}: ${name as string}`,
+    defaultLabel: 'status',
+    busy: 'Saving…',
   },
   pageHeader: {
     back: 'Go back',

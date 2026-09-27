@@ -151,12 +151,8 @@ export type {
   StatusCategory,
 } from './components/EntityChip';
 
-export { StatusMenu } from './components/StatusMenu';
-export type {
-  StatusMenuProps,
-  StatusMenuStatus,
-  StatusMenuCategory,
-} from './components/StatusMenu';
+export { PillMenu } from './components/PillMenu';
+export type { PillMenuProps, PillMenuOption, PillMenuCategory } from './components/PillMenu';
 
 export { Timeline } from './components/Timeline';
 export type { TimelineProps, TimelineItemProps } from './components/Timeline';
@@ -699,6 +695,12 @@ export type {
 
 export { DatePicker } from './components/DatePicker';
 export type { DatePickerProps, DatePickerSize } from './components/DatePicker';
+
+export { DateStrip } from './components/DateStrip';
+export type { DateStripProps, DateStripDay } from './components/DateStrip';
+
+export { SlotGrid } from './components/SlotGrid';
+export type { SlotGridProps, SlotGridGroup, SlotGridSlot } from './components/SlotGrid';
 
 export { DateRangePicker } from './components/DateRangePicker';
 export type {

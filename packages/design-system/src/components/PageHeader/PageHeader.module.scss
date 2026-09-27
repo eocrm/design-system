@@ -162,8 +162,8 @@
   align-items: center;
   flex-wrap: wrap;
 
-  // Wrapped rows end at the right edge like the first one (the narrow
-  // media query below resets this to flex-start).
+  // Wrapped rows end at the right edge like the first one — on narrow
+  // viewports too, so the primary action stays at the thumb-side edge (#564).
   justify-content: flex-end;
   gap: var(--page-header-actions-gap);
 
@@ -194,8 +194,6 @@
   }
 
   .actions {
-    justify-content: flex-start;
-
     // stylelint-disable-next-line property-disallowed-list -- internal responsive spacing in this layout primitive
     margin-top: var(--page-header-actions-margin-top-narrow);
   }

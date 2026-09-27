@@ -1,0 +1,78 @@
+@use './DateStrip.tokens';
+@use '../_internal/choiceTile' as tile;
+
+.root {
+  // UA fieldset reset (precedent: Radio/RadioGroup.module.scss).
+  // stylelint-disable-next-line property-disallowed-list -- UA fieldset reset, not layout
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--date-strip-header-gap);
+  container-type: inline-size;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--date-strip-header-gap);
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(var(--date-strip-columns, 7), minmax(0, 1fr));
+  gap: var(--date-strip-gap);
+}
+
+.tile {
+  @include tile.choice-tile(
+    $input: '.input',
+    $bg: var(--date-strip-tile-bg),
+    $bg-hover: var(--date-strip-tile-bg-hover),
+    $fg: var(--date-strip-tile-fg),
+    $border: var(--date-strip-tile-border),
+    $bg-checked: var(--date-strip-tile-bg-checked),
+    $bg-checked-hover: var(--date-strip-tile-bg-checked-hover),
+    $fg-checked: var(--date-strip-tile-fg-checked),
+    $radius: var(--date-strip-tile-radius),
+    $ring: var(--date-strip-tile-ring),
+    $opacity-disabled: var(--date-strip-tile-opacity-disabled)
+  );
+
+  padding: var(--date-strip-tile-padding-y) 0;
+}
+
+// Needs a real declaration so CSS Modules emits the class the mixin targets.
+.input {
+  opacity: var(--opacity-hidden);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.dow {
+  font-size: var(--date-strip-dow-font-size);
+}
+
+.num {
+  font-size: var(--date-strip-num-font-size);
+  font-weight: var(--date-strip-num-font-weight);
+}
+
+.count {
+  font-size: var(--date-strip-count-font-size);
+  white-space: nowrap;
+}
+
+// Narrow strip: 7 tiles can't fit "9 free" — the tile's name still carries it.
+@container (max-width: 30rem) {
+  .count {
+    display: none;
+  }
+}

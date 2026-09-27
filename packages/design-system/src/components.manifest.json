@@ -70,6 +70,7 @@
       "Calendar",
       "ConfirmationPopover",
       "DataTable",
+      "DateStrip",
       "Drawer",
       "FileUpload",
       "FlowCanvas",
@@ -137,6 +138,7 @@
     "composedBy": [
       "Calendar",
       "ConfirmationPopover",
+      "DateStrip",
       "OptionsPicker",
       "RichTextEditor",
       "Tour"
@@ -223,6 +225,18 @@
     ],
     "composedBy": []
   },
+  "DateStrip": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "Button",
+      "Cluster",
+      "LiveRegion",
+      "Title",
+      "VisuallyHidden"
+    ],
+    "composedBy": []
+  },
   "DefinitionList": {
     "tier": "primitive",
     "cluster": "Display",
@@ -262,8 +276,8 @@
     "composedBy": [
       "DataTable",
       "LiquidEditor",
-      "RichTextEditor",
-      "StatusMenu"
+      "PillMenu",
+      "RichTextEditor"
     ]
   },
   "EmojiPicker": {
@@ -467,7 +481,9 @@
     "composes": [
       "VisuallyHidden"
     ],
-    "composedBy": []
+    "composedBy": [
+      "DateStrip"
+    ]
   },
   "Logo": {
     "tier": "primitive",
@@ -571,6 +587,14 @@
     "composes": [
       "Input",
       "Select"
+    ],
+    "composedBy": []
+  },
+  "PillMenu": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "DropdownMenu"
     ],
     "composedBy": []
   },
@@ -689,6 +713,15 @@
       "RichTextEditor"
     ]
   },
+  "SlotGrid": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "Text",
+      "Title"
+    ],
+    "composedBy": []
+  },
   "SocialButton": {
     "tier": "composition",
     "cluster": "Forms",
@@ -732,14 +765,6 @@
       "Tour"
     ]
   },
-  "StatusMenu": {
-    "tier": "composition",
-    "cluster": "Forms",
-    "composes": [
-      "DropdownMenu"
-    ],
-    "composedBy": []
-  },
   "Sticky": {
     "tier": "primitive",
     "cluster": "Layout",
@@ -780,7 +805,8 @@
       "OptionsPicker",
       "PersonDisplay",
       "RichTextEditor",
-      "SettingRow"
+      "SettingRow",
+      "SlotGrid"
     ]
   },
   "Textarea": {
@@ -815,8 +841,10 @@
     "cluster": "Display",
     "composes": [],
     "composedBy": [
+      "DateStrip",
       "FormSection",
-      "PageHeader"
+      "PageHeader",
+      "SlotGrid"
     ]
   },
   "Toast": {
@@ -862,6 +890,7 @@
     "cluster": "Accessibility",
     "composes": [],
     "composedBy": [
+      "DateStrip",
       "LiveRegion"
     ]
   }
