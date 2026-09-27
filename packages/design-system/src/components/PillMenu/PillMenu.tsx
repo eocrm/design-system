@@ -27,7 +27,8 @@ export interface PillMenuOption {
    * Optional glyph rendered before the name — in the pill and in its menu
    * row (e.g. a task-type or priority icon). Decorative: wrapped
    * `aria-hidden`, so the name alone is announced. Size it to the text
-   * (~14px lucide icon).
+   * (~14px lucide icon), at most 16px: menu rows place it in DropdownMenu's
+   * fixed 16px icon slot.
    */
   icon?: ReactNode;
   /** Semantic category → default color: to_do slate / in_progress blue / open violet / done green / won green / lost red. */
@@ -76,7 +77,7 @@ function statusColorStyle(status: PillMenuOption): CSSProperties {
   return { '--pill-menu-bg': bg, '--pill-menu-fg': fg } as CSSProperties;
 }
 
-/** Renders the optional icon + name, shared by the pill, chip and rows. */
+/** Renders the optional icon + name, shared by the pill and the read-only chip (rows use Item's icon slot). */
 function OptionContent({ option }: { option: PillMenuOption }) {
   return (
     <>
