@@ -63,8 +63,11 @@
   // Forced colors (Windows High Contrast) drops backgrounds, which is all
   // that marks the checked tile — add an outline outside its border (text
   // color, forced to a system color) so checked still reads as different.
+  // Not while focus-visible: this rule would come after the focus ring and
+  // replace it (arrows select as they move, so the focused tile is usually
+  // the checked one) — the ring is the stronger signal there.
   @media (forced-colors: active) {
-    &:has(#{$input}:checked) {
+    &:has(#{$input}:checked:not(:focus-visible)) {
       outline: var(--border-width) solid currentcolor;
     }
   }

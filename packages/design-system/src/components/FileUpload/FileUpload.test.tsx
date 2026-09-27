@@ -697,6 +697,8 @@ describe('FileUpload in Field (#568)', () => {
     input.addEventListener('click', onInputClick);
     await userEvent.click(screen.getByText('Logo'));
     expect(onInputClick).toHaveBeenCalled();
+    // The bubbled click must not re-click the input (double picker open).
+    expect(click).not.toHaveBeenCalled();
     click.mockRestore();
   });
 });

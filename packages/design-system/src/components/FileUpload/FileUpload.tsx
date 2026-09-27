@@ -54,6 +54,8 @@ export interface FileUploadProps extends Omit<HTMLAttributes<HTMLDivElement>, 'o
    * the only labelable element, so a `<label for>` (Field / SettingRow wire
    * one) opens the file picker when clicked (#568). A `role="button"` div is
    * not labelable, so the id on the dropzone would make the label click a no-op.
+   * While the dropzone is hidden (single mode with a file) the id falls back
+   * to the root, so scroll-to-id / focus-first-invalid still find the field.
    */
   id?: string;
   /** Marks the dropzone `aria-invalid` for Field / SettingRow composition. @default false */

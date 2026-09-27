@@ -766,7 +766,7 @@
           "type": "boolean",
           "required": false,
           "default": "false",
-          "description": "Caps the cluster at its container's width (`max-width: 100%`). Meant for\n`as=\"span\"` inside running text: an inline cluster otherwise sizes to its\ncontent, so a `<Text as=\"span\" truncate>` child with a long title makes\nthe cluster overflow the paragraph instead of ellipsizing at the line\nedge. Combine with `wrap={false}` + `minWidth0` + a truncating child.\nPhrasing-safe (still a span) — unlike `<Constrain maxWidth>`, which\nrenders a `<div>` that is invalid inside `<p>` (#571).\n\nFor an entity link row (icon, KEY, title, status, adornments) prefer\n`<EntityChip truncate trailing={…}>`, which does exactly this."
+          "description": "Caps the cluster at its container's width (`max-width: 100%`). Meant for\n`as=\"span\"` inside running text: an inline cluster otherwise sizes to its\ncontent, so a `<Text as=\"span\" truncate>` child with a long title makes\nthe cluster overflow the paragraph instead of ellipsizing at the line\nedge. Combine with `wrap={false}` + a truncating child. The chip is one\ninline box: if the text before it leaves too little room on the line, the\nwhole chip wraps to the next line, then ellipsizes at the full paragraph\nwidth. Phrasing-safe (still a span) — unlike `<Constrain maxWidth>`, which\nrenders a `<div>` that is invalid inside `<p>` (#571).\n\nFor an entity link row (icon, KEY, title, status, adornments) prefer\n`<EntityChip truncate trailing={…}>`, which does exactly this."
         },
         {
           "name": "wrap",
@@ -2124,7 +2124,7 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Placed on the hidden native `<input type=\"file\">`, not the root — it is\nthe only labelable element, so a `<label for>` (Field / SettingRow wire\none) opens the file picker when clicked (#568). A `role=\"button\"` div is\nnot labelable, so the id on the dropzone would make the label click a no-op."
+          "description": "Placed on the hidden native `<input type=\"file\">`, not the root — it is\nthe only labelable element, so a `<label for>` (Field / SettingRow wire\none) opens the file picker when clicked (#568). A `role=\"button\"` div is\nnot labelable, so the id on the dropzone would make the label click a no-op.\nWhile the dropzone is hidden (single mode with a file) the id falls back\nto the root, so scroll-to-id / focus-first-invalid still find the field."
         },
         {
           "name": "invalid",
@@ -4141,7 +4141,7 @@
           "type": "RenderLink",
           "required": false,
           "default": "",
-          "description": "Substitute how a link renders. Called per link with `{ href, text }` and the\ndefault `<a>` node; return your own node (e.g. a task/member chip) or the\n`defaultNode` to keep the standard anchor. Render-time only — the document\nmodel is unchanged, so serialization still emits a plain link."
+          "description": "Substitute how a link renders. Called per link with `{ href, text }` and the\ndefault `<a>` node; return your own node (e.g. a task/member chip) or the\n`defaultNode` to keep the standard anchor. Render-time only — the document\nmodel is unchanged, so serialization still emits a plain link.\n\nProse link styling (accent colour + underline) applies to BARE anchors\nonly: an `<a>` you return with any `className` — including a DS `<Link>` —\nkeeps its own decoration and colour entirely (#570)."
         },
         {
           "name": "renderMention",

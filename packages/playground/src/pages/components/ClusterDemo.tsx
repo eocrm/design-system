@@ -352,14 +352,14 @@ export function Demo() {
 
       <Example
         title="maxWidthFull — an inline chip that ellipsizes at the line edge"
-        description="An as='span' Cluster inside a paragraph sizes to its content, so a long truncating title makes it overflow the line. maxWidthFull caps it at the paragraph width (max-width: 100%) while staying a span. Pair with wrap={false} and minWidth0. Drag the resize handle to narrow the paragraph. (For an entity link row, EntityChip truncate + trailing does this for you.)"
+        description="An as='span' Cluster inside a paragraph sizes to its content, so a long truncating title makes it overflow the line. maxWidthFull caps it at the paragraph width (max-width: 100%) while staying a span. Pair with wrap={false}; the chip wraps to the next line as one unit when the preceding text leaves too little room. Drag the resize handle to narrow the paragraph. (For an entity link row, EntityChip truncate + trailing does this for you.)"
         code={`import { Badge, Cluster, Dot, Text } from '@eocrm/design-system';
 
 export function Demo() {
   return (
     <Text as="p">
       Blocked by{' '}
-      <Cluster as="span" gap="xs" align="center" wrap={false} minWidth0 maxWidthFull>
+      <Cluster as="span" gap="xs" align="center" wrap={false} maxWidthFull>
         <Dot color="violet" />
         <Text as="span" truncate>
           ENG-42 Migrate the reporting exports to the new async job runner
@@ -373,7 +373,7 @@ export function Demo() {
         <ResizablePreview initialWidth={360}>
           <Text as="p">
             Blocked by{' '}
-            <Cluster as="span" gap="xs" align="center" wrap={false} minWidth0 maxWidthFull>
+            <Cluster as="span" gap="xs" align="center" wrap={false} maxWidthFull>
               <Dot color="violet" />
               <Text as="span" truncate>
                 ENG-42 Migrate the reporting exports to the new async job runner

@@ -576,8 +576,9 @@ describe('Tooltip — tap exclusions (#567 review)', () => {
   it('a tap on a trigger inside a <label> does not open it (the label activates its control)', async () => {
     const user = userEvent.setup();
     render(
+      // No control inside: a label WITH one would move focus on tap and the
+      // blur would close the tooltip anyway, making this test pass vacuously.
       <label>
-        <input type="checkbox" />
         <Tooltip content="Why">
           <span tabIndex={0}>info</span>
         </Tooltip>
@@ -585,5 +586,34 @@ describe('Tooltip — tap exclusions (#567 review)', () => {
     );
     await user.pointer({ keys: '[TouchA]', target: screen.getByText('info') });
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
+  it('a pen contact is not a tap: it does not toggle the tooltip', async () => {
+    render(
+      <Tooltip content="Why" delay={10_000}>
+        <span tabIndex={0}>info</span>
+      </Tooltip>,
+    );
+    const trigger = screen.getByText('info');
+    const up = new Event('pointerup', { bubbles: true });
+    Object.assign(up, { pointerType: 'pen' });
+    act(() => {
+      trigger.dispatchEvent(up);
+    });
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
+  it('control: the same pointerup with pointerType touch does toggle it', () => {
+    render(
+      <Tooltip content="Why" delay={10_000}>
+        <span tabIndex={0}>info</span>
+      </Tooltip>,
+    );
+    const up = new Event('pointerup', { bubbles: true });
+    Object.assign(up, { pointerType: 'touch' });
+    act(() => {
+      screen.getByText('info').dispatchEvent(up);
+    });
+    expect(screen.getByRole('tooltip')).toBeInTheDocument();
   });
 });

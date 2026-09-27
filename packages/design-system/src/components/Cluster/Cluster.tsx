@@ -94,8 +94,10 @@ export interface ClusterProps extends HTMLAttributes<HTMLElement> {
    * `as="span"` inside running text: an inline cluster otherwise sizes to its
    * content, so a `<Text as="span" truncate>` child with a long title makes
    * the cluster overflow the paragraph instead of ellipsizing at the line
-   * edge. Combine with `wrap={false}` + `minWidth0` + a truncating child.
-   * Phrasing-safe (still a span) — unlike `<Constrain maxWidth>`, which
+   * edge. Combine with `wrap={false}` + a truncating child. The chip is one
+   * inline box: if the text before it leaves too little room on the line, the
+   * whole chip wraps to the next line, then ellipsizes at the full paragraph
+   * width. Phrasing-safe (still a span) — unlike `<Constrain maxWidth>`, which
    * renders a `<div>` that is invalid inside `<p>` (#571).
    *
    * For an entity link row (icon, KEY, title, status, adornments) prefer

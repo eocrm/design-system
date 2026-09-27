@@ -344,6 +344,22 @@ describe('Split collapseBelow — the container query can actually match (#372)'
       expect(onChange).toHaveBeenCalledWith(true); // 800 - 32 = 768
     });
 
+    it('content-box: padding is not subtracted (computed width is already the content box)', () => {
+      const onChange = vi.fn();
+      widthPx = 769;
+      render(
+        <Split
+          aside="a"
+          collapseBelow="lg"
+          onCollapsedChange={onChange}
+          style={{ paddingLeft: '20px', paddingRight: '12px' }}
+        >
+          m
+        </Split>,
+      );
+      expect(onChange.mock.calls).toEqual([[false]]);
+    });
+
     it('ignores CSS transforms (reads layout width, not the scaled rect)', () => {
       const onChange = vi.fn();
       // A Modal entrance scale(0.96) shrinks the rect to 960 * 0.96 < 1000 —
