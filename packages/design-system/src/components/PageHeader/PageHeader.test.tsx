@@ -373,3 +373,23 @@ describe('PageHeader.BackButton — empty aria-label', () => {
     expect(screen.getByRole('link', { name: 'Go back' })).toBeInTheDocument();
   });
 });
+
+describe('PageHeader.Title — truncate (#573)', () => {
+  it('forwards truncate to Title', () => {
+    render(
+      <PageHeader>
+        <PageHeader.Title truncate>A very long record title</PageHeader.Title>
+      </PageHeader>,
+    );
+    expect(screen.getByRole('heading', { level: 1 }).className).toMatch(/truncate/);
+  });
+
+  it('does not truncate by default', () => {
+    render(
+      <PageHeader>
+        <PageHeader.Title>Short</PageHeader.Title>
+      </PageHeader>,
+    );
+    expect(screen.getByRole('heading', { level: 1 }).className).not.toMatch(/truncate/);
+  });
+});

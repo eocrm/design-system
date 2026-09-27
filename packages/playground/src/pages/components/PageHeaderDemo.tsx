@@ -90,6 +90,24 @@ function SectionHeaderDemo() {
   );
 }
 
+function TruncatedTitleDemo() {
+  return (
+    <PageHeader>
+      <PageHeader.Title truncate>
+        ENG-15 Migrate the legacy billing exports to the new reporting pipeline before Q4 close
+      </PageHeader.Title>
+      <PageHeader.Meta>
+        <Badge tone="info">Task</Badge>
+        <Badge tone="warning">In progress</Badge>
+      </PageHeader.Meta>
+      <PageHeader.Actions>
+        <Button variant="secondary">Assign</Button>
+        <Button>Edit</Button>
+      </PageHeader.Actions>
+    </PageHeader>
+  );
+}
+
 export function PageHeaderDemo() {
   return (
     <DemoLayout
@@ -223,6 +241,32 @@ export function SectionHeaderDemo() {
 }`}
       >
         <SectionHeaderDemo />
+      </Example>
+
+      <Example
+        title="Truncated title (record detail)"
+        description="`truncate` keeps a long title on one line, ending in an ellipsis at the actions column. Status badges go in Meta — inline after the title text they would be clipped with it."
+        code={`import { Badge, Button, PageHeader } from '@eocrm/design-system';
+
+export function TruncatedTitleDemo() {
+  return (
+    <PageHeader>
+      <PageHeader.Title truncate>
+        ENG-15 Migrate the legacy billing exports to the new reporting pipeline before Q4 close
+      </PageHeader.Title>
+      <PageHeader.Meta>
+        <Badge tone="info">Task</Badge>
+        <Badge tone="warning">In progress</Badge>
+      </PageHeader.Meta>
+      <PageHeader.Actions>
+        <Button variant="secondary">Assign</Button>
+        <Button>Edit</Button>
+      </PageHeader.Actions>
+    </PageHeader>
+  );
+}`}
+      >
+        <TruncatedTitleDemo />
       </Example>
     </DemoLayout>
   );

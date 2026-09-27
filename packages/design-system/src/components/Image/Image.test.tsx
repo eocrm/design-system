@@ -1,4 +1,4 @@
-import { createRef } from 'react';
+import { createRef, useLayoutEffect, type ReactNode } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Image } from './Image';
@@ -443,5 +443,24 @@ describe('Image — a fluid tile with no room (#542)', () => {
     // A boxless fallback is in flow and sizes the wrapper itself.
     rerender(<Image src={SRC} alt="x" fallback={<span>nope</span>} />);
     expect(wrapper.className).not.toMatch(/unreserved/);
+  });
+});
+
+describe('Image — early load (#574)', () => {
+  // #574: a cached/fast image can fire `load` before the mount's passive
+  // effects run. The src-reset must not undo it on the first mount.
+  it('stays loaded when the image loads before mount effects run', () => {
+    function LoadEarly({ children }: { children: ReactNode }) {
+      useLayoutEffect(() => {
+        fireEvent.load(document.querySelector('img') as HTMLImageElement);
+      }, []);
+      return <>{children}</>;
+    }
+    const { container } = render(
+      <LoadEarly>
+        <Image src={SRC} alt="Logo" />
+      </LoadEarly>,
+    );
+    expect(container.firstElementChild).toHaveAttribute('data-state', 'loaded');
   });
 });

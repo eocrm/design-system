@@ -1,4 +1,4 @@
-import { forwardRef, useEffect, useState, type CSSProperties, type HTMLAttributes } from 'react';
+import { forwardRef, useState, type CSSProperties, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
 import { Tooltip } from '../Tooltip';
 import { useTranslation } from '../../i18n';
@@ -146,10 +146,14 @@ export const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(function Avatar(
   const resolvedSize: AvatarSize = size ?? group?.size ?? 'md';
   const resolvedTooltip: boolean = tooltip ?? group?.tooltip ?? false;
 
+  // Reset on src change during render, not in an effect: a mount-time effect
+  // undid an error that fired before it ran (#574).
   const [imageBroken, setImageBroken] = useState(false);
-  useEffect(() => {
+  const [prevSrc, setPrevSrc] = useState(src);
+  if (src !== prevSrc) {
+    setPrevSrc(src);
     setImageBroken(false);
-  }, [src]);
+  }
 
   const hasImage = typeof src === 'string' && src.trim() !== '' && !imageBroken;
   const trimmedName = name.trim();

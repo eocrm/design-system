@@ -3,7 +3,7 @@ import { parse, type Declaration, type Root, type Rule } from 'postcss';
 import { compile } from 'sass';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createRef } from 'react';
+import { createRef, useLayoutEffect, type ReactNode } from 'react';
 import { Avatar, avatarColorIndex } from './Avatar';
 
 // The presence shapes are pure CSS and jsdom computes no styles, so they are
@@ -281,5 +281,25 @@ describe('Avatar', () => {
     await user.hover(avatar);
     const tip = await screen.findByRole('tooltip', {}, { timeout: 2000 });
     expect(tip).toHaveTextContent('Alex');
+  });
+});
+
+// #574 (sibling): an image that errors before the mount's passive effects run
+// must stay broken — falling back to initials, not a broken <img>.
+describe('Avatar — early image error', () => {
+  it('shows initials when the image errors before mount effects run', () => {
+    function ErrorEarly({ children }: { children: ReactNode }) {
+      useLayoutEffect(() => {
+        fireEvent.error(document.querySelector('img') as HTMLImageElement);
+      }, []);
+      return <>{children}</>;
+    }
+    const { container } = render(
+      <ErrorEarly>
+        <Avatar name="Alex Kim" src="https://example.com/a.png" />
+      </ErrorEarly>,
+    );
+    expect(container.querySelector('img')).toBeNull();
+    expect(container).toHaveTextContent('AK');
   });
 });
