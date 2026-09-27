@@ -3,7 +3,7 @@ import type { AvatarSize } from './Avatar';
 
 export interface AvatarGroupContextValue {
   /** Uniform size for every avatar in the group. */
-  size: AvatarSize;
+  size: Exclude<AvatarSize, 'inline'>;
   /** Default tooltip behavior for child avatars. */
   tooltip: boolean;
 }

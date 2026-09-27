@@ -17,7 +17,8 @@
 
   // Size-keyed gap — descriptive text doesn't need to crowd the avatar.
   // sm tightens; md and lg share the same outer gap.
-  &[data-size='sm'] {
+  &[data-size='sm'],
+  &[data-size='inline'] {
     gap: var(--person-display-gap-sm);
   }
 }

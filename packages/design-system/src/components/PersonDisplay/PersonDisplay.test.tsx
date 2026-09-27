@@ -272,3 +272,30 @@ describe('PersonDisplay stylesheet — self-containment (#527)', () => {
     expect(decl(description, 'min-width')).toMatchObject({ value: '0' });
   });
 });
+
+describe('PersonDisplay — size="inline" (#579)', () => {
+  it('uses the inline Avatar and a bare Name that inherits size, weight and colour', () => {
+    const { container } = render(
+      <PersonDisplay size="inline">
+        <PersonDisplay.Avatar name="Avery Liu" />
+        <PersonDisplay.Name>Avery Liu</PersonDisplay.Name>
+      </PersonDisplay>,
+    );
+    const root = container.firstChild as HTMLElement;
+    expect(root).toHaveAttribute('data-size', 'inline');
+    expect(screen.getByRole('img', { name: 'Avery Liu' }).className).toMatch(/inline/);
+    // No <Text> wrapper: Text always sets a size and weight class.
+    const name = screen.getByText('Avery Liu', { selector: 'span:not([role])' });
+    expect(name.children).toHaveLength(0);
+  });
+
+  it('a linked Name also renders bare', () => {
+    render(
+      <PersonDisplay size="inline">
+        <PersonDisplay.Avatar name="Avery Liu" />
+        <PersonDisplay.Name href="/m/avery">Avery Liu</PersonDisplay.Name>
+      </PersonDisplay>,
+    );
+    expect(screen.getByRole('link', { name: 'Avery Liu' }).children).toHaveLength(0);
+  });
+});

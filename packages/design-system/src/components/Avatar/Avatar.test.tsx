@@ -312,3 +312,30 @@ describe('Avatar — early image error', () => {
     expect(container.querySelector('img')).toHaveAttribute('src', 'https://example.com/b.png');
   });
 });
+
+describe('Avatar — size="inline" (#579)', () => {
+  it('applies the inline class', () => {
+    const { container } = render(<Avatar name="Alex Kim" size="inline" />);
+    expect((container.firstChild as HTMLElement).className).toMatch(/inline/);
+  });
+
+  it('is one text line tall; the wrapper keeps the inherited font-size so 1lh is the text line', () => {
+    const inline = compiledRule(stylesheet, '.inline');
+    expect(compiledDeclaration(inline, 'width')?.value).toBe('var(--avatar-size-inline)');
+    expect(compiledDeclaration(inline, 'height')?.value).toBe('var(--avatar-size-inline)');
+    // A font-size here would change what `lh` resolves against.
+    expect(compiledDeclaration(inline, 'font-size')).toBeUndefined();
+    const crop = compiledRule(stylesheet, '.inline .crop');
+    expect(compiledDeclaration(crop, 'font-size')?.value).toBe('var(--avatar-font-size-inline)');
+    const tokens = parse(compile(resolve(__dirname, './Avatar.tokens.scss')).css);
+    let size = '';
+    tokens.walkDecls('--avatar-size-inline', (d) => {
+      size = d.value;
+    });
+    expect(size).toBe('1lh');
+  });
+
+  it('sizes the presence dot', () => {
+    expect(compiledRule(stylesheet, '.inline .presence')).toBeDefined();
+  });
+});

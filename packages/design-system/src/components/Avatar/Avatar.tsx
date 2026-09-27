@@ -5,8 +5,11 @@ import { useTranslation } from '../../i18n';
 import { useAvatarGroup } from './AvatarGroupContext';
 import styles from './Avatar.module.scss';
 
-/** Diameter. Matches the shared `--size-*` scale so a Button next to an Avatar lines up. */
-export type AvatarSize = 'sm' | 'md' | 'lg' | 'xl';
+/**
+ * Diameter. Matches the shared `--size-*` scale so a Button next to an Avatar
+ * lines up — except `inline`, which is one text line tall (`1lh`).
+ */
+export type AvatarSize = 'inline' | 'sm' | 'md' | 'lg' | 'xl';
 
 /** Presence dot rendered in the bottom-right corner. Omit to render no dot. */
 export type AvatarStatus = 'online' | 'busy' | 'away' | 'offline';
@@ -31,6 +34,10 @@ export interface AvatarProps extends HTMLAttributes<HTMLSpanElement> {
    * - `md` (32px, default) — most uses.
    * - `lg` (40px) — detail-page headers.
    * - `xl` (80px) — member-card popovers / profile headers.
+   * - `inline` — one line of the surrounding text tall (`1lh`), initials
+   *   scaled to match, so a person in running text or a `DefinitionList` row
+   *   is no taller than its text neighbours. Follows the text size; no size
+   *   decision per call site. Not available on `<AvatarGroup>`.
    *
    * Inside `<AvatarGroup>`, the group's `size` overrides this.
    */
@@ -55,6 +62,7 @@ export interface AvatarProps extends HTMLAttributes<HTMLSpanElement> {
 }
 
 const sizeClass: Record<AvatarSize, string> = {
+  inline: styles.inline,
   sm: styles.sm,
   md: styles.md,
   lg: styles.lg,

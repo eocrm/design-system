@@ -27,7 +27,7 @@ export interface AvatarGroupProps extends HTMLAttributes<HTMLDivElement> {
    * - `lg` (40px) — detail-page headers.
    * - `xl` (80px) — member-card popovers / profile headers.
    */
-  size?: AvatarSize;
+  size?: Exclude<AvatarSize, 'inline'>;
 
   /**
    * Maximum number of visible avatars. Children beyond this count collapse

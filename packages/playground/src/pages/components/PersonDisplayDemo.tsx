@@ -1,4 +1,4 @@
-import { Badge, Link, PersonDisplay, Stack } from '@eocrm/design-system';
+import { Badge, DefinitionList, Link, PersonDisplay, Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
@@ -238,6 +238,81 @@ export function Demo() {
             </PersonDisplay>
           </Stack>
         </InputExample>
+      </Example>
+      <Example
+        title="Inline — in a details list"
+        description="size=inline makes the avatar one text line tall and the name inherit the row's size, weight and colour, so a person row is exactly as tall as its plain-text, Badge and link neighbours. It follows the text size; skip Descriptions."
+        code={`import { Badge, DefinitionList, Link, PersonDisplay } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <DefinitionList dividers>
+    <DefinitionList.Item>
+      <DefinitionList.Term>Status</DefinitionList.Term>
+      <DefinitionList.Description>
+        <Badge tone="info">In progress</Badge>
+      </DefinitionList.Description>
+    </DefinitionList.Item>
+    <DefinitionList.Item>
+      <DefinitionList.Term>Assignee</DefinitionList.Term>
+      <DefinitionList.Description>
+        <PersonDisplay size="inline">
+          <PersonDisplay.Avatar name="Avery Liu" />
+          <PersonDisplay.Name href="#">Avery Liu</PersonDisplay.Name>
+        </PersonDisplay>
+      </DefinitionList.Description>
+    </DefinitionList.Item>
+    <DefinitionList.Item>
+      <DefinitionList.Term>Reporter</DefinitionList.Term>
+      <DefinitionList.Description>
+        <PersonDisplay size="inline">
+          <PersonDisplay.Avatar name="Sarah Chen" />
+          <PersonDisplay.Name>Sarah Chen</PersonDisplay.Name>
+        </PersonDisplay>
+      </DefinitionList.Description>
+    </DefinitionList.Item>
+    <DefinitionList.Item>
+      <DefinitionList.Term>Space</DefinitionList.Term>
+      <DefinitionList.Description>
+        <Link href="#">Engineering</Link>
+      </DefinitionList.Description>
+    </DefinitionList.Item>
+  </DefinitionList>
+  );
+}`}
+      >
+        <DefinitionList dividers>
+          <DefinitionList.Item>
+            <DefinitionList.Term>Status</DefinitionList.Term>
+            <DefinitionList.Description>
+              <Badge tone="info">In progress</Badge>
+            </DefinitionList.Description>
+          </DefinitionList.Item>
+          <DefinitionList.Item>
+            <DefinitionList.Term>Assignee</DefinitionList.Term>
+            <DefinitionList.Description>
+              <PersonDisplay size="inline">
+                <PersonDisplay.Avatar name="Avery Liu" />
+                <PersonDisplay.Name href="#">Avery Liu</PersonDisplay.Name>
+              </PersonDisplay>
+            </DefinitionList.Description>
+          </DefinitionList.Item>
+          <DefinitionList.Item>
+            <DefinitionList.Term>Reporter</DefinitionList.Term>
+            <DefinitionList.Description>
+              <PersonDisplay size="inline">
+                <PersonDisplay.Avatar name="Sarah Chen" />
+                <PersonDisplay.Name>Sarah Chen</PersonDisplay.Name>
+              </PersonDisplay>
+            </DefinitionList.Description>
+          </DefinitionList.Item>
+          <DefinitionList.Item>
+            <DefinitionList.Term>Space</DefinitionList.Term>
+            <DefinitionList.Description>
+              <Link href="#">Engineering</Link>
+            </DefinitionList.Description>
+          </DefinitionList.Item>
+        </DefinitionList>
       </Example>
     </DemoLayout>
   );

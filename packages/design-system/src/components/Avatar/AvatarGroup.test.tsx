@@ -1,3 +1,4 @@
+import type { ComponentProps } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Avatar } from './Avatar';
@@ -114,5 +115,14 @@ describe('AvatarGroup', () => {
     expect(screen.queryByRole('img', { name: /more avatars/ })).toBeNull();
     expect(screen.queryByRole('button', { name: /more avatars/ })).toBeNull();
     expect(screen.getAllByRole('listitem')).toHaveLength(3);
+  });
+});
+
+describe('AvatarGroup — no inline size (#579)', () => {
+  it('rejects size="inline" at the type level', () => {
+    // inline is a text-row size; a group has fixed per-size overlaps.
+    // @ts-expect-error — not assignable to AvatarGroup's size
+    const props: ComponentProps<typeof AvatarGroup> = { size: 'inline', children: null };
+    expect(props.size).toBe('inline');
   });
 });

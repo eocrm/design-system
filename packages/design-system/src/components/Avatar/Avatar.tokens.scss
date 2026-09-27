@@ -7,6 +7,10 @@
   --avatar-font-weight: var(--font-weight-semibold);
 
   // Size variants — square dimension + initials font-size per size
+  // `inline` is font-relative (#579): one text line tall, initials ~0.7 of
+  // the text (≈ the sm ratio of initials to diameter).
+  --avatar-size-inline: 1lh;
+  --avatar-font-size-inline: 0.7em;
   --avatar-size-sm: var(--size-sm);
   --avatar-size-md: var(--size-md);
   --avatar-size-lg: var(--size-lg);
