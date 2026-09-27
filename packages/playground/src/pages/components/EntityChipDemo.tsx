@@ -312,7 +312,7 @@ export function Demo() {
             { kind: 'text', text: 'Reported', color: 'amber' },
           ]}
         />{' '}
-        and <EntityChip href="#" icon={<Building2 />} label="Acme Corp" />.
+        and <EntityChip href="#" icon={<Building2 size={14} />} label="Acme Corp" />.
       </Text>
       <EntityChip
         href="#"
@@ -342,7 +342,7 @@ export function Demo() {
                 { kind: 'text', text: 'Reported', color: 'amber' },
               ]}
             />{' '}
-            and <EntityChip href="#" icon={<Building2 />} label="Acme Corp" />.
+            and <EntityChip href="#" icon={<Building2 size={14} />} label="Acme Corp" />.
           </Text>
           <ResizablePreview>
             <EntityChip
