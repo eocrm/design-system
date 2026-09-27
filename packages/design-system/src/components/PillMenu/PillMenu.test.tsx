@@ -1,8 +1,10 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
-import { PillMenu, StatusMenu, type PillMenuOption } from './PillMenu';
+import { PillMenu, type PillMenuOption } from './PillMenu';
 import { I18nProvider } from '../../i18n/I18nProvider';
 
 beforeEach(() => {
@@ -202,7 +204,7 @@ it('mounts the region EMPTY, so the word always arrives as a change', () => {
   const html = renderToStaticMarkup(<PillMenu current={inProgress} options={options} busy />);
   // Asserted as an EMPTY element, not as "does not contain the word". The
   // word-based form went blind the moment anyone renamed the i18n string:
-  // review verified that reverting the deferral AND renaming `statusMenu.busy`
+  // review verified that reverting the deferral AND renaming `pillMenu.busy`
   // made this pass against the very bug it pins. This shape cannot be
   // satisfied by a rename, and it also pins `aria-live="polite"`.
   //
@@ -268,6 +270,7 @@ describe('PillMenu — general value menu (#572)', () => {
     const item = screen.getAllByRole('menuitem')[0];
     expect(item).toContainElement(screen.getByTestId('opt-icon-0'));
     expect(item).toHaveAccessibleName(options[0].name);
+    expect(screen.getByTestId('opt-icon-0').parentElement).toHaveAttribute('aria-hidden', 'true');
   });
 
   it('read-only chip renders the icon too', () => {
@@ -275,7 +278,24 @@ describe('PillMenu — general value menu (#572)', () => {
     expect(screen.getByTestId('ro-icon').parentElement).toHaveAttribute('aria-hidden', 'true');
   });
 
-  it('StatusMenu is a deprecated alias of PillMenu', () => {
-    expect(StatusMenu).toBe(PillMenu);
+  it('typeahead still selects rows by name, with or without icons', async () => {
+    const onSelect = vi.fn();
+    render(
+      <PillMenu
+        current={inProgress}
+        options={[toDo, { ...done, icon: <svg /> }]}
+        onSelect={onSelect}
+      />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: 'Change status: In progress' }));
+    await userEvent.keyboard('d{Enter}');
+    expect(onSelect).toHaveBeenCalledWith(done.id);
+  });
+
+  it('row icons take the row colour, not the menu grey', () => {
+    const scss = readFileSync(resolve(__dirname, 'PillMenu.module.scss'), 'utf8');
+    expect(scss).toMatch(
+      /\.option\.option\s*\{[^}]*--dropdown-menu-icon-fg:\s*var\(--pill-menu-fg\)/,
+    );
   });
 });

@@ -42,8 +42,9 @@ export interface PillMenuProps extends Omit<HTMLAttributes<HTMLElement>, 'onSele
   /**
    * What the value IS, for the trigger's accessible name: `label="type"` →
    * "Change type: Bug". Default: the localized "status" ("Change status: …").
-   * Pass it lower-case as it reads mid-sentence, and in the UI's language —
-   * it is data, not a translatable string.
+   * Pass it as it reads right after "Change" / "Изменить", lower-case, in the
+   * UI's language — it is data, not a translatable string. In ru that is the
+   * accusative: `label="категорию"`, not "категория".
    */
   label?: string;
   /**
@@ -92,7 +93,7 @@ function OptionContent({ option }: { option: PillMenuOption }) {
 /**
  * Coloured value menu: a coloured pill trigger that opens a menu of values,
  * each row fully coloured to its own value — for a workflow status, a task
- * type, a priority, any small categorical value. Formerly `StatusMenu` (#572).
+ * type, a priority, any small categorical value.
  * Composes `<DropdownMenu>` internally. Renders read-only (a static coloured
  * chip, no button) when `options` is omitted or empty.
  *
@@ -246,24 +247,16 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
             onSelect={() => onSelect?.(option.id)}
             className={styles.option}
             style={statusColorStyle(option)}
+            // The name stays a plain string child: DropdownMenu's typeahead
+            // only reads string children, so wrapping it broke type-to-select.
+            // The glyph goes in Item's own fixed-size icon slot (aligned rows,
+            // item gap) instead.
+            icon={option.icon != null ? <span aria-hidden="true">{option.icon}</span> : undefined}
           >
-            <OptionContent option={option} />
+            {option.name}
           </DropdownMenu.Item>
         ))}
       </DropdownMenu.Content>
     </DropdownMenu>
   );
 });
-
-/**
- * @deprecated Renamed to {@link PillMenu} (#572) — it is no longer
- * status-specific. Same component, same props; this alias is removed in the
- * next minor release. Migrate: `import { PillMenu } from '@eocrm/design-system'`.
- */
-export const StatusMenu = PillMenu;
-/** @deprecated Renamed to {@link PillMenuProps} (#572). */
-export type StatusMenuProps = PillMenuProps;
-/** @deprecated Renamed to {@link PillMenuOption} (#572). */
-export type StatusMenuStatus = PillMenuOption;
-/** @deprecated Renamed to {@link PillMenuCategory} (#572). */
-export type StatusMenuCategory = PillMenuCategory;

@@ -2066,7 +2066,7 @@ import { Link as RouterLink } from 'react-router-dom';
 
 ### `<PillMenu>` — coloured value menu (status, type, priority…)
 
-Formerly `StatusMenu` (#572). `StatusMenu` / `StatusMenuProps` / `StatusMenuStatus` / `StatusMenuCategory` remain as deprecated aliases for one release — migrate to `PillMenu` / `PillMenuProps` / `PillMenuOption` / `PillMenuCategory`. The component tokens are now `--pill-menu-*` (were `--status-menu-*`) and the i18n namespace is `pillMenu` (was `statusMenu`).
+Renamed from `StatusMenu` (#572) — `StatusMenu` / `StatusMenuProps` / `StatusMenuStatus` / `StatusMenuCategory` no longer exist; use `PillMenu` / `PillMenuProps` / `PillMenuOption` / `PillMenuCategory`. Component tokens are `--pill-menu-*`, the i18n namespace is `pillMenu`.
 
 ```tsx
 <PillMenu

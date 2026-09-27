@@ -153,16 +153,6 @@ export type {
 
 export { PillMenu } from './components/PillMenu';
 export type { PillMenuProps, PillMenuOption, PillMenuCategory } from './components/PillMenu';
-/** @deprecated Renamed to `PillMenu` (#572); removed in the next minor release. */
-export { StatusMenu } from './components/PillMenu';
-export type {
-  /** @deprecated Renamed to `PillMenuProps`. */
-  StatusMenuProps,
-  /** @deprecated Renamed to `PillMenuOption`. */
-  StatusMenuStatus,
-  /** @deprecated Renamed to `PillMenuCategory`. */
-  StatusMenuCategory,
-} from './components/PillMenu';
 
 export { Timeline } from './components/Timeline';
 export type { TimelineProps, TimelineItemProps } from './components/Timeline';

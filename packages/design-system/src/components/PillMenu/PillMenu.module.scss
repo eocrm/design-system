@@ -51,6 +51,10 @@
 // background/color here too, since DropdownMenu's rule would otherwise be
 // the only one setting `background` at all.
 .option.option {
+  // Item's icon slot defaults to a muted grey; on a coloured row the glyph
+  // takes the row's colour, like the pill's.
+  --dropdown-menu-icon-fg: var(--pill-menu-fg);
+
   background: var(--pill-menu-bg);
   color: var(--pill-menu-fg);
 }

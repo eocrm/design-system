@@ -28,7 +28,7 @@ export function PillMenuDemo() {
     <DemoLayout
       name="PillMenu"
       componentName="PillMenu"
-      description="Coloured value menu (formerly StatusMenu): a coloured pill trigger that opens a menu of values, each row fully coloured to its own value — a workflow status, a task type, a priority. Composes DropdownMenu. Renders a read-only coloured chip when options is omitted or empty. StatusMenu remains as a deprecated alias for one release."
+      description="Coloured value menu: a coloured pill trigger that opens a menu of values, each row fully coloured to its own value — a workflow status, a task type, a priority. Composes DropdownMenu. Renders a read-only coloured chip when options is omitted or empty."
       files={getComponentFiles('PillMenu')}
     >
       <Example

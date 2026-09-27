@@ -202,7 +202,7 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     to: '/components/pill-menu',
     name: 'PillMenu',
     description:
-      'Status-transition dropdown — colored pill trigger, each menu row colored to its own status. Composes DropdownMenu; read-only chip when options is omitted.',
+      'Coloured value menu (status, task type, priority) — coloured pill trigger, each row coloured to its own value, optional icons. Composes DropdownMenu; read-only chip when options is omitted.',
     preview: SCHEMATICS['PillMenu'],
   },
   {

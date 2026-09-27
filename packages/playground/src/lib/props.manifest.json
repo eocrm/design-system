@@ -3939,7 +3939,7 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "What the value IS, for the trigger's accessible name: `label=\"type\"` →\n\"Change type: Bug\". Default: the localized \"status\" (\"Change status: …\").\nPass it lower-case as it reads mid-sentence, and in the UI's language —\nit is data, not a translatable string."
+          "description": "What the value IS, for the trigger's accessible name: `label=\"type\"` →\n\"Change type: Bug\". Default: the localized \"status\" (\"Change status: …\").\nPass it as it reads right after \"Change\" / \"Изменить\", lower-case, in the\nUI's language — it is data, not a translatable string. In ru that is the\naccusative: `label=\"категорию\"`, not \"категория\"."
         },
         {
           "name": "options",
