@@ -3013,6 +3013,13 @@
           "description": "Visual variant. See `LinkVariant` for descriptions."
         },
         {
+          "name": "underline",
+          "type": "LinkUnderline",
+          "required": false,
+          "default": "",
+          "description": "Underline behavior. See `LinkUnderline` for descriptions. Default: `'hover'`."
+        },
+        {
           "name": "children",
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
@@ -5947,6 +5954,7 @@
     "DefinitionListLayout": "\"horizontal\" | \"stacked\"",
     "DefinitionListSpacing": "\"sm\" | \"md\" | \"lg\"",
     "LinkVariant": "\"default\" | \"muted\" | \"subtle\"",
+    "LinkUnderline": "\"none\" | \"hover\" | \"always\"",
     "AccordionVariant": "\"bordered\" | \"borderless\"",
     "AccordionSize": "\"sm\" | \"md\" | \"lg\"",
     "AccordionGap": "\"sm\" | \"md\" | \"lg\"",

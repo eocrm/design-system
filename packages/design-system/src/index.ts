@@ -522,7 +522,7 @@ export type {
 } from './components/DefinitionList';
 
 export { Link } from './components/Link';
-export type { LinkProps, LinkVariant } from './components/Link';
+export type { LinkProps, LinkVariant, LinkUnderline } from './components/Link';
 
 export { LinkCard } from './components/LinkCard';
 export type { LinkCardProps } from './components/LinkCard';

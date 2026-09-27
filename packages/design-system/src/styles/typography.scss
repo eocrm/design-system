@@ -24,10 +24,12 @@ h4 {
 a {
   color: var(--color-accent);
   text-decoration: none;
+}
 
-  &:hover {
-    text-decoration: underline;
-  }
+// Zero-specificity via :where() so this never outranks a component's own
+// single-class rule (e.g. `.link:hover`, `.button:hover`) — see #584.
+:where(a:hover) {
+  text-decoration: underline;
 }
 
 code,

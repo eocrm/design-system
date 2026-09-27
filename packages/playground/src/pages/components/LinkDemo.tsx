@@ -166,6 +166,51 @@ export function Demo() {
       </Example>
 
       <Example
+        title="underline prop — running text vs. brand/nav"
+        description={
+          'Independent of `variant`. `underline="always"` for links inside running text ' +
+          '(color alone fails WCAG 1.4.1). `underline="none"` for a brand/nav link that ' +
+          'wants a subtle color with no hover underline.'
+        }
+        code={`import { Link, Stack } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Stack gap="sm">
+      <p style={{ fontSize: 'var(--font-size-md)', color: 'var(--color-fg)', margin: 0 }}>
+        Read our{' '}
+        <Link href="#privacy" underline="always" onClick={(e) => e.preventDefault()}>
+          privacy notice
+        </Link>{' '}
+        before continuing.
+      </p>
+      <Link
+        href="#home"
+        variant="subtle"
+        underline="none"
+        onClick={(e) => e.preventDefault()}
+      >
+        Acme Inc
+      </Link>
+    </Stack>
+  );
+}`}
+      >
+        <Stack gap="sm">
+          <p style={{ fontSize: 'var(--font-size-md)', color: 'var(--color-fg)', margin: 0 }}>
+            Read our{' '}
+            <Link href="#privacy" underline="always" onClick={(e) => e.preventDefault()}>
+              privacy notice
+            </Link>{' '}
+            before continuing.
+          </p>
+          <Link href="#home" variant="subtle" underline="none" onClick={(e) => e.preventDefault()}>
+            Acme Inc
+          </Link>
+        </Stack>
+      </Example>
+
+      <Example
         title="Cluster of links"
         description="Multiple links lay out via Cluster — no special grouping primitive needed."
         code={`import { Cluster, Link } from '@eocrm/design-system';
