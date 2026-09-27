@@ -24,10 +24,12 @@ import styles from './EntityChip.module.scss';
 export type EntityChipAs = ElementType;
 
 /**
- * Font weight for `prefix` + `label` (#590). `'medium'` (default) matches a
- * plain chip and the RichText `@mention`. `'semibold'` is for designs that
- * want a heavier title — e.g. the segmented task chip, whose key and title
- * are both semibold. See `labelWeight` on `EntityChipOwnProps`.
+ * Font weight for `label` (#590). `'medium'` (default) matches a plain chip
+ * and the RichText `@mention`, and applies to `label` only — `prefix` has no
+ * weight rule of its own and stays inherited (normal). `'semibold'` is the
+ * one value that also sets `prefix`, for designs that want a heavier title —
+ * e.g. the segmented task chip, whose key and title are both semibold. See
+ * `labelWeight` on `EntityChipOwnProps`.
  */
 export type EntityChipLabelWeight = 'medium' | 'semibold';
 
@@ -89,8 +91,12 @@ export type EntityChipSegment =
       tooltip?: ReactNode;
       /**
        * Overrides the segment's font size, a positive number in em of the
-       * chip text. Default `0.9em`. Above ~1.1 makes the chip taller than a
-       * plain chip.
+       * chip text. Default `0.9em`. At or below 1 (including the default)
+       * the segment's inner span keeps `line-height: 0`, so it can't grow —
+       * the chip stays a plain chip's height and baseline. Above 1, the
+       * inner span also gets `line-height: 1` so its now-larger glyphs
+       * aren't clipped by `.chip.segmented`'s `overflow: hidden`, which
+       * makes the chip grow taller than a plain chip.
        */
       size?: number;
     };
@@ -230,11 +236,14 @@ interface EntityChipOwnProps {
    */
   labelMaxWidth?: number;
   /**
-   * Font weight for `prefix` + `label` (both — a task-chip design that wants
-   * a heavier title also wants its key heavier, #590). Default `'medium'`
-   * matches a plain chip's fixed weight and the RichText `@mention`, so most
-   * chips should leave this unset. Use `'semibold'` for a design that
-   * explicitly wants a heavier title, e.g. a segmented task chip.
+   * Font weight for `label`. `'medium'` (default) matches a plain chip's
+   * fixed weight and the RichText `@mention` — most chips should leave this
+   * unset. `'medium'` does NOT apply to `prefix`: `.prefix` carries no
+   * font-weight rule of its own and simply inherits (normal), so a default
+   * chip's key is lighter than its title. `'semibold'` is the one value that
+   * touches BOTH — it sets `prefix` AND `label` to the same heavier weight
+   * (a task-chip design that wants its key heavier along with its title,
+   * #590). Use `'semibold'` for a design that explicitly wants that.
    *
    * Don't reach for a styled `<Text weight="semibold">` around `label` to get
    * a heavier title instead (see the component's `@remarks` anti-patterns) —
@@ -352,7 +361,23 @@ function Segment({ segment }: { segment: EntityChipSegment }): ReactElement {
           this span then sits on it via normal inline layout. */}
       <span
         className={styles.segmentTextValue}
-        style={segment.size != null ? { fontSize: `${segment.size}em` } : undefined}
+        style={
+          segment.size != null
+            ? {
+                fontSize: `${segment.size}em`,
+                // Above 1, the CSS default `line-height: 0` (which keeps this
+                // span from adding any height of its own, so a plain-sized
+                // segment can't grow the chip) would clip the now-larger
+                // glyphs against `.chip.segmented`'s `overflow: hidden`
+                // instead — so let the span's line box grow to fit them, at
+                // the cost of the chip itself growing taller than a plain
+                // chip (#591 follow-up). At/below 1 (and the unset default,
+                // 0.9em) the CSS `line-height: 0` stands untouched, so a
+                // plain-sized chip keeps the SAME height/baseline as before.
+                ...(segment.size > 1 ? { lineHeight: 1 } : null),
+              }
+            : undefined
+        }
       >
         {segment.text}
       </span>
@@ -497,17 +522,24 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
   // tooltip and no aria-describedby (it would be announced twice).
   const labelRef = useRef<HTMLSpanElement>(null);
   const [labelTipOpen, setLabelTipOpen] = useState(false);
-  // The clipped-label tooltip's own content (#590): captured from the label
-  // element's `textContent` when the tooltip opens, so it always shows PLAIN
-  // TEXT in the tooltip's own color — never the (possibly styled) `label`
-  // node itself, which could carry its own color/weight that reads badly on
-  // the dark tooltip background. Falls back to the raw `label` node before it
-  // has ever been measured — Tooltip treats `null`/`undefined`/`''` content as
-  // "disabled" (no listeners at all, see Tooltip.tsx), so an empty fallback
-  // here would permanently deadlock a non-string label's first hover. Safe:
-  // `onLabelTip` sets this state and `labelTipOpen` in the same call, so React
-  // batches them into one render — the first render where the tooltip is
-  // actually open already carries the freshly measured plain text.
+  // The clipped-label tooltip's own content (#590, #592): for a STRING
+  // `label`, use it directly — always fresh off the prop, so a label that
+  // changes while the tooltip is open shows the new text immediately, with
+  // no capture step at all. For any other `label` (styled node, icon, …),
+  // fall back to plain text captured from the label element's `textContent`
+  // when the tooltip opens — this is what keeps a styled label's color/
+  // weight from leaking into the tooltip, which reads badly on the dark
+  // tooltip background.
+  //
+  // The captured text falls back to the raw `label` node with `||`, not `??`:
+  // Tooltip treats `null`/`undefined`/`''` content as "disabled" (no listeners
+  // at all, see Tooltip.tsx), so a captured EMPTY string (a non-string label
+  // that renders no text, e.g. an icon) must not stick around as `''` — `??`
+  // only falls back on null/undefined and would leave the tooltip
+  // permanently disabled from that point on, even after `label` later becomes
+  // a long, genuinely clipped string (#592). Storing `null` instead of `''`
+  // for an empty capture, and falling back with `||`, means an empty capture
+  // always resolves back to the current `label`.
   const [labelTipText, setLabelTipText] = useState<string | null>(null);
   // `hasSegments`, not `segmented`: a loading/unavailable chip with `before`/
   // `after` configured still gets the `truncate` class (below) even though
@@ -523,10 +555,10 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
   if (!labelTip && labelTipOpen) setLabelTipOpen(false);
   const onLabelTip = (next: boolean) => {
     const el = labelRef.current;
-    if (next && el != null) setLabelTipText(el.textContent ?? '');
+    if (next && el != null) setLabelTipText(el.textContent || null);
     setLabelTipOpen(next && el != null && el.scrollWidth > el.clientWidth);
   };
-  const labelTipContent = labelTipText ?? label;
+  const labelTipContent = typeof label === 'string' ? label : labelTipText || label;
   // Keyboard reachability for the clipped-label tooltip: its Tooltip trigger
   // is the label `<span>`, which is not itself focusable — focus lands on the
   // chip root. Chain onto the root's own onFocus/onBlur (preserving whatever

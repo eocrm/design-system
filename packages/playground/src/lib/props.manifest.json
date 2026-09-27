@@ -1999,8 +1999,8 @@
           "name": "labelWeight",
           "type": "EntityChipLabelWeight",
           "required": false,
-          "default": "",
-          "description": "Font weight for `prefix` + `label` (both — a task-chip design that wants\na heavier title also wants its key heavier, #590). Default `'medium'`\nmatches a plain chip's fixed weight and the RichText `@mention`, so most\nchips should leave this unset. Use `'semibold'` for a design that\nexplicitly wants a heavier title, e.g. a segmented task chip.\n\nDon't reach for a styled `<Text weight=\"semibold\">` around `label` to get\na heavier title instead (see the component's `@remarks` anti-patterns) —\nit buys nothing: the clipped-label tooltip reads the label's own\n`textContent` and always renders it plain, in the tooltip's own color,\nregardless of what the label node carries. Only this prop changes the\nrendered weight."
+          "default": "'medium'",
+          "description": "Font weight for `label`. `'medium'` (default) matches a plain chip's\nfixed weight and the RichText `@mention` — most chips should leave this\nunset. `'medium'` does NOT apply to `prefix`: `.prefix` carries no\nfont-weight rule of its own and simply inherits (normal), so a default\nchip's key is lighter than its title. `'semibold'` is the one value that\ntouches BOTH — it sets `prefix` AND `label` to the same heavier weight\n(a task-chip design that wants its key heavier along with its title,\n#590). Use `'semibold'` for a design that explicitly wants that.\n\nDon't reach for a styled `<Text weight=\"semibold\">` around `label` to get\na heavier title instead (see the component's `@remarks` anti-patterns) —\nit buys nothing: the clipped-label tooltip reads the label's own\n`textContent` and always renders it plain, in the tooltip's own color,\nregardless of what the label node carries. Only this prop changes the\nrendered weight."
         },
         {
           "name": "as",

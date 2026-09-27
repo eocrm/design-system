@@ -2024,7 +2024,11 @@ describe('a translated fallback is never introduced with ??', () => {
  * interpolation rather than a literal `var(--...)`; a genuine name collision
  * where two components declare the identical custom property (none exist
  * today — `declaredBy` would silently keep whichever component's tokens file
- * this walk visits last).
+ * this walk visits last). Also out of scope: `styleFiles` only globs
+ * `*.module.scss`/`*.tokens.scss`, so an underscore-prefixed `_*.scss`
+ * partial is invisible to both `declaredBy` and the read scan, and `usesOf`
+ * only matches `@use` — a chain that reaches another component's tokens via
+ * `@forward` instead is not resolved as reach.
  */
 describe("a stylesheet does not read another component's tokens without @use-ing them", () => {
   /** Resolves an `@use` specifier written inside `fromDir` to a `Comp/File.scss` label. */

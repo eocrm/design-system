@@ -244,6 +244,13 @@
   border-color: var(--color-picker-trigger-border-color-invalid);
 }
 
+// Same danger ring Input's `.invalid:focus-visible` uses, via ColorPicker's
+// own component token (--color-picker-trigger-ring-invalid resolves to the
+// same primitive, var(--ring-danger)) rather than the default accent ring.
+.trigger[aria-invalid='true']:focus-visible {
+  @include focus-ring(var(--color-picker-trigger-ring-invalid));
+}
+
 .triggerSwatch {
   width: 16px;
   height: 16px;

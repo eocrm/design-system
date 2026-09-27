@@ -571,6 +571,26 @@ describe('<EntityChip> — segments (#582)', () => {
     expect(outer.style.fontSize).toBe('');
   });
 
+  it('a text segment sized above 1 also sets inline line-height: 1 so the chip grows to fit (no clipping); at/below 1 leaves line-height alone (the CSS line-height: 0 default keeps a plain chip height, #591 follow-up)', () => {
+    render(
+      <EntityChip
+        href="/t"
+        label="T"
+        after={[
+          { kind: 'text', text: 'Tall', size: 1.4 },
+          { kind: 'text', text: 'Small', size: 0.8 },
+        ]}
+      />,
+    );
+    const tall = screen.getByText('Tall');
+    expect(tall.style.fontSize).toBe('1.4em');
+    expect(tall.style.lineHeight).toBe('1');
+
+    const small = screen.getByText('Small');
+    expect(small.style.fontSize).toBe('0.8em');
+    expect(small.style.lineHeight).toBe('');
+  });
+
   it('a text segment (no `size`) wraps its text in an inner span; the outer segment has no inline font-size (#591)', () => {
     render(<EntityChip href="/t" label="T" after={[{ kind: 'text', text: 'Reported' }]} />);
     const value = screen.getByText('Reported');
@@ -1004,6 +1024,42 @@ describe('<EntityChip> — clipped-label tooltip is always plain text (#590)', (
     fakeClip(label, true);
     await user.hover(label);
     expect(await screen.findByRole('tooltip')).toHaveTextContent('A very long task title');
+  });
+});
+
+describe('<EntityChip> — clipped-label tooltip never gets stuck disabled (#592)', () => {
+  it('a non-string label that renders no text, then a rerender to a long clipped text label, still opens the tooltip with the text', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <EntityChip href="/t" label={<svg data-testid="icon" />} truncate />,
+    );
+    // The labelRef wrapper Tooltip trigger — its textContent is '' (an empty
+    // <svg>). Hovering it while unclipped must not permanently disable the
+    // tooltip: an empty string, unlike null/undefined, makes Tooltip treat
+    // `content` as disabled (no listeners) forever after.
+    const iconLabel = screen.getByTestId('icon').parentElement as HTMLElement;
+    fakeClip(iconLabel, false);
+    await user.hover(iconLabel);
+    await new Promise((r) => setTimeout(r, 600)); // past Tooltip's 400ms delay
+    await user.unhover(iconLabel);
+
+    rerender(<EntityChip href="/t" label="A very long task title" truncate />);
+    const label = screen.getByText('A very long task title');
+    fakeClip(label, true);
+    await user.hover(label);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('A very long task title');
+  });
+
+  it('a string label that changes while the tooltip is open shows the new text (always fresh, never stale)', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<EntityChip href="/t" label="Original title" truncate />);
+    const label = screen.getByText('Original title');
+    fakeClip(label, true);
+    await user.hover(label);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Original title');
+
+    rerender(<EntityChip href="/t" label="Updated title" truncate />);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Updated title');
   });
 });
 

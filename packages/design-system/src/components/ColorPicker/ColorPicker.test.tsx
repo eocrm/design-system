@@ -691,6 +691,32 @@ describe('ColorPicker.Panel — framed', () => {
   });
 });
 
+describe('ColorPicker.Panel — unframed modifier (compiled CSS)', () => {
+  const css = compile(resolve(__dirname, 'ColorPicker.module.scss')).css;
+  const root = parse(css);
+  const rules: Rule[] = [];
+  root.walkRules((rule) => {
+    rules.push(rule);
+  });
+
+  const panelRule = rules.find((rule) => rule.selector === '.panel');
+  const unframedRule = rules.find((rule) => rule.selector === '.unframed');
+
+  it('.unframed comes after .panel in source (equal single-class specificity, so source order decides)', () => {
+    expect(panelRule).toBeDefined();
+    expect(unframedRule).toBeDefined();
+    expect(rules.indexOf(unframedRule!)).toBeGreaterThan(rules.indexOf(panelRule!));
+  });
+
+  it('.unframed zeroes border, shadow and padding', () => {
+    const decl = (prop: string) =>
+      unframedRule!.nodes.find((node) => node.type === 'decl' && node.prop === prop);
+    expect((decl('padding') as { value?: string } | undefined)?.value).toBe('0');
+    expect((decl('border') as { value?: string } | undefined)?.value).toBe('none');
+    expect((decl('box-shadow') as { value?: string } | undefined)?.value).toBe('none');
+  });
+});
+
 describe('ColorPicker — single popover frame (#587)', () => {
   it('renders its popover panel unframed', async () => {
     const user = userEvent.setup();
@@ -790,6 +816,39 @@ describe('ColorPicker — invalid trigger (compiled CSS)', () => {
     );
 
     expect(classWeight(invalidHoverSelector)).toBeGreaterThan(classWeight(hoverSelector));
+  });
+
+  it("focus-visible on an invalid trigger uses a danger ring — the same PRIMITIVE Input's invalid ring resolves to, via the component's own token (not a cross-component --input-* read)", () => {
+    const focusRule = allRules.find((rule) =>
+      rule.selectors.some((s) => /\.trigger\[aria-invalid=true\]:focus-visible$/.test(s)),
+    );
+    expect(focusRule).toBeDefined();
+    const outlineDecl = focusRule!.nodes.find(
+      (node) => node.type === 'decl' && node.prop === 'outline',
+    );
+    expect(outlineDecl && outlineDecl.type === 'decl' ? outlineDecl.value : undefined).toContain(
+      'var(--color-picker-trigger-ring-invalid)',
+    );
+
+    const tokensCss = compile(resolve(__dirname, 'ColorPicker.tokens.scss')).css;
+    const tokensRoot = parse(tokensCss);
+    let colorPickerRingInvalid: string | undefined;
+    tokensRoot.walkDecls('--color-picker-trigger-ring-invalid', (d) => {
+      colorPickerRingInvalid = d.value;
+    });
+    expect(colorPickerRingInvalid).toBe('var(--ring-danger)');
+
+    const inputTokensCss = compile(resolve(__dirname, '../Input/Input.tokens.scss')).css;
+    const inputTokensRoot = parse(inputTokensCss);
+    let inputRingInvalid: string | undefined;
+    inputTokensRoot.walkDecls('--input-ring-invalid', (d) => {
+      inputRingInvalid = d.value;
+    });
+    expect(inputRingInvalid).toBe('var(--ring-danger)');
+
+    // Same primitive, reached through each component's OWN token — not
+    // ColorPicker reading `--input-ring-invalid` directly.
+    expect(colorPickerRingInvalid).toBe(inputRingInvalid);
   });
 });
 
