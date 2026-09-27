@@ -316,6 +316,18 @@ function Segment({ segment }: { segment: EntityChipSegment }): ReactElement {
  * <EntityChip href="/deals/9" label="Acme Corp" color="violet" />
  *
  * @example
+ * // Segmented task chip — the whole chip is one link, one Tab stop:
+ * <EntityChip
+ *   as={RouterLink} to="/tasks/ENG-15"
+ *   prefix="ENG-15" label="Fix the login bug on Safari" labelMaxWidth={40}
+ *   before={[{ kind: 'icon', icon: <Bug />, label: 'Bug', color: 'red' }]}
+ *   after={[
+ *     { kind: 'icon', icon: <Equal />, label: 'Normal priority', color: 'slate' },
+ *     { kind: 'text', text: 'Reported', color: 'amber' },
+ *   ]}
+ * />
+ *
+ * @example
  * // One-line list row: label ellipsizes, key/status/adornments stay whole
  * <EntityChip
  *   truncate
@@ -347,6 +359,10 @@ function Segment({ segment }: { segment: EntityChipSegment }): ReactElement {
  * - ❌ Omitting a link target — an EntityChip should always link to its
  *   entity (`href` or `as`); the span-only form is for rare non-navigable
  *   contexts.
+ * - ❌ Nesting `<IconTile>` / `<Badge>` in `icon`/`trailing` to fake coloured
+ *   parts — use `before`/`after` segments, which line up with the chip's text.
+ * - ❌ An icon segment without a meaningful `label` — it is the segment's
+ *   accessible name; a decorative glyph belongs in `icon`, not a segment.
  */
 export const EntityChip = forwardRef(function EntityChip<C extends ElementType = 'a'>(
   {

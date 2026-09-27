@@ -1968,6 +1968,27 @@
           "description": "Extra adornments inside the chip, after `status` (e.g. a priority icon or\na status `<Badge>`), kept at full size under `truncate`. Not rendered\nwhile `loading` (same as `prefix`/`status`).\n\nNon-interactive content only: the chip is itself a link, so a button or\nlink here is invalid nested interactive content. Its text JOINS the chip's\naccessible name (\"ENG-5 Fix login bug High\") — give a decorative icon\n`aria-hidden`, and a meaningful one a short text alternative."
         },
         {
+          "name": "before",
+          "type": "EntityChipSegment[]",
+          "required": false,
+          "default": "",
+          "description": "Coloured segments before the chip's core, in order (e.g. the task type).\nAny segment turns the chip segmented: one line, only the outer corners\nrounded, only the label shrinks (as with `truncate`). Every segment's text\njoins the accessible name (\"Bug ENG-15 Fix login bug Normal Reported\").\nNot rendered while `loading` or `unavailable`."
+        },
+        {
+          "name": "after",
+          "type": "EntityChipSegment[]",
+          "required": false,
+          "default": "",
+          "description": "Coloured segments after the core, in order (e.g. priority, status). See `before`."
+        },
+        {
+          "name": "labelMaxWidth",
+          "type": "number",
+          "required": false,
+          "default": "",
+          "description": "Caps the label's width, in `ch`; past it the label ellipsizes on one line\n(also on a chip without `truncate`). For chips in running text, where the\ncontainer edge is a whole paragraph away. The full label stays in the DOM\nand the accessible name; hovering a clipped label shows it in a tooltip."
+        },
+        {
           "name": "as",
           "type": "C",
           "required": false,
@@ -5847,6 +5868,7 @@
     "BadgeVariant": "\"filled\" | \"stripe\"",
     "BadgeAlign": "\"baseline\" | \"middle\"",
     "EntityChipStatus": "{ label: string; category?: StatusCategory; color?: PaletteColor }",
+    "EntityChipSegment": "{ kind: \"icon\"; icon: ReactNode; label: string; color?: PaletteColor; size?: number; } | { kind: \"text\"; text: ReactNode; color?: PaletteColor; tooltip?: ReactNode; size?: number; }",
     "ThreadNodeAlign": "\"header\" | \"top\"",
     "LogoSize": "\"sm\" | \"md\" | \"lg\"",
     "LogoTextPlacement": "\"end\" | \"bottom\"",

@@ -37,9 +37,11 @@
 ### Task 1: Guard today's markup
 
 **Files:**
+
 - Test: `packages/design-system/src/components/EntityChip/EntityChip.test.tsx` (append)
 
 **Interfaces:**
+
 - Consumes: nothing new.
 - Produces: `normalizeClasses(html: string): string` helper local to the test file (used again in Task 2).
 
@@ -96,6 +98,7 @@ git commit -m "test: guard EntityChip markup before segments (#582)"
 ### Task 2: Segment types, rendering and layout
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/EntityChip/EntityChip.tsx`
 - Modify: `packages/design-system/src/components/EntityChip/EntityChip.module.scss`
 - Modify: `packages/design-system/src/components/EntityChip/EntityChip.tokens.scss`
@@ -104,13 +107,16 @@ git commit -m "test: guard EntityChip markup before segments (#582)"
 - Test: `packages/design-system/src/components/EntityChip/EntityChip.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `normalizeClasses` (Task 1), `paletteTokens` from `../../palette`.
 - Produces (exported from `src/index.ts`):
+
   ```ts
   export type EntityChipSegment =
     | { kind: 'icon'; icon: ReactNode; label: string; color?: PaletteColor; size?: number }
     | { kind: 'text'; text: ReactNode; color?: PaletteColor; tooltip?: ReactNode; size?: number };
   ```
+
   New `EntityChipOwnProps` fields: `before?: EntityChipSegment[]`, `after?: EntityChipSegment[]`.
   Internal: `function Segment({ segment }: { segment: EntityChipSegment }): ReactElement` in `EntityChip.tsx` (Task 3 adds tooltips inside it).
   CSS classes: `.segmented` (root), `.core`, `.segment`, `.segmentIcon`, `.segmentText`, `.segmentGlyph`.
@@ -129,25 +135,44 @@ const TASK_AFTER = [
 describe('<EntityChip> — segments (#582)', () => {
   it('renders before → core → after, the whole chip one link named by every part', () => {
     render(
-      <EntityChip href="/tasks/15" prefix="ENG-15" label="Fix the login bug" before={TASK_BEFORE} after={TASK_AFTER} />,
+      <EntityChip
+        href="/tasks/15"
+        prefix="ENG-15"
+        label="Fix the login bug"
+        before={TASK_BEFORE}
+        after={TASK_AFTER}
+      />,
     );
     // jsdom has no layout, so it doesn't separate the core's own prefix/label
     // spans (browsers do — they're blockified flex items); the whitespace the
     // component puts BETWEEN segments and core is what this asserts.
-    const link = screen.getByRole('link', { name: /^Bug ENG-15.*Fix the login bug Normal Reported$/ });
+    const link = screen.getByRole('link', {
+      name: /^Bug ENG-15.*Fix the login bug Normal Reported$/,
+    });
     expect(link.className).toMatch(/segmented/);
-    const parts = Array.from(link.children).map((c) => c.className.replace(/_([A-Za-z]+)_[0-9a-z]{6}/g, '$1'));
-    expect(parts).toEqual(['segment segmentIcon', 'core', 'segment segmentIcon', 'segment segmentText']);
+    const parts = Array.from(link.children).map((c) =>
+      c.className.replace(/_([A-Za-z]+)_[0-9a-z]{6}/g, '$1'),
+    );
+    expect(parts).toEqual([
+      'segment segmentIcon',
+      'core',
+      'segment segmentIcon',
+      'segment segmentText',
+    ]);
   });
 
   it('icon segment: role=img named by label, glyph hidden, palette colours set (slate default)', () => {
     render(<EntityChip href="/t" label="T" before={TASK_BEFORE} after={TASK_AFTER} />);
     const bug = screen.getByRole('img', { name: 'Bug' });
     expect(screen.getByTestId('type').parentElement).toHaveAttribute('aria-hidden', 'true');
-    expect(bug.style.getPropertyValue('--entity-chip-segment-bg')).toBe('var(--color-palette-red-bg)');
-    expect(screen.getByRole('img', { name: 'Normal' }).style.getPropertyValue('--entity-chip-segment-fg')).toBe(
-      'var(--color-palette-slate-fg)',
+    expect(bug.style.getPropertyValue('--entity-chip-segment-bg')).toBe(
+      'var(--color-palette-red-bg)',
     );
+    expect(
+      screen
+        .getByRole('img', { name: 'Normal' })
+        .style.getPropertyValue('--entity-chip-segment-fg'),
+    ).toBe('var(--color-palette-slate-fg)');
   });
 
   it('size overrides the glyph (icon) or font size (text), in em', () => {
@@ -161,9 +186,11 @@ describe('<EntityChip> — segments (#582)', () => {
         ]}
       />,
     );
-    expect(screen.getByRole('img', { name: 'Big' }).style.getPropertyValue('--entity-chip-segment-glyph-size')).toBe(
-      '1.2em',
-    );
+    expect(
+      screen
+        .getByRole('img', { name: 'Big' })
+        .style.getPropertyValue('--entity-chip-segment-glyph-size'),
+    ).toBe('1.2em');
     expect(screen.getByText('Small').style.fontSize).toBe('0.75em');
   });
 
@@ -194,7 +221,9 @@ describe('<EntityChip> — segments (#582)', () => {
       <EntityChip href="/t" label="L" loading before={TASK_BEFORE} after={TASK_AFTER} />,
     );
     expect(container.querySelector('[class*="segment"]')).toBeNull();
-    rerender(<EntityChip href="/t" label="L" unavailable before={TASK_BEFORE} after={TASK_AFTER} />);
+    rerender(
+      <EntityChip href="/t" label="L" unavailable before={TASK_BEFORE} after={TASK_AFTER} />,
+    );
     expect(container.querySelector('[class*="segment"]')).toBeNull();
   });
 });
@@ -241,16 +270,16 @@ Expected: the new "segments" and "segmented layout CSS" tests FAIL (props ignore
 - [ ] **Step 3: Implement — tokens** (`EntityChip.tokens.scss`, inside `:root`, after `--entity-chip-dot-size`)
 
 ```scss
-  // Segments (#582): palette-coloured parts butted against the core. The
-  // fill/fg come from the segment's PaletteColor at runtime
-  // (--entity-chip-segment-bg/-fg), so they're not declared here.
-  --entity-chip-segment-padding-x-icon: var(--space-1);
-  --entity-chip-segment-padding-x-text: var(--space-2);
+// Segments (#582): palette-coloured parts butted against the core. The
+// fill/fg come from the segment's PaletteColor at runtime
+// (--entity-chip-segment-bg/-fg), so they're not declared here.
+--entity-chip-segment-padding-x-icon: var(--space-1);
+--entity-chip-segment-padding-x-text: var(--space-2);
 
-  // Relative to the inherited text size, like the chip itself; a segment's
-  // `size` prop overrides them in em.
-  --entity-chip-segment-glyph-size: 0.85em;
-  --entity-chip-segment-text-size: 0.9em;
+// Relative to the inherited text size, like the chip itself; a segment's
+// `size` prop overrides them in em.
+--entity-chip-segment-glyph-size: 0.85em;
+--entity-chip-segment-text-size: 0.9em;
 ```
 
 - [ ] **Step 4: Implement — styles** (append to `EntityChip.module.scss`)
@@ -374,7 +403,10 @@ Add above the component:
 /** Palette fill/fg for one segment, read by `.segment`, plus its `size` override. */
 function segmentStyle(segment: EntityChipSegment): CSSProperties {
   const { bg, fg } = paletteTokens(segment.color ?? 'slate');
-  const style: Record<string, string> = { '--entity-chip-segment-bg': bg, '--entity-chip-segment-fg': fg };
+  const style: Record<string, string> = {
+    '--entity-chip-segment-bg': bg,
+    '--entity-chip-segment-fg': fg,
+  };
   if (segment.size != null) {
     if (segment.kind === 'icon') style['--entity-chip-segment-glyph-size'] = `${segment.size}em`;
     else style.fontSize = `${segment.size}em`;
@@ -408,36 +440,39 @@ function Segment({ segment }: { segment: EntityChipSegment }) {
 In the component: destructure `before`, `after`; then
 
 ```tsx
-  // Segments only in the normal state — like prefix/status under `loading`, a
-  // not-yet-loaded or unavailable entity has no known type/status (#582).
-  const segmented = !loading && !unavailable && ((before?.length ?? 0) > 0 || (after?.length ?? 0) > 0);
+// Segments only in the normal state — like prefix/status under `loading`, a
+// not-yet-loaded or unavailable entity has no known type/status (#582).
+const segmented =
+  !loading && !unavailable && ((before?.length ?? 0) > 0 || (after?.length ?? 0) > 0);
 ```
 
 Add `Fragment` to the `react` import. Add `segmented && styles.segmented` to the root `clsx(...)`. Assign today's JSX children (the `{icon && …}{loading ? … : …}` block) to `const content = (<>…</>);` unchanged, and render:
 
 ```tsx
-      {segmented ? (
-        <>
-          {/* A space after/before each part keeps the accessible name
+{
+  segmented ? (
+    <>
+      {/* A space after/before each part keeps the accessible name
               "Bug ENG-15 … Normal Reported" separated in every engine, not
               only where blockified flex items get a separator. Whitespace-only
               text between flex items isn't rendered, so layout is unchanged. */}
-          {before?.map((segment, i) => (
-            <Fragment key={`b${i}`}>
-              <Segment segment={segment} />{' '}
-            </Fragment>
-          ))}
-          <span className={styles.core}>{content}</span>
-          {after?.map((segment, i) => (
-            <Fragment key={`a${i}`}>
-              {' '}
-              <Segment segment={segment} />
-            </Fragment>
-          ))}
-        </>
-      ) : (
-        content
-      )}
+      {before?.map((segment, i) => (
+        <Fragment key={`b${i}`}>
+          <Segment segment={segment} />{' '}
+        </Fragment>
+      ))}
+      <span className={styles.core}>{content}</span>
+      {after?.map((segment, i) => (
+        <Fragment key={`a${i}`}>
+          {' '}
+          <Segment segment={segment} />
+        </Fragment>
+      ))}
+    </>
+  ) : (
+    content
+  );
+}
 ```
 
 - [ ] **Step 6: Export the type** — `EntityChip/index.ts`: add `EntityChipSegment` to the `export type { … } from './EntityChip'` list; `src/index.ts`: add `EntityChipSegment,` to the EntityChip type export block.
@@ -459,11 +494,13 @@ git commit -m "feat: EntityChip before/after coloured segments (#582)"
 ### Task 3: Tooltips and `labelMaxWidth`
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/EntityChip/EntityChip.tsx`
 - Modify: `packages/design-system/src/components/EntityChip/EntityChip.module.scss`
 - Test: `packages/design-system/src/components/EntityChip/EntityChip.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `Segment`, `segmented`, `.core > .label` from Task 2; `Tooltip` from `../Tooltip` (`content`, `open`, `onOpenChange`, `delay`; sets `aria-describedby` only while open; merges the child's `ref`).
 - Produces: prop `labelMaxWidth?: number` (ch); CSS class `.capped` on the label.
 
@@ -488,7 +525,11 @@ describe('<EntityChip> — tooltips and labelMaxWidth (#582)', () => {
   it('text segment shows its tooltip when given', async () => {
     const user = userEvent.setup();
     render(
-      <EntityChip href="/t" label="Fix" after={[{ kind: 'text', text: 'Reported', tooltip: 'Status: Reported' }]} />,
+      <EntityChip
+        href="/t"
+        label="Fix"
+        after={[{ kind: 'text', text: 'Reported', tooltip: 'Status: Reported' }]}
+      />,
     );
     await user.hover(screen.getByText('Reported'));
     expect(await screen.findByRole('tooltip')).toHaveTextContent('Status: Reported');
@@ -568,34 +609,36 @@ In `Segment`: wrap the icon span in `<Tooltip content={segment.label}>…</Toolt
 In the component: destructure `labelMaxWidth`; add
 
 ```tsx
-  // Full label on hover, but only when it is actually clipped: a controlled
-  // Tooltip that refuses to open otherwise, so a fully visible label gets no
-  // tooltip and no aria-describedby (it would be announced twice).
-  const labelRef = useRef<HTMLSpanElement>(null);
-  const [labelTipOpen, setLabelTipOpen] = useState(false);
-  const clippable = segmented || truncate || labelMaxWidth != null;
-  const onLabelTip = (next: boolean) => {
-    const el = labelRef.current;
-    setLabelTipOpen(next && el != null && el.scrollWidth > el.clientWidth);
-  };
+// Full label on hover, but only when it is actually clipped: a controlled
+// Tooltip that refuses to open otherwise, so a fully visible label gets no
+// tooltip and no aria-describedby (it would be announced twice).
+const labelRef = useRef<HTMLSpanElement>(null);
+const [labelTipOpen, setLabelTipOpen] = useState(false);
+const clippable = segmented || truncate || labelMaxWidth != null;
+const onLabelTip = (next: boolean) => {
+  const el = labelRef.current;
+  setLabelTipOpen(next && el != null && el.scrollWidth > el.clientWidth);
+};
 ```
 
 Replace the label span `<span className={styles.label}>{label}</span>` with:
 
 ```tsx
-          {clippable ? (
-            <Tooltip content={label} open={labelTipOpen} onOpenChange={onLabelTip}>
-              <span
-                ref={labelRef}
-                className={clsx(styles.label, labelMaxWidth != null && styles.capped)}
-                style={labelMaxWidth != null ? { maxWidth: `${labelMaxWidth}ch` } : undefined}
-              >
-                {label}
-              </span>
-            </Tooltip>
-          ) : (
-            <span className={styles.label}>{label}</span>
-          )}
+{
+  clippable ? (
+    <Tooltip content={label} open={labelTipOpen} onOpenChange={onLabelTip}>
+      <span
+        ref={labelRef}
+        className={clsx(styles.label, labelMaxWidth != null && styles.capped)}
+        style={labelMaxWidth != null ? { maxWidth: `${labelMaxWidth}ch` } : undefined}
+      >
+        {label}
+      </span>
+    </Tooltip>
+  ) : (
+    <span className={styles.label}>{label}</span>
+  );
+}
 ```
 
 (Task 1's guard uses `truncate`, so the Tooltip wrapper is active there: a closed Tooltip adds only event handlers and a ref — no attributes — so the guard must still pass.)
@@ -617,12 +660,14 @@ git commit -m "feat: EntityChip segment tooltips, clipped-label tooltip, labelMa
 ### Task 4: Docs, demo, manifest, visual check
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/EntityChip/EntityChip.tsx` (JSDoc on the component)
 - Modify: `packages/design-system/AGENTS.md` (EntityChip section)
 - Modify: `packages/playground/src/pages/components/EntityChipDemo.tsx`
 - Regenerate: `packages/playground/src/lib/props.manifest.json` (`npm run build:props -w playground` from repo root)
 
 **Interfaces:**
+
 - Consumes: `EntityChip` props `before`, `after`, `labelMaxWidth`, type `EntityChipSegment` (Tasks 2–3).
 - Produces: nothing consumed by code.
 
@@ -696,18 +741,20 @@ and under `@remarks Anti-patterns`:
 - [ ] **Step 4: Manifest + gates** (repo root)
 
 Run:
+
 ```bash
 npm run build:props -w playground && npx prettier --write packages/playground/src/lib/props.manifest.json
 cd packages/design-system && npm run build:manifest && cd ../..
 make test && make build-lib && make lint && npm run format:check && npm run typecheck
 ```
+
 Expected: all exit 0.
 
 - [ ] **Step 5: Visual check** (dev server on port 8090, never the default): `cd packages/playground && npx vite --port 8090 --strictPort`, open `/components/entity-chip` in Playwright and measure in the "Segmented (task chip)" example:
   - the segmented chip's height equals the plain `Acme Corp` chip's height in the same `<p>`, and their text shares a baseline (compare label glyph-box `top`/`bottom` via a Range);
   - the capped label ellipsizes at ~40ch; in the ResizablePreview the chip never exceeds the container and only the label shrinks;
   - only the chip's outer corners are rounded.
-  Kill the server and `rm -rf .playwright-mcp` afterwards.
+    Kill the server and `rm -rf .playwright-mcp` afterwards.
 
 - [ ] **Step 6: Commit**
 
