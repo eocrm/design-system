@@ -355,12 +355,19 @@ describe('PillMenu — inside a Field (#578)', () => {
 
   it('warns in dev when a Field label arrives but `label` is missing', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    render(
+    const { rerender } = render(
       <Field label="Priority">
-        <PillMenu current={CURRENT} options={OPTIONS} />
+        <PillMenu current={CURRENT} options={[...OPTIONS]} />
       </Field>,
     );
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('no `label`'));
+    // Once — not again on every re-render with a fresh options array.
+    rerender(
+      <Field label="Priority">
+        <PillMenu current={CURRENT} options={[...OPTIONS]} />
+      </Field>,
+    );
+    expect(warn).toHaveBeenCalledTimes(1);
     warn.mockClear();
     render(
       <Field label="Type">

@@ -212,16 +212,17 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
     ...rest
   } = props as typeof props & { required?: boolean; 'aria-labelledby'?: string };
   const t = useTranslation();
+  // Trigger mode only: the read-only chip has no name for `label` to fix.
+  // A boolean dep, not `options` — callers pass a fresh array every render.
+  const hasTrigger = options != null && options.length > 0;
   useEffect(() => {
-    // Trigger mode only: the read-only chip has no name for `label` to fix.
-    const hasTrigger = options != null && options.length > 0;
     if (process.env.NODE_ENV !== 'production' && hasTrigger && fieldLabelledBy && !label) {
       // eslint-disable-next-line no-console
       console.warn(
         '<PillMenu> received `aria-labelledby` (e.g. inside a <Field>) but no `label`. `aria-labelledby` is ignored — the trigger keeps its own name ("Change status: …") — so unless the field label is "status", it doesn\'t reach assistive tech. Pass `label` (e.g. label="priority").',
       );
     }
-  }, [fieldLabelledBy, label, options]);
+  }, [fieldLabelledBy, label, hasTrigger]);
   // Deferred for the same reason as Switch: a PillMenu that mounts already
   // busy would otherwise mount its region and text together and announce
   // nothing. See CLAUDE.md Hard rule 10.
@@ -251,7 +252,7 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
   // render: reset synchronously, before paint.
   if (isBlocked && uncontrolledOpen) setUncontrolledOpen(false);
 
-  if (!options || options.length === 0) {
+  if (!hasTrigger) {
     return (
       // {...rest} first so a consumer prop can't collide with the chip's
       // own className/style resolution below.
