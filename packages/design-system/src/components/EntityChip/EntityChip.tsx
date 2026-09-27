@@ -452,10 +452,12 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
   // should still get a tooltip. Safe for `loading` regardless, since that
   // branch never renders the label Tooltip at all (#582 review).
   const clippable = truncate || hasSegments || labelMaxWidth != null;
-  // A chip that stops being clippable while its tooltip is open loses the
-  // blur handler that would close it; reset during render so the tooltip
-  // can't come back already open if it becomes clippable again.
-  if (!clippable && labelTipOpen) setLabelTipOpen(false);
+  // Whether the label Tooltip is mounted: the loading branch never renders it.
+  const labelTip = clippable && !loading;
+  // Whenever the label Tooltip unmounts while open (the chip stops being
+  // clippable, or starts loading — a refetch under the pointer), nothing is
+  // left to close it; reset during render so it can't remount already open.
+  if (!labelTip && labelTipOpen) setLabelTipOpen(false);
   const onLabelTip = (next: boolean) => {
     const el = labelRef.current;
     setLabelTipOpen(next && el != null && el.scrollWidth > el.clientWidth);
@@ -545,7 +547,7 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
               is itself multiple nodes — e.g. a fragment) so the chip's `gap`
               doesn't insert extra space inside the name. No longer scopes
               hover styling (the fake-bold rule was dropped, see #345). */}
-          {clippable ? (
+          {labelTip ? (
             <Tooltip content={label} open={labelTipOpen} onOpenChange={onLabelTip}>
               <span
                 ref={labelRef}

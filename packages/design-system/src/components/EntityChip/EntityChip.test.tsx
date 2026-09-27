@@ -695,10 +695,24 @@ describe('<EntityChip> — tooltips and labelMaxWidth (#582)', () => {
     fakeClip(label, true);
     await user.hover(label);
     expect(await screen.findByRole('tooltip')).toBeInTheDocument();
-    // Parent drops `truncate` while it's open: no Tooltip, no blur to close it…
+    // Parent drops `truncate` while it's open: no Tooltip left to close it…
     rerender(<EntityChip href="/t" label="A very long task title" />);
     await user.unhover(screen.getByText('A very long task title'));
     // …then clippable again: it must not mount already open.
+    rerender(<EntityChip href="/t" label="A very long task title" truncate />);
+    expect(screen.queryByRole('tooltip')).toBeNull();
+  });
+
+  it('an open label tooltip does not come back open after a loading round-trip', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<EntityChip href="/t" label="A very long task title" truncate />);
+    const label = screen.getByText('A very long task title');
+    fakeClip(label, true);
+    await user.hover(label);
+    expect(await screen.findByRole('tooltip')).toBeInTheDocument();
+    // A refetch under the pointer: the loading branch unmounts the label Tooltip…
+    rerender(<EntityChip href="/t" label="A very long task title" truncate loading />);
+    // …and when it resolves the tooltip must not remount already open.
     rerender(<EntityChip href="/t" label="A very long task title" truncate />);
     expect(screen.queryByRole('tooltip')).toBeNull();
   });
