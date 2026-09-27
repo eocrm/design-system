@@ -1,6 +1,8 @@
 // Sticky.tokens.scss — global defaults for <Sticky>. Emitted from the stable
 // styles/tokens.scss entry (not the lazy component module) so later consumer
 // :root overrides win predictably.
+@use '../TopBar/TopBar.tokens';
+
 :root {
   --sticky-top-xs: var(--space-1);
   --sticky-top-sm: var(--space-2);

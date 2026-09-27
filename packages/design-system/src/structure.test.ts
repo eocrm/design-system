@@ -1969,3 +1969,204 @@ describe('a translated fallback is never introduced with ??', () => {
     },
   );
 });
+
+/**
+ * A component's stylesheet may not read ANOTHER component's declared token
+ * without `@use`-ing that component's tokens file — codifying #583.
+ *
+ * `LinkCard.module.scss` painted Card's surface (`--card-bg`, `--card-radius`,
+ * `--card-shadow`, the padding scale, the tone stripe) by reading tokens
+ * `Card.tokens.scss` declares, without `@use`-ing it — and `LinkCard.tokens.scss`
+ * had the identical defect one file over (`--card-shadow`). A code-split
+ * consumer whose chunk renders `LinkCard` without `Card` never gets those
+ * custom properties compiled into its CSS at all — not a wrong value, no
+ * value — so the card rendered with no background, border, radius, shadow or
+ * padding until some other route happened to load Card's CSS.
+ *
+ * OWNERSHIP is exact declared name, not a derived prefix. A first cut
+ * collapsed each component's declared names to their longest common
+ * hyphen-segment prefix, and real data broke it two ways: `Badge.tokens.scss`
+ * also declares legacy `--color-badge-*` compatibility aliases that share no
+ * segment at all with `--badge-*`, so the reduction produced an EMPTY prefix
+ * and would have matched nothing in Badge's own file; `FlowCanvas`,
+ * `MediaTile`, `QrCode` and `TopBar` all declare a shorter or differently
+ * spelled prefix than their component name kebab-cases to (`flow`,
+ * `mediatile`, `qr`, `topbar`), so deriving the prefix FROM THE NAME instead
+ * misses exactly the reads worth catching. Matching the exact declared name
+ * sidesteps both — whatever a `<Comp>.tokens.scss` actually declares is
+ * Comp's, in full, regardless of what it looks like. This also gives the
+ * CLAUDE.md exclusion for global tokens for free: `--color-*` / `--space-*` /
+ * `--radius-*` / `--size-*` / `--font-*` from `src/styles/**` never enter
+ * `declaredBy` because nothing under `components/` declares them, so they are
+ * invisible to this gate rather than needing a denylist.
+ *
+ * REACH is direct `@use`, or one level through a file's own `@use`d partials.
+ * `SortableGroup.module.scss` reading `--sortable-*` and directly `@use`ing
+ * `Sortable.tokens` is the direct shape; `DateStrip.module.scss` never reads
+ * `--button-*` itself, only `DateStrip.tokens.scss` does (and that file
+ * `@use`s `Button.tokens` directly) — so every real cross-component read
+ * already in the tree resolves at depth one or less. That is what "one level
+ * is enough if that's all the codebase needs" resolves to: it costs one extra
+ * hop of resolution and nothing here needs a second.
+ *
+ * Fixed the same way, found by this gate as the #583 audit before any of this
+ * file's comments existed: `DataTable.module.scss` read Table's border/bg/
+ * header tokens, `Dot.module.scss` and `Select.tokens.scss` each read a
+ * `Badge` tone token, `DropdownMenu.tokens.scss` read two, `Image.module.scss`
+ * read Button's focus-ring color, `OtpInput.tokens.scss` read the whole Input
+ * surface, and `Sticky.tokens.scss` read TopBar's height — the last with an
+ * inline `56px` fallback already in place, which softens the failure but does
+ * not make the read correct: `@use` makes the real height available instead
+ * of the guess, and costs nothing.
+ *
+ * WHAT IT CANNOT CATCH: a read satisfied by two or more levels of
+ * indirection (none exist today, see above); a token read through SCSS
+ * interpolation rather than a literal `var(--...)`; a genuine name collision
+ * where two components declare the identical custom property (none exist
+ * today — `declaredBy` would silently keep whichever component's tokens file
+ * this walk visits last).
+ */
+describe("a stylesheet does not read another component's tokens without @use-ing them", () => {
+  /** Resolves an `@use` specifier written inside `fromDir` to a `Comp/File.scss` label. */
+  const resolveUsePath = (fromDir: string, specifier: string): string => {
+    const withExt = specifier.endsWith('.scss') ? specifier : `${specifier}.scss`;
+    const stack = fromDir === '' ? [] : fromDir.split('/');
+    for (const part of withExt.split('/')) {
+      if (part === '.' || part === '') continue;
+      if (part === '..') stack.pop();
+      else stack.push(part);
+    }
+    return stack.join('/');
+  };
+
+  const usesOf = (code: string): string[] =>
+    [...stripScssComments(code).matchAll(/@use\s+['"]([^'"]+)['"]/g)].map((m) => m[1]!);
+
+  const readsOf = (code: string): Set<string> =>
+    new Set([...stripScssComments(code).matchAll(/var\(\s*(--[a-z0-9-]+)/g)].map((m) => m[1]!));
+
+  /**
+   * Pure and injectable — `declaredBy` and `filesByLabel` are parameters, not
+   * closed-over module state, so the self-test below can exercise direct use,
+   * one-level indirection, and "no path reaches it" without depending on
+   * which real files currently happen to shape each case.
+   */
+  const offendersIn = (
+    label: string,
+    code: string,
+    declaredBy: Map<string, string>,
+    filesByLabel: Map<string, string>,
+  ): string[] => {
+    const owner = label.split('/')[0]!;
+    const dir = label.split('/').slice(0, -1).join('/');
+    const direct = usesOf(code).map((spec) => resolveUsePath(dir, spec));
+    const indirect = direct.flatMap((target) => {
+      const targetCode = filesByLabel.get(target);
+      if (!targetCode) return [];
+      const targetDir = target.split('/').slice(0, -1).join('/');
+      return usesOf(targetCode).map((spec) => resolveUsePath(targetDir, spec));
+    });
+    const reach = new Set([...direct, ...indirect]);
+    const offenders: string[] = [];
+    for (const name of readsOf(code)) {
+      const owningComponent = declaredBy.get(name);
+      if (!owningComponent || owningComponent === owner) continue;
+      const required = `${owningComponent}/${owningComponent}.tokens.scss`;
+      if (!reach.has(required))
+        offenders.push(`${name} (needs @use '../${owningComponent}/${owningComponent}.tokens')`);
+    }
+    return offenders;
+  };
+
+  it('the scan itself can fail', () => {
+    const declared = new Map([['--other-x', 'Other']]);
+    const noFiles = new Map<string, string>();
+
+    // Direct @use of the other component's tokens file clears it.
+    expect(
+      offendersIn(
+        'Mine/Mine.module.scss',
+        "@use '../Other/Other.tokens';\n.a { color: var(--other-x); }",
+        declared,
+        noFiles,
+      ),
+    ).toEqual([]);
+
+    // No @use anywhere: flagged.
+    expect(
+      offendersIn('Mine/Mine.module.scss', '.a { color: var(--other-x); }', declared, noFiles),
+    ).toEqual(["--other-x (needs @use '../Other/Other.tokens')"]);
+
+    // One level of indirection: Mine.module.scss @uses its own tokens
+    // partial, which is the file that actually @uses Other.tokens — the
+    // DateStrip/SlotGrid shape (see docblock).
+    const filesWithPartial = new Map([
+      ['Mine/Mine.tokens.scss', "@use '../Other/Other.tokens';\n:root { --mine-x: red; }"],
+    ]);
+    expect(
+      offendersIn(
+        'Mine/Mine.module.scss',
+        "@use './Mine.tokens';\n.a { color: var(--other-x); }",
+        declared,
+        filesWithPartial,
+      ),
+    ).toEqual([]);
+
+    // Two levels is out of scope — documented, not silently passing.
+    const filesTwoDeep = new Map([
+      ['Mine/Mine.tokens.scss', "@use './Nested.tokens';\n:root { --mine-x: red; }"],
+      ['Mine/Nested.tokens.scss', "@use '../Other/Other.tokens';\n:root { --nested-x: blue; }"],
+    ]);
+    expect(
+      offendersIn(
+        'Mine/Mine.module.scss',
+        "@use './Mine.tokens';\n.a { color: var(--other-x); }",
+        declared,
+        filesTwoDeep,
+      ),
+    ).toEqual(["--other-x (needs @use '../Other/Other.tokens')"]);
+
+    // Reading a token this component declares itself is never an offense.
+    expect(
+      offendersIn('Other/Other.module.scss', '.a { color: var(--other-x); }', declared, noFiles),
+    ).toEqual([]);
+
+    // A var() with no declaring component (a global token, or nothing) is
+    // never an offense — the exclusion the CLAUDE.md rule asks for, applied
+    // by simply never being in `declaredBy`.
+    expect(
+      offendersIn('Mine/Mine.module.scss', '.a { color: var(--color-bg); }', declared, noFiles),
+    ).toEqual([]);
+  });
+
+  const declaredBy = new Map<string, string>();
+  for (const name of components) {
+    const tokensPath = join(componentsDir, name, `${name}.tokens.scss`);
+    if (!existsSync(tokensPath)) continue;
+    const stripped = stripScssComments(readFileSync(tokensPath, 'utf-8'));
+    for (const m of stripped.matchAll(/(?:^|[^\w-])(--[a-z0-9-]+)\s*:/g)) {
+      declaredBy.set(m[1]!, name);
+    }
+  }
+
+  const styleFiles = allFilesUnder(componentsDir).filter(({ label }) =>
+    /\.(module|tokens)\.scss$/.test(label),
+  );
+  const filesByLabel = new Map(styleFiles.map(({ label, code }) => [label, code]));
+
+  it('found declared component tokens and stylesheets to check', () => {
+    expect(declaredBy.size).toBeGreaterThan(100);
+    expect(styleFiles.length).toBeGreaterThan(50);
+    // Pinned so the "compat alias" and "shorter-than-kebab" cases the
+    // docblock argues from cannot silently stop being true.
+    expect(declaredBy.get('--color-badge-danger-bg')).toBe('Badge');
+    expect(declaredBy.get('--qr-ink')).toBe('QrCode');
+  });
+
+  it.each(styleFiles.map(({ label, code }) => [label, code]))('%s', (label, code) => {
+    expect(
+      offendersIn(label, code, declaredBy, filesByLabel),
+      "reads another component's token without @use-ing its tokens file (or a file it @uses)",
+    ).toEqual([]);
+  });
+});

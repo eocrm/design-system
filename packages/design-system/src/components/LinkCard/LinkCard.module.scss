@@ -1,5 +1,6 @@
 @use '../../styles/mixins' as *;
 @use './LinkCard.tokens';
+@use '../Card/Card.tokens';
 
 .linkCard {
   --link-card-elevation: var(--link-card-shadow);
