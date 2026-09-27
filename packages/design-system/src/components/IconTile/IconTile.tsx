@@ -34,8 +34,9 @@ export interface IconTileProps extends Omit<HTMLAttributes<HTMLSpanElement>, 'co
    * EntityChip row without growing it.
    *
    * `'inline'` is font-relative: a `1em` tile (the surrounding text's
-   * font-size) aligned with the text, whose glyph the tile sizes to `0.75em`
-   * — the icon's own `size` prop is overridden. Use it in text contexts
+   * font-size) centred on the text's capitals, whose glyph the tile sizes to
+   * `0.75em` — a direct `<svg>` child's (a lucide icon's) own `size` is
+   * overridden; wrap nothing around the icon. Use it in text contexts
    * (`EntityChip` `icon` / `trailing`, `Badge` rows, dense lists, running
    * text) where even `xs` towers over the capitals. It follows `font-size`,
    * so there is no size decision per call site.

@@ -347,8 +347,39 @@ describe('PillMenu — inside a Field (#578)', () => {
     expect(trigger).not.toHaveAttribute('required');
   });
 
-  it('read-only chip takes invalid too', () => {
+  it('the read-only chip ignores invalid (not a control)', () => {
     const { container } = render(<PillMenu invalid current={CURRENT} />);
-    expect(container.firstChild).toHaveAttribute('aria-invalid', 'true');
+    expect(container.firstChild).not.toHaveAttribute('aria-invalid');
+    expect(container.firstChild).not.toHaveAttribute('invalid');
+  });
+
+  it('warns in dev when a Field label arrives but `label` is missing', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    render(
+      <Field label="Priority">
+        <PillMenu current={CURRENT} options={OPTIONS} />
+      </Field>,
+    );
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('no `label`'));
+    warn.mockClear();
+    render(
+      <Field label="Type">
+        <PillMenu label="type" current={CURRENT} options={OPTIONS} />
+      </Field>,
+    );
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('never lets aria-labelledby override the component-owned name', () => {
+    const smuggled = { 'aria-labelledby': 'elsewhere' } as object;
+    render(<PillMenu label="type" current={CURRENT} options={OPTIONS} {...smuggled} />);
+    const trigger = screen.getByRole('button', { name: 'Change type: Bug' });
+    expect(trigger).not.toHaveAttribute('aria-labelledby');
+  });
+
+  it('stays content-width as a stretching flex item unless fullWidth', () => {
+    const scss = readFileSync(resolve(__dirname, 'PillMenu.module.scss'), 'utf8');
+    expect(scss).toMatch(/\.trigger,\s*\.chip\s*\{[^}]*width:\s*fit-content;/);
   });
 });

@@ -327,15 +327,19 @@ describe('Avatar — size="inline" (#579)', () => {
     expect(compiledDeclaration(inline, 'font-size')).toBeUndefined();
     const crop = compiledRule(stylesheet, '.inline .crop');
     expect(compiledDeclaration(crop, 'font-size')?.value).toBe('var(--avatar-font-size-inline)');
+    // In running text: top-aligned to the line box, which a 1lh box fills.
+    expect(compiledDeclaration(inline, 'vertical-align')?.value).toBe('top');
     const tokens = parse(compile(resolve(__dirname, './Avatar.tokens.scss')).css);
-    let size = '';
+    const sizes: string[] = [];
     tokens.walkDecls('--avatar-size-inline', (d) => {
-      size = d.value;
+      sizes.push(d.value);
     });
-    expect(size).toBe('1lh');
+    // 1.5em fallback, then 1lh where supported.
+    expect(sizes).toEqual(['1.5em', '1lh']);
   });
 
-  it('sizes the presence dot', () => {
-    expect(compiledRule(stylesheet, '.inline .presence')).toBeDefined();
+  it('sizes the presence dot with the text', () => {
+    const dot = compiledRule(stylesheet, '.inline .presence');
+    expect(compiledDeclaration(dot, 'width')?.value).toBe('var(--avatar-presence-size-inline)');
   });
 });

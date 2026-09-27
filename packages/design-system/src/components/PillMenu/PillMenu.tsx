@@ -37,7 +37,12 @@ export interface PillMenuOption {
   color?: PaletteColor;
 }
 
-export interface PillMenuProps extends Omit<HTMLAttributes<HTMLElement>, 'onSelect'> {
+// `aria-labelledby` is omitted: the trigger's name is component-owned (see
+// `label`), and aria-labelledby would override it.
+export interface PillMenuProps extends Omit<
+  HTMLAttributes<HTMLElement>,
+  'onSelect' | 'aria-labelledby'
+> {
   /** The value currently shown on the trigger (or the read-only chip). */
   current: PillMenuOption;
   /**
@@ -46,6 +51,11 @@ export interface PillMenuProps extends Omit<HTMLAttributes<HTMLElement>, 'onSele
    * Pass it as it reads right after "Change" / "Изменить", lower-case, in the
    * UI's language — it is data, not a translatable string. In ru that is the
    * accusative: `label="категорию"`, not "категория".
+   *
+   * Inside a `<Field>`, pass the field's label here (`label="priority"` under
+   * "Priority"): the trigger keeps its own name, so the visible field label
+   * reaches AT only through this (WCAG 2.5.3). A dev warning fires if it's
+   * missing there.
    */
   label?: string;
   /**
@@ -81,7 +91,8 @@ export interface PillMenuProps extends Omit<HTMLAttributes<HTMLElement>, 'onSele
   /**
    * Error state — sets `aria-invalid` on the trigger. `<Field error>` injects
    * it for you. No visual change: the fill IS the value's colour, and the
-   * Field's error text carries the error.
+   * Field's error text carries the error. The read-only chip ignores it (a
+   * non-focusable chip isn't a control AT can report invalid).
    */
   invalid?: boolean;
 }
@@ -145,7 +156,8 @@ function OptionContent({ option }: { option: PillMenuOption }) {
  * @example
  * // In a form column beside full-width Selects/Inputs. Field wires `id`,
  * // the error text and `invalid`; the trigger keeps its own name
- * // ("Change priority: High"), so pass `label`.
+ * // ("Change priority: High"), so pass `label`. Without `fullWidth` the pill
+ * // stays content-width in the field.
  * <Field label="Priority" error={errors.priority}>
  *   <PillMenu fullWidth label="priority" current={priority} options={priorities} onSelect={setPriority} />
  * </Field>
@@ -194,10 +206,18 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
   // `aria-describedby` (the error/help text) do pass through.
   const {
     required: _required,
-    'aria-labelledby': _labelledBy,
+    'aria-labelledby': fieldLabelledBy,
     ...rest
-  } = props as typeof props & { required?: boolean };
+  } = props as typeof props & { required?: boolean; 'aria-labelledby'?: string };
   const t = useTranslation();
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'production' && fieldLabelledBy && !label) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        '<PillMenu> received `aria-labelledby` (e.g. inside a <Field>) but no `label`. The trigger keeps its own name ("Change status: …"), so the visible field label never reaches assistive tech — pass `label` (e.g. label="priority").',
+      );
+    }
+  }, [fieldLabelledBy, label]);
   // Deferred for the same reason as Switch: a PillMenu that mounts already
   // busy would otherwise mount its region and text together and announce
   // nothing. See CLAUDE.md Hard rule 10.
@@ -236,7 +256,6 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
         ref={ref as Ref<HTMLSpanElement>}
         className={clsx(styles.chip, fullWidth && styles.fullWidth, className)}
         style={mergedStyle}
-        aria-invalid={invalid || undefined}
       >
         <OptionContent option={current} />
       </span>

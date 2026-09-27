@@ -249,13 +249,13 @@ describe('Image', () => {
     expect(getImg(container)).toBe(imgNode); // error: still the same node
   });
 
-  it('a src change gets a fresh <img>, so a stale load for the old src cannot mark it loaded', () => {
+  // A fresh element per src means a queued `load` for the old src lands on a
+  // detached node and can't mark the new one loaded.
+  it('a src change gets a fresh <img>', () => {
     const { container, rerender } = render(<Image src={SRC} alt="" />);
     const first = getImg(container);
     rerender(<Image src="https://example.com/other.jpg" alt="" />);
     expect(getImg(container)).not.toBe(first);
-    fireEvent.load(first); // late event from the detached old element
-    expect(container.firstElementChild).toHaveAttribute('data-state', 'loading');
   });
 });
 

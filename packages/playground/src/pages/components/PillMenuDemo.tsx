@@ -178,7 +178,14 @@ export function Demo() {
         title="Full width in a form"
         description="fullWidth stretches the pill to its field like a Select trigger: icon and name at the start, chevron at the end edge, the menu at least as wide as the trigger. Keeps the full-colour fill."
         code={`import { useState } from 'react';
+import { BookOpen, Bug, CheckSquare } from 'lucide-react';
 import { Field, Input, PillMenu, Stack, type PillMenuOption } from '@eocrm/design-system';
+
+const TASK_TYPES: PillMenuOption[] = [
+  { id: 'bug', name: 'Bug', color: 'red', icon: <Bug size={14} /> },
+  { id: 'story', name: 'Story', color: 'green', icon: <BookOpen size={14} /> },
+  { id: 'task', name: 'Task', color: 'blue', icon: <CheckSquare size={14} /> },
+];
 
 export function Demo() {
   const [type, setType] = useState<PillMenuOption>(TASK_TYPES[0]);

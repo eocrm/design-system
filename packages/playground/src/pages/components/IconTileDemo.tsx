@@ -126,24 +126,24 @@ import { Badge, EntityChip, IconTile, Stack, Text } from '@eocrm/design-system';
 export function Demo() {
   return (
     <Stack gap="md">
-    <EntityChip
-      prefix="ENG-15"
-      label="Migrate billing exports"
-      icon={<IconTile size="inline" color="violet" icon={<ListTodo />} />}
-      trailing={
-        <>
-          <IconTile size="inline" color="red" icon={<ChevronsUp />} />
-          <Badge tone="warning">In progress</Badge>
-        </>
-      }
-    />
-    <Text size="sm">
-      Blocked by <IconTile size="inline" color="violet" icon={<ListTodo />} /> ENG-12
-    </Text>
-    <Text size="xl">
-      Blocked by <IconTile size="inline" color="violet" icon={<ListTodo />} /> ENG-12
-    </Text>
-  </Stack>
+      <EntityChip
+        prefix="ENG-15"
+        label="Migrate billing exports"
+        icon={<IconTile size="inline" color="violet" icon={<ListTodo />} />}
+        trailing={
+          <>
+            <IconTile size="inline" color="red" icon={<ChevronsUp />} />
+            <Badge tone="warning">In progress</Badge>
+          </>
+        }
+      />
+      <Text size="sm">
+        Blocked by <IconTile size="inline" color="violet" icon={<ListTodo />} /> ENG-12
+      </Text>
+      <Text size="xl">
+        Blocked by <IconTile size="inline" color="violet" icon={<ListTodo />} /> ENG-12
+      </Text>
+    </Stack>
   );
 }`}
       >

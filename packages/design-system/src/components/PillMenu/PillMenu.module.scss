@@ -16,6 +16,11 @@
   background: var(--pill-menu-bg);
   color: var(--pill-menu-fg);
   white-space: nowrap;
+
+  // Content-width even as a stretching flex/grid item (a vertical Field, a
+  // Stack), where the pill was blockified and stretched with the chevron
+  // stranded mid-pill. Sizes the element's own box, not its placement.
+  width: fit-content;
 }
 
 .trigger {

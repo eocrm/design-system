@@ -35,9 +35,11 @@ export interface AvatarProps extends HTMLAttributes<HTMLSpanElement> {
    * - `lg` (40px) — detail-page headers.
    * - `xl` (80px) — member-card popovers / profile headers.
    * - `inline` — one line of the surrounding text tall (`1lh`), initials
-   *   scaled to match, so a person in running text or a `DefinitionList` row
-   *   is no taller than its text neighbours. Follows the text size; no size
-   *   decision per call site. Not available on `<AvatarGroup>`.
+   *   scaled to match, so an avatar in a text row (a `DefinitionList` value,
+   *   a table cell, a line of text) doesn't make it taller. Follows the text
+   *   size; no size decision per call site. Not available on `<AvatarGroup>`
+   *   — and don't set it per child inside one: the group's overlaps are
+   *   sized for its fixed steps.
    *
    * Inside `<AvatarGroup>`, the group's `size` overrides this.
    */

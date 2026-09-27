@@ -34,11 +34,10 @@
   width: var(--icon-tile-size-inline);
   height: var(--icon-tile-size-inline);
 
-  // An icon-only inline-grid has no text baseline: it would sit ON the
-  // baseline and rise a full 1em, above the capitals. -0.125em centres it on
-  // the cap height in running text. (Flex rows like EntityChip's slots
-  // centre it themselves; vertical-align doesn't apply there.)
-  vertical-align: -0.125em;
+  // No baseline offset: the grid's baseline is the svg's bottom edge, 0.125em
+  // above the tile's, so in running text the tile already centres on the
+  // capitals (measured in Chromium, within 0.25px). Flex rows (EntityChip's
+  // slots) centre it themselves.
 
   > svg {
     width: var(--icon-tile-glyph-inline);

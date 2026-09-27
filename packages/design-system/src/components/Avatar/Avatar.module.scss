@@ -43,6 +43,12 @@
   width: var(--avatar-size-inline);
   height: var(--avatar-size-inline);
 
+  // In running text the default baseline is the initials' (or, for a photo,
+  // the box's bottom), which pushes the 1lh box off the line and grows it.
+  // A box exactly one line tall aligned to the line box's top fills it
+  // without growing it. Ignored in flex rows, which centre it.
+  vertical-align: top;
+
   .crop {
     font-size: var(--avatar-font-size-inline);
   }
@@ -143,7 +149,11 @@
 
 // Per-size dot dimensions. The size class lives on the avatar wrapper (the
 // .presence child's parent), so a descendant selector picks the right size.
-.inline .presence,
+.inline .presence {
+  width: var(--avatar-presence-size-inline);
+  height: var(--avatar-presence-size-inline);
+}
+
 .sm .presence {
   width: var(--avatar-presence-size-sm);
   height: var(--avatar-presence-size-sm);

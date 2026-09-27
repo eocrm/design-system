@@ -247,37 +247,37 @@ export function Demo() {
 export function Demo() {
   return (
     <DefinitionList dividers>
-    <DefinitionList.Item>
-      <DefinitionList.Term>Status</DefinitionList.Term>
-      <DefinitionList.Description>
-        <Badge tone="info">In progress</Badge>
-      </DefinitionList.Description>
-    </DefinitionList.Item>
-    <DefinitionList.Item>
-      <DefinitionList.Term>Assignee</DefinitionList.Term>
-      <DefinitionList.Description>
-        <PersonDisplay size="inline">
-          <PersonDisplay.Avatar name="Avery Liu" />
-          <PersonDisplay.Name href="#">Avery Liu</PersonDisplay.Name>
-        </PersonDisplay>
-      </DefinitionList.Description>
-    </DefinitionList.Item>
-    <DefinitionList.Item>
-      <DefinitionList.Term>Reporter</DefinitionList.Term>
-      <DefinitionList.Description>
-        <PersonDisplay size="inline">
-          <PersonDisplay.Avatar name="Sarah Chen" />
-          <PersonDisplay.Name>Sarah Chen</PersonDisplay.Name>
-        </PersonDisplay>
-      </DefinitionList.Description>
-    </DefinitionList.Item>
-    <DefinitionList.Item>
-      <DefinitionList.Term>Space</DefinitionList.Term>
-      <DefinitionList.Description>
-        <Link href="#">Engineering</Link>
-      </DefinitionList.Description>
-    </DefinitionList.Item>
-  </DefinitionList>
+      <DefinitionList.Item>
+        <DefinitionList.Term>Status</DefinitionList.Term>
+        <DefinitionList.Description>
+          <Badge tone="info">In progress</Badge>
+        </DefinitionList.Description>
+      </DefinitionList.Item>
+      <DefinitionList.Item>
+        <DefinitionList.Term>Assignee</DefinitionList.Term>
+        <DefinitionList.Description>
+          <PersonDisplay size="inline">
+            <PersonDisplay.Avatar name="Avery Liu" />
+            <PersonDisplay.Name href="#">Avery Liu</PersonDisplay.Name>
+          </PersonDisplay>
+        </DefinitionList.Description>
+      </DefinitionList.Item>
+      <DefinitionList.Item>
+        <DefinitionList.Term>Reporter</DefinitionList.Term>
+        <DefinitionList.Description>
+          <PersonDisplay size="inline">
+            <PersonDisplay.Avatar name="Sarah Chen" />
+            <PersonDisplay.Name>Sarah Chen</PersonDisplay.Name>
+          </PersonDisplay>
+        </DefinitionList.Description>
+      </DefinitionList.Item>
+      <DefinitionList.Item>
+        <DefinitionList.Term>Space</DefinitionList.Term>
+        <DefinitionList.Description>
+          <Link href="#">Engineering</Link>
+        </DefinitionList.Description>
+      </DefinitionList.Item>
+    </DefinitionList>
   );
 }`}
       >

@@ -46,6 +46,9 @@ describe('IconTile', () => {
     expect(scss).toMatch(
       /\.size-inline\s*\{[^}]*width:\s*var\(--icon-tile-size-inline\)[^}]*height:\s*var\(--icon-tile-size-inline\)/,
     );
+    // No vertical-align: the svg's bottom edge already centres the tile on the
+    // capitals; the -0.125em once here pushed it ~0.11em low.
+    expect(scss).not.toMatch(/\.size-inline\s*\{[^}]*vertical-align/);
     expect(scss).toMatch(
       />\s*svg\s*\{[^}]*width:\s*var\(--icon-tile-glyph-inline\)[^}]*height:\s*var\(--icon-tile-glyph-inline\)/,
     );

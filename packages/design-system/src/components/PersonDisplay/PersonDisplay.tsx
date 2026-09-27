@@ -33,9 +33,10 @@ export interface PersonDisplayProps extends HTMLAttributes<HTMLDivElement> {
    * text sizes via context.
    *
    * `inline` fits a person into a text row: the Avatar is one line tall
-   * (`1lh`) and the Name inherits the surrounding text's size, weight and
-   * colour, so a person row in a `DefinitionList` or a sentence is exactly
-   * as tall as its plain-text neighbours. Follows the text size; no size
+   * (`1lh`) and the Name inherits the surrounding text's size and weight
+   * (and colour, unless it has an `href` — then it's a subtle Link), so a
+   * person in a `DefinitionList` value or a table cell is exactly as tall as
+   * its plain-text neighbours. The root is a `<div>`: not for inside a `<p>`. Follows the text size; no size
    * decision per call site. Skip Descriptions — a second line defeats it.
    */
   size?: PersonDisplaySize;

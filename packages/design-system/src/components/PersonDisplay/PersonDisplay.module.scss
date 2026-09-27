@@ -21,6 +21,13 @@
   &[data-size='inline'] {
     gap: var(--person-display-gap-sm);
   }
+
+  // One line tall (inline Avatar = 1lh, bare Name), so top-aligning to the
+  // line box fills it without growing it when the row sits inside text;
+  // the default baseline is the avatar's and pushed it off the line.
+  &[data-size='inline'] {
+    vertical-align: top;
+  }
 }
 
 // Opt-in shrink-wrap (the `shrink` prop). The root is `inline-flex`, but as a child

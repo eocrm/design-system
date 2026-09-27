@@ -357,30 +357,30 @@ export function Demo() {
 export function Demo() {
   return (
     <Constrain width="sm">
-    <Card>
-      <DefinitionList dividers>
-        <DefinitionList.Item>
-          <DefinitionList.Term>Parent</DefinitionList.Term>
-          <DefinitionList.Description>
-            <EntityChip
-              truncate
-              href="#"
-              prefix="ENG-15"
-              label="Migrate the legacy billing exports to the new reporting pipeline"
-            />
-          </DefinitionList.Description>
-        </DefinitionList.Item>
-        <DefinitionList.Item>
-          <DefinitionList.Term>Summary</DefinitionList.Term>
-          <DefinitionList.Description>
-            <Text truncate>
-              Exports time out for tenants with more than 50k invoices per month
-            </Text>
-          </DefinitionList.Description>
-        </DefinitionList.Item>
-      </DefinitionList>
-    </Card>
-  </Constrain>
+      <Card>
+        <DefinitionList dividers>
+          <DefinitionList.Item>
+            <DefinitionList.Term>Parent</DefinitionList.Term>
+            <DefinitionList.Description>
+              <EntityChip
+                truncate
+                href="#"
+                prefix="ENG-15"
+                label="Migrate the legacy billing exports to the new reporting pipeline"
+              />
+            </DefinitionList.Description>
+          </DefinitionList.Item>
+          <DefinitionList.Item>
+            <DefinitionList.Term>Summary</DefinitionList.Term>
+            <DefinitionList.Description>
+              <Text truncate>
+                Exports time out for tenants with more than 50k invoices per month
+              </Text>
+            </DefinitionList.Description>
+          </DefinitionList.Item>
+        </DefinitionList>
+      </Card>
+    </Constrain>
   );
 }`}
       >
