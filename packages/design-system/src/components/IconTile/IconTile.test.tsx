@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { render } from '@testing-library/react';
 import { createRef } from 'react';
 import { IconTile } from './IconTile';
@@ -24,6 +26,17 @@ describe('IconTile', () => {
     expect((container.firstChild as HTMLElement).className).toMatch(/shape-circle/);
     rerender(<IconTile icon={<svg />} size="lg" />);
     expect((container.firstChild as HTMLElement).className).toMatch(/size-lg/);
+    rerender(<IconTile icon={<svg />} size="xs" />);
+    expect((container.firstChild as HTMLElement).className).toMatch(/size-xs/);
+  });
+
+  it('xs is a 20px box via the --size-xs token (#566)', () => {
+    const scss = readFileSync(resolve(__dirname, 'IconTile.module.scss'), 'utf8');
+    expect(scss).toMatch(
+      /\.size-xs\s*\{[^}]*width:\s*var\(--icon-tile-size-xs\)[^}]*height:\s*var\(--icon-tile-size-xs\)/,
+    );
+    const tokens = readFileSync(resolve(__dirname, 'IconTile.tokens.scss'), 'utf8');
+    expect(tokens).toMatch(/--icon-tile-size-xs:\s*var\(--size-xs\);/);
   });
 
   it('color sets the palette CSS vars', () => {

@@ -7,6 +7,11 @@
   color: var(--icon-tile-fg);
 }
 
+.size-xs {
+  width: var(--icon-tile-size-xs);
+  height: var(--icon-tile-size-xs);
+}
+
 .size-sm {
   width: var(--icon-tile-size-sm);
   height: var(--icon-tile-size-sm);

@@ -2593,7 +2593,7 @@
           "type": "IconTileSize",
           "required": false,
           "default": "",
-          "description": "Tile box size. `'sm'` 24 / `'md'` 32 (**default**) / `'lg'` 40 px. Sizes the\ntile box — size your icon child separately."
+          "description": "Tile box size. `'xs'` 20 / `'sm'` 24 / `'md'` 32 (**default**) / `'lg'` 40 px.\nSizes the tile box — size your icon child separately. `'xs'` brackets a\n14px glyph with ~3px of padding so the tile sits inside a text / Badge /\nEntityChip row without growing it."
         },
         {
           "name": "shape",
@@ -5716,7 +5716,7 @@
     "ErrorStateAlign": "\"start\" | \"center\"",
     "ErrorStateTone": "\"neutral\" | \"danger\"",
     "ErrorStateHeadingLevel": "1 | 2 | 3 | 4 | 5 | 6",
-    "IconTileSize": "\"sm\" | \"md\" | \"lg\"",
+    "IconTileSize": "\"sm\" | \"md\" | \"lg\" | \"xs\"",
     "IconTileShape": "\"circle\" | \"square\"",
     "TooltipSide": "\"left\" | \"right\" | \"top\" | \"bottom\"",
     "TooltipAlign": "\"start\" | \"end\" | \"center\"",
