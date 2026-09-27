@@ -11,6 +11,7 @@ import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import outlineStyles from './demoOutline.module.scss';
 import { getComponentFiles } from '../../lib/componentFiles';
+import { ResizablePreview } from './ResizablePreview';
 
 // Live preview for the as="span" example — the issue's motivating use case:
 // icon + label inside a segmented ButtonGroup.Item, where a <div> is invalid.
@@ -347,6 +348,40 @@ export function Demo() {
             </Cluster>
           </ChipButton>
         </Stack>
+      </Example>
+
+      <Example
+        title="maxWidthFull — an inline chip that ellipsizes at the line edge"
+        description="An as='span' Cluster inside a paragraph sizes to its content, so a long truncating title makes it overflow the line. maxWidthFull caps it at the paragraph width (max-width: 100%) while staying a span. Pair with wrap={false} and minWidth0. Drag the resize handle to narrow the paragraph. (For an entity link row, EntityChip truncate + trailing does this for you.)"
+        code={`import { Badge, Cluster, Dot, Text } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Text as="p">
+      Blocked by{' '}
+      <Cluster as="span" gap="xs" align="center" wrap={false} minWidth0 maxWidthFull>
+        <Dot color="violet" />
+        <Text as="span" truncate>
+          ENG-42 Migrate the reporting exports to the new async job runner
+        </Text>
+        <Badge tone="info">In progress</Badge>
+      </Cluster>
+    </Text>
+  );
+}`}
+      >
+        <ResizablePreview initialWidth={360}>
+          <Text as="p">
+            Blocked by{' '}
+            <Cluster as="span" gap="xs" align="center" wrap={false} minWidth0 maxWidthFull>
+              <Dot color="violet" />
+              <Text as="span" truncate>
+                ENG-42 Migrate the reporting exports to the new async job runner
+              </Text>
+              <Badge tone="info">In progress</Badge>
+            </Cluster>
+          </Text>
+        </ResizablePreview>
       </Example>
     </DemoLayout>
   );

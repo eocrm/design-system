@@ -172,3 +172,23 @@ describe('Cluster', () => {
     expect(scss).not.toMatch(/@extend\s+\.minWidth0|composes:[^;]*\bminWidth0\b/);
   });
 });
+
+describe('maxWidthFull (#571)', () => {
+  it('applies the class only when set, and stays a span with as="span"', () => {
+    const { container: off } = render(<Cluster as="span">x</Cluster>);
+    expect((off.firstChild as HTMLElement).className).not.toMatch(/maxWidthFull/);
+    const { container: on } = render(
+      <Cluster as="span" maxWidthFull>
+        x
+      </Cluster>,
+    );
+    const el = on.firstChild as HTMLElement;
+    expect(el.tagName).toBe('SPAN');
+    expect(el.className).toMatch(/maxWidthFull/);
+  });
+
+  it('SCSS: caps at 100% of the container', () => {
+    const scss = readFileSync(resolve(__dirname, 'Cluster.module.scss'), 'utf8');
+    expect(scss).toMatch(/\.maxWidthFull\s*\{[^}]*max-width:\s*100%/);
+  });
+});

@@ -27,6 +27,13 @@
   min-width: 0;
 }
 
+// Opt-in, via `maxWidthFull` (#571): an inline (`as="span"`) cluster sizes to
+// its content, and with a nowrap truncating child that content is the full
+// title — so it overflows the line instead of ellipsizing at its edge.
+.maxWidthFull {
+  max-width: 100%;
+}
+
 // as="span": phrasing-content contexts (inside <button>, <a>, <label>) need
 // an inline-level box — a block flex container would break inline flow and
 // is invalid HTML there; this is the reason the span variant exists.
