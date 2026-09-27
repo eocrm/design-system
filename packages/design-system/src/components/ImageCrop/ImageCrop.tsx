@@ -241,13 +241,17 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
     };
   }, [src]);
 
-  // Image load state + natural dimensions. Reset whenever src changes.
+  // Image load state + natural dimensions. Reset when src changes — during
+  // render, not in an effect: a mount-time effect ran after a cached image's
+  // `load` and wiped it, leaving the skeleton up for good (#574).
   const [loadState, setLoadState] = useState<'loading' | 'loaded' | 'error'>('loading');
   const [imageNatural, setImageNatural] = useState<{ width: number; height: number } | null>(null);
-  useEffect(() => {
+  const [prevSrc, setPrevSrc] = useState(resolvedSrc);
+  if (resolvedSrc !== prevSrc) {
+    setPrevSrc(resolvedSrc);
     setLoadState('loading');
     setImageNatural(null);
-  }, [resolvedSrc]);
+  }
 
   // Viewport size — measured after layout via getBoundingClientRect. We use a
   // ResizeObserver instead of a window-resize listener so we catch:

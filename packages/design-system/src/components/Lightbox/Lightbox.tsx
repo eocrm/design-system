@@ -193,10 +193,14 @@ export function Lightbox({
   // Per-image stage load/error state, reset when the source changes.
   const currentItem: LightboxItem | undefined = items[current];
   const currentSrc = currentItem?.src;
+  // Reset during render, not in an effect: a mount-time effect ran after a
+  // cached image's `load` and left the skeleton up for good (#574).
   const [stageState, setStageState] = useState<'loading' | 'loaded' | 'error'>('loading');
-  useEffect(() => {
+  const [prevSrc, setPrevSrc] = useState(currentSrc);
+  if (currentSrc !== prevSrc) {
+    setPrevSrc(currentSrc);
     setStageState('loading');
-  }, [currentSrc]);
+  }
 
   // Inert the rest of the page while we're the top overlay (mirrors Modal.Overlay).
   useEffect(() => {

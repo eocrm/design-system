@@ -302,4 +302,13 @@ describe('Avatar — early image error', () => {
     expect(container.querySelector('img')).toBeNull();
     expect(container).toHaveTextContent('AK');
   });
+  it('shows the image again when src changes after an error', () => {
+    const { container, rerender } = render(
+      <Avatar name="Alex Kim" src="https://example.com/a.png" />,
+    );
+    fireEvent.error(container.querySelector('img')!);
+    expect(container.querySelector('img')).toBeNull();
+    rerender(<Avatar name="Alex Kim" src="https://example.com/b.png" />);
+    expect(container.querySelector('img')).toHaveAttribute('src', 'https://example.com/b.png');
+  });
 });

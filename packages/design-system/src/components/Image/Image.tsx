@@ -251,7 +251,7 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
     // so a careless spread can't break them.
     <img
       {...rest}
-      key={reloadNonce}
+      key={`${src}|${reloadNonce}`}
       ref={ref}
       src={src}
       alt={state === 'error' ? '' : alt}

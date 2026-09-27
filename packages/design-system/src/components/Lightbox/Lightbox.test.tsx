@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useState, type ReactNode } from 'react';
 import { act, render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { overlayStack } from '../_internal/overlay';
@@ -369,5 +369,27 @@ describe('Lightbox — empty aria-label', () => {
   it('falls back to the default dialog name when aria-label is an empty string', () => {
     open({ 'aria-label': '' });
     expect(screen.getByRole('dialog', { name: 'Image gallery' })).toBeInTheDocument();
+  });
+});
+
+// #574: a cached image can fire `load` before the mount's passive effects run.
+function LoadEarly({ selector, children }: { selector: string; children: ReactNode }) {
+  useLayoutEffect(() => {
+    const img = document.querySelector<HTMLImageElement>(selector)!;
+    Object.defineProperty(img, 'naturalWidth', { configurable: true, value: 1000 });
+    Object.defineProperty(img, 'naturalHeight', { configurable: true, value: 800 });
+    fireEvent.load(img);
+  }, [selector]);
+  return <>{children}</>;
+}
+
+describe('Lightbox — early load (#574)', () => {
+  it('stays loaded when the stage image loads before mount effects run', () => {
+    render(
+      <LoadEarly selector="img[data-state]">
+        <Lightbox open onOpenChange={() => {}} items={ITEMS} />
+      </LoadEarly>,
+    );
+    expect(screen.getByAltText('Alpha')).toHaveAttribute('data-state', 'loaded');
   });
 });

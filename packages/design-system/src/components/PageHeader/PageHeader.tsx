@@ -71,10 +71,12 @@ export interface PageHeaderTitleProps {
    */
   size?: TitleSize;
   /**
-   * Keep the title on one line, ending in an ellipsis at the actions column
-   * instead of wrapping. Pass-through to `<Title truncate>`. Defaults to
-   * `false`. Anything inline AFTER the text (e.g. a status badge) is clipped
-   * with it — put badges in `PageHeader.Meta` when truncating.
+   * Keep the title on one line, ending in an ellipsis where the title column
+   * ends (at the actions on wide layouts) instead of wrapping. Pass-through to
+   * `<Title truncate>`. Defaults to `false`. Anything inline AFTER the text
+   * (e.g. a status badge) is clipped with it — put badges in `PageHeader.Meta`.
+   * Screen readers still get the full text (don't add `aria-label`); sighted
+   * users don't, so show the full title somewhere else too if it matters.
    */
   truncate?: boolean;
   children: ReactNode;
