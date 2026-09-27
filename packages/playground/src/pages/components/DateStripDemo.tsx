@@ -106,7 +106,10 @@ export function Demo() {
       <Example
         title="Month boundary"
         description="A week spanning September into October — the heading reads 'September – October 2026'."
-        code={`const week = [
+        code={`import { useState } from 'react';
+import { DateStrip, type DateStripDay } from '@eocrm/design-system';
+
+const week: DateStripDay[] = [
   { date: '2026-09-28', free: 3 },
   { date: '2026-09-29', free: 1 },
   { date: '2026-09-30', free: 9 },
@@ -116,13 +119,21 @@ export function Demo() {
   { date: '2026-10-04', free: 4 },
 ];
 
-<DateStrip
-  days={week}
-  value={day}
-  onChange={setDay}
-  onPrevious={() => {}}
-  onNext={() => {}}
-/>`}
+export function Demo() {
+  const [day, setDay] = useState<string | null>(null);
+
+  return (
+    <DateStrip
+      days={week}
+      value={day}
+      onChange={setDay}
+      onPrevious={() => {}}
+      onNext={() => {}}
+      canPrevious={false}
+      canNext={false}
+    />
+  );
+}`}
       >
         <DateStrip
           days={MONTH_BOUNDARY_WEEK}
@@ -130,15 +141,55 @@ export function Demo() {
           onChange={setBoundaryDay}
           onPrevious={() => {}}
           onNext={() => {}}
+          canPrevious={false}
+          canNext={false}
         />
       </Example>
 
       <Example
         title="Narrow container"
         description="Below 480px (a container query on the strip's own width) the per-day free-time count hides so the tiles stay legible."
-        code={`<ResizablePreview initialWidth={320}>
-  <DateStrip days={days} value={day} onChange={setDay} onPrevious={prev} onNext={next} />
-</ResizablePreview>`}
+        code={`import { useState } from 'react';
+import { DateStrip, type DateStripDay } from '@eocrm/design-system';
+import { ResizablePreview } from './ResizablePreview'; // playground-only sizing harness
+
+const PATTERN = [3, 1, 9, 0, 2, 0, 4];
+const addDays = (iso: string, n: number) =>
+  new Date(Date.parse(iso) + n * 86_400_000).toISOString().slice(0, 10);
+
+function weekDays(weekStart: string, weekIndex: number): DateStripDay[] {
+  return Array.from({ length: 7 }, (_, i) => ({
+    date: addDays(weekStart, i),
+    free: PATTERN[(i + weekIndex) % 7],
+  }));
+}
+
+export function Demo() {
+  const [weekStart, setWeekStart] = useState('2026-10-05');
+  const [weekIndex, setWeekIndex] = useState(0);
+  const [day, setDay] = useState<string | null>(null);
+  const days = weekDays(weekStart, weekIndex);
+
+  return (
+    <ResizablePreview initialWidth={320}>
+      <DateStrip
+        days={days}
+        value={day}
+        onChange={setDay}
+        onPrevious={() => {
+          setWeekStart(addDays(weekStart, -7));
+          setWeekIndex((i) => i - 1);
+        }}
+        onNext={() => {
+          setWeekStart(addDays(weekStart, 7));
+          setWeekIndex((i) => i + 1);
+        }}
+        canPrevious={weekIndex > 0}
+        canNext={weekIndex < 3}
+      />
+    </ResizablePreview>
+  );
+}`}
       >
         <ResizablePreview initialWidth={320}>
           <DateStrip

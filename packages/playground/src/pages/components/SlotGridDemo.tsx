@@ -101,14 +101,24 @@ export function Demo() {
       <Example
         title="Empty"
         description="Default localized empty state above; a custom empty node (any ReactNode) below."
-        code={`<SlotGrid groups={[]} value={null} onChange={setSlot} />
+        code={`import { useState } from 'react';
+import { SlotGrid, Stack, Text } from '@eocrm/design-system';
 
-<SlotGrid
-  groups={[]}
-  value={null}
-  onChange={setSlot}
-  empty={<Text tone="danger">Fully booked — try another day</Text>}
-/>`}
+export function Demo() {
+  const [slot, setSlot] = useState<string | null>(null);
+
+  return (
+    <Stack gap="lg">
+      <SlotGrid groups={[]} value={slot} onChange={setSlot} />
+      <SlotGrid
+        groups={[]}
+        value={slot}
+        onChange={setSlot}
+        empty={<Text tone="danger">Fully booked — try another day</Text>}
+      />
+    </Stack>
+  );
+}`}
       >
         <Stack gap="lg">
           <SlotGrid groups={[]} value={emptySlot} onChange={setEmptySlot} />
@@ -125,12 +135,37 @@ export function Demo() {
         title="With DateStrip"
         description="The booking time step: DateStrip picks the day, SlotGrid the time. No slots render until a day is chosen."
         code={`import { useState } from 'react';
-import { DateStrip, SlotGrid, Stack, type DateStripDay, type SlotGridGroup } from '@eocrm/design-system';
+import {
+  DateStrip,
+  SlotGrid,
+  Stack,
+  Text,
+  type DateStripDay,
+  type SlotGridGroup,
+} from '@eocrm/design-system';
+
+const week: DateStripDay[] = [
+  { date: '2026-10-12', free: 4 },
+  { date: '2026-10-13', free: 0 },
+  { date: '2026-10-14', free: 2 },
+  { date: '2026-10-15', free: 6 },
+  { date: '2026-10-16', free: 0 },
+  { date: '2026-10-17', free: 3 },
+  { date: '2026-10-18', free: 5 },
+];
 
 function slotsForDay(date: string | null, days: DateStripDay[]): SlotGridGroup[] {
   const info = date ? days.find((d) => d.date === date) : undefined;
   if (!info || info.free === 0) return [];
-  return [{ label: 'Available', slots: /* one slot per free time */ [] }];
+  return [
+    {
+      label: 'Available',
+      slots: Array.from({ length: info.free }, (_, i) => {
+        const hour = 9 + i;
+        return { key: \`\${date}T\${String(hour).padStart(2, '0')}:00\`, label: \`\${hour}:00\` };
+      }),
+    },
+  ];
 }
 
 export function Demo() {
@@ -139,7 +174,15 @@ export function Demo() {
 
   return (
     <Stack gap="lg">
-      <DateStrip days={week} value={day} onChange={setDay} onPrevious={() => {}} onNext={() => {}} />
+      <DateStrip
+        days={week}
+        value={day}
+        onChange={setDay}
+        onPrevious={() => {}}
+        onNext={() => {}}
+        canPrevious={false}
+        canNext={false}
+      />
       <SlotGrid
         groups={slotsForDay(day, week)}
         value={slot}
