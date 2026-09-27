@@ -22,7 +22,7 @@ import styles from './PersonDisplay.module.scss';
  * Visual size of the PersonDisplay composition. Drives Avatar diameter
  * and Name / Description text sizes via context.
  */
-export type PersonDisplaySize = 'sm' | 'md' | 'lg';
+export type PersonDisplaySize = 'inline' | 'sm' | 'md' | 'lg';
 
 export interface PersonDisplayProps extends HTMLAttributes<HTMLDivElement> {
   /**
@@ -31,6 +31,15 @@ export interface PersonDisplayProps extends HTMLAttributes<HTMLDivElement> {
    * the compact density for tight table cells; `lg` is the detail-page
    * hero size. Propagates to the Avatar size and the Name / Description
    * text sizes via context.
+   *
+   * `inline` fits a person into a text row: the Avatar is one line tall
+   * (`1lh`) and the Name inherits the surrounding text's size and weight
+   * (and colour, unless it has an `href` — then it's a subtle Link), so a
+   * person in a `DefinitionList` value or a table cell is exactly as tall as
+   * its plain-text neighbours. Follows the text size; no size decision per
+   * call site. Skip Descriptions — a second line defeats it. The root is a
+   * `<div>`, so not inside a `<p>`; in a line that also holds something
+   * taller than one line it top-aligns rather than sharing the baseline.
    */
   size?: PersonDisplaySize;
   /**
@@ -94,18 +103,22 @@ function useSize(): PersonDisplaySize {
 }
 
 const AVATAR_SIZE: Record<PersonDisplaySize, AvatarSize> = {
+  inline: 'inline',
   sm: 'sm',
   md: 'md',
   lg: 'lg',
 };
 
-const NAME_TEXT_SIZE: Record<PersonDisplaySize, TextSize> = {
+// `inline` is absent: its Name renders bare to inherit size AND weight
+// (Text has no inherited weight).
+const NAME_TEXT_SIZE: Record<Exclude<PersonDisplaySize, 'inline'>, TextSize> = {
   sm: 'sm',
   md: 'md',
   lg: 'lg',
 };
 
 const DESCRIPTION_TEXT_SIZE: Record<PersonDisplaySize, TextSize> = {
+  inline: 'inherit',
   sm: 'xs',
   md: 'sm',
   lg: 'md',
@@ -149,7 +162,15 @@ const PersonDisplayAvatar = forwardRef<HTMLSpanElement, PersonDisplayAvatarProps
 const PersonDisplayName = forwardRef<HTMLElement, PersonDisplayNameProps>(
   function PersonDisplayName({ href, className, children, ...rest }, ref) {
     const size = useSize();
-    const textSize = NAME_TEXT_SIZE[size];
+    // inline: bare text, so it inherits the row's size, weight and colour.
+    const content =
+      size === 'inline' ? (
+        children
+      ) : (
+        <Text as="span" size={NAME_TEXT_SIZE[size]} weight="medium">
+          {children}
+        </Text>
+      );
     if (href) {
       return (
         <Link
@@ -160,9 +181,7 @@ const PersonDisplayName = forwardRef<HTMLElement, PersonDisplayNameProps>(
           // {...rest} last so consumer overrides win (Pattern A)
           {...rest}
         >
-          <Text as="span" size={textSize} weight="medium">
-            {children}
-          </Text>
+          {content}
         </Link>
       );
     }
@@ -173,9 +192,7 @@ const PersonDisplayName = forwardRef<HTMLElement, PersonDisplayNameProps>(
         // {...rest} last so consumer overrides win (Pattern A)
         {...rest}
       >
-        <Text as="span" size={textSize} weight="medium">
-          {children}
-        </Text>
+        {content}
       </span>
     );
   },
@@ -235,9 +252,9 @@ const PersonDisplayDescription = forwardRef<HTMLSpanElement, PersonDisplayDescri
  * Avatar + Name (+ optional Description lines) — the most-duplicated
  * "person row" composition across the CRM mockups. Compound API:
  * `<PersonDisplay>` root + `<PersonDisplay.Avatar>` + `<PersonDisplay.Name>` +
- * optional repeating `<PersonDisplay.Description>` children. Three sizes
- * (`sm` / `md` / `lg`) drive the Avatar size and the Name / Description
- * text sizes via context.
+ * optional repeating `<PersonDisplay.Description>` children. Sizes
+ * (`inline` / `sm` / `md` / `lg`) drive the Avatar size and the Name /
+ * Description text sizes via context.
  *
  * Use it for contact rows, owner cells, audit actors, activity-timeline
  * authors, members lists, and detail-page owner sidebars. NOT for
@@ -268,6 +285,13 @@ const PersonDisplayDescription = forwardRef<HTMLSpanElement, PersonDisplayDescri
  *   <PersonDisplay.Name>Avery Liu</PersonDisplay.Name>
  * </PersonDisplay>
  *
+ * @example
+ * // A DefinitionList value — as tall as the text rows around it
+ * <PersonDisplay size="inline">
+ *   <PersonDisplay.Avatar name="Avery Liu" />
+ *   <PersonDisplay.Name href="/members/avery">Avery Liu</PersonDisplay.Name>
+ * </PersonDisplay>
+ *
  * @remarks When NOT to use
  * - Avatar-only badges (no name beside the avatar) — use `<Avatar>` directly.
  * - Stacks of avatars (overlapping circles) — use `<AvatarGroup>`.
@@ -278,6 +302,11 @@ const PersonDisplayDescription = forwardRef<HTMLSpanElement, PersonDisplayDescri
  * @remarks Anti-patterns
  * - Wrapping the entire PersonDisplay in a `<Link>` to make the whole
  *   row clickable. The Name owns the link via its `href` prop.
+ * - `size="sm"` for a person among text values (a `DefinitionList`, a
+ *   sentence) — the 24px avatar makes that row taller than its neighbours.
+ *   Use `size="inline"`.
+ * - Descriptions under `size="inline"` — the second line is exactly the
+ *   extra height `inline` exists to avoid.
  * - Passing `size` to `<PersonDisplay.Avatar>` directly. Root's `size`
  *   controls all children — overriding the Avatar size in isolation
  *   makes the proportions wrong. The Avatar's `size` prop is omitted

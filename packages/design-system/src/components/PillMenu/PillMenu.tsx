@@ -37,7 +37,14 @@ export interface PillMenuOption {
   color?: PaletteColor;
 }
 
-export interface PillMenuProps extends Omit<HTMLAttributes<HTMLElement>, 'onSelect'> {
+// `aria-labelledby` is omitted: the trigger's name is component-owned (see
+// `label`), and aria-labelledby would override it. TS doesn't excess-check
+// hyphenated JSX attributes, so this is documentation — it's also stripped
+// at runtime.
+export interface PillMenuProps extends Omit<
+  HTMLAttributes<HTMLElement>,
+  'onSelect' | 'aria-labelledby'
+> {
   /** The value currently shown on the trigger (or the read-only chip). */
   current: PillMenuOption;
   /**
@@ -46,6 +53,11 @@ export interface PillMenuProps extends Omit<HTMLAttributes<HTMLElement>, 'onSele
    * Pass it as it reads right after "Change" / "Изменить", lower-case, in the
    * UI's language — it is data, not a translatable string. In ru that is the
    * accusative: `label="категорию"`, not "категория".
+   *
+   * Inside a `<Field>`, pass the field's label here (`label="priority"` under
+   * "Priority"): the trigger keeps its own name, so the visible field label
+   * reaches AT only through this (WCAG 2.5.3). A dev warning fires if it's
+   * missing there.
    */
   label?: string;
   /**
@@ -69,6 +81,22 @@ export interface PillMenuProps extends Omit<HTMLAttributes<HTMLElement>, 'onSele
    * so has nothing to mark busy.
    */
   busy?: boolean;
+  /**
+   * Stretch the trigger (or read-only chip) to its container's width, for a
+   * form column of full-width controls (`Input`, `Select`, `DatePicker` in
+   * vertical `Field`s). Icon + name stay at the start, the chevron moves to
+   * the end edge like a `Select` trigger, and the menu is at least as wide as
+   * the trigger. Keeps the full-colour fill. Defaults to `false`
+   * (content-width pill).
+   */
+  fullWidth?: boolean;
+  /**
+   * Error state — sets `aria-invalid` on the trigger. `<Field error>` injects
+   * it for you. No visual change: the fill IS the value's colour, and the
+   * Field's error text carries the error. The read-only chip ignores it (a
+   * non-focusable chip isn't a control AT can report invalid).
+   */
+  invalid?: boolean;
 }
 
 /** Injectable custom-property pair for a value's resolved color. */
@@ -128,6 +156,15 @@ function OptionContent({ option }: { option: PillMenuOption }) {
  * // trigger is announced "Change type: Bug"
  *
  * @example
+ * // In a form column beside full-width Selects/Inputs. Field wires `id`,
+ * // the error text and `invalid`; the trigger keeps its own name
+ * // ("Change priority: High"), so pass `label`. Without `fullWidth` the pill
+ * // stays content-width in the field.
+ * <Field label="Priority" error={errors.priority}>
+ *   <PillMenu fullWidth label="priority" current={priority} options={priorities} onSelect={setPriority} />
+ * </Field>
+ *
+ * @example
  * // Read-only — omit `options` for a static colored chip (no menu)
  * <PillMenu current={{ id: 'done', name: 'Done', category: 'done' }} />
  *
@@ -148,10 +185,44 @@ function OptionContent({ option }: { option: PillMenuOption }) {
  *   temporarily blocked, keep `options` and pass `disabled` instead.
  */
 export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu(
-  { current, options, onSelect, label, disabled = false, busy = false, className, style, ...rest },
+  {
+    current,
+    options,
+    onSelect,
+    label,
+    disabled = false,
+    busy = false,
+    fullWidth = false,
+    invalid = false,
+    className,
+    style,
+    ...props
+  },
   ref,
 ) {
+  // Inside a <Field>, auto-wiring also injects `required` (not valid on a
+  // button — there's no aria-required for it) and `aria-labelledby`, which
+  // would OVERRIDE the component-owned name: "Change type: Bug" would read
+  // as the bare field label "Type", dropping the current value. Neither
+  // reaches the DOM; `label` names the value instead. `id` and
+  // `aria-describedby` (the error/help text) do pass through.
+  const {
+    required: _required,
+    'aria-labelledby': fieldLabelledBy,
+    ...rest
+  } = props as typeof props & { required?: boolean; 'aria-labelledby'?: string };
   const t = useTranslation();
+  // Trigger mode only: the read-only chip has no name for `label` to fix.
+  // A boolean dep, not `options` — callers pass a fresh array every render.
+  const hasTrigger = options != null && options.length > 0;
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'production' && hasTrigger && fieldLabelledBy && !label) {
+      // eslint-disable-next-line no-console
+      console.warn(
+        '<PillMenu> received `aria-labelledby` (e.g. inside a <Field>) but no `label`. `aria-labelledby` is ignored — the trigger keeps its own name ("Change status: …") — so unless the field label is "status", it doesn\'t reach assistive tech. Pass `label` (e.g. label="priority").',
+      );
+    }
+  }, [fieldLabelledBy, label, hasTrigger]);
   // Deferred for the same reason as Switch: a PillMenu that mounts already
   // busy would otherwise mount its region and text together and announce
   // nothing. See CLAUDE.md Hard rule 10.
@@ -181,14 +252,14 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
   // render: reset synchronously, before paint.
   if (isBlocked && uncontrolledOpen) setUncontrolledOpen(false);
 
-  if (!options || options.length === 0) {
+  if (!hasTrigger) {
     return (
       // {...rest} first so a consumer prop can't collide with the chip's
       // own className/style resolution below.
       <span
         {...rest}
         ref={ref as Ref<HTMLSpanElement>}
-        className={clsx(styles.chip, className)}
+        className={clsx(styles.chip, fullWidth && styles.fullWidth, className)}
         style={mergedStyle}
       >
         <OptionContent option={current} />
@@ -210,10 +281,11 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
           {...rest}
           ref={ref as Ref<HTMLButtonElement>}
           type="button"
-          className={clsx(styles.trigger, className)}
+          className={clsx(styles.trigger, fullWidth && styles.fullWidth, className)}
           style={mergedStyle}
           disabled={isBlocked}
           aria-busy={busy || undefined}
+          aria-invalid={invalid || undefined}
           aria-label={t('pillMenu.change', {
             label: label || t('pillMenu.defaultLabel'),
             name: current.name,

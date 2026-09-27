@@ -1,5 +1,5 @@
 import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
-import { createRef } from 'react';
+import { createRef, useLayoutEffect, type ReactNode } from 'react';
 import { ImageCrop, extractCropBlob, useCropPreview, type CropArea } from './index';
 
 // jsdom doesn't implement setPointerCapture; stub it.
@@ -588,5 +588,27 @@ describe('ImageCrop', () => {
       expect(el.dataset.encoding).toBe('false');
       restore();
     });
+  });
+});
+
+// #574: a cached image can fire `load` before the mount's passive effects run.
+function LoadEarly({ selector, children }: { selector: string; children: ReactNode }) {
+  useLayoutEffect(() => {
+    const img = document.querySelector<HTMLImageElement>(selector)!;
+    Object.defineProperty(img, 'naturalWidth', { configurable: true, value: 1000 });
+    Object.defineProperty(img, 'naturalHeight', { configurable: true, value: 800 });
+    fireEvent.load(img);
+  }, [selector]);
+  return <>{children}</>;
+}
+
+describe('ImageCrop — early load (#574)', () => {
+  it('leaves the loading state when the image loads before mount effects run', () => {
+    const { container } = render(
+      <LoadEarly selector="img">
+        <ImageCrop src="https://example.com/logo.png" value={null} onChange={() => {}} />
+      </LoadEarly>,
+    );
+    expect(container.querySelector('[class*="skeleton"]')).toBeNull();
   });
 });

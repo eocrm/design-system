@@ -5,8 +5,12 @@ import styles from './IconTile.module.scss';
 
 type StyleWithVars = CSSProperties & { [key: `--${string}`]: string | number };
 
-/** Tile box size — `xs` 20 / `sm` 24 / `md` 32 / `lg` 40 px. Sizes the tile, not the icon. */
-export type IconTileSize = 'xs' | 'sm' | 'md' | 'lg';
+/**
+ * Tile box size — `xs` 20 / `sm` 24 / `md` 32 / `lg` 40 px (sizes the tile, not
+ * the icon), or `inline`: `1em`, following the surrounding text (sizes the icon
+ * too).
+ */
+export type IconTileSize = 'inline' | 'xs' | 'sm' | 'md' | 'lg';
 
 /** Tile shape — `'square'` (radius-md, default) or `'circle'` (radius-full). */
 export type IconTileShape = 'square' | 'circle';
@@ -28,6 +32,14 @@ export interface IconTileProps extends Omit<HTMLAttributes<HTMLSpanElement>, 'co
    * Sizes the tile box — size your icon child separately. `'xs'` brackets a
    * 14px glyph with ~3px of padding so the tile sits inside a text / Badge /
    * EntityChip row without growing it.
+   *
+   * `'inline'` is font-relative: a `1em` tile (the surrounding text's
+   * font-size) centred on the text's capitals, whose glyph the tile sizes to
+   * `0.75em` — a direct `<svg>` child's (a lucide icon's) own `size` is
+   * overridden; wrap nothing around the icon. Use it in text contexts
+   * (`EntityChip` `icon` / `trailing`, `Badge` rows, dense lists, running
+   * text) where even `xs` towers over the capitals. It follows `font-size`,
+   * so there is no size decision per call site.
    */
   size?: IconTileSize;
   /** `'square'` (radius-md, **default**) or `'circle'` (radius-full). */
@@ -60,6 +72,14 @@ export interface IconTileProps extends Omit<HTMLAttributes<HTMLSpanElement>, 'co
  * </Cluster>
  *
  * @example
+ * // Inline with text — follows the chip's font size, sizes the glyph itself:
+ * <EntityChip
+ *   prefix="ENG-15"
+ *   label="Migrate billing exports"
+ *   icon={<IconTile size="inline" color="violet" icon={<ListTodo />} />}
+ * />
+ *
+ * @example
  * // Standalone + meaningful → give it a label:
  * <IconTile color="green" label="Verified" icon={<Check size={16} />} />
  *
@@ -72,6 +92,10 @@ export interface IconTileProps extends Omit<HTMLAttributes<HTMLSpanElement>, 'co
  * @remarks Anti-patterns
  * - A decorative (default) IconTile used as the ONLY indicator of meaning with
  *   no nearby text — pass a `label` so AT users get the meaning.
+ * - `size="xs"` inside a chip or text row — it is a fixed 20px and towers over
+ *   the text. Use `size="inline"`.
+ * - `size="inline"` as a standalone tile (stat, list-row lead) — it is only as
+ *   big as the text around it. Use a fixed size.
  *
  * @remarks A11y
  * - Decorative by default (`aria-hidden="true"`). `label` makes it

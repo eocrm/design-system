@@ -3,7 +3,7 @@ import { parse, type Declaration, type Root, type Rule } from 'postcss';
 import { compile } from 'sass';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createRef } from 'react';
+import { createRef, useLayoutEffect, type ReactNode } from 'react';
 import { Avatar, avatarColorIndex } from './Avatar';
 
 // The presence shapes are pure CSS and jsdom computes no styles, so they are
@@ -281,5 +281,72 @@ describe('Avatar', () => {
     await user.hover(avatar);
     const tip = await screen.findByRole('tooltip', {}, { timeout: 2000 });
     expect(tip).toHaveTextContent('Alex');
+  });
+});
+
+// #574 (sibling): an image that errors before the mount's passive effects run
+// must stay broken — falling back to initials, not a broken <img>.
+describe('Avatar — early image error', () => {
+  it('shows initials when the image errors before mount effects run', () => {
+    function ErrorEarly({ children }: { children: ReactNode }) {
+      useLayoutEffect(() => {
+        fireEvent.error(document.querySelector('img') as HTMLImageElement);
+      }, []);
+      return <>{children}</>;
+    }
+    const { container } = render(
+      <ErrorEarly>
+        <Avatar name="Alex Kim" src="https://example.com/a.png" />
+      </ErrorEarly>,
+    );
+    expect(container.querySelector('img')).toBeNull();
+    expect(container).toHaveTextContent('AK');
+  });
+  it('shows the image again when src changes after an error', () => {
+    const { container, rerender } = render(
+      <Avatar name="Alex Kim" src="https://example.com/a.png" />,
+    );
+    fireEvent.error(container.querySelector('img')!);
+    expect(container.querySelector('img')).toBeNull();
+    rerender(<Avatar name="Alex Kim" src="https://example.com/b.png" />);
+    expect(container.querySelector('img')).toHaveAttribute('src', 'https://example.com/b.png');
+  });
+});
+
+describe('Avatar — size="inline" (#579)', () => {
+  it('applies the inline class', () => {
+    const { container } = render(<Avatar name="Alex Kim" size="inline" />);
+    expect((container.firstChild as HTMLElement).className).toMatch(/inline/);
+  });
+
+  it('is one text line tall; the wrapper keeps the inherited font-size so 1lh is the text line', () => {
+    const inline = compiledRule(stylesheet, '.inline');
+    expect(compiledDeclaration(inline, 'width')?.value).toBe('var(--avatar-size-inline)');
+    expect(compiledDeclaration(inline, 'height')?.value).toBe('var(--avatar-size-inline)');
+    // A font-size here would change what `lh` resolves against.
+    expect(compiledDeclaration(inline, 'font-size')).toBeUndefined();
+    const crop = compiledRule(stylesheet, '.inline .crop');
+    expect(compiledDeclaration(crop, 'font-size')?.value).toBe('var(--avatar-font-size-inline)');
+    // In running text: top-aligned to the line box, which a 1lh box fills.
+    expect(compiledDeclaration(inline, 'vertical-align')?.value).toBe('top');
+    const tokens = parse(compile(resolve(__dirname, './Avatar.tokens.scss')).css);
+    const sizes: string[] = [];
+    tokens.walkDecls('--avatar-size-inline', (d) => {
+      sizes.push(d.value);
+    });
+    // 1.5em fallback, then 1lh where supported.
+    expect(sizes).toEqual(['1.5em', '1lh']);
+  });
+
+  it('sizes the presence dot with the text', () => {
+    const dot = compiledRule(stylesheet, '.inline .presence');
+    expect(compiledDeclaration(dot, 'width')?.value).toBe('var(--avatar-presence-size-inline)');
+    const tokens = parse(compile(resolve(__dirname, './Avatar.tokens.scss')).css);
+    let size = '';
+    tokens.walkDecls('--avatar-presence-size-inline', (d) => {
+      size = d.value;
+    });
+    // Never below the sm dot the presence shapes were checked at (#506).
+    expect(size).toBe('max(var(--size-presence-sm), 0.5em)');
   });
 });

@@ -272,3 +272,44 @@ describe('PersonDisplay stylesheet — self-containment (#527)', () => {
     expect(decl(description, 'min-width')).toMatchObject({ value: '0' });
   });
 });
+
+describe('PersonDisplay — size="inline" (#579)', () => {
+  it('uses the inline Avatar and a bare Name that inherits size, weight and colour', () => {
+    const { container } = render(
+      <PersonDisplay size="inline">
+        <PersonDisplay.Avatar name="Avery Liu" />
+        <PersonDisplay.Name>Avery Liu</PersonDisplay.Name>
+      </PersonDisplay>,
+    );
+    const root = container.firstChild as HTMLElement;
+    expect(root).toHaveAttribute('data-size', 'inline');
+    expect(screen.getByRole('img', { name: 'Avery Liu' }).className).toMatch(/inline/);
+    // No <Text> wrapper inside the Name slot: Text always sets a size and
+    // weight class, so the text must sit directly in the slot's own span.
+    const slot = root.querySelector('[class*="name"]') as HTMLElement;
+    expect(slot).toHaveTextContent('Avery Liu');
+    expect(slot.children).toHaveLength(0);
+  });
+
+  it('a linked Name also renders bare', () => {
+    render(
+      <PersonDisplay size="inline">
+        <PersonDisplay.Avatar name="Avery Liu" />
+        <PersonDisplay.Name href="/m/avery">Avery Liu</PersonDisplay.Name>
+      </PersonDisplay>,
+    );
+    expect(screen.getByRole('link', { name: 'Avery Liu' }).children).toHaveLength(0);
+  });
+
+  it('top-aligns to the line box so it never grows a text line', () => {
+    const css = parse(compile(resolve(__dirname, './PersonDisplay.module.scss')).css);
+    let va: string | undefined;
+    css.walkRules((rule: Rule) => {
+      if (rule.selector !== '.root[data-size=inline]') return;
+      rule.walkDecls('vertical-align', (d: Declaration) => {
+        va = d.value;
+      });
+    });
+    expect(va).toBe('top');
+  });
+});

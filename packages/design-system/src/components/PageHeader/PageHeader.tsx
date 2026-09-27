@@ -70,6 +70,15 @@ export interface PageHeaderTitleProps {
    * h-level is 2 but you want it to LOOK like an h1.
    */
   size?: TitleSize;
+  /**
+   * Keep the title on one line, ending in an ellipsis where the title column
+   * ends (at the actions on wide layouts) instead of wrapping. Pass-through to
+   * `<Title truncate>`. Defaults to `false`. Anything inline AFTER the text
+   * (e.g. a status badge) is clipped with it — put badges in `PageHeader.Meta`.
+   * Screen readers still get the full text (don't add `aria-label`); sighted
+   * users don't, so show the full title somewhere else too if it matters.
+   */
+  truncate?: boolean;
   children: ReactNode;
 }
 
@@ -238,10 +247,14 @@ PageHeaderAside.displayName = 'PageHeaderAside';
  * @example
  * // Section header — h2 with default visual size for h2 (2xl):
  * <PageHeader.Title order={2}>Filters</PageHeader.Title>
+ *
+ * @example
+ * // Record detail header — one line, ellipsis at the actions; badges go in Meta:
+ * <PageHeader.Title truncate>{task.key} {task.title}</PageHeader.Title>
  */
-export function PageHeaderTitle({ order = 1, size, children }: PageHeaderTitleProps) {
+export function PageHeaderTitle({ order = 1, size, truncate, children }: PageHeaderTitleProps) {
   return (
-    <Title order={order} size={size} className={styles.title}>
+    <Title order={order} size={size} truncate={truncate} className={styles.title}>
       {children}
     </Title>
   );

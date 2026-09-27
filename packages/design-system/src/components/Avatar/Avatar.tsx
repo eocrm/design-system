@@ -1,12 +1,15 @@
-import { forwardRef, useEffect, useState, type CSSProperties, type HTMLAttributes } from 'react';
+import { forwardRef, useState, type CSSProperties, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
 import { Tooltip } from '../Tooltip';
 import { useTranslation } from '../../i18n';
 import { useAvatarGroup } from './AvatarGroupContext';
 import styles from './Avatar.module.scss';
 
-/** Diameter. Matches the shared `--size-*` scale so a Button next to an Avatar lines up. */
-export type AvatarSize = 'sm' | 'md' | 'lg' | 'xl';
+/**
+ * Diameter. Matches the shared `--size-*` scale so a Button next to an Avatar
+ * lines up — except `inline`, which is one text line tall (`1lh`).
+ */
+export type AvatarSize = 'inline' | 'sm' | 'md' | 'lg' | 'xl';
 
 /** Presence dot rendered in the bottom-right corner. Omit to render no dot. */
 export type AvatarStatus = 'online' | 'busy' | 'away' | 'offline';
@@ -31,6 +34,12 @@ export interface AvatarProps extends HTMLAttributes<HTMLSpanElement> {
    * - `md` (32px, default) — most uses.
    * - `lg` (40px) — detail-page headers.
    * - `xl` (80px) — member-card popovers / profile headers.
+   * - `inline` — one line of the surrounding text tall (`1lh`), initials
+   *   scaled to match, so an avatar in a text row (a `DefinitionList` value,
+   *   a table cell, a line of text) doesn't make it taller. Follows the text
+   *   size; no size decision per call site. Not available on `<AvatarGroup>`
+   *   — and don't set it per child inside one: the group's overlaps are
+   *   sized for its fixed steps.
    *
    * Inside `<AvatarGroup>`, the group's `size` overrides this.
    */
@@ -55,6 +64,7 @@ export interface AvatarProps extends HTMLAttributes<HTMLSpanElement> {
 }
 
 const sizeClass: Record<AvatarSize, string> = {
+  inline: styles.inline,
   sm: styles.sm,
   md: styles.md,
   lg: styles.lg,
@@ -146,10 +156,14 @@ export const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(function Avatar(
   const resolvedSize: AvatarSize = size ?? group?.size ?? 'md';
   const resolvedTooltip: boolean = tooltip ?? group?.tooltip ?? false;
 
+  // Reset on src change during render, not in an effect: a mount-time effect
+  // undid an error that fired before it ran (#574).
   const [imageBroken, setImageBroken] = useState(false);
-  useEffect(() => {
+  const [prevSrc, setPrevSrc] = useState(src);
+  if (src !== prevSrc) {
+    setPrevSrc(src);
     setImageBroken(false);
-  }, [src]);
+  }
 
   const hasImage = typeof src === 'string' && src.trim() !== '' && !imageBroken;
   const trimmedName = name.trim();

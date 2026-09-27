@@ -5,6 +5,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { PillMenu, type PillMenuOption } from './PillMenu';
+import { Field } from '../Field';
 import { I18nProvider } from '../../i18n/I18nProvider';
 
 beforeEach(() => {
@@ -297,5 +298,104 @@ describe('PillMenu — general value menu (#572)', () => {
     expect(scss).toMatch(
       /\.option\.option\s*\{[^}]*--dropdown-menu-icon-fg:\s*var\(--pill-menu-fg\)/,
     );
+  });
+});
+
+describe('PillMenu — fullWidth (#578)', () => {
+  const CURRENT: PillMenuOption = { id: 'high', name: 'High', color: 'red' };
+  const OPTIONS: PillMenuOption[] = [{ id: 'low', name: 'Low', color: 'slate' }];
+
+  it('stretches the trigger, chevron last', () => {
+    render(<PillMenu fullWidth current={CURRENT} options={OPTIONS} />);
+    const trigger = screen.getByRole('button');
+    expect(trigger.className).toMatch(/fullWidth/);
+    expect(trigger.lastElementChild?.tagName.toLowerCase()).toBe('svg');
+  });
+
+  it('stretches the read-only chip', () => {
+    const { container } = render(<PillMenu fullWidth current={CURRENT} />);
+    expect((container.firstChild as HTMLElement).className).toMatch(/fullWidth/);
+  });
+
+  it('is content-width by default', () => {
+    render(<PillMenu current={CURRENT} options={OPTIONS} />);
+    expect(screen.getByRole('button').className).not.toMatch(/fullWidth/);
+  });
+
+  it('fills its container, chevron pushed to the end edge', () => {
+    const scss = readFileSync(resolve(__dirname, 'PillMenu.module.scss'), 'utf8');
+    expect(scss).toMatch(/\.fullWidth\s*\{[^}]*display:\s*flex;[^}]*width:\s*100%;/);
+    expect(scss).toMatch(/>\s*\.chevron\s*\{[^}]*margin-inline-start:\s*auto;/);
+  });
+});
+
+describe('PillMenu — inside a Field (#578)', () => {
+  const CURRENT: PillMenuOption = { id: 'bug', name: 'Bug', color: 'red' };
+  const OPTIONS: PillMenuOption[] = [{ id: 'story', name: 'Story', color: 'green' }];
+
+  it('keeps its own name, takes the error text and invalid, leaks no bogus attributes', () => {
+    render(
+      <Field label="Type" error="Pick a type" required>
+        <PillMenu fullWidth label="type" current={CURRENT} options={OPTIONS} />
+      </Field>,
+    );
+    const trigger = screen.getByRole('button', { name: 'Change type: Bug' });
+    expect(trigger).toHaveAccessibleDescription('Pick a type');
+    expect(trigger).toHaveAttribute('aria-invalid', 'true');
+    expect(trigger).not.toHaveAttribute('aria-labelledby');
+    expect(trigger).not.toHaveAttribute('invalid');
+    expect(trigger).not.toHaveAttribute('required');
+  });
+
+  it('the read-only chip ignores invalid (not a control)', () => {
+    const { container } = render(<PillMenu invalid current={CURRENT} />);
+    expect(container.firstChild).not.toHaveAttribute('aria-invalid');
+    expect(container.firstChild).not.toHaveAttribute('invalid');
+  });
+
+  it('warns in dev when a Field label arrives but `label` is missing', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { rerender } = render(
+      <Field label="Priority">
+        <PillMenu current={CURRENT} options={[...OPTIONS]} />
+      </Field>,
+    );
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('no `label`'));
+    // Once — not again on every re-render with a fresh options array.
+    rerender(
+      <Field label="Priority">
+        <PillMenu current={CURRENT} options={[...OPTIONS]} />
+      </Field>,
+    );
+    expect(warn).toHaveBeenCalledTimes(1);
+    warn.mockClear();
+    render(
+      <Field label="Type">
+        <PillMenu label="type" current={CURRENT} options={OPTIONS} />
+      </Field>,
+    );
+    expect(warn).not.toHaveBeenCalled();
+    // Read-only chip: `label` changes nothing there, so no advice to pass it.
+    render(
+      <Field label="Type">
+        <PillMenu current={CURRENT} />
+      </Field>,
+    );
+    expect(warn).not.toHaveBeenCalled();
+    warn.mockRestore();
+  });
+
+  it('ignores aria-labelledby at runtime, keeping the component-owned name', () => {
+    const smuggled = { 'aria-labelledby': 'elsewhere' } as object;
+    render(<PillMenu label="type" current={CURRENT} options={OPTIONS} {...smuggled} />);
+    const trigger = screen.getByRole('button', { name: 'Change type: Bug' });
+    expect(trigger).not.toHaveAttribute('aria-labelledby');
+  });
+
+  it('stays content-width as a stretching flex item unless fullWidth', () => {
+    const scss = readFileSync(resolve(__dirname, 'PillMenu.module.scss'), 'utf8');
+    expect(scss).toMatch(/\.trigger,\s*\.chip\s*\{[^}]*width:\s*fit-content;/);
+    // Same specificity: .fullWidth's width: 100% only wins by coming later.
+    expect(scss.indexOf('.fullWidth {')).toBeGreaterThan(scss.search(/\.trigger,\s*\.chip\s*\{/));
   });
 });

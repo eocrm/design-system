@@ -7,6 +7,17 @@
   --avatar-font-weight: var(--font-weight-semibold);
 
   // Size variants — square dimension + initials font-size per size
+  // `inline` is font-relative (#579): one text line tall, initials ~0.7 of
+  // the text (≈ the sm ratio of initials to diameter).
+  // 1.5em before `lh` support (Safari < 16.4, Firefox < 120) — the library's
+  // body line-height, so still about one line.
+  --avatar-size-inline: 1.5em;
+  --avatar-font-size-inline: 0.7em;
+
+  // Scales with larger text, but never below the sm dot: #506's presence
+  // shapes (filled/half/barred/hollow, 2px strokes) are the non-colour
+  // channel and were only checked down to --size-presence-sm (8px).
+  --avatar-presence-size-inline: max(var(--size-presence-sm), 0.5em);
   --avatar-size-sm: var(--size-sm);
   --avatar-size-md: var(--size-md);
   --avatar-size-lg: var(--size-lg);
@@ -70,4 +81,10 @@
   --avatar-overflow-font-size-md: var(--font-size-sm);
   --avatar-overflow-font-size-lg: var(--font-size-md);
   --avatar-overflow-font-size-xl: var(--font-size-2xl);
+}
+
+@supports (height: 1lh) {
+  :root {
+    --avatar-size-inline: 1lh;
+  }
 }

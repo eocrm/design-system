@@ -208,7 +208,7 @@
           "type": "AvatarSize",
           "required": false,
           "default": "md",
-          "description": "Diameter.\n- `sm` (24px) — table rows, dense lists.\n- `md` (32px, default) — most uses.\n- `lg` (40px) — detail-page headers.\n- `xl` (80px) — member-card popovers / profile headers.\n\nInside `<AvatarGroup>`, the group's `size` overrides this."
+          "description": "Diameter.\n- `sm` (24px) — table rows, dense lists.\n- `md` (32px, default) — most uses.\n- `lg` (40px) — detail-page headers.\n- `xl` (80px) — member-card popovers / profile headers.\n- `inline` — one line of the surrounding text tall (`1lh`), initials\n  scaled to match, so an avatar in a text row (a `DefinitionList` value,\n  a table cell, a line of text) doesn't make it taller. Follows the text\n  size; no size decision per call site. Not available on `<AvatarGroup>`\n  — and don't set it per child inside one: the group's overlaps are\n  sized for its fixed steps.\n\nInside `<AvatarGroup>`, the group's `size` overrides this."
         },
         {
           "name": "status",
@@ -2663,7 +2663,7 @@
           "type": "IconTileSize",
           "required": false,
           "default": "",
-          "description": "Tile box size. `'xs'` 20 / `'sm'` 24 / `'md'` 32 (**default**) / `'lg'` 40 px.\nSizes the tile box — size your icon child separately. `'xs'` brackets a\n14px glyph with ~3px of padding so the tile sits inside a text / Badge /\nEntityChip row without growing it."
+          "description": "Tile box size. `'xs'` 20 / `'sm'` 24 / `'md'` 32 (**default**) / `'lg'` 40 px.\nSizes the tile box — size your icon child separately. `'xs'` brackets a\n14px glyph with ~3px of padding so the tile sits inside a text / Badge /\nEntityChip row without growing it.\n\n`'inline'` is font-relative: a `1em` tile (the surrounding text's\nfont-size) centred on the text's capitals, whose glyph the tile sizes to\n`0.75em` — a direct `<svg>` child's (a lucide icon's) own `size` is\noverridden; wrap nothing around the icon. Use it in text contexts\n(`EntityChip` `icon` / `trailing`, `Badge` rows, dense lists, running\ntext) where even `xs` towers over the capitals. It follows `font-size`,\nso there is no size decision per call site."
         },
         {
           "name": "shape",
@@ -3805,7 +3805,7 @@
           "type": "PersonDisplaySize",
           "required": false,
           "default": "",
-          "description": "Visual size of the entire composition. `md` is the default — suits\nsidebars, members lists, and most card / table contexts. `sm` is\nthe compact density for tight table cells; `lg` is the detail-page\nhero size. Propagates to the Avatar size and the Name / Description\ntext sizes via context."
+          "description": "Visual size of the entire composition. `md` is the default — suits\nsidebars, members lists, and most card / table contexts. `sm` is\nthe compact density for tight table cells; `lg` is the detail-page\nhero size. Propagates to the Avatar size and the Name / Description\ntext sizes via context.\n\n`inline` fits a person into a text row: the Avatar is one line tall\n(`1lh`) and the Name inherits the surrounding text's size and weight\n(and colour, unless it has an `href` — then it's a subtle Link), so a\nperson in a `DefinitionList` value or a table cell is exactly as tall as\nits plain-text neighbours. Follows the text size; no size decision per\ncall site. Skip Descriptions — a second line defeats it. The root is a\n`<div>`, so not inside a `<p>`; in a line that also holds something\ntaller than one line it top-aligns rather than sharing the baseline."
         },
         {
           "name": "shrink",
@@ -3939,7 +3939,7 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "What the value IS, for the trigger's accessible name: `label=\"type\"` →\n\"Change type: Bug\". Default: the localized \"status\" (\"Change status: …\").\nPass it as it reads right after \"Change\" / \"Изменить\", lower-case, in the\nUI's language — it is data, not a translatable string. In ru that is the\naccusative: `label=\"категорию\"`, not \"категория\"."
+          "description": "What the value IS, for the trigger's accessible name: `label=\"type\"` →\n\"Change type: Bug\". Default: the localized \"status\" (\"Change status: …\").\nPass it as it reads right after \"Change\" / \"Изменить\", lower-case, in the\nUI's language — it is data, not a translatable string. In ru that is the\naccusative: `label=\"категорию\"`, not \"категория\".\n\nInside a `<Field>`, pass the field's label here (`label=\"priority\"` under\n\"Priority\"): the trigger keeps its own name, so the visible field label\nreaches AT only through this (WCAG 2.5.3). A dev warning fires if it's\nmissing there."
         },
         {
           "name": "options",
@@ -3968,6 +3968,20 @@
           "required": false,
           "default": "",
           "description": "Transition in flight: the trigger is non-interactive and keeps its color.\nAnnounced from a polite live region the component owns — `aria-busy` is\nalso set but reaches no screen reader on its own. The trigger's accessible\nname does not change (contrast `EntityChip`): you activated this control,\nso the change is announced rather than folded into the name.\n\nNo effect in read-only mode (no `options`), which renders no trigger and\nso has nothing to mark busy."
+        },
+        {
+          "name": "fullWidth",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Stretch the trigger (or read-only chip) to its container's width, for a\nform column of full-width controls (`Input`, `Select`, `DatePicker` in\nvertical `Field`s). Icon + name stay at the start, the chevron moves to\nthe end edge like a `Select` trigger, and the menu is at least as wide as\nthe trigger. Keeps the full-colour fill. Defaults to `false`\n(content-width pill)."
+        },
+        {
+          "name": "invalid",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Error state — sets `aria-invalid` on the trigger. `<Field error>` injects\nit for you. No visual change: the fill IS the value's colour, and the\nField's error text carries the error. The read-only chip ignores it (a\nnon-focusable chip isn't a control AT can report invalid)."
         }
       ]
     },
@@ -5825,7 +5839,7 @@
     "DividerVariant": "\"solid\" | \"dashed\"",
     "DividerSize": "\"sm\" | \"md\" | \"lg\"",
     "AlertTone": "\"info\" | \"success\" | \"warning\" | \"error\"",
-    "AvatarSize": "\"sm\" | \"md\" | \"lg\" | \"xl\"",
+    "AvatarSize": "\"sm\" | \"md\" | \"lg\" | \"inline\" | \"xl\"",
     "AvatarStatus": "\"online\" | \"busy\" | \"away\" | \"offline\"",
     "BadgeTone": "\"info\" | \"success\" | \"warning\" | \"neutral\" | \"danger\" | \"purple\"",
     "BadgeSize": "\"sm\" | \"md\"",
@@ -5838,7 +5852,7 @@
     "LogoTextPlacement": "\"end\" | \"bottom\"",
     "FlowCanvasSelection": "{ type: \"node\" | \"edge\"; id: string; } | null",
     "FlowCanvasPoint": "{ x: number; y: number }",
-    "PersonDisplaySize": "\"sm\" | \"md\" | \"lg\"",
+    "PersonDisplaySize": "\"sm\" | \"md\" | \"lg\" | \"inline\"",
     "TabsActivationMode": "\"auto\" | \"manual\"",
     "TabsOrientation": "\"auto\" | \"horizontal\" | \"vertical\"",
     "EmptyStateSize": "\"sm\" | \"md\" | \"lg\"",
@@ -5848,7 +5862,7 @@
     "ErrorStateAlign": "\"start\" | \"center\"",
     "ErrorStateTone": "\"neutral\" | \"danger\"",
     "ErrorStateHeadingLevel": "1 | 2 | 3 | 4 | 5 | 6",
-    "IconTileSize": "\"sm\" | \"md\" | \"lg\" | \"xs\"",
+    "IconTileSize": "\"sm\" | \"md\" | \"lg\" | \"inline\" | \"xs\"",
     "IconTileShape": "\"circle\" | \"square\"",
     "TooltipSide": "\"left\" | \"right\" | \"top\" | \"bottom\"",
     "TooltipAlign": "\"start\" | \"end\" | \"center\"",

@@ -39,6 +39,24 @@ describe('IconTile', () => {
     expect(tokens).toMatch(/--icon-tile-size-xs:\s*var\(--size-xs\);/);
   });
 
+  it('inline is a font-relative 1em tile that sizes its glyph (#577)', () => {
+    const { container } = render(<IconTile icon={<svg />} size="inline" />);
+    expect((container.firstChild as HTMLElement).className).toMatch(/size-inline/);
+    const scss = readFileSync(resolve(__dirname, 'IconTile.module.scss'), 'utf8');
+    expect(scss).toMatch(
+      /\.size-inline\s*\{[^}]*width:\s*var\(--icon-tile-size-inline\)[^}]*height:\s*var\(--icon-tile-size-inline\)/,
+    );
+    // No vertical-align: the svg's bottom edge already centres the tile on the
+    // capitals; the -0.125em once here pushed it ~0.11em low.
+    expect(scss).not.toMatch(/\.size-inline\s*\{[^}]*vertical-align/);
+    expect(scss).toMatch(
+      />\s*svg\s*\{[^}]*width:\s*var\(--icon-tile-glyph-inline\)[^}]*height:\s*var\(--icon-tile-glyph-inline\)/,
+    );
+    const tokens = readFileSync(resolve(__dirname, 'IconTile.tokens.scss'), 'utf8');
+    expect(tokens).toMatch(/--icon-tile-size-inline:\s*1em;/);
+    expect(tokens).toMatch(/--icon-tile-glyph-inline:\s*0\.75em;/);
+  });
+
   it('color sets the palette CSS vars', () => {
     const { container } = render(<IconTile icon={<svg />} color="blue" />);
     const el = container.firstChild as HTMLElement;

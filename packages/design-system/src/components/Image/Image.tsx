@@ -1,6 +1,5 @@
 import {
   forwardRef,
-  useEffect,
   useState,
   type CSSProperties,
   type ImgHTMLAttributes,
@@ -219,10 +218,14 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
   const [state, setState] = useState<LoadState>('loading');
   const [reloadNonce, setReloadNonce] = useState(0);
 
-  // Reset to loading whenever the source changes (the Avatar pattern).
-  useEffect(() => {
+  // Reset to loading when the source changes — during render, not in an
+  // effect: a mount-time effect ran AFTER a cached image's `load` and put it
+  // back to 'loading' for good (#574).
+  const [prevSrc, setPrevSrc] = useState(src);
+  if (src !== prevSrc) {
+    setPrevSrc(src);
     setState('loading');
-  }, [src]);
+  }
 
   const retry = () => {
     setState('loading');
@@ -248,7 +251,7 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
     // so a careless spread can't break them.
     <img
       {...rest}
-      key={reloadNonce}
+      key={`${src}|${reloadNonce}`}
       ref={ref}
       src={src}
       alt={state === 'error' ? '' : alt}

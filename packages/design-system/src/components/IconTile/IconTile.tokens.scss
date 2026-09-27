@@ -7,6 +7,10 @@
   --icon-tile-size-sm: var(--size-sm); // 24px
   --icon-tile-size-md: var(--size-md); // 32px
   --icon-tile-size-lg: var(--size-lg); // 40px
+  // `inline` is font-relative (#577): the tile is the surrounding text's
+  // font-size, the glyph a bit smaller.
+  --icon-tile-size-inline: 1em;
+  --icon-tile-glyph-inline: 0.75em;
   --icon-tile-radius-square: var(--radius-md);
   --icon-tile-radius-circle: var(--radius-full);
 }
