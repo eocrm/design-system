@@ -70,6 +70,7 @@
       "Calendar",
       "ConfirmationPopover",
       "DataTable",
+      "DateStrip",
       "Drawer",
       "FileUpload",
       "FlowCanvas",
@@ -137,6 +138,7 @@
     "composedBy": [
       "Calendar",
       "ConfirmationPopover",
+      "DateStrip",
       "OptionsPicker",
       "RichTextEditor",
       "Tour"
@@ -220,6 +222,18 @@
     "composes": [
       "DatePicker",
       "TimeField"
+    ],
+    "composedBy": []
+  },
+  "DateStrip": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "Button",
+      "Cluster",
+      "LiveRegion",
+      "Title",
+      "VisuallyHidden"
     ],
     "composedBy": []
   },
@@ -467,7 +481,9 @@
     "composes": [
       "VisuallyHidden"
     ],
-    "composedBy": []
+    "composedBy": [
+      "DateStrip"
+    ]
   },
   "Logo": {
     "tier": "primitive",
@@ -815,6 +831,7 @@
     "cluster": "Display",
     "composes": [],
     "composedBy": [
+      "DateStrip",
       "FormSection",
       "PageHeader"
     ]
@@ -862,6 +879,7 @@
     "cluster": "Accessibility",
     "composes": [],
     "composedBy": [
+      "DateStrip",
       "LiveRegion"
     ]
   }

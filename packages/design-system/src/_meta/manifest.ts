@@ -65,6 +65,7 @@ const CLUSTERS: Record<string, string> = {
   ColorPicker: 'Forms',
   DatePicker: 'Forms',
   DatePickers: 'Forms',
+  DateStrip: 'Forms',
   DateRangePicker: 'Forms',
   Field: 'Forms',
   SettingRow: 'Forms',

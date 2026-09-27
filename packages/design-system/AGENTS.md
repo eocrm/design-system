@@ -3642,6 +3642,28 @@ const [range, setRange] = useState<DateRange | null>(null);
 - Use when the consumer wants the calendar permanently visible. For a compact form field with the same selection model, use `<DateRangePicker>`. Don't render inside containers narrower than ~32rem — the two grids need side-by-side room.
 - **Granularity.** Pass `granularity="minute"` to render dual `<TimeField>`s (start + end) below the two-month grid; the hidden form mirrors emit ISO local datetime. Defaults to `'day'`. The start/end time inputs are shown and editable below the grid even before a range is picked — defaulting to `00:00` start / `23:59` end. Times set in this empty state are applied when the range is committed (no need to seed a placeholder range), and existing times are preserved across subsequent date picks. Same-day end-time silently clamps to ≥ start-time on every commit; different-day ranges are not clamped. `timeStep` (default `15`, in minutes) applies to BOTH TimeFields, controlling each minute-list row count AND rounding typed input in the time fields on commit; set `timeStep={1}` to disable rounding. `hourCycle` (default `'auto'`) forwards to both embedded TimeFields — `'12'` / `'24'` force a cycle, `'auto'` derives from locale.
 
+### `<DateStrip>` — week of selectable day tiles
+
+```tsx
+const [day, setDay] = useState<string | null>(null);
+<DateStrip
+  days={week} // [{ date: '2026-10-05', free: 3 }, … 7 days]
+  value={day}
+  onChange={setDay}
+  onPrevious={prevWeek}
+  onNext={nextWeek}
+  canPrevious={!isCurrentWeek}
+/>;
+```
+
+- `date` is an ISO `'YYYY-MM-DD'` calendar day (the business's day, not a `Date`); the strip formats weekday / number / month through the locale in UTC, so the browser timezone never shifts it. The month heading is derived ("October 2026", "September – October 2026").
+- `free: 0` → "No times", tile natively disabled (skipped by Tab and arrows). Keep full days in the array.
+- Native radios, one `name`: one Tab stop, arrows move AND select (so `onChange` fires per arrow press — debounce slot fetching if needed). Tiles are `role="radio"` named "Wednesday, October 7, 9 free"; query them that way in tests.
+- Controlled only. `canPrevious` / `canNext` (default `true`) disable the week buttons. `titleOrder` (default 2) sets the heading level.
+- Changing week announces the new range politely; same-week re-renders stay silent.
+- ❌ No `aria-label` on the strip — the month heading names the group. ❌ No `Date`/`toISOString()` for `date`.
+- When NOT to use: any-date picking → `<InlineDatePicker>`; events → `<Calendar>`; times → `<SlotGrid>`.
+
 ### `<TimeField>` — standalone time-of-day input
 
 ```tsx

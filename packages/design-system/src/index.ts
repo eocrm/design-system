@@ -700,6 +700,9 @@ export type {
 export { DatePicker } from './components/DatePicker';
 export type { DatePickerProps, DatePickerSize } from './components/DatePicker';
 
+export { DateStrip } from './components/DateStrip';
+export type { DateStripProps, DateStripDay } from './components/DateStrip';
+
 export { DateRangePicker } from './components/DateRangePicker';
 export type {
   DateRangePickerProps,
