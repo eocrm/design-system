@@ -215,6 +215,24 @@ export interface Messages {
     /** Live-region text when a gesture was abandoned (pointer cancelled, window blurred). */
     dragCancelled: (params: { event: string }) => string;
   };
+  dateStrip: {
+    /** aria-label of the previous-week icon button. */
+    previousWeek: string;
+    /** aria-label of the next-week icon button. */
+    nextWeek: string;
+    /** Function leaf — VISIBLE availability count on a day tile ("9 free"); also used in the tile's name. */
+    free: (params: { count: number }) => string;
+    /** Availability text of a day with no free times; the tile is disabled. */
+    noTimes: string;
+    /** Function leaf — a day tile's accessible name: long date + availability ("Wednesday, October 7, 9 free"). */
+    day: (params: { date: string; availability: string }) => string;
+    /** Function leaf — polite announcement after the week changes; `range` is e.g. "October 12 – 18". */
+    range: (params: { range: string }) => string;
+  };
+  slotGrid: {
+    /** Default empty state when no group has any slot. */
+    empty: string;
+  };
   datePicker: {
     /** Visible label / aria-label for the "Today" jump button. */
     today: string;

@@ -106,6 +106,18 @@ export const ru: Messages = {
     dragUnchanged: ({ event }) => `${event as string}: без изменений.`,
     dragCancelled: ({ event }) => `Перенос отменён. ${event as string} на прежнем месте.`,
   },
+  dateStrip: {
+    previousWeek: 'Предыдущая неделя',
+    nextWeek: 'Следующая неделя',
+    free: ({ count }) =>
+      `${count as number} ${ruPlural(count as number, ['свободное', 'свободных', 'свободных'])}`,
+    noTimes: 'Нет времени',
+    day: ({ date, availability }) => `${date as string}, ${availability as string}`,
+    range: ({ range }) => `${range as string}`,
+  },
+  slotGrid: {
+    empty: 'Нет свободного времени',
+  },
   datePicker: {
     today: 'Сегодня',
     clear: 'Очистить',

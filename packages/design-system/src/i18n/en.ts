@@ -104,6 +104,17 @@ export const en: Messages = {
     dragUnchanged: ({ event }) => `${event as string} is unchanged.`,
     dragCancelled: ({ event }) => `Move cancelled. ${event as string} is back where it was.`,
   },
+  dateStrip: {
+    previousWeek: 'Previous week',
+    nextWeek: 'Next week',
+    free: ({ count }) => `${count as number} free`,
+    noTimes: 'No times',
+    day: ({ date, availability }) => `${date as string}, ${availability as string}`,
+    range: ({ range }) => `${range as string}`,
+  },
+  slotGrid: {
+    empty: 'No available times',
+  },
   datePicker: {
     today: 'Today',
     clear: 'Clear',
