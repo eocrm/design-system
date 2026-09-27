@@ -652,3 +652,51 @@ describe('batch progress and failed rows reach assistive tech (#502)', () => {
     expect(screen.getByRole('button', { name: 'Remove a.txt' })).toBeInTheDocument();
   });
 });
+
+function expectNoWiringLeak(container: HTMLElement, errSpy: { mock: { calls: unknown[][] } }) {
+  // Field injects id / invalid / required into its child (#568); a non-input
+  // element must never carry them as attributes, and React must not warn.
+  expect(container.querySelectorAll('div[required], fieldset[required], [invalid]')).toHaveLength(
+    0,
+  );
+  expect(errSpy.mock.calls.flat().join(' ')).not.toMatch(
+    /non-boolean attribute|React does not recognize/,
+  );
+}
+
+describe('FileUpload in Field (#568)', () => {
+  it.each([true, false])(
+    'consumes invalid/required (error=%s); aria-invalid on the dropzone',
+    (hasError) => {
+      const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { container } = render(
+        <Field label="Logo" error={hasError ? 'Pick a file' : undefined} required>
+          <FileUpload files={[]} onFilesAdded={() => {}} onFileRemove={() => {}} />
+        </Field>,
+      );
+      expectNoWiringLeak(container, errSpy);
+      const dropzone = screen.getByRole('button', { name: 'Logo' });
+      if (hasError) expect(dropzone).toHaveAttribute('aria-invalid', 'true');
+      else expect(dropzone).not.toHaveAttribute('aria-invalid');
+      errSpy.mockRestore();
+    },
+  );
+
+  it('the forwarded id lands on the labelable file input, so a label click opens the picker', async () => {
+    render(
+      <>
+        <label htmlFor="logo">Logo</label>
+        <FileUpload id="logo" files={[]} onFilesAdded={() => {}} onFileRemove={() => {}} />
+      </>,
+    );
+    const input = document.getElementById('logo') as HTMLInputElement;
+    expect(input.tagName).toBe('INPUT');
+    expect(input.type).toBe('file');
+    const click = vi.spyOn(input, 'click');
+    const onInputClick = vi.fn();
+    input.addEventListener('click', onInputClick);
+    await userEvent.click(screen.getByText('Logo'));
+    expect(onInputClick).toHaveBeenCalled();
+    click.mockRestore();
+  });
+});

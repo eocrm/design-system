@@ -700,3 +700,33 @@ describe('Slider dragging shadow (source-level, #517)', () => {
     expect(value('slider-thumb-shadow-dragging')).not.toBe(value('slider-thumb-shadow-hover'));
   });
 });
+
+function expectNoWiringLeak(container: HTMLElement, errSpy: { mock: { calls: unknown[][] } }) {
+  // Field injects id / invalid / required into its child (#568); a non-input
+  // element must never carry them as attributes, and React must not warn.
+  expect(container.querySelectorAll('div[required], fieldset[required], [invalid]')).toHaveLength(
+    0,
+  );
+  expect(errSpy.mock.calls.flat().join(' ')).not.toMatch(
+    /non-boolean attribute|React does not recognize/,
+  );
+}
+
+describe('Slider in Field (#568)', () => {
+  it.each([true, false])(
+    'consumes invalid/required (error=%s); aria-invalid on the thumb',
+    (hasError) => {
+      const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { container } = render(
+        <Field label="Volume" error={hasError ? 'Too loud' : undefined} required>
+          <Slider value={50} onChange={() => {}} />
+        </Field>,
+      );
+      expectNoWiringLeak(container, errSpy);
+      const thumb = screen.getByRole('slider');
+      if (hasError) expect(thumb).toHaveAttribute('aria-invalid', 'true');
+      else expect(thumb).not.toHaveAttribute('aria-invalid');
+      errSpy.mockRestore();
+    },
+  );
+});

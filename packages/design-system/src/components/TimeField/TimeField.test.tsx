@@ -1009,3 +1009,28 @@ describe('invalid state matches every other form control (#494)', () => {
     expect(container.querySelector('input[aria-invalid]')).toBeNull();
   });
 });
+
+function expectNoWiringLeak(container: HTMLElement, errSpy: { mock: { calls: unknown[][] } }) {
+  // Field injects id / invalid / required into its child (#568); a non-input
+  // element must never carry them as attributes, and React must not warn.
+  expect(container.querySelectorAll('div[required], fieldset[required], [invalid]')).toHaveLength(
+    0,
+  );
+  expect(errSpy.mock.calls.flat().join(' ')).not.toMatch(
+    /non-boolean attribute|React does not recognize/,
+  );
+}
+
+describe('TimeField in Field (#568)', () => {
+  it('consumes required: aria-required on the text input, not a required attribute on the wrapper', () => {
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { container } = render(
+      <Field label="Start" required>
+        <TimeField value={null} onChange={() => {}} />
+      </Field>,
+    );
+    expectNoWiringLeak(container, errSpy);
+    expect(container.querySelector('input[type="text"]')).toHaveAttribute('aria-required', 'true');
+    errSpy.mockRestore();
+  });
+});

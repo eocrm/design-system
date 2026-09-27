@@ -1,3 +1,4 @@
+import { Field } from '../Field';
 import { StrictMode } from 'react';
 import { createRef } from 'react';
 import { act, render, screen, waitFor } from '@testing-library/react';
@@ -237,4 +238,44 @@ describe('<DateStrip>', () => {
     setup({ 'aria-label': 'Pick a day' } as Partial<DateStripProps>);
     expect(screen.getByRole('group', { name: 'October 2026' })).toBeInTheDocument();
   });
+});
+
+function expectNoWiringLeak(container: HTMLElement, errSpy: { mock: { calls: unknown[][] } }) {
+  // Field injects id / invalid / required into its child (#568); a non-input
+  // element must never carry them as attributes, and React must not warn.
+  expect(container.querySelectorAll('div[required], fieldset[required], [invalid]')).toHaveLength(
+    0,
+  );
+  expect(errSpy.mock.calls.flat().join(' ')).not.toMatch(
+    /non-boolean attribute|React does not recognize/,
+  );
+}
+
+describe('DateStrip in Field (#568)', () => {
+  it.each([true, false])(
+    'consumes invalid/required (error=%s): native required + aria-invalid on the radios',
+    (hasError) => {
+      const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { container } = render(
+        <LocaleProvider locale="en-US">
+          <Field label="Day" error={hasError ? 'Pick a day' : undefined} required>
+            <DateStrip
+              days={WEEK}
+              value={null}
+              onChange={vi.fn()}
+              onPrevious={vi.fn()}
+              onNext={vi.fn()}
+            />
+          </Field>
+        </LocaleProvider>,
+      );
+      expectNoWiringLeak(container, errSpy);
+      for (const radio of screen.getAllByRole('radio')) {
+        expect(radio).toBeRequired();
+        if (hasError) expect(radio).toHaveAttribute('aria-invalid', 'true');
+        else expect(radio).not.toHaveAttribute('aria-invalid');
+      }
+      errSpy.mockRestore();
+    },
+  );
 });

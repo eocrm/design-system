@@ -874,6 +874,7 @@ A switch whose toggle triggers an **immediate action** — persisting to a serve
 ```
 
 - **Pure UI shell.** Consumer owns the `files: FileEntry[]` state and the network code. The component handles drag/drop + click + validation + per-row rendering ONLY.
+- **Inside `<Field>` / `<SettingRow>`:** the wired `id` goes on the hidden `<input type="file">` (the only labelable element), so clicking the row's label opens the picker; `invalid` marks the dropzone `aria-invalid`; `required` only drives the row's visible marker (a hidden native `required` would block submit invisibly — your state owns the files).
 - `FileEntry`: `{ id: string, file: File, status: 'pending' | 'uploading' | 'done' | 'error', progress?: number, error?: string }`. Consumer assigns `id` (typically `crypto.randomUUID()`); File has no stable identity in JS.
 - **Status drives the row:** `uploading` renders `<Progress size="sm" value={progress}>`; `error` renders the error string in danger color and tints the row border; `done` renders a green check icon; `pending` is neutral. The remove button (X) is always visible regardless of status.
 - **Validation pipeline** (per file, in order): type (`accept`) → size (`maxSize`) → count (`maxFiles`, multi mode only) → duplicate (name + size) → custom (`validator`). First failure fires `onFileReject(file, reason, message?)`; passing files batch into ONE `onFilesAdded(File[])` call.
@@ -3660,6 +3661,7 @@ const [day, setDay] = useState<string | null>(null);
 - `free: 0` → "No times", tile natively disabled (skipped by Tab and arrows). Keep full days in the array.
 - Native radios, one `name`: one Tab stop, arrows move AND select (so `onChange` fires per arrow press — debounce slot fetching if needed). Tiles are `role="radio"` named "Wednesday, October 7, 9 free"; query them that way in tests.
 - Controlled only. `canPrevious` / `canNext` (default `true`) disable the week buttons. `titleOrder` (default 2) sets the heading level.
+- In `<Field>` / `<SettingRow>`: `required` → native `required` on the radios, `invalid` → `aria-invalid` on them. The month heading still names the group.
 - Changing week announces the new range politely; same-week re-renders stay silent.
 - ❌ No `aria-label` on the strip — the month heading names the group. ❌ No `Date`/`toISOString()` for `date`.
 - ❌ In an intrinsic-width context (`Split`'s default `auto` aside track, a `Cluster` item, `width: max-content`) it renders at width 0 — `container-type: inline-size` zeroes its intrinsic-width contribution; give the parent a concrete width (e.g. `asideWidth` on a Split). It is also the containing block for absolutely-positioned descendants (layout containment).
@@ -3688,6 +3690,7 @@ const [day, setDay] = useState<string | null>(null);
 - Slot `label`s are yours, formatted in the business's timezone. `key` is what `onChange` returns; keep it unique across ALL groups (one exclusive choice).
 - Native radios with one `name`: one Tab stop for the whole grid, arrows move AND select in reading order (↓ goes to the next slot, not the one below). Tiles are `role="radio"` named by their label; each group is a `<fieldset>` named by its heading (`titleOrder`, default 3).
 - Groups with no slots are skipped; if none has slots, `empty` renders (default: localized "No available times").
+- In `<Field>` / `<SettingRow>`: `required` → native `required` on the radios, `invalid` → `aria-invalid` on them.
 - 6 columns, 3 when the grid's own width ≤ 48rem (container query).
 - ❌ No per-slot `disabled` — pass only bookable slots. ❌ Don't wrap it in your own `role="radiogroup"`.
 - ❌ In an intrinsic-width context (`Split`'s default `auto` aside track, a `Cluster` item, `width: max-content`) it renders at width 0 — `container-type: inline-size` zeroes its intrinsic-width contribution; give the parent a concrete width (e.g. `asideWidth` on a Split). It is also the containing block for absolutely-positioned descendants (layout containment).

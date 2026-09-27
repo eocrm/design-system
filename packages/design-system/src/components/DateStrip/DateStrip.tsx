@@ -41,6 +41,14 @@ export interface DateStripProps extends Omit<
   titleOrder?: TitleOrder;
   /** Radio group `name` (also submitted with a form). Default: a generated id. */
   name?: string;
+  /** Marks every radio `aria-invalid`. Field / SettingRow inject it. @default false */
+  invalid?: boolean;
+  /**
+   * Native `required` on the radios (the group then fails form validation
+   * until one is chosen). Field / SettingRow inject it; it used to land on the
+   * root as a stray attribute (#568).
+   */
+  required?: boolean;
 }
 
 /**
@@ -99,6 +107,8 @@ export const DateStrip = forwardRef<HTMLFieldSetElement, DateStripProps>(functio
     canNext = true,
     titleOrder = 2,
     name,
+    invalid = false,
+    required = false,
     className,
     ...props
   },
@@ -176,6 +186,8 @@ export const DateStrip = forwardRef<HTMLFieldSetElement, DateStripProps>(functio
             <label key={day.date} className={styles.tile}>
               <input
                 type="radio"
+                required={required}
+                aria-invalid={invalid || undefined}
                 className={styles.input}
                 name={groupName}
                 value={day.date}

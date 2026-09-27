@@ -48,6 +48,22 @@ export interface FileEntry {
 }
 
 export interface FileUploadProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
+  /**
+   * Placed on the hidden native `<input type="file">`, not the root — it is
+   * the only labelable element, so a `<label for>` (Field / SettingRow wire
+   * one) opens the file picker when clicked (#568). A `role="button"` div is
+   * not labelable, so the id on the dropzone would make the label click a no-op.
+   */
+  id?: string;
+  /** Marks the dropzone `aria-invalid` for Field / SettingRow composition. @default false */
+  invalid?: boolean;
+  /**
+   * Consumed for Field / SettingRow composition (they render the visible
+   * required marker). Not forwarded: `role="button"` does not support
+   * `aria-required`, and native `required` on the hidden input would block
+   * form submission with an invisible bubble — your state owns the files.
+   */
+  required?: boolean;
   /** Controlled file list. The component renders this; consumer owns the state. */
   files: FileEntry[];
   /**
@@ -297,6 +313,10 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
     dropzoneHint,
     'aria-labelledby': ariaLabelledBy,
     'aria-describedby': ariaDescribedBy,
+    id,
+    invalid = false,
+    // Consumed so it never lands on the root div (#568); see the prop's JSDoc.
+    required: _required = false,
     className,
     ...rest
   },
@@ -545,6 +565,7 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
               : t('fileUpload.upload')
           }
           aria-describedby={ariaDescribedBy}
+          aria-invalid={invalid || undefined}
           aria-disabled={disabled || undefined}
           className={clsx(styles.dropzone, isDragOver && styles.dragOver)}
           onDragEnter={handleDragEnter}
@@ -556,6 +577,7 @@ export const FileUpload = forwardRef<HTMLDivElement, FileUploadProps>(function F
         >
           <input
             ref={inputRef}
+            id={id}
             type="file"
             multiple={multiple}
             accept={accept}

@@ -1,3 +1,4 @@
+import { Field } from '../Field';
 import { createRef } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -116,4 +117,36 @@ describe('<SlotGrid>', () => {
     expect(ref.current?.className).toMatch(/extra/);
     expect(ref.current?.className).toMatch(/root/);
   });
+});
+
+function expectNoWiringLeak(container: HTMLElement, errSpy: { mock: { calls: unknown[][] } }) {
+  // Field injects id / invalid / required into its child (#568); a non-input
+  // element must never carry them as attributes, and React must not warn.
+  expect(container.querySelectorAll('div[required], fieldset[required], [invalid]')).toHaveLength(
+    0,
+  );
+  expect(errSpy.mock.calls.flat().join(' ')).not.toMatch(
+    /non-boolean attribute|React does not recognize/,
+  );
+}
+
+describe('SlotGrid in Field (#568)', () => {
+  it.each([true, false])(
+    'consumes invalid/required (error=%s): native required + aria-invalid on the radios',
+    (hasError) => {
+      const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { container } = render(
+        <Field label="Time" error={hasError ? 'Pick a time' : undefined} required>
+          <SlotGrid groups={GROUPS} value={null} onChange={vi.fn()} />
+        </Field>,
+      );
+      expectNoWiringLeak(container, errSpy);
+      for (const radio of screen.getAllByRole('radio')) {
+        expect(radio).toBeRequired();
+        if (hasError) expect(radio).toHaveAttribute('aria-invalid', 'true');
+        else expect(radio).not.toHaveAttribute('aria-invalid');
+      }
+      errSpy.mockRestore();
+    },
+  );
 });

@@ -44,6 +44,14 @@ export interface SliderProps extends Omit<
   HTMLAttributes<HTMLDivElement>,
   'onChange' | 'defaultValue' | 'role'
 > {
+  /** Marks each thumb `aria-invalid` for Field / SettingRow composition. @default false */
+  invalid?: boolean;
+  /**
+   * Consumed for Field / SettingRow composition (they render the visible
+   * required marker). `role="slider"` does not support `aria-required` and a
+   * slider always has a value, so nothing is forwarded (#568).
+   */
+  required?: boolean;
   /**
    * Current value. A single `number` for one-thumb mode; a `[min, max]` tuple
    * for two-thumb (range) mode. The component type-discriminates internally.
@@ -250,6 +258,9 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
     'aria-label': ariaLabel,
     'aria-labelledby': ariaLabelledBy,
     'aria-describedby': ariaDescribedBy,
+    invalid = false,
+    // Consumed so it never lands on the root div (#568); see the prop's JSDoc.
+    required: _required = false,
     ...rest
   },
   ref,
@@ -614,6 +625,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
           aria-valuetext={typeof label === 'function' ? String(label(thumbValue)) : undefined}
           aria-orientation={orientation}
           aria-disabled={disabled || undefined}
+          aria-invalid={invalid || undefined}
           aria-label={
             // Each range thumb needs a distinct accessible name. Explicit
             // tuple labels take precedence; otherwise derive from the root's

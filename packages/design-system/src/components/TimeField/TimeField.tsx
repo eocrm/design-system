@@ -107,6 +107,11 @@ export interface TimeFieldProps extends Omit<
    * `<Field error=…>` looked wrong and announced valid (#494).
    */
   invalid?: boolean;
+  /**
+   * Sets `aria-required` on the text input. Field / SettingRow inject it; it
+   * used to fall through onto the wrapper div as a stray `required` attribute (#568).
+   */
+  required?: boolean;
   /** Stable id for the input (so an external `<label htmlFor>` can target it). */
   id?: string;
   /** Additional className on the wrapper. */
@@ -183,6 +188,7 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
     'aria-describedby': ariaDescribedBy,
     disabled = false,
     invalid = false,
+    required = false,
     id: idProp,
     className,
     ...rest
@@ -615,6 +621,7 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
         id={inputId}
         type="text"
         aria-invalid={invalid || undefined}
+        aria-required={required || undefined}
         className={styles.timeInputCore}
         placeholder={placeholder}
         inputMode="numeric"
