@@ -36,6 +36,7 @@
 ### Task 1: Shared foundations — ISO-day helpers, i18n keys, choice-tile mixin
 
 **Files:**
+
 - Create: `packages/design-system/src/components/_internal/isoDay.ts`
 - Create: `packages/design-system/src/components/_internal/isoDay.test.ts`
 - Create: `packages/design-system/src/components/_internal/choiceTile.scss`
@@ -43,6 +44,7 @@
 - Modify: `packages/design-system/src/i18n/en.ts`, `packages/design-system/src/i18n/ru.ts`
 
 **Interfaces:**
+
 - Produces:
   - `parseIsoDay(iso: string): Date` — UTC midnight; throws `Error("[isoDay] expected 'YYYY-MM-DD', got '<iso>'")` on malformed input.
   - `formatIsoDay(iso: string, locale: string, options: Intl.DateTimeFormatOptions): string` — always `timeZone: 'UTC'`.
@@ -87,9 +89,9 @@ describe('isoDay', () => {
   });
 
   it('localizes (ru)', () => {
-    expect(formatIsoRange('2026-10-05', '2026-10-11', 'ru-RU', { month: 'long', year: 'numeric' })).toMatch(
-      /^октябрь 2026/,
-    );
+    expect(
+      formatIsoRange('2026-10-05', '2026-10-11', 'ru-RU', { month: 'long', year: 'numeric' }),
+    ).toMatch(/^октябрь 2026/);
   });
 });
 ```
@@ -144,24 +146,24 @@ export function formatIsoRange(
 - [ ] **Step 5: Add i18n keys.** In `messages.ts` `Messages`, add (JSDoc each leaf, matching the file's style):
 
 ```ts
-  dateStrip: {
-    /** aria-label of the previous-week icon button. */
-    previousWeek: string;
-    /** aria-label of the next-week icon button. */
-    nextWeek: string;
-    /** Function leaf — VISIBLE availability count on a day tile ("9 free"); also used in the tile's name. */
-    free: (params: { count: number }) => string;
-    /** Availability text of a day with no free times; the tile is disabled. */
-    noTimes: string;
-    /** Function leaf — a day tile's accessible name: long date + availability ("Wednesday, October 7, 9 free"). */
-    day: (params: { date: string; availability: string }) => string;
-    /** Function leaf — polite announcement after the week changes; `range` is e.g. "October 12 – 18". */
-    range: (params: { range: string }) => string;
-  };
-  slotGrid: {
-    /** Default empty state when no group has any slot. */
-    empty: string;
-  };
+dateStrip: {
+  /** aria-label of the previous-week icon button. */
+  previousWeek: string;
+  /** aria-label of the next-week icon button. */
+  nextWeek: string;
+  /** Function leaf — VISIBLE availability count on a day tile ("9 free"); also used in the tile's name. */
+  free: (params: { count: number }) => string;
+  /** Availability text of a day with no free times; the tile is disabled. */
+  noTimes: string;
+  /** Function leaf — a day tile's accessible name: long date + availability ("Wednesday, October 7, 9 free"). */
+  day: (params: { date: string; availability: string }) => string;
+  /** Function leaf — polite announcement after the week changes; `range` is e.g. "October 12 – 18". */
+  range: (params: { range: string }) => string;
+}
+slotGrid: {
+  /** Default empty state when no group has any slot. */
+  empty: string;
+}
 ```
 
 `en.ts`:
@@ -282,6 +284,7 @@ git commit -m "feat: isoDay helpers, choice-tile mixin, DateStrip/SlotGrid i18n 
 ### Task 2: DateStrip component (library side, complete)
 
 **Files:**
+
 - Create: `packages/design-system/src/components/DateStrip/DateStrip.tsx`
 - Create: `packages/design-system/src/components/DateStrip/DateStrip.module.scss`
 - Create: `packages/design-system/src/components/DateStrip/DateStrip.tokens.scss`
@@ -292,6 +295,7 @@ git commit -m "feat: isoDay helpers, choice-tile mixin, DateStrip/SlotGrid i18n 
 - Modify: `packages/design-system/AGENTS.md` — one TL;DR section `### \`<DateStrip>\` — week of selectable day tiles`, placed near the DatePicker/TimeField sections
 
 **Interfaces:**
+
 - Consumes (Task 1): `formatIsoDay`, `formatIsoRange` from `../_internal/isoDay`; `choice-tile` mixin from `../_internal/choiceTile`; i18n keys `dateStrip.*`.
 - Produces: `DateStrip`, `DateStripProps`, `DateStripDay` exported from `@eocrm/design-system`.
 
@@ -351,7 +355,9 @@ describe('<DateStrip>', () => {
         { date: '2026-10-04', free: 1 },
       ],
     });
-    expect(screen.getByRole('group', { name: /^September\s*–\s*October 2026$/ })).toBeInTheDocument();
+    expect(
+      screen.getByRole('group', { name: /^September\s*–\s*October 2026$/ }),
+    ).toBeInTheDocument();
   });
 
   it('renders one radio per day with a full accessible name', () => {
@@ -455,7 +461,13 @@ describe('<DateStrip>', () => {
       render(
         <StrictMode>
           <LocaleProvider locale="en-US">
-            <DateStrip days={WEEK} value={null} onChange={vi.fn()} onPrevious={vi.fn()} onNext={vi.fn()} />
+            <DateStrip
+              days={WEEK}
+              value={null}
+              onChange={vi.fn()}
+              onPrevious={vi.fn()}
+              onNext={vi.fn()}
+            />
           </LocaleProvider>
         </StrictMode>,
       );
@@ -467,7 +479,13 @@ describe('<DateStrip>', () => {
     render(
       <I18nProvider locale="ru">
         <LocaleProvider locale="ru-RU">
-          <DateStrip days={WEEK} value={null} onChange={vi.fn()} onPrevious={vi.fn()} onNext={vi.fn()} />
+          <DateStrip
+            days={WEEK}
+            value={null}
+            onChange={vi.fn()}
+            onPrevious={vi.fn()}
+            onNext={vi.fn()}
+          />
         </LocaleProvider>
       </I18nProvider>,
     );
@@ -617,14 +635,7 @@ Note: the `.input` rule and the mixin's visually-hidden rule both target the inp
 - [ ] **Step 5: Component** — `DateStrip.tsx`:
 
 ```tsx
-import {
-  forwardRef,
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  type FieldsetHTMLAttributes,
-} from 'react';
+import { forwardRef, useEffect, useId, useRef, useState, type FieldsetHTMLAttributes } from 'react';
 import clsx from 'clsx';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Button } from '../Button';
@@ -645,8 +656,10 @@ export interface DateStripDay {
   free: number;
 }
 
-export interface DateStripProps
-  extends Omit<FieldsetHTMLAttributes<HTMLFieldSetElement>, 'onChange'> {
+export interface DateStripProps extends Omit<
+  FieldsetHTMLAttributes<HTMLFieldSetElement>,
+  'onChange'
+> {
   /** The days to show, in order — usually one week (7). The month heading is derived from the first and last. */
   days: DateStripDay[];
   /** Selected day (`'YYYY-MM-DD'`), or `null`. A value not in `days` checks nothing. */
@@ -804,8 +817,12 @@ export const DateStrip = forwardRef<HTMLFieldSetElement, DateStripProps>(functio
               {/* Visual body hidden from AT: its spans would concatenate into
                   "Wed79 free". The name is the full sentence below. */}
               <span className={styles.body} aria-hidden="true">
-                <span className={styles.dow}>{formatIsoDay(day.date, locale, { weekday: 'short' })}</span>
-                <span className={styles.num}>{formatIsoDay(day.date, locale, { day: 'numeric' })}</span>
+                <span className={styles.dow}>
+                  {formatIsoDay(day.date, locale, { weekday: 'short' })}
+                </span>
+                <span className={styles.num}>
+                  {formatIsoDay(day.date, locale, { day: 'numeric' })}
+                </span>
                 <span className={styles.count}>{availability}</span>
               </span>
               <VisuallyHidden>
@@ -859,7 +876,7 @@ const [day, setDay] = useState<string | null>(null);
   onPrevious={prevWeek}
   onNext={nextWeek}
   canPrevious={!isCurrentWeek}
-/>
+/>;
 ```
 
 - `date` is an ISO `'YYYY-MM-DD'` calendar day (the business's day, not a `Date`); the strip formats weekday / number / month through the locale in UTC, so the browser timezone never shifts it. The month heading is derived ("October 2026", "September – October 2026").
@@ -871,7 +888,7 @@ const [day, setDay] = useState<string | null>(null);
 - When NOT to use: any-date picking → `<InlineDatePicker>`; events → `<Calendar>`; times → `<SlotGrid>`.
 ````
 
-  - Run: `cd packages/design-system && npm run build:manifest` then `npx vitest run src/_meta` — Expected: PASS (manifest drift test).
+- Run: `cd packages/design-system && npm run build:manifest` then `npx vitest run src/_meta` — Expected: PASS (manifest drift test).
 
 - [ ] **Step 8: Commit**
 
@@ -885,6 +902,7 @@ git commit -m "feat: add DateStrip (#560)"
 ### Task 3: SlotGrid component (library side, complete)
 
 **Files:**
+
 - Create: `packages/design-system/src/components/SlotGrid/SlotGrid.tsx`
 - Create: `packages/design-system/src/components/SlotGrid/SlotGrid.module.scss`
 - Create: `packages/design-system/src/components/SlotGrid/SlotGrid.tokens.scss`
@@ -893,6 +911,7 @@ git commit -m "feat: add DateStrip (#560)"
 - Modify: `packages/design-system/src/index.ts`, `src/_meta/manifest.ts`, `scripts/generate-manifest.mjs` (`SlotGrid: 'Forms'`), `AGENTS.md`
 
 **Interfaces:**
+
 - Consumes (Task 1): `choice-tile` mixin; i18n key `slotGrid.empty`.
 - Produces: `SlotGrid`, `SlotGridProps`, `SlotGridGroup`, `SlotGridSlot` exported from `@eocrm/design-system`.
 
@@ -989,7 +1008,14 @@ describe('<SlotGrid>', () => {
   it('forwards ref to the root div, merges className, spreads props', () => {
     const ref = createRef<HTMLDivElement>();
     render(
-      <SlotGrid ref={ref} groups={GROUPS} value={null} onChange={vi.fn()} className="extra" data-testid="sg" />,
+      <SlotGrid
+        ref={ref}
+        groups={GROUPS}
+        value={null}
+        onChange={vi.fn()}
+        className="extra"
+        data-testid="sg"
+      />,
     );
     expect(ref.current).toBe(screen.getByTestId('sg'));
     expect(ref.current?.className).toMatch(/extra/);
@@ -1234,7 +1260,13 @@ Expected: PASS.
 ```tsx
 <SlotGrid
   groups={[
-    { label: 'Morning', slots: [{ key: '09:00', label: '9:00' }, { key: '09:30', label: '9:30' }] },
+    {
+      label: 'Morning',
+      slots: [
+        { key: '09:00', label: '9:00' },
+        { key: '09:30', label: '9:30' },
+      ],
+    },
     { label: 'Afternoon', slots: [{ key: '14:00', label: '14:00' }] },
   ]}
   value={slot}
@@ -1263,6 +1295,7 @@ git commit -m "feat: add SlotGrid (#561)"
 ### Task 4: Playground demos + wiring (both components)
 
 **Files:**
+
 - Create: `packages/playground/src/pages/components/DateStripDemo.tsx`
 - Create: `packages/playground/src/pages/components/SlotGridDemo.tsx`
 - Modify: `packages/playground/src/App.tsx` (import + `<Route path="/components/date-strip">` and `/components/slot-grid`, next to the `/components/timefield` route)
@@ -1273,13 +1306,14 @@ git commit -m "feat: add SlotGrid (#561)"
 - Modify: `packages/playground/src/lib/props.manifest.json` (regenerated)
 
 **Interfaces:**
+
 - Consumes: `DateStrip`, `DateStripDay`, `SlotGrid`, `SlotGridGroup` from `@eocrm/design-system`. Demo scaffolding: read `packages/playground/CLAUDE.md` and mirror an existing demo (e.g. `TourDemo.tsx`, `SplitDemo.tsx`): `DemoLayout` (`name`, `description`, `files={getComponentFiles('<Name>')}`, `componentName`), `Example` (`title`, `description`, `code`), `ResizablePreview` for width-dependent behavior.
 
 - [ ] **Step 1: DateStripDemo.** Examples:
   1. **"Booking week"** — stateful: a `weekStart` ISO string (`'2026-10-05'`), `days` generated for 7 days with a deterministic `free` pattern (e.g. `[3, 1, 9, 0, 2, 0, 4]` rotated by week index), `canPrevious` false on the first week, `canNext` false after 4 weeks, selected `day` state shown below via `<Text>`. Date math on ISO strings: `const addDays = (iso: string, n: number) => new Date(Date.parse(iso) + n * 86_400_000).toISOString().slice(0, 10);` (UTC-safe because `Date.parse` of `YYYY-MM-DD` is UTC).
   2. **"Month boundary"** — static week `2026-09-28`…`2026-10-04` to show "September – October 2026".
   3. **"Narrow container"** — the example 1 strip inside `<ResizablePreview initialWidth={320}>` showing the count hide.
-  Each `code` string is a self-contained snippet importing from `@eocrm/design-system`.
+     Each `code` string is a self-contained snippet importing from `@eocrm/design-system`.
 - [ ] **Step 2: SlotGridDemo.** Examples:
   1. **"Grouped slots"** — Morning (6 slots), Afternoon (8), Evening (3), stateful `value`, inside `<ResizablePreview>` to show 6 → 3 columns.
   2. **"Empty"** — default empty state and a custom `empty`.

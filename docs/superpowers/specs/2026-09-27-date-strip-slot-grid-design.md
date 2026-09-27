@@ -51,8 +51,10 @@ export interface DateStripDay {
   free: number;
 }
 
-export interface DateStripProps
-  extends Omit<FieldsetHTMLAttributes<HTMLFieldSetElement>, 'onChange'> {
+export interface DateStripProps extends Omit<
+  FieldsetHTMLAttributes<HTMLFieldSetElement>,
+  'onChange'
+> {
   days: DateStripDay[]; // usually 7
   value: string | null;
   onChange: (date: string) => void;
@@ -113,8 +115,14 @@ buttons). The group is named by the month `<Title>` via `aria-labelledby`
 ## SlotGrid
 
 ```ts
-export interface SlotGridSlot { key: string; label: string }
-export interface SlotGridGroup { label: string; slots: SlotGridSlot[] }
+export interface SlotGridSlot {
+  key: string;
+  label: string;
+}
+export interface SlotGridGroup {
+  label: string;
+  slots: SlotGridSlot[];
+}
 
 export interface SlotGridProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
   groups: SlotGridGroup[];
@@ -160,15 +168,15 @@ Markup (ref → root `<div>`, `{...props}` spread on it):
 
 ## i18n (`messages.ts`, `en.ts`, `ru.ts`)
 
-| key | en |
-|---|---|
-| `dateStrip.previousWeek` | Previous week |
-| `dateStrip.nextWeek` | Next week |
-| `dateStrip.free({count})` | `${count} free` (ru: 3 plural forms via `ruPlural`) |
-| `dateStrip.noTimes` | No times |
-| `dateStrip.day({date, availability})` | `${date}, ${availability}` |
-| `dateStrip.range({range})` | `${range}` (announcement; locales may prefix) |
-| `slotGrid.empty` | No available times |
+| key                                   | en                                                  |
+| ------------------------------------- | --------------------------------------------------- |
+| `dateStrip.previousWeek`              | Previous week                                       |
+| `dateStrip.nextWeek`                  | Next week                                           |
+| `dateStrip.free({count})`             | `${count} free` (ru: 3 plural forms via `ruPlural`) |
+| `dateStrip.noTimes`                   | No times                                            |
+| `dateStrip.day({date, availability})` | `${date}, ${availability}`                          |
+| `dateStrip.range({range})`            | `${range}` (announcement; locales may prefix)       |
+| `slotGrid.empty`                      | No available times                                  |
 
 ## Completeness (root CLAUDE.md invariant)
 
@@ -176,7 +184,8 @@ Both components: `<Name>.test.tsx`, playground demo + route + `navItems.ts` +
 `ComponentsIndex.tsx` + `overviewSchematics.tsx` + `ComponentName` union,
 `src/index.ts` exports (component + types), JSDoc with `@remarks` When NOT to
 use / Anti-patterns, AGENTS.md TL;DR, `CLUSTERS` entries in both manifest maps
-+ `npm run build:manifest`, `npm run build:props` in playground.
+
+- `npm run build:manifest`, `npm run build:props` in playground.
 
 ## Testing
 
