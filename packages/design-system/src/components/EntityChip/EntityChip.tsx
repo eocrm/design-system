@@ -318,13 +318,6 @@ function rootStyle(
 }
 
 /**
- * Palette fill/fg for one segment, read by `.segment`, plus an icon segment's
- * `size` override (its glyph size custom property). A text segment's `size`
- * is NOT set here (#591) — it goes on the inner `.segmentTextValue` span
- * instead, so the outer box keeps the chip's own font-size/line-height and
- * its text sits on the label's baseline.
- */
-/**
  * A segment is at most the chip's own text size (1em). Measured in Chromium:
  * above 1, only the segment grows (the core doesn't stretch), leaving a
  * ragged bottom edge and the segment text below the label's baseline.
@@ -333,6 +326,13 @@ function clampSegmentSize(size: number): number {
   return Math.min(size, 1);
 }
 
+/**
+ * Palette fill/fg for one segment, read by `.segment`, plus an icon segment's
+ * `size` override (its glyph size custom property). A text segment's `size`
+ * is NOT set here (#591) — it goes on the inner `.segmentTextValue` span
+ * instead, so the outer box keeps the chip's own font-size/line-height and
+ * its text sits on the label's baseline.
+ */
 function segmentStyle(segment: EntityChipSegment): CSSProperties {
   const { bg, fg } = paletteTokens(segment.color ?? 'slate');
   const style: Record<string, string> = {
