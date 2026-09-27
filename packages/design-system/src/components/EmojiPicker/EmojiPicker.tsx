@@ -35,6 +35,13 @@ const ENTRY_BY_CHAR = new Map<string, EmojiEntry>(
 
 export interface EmojiPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onSelect'> {
   /**
+   * Consumed so a Field / SettingRow wrapping the picker cannot leak it onto
+   * the root div (#568). The picker has no value to validate, so it renders nothing.
+   */
+  invalid?: boolean;
+  /** Consumed for Field / SettingRow composition (#568); the picker has no value, so nothing is forwarded. */
+  required?: boolean;
+  /**
    * Fired with the chosen emoji character (e.g. `'👍'`) when the user clicks a
    * cell or presses Enter/Space on a focused cell. This is the picker's single
    * output — wire it to insert into an editor, set a reaction, etc.
@@ -116,7 +123,8 @@ interface VisibleCategory {
  *   no notion of which emoji are already selected or how many times.
  */
 export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(function EmojiPicker(
-  { onSelect, recent, className, ...rest },
+  // invalid/required consumed for Field composition only (#568).
+  { onSelect, recent, className, invalid: _invalid, required: _required, ...rest },
   ref,
 ) {
   const t = useTranslation();

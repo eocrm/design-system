@@ -1,3 +1,4 @@
+import { Field } from '../Field';
 import { createRef } from 'react';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -250,4 +251,18 @@ it('roving keyboard nav crosses from the recent group into the categories', asyn
   );
   await user.keyboard('{ArrowRight}'); // cross into the first category
   expect(document.activeElement).toBe(screen.getByRole('option', { name: 'grinning face' }));
+});
+
+describe('EmojiPicker in Field (#568)', () => {
+  it.each([true, false])('consumes injected invalid/required (error=%s)', (hasError) => {
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { container } = render(
+      <Field label="Reaction" error={hasError ? 'Pick one' : undefined} required>
+        <EmojiPicker onSelect={() => {}} />
+      </Field>,
+    );
+    expect(container.querySelectorAll('div[required], [invalid]')).toHaveLength(0);
+    expect(errSpy.mock.calls.flat().join(' ')).not.toMatch(/non-boolean attribute/);
+    errSpy.mockRestore();
+  });
 });

@@ -1792,6 +1792,20 @@
     "EmojiPicker": {
       "props": [
         {
+          "name": "invalid",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Consumed so a Field / SettingRow wrapping the picker cannot leak it onto\nthe root div (#568). The picker has no value to validate, so it renders nothing."
+        },
+        {
+          "name": "required",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Consumed for Field / SettingRow composition (#568); the picker has no value, so nothing is forwarded."
+        },
+        {
           "name": "onSelect",
           "type": "(emoji: string) => void",
           "required": true,
@@ -4253,6 +4267,13 @@
     },
     "Select": {
       "props": [
+        {
+          "name": "id",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Placed on the combobox trigger (the `<button>` / `<input>`), not the\nwrapper div, so a `<label for>` — Field / SettingRow wire one — focuses\nthe control when clicked (#568). Default: a generated id."
+        },
         {
           "name": "options",
           "type": "SelectOptions<T>",

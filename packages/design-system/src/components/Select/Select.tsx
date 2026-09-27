@@ -81,6 +81,12 @@ export interface SelectProps<T = unknown> extends Omit<
   HTMLAttributes<HTMLDivElement>,
   'onChange' | 'defaultValue'
 > {
+  /**
+   * Placed on the combobox trigger (the `<button>` / `<input>`), not the
+   * wrapper div, so a `<label for>` — Field / SettingRow wire one — focuses
+   * the control when clicked (#568). Default: a generated id.
+   */
+  id?: string;
   // ─── data ─────────────────────────────────────────────────────────────────
   /**
    * Sync options — flat list or list of groups. Ignored when `loadOptions`
@@ -346,6 +352,7 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
     renderLoading,
     renderError,
     className,
+    id,
     ...rest
   } = props;
 
@@ -361,7 +368,9 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
   const reactId = useId();
   const idBase = sanitizeId(reactId);
   const listboxId = `select-listbox-${idBase}`;
-  const triggerId = `select-trigger-${idBase}`;
+  // A consumer / Field-wired `id` goes on the combobox itself, not the wrapper
+  // div — it is the labelable element, so `<label for>` focuses it (#568).
+  const triggerId = id ?? `select-trigger-${idBase}`;
   const getOptionId = useCallback((v: string) => `select-opt-${idBase}-${sanitizeId(v)}`, [idBase]);
   const getGroupHeaderId = useCallback(
     (label: string) => `select-grp-${idBase}-${sanitizeId(label)}`,

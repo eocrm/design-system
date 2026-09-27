@@ -1826,3 +1826,34 @@ describe('Select — empty aria-label', () => {
     expect(screen.getByRole('combobox', { name: 'Open select' })).toBeInTheDocument();
   });
 });
+
+describe('Select — label targets the combobox (#568)', () => {
+  beforeEach(() => configure({ asyncWrapper: async (cb) => cb() }));
+
+  it.each([false, true])(
+    'Field label click focuses the trigger (searchable=%s)',
+    async (searchable) => {
+      render(
+        <Field label="Status">
+          <Select
+            searchable={searchable}
+            options={[{ value: 'a', label: 'Active' }]}
+            value=""
+            onChange={() => {}}
+          />
+        </Field>,
+      );
+      const combobox = screen.getByRole('combobox');
+      const label = screen.getByText('Status');
+      expect(label).toHaveAttribute('for', combobox.id);
+      await userEvent.click(label);
+      expect(combobox).toHaveFocus();
+    },
+  );
+
+  it('a consumer id lands on the trigger, not the wrapper', () => {
+    const { container } = render(<Select id="status" options={[]} value="" onChange={() => {}} />);
+    expect(screen.getByRole('combobox')).toHaveAttribute('id', 'status');
+    expect(container.querySelectorAll('#status')).toHaveLength(1);
+  });
+});
