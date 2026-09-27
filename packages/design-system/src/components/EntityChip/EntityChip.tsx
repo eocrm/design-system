@@ -1,4 +1,5 @@
 import {
+  Fragment,
   forwardRef,
   type ComponentPropsWithoutRef,
   type ComponentPropsWithRef,
@@ -25,6 +26,21 @@ export interface EntityChipStatus {
   /** Explicit palette color — wins over `category` (per-state custom colors). */
   color?: PaletteColor;
 }
+
+/**
+ * A coloured part of a segmented chip (#582), rendered before or after the
+ * chip's core (icon · prefix · label · status · trailing).
+ * - `icon` — a glyph on a palette colour. `label` is its accessible name (the
+ *   segment is `role="img"`) and its tooltip; the glyph is sized to the text.
+ * - `text` — a short value (e.g. a status) on a palette colour, same weight as
+ *   the label, with an optional `tooltip`.
+ * `color` defaults to `'slate'`. `size` (in em of the chip text) overrides
+ * the glyph size (icon, default 0.85em) or the font size (text, default
+ * 0.9em). Non-interactive: the chip is the link.
+ */
+export type EntityChipSegment =
+  | { kind: 'icon'; icon: ReactNode; label: string; color?: PaletteColor; size?: number }
+  | { kind: 'text'; text: ReactNode; color?: PaletteColor; tooltip?: ReactNode; size?: number };
 
 interface EntityChipOwnProps {
   /** Leading icon — consumer passes the element (e.g. a lucide icon). Rendered aria-hidden. */
@@ -141,6 +157,16 @@ interface EntityChipOwnProps {
    * `aria-hidden`, and a meaningful one a short text alternative.
    */
   trailing?: ReactNode;
+  /**
+   * Coloured segments before the chip's core, in order (e.g. the task type).
+   * Any segment turns the chip segmented: one line, only the outer corners
+   * rounded, only the label shrinks (as with `truncate`). Every segment's text
+   * joins the accessible name ("Bug ENG-15 Fix login bug Normal Reported").
+   * Not rendered while `loading` or `unavailable`.
+   */
+  before?: EntityChipSegment[];
+  /** Coloured segments after the core, in order (e.g. priority, status). See `before`. */
+  after?: EntityChipSegment[];
 }
 
 /**
@@ -204,6 +230,42 @@ function rootStyle(
   return colorVars || statusVars || consumerStyle
     ? { ...colorVars, ...statusVars, ...consumerStyle }
     : undefined;
+}
+
+/** Palette fill/fg for one segment, read by `.segment`, plus its `size` override. */
+function segmentStyle(segment: EntityChipSegment): CSSProperties {
+  const { bg, fg } = paletteTokens(segment.color ?? 'slate');
+  const style: Record<string, string> = {
+    '--entity-chip-segment-bg': bg,
+    '--entity-chip-segment-fg': fg,
+  };
+  if (segment.size != null) {
+    if (segment.kind === 'icon') style['--entity-chip-segment-glyph-size'] = `${segment.size}em`;
+    else style.fontSize = `${segment.size}em`;
+  }
+  return style as CSSProperties;
+}
+
+function Segment({ segment }: { segment: EntityChipSegment }): ReactElement {
+  if (segment.kind === 'icon') {
+    return (
+      <span
+        className={clsx(styles.segment, styles.segmentIcon)}
+        style={segmentStyle(segment)}
+        role="img"
+        aria-label={segment.label}
+      >
+        <span className={styles.segmentGlyph} aria-hidden="true">
+          {segment.icon}
+        </span>
+      </span>
+    );
+  }
+  return (
+    <span className={clsx(styles.segment, styles.segmentText)} style={segmentStyle(segment)}>
+      {segment.text}
+    </span>
+  );
 }
 
 /**
@@ -286,6 +348,8 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
     unavailable = false,
     truncate = false,
     trailing,
+    before,
+    after,
     className,
     style,
     ...rest
@@ -299,6 +363,10 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
   const Component = (as ?? (href ? 'a' : 'span')) as ElementType;
   const bareSpan = !as && !href;
   const inert = unavailable && bareSpan;
+  // Segments only in the normal state — like prefix/status under `loading`, a
+  // not-yet-loaded or unavailable entity has no known type/status (#582).
+  const segmented =
+    !loading && !unavailable && ((before?.length ?? 0) > 0 || (after?.length ?? 0) > 0);
   // The state as real text, not just muted colour. Browsers do expose
   // `aria-disabled`, but it carries no meaning on a non-widget role such as
   // `generic`, so no AT conveys it — without this the state reached nobody using a screen reader,
@@ -327,27 +395,8 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
   if (Component === 'a') elementProps.href = href;
   if (Component === 'button') elementProps.type = 'button';
 
-  return (
-    <Component
-      ref={ref}
-      style={rootStyle(color, status, style)}
-      className={clsx(
-        styles.chip,
-        unavailable && styles.unavailable,
-        truncate && styles.truncate,
-        className,
-      )}
-      {...elementProps}
-      {...rest}
-      // A target-less unavailable chip is non-interactive — cancel any
-      // consumer onClick that {...rest} just spread on above, so it can't
-      // fire through a chip keyboard users have no way to reach (Pattern B).
-      {...(inert ? { onClick: undefined } : null)}
-      // Component-owned ARIA state must survive whatever the consumer passes
-      // via {...rest} — aria-busy/aria-disabled are the component's contract.
-      aria-busy={loading || undefined}
-      aria-disabled={inert || undefined}
-    >
+  const content = (
+    <>
       {icon && (
         <span className={styles.icon} aria-hidden="true">
           {icon}
@@ -392,6 +441,53 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
           )}
           {trailing != null && <span className={styles.trailing}>{trailing}</span>}
         </>
+      )}
+    </>
+  );
+
+  return (
+    <Component
+      ref={ref}
+      style={rootStyle(color, status, style)}
+      className={clsx(
+        styles.chip,
+        unavailable && styles.unavailable,
+        truncate && styles.truncate,
+        segmented && styles.segmented,
+        className,
+      )}
+      {...elementProps}
+      {...rest}
+      // A target-less unavailable chip is non-interactive — cancel any
+      // consumer onClick that {...rest} just spread on above, so it can't
+      // fire through a chip keyboard users have no way to reach (Pattern B).
+      {...(inert ? { onClick: undefined } : null)}
+      // Component-owned ARIA state must survive whatever the consumer passes
+      // via {...rest} — aria-busy/aria-disabled are the component's contract.
+      aria-busy={loading || undefined}
+      aria-disabled={inert || undefined}
+    >
+      {segmented ? (
+        <>
+          {/* A space after/before each part keeps the accessible name
+              "Bug ENG-15 … Normal Reported" separated in every engine, not
+              only where blockified flex items get a separator. Whitespace-only
+              text between flex items isn't rendered, so layout is unchanged. */}
+          {before?.map((segment, i) => (
+            <Fragment key={`b${i}`}>
+              <Segment segment={segment} />{' '}
+            </Fragment>
+          ))}
+          <span className={styles.core}>{content}</span>
+          {after?.map((segment, i) => (
+            <Fragment key={`a${i}`}>
+              {' '}
+              <Segment segment={segment} />
+            </Fragment>
+          ))}
+        </>
+      ) : (
+        content
       )}
     </Component>
   );

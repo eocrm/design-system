@@ -3,6 +3,8 @@ import { resolve } from 'node:path';
 import { createRef, type ComponentProps, type ReactNode } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { parse, type Rule } from 'postcss';
+import { compile } from 'sass';
 import { I18nProvider } from '../../i18n/I18nProvider';
 import { EntityChip } from './EntityChip';
 
@@ -488,5 +490,142 @@ describe('<EntityChip> — markup without segments is unchanged (#582)', () => {
         '<span class="trailing"><span>High</span></span>' +
         '</a>',
     );
+  });
+});
+
+const TASK_BEFORE = [
+  { kind: 'icon' as const, icon: <svg data-testid="type" />, label: 'Bug', color: 'red' as const },
+];
+const TASK_AFTER = [
+  { kind: 'icon' as const, icon: <svg data-testid="prio" />, label: 'Normal' },
+  { kind: 'text' as const, text: 'Reported', color: 'amber' as const },
+];
+
+describe('<EntityChip> — segments (#582)', () => {
+  it('renders before → core → after, the whole chip one link named by every part', () => {
+    render(
+      <EntityChip
+        href="/tasks/15"
+        prefix="ENG-15"
+        label="Fix the login bug"
+        before={TASK_BEFORE}
+        after={TASK_AFTER}
+      />,
+    );
+    // jsdom has no layout, so it doesn't separate the core's own prefix/label
+    // spans (browsers do — they're blockified flex items); the whitespace the
+    // component puts BETWEEN segments and core is what this asserts.
+    const link = screen.getByRole('link', {
+      name: /^Bug ENG-15.*Fix the login bug Normal Reported$/,
+    });
+    expect(link.className).toMatch(/segmented/);
+    const parts = Array.from(link.children).map((c) =>
+      c.className.replace(/_([A-Za-z]+)_[0-9a-z]{6}/g, '$1'),
+    );
+    expect(parts).toEqual([
+      'segment segmentIcon',
+      'core',
+      'segment segmentIcon',
+      'segment segmentText',
+    ]);
+  });
+
+  it('icon segment: role=img named by label, glyph hidden, palette colours set (slate default)', () => {
+    render(<EntityChip href="/t" label="T" before={TASK_BEFORE} after={TASK_AFTER} />);
+    const bug = screen.getByRole('img', { name: 'Bug' });
+    expect(screen.getByTestId('type').parentElement).toHaveAttribute('aria-hidden', 'true');
+    expect(bug.style.getPropertyValue('--entity-chip-segment-bg')).toBe(
+      'var(--color-palette-red-bg)',
+    );
+    expect(
+      screen
+        .getByRole('img', { name: 'Normal' })
+        .style.getPropertyValue('--entity-chip-segment-fg'),
+    ).toBe('var(--color-palette-slate-fg)');
+  });
+
+  it('size overrides the glyph (icon) or font size (text), in em', () => {
+    render(
+      <EntityChip
+        href="/t"
+        label="T"
+        after={[
+          { kind: 'icon', icon: <svg />, label: 'Big', size: 1.2 },
+          { kind: 'text', text: 'Small', size: 0.75 },
+        ]}
+      />,
+    );
+    expect(
+      screen
+        .getByRole('img', { name: 'Big' })
+        .style.getPropertyValue('--entity-chip-segment-glyph-size'),
+    ).toBe('1.2em');
+    expect(screen.getByText('Small').style.fontSize).toBe('0.75em');
+  });
+
+  it('keeps the core content (icon, prefix, label, status, trailing) inside .core', () => {
+    const { container } = render(
+      <EntityChip
+        href="/t"
+        prefix="K"
+        label="L"
+        status={{ label: 'Open', category: 'to_do' }}
+        trailing={<span>tr</span>}
+        after={TASK_AFTER}
+      />,
+    );
+    const core = container.querySelector('[class*="core"]') as HTMLElement;
+    expect(core).toHaveTextContent('KLOpentr');
+  });
+
+  it('empty segment arrays behave exactly like none', () => {
+    const { container } = render(<EntityChip href="/t" label="L" before={[]} after={[]} />);
+    expect(normalizeClasses(container.innerHTML)).toBe(
+      '<a class="chip" href="/t"><span class="label">L</span></a>',
+    );
+  });
+
+  it('loading and unavailable render no segments', () => {
+    const { container, rerender } = render(
+      <EntityChip href="/t" label="L" loading before={TASK_BEFORE} after={TASK_AFTER} />,
+    );
+    expect(container.querySelector('[class*="segment"]')).toBeNull();
+    rerender(
+      <EntityChip href="/t" label="L" unavailable before={TASK_BEFORE} after={TASK_AFTER} />,
+    );
+    expect(container.querySelector('[class*="segment"]')).toBeNull();
+  });
+});
+
+describe('<EntityChip> — segmented layout CSS (#582)', () => {
+  const css = parse(compile(resolve(__dirname, './EntityChip.module.scss')).css);
+  const decl = (selector: string, prop: string): string | undefined => {
+    let value: string | undefined;
+    css.walkRules((rule: Rule) => {
+      if (rule.selector !== selector) return;
+      rule.walkDecls(prop, (d) => {
+        value = d.value;
+      });
+    });
+    return value;
+  };
+
+  it('root is the rounded clip: no padding/fill, clips, baseline from the core', () => {
+    expect(decl('.chip.segmented', 'padding')).toBe('0');
+    expect(decl('.chip.segmented', 'background')).toBe('none');
+    expect(decl('.chip.segmented', 'overflow')).toBe('hidden');
+    expect(decl('.chip.segmented', 'align-items')).toBe('baseline');
+    expect(decl('.chip.segmented', 'max-width')).toBe('100%');
+    expect(decl('.chip.segmented', 'white-space')).toBe('nowrap');
+  });
+
+  it('core shrinks and ellipsizes its label; segments never shrink and stretch to the core', () => {
+    expect(decl('.core', 'flex-shrink')).toBe('1');
+    expect(decl('.core', 'min-width')).toBe('0');
+    expect(decl('.core > .label', 'text-overflow')).toBe('ellipsis');
+    expect(decl('.segment', 'flex-shrink')).toBe('0');
+    expect(decl('.segment', 'align-self')).toBe('stretch');
+    expect(decl('.segmentGlyph > svg', 'width')).toBe('var(--entity-chip-segment-glyph-size)');
+    expect(decl('.segmentText', 'font-size')).toBe('var(--entity-chip-segment-text-size)');
   });
 });
