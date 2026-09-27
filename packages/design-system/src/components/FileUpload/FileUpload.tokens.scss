@@ -57,6 +57,15 @@
   // Row — error variant
   --file-upload-row-border-color-error: var(--color-danger);
 
+  // Row — status cell. The 4th grid column (`.rowStatus`) is `auto`-sized,
+  // which measures to 0 for an uploading row: <Progress> is `width: 100%`
+  // with no intrinsic size, so it has nothing to be 100% of (#588). This
+  // gives the uploading status cell a floor so the bar has somewhere to
+  // grow into. `--size-xl` is the closest existing shared size token to a
+  // sensible progress-bar minimum (80px) — no dedicated 80-120px token
+  // exists for this, so this reuses the primitive rather than inventing one.
+  --file-upload-progress-min-width: var(--size-xl);
+
   // Row — text + icon colors
   --file-upload-row-icon-fg: var(--color-fg-subtle);
   --file-upload-row-name-font-size: var(--font-size-md);

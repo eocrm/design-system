@@ -1,8 +1,12 @@
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
+import { resolve } from 'node:path';
+import { parse, type Rule } from 'postcss';
+import { compile } from 'sass';
 import { FileUpload, type FileEntry } from './FileUpload';
 import { Field } from '../Field';
+import styles from './FileUpload.module.scss';
 
 // Helper — build a File with controllable name + size + MIME for tests.
 function makeFile(name: string, sizeBytes: number, type: string): File {
@@ -100,6 +104,28 @@ describe('FileUpload', () => {
     const progressbar = container.querySelector('[role="progressbar"]');
     expect(progressbar).toBeInTheDocument();
     expect(progressbar).toHaveAttribute('aria-valuenow', '42');
+  });
+
+  // #588 — `.rowStatus` sits in the row grid's 4th `auto` column, which sizes
+  // to 0 unless something gives it an intrinsic width. The fix keys a
+  // min-inline-size rule off `.rowUploading` on the <li> (the row's existing
+  // per-status class, from STATUS_CLASS); this asserts the row that wraps the
+  // <Progress> actually carries that class, i.e. the selector the CSS fix
+  // depends on is really present in the rendered DOM, not just in theory.
+  it("#588: an uploading row carries the rowUploading class its status cell's min-width rule depends on", () => {
+    const f1 = makeFile('a.txt', 100, 'text/plain');
+    const { container } = render(
+      <FileUpload
+        files={[entry('1', f1, 'uploading', { progress: 42 })]}
+        onFilesAdded={() => {}}
+        onFileRemove={() => {}}
+      />,
+    );
+    const progressbar = container.querySelector('[role="progressbar"]');
+    const row = progressbar!.closest('li');
+    expect(row).toHaveClass(styles.rowUploading);
+    const statusCell = progressbar!.closest(`.${styles.rowStatus}`);
+    expect(statusCell).not.toBeNull();
   });
 
   it('renders the error message when status="error"', () => {
@@ -715,4 +741,51 @@ it('single mode with a file: the dropzone is gone, so the root keeps the id (#56
   );
   expect(container.firstElementChild).toHaveAttribute('id', 'logo');
   expect(container.querySelectorAll('#logo')).toHaveLength(1);
+});
+
+describe('FileUpload — uploading row status cell min-width (#588)', () => {
+  const css = compile(resolve(__dirname, 'FileUpload.module.scss')).css;
+  const root = parse(css);
+  const allRules: Rule[] = [];
+  root.walkRules((rule) => {
+    allRules.push(rule);
+  });
+
+  it('sets min-inline-size on .rowStatus scoped to an uploading row only, from the component token', () => {
+    const rule = allRules.find((r) =>
+      r.selectors.some((s) => /rowUploading/.test(s) && /rowStatus/.test(s)),
+    );
+    expect(rule).toBeDefined();
+    const decl = rule!.nodes.find(
+      (node) =>
+        node.type === 'decl' && (node.prop === 'min-inline-size' || node.prop === 'min-width'),
+    );
+    expect(decl).toBeDefined();
+    expect(decl && decl.type === 'decl' ? decl.value : undefined).toBe(
+      'var(--file-upload-progress-min-width)',
+    );
+
+    // Other statuses must not pick up a min size on their status cell — only
+    // the uploading row's grid should change shape.
+    const otherStatusRule = allRules.find((r) =>
+      r.selectors.some(
+        (s) =>
+          /rowStatus/.test(s) &&
+          !/rowUploading/.test(s) &&
+          (s.includes('rowDone') || s.includes('rowPending') || s.includes('rowError')),
+      ),
+    );
+    expect(otherStatusRule).toBeUndefined();
+  });
+
+  it('the token resolves to an existing shared size token, not a raw pixel value', () => {
+    const tokensCss = compile(resolve(__dirname, 'FileUpload.tokens.scss')).css;
+    const tokensRoot = parse(tokensCss);
+    let progressMinWidthDecl: { value: string } | undefined;
+    tokensRoot.walkDecls('--file-upload-progress-min-width', (decl) => {
+      progressMinWidthDecl = decl;
+    });
+    expect(progressMinWidthDecl).toBeDefined();
+    expect(progressMinWidthDecl!.value).toMatch(/^var\(--(size|space|measure)-/);
+  });
 });
