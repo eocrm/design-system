@@ -78,6 +78,12 @@ export interface PillMenuProps extends Omit<HTMLAttributes<HTMLElement>, 'onSele
    * (content-width pill).
    */
   fullWidth?: boolean;
+  /**
+   * Error state — sets `aria-invalid` on the trigger. `<Field error>` injects
+   * it for you. No visual change: the fill IS the value's colour, and the
+   * Field's error text carries the error.
+   */
+  invalid?: boolean;
 }
 
 /** Injectable custom-property pair for a value's resolved color. */
@@ -137,8 +143,10 @@ function OptionContent({ option }: { option: PillMenuOption }) {
  * // trigger is announced "Change type: Bug"
  *
  * @example
- * // In a form column beside full-width Selects/Inputs
- * <Field label="Priority">
+ * // In a form column beside full-width Selects/Inputs. Field wires `id`,
+ * // the error text and `invalid`; the trigger keeps its own name
+ * // ("Change priority: High"), so pass `label`.
+ * <Field label="Priority" error={errors.priority}>
  *   <PillMenu fullWidth label="priority" current={priority} options={priorities} onSelect={setPriority} />
  * </Field>
  *
@@ -171,12 +179,24 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
     disabled = false,
     busy = false,
     fullWidth = false,
+    invalid = false,
     className,
     style,
-    ...rest
+    ...props
   },
   ref,
 ) {
+  // Inside a <Field>, auto-wiring also injects `required` (not valid on a
+  // button — there's no aria-required for it) and `aria-labelledby`, which
+  // would OVERRIDE the component-owned name: "Change type: Bug" would read
+  // as the bare field label "Type", dropping the current value. Neither
+  // reaches the DOM; `label` names the value instead. `id` and
+  // `aria-describedby` (the error/help text) do pass through.
+  const {
+    required: _required,
+    'aria-labelledby': _labelledBy,
+    ...rest
+  } = props as typeof props & { required?: boolean };
   const t = useTranslation();
   // Deferred for the same reason as Switch: a PillMenu that mounts already
   // busy would otherwise mount its region and text together and announce
@@ -216,6 +236,7 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
         ref={ref as Ref<HTMLSpanElement>}
         className={clsx(styles.chip, fullWidth && styles.fullWidth, className)}
         style={mergedStyle}
+        aria-invalid={invalid || undefined}
       >
         <OptionContent option={current} />
       </span>
@@ -240,6 +261,7 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
           style={mergedStyle}
           disabled={isBlocked}
           aria-busy={busy || undefined}
+          aria-invalid={invalid || undefined}
           aria-label={t('pillMenu.change', {
             label: label || t('pillMenu.defaultLabel'),
             name: current.name,

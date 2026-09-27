@@ -5,6 +5,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef } from 'react';
 import { PillMenu, type PillMenuOption } from './PillMenu';
+import { Field } from '../Field';
 import { I18nProvider } from '../../i18n/I18nProvider';
 
 beforeEach(() => {
@@ -325,5 +326,29 @@ describe('PillMenu — fullWidth (#578)', () => {
     const scss = readFileSync(resolve(__dirname, 'PillMenu.module.scss'), 'utf8');
     expect(scss).toMatch(/\.fullWidth\s*\{[^}]*display:\s*flex;[^}]*width:\s*100%;/);
     expect(scss).toMatch(/>\s*\.chevron\s*\{[^}]*margin-inline-start:\s*auto;/);
+  });
+});
+
+describe('PillMenu — inside a Field (#578)', () => {
+  const CURRENT: PillMenuOption = { id: 'bug', name: 'Bug', color: 'red' };
+  const OPTIONS: PillMenuOption[] = [{ id: 'story', name: 'Story', color: 'green' }];
+
+  it('keeps its own name, takes the error text and invalid, leaks no bogus attributes', () => {
+    render(
+      <Field label="Type" error="Pick a type" required>
+        <PillMenu fullWidth label="type" current={CURRENT} options={OPTIONS} />
+      </Field>,
+    );
+    const trigger = screen.getByRole('button', { name: 'Change type: Bug' });
+    expect(trigger).toHaveAccessibleDescription('Pick a type');
+    expect(trigger).toHaveAttribute('aria-invalid', 'true');
+    expect(trigger).not.toHaveAttribute('aria-labelledby');
+    expect(trigger).not.toHaveAttribute('invalid');
+    expect(trigger).not.toHaveAttribute('required');
+  });
+
+  it('read-only chip takes invalid too', () => {
+    const { container } = render(<PillMenu invalid current={CURRENT} />);
+    expect(container.firstChild).toHaveAttribute('aria-invalid', 'true');
   });
 });
