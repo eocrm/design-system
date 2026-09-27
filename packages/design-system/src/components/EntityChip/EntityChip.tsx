@@ -253,7 +253,7 @@ function rootStyle(
  * />
  *
  * @remarks When NOT to use
- * - Plain status display with no linked entity → use `<Badge>` or `<StatusMenu>`.
+ * - Plain status display with no linked entity → use `<Badge>` or `<PillMenu>`.
  * - Standalone navigation with no entity chrome (icon/prefix/status) → use `<Link>`.
  * - Removable filter pills → use `<FilterChip>`.
  *

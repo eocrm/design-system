@@ -89,7 +89,7 @@ const CLUSTERS: Record<string, string> = {
   Slider: 'Forms',
   Sortable: 'Forms',
   SortableGroup: 'Forms',
-  StatusMenu: 'Forms',
+  PillMenu: 'Forms',
   Switch: 'Forms',
   RichTextEditor: 'Forms',
   Textarea: 'Forms',

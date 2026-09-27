@@ -362,9 +362,10 @@ export const en: Messages = {
     unavailable: '(unavailable)',
     loading: '(loading)',
   },
-  statusMenu: {
-    changeStatus: 'Change status',
-    busy: 'Saving status…',
+  pillMenu: {
+    change: ({ label, name }) => `Change ${label as string}: ${name as string}`,
+    defaultLabel: 'status',
+    busy: 'Saving…',
   },
   pageHeader: {
     back: 'Go back',

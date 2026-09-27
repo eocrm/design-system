@@ -368,9 +368,10 @@ export const ru: Messages = {
     unavailable: '(недоступно)',
     loading: '(загружается)',
   },
-  statusMenu: {
-    changeStatus: 'Изменить статус',
-    busy: 'Сохранение статуса…',
+  pillMenu: {
+    change: ({ label, name }) => `Изменить ${label as string}: ${name as string}`,
+    defaultLabel: 'статус',
+    busy: 'Сохранение…',
   },
   pageHeader: {
     back: 'Назад',

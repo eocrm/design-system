@@ -1,0 +1,15 @@
+// PillMenu.tokens.scss
+// Component-scoped tokens for <PillMenu>. Each token defaults to the
+// primitive/token it replaces — overriding any of these at :root re-themes
+// PillMenu without touching globals. Convention: --pill-menu-<part>.
+// See docs/superpowers/specs/2026-05-27-component-tokens-design.md
+:root {
+  --pill-menu-radius: var(--radius-md);
+  --pill-menu-padding-y: var(--space-1);
+  --pill-menu-padding-x: var(--space-3);
+  --pill-menu-font-size: var(--font-size-sm);
+  --pill-menu-font-weight: var(--font-weight-medium);
+  --pill-menu-gap: var(--space-2);
+  --pill-menu-disabled-opacity: var(--opacity-disabled);
+  --pill-menu-ring-focus: var(--ring-accent);
+}

@@ -3925,6 +3925,52 @@
         }
       ]
     },
+    "PillMenu": {
+      "props": [
+        {
+          "name": "current",
+          "type": "PillMenuOption",
+          "required": true,
+          "default": "",
+          "description": "The value currently shown on the trigger (or the read-only chip)."
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "What the value IS, for the trigger's accessible name: `label=\"type\"` →\n\"Change type: Bug\". Default: the localized \"status\" (\"Change status: …\").\nPass it lower-case as it reads mid-sentence, and in the UI's language —\nit is data, not a translatable string."
+        },
+        {
+          "name": "options",
+          "type": "PillMenuOption[]",
+          "required": false,
+          "default": "",
+          "description": "Transition targets, offered in the dropdown. Omitted or empty renders\nread-only mode: a static colored chip with no button, no menu, no\naria-haspopup."
+        },
+        {
+          "name": "onSelect",
+          "type": "((id: string | number) => void)",
+          "required": false,
+          "default": "",
+          "description": "Fired with the chosen option's `id` when a transition target is picked."
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Disables the trigger. Stays colored, dims via opacity."
+        },
+        {
+          "name": "busy",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Transition in flight: the trigger is non-interactive and keeps its color.\nAnnounced from a polite live region the component owns — `aria-busy` is\nalso set but reaches no screen reader on its own. The trigger's accessible\nname does not change (contrast `EntityChip`): you activated this control,\nso the change is announced rather than folded into the name.\n\nNo effect in read-only mode (no `options`), which renders no trigger and\nso has nothing to mark busy."
+        }
+      ]
+    },
     "Popover": {
       "props": [
         {
@@ -5026,45 +5072,6 @@
         }
       ]
     },
-    "StatusMenu": {
-      "props": [
-        {
-          "name": "current",
-          "type": "StatusMenuStatus",
-          "required": true,
-          "default": "",
-          "description": "The status currently shown on the trigger (or the read-only chip)."
-        },
-        {
-          "name": "options",
-          "type": "StatusMenuStatus[]",
-          "required": false,
-          "default": "",
-          "description": "Transition targets, offered in the dropdown. Omitted or empty renders\nread-only mode: a static colored chip with no button, no menu, no\naria-haspopup."
-        },
-        {
-          "name": "onSelect",
-          "type": "((id: string | number) => void)",
-          "required": false,
-          "default": "",
-          "description": "Fired with the chosen option's `id` when a transition target is picked."
-        },
-        {
-          "name": "disabled",
-          "type": "boolean",
-          "required": false,
-          "default": "",
-          "description": "Disables the trigger. Stays colored, dims via opacity."
-        },
-        {
-          "name": "busy",
-          "type": "boolean",
-          "required": false,
-          "default": "",
-          "description": "Transition in flight: the trigger is non-interactive and keeps its color.\nAnnounced from a polite live region the component owns — `aria-busy` is\nalso set but reaches no screen reader on its own. The trigger's accessible\nname does not change (contrast `EntityChip`): you activated this control,\nso the change is announced rather than folded into the name.\n\nNo effect in read-only mode (no `options`), which renders no trigger and\nso has nothing to mark busy."
-        }
-      ]
-    },
     "Sticky": {
       "props": [
         {
@@ -5826,7 +5833,6 @@
     "BadgeVariant": "\"filled\" | \"stripe\"",
     "BadgeAlign": "\"baseline\" | \"middle\"",
     "EntityChipStatus": "{ label: string; category?: StatusCategory; color?: PaletteColor }",
-    "StatusMenuStatus": "{ id: string | number; name: string; category?: StatusCategory; color?: PaletteColor }",
     "ThreadNodeAlign": "\"header\" | \"top\"",
     "LogoSize": "\"sm\" | \"md\" | \"lg\"",
     "LogoTextPlacement": "\"end\" | \"bottom\"",

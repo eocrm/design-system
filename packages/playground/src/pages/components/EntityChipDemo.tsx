@@ -81,7 +81,7 @@ export function Demo() {
 
       <Example
         title="Status: categories vs custom color"
-        description="`status.category` (to_do/in_progress/open/done/won/lost) resolves a default palette color. `status.color` is an explicit PaletteColor override — it wins over category, same contract as StatusMenu."
+        description="`status.category` (to_do/in_progress/open/done/won/lost) resolves a default palette color. `status.color` is an explicit PaletteColor override — it wins over category, same contract as PillMenu."
         code={`import { EntityChip } from '@eocrm/design-system';
 
 export function Demo() {

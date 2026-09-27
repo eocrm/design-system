@@ -199,11 +199,11 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['Switch'],
   },
   {
-    to: '/components/status-menu',
-    name: 'StatusMenu',
+    to: '/components/pill-menu',
+    name: 'PillMenu',
     description:
       'Status-transition dropdown — colored pill trigger, each menu row colored to its own status. Composes DropdownMenu; read-only chip when options is omitted.',
-    preview: SCHEMATICS['StatusMenu'],
+    preview: SCHEMATICS['PillMenu'],
   },
   {
     to: '/components/skeleton',

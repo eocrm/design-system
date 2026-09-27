@@ -774,7 +774,7 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       </Outline>
     </Row>
   ),
-  StatusMenu: (
+  PillMenu: (
     <Col gap={5} style={{ alignItems: 'flex-start' }}>
       <Solid
         w={54}

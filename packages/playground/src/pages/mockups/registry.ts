@@ -89,7 +89,7 @@ export type ComponentName =
   | 'SortableGroup'
   | 'Split'
   | 'Stack'
-  | 'StatusMenu'
+  | 'PillMenu'
   | 'Sticky'
   | 'Switch'
   | 'Table'

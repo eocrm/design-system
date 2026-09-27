@@ -276,8 +276,8 @@
     "composedBy": [
       "DataTable",
       "LiquidEditor",
-      "RichTextEditor",
-      "StatusMenu"
+      "PillMenu",
+      "RichTextEditor"
     ]
   },
   "EmojiPicker": {
@@ -590,6 +590,14 @@
     ],
     "composedBy": []
   },
+  "PillMenu": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "DropdownMenu"
+    ],
+    "composedBy": []
+  },
   "Popover": {
     "tier": "primitive",
     "cluster": "Overlays",
@@ -756,14 +764,6 @@
       "RichTextEditor",
       "Tour"
     ]
-  },
-  "StatusMenu": {
-    "tier": "composition",
-    "cluster": "Forms",
-    "composes": [
-      "DropdownMenu"
-    ],
-    "composedBy": []
   },
   "Sticky": {
     "tier": "primitive",

@@ -4,6 +4,7 @@ import {
   useState,
   type CSSProperties,
   type HTMLAttributes,
+  type ReactNode,
   type Ref,
 } from 'react';
 import clsx from 'clsx';
@@ -11,32 +12,46 @@ import { DropdownMenu } from '../DropdownMenu';
 import { paletteTokens, type PaletteColor } from '../../palette';
 import { useTranslation } from '../../i18n/useTranslation';
 import { resolveStatusColor, type StatusCategory } from '../_internal/statusColor';
-import styles from './StatusMenu.module.scss';
+import styles from './PillMenu.module.scss';
 
-/** Workflow status category — maps to a default palette color. */
-export type StatusMenuCategory = StatusCategory;
+/** Workflow category — maps to a default palette color. */
+export type PillMenuCategory = StatusCategory;
 
-/** One status: current value or a transition target. */
-export interface StatusMenuStatus {
+/** One value (a status, a task type, a priority…): the current one or a menu option. */
+export interface PillMenuOption {
   /** Stable id — passed to `onSelect` when this option is chosen. */
   id: string | number;
-  /** Visible status name. */
+  /** Visible name. */
   name: string;
+  /**
+   * Optional glyph rendered before the name — in the pill and in its menu
+   * row (e.g. a task-type or priority icon). Decorative: wrapped
+   * `aria-hidden`, so the name alone is announced. Size it to the text
+   * (~14px lucide icon).
+   */
+  icon?: ReactNode;
   /** Semantic category → default color: to_do slate / in_progress blue / open violet / done green / won green / lost red. */
-  category?: StatusMenuCategory;
+  category?: PillMenuCategory;
   /** Explicit palette color — wins over `category` (per-state custom colors). */
   color?: PaletteColor;
 }
 
-export interface StatusMenuProps extends Omit<HTMLAttributes<HTMLElement>, 'onSelect'> {
-  /** The status currently shown on the trigger (or the read-only chip). */
-  current: StatusMenuStatus;
+export interface PillMenuProps extends Omit<HTMLAttributes<HTMLElement>, 'onSelect'> {
+  /** The value currently shown on the trigger (or the read-only chip). */
+  current: PillMenuOption;
+  /**
+   * What the value IS, for the trigger's accessible name: `label="type"` →
+   * "Change type: Bug". Default: the localized "status" ("Change status: …").
+   * Pass it lower-case as it reads mid-sentence, and in the UI's language —
+   * it is data, not a translatable string.
+   */
+  label?: string;
   /**
    * Transition targets, offered in the dropdown. Omitted or empty renders
    * read-only mode: a static colored chip with no button, no menu, no
    * aria-haspopup.
    */
-  options?: StatusMenuStatus[];
+  options?: PillMenuOption[];
   /** Fired with the chosen option's `id` when a transition target is picked. */
   onSelect?: (id: string | number) => void;
   /** Disables the trigger. Stays colored, dims via opacity. */
@@ -54,21 +69,36 @@ export interface StatusMenuProps extends Omit<HTMLAttributes<HTMLElement>, 'onSe
   busy?: boolean;
 }
 
-/** Injectable custom-property pair for a status's resolved color. */
-function statusColorStyle(status: StatusMenuStatus): CSSProperties {
+/** Injectable custom-property pair for a value's resolved color. */
+function statusColorStyle(status: PillMenuOption): CSSProperties {
   const { bg, fg } = paletteTokens(resolveStatusColor(status));
-  return { '--status-menu-bg': bg, '--status-menu-fg': fg } as CSSProperties;
+  return { '--pill-menu-bg': bg, '--pill-menu-fg': fg } as CSSProperties;
+}
+
+/** Renders the optional icon + name, shared by the pill, chip and rows. */
+function OptionContent({ option }: { option: PillMenuOption }) {
+  return (
+    <>
+      {option.icon != null && (
+        <span className={styles.icon} aria-hidden="true">
+          {option.icon}
+        </span>
+      )}
+      {option.name}
+    </>
+  );
 }
 
 /**
- * Status-transition dropdown: a colored pill trigger that opens a menu of
- * transition targets, each row fully colored to its own status. Composes
- * `<DropdownMenu>` internally. Renders read-only (a static colored chip, no
- * button) when `options` is omitted or empty.
+ * Coloured value menu: a coloured pill trigger that opens a menu of values,
+ * each row fully coloured to its own value — for a workflow status, a task
+ * type, a priority, any small categorical value. Formerly `StatusMenu` (#572).
+ * Composes `<DropdownMenu>` internally. Renders read-only (a static coloured
+ * chip, no button) when `options` is omitted or empty.
  *
  * @example
  * // Task status with categories — colors resolve automatically
- * <StatusMenu
+ * <PillMenu
  *   current={{ id: 'todo', name: 'To do', category: 'to_do' }}
  *   options={[
  *     { id: 'in_progress', name: 'In progress', category: 'in_progress' },
@@ -79,15 +109,25 @@ function statusColorStyle(status: StatusMenuStatus): CSSProperties {
  *
  * @example
  * // Per-state custom color override — `color` wins over `category`
- * <StatusMenu
+ * <PillMenu
  *   current={{ id: 'triage', name: 'Triage', color: 'amber' }}
  *   options={[{ id: 'won', name: 'Won', category: 'won', color: 'emerald' }]}
  *   onSelect={(id) => setStage(id)}
  * />
  *
  * @example
+ * // A non-status value with icons and its own accessible label
+ * <PillMenu
+ *   label="type"
+ *   current={{ id: 'bug', name: 'Bug', color: 'red', icon: <Bug size={14} /> }}
+ *   options={[{ id: 'story', name: 'Story', color: 'green', icon: <BookOpen size={14} /> }]}
+ *   onSelect={(id) => setType(id)}
+ * />
+ * // trigger is announced "Change type: Bug"
+ *
+ * @example
  * // Read-only — omit `options` for a static colored chip (no menu)
- * <StatusMenu current={{ id: 'done', name: 'Done', category: 'done' }} />
+ * <PillMenu current={{ id: 'done', name: 'Done', category: 'done' }} />
  *
  * @remarks When NOT to use
  * - A single non-status action menu ("Actions", "⋯") — use `<DropdownMenu>`
@@ -98,27 +138,27 @@ function statusColorStyle(status: StatusMenuStatus): CSSProperties {
  *
  * @remarks Anti-patterns
  * - ❌ A small `<Badge>` wrapped inside a neutral `<Button>` to fake a
- *   colored status trigger — that's exactly what `StatusMenu` replaces.
+ *   colored status trigger — that's exactly what `PillMenu` replaces.
  * - ❌ Raw hex strings in `color`. It's a `PaletteColor` name (`'amber'`,
  *   `'violet'`, …), not a CSS color value.
  * - ❌ Omitting `options` to "disable" the menu. Omitting `options` is
  *   read-only mode (no interactivity at all); for a transition that's
  *   temporarily blocked, keep `options` and pass `disabled` instead.
  */
-export const StatusMenu = forwardRef<HTMLElement, StatusMenuProps>(function StatusMenu(
-  { current, options, onSelect, disabled = false, busy = false, className, style, ...rest },
+export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu(
+  { current, options, onSelect, label, disabled = false, busy = false, className, style, ...rest },
   ref,
 ) {
   const t = useTranslation();
-  // Deferred for the same reason as Switch: a StatusMenu that mounts already
+  // Deferred for the same reason as Switch: a PillMenu that mounts already
   // busy would otherwise mount its region and text together and announce
   // nothing. See CLAUDE.md Hard rule 10.
   const [busyText, setBusyText] = useState('');
   useEffect(() => {
-    setBusyText(busy ? t('statusMenu.busy') : '');
+    setBusyText(busy ? t('pillMenu.busy') : '');
   }, [busy, t]);
   // Component color wins over any consumer `style` — merged AFTER so its
-  // `--status-menu-*` custom properties can't be shadowed by a consumer's
+  // `--pill-menu-*` custom properties can't be shadowed by a consumer's
   // own inline style object.
   const mergedStyle: CSSProperties = { ...style, ...statusColorStyle(current) };
   const isBlocked = disabled || busy;
@@ -149,7 +189,7 @@ export const StatusMenu = forwardRef<HTMLElement, StatusMenuProps>(function Stat
         className={clsx(styles.chip, className)}
         style={mergedStyle}
       >
-        {current.name}
+        <OptionContent option={current} />
       </span>
     );
   }
@@ -172,9 +212,12 @@ export const StatusMenu = forwardRef<HTMLElement, StatusMenuProps>(function Stat
           style={mergedStyle}
           disabled={isBlocked}
           aria-busy={busy || undefined}
-          aria-label={`${t('statusMenu.changeStatus')}: ${current.name}`}
+          aria-label={t('pillMenu.change', {
+            label: label || t('pillMenu.defaultLabel'),
+            name: current.name,
+          })}
         >
-          {current.name}
+          <OptionContent option={current} />
           <svg
             width="10"
             height="6"
@@ -204,10 +247,23 @@ export const StatusMenu = forwardRef<HTMLElement, StatusMenuProps>(function Stat
             className={styles.option}
             style={statusColorStyle(option)}
           >
-            {option.name}
+            <OptionContent option={option} />
           </DropdownMenu.Item>
         ))}
       </DropdownMenu.Content>
     </DropdownMenu>
   );
 });
+
+/**
+ * @deprecated Renamed to {@link PillMenu} (#572) — it is no longer
+ * status-specific. Same component, same props; this alias is removed in the
+ * next minor release. Migrate: `import { PillMenu } from '@eocrm/design-system'`.
+ */
+export const StatusMenu = PillMenu;
+/** @deprecated Renamed to {@link PillMenuProps} (#572). */
+export type StatusMenuProps = PillMenuProps;
+/** @deprecated Renamed to {@link PillMenuOption} (#572). */
+export type StatusMenuStatus = PillMenuOption;
+/** @deprecated Renamed to {@link PillMenuCategory} (#572). */
+export type StatusMenuCategory = PillMenuCategory;

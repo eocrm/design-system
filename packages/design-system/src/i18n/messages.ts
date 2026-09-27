@@ -91,7 +91,7 @@ export interface Messages {
   switch: {
     /**
      * Announced from a polite live region while `loading` is true. Same
-     * reasoning as `statusMenu.busy` — the switch keeps its name and the
+     * reasoning as `pillMenu.busy` — the switch keeps its name and the
      * change is announced instead.
      */
     busy: string;
@@ -757,11 +757,17 @@ export interface Messages {
      */
     loading: string;
   };
-  statusMenu: {
-    /** aria-label prefix on the trigger, interpolated with the current status name. */
-    changeStatus: string;
+  pillMenu: {
     /**
-     * Announced from a polite live region while a status change is in flight.
+     * Function leaf — the trigger's accessible name: `label` is the consumer's
+     * `label` prop (or `defaultLabel`), `name` the current value's name
+     * ("Change status: In progress", "Change type: Bug").
+     */
+    change: (params: { label: string; name: string }) => string;
+    /** What the value is when the consumer passes no `label` — keeps "Change status". */
+    defaultLabel: string;
+    /**
+     * Announced from a polite live region while a value change is in flight.
      * The trigger's `aria-busy` is inert to screen readers, and the name is
      * deliberately NOT mutated here: the user is focused on the control they
      * just activated, so this is a change to announce, not a property of the

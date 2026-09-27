@@ -2050,7 +2050,7 @@ import { Link as RouterLink } from 'react-router-dom';
 - Polymorphic inline chip: optional `icon` (rendered `aria-hidden`), optional muted `prefix` (e.g. a task key), the `label`, and an optional colored `status`. All inline `<span>`s inside one root — safe to drop directly inside a `<p>`/`<Text>`.
 - **An EntityChip is always a link to its entity**: pass `href` (renders `<a href>`) or `as` (`RouterLink`, `'button'`, any component — same polymorphic contract as `<Link>`). The bare `<span>` form (no target) is for rare non-navigable contexts only.
 - Default chip fill matches RichText's `@mention` styling (`--color-accent-bg-subtle` / `--color-accent`) — a chip and a rendered mention read as the same visual object in both themes. `color?: PaletteColor` overrides the fill (same inline-injection contract as `Badge color`) — independent of `status`, which keeps its own resolved color. `unavailable` still mutes the label/status/dot over any `color`.
-- `status`: `{ label, category?, color? }`. `category` (`to_do`/`in_progress`/`open`/`done`/`won`/`lost`) resolves a default palette color; `color` (a `PaletteColor`) overrides it — same category → color mapping as `<StatusMenu>`. The separator dot between name and status takes the status's resolved color too (reads as one unit with the status label).
+- `status`: `{ label, category?, color? }`. `category` (`to_do`/`in_progress`/`open`/`done`/`won`/`lost`) resolves a default palette color; `color` (a `PaletteColor`) overrides it — same category → color mapping as `<PillMenu>`. The separator dot between name and status takes the status's resolved color too (reads as one unit with the status label).
 - `loading`: swaps the body for an ellipsis and sets `aria-busy` (which nothing reads on its own — the state reaches AT through the name, below). `unavailable`: mutes the chip (entity deleted or no access). Both are purely visual when the chip has a link target — it stays a live, keyboard-reachable link. Only a target-less `unavailable` chip is non-interactive with `aria-disabled`.
 - ⚠️ **On a chip with a link target, both state words change the accessible name**, so a name-exact query stops matching: `getByRole('link', { name: 'Appointment' })` misses a chip that is loading or unavailable. If your tests select chips by name over lists that render placeholders, use a regex or query before the state applies.
 - **`loading` is announced too.** Same mechanism, and `aria-busy` alone did not do it either — it is a _global_ ARIA state so it IS valid on the role-less span and browsers expose it, but no mainstream screen reader reliably conveys `busy` on a non-live element, and the `…` is `aria-hidden`. The label reached the user; the state did not. A linked chip's name becomes `"Appointment (loading)"`. **The trade:** the accessible name changes when loading resolves. Announcing a transient state through the name always costs that; the alternative is a consumer-owned `aria-live` region, since only the consumer knows whether a chip resolving is worth interrupting for. Override the word to `''` **at your top-level provider** if you'd rather handle it yourself — a nested `I18nProvider` replaces its parent rather than extending it, so wrapping a single chip would discard every other override you have set.
@@ -2061,13 +2061,15 @@ import { Link as RouterLink } from 'react-router-dom';
 - **`trailing`** — adornments inside the chip after `status` (a priority icon, a `<Badge>`), full size under `truncate`, not rendered while `loading`. Its text JOINS the link's name (`aria-hidden` a decorative icon). ❌ Never interactive content — the chip is a link; row actions go beside it.
 - Hover affordance on link/button chips: the background deepens a step plus a brightness dip. Never a weight change, never an underline, even under aggressive consumer link CSS.
 - Chip text inherits the surrounding font size — inside a heading it renders at heading size, by design (that's what keeps the chip box symmetric around the local text in any context).
-- **When NOT to use**: plain status with no linked entity → `<Badge>`/`<StatusMenu>`; standalone navigation with no icon/prefix/status chrome → `<Link>`; removable filter pills → `<FilterChip>`.
+- **When NOT to use**: plain status with no linked entity → `<Badge>`/`<PillMenu>`; standalone navigation with no icon/prefix/status chrome → `<Link>`; removable filter pills → `<FilterChip>`.
 - **Anti-pattern**: nesting a `<Badge>` inside another `<Badge>` to fake an entity-with-status chip — `EntityChip` replaces that composition. `status.color` and the chip's own `color` are `PaletteColor` names, never raw hex strings. Omitting a link target (`href`/`as`) is also an anti-pattern — an EntityChip should link to its entity.
 
-### `<StatusMenu>` — status-transition dropdown
+### `<PillMenu>` — coloured value menu (status, type, priority…)
+
+Formerly `StatusMenu` (#572). `StatusMenu` / `StatusMenuProps` / `StatusMenuStatus` / `StatusMenuCategory` remain as deprecated aliases for one release — migrate to `PillMenu` / `PillMenuProps` / `PillMenuOption` / `PillMenuCategory`. The component tokens are now `--pill-menu-*` (were `--status-menu-*`) and the i18n namespace is `pillMenu` (was `statusMenu`).
 
 ```tsx
-<StatusMenu
+<PillMenu
   current={{ id: 'todo', name: 'To do', category: 'to_do' }}
   options={[
     { id: 'in_progress', name: 'In progress', category: 'in_progress' },
@@ -2077,10 +2079,21 @@ import { Link as RouterLink } from 'react-router-dom';
 />
 
 // Read-only chip — omit `options` for a static colored chip, no menu:
-<StatusMenu current={{ id: 'won', name: 'Won', category: 'won' }} />
+<PillMenu current={{ id: 'won', name: 'Won', category: 'won' }} />
+
+// Not a status: label the trigger and add per-value icons:
+<PillMenu
+  label="type"
+  current={{ id: 'bug', name: 'Bug', color: 'red', icon: <Bug size={14} /> }}
+  options={[{ id: 'story', name: 'Story', color: 'green', icon: <BookOpen size={14} /> }]}
+  onSelect={setType}
+/>
+// → trigger announced "Change type: Bug"
 ```
 
-- A colored pill trigger that opens a menu of transition targets, each row colored to its own status. Composes `<DropdownMenu>` internally.
+- A coloured pill trigger that opens a menu of values, each row coloured to its own value — a workflow status, a task type, a priority. Composes `<DropdownMenu>` internally.
+- `label` (default: localized "status") names what the value is in the trigger's accessible name: `label="type"` → "Change type: Bug". Lower-case, in the UI language — it's data. Don't put `aria-label` on it: the trigger's name is component-owned.
+- `icon?: ReactNode` on `current` and on each option renders before the name in the pill and in its row, `aria-hidden` (decorative — the name is announced). Size it to the text (~14px).
 - `current` / each option: `{ id, name, category?, color? }`. `category` (`to_do` / `in_progress` / `open` / `done` / `won` / `lost`) maps to a default palette color (slate / blue / violet / green / green / red); `color` (a `PaletteColor`) overrides it per-status.
 - `options` omitted or empty → read-only mode: a static colored `<span>` chip, no button, no `aria-haspopup`. This is the read-only surface — there's no separate `readOnly` prop.
 - `disabled` blocks the trigger (dims via opacity, stays colored). `busy` marks a transition in flight — also non-interactive, no built-in spinner. It announces from the component's own polite live region and **does not change the trigger's accessible name** (contrast `EntityChip`: you activated this control, so the change is announced rather than renamed). `aria-busy` is also set, but reaches no screen reader on its own.
@@ -3997,7 +4010,7 @@ For your OWN outcomes — a consumer-level event with no visible text of its own
 The rule the library follows, so you can predict any component:
 
 - **State you meet by arriving** — an `EntityChip` placeholder you tab onto — is folded into the **accessible name**. Its name therefore _changes_ when the state resolves, so don't select those elements by exact name in tests while a placeholder can be on screen.
-- **State that changes while you are elsewhere** — a `Switch` saving, a `DataTable` loading, a `StatusMenu` committing, a `Select` resolving its async options, a `FileUpload` batch finishing, a `ConfirmationPopover` going pending — is announced from a **live region the component owns**. Names stay stable.
+- **State that changes while you are elsewhere** — a `Switch` saving, a `DataTable` loading, a `PillMenu` committing, a `Select` resolving its async options, a `FileUpload` batch finishing, a `ConfirmationPopover` going pending — is announced from a **live region the component owns**. Names stay stable.
 - **Purely visual state** — `Badge` tone, `Skeleton` — is yours to announce if it matters. These are documented as visual-only.
 - **One deliberate exception to the noise rule.** `Textarea`'s character counter is an `aria-live="polite"` region that updates on every keystroke — the same per-keystroke announcing that #494 rejected for `Field`'s validation errors. It is kept because a counter is only useful while you are typing in the field it belongs to, where the user's attention already is, and because a remaining-characters count that arrives after you have run out is not a warning. If that trade is wrong for your form, `Textarea` takes `showCount={false}`. Noted here because the rule above would otherwise imply the library never announces per keystroke, and it does, once.
 - **`Progress` / `CircularProgress`** carry `role="progressbar"`. A _determinate_ one exposes its value through `aria-valuenow`; an _indeterminate_ one has no `aria-valuenow` at all and puts its meaning in `aria-valuetext`, whose fallback is translated via `progress.indeterminate` (#503). Don't wrap either — but do pass an `aria-label`, because that fallback is the only thing spoken if you don't.
@@ -4012,7 +4025,7 @@ The rule the library follows, so you can predict any component:
 
 Known gaps: **none currently open**, with one boundary case worth stating. A fluid `Image`'s error tile is DISCOVERABLE but not announced: the failure is visible text in the accessible tree, reachable in browse mode, and the icon is named by `alt` alone. It is deliberately not folded into the name — that made a reader hear the sentence twice — and deliberately not a live region, because an image failing is not worth interrupting for. A fixed-`size` `Image` renders no text (#538), so there the failure IS folded into the icon's name; still discoverable, still not announced. If your case needs it to interrupt, that announcement is yours. The three that stood here — `ConfirmationPopover` while pending (#497), `FileUpload` per-file failure and its `pending` state (#502), and `Select`'s async loading/error rows (#495) — all announce for themselves now, so do NOT wrap them. `FileUpload`'s `uploading` state still carries a `Progress` that is readable on focus rather than announced; don't wrap that either. Assume nothing about a component not named in **this list** — every component appears somewhere on this page, so the list, not the page, is the boundary. Check the component's own JSDoc. `Field`'s validation errors are covered above — documented behaviour, not an oversight.
 
-One consequence for your tests: components that own a region expose `role="status"`, so `getByRole('status')` on a page containing a `Switch`, `StatusMenu` or `DataTable` may now match more than one element. Scope the query, or select by the text you expect.
+One consequence for your tests: components that own a region expose `role="status"`, so `getByRole('status')` on a page containing a `Switch`, `PillMenu` or `DataTable` may now match more than one element. Scope the query, or select by the text you expect.
 
 What this means for you:
 
