@@ -600,14 +600,15 @@ describe('<EntityChip> — segments (#582)', () => {
     // Compile-time assertion: `before`/`after` are typed `readonly
     // EntityChipSegment[]`, so a `satisfies`-checked `as const` array — the
     // shape a consumer building a static segment list would reach for —
-    // must type-check without a cast. If either prop reverts to a mutable
-    // array type, this still compiles (readonly is the wider type); if it
-    // narrows to something incompatible with the union shape, `tsc` fails.
+    // must type-check without a cast. An `as const` tuple is readonly, so if
+    // either prop reverts to a mutable `EntityChipSegment[]`, `tsc` fails
+    // (TS4104). Vitest doesn't type-check — this guard fires under
+    // `npm run typecheck` (and the pre-push hook), not `vitest run`.
     const segs = [
       { kind: 'icon', icon: <svg data-testid="typed" />, label: 'Bug', color: 'red' },
     ] as const satisfies readonly EntityChipSegment[];
-    render(<EntityChip href="/t" label="T" before={segs} />);
-    expect(screen.getByRole('img', { name: 'Bug' })).toBeInTheDocument();
+    render(<EntityChip href="/t" label="T" before={segs} after={segs} />);
+    expect(screen.getAllByRole('img', { name: 'Bug' })).toHaveLength(2);
   });
 });
 
@@ -685,6 +686,21 @@ describe('<EntityChip> — tooltips and labelMaxWidth (#582)', () => {
     fakeClip(label, true);
     await user.hover(label);
     expect(await screen.findByRole('tooltip')).toHaveTextContent('A very long task title');
+  });
+
+  it('an open label tooltip does not come back open after the chip stops and restarts being clippable', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<EntityChip href="/t" label="A very long task title" truncate />);
+    const label = screen.getByText('A very long task title');
+    fakeClip(label, true);
+    await user.hover(label);
+    expect(await screen.findByRole('tooltip')).toBeInTheDocument();
+    // Parent drops `truncate` while it's open: no Tooltip, no blur to close it…
+    rerender(<EntityChip href="/t" label="A very long task title" />);
+    await user.unhover(screen.getByText('A very long task title'));
+    // …then clippable again: it must not mount already open.
+    rerender(<EntityChip href="/t" label="A very long task title" truncate />);
+    expect(screen.queryByRole('tooltip')).toBeNull();
   });
 
   it('a fully visible label gets no tooltip and no aria-describedby', async () => {

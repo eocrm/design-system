@@ -73,9 +73,10 @@ export type EntityChipSegment =
       /** Palette color for the segment's fill/fg pair. Default `'slate'`. */
       color?: PaletteColor;
       /**
-       * Supplementary detail shown on hover (or keyboard focus) only — never
-       * part of the accessible name. Don't put meaning here that isn't also
-       * in `text`; a screen-reader user never sees it.
+       * Supplementary detail shown on hover only — the segment isn't
+       * focusable (focus lands on the chip), and it's never part of the
+       * accessible name. Don't put meaning here that isn't also in `text`;
+       * keyboard and screen-reader users never see it.
        */
       tooltip?: ReactNode;
       /**
@@ -451,6 +452,10 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
   // should still get a tooltip. Safe for `loading` regardless, since that
   // branch never renders the label Tooltip at all (#582 review).
   const clippable = truncate || hasSegments || labelMaxWidth != null;
+  // A chip that stops being clippable while its tooltip is open loses the
+  // blur handler that would close it; reset during render so the tooltip
+  // can't come back already open if it becomes clippable again.
+  if (!clippable && labelTipOpen) setLabelTipOpen(false);
   const onLabelTip = (next: boolean) => {
     const el = labelRef.current;
     setLabelTipOpen(next && el != null && el.scrollWidth > el.clientWidth);
@@ -465,8 +470,8 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
   // including its jsdom fallback (matches() unsupported/throwing → open).
   const restOnFocus = (rest as { onFocus?: (e: ReactFocusEvent<Element>) => void }).onFocus;
   const restOnBlur = (rest as { onBlur?: (e: ReactFocusEvent<Element>) => void }).onBlur;
+  // Attached only when `clippable` (below), so no guard here.
   const handleRootFocus = (e: ReactFocusEvent<Element>) => {
-    if (!clippable) return;
     const node = e.currentTarget;
     let focusVisible = true;
     try {
@@ -479,9 +484,7 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
     if (!focusVisible) return;
     onLabelTip(true);
   };
-  const handleRootBlur = () => {
-    if (clippable) onLabelTip(false);
-  };
+  const handleRootBlur = () => onLabelTip(false);
   // The state as real text, not just muted colour. Browsers do expose
   // `aria-disabled`, but it carries no meaning on a non-widget role such as
   // `generic`, so no AT conveys it — without this the state reached nobody using a screen reader,
@@ -599,10 +602,11 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
       // via {...rest} — aria-busy/aria-disabled are the component's contract.
       aria-busy={loading || undefined}
       aria-disabled={inert || undefined}
-      // Only chain in the clipped-label tooltip's focus/blur handlers when the
-      // chip actually has a clippable label — otherwise {...rest} above has
-      // already passed the consumer's own onFocus/onBlur through untouched,
-      // and there is nothing here for this chip to add.
+      // The clipped-label tooltip's focus/blur handlers only when the label can
+      // clip; otherwise {...rest} above already passed the consumer's own
+      // onFocus/onBlur through untouched. (Behaviourally equivalent to always
+      // attaching — onLabelTip can't open without a clipped label — but it
+      // keeps a non-clipping chip's handlers exactly the consumer's.)
       {...(clippable
         ? {
             onFocus: chain(restOnFocus, handleRootFocus),
