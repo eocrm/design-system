@@ -27,6 +27,25 @@
   height: var(--icon-tile-size-lg);
 }
 
+// Font-relative (#577): inherits the surrounding text size, so it needs no
+// size decision per call site. The tile sizes the glyph too — CSS beats a
+// lucide icon's width/height attributes, so the icon's `size` prop is moot.
+.size-inline {
+  width: var(--icon-tile-size-inline);
+  height: var(--icon-tile-size-inline);
+
+  // An icon-only inline-grid has no text baseline: it would sit ON the
+  // baseline and rise a full 1em, above the capitals. -0.125em centres it on
+  // the cap height in running text. (Flex rows like EntityChip's slots
+  // centre it themselves; vertical-align doesn't apply there.)
+  vertical-align: -0.125em;
+
+  > svg {
+    width: var(--icon-tile-glyph-inline);
+    height: var(--icon-tile-glyph-inline);
+  }
+}
+
 .shape-square {
   border-radius: var(--icon-tile-radius-square);
 }

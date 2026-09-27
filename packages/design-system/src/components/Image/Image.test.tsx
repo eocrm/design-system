@@ -248,6 +248,15 @@ describe('Image', () => {
     fireEvent.error(getImg(container));
     expect(getImg(container)).toBe(imgNode); // error: still the same node
   });
+
+  it('a src change gets a fresh <img>, so a stale load for the old src cannot mark it loaded', () => {
+    const { container, rerender } = render(<Image src={SRC} alt="" />);
+    const first = getImg(container);
+    rerender(<Image src="https://example.com/other.jpg" alt="" />);
+    expect(getImg(container)).not.toBe(first);
+    fireEvent.load(first); // late event from the detached old element
+    expect(container.firstElementChild).toHaveAttribute('data-state', 'loading');
+  });
 });
 
 describe('the error tile does not prune its own contents (#496)', () => {

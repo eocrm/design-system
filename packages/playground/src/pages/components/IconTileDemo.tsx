@@ -1,5 +1,13 @@
-import { Cluster, IconTile, PALETTE_COLORS, Stack, Text } from '@eocrm/design-system';
-import { Shapes, MailPlus, Check } from 'lucide-react';
+import {
+  Badge,
+  Cluster,
+  EntityChip,
+  IconTile,
+  PALETTE_COLORS,
+  Stack,
+  Text,
+} from '@eocrm/design-system';
+import { Shapes, MailPlus, Check, ListTodo, ChevronsUp } from 'lucide-react';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -107,6 +115,56 @@ export function Demo() {
             <Text>alex@acme.co</Text>
           </Cluster>
           <IconTile color="green" label="Verified" icon={<Check size={16} />} />
+        </Stack>
+      </Example>
+      <Example
+        title="Inline with text"
+        description="The `inline` size is a 1em tile that follows the surrounding font size and sizes its own glyph (0.75em). For EntityChip icon/trailing, Badge rows and running text, where even `xs` towers over the capitals."
+        code={`import { ChevronsUp, ListTodo } from 'lucide-react';
+import { Badge, EntityChip, IconTile, Stack, Text } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Stack gap="md">
+    <EntityChip
+      prefix="ENG-15"
+      label="Migrate billing exports"
+      icon={<IconTile size="inline" color="violet" icon={<ListTodo />} />}
+      trailing={
+        <>
+          <IconTile size="inline" color="red" icon={<ChevronsUp />} />
+          <Badge tone="warning">In progress</Badge>
+        </>
+      }
+    />
+    <Text size="sm">
+      Blocked by <IconTile size="inline" color="violet" icon={<ListTodo />} /> ENG-12
+    </Text>
+    <Text size="xl">
+      Blocked by <IconTile size="inline" color="violet" icon={<ListTodo />} /> ENG-12
+    </Text>
+  </Stack>
+  );
+}`}
+      >
+        <Stack gap="md">
+          <EntityChip
+            prefix="ENG-15"
+            label="Migrate billing exports"
+            icon={<IconTile size="inline" color="violet" icon={<ListTodo />} />}
+            trailing={
+              <>
+                <IconTile size="inline" color="red" icon={<ChevronsUp />} />
+                <Badge tone="warning">In progress</Badge>
+              </>
+            }
+          />
+          <Text size="sm">
+            Blocked by <IconTile size="inline" color="violet" icon={<ListTodo />} /> ENG-12
+          </Text>
+          <Text size="xl">
+            Blocked by <IconTile size="inline" color="violet" icon={<ListTodo />} /> ENG-12
+          </Text>
         </Stack>
       </Example>
     </DemoLayout>
