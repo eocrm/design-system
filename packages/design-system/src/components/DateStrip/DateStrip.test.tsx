@@ -105,6 +105,17 @@ describe('<DateStrip>', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  it('a negative free count reads "No times" and is disabled, agreeing with the text', () => {
+    setup({
+      days: [
+        { date: '2026-10-05', free: -1 },
+        { date: '2026-10-06', free: 1 },
+      ],
+    });
+    const radio = screen.getByRole('radio', { name: /No times$/ });
+    expect(radio).toBeDisabled();
+  });
+
   it('value outside the week checks nothing', () => {
     setup({ value: '2026-11-01' });
     for (const r of screen.getAllByRole('radio')) expect(r).not.toBeChecked();

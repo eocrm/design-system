@@ -74,6 +74,12 @@ export interface SlotGridProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onC
  * - ❌ Reusing a `key` across groups — the choice is exclusive across the whole grid.
  * - ❌ Wrapping in your own `role="radiogroup"` — the native radios already
  *   form the group.
+ * - ❌ In an intrinsic-width context (`Split`'s default `auto` aside track, a
+ *   `Cluster` item, `width: max-content`) it renders at width 0 —
+ *   `container-type: inline-size` zeroes its intrinsic-width contribution;
+ *   give the parent a concrete width (e.g. `asideWidth` on a Split). It is
+ *   also the containing block for absolutely-positioned descendants (layout
+ *   containment).
  */
 export const SlotGrid = forwardRef<HTMLDivElement, SlotGridProps>(function SlotGrid(
   { groups, value, onChange, empty, titleOrder = 3, name, className, ...props },
@@ -88,8 +94,8 @@ export const SlotGrid = forwardRef<HTMLDivElement, SlotGridProps>(function SlotG
     <div ref={ref} className={clsx(styles.root, className)} {...props}>
       {visible.length === 0
         ? (empty ?? <Text tone="muted">{t('slotGrid.empty')}</Text>)
-        : visible.map((group) => (
-            <fieldset key={group.label} className={styles.group}>
+        : visible.map((group, i) => (
+            <fieldset key={`${i}-${group.label}`} className={styles.group}>
               <legend className={styles.legend}>
                 <Title order={titleOrder} size="sm">
                   {group.label}

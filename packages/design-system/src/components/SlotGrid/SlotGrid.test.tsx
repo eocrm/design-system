@@ -58,6 +58,21 @@ describe('<SlotGrid>', () => {
     for (const r of screen.getAllByRole('radio')) expect(r).not.toBeChecked();
   });
 
+  it('duplicate group labels each render their own fieldset with no React duplicate-key warning', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+    setup({
+      groups: [
+        { label: 'Morning', slots: [{ key: '09:00', label: '9:00' }] },
+        { label: 'Morning', slots: [{ key: '09:30', label: '9:30' }] },
+      ],
+    });
+    expect(screen.getAllByRole('group', { name: 'Morning' })).toHaveLength(2);
+    for (const call of consoleError.mock.calls) {
+      expect(call.join(' ')).not.toMatch(/same key/);
+    }
+    consoleError.mockRestore();
+  });
+
   it('renders the default empty state when no group has slots', () => {
     setup({ groups: [] });
     expect(screen.getByText('No available times')).toBeInTheDocument();

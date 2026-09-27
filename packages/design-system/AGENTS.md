@@ -3662,6 +3662,7 @@ const [day, setDay] = useState<string | null>(null);
 - Controlled only. `canPrevious` / `canNext` (default `true`) disable the week buttons. `titleOrder` (default 2) sets the heading level.
 - Changing week announces the new range politely; same-week re-renders stay silent.
 - ❌ No `aria-label` on the strip — the month heading names the group. ❌ No `Date`/`toISOString()` for `date`.
+- ❌ In an intrinsic-width context (`Split`'s default `auto` aside track, a `Cluster` item, `width: max-content`) it renders at width 0 — `container-type: inline-size` zeroes its intrinsic-width contribution; give the parent a concrete width (e.g. `asideWidth` on a Split). It is also the containing block for absolutely-positioned descendants (layout containment).
 - When NOT to use: any-date picking → `<InlineDatePicker>`; events → `<Calendar>`; times → `<SlotGrid>`.
 
 ### `<SlotGrid>` — grouped time-slot tiles
@@ -3689,6 +3690,7 @@ const [day, setDay] = useState<string | null>(null);
 - Groups with no slots are skipped; if none has slots, `empty` renders (default: localized "No available times").
 - 6 columns, 3 when the grid's own width ≤ 48rem (container query).
 - ❌ No per-slot `disabled` — pass only bookable slots. ❌ Don't wrap it in your own `role="radiogroup"`.
+- ❌ In an intrinsic-width context (`Split`'s default `auto` aside track, a `Cluster` item, `width: max-content`) it renders at width 0 — `container-type: inline-size` zeroes its intrinsic-width contribution; give the parent a concrete width (e.g. `asideWidth` on a Split). It is also the containing block for absolutely-positioned descendants (layout containment).
 - When NOT to use: free-form time → `<TimeField>`; a handful of options → `<ButtonGroup value>` / `<RadioGroup>`.
 
 ### `<TimeField>` — standalone time-of-day input

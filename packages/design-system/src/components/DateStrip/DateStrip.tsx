@@ -81,6 +81,12 @@ export interface DateStripProps extends Omit<
  * - ❌ An `aria-label` on the strip — the month heading names the group.
  * - ❌ Hiding days with no times instead of passing `free: 0` — the week
  *   loses its shape and the user can't see the day is full.
+ * - ❌ In an intrinsic-width context (`Split`'s default `auto` aside track, a
+ *   `Cluster` item, `width: max-content`) it renders at width 0 —
+ *   `container-type: inline-size` zeroes its intrinsic-width contribution;
+ *   give the parent a concrete width (e.g. `asideWidth` on a Split). It is
+ *   also the containing block for absolutely-positioned descendants (layout
+ *   containment).
  */
 export const DateStrip = forwardRef<HTMLFieldSetElement, DateStripProps>(function DateStrip(
   {
@@ -174,7 +180,7 @@ export const DateStrip = forwardRef<HTMLFieldSetElement, DateStripProps>(functio
                 name={groupName}
                 value={day.date}
                 checked={value === day.date}
-                disabled={day.free === 0}
+                disabled={!(day.free > 0)}
                 onChange={() => onChange(day.date)}
               />
               {/* Visual body hidden from AT: its spans would concatenate into
