@@ -1,7 +1,16 @@
-import { forwardRef, type CSSProperties, type HTMLAttributes, type ReactNode } from 'react';
+import {
+  forwardRef,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type HTMLAttributes,
+  type ReactNode,
+} from 'react';
 import clsx from 'clsx';
 import styles from './Split.module.scss';
-import type { CollapseBreakpoint } from '../_internal/collapse';
+import { COLLAPSE_BREAKPOINT_PX, type CollapseBreakpoint } from '../_internal/collapse';
+import { mergeRefs } from '../_internal/refs';
 
 /** Which side the `aside` pane sits on. RTL-aware (DOM + column order flip together). */
 export type SplitSide = 'start' | 'end';
@@ -70,6 +79,38 @@ export interface SplitProps extends HTMLAttributes<HTMLDivElement> {
    * (layout containment). Splits without the prop pay none of this.
    */
   collapseBelow?: CollapseBreakpoint;
+  /**
+   * Called with `true` when a `collapseBelow` split stacks and `false` when it
+   * goes back side by side — once on mount with the initial state, then on
+   * every change. Ignored without `collapseBelow`.
+   *
+   * Use it to move content you own between placements so DOM order matches
+   * visual order in both states, instead of CSS `order` — e.g. render a
+   * comment thread at the end of `main` while side by side and after the
+   * `<Split>` once stacked, or a status switcher at the top of the aside vs.
+   * above the split.
+   *
+   * It measures the SPLIT'S OWN content width against the same inclusive
+   * threshold its container query uses (a `ResizeObserver`, read
+   * synchronously on mount so the first paint is already right), so it agrees
+   * with the CSS where `useBelowBreakpoint` — which measures the viewport —
+   * would not beside an app sidebar. The same state is on the root as
+   * `data-collapsed="true" | "false"`.
+   */
+  onCollapsedChange?: (collapsed: boolean) => void;
+}
+
+/** Content-box inline size — what `container-type: inline-size` queries. */
+function contentWidth(el: HTMLElement): number {
+  const cs = getComputedStyle(el);
+  const px = (v: string) => parseFloat(v) || 0;
+  return (
+    el.getBoundingClientRect().width -
+    px(cs.paddingLeft) -
+    px(cs.paddingRight) -
+    px(cs.borderLeftWidth) -
+    px(cs.borderRightWidth)
+  );
 }
 
 const gapClass: Record<SplitGap, string> = {
@@ -123,6 +164,17 @@ const alignClass: Record<SplitAlign, string> = {
  *   <SettingsPanel />
  * </Split>
  *
+ * @example
+ * // Record detail: comments last on the page in both states (#563).
+ * const [stacked, setStacked] = useState(false);
+ * <>
+ *   <Split aside={<Sidebar />} side="end" collapseBelow="lg" onCollapsedChange={setStacked}>
+ *     <RecordData />
+ *     {!stacked && <Comments />}
+ *   </Split>
+ *   {stacked && <Comments />}
+ * </>
+ *
  * @remarks When NOT to use
  * - For equal-width columns — use `<Grid columns={2}>`. Split is intentionally
  *   asymmetric (intrinsic aside + filling main).
@@ -150,17 +202,46 @@ export const Split = forwardRef<HTMLDivElement, SplitProps>(function Split(
     gap = 'md',
     align = 'start',
     collapseBelow,
+    onCollapsedChange,
     className,
     style,
     ...props
   },
   ref,
 ) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [collapsed, setCollapsed] = useState<boolean>();
+  const onChangeRef = useRef(onCollapsedChange);
+  onChangeRef.current = onCollapsedChange;
+
+  useLayoutEffect(() => {
+    const el = rootRef.current;
+    if (!collapseBelow || !el) {
+      setCollapsed(undefined);
+      return;
+    }
+    let last: boolean | undefined;
+    const measure = () => {
+      // Inclusive, like `@container (max-width: …)`.
+      const next = contentWidth(el) <= COLLAPSE_BREAKPOINT_PX[collapseBelow];
+      if (next === last) return;
+      last = next;
+      setCollapsed(next);
+      onChangeRef.current?.(next);
+    };
+    measure();
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [collapseBelow]);
+
   const asideCell = <div className={styles.aside}>{aside}</div>;
   const mainCell = <div className={styles.main}>{children}</div>;
   return (
     <div
-      ref={ref}
+      ref={mergeRefs(ref, rootRef)}
+      data-collapsed={collapsed === undefined ? undefined : String(collapsed)}
       className={clsx(
         styles.split,
         side === 'end' ? styles.sideEnd : styles.sideStart,

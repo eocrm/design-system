@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
-import { Building2, CheckSquare, User } from 'lucide-react';
-import { Cluster, EntityChip, Text } from '@eocrm/design-system';
+import { ArrowDown, ArrowUp, Building2, CheckSquare, User } from 'lucide-react';
+import { Badge, Cluster, EntityChip, Stack, Text } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
+import { ResizablePreview } from './ResizablePreview';
 import { getComponentFiles } from '../../lib/componentFiles';
 
 // Looks like react-router's <Link> — accepts `to`, renders an <a>. Stands
@@ -217,6 +218,76 @@ export function Demo() {
             <EntityChip label="Deleted contact" unavailable />
           </Cluster>
         </InputExample>
+      </Example>
+
+      <Example
+        title="List rows: `truncate` + `trailing`"
+        description="`truncate` makes the chip a single line capped at its container: only the label ellipsizes, while icon, prefix, status and `trailing` keep their size. `trailing` puts adornments (a priority icon, a Badge) inside the chip's tint — non-interactive content only, and its text joins the link's accessible name, so give an icon a short aria-label (or aria-hidden if decorative). The full label stays in the accessible name. Drag the resize handle to narrow the list."
+        code={`import { ArrowUp, CheckSquare } from 'lucide-react';
+import { Badge, Cluster, EntityChip, Stack } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Stack gap="xs" align="start">
+      <EntityChip
+        truncate
+        href="/tasks/5"
+        icon={<CheckSquare size={14} />}
+        prefix="ENG-5"
+        label="Fix the login bug that only happens on Safari after a password reset"
+        trailing={
+          <Cluster gap="xs">
+            <ArrowUp size={14} aria-label="High priority" />
+            <Badge tone="info">In progress</Badge>
+          </Cluster>
+        }
+      />
+      <EntityChip
+        truncate
+        href="/tasks/8"
+        icon={<CheckSquare size={14} />}
+        prefix="ENG-8"
+        label="Short title"
+        status={{ label: 'Done', category: 'done' }}
+      />
+    </Stack>
+  );
+}`}
+      >
+        <ResizablePreview initialWidth={360}>
+          <Stack gap="xs" align="start">
+            <EntityChip
+              truncate
+              href="/tasks/5"
+              icon={<CheckSquare size={14} />}
+              prefix="ENG-5"
+              label="Fix the login bug that only happens on Safari after a password reset"
+              trailing={
+                <Cluster gap="xs">
+                  <ArrowUp size={14} aria-label="High priority" />
+                  <Badge tone="info">In progress</Badge>
+                </Cluster>
+              }
+            />
+            <EntityChip
+              truncate
+              href="/tasks/7"
+              icon={<CheckSquare size={14} />}
+              prefix="ENG-7"
+              label="Migrate the reporting exports to the new async job runner"
+              status={{ label: 'To do', category: 'to_do' }}
+              trailing={<ArrowDown size={14} aria-label="Low priority" />}
+            />
+            <EntityChip
+              truncate
+              href="/tasks/8"
+              icon={<CheckSquare size={14} />}
+              prefix="ENG-8"
+              label="Short title"
+              status={{ label: 'Done', category: 'done' }}
+            />
+          </Stack>
+        </ResizablePreview>
       </Example>
     </DemoLayout>
   );

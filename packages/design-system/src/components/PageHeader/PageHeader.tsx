@@ -290,7 +290,8 @@ PageHeaderMeta.displayName = 'PageHeaderMeta';
  * rows stay flush right. A wrapping `<Cluster>` inside it needs
  * `justify="end"`, or its wrapped rows go ragged-left. Vertically centered
  * with the title block. On viewports < 640px it moves to a new row below
- * the title and becomes left-aligned.
+ * the title and stays right-aligned, keeping the primary action at the
+ * thumb-side edge.
  *
  * @example
  * <PageHeader.Actions>

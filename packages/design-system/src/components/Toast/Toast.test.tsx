@@ -1,3 +1,4 @@
+import { Suspense, StrictMode } from 'react';
 import { render, screen, act, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ToastViewport, type ToastViewportProps } from './ToastViewport';
@@ -280,6 +281,77 @@ describe('<ToastViewport>', () => {
     });
     expect(screen.getAllByText('once')).toHaveLength(1);
     expect(errSpy).toHaveBeenCalledWith(expect.stringContaining('Multiple <ToastViewport>'));
+    errSpy.mockRestore();
+  });
+
+  it('a render discarded by Suspense does not leak the instance count (#562)', async () => {
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    let resolve!: () => void;
+    const pending = new Promise<void>((r) => (resolve = r));
+    let suspended = true;
+    function SuspendOnce() {
+      if (suspended) throw pending;
+      return null;
+    }
+    const { unmount } = render(
+      <Suspense fallback={null}>
+        <ToastViewport />
+        <SuspendOnce />
+      </Suspense>,
+    );
+    await act(async () => {
+      suspended = false;
+      resolve();
+      await pending;
+    });
+    act(() => {
+      toast.success('after suspense');
+    });
+    expect(screen.getByText('after suspense')).toBeInTheDocument();
+    unmount();
+
+    // A later viewport is still the only one: it renders and does not warn.
+    render(<ToastViewport />);
+    act(() => {
+      toast.success('later');
+    });
+    expect(screen.getByText('later')).toBeInTheDocument();
+    expect(errSpy).not.toHaveBeenCalledWith(expect.stringContaining('Multiple <ToastViewport>'));
+    errSpy.mockRestore();
+  });
+
+  it('StrictMode: one viewport renders toasts and does not warn', () => {
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    render(
+      <StrictMode>
+        <ToastViewport />
+      </StrictMode>,
+    );
+    act(() => {
+      toast.success('strict');
+    });
+    expect(screen.getAllByText('strict')).toHaveLength(1);
+    expect(errSpy).not.toHaveBeenCalledWith(expect.stringContaining('Multiple <ToastViewport>'));
+    errSpy.mockRestore();
+  });
+
+  it('when the first of two viewports unmounts, the second takes over', () => {
+    const errSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const { rerender } = render(
+      <>
+        <ToastViewport key="a" />
+        <ToastViewport key="b" />
+      </>,
+    );
+    rerender(
+      <>
+        <ToastViewport key="b" />
+      </>,
+    );
+    act(() => {
+      toast.success('handover');
+    });
+    expect(screen.getAllByText('handover')).toHaveLength(1);
     errSpy.mockRestore();
   });
 });

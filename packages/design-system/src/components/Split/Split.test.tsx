@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { render, screen } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import { createRef } from 'react';
 import { Split } from './Split';
 import { Sticky } from '../Sticky';
@@ -261,5 +261,86 @@ describe('Split collapseBelow — the container query can actually match (#372)'
     expect(scss).toMatch(
       /\.sideEnd\.collapsible\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)\s+minmax\(0,\s*var\(--split-aside-width,\s*auto\)\)/s,
     );
+  });
+
+  describe('onCollapsedChange (#563)', () => {
+    let resize: (width: number) => void;
+    let widthPx = 1000;
+    beforeEach(() => {
+      widthPx = 1000;
+      let callback: (() => void) | undefined;
+      vi.stubGlobal(
+        'ResizeObserver',
+        class {
+          constructor(cb: () => void) {
+            callback = cb;
+          }
+          observe() {}
+          disconnect() {
+            callback = undefined;
+          }
+        },
+      );
+      vi.spyOn(Element.prototype, 'getBoundingClientRect').mockImplementation(
+        () => ({ width: widthPx }) as DOMRect,
+      );
+      resize = (width) => {
+        widthPx = width;
+        act(() => callback?.());
+      };
+    });
+    afterEach(() => {
+      vi.unstubAllGlobals();
+      vi.restoreAllMocks();
+    });
+
+    it('reports the initial state on mount, then each change, inclusive at the threshold', () => {
+      const onChange = vi.fn();
+      const ref = createRef<HTMLDivElement>();
+      render(
+        <Split ref={ref} aside="a" collapseBelow="lg" onCollapsedChange={onChange}>
+          m
+        </Split>,
+      );
+      expect(onChange.mock.calls).toEqual([[false]]);
+      expect(ref.current).toHaveAttribute('data-collapsed', 'false');
+
+      resize(900); // still side by side: no call
+      resize(768); // inclusive, like @container (max-width: 768px)
+      expect(onChange.mock.calls).toEqual([[false], [true]]);
+      expect(ref.current).toHaveAttribute('data-collapsed', 'true');
+
+      resize(500); // still stacked: no call
+      resize(769);
+      expect(onChange.mock.calls).toEqual([[false], [true], [false]]);
+    });
+
+    it('measures the content box (padding and border excluded), like the container query', () => {
+      const onChange = vi.fn();
+      widthPx = 800;
+      render(
+        <Split
+          aside="a"
+          collapseBelow="lg"
+          onCollapsedChange={onChange}
+          style={{ paddingLeft: '20px', paddingRight: '12px' }}
+        >
+          m
+        </Split>,
+      );
+      expect(onChange).toHaveBeenCalledWith(true); // 800 - 32 = 768
+    });
+
+    it('is inert without collapseBelow', () => {
+      const onChange = vi.fn();
+      const ref = createRef<HTMLDivElement>();
+      render(
+        <Split ref={ref} aside="a" onCollapsedChange={onChange}>
+          m
+        </Split>,
+      );
+      expect(onChange).not.toHaveBeenCalled();
+      expect(ref.current).not.toHaveAttribute('data-collapsed');
+    });
   });
 });

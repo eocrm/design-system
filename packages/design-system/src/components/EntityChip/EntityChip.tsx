@@ -119,6 +119,28 @@ interface EntityChipOwnProps {
    * carries its own punctuation so a locale can choose different marks.
    */
   unavailable?: boolean;
+  /**
+   * Single-line mode for list rows. The chip is capped at its container's
+   * width (`max-width: 100%`, `min-width: 0`, so it also shrinks as a flex
+   * item) and only the `label` ellipsizes — `icon`, `prefix`, `status` and
+   * `trailing` keep their full size. Default `false`: the label wraps, which
+   * is right for a chip inside running text.
+   *
+   * The full label stays in the DOM, so the accessible name is unchanged; a
+   * sighted user sees the rest on the entity's own page (or add a `title`).
+   */
+  truncate?: boolean;
+  /**
+   * Extra adornments inside the chip, after `status` (e.g. a priority icon or
+   * a status `<Badge>`), kept at full size under `truncate`. Not rendered
+   * while `loading` (same as `prefix`/`status`).
+   *
+   * Non-interactive content only: the chip is itself a link, so a button or
+   * link here is invalid nested interactive content. Its text JOINS the chip's
+   * accessible name ("ENG-5 Fix login bug High") — give a decorative icon
+   * `aria-hidden`, and a meaningful one a short text alternative.
+   */
+  trailing?: ReactNode;
 }
 
 /**
@@ -218,6 +240,18 @@ function rootStyle(
  * // Categorical `color` override — the chip fill itself, independent of `status`
  * <EntityChip href="/deals/9" label="Acme Corp" color="violet" />
  *
+ * @example
+ * // One-line list row: label ellipsizes, key/status/adornments stay whole
+ * <EntityChip
+ *   truncate
+ *   href="/tasks/5"
+ *   icon={<CheckSquareIcon />}
+ *   prefix="ENG-5"
+ *   label="Fix the login bug that only happens on Safari"
+ *   status={{ label: 'In progress', category: 'in_progress' }}
+ *   trailing={<ArrowUpIcon aria-label="High priority" />}
+ * />
+ *
  * @remarks When NOT to use
  * - Plain status display with no linked entity → use `<Badge>` or `<StatusMenu>`.
  * - Standalone navigation with no entity chrome (icon/prefix/status) → use `<Link>`.
@@ -230,6 +264,11 @@ function rootStyle(
  *   the inline-safety contract requires span-only content.
  * - ❌ Raw hex strings in `status.color` or the chip's own `color`. Both are
  *   `PaletteColor` names (`'amber'`, `'violet'`, …), not CSS color values.
+ * - ❌ Interactive content (a `<Button>`, a `<Link>`, a menu) in `trailing` —
+ *   the chip is a link, so it would be nested interactive content. Put
+ *   row actions beside the chip, not inside it.
+ * - ❌ `truncate` on a chip inside running text — it exists for list rows;
+ *   in a sentence the label should wrap.
  * - ❌ Omitting a link target — an EntityChip should always link to its
  *   entity (`href` or `as`); the span-only form is for rare non-navigable
  *   contexts.
@@ -245,6 +284,8 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
     href,
     loading = false,
     unavailable = false,
+    truncate = false,
+    trailing,
     className,
     style,
     ...rest
@@ -290,7 +331,12 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
     <Component
       ref={ref}
       style={rootStyle(color, status, style)}
-      className={clsx(styles.chip, unavailable && styles.unavailable, className)}
+      className={clsx(
+        styles.chip,
+        unavailable && styles.unavailable,
+        truncate && styles.truncate,
+        className,
+      )}
       {...elementProps}
       {...rest}
       // A target-less unavailable chip is non-interactive — cancel any
@@ -344,6 +390,7 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
               <span className={styles.status}>{status.label}</span>
             </>
           )}
+          {trailing != null && <span className={styles.trailing}>{trailing}</span>}
         </>
       )}
     </Component>

@@ -1764,6 +1764,20 @@ beside results).
 
 - Collapsed panes stack in **DOM order**: aside → main for `side="start"` (default), main → aside for `side="end"`. No CSS `order` flip — visual order stays in sync with tab order. Need the aside on top when stacked? Use `side="start"`.
 - A `<Sticky>` passed as `aside` becomes a plain block while collapsed (no pin, no `scroll` cap) — don't shim it.
+- `onCollapsedChange(collapsed)` — fires once on mount with the initial state, then on every change; the root also carries `data-collapsed`. It measures the split's own content width against the same inclusive threshold as the container query, so it agrees with the CSS (`useBelowBreakpoint` measures the viewport and does not, beside an app sidebar). Use it to move content YOU own so DOM order = visual order in both states — never CSS `order`:
+
+```tsx
+// Comments last on the page, side by side or stacked:
+const [stacked, setStacked] = useState(false);
+<>
+  <Split aside={<Sidebar />} side="end" collapseBelow="lg" onCollapsedChange={setStacked}>
+    <RecordData />
+    {!stacked && <Comments />}
+  </Split>
+  {stacked && <Comments />}
+</>;
+```
+
 - ❌ A `collapseBelow` split in an intrinsic-width context (another `Split`'s default `auto` aside track, a `Cluster` item, `width: max-content`). `container-type: inline-size` makes it contribute zero intrinsic width, so it renders at width 0 — give the parent a concrete width instead. It also becomes the containing block for absolutely-positioned descendants (layout containment). Splits without the prop pay neither cost.
 
 When NOT to use: equal columns → `<Grid columns={2}>`; wrapping peer row → `<Cluster>`; app shell sidebar → `<AppLayout>`/`<Rail>`.
@@ -1891,9 +1905,9 @@ import { Divider } from '@eocrm/design-system';
 - **`<PageHeader.Title>`** passes through to `<Title order={order} size={size}>`. Default `order={1}` (renders `<h1>`); set `order={2}` for sub-page section headers.
 - **`<PageHeader.Subtitle>`** is a `<p>` with muted color.
 - **`<PageHeader.Meta>`** is a flex row that wraps — good for badges + timestamps.
-- **`<PageHeader.Actions>`** is already a wrapping, right-aligned flex row — put `<Button>`s directly in it. A wrapping `<Cluster>` inside it needs `justify="end"`, or its wrapped rows go ragged-left. On viewports < 640px, Actions moves below the title block, left-aligned.
+- **`<PageHeader.Actions>`** is already a wrapping, right-aligned flex row — put `<Button>`s directly in it. A wrapping `<Cluster>` inside it needs `justify="end"`, or its wrapped rows go ragged-left. On viewports < 640px, Actions moves below the title block and stays right-aligned (primary action at the thumb-side edge).
 - **NOT a `<header>` landmark.** PageHeader renders a `<div>` to avoid conflicting with the AppShell's app-level `<header role="banner">`.
-- **Shrinks to narrow containers without overflowing.** On viewports ≥ 640px the actions column is sized to fit its buttons on one line, capped so the title keeps about `--page-header-title-min` (160px, `--measure-2xs`; with an `<Aside>`, the aside and title share that room). A wide header keeps all its actions on one line to the right; once they'd leave the title less than that, the buttons wrap onto extra lines. Wrapped rows stay right-aligned when the buttons are direct children of `<PageHeader.Actions>` (or inside a `<Cluster justify="end">`). If a single action item is wider than the space left, the title shrinks below that instead of the header overflowing (as long as that item itself — plus the aside and gaps — fits in the container). `<PageHeader.Breadcrumb>` wraps too. A title word wider than its column breaks mid-word (`overflow-wrap: anywhere`) rather than overflowing — e.g. "Acme Corporation" beside an `<Aside>` in a narrow container. Below a 640px viewport the actions move below, left-aligned: the header becomes a single column, or two (aside + title) with an `<Aside>`, and the actions span the full width.
+- **Shrinks to narrow containers without overflowing.** On viewports ≥ 640px the actions column is sized to fit its buttons on one line, capped so the title keeps about `--page-header-title-min` (160px, `--measure-2xs`; with an `<Aside>`, the aside and title share that room). A wide header keeps all its actions on one line to the right; once they'd leave the title less than that, the buttons wrap onto extra lines. Wrapped rows stay right-aligned when the buttons are direct children of `<PageHeader.Actions>` (or inside a `<Cluster justify="end">`). If a single action item is wider than the space left, the title shrinks below that instead of the header overflowing (as long as that item itself — plus the aside and gaps — fits in the container). `<PageHeader.Breadcrumb>` wraps too. A title word wider than its column breaks mid-word (`overflow-wrap: anywhere`) rather than overflowing — e.g. "Acme Corporation" beside an `<Aside>` in a narrow container. Below a 640px viewport the actions move below, still right-aligned: the header becomes a single column, or two (aside + title) with an `<Aside>`, and the actions span the full width.
 - **Give it a stretched or definite width.** In a shrink-to-fit parent PageHeader is only as wide as its content, so the actions don't sit at the right edge. Fix it where the width comes from: as a non-growing flex item, give the PageHeader `flex: 1` (or `width: 100%`) via its `className`; inside an `inline-block` parent or an `auto` grid track that doesn't work (the percentage is cyclic, `flex` is ignored) — make the parent block-level, or use a `1fr` / `minmax(0, 1fr)` track.
 
 #### Hard rule
@@ -2018,6 +2032,17 @@ import { Link as RouterLink } from 'react-router-dom';
 
 // Chip fill override (categorical, independent of status):
 <EntityChip href="/deals/9" label="Acme Corp" color="violet" />
+
+// One-line list row: only the label ellipsizes; adornments inside the chip:
+<EntityChip
+  truncate
+  href="/tasks/5"
+  icon={<CheckSquare size={14} />}
+  prefix="ENG-5"
+  label="Fix the login bug that only happens on Safari"
+  status={{ label: 'In progress', category: 'in_progress' }}
+  trailing={<ArrowUp size={14} aria-label="High priority" />}
+/>
 ```
 
 - Polymorphic inline chip: optional `icon` (rendered `aria-hidden`), optional muted `prefix` (e.g. a task key), the `label`, and an optional colored `status`. All inline `<span>`s inside one root — safe to drop directly inside a `<p>`/`<Text>`.
@@ -2030,6 +2055,8 @@ import { Link as RouterLink } from 'react-router-dom';
 - **`unavailable` is announced, not just muted.** A localized word is rendered visually hidden inside the chip. A **linked** chip's accessible name becomes `"Appointment (unavailable)"`; a **target-less** chip is `role=generic`, which has no accessible name at all, so the word is announced as part of the chip's text in reading order. Either way it reaches the user.
 - Why `aria-disabled` was not enough: browsers do expose it, but it carries no meaning on a non-widget role such as `generic`, so no assistive tech conveys it. This matters because the canonical use is to withhold the entity's name and show a TYPE word instead — without the state, a masked reference is indistinguishable from a real entity that happens to be called "Appointment".
 - ❌ Don't put an `aria-label` on the chip — it replaces the whole name and takes the state word with it. The state lives in the chip's contents. Override the word via `<I18nProvider overrides={{ entityChip: { unavailable: '…' } }}>` instead; it carries its own punctuation so a locale can pick different marks.
+- **`truncate`** — single-line mode for list rows: the chip caps at its container (`max-width: 100%`, `min-width: 0`) and only `label` ellipsizes; `icon`/`prefix`/`status`/`trailing` keep full size. The accessible name keeps the full label. Default wraps — right for chips in running text, so don't set `truncate` there.
+- **`trailing`** — adornments inside the chip after `status` (a priority icon, a `<Badge>`), full size under `truncate`, not rendered while `loading`. Its text JOINS the link's name (`aria-hidden` a decorative icon). ❌ Never interactive content — the chip is a link; row actions go beside it.
 - Hover affordance on link/button chips: the background deepens a step plus a brightness dip. Never a weight change, never an underline, even under aggressive consumer link CSS.
 - Chip text inherits the surrounding font size — inside a heading it renders at heading size, by design (that's what keeps the chip box symmetric around the local text in any context).
 - **When NOT to use**: plain status with no linked entity → `<Badge>`/`<StatusMenu>`; standalone navigation with no icon/prefix/status chrome → `<Link>`; removable filter pills → `<FilterChip>`.
