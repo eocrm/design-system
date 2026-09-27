@@ -210,3 +210,11 @@
     height: var(--entity-chip-segment-glyph-size);
   }
 }
+
+// `labelMaxWidth` (#582): the label alone is capped (max-width set inline in
+// `ch`) and ellipsizes on one line — also on a chip that otherwise wraps.
+.capped {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -629,3 +629,66 @@ describe('<EntityChip> — segmented layout CSS (#582)', () => {
     expect(decl('.segmentText', 'font-size')).toBe('var(--entity-chip-segment-text-size)');
   });
 });
+
+// jsdom has no layout: fake the label's box to say whether it is clipped.
+function fakeClip(el: HTMLElement, clipped: boolean) {
+  Object.defineProperty(el, 'clientWidth', { configurable: true, value: 100 });
+  Object.defineProperty(el, 'scrollWidth', { configurable: true, value: clipped ? 300 : 100 });
+}
+
+describe('<EntityChip> — tooltips and labelMaxWidth (#582)', () => {
+  it('icon segment shows its label on hover, and only that tooltip', async () => {
+    const user = userEvent.setup();
+    render(<EntityChip href="/t" label="Fix" truncate before={TASK_BEFORE} />);
+    await user.hover(screen.getByRole('img', { name: 'Bug' }));
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Bug');
+    expect(screen.getAllByRole('tooltip')).toHaveLength(1);
+  });
+
+  it('text segment shows its tooltip when given', async () => {
+    const user = userEvent.setup();
+    render(
+      <EntityChip
+        href="/t"
+        label="Fix"
+        after={[{ kind: 'text', text: 'Reported', tooltip: 'Status: Reported' }]}
+      />,
+    );
+    await user.hover(screen.getByText('Reported'));
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Status: Reported');
+  });
+
+  it('label tooltip shows the full label only when the label is clipped', async () => {
+    const user = userEvent.setup();
+    render(<EntityChip href="/t" label="A very long task title" truncate />);
+    const label = screen.getByText('A very long task title');
+    fakeClip(label, true);
+    await user.hover(label);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('A very long task title');
+  });
+
+  it('a fully visible label gets no tooltip and no aria-describedby', async () => {
+    const user = userEvent.setup();
+    render(<EntityChip href="/t" label="Short" truncate />);
+    const label = screen.getByText('Short');
+    fakeClip(label, false);
+    await user.hover(label);
+    await new Promise((r) => setTimeout(r, 600)); // past Tooltip's 400ms delay
+    expect(screen.queryByRole('tooltip')).toBeNull();
+    expect(label).not.toHaveAttribute('aria-describedby');
+  });
+
+  it('labelMaxWidth caps the label in ch, single-line, even without truncate/segments', () => {
+    render(<EntityChip href="/t" label="Long title" labelMaxWidth={40} />);
+    const label = screen.getByText('Long title');
+    expect(label.style.maxWidth).toBe('40ch');
+    expect(label.className).toMatch(/capped/);
+  });
+
+  it('.capped makes the label single-line with an ellipsis', () => {
+    const scss = readFileSync(resolve(__dirname, 'EntityChip.module.scss'), 'utf8');
+    expect(scss).toMatch(
+      /\.capped\s*\{[^}]*overflow:\s*hidden;[^}]*text-overflow:\s*ellipsis;[^}]*white-space:\s*nowrap;/,
+    );
+  });
+});

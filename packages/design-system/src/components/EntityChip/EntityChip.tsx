@@ -1,6 +1,8 @@
 import {
   Fragment,
   forwardRef,
+  useRef,
+  useState,
   type ComponentPropsWithoutRef,
   type ComponentPropsWithRef,
   type CSSProperties,
@@ -13,6 +15,7 @@ import clsx from 'clsx';
 import { useTranslation } from '../../i18n/useTranslation';
 import { paletteTokens, type PaletteColor } from '../../palette';
 import { resolveStatusColor, type StatusCategory } from '../_internal/statusColor';
+import { Tooltip } from '../Tooltip';
 import styles from './EntityChip.module.scss';
 
 /** Elements EntityChip can render as. All inline-safe phrasing content. */
@@ -167,6 +170,13 @@ interface EntityChipOwnProps {
   before?: EntityChipSegment[];
   /** Coloured segments after the core, in order (e.g. priority, status). See `before`. */
   after?: EntityChipSegment[];
+  /**
+   * Caps the label's width, in `ch`; past it the label ellipsizes on one line
+   * (also on a chip without `truncate`). For chips in running text, where the
+   * container edge is a whole paragraph away. The full label stays in the DOM
+   * and the accessible name; hovering a clipped label shows it in a tooltip.
+   */
+  labelMaxWidth?: number;
 }
 
 /**
@@ -249,23 +259,26 @@ function segmentStyle(segment: EntityChipSegment): CSSProperties {
 function Segment({ segment }: { segment: EntityChipSegment }): ReactElement {
   if (segment.kind === 'icon') {
     return (
-      <span
-        className={clsx(styles.segment, styles.segmentIcon)}
-        style={segmentStyle(segment)}
-        role="img"
-        aria-label={segment.label}
-      >
-        <span className={styles.segmentGlyph} aria-hidden="true">
-          {segment.icon}
+      <Tooltip content={segment.label}>
+        <span
+          className={clsx(styles.segment, styles.segmentIcon)}
+          style={segmentStyle(segment)}
+          role="img"
+          aria-label={segment.label}
+        >
+          <span className={styles.segmentGlyph} aria-hidden="true">
+            {segment.icon}
+          </span>
         </span>
-      </span>
+      </Tooltip>
     );
   }
-  return (
+  const node = (
     <span className={clsx(styles.segment, styles.segmentText)} style={segmentStyle(segment)}>
       {segment.text}
     </span>
   );
+  return segment.tooltip != null ? <Tooltip content={segment.tooltip}>{node}</Tooltip> : node;
 }
 
 /**
@@ -350,6 +363,7 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
     trailing,
     before,
     after,
+    labelMaxWidth,
     className,
     style,
     ...rest
@@ -367,6 +381,16 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
   // not-yet-loaded or unavailable entity has no known type/status (#582).
   const segmented =
     !loading && !unavailable && ((before?.length ?? 0) > 0 || (after?.length ?? 0) > 0);
+  // Full label on hover, but only when it is actually clipped: a controlled
+  // Tooltip that refuses to open otherwise, so a fully visible label gets no
+  // tooltip and no aria-describedby (it would be announced twice).
+  const labelRef = useRef<HTMLSpanElement>(null);
+  const [labelTipOpen, setLabelTipOpen] = useState(false);
+  const clippable = segmented || truncate || labelMaxWidth != null;
+  const onLabelTip = (next: boolean) => {
+    const el = labelRef.current;
+    setLabelTipOpen(next && el != null && el.scrollWidth > el.clientWidth);
+  };
   // The state as real text, not just muted colour. Browsers do expose
   // `aria-disabled`, but it carries no meaning on a non-widget role such as
   // `generic`, so no AT conveys it — without this the state reached nobody using a screen reader,
@@ -427,7 +451,19 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
               is itself multiple nodes — e.g. a fragment) so the chip's `gap`
               doesn't insert extra space inside the name. No longer scopes
               hover styling (the fake-bold rule was dropped, see #345). */}
-          <span className={styles.label}>{label}</span>
+          {clippable ? (
+            <Tooltip content={label} open={labelTipOpen} onOpenChange={onLabelTip}>
+              <span
+                ref={labelRef}
+                className={clsx(styles.label, labelMaxWidth != null && styles.capped)}
+                style={labelMaxWidth != null ? { maxWidth: `${labelMaxWidth}ch` } : undefined}
+              >
+                {label}
+              </span>
+            </Tooltip>
+          ) : (
+            <span className={styles.label}>{label}</span>
+          )}
           {stateWord}
           {status && (
             <>
