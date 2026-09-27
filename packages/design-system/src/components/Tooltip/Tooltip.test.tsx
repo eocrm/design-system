@@ -482,3 +482,92 @@ describe('Tooltip — cleanup + props preservation', () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 });
+
+describe('Tooltip — tap to open on non-interactive triggers (#567)', () => {
+  const tap = async (user: ReturnType<typeof userEvent.setup>, target: Element) =>
+    user.pointer({ keys: '[TouchA]', target });
+
+  it('a touch tap opens it and it stays open after the finger lifts', async () => {
+    const user = userEvent.setup();
+    render(
+      <Tooltip content="12 March 2026, 14:05">
+        <span tabIndex={0}>2 weeks ago</span>
+      </Tooltip>,
+    );
+    const trigger = screen.getByText('2 weeks ago');
+    await tap(user, trigger);
+    expect(screen.getByRole('tooltip')).toHaveTextContent('12 March 2026, 14:05');
+    expect(trigger).toHaveAttribute('aria-describedby', screen.getByRole('tooltip').id);
+  });
+
+  it('a second tap on the trigger closes it', async () => {
+    const user = userEvent.setup();
+    render(
+      <Tooltip content="Detail">
+        <span tabIndex={0}>Trigger</span>
+      </Tooltip>,
+    );
+    await tap(user, screen.getByText('Trigger'));
+    expect(screen.getByRole('tooltip')).toBeInTheDocument();
+    await tap(user, screen.getByText('Trigger'));
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
+  it('a tap elsewhere closes it', async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <Tooltip content="Detail">
+          <span tabIndex={0}>Trigger</span>
+        </Tooltip>
+        <div data-testid="elsewhere">elsewhere</div>
+      </>,
+    );
+    await tap(user, screen.getByText('Trigger'));
+    await tap(user, screen.getByTestId('elsewhere'));
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
+  it('a tap on an interactive trigger does not open it (the tap performs the action)', async () => {
+    const user = userEvent.setup();
+    const onClick = vi.fn();
+    render(
+      <Tooltip content="Detail">
+        <button type="button" onClick={onClick}>
+          Save
+        </button>
+      </Tooltip>,
+    );
+    await tap(user, screen.getByRole('button', { name: 'Save' }));
+    expect(onClick).toHaveBeenCalled();
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
+  it('a tap on a non-interactive trigger inside a link does not open it', async () => {
+    const user = userEvent.setup();
+    render(
+      <a href="#row">
+        <Tooltip content="High priority">
+          <span tabIndex={0}>P1</span>
+        </Tooltip>
+      </a>,
+    );
+    await tap(user, screen.getByText('P1'));
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+
+  it('a mouse click on a non-interactive trigger does not toggle it', async () => {
+    const user = userEvent.setup();
+    render(
+      <Tooltip content="Detail" delay={0}>
+        <span tabIndex={0}>Trigger</span>
+      </Tooltip>,
+    );
+    const trigger = screen.getByText('Trigger');
+    await user.hover(trigger);
+    expect(screen.getByRole('tooltip')).toBeInTheDocument();
+    await user.click(trigger);
+    // Unchanged mouse behaviour: pointerdown anywhere closes; no tap toggle re-opens it.
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+  });
+});
