@@ -3664,6 +3664,33 @@ const [day, setDay] = useState<string | null>(null);
 - ❌ No `aria-label` on the strip — the month heading names the group. ❌ No `Date`/`toISOString()` for `date`.
 - When NOT to use: any-date picking → `<InlineDatePicker>`; events → `<Calendar>`; times → `<SlotGrid>`.
 
+### `<SlotGrid>` — grouped time-slot tiles
+
+```tsx
+<SlotGrid
+  groups={[
+    {
+      label: 'Morning',
+      slots: [
+        { key: '09:00', label: '9:00' },
+        { key: '09:30', label: '9:30' },
+      ],
+    },
+    { label: 'Afternoon', slots: [{ key: '14:00', label: '14:00' }] },
+  ]}
+  value={slot}
+  onChange={setSlot}
+  empty={<Text tone="muted">No times this day — try another.</Text>} // optional
+/>
+```
+
+- Slot `label`s are yours, formatted in the business's timezone. `key` is what `onChange` returns; keep it unique across ALL groups (one exclusive choice).
+- Native radios with one `name`: one Tab stop for the whole grid, arrows move AND select in reading order (↓ goes to the next slot, not the one below). Tiles are `role="radio"` named by their label; each group is a `<fieldset>` named by its heading (`titleOrder`, default 3).
+- Groups with no slots are skipped; if none has slots, `empty` renders (default: localized "No available times").
+- 6 columns, 3 when the grid's own width ≤ 48rem (container query).
+- ❌ No per-slot `disabled` — pass only bookable slots. ❌ Don't wrap it in your own `role="radiogroup"`.
+- When NOT to use: free-form time → `<TimeField>`; a handful of options → `<ButtonGroup value>` / `<RadioGroup>`.
+
 ### `<TimeField>` — standalone time-of-day input
 
 ```tsx

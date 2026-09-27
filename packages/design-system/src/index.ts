@@ -703,6 +703,9 @@ export type { DatePickerProps, DatePickerSize } from './components/DatePicker';
 export { DateStrip } from './components/DateStrip';
 export type { DateStripProps, DateStripDay } from './components/DateStrip';
 
+export { SlotGrid } from './components/SlotGrid';
+export type { SlotGridProps, SlotGridGroup, SlotGridSlot } from './components/SlotGrid';
+
 export { DateRangePicker } from './components/DateRangePicker';
 export type {
   DateRangePickerProps,

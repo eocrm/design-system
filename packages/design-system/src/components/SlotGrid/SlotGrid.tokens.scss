@@ -1,0 +1,21 @@
+// SlotGrid.tokens.scss — component tokens. Tile colors default to Button's.
+@use '../Button/Button.tokens';
+
+:root {
+  --slot-grid-group-gap: var(--space-5);
+  --slot-grid-legend-gap: var(--space-2);
+  --slot-grid-gap: var(--space-2);
+  --slot-grid-tile-height: var(--button-height-md);
+  --slot-grid-tile-font-size: var(--button-font-size-md);
+  --slot-grid-tile-font-weight: var(--button-font-weight);
+  --slot-grid-tile-radius: var(--button-radius);
+  --slot-grid-tile-bg: var(--button-bg-secondary);
+  --slot-grid-tile-bg-hover: var(--button-bg-secondary-hover);
+  --slot-grid-tile-fg: var(--button-fg-secondary);
+  --slot-grid-tile-border: var(--button-border-color-secondary);
+  --slot-grid-tile-bg-checked: var(--button-bg);
+  --slot-grid-tile-bg-checked-hover: var(--button-bg-hover);
+  --slot-grid-tile-fg-checked: var(--button-fg);
+  --slot-grid-tile-ring: var(--button-ring);
+  --slot-grid-tile-opacity-disabled: var(--button-opacity-disabled);
+}

@@ -705,6 +705,15 @@
       "RichTextEditor"
     ]
   },
+  "SlotGrid": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "Text",
+      "Title"
+    ],
+    "composedBy": []
+  },
   "SocialButton": {
     "tier": "composition",
     "cluster": "Forms",
@@ -796,7 +805,8 @@
       "OptionsPicker",
       "PersonDisplay",
       "RichTextEditor",
-      "SettingRow"
+      "SettingRow",
+      "SlotGrid"
     ]
   },
   "Textarea": {
@@ -833,7 +843,8 @@
     "composedBy": [
       "DateStrip",
       "FormSection",
-      "PageHeader"
+      "PageHeader",
+      "SlotGrid"
     ]
   },
   "Toast": {
