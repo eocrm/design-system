@@ -11,6 +11,11 @@
   // Matches the RichText @mention's own font-weight (_prose.scss) — part of
   // the same "read as one visual object" goal as the bg/fg tokens above.
   --entity-chip-label-font-weight: var(--font-weight-medium);
+
+  // `labelWeight="semibold"` (#590) — an explicit heavier weight for designs
+  // that want it (e.g. the segmented task chip's key + title). Default stays
+  // `medium` above, matching a plain chip and the RichText @mention.
+  --entity-chip-label-font-weight-semibold: var(--font-weight-semibold);
   --entity-chip-prefix-fg: var(--color-fg-muted);
   --entity-chip-radius: var(--radius-sm);
   --entity-chip-gap: var(--space-1);

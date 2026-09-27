@@ -23,6 +23,14 @@ import styles from './EntityChip.module.scss';
 /** Elements EntityChip can render as. All inline-safe phrasing content. */
 export type EntityChipAs = ElementType;
 
+/**
+ * Font weight for `prefix` + `label` (#590). `'medium'` (default) matches a
+ * plain chip and the RichText `@mention`. `'semibold'` is for designs that
+ * want a heavier title — e.g. the segmented task chip, whose key and title
+ * are both semibold. See `labelWeight` on `EntityChipOwnProps`.
+ */
+export type EntityChipLabelWeight = 'medium' | 'semibold';
+
 export interface EntityChipStatus {
   /** Status label, rendered inside the chip in the status's own color. */
   label: string;
@@ -221,6 +229,21 @@ interface EntityChipOwnProps {
    * shows it in a tooltip on hover or keyboard focus.
    */
   labelMaxWidth?: number;
+  /**
+   * Font weight for `prefix` + `label` (both — a task-chip design that wants
+   * a heavier title also wants its key heavier, #590). Default `'medium'`
+   * matches a plain chip's fixed weight and the RichText `@mention`, so most
+   * chips should leave this unset. Use `'semibold'` for a design that
+   * explicitly wants a heavier title, e.g. a segmented task chip.
+   *
+   * Don't reach for a styled `<Text weight="semibold">` around `label` to get
+   * a heavier title instead (see the component's `@remarks` anti-patterns) —
+   * it buys nothing: the clipped-label tooltip reads the label's own
+   * `textContent` and always renders it plain, in the tooltip's own color,
+   * regardless of what the label node carries. Only this prop changes the
+   * rendered weight.
+   */
+  labelWeight?: EntityChipLabelWeight;
 }
 
 /**
@@ -286,16 +309,21 @@ function rootStyle(
     : undefined;
 }
 
-/** Palette fill/fg for one segment, read by `.segment`, plus its `size` override. */
+/**
+ * Palette fill/fg for one segment, read by `.segment`, plus an icon segment's
+ * `size` override (its glyph size custom property). A text segment's `size`
+ * is NOT set here (#591) — it goes on the inner `.segmentTextValue` span
+ * instead, so the outer box keeps the chip's own font-size/line-height and
+ * its text sits on the label's baseline.
+ */
 function segmentStyle(segment: EntityChipSegment): CSSProperties {
   const { bg, fg } = paletteTokens(segment.color ?? 'slate');
   const style: Record<string, string> = {
     '--entity-chip-segment-bg': bg,
     '--entity-chip-segment-fg': fg,
   };
-  if (segment.size != null) {
-    if (segment.kind === 'icon') style['--entity-chip-segment-glyph-size'] = `${segment.size}em`;
-    else style.fontSize = `${segment.size}em`;
+  if (segment.kind === 'icon' && segment.size != null) {
+    style['--entity-chip-segment-glyph-size'] = `${segment.size}em`;
   }
   return style as CSSProperties;
 }
@@ -319,7 +347,15 @@ function Segment({ segment }: { segment: EntityChipSegment }): ReactElement {
   }
   const node = (
     <span className={clsx(styles.segment, styles.segmentText)} style={segmentStyle(segment)}>
-      {segment.text}
+      {/* Inner span carries the smaller size (#591) — the outer box keeps the
+          chip's own font-size/line-height so the strut sets the baseline;
+          this span then sits on it via normal inline layout. */}
+      <span
+        className={styles.segmentTextValue}
+        style={segment.size != null ? { fontSize: `${segment.size}em` } : undefined}
+      >
+        {segment.text}
+      </span>
     </span>
   );
   return segment.tooltip != null ? <Tooltip content={segment.tooltip}>{node}</Tooltip> : node;
@@ -383,6 +419,15 @@ function Segment({ segment }: { segment: EntityChipSegment }): ReactElement {
  *   trailing={<ArrowUpIcon aria-label="High priority" />}
  * />
  *
+ * @example
+ * // `labelWeight="semibold"` — a heavier key + title (#590):
+ * <EntityChip
+ *   href="/tasks/ENG-15"
+ *   prefix="ENG-15"
+ *   label="Fix the login bug on Safari"
+ *   labelWeight="semibold"
+ * />
+ *
  * @remarks When NOT to use
  * - Plain status display with no linked entity → use `<Badge>` or `<PillMenu>`.
  * - Standalone navigation with no entity chrome (icon/prefix/status) → use `<Link>`.
@@ -407,6 +452,11 @@ function Segment({ segment }: { segment: EntityChipSegment }): ReactElement {
  *   parts — use `before`/`after` segments, which line up with the chip's text.
  * - ❌ An icon segment without a meaningful `label` — it is the segment's
  *   accessible name; a decorative glyph belongs in `icon`, not a segment.
+ * - ❌ Wrapping `label` in a styled `<Text weight="semibold">` (or similar) to
+ *   make the title heavier — use `labelWeight="semibold"` instead. A styled
+ *   label node never changes the clipped-label tooltip either way (it always
+ *   reads the label's own `textContent` and shows it plain, #590), so this
+ *   anti-pattern buys nothing but inconsistency.
  */
 export const EntityChip = forwardRef(function EntityChip<C extends ElementType = 'a'>(
   {
@@ -424,6 +474,7 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
     before,
     after,
     labelMaxWidth,
+    labelWeight = 'medium',
     className,
     style,
     ...rest
@@ -446,6 +497,18 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
   // tooltip and no aria-describedby (it would be announced twice).
   const labelRef = useRef<HTMLSpanElement>(null);
   const [labelTipOpen, setLabelTipOpen] = useState(false);
+  // The clipped-label tooltip's own content (#590): captured from the label
+  // element's `textContent` when the tooltip opens, so it always shows PLAIN
+  // TEXT in the tooltip's own color — never the (possibly styled) `label`
+  // node itself, which could carry its own color/weight that reads badly on
+  // the dark tooltip background. Falls back to the raw `label` node before it
+  // has ever been measured — Tooltip treats `null`/`undefined`/`''` content as
+  // "disabled" (no listeners at all, see Tooltip.tsx), so an empty fallback
+  // here would permanently deadlock a non-string label's first hover. Safe:
+  // `onLabelTip` sets this state and `labelTipOpen` in the same call, so React
+  // batches them into one render — the first render where the tooltip is
+  // actually open already carries the freshly measured plain text.
+  const [labelTipText, setLabelTipText] = useState<string | null>(null);
   // `hasSegments`, not `segmented`: a loading/unavailable chip with `before`/
   // `after` configured still gets the `truncate` class (below) even though
   // `segmented` itself stays gated off — its label can still be clipped, and
@@ -460,8 +523,10 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
   if (!labelTip && labelTipOpen) setLabelTipOpen(false);
   const onLabelTip = (next: boolean) => {
     const el = labelRef.current;
+    if (next && el != null) setLabelTipText(el.textContent ?? '');
     setLabelTipOpen(next && el != null && el.scrollWidth > el.clientWidth);
   };
+  const labelTipContent = labelTipText ?? label;
   // Keyboard reachability for the clipped-label tooltip: its Tooltip trigger
   // is the label `<span>`, which is not itself focusable — focus lands on the
   // chip root. Chain onto the root's own onFocus/onBlur (preserving whatever
@@ -542,23 +607,33 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
         </>
       ) : (
         <>
-          {prefix && <span className={styles.prefix}>{prefix}</span>}
+          {prefix && (
+            <span className={clsx(styles.prefix, labelWeight === 'semibold' && styles.semibold)}>
+              {prefix}
+            </span>
+          )}
           {/* Wrapper keeps the name a single flex item (matters when `label`
               is itself multiple nodes — e.g. a fragment) so the chip's `gap`
               doesn't insert extra space inside the name. No longer scopes
               hover styling (the fake-bold rule was dropped, see #345). */}
           {labelTip ? (
-            <Tooltip content={label} open={labelTipOpen} onOpenChange={onLabelTip}>
+            <Tooltip content={labelTipContent} open={labelTipOpen} onOpenChange={onLabelTip}>
               <span
                 ref={labelRef}
-                className={clsx(styles.label, labelMaxWidth != null && styles.capped)}
+                className={clsx(
+                  styles.label,
+                  labelWeight === 'semibold' && styles.semibold,
+                  labelMaxWidth != null && styles.capped,
+                )}
                 style={labelMaxWidth != null ? { maxWidth: `${labelMaxWidth}ch` } : undefined}
               >
                 {label}
               </span>
             </Tooltip>
           ) : (
-            <span className={styles.label}>{label}</span>
+            <span className={clsx(styles.label, labelWeight === 'semibold' && styles.semibold)}>
+              {label}
+            </span>
           )}
           {stateWord}
           {status && (

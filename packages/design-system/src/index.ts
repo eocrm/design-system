@@ -149,6 +149,7 @@ export type {
   EntityChipAs,
   EntityChipStatus,
   EntityChipSegment,
+  EntityChipLabelWeight,
   StatusCategory,
 } from './components/EntityChip';
 

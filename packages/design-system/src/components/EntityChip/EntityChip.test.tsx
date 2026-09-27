@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createRef, type ComponentProps, type ReactNode } from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { parse, type Rule } from 'postcss';
 import { compile } from 'sass';
@@ -560,7 +560,24 @@ describe('<EntityChip> — segments (#582)', () => {
         .getByRole('img', { name: 'Big' })
         .style.getPropertyValue('--entity-chip-segment-glyph-size'),
     ).toBe('1.2em');
-    expect(screen.getByText('Small').style.fontSize).toBe('0.75em');
+    // `size` sets the INNER span's font-size (#591) — the outer `.segment` box
+    // keeps the chip's own font-size/line-height so the text sits on the
+    // label's baseline; only the wrapped value is sized down.
+    const value = screen.getByText('Small');
+    expect(value.className).toMatch(/segmentTextValue/);
+    expect(value.style.fontSize).toBe('0.75em');
+    const outer = value.parentElement as HTMLElement;
+    expect(outer.className).toMatch(/segmentText/);
+    expect(outer.style.fontSize).toBe('');
+  });
+
+  it('a text segment (no `size`) wraps its text in an inner span; the outer segment has no inline font-size (#591)', () => {
+    render(<EntityChip href="/t" label="T" after={[{ kind: 'text', text: 'Reported' }]} />);
+    const value = screen.getByText('Reported');
+    expect(value.className).toMatch(/segmentTextValue/);
+    const outer = value.parentElement as HTMLElement;
+    expect(outer.className).toMatch(/segmentText/);
+    expect(outer.style.fontSize).toBe('');
   });
 
   it('keeps the core content (icon, prefix, label, status, trailing) inside .core', () => {
@@ -641,7 +658,19 @@ describe('<EntityChip> — segmented layout CSS (#582)', () => {
     expect(decl('.segment', 'flex-shrink')).toBe('0');
     expect(decl('.segment', 'align-self')).toBe('stretch');
     expect(decl('.segmentGlyph > svg', 'width')).toBe('var(--entity-chip-segment-glyph-size)');
-    expect(decl('.segmentText', 'font-size')).toBe('var(--entity-chip-segment-text-size)');
+  });
+
+  // #591: a text segment's text must sit on the label's baseline, not be
+  // centred at 0.9em. The outer `.segmentText` box gives up flex-centring for
+  // a normal block/inline formatting context (so the strut sets the
+  // baseline) and inherits the chip's own font-size/line-height; the smaller
+  // size lives on the inner `.segmentTextValue` span instead.
+  it('.segmentText is not a centring flex box and uses the chip line-height; the inner span carries the smaller size (#591)', () => {
+    expect(decl('.segmentText', 'display')).not.toBe('flex');
+    expect(decl('.segmentText', 'align-items')).toBeUndefined();
+    expect(decl('.segmentText', 'font-size')).toBeUndefined();
+    expect(decl('.segmentText', 'line-height')).toBe('var(--entity-chip-line-height)');
+    expect(decl('.segmentTextValue', 'font-size')).toBe('var(--entity-chip-segment-text-size)');
   });
 
   it('hovering a linked/button segmented chip brightens the core, matching the unsegmented hover token', () => {
@@ -940,5 +969,68 @@ describe('<EntityChip> — .core shrink rule outranks .truncate > * regardless o
       });
     });
     expect(found).toBe(true);
+  });
+});
+
+describe('<EntityChip> — clipped-label tooltip is always plain text (#590)', () => {
+  it('a clipped, styled label shows its text in the tooltip, never the styled element itself', async () => {
+    const user = userEvent.setup();
+    render(
+      <EntityChip
+        href="/t"
+        label={
+          <span data-testid="styled" style={{ color: 'red' }}>
+            Title
+          </span>
+        }
+        truncate
+      />,
+    );
+    const styled = screen.getByTestId('styled');
+    const label = styled.parentElement as HTMLElement; // the labelRef wrapper Tooltip trigger
+    fakeClip(label, true);
+    await user.hover(label);
+    const tooltip = await screen.findByRole('tooltip');
+    expect(tooltip).toHaveTextContent('Title');
+    expect(within(tooltip).queryByTestId('styled')).toBeNull();
+  });
+
+  it('a clipped, plain-string label still shows its text (unchanged behavior)', async () => {
+    const user = userEvent.setup();
+    render(<EntityChip href="/t" label="A very long task title" truncate />);
+    const label = screen.getByText('A very long task title');
+    fakeClip(label, true);
+    await user.hover(label);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('A very long task title');
+  });
+});
+
+describe('<EntityChip> — `labelWeight` (#590)', () => {
+  it('defaults to no semibold class on prefix or label', () => {
+    render(<EntityChip href="/t" prefix="ENG-5" label="Fix login bug" />);
+    expect(screen.getByText('ENG-5').className).not.toMatch(/semibold/i);
+    expect(screen.getByText('Fix login bug').className).not.toMatch(/semibold/i);
+  });
+
+  it('labelWeight="semibold" adds the modifier class to BOTH prefix and label', () => {
+    render(<EntityChip href="/t" prefix="ENG-5" label="Fix login bug" labelWeight="semibold" />);
+    expect(screen.getByText('ENG-5').className).toMatch(/semibold/i);
+    expect(screen.getByText('Fix login bug').className).toMatch(/semibold/i);
+  });
+
+  it('SCSS: the semibold modifier resolves to the new component token', () => {
+    const css = parse(compile(resolve(__dirname, './EntityChip.module.scss')).css);
+    let sawPrefix = false;
+    let sawLabel = false;
+    css.walkRules((rule: Rule) => {
+      if (!/semibold/i.test(rule.selector)) return;
+      rule.walkDecls('font-weight', (d) => {
+        if (d.value !== 'var(--entity-chip-label-font-weight-semibold)') return;
+        if (/prefix/.test(rule.selector)) sawPrefix = true;
+        if (/\.label/.test(rule.selector)) sawLabel = true;
+      });
+    });
+    expect(sawPrefix).toBe(true);
+    expect(sawLabel).toBe(true);
   });
 });

@@ -2069,6 +2069,9 @@ import { Link as RouterLink } from 'react-router-dom';
     { kind: 'text', text: 'Reported', color: 'amber' },
   ]}
 />
+
+// `labelWeight="semibold"` — a heavier key + title (#590):
+<EntityChip href="/tasks/ENG-15" prefix="ENG-15" label="Fix the login bug on Safari" labelWeight="semibold" />
 ```
 
 - Polymorphic inline chip: optional `icon` (rendered `aria-hidden`), optional muted `prefix` (e.g. a task key), the `label`, and an optional colored `status`. All inline `<span>`s inside one root — safe to drop directly inside a `<p>`/`<Text>`.
@@ -2086,8 +2089,11 @@ import { Link as RouterLink } from 'react-router-dom';
 - Hover affordance on link/button chips: the background deepens a step plus a brightness dip. Never a weight change, never an underline, even under aggressive consumer link CSS.
 - Chip text inherits the surrounding font size — inside a heading it renders at heading size, by design (that's what keeps the chip box symmetric around the local text in any context).
 - **Segments** (`before` / `after`, #582): coloured parts butted against the chip — `{ kind: 'icon', icon, label, color?, size? }` (label = accessible name + tooltip) or `{ kind: 'text', text, color?, tooltip?, size? }`; `size` is in em of the chip text (glyph default 0.85em, text default 0.9em). The whole chip stays one link; every segment joins its name. Any segment makes the chip one line (only the label shrinks) with only the outer corners rounded. Not rendered while `loading`/`unavailable`. `labelMaxWidth` (ch) caps the label in running text; a clipped label shows its full text in a tooltip on hover or keyboard focus.
+- **A text segment's text sits on the label's baseline, not centred** (#591): the segment's own box keeps the chip's font-size/line-height (so its box and first-line baseline match the core exactly); the smaller `--entity-chip-segment-text-size` lives on an inner span instead, which then sits on that baseline through normal inline layout. Icon (glyph) segments stay vertically centred, as before — only text segments changed.
+- **The clipped-label tooltip is always plain text** (#590): it reads the label element's own `textContent` when it opens, not the `label` node itself — so a styled `label` (e.g. a `<Text tone="accent">`) never leaks its color/weight into the tooltip. No prop controls this; it's automatic.
+- **`labelWeight`**: `'medium'` (default, matches a plain chip / the RichText `@mention`) or `'semibold'`, applied to BOTH `prefix` and `label` together (a heavier key + title, e.g. a segmented task chip). Backed by a component token (`--entity-chip-label-font-weight-semibold`), not by wrapping `label` in a styled `<Text>` — see the anti-pattern below.
 - **When NOT to use**: plain status with no linked entity → `<Badge>`/`<PillMenu>`; standalone navigation with no icon/prefix/status chrome → `<Link>`; removable filter pills → `<FilterChip>`.
-- **Anti-pattern**: nesting a `<Badge>` inside another `<Badge>` to fake an entity-with-status chip — `EntityChip` replaces that composition. `status.color` and the chip's own `color` are `PaletteColor` names, never raw hex strings. Omitting a link target (`href`/`as`) is also an anti-pattern — an EntityChip should link to its entity. Nesting `<IconTile>`/`<Badge>` in `icon`/`trailing` to fake coloured parts is also an anti-pattern — use `before`/`after` segments instead.
+- **Anti-pattern**: nesting a `<Badge>` inside another `<Badge>` to fake an entity-with-status chip — `EntityChip` replaces that composition. `status.color` and the chip's own `color` are `PaletteColor` names, never raw hex strings. Omitting a link target (`href`/`as`) is also an anti-pattern — an EntityChip should link to its entity. Nesting `<IconTile>`/`<Badge>` in `icon`/`trailing` to fake coloured parts is also an anti-pattern — use `before`/`after` segments instead. Wrapping `label` in a styled `<Text weight="semibold">` to get a heavier title is also an anti-pattern — use `labelWeight="semibold"`; it buys nothing anyway, since the clipped-label tooltip always renders the label's plain text regardless of how `label` is styled.
 
 ### `<PillMenu>` — coloured value menu (status, type, priority…)
 

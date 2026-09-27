@@ -1996,6 +1996,13 @@
           "description": "Caps the label's width, a positive number of `ch`; past it the label\nellipsizes on one line (also on a chip without `truncate`). For chips in\nrunning text, where the container edge is a whole paragraph away. The\nfull label stays in the DOM and the accessible name; a clipped label\nshows it in a tooltip on hover or keyboard focus."
         },
         {
+          "name": "labelWeight",
+          "type": "EntityChipLabelWeight",
+          "required": false,
+          "default": "",
+          "description": "Font weight for `prefix` + `label` (both — a task-chip design that wants\na heavier title also wants its key heavier, #590). Default `'medium'`\nmatches a plain chip's fixed weight and the RichText `@mention`, so most\nchips should leave this unset. Use `'semibold'` for a design that\nexplicitly wants a heavier title, e.g. a segmented task chip.\n\nDon't reach for a styled `<Text weight=\"semibold\">` around `label` to get\na heavier title instead (see the component's `@remarks` anti-patterns) —\nit buys nothing: the clipped-label tooltip reads the label's own\n`textContent` and always renders it plain, in the tooltip's own color,\nregardless of what the label node carries. Only this prop changes the\nrendered weight."
+        },
+        {
           "name": "as",
           "type": "C",
           "required": false,
@@ -5883,6 +5890,7 @@
     "BadgeAlign": "\"baseline\" | \"middle\"",
     "EntityChipStatus": "{ label: string; category?: StatusCategory; color?: PaletteColor }",
     "EntityChipSegment": "{ kind: \"icon\"; icon: ReactNode; label: string; color?: PaletteColor; size?: number; } | { kind: \"text\"; text: ReactNode; color?: PaletteColor; tooltip?: ReactNode; size?: number; }",
+    "EntityChipLabelWeight": "\"medium\" | \"semibold\"",
     "ThreadNodeAlign": "\"header\" | \"top\"",
     "LogoSize": "\"sm\" | \"md\" | \"lg\"",
     "LogoTextPlacement": "\"end\" | \"bottom\"",
@@ -5975,12 +5983,12 @@
     "TextAs": "\"div\" | \"label\" | \"p\" | \"span\"",
     "TextSize": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"inherit\"",
     "TextTone": "\"success\" | \"warning\" | \"danger\" | \"accent\" | \"default\" | \"muted\" | \"subtle\"",
-    "TextWeight": "\"regular\" | \"medium\" | \"semibold\" | \"bold\"",
+    "TextWeight": "\"medium\" | \"semibold\" | \"regular\" | \"bold\"",
     "TextAlign": "\"left\" | \"right\" | \"center\"",
     "TitleOrder": "1 | 2 | 3 | 4 | 5 | 6",
     "TitleSize": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"2xl\" | \"3xl\"",
     "TitleTone": "\"danger\" | \"accent\" | \"default\" | \"muted\" | \"subtle\"",
-    "TitleWeight": "\"regular\" | \"medium\" | \"semibold\" | \"bold\"",
+    "TitleWeight": "\"medium\" | \"semibold\" | \"regular\" | \"bold\"",
     "CalendarBackgroundInterval": "{ startsAt: Date; endsAt: Date; resourceId?: string; tone?: CalendarBackgroundTone }",
     "CalendarDropCandidate": "({ mode: \"move\"; } & CalendarEventMove) | ({ mode: \"resize\"; resourceId?: string; } & CalendarEventResize)",
     "CalendarDropResult": "boolean | void | Promise<boolean | void>",
