@@ -1827,6 +1827,19 @@ Pins its box to the top of the scroll container while the page scrolls past — 
 
 When NOT to use: arranging children → `<Stack>`/`<Cluster>`; a fixed overlay above content → `position: fixed` chrome (`Popover`/`Modal`/app bar); the split itself → `<Split>`. Note: `position: sticky` breaks if a clipping ancestor (`overflow: hidden/auto`) isn't the intended scroll container.
 
+### `<ScrollArea>` — height-capped vertical scroll region
+
+```tsx
+<ScrollArea maxHeight="md" aria-label="Notifications">
+  <Stack gap="xs">{rows}</Stack>
+</ScrollArea>
+```
+
+- `maxHeight`: `sm` (240px) / `md` (400px) / `lg` (560px), or a one-off `number` (px) / CSS length string. Prefer the scale. Omitted: no cap of its own, so it fills a bounded flex parent.
+- **Keyboard:** while it overflows AND holds nothing focusable, it becomes a tab stop (`tabIndex=0`, `role="region"`). Name it with `aria-label` / `aria-labelledby` (a dev warning fires if you don't). A feed of links adds no tab stop.
+- **In a Popover** it's what caps the popover at the viewport: the popover becomes a flex column where only the ScrollArea shrinks, so a header above it stays put. Keep it a direct child of `Popover.Content` or wrapped at most once (`Content > Stack > ScrollArea`).
+- Not for whole-page scroll (AppLayout owns it), a Card body (`<Card fill>` + `<Card.Body scroll>`), or horizontal scrolling. Don't nest them.
+
 ### `<Masonry>` — height-balanced masonry layout
 
 ```tsx
@@ -2672,6 +2685,8 @@ import { Bell, Plus } from 'lucide-react';
 
   `meta` renders after the label and before `shortcut` (the keyboard hint stays rightmost). It carries no `aria-hidden`, so it **joins the accessible name** — a screen reader announces "demo RU". Because it is a prop and not a child, it stays **out of the typeahead label**: type-to-select still matches the bare label.
 
+- ❌ Using DropdownMenu as a panel (a notification centre, a header with a "Mark all as read" button, rich feed rows). It is `role="menu"`, which may only hold menu items; a header button is invalid ARIA and unreachable by the menu's arrow keys. Use `Popover` + `ScrollArea` (#598).
+
 ### `<Tooltip>` — small floating label on hover / keyboard focus
 
 ```tsx
@@ -2738,6 +2753,7 @@ import { Bell, Plus } from 'lucide-react';
 - Z-layer `--z-popover: 1050` — above dropdown, below modal/toast/tooltip.
 - **Overlay host for nested floating surfaces.** A `Popover.Content` (and a `DropdownMenu` content panel) acts as an overlay host: any floating surface (`DropdownMenu` / `Popover` / `ConfirmationPopover` / `Select` / `DatePicker` / `DateRangePicker` / `TimeField` / the `Rail.Group` flyout) whose trigger sits inside it auto-elevates to `--z-overlay-floating` (1190), so a kebab menu, nested popover, or confirm dialog opened from within a Popover panel stacks ABOVE the panel instead of rendering behind it. No prop needed — it keys off the existing `[data-popover-content]` / `[data-dropdown-menu-content]` markers, plus `[data-in-overlay]` itself (elevation is transitive: a surface nested inside an elevated surface elevates too). The Popover also won't dismiss itself when you interact with such a nested surface (its content portals to `document.body`, so a click inside it would otherwise read as "outside") — so a kebab menu item or its confirm dialog stays usable without collapsing the host.
 - **Escape is innermost-first across nested surfaces (#280).** When one floating surface is open inside another — a `Select` listbox inside a `Popover`, a `ConfirmationPopover` opened from a `DropdownMenu` item, etc. — the first `Escape` closes only the **innermost** surface; the outer one (and any host `Modal`/`Drawer`) survives that press. Each press peels exactly one layer. Surfaces coordinate via the shared overlay registry (`isTopFloating`) — the most-recently-opened is innermost — so no per-pair wiring is needed.
+- **Tall content:** a Popover is capped at the viewport only when it holds a `<ScrollArea>` (#598). Wrap the long part (a feed, a list) in `<ScrollArea maxHeight="md">`; the header above it stays put. Without one, a tall popover runs off-screen. Recipe (notification centre): `Popover.Content minWidth={380}` → `Stack` → header `Cluster` (`Popover.Heading` + "Mark all as read" Button) + `ScrollArea maxHeight="md" aria-label="Notifications"`.
 - For passive hover/focus hints → `<Tooltip>`. For lists of actions → `<DropdownMenu>`. For focus-locked dialogs → `<Modal>`.
 
 ### `<ToastViewport>` + `toast` — transient notifications
