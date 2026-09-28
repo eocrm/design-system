@@ -307,7 +307,10 @@
     "--transition-slow": "260ms ease-in-out",
     "--z-tour": "1150",
     "--measure-2xs": "160px",
-    "--size-otp-cell-xl": "48px"
+    "--size-otp-cell-xl": "48px",
+    "--size-scroll-area-sm": "240px",
+    "--size-scroll-area-md": "400px",
+    "--size-scroll-area-lg": "560px"
   },
   "forcedDark": {
     "--color-accent": "#68a7ff",
