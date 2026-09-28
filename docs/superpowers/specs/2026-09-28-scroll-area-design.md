@@ -62,10 +62,9 @@ Two gaps remain:
     to `tabindex`, `disabled`, `href`, `hidden`), which also re-observes new
     direct children with the ResizeObserver.
 
-  `FOCUSABLE` is the selector already used in the repo for focus trapping (reuse
-  it if one exists in `_internal`; otherwise a local constant covering
-  `a[href]`, `button:not([disabled])`, `input:not([disabled])`, `select`,
-  `textarea`, `[tabindex]:not([tabindex="-1"])`, `[contenteditable="true"]`).
+  `FOCUSABLE` is the focus-trap selector in
+  `components/_internal/overlay/useFocusTrap.ts`, exported from there (today it
+  is a module-private constant) so both share one definition.
 
   While `focusable`, it renders `tabIndex={0}` and `role="region"`. The
   accessible name comes from the consumer's `aria-label` / `aria-labelledby`.
