@@ -141,7 +141,15 @@ export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(function S
     mo?.observe(el, {
       childList: true,
       subtree: true,
+      // A bare text-node child (e.g. a plain-text log) updates via
+      // `nodeValue` in place — no childList mutation, so without this the
+      // area never re-measures as that text grows.
+      characterData: true,
       attributes: true,
+      // FOCUSABLE_SELECTOR ignores visibility, so a link inside a `hidden`
+      // wrapper still counts as focusable and suppresses the tab stop — a
+      // known limit shared with useFocusTrap. `hidden` stays in the filter
+      // anyway: the re-measure it triggers is harmless.
       attributeFilter: ['tabindex', 'disabled', 'href', 'hidden'],
     });
     return () => {

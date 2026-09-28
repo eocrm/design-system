@@ -27,57 +27,61 @@ import { Bell } from 'lucide-react';
 
 export function Demo({ rows }) {
   return (
-    <Popover>
-      <Popover.Trigger>
-        <Button variant="secondary" iconOnly aria-label="Notifications">
-          <Bell size={16} />
-        </Button>
-      </Popover.Trigger>
-      <Popover.Content minWidth={380}>
-        <Stack gap="sm">
-          <Cluster justify="between" align="center">
-            <Popover.Heading>Notifications</Popover.Heading>
-            <Button variant="ghost" size="sm">Mark all as read</Button>
-          </Cluster>
-          <ScrollArea maxHeight="md" aria-label="Notifications">
-            <Stack gap="xs">
-              {rows.map((row) => (
-                <Link key={row.id} href="#">{row.text}</Link>
-              ))}
-            </Stack>
-          </ScrollArea>
-        </Stack>
-      </Popover.Content>
-    </Popover>
+    <Cluster gap="md" justify="center">
+      <Popover>
+        <Popover.Trigger>
+          <Button variant="secondary" iconOnly aria-label="Notifications">
+            <Bell size={16} />
+          </Button>
+        </Popover.Trigger>
+        <Popover.Content minWidth={380}>
+          <Stack gap="sm">
+            <Cluster justify="between" align="center">
+              <Popover.Heading>Notifications</Popover.Heading>
+              <Button variant="ghost" size="sm">Mark all as read</Button>
+            </Cluster>
+            <ScrollArea maxHeight="md" aria-label="Notifications">
+              <Stack gap="xs">
+                {rows.map((row) => (
+                  <Link key={row.id} href="#">{row.text}</Link>
+                ))}
+              </Stack>
+            </ScrollArea>
+          </Stack>
+        </Popover.Content>
+      </Popover>
+    </Cluster>
   );
 }`}
       >
-        <Popover>
-          <Popover.Trigger>
-            <Button variant="secondary" iconOnly aria-label="Notifications">
-              <Bell size={16} />
-            </Button>
-          </Popover.Trigger>
-          <Popover.Content minWidth={380}>
-            <Stack gap="sm">
-              <Cluster justify="between" align="center">
-                <Popover.Heading>Notifications</Popover.Heading>
-                <Button variant="ghost" size="sm">
-                  Mark all as read
-                </Button>
-              </Cluster>
-              <ScrollArea maxHeight="md" aria-label="Notifications">
-                <Stack gap="xs">
-                  {ROWS.map((row) => (
-                    <Link key={row.id} href="#">
-                      {row.text}
-                    </Link>
-                  ))}
-                </Stack>
-              </ScrollArea>
-            </Stack>
-          </Popover.Content>
-        </Popover>
+        <Cluster gap="md" justify="center">
+          <Popover>
+            <Popover.Trigger>
+              <Button variant="secondary" iconOnly aria-label="Notifications">
+                <Bell size={16} />
+              </Button>
+            </Popover.Trigger>
+            <Popover.Content minWidth={380}>
+              <Stack gap="sm">
+                <Cluster justify="between" align="center">
+                  <Popover.Heading>Notifications</Popover.Heading>
+                  <Button variant="ghost" size="sm">
+                    Mark all as read
+                  </Button>
+                </Cluster>
+                <ScrollArea maxHeight="md" aria-label="Notifications">
+                  <Stack gap="xs">
+                    {ROWS.map((row) => (
+                      <Link key={row.id} href="#">
+                        {row.text}
+                      </Link>
+                    ))}
+                  </Stack>
+                </ScrollArea>
+              </Stack>
+            </Popover.Content>
+          </Popover>
+        </Cluster>
       </Example>
 
       <Example

@@ -165,6 +165,23 @@ describe('ScrollArea', () => {
     await waitFor(() => expect(screen.getByTestId('sa')).toHaveAttribute('tabindex', '0'));
   });
 
+  it('re-measures when a bare text-node child grows in place (no childList mutation)', async () => {
+    const layout = stubLayout(100, 100);
+    const { rerender } = render(
+      <ScrollArea aria-label="Log" data-testid="sa">
+        {'short'}
+      </ScrollArea>,
+    );
+    expect(screen.getByTestId('sa')).not.toHaveAttribute('tabindex');
+    layout.set(500, 100);
+    rerender(
+      <ScrollArea aria-label="Log" data-testid="sa">
+        {'a much longer log'}
+      </ScrollArea>,
+    );
+    await waitFor(() => expect(screen.getByTestId('sa')).toHaveAttribute('tabindex', '0'));
+  });
+
   it('becomes a tab stop when a resize makes it overflow', () => {
     const layout = stubLayout(100, 100);
     const ro = stubResizeObserver();
