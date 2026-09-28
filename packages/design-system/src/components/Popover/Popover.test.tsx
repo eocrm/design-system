@@ -890,11 +890,25 @@ describe('Popover — viewport cap with a ScrollArea (#598)', () => {
     // shrink down to the ScrollArea (a plain div/form wrapper otherwise
     // shrinks while the rows paint outside the chrome). The ScrollArea
     // itself is not made a flex container.
+    // The wrapper's shrink stays in the specific rule…
     const wrapper = block.match(/> :has\(> \[data-scroll-area\]\) \{[^}]*\}/)![0];
-    expect(wrapper).toMatch(/display: flex;/);
-    expect(wrapper).toMatch(/flex-direction: column;/);
     expect(wrapper).toMatch(/flex-shrink: 1;/);
     expect(wrapper).toMatch(/min-height: 0;/);
+    expect(wrapper).not.toMatch(/display/);
+    // …but its LAYOUT is zero-specificity (a Cluster/Grid wrapper keeps its own
+    // display) and skips `[hidden]` wrappers (an author display would beat the
+    // UA `[hidden] { display: none }`).
+    const layout = scss.match(
+      /:where\(\s*\.content:has\(> \[data-scroll-area\], > \* > \[data-scroll-area\]\)\s*> :has\(> \[data-scroll-area\]\):not\(\[hidden\]\)\s*\) \{[^}]*\}/,
+    )![0];
+    expect(layout).toMatch(/display: flex;/);
+    expect(layout).toMatch(/flex-direction: column;/);
+    // The wrapper's other children (a header) don't shrink; zero specificity
+    // so a consumer class setting flex-shrink still wins.
+    const guard = scss.match(
+      /:where\(\s*\.content:has\(> \[data-scroll-area\], > \* > \[data-scroll-area\]\)\s*> :has\(> \[data-scroll-area\]\)\s*> :not\(\[data-scroll-area\]\)\s*\) \{[^}]*\}/,
+    )![0];
+    expect(guard).toMatch(/flex-shrink: 0;/);
 
     // The base `.content` rule stays un-capped and not a flex container.
     const base = scss.match(/^\.content \{[\s\S]*?\n\}/m)![0];

@@ -73,9 +73,11 @@ export interface PopoverProps {
  *   `<ScrollArea maxHeight="md">`: the popover then caps itself at the
  *   viewport and only the ScrollArea shrinks, so a header above it stays put.
  *   Keep the ScrollArea a direct child of `<Popover.Content>`, or inside one
- *   wrapper element that is a direct child — that wrapper is laid out as a
- *   flex column (a `<Stack>` already is); deeper nesting leaves the popover
- *   uncapped.
+ *   wrapper element that is a direct child. That wrapper is laid out as a
+ *   flex column unless it sets its own display: a `<Stack>` or a plain
+ *   element works; a row/grid wrapper (`<Cluster>`, `<Grid>`) keeps its
+ *   layout but is not shrunk to the cap, so put the ScrollArea in a Stack
+ *   there. Deeper nesting leaves the popover uncapped.
  *
  * @remarks Anti-patterns
  * - ❌ `<Popover.Trigger><Button disabled>…</Button></Popover.Trigger>` —
