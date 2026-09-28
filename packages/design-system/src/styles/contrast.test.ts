@@ -187,6 +187,9 @@ const PAIRS: Pair[] = [
   // The same tones in their OTHER three roles, so a future retune cannot fix
   // the text pair by breaking a fill.
   ['danger-fg on solid danger', '--color-danger-fg', '--color-danger', 4.5],
+  // Button danger-outline (#596): danger text (and its 1px border) on the page
+  // surface; its hover tint is the 'danger text on danger tint' row above.
+  ['danger text on page bg', '--color-danger', '--color-bg', 4.5],
   ['success-fg on solid success', '--color-success-fg', '--color-success', 4.5],
   ['accent-fg on solid accent', '--color-accent-fg', '--color-accent', 4.5],
   ['info text on info tint', '--color-info', '--color-info-bg-subtle', 4.5],

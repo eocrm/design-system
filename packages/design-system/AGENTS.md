@@ -323,7 +323,7 @@ When NOT to use: plain text → `Text`. For editing → `<RichTextEditor>`. The 
 </Button>
 ```
 
-- `variant`: `primary` (default — one per section) / `secondary` / `ghost` / `danger` / `success`
+- `variant`: `primary` (default — one per section) / `secondary` / `ghost` / `danger` / `danger-outline` / `success`. `danger-outline` (#596) = surface fill + danger text/border, for a destructive action that must not dominate (a per-row Remove); keep filled `danger` for the confirm step.
 - `size`: `xs` / `sm` / `md` (default) / `lg` — use `xs` for icon-only or dense inline actions; pass `aria-label` when icon-only.
 - `iconOnly`: boolean. Renders a square icon-only button (`aspect-ratio: 1`, tight 4px padding). Width tracks the size's height token. **Always pair with `aria-label`** — there's no other accessible name.
 - `selected`: controlled paint for a durable applied filter or independent toolbar value. It paints only `secondary` and `ghost` variants and adds no ARIA semantics. If activating the Button itself toggles that value, also pass the matching native `aria-pressed`; menu/disclosure triggers keep their existing semantics. Keep state in the consumer. Do not use it for transient success feedback or mutually exclusive `<ButtonGroup>` choices.

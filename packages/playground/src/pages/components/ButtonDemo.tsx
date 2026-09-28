@@ -73,7 +73,7 @@ export function ButtonDemo() {
     >
       <Example
         title="Variants"
-        description="Five visual variants. Use primary for the page's main action, secondary for supporting actions, ghost for tertiary actions in dense UIs, danger for destructive operations. The success variant is a transient confirmation state — see the next example."
+        description="Six visual variants. Use primary for the page's main action, secondary for supporting actions, ghost for tertiary actions in dense UIs, danger for destructive operations, danger-outline for a destructive action that must not dominate (a Remove on every row). The success variant is a transient confirmation state — see the next example."
         code={`import { Button, Cluster } from '@eocrm/design-system';
 
 export function Demo() {
@@ -83,6 +83,7 @@ export function Demo() {
       <Button variant="secondary">Secondary</Button>
       <Button variant="ghost">Ghost</Button>
       <Button variant="danger">Danger</Button>
+      <Button variant="danger-outline">Danger outline</Button>
       <Button variant="success">Success</Button>
     </Cluster>
   );
@@ -93,6 +94,7 @@ export function Demo() {
           <Button variant="secondary">Secondary</Button>
           <Button variant="ghost">Ghost</Button>
           <Button variant="danger">Danger</Button>
+          <Button variant="danger-outline">Danger outline</Button>
           <Button variant="success">Success</Button>
         </Cluster>
       </Example>
