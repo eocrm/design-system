@@ -38,7 +38,8 @@ export interface ScrollAreaProps extends HTMLAttributes<HTMLDivElement> {
 
 /**
  * A region that scrolls only its own content vertically: a feed under a
- * fixed header, a long list in a popover. Inside `<Popover.Content>` it is
+ * fixed header, a long list in a popover. It pads its content by the
+ * focus-ring extent (4px) so focused children's rings aren't clipped. Inside `<Popover.Content>` it is
  * also what lets the popover cap itself at the viewport: the popover
  * becomes a flex column in which the ScrollArea is the only child that
  * shrinks, so the header stays put while the feed scrolls. That needs the

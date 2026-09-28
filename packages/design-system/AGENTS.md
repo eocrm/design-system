@@ -1835,6 +1835,7 @@ When NOT to use: arranging children → `<Stack>`/`<Cluster>`; a fixed overlay a
 </ScrollArea>
 ```
 
+- Pads its content by the focus-ring extent (4px) so focused children's rings aren't clipped.
 - `maxHeight`: `sm` (240px) / `md` (400px) / `lg` (560px), or a one-off `number` (px) / CSS length string. Prefer the scale. Omitted: no cap of its own, so it fills a bounded flex parent.
 - **Keyboard:** named (`aria-label` / `aria-labelledby`), it is always a `role="region"` landmark. It is a tab stop (`tabIndex=0`) only while it overflows AND holds nothing focusable (a dev warning fires if that happens unnamed). A feed of links adds no tab stop. Name the ones worth landmark navigation (feeds, logs), not decorative ones.
 - **In a Popover** it's what caps the popover at the viewport: the popover becomes a flex column where only the ScrollArea shrinks, so a header above it stays put. Keep it a direct child of `Popover.Content`, or inside one wrapper element that is a direct child (`Content > Stack > ScrollArea`). That one wrapper must lay its children out as a column: a `<Stack>`, or a plain element (div/form/Card), which the popover lays out as a column. A row wrapper such as `<Cluster>` is not supported (the popover caps but the feed overflows it) — put the ScrollArea in a Stack instead. Deeper nesting leaves the popover uncapped.

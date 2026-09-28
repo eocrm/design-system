@@ -318,6 +318,13 @@ describe('ScrollArea', () => {
     const root = scss.match(/\.root \{[\s\S]*?\n\}/)![0];
     expect(root).toMatch(/overflow-y: auto;/);
     expect(root).toMatch(/overflow-x: hidden;/);
+    // Room for a focused child's outset ring at the clip edge (focus-ring sweep).
+    expect(root).toMatch(/padding: var\(--scroll-area-padding\);/);
+    expect(root).toMatch(/scroll-padding: var\(--scroll-area-padding\);/);
+    const tokens = readFileSync(resolve(__dirname, 'ScrollArea.tokens.scss'), 'utf8');
+    expect(tokens).toMatch(
+      /--scroll-area-padding: calc\(var\(--ring-offset\) \+ var\(--ring-width\)\);/,
+    );
     expect(root).toMatch(/min-height: 0;/);
     expect(root).toMatch(/overscroll-behavior: contain;/);
     expect(root).toMatch(/focus-ring\(var\(--scroll-area-ring\)\)/);

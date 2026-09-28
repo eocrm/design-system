@@ -14,6 +14,13 @@
   min-height: 0;
   overscroll-behavior: contain;
 
+  // The overflow clips at the padding edge, so a link flush against it lost
+  // its outset focus ring (focus-ring geometry sweep). Pad by the ring's
+  // extent, and scroll-pad the same so a keyboard-focused child scrolls into
+  // view with its ring.
+  padding: var(--scroll-area-padding);
+  scroll-padding: var(--scroll-area-padding);
+
   &:focus-visible {
     @include focus-ring(var(--scroll-area-ring));
   }
