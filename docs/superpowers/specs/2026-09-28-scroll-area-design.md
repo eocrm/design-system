@@ -23,18 +23,20 @@ Two gaps remain:
 
 ## Decisions
 
-| Question | Decision |
-|---|---|
-| Height API | Token scale `'sm' \| 'md' \| 'lg'` plus an escape hatch: a `number` (px) or `string` (any CSS length) |
-| Keyboard tab stop | Only while it overflows AND contains no focusable descendant |
-| Popover padding prop | None; 12px default fits |
-| Popover cap scope | Only popovers that contain a ScrollArea (`:has([data-scroll-area])`) |
-| Branch | Same branch as #593–#597 |
+| Question             | Decision                                                                                              |
+| -------------------- | ----------------------------------------------------------------------------------------------------- |
+| Height API           | Token scale `'sm' \| 'md' \| 'lg'` plus an escape hatch: a `number` (px) or `string` (any CSS length) |
+| Keyboard tab stop    | Only while it overflows AND contains no focusable descendant                                          |
+| Popover padding prop | None; 12px default fits                                                                               |
+| Popover cap scope    | Only popovers that contain a ScrollArea (`:has([data-scroll-area])`)                                  |
+| Branch               | Same branch as #593–#597                                                                              |
 
 ## 1. `ScrollArea`
 
 ```tsx
-<ScrollArea maxHeight="md" aria-label="Notifications">{rows}</ScrollArea>
+<ScrollArea maxHeight="md" aria-label="Notifications">
+  {rows}
+</ScrollArea>
 ```
 
 - `src/components/ScrollArea/`: `ScrollArea.tsx`, `.module.scss`,
@@ -51,7 +53,7 @@ Two gaps remain:
   - No default. Without `maxHeight` the area fills the height its parent
     gives it. This supports a bounded flex parent.
 - Styles (not layout under Rule 4): `overflow-y: auto; min-height: 0;
-  overscroll-behavior: contain;` plus a `:focus-visible` ring through the
+overscroll-behavior: contain;` plus a `:focus-visible` ring through the
   `focus-ring` mixin and a component token aliasing the default ring.
 - **Keyboard reachability.** State `focusable` =
   `scrollHeight > clientHeight && !el.querySelector(FOCUSABLE)`. It is
@@ -70,6 +72,7 @@ Two gaps remain:
   accessible name comes from the consumer's `aria-label` / `aria-labelledby`.
   In dev only, a `console.warn` fires once per instance when it becomes
   focusable with neither.
+
 - Full JSDoc: the component with 2–3 `@example`s (standalone, the Popover
   notification recipe), every prop, and `ScrollAreaMaxHeight`. `@remarks`:
   - When NOT to use: whole-page scrolling (AppLayout owns it); a Card with a
@@ -84,19 +87,27 @@ Two gaps remain:
 - `Popover/Content.tsx`: middleware becomes
   `[offset(sideOffset), flip(), shift({ padding: 8 }), size({ padding: 8, apply({ availableHeight, elements }) { elements.floating.style.setProperty('--popover-available-height', `${availableHeight}px`) } }), arrow({ element: arrowRef })]`.
 - `Popover.module.scss`:
+
   ```scss
   .content:has([data-scroll-area]) {
     display: flex;
     flex-direction: column;
     max-height: var(--popover-available-height);
 
-    > * { flex-shrink: 0; }
+    > * {
+      flex-shrink: 0;
+    }
     > [data-scroll-area],
-    > :has([data-scroll-area]) { flex-shrink: 1; min-height: 0; }
+    > :has([data-scroll-area]) {
+      flex-shrink: 1;
+      min-height: 0;
+    }
   }
   ```
+
   This is a compound-internal layout exception like Card's `.scroll`, with a
   comment. No `overflow` on `.content`, so the arrow is never clipped.
+
 - Supported shapes: a ScrollArea as a direct child of `Popover.Content`, or
   wrapped exactly once (e.g. `Content > Stack > [Header, ScrollArea]`).
 - Popovers without a ScrollArea are unchanged. A tall one still overflows, and

@@ -867,7 +867,9 @@ describe('Popover — viewport cap with a ScrollArea (#598)', () => {
     await user.click(screen.getByRole('button', { name: 'Open' }));
     const dialog = screen.getByRole('dialog');
     await waitFor(() =>
-      expect(dialog.style.getPropertyValue('--popover-available-height')).toMatch(/^-?\d+(\.\d+)?px$/),
+      expect(dialog.style.getPropertyValue('--popover-available-height')).toMatch(
+        /^-?\d+(\.\d+)?px$/,
+      ),
     );
   });
 

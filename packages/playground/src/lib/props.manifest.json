@@ -336,7 +336,7 @@
           "type": "ButtonVariant",
           "required": false,
           "default": "primary",
-          "description": "Visual variant.\n- `primary` (default) — the section's main action. Use **one** per page section.\n- `secondary` — supporting actions like \"Cancel\", \"Export\", \"Filter\".\n- `ghost` — tertiary actions in dense UIs (toolbar buttons, row actions).\n- `danger` — destructive operations only (Delete, Revoke, Remove). Pair with a confirmation if irreversible.\n- `success` — **transient confirmation only**, not an initial state. Flip to\n  `success` for ~1.5s after an action resolves (Save → \"Saved!\"), then\n  flip back. Never render a button as `success` on mount — it has no\n  action-intent meaning, only post-action feedback. See the `@example`\n  below for the timer pattern."
+          "description": "Visual variant.\n- `primary` (default) — the section's main action. Use **one** per page section.\n- `secondary` — supporting actions like \"Cancel\", \"Export\", \"Filter\".\n- `ghost` — tertiary actions in dense UIs (toolbar buttons, row actions).\n- `danger` — destructive operations only (Delete, Revoke, Remove). Pair with a confirmation if irreversible.\n- `danger-outline` — a destructive action that must not dominate: surface\n  fill, danger text and border. For a Remove repeated on every row, or a\n  destructive action beside a primary one. Use filled `danger` for the\n  confirm step itself.\n- `success` — **transient confirmation only**, not an initial state. Flip to\n  `success` for ~1.5s after an action resolves (Save → \"Saved!\"), then\n  flip back. Never render a button as `success` on mount — it has no\n  action-intent meaning, only post-action feedback. See the `@example`\n  below for the timer pattern."
         },
         {
           "name": "size",
@@ -865,7 +865,7 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Id(s) of element(s) that label the trigger button. Forwarded onto the\nfocusable trigger (not the root wrapper) and takes precedence over the\ngenerated `aria-label`. Set automatically when wrapped in `<Field label>`."
+          "description": "Id(s) of element(s) that label the trigger button. Forwarded onto the\nfocusable trigger (not the root wrapper) and takes precedence over the\ngenerated `aria-label`. Set automatically when wrapped in `<Field label>`.\nOn the default trigger a visually hidden span holding the current HEX is\nappended, so the name reads e.g. \"Accent colour #0052CC\". The popover\ndialog is named by these ids alone (purpose, no value)."
         },
         {
           "name": "aria-describedby",
@@ -886,7 +886,7 @@
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
           "default": "",
-          "description": "Optional content rendered inside the popover, below the panel (and below\nits presets grid, if any) — for live feedback about the color being\npicked, e.g. a contrast-ratio readout that updates as the user drags.\nNot available on the standalone `<ColorPicker.Panel>`, which has no\npopover to render it inside.\n\nNot an `aria-live` region by default — announcing every drag tick would\nbe disruptive. If the footer's text should be announced as it settles,\nwire that up yourself (e.g. wrap it in your own `role=\"status\"` span);\nthat tradeoff is the consumer's call, not the picker's default."
+          "description": "Optional content rendered inside the popover, below the panel (and below\nits presets grid, if any) — for live feedback about the color being\npicked, e.g. a contrast-ratio readout that updates as the user drags.\nNot available on the standalone `<ColorPicker.Panel>`, which has no\npopover to render it inside.\n\nNot an `aria-live` region by default — announcing every drag tick would\nbe disruptive. If the footer's text should be announced as it settles,\nwire that up yourself (e.g. wrap it in your own `role=\"status\"` span);\nthat tradeoff is the consumer's call, not the picker's default.\n\nThe footer is wired as the popover dialog's `aria-describedby`, so its\ntext is read when the dialog opens. Keep it short — it is read in full."
         },
         {
           "name": "children",
@@ -1994,6 +1994,13 @@
           "required": false,
           "default": "",
           "description": "Caps the label's width, a positive number of `ch`; past it the label\nellipsizes on one line (also on a chip without `truncate`). For chips in\nrunning text, where the container edge is a whole paragraph away. The\nfull label stays in the DOM and the accessible name; a clipped label\nshows it in a tooltip on hover or keyboard focus."
+        },
+        {
+          "name": "labelEllipsis",
+          "type": "EntityChipLabelEllipsis",
+          "required": false,
+          "default": "'end'",
+          "description": "Which end of a clipped label is cut. Applies only where the label can\nclip at all (`truncate`, segments, or `labelMaxWidth`); ignored on a\nwrapping chip.\n- `'end'` (default) — `Fix the login bu…`. Right for titles, whose\n  distinctive part is the start.\n- `'start'` — `…/pull/1116`. For labels whose distinctive part is the\n  tail, e.g. a URL path under a host `prefix`. The text keeps its order;\n  `prefix` and segments stay whole, and the tooltip still shows it all."
         },
         {
           "name": "labelWeight",
@@ -3606,7 +3613,7 @@
           "type": "OtpInputSize",
           "required": false,
           "default": "",
-          "description": "Cell size. Default `'md'`.\n- `'sm'` — 24px cells; dense admin screens.\n- `'md'` — 32px cells (default); most forms.\n- `'lg'` — 40px cells; a dedicated verification screen."
+          "description": "Cell size. Default `'md'`.\n- `'sm'` — 24px cells; dense admin screens.\n- `'md'` — 32px cells (default); most forms.\n- `'lg'` — 40px cells; a dedicated verification screen.\n- `'xl'` — 48px cells; a code field that IS the screen (IdP login\n  challenge, touch-first). Six cells still fit a 360px phone. No\n  `<Input>` counterpart at this height — don't line it up with fields."
         },
         {
           "name": "invalid",
@@ -4402,6 +4409,17 @@
         }
       ]
     },
+    "ScrollArea": {
+      "props": [
+        {
+          "name": "maxHeight",
+          "type": "ScrollAreaMaxHeight",
+          "required": false,
+          "default": "",
+          "description": "Caps the area's height; past it, the content scrolls vertically.\n- `'sm'` — 240px. A short list inside a form or a card.\n- `'md'` — 400px. A popover feed (notifications, activity).\n- `'lg'` — 560px. A tall panel body.\n- `number` — px, for a one-off (`maxHeight={320}`). Prefer the scale.\n- `string` — any CSS length (`'50vh'`).\n\nOmitted: no cap of its own. The area fills the height its parent gives\nit, which is right as the flexible child of a bounded flex column."
+        }
+      ]
+    },
     "Select": {
       "props": [
         {
@@ -4975,7 +4993,7 @@
           "type": "ButtonVariant",
           "required": false,
           "default": "primary",
-          "description": "Visual variant.\n- `primary` (default) — the section's main action. Use **one** per page section.\n- `secondary` — supporting actions like \"Cancel\", \"Export\", \"Filter\".\n- `ghost` — tertiary actions in dense UIs (toolbar buttons, row actions).\n- `danger` — destructive operations only (Delete, Revoke, Remove). Pair with a confirmation if irreversible.\n- `success` — **transient confirmation only**, not an initial state. Flip to\n  `success` for ~1.5s after an action resolves (Save → \"Saved!\"), then\n  flip back. Never render a button as `success` on mount — it has no\n  action-intent meaning, only post-action feedback. See the `@example`\n  below for the timer pattern."
+          "description": "Visual variant.\n- `primary` (default) — the section's main action. Use **one** per page section.\n- `secondary` — supporting actions like \"Cancel\", \"Export\", \"Filter\".\n- `ghost` — tertiary actions in dense UIs (toolbar buttons, row actions).\n- `danger` — destructive operations only (Delete, Revoke, Remove). Pair with a confirmation if irreversible.\n- `danger-outline` — a destructive action that must not dominate: surface\n  fill, danger text and border. For a Remove repeated on every row, or a\n  destructive action beside a primary one. Use filled `danger` for the\n  confirm step itself.\n- `success` — **transient confirmation only**, not an initial state. Flip to\n  `success` for ~1.5s after an action resolves (Save → \"Saved!\"), then\n  flip back. Never render a button as `success` on mount — it has no\n  action-intent meaning, only post-action feedback. See the `@example`\n  below for the timer pattern."
         },
         {
           "name": "size",
@@ -5844,7 +5862,7 @@
     }
   },
   "types": {
-    "ButtonVariant": "\"success\" | \"danger\" | \"primary\" | \"secondary\" | \"ghost\"",
+    "ButtonVariant": "\"success\" | \"danger\" | \"primary\" | \"secondary\" | \"ghost\" | \"danger-outline\"",
     "ButtonSize": "\"sm\" | \"md\" | \"lg\" | \"xs\"",
     "InputSize": "\"sm\" | \"md\" | \"lg\"",
     "KanbanMoveEvent": "{ from: { columnId: string | number; index: number; }; to: { columnId: string | number; index: number; }; cardId: string | number }",
@@ -5877,6 +5895,7 @@
     "SplitAlign": "\"start\" | \"center\" | \"stretch\"",
     "StickyTop": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"none\" | \"topbar\"",
     "MasonryGap": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"2xl\"",
+    "ScrollAreaMaxHeight": "string | number",
     "DividerOrientation": "\"horizontal\" | \"vertical\"",
     "DividerVariant": "\"solid\" | \"dashed\"",
     "DividerSize": "\"sm\" | \"md\" | \"lg\"",
@@ -5891,6 +5910,7 @@
     "EntityChipStatus": "{ label: string; category?: StatusCategory; color?: PaletteColor }",
     "EntityChipSegment": "{ kind: \"icon\"; icon: ReactNode; label: string; color?: PaletteColor; size?: number; } | { kind: \"text\"; text: ReactNode; color?: PaletteColor; tooltip?: ReactNode; size?: number; }",
     "EntityChipLabelWeight": "\"medium\" | \"semibold\"",
+    "EntityChipLabelEllipsis": "\"start\" | \"end\"",
     "ThreadNodeAlign": "\"header\" | \"top\"",
     "LogoSize": "\"sm\" | \"md\" | \"lg\"",
     "LogoTextPlacement": "\"end\" | \"bottom\"",
@@ -5922,7 +5942,7 @@
     "DrawerSize": "\"sm\" | \"md\" | \"lg\"",
     "DrawerOverlayVariant": "\"solid\" | \"blur\"",
     "RadioSize": "\"sm\" | \"md\" | \"lg\"",
-    "OtpInputSize": "\"sm\" | \"md\" | \"lg\"",
+    "OtpInputSize": "\"sm\" | \"md\" | \"lg\" | \"xl\"",
     "OtpInputType": "\"numeric\" | \"alphanumeric\"",
     "PasswordInputSize": "\"sm\" | \"md\" | \"lg\"",
     "PasswordStrengthScore": "0 | 1 | 2 | 3 | 4",

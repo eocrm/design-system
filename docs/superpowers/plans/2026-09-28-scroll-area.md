@@ -71,6 +71,7 @@ JSON → generated Sass.
 ### Task 1: Scroll-area size primitives
 
 **Files:**
+
 - Modify: `packages/design-tokens/src/tokens.json`
 - Regenerate: `packages/design-tokens/generated/web/tokens.scss` (via script)
 - Modify: `packages/design-tokens/test/generate.test.mjs:14`
@@ -79,13 +80,14 @@ JSON → generated Sass.
 - Modify: `packages/design-tokens/test/fixtures/current-web-contract.json`
 
 **Interfaces:**
+
 - Produces: CSS custom properties `--size-scroll-area-sm` (240px),
   `--size-scroll-area-md` (400px) and `--size-scroll-area-lg` (560px), all
   global and non-themed.
 
 - [ ] **Step 1: Add the three tokens to `tokens.json`.** Insert them
-  directly after the `size.radio.small` entry (the last `size.radio.*`
-  entry). Use exactly this shape, one entry per token:
+      directly after the `size.radio.small` entry (the last `size.radio.*`
+      entry). Use exactly this shape, one entry per token:
 
 ```json
     {
@@ -158,6 +160,7 @@ Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>"
 ### Task 2: `ScrollArea` component
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/_internal/overlay/useFocusTrap.ts`
   (export the existing `FOCUSABLE_SELECTOR`)
 - Create: `packages/design-system/src/components/ScrollArea/ScrollArea.tsx`
@@ -173,6 +176,7 @@ Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>"
   `index.ts` sha256 pin)
 
 **Interfaces:**
+
 - Consumes: `--size-scroll-area-sm/md/lg` (Task 1); `mergeRefs` from
   `../_internal/refs`; the `focus-ring` mixin from `../../styles/mixins`.
 - Produces:
@@ -184,8 +188,8 @@ Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>"
   - `export const FOCUSABLE_SELECTOR: string` from `useFocusTrap.ts`
 
 - [ ] **Step 1: Export the selector.** In `useFocusTrap.ts`, change
-  `const FOCUSABLE_SELECTOR = [` to `export const FOCUSABLE_SELECTOR = [`.
-  Nothing else changes.
+      `const FOCUSABLE_SELECTOR = [` to `export const FOCUSABLE_SELECTOR = [`.
+      Nothing else changes.
 
 - [ ] **Step 2: Write the failing tests** in `ScrollArea.test.tsx`:
 
@@ -258,21 +262,36 @@ describe('ScrollArea', () => {
     expect(el.className).toMatch(/mine/);
   });
 
-  it.each(['sm', 'md', 'lg'] as const)('maxHeight="%s" applies its scale class and no inline max-height', (size) => {
-    render(<ScrollArea maxHeight={size} data-testid="sa">x</ScrollArea>);
-    const el = screen.getByTestId('sa');
-    expect(el.className).toMatch(new RegExp(`max-height-${size}`));
-    expect(el.style.maxHeight).toBe('');
-  });
+  it.each(['sm', 'md', 'lg'] as const)(
+    'maxHeight="%s" applies its scale class and no inline max-height',
+    (size) => {
+      render(
+        <ScrollArea maxHeight={size} data-testid="sa">
+          x
+        </ScrollArea>,
+      );
+      const el = screen.getByTestId('sa');
+      expect(el.className).toMatch(new RegExp(`max-height-${size}`));
+      expect(el.style.maxHeight).toBe('');
+    },
+  );
 
   it('a number maxHeight is inline px; a string passes through', () => {
-    const { rerender } = render(<ScrollArea maxHeight={320} data-testid="sa">x</ScrollArea>);
+    const { rerender } = render(
+      <ScrollArea maxHeight={320} data-testid="sa">
+        x
+      </ScrollArea>,
+    );
     expect(screen.getByTestId('sa').style.maxHeight).toBe('320px');
-    rerender(<ScrollArea maxHeight="50vh" data-testid="sa">x</ScrollArea>);
+    rerender(
+      <ScrollArea maxHeight="50vh" data-testid="sa">
+        x
+      </ScrollArea>,
+    );
     expect(screen.getByTestId('sa').style.maxHeight).toBe('50vh');
   });
 
-  it("a consumer style.maxHeight wins over the maxHeight prop", () => {
+  it('a consumer style.maxHeight wins over the maxHeight prop', () => {
     render(
       <ScrollArea maxHeight={320} style={{ maxHeight: '100px' }} data-testid="sa">
         x
@@ -399,7 +418,9 @@ describe('ScrollArea', () => {
     expect(root).toMatch(/focus-ring\(var\(--scroll-area-ring\)\)/);
     for (const size of ['sm', 'md', 'lg']) {
       expect(scss).toMatch(
-        new RegExp(`\\.max-height-${size} \\{\\s*max-height: var\\(--scroll-area-max-height-${size}\\);`),
+        new RegExp(
+          `\\.max-height-${size} \\{\\s*max-height: var\\(--scroll-area-max-height-${size}\\);`,
+        ),
       );
     }
   });
@@ -575,7 +596,9 @@ export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(function S
   const measure = useCallback(() => {
     const el = innerRef.current;
     if (!el) return;
-    setFocusable(el.scrollHeight > el.clientHeight && el.querySelector(FOCUSABLE_SELECTOR) === null);
+    setFocusable(
+      el.scrollHeight > el.clientHeight && el.querySelector(FOCUSABLE_SELECTOR) === null,
+    );
   }, []);
 
   useLayoutEffect(measure, [measure]);
@@ -678,8 +701,8 @@ called before `render` (it is, in the test above).
   - From `packages/design-system`: `npm run build:manifest`
 
 - [ ] **Step 10: Re-pin the design-tokens `index.ts` hash.** It pins a
-  sha256 of `packages/design-system/src/index.ts`, which the export just
-  changed.
+      sha256 of `packages/design-system/src/index.ts`, which the export just
+      changed.
 
 Run: `npm test -w @eocrm/design-tokens 2>&1 | grep -A3 "actual: '"`
 Copy the `actual` hash into
@@ -688,7 +711,7 @@ current pinned hash. Re-run until `npm test -w @eocrm/design-tokens; echo exit=$
 prints `exit=0`.
 
 - [ ] **Step 11: Run the full design-system suite** (manifest drift, the
-  structure test and the export tests live there).
+      structure test and the export tests live there).
 
 Run: `npm test -w @eocrm/design-system; echo exit=$?`
 Expected: `exit=0`.
@@ -707,6 +730,7 @@ Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>"
 ### Task 3: Popover viewport cap with a ScrollArea
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/Popover/Content.tsx`
   (imports, and the middleware array near line 83)
 - Modify: `packages/design-system/src/components/Popover/Popover.module.scss`
@@ -715,14 +739,15 @@ Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>"
   (the `@remarks When NOT to use` list near line 65)
 
 **Interfaces:**
+
 - Consumes: `ScrollArea` from `../ScrollArea` (tests only) and its
   `data-scroll-area` attribute.
 - Produces: the CSS custom property `--popover-available-height`, set inline
   on the open `.content` element.
 
 - [ ] **Step 1: Write the failing tests** by appending to `Popover.test.tsx`
-  (`readFileSync`, `resolve`, `render`, `screen` and `userEvent` are already
-  imported there):
+      (`readFileSync`, `resolve`, `render`, `screen` and `userEvent` are already
+      imported there):
 
 ```tsx
 import { ScrollArea } from '../ScrollArea';
@@ -745,7 +770,9 @@ describe('Popover — viewport cap with a ScrollArea (#598)', () => {
     await user.click(screen.getByRole('button', { name: 'Open' }));
     const dialog = screen.getByRole('dialog');
     await waitFor(() =>
-      expect(dialog.style.getPropertyValue('--popover-available-height')).toMatch(/^-?\d+(\.\d+)?px$/),
+      expect(dialog.style.getPropertyValue('--popover-available-height')).toMatch(
+        /^-?\d+(\.\d+)?px$/,
+      ),
     );
   });
 
@@ -779,8 +806,8 @@ Run: `npx vitest run src/components/Popover`
 Expected: FAIL. The property is empty, and the SCSS `match` returns null.
 
 - [ ] **Step 3: Add the middleware** in `Content.tsx`. Add `size` to the
-  `@floating-ui/react-dom` import list (alphabetical, after `shift`). Then
-  replace the `middleware:` line with:
+      `@floating-ui/react-dom` import list (alphabetical, after `shift`). Then
+      replace the `middleware:` line with:
 
 ```tsx
     middleware: [
@@ -803,7 +830,7 @@ Expected: FAIL. The property is empty, and the SCSS `match` returns null.
 ```
 
 - [ ] **Step 4: Add the SCSS** in `Popover.module.scss`, directly after the
-  base `.content { ... }` block:
+      base `.content { ... }` block:
 
 ```scss
 // #598: a popover holding a <ScrollArea> caps itself at the viewport
@@ -839,7 +866,7 @@ immediately before each flagged declaration. Don't disable the rule for the
 whole block.
 
 - [ ] **Step 5: Document it in the Popover JSDoc.** In `PopoverRoot.tsx`'s
-  `@remarks When NOT to use` list, add:
+      `@remarks When NOT to use` list, add:
 
 ```
  * - A tall panel with no `<ScrollArea>`. The popover is NOT capped at the
@@ -875,6 +902,7 @@ Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>"
 ### Task 4: Guidance (AGENTS.md + DropdownMenu anti-pattern)
 
 **Files:**
+
 - Modify: `packages/design-system/AGENTS.md` (a new `ScrollArea` section
   after the `<Sticky>` section, which starts near line 1801; a note in the
   `<Popover>` section near line 2702; an anti-pattern in the
@@ -883,10 +911,11 @@ Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>"
   (the `@remarks Anti-patterns` list near line 68)
 
 **Interfaces:**
+
 - Consumes: the APIs from Tasks 2 and 3, exactly as named there.
 
 - [ ] **Step 1: Add the AGENTS.md ScrollArea section.** Insert it after the
-  whole `<Sticky>` section, before the next `### ` heading:
+      whole `<Sticky>` section, before the next `### ` heading:
 
 ````markdown
 ### `<ScrollArea>` — height-capped vertical scroll region
@@ -904,7 +933,7 @@ Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>"
 ````
 
 - [ ] **Step 2: Add the Popover note.** Append this bullet at the end of the
-  `<Popover>` section's bullet list:
+      `<Popover>` section's bullet list:
 
 ```markdown
 - **Tall content:** a Popover is capped at the viewport only when it holds a `<ScrollArea>` (#598). Wrap the long part (a feed, a list) in `<ScrollArea maxHeight="md">`; the header above it stays put. Without one, a tall popover runs off-screen. Recipe (notification centre): `Popover.Content minWidth={380}` → `Stack` → header `Cluster` (`Popover.Heading` + "Mark all as read" Button) + `ScrollArea maxHeight="md" aria-label="Notifications"`.
@@ -937,6 +966,7 @@ Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>"
 ### Task 5: Playground demo + wiring
 
 **Files:**
+
 - Create: `packages/playground/src/pages/components/ScrollAreaDemo.tsx`
 - Modify: `packages/playground/src/App.tsx` (import near line 116, route near line 246)
 - Modify: `packages/playground/src/layout/AppShell/navItems.ts` (the Layout
@@ -949,6 +979,7 @@ Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>"
   `ComponentName` union: add `| 'ScrollArea'` after `| 'Sticky'` near line 93)
 
 **Interfaces:**
+
 - Consumes: `ScrollArea`, `Popover`, `Button`, `Cluster`, `Stack`, `Text`
   and `Link` from `@eocrm/design-system`; `DemoLayout`, `Example` and
   `getComponentFiles` as in `VisuallyHiddenDemo.tsx`.
@@ -956,15 +987,7 @@ Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>"
 - [ ] **Step 1: Write `ScrollAreaDemo.tsx`:**
 
 ```tsx
-import {
-  Button,
-  Cluster,
-  Link,
-  Popover,
-  ScrollArea,
-  Stack,
-  Text,
-} from '@eocrm/design-system';
+import { Button, Cluster, Link, Popover, ScrollArea, Stack, Text } from '@eocrm/design-system';
 import { Bell } from 'lucide-react';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
@@ -1111,17 +1134,17 @@ export function Demo({ rows }) {
 ```
 
 - [ ] **Step 2: Wire the route.** In `App.tsx`, after the `StickyDemo`
-  import add `import { ScrollAreaDemo } from './pages/components/ScrollAreaDemo';`,
-  and after the `/components/sticky` route add
-  `<Route path="/components/scroll-area" element={<ScrollAreaDemo />} />`.
+      import add `import { ScrollAreaDemo } from './pages/components/ScrollAreaDemo';`,
+      and after the `/components/sticky` route add
+      `<Route path="/components/scroll-area" element={<ScrollAreaDemo />} />`.
 
 - [ ] **Step 3: Wire the nav.** In `navItems.ts`, add `ScrollText` to the
-  `lucide-react` import list (alphabetical position), and after the Sticky
-  item add
-  `{ to: '/components/scroll-area', label: 'ScrollArea', icon: ScrollText, end: false },`.
+      `lucide-react` import list (alphabetical position), and after the Sticky
+      item add
+      `{ to: '/components/scroll-area', label: 'ScrollArea', icon: ScrollText, end: false },`.
 
 - [ ] **Step 4: Wire the overview grid.** In `ComponentsIndex.tsx`, after
-  the Sticky entry add:
+      the Sticky entry add:
 
 ```tsx
   {
@@ -1134,8 +1157,8 @@ export function Demo({ rows }) {
 ```
 
 - [ ] **Step 5: Add the schematic.** In `overviewSchematics.tsx`, after the
-  `Sticky: (...)` entry, add (it uses the file's existing `Outline`, `Col`,
-  `Row`, `Box` and `Solid` helpers):
+      `Sticky: (...)` entry, add (it uses the file's existing `Outline`, `Col`,
+      `Row`, `Box` and `Solid` helpers):
 
 ```tsx
   ScrollArea: (
@@ -1158,7 +1181,7 @@ export function Demo({ rows }) {
 ```
 
 - [ ] **Step 6: Add to the `ComponentName` union.** In `registry.ts`, add
-  `| 'ScrollArea'` after `| 'Sticky'`.
+      `| 'ScrollArea'` after `| 'Sticky'`.
 
 - [ ] **Step 7: Typecheck, test and format.**
 
@@ -1181,20 +1204,20 @@ Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>"
 Run by the controller in this session, not by a subagent (Playwright MCP).
 
 - [ ] Start the playground on a free port 8090+:
-  `npm run dev -w playground -- --port 8091 --strictPort` (background).
+      `npm run dev -w playground -- --port 8091 --strictPort` (background).
 - [ ] At a 1280×900 viewport, open `/components/scroll-area`, open the
-  notification popover, and screenshot it. Then resize to 1280×420 and
-  re-open. Confirm the popover's bottom stays within the viewport, the
-  header ("Notifications" plus "Mark all as read") is fully visible, and the
-  feed scrolls.
+      notification popover, and screenshot it. Then resize to 1280×420 and
+      re-open. Confirm the popover's bottom stays within the viewport, the
+      header ("Notifications" plus "Mark all as read") is fully visible, and the
+      feed scrolls.
 - [ ] Tab through the keyboard example. Confirm the link list adds no stop
-  of its own, the plain-text list gets a visible focus ring, and ArrowDown
-  scrolls it.
+      of its own, the plain-text list gets a visible focus ring, and ArrowDown
+      scrolls it.
 - [ ] Spot-check that an existing ConfirmationPopover and a ColorPicker
-  popover look unchanged.
+      popover look unchanged.
 - [ ] Kill the dev server and any Playwright Chrome (see the WSLg cleanup
-  memory).
+      memory).
 - [ ] Gates from the repo root, reading exit codes:
-  `make test; echo $?`, `make build-lib; echo $?`, `make lint; echo $?`,
-  `npm run format:check; echo $?`, and the tarball check from the
-  implement-issue skill (expect `0`).
+      `make test; echo $?`, `make build-lib; echo $?`, `make lint; echo $?`,
+      `npm run format:check; echo $?`, and the tarball check from the
+      implement-issue skill (expect `0`).
