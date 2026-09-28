@@ -6,6 +6,7 @@ import {
   flip,
   offset,
   shift,
+  size,
   useFloating,
   type Placement,
 } from '@floating-ui/react-dom';
@@ -80,7 +81,23 @@ export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function 
     open: ctx.open,
     placement,
     transform: false,
-    middleware: [offset(sideOffset), flip(), shift({ padding: 8 }), arrow({ element: arrowRef })],
+    middleware: [
+      offset(sideOffset),
+      flip(),
+      shift({ padding: 8 }),
+      // #598: expose the room left in the viewport. Only a popover holding a
+      // <ScrollArea> uses it (Popover.module.scss `:has([data-scroll-area])`):
+      // it caps there and the ScrollArea shrinks, so the header stays put.
+      // A CSS variable rather than inline max-height, so popovers without a
+      // ScrollArea keep today's layout (and the arrow is never clipped).
+      size({
+        padding: 8,
+        apply({ availableHeight, elements }) {
+          elements.floating.style.setProperty('--popover-available-height', `${availableHeight}px`);
+        },
+      }),
+      arrow({ element: arrowRef }),
+    ],
     whileElementsMounted: autoUpdate,
     elements: { reference: ctx.triggerRef.current },
   });

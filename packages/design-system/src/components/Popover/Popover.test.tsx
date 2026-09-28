@@ -1,11 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createRef } from 'react';
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Popover } from './Popover';
 import { DropdownMenu } from '../DropdownMenu';
 import { ConfirmationPopover } from '../ConfirmationPopover';
+import { ScrollArea } from '../ScrollArea';
 
 describe('Popover — initial render', () => {
   it('renders nothing portaled on mount when defaultOpen is false', () => {
@@ -845,5 +846,46 @@ describe('Popover — nested floating-surface elevation', () => {
       .find((d) => d.textContent?.includes('Delete record?'));
     expect(confirmDialog).toBeTruthy();
     expect(confirmDialog).toHaveAttribute('data-in-overlay', '');
+  });
+});
+
+describe('Popover — viewport cap with a ScrollArea (#598)', () => {
+  it('writes --popover-available-height onto the open content', async () => {
+    const user = userEvent.setup();
+    render(
+      <Popover>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+        <Popover.Content aria-label="Panel">
+          <ScrollArea maxHeight="md" aria-label="Feed">
+            <a href="/x">row</a>
+          </ScrollArea>
+        </Popover.Content>
+      </Popover>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const dialog = screen.getByRole('dialog');
+    await waitFor(() =>
+      expect(dialog.style.getPropertyValue('--popover-available-height')).toMatch(/^-?\d+(\.\d+)?px$/),
+    );
+  });
+
+  it('SCSS: only a popover containing a ScrollArea becomes a capped flex column; the rest do not shrink', () => {
+    const scss = readFileSync(resolve(__dirname, 'Popover.module.scss'), 'utf8');
+    const block = scss.match(/\.content:has\(\[data-scroll-area\]\) \{[\s\S]*?\n\}/)![0];
+    expect(block).toMatch(/display: flex;/);
+    expect(block).toMatch(/flex-direction: column;/);
+    expect(block).toMatch(/max-height: var\(--popover-available-height\);/);
+    expect(block).toMatch(/> \* \{\s*flex-shrink: 0;/);
+    expect(block).toMatch(
+      /> \[data-scroll-area\],\s*> :has\(\[data-scroll-area\]\) \{\s*flex-shrink: 1;\s*min-height: 0;/,
+    );
+    // The base `.content` rule stays un-capped and not a flex container.
+    const base = scss.match(/^\.content \{[\s\S]*?\n\}/m)![0];
+    expect(base).not.toMatch(/display: flex/);
+    expect(base).not.toMatch(/max-height/);
+    // No overflow on the content itself: it would clip the arrow.
+    expect(scss).not.toMatch(/\.content[^{]*\{[^}]*overflow/);
   });
 });

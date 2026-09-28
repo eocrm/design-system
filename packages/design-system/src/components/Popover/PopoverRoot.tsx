@@ -68,6 +68,10 @@ export interface PopoverProps {
  * - For a focus-locked confirmation that demands full attention → use
  *   `<Modal>` (not yet shipped) once available; until then, `<Popover>`
  *   with explicit Confirm/Cancel buttons is acceptable.
+ * - A tall panel with no `<ScrollArea>`. The popover is NOT capped at the
+ *   viewport and will run off-screen. Wrap the long part in
+ *   `<ScrollArea maxHeight="md">`: the popover then caps itself at the
+ *   viewport and only the ScrollArea shrinks, so a header above it stays put.
  *
  * @remarks Anti-patterns
  * - ❌ `<Popover.Trigger><Button disabled>…</Button></Popover.Trigger>` —

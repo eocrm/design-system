@@ -33,6 +33,31 @@
   z-index: var(--z-overlay-floating);
 }
 
+// #598: a popover holding a <ScrollArea> caps itself at the viewport
+// (`--popover-available-height`, written by Content.tsx's size middleware)
+// and becomes a flex column in which the ScrollArea is the ONLY child that
+// shrinks, so a header above it stays whole while the feed scrolls. The
+// ScrollArea may be a direct child or wrapped once (e.g. Content > Stack >
+// [header, ScrollArea]); deeper nesting is out of reach by design.
+// Compound-internal layout like Card's `.scroll`: the popover lays out its
+// own content box, not a consumer-positioned component. No `overflow` here,
+// since it would clip the arrow.
+.content:has([data-scroll-area]) {
+  display: flex;
+  flex-direction: column;
+  max-height: var(--popover-available-height);
+
+  > * {
+    flex-shrink: 0;
+  }
+
+  > [data-scroll-area],
+  > :has([data-scroll-area]) {
+    flex-shrink: 1;
+    min-height: 0;
+  }
+}
+
 .arrow {
   position: absolute;
   width: var(--popover-arrow-size);
