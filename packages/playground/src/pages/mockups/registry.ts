@@ -90,6 +90,7 @@ export type ComponentName =
   | 'Split'
   | 'Stack'
   | 'PillMenu'
+  | 'ScrollArea'
   | 'Sticky'
   | 'Switch'
   | 'Table'

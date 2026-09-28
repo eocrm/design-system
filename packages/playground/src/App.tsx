@@ -114,6 +114,7 @@ import { DrawerDemo } from './pages/components/DrawerDemo';
 import { GridDemo } from './pages/components/GridDemo';
 import { SplitDemo } from './pages/components/SplitDemo';
 import { StickyDemo } from './pages/components/StickyDemo';
+import { ScrollAreaDemo } from './pages/components/ScrollAreaDemo';
 import { MasonryDemo } from './pages/components/MasonryDemo';
 import { LinkDemo } from './pages/components/LinkDemo';
 import { LinkCardDemo } from './pages/components/LinkCardDemo';
@@ -244,6 +245,7 @@ export default function App() {
             <Route path="/components/grid" element={<GridDemo />} />
             <Route path="/components/split" element={<SplitDemo />} />
             <Route path="/components/sticky" element={<StickyDemo />} />
+            <Route path="/components/scroll-area" element={<ScrollAreaDemo />} />
             <Route path="/components/masonry" element={<MasonryDemo />} />
             <Route path="/components/link" element={<LinkDemo />} />
             <Route path="/components/link-card" element={<LinkCardDemo />} />

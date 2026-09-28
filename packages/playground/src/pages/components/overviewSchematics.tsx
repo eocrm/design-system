@@ -1305,6 +1305,27 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       <Solid w={58} h={30} />
     </Outline>
   ),
+  ScrollArea: (
+    <Outline
+      w={170}
+      h={84}
+      style={{ display: 'flex', flexDirection: 'column', gap: 6, padding: 8 }}
+    >
+      <Row gap={6} style={{ justifyContent: 'space-between' }}>
+        <Solid w={60} h={8} />
+        <Box w={36} h={8} />
+      </Row>
+      <Row gap={6} style={{ overflow: 'hidden', flex: 1, alignItems: 'flex-start' }}>
+        <Col gap={4}>
+          <Box w={130} h={9} />
+          <Box w={130} h={9} />
+          <Box w={130} h={9} />
+          <Box w={130} h={9} />
+        </Col>
+        <Solid w={4} h={26} />
+      </Row>
+    </Outline>
+  ),
   Masonry: (
     <Row gap={6} style={{ alignItems: 'flex-start' }}>
       <Col gap={6}>

@@ -388,6 +388,13 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['Sticky'],
   },
   {
+    to: '/components/scroll-area',
+    name: 'ScrollArea',
+    description:
+      'Height-capped vertical scroll region — a feed under a fixed header, a long list in a popover. Caps a Popover at the viewport; a named tab stop only when it must be.',
+    preview: SCHEMATICS['ScrollArea'],
+  },
+  {
     to: '/components/masonry',
     name: 'Masonry',
     description: 'Height-balanced columns for variable-height items.',
