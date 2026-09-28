@@ -1,5 +1,6 @@
 @use '../../styles/mixins' as *;
 @use './LinkCard.tokens';
+@use '../Card/Card.tokens';
 
 .linkCard {
   --link-card-elevation: var(--link-card-shadow);
@@ -21,10 +22,13 @@
 
   border-color: var(--link-card-hover-border-color);
 
-  // Re-assert no underline on hover: the global `a:hover { text-decoration:
-  // underline }` (typography.scss) out-specifies `.linkCard`'s rest rule, so
-  // without this the whole-card link underlines on hover. `.linkCard:hover`
-  // (0,2,0) beats `a:hover` (0,1,1). A LinkCard is a surface, never text.
+  // Re-assert no underline on hover. The library's own global hover rule
+  // (typography.scss's `a:where(:hover)`, specificity 0,0,1) is deliberately
+  // kept below `.linkCard` (0,1,0) so it can't win here — this is defensive
+  // against a CONSUMER's global link rule (e.g. a plain `a:hover { text-
+  // decoration: underline }` in the CRM shell), which has no such restraint
+  // and would otherwise out-specify `.linkCard`'s rest rule. A LinkCard is a
+  // surface, never text.
   text-decoration: none;
 }
 

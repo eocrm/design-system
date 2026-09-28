@@ -13,6 +13,17 @@
   box-shadow: var(--color-picker-panel-shadow);
 }
 
+// `framed={false}` — drops the panel's own chrome for nesting inside a
+// container that already draws a frame (Popover.Content, Card, ...).
+// Layout (gap, width) is untouched; only the surface chrome goes.
+.unframed {
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+}
+
 .panelDisabled {
   opacity: var(--color-picker-panel-opacity-disabled);
 
@@ -219,6 +230,25 @@
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
   cursor: not-allowed;
   opacity: var(--color-picker-trigger-opacity-disabled);
+}
+
+// Same danger border Input's `.invalid` uses (both tokens resolve to
+// --color-danger — see ColorPicker.tokens.scss). Repeated at
+// :hover:not(:disabled) because that rule (0-3-0) otherwise outranks a bare
+// [aria-invalid] rule (0-2-0) and would paint over it on hover.
+.trigger[aria-invalid='true'] {
+  border-color: var(--color-picker-trigger-border-color-invalid);
+}
+
+.trigger[aria-invalid='true']:hover:not(:disabled) {
+  border-color: var(--color-picker-trigger-border-color-invalid);
+}
+
+// Same danger ring Input's `.invalid:focus-visible` uses, via ColorPicker's
+// own component token (--color-picker-trigger-ring-invalid resolves to the
+// same primitive, var(--ring-danger)) rather than the default accent ring.
+.trigger[aria-invalid='true']:focus-visible {
+  @include focus-ring(var(--color-picker-trigger-ring-invalid));
 }
 
 .triggerSwatch {

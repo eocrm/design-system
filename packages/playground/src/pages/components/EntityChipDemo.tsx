@@ -292,7 +292,7 @@ export function Demo() {
 
       <Example
         title="Segmented (task chip)"
-        description="`before`/`after` add coloured segments butted against the chip — the whole chip stays one link and one Tab stop, and every segment's text joins its accessible name. Any segment makes the chip one line with only the outer corners rounded; `labelMaxWidth` caps the label in running text (full text on hover) while a `ResizablePreview` shows only the label shrinking as the container narrows."
+        description="`before`/`after` add coloured segments butted against the chip — the whole chip stays one link and one Tab stop, and every segment's text joins its accessible name. Any segment makes the chip one line with only the outer corners rounded; `labelMaxWidth` caps the label in running text (full text on hover) while a `ResizablePreview` shows only the label shrinking as the container narrows. `labelWeight` set to `semibold` gives the key + title the heavier weight this task-chip design wants."
         code={`import { Bug, Building2, Equal } from 'lucide-react';
 import { EntityChip, Stack, Text } from '@eocrm/design-system';
 
@@ -306,6 +306,7 @@ export function Demo() {
           prefix="ENG-15"
           label="Fix the login bug that only happens on Safari when the session cookie expires"
           labelMaxWidth={40}
+          labelWeight="semibold"
           before={[{ kind: 'icon', icon: <Bug />, label: 'Bug', color: 'red' }]}
           after={[
             { kind: 'icon', icon: <Equal />, label: 'Normal priority', color: 'slate' },
@@ -318,6 +319,7 @@ export function Demo() {
         href="#"
         prefix="ENG-15"
         label="Fix the login bug that only happens on Safari when the session cookie expires"
+        labelWeight="semibold"
         before={[{ kind: 'icon', icon: <Bug />, label: 'Bug', color: 'red' }]}
         after={[
           { kind: 'icon', icon: <Equal />, label: 'Normal priority', color: 'slate' },
@@ -336,6 +338,7 @@ export function Demo() {
               prefix="ENG-15"
               label="Fix the login bug that only happens on Safari when the session cookie expires"
               labelMaxWidth={40}
+              labelWeight="semibold"
               before={[{ kind: 'icon', icon: <Bug />, label: 'Bug', color: 'red' }]}
               after={[
                 { kind: 'icon', icon: <Equal />, label: 'Normal priority', color: 'slate' },
@@ -349,6 +352,7 @@ export function Demo() {
               href="#"
               prefix="ENG-15"
               label="Fix the login bug that only happens on Safari when the session cookie expires"
+              labelWeight="semibold"
               before={[{ kind: 'icon', icon: <Bug />, label: 'Bug', color: 'red' }]}
               after={[
                 { kind: 'icon', icon: <Equal />, label: 'Normal priority', color: 'slate' },

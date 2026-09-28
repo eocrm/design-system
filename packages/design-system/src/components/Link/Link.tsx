@@ -21,9 +21,28 @@ import styles from './Link.module.scss';
  */
 export type LinkVariant = 'default' | 'muted' | 'subtle';
 
+/**
+ * Underline behavior, independent of `variant`. Defaults to `'hover'`, which
+ * preserves each variant's existing look exactly — this prop only needs to
+ * be passed to opt into one of the other two behaviors.
+ * - `'hover'` — (default, same as omitting the prop) each variant's own
+ *   at-rest/hover behavior: `default`/`subtle` underline on hover only,
+ *   `muted` never underlines.
+ * - `'always'` — underlined at rest (and stays underlined on hover). Use for
+ *   any Link inside running text/body copy: color alone is not a sufficient
+ *   visual cue (WCAG 1.4.1 — the default accent-on-body contrast is 2.06:1,
+ *   below the 3:1 non-text threshold), so an inline link needs an underline
+ *   to be told apart from surrounding words without relying on color.
+ * - `'none'` — never underlined, not even on hover. Use for brand/nav/logo
+ *   links that want a variant's subtle color without a hover underline.
+ */
+export type LinkUnderline = 'hover' | 'always' | 'none';
+
 interface LinkOwnProps {
   /** Visual variant. See `LinkVariant` for descriptions. */
   variant?: LinkVariant;
+  /** Underline behavior. See `LinkUnderline` for descriptions. Default: `'hover'`. */
+  underline?: LinkUnderline;
   children?: ReactNode;
 }
 
@@ -57,6 +76,13 @@ const VARIANT_CLASS: Record<LinkVariant, string> = {
   default: styles.default,
   muted: styles.muted,
   subtle: styles.subtle,
+};
+
+// `'hover'` (the default) adds no class — each variant's own rules already
+// implement it. Only the two overrides need a class.
+const UNDERLINE_CLASS: Partial<Record<LinkUnderline, string>> = {
+  always: styles.underlineAlways,
+  none: styles.underlineNone,
 };
 
 /**
@@ -93,9 +119,13 @@ const VARIANT_CLASS: Record<LinkVariant, string> = {
  *   Use `<Button variant="ghost">` instead.
  * - ❌ Forgetting `rel="noopener noreferrer"` on `target="_blank"` links — security risk.
  * - ❌ Using `variant="default"` for low-emphasis nav (breadcrumbs, footer). Use `muted`.
+ * - ❌ A Link inside running text/body copy without `underline="always"` — with only
+ *   the default hover-underline, the link is told apart from surrounding text by
+ *   color alone, which fails WCAG 1.4.1 at this library's accent-vs-body contrast
+ *   (2.06:1, below the 3:1 non-text threshold).
  */
 export const Link = forwardRef(function Link<C extends ElementType = 'a'>(
-  { as, variant = 'default', className, children, ...props }: LinkProps<C>,
+  { as, variant = 'default', underline, className, children, ...props }: LinkProps<C>,
   ref: ForwardedRef<Element>,
 ) {
   const Component = (as || 'a') as ElementType;
@@ -103,7 +133,12 @@ export const Link = forwardRef(function Link<C extends ElementType = 'a'>(
     <Component
       ref={ref}
       {...props}
-      className={clsx(styles.link, VARIANT_CLASS[variant], className)}
+      className={clsx(
+        styles.link,
+        VARIANT_CLASS[variant],
+        underline && UNDERLINE_CLASS[underline],
+        className,
+      )}
     >
       {children}
     </Component>

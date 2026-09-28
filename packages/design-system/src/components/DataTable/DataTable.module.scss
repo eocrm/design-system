@@ -1,5 +1,6 @@
 @use '../../styles/mixins' as *;
 @use './DataTable.tokens';
+@use '../Table/Table.tokens';
 @use '../_internal/collapse' as bp;
 
 // Visual / behavior modifiers ONLY. No layout (Rule 4).

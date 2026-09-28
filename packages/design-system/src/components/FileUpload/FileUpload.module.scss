@@ -156,6 +156,17 @@
   min-width: 0;
 }
 
+// #588 — `<Progress>` is `width: 100%` with no intrinsic size of its own, so
+// in the row's `auto` 4th column it measures to 0 and the bar is invisible.
+// Scoped to `.rowUploading` (the row's own per-status class, from
+// STATUS_CLASS) so only the row actually showing a bar gets a wider column;
+// pending/done/error status cells are untouched. `min-inline-size` on a
+// grid item is the item's own sizing, not a layout property the parent owns
+// (CLAUDE.md Rule 4) — it's the same category as the `min-width: 0` above.
+.rowUploading .rowStatus {
+  min-inline-size: var(--file-upload-progress-min-width);
+}
+
 .rowErrorMsg {
   font-size: var(--file-upload-row-error-font-size);
   color: var(--file-upload-row-error-fg);

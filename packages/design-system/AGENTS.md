@@ -411,6 +411,10 @@ import { Link as RouterLink } from 'react-router-dom';
 <Link href="/x">View all</Link>                                  {/* default — accent, hover-underline */}
 <Link href="/x" variant="muted">Subdued nav</Link>               {/* breadcrumb-style */}
 <Link href="/x" variant="subtle">Contact name</Link>             {/* fg color, hover-accent */}
+
+// underline — independent of variant
+<Link href="/x" underline="always">documentation</Link>          {/* running text / body copy — required, see below */}
+<Link href="/x" variant="subtle" underline="none">Acme Inc</Link> {/* brand/nav — no hover underline */}
 ```
 
 - **Polymorphic**: `as={Component}` forwards all of Component's props with full TypeScript inference.
@@ -419,6 +423,11 @@ import { Link as RouterLink } from 'react-router-dom';
   - `default`: accent color, hover-underline. Inline CTA ("View all →").
   - `muted`: muted color, hover-accent. Low-emphasis nav (breadcrumb-style).
   - `subtle`: foreground color, hover-accent + underline. Dense-surface name links. **Not deprecated** — this is `Link`'s own variant and is unrelated to `Text`/`Title`'s `tone="subtle"`, which #521 DID deprecate. Same word, opposite status: a grep for "subtle deprecated" will land on the tone, and `PersonDisplay.Name` uses this variant deliberately.
+- **`underline` prop** (`'hover'` | `'always'` | `'none'`, default `'hover'`) — orthogonal to `variant`:
+  - `'hover'` (default, same as omitting it): each variant's existing look — `default`/`subtle` underline on hover only, `muted` never underlines.
+  - `'always'`: underlined at rest and on hover, on every variant.
+  - `'none'`: never underlined, not even on hover, on every variant.
+  - **Links inside running text/body copy MUST use `underline="always"`.** The default accent-on-body contrast falls short of WCAG 1.4.1's 3:1 non-text threshold, so color alone isn't a sufficient cue — a link needs an underline to be told apart from surrounding words. `underline="none"` is for brand/nav links that want a variant's subtle color without the hover underline (the opposite end of the same axis).
 - **No `disabled` state** — render `<span>` directly for non-clickable labels.
 
 #### When NOT to use
@@ -432,6 +441,7 @@ import { Link as RouterLink } from 'react-router-dom';
 - ❌ `<Link href="#" onClick={...}>` — fake hrefs break right-click "open in new tab".
 - ❌ Forgetting `rel="noopener noreferrer"` on `target="_blank"` links.
 - ❌ Using `variant="default"` for low-emphasis nav like breadcrumbs.
+- ❌ A Link inside running text/body copy without `underline="always"` — color alone isn't a sufficient visual cue (WCAG 1.4.1).
 
 ### `<LinkCard>` — clickable, full-surface Card
 
@@ -624,6 +634,9 @@ const [hex, setHex] = useState('#4F46E5');
 - **Keyboard (hue slider)**: inherits Slider's keyboard — arrows ±1°, PgUp/Dn ±10°, Home/End for 0°/360°.
 - **Popover placement** via `popoverPlacement?: 'bottom-start' | 'bottom' | 'top-start' | ...`. Default `'bottom-start'`.
 - **Disabled** dims the panel, sets `aria-disabled` on the SV pad, disables the slider + input, makes presets non-interactive. Trigger doesn't open.
+- **`panelFooter?: ReactNode`** — rendered inside the popover below the panel (and below presets). For live feedback about the color being picked, e.g. a contrast-ratio readout that updates as the user drags. Not available on the standalone `<ColorPicker.Panel>` (no popover to render it inside). Not an `aria-live` region by default — if the text should be announced as it changes, wrap it in your own `role="status"` span; announcing every drag tick would be disruptive by default.
+- **`<ColorPickerPanel>` (`<ColorPicker.Panel>`) takes `framed?: boolean`, default `true`.** `framed={false}` drops the panel's own chrome (border, shadow, padding, background, radius) — use it when nesting the panel inside something that already draws a frame (your own `Popover.Content`, a `Card`). `<ColorPicker>` renders its popover panel with `framed={false}` internally so the popover shows exactly one frame; a standalone `<ColorPicker.Panel>` keeps its frame by default.
+- **`invalid` now paints the default trigger's border AND its focus ring**, not just `aria-invalid` — `.trigger[aria-invalid=true]` uses the same danger primitive as `Input invalid` for both: the border (`--color-picker-trigger-border-color-invalid`, same primitive as `--input-border-color-invalid`, and it survives `:hover`) and the `:focus-visible` ring (`--color-picker-trigger-ring-invalid`, same primitive as `--input-ring-invalid`, both `var(--ring-danger)`) — each reached through ColorPicker's own component token, never a direct `--input-*` read.
 
 #### Color math API
 
@@ -2056,6 +2069,9 @@ import { Link as RouterLink } from 'react-router-dom';
     { kind: 'text', text: 'Reported', color: 'amber' },
   ]}
 />
+
+// `labelWeight="semibold"` — a heavier key + title (#590):
+<EntityChip href="/tasks/ENG-15" prefix="ENG-15" label="Fix the login bug on Safari" labelWeight="semibold" />
 ```
 
 - Polymorphic inline chip: optional `icon` (rendered `aria-hidden`), optional muted `prefix` (e.g. a task key), the `label`, and an optional colored `status`. All inline `<span>`s inside one root — safe to drop directly inside a `<p>`/`<Text>`.
@@ -2072,9 +2088,12 @@ import { Link as RouterLink } from 'react-router-dom';
 - **`trailing`** — adornments inside the chip after `status` (a priority icon, a `<Badge>`), full size under `truncate`, not rendered while `loading`. Its text JOINS the link's name (`aria-hidden` a decorative icon). ❌ Never interactive content — the chip is a link; row actions go beside it.
 - Hover affordance on link/button chips: the background deepens a step plus a brightness dip. Never a weight change, never an underline, even under aggressive consumer link CSS.
 - Chip text inherits the surrounding font size — inside a heading it renders at heading size, by design (that's what keeps the chip box symmetric around the local text in any context).
-- **Segments** (`before` / `after`, #582): coloured parts butted against the chip — `{ kind: 'icon', icon, label, color?, size? }` (label = accessible name + tooltip) or `{ kind: 'text', text, color?, tooltip?, size? }`; `size` is in em of the chip text (glyph default 0.85em, text default 0.9em). The whole chip stays one link; every segment joins its name. Any segment makes the chip one line (only the label shrinks) with only the outer corners rounded. Not rendered while `loading`/`unavailable`. `labelMaxWidth` (ch) caps the label in running text; a clipped label shows its full text in a tooltip on hover or keyboard focus.
+- **Segments** (`before` / `after`, #582): coloured parts butted against the chip — `{ kind: 'icon', icon, label, color?, size? }` (label = accessible name + tooltip) or `{ kind: 'text', text, color?, tooltip?, size? }`; `size` is in em of the chip text, at most 1 (larger is clamped, so a segment never makes the chip taller or knocks its text off the label's baseline); glyph default 0.85em, text default 0.9em. The whole chip stays one link; every segment joins its name. Any segment makes the chip one line (only the label shrinks) with only the outer corners rounded. Not rendered while `loading`/`unavailable`. `labelMaxWidth` (ch) caps the label in running text; a clipped label shows its full text in a tooltip on hover or keyboard focus. That text is always plain; a non-string `label` is read when the tooltip opens, so it can show old text if the label changes while the tooltip is open.
+- **A text segment's text sits on the label's baseline, not centred** (#591): the segment's own box keeps the chip's font-size/line-height (so its box and first-line baseline match the core exactly); the smaller `--entity-chip-segment-text-size` lives on an inner span instead, which then sits on that baseline through normal inline layout. Icon (glyph) segments stay vertically centred, as before — only text segments changed.
+- **The clipped-label tooltip is always plain text** (#590): it reads the label element's own `textContent` when it opens, not the `label` node itself — so a styled `label` (e.g. a `<Text tone="accent">`) never leaks its color/weight into the tooltip. No prop controls this; it's automatic.
+- **`labelWeight`**: `'medium'` (default, matches a plain chip / the RichText `@mention`) applies to `label` only — `prefix` has no weight rule of its own and stays inherited (normal). `'semibold'` is the one value that also touches `prefix`, setting BOTH `prefix` and `label` together (a heavier key + title, e.g. a segmented task chip). Backed by a component token (`--entity-chip-label-font-weight-semibold`), not by wrapping `label` in a styled `<Text>` — see the anti-pattern below.
 - **When NOT to use**: plain status with no linked entity → `<Badge>`/`<PillMenu>`; standalone navigation with no icon/prefix/status chrome → `<Link>`; removable filter pills → `<FilterChip>`.
-- **Anti-pattern**: nesting a `<Badge>` inside another `<Badge>` to fake an entity-with-status chip — `EntityChip` replaces that composition. `status.color` and the chip's own `color` are `PaletteColor` names, never raw hex strings. Omitting a link target (`href`/`as`) is also an anti-pattern — an EntityChip should link to its entity. Nesting `<IconTile>`/`<Badge>` in `icon`/`trailing` to fake coloured parts is also an anti-pattern — use `before`/`after` segments instead.
+- **Anti-pattern**: nesting a `<Badge>` inside another `<Badge>` to fake an entity-with-status chip — `EntityChip` replaces that composition. `status.color` and the chip's own `color` are `PaletteColor` names, never raw hex strings. Omitting a link target (`href`/`as`) is also an anti-pattern — an EntityChip should link to its entity. Nesting `<IconTile>`/`<Badge>` in `icon`/`trailing` to fake coloured parts is also an anti-pattern — use `before`/`after` segments instead. Wrapping `label` in a styled `<Text weight="semibold">` to get a heavier title is also an anti-pattern — use `labelWeight="semibold"`; it buys nothing anyway, since the clipped-label tooltip always renders the label's plain text regardless of how `label` is styled.
 
 ### `<PillMenu>` — coloured value menu (status, type, priority…)
 

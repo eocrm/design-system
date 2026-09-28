@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createRef, type ComponentProps, type ReactNode } from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { parse, type Rule } from 'postcss';
 import { compile } from 'sass';
@@ -550,7 +550,7 @@ describe('<EntityChip> — segments (#582)', () => {
         href="/t"
         label="T"
         after={[
-          { kind: 'icon', icon: <svg />, label: 'Big', size: 1.2 },
+          { kind: 'icon', icon: <svg />, label: 'Big', size: 0.7 },
           { kind: 'text', text: 'Small', size: 0.75 },
         ]}
       />,
@@ -559,8 +559,52 @@ describe('<EntityChip> — segments (#582)', () => {
       screen
         .getByRole('img', { name: 'Big' })
         .style.getPropertyValue('--entity-chip-segment-glyph-size'),
-    ).toBe('1.2em');
-    expect(screen.getByText('Small').style.fontSize).toBe('0.75em');
+    ).toBe('0.7em');
+    // `size` sets the INNER span's font-size (#591) — the outer `.segment` box
+    // keeps the chip's own font-size/line-height so the text sits on the
+    // label's baseline; only the wrapped value is sized down.
+    const value = screen.getByText('Small');
+    expect(value.className).toMatch(/segmentTextValue/);
+    expect(value.style.fontSize).toBe('0.75em');
+    const outer = value.parentElement as HTMLElement;
+    expect(outer.className).toMatch(/segmentText/);
+    expect(outer.style.fontSize).toBe('');
+  });
+
+  it('clamps a segment `size` above 1 to 1em (text and icon) — a segment never outgrows the chip; the CSS line-height: 0 is never overridden', () => {
+    render(
+      <EntityChip
+        href="/t"
+        label="T"
+        after={[
+          { kind: 'text', text: 'Tall', size: 1.4 },
+          { kind: 'text', text: 'Small', size: 0.8 },
+          { kind: 'icon', icon: <svg />, label: 'Huge', size: 2 },
+        ]}
+      />,
+    );
+    const tall = screen.getByText('Tall');
+    expect(tall.style.fontSize).toBe('1em');
+    expect(tall.style.lineHeight).toBe('');
+
+    const small = screen.getByText('Small');
+    expect(small.style.fontSize).toBe('0.8em');
+    expect(small.style.lineHeight).toBe('');
+
+    expect(
+      screen
+        .getByRole('img', { name: 'Huge' })
+        .style.getPropertyValue('--entity-chip-segment-glyph-size'),
+    ).toBe('1em');
+  });
+
+  it('a text segment (no `size`) wraps its text in an inner span; the outer segment has no inline font-size (#591)', () => {
+    render(<EntityChip href="/t" label="T" after={[{ kind: 'text', text: 'Reported' }]} />);
+    const value = screen.getByText('Reported');
+    expect(value.className).toMatch(/segmentTextValue/);
+    const outer = value.parentElement as HTMLElement;
+    expect(outer.className).toMatch(/segmentText/);
+    expect(outer.style.fontSize).toBe('');
   });
 
   it('keeps the core content (icon, prefix, label, status, trailing) inside .core', () => {
@@ -641,7 +685,21 @@ describe('<EntityChip> — segmented layout CSS (#582)', () => {
     expect(decl('.segment', 'flex-shrink')).toBe('0');
     expect(decl('.segment', 'align-self')).toBe('stretch');
     expect(decl('.segmentGlyph > svg', 'width')).toBe('var(--entity-chip-segment-glyph-size)');
-    expect(decl('.segmentText', 'font-size')).toBe('var(--entity-chip-segment-text-size)');
+  });
+
+  // #591: a text segment's text must sit on the label's baseline, not be
+  // centred at 0.9em. The outer `.segmentText` box gives up flex-centring for
+  // a normal block/inline formatting context (so the strut sets the
+  // baseline) and inherits the chip's own font-size/line-height; the smaller
+  // size lives on the inner `.segmentTextValue` span instead.
+  it('.segmentText is not a centring flex box and uses the chip line-height; the inner span carries the smaller size (#591)', () => {
+    expect(decl('.segmentText', 'display')).not.toBe('flex');
+    expect(decl('.segmentText', 'align-items')).toBeUndefined();
+    expect(decl('.segmentText', 'font-size')).toBeUndefined();
+    expect(decl('.segmentText', 'line-height')).toBe('var(--entity-chip-line-height)');
+    expect(decl('.segmentTextValue', 'font-size')).toBe('var(--entity-chip-segment-text-size)');
+    // Zero so the smaller text can't grow the chip past a plain chip's height.
+    expect(decl('.segmentTextValue', 'line-height')).toBe('0');
   });
 
   it('hovering a linked/button segmented chip brightens the core, matching the unsegmented hover token', () => {
@@ -940,5 +998,125 @@ describe('<EntityChip> — .core shrink rule outranks .truncate > * regardless o
       });
     });
     expect(found).toBe(true);
+  });
+});
+
+describe('<EntityChip> — clipped-label tooltip is always plain text (#590)', () => {
+  it('a clipped, styled label shows its text in the tooltip, never the styled element itself', async () => {
+    const user = userEvent.setup();
+    render(
+      <EntityChip
+        href="/t"
+        label={
+          <span data-testid="styled" style={{ color: 'red' }}>
+            Title
+          </span>
+        }
+        truncate
+      />,
+    );
+    const styled = screen.getByTestId('styled');
+    const label = styled.parentElement as HTMLElement; // the labelRef wrapper Tooltip trigger
+    fakeClip(label, true);
+    await user.hover(label);
+    const tooltip = await screen.findByRole('tooltip');
+    expect(tooltip).toHaveTextContent('Title');
+    expect(within(tooltip).queryByTestId('styled')).toBeNull();
+  });
+
+  it('a clipped, plain-string label still shows its text (unchanged behavior)', async () => {
+    const user = userEvent.setup();
+    render(<EntityChip href="/t" label="A very long task title" truncate />);
+    const label = screen.getByText('A very long task title');
+    fakeClip(label, true);
+    await user.hover(label);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('A very long task title');
+  });
+});
+
+describe('<EntityChip> — clipped-label tooltip never gets stuck disabled (#592)', () => {
+  it('a non-string label that renders no text, then a rerender to a long clipped text label, still opens the tooltip with the text', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <EntityChip href="/t" label={<svg data-testid="icon" />} truncate />,
+    );
+    // The labelRef wrapper Tooltip trigger — its textContent is '' (an empty
+    // <svg>). Hovering it while unclipped must not permanently disable the
+    // tooltip: an empty string, unlike null/undefined, makes Tooltip treat
+    // `content` as disabled (no listeners) forever after.
+    const iconLabel = screen.getByTestId('icon').parentElement as HTMLElement;
+    fakeClip(iconLabel, false);
+    await user.hover(iconLabel);
+    await new Promise((r) => setTimeout(r, 600)); // past Tooltip's 400ms delay
+    await user.unhover(iconLabel);
+
+    rerender(<EntityChip href="/t" label="A very long task title" truncate />);
+    const label = screen.getByText('A very long task title');
+    fakeClip(label, true);
+    await user.hover(label);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('A very long task title');
+  });
+
+  // Same trap, but staying on the NON-string path (the string branch above
+  // bypasses the captured-text fallback entirely): an empty capture must fall
+  // back rather than stick as '' and disable the Tooltip.
+  it('a non-string empty label, then a non-string long clipped label, still opens the tooltip', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <EntityChip href="/t" label={<svg data-testid="icon" />} truncate />,
+    );
+    const iconLabel = screen.getByTestId('icon').parentElement as HTMLElement;
+    fakeClip(iconLabel, true);
+    await user.hover(iconLabel);
+    await new Promise((r) => setTimeout(r, 600));
+    await user.unhover(iconLabel);
+
+    rerender(<EntityChip href="/t" label={<b>A very long task title</b>} truncate />);
+    const label = screen.getByText('A very long task title').parentElement as HTMLElement;
+    fakeClip(label, true);
+    await user.hover(label);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('A very long task title');
+  });
+
+  it('a string label that changes while the tooltip is open shows the new text (always fresh, never stale)', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(<EntityChip href="/t" label="Original title" truncate />);
+    const label = screen.getByText('Original title');
+    fakeClip(label, true);
+    await user.hover(label);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Original title');
+
+    rerender(<EntityChip href="/t" label="Updated title" truncate />);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent('Updated title');
+  });
+});
+
+describe('<EntityChip> — `labelWeight` (#590)', () => {
+  it('defaults to no semibold class on prefix or label', () => {
+    render(<EntityChip href="/t" prefix="ENG-5" label="Fix login bug" />);
+    expect(screen.getByText('ENG-5').className).not.toMatch(/semibold/i);
+    expect(screen.getByText('Fix login bug').className).not.toMatch(/semibold/i);
+  });
+
+  it('labelWeight="semibold" adds the modifier class to BOTH prefix and label', () => {
+    render(<EntityChip href="/t" prefix="ENG-5" label="Fix login bug" labelWeight="semibold" />);
+    expect(screen.getByText('ENG-5').className).toMatch(/semibold/i);
+    expect(screen.getByText('Fix login bug').className).toMatch(/semibold/i);
+  });
+
+  it('SCSS: the semibold modifier resolves to the new component token', () => {
+    const css = parse(compile(resolve(__dirname, './EntityChip.module.scss')).css);
+    let sawPrefix = false;
+    let sawLabel = false;
+    css.walkRules((rule: Rule) => {
+      if (!/semibold/i.test(rule.selector)) return;
+      rule.walkDecls('font-weight', (d) => {
+        if (d.value !== 'var(--entity-chip-label-font-weight-semibold)') return;
+        if (/prefix/.test(rule.selector)) sawPrefix = true;
+        if (/\.label/.test(rule.selector)) sawLabel = true;
+      });
+    });
+    expect(sawPrefix).toBe(true);
+    expect(sawLabel).toBe(true);
   });
 });

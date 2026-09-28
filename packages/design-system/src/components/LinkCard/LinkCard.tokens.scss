@@ -1,4 +1,6 @@
 // LinkCard.tokens.scss — interactive-state tokens over Card's reused surface tokens.
+@use '../Card/Card.tokens';
+
 :root {
   --link-card-shadow: var(--card-shadow); // rest = Card's shadow (--shadow-sm)
   --link-card-hover-shadow: var(--shadow-md);

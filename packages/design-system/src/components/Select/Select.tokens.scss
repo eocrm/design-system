@@ -1,4 +1,6 @@
 // Select.tokens.scss — component-scoped tokens for <Select> (trigger + listbox + chips + state rows). Defaults preserve byte-identical visuals.
+@use '../Badge/Badge.tokens';
+
 :root {
   // Trigger
   --select-trigger-padding-x: var(--space-3);

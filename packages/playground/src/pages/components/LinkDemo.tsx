@@ -1,6 +1,6 @@
 import { Link as RouterLink } from 'react-router';
 import { ExternalLink } from 'lucide-react';
-import { Cluster, Link, Stack } from '@eocrm/design-system';
+import { Cluster, Link, Stack, Text } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -163,6 +163,51 @@ export function Demo() {
           </Link>
           .
         </p>
+      </Example>
+
+      <Example
+        title="underline prop — running text vs. brand/nav"
+        description={
+          'Independent of `variant`. `underline="always"` for links inside running text ' +
+          '(color alone fails WCAG 1.4.1). `underline="none"` for a brand/nav link that ' +
+          'wants a subtle color with no hover underline.'
+        }
+        code={`import { Link, Stack, Text } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Stack gap="sm">
+      <Text>
+        Read our{' '}
+        <Link href="#privacy" underline="always" onClick={(e) => e.preventDefault()}>
+          privacy notice
+        </Link>{' '}
+        before continuing.
+      </Text>
+      <Link
+        href="#home"
+        variant="subtle"
+        underline="none"
+        onClick={(e) => e.preventDefault()}
+      >
+        Acme Inc
+      </Link>
+    </Stack>
+  );
+}`}
+      >
+        <Stack gap="sm">
+          <Text>
+            Read our{' '}
+            <Link href="#privacy" underline="always" onClick={(e) => e.preventDefault()}>
+              privacy notice
+            </Link>{' '}
+            before continuing.
+          </Text>
+          <Link href="#home" variant="subtle" underline="none" onClick={(e) => e.preventDefault()}>
+            Acme Inc
+          </Link>
+        </Stack>
       </Example>
 
       <Example

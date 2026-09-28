@@ -882,6 +882,13 @@
           "description": "Popover placement (split internally into side + align). Default `'bottom-start'`."
         },
         {
+          "name": "panelFooter",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Optional content rendered inside the popover, below the panel (and below\nits presets grid, if any) — for live feedback about the color being\npicked, e.g. a contrast-ratio readout that updates as the user drags.\nNot available on the standalone `<ColorPicker.Panel>`, which has no\npopover to render it inside.\n\nNot an `aria-live` region by default — announcing every drag tick would\nbe disruptive. If the footer's text should be announced as it settles,\nwire that up yourself (e.g. wrap it in your own `role=\"status\"` span);\nthat tradeoff is the consumer's call, not the picker's default."
+        },
+        {
           "name": "children",
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
@@ -1989,6 +1996,13 @@
           "description": "Caps the label's width, a positive number of `ch`; past it the label\nellipsizes on one line (also on a chip without `truncate`). For chips in\nrunning text, where the container edge is a whole paragraph away. The\nfull label stays in the DOM and the accessible name; a clipped label\nshows it in a tooltip on hover or keyboard focus."
         },
         {
+          "name": "labelWeight",
+          "type": "EntityChipLabelWeight",
+          "required": false,
+          "default": "'medium'",
+          "description": "Font weight for `label`. `'medium'` (default) matches a plain chip's\nfixed weight and the RichText `@mention` — most chips should leave this\nunset. `'medium'` does NOT apply to `prefix`: `.prefix` carries no\nfont-weight rule of its own and simply inherits (normal), so a default\nchip's key is lighter than its title. `'semibold'` is the one value that\ntouches BOTH — it sets `prefix` AND `label` to the same heavier weight\n(a task-chip design that wants its key heavier along with its title,\n#590). Use `'semibold'` for a design that explicitly wants that.\n\nDon't reach for a styled `<Text weight=\"semibold\">` around `label` to get\na heavier title instead (see the component's `@remarks` anti-patterns) —\nit buys nothing: the clipped-label tooltip reads the label's own\n`textContent` and always renders it plain, in the tooltip's own color,\nregardless of what the label node carries. Only this prop changes the\nrendered weight."
+        },
+        {
           "name": "as",
           "type": "C",
           "required": false,
@@ -3011,6 +3025,13 @@
           "required": false,
           "default": "",
           "description": "Visual variant. See `LinkVariant` for descriptions."
+        },
+        {
+          "name": "underline",
+          "type": "LinkUnderline",
+          "required": false,
+          "default": "",
+          "description": "Underline behavior. See `LinkUnderline` for descriptions. Default: `'hover'`."
         },
         {
           "name": "children",
@@ -5869,6 +5890,7 @@
     "BadgeAlign": "\"baseline\" | \"middle\"",
     "EntityChipStatus": "{ label: string; category?: StatusCategory; color?: PaletteColor }",
     "EntityChipSegment": "{ kind: \"icon\"; icon: ReactNode; label: string; color?: PaletteColor; size?: number; } | { kind: \"text\"; text: ReactNode; color?: PaletteColor; tooltip?: ReactNode; size?: number; }",
+    "EntityChipLabelWeight": "\"medium\" | \"semibold\"",
     "ThreadNodeAlign": "\"header\" | \"top\"",
     "LogoSize": "\"sm\" | \"md\" | \"lg\"",
     "LogoTextPlacement": "\"end\" | \"bottom\"",
@@ -5947,6 +5969,7 @@
     "DefinitionListLayout": "\"horizontal\" | \"stacked\"",
     "DefinitionListSpacing": "\"sm\" | \"md\" | \"lg\"",
     "LinkVariant": "\"default\" | \"muted\" | \"subtle\"",
+    "LinkUnderline": "\"none\" | \"hover\" | \"always\"",
     "AccordionVariant": "\"bordered\" | \"borderless\"",
     "AccordionSize": "\"sm\" | \"md\" | \"lg\"",
     "AccordionGap": "\"sm\" | \"md\" | \"lg\"",
@@ -5960,12 +5983,12 @@
     "TextAs": "\"div\" | \"label\" | \"p\" | \"span\"",
     "TextSize": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"inherit\"",
     "TextTone": "\"success\" | \"warning\" | \"danger\" | \"accent\" | \"default\" | \"muted\" | \"subtle\"",
-    "TextWeight": "\"regular\" | \"medium\" | \"semibold\" | \"bold\"",
+    "TextWeight": "\"medium\" | \"semibold\" | \"regular\" | \"bold\"",
     "TextAlign": "\"left\" | \"right\" | \"center\"",
     "TitleOrder": "1 | 2 | 3 | 4 | 5 | 6",
     "TitleSize": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"2xl\" | \"3xl\"",
     "TitleTone": "\"danger\" | \"accent\" | \"default\" | \"muted\" | \"subtle\"",
-    "TitleWeight": "\"regular\" | \"medium\" | \"semibold\" | \"bold\"",
+    "TitleWeight": "\"medium\" | \"semibold\" | \"regular\" | \"bold\"",
     "CalendarBackgroundInterval": "{ startsAt: Date; endsAt: Date; resourceId?: string; tone?: CalendarBackgroundTone }",
     "CalendarDropCandidate": "({ mode: \"move\"; } & CalendarEventMove) | ({ mode: \"resize\"; resourceId?: string; } & CalendarEventResize)",
     "CalendarDropResult": "boolean | void | Promise<boolean | void>",

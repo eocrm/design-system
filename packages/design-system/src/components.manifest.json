@@ -156,7 +156,8 @@
     "composes": [
       "Input",
       "Popover",
-      "Slider"
+      "Slider",
+      "Stack"
     ],
     "composedBy": []
   },
@@ -761,6 +762,7 @@
     "cluster": "Layout",
     "composes": [],
     "composedBy": [
+      "ColorPicker",
       "ConfirmationPopover",
       "Page",
       "RichTextEditor",

@@ -55,3 +55,16 @@
     text-decoration: underline;
   }
 }
+
+// `underline` prop overrides. Combined with `.link` (always present on every
+// Link element) each becomes a 2-class compound selector — 3 classes for the
+// `:hover` override — so it reliably outranks a bare single-class variant
+// rule (`.default`, `.muted`, `.subtle`) regardless of source order, without
+// `!important`.
+.link.underlineAlways {
+  text-decoration: underline;
+}
+
+.link.underlineNone:hover {
+  text-decoration: none;
+}

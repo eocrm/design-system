@@ -1,6 +1,8 @@
 // OtpInput.tokens.scss — component-scoped tokens for <OtpInput>. Every value
 // aliases the <Input> family or a primitive, so a code field sits flush with a
 // same-size Input or Button without visual drift.
+@use '../Input/Input.tokens';
+
 :root {
   // Group
   --otp-input-gap: var(--space-2);

@@ -87,6 +87,47 @@ function DisabledDemo() {
   );
 }
 
+// Relative luminance + WCAG contrast ratio — demo-only helper (not shipped
+// by the library; see AGENTS.md's ColorPicker section for `panelFooter`).
+function relativeLuminance(hex: string): number {
+  const channels = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+  const [r, g, b] = channels.map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function contrastRatio(hexA: string, hexB: string): number {
+  const a = relativeLuminance(hexA);
+  const b = relativeLuminance(hexB);
+  const [lighter, darker] = a > b ? [a, b] : [b, a];
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+function PopoverWithFooterAndInvalid() {
+  const [hex, setHex] = useState('#4F46E5');
+  const ratio = contrastRatio(hex, '#FFFFFF');
+  const tooLow = ratio < 4.5;
+  return (
+    <Stack gap="sm" align="start">
+      <Field
+        label="Accent color"
+        description="Used for button text contrast"
+        error={tooLow ? 'Contrast against white text is too low' : undefined}
+      >
+        <ColorPicker
+          value={hex}
+          onChange={setHex}
+          invalid={tooLow}
+          panelFooter={
+            <Text size="sm" tone={tooLow ? 'danger' : 'muted'}>
+              {ratio.toFixed(2)}:1 against white text
+            </Text>
+          }
+        />
+      </Field>
+    </Stack>
+  );
+}
+
 export function ColorPickerDemo() {
   return (
     <DemoLayout
@@ -164,6 +205,55 @@ export function PopoverCustomTrigger() {
 }`}
       >
         <PopoverCustomTrigger />
+      </Example>
+
+      <Example
+        title="panelFooter — live contrast feedback, and invalid"
+        description="panelFooter renders inside the popover below the panel — here a live contrast-ratio readout that updates as the user drags. invalid paints the default trigger's border with the same danger token Input uses, and Field mirrors it into a visible error."
+        code={`import { useState } from 'react';
+import { ColorPicker, Field, Stack, Text } from '@eocrm/design-system';
+
+// Relative luminance + WCAG contrast ratio — demo-only helper.
+function relativeLuminance(hex: string): number {
+  const channels = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+  const [r, g, b] = channels.map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function contrastRatio(hexA: string, hexB: string): number {
+  const a = relativeLuminance(hexA);
+  const b = relativeLuminance(hexB);
+  const [lighter, darker] = a > b ? [a, b] : [b, a];
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
+export function PopoverWithFooterAndInvalid() {
+  const [hex, setHex] = useState('#4F46E5');
+  const ratio = contrastRatio(hex, '#FFFFFF');
+  const tooLow = ratio < 4.5;
+  return (
+    <Stack gap="sm" align="start">
+      <Field
+        label="Accent color"
+        description="Used for button text contrast"
+        error={tooLow ? 'Contrast against white text is too low' : undefined}
+      >
+        <ColorPicker
+          value={hex}
+          onChange={setHex}
+          invalid={tooLow}
+          panelFooter={
+            <Text size="sm" tone={tooLow ? 'danger' : 'muted'}>
+              {ratio.toFixed(2)}:1 against white text
+            </Text>
+          }
+        />
+      </Field>
+    </Stack>
+  );
+}`}
+      >
+        <PopoverWithFooterAndInvalid />
       </Example>
 
       <Example

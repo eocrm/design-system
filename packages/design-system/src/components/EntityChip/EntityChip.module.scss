@@ -65,6 +65,15 @@
   font-weight: var(--entity-chip-label-font-weight);
 }
 
+// `labelWeight="semibold"` (#590): a modifier class on BOTH the prefix and
+// the label (the task-chip design wants key + title both heavier). Compound
+// selectors so the class only takes effect together with the part's own
+// class; the prefix keeps its muted color, only the weight changes.
+.prefix.semibold,
+.label.semibold {
+  font-weight: var(--entity-chip-label-font-weight-semibold);
+}
+
 // Text that belongs in the accessible name but not on screen. Three jobs now:
 // a loading chip's label (so it isn't announced as just "…"), its loading state
 // word, and an unavailable chip's state word. Both state words exist because
@@ -203,10 +212,31 @@
   padding-inline: var(--entity-chip-segment-padding-x-icon);
 }
 
+// #591: the outer box keeps the chip's OWN font-size and line-height (and the
+// same vertical padding as `.core`, from `.segment` above) so its box and its
+// first-line baseline match the core exactly. `display: block` drops the
+// `.segment` base rule's centring flex layout in favor of a normal block
+// formatting context, so the line box's strut — not `align-items: center` —
+// sets the baseline; `align-self: stretch` (inherited from `.segment`) still
+// spans the row for the fill. The smaller text size lives on the inner
+// `.segmentTextValue` span instead (moved off this element), which then sits
+// on that baseline via ordinary inline layout.
 .segmentText {
+  display: block;
   padding-inline: var(--entity-chip-segment-padding-x-text);
+  line-height: var(--entity-chip-line-height);
+}
+
+.segmentTextValue {
   font-size: var(--entity-chip-segment-text-size);
   font-weight: var(--entity-chip-label-font-weight);
+
+  // Contributes no height of its own: `line-height: 1` resolved against this
+  // smaller font sticks out of the chip's line box when baseline-aligned
+  // (measured: the chip grew 20.5px → 21.09px). At 0 the segment's strut
+  // alone sets the line — the same box as the core — and the glyphs still
+  // sit on its baseline (#591, measured equal in Chromium).
+  line-height: 0;
 }
 
 .segmentGlyph {

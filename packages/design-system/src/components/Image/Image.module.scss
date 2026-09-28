@@ -1,5 +1,6 @@
 @use './Image.tokens';
 @use '../../styles/mixins' as *;
+@use '../Button/Button.tokens';
 
 .wrapper {
   display: block;

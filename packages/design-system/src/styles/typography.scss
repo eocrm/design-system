@@ -24,10 +24,17 @@ h4 {
 a {
   color: var(--color-accent);
   text-decoration: none;
+}
 
-  &:hover {
-    text-decoration: underline;
-  }
+// Specificity 0,0,1 (ties the at-rest `a` rule above, wins by source order)
+// via :where() around only the `:hover` part — so this never outranks a
+// component's own single-class rule (e.g. `.link:hover`, `.button:hover`,
+// `.linkCard:hover`, all 0,1,0), but still beats the at-rest `a` rule so the
+// hover underline actually applies. A fully zero-specificity `:where(a:hover)`
+// (0,0,0) loses to the at-rest `a { text-decoration: none }` (0,0,1) and never
+// shows at all — see #584/#592.
+a:where(:hover) {
+  text-decoration: underline;
 }
 
 code,
