@@ -72,8 +72,9 @@ export interface PopoverProps {
  *   viewport and will run off-screen. Wrap the long part in
  *   `<ScrollArea maxHeight="md">`: the popover then caps itself at the
  *   viewport and only the ScrollArea shrinks, so a header above it stays put.
- *   Keep the ScrollArea a direct child, or inside one `<Stack>` that is a
- *   direct child, of `<Popover.Content>`; nested deeper, the popover stays
+ *   Keep the ScrollArea a direct child of `<Popover.Content>`, or inside one
+ *   wrapper element that is a direct child — that wrapper is laid out as a
+ *   flex column (a `<Stack>` already is); deeper nesting leaves the popover
  *   uncapped.
  *
  * @remarks Anti-patterns

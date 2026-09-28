@@ -19,9 +19,11 @@ function stubLayout(scrollHeight: number, clientHeight: number) {
 
 function stubResizeObserver() {
   const callbacks: ResizeObserverCallback[] = [];
+  const instances: MockResizeObserver[] = [];
   class MockResizeObserver {
     constructor(cb: ResizeObserverCallback) {
       callbacks.push(cb);
+      instances.push(this);
     }
     observe = vi.fn();
     unobserve = vi.fn();
@@ -29,6 +31,7 @@ function stubResizeObserver() {
   }
   vi.stubGlobal('ResizeObserver', MockResizeObserver);
   return {
+    instances,
     fire() {
       act(() => {
         for (const cb of callbacks) cb([], {} as ResizeObserver);
@@ -253,6 +256,27 @@ describe('ScrollArea', () => {
     layout.set(500, 100);
     ro.fire();
     expect(screen.getByTestId('sa')).toHaveAttribute('tabindex', '0');
+  });
+
+  it('observes added direct children and unobserves removed ones', async () => {
+    stubLayout(100, 100);
+    const ro = stubResizeObserver();
+    const { rerender } = render(
+      <ScrollArea aria-label="Feed" data-testid="sa">
+        <div data-testid="a">a</div>
+      </ScrollArea>,
+    );
+    const a = screen.getByTestId('a');
+    const obs = ro.instances[0]!;
+    expect(obs.observe).toHaveBeenCalledWith(a);
+    rerender(
+      <ScrollArea aria-label="Feed" data-testid="sa">
+        <p data-testid="b">b</p>
+      </ScrollArea>,
+    );
+    const b = screen.getByTestId('b');
+    await waitFor(() => expect(obs.observe).toHaveBeenCalledWith(b));
+    expect(obs.unobserve).toHaveBeenCalledWith(a);
   });
 
   it('warns once in dev when it becomes a tab stop with no accessible name', () => {

@@ -37,11 +37,13 @@
 // (`--popover-available-height`, written by Content.tsx's size middleware)
 // and becomes a flex column in which the ScrollArea is the ONLY child that
 // shrinks, so a header above it stays whole while the feed scrolls.
-// Supported shapes: the ScrollArea is a direct child, or inside ONE `<Stack>`
-// (a flex column) that is a direct child (Content > Stack > [header,
-// ScrollArea]). The selectors are `>`-anchored on purpose: deeper nesting, or
-// a non-flex wrapper, can't pass the shrink down, so it would cap the chrome
-// while the rows paint outside it. Such popovers stay uncapped (pre-#598).
+// Supported shapes: the ScrollArea is a direct child, or inside ONE wrapper
+// element that is a direct child (Content > Stack > [header, ScrollArea]).
+// That wrapper is laid out as a flex column (a `<Stack>` already is) so a
+// plain div/form wrapper passes the shrink down too. The selectors are
+// `>`-anchored on purpose: deeper nesting can't pass the shrink down, so it
+// would cap the chrome while the rows paint outside it. Such popovers stay
+// uncapped (pre-#598).
 // Compound-internal layout like Card's `.scroll`: the popover lays out its
 // own content box, not a consumer-positioned component. No `overflow` here,
 // since it would clip the arrow.
@@ -54,8 +56,14 @@
     flex-shrink: 0;
   }
 
-  > [data-scroll-area],
+  > [data-scroll-area] {
+    flex-shrink: 1;
+    min-height: 0;
+  }
+
   > :has(> [data-scroll-area]) {
+    display: flex;
+    flex-direction: column;
     flex-shrink: 1;
     min-height: 0;
   }

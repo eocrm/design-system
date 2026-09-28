@@ -42,8 +42,10 @@ export interface ScrollAreaProps extends HTMLAttributes<HTMLDivElement> {
  * also what lets the popover cap itself at the viewport: the popover
  * becomes a flex column in which the ScrollArea is the only child that
  * shrinks, so the header stays put while the feed scrolls. That needs the
- * ScrollArea to be a direct child, or inside one `<Stack>` that is a direct
- * child, of `<Popover.Content>`.
+ * ScrollArea to be a direct child of `<Popover.Content>`, or inside one
+ * wrapper element that is a direct child — that wrapper is laid out as a
+ * flex column (a `<Stack>` already is); deeper nesting leaves the popover
+ * uncapped.
  *
  * Keyboard: name it with `aria-label` / `aria-labelledby` and it is always a
  * `role="region"` landmark. It is a tab stop (`tabIndex=0`) only while it
@@ -75,7 +77,7 @@ export interface ScrollAreaProps extends HTMLAttributes<HTMLDivElement> {
  * // A plain-text log: overflowing with nothing focusable, so it becomes a
  * // named tab stop by itself.
  * <ScrollArea maxHeight="sm" aria-label="Import log">
- *   <Stack gap="xs">{lines.map((line) => <Text key={line} size="sm">{line}</Text>)}</Stack>
+ *   <Stack gap="xs">{lines.map((line, i) => <Text key={i} size="sm">{line}</Text>)}</Stack>
  * </ScrollArea>
  *
  * @example
@@ -97,8 +99,10 @@ export interface ScrollAreaProps extends HTMLAttributes<HTMLDivElement> {
  * - ❌ A ScrollArea with plain-text content and no `aria-label` /
  *   `aria-labelledby`. It becomes an unnamed tab stop.
  * - ❌ Nesting the ScrollArea deeper inside `<Popover.Content>` than a direct
- *   child, or inside one `<Stack>` that is a direct child
- *   (`Content > Stack > ScrollArea`). Deeper, the popover stays uncapped.
+ *   child, or inside one wrapper element that is a direct child
+ *   (`Content > Stack > ScrollArea`; that wrapper is laid out as a flex
+ *   column, which a `<Stack>` already is). Deeper nesting leaves the popover
+ *   uncapped.
  */
 export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(function ScrollArea(
   { maxHeight, className, style, children, onBlur, ...rest },
@@ -130,7 +134,8 @@ export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(function S
     const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
     // The area's own box changes when its cap or its parent does; its
     // content's height changes when a direct child resizes (images loading,
-    // rows expanding). Observe direct children as they're added.
+    // rows expanding). Observe direct children as they're added; drop the
+    // ones removed so detached rows aren't held until unmount.
     if (ro) {
       ro.observe(el);
       for (const child of Array.from(el.children)) ro.observe(child);
@@ -143,6 +148,11 @@ export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(function S
               for (const record of records) {
                 for (const node of Array.from(record.addedNodes)) {
                   if (node instanceof Element && node.parentNode === el) ro.observe(node);
+                }
+                if (record.target === el) {
+                  for (const node of Array.from(record.removedNodes)) {
+                    if (node instanceof Element) ro.unobserve(node);
+                  }
                 }
               }
             }

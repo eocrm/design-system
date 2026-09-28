@@ -86,9 +86,10 @@ export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function 
       flip(),
       shift({ padding: 8 }),
       // #598: expose the room left in the viewport. Only a popover holding a
-      // <ScrollArea> as a direct child, or inside one `<Stack>` that is a
-      // direct child, uses it (Popover.module.scss
-      // `:has(> [data-scroll-area], …)`): it caps there and the ScrollArea shrinks, so the header stays put.
+      // <ScrollArea> as a direct child, or inside one wrapper element that is
+      // a direct child, uses it (Popover.module.scss
+      // `:has(> [data-scroll-area], …)`): it caps there and the ScrollArea
+      // shrinks, so the header stays put.
       // A CSS variable rather than inline max-height, so popovers without a
       // ScrollArea keep today's layout (and the arrow is never clipped).
       size({

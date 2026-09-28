@@ -882,9 +882,20 @@ describe('Popover — viewport cap with a ScrollArea (#598)', () => {
     expect(block).toMatch(/flex-direction: column;/);
     expect(block).toMatch(/max-height: var\(--popover-available-height\);/);
     expect(block).toMatch(/> \* \{\s*flex-shrink: 0;/);
-    expect(block).toMatch(
-      /> \[data-scroll-area\],\s*> :has\(> \[data-scroll-area\]\) \{\s*flex-shrink: 1;\s*min-height: 0;/,
-    );
+    const area = block.match(/> \[data-scroll-area\] \{[^}]*\}/)![0];
+    expect(area).toMatch(/flex-shrink: 1;/);
+    expect(area).toMatch(/min-height: 0;/);
+    expect(area).not.toMatch(/display/);
+    // The one-level wrapper is laid out as a flex column so it passes the
+    // shrink down to the ScrollArea (a plain div/form wrapper otherwise
+    // shrinks while the rows paint outside the chrome). The ScrollArea
+    // itself is not made a flex container.
+    const wrapper = block.match(/> :has\(> \[data-scroll-area\]\) \{[^}]*\}/)![0];
+    expect(wrapper).toMatch(/display: flex;/);
+    expect(wrapper).toMatch(/flex-direction: column;/);
+    expect(wrapper).toMatch(/flex-shrink: 1;/);
+    expect(wrapper).toMatch(/min-height: 0;/);
+
     // The base `.content` rule stays un-capped and not a flex container.
     const base = scss.match(/^\.content \{[\s\S]*?\n\}/m)![0];
     expect(base).not.toMatch(/display: flex/);
