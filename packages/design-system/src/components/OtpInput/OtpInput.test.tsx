@@ -38,10 +38,10 @@ describe('OtpInput', () => {
     }
   });
 
-  it('applies the size class to every cell', () => {
-    render(<OtpInput length={2} size="lg" />);
+  it.each(['lg', 'xl'] as const)('applies the %s size class to every cell', (size) => {
+    render(<OtpInput length={2} size={size} />);
     for (const box of boxes()) {
-      expect(box.className).toMatch(/size-lg/);
+      expect(box.className).toMatch(new RegExp(`size-${size}`));
     }
   });
 

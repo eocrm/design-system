@@ -129,7 +129,7 @@ export function Demo() {
 
       <Example
         title="Sizes"
-        description="sm / md (default) / lg — the same height scale as <Input>, so a code field lines up with the fields around it."
+        description="sm / md (default) / lg — the same height scale as <Input>, so a code field lines up with the fields around it. xl (48px) is for a code field that is the whole screen."
         code={`import { OtpInput, Stack } from '@eocrm/design-system';
 
 export function Demo() {
@@ -138,6 +138,7 @@ export function Demo() {
       <OtpInput length={4} size="sm" aria-label="Small" />
       <OtpInput length={4} size="md" aria-label="Medium" />
       <OtpInput length={4} size="lg" aria-label="Large" />
+      <OtpInput length={4} size="xl" aria-label="Extra large" />
     </Stack>
   );
 }`}
@@ -147,6 +148,8 @@ export function Demo() {
             <OtpInput length={4} size="sm" aria-label="Small" />
             <OtpInput length={4} size="md" aria-label="Medium" />
             <OtpInput length={4} size="lg" aria-label="Large" />
+            <OtpInput length={4} size="xl" aria-label="Extra large" />
+            <OtpInput length={4} size="xl" aria-label="Extra large" />
           </Stack>
         </InputExample>
       </Example>

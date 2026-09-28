@@ -16,7 +16,7 @@ import { useTranslation } from '../../i18n';
 import styles from './OtpInput.module.scss';
 
 /** Cell height. Matches the `<Input>` / `<Button>` size scale. */
-export type OtpInputSize = 'sm' | 'md' | 'lg';
+export type OtpInputSize = 'sm' | 'md' | 'lg' | 'xl';
 
 /**
  * Which characters the code is made of.
@@ -71,6 +71,9 @@ export interface OtpInputProps extends Omit<
    * - `'sm'` — 24px cells; dense admin screens.
    * - `'md'` — 32px cells (default); most forms.
    * - `'lg'` — 40px cells; a dedicated verification screen.
+   * - `'xl'` — 48px cells; a code field that IS the screen (IdP login
+   *   challenge, touch-first). Six cells still fit a 360px phone. No
+   *   `<Input>` counterpart at this height — don't line it up with fields.
    */
   size?: OtpInputSize;
   /**
