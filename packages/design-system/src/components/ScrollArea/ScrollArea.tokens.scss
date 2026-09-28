@@ -1,0 +1,10 @@
+// ScrollArea.tokens.scss — component-scoped tokens for <ScrollArea>.
+:root {
+  // Height cap scale (`maxHeight="sm" | "md" | "lg"`).
+  --scroll-area-max-height-sm: var(--size-scroll-area-sm);
+  --scroll-area-max-height-md: var(--size-scroll-area-md);
+  --scroll-area-max-height-lg: var(--size-scroll-area-lg);
+
+  // Focus ring — shown only while the area is itself a tab stop.
+  --scroll-area-ring: var(--ring-accent);
+}

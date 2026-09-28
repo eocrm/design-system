@@ -53,6 +53,7 @@ const CLUSTERS: Record<string, string> = {
   Sticky: 'Layout',
   Masonry: 'Layout',
   Card: 'Layout',
+  ScrollArea: 'Layout',
   Page: 'Layout',
   Screen: 'Layout',
   PageHeader: 'Layout',

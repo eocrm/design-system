@@ -116,6 +116,9 @@ export type { StickyProps, StickyTop } from './components/Sticky';
 export { Masonry } from './components/Masonry';
 export type { MasonryProps, MasonryGap } from './components/Masonry';
 
+export { ScrollArea } from './components/ScrollArea';
+export type { ScrollAreaProps, ScrollAreaMaxHeight } from './components/ScrollArea';
+
 export { Divider } from './components/Divider';
 export type {
   DividerProps,

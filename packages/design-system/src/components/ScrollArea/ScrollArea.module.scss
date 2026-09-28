@@ -1,0 +1,28 @@
+@use './ScrollArea.tokens';
+@use '../../styles/mixins' as *;
+
+// Scrolling, not layout: overflow + a shrinkable min-height so the area can
+// be the one flexible child of a bounded flex parent (e.g. a Popover capped at
+// the viewport). `overscroll-behavior: contain` keeps a feed scrolled to its
+// end from scrolling the page behind the popover.
+.root {
+  overflow-y: auto;
+  min-height: 0;
+  overscroll-behavior: contain;
+
+  &:focus-visible {
+    @include focus-ring(var(--scroll-area-ring));
+  }
+}
+
+.max-height-sm {
+  max-height: var(--scroll-area-max-height-sm);
+}
+
+.max-height-md {
+  max-height: var(--scroll-area-max-height-md);
+}
+
+.max-height-lg {
+  max-height: var(--scroll-area-max-height-lg);
+}
