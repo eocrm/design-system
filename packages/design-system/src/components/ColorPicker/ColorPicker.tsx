@@ -104,7 +104,9 @@ export interface ColorPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, '
   required?: boolean;
   /**
    * Accessible name for the focusable trigger. Forwarded to the default or custom trigger,
-   * not the root wrapper. Ignored when `aria-labelledby` is provided. An explicit name on
+   * not the root wrapper. On the default trigger the current value is appended
+   * (`aria-label="Accent colour"` → "Accent colour, current value #3366FF"); the popover
+   * dialog is named by the bare `aria-label`. Ignored when `aria-labelledby` is provided. An explicit name on
    * a custom trigger child takes precedence — but an EMPTY one on that child does not, since
    * an empty string names nothing.
    */
@@ -199,12 +201,13 @@ const DefaultTrigger = forwardRef<HTMLButtonElement, DefaultTriggerProps>(functi
       type="button"
       className={styles.trigger}
       disabled={disabled}
-      // An external label (e.g. <Field label>) wins; otherwise fall back to
-      // the self-describing generated label. Never set both.
+      // An external label (e.g. <Field label>) wins; otherwise an explicit
+      // aria-label, or the trigger label, with the current value appended
+      // (#594). Never set both.
       aria-label={
         labelledBy
           ? undefined
-          : ariaLabel || t('colorPicker.triggerAccessibleLabel', { label, value: display })
+          : t('colorPicker.triggerAccessibleLabel', { label: ariaLabel || label, value: display })
       }
       aria-labelledby={labelledBy}
       aria-describedby={describedBy}

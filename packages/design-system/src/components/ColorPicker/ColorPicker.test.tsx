@@ -452,7 +452,7 @@ describe('ColorPicker — misc', () => {
 });
 
 describe('ColorPicker — labelledby / describedby forwarding', () => {
-  it('forwards an explicit aria-label to the trigger without naming the wrapper', () => {
+  it('forwards an explicit aria-label to the trigger, value appended, without naming the wrapper', () => {
     const { container } = render(
       <ColorPicker
         className="picker-root"
@@ -462,9 +462,11 @@ describe('ColorPicker — labelledby / describedby forwarding', () => {
       />,
     );
 
-    const trigger = screen.getByRole('button', { name: 'Brand color' });
+    const trigger = screen.getByRole('button', {
+      name: 'Brand color, current value #4F46E5',
+    });
     const root = container.querySelector('.picker-root')!;
-    expect(trigger).toHaveAttribute('aria-label', 'Brand color');
+    expect(trigger).toHaveAttribute('aria-label', 'Brand color, current value #4F46E5');
     expect(root).not.toHaveAttribute('aria-label');
   });
 
@@ -896,7 +898,8 @@ describe('ColorPicker — popover dialog name and description (#595)', () => {
   it('names the dialog by aria-label, and sets no description without a footer', async () => {
     const user = userEvent.setup();
     render(<ColorPicker value="#3366ff" onChange={() => {}} aria-label="Accent colour" />);
-    await user.click(screen.getByRole('button', { name: 'Accent colour' }));
+    // The trigger's name carries the value (#594); the dialog's is the bare purpose.
+    await user.click(screen.getByRole('button', { name: 'Accent colour, current value #3366FF' }));
     const dialog = screen.getByRole('dialog');
     expect(dialog).toHaveAccessibleName('Accent colour');
     expect(dialog).not.toHaveAttribute('aria-describedby');
