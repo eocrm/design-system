@@ -255,3 +255,10 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+// `labelEllipsis="start"` (#593): overflow — and the ellipsis — falls at the
+// label's start, so its tail stays visible. The inner `dir="ltr"` run in the
+// markup keeps the text order.
+.ellipsisStart {
+  direction: rtl;
+}

@@ -5,5 +5,6 @@ export type {
   EntityChipStatus,
   EntityChipSegment,
   EntityChipLabelWeight,
+  EntityChipLabelEllipsis,
 } from './EntityChip';
 export type { StatusCategory } from '../_internal/statusColor';

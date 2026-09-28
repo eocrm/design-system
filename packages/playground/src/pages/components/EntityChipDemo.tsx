@@ -362,6 +362,60 @@ export function Demo() {
           </ResizablePreview>
         </Stack>
       </Example>
+
+      <Example
+        title="Start ellipsis (URL chip)"
+        description="`labelEllipsis` set to `start` cuts a clipped label from its start, so the tail stays visible — for labels whose distinctive part is the end, like a URL path under a host `prefix`. The prefix stays whole and the tooltip still shows the full text. Compare the default `'end'` cut below it."
+        code={`import { EntityChip, Stack, Text } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Stack gap="sm">
+      <Text>
+        See{' '}
+        <EntityChip
+          href="https://github.com/eocrm/design-system/pull/1116"
+          prefix="github.com"
+          label="/eocrm/design-system/pull/1116"
+          labelMaxWidth={16}
+          labelEllipsis="start"
+        />
+      </Text>
+      <Text>
+        See{' '}
+        <EntityChip
+          href="https://github.com/eocrm/design-system/pull/1116"
+          prefix="github.com"
+          label="/eocrm/design-system/pull/1116"
+          labelMaxWidth={16}
+        />
+      </Text>
+    </Stack>
+  );
+}`}
+      >
+        <Stack gap="sm">
+          <Text>
+            See{' '}
+            <EntityChip
+              href="https://github.com/eocrm/design-system/pull/1116"
+              prefix="github.com"
+              label="/eocrm/design-system/pull/1116"
+              labelMaxWidth={16}
+              labelEllipsis="start"
+            />
+          </Text>
+          <Text>
+            See{' '}
+            <EntityChip
+              href="https://github.com/eocrm/design-system/pull/1116"
+              prefix="github.com"
+              label="/eocrm/design-system/pull/1116"
+              labelMaxWidth={16}
+            />
+          </Text>
+        </Stack>
+      </Example>
     </DemoLayout>
   );
 }

@@ -150,6 +150,7 @@ export type {
   EntityChipStatus,
   EntityChipSegment,
   EntityChipLabelWeight,
+  EntityChipLabelEllipsis,
   StatusCategory,
 } from './components/EntityChip';
 

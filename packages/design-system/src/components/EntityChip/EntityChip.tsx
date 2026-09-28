@@ -33,6 +33,12 @@ export type EntityChipAs = ElementType;
  */
 export type EntityChipLabelWeight = 'medium' | 'semibold';
 
+/**
+ * Which end of a clipped `label` is cut (#593). See `labelEllipsis` on
+ * `EntityChipOwnProps`.
+ */
+export type EntityChipLabelEllipsis = 'end' | 'start';
+
 export interface EntityChipStatus {
   /** Status label, rendered inside the chip in the status's own color. */
   label: string;
@@ -234,6 +240,17 @@ interface EntityChipOwnProps {
    * shows it in a tooltip on hover or keyboard focus.
    */
   labelMaxWidth?: number;
+  /**
+   * Which end of a clipped label is cut. Applies only where the label can
+   * clip at all (`truncate`, segments, or `labelMaxWidth`); ignored on a
+   * wrapping chip.
+   * - `'end'` (default) — `Fix the login bu…`. Right for titles, whose
+   *   distinctive part is the start.
+   * - `'start'` — `…/pull/1116`. For labels whose distinctive part is the
+   *   tail, e.g. a URL path under a host `prefix`. The text keeps its order;
+   *   `prefix` and segments stay whole, and the tooltip still shows it all.
+   */
+  labelEllipsis?: EntityChipLabelEllipsis;
   /**
    * Font weight for `label`. `'medium'` (default) matches a plain chip's
    * fixed weight and the RichText `@mention` — most chips should leave this
@@ -494,6 +511,7 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
     after,
     labelMaxWidth,
     labelWeight = 'medium',
+    labelEllipsis = 'end',
     className,
     style,
     ...rest
@@ -650,10 +668,15 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
                   styles.label,
                   labelWeight === 'semibold' && styles.semibold,
                   labelMaxWidth != null && styles.capped,
+                  labelEllipsis === 'start' && styles.ellipsisStart,
                 )}
                 style={labelMaxWidth != null ? { maxWidth: `${labelMaxWidth}ch` } : undefined}
               >
-                {label}
+                {/* `ellipsisStart` flips the span to RTL so the overflow (and
+                    its ellipsis) falls at the start; this isolated LTR run
+                    keeps the text itself in order — without it, trailing
+                    neutrals like `/` or `?` would hop to the other end. */}
+                {labelEllipsis === 'start' ? <span dir="ltr">{label}</span> : label}
               </span>
             </Tooltip>
           ) : (
