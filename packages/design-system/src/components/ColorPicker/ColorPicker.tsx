@@ -330,9 +330,10 @@ const ColorPickerRoot = forwardRef<HTMLDivElement, ColorPickerProps>(function Co
     const resolvedLabel = childAriaLabel || (resolvedLabelledBy ? undefined : ariaLabel);
     const resolvedDescribedBy = childProps['aria-describedby'] ?? ariaDescribedBy;
     const resolvedInvalid = childProps['aria-invalid'] ?? (invalid ? true : ariaInvalid);
+    // The child's props are untyped; its ARIA naming props are strings.
     dialogLabelProps = resolvedLabelledBy
-      ? { 'aria-labelledby': resolvedLabelledBy }
-      : { 'aria-label': resolvedLabel || resolvedTriggerLabel };
+      ? { 'aria-labelledby': resolvedLabelledBy as string }
+      : { 'aria-label': (resolvedLabel as string | undefined) || resolvedTriggerLabel };
 
     // The consumer's child is cloned to receive the supported control attributes;
     // <Popover.Trigger> clones it again to add disclosure behavior and its ref. A
