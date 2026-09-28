@@ -122,6 +122,20 @@
   }
 }
 
+.danger-outline {
+  background: var(--button-bg-danger-outline);
+  color: var(--button-fg-danger-outline);
+  border-color: var(--button-border-color-danger-outline);
+
+  &:hover:not(:disabled, [aria-disabled='true']) {
+    background: var(--button-bg-danger-outline-hover);
+  }
+
+  &:focus-visible {
+    @include focus-ring(var(--button-ring-danger-outline));
+  }
+}
+
 .success {
   background: var(--button-bg-success);
   color: var(--button-fg-success);

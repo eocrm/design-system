@@ -280,3 +280,7 @@
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
   pointer-events: none;
 }
+
+.visuallyHidden {
+  @include visually-hidden;
+}

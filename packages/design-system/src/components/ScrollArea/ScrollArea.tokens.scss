@@ -1,0 +1,15 @@
+// ScrollArea.tokens.scss — component-scoped tokens for <ScrollArea>.
+:root {
+  // Height cap scale (`maxHeight="sm" | "md" | "lg"`).
+  --scroll-area-max-height-sm: var(--size-scroll-area-sm);
+  --scroll-area-max-height-md: var(--size-scroll-area-md);
+  --scroll-area-max-height-lg: var(--size-scroll-area-lg);
+
+  // Content inset = the focus-ring extent (offset + width, 4px): room for a
+  // focused child's outset ring at the area's clip edge (same approach as
+  // DropdownMenu's --dropdown-menu-padding).
+  --scroll-area-padding: calc(var(--ring-offset) + var(--ring-width));
+
+  // Focus ring — shown only while the area is itself a tab stop.
+  --scroll-area-ring: var(--ring-accent);
+}

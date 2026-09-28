@@ -75,6 +75,13 @@
   --button-fg-danger: var(--color-danger-fg);
   --button-ring-danger: var(--ring-danger);
 
+  // Variant: danger-outline (#596) — secondary's surface, danger's ink.
+  --button-bg-danger-outline: var(--color-bg);
+  --button-bg-danger-outline-hover: var(--color-danger-bg-subtle);
+  --button-fg-danger-outline: var(--color-danger);
+  --button-border-color-danger-outline: var(--color-danger);
+  --button-ring-danger-outline: var(--ring-danger);
+
   // Variant: success
   --button-bg-success: var(--color-success);
   --button-bg-success-hover: var(--color-success-hover);

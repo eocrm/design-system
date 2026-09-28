@@ -1,0 +1,39 @@
+@use './ScrollArea.tokens';
+@use '../../styles/mixins' as *;
+
+// Scrolling, not layout: overflow + a shrinkable min-height so the area can
+// be the one flexible child of a bounded flex parent (e.g. a Popover capped at
+// the viewport). `overscroll-behavior: contain` keeps a feed scrolled to its
+// end from scrolling the page behind the popover.
+.root {
+  overflow-y: auto;
+
+  // Vertical only: `overflow-y: auto` alone computes `overflow-x: auto`, a
+  // horizontal scroller with no keyboard tab stop. Wide content is clipped.
+  overflow-x: hidden;
+  min-height: 0;
+  overscroll-behavior: contain;
+
+  // The overflow clips at the padding edge, so a link flush against it lost
+  // its outset focus ring (focus-ring geometry sweep). Pad by the ring's
+  // extent, and scroll-pad the same so a keyboard-focused child scrolls into
+  // view with its ring.
+  padding: var(--scroll-area-padding);
+  scroll-padding: var(--scroll-area-padding);
+
+  &:focus-visible {
+    @include focus-ring(var(--scroll-area-ring));
+  }
+}
+
+.max-height-sm {
+  max-height: var(--scroll-area-max-height-sm);
+}
+
+.max-height-md {
+  max-height: var(--scroll-area-max-height-md);
+}
+
+.max-height-lg {
+  max-height: var(--scroll-area-max-height-lg);
+}

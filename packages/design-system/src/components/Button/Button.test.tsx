@@ -27,6 +27,22 @@ describe('Button', () => {
     expect(btn.className).toMatch(/lg/);
   });
 
+  it('applies the danger-outline class (#596), not the filled danger one', () => {
+    render(<Button variant="danger-outline">Remove</Button>);
+    const classes = screen.getByRole('button', { name: 'Remove' }).className.split(' ');
+    expect(classes.some((c) => /danger-outline/.test(c))).toBe(true);
+    expect(classes.some((c) => /(^|_)danger(_|$)/.test(c))).toBe(false);
+  });
+
+  it('danger-outline paints surface fill with danger text and border via its own tokens', () => {
+    const scss = readFileSync(resolve(__dirname, 'Button.module.scss'), 'utf8');
+    const block = scss.match(/\.danger-outline \{[\s\S]*?\n\}/)![0];
+    expect(block).toMatch(/background: var\(--button-bg-danger-outline\)/);
+    expect(block).toMatch(/color: var\(--button-fg-danger-outline\)/);
+    expect(block).toMatch(/border-color: var\(--button-border-color-danger-outline\)/);
+    expect(block).toMatch(/focus-ring\(var\(--button-ring-danger-outline\)\)/);
+  });
+
   it('applies the xs size class', () => {
     render(<Button size="xs">Tiny</Button>);
     expect(screen.getByRole('button', { name: 'Tiny' }).className).toMatch(/xs/);
@@ -175,7 +191,7 @@ describe('Button', () => {
     expect(scss).toMatch(/&:disabled\s*\{[^}]*pointer-events:\s*none;/s);
 
     const hoverSelectors = scss.match(/&:hover[^{]*/g);
-    expect(hoverSelectors).toHaveLength(6);
+    expect(hoverSelectors).toHaveLength(7);
     hoverSelectors?.forEach((selector) => {
       expect(selector).toContain(":not(:disabled, [aria-disabled='true'])");
     });

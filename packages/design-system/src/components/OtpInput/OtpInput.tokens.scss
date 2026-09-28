@@ -32,9 +32,14 @@
   --otp-input-cell-size-md: var(--size-md);
   --otp-input-cell-size-lg: var(--size-lg);
 
+  // No <Input> step this big: --size-xl (80px) would overflow a phone at six
+  // cells, so xl has its own 48px primitive.
+  --otp-input-cell-size-xl: var(--size-otp-cell-xl);
+
   // Size — a code is read back character by character, so the glyph runs one
   // step larger than the equivalent <Input>.
   --otp-input-font-size-sm: var(--font-size-md);
   --otp-input-font-size-md: var(--font-size-lg);
   --otp-input-font-size-lg: var(--font-size-xl);
+  --otp-input-font-size-xl: var(--font-size-2xl);
 }

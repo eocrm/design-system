@@ -10,7 +10,13 @@ import clsx from 'clsx';
 import styles from './Button.module.scss';
 
 /** Visual variant. See ButtonProps#variant for when to use each. */
-export type ButtonVariant = 'primary' | 'secondary' | 'ghost' | 'danger' | 'success';
+export type ButtonVariant =
+  | 'primary'
+  | 'secondary'
+  | 'ghost'
+  | 'danger'
+  | 'danger-outline'
+  | 'success';
 
 /** Control height. See ButtonProps#size for when to use each. */
 export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg';
@@ -22,6 +28,10 @@ interface ButtonOwnProps {
    * - `secondary` — supporting actions like "Cancel", "Export", "Filter".
    * - `ghost` — tertiary actions in dense UIs (toolbar buttons, row actions).
    * - `danger` — destructive operations only (Delete, Revoke, Remove). Pair with a confirmation if irreversible.
+   * - `danger-outline` — a destructive action that must not dominate: surface
+   *   fill, danger text and border. For a Remove repeated on every row, or a
+   *   destructive action beside a primary one. Use filled `danger` for the
+   *   confirm step itself.
    * - `success` — **transient confirmation only**, not an initial state. Flip to
    *   `success` for ~1.5s after an action resolves (Save → "Saved!"), then
    *   flip back. Never render a button as `success` on mount — it has no

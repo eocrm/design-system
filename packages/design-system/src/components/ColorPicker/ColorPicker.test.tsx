@@ -452,7 +452,7 @@ describe('ColorPicker — misc', () => {
 });
 
 describe('ColorPicker — labelledby / describedby forwarding', () => {
-  it('forwards an explicit aria-label to the trigger without naming the wrapper', () => {
+  it('forwards an explicit aria-label to the trigger, value appended, without naming the wrapper', () => {
     const { container } = render(
       <ColorPicker
         className="picker-root"
@@ -462,9 +462,11 @@ describe('ColorPicker — labelledby / describedby forwarding', () => {
       />,
     );
 
-    const trigger = screen.getByRole('button', { name: 'Brand color' });
+    const trigger = screen.getByRole('button', {
+      name: 'Brand color, current value #4F46E5',
+    });
     const root = container.querySelector('.picker-root')!;
-    expect(trigger).toHaveAttribute('aria-label', 'Brand color');
+    expect(trigger).toHaveAttribute('aria-label', 'Brand color, current value #4F46E5');
     expect(root).not.toHaveAttribute('aria-label');
   });
 
@@ -476,12 +478,13 @@ describe('ColorPicker — labelledby / describedby forwarding', () => {
     );
 
     const label = container.querySelector('label')!;
-    const trigger = screen.getByRole('button', { name: 'Brand color' });
+    const trigger = screen.getByRole('button', { name: 'Brand color #4F46E5' });
     const root = container.querySelector('.picker-root')!;
 
     expect(label.htmlFor).toBe(trigger.id);
     expect(trigger).toHaveAttribute('id', 'brand-color');
-    expect(trigger).toHaveAccessibleName('Brand color');
+    // The current value stays in the name under an external label (#594).
+    expect(trigger).toHaveAccessibleName('Brand color #4F46E5');
     expect(trigger).toHaveAttribute('aria-describedby', 'brand-color-error');
     expect(trigger).toHaveAttribute('aria-invalid', 'true');
     expect(trigger).not.toHaveAttribute('aria-required');
@@ -509,8 +512,8 @@ describe('ColorPicker — labelledby / describedby forwarding', () => {
         />
       </>,
     );
-    const trigger = screen.getByRole('button', { name: 'Pick brand color' });
-    expect(trigger).toHaveAttribute('aria-labelledby', 'lbl');
+    const trigger = screen.getByRole('button', { name: 'Pick brand color #FF0000' });
+    expect(trigger.getAttribute('aria-labelledby')).toMatch(/^lbl \S+$/);
     expect(trigger).toHaveAttribute('aria-describedby', 'desc');
     expect(container.querySelector('div')).not.toHaveAttribute('aria-labelledby');
   });
@@ -871,5 +874,57 @@ describe('ColorPicker tokens — invalid trigger reuses Input danger token', () 
     expect(cpValue).toBeDefined();
     expect(inputValue).toBeDefined();
     expect(cpValue).toBe(inputValue);
+  });
+});
+
+describe('ColorPicker — popover dialog name and description (#595)', () => {
+  it('names the dialog by the Field label, without the value, and describes it by panelFooter', async () => {
+    const user = userEvent.setup();
+    render(
+      <Field label="Accent colour">
+        <ColorPicker
+          value="#3366ff"
+          onChange={() => {}}
+          panelFooter={<span>4.5:1 against white text</span>}
+        />
+      </Field>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Accent colour #3366FF' }));
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveAccessibleName('Accent colour');
+    expect(dialog).toHaveAccessibleDescription('4.5:1 against white text');
+  });
+
+  it('names the dialog by aria-label, and sets no description without a footer', async () => {
+    const user = userEvent.setup();
+    render(<ColorPicker value="#3366ff" onChange={() => {}} aria-label="Accent colour" />);
+    // The trigger's name carries the value (#594); the dialog's is the bare purpose.
+    await user.click(screen.getByRole('button', { name: 'Accent colour, current value #3366FF' }));
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toHaveAccessibleName('Accent colour');
+    expect(dialog).not.toHaveAttribute('aria-describedby');
+  });
+
+  it('falls back to the default trigger label for an unlabelled picker', async () => {
+    const user = userEvent.setup();
+    render(<ColorPicker value="#3366ff" onChange={() => {}} />);
+    await user.click(screen.getByRole('button'));
+    expect(screen.getByRole('dialog')).toHaveAccessibleName('Pick a color');
+  });
+
+  it("names the dialog by a custom trigger's own aria-labelledby", async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <span id="ext">Brand accent</span>
+        <ColorPicker value="#3366ff" onChange={() => {}}>
+          <ColorPicker.Trigger asChild>
+            <button type="button" aria-labelledby="ext" />
+          </ColorPicker.Trigger>
+        </ColorPicker>
+      </>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Brand accent' }));
+    expect(screen.getByRole('dialog')).toHaveAccessibleName('Brand accent');
   });
 });

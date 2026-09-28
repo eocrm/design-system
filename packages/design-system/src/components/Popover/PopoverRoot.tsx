@@ -68,6 +68,17 @@ export interface PopoverProps {
  * - For a focus-locked confirmation that demands full attention → use
  *   `<Modal>` (not yet shipped) once available; until then, `<Popover>`
  *   with explicit Confirm/Cancel buttons is acceptable.
+ * - A tall panel with no `<ScrollArea>`. The popover is NOT capped at the
+ *   viewport and will run off-screen. Wrap the long part in
+ *   `<ScrollArea maxHeight="md">`: the popover then caps itself at the
+ *   viewport and only the ScrollArea shrinks, so a header above it stays put.
+ *   Keep the ScrollArea a direct child of `<Popover.Content>`, or inside one
+ *   wrapper element that is a direct child. That one wrapper must lay its
+ *   children out as a column: a `<Stack>`, or a plain element
+ *   (div/form/Card), which the popover lays out as a column. A row wrapper
+ *   such as `<Cluster>` is not supported (the popover caps but the feed
+ *   overflows it) — put the ScrollArea in a Stack instead. Deeper nesting
+ *   leaves the popover uncapped.
  *
  * @remarks Anti-patterns
  * - ❌ `<Popover.Trigger><Button disabled>…</Button></Popover.Trigger>` —

@@ -1,11 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createRef } from 'react';
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Popover } from './Popover';
 import { DropdownMenu } from '../DropdownMenu';
 import { ConfirmationPopover } from '../ConfirmationPopover';
+import { ScrollArea } from '../ScrollArea';
 
 describe('Popover — initial render', () => {
   it('renders nothing portaled on mount when defaultOpen is false', () => {
@@ -845,5 +846,116 @@ describe('Popover — nested floating-surface elevation', () => {
       .find((d) => d.textContent?.includes('Delete record?'));
     expect(confirmDialog).toBeTruthy();
     expect(confirmDialog).toHaveAttribute('data-in-overlay', '');
+  });
+});
+
+describe('Popover — viewport cap with a ScrollArea (#598)', () => {
+  it('writes --popover-available-height onto the open content', async () => {
+    const user = userEvent.setup();
+    render(
+      <Popover>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+        <Popover.Content aria-label="Panel">
+          <ScrollArea maxHeight="md" aria-label="Feed">
+            <a href="/x">row</a>
+          </ScrollArea>
+        </Popover.Content>
+      </Popover>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const dialog = screen.getByRole('dialog');
+    await waitFor(() =>
+      expect(dialog.style.getPropertyValue('--popover-available-height')).toMatch(
+        /^\d+(\.\d+)?px$/,
+      ),
+    );
+  });
+
+  it('SCSS: only a popover containing a ScrollArea becomes a capped flex column; the rest do not shrink', () => {
+    const scss = readFileSync(resolve(__dirname, 'Popover.module.scss'), 'utf8');
+    const block = scss.match(
+      /\.content:has\(> \[data-scroll-area\], > :not\(\[hidden\]\) > \[data-scroll-area\]\) \{[\s\S]*?\n\}/,
+    )![0];
+    expect(block).toMatch(/display: flex;/);
+    expect(block).toMatch(/flex-direction: column;/);
+    expect(block).toMatch(/max-height: var\(--popover-available-height\);/);
+    // A ScrollArea only in a `hidden` view must not cap the visible one: every
+    // one-level `:has()` branch skips hidden wrappers.
+    const oneLevel = scss.match(/:has\(> \[data-scroll-area\], > [^)]*\)[^)]*\)/g) ?? [];
+    expect(oneLevel).toHaveLength(3);
+    for (const sel of oneLevel) expect(sel).toMatch(/> :not\(\[hidden\]\) > \[data-scroll-area\]/);
+    expect(block).toMatch(/> \* \{\s*flex-shrink: 0;/);
+    const area = block.match(/> \[data-scroll-area\] \{[^}]*\}/)![0];
+    expect(area).toMatch(/flex-shrink: 1;/);
+    expect(area).toMatch(/min-height: 0;/);
+    expect(area).not.toMatch(/display/);
+    // The one-level wrapper is laid out as a flex column so it passes the
+    // shrink down to the ScrollArea (a plain div/form wrapper otherwise
+    // shrinks while the rows paint outside the chrome). The ScrollArea
+    // itself is not made a flex container.
+    // The wrapper's shrink stays in the specific rule…
+    const wrapper = block.match(/> :has\(> \[data-scroll-area\]\) \{[^}]*\}/)![0];
+    expect(wrapper).toMatch(/flex-shrink: 1;/);
+    expect(wrapper).toMatch(/min-height: 0;/);
+    expect(wrapper).not.toMatch(/display/);
+    // …but its LAYOUT is zero-specificity (a Cluster/Grid wrapper keeps its own
+    // display) and skips `[hidden]` wrappers (an author display would beat the
+    // UA `[hidden] { display: none }`).
+    const layout = scss.match(
+      /:where\(\s*\.content:has\(> \[data-scroll-area\], > :not\(\[hidden\]\) > \[data-scroll-area\]\)\s*> :has\(> \[data-scroll-area\]\):not\(\[hidden\]\)\s*\) \{[^}]*\}/,
+    )![0];
+    expect(layout).toMatch(/display: flex;/);
+    expect(layout).toMatch(/flex-direction: column;/);
+    // The wrapper's other children (a header) don't shrink; zero specificity
+    // so a consumer class setting flex-shrink still wins.
+    const guard = scss.match(
+      /:where\(\s*\.content:has\(> \[data-scroll-area\], > :not\(\[hidden\]\) > \[data-scroll-area\]\)\s*> :has\(> \[data-scroll-area\]\)\s*> :not\(\[data-scroll-area\]\)\s*\) \{[^}]*\}/,
+    )![0];
+    expect(guard).toMatch(/flex-shrink: 0;/);
+
+    // The base `.content` rule stays un-capped and not a flex container.
+    const base = scss.match(/^\.content \{[\s\S]*?\n\}/m)![0];
+    expect(base).not.toMatch(/display: flex/);
+    expect(base).not.toMatch(/max-height/);
+    // No overflow on the content itself: it would clip the arrow.
+    expect(scss).not.toMatch(/\.content[^{]*\{[^}]*overflow/);
+  });
+
+  it('a ScrollArea nested two levels deep leaves the popover uncapped (selectors are >-anchored)', async () => {
+    const user = userEvent.setup();
+    render(
+      <Popover>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+        <Popover.Content aria-label="Panel">
+          <div>
+            <div>
+              <ScrollArea maxHeight="md" aria-label="Feed">
+                <a href="/x">row</a>
+              </ScrollArea>
+            </div>
+          </div>
+        </Popover.Content>
+      </Popover>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const dialog = screen.getByRole('dialog');
+    const area = screen.getByRole('region', { name: 'Feed' });
+    // Two levels deep: neither a direct child nor a grandchild of the content.
+    expect(area.parentElement?.parentElement?.parentElement).toBe(dialog);
+    // jsdom applies no CSS-module styles, so the contract is the selector
+    // text: every `:has(…[data-scroll-area])` must be `>`-anchored, which is
+    // what keeps this nesting depth from matching (and from being capped with
+    // a ScrollArea that can't shrink, painting rows outside the chrome).
+    const scss = readFileSync(resolve(__dirname, 'Popover.module.scss'), 'utf8');
+    const hasForms = scss.match(/:has\([^)]*data-scroll-area[^)]*\)/g) ?? [];
+    expect(hasForms.length).toBeGreaterThan(0);
+    for (const form of hasForms) {
+      expect(form).not.toMatch(/:has\(\s*\[data-scroll-area\]/);
+      for (const part of form.slice(5, -1).split(',')) expect(part.trim()).toMatch(/^>/);
+    }
   });
 });

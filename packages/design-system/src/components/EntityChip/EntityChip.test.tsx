@@ -1120,3 +1120,56 @@ describe('<EntityChip> — `labelWeight` (#590)', () => {
     expect(sawLabel).toBe(true);
   });
 });
+
+describe('<EntityChip> — labelEllipsis (#593)', () => {
+  const URL_PATH = '/eocrm/design-system/pull/1116';
+
+  it("'start' flips the clipped label to RTL around an LTR run that keeps the text order", () => {
+    render(
+      <EntityChip
+        href="/u"
+        prefix="github.com"
+        label={URL_PATH}
+        labelMaxWidth={12}
+        labelEllipsis="start"
+      />,
+    );
+    const run = screen.getByText(URL_PATH);
+    expect(run).toHaveAttribute('dir', 'ltr');
+    const label = run.parentElement!;
+    expect(label.className).toMatch(/ellipsisStart/);
+    expect(label.className).toMatch(/capped/);
+    // Prefix untouched; accessible name unchanged.
+    expect(screen.getByText('github.com').className).not.toMatch(/ellipsisStart/);
+    const { unmount } = render(
+      <EntityChip href="/v" prefix="github.com" label={URL_PATH} labelMaxWidth={12} />,
+    );
+    const [startChip, endChip] = screen.getAllByRole('link');
+    const endName = endChip!.textContent;
+    expect(startChip).toHaveAccessibleName(endName!);
+    unmount();
+  });
+
+  it("the clipped-label tooltip still shows the full text under 'start'", async () => {
+    const user = userEvent.setup();
+    render(<EntityChip href="/u" label={URL_PATH} truncate labelEllipsis="start" />);
+    const label = screen.getByText(URL_PATH).parentElement!;
+    fakeClip(label, true);
+    await user.hover(label);
+    expect(await screen.findByRole('tooltip')).toHaveTextContent(URL_PATH);
+  });
+
+  it("defaults to 'end', and 'start' is ignored on a chip whose label can't clip", () => {
+    const { rerender } = render(<EntityChip href="/u" label={URL_PATH} truncate />);
+    expect(screen.getByText(URL_PATH).className).not.toMatch(/ellipsisStart/);
+    expect(screen.getByText(URL_PATH)).not.toHaveAttribute('dir');
+    rerender(<EntityChip href="/u" label={URL_PATH} labelEllipsis="start" />);
+    expect(screen.getByText(URL_PATH).className).not.toMatch(/ellipsisStart/);
+    expect(screen.getByText(URL_PATH)).not.toHaveAttribute('dir');
+  });
+
+  it('.ellipsisStart sets direction: rtl', () => {
+    const scss = readFileSync(resolve(__dirname, 'EntityChip.module.scss'), 'utf8');
+    expect(scss).toMatch(/\.ellipsisStart\s*\{[^}]*direction:\s*rtl;/);
+  });
+});

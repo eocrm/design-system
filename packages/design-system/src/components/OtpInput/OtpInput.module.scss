@@ -52,6 +52,12 @@
   font-size: var(--otp-input-font-size-lg);
 }
 
+.size-xl {
+  width: var(--otp-input-cell-size-xl);
+  height: var(--otp-input-cell-size-xl);
+  font-size: var(--otp-input-font-size-xl);
+}
+
 .invalid {
   border-color: var(--otp-input-border-color-invalid);
 

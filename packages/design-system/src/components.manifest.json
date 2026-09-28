@@ -679,6 +679,12 @@
     "composes": [],
     "composedBy": []
   },
+  "ScrollArea": {
+    "tier": "primitive",
+    "cluster": "Layout",
+    "composes": [],
+    "composedBy": []
+  },
   "Select": {
     "tier": "primitive",
     "cluster": "Forms",

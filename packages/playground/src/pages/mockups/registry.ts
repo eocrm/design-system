@@ -91,6 +91,7 @@ export type ComponentName =
   | 'Stack'
   | 'PillMenu'
   | 'Sticky'
+  | 'ScrollArea'
   | 'Switch'
   | 'Table'
   | 'Tabs'

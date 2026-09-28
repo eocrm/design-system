@@ -77,6 +77,10 @@ export interface DropdownMenuProps {
  * - ❌ Nesting a full `<DropdownMenu>` root inside another DropdownMenu.
  *   Use `<DropdownMenu.Sub>` for nested menus — see the Sub component's
  *   JSDoc for the canonical pattern.
+ * - ❌ Using DropdownMenu as a panel (a notification centre, a header with a
+ *   "Mark all as read" button, rich feed rows). It is `role="menu"`, which
+ *   may only hold menu items; a header button is invalid ARIA and unreachable
+ *   by the menu's arrow keys. Use `Popover` + `ScrollArea` (#598).
  */
 export function DropdownMenuRoot({
   children,

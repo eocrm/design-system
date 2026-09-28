@@ -2,6 +2,7 @@ import {
   forwardRef,
   isValidElement,
   useCallback,
+  useId,
   useState,
   Children,
   cloneElement,
@@ -103,7 +104,9 @@ export interface ColorPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, '
   required?: boolean;
   /**
    * Accessible name for the focusable trigger. Forwarded to the default or custom trigger,
-   * not the root wrapper. Ignored when `aria-labelledby` is provided. An explicit name on
+   * not the root wrapper. On the default trigger the current value is appended
+   * (`aria-label="Accent colour"` → "Accent colour, current value #3366FF"); the popover
+   * dialog is named by the bare `aria-label`. Ignored when `aria-labelledby` is provided. An explicit name on
    * a custom trigger child takes precedence — but an EMPTY one on that child does not, since
    * an empty string names nothing.
    */
@@ -120,6 +123,9 @@ export interface ColorPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, '
    * Id(s) of element(s) that label the trigger button. Forwarded onto the
    * focusable trigger (not the root wrapper) and takes precedence over the
    * generated `aria-label`. Set automatically when wrapped in `<Field label>`.
+   * On the default trigger a visually hidden span holding the current HEX is
+   * appended, so the name reads e.g. "Accent colour #0052CC". The popover
+   * dialog is named by these ids alone (purpose, no value).
    */
   'aria-labelledby'?: string;
   /**
@@ -140,6 +146,9 @@ export interface ColorPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, '
    * be disruptive. If the footer's text should be announced as it settles,
    * wire that up yourself (e.g. wrap it in your own `role="status"` span);
    * that tradeoff is the consumer's call, not the picker's default.
+   *
+   * The footer is wired as the popover dialog's `aria-describedby`, so its
+   * text is read when the dialog opens. Keep it short — it is read in full.
    *
    * @example
    * <ColorPicker
@@ -192,12 +201,13 @@ const DefaultTrigger = forwardRef<HTMLButtonElement, DefaultTriggerProps>(functi
       type="button"
       className={styles.trigger}
       disabled={disabled}
-      // An external label (e.g. <Field label>) wins; otherwise fall back to
-      // the self-describing generated label. Never set both.
+      // An external label (e.g. <Field label>) wins; otherwise an explicit
+      // aria-label, or the trigger label, with the current value appended
+      // (#594). Never set both.
       aria-label={
         labelledBy
           ? undefined
-          : ariaLabel || t('colorPicker.triggerAccessibleLabel', { label, value: display })
+          : t('colorPicker.triggerAccessibleLabel', { label: ariaLabel || label, value: display })
       }
       aria-labelledby={labelledBy}
       aria-describedby={describedBy}
@@ -294,6 +304,11 @@ const ColorPickerRoot = forwardRef<HTMLDivElement, ColorPickerProps>(function Co
   const [open, setOpen] = useState(false);
   const { side, align } = PLACEMENT_MAP[popoverPlacement];
   const resolvedTriggerLabel = triggerLabel || t('colorPicker.triggerLabel');
+  const valueId = `${useId()}-value`;
+  const footerId = `${useId()}-footer`;
+  // What the popover dialog is named by — the trigger's PURPOSE (Field label,
+  // aria-label, or the default label), without the value, as IconPicker does.
+  let dialogLabelProps: { 'aria-labelledby'?: string; 'aria-label'?: string };
 
   // Find a <ColorPicker.Trigger> marker child if present; extract its
   // children to use as the popover trigger element. Other children types
@@ -318,6 +333,10 @@ const ColorPickerRoot = forwardRef<HTMLDivElement, ColorPickerProps>(function Co
     const resolvedLabel = childAriaLabel || (resolvedLabelledBy ? undefined : ariaLabel);
     const resolvedDescribedBy = childProps['aria-describedby'] ?? ariaDescribedBy;
     const resolvedInvalid = childProps['aria-invalid'] ?? (invalid ? true : ariaInvalid);
+    // The child's props are untyped; its ARIA naming props are strings.
+    dialogLabelProps = resolvedLabelledBy
+      ? { 'aria-labelledby': resolvedLabelledBy as string }
+      : { 'aria-label': (resolvedLabel as string | undefined) || resolvedTriggerLabel };
 
     // The consumer's child is cloned to receive the supported control attributes;
     // <Popover.Trigger> clones it again to add disclosure behavior and its ref. A
@@ -332,6 +351,9 @@ const ColorPickerRoot = forwardRef<HTMLDivElement, ColorPickerProps>(function Co
       'aria-required': undefined,
     });
   } else {
+    dialogLabelProps = ariaLabelledBy
+      ? { 'aria-labelledby': ariaLabelledBy }
+      : { 'aria-label': ariaLabel || resolvedTriggerLabel };
     triggerElement = (
       <DefaultTrigger
         id={id}
@@ -342,7 +364,10 @@ const ColorPickerRoot = forwardRef<HTMLDivElement, ColorPickerProps>(function Co
         ariaInvalid={ariaInvalid}
         ariaLabel={ariaLabel}
         open={open}
-        labelledBy={ariaLabelledBy}
+        // The swatch and hex inside the button are aria-hidden, so an external
+        // label alone would drop the value from the name (#594) — append a
+        // hidden span holding it, as IconPicker does.
+        labelledBy={ariaLabelledBy && `${ariaLabelledBy} ${valueId}`}
         describedBy={ariaDescribedBy}
         // onClick is overridden by Popover.Trigger's cloneElement; we set a
         // no-op here so DefaultTrigger's prop type is satisfied.
@@ -361,9 +386,19 @@ const ColorPickerRoot = forwardRef<HTMLDivElement, ColorPickerProps>(function Co
 
   return (
     <div ref={ref} className={clsx(disabled && styles.disabled, className)} {...rest}>
+      {!customTrigger && ariaLabelledBy && (
+        <span id={valueId} className={styles.visuallyHidden}>
+          {normalizeHex(value) ?? FALLBACK_HEX}
+        </span>
+      )}
       <Popover open={open} onOpenChange={handleOpenChange}>
         <Popover.Trigger>{triggerElement}</Popover.Trigger>
-        <Popover.Content side={side} align={align}>
+        <Popover.Content
+          side={side}
+          align={align}
+          {...dialogLabelProps}
+          aria-describedby={panelFooter != null ? footerId : undefined}
+        >
           <Stack gap="md">
             <ColorPickerPanel
               framed={false}
@@ -373,7 +408,7 @@ const ColorPickerRoot = forwardRef<HTMLDivElement, ColorPickerProps>(function Co
               presets={presets}
               disabled={disabled}
             />
-            {panelFooter}
+            {panelFooter != null && <div id={footerId}>{panelFooter}</div>}
           </Stack>
         </Popover.Content>
       </Popover>
