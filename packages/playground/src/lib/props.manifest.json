@@ -851,7 +851,7 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Accessible name for the focusable trigger. Forwarded to the default or custom trigger,\nnot the root wrapper. Ignored when `aria-labelledby` is provided. An explicit name on\na custom trigger child takes precedence — but an EMPTY one on that child does not, since\nan empty string names nothing."
+          "description": "Accessible name for the focusable trigger. Forwarded to the default or custom trigger,\nnot the root wrapper. On the default trigger the current value is appended\n(`aria-label=\"Accent colour\"` → \"Accent colour, current value #3366FF\"); the popover\ndialog is named by the bare `aria-label`. Ignored when `aria-labelledby` is provided. An explicit name on\na custom trigger child takes precedence — but an EMPTY one on that child does not, since\nan empty string names nothing."
         },
         {
           "name": "triggerLabel",
@@ -5895,7 +5895,7 @@
     "SplitAlign": "\"start\" | \"center\" | \"stretch\"",
     "StickyTop": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"none\" | \"topbar\"",
     "MasonryGap": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"2xl\"",
-    "ScrollAreaMaxHeight": "string | number",
+    "ScrollAreaMaxHeight": "number | \"sm\" | \"md\" | \"lg\" | (string & {})",
     "DividerOrientation": "\"horizontal\" | \"vertical\"",
     "DividerVariant": "\"solid\" | \"dashed\"",
     "DividerSize": "\"sm\" | \"md\" | \"lg\"",
