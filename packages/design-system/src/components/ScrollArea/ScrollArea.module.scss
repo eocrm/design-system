@@ -7,6 +7,10 @@
 // end from scrolling the page behind the popover.
 .root {
   overflow-y: auto;
+
+  // Vertical only: `overflow-y: auto` alone computes `overflow-x: auto`, a
+  // horizontal scroller with no keyboard tab stop. Wide content is clipped.
+  overflow-x: hidden;
   min-height: 0;
   overscroll-behavior: contain;
 

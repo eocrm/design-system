@@ -8,7 +8,7 @@ import {
   type HTMLAttributes,
 } from 'react';
 import clsx from 'clsx';
-import { mergeRefs } from '../_internal/refs';
+import { chain, mergeRefs } from '../_internal/refs';
 import { FOCUSABLE_SELECTOR } from '../_internal/overlay/useFocusTrap';
 import styles from './ScrollArea.module.scss';
 
@@ -16,7 +16,8 @@ import styles from './ScrollArea.module.scss';
  * Height cap for `<ScrollArea>`. A scale value (`'sm' | 'md' | 'lg'`) or an
  * escape-hatch length. Details on `ScrollAreaProps#maxHeight`.
  */
-export type ScrollAreaMaxHeight = 'sm' | 'md' | 'lg' | number | string;
+// `string & {}` keeps editor autocomplete for the scale values.
+export type ScrollAreaMaxHeight = 'sm' | 'md' | 'lg' | number | (string & {});
 
 const SCALE: ReadonlySet<string> = new Set(['sm', 'md', 'lg']);
 
@@ -40,13 +41,16 @@ export interface ScrollAreaProps extends HTMLAttributes<HTMLDivElement> {
  * fixed header, a long list in a popover. Inside `<Popover.Content>` it is
  * also what lets the popover cap itself at the viewport: the popover
  * becomes a flex column in which the ScrollArea is the only child that
- * shrinks, so the header stays put while the feed scrolls.
+ * shrinks, so the header stays put while the feed scrolls. That needs the
+ * ScrollArea to be a direct child, or inside one `<Stack>` that is a direct
+ * child, of `<Popover.Content>`.
  *
- * Keyboard: while the area overflows AND contains nothing focusable, it
- * becomes a tab stop (`tabIndex=0`, `role="region"`), so keyboard users can
- * scroll it. Name it with `aria-label` / `aria-labelledby`; a dev warning
- * fires if it becomes a tab stop unnamed. With links or buttons inside, it
- * adds no tab stop, because tabbing through them scrolls the area already.
+ * Keyboard: name it with `aria-label` / `aria-labelledby` and it is always a
+ * `role="region"` landmark. It is a tab stop (`tabIndex=0`) only while it
+ * overflows AND contains nothing focusable, so keyboard users can scroll it;
+ * a dev warning fires if it becomes a tab stop unnamed (then it is also a
+ * region). With links or buttons inside, it adds no tab stop, because
+ * tabbing through them scrolls the area already.
  *
  * @example
  * // A notification centre: a fixed header over a scrolling feed.
@@ -71,7 +75,7 @@ export interface ScrollAreaProps extends HTMLAttributes<HTMLDivElement> {
  * // A plain-text log: overflowing with nothing focusable, so it becomes a
  * // named tab stop by itself.
  * <ScrollArea maxHeight="sm" aria-label="Import log">
- *   <Code>{log}</Code>
+ *   <Stack gap="xs">{lines.map((line) => <Text key={line} size="sm">{line}</Text>)}</Stack>
  * </ScrollArea>
  *
  * @example
@@ -82,7 +86,8 @@ export interface ScrollAreaProps extends HTMLAttributes<HTMLDivElement> {
  * - Whole-page scrolling. `AppLayout` owns the page's scroll container.
  * - A Card with a fixed header over a scrolling body. Use `<Card fill>` with
  *   `<Card.Body scroll>`.
- * - Horizontal scrolling. ScrollArea scrolls vertically only.
+ * - Horizontal scrolling. ScrollArea scrolls vertically only: content wider
+ *   than the area is clipped (`overflow-x: hidden`), so wrap long lines.
  *
  * @remarks Anti-patterns
  * - ❌ Nesting ScrollAreas. Two scroll containers under one pointer trap the
@@ -91,12 +96,12 @@ export interface ScrollAreaProps extends HTMLAttributes<HTMLDivElement> {
  *   keyboard tab stop, the popover viewport cap, and overscroll containment.
  * - ❌ A ScrollArea with plain-text content and no `aria-label` /
  *   `aria-labelledby`. It becomes an unnamed tab stop.
- * - ❌ Wrapping the ScrollArea more than one level deep inside
- *   `<Popover.Content>`. The viewport cap only reaches a direct child or a
- *   child wrapped once (e.g. `Content > Stack > ScrollArea`).
+ * - ❌ Nesting the ScrollArea deeper inside `<Popover.Content>` than a direct
+ *   child, or inside one `<Stack>` that is a direct child
+ *   (`Content > Stack > ScrollArea`). Deeper, the popover stays uncapped.
  */
 export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(function ScrollArea(
-  { maxHeight, className, style, children, ...rest },
+  { maxHeight, className, style, children, onBlur, ...rest },
   ref,
 ) {
   const innerRef = useRef<HTMLDivElement>(null);
@@ -111,9 +116,10 @@ export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(function S
   const measure = useCallback(() => {
     const el = innerRef.current;
     if (!el) return;
-    setFocusable(
-      el.scrollHeight > el.clientHeight && el.querySelector(FOCUSABLE_SELECTOR) === null,
-    );
+    const next = el.scrollHeight > el.clientHeight && el.querySelector(FOCUSABLE_SELECTOR) === null;
+    // Removing tabIndex from the focused element drops focus to <body>. Keep
+    // the tab stop while the area holds focus; the onBlur re-measure drops it.
+    setFocusable((prev) => next || (prev && document.activeElement === el));
   }, []);
 
   useLayoutEffect(measure, [measure]);
@@ -124,18 +130,22 @@ export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(function S
     const ro = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(measure);
     // The area's own box changes when its cap or its parent does; its
     // content's height changes when a direct child resizes (images loading,
-    // rows expanding). Re-observe children as they're added.
-    const observeAll = () => {
-      if (!ro) return;
+    // rows expanding). Observe direct children as they're added.
+    if (ro) {
       ro.observe(el);
       for (const child of Array.from(el.children)) ro.observe(child);
-    };
-    observeAll();
+    }
     const mo =
       typeof MutationObserver === 'undefined'
         ? null
-        : new MutationObserver(() => {
-            observeAll();
+        : new MutationObserver((records) => {
+            if (ro) {
+              for (const record of records) {
+                for (const node of Array.from(record.addedNodes)) {
+                  if (node instanceof Element && node.parentNode === el) ro.observe(node);
+                }
+              }
+            }
             measure();
           });
     mo?.observe(el, {
@@ -184,9 +194,11 @@ export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(function S
       ref={mergeRefs<HTMLDivElement>(innerRef, ref)}
       data-scroll-area=""
       tabIndex={focusable ? 0 : undefined}
-      role={focusable ? 'region' : undefined}
+      // Named ⇒ always a region: a named generic div is prohibited (ARIA 1.2).
+      role={named || focusable ? 'region' : undefined}
       className={clsx(styles.root, scale && styles[`max-height-${maxHeight}`], className)}
       style={inlineMaxHeight !== undefined ? { maxHeight: inlineMaxHeight, ...style } : style}
+      onBlur={chain(onBlur, measure)}
       {...rest}
     >
       {children}

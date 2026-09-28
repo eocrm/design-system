@@ -1836,9 +1836,9 @@ When NOT to use: arranging children → `<Stack>`/`<Cluster>`; a fixed overlay a
 ```
 
 - `maxHeight`: `sm` (240px) / `md` (400px) / `lg` (560px), or a one-off `number` (px) / CSS length string. Prefer the scale. Omitted: no cap of its own, so it fills a bounded flex parent.
-- **Keyboard:** while it overflows AND holds nothing focusable, it becomes a tab stop (`tabIndex=0`, `role="region"`). Name it with `aria-label` / `aria-labelledby` (a dev warning fires if you don't). A feed of links adds no tab stop.
-- **In a Popover** it's what caps the popover at the viewport: the popover becomes a flex column where only the ScrollArea shrinks, so a header above it stays put. Keep it a direct child of `Popover.Content` or wrapped at most once (`Content > Stack > ScrollArea`).
-- Not for whole-page scroll (AppLayout owns it), a Card body (`<Card fill>` + `<Card.Body scroll>`), or horizontal scrolling. Don't nest them.
+- **Keyboard:** named (`aria-label` / `aria-labelledby`), it is always a `role="region"` landmark. It is a tab stop (`tabIndex=0`) only while it overflows AND holds nothing focusable (a dev warning fires if that happens unnamed). A feed of links adds no tab stop.
+- **In a Popover** it's what caps the popover at the viewport: the popover becomes a flex column where only the ScrollArea shrinks, so a header above it stays put. Keep it a direct child of `Popover.Content`, or inside one `<Stack>` that is a direct child (`Content > Stack > ScrollArea`); nested deeper, the popover stays uncapped.
+- Not for whole-page scroll (AppLayout owns it), a Card body (`<Card fill>` + `<Card.Body scroll>`), or horizontal scrolling (wider content is clipped — wrap long lines). Don't nest them.
 
 ### `<Masonry>` — height-balanced masonry layout
 

@@ -111,7 +111,7 @@ describe('ScrollArea', () => {
     expect(region).toHaveAttribute('tabindex', '0');
   });
 
-  it('overflowing with a link inside: not a tab stop, no region role', () => {
+  it('named, overflowing with a link inside: a region, but not a tab stop', () => {
     stubLayout(500, 100);
     render(
       <ScrollArea aria-label="Feed" data-testid="sa">
@@ -120,7 +120,66 @@ describe('ScrollArea', () => {
     );
     const el = screen.getByTestId('sa');
     expect(el).not.toHaveAttribute('tabindex');
+    expect(el).toHaveAttribute('role', 'region');
+  });
+
+  it('unnamed, overflowing with a link inside: no role, no tab stop', () => {
+    stubLayout(500, 100);
+    render(
+      <ScrollArea data-testid="sa">
+        <a href="/x">row</a>
+      </ScrollArea>,
+    );
+    const el = screen.getByTestId('sa');
+    expect(el).not.toHaveAttribute('tabindex');
     expect(el).not.toHaveAttribute('role');
+  });
+
+  it('named, not overflowing: a region, but not a tab stop', () => {
+    stubLayout(100, 100);
+    render(
+      <ScrollArea aria-label="Log" data-testid="sa">
+        plain text
+      </ScrollArea>,
+    );
+    const el = screen.getByTestId('sa');
+    expect(el).not.toHaveAttribute('tabindex');
+    expect(el).toHaveAttribute('role', 'region');
+  });
+
+  it('a hidden input does not count as focusable content', () => {
+    stubLayout(500, 100);
+    render(
+      <ScrollArea aria-label="Log" data-testid="sa">
+        plain text
+        <input type="hidden" name="x" value="1" />
+      </ScrollArea>,
+    );
+    expect(screen.getByTestId('sa')).toHaveAttribute('tabindex', '0');
+  });
+
+  it('keeps the tab stop while it has focus, and drops it once focus leaves', async () => {
+    stubLayout(500, 100);
+    const { rerender } = render(
+      <ScrollArea aria-label="Feed" data-testid="sa">
+        <span>row</span>
+      </ScrollArea>,
+    );
+    const el = screen.getByTestId('sa');
+    act(() => el.focus());
+    expect(document.activeElement).toBe(el);
+    rerender(
+      <ScrollArea aria-label="Feed" data-testid="sa">
+        <a href="/x">row</a>
+      </ScrollArea>,
+    );
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 0));
+    });
+    expect(el).toHaveAttribute('tabindex', '0');
+    expect(document.activeElement).toBe(el);
+    act(() => el.blur());
+    await waitFor(() => expect(el).not.toHaveAttribute('tabindex'));
   });
 
   it('not overflowing: not a tab stop', () => {
@@ -234,6 +293,7 @@ describe('ScrollArea', () => {
     const scss = readFileSync(resolve(__dirname, 'ScrollArea.module.scss'), 'utf8');
     const root = scss.match(/\.root \{[\s\S]*?\n\}/)![0];
     expect(root).toMatch(/overflow-y: auto;/);
+    expect(root).toMatch(/overflow-x: hidden;/);
     expect(root).toMatch(/min-height: 0;/);
     expect(root).toMatch(/overscroll-behavior: contain;/);
     expect(root).toMatch(/focus-ring\(var\(--scroll-area-ring\)\)/);

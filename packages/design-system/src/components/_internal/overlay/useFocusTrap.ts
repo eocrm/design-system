@@ -3,7 +3,7 @@ import { useEffect, type RefObject } from 'react';
 export const FOCUSABLE_SELECTOR = [
   'button:not([disabled])',
   '[href]',
-  'input:not([disabled])',
+  'input:not([disabled]):not([type="hidden"])',
   'select:not([disabled])',
   'textarea:not([disabled])',
   '[tabindex]:not([tabindex="-1"])',

@@ -868,20 +868,22 @@ describe('Popover — viewport cap with a ScrollArea (#598)', () => {
     const dialog = screen.getByRole('dialog');
     await waitFor(() =>
       expect(dialog.style.getPropertyValue('--popover-available-height')).toMatch(
-        /^-?\d+(\.\d+)?px$/,
+        /^\d+(\.\d+)?px$/,
       ),
     );
   });
 
   it('SCSS: only a popover containing a ScrollArea becomes a capped flex column; the rest do not shrink', () => {
     const scss = readFileSync(resolve(__dirname, 'Popover.module.scss'), 'utf8');
-    const block = scss.match(/\.content:has\(\[data-scroll-area\]\) \{[\s\S]*?\n\}/)![0];
+    const block = scss.match(
+      /\.content:has\(> \[data-scroll-area\], > \* > \[data-scroll-area\]\) \{[\s\S]*?\n\}/,
+    )![0];
     expect(block).toMatch(/display: flex;/);
     expect(block).toMatch(/flex-direction: column;/);
     expect(block).toMatch(/max-height: var\(--popover-available-height\);/);
     expect(block).toMatch(/> \* \{\s*flex-shrink: 0;/);
     expect(block).toMatch(
-      /> \[data-scroll-area\],\s*> :has\(\[data-scroll-area\]\) \{\s*flex-shrink: 1;\s*min-height: 0;/,
+      /> \[data-scroll-area\],\s*> :has\(> \[data-scroll-area\]\) \{\s*flex-shrink: 1;\s*min-height: 0;/,
     );
     // The base `.content` rule stays un-capped and not a flex container.
     const base = scss.match(/^\.content \{[\s\S]*?\n\}/m)![0];
@@ -889,5 +891,41 @@ describe('Popover — viewport cap with a ScrollArea (#598)', () => {
     expect(base).not.toMatch(/max-height/);
     // No overflow on the content itself: it would clip the arrow.
     expect(scss).not.toMatch(/\.content[^{]*\{[^}]*overflow/);
+  });
+
+  it('a ScrollArea nested two levels deep leaves the popover uncapped (selectors are >-anchored)', async () => {
+    const user = userEvent.setup();
+    render(
+      <Popover>
+        <Popover.Trigger>
+          <button type="button">Open</button>
+        </Popover.Trigger>
+        <Popover.Content aria-label="Panel">
+          <div>
+            <div>
+              <ScrollArea maxHeight="md" aria-label="Feed">
+                <a href="/x">row</a>
+              </ScrollArea>
+            </div>
+          </div>
+        </Popover.Content>
+      </Popover>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    const dialog = screen.getByRole('dialog');
+    const area = screen.getByRole('region', { name: 'Feed' });
+    // Two levels deep: neither a direct child nor a grandchild of the content.
+    expect(area.parentElement?.parentElement?.parentElement).toBe(dialog);
+    // jsdom applies no CSS-module styles, so the contract is the selector
+    // text: every `:has(…[data-scroll-area])` must be `>`-anchored, which is
+    // what keeps this nesting depth from matching (and from being capped with
+    // a ScrollArea that can't shrink, painting rows outside the chrome).
+    const scss = readFileSync(resolve(__dirname, 'Popover.module.scss'), 'utf8');
+    const hasForms = scss.match(/:has\([^)]*data-scroll-area[^)]*\)/g) ?? [];
+    expect(hasForms.length).toBeGreaterThan(0);
+    for (const form of hasForms) {
+      expect(form).not.toMatch(/:has\(\s*\[data-scroll-area\]/);
+      for (const part of form.slice(5, -1).split(',')) expect(part.trim()).toMatch(/^>/);
+    }
   });
 });
