@@ -409,6 +409,18 @@ describe('OtpInput', () => {
     expect(boxes()[2]).toHaveFocus();
   });
 
+  it('does not select() the clicked cell when the click was redirected elsewhere', async () => {
+    // Chromium's select() focuses the input, so selecting the clicked cell
+    // after mousedown redirected focus would undo the redirect (#597). jsdom's
+    // select() doesn't focus, so assert on the call itself.
+    const user = userEvent.setup();
+    render(<OtpInput length={6} defaultValue="12" />);
+    const select = vi.spyOn(boxes()[5]!, 'select');
+    await user.click(boxes()[5]!);
+    expect(select).not.toHaveBeenCalled();
+    expect(boxes()[2]).toHaveFocus();
+  });
+
   it('keeps exactly one box in the tab order', async () => {
     const user = userEvent.setup();
     const { container } = render(<OtpInput length={4} defaultValue="12" />);

@@ -387,8 +387,11 @@ export const OtpInput = forwardRef<HTMLDivElement, OtpInputProps>(function OtpIn
 
   // Re-clicking a cell that already has focus moves the caret but fires no
   // focus event, so it needs its own select — same reasoning as `focusCell`.
+  // Only when it really has focus: Chromium's select() also FOCUSES, so on a
+  // click that `handleMouseDown` redirected it would pull focus back to the
+  // clicked cell and undo the redirect (#597).
   const handleClick = (event: ReactMouseEvent<HTMLInputElement>) => {
-    event.currentTarget.select();
+    if (document.activeElement === event.currentTarget) event.currentTarget.select();
   };
 
   const cellLabel = type === 'numeric' ? 'otpInput.digit' : 'otpInput.character';
