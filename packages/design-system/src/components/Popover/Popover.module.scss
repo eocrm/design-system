@@ -39,17 +39,19 @@
 // shrinks, so a header above it stays whole while the feed scrolls.
 // Supported shapes: the ScrollArea is a direct child, or inside ONE wrapper
 // element that is a direct child (Content > Stack > [header, ScrollArea]).
-// That wrapper is laid out as a flex column unless it sets its own display
-// (see the `:where` rule below): a `<Stack>` or a plain element works; a
-// row/grid wrapper (Cluster, Grid) keeps its layout but is not shrunk to the
-// cap, so put the ScrollArea in a Stack there. The selectors are
+// That one wrapper must lay its children out as a column: a `<Stack>`, or a
+// plain element (div/form/Card), which the `:where` rule below lays out as a
+// column. A row wrapper such as `<Cluster>` is not supported (the popover
+// caps but the feed overflows it) — put the ScrollArea in a Stack instead.
+// A `hidden` wrapper doesn't count, so a ScrollArea only in a hidden view of
+// a two-view popover doesn't cap the visible view. The selectors are
 // `>`-anchored on purpose: deeper nesting can't pass the shrink down, so it
 // would cap the chrome while the rows paint outside it. Such popovers stay
 // uncapped (pre-#598).
 // Compound-internal layout like Card's `.scroll`: the popover lays out its
 // own content box, not a consumer-positioned component. No `overflow` here,
 // since it would clip the arrow.
-.content:has(> [data-scroll-area], > * > [data-scroll-area]) {
+.content:has(> [data-scroll-area], > :not([hidden]) > [data-scroll-area]) {
   display: flex;
   flex-direction: column;
   max-height: var(--popover-available-height);
@@ -70,12 +72,12 @@
 }
 
 // The one wrapper's LAYOUT, at zero specificity: a wrapper with its own
-// display (Stack, Cluster, Grid) keeps it; a plain div/form becomes a column
-// so it passes the shrink down. `:not([hidden])`: an author `display` would
+// display (a Stack) keeps it; a plain div/form becomes a column so it passes
+// the shrink down. `:not([hidden])`: an author `display` would
 // otherwise override the UA `[hidden] { display: none }` (cf. Rail's
 // `.subitems[hidden]`), showing a hidden view of a two-view popover.
 :where(
-  .content:has(> [data-scroll-area], > * > [data-scroll-area])
+  .content:has(> [data-scroll-area], > :not([hidden]) > [data-scroll-area])
     > :has(> [data-scroll-area]):not([hidden])
 ) {
   display: flex;
@@ -86,7 +88,7 @@
 // with the ScrollArea. Zero specificity so a consumer class setting
 // `flex-shrink` still wins.
 :where(
-  .content:has(> [data-scroll-area], > * > [data-scroll-area])
+  .content:has(> [data-scroll-area], > :not([hidden]) > [data-scroll-area])
     > :has(> [data-scroll-area])
     > :not([data-scroll-area])
 ) {

@@ -43,11 +43,11 @@ export interface ScrollAreaProps extends HTMLAttributes<HTMLDivElement> {
  * becomes a flex column in which the ScrollArea is the only child that
  * shrinks, so the header stays put while the feed scrolls. That needs the
  * ScrollArea to be a direct child of `<Popover.Content>`, or inside one
- * wrapper element that is a direct child. That wrapper is laid out as a
- * flex column unless it sets its own display: a `<Stack>` or a plain element
- * works; a row/grid wrapper (`<Cluster>`, `<Grid>`) keeps its layout but is
- * not shrunk to the cap, so put the ScrollArea in a Stack there. Deeper
- * nesting leaves the popover uncapped.
+ * wrapper element that is a direct child. That one wrapper must lay its
+ * children out as a column: a `<Stack>`, or a plain element (div/form/Card),
+ * which the popover lays out as a column. A row wrapper such as `<Cluster>`
+ * is not supported (the popover caps but the feed overflows it) — put the
+ * ScrollArea in a Stack instead. Deeper nesting leaves the popover uncapped.
  *
  * Keyboard: name it with `aria-label` / `aria-labelledby` and it is always a
  * `role="region"` landmark. It is a tab stop (`tabIndex=0`) only while it
@@ -103,8 +103,10 @@ export interface ScrollAreaProps extends HTMLAttributes<HTMLDivElement> {
  * - ❌ Nesting the ScrollArea deeper inside `<Popover.Content>` than a direct
  *   child, or inside one wrapper element that is a direct child
  *   (`Content > Stack > ScrollArea`). Deeper nesting leaves the popover
- *   uncapped. A row/grid wrapper (`<Cluster>`, `<Grid>`) keeps its own layout
- *   and is not shrunk to the cap — put the ScrollArea in a Stack there.
+ *   uncapped.
+ * - ❌ A `<Cluster>` (row) as the wrapper around a ScrollArea inside
+ *   `<Popover.Content>`. The popover caps but the feed overflows it; put the
+ *   ScrollArea in a `<Stack>` instead.
  */
 export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(function ScrollArea(
   { maxHeight, className, style, children, onBlur, ...rest },

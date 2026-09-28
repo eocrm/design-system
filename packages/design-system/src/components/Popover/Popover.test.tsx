@@ -876,11 +876,16 @@ describe('Popover — viewport cap with a ScrollArea (#598)', () => {
   it('SCSS: only a popover containing a ScrollArea becomes a capped flex column; the rest do not shrink', () => {
     const scss = readFileSync(resolve(__dirname, 'Popover.module.scss'), 'utf8');
     const block = scss.match(
-      /\.content:has\(> \[data-scroll-area\], > \* > \[data-scroll-area\]\) \{[\s\S]*?\n\}/,
+      /\.content:has\(> \[data-scroll-area\], > :not\(\[hidden\]\) > \[data-scroll-area\]\) \{[\s\S]*?\n\}/,
     )![0];
     expect(block).toMatch(/display: flex;/);
     expect(block).toMatch(/flex-direction: column;/);
     expect(block).toMatch(/max-height: var\(--popover-available-height\);/);
+    // A ScrollArea only in a `hidden` view must not cap the visible one: every
+    // one-level `:has()` branch skips hidden wrappers.
+    const oneLevel = scss.match(/:has\(> \[data-scroll-area\], > [^)]*\)[^)]*\)/g) ?? [];
+    expect(oneLevel).toHaveLength(3);
+    for (const sel of oneLevel) expect(sel).toMatch(/> :not\(\[hidden\]\) > \[data-scroll-area\]/);
     expect(block).toMatch(/> \* \{\s*flex-shrink: 0;/);
     const area = block.match(/> \[data-scroll-area\] \{[^}]*\}/)![0];
     expect(area).toMatch(/flex-shrink: 1;/);
@@ -899,14 +904,14 @@ describe('Popover — viewport cap with a ScrollArea (#598)', () => {
     // display) and skips `[hidden]` wrappers (an author display would beat the
     // UA `[hidden] { display: none }`).
     const layout = scss.match(
-      /:where\(\s*\.content:has\(> \[data-scroll-area\], > \* > \[data-scroll-area\]\)\s*> :has\(> \[data-scroll-area\]\):not\(\[hidden\]\)\s*\) \{[^}]*\}/,
+      /:where\(\s*\.content:has\(> \[data-scroll-area\], > :not\(\[hidden\]\) > \[data-scroll-area\]\)\s*> :has\(> \[data-scroll-area\]\):not\(\[hidden\]\)\s*\) \{[^}]*\}/,
     )![0];
     expect(layout).toMatch(/display: flex;/);
     expect(layout).toMatch(/flex-direction: column;/);
     // The wrapper's other children (a header) don't shrink; zero specificity
     // so a consumer class setting flex-shrink still wins.
     const guard = scss.match(
-      /:where\(\s*\.content:has\(> \[data-scroll-area\], > \* > \[data-scroll-area\]\)\s*> :has\(> \[data-scroll-area\]\)\s*> :not\(\[data-scroll-area\]\)\s*\) \{[^}]*\}/,
+      /:where\(\s*\.content:has\(> \[data-scroll-area\], > :not\(\[hidden\]\) > \[data-scroll-area\]\)\s*> :has\(> \[data-scroll-area\]\)\s*> :not\(\[data-scroll-area\]\)\s*\) \{[^}]*\}/,
     )![0];
     expect(guard).toMatch(/flex-shrink: 0;/);
 
