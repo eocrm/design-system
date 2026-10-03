@@ -54,3 +54,30 @@
   point the next step into the opened Modal/Drawer) or use `modal={false}`.
   Library floating surfaces (menus, popovers, selects) opened from an
   interactive target elevate above the tour automatically.
+
+```tsx
+// One-step feature announcement — page stays usable:
+<Tour open={open} onOpenChange={setOpen} modal={false} doneLabel="Got it"
+  steps={[{ target: 'bulk-edit', title: 'New: bulk edit', body: 'Select rows, then edit them together.' }]} />
+
+// Cross-page: controlled step, navigate first, Tour waits for the target.
+// Symmetric on i, not a one-shot `i === 3`: Back past step 3 must navigate away too.
+<Tour open={open} onOpenChange={setOpen} step={step}
+  onStepChange={(i) => { navigate(i >= 3 ? '/contacts' : '/deals'); setStep(i); }}
+  steps={steps} />
+```
+
+- Each step spotlights its `data-tour` target and anchors a card (title, body, "Step n of m", Skip / Back / Next) to it. Steps without a target, or whose target never appears, render as a centered card. Every transition animates; all motion drops under `prefers-reduced-motion`.
+- **Keyboard:** Escape skips; ←/→ move between steps (not inside inputs).
+
+**When NOT to use**
+
+- A single contextual hint on hover/focus: `<Tooltip>`.
+- An interactive panel the user opens themselves: `<Popover>`.
+- A blocking decision: `<Modal>` / `<ConfirmationPopover>`.
+- Persistent inline guidance: `<Alert>` or `EmptyState`.
+
+**More anti-patterns**
+
+- ❌ Two elements with the same `data-tour` value on screen: the first rendered wins (dev warning). Keep ids unique per screen.
+- ❌ 10+ step tours: keep onboarding to about 5-7 steps; split longer ones per page.

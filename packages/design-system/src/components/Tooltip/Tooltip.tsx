@@ -95,58 +95,8 @@ function isInteractiveTarget(target: EventTarget | null): boolean {
 }
 
 /**
- * Renders a small floating label anchored to a single trigger element. Opens
- * on hover (after `delay` ms) or immediately on keyboard focus, with a
- * directional arrow pointing at the trigger and a short scale-fade entrance.
- * Hand-rolled on `@floating-ui/react-dom` — no UI library.
- *
- * The trigger child must accept a ref (`forwardRef` if it's a custom
- * component; a raw `<button>` or this library's `<Button>` both qualify) and
- * must already have its own accessible name (visible text or `aria-label`).
- * The tooltip provides **supplementary description** via `aria-describedby`,
- * never the label itself.
- *
- * @example
- * <Tooltip content="Save the record (⌘S)">
- *   <Button onClick={save}>Save</Button>
- * </Tooltip>
- *
- * @example
- * // Icon-only trigger — give it its own aria-label; tooltip describes:
- * <Tooltip content="Filter results">
- *   <Button variant="ghost" aria-label="Filter">⏷</Button>
- * </Tooltip>
- *
- * @example
- * // Controlled open (rare — usually let Tooltip manage state):
- * const [open, setOpen] = useState(false);
- * <Tooltip content="…" open={open} onOpenChange={setOpen}>
- *   <Button>Edit</Button>
- * </Tooltip>
- *
- * @remarks When NOT to use
- * - For content the user must click to interact with → use Popover (separate
- *   wishlist item). Tooltips are not hoverable; moving the pointer into the
- *   tooltip body does not keep it open.
- * - For form-value selection → use Select (separate wishlist item).
- * - As the only source of essential information. Tooltips are progressive
- *   enhancement. Touch users reach them only on NON-interactive triggers: a
- *   tap on a `Text` / `Badge` / `IconTile` trigger toggles the tooltip (a tap
- *   elsewhere closes it), while a tap on a button, link or form control — or
- *   on anything inside one — performs its action and shows nothing.
- *
- * @remarks Anti-patterns
- * - ❌ `<Tooltip><Button disabled>…</Button></Tooltip>` — `disabled` buttons
- *   do not fire pointerenter or focus events in any browser. If you need a
- *   tooltip explaining *why* a button is disabled, render the button with
- *   `aria-disabled="true"` and intercept its click handler, or wrap the
- *   disabled element in a `<span>` and pass the span as the Tooltip child.
- * - ❌ Putting essential info only in the tooltip. Make it visible in copy
- *   or, for icon buttons, in the trigger's `aria-label`.
- * - ❌ Trigger child that does not accept a ref — cloneElement needs a ref
- *   contract on the child.
- * - ❌ Multi-paragraph tooltip content. If you have that much to say, it's
- *   Popover territory.
+ * Small floating label anchored to a single trigger, opening on hover or keyboard focus with a directional arrow.
+ * @see docs/components/Tooltip.md
  */
 export function Tooltip({
   content,

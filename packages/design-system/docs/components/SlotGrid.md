@@ -45,3 +45,11 @@
 - ❌ No per-slot `disabled` — pass only bookable slots. ❌ Don't wrap it in your own `role="radiogroup"`.
 - ❌ In an intrinsic-width context (`Split`'s default `auto` aside track, a `Cluster` item, `width: max-content`) it renders at width 0 — `container-type: inline-size` zeroes its intrinsic-width contribution; give the parent a concrete width (e.g. `asideWidth` on a Split). It is also the containing block for absolutely-positioned descendants (layout containment).
 - When NOT to use: free-form time → `<TimeField>`; a handful of options → `<ButtonGroup value>` / `<RadioGroup>`.
+
+```tsx
+// Booking time step: DateStrip picks the day, SlotGrid the time.
+<Stack gap="lg">
+  <DateStrip days={week} value={day} onChange={setDay} onPrevious={prev} onNext={next} />
+  <SlotGrid groups={slotsFor(day)} value={slot} onChange={setSlot} />
+</Stack>
+```

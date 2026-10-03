@@ -49,3 +49,22 @@ return showPlaceholder ? (
 - `aria-hidden='true'` by default — Skeleton is decorative. Communicate "loading" from a parent live region you own. Note `aria-busy` alone on the section will NOT do it — no mainstream screen reader speaks it on a non-live element; pair it with `role="status"` and text that changes. Skeleton is one of the few components where announcing is genuinely yours, because it has no state of its own to describe.
 - Composes — for a list-row placeholder, render `<Skeleton variant='circular' />` + 2–3 text skeletons + a button-shaped rectangular in a Cluster.
 - Use `<EmptyState>` for "nothing here yet" — Skeleton implies "loading," not "empty."
+
+```tsx
+// List-row loading: avatar + two text lines + button
+<Cluster gap="md" align="center">
+  <Skeleton variant="circular" width={32} />
+  <Stack gap="xs" style={{ flex: 1 }}>
+    <Skeleton width="60%" />
+    <Skeleton width="40%" />
+  </Stack>
+  <Skeleton variant="rectangular" width={80} height={32} />
+</Cluster>
+```
+
+**Anti-patterns**
+
+- Wrapping real content in a Skeleton: it is a leaf, don't pass children.
+- Omitting all dimensions on `rectangular`: with no `width` / `height` the box has zero size and renders invisibly. Always size it.
+- Showing an immediate placeholder for loads that resolve quickly: use `delay` so fast loads never display it.
+- Conditionally unmounting a timed Skeleton (`{loading && <Skeleton minDuration={300} />}`): React removes it before the minimum can finish. Keep it mounted and pass `loading={loading}`.

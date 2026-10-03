@@ -68,3 +68,13 @@ const [stacked, setStacked] = useState(false);
 - ❌ A `collapseBelow` split in an intrinsic-width context (another `Split`'s default `auto` aside track, a `Cluster` item, `width: max-content`). `container-type: inline-size` makes it contribute zero intrinsic width, so it renders at width 0 — give the parent a concrete width instead. It also becomes the containing block for absolutely-positioned descendants (layout containment). Splits without the prop pay neither cost.
 
 When NOT to use: equal columns → `<Grid columns={2}>`; wrapping peer row → `<Cluster>`; app shell sidebar → `<AppLayout>`/`<Rail>`.
+
+```tsx
+// Pinned rail width, aside on the right:
+<Split aside={<Filters />} side="end" asideWidth="260px" gap="lg">
+  <Results />
+</Split>
+```
+
+- Split owns only its internal grid (like `AppLayout` / `Page` / `Screen`, a documented exception to "components don't own layout"). Unlike `Cluster` it never wraps the panel below the rail; unlike `Grid columns={2}` the rail keeps its natural width instead of taking half.
+- ❌ Primary page navigation in `aside`: that belongs in the app shell (`<Rail>` / `<AppLayout sidebar>`); Split's aside is intra-page.

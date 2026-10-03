@@ -121,69 +121,8 @@ const sortAriaFor: Record<TableSortDirection, 'ascending' | 'descending' | 'none
 };
 
 /**
- * Tabular data primitive. Compound API:
- * `Table`, `Table.Caption`, `Table.Header`, `Table.Body`, `Table.Footer`,
- * `Table.Row`, `Table.HeaderCell`, `Table.Cell`.
- *
- * Native HTML elements throughout — no ARIA-on-divs. Density, hover,
- * striped, sticky header, and horizontal-scroll wrapper are visual
- * modifiers on the root. Sortable header is a visual hook — the consumer
- * wires `onClick` on `Table.HeaderCell` to drive their own sort state.
- *
- * **Sizing model.** The `<table>` is `min-width: 100%` (not `width: 100%`),
- * so it fills the wrap for narrow content but can grow past the wrap when
- * cell content or explicit `<col>` widths sum wider. The default `scroll`
- * wrapper then provides horizontal scroll. Consumers wanting the table to
- * stretch their columns over the available width can still do so by
- * sizing columns to total exactly 100% of the parent; the table will fill
- * the wrap regardless.
- *
- * @example
- * <Table>
- *   <Table.Caption>Recent activity</Table.Caption>
- *   <Table.Header>
- *     <Table.Row>
- *       <Table.HeaderCell>Name</Table.HeaderCell>
- *       <Table.HeaderCell align="end">Amount</Table.HeaderCell>
- *     </Table.Row>
- *   </Table.Header>
- *   <Table.Body>
- *     {rows.map((r) => (
- *       <Table.Row key={r.id}>
- *         <Table.Cell>{r.name}</Table.Cell>
- *         <Table.Cell align="end">{r.amount}</Table.Cell>
- *       </Table.Row>
- *     ))}
- *   </Table.Body>
- * </Table>
- *
- * @example
- * // Sortable column — consumer owns the state machine; the primitive
- * // only paints the indicator and sets aria-sort.
- * <Table.HeaderCell
- *   sortDirection={sortKey === 'amount' ? sortDir : 'none'}
- *   onClick={() => toggleSort('amount')}
- * >
- *   Amount
- * </Table.HeaderCell>
- *
- * @remarks When NOT to use
- * - For data that needs sorting / filtering / pagination state — use
- *   `<DataTable>` (composes this primitive with a hand-rolled state machine
- *   covering sort, filter, pagination, selection, column visibility).
- * - For non-tabular content (cards, lists). Use `<Stack>` / `<Cluster>` /
- *   `<Card>` instead.
- * - For dashboards with editable cells. The primitive doesn't ship inline
- *   editing; consumer adds inputs inside cells as needed.
- *
- * @remarks Anti-patterns
- * - ❌ `<Table>` without `<Table.Body>` for non-header rows. Native
- *   semantics require `<tbody>` for data rows.
- * - ❌ Putting `<Table.HeaderCell>` inside `<Table.Body>` for the leftmost
- *   row-header column. Use a `<th scope="row">` instead — pass `scope` via
- *   spread on `<Table.Cell>` is not supported (it would silently render as
- *   `<td scope="row">` which is invalid). If you need row headers, file a
- *   follow-up to add a `rowHeader` prop.
+ * Tabular data primitive with a compound API (`Table.Header`, `Table.Body`, `Table.Row`, `Table.Cell`, ...) over native table elements.
+ * @see docs/components/Table.md
  */
 const TableRoot = forwardRef<HTMLTableElement, TableProps>(function TableRoot(
   {
@@ -354,8 +293,8 @@ const TableCell = forwardRef<HTMLTableCellElement, TableCellProps>(function Tabl
 });
 
 /**
- * Compound `<Table>` family. Attach subcomponents via Object.assign so
- * consumers write `<Table.Body>` etc., not separate imports.
+ * Compound `<Table>` family; subcomponents are attached as `Table.Body` etc.
+ * @see docs/components/Table.md
  */
 export const Table = Object.assign(TableRoot, {
   Caption: TableCaption,

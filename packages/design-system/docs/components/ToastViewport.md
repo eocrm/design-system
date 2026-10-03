@@ -54,3 +54,6 @@ toast.success('Saved', { id });
 - ❌ For destructive confirmations. Use `<ConfirmationPopover>` or `<Modal>` — the user needs an explicit yes/no decision, not a transient banner.
 - ❌ For long-form messages. Toasts are 1–2 lines. If you need more, link to a page from the description.
 - ❌ As a substitute for in-page progress UI. A toast can announce "Upload started" but the persistent progress bar belongs in the page.
+
+- Toasts fired before the viewport mounts sit in the store and render the moment it mounts. When a second viewport mounts, only the first (in mount order) renders and the next takes over if it unmounts.
+- The portal target is `document.body`, so toasts aren't constrained by any parent overflow / transform / contain context.

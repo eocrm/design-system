@@ -94,3 +94,33 @@
 - **`colSpan` / `rowSpan`** flow through to the native `<th>` / `<td>` via spread. Use for multi-row grouped headers (`rowSpan` on a corner cell + `colSpan` on group cells over a second `<Table.Row>`), category-grouped body rows (`rowSpan` on a leftmost cell), and footer total rows (`<Table.Cell colSpan={n}>Total</Table.Cell>`). Use `<Table.HeaderCell scope="row">` (instead of `<Table.Cell>`) for the leftmost cell when it labels its row to AT.
 - The native HTML `align` attribute on `<th>` / `<td>` is shadowed by the component-level `align` prop (logical) — `Omit<…, 'align'>` on both `*Props`.
 - **Use `<DataTable>` instead** when you need sorting / filtering / pagination state. Table is the paint primitive; DataTable will be the opinionated wrapper.
+
+```tsx
+// Caption and a sortable column — you own the sort state; the primitive paints the indicator and sets aria-sort:
+<Table>
+  <Table.Caption>Recent activity</Table.Caption>
+  <Table.Header>
+    <Table.Row>
+      <Table.HeaderCell
+        sortDirection={sortKey === 'amount' ? sortDir : 'none'}
+        onClick={() => toggleSort('amount')}
+      >
+        Amount
+      </Table.HeaderCell>
+    </Table.Row>
+  </Table.Header>
+  ...
+</Table>
+```
+
+**Sizing:** the `<table>` is `min-width: 100%` (not `width: 100%`), so it fills the wrap for narrow content but grows past it when cell content or explicit `<col>` widths sum wider; the default `scroll` wrapper then scrolls horizontally.
+
+**When NOT to use**
+
+- Non-tabular content (cards, lists): use `<Stack>` / `<Cluster>` / `<Card>`.
+- Editable cells: no inline editing ships; add inputs inside cells yourself.
+
+**Anti-patterns**
+
+- `<Table>` without `<Table.Body>` for data rows: native semantics require `<tbody>`.
+- `scope` on `<Table.Cell>`: it renders a `<td>`, where `scope="row"` is invalid. Use `<Table.HeaderCell scope="row">` for a row-header column.

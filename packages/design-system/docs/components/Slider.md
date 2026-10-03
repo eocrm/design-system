@@ -73,3 +73,28 @@
 - ❌ Hitting a network endpoint inside `onChange` — fires on every pointer-move tick. Use `onChangeEnd` or debounce.
 - ❌ `<Slider role="region">` — `role="slider"` is locked on each thumb. The TypeScript `Omit` prevents the root override.
 - ❌ Passing `value[0] > value[1]` in range mode. The component clamps but the inverted tuple is a consumer bug — fix the state shape.
+
+Custom-painted rather than wrapping `<input type="range">`, because range mode needs two thumbs.
+
+```tsx
+// Tone-coded threshold (disk usage approaching capacity):
+<Slider
+  value={usage}
+  tone={usage > 90 ? 'danger' : usage > 75 ? 'warning' : 'default'}
+  onChange={(v) => setUsage(v as number)}
+  label
+/>
+
+// Form submission via `name` — renders hidden inputs the form picks up:
+<form action="/api/settings" method="post">
+  <Slider name="brightness" value={brightness} onChange={setB} />
+  <button type="submit">Save</button>
+</form>
+```
+
+**When NOT to use**
+
+- Binary state: use `<Switch>` or `<Checkbox>`.
+- Pick one of a small enumerated set: use `<RadioGroup>` or `<Select>`.
+- Continuous colour picking: that is a colour picker (not yet shipped).
+- Server-bound expensive updates on every move tick: use `onChangeEnd` or debounce.

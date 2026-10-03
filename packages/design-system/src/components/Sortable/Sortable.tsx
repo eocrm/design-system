@@ -225,108 +225,8 @@ function containsHandle(children: ReactNode): boolean {
 }
 
 /**
- * Drag-to-reorder list (single column). Compound API: `Sortable`,
- * `Sortable.Item`, `Sortable.Handle`. Built on `@dnd-kit/sortable`.
- *
- * Pointer drag uses dnd-kit's `PointerSensor` with a 5px activation
- * constraint — short clicks-without-movement on internal buttons inside
- * Items still fire. Keyboard reorder uses dnd-kit's canonical Space-pickup
- * flow: Tab to focus, Space to pick up, ArrowUp/ArrowDown to move, Space
- * to drop, Escape to cancel.
- *
- * Controlled-only: consumer holds the items array, applies the move on
- * `onReorder`, re-renders with the new order. dnd-kit ships an `arrayMove`
- * utility (`import { arrayMove } from '@dnd-kit/sortable'`) consumers can
- * use, or write a 3-line equivalent.
- *
- * @example
- * // Plain text list — no handle needed; whole item is draggable.
- * import { arrayMove } from '@dnd-kit/sortable';
- * const [items, setItems] = useState([{ id: 1, label: 'Buy milk' }, ...]);
- * <Sortable
- *   onReorder={({ from, to }) => setItems((curr) => arrayMove(curr, from, to))}
- * >
- *   {items.map((item) => (
- *     <Sortable.Item key={item.id} id={item.id}>{item.label}</Sortable.Item>
- *   ))}
- * </Sortable>
- *
- * @example
- * // Card with internal DropdownMenu — explicit Handle keeps the menu clickable.
- * <Sortable onReorder={handle}>
- *   {cards.map((c) => (
- *     <Sortable.Item key={c.id} id={c.id}>
- *       <Card>
- *         <Cluster justify="between">
- *           <Sortable.Handle aria-label={`Reorder ${c.title}`}>
- *             <GripVertical size={14} />
- *           </Sortable.Handle>
- *           <Title order={3}>{c.title}</Title>
- *           <DropdownMenu>...</DropdownMenu>
- *         </Cluster>
- *       </Card>
- *     </Sortable.Item>
- *   ))}
- * </Sortable>
- *
- * @example
- * // Grid arrangement — a 12-column dashboard of widgets with mixed spans.
- * // Items reflow in 2D during a drag; a drop reorders the flow (order-based,
- * // no persisted x/y). Rows are equal-height.
- * <Sortable
- *   arrangement="grid"
- *   columns={12}
- *   collapseBelow={{ md: 6, sm: 1 }}
- *   onReorder={({ from, to }) => setWidgets((w) => arrayMove(w, from, to))}
- * >
- *   {widgets.map((w) => (
- *     <Sortable.Item key={w.id} id={w.id} span={w.span}>
- *       <Card>{w.title}</Card>
- *     </Sortable.Item>
- *   ))}
- * </Sortable>
- *
- * @remarks Grid arrangement
- * - `arrangement="grid"` re-lays the `<ol>` as a `columns`-track CSS grid
- *   (default 12) using dnd-kit's `rectSortingStrategy`, so siblings reflow in
- *   2D during a drag instead of shifting only vertically. Give each item a
- *   `span` (`Sortable.Item span="50%"` / `span={6}` / `span="100%"`) — same
- *   values as `Grid.Item`. Semantics stay order-based: a drop reorders the
- *   flow; nothing persists a grid x/y position. `restrictToContainer` still
- *   clamps the drag to the grid's bounding box. `collapseBelow` mirrors
- *   `Grid`'s responsive collapse exactly — same breakpoints, same
- *   container-query mechanism, same binary/graduated distinction.
- *
- * @remarks Drag confinement
- * - By default (`restrictToContainer`) the dragged item is clamped to the
- *   list's bounding box and can't be dragged off over unrelated UI. Pass
- *   `restrictToContainer={false}` for free-drag if you genuinely want the item
- *   to follow the cursor anywhere on the page.
- *
- * @remarks When NOT to use
- * - Tabular data — use `<Table>` / `<DataTable>` (DataTable already uses
- *   dnd-kit for column reorder).
- * - Static lists that never reorder — use `<Stack>` or `<DefinitionList>`.
- * - Cross-list drag (move between columns) — out of scope for v1; lands
- *   with the future `<Kanban>` primitive.
- *
- * @remarks Anti-patterns
- * - ❌ Relying on the no-Handle whole-item drag for screen-reader users.
- *   When no Handle is present, dnd-kit applies `role="button"` and
- *   `aria-roledescription="sortable"` to the `<li>`, which clobbers the
- *   default `listitem` role. Screen readers stop announcing "item N of M".
- *   dnd-kit's live-region announcements partially compensate during drag,
- *   but for accessible lists ALWAYS include a `<Sortable.Handle>` — that
- *   moves the button semantics onto the Handle and leaves the `<li>` as a
- *   proper listitem.
- * - ❌ Mutating items in place inside `onReorder`. Always return a new
- *   array (immutable `arrayMove`) — React needs a fresh reference to
- *   re-render.
- * - ❌ Using a non-stable `id` (e.g. array index). The id must persist
- *   across reorders so React reconciles correctly during drag.
- * - ❌ Wrapping non-`Sortable.Item` content inside `<Sortable>`. dnd-kit's
- *   `SortableContext` only tracks the ids you pass it; arbitrary children
- *   render but won't be reorderable.
+ * Drag-to-reorder list (single column) with `Sortable.Item` and `Sortable.Handle`, in list or grid arrangement.
+ * @see docs/components/Sortable.md
  */
 const collapseClass: Record<CollapseBreakpoint, string> = {
   sm: styles.collapseSm,
@@ -536,20 +436,8 @@ const SortableRoot = forwardRef<HTMLOListElement, SortableProps>(function Sortab
 SortableRoot.displayName = 'Sortable';
 
 /**
- * One reorderable item in a `<Sortable>`. Renders an `<li>` with the
- * consumer's children. Must have a stable `id` prop (`string | number`).
- *
- * If the children subtree contains a `<Sortable.Handle>`, only the Handle
- * initiates drag. Otherwise the whole Item is draggable (and focusable for
- * keyboard reorder).
- *
- * Under `<Sortable arrangement="grid">`, pass `span` for the item's column
- * span (mirrors `Grid.Item`'s `span`); it's ignored in a list.
- *
- * @remarks
- * Drag announcements name the item by its rendered text. Pass `aria-label` to
- * override that — worth doing when the item renders a lot of chrome (badges,
- * timestamps, avatars) and only part of it is the actual name.
+ * One reorderable item in a `<Sortable>`; renders an `<li>` with a stable `id`.
+ * @see docs/components/Sortable.md
  */
 export const SortableItem = forwardRef<HTMLLIElement, SortableItemProps>(function SortableItem(
   { id, span, className, children, ...rest },
@@ -640,10 +528,8 @@ export const SortableItem = forwardRef<HTMLLIElement, SortableItemProps>(functio
 SortableItem.displayName = 'SortableItem';
 
 /**
- * Optional drag-origin marker inside a `<Sortable.Item>`. When present,
- * only the Handle initiates drag. The Handle is a `<button>` so it's
- * keyboard-focusable; consumer's children render inside as decorative
- * content (`aria-hidden`).
+ * Optional drag-origin marker inside a `<Sortable.Item>`; when present, only the Handle initiates drag.
+ * @see docs/components/Sortable.md
  */
 export const SortableHandle = forwardRef<HTMLButtonElement, SortableHandleProps>(
   function SortableHandle({ className, children, 'aria-label': ariaLabel, ...rest }, ref) {

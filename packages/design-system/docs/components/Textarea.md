@@ -58,3 +58,5 @@ import { Textarea } from '@eocrm/design-system';
 - ❌ Using `placeholder` as a label.
 - ❌ Setting both `autoGrow={true}` AND expecting `resize="vertical"` to render a drag handle — auto-grow wins; the handle is hidden.
 - ❌ Building your own character counter outside the component when `maxLength` / `showCount` would do it.
+
+Forwards the `<textarea>` (not the wrapper `<div>`) via ref. All native textarea attributes pass through except `size` (shadowed by the size prop) and `rows` (computed from `minRows`). It always renders a wrapper `<div>` so the optional counter has somewhere to live, unlike `<Input>`.

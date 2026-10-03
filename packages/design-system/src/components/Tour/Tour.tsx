@@ -128,72 +128,8 @@ const CARD_OFFSET = 12;
 const EDITABLE = 'input, textarea, select, [contenteditable]:not([contenteditable="false"])';
 
 /**
- * Guided tour: walks the user through `steps`, spotlighting each step's
- * `data-tour` target and anchoring a card (title, body, "Step n of m",
- * Skip / Back / Next) to it. Steps without a target — or whose target never
- * appears — render as a centered card. Every transition animates; all motion
- * drops under `prefers-reduced-motion`.
- *
- * Controlled `open` like `Modal`. Mount it ONCE in the app shell, above the
- * router outlet, so a tour survives route changes; control `step` and navigate
- * in `onStepChange` for cross-page tours — the Tour waits for the next target
- * (`targetTimeout`). Persisting "seen" is yours: use `onFinish(reason)`.
- *
- * `modal` (default) dims the page, blocks clicks outside the spotlight and
- * traps focus; `modal={false}` renders the card alone for announcements.
- * Keyboard: Escape skips, ←/→ move between steps (not inside inputs).
- *
- * @example
- * // Onboarding, first visit:
- * <Button data-tour="deals-filter">Filter</Button>
- * <Tour
- *   open={open}
- *   onOpenChange={setOpen}
- *   onFinish={(reason) => markSeen('deals-onboarding', reason)}
- *   steps={[
- *     { title: 'Welcome to Deals', body: 'A 30-second tour.' },
- *     { target: 'deals-filter', title: 'Filter', body: 'Narrow the pipeline.' },
- *     { title: "You're set", body: 'Replay it from Help → Tour.' },
- *   ]}
- * />
- *
- * @example
- * // One-step feature announcement — page stays usable:
- * <Tour open={open} onOpenChange={setOpen} modal={false} doneLabel="Got it"
- *   steps={[{ target: 'bulk-edit', title: 'New: bulk edit', body: 'Select rows, then edit them together.' }]} />
- *
- * @example
- * // Cross-page: controlled step, navigate first, Tour waits for the target.
- * // Symmetric on i, not a one-shot `i === 3` — Back past step 3 must
- * // navigate away from /contacts too, or the Tour waits on the wrong page.
- * <Tour open={open} onOpenChange={setOpen} step={step}
- *   onStepChange={(i) => { navigate(i >= 3 ? '/contacts' : '/deals'); setStep(i); }}
- *   steps={steps} />
- *
- * @remarks When NOT to use
- * - A single contextual hint on hover/focus → `<Tooltip>`.
- * - An interactive panel the user opens themselves → `<Popover>`.
- * - A blocking decision → `<Modal>` / `<ConfirmationPopover>`.
- * - Persistent inline guidance that should stay on the page → `<Alert>` or `EmptyState`.
- *
- * @remarks Anti-patterns
- * - ❌ Targeting by CSS selector or ref — `target` is a `data-tour` VALUE
- *   (`target: 'bulk-edit'`, not `'#bulk-edit'` or `'[data-tour=…]'`).
- * - ❌ Mounting `<Tour>` inside a routed page for a cross-page tour — it
- *   unmounts on navigation. Mount it in the shell.
- * - ❌ Two elements with the same `data-tour` value on screen — the first
- *   rendered one wins (dev warning). Keep ids unique per screen.
- * - ❌ `advanceOn: 'click'` without `interactive: true` in modal mode — the
- *   target is blocked, so it can never be clicked (ignored + dev warning).
- * - ❌ 10+ step tours. Keep onboarding to ~5–7 steps; split longer ones per page.
- * - ❌ Auto-opening on every visit — gate on your own "seen" flag from `onFinish`.
- * - ❌ An `interactive: true` step in modal mode whose target opens a
- *   `Modal`/`Drawer` — it renders BENEATH the tour's scrim (`Modal`/`Drawer`
- *   aren't floating surfaces the tour elevates). End the step first
- *   (`advanceOn: 'click'`, then point the next step into the opened
- *   `Modal`/`Drawer`) or use `modal={false}`. Library floating surfaces
- *   (`DropdownMenu`, `Popover`, `Select`, …) opened from an interactive
- *   target elevate above the tour automatically — no workaround needed there.
+ * Guided tour that spotlights each step's `data-tour` target and anchors a card with Skip / Back / Next to it.
+ * @see docs/components/Tour.md
  */
 export const Tour = forwardRef<HTMLDivElement, TourProps>(function Tour(props, ref) {
   const { open } = props;

@@ -36,3 +36,32 @@
 - `truncate`: single-line ellipsis. `lineClamp: number`: multi-line ellipsis. `lineClamp` overrides `truncate`.
 - **Use `<Text>` for every non-heading run.** No more `<span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-fg-muted)' }}>`.
 - **`size="inherit"`** — for a muted/toned inline run INSIDE a heading (e.g. `<Text as="span" size="inherit" tone="muted">ENG-5</Text>` at the start of a `<Title order={1}>` task name) that must keep the heading's size instead of shrinking to `md`. Font-size AND line-height both inherit from the parent.
+
+```tsx
+// Muted inline run inside a heading — keeps the heading's font size:
+<Title order={1}>
+  <Text as="span" size="inherit" tone="muted">ENG-5</Text> Fix login
+</Title>
+
+// Body copy under a heading, spaced with Stack — the canonical CRM-page shape:
+<Stack gap="xs">
+  <Title order={2}>Pipeline</Title>
+  <Text tone="muted">Active deals for Q3.</Text>
+</Stack>
+```
+
+If you need a size or tone the primitive doesn't expose, that is a token-vocabulary conversation, not a reason to skip the component.
+
+**When NOT to use**
+
+- Heading text: use `<Title order={N}>`.
+- Inline code: use `<Code>`.
+- Clickable text / action triggers: use `<Button>` or `<Link>`.
+- Pure layout containers: use `<Stack>` / `<Cluster>` / `<Grid>`.
+
+**Anti-patterns**
+
+- `<Text style={{ color: '#someHex' }}>`: pick a tone from the whitelist; the whitelist is the contract.
+- `<Text as="h2">`: Text doesn't accept heading tags; use `<Title order={2}>`.
+- Wrapping a `<Title>` in `<Text>` for tone/weight tweaks: pass tone/weight to the `<Title>`. `size="inherit"` is for runs INSIDE a heading, not for wrapping it.
+- Nesting `<Text>` in another `<Text>` with the default `as="p"`: the inner `<p>` inside the outer `<p>` is invalid HTML and triggers React's DOM nesting warning. Use `<Text as="span" tone="...">` for an inline override inside a paragraph.

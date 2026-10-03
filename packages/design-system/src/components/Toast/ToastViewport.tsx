@@ -54,20 +54,8 @@ export interface ToastViewportProps {
 }
 
 /**
- * The single Toast portal. Mount exactly one of these at your app root.
- *
- * @example
- * ```tsx
- * <ToastViewport position="bottom-right" />
- * ```
- *
- * @remarks
- * - **Mount once.** A dev-warning logs if a second one mounts; only the first
- *   (in mount order) renders, and the next one takes over if it unmounts.
- * - **Mounts before consumers can fire are fine.** Toasts fired before this is in
- *   the tree sit in the store and render the moment this mounts.
- * - **Portal target is `document.body`.** Toasts are not constrained by any
- *   parent overflow/transform/contain context.
+ * The single Toast portal; mount exactly one at the app root.
+ * @see docs/components/ToastViewport.md
  */
 export function ToastViewport({
   position = 'bottom-right',

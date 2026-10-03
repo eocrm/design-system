@@ -670,79 +670,8 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
 });
 
 /**
- * Value picker — covers single, multi (chips and summary), searchable,
- * grouped, async-loaded, and creatable patterns in one component.
- * Implements the WAI-ARIA combobox 1.2 pattern with a `role="listbox"`
- * popup, full keyboard navigation (Arrow keys, Home/End, typeahead,
- * Enter/Space to select, Escape to dismiss), and ARIA wiring suitable for
- * screen readers.
- *
- * The mode matrix is `multiple` × `triggerDisplay: 'chips' | 'summary'` ×
- * `searchable`. Tag-input is the composition
- * `multiple + searchable + creatable + triggerDisplay='chips'`.
- *
- * @example
- * // Single, non-searchable status picker
- * <Select
- *   options={[{ value: 'active', label: 'Active' }, { value: 'pending', label: 'Pending' }]}
- *   value={status}
- *   onChange={(v) => setStatus(v as Status)}
- *   placeholder="Pick a status"
- * />
- *
- * @example
- * // Async assignee picker with custom rendering
- * <Select
- *   searchable
- *   loadOptions={async (q, signal) => {
- *     const users = await api.searchUsers(q, { signal });
- *     return users.map((u) => ({ value: u.id, label: u.name, data: u }));
- *   }}
- *   renderOption={(opt) => (
- *     <Cluster gap="sm">
- *       <Avatar name={opt.label} src={opt.data?.avatarUrl} size="sm" />
- *       <span>{opt.label}</span>
- *     </Cluster>
- *   )}
- *   value={assigneeId}
- *   onChange={(id) => setAssigneeId(id as string)}
- * />
- *
- * @example
- * // Tag input with creatable
- * <Select
- *   multiple
- *   searchable
- *   creatable
- *   options={existingTags}
- *   value={tags}
- *   onChange={(v) => setTags(v as string[])}
- *   onCreate={(label) => api.tags.create({ label })}
- *   placeholder="Add tags…"
- * />
- *
- * @remarks When NOT to use
- * - For action menus (Edit / Delete / Duplicate) → use `<DropdownMenu>`.
- * - For free-form text with no constrained value set → use `<Input>`.
- * - For yes/no/maybe with strong defaults → use `<Tabs>` or radio buttons.
- *
- * @remarks Anti-patterns
- * - ❌ Passing both `options` and `loadOptions`. `loadOptions` always
- *   wins; the conflict is logged as a dev warning.
- * - ❌ `creatable` without `searchable`. There's no way to capture the
- *   new label without a search input. Throws in dev.
- * - ❌ Using `triggerDisplay='summary'` for tag input. Summary collapses
- *   the active set into a comma-joined line; chips communicate selection
- *   at a glance and expose per-item remove affordances.
- * - ❌ Embedding stale-closure business logic in `loadOptions`. The
- *   fetcher is called on every debounced query — read fresh props from a
- *   stable reference (e.g. `useCallback` in the consumer) instead of
- *   capturing values that drift.
- *
- * @remarks Keyboard limitations (v1)
- * - In chips-mode, Backspace on an empty input removes the trailing chip;
- *   full chip-to-chip arrow navigation (ArrowLeft from empty input stepping
- *   into chips, ArrowLeft/Right cycling chips) is not implemented in v1.
+ * Value picker covering single, multi (chips and summary), searchable, grouped, async-loaded and creatable patterns.
+ * @see docs/components/Select.md
  */
 // `Select` is exposed via a cast so the public type is generic over `T`
 // — `forwardRef` does not preserve the generic parameter through its own

@@ -48,72 +48,8 @@ export interface TopBarProps extends Omit<HTMLAttributes<HTMLElement>, 'aria-lab
 }
 
 /**
- * Sticky application top-bar primitive. Renders an inline-padded horizontal
- * bar pinned to the top of its scroll container with a subtle bottom border.
- *
- * **Layout-owning primitive (Hard rule 4 exception).** Like `<Modal>`,
- * `<Drawer>`, `<Page>`, and `<Rail>`, `<TopBar>` is a layout container by
- * design — it owns its own height, sticky positioning, padding, and
- * background because that IS its job as a top-bar chrome. The consumer
- * chooses where to place the bar by styling its parent (typically a CSS
- * grid app shell); the bar itself fills the available inline space.
- *
- * Compound API — combine the subcomponents to build the bar you need:
- *
- * - `<TopBar.Start>` — the left cluster. Flex-grows to take remaining space.
- * - `<TopBar.End>` — the right cluster. Shrinks to its content.
- * - `<TopBar.Search>` — a styled `<input type="search">` with leading icon
- *   and optional trailing `<kbd>` hint.
- * - `<TopBar.IconButton>` — a thin `<Button iconOnly variant="ghost">` with
- *   an optional notification-dot indicator.
- *
- * @example
- * // Canonical app-shell pattern: Start has the search, End has the actions.
- * <TopBar>
- *   <TopBar.Start>
- *     <TopBar.Search placeholder="Search contacts, deals…" hotkey="⌘K" />
- *   </TopBar.Start>
- *   <TopBar.End>
- *     <TopBar.IconButton aria-label="Create new"><Plus size={16} /></TopBar.IconButton>
- *     <TopBar.IconButton aria-label="Notifications" indicator>
- *       <Bell size={16} />
- *     </TopBar.IconButton>
- *     <Avatar name="Alex Rivera" size="sm" />
- *   </TopBar.End>
- * </TopBar>
- *
- * @example
- * // Right-aligned actions only — Start can be omitted; End still shrinks to
- * // the right because the flex row has no growing sibling to push it.
- * <TopBar>
- *   <TopBar.End>
- *     <TopBar.IconButton aria-label="Settings"><Settings size={16} /></TopBar.IconButton>
- *   </TopBar.End>
- * </TopBar>
- *
- * @example
- * // Nested secondary toolbar — use `as="div"` to avoid stacking two
- * // `<header>` landmarks on the page.
- * <TopBar as="div" aria-label="Filters">
- *   <TopBar.Start>…</TopBar.Start>
- * </TopBar>
- *
- * @remarks When NOT to use
- * - For a left-side navigation column → use `<Rail>`.
- * - For a page-local heading + actions → use `<PageHeader>`, not a TopBar.
- * - For an action toolbar attached to a specific section → use a `<Cluster>`
- *   inside that section; TopBar is for the application's top chrome.
- *
- * @remarks Anti-patterns
- * - ❌ Wrapping the bar in additional `position: sticky` containers — the
- *   bar already sticks. Layered sticky parents stack the bar at the wrong
- *   offset.
- * - ❌ Reaching for `<TopBar.IconButton>` outside the bar. It's a
- *   topbar-specific size + indicator pattern; for general icon buttons use
- *   `<Button iconOnly variant="ghost">`.
- * - ❌ Putting a `<Button variant="primary">` inside the bar. Primary
- *   actions belong inside the page body where they're discoverable; the
- *   topbar is for navigation, search, and global ambient actions only.
+ * Sticky application top-bar primitive; a layout-owning compound (`TopBar.Start`, `.End`, `.Search`, `.IconButton`).
+ * @see docs/components/TopBar.md
  */
 const TopBarRoot = forwardRef<HTMLElement, TopBarProps>(function TopBar(
   { as = 'header', 'aria-label': ariaLabel, className, children, ...props },
@@ -140,10 +76,8 @@ const TopBarRoot = forwardRef<HTMLElement, TopBarProps>(function TopBar(
 });
 
 /**
- * `<TopBar>` — sticky application top-bar primitive. See `TopBarRoot` JSDoc
- * for the full per-prop and per-subcomponent contract. Subcomponents are
- * attached to the root via `Object.assign` (the canonical compound pattern
- * used by `<Card>`, `<Rail>`, `<DropdownMenu>`, etc.).
+ * Compound `<TopBar>`; subcomponents are attached via `Object.assign`.
+ * @see docs/components/TopBar.md
  */
 export const TopBar = Object.assign(TopBarRoot, {
   Start: TopBarStart,

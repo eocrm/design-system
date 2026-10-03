@@ -105,46 +105,8 @@ function itemContentMap(children: ReactNode): Map<Id, ReactNode> {
 }
 
 /**
- * Multi-container drag-to-sort — drag items WITHIN a list and BETWEEN lists.
- * Compound API: `<SortableGroup onMove>` + `<SortableGroup.Container id items>`,
- * with the same `<Sortable.Item>` / `<Sortable.Handle>` inside. Built on
- * `@dnd-kit`. For a single list, use `<Sortable>`.
- *
- * Controlled + live: `onMove` fires the moment the item crosses into another
- * container (and again on drop). Apply it to your per-container state with the
- * exported `moveSortableItem` helper and the item slides into the target list.
- *
- * @example
- * const [groups, setGroups] = useState<Record<string, Field[]>>(initial);
- * <SortableGroup onMove={(e) => setGroups((g) => moveSortableItem(g, e))}>
- *   {Object.entries(groups).map(([gid, fields]) => (
- *     <SortableGroup.Container key={gid} id={gid} items={fields.map((f) => f.id)}>
- *       {fields.map((f) => (
- *         <Sortable.Item key={f.id} id={f.id}>
- *           <Sortable.Handle>⋮⋮</Sortable.Handle>
- *           {f.label}
- *         </Sortable.Item>
- *       ))}
- *     </SortableGroup.Container>
- *   ))}
- * </SortableGroup>
- *
- * @remarks When NOT to use
- * - A single reorderable list → `<Sortable>` (no cross-container machinery).
- *
- * @remarks Anti-patterns
- * - ❌ Mutating state inside `onMove` — return a NEW object (use `moveSortableItem`).
- * - ❌ Reusing an id as both a container id AND an item id — dnd-kit shares one id
- *   namespace, so container ids and item ids must all be unique.
- * - ❌ A `Container`'s `items` not matching its `<Sortable.Item>` child ids — the
- *   `items` array is the source of truth for ordering + index reporting.
- * - ❌ Expecting Esc to revert — moves are applied to YOUR state optimistically;
- *   cancel leaves the item at its last hovered spot. Snapshot before drag to undo.
- *
- * @remarks
- * The root renders no host DOM node (it's a `DndContext` + context provider), so
- * it intentionally forwards no `ref` — attach refs to `<SortableGroup.Container>`,
- * which forwards to its `<ol>`.
+ * Multi-container drag-to-sort: drag items within a list and between lists.
+ * @see docs/components/SortableGroup.md
  */
 const SortableGroupRoot = function SortableGroup({ onMove, children }: SortableGroupProps) {
   const t = useTranslation();
@@ -306,15 +268,8 @@ const SortableGroupRoot = function SortableGroup({ onMove, children }: SortableG
 SortableGroupRoot.displayName = 'SortableGroup';
 
 /**
- * One list inside a `<SortableGroup>`. Renders an `<ol>` (its own
- * `SortableContext`) and registers as a droppable so even an empty list accepts
- * cross-container drops. Children are `<Sortable.Item>`s for the ids in `items`.
- *
- * @remarks
- * Name the list — `aria-label` with its visible heading, or `aria-labelledby`
- * pointing at that heading's element. Either names the `<ol>` for a screen
- * reader AND names the list in drag announcements ("…position 2 of 4 in In
- * review"); without one they fall back to "list 2 of 3".
+ * One list inside a `<SortableGroup>`; renders an `<ol>` that accepts cross-container drops.
+ * @see docs/components/SortableGroup.md
  */
 const SortableGroupContainer = forwardRef<HTMLOListElement, SortableGroupContainerProps>(
   function SortableGroupContainer({ id, items, className, children, ...rest }, ref) {

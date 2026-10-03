@@ -46,3 +46,7 @@ const [groups, setGroups] = useState<Record<string, Field[]>>(initial);
 - Container ids and item ids share dnd-kit's one id namespace — keep them all unique.
 - Each `Container.items` must match its `<Sortable.Item>` child ids (it's the ordering source of truth).
 - Esc-cancel doesn't revert (moves are applied to your state optimistically) — snapshot before drag to undo.
+
+- The root renders no host DOM node, so it forwards no `ref`; attach refs to `<SortableGroup.Container>`, which forwards to its `<ol>`.
+- `Container` renders an `<ol>` registered as a droppable, so an empty list still accepts cross-container drops.
+- Mutating state inside `onMove` is wrong: return a NEW object (use `moveSortableItem`).

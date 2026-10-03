@@ -94,3 +94,33 @@ import { Bell, Plus } from 'lucide-react';
 - ❌ Reaching for `<TopBar.IconButton>` outside the bar — it's a topbar-scoped size + indicator pattern. Use `<Button iconOnly variant="ghost">` for general icon buttons.
 - ❌ Putting a `<Button variant="primary">` inside the bar — primary actions belong in the page body where they're discoverable; the topbar is for navigation, search, and global ambient actions only.
 - ❌ Relying on the indicator dot to communicate count to assistive tech — the dot is decorative (`aria-hidden`); put the count in the `aria-label` instead.
+
+```tsx
+// Right-aligned actions only — Start can be omitted; End still sits right.
+<TopBar>
+  <TopBar.End>
+    <TopBar.IconButton aria-label="Settings"><Settings size={16} /></TopBar.IconButton>
+  </TopBar.End>
+</TopBar>
+
+// Nested secondary toolbar — as="div" avoids stacking two <header> landmarks:
+<TopBar as="div" aria-label="Filters">
+  <TopBar.Start>…</TopBar.Start>
+</TopBar>
+
+// Search hotkey hint — array form renders one chip per key; string form one chip:
+<TopBar.Search placeholder="Search contacts, deals…" hotkey={['⌘', 'K']} />
+<TopBar.Search placeholder="Filter…" hotkey="/" />
+
+// Soft-cue indicator tone:
+<TopBar.IconButton aria-label="Maintenance scheduled" indicator indicatorTone="warning">
+  <Wrench size={16} />
+</TopBar.IconButton>
+```
+
+- `<TopBar.Start>` typically holds a brand mark, workspace switcher and/or `<TopBar.Search>`; `<TopBar.End>` trailing `<TopBar.IconButton>`s and the user `<Avatar>`.
+- `<TopBar.Search>` is a 32px pill with a leading search icon; the native `type="search"` gives `role="searchbox"` and the browser's clear button. It has no keyboard-shortcut behaviour of its own.
+- `<TopBar.IconButton>` is icon-only (the 32×32 size and `indicator` dot are bar-specific); for a labelled action use a regular `<Button>`.
+- ❌ A submit button inside the search wrapper: read the value from `onKeyDown` / `onChange` on Enter.
+- ❌ `placeholder` and `aria-label` set to different strings: the default aria-label IS the placeholder; override only when the placeholder is too terse alone.
+- ❌ A search field in a form: use `<Input>`; the pill styling is specific to the bar.

@@ -96,7 +96,7 @@
 
 <!-- props:end -->
 
-- One generalist; the mode matrix is `multiple` × `triggerDisplay: 'chips' | 'summary'` × `searchable`. See the JSDoc on `<Select>` for the matrix and anti-patterns.
+- One generalist; the mode matrix is `multiple` × `triggerDisplay: 'chips' | 'summary'` × `searchable`.
 - `id` goes on the combobox trigger (the `<button>` / `<input>`), not the wrapper div, so a `<label for>` (Field / SettingRow) focuses it. Target the wrapper by `className` or a `data-*` attribute, not `#id`.
 - `triggerDisplay` defaults to `'chips'` when `multiple` is set. Use `'summary'` for table-filter UIs where chips would crowd the toolbar.
 - **Async**: pass `loadOptions(query, signal)`. Debounce (250ms default, configurable via `searchDebounceMs`) and `AbortSignal` cancellation are built-in. Do NOT debounce externally.
@@ -124,3 +124,11 @@
 - For **free-form text**, use `<Input>`. Select always picks from a (possibly async) set.
 - Don't reach for `triggerDisplay='summary'` for tag input — chips communicate the active filter set at a glance.
 - `creatable` requires `searchable` (throws in dev). Passing both `options` and `loadOptions` is also flagged (loadOptions wins).
+
+**Keyboard / ARIA:** implements the WAI-ARIA combobox 1.2 pattern with a `role="listbox"` popup: Arrow keys, Home/End, typeahead, Enter/Space to select, Escape to dismiss. In chips mode, Backspace on an empty input removes the trailing chip; chip-to-chip arrow navigation (ArrowLeft from the empty input into the chips, ArrowLeft/Right cycling them) is not implemented.
+
+**Anti-patterns**
+
+- For yes/no/maybe with strong defaults, use `<Tabs>` or radio buttons.
+- Embedding stale-closure logic in `loadOptions`: the fetcher runs on every debounced query, so read fresh props from a stable reference (e.g. `useCallback`) instead of capturing values that drift.
+- `triggerDisplay='summary'` collapses the active set into a comma-joined line and has no per-item remove affordance; chips do.

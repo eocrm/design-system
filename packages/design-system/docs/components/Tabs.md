@@ -65,3 +65,32 @@ const [tab, setTab] = useState('overview');
 - `panelIdPrefix`: optional. When set, the **active** tab gets `aria-controls="${prefix}-${itemId}-panel"`. Set this if you render the panels in the DOM and want assistive tech to follow the link. Only the active tab carries it because only the active panel is in the DOM — stamping it on every tab (the earlier behaviour) pointed the inactive ones at ids no element had.
 - The active-tab underline slides between tabs when `activeId` changes. Respects `prefers-reduced-motion: reduce`.
 - `action?: { label, icon?, onClick, disabled? }` renders a `+ New entity`-style button-like pseudo-tab after the tab items, inside the same strip — tab-shaped but visibly muted, NOT `role="tab"`, never selected, skipped by arrow-key roving (reachable via `Tab` instead), and the sliding indicator never targets it. It only fires `onClick`; if the click should change `activeId`, do that yourself in the handler (e.g. append + select a new tab). Known, accepted a11y tradeoff: like the `TabItem.actions` button, this leaves one non-`"tab"` child in the `role="tablist"` container (an `aria-required-children` deviation) — a real `<button>` still announces correctly to assistive tech regardless of its parent's role.
+
+```tsx
+// Lazy-loaded panels — manual mode, so arrows scan without loading:
+<Tabs items={items} activeId={tab} onChange={setTab} activationMode="manual" />
+
+// Trailing action — a button-like pseudo-tab that never becomes selected:
+<Tabs
+  items={items}
+  activeId={tab}
+  onChange={setTab}
+  action={{ label: '+ New entity', icon: <Plus size={14} />, onClick: createEntity }}
+/>
+```
+
+Implements the WAI-ARIA Tabs pattern: roving `tabIndex`, arrow keys (Left/Right horizontal, Up/Down vertical) plus Home/End, `aria-controls`, `aria-orientation`, per-tab/per-panel ids. Controlled: pass `activeId` and `onChange`.
+
+**When NOT to use**
+
+- Navigation between pages: use the sidebar or breadcrumbs. Tabs switch views within a page.
+- 5+ tabs: usually the entity is doing too much; split the page or rethink the IA.
+- When the user may want two views at once: use side-by-side panels.
+
+**Anti-patterns**
+
+- Lazy-loading tab content but losing form state on switch: preserve state or warn before data is lost.
+- The page's primary action inside a tab: it belongs in the page header.
+- `orientation="vertical"` as a page sidebar / primary navigation: it is for intra-page section switching, not route changes.
+- `orientation="auto"` combined with app-owned viewport measurement: auto measures the available strip width, so let it react to the `Split`'s layout instead of duplicating breakpoint state.
+- `action` to switch views: it never sets `activeId`; if the click should select a tab, add a `TabItem`.

@@ -123,66 +123,8 @@ const SPIN_SIZE: Record<SwitchSize, number> = {
 };
 
 /**
- * Binary on/off toggle. Hand-rolled track + sliding thumb on a native
- * `<input type="checkbox" role="switch">`. The dumb companion to
- * `<Checkbox>` and `<Radio>` for binary state (settings, feature flags,
- * server-persisted toggles).
- *
- * Forwards ref to the underlying `<input>`. Spread native attrs reach
- * the input (e.g., `name`, `value`, `disabled`, `aria-label`).
- *
- * @example
- * // Default — uncontrolled, accent tone.
- * <Switch>Enable notifications</Switch>
- *
- * @example
- * // Controlled, success tone.
- * <Switch tone="success" checked={enabled} onChange={(next) => setEnabled(next)}>
- *   Daily digest
- * </Switch>
- *
- * @example
- * // Async toggle with loading spinner.
- * <Switch
- *   checked={enabled}
- *   loading={saving}
- *   onChange={async (next) => {
- *     setSaving(true);
- *     setEnabled(next);
- *     try { await api.save(next); }
- *     catch { setEnabled(!next); }
- *     finally { setSaving(false); }
- *   }}
- * >
- *   Two-factor auth
- * </Switch>
- *
- * @example
- * // Icon-only.
- * <Switch aria-label="Mute notifications" />
- *
- * @remarks Hard rule (consumers)
- * A switch whose toggle triggers an **immediate action** — persisting to a
- * server or firing any side effect — MUST use the async optimistic-update flow:
- * flip the state optimistically, set `loading` while the request is in flight,
- * and roll back on failure (see the async `@example` above). Never fire-and-
- * forget a side-effecting toggle: the user needs the in-flight (`loading`) and
- * rollback feedback. A switch over pure local UI state (no side effect) may
- * toggle synchronously.
- *
- * @remarks When NOT to use
- * - Mutually-exclusive choice → `<Radio>` / `<RadioGroup>`.
- * - Multi-select list → `<Checkbox>`.
- * - Mixed / indeterminate state → use Checkbox's `indeterminate`.
- * - Immediate action without state → `<Button>`.
- *
- * @remarks Anti-patterns
- * - ❌ Using "ON" / "OFF" labels inside the track. Use a real adjacent label.
- * - ❌ Setting `loading` without an external optimistic-update flow — the
- *   user clicks, the spinner appears, the visual state never updates,
- *   confusing.
- * - ❌ `tone="success"` for "Mark as failed". Tone communicates the
- *   meaning of the "on" state.
+ * Binary on/off toggle on a native `<input type="checkbox" role="switch">`.
+ * @see docs/components/Switch.md
  */
 export const Switch = forwardRef<HTMLInputElement, SwitchProps>(function Switch(
   {

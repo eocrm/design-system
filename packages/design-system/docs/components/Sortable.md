@@ -91,3 +91,37 @@ Props on the root: `onReorder?: ({ from, to, id }) => void` — fires only when 
 - ❌ Using a non-stable `id` (e.g. array index). The id must persist across reorders for React reconciliation and for `onReorder`'s `id` field to be meaningful.
 - ❌ Wrapping non-`Sortable.Item` content inside `<Sortable>`. dnd-kit's `SortableContext` only tracks the ids you pass it; arbitrary children render but won't be reorderable.
 - ❌ Relying on whole-item drag (no Handle) for screen-reader-accessible lists. Without a Handle, dnd-kit puts `role="button"` on the `<li>` and the listitem semantics are lost — screen readers stop announcing "item N of M." For accessible lists, always include a `<Sortable.Handle>`.
+
+```tsx
+// Plain text list — no handle needed; the whole item is draggable.
+<Sortable onReorder={({ from, to }) => setItems((curr) => arrayMove(curr, from, to))}>
+  {items.map((item) => (
+    <Sortable.Item key={item.id} id={item.id}>{item.label}</Sortable.Item>
+  ))}
+</Sortable>
+
+// Card with an internal DropdownMenu — an explicit Handle keeps the menu clickable.
+<Sortable onReorder={handle}>
+  {cards.map((c) => (
+    <Sortable.Item key={c.id} id={c.id}>
+      <Card>
+        <Cluster justify="between">
+          <Sortable.Handle aria-label={`Reorder ${c.title}`}><GripVertical size={14} /></Sortable.Handle>
+          <Title order={3}>{c.title}</Title>
+          <DropdownMenu>...</DropdownMenu>
+        </Cluster>
+      </Card>
+    </Sortable.Item>
+  ))}
+</Sortable>
+```
+
+- `Sortable.Item` renders an `<li>`; `span` applies only under `arrangement="grid"` and is ignored in a list. Drag announcements name the item by its rendered text; pass `aria-label` to override it when the item renders a lot of chrome (badges, timestamps, avatars) and only part of it is the name.
+- `Sortable.Handle` is a `<button>` (keyboard-focusable); its children are decorative (`aria-hidden`), so give it an `aria-label`.
+- Place `<Sortable.Handle>` at the same JSX nesting level as the Item's other content. A Handle hidden inside your own wrapper component (e.g. a `<TaskRow>` that renders it internally) is not detected, and the Item falls back to whole-item drag.
+
+**When NOT to use**
+
+- Tabular data: use `<Table>` / `<DataTable>` (DataTable has its own column reorder).
+- Static lists that never reorder: use `<Stack>` or `<DefinitionList>`.
+- Cross-list drag: use `<SortableGroup>`.

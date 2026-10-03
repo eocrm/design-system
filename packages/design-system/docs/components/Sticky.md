@@ -40,3 +40,23 @@ Pins its box to the top of the scroll container while the page scrolls past — 
 - As a `<Split collapseBelow>` aside, it automatically becomes a plain block (no pin, no `scroll` cap/inner scroll) while the Split is stacked — no consumer shim needed. Applies only when the `Sticky` is the `aside` itself.
 
 When NOT to use: arranging children → `<Stack>`/`<Cluster>`; a fixed overlay above content → `position: fixed` chrome (`Popover`/`Modal`/app bar); the split itself → `<Split>`. Note: `position: sticky` breaks if a clipping ancestor (`overflow: hidden/auto`) isn't the intended scroll container.
+
+```tsx
+// A standalone sticky filter rail next to a long list:
+<Sticky top="lg">
+  <FilterPanel />
+</Sticky>
+
+// Clear AppLayout's pinned TopBar with the standard content gap:
+<Sticky top="topbar" scroll>
+  <FilterPanel />
+</Sticky>
+
+// A tall pinned sidebar that scrolls within itself when it exceeds the screen:
+<Sticky top="lg" scroll>
+  <Stack gap="md">{manyCards}</Stack>
+</Sticky>
+```
+
+- `position: sticky` pins to the nearest scrolling ancestor, so an `overflow: hidden/auto` ancestor that isn't the intended scroll container breaks it.
+- ❌ `margin` / `padding` on it for spacing: it carries sticky position only; spacing comes from the parent layout primitive.

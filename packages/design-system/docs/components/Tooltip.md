@@ -43,3 +43,25 @@
 - Touch devices: a tap toggles the tooltip on a **non-interactive** trigger (`Text`, `Badge`, `IconTile`, a focusable `span`); a tap elsewhere closes it. A tap on a button/link/form control — or on anything inside one, e.g. a Badge in a row link — performs the action and opens nothing, so don't put supplementary info you want reachable on touch behind an interactive trigger's tooltip; rely on its accessible name.
 - Opens with a short scale-fade (140 ms) from the trigger side. Closes instantly. Respects `prefers-reduced-motion: reduce`.
 - Z-layer `--z-tooltip: 1300` is above modal and toast, so tooltips inside any host UI remain visible.
+
+```tsx
+// Controlled open (rare — usually let Tooltip manage state):
+const [open, setOpen] = useState(false);
+<Tooltip content="…" open={open} onOpenChange={setOpen}>
+  <Button>Edit</Button>
+</Tooltip>;
+```
+
+Opens on hover (after `delay`) or immediately on keyboard focus, with a directional arrow. Hand-rolled on `@floating-ui/react-dom`.
+
+**When NOT to use**
+
+- Content the user must click to interact with: use `<Popover>`. Tooltips are not hoverable; moving the pointer into the tooltip body does not keep it open.
+- Form-value selection: use `<Select>`.
+- As the only source of essential information: tooltips are progressive enhancement. Make it visible in copy or, for icon buttons, in the trigger's `aria-label`.
+- Multi-paragraph content: that is Popover territory.
+
+**Anti-patterns**
+
+- `<Tooltip><Button disabled>…</Button></Tooltip>`: disabled buttons fire no pointerenter or focus events in any browser. To explain _why_ a button is disabled, render it with `aria-disabled="true"` and intercept its click, or wrap the disabled element in a `<span>` and pass the span as the Tooltip child.
+- A trigger child that doesn't accept a ref (`cloneElement` needs the ref contract).

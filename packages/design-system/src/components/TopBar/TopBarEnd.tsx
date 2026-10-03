@@ -9,19 +9,8 @@ import styles from './TopBar.module.scss';
 export type TopBarEndProps = HTMLAttributes<HTMLDivElement>;
 
 /**
- * Right-side cluster of a `<TopBar>`. Renders a flex row that shrinks to its
- * intrinsic content width — paired with `<TopBar.Start>` (which flex-grows),
- * `End` is naturally pushed to the right edge of the bar.
- *
- * Typically holds `<TopBar.IconButton>` action buttons and a trailing
- * `<Avatar>` for the user menu.
- *
- * @example
- * <TopBar.End>
- *   <TopBar.IconButton aria-label="Create new"><Plus size={16} /></TopBar.IconButton>
- *   <TopBar.IconButton aria-label="Notifications" indicator><Bell size={16} /></TopBar.IconButton>
- *   <Avatar name="Alex Rivera" size="sm" />
- * </TopBar.End>
+ * Right-side cluster of a `<TopBar>` that shrinks to its content.
+ * @see docs/components/TopBar.md
  */
 export const TopBarEnd = forwardRef<HTMLDivElement, TopBarEndProps>(function TopBarEnd(
   { className, ...props },

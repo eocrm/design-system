@@ -28,3 +28,34 @@
 - `gap`: `xs` (4) / `sm` (8) / `md` (12, default) / `lg` (16) / `xl` (24) / `2xl` (32) — pixels
 - `align`: `start` / `center` / `end` / `stretch` (default)
 - `minWidth0`: `false` (default). Sets `min-width: 0` so the Stack can shrink below its content's intrinsic width, letting a `<Text truncate>` inside ellipsize instead of being hard-cut. Only bites when the Stack is itself an item of a **row** flex container (or a grid item) that clips — what decides is the PARENT's main axis, not the Stack's own direction: a two-line label beside a fixed badge, a detail column in a squeezed toolbar. **No-op** inside another `Stack`, a plain block, or a table cell — and note a table cell is a no-op for a different reason than it looks: auto table layout floors the cell at its content's min-content width regardless, so what makes text truncate there is `table-layout: fixed` or a `max-width` on the cell (that is what `<Table.Cell truncate>` does), not this prop. **Opt-in on purpose:** a container that can shrink also _volunteers_ for shrink, so setting it where the content is NOT truncatable (buttons, badges, icons) lets that content be clipped instead.
+
+Pairs with `<Cluster>` (horizontal); together they cover most CRM layout. Use it instead of ad-hoc `display: flex; flex-direction: column` divs.
+
+```tsx
+// Page sections with a larger gap:
+<Stack gap="xl">
+  <header>...</header>
+  <section>...</section>
+  <section>...</section>
+</Stack>
+
+// minWidth0 — a Stack inside a squeezing flex row, so truncating children can ellipsize:
+<Cluster wrap={false} gap="sm">
+  <Stack gap="xs" minWidth0>
+    <Text weight="medium" truncate>{deal.name}</Text>
+    <Text size="xs" tone="muted" truncate>{deal.accountPath}</Text>
+  </Stack>
+  <Badge tone="success">{deal.stage}</Badge>
+</Cluster>
+```
+
+**When NOT to use**
+
+- Tabular data: use a real `<table>` or `<Grid>`.
+- A list of clickable items: semantics matter, use `<ul><li>` with appropriate styling.
+
+**Anti-patterns**
+
+- `minWidth0` on a Stack holding buttons or badges: the container shrinks and non-truncatable content is clipped. Use it on the container whose TEXT should give way.
+- Nested Stacks with different gaps just to bend spacing locally. Sometimes legitimate (page sections at `xl` containing field stacks at `md`), but it usually signals unclear hierarchy.
+- A Stack with one or two children (`<Stack><Button /></Stack>`) is noise; inline the child.

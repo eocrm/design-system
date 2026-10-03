@@ -58,54 +58,8 @@ const TONE_CLASS: Record<TopBarIndicatorTone, string> = {
 };
 
 /**
- * Icon button subcomponent for `<TopBar>`. Wraps the design system's
- * `<Button iconOnly variant="ghost" size="sm">` and adds the optional
- * notification-indicator dot in the upper-right corner.
- *
- * Two reasons to reach for this instead of using `<Button>` directly:
- *
- * 1. The bar uses a specific 32×32 size + radius pair that the base
- *    Button doesn't expose as a single prop. Keeping it as a separate
- *    subcomponent means consumers don't have to remember the exact
- *    classes / sizes.
- * 2. The `indicator` dot is topbar-specific — outside the bar it would
- *    overlap with the layout in odd ways. Scoping it to the topbar
- *    keeps the API surface tight.
- *
- * @example
- * <TopBar.IconButton aria-label="Create new">
- *   <Plus size={16} />
- * </TopBar.IconButton>
- *
- * @example
- * // With a notification dot.
- * <TopBar.IconButton aria-label="Notifications, 3 unread" indicator>
- *   <Bell size={16} />
- * </TopBar.IconButton>
- *
- * @example
- * // Custom indicator tone for a soft cue (maintenance banner trigger).
- * <TopBar.IconButton
- *   aria-label="Maintenance scheduled"
- *   indicator
- *   indicatorTone="warning"
- * >
- *   <Wrench size={16} />
- * </TopBar.IconButton>
- *
- * @remarks When NOT to use
- * - For an icon-only button outside the topbar → use
- *   `<Button iconOnly variant="ghost">` directly. The TopBar variant has
- *   indicator-dot styling that only makes sense inside the bar.
- * - For a labeled action ("Create new" with both icon + text) → use a
- *   regular `<Button>`; this subcomponent is icon-only.
- *
- * @remarks Anti-patterns
- * - ❌ Forgetting `aria-label`. The button is icon-only — without a label
- *   screen readers announce nothing. TypeScript requires it.
- * - ❌ Relying on the indicator dot to communicate the count to assistive
- *   tech. The dot is `aria-hidden`; put the count text in the
- *   `aria-label` (`'Notifications, 3 unread'`) instead.
+ * Icon-only ghost button for `<TopBar>` with an optional notification-indicator dot.
+ * @see docs/components/TopBar.md
  */
 export const TopBarIconButton = forwardRef<HTMLButtonElement, TopBarIconButtonProps>(
   function TopBarIconButton(

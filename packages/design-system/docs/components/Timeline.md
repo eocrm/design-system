@@ -43,3 +43,16 @@
 
 - `node` is a SLOT (pass `<Dot>` / `<Avatar size="sm">` / a small icon) — there's no built-in dot.
 - The last item's connector stops automatically (CSS `:last-child`); `compact` flows via CSS vars.
+
+```tsx
+// Compact sidebar widget with dot nodes:
+<Timeline compact>
+  <Timeline.Item node={<Dot tone="success" />}>
+    <Text size="sm">Renewal confirmed</Text>
+  </Timeline.Item>
+</Timeline>
+```
+
+- Not for a horizontal step indicator (Timeline is vertical).
+- ❌ Hand-rolling the connector line: it is built in.
+- ❌ Layout margins on items: spacing comes from `compact` / the row gap token.

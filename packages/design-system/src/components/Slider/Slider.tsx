@@ -163,80 +163,8 @@ function snapToStep(raw: number, min: number, step: number): number {
 }
 
 /**
- * Controlled slider primitive supporting single (one-thumb) and range
- * (two-thumb) modes, horizontal and vertical orientations, fractional steps,
- * tick marks, and value bubbles. Custom-painted (not wrapping
- * `<input type="range">`) because range mode requires two thumbs and the
- * native input can't do that.
- *
- * **Controlled-only:** `value` is required and `onChange` must update the
- * consumer's state. Pass a `number` for single mode or `[number, number]`
- * for range — the component branches on `Array.isArray(value)`.
- *
- * @example
- * // Single-thumb with fractional steps (the ImageCrop zoom case):
- * const [zoom, setZoom] = useState(1);
- * <Slider value={zoom} min={1} max={3} step={0.1} onChange={(v) => setZoom(v as number)} aria-label="Zoom" />
- *
- * @example
- * // Range filter — price band, formatted label:
- * const [price, setPrice] = useState<[number, number]>([0, 50000]);
- * <Slider
- *   value={price}
- *   min={0}
- *   max={100000}
- *   step={1000}
- *   onChange={(v) => setPrice(v as [number, number])}
- *   aria-label="Price range"
- *   label={(v) => `$${v.toLocaleString()}`}
- * />
- *
- * @example
- * // Vertical volume control with tick marks:
- * <Slider
- *   value={volume}
- *   orientation="vertical"
- *   marks={[0, 25, 50, 75, 100]}
- *   onChange={(v) => setVolume(v as number)}
- * />
- *
- * @example
- * // Tone-coded threshold (disk usage approaching capacity):
- * <Slider
- *   value={usage}
- *   tone={usage > 90 ? 'danger' : usage > 75 ? 'warning' : 'default'}
- *   onChange={(v) => setUsage(v as number)}
- *   label
- * />
- *
- * @example
- * // Form submission via `name` — renders hidden inputs the form will pick up:
- * <form action="/api/settings" method="post">
- *   <Slider name="brightness" value={brightness} onChange={setB} />
- *   <button type="submit">Save</button>
- * </form>
- *
- * @remarks When NOT to use
- * - For binary state (on/off) — use `<Switch>` or `<Checkbox>`.
- * - For "pick one of a small enumerated set" — use `<RadioGroup>` or `<Select>`.
- * - For continuous color picking — that's a `<ColorPicker>` (not yet shipped).
- * - For server-state-bound expensive updates on every move tick. Use
- *   `onChangeEnd` or debounce.
- *
- * @remarks Anti-patterns
- * - ❌ Raw `<input type="range">` — can't do range mode, doesn't theme cleanly
- *   across browsers, vertical orientation is hacky. Use this.
- * - ❌ Hand-rolling drag math per page. The pointer / keyboard handling is
- *   non-trivial; the primitive owns it.
- * - ❌ Hitting a network endpoint inside `onChange`. The callback fires on
- *   every pointer-move tick — use `onChangeEnd` or debounce.
- * - ❌ `<Slider role="region">` — `role="slider"` is locked on each thumb.
- *   The TypeScript `Omit` prevents the root override.
- * - ❌ Passing `value[0] > value[1]` in range mode. The component clamps but
- *   the inverted tuple is a consumer bug — fix the state shape.
- * - ❌ Leaving range thumbs with identical names. Set the root `aria-label` /
- *   `aria-labelledby` so Slider can add localized minimum/maximum suffixes,
- *   or pass `thumbLabels` for domain-specific names.
+ * Controlled slider supporting single and range modes, horizontal and vertical orientations, fractional steps, tick marks and value bubbles.
+ * @see docs/components/Slider.md
  */
 export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
   {

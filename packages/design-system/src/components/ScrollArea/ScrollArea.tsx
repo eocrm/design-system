@@ -37,77 +37,8 @@ export interface ScrollAreaProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * A region that scrolls only its own content vertically: a feed under a
- * fixed header, a long list in a popover. It pads its content by the
- * focus-ring extent (4px) so focused children's rings aren't clipped. Inside `<Popover.Content>` it is
- * also what lets the popover cap itself at the viewport: the popover
- * becomes a flex column in which the ScrollArea is the only child that
- * shrinks, so the header stays put while the feed scrolls. That needs the
- * ScrollArea to be a direct child of `<Popover.Content>`, or inside one
- * wrapper element that is a direct child. That one wrapper must lay its
- * children out as a column: a `<Stack>`, or a plain element (div/form/Card),
- * which the popover lays out as a column. A row wrapper such as `<Cluster>`
- * is not supported (the popover caps but the feed overflows it) — put the
- * ScrollArea in a Stack instead. Deeper nesting leaves the popover uncapped.
- *
- * Keyboard: name it with `aria-label` / `aria-labelledby` and it is always a
- * `role="region"` landmark. It is a tab stop (`tabIndex=0`) only while it
- * overflows AND contains nothing focusable, so keyboard users can scroll it;
- * a dev warning fires if it becomes a tab stop unnamed (then it is also a
- * region). With links or buttons inside, it adds no tab stop, because
- * tabbing through them scrolls the area already.
- *
- * @example
- * // A notification centre: a fixed header over a scrolling feed.
- * <Popover>
- *   <Popover.Trigger>
- *     <Button variant="ghost" iconOnly aria-label="Notifications"><Bell size={16} /></Button>
- *   </Popover.Trigger>
- *   <Popover.Content minWidth={380}>
- *     <Stack gap="sm">
- *       <Cluster justify="between" align="center">
- *         <Popover.Heading>Notifications</Popover.Heading>
- *         <Button variant="ghost" size="sm" onClick={markAllRead}>Mark all as read</Button>
- *       </Cluster>
- *       <ScrollArea maxHeight="md" aria-label="Notifications">
- *         <Stack gap="xs">{rows}</Stack>
- *       </ScrollArea>
- *     </Stack>
- *   </Popover.Content>
- * </Popover>
- *
- * @example
- * // A plain-text log: overflowing with nothing focusable, so it becomes a
- * // named tab stop by itself.
- * <ScrollArea maxHeight="sm" aria-label="Import log">
- *   <Stack gap="xs">{lines.map((line, i) => <Text key={i} size="sm">{line}</Text>)}</Stack>
- * </ScrollArea>
- *
- * @example
- * // One-off height — prefer the scale.
- * <ScrollArea maxHeight={320} aria-label="Members">{members}</ScrollArea>
- *
- * @remarks When NOT to use
- * - Whole-page scrolling. `AppLayout` owns the page's scroll container.
- * - A Card with a fixed header over a scrolling body. Use `<Card fill>` with
- *   `<Card.Body scroll>`.
- * - Horizontal scrolling. ScrollArea scrolls vertically only: content wider
- *   than the area is clipped (`overflow-x: hidden`), so wrap long lines.
- *
- * @remarks Anti-patterns
- * - ❌ Nesting ScrollAreas. Two scroll containers under one pointer trap the
- *   wheel and make keyboard scrolling ambiguous.
- * - ❌ `className` with `overflow: auto` on a div instead. It loses the
- *   keyboard tab stop, the popover viewport cap, and overscroll containment.
- * - ❌ A ScrollArea with plain-text content and no `aria-label` /
- *   `aria-labelledby`. It becomes an unnamed tab stop.
- * - ❌ Nesting the ScrollArea deeper inside `<Popover.Content>` than a direct
- *   child, or inside one wrapper element that is a direct child
- *   (`Content > Stack > ScrollArea`). Deeper nesting leaves the popover
- *   uncapped.
- * - ❌ A `<Cluster>` (row) as the wrapper around a ScrollArea inside
- *   `<Popover.Content>`. The popover caps but the feed overflows it; put the
- *   ScrollArea in a `<Stack>` instead.
+ * A region that scrolls only its own content vertically, padded by the focus-ring extent so focused rings are not clipped.
+ * @see docs/components/ScrollArea.md
  */
 export const ScrollArea = forwardRef<HTMLDivElement, ScrollAreaProps>(function ScrollArea(
   { maxHeight, className, style, children, onBlur, ...rest },

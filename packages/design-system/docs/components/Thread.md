@@ -50,3 +50,6 @@
 - Plain children are the comment body; any direct `<Thread.Item>` child is a reply. Don't wrap a reply in a Fragment / wrapper — the sort matches `Thread.Item` by identity and it won't be detected.
 - `maxDepth` (default `4`): once nesting hits the cap, deeper replies render flat (same indent) instead of marching further right. `compact` flows to every nested level via CSS vars.
 - **When NOT to use**: a flat activity feed with no parent/child nesting → `<Timeline>`; plain indentation with no connecting line → `<Indent>`.
+
+- Also not for a non-threaded vertical list (`<Stack>`) or an avatar + name/meta row (`<PersonDisplay>`; use it as an item's `node` / body, not instead of Thread).
+- ❌ Layout margins on items: spacing comes from `compact` / the row-gap token.

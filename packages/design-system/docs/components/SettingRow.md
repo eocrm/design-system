@@ -71,3 +71,32 @@
 - `<SettingRow.List>` owns the shared label column (`labelWidth`, default `16rem`), `spacing` (`sm`/`md`/`lg`, default `md`), `dividers` (default `false`) and `collapseBelow` (`sm`/`md`/`lg`, default `'sm'` — a container query on the list's own box that stacks each row; pass `false` to opt out of containment entirely). **Collapse only works inside a List** — a standalone `<SettingRow>` never stacks at any width.
 - ❌ A `SettingRow.List` inside a shrink-to-fit parent (a `width: max-content` flex item, an inline-block, a table cell) with the default `collapseBelow` — the List is a size container by default, so its intrinsic-width contribution is zero and it collapses. Pass `collapseBelow={false}` there.
 - ❌ Read-only key/value → `<DefinitionList>`. ❌ An ordinary form field → `<Field>`. ❌ `margin` on a row to space rows → that is the List.
+
+```tsx
+// A plain setting — no adornments:
+<SettingRow label="Default currency" description="Currency preselected for new records">
+  <Select options={currencies} value={currency} onChange={setCurrency} />
+</SettingRow>
+
+// Render-prop for a wrapped or native control:
+<SettingRow label="Webhook URL" error={errors.url}>
+  {(field) => <input type="url" {...field} />}
+</SettingRow>
+```
+
+**Alignment:** rows align because the label column is a length shared via `--setting-row-label-width`; set it once on `<SettingRow.List>` (`labelWidth`), never on individual rows.
+
+**When NOT to use**
+
+- A form field in a normal form: use `<Field>`; the shared label column is wrong for a two-up `<FormRow>`.
+- A single self-labelling `<Checkbox>` / `<Switch>`: put it in a `<Cluster>`, or pass it as the row's control with the row's `label` as the only label (don't double-label).
+- Grouping rows under a heading: use `<FormSection>`, which can wrap a `<SettingRow.List>`.
+
+**Anti-patterns**
+
+- A badge inside `label` instead of `labelAdornment`: it joins the control's accessible name.
+- A bare `<Cluster justify="between">` or packed-left `<Cluster>` for a settings row: the first flings the control to the far edge of a wide card, the second leaves every row's control at a different x.
+- A `<Stack>` of rows with ad-hoc `gap` instead of `<SettingRow.List>`: no shared label-column owner and no divider rhythm.
+- Absent-value semantics: `label` / `error` / `description` treat `0`, `NaN`, `false`, `''`, an empty array and an empty fragment as ABSENT, so `description={remaining}` with `remaining === 0` or `error={errors.map(...)}` with no errors renders nothing (no `<label>`, no description, no error, no `invalid` flip). A labelless control falls back to its own `aria-label`, or is unnamed. A real but visually empty node (`label={<span />}`, `label="   "`) or an empty one-shot iterator (`Map.prototype.values()`, a generator) counts as present.
+- `trailing` uses a plain truthiness check: an empty array or fragment still renders an empty wrapper (a stray gap). Pass `undefined` for "none". `footer` / `labelAdornment` have no wrapper, so empty input renders nothing.
+- An absent `label` also removes the `required` `*` marker (it lives inside the `<label>`): `<SettingRow label={0} required>` shows no `*`.

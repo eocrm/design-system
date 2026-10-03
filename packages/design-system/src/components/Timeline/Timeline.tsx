@@ -20,36 +20,8 @@ export interface TimelineItemProps extends Omit<HTMLAttributes<HTMLLIElement>, '
 }
 
 /**
- * Vertical activity-feed primitive — a connector line running between per-item `node`
- * slots (avatar / dot / icon) with content to the right. The line connects consecutive
- * nodes and **stops at the last node**. Use `<Timeline compact>` for a dense sidebar widget.
- *
- * @example
- * <Timeline>
- *   {activities.map((a) => (
- *     <Timeline.Item key={a.id} node={<Avatar name={a.actor} size="sm" src={a.avatarUrl} />}>
- *       <Text size="sm"><strong>{a.actor}</strong> · {a.type} · {a.time}</Text>
- *       <Text size="sm" tone="muted">{a.body}</Text>
- *     </Timeline.Item>
- *   ))}
- * </Timeline>
- *
- * @example
- * // Compact sidebar widget with dot nodes:
- * <Timeline compact>
- *   <Timeline.Item node={<Dot tone="success" />}>
- *     <Text size="sm">Renewal confirmed</Text>
- *   </Timeline.Item>
- * </Timeline>
- *
- * @remarks When NOT to use
- * - A plain vertical list with no connector / nodes → `<Stack>`.
- * - A horizontal step indicator → not this (Timeline is vertical).
- *
- * @remarks Anti-patterns
- * - ❌ Expecting a built-in dot — `node` is a slot; pass `<Dot>` / `<Avatar>` / an icon.
- * - ❌ Hand-rolling the connector line — it's built in and stops at the last item automatically.
- * - ❌ Putting layout margins on items — spacing comes from `compact` / the row gap token.
+ * Vertical activity-feed primitive: a connector line between per-item `node` slots, with content to the right.
+ * @see docs/components/Timeline.md
  */
 const TimelineRoot = forwardRef<HTMLOListElement, TimelineProps>(function Timeline(
   { compact = false, className, children, ...rest },

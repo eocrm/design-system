@@ -9,24 +9,8 @@ import styles from './TopBar.module.scss';
 export type TopBarStartProps = HTMLAttributes<HTMLDivElement>;
 
 /**
- * Left-side cluster of a `<TopBar>`. Renders a flex row that occupies the
- * remaining bar width (`flex: 1`) — so a sibling `<TopBar.End>` gets pushed
- * to the right edge with no extra spacer needed.
- *
- * Typically holds a brand mark, a workspace switcher, and/or `<TopBar.Search>`.
- * Children are laid out horizontally with the bar's standard gap.
- *
- * @example
- * <TopBar>
- *   <TopBar.Start>
- *     <TopBar.Search placeholder="Search…" hotkey="⌘K" />
- *   </TopBar.Start>
- *   <TopBar.End>
- *     <TopBar.IconButton aria-label="Notifications" indicator>
- *       <Bell size={16} />
- *     </TopBar.IconButton>
- *   </TopBar.End>
- * </TopBar>
+ * Left-side cluster of a `<TopBar>` that takes the remaining bar width.
+ * @see docs/components/TopBar.md
  */
 export const TopBarStart = forwardRef<HTMLDivElement, TopBarStartProps>(function TopBarStart(
   { className, ...props },

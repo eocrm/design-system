@@ -30,3 +30,28 @@
 - `weight`: `regular | medium | semibold | bold` (default `semibold`).
 - `truncate`: single-line ellipsis.
 - **Use `<Title>` for every heading in your UI.** Raw `<h1>` / `<h2>` is forbidden.
+
+`size` decouples visual size from the semantic level (e.g. a nested section that needs a smaller-looking h2).
+
+```tsx
+// Heading + supporting paragraph in a Stack:
+<Stack gap="xs">
+  <Title order={1}>Dashboard</Title>
+  <Text size="md" tone="muted">
+    Pipeline summary for this week.
+  </Text>
+</Stack>
+```
+
+**When NOT to use**
+
+- Body text: use `<Text>`.
+- Inline emphasis: use `<strong>` / `<em>` / `<Text weight="semibold">`.
+- Monospaced identifiers: use `<Code>`.
+- Picking a font size without thinking about hierarchy: the required `order` prop forces the question of what level this heading is on the page.
+
+**Anti-patterns**
+
+- `<h2 className={styles.title}>`: use `<Title order={2}>`; consumer SCSS should never name a typography class.
+- `<Title order={1} size="xs">`: usually a sign the heading hierarchy is wrong. Bump the order up instead of shrinking a low-order heading.
+- Skipping heading levels (`order={1}` then `order={4}`) hurts screen-reader users; use sequential orders.

@@ -51,7 +51,7 @@ import { Switch } from '@eocrm/design-system';
 
 <!-- props:end -->
 
-- **Native `<input type="checkbox" role="switch">`**. Form submission works; AT announces as switch.
+- **Native `<input type="checkbox" role="switch">`**. Form submission works; AT announces as switch. `ref` and native attributes (`name`, `value`, `disabled`, `aria-label`) reach the input.
 - **Three tones** (`accent`/`success`/`danger`) for the checked track. Unchecked track is always neutral muted.
 - **`loading={true}`** shows a spinner inside the thumb, sets `aria-busy`, announces from its own polite live region, and ignores toggle attempts while keeping the input focusable. Consumer manages the optimistic-update flow. The switch's accessible **name does not change** while loading — you activated it, so the change is announced rather than renamed. `aria-busy` is set for tooling but reaches no screen reader on its own; the live region is what actually speaks.
 - **`onChange(checked, event)`** signature matches Checkbox — first arg is the next boolean, second is the raw event.
