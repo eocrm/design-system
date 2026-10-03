@@ -67,7 +67,7 @@ contract wins (same pattern as Alert).
 - `width: 100%` of the slot, `border-radius: 0`, `border-bottom: 1px solid <tone rule>`.
 - Padding: `--banner-padding-x` defaults to `var(--topbar-padding-x)` (`--space-4`), so
   the icon lines up with TopBar content.
-- Typography: `font-size-sm`, title `font-weight-medium`, text `color-fg`.
+- Typography: `font-size-sm`, title `font-weight-semibold`, text `color-fg`.
 
 ### Tone colours (component tokens in `Banner.tokens.scss`, no new shared tokens)
 

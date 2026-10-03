@@ -17,7 +17,7 @@
 
   // Below this width the text block stops sharing its row and the action/×
   // wrap onto their own line (flex-wrap, no breakpoint).
-  --banner-text-min-width: 16rem;
+  --banner-text-min-width: 12rem;
 
   --banner-bg-info: var(--color-info-bg-subtle);
   --banner-rule-info: var(--color-info);

@@ -378,6 +378,21 @@ describe('AppLayout banner slots', () => {
     expect(container.querySelectorAll('div').length).toBe(withSlots - 2);
   });
 
+  it('omits banner wrappers for falsy slot values', () => {
+    const { container, rerender } = render(
+      <AppLayout banner={<span>b</span>} contextBanner={<span>c</span>}>
+        x
+      </AppLayout>,
+    );
+    const withSlots = container.querySelectorAll('div').length;
+    rerender(
+      <AppLayout banner={false} contextBanner={null}>
+        x
+      </AppLayout>,
+    );
+    expect(container.querySelectorAll('div').length).toBe(withSlots - 2);
+  });
+
   it('contextBanner and banner render in overlay mode', () => {
     stubMatchMedia(400);
     render(
