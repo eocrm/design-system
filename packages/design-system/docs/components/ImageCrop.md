@@ -26,7 +26,7 @@ const handleSave = async () => {
 |---|---|---|---|---|
 | `src` | `string \| File \| Blob` | yes | — | Image source. String URLs (HTTP/HTTPS, data:, blob:) pass through. File/Blob are normalized to object URLs internally via `URL.createObjectURL()`, with cleanup on unmount and `src` change. |
 | `value` | `CropArea \| null` | yes | — | Controlled crop area in SOURCE-IMAGE pixel coordinates. Pass `null` to use the component's default centered crop (the largest centered region matching `aspectRatio` at zoom=1). The component computes the visual position from this + the image's natural size + the viewport size. |
-| `onChange` | `(area: CropArea) => void` | yes | — | Fires on every drag/zoom tick. High frequency. |
+| `onChange` | `(area: CropArea) => void` | yes | — | Fires on every drag/zoom tick. High frequency. Also fires once on first image load when `value` is `null`, with the computed default crop; after that the consumer owns the state. |
 | `onChangeEnd` | `((area: CropArea) => void)` | no | — | Fires once when the user releases the drag or releases the zoom slider thumb. |
 | `aspectRatio` | `number` | no | — | Fixed aspect ratio for the crop box (e.g. `1` for square, `16/9` for landscape, `4/3` for traditional photo). Omit for free aspect — the crop box fills the entire viewport and the user controls the cropped region via zoom only. Typically a stable prop from the consumer (set once per page). Toggling `aspectRatio` at runtime updates the crop box dimensions but does NOT automatically re-fit `value` to the new ratio — pass a fresh `value` (or `null` for the new default) when you change ratios. |
 | `minZoom` | `number` | no | — | Minimum zoom level. Default `1` (image fits viewport at zoom=1). |
@@ -37,8 +37,6 @@ const handleSave = async () => {
 
 <!-- props:end -->
 
-- **Controlled-only.** `value: CropArea | null` (in source-image pixels). Pass `null` initially — the component computes the default centered crop on first image load and fires `onChange` once. From then on, the consumer owns the state.
-- **`src: string | File | Blob`** — string URLs pass through; File/Blob are normalized to object URLs internally with cleanup on unmount + src change. Consumer never sees the URL.
 - **Pattern A drag**: the crop box is centered in the viewport; the user drags the IMAGE to reposition. Zoom adjusts via the embedded `<Slider>`. No corner / edge resize handles.
 - **`aspectRatio?: number`** — pass `1` for square, `16/9` for landscape, etc. Omit for free aspect (crop box fills the viewport; zoom controls effective cropped region).
 - **`onChange` fires per drag/zoom tick (high frequency).** Debounce in the consumer OR use `onChangeEnd` (fires on pointerup / slider release).

@@ -34,13 +34,13 @@ export interface DrawerProps {
   /** Fired when Drawer wants to change open state — Esc, overlay click, Close, swipe, programmatic. */
   onOpenChange: (open: boolean) => void;
 
-  /** Edge the drawer slides in from. Defaults to 'right'. */
+  /** Edge the drawer slides in from: `left`, `right` (default), `top`, `bottom`. */
   side?: DrawerSide;
 
-  /** Size preset. Width for left/right, height for top/bottom. Defaults to 'md'. */
+  /** Size preset: `sm` 320px, `md` 440px (default), `lg` 640px. Width for left/right, height for top/bottom. Capped to `viewport - 32px` on narrow viewports; always edge-anchored, never fullscreen. */
   size?: DrawerSize;
 
-  /** Overlay variant. 'solid' (default) | 'blur'. */
+  /** Overlay variant. 'solid' (default) | 'blur' (frosted glass, `backdrop-filter: blur(4px)`). */
   overlay?: DrawerOverlayVariant;
 
   /**

@@ -64,7 +64,7 @@ export interface DateRangePickerProps extends Omit<
   min?: Date;
   /** Latest selectable date (inclusive). */
   max?: Date;
-  /** Per-date disable predicate. */
+  /** Per-date disable predicate; gates both the popover grid and typed-input parsing. */
   isDateDisabled?: (date: Date) => boolean;
 
   /**
@@ -79,10 +79,10 @@ export interface DateRangePickerProps extends Omit<
 
   /** Show the ✕ clear button when a range is set. Defaults to `true`. */
   clearable?: boolean;
-  /** Toggle red border + focus ring + `aria-invalid="true"`. */
+  /** Toggle red border + focus ring + `aria-invalid="true"`. Pair with a visible error and `aria-describedby`. */
   invalid?: boolean;
 
-  /** Form name for the START half (hidden `<input>`). */
+  /** Form name for the START half (hidden `<input>` with an ISO date, so native `<form>` submission works). Post both keys or just one. */
   nameStart?: string;
   /** Form name for the END half. */
   nameEnd?: string;

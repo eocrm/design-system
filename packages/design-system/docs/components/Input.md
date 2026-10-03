@@ -13,15 +13,13 @@
 | Prop | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `invalid` | `boolean` | no | — | Toggles the error visual (red border + focus ring) and sets `aria-invalid="true"`. Pair with a visible error message and `aria-describedby` pointing at the message id. |
-| `size` | `InputSize` | no | — | Visual size. Defaults to `'md'`. - `'sm'` — 24px tall; toolbars, secondary forms. - `'md'` — 32px tall (default); most form contexts. - `'lg'` — 40px tall; hero search, mobile-friendly forms. Note: this shadows the native HTML `<input size>` attribute (visible character count). If you need that legacy attribute, set width via `style` or a parent container. |
+| `size` | `InputSize` | no | — | Visual size. Defaults to `'md'`. - `'sm'` — 24px tall; toolbars, secondary forms. - `'md'` — 32px tall (default); most form contexts. - `'lg'` — 40px tall; hero search, mobile-friendly forms. Same scale as `<Select>`; fields have no `xs` (unlike `<Button>`). Note: this shadows the native HTML `<input size>` attribute (visible character count). If you need that legacy attribute, set width via `style` or a parent container. |
 | `disableAutofill` | `boolean` | no | — | Block browser autofill AND password managers from offering to fill this input. Applies the standard set of opt-out hints: - `autoComplete="off"` - `data-1p-ignore` (1Password) - `data-lpignore="true"` (LastPass) - `data-form-type="other"` (generic "not a login field") **Smart default**: when omitted, the input blocks autofill iff `autoComplete` is also omitted (or `'off'`). Explicit autocomplete hints (`autoComplete="email"`, `"current-password"`, `"username"`, etc.) opt back IN to autofill — the assumption is that a consumer specifying autoComplete actually wants password-manager interaction. Pass `disableAutofill={true}` to force-block even with an autocomplete hint, or `false` to force-allow. |
 | …native | | | | plus native `<input>` attributes |
 
 <!-- props:end -->
 
 - All native `<input>` attributes pass through, except `size` — that's been replaced by the component-level `size` prop (the native HTML `size` attribute, visible-character count, is shadowed).
-- `invalid` toggles the error visual + sets `aria-invalid="true"`. Pair with an error message and `aria-describedby`.
-- Sizes: `sm` (24px) / `md` (32px, default) / `lg` (40px). Same scale as `<Select>`. (`<Button>` exposes `xs/sm/md/lg`; fields don't ship `xs` yet.)
 - **Autofill is BLOCKED by default** — `<Input />` carries `autoComplete="off"` + the 1Password / LastPass / generic data-\* opt-out hints so password managers don't misfire on search / filter / free-text fields. Set `autoComplete="email"` (or `"username"`, `"current-password"`, etc.) to opt INTO autofill for real form fields. Force the behavior either way via `disableAutofill={true | false}`.
 - Validation logic lives in your form layer (React Hook Form + Zod recommended), not in the component.
 - Not for multi-line (`Textarea`), a fixed list (`Select`), date/time (`DatePicker` / `DateRangePicker`) or password reveal (`PasswordInput`).

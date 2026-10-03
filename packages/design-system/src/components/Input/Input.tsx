@@ -19,6 +19,8 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
    * - `'md'` — 32px tall (default); most form contexts.
    * - `'lg'` — 40px tall; hero search, mobile-friendly forms.
    *
+   * Same scale as `<Select>`; fields have no `xs` (unlike `<Button>`).
+   *
    * Note: this shadows the native HTML `<input size>` attribute (visible
    * character count). If you need that legacy attribute, set width via
    * `style` or a parent container.

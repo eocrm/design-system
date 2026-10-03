@@ -35,7 +35,7 @@ export interface ImageCropProps extends Omit<HTMLAttributes<HTMLDivElement>, 'on
    * position from this + the image's natural size + the viewport size.
    */
   value: CropArea | null;
-  /** Fires on every drag/zoom tick. High frequency. */
+  /** Fires on every drag/zoom tick. High frequency. Also fires once on first image load when `value` is `null`, with the computed default crop; after that the consumer owns the state. */
   onChange: (area: CropArea) => void;
   /** Fires once when the user releases the drag or releases the zoom slider thumb. */
   onChangeEnd?: (area: CropArea) => void;

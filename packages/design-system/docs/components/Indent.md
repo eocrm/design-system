@@ -26,8 +26,6 @@
 
 <!-- props:end -->
 
-- `gutter`: `xs` 4 · `sm` 8 · `md` 12 · `lg` 16 (default) · `xl` 24 · `2xl` 32 (px per level).
-- `level` is a depth count (0, 1, 2, …); negatives clamp to 0.
 - Don't pass a fractional or huge `level`.
 - Not for general left padding on non-nested content — it expresses hierarchy; use the parent layout primitive.
 - Not for a bordered / padded surface (`<Card>`) or arranging children in a row (`<Cluster>`).

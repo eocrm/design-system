@@ -53,7 +53,6 @@
   composite controls that forward ARIA props (`Select`, `Slider`, `ColorPicker`,
   `IconPicker`, `FileUpload`, `TimeField`) get an accessible name for free. The render-prop `field`
   object also carries `aria-labelledby` for wrapped/nested DOM.
-- `error` replaces `description` and flips the control invalid. `required` shows `*`;
   `optional` shows `(optional)`. `orientation="horizontal"` = label beside control.
 - Field owns the control `id` — to set one, use `<Field id>`, not the control.
 - Groups: `<Field asGroup>` around `<RadioGroup>` → label becomes a `role="group"` caption.

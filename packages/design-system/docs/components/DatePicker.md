@@ -16,12 +16,12 @@ const [value, setValue] = useState<Date | null>(null);
 | `defaultValue` | `Date \| null` | no | — | Initial selected date for uncontrolled use. |
 | `onChange` | `((date: Date \| null) => void)` | no | — | Fires when the value changes. |
 | `locale` | `string` | no | — | Override locale (otherwise reads `useLocale()`). |
-| `min` | `Date` | no | — | Earliest selectable date (inclusive). |
+| `min` | `Date` | no | — | Earliest selectable date (inclusive, day-granular). Gates both the grid and typed input. |
 | `max` | `Date` | no | — | Latest selectable date (inclusive). |
-| `isDateDisabled` | `((date: Date) => boolean)` | no | — | Per-date disable callback. |
+| `isDateDisabled` | `((date: Date) => boolean)` | no | — | Per-date disable callback; applied per grid cell and to parsed typed input. |
 | `clearable` | `boolean` | no | — | Show the ✕ clear button when a value is set. Defaults to `true`. |
-| `invalid` | `boolean` | no | — | Toggle red border + focus ring + `aria-invalid="true"`. |
-| `name` | `string` | no | — | Form name. When set, renders a hidden mirror `<input>` with the ISO date. |
+| `invalid` | `boolean` | no | — | Toggle red border + focus ring + `aria-invalid="true"`. Pair with a visible error and `aria-describedby`. |
+| `name` | `string` | no | — | Form name. When set, renders a hidden mirror `<input>` with the ISO date so native `<form>` submission works. |
 | `size` | `DatePickerSize` | no | — | Field height + type scale. Same scale as `<Input>`. Defaults to `'md'`. Affects only the trigger row; the popover month grid is fixed-size. - `'sm'` — 24px tall. - `'md'` — 32px tall (default). - `'lg'` — 40px tall. |
 | `granularity` | `DateTimeGranularity` | no | — | Picker precision. - `'day'` (default) — date only; behavior unchanged from prior releases. - `'minute'` — adds a manual-entry time input below the calendar grid. The trigger text shows `HH:mm` after the date. The hidden form mirror (when `name` is set) emits ISO local datetime (`2026-05-28T14:30`). Time is preserved across date re-picks. Picking from a `null` value defaults the time to `00:00`. |
 | `timeStep` | `number` | no | — | Minutes step for the `<TimeField>` popover and for rounding typed time input on commit. Defaults to `15`. Set `1` to disable rounding. Only meaningful when `granularity='minute'`. |
@@ -33,10 +33,6 @@ const [value, setValue] = useState<Date | null>(null);
 - Single-date selection (date-only by default; opt into date+time with `granularity="minute"`). Range → `<DateRangePicker>`. Year-picker — out of scope for v1.
 - Looks like an `<Input>`. Click the input or press ArrowDown to open the popover. The 📅 button toggles, the ✕ button clears.
 - Typed input parses on blur / Enter using the active locale: en-US `M/D/YYYY`, ru-RU `D.M.YYYY`, ja-JP `Y/M/D`. ISO `YYYY-MM-DD` is always accepted as a paste fallback. Unparseable / out-of-range / disabled input reverts to the last committed value.
-- `min` / `max` (inclusive, day-granular) gate both the grid and typed input. `isDateDisabled(date) => boolean` is per-cell + per-parsed-input.
-- `clearable` (default `true`) shows the ✕ button when a value is set. `name` renders a hidden mirror `<input type="hidden">` with the ISO date so native `<form>` submission works.
-- `invalid` toggles the red border + `aria-invalid="true"`. Pair with a visible error and `aria-describedby`.
-- Sizes: `sm` / `md` (default) / `lg`. Same scale as `<Input>`; affects the trigger row only — the popover month grid stays fixed.
 - Locale-aware via `useLocale()`; override with `locale` prop. UI strings (previousMonth / nextMonth / openCalendar / clear) translate via `datePicker.*` keys — override with `<I18nProvider overrides={{ datePicker: { ... } }}>`.
 - ARIA: typed input has `aria-haspopup="dialog"` + `aria-expanded`. Popover wrapper is `role="dialog"` (labelled by `aria-label={t('datePicker.openCalendar')}`); the grid inside is `role="grid"` with `role="gridcell"` buttons that carry `aria-selected` / `aria-disabled` as appropriate.
 - Keyboard inside the grid: ←→↑↓ move focus by 1 day, Home/End to start/end of week, PageUp/PageDown step a month, Enter/Space selects, Escape closes and returns focus to the input. Tab leaves the grid.

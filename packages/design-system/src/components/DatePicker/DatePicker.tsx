@@ -52,19 +52,19 @@ export interface DatePickerProps extends Omit<
 
   /** Override locale (otherwise reads `useLocale()`). */
   locale?: string;
-  /** Earliest selectable date (inclusive). */
+  /** Earliest selectable date (inclusive, day-granular). Gates both the grid and typed input. */
   min?: Date;
   /** Latest selectable date (inclusive). */
   max?: Date;
-  /** Per-date disable callback. */
+  /** Per-date disable callback; applied per grid cell and to parsed typed input. */
   isDateDisabled?: (date: Date) => boolean;
 
   /** Show the ✕ clear button when a value is set. Defaults to `true`. */
   clearable?: boolean;
-  /** Toggle red border + focus ring + `aria-invalid="true"`. */
+  /** Toggle red border + focus ring + `aria-invalid="true"`. Pair with a visible error and `aria-describedby`. */
   invalid?: boolean;
 
-  /** Form name. When set, renders a hidden mirror `<input>` with the ISO date. */
+  /** Form name. When set, renders a hidden mirror `<input>` with the ISO date so native `<form>` submission works. */
   name?: string;
 
   /**

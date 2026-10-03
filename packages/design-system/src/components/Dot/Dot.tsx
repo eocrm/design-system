@@ -7,12 +7,12 @@ import styles from './Dot.module.scss';
 export interface DotProps extends HTMLAttributes<HTMLSpanElement> {
   /**
    * One of the 30 `PaletteColor`s — renders the bare circle in that color's
-   * saturated `--color-palette-<name>-fg` token. Takes precedence over `tone`.
+   * saturated `--color-palette-<name>-fg` token (the same color OptionsPicker groups and palette Badges use). Takes precedence over `tone`.
    */
   color?: PaletteColor;
   /**
    * A semantic `BadgeTone` (`neutral` default / `info` / `success` / `warning` /
-   * `danger` / `purple`) — used when `color` is omitted.
+   * `danger` / `purple`) — used when `color` is omitted. Neither set → `neutral`.
    */
   tone?: BadgeTone;
 }

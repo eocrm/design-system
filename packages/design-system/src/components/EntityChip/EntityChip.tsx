@@ -117,7 +117,11 @@ interface EntityChipOwnProps {
   label?: ReactNode;
   /** Muted leading run before the name (e.g. task key `ENG-5`). */
   prefix?: ReactNode;
-  /** Inline workflow status, separated by a small dot and rendered in the status's own color. */
+  /**
+   * Inline workflow status `{ label, category?, color? }`, separated by a small dot and rendered in the
+   * status's own color. `category` (`to_do`/`in_progress`/`open`/`done`/`won`/`lost`) resolves a default
+   * palette color (same mapping as `<PillMenu>`); `color` overrides it. The dot takes the resolved color too.
+   */
   status?: EntityChipStatus;
   /**
    * Optional categorical palette color for the chip fill. When set, takes

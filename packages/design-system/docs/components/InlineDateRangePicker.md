@@ -33,9 +33,7 @@ const [range, setRange] = useState<DateRange | null>(null);
 - External prev/next chevrons in the header shift both grids by ±1 month at once.
 - Cursor anchors to `value?.start ?? new Date()` on mount and re-anchors each time `value` transitions from `null` to a non-null range (e.g. loading an async initial value, or a consumer clearing and re-setting). After a transition, later non-null `value` changes do not move the cursor — consumers own navigation into the new month via `ref`.
 - Keyboard cross-grid navigation works in both directions between the two grids.
-- `min` / `max` / `isDateDisabled` gate both boundaries.
-- `nameStart` / `nameEnd` render independent hidden form mirrors (post both, only one, or neither — caller's choice).
-- `disabled` mutes everything; ref forwards to the outer wrapper.
+- `ref` forwards to the outer wrapper.
 - Use when the consumer wants the calendar permanently visible. For a compact form field with the same selection model, use `<DateRangePicker>`. Don't render inside containers narrower than ~32rem — the two grids need side-by-side room.
 - **Granularity.** Pass `granularity="minute"` to render dual `<TimeField>`s (start + end) below the two-month grid; the hidden form mirrors emit ISO local datetime. Defaults to `'day'`. The start/end time inputs are shown and editable below the grid even before a range is picked — defaulting to `00:00` start / `23:59` end. Times set in this empty state are applied when the range is committed (no need to seed a placeholder range), and existing times are preserved across subsequent date picks. Same-day end-time silently clamps to ≥ start-time on every commit; different-day ranges are not clamped. `timeStep` (default `15`, in minutes) applies to BOTH TimeFields, controlling each minute-list row count AND rounding typed input in the time fields on commit; set `timeStep={1}` to disable rounding. `hourCycle` (default `'auto'`) forwards to both embedded TimeFields — `'12'` / `'24'` force a cycle, `'auto'` derives from locale.
 

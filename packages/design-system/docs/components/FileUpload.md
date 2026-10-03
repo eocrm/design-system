@@ -50,8 +50,6 @@
 - **Single mode (default):** implicit count cap of 1. Dropzone HIDES once `files.length === 1` and re-appears after the user removes the file. Multi-file drops in single mode → first valid file accepted, rest rejected as `'too-many'`.
 - **Defensive guards.** `NaN`, `Infinity`, and `max <= 0` on the underlying `<Progress>` fall back to indeterminate — covers the file-upload race condition where `bytes_uploaded / total_bytes` produces NaN before the total is known.
 - **Drag and click both open the same hidden `<input type="file">`.** Drag is mouse-only; keyboard users use the dropzone's `role="button"` + Enter/Space to open the picker.
-- `disabled`: dropzone shows grayed, drag/click no-op, remove buttons disabled.
-- `dropzoneLabel`, `dropzoneIcon`, `dropzoneHint` override the dropzone's default content. **A11y note:** when `dropzoneLabel` is a ReactNode (not a plain string), the component falls back to `aria-label="Upload files"` — pass `aria-label` via the spread for a screen-reader-equivalent description.
 
 #### `FileRejectReason`
 

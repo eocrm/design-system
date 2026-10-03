@@ -39,7 +39,7 @@ export interface IconTileProps extends Omit<HTMLAttributes<HTMLSpanElement>, 'co
    * overridden; wrap nothing around the icon. Use it in text contexts
    * (`EntityChip` `icon` / `trailing`, `Badge` rows, dense lists, running
    * text) where even `xs` towers over the capitals. It follows `font-size`,
-   * so there is no size decision per call site.
+   * so there is no size decision per call site. Not for standalone tiles — it is only as big as the text.
    */
   size?: IconTileSize;
   /** `'square'` (radius-md, **default**) or `'circle'` (radius-full). */

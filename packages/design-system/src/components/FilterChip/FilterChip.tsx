@@ -51,7 +51,8 @@ export interface FilterChipProps extends Omit<HTMLAttributes<HTMLDivElement>, 'r
 
   /**
    * Open state of the disclosure the body opens (e.g. the editor popover),
-   * surfaced as `aria-expanded` on the body button. Only meaningful with
+   * surfaced as `aria-expanded` on the body button (which also carries
+   * `aria-haspopup="dialog"`). Only meaningful with
    * `onActivate`. Omit if the body doesn't toggle a disclosure.
    */
   expanded?: boolean;

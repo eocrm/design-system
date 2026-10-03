@@ -57,10 +57,6 @@
 <!-- props:end -->
 
 - Page-level sibling of `<EmptyState>` — the component EmptyState's docs point to for "page-level 404 / 500" and danger-tinted error states. Use `<EmptyState>` for "nothing here" inside a surface; use `<Alert tone="error">` for an in-flow banner.
-- Slots: `icon`, `title` (required, semantic heading), `description`, `actions`, and `extra` (below the actions — error ID, status link).
-- `tone`: `'neutral'` (default — 404; muted icon) / `'danger'` (error; red icon + `role="alert"` on the wrapper so a boundary fallback announces on mount, overridable via `role`).
-- `size`: `sm` / `md` / `lg` (**default** — full-page hero). `align`: `'center'` (default) / `'start'`.
-- `headingLevel` defaults to `1` (the page h1); lower it when nested. Values outside 1–6 clamp to 1.
 - `tone="danger"` makes the wrapper `role="alert"` (announces the whole subtree assertively on mount — ideal for an error-boundary fallback). For a _standalone_ error page, pass `role={undefined}` so it isn't read as a wall of text on load. Override via `role`.
 - **Loading → error in an existing page-level surface:** the example's Card is intentionally the stable page-level transition surface, not a recommendation to nest ErrorState in arbitrary cards. Keep that one `Card role="status" aria-busy={!failed}` mounted, with either loading content or `<ErrorState role={undefined}>` inside it. A live region mounted together with the error has no mutation to announce, and a page-sized assertive alert is inappropriate for this update.
 - For `tone="neutral"`, the `<section>` is not a screen-reader landmark unless it has an accessible name — pass `aria-label` / `aria-labelledby` when it IS the page's primary region (typical for a full-page 404).

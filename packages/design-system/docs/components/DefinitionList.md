@@ -61,8 +61,6 @@ For displaying entity properties — contact details, settings rows, metadata si
 
 <!-- props:end -->
 
-Props on the root: `layout='horizontal' | 'stacked'` (default `'horizontal'`), `termWidth` (CSS length, default `max-content` — column sizes to the longest term), `spacing='sm' | 'md' | 'lg'` (default `'sm'` — compact; bump to `md`/`lg` for roomier), `dividers` (default `false`). The `Description` has an `icon` prop — leading-position, automatically wrapped `aria-hidden` because the `<dt>` carries the semantic label.
-
 Use this instead of `Card.List` + `Card.ListRow` whenever the data is genuinely key/value (every row has a label and a value). Use `Card.List` when rows aren't keyed (activity feeds, list of cards).
 
 **Anti-patterns**

@@ -45,7 +45,7 @@ interface GridBaseProps {
   gap?: GridGap;
   /**
    * Cross-axis (vertical within row) alignment of each cell. Default browser
-   * behavior is `stretch`; omit to use the default.
+   * behavior is `stretch`; omit to use the default. Useful for cards of varying intrinsic height.
    */
   alignItems?: GridAlignItems;
   /**
@@ -53,13 +53,14 @@ interface GridBaseProps {
    * browser behavior is `stretch`; omit to use the default.
    */
   justifyItems?: GridJustifyItems;
-  /** Element to render. Default `'div'`. Limited to common layout / semantic elements. */
+  /** Element to render. Default `'div'`. Limited to `div`, `section`, `ul`, `ol`, `nav`, `main`, `aside`, `article`, `header`, `footer` rather than fully polymorphic. */
   as?: GridAs;
 }
 
 interface GridFixedColumns extends GridBaseProps, HTMLAttributes<HTMLElement> {
   /** Fixed number of equal-width columns. Mutually exclusive with `minColumnWidth`. */
   columns: number;
+  /** Auto-fit variant only: minimum cell width (CSS length, e.g. `'240px'`); defaults to `'240px'` when neither `columns` nor this is set. Not allowed with `columns`. */
   minColumnWidth?: never;
   /**
    * Collapse to a single visual column when the GRID'S OWN width (container

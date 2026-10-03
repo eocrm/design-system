@@ -18,11 +18,11 @@ const [range, setRange] = useState<DateRange | null>(null);
 | `locale` | `string` | no | — | Override locale (otherwise reads `useLocale()`). |
 | `min` | `Date` | no | — | Earliest selectable date (inclusive). Both halves and typed input are gated. |
 | `max` | `Date` | no | — | Latest selectable date (inclusive). |
-| `isDateDisabled` | `((date: Date) => boolean)` | no | — | Per-date disable predicate. |
+| `isDateDisabled` | `((date: Date) => boolean)` | no | — | Per-date disable predicate; gates both the popover grid and typed-input parsing. |
 | `size` | `DateRangePickerSize` | no | — | Field height + type scale. Same scale as `<DatePicker>`. Defaults to `'md'`. Affects only the trigger row; the two-month popover grid is fixed-size. - `'sm'` — 24px tall. - `'md'` — 32px tall (default). - `'lg'` — 40px tall. |
 | `clearable` | `boolean` | no | — | Show the ✕ clear button when a range is set. Defaults to `true`. |
-| `invalid` | `boolean` | no | — | Toggle red border + focus ring + `aria-invalid="true"`. |
-| `nameStart` | `string` | no | — | Form name for the START half (hidden `<input>`). |
+| `invalid` | `boolean` | no | — | Toggle red border + focus ring + `aria-invalid="true"`. Pair with a visible error and `aria-describedby`. |
+| `nameStart` | `string` | no | — | Form name for the START half (hidden `<input>` with an ISO date, so native `<form>` submission works). Post both keys or just one. |
 | `nameEnd` | `string` | no | — | Form name for the END half. |
 | `granularity` | `DateTimeGranularity` | no | — | Picker precision. - `'day'` (default) — date only; behavior unchanged from prior releases. - `'minute'` — adds two manual-entry time inputs (start + end) below the two-month grid. The trigger text shows `HH:mm` after each date. Hidden form mirrors (when `nameStart` / `nameEnd` are set) emit ISO local datetime (`2026-05-28T14:30`). At `'minute'` the start/end time inputs are shown and editable in the popover even before a range is picked (defaulting to `00:00` / `23:59`). Times entered in the empty state are applied when the range is committed (instead of the bare defaults), and existing times are preserved across date re-picks. Same-day ranges with end-time < start-time are silently clamped so end-time ≥ start-time. |
 | `timeStep` | `number` | no | — | Minutes step for the start + end `<TimeField>` popovers and for rounding typed time input on commit. Defaults to `15`. Set `1` to disable rounding. Only meaningful when `granularity='minute'`. |
@@ -35,10 +35,6 @@ const [range, setRange] = useState<DateRange | null>(null);
 - Looks like an `<Input>`. Click the input or press ArrowDown to open; the popover shows two months side-by-side. The 📅 button toggles, the ✕ button clears the whole range.
 - Selection flow: first click sets the start; hover (or keyboard-focus) another cell to preview the range; second click commits and closes. If the second pick is earlier than the start, the range is auto-swapped to `[earlier, later]`. A third click in a reopened popover restarts selection.
 - Typed input parses on blur / Enter using the active locale. Accepts `—` (em dash), `–` (en dash), `-` (hyphen with spaces), or `to` (case-insensitive word) as the separator. ISO `YYYY-MM-DD` works for each half too. Out-of-order typed input is auto-swapped. Anything unparseable / out-of-range / disabled reverts to the last committed value.
-- `min` / `max` (inclusive) + `isDateDisabled(date) => boolean` gate both the popover grid AND typed-input parsing.
-- `clearable` (default `true`) shows the ✕ when a range is set. `nameStart` / `nameEnd` render two hidden mirror `<input>`s with ISO dates so native `<form>` submission works (post both keys, or just one — caller's choice).
-- `invalid` toggles the red border + `aria-invalid="true"`. Pair with a visible error and `aria-describedby`.
-- Sizes: `sm` / `md` (default) / `lg`. Same scale as `<DatePicker>`; affects the trigger row only — the two-month popover grid stays fixed.
 - ARIA: typed input has `aria-haspopup="dialog"` + `aria-expanded`. Popover wrapper is `role="dialog"` (labelled by `aria-label={t('datePicker.openCalendar')}`); each grid inside is `role="grid"` with `gridcell` buttons. The range-start and range-end cells (and the live hover end during selection) carry `aria-selected="true"`.
 - Keyboard inside a grid: ←→↑↓ move focus by 1 day, Home/End to start/end of week, PageUp/PageDown step a month, Enter/Space drives the same first-click → second-click flow, Escape closes and returns focus to the input. With selection-start set, the focused cell acts as the hover end so the preview range follows arrow keys.
 - Reuses `<DatePickerGrid>` via `selectionMode='range'` + `rangeStart`/`rangeEnd`/`hoverDate`/`onHoverDate` + `chevrons={false}`. The two grids share the same cursor; the picker renders its own prev/next chevrons outside them.

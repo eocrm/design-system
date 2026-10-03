@@ -84,7 +84,8 @@ export interface DataTableProps<T> {
   /**
    * Minimum milliseconds skeleton rows remain visible after appearing.
    * Defaults to `0`. Arriving rows and the empty state remain hidden until the
-   * visual tail finishes.
+   * visual tail finishes. `aria-busy` still follows actual `loading`, not the
+   * skeleton's visual tail.
    */
   skeletonMinDuration?: number;
   /** Element shown when `data` is empty and not loading. Defaults to a stock <EmptyState>. */
