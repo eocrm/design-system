@@ -161,7 +161,7 @@ and `contextBanner` under the TopBar.
 - The title and children render; `icon={null}` hides the icon; a custom icon renders.
 - `action` renders; `onDismiss` renders a button labelled "Dismiss" and calls the handler; no button without it.
 - `{...props}` cannot override `role`; the ref is forwarded.
-- axe passes for each tone.
+- (No axe infra in the repo; a11y is covered by the role/prefix tests.)
 
 `AppLayout.test.tsx`:
 
