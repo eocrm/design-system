@@ -28,42 +28,47 @@ import { Bell, Plus } from 'lucide-react';
 
 ### `TopBarProps`
 
-| Prop         | Type            | Required | Default | Description                                                                                                                                                                                                                                                      |
-| ------------ | --------------- | -------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `as`         | `TopBarElement` | no       | —       | Element to render. Defaults to `'header'`. Pick `'div'` when the bar is nested inside another content area where a second `<header>` landmark would conflict with page semantics.                                                                                |
-| `aria-label` | `string`        | no       | —       | Accessible label for the bar's landmark. Defaults to `t('topBar.label')` when omitted OR empty — an empty string is not an explicit name — so screen readers always announce a name for the region. Override when a page has multiple bars to disambiguate them. |
-| `children`   | `ReactNode`     | no       | —       | Children of the bar — typically `<TopBar.Start>` + `<TopBar.End>`. The children area is open so consumers can render a single cluster, a single trailing element, or any other arrangement they need.                                                            |
-| …native      |                 |          |         | plus native HTML attributes                                                                                                                                                                                                                                      |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `as` | `TopBarElement` | no | — | Element to render. Defaults to `'header'`. Pick `'div'` when the bar is nested inside another content area where a second `<header>` landmark would conflict with page semantics. |
+| `aria-label` | `string` | no | — | Accessible label for the bar's landmark. Defaults to `t('topBar.label')` when omitted OR empty — an empty string is not an explicit name — so screen readers always announce a name for the region. Override when a page has multiple bars to disambiguate them. |
+| `children` | `ReactNode` | no | — | Children of the bar — typically `<TopBar.Start>` + `<TopBar.End>`. The children area is open so consumers can render a single cluster, a single trailing element, or any other arrangement they need. |
+| …native | | | | plus native HTML attributes |
 
 ### `TopBarEndProps`
 
-| Prop    | Type | Required | Default | Description                    |
-| ------- | ---- | -------- | ------- | ------------------------------ |
-| …native |      |          |         | plus native `<div>` attributes |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| …native | | | | plus native `<div>` attributes |
 
 ### `TopBarIconButtonProps`
 
-| Prop            | Type                  | Required | Default | Description                                                                                                                                                                                                                                                                                               |
-| --------------- | --------------------- | -------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `children`      | `ReactNode`           | yes      | —       | Icon to render inside the button. Typically a single lucide icon (e.g. `<Bell size={16} />`). The wrapping button supplies the accessible name via `aria-label` — the icon itself is decorative.                                                                                                          |
-| `indicator`     | `boolean`             | no       | —       | Show a small dot in the upper-right corner of the button. Useful for "unread notifications", "pending updates", etc. The dot is purely visual (`aria-hidden`); the consumer is responsible for surfacing count / status text to assistive tech, typically via the button's `aria-label` or a hidden span. |
-| `indicatorTone` | `TopBarIndicatorTone` | no       | —       | Dot color. Defaults to `'danger'` (red). See `TopBarIndicatorTone` for the full option set.                                                                                                                                                                                                               |
-| `aria-label`    | `string`              | yes      | —       | **Required.** Accessible name for the icon-only button — without it, screen readers announce nothing. Phrase as an action (`'Notifications'`, `'Create new'`). Include count info here when the indicator is on (e.g. `'Notifications, 3 unread'`).                                                       |
-| …native         |                       |          |         | plus native `<button>` attributes                                                                                                                                                                                                                                                                         |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `children` | `ReactNode` | yes | — | Icon to render inside the button. Typically a single lucide icon (e.g. `<Bell size={16} />`). The wrapping button supplies the accessible name via `aria-label` — the icon itself is decorative. |
+| `indicator` | `boolean` | no | — | Show a small dot in the upper-right corner of the button. Useful for "unread notifications", "pending updates", etc. The dot is purely visual (`aria-hidden`); the consumer is responsible for surfacing count / status text to assistive tech, typically via the button's `aria-label` or a hidden span. |
+| `indicatorTone` | `TopBarIndicatorTone` | no | — | Dot color. Defaults to `'danger'` (red). See `TopBarIndicatorTone` for the full option set. |
+| `aria-label` | `string` | yes | — | **Required.** Accessible name for the icon-only button — without it, screen readers announce nothing. Phrase as an action (`'Notifications'`, `'Create new'`). Include count info here when the indicator is on (e.g. `'Notifications, 3 unread'`). |
+| …native | | | | plus native `<button>` attributes |
 
 ### `TopBarSearchProps`
 
-| Prop        | Type                 | Required | Default | Description                                                                                                                                                                                                                                                                                                                                                                                                                                    |
-| ----------- | -------------------- | -------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `hotkey`    | `string \| string[]` | no       | —       | Optional hotkey hint shown after the input. Rendered internally via `<Kbd size="sm">`. Pass an **array** of key labels for a multi-key combo (`['⌘', 'K']` → two chips joined with `+`) or a single string for a one-chip hint (`'Esc'` → one chip). Note: `'⌘K'` is treated as a single chip — use the array form for multi-key combos. The hint is **visual only**; the library does not bind any keyboard shortcut to it. Omit for no hint. |
-| `className` | `string`             | no       | —       | `className` for the wrapping `<div>` (the search surface itself). The input's own className lives on the underlying `<input>` via the spread input-props (use the standard `inputClassName` pattern if you need to target the inner element specifically — not exposed in v1).                                                                                                                                                                 |
-| …native     |                      |          |         | plus native `<input>` attributes                                                                                                                                                                                                                                                                                                                                                                                                               |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `hotkey` | `string \| string[]` | no | — | Optional hotkey hint shown after the input. Rendered internally via `<Kbd size="sm">`. Pass an **array** of key labels for a multi-key combo (`['⌘', 'K']` → two chips joined with `+`) or a single string for a one-chip hint (`'Esc'` → one chip). Note: `'⌘K'` is treated as a single chip — use the array form for multi-key combos. The hint is **visual only**; the library does not bind any keyboard shortcut to it. Omit for no hint. |
+| `className` | `string` | no | — | `className` for the wrapping `<div>` (the search surface itself). The input's own className lives on the underlying `<input>` via the spread input-props (use the standard `inputClassName` pattern if you need to target the inner element specifically — not exposed in v1). |
+| …native | | | | plus native `<input>` attributes |
 
 ### `TopBarStartProps`
 
-| Prop    | Type | Required | Default | Description                    |
-| ------- | ---- | -------- | ------- | ------------------------------ |
-| …native |      |          |         | plus native `<div>` attributes |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| …native | | | | plus native `<div>` attributes |
 
 <!-- props:end -->
 

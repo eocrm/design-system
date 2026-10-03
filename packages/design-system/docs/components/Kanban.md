@@ -46,26 +46,29 @@ function handleMove(event: KanbanMoveEvent) {
 
 ### `KanbanProps`
 
-| Prop     | Type                                 | Required | Default | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| -------- | ------------------------------------ | -------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `onMove` | `((event: KanbanMoveEvent) => void)` | no       | —       | Fires once per drag (on drop) with the from/to positions and the cardId. NOT fired on drag cancel. NOT fired when from === to (no-op drop). Consumer should update their items state immutably, e.g.: `ts const [cols, setCols] = useState({ todo: ['a', 'b'], done: ['c'] }); const handleMove = ({ from, to, cardId }) => { setCols((prev) => { const next = { ...prev }; next[from.columnId] = [...prev[from.columnId]]; next[from.columnId].splice(from.index, 1); next[to.columnId] = [...prev[to.columnId]]; next[to.columnId].splice(to.index, 0, cardId); return next; }); }; ` |
-| …native  |                                      |          |         | plus native `<div>` attributes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `onMove` | `((event: KanbanMoveEvent) => void)` | no | — | Fires once per drag (on drop) with the from/to positions and the cardId. NOT fired on drag cancel. NOT fired when from === to (no-op drop). Consumer should update their items state immutably, e.g.: ```ts const [cols, setCols] = useState({ todo: ['a', 'b'], done: ['c'] }); const handleMove = ({ from, to, cardId }) => { setCols((prev) => { const next = { ...prev }; next[from.columnId] = [...prev[from.columnId]]; next[from.columnId].splice(from.index, 1); next[to.columnId] = [...prev[to.columnId]]; next[to.columnId].splice(to.index, 0, cardId); return next; }); }; ``` |
+| …native | | | | plus native `<div>` attributes |
 
 ### `KanbanCardProps`
 
-| Prop       | Type               | Required | Default | Description                                                                                                                          |
-| ---------- | ------------------ | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `id`       | `string \| number` | yes      | —       | Stable identifier for this card. Must be unique across ALL columns in the `<Kanban>`. Used by dnd-kit to track the card during drag. |
-| `children` | `ReactNode`        | yes      | —       |                                                                                                                                      |
-| …native    |                    |          |         | plus native `<div>` attributes                                                                                                       |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `id` | `string \| number` | yes | — | Stable identifier for this card. Must be unique across ALL columns in the `<Kanban>`. Used by dnd-kit to track the card during drag. |
+| `children` | `ReactNode` | yes | — |  |
+| …native | | | | plus native `<div>` attributes |
 
 ### `KanbanColumnProps`
 
-| Prop       | Type               | Required | Default | Description                                                                                                                         |
-| ---------- | ------------------ | -------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `id`       | `string \| number` | yes      | —       | Stable identifier for this column. Must be unique within a `<Kanban>`. Used internally to track which cards belong to which column. |
-| `children` | `ReactNode`        | no       | —       |                                                                                                                                     |
-| …native    |                    |          |         | plus native `<div>` attributes                                                                                                      |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `id` | `string \| number` | yes | — | Stable identifier for this column. Must be unique within a `<Kanban>`. Used internally to track which cards belong to which column. |
+| `children` | `ReactNode` | no | — |  |
+| …native | | | | plus native `<div>` attributes |
 
 <!-- props:end -->
 

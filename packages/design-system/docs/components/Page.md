@@ -20,11 +20,12 @@
 
 ## Props
 
-| Prop       | Type        | Required | Default | Description                                                                                                                                                                                                                                                                       |
-| ---------- | ----------- | -------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `gap`      | `StackGap`  | no       | —       | Vertical rhythm between top-level page sections. - `xs` (4) / `sm` (8) / `md` (12) — tighter than canonical; rare. - `lg` (16, **default**) — the canonical CRM page rhythm; matches every shipped mockup. - `xl` (24) / `2xl` (32) — looser; for spacious overview / hero pages. |
-| `children` | `ReactNode` | yes      | —       |                                                                                                                                                                                                                                                                                   |
-| …native    |             |          |         | plus native `<div>` attributes                                                                                                                                                                                                                                                    |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `gap` | `StackGap` | no | — | Vertical rhythm between top-level page sections. - `xs` (4) / `sm` (8) / `md` (12) — tighter than canonical; rare. - `lg` (16, **default**) — the canonical CRM page rhythm; matches every shipped mockup. - `xl` (24) / `2xl` (32) — looser; for spacious overview / hero pages. |
+| `children` | `ReactNode` | yes | — |  |
+| …native | | | | plus native `<div>` attributes |
 
 <!-- props:end -->
 

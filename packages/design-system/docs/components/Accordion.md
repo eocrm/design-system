@@ -36,46 +36,50 @@ import { Accordion } from '@eocrm/design-system';
 
 ### `AccordionProps`
 
-| Prop                | Type                                                     | Required | Default | Description                                                                                                                                                                  |
-| ------------------- | -------------------------------------------------------- | -------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `variant`           | `AccordionVariant`                                       | no       | —       | Visual variant. Defaults to `'bordered'`.                                                                                                                                    |
-| `size`              | `AccordionSize`                                          | no       | —       | Trigger size (font + padding). Defaults to `'md'`.                                                                                                                           |
-| `gap`               | `AccordionGap`                                           | no       | —       | Gap between items → separated "card" look (each item gets its own border + radius; the outer container chrome is dropped). Omit for the joined default.                      |
-| `indicatorSide`     | `AccordionIndicatorSide`                                 | no       | —       | Which side the chevron indicator sits on. Defaults to `'right'`.                                                                                                             |
-| `actionsWhenClosed` | `AccordionActionsWhenClosed`                             | no       | —       | Whether `Accordion.Trigger` `actions` stay visible when the item is collapsed. Defaults to `'show'`; `'hide'` fades them out (and drops them from focus order) while closed. |
-| `children`          | `ReactNode`                                              | yes      | —       |                                                                                                                                                                              |
-| `type`              | `"single" \| "multiple"`                                 | yes      | —       |                                                                                                                                                                              |
-| `value`             | `string \| string[]`                                     | no       | —       | Controlled open item value. `''` = nothing open (only meaningful when `collapsible`).                                                                                        |
-| `defaultValue`      | `string \| string[]`                                     | no       | —       | Initial open item for uncontrolled use.                                                                                                                                      |
-| `onValueChange`     | `((next: string) => void) \| ((next: string[]) => void)` | no       | —       | Fires when the open item changes.                                                                                                                                            |
-| `collapsible`       | `boolean`                                                | no       | —       | When true, clicking the currently-open item closes it. Default: `false` (matches Radix; prevents accidentally closing the only available content).                           |
-| …native             |                                                          |          |         | plus native HTML attributes                                                                                                                                                  |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `variant` | `AccordionVariant` | no | — | Visual variant. Defaults to `'bordered'`. |
+| `size` | `AccordionSize` | no | — | Trigger size (font + padding). Defaults to `'md'`. |
+| `gap` | `AccordionGap` | no | — | Gap between items → separated "card" look (each item gets its own border + radius; the outer container chrome is dropped). Omit for the joined default. |
+| `indicatorSide` | `AccordionIndicatorSide` | no | — | Which side the chevron indicator sits on. Defaults to `'right'`. |
+| `actionsWhenClosed` | `AccordionActionsWhenClosed` | no | — | Whether `Accordion.Trigger` `actions` stay visible when the item is collapsed. Defaults to `'show'`; `'hide'` fades them out (and drops them from focus order) while closed. |
+| `children` | `ReactNode` | yes | — |  |
+| `type` | `"single" \| "multiple"` | yes | — |  |
+| `value` | `string \| string[]` | no | — | Controlled open item value. `''` = nothing open (only meaningful when `collapsible`). |
+| `defaultValue` | `string \| string[]` | no | — | Initial open item for uncontrolled use. |
+| `onValueChange` | `((next: string) => void) \| ((next: string[]) => void)` | no | — | Fires when the open item changes. |
+| `collapsible` | `boolean` | no | — | When true, clicking the currently-open item closes it. Default: `false` (matches Radix; prevents accidentally closing the only available content). |
+| …native | | | | plus native HTML attributes |
 
 ### `AccordionContentProps`
 
-| Prop       | Type        | Required | Default | Description                    |
-| ---------- | ----------- | -------- | ------- | ------------------------------ |
-| `children` | `ReactNode` | yes      | —       |                                |
-| …native    |             |          |         | plus native `<div>` attributes |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `children` | `ReactNode` | yes | — |  |
+| …native | | | | plus native `<div>` attributes |
 
 ### `AccordionItemProps`
 
-| Prop          | Type                   | Required | Default | Description                                                                                                              |
-| ------------- | ---------------------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `value`       | `string`               | yes      | —       | Unique value used to identify the item in the root's `value`/`onValueChange`.                                            |
-| `disabled`    | `boolean`              | no       | —       | When true, the trigger is non-interactive and keyboard nav skips this item.                                              |
-| `headerLevel` | `AccordionHeaderLevel` | no       | —       | Heading level wrapping the trigger. WAI-ARIA APG requires triggers to live inside a heading element. Defaults to `'h3'`. |
-| `children`    | `ReactNode`            | yes      | —       |                                                                                                                          |
-| …native       |                        |          |         | plus native `<div>` attributes                                                                                           |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `value` | `string` | yes | — | Unique value used to identify the item in the root's `value`/`onValueChange`. |
+| `disabled` | `boolean` | no | — | When true, the trigger is non-interactive and keyboard nav skips this item. |
+| `headerLevel` | `AccordionHeaderLevel` | no | — | Heading level wrapping the trigger. WAI-ARIA APG requires triggers to live inside a heading element. Defaults to `'h3'`. |
+| `children` | `ReactNode` | yes | — |  |
+| …native | | | | plus native `<div>` attributes |
 
 ### `AccordionTriggerProps`
 
-| Prop       | Type        | Required | Default | Description                                                                                                                                                                                                                                                                                               |
-| ---------- | ----------- | -------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `icon`     | `ReactNode` | no       | —       | Override the default trigger indicator icon (rotates 180° when open). Pass `null` to suppress the icon entirely. Default: `<ChevronDown />`.                                                                                                                                                              |
-| `actions`  | `ReactNode` | no       | —       | Controls rendered at the **right of the header**, OUTSIDE the toggle button — so their buttons/menus are clickable without toggling the section, and the heading's accessible name stays just the title. Keep it to a few small controls (`<Button iconOnly>`, a `<DropdownMenu>` trigger, a `<Switch>`). |
-| `children` | `ReactNode` | yes      | —       |                                                                                                                                                                                                                                                                                                           |
-| …native    |             |          |         | plus native `<button>` attributes                                                                                                                                                                                                                                                                         |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `icon` | `ReactNode` | no | — | Override the default trigger indicator icon (rotates 180° when open). Pass `null` to suppress the icon entirely. Default: `<ChevronDown />`. |
+| `actions` | `ReactNode` | no | — | Controls rendered at the **right of the header**, OUTSIDE the toggle button — so their buttons/menus are clickable without toggling the section, and the heading's accessible name stays just the title. Keep it to a few small controls (`<Button iconOnly>`, a `<DropdownMenu>` trigger, a `<Switch>`). |
+| `children` | `ReactNode` | yes | — |  |
+| …native | | | | plus native `<button>` attributes |
 
 <!-- props:end -->
 

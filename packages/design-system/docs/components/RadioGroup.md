@@ -12,20 +12,21 @@
 
 ## Props
 
-| Prop           | Type                                                                       | Required | Default | Description                                                                                                                          |
-| -------------- | -------------------------------------------------------------------------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------ |
-| `name`         | `string`                                                                   | yes      | —       | Form `name` shared by all radio children. Required.                                                                                  |
-| `value`        | `string`                                                                   | no       | —       | Controlled selected value. Pair with `onChange`.                                                                                     |
-| `defaultValue` | `string`                                                                   | no       | —       | Initial selected value for uncontrolled use.                                                                                         |
-| `onChange`     | `((value: string, event: ChangeEvent<HTMLInputElement, Element>) => void)` | no       | —       | Fires when the user selects a different radio. Receives the new value AND the native event so consumers can read modifier keys, etc. |
-| `label`        | `ReactNode`                                                                | no       | —       | Optional group label, rendered as `<legend>`.                                                                                        |
-| `size`         | `RadioSize`                                                                | no       | —       | Default size for child radios. Per-child explicit `size` wins. Defaults to `'md'`.                                                   |
-| `orientation`  | `RadioGroupOrientation`                                                    | no       | —       | Layout direction. `'vertical'` (default) / `'horizontal'`.                                                                           |
-| `disabled`     | `boolean`                                                                  | no       | —       | Disable every child. Per-child explicit `disabled` wins.                                                                             |
-| `invalid`      | `boolean`                                                                  | no       | —       | Apply the invalid visual to every child + set `aria-invalid` on the fieldset.                                                        |
-| `required`     | `boolean`                                                                  | no       | —       | Mark every child as required (HTML form validation).                                                                                 |
-| `children`     | `ReactNode`                                                                | yes      | —       |                                                                                                                                      |
-| …native        |                                                                            |          |         | plus native `<FieldSet>` attributes                                                                                                  |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `name` | `string` | yes | — | Form `name` shared by all radio children. Required. |
+| `value` | `string` | no | — | Controlled selected value. Pair with `onChange`. |
+| `defaultValue` | `string` | no | — | Initial selected value for uncontrolled use. |
+| `onChange` | `((value: string, event: ChangeEvent<HTMLInputElement, Element>) => void)` | no | — | Fires when the user selects a different radio. Receives the new value AND the native event so consumers can read modifier keys, etc. |
+| `label` | `ReactNode` | no | — | Optional group label, rendered as `<legend>`. |
+| `size` | `RadioSize` | no | — | Default size for child radios. Per-child explicit `size` wins. Defaults to `'md'`. |
+| `orientation` | `RadioGroupOrientation` | no | — | Layout direction. `'vertical'` (default) / `'horizontal'`. |
+| `disabled` | `boolean` | no | — | Disable every child. Per-child explicit `disabled` wins. |
+| `invalid` | `boolean` | no | — | Apply the invalid visual to every child + set `aria-invalid` on the fieldset. |
+| `required` | `boolean` | no | — | Mark every child as required (HTML form validation). |
+| `children` | `ReactNode` | yes | — |  |
+| …native | | | | plus native `<FieldSet>` attributes |
 
 <!-- props:end -->
 

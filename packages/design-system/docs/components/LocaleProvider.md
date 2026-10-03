@@ -12,10 +12,11 @@ const locale = useLocale(); // 'ru-RU', or navigator.language fallback
 
 ## Props
 
-| Prop       | Type        | Required | Default | Description                                           |
-| ---------- | ----------- | -------- | ------- | ----------------------------------------------------- |
-| `locale`   | `string`    | yes      | —       | BCP-47 locale string, e.g. 'en-US', 'ru-RU', 'de-DE'. |
-| `children` | `ReactNode` | yes      | —       |                                                       |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `locale` | `string` | yes | — | BCP-47 locale string, e.g. 'en-US', 'ru-RU', 'de-DE'. |
+| `children` | `ReactNode` | yes | — |  |
 
 <!-- props:end -->
 

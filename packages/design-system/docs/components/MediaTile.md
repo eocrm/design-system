@@ -26,15 +26,16 @@
 
 ## Props
 
-| Prop       | Type              | Required | Default | Description                                                                                                                                                                                                                          |
-| ---------- | ----------------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `media`    | `ReactNode`       | yes      | —       | Tile body — full-bleed media (an `<Image>`, or a centered file-type icon).                                                                                                                                                           |
-| `title`    | `ReactNode`       | no       | —       | Top-bar leading content (e.g. the file name). Truncates with an ellipsis.                                                                                                                                                            |
-| `meta`     | `ReactNode`       | no       | —       | Top-bar trailing content (e.g. the file size). Sits at the end of the row.                                                                                                                                                           |
-| `actions`  | `ReactNode`       | no       | —       | Bottom-bar controls (e.g. preview / download / delete icon buttons), centered.                                                                                                                                                       |
-| `revealOn` | `MediaTileReveal` | no       | —       | When the bars + scrims reveal. Default `'hover'`. - `'hover'` — on pointer hover OR keyboard focus-within (focus always included for a11y). - `'focus'` — only on focus-within (no mouse-over reveal). - `'visible'` — always shown. |
-| `radius`   | `MediaTileRadius` | no       | —       | Corner rounding (clips the media). Default `'md'`.                                                                                                                                                                                   |
-| …native    |                   |          |         | plus native `<div>` attributes                                                                                                                                                                                                       |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `media` | `ReactNode` | yes | — | Tile body — full-bleed media (an `<Image>`, or a centered file-type icon). |
+| `title` | `ReactNode` | no | — | Top-bar leading content (e.g. the file name). Truncates with an ellipsis. |
+| `meta` | `ReactNode` | no | — | Top-bar trailing content (e.g. the file size). Sits at the end of the row. |
+| `actions` | `ReactNode` | no | — | Bottom-bar controls (e.g. preview / download / delete icon buttons), centered. |
+| `revealOn` | `MediaTileReveal` | no | — | When the bars + scrims reveal. Default `'hover'`. - `'hover'` — on pointer hover OR keyboard focus-within (focus always included for a11y). - `'focus'` — only on focus-within (no mouse-over reveal). - `'visible'` — always shown. |
+| `radius` | `MediaTileRadius` | no | — | Corner rounding (clips the media). Default `'md'`. |
+| …native | | | | plus native `<div>` attributes |
 
 <!-- props:end -->
 

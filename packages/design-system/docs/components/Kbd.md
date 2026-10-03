@@ -12,12 +12,13 @@ Inline keyboard-shortcut display: one `<kbd>` chip per key, joined with a faint 
 
 ## Props
 
-| Prop         | Type       | Required | Default | Description                                                                                                                                                                                                                                                                                                                                       |
-| ------------ | ---------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `keys`       | `string[]` | yes      | —       | Keys to display. Each entry renders one `<kbd>` chip. Multiple entries are joined with an inline `+` separator; a single-entry array renders no separator. Pass the literal label you want shown (`'⌘'`, `'Ctrl'`, `'Shift'`, `'K'`) — the component does NOT platform-translate.                                                                 |
-| `size`       | `KbdSize`  | no       | 'sm'    | Visual size. `'sm'` is the inline-chrome size (18px tall — matches `TopBar.Search`'s hotkey hint). `'md'` is the standalone shortcut size (24px tall — for command-palette / shortcut-sheet UI).                                                                                                                                                  |
-| `aria-label` | `string`   | no       | —       | Accessible label for the whole shortcut, read as a single phrase by screen readers. Defaults to `keys.join(' + ')` (e.g. `'⌘ + K'`) when omitted OR empty — an empty string is not an explicit name, so it takes the default too. Override when the raw keys are unintuitive — e.g. `keys={['⌘', 'K']}` with `aria-label="Open command palette"`. |
-| …native      |            |          |         | plus native `<span>` attributes                                                                                                                                                                                                                                                                                                                   |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `keys` | `string[]` | yes | — | Keys to display. Each entry renders one `<kbd>` chip. Multiple entries are joined with an inline `+` separator; a single-entry array renders no separator. Pass the literal label you want shown (`'⌘'`, `'Ctrl'`, `'Shift'`, `'K'`) — the component does NOT platform-translate. |
+| `size` | `KbdSize` | no | 'sm' | Visual size. `'sm'` is the inline-chrome size (18px tall — matches `TopBar.Search`'s hotkey hint). `'md'` is the standalone shortcut size (24px tall — for command-palette / shortcut-sheet UI). |
+| `aria-label` | `string` | no | — | Accessible label for the whole shortcut, read as a single phrase by screen readers. Defaults to `keys.join(' + ')` (e.g. `'⌘ + K'`) when omitted OR empty — an empty string is not an explicit name, so it takes the default too. Override when the raw keys are unintuitive — e.g. `keys={['⌘', 'K']}` with `aria-label="Open command palette"`. |
+| …native | | | | plus native `<span>` attributes |
 
 <!-- props:end -->
 

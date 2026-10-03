@@ -17,12 +17,14 @@
 
 ## Props
 
-| Prop       | Type          | Required | Default | Description                                                 |
-| ---------- | ------------- | -------- | ------- | ----------------------------------------------------------- |
-| `padding`  | `CardPadding` | no       | —       | Inner padding — same scale as `Card`. Defaults to `'md'`.   |
-| `tone`     | `CardTone`    | no       | —       | Optional left-edge tone stripe — same vocabulary as `Card`. |
-| `children` | `ReactNode`   | no       | —       |                                                             |
-| `as`       | `C`           | no       | —       |                                                             |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `padding` | `CardPadding` | no | — | Inner padding — same scale as `Card`. Defaults to `'md'`. |
+| `tone` | `CardTone` | no | — | Optional left-edge tone stripe — same vocabulary as `Card`. |
+| `children` | `ReactNode` | no | — |  |
+| `as` | `ElementType` | no | — |  |
+| …native | | | | plus native attributes of the `as` element (default `<a>`) |
 
 <!-- props:end -->
 

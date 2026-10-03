@@ -32,50 +32,56 @@
 
 ### `PopoverProps`
 
-| Prop           | Type                        | Required | Default | Description                                                                                                                                                                                                                                                                   |
-| -------------- | --------------------------- | -------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `children`     | `ReactNode`                 | yes      | —       | Must contain exactly one `<Popover.Trigger>` (or `<Popover.Anchor>` for a controlled popover whose anchor owns its own toggle + ARIA) and one `<Popover.Content>`. `<Popover.Heading>` and `<Popover.Close>` are optional and may appear anywhere inside `<Popover.Content>`. |
-| `open`         | `boolean`                   | no       | —       | Controlled open state. Provide alongside `onOpenChange` to drive open externally. Omit both to let Popover own its state (the common case).                                                                                                                                   |
-| `onOpenChange` | `((open: boolean) => void)` | no       | —       | Fired whenever Popover wants to change open state. Required when `open` is provided.                                                                                                                                                                                          |
-| `defaultOpen`  | `boolean`                   | no       | —       | Default open state for uncontrolled usage. Defaults to `false`.                                                                                                                                                                                                               |
-| `modal`        | `boolean`                   | no       | —       | Reserved future hint. v1 ignores the value and always renders non-modal. Will gate focus-trap + inert-background once `<Modal>` lands.                                                                                                                                        |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `children` | `ReactNode` | yes | — | Must contain exactly one `<Popover.Trigger>` (or `<Popover.Anchor>` for a controlled popover whose anchor owns its own toggle + ARIA) and one `<Popover.Content>`. `<Popover.Heading>` and `<Popover.Close>` are optional and may appear anywhere inside `<Popover.Content>`. |
+| `open` | `boolean` | no | — | Controlled open state. Provide alongside `onOpenChange` to drive open externally. Omit both to let Popover own its state (the common case). |
+| `onOpenChange` | `((open: boolean) => void)` | no | — | Fired whenever Popover wants to change open state. Required when `open` is provided. |
+| `defaultOpen` | `boolean` | no | — | Default open state for uncontrolled usage. Defaults to `false`. |
+| `modal` | `boolean` | no | — | Reserved future hint. v1 ignores the value and always renders non-modal. Will gate focus-trap + inert-background once `<Modal>` lands. |
 
 ### `PopoverAnchorProps`
 
-| Prop       | Type                                                          | Required | Default | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| ---------- | ------------------------------------------------------------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `children` | `ReactElement<unknown, string \| JSXElementConstructor<any>>` | yes      | —       | Exactly one React element that accepts a ref. Unlike `Popover.Trigger`, Anchor injects ONLY the floating-positioning ref — no `onClick`, no keyboard handler, and no `aria-haspopup` / `aria-expanded` / `aria-controls`. Use it when the anchor element already owns its open-toggle and ARIA (e.g. an interactive `FilterChip` whose body `<button>` self-manages `aria-haspopup`/`aria-expanded`), and you drive the popover's open state yourself (controlled `open` + `onOpenChange`). The child must accept a ref (`forwardRef`); raw DOM elements and this library's components qualify, and it should be focusable (a `<button>` or `tabIndex` host) so Escape can return focus to it on close. |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `children` | `ReactElement<unknown, string \| JSXElementConstructor<any>>` | yes | — | Exactly one React element that accepts a ref. Unlike `Popover.Trigger`, Anchor injects ONLY the floating-positioning ref — no `onClick`, no keyboard handler, and no `aria-haspopup` / `aria-expanded` / `aria-controls`. Use it when the anchor element already owns its open-toggle and ARIA (e.g. an interactive `FilterChip` whose body `<button>` self-manages `aria-haspopup`/`aria-expanded`), and you drive the popover's open state yourself (controlled `open` + `onOpenChange`). The child must accept a ref (`forwardRef`); raw DOM elements and this library's components qualify, and it should be focusable (a `<button>` or `tabIndex` host) so Escape can return focus to it on close. |
 
 ### `PopoverCloseProps`
 
-| Prop       | Type                                                          | Required | Default | Description                                                                                                                                                                 |
-| ---------- | ------------------------------------------------------------- | -------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `children` | `ReactElement<unknown, string \| JSXElementConstructor<any>>` | yes      | —       | Exactly one React element. The Close clones this element to inject an `onClick` that closes the popover, chained with the child's existing `onClick` (consumer runs first). |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `children` | `ReactElement<unknown, string \| JSXElementConstructor<any>>` | yes | — | Exactly one React element. The Close clones this element to inject an `onClick` that closes the popover, chained with the child's existing `onClick` (consumer runs first). |
 
 ### `PopoverContentProps`
 
-| Prop         | Type               | Required | Default | Description                                                                                                                                                                                                                                                                  |
-| ------------ | ------------------ | -------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `side`       | `PopoverSide`      | no       | —       | Preferred side. Default `'bottom'`. Auto-flips on collision via Floating UI.                                                                                                                                                                                                 |
-| `align`      | `PopoverAlign`     | no       | —       | Edge alignment. Default `'center'`.                                                                                                                                                                                                                                          |
-| `sideOffset` | `number`           | no       | —       | Gap in px between trigger and panel. Default `10` (room for the arrow).                                                                                                                                                                                                      |
-| `minWidth`   | `string \| number` | no       | —       | Minimum width in px or any CSS length. Defaults to the token `--size-popover-min-width` (220px) applied via SCSS.                                                                                                                                                            |
-| `maxWidth`   | `string \| number` | no       | —       | Maximum width in px or any CSS length, overriding the default cap (`--popover-max-width`, 360px). Use for wide content — calendars, tables — that would otherwise overflow the panel. Accepts a number (px), `'fit-content'`, `'none'` to remove the cap, or any CSS length. |
-| …native      |                    |          |         | plus native `<div>` attributes                                                                                                                                                                                                                                               |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `side` | `PopoverSide` | no | — | Preferred side. Default `'bottom'`. Auto-flips on collision via Floating UI. |
+| `align` | `PopoverAlign` | no | — | Edge alignment. Default `'center'`. |
+| `sideOffset` | `number` | no | — | Gap in px between trigger and panel. Default `10` (room for the arrow). |
+| `minWidth` | `string \| number` | no | — | Minimum width in px or any CSS length. Defaults to the token `--size-popover-min-width` (220px) applied via SCSS. |
+| `maxWidth` | `string \| number` | no | — | Maximum width in px or any CSS length, overriding the default cap (`--popover-max-width`, 360px). Use for wide content — calendars, tables — that would otherwise overflow the panel. Accepts a number (px), `'fit-content'`, `'none'` to remove the cap, or any CSS length. |
+| …native | | | | plus native `<div>` attributes |
 
 ### `PopoverHeadingProps`
 
-| Prop    | Type                                   | Required | Default | Description                                                                                                                                                   |
-| ------- | -------------------------------------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `as`    | `"h2" \| "h3" \| "h4" \| "h5" \| "h6"` | no       | —       | Heading level. Defaults to `'h3'`. Pick the level that fits the surrounding document outline (Popover content is usually a level 3 inside a level 2 section). |
-| …native |                                        |          |         | plus native `<h1–h6>` attributes                                                                                                                              |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `as` | `"h2" \| "h3" \| "h4" \| "h5" \| "h6"` | no | — | Heading level. Defaults to `'h3'`. Pick the level that fits the surrounding document outline (Popover content is usually a level 3 inside a level 2 section). |
+| …native | | | | plus native `<h1–h6>` attributes |
 
 ### `PopoverTriggerProps`
 
-| Prop            | Type                                                                       | Required | Default  | Description                                                                                                                                                                                                                                                                                                                         |
-| --------------- | -------------------------------------------------------------------------- | -------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `children`      | `ReactElement<unknown, string \| JSXElementConstructor<any>>`              | yes      | —        | Exactly one React element that accepts a ref. The Trigger clones this element to inject `aria-haspopup`, `aria-expanded`, `aria-controls`, a click handler that toggles the popover, and a keydown handler that opens on Enter/Space. `<Button>` and raw `<button>` both qualify; a custom component without `forwardRef` does not. |
-| `aria-haspopup` | `"true" \| "false" \| "dialog" \| "grid" \| "listbox" \| "menu" \| "tree"` | no       | 'dialog' | Override the `aria-haspopup` value injected onto the trigger child. Defaults to `'dialog'` (matching the role of `Popover.Content`). Pass `'listbox'` for picker-style compound usages where the popover surfaces a listbox rather than a generic dialog.                                                                           |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `children` | `ReactElement<unknown, string \| JSXElementConstructor<any>>` | yes | — | Exactly one React element that accepts a ref. The Trigger clones this element to inject `aria-haspopup`, `aria-expanded`, `aria-controls`, a click handler that toggles the popover, and a keydown handler that opens on Enter/Space. `<Button>` and raw `<button>` both qualify; a custom component without `forwardRef` does not. |
+| `aria-haspopup` | `"true" \| "false" \| "dialog" \| "grid" \| "listbox" \| "menu" \| "tree"` | no | 'dialog' | Override the `aria-haspopup` value injected onto the trigger child. Defaults to `'dialog'` (matching the role of `Popover.Content`). Pass `'listbox'` for picker-style compound usages where the popover surfaces a listbox rather than a generic dialog. |
 
 <!-- props:end -->
 

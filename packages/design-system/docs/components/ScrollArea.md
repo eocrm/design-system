@@ -10,10 +10,11 @@
 
 ## Props
 
-| Prop        | Type                  | Required | Default | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
-| ----------- | --------------------- | -------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `maxHeight` | `ScrollAreaMaxHeight` | no       | —       | Caps the area's height; past it, the content scrolls vertically. - `'sm'` — 240px. A short list inside a form or a card. - `'md'` — 400px. A popover feed (notifications, activity). - `'lg'` — 560px. A tall panel body. - `number` — px, for a one-off (`maxHeight={320}`). Prefer the scale. - `string` — any CSS length (`'50vh'`). Omitted: no cap of its own. The area fills the height its parent gives it, which is right as the flexible child of a bounded flex column. |
-| …native     |                       |          |         | plus native `<div>` attributes                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `maxHeight` | `ScrollAreaMaxHeight` | no | — | Caps the area's height; past it, the content scrolls vertically. - `'sm'` — 240px. A short list inside a form or a card. - `'md'` — 400px. A popover feed (notifications, activity). - `'lg'` — 560px. A tall panel body. - `number` — px, for a one-off (`maxHeight={320}`). Prefer the scale. - `string` — any CSS length (`'50vh'`). Omitted: no cap of its own. The area fills the height its parent gives it, which is right as the flexible child of a bounded flex column. |
+| …native | | | | plus native `<div>` attributes |
 
 <!-- props:end -->
 

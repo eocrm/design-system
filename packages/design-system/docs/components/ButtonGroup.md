@@ -22,27 +22,29 @@
 
 ### `ButtonGroupProps`
 
-| Prop            | Type                     | Required | Default | Description                                                                                                                                                                                                           |
-| --------------- | ------------------------ | -------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `size`          | `ButtonSize`             | no       | —       | Size propagated to children. Per-child `size` (Button or Item) wins when explicitly set. In visual mode this happens via cloneElement on Button children. In segmented mode, `<ButtonGroup.Item>` reads from context. |
-| `disabled`      | `boolean`                | no       | —       | Disabled state for the whole group. In segmented mode this is authoritative (all items become aria-disabled, clicks no-op). In visual mode this is a no-op — pass `disabled` per `<Button>` instead.                  |
-| `invalid`       | `boolean`                | no       | false   | Segmented mode: `aria-invalid` on the radiogroup. Visual mode: consumed and ignored. Field / SettingRow inject it — it used to leak onto the group div as a stray attribute.                                          |
-| `required`      | `boolean`                | no       | false   | Segmented mode: `aria-required` on the radiogroup. Visual mode: consumed and ignored. Field / SettingRow inject it.                                                                                                   |
-| `className`     | `string`                 | no       | —       |                                                                                                                                                                                                                       |
-| `style`         | `CSSProperties`          | no       | —       |                                                                                                                                                                                                                       |
-| `value`         | `string`                 | no       | —       | Visual mode marker. Never set; absence flips to visual.                                                                                                                                                               |
-| `onValueChange` | `(next: string) => void` | no       | —       |                                                                                                                                                                                                                       |
-| `aria-label`    | `string`                 | no       | —       | Accessible name for the group landmark. Optional but recommended.                                                                                                                                                     |
-| …native         |                          |          |         | plus native HTML attributes                                                                                                                                                                                           |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `size` | `ButtonSize` | no | — | Size propagated to children. Per-child `size` (Button or Item) wins when explicitly set. In visual mode this happens via cloneElement on Button children. In segmented mode, `<ButtonGroup.Item>` reads from context. |
+| `disabled` | `boolean` | no | — | Disabled state for the whole group. In segmented mode this is authoritative (all items become aria-disabled, clicks no-op). In visual mode this is a no-op — pass `disabled` per `<Button>` instead. |
+| `invalid` | `boolean` | no | false | Segmented mode: `aria-invalid` on the radiogroup. Visual mode: consumed and ignored. Field / SettingRow inject it — it used to leak onto the group div as a stray attribute. |
+| `required` | `boolean` | no | false | Segmented mode: `aria-required` on the radiogroup. Visual mode: consumed and ignored. Field / SettingRow inject it. |
+| `className` | `string` | no | — |  |
+| `style` | `CSSProperties` | no | — |  |
+| `value` | `string` | no | — | Visual mode marker. Never set; absence flips to visual. |
+| `onValueChange` | `(next: string) => void` | no | — |  |
+| `aria-label` | `string` | no | — | Accessible name for the group landmark. Optional but recommended. |
+| …native | | | | plus native HTML attributes |
 
 ### `ButtonGroupItemProps`
 
-| Prop        | Type        | Required | Default | Description                                                  |
-| ----------- | ----------- | -------- | ------- | ------------------------------------------------------------ |
-| `value`     | `string`    | yes      | —       | Value emitted to `onValueChange` when this item is selected. |
-| `disabled`  | `boolean`   | no       | —       | Per-item disabled. Group-level disabled is OR-merged.        |
-| `className` | `string`    | no       | —       | className merges onto the rendered <button>.                 |
-| `children`  | `ReactNode` | yes      | —       |                                                              |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `value` | `string` | yes | — | Value emitted to `onValueChange` when this item is selected. |
+| `disabled` | `boolean` | no | — | Per-item disabled. Group-level disabled is OR-merged. |
+| `className` | `string` | no | — | className merges onto the rendered <button>. |
+| `children` | `ReactNode` | yes | — |  |
 
 <!-- props:end -->
 

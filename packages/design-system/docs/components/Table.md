@@ -25,57 +25,63 @@
 
 ### `TableProps`
 
-| Prop           | Type           | Required | Default | Description                                                                                                                                                                                                                                                                     |
-| -------------- | -------------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `density`      | `TableDensity` | no       | —       | Row height + cell padding scale. Defaults to `'comfortable'`. - `'comfortable'` — 32px row, 12px horiz padding, font-size-md. - `'dense'` — 24px row, 8px horiz padding, font-size-sm.                                                                                          |
-| `striped`      | `boolean`      | no       | —       | Zebra-striped body rows (even rows tinted). Defaults to `false`.                                                                                                                                                                                                                |
-| `bordered`     | `boolean`      | no       | —       | Full-grid borders — outer border + vertical borders between every cell on top of the existing horizontal row dividers. Defaults to `false` (Atlassian-style minimal: header underline + row dividers only).                                                                     |
-| `hover`        | `boolean`      | no       | —       | Hover highlight on body rows. Defaults to `false` — turn on when the table represents a list of clickable / selectable items (a row a user is likely to act on). Leave off for read-only data displays where the hover affordance would suggest interactivity that isn't there. |
-| `stickyHeader` | `boolean`      | no       | —       | `position: sticky` on the header so it stays visible while body scrolls. Requires a scrollable ancestor — the default `scroll` wrapper provides one. Defaults to `false`.                                                                                                       |
-| `scroll`       | `boolean`      | no       | —       | When `true` (default), the `<table>` is wrapped in a `<div>` with `overflow-x: auto` so wide tables scroll horizontally inside their container. Set to `false` to render a bare `<table>` — the consumer manages their own scroll context.                                      |
-| `children`     | `ReactNode`    | no       | —       | Compound-subcomponent children.                                                                                                                                                                                                                                                 |
-| …native        |                |          |         | plus native `<table>` attributes                                                                                                                                                                                                                                                |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `density` | `TableDensity` | no | — | Row height + cell padding scale. Defaults to `'comfortable'`. - `'comfortable'` — 32px row, 12px horiz padding, font-size-md. - `'dense'` — 24px row, 8px horiz padding, font-size-sm. |
+| `striped` | `boolean` | no | — | Zebra-striped body rows (even rows tinted). Defaults to `false`. |
+| `bordered` | `boolean` | no | — | Full-grid borders — outer border + vertical borders between every cell on top of the existing horizontal row dividers. Defaults to `false` (Atlassian-style minimal: header underline + row dividers only). |
+| `hover` | `boolean` | no | — | Hover highlight on body rows. Defaults to `false` — turn on when the table represents a list of clickable / selectable items (a row a user is likely to act on). Leave off for read-only data displays where the hover affordance would suggest interactivity that isn't there. |
+| `stickyHeader` | `boolean` | no | — | `position: sticky` on the header so it stays visible while body scrolls. Requires a scrollable ancestor — the default `scroll` wrapper provides one. Defaults to `false`. |
+| `scroll` | `boolean` | no | — | When `true` (default), the `<table>` is wrapped in a `<div>` with `overflow-x: auto` so wide tables scroll horizontally inside their container. Set to `false` to render a bare `<table>` — the consumer manages their own scroll context. |
+| `children` | `ReactNode` | no | — | Compound-subcomponent children. |
+| …native | | | | plus native `<table>` attributes |
 
 ### `TableCaptionProps`
 
-| Prop       | Type        | Required | Default | Description                             |
-| ---------- | ----------- | -------- | ------- | --------------------------------------- |
-| `children` | `ReactNode` | yes      | —       |                                         |
-| …native    |             |          |         | plus native `<TableCaption>` attributes |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `children` | `ReactNode` | yes | — |  |
+| …native | | | | plus native `<TableCaption>` attributes |
 
 ### `TableCellProps`
 
-| Prop       | Type             | Required | Default | Description                                                                                                                     |
-| ---------- | ---------------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| `align`    | `TableCellAlign` | no       | —       | Text alignment. Defaults to `'start'`.                                                                                          |
-| `truncate` | `boolean`        | no       | —       | Suppress wrapping and ellipsize on overflow. Requires a constrained cell width (column-level CSS or `style={{ maxWidth: … }}`). |
-| `children` | `ReactNode`      | no       | —       |                                                                                                                                 |
-| …native    |                  |          |         | plus native `<TableCell>` attributes                                                                                            |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `align` | `TableCellAlign` | no | — | Text alignment. Defaults to `'start'`. |
+| `truncate` | `boolean` | no | — | Suppress wrapping and ellipsize on overflow. Requires a constrained cell width (column-level CSS or `style={{ maxWidth: … }}`). |
+| `children` | `ReactNode` | no | — |  |
+| …native | | | | plus native `<TableCell>` attributes |
 
 ### `TableHeaderCellProps`
 
-| Prop            | Type                                         | Required | Default | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             |
-| --------------- | -------------------------------------------- | -------- | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `align`         | `TableCellAlign`                             | no       | —       | Text alignment. Defaults to `'start'`.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  |
-| `scope`         | `"row" \| "rowgroup" \| "col" \| "colgroup"` | no       | —       | Native HTML `<th scope>` attribute. Defaults to `'col'` (the cell labels its column). Use `'row'` for the leftmost cell that labels its row when rendering row-headers inside `<Table.Body>`. `'colgroup'` / `'rowgroup'` are valid HTML but rarely needed in practice.                                                                                                                                                                                                                                                 |
-| `sortDirection` | `TableSortDirection`                         | no       | —       | When set, the cell renders a sort indicator (up/down/unsorted chevron) and sets `aria-sort`. The consumer drives interactivity via `onClick`; this primitive only paints the indicator. Sortable headers also become keyboard-reachable (`tabIndex={0}` + Enter/Space → `onClick`). - `'asc'` → up chevron + `aria-sort="ascending"`. - `'desc'` → down chevron + `aria-sort="descending"`. - `'none'` → muted up/down chevron + `aria-sort="none"`. Omit to render a non-sortable header (no chevron, no `aria-sort`). |
-| `children`      | `ReactNode`                                  | no       | —       |                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                         |
-| …native         |                                              |          |         | plus native `<TableCell>` attributes                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `align` | `TableCellAlign` | no | — | Text alignment. Defaults to `'start'`. |
+| `scope` | `"row" \| "rowgroup" \| "col" \| "colgroup"` | no | — | Native HTML `<th scope>` attribute. Defaults to `'col'` (the cell labels its column). Use `'row'` for the leftmost cell that labels its row when rendering row-headers inside `<Table.Body>`. `'colgroup'` / `'rowgroup'` are valid HTML but rarely needed in practice. |
+| `sortDirection` | `TableSortDirection` | no | — | When set, the cell renders a sort indicator (up/down/unsorted chevron) and sets `aria-sort`. The consumer drives interactivity via `onClick`; this primitive only paints the indicator. Sortable headers also become keyboard-reachable (`tabIndex={0}` + Enter/Space → `onClick`). - `'asc'` → up chevron + `aria-sort="ascending"`. - `'desc'` → down chevron + `aria-sort="descending"`. - `'none'` → muted up/down chevron + `aria-sort="none"`. Omit to render a non-sortable header (no chevron, no `aria-sort`). |
+| `children` | `ReactNode` | no | — |  |
+| …native | | | | plus native `<TableCell>` attributes |
 
 ### `TableRowProps`
 
-| Prop       | Type        | Required | Default | Description                                                                                                                                             |
-| ---------- | ----------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `selected` | `boolean`   | no       | —       | Visual selected state. Pair with the consumer's own selection logic. Adds `aria-selected="true"` and a subtle accent tint that wins over hover/striped. |
-| `children` | `ReactNode` | yes      | —       |                                                                                                                                                         |
-| …native    |             |          |         | plus native `<TableRow>` attributes                                                                                                                     |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `selected` | `boolean` | no | — | Visual selected state. Pair with the consumer's own selection logic. Adds `aria-selected="true"` and a subtle accent tint that wins over hover/striped. |
+| `children` | `ReactNode` | yes | — |  |
+| …native | | | | plus native `<TableRow>` attributes |
 
 ### `TableSectionProps`
 
-| Prop       | Type        | Required | Default | Description                             |
-| ---------- | ----------- | -------- | ------- | --------------------------------------- |
-| `children` | `ReactNode` | yes      | —       |                                         |
-| …native    |             |          |         | plus native `<TableSection>` attributes |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `children` | `ReactNode` | yes | — |  |
+| …native | | | | plus native `<TableSection>` attributes |
 
 <!-- props:end -->
 

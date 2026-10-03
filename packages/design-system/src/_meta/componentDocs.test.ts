@@ -23,8 +23,8 @@ describe('docs/components props tables', () => {
   it('renders union (polymorphic) props', () => {
     const md = doc('Button');
     expect(md).toContain('<!-- props:start -->');
-    expect(md).toMatch(/\| `variant` +\|/);
-    expect(md).toMatch(/\| `as` +\|/);
+    expect(md).toMatch(/\| `variant` \|/);
+    expect(md).toMatch(/\| `as` \|/);
   });
 
   it('keeps compound sub-props and excludes sibling-doc prefixes', () => {
@@ -35,8 +35,16 @@ describe('docs/components props tables', () => {
   it('escapes pipes inside type cells', () => {
     const row = doc('Accordion')
       .split('\n')
-      .find((l) => /^\| `type` +\|/.test(l))!;
+      .find((l) => l.startsWith('| `type` |'))!;
     expect(row).toContain('\\|');
     expect(row.split(/(?<!\\)\|/).length).toBe(7);
+  });
+
+  it('renders a polymorphic as-prop by its constraint and the default element', () => {
+    const md = doc('Button');
+    expect(md).toContain("| `as` | `ElementType` | no | 'button' |");
+    expect(md).toContain(
+      '| …native | | | | plus native attributes of the `as` element (default `<button>`) |',
+    );
   });
 });

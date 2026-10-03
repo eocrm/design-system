@@ -9,16 +9,17 @@ const [page, setPage] = useState(1);
 
 ## Props
 
-| Prop           | Type                     | Required | Default | Description                                                                                                                                                                                                                                                                      |
-| -------------- | ------------------------ | -------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `currentPage`  | `number`                 | yes      | —       | Current 1-indexed page. Values outside `[1, pageCount]` clamp at render time (defensive — same precedent as `clampHeading` in `<EmptyState>`).                                                                                                                                   |
-| `pageCount`    | `number`                 | yes      | —       | Total number of pages. Values `< 1` clamp to `1`. The component still renders when `pageCount === 1` (single enabled current-page button + both prev/next disabled) so consumers don't have to conditionally hide it. The `disabled` prop still disables all three controls.     |
-| `onPageChange` | `(page: number) => void` | yes      | —       | Called with the new 1-indexed page when the user clicks prev, next, or a page number. Not fired when the user clicks the current page.                                                                                                                                           |
-| `siblingCount` | `number`                 | no       | —       | How many page-number buttons to show on each side of `currentPage`. Default `1`. Set to `0` for the tightest possible display (sidebar / narrow column) or `2` for wider footers. Boundary is fixed at 1 — first and last pages are always shown.                                |
-| `size`         | `PaginationSize`         | no       | —       | Visual size — `'sm'` (24px), `'md'` (32px, default), `'lg'` (40px). Tracks the Button / Input scale so Pagination sits cleanly inside a `<Cluster>` next to those components.                                                                                                    |
-| `disabled`     | `boolean`                | no       | —       | When `true`, all buttons (prev / next / numbers) are disabled. Use during page transitions (loading, saving) to prevent double-clicks.                                                                                                                                           |
-| `aria-label`   | `string`                 | no       | —       | Accessible name for the `<nav>` wrapper. Defaults to `'Pagination'` when omitted OR empty — an empty string is not an explicit name, so it takes the default too. Override when multiple paginations appear on the same page (e.g., `'Top pagination'` / `'Bottom pagination'`). |
-| …native        |                          |          |         | plus native HTML attributes                                                                                                                                                                                                                                                      |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `currentPage` | `number` | yes | — | Current 1-indexed page. Values outside `[1, pageCount]` clamp at render time (defensive — same precedent as `clampHeading` in `<EmptyState>`). |
+| `pageCount` | `number` | yes | — | Total number of pages. Values `< 1` clamp to `1`. The component still renders when `pageCount === 1` (single enabled current-page button + both prev/next disabled) so consumers don't have to conditionally hide it. The `disabled` prop still disables all three controls. |
+| `onPageChange` | `(page: number) => void` | yes | — | Called with the new 1-indexed page when the user clicks prev, next, or a page number. Not fired when the user clicks the current page. |
+| `siblingCount` | `number` | no | — | How many page-number buttons to show on each side of `currentPage`. Default `1`. Set to `0` for the tightest possible display (sidebar / narrow column) or `2` for wider footers. Boundary is fixed at 1 — first and last pages are always shown. |
+| `size` | `PaginationSize` | no | — | Visual size — `'sm'` (24px), `'md'` (32px, default), `'lg'` (40px). Tracks the Button / Input scale so Pagination sits cleanly inside a `<Cluster>` next to those components. |
+| `disabled` | `boolean` | no | — | When `true`, all buttons (prev / next / numbers) are disabled. Use during page transitions (loading, saving) to prevent double-clicks. |
+| `aria-label` | `string` | no | — | Accessible name for the `<nav>` wrapper. Defaults to `'Pagination'` when omitted OR empty — an empty string is not an explicit name, so it takes the default too. Override when multiple paginations appear on the same page (e.g., `'Top pagination'` / `'Bottom pagination'`). |
+| …native | | | | plus native HTML attributes |
 
 <!-- props:end -->
 

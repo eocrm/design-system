@@ -12,11 +12,12 @@
 
 ## Props
 
-| Prop    | Type           | Required | Default | Description                                                                                                                                        |
-| ------- | -------------- | -------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `color` | `PaletteColor` | no       | —       | One of the 30 `PaletteColor`s — renders the bare circle in that color's saturated `--color-palette-<name>-fg` token. Takes precedence over `tone`. |
-| `tone`  | `BadgeTone`    | no       | —       | A semantic `BadgeTone` (`neutral` default / `info` / `success` / `warning` / `danger` / `purple`) — used when `color` is omitted.                  |
-| …native |                |          |         | plus native `<span>` attributes                                                                                                                    |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `color` | `PaletteColor` | no | — | One of the 30 `PaletteColor`s — renders the bare circle in that color's saturated `--color-palette-<name>-fg` token. Takes precedence over `tone`. |
+| `tone` | `BadgeTone` | no | — | A semantic `BadgeTone` (`neutral` default / `info` / `success` / `warning` / `danger` / `purple`) — used when `color` is omitted. |
+| …native | | | | plus native `<span>` attributes |
 
 <!-- props:end -->
 

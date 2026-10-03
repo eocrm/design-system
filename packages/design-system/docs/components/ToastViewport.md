@@ -30,13 +30,14 @@ toast.success('Saved', { id });
 
 ## Props
 
-| Prop         | Type            | Required | Default | Description                                                                   |
-| ------------ | --------------- | -------- | ------- | ----------------------------------------------------------------------------- |
-| `position`   | `ToastPosition` | no       | —       | Default position for toasts that don't specify one. Default: 'bottom-right'.  |
-| `duration`   | `number`        | no       | —       | Default duration (ms) for toasts without explicit duration. Default: 4000.    |
-| `maxVisible` | `number`        | no       | —       | How many toasts are fully visible per position bucket. Default: 3.            |
-| `gap`        | `"sm" \| "md"`  | no       | —       | Spacing between stacked toasts. Default: 'sm' (8px).                          |
-| `expand`     | `boolean`       | no       | —       | false (default): peek-collapsed stack, hover to fan out. true: always fanned. |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `position` | `ToastPosition` | no | — | Default position for toasts that don't specify one. Default: 'bottom-right'. |
+| `duration` | `number` | no | — | Default duration (ms) for toasts without explicit duration. Default: 4000. |
+| `maxVisible` | `number` | no | — | How many toasts are fully visible per position bucket. Default: 3. |
+| `gap` | `"sm" \| "md"` | no | — | Spacing between stacked toasts. Default: 'sm' (8px). |
+| `expand` | `boolean` | no | — | false (default): peek-collapsed stack, hover to fan out. true: always fanned. |
 
 <!-- props:end -->
 

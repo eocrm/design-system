@@ -87,11 +87,13 @@ function renderTable(typeName) {
     for (const prop of checker.getPropertiesOfType(part)) {
       const decl = prop.valueDeclaration ?? prop.declarations?.[0] ?? sym.declarations[0];
       const optional = (prop.flags & ts.SymbolFlags.Optional) !== 0;
-      let type = checker.typeToString(
-        checker.getTypeOfSymbolAtLocation(prop, decl),
-        undefined,
-        ts.TypeFormatFlags.NoTruncation,
-      );
+      let t = checker.getTypeOfSymbolAtLocation(prop, decl);
+      if (checker.getNonNullableType(t).flags & ts.TypeFlags.TypeParameter)
+        t = checker.getBaseConstraintOfType(checker.getNonNullableType(t)) ?? 'ElementType';
+      let type =
+        typeof t === 'string'
+          ? t
+          : checker.typeToString(t, undefined, ts.TypeFormatFlags.NoTruncation);
       if (optional) type = type.replace(/ \| undefined\b/g, '').replace(/^undefined \| /, '');
       const entry = merged.get(prop.name);
       if (entry) {
@@ -118,10 +120,7 @@ function renderTable(typeName) {
   }
   rows.sort((a, b) => fileOrder.indexOf(a.file) - fileOrder.indexOf(b.file) || a.pos - b.pos);
 
-  const lines = [
-    '| Prop | Type | Required | Default | Description |',
-    '| --- | --- | --- | --- | --- |',
-  ];
+  const lines = ['| Prop | Type | Required | Default | Description |', '|---|---|---|---|---|'];
   for (const { prop, types, required, seen } of rows) {
     const def = prop.getJsDocTags(checker).find((t) => t.name === 'default');
     const defText = def ? ts.displayPartsToString(def.text) : '';
@@ -132,12 +131,18 @@ function renderTable(typeName) {
       `| \`${prop.name}\` | \`${cell(type)}\` | ${required && seen === parts.length ? 'yes' : 'no'} | ${defText ? cell(defText) : '—'} | ${cell(stripIssueRefs(ts.displayPartsToString(prop.getDocumentationComment(checker))))} |`,
     );
   }
-  if (collapsed) {
-    const m = sym.declarations[0].getText().match(/HTML(\w+)Element/);
+  const declText = sym.declarations[0].getText();
+  if (/PolymorphicProps<|ComponentPropsWithoutRef<C>/.test(declText)) {
+    const dflt = sym.declarations[0].typeParameters?.[0]?.default;
+    const dfltType = dflt && checker.getTypeFromTypeNode(dflt);
+    const tag = dfltType?.isStringLiteral() ? ` (default \`<${dfltType.value}>\`)` : '';
+    lines.push(`| …native | | | | plus native attributes of the \`as\` element${tag} |`);
+  } else if (collapsed) {
+    const m = declText.match(/HTML(\w+)Element/);
     const native = m ? `native \`<${TAGS[m[1]] ?? m[1]}>\` attributes` : 'native HTML attributes';
     lines.push(`| …native | | | | plus ${native} |`);
   }
-  return lines.join('\n');
+  return `<!-- prettier-ignore -->\n${lines.join('\n')}`;
 }
 
 const prettierOptions = {
@@ -157,7 +162,7 @@ function insertBlock(text, block) {
   const close = open === -1 ? -1 : lines.findIndex((l, i) => i > open && /^\s*```\s*$/.test(l));
   if (close === -1) return `${text.replace(/\n*$/, '\n')}\n${block}\n`;
   lines.splice(close + 1, 0, '', block);
-  return lines.join('\n');
+  return `<!-- prettier-ignore -->\n${lines.join('\n')}`;
 }
 
 const unresolved = docNames.filter((n) => typesFor(n).length === 0 && !NO_PROPS.includes(n));

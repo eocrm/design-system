@@ -24,19 +24,21 @@ const [groups, setGroups] = useState<Record<string, Field[]>>(initial);
 
 ### `SortableGroupProps`
 
-| Prop       | Type                                   | Required | Default | Description                                                                                                                                               |
-| ---------- | -------------------------------------- | -------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `onMove`   | `((event: SortableMoveEvent) => void)` | no       | —       | Fires on every cross-container handoff (during the drag) AND on the final drop. Apply it to your controlled per-container state — see `moveSortableItem`. |
-| `children` | `ReactNode`                            | yes      | —       | The `<SortableGroup.Container>` lists.                                                                                                                    |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `onMove` | `((event: SortableMoveEvent) => void)` | no | — | Fires on every cross-container handoff (during the drag) AND on the final drop. Apply it to your controlled per-container state — see `moveSortableItem`. |
+| `children` | `ReactNode` | yes | — | The `<SortableGroup.Container>` lists. |
 
 ### `SortableGroupContainerProps`
 
-| Prop       | Type        | Required | Default | Description                                                            |
-| ---------- | ----------- | -------- | ------- | ---------------------------------------------------------------------- |
-| `id`       | `Id`        | yes      | —       | Stable container id (the `container` reported in `SortableMoveEvent`). |
-| `items`    | `Id[]`      | yes      | —       | Ordered item ids in THIS container — the controlled source of truth.   |
-| `children` | `ReactNode` | yes      | —       | `<Sortable.Item>`s for the ids in `items`.                             |
-| …native    |             |          |         | plus native `<ol>` attributes                                          |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `id` | `Id` | yes | — | Stable container id (the `container` reported in `SortableMoveEvent`). |
+| `items` | `Id[]` | yes | — | Ordered item ids in THIS container — the controlled source of truth. |
+| `children` | `ReactNode` | yes | — | `<Sortable.Item>`s for the ids in `items`. |
+| …native | | | | plus native `<ol>` attributes |
 
 <!-- props:end -->
 

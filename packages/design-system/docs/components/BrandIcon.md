@@ -10,12 +10,13 @@
 
 ## Props
 
-| Prop    | Type        | Required | Default | Description                                                                                                                                                                                        |
-| ------- | ----------- | -------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `name`  | `BrandName` | yes      | —       | Which brand mark to render.                                                                                                                                                                        |
-| `size`  | `number`    | no       | —       | Square pixel size (width = height). Defaults to `20`.                                                                                                                                              |
-| `title` | `string`    | no       | —       | Accessible name. Omit (default) for a decorative icon beside a text label — the icon renders `aria-hidden`. Set it for a standalone icon (e.g. an icon-only button) → `role="img"` + `aria-label`. |
-| …native |             |          |         | plus native HTML attributes                                                                                                                                                                        |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `name` | `BrandName` | yes | — | Which brand mark to render. |
+| `size` | `number` | no | — | Square pixel size (width = height). Defaults to `20`. |
+| `title` | `string` | no | — | Accessible name. Omit (default) for a decorative icon beside a text label — the icon renders `aria-hidden`. Set it for a standalone icon (e.g. an icon-only button) → `role="img"` + `aria-label`. |
+| …native | | | | plus native HTML attributes |
 
 <!-- props:end -->
 

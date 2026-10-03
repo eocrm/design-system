@@ -22,17 +22,18 @@
 
 ## Props
 
-| Prop         | Type                    | Required | Default | Description                                                                                                                                                                 |
-| ------------ | ----------------------- | -------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `groups`     | `SlotGridGroup[]`       | yes      | —       | Groups in display order.                                                                                                                                                    |
-| `value`      | `string \| null`        | yes      | —       | Selected slot `key`, or `null`. A key not in `groups` checks nothing.                                                                                                       |
-| `onChange`   | `(key: string) => void` | yes      | —       | Called with the chosen slot's `key`. Controlled — update `value` yourself.                                                                                                  |
-| `empty`      | `ReactNode`             | no       | —       | Shown when no group has any slot. Default: the localized "No available times".                                                                                              |
-| `titleOrder` | `TitleOrder`            | no       | —       | Heading level of each group label. Default `3`.                                                                                                                             |
-| `name`       | `string`                | no       | —       | Radio group `name` (also submitted with a form). Default: a generated id.                                                                                                   |
-| `invalid`    | `boolean`               | no       | false   | Marks the group `aria-invalid` (the radios themselves do not support it). Field / SettingRow inject it.                                                                     |
-| `required`   | `boolean`               | no       | —       | Native `required` on the radios (the group then fails form validation until one is chosen). Field / SettingRow inject it; it used to land on the root as a stray attribute. |
-| …native      |                         |          |         | plus native `<div>` attributes                                                                                                                                              |
+<!-- prettier-ignore -->
+| Prop | Type | Required | Default | Description |
+|---|---|---|---|---|
+| `groups` | `SlotGridGroup[]` | yes | — | Groups in display order. |
+| `value` | `string \| null` | yes | — | Selected slot `key`, or `null`. A key not in `groups` checks nothing. |
+| `onChange` | `(key: string) => void` | yes | — | Called with the chosen slot's `key`. Controlled — update `value` yourself. |
+| `empty` | `ReactNode` | no | — | Shown when no group has any slot. Default: the localized "No available times". |
+| `titleOrder` | `TitleOrder` | no | — | Heading level of each group label. Default `3`. |
+| `name` | `string` | no | — | Radio group `name` (also submitted with a form). Default: a generated id. |
+| `invalid` | `boolean` | no | false | Marks the group `aria-invalid` (the radios themselves do not support it). Field / SettingRow inject it. |
+| `required` | `boolean` | no | — | Native `required` on the radios (the group then fails form validation until one is chosen). Field / SettingRow inject it; it used to land on the root as a stray attribute. |
+| …native | | | | plus native `<div>` attributes |
 
 <!-- props:end -->
 
