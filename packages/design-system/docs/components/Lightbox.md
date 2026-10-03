@@ -1,0 +1,19 @@
+# `<Lightbox>` — full-screen image & document gallery overlay
+
+`<Lightbox open onOpenChange items>` shows one large item at a time (an image, or a PDF in an `<iframe>`) with prev/next chevrons, ← → keys, a thumbnail strip, a position counter, and an optional caption. Controlled `open` like `<Modal>`; the current index is uncontrolled (`defaultIndex`) unless you pass `index` + `onIndexChange`. `loop` (default true) wraps at the ends. The consumer owns the trigger — typically a row of interactive `<Image>` thumbnails. For a single inline image use `<Image>`.
+
+```tsx
+const [open, setOpen] = useState(false);
+const [start, setStart] = useState(0);
+<Lightbox
+  open={open}
+  onOpenChange={setOpen}
+  defaultIndex={start}
+  items={files.map((f) => ({ src: f.url, alt: f.name, caption: f.name }))}
+/>;
+```
+
+- Each `LightboxItem` is `{ src, alt, kind?, caption?, thumbnail? }` — `alt` is required.
+- `items` accept `kind: 'pdf'` (or a `.pdf` src) → rendered in an `<iframe>` with a download action; mixed image+PDF galleries supported. A PDF without a `thumbnail` shows a document-icon placeholder in the strip; unsafe (non-http(s)) doc srcs show a "Preview unavailable" message.
+- Single item → chevrons, counter, and strip auto-hide. Empty `items` → renders nothing.
+- Reuses the DS overlay machinery (focus-trap, scroll-lock, Esc — yielding to open floating surfaces first like Modal/Drawer, stacking above modals).

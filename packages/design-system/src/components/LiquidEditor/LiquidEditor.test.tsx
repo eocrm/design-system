@@ -316,7 +316,7 @@ describe('descriptions + collection tag in autocomplete (#304)', () => {
   // The autocomplete builds its items in `useLiquidAutocomplete`, a SECOND
   // reader of the same `LiquidVariable.label` the insert menu reads. Fixing
   // only the menu left `label: ''` rendering a blank `role="option"` here,
-  // while `types.ts` and AGENTS.md both promised `''` means unset.
+  // while `types.ts` and AI-PRIMER.md both promised `''` means unset.
   it('treats an empty variable label as unset in the autocomplete too', async () => {
     const user = userEvent.setup();
     renderEditor(<Harness variables={[{ code: 'blank_one', label: '' }]} />);

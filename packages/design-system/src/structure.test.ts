@@ -1375,7 +1375,7 @@ describe('a focus ring goes through the focus-ring mixin', () => {
  * asked for: adding an entry costs an argued comment in a test file, using the
  * mixin costs one line. The staleness check makes a waiver that stops matching
  * a failure, so the list cannot outlive the code it excuses — which is how the
- * same four names in AGENTS.md prose went stale three times.
+ * same four names in AI-PRIMER.md prose went stale three times.
  *
  * WHAT IT PROVABLY CANNOT CATCH:
  *
@@ -1880,7 +1880,7 @@ describe('an accessible name is never built with ??', () => {
  * has no such site behind a `t()` today.
  *
  * So a green run is not coverage of the rule. The rule is prose, in
- * `AGENTS.md`'s "An empty label prop means *unset*, never *blank*".
+ * `AI-PRIMER.md`'s "An empty label prop means *unset*, never *blank*".
  */
 describe('a translated fallback is never introduced with ??', () => {
   /**

@@ -62,7 +62,7 @@ export function RichTextAttachment({ block }: { block: Block }) {
         // `alt=""` is a real HTML value — "decorative, skip me" — so an empty
         // `block.alt` is a choice to honour, not an unset to fall back from.
         // Everywhere else in this library an empty label means unset; see
-        // AGENTS.md, which names this as the exception.
+        // AI-PRIMER.md, which names this as the exception.
         alt={block.alt ?? name}
         width={block.width}
         height={block.height}

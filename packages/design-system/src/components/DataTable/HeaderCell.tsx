@@ -202,7 +202,7 @@ export function HeaderCell<T>({
   // that names nothing (an icon), so it fired on the commonest VALID shape.
   // A warning on correct code is the same defect as a gate that false-alarms,
   // and this file's own history is the argument — noise gets ignored, and then
-  // the real case is ignored with it. The contract is documented in AGENTS.md
+  // the real case is ignored with it. The contract is documented in docs/components/DataTable.md
   // instead, which is where a rule only the author can satisfy belongs.
 
   const sortableResult = useSortable({

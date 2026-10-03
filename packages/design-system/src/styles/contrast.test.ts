@@ -1,6 +1,19 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
+/** AI-PRIMER.md plus docs/tokens.md and every docs/components/*.md — the consumer-facing primer. */
+const readPrimer = (): string => {
+  const root = resolve(__dirname, '../..');
+  const dir = resolve(root, 'docs/components');
+  return [
+    readFileSync(resolve(root, 'AI-PRIMER.md'), 'utf8'),
+    readFileSync(resolve(root, 'docs/tokens.md'), 'utf8'),
+    ...readdirSync(dir)
+      .sort()
+      .map((f) => readFileSync(resolve(dir, f), 'utf8')),
+  ].join('\n');
+};
+
 /**
  * Contrast guard for the foreground/background pairs the library actually
  * ships together.
@@ -129,7 +142,7 @@ function contrast(fg: string, bg: string): number {
  * `over` at `alpha` laid on `base`, both opaque hex, result opaque hex.
  *
  * Module scope because two gates need it: the scrim gate composites
- * Lightbox's chrome over `--color-bg-overlay-strong`, and the AGENTS.md gate
+ * Lightbox's chrome over `--color-bg-overlay-strong`, and the AI-PRIMER.md gate
  * has to reach the same surfaces to recompute the figures the prose states
  * about them. A second copy would track the tokens just as well but could
  * drift from THIS one, and the two would then certify different surfaces
@@ -588,7 +601,7 @@ describe('the neutral foreground ramp keeps its remaining tiers', () => {
  * The ΔE figures the `tone="subtle"` deprecation is ARGUED FROM, recomputed.
  *
  * `0.0261 / 0.0365 / 0.0707` are the whole case for #521, and this branch
- * published them in four consumer-facing places at once: `AGENTS.md` twice,
+ * published them in four consumer-facing places at once: `AI-PRIMER.md` twice,
  * `Text.tsx`'s and `Title.tsx`'s `tone` JSDoc, and the `props.manifest.json`
  * the playground generates from that JSDoc. Nothing bound any of them. The
  * ratio gate below binds `N.NN:1` forms only, and the ramp gate above asserts
@@ -597,7 +610,7 @@ describe('the neutral foreground ramp keeps its remaining tiers', () => {
  * deprecation rationale stale with CI green. That is verbatim the rot this
  * branch added gates to stop, and this branch is what published the numbers.
  *
- * Bound in both directions, like the AGENTS.md ratio gate: every figure here
+ * Bound in both directions, like the AI-PRIMER.md ratio gate: every figure here
  * must appear in every document, and every figure in those documents must be
  * one of these.
  *
@@ -645,7 +658,7 @@ describe('the published ΔE figures for the subtle-tone deprecation still hold',
 
   /** The four places this branch published the figures. */
   const DOCUMENTS: [label: string, path: string][] = [
-    ['AGENTS.md', '../../AGENTS.md'],
+    ['AI-PRIMER.md', 'PRIMER'],
     ['Text.tsx', '../components/Text/Text.tsx'],
     ['Title.tsx', '../components/Title/Title.tsx'],
     // Generated from the two JSDoc blocks above, and shipped to the gallery as
@@ -673,7 +686,8 @@ describe('the published ΔE figures for the subtle-tone deprecation still hold',
     ],
   ];
 
-  const read = (path: string) => readFileSync(resolve(__dirname, path), 'utf8');
+  const read = (path: string) =>
+    path === 'PRIMER' ? readPrimer() : readFileSync(resolve(__dirname, path), 'utf8');
 
   // Four decimal places, which is the notation every one of these figures uses
   // and the 0.065 floor does not. Verified against all four documents: no
@@ -1079,7 +1093,7 @@ const COMPONENTS_DIR_FOR_SCRIM = resolve(__dirname, '../components');
  * None of them is a token: each is `--color-bg-overlay-strong` composited over
  * the page colour, and three of them a further `rgb(… / …%)` layer on top of
  * that. So no `@contrast` annotation can express them and no reader can
- * reproduce them by eye — which is exactly why the figures AGENTS.md states
+ * reproduce them by eye — which is exactly why the figures AI-PRIMER.md states
  * about them were challenged as unreproducible in #518. They reproduce; the
  * arithmetic just lives here.
  *
@@ -1146,7 +1160,7 @@ const PALETTE_EVENT_FILLS = [...TOKENS.matchAll(/--color-palette-([a-z]+)-bg:/g)
  *
  * PAIRS above cannot express this: it is one ring against thirty surfaces, and
  * what matters is the WORST of them, which moves when the palette is retuned.
- * AGENTS.md states that worst case as prose, and #518's whole complaint is
+ * AI-PRIMER.md states that worst case as prose, and #518's whole complaint is
  * that the prose named no pair — so this both names it and holds a floor under
  * it. 1.4.11's 3:1, not 4.5: a focus ring is a graphical object.
  *
@@ -1168,13 +1182,13 @@ describe('an inset ring stays legible against every fill a .colored event can ta
 });
 
 /**
- * Every contrast figure `AGENTS.md` states in ENGLISH PROSE, recomputed.
+ * Every contrast figure `AI-PRIMER.md` + `docs/**` state in ENGLISH PROSE, recomputed.
  *
  * `structure.test.ts`'s "stated contrast ratios still hold" gate binds every
  * `N.NN:1` in a `.tokens.scss` / `.module.scss` / `.ts` file to a `@contrast`
- * annotation sitting beside it. `AGENTS.md` is outside that gate and has to
+ * annotation sitting beside it. `AI-PRIMER.md` + `docs/` are outside that gate and have to
  * stay outside it: Markdown has no comment syntax to hide an annotation in, so
- * the annotation would have to be prose too, and this file ships in the
+ * the annotation would have to be prose too, and these files ship in the
  * published tarball as the agent-facing primer — a number in it is read and
  * copied, not skimmed.
  *
@@ -1187,9 +1201,9 @@ describe('an inset ring stays legible against every fill a .colored event can ta
  * annotation gate — THIS FILE owns the computation, and the doc must agree
  * with it:
  *
- *  - every entry in `FIGURES` appears in `AGENTS.md` at the stated precision,
+ *  - every entry in `FIGURES` appears in `AI-PRIMER.md` at the stated precision,
  *    so a retune that moves one reddens CI instead of rotting the sentence;
- *  - every `N.NN:1` and every `N of the M` in `AGENTS.md` is a figure
+ *  - every `N.NN:1` and every `N of the M` in `AI-PRIMER.md` is a figure
  *    `FIGURES` produces, so a number added to the prose later cannot arrive
  *    unbound — which is what let this sweep itself ship two stale sentences
  *    that only human review caught.
@@ -1208,8 +1222,8 @@ describe('an inset ring stays legible against every fill a .colored event can ta
  * - **Which occurrence.** A figure is matched anywhere in the file, so two
  *   sentences quoting the same number are indistinguishable, as are two
  *   different pairs that happen to round to the same two decimals.
- * - **Every other Markdown file.** Scoped to `AGENTS.md` alone — the one doc
- *   that ships to consumers. `README.md`, `guidance.md` and the three
+ * - **Every other Markdown file.** Scoped to `AI-PRIMER.md` + `docs/**` — the docs
+ *   that ship to consumers. `README.md`, `guidance.md` and the three
  *   `CLAUDE.md` files state ratios too and nothing binds them.
  * - **WCAG's own thresholds.** `3:1`, `4.5:1`, `7:1`, `21:1` and `1:1` are
  *   normative constants cited throughout the document, not measurements of a
@@ -1226,14 +1240,14 @@ describe('an inset ring stays legible against every fill a .colored event can ta
  *   FIGURES produces. A generic `N of the M` matched ordinary English —
  *   `Only 2 of the 7 layout primitives own spacing` would have failed CI on a
  *   3,900-line prose file agents are told to edit. The cost is real and is
- *   the point of stating it: a DIFFERENT count added to AGENTS.md is not
+ *   the point of stating it: a DIFFERENT count added to AI-PRIMER.md is not
  *   bound, and binding it means widening this phrase deliberately.
  */
-describe('AGENTS.md states no contrast figure this file cannot recompute', () => {
-  const AGENTS = readFileSync(resolve(__dirname, '../../AGENTS.md'), 'utf8');
+describe('AI-PRIMER.md + docs/** state no contrast figure this file cannot recompute', () => {
+  const AGENTS = readPrimer();
 
   /**
-   * Each figure is `[what it measures, the digits AGENTS.md must contain]`.
+   * Each figure is `[what it measures, the digits AI-PRIMER.md must contain]`.
    *
    * A function rather than a const so a token that stops resolving throws
    * with a token name in it. Note this is called at COLLECTION time by the
@@ -1283,7 +1297,7 @@ describe('AGENTS.md states no contrast figure this file cannot recompute', () =>
     // A boolean, not `toContain`. The failure diff for a miss on a 3900-line
     // Markdown file is the whole file, which buries the one line that says
     // which figure moved.
-    expect(AGENTS.includes(stated), `AGENTS.md no longer states ${stated}`).toBe(true);
+    expect(AGENTS.includes(stated), `AI-PRIMER.md no longer states ${stated}`).toBe(true);
   });
 
   it('states no ratio or count these figures do not produce', () => {
@@ -1304,7 +1318,7 @@ describe('AGENTS.md states no contrast figure this file cannot recompute', () =>
     ];
     expect(
       claims.filter((c) => !produced.has(c)),
-      'AGENTS.md states a measured figure nothing recomputes — add it to FIGURES with the pair it measures, or drop the number',
+      'AI-PRIMER.md states a measured figure nothing recomputes — add it to FIGURES with the pair it measures, or drop the number',
     ).toEqual([]);
   });
 });
