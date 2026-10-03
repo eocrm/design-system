@@ -134,11 +134,11 @@ The existing 8 components are fully JSDoc'd — match that pattern.
 
 Before completing a pull request that touches `packages/design-system/**`, you MUST run the review-fix loop — invoke the **`pre-push-review`** skill (variant A) and follow it exactly. Run baseline gates, open the PR as a draft, then autonomously review, fix, verify, commit, and push until a clean review round (per the tier below) allows the PR to be marked ready. This is not optional, including for one-line SCSS tweaks. The library is consumed by AI agents who pattern-match against whatever we ship — a missing JSDoc, broken ARIA, or token slip propagates to every page they generate.
 
-**When this rule applies**: any change inside `packages/design-system/` — component code, tests, tokens, SCSS, `package.json`, `AI-PRIMER.md`, `docs/components/`, `README.md`, or this `CLAUDE.md`.
+**When this rule applies**: any change inside `packages/design-system/` — component code, tests, tokens, SCSS, `package.json`, `AI-PRIMER.md`, `docs/`, `README.md`, or this `CLAUDE.md`.
 
 **When this rule does NOT apply**: changes scoped to `packages/playground/**`, root `README.md`, root `CLAUDE.md`, GitHub workflows, the Makefile, or other non-library files. Push those normally.
 
-The skill holds the gates, the reviewer brief, the exit criteria, and the trivial-change escape hatch. Review effort is tiered: **Light** changes (docs/markdown, JSDoc-only, copy, JSDoc wording that does not change meaning; no component behaviour, a11y semantics, tokens or public API) get one fresh reviewer on Sonnet; **Standard** changes (everything else) get two fresh reviewers per round inheriting the session model. Fable only with dpws's explicit direction or approval. The skill defines the tiers and report-length caps. The first round reviews the complete branch diff. Later rounds review only commits since the previously reviewed head, together with the findings those commits are meant to fix.
+The skill holds the gates, the reviewer brief, the exit criteria, and the trivial-change escape hatch. Review effort is tiered: **Light** changes (docs, copy or JSDoc wording that does not change meaning; never `@remarks`, prop-doc semantics, documented a11y/token/API guidance, component behaviour, tokens or public API) get one fresh reviewer on Sonnet; **Standard** changes (everything else) get at least two fresh reviewers per round inheriting the session model. Fable only with dpws's explicit direction or approval. The skill defines the tiers and report-length caps. The first round reviews the complete branch diff. Later rounds review only commits since the previously reviewed head, together with the findings those commits are meant to fix.
 
 ### 9. Every user-facing string goes through i18n
 

@@ -11,13 +11,14 @@ Two variants. Pick the one matching what you changed; if a PR touches both, run 
 
 Review effort is tiered. Set the tier from the full branch diff; across rounds it can only go up, never down.
 
-- **Light** — docs/markdown and copy only, plus JSDoc wording that does not
-  change meaning (never `@remarks` or prop-doc semantics: they are the
+- **Light** — docs/markdown, copy and JSDoc wording that does not change
+  meaning (never `@remarks` or prop-doc semantics: they are the
   agent-facing contract); no component behaviour, a11y semantics, tokens, or
   public API. Use **one** fresh-context reviewer on Sonnet (`model: sonnet` at
   dispatch). If fixes were applied, repeat the Sonnet pass on the fix delta
-  only until one returns `clean enough to stop`. Variant B mockup reviews are
-  always Standard.
+  only until one returns `clean enough to stop`. Variant B mockup reviews, and any change to
+  documented a11y, token or API guidance (`AI-PRIMER.md`, `docs/**`, the Hard
+  rules), are always Standard.
 - **Standard** — everything else. Each round uses at least **two independent
   fresh-context agents** inheriting the session's currently selected/default
   model (no model override).
@@ -98,7 +99,7 @@ If a reviewer keeps catching the same class of issue (raw values, missing JSDoc,
 
 ### Trivial-change escape hatch
 
-A one-line doc typo or comment tweak doesn't need a full review loop. Use judgment — if the change couldn't plausibly introduce a regression, push without the cycle. When unsure, run the cycle.
+A one-line doc typo or comment tweak doesn't need a full review loop. Use judgment — if the change couldn't plausibly introduce a regression, push without the cycle. Never for `@remarks`, prop docs, or documented a11y/token/API guidance. When unsure, run the cycle.
 
 ---
 

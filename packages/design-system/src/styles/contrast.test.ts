@@ -1182,11 +1182,11 @@ describe('an inset ring stays legible against every fill a .colored event can ta
 });
 
 /**
- * Every contrast figure `AI-PRIMER.md` states in ENGLISH PROSE, recomputed.
+ * Every contrast figure `AI-PRIMER.md` + `docs/**` state in ENGLISH PROSE, recomputed.
  *
  * `structure.test.ts`'s "stated contrast ratios still hold" gate binds every
  * `N.NN:1` in a `.tokens.scss` / `.module.scss` / `.ts` file to a `@contrast`
- * annotation sitting beside it. `AI-PRIMER.md` is outside that gate and has to
+ * annotation sitting beside it. `AI-PRIMER.md` + `docs/**` are outside that gate and has to
  * stay outside it: Markdown has no comment syntax to hide an annotation in, so
  * the annotation would have to be prose too, and this file ships in the
  * published tarball as the agent-facing primer — a number in it is read and
@@ -1243,7 +1243,7 @@ describe('an inset ring stays legible against every fill a .colored event can ta
  *   the point of stating it: a DIFFERENT count added to AI-PRIMER.md is not
  *   bound, and binding it means widening this phrase deliberately.
  */
-describe('AI-PRIMER.md states no contrast figure this file cannot recompute', () => {
+describe('AI-PRIMER.md + docs/** state no contrast figure this file cannot recompute', () => {
   const AGENTS = readPrimer();
 
   /**
