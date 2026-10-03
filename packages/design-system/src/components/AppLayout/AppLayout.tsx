@@ -81,6 +81,13 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
    * Measures the viewport (`matchMedia`), not a container — the sidebar's
    * presence in the row is exactly what the threshold changes, so a container
    * query would be circular. Same scale and same basis as `<Rail collapseBelow>`.
+   *
+   * The `sidebar` node moves between the in-flow slot and the `Drawer`,
+   * remounting it, so a `Rail`'s internal state (expanded `Rail.Group`s, scroll
+   * position) resets each time, by design. A `<Rail>` in the drawer scrolls its
+   * own body while its footer stays visible; a custom non-`Rail` sidebar needs
+   * its own height-filling scroll container, especially on short viewports
+   * (phone landscape, ~380px).
    */
   sidebarOverlayBelow?: CollapseBreakpoint;
   /**

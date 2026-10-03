@@ -20,7 +20,11 @@ import styles from './Banner.module.scss';
 export type BannerTone = 'info' | 'success' | 'warning' | 'danger';
 
 export interface BannerProps extends Omit<HTMLAttributes<HTMLDivElement>, 'role' | 'title'> {
-  /** Tone. Defaults to `'info'`. See `BannerTone`. */
+  /**
+   * Tone. Defaults to `'info'`. `info` — advance notice; `success` — condition
+   * resolved; `warning` — imminent or degrading; `danger` — broken or blocked
+   * now. See `BannerTone`.
+   */
   tone?: BannerTone;
 
   /**

@@ -70,7 +70,9 @@ interface ButtonOwnProps {
    * visual only and does not add toggle-button semantics. Pass native
    * `aria-pressed` explicitly only when activating the Button itself toggles
    * the selected state; menu and disclosure triggers keep their own semantics.
-   * The consumer owns the state. Defaults to `undefined` (not selected).
+   * The consumer owns the state. Not for transient success feedback or for
+   * mutually exclusive `<ButtonGroup>` choices. Defaults to `undefined` (not
+   * selected).
    */
   selected?: boolean;
 }
@@ -87,7 +89,7 @@ type PolymorphicProps<C extends ElementType, P> = P & {
    * download, an IdP hand-off). The element named here is what actually
    * renders, and its own attributes are typed: `href` is REQUIRED when
    * `as="a"` (an anchor without one is neither focusable nor a link) and
-   * rejected otherwise.
+   * rejected otherwise; `target`/`rel`/`download` come through. Never navigate from `onClick`.
    *
    * Reach for `<Link>` first. `<Link>` is link-SHAPED navigation — inline text
    * in a sentence, a table cell, a breadcrumb. `<Button as="a">` is for a

@@ -49,7 +49,6 @@
 <!-- props:end -->
 
 - Built on top of `<Popover>`. Declarative: `title` / `description` / `confirmLabel` / `cancelLabel` / `variant` / `onConfirm` / `onCancel`.
-- `variant`: `'default'` (Confirm is primary) | `'danger'` (Confirm is danger).
 - **Initial focus on Cancel** for both variants — keyboard Enter never accidentally confirms. Tab once to Confirm.
 - **`initialFocusRef`** (`RefObject<HTMLElement | null>`) overrides the Cancel default: directs initial focus into the `description` content instead — e.g. an `<Input>` rendered there for a rename flow. The component focuses `initialFocusRef.current` after the panel mounts (mirrors `<Modal>`'s `initialFocusRef`). Tip: add `onFocus={(e) => e.currentTarget.select()}` to a text input so its contents are selected on open and the user can type a replacement immediately.
 - **Async-aware** `onConfirm`. May return a Promise. While pending, both buttons take `aria-disabled` (NOT the native `disabled`, which would drop them from the tab order and blow away focus mid-operation), their handlers no-op, Confirm shows a spinner, the pending state is announced, and Escape / click-outside are blocked.

@@ -64,7 +64,11 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
    *   square corners (Table's internal scroll wrapper, images, full-bleed
    *   media). Overlays in this library (DropdownMenu, Tooltip, Popover, Drawer,
    *   Modal) portal to `document.body` and are NOT clipped by this. Focus
-   *   outlines use CSS `outline`, which is not affected by ancestor overflow.
+   *   rings are NOT exempt: an `outline` is clipped by an ancestor's overflow,
+   *   so a focusable flush against the card edge loses that band — draw its
+   *   ring inset by passing `$offset: calc(-1 * var(--ring-offset))` to the
+   *   `focus-ring` mixin, not a separate `outline-offset` after the `@include`
+   *   (a `structure.test.ts` gate fails the build on that shape).
    * - `visible` — opt out of clipping. Use when a direct child needs to
    *   overhang the card edge — decorative badges that protrude from a corner,
    *   hover-lift transforms whose shadow extends past the card border, etc.

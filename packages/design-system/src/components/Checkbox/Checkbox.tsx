@@ -60,7 +60,7 @@ export interface CheckboxProps extends Omit<
    */
   label?: ReactNode;
 
-  /** Toggles the error visual + sets `aria-invalid="true"`. */
+  /** Toggles the error visual + sets `aria-invalid="true"`. Pair with a visible error message and `aria-describedby`. */
   invalid?: boolean;
 
   /**

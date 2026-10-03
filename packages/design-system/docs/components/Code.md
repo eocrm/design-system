@@ -18,7 +18,6 @@
 
 <!-- props:end -->
 
-- `tone`: `default | muted | accent | danger` (only the text color changes; chip background stays the same).
 - **Inline only.** Block code with syntax highlighting belongs in the playground's `CodeBlock` (Prism), not the library.
 
 - The chip background is intentionally `--color-bg-muted` so it subordinates to body text.

@@ -60,7 +60,7 @@ import { AppLayout, Banner, Link } from '@eocrm/design-system';
 <!-- prettier-ignore -->
 | Prop | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `tone` | `BannerTone` | no | — | Tone. Defaults to `'info'`. See `BannerTone`. |
+| `tone` | `BannerTone` | no | — | Tone. Defaults to `'info'`. `info` — advance notice; `success` — condition resolved; `warning` — imminent or degrading; `danger` — broken or blocked now. See `BannerTone`. |
 | `title` | `ReactNode` | no | — | Optional bold lead-in, rendered INLINE before `children` in the same text flow ("**Scheduled maintenance** Sat 22:00–23:00."). Keep it short — the banner is one line on desktop. Collapses the native HTML `title` (tooltip) attribute. |
 | `children` | `ReactNode` | no | — | Message text. Wraps with the title. Keep to one sentence. |
 | `icon` | `ReactNode` | no | — | Override the tone's default icon (any ReactNode, typically a 16px lucide icon with `aria-hidden`). `null` hides it. Defaults: `info` → `Info`, `success` → `CheckCircle2`, `warning` → `AlertTriangle`, `danger` → `XCircle`. |
@@ -71,11 +71,7 @@ import { AppLayout, Banner, Link } from '@eocrm/design-system';
 
 <!-- props:end -->
 
-- `tone`: `info` (default) / `success` / `warning` / `danger`. Info = advance notice; warning = imminent/degrading; danger = broken now; success = condition resolved.
-- `title` renders bold and **inline** before the text. Keep the whole thing to one line on desktop.
-- `action`: one `<Link>` or `<Button size="xs">`. `onDismiss` shows the × button and is **controlled**: the app persists the dismissal.
 - **The tone is spoken.** A visually hidden, localised prefix ("Warning: ") comes before the text.
-- `icon`: overrides the tone's default icon; `icon={null}` hides it.
 - The tone is `danger`, not Alert's `error`.
 - **`live` defaults to `false`** (`role="note"`), because banners are usually present at load. Pass `live` for one that appears mid-session — but a Banner mounts together with its text, so `role="status"` is not reliably announced; only `tone="danger"` + `live` (`role="alert"`) is. For a must-hear non-danger message, add a `<LiveRegion>` or a toast alongside the banner.
 - Neither slot is sticky; only the TopBar pins.

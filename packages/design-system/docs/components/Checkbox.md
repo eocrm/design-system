@@ -29,7 +29,7 @@
 | `defaultChecked` | `boolean` | no | — | Initial checked state for uncontrolled use. Defaults to `false`. |
 | `indeterminate` | `boolean` | no | — | Indeterminate (mixed) visual + a11y state. Independent of `checked` — the box paints with a dash icon and `input.indeterminate = true` so AT announces "mixed". Consumer drives this based on partial selection (e.g., a "select all" header where some-but-not-all rows are selected). When the user clicks an indeterminate checkbox, the native change event fires with the next `checked` value (`true` if it was `false`). The consumer typically responds by clearing `indeterminate`. |
 | `label` | `ReactNode` | no | — | Optional label rendered next to the box. The whole `<label>` is the click target. Omit for icon-only checkboxes (e.g., a DataTable row selector) — pass `aria-label` instead. |
-| `invalid` | `boolean` | no | — | Toggles the error visual + sets `aria-invalid="true"`. |
+| `invalid` | `boolean` | no | — | Toggles the error visual + sets `aria-invalid="true"`. Pair with a visible error message and `aria-describedby`. |
 | `color` | `PaletteColor` | no | — | Optional palette color for the checked / indeterminate fill. When set, the filled state uses the palette color's fg token instead of `--color-accent`. Use to color-tag checkbox groups (per-team, per-status, per-category). Default unchanged (accent blue). The focus ring, hover border, and unchecked state remain accent-colored regardless of `color` — only the checked / indeterminate fill is affected. |
 | `onChange` | `((checked: boolean, event: ChangeEvent<HTMLInputElement, Element>) => void)` | no | — | Fires on every change. Receives the next checked state AND the native event so consumers can do `event.preventDefault()`, read modifier keys, etc. |
 | …native | | | | plus native `<input>` attributes |
@@ -37,11 +37,6 @@
 <!-- props:end -->
 
 - Native `<input type='checkbox'>` is visually hidden but stays in tab order + AT tree — keyboard, screen reader, form submission, RHF/Zod, autofill all work for free.
-- `size`: `sm` (14px) / `md` (16px, default) / `lg` (20px). Same scale as `<Input>`.
-- `checked` + `onChange(next, event)` for controlled; `defaultChecked` for uncontrolled.
-- `indeterminate` is a **display flag, not a third value**. Pairs with `checked` for the "select all where some-but-not-all are picked" pattern. Clicking an indeterminate checkbox emits `onChange(nextChecked)` based on the current `checked`; consumer typically clears `indeterminate` in response.
-- `label` (ReactNode) renders next to the box; the whole `<label>` is the click target. Omit `label` for icon-only checkboxes (e.g., DataTable row selectors) and pass `aria-label` instead.
-- `invalid` adds the danger border + sets `aria-invalid='true'`. Pair with a visible error + `aria-describedby`. Hover preview is border-only (no fill tint).
 - Native HTML attrs flow through (`name`, `value`, `required`, `form`, `autoFocus`, etc.). `FormData.getAll(name)` returns the array of checked values for same-`name` checkboxes.
 - forwardRef points at the native `<input>` so consumers can `.focus()` or programmatically set `.indeterminate`.
 

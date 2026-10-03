@@ -51,6 +51,13 @@ export interface AvatarProps extends HTMLAttributes<HTMLSpanElement> {
    * - `'away'`    — amber (the categorical amber, dark enough to read at dot size).
    * - `'offline'` — gray.
    * Omit to render no dot at all.
+   *
+   * Setting `status` changes the accessible name to `"{name}, {status}"`
+   * (localized), because colour alone cannot carry the status (WCAG 1.4.1);
+   * query with `getByRole('img', { name: 'Alex, online' })`. Each status also
+   * renders a distinct shape (filled / half / barred / hollow), so it survives
+   * colour-vision deficiency and greyscale; the dot stays `aria-hidden` so
+   * nothing is announced twice.
    */
   status?: AvatarStatus;
   /**

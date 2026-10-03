@@ -38,14 +38,16 @@ export interface AvatarGroupProps extends HTMLAttributes<HTMLDivElement> {
 
   /**
    * Whether to render a name tooltip on each child avatar. Defaults to `true`
-   * inside the group; overridable per-child by setting `tooltip` on the Avatar.
+   * inside the group (a standalone `<Avatar tooltip>` is opt-in; group context
+   * flips that default). Set `false` on the group to suppress all tooltips;
+   * overridable per-child by setting `tooltip` on the Avatar.
    */
   tooltip?: boolean;
 
   /**
    * Fires when the user clicks the `+N` overflow button. The library does
    * NOT render a popover — apps decide what happens (open a modal, navigate,
-   * etc.). When omitted, the `+N` is rendered as a non-interactive `<span>`.
+   * etc.). When omitted, the `+N` is rendered as a non-interactive `<span>` (still labelled for AT).
    *
    * @param event The native click event.
    * @param hiddenCount The number of children not visible in the strip.

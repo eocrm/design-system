@@ -12,13 +12,17 @@ export type ConstrainHeight = ConstrainWidth | 'viewport' | 'viewport-70';
 export type ConstrainFlex = 'grow' | 'shrink' | 'auto' | 'none';
 
 export interface ConstrainProps extends HTMLAttributes<HTMLDivElement> {
-  /** Fixed width — a named step (`xs`–`xl`) or `'full'` (100%). */
+  /** Fixed width — a named step (`xs` 200 / `sm` 320 / `md` 448 / `lg` 640 / `xl` 800px, via `--measure-*` tokens) or `'full'` (100%). */
   width?: ConstrainWidth;
   /** Minimum width floor — a named step or `'full'` (100%). */
   minWidth?: ConstrainWidth;
   /** Maximum width cap — the common case (e.g. a search input at `'sm'`). */
   maxWidth?: ConstrainWidth;
-  /** Fixed height — a named measure, `'full'` (100%), `'viewport'` (100dvh), or `'viewport-70'` (70dvh). */
+  /**
+   * Fixed height — a named measure (same scale as the widths), `'full'` (100%),
+   * `'viewport'` (100dvh), or `'viewport-70'` (70dvh). `height="viewport-70"` with
+   * `maxHeight="lg"` makes a viewport-relative panel that never exceeds 640px.
+   */
   height?: ConstrainHeight;
   /** Minimum height floor — a named measure, `'full'`, `'viewport'`, or `'viewport-70'`. */
   minHeight?: ConstrainHeight;
@@ -35,6 +39,8 @@ export interface ConstrainProps extends HTMLAttributes<HTMLDivElement> {
    * - `'auto'` — size to content, may grow/shrink (`flex: 1 1 auto`).
    * - `'shrink'` — don't grow, may shrink (`flex: 0 1 auto`, the flex default).
    * - `'none'` — fixed, never grow/shrink (`flex: 0 0 auto`).
+   *
+   * Omit for no flex class: the element behaves as its flex container dictates.
    */
   flex?: ConstrainFlex;
   /** The content to size. Required — a Constrain with nothing inside has nothing to constrain. */

@@ -64,7 +64,7 @@ export interface CalendarProps extends Omit<
   locale?: string;
   /** Override locale-derived first day of week. */
   weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
-  /** Lane cap per week before "+N more" appears in affected cells (month view). Default 3. */
+  /** Lane cap per week (month view). Default 3. Events beyond it collapse into a "+N more" chip; clicking it fires `onDayClick(date)`. */
   maxLanesPerWeek?: number;
   /**
    * Hour range shown in week/day views (inclusive start, exclusive end).
@@ -86,6 +86,9 @@ export interface CalendarProps extends Omit<
    *
    * Ignored by month, week and agenda views — those have their own column
    * meaning.
+   *
+   * Don't approximate it with N side-by-side `<Calendar view="day">` in a
+   * `Split`: each brings its own header, gutter and scroll, so they drift.
    */
   resources?: readonly CalendarResource[];
   /**
