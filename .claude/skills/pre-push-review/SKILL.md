@@ -9,12 +9,15 @@ Two variants. Pick the one matching what you changed; if a PR touches both, run 
 
 ## Reviewer model and freshness
 
-Review effort is tiered. Pick the tier per round from the diff being reviewed.
+Review effort is tiered. Set the tier from the full branch diff; across rounds it can only go up, never down.
 
-- **Light** — docs/markdown, JSDoc-only, demo/playground-only, or story/copy
-  changes; no component behaviour, a11y semantics, tokens, or public API. Use
-  **one** fresh-context reviewer on Sonnet (`model: sonnet` at dispatch). If
-  fixes were applied, run one more Sonnet pass on the fix delta only; then done.
+- **Light** — docs/markdown and copy only, plus JSDoc wording that does not
+  change meaning (never `@remarks` or prop-doc semantics: they are the
+  agent-facing contract); no component behaviour, a11y semantics, tokens, or
+  public API. Use **one** fresh-context reviewer on Sonnet (`model: sonnet` at
+  dispatch). If fixes were applied, repeat the Sonnet pass on the fix delta
+  only until one returns `clean enough to stop`. Variant B mockup reviews are
+  always Standard.
 - **Standard** — everything else. Each round uses at least **two independent
   fresh-context agents** inheriting the session's currently selected/default
   model (no model override).
@@ -67,7 +70,7 @@ continue the review-fix loop autonomously.
 
 The library is consumed by AI agents who pattern-match against whatever we ship — a missing JSDoc, broken ARIA, or token slip propagates to every page they generate. Catching it here is cheaper than tracking it down across consumer code.
 
-**Applies to**: any change inside `packages/design-system/` — component code, tests, tokens, SCSS, `package.json`, `AI-PRIMER.md`, `README.md`, or that package's `CLAUDE.md`.
+**Applies to**: any change inside `packages/design-system/` — component code, tests, tokens, SCSS, `package.json`, `AI-PRIMER.md`, `docs/components/`, `docs/tokens.md`, `README.md`, or that package's `CLAUDE.md`.
 
 **Does NOT apply to**: changes scoped to `packages/playground/**`, root `README.md`, root `CLAUDE.md`, GitHub workflows, the Makefile, or other non-library files. Push those normally.
 
@@ -75,7 +78,7 @@ The library is consumed by AI agents who pattern-match against whatever we ship 
 
 1. **Run baseline gates** — `npm test`, `npm run typecheck`, `npm run lint:css`, `npm run build`, `npm pack --dry-run -w @eocrm/design-system`. They must all pass before the draft PR is opened.
 2. **Open the draft PR** — commit and push the scoped branch, then create a draft pull request. All review rounds and fixes target this same draft.
-3. **Spawn the independent fresh-context review agents (per the tier; Standard = at least two)** against the complete branch diff, targeted at `packages/design-system/` and per the tier in "Reviewer model and freshness" (Standard: inherit the session model, no override). Brief each explicitly on the 10 review categories: bugs, a11y, API inconsistencies, type safety, rule violations (Rules 1–7), test coverage, token discipline, SCSS, cross-package leakage, package/distribution. Tell each to read `packages/design-system/CLAUDE.md`, `AI-PRIMER.md`, and `README.md` first. Ask for output as Critical / Important / Nice-to-have / Regression-watch + a final verdict (`clean enough to stop` or `keep iterating`). Record the reviewed head.
+3. **Spawn the independent fresh-context review agents (per the tier; Standard = at least two)** against the complete branch diff, targeted at `packages/design-system/` and per the tier in "Reviewer model and freshness" (Standard: inherit the session model, no override). Brief each explicitly on the 10 review categories: bugs, a11y, API inconsistencies, type safety, rule violations (Rules 1–7), test coverage, token discipline, SCSS, cross-package leakage, package/distribution. Tell each to read `packages/design-system/CLAUDE.md`, `AI-PRIMER.md`, and `README.md` first, plus `.claude/skills/transient-state-a11y/SKILL.md` when a11y or transient state is in scope. Ask for output as Critical / Important / Nice-to-have / Regression-watch + a final verdict (`clean enough to stop` or `keep iterating`). Record the reviewed head.
 4. **Fix every Critical and every Important finding**. Nice-to-have is judgment — fix when cheap, skip when churn outweighs.
 5. **For every finding you deliberately skip**, leave a one-line explanation in your response so the next reviewer doesn't re-flag it.
 6. **Re-run affected gates, commit, and push** fixes to the same draft PR.
@@ -84,8 +87,8 @@ The library is consumed by AI agents who pattern-match against whatever we ship 
 
 ### Hard exit criteria
 
-- 0 Critical, 0 Important findings across both reviewers (or each remaining one has an explicit documented skip)
-- Both fresh reviewers in the final round return `clean enough to stop`
+- 0 Critical, 0 Important findings across every reviewer in the final round (or each remaining one has an explicit documented skip)
+- Every reviewer in the final round (per tier) returns `clean enough to stop`
 - All four gates (test, typecheck, lint, build) green
 - `npm pack --dry-run` shows no test files or internal-only paths in the tarball
 
@@ -133,8 +136,8 @@ Mockups are the most visible artifact of the library — they're what a new engi
 
 ### Hard exit criteria
 
-- 0 Critical, 0 Important findings across both reviewers (or each remaining one has an explicit documented skip).
-- Both fresh reviewers in the final round return `clean enough to stop`.
+- 0 Critical, 0 Important findings across every reviewer in the final round (or each remaining one has an explicit documented skip).
+- Every reviewer in the final round (per tier) returns `clean enough to stop`.
 - All three gates (test, build, lint) green.
 - All open TODOs in `packages/design-system/src/components/TODO.md` that the changed mockup touches are either still open with a matching inline comment, OR ticked + the refactor done in this PR.
 

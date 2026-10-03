@@ -61,7 +61,7 @@ Process for those:
 4. Wait for the `Quality / check` status check to pass
 5. Merge (squash or merge commit — caller's choice)
 
-**Standalone docs may be direct-pushed.** A `.md` change that is NOT bundled with a code/config/workflow change — typo fixes, restructures, new clarifications, JSDoc-style markdown — can go straight to `main`. Examples: editing root `README.md`, root `CLAUDE.md`, `packages/design-system/AI-PRIMER.md`, `packages/design-system/guidance.md`. If the doc change is _part of_ a code change (e.g., adding a component AND its guidance.md entry), it goes through the same PR as the code.
+**Standalone docs may be direct-pushed.** A `.md` change that is NOT bundled with a code/config/workflow change — typo fixes, restructures, new clarifications, JSDoc-style markdown — can go straight to `main`. Examples: editing root `README.md`, root `CLAUDE.md`, `packages/design-system/guidance.md`. Library docs (`packages/design-system/AI-PRIMER.md`, `packages/design-system/docs/**`) are not direct-pushable: they go through the PR + pre-push review. If the doc change is _part of_ a code change (e.g., adding a component AND its guidance.md entry), it goes through the same PR as the code.
 
 **Explicit override**: the user may authorize a direct push for any specific change ("just push it", "no PR needed", etc.). When in doubt, default to branch + PR for code; default to direct-push for standalone docs.
 

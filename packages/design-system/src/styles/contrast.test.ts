@@ -1222,8 +1222,8 @@ describe('an inset ring stays legible against every fill a .colored event can ta
  * - **Which occurrence.** A figure is matched anywhere in the file, so two
  *   sentences quoting the same number are indistinguishable, as are two
  *   different pairs that happen to round to the same two decimals.
- * - **Every other Markdown file.** Scoped to `AI-PRIMER.md` alone — the one doc
- *   that ships to consumers. `README.md`, `guidance.md` and the three
+ * - **Every other Markdown file.** Scoped to `AI-PRIMER.md` + `docs/**` — the docs
+ *   that ship to consumers. `README.md`, `guidance.md` and the three
  *   `CLAUDE.md` files state ratios too and nothing binds them.
  * - **WCAG's own thresholds.** `3:1`, `4.5:1`, `7:1`, `21:1` and `1:1` are
  *   normative constants cited throughout the document, not measurements of a

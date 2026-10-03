@@ -212,7 +212,7 @@ Each component is fully JSDoc'd. Hover any usage in your editor for inline docs 
 - [`Title`](docs/components/Title.md) — semantic heading
 - [`Text`](docs/components/Text.md) — body / inline text
 - [`Code`](docs/components/Code.md) — inline `<code>` chip
-- [`Kbd`](docs/components/Kbd.md) — `Kbd`
+- [`Kbd`](docs/components/Kbd.md) — keyboard-shortcut chips
 
 ### Typography hard rule
 
@@ -232,7 +232,7 @@ Each component is fully JSDoc'd. Hover any usage in your editor for inline docs 
 - [`Textarea`](docs/components/Textarea.md) — multi-line text
 - [`PasswordInput`](docs/components/PasswordInput.md) — password field with eye toggle + optional warnings
 - [`PasswordStrengthMeter`](docs/components/PasswordStrengthMeter.md) — 4-segment strength visualization
-- [`PhoneInput`](docs/components/PhoneInput.md) — `<PhoneInput>`
+- [`PhoneInput`](docs/components/PhoneInput.md) — E.164 phone field with country picker
 - [`OtpInput`](docs/components/OtpInput.md) — one-time-code field
 - [`Checkbox`](docs/components/Checkbox.md) — checkbox with native input + custom paint
 - [`ColorPicker`](docs/components/ColorPicker.md) — controlled HEX color picker (popover + inline)
@@ -391,7 +391,7 @@ The authoritative list of tokens per component lives in that component's `<Name>
 
 Components in this library handle their own transient state (`loading`, `busy`, async failure). For the components that do, you do not need to wrap them in a live region — and you should not, because two regions announcing one event talk over each other. **But not every component does**: see Known gaps below, and check the component's own JSDoc before assuming.
 
-For your OWN outcomes — a consumer-level event with no visible text of its own (e.g. "Authenticator app added") — reach for `<LiveRegion>` rather than hand-rolling a live region; see its TL;DR entry above.
+For your OWN outcomes — a consumer-level event with no visible text of its own (e.g. "Authenticator app added") — reach for `<LiveRegion>` rather than hand-rolling a live region; see [`LiveRegion`](docs/components/LiveRegion.md).
 
 The rule the library follows, so you can predict any component:
 

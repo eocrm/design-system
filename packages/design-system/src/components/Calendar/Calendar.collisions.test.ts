@@ -1,22 +1,9 @@
-import { readdirSync, readFileSync } from 'node:fs';
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-
-/** AI-PRIMER.md plus docs/tokens.md and every docs/components/*.md — the consumer-facing primer. */
-const readPrimer = (): string => {
-  const root = resolve(__dirname, '../../..');
-  const dir = resolve(root, 'docs/components');
-  return [
-    readFileSync(resolve(root, 'AI-PRIMER.md'), 'utf8'),
-    readFileSync(resolve(root, 'docs/tokens.md'), 'utf8'),
-    ...readdirSync(dir)
-      .sort()
-      .map((f) => readFileSync(resolve(dir, f), 'utf8')),
-  ].join('\n');
-};
 
 /**
  * The `color` + `tone` collision table is published TWICE — in the `color`
- * JSDoc on `CalendarEvent` and in AI-PRIMER.md — and both are read by the agents
+ * JSDoc on `CalendarEvent` and in docs/components/Calendar.md — and both are read by the agents
  * that pick category colours for a tenant. Neither was computed from anything;
  * both were measured once by hand and pasted.
  *
@@ -142,7 +129,7 @@ function tableRegion(text: string): string {
 /**
  * Pulls the `tone` -> [color, n] mapping out of a table region. The two copies
  * are formatted differently — a bullet per tone in the JSDoc, one running
- * sentence in AI-PRIMER.md — so this splits on whichever tone name comes next
+ * sentence in Calendar.md — so this splits on whichever tone name comes next
  * rather than on layout.
  */
 function documented(text: string, tone: string): Map<string, number> {
@@ -164,7 +151,10 @@ describe('the documented color/tone collision table matches the shipped tokens',
   const rows = measured();
   const sources: [label: string, text: string][] = [
     ['CalendarEvent.color JSDoc', readFileSync(resolve(__dirname, 'types.ts'), 'utf8')],
-    ['AI-PRIMER.md', readPrimer()],
+    [
+      'docs/components/Calendar.md',
+      readFileSync(resolve(__dirname, '../../../docs/components/Calendar.md'), 'utf8'),
+    ],
   ];
 
   it('resolves the palette and every band token', () => {

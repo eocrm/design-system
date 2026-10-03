@@ -138,7 +138,7 @@ Before completing a pull request that touches `packages/design-system/**`, you M
 
 **When this rule does NOT apply**: changes scoped to `packages/playground/**`, root `README.md`, root `CLAUDE.md`, GitHub workflows, the Makefile, or other non-library files. Push those normally.
 
-The skill holds the gates, the reviewer brief, the exit criteria, and the trivial-change escape hatch. Review effort is tiered: **Light** changes (docs/markdown, JSDoc-only, demo/playground-only, story/copy; no component behaviour, a11y semantics, tokens or public API) get one fresh reviewer on Sonnet; **Standard** changes (everything else) get two fresh reviewers per round inheriting the session model. Fable only with dpws's explicit direction. The skill defines the tiers and report-length caps. The first round reviews the complete branch diff. Later rounds review only commits since the previously reviewed head, together with the findings those commits are meant to fix.
+The skill holds the gates, the reviewer brief, the exit criteria, and the trivial-change escape hatch. Review effort is tiered: **Light** changes (docs/markdown, JSDoc-only, copy, JSDoc wording that does not change meaning; no component behaviour, a11y semantics, tokens or public API) get one fresh reviewer on Sonnet; **Standard** changes (everything else) get two fresh reviewers per round inheriting the session model. Fable only with dpws's explicit direction or approval. The skill defines the tiers and report-length caps. The first round reviews the complete branch diff. Later rounds review only commits since the previously reviewed head, together with the findings those commits are meant to fix.
 
 ### 9. Every user-facing string goes through i18n
 
@@ -180,6 +180,8 @@ See `AI-PRIMER.md` "Localization (i18n)" section for the consumer-facing API and
 ### 10. Transient state must reach assistive tech — and the mechanism is not a coin flip
 
 A component with a transient or async state (`loading`, `busy`, `pending`, an async failure) must expose it to screen readers, **or document why it doesn't**. The mechanism depends on one question: is it a property the user arrives at (fold into the accessible name), or a change while their attention is elsewhere (component-owned live region)?
+
+`aria-busy` is never sufficient on its own. Render the live region unconditionally.
 
 Before building or changing transient state UI, read `.claude/skills/transient-state-a11y/SKILL.md`.
 

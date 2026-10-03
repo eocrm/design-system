@@ -18,13 +18,13 @@
     "key": "a.Link-module__default.Link-module__link",
     "band": "left",
     "issue": 527,
-    "reason": "A Link that fills PersonDisplay's Description exactly (nowrap + ellipsis) has both horizontal bands of its outset ring outside the description's `overflow: clip visible`, measured at box[984.6,1091.4] inside a container at L=984.6 R=1091.4. The supported place for a control is PersonDisplay.Name, which does not clip, and that is documented on the component and in AGENTS.md (#527)."
+    "reason": "A Link that fills PersonDisplay's Description exactly (nowrap + ellipsis) has both horizontal bands of its outset ring outside the description's `overflow: clip visible`, measured at box[984.6,1091.4] inside a container at L=984.6 R=1091.4. The supported place for a control is PersonDisplay.Name, which does not clip, and that is documented on the component and in docs/components/PersonDisplay.md (#527)."
   },
   {
     "route": "/components/person-display",
     "key": "a.Link-module__default.Link-module__link",
     "band": "right",
     "issue": 527,
-    "reason": "A Link that fills PersonDisplay's Description exactly (nowrap + ellipsis) has both horizontal bands of its outset ring outside the description's `overflow: clip visible`, measured at box[984.6,1091.4] inside a container at L=984.6 R=1091.4. The supported place for a control is PersonDisplay.Name, which does not clip, and that is documented on the component and in AGENTS.md (#527)."
+    "reason": "A Link that fills PersonDisplay's Description exactly (nowrap + ellipsis) has both horizontal bands of its outset ring outside the description's `overflow: clip visible`, measured at box[984.6,1091.4] inside a container at L=984.6 R=1091.4. The supported place for a control is PersonDisplay.Name, which does not clip, and that is documented on the component and in docs/components/PersonDisplay.md (#527)."
   }
 ]
