@@ -14,7 +14,8 @@ import styles from './Banner.module.scss';
  * - `'success'` — green. A resolved system condition ("Email sending restored").
  * - `'warning'` — amber. Imminent or degrading ("Read-only in 30 minutes").
  * - `'danger'` — red. Something is broken or blocked now ("Email sending
- *   suspended"). With `live`, uses `role="alert"`.
+ *   suspended"). With `live`, uses `role="alert"`. Note: this is `danger`, not
+ *   Alert's `error`.
  */
 export type BannerTone = 'info' | 'success' | 'warning' | 'danger';
 
@@ -51,14 +52,14 @@ export interface BannerProps extends Omit<HTMLAttributes<HTMLDivElement>, 'role'
   action?: ReactNode;
 
   /**
-   * Whether the Banner is a live region. Defaults to `false`: `role="note"` —
-   * right for the common case of a banner that is present when the app loads
-   * (a live region mounted together with its text isn't reliably announced
-   * anyway).
+   * Whether the Banner is a live region. Defaults to `false`: `role="note"`,
+   * right for a banner that is present when the app loads.
    *
-   * Pass `live` for a banner that APPEARS mid-session in response to
-   * something (sending got suspended while the user works): `role="status"`
-   * (polite), or `role="alert"` (assertive) for `tone="danger"`.
+   * Pass `live` for a banner that APPEARS mid-session. Caveat: a mid-session
+   * Banner mounts together with its text, and a `role="status"` region that
+   * mounts with its text is not reliably announced. Only `tone="danger"` +
+   * `live` (`role="alert"`) is announced on insertion. For a must-hear
+   * non-danger message, pair the banner with a `<LiveRegion>` or a toast.
    *
    * Decide it at mount — flipping it on a mounted Banner announces nothing.
    * @default false
@@ -107,7 +108,8 @@ const DEFAULT_ICONS: Record<BannerTone, ReactNode> = {
  * </AppLayout>
  *
  * @example
- * // Module-scoped, under the TopBar; appeared mid-session so it's live:
+ * // Module-scoped, under the TopBar; appeared mid-session. danger + live is
+ * // announced on insertion (role="alert"):
  * <AppLayout
  *   contextBanner={inEmail && suspended && (
  *     <Banner tone="danger" live title="Email sending suspended."
@@ -140,6 +142,9 @@ const DEFAULT_ICONS: Record<BannerTone, ReactNode> = {
  * - ❌ System-wide messages in `contextBanner`, or route-specific ones in
  *   `banner`. The slot IS the scope signal.
  * - ❌ `live` on a banner that is present when the app loads.
+ * - ❌ Relying on `live` for a non-danger banner to be announced when it
+ *   appears — `role="status"` mounted with its text is not reliable. Add a
+ *   `<LiveRegion>` or a toast.
  * - ❌ Multiple actions or a paragraph of text — link to a details page.
  */
 export const Banner = forwardRef<HTMLDivElement, BannerProps>(function Banner(
@@ -150,6 +155,7 @@ export const Banner = forwardRef<HTMLDivElement, BannerProps>(function Banner(
   const role = !live ? 'note' : tone === 'danger' ? 'alert' : 'status';
   const renderedIcon = icon === null ? null : (icon ?? DEFAULT_ICONS[tone]);
   const hasTitle = title != null && title !== false && title !== '';
+  const hasAction = action != null && action !== false && action !== '';
   const hasChildren = children != null && children !== false && children !== '';
 
   return (
@@ -161,14 +167,18 @@ export const Banner = forwardRef<HTMLDivElement, BannerProps>(function Banner(
       data-tone={tone}
       className={clsx(styles.banner, className)}
     >
-      {renderedIcon && <span className={styles.icon}>{renderedIcon}</span>}
+      {renderedIcon && (
+        <span className={styles.icon} aria-hidden="true">
+          {renderedIcon}
+        </span>
+      )}
       <div className={styles.text}>
         <VisuallyHidden>{`${t(`banner.tone.${tone}`)}: `}</VisuallyHidden>
         {hasTitle && <strong className={styles.title}>{title}</strong>}
         {hasTitle && hasChildren && ' '}
         {children}
       </div>
-      {action && <div className={styles.action}>{action}</div>}
+      {hasAction && <div className={styles.action}>{action}</div>}
       {onDismiss && (
         <Button
           variant="ghost"

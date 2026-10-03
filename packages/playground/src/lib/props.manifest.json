@@ -328,7 +328,7 @@
           "type": "boolean",
           "required": false,
           "default": "false",
-          "description": "Whether the Banner is a live region. Defaults to `false`: `role=\"note\"` —\nright for the common case of a banner that is present when the app loads\n(a live region mounted together with its text isn't reliably announced\nanyway).\n\nPass `live` for a banner that APPEARS mid-session in response to\nsomething (sending got suspended while the user works): `role=\"status\"`\n(polite), or `role=\"alert\"` (assertive) for `tone=\"danger\"`.\n\nDecide it at mount — flipping it on a mounted Banner announces nothing."
+          "description": "Whether the Banner is a live region. Defaults to `false`: `role=\"note\"`,\nright for a banner that is present when the app loads.\n\nPass `live` for a banner that APPEARS mid-session. Caveat: a mid-session\nBanner mounts together with its text, and a `role=\"status\"` region that\nmounts with its text is not reliably announced. Only `tone=\"danger\"` +\n`live` (`role=\"alert\"`) is announced on insertion. For a must-hear\nnon-danger message, pair the banner with a `<LiveRegion>` or a toast.\n\nDecide it at mount — flipping it on a mounted Banner announces nothing."
         },
         {
           "name": "onDismiss",

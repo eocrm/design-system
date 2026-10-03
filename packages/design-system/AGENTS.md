@@ -2883,7 +2883,9 @@ import { AppLayout, Banner, Link } from '@eocrm/design-system';
 - `title` renders bold and **inline** before the text. Keep the whole thing to one line on desktop.
 - `action`: one `<Link>` or `<Button size="xs">`. `onDismiss` shows the × button and is **controlled**: the app persists the dismissal.
 - **The tone is spoken.** A visually hidden, localised prefix ("Warning: ") comes before the text.
-- **`live` defaults to `false`** (`role="note"`), because banners are usually present at load. Pass `live` for one that appears mid-session (`status`; `alert` for danger).
+- `icon`: overrides the tone's default icon; `icon={null}` hides it.
+- The tone is `danger`, not Alert's `error`.
+- **`live` defaults to `false`** (`role="note"`), because banners are usually present at load. Pass `live` for one that appears mid-session — but a Banner mounts together with its text, so `role="status"` is not reliably announced; only `tone="danger"` + `live` (`role="alert"`) is. For a must-hear non-danger message, add a `<LiveRegion>` or a toast alongside the banner.
 - Neither slot is sticky; only the TopBar pins.
 
 **Anti-patterns**
@@ -2893,6 +2895,7 @@ import { AppLayout, Banner, Link } from '@eocrm/design-system';
 - ❌ Routine stacks of banners in one slot. Show the most severe first.
 - ❌ A system-wide message in `contextBanner`, or a route-specific one in `banner`.
 - ❌ `live` on a banner that is present when the app loads.
+- ❌ Relying on `live` for a non-danger banner to be announced on appearing. Add a `<LiveRegion>` or a toast.
 
 ### `<ConfirmationPopover>` — opinionated "Are you sure?" preset
 

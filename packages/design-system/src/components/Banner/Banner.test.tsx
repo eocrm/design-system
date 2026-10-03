@@ -2,6 +2,7 @@ import { createRef } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Bell } from 'lucide-react';
+import { I18nProvider } from '../../i18n/I18nProvider';
 import { Banner } from './Banner';
 
 describe('<Banner>', () => {
@@ -110,5 +111,29 @@ describe('<Banner>', () => {
     expect(ref.current).toBeInstanceOf(HTMLDivElement);
     expect(ref.current).toHaveClass('custom');
     expect(ref.current?.className).not.toBe('custom');
+  });
+
+  it('speaks the tone prefix in the active locale (ru)', () => {
+    render(
+      <I18nProvider locale="ru">
+        <Banner tone="warning">Текст</Banner>
+      </I18nProvider>,
+    );
+    expect(screen.getByRole('note').textContent).toBe('Предупреждение: Текст');
+  });
+
+  it.each([[''], [false]] as const)('title=%j with children adds no leading space', (title) => {
+    render(<Banner title={title}>Body</Banner>);
+    expect(screen.getByRole('note').textContent).toBe('Information: Body');
+  });
+
+  it('action={false} renders no action wrapper', () => {
+    const { container } = render(<Banner action={false}>x</Banner>);
+    expect(container.firstElementChild?.children).toHaveLength(2);
+  });
+
+  it('hides the icon wrapper from assistive tech', () => {
+    const { container } = render(<Banner icon={<Bell />}>x</Banner>);
+    expect(container.querySelector('svg')?.parentElement).toHaveAttribute('aria-hidden', 'true');
   });
 });

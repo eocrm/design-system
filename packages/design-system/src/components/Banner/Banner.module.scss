@@ -6,7 +6,7 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--banner-row-gap) var(--banner-gap);
   width: 100%;
   padding: var(--banner-padding-y) var(--banner-padding-x);
@@ -35,6 +35,8 @@
 .icon {
   display: flex;
   flex: none;
+  align-items: center;
+  min-height: var(--banner-row-height);
   color: var(--banner-icon-info);
 }
 
@@ -56,6 +58,7 @@
 .text {
   flex: 1 1 var(--banner-text-min-width);
   min-width: 0;
+  padding-block: var(--banner-text-padding-y);
 }
 
 .title {
@@ -66,4 +69,5 @@
   display: flex;
   flex: none;
   align-items: center;
+  min-height: var(--banner-row-height);
 }
