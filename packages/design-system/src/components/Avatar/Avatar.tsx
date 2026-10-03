@@ -41,7 +41,7 @@ export interface AvatarProps extends HTMLAttributes<HTMLSpanElement> {
    *   — and don't set it per child inside one: the group's overlaps are
    *   sized for its fixed steps.
    *
-   * Inside `<AvatarGroup>`, the group's `size` overrides this.
+   * Inside `<AvatarGroup>`, defaults to the group's `size`.
    */
   size?: AvatarSize;
   /**
