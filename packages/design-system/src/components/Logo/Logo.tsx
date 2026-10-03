@@ -120,7 +120,7 @@ function getTextMetric(text: ReactNode): 'cap' | 'ex' {
  * sits within 0.1px. That is the correction, but it means every lockup with a
  * wordmark moved visually. All these figures are Chromium + Outfit-600 and are
  * not pinned by any test; re-measure in your own face. Size fixed-height brand
- * bars off the mark rather than the lockup; AGENTS.md has the per-shape figures.
+ * bars off the mark rather than the lockup; AI-PRIMER.md has the per-shape figures.
  *
  * @example
  * // Mark + wordmark — the common app-header / auth lockup:

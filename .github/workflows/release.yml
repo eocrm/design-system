@@ -10,7 +10,7 @@ name: Release
 #   Playground-only changes
 #   skip the publish step → no version bump just because a demo page tweaked.
 #   packages/design-system/CLAUDE.md is excluded too — it is the one file in
-#   that package that never reaches the tarball (AGENTS.md, README.md, and
+#   that package that never reaches the tarball (AI-PRIMER.md, README.md, and
 #   src/components/TODO.md all ship, so those DO warrant a release).
 # - deploy-playground runs after a successful quality and publish, or when the
 #   change detector succeeds and intentionally skips publishing.

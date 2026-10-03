@@ -18,7 +18,7 @@ Adding a component to `@eocrm/design-system` is **not complete** until:
 2. A demo page exists in the playground (`packages/playground/src/pages/components/<Name>Demo.tsx`)
 3. The demo is wired into `packages/playground/src/App.tsx` (route), `src/layout/AppShell/navItems.ts` (sidebar nav — `componentGroups`; `AppShell.tsx` only consumes it), `src/pages/components/ComponentsIndex.tsx` (overview grid) and `src/pages/components/overviewSchematics.tsx` (its schematic preview), and — if the demo passes `componentName` to `DemoLayout`, as nearly all do — the component name is added to the `ComponentName` union in `src/pages/mockups/registry.ts`, which that prop is typed to (`componentName` is optional, so a demo may omit both)
 4. The component is re-exported from `packages/design-system/src/index.ts`
-5. "When NOT to use / anti-patterns" prose is added to the component function's JSDoc (`@remarks` blocks) AND a one-section TL;DR is added to `packages/design-system/AGENTS.md`
+5. "When NOT to use / anti-patterns" prose is added to the component function's JSDoc (`@remarks` blocks) AND a one-section TL;DR is added as `packages/design-system/docs/components/<Name>.md` plus its index line in `packages/design-system/AI-PRIMER.md`
 6. A `CLUSTERS` entry is added in **both** parallel maps — `packages/design-system/src/_meta/manifest.ts` and `packages/design-system/scripts/generate-manifest.mjs` (they are kept in sync) — then `npm run build:manifest` is run from `packages/design-system`. Editing only the `.mjs` leaves `manifest.ts` stale and fails the manifest drift test in `npm test`.
 
 Missing any of these = component does not exist as far as the design system is concerned. Don't merge half-built components.
@@ -61,7 +61,7 @@ Process for those:
 4. Wait for the `Quality / check` status check to pass
 5. Merge (squash or merge commit — caller's choice)
 
-**Standalone docs may be direct-pushed.** A `.md` change that is NOT bundled with a code/config/workflow change — typo fixes, restructures, new clarifications, JSDoc-style markdown — can go straight to `main`. Examples: editing root `README.md`, root `CLAUDE.md`, `packages/design-system/AGENTS.md`, `packages/design-system/guidance.md`. If the doc change is _part of_ a code change (e.g., adding a component AND its guidance.md entry), it goes through the same PR as the code.
+**Standalone docs may be direct-pushed.** A `.md` change that is NOT bundled with a code/config/workflow change — typo fixes, restructures, new clarifications, JSDoc-style markdown — can go straight to `main`. Examples: editing root `README.md`, root `CLAUDE.md`, `packages/design-system/AI-PRIMER.md`, `packages/design-system/guidance.md`. If the doc change is _part of_ a code change (e.g., adding a component AND its guidance.md entry), it goes through the same PR as the code.
 
 **Explicit override**: the user may authorize a direct push for any specific change ("just push it", "no PR needed", etc.). When in doubt, default to branch + PR for code; default to direct-push for standalone docs.
 
@@ -86,4 +86,4 @@ If either fails, run `npm install` again — do not proceed with code changes un
 
 Releases are automatic. Merging to `main` triggers the `Release` workflow (`.github/workflows/release.yml`): it runs the quality gate, and **if the library changed** auto-increments from the latest `v*` tag (patch by default), refuses to overwrite existing tags, publishes to GitHub Packages, and pushes a `vX.Y.Z` tag. It then redeploys the playground whenever quality passes (even on playground-only changes). There is no manual workflow button — merge to release. Force a minor/major bump by editing `BUMP` in `release.yml` on a branch and merging.
 
-See `packages/design-system/README.md` for the consumer-side install instructions and `packages/design-system/AGENTS.md` for the agent-facing component primer.
+See `packages/design-system/README.md` for the consumer-side install instructions and `packages/design-system/AI-PRIMER.md` for the agent-facing component primer.

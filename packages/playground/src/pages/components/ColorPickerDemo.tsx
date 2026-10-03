@@ -88,7 +88,7 @@ function DisabledDemo() {
 }
 
 // Relative luminance + WCAG contrast ratio — demo-only helper (not shipped
-// by the library; see AGENTS.md's ColorPicker section for `panelFooter`).
+// by the library; see AI-PRIMER.md's ColorPicker section for `panelFooter`).
 function relativeLuminance(hex: string): number {
   const channels = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
   const [r, g, b] = channels.map((c) => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));

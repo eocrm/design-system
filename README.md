@@ -41,7 +41,7 @@ import { Button, Stack, Cluster, Card, Input, Avatar, Badge, Tabs } from '@eocrm
 ```
 
 Full install + bundler notes: [`packages/design-system/README.md`](./packages/design-system/README.md).
-Per-component contracts: hover any import for JSDoc; see [`packages/design-system/AGENTS.md`](./packages/design-system/AGENTS.md) for an agent-targeted primer.
+Per-component contracts: hover any import for JSDoc; see [`packages/design-system/AI-PRIMER.md`](./packages/design-system/AI-PRIMER.md) for an agent-targeted primer.
 
 ---
 
@@ -79,7 +79,7 @@ eocrm/design-system/
 ├── packages/
 │   ├── design-system/   ← @eocrm/design-system — the library that ships
 │   │   ├── README.md    ← install + bundler notes
-│   │   ├── AGENTS.md    ← agent primer: tokens, components, anti-patterns
+│   │   ├── AI-PRIMER.md    ← agent primer: tokens, components, anti-patterns
 │   │   └── CLAUDE.md    ← rules for modifying the library
 │   ├── design-tokens/   ← validated source + generated npm and Compose contracts
 │   └── playground/      ← dev gallery (deployed to GH Pages, never published to npm)
@@ -113,4 +113,4 @@ platform layers.
 
 70+ components and counting — buttons, the full form set (Input, Select, Checkbox, Radio, Switch, Slider, date/time pickers, …), layout primitives (Stack, Cluster, Grid, AppLayout), overlays (Modal, Drawer, Popover, Tooltip, Toast), and data display (Table, DataTable, Kanban). Each is unit-tested, JSDoc'd with `@example` and `@remarks` blocks, and demoed in the playground.
 
-The canonical, always-current roster lives in the **[live playground](https://eocrm.github.io/design-system/)** and **[`AGENTS.md`](./packages/design-system/AGENTS.md)** — refer to those rather than a hand-maintained list that drifts out of date.
+The canonical, always-current roster lives in the **[live playground](https://eocrm.github.io/design-system/)** and **[`AI-PRIMER.md`](./packages/design-system/AI-PRIMER.md)** — refer to those rather than a hand-maintained list that drifts out of date.

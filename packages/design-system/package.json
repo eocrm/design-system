@@ -25,7 +25,8 @@
   },
   "files": [
     "src",
-    "AGENTS.md",
+    "AI-PRIMER.md",
+    "docs",
     "!src/**/*.test.ts",
     "!src/**/*.test.tsx",
     "!src/**/*.test.js",

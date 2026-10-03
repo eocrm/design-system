@@ -76,7 +76,7 @@ Exactly ONE issue per invocation.
    package Hard rules in `packages/design-system/CLAUDE.md` — read both now, don't
    rely on memory. That checklist covers: tests beside the component, a playground
    demo page + wiring (route + sidebar nav + overview grid), the `src/index.ts`
-   re-export, JSDoc `@remarks` anti-patterns, an `AGENTS.md` TL;DR, and the
+   re-export, JSDoc `@remarks` anti-patterns, a `docs/components/<Name>.md` TL;DR + `AI-PRIMER.md` index line, and the
    CLUSTERS manifest entry. (The root CLAUDE.md's playground paths used to be
    stale — `pages/demo/` + `DemoIndex.tsx` — and were corrected; the demo lives
    at `packages/playground/src/pages/components/<Name>Demo.tsx` and the overview

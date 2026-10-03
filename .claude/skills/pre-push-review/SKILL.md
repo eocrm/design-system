@@ -1,6 +1,6 @@
 ---
 name: pre-push-review
-description: Use when preparing a pull request that touches packages/design-system/** (library variant) or packages/playground/src/pages/mockups/** (mockup variant). Opens a draft PR after baseline gates, then runs the mandatory review-fix loop until two fresh reviewers say "clean enough to stop" before marking it ready. Required by design-system CLAUDE.md Hard rule 8 and playground CLAUDE.md Hard rule 7.
+description: Use when preparing a pull request that touches packages/design-system/** (library variant) or packages/playground/src/pages/mockups/** (mockup variant). Opens a draft PR after baseline gates, then runs the mandatory review-fix loop until the fresh reviewers (per tier) say "clean enough to stop" before marking it ready. Required by design-system CLAUDE.md Hard rule 8 and playground CLAUDE.md Hard rule 7.
 ---
 
 # Pre-push review-fix cycle
@@ -9,18 +9,27 @@ Two variants. Pick the one matching what you changed; if a PR touches both, run 
 
 ## Reviewer model and freshness
 
-Each review round uses at least **two independent fresh-context agents**.
+Review effort is tiered. Pick the tier per round from the diff being reviewed.
+
+- **Light** — docs/markdown, JSDoc-only, demo/playground-only, or story/copy
+  changes; no component behaviour, a11y semantics, tokens, or public API. Use
+  **one** fresh-context reviewer on Sonnet (`model: sonnet` at dispatch). If
+  fixes were applied, run one more Sonnet pass on the fix delta only; then done.
+- **Standard** — everything else. Each round uses at least **two independent
+  fresh-context agents** inheriting the session's currently selected/default
+  model (no model override).
+- **Fable** only with dpws's explicit direction or approval, in any role.
+
 Freshness means the agents receive the review brief and repository state, but
 none of the implementation conversation or another reviewer's reasoning.
 
-Use the session's currently selected/default model and **do not set a model
-override**. Model inheritance is intentional: an Opus session reviews with
-Opus, and a Codex session reviews with its active model. Do not substitute a
-different model based on assumptions about strength, cost, or token usage.
+For Standard rounds, run the two reviews in parallel when the harness supports
+it. If fewer than two agent slots are available, run them sequentially; they
+must still be separate fresh contexts.
 
-Run the two reviews in parallel when the harness supports it. If fewer than
-two agent slots are available, run them sequentially; they must still be
-separate fresh contexts.
+Report caps: reviewer reports are at most ~300 words excluding test-run lines,
+and the brief states the cap. Implementer reports are at most ~200 words plus
+the sha and test lines.
 
 ## Review scope by round
 
@@ -39,11 +48,11 @@ The review loop runs against a visible draft pull request:
 
 1. Run the variant's baseline gates.
 2. Commit and push the scoped changes, then open a **draft** pull request.
-3. Run the first two-reviewer round against the draft PR's complete branch
+3. Run the first review round (per tier) against the draft PR's complete branch
    diff, then record the reviewed head.
 4. Fix every load-bearing finding autonomously, rerun affected gates, commit,
    and push the fixes to the same draft PR.
-5. Repeat with two new fresh-context reviewers after every fix round, scoped
+5. Repeat with new fresh-context reviewers (per tier) after every fix round, scoped
    to commits since the previously reviewed head.
 6. Mark the pull request **ready for review** only when every reviewer in the
    same final round returns `clean enough to stop` and all exit criteria pass.
@@ -58,7 +67,7 @@ continue the review-fix loop autonomously.
 
 The library is consumed by AI agents who pattern-match against whatever we ship — a missing JSDoc, broken ARIA, or token slip propagates to every page they generate. Catching it here is cheaper than tracking it down across consumer code.
 
-**Applies to**: any change inside `packages/design-system/` — component code, tests, tokens, SCSS, `package.json`, `AGENTS.md`, `README.md`, or that package's `CLAUDE.md`.
+**Applies to**: any change inside `packages/design-system/` — component code, tests, tokens, SCSS, `package.json`, `AI-PRIMER.md`, `README.md`, or that package's `CLAUDE.md`.
 
 **Does NOT apply to**: changes scoped to `packages/playground/**`, root `README.md`, root `CLAUDE.md`, GitHub workflows, the Makefile, or other non-library files. Push those normally.
 
@@ -66,11 +75,11 @@ The library is consumed by AI agents who pattern-match against whatever we ship 
 
 1. **Run baseline gates** — `npm test`, `npm run typecheck`, `npm run lint:css`, `npm run build`, `npm pack --dry-run -w @eocrm/design-system`. They must all pass before the draft PR is opened.
 2. **Open the draft PR** — commit and push the scoped branch, then create a draft pull request. All review rounds and fixes target this same draft.
-3. **Spawn at least two independent fresh-context review agents** against the complete branch diff, targeted at `packages/design-system/` and inheriting the current session's default model without an override. Brief each explicitly on the 10 review categories: bugs, a11y, API inconsistencies, type safety, rule violations (Rules 1–7), test coverage, token discipline, SCSS, cross-package leakage, package/distribution. Tell each to read `packages/design-system/CLAUDE.md`, `AGENTS.md`, and `README.md` first. Ask for output as Critical / Important / Nice-to-have / Regression-watch + a final verdict (`clean enough to stop` or `keep iterating`). Record the reviewed head.
+3. **Spawn the independent fresh-context review agents (per the tier; Standard = at least two)** against the complete branch diff, targeted at `packages/design-system/` and per the tier in "Reviewer model and freshness" (Standard: inherit the session model, no override). Brief each explicitly on the 10 review categories: bugs, a11y, API inconsistencies, type safety, rule violations (Rules 1–7), test coverage, token discipline, SCSS, cross-package leakage, package/distribution. Tell each to read `packages/design-system/CLAUDE.md`, `AI-PRIMER.md`, and `README.md` first. Ask for output as Critical / Important / Nice-to-have / Regression-watch + a final verdict (`clean enough to stop` or `keep iterating`). Record the reviewed head.
 4. **Fix every Critical and every Important finding**. Nice-to-have is judgment — fix when cheap, skip when churn outweighs.
 5. **For every finding you deliberately skip**, leave a one-line explanation in your response so the next reviewer doesn't re-flag it.
 6. **Re-run affected gates, commit, and push** fixes to the same draft PR.
-7. **Spawn another round of at least two fresh reviewers** with the inherited default model. Give them the prior blocking findings and only the diff since the previously reviewed head; ask them to verify the fixes and inspect that scoped diff for new breakage.
+7. **Spawn another round of fresh reviewers (per the tier)** per the tier in "Reviewer model and freshness". Give them the prior blocking findings and only the diff since the previously reviewed head; ask them to verify the fixes and inspect that scoped diff for new breakage.
 8. **Repeat autonomously** until every reviewer in the same round returns `clean enough to stop`, then mark the PR ready for review.
 
 ### Hard exit criteria
@@ -102,7 +111,7 @@ Mockups are the most visible artifact of the library — they're what a new engi
 
 1. **Run baseline gates** — `make test`, `make build` (typecheck + bundle), `make lint`. They must all pass before the draft PR is opened.
 2. **Open the draft PR** — commit and push the scoped branch, then create a draft pull request. All review rounds and fixes target this same draft.
-3. **Spawn at least two independent fresh-context review agents** against the complete branch diff, targeted at the changed mockup file(s), inheriting the current session's default model without an override. Record the reviewed head and brief each on these 10 review categories:
+3. **Spawn the independent fresh-context review agents (per the tier; Standard = at least two)** against the complete branch diff, targeted at the changed mockup file(s), per the tier in "Reviewer model and freshness" (Standard: inherit the session model, no override). Record the reviewed head and brief each on these 10 review categories:
    1. **Hard rule 6 compliance** — no inline `style={...}`, no raw HTML tags, no co-located `.module.scss`. Any escape-hatch mock has a matching entry in `packages/design-system/src/components/TODO.md` AND an inline `{/* TODO: replace when … */}` comment.
    2. **Registry sync** — every library component used in the mockup is listed in that mockup's `usesComponents` array in `registry.ts`. No stale entries (a name listed that's no longer imported).
    3. **Imports** — only from `@eocrm/design-system`, never relative paths into the library (Rule 2). Demo-only deps from Rule 5 stay out.
@@ -119,7 +128,7 @@ Mockups are the most visible artifact of the library — they're what a new engi
 4. **Fix every Critical and every Important finding**. Nice-to-have is judgment — fix when cheap, skip when churn outweighs.
 5. **For every finding deliberately skipped**, leave a one-line explanation so the next reviewer doesn't re-flag it.
 6. **Re-run affected gates, commit, and push** fixes to the same draft PR.
-7. **Spawn another round of at least two fresh reviewers** with the inherited default model. Give them the prior blocking findings and only the diff since the previously reviewed head; ask them to verify the fixes and inspect that scoped diff for new breakage.
+7. **Spawn another round of fresh reviewers (per the tier)** per the tier in "Reviewer model and freshness". Give them the prior blocking findings and only the diff since the previously reviewed head; ask them to verify the fixes and inspect that scoped diff for new breakage.
 8. **Repeat autonomously** until every reviewer in the same round returns `clean enough to stop`, then mark the PR ready for review.
 
 ### Hard exit criteria

@@ -5,7 +5,7 @@
  *
  * - the drift-detection Vitest test alongside this file
  * - the playground's `/components/dependencies` page
- * - (future) AGENTS.md auto-generated architecture section
+ * - (future) AI-PRIMER.md auto-generated architecture section
  *
  * The graph is computed from import statements — no per-component
  * metadata to maintain. A component is a "primitive" if it imports no
@@ -35,7 +35,7 @@ export interface ComponentManifestEntry {
 export type ComponentManifest = Record<string, ComponentManifestEntry>;
 
 /**
- * Functional-cluster table. Mirrors the AGENTS.md and AppShell sidebar
+ * Functional-cluster table. Mirrors the AI-PRIMER.md and AppShell sidebar
  * grouping. Update this when adding a component to keep the cluster
  * column accurate; the test alongside this file fails if a component is
  * unclassified.
