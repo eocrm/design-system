@@ -60,7 +60,12 @@ export interface LightboxProps {
   open: boolean;
   /** Fired when the Lightbox wants to close — Esc, backdrop click, the × button. */
   onOpenChange: (open: boolean) => void;
-  /** The images. An empty array renders nothing. */
+  /**
+   * The images and documents (mixed galleries are supported; see `kind` on
+   * `LightboxItem` for PDFs). A PDF without a `thumbnail` shows a document-icon
+   * placeholder in the strip; an unsafe (non-http(s)) document `src` shows a
+   * "Preview unavailable" message. An empty array renders nothing.
+   */
   items: LightboxItem[];
   /** Initial image index (uncontrolled). Defaults to `0`. Clamped to range. */
   defaultIndex?: number;

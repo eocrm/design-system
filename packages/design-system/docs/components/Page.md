@@ -29,7 +29,6 @@
 
 <!-- props:end -->
 
-- `gap`: `'xs'` (4) / `'sm'` (8) / `'md'` (12) / `'lg'` (16, **default**) / `'xl'` (24) / `'2xl'` (32). The default `'lg'` is the canonical CRM page rhythm — match it across pages unless you have a specific reason.
 - Page is the OUTER wrapper at the page root. Inside it, sections compose with `<PageHeader>`, `<Card>`, `<Table>`, etc.
 - **Use Page at the page root, not nested.** For sub-regions (inside a card, modal, drawer), use `<Stack>` instead — those contexts have their own padding contract.
 - Page does NOT add padding. The page container (AppShell content, modal body) provides outer padding; Page just provides inner section rhythm.

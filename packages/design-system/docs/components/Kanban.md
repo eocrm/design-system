@@ -72,7 +72,7 @@ function handleMove(event: KanbanMoveEvent) {
 
 <!-- props:end -->
 
-Props on the root: `onMove?: (event: KanbanMoveEvent) => void` — fires once per drop with the diff between the initial layout and the final layout. Consumer applies the move (immutable splice in/out). Controlled-only: `onMove` fires exactly once per drag (on drop), never during it. Column layout (header, footer) goes before / after the `<Kanban.Card>` children. Columns and Cards both need stable `id` props (`string | number`).
+Controlled-only: the consumer applies each `onMove`. Column layout (header, footer) goes before / after the `<Kanban.Card>` children.
 
 **Drag origin** (hybrid): `<Kanban.Handle>` inside a Card restricts drag origin to the Handle. Without a Handle, the whole Card is draggable (and dnd-kit assigns it `role="button"`). With a Handle the card div gets `role="article"`.
 

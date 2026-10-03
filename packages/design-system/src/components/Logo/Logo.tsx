@@ -12,6 +12,8 @@ export interface LogoProps extends HTMLAttributes<HTMLDivElement> {
   /**
    * The brand mark image URL — typically an imported SVG/PNG asset. The mark is
    * a **consumer-owned asset**; the design system ships no logo of its own.
+   * Rendered as an `<img>` (`object-fit: contain`) with no CSS recolor — the
+   * asset carries its own color. For third-party SSO marks use `<BrandIcon>`.
    */
   src: string;
   /**
@@ -29,7 +31,7 @@ export interface LogoProps extends HTMLAttributes<HTMLDivElement> {
   /**
    * Accessible name for the mark when there's no `text` (used as the image
    * `alt`). Omit for a decorative mark (`alt=""`), or when `text` is present
-   * (the wordmark is the name).
+   * (the wordmark is the name). Never pass both `text` and `label`.
    */
   label?: string;
   /**

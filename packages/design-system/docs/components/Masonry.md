@@ -27,8 +27,7 @@ Packs variable-height children into columns (greedy shortest-column-first) →
 left→right reading order, balanced heights. Measures on the client + rebalances
 via `ResizeObserver`.
 
-- `columns: number` **xor** `minColumnWidth: string` (default `'240px'`, px).
-- `gap`: `xs`|`sm`|`md` (default)|`lg`|`xl`|`2xl`.
+- `columns` **xor** `minColumnWidth` (px string, default `'240px'`) — pass one.
 
 **When NOT to use:** equal-height tiles → `<Grid>`; one column → `<Stack>`;
 wrapping rows → `<Cluster>`. Display content only — rebalancing remounts children.

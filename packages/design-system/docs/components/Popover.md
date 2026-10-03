@@ -46,7 +46,7 @@
 <!-- prettier-ignore -->
 | Prop | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `children` | `ReactElement<unknown, string \| JSXElementConstructor<any>>` | yes | — | Exactly one React element that accepts a ref. Unlike `Popover.Trigger`, Anchor injects ONLY the floating-positioning ref — no `onClick`, no keyboard handler, and no `aria-haspopup` / `aria-expanded` / `aria-controls`. Use it when the anchor element already owns its open-toggle and ARIA (e.g. an interactive `FilterChip` whose body `<button>` self-manages `aria-haspopup`/`aria-expanded`), and you drive the popover's open state yourself (controlled `open` + `onOpenChange`). The child must accept a ref (`forwardRef`); raw DOM elements and this library's components qualify, and it should be focusable (a `<button>` or `tabIndex` host) so Escape can return focus to it on close. |
+| `children` | `ReactElement<unknown, string \| JSXElementConstructor<any>>` | yes | — | Exactly one React element that accepts a ref. Unlike `Popover.Trigger`, Anchor injects ONLY the floating-positioning ref — no `onClick`, no keyboard handler, and no `aria-haspopup` / `aria-expanded` / `aria-controls`. Use it when the anchor element already owns its open-toggle and ARIA (e.g. an interactive `FilterChip` whose body `<button>` self-manages `aria-haspopup`/`aria-expanded`), and you drive the popover's open state yourself (controlled `open` + `onOpenChange`). The child must accept a ref (`forwardRef`); raw DOM elements and this library's components qualify, and it should be focusable (a `<button>` or `tabIndex` host) so Escape can return focus to it on close. Wrapping such a chip in `Popover.Trigger` instead would stamp that ARIA onto its `role="group"` root, not the body button. |
 
 ### `PopoverCloseProps`
 
@@ -86,11 +86,8 @@
 <!-- props:end -->
 
 - Compound API: `<Popover>` is the provider; `<Popover.Trigger>` clones its single child to inject ARIA + click; `<Popover.Content>` portals to `document.body` and positions via Floating UI; `<Popover.Heading>` (optional) wires `aria-labelledby`; `<Popover.Close>` clones its child to inject a close-onClick.
-- `<Popover.Anchor>` positions Content against its child by injecting ONLY the floating ref — no `onClick`, no keyboard handler, and no `aria-haspopup`/`aria-expanded`/`aria-controls`. Use it (instead of `Popover.Trigger`) for a CONTROLLED popover whose anchor already owns its own toggle + ARIA — e.g. an interactive `FilterChip` whose body `<button>` self-manages `aria-haspopup`/`aria-expanded` via `onActivate`/`expanded`; wrapping it in `Popover.Trigger` would redundantly stamp that ARIA onto the chip's `role="group"` root, whereas `Popover.Anchor` leaves the ARIA solely on the body button.
 - Trigger child must accept a ref (`forwardRef`). `<Button>` does.
 - **Non-modal**: focus moves to the panel on open; Tab traverses INTO content, then OUT to the page behind. Click-outside or Escape dismisses. Page is NOT inert.
-- `<Popover.Content>` props: `side` (`'top'` | `'right'` | `'bottom'` | `'left'`, default `'bottom'`), `align` (default `'center'`), `sideOffset` (default `10`), `minWidth`, `maxWidth` (overrides the default 360px cap — pass a px number, a CSS length, `'fit-content'`, or `'none'` for wide content like calendars/tables).
-- `<Popover.Heading>` props: `as` (`'h2'` – `'h6'`, default `'h3'`).
 - Opens with a short scale-fade from the trigger side (140ms). Closes instantly. Respects `prefers-reduced-motion: reduce`.
 - **From a DropdownMenu item.** Wrap a `<DropdownMenu.Item closeOnSelect={false}>` as the `<Popover.Trigger>` child — the Item itself becomes the trigger, so the full highlighted row opens the popover. `closeOnSelect={false}` keeps the menu open while the popover is shown.
 - Z-layer `--z-popover: 1050` — above dropdown, below modal/toast/tooltip.

@@ -39,7 +39,6 @@
 
 <!-- props:end -->
 
-- `revealOn`: `'hover'` (default — hover OR keyboard focus) · `'focus'` (focus only) · `'visible'` (always).
 - Bars render only when they have content; icon-only `actions` need `aria-label`s.
 - MediaTile clips + overlays only — the `media` (`<Image aspectRatio>`) owns the tile's aspect.
 

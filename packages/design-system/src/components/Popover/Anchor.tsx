@@ -13,7 +13,9 @@ export interface PopoverAnchorProps {
    * yourself (controlled `open` + `onOpenChange`). The child must accept a ref
    * (`forwardRef`); raw DOM elements and this library's components qualify, and
    * it should be focusable (a `<button>` or `tabIndex` host) so Escape can
-   * return focus to it on close.
+   * return focus to it on close. Wrapping such a chip in `Popover.Trigger`
+   * instead would stamp that ARIA onto its `role="group"` root, not the body
+   * button.
    */
   children: ReactElement;
 }

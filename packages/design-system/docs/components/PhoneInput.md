@@ -51,4 +51,3 @@ Inside a `<Field>` the label and error wiring are injected:
 **Known limitations**
 
 - Format-as-you-type moves the caret to the end of the number field after each reformat; editing in the middle of the number bounces the caret to the end.
-- `countries={[]}` (empty array) shows ALL countries, not none.
