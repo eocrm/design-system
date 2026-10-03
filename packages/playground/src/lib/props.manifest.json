@@ -137,6 +137,20 @@
     "AppLayout": {
       "props": [
         {
+          "name": "banner",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "System-wide banner slot — full WINDOW width, above the sidebar + content\nrow. For messages that apply wherever the user is: maintenance, billing\noverdue, impersonation. Pass a `<Banner>` (or several, most severe first).\nNot sticky: it scrolls away with the page while the `topBar` stays pinned.\nOmit (or pass `null` / `false`) for no wrapper.\n\nWith `sidebarPinned`, the pinned sidebar starts below this banner, so at\nscroll position 0 its bottom (a `Rail.Footer`) sits up to one banner height\nbelow the fold until the page scrolls past the banner. This is accepted —\nbanners are temporary."
+        },
+        {
+          "name": "contextBanner",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Context banner slot — inside the content column, between the `topBar` and\nthe padded content region, full-bleed within the column. For messages\nscoped to a module or route (\"Email sending suspended\" on the Email\npages); the app decides which routes render it. Pass a `<Banner>`. Not\nsticky. Page-level messages belong in the content as `<Alert>` instead."
+        },
+        {
           "name": "topBar",
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
@@ -269,6 +283,59 @@
           "required": false,
           "default": "baseline",
           "description": "Vertical alignment within the surrounding line of text.\n- `baseline` (default) — rides the text baseline; right for body-size text.\n- `middle` — centers the badge on the line box; use for a badge inside a\n  heading line (`<Title>` / `<PageHeader.Title>`), where baseline riding\n  makes the badge look sunken next to large text."
+        }
+      ]
+    },
+    "Banner": {
+      "props": [
+        {
+          "name": "tone",
+          "type": "BannerTone",
+          "required": false,
+          "default": "",
+          "description": "Tone. Defaults to `'info'`. See `BannerTone`."
+        },
+        {
+          "name": "title",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Optional bold lead-in, rendered INLINE before `children` in the same text\nflow (\"**Scheduled maintenance** Sat 22:00–23:00.\"). Keep it short — the\nbanner is one line on desktop.\n\nCollapses the native HTML `title` (tooltip) attribute."
+        },
+        {
+          "name": "children",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Message text. Wraps with the title. Keep to one sentence."
+        },
+        {
+          "name": "icon",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Override the tone's default icon (any ReactNode, typically a 16px lucide\nicon with `aria-hidden`). `null` hides it.\n\nDefaults: `info` → `Info`, `success` → `CheckCircle2`,\n`warning` → `AlertTriangle`, `danger` → `XCircle`."
+        },
+        {
+          "name": "action",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "One action pinned to the end of the row — typically a `<Link>` (\"Details\")\nor a `<Button size=\"xs\">` (\"Review bounces\"). Banner doesn't lay out\nmultiple actions; pass one."
+        },
+        {
+          "name": "live",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "Whether the Banner is a live region. Defaults to `false`: `role=\"note\"` —\nright for the common case of a banner that is present when the app loads\n(a live region mounted together with its text isn't reliably announced\nanyway).\n\nPass `live` for a banner that APPEARS mid-session in response to\nsomething (sending got suspended while the user works): `role=\"status\"`\n(polite), or `role=\"alert\"` (assertive) for `tone=\"danger\"`.\n\nDecide it at mount — flipping it on a mounted Banner announces nothing."
+        },
+        {
+          "name": "onDismiss",
+          "type": "(() => void)",
+          "required": false,
+          "default": "",
+          "description": "Called when the × is clicked. When set, the × renders. **Controlled** —\nBanner keeps no hidden state and persists nothing; the app decides what\n\"dismissed\" means (per session, per incident, per user) and stops\nrendering it."
         }
       ]
     },
@@ -5900,6 +5967,7 @@
     "DividerVariant": "\"solid\" | \"dashed\"",
     "DividerSize": "\"sm\" | \"md\" | \"lg\"",
     "AlertTone": "\"info\" | \"success\" | \"warning\" | \"error\"",
+    "BannerTone": "\"info\" | \"success\" | \"warning\" | \"danger\"",
     "AvatarSize": "\"sm\" | \"md\" | \"lg\" | \"inline\" | \"xl\"",
     "AvatarStatus": "\"online\" | \"busy\" | \"away\" | \"offline\"",
     "BadgeTone": "\"info\" | \"success\" | \"warning\" | \"neutral\" | \"danger\" | \"purple\"",

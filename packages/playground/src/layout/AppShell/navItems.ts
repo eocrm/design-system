@@ -266,6 +266,7 @@ export const componentGroups: { heading: string; items: NavItem[] }[] = [
     heading: 'Feedback',
     items: [
       { to: '/components/alert', label: 'Alert', icon: AlertCircle, end: false },
+      { to: '/components/banner', label: 'Banner', icon: Megaphone, end: false },
       { to: '/components/toast', label: 'Toast', icon: Bell, end: false },
     ],
   },

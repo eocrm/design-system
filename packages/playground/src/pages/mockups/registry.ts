@@ -4,6 +4,7 @@ export type ComponentName =
   | 'Accordion'
   | 'Alert'
   | 'Avatar'
+  | 'Banner'
   | 'Badge'
   | 'BrandIcon'
   | 'Breadcrumb'
