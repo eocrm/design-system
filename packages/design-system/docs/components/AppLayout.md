@@ -4,6 +4,26 @@
 <AppLayout topBar={<TopBar />} sidebar={<Rail>{nav}</Rail>}>
   <Page>{content}</Page>
 </AppLayout>
+
+// No sidebar — top bar + content only
+<AppLayout topBar={<TopBar />}>
+  <Page>{content}</Page>
+</AppLayout>
+
+// Tall pages: pin the sidebar so a Rail's footer/CollapseToggle stays at the viewport bottom
+<AppLayout sidebar={<Rail>{nav}<Rail.Footer>{footer}</Rail.Footer></Rail>} sidebarPinned>
+  <Page>{content}</Page>
+</AppLayout>
+
+// System banner above everything + a module-scoped one under the top bar
+<AppLayout
+  banner={<Banner tone="info" title="Maintenance Saturday 22:00.">CRM will be read-only.</Banner>}
+  contextBanner={suspended && <Banner tone="danger" title="Email sending suspended." />}
+  topBar={<TopBar />}
+  sidebar={<Rail>{nav}</Rail>}
+>
+  <Page>{content}</Page>
+</AppLayout>
 ```
 
 <!-- props:start -->
@@ -36,3 +56,17 @@
 - **`sidebarOverlayBelow`** (default: none): below a **viewport** threshold (`'sm'` 480 / `'md'` 640 / `'lg'` 768) the sidebar leaves the flow and renders in a left `<Drawer>`, so the content column gets the full viewport width — the fix for a 240px rail eating a phone screen. **AppLayout renders no trigger** — put a hamburger in your `topBar` and gate it with the `useBelowBreakpoint` hook (see below) so it only shows while the overlay is active. Because there's no built-in trigger, `sidebarOpen` + `onSidebarOpenChange` are technically optional props but **effectively required together**: with both omitted nothing can ever open the drawer. Once open, the drawer has a visible close button and a header that can be swiped left to dismiss, in addition to Esc/backdrop dismissal. `sidebarPinned` is ignored below the threshold (the drawer owns the sidebar's box there).
 - The `children` slot renders inside a plain `<div>`, not a `<main>` — `AppLayout` can be nested in a demo or documentation preview (never in product code, see above), so it must not unilaterally claim the page's `main` landmark. The consuming app owns that: wrap your top-level routed content in your own `<main>` once, at your app shell (not per-page), the way the playground's `AppShell` does.
 - `banner` / `contextBanner`: slots for `<Banner>`. `banner` spans the full window above the sidebar; `contextBanner` sits under the top bar, outside the content padding. Neither is sticky. With `sidebarPinned`, the footer of a pinned rail sits up to one banner height below the fold until the page scrolls past the banner.
+
+- A `<Sticky>` inside the main region must clear the pinned `topBar`: use `<Sticky top="topbar">`, which resolves to the standard top-bar height plus the normal content gap. Override `--sticky-top-topbar` when your chrome uses a custom height or clearance.
+- `sidebarOverlayBelow` measures the **viewport** (`matchMedia`), like `<Rail collapseBelow>` and unlike `<Grid collapseBelow>`'s container query: the sidebar's presence in the row is what the threshold changes, so a container query would be circular. The `sidebar` node moves between the in-flow slot and the `Drawer`, remounting it, so a `Rail`'s internal state (expanded `Rail.Group`s, scroll position) resets each time, by design. It renders in a remaining-height wrapper directly below `<Drawer.Header>`, NOT in `<Drawer.Body>`, so it does not inherit the body's `overflow-y: auto`; a 100%-height `<Rail>` shrinks below its min-content size and scrolls its own body while the footer stays visible. A custom non-`Rail` sidebar needs its own height-filling scroll container, especially on short viewports (phone landscape, ~380px).
+
+#### When NOT to use
+
+- ❌ In-page content layout: use `<Stack>` / `<Cluster>` / `<Grid>`.
+- ❌ A chromeless full-bleed page (sign-in / 404 / error): use `<Screen>`.
+
+#### Anti-patterns
+
+- ❌ Setting `sidebarOverlayBelow` without rendering a trigger: the sidebar becomes unreachable below the threshold.
+- ❌ Duplicating the threshold as a raw media query in consumer CSS to hide the trigger. Use `useBelowBreakpoint(bp)` with the same token so the two can't drift.
+- ❌ `<Rail collapseBelow>` and `sidebarOverlayBelow` at the same breakpoint: the rail would render icon-only inside a drawer that already has room for labels. Pick one behavior per width.

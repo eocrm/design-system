@@ -28,6 +28,9 @@ import { Accordion } from '@eocrm/design-system';
 
 // Controlled
 <Accordion type="single" value={open} onValueChange={setOpen}>...</Accordion>
+
+// Borderless + large, e.g. hero FAQ sections
+<Accordion type="single" collapsible variant="borderless" size="lg">...</Accordion>
 ```
 
 <!-- props:start -->
@@ -94,6 +97,7 @@ import { Accordion } from '@eocrm/design-system';
 - **Smooth animation** via CSS `grid-template-rows: 0fr → 1fr`. No JS measurement.
 - **Heading wrapping** — Trigger is wrapped in `<h3>` by default per WAI-ARIA APG. Override via `headerLevel` on Item.
 - **Keyboard**: ArrowDown/Up cycles between triggers, Home/End jumps to ends, Space/Enter toggles. Disabled items are skipped.
+- **Anatomy**: `Accordion.Item` shares its value, disabled/open state and stable ids with Trigger and Content via context. Content is `role="region"` with `aria-labelledby` pointing at its trigger. The Trigger's default indicator is a `<ChevronDown>` that rotates 180° when open.
 
 #### When NOT to use
 
@@ -106,3 +110,5 @@ import { Accordion } from '@eocrm/design-system';
 - ❌ Nesting `<Accordion.Trigger>` inside a heading the consumer also renders manually. Trigger ALREADY wraps itself in a heading.
 - ❌ Setting `aria-expanded` manually on the Trigger via `{...props}`. The component owns the ARIA contract.
 - ❌ Using `headerLevel="h1"`. There should only be one `<h1>` per page; Accordion lives below it.
+
+- ❌ Putting bulky or primary content in the Trigger `actions` slot. It is for a few small header controls (an icon `<Button>`, a `<DropdownMenu>` trigger, a `<Switch>`); the section's real content belongs in `<Accordion.Content>`.

@@ -22,8 +22,8 @@ export interface AccordionItemProps extends Omit<HTMLAttributes<HTMLDivElement>,
 }
 
 /**
- * Item wrapper. Provides `AccordionItemContext` so Trigger and Content can
- * read this item's value, disabled state, open state, and stable ids.
+ * Item wrapper providing the item context to its Trigger and Content.
+ * @see docs/components/Accordion.md
  */
 export const AccordionItem = forwardRef<HTMLDivElement, AccordionItemProps>(function AccordionItem(
   { value, disabled = false, headerLevel = 'h3', children, className, ...props },

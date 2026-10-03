@@ -12,6 +12,15 @@
 >
   <Button variant="danger">Delete</Button>
 </ConfirmationPopover>
+
+// Default variant: lighter-weight (archive, publish, etc.)
+<ConfirmationPopover
+  title="Archive this contact?"
+  description="You can unarchive later from the archive view."
+  onConfirm={() => archive(id)}
+>
+  <Button variant="secondary">Archive</Button>
+</ConfirmationPopover>
 ```
 
 <!-- props:start -->
@@ -48,3 +57,15 @@
 - **Return focus** (`returnFocusRef`): on Confirm, Cancel and Escape focus returns to `returnFocusRef` when it is connected, otherwise to the trigger. Unlike `<Modal>`, an outside click never restores focus — it stays wherever the user clicked. `returnFocusRef` is read at CLOSE time. A statically-set ref also fires when the user closes by clicking the trigger again; to apply it only after a successful confirm, set it in `onConfirm` and clear it in `onOpenChange(true)`. A named target is scrolled into view with `{ block: 'nearest' }`.
 - Anchors above the trigger by default (`side="top"`).
 - **From a DropdownMenu item (kebab Delete pattern).** Wrap a `<DropdownMenu.Item closeOnSelect={false}>` as the trigger — clicking anywhere on the row opens the confirmation. The menu stays open until the user dismisses it (Escape or click outside). To close the menu after the action resolves, drive `DropdownMenu`'s `open` state externally and call `setMenuOpen(false)` inside `onConfirm` — and pass `returnFocusRef={kebabTriggerRef}` (the menu's trigger), because closing the menu unmounts the item that is the popover's trigger, so focus would otherwise drop to `<body>`.
+
+#### When NOT to use
+
+- ❌ A multi-step flow ("type the name to confirm") → `Modal`. This is for one-tap confirmations.
+- ❌ A non-blocking heads-up that needs no yes/no answer → a Toast or inline UI.
+
+#### Anti-patterns
+
+- ❌ A hanging-forever `onConfirm` Promise. There is no timeout; the popover stays pending indefinitely, so add a timeout / abort inside your `onConfirm` if the operation may stall.
+- ❌ Expecting the rejection to render inside the popover body. Surface errors via toast or page-level UI.
+- ❌ Controlled `open` while relying on pending-blocks-close. With `open` / `onOpenChange` you can force-close from outside while pending; coordinate `pending` in your own code if that matters.
+- ❌ Letting a confirmed delete remove the trigger with no `returnFocusRef`: focus drops to `<body>`. Aim the ref at the next row's trigger (or the empty state) inside `onConfirm`.

@@ -35,3 +35,8 @@
 - `height` / `minHeight` / `maxHeight`: the same named scale plus `'viewport'` (100dvh) and `'viewport-70'` (70dvh). Combine `height="viewport-70"` with `maxHeight="lg"` to make a viewport-relative panel that never exceeds the 640px large measure.
 - `flex`: `'grow'` (fill remaining space) / `'auto'` / `'shrink'` (no grow, may shrink — the CSS flex default) / `'none'` (fixed). Omitting `flex` applies no class; the element behaves as its flex container dictates. Use `flex="grow"` to let a child fill a `Cluster` row.
 - No padding/border/background — for those use `<Card>`; for a full-bleed shell use `<Screen>`.
+
+#### Anti-patterns
+
+- ❌ Reaching for Constrain to add `margin` / `padding`. It carries size/flex only; spacing comes from the parent layout primitive.
+- ❌ Spacing or arranging children: use `<Stack>` / `<Cluster>` / `<Grid>`.

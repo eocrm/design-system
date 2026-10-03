@@ -16,6 +16,11 @@
   </Cluster>
 </Cluster>
 
+// Tag list: wraps to multiple lines when narrow
+<Cluster gap="xs">
+  {tags.map((t) => <Badge key={t.id} tone={t.tone}>{t.label}</Badge>)}
+</Cluster>
+
 // Inline, inside a <button>/<a>/<label> where a <div> is invalid HTML —
 // as="span" renders inline-flex (e.g. icon + label in a ButtonGroup.Item):
 <ButtonGroup.Item value="list">
@@ -68,3 +73,17 @@
   )}
 />
 ```
+
+Use it for button rows, toolbars, tag lists and breadcrumbs: anywhere you would otherwise write `display: flex; gap: ...; flex-wrap: wrap`.
+
+#### When NOT to use
+
+- ❌ Aligned columns of equal width → `<Grid>`. Cluster wraps unpredictably at narrow widths and isn't a column system.
+- ❌ Content that must never wrap: `wrap={false}` if you must, but reconsider whether that's truly required on narrow viewports.
+
+#### Anti-patterns
+
+- ❌ Cluster as a 2-column layout. Use `<Grid columns={2}>` for "two columns, always".
+- ❌ `style={{ marginLeft: 'auto' }}` on a child to push it right. Use `justify="between"` (with a sibling on the left) or split into two Clusters in the parent.
+- ❌ `minWidth0` on a Cluster holding buttons or badges: it lets the container shrink, so non-truncatable content gets clipped. Use it on the container whose TEXT should give way.
+- ❌ `as="span"` as a general styling hook. Reach for it only when block content is invalid HTML (inside `<button>`, `<a>`, `<label>`); in normal flow the default block `div` is what you want.

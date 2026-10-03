@@ -52,14 +52,8 @@ export interface DayViewProps {
 }
 
 /**
- * Internal: single-day hour grid. Shows the day at `cursor` with an
- * AllDayBand above and an HourGrid below. With `resources`, the day splits
- * into one column per resource (the "resource day view" every scheduling
- * product ships) instead of a single column.
- *
- * @remarks
- * **When NOT to use:** Do not render `DayView` directly — use the `Calendar`
- * shell with `view='day'`.
+ * Internal: single-day hour grid.
+ * @see docs/components/Calendar.md
  */
 export function DayView({
   cursor,

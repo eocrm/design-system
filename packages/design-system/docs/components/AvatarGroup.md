@@ -6,6 +6,14 @@
     <Avatar key={m.id} name={m.name} src={m.avatarUrl} status={m.presence} />
   ))}
 </AvatarGroup>
+
+// Static: without onOverflowClick the +N is non-interactive
+<AvatarGroup max={3}>
+  <Avatar name="Alex Rivera" />
+  <Avatar name="Priya Patel" />
+  <Avatar name="Tom Kim" />
+  <Avatar name="Sara Chen" />
+</AvatarGroup>
 ```
 
 <!-- props:start -->
@@ -30,3 +38,13 @@
 - `onOverflowClick(event, hiddenCount)` — the library does NOT render its own popover. The app decides what happens (open a `<Popover>` listing all members, navigate to a page, open a modal). When omitted, `+N` renders as a non-interactive `<span>` (still labelled for AT).
 - The group wrapper is `role="list"` and each visible avatar is wrapped in a `role="listitem"` div; the +N (button or span) is the last list item.
 - forwardRef to the outer `<div>`. `className` is merged.
+
+#### When NOT to use
+
+- A single avatar: use `<Avatar>` directly.
+- Showing member counts but not faces: use a `Badge` next to a label.
+
+#### Anti-patterns
+
+- ❌ Wrapping `<AvatarGroup>` in a `<button>` as one click target. The `+N` is the click affordance; the visible avatars are deliberately not interactive. Wrap individual avatars in `<button>` / `<Link>` if needed.
+- ❌ Mixing avatar sizes inside one group on purpose. Per-child `size` wins, which is useful for emphasising one member but visually noisy if used carelessly.

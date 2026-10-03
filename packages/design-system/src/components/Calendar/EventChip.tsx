@@ -24,21 +24,8 @@ export interface EventChipProps {
 }
 
 /**
- * Internal: a single event bar inside a Calendar month grid. Renders as a
- * tone-styled button wrapped in a Tooltip so the full "time + title" is
- * always reachable even when the chip text is ellipsis-clipped in narrow
- * day columns.
- *
- * - Non-`allDay` events show a subtle tinted background with a time prefix
- *   in the chip and "<time> <title>" in the tooltip.
- * - `allDay` events use a filled tone background, no time prefix, and the
- *   tooltip shows just the title.
- * - Tone defaults to `'neutral'` when not set on the event.
- *
- * @remarks
- * **When NOT to use:** Do not render `EventChip` directly in application code —
- * it is an internal building block consumed by `MonthView`. Use `Calendar` (or
- * `MonthView`) from the design system and pass events via the `events` prop.
+ * Internal: a single event bar inside a Calendar month grid.
+ * @see docs/components/Calendar.md
  */
 export function EventChip({
   event,

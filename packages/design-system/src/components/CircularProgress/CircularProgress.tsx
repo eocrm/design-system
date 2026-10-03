@@ -86,52 +86,8 @@ const RADIUS = 16;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;
 
 /**
- * Circular progress primitive (donut shape). Tracks known progress like
- * `<Progress>`, but in a circular geometry — better for inline loading
- * indicators ("Saving…" next to a button) and tight spaces where a horizontal
- * bar wouldn't fit. Indeterminate mode is a spinning arc (the canonical
- * "Loader" / "Spinner" use case).
- *
- * `role="progressbar"` is locked (can't be overridden via the `role` prop).
- *
- * @example
- * // Determinate donut, default size:
- * <CircularProgress value={45} />
- *
- * @example
- * // Centered percentage label:
- * <CircularProgress value={75} label />
- *
- * @example
- * // Indeterminate spinner inline next to a button (the canonical loader):
- * <Cluster gap="sm">
- *   <Button>Save</Button>
- *   <CircularProgress size="sm" aria-label="Saving" />
- * </Cluster>
- *
- * @example
- * // Large stat-card-style donut:
- * <CircularProgress size="lg" value={80} tone="success" label />
- *
- * @example
- * // Custom label (e.g. for "n of N" or a status word):
- * <CircularProgress value={3} max={10} label={`3 / 10`} />
- *
- * @remarks When NOT to use
- * - For horizontal progress next to row content. Use `<Progress>` linear.
- * - To replace `<Skeleton>` for loading placeholders. Skeleton implies
- *   "structure on its way"; CircularProgress implies "I'm working on it."
- * - As a decorative icon. The `role="progressbar"` is announced to SR.
- *
- * @remarks Anti-patterns
- * - ❌ Hand-rolled spinning `<svg>` per page. Use `<CircularProgress />`
- *   indeterminate — same visual, accessible, reduced-motion-aware.
- * - ❌ `<CircularProgress value={0}>` to render an empty circle.
- *   `value={0}` is determinate (0% done) and renders an empty arc; the
- *   intent is usually "indeterminate" — omit `value` entirely instead.
- * - ❌ `<CircularProgress size="sm" label>` expecting centered text in a
- *   16px circle. The label is auto-suppressed at `sm` — by design. Use
- *   `md` or `lg` if you need the label.
+ * Circular progress primitive (donut shape); indeterminate mode is a spinner.
+ * @see docs/components/CircularProgress.md
  */
 export const CircularProgress = forwardRef<HTMLDivElement, CircularProgressProps>(
   function CircularProgress(

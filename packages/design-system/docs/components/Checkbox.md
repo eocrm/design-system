@@ -4,6 +4,17 @@
 <Checkbox label="I agree" />
 <Checkbox checked={agreed} onChange={setAgreed} label="Subscribe" />
 <Checkbox indeterminate checked={allSelected} onChange={selectAll} aria-label="Select all" />
+
+// "Select all" pattern
+<Checkbox
+  checked={allSelected}
+  indeterminate={someSelected && !allSelected}
+  onChange={(next) => (next ? selectAll() : selectNone())}
+  aria-label="Select all rows"
+/>
+
+// Icon-only (no visible label)
+<Checkbox aria-label="Select row" checked={isSelected} onChange={setIsSelected} />
 ```
 
 <!-- props:start -->
@@ -33,3 +44,17 @@
 - `invalid` adds the danger border + sets `aria-invalid='true'`. Pair with a visible error + `aria-describedby`. Hover preview is border-only (no fill tint).
 - Native HTML attrs flow through (`name`, `value`, `required`, `form`, `autoFocus`, etc.). `FormData.getAll(name)` returns the array of checked values for same-`name` checkboxes.
 - forwardRef points at the native `<input>` so consumers can `.focus()` or programmatically set `.indeterminate`.
+
+- The native input owns all a11y (keyboard, screen reader, form submission); the custom paint owns the look. States: checked / unchecked / indeterminate / disabled / invalid.
+
+#### When NOT to use
+
+- ❌ A single binary on/off setting that applies immediately → `Switch`.
+- ❌ One-of-many choice from a fixed set → `Radio`.
+- ❌ Multi-select from a long list → `<Select multi>`.
+
+#### Anti-patterns
+
+- ❌ Treating `indeterminate` as a third value. It is a display flag; `checked` is still the underlying boolean.
+- ❌ Wrapping the checkbox in your own `<label>`. It is already wrapped; an outer `<label>` nests two and breaks the click contract.
+- ❌ Omitting `label` AND `aria-label`. Screen readers announce just "checkbox" with no context.

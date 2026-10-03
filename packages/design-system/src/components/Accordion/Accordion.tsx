@@ -109,83 +109,8 @@ interface AccordionMultipleProps {
 export type AccordionProps = AccordionBaseProps & (AccordionSingleProps | AccordionMultipleProps);
 
 /**
- * Vertically-stacked collapsible panels. Compound component:
- *
- * - `<Accordion>` — root (this component). Configures mode + state + collapsible.
- * - `<Accordion.Item value>` — one section, identified by a string value.
- * - `<Accordion.Trigger>` — clickable header (wrapped in `<h3>` by default).
- * - `<Accordion.Content>` — the collapsible body.
- *
- * Two modes via the discriminated `type` prop:
- * - `type='single'` — one item open at a time. Optional `collapsible` lets the user close the open item.
- * - `type='multiple'` — any combination of items can be open.
- *
- * Both controlled (`value` + `onValueChange`) and uncontrolled (`defaultValue`) supported.
- *
- * @example
- * // Single-open with collapsible (FAQ-style)
- * <Accordion type="single" collapsible defaultValue="faq-2">
- *   <Accordion.Item value="faq-1">
- *     <Accordion.Trigger>How do I reset my password?</Accordion.Trigger>
- *     <Accordion.Content>Visit Settings → Security → Reset.</Accordion.Content>
- *   </Accordion.Item>
- *   <Accordion.Item value="faq-2">
- *     <Accordion.Trigger>How do I export my data?</Accordion.Trigger>
- *     <Accordion.Content>Use the gear icon → Export → CSV.</Accordion.Content>
- *   </Accordion.Item>
- * </Accordion>
- *
- * @example
- * // Multiple — independent sections
- * <Accordion type="multiple" defaultValue={['account', 'notifications']}>
- *   <Accordion.Item value="account">...</Accordion.Item>
- *   <Accordion.Item value="notifications">...</Accordion.Item>
- * </Accordion>
- *
- * @example
- * // Controlled
- * const [open, setOpen] = useState('');
- * <Accordion type="single" collapsible value={open} onValueChange={setOpen}>
- *   ...
- * </Accordion>
- *
- * @example
- * // Borderless + large for hero FAQ sections
- * <Accordion type="single" collapsible variant="borderless" size="lg">
- *   ...
- * </Accordion>
- *
- * @example
- * // Collapsible cards: gap between items + chevron on the left + a header
- * // controls slot (rendered outside the toggle, so it doesn't toggle the section).
- * // `actionsWhenClosed="hide"` fades the controls out on collapsed cards.
- * <Accordion type="multiple" gap="md" indicatorSide="left" actionsWhenClosed="hide">
- *   <Accordion.Item value="billing">
- *     <Accordion.Trigger
- *       actions={
- *         <Button iconOnly size="xs" variant="ghost" aria-label="Edit billing">
- *           <Pencil size={14} />
- *         </Button>
- *       }
- *     >
- *       Billing
- *     </Accordion.Trigger>
- *     <Accordion.Content>…</Accordion.Content>
- *   </Accordion.Item>
- * </Accordion>
- *
- * @remarks When NOT to use
- * - Mutually-exclusive view switchers → `<Tabs>`.
- * - Single show/hide toggle → `<Button>` + conditional render.
- * - Sequential wizard flows → dedicated Stepper (not yet shipped).
- *
- * @remarks Anti-patterns
- * - ❌ Nesting `<Accordion.Trigger>` inside a heading the consumer also renders. Trigger wraps itself in a heading.
- * - ❌ Manually setting `aria-expanded` on the Trigger via `{...props}`. The component owns the ARIA contract.
- * - ❌ Using `headerLevel="h1"`. There should only be one `<h1>` per page; Accordion lives below it.
- * - ❌ Putting bulky or primary content in the Trigger `actions` slot. It's for a
- *   few small header controls (an icon `<Button>`, a `<DropdownMenu>` trigger, a
- *   `<Switch>`) — the section's real content belongs in `<Accordion.Content>`.
+ * Vertically-stacked collapsible panels. Compound component with `Item`, `Trigger` and `Content`.
+ * @see docs/components/Accordion.md
  */
 const AccordionRoot = forwardRef<HTMLDivElement, AccordionProps>(
   function AccordionRoot(props, ref) {
@@ -336,7 +261,10 @@ const AccordionMultipleImpl = forwardRef<HTMLDivElement, MultipleImplProps>(
   },
 );
 
-/** Compound export. */
+/**
+ * Compound export.
+ * @see docs/components/Accordion.md
+ */
 export const Accordion = Object.assign(AccordionRoot, {
   Item: AccordionItem,
   Trigger: AccordionTrigger,

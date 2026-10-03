@@ -70,30 +70,8 @@ const ICONS: Record<BrandName, BrandSvg> = {
 };
 
 /**
- * Renders a third-party brand's official multi-color mark — for SSO buttons and
- * brand chrome. Colors are brand-mandated (not themeable). Decorative by
- * default; pass `title` for standalone, labeled use.
- *
- * @example
- * // In an SSO button (decorative — the text carries the name):
- * <Button variant="secondary">
- *   <BrandIcon name="google" size={16} /> Continue with Google
- * </Button>
- *
- * @example
- * // Standalone, labeled:
- * <BrandIcon name="yandex" title="Yandex" size={24} />
- *
- * @remarks When NOT to use
- * - Generic UI glyphs (chevron, search, close) → use `lucide-react`. This is
- *   only for third-party brand marks.
- * - Recoloring to match your theme — unsupported; brand marks keep their
- *   official colors.
- *
- * @remarks Anti-patterns
- * - ❌ A decorative `BrandIcon` next to visible brand text AND a `title` —
- *   double-announces ("Google Continue with Google"). Keep it `aria-hidden`
- *   (the default) beside a label.
+ * Renders a third-party brand's official multi-color mark, for SSO buttons and brand chrome.
+ * @see docs/components/BrandIcon.md
  */
 export const BrandIcon = forwardRef<SVGSVGElement, BrandIconProps>(function BrandIcon(
   { name, size = 20, title, className, ...rest },

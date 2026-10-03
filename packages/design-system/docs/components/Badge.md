@@ -12,6 +12,18 @@
 <Badge color="amber">Marketing</Badge>
 <Badge color="teal">Engineering</Badge>
 <Badge variant="stripe" color="violet">Design</Badge>
+
+// Tag list
+<Cluster gap="xs">
+  <Badge tone="purple">Enterprise</Badge>
+  <Badge tone="info">Pipeline 2026</Badge>
+</Cluster>
+
+// Inside a heading line: align="middle" so the badge doesn't ride the heading's baseline
+<Title order={1}>
+  <Text as="span" size="inherit" tone="muted">ENG-5</Text> Fix login flow{' '}
+  <Badge align="middle" tone="warning">In progress</Badge>
+</Title>
 ```
 
 <!-- props:start -->
@@ -38,4 +50,17 @@
 - `dot`: `start` / `end` — adds a small filled circle in the badge's text color before or after the content. Use for Slack/GitHub-style status indicators (`<Badge tone="success" dot="start">Online</Badge>`). Decorative only (`aria-hidden`); the text is still the accessible label.
 - `align`: `baseline` (default) / `middle`. Use `align="middle"` for a badge inside a heading line (`<Title>` / `<PageHeader.Title>`) — pairs with `<Text size="inherit">` — so it centers on the line box instead of riding the heading's baseline and looking sunken next to large text.
 - **Non-interactive.** If it's clickable, use `<Button>` instead.
-- Doesn't auto-add `role="status"`. Wrap in `aria-live` if a state change should be announced. **This is not an inconsistency with `EntityChip`, which announces its own state** — a Badge tone is a durable property of the row you are looking at, not a change that happens while you are elsewhere, so there is nothing for the component to announce. See [Transient state and screen readers](../../AI-PRIMER.md#transient-state-and-screen-readers) for the rule both follow.
+- Doesn't auto-add `role="status"`. Wrap the badge (or a parent region) in `aria-live="polite"` if a state change should be announced. **This is not an inconsistency with `EntityChip`, which announces its own state** — a Badge tone is a durable property of the row you are looking at, not a change that happens while you are elsewhere, so there is nothing for the component to announce. See [Transient state and screen readers](../../AI-PRIMER.md#transient-state-and-screen-readers) for the rule both follow.
+
+#### When NOT to use
+
+- ❌ As a button. Badges are non-interactive labels; if it's clickable use a `Button` or `Link`.
+- ❌ For long-form text. Badges are 1-2 words max.
+- ❌ `align="middle"` outside a heading line. It fixes the baseline-vs-line-box mismatch next to large text; keep the default `baseline` next to body-size text.
+
+#### Anti-patterns
+
+- ❌ Mixing tone meanings across pages. `success` may mean "Won" on Deals and "Active" on Contacts, but never use `success` for anything negative.
+- ❌ Stacking 4+ badges on a single row. If you have that many tags, the design problem is information density, not the badge.
+- ❌ Wrapping a Badge in a `<button>` to make it clickable. Use a `Button` with an appropriate variant.
+- ❌ Using `color` (palette) for status. Use `tone` (semantic); palette colors carry no built-in meaning and the mapping may shift over time.

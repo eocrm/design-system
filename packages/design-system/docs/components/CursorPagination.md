@@ -2,6 +2,16 @@
 
 ```tsx
 <CursorPagination hasPrevious={hasPrev} hasNext={hasNext} onPrevious={loadPrev} onNext={loadNext} />
+
+// Activity feed with reversed direction labels
+<CursorPagination
+  hasPrevious={hasNewer}
+  hasNext={hasOlder}
+  onPrevious={loadNewer}
+  onNext={loadOlder}
+  previousLabel="Newer"
+  nextLabel="Older"
+/>
 ```
 
 <!-- props:start -->
@@ -29,3 +39,6 @@
 - `previousLabel` / `nextLabel` accept `ReactNode` — override for reverse-chronological feeds (`'Newer'` / `'Older'`).
 - Shares the `<Pagination>` size scale (`sm` / `md` / `lg`).
 - Use `<Pagination>` (numbered) when you have a known total page count. CursorPagination is for streams.
+
+- A11y: the wrapper is `<nav aria-label="Pagination">` (overridable for disambiguation). Disabled buttons are native, so screen readers announce "dimmed" and skip them in Tab order.
+- Use `<Pagination>` (numbered, with jump-to-page and progress indication) when you have a total page count.

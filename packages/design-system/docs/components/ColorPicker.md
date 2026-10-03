@@ -19,6 +19,9 @@ const [hex, setHex] = useState('#4F46E5');
 
 // Inline (always-visible panel — for theme builders, settings rows):
 <ColorPicker.Panel value={hex} onChange={setHex} />
+
+// With consumer-supplied preset swatches:
+<ColorPicker.Panel value={hex} onChange={setHex} presets={['#4F46E5', '#10B981', '#F59E0B', '#EF4444']} />
 ```
 
 <!-- props:start -->
@@ -70,8 +73,10 @@ const [hex, setHex] = useState('#4F46E5');
 <!-- props:end -->
 
 - **Controlled-only.** `value: string` in `#RRGGBB` form. Loose input accepted on the HEX text field (`#FFF`, `FFF`, `#ffffff`); the component always emits the canonical `#RRGGBB` (uppercase, with `#`).
+- **The Panel owns local HSV state.** The UI thinks in HSV (the SV pad needs S+V, the hue strip needs H) but the contract is HEX. HEX→HSV per render is lossy at saturation 0 (dragging hue at black would not update because the HEX stays black), so HSV is tracked locally and re-synced from `value` only when an external write changes it. Use `<ColorPicker>` (not the Panel) when you need a compact trigger.
+- **The SV pad is `role="application"`** with an `aria-valuetext` describing the state: 2D pointer-driven controls have no standard ARIA pattern (slider is 1D, button is binary); same precedent as ImageCrop's viewport. Pointer-driven; keyboard adjusts S/V by 1% per arrow (10% with Shift). Internal, not exported.
 - **Two distribution shapes via the compound API.** `<ColorPicker>` is the popover-wrapped form-field-ready widget. `<ColorPicker.Panel>` is the same picker without the popover wrapping — drop it directly into a settings page or theme builder.
-- **Default trigger** is an input-field-shaped button with a 16×16 swatch + uppercase HEX text. Override via `<ColorPicker.Trigger asChild>{customNode}</ColorPicker.Trigger>` (the child must `forwardRef` because `<Popover.Trigger>` clones it).
+- **Default trigger** is an input-field-shaped button with a 16×16 swatch + uppercase HEX text. Override via `<ColorPicker.Trigger asChild>{customNode}</ColorPicker.Trigger>` (the child must `forwardRef` and accept `onClick` because `<Popover.Trigger>` clones it). `<ColorPicker.Trigger>` renders nothing itself; it is a marker child that `<ColorPicker>` reads from its `children`, so it only has meaning inside `<ColorPicker>`.
 - **Field-ready.** `<Field label>` connects `id`, naming, description, and invalid state to either the default or custom trigger rather than the role-less picker wrapper. `required` remains a visible Field marker; native trigger buttons do not expose `aria-required` because that state is unsupported for buttons.
 - **`onChange` fires per drag/zoom tick (high frequency).** Use `onChangeEnd` for commit-style logic (network calls, history snapshots) — it fires on pointer release, slider release, HEX input blur, and preset click.
 - **Presets via `presets?: string[]`.** Invalid entries are dropped silently. The library doesn't ship a default palette — pass your own brand colors. Selected swatch gets an inset ring + check overlay.
@@ -102,9 +107,10 @@ hsvToHex({ h: 240, s: 100, v: 100 }); // '#0000FF'
 #### Hard rule
 
 - ❌ Passing non-HEX `value` — named colors, `rgb()`, `hsl()`, alpha hex (`#RRGGBBAA`). Convert in the consumer or use the exported `normalizeHex` first. Invalid input falls back to `#000000` with a dev-only warning.
+- ❌ Using `<ColorPicker.Trigger>` outside `<ColorPicker>`.
 - ❌ Reaching into the picker's internal HSV state. Consumer contract is HEX-only.
 - ❌ Hand-rolling a color picker per page. Use this.
 - ❌ Bundling a default palette inside the consumer. Pass via `presets`.
 - ❌ Calling expensive work in `onChange`. Use `onChangeEnd` (one fire per gesture).
 - ❌ Wrapping a non-`forwardRef` component in `<ColorPicker.Trigger asChild>`. `<Popover.Trigger>` clones the child to inject the ref; non-forwardRef silently drops it.
-- ❌ Forgetting to wire `disabled` into the consumer's custom trigger element. The picker dims its wrapper and blocks pointer events, but the trigger button's own disabled visuals are the consumer's responsibility.
+- ❌ Forgetting to wire `disabled` into the consumer's custom trigger element. The picker dims its wrapper and blocks pointer events (`pointer-events: none`), but the trigger button's own disabled visuals are the consumer's responsibility.

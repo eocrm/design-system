@@ -52,28 +52,8 @@ export interface ColorPickerTriggerProps {
 }
 
 /**
- * Marker child used INSIDE `<ColorPicker>` to override the default trigger.
- * Doesn't render anything by itself — `<ColorPicker>` reads its
- * `children` and passes them to `<Popover.Trigger>`. The child element
- * must `forwardRef` and accept `onClick` for the popover to work.
- *
- * @example
- * <ColorPicker value={hex} onChange={setHex}>
- *   <ColorPicker.Trigger asChild>
- *     <Button variant="secondary">Pick a color</Button>
- *   </ColorPicker.Trigger>
- * </ColorPicker>
- *
- * @remarks Anti-patterns
- * - ❌ Using `<ColorPicker.Trigger>` outside `<ColorPicker>`. It only has
- *   meaning as a marker child read by the parent.
- * - ❌ Wrapping a non-forwardRef component. `<Popover.Trigger>` calls
- *   cloneElement to inject the ref; non-forwardRef components silently
- *   drop it and the popover never positions correctly.
- * - ❌ Forgetting to wire `disabled` into the custom trigger element when
- *   `<ColorPicker disabled>` is passed. The wrapper dims with
- *   `pointer-events: none` for click-blocking, but the consumer's button
- *   itself doesn't know it's disabled unless YOU pass the prop through.
+ * Marker child used inside `<ColorPicker>` to override the default trigger.
+ * @see docs/components/ColorPicker.md
  */
 export function ColorPickerTrigger(_props: ColorPickerTriggerProps): null {
   return null;
@@ -229,51 +209,8 @@ const DefaultTrigger = forwardRef<HTMLButtonElement, DefaultTriggerProps>(functi
 });
 
 /**
- * Controlled HEX color picker with a Popover trigger by default. For the
- * inline (always-visible) variant, use `<ColorPicker.Panel>` directly.
- *
- * @example
- * // Default popover with the library's trigger swatch:
- * const [hex, setHex] = useState('#4F46E5');
- * <Field label="Brand color">
- *   <ColorPicker value={hex} onChange={setHex} />
- * </Field>
- *
- * @example
- * // Custom trigger via the slot-style override:
- * <Field label="Brand color" description="Used for campaign accents">
- *   <ColorPicker value={hex} onChange={setHex}>
- *     <ColorPicker.Trigger asChild>
- *       <Button variant="secondary">Pick a color</Button>
- *     </ColorPicker.Trigger>
- *   </ColorPicker>
- * </Field>
- *
- * @example
- * // With preset swatches:
- * <ColorPicker
- *   value={hex}
- *   onChange={setHex}
- *   presets={['#4F46E5', '#10B981', '#F59E0B', '#EF4444']}
- * />
- *
- * @remarks When NOT to use
- * - For an inline always-visible picker. Use `<ColorPicker.Panel>` directly.
- * - For an uncontrolled picker. Component is controlled-only.
- * - For non-HEX color formats (named colors, rgb(), hsl()). Convert in
- *   the consumer.
- *
- * @remarks Anti-patterns
- * - ❌ Passing non-HEX `value`. Use one of `#RGB` / `#RRGGBB`, with or
- *   without the leading `#`. Anything else falls back to `#000000` with
- *   a dev-only warning.
- * - ❌ Reaching into the picker's internal HSV state. The consumer's
- *   contract is HEX-only.
- * - ❌ Hand-rolling a color picker per page when this exists.
- * - ❌ Bundling a default palette in a consumer instead of passing
- *   `presets`. The library doesn't ship a default palette by design.
- * - ❌ Calling expensive work in `onChange`. Use `onChangeEnd` (fires once
- *   per gesture).
+ * Controlled HEX color picker with a Popover trigger by default.
+ * @see docs/components/ColorPicker.md
  */
 const ColorPickerRoot = forwardRef<HTMLDivElement, ColorPickerProps>(function ColorPickerRoot(
   {
@@ -417,7 +354,10 @@ const ColorPickerRoot = forwardRef<HTMLDivElement, ColorPickerProps>(function Co
 });
 ColorPickerRoot.displayName = 'ColorPicker';
 
-/** Compound API: `<ColorPicker>` + `<ColorPicker.Trigger>` + `<ColorPicker.Panel>`. */
+/**
+ * Compound API: `<ColorPicker>` + `<ColorPicker.Trigger>` + `<ColorPicker.Panel>`.
+ * @see docs/components/ColorPicker.md
+ */
 export const ColorPicker = Object.assign(ColorPickerRoot, {
   Trigger: ColorPickerTrigger,
   Panel: ColorPickerPanel,

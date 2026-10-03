@@ -18,14 +18,8 @@ export interface AllDayBandProps {
 }
 
 /**
- * Internal: the all-day event band rendered above the hour grid. Multi-day
- * events span columns as continuous bars; the left gutter is empty so the
- * band aligns visually with the hour-grid columns below.
- *
- * @remarks
- * **When NOT to use:** Do not render `AllDayBand` directly in application code —
- * it is an internal building block consumed by `WeekView`/`DayView`. Use `Calendar`
- * from the design system and pass events via the `events` prop.
+ * Internal: the all-day event band rendered above the hour grid.
+ * @see docs/components/Calendar.md
  */
 export function AllDayBand({
   bars,

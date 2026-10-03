@@ -79,58 +79,8 @@ interface ButtonGroupSegmentedProps
 export type ButtonGroupProps = ButtonGroupVisualProps | ButtonGroupSegmentedProps;
 
 /**
- * Compound. Two modes:
- *
- * - **Visual** (no `value` prop): joins `<Button>` children into a single
- *   visual unit with shared borders and outer-only rounded corners. Use
- *   for toolbar action groups (Cut/Copy/Paste).
- *
- * - **Segmented** (`value` + `onValueChange`): single-select radiogroup
- *   with `<ButtonGroup.Item>` children. Use for view-mode toggles,
- *   timeframe filters, etc.
- *
- * Mode is determined by the presence of `value`. TypeScript enforces
- * "value AND onValueChange together OR neither" via a discriminated
- * union — passing one without the other is a compile error.
- *
- * @example
- * // Visual mode
- * <ButtonGroup aria-label="Edit actions">
- *   <Button>Cut</Button>
- *   <Button>Copy</Button>
- *   <Button>Paste</Button>
- * </ButtonGroup>
- *
- * @example
- * // Segmented mode
- * const [view, setView] = useState<'grid' | 'list' | 'calendar'>('grid');
- * <ButtonGroup value={view} onValueChange={setView} aria-label="View mode">
- *   <ButtonGroup.Item value="grid">Grid</ButtonGroup.Item>
- *   <ButtonGroup.Item value="list">List</ButtonGroup.Item>
- *   <ButtonGroup.Item value="calendar">Calendar</ButtonGroup.Item>
- * </ButtonGroup>
- *
- * @example
- * // Size propagation — group-level size flows to children.
- * <ButtonGroup size="sm">
- *   <Button>Cut</Button>      // size="sm"
- *   <Button>Copy</Button>     // size="sm"
- *   <Button size="md">Paste</Button>  // per-child override wins
- * </ButtonGroup>
- *
- * @remarks When NOT to use
- * - For routing-style tab strips that change page content — use `<Tabs>`.
- * - For multi-select toggles — compose with checkboxes.
- * - For non-button content groupings — use `<Cluster>` or `<Stack>`.
- *
- * @remarks Anti-patterns
- * - Mixing visual `<Button>` children with `<ButtonGroup.Item>` in the
- *   same group. Undefined behavior — pick one mode per ButtonGroup.
- * - Passing only `value` (no `onValueChange`) or only `onValueChange`
- *   (no `value`). TypeScript catches this; the runtime is also broken.
- * - Wrapping a `<ButtonGroup.Item>` in a user component. The Item's
- *   ref-registration depends on being a direct child so the parent can
- *   focus it on Arrow nav.
+ * Compound. Visual mode joins Buttons; segmented mode (`value` + `onValueChange`) is a single-select radiogroup.
+ * @see docs/components/ButtonGroup.md
  */
 export function ButtonGroupRoot(props: ButtonGroupProps) {
   const isSegmented = 'value' in props && props.value !== undefined;
@@ -321,5 +271,8 @@ function Segmented({
   );
 }
 
-/** Compound: `<ButtonGroup>` with `<ButtonGroup.Item>` attached. */
+/**
+ * Compound: `<ButtonGroup>` with `<ButtonGroup.Item>` attached.
+ * @see docs/components/ButtonGroup.md
+ */
 export const ButtonGroup = Object.assign(ButtonGroupRoot, { Item: ButtonGroupItem });

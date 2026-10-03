@@ -94,67 +94,8 @@ const DEFAULT_ICONS: Record<AlertTone, ReactNode> = {
 };
 
 /**
- * Persistent in-flow notification. Fills the gap between `<Toast>` (transient,
- * auto-dismissing, portal-rendered) and inline error text. Use Alert when the
- * message needs to stay visible while the user reads the page — subscription
- * warnings, save failures, "Update available" notices.
- *
- * Four tones (info / success / warning / error) with a subtle tinted background
- * + left accent stripe per tone. Optional title, description (children), icon,
- * action row, and dismiss button. No internal state, no animations, no
- * auto-dismiss.
- *
- * @example
- * // Basic
- * <Alert tone="info" title="Synced 5 minutes ago" />
- * <Alert tone="warning">Your storage is at 85% capacity.</Alert>
- *
- * @example
- * // With title + description + actions
- * <Alert tone="warning" title="Update available" actions={<Button size="sm">Reload</Button>}>
- *   A new version is ready. Reload to apply.
- * </Alert>
- *
- * @example
- * // Dismissible (controlled by consumer)
- * const [show, setShow] = useState(true);
- * {show && (
- *   <Alert tone="success" onDismiss={() => setShow(false)}>
- *     Changes saved.
- *   </Alert>
- * )}
- *
- * @example
- * // Static callout that is part of the page, not a status change — no live region:
- * <Alert tone="warning" live={false} title="Needs action">
- *   The client asked for a revised quote by Friday.
- * </Alert>
- *
- * @example
- * // Custom icon / suppressed icon
- * <Alert tone="info" icon={<Bell size={16} />} title="New mention" />
- * <Alert tone="info" icon={null}>Quietly informative.</Alert>
- *
- * @remarks When NOT to use
- * - Transient confirmations → `toast.success(...)`.
- * - Empty-state placeholders ("No deals yet") → `<EmptyState>`.
- * - Form-field validation messages → inline error text + `aria-describedby`.
- * - Destructive confirmations needing yes/no → `<ConfirmationPopover>` or `<Modal>`.
- *
- * @remarks Anti-patterns
- * - ❌ Auto-dismissing the Alert with `setTimeout` — that's what Toast is for.
- * - ❌ `tone="error"` for non-critical warnings. Reserve `error` for genuine
- *   failures; `role="alert"` interrupts screen readers.
- * - ❌ A live Alert (the default) for content that exists when the page
- *   opens, especially one per list item: each is a live region, and some
- *   screen readers announce every one as a queue. Pass `live={false}`.
- * - ❌ `live={false}` for a message that appears in response to an action (a
- *   failed save) — it is never announced. (A polite live Alert that mounts
- *   together with its text is not reliably announced either; `tone="error"`'s
- *   `role="alert"` is. For a must-hear reactive message use `tone="error"` or
- *   a Toast.)
- * - ❌ Multiple stacked Alerts above a page — pick one (most urgent tone) or
- *   compose into the page layout with explicit hierarchy.
+ * Persistent in-flow notification.
+ * @see docs/components/Alert.md
  */
 export const Alert = forwardRef<HTMLDivElement, AlertProps>(function Alert(
   { tone = 'info', title, children, icon, actions, live = true, onDismiss, className, ...props },

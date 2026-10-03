@@ -28,6 +28,29 @@ import { AppLayout, Banner, Link } from '@eocrm/design-system';
 >
   {routes}
 </AppLayout>;
+
+// Module-scoped banner that appeared mid-session: danger + live is announced on insertion (role="alert")
+<Banner
+  tone="danger"
+  live
+  title="Email sending suspended."
+  action={
+    <Button size="xs" variant="secondary">
+      Review bounces
+    </Button>
+  }
+>
+  Bounce rate 7.2% (limit 5%).
+</Banner>;
+
+// Dismissible: the app persists the dismissal
+{
+  !dismissed && (
+    <Banner tone="success" onDismiss={() => setDismissed(true)}>
+      Email sending restored.
+    </Banner>
+  );
+}
 ```
 
 <!-- props:start -->
@@ -65,3 +88,6 @@ import { AppLayout, Banner, Link } from '@eocrm/design-system';
 - ❌ A system-wide message in `contextBanner`, or a route-specific one in `banner`.
 - ❌ `live` on a banner that is present when the app loads.
 - ❌ Relying on `live` for a non-danger banner to be announced on appearing. Add a `<LiveRegion>` or a toast.
+- ❌ Multiple actions or a paragraph of text. Link to a details page.
+
+**When NOT to use:** content about the current page or a section of it → `<Alert>`; a transient confirmation ("Saved") → `toast.success(...)`; anywhere other than `AppLayout`'s `banner` / `contextBanner` slots (inside page content it is just a borderless Alert).

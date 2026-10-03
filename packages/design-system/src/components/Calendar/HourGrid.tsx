@@ -75,16 +75,8 @@ export interface HourGridProps {
 }
 
 /**
- * Internal: hour-grid scaffold for Week and Day views. Renders the column
- * headers, hour gutter labels, the column bodies (with the availability
- * underlay behind and timed events positioned absolutely inside), and a
- * horizontal "now" line in today's column when today is in the rendered
- * range. Re-renders every minute so the now-line stays accurate.
- *
- * @remarks
- * **When NOT to use:** Do not render `HourGrid` directly in application code —
- * it is an internal building block consumed by `WeekView`/`DayView`. Use `Calendar`
- * from the design system and pass events via the `events` prop.
+ * Internal: hour-grid scaffold for Week and Day views.
+ * @see docs/components/Calendar.md
  */
 export function HourGrid({
   columns,

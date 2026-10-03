@@ -2,7 +2,16 @@
 
 ```tsx
 <Avatar name="Alex Rivera" />
-<Avatar name="Alex Rivera" src="https://example.com/alex.jpg" size="lg" />
+<Avatar name="Alex Rivera" src="https://example.com/alex.jpg" size="lg" status="online" />
+
+// Hover-discoverable name (off by default; opt in)
+<Avatar name="Alex Rivera" tooltip />
+
+// In a table row
+<Cluster gap="sm" align="center">
+  <Avatar name={contact.name} size="sm" />
+  <span>{contact.name}</span>
+</Cluster>
 ```
 
 <!-- props:start -->
@@ -27,4 +36,18 @@
 - `status?` — presence dot in the bottom-right corner. `'online' | 'busy' | 'away' | 'offline'`. Omit to render no dot. **Setting `status` changes the accessible name**: it becomes `"{name}, {status}"` (localized), because colour alone cannot carry the status — WCAG 1.4.1. Query with `getByRole('img', { name: 'Alex, online' })`, not `{ name: 'Alex' }`. Each status also renders a distinct **shape** (filled / half / barred / hollow), so it survives colour-vision deficiency and greyscale; the dot itself stays `aria-hidden` so nothing is announced twice.
 - `tooltip?` — wraps the avatar in `<Tooltip>` with `content={name}`. Defaults to `false` standalone (back-compat). Inside `<AvatarGroup>`, the group's `tooltip` becomes the default (which itself defaults to `true`); explicit per-child still wins.
 - Inside `<AvatarGroup>`, the group's `size` and `tooltip` become defaults — explicit per-child props still win. The avatar also picks up a `--color-bg` ring so stacked siblings read as distinct.
+- Group membership is detected through an internal context (`null` = standalone).
 - Use `avatarColorIndex(name)` if you need to match an avatar's color elsewhere (e.g. a chart segment).
+
+#### When NOT to use
+
+- Company logos: Avatars are for people. Use a `Logo` component (not yet shipped) or an `<img>` with rounded corners.
+- As a clickable button. If clicking opens a profile, wrap the Avatar in a `<button>` or `<Link>`; don't make the Avatar itself interactive.
+
+#### Anti-patterns
+
+- ❌ `<Avatar name="" />`: `name` is required and is the accessible label.
+- ❌ Relying on the status dot's colour, or re-tinting it. The distinct shape is the channel that survives colour-vision deficiency, and `away` vs `busy` collapses without it.
+- ❌ Adding your own visually-hidden status text next to the avatar. It is announced twice, and inside the no-`src` branch (a `role="img"`) ARIA prunes children as presentational, so it would be silent there anyway.
+- ❌ Using Avatar for a non-person icon. Use an icon component.
+- ❌ Wrapping the result in `role="img"` again. With `src`, the inner `<img>` is the labeled image; without it, the wrapper has `role="img" aria-label={name}`, plus the localized `status` when set (`"Alex, online"`).

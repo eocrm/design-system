@@ -4,6 +4,9 @@
 <Button variant="secondary">
   <BrandIcon name="google" size={16} /> Continue with Google
 </Button>
+
+// Standalone, labeled
+<BrandIcon name="yandex" title="Yandex" size={24} />
 ```
 
 <!-- props:start -->
@@ -26,3 +29,5 @@ Full-color official brand marks for SSO buttons. Ships `google` + `yandex`.
 - Decorative by default (`aria-hidden`); pass `title` for a labeled standalone icon (`role="img"`).
 
 **When NOT to use:** generic UI glyphs → `lucide-react`. Don't recolor brand marks.
+
+**Anti-pattern:** ❌ a decorative `BrandIcon` next to visible brand text AND a `title` double-announces ("Google Continue with Google"). Keep it `aria-hidden` (the default) beside a label.

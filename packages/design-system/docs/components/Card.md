@@ -114,3 +114,23 @@
 - `Card.List`: semantic `<ul>` with list-reset styling — screen readers announce "list with N items".
 - `Card.ListRow`: `<li>` with padded content and bottom dividing border; last-child border suppressed automatically.
 - **Never nest Card in Card.**
+- `Card.Header` sits flush with the card edge inside `<Card padding="none">`. It renders a `<div>` holding the heading element plus an optional `<span>` wrapping `action`. Under an `h1` with no `h2` above, pass `headerLevel="h2"`.
+- `Card.List` / `Card.ListRow`: row dividers use a `:last-child` selector to suppress the final bottom border. Fragments are transparent, but wrapping rows in an extra `<div>` or other element breaks the match and leaves a stray divider on the last row. Render rows as direct children (or via `.map`).
+- `Card.Body` keeps `scroll` for a bounded `fill` Card (Grid, Sortable or DashboardCanvas cell); for page-level scrolling let the page or `AppLayout` own the scroll area. Keep it a direct child of Card (Fragments are transparent) so Card can detect the compound structure.
+
+#### When NOT to use
+
+- ❌ As the only child of another Card, or as a layout primitive (use `Stack` / `Cluster` / `Grid`). Card is for semantic grouping.
+- ❌ For every container. If the page looks like a deck of cards, nothing is visually grouped.
+- ❌ `Card.Body` outside a Card. It owns padding and sizing only as part of Card's compound structure.
+
+#### Anti-patterns
+
+- ❌ `<Card style={{ padding: 20 }}>`: use `padding`. A missing value is a token/scale conversation.
+- ❌ `<Card style={{ overflow: 'visible' }}>`: use `<Card overflow="visible">`.
+- ❌ `<Card style={{ height: '100%' }}>`: use `<Card fill>`, which also applies the shrink-safe minimum width for narrow grid cells.
+- ❌ Hand-rolling a flex column and scrolling body in a Card, or consumer CSS for `flex: 1`, `min-height: 0` or `overflow-y: auto`. Use `<Card fill>` with `<Card.Body scroll>`.
+- ❌ Expecting `scroll` to create a height. The Card's parent must provide a definite height; `fill` carries that bound into the body.
+- ❌ Hover shadows to make Cards "interactive". If the whole card is clickable, that's a different component (`LinkCard`).
+- ❌ Hand-rolling a left stripe via `className` / `style`. Use `tone`; it reserves the border-left space so layout never shifts.
+- ❌ Hand-rolling `.cardHeader` / `.list` / `.listRow` SCSS. Use the compound API.

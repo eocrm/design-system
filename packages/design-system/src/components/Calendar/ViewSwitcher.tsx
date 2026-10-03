@@ -13,13 +13,8 @@ export interface ViewSwitcherProps {
 }
 
 /**
- * Internal: segmented control for switching between month / week / day /
- * agenda views. Uses the design system's `<Tabs>` for ARIA + keyboard
- * navigation.
- *
- * @remarks
- * **When NOT to use:** Do not render `ViewSwitcher` directly. It is composed
- * by the `Calendar` shell. Use `<Calendar view ... onViewChange ...>`.
+ * Internal: segmented control for switching between month / week / day / agenda views.
+ * @see docs/components/Calendar.md
  */
 export function ViewSwitcher({
   view,

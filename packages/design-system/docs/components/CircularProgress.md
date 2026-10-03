@@ -6,6 +6,14 @@
 <CircularProgress />                               // indeterminate spinner (the "Loader" use case)
 <CircularProgress size="sm" />                     // 16px inline spinner next to a button
 <CircularProgress tone="success" value={100} />    // green full circle
+<CircularProgress size="lg" value={80} tone="success" label />  // stat-card-style donut
+<CircularProgress value={3} max={10} label={`3 / 10`} />        // custom label ("n of N", a status word)
+
+// Canonical inline loader next to a button
+<Cluster gap="sm">
+  <Button>Save</Button>
+  <CircularProgress size="sm" aria-label="Saving" />
+</Cluster>
 ```
 
 <!-- props:start -->
@@ -30,3 +38,17 @@
 - Built as inline `<svg viewBox="0 0 36 36">` with two `<circle>` elements (track + fill). Determinate arc is driven by `stroke-dashoffset`; indeterminate is a CSS `rotate` animation on a partial arc.
 - Centered `label` auto-suppressed at `size="sm"` (no room for text) AND when `label=true` on indeterminate. ReactNode labels still suppress at `size="sm"` regardless.
 - `prefers-reduced-motion` disables the spin animation and shows a static accent ring.
+
+- `role="progressbar"` is locked (can't be overridden via the `role` prop) and is announced to screen readers. Tracks known progress like `<Progress>` in a circular geometry, better for inline loading indicators and tight spaces; indeterminate mode is the canonical spinner.
+
+#### When NOT to use
+
+- ❌ Horizontal progress next to row content → `<Progress>` linear.
+- ❌ Replacing `<Skeleton>` for loading placeholders. Skeleton implies "structure on its way"; CircularProgress implies "I'm working on it."
+- ❌ A decorative icon: the `progressbar` role is announced.
+
+#### Anti-patterns
+
+- ❌ Hand-rolled spinning `<svg>` per page. `<CircularProgress />` indeterminate is the same visual, accessible and reduced-motion-aware.
+- ❌ `<CircularProgress value={0}>` to render an empty circle. `value={0}` is determinate (0% done); the intent is usually indeterminate, so omit `value`.
+- ❌ `<CircularProgress size="sm" label>` expecting centered text in a 16px circle. The label is auto-suppressed at `sm` by design; use `md` or `lg`.

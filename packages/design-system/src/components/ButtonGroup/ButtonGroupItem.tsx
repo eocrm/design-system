@@ -21,14 +21,8 @@ const sizeClass: Record<ButtonGroupSize, string> = {
 };
 
 /**
- * Segmented-mode item. Renders `<button role="radio">` with roving tabindex
- * and `aria-checked` driven by the parent's `value`. The parent walks items
- * in DOM order via a `querySelectorAll` on keydown — no registration needed.
- *
- * Must be used inside a `<ButtonGroup>` in segmented mode (where `value` +
- * `onValueChange` are set). Using `<ButtonGroup.Item>` in visual mode
- * (no `value` on the parent) throws at render time because there's no
- * `ButtonGroupContext` to register against — that's the intended guardrail.
+ * Segmented-mode item. Renders `<button role="radio">` with roving tabindex.
+ * @see docs/components/ButtonGroup.md
  */
 export function ButtonGroupItem({
   value,

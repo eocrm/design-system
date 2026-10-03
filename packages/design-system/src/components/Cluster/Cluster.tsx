@@ -139,74 +139,8 @@ const alignClass: Record<ClusterAlign, string> = {
 };
 
 /**
- * Horizontal layout primitive that wraps. Use for button rows, toolbars,
- * tag lists, breadcrumbs — anywhere you'd otherwise write
- * `display: flex; gap: ...; flex-wrap: wrap`.
- *
- * @example
- * // Form footer (the most common use):
- * <Cluster justify="end" gap="sm">
- *   <Button variant="secondary">Cancel</Button>
- *   <Button type="submit">Save</Button>
- * </Cluster>
- *
- * @example
- * // Toolbar: title on the left, actions on the right.
- * <Cluster justify="between" gap="md">
- *   <h1>Users</h1>
- *   <Cluster gap="sm">
- *     <Button variant="secondary">Filter</Button>
- *     <Button>Add user</Button>
- *   </Cluster>
- * </Cluster>
- *
- * @example
- * // Tag list — wraps to multiple lines when narrow.
- * <Cluster gap="xs">
- *   {tags.map(t => <Badge key={t.id} tone={t.tone}>{t.label}</Badge>)}
- * </Cluster>
- *
- * @example
- * // Inline, inside a <button> where a <div> is invalid HTML — as="span"
- * // renders inline-flex (icon + label in a segmented ButtonGroup.Item):
- * <ButtonGroup.Item value="list">
- *   <Cluster as="span" gap="xs" align="center" wrap={false}>
- *     <List size={14} aria-hidden />
- *     List
- *   </Cluster>
- * </ButtonGroup.Item>
- *
- * @example
- * // minWidth0 — custom Calendar chip content that ellipsizes instead of
- * // hard-clipping. The chip is a <button> with overflow: hidden, so the
- * // Cluster is a flex item and needs to be allowed to shrink:
- * <Calendar
- *   events={events}
- *   renderEvent={(event) => (
- *     <Cluster as="span" gap="xs" align="center" wrap={false} minWidth0>
- *       <Dot color="violet" />
- *       <Text as="span" size="inherit" truncate>{event.title}</Text>
- *     </Cluster>
- *   )}
- * />
- *
- * @remarks When NOT to use
- * - For aligned columns of equal width — use `<Grid>`. Cluster wraps
- *   unpredictably at narrow widths and isn't a column system.
- * - For content that must never wrap — set `wrap={false}` if you must, but
- *   reconsider whether that's truly required on narrow viewports.
- *
- * @remarks Anti-patterns
- * - ❌ Cluster as a 2-column layout. Use `<Grid columns={2}>` for "two columns, always".
- * - ❌ Inline `style={{ marginLeft: 'auto' }}` on a child to push it right.
- *   Use `justify="between"` (with a sibling on the left) or split into two
- *   Clusters in the parent.
- * - ❌ `minWidth0` on a Cluster holding buttons or badges. It lets the
- *   container shrink, so non-truncatable content gets clipped instead. Use it
- *   on the container whose TEXT should give way.
- * - ❌ `as="span"` as a general styling hook. Reach for it only when block
- *   content is invalid HTML (inside `<button>`, `<a>`, `<label>`); in normal
- *   flow, the default block `div` is what you want.
+ * Horizontal layout primitive that wraps.
+ * @see docs/components/Cluster.md
  */
 export const Cluster = forwardRef<HTMLElement, ClusterProps>(function Cluster(
   {

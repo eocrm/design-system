@@ -102,73 +102,8 @@ const sizeClass: Record<BadgeSize, string> = {
 };
 
 /**
- * Small inline pill for status, category, or count. Supports two variants:
- * the default `'filled'` pill and a `'stripe'` rectangular block with a
- * tone-colored left stripe and a softly tinted body — useful for category
- * markers or sidebar labels where the uppercase pill is too loud. Non-interactive
- * — wrap in a `<Button>` if you need it clickable.
- *
- * Badge does NOT auto-add `role="status"`. Tone is a visual signal only.
- * If a state change should be announced to screen readers, wrap the badge
- * (or a parent region) in `aria-live="polite"`.
- *
- * @example
- * <Badge tone="success">Active</Badge>
- *
- * @example
- * // Contact status:
- * <Badge tone={contact.status === 'churned' ? 'danger' : 'success'}>
- *   {contact.status}
- * </Badge>
- *
- * @example
- * // Tag list:
- * <Cluster gap="xs">
- *   <Badge tone="purple">Enterprise</Badge>
- *   <Badge tone="info">Pipeline 2026</Badge>
- * </Cluster>
- *
- * @example
- * // Stripe variant — rectangular category markers:
- * <Cluster gap="sm">
- *   <Badge variant="stripe" tone="info">Lead</Badge>
- *   <Badge variant="stripe" tone="warning">Renewal due</Badge>
- *   <Badge variant="stripe" tone="success">Active</Badge>
- * </Cluster>
- *
- * @example
- * // Inside a heading line — align="middle" so the badge doesn't ride the
- * // heading's baseline (paired with Text size="inherit" for the muted run):
- * <Title order={1}>
- *   <Text as="span" size="inherit" tone="muted">ENG-5</Text> Fix login flow{' '}
- *   <Badge align="middle" tone="warning">In progress</Badge>
- * </Title>
- *
- * @remarks When NOT to use
- * - As a button. Badges are non-interactive labels. If it's clickable, use
- *   a `Button` or `Link`.
- * - For long-form text. Badges should be 1-2 words max.
- * - `align="middle"` outside a heading line. It's a fix for the
- *   baseline-vs-line-box mismatch next to large text — leave the default
- *   `baseline` for badges next to body-size text.
- *
- * @example
- * // Categorical palette color (not a semantic tone) — for tag-like labels
- * <Badge color="amber">Marketing</Badge>
- * <Badge color="teal">Engineering</Badge>
- * <Badge variant="stripe" color="violet">Design</Badge>
- *
- * @remarks Anti-patterns
- * - ❌ Mixing tone meanings across pages. If `success` means "Won" on Deals
- *   and "Active" on Contacts, that's fine — but never use `success` for
- *   anything negative.
- * - ❌ Stacking 4+ badges on a single row. If you have that many tags, the
- *   design problem is information density, not the badge.
- * - ❌ Wrapping a Badge in a `<button>` to make it clickable. Use a `Button`
- *   with an appropriate variant instead.
- * - ❌ Using `color` (palette) for status. Use `tone` (semantic) for status;
- *   palette colors carry no built-in meaning and consumers might shift the
- *   mapping over time.
+ * Small inline pill for status, category, or count.
+ * @see docs/components/Badge.md
  */
 export const Badge = forwardRef<HTMLSpanElement, BadgeProps>(function Badge(
   {

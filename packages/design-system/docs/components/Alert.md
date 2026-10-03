@@ -21,6 +21,15 @@ const [show, setShow] = useState(true);
     Changes saved.
   </Alert>
 )}
+
+// Static callout that is part of the page, not a status change (no live region)
+<Alert tone="warning" live={false} title="Needs action">
+  The client asked for a revised quote by Friday.
+</Alert>
+
+// Custom icon / suppressed icon
+<Alert tone="info" icon={<Bell size={16} />} title="New mention" />
+<Alert tone="info" icon={null}>Quietly informative.</Alert>
 ```
 
 <!-- props:start -->
@@ -58,7 +67,7 @@ const [show, setShow] = useState(true);
 #### Anti-patterns
 
 - ❌ Auto-dismissing the Alert with a `setTimeout` — that's what Toast is for.
-- ❌ Using `tone="error"` for non-critical warnings. Reserve `error` for genuine failures.
+- ❌ Using `tone="error"` for non-critical warnings. Reserve `error` for genuine failures; `role="alert"` interrupts screen readers.
 - ❌ Multiple stacked Alerts above a page — pick one (most urgent tone) or compose into the page layout with explicit hierarchy.
 - ❌ A live Alert (the default) for content that exists when the page opens, especially one per list item — each is a live region and some screen readers queue an announcement per item. Pass `live={false}`.
-- ❌ `live={false}` for a message that appears in response to an action (a failed save) — it is never announced. For a must-hear reactive message use `tone="error"` (`role="alert"` is announced on insertion) or a Toast.
+- ❌ `live={false}` for a message that appears in response to an action (a failed save) — it is never announced. For a must-hear reactive message use `tone="error"` (`role="alert"` is announced on insertion) or a Toast. A polite live Alert that mounts together with its text is not reliably announced either.

@@ -97,55 +97,8 @@ function hasOwnProps(obj: object | undefined): obj is object {
 }
 
 /**
- * Profile circle. Renders an `<img>` when `src` is set; otherwise renders the
- * person's initials on a deterministic color (same name → same color, always —
- * so a given user keeps their color across every page).
- *
- * On image load failure, the component automatically falls back to initials.
- *
- * Inside `<AvatarGroup>`, the group's `size` and `tooltip` defaults take over —
- * individual `size` / `tooltip` props still win per-child.
- *
- * @example
- * <Avatar name="Alex Rivera" />
- *
- * @example
- * <Avatar name="Alex Rivera" src="https://example.com/alex.jpg" size="lg" status="online" />
- *
- * @example
- * // Hover-discoverable name (off by default; opt in).
- * <Avatar name="Alex Rivera" tooltip />
- *
- * @example
- * // In a table row:
- * <Cluster gap="sm" align="center">
- *   <Avatar name={contact.name} size="sm" />
- *   <span>{contact.name}</span>
- * </Cluster>
- *
- * @remarks When NOT to use
- * - For company logos — Avatars are for people. Use a `Logo` component (not
- *   yet shipped) or an `<img>` with rounded corners.
- * - As a clickable button. If clicking opens a profile, wrap the Avatar in
- *   a `<button>` or `<Link>` — don't make the Avatar itself interactive.
- *
- * @remarks Anti-patterns
- * - ❌ `<Avatar name="" />` — `name` is required and is the accessible label.
- * - ❌ Querying a status-bearing avatar by the bare name. `status` is folded
- *   into the accessible name (`"Alex, online"`), because colour alone cannot
- *   carry it — WCAG 1.4.1. Use `getByRole('img', { name: 'Alex, online' })`.
- * - ❌ Relying on the dot's colour to distinguish statuses in your own UI, or
- *   re-tinting it. Each status also renders a distinct shape (filled / half /
- *   barred / hollow); that shape is the channel that survives colour-vision
- *   deficiency, and `away` vs `busy` collapses without it.
- * - ❌ Adding your own visually-hidden status text next to the avatar. It would
- *   be announced twice, and inside the no-`src` branch — a `role="img"` — ARIA
- *   prunes children as presentational, so it would be silent there anyway.
- * - ❌ Using Avatar to show a non-person icon. Use an icon component instead.
- * - ❌ Wrapping the result with `role="img"` again. The component already
- *   handles ARIA: with `src` set, the inner `<img>` is the labeled image;
- *   without `src`, the wrapper has `role="img" aria-label={name}` — plus the
- *   localized `status` when one is set, so the name reads "Alex, online".
+ * Profile circle. Renders an `<img>` when `src` is set, otherwise initials on a deterministic color.
+ * @see docs/components/Avatar.md
  */
 export const Avatar = forwardRef<HTMLSpanElement, AvatarProps>(function Avatar(
   { name, src, size, status, tooltip, className, style, ...props },

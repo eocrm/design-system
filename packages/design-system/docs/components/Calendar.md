@@ -1,6 +1,10 @@
 # `<Calendar>` — month / week / day / agenda views
 
 ```tsx
+// Uncontrolled
+<Calendar events={events} defaultView="week" />;
+
+// Controlled cursor + view
 const [cursor, setCursor] = useState(new Date());
 const [view, setView] = useState<CalendarView>('month');
 <Calendar
@@ -68,7 +72,7 @@ const [view, setView] = useState<CalendarView>('month');
 - Controlled cursor via `value` / `onChange`, or uncontrolled via `defaultValue`. Controlled view via `view` / `onViewChange`, or uncontrolled via `defaultView`.
 - `hourRange` (default `[7, 19]`) sets the visible hour window in week/day views. Hours outside the range are not rendered. `hourRowHeight` (default 48) is the pixel height per hour row.
 - Overlapping timed events in week/day views render as a Google-Calendar-style cascade: each lane is offset to the right by a small constant step but every block extends to the column's right edge, with later lanes overlaying earlier ones via `z-index`. Hovering or keyboard-focusing a block lifts it to full width on top of all neighbours. A horizontal "now" line marks the current time in today's column.
-- Locale-aware via `useLocale()`; override with `locale` prop. UI strings (`today`, `viewMonth`, etc.) come from the i18n provider — override them with `<I18nProvider overrides={{ calendar: { today: '…' } }}>`. There is no `labels` prop.
+- Locale-aware via `useLocale()`; override with `locale` prop. UI strings (`today`, `viewMonth`, etc.) come from the i18n provider (`useTranslation`) — override them with `<I18nProvider overrides={{ calendar: { today: '…' } }}>`. There is no `labels` prop. For Russian copy and dates: `<I18nProvider locale="ru"><Calendar locale="ru-RU" … /></I18nProvider>`.
 - `maxLanesPerWeek` (default 3) caps event lanes per week in the month view. Events beyond the cap collapse into a `+N more` chip; click fires `onDayClick(date)`.
 - Read-mostly **by default**: `onDayClick` and `onEventClick` callbacks; opt into editing by wiring `onEventMove` / `onEventResize` (see _Drag to move and resize_ below). `onDayClick` fires across all views — month-cell click, "+N more" chip, keyboard activation (Enter/Space) on a focused cell, and (in week/day views) clicks on the empty hour-grid space of a day column. No built-in popover or modal — wire your own detail UI.
 - ARIA: month view is `role="grid" aria-readonly="true"`; arrow keys move focus, PageUp/PageDown navigates months, Enter/Space calls `onDayClick`. Week/day views are also `role="grid"` with `role="row"` + `role="columnheader"` headers and standard sequential tab order for event blocks — `aria-readonly="true"` there too, until a drag handler is wired (see below). Agenda view exposes the visible week as `role="list"` with each day group as a `role="listitem"` and the day label as an `<h3>` heading inside — screen readers announce the date grouping before reading each event row. **Known v3 gap:** in week/day views, `onDayClick` on empty hour-grid space is **mouse-only** (no keyboard equivalent). Consumers needing keyboard activation should drive their detail UI through the focusable event chips via `onEventClick`.
@@ -144,3 +148,44 @@ const [view, setView] = useState<CalendarView>('month');
 - **Known gaps.** `onDayClick` still reports only a date, so in a resource day view it cannot say which column a free slot belongs to. After a keyboard column move, the block re-parents into the new column and loses focus, so nudges can't be chained. `touch-action: none` on a movable block means a touch that starts on an event drags it rather than scrolling the grid. Resource columns are `1fr` with no minimum width, so a dozen lanes squash rather than scroll — the all-day band lays itself out separately and would drift out of alignment if only the hour grid could scroll.
 - The click that terminates a drag is swallowed, so `onEventClick` doesn't fire on a reschedule. A plain click still opens your detail UI.
 - Drag-to-**create** (dragging empty grid space to draft a new event) is still out of scope — use `onDayClick` plus your own form.
+
+#### When NOT to use
+
+- ❌ Single-date or date-range selection → `<DatePicker>` / `<DateRangePicker>`.
+- ❌ Drag-to-create (see above).
+
+#### Anti-patterns
+
+- ❌ Mounting `<Calendar>` with no `events` AND no `onDayClick`: the grid is fully inert.
+- ❌ Pre-grouping events by day in the consumer. Pass the flat array; the layout algorithms group and lane internally.
+- ❌ Treating `onEventMove` as the thing that moves the event. It proposes; your state disposes, and not committing means the block snaps back.
+- ❌ Faking the availability underlay with all-day events, or approximating resource columns with N side-by-side day calendars (see above). Use `backgroundIntervals` and `resources`.
+
+#### Internal building blocks
+
+Not for application code: render the `Calendar` shell (it owns cursor, locale and labels and dispatches into these) and pass events via `events`.
+
+- `ViewSwitcher`: segmented control over month / week / day / agenda, built on `<Tabs>` for ARIA + keyboard navigation. Use `<Calendar view onViewChange>` instead.
+- `MonthView`: the month grid renderer. Consumes a `MonthGrid` from `useMonth`, computes event bar placement via `layoutEventsForMonth`, renders the weekday header + week rows, and implements WAI-ARIA grid keyboard navigation (arrow keys, Home/End, PageUp/PageDown, Enter/Space). A pure renderer with no month navigation state; the shell owns `useMonth` and the header.
+
+  ```tsx
+  // Inside a parent that owns the anchor date:
+  const grid = useMonth(anchor);
+  <MonthView
+    grid={grid}
+    events={events}
+    maxLanesPerWeek={3}
+    cursor={anchor}
+    onChange={setAnchor}
+    onDayClick={handleDayClick}
+    onEventClick={handleEventClick}
+  />;
+  ```
+
+- `DayCell`: the day-number content of one month cell. Background, border and today/weekend tints come from MonthView's per-week `.dayColumn` layers; it owns only the day-number text and the gridcell ARIA role.
+- `EventChip`: one event bar in the month grid, a tone-styled button wrapped in a Tooltip so the full "time + title" stays reachable when the text is ellipsis-clipped. Non-`allDay` events show a subtle tint with a time prefix (tooltip "<time> <title>"); `allDay` events use a filled tone background, no time prefix, and a title-only tooltip. Tone defaults to `'neutral'`.
+- `WeekView`: 7-day hour grid for the week containing `cursor`, AllDayBand above and HourGrid below (`view="week"`).
+- `DayView`: single-day hour grid at `cursor`, AllDayBand above and HourGrid below (`view="day"`). With `resources` the day splits into one column per resource.
+- `AllDayBand`: the all-day band above the hour grid. Multi-day events span columns as continuous bars; the left gutter is empty so it aligns with the hour-grid columns below.
+- `HourGrid`: scaffold for week and day views: column headers, hour gutter labels, column bodies (availability underlay behind, timed events positioned absolutely), and a "now" line in today's column. Re-renders every minute so the line stays accurate.
+- `AgendaView` (`view="agenda"`): projects the cursor's current-week window into a chronological list grouped by day; days without events are hidden. Multi-day events appear under every day they span, each row marked `asAllDay` so the gutter shows "All day" instead of a clock time; single-day timed events show their start time. Within a day: all-day events first, then timed events by start time.

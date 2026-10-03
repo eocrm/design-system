@@ -17,6 +17,12 @@ import { Link as RouterLink } from 'react-router-dom';
   <Breadcrumb.Item as={RouterLink} to="/a">A</Breadcrumb.Item>
   <Breadcrumb.Item>B</Breadcrumb.Item>
 </Breadcrumb>
+
+// External crumb (default <a>)
+<Breadcrumb>
+  <Breadcrumb.Item href="https://docs.example.com">Docs</Breadcrumb.Item>
+  <Breadcrumb.Item>This page</Breadcrumb.Item>
+</Breadcrumb>
 ```
 
 <!-- props:start -->
@@ -48,13 +54,14 @@ import { Link as RouterLink } from 'react-router-dom';
 
 - **Compound API** — wrap each crumb in `<Breadcrumb.Item>`.
 - **Auto-current** — last child gets `aria-current="page"` and renders as `<span>`. Override with explicit `current` prop.
-- **Item is polymorphic** — same `as` pattern as Link.
+- **Item is polymorphic** — same `as` pattern as Link. It is not `forwardRef`-wrapped because the return shape varies (`<span>` for current, `<Link>` for non-current); for a ref to a specific crumb, render the underlying link manually inside an Item, or use Link directly.
+- Separated by a customizable icon in an `<ol>` inside the `<nav>`.
 - **Default separator** is `<ChevronRight size={14} />`. Override via the `separator` prop.
 - **`<nav aria-label="Breadcrumb">` wrapper** — semantic landmark, AT-friendly.
 
 #### When NOT to use
 
-- ❌ Horizontal nav of equal-importance siblings → `<Tabs>`.
+- ❌ Horizontal nav of equal-importance siblings → `<Tabs>` or `<ButtonGroup>`.
 - ❌ Step-by-step progress → a dedicated Stepper (not shipped).
 - ❌ Single-page apps with no parent hierarchy — omit Breadcrumb entirely.
 

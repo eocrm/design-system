@@ -55,43 +55,7 @@ export interface AvatarGroupProps extends HTMLAttributes<HTMLDivElement> {
 
 /**
  * Horizontal stack of `<Avatar>`s with `+N` overflow when count exceeds `max`.
- *
- * The group propagates `size` and `tooltip` to descendant `<Avatar>`s via
- * context. The first `max` children render; any remainder collapses to a
- * single overflow control.
- *
- * @example
- * // Static — non-interactive +N:
- * <AvatarGroup max={3}>
- *   <Avatar name="Alex Rivera" />
- *   <Avatar name="Priya Patel" />
- *   <Avatar name="Tom Kim" />
- *   <Avatar name="Sara Chen" />
- *   <Avatar name="Jaden Lee" />
- * </AvatarGroup>
- *
- * @example
- * // With overflow handler — app composes whatever popover/modal it wants:
- * <AvatarGroup
- *   max={4}
- *   size="lg"
- *   onOverflowClick={(_e, hiddenCount) => openMembersPopover(hiddenCount)}
- * >
- *   {members.map((m) => <Avatar key={m.id} name={m.name} src={m.avatarUrl} status={m.presence} />)}
- * </AvatarGroup>
- *
- * @remarks When NOT to use
- * - For a single avatar — use `<Avatar>` directly.
- * - When you want to show member counts but not faces — use a `Badge` next to a label.
- *
- * @remarks Anti-patterns
- * - ❌ Wrapping `<AvatarGroup>` in a `<button>` and treating it as one click target.
- *   The `+N` is the click affordance; the visible avatars are deliberately not
- *   interactive in the library — wrap individual avatars in `<button>` / `<Link>`
- *   if needed.
- * - ❌ Mixing avatar sizes inside one group on purpose. The group's `size`
- *   is the default; per-child explicit `size` wins, which is useful for
- *   emphasising a specific member but visually noisy if used carelessly.
+ * @see docs/components/AvatarGroup.md
  */
 export const AvatarGroup = forwardRef<HTMLDivElement, AvatarGroupProps>(function AvatarGroup(
   { children, size = 'md', max = 4, tooltip = true, onOverflowClick, className, ...props },

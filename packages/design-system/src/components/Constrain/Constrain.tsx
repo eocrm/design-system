@@ -42,42 +42,8 @@ export interface ConstrainProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * Size / flex constraint primitive. The one place layout-sizing props live —
- * `Stack`/`Cluster`/`Grid` are spacing-only by design, so when you need to cap a
- * search input's width, floor a column, or let a box fill a flex row, wrap it in
- * `<Constrain>`.
- *
- * It sizes its OWN box only — it does not lay out its children. Put a layout
- * primitive (`Cluster`/`Stack`) *inside* it when you need both.
- *
- * @example
- * // Cap a search field's width:
- * <Constrain maxWidth="sm">
- *   <Input placeholder="Search…" />
- * </Constrain>
- *
- * @example
- * // Let a Progress bar fill a row next to a fixed button:
- * <Cluster wrap={false} gap="sm">
- *   <Constrain flex="grow"><Progress value={x} max={y} /></Constrain>
- *   <Button>Upgrade plan</Button>
- * </Cluster>
- *
- * @example
- * // Keep a viewport-sized canvas no taller than the large measure:
- * <Constrain height="viewport-70" maxHeight="lg">
- *   <FlowCanvas nodes={nodes} edges={edges} />
- * </Constrain>
- *
- * @remarks When NOT to use
- * - Spacing / arranging children → `<Stack>` / `<Cluster>` / `<Grid>`. Constrain
- *   sizes its own box; it doesn't arrange what's inside.
- * - A bordered, padded surface → `<Card>`. Constrain has no padding / border / bg.
- * - A full-bleed page shell → `<Screen>`.
- *
- * @remarks Anti-patterns
- * - ❌ Reaching for Constrain to add `margin`/`padding` — it carries size/flex
- *   only. Spacing comes from the parent layout primitive.
+ * Size / flex constraint primitive; sizes its own box and does not lay out its children.
+ * @see docs/components/Constrain.md
  */
 // `children` is destructured out of `rest` and rendered once below (Stack/Cluster
 // pass children via {...props} instead — both are correct; this is explicit).

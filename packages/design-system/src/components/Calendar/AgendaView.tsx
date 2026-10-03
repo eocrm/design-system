@@ -39,19 +39,8 @@ interface DayGroup {
 }
 
 /**
- * Internal: agenda (list) view for `<Calendar view='agenda'>`. Projects the
- * cursor's current-week event window into a chronological list grouped by
- * day. Days without events are hidden so the list stays scannable.
- *
- * - Multi-day events appear under every day they span, each row marked
- *   `asAllDay` so the time gutter shows "All day" instead of a clock time.
- * - Single-day timed events show the start time in the gutter.
- * - Within a day: all-day events first, then timed events by start time.
- *
- * @remarks
- * **When NOT to use:** Do not render `AgendaView` directly — use the
- * `Calendar` shell with `view='agenda'` (or `defaultView='agenda'`). The
- * shell owns cursor / locale / labels and dispatches into this component.
+ * Internal: agenda (list) view for `<Calendar view='agenda'>`.
+ * @see docs/components/Calendar.md
  */
 export function AgendaView({
   days,

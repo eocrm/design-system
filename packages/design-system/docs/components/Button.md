@@ -13,6 +13,22 @@
 >
   Owner: {ownerLabel}
 </Button>
+
+// Icon-only square button (20×20 at xs, 32×32 at md); aria-label is the accessible name
+<Button size="xs" variant="ghost" iconOnly aria-label="Remove">
+  <X size={12} />
+</Button>
+
+// Destination that must look like a button: a real <a>; rel="noreferrer" belongs with target="_blank"
+<Button as="a" href={idpConsoleUrl} target="_blank" rel="noreferrer" variant="secondary">
+  Open identity console
+</Button>
+
+// Form footer
+<Cluster justify="end" gap="sm">
+  <Button variant="secondary">Cancel</Button>
+  <Button type="submit">Save</Button>
+</Cluster>
 ```
 
 <!-- props:start -->
@@ -35,8 +51,9 @@
 - `size`: `xs` / `sm` / `md` (default) / `lg` — use `xs` for icon-only or dense inline actions; pass `aria-label` when icon-only.
 - `iconOnly`: boolean. Renders a square icon-only button (`aspect-ratio: 1`, tight 4px padding). Width tracks the size's height token. **Always pair with `aria-label`** — there's no other accessible name.
 - `selected`: controlled paint for a durable applied filter or independent toolbar value. It paints only `secondary` and `ghost` variants and adds no ARIA semantics. If activating the Button itself toggles that value, also pass the matching native `aria-pressed`; menu/disclosure triggers keep their existing semantics. Keep state in the consumer. Do not use it for transient success feedback or mutually exclusive `<ButtonGroup>` choices.
-- Always renders `<button type="button">` unless you pass `type="submit"` — or unless you pass `as`.
-- `as`: polymorphic element. `<Button as="a" href="…">` renders a REAL `<a>` — it navigates, announces as a link, supports middle-click and open-in-new-tab, and does not get `type="button"`. The element's own attributes are typed: `href` is REQUIRED with `as="a"` (an anchor without one is neither focusable nor a link) and rejected without it, and `target`/`rel`/`download` come through. Use it for a destination that must look like a button; use `<Link>` for link-shaped navigation in running text. Never navigate from `onClick`.
+- Always renders `<button type="button">` unless you pass `type="submit"` — or unless you pass `as`. It won't submit ancestor forms by default.
+- `aria-disabled="true"` keeps an unavailable action focusable (so keyboard users can discover it and its explanation) with the unavailable visual treatment, but does not set native `disabled` or prevent events: the consumer's handler must suppress activation while it is unavailable.
+- `as`: polymorphic element. `<Button as="a" href="…">` renders a REAL `<a>` — it navigates, announces as a link, supports middle-click and open-in-new-tab, and does not get `type="button"`. The element's own attributes are typed: `href` is REQUIRED with `as="a"` (an anchor without one is neither focusable nor a link) and rejected without it, and `target`/`rel`/`download` come through. Use it for a destination that must look like a button; use `<Link>` for link-shaped navigation in running text (`<Link as={NavLink} to="…">` is itself polymorphic; reserve `<Button as="a">` for a destination that belongs in a row of buttons). Never navigate from `onClick`.
 - `variant="success"` is a **transient confirmation state**, not an action intent. Flip to it for ~1.5s after the action resolves, then flip back to `primary`. The timer is the consumer's responsibility — Button stays stateless. Never render a button as `success` on initial mount. Track the timer in a `useRef` and clear on unmount + on rapid re-clicks so the flash doesn't outlive the component or get cut short.
 
   ```tsx
@@ -58,3 +75,25 @@
     {saved ? 'Saved!' : 'Save'}
   </Button>;
   ```
+
+#### When NOT to use
+
+- ❌ Navigation in running text, a table cell, or a breadcrumb → `<Link>`.
+- ❌ Toggle state (on/off) → `Switch` or `Checkbox`, not a Button with internal state.
+- ❌ Mutually exclusive choices → `<ButtonGroup>`, which supplies the group-level selection semantics.
+- ❌ A clickable table row → make the row itself the interactive surface; don't nest a button.
+- On touch-first surfaces prefer `size="sm"` or larger: `xs` (20px×~28px, or 20×20 with `iconOnly`) is below WCAG 2.5.5 Level AAA touch-target guidance (24×24); acceptable here because the CRM is desktop-first.
+
+#### Anti-patterns
+
+- ❌ Two `variant="primary"` Buttons in the same section. Pick one; others are `secondary`.
+- ❌ `<Button style={{ marginLeft: 'auto' }}>` — wrap in `<Cluster justify="end">` (or `justify="between"` with a sibling) instead.
+- ❌ Overriding padding/height via `className`. A different visual size is a missing variant: request it.
+- ❌ `variant="ghost"` for the page's primary action. Users won't discover it.
+- ❌ `<Button variant="success">Save</Button>` on initial mount. Start as `primary` and flip to `success` after the action resolves.
+- ❌ `size="xs"` for the primary or most prominent action. `xs` is for inline density, not emphasis; reach for `md` or `lg`.
+- ❌ `<Button iconOnly><X /></Button>` without `aria-label`: screen readers announce nothing.
+- ❌ Assuming `selected` adds toggle semantics. It is paint only; pass `aria-pressed` explicitly when activating the Button toggles that state, and not on menu or disclosure triggers.
+- ❌ Assuming `aria-disabled="true"` blocks activation. It preserves native focusability and pointer events; guard your handler.
+- ❌ `<Button onClick={() => (window.location.href = url)}>` for navigation: it announces as a button, with no middle-click, no open-in-new-tab and no status-bar preview. Use `<Button as="a" href={url}>`.
+- ❌ `<Button as="a">` with no `href`, for a click handler you wanted to look like a link. An anchor without one is neither focusable nor activatable; the type requires `href` whenever `as="a"`, so this does not compile.

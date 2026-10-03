@@ -68,10 +68,8 @@ export interface BreadcrumbProps {
 }
 
 /**
- * `<Breadcrumb.Item>`. Polymorphic. Not `forwardRef`-wrapped because the
- * return shape varies (`<span>` for current, `<Link>` for non-current). If
- * you need a ref to a specific crumb, render the underlying link manually
- * inside an Item, or use Link directly.
+ * `<Breadcrumb.Item>`. Polymorphic.
+ * @see docs/components/Breadcrumb.md
  */
 function BreadcrumbItem<C extends ElementType = 'a'>({
   current,
@@ -100,44 +98,8 @@ function BreadcrumbItem<C extends ElementType = 'a'>({
 const DEFAULT_SEPARATOR = <ChevronRight size={14} />;
 
 /**
- * Navigation breadcrumb trail. Renders a `<nav>` with an `<ol>` of items,
- * separated by a customizable icon (default: ChevronRight). The last child
- * is auto-marked as the current page — rendered as `<span aria-current="page">`
- * instead of a link.
- *
- * Compose with `<Breadcrumb.Item>` (compound API):
- *
- * @example
- * // Basic — auto-current on the last child
- * <Breadcrumb>
- *   <Breadcrumb.Item as={RouterLink} to="/mockups">Mockups</Breadcrumb.Item>
- *   <Breadcrumb.Item as={RouterLink} to="/mockups/contacts">Contacts</Breadcrumb.Item>
- *   <Breadcrumb.Item>Acme Corp</Breadcrumb.Item>
- * </Breadcrumb>
- *
- * @example
- * // Custom separator
- * <Breadcrumb separator={<Slash size={12} />}>
- *   <Breadcrumb.Item as={RouterLink} to="/a">A</Breadcrumb.Item>
- *   <Breadcrumb.Item>B</Breadcrumb.Item>
- * </Breadcrumb>
- *
- * @example
- * // External crumb (default `<a>`)
- * <Breadcrumb>
- *   <Breadcrumb.Item href="https://docs.example.com">Docs</Breadcrumb.Item>
- *   <Breadcrumb.Item>This page</Breadcrumb.Item>
- * </Breadcrumb>
- *
- * @remarks When NOT to use
- * - For a horizontal nav of equal-importance siblings → use `<Tabs>` or `<ButtonGroup>`.
- * - For "Step 2 of 5" progress indicators → use a dedicated Stepper (not yet shipped).
- * - When there's only one crumb (root page) — omit the Breadcrumb entirely.
- *
- * @remarks Anti-patterns
- * - ❌ Putting a clickable `<Breadcrumb.Item>` for the current page. Current items
- *   are non-link by design — they represent "you are here", not navigation.
- * - ❌ More than ~5 levels deep. Long trails wrap and become illegible.
+ * Navigation breadcrumb trail; the last child is auto-marked as the current page.
+ * @see docs/components/Breadcrumb.md
  */
 function BreadcrumbRoot({
   children,

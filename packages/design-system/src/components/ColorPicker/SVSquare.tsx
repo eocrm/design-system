@@ -27,19 +27,8 @@ export interface SVSquareProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onC
 }
 
 /**
- * 2D saturation/value pad. Background is a solid hue color overlaid with
- * stacked CSS gradients (white→transparent left→right + black→transparent
- * bottom→top), so the visible pixel at (x, y) in the pad represents the
- * color at (S = x%, V = 100 - y%) in HSV space. Picking is pointer-driven;
- * keyboard nav adjusts S/V by 1% per arrow press (10% with Shift).
- *
- * Not exported from the package — used internally by ColorPickerPanel.
- *
- * @remarks Why role="application"
- * 2D pointer-driven controls don't have a standard ARIA pattern (slider is
- * 1D, button is binary). The accepted compromise is `role="application"`
- * with an aria-valuetext describing the current state — same precedent as
- * ImageCrop's viewport in this library.
+ * 2D saturation/value pad; not exported, used internally by ColorPickerPanel.
+ * @see docs/components/ColorPicker.md
  */
 export const SVSquare = forwardRef<HTMLDivElement, SVSquareProps>(function SVSquare(
   { hue, s, v, onChange, onChangeEnd, disabled = false, className, ...rest },
