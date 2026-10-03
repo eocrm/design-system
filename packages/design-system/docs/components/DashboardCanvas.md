@@ -15,8 +15,63 @@ const [value, setValue] = useState<DashboardCanvasValue>(initialLayout);
 />;
 ```
 
+<!-- props:start -->
+
+## Props
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `value` | `DashboardCanvasValue` | yes | The controlled layout: top-level items plus an ordered array of collapsible sections. `DashboardCanvas` never mutates this value — every change flows out through `onChange`. |
+| `onChange` | `((next: DashboardCanvasValue) => void)` | no | Fires once per completed gesture — a drop, a resize end, a collapse toggle, a section reorder, or a cross-container move — with the whole next `value`. Omit for a read-only or fully static canvas; without it, drags preview live but nothing persists on drop. |
+| `renderItem` | `(id: string \| number) => ReactNode` | yes | Renders the body of an item by id. Called for every item on every render — including items inside a COLLAPSED section (its body stays mounted and `inert`, not unmounted, so Accordion's own collapse animation has real content to animate) — and once more for the dragged item mid-gesture (the cursor-following ghost). Keep it pure; a widget that fetches on mount pays that cost even while its section is collapsed. The cell itself is a bare positioned box with no background/border/radius/shadow of its own and no minimum height beyond its `h` row-span — that chrome belongs here, in whatever this returns (typically a `<Card>`); size the content to the cell, or accept that a shorter widget in a taller cell shows bare (dotted, in edit mode) space below it. |
+| `renderSectionHeader` | `((id: string \| number) => ReactNode)` | no | Optional extra controls in a section's header (a title editor, a `DropdownMenu` trigger) rendered by section id, to the right of the title. Keep it small — the header row is not a general-purpose toolbar. Pointer presses inside the slot never start a band-reorder drag. |
+| `constraints` | `DashboardCanvasConstraintsProp` | no | Per-item size constraints, consulted when clamping resize gestures. |
+| `columns` | `number` | no | Column count of every container grid (top level and each section's sub-grid). All placement/resize bounds clamp against it. Minimum 1; fractional or sub-1 values are the consumer's bug, not validated. Layouts are NOT converted between column counts — a `value` saved at one `columns` renders at half width when the count doubles. Schemas written for the earlier 12-column grid (e.g. the eocrm layout-v2 spec) either pass `columns={12}` to match, or migrate their saved placements to 24. Default: `24`. |
+| `stackBelow` | `'sm' \| 'md' \| 'lg'` | no | Container width at (inclusive) and below which every container grid re-templates to one column and pointer + keyboard editing turns off: `sm` 480px / `md` 640px / `lg` 768px, measured against the canvas's OWN width (container query), not the viewport. Section collapse toggles keep working at any width. Default: `'md'`. |
+| `readOnly` | `boolean` | no | View-only mode: identical geometry, but no drag/resize wiring, no resize handles, and no keyboard editing — the canvas renders `value` and lets section collapse toggles keep working. The canvas also disables editing on its own, without this prop, once its own width drops to or below the `stackBelow` breakpoint (single-column stack) — `readOnly` is for a consumer-chosen view mode, the width gate is automatic. Default: `false`. |
+| …native | | | plus native `<div>` attributes |
+
+<!-- props:end -->
+
 **Cells are SQUARE by default**: the row unit derives from the canvas's own width (`(width - (columns - 1) * gap) / columns`), so cell height == cell width at every size and the whole layout scales fluidly — override `--dashboard-canvas-row` with a fixed length for fixed-height rows (`--dashboard-canvas-row-stacked`, default 48px, is the row unit of the single-column stack, where the square unit would be uselessly tiny).
 
 `readOnly` turns off all editing (no handles, no keyboard editing) while section collapse toggles keep working — collapse is navigation, not editing. Independent of `readOnly`, at and below the `stackBelow` breakpoint (`'sm'` 480px / `'md'` 640px, the default / `'lg'` 768px) of the canvas's OWN width (a CSS container query, not the viewport) every container automatically re-templates to one column and editing turns off the same way — a `ResizeObserver` mirrors the breakpoint so a gesture can never half-start below it.
 
 When NOT to use: a single ordered list (priority queue, simple reordering) — use `Sortable`; fixed kanban-style columns — use `Kanban`; a free-form node/edge graph — use `FlowCanvas`. The canvas is ALWAYS a size container (named `dashboard-canvas`, unconditionally) — give it a parent with a concrete width; an intrinsic-width context (a `Cluster` item, `width: max-content`) renders it at width 0, same caveat as Grid's `collapseBelow`.
+
+A collapsed section's band is NOT a drop target — expand it first (no hover-to-expand). Escape or a pointer cancel mid-gesture restores the current `value` without firing `onChange`.
+
+#### Anti-patterns
+
+- ❌ Treating `value` as uncontrolled — passing it once with no `onChange`. Drags and resizes still preview live, but nothing persists past pointerup; the next render snaps the item back to the stale `value`.
+- ❌ Nesting a `DashboardCanvas` inside another one's `renderItem`: a nested canvas fights its parent for pointer capture and Escape handling.
+- ❌ Expecting the grid cell to draw a card-like surface. It is chrome-less by design so widgets with transparent bodies (charts, images) don't sit inside a redundant box — wrap `renderItem`'s output in `<Card>` for the boxed look.
+- ❌ Using it for a simple ordered list — see "When NOT to use" above.
+- ❌ Placing it in an intrinsic-width parent (a `Split` aside's default `auto` track, a `Cluster` item): the canvas is always a size container and renders at width 0. At and below `stackBelow` pointer + keyboard editing turns off (handles hidden, items not editing-focusable).
+
+#### More examples
+
+```tsx
+// Persist every completed gesture: keep the canvas controlled AND save.
+// Debounce / fire-and-forget is the caller's job.
+const handleChange = (next: DashboardCanvasValue) => {
+  setValue(next);
+  saveDashboardLayout(dashboardId, next);
+};
+
+// Read-only record view — same value shape, no editing affordances.
+<DashboardCanvas
+  value={savedLayout}
+  renderItem={(id) => <Card>{widgets[id].title}</Card>}
+  readOnly
+/>
+
+// Constraints computed from data, e.g. locking size for chart widgets.
+<DashboardCanvas
+  value={value}
+  onChange={setValue}
+  renderItem={(id) => <Card>{widgets[id].title}</Card>}
+  constraints={(id) => (widgets[id]?.kind === 'chart' ? { minW: 4, minH: 3, maxH: 6 } : undefined)}
+/>
+```

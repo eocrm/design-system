@@ -72,46 +72,8 @@ export interface DropdownMenuCheckboxItemProps extends Omit<
 }
 
 /**
- * Toggleable menu item with `role="menuitemcheckbox"` and `aria-checked`.
- * Defaults to `closeOnSelect=false` — multi-select menus stay open after each
- * toggle, which matches the typical filter-menu interaction. Override to
- * `true` for single-toggle menus.
- *
- * **Checked-state visual**: when checked, the row is tinted with the info
- * surface color (`--badge-bg-info` / `--badge-fg-info`) and gets
- * a 2px left accent (`--color-info`). No default glyph is rendered. Provide a
- * `<DropdownMenu.ItemIndicator>` as a direct child if you want an additional
- * indicator glyph alongside the tinted row.
- *
- * @example
- * <DropdownMenu.CheckboxItem checked={isOn} onCheckedChange={setOn}>
- *   Show archived
- * </DropdownMenu.CheckboxItem>
- *
- * @example
- * // Augment the tinted-row indicator with a custom glyph:
- * <DropdownMenu.CheckboxItem checked={isOn} onCheckedChange={setOn}>
- *   <DropdownMenu.ItemIndicator>
- *     <CheckIcon size={14} />
- *   </DropdownMenu.ItemIndicator>
- *   Show archived
- * </DropdownMenu.CheckboxItem>
- *
- * @example
- * // Apply-then-close pattern:
- * <DropdownMenu.CheckboxItem checked={isOn} onCheckedChange={setOn} closeOnSelect>
- *   Apply and close
- * </DropdownMenu.CheckboxItem>
- *
- * @remarks When NOT to use
- * - For a one-off action that fires a function. Use `<DropdownMenu.Item>` —
- *   CheckboxItem implies persistent boolean state.
- * - For mutually exclusive selections. Use `<DropdownMenu.RadioGroup>` instead.
- *
- * @remarks Anti-patterns
- * - ❌ Nesting an `<ItemIndicator>` deeper than a direct child. Detection is
- *   shallow; deeper nesting won't render in the indicator slot.
- * - ❌ Multiple checked CheckboxItems in a "pick one" context. Switch to RadioGroup.
+ * Toggleable menu item (`role="menuitemcheckbox"`) that stays open after each toggle by default.
+ * @see docs/components/DropdownMenu.md
  */
 export const CheckboxItem = forwardRef<HTMLDivElement, DropdownMenuCheckboxItemProps>(
   function CheckboxItem(

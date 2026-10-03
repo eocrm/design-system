@@ -52,19 +52,19 @@ export interface DatePickerProps extends Omit<
 
   /** Override locale (otherwise reads `useLocale()`). */
   locale?: string;
-  /** Earliest selectable date (inclusive). */
+  /** Earliest selectable date (inclusive, day-granular). Gates both the grid and typed input. */
   min?: Date;
   /** Latest selectable date (inclusive). */
   max?: Date;
-  /** Per-date disable callback. */
+  /** Per-date disable callback; applied per grid cell and to parsed typed input. */
   isDateDisabled?: (date: Date) => boolean;
 
   /** Show the ✕ clear button when a value is set. Defaults to `true`. */
   clearable?: boolean;
-  /** Toggle red border + focus ring + `aria-invalid="true"`. */
+  /** Toggle red border + focus ring + `aria-invalid="true"`. Pair with a visible error and `aria-describedby`. */
   invalid?: boolean;
 
-  /** Form name. When set, renders a hidden mirror `<input>` with the ISO date. */
+  /** Form name. When set, renders a hidden mirror `<input>` with the ISO date so native `<form>` submission works. */
   name?: string;
 
   /**
@@ -118,45 +118,10 @@ const ICON_SIZE_FOR: Record<DatePickerSize, number> = {
 };
 
 /**
- * Single-date input with a Floating-UI popover that contains a month grid.
- * Locale-aware typed parsing (en-US, ru-RU, ja-JP, etc.), min/max +
- * `isDateDisabled` constraints, clearable, and a hidden mirror `<input>`
- * for native form posts.
- *
- * Built on the Calendar primitives (`useMonth`, formatters); the popover
- * is positioned via `@floating-ui/react-dom` and portaled into
- * `document.body` so it escapes overflow-hidden ancestors.
- *
- * @example
- * // Uncontrolled, today as the default:
- * <DatePicker defaultValue={new Date()} onChange={(d) => console.log(d)} />
- *
- * @example
- * // Constrained + cleared:
- * <DatePicker
- *   value={value}
- *   onChange={setValue}
- *   min={new Date()}
- *   isDateDisabled={(d) => d.getDay() === 0 || d.getDay() === 6}
- * />
- *
- * @example
- * // Form integration via the hidden mirror:
- * <form action="/dates"><DatePicker name="dob" /></form>
- *
- * @remarks When NOT to use
- * - Range selection → not supported in v1; ships in a follow-up PR.
- * - Datetime with seconds precision → only `granularity='minute'` is
- *   supported. For finer precision, compose with a separate input.
- * - Time-only fields (no date) → out of scope.
- * - Free-form date strings without a clear locale → use a plain `<Input>`.
- *
- * @remarks Anti-patterns
- * - ❌ Wrapping the picker in `<label htmlFor={id}>` while also passing
- *   `aria-label` — pick one. The wrapper label is preferred.
- * - ❌ Using `value` without `onChange` and expecting state to update on
- *   user input — the picker is fully controlled when `value` is passed.
+ * Single-date input with a Floating-UI popover month grid, locale-aware typed parsing and min/max constraints.
+ * @see docs/components/DatePicker.md
  */
+// Built on the Calendar primitives (`useMonth`, formatters); popover via `@floating-ui/react-dom`.
 export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function DatePicker(
   {
     value: valueProp,

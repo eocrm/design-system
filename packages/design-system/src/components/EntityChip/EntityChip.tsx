@@ -117,7 +117,11 @@ interface EntityChipOwnProps {
   label?: ReactNode;
   /** Muted leading run before the name (e.g. task key `ENG-5`). */
   prefix?: ReactNode;
-  /** Inline workflow status, separated by a small dot and rendered in the status's own color. */
+  /**
+   * Inline workflow status `{ label, category?, color? }`, separated by a small dot and rendered in the
+   * status's own color. `category` (`to_do`/`in_progress`/`open`/`done`/`won`/`lost`) resolves a default
+   * palette color (same mapping as `<PillMenu>`); `color` overrides it. The dot takes the resolved color too.
+   */
   status?: EntityChipStatus;
   /**
    * Optional categorical palette color for the chip fill. When set, takes
@@ -262,7 +266,7 @@ interface EntityChipOwnProps {
    * #590). Use `'semibold'` for a design that explicitly wants that.
    *
    * Don't reach for a styled `<Text weight="semibold">` around `label` to get
-   * a heavier title instead (see the component's `@remarks` anti-patterns) —
+   * a heavier title instead (see the clipped-label tooltip bullet in `docs/components/EntityChip.md`) —
    * it buys nothing: the clipped-label tooltip reads the label's own
    * `textContent` and always renders it plain, in the tooltip's own color,
    * regardless of what the label node carries. Only this prop changes the
@@ -398,101 +402,8 @@ function Segment({ segment }: { segment: EntityChipSegment }): ReactElement {
 }
 
 /**
- * Inline entity-link chip: an optional icon, an optional muted prefix (e.g.
- * a task key), the entity's name, and an optional workflow status shown in
- * its own color — all spans inside a single inline root, safe to drop
- * directly inside a `<p>`. An EntityChip is canonically a link to its entity:
- * pass `href` (renders `<a>`) or `as` (router-aware navigation). The bare
- * `<span>` form is for rare non-navigable contexts only.
- *
- * @example
- * // Inline usage inside a sentence
- * <p>Reassigned <EntityChip icon={<UserIcon />} label="Priya Shah" /> to this deal.</p>
- *
- * @example
- * // RouterLink via `as`
- * import { Link as RouterLink } from 'react-router-dom';
- * <EntityChip as={RouterLink} to="/tasks/5" prefix="ENG-5" label="Fix login bug" />
- *
- * @example
- * // Status + custom color override
- * <EntityChip
- *   href="/deals/9"
- *   label="Acme Corp"
- *   status={{ label: 'At risk', color: 'amber' }}
- * />
- *
- * @example
- * // Loading / unavailable states — still live links with a target
- * <EntityChip href="/contacts/7" label="Contact" loading />
- * <EntityChip href="/contacts/9" label="Deleted contact" unavailable />
- *
- * @example
- * // Categorical `color` override — the chip fill itself, independent of `status`
- * <EntityChip href="/deals/9" label="Acme Corp" color="violet" />
- *
- * @example
- * // Segmented task chip — the whole chip is one link, one Tab stop:
- * <EntityChip
- *   as={RouterLink} to="/tasks/ENG-15"
- *   prefix="ENG-15" label="Fix the login bug on Safari" labelMaxWidth={40}
- *   before={[{ kind: 'icon', icon: <Bug />, label: 'Bug', color: 'red' }]}
- *   after={[
- *     { kind: 'icon', icon: <Equal />, label: 'Normal priority', color: 'slate' },
- *     { kind: 'text', text: 'Reported', color: 'amber' },
- *   ]}
- * />
- *
- * @example
- * // One-line list row: label ellipsizes, key/status/adornments stay whole
- * <EntityChip
- *   truncate
- *   href="/tasks/5"
- *   icon={<CheckSquareIcon />}
- *   prefix="ENG-5"
- *   label="Fix the login bug that only happens on Safari"
- *   status={{ label: 'In progress', category: 'in_progress' }}
- *   trailing={<ArrowUpIcon aria-label="High priority" />}
- * />
- *
- * @example
- * // `labelWeight="semibold"` — a heavier key + title (#590):
- * <EntityChip
- *   href="/tasks/ENG-15"
- *   prefix="ENG-15"
- *   label="Fix the login bug on Safari"
- *   labelWeight="semibold"
- * />
- *
- * @remarks When NOT to use
- * - Plain status display with no linked entity → use `<Badge>` or `<PillMenu>`.
- * - Standalone navigation with no entity chrome (icon/prefix/status) → use `<Link>`.
- * - Removable filter pills → use `<FilterChip>`.
- *
- * @remarks Anti-patterns
- * - ❌ Composing a `<Badge>` inside another `<Badge>` to fake an entity-with-status
- *   chip — that composition is exactly what `EntityChip` replaces.
- * - ❌ Putting block-level children (e.g. a `<div>`) inside `label`/`prefix` —
- *   the inline-safety contract requires span-only content.
- * - ❌ Raw hex strings in `status.color` or the chip's own `color`. Both are
- *   `PaletteColor` names (`'amber'`, `'violet'`, …), not CSS color values.
- * - ❌ Interactive content (a `<Button>`, a `<Link>`, a menu) in `trailing` —
- *   the chip is a link, so it would be nested interactive content. Put
- *   row actions beside the chip, not inside it.
- * - ❌ `truncate` on a chip inside running text — it exists for list rows;
- *   in a sentence the label should wrap.
- * - ❌ Omitting a link target — an EntityChip should always link to its
- *   entity (`href` or `as`); the span-only form is for rare non-navigable
- *   contexts.
- * - ❌ Nesting `<IconTile>` / `<Badge>` in `icon`/`trailing` to fake coloured
- *   parts — use `before`/`after` segments, which line up with the chip's text.
- * - ❌ An icon segment without a meaningful `label` — it is the segment's
- *   accessible name; a decorative glyph belongs in `icon`, not a segment.
- * - ❌ Wrapping `label` in a styled `<Text weight="semibold">` (or similar) to
- *   make the title heavier — use `labelWeight="semibold"` instead. A styled
- *   label node never changes the clipped-label tooltip either way (it always
- *   reads the label's own `textContent` and shows it plain, #590), so this
- *   anti-pattern buys nothing but inconsistency.
+ * Inline entity-link chip: icon, muted prefix, name and workflow status in one inline root.
+ * @see docs/components/EntityChip.md
  */
 export const EntityChip = forwardRef(function EntityChip<C extends ElementType = 'a'>(
   {

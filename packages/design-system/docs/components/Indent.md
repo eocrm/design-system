@@ -12,5 +12,20 @@
 }
 ```
 
-- `gutter`: `xs` 4 · `sm` 8 · `md` 12 · `lg` 16 (default) · `xl` 24 · `2xl` 32 (px per level).
-- `level` is a depth count (0, 1, 2, …); negatives clamp to 0.
+<!-- props:start -->
+
+## Props
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `level` | `number` | no | Nesting depth — multiplies the gutter. `0` = flush (no indent, e.g. a root-level comment). Defaults to `1` (one gutter). Negative values clamp to `0`. |
+| `gutter` | `'xs' \| 'sm' \| 'md' \| 'lg' \| 'xl' \| '2xl'` | no | Per-level indent size — a spacing step. Defaults to `'lg'` (16px per level). - `xs` 4px · `sm` 8px · `md` 12px · `lg` 16px · `xl` 24px · `2xl` 32px |
+| `children` | `ReactNode` | yes | The nested content to indent. Required — an Indent with nothing inside indents nothing. |
+| …native | | | plus native `<div>` attributes |
+
+<!-- props:end -->
+
+- Don't pass a fractional or huge `level`.
+- Not for general left padding on non-nested content — it expresses hierarchy; use the parent layout primitive.
+- Not for a bordered / padded surface (`<Card>`) or arranging children in a row (`<Cluster>`).

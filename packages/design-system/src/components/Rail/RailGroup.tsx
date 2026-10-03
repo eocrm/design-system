@@ -122,63 +122,8 @@ type RailGroupImplProps = RailGroupOwnProps & {
 } & Omit<HTMLAttributes<HTMLDivElement>, 'children'>;
 
 /**
- * Two-state navigation parent. When the surrounding `<Rail>` is **expanded**,
- * the group renders icon + label + chevron; clicking toggles a list of
- * subitems that drop down inline below the group button. When the rail is
- * **collapsed**, only the icon is visible — hovering it opens a popover
- * anchored to the right of the rail containing the group label as a header
- * and the subitems as a vertical list.
- *
- * **Linkable groups** (`as`): pass `as={NavLink}` (or any routing primitive)
- * plus its props and the row splits into two hit-targets — the icon + label
- * navigate, and a separate chevron `<button>` owns the expand/collapse. The
- * link carries `aria-current="page"` from the router, so the row highlights
- * like any other item; the chevron carries `aria-expanded` + `aria-controls`
- * and an accessible name of `Expand <label>` / `Collapse <label>`. Keyboard
- * order within the row is link, then chevron. **Omitting `as` keeps the
- * toggle-only shape** — one `<button>` spanning the whole row.
- *
- * When the rail is **collapsed** a linkable group has no chevron: the single
- * icon-sized target navigates on click, and hover (or focus) opens the
- * flyout, whose header is a link to the same destination so the parent page
- * stays reachable from inside the panel.
- *
- * **Auto-open**: on mount, if the group's own link or any subitem already has
- * `aria-current="page"` (i.e. the consumer is on the parent page or deep-
- * linked into a subroute), the group defaults to open so the active branch is
- * visible. This is uncontrolled-only and one-shot — subsequent navigations
- * don't force the group open, and manually closing it sticks. Consumers
- * wanting exact sync can pass a controlled `open` prop.
- *
- * **Hover-intent timing**: the flyout opens after a small 80ms delay to
- * avoid flicker during cursor traversal, and stays open for a 200ms grace
- * period after the cursor leaves so the user has time to move into the
- * panel. Re-entering the trigger or the flyout cancels the pending close.
- *
- * @example
- * // Toggle-only — the whole row expands/collapses, nothing navigates.
- * <Rail.Section title="Operations">
- *   <Rail.Group icon={<Settings />} label="Settings">
- *     <Rail.Item as={NavLink} to="/settings/general">General</Rail.Item>
- *     <Rail.Item as={NavLink} to="/settings/security">Security</Rail.Item>
- *     <Rail.Item as={NavLink} to="/settings/billing">Billing</Rail.Item>
- *   </Rail.Group>
- * </Rail.Section>
- *
- * @example
- * // Linkable — "Deals" navigates, the chevron reveals the saved views.
- * <Rail.Group as={NavLink} to="/deals" icon={<Handshake />} label="Deals">
- *   <Rail.Item as={NavLink} to="/deals?view=open">My open USD</Rail.Item>
- *   <Rail.Item as={NavLink} to="/deals?view=closing">Closing this month</Rail.Item>
- * </Rail.Group>
- *
- * @remarks Anti-patterns
- * - ❌ Nesting `<Rail.Group>` inside another `<Rail.Group>`. v1 supports
- *   only one level — subitems must be leaves.
- * - ❌ Putting non-`<Rail.Item>` children inside a group. Subitems should
- *   match the item shape so the active-state cascade reaches them.
- * - ❌ Adding a synthetic "All deals" first subitem to get a link to the
- *   parent page. That's what `as` is for — make the group itself the link.
+ * Two-state navigation parent: inline-expanding subitems when expanded, a hover flyout when collapsed; optionally linkable via `as` (`Rail.Group`).
+ * @see docs/components/Rail.md
  */
 export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function RailGroup(
   {

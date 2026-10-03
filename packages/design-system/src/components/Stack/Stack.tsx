@@ -77,55 +77,8 @@ const alignClass: Record<StackAlign, string> = {
 };
 
 /**
- * Vertical layout primitive. Replaces ad-hoc `display: flex; flex-direction: column`
- * divs. Use this whenever children should stack with consistent spacing.
- *
- * Pairs with `<Cluster>` (horizontal). Together they cover ~80% of CRM layout.
- *
- * @example
- * // Canonical form pattern:
- * <Stack gap="md">
- *   <Input placeholder="Name" />
- *   <Input placeholder="Email" />
- *   <Cluster justify="end" gap="sm">
- *     <Button variant="secondary">Cancel</Button>
- *     <Button type="submit">Save</Button>
- *   </Cluster>
- * </Stack>
- *
- * @example
- * // Page sections with larger gap:
- * <Stack gap="xl">
- *   <header>...</header>
- *   <section>...</section>
- *   <section>...</section>
- * </Stack>
- *
- * @example
- * // minWidth0 — lets a Stack shrink when it is itself an item of a squeezing
- * // flex row, so its truncating children can ellipsize:
- * <Cluster wrap={false} gap="sm">
- *   <Stack gap="xs" minWidth0>
- *     <Text weight="medium" truncate>{deal.name}</Text>
- *     <Text size="xs" tone="muted" truncate>{deal.accountPath}</Text>
- *   </Stack>
- *   <Badge tone="success">{deal.stage}</Badge>
- * </Cluster>
- *
- * @remarks When NOT to use
- * - For tabular data — use a real `<table>` or `<Grid>`.
- * - For a list of clickable items — semantics matter. Use `<ul><li>` with
- *   appropriate styling.
- *
- * @remarks Anti-patterns
- * - ❌ `minWidth0` on a Stack holding buttons or badges. It lets the container
- *   shrink, so non-truncatable content gets clipped instead. Use it on the
- *   container whose TEXT should give way.
- * - ❌ Nested Stacks with different gaps just to bend spacing locally.
- *   Sometimes legitimate (page sections at `xl` containing field stacks at
- *   `md`), but pause and consider — usually it signals unclear hierarchy.
- * - ❌ A Stack with one or two children. `<Stack><Button /></Stack>` is noise.
- *   Inline the child.
+ * Vertical layout primitive that stacks children with consistent spacing.
+ * @see docs/components/Stack.md
  */
 export const Stack = forwardRef<HTMLDivElement, StackProps>(function Stack(
   { gap = 'md', align = 'stretch', minWidth0 = false, className, ...props },

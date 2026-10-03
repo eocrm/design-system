@@ -33,7 +33,8 @@ export interface TextareaProps extends Omit<
   invalid?: boolean;
 
   /**
-   * Visual size. Defaults to `'md'`.
+   * Visual size. Defaults to `'md'`. Affects typography + padding only, not
+   * height — that comes from `minRows`.
    * - `'sm'` — tighter padding + `--font-size-sm`. Used in dense forms.
    * - `'md'` — default padding + `--font-size-md`. Most form contexts.
    * - `'lg'` — same padding as md but `--font-size-lg`. Hero / focus textareas.
@@ -117,50 +118,8 @@ const RESIZE_CLASS: Record<TextareaResize, string> = {
 };
 
 /**
- * Multi-line text input. The dumb companion to `<Input>` — same `invalid` +
- * `disableAutofill` smart-default behavior, plus auto-grow, resize-handle
- * direction, and an optional character counter.
- *
- * Forwards the `<textarea>` element via ref (not the wrapper div). All
- * native textarea attributes pass through except `size` (shadowed by the
- * component-level size prop) and `rows` (computed from `minRows`).
- *
- * Always renders a `<div>` wrapper so the optional counter has a place
- * to live — unlike Input, which is a single `<input>`.
- *
- * @example
- * // Default — auto-grows, 3 min rows.
- * <Textarea placeholder="Write something…" />
- *
- * @example
- * // Twitter-style counter, controlled.
- * <Textarea
- *   maxLength={140}
- *   value={value}
- *   onChange={(e) => setValue(e.target.value)}
- * />
- *
- * @example
- * // Fixed rows + drag-to-resize.
- * <Textarea autoGrow={false} minRows={4} resize="vertical" />
- *
- * @example
- * // Error state.
- * <Textarea invalid aria-describedby="bio-error" />
- * <p id="bio-error">Bio is required.</p>
- *
- * @remarks When NOT to use
- * - Single-line text → use `<Input>`.
- * - Choosing from a fixed list → use `<Select>`.
- * - Rich text editing / mentions / markdown → no shipped primitive yet.
- * - Password fields → use `<PasswordInput>`.
- *
- * @remarks Anti-patterns
- * - ❌ Using `placeholder` as a label. Placeholders disappear on focus.
- * - ❌ Setting both `autoGrow={true}` AND expecting `resize="vertical"`
- *   to render a drag handle. Auto-grow wins; the handle is hidden.
- * - ❌ Building a separate character counter outside the component when
- *   `maxLength` / `showCount` would do it.
+ * Multi-line text input with auto-grow, resize direction and an optional character counter.
+ * @see docs/components/Textarea.md
  */
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(function Textarea(
   {

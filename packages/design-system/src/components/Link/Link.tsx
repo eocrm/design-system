@@ -86,43 +86,8 @@ const UNDERLINE_CLASS: Partial<Record<LinkUnderline, string>> = {
 };
 
 /**
- * Polymorphic styled anchor. Default element is `<a>`. Pass `as={Component}`
- * to render any router-aware link primitive — the library has no router
- * dependency, but the polymorphic generic lets the consumer wire up whatever
- * routing solution they use with full type inference.
- *
- * Three visual variants cover the inline-text use cases (CTA, breadcrumb-style
- * muted, and subtle name-link). Use Button for action triggers — Link is for
- * navigation only.
- *
- * @example
- * // External link — uses native `<a>`.
- * <Link href="https://docs.example.com">Documentation</Link>
- *
- * @example
- * // SPA route — pass router's Link as `as`.
- * import { Link as RouterLink } from 'react-router-dom';
- * <Link as={RouterLink} to="/contacts">Contacts</Link>
- *
- * @example
- * // Variants compose freely with `as`.
- * <Link as={RouterLink} to="/x" variant="muted">Subdued nav</Link>
- * <Link as={RouterLink} to="/x" variant="subtle">Contact name</Link>
- *
- * @remarks When NOT to use
- * - For action triggers (submitting forms, opening modals) → use `<Button>`.
- * - For mutually-exclusive view switchers → use `<Tabs>` or `<ButtonGroup>`.
- * - For a "link styled as a button" → use `<Button variant="ghost">`.
- *
- * @remarks Anti-patterns
- * - ❌ `<Link href="#" onClick={...}>` — fake hrefs break right-click "open in new tab".
- *   Use `<Button variant="ghost">` instead.
- * - ❌ Forgetting `rel="noopener noreferrer"` on `target="_blank"` links — security risk.
- * - ❌ Using `variant="default"` for low-emphasis nav (breadcrumbs, footer). Use `muted`.
- * - ❌ A Link inside running text/body copy without `underline="always"` — with only
- *   the default hover-underline, the link is told apart from surrounding text by
- *   color alone, which fails WCAG 1.4.1 at this library's accent-vs-body contrast
- *   (2.06:1, below the 3:1 non-text threshold).
+ * Polymorphic styled anchor (`as` for router links) with `default` / `muted` / `subtle` variants; for navigation only.
+ * @see docs/components/Link.md
  */
 export const Link = forwardRef(function Link<C extends ElementType = 'a'>(
   { as, variant = 'default', underline, className, children, ...props }: LinkProps<C>,

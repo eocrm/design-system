@@ -27,69 +27,8 @@ export interface PopoverProps {
 }
 
 /**
- * Non-modal floating panel that opens from a trigger and contains arbitrary
- * interactive content. Compound API — pair `<Trigger>`, `<Content>`,
- * optionally `<Heading>` and `<Close>`, as direct or nested children.
- *
- * Implements the WAI-ARIA non-modal dialog pattern: `role="dialog"` on
- * Content, `aria-haspopup="dialog"` on Trigger, focus moves to the panel
- * on open, Tab traverses out of the panel into the page behind, click
- * outside or Escape dismisses. Page is NOT inert. Tooltip-grade animation
- * via `@starting-style`.
- *
- * @example
- * <Popover>
- *   <Popover.Trigger>
- *     <Button variant="secondary">Filters</Button>
- *   </Popover.Trigger>
- *   <Popover.Content>
- *     <Stack gap="sm">
- *       <Popover.Heading>Filter results</Popover.Heading>
- *       <Cluster justify="end" gap="sm">
- *         <Popover.Close>
- *           <Button variant="secondary" size="sm">Cancel</Button>
- *         </Popover.Close>
- *         <Popover.Close>
- *           <Button size="sm" onClick={apply}>Apply</Button>
- *         </Popover.Close>
- *       </Cluster>
- *     </Stack>
- *   </Popover.Content>
- * </Popover>
- *
- * @example
- * // Controlled (rare — usually let Popover manage state):
- * const [open, setOpen] = useState(false);
- * <Popover open={open} onOpenChange={setOpen}>…</Popover>
- *
- * @remarks When NOT to use
- * - For a passive hint on hover/focus → use `<Tooltip>`.
- * - For a list of actions → use `<DropdownMenu>`.
- * - For a focus-locked confirmation that demands full attention → use
- *   `<Modal>` (not yet shipped) once available; until then, `<Popover>`
- *   with explicit Confirm/Cancel buttons is acceptable.
- * - A tall panel with no `<ScrollArea>`. The popover is NOT capped at the
- *   viewport and will run off-screen. Wrap the long part in
- *   `<ScrollArea maxHeight="md">`: the popover then caps itself at the
- *   viewport and only the ScrollArea shrinks, so a header above it stays put.
- *   Keep the ScrollArea a direct child of `<Popover.Content>`, or inside one
- *   wrapper element that is a direct child. That one wrapper must lay its
- *   children out as a column: a `<Stack>`, or a plain element
- *   (div/form/Card), which the popover lays out as a column. A row wrapper
- *   such as `<Cluster>` is not supported (the popover caps but the feed
- *   overflows it) — put the ScrollArea in a Stack instead. Deeper nesting
- *   leaves the popover uncapped.
- *
- * @remarks Anti-patterns
- * - ❌ `<Popover.Trigger><Button disabled>…</Button></Popover.Trigger>` —
- *   disabled buttons do not fire click. Use `aria-disabled="true"` +
- *   intercept the click, or wrap in `<span>`.
- * - ❌ `<Popover.Content>` with no `<Popover.Close>` button AND content
- *   that isn't obviously dismissable by clicking outside — keyboard /
- *   screen-reader users get no clear close affordance. Add `<Popover.Close>`
- *   or rely on outside-click only when the popover is small and obvious.
- * - ❌ Multiple `<Popover.Heading>` instances inside one `<Popover.Content>`
- *   — second mount overwrites `aria-labelledby`. Use one Heading per Popover.
+ * Non-modal floating panel opened from a trigger, holding arbitrary interactive content (WAI-ARIA non-modal dialog); compound `Popover.Trigger`, `Content`, `Heading`, `Close`, `Anchor`.
+ * @see docs/components/Popover.md
  */
 export function PopoverRoot({
   children,

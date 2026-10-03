@@ -22,6 +22,26 @@
 </Masonry>
 ```
 
-- `revealOn`: `'hover'` (default — hover OR keyboard focus) · `'focus'` (focus only) · `'visible'` (always).
+<!-- props:start -->
+
+## Props
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `media` | `ReactNode` | yes | Tile body — full-bleed media (an `<Image>`, or a centered file-type icon). |
+| `title` | `ReactNode` | no | Top-bar leading content (e.g. the file name). Truncates with an ellipsis. |
+| `meta` | `ReactNode` | no | Top-bar trailing content (e.g. the file size). Sits at the end of the row. |
+| `actions` | `ReactNode` | no | Bottom-bar controls (e.g. preview / download / delete icon buttons), centered. |
+| `revealOn` | `'hover' \| 'focus' \| 'visible'` | no | When the bars + scrims reveal. Default `'hover'`. - `'hover'` — on pointer hover OR keyboard focus-within (focus always included for a11y). - `'focus'` — only on focus-within (no mouse-over reveal). - `'visible'` — always shown. |
+| `radius` | `'none' \| 'sm' \| 'md' \| 'lg'` | no | Corner rounding (clips the media). Default `'md'`. |
+| …native | | | plus native `<div>` attributes |
+
+<!-- props:end -->
+
 - Bars render only when they have content; icon-only `actions` need `aria-label`s.
 - MediaTile clips + overlays only — the `media` (`<Image aspectRatio>`) owns the tile's aspect.
+
+**When NOT to use:** a plain, non-revealing image block — `<Image>` (optionally inside a `<Card>`); a colored icon chip — `<IconTile>`.
+
+- ❌ Putting the ONLY copy of critical info in a hover-revealed bar — it is hidden at rest for mouse users. Use `revealOn="visible"` if the info must always show.

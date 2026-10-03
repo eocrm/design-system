@@ -11,6 +11,49 @@
 </Stack>
 ```
 
-- `gap`: `xs` (4) / `sm` (8) / `md` (12, default) / `lg` (16) / `xl` (24) / `2xl` (32) — pixels
-- `align`: `start` / `center` / `end` / `stretch` (default)
+<!-- props:start -->
+
+## Props
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `gap` | `'xs' \| 'sm' \| 'md' \| 'lg' \| 'xl' \| '2xl'` | no | Gap between children, in pixels: `xs` (4) / `sm` (8) / `md` (12, default) / `lg` (16) / `xl` (24) / `2xl` (32). |
+| `align` | `'start' \| 'center' \| 'end' \| 'stretch'` | no | Cross-axis alignment. - `stretch` (default) — children fill the stack's horizontal width. - `start` / `center` / `end` — left, center, right alignment. |
+| `minWidth0` | `boolean` | no | Lets the container shrink below its content's intrinsic width (`min-width: 0`), so a `<Text truncate>` inside can ellipsize instead of being hard-cut by a clipping ancestor. Only bites when the Stack is itself an item of a **row** flex container (or a grid item) that clips — what decides is the PARENT's main axis, not the Stack's own direction. That is the two-line label beside a fixed badge, or a detail column in a squeezed toolbar. Without it the flex default (`min-width: auto`) floors the Stack at its widest line and the ellipsis never appears. That floor applies because a Stack sets no `overflow` — per CSS Flexbox §4.5 a flex item keeps its automatic minimum size while its computed `overflow` is non-scrollable (`visible` or `clip`); the scrollable values (`hidden`/`auto`/`scroll`) drop it to `0`. It is a **no-op** when the Stack sits in another `Stack` (the automatic minimum size applies only on the flex MAIN axis, so there is no horizontal floor), or in a plain block or table cell (that minimum applies to flex and grid ITEMS only, so `min-width: auto` is just `0` there). A table cell is a no-op for a different reason than it looks: auto table layout floors the cell at its content's min-content width regardless, so what makes text truncate there is `table-layout: fixed` or a `max-width` on the cell — not this prop. Opt-in rather than the default on purpose: a container that CAN shrink also VOLUNTEERS for shrink, so turning it on where the content is NOT truncatable (buttons, badges, icons) lets that content be clipped instead. Set it on the container whose text should give way, not on one holding controls. Related: `<Constrain flex="grow">` applies the same `min-width: 0` but also forces `flex: 1 1 0`, and renders a `<div>` — reach for this prop when you want only the shrink permission, or when you are inside a `<button>`/`<a>`/`<label>` where a `<div>` is invalid HTML. Default: `false`. |
+| …native | | | plus native `<div>` attributes |
+
+<!-- props:end -->
+
 - `minWidth0`: `false` (default). Sets `min-width: 0` so the Stack can shrink below its content's intrinsic width, letting a `<Text truncate>` inside ellipsize instead of being hard-cut. Only bites when the Stack is itself an item of a **row** flex container (or a grid item) that clips — what decides is the PARENT's main axis, not the Stack's own direction: a two-line label beside a fixed badge, a detail column in a squeezed toolbar. **No-op** inside another `Stack`, a plain block, or a table cell — and note a table cell is a no-op for a different reason than it looks: auto table layout floors the cell at its content's min-content width regardless, so what makes text truncate there is `table-layout: fixed` or a `max-width` on the cell (that is what `<Table.Cell truncate>` does), not this prop. **Opt-in on purpose:** a container that can shrink also _volunteers_ for shrink, so setting it where the content is NOT truncatable (buttons, badges, icons) lets that content be clipped instead.
+
+Pairs with `<Cluster>` (horizontal); together they cover most CRM layout. Use it instead of ad-hoc `display: flex; flex-direction: column` divs.
+
+```tsx
+// Page sections with a larger gap:
+<Stack gap="xl">
+  <header>...</header>
+  <section>...</section>
+  <section>...</section>
+</Stack>
+
+// minWidth0 — a Stack inside a squeezing flex row, so truncating children can ellipsize:
+<Cluster wrap={false} gap="sm">
+  <Stack gap="xs" minWidth0>
+    <Text weight="medium" truncate>{deal.name}</Text>
+    <Text size="xs" tone="muted" truncate>{deal.accountPath}</Text>
+  </Stack>
+  <Badge tone="success">{deal.stage}</Badge>
+</Cluster>
+```
+
+**When NOT to use**
+
+- Tabular data: use a real `<table>` or `<Grid>`.
+- A list of clickable items: semantics matter, use `<ul><li>` with appropriate styling.
+
+**Anti-patterns**
+
+- `minWidth0` on a Stack holding buttons or badges: the container shrinks and non-truncatable content is clipped. Use it on the container whose TEXT should give way.
+- Nested Stacks with different gaps just to bend spacing locally. Sometimes legitimate (page sections at `xl` containing field stacks at `md`), but it usually signals unclear hierarchy.
+- A Stack with one or two children (`<Stack><Button /></Stack>`) is noise; inline the child.

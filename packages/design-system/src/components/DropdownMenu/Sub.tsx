@@ -59,44 +59,10 @@ export interface DropdownMenuSubProps {
 }
 
 /**
- * Submenu container. Creates a new DropdownMenuContext that shadows the
- * parent — submenu items register in this context, dismissal is scoped here.
- * `closeAll()` chains up to the parent's closeAll, producing cascading-close
- * semantics for leaf item selection.
- *
- * Must contain exactly one `<DropdownMenu.SubTrigger>` and one
- * `<DropdownMenu.SubContent>`.
- *
- * @example
- * <DropdownMenu.Sub>
- *   <DropdownMenu.SubTrigger>Export</DropdownMenu.SubTrigger>
- *   <DropdownMenu.SubContent>
- *     <DropdownMenu.Item onSelect={exportCsv}>CSV</DropdownMenu.Item>
- *     <DropdownMenu.Item onSelect={exportJson}>JSON</DropdownMenu.Item>
- *   </DropdownMenu.SubContent>
- * </DropdownMenu.Sub>
- *
- * @example
- * // Controlled open state:
- * <DropdownMenu.Sub open={subOpen} onOpenChange={setSubOpen}>
- *   <DropdownMenu.SubTrigger>More options</DropdownMenu.SubTrigger>
- *   <DropdownMenu.SubContent>
- *     <DropdownMenu.Item onSelect={handleAction}>Action</DropdownMenu.Item>
- *   </DropdownMenu.SubContent>
- * </DropdownMenu.Sub>
- *
- * @remarks When NOT to use
- * - For top-level sections — use `<DropdownMenu.Group>` + `<DropdownMenu.Label>`
- *   instead. Sub is only for nested flyout menus.
- * - For more than 2–3 levels of nesting. UX gets confusing fast; refactor
- *   the information architecture.
- * - On touch-first surfaces. Submenus rely on hover and lateral arrow keys;
- *   touch users have neither reliably.
- *
- * @remarks Anti-patterns
- * - ❌ Putting a SubTrigger outside a Sub. SubTrigger needs Sub's context.
- * - ❌ Multiple SubTriggers under one Sub. One sub = one trigger.
+ * Submenu container holding one `SubTrigger` and one `SubContent`.
+ * @see docs/components/DropdownMenu.md
  */
+// Shadows the parent context; `closeAll()` chains to the parent's for cascading close.
 export function Sub({
   children,
   open: controlledOpen,
@@ -190,28 +156,10 @@ export interface DropdownMenuSubTriggerProps extends HTMLAttributes<HTMLDivEleme
 }
 
 /**
- * Trigger for a submenu. Renders as a menuitem in the PARENT menu with a
- * trailing chevron (`›`). Click, hover (100 ms delay), Enter, Space, or
- * ArrowRight opens the sub; ArrowLeft (when inside the sub) closes it.
- *
- * Internally registers itself in the parent context's item registry so it
- * participates in keyboard navigation (Arrow keys, Home/End, typeahead) like
- * any other item in the parent menu.
- *
- * Must be used inside `<DropdownMenu.Sub>` — throws otherwise.
- *
- * @example
- * <DropdownMenu.Sub>
- *   <DropdownMenu.SubTrigger>More options</DropdownMenu.SubTrigger>
- *   <DropdownMenu.SubContent>
- *     <DropdownMenu.Item onSelect={handleAction}>Action</DropdownMenu.Item>
- *   </DropdownMenu.SubContent>
- * </DropdownMenu.Sub>
- *
- * @remarks When NOT to use
- * - Outside a `<DropdownMenu.Sub>` — throws in dev. Always pair SubTrigger
- *   with a Sub + SubContent.
+ * Trigger for a submenu: a menu item in the parent menu with a trailing chevron.
+ * @see docs/components/DropdownMenu.md
  */
+// Registers in the parent context's item registry for keyboard navigation.
 export const SubTrigger = forwardRef<HTMLDivElement, DropdownMenuSubTriggerProps>(
   function SubTrigger({ disabled = false, icon, className, children, ...rest }, forwardedRef) {
     const subCtx = useDropdownMenuContext('SubTrigger');
@@ -345,23 +293,10 @@ export const SubTrigger = forwardRef<HTMLDivElement, DropdownMenuSubTriggerProps
 export type DropdownMenuSubContentProps = DropdownMenuContentProps;
 
 /**
- * Floating panel for a submenu. Thin wrapper around `<Content>` — Content's
- * `handleKeyDown` handles ArrowLeft when `depth > 0`, closing this sub and
- * returning focus to the SubTrigger. Position defaults match `<Content>`.
- *
- * Adds hover-intent logic so moving the pointer from the SubTrigger into the
- * SubContent cancels the pending close timer, keeping the sub open while the
- * user moves between the trigger and the sub's items.
- *
- * @example
- * <DropdownMenu.Sub>
- *   <DropdownMenu.SubTrigger>Export</DropdownMenu.SubTrigger>
- *   <DropdownMenu.SubContent>
- *     <DropdownMenu.Item onSelect={exportCsv}>CSV</DropdownMenu.Item>
- *     <DropdownMenu.Item onSelect={exportJson}>JSON</DropdownMenu.Item>
- *   </DropdownMenu.SubContent>
- * </DropdownMenu.Sub>
+ * Floating panel for a submenu.
+ * @see docs/components/DropdownMenu.md
  */
+// Thin wrapper over `Content` (which handles ArrowLeft at depth > 0); moving from the SubTrigger into it cancels the pending close timer.
 export const SubContent = forwardRef<HTMLDivElement, DropdownMenuSubContentProps>(
   function SubContent({ side = 'right', ...props }, ref) {
     const hoverCtx = useSubHoverContext('SubContent');

@@ -19,11 +19,67 @@ const [open, setOpen] = useState(false);
 </Drawer>
 ```
 
-- **Controlled-only.** `open` + `onOpenChange` always.
-- **Four sides:** `left`, `right` (default), `top`, `bottom`. Each slides in from its edge.
-- **Three sizes:** `sm` (320px), `md` (440px, default), `lg` (640px). Capped to `viewport - 32px` on narrow viewports; always edge-anchored, never fullscreen.
+<!-- props:start -->
+
+## Props
+
+### `DrawerProps`
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `open` | `boolean` | yes | Controlled open state. Required — Drawer has no uncontrolled mode. |
+| `onOpenChange` | `(open: boolean) => void` | yes | Fired when Drawer wants to change open state — Esc, overlay click, Close, swipe, programmatic. |
+| `side` | `'left' \| 'right' \| 'top' \| 'bottom'` | no | Edge the drawer slides in from: `left`, `right` (default), `top`, `bottom`. |
+| `size` | `'sm' \| 'md' \| 'lg'` | no | Size preset: `sm` 320px, `md` 440px (default), `lg` 640px. Width for left/right, height for top/bottom. Capped to `viewport - 32px` on narrow viewports; always edge-anchored, never fullscreen. |
+| `overlay` | `'solid' \| 'blur'` | no | Overlay variant. 'solid' (default) \| 'blur' (frosted glass, `backdrop-filter: blur(4px)`). |
+| `stackMode` | `'replace' \| 'overlay'` | no | How this drawer relates to other open overlays (Modals or Drawers). 'overlay' (default): parent stays visible. 'replace': parent hidden via display:none. |
+| `disableEscapeClose` | `boolean` | no | Disable Escape-to-close. Default false. |
+| `dismissOnOverlayClick` | `boolean` | no | When false, overlay click does NOT close. Default true. |
+| `dragToClose` | `boolean` | no | Enable swipe-to-close gesture on touch devices (from Header). Default true. |
+| `initialFocusRef` | `RefObject<HTMLElement \| null>` | no | Initial focus target on open. |
+| `children` | `ReactNode` | yes |  |
+| `className` | `string` | no |  |
+| `style` | `CSSProperties` | no |  |
+| `aria-label` | `string` | no |  |
+| `aria-describedby` | `string` | no |  |
+
+### `DrawerBodyProps`
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `padding` | `'none' \| 'default'` | no | Override body padding. Default 'default' (--space-4). 'none' for edge-to-edge. |
+| …native | | | plus native `<div>` attributes |
+
+### `DrawerCloseProps`
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `children` | `ReactElement<unknown, string \| JSXElementConstructor<any>>` | yes | Exactly one React element. Close clones it to inject an onClick that closes the drawer, chained with the child's existing onClick. |
+
+### `DrawerFooterProps`
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `align` | `'start' \| 'end' \| 'space-between'` | no | Horizontal action alignment. Default 'end'. |
+| …native | | | plus native `<div>` attributes |
+
+### `DrawerHeaderProps`
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `closeButton` | `boolean` | no | Show the built-in × close button. Default true. |
+| …native | | | plus native `<div>` attributes |
+
+<!-- props:end -->
+
+- **Compound API:** `<Drawer.Header>` — title, auto-wired `aria-labelledby`, built-in × close button unless `closeButton={false}`, and the drag-to-close origin; `<Drawer.Body>` — scrollable content; `<Drawer.Footer>` — pinned action bar; `<Drawer.Close>` — wraps a clickable child so activating it dismisses the drawer.
+- **Dialog semantics:** same focus-lock and scroll-lock as Modal. Passing neither `<Drawer.Header>` nor `aria-label` fires a dev warning.
 - **Drag-to-close** on mobile: swipe the Header in the dismiss direction (right drawer → swipe right, bottom → swipe down, etc.). Threshold: 40% of drawer size or 0.5 px/ms velocity. Opt out with `dragToClose={false}`.
-- **Overlay variants:** `overlay="solid"` (default) or `overlay="blur"` (frosted-glass with `backdrop-filter: blur(4px)`).
 - **Stacks with Modal.** Both share one overlay registry — a Drawer can open from inside a Modal (and vice versa). Escape closes the topmost regardless of type — after yielding to any open floating surface (innermost-first: the first press closes the surface, the next closes the host); body scroll lock is shared.
 - **Focus return:** the element focused before the Drawer opened gets focus back on close — also when the Drawer mounts already open (`{seed && <Drawer open …/>}`) and when it unmounts while open. On unmount it only restores if focus was actually lost, so an element your own code focused after the unmount keeps focus.
 - **Forced step:** combine `disableEscapeClose + dismissOnOverlayClick={false} + dragToClose={false}` + `<Drawer.Header closeButton={false}>` + omit `<Drawer.Close>`.
@@ -32,6 +88,7 @@ const [open, setOpen] = useState(false);
 
 - ❌ Same-side stacked drawers as a navigation pattern. They visually overlap — use route changes instead.
 - ❌ Drag from inside `<Drawer.Body>` does not close the drawer. Only Header is draggable (so Body scroll works correctly).
-- ❌ For center-anchored dialogs, use `<Modal>` not Drawer.
+- ❌ For center-anchored dialogs, use `<Modal>` not Drawer. For lightweight popovers use `<Popover>` or `<DropdownMenu>`; for non-blocking notifications use `<Toast>` (not yet shipped).
+- ❌ Worrying about a `position: fixed` ancestor — the Drawer portals to `document.body`, so render it at any level.
 
 **See also:** `<Modal>` for center-anchored variant.

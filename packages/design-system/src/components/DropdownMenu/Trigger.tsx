@@ -22,8 +22,8 @@ export interface DropdownMenuTriggerProps {
 }
 
 /**
- * Clones its single child element to inject the open-toggle handlers and
- * ARIA. The child must accept a ref (forwardRef or a native element).
+ * Clones its single child to inject the open-toggle handlers and ARIA; the child must accept a ref.
+ * @see docs/components/DropdownMenu.md
  */
 export function Trigger({ children }: DropdownMenuTriggerProps) {
   const ctx = useDropdownMenuContext('Trigger');

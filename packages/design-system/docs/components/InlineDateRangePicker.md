@@ -5,11 +5,53 @@ const [range, setRange] = useState<DateRange | null>(null);
 <InlineDateRangePicker value={range} onChange={setRange} />;
 ```
 
+<!-- props:start -->
+
+## Props
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `value` | `DateRange \| null` | no | Selected range. `null` = no range. Pair with `onChange` for controlled use. |
+| `defaultValue` | `DateRange \| null` | no | Initial range for uncontrolled use. |
+| `onChange` | `((range: DateRange \| null) => void)` | no | Fires when a complete range commits (second click, auto-swapped). Currently always fires with a complete `DateRange`; `null` is reserved for a future clear / deselect mechanism. |
+| `locale` | `string` | no | Override locale. |
+| `min` | `Date` | no | Earliest selectable date (inclusive). |
+| `max` | `Date` | no | Latest selectable date (inclusive). |
+| `isDateDisabled` | `((date: Date) => boolean)` | no | Per-date disable predicate. |
+| `nameStart` | `string` | no | Form name for the START half (hidden `<input>` mirror). |
+| `nameEnd` | `string` | no | Form name for the END half. |
+| `disabled` | `boolean` | no | Disables interaction. Defaults to `false`. |
+| `granularity` | `'day' \| 'minute'` | no | Picker precision. - `'day'` (default) — date only; behavior unchanged from prior releases. - `'minute'` — adds two manual-entry time inputs (start + end) below the two-month grid. Hidden form mirrors (when `nameStart` / `nameEnd` are set) emit ISO local datetime (`2026-05-28T14:30`). At `'minute'` the start/end time inputs are shown and editable even before a range is picked (defaulting to `00:00` / `23:59`). Times entered in the empty state are applied when the range is committed (instead of the bare defaults), and existing times are preserved across date re-picks. Same-day ranges with end-time < start-time are silently clamped so end-time ≥ start-time. |
+| `timeStep` | `number` | no | Minutes step for the start + end `<TimeField>` popovers and for rounding typed time input on commit. Defaults to `15`. Set `1` to disable rounding. Only meaningful when `granularity='minute'`. |
+| `hourCycle` | `'12' \| '24' \| 'auto'` | no | Display cycle for the two embedded `<TimeField>`s. - `'24'` — `"HH:mm"` text inputs; 24h hour list in popovers. - `'12'` — `"h:mm AM/PM"` text inputs; 12h hour list + AM/PM column. - `'auto'` (default) — derives from the active locale via Intl. en-US → `'12'`; ru-RU → `'24'`. Only meaningful when `granularity='minute'`. |
+| …native | | | plus native `<div>` attributes |
+
+<!-- props:end -->
+
 - Two-month calendar grid (side-by-side) embedded directly in the page. Same click-1/click-2/restart selection machine, hover preview, auto-swap on out-of-order picks, and keyboard cross-grid navigation as `<DateRangePicker>` — without the input + popover.
 - External prev/next chevrons in the header shift both grids by ±1 month at once.
-- Sticky cursor (anchors to `value?.start ?? new Date()` on mount; stays where the user navigated).
-- `min` / `max` / `isDateDisabled` gate both boundaries.
-- `nameStart` / `nameEnd` render independent hidden form mirrors (post both, only one, or neither — caller's choice).
-- `disabled` mutes everything; ref forwards to the outer wrapper.
+- Cursor anchors to `value?.start ?? new Date()` on mount and re-anchors each time `value` transitions from `null` to a non-null range (e.g. loading an async initial value, or a consumer clearing and re-setting). After a transition, later non-null `value` changes do not move the cursor — `ref` is the wrapper `<div>` and exposes no cursor API; to jump to the new month, remount with a changed `key`.
+- Keyboard cross-grid navigation works in both directions between the two grids.
+- `ref` forwards to the outer wrapper.
 - Use when the consumer wants the calendar permanently visible. For a compact form field with the same selection model, use `<DateRangePicker>`. Don't render inside containers narrower than ~32rem — the two grids need side-by-side room.
 - **Granularity.** Pass `granularity="minute"` to render dual `<TimeField>`s (start + end) below the two-month grid; the hidden form mirrors emit ISO local datetime. Defaults to `'day'`. The start/end time inputs are shown and editable below the grid even before a range is picked — defaulting to `00:00` start / `23:59` end. Times set in this empty state are applied when the range is committed (no need to seed a placeholder range), and existing times are preserved across subsequent date picks. Same-day end-time silently clamps to ≥ start-time on every commit; different-day ranges are not clamped. `timeStep` (default `15`, in minutes) applies to BOTH TimeFields, controlling each minute-list row count AND rounding typed input in the time fields on commit; set `timeStep={1}` to disable rounding. `hourCycle` (default `'auto'`) forwards to both embedded TimeFields — `'12'` / `'24'` force a cycle, `'auto'` derives from locale.
+
+```tsx
+<form action="/api/bookings">
+  <InlineDateRangePicker nameStart="bookingStart" nameEnd="bookingEnd" min={new Date()} />
+  <button type="submit">Save</button>
+</form>
+```
+
+#### When NOT to use
+
+- Compact form field: use `<DateRangePicker>` (the popover variant).
+- Single-date selection: use `<InlineDatePicker>`.
+- Seconds-precision tracking: only `granularity="minute"` is supported.
+- Time-only fields (no date): out of scope.
+
+#### Anti-patterns
+
+- ❌ Wrapping in a narrow container (< ~32rem): the two grids need side-by-side room; squashing them clips the right grid.
+- ❌ Using `value` without `onChange`.

@@ -16,34 +16,8 @@ export interface DropdownMenuGroupProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * Visual and accessible grouping wrapper for related menu items. Renders
- * `<div role="group">` with `aria-labelledby` wired to any
- * `<DropdownMenu.Label>` inside — no manual id management needed.
- *
- * Use to wrap a label + items section (e.g., a labeled RadioGroup or a
- * labeled checkbox bank).
- *
- * @example
- * <DropdownMenu.Group>
- *   <DropdownMenu.Label>Sort by</DropdownMenu.Label>
- *   <DropdownMenu.RadioGroup value={sort} onValueChange={setSort}>
- *     <DropdownMenu.RadioItem value="name">Name</DropdownMenu.RadioItem>
- *     <DropdownMenu.RadioItem value="date">Date</DropdownMenu.RadioItem>
- *   </DropdownMenu.RadioGroup>
- * </DropdownMenu.Group>
- *
- * @example
- * <DropdownMenu.Group>
- *   <DropdownMenu.Label>Visibility</DropdownMenu.Label>
- *   <DropdownMenu.CheckboxItem checked={a} onCheckedChange={setA}>Active</DropdownMenu.CheckboxItem>
- *   <DropdownMenu.CheckboxItem checked={p} onCheckedChange={setP}>Pending</DropdownMenu.CheckboxItem>
- * </DropdownMenu.Group>
- *
- * @remarks When NOT to use
- * - Around a single Item — overkill. Group is for sections of 2+ related items.
- * - As a generic layout primitive. Use `<Stack>` or `<Cluster>` for non-menu layout.
- * - Around a RadioGroup if you don't need a visible Label too — RadioGroup
- *   already provides `role="radiogroup"`. Group adds a second role layer.
+ * Accessible grouping wrapper for related menu items, labelled by a `DropdownMenu.Label` inside it.
+ * @see docs/components/DropdownMenu.md
  */
 export const Group = forwardRef<HTMLDivElement, DropdownMenuGroupProps>(function Group(
   { children, className, ...rest },
@@ -81,32 +55,8 @@ export interface DropdownMenuLabelProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * Non-interactive section heading inside a `<DropdownMenu.Content>`. Renders
- * a small uppercase tracked text row. When placed inside a
- * `<DropdownMenu.Group>`, Label gets the group's auto-generated id so
- * `aria-labelledby` resolves correctly. Outside a Group, Label still renders —
- * without aria wiring.
- *
- * @example
- * // Inside a Group — id/aria wiring is automatic:
- * <DropdownMenu.Group>
- *   <DropdownMenu.Label>Sort by</DropdownMenu.Label>
- *   <DropdownMenu.Item onSelect={handleEdit}>Edit</DropdownMenu.Item>
- * </DropdownMenu.Group>
- *
- * @example
- * // Standalone label (no Group), no aria wiring — useful for casual headings:
- * <DropdownMenu.Content>
- *   <DropdownMenu.Label>Quick actions</DropdownMenu.Label>
- *   <DropdownMenu.Item onSelect={refresh}>Refresh</DropdownMenu.Item>
- * </DropdownMenu.Content>
- *
- * @remarks When NOT to use
- * - As a clickable item — Label carries no `role="menuitem"` and is not
- *   keyboard-focusable. Use a disabled `<DropdownMenu.Item>` for a
- *   selectable header-style row.
- * - As a replacement for `<DropdownMenu.Group>` + Label. Outside a Group,
- *   there is no `aria-labelledby` wiring.
+ * Non-interactive section heading inside a `DropdownMenu.Content`.
+ * @see docs/components/DropdownMenu.md
  */
 
 export const Label = forwardRef<HTMLDivElement, DropdownMenuLabelProps>(function Label(

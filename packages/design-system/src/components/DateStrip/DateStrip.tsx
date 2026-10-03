@@ -60,50 +60,8 @@ export interface DateStripProps extends Omit<
 }
 
 /**
- * One week of selectable day tiles under a month heading with previous/next
- * week buttons. Each tile shows the short weekday, the day number and how
- * many free times the day has; a day with none reads "No times" and is
- * disabled. Built on native radios sharing one `name`: the strip is one Tab
- * stop, arrow keys move and select, disabled days are skipped.
- *
- * @example
- * const [day, setDay] = useState<string | null>(null);
- * <DateStrip
- *   days={week} // [{ date: '2026-10-05', free: 3 }, …]
- *   value={day}
- *   onChange={setDay}
- *   onPrevious={() => setWeekStart(addDays(weekStart, -7))}
- *   onNext={() => setWeekStart(addDays(weekStart, 7))}
- *   canPrevious={weekStart > today}
- * />
- *
- * @example
- * // Booking time step: DateStrip picks the day, SlotGrid the time.
- * <Stack gap="lg">
- *   <DateStrip days={week} value={day} onChange={setDay} onPrevious={prev} onNext={next} />
- *   <SlotGrid groups={slotsFor(day)} value={slot} onChange={setSlot} />
- * </Stack>
- *
- * @remarks When NOT to use
- * - Picking any date across months → `<InlineDatePicker>` / `<DatePicker>`.
- * - Scheduling / showing events → `<Calendar>`.
- * - Picking a time of day → `<SlotGrid>` (offered slots) or `<TimeField>` (free-form).
- *
- * @remarks Anti-patterns
- * - ❌ Passing `Date` objects or locale-formatted strings in `date` — it is an
- *   ISO `'YYYY-MM-DD'` calendar day; the strip formats it.
- * - ❌ Building `date` from `toISOString()` of a local-midnight `Date` — that
- *   shifts a day west of UTC. Produce the business-timezone calendar day.
- * - ❌ An `aria-label` on the strip — the month heading names the group (a
- *   wrapping Field / SettingRow label is merged in front of it).
- * - ❌ Hiding days with no times instead of passing `free: 0` — the week
- *   loses its shape and the user can't see the day is full.
- * - ❌ In an intrinsic-width context (`Split`'s default `auto` aside track, a
- *   `Cluster` item, `width: max-content`) it renders at width 0 —
- *   `container-type: inline-size` zeroes its intrinsic-width contribution;
- *   give the parent a concrete width (e.g. `asideWidth` on a Split). It is
- *   also the containing block for absolutely-positioned descendants (layout
- *   containment).
+ * One week of selectable day tiles under a month heading with previous/next week buttons.
+ * @see docs/components/DateStrip.md
  */
 export const DateStrip = forwardRef<HTMLFieldSetElement, DateStripProps>(function DateStrip(
   {

@@ -17,8 +17,26 @@ const handleSave = async () => {
 };
 ```
 
-- **Controlled-only.** `value: CropArea | null` (in source-image pixels). Pass `null` initially — the component computes the default centered crop on first image load and fires `onChange` once. From then on, the consumer owns the state.
-- **`src: string | File | Blob`** — string URLs pass through; File/Blob are normalized to object URLs internally with cleanup on unmount + src change. Consumer never sees the URL.
+<!-- props:start -->
+
+## Props
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `src` | `string \| File \| Blob` | yes | Image source. String URLs (HTTP/HTTPS, data:, blob:) pass through. File/Blob are normalized to object URLs internally via `URL.createObjectURL()`, with cleanup on unmount and `src` change. |
+| `value` | `CropArea \| null` | yes | Controlled crop area in SOURCE-IMAGE pixel coordinates. Pass `null` to use the component's default centered crop (the largest centered region matching `aspectRatio` at zoom=1). The component computes the visual position from this + the image's natural size + the viewport size. |
+| `onChange` | `(area: CropArea) => void` | yes | Fires on every drag/zoom tick. High frequency. Also fires once on first image load when `value` is `null`, with the computed default crop; after that the consumer owns the state. |
+| `onChangeEnd` | `((area: CropArea) => void)` | no | Fires once when the user releases the drag or releases the zoom slider thumb. |
+| `aspectRatio` | `number` | no | Fixed aspect ratio for the crop box (e.g. `1` for square, `16/9` for landscape, `4/3` for traditional photo). Omit for free aspect — the crop box fills the entire viewport and the user controls the cropped region via zoom only. Typically a stable prop from the consumer (set once per page). Toggling `aspectRatio` at runtime updates the crop box dimensions but does NOT automatically re-fit `value` to the new ratio — pass a fresh `value` (or `null` for the new default) when you change ratios. |
+| `minZoom` | `number` | no | Minimum zoom level. Default `1` (image fits viewport at zoom=1). |
+| `maxZoom` | `number` | no | Maximum zoom level. Default `3`. |
+| `showZoomControl` | `boolean` | no | Render the embedded `<Slider>` zoom control below the canvas. Default `true`. Set `false` for a pure canvas with no zoom UI — but the component's internal zoom state isn't exposed (v2 feature). |
+| `disabled` | `boolean` | no | Disable all interaction (drag, zoom). Default `false`. Image still renders; the zoom slider is also disabled. |
+| …native | | | plus native `<div>` attributes |
+
+<!-- props:end -->
+
 - **Pattern A drag**: the crop box is centered in the viewport; the user drags the IMAGE to reposition. Zoom adjusts via the embedded `<Slider>`. No corner / edge resize handles.
 - **`aspectRatio?: number`** — pass `1` for square, `16/9` for landscape, etc. Omit for free aspect (crop box fills the viewport; zoom controls effective cropped region).
 - **`onChange` fires per drag/zoom tick (high frequency).** Debounce in the consumer OR use `onChangeEnd` (fires on pointerup / slider release).
@@ -102,3 +120,21 @@ interface UseCropPreviewOptions extends ExtractCropOptions {
 - ❌ `<ImageCrop ref={ref}>` expecting `.getBlob()`. There's no imperative API. The extraction utility is a top-level export.
 - ❌ Calling `URL.revokeObjectURL(previewUrl)` from `useCropPreview` manually. The hook owns the URL lifecycle.
 - ❌ Cropping a circular avatar at the canvas level. Crop rectangular, then CSS-mask in the consumer.
+- Not for server-side cropping (send `value`'s `CropArea` coordinates to your backend instead of calling `extractCropBlob`), rotation (not supported), or multi-touch / pinch-zoom (single-pointer drag + slider zoom only).
+
+```tsx
+// Free aspect (no aspectRatio prop)
+<ImageCrop src={imageUrl} value={crop} onChange={setCrop} />
+
+// Canonical "pick → crop → save" flow inside a Modal
+<Modal isOpen onClose={cancel}>
+  <Modal.Header>Crop your photo</Modal.Header>
+  <Modal.Body>
+    <ImageCrop src={file} value={crop} onChange={setCrop} aspectRatio={1} />
+  </Modal.Body>
+  <Modal.Footer>
+    <Button variant="secondary" onClick={cancel}>Cancel</Button>
+    <Button onClick={handleSave} disabled={!crop}>Save</Button>
+  </Modal.Footer>
+</Modal>
+```

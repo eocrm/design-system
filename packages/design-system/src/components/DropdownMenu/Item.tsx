@@ -57,24 +57,8 @@ export interface DropdownMenuItemProps extends Omit<HTMLAttributes<HTMLDivElemen
 }
 
 /**
- * A selectable menu item. Self-registers with the DropdownMenu context for
- * keyboard navigation and typeahead. Fires `onSelect` on activation.
- *
- * @example
- * <DropdownMenu.Item onSelect={onRename}>Rename</DropdownMenu.Item>
- *
- * @example
- * // Two trailing slots, deliberately different things:
- * // `shortcut` is a keyboard hint; `meta` qualifies the item itself and
- * // joins the accessible name ("Duplicate 3 files").
- * <DropdownMenu.Item onSelect={onDuplicate} meta="3 files" shortcut="⌘D">
- *   Duplicate
- * </DropdownMenu.Item>
- *
- * @remarks Anti-patterns
- * - ❌ Using `shortcut` to carry text that is not a keyboard hint (a region
- *   code, a count, a status). It is styled as a key hint and may become a
- *   `<Kbd>` key cap. Use `meta` for that.
+ * A selectable menu item that fires `onSelect` on activation.
+ * @see docs/components/DropdownMenu.md
  */
 export const Item = forwardRef<HTMLDivElement, DropdownMenuItemProps>(function Item(
   {
@@ -148,7 +132,10 @@ export const Item = forwardRef<HTMLDivElement, DropdownMenuItemProps>(function I
 /** Visual divider between groups of items. Decorative — `role="separator"`. */
 export interface DropdownMenuSeparatorProps extends HTMLAttributes<HTMLDivElement> {}
 
-/** Decorative visual divider between groups of items. `role="separator"`, not focusable. */
+/**
+ * Decorative visual divider between groups of items (`role="separator"`, not focusable).
+ * @see docs/components/DropdownMenu.md
+ */
 export const Separator = forwardRef<HTMLDivElement, DropdownMenuSeparatorProps>(function Separator(
   { className, ...rest },
   ref,

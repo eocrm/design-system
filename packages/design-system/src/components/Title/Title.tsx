@@ -42,7 +42,7 @@ export interface TitleProps extends HTMLAttributes<HTMLHeadingElement> {
    * - `muted` — `--color-fg-muted`
    * - `subtle` — **@deprecated (#521): resolves to `muted`. Use `muted`.**
    *   In LIGHT theme the two neutrals were indistinguishable: OKLab ΔE 0.0261
-   *   when #521 was filed, 0.0365 after #522 retuned `--color-fg-muted`,
+   *   when the deprecation was filed, 0.0365 after `--color-fg-muted` was retuned,
    *   against the 0.065 floor this library's perceptual gates use. In DARK
    *   they were 0.0707 apart — a real step — so **this deprecation changes
    *   dark-theme appearance**: `subtle` text in dark gets lighter, moving from
@@ -111,54 +111,8 @@ const WEIGHT_CLASS: Record<TitleWeight, string> = {
 };
 
 /**
- * Semantic heading primitive. Renders `<h1>`–`<h6>` based on `order`, with a
- * default visual size from the order→size map. Use `size` to decouple the
- * visual size from the semantic level (e.g. a nested section that needs a
- * smaller-looking h2).
- *
- * Use `<Title>` for ALL heading text in your UI. Don't write raw `<h1>` /
- * `<h2>` / `<h3>` elements with className — the typography primitives exist
- * precisely so you never need to.
- *
- * @example
- * // Page title — biggest, h1 for screen readers:
- * <Title order={1}>Dashboard</Title>
- *
- * @example
- * // Section heading at the canonical size:
- * <Title order={2}>Recent activity</Title>
- *
- * @example
- * // Override visual size when nested deep but you still want the right SR level:
- * <Title order={2} size="lg">Section that's semantically h2 but visually compact</Title>
- *
- * @example
- * // De-emphasize via tone:
- * <Title order={3} tone="muted">Filter group label</Title>
- *
- * @example
- * // Page heading + supporting paragraph composed in a Stack:
- * <Stack gap="xs">
- *   <Title order={1}>Dashboard</Title>
- *   <Text size="md" tone="muted">Pipeline summary for this week.</Text>
- * </Stack>
- *
- * @remarks When NOT to use
- * - For body text. Use `<Text>` instead.
- * - For inline emphasis. Use `<strong>` / `<em>` / `<Text weight="semibold">`.
- * - When you only want monospaced text (e.g. a code identifier). Use `<Code>`.
- * - To pick a font size visually without thinking about heading hierarchy.
- *   The required `order` prop is there to force the conversation: what level
- *   is this heading on the page?
- *
- * @remarks Anti-patterns
- * - ❌ `<h2 className={styles.title}>` — use `<Title order={2}>`. The library
- *   exists so consumer SCSS never names a typography class.
- * - ❌ `<Title order={1} size="xs">` — almost certainly a sign that the page's
- *   heading hierarchy is wrong. Bump the order to a higher number instead of
- *   shrinking a low-order heading.
- * - ❌ Skipping heading levels (`order={1}` then jumping to `order={4}`).
- *   Hurts SR users. Use sequential orders.
+ * Semantic heading primitive rendering `<h1>`-`<h6>` by `order`, with a default visual size per level.
+ * @see docs/components/Title.md
  */
 export const Title = forwardRef<HTMLHeadingElement, TitleProps>(function Title(
   {

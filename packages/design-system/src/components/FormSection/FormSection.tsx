@@ -16,29 +16,8 @@ export interface FormSectionProps extends Omit<HTMLAttributes<HTMLElement>, 'tit
 }
 
 /**
- * Titled group of form fields — a heading + description over a vertical stack of
- * fields. Consecutive `<FormSection>`s are separated by a divider automatically.
- *
- * A layout-family primitive (like `<FormRow>`); it arranges its own children only
- * (no outer margin).
- *
- * @example
- * <FormSection title="Profile" description="Basic contact details.">
- *   <FormRow>
- *     <Field label="First name" required><Input /></Field>
- *     <Field label="Last name" required><Input /></Field>
- *   </FormRow>
- *   <Field label="Work email" required><Input type="email" /></Field>
- * </FormSection>
- *
- * @remarks When NOT to use
- * - A whole page's heading/actions — that's `<PageHeader>`, not FormSection.
- * - A bordered surface/card — wrap the form in `<Card>`; FormSection has no background.
- * - A single field — just render the `<Field>`.
- *
- * @remarks Anti-patterns
- * - ❌ Adding `margin` around it to separate sections — render two FormSections as
- *   siblings and the built-in adjacency divider handles it.
+ * Titled group of form fields: a heading + description over a vertical stack.
+ * @see docs/components/FormSection.md
  */
 export const FormSection = forwardRef<HTMLElement, FormSectionProps>(function FormSection(
   { title, description, titleOrder = 2, className, children, ...rest },

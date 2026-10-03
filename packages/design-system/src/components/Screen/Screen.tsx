@@ -62,42 +62,8 @@ const alignClass: Record<ScreenAlign, string> = {
 };
 
 /**
- * Full-bleed / centered screen layout — a page-root primitive for chromeless
- * screens that render OUTSIDE the app shell: sign-in, 404, error-boundary
- * fallback, onboarding. Lays out an optional pinned `header`, a vertically +
- * horizontally centered main slot (`children`), and an optional pinned
- * `footer`, over an optional tinted backdrop.
- *
- * Screen is a layout-owning primitive — like `<Page>` / `<Rail>` it is the
- * documented exception to "no layout properties on components": taking over the
- * viewport and centering its main slot is its entire job.
- *
- * @example
- * // Standalone 404 — full viewport, accent backdrop, brand + legal chrome
- * <Screen
- *   backdrop="accent"
- *   header={<Link to="/">← Home</Link>}
- *   footer={<Cluster gap="lg"><Link>Privacy</Link><Link>Terms</Link></Cluster>}
- * >
- *   <ErrorState title="Page not found" actions={<Button>Go home</Button>} />
- * </Screen>
- *
- * @example
- * // In-app variant — fills the shell content area, no backdrop
- * <Screen fill="block">
- *   <ErrorState title="Page not found" />
- * </Screen>
- *
- * @remarks When NOT to use
- * - A normal page inside the app shell → `<Page>` (it provides section rhythm,
- *   not full-bleed chrome).
- * - Centering a small element inside an existing layout → `<Cluster
- *   justify="center">` / `<Stack align="center">`. Screen is a page root.
- *
- * @remarks Anti-patterns
- * - Nesting `<Screen>` inside `<Page>` or another `<Screen>` (compounds
- *   layout). The in-app variants use `fill="block"` + `backdrop="none"` so they
- *   don't fight the shell.
+ * Full-bleed / centered page-root layout for chromeless screens outside the app shell (sign-in, 404, error, onboarding).
+ * @see docs/components/Screen.md
  */
 export const Screen = forwardRef<HTMLDivElement, ScreenProps>(function Screen(
   {

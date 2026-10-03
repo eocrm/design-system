@@ -68,49 +68,8 @@ function toCssSize(value: number | string | undefined): string | undefined {
 }
 
 /**
- * Placeholder rectangle for loading states. Consumers compose multiple
- * `<Skeleton>`s in any layout to mimic the eventual content shape.
- *
- * @example
- * // Single text line (inline with surrounding text):
- * <Skeleton width={120} />
- *
- * @example
- * // Avatar + two text lines + button (the canonical "list row loading"):
- * <Cluster gap="md" align="center">
- *   <Skeleton variant="circular" width={32} />
- *   <Stack gap="xs" style={{ flex: 1 }}>
- *     <Skeleton width="60%" />
- *     <Skeleton width="40%" />
- *   </Stack>
- *   <Skeleton variant="rectangular" width={80} height={32} />
- * </Cluster>
- *
- * @example
- * // Avoid flashes during quick refetches while guaranteeing a deliberate
- * // visible window for slower loads. Keep the component mounted:
- * <Skeleton
- *   loading={isFetching}
- *   delay={200}
- *   minDuration={300}
- *   variant="rectangular"
- *   height={32}
- * />
- *
- * @remarks When NOT to use
- * - For loads expected to resolve quickly, do not show an immediate
- *   placeholder. Use `delay` so fast loads never display the Skeleton.
- * - For empty states ("No contacts yet"). Use `<EmptyState>` (not yet
- *   shipped) — a skeleton implies "loading," not "nothing here."
- *
- * @remarks Anti-patterns
- * - ❌ Wrapping real content in a Skeleton ("just hide everything"). The
- *   primitive is a leaf — don't pass children.
- * - ❌ Omitting all dimensions on `rectangular`. With no `width`/`height`,
- *   the box has zero size and renders invisibly. Always size it.
- * - ❌ Conditionally unmounting a timed Skeleton with
- *   `{loading && <Skeleton minDuration={300} />}`. React removes it before
- *   the minimum can finish. Keep it mounted and pass `loading={loading}`.
+ * Placeholder rectangle for loading states, composed in any layout to mimic the eventual content shape.
+ * @see docs/components/Skeleton.md
  */
 export const Skeleton = forwardRef<HTMLSpanElement, SkeletonProps>(function Skeleton(
   {

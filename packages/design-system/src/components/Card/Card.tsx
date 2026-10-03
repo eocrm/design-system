@@ -64,7 +64,11 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
    *   square corners (Table's internal scroll wrapper, images, full-bleed
    *   media). Overlays in this library (DropdownMenu, Tooltip, Popover, Drawer,
    *   Modal) portal to `document.body` and are NOT clipped by this. Focus
-   *   outlines use CSS `outline`, which is not affected by ancestor overflow.
+   *   rings are NOT exempt: an `outline` is clipped by an ancestor's overflow,
+   *   so a focusable flush against the card edge loses that band — draw its
+   *   ring inset by passing `$offset: calc(-1 * var(--ring-offset))` to the
+   *   `focus-ring` mixin, not a separate `outline-offset` after the `@include`
+   *   (a `structure.test.ts` gate fails the build on that shape).
    * - `visible` — opt out of clipping. Use when a direct child needs to
    *   overhang the card edge — decorative badges that protrude from a corner,
    *   hover-lift transforms whose shadow extends past the card border, etc.
@@ -124,96 +128,8 @@ function inspectCompoundChildren(children: ReactNode): CompoundChildrenInfo {
 }
 
 /**
- * Bordered container for grouped content. Supports an optional `tone` prop
- * that draws a 3px left-edge stripe in the tone color — useful for stat cards
- * or status panels where one card in a row needs visual emphasis. **Don't
- * nest Card in Card** — if you need to subdivide, use spacing or a horizontal
- * rule instead. If everything on your page is a card, none of them are.
- *
- * Compound API — `Card.Header` / `Card.Body` / `Card.List` / `Card.ListRow`
- * for section-card patterns. When any of these subcomponents appear as a
- * direct child, `padding` auto-defaults to `'none'` so sections bleed to the
- * card edge. Pass `padding` explicitly to override.
- *
- * @example
- * <Card padding="md">
- *   <Stack gap="md">
- *     <h3>Acme team plan</h3>
- *     <p>Renewal due Q3.</p>
- *     <Cluster justify="end" gap="sm">
- *       <Button variant="secondary">Archive</Button>
- *       <Button>View deal</Button>
- *     </Cluster>
- *   </Stack>
- * </Card>
- *
- * @example
- * // Compound API — section card with header + action + list rows.
- * // No `padding` prop needed: the presence of Card.Header / Card.List makes
- * // the card auto-default to padding="none".
- * <Card>
- *   <Card.Header action={<Link>View all</Link>}>
- *     Deals needing attention
- *   </Card.Header>
- *   <Card.List>
- *     {deals.map(d => (
- *       <Card.ListRow key={d.id}>
- *         <Stack gap="xs">
- *           <span>{d.title}</span>
- *           <span>{d.company}</span>
- *         </Stack>
- *         <Avatar name={d.owner} size="sm" />
- *       </Card.ListRow>
- *     ))}
- *   </Card.List>
- * </Card>
- *
- * @example
- * // Tone-coded stat cards — row of cards, each with a left-edge stripe:
- * <Cluster gap="md" wrap>
- *   <Card padding="md" tone="accent">Open deals</Card>
- *   <Card padding="md" tone="success">Won this month</Card>
- *   <Card padding="md" tone="danger">Churned</Card>
- * </Cluster>
- *
- * @example
- * // Keep a header fixed over a scrolling body in a bounded dashboard cell:
- * <Card fill>
- *   <Card.Header>Pipeline</Card.Header>
- *   <Card.Body scroll>
- *     <PipelineRows />
- *   </Card.Body>
- * </Card>
- *
- * @remarks When NOT to use
- * - As the only child of another Card. **Never nest cards.** If you need to
- *   subdivide, use spacing or a horizontal rule inside one card.
- * - As a layout primitive. Card is for *semantic grouping*; for layout use
- *   `Stack` / `Cluster` / CSS Grid.
- * - For every container. If the page looks like a deck of cards, nothing is
- *   visually grouped. Use Card for content that actually represents a unit.
- *
- * @remarks Anti-patterns
- * - ❌ `<Card style={{ padding: 20 }}>` — use the `padding` prop. If the
- *   value you need isn't there, it's a token/scale conversation.
- * - ❌ `<Card style={{ overflow: 'visible' }}>` — use `<Card overflow="visible">`.
- *   The default `hidden` exists so square-cornered children (Tables with internal
- *   scroll wrappers, images, full-bleed media) don't show a seam at the rounded
- *   corner.
- * - ❌ `<Card style={{ height: '100%' }}>` — use `<Card fill>`. The modifier
- *   also applies the shrink-safe minimum width required in narrow grid cells.
- * - ❌ Hand-rolling a flex column and scrolling body inside a Card. Use
- *   `<Card fill>` with `<Card.Body scroll>` so Header/Body sizing stays owned
- *   by the compound component.
- * - ❌ Adding hover shadows to make Cards "interactive". If the whole card
- *   is clickable, that's a different component (`LinkCard`, not yet shipped).
- * - ❌ Cards nested in Cards. Almost always means your information
- *   architecture is wrong.
- * - ❌ Hand-rolling a left-stripe via `className` / `style`. Use the `tone`
- *   prop — it reserves the border-left space so layout never shifts.
- * - ❌ Hand-rolling `.cardHeader` / `.list` / `.listRow` SCSS. Use the
- *   compound API (`Card.Header` / `Card.Body` / `Card.List` /
- *   `Card.ListRow`) instead.
+ * Bordered container for grouped content, with an optional compound API (`Card.Header` / `Body` / `List` / `ListRow`).
+ * @see docs/components/Card.md
  */
 const CardRoot = forwardRef<HTMLDivElement, CardProps>(function Card(
   { padding, tone, overflow = 'hidden', fill = false, className, children, ...props },

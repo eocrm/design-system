@@ -32,70 +32,8 @@ import styles from './LiquidEditor.module.scss';
 const MENU_NAV_KEYS = new Set(['ArrowUp', 'ArrowDown', 'Enter', 'Tab', 'Escape']);
 
 /**
- * Liquid template editor — a code-editor-flavored control for authoring Liquid
- * template strings: syntax highlighting, a line-number gutter, a variable-insert
- * menu, caret autocomplete, client-side unknown-variable flagging, and a
- * controlled preview pane.
- *
- * Controlled only: pass `value` + `onChange`. The component never parses or
- * renders Liquid — backend syntax errors come in via `invalid`/`error`, and the
- * rendered preview comes in via `preview`/`previewStatus`.
- *
- * @example
- * // Custom-field formula editor.
- * const VARS = [
- *   { code: 'first_name', label: 'First name', type: 'text', group: 'Built-in' },
- *   { code: 'last_name', label: 'Last name', type: 'text', group: 'Built-in' },
- * ];
- * <LiquidEditor value={formula} onChange={setFormula} variables={VARS} />
- *
- * @example
- * // Grouped/dotted palette with descriptions and a collection variable.
- * const VARS = [
- *   { code: 'event.type', label: 'Event type', group: 'Event',
- *     description: 'The journal event type' },
- *   { code: 'record.associations', label: 'Associations', group: 'Record',
- *     collection: true, description: "The record's links — iterate with for" },
- * ];
- * // {{ event.type }} is known (root "event" matches), the insert menu drops a
- * // {% for %} snippet for Associations, and the footer explains the variable
- * // under the caret.
- * <LiquidEditor value={tpl} onChange={setTpl} variables={VARS} />
- *
- * @example
- * // With a debounced backend preview.
- * <LiquidEditor
- *   value={formula}
- *   onChange={setFormula}
- *   variables={VARS}
- *   preview={rendered}
- *   previewStatus={isRendering ? 'loading' : 'idle'}
- * />
- *
- * @example
- * // Inside a Field (auto label association via id / aria-labelledby).
- * <Field label="Formula">
- *   <LiquidEditor value={formula} onChange={setFormula} variables={VARS} />
- * </Field>
- *
- * @example
- * // Extra toolbar buttons (right-aligned, before "Insert variable").
- * <LiquidEditor value={formula} onChange={setFormula} variables={VARS}
- *   toolbarActions={<Button variant="ghost" size="sm"><BookOpen size={14} /> Docs</Button>}
- * />
- *
- * @remarks When NOT to use
- * - Plain multi-line prose → use `<Textarea>`.
- * - Static, read-only code display → use the playground `CodeBlock` (the library
- *   has no block-code primitive).
- *
- * @remarks Anti-patterns
- * - ❌ Expecting it to validate Liquid syntax — it does not parse; feed
- *   `invalid`/`error` from the backend.
- * - ❌ Producing the preview inside the component — preview is consumer-rendered
- *   and arrives via `preview`/`previewStatus`.
- * - ❌ Adding `margin`/positioning hoping the editor self-places — that's the
- *   parent's job (use `<Stack>` / `<Cluster>` / a wrapper `className`).
+ * Liquid template editor: highlighting, gutter, variable-insert menu, autocomplete, unknown-variable flagging and a controlled preview pane.
+ * @see docs/components/LiquidEditor.md
  */
 export const LiquidEditor = forwardRef<HTMLTextAreaElement, LiquidEditorProps>(
   function LiquidEditor(

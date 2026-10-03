@@ -63,11 +63,10 @@ export interface DropdownMenuContentProps extends HTMLAttributes<HTMLDivElement>
 }
 
 /**
- * The floating menu panel. Renders only when the menu is open, portaled to
- * `document.body`, positioned by Floating UI. Owns the keyboard handlers
- * (Escape, Tab, Arrow, Home/End, Enter/Space, typeahead) and outside-click
- * dismissal.
+ * The floating menu panel, rendered only while the menu is open.
+ * @see docs/components/DropdownMenu.md
  */
+// Owns keyboard handling (Escape, Tab, arrows, Home/End, Enter/Space, typeahead) and outside-click dismissal.
 export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(function Content(
   { side = 'bottom', align = 'start', sideOffset = 4, minWidth, className, children, ...rest },
   forwardedRef,

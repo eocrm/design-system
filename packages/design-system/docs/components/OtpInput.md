@@ -6,13 +6,60 @@ const [code, setCode] = useState('');
 <OtpInput length={4} type="alphanumeric" aria-label="Invite code" />;
 ```
 
-- `length` boxes (default `6`), one character each, behaving as a single control.
+<!-- props:start -->
+
+## Props
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `length` | `number` | no | How many boxes to render. Default `6`. |
+| `value` | `string` | no | Controlled code. Sanitized and truncated to `length` on render, so a consumer echoing back a dirty string sees it cleaned rather than mis-sliced. Pair with `onChange`. |
+| `defaultValue` | `string` | no | Uncontrolled seed. Ignored when `value` is supplied. |
+| `onChange` | `((value: string) => void)` | no | Fires on every edit with the whole code so far — always sanitized, never longer than `length`, and never with a gap in the middle. |
+| `onComplete` | `((value: string) => void)` | no | Fires whenever the code becomes full with a value different from the last one — not on every keystroke while it is full. Use it to submit. Correcting a wrong character inside an already-full code re-fires with the corrected value; retyping the same character does not, since nothing changed. |
+| `type` | `'numeric' \| 'alphanumeric'` | no | Character set. Default `'numeric'`. See `OtpInputType`. |
+| `size` | `'sm' \| 'md' \| 'lg' \| 'xl'` | no | Cell size. Default `'md'`. - `'sm'` — 24px cells; dense admin screens. - `'md'` — 32px cells (default); most forms. - `'lg'` — 40px cells; a dedicated verification screen. - `'xl'` — 48px cells; a code field that IS the screen (IdP login challenge, touch-first). Six cells still fit a 360px phone. No `<Input>` counterpart at this height — don't line it up with fields. |
+| `invalid` | `boolean` | no | Error visual on every cell plus `aria-invalid="true"`. Pair with a visible message and point `aria-describedby` at it (or wrap in `<Field error>`). |
+| `disabled` | `boolean` | no | Disable every cell. |
+| `required` | `boolean` | no | Marks the field required. There is no single native input to attach the native `required` attribute to — a per-cell `required` would let the browser block submit on an empty first cell while accepting a 1-of-`length` code as complete, which is worse than no native gate at all. Sets `aria-required="true"` on every cell instead (the group's `role="group"` does not support `aria-required` per ARIA 1.2 — only `textbox` and a handful of other roles do), the same way `aria-invalid` and `aria-describedby` are already repeated on every cell. Validating completeness is the consumer's job (pair with `invalid` + `onComplete`). |
+| `autoFocus` | `boolean` | no | Focus the first cell on mount. |
+| `id` | `string` | no | Id for the first cell, so an external `<label htmlFor>` focuses the field. |
+| `aria-label` | `string` | no | Accessible name for the group. Defaults to the localized `otpInput.groupLabel` ("Verification code") when omitted OR empty — an empty string is not an explicit name — so a standalone OtpInput is never an unnamed group. |
+| `aria-labelledby` | `string` | no | Ids of elements naming the group. Injected by `<Field>`; wins over `aria-label`. |
+| `aria-describedby` | `string` | no | Ids of description / error elements. Set on EVERY cell — see the remarks. |
+| …native | | | plus native `<div>` attributes |
+
+<!-- props:end -->
+
 - Every box carries `autocomplete="one-time-code"` + `inputMode`, so iOS and Android offer the code from a just-arrived SMS/email above the keyboard. No WebOTP — it is Android-Chrome-only and needs an origin-bound SMS body.
 - Focus advances as characters are typed. Boxes select their content on focus, so typing over a filled box replaces it, and a delivery shorter than the full code (a keystroke, or a short paste) spreads from whichever box is focused. A delivery of EXACTLY the full length — SMS/email autofill dumping it into whichever box happens to be focused — replaces the whole value instead of splicing in at that position. A delivery LONGER than the full length (an over-long paste) still splices in at the focused box and truncates, the same as a short delivery. **Never cap a box at one character** — that truncates an autofilled code to its first digit.
-- `value` / `defaultValue` / `onChange(value)` — a single contiguous string, always sanitized and never longer than `length`. `onComplete(value)` fires whenever the code becomes full with a new value — including a corrected digit inside an already-full code, not just the first empty→full transition; retyping the same value does not re-fire. Use it to submit.
-- `type`: `'numeric'` (default, digits only) or `'alphanumeric'` (digits + Latin letters, uppercased).
-- `size`: `sm` / `md` (default) / `lg` — the same height scale as `<Input>` — plus `xl` (48px cells, no Input counterpart) for a code field that is the whole screen; six cells still fit a phone.
-- `invalid` sets the error chrome and `aria-invalid` on every box; `aria-describedby` is applied to every box too, so the error is heard wherever focus lands. Inside `<Field error>` this is wired for you.
 - Roving tabindex — the whole group is one Tab stop. Arrows / Home / End move between boxes; Backspace on an empty box steps back. Deleting mid-code clears from that box onward, keeping the value contiguous.
 - Never masks. For a secret the user must not see → `<PasswordInput>`.
 - Not a native form control — it renders no named field, so nothing reaches `FormData`. Read the code from `onChange` / `onComplete` and submit it yourself. `required` sets `aria-required` on every box, not the group (`role="group"` doesn't support `aria-required`; a per-cell native `required` would instead pass a 1-of-`length` code as valid); validating completeness is yours.
+
+Inside a `<Field>`, the label and error wiring are supplied:
+
+```tsx
+<Field label="Invite code" error={error}>
+  <OtpInput length={4} type="alphanumeric" invalid={!!error} />
+</Field>
+```
+
+**When NOT to use**
+
+- A code the user copies rather than reads — a plain `<Input>` pastes just as well and does not fight the caret.
+- Codes longer than about eight characters — the boxes stop being scannable; use `<Input>`.
+- A password or PIN you need masked — `<PasswordInput>`. A one-time code is read off a phone and typed once; hiding it only costs the user the ability to spot a typo.
+
+**Anti-patterns**
+
+- ❌ Setting `maxLength` on the cells via `className` hacks or a fork — a one-character cap truncates an autofilled code to its first character.
+- ❌ Validating inside `onChange` and rejecting characters. The component already sanitizes; your form layer owns whether the code is correct.
+- ❌ Reading the code out of the DOM. It arrives in `onChange` / `onComplete`.
+
+**Accessibility**
+
+- The wrapper is a `role="group"`, named by `aria-labelledby`, then `aria-label`, then the localized default ("Verification code"; an empty `aria-label` also falls back). Each cell is named by position ("Digit 3 of 6").
+- There is deliberately no live region: `invalid` is a durable property already carried by `aria-invalid`, so announcing the outcome of a code check is the consumer's job.
+- A paste or autofill that delivers the whole code fills every box in one update; a screen reader announces only the cell focus lands on ("Digit 6 of 6"). Announce the result yourself (e.g. off `onComplete`) if silent multi-box fills would confuse your users.

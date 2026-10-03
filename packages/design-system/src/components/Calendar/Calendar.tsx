@@ -64,7 +64,7 @@ export interface CalendarProps extends Omit<
   locale?: string;
   /** Override locale-derived first day of week. */
   weekStartsOn?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
-  /** Lane cap per week before "+N more" appears in affected cells (month view). Default 3. */
+  /** Lane cap per week (month view). Default 3. Events beyond it collapse into a "+N more" chip; clicking it fires `onDayClick(date)`. */
   maxLanesPerWeek?: number;
   /**
    * Hour range shown in week/day views (inclusive start, exclusive end).
@@ -86,6 +86,9 @@ export interface CalendarProps extends Omit<
    *
    * Ignored by month, week and agenda views — those have their own column
    * meaning.
+   *
+   * Don't approximate it with N side-by-side `<Calendar view="day">` in a
+   * `Split`: each brings its own header, gutter and scroll, so they drift.
    */
   resources?: readonly CalendarResource[];
   /**
@@ -169,76 +172,7 @@ export interface CalendarProps extends Omit<
 
 /**
  * Month / week / day / agenda calendar.
- *
- * - Controlled cursor via `value` / `onChange`, or uncontrolled via
- *   `defaultValue`.
- * - Controlled view via `view` / `onViewChange`, or uncontrolled via
- *   `defaultView`.
- * - Events as `CalendarEvent` objects; multi-day events render as continuous
- *   bars across the month grid and in the all-day band of week/day views.
- * - Locale-aware via `useLocale()`; override with `locale` prop. UI strings
- *   come from the i18n provider (`useTranslation`); wrap your app in
- *   `<I18nProvider locale="..." overrides={{ calendar: { today: '...' } }}>`
- *   to translate or customize them.
- * - Read-mostly by default: `onDayClick` and `onEventClick` callbacks; no
- *   built-in popover or modal. Opt into editing by wiring `onEventMove` /
- *   `onEventResize`, which turn on drag-to-reschedule in week/day views.
- * - `resources` splits `view="day"` into one column per bookable subject;
- *   `backgroundIntervals` paints the availability underlay behind events.
- *
- * @example
- * <Calendar events={events} defaultView="week" />
- *
- * @example
- * // Controlled cursor + view + Russian copy via the i18n provider:
- * const [cursor, setCursor] = useState(new Date());
- * const [view, setView] = useState<CalendarView>('month');
- * <I18nProvider locale="ru">
- *   <Calendar
- *     value={cursor}
- *     onChange={setCursor}
- *     view={view}
- *     onViewChange={setView}
- *     events={events}
- *     locale="ru-RU"
- *   />
- * </I18nProvider>;
- *
- * @example
- * // Booking screen: one column per practitioner, shifts shaded behind the
- * // events, drag to reschedule with the backend allowed to refuse the drop.
- * <Calendar
- *   view="day"
- *   events={appointments}
- *   resources={[
- *     { id: 'ana', label: 'Ana' },
- *     { id: 'ben', label: 'Ben' },
- *   ]}
- *   backgroundIntervals={shifts}
- *   canDropEvent={(ev, next) => isWithinOpeningHours(next)}
- *   onEventMove={async (ev, next) => {
- *     const ok = await api.reschedule(ev.id, next);
- *     if (!ok) return false; // snaps back
- *     setAppointments((prev) => applyMove(prev, ev.id, next));
- *   }}
- * />
- *
- * @remarks When NOT to use
- * - Single-date or date-range selection → use a future `<DatePicker>`.
- * - Drag-to-CREATE (dragging empty grid space to draft a new event) — still
- *   out of scope. Use `onDayClick` plus your own form.
- *
- * @remarks Anti-patterns
- * - ❌ Mounting `<Calendar>` with no `events` AND no `onDayClick` — the grid
- *   is fully inert. Provide events or a click handler.
- * - ❌ Pre-grouping events by day in the consumer. Pass the flat array; the
- *   layout algorithms group + lane internally.
- * - ❌ Treating `onEventMove` as the thing that moves the event. It proposes;
- *   your state disposes. Not committing means the block snaps back.
- * - ❌ Faking the availability underlay with all-day events — that pollutes
- *   the `events` array you also read back. Use `backgroundIntervals`.
- * - ❌ Approximating resource columns with N side-by-side `<Calendar view="day">`.
- *   Each brings its own header, gutter and scroll, so they drift. Use `resources`.
+ * @see docs/components/Calendar.md
  */
 export const Calendar = forwardRef<HTMLDivElement, CalendarProps>(function Calendar(
   {

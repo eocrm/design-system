@@ -67,49 +67,8 @@ function toMessage(children: ReactNode): ReactNode {
 }
 
 /**
- * A visually-hidden, always-mounted announcement region for screen readers —
- * for consumer-level outcomes that have no visible text of their own (e.g.
- * "Authenticator app added"). Renders `role="status"`/`role="alert"` +
- * `aria-live` on a `VisuallyHidden` span. On mount and on every message
- * change, the region is cleared and then rewritten after a short delay, so
- * the transition from empty → text is what triggers the announcement (Hard
- * rule 10).
- *
- * @example
- * // Two-factor success status
- * <LiveRegion>{addedAuthenticator ? t('security.authenticatorAdded') : null}</LiveRegion>
- *
- * @example
- * // Assertive form-level error
- * <LiveRegion politeness="assertive">{formError}</LiveRegion>
- *
- * @example
- * // Re-announcing an identical message
- * <LiveRegion announceKey={saveCount}>{t('common.saved')}</LiveRegion>
- *
- * @remarks
- * **Anti-patterns:**
- * - ❌ Announcing text that is already visible and focused — the user hears
- *   it twice, once from the region and once from the focused element.
- * - ❌ Mounting it conditionally (`{msg && <LiveRegion>…}`) — keep it always
- *   mounted and pass an empty message instead. A region inserted into the
- *   page together with its message won't announce reliably: some screen
- *   readers only watch live regions that already existed.
- * - ❌ Changing the message faster than every ~50ms — each change restarts
- *   the clear-then-write delay, so only the last message of a rapid burst
- *   is announced (the ones before it are never written).
- * - ❌ Using it for a library component's own transient state — components
- *   own their own regions (Hard rule 10); `LiveRegion` is for consumer-level
- *   outcomes, not internal component state.
- * - ❌ `assertive` for routine success — reserve it for errors needing
- *   immediate attention.
- * - ❌ Passing JSX children when a string would do — element children
- *   re-announce on every parent render, since their identity changes even
- *   when the rendered text doesn't.
- * - ❌ Placing it inside a `<label>` or a `<button>` — inside a `<label>` it
- *   joins the control's accessible name via name-from-content; inside a
- *   `<button>` it is pruned as children-presentational. Render it as a
- *   sibling instead (Hard rule 10).
+ * A visually-hidden, always-mounted `role="status"`/`role="alert"` announcement region for consumer-level outcomes with no visible text.
+ * @see docs/components/LiveRegion.md
  */
 export const LiveRegion = forwardRef<HTMLSpanElement, LiveRegionProps>(function LiveRegion(
   { children, politeness = 'polite', announceKey, ...props },

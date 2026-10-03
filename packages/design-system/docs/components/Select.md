@@ -50,14 +50,55 @@
 />
 ```
 
-- One generalist; the mode matrix is `multiple` × `triggerDisplay: 'chips' | 'summary'` × `searchable`. See the JSDoc on `<Select>` for the matrix and anti-patterns.
-- `id` goes on the combobox trigger (the `<button>` / `<input>`), not the wrapper div, so a `<label for>` (Field / SettingRow) focuses it. Target the wrapper by `className` or a `data-*` attribute, not `#id`.
-- `triggerDisplay` defaults to `'chips'` when `multiple` is set. Use `'summary'` for table-filter UIs where chips would crowd the toolbar.
-- **Async**: pass `loadOptions(query, signal)`. Debounce (250ms default, configurable via `searchDebounceMs`) and `AbortSignal` cancellation are built-in. Do NOT debounce externally.
+<!-- props:start -->
+
+## Props
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `id` | `string` | no | Placed on the combobox trigger (the `<button>` / `<input>`), not the wrapper div, so a `<label for>` — Field / SettingRow wire one — focuses the control when clicked. Default: a generated id. Target the wrapper by `className` or a `data-*` attribute, not `#id`. |
+| `options` | `SelectOptions<T>` | no | Sync options — flat list or list of groups. Ignored when `loadOptions` is provided (dev warning fires if both are non-empty). For grouped input, every element must carry an `options` field; mixing flat options with groups at the same level is not supported. |
+| `loadOptions` | `((query: string, signal: AbortSignal) => Promise<SelectOptions<T>>)` | no | Async fetcher that returns the options for a given query. When set, the Select switches to async mode: the local substring filter is bypassed (the server filters), loading/error/empty rows replace the listbox body, and `options` is ignored (with a dev warning). The `signal` argument is aborted whenever a newer query supersedes this one — wire it through to `fetch` to cancel in-flight requests. |
+| `loadOnOpen` | `boolean` | no | When `true` (default), defers the first `loadOptions` call until the user opens the listbox. Set to `false` to fetch eagerly on mount. |
+| `searchDebounceMs` | `number` | no | Debounce window (ms) between the last query keystroke and the next `loadOptions` call. Default `250`. |
+| `multiple` | `boolean` | no | Enables multi-select. `value` / `defaultValue` become `string[]` and `onChange` emits arrays. Picking a row toggles it in/out of the selection instead of replacing-and-closing. |
+| `triggerDisplay` | `'chips' \| 'summary'` | no | How the trigger renders the selected value(s) in multi mode. Ignored in single mode. See `SelectTriggerDisplay`. Defaults to `'chips'`. Use `'summary'` for table-filter UIs where chips would crowd the toolbar. |
+| `searchable` | `boolean` | no | Renders the trigger as a combobox text input with substring filtering over the (sync) options. In async mode the filter is delegated to the server. Required by `creatable`. |
+| `selectOnOpen` | `boolean` | no | When the searchable combobox opens, select the current text so the user can immediately type to replace it (type-to-search). Default `false`. Only affects the single searchable trigger. |
+| `creatable` | `boolean` | no | Adds a "+ Create <query>" row when the trimmed query has no exact label match. Activating it fires `onCreate(label)` and folds the new value into the selection. Requires `searchable` (throws in dev otherwise). |
+| `onCreate` | `((label: string) => void)` | no | Fires when the user activates the "+ Create" row (creatable mode). The trimmed query string is passed as `label`. After this fires, the Select also calls `onChange` with the new value: in single mode the value replaces the current selection and the listbox closes; in multi mode the value is appended to the current selection and the query is cleared. Consumers typically use this hook to persist the new option upstream (e.g. POST to a backend) and reconcile their `options` array. |
+| `value` | `string \| string[]` | no | Controlled selection. `string` in single mode, `string[]` in multi. Provide alongside `onChange` to drive the value externally. `''` is NOT reserved for "nothing selected". If your `options` contain an option whose `value` is `''` — the common "one sentinel row plus N catalog ids" shape — that option renders and selects like any other, and the trigger shows its label. "Nothing selected" means simply "the value matches no option", which is what an untouched Select resolves to when the list has no `''` row. |
+| `defaultValue` | `string \| string[]` | no | Initial selection for uncontrolled usage. `string` in single mode, `string[]` in multi. Ignored when `value` is provided. |
+| `onChange` | `((value: string \| string[], option: SelectOption<T> \| SelectOption<T>[] \| null) => void)` | no | Fires when the selection changes. The first argument is the next value (`string` in single mode, `string[]` in multi). The second argument is the matched `SelectOption` (single), the matched array (multi), or `null` when the selection clears in single mode. For creatable rows not present in `options`, a synthetic `{ value, label: value }` is supplied. The match is a lookup, not an emptiness test: an emitted `''` yields the matching `SelectOption` when your `options` contain a `value: ''` row, and `null` only when they don't (a genuine clear). |
+| `open` | `boolean` | no | Controlled open state. Pair with `onOpenChange`. Omit both to let Select own its open state (the common case). |
+| `defaultOpen` | `boolean` | no | Initial open state for uncontrolled usage. Defaults to `false`. |
+| `onOpenChange` | `((open: boolean) => void)` | no | Fires whenever Select wants to change open state. |
+| `size` | `'sm' \| 'md' \| 'lg'` | no | Trigger height + type scale. See `SelectSize`. Defaults to `'md'`. |
+| `invalid` | `boolean` | no | Marks the trigger as invalid — applies the error border + sets `aria-invalid="true"`. Pair with an external error message linked via `aria-describedby`. |
+| `placeholder` | `string` | no | Placeholder shown when nothing is selected. In searchable mode, also the input's `placeholder` until the user types. |
+| `clearable` | `boolean` | no | Shows a `✕` button in the trigger that clears the selection. Opt-in: defaults to `false`. Always forced `false` when `disabled` or `readOnly`. "Clear" means "reset to the empty value" (`''` / `[]`), so the button only appears when the current value differs from that. A Select whose selected option IS `value: ''` is already at the cleared value and shows no ✕; a value matching no option (a stale id) does show one. |
+| `disabled` | `boolean` | no | Disables the trigger entirely — non-interactive, dimmed, focusable only via assistive tech. Hidden form inputs are also disabled. |
+| `readOnly` | `boolean` | no | Read-only — trigger is focusable but cannot open or change the selection. Useful for displaying a value inside a form that's not yet editable. |
+| `name` | `string` | no | Name attribute for native form submission. In multi mode, one hidden `<input>` per selected value is emitted (so `FormData.getAll(name)` returns the array). |
+| `required` | `boolean` | no | Marks the field as required. The trigger exposes `aria-required="true"` to assistive technology. Hidden inputs still serialize named values, but they do not participate in native constraint validation; validate the selection in your form layer. |
+| `form` | `string` | no | `form` attribute forwarded to the hidden `<input>` elements. |
+| `renderOption` | `((opt: SelectOption<T>, state: { active: boolean; selected: boolean; }) => ReactNode)` | no | Custom renderer for a row inside the listbox. Receives the option and its current `{ active, selected }` state (active = keyboard-focused row, selected = part of the current value). The returned node replaces the default label / description layout — chrome (padding, background, `aria-*`) stays. |
+| `renderValue` | `((opt: SelectOption<T>) => ReactNode)` | no | Custom renderer for the selected value inside the single-mode trigger. Ignored in multi mode (see `renderTag`). |
+| `renderTag` | `((opt: SelectOption<T>, remove: () => void) => ReactNode)` | no | Custom renderer for a chip inside the multi-mode `chips` trigger. Receives the option and a `remove` callback that deselects it. Ignored in single mode and in `triggerDisplay='summary'`. |
+| `renderEmpty` | `((query: string) => ReactNode)` | no | Custom empty-state renderer. Fires when the filtered listbox has no rows. Receives the current trimmed query for use in messages like "No matches for 'foo'". |
+| `renderLoading` | `(() => ReactNode)` | no | Custom loading-state renderer for async mode. |
+| `renderError` | `((err: Error, retry: () => void) => ReactNode)` | no | Custom error-state renderer for async mode. Receives the thrown `Error` and a `retry` callback that re-invokes `loadOptions` with the current query. |
+| `aria-label` | `string` | no | Accessible name for the trigger. Use this when a visible `<label>` is not present. Mutually exclusive with `aria-labelledby`. |
+| `aria-labelledby` | `string` | no | ID of an element that labels the trigger. Use when the label is a sibling node (e.g. a `<Field>` label). |
+| `aria-describedby` | `string` | no | ID of an element that describes the trigger — e.g. an error message or helper hint paired with `invalid`. |
+| …native | | | plus native `<div>` attributes |
+
+<!-- props:end -->
+
+- One generalist; the mode matrix is `multiple` × `triggerDisplay: 'chips' | 'summary'` × `searchable`.
+- **Async**: pass `loadOptions(query, signal)`; debounce and `AbortSignal` cancellation are built in — do NOT debounce externally.
 - **Tag input pattern** = `multiple + searchable + creatable + triggerDisplay='chips'`. There is no separate `<Tags>` component.
-- **Form integration**: pass `name` (and `required`/`form` if needed). Hidden inputs render so `new FormData(form)` works. Multi mode renders one hidden input per selected value; `FormData.getAll(name)` returns the array.
-- **`clearable`** is opt-in (default `false`) — pass it to show the ✕ clear button once there's a value. Always suppressed when `disabled`/`readOnly`.
-- **`onChange` signature** is `(value, option | options | null)` — the second arg is the matched option(s), saving you a lookup.
 - **`''` is a normal option value, not a reserved "unset" sentinel.** The "one sentinel row plus N catalog ids" shape works directly — no `"__default__"` workaround:
 
   ```tsx
@@ -73,8 +114,14 @@
 
   The trigger shows "Use the default scheme" (not a blank or the placeholder), and `onChange` hands you that row's `SelectOption`. "Nothing selected" is resolved by lookup — the value matches no option — so a Select with no `''` row still shows its placeholder at `value=""`. Corollary for `clearable`: ✕ means "reset to the empty value", so it is hidden when the selected option already IS `value: ''`, and shown for a stale value that matches nothing.
 
-- **Render escape hatches**: `renderOption`, `renderValue`, `renderTag`, `renderEmpty`, `renderLoading`, `renderError`. Use when defaults don't suffice; default rendering is always token-correct.
 - For **action menus** (Edit/Delete/Duplicate buttons), use `<DropdownMenu>` — Select is for value selection, not actions.
 - For **free-form text**, use `<Input>`. Select always picks from a (possibly async) set.
 - Don't reach for `triggerDisplay='summary'` for tag input — chips communicate the active filter set at a glance.
-- `creatable` requires `searchable` (throws in dev). Passing both `options` and `loadOptions` is also flagged (loadOptions wins).
+
+**Keyboard / ARIA:** implements the WAI-ARIA combobox 1.2 pattern with a `role="listbox"` popup: Arrow keys, Home/End, typeahead, Enter/Space to select, Escape to dismiss. In chips mode, Backspace on an empty input removes the trailing chip; chip-to-chip arrow navigation (ArrowLeft from the empty input into the chips, ArrowLeft/Right cycling them) is not implemented.
+
+**Anti-patterns**
+
+- For yes/no/maybe with strong defaults, use `<Tabs>` or radio buttons.
+- Embedding stale-closure logic in `loadOptions`: the fetcher runs on every debounced query, so read fresh props from a stable reference (e.g. `useCallback`) instead of capturing values that drift.
+- `triggerDisplay='summary'` collapses the active set into a comma-joined line and has no per-item remove affordance; chips do.

@@ -43,11 +43,8 @@ export interface PopoverContentProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * The floating panel itself. Portaled to `document.body`, positioned by
- * Floating UI (auto-flip, viewport-aware), animated via `@starting-style`
- * on open. `role="dialog"`, `aria-modal="false"`, `tabIndex={-1}` so it
- * can receive focus on open. Renders an aria-hidden arrow that tracks
- * the trigger.
+ * The floating panel: portaled, auto-flipping, `role="dialog"` with an aria-hidden arrow (`Popover.Content`).
+ * @see docs/components/Popover.md
  */
 export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function Content(
   {

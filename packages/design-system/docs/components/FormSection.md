@@ -16,6 +16,22 @@
 </FormSection>
 ```
 
-- Heading (`title`, level via `titleOrder`, default 2) + `description` over a stack of fields.
+<!-- props:start -->
+
+## Props
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `title` | `ReactNode` | no | Section heading. |
+| `description` | `ReactNode` | no | Secondary text under the heading. |
+| `titleOrder` | `1 \| 2 \| 3 \| 4 \| 5 \| 6` | no | Heading level for `title`. Default `2`. |
+| `children` | `ReactNode` | yes | The fields (usually `<Field>` / `<FormRow>`). |
+| …native | | | plus native HTML attributes |
+
+<!-- props:end -->
+
+- Heading + description over a stack of fields.
 - Consecutive `<FormSection>`s get an automatic divider (adjacency, no margin).
 - Layout-family primitive — arranges its own children only. ❌ Not a `<Card>` (no surface), ❌ not a `<PageHeader>`.
+- Not for a single field (render the `<Field>`). ❌ Adding `margin` around it to separate sections — render FormSections as siblings; the adjacency divider handles it.

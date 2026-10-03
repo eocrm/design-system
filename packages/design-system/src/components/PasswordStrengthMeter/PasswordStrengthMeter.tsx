@@ -61,27 +61,8 @@ const MESSAGE_KEY_FOR_SCORE: Record<1 | 2 | 3 | 4, MessageKeyForScore> = {
 };
 
 /**
- * Visual 4-segment password-strength meter. Pluggable scoring; default
- * heuristic is intentionally crude — pass `score` from zxcvbn or a
- * server-side scorer for production. Use `aria-describedby` on a
- * `<PasswordInput>` to associate the meter with the field for AT.
- *
- * @example
- * <PasswordInput value={pw} onChange={(e) => setPw(e.target.value)} />
- * <PasswordStrengthMeter value={pw} />
- *
- * @example
- * // Consumer-driven score (zxcvbn etc.):
- * <PasswordStrengthMeter score={zxcvbnScore(pw)} />
- *
- * @remarks When NOT to use
- * - As a security control. The default heuristic flags long+mixed
- *   passwords as "Strong" even when they're in a breach corpus.
- *   Production: server-side scoring + breach-list check.
- *
- * @remarks Anti-patterns
- * - ❌ `<PasswordStrengthMeter value={pw} score={4} />` — `score` wins,
- *   `value` is ignored. Pass one OR the other.
+ * Visual 4-segment password-strength meter with pluggable scoring; the default heuristic is a UX hint only.
+ * @see docs/components/PasswordStrengthMeter.md
  */
 export const PasswordStrengthMeter = forwardRef<HTMLDivElement, PasswordStrengthMeterProps>(
   function PasswordStrengthMeter(

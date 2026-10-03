@@ -106,8 +106,8 @@ This rule applies **only to files under `src/pages/mockups/`** — NOT to demo p
 
 **When the library doesn't cover what the mockup needs:**
 
-1. Open `packages/design-system/src/components/TODO.md` and add a new entry describing the missing functionality (primitive name, what it should do, where in which mockup you needed it, how you're currently mocking it).
-2. Inline-mock the gap in the mockup with a one-line comment pointing to the TODO entry: `{/* TODO: replace when <PrimitiveName> ships — see components/TODO.md */}`.
+1. Open `packages/playground/TODO.md` and add a new entry describing the missing functionality (primitive name, what it should do, where in which mockup you needed it, how you're currently mocking it).
+2. Inline-mock the gap in the mockup with a one-line comment pointing to the TODO entry: `{/* TODO: replace when <PrimitiveName> ships — see packages/playground/TODO.md */}`.
 3. The inline mock MAY use raw HTML / inline styles **only at the exact mock site**, contained to the smallest possible block. Mark it visually with the TODO comment so the next reviewer notices.
 4. When the library primitive ships, the TODO entry's "Mocked in" path tells the implementer exactly which files to refactor. Tick the TODO and delete the inline mock.
 

@@ -102,7 +102,7 @@ export interface TabsProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChang
    * render the matching panel with that id. When omitted, NO tab carries
    * `aria-controls` at all — the internal id (sanitized React `useId`) named
    * below is the tab's own id, not a panel's, and pointing at it would be the
-   * dangling IDREF #501 removed.
+   * dangling IDREF that was removed.
    *
    * Only the active tab carries it, because consumers render only the active
    * panel; stamping every tab would point N-1 of them at elements that do not
@@ -170,88 +170,8 @@ function sanitizeId(raw: string): string {
 const IS_DEV = typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production';
 
 /**
- * Responsive tab strip (horizontal, vertical, or automatic) with optional
- * count chips and leading/trailing adornments. Controlled by the caller —
- * pass `activeId` and `onChange`. Implements the full WAI-ARIA Tabs pattern:
- * roving `tabIndex`, arrow-key navigation (Left/Right when horizontal,
- * Up/Down when vertical) + Home/End, `aria-controls` + `aria-orientation`,
- * and per-tab/per-panel ids.
- *
- * @example
- * // Basic controlled usage:
- * function ContactView() {
- *   const [tab, setTab] = useState('overview');
- *   return (
- *     <>
- *       <Tabs
- *         items={[
- *           { id: 'overview', label: 'Overview' },
- *           { id: 'activity', label: 'Activity', count: 12 },
- *           { id: 'notes', label: 'Notes', count: 4 },
- *         ]}
- *         activeId={tab}
- *         onChange={setTab}
- *       />
- *       {tab === 'overview' && <OverviewPanel />}
- *     </>
- *   );
- * }
- *
- * @example
- * // Lazy-loaded panels — use manual mode so arrows scan without loading:
- * <Tabs items={items} activeId={tab} onChange={setTab} activationMode="manual" />
- *
- * @example
- * // Trailing action — a button-like pseudo-tab that never becomes selected:
- * <Tabs
- *   items={items}
- *   activeId={tab}
- *   onChange={setTab}
- *   action={{ label: '+ New entity', icon: <Plus size={14} />, onClick: createEntity }}
- * />
- *
- * @example
- * // Responsive master–detail rail with a trailing unsaved-changes badge:
- * <Split
- *   asideWidth="220px"
- *   collapseBelow="sm"
- *   aside={
- *     <Tabs
- *       orientation="auto"
- *       items={[
- *         { id: 'general', label: 'General' },
- *         { id: 'security', label: 'Security', trailing: <Badge tone="warning">Unsaved</Badge> },
- *         { id: 'billing', label: 'Billing', count: 3 },
- *       ]}
- *       activeId={section}
- *       onChange={setSection}
- *     />
- *   }
- * >
- *   <SectionPanel id={section} />
- * </Split>
- *
- * @remarks When NOT to use
- * - For navigation between pages — use the sidebar or breadcrumbs. Tabs are
- *   for *intra-page* view switching.
- * - For 5+ tabs. That's usually a sign the entity is doing too much — split
- *   the page or use a different IA.
- * - When the user might want to see two views at once. Use side-by-side
- *   panels instead.
- *
- * @remarks Anti-patterns
- * - ❌ Lazy-loading tab content but losing form state when tabs switch.
- *   Either preserve state or warn the user before they lose data.
- * - ❌ Putting the page's primary action inside a tab. The primary action
- *   belongs in the page header.
- * - ❌ Using `orientation="vertical"` as a page sidebar / primary navigation.
- *   It is for *intra-page* master–detail section switching, not route changes —
- *   use the app sidebar for navigation.
- * - ❌ Combining `orientation="auto"` with app-owned viewport measurement.
- *   Auto mode measures the available Tabs/tab-strip width, so let it react to
- *   the `Split`'s layout instead of duplicating breakpoint state in the app.
- * - ❌ Reaching for `action` to switch views. It never sets `activeId` — if
- *   the click should select a tab, add a `TabItem` instead.
+ * Responsive controlled tab strip (horizontal, vertical or auto) with count chips and leading/trailing adornments, following the WAI-ARIA Tabs pattern.
+ * @see docs/components/Tabs.md
  */
 export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
   {

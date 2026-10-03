@@ -60,7 +60,7 @@ export interface CheckboxProps extends Omit<
    */
   label?: ReactNode;
 
-  /** Toggles the error visual + sets `aria-invalid="true"`. */
+  /** Toggles the error visual + sets `aria-invalid="true"`. Pair with a visible error message and `aria-describedby`. */
   invalid?: boolean;
 
   /**
@@ -90,46 +90,8 @@ const iconSize: Record<CheckboxSize, number> = {
 };
 
 /**
- * Checkbox — native `<input type="checkbox">` visually hidden + custom-painted
- * box. Supports checked / unchecked / indeterminate / disabled / invalid
- * states. The native input owns all a11y (keyboard, screen reader, form
- * submission, RHF/Zod integration); the custom paint owns the look.
- *
- * @example
- * <Checkbox label="I agree to the terms" />
- *
- * @example
- * // Controlled:
- * <Checkbox checked={agreed} onChange={(next) => setAgreed(next)} label="I agree" />
- *
- * @example
- * // Indeterminate ("select all" pattern):
- * <Checkbox
- *   checked={allSelected}
- *   indeterminate={someSelected && !allSelected}
- *   onChange={(next) => (next ? selectAll() : selectNone())}
- *   aria-label="Select all rows"
- * />
- *
- * @example
- * // Icon-only (no visible label):
- * <Checkbox aria-label="Select row" checked={isSelected} onChange={setIsSelected} />
- *
- * @remarks When NOT to use
- * - Single binary on/off setting that toggles immediately and visually
- *   communicates "on" vs "off" — use a `Switch` (not yet shipped).
- * - One-of-many choice from a fixed set — use `Radio` (not yet shipped).
- * - Multi-select from a long list — use `<Select multi>`.
- *
- * @remarks Anti-patterns
- * - Treating `indeterminate` as a third value. It's a display flag for
- *   "partial selection"; `checked` is still the underlying boolean. Clicking
- *   an indeterminate checkbox emits `onChange(nextChecked)` based on the
- *   current `checked` state, not on `indeterminate`.
- * - Wrapping the checkbox in your own `<label>`. We already wrap it; an
- *   outer `<label>` nests two and breaks the click contract.
- * - Omitting `label` AND `aria-label`. Screen readers will announce just
- *   "checkbox" with no context.
+ * Checkbox: a visually hidden native input plus a custom-painted box.
+ * @see docs/components/Checkbox.md
  */
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Checkbox(
   {

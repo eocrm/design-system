@@ -53,34 +53,8 @@ const FALLBACK_HSV: HSV = { h: 0, s: 0, v: 0 };
 const FALLBACK_HEX = '#000000';
 
 /**
- * The picker UI without the popover wrapping. Use directly as
- * `<ColorPicker.Panel>` for inline / always-visible color picking (theme
- * builders, settings pages, color cells in a grid). The popover-wrapped
- * `<ColorPicker>` composes this internally.
- *
- * Owns the local-HSV state-of-truth: the UI thinks in HSV (the SV pad
- * needs S+V, the hue strip needs H) but the consumer's contract is HEX.
- * Naive HEX→HSV-per-render is lossy at saturation=0 (gray) — dragging hue
- * at black would not update because HEX stays `#000000`. We track HSV
- * locally and only sync from the `value` prop when an external write
- * (consumer-driven, not our own) changes it.
- *
- * @example
- * const [hex, setHex] = useState('#4F46E5');
- * <ColorPicker.Panel value={hex} onChange={setHex} />
- *
- * @example
- * // With consumer-supplied preset swatches:
- * <ColorPicker.Panel
- *   value={hex}
- *   onChange={setHex}
- *   presets={['#4F46E5', '#10B981', '#F59E0B', '#EF4444']}
- * />
- *
- * @remarks When NOT to use
- * - When you need a compact trigger button. Use `<ColorPicker>` (popover
- *   variant) instead.
- * - For an uncontrolled picker. The component is controlled-only by design.
+ * The picker UI without the popover wrapping, for inline color picking.
+ * @see docs/components/ColorPicker.md
  */
 export const ColorPickerPanel = forwardRef<HTMLDivElement, ColorPickerPanelProps>(
   function ColorPickerPanel(

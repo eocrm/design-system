@@ -21,41 +21,8 @@ export interface IndentProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * Indentation primitive — indents its own box by `level × gutter`, token-based and
- * RTL-aware (`padding-inline-start`). The DS-native way to express nesting depth
- * (threaded comment trees, file trees, outline views) without inline CSS.
- *
- * It pads its OWN box only — it does not arrange its children (mirrors `Constrain`,
- * which only sizes its own box). Put a `<Stack>`/`<Cluster>` *inside* it when the
- * indented block has multiple rows. `level={0}` is flush; nesting compounds because
- * padding stacks, so a flat list at known depths and a physically-nested tree both work.
- *
- * @example
- * // A flat comment list rendered at known depths:
- * {comments.map((c) => (
- *   <Indent key={c.id} level={c.depth}>
- *     <CommentCard comment={c} />
- *   </Indent>
- * ))}
- *
- * @example
- * // Tighter gutter for a dense outline:
- * <Indent level={2} gutter="sm">
- *   <Text>Deeply nested line</Text>
- * </Indent>
- *
- * @remarks When NOT to use
- * - Vertical spacing between siblings → `<Stack gap>`. Indent adds a leading inline
- *   gutter to one box; it doesn't space a list.
- * - A bordered / padded surface → `<Card>`.
- * - Arranging children in a row → `<Cluster>`.
- *
- * @remarks Anti-patterns
- * - ❌ Using `<Indent>` for general left padding on non-nested content — it expresses
- *   hierarchy/depth; for plain spacing reach for the parent layout primitive.
- * - ❌ Passing a fractional or huge `level` — it's a depth count (0, 1, 2, …).
- * - ❌ Expecting it to arrange children — wrap a `<Stack>` inside if the indented
- *   block has multiple rows.
+ * Indentation primitive — indents its own box by `level × gutter`.
+ * @see docs/components/Indent.md
  */
 // {...rest} last so consumer attrs win (Pattern A). But `style` is spread FIRST in
 // the merge below so the internal --indent-level wins — depth is set via the `level`

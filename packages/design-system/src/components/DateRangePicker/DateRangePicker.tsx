@@ -64,7 +64,7 @@ export interface DateRangePickerProps extends Omit<
   min?: Date;
   /** Latest selectable date (inclusive). */
   max?: Date;
-  /** Per-date disable predicate. */
+  /** Per-date disable predicate; gates both the popover grid and typed-input parsing. */
   isDateDisabled?: (date: Date) => boolean;
 
   /**
@@ -79,10 +79,10 @@ export interface DateRangePickerProps extends Omit<
 
   /** Show the ✕ clear button when a range is set. Defaults to `true`. */
   clearable?: boolean;
-  /** Toggle red border + focus ring + `aria-invalid="true"`. */
+  /** Toggle red border + focus ring + `aria-invalid="true"`. Pair with a visible error and `aria-describedby`. */
   invalid?: boolean;
 
-  /** Form name for the START half (hidden `<input>`). */
+  /** Form name for the START half (hidden `<input>` with an ISO date, so native `<form>` submission works). Post both keys or just one. */
   nameStart?: string;
   /** Form name for the END half. */
   nameEnd?: string;
@@ -134,42 +134,10 @@ const ICON_SIZE_FOR: Record<DateRangePickerSize, number> = {
 };
 
 /**
- * Single-field date-range input with a Floating-UI popover that shows
- * two months side-by-side. Locale-aware typed parsing, min/max +
- * `isDateDisabled`, clearable, hover preview between clicks, auto-swap
- * on out-of-order picks, and separate `nameStart`/`nameEnd` form
- * mirrors. Built on the same `DatePickerGrid` as `<DatePicker>` (with a
- * new `selectionMode='range'`).
- *
- * @example
- * <DateRangePicker defaultValue={{ start: new Date(), end: new Date() }} />
- *
- * @example
- * // Controlled, constrained to a 90-day window:
- * <DateRangePicker
- *   value={range}
- *   onChange={setRange}
- *   min={new Date()}
- *   max={new Date(Date.now() + 90 * 86_400_000)}
- * />
- *
- * @example
- * // Form-mirror, two separate fields:
- * <form action="/api/bookings">
- *   <DateRangePicker nameStart="bookingStart" nameEnd="bookingEnd" />
- * </form>
- *
- * @remarks When NOT to use
- * - Single date → use `<DatePicker>`.
- * - Seconds-precision tracking → only `granularity='minute'` is supported.
- * - Time-only fields (no date) → out of scope.
- * - Multi-date selection (3+ non-contiguous dates) → out of scope.
- *
- * @remarks Anti-patterns
- * - ❌ Passing `value` without `onChange` — picker is fully controlled
- *   when `value` is set; user input has no effect.
- * - ❌ Using `defaultValue` AND `value` together — pick one.
+ * Single-field date-range input with a two-month Floating-UI popover, hover preview and auto-swap.
+ * @see docs/components/DateRangePicker.md
  */
+// Built on `DatePickerGrid` with `selectionMode='range'`.
 export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps>(
   function DateRangePicker(
     {

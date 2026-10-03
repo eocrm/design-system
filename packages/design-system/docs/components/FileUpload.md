@@ -15,6 +15,33 @@
 />
 ```
 
+<!-- props:start -->
+
+## Props
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `id` | `string` | no | Placed on the hidden native `<input type="file">`, not the root — it is the only labelable element, so a `<label for>` (Field / SettingRow wire one) opens the file picker when clicked. A `role="button"` div is not labelable, so the id on the dropzone would make the label click a no-op. While the dropzone is hidden (single mode with a file) the id falls back to the root, so scroll-to-id / focus-first-invalid still find the field. |
+| `invalid` | `boolean` | no | Marks the dropzone `aria-invalid` for Field / SettingRow composition. Default: `false`. |
+| `required` | `boolean` | no | Consumed for Field / SettingRow composition (they render the visible required marker). Not forwarded: `role="button"` does not support `aria-required`, and native `required` on the hidden input would block form submission with an invisible bubble — your state owns the files. |
+| `files` | `FileEntry[]` | yes | Controlled file list. The component renders this; consumer owns the state. |
+| `onFilesAdded` | `(files: File[]) => void` | yes | Called when the user drops or picks new files AND those files pass validation. The component does NOT mutate state — consumer is responsible for adding the returned `File[]` to `files` (typically wrapped in `FileEntry` shape with new IDs). |
+| `onFileRemove` | `(entry: FileEntry) => void` | yes | Called when the user clicks the X on a file row. Consumer removes from `files`. |
+| `onFileReject` | `((file: File, reason: FileRejectReason, message?: string) => void)` | no | Called when a file fails validation. `reason` is one of `FileRejectReason`; `message` is the custom message from `validator` (only present when reason='custom'). Use for toasts or inline error rendering. |
+| `multiple` | `boolean` | no | Allow multi-file selection. Default `false`. In single mode (default), `files` should have at most 1 entry; the dropzone hides once a file is present and re-appears after removal. |
+| `accept` | `string` | no | Accepted file types — MIME types and/or extensions, comma-separated. Forwarded to the native `<input accept>` attribute AND used for the built-in `invalid-type` validation. Default: no filter. Examples: - `accept="image/*"` — any image - `accept=".csv,application/vnd.ms-excel"` — CSV or Excel - `accept="application/pdf,image/png,image/jpeg"` — explicit MIME list |
+| `maxSize` | `number` | no | Per-file size cap in bytes. Default: no limit. Files exceeding this fire `onFileReject` with reason `'too-large'`. |
+| `maxFiles` | `number` | no | Total file count cap. Only meaningful when `multiple=true`. Counts existing entries in `files` PLUS new files being added. Default: no limit. Excess files fire `onFileReject` with reason `'too-many'`. |
+| `validator` | `((file: File) => string \| null)` | no | Custom validation hook. Return `null` for valid; return a string error message for invalid (fires `onFileReject` with reason='custom', message= the returned string). Runs LAST in the validation chain (after type, size, count, duplicate checks). |
+| `disabled` | `boolean` | no | Disable the entire component. Dropzone shows muted, drag/click handlers are no-ops, remove buttons disabled. Default `false`. |
+| `dropzoneLabel` | `ReactNode` | no | Override the dropzone's main label. Default: the i18n value at `fileUpload.dragHint`. Pass a ReactNode for richer content (e.g. with a `<Code>` for accepted extensions). **A11y note:** when `dropzoneLabel` is a plain string, the component uses it as `aria-label` on the dropzone. When it's a ReactNode, the component falls back to the i18n value at `fileUpload.upload` and the rich content is visible-only. To give screen readers the equivalent text, pass `aria-label` via the spread (e.g. `aria-label="Upload CSV or Excel files"`). An EMPTY string counts as unset, not as an explicit blank — it drives both the visible label and the dropzone's `aria-label`, so an empty one left a `role="button"` with no accessible name. |
+| `dropzoneIcon` | `ReactNode` | no | Override the dropzone icon. Default: lucide `CloudUpload` at 32px. Pass an SVG ReactNode or another icon component instance. |
+| `dropzoneHint` | `ReactNode` | no | Optional secondary line under the main label, typically describing accepted formats / size limits. Renders muted at `--font-size-sm`. Default: undefined (no secondary text). |
+| …native | | | plus native `<div>` attributes |
+
+<!-- props:end -->
+
 - **Pure UI shell.** Consumer owns the `files: FileEntry[]` state and the network code. The component handles drag/drop + click + validation + per-row rendering ONLY.
 - **Inside `<Field>` / `<SettingRow>`:** the wired `id` goes on the hidden `<input type="file">` (the only labelable element), so clicking the row's label opens the picker; `invalid` marks the dropzone `aria-invalid`; `required` only drives the row's visible marker (a hidden native `required` would block submit invisibly — your state owns the files).
 - `FileEntry`: `{ id: string, file: File, status: 'pending' | 'uploading' | 'done' | 'error', progress?: number, error?: string }`. Consumer assigns `id` (typically `crypto.randomUUID()`); File has no stable identity in JS.
@@ -23,8 +50,6 @@
 - **Single mode (default):** implicit count cap of 1. Dropzone HIDES once `files.length === 1` and re-appears after the user removes the file. Multi-file drops in single mode → first valid file accepted, rest rejected as `'too-many'`.
 - **Defensive guards.** `NaN`, `Infinity`, and `max <= 0` on the underlying `<Progress>` fall back to indeterminate — covers the file-upload race condition where `bytes_uploaded / total_bytes` produces NaN before the total is known.
 - **Drag and click both open the same hidden `<input type="file">`.** Drag is mouse-only; keyboard users use the dropzone's `role="button"` + Enter/Space to open the picker.
-- `disabled`: dropzone shows grayed, drag/click no-op, remove buttons disabled.
-- `dropzoneLabel`, `dropzoneIcon`, `dropzoneHint` override the dropzone's default content. **A11y note:** when `dropzoneLabel` is a ReactNode (not a plain string), the component falls back to `aria-label="Upload files"` — pass `aria-label` via the spread for a screen-reader-equivalent description.
 
 #### `FileRejectReason`
 
@@ -41,3 +66,44 @@
 - ❌ Storing the file list in the component (it has no internal state). Always pass `files` + the two callbacks.
 - ❌ Setting `multiple=true` and showing only one file slot via custom CSS. The component decides dropzone visibility from `multiple` + `files.length`; don't fight it.
 - ❌ Calling `onFilesAdded` from inside `onFileReject` (or vice versa) in an attempt to "auto-retry." Reject is terminal for that file; the user has to re-drop.
+
+#### Examples and limits
+
+```tsx
+// Single-file picker (controlled)
+function ProfileImage() {
+  const [files, setFiles] = useState<FileEntry[]>([]);
+  return (
+    <FileUpload
+      files={files}
+      accept="image/*"
+      maxSize={2 * 1024 * 1024}
+      onFilesAdded={(added) =>
+        setFiles(added.map((f) => ({ id: crypto.randomUUID(), file: f, status: 'pending' })))
+      }
+      onFileRemove={(entry) => setFiles((prev) => prev.filter((e) => e.id !== entry.id))}
+    />
+  );
+}
+
+// Status walkthrough — the consumer moves each entry pending → uploading → done / error
+const upload = async (entry: FileEntry) => {
+  setFiles((prev) =>
+    prev.map((e) => (e.id === entry.id ? { ...e, status: 'uploading', progress: 0 } : e)),
+  );
+  try {
+    await uploadToS3(entry.file, (pct) =>
+      setFiles((prev) => prev.map((e) => (e.id === entry.id ? { ...e, progress: pct } : e))),
+    );
+    setFiles((prev) =>
+      prev.map((e) => (e.id === entry.id ? { ...e, status: 'done', progress: 100 } : e)),
+    );
+  } catch (err) {
+    setFiles((prev) =>
+      prev.map((e) => (e.id === entry.id ? { ...e, status: 'error', error: String(err) } : e)),
+    );
+  }
+};
+```
+
+- When NOT to use: a hidden file-picker button with no dropzone (use `<Button>` + a raw `<input type="file" hidden>`); paste-from-clipboard image upload; directory upload (`webkitdirectory` is not exposed); image thumbnails of the picked files (generic file icons only); component-owned upload state.

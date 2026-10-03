@@ -26,36 +26,8 @@ export interface CardHeaderProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * Title row subcomponent for `<Card>` with an optional right-aligned action
- * slot and a bottom-border separator. Renders as a `<div>` containing a
- * configurable heading element (`h3` by default) plus an optional `<span>`
- * wrapping the `action` node.
- *
- * Use inside `<Card padding="none">` so the header's internal padding aligns
- * flush with the card edge.
- *
- * @example
- * // Basic header — title only:
- * <Card padding="none">
- *   <Card.Header>Recent activity</Card.Header>
- *   <Card.List>...</Card.List>
- * </Card>
- *
- * @example
- * // Header with a right-aligned "View all" link:
- * <Card padding="none">
- *   <Card.Header action={<Link variant="muted">View all</Link>}>
- *     Deals needing attention
- *   </Card.Header>
- *   <Card.List>...</Card.List>
- * </Card>
- *
- * @example
- * // Adjust heading level when nested below an h1 (page has no h2 above):
- * <Card padding="none">
- *   <Card.Header headerLevel="h2">Pipeline overview</Card.Header>
- *   <Card.List>...</Card.List>
- * </Card>
+ * Title row subcomponent for `<Card>` with an optional right-aligned action slot.
+ * @see docs/components/Card.md
  */
 export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(function CardHeader(
   { headerLevel = 'h3', action, children, className, ...rest },

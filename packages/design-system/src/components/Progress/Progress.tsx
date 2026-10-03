@@ -79,63 +79,8 @@ const TONE_CLASS: Record<ProgressTone, string> = {
 };
 
 /**
- * Linear progress primitive. Renders a horizontal bar with an optional
- * right-aligned label. Tracks known progress against a `max` (default 100),
- * OR renders an indeterminate sliding animation when `value` is omitted.
- *
- * Use for: per-file upload bars, multi-step wizard step indicators, form
- * completion meters, disk-usage gauges, anything with a known total.
- *
- * `role="progressbar"` is locked (can't be overridden via the `role` prop) —
- * the component contract IS the progressbar semantics.
- *
- * @example
- * // Determinate, default size and tone:
- * <Progress value={45} />
- *
- * @example
- * // With percentage label:
- * <Progress value={67} label />
- *
- * @example
- * // Tone-coded for state (e.g. disk usage above 80%):
- * <Progress value={85} tone="warning" label />
- *
- * @example
- * // Indeterminate — value omitted. Use when total is unknown
- * // (e.g. waiting for server-side processing to finish).
- * <Progress />
- *
- * @example
- * // Custom label slot for "N of M" patterns or non-percentage text:
- * <Progress value={3} max={10} label={`3 of 10`} />
- *
- * @example
- * // Composed in a Stack — the canonical "storage usage" panel:
- * <Stack gap="xs">
- *   <Title order={3} size="md">Storage</Title>
- *   <Progress value={85} max={100} tone="warning" label />
- *   <Text size="sm" tone="muted">85 GB of 100 GB used</Text>
- * </Stack>
- *
- * @remarks When NOT to use
- * - For inline loading affordances next to a button. Use `<CircularProgress>`
- *   indeterminate instead — it's the right shape for that pattern.
- * - To "celebrate" task completion. A done bar is a done bar — leave it the
- *   default tone. `tone` communicates STATE during progress (warning when
- *   approaching a threshold, danger when over), not success-on-finish.
- * - For arbitrary horizontal lines. Use `<Divider>` for visual rules.
- *
- * @remarks Anti-patterns
- * - ❌ `<div style={{ width: '${n}%', background: '#xxx', height: 8 }}>` —
- *   the whole reason `<Progress>` exists. Use the primitive.
- * - ❌ `<Progress role="something">` — `role` is locked to `'progressbar'`.
- *   TypeScript will reject the override.
- * - ❌ `<Progress tone="success" value={100}>` to "celebrate" completion.
- *   Tones are for in-flight state-coding, not success-on-done.
- * - ❌ Combining `<Progress>` with a separate label element rendered by the
- *   consumer. The component already exposes a `label` slot that handles
- *   spacing, font-size, and tabular-nums for stable digit widths.
+ * Linear progress bar: determinate against `max`, or an indeterminate slide when `value` is omitted; `role="progressbar"` is locked.
+ * @see docs/components/Progress.md
  */
 export const Progress = forwardRef<HTMLDivElement, ProgressProps>(function Progress(
   { value, max = 100, size = 'md', tone = 'default', label = false, className, ...rest },

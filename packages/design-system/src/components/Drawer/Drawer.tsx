@@ -5,8 +5,8 @@ import { Footer } from './Footer';
 import { Close } from './Close';
 
 /**
- * Compound `<Drawer>` family. Subcomponents attached via Object.assign so
- * consumers write `<Drawer.Header>` etc., not separate imports.
+ * Compound `<Drawer>` family: `Drawer.Header`, `Body`, `Footer` and `Close` attached via `Object.assign`.
+ * @see docs/components/Drawer.md
  */
 export const Drawer = Object.assign(DrawerRoot, {
   Header,

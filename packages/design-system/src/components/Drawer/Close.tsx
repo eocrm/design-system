@@ -17,10 +17,8 @@ export interface DrawerCloseProps {
 }
 
 /**
- * @example
- * <Drawer.Close>
- *   <Button variant="secondary">Cancel</Button>
- * </Drawer.Close>
+ * Wraps a clickable child so activating it dismisses the drawer (`Drawer.Close`).
+ * @see docs/components/Drawer.md
  */
 export function Close({ children }: DrawerCloseProps) {
   const ctx = useDrawerContext('Close');

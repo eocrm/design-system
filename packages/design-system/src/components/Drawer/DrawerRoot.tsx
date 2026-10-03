@@ -34,13 +34,13 @@ export interface DrawerProps {
   /** Fired when Drawer wants to change open state — Esc, overlay click, Close, swipe, programmatic. */
   onOpenChange: (open: boolean) => void;
 
-  /** Edge the drawer slides in from. Defaults to 'right'. */
+  /** Edge the drawer slides in from: `left`, `right` (default), `top`, `bottom`. */
   side?: DrawerSide;
 
-  /** Size preset. Width for left/right, height for top/bottom. Defaults to 'md'. */
+  /** Size preset: `sm` 320px, `md` 440px (default), `lg` 640px. Width for left/right, height for top/bottom. Capped to `viewport - 32px` on narrow viewports; always edge-anchored, never fullscreen. */
   size?: DrawerSize;
 
-  /** Overlay variant. 'solid' (default) | 'blur'. */
+  /** Overlay variant. 'solid' (default) | 'blur' (frosted glass, `backdrop-filter: blur(4px)`). */
   overlay?: DrawerOverlayVariant;
 
   /**
@@ -67,39 +67,8 @@ export interface DrawerProps {
 }
 
 /**
- * Edge-anchored slide-in dialog. Same focus-lock + scroll-lock + stack semantics
- * as Modal — the two share the overlay-stack singleton so they can stack across
- * types (Drawer-inside-Modal, Modal-inside-Drawer).
- *
- * Compound API:
- * - `<Drawer.Header>` — title + auto-wired aria-labelledby + drag-to-close origin
- * - `<Drawer.Body>` — scrollable content
- * - `<Drawer.Footer>` — pinned action bar
- * - `<Drawer.Close>` — wraps a clickable child to dismiss
- *
- * @example
- * const [open, setOpen] = useState(false);
- * <Button onClick={() => setOpen(true)}>Show filters</Button>
- * <Drawer open={open} onOpenChange={setOpen} side="right" size="md">
- *   <Drawer.Header>Filters</Drawer.Header>
- *   <Drawer.Body><Stack gap="md">...</Stack></Drawer.Body>
- *   <Drawer.Footer>
- *     <Drawer.Close><Button variant="secondary">Cancel</Button></Drawer.Close>
- *     <Button onClick={apply}>Apply</Button>
- *   </Drawer.Footer>
- * </Drawer>
- *
- * @remarks When NOT to use
- * - For center-anchored dialogs — use `<Modal>`.
- * - For lightweight popovers — use `<Popover>` or `<DropdownMenu>`.
- * - For non-blocking notifications — use `<Toast>` (not yet shipped).
- *
- * @remarks Anti-patterns
- * - ❌ Rendering inside a `position: fixed` ancestor — the portal escapes that
- *   container anyway. Render `<Drawer>` at any level; it portals to document.body.
- * - ❌ Same `side` stacked drawers as a navigation pattern. They visually overlap;
- *   the user only sees the inner. Use route changes instead.
- * - ❌ Passing neither `<Drawer.Header>` nor `aria-label` — dev warning fires.
+ * Edge-anchored slide-in dialog sharing Modal's focus-lock, scroll-lock and overlay stack.
+ * @see docs/components/Drawer.md
  */
 export function DrawerRoot({
   open,

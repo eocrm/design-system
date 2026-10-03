@@ -41,7 +41,7 @@ import { Button, Stack, Cluster, Card, Input, Avatar, Badge, Tabs } from '@eocrm
 ```
 
 Full install + bundler notes: [`packages/design-system/README.md`](./packages/design-system/README.md).
-Per-component contracts: hover any import for JSDoc; see [`packages/design-system/AI-PRIMER.md`](./packages/design-system/AI-PRIMER.md) for an agent-targeted primer.
+Per-component contracts: [`packages/design-system/docs/components/<Name>.md`](./packages/design-system/docs/components); see [`packages/design-system/AI-PRIMER.md`](./packages/design-system/AI-PRIMER.md) for an agent-targeted primer.
 
 ---
 
@@ -111,6 +111,6 @@ platform layers.
 
 ## Components shipped
 
-70+ components and counting — buttons, the full form set (Input, Select, Checkbox, Radio, Switch, Slider, date/time pickers, …), layout primitives (Stack, Cluster, Grid, AppLayout), overlays (Modal, Drawer, Popover, Tooltip, Toast), and data display (Table, DataTable, Kanban). Each is unit-tested, JSDoc'd with `@example` and `@remarks` blocks, and demoed in the playground.
+70+ components and counting — buttons, the full form set (Input, Select, Checkbox, Radio, Switch, Slider, date/time pickers, …), layout primitives (Stack, Cluster, Grid, AppLayout), overlays (Modal, Drawer, Popover, Tooltip, Toast), and data display (Table, DataTable, Kanban). Each is unit-tested, documented in `docs/components/<Name>.md`, and demoed in the playground.
 
 The canonical, always-current roster lives in the **[live playground](https://eocrm.github.io/design-system/)** and **[`AI-PRIMER.md`](./packages/design-system/AI-PRIMER.md)** — refer to those rather than a hand-maintained list that drifts out of date.

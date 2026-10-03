@@ -33,8 +33,8 @@ interface ItemContextWithHeaderLevel extends AccordionItemContextValue {
 }
 
 /**
- * Heading-wrapped button that toggles the parent Item. Default indicator is a
- * `<ChevronDown>` icon that rotates 180° when open.
+ * Heading-wrapped button that toggles the parent Item.
+ * @see docs/components/Accordion.md
  */
 export const AccordionTrigger = forwardRef<HTMLButtonElement, AccordionTriggerProps>(
   function AccordionTrigger({ icon, actions, children, className, onKeyDown, ...props }, ref) {

@@ -8,19 +8,8 @@ export interface CardListRowProps extends HTMLAttributes<HTMLLIElement> {
 }
 
 /**
- * A single row inside a `<Card.List>`. Renders as `<li>` with padded content
- * and a bottom dividing border. The border is suppressed on the last child via
- * `:last-child` in SCSS so the final row sits flush against the card edge.
- *
- * @example
- * <Card.List>
- *   <Card.ListRow>
- *     <Stack gap="xs">
- *       <span>Deal name</span>
- *       <span>Company · $12,000</span>
- *     </Stack>
- *   </Card.ListRow>
- * </Card.List>
+ * A single row inside a `<Card.List>`, rendered as `<li>`.
+ * @see docs/components/Card.md
  */
 export const CardListRow = forwardRef<HTMLLIElement, CardListRowProps>(function CardListRow(
   { children, className, ...rest },

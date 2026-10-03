@@ -119,81 +119,8 @@ const SIZE_CLASS: Record<ImageSize, string> = {
 };
 
 /**
- * Displays a remote image with built-in loading and error states. Reserves its
- * box (no layout shift), shows a `Skeleton` while loading, fades in on load, and
- * degrades to a compact, accessible broken-image placeholder on failure (with
- * Retry when the box has room for it).
- *
- * The wrapper fills its container's width — give it an `aspectRatio` (or a
- * height) so the box is reserved before the image arrives — UNLESS you pass
- * `size`, which renders a fixed square box (e.g. a table-cell thumbnail).
- * `className` / `style` apply to the wrapper box; `ref` forwards to the
- * underlying `<img>`. The wrapper owns sizing: rendered height comes from `size`
- * or `aspectRatio` (or the container), and native `width`/`height` attrs on the
- * `<img>` are intrinsic-ratio hints only, not the rendered size.
- *
- * The error tile comes in two forms. A fluid image (no `size`) shows the icon,
- * a message and a **Retry** button when its box can hold them. In a box too
- * narrow or too short for that it drops to the icon alone — the message
- * stays for screen readers, Retry is removed rather than left clipped yet
- * focusable (#542) — and an unreserved box (no `size`, no `aspectRatio`) is
- * given an icon's height on error instead of collapsing to zero (a height you
- * set yourself still wins). So a fluid image is only retryable at roughly
- * 96×104px or more at the default tokens; a longer custom `image.retry`
- * label needs a wider box. A fixed-`size` image — `'xs'` / `'sm'` /
- * `'md'` / `'lg'`, i.e. 20 / 24 / 32 / 40px — shows the **icon alone**, scaled
- * to its box, and is **not retryable**: none of those squares can hold the
- * message *and* an `sm` Button, and the button they used to render sat outside
- * the wrapper's clip, painted nowhere yet still in the tab order (#538). Screen
- * readers still get the failure, from the icon's name. If a failed thumbnail
- * needs a control at those sizes, supply one via `fallback` — it is rendered in
- * a slot filling the box, so it cannot escape the wrapper, but sizing it to fit
- * 20-40px is yours.
- *
- * @example
- * // Responsive 16:9 thumbnail
- * <Image src={url} alt="Quarterly revenue chart" aspectRatio="16 / 9" />
- *
- * @example
- * // Fixed 40px square thumbnail (e.g. a dense table cell) — no width:100% stretch
- * <Image src={url} alt="report.pdf preview" size="lg" objectFit="cover" />
- *
- * @example
- * // Contain a logo on its muted box, square corners
- * <Image src={logo} alt="Acme Corp" objectFit="contain" radius="none" />
- *
- * @example
- * // Eager above-the-fold hero with a custom error fallback
- * <Image
- *   src={hero}
- *   alt="Welcome aboard"
- *   loading="eager"
- *   aspectRatio={2}
- *   fallback={<EmptyState title="Couldn't load the hero image" />}
- * />
- *
- * @example
- * // Flush, keyboard-accessible thumbnail that opens a preview (no button chrome):
- * <Image
- *   src={att.url}
- *   alt={att.filename}
- *   size="lg"
- *   objectFit="cover"
- *   onClick={() => openPreview(att)}
- *   ariaLabel={`Preview ${att.filename}`}
- * />
- *
- * @remarks When NOT to use
- * - Circular profile / identity images → use `<Avatar>` (initials fallback).
- * - Cropping / zoom UI → use `<ImageCrop>`.
- * - Decorative CSS backgrounds → use a `background-image`, not a content `<img>`.
- * - Icons / vector glyphs → use a `lucide-react` icon or inline SVG.
- *
- * @remarks Anti-patterns
- * - ❌ Empty `alt` for a meaningful image — pass a real description.
- * - ❌ No `aspectRatio` / height when you care about layout shift — reserve the box.
- * - ❌ Wrapping `<Image>` in a `<Button>` / `<Link>` for a clickable thumbnail — that
- *   paints button/link chrome over it. Use `interactive` / `onClick` for a flush trigger.
+ * Displays a remote image with built-in loading and error states.
+ * @see docs/components/Image.md
  */
 export const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
   {

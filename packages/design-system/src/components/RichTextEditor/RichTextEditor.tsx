@@ -207,78 +207,8 @@ function toggleInList(marks: Mark[], mark: Mark): Mark[] {
 }
 
 /**
- * Controlled rich-text editor — a contentEditable surface over the in-house
- * engine. Type to edit; ⌘/Ctrl+B/I/U and ⌘/Ctrl+⇧X toggle marks over a
- * selection (with a collapsed caret they stage a *pending* mark applied to the
- * next typed text); Enter splits, Backspace/Delete merge. Pass `toolbar` for the
- * built-in formatting toolbar (marks, lists, links, emoji insert, and text/highlight color). ⌘/Ctrl+K (or the toolbar link button) opens a
- * floating editor to add, edit, or remove a link on the selection. Inside a
- * list, Tab/⇧Tab indent/outdent and Enter on an empty item exits to a paragraph.
- * Pasting rich HTML (web, Word, Google Docs) imports it as formatted content.
- * ⌘/Ctrl+Z / ⌘/Ctrl+Shift+Z (and the toolbar Undo/Redo buttons) undo and redo.
- * Markdown shortcuts auto-format on typing — `# `, `- `, `1. `, `> `, or a code
- * fence at a line start convert the block (Undo reverts the conversion).
- * Pass `mentions={{ onQuery }}` to enable `@`-mention autocomplete: typing the
- * trigger opens a combobox of candidates and inserts a chip carrying the id.
- * The model is the source of truth: every input is replayed as an engine
- * transform and the DOM re-rendered.
- *
- * @example
- * const [doc, setDoc] = useState(emptyDoc());
- * <RichTextEditor value={doc} onChange={setDoc} placeholder="Write a note…" />
- *
- * @example
- * // With the built-in toolbar (mark buttons, block-type menu, list toggles).
- * <RichTextEditor value={doc} onChange={setDoc} toolbar />
- *
- * @example
- * // @-mentions: resolve candidates from your data (sync or async).
- * <RichTextEditor value={doc} onChange={setDoc}
- *   mentions={{ onQuery: (q) => searchUsers(q) }} />
- *
- * @example
- * // Read-only display of an existing document.
- * <RichTextEditor value={doc} onChange={() => {}} readOnly />
- *
- * @remarks When NOT to use
- * - Displaying read-only content → `<RichText>` (or `<RichTextEditor readOnly>`).
- *
- * @remarks Anti-patterns
- * - ❌ Treating it as uncontrolled — you MUST feed `onChange`'s doc back into
- *   `value`, or edits won't stick.
- * - ❌ Mutating `value` in place — pass the new doc the transforms return.
- * - ❌ Implementing your own undo/redo stack — the editor tracks history internally; use ⌘/Ctrl+Z (undo), ⌘/Ctrl+⇧Z or ⌘/Ctrl+Y (redo), or the toolbar Undo/Redo buttons.
- * - ❌ Hand-rolling a link UI by reaching into the DOM — press ⌘/Ctrl+K or the
- *   toolbar link button; both open the built-in editor and route through the
- *   controlled `value`/`onChange` round-trip.
- * - ❌ Building your own toolbar by reaching into the DOM — pass `toolbar`, or
- *   drive marks/blocks through the controlled `value`/`onChange` round-trip.
- * - ❌ Pre-stripping pasted HTML to plain text — paste rich HTML directly; the
- *   editor parses it (sanitized) into the model. Seed stored content with
- *   `fromHtml` / `fromMarkdown`.
- * - ❌ Hand-rolling HTML/Markdown from the model — use `toHtml` / `toMarkdown`
- *   (the inverse of `fromHtml` / `fromMarkdown`).
- * - ❌ Using mentions to insert plain links — that's the link tool (⌘K). A
- *   mention chip is an inert reference carrying an `id`, not a navigable anchor.
- * - ❌ Using `renderMention` for plain links — that's `renderLink`; a mention chip
- *   is an inert reference carrying an `id`. The two compose; use each for its mark.
- * - ❌ Returning thousands of unfiltered items from `onQuery` — filter server-side
- *   (or by the `query`); the menu renders what you return.
- * - ❌ Relying on Markdown to preserve mentions — `toMarkdown` is lossy (plain
- *   `@label`); use `toHtml`/`fromHtml` to round-trip a mention's id.
- * - ❌ Building a custom block drag/menu by reaching into the DOM — pass
- *   `blockControls`; insert/move/duplicate/delete route through the controlled
- *   `value`/`onChange` round-trip and are undoable.
- * - ❌ Expecting Backspace to delete a whole block — it edits text; use the block
- *   menu's Delete (or select the block's text and delete) to remove a block.
- * - ❌ Persisting or submitting the doc while an upload is in flight — gate your
- *   submit on `upload.onUploadingChange` (transient attachment blocks are skipped
- *   by `toHtml`/`toMarkdown`, but the model still carries them until they settle).
- * - ❌ Relying on the picker `accept` for validation — it's only a hint and paste
- *   bypasses it; enforce size/type inside `onUpload` and reject to show an error.
- * - ❌ Expecting image alignment/width to survive a Markdown round-trip — they
- *   serialize to HTML only (Markdown has no syntax for them); the stored RichDoc
- *   JSON is lossless.
+ * Controlled rich-text editor: a contentEditable surface over the in-house engine with marks, lists, links, mentions, uploads and undo/redo.
+ * @see docs/components/RichTextEditor.md
  */
 export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
   function RichTextEditor(

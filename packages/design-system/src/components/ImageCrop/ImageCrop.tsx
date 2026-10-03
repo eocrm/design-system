@@ -35,7 +35,7 @@ export interface ImageCropProps extends Omit<HTMLAttributes<HTMLDivElement>, 'on
    * position from this + the image's natural size + the viewport size.
    */
   value: CropArea | null;
-  /** Fires on every drag/zoom tick. High frequency. */
+  /** Fires on every drag/zoom tick. High frequency. Also fires once on first image load when `value` is `null`, with the computed default crop; after that the consumer owns the state. */
   onChange: (area: CropArea) => void;
   /** Fires once when the user releases the drag or releases the zoom slider thumb. */
   onChangeEnd?: (area: CropArea) => void;
@@ -146,62 +146,8 @@ function clampCropArea(area: CropArea, imageWidth: number, imageHeight: number):
 }
 
 /**
- * Controlled, inline image-crop primitive built on `<canvas>` with Pattern-A
- * drag: the crop box stays centered in the viewport; the user drags the
- * IMAGE to reposition the source region under the box. Zoom adjusts via an
- * embedded `<Slider>`.
- *
- * Output is produced via the top-level `extractCropBlob` utility (NOT a ref
- * method) — pure-declarative pattern. Consumer holds the crop area state,
- * calls `extractCropBlob(src, area, options)` in their Save handler to
- * produce the cropped Blob.
- *
- * @example
- * // Profile photo crop with square aspect:
- * const [crop, setCrop] = useState<CropArea | null>(null);
- * const handleSave = async () => {
- *   if (!crop) return;
- *   const blob = await extractCropBlob(file, crop, {
- *     type: 'image/jpeg',
- *     quality: 0.9,
- *     outputWidth: 512,
- *   });
- *   onComplete(blob);
- * };
- * return <ImageCrop src={file} value={crop} onChange={setCrop} aspectRatio={1} />;
- *
- * @example
- * // Free-aspect crop (no aspectRatio prop):
- * <ImageCrop src={imageUrl} value={crop} onChange={setCrop} />
- *
- * @example
- * // Inside a Modal (the canonical "pick → crop → save" flow):
- * <Modal isOpen onClose={cancel}>
- *   <Modal.Header>Crop your photo</Modal.Header>
- *   <Modal.Body>
- *     <ImageCrop src={file} value={crop} onChange={setCrop} aspectRatio={1} />
- *   </Modal.Body>
- *   <Modal.Footer>
- *     <Button variant="secondary" onClick={cancel}>Cancel</Button>
- *     <Button onClick={handleSave} disabled={!crop}>Save</Button>
- *   </Modal.Footer>
- * </Modal>
- *
- * @remarks When NOT to use
- * - For server-side cropping. Pass `value` (CropArea coords) to your backend
- *   instead of using `extractCropBlob`.
- * - For circular avatars. Crop rectangular, then CSS-mask in the consumer.
- * - For rotation. v1 doesn't rotate. Use a future v2 or rotate server-side.
- * - For multi-touch / pinch-zoom. v1 is single-pointer drag + slider zoom.
- *
- * @remarks Anti-patterns
- * - ❌ Hand-rolling a `<canvas>` + drag math per page. Use this.
- * - ❌ Calling `extractCropBlob` on every `onChange` tick. The encode is
- *   expensive — call ONCE in the Save handler.
- * - ❌ Wrapping `<img>` in CSS clip-path for a "crop preview" — that doesn't
- *   produce a cropped Blob. Use `extractCropBlob`.
- * - ❌ `<ImageCrop ref={ref}>` expecting a `.getBlob()` method. There's no
- *   imperative API. Use the top-level `extractCropBlob(src, value)` utility.
+ * Controlled, inline image-crop primitive: drag the image under a centered crop box, zoom via a slider.
+ * @see docs/components/ImageCrop.md
  */
 export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function ImageCrop(
   {

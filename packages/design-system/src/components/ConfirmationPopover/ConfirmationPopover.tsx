@@ -229,67 +229,8 @@ function FocusReturn({ returnFocusRef }: { returnFocusRef?: RefObject<HTMLElemen
 }
 
 /**
- * Opinionated "Are you sure?" preset on top of `<Popover>`. Renders a
- * compact panel with a title, optional description, Cancel button, and
- * Confirm button. Anchors above the trigger by default to keep the user's
- * eye near where they clicked.
- *
- * - **Initial focus** lands on Cancel for both variants. Safer default —
- *   keyboard "Enter" never accidentally confirms; the user must Tab once
- *   to Confirm. Pass `initialFocusRef` to override this and focus a given
- *   element instead (e.g. an `<Input>` rendered in `description` for a
- *   rename flow).
- * - **Focus return** on every close (Confirm, Cancel, Escape): back to the
- *   trigger, or to `returnFocusRef` when it is set and still in the
- *   document — pass it when the confirmed action removes the trigger.
- * - **Async-aware** `onConfirm`. While the returned Promise is in flight,
- *   both buttons disable, the Confirm shows a spinner, and Escape /
- *   click-outside dismissal is blocked.
- * - **Failure mode**. If `onConfirm` rejects, the popover stays open and
- *   buttons re-enable. The consumer surfaces the error.
- *
- * @example
- * <ConfirmationPopover
- *   title="Delete record?"
- *   description="This action cannot be undone."
- *   variant="danger"
- *   onConfirm={async () => {
- *     await api.deleteRecord(id);
- *   }}
- * >
- *   <Button variant="danger">Delete</Button>
- * </ConfirmationPopover>
- *
- * @example
- * // Default variant — lighter-weight (archive, publish, etc.):
- * <ConfirmationPopover
- *   title="Archive this contact?"
- *   description="You can unarchive later from the archive view."
- *   onConfirm={() => archive(id)}
- * >
- *   <Button variant="secondary">Archive</Button>
- * </ConfirmationPopover>
- *
- * @remarks When NOT to use
- * - For a multi-step flow ("type the name to confirm") → use Modal (when
- *   shipped). ConfirmationPopover is for one-tap confirmations.
- * - For a non-blocking heads-up that doesn't need a yes/no answer → use
- *   a Toast (when shipped) or inline UI.
- *
- * @remarks Anti-patterns
- * - ❌ Hanging-forever `onConfirm` Promise. v1 has no timeout — the
- *   popover stays in pending state indefinitely. Add a timeout / abort
- *   inside your `onConfirm` if the operation may stall.
- * - ❌ Rendering an inline error from `onConfirm`'s rejection inside the
- *   popover body. ConfirmationPopover doesn't render errors — surface
- *   them via toast or page-level UI instead.
- * - ❌ Combining controlled `open` + relying on pending-blocks-close. If
- *   you provide `open` / `onOpenChange`, you can force-close from outside
- *   while we're pending. Coordinate `pending` in your own code if that
- *   matters.
- * - ❌ Letting a confirmed delete remove the trigger with no
- *   `returnFocusRef` — focus drops to `<body>`. Aim the ref at the next
- *   row's trigger (or the empty state) inside `onConfirm`.
+ * Opinionated "Are you sure?" preset on top of `<Popover>`.
+ * @see docs/components/ConfirmationPopover.md
  */
 export function ConfirmationPopover({
   children,

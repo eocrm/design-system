@@ -51,7 +51,8 @@ export interface FilterChipProps extends Omit<HTMLAttributes<HTMLDivElement>, 'r
 
   /**
    * Open state of the disclosure the body opens (e.g. the editor popover),
-   * surfaced as `aria-expanded` on the body button. Only meaningful with
+   * surfaced as `aria-expanded` on the body button (which also carries
+   * `aria-haspopup="dialog"`). Only meaningful with
    * `onActivate`. Omit if the body doesn't toggle a disclosure.
    */
   expanded?: boolean;
@@ -106,69 +107,8 @@ export interface FilterChipValueProps extends HTMLAttributes<HTMLSpanElement> {
 // ----------------------------------------------------------------------------
 
 /**
- * Dismissible "active filter" pill — the chip that shows which filters
- * are currently applied above a filter bar. Compound API: `<FilterChip>`
- * root with optional `<FilterChip.Label>` and `<FilterChip.Value>`
- * children. A dismiss button auto-renders at the end when `onDismiss`
- * is provided.
- *
- * Use it for filter UX (audit log filter strip, contacts owner filter,
- * deals stage filter). Not for tags or status pills — use `<Badge>`
- * for those.
- *
- * @example
- * // Canonical: label + tone-dotted value + dismiss
- * <FilterChip onDismiss={() => removeFilter('event')}>
- *   <FilterChip.Label>Event</FilterChip.Label>
- *   <FilterChip.Value tone="info">auth.* (3)</FilterChip.Value>
- * </FilterChip>
- *
- * @example
- * // Value-only (no label slot, no tone)
- * <FilterChip onDismiss={() => removeFilter('tenant')}>
- *   <FilterChip.Value>beta</FilterChip.Value>
- * </FilterChip>
- *
- * @example
- * // Read-only (no dismiss button — onDismiss omitted)
- * <FilterChip>
- *   <FilterChip.Label>Status</FilterChip.Label>
- *   <FilterChip.Value>Active</FilterChip.Value>
- * </FilterChip>
- *
- * @example
- * // Editable chip — body re-opens an editor popover; ✕ removes the filter
- * const [open, setOpen] = useState(false);
- * <Popover open={open} onOpenChange={setOpen}>
- *   <Popover.Trigger>
- *     <FilterChip onActivate={() => setOpen((o) => !o)} expanded={open} onDismiss={remove}>
- *       <FilterChip.Label>Range</FilterChip.Label>
- *       <FilterChip.Value>Jun 1 – Jul 31</FilterChip.Value>
- *     </FilterChip>
- *   </Popover.Trigger>
- *   <Popover.Content maxWidth={520}>{rangePicker}</Popover.Content>
- * </Popover>
- *
- * @remarks When NOT to use
- * - Status / category pills with no dismiss UX — use `<Badge>` instead.
- *   FilterChip's white pill + thin border + optional X is purpose-built
- *   for "currently applied filter", not "this contact is a VIP".
- * - Tags on an entity (e.g., deal labels) — `<Badge>` again. Tags don't
- *   carry a `Label: Value` shape.
- * - Clickable filter triggers that navigate or run an action — that's the
- *   role of a `<Button>` or `<OptionsPicker.Trigger>`. A read-only chip's
- *   only interactive target is the dismiss ✕. An *editable* chip (one that
- *   re-opens its own editor) is the exception: pass `onActivate` to make
- *   the body a `<button>` wired to a controlled `<Popover>`.
- *
- * @remarks Anti-patterns
- * - Putting interactive children inside `<FilterChip.Label>` or
- *   `<FilterChip.Value>`. The dismiss button is the only interactive
- *   target. Wrapping a Button inside the chip violates the
- *   `role="group"` composition and confuses screen readers.
- * - Calling `onDismiss` and expecting the chip to animate out. The
- *   chip doesn't animate — the consumer's state update unmounts it.
- *   Wrap the chip in your own transition if you need one.
+ * Dismissible "active filter" pill with optional `Label` and `Value` children.
+ * @see docs/components/FilterChip.md
  */
 const FilterChipRoot = forwardRef<HTMLDivElement, FilterChipProps>(function FilterChipRoot(
   { onDismiss, dismissLabel, onActivate, expanded, className, children, ...rest },
@@ -220,18 +160,8 @@ const FilterChipRoot = forwardRef<HTMLDivElement, FilterChipProps>(function Filt
 // ----------------------------------------------------------------------------
 
 /**
- * Label slot for the chip's filter category (e.g., `Event`, `Tenant`,
- * `Stage`). Renders muted text — the visual lead-in to the Value.
- * Optional; omit for value-only chips where the category is implicit.
- *
- * @example
- * <FilterChip.Label>Event</FilterChip.Label>
- *
- * @example
- * <FilterChip onDismiss={remove}>
- *   <FilterChip.Label>Tenant</FilterChip.Label>
- *   <FilterChip.Value>beta</FilterChip.Value>
- * </FilterChip>
+ * Label slot for the chip's filter category.
+ * @see docs/components/FilterChip.md
  */
 const FilterChipLabel = forwardRef<HTMLSpanElement, FilterChipLabelProps>(function FilterChipLabel(
   { className, children, ...rest },
@@ -251,30 +181,8 @@ const FilterChipLabel = forwardRef<HTMLSpanElement, FilterChipLabelProps>(functi
 // ----------------------------------------------------------------------------
 
 /**
- * Value slot for the chip's filter value. Set `tone` to prefix a 6px
- * colored dot before the text — use the same `BadgeTone` palette as
- * `<Badge>` for cross-component consistency. Or set `color` for a full
- * `PaletteColor` (30 categorical colors) when the 6 tones aren't enough;
- * `color` wins over `tone`. Omit both for plain values (e.g., a tenant
- * slug).
- *
- * @example
- * // Plain value, no dot
- * <FilterChip.Value>beta</FilterChip.Value>
- *
- * @example
- * // Tone-dotted value
- * <FilterChip.Value tone="info">auth.* (3)</FilterChip.Value>
- *
- * @example
- * // Palette-color dot (categorical) — matches an OptionsPicker group color
- * <FilterChip.Value color="violet">Design</FilterChip.Value>
- *
- * @example
- * // Mixed content — Value accepts any ReactNode
- * <FilterChip.Value tone="success">
- *   <Avatar size="2xs" name="Sarah" /> Sarah
- * </FilterChip.Value>
+ * Value slot for the chip's filter value, with an optional tone or palette-color dot.
+ * @see docs/components/FilterChip.md
  */
 const FilterChipValue = forwardRef<HTMLSpanElement, FilterChipValueProps>(function FilterChipValue(
   { color, tone, className, children, ...rest },

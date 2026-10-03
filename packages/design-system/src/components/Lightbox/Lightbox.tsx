@@ -60,7 +60,12 @@ export interface LightboxProps {
   open: boolean;
   /** Fired when the Lightbox wants to close — Esc, backdrop click, the × button. */
   onOpenChange: (open: boolean) => void;
-  /** The images. An empty array renders nothing. */
+  /**
+   * The images and documents (mixed galleries are supported; see `kind` on
+   * `LightboxItem` for PDFs). A PDF without a `thumbnail` shows a document-icon
+   * placeholder in the strip; an unsafe (non-http(s)) document `src` shows a
+   * "Preview unavailable" message. An empty array renders nothing.
+   */
   items: LightboxItem[];
   /** Initial image index (uncontrolled). Defaults to `0`. Clamped to range. */
   defaultIndex?: number;
@@ -89,40 +94,8 @@ const PORTAL_EXEMPT =
   '[data-lightbox-portal-root], [data-modal-portal-root], [data-drawer-portal-root]';
 
 /**
- * Full-screen image & document gallery overlay — shows one large item at a time
- * (an image, or a PDF previewed in an `<iframe>`), cycles through a set (prev/next
- * chevrons, ← → keys, a thumbnail strip), and shows an optional caption. Controlled
- * `open` like `<Modal>`; the current index is uncontrolled (`defaultIndex`) unless
- * you pass `index` + `onIndexChange`.
- *
- * The consumer owns the trigger and `open` — e.g. a row of interactive
- * `<Image>` thumbnails that set the start index and open the Lightbox.
- *
- * @example
- * const [open, setOpen] = useState(false);
- * const [start, setStart] = useState(0);
- * <Lightbox
- *   open={open}
- *   onOpenChange={setOpen}
- *   defaultIndex={start}
- *   items={files.map((f) => ({ src: f.url, alt: f.name, caption: f.name }))}
- * />
- *
- * @example
- * // Mixed gallery — images + a PDF (rendered in an iframe with a download action).
- * <Lightbox open={open} onOpenChange={setOpen} items={[
- *   { src: shot.url, alt: 'Screenshot' },
- *   { src: doc.url, alt: 'Contract.pdf', kind: 'pdf' },
- * ]} />
- *
- * @remarks When NOT to use
- * - A single, always-visible image → `<Image>` (optionally `interactive`).
- * - An arbitrary modal dialog (not an image/PDF preview) → `<Modal>`.
- *
- * @remarks Anti-patterns
- * - ❌ Building your own `Modal` + `Image` + arrows — that's what this is.
- * - ❌ Omitting `alt` on items — it's required and is the thumbnail/stage name.
- * - ❌ Passing `index` without `onIndexChange` — navigation would be a no-op.
+ * Full-screen image and PDF gallery overlay with prev/next, thumbnail strip and optional captions; controlled `open`.
+ * @see docs/components/Lightbox.md
  */
 export function Lightbox({
   open,

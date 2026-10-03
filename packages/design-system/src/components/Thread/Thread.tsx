@@ -49,7 +49,8 @@ export interface ThreadProps extends HTMLAttributes<HTMLUListElement> {
    *   timestamp header), Jira/GitHub style, so a node taller than one line (e.g. a 24px
    *   `<Avatar>`) reads as centered against the name rather than top-aligned. Assumes the
    *   header line-box matches `--thread-header-line-height` (defaults to `<Text size="sm">`);
-   *   override that token if your header line differs.
+   *   override that token if your header line differs. Remove any old header
+   *   `lineHeight` override (e.g. `var(--size-sm)`) — it now double-compensates.
    * - `top` — top-aligned with the body (the node's top meets the body's top). Use when the
    *   node is about one line tall, or when you deliberately want top alignment.
    */
@@ -142,55 +143,8 @@ const ThreadItem = forwardRef<HTMLLIElement, ThreadItemProps>(function ThreadIte
 ThreadItem.displayName = 'Thread.Item';
 
 /**
- * Nested-reply threading primitive — a continuous left vertical rail per nesting level
- * connecting a parent comment to its replies, with the leading `node` (avatar / icon) as
- * the connection point. Replies are written as nested `<Thread.Item>`s; the recursive
- * compound detects them and indents under the rail. Depth-capped (`maxDepth`, default 4)
- * so deep threads stop marching right — past the cap, replies render flat at the same
- * indent. Use `<Thread compact>` for dense sidebars.
- *
- * @example
- * // Basic nested thread. Size the Avatar to match `--thread-node-size` (default sm).
- * <Thread>
- *   <Thread.Item node={<Avatar name="Ada" src={ada.url} size="sm" />}>
- *     <Text size="sm"><strong>Ada</strong> · 2h ago</Text>
- *     <Text size="sm">Looks good to me.</Text>
- *     <Thread.Item node={<Avatar name="Linus" src={linus.url} size="sm" />}>
- *       <Text size="sm">Agreed — shipping it.</Text>
- *     </Thread.Item>
- *   </Thread.Item>
- * </Thread>
- *
- * @example
- * // Depth-capped: replies deeper than 2 levels render flat instead of indenting further.
- * <Thread maxDepth={2}>{comments.map(renderComment)}</Thread>
- *
- * @example
- * // Compact (tighter gaps), for a sidebar activity panel:
- * <Thread compact>
- *   <Thread.Item node={<Avatar name="Grace" size="sm" />}>
- *     <Text size="sm">Renewed the contract.</Text>
- *   </Thread.Item>
- * </Thread>
- *
- * @example
- * // Node alignment: by default the avatar centers on the first body line (the header).
- * // Pass nodeAlign="top" to top-align it with the body instead.
- * <Thread nodeAlign="top">…</Thread>
- *
- * @remarks When NOT to use
- * - A flat activity feed with no parent/child nesting → `<Timeline>`.
- * - Plain indentation with no connecting line → `<Indent>`.
- * - A non-threaded vertical list → `<Stack>`.
- * - An avatar + name/meta row → `<PersonDisplay>` (use it as an item's `node` / body, not
- *   instead of Thread).
- *
- * @remarks Anti-patterns
- * - ❌ Wrapping a reply `<Thread.Item>` in a Fragment or custom wrapper component — it
- *   won't be detected as a reply (the sort matches `Thread.Item` by identity). Render it
- *   as a direct child.
- * - ❌ Expecting a built-in avatar — `node` is a slot; pass an `<Avatar>` / icon / `<Dot>`.
- * - ❌ Putting layout margins on items — spacing comes from `compact` / the row-gap token.
+ * Nested-reply threading primitive: a left rail per nesting level connecting a parent comment to its replies.
+ * @see docs/components/Thread.md
  */
 const ThreadRoot = forwardRef<HTMLUListElement, ThreadProps>(function Thread(
   {

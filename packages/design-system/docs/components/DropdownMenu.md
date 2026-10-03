@@ -18,6 +18,155 @@
 </DropdownMenu>
 ```
 
+<!-- props:start -->
+
+## Props
+
+### `DropdownMenuProps`
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `children` | `ReactNode` | yes | Must contain exactly one `<DropdownMenu.Trigger>` and one `<DropdownMenu.Content>`. |
+| `open` | `boolean` | no | Controlled open state. Provide alongside `onOpenChange` to drive open externally. Omit both to let DropdownMenu own its own state (the common case). |
+| `onOpenChange` | `((open: boolean) => void)` | no | Fired whenever DropdownMenu wants to change open state. Required when `open` is provided. |
+| `defaultOpen` | `boolean` | no | Default open state for uncontrolled usage. Defaults to `false`. |
+
+### `DropdownMenuCheckboxItemProps`
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `checked` | `boolean` | yes | Whether the item is checked. |
+| `onCheckedChange` | `(checked: boolean) => void` | yes | Called with the new checked state when activated (click or Enter/Space). |
+| `closeOnSelect` | `boolean` | no | Whether activating closes the entire menu chain. Defaults to `false` — checkbox items typically toggle in place inside a multi-select menu. Set to `true` for single-toggle "apply and close" patterns. |
+| `disabled` | `boolean` | no | Disabled items don't fire `onCheckedChange`, are skipped by keyboard nav, and render dimmed. |
+| `icon` | `ReactNode` | no | Leading icon, rendered in a fixed-size slot before the label (parity with `<DropdownMenu.Item icon>`). Prefer this over inlining an icon into `children`: typeahead derives its match string from the string children, so an inlined leading icon leaves the JSX whitespace `" "` as the first string child and breaks first-letter type-to-select. Passing the icon here keeps the typeahead label the pure label string. Mark the glyph `aria-hidden`. |
+| `shortcut` | `string` | no | Optional trailing shortcut hint (e.g. `'⌘D'`). Visual cue only — does NOT register a global key handler. |
+| `meta` | `ReactNode` | no | Trailing secondary content *about the item itself* — a region code, a count, a `<Badge>`. Distinct from `shortcut`, which is a keyboard hint and is styled (and free to evolve) as one. `ReactNode`, so a Badge or Dot can go here. It is NOT `aria-hidden`, so it joins the item's accessible name ("demo RU" rather than a second identical "demo") — which is the point when the label alone is ambiguous. It is a prop, not a child, so it stays out of the typeahead label; type-to-select still matches the pure label text. Renders before `shortcut` when both are present, keeping the keyboard hint rightmost. |
+| `children` | `ReactNode` | yes | Item content. May include a `<DropdownMenu.ItemIndicator>` as a direct child to provide a custom indicator glyph. |
+| …native | | | plus native `<div>` attributes |
+
+### `DropdownMenuContentProps`
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `side` | `'top' \| 'bottom' \| 'left' \| 'right'` | no | Preferred side. Default `'bottom'`. Auto-flips on collision. |
+| `align` | `'start' \| 'center' \| 'end'` | no | Edge alignment. Default `'start'`. |
+| `sideOffset` | `number` | no | Gap in px between trigger and menu. Default `4`. |
+| `minWidth` | `string \| number` | no | Preferred minimum width in px or any CSS length. Defaults to the trigger's width and is reduced when necessary to keep the menu within the viewport. |
+| …native | | | plus native `<div>` attributes |
+
+### `DropdownMenuGroupProps`
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `children` | `ReactNode` | yes | Menu items (and optionally a `<DropdownMenu.Label>`) to include in the group. |
+| …native | | | plus native `<div>` attributes |
+
+### `DropdownMenuItemIndicatorProps`
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `children` | `ReactNode` | no | Indicator content (icon, custom glyph, animated element) to render in the parent item's indicator slot. The parent — CheckboxItem or RadioItem — decides when this is rendered based on its own `checked` state. |
+| …native | | | plus native `<span>` attributes |
+
+### `DropdownMenuItemProps`
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `onSelect` | `() => void` | yes | Called when the item is activated (click or Enter/Space). The consumer performs the action. |
+| `tone` | `'default' \| 'danger'` | no | Visual tone. - `'default'` — normal action. - `'danger'` — destructive (Delete, Revoke, Remove). Reserve for irreversible operations. |
+| `icon` | `ReactNode` | no | Leading icon. Rendered in a fixed-size slot so labels stay aligned across items. |
+| `shortcut` | `string` | no | Trailing shortcut hint (e.g. `'⌘D'`). Visual cue only — does NOT register a global key handler. |
+| `meta` | `ReactNode` | no | Trailing secondary content *about the item itself* — a region code, a count, a `<Badge>`. Distinct from `shortcut`, which is a keyboard hint and is styled (and free to evolve) as one. `ReactNode`, so a Badge or Dot can go here. It is NOT `aria-hidden`, so it joins the item's accessible name ("demo RU" rather than a second identical "demo") — which is the point when the label alone is ambiguous. It is a prop, not a child, so it stays out of the typeahead label; type-to-select still matches the pure label text. Renders before `shortcut` when both are present, keeping the keyboard hint rightmost. |
+| `disabled` | `boolean` | no | Disabled items are skipped by keyboard nav, dimmed, and don't fire `onSelect` on click. |
+| `closeOnSelect` | `boolean` | no | Whether to close the menu after `onSelect` fires. Defaults to `true`. Set to `false` when this item is wrapped in a Popover/ConfirmationPopover trigger — the trigger will open its panel on this click; closing the menu would unmount the popover before the user could interact with it. The menu can be dismissed separately (Escape or outside-click). |
+| …native | | | plus native `<div>` attributes |
+
+### `DropdownMenuLabelProps`
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `children` | `ReactNode` | yes | The label text content. |
+| …native | | | plus native `<div>` attributes |
+
+### `DropdownMenuRadioGroupProps`
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `value` | `string` | yes | The currently-selected value. Must match the `value` prop of one of the child RadioItems. |
+| `onValueChange` | `(value: string) => void` | yes | Called with the new value when a `<DropdownMenu.RadioItem>` is activated. |
+| `children` | `ReactNode` | yes | `<DropdownMenu.RadioItem>` children (and optionally `<DropdownMenu.Label>`). |
+| …native | | | plus native `<div>` attributes |
+
+### `DropdownMenuRadioItemProps`
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `value` | `string` | yes | The value this item represents. Activating sets the parent RadioGroup's value to this. |
+| `closeOnSelect` | `boolean` | no | Whether activating closes the entire menu chain. Defaults to `true` — radio selection IS the action; the menu's job is done once a value is chosen. Set to `false` for preview-style selection where the menu stays open. |
+| `disabled` | `boolean` | no | Disabled items don't fire `onValueChange`, are skipped by keyboard nav, and render dimmed. |
+| `icon` | `ReactNode` | no | Leading icon, rendered in a fixed-size slot before the label (parity with `<DropdownMenu.Item icon>`). Prefer this over inlining an icon into `children`: typeahead derives its match string from the string children, so an inlined leading icon leaves the JSX whitespace `" "` as the first string child and breaks first-letter type-to-select. Passing the icon here keeps the typeahead label the pure label string. Mark the glyph `aria-hidden`. |
+| `shortcut` | `string` | no | Optional trailing shortcut hint (e.g. `'⌘N'`). Visual cue only — does NOT register a global key handler. |
+| `meta` | `ReactNode` | no | Trailing secondary content *about the item itself* — a region code, a count, a `<Badge>`. Distinct from `shortcut`, which is a keyboard hint and is styled (and free to evolve) as one. `ReactNode`, so a Badge or Dot can go here. It is NOT `aria-hidden`, so it joins the item's accessible name ("demo RU" rather than a second identical "demo") — which is the point when the label alone is ambiguous. It is a prop, not a child, so it stays out of the typeahead label; type-to-select still matches the pure label text. Renders before `shortcut` when both are present, keeping the keyboard hint rightmost. |
+| `children` | `ReactNode` | yes | Item content. May include a `<DropdownMenu.ItemIndicator>` as a direct child to provide a custom indicator glyph. |
+| …native | | | plus native `<div>` attributes |
+
+### `DropdownMenuSeparatorProps`
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| …native | | | plus native `<div>` attributes |
+
+### `DropdownMenuSubContentProps`
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `side` | `'top' \| 'bottom' \| 'left' \| 'right'` | no | Preferred side. Default `'bottom'`. Auto-flips on collision. |
+| `align` | `'start' \| 'center' \| 'end'` | no | Edge alignment. Default `'start'`. |
+| `sideOffset` | `number` | no | Gap in px between trigger and menu. Default `4`. |
+| `minWidth` | `string \| number` | no | Preferred minimum width in px or any CSS length. Defaults to the trigger's width and is reduced when necessary to keep the menu within the viewport. |
+| …native | | | plus native HTML attributes |
+
+### `DropdownMenuSubProps`
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `children` | `ReactNode` | yes | The submenu trigger and content to render. Should contain exactly one `<DropdownMenu.SubTrigger>` and one `<DropdownMenu.SubContent>`. |
+| `open` | `boolean` | no | Controlled open state. When provided, `defaultOpen` is ignored. |
+| `onOpenChange` | `((open: boolean) => void)` | no | Called when the open state changes (user opens or closes the sub). |
+| `defaultOpen` | `boolean` | no | Initial open state when uncontrolled. Defaults to `false`. |
+
+### `DropdownMenuSubTriggerProps`
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `disabled` | `boolean` | no | When `true`, the trigger renders dimmed and pointer/keyboard interaction does not open the sub. |
+| `icon` | `ReactNode` | no | Optional leading icon. Rendered in a fixed-size slot, matching `<DropdownMenu.Item>`'s icon slot. |
+| `children` | `ReactNode` | yes | The trigger label text. String children participate in the parent menu's typeahead. |
+| …native | | | plus native `<div>` attributes |
+
+### `DropdownMenuTriggerProps`
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `children` | `ReactElement<unknown, string \| JSXElementConstructor<any>>` | yes | Exactly one React element. The Trigger clones this element to inject a ref, `aria-haspopup="menu"`, `aria-expanded`, `aria-controls`, and the pointerdown/keyboard handlers that open the menu. The child must accept a ref (i.e. use `forwardRef` if it's a custom component); a raw `<button>` or the library's `<Button>` both qualify. |
+
+<!-- props:end -->
+
 - Compound API: `<DropdownMenu>` is the provider; `<Trigger>` clones its single child to inject ARIA + handlers; `<Content>` portals to `document.body` and positions itself with Floating UI; `<Item>` renders a `menuitem`; `<Separator>` renders a divider.
 - Trigger child must accept a ref via `forwardRef`. `<Button>` does.
 - `<Item>` props: `onSelect` (required), `disabled`, `tone` (`'default'` | `'danger'`), `icon`, `shortcut`, `meta`, `closeOnSelect` (default `true`; set to `false` when wrapping the Item in a `<Popover.Trigger>` or `<ConfirmationPopover>` — otherwise the menu close would unmount the popover before it can render).
@@ -88,4 +237,63 @@
 
   `meta` renders after the label and before `shortcut` (the keyboard hint stays rightmost). It carries no `aria-hidden`, so it **joins the accessible name** — a screen reader announces "demo RU". Because it is a prop and not a child, it stays **out of the typeahead label**: type-to-select still matches the bare label.
 
-- ❌ Using DropdownMenu as a panel (a notification centre, a header with a "Mark all as read" button, rich feed rows). It is `role="menu"`, which may only hold menu items; a header button is invalid ARIA and unreachable by the menu's arrow keys. Use `Popover` + `ScrollArea` (#598).
+- ❌ Using DropdownMenu as a panel (a notification centre, a header with a "Mark all as read" button, rich feed rows). It is `role="menu"`, which may only hold menu items; a header button is invalid ARIA and unreachable by the menu's arrow keys. Use `Popover` + `ScrollArea`.
+
+#### More usage
+
+```tsx
+// Controlled open (rare — usually let DropdownMenu manage state)
+<DropdownMenu open={open} onOpenChange={setOpen}>...</DropdownMenu>
+
+// Table row kebab
+<DropdownMenu>
+  <DropdownMenu.Trigger>
+    <Button variant="ghost" aria-label="Row actions">⋯</Button>
+  </DropdownMenu.Trigger>
+  <DropdownMenu.Content align="end">
+    <DropdownMenu.Item onSelect={() => view(row)}>View</DropdownMenu.Item>
+    <DropdownMenu.Item onSelect={() => archive(row)}>Archive</DropdownMenu.Item>
+  </DropdownMenu.Content>
+</DropdownMenu>
+
+// CheckboxItem that applies then closes
+<DropdownMenu.CheckboxItem checked={isOn} onCheckedChange={setOn} closeOnSelect>
+  Apply and close
+</DropdownMenu.CheckboxItem>
+
+// RadioItem that keeps the menu open (e.g. live preview)
+<DropdownMenu.RadioItem value="compact" closeOnSelect={false}>Compact</DropdownMenu.RadioItem>
+
+// Custom glyph alongside the tinted checked row
+<DropdownMenu.CheckboxItem checked={isOn} onCheckedChange={setOn}>
+  <DropdownMenu.ItemIndicator><CheckIcon size={14} /></DropdownMenu.ItemIndicator>
+  Show archived
+</DropdownMenu.CheckboxItem>
+
+// Controlled submenu
+<DropdownMenu.Sub open={subOpen} onOpenChange={setSubOpen}>...</DropdownMenu.Sub>
+
+// Item with both trailing slots: `meta` qualifies the item and joins the accessible name
+// ("Duplicate 3 files"); `shortcut` is a keyboard hint.
+<DropdownMenu.Item onSelect={onDuplicate} meta="3 files" shortcut="⌘D">Duplicate</DropdownMenu.Item>
+```
+
+#### When NOT to use
+
+- An always-visible row of actions: use a `<Cluster>` of Buttons in a toolbar. Menus are for actions that don't deserve permanent screen space.
+- Navigation between pages: use the sidebar or a `<Link>`. Menu items are for actions, not page transitions.
+- `CheckboxItem` for a one-off action (use `Item`) or for mutually exclusive choices (use `RadioGroup`); `RadioGroup` for an action menu or for multi-select (use `CheckboxItem`s).
+- `Group` around a single Item, as a generic layout primitive (use `<Stack>` / `<Cluster>`), or around a `RadioGroup` that needs no visible Label (`RadioGroup` already has `role="radiogroup"`).
+- `Label` as a clickable item: it has no `role="menuitem"` and is not keyboard-focusable; use a disabled `Item` for a selectable header-style row. Outside a `Group` it carries no `aria-labelledby` wiring.
+- `Sub` for top-level sections (use `Group` + `Label`), beyond 2–3 nesting levels, or on touch-first surfaces — submenus rely on hover and lateral arrow keys.
+
+#### Rules and anti-patterns
+
+- `RadioItem` must be inside a `RadioGroup`, and `SubTrigger` inside a `Sub` — both throw in dev otherwise. A `Sub` holds exactly one `SubTrigger` and one `SubContent`.
+- `Content` renders only while the menu is open. `Separator` is a decorative `role="separator"`, not focusable.
+- ❌ Multiple `<DropdownMenu.Trigger>`s in one `<DropdownMenu>`: use one DropdownMenu per trigger.
+- ❌ `tone="danger"` for non-destructive actions like "Filter" or "Sort"; reserve it for irreversible destructive operations.
+- ❌ Nesting a full `<DropdownMenu>` root inside another; use `<DropdownMenu.Sub>`.
+- ❌ Putting `<ItemIndicator>` deeper than a direct child of CheckboxItem / RadioItem: the custom glyph is silently dropped (the row still looks selected). In a plain `<Item>` it just renders inline as any other child.
+- ❌ Using `shortcut` for text that is not a keyboard hint (a region code, a count, a status) — use `meta`.
+- ❌ Several checked CheckboxItems in a "pick one" context: switch to `RadioGroup`.

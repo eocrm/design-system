@@ -8,8 +8,8 @@ export interface AccordionContentProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * Collapsible region announced via `role="region"` + `aria-labelledby` pointing
- * at the trigger. Animated via CSS `grid-template-rows: 0fr → 1fr`.
+ * Collapsible region announced via `role="region"` + `aria-labelledby` pointing at the trigger.
+ * @see docs/components/Accordion.md
  */
 export const AccordionContent = forwardRef<HTMLDivElement, AccordionContentProps>(
   function AccordionContent({ children, className, ...props }, ref) {

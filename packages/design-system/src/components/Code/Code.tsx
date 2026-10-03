@@ -27,42 +27,8 @@ const TONE_CLASS: Record<CodeTone, string> = {
 };
 
 /**
- * Inline `<code>` primitive — monospace text with a subtle chip background.
- * Use for inline identifiers, snippets, file paths inside body text.
- *
- * **Inline only.** For multi-line code blocks with syntax highlighting, the
- * playground's `CodeBlock` (Prism-backed) is the right tool — but that's a
- * playground concern, not a library primitive. Don't try to make `<Code>` do
- * block code.
- *
- * @example
- * // Inline inside body text:
- * <Text>Use <Code>npm install</Code> to add a dependency.</Text>
- *
- * @example
- * // Standalone identifier:
- * <Code>userId</Code>
- *
- * @example
- * // Tone-coded — e.g. a removed flag in a release note:
- * <Code tone="danger">--no-verify</Code>
- *
- * @remarks When NOT to use
- * - For block-level code with multiple lines or syntax highlighting.
- * - For action triggers that LOOK like code (`<Button variant="ghost">`).
- * - As a substitute for `<kbd>` (keyboard input rendering — not yet shipped).
- *
- * @remarks Anti-patterns
- * - ❌ `<Code>multi-line\nblock</Code>` — Code is inline only; the chip
- *   background doesn't extend across newlines. Use the playground's
- *   `CodeBlock` for block code, or a `<pre><Code>...</Code></pre>` if you
- *   really need a static block inside the library.
- * - ❌ `<Code style={{ background: '#xxx' }}>` — the chip background is
- *   intentionally `--color-bg-muted` so it visually subordinates to body
- *   text. If you need a different background, that's a token-vocabulary
- *   conversation.
- * - ❌ Wrapping a `<Button>` or `<Link>` in `<Code>` to style it as code-
- *   like. Code is for content semantics (it IS code), not visual styling.
+ * Inline `<code>` primitive: monospace text with a subtle chip background.
+ * @see docs/components/Code.md
  */
 export const Code = forwardRef<HTMLElement, CodeProps>(function Code(
   { tone = 'default', className, children, ...rest },

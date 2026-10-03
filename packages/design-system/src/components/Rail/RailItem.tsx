@@ -63,42 +63,8 @@ type RailItemComponent = <C extends ElementType = 'a'>(
 ) => ReactElement | null;
 
 /**
- * Single navigation item in the rail. Polymorphic — defaults to `<a>` but
- * the consumer typically passes `as={NavLink}` (react-router) or any
- * equivalent routing component. Active styling is **purely CSS** via the
- * `[aria-current="page"]` selector, so any routing primitive that sets
- * `aria-current` on the rendered element triggers the active state — no
- * routing dependency in the library.
- *
- * Behavior:
- * - Expanded: renders icon + label + (optional) badge on a single row.
- * - Collapsed (top-level): renders icon only, wrapped in a `<Tooltip>` so
- *   the label is still discoverable. Only wraps in Tooltip when the
- *   children are a string AND the item is a direct child of the rail (not
- *   inside a `<Rail.Group>` — group subitems render inside the flyout
- *   popover when collapsed, which already shows their labels).
- *
- * @example
- * // Default — renders <a href="…">.
- * <Rail.Item icon={<Home />} href="/dashboard">Dashboard</Rail.Item>
- *
- * @example
- * // SPA — react-router NavLink sets aria-current="page" automatically,
- * // which Rail's CSS picks up and renders the active accent.
- * <Rail.Item icon={<Home />} as={NavLink} to="/" end>Dashboard</Rail.Item>
- *
- * @example
- * // Trailing badge — fades when the rail collapses.
- * <Rail.Item icon={<Building />} as={NavLink} to="/tenants" badge="12">
- *   Tenants
- * </Rail.Item>
- *
- * @remarks Anti-patterns
- * - ❌ Putting an icon-less top-level item directly in a `<Rail.Section>` —
- *   when the rail collapses there's literally nothing visible. Items
- *   without an icon belong inside a `<Rail.Group>`.
- * - ❌ Hand-rolling active-state styling. Set `aria-current="page"` on the
- *   rendered element and the CSS handles it.
+ * Single polymorphic navigation item: icon + label + optional badge; active state comes from `aria-current="page"` (`Rail.Item`).
+ * @see docs/components/Rail.md
  */
 export const RailItem = forwardRef(function RailItem<C extends ElementType = 'a'>(
   { as, icon, badge, children, className, ...rest }: RailItemProps<C>,

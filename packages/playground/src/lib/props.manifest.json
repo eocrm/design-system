@@ -176,7 +176,7 @@
           "type": "CollapseBreakpoint",
           "required": false,
           "default": "",
-          "description": "Move the sidebar out of the flow and into a left-anchored `<Drawer>` while\nthe **viewport** is at or below a width threshold: `'sm'` 480px / `'md'`\n640px / `'lg'` 768px. Omit for no responsive behavior (the default) — the\nsidebar always renders in the flow.\n\nBelow the threshold the content column claims the full viewport width, and\nthe sidebar is reachable only by opening the drawer. Render your own\ntrigger (a hamburger in the `topBar`) and drive it with `sidebarOpen` +\n`onSidebarOpenChange` — AppLayout deliberately renders no trigger of its\nown, since where it belongs in the bar is the consumer's call, which means\nboth props are effectively required together (see `sidebarOpen`'s doc).\nUse the exported `useBelowBreakpoint` hook to show that trigger only while\nthe overlay mode is active.\n\n`sidebarPinned` is ignored below the threshold: the drawer owns the\nsidebar's box there, and a `sticky; height: 100dvh` wrapper inside it would\nsize the rail to the window instead of the drawer.\n\nMeasures the viewport (`matchMedia`), not a container — the sidebar's\npresence in the row is exactly what the threshold changes, so a container\nquery would be circular. Same scale and same basis as `<Rail collapseBelow>`."
+          "description": "Move the sidebar out of the flow and into a left-anchored `<Drawer>` while\nthe **viewport** is at or below a width threshold: `'sm'` 480px / `'md'`\n640px / `'lg'` 768px. Omit for no responsive behavior (the default) — the\nsidebar always renders in the flow.\n\nBelow the threshold the content column claims the full viewport width, and\nthe sidebar is reachable only by opening the drawer. Render your own\ntrigger (a hamburger in the `topBar`) and drive it with `sidebarOpen` +\n`onSidebarOpenChange` — AppLayout deliberately renders no trigger of its\nown, since where it belongs in the bar is the consumer's call, which means\nboth props are effectively required together (see `sidebarOpen`'s doc).\nUse the exported `useBelowBreakpoint` hook to show that trigger only while\nthe overlay mode is active.\n\n`sidebarPinned` is ignored below the threshold: the drawer owns the\nsidebar's box there, and a `sticky; height: 100dvh` wrapper inside it would\nsize the rail to the window instead of the drawer.\n\nMeasures the viewport (`matchMedia`), not a container — the sidebar's\npresence in the row is exactly what the threshold changes, so a container\nquery would be circular. Same scale and same basis as `<Rail collapseBelow>`.\n\nThe `sidebar` node moves between the in-flow slot and the `Drawer`,\nremounting it, so a `Rail`'s internal state (expanded `Rail.Group`s, scroll\nposition) resets each time, by design. A `<Rail>` in the drawer scrolls its\nown body while its footer stays visible; a custom non-`Rail` sidebar needs\nits own height-filling scroll container, especially on short viewports\n(phone landscape, ~380px)."
         },
         {
           "name": "sidebarOpen",
@@ -222,14 +222,14 @@
           "type": "AvatarSize",
           "required": false,
           "default": "md",
-          "description": "Diameter.\n- `sm` (24px) — table rows, dense lists.\n- `md` (32px, default) — most uses.\n- `lg` (40px) — detail-page headers.\n- `xl` (80px) — member-card popovers / profile headers.\n- `inline` — one line of the surrounding text tall (`1lh`), initials\n  scaled to match, so an avatar in a text row (a `DefinitionList` value,\n  a table cell, a line of text) doesn't make it taller. Follows the text\n  size; no size decision per call site. Not available on `<AvatarGroup>`\n  — and don't set it per child inside one: the group's overlaps are\n  sized for its fixed steps.\n\nInside `<AvatarGroup>`, the group's `size` overrides this."
+          "description": "Diameter.\n- `sm` (24px) — table rows, dense lists.\n- `md` (32px, default) — most uses.\n- `lg` (40px) — detail-page headers.\n- `xl` (80px) — member-card popovers / profile headers.\n- `inline` — one line of the surrounding text tall (`1lh`), initials\n  scaled to match, so an avatar in a text row (a `DefinitionList` value,\n  a table cell, a line of text) doesn't make it taller. Follows the text\n  size; no size decision per call site. Not available on `<AvatarGroup>`\n  — and don't set it per child inside one: the group's overlaps are\n  sized for its fixed steps.\n\nInside `<AvatarGroup>`, defaults to the group's `size`."
         },
         {
           "name": "status",
           "type": "AvatarStatus",
           "required": false,
           "default": "",
-          "description": "Presence dot in the bottom-right.\n- `'online'`  — green.\n- `'busy'`    — red.\n- `'away'`    — amber (the categorical amber, dark enough to read at dot size).\n- `'offline'` — gray.\nOmit to render no dot at all."
+          "description": "Presence dot in the bottom-right.\n- `'online'`  — green.\n- `'busy'`    — red.\n- `'away'`    — amber (the categorical amber, dark enough to read at dot size).\n- `'offline'` — gray.\nOmit to render no dot at all.\n\nSetting `status` changes the accessible name to `\"{name}, {status}\"`\n(localized), because colour alone cannot carry the status (WCAG 1.4.1);\nquery with `getByRole('img', { name: 'Alex, online' })`. Each status also\nrenders a distinct shape (filled / half / barred / hollow), so it survives\ncolour-vision deficiency and greyscale; the dot stays `aria-hidden` so\nnothing is announced twice."
         },
         {
           "name": "tooltip",
@@ -293,7 +293,7 @@
           "type": "BannerTone",
           "required": false,
           "default": "",
-          "description": "Tone. Defaults to `'info'`. See `BannerTone`."
+          "description": "Tone. Defaults to `'info'`. `info` — advance notice; `success` — condition\nresolved; `warning` — imminent or degrading; `danger` — broken or blocked\nnow. See `BannerTone`."
         },
         {
           "name": "title",
@@ -424,14 +424,14 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Controlled persistent paint for an applied filter or toolbar value.\nSelected paint applies only to `secondary` and `ghost` Buttons;\n`primary`, `danger`, and `success` retain their intent paint. This prop is\nvisual only and does not add toggle-button semantics. Pass native\n`aria-pressed` explicitly only when activating the Button itself toggles\nthe selected state; menu and disclosure triggers keep their own semantics.\nThe consumer owns the state. Defaults to `undefined` (not selected)."
+          "description": "Controlled persistent paint for an applied filter or toolbar value.\nSelected paint applies only to `secondary` and `ghost` Buttons;\n`primary`, `danger`, and `success` retain their intent paint. This prop is\nvisual only and does not add toggle-button semantics. Pass native\n`aria-pressed` explicitly only when activating the Button itself toggles\nthe selected state; menu and disclosure triggers keep their own semantics.\nThe consumer owns the state. Not for transient success feedback or for\nmutually exclusive `<ButtonGroup>` choices. Defaults to `undefined` (not\nselected)."
         },
         {
           "name": "as",
           "type": "C",
           "required": false,
           "default": "button",
-          "description": "Render a different element — the case that matters is `as=\"a\"` with\n`href`, for a link that must LOOK like a button (an external console, a\ndownload, an IdP hand-off). The element named here is what actually\nrenders, and its own attributes are typed: `href` is REQUIRED when\n`as=\"a\"` (an anchor without one is neither focusable nor a link) and\nrejected otherwise.\n\nReach for `<Link>` first. `<Link>` is link-SHAPED navigation — inline text\nin a sentence, a table cell, a breadcrumb. `<Button as=\"a\">` is for a\ndestination that sits in a row of buttons and must carry their weight.\nEither way the element is a real anchor, so assistive tech announces a\nlink and the browser gives middle-click, \"open in new tab\", and the status\nbar preview — none of which a `<button onClick={() => navigate()}>` has.\n\n`type=\"button\"` is emitted only for a real `<button>`; an anchor never\ngets it. Everything else — variant, size, `iconOnly`, `selected`, the\nfocus ring — is unchanged."
+          "description": "Render a different element — the case that matters is `as=\"a\"` with\n`href`, for a link that must LOOK like a button (an external console, a\ndownload, an IdP hand-off). The element named here is what actually\nrenders, and its own attributes are typed: `href` is REQUIRED when\n`as=\"a\"` (an anchor without one is neither focusable nor a link) and\nrejected otherwise; `target`/`rel`/`download` come through. Never navigate from `onClick`.\n\nReach for `<Link>` first. `<Link>` is link-SHAPED navigation — inline text\nin a sentence, a table cell, a breadcrumb. `<Button as=\"a\">` is for a\ndestination that sits in a row of buttons and must carry their weight.\nEither way the element is a real anchor, so assistive tech announces a\nlink and the browser gives middle-click, \"open in new tab\", and the status\nbar preview — none of which a `<button onClick={() => navigate()}>` has.\n\n`type=\"button\"` is emitted only for a real `<button>`; an anchor never\ngets it. Everything else — variant, size, `iconOnly`, `selected`, the\nfocus ring — is unchanged."
         }
       ]
     },
@@ -593,7 +593,7 @@
           "type": "number",
           "required": false,
           "default": "",
-          "description": "Lane cap per week before \"+N more\" appears in affected cells (month view). Default 3."
+          "description": "Lane cap per week (month view). Default 3. Events beyond it collapse into a \"+N more\" chip; clicking it fires `onDayClick(date)`."
         },
         {
           "name": "hourRange",
@@ -614,7 +614,7 @@
           "type": "readonly CalendarResource[]",
           "required": false,
           "default": "",
-          "description": "Split `view=\"day\"` into one column per bookable subject — practitioner,\nchair, room, bay — all sharing a single time axis and a single scroll\ncontainer. This is the \"resource day view\" of scheduling products.\n\nEvents are routed by `CalendarEvent.resourceId`. A timed event whose\n`resourceId` matches nothing (or is absent) lands in a trailing\n\"unassigned\" column, which is only rendered when such an event exists.\nAll-day events without a `resourceId` are day-wide and span every column.\n\nIgnored by month, week and agenda views — those have their own column\nmeaning."
+          "description": "Split `view=\"day\"` into one column per bookable subject — practitioner,\nchair, room, bay — all sharing a single time axis and a single scroll\ncontainer. This is the \"resource day view\" of scheduling products.\n\nEvents are routed by `CalendarEvent.resourceId`. A timed event whose\n`resourceId` matches nothing (or is absent) lands in a trailing\n\"unassigned\" column, which is only rendered when such an event exists.\nAll-day events without a `resourceId` are day-wide and span every column.\n\nIgnored by month, week and agenda views — those have their own column\nmeaning.\n\nDon't approximate it with N side-by-side `<Calendar view=\"day\">` in a\n`Split`: each brings its own header, gutter and scroll, so they drift."
         },
         {
           "name": "backgroundIntervals",
@@ -681,7 +681,7 @@
           "type": "CardOverflow",
           "required": false,
           "default": "hidden",
-          "description": "How the card clips its children at the rounded border.\n- `hidden` (default) — children are clipped to the rounded border. This\n  prevents the visible seam that appears at the corners when a child has\n  square corners (Table's internal scroll wrapper, images, full-bleed\n  media). Overlays in this library (DropdownMenu, Tooltip, Popover, Drawer,\n  Modal) portal to `document.body` and are NOT clipped by this. Focus\n  outlines use CSS `outline`, which is not affected by ancestor overflow.\n- `visible` — opt out of clipping. Use when a direct child needs to\n  overhang the card edge — decorative badges that protrude from a corner,\n  hover-lift transforms whose shadow extends past the card border, etc."
+          "description": "How the card clips its children at the rounded border.\n- `hidden` (default) — children are clipped to the rounded border. This\n  prevents the visible seam that appears at the corners when a child has\n  square corners (Table's internal scroll wrapper, images, full-bleed\n  media). Overlays in this library (DropdownMenu, Tooltip, Popover, Drawer,\n  Modal) portal to `document.body` and are NOT clipped by this. Focus\n  rings are NOT exempt: an `outline` is clipped by an ancestor's overflow,\n  so a focusable flush against the card edge loses that band — draw its\n  ring inset by passing `$offset: calc(-1 * var(--ring-offset))` to the\n  `focus-ring` mixin, not a separate `outline-offset` after the `@include`\n  (a `structure.test.ts` gate fails the build on that shape).\n- `visible` — opt out of clipping. Use when a direct child needs to\n  overhang the card edge — decorative badges that protrude from a corner,\n  hover-lift transforms whose shadow extends past the card border, etc."
         },
         {
           "name": "fill",
@@ -734,7 +734,7 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Toggles the error visual + sets `aria-invalid=\"true\"`."
+          "description": "Toggles the error visual + sets `aria-invalid=\"true\"`. Pair with a visible error message and `aria-describedby`."
         },
         {
           "name": "color",
@@ -1080,7 +1080,7 @@
           "type": "ConstrainWidth",
           "required": false,
           "default": "",
-          "description": "Fixed width — a named step (`xs`–`xl`) or `'full'` (100%)."
+          "description": "Fixed width — a named step (`xs` 200 / `sm` 320 / `md` 448 / `lg` 640 / `xl` 800px, via `--measure-*` tokens) or `'full'` (100%)."
         },
         {
           "name": "minWidth",
@@ -1101,7 +1101,7 @@
           "type": "ConstrainHeight",
           "required": false,
           "default": "",
-          "description": "Fixed height — a named measure, `'full'` (100%), `'viewport'` (100dvh), or `'viewport-70'` (70dvh)."
+          "description": "Fixed height — a named measure (same scale as the widths), `'full'` (100%),\n`'viewport'` (100dvh), or `'viewport-70'` (70dvh). `height=\"viewport-70\"` with\n`maxHeight=\"lg\"` makes a viewport-relative panel that never exceeds 640px."
         },
         {
           "name": "minHeight",
@@ -1122,7 +1122,7 @@
           "type": "ConstrainFlex",
           "required": false,
           "default": "",
-          "description": "Flex behavior as a child of a flex row/column.\n- `'grow'` — fill remaining space (`flex: 1 1 0`) and shrink below content\n  width (`min-width: 0`) so a truncating child (`<Text truncate>`) can clip.\n  To opt a `Stack`/`Cluster` into that truncating chain WITHOUT also making\n  it fill the row, use their `minWidth0` prop instead — and note Constrain\n  renders a `<div>`, so it is invalid inside a `<button>`/`<a>`/`<label>`,\n  where `<Cluster as=\"span\" minWidth0>` is the only option.\n- `'auto'` — size to content, may grow/shrink (`flex: 1 1 auto`).\n- `'shrink'` — don't grow, may shrink (`flex: 0 1 auto`, the flex default).\n- `'none'` — fixed, never grow/shrink (`flex: 0 0 auto`)."
+          "description": "Flex behavior as a child of a flex row/column.\n- `'grow'` — fill remaining space (`flex: 1 1 0`) and shrink below content\n  width (`min-width: 0`) so a truncating child (`<Text truncate>`) can clip.\n  To opt a `Stack`/`Cluster` into that truncating chain WITHOUT also making\n  it fill the row, use their `minWidth0` prop instead — and note Constrain\n  renders a `<div>`, so it is invalid inside a `<button>`/`<a>`/`<label>`,\n  where `<Cluster as=\"span\" minWidth0>` is the only option.\n- `'auto'` — size to content, may grow/shrink (`flex: 1 1 auto`).\n- `'shrink'` — don't grow, may shrink (`flex: 0 1 auto`, the flex default).\n- `'none'` — fixed, never grow/shrink (`flex: 0 0 auto`).\n\nOmit for no flex class: the element behaves as its flex container dictates."
         },
         {
           "name": "children",
@@ -1242,7 +1242,7 @@
           "type": "number",
           "required": false,
           "default": "24",
-          "description": "Column count of every container grid (top level and each section's\nsub-grid). All placement/resize bounds clamp against it. Minimum 1;\nfractional or sub-1 values are the consumer's bug, not validated.\n\nLayouts are NOT converted between column counts — a `value` saved at one\n`columns` renders at half width when the count doubles. Schemas written\nfor the pre-#350 12-column grid (e.g. the eocrm layout-v2 spec) either\npass `columns={12}` to match, or migrate their saved placements to 24."
+          "description": "Column count of every container grid (top level and each section's\nsub-grid). All placement/resize bounds clamp against it. Minimum 1;\nfractional or sub-1 values are the consumer's bug, not validated.\n\nLayouts are NOT converted between column counts — a `value` saved at one\n`columns` renders at half width when the count doubles. Schemas written\nfor the earlier 12-column grid (e.g. the eocrm layout-v2 spec) either\npass `columns={12}` to match, or migrate their saved placements to 24."
         },
         {
           "name": "stackBelow",
@@ -1323,7 +1323,7 @@
           "type": "number",
           "required": false,
           "default": "",
-          "description": "Minimum milliseconds skeleton rows remain visible after appearing.\nDefaults to `0`. Arriving rows and the empty state remain hidden until the\nvisual tail finishes."
+          "description": "Minimum milliseconds skeleton rows remain visible after appearing.\nDefaults to `0`. Arriving rows and the empty state remain hidden until the\nvisual tail finishes. `aria-busy` still follows actual `loading`, not the\nskeleton's visual tail."
         },
         {
           "name": "emptyState",
@@ -1358,7 +1358,7 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Drag the whole column while reordering, not just its header cell.\n\nDefault `true` — the dragged column's body cells travel with its header,\nand every column the drag displaces shifts its body cells too, so the\nheader row and the body never disagree mid-drag. Costs one CSS-variable\nwrite per shifted column per frame; the cells move on the compositor, so\nthe table body is not re-rendered during pointer movement. It does cost\ntwo full body reconciliations per drag — one at drag start, one at drag\nend — because the drag-active flag is component state and body rows are\nnot memoized; that is the number to weigh for a very large table.\n\nSet `false` for the cheaper preview: only the dragged header cell follows\nthe pointer and the body stays put until drop. Worth it for very large\ntables on low-end hardware, or to restore the previous behavior.\n\nPinned columns never move under either setting — they are excluded from\nreordering entirely.\n\nThe two settings also differ on **what a release means when no unpinned\nslot is under the column** — over a pinned column, or off the table\nentirely. Default: the drop commits the slot the preview is showing. The\nopt-out: the drop is discarded, because dnd-kit's own preview retracts (the\nheader snaps back home) in that situation, and a commit would contradict\nit. See the component's `@remarks`."
+          "description": "Drag the whole column while reordering, not just its header cell.\n\nDefault `true` — the dragged column's body cells travel with its header,\nand every column the drag displaces shifts its body cells too, so the\nheader row and the body never disagree mid-drag. Costs one CSS-variable\nwrite per shifted column per frame; the cells move on the compositor, so\nthe table body is not re-rendered during pointer movement. It does cost\ntwo full body reconciliations per drag — one at drag start, one at drag\nend — because the drag-active flag is component state and body rows are\nnot memoized; that is the number to weigh for a very large table.\n\nSet `false` for the cheaper preview: only the dragged header cell follows\nthe pointer and the body stays put until drop. Worth it for very large\ntables on low-end hardware, or to restore the previous behavior.\n\nPinned columns never move under either setting — they are excluded from\nreordering entirely.\n\nThe two settings also differ on **what a release means when no unpinned\nslot is under the column** — over a pinned column, or off the table\nentirely. Default: the drop commits the slot the preview is showing. The\nopt-out: the drop is discarded, because dnd-kit's own preview retracts (the\nheader snaps back home) in that situation, and a commit would contradict\nit. See `docs/components/DataTable.md`, the column-drag bullet."
         },
         {
           "name": "className",
@@ -1404,7 +1404,7 @@
           "type": "Date",
           "required": false,
           "default": "",
-          "description": "Earliest selectable date (inclusive)."
+          "description": "Earliest selectable date (inclusive, day-granular). Gates both the grid and typed input."
         },
         {
           "name": "max",
@@ -1418,7 +1418,7 @@
           "type": "((date: Date) => boolean)",
           "required": false,
           "default": "",
-          "description": "Per-date disable callback."
+          "description": "Per-date disable callback; applied per grid cell and to parsed typed input."
         },
         {
           "name": "clearable",
@@ -1432,14 +1432,14 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Toggle red border + focus ring + `aria-invalid=\"true\"`."
+          "description": "Toggle red border + focus ring + `aria-invalid=\"true\"`. Pair with a visible error and `aria-describedby`."
         },
         {
           "name": "name",
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Form name. When set, renders a hidden mirror `<input>` with the ISO date."
+          "description": "Form name. When set, renders a hidden mirror `<input>` with the ISO date so native `<form>` submission works."
         },
         {
           "name": "size",
@@ -1520,7 +1520,7 @@
           "type": "((date: Date) => boolean)",
           "required": false,
           "default": "",
-          "description": "Per-date disable predicate."
+          "description": "Per-date disable predicate; gates both the popover grid and typed-input parsing."
         },
         {
           "name": "size",
@@ -1541,14 +1541,14 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Toggle red border + focus ring + `aria-invalid=\"true\"`."
+          "description": "Toggle red border + focus ring + `aria-invalid=\"true\"`. Pair with a visible error and `aria-describedby`."
         },
         {
           "name": "nameStart",
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Form name for the START half (hidden `<input>`)."
+          "description": "Form name for the START half (hidden `<input>` with an ISO date, so native `<form>` submission works). Post both keys or just one."
         },
         {
           "name": "nameEnd",
@@ -1732,14 +1732,14 @@
           "type": "PaletteColor",
           "required": false,
           "default": "",
-          "description": "One of the 30 `PaletteColor`s — renders the bare circle in that color's\nsaturated `--color-palette-<name>-fg` token. Takes precedence over `tone`."
+          "description": "One of the 30 `PaletteColor`s — renders the bare circle in that color's\nsaturated `--color-palette-<name>-fg` token (the same color OptionsPicker groups and palette Badges use). Takes precedence over `tone`."
         },
         {
           "name": "tone",
           "type": "BadgeTone",
           "required": false,
           "default": "BadgeTone",
-          "description": "A semantic `BadgeTone` (`neutral` default / `info` / `success` / `warning` /\n`danger` / `purple`) — used when `color` is omitted."
+          "description": "A semantic `BadgeTone` (`neutral` default / `info` / `success` / `warning` /\n`danger` / `purple`) — used when `color` is omitted. Neither set → `neutral`."
         }
       ]
     },
@@ -1763,22 +1763,22 @@
           "name": "side",
           "type": "DrawerSide",
           "required": false,
-          "default": "",
-          "description": "Edge the drawer slides in from. Defaults to 'right'."
+          "default": "right",
+          "description": "Edge the drawer slides in from: `left`, `right` (default), `top`, `bottom`."
         },
         {
           "name": "size",
           "type": "DrawerSize",
           "required": false,
           "default": "",
-          "description": "Size preset. Width for left/right, height for top/bottom. Defaults to 'md'."
+          "description": "Size preset: `sm` 320px, `md` 440px (default), `lg` 640px. Width for left/right, height for top/bottom. Capped to `viewport - 32px` on narrow viewports; always edge-anchored, never fullscreen."
         },
         {
           "name": "overlay",
           "type": "DrawerOverlayVariant",
           "required": false,
           "default": "",
-          "description": "Overlay variant. 'solid' (default) | 'blur'."
+          "description": "Overlay variant. 'solid' (default) | 'blur' (frosted glass, `backdrop-filter: blur(4px)`)."
         },
         {
           "name": "stackMode",
@@ -1997,7 +1997,7 @@
           "type": "EntityChipStatus",
           "required": false,
           "default": "",
-          "description": "Inline workflow status, separated by a small dot and rendered in the status's own color."
+          "description": "Inline workflow status `{ label, category?, color? }`, separated by a small dot and rendered in the\nstatus's own color. `category` (`to_do`/`in_progress`/`open`/`done`/`won`/`lost`) resolves a default\npalette color (same mapping as `<PillMenu>`); `color` overrides it. The dot takes the resolved color too."
         },
         {
           "name": "color",
@@ -2074,7 +2074,7 @@
           "type": "EntityChipLabelWeight",
           "required": false,
           "default": "'medium'",
-          "description": "Font weight for `label`. `'medium'` (default) matches a plain chip's\nfixed weight and the RichText `@mention` — most chips should leave this\nunset. `'medium'` does NOT apply to `prefix`: `.prefix` carries no\nfont-weight rule of its own and simply inherits (normal), so a default\nchip's key is lighter than its title. `'semibold'` is the one value that\ntouches BOTH — it sets `prefix` AND `label` to the same heavier weight\n(a task-chip design that wants its key heavier along with its title,\n#590). Use `'semibold'` for a design that explicitly wants that.\n\nDon't reach for a styled `<Text weight=\"semibold\">` around `label` to get\na heavier title instead (see the component's `@remarks` anti-patterns) —\nit buys nothing: the clipped-label tooltip reads the label's own\n`textContent` and always renders it plain, in the tooltip's own color,\nregardless of what the label node carries. Only this prop changes the\nrendered weight."
+          "description": "Font weight for `label`. `'medium'` (default) matches a plain chip's\nfixed weight and the RichText `@mention` — most chips should leave this\nunset. `'medium'` does NOT apply to `prefix`: `.prefix` carries no\nfont-weight rule of its own and simply inherits (normal), so a default\nchip's key is lighter than its title. `'semibold'` is the one value that\ntouches BOTH — it sets `prefix` AND `label` to the same heavier weight\n(a task-chip design that wants its key heavier along with its title,\n#590). Use `'semibold'` for a design that explicitly wants that.\n\nDon't reach for a styled `<Text weight=\"semibold\">` around `label` to get\na heavier title instead (see the clipped-label tooltip bullet in `docs/components/EntityChip.md`) —\nit buys nothing: the clipped-label tooltip reads the label's own\n`textContent` and always renders it plain, in the tooltip's own color,\nregardless of what the label node carries. Only this prop changes the\nrendered weight."
         },
         {
           "name": "as",
@@ -2173,7 +2173,7 @@
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
           "default": "",
-          "description": "Error message. Replaces `description`, flips the control to `invalid`, and\nlinks it with `aria-describedby`.\n\n**Not announced, deliberately.** `aria-describedby` is read on FOCUS, so an\nerror that appears after a submit reaches nobody unless focus moves into\nthe field. Hard rule 10 permits chosen silence provided it is written down;\nthis is that note.\n\nThe alternative — a live region per Field — is worse in the common case: a\nvalidate-on-change form would announce on every keystroke, and a submit\nfailing N fields would fire N announcements over each other. The right\nowner of that announcement is the FORM, which knows how many fields failed\nand when the user asked for the answer.\n\nSo: announce a summary yourself on submit, and leave the per-field message\nto `aria-describedby` for when focus arrives.\n\n```tsx\n<div role=\"status\" aria-live=\"polite\">\n  {submitted && errorCount > 0 ? `${errorCount} fields need attention` : ''}\n</div>\n```\n\nSee #494 for the full reasoning."
+          "description": "Error message. Replaces `description`, flips the control to `invalid`, and\nlinks it with `aria-describedby`.\n\n**Not announced, deliberately.** `aria-describedby` is read on FOCUS, so an\nerror that appears after a submit reaches nobody unless focus moves into\nthe field. Hard rule 10 permits chosen silence provided it is written down;\nthis is that note.\n\nThe alternative — a live region per Field — is worse in the common case: a\nvalidate-on-change form would announce on every keystroke, and a submit\nfailing N fields would fire N announcements over each other. The right\nowner of that announcement is the FORM, which knows how many fields failed\nand when the user asked for the answer.\n\nSo: announce a summary yourself on submit, and leave the per-field message\nto `aria-describedby` for when focus arrives.\n\n```tsx\n<div role=\"status\" aria-live=\"polite\">\n  {submitted && errorCount > 0 ? `${errorCount} fields need attention` : ''}\n</div>\n```"
         },
         {
           "name": "required",
@@ -2370,7 +2370,7 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Open state of the disclosure the body opens (e.g. the editor popover),\nsurfaced as `aria-expanded` on the body button. Only meaningful with\n`onActivate`. Omit if the body doesn't toggle a disclosure."
+          "description": "Open state of the disclosure the body opens (e.g. the editor popover),\nsurfaced as `aria-expanded` on the body button (which also carries\n`aria-haspopup=\"dialog\"`). Only meaningful with\n`onActivate`. Omit if the body doesn't toggle a disclosure."
         },
         {
           "name": "children",
@@ -2638,7 +2638,7 @@
           "type": "GridAlignItems",
           "required": false,
           "default": "",
-          "description": "Cross-axis (vertical within row) alignment of each cell. Default browser\nbehavior is `stretch`; omit to use the default."
+          "description": "Cross-axis (vertical within row) alignment of each cell. Default browser\nbehavior is `stretch`; omit to use the default. Useful for cards of varying intrinsic height."
         },
         {
           "name": "justifyItems",
@@ -2652,7 +2652,7 @@
           "type": "GridAs",
           "required": false,
           "default": "",
-          "description": "Element to render. Default `'div'`. Limited to common layout / semantic elements."
+          "description": "Element to render. Default `'div'`. Limited to `div`, `section`, `ul`, `ol`, `nav`, `main`, `aside`, `article`, `header`, `footer` rather than fully polymorphic."
         },
         {
           "name": "columns",
@@ -2772,7 +2772,7 @@
           "type": "IconTileSize",
           "required": false,
           "default": "",
-          "description": "Tile box size. `'xs'` 20 / `'sm'` 24 / `'md'` 32 (**default**) / `'lg'` 40 px.\nSizes the tile box — size your icon child separately. `'xs'` brackets a\n14px glyph with ~3px of padding so the tile sits inside a text / Badge /\nEntityChip row without growing it.\n\n`'inline'` is font-relative: a `1em` tile (the surrounding text's\nfont-size) centred on the text's capitals, whose glyph the tile sizes to\n`0.75em` — a direct `<svg>` child's (a lucide icon's) own `size` is\noverridden; wrap nothing around the icon. Use it in text contexts\n(`EntityChip` `icon` / `trailing`, `Badge` rows, dense lists, running\ntext) where even `xs` towers over the capitals. It follows `font-size`,\nso there is no size decision per call site."
+          "description": "Tile box size. `'xs'` 20 / `'sm'` 24 / `'md'` 32 (**default**) / `'lg'` 40 px.\nSizes the tile box — size your icon child separately. `'xs'` brackets a\n14px glyph with ~3px of padding so the tile sits inside a text / Badge /\nEntityChip row without growing it.\n\n`'inline'` is font-relative: a `1em` tile (the surrounding text's\nfont-size) centred on the text's capitals, whose glyph the tile sizes to\n`0.75em` — a direct `<svg>` child's (a lucide icon's) own `size` is\noverridden; wrap nothing around the icon. Use it in text contexts\n(`EntityChip` `icon` / `trailing`, `Badge` rows, dense lists, running\ntext) where even `xs` towers over the capitals. It follows `font-size`,\nso there is no size decision per call site. Not for standalone tiles — it is only as big as the text."
         },
         {
           "name": "shape",
@@ -2892,7 +2892,7 @@
           "type": "(area: CropArea) => void",
           "required": true,
           "default": "",
-          "description": "Fires on every drag/zoom tick. High frequency."
+          "description": "Fires on every drag/zoom tick. High frequency. Also fires once on first image load when `value` is `null`, with the computed default crop; after that the consumer owns the state."
         },
         {
           "name": "onChangeEnd",
@@ -2977,7 +2977,7 @@
           "type": "InputSize",
           "required": false,
           "default": "",
-          "description": "Visual size. Defaults to `'md'`.\n- `'sm'` — 24px tall; toolbars, secondary forms.\n- `'md'` — 32px tall (default); most form contexts.\n- `'lg'` — 40px tall; hero search, mobile-friendly forms.\n\nNote: this shadows the native HTML `<input size>` attribute (visible\ncharacter count). If you need that legacy attribute, set width via\n`style` or a parent container."
+          "description": "Visual size. Defaults to `'md'`.\n- `'sm'` — 24px tall; toolbars, secondary forms.\n- `'md'` — 32px tall (default); most form contexts.\n- `'lg'` — 40px tall; hero search, mobile-friendly forms.\n\nSame scale as `<Select>`; fields have no `xs` (unlike `<Button>`).\n\nNote: this shadows the native HTML `<input size>` attribute (visible\ncharacter count). If you need that legacy attribute, set width via\n`style` or a parent container."
         },
         {
           "name": "disableAutofill",
@@ -3045,7 +3045,7 @@
           "type": "LightboxItem[]",
           "required": true,
           "default": "",
-          "description": "The images. An empty array renders nothing."
+          "description": "The images and documents (mixed galleries are supported; see `kind` on\n`LightboxItem` for PDFs). A PDF without a `thumbnail` shows a document-icon\nplaceholder in the strip; an unsafe (non-http(s)) document `src` shows a\n\"Preview unavailable\" message. An empty array renders nothing."
         },
         {
           "name": "defaultIndex",
@@ -3359,7 +3359,7 @@
           "type": "string",
           "required": true,
           "default": "",
-          "description": "The brand mark image URL — typically an imported SVG/PNG asset. The mark is\na **consumer-owned asset**; the design system ships no logo of its own."
+          "description": "The brand mark image URL — typically an imported SVG/PNG asset. The mark is\na **consumer-owned asset**; the design system ships no logo of its own.\nRendered as an `<img>` (`object-fit: contain`) with no CSS recolor — the\nasset carries its own color. For third-party SSO marks use `<BrandIcon>`."
         },
         {
           "name": "text",
@@ -3387,7 +3387,7 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Accessible name for the mark when there's no `text` (used as the image\n`alt`). Omit for a decorative mark (`alt=\"\"`), or when `text` is present\n(the wordmark is the name)."
+          "description": "Accessible name for the mark when there's no `text` (used as the image\n`alt`). Omit for a decorative mark (`alt=\"\"`), or when `text` is present\n(the wordmark is the name). Never pass both `text` and `label`."
         },
         {
           "name": "subtext",
@@ -4285,7 +4285,7 @@
           "type": "CollapseBreakpoint",
           "required": false,
           "default": "",
-          "description": "Force the icon-only collapsed mode while the **viewport** is at or below a\nwidth threshold: `'sm'` 480px / `'md'` 640px / `'lg'` 768px. Omit for no\nresponsive behavior (the default) — `collapsed` alone governs.\n\nBelow the threshold the rail renders collapsed regardless of `collapsed` /\n`defaultCollapsed`; above it, the consumer's value governs again,\nuntouched. It is a **presentation override, not a user choice**, so\n`onCollapsedChange` does NOT fire when the viewport crosses the threshold\nin either direction — a narrow window can't silently rewrite a persisted\npreference. `<Rail.CollapseToggle>` hides itself while the override is\nactive, since it could not change anything.\n\nUnlike `<Grid collapseBelow>` / `<Split collapseBelow>`, which measure\ntheir own width with a container query, this measures the viewport: the\nrail's own width is exactly what collapsing changes, so a container query\nwould be circular. Same token scale, different basis.\n\n⚠️ **Your shell's column track must follow.** The override shrinks the\nrail but is invisible to the layout around it — a shell that sizes its\nrail track from its OWN `collapsed` state will keep a 240px track around a\n56px rail and leave a dead gap on every screen. Key the track off the\nviewport or off the rail instead, both of which work precisely because the\nbasis here is the viewport rather than a container:\n\n```scss\n// Either mirror the breakpoint…"
+          "description": "Force the icon-only collapsed mode while the **viewport** is at or below a\nwidth threshold: `'sm'` 480px / `'md'` 640px / `'lg'` 768px. Omit for no\nresponsive behavior (the default) — `collapsed` alone governs.\n\nBelow the threshold the rail renders collapsed regardless of `collapsed` /\n`defaultCollapsed`; above it, the consumer's value governs again,\nuntouched. It is a **presentation override, not a user choice**, so\n`onCollapsedChange` does NOT fire when the viewport crosses the threshold\nin either direction — a narrow window can't silently rewrite a persisted\npreference. `<Rail.CollapseToggle>` hides itself while the override is\nactive, since it could not change anything.\n\nUnlike `<Grid collapseBelow>` / `<Split collapseBelow>`, which measure\ntheir own width with a container query, this measures the viewport: the\nrail's own width is exactly what collapsing changes, so a container query\nwould be circular. Same token scale, different basis.\n\n⚠️ **Your shell's column track must follow.** The override shrinks the\nrail but is invisible to the layout around it — a shell that sizes its\nrail track from its OWN `collapsed` state will keep a 240px track around a\n56px rail and leave a dead gap on every screen. Key the track off the\nviewport or off the rail instead, both of which work precisely because the\nbasis here is the viewport rather than a container:\n\n```scss\n// Either mirror the breakpoint: a (max-width: 768px) media query setting\n// .shell { grid-template-columns: 56px 1fr; }…\n// …or follow the rail's own state attribute, no breakpoint duplication:\n.shell:has(nav[data-collapsed]) { grid-template-columns: 56px 1fr; }\n```"
         },
         {
           "name": "aria-label",
@@ -4494,7 +4494,7 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Placed on the combobox trigger (the `<button>` / `<input>`), not the\nwrapper div, so a `<label for>` — Field / SettingRow wire one — focuses\nthe control when clicked (#568). Default: a generated id."
+          "description": "Placed on the combobox trigger (the `<button>` / `<input>`), not the\nwrapper div, so a `<label for>` — Field / SettingRow wire one — focuses\nthe control when clicked (#568). Default: a generated id. Target the\nwrapper by `className` or a `data-*` attribute, not `#id`."
         },
         {
           "name": "options",
@@ -4536,7 +4536,7 @@
           "type": "SelectTriggerDisplay",
           "required": false,
           "default": "",
-          "description": "How the trigger renders the selected value(s) in multi mode. Ignored\nin single mode. See `SelectTriggerDisplay`. Defaults to `'chips'`."
+          "description": "How the trigger renders the selected value(s) in multi mode. Ignored\nin single mode. See `SelectTriggerDisplay`. Defaults to `'chips'`. Use\n`'summary'` for table-filter UIs where chips would crowd the toolbar."
         },
         {
           "name": "searchable",
@@ -4771,7 +4771,7 @@
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
           "default": "",
-          "description": "Content after the control on the same line — a mode select, a state\nbadge, a reset button. `controlWidth` does NOT apply here — it only sizes\nthe main control. A control that sizes itself to `width: 100%` (`Select`,\n`Input`, `Textarea`) fills the ENTIRE trailing group and pushes any other\nadornment onto a second line; wrap it in `<Constrain width=\"xs\">` (or\nanother named step) to size it instead."
+          "description": "Content after the control on the same line — a mode select, a state\nbadge, a reset button. `controlWidth` does NOT apply here — it only sizes\nthe main control. A control that sizes itself to `width: 100%` (`Select`,\n`Input`, `Textarea`) fills the ENTIRE trailing group and pushes any other\nadornment onto a second line; wrap it in `<Constrain width=\"xs\">` (or\nanother named step) to size it instead. Plain truthiness check: an empty\narray or fragment still renders an empty wrapper (a stray gap) — pass\n`undefined` for \"none\"."
         },
         {
           "name": "footer",
@@ -4785,7 +4785,7 @@
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
           "default": "",
-          "description": "Error message. Takes over `aria-describedby` and flips the control to\n`invalid`. Unlike `<Field>`, the `description` stays VISIBLE alongside it —\nthe two sit in different columns, so an invalid value is no reason to\nremove the explanation of what the setting is.\n\n**Not announced, deliberately** — `aria-describedby` is read on focus, so\nthe form owns the submit-time summary. Same reasoning as `<Field error>`;\nsee #494."
+          "description": "Error message. Takes over `aria-describedby` and flips the control to\n`invalid`. Unlike `<Field>`, the `description` stays VISIBLE alongside it —\nthe two sit in different columns, so an invalid value is no reason to\nremove the explanation of what the setting is.\n\n**Not announced, deliberately** — `aria-describedby` is read on focus, so\nthe form owns the submit-time summary. Same reasoning as `<Field error>`."
         },
         {
           "name": "required",
@@ -4961,14 +4961,14 @@
           "type": "SliderOrientation",
           "required": false,
           "default": "",
-          "description": "Orientation. Defaults to `'horizontal'`."
+          "description": "Orientation. Defaults to `'horizontal'`. Vertical defaults to 200px tall; override via `style={{ height }}`."
         },
         {
           "name": "disabled",
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Disabled state. Defaults to `false`."
+          "description": "Disabled state. Defaults to `false`. Thumbs become non-interactive\n(`tabIndex=-1`, `aria-disabled`, `pointer-events: none`, `cursor: not-allowed`)."
         },
         {
           "name": "name",
@@ -5059,8 +5059,8 @@
           "name": "variant",
           "type": "ButtonVariant",
           "required": false,
-          "default": "primary",
-          "description": "Visual variant.\n- `primary` (default) — the section's main action. Use **one** per page section.\n- `secondary` — supporting actions like \"Cancel\", \"Export\", \"Filter\".\n- `ghost` — tertiary actions in dense UIs (toolbar buttons, row actions).\n- `danger` — destructive operations only (Delete, Revoke, Remove). Pair with a confirmation if irreversible.\n- `danger-outline` — a destructive action that must not dominate: surface\n  fill, danger text and border. For a Remove repeated on every row, or a\n  destructive action beside a primary one. Use filled `danger` for the\n  confirm step itself.\n- `success` — **transient confirmation only**, not an initial state. Flip to\n  `success` for ~1.5s after an action resolves (Save → \"Saved!\"), then\n  flip back. Never render a button as `success` on mount — it has no\n  action-intent meaning, only post-action feedback. See the `@example`\n  below for the timer pattern."
+          "default": "secondary",
+          "description": "Button variant; the values are Button's. Defaults to `secondary`, not\nButton's `primary`."
         },
         {
           "name": "size",
@@ -5074,7 +5074,7 @@
           "type": "\"button\"",
           "required": false,
           "default": "button",
-          "description": "Render a different element — the case that matters is `as=\"a\"` with\n`href`, for a link that must LOOK like a button (an external console, a\ndownload, an IdP hand-off). The element named here is what actually\nrenders, and its own attributes are typed: `href` is REQUIRED when\n`as=\"a\"` (an anchor without one is neither focusable nor a link) and\nrejected otherwise.\n\nReach for `<Link>` first. `<Link>` is link-SHAPED navigation — inline text\nin a sentence, a table cell, a breadcrumb. `<Button as=\"a\">` is for a\ndestination that sits in a row of buttons and must carry their weight.\nEither way the element is a real anchor, so assistive tech announces a\nlink and the browser gives middle-click, \"open in new tab\", and the status\nbar preview — none of which a `<button onClick={() => navigate()}>` has.\n\n`type=\"button\"` is emitted only for a real `<button>`; an anchor never\ngets it. Everything else — variant, size, `iconOnly`, `selected`, the\nfocus ring — is unchanged."
+          "description": "Render a different element — the case that matters is `as=\"a\"` with\n`href`, for a link that must LOOK like a button (an external console, a\ndownload, an IdP hand-off). The element named here is what actually\nrenders, and its own attributes are typed: `href` is REQUIRED when\n`as=\"a\"` (an anchor without one is neither focusable nor a link) and\nrejected otherwise; `target`/`rel`/`download` come through. Never navigate from `onClick`.\n\nReach for `<Link>` first. `<Link>` is link-SHAPED navigation — inline text\nin a sentence, a table cell, a breadcrumb. `<Button as=\"a\">` is for a\ndestination that sits in a row of buttons and must carry their weight.\nEither way the element is a real anchor, so assistive tech announces a\nlink and the browser gives middle-click, \"open in new tab\", and the status\nbar preview — none of which a `<button onClick={() => navigate()}>` has.\n\n`type=\"button\"` is emitted only for a real `<button>`; an anchor never\ngets it. Everything else — variant, size, `iconOnly`, `selected`, the\nfocus ring — is unchanged."
         }
       ]
     },
@@ -5252,7 +5252,7 @@
           "type": "SwitchTone",
           "required": false,
           "default": "",
-          "description": "Track color when checked. Defaults to `'accent'`.\n- `'accent'` — blue (default).\n- `'success'` — green. Use for affirmative toggles (\"Enable notifications\").\n- `'danger'` — red. Use for destructive toggles (\"Allow root access\")."
+          "description": "Track color when checked (the unchecked track is always neutral muted). Defaults to `'accent'`.\n- `'accent'` — blue (default).\n- `'success'` — green. Use for affirmative toggles (\"Enable notifications\").\n- `'danger'` — red. Use for destructive toggles (\"Allow root access\")."
         },
         {
           "name": "checked",
@@ -5379,7 +5379,7 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Optional id prefix for controlled tabpanels. When set, the ACTIVE tab gets\n`aria-controls=\"${panelIdPrefix}-${itemId}-panel\"` — the consumer must\nrender the matching panel with that id. When omitted, NO tab carries\n`aria-controls` at all — the internal id (sanitized React `useId`) named\nbelow is the tab's own id, not a panel's, and pointing at it would be the\ndangling IDREF #501 removed.\n\nOnly the active tab carries it, because consumers render only the active\npanel; stamping every tab would point N-1 of them at elements that do not\nexist. Inactive tabs keep their own `id` for the panel's\n`aria-labelledby` to reference."
+          "description": "Optional id prefix for controlled tabpanels. When set, the ACTIVE tab gets\n`aria-controls=\"${panelIdPrefix}-${itemId}-panel\"` — the consumer must\nrender the matching panel with that id. When omitted, NO tab carries\n`aria-controls` at all — the internal id (sanitized React `useId`) named\nbelow is the tab's own id, not a panel's, and pointing at it would be the\ndangling IDREF that was removed.\n\nOnly the active tab carries it, because consumers render only the active\npanel; stamping every tab would point N-1 of them at elements that do not\nexist. Inactive tabs keep their own `id` for the panel's\n`aria-labelledby` to reference."
         },
         {
           "name": "activationMode",
@@ -5446,7 +5446,7 @@
           "type": "TextTone",
           "required": false,
           "default": "",
-          "description": "Color tone. Defaults to `'default'`.\n- `default` — `--color-fg`\n- `muted` — `--color-fg-muted` (for secondary copy)\n- `subtle` — **@deprecated (#521): resolves to `muted`. Use `muted`.**\n  In LIGHT theme the two neutrals were indistinguishable: OKLab ΔE 0.0261\n  when #521 was filed, 0.0365 after #522 retuned `--color-fg-muted`,\n  against the 0.065 floor this library's perceptual gates use. In DARK\n  they were 0.0707 apart — a real step — so **this deprecation changes\n  dark-theme appearance**: `subtle` text in dark gets lighter, moving from\n  `--color-fg-subtle` to `--color-fg-muted`. That is the accepted trade\n  (a tier that exists in one theme only is not a tier), but it is a\n  visual change, not the removal of a duplicate. `--text-fg-subtle` now\n  aliases `--text-fg-muted`, so nothing breaks at the type or build level;\n  if you need the old dark value back, override `--text-fg-subtle`.\n- `accent` — `--color-accent`\n- `danger` / `success` / `warning` — state-coded text"
+          "description": "Color tone. Defaults to `'default'`.\n- `default` — `--color-fg`\n- `muted` — `--color-fg-muted` (for secondary copy)\n- `subtle` — **@deprecated (#521): resolves to `muted`. Use `muted`.**\n  In LIGHT theme the two neutrals were indistinguishable: OKLab ΔE 0.0261\n  when the deprecation was filed, 0.0365 after `--color-fg-muted` was retuned,\n  against the 0.065 floor this library's perceptual gates use. In DARK\n  they were 0.0707 apart — a real step — so **this deprecation changes\n  dark-theme appearance**: `subtle` text in dark gets lighter, moving from\n  `--color-fg-subtle` to `--color-fg-muted`. That is the accepted trade\n  (a tier that exists in one theme only is not a tier), but it is a\n  visual change, not the removal of a duplicate. `--text-fg-subtle` now\n  aliases `--text-fg-muted`, so nothing breaks at the type or build level;\n  if you need the old dark value back, override `--text-fg-subtle`.\n- `accent` — `--color-accent`\n- `danger` / `success` / `warning` — state-coded text"
         },
         {
           "name": "weight",
@@ -5499,7 +5499,7 @@
           "type": "TextareaSize",
           "required": false,
           "default": "",
-          "description": "Visual size. Defaults to `'md'`.\n- `'sm'` — tighter padding + `--font-size-sm`. Used in dense forms.\n- `'md'` — default padding + `--font-size-md`. Most form contexts.\n- `'lg'` — same padding as md but `--font-size-lg`. Hero / focus textareas.\n\nNote: this collapses the native HTML `<textarea size>` attribute. Use\n`style={{ width }}` or a parent container for explicit width."
+          "description": "Visual size. Defaults to `'md'`. Affects typography + padding only, not\nheight — that comes from `minRows`.\n- `'sm'` — tighter padding + `--font-size-sm`. Used in dense forms.\n- `'md'` — default padding + `--font-size-md`. Most form contexts.\n- `'lg'` — same padding as md but `--font-size-lg`. Hero / focus textareas.\n\nNote: this collapses the native HTML `<textarea size>` attribute. Use\n`style={{ width }}` or a parent container for explicit width."
         },
         {
           "name": "disableAutofill",
@@ -5566,7 +5566,7 @@
           "type": "ThreadNodeAlign",
           "required": false,
           "default": "header",
-          "description": "Where the leading `node` sits relative to the comment body.\n- `header` (default) — vertically centered on the **first body line** (the author /\n  timestamp header), Jira/GitHub style, so a node taller than one line (e.g. a 24px\n  `<Avatar>`) reads as centered against the name rather than top-aligned. Assumes the\n  header line-box matches `--thread-header-line-height` (defaults to `<Text size=\"sm\">`);\n  override that token if your header line differs.\n- `top` — top-aligned with the body (the node's top meets the body's top). Use when the\n  node is about one line tall, or when you deliberately want top alignment."
+          "description": "Where the leading `node` sits relative to the comment body.\n- `header` (default) — vertically centered on the **first body line** (the author /\n  timestamp header), Jira/GitHub style, so a node taller than one line (e.g. a 24px\n  `<Avatar>`) reads as centered against the name rather than top-aligned. Assumes the\n  header line-box matches `--thread-header-line-height` (defaults to `<Text size=\"sm\">`);\n  override that token if your header line differs. Remove any old header\n  `lineHeight` override (e.g. `var(--size-sm)`) — it now double-compensates.\n- `top` — top-aligned with the body (the node's top meets the body's top). Use when the\n  node is about one line tall, or when you deliberately want top alignment."
         },
         {
           "name": "children",
@@ -5718,7 +5718,7 @@
           "type": "TitleTone",
           "required": false,
           "default": "",
-          "description": "Color tone. Defaults to `'default'` (full foreground).\n- `default` — `--color-fg`\n- `muted` — `--color-fg-muted`\n- `subtle` — **@deprecated (#521): resolves to `muted`. Use `muted`.**\n  In LIGHT theme the two neutrals were indistinguishable: OKLab ΔE 0.0261\n  when #521 was filed, 0.0365 after #522 retuned `--color-fg-muted`,\n  against the 0.065 floor this library's perceptual gates use. In DARK\n  they were 0.0707 apart — a real step — so **this deprecation changes\n  dark-theme appearance**: `subtle` text in dark gets lighter, moving from\n  `--color-fg-subtle` to `--color-fg-muted`. That is the accepted trade\n  (a tier that exists in one theme only is not a tier), but it is a\n  visual change, not the removal of a duplicate. `--title-fg-subtle` now\n  aliases `--title-fg-muted`, so nothing breaks at the type or build level;\n  if you need the old dark value back, override `--title-fg-subtle`.\n- `accent` — `--color-accent`\n- `danger` — `--color-danger`"
+          "description": "Color tone. Defaults to `'default'` (full foreground).\n- `default` — `--color-fg`\n- `muted` — `--color-fg-muted`\n- `subtle` — **@deprecated (#521): resolves to `muted`. Use `muted`.**\n  In LIGHT theme the two neutrals were indistinguishable: OKLab ΔE 0.0261\n  when the deprecation was filed, 0.0365 after `--color-fg-muted` was retuned,\n  against the 0.065 floor this library's perceptual gates use. In DARK\n  they were 0.0707 apart — a real step — so **this deprecation changes\n  dark-theme appearance**: `subtle` text in dark gets lighter, moving from\n  `--color-fg-subtle` to `--color-fg-muted`. That is the accepted trade\n  (a tier that exists in one theme only is not a tier), but it is a\n  visual change, not the removal of a duplicate. `--title-fg-subtle` now\n  aliases `--title-fg-muted`, so nothing breaks at the type or build level;\n  if you need the old dark value back, override `--title-fg-subtle`.\n- `accent` — `--color-accent`\n- `danger` — `--color-danger`"
         },
         {
           "name": "weight",

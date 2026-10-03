@@ -40,7 +40,9 @@ export interface SettingRowProps extends Omit<HTMLAttributes<HTMLDivElement>, 'c
    * the main control. A control that sizes itself to `width: 100%` (`Select`,
    * `Input`, `Textarea`) fills the ENTIRE trailing group and pushes any other
    * adornment onto a second line; wrap it in `<Constrain width="xs">` (or
-   * another named step) to size it instead.
+   * another named step) to size it instead. Plain truthiness check: an empty
+   * array or fragment still renders an empty wrapper (a stray gap) — pass
+   * `undefined` for "none".
    */
   trailing?: ReactNode;
   /**
@@ -56,8 +58,7 @@ export interface SettingRowProps extends Omit<HTMLAttributes<HTMLDivElement>, 'c
    * remove the explanation of what the setting is.
    *
    * **Not announced, deliberately** — `aria-describedby` is read on focus, so
-   * the form owns the submit-time summary. Same reasoning as `<Field error>`;
-   * see #494.
+   * the form owns the submit-time summary. Same reasoning as `<Field error>`.
    */
   error?: ReactNode;
   /** Marks the row required: shows `*` and injects `required` onto the control. */
@@ -69,96 +70,8 @@ export interface SettingRowProps extends Omit<HTMLAttributes<HTMLDivElement>, 'c
 }
 
 /**
- * One row of a settings screen: label (+ provenance adornment) and description
- * in a shared left column, the control (+ adornments that act on it) and an
- * optional footer block in the right column.
- *
- * Rows align because the label column is a length, shared via
- * `--setting-row-label-width` — set it once on `<SettingRow.List>`.
- *
- * Wiring (`id`, `aria-labelledby`, `aria-describedby`, `invalid`) works exactly
- * as `<Field>`'s, and the render-prop receives the same `field` object.
- *
- * Responsive collapse (stacking the label above the control at a narrow
- * width) is provided by `<SettingRow.List>`'s container query — a standalone
- * row does not collapse on its own.
- *
- * @example
- * // A metered limit with provenance, a mode adornment and a usage meter:
- * <SettingRow.List dividers labelWidth="18rem">
- *   <SettingRow
- *     label="Seats"
- *     labelAdornment={<Badge tone="neutral" size="sm">From plan</Badge>}
- *     description="Member seats included for this tenant"
- *     controlWidth="xs"
- *     trailing={
- *       <Constrain width="xs">
- *         <Select options={modes} value={mode} onChange={setMode} />
- *       </Constrain>
- *     }
- *     footer={
- *       <Constrain maxWidth="sm">
- *         <Progress value={0} max={50} aria-label="Seats usage" />
- *       </Constrain>
- *     }
- *   >
- *     <Input type="number" />
- *   </SettingRow>
- * </SettingRow.List>
- *
- * @example
- * // A plain setting — no adornments:
- * <SettingRow label="Default currency" description="Currency preselected for new records">
- *   <Select options={currencies} value={currency} onChange={setCurrency} />
- * </SettingRow>
- *
- * @example
- * // Render-prop for a wrapped or native control:
- * <SettingRow label="Webhook URL" error={errors.url}>
- *   {(field) => <input type="url" {...field} />}
- * </SettingRow>
- *
- * @remarks When NOT to use
- * - Read-only key/value display — use `<DefinitionList>`.
- * - A form field in a normal form — use `<Field>`; a settings row's shared
- *   label column is wrong for a two-up `<FormRow>`.
- * - A single `<Checkbox>` / `<Switch>` that already self-labels — put it in a
- *   `<Cluster>`, or pass it as the row's control with the row's `label` as the
- *   only label (don't double-label).
- *
- * @remarks Anti-patterns
- * - ❌ Putting a badge inside `label` instead of `labelAdornment` — it joins
- *   the control's accessible name.
- * - ❌ Wrapping the control in `<Constrain>` to size it — that makes
- *   `Constrain` the element the row wires, so the control silently loses its
- *   `id` and `aria-*`. Use `controlWidth`.
- * - ❌ A bare `<Cluster justify="between">` or a packed-left `<Cluster>` for a
- *   settings row — the first flings the control to the far edge of a wide
- *   card, the second leaves every row's control at a different x.
- * - ❌ `margin` on a row to separate rows — that is `<SettingRow.List>`'s job.
- * - ❌ Mixing control sizes within one row — a `size="sm"` adornment beside a
- *   default-`md` control renders two different heights on the same line.
- * - ⚠️ `label` / `error` / `description` treat `0`, `NaN`, `false`, `''`, an
- *   empty array, and an empty fragment (`<></>`) as ABSENT — not just the
- *   falsy cases. `description={remaining}` with `remaining === 0`,
- *   `error={errors.map(...)}` with no errors, and `label={<></>}` all
- *   render nothing at all: no `<label>`, no description `<Text>`, no error
- *   `<Text>` (and no `invalid` flip for `error`) — a labelless control
- *   falls back to its own `aria-label` if it has one, or ends up unnamed
- *   otherwise. This can't see a REAL but visually-empty node
- *   (`label={<span />}`, `label="   "`) — those still count as present, and
- *   neither can it see an EMPTY one-shot iterator (`Map.prototype.values()`,
- *   a generator) — those count as present too, since checking would drain
- *   the very iterator React needs to render.
- * - ⚠️ `trailing` uses the plain `Boolean(x)` check, not the smarter one
- *   above — an empty array or fragment there still counts as PRESENT and
- *   renders an empty `.trailing` wrapper div (a stray gap).
- *   `footer`/`labelAdornment` have no wrapper at all, so the same input
- *   renders nothing either way. Pass `undefined` explicitly for "none"
- *   rather than a container that might be empty.
- * - ⚠️ An absent `label` also removes the `required` `*` marker — it lives
- *   inside the `<label>` element, which isn't rendered at all when the
- *   label has no content. `<SettingRow label={0} required>` shows no `*`.
+ * One row of a settings screen: label and description in a shared left column, control and footer on the right.
+ * @see docs/components/SettingRow.md
  */
 const SettingRowRoot = forwardRef<HTMLDivElement, SettingRowProps>(function SettingRow(
   {
@@ -282,34 +195,8 @@ const COLLAPSE_CLASS: Record<CollapseBreakpoint, string> = {
 };
 
 /**
- * A list of `<SettingRow>`s. Owns the shared label column, the vertical
- * rhythm, the optional dividers, and the narrow-container collapse — all of
- * which are the parent's job, not the row's.
- *
- * @example
- * <SettingRow.List dividers labelWidth="18rem">
- *   <SettingRow label="Seats" description="Member seats for this tenant">
- *     <Input type="number" />
- *   </SettingRow>
- *   <SettingRow label="API calls" description="Requests included per month">
- *     <Input type="number" />
- *   </SettingRow>
- * </SettingRow.List>
- *
- * @remarks When NOT to use
- * - Grouping rows under a heading — that is `<FormSection>`, which can wrap a
- *   `<SettingRow.List>`.
- *
- * @remarks Anti-patterns
- * - ❌ A `<Stack>` of rows with ad-hoc `gap` instead of this — the rows then
- *   have no shared label-column owner and no divider rhythm.
- * - ❌ Setting `--setting-row-label-width` on individual rows — the point is
- *   one value for the whole list.
- * - ❌ A `SettingRow.List` inside a shrink-to-fit parent (a
- *   `width: max-content` flex item, an inline-block, a table cell) with the
- *   default `collapseBelow` — the List is a size container by default, so
- *   its intrinsic-width contribution is zero and it collapses. Pass
- *   `collapseBelow={false}` there to opt out of containment.
+ * A list of `<SettingRow>`s that owns the shared label column, vertical rhythm, dividers and narrow-container collapse.
+ * @see docs/components/SettingRow.md
  */
 const SettingRowList = forwardRef<HTMLDivElement, SettingRowListProps>(function SettingRowList(
   {

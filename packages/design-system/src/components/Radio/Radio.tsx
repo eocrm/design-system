@@ -57,33 +57,8 @@ export interface RadioProps extends Omit<
 }
 
 /**
- * Single radio button — native `<input type='radio'>` visually hidden +
- * custom-painted ring + inner dot. Standalone or inside `<RadioGroup>`.
- *
- * @example
- * // Inside a group (preferred):
- * <RadioGroup name="size" defaultValue="md" label="T-shirt size">
- *   <Radio value="sm" label="Small" />
- *   <Radio value="md" label="Medium" />
- *   <Radio value="lg" label="Large" />
- * </RadioGroup>
- *
- * @example
- * // Standalone — consumer manages `name` + state across siblings.
- * <Radio name="plan" value="free" checked={plan === 'free'} onChange={setPlan} label="Free" />
- * <Radio name="plan" value="pro" checked={plan === 'pro'} onChange={setPlan} label="Pro" />
- *
- * @remarks When NOT to use
- * - 10+ options → use `<Select>`.
- * - Multi-select → use a set of `<Checkbox>`es.
- * - Single binary on/off → use a `Switch` (not yet shipped).
- *
- * @remarks Anti-patterns
- * - ❌ Standalone radios without a wrapping `<fieldset>` — fails AT grouping.
- *   Use `<RadioGroup>` for proper a11y semantics.
- * - ❌ Setting `checked` on a Radio inside a `<RadioGroup>` — the group's
- *   `value` already controls each child's checked state.
- * - ❌ Omitting `label` AND `aria-label` — the radio is unlabelled to AT.
+ * Single radio button: a visually-hidden native `<input type="radio">` with a custom ring and dot; standalone or in a `<RadioGroup>`.
+ * @see docs/components/Radio.md
  */
 export const Radio = forwardRef<HTMLInputElement, RadioProps>(function Radio(
   {

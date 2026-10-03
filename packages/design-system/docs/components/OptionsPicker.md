@@ -18,7 +18,70 @@ Multi mode buffers a draft until Apply; single mode commits per click.
 </OptionsPicker>
 ```
 
+<!-- props:start -->
+
+## Props
+
+### `OptionsPickerProps`
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `mode` | `"multi" \| "single"` | no |  |
+| `selected` | `string[] \| string \| null` | yes |  |
+| `onApply` | `(next: string[]) => void \| (next: string \| null) => void` | yes |  |
+| `onCancel` | `(() => void)` | no |  |
+| `open` | `boolean` | no |  |
+| `onOpenChange` | `((open: boolean) => void)` | no |  |
+| `children` | `ReactNode` | yes |  |
+
+### `OptionsPickerContentProps`
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `options` | `OptionsPickerOption[]` | no |  |
+| `groups` | `OptionsPickerGroup[]` | no |  |
+| `label` | `string` | yes | Accessible label on the panel (the dialog's `aria-label`). |
+| `emptyState` | `ReactNode` | no | Rendered when search produces zero matches. Defaults to the `optionsPicker.noMatches` i18n string (en: `'No matches'`). An EMPTY string counts as unset, matching every other label override in the library. There is no way to suppress the message entirely — a blank listbox reads as a broken filter rather than as a deliberate silence. |
+| `footerCount` | `((selected: number, total: number) => ReactNode)` | no | Footer count formatter (multi only). Default `'${selected} of ${total}'`. |
+| `searchable` | `boolean` | no | Whether to render the search bar at the top of the panel. Defaults to `true`. Hide it (`false`) for small/curated option lists where typing filters would just be noise — the selection-count header is hidden alongside the search input (the footer's `N of TOTAL` text still shows in multi mode). |
+| `className` | `string` | no |  |
+
+### `OptionsPickerTriggerProps`
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `children` | `ReactElement<unknown, string \| JSXElementConstructor<any>>` | yes | Must be a single React element that accepts a ref (e.g. `<Button>`). |
+
+<!-- props:end -->
+
 `mode="single"` for single-select: `selected: string | null`, `onApply(value | null)`, no Apply/Cancel footer.
 
 Don't use for form selects (use `<Select>`), action menus (use `<DropdownMenu>`),
 or single boolean toggles (use `<Checkbox>` or `<Switch>`).
+
+Multi mode (default) keeps a draft until Apply; Cancel, Esc and click-outside revert it. Single mode commits through `onApply` on each click and closes the panel.
+
+```tsx
+<OptionsPicker mode="single" selected={tenantId} onApply={setTenantId}>
+  <OptionsPicker.Trigger>
+    <Button variant="secondary">Tenant</Button>
+  </OptionsPicker.Trigger>
+  <OptionsPicker.Content
+    label="Filter tenant"
+    options={tenants.map((t) => ({ value: t.id, label: t.slug }))}
+  />
+</OptionsPicker>
+```
+
+`<OptionsPicker.Trigger>` takes a single ref-accepting element (typically a `<Button>`); open wiring and ARIA (`aria-haspopup`, `aria-expanded`, `aria-controls`) are injected, and your own ref on the child still receives the DOM node. `<OptionsPicker.Content>` hosts the search bar, the option list and (multi mode) the Apply/Cancel footer.
+
+OptionsPicker has no `name` attribute and no form association. Action menus (Edit / Delete / Archive) are commands, not filters — use `<DropdownMenu>`.
+
+**Anti-patterns**
+
+- ❌ Passing BOTH `options` and `groups` to Content — TypeScript rejects it. Pick one.
+- ❌ Calling `onApply` yourself inside Content's render — the picker owns the commit; treat `onApply(next)` as the single source of truth and update React state from it.
+- ❌ Controlling open state without passing both `open` and `onOpenChange` — partial control breaks invariants.

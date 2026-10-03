@@ -5,17 +5,8 @@ import styles from './Rail.module.scss';
 export type RailFooterProps = HTMLAttributes<HTMLDivElement>;
 
 /**
- * Bottom slot of the rail — typically a user chip, theme switcher, or the
- * `<Rail.CollapseToggle>` itself. It anchors to the bottom on its own: the
- * rail extracts the first `<Rail.Footer>` out of the scroll box and renders it
- * as a separate flex child below, so it stays put however long the item list
- * grows. No `<Rail.Spacer />` needed.
- *
- * @example
- * <Rail.Footer>
- *   <Rail.CollapseToggle />
- *   <UserChip />
- * </Rail.Footer>
+ * Bottom slot of the rail, pinned outside the scroll box on its own (`Rail.Footer`).
+ * @see docs/components/Rail.md
  */
 export const RailFooter = forwardRef<HTMLDivElement, RailFooterProps>(function RailFooter(
   { className, ...props },

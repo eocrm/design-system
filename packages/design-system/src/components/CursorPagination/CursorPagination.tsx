@@ -60,41 +60,8 @@ export interface CursorPaginationProps extends HTMLAttributes<HTMLElement> {
 }
 
 /**
- * Cursor pagination — prev / next pair for streams without a known total
- * page count (activity feeds, infinite scroll, keyset-paginated APIs).
- *
- * Controlled — consumer owns the cursor state. The component just renders
- * the two buttons and fires `onPrevious` / `onNext`.
- *
- * @example
- * <CursorPagination
- *   hasPrevious={hasPrev}
- *   hasNext={hasNext}
- *   onPrevious={loadPrevious}
- *   onNext={loadNext}
- * />
- *
- * @example
- * // Activity feed with reversed direction labels:
- * <CursorPagination
- *   hasPrevious={hasNewer}
- *   hasNext={hasOlder}
- *   onPrevious={loadNewer}
- *   onNext={loadOlder}
- *   previousLabel="Newer"
- *   nextLabel="Older"
- * />
- *
- * @remarks When NOT to use
- * - When you have a total page count → use `<Pagination>` (numbered, with
- *   jump-to-page and progress indication).
- *
- * @remarks A11y
- * - Wrapper is `<nav aria-label="Pagination">` (overridable for
- *   disambiguation).
- * - Buttons are native `<button disabled>` when `hasPrevious` /
- *   `hasNext` is false — screen readers announce "dimmed" and skip them
- *   during Tab navigation.
+ * Cursor pagination: prev / next pair for streams without a known total page count.
+ * @see docs/components/CursorPagination.md
  */
 export const CursorPagination = forwardRef<HTMLElement, CursorPaginationProps>(
   function CursorPagination(

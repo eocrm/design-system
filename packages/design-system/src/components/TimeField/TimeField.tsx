@@ -121,59 +121,8 @@ export interface TimeFieldProps extends Omit<
 type FocusColumn = 'hours' | 'minutes' | 'period';
 
 /**
- * Standalone time-of-day input — bare text input plus a chevron that opens
- * a Floating-UI popover with scrollable hour / minute (and AM/PM in 12h
- * locales) lists. Free typing parses on blur / Enter via `parseTime`;
- * popover clicks commit immediately and leave the popover open so the user
- * can dial in additional columns. A "Now" footer button quick-picks the
- * current rounded time.
- *
- * Keyboard:
- * - `ArrowDown` on the input opens the popover and moves focus to the
- *   current hour row.
- * - Inside the popover: `ArrowUp` / `ArrowDown` move within the focused
- *   column (no wrap), `ArrowLeft` / `ArrowRight` switch columns, `Home` /
- *   `End` jump to first / last row, `Enter` / `Space` commit, `Escape`
- *   closes.
- *
- * @example
- * // Default — derives 12h vs 24h from the active locale.
- * const [time, setTime] = useState<TimeValue | null>({ hours: 9, minutes: 0 });
- * <TimeField value={time} onChange={setTime} aria-label="Start time" />
- *
- * @example
- * // Forced 24h, 30-minute step, no Now button.
- * <TimeField
- *   value={time}
- *   onChange={setTime}
- *   hourCycle="24"
- *   step={30}
- *   hideNowButton
- *   aria-label="Departure time"
- * />
- *
- * @example
- * // Inside a DatePicker, after a date has been chosen:
- * <TimeField
- *   value={value ? { hours: value.getHours(), minutes: value.getMinutes() } : null}
- *   onChange={(time) => setValue(combineDateAndTime(value, time.hours, time.minutes))}
- *   step={timeStep}
- *   hourCycle={hourCycle}
- *   aria-label={t('datePicker.timeLabel')}
- *   disabled={value == null}
- * />
- *
- * @remarks
- * **When NOT to use.** For datetime input use `<DatePicker>` /
- * `<DateRangePicker>` with `granularity='minute'` — TimeField is for
- * pure time-of-day. For elapsed-duration inputs (e.g. "3h 15m" of
- * meeting length) use a numeric input pair — TimeField clamps to 23:59
- * and parses AM/PM, which are wrong semantics for durations.
- *
- * @remarks
- * **Time zones are out of scope.** The value contract is wall-clock —
- * `{ hours, minutes }` carries no zone information. Round-tripping to UTC
- * is the consumer's responsibility.
+ * Standalone time-of-day input: a text input plus a popover with scrollable hour / minute (and AM/PM) lists.
+ * @see docs/components/TimeField.md
  */
 export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function TimeField(
   {

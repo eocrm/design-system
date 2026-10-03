@@ -27,7 +27,43 @@ const [items, setItems] = useState([
 </Sortable>;
 ```
 
-Props on the root: `onReorder?: ({ from, to, id }) => void` — fires only when the drop position differs from the source. Consumer owns the items array and re-renders with the new order. `arrayMove` is shipped by `@dnd-kit/sortable` (the library is already a dep) — import it from there. Items must have a stable `id` prop (`string | number`). `restrictToContainer?: boolean` (default `true`) — clamps the drag to the list's bounding box so the dragged item can't leave the `<ol>`; pass `false` for free-drag (item follows the cursor anywhere on the page). `arrangement?: 'list' | 'grid'` (default `'list'`) + `columns?: number` (grid only, default 12) — see **Grid arrangement** below.
+<!-- props:start -->
+
+## Props
+
+### `SortableProps`
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `onReorder` | `((event: SortableReorderEvent) => void)` | no | Fires after a drag or keyboard move with the new position. Consumer holds the items array and re-renders with the new order. Not fired if the drop position equals the source position (no-op). |
+| `restrictToContainer` | `boolean` | no | When `true` (default), the dragged item is clamped to the list's bounding box — it can't be dragged outside the `<ol>`. Set `false` for free-drag (the item can be dragged anywhere on the page). For a vertical list this constrains the drag vertically to the list's extent. |
+| `arrangement` | `'list' \| 'grid'` | no | Layout arrangement of the items. - `'list'` (default) — single vertical column; existing behavior unchanged. - `'grid'` — the `<ol>` becomes a `columns`-track CSS grid. Items carry column spans (`Sortable.Item span`), rows are equal-height, and siblings reflow in 2D during a drag. Reorder semantics stay order-based (a drop reorders the flow; nothing here persists an x/y position). |
+| `columns` | `number` | no | Number of equal-width grid tracks. Only applies when `arrangement="grid"` (ignored for a list). Default `12`, matching `Grid.Item`'s 12-column fraction spans (`'25%'`→3 … `'75%'`→9 tracks). Set another count for a simpler grid, but the named fraction spans then won't map to their fraction (documented, not validated — same as `Grid`). |
+| `collapseBelow` | `CollapseBreakpoint \| Partial<Record<CollapseBreakpoint, number>>` | no | Responsive collapse for the grid arrangement — mirrors `Grid`'s `collapseBelow` exactly (same breakpoints, same container-query mechanism). Ignored unless `arrangement="grid"`. - `'sm' \| 'md' \| 'lg'` — below the container-width threshold (480 / 640 / 768px of the LIST'S OWN width) every item spans the full row: a single visual column. - `{ lg?: n, md?: n, sm?: n }` — graduated: below each breakpoint the grid re-templates to that many columns and item spans clamp to fit (a span wider than the step becomes a full row). E.g. `{ md: 6, sm: 1 }`. ❌ Anti-pattern: a collapsible Sortable must get its width from its parent — `container-type: inline-size` zeroes the list's contribution to intrinsic sizing (same caveat as `Grid`'s `collapseBelow`). ⚠️ The map form (and ONLY the map form) wraps the `<ol>` in an extra `<div>` carrying `container-type: inline-size` — re-templating the `<ol>` requires querying an ancestor, not the `<ol>` itself. A `> child` selector aimed at the list from its parent hits that wrapper instead, and layout the parent applies via `className` lands on the `<ol>` inside it. `ref`, `className`, `style` and spread props all stay on the `<ol>`. |
+| …native | | | plus native `<ol>` attributes |
+
+### `SortableHandleProps`
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `children` | `ReactNode` | no | Decorative content — typically a grip icon (e.g. `<GripVertical size={14} />`). Rendered inside the Handle's `<button>` wrapped with `aria-hidden`. |
+| …native | | | plus native `<button>` attributes |
+
+### `SortableItemProps`
+
+<!-- prettier-ignore -->
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `id` | `string \| number` | yes | Stable identifier for this item. Used by dnd-kit for tracking the item across reorders. String or number — typically the consumer's database id. |
+| `children` | `ReactNode` | yes | Item content — typically a `<Card>` or a row of text + icons. |
+| `span` | `GridItemSpan` | no | Column span, only meaningful under `<Sortable arrangement="grid">` (ignored in a list). Mirrors `Grid.Item`'s `span` exactly: - number — `span N` of the grid's `columns`. - `'25%' \| '33%' \| '50%' \| '67%' \| '75%'` — fractions of a 12-column grid. - `'100%'` / `'full'` — the entire row (`1 / -1`); safe with any `columns`. Omit for a single track (auto placement). |
+| …native | | | plus native `<li>` attributes |
+
+<!-- props:end -->
+
+Reorder with `arrayMove` from `@dnd-kit/sortable` (already a dependency) — import it from there; `Sortable.Item` ids must be stable (`string | number`). For `arrangement` / `columns` see **Grid arrangement** below.
 
 **Grid arrangement** (`arrangement="grid"`): re-lays the `<ol>` as a `columns`-track CSS grid (`columns?: number`, default 12) driven by dnd-kit's `rectSortingStrategy`, so siblings reflow in **2D** during a drag instead of shifting only vertically. Give each item a span via `<Sortable.Item span="50%">` (or `span={6}` / `span="100%"`) — **same values as `Grid.Item`** (`25%`→3 … `75%`→9 tracks of 12; `100%`/`full`→whole row). Rows are equal-height (`align-items: stretch`). Semantics stay order-based: a drop reorders the flow — nothing persists a grid x/y position. `restrictToContainer` still clamps the drag to the grid box. Default `arrangement="list"` is unchanged (single vertical column). Canonical use: a WYSIWYG dashboard customize view where edit mode mirrors view mode's 12-col widget grid.
 
@@ -45,7 +81,7 @@ Props on the root: `onReorder?: ({ from, to, id }) => void` — fires only when 
 
 **Drag origin** (hybrid): if `<Sortable.Handle>` is present in the Item subtree, only the Handle initiates drag. If no Handle is present, the entire Item is draggable + focusable. A 5px activation distance means short clicks-without-movement on internal buttons / links pass through.
 
-**Keyboard reorder**: Tab to focus the Handle (or the Item if no Handle), press **Space** to pick up, **ArrowUp** / **ArrowDown** to move, **Space** to drop, **Escape** to cancel. dnd-kit's KeyboardSensor ships built-in `aria-live` announcements describing each move. Inside a `Modal`/`Drawer`, an in-progress drag is an Escape-consuming mode: Escape cancels the drag and the host survives that press; the next Escape closes the host (#282). Same for `DataTable` column reorder.
+**Keyboard reorder**: Tab to focus the Handle (or the Item if no Handle), press **Space** to pick up, **ArrowUp** / **ArrowDown** to move, **Space** to drop, **Escape** to cancel. dnd-kit's KeyboardSensor ships built-in `aria-live` announcements describing each move. Inside a `Modal`/`Drawer`, an in-progress drag is an Escape-consuming mode: Escape cancels the drag and the host survives that press; the next Escape closes the host. Same for `DataTable` column reorder.
 
 **Drop visual / async-safe**: the dragged item renders in a dnd-kit `<DragOverlay>` (a portaled, fixed-position clone); the active list `<li>` is an invisible placeholder during drag. Because the overlay owns the drop animation, the in-list row never carries a stale drag transform — so `onReorder` may commit the new order **asynchronously / optimistically** (e.g. an optimistic TanStack mutation's `onMutate` that lands a tick late) without the dropped row glitching ("fly up then settle"). You no longer need to reorder synchronously. The drop animation respects `prefers-reduced-motion` (it's disabled under reduced motion).
 
@@ -55,3 +91,37 @@ Props on the root: `onReorder?: ({ from, to, id }) => void` — fires only when 
 - ❌ Using a non-stable `id` (e.g. array index). The id must persist across reorders for React reconciliation and for `onReorder`'s `id` field to be meaningful.
 - ❌ Wrapping non-`Sortable.Item` content inside `<Sortable>`. dnd-kit's `SortableContext` only tracks the ids you pass it; arbitrary children render but won't be reorderable.
 - ❌ Relying on whole-item drag (no Handle) for screen-reader-accessible lists. Without a Handle, dnd-kit puts `role="button"` on the `<li>` and the listitem semantics are lost — screen readers stop announcing "item N of M." For accessible lists, always include a `<Sortable.Handle>`.
+
+```tsx
+// Plain text list — no handle needed; the whole item is draggable.
+<Sortable onReorder={({ from, to }) => setItems((curr) => arrayMove(curr, from, to))}>
+  {items.map((item) => (
+    <Sortable.Item key={item.id} id={item.id}>{item.label}</Sortable.Item>
+  ))}
+</Sortable>
+
+// Card with an internal DropdownMenu — an explicit Handle keeps the menu clickable.
+<Sortable onReorder={handle}>
+  {cards.map((c) => (
+    <Sortable.Item key={c.id} id={c.id}>
+      <Card>
+        <Cluster justify="between">
+          <Sortable.Handle aria-label={`Reorder ${c.title}`}><GripVertical size={14} /></Sortable.Handle>
+          <Title order={3}>{c.title}</Title>
+          <DropdownMenu>...</DropdownMenu>
+        </Cluster>
+      </Card>
+    </Sortable.Item>
+  ))}
+</Sortable>
+```
+
+- `Sortable.Item` renders an `<li>`; `span` applies only under `arrangement="grid"` and is ignored in a list. Drag announcements name the item by its rendered text; pass `aria-label` to override it when the item renders a lot of chrome (badges, timestamps, avatars) and only part of it is the name.
+- `Sortable.Handle` is a `<button>` (keyboard-focusable); its children are decorative (`aria-hidden`), so give it an `aria-label`.
+- Place `<Sortable.Handle>` at the same JSX nesting level as the Item's other content. A Handle hidden inside your own wrapper component (e.g. a `<TaskRow>` that renders it internally) is not detected, and the Item falls back to whole-item drag.
+
+**When NOT to use**
+
+- Tabular data: use `<Table>` / `<DataTable>` (DataTable has its own column reorder).
+- Static lists that never reorder: use `<Stack>` or `<DefinitionList>`.
+- Cross-list drag: use `<SortableGroup>`.

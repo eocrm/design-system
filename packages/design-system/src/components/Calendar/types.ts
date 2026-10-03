@@ -87,7 +87,7 @@ export interface CalendarEvent {
    * are where this list stops rather than where the problem does: the pair just
    * off the end is no safer than the last one on it.
    *
-   * These numbers moved in #484, which raised `danger`, `success`, and `accent`
+   * These numbers moved when `danger`, `success`, and `accent` were raised
    * to clear WCAG AA as text. The bands got closer to their neighbouring
    * category colours as a result: `success` + `mint` went 18 → 11 and `danger`
    * + `red` went 36 → 17. `Calendar.collisions.test.ts` recomputes this list

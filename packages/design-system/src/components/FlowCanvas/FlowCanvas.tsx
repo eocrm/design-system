@@ -154,84 +154,8 @@ export interface FlowCanvasProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * A pan/zoom canvas for directed node-edge diagrams — the primitive behind
- * visual workflow builders. Nodes are draggable cards with a colored accent
- * bar and an adornment slot; edges are directed bezier curves with an
- * optional mid-edge chip slot. The canvas is events-only: it renders the
- * `nodes`/`edges` you pass and emits intent callbacks (`onNodeCreate`,
- * `onEdgeCreate`, …) — it never mutates data, so wire the callbacks to your
- * own state or server mutations and re-render.
- *
- * Nodes without `position` are auto-laid-out (layered, left → right) and stay
- * draggable for the session. Full keyboard support: arrows rove between
- * nodes, E cycles a node's connections, C starts a keyboard connect mode,
- * R (`Shift+R` for the source) rewires a selected edge's endpoint,
- * Shift+arrows nudge, +/−/0 zoom and fit, Ctrl+arrows pan.
- *
- * Selecting an edge exposes endpoint handles you can drag onto another node —
- * or press `R` / `Shift+R` — firing `onEdgeReconnect(id, from, to)` (the canvas
- * never mutates the edge; apply it to your state). `allowConnections={false}`
- * disables all connecting and rewiring while leaving node drag/move/delete/select
- * intact; `confineNodesToView` clamps a dragged node to the visible canvas area;
- * and `renderNodeActions`/`renderEdgeActions` float a toolbar on the selected
- * node/edge that tracks it through pan and zoom.
- *
- * Pass `controls` to render your own buttons in a top-left toolbar (e.g. an
- * "Add node" button wired to your state). A built-in Maximize toggle (top-right,
- * or the `F` key; Escape restores) expands the canvas **in place** to fill the
- * viewport — this is an in-page maximize, not the native Fullscreen API.
- *
- * @remarks
- * When NOT to use:
- * - Large graphs (100+ nodes) — there is no virtualization; rendering and
- *   auto-layout are O(n·e) per change.
- * - Column/list reordering — use `Kanban` or `Sortable`; this is a 2D canvas,
- *   not a sortable list.
- * - Undirected or free-form drawing (mind maps, whiteboards) — edges here are
- *   directed with arrowheads and the interaction model assumes a digraph.
- * - As the only editing surface for critical flows — keep an accessible
- *   form-based alternative for complex attribute editing; the canvas's inline
- *   surface is selection + spatial arrangement only, editors belong to the
- *   consumer (anchor modals/popovers via the open callbacks).
- * - Do not hide primary, always-needed actions solely behind Maximize or in the
- *   `controls` slot — those are canvas chrome, not a substitute for the page's
- *   own toolbar; keep essential actions reachable when the canvas is inline.
- * - Relying on maximize while the canvas sits inside an ancestor that
- *   establishes a containing block via `transform`/`filter`/`perspective`/
- *   `will-change` — in-page maximize uses `position: fixed`, so it anchors to
- *   that ancestor instead of the viewport and won't fill the screen. Keep the
- *   canvas out of transformed wrappers if you depend on maximize.
- *
- * @example
- * ```tsx
- * const [nodes, setNodes] = useState<FlowCanvasNode[]>([
- *   { id: 'open', label: 'Open', color: '#0052CC', adornment: <Badge>Initial</Badge> },
- *   { id: 'done', label: 'Done', color: '#1F845A' },
- * ]);
- * const [edges, setEdges] = useState<FlowCanvasEdge[]>([
- *   { id: 't1', from: 'open', to: 'done', label: <Badge tone="purple">Guard</Badge> },
- * ]);
- *
- * <div style={{ height: 480 }}>
- *   <FlowCanvas
- *     nodes={nodes}
- *     edges={edges}
- *     onEdgeCreate={(from, to) =>
- *       setEdges((prev) => [...prev, { id: crypto.randomUUID(), from, to }])
- *     }
- *     onNodeMove={(id, position) =>
- *       setNodes((prev) => prev.map((n) => (n.id === id ? { ...n, position } : n)))
- *     }
- *     onNodeOpen={(id) => openStateModal(id)}
- *   />
- * </div>
- * ```
- *
- * @example
- * ```tsx
- * // Read-only diagram (record page): no editing intents, still zoomable.
- * <FlowCanvas nodes={nodes} edges={edges} readOnly aria-label="Deal workflow" />
- * ```
+ * A pan/zoom canvas for directed node-edge diagrams, the primitive behind visual workflow builders.
+ * @see docs/components/FlowCanvas.md
  */
 export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function FlowCanvas(
   {

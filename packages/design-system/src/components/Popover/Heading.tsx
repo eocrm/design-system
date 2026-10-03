@@ -12,14 +12,8 @@ export interface PopoverHeadingProps extends HTMLAttributes<HTMLHeadingElement> 
 }
 
 /**
- * Renders a semantic heading element (default `h3`) and registers its
- * auto-generated id via context so `<Popover.Content>` can wire
- * `aria-labelledby` to it. The registration unsubscribes on unmount.
- *
- * @example
- * <Popover.Content>
- *   <Popover.Heading>Filter results</Popover.Heading>
- * </Popover.Content>
+ * Semantic heading (default `h3`) that names the popover via `aria-labelledby` (`Popover.Heading`).
+ * @see docs/components/Popover.md
  */
 export function Heading({ as = 'h3', id: idProp, children, ...rest }: PopoverHeadingProps) {
   const ctx = usePopoverContext('Heading');

@@ -46,48 +46,7 @@ export interface SlotGridProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onC
 
 /**
  * Selectable time-slot tiles grouped by part of the day, with an empty state.
- * Every slot is a native radio sharing one `name`, so the whole grid is one
- * Tab stop with a single exclusive choice across groups; arrow keys move and
- * select (linearly, in reading order). Each group is a `<fieldset>` named by
- * its `<legend>` heading. 6 columns, 3 when the grid's own width is ≤ 48rem.
- *
- * @example
- * <SlotGrid
- *   groups={[
- *     { label: 'Morning', slots: [{ key: '2026-10-07T09:00', label: '9:00' }] },
- *     { label: 'Afternoon', slots: [{ key: '2026-10-07T14:00', label: '14:00' }] },
- *   ]}
- *   value={slot}
- *   onChange={setSlot}
- * />
- *
- * @example
- * // Custom empty state
- * <SlotGrid groups={[]} value={null} onChange={setSlot} empty={<EmptyState title="Fully booked" />} />
- *
- * @example
- * // Booking time step: DateStrip picks the day, SlotGrid the time.
- * <Stack gap="lg">
- *   <DateStrip days={week} value={day} onChange={setDay} onPrevious={prev} onNext={next} />
- *   <SlotGrid groups={slotsFor(day)} value={slot} onChange={setSlot} />
- * </Stack>
- *
- * @remarks When NOT to use
- * - A free-form time → `<TimeField>`.
- * - Two to five mutually exclusive options → `<ButtonGroup value>` or `<RadioGroup>`.
- *
- * @remarks Anti-patterns
- * - ❌ Filtering out full slots by rendering them disabled — pass only the
- *   bookable ones; there is no per-slot `disabled`.
- * - ❌ Reusing a `key` across groups — the choice is exclusive across the whole grid.
- * - ❌ Wrapping in your own `role="radiogroup"` — the native radios already
- *   form the group.
- * - ❌ In an intrinsic-width context (`Split`'s default `auto` aside track, a
- *   `Cluster` item, `width: max-content`) it renders at width 0 —
- *   `container-type: inline-size` zeroes its intrinsic-width contribution;
- *   give the parent a concrete width (e.g. `asideWidth` on a Split). It is
- *   also the containing block for absolutely-positioned descendants (layout
- *   containment).
+ * @see docs/components/SlotGrid.md
  */
 export const SlotGrid = forwardRef<HTMLDivElement, SlotGridProps>(function SlotGrid(
   {

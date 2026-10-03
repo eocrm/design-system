@@ -38,14 +38,16 @@ export interface AvatarGroupProps extends HTMLAttributes<HTMLDivElement> {
 
   /**
    * Whether to render a name tooltip on each child avatar. Defaults to `true`
-   * inside the group; overridable per-child by setting `tooltip` on the Avatar.
+   * inside the group (a standalone `<Avatar tooltip>` is opt-in; group context
+   * flips that default). Set `false` on the group to suppress all tooltips;
+   * overridable per-child by setting `tooltip` on the Avatar.
    */
   tooltip?: boolean;
 
   /**
    * Fires when the user clicks the `+N` overflow button. The library does
    * NOT render a popover — apps decide what happens (open a modal, navigate,
-   * etc.). When omitted, the `+N` is rendered as a non-interactive `<span>`.
+   * etc.). When omitted, the `+N` is rendered as a non-interactive `<span>` (still labelled for AT).
    *
    * @param event The native click event.
    * @param hiddenCount The number of children not visible in the strip.
@@ -55,43 +57,7 @@ export interface AvatarGroupProps extends HTMLAttributes<HTMLDivElement> {
 
 /**
  * Horizontal stack of `<Avatar>`s with `+N` overflow when count exceeds `max`.
- *
- * The group propagates `size` and `tooltip` to descendant `<Avatar>`s via
- * context. The first `max` children render; any remainder collapses to a
- * single overflow control.
- *
- * @example
- * // Static — non-interactive +N:
- * <AvatarGroup max={3}>
- *   <Avatar name="Alex Rivera" />
- *   <Avatar name="Priya Patel" />
- *   <Avatar name="Tom Kim" />
- *   <Avatar name="Sara Chen" />
- *   <Avatar name="Jaden Lee" />
- * </AvatarGroup>
- *
- * @example
- * // With overflow handler — app composes whatever popover/modal it wants:
- * <AvatarGroup
- *   max={4}
- *   size="lg"
- *   onOverflowClick={(_e, hiddenCount) => openMembersPopover(hiddenCount)}
- * >
- *   {members.map((m) => <Avatar key={m.id} name={m.name} src={m.avatarUrl} status={m.presence} />)}
- * </AvatarGroup>
- *
- * @remarks When NOT to use
- * - For a single avatar — use `<Avatar>` directly.
- * - When you want to show member counts but not faces — use a `Badge` next to a label.
- *
- * @remarks Anti-patterns
- * - ❌ Wrapping `<AvatarGroup>` in a `<button>` and treating it as one click target.
- *   The `+N` is the click affordance; the visible avatars are deliberately not
- *   interactive in the library — wrap individual avatars in `<button>` / `<Link>`
- *   if needed.
- * - ❌ Mixing avatar sizes inside one group on purpose. The group's `size`
- *   is the default; per-child explicit `size` wins, which is useful for
- *   emphasising a specific member but visually noisy if used carelessly.
+ * @see docs/components/AvatarGroup.md
  */
 export const AvatarGroup = forwardRef<HTMLDivElement, AvatarGroupProps>(function AvatarGroup(
   { children, size = 'md', max = 4, tooltip = true, onOverflowClick, className, ...props },

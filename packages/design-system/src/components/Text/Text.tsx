@@ -65,7 +65,7 @@ export interface TextProps extends HTMLAttributes<HTMLElement> {
    * - `muted` — `--color-fg-muted` (for secondary copy)
    * - `subtle` — **@deprecated (#521): resolves to `muted`. Use `muted`.**
    *   In LIGHT theme the two neutrals were indistinguishable: OKLab ΔE 0.0261
-   *   when #521 was filed, 0.0365 after #522 retuned `--color-fg-muted`,
+   *   when the deprecation was filed, 0.0365 after `--color-fg-muted` was retuned,
    *   against the 0.065 floor this library's perceptual gates use. In DARK
    *   they were 0.0707 apart — a real step — so **this deprecation changes
    *   dark-theme appearance**: `subtle` text in dark gets lighter, moving from
@@ -135,71 +135,8 @@ const ALIGN_CLASS: Record<TextAlign, string> = {
 };
 
 /**
- * Body / inline text primitive. Constrained-as dispatch (no polymorphic
- * generic) — accepts `p` (default), `span`, `div`, or `label`. Use for ALL
- * non-heading text in your UI: paragraphs, captions, labels, inline runs.
- *
- * Don't reach for raw `style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-fg-muted)' }}` —
- * that's the whole reason `<Text>` exists. If you need a size / tone the
- * primitive doesn't expose, that's a token-vocabulary conversation, not a
- * component-skipping one.
- *
- * @example
- * // Default body text — block, md, regular:
- * <Text>Acme Inc · Renewal due Q3.</Text>
- *
- * @example
- * // Inline run inside a parent — span, smaller, muted:
- * <Text as="span" size="sm" tone="muted">12m ago</Text>
- *
- * @example
- * // Form label paired with an input:
- * <Text as="label" htmlFor="email" weight="medium">Email</Text>
- * <Input id="email" />
- *
- * @example
- * // Multi-line clamp inside a narrow card:
- * <Text lineClamp={2}>
- *   A long deal description that we want to ellipsis after two lines so the
- *   card stays at a predictable height.
- * </Text>
- *
- * @example
- * // State-coded inline text (e.g. validation message):
- * <Text size="sm" tone="danger">Email is required.</Text>
- *
- * @example
- * // Muted inline run inside a heading — keeps the heading's font size:
- * <Title order={1}>
- *   <Text as="span" size="inherit" tone="muted">ENG-5</Text> Fix login
- * </Title>
- *
- * @example
- * // Body copy under a heading, spaced with Stack — the canonical CRM-page shape:
- * <Stack gap="xs">
- *   <Title order={2}>Pipeline</Title>
- *   <Text tone="muted">Active deals for Q3.</Text>
- * </Stack>
- *
- * @remarks When NOT to use
- * - For heading text. Use `<Title order={N}>`.
- * - For inline `<code>`-style content. Use `<Code>`.
- * - For action triggers (clickable text). Use `<Button>` or `<Link>`.
- * - For pure layout containers. Use `<Stack>` / `<Cluster>` / `<Grid>`.
- *
- * @remarks Anti-patterns
- * - ❌ `<span style={{ fontSize: 'var(--font-size-sm)' }}>` — use `<Text as="span" size="sm">`.
- * - ❌ `<Text style={{ color: '#someHex' }}>` — pick a tone from the whitelist.
- *   The whitelist is the contract.
- * - ❌ `<Text as="h2">` — Text doesn't accept heading tags. Use `<Title order={2}>`.
- * - ❌ Wrapping a `<Title>` in `<Text>` for tone/weight tweaks. Pass tone/weight
- *   directly to the `<Title>` instead. `size="inherit"` is for runs INSIDE a
- *   heading, not for wrapping the heading itself.
- * - ❌ Nesting `<Text>` inside another `<Text>` with the default `as="p"`. The
- *   inner `<p>` renders inside the outer `<p>`, which the React DOM nesting
- *   validator warns about (and is invalid HTML). When you need a tone or
- *   weight override on an inline run inside a paragraph, use
- *   `<Text as="span" tone="...">` for the inner.
+ * Body / inline text primitive for all non-heading text (`p`, `span`, `div` or `label`).
+ * @see docs/components/Text.md
  */
 export const Text = forwardRef<HTMLElement, TextProps>(function Text(
   {
