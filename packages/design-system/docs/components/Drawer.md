@@ -30,10 +30,10 @@ const [open, setOpen] = useState(false);
 |---|---|---|---|---|
 | `open` | `boolean` | yes | — | Controlled open state. Required — Drawer has no uncontrolled mode. |
 | `onOpenChange` | `(open: boolean) => void` | yes | — | Fired when Drawer wants to change open state — Esc, overlay click, Close, swipe, programmatic. |
-| `side` | `DrawerSide` | no | — | Edge the drawer slides in from: `left`, `right` (default), `top`, `bottom`. |
-| `size` | `DrawerSize` | no | — | Size preset: `sm` 320px, `md` 440px (default), `lg` 640px. Width for left/right, height for top/bottom. Capped to `viewport - 32px` on narrow viewports; always edge-anchored, never fullscreen. |
-| `overlay` | `DrawerOverlayVariant` | no | — | Overlay variant. 'solid' (default) \| 'blur' (frosted glass, `backdrop-filter: blur(4px)`). |
-| `stackMode` | `OverlayStackMode` | no | — | How this drawer relates to other open overlays (Modals or Drawers). 'overlay' (default): parent stays visible. 'replace': parent hidden via display:none. |
+| `side` | `'left' \| 'right' \| 'top' \| 'bottom'` | no | — | Edge the drawer slides in from: `left`, `right` (default), `top`, `bottom`. |
+| `size` | `'sm' \| 'md' \| 'lg'` | no | — | Size preset: `sm` 320px, `md` 440px (default), `lg` 640px. Width for left/right, height for top/bottom. Capped to `viewport - 32px` on narrow viewports; always edge-anchored, never fullscreen. |
+| `overlay` | `'solid' \| 'blur'` | no | — | Overlay variant. 'solid' (default) \| 'blur' (frosted glass, `backdrop-filter: blur(4px)`). |
+| `stackMode` | `'replace' \| 'overlay'` | no | — | How this drawer relates to other open overlays (Modals or Drawers). 'overlay' (default): parent stays visible. 'replace': parent hidden via display:none. |
 | `disableEscapeClose` | `boolean` | no | — | Disable Escape-to-close. Default false. |
 | `dismissOnOverlayClick` | `boolean` | no | — | When false, overlay click does NOT close. Default true. |
 | `dragToClose` | `boolean` | no | — | Enable swipe-to-close gesture on touch devices (from Header). Default true. |
@@ -49,7 +49,7 @@ const [open, setOpen] = useState(false);
 <!-- prettier-ignore -->
 | Prop | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `padding` | `"none" \| "default"` | no | — | Override body padding. Default 'default' (--space-4). 'none' for edge-to-edge. |
+| `padding` | `'none' \| 'default'` | no | — | Override body padding. Default 'default' (--space-4). 'none' for edge-to-edge. |
 | …native | | | | plus native `<div>` attributes |
 
 ### `DrawerCloseProps`
@@ -64,7 +64,7 @@ const [open, setOpen] = useState(false);
 <!-- prettier-ignore -->
 | Prop | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `align` | `"start" \| "end" \| "space-between"` | no | — | Horizontal action alignment. Default 'end'. |
+| `align` | `'start' \| 'end' \| 'space-between'` | no | — | Horizontal action alignment. Default 'end'. |
 | …native | | | | plus native `<div>` attributes |
 
 ### `DrawerHeaderProps`

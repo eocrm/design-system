@@ -31,7 +31,7 @@ import { Bell, Plus } from 'lucide-react';
 <!-- prettier-ignore -->
 | Prop | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `as` | `TopBarElement` | no | — | Element to render. Defaults to `'header'`. Pick `'div'` when the bar is nested inside another content area where a second `<header>` landmark would conflict with page semantics. |
+| `as` | `'header' \| 'div'` | no | — | Element to render. Defaults to `'header'`. Pick `'div'` when the bar is nested inside another content area where a second `<header>` landmark would conflict with page semantics. |
 | `aria-label` | `string` | no | — | Accessible label for the bar's landmark. Defaults to `t('topBar.label')` when omitted OR empty — an empty string is not an explicit name — so screen readers always announce a name for the region. Override when a page has multiple bars to disambiguate them. |
 | `children` | `ReactNode` | no | — | Children of the bar — typically `<TopBar.Start>` + `<TopBar.End>`. The children area is open so consumers can render a single cluster, a single trailing element, or any other arrangement they need. |
 | …native | | | | plus native HTML attributes |
@@ -50,7 +50,7 @@ import { Bell, Plus } from 'lucide-react';
 |---|---|---|---|---|
 | `children` | `ReactNode` | yes | — | Icon to render inside the button. Typically a single lucide icon (e.g. `<Bell size={16} />`). The wrapping button supplies the accessible name via `aria-label` — the icon itself is decorative. |
 | `indicator` | `boolean` | no | — | Show a small dot in the upper-right corner of the button. Useful for "unread notifications", "pending updates", etc. The dot is purely visual (`aria-hidden`); the consumer is responsible for surfacing count / status text to assistive tech, typically via the button's `aria-label` or a hidden span. |
-| `indicatorTone` | `TopBarIndicatorTone` | no | — | Dot color. Defaults to `'danger'` (red). See `TopBarIndicatorTone` for the full option set. |
+| `indicatorTone` | `'danger' \| 'warning' \| 'info' \| 'accent'` | no | — | Dot color. Defaults to `'danger'` (red). See `TopBarIndicatorTone` for the full option set. |
 | `aria-label` | `string` | yes | — | **Required.** Accessible name for the icon-only button — without it, screen readers announce nothing. Phrase as an action (`'Notifications'`, `'Create new'`). Include count info here when the indicator is on (e.g. `'Notifications, 3 unread'`). |
 | …native | | | | plus native `<button>` attributes |
 

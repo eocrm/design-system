@@ -25,8 +25,8 @@ const VARS = [
 | `invalid` | `boolean` | no | — | External error visual (red border) — set from a backend Liquid syntax error. Default `false`. |
 | `error` | `ReactNode` | no | — | External error message shown in the footer. Pairs with `invalid`. |
 | `preview` | `ReactNode` | no | — | Consumer-rendered preview output. When set (or `previewStatus` ≠ 'idle'), the pane shows. |
-| `previewStatus` | `LiquidPreviewStatus` | no | — | Preview pane chrome. Default `'idle'`. |
-| `previewPlacement` | `LiquidPreviewPlacement` | no | — | Preview pane position. Default `'bottom'`. |
+| `previewStatus` | `'idle' \| 'loading' \| 'error'` | no | — | Preview pane chrome. Default `'idle'`. |
+| `previewPlacement` | `'bottom' \| 'right'` | no | — | Preview pane position. Default `'bottom'`. |
 | `showLineNumbers` | `boolean` | no | — | Show the line-number gutter. Default `true`. |
 | `showToolbar` | `boolean` | no | — | Show the toolbar (variable-insert menu). Default `true`. |
 | `toolbarActions` | `ReactNode` | no | — | Custom action buttons rendered in the toolbar, right-aligned just before the "Insert variable" button (e.g. a Docs / Help link). Pass `<Button size="sm">` elements (or a fragment of them); a `ghost` variant pairs well next to the bordered "Insert variable" button. Only renders when `showToolbar` is true. |

@@ -12,7 +12,7 @@
 | Prop | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `value` | `string` | yes | — | The value submitted when this radio is selected. |
-| `size` | `RadioSize` | no | — | Ring diameter + label type scale. Defaults to `'md'`. - `'sm'` — 14px ring, font-size-sm label. - `'md'` — 16px ring, font-size-md label. - `'lg'` — 20px ring, font-size-lg label. Inside `<RadioGroup>`, the group's `size` becomes the default; explicit per-radio `size` still wins. |
+| `size` | `'sm' \| 'md' \| 'lg'` | no | — | Ring diameter + label type scale. Defaults to `'md'`. - `'sm'` — 14px ring, font-size-sm label. - `'md'` — 16px ring, font-size-md label. - `'lg'` — 20px ring, font-size-lg label. Inside `<RadioGroup>`, the group's `size` becomes the default; explicit per-radio `size` still wins. |
 | `checked` | `boolean` | no | — | Controlled checked state. Inside `<RadioGroup>`, leave this unset — the group computes `checked` from its `value`. If you explicitly set `checked` on a Radio inside a group, your prop wins and the group's controlled invariant breaks (don't do this). |
 | `defaultChecked` | `boolean` | no | — | Initial checked state for uncontrolled standalone use. |
 | `label` | `ReactNode` | no | — | Label rendered next to the ring. The whole `<label>` is the click target. Omit for icon-only radios + pass `aria-label`. |

@@ -60,7 +60,7 @@ import { AppLayout, Banner, Link } from '@eocrm/design-system';
 <!-- prettier-ignore -->
 | Prop | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `tone` | `BannerTone` | no | — | Tone. Defaults to `'info'`. `info` — advance notice; `success` — condition resolved; `warning` — imminent or degrading; `danger` — broken or blocked now. See `BannerTone`. |
+| `tone` | `'info' \| 'success' \| 'warning' \| 'danger'` | no | — | Tone. Defaults to `'info'`. `info` — advance notice; `success` — condition resolved; `warning` — imminent or degrading; `danger` — broken or blocked now. See `BannerTone`. |
 | `title` | `ReactNode` | no | — | Optional bold lead-in, rendered INLINE before `children` in the same text flow ("**Scheduled maintenance** Sat 22:00–23:00."). Keep it short — the banner is one line on desktop. Collapses the native HTML `title` (tooltip) attribute. |
 | `children` | `ReactNode` | no | — | Message text. Wraps with the title. Keep to one sentence. |
 | `icon` | `ReactNode` | no | — | Override the tone's default icon (any ReactNode, typically a 16px lucide icon with `aria-hidden`). `null` hides it. Defaults: `info` → `Info`, `success` → `CheckCircle2`, `warning` → `AlertTriangle`, `danger` → `XCircle`. |

@@ -25,8 +25,8 @@ const [view, setView] = useState<CalendarView>('month');
 | Prop | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `events` | `readonly CalendarEvent[]` | no | — | Events to display. |
-| `view` | `CalendarView` | no | — | Active view (controlled). Pair with `onViewChange`. |
-| `defaultView` | `CalendarView` | no | — | Initial view (uncontrolled). Defaults to `'month'`. |
+| `view` | `'month' \| 'week' \| 'day' \| 'agenda'` | no | — | Active view (controlled). Pair with `onViewChange`. |
+| `defaultView` | `'month' \| 'week' \| 'day' \| 'agenda'` | no | — | Initial view (uncontrolled). Defaults to `'month'`. |
 | `onViewChange` | `((view: CalendarView) => void)` | no | — | Fires when the user clicks the view switcher. |
 | `value` | `Date` | no | — | Navigation cursor (controlled). |
 | `defaultValue` | `Date` | no | — | Initial cursor (uncontrolled). Defaults to `new Date()`. |

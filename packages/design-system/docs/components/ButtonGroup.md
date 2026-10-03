@@ -32,14 +32,14 @@
 <!-- prettier-ignore -->
 | Prop | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `size` | `ButtonSize` | no | — | Size propagated to children. Per-child `size` (Button or Item) wins when explicitly set. In visual mode this happens via cloneElement on Button children. In segmented mode, `<ButtonGroup.Item>` reads from context. |
+| `size` | `'xs' \| 'sm' \| 'md' \| 'lg'` | no | — | Size propagated to children. Per-child `size` (Button or Item) wins when explicitly set. In visual mode this happens via cloneElement on Button children. In segmented mode, `<ButtonGroup.Item>` reads from context. |
 | `disabled` | `boolean` | no | — | Disabled state for the whole group. In segmented mode this is authoritative (all items become aria-disabled, clicks no-op). In visual mode this is a no-op — pass `disabled` per `<Button>` instead. |
 | `invalid` | `boolean` | no | false | Segmented mode: `aria-invalid` on the radiogroup. Visual mode: consumed and ignored. Field / SettingRow inject it — it used to leak onto the group div as a stray attribute. |
 | `required` | `boolean` | no | false | Segmented mode: `aria-required` on the radiogroup. Visual mode: consumed and ignored. Field / SettingRow inject it. |
 | `className` | `string` | no | — |  |
 | `style` | `CSSProperties` | no | — |  |
 | `value` | `string` | no | — | Visual mode marker. Never set; absence flips to visual. |
-| `onValueChange` | `(next: string) => void` | no | — |  |
+| `onValueChange` | `(next: string) => void` | no | — | Fired when a different Item is selected. Consumers wanting literal-union narrowing can cast the setter: `onValueChange={(v) => setView(v as 'grid' \| 'list')}`. |
 | `aria-label` | `string` | no | — | Accessible name for the group landmark. Optional but recommended. |
 | …native | | | | plus native HTML attributes |
 

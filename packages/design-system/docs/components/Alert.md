@@ -39,7 +39,7 @@ const [show, setShow] = useState(true);
 <!-- prettier-ignore -->
 | Prop | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `tone` | `AlertTone` | no | — | Tone. Defaults to `'info'`. See `AlertTone` for full descriptions. |
+| `tone` | `'info' \| 'success' \| 'warning' \| 'error'` | no | — | Tone. Defaults to `'info'`. See `AlertTone` for full descriptions. |
 | `title` | `ReactNode` | no | — | Optional bold heading. Renders above the description. ReactNode so you can embed inline emphasis (`<>Update <strong>1.2.3</strong> available</>`). The native HTML `title` attribute (tooltip-on-hover) is collapsed by this prop. Use `aria-label` if you need that. |
 | `children` | `ReactNode` | no | — | Description body. Rendered below the title in muted color. |
 | `icon` | `ReactNode` | no | — | Override the tone's default icon. Pass any ReactNode (typically a lucide-react icon). Pass `null` to hide the icon entirely. Defaults: `info` → `Info`, `success` → `CheckCircle2`, `warning` → `AlertTriangle`, `error` → `XCircle`. |

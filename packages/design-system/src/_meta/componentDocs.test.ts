@@ -47,4 +47,24 @@ describe('docs/components props tables', () => {
       '| …native | | | | plus native attributes of the `as` element (default `<button>`) |',
     );
   });
+
+  const row = (n: string, prop: string) =>
+    doc(n)
+      .split('\n')
+      .find((l) => l.startsWith(`| \`${prop}\` |`))!;
+
+  it('takes a union member description from any constituent', () => {
+    expect(row('Grid', 'minColumnWidth')).toMatch(/\| \S[^|]*\|$/);
+    expect(row('Masonry', 'minColumnWidth')).toMatch(/\| \S[^|]*\|$/);
+  });
+
+  it('expands small literal-union aliases in declaration order', () => {
+    expect(row('Button', 'variant')).toContain(
+      "| `'primary' \\| 'secondary' \\| 'ghost' \\| 'danger' \\| 'danger-outline' \\| 'success'` |",
+    );
+  });
+
+  it("documents SocialButton's own variant default", () => {
+    expect(row('SocialButton', 'variant')).toContain("| no | 'secondary' |");
+  });
 });

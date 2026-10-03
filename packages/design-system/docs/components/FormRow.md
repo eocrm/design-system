@@ -18,7 +18,7 @@
 |---|---|---|---|---|
 | `columns` | `2 \| 3` | no | — | Fixed equal-width column count. Omit for responsive auto-fit (the default). |
 | `minColumnWidth` | `string` | no | — | Min field width before the row reflows to stacked (auto-fit mode). Default `'16rem'`. |
-| `gap` | `GridGap` | no | — | Gap between fields. Default `'lg'`. |
+| `gap` | `'xs' \| 'sm' \| 'md' \| 'lg' \| 'xl' \| '2xl'` | no | — | Gap between fields. Default `'lg'`. |
 | `children` | `ReactNode` | yes | — | The fields (usually `<Field>`). |
 | …native | | | | plus native HTML attributes |
 

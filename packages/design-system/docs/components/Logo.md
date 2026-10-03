@@ -17,8 +17,8 @@ import logo from '../assets/eocrm-logo.svg'; // a consumer-owned asset
 |---|---|---|---|---|
 | `src` | `string` | yes | — | The brand mark image URL — typically an imported SVG/PNG asset. The mark is a **consumer-owned asset**; the design system ships no logo of its own. Rendered as an `<img>` (`object-fit: contain`) with no CSS recolor — the asset carries its own color. For third-party SSO marks use `<BrandIcon>`. |
 | `text` | `ReactNode` | no | — | Wordmark rendered beside (or below) the mark — consumers pass `"eocrm"`. Omit for a mark-only logo. |
-| `textPlacement` | `LogoTextPlacement` | no | — | Where the wordmark sits relative to the mark. Defaults to `'end'` (beside); `'bottom'` stacks it under the mark, centered. |
-| `size` | `LogoSize` | no | — | Mark size — `'sm'` (24) / `'md'` (32, default) / `'lg'` (40). |
+| `textPlacement` | `'end' \| 'bottom'` | no | — | Where the wordmark sits relative to the mark. Defaults to `'end'` (beside); `'bottom'` stacks it under the mark, centered. |
+| `size` | `'sm' \| 'md' \| 'lg'` | no | — | Mark size — `'sm'` (24) / `'md'` (32, default) / `'lg'` (40). |
 | `label` | `string` | no | — | Accessible name for the mark when there's no `text` (used as the image `alt`). Omit for a decorative mark (`alt=""`), or when `text` is present (the wordmark is the name). Never pass both `text` and `label`. |
 | `subtext` | `ReactNode` | no | — | Small, muted secondary line rendered under `text` — e.g. a plan or tagline (`subtext="Free trial"`). Only shown when `text` is present. |
 | …native | | | | plus native `<div>` attributes |

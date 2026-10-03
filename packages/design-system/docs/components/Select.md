@@ -63,7 +63,7 @@
 | `loadOnOpen` | `boolean` | no | — | When `true` (default), defers the first `loadOptions` call until the user opens the listbox. Set to `false` to fetch eagerly on mount. |
 | `searchDebounceMs` | `number` | no | — | Debounce window (ms) between the last query keystroke and the next `loadOptions` call. Default `250`. |
 | `multiple` | `boolean` | no | — | Enables multi-select. `value` / `defaultValue` become `string[]` and `onChange` emits arrays. Picking a row toggles it in/out of the selection instead of replacing-and-closing. |
-| `triggerDisplay` | `SelectTriggerDisplay` | no | — | How the trigger renders the selected value(s) in multi mode. Ignored in single mode. See `SelectTriggerDisplay`. Defaults to `'chips'`. Use `'summary'` for table-filter UIs where chips would crowd the toolbar. |
+| `triggerDisplay` | `'chips' \| 'summary'` | no | — | How the trigger renders the selected value(s) in multi mode. Ignored in single mode. See `SelectTriggerDisplay`. Defaults to `'chips'`. Use `'summary'` for table-filter UIs where chips would crowd the toolbar. |
 | `searchable` | `boolean` | no | — | Renders the trigger as a combobox text input with substring filtering over the (sync) options. In async mode the filter is delegated to the server. Required by `creatable`. |
 | `selectOnOpen` | `boolean` | no | — | When the searchable combobox opens, select the current text so the user can immediately type to replace it (type-to-search). Default `false`. Only affects the single searchable trigger. |
 | `creatable` | `boolean` | no | — | Adds a "+ Create <query>" row when the trimmed query has no exact label match. Activating it fires `onCreate(label)` and folds the new value into the selection. Requires `searchable` (throws in dev otherwise). |
@@ -74,7 +74,7 @@
 | `open` | `boolean` | no | — | Controlled open state. Pair with `onOpenChange`. Omit both to let Select own its open state (the common case). |
 | `defaultOpen` | `boolean` | no | — | Initial open state for uncontrolled usage. Defaults to `false`. |
 | `onOpenChange` | `((open: boolean) => void)` | no | — | Fires whenever Select wants to change open state. |
-| `size` | `SelectSize` | no | — | Trigger height + type scale. See `SelectSize`. Defaults to `'md'`. |
+| `size` | `'sm' \| 'md' \| 'lg'` | no | — | Trigger height + type scale. See `SelectSize`. Defaults to `'md'`. |
 | `invalid` | `boolean` | no | — | Marks the trigger as invalid — applies the error border + sets `aria-invalid="true"`. Pair with an external error message linked via `aria-describedby`. |
 | `placeholder` | `string` | no | — | Placeholder shown when nothing is selected. In searchable mode, also the input's `placeholder` until the user types. |
 | `clearable` | `boolean` | no | — | Shows a `✕` button in the trigger that clears the selection. Opt-in: defaults to `false`. Always forced `false` when `disabled` or `readOnly`. "Clear" means "reset to the empty value" (`''` / `[]`), so the button only appears when the current value differs from that. A Select whose selected option IS `value: ''` is already at the cleared value and shows no ✕; a value matching no option (a stale id) does show one. |

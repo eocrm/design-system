@@ -52,8 +52,8 @@
 <!-- prettier-ignore -->
 | Prop | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `side` | `DropdownMenuSide` | no | — | Preferred side. Default `'bottom'`. Auto-flips on collision. |
-| `align` | `DropdownMenuAlign` | no | — | Edge alignment. Default `'start'`. |
+| `side` | `'top' \| 'bottom' \| 'left' \| 'right'` | no | — | Preferred side. Default `'bottom'`. Auto-flips on collision. |
+| `align` | `'start' \| 'center' \| 'end'` | no | — | Edge alignment. Default `'start'`. |
 | `sideOffset` | `number` | no | — | Gap in px between trigger and menu. Default `4`. |
 | `minWidth` | `string \| number` | no | — | Preferred minimum width in px or any CSS length. Defaults to the trigger's width and is reduced when necessary to keep the menu within the viewport. |
 | …native | | | | plus native `<div>` attributes |
@@ -80,7 +80,7 @@
 | Prop | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `onSelect` | `() => void` | yes | — | Called when the item is activated (click or Enter/Space). The consumer performs the action. |
-| `tone` | `DropdownMenuItemTone` | no | — | Visual tone. - `'default'` — normal action. - `'danger'` — destructive (Delete, Revoke, Remove). Reserve for irreversible operations. |
+| `tone` | `'default' \| 'danger'` | no | — | Visual tone. - `'default'` — normal action. - `'danger'` — destructive (Delete, Revoke, Remove). Reserve for irreversible operations. |
 | `icon` | `ReactNode` | no | — | Leading icon. Rendered in a fixed-size slot so labels stay aligned across items. |
 | `shortcut` | `string` | no | — | Trailing shortcut hint (e.g. `'⌘D'`). Visual cue only — does NOT register a global key handler. |
 | `meta` | `ReactNode` | no | — | Trailing secondary content *about the item itself* — a region code, a count, a `<Badge>`. Distinct from `shortcut`, which is a keyboard hint and is styled (and free to evolve) as one. `ReactNode`, so a Badge or Dot can go here. It is NOT `aria-hidden`, so it joins the item's accessible name ("demo RU" rather than a second identical "demo") — which is the point when the label alone is ambiguous. It is a prop, not a child, so it stays out of the typeahead label; type-to-select still matches the pure label text. Renders before `shortcut` when both are present, keeping the keyboard hint rightmost. |
@@ -132,8 +132,8 @@
 <!-- prettier-ignore -->
 | Prop | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `side` | `DropdownMenuSide` | no | — | Preferred side. Default `'bottom'`. Auto-flips on collision. |
-| `align` | `DropdownMenuAlign` | no | — | Edge alignment. Default `'start'`. |
+| `side` | `'top' \| 'bottom' \| 'left' \| 'right'` | no | — | Preferred side. Default `'bottom'`. Auto-flips on collision. |
+| `align` | `'start' \| 'center' \| 'end'` | no | — | Edge alignment. Default `'start'`. |
 | `sideOffset` | `number` | no | — | Gap in px between trigger and menu. Default `4`. |
 | `minWidth` | `string \| number` | no | — | Preferred minimum width in px or any CSS length. Defaults to the trigger's width and is reduced when necessary to keep the menu within the viewport. |
 | …native | | | | plus native HTML attributes |

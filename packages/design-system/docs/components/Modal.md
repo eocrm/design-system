@@ -30,9 +30,9 @@ const [open, setOpen] = useState(false);
 |---|---|---|---|---|
 | `open` | `boolean` | yes | — | Controlled open state. Required. |
 | `onOpenChange` | `(open: boolean) => void` | yes | — | Fired when Modal wants to change open state — Esc, overlay click, Close button, programmatic. |
-| `size` | `ModalSize` | no | 'md' | Size preset. Defaults to `'md'`. - `'sm'` (400px) — confirms and short prompts. - `'md'` (560px) — the default; typical forms. - `'lg'` (800px) — wide forms, tables, previews. - `'full'` (95vw × 90dvh, fixed height) — long documents, e.g. an HTML email. See {@link ModalSize}. |
-| `overlay` | `ModalOverlayVariant` | no | — | Overlay variant. 'solid' (default) paints a dark dimming layer. 'blur' uses a light tinted background plus `backdrop-filter: blur(4px)` for a frosted-glass effect. 'blur' costs an extra compositor layer — fine for normal use; avoid stacking three blurred modals at once. |
-| `stackMode` | `OverlayStackMode` | no | — | How this modal relates to existing modals in the stack when it opens. - `'overlay'` (default): if there's a modal below this one, it stays visible underneath. This modal's own overlay paints transparent so the parent's dim shows through. Only the bottom modal (depth 0) paints the actual dim/blur. The user sees the parent's context behind the active modal. - `'replace'`: any modals below this one are hidden via `display: none` (React state preserved). This modal paints its own overlay normally. Best for forced-step modals where the parent context is irrelevant. Has no effect when this is the only open modal. |
+| `size` | `'sm' \| 'md' \| 'lg' \| 'full'` | no | 'md' | Size preset. Defaults to `'md'`. - `'sm'` (400px) — confirms and short prompts. - `'md'` (560px) — the default; typical forms. - `'lg'` (800px) — wide forms, tables, previews. - `'full'` (95vw × 90dvh, fixed height) — long documents, e.g. an HTML email. See {@link ModalSize}. |
+| `overlay` | `'solid' \| 'blur'` | no | — | Overlay variant. 'solid' (default) paints a dark dimming layer. 'blur' uses a light tinted background plus `backdrop-filter: blur(4px)` for a frosted-glass effect. 'blur' costs an extra compositor layer — fine for normal use; avoid stacking three blurred modals at once. |
+| `stackMode` | `'replace' \| 'overlay'` | no | — | How this modal relates to existing modals in the stack when it opens. - `'overlay'` (default): if there's a modal below this one, it stays visible underneath. This modal's own overlay paints transparent so the parent's dim shows through. Only the bottom modal (depth 0) paints the actual dim/blur. The user sees the parent's context behind the active modal. - `'replace'`: any modals below this one are hidden via `display: none` (React state preserved). This modal paints its own overlay normally. Best for forced-step modals where the parent context is irrelevant. Has no effect when this is the only open modal. |
 | `disableEscapeClose` | `boolean` | no | — | Disable Escape-to-close. Default false. Combined with `dismissOnOverlayClick: false` and omitting `<Modal.Close>` produces a fully forced step. |
 | `dismissOnOverlayClick` | `boolean` | no | — | When false, clicking the overlay backdrop does NOT close the modal. Default true. |
 | `initialFocusRef` | `RefObject<HTMLElement \| null>` | no | — | Initial focus target on open. Default: the dialog container itself. Pass a ref to override (e.g. focus the first input in a form). |
@@ -48,7 +48,7 @@ const [open, setOpen] = useState(false);
 <!-- prettier-ignore -->
 | Prop | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `padding` | `"none" \| "default"` | no | — | Override body's padding. Default 'default' (--space-4). 'none' for edge-to-edge content. |
+| `padding` | `'none' \| 'default'` | no | — | Override body's padding. Default 'default' (--space-4). 'none' for edge-to-edge content. |
 | …native | | | | plus native `<div>` attributes |
 
 ### `ModalCloseProps`
@@ -63,7 +63,7 @@ const [open, setOpen] = useState(false);
 <!-- prettier-ignore -->
 | Prop | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `align` | `"start" \| "end" \| "space-between"` | no | — | Horizontal action alignment. Default 'end'. |
+| `align` | `'start' \| 'end' \| 'space-between'` | no | — | Horizontal action alignment. Default 'end'. |
 | …native | | | | plus native `<div>` attributes |
 
 ### `ModalHeaderProps`

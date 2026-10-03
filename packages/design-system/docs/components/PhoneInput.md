@@ -18,8 +18,8 @@ const [phone, setPhone] = useState<string | null>(null);
 | `onChange` | `(e164: string \| null) => void` | yes | — | Fires with canonical E.164 on every edit; `null` when empty. |
 | `defaultCountry` | `string` | no | — | ISO 3166-1 alpha-2 country used to seed the picker when `value` is empty. Default `"US"`. |
 | `countries` | `string[]` | no | — | Restrict the picker to this ISO-code subset. Defaults to all libphonenumber-js countries. An empty array is treated as all countries. |
-| `countryDisplay` | `CountryDisplay` | no | — | How the SELECTED country renders in the picker trigger. Default `"code"`. - `"code"` — calling code only (`+1`). - `"iso"` — ISO code + code (`US +1`). - `"name"` — full country name + code (`United States +1`). - `"flag"` — emoji flag + code (`🇺🇸 +1`). Note: emoji flags don't render on Windows Chrome/Edge (they show the letters), so prefer `"iso"` there. The dropdown rows always show the full country name + code (plus a flag in `"flag"` mode) so they stay searchable + identifiable regardless of this. |
-| `size` | `PhoneInputSize` | no | — | Control size, forwarded to the Select + Input. Default `"md"`. |
+| `countryDisplay` | `'flag' \| 'iso' \| 'name' \| 'code'` | no | — | How the SELECTED country renders in the picker trigger. Default `"code"`. - `"code"` — calling code only (`+1`). - `"iso"` — ISO code + code (`US +1`). - `"name"` — full country name + code (`United States +1`). - `"flag"` — emoji flag + code (`🇺🇸 +1`). Note: emoji flags don't render on Windows Chrome/Edge (they show the letters), so prefer `"iso"` there. The dropdown rows always show the full country name + code (plus a flag in `"flag"` mode) so they stay searchable + identifiable regardless of this. |
+| `size` | `'sm' \| 'md' \| 'lg'` | no | — | Control size, forwarded to the Select + Input. Default `"md"`. |
 | `invalid` | `boolean` | no | — | Error chrome on both controls (host/Field-driven). |
 | `disabled` | `boolean` | no | — | Disable both controls. |
 | `required` | `boolean` | no | — | Mark required (forwarded for Field semantics). |

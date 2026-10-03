@@ -13,7 +13,7 @@
 <!-- prettier-ignore -->
 | Prop | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `size` | `PasswordInputSize` | no | — | Field height + type scale. Same scale as `<Input>`. Defaults to `'md'`. |
+| `size` | `'sm' \| 'md' \| 'lg'` | no | — | Field height + type scale. Same scale as `<Input>`. Defaults to `'md'`. |
 | `invalid` | `boolean` | no | — | Toggles the error visual + sets `aria-invalid="true"`. |
 | `revealed` | `boolean` | no | — | Controlled revealed state. Pair with `onRevealChange`. |
 | `defaultRevealed` | `boolean` | no | — | Initial revealed state for uncontrolled use. Defaults to `false`. |

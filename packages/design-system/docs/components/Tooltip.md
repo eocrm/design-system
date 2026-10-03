@@ -23,8 +23,8 @@
 |---|---|---|---|---|
 | `content` | `ReactNode` | yes | — | Tooltip body. ReactNode so you can include inline `<kbd>` or icons. If `null`, `undefined`, or `""`, the trigger renders as-is with no listeners and no `aria-describedby` — useful for conditional UIs. |
 | `children` | `ReactElement<unknown, string \| JSXElementConstructor<any>>` | yes | — | Exactly one React element that accepts a ref. Cloned to inject the tooltip's ref + listeners + aria. `<Button>` and raw `<button>` both qualify; a custom component without `forwardRef` does not. |
-| `side` | `TooltipSide` | no | — | Preferred side. Default `'top'`. Auto-flips on collision via Floating UI. |
-| `align` | `TooltipAlign` | no | — | Edge alignment. Default `'center'`. |
+| `side` | `'top' \| 'right' \| 'bottom' \| 'left'` | no | — | Preferred side. Default `'top'`. Auto-flips on collision via Floating UI. |
+| `align` | `'start' \| 'center' \| 'end'` | no | — | Edge alignment. Default `'center'`. |
 | `sideOffset` | `number` | no | — | Gap in px between trigger and tooltip. Default `6` (room for the arrow). |
 | `delay` | `number` | no | — | Delay in ms before hover opens the tooltip. Default `400`. Keyboard focus is always immediate (a11y). Close is always immediate. |
 | `open` | `boolean` | no | — | Controlled open state. Provide alongside `onOpenChange` to drive open externally. Omit both to let Tooltip own its state (the common case). |

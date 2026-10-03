@@ -48,7 +48,7 @@
 | Prop | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `color` | `PaletteColor` | no | — | Optional full `PaletteColor` (one of the 30 named categorical colors) for the leading dot. Use when the 6 semantic tones aren't enough to distinguish filter categories (e.g., per-tenant or per-tag color coding that matches an `OptionsPicker` group). Takes precedence over `tone` when both are set. Renders a bare `<Dot>` in that color. |
-| `tone` | `BadgeTone` | no | — | Optional dot tone. When set, prefixes a 6px colored circle before the value text — use to distinguish filter categories that share a screen (e.g., event filters get a tone-matched dot, tenant filters get no dot). Reuses Badge's tone palette: `neutral`, `info`, `success`, `warning`, `danger`, `purple`. Omit for plain text values. For a richer categorical color, use `color` instead. |
+| `tone` | `'neutral' \| 'info' \| 'success' \| 'warning' \| 'danger' \| 'purple'` | no | — | Optional dot tone. When set, prefixes a 6px colored circle before the value text — use to distinguish filter categories that share a screen (e.g., event filters get a tone-matched dot, tenant filters get no dot). Reuses Badge's tone palette: `neutral`, `info`, `success`, `warning`, `danger`, `purple`. Omit for plain text values. For a richer categorical color, use `color` instead. |
 | `children` | `ReactNode` | yes | — | The value text — what the filter is actually filtering by (`auth.*`, `beta`, `Won`). Pair with an optional `tone` / `color` dot to categorize. |
 | …native | | | | plus native `<span>` attributes |
 

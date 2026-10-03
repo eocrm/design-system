@@ -42,11 +42,11 @@ import { Accordion } from '@eocrm/design-system';
 <!-- prettier-ignore -->
 | Prop | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `variant` | `AccordionVariant` | no | — | Visual variant. Defaults to `'bordered'`. |
-| `size` | `AccordionSize` | no | — | Trigger size (font + padding). Defaults to `'md'`. |
-| `gap` | `AccordionGap` | no | — | Gap between items → separated "card" look (each item gets its own border + radius; the outer container chrome is dropped). Omit for the joined default. |
-| `indicatorSide` | `AccordionIndicatorSide` | no | — | Which side the chevron indicator sits on. Defaults to `'right'`. |
-| `actionsWhenClosed` | `AccordionActionsWhenClosed` | no | — | Whether `Accordion.Trigger` `actions` stay visible when the item is collapsed. Defaults to `'show'`; `'hide'` fades them out (and drops them from focus order) while closed. |
+| `variant` | `'bordered' \| 'borderless'` | no | — | Visual variant. Defaults to `'bordered'`. |
+| `size` | `'sm' \| 'md' \| 'lg'` | no | — | Trigger size (font + padding). Defaults to `'md'`. |
+| `gap` | `'sm' \| 'md' \| 'lg'` | no | — | Gap between items → separated "card" look (each item gets its own border + radius; the outer container chrome is dropped). Omit for the joined default. |
+| `indicatorSide` | `'left' \| 'right'` | no | — | Which side the chevron indicator sits on. Defaults to `'right'`. |
+| `actionsWhenClosed` | `'show' \| 'hide'` | no | — | Whether `Accordion.Trigger` `actions` stay visible when the item is collapsed. Defaults to `'show'`; `'hide'` fades them out (and drops them from focus order) while closed. |
 | `children` | `ReactNode` | yes | — |  |
 | `type` | `"single" \| "multiple"` | yes | — |  |
 | `value` | `string \| string[]` | no | — | Controlled open item value. `''` = nothing open (only meaningful when `collapsible`). |
@@ -70,7 +70,7 @@ import { Accordion } from '@eocrm/design-system';
 |---|---|---|---|---|
 | `value` | `string` | yes | — | Unique value used to identify the item in the root's `value`/`onValueChange`. |
 | `disabled` | `boolean` | no | — | When true, the trigger is non-interactive and keyboard nav skips this item. |
-| `headerLevel` | `AccordionHeaderLevel` | no | — | Heading level wrapping the trigger. WAI-ARIA APG requires triggers to live inside a heading element. Defaults to `'h3'`. |
+| `headerLevel` | `'h2' \| 'h3' \| 'h4' \| 'h5' \| 'h6'` | no | — | Heading level wrapping the trigger. WAI-ARIA APG requires triggers to live inside a heading element. Defaults to `'h3'`. |
 | `children` | `ReactNode` | yes | — |  |
 | …native | | | | plus native `<div>` attributes |
 

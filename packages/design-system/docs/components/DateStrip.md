@@ -26,7 +26,7 @@ const [day, setDay] = useState<string | null>(null);
 | `onNext` | `() => void` | yes | — | Next-week button handler. Replace `days` with the later week. |
 | `canPrevious` | `boolean` | no | — | `false` disables the previous-week button (e.g. the current week). Default `true`. |
 | `canNext` | `boolean` | no | — | `false` disables the next-week button (end of the booking window). Default `true`. |
-| `titleOrder` | `TitleOrder` | no | — | Heading level of the month label. Default `2`. |
+| `titleOrder` | `1 \| 2 \| 3 \| 4 \| 5 \| 6` | no | — | Heading level of the month label. Default `2`. |
 | `name` | `string` | no | — | Radio group `name` (also submitted with a form). Default: a generated id. |
 | `invalid` | `boolean` | no | false | Marks the group `aria-invalid` (the radios themselves do not support it). Field / SettingRow inject it. |
 | `required` | `boolean` | no | — | Native `required` on the radios (the group then fails form validation until one is chosen). Field / SettingRow inject it; it used to land on the root as a stray attribute. |

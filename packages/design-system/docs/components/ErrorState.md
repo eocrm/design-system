@@ -48,10 +48,10 @@
 | `description` | `ReactNode` | no | — | Optional description rendered below the title. |
 | `actions` | `ReactNode` | no | — | Optional action(s) below the description — a `<Button>` or a `<Cluster gap="sm">` of buttons. Keep to ONE primary action. |
 | `extra` | `ReactNode` | no | — | Optional supplemental content rendered below the actions — e.g. an `Error ID: …` line or a "view status" link. Reads as metadata, not primary copy. Distinct from `description`, which sits above the actions. |
-| `tone` | `ErrorStateTone` | no | — | Status tone. Defaults to `'neutral'`. - `'neutral'` — informational (404 / not-found). Icon uses `--color-fg-muted`. - `'danger'` — an error (500 / crash). Icon uses `--color-danger`, and the wrapper gets `role="alert"` so an error-boundary fallback announces on mount. Override the role by passing your own `role`. |
-| `size` | `ErrorStateSize` | no | — | Visual size. Defaults to `'lg'` (full-page hero). Use `'sm'` / `'md'` when the state is embedded in a smaller surface. |
-| `align` | `ErrorStateAlign` | no | — | Horizontal alignment of the stacked content. Defaults to `'center'`. Use `'start'` in a tight column where centering looks stranded. |
-| `headingLevel` | `ErrorStateHeadingLevel` | no | — | Heading level for `title`. Defaults to `1` (page-level). Lower it when the screen is nested under an existing heading. Values outside `1–6` clamp to `1`. |
+| `tone` | `'neutral' \| 'danger'` | no | — | Status tone. Defaults to `'neutral'`. - `'neutral'` — informational (404 / not-found). Icon uses `--color-fg-muted`. - `'danger'` — an error (500 / crash). Icon uses `--color-danger`, and the wrapper gets `role="alert"` so an error-boundary fallback announces on mount. Override the role by passing your own `role`. |
+| `size` | `'sm' \| 'md' \| 'lg'` | no | — | Visual size. Defaults to `'lg'` (full-page hero). Use `'sm'` / `'md'` when the state is embedded in a smaller surface. |
+| `align` | `'center' \| 'start'` | no | — | Horizontal alignment of the stacked content. Defaults to `'center'`. Use `'start'` in a tight column where centering looks stranded. |
+| `headingLevel` | `1 \| 2 \| 3 \| 4 \| 5 \| 6` | no | — | Heading level for `title`. Defaults to `1` (page-level). Lower it when the screen is nested under an existing heading. Values outside `1–6` clamp to `1`. |
 | …native | | | | plus native HTML attributes |
 
 <!-- props:end -->

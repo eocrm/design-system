@@ -78,6 +78,25 @@ const cell = (s) => s.replace(/\s+/g, ' ').trim().replace(/\|/g, '\\|');
 const stripIssueRefs = (s) =>
   s.replace(/\s*\(#\d+(?:,\s*#\d+)*\)/g, '').replace(/,\s*#\d+(?=\))/g, '');
 
+const typeText = (t) => checker.typeToString(t, undefined, ts.TypeFormatFlags.NoTruncation);
+const LITERAL =
+  ts.TypeFlags.StringLiteral | ts.TypeFlags.NumberLiteral | ts.TypeFlags.BooleanLiteral;
+
+function literalUnion(t, optional) {
+  const u = optional ? checker.getNonNullableType(t) : t;
+  if (!u.isUnion() || u.flags & ts.TypeFlags.Boolean || u.types.length > 12) return undefined;
+  if (!u.types.every((m) => m.flags & LITERAL)) return undefined;
+  const node = u.aliasSymbol?.declarations?.[0]?.type;
+  const order = ts.isUnionTypeNode(node ?? {})
+    ? node.types.map((n) => checker.getTypeFromTypeNode(n))
+    : [];
+  const rank = (m) => order.indexOf(m) + 1 || order.length + 1;
+  return [...u.types]
+    .sort((a, b) => rank(a) - rank(b))
+    .map((m) => (m.isStringLiteral() ? `'${m.value}'` : typeText(m)))
+    .join(' | ');
+}
+
 function renderTable(typeName) {
   const sym = propsTypes.get(typeName);
   const declared = checker.getDeclaredTypeOfSymbol(sym);
@@ -90,18 +109,17 @@ function renderTable(typeName) {
       let t = checker.getTypeOfSymbolAtLocation(prop, decl);
       if (checker.getNonNullableType(t).flags & ts.TypeFlags.TypeParameter)
         t = checker.getBaseConstraintOfType(checker.getNonNullableType(t)) ?? 'ElementType';
-      let type =
-        typeof t === 'string'
-          ? t
-          : checker.typeToString(t, undefined, ts.TypeFormatFlags.NoTruncation);
+      let type = typeof t === 'string' ? t : (literalUnion(t, optional) ?? typeText(t));
       if (optional) type = type.replace(/ \| undefined\b/g, '').replace(/^undefined \| /, '');
+      const doc = ts.displayPartsToString(prop.getDocumentationComment(checker));
       const entry = merged.get(prop.name);
       if (entry) {
+        entry.doc ||= doc;
         if (!entry.types.includes(type)) entry.types.push(type);
         entry.required &&= !optional;
         entry.seen += 1;
       } else {
-        merged.set(prop.name, { prop, decl, types: [type], required: !optional, seen: 1 });
+        merged.set(prop.name, { prop, decl, doc, types: [type], required: !optional, seen: 1 });
       }
     }
   }
@@ -121,14 +139,14 @@ function renderTable(typeName) {
   rows.sort((a, b) => fileOrder.indexOf(a.file) - fileOrder.indexOf(b.file) || a.pos - b.pos);
 
   const lines = ['| Prop | Type | Required | Default | Description |', '|---|---|---|---|---|'];
-  for (const { prop, types, required, seen } of rows) {
+  for (const { prop, doc, types, required, seen } of rows) {
     const def = prop.getJsDocTags(checker).find((t) => t.name === 'default');
     const defText = def ? ts.displayPartsToString(def.text) : '';
     const type = (types.length > 1 ? types.filter((t) => t !== 'undefined') : types)
       .join(' | ')
       .replace(/`/g, "'");
     lines.push(
-      `| \`${prop.name}\` | \`${cell(type)}\` | ${required && seen === parts.length ? 'yes' : 'no'} | ${defText ? cell(defText) : '—'} | ${cell(stripIssueRefs(ts.displayPartsToString(prop.getDocumentationComment(checker))))} |`,
+      `| \`${prop.name}\` | \`${cell(type)}\` | ${required && seen === parts.length ? 'yes' : 'no'} | ${defText ? cell(defText) : '—'} | ${cell(stripIssueRefs(doc))} |`,
     );
   }
   const declText = sym.declarations[0].getText();

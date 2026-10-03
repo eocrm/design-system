@@ -60,7 +60,6 @@ interface GridBaseProps {
 interface GridFixedColumns extends GridBaseProps, HTMLAttributes<HTMLElement> {
   /** Fixed number of equal-width columns. Mutually exclusive with `minColumnWidth`. */
   columns: number;
-  /** Auto-fit variant only: minimum cell width (CSS length, e.g. `'240px'`); defaults to `'240px'` when neither `columns` nor this is set. Not allowed with `columns`. */
   minColumnWidth?: never;
   /**
    * Collapse to a single visual column when the GRID'S OWN width (container

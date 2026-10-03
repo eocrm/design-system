@@ -90,7 +90,7 @@
 | Prop | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `order` | `1 \| 2 \| 3 \| 4 \| 5 \| 6` | no | — | Heading semantic level (1–6). Default `1`. Passes through to `<Title order={order}>` so the rendered element is `<h1>`–`<h6>`. |
-| `size` | `TitleSize` | no | — | Visual size override (decouples from semantic level). Pass-through to `<Title size>` — useful for "section-level page headers" where the h-level is 2 but you want it to LOOK like an h1. |
+| `size` | `'xs' \| 'sm' \| 'md' \| 'lg' \| 'xl' \| '2xl' \| '3xl'` | no | — | Visual size override (decouples from semantic level). Pass-through to `<Title size>` — useful for "section-level page headers" where the h-level is 2 but you want it to LOOK like an h1. |
 | `truncate` | `boolean` | no | — | Keep the title on one line, ending in an ellipsis where the title column ends (at the actions on wide layouts) instead of wrapping. Pass-through to `<Title truncate>`. Defaults to `false`. Anything inline AFTER the text (e.g. a status badge) is clipped with it — put badges in `PageHeader.Meta`. Screen readers still get the full text (don't add `aria-label`); sighted users don't, so show the full title somewhere else too if it matters. |
 | `children` | `ReactNode` | yes | — |  |
 

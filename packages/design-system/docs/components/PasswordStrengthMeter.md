@@ -14,7 +14,7 @@
 | Prop | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `value` | `string` | no | — | The password to evaluate. Required UNLESS `score` is provided. Evaluated via the default scoring heuristic or a consumer-supplied `scoreFn`. |
-| `score` | `PasswordStrengthScore` | no | — | Pre-computed score (0–4). Wins over `value` + `scoreFn` when both are present. Use this when scoring is done by zxcvbn or server-side. |
+| `score` | `0 \| 1 \| 2 \| 3 \| 4` | no | — | Pre-computed score (0–4). Wins over `value` + `scoreFn` when both are present. Use this when scoring is done by zxcvbn or server-side. |
 | `scoreFn` | `((value: string) => PasswordStrengthScore)` | no | — | Custom scoring fn. Receives the password, returns 0–4. Defaults to a length + character-class heuristic — fine for prototypes, NOT a security control. Production should pass a real scorer via `score`. |
 | `showLabel` | `boolean` | no | — | Render the textual label next to the segments. Defaults to `true`. |
 | …native | | | | plus native `<div>` attributes |

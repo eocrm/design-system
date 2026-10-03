@@ -24,7 +24,7 @@
 <!-- prettier-ignore -->
 | Prop | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `size` | `CheckboxSize` | no | — | Box diameter + label type scale. Defaults to `'md'`. - `'sm'` — 14px box, font-size-sm label. Dense tables, inline filters. - `'md'` — 16px box, font-size-md label. Default. - `'lg'` — 20px box, font-size-lg label. Hero forms, mobile-friendly. Note: shadows the native HTML `<input size>` attribute (which on checkboxes is meaningless anyway). |
+| `size` | `'sm' \| 'md' \| 'lg'` | no | — | Box diameter + label type scale. Defaults to `'md'`. - `'sm'` — 14px box, font-size-sm label. Dense tables, inline filters. - `'md'` — 16px box, font-size-md label. Default. - `'lg'` — 20px box, font-size-lg label. Hero forms, mobile-friendly. Note: shadows the native HTML `<input size>` attribute (which on checkboxes is meaningless anyway). |
 | `checked` | `boolean` | no | — | Controlled checked state. Pair with `onChange`. Omit (with optional `defaultChecked`) for uncontrolled use. |
 | `defaultChecked` | `boolean` | no | — | Initial checked state for uncontrolled use. Defaults to `false`. |
 | `indeterminate` | `boolean` | no | — | Indeterminate (mixed) visual + a11y state. Independent of `checked` — the box paints with a dash icon and `input.indeterminate = true` so AT announces "mixed". Consumer drives this based on partial selection (e.g., a "select all" header where some-but-not-all rows are selected). When the user clicks an indeterminate checkbox, the native change event fires with the next `checked` value (`true` if it was `false`). The consumer typically responds by clearing `indeterminate`. |

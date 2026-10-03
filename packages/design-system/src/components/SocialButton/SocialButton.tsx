@@ -1,5 +1,5 @@
 import { forwardRef, type ReactNode } from 'react';
-import { Button, type ButtonProps, type ButtonSize } from '../Button';
+import { Button, type ButtonProps, type ButtonSize, type ButtonVariant } from '../Button';
 import { BrandIcon, type BrandName } from '../BrandIcon';
 
 const ICON_SIZE: Record<ButtonSize, number> = { xs: 14, sm: 16, md: 18, lg: 20 };
@@ -12,6 +12,12 @@ export interface SocialButtonProps extends Omit<ButtonProps, 'children' | 'iconO
   provider: BrandName;
   /** The button text — e.g. `"Continue with Google"`. Required (consumer-supplied). */
   label: ReactNode;
+  /**
+   * Button variant; the values are Button's. Defaults to `secondary`, not
+   * Button's `primary`.
+   * @default 'secondary'
+   */
+  variant?: ButtonVariant;
 }
 
 /**

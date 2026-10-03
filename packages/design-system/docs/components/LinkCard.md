@@ -20,8 +20,8 @@
 <!-- prettier-ignore -->
 | Prop | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `padding` | `CardPadding` | no | — | Inner padding — same scale as `Card`. Defaults to `'md'`. |
-| `tone` | `CardTone` | no | — | Optional left-edge tone stripe — same vocabulary as `Card`. |
+| `padding` | `'none' \| 'sm' \| 'md' \| 'lg'` | no | — | Inner padding — same scale as `Card`. Defaults to `'md'`. |
+| `tone` | `'accent' \| 'info' \| 'success' \| 'warning' \| 'danger'` | no | — | Optional left-edge tone stripe — same vocabulary as `Card`. |
 | `children` | `ReactNode` | no | — |  |
 | `as` | `ElementType` | no | — |  |
 | …native | | | | plus native attributes of the `as` element (default `<a>`) |
