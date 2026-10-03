@@ -17,8 +17,8 @@ Review effort is tiered. Set the tier from the full branch diff; across rounds i
   public API. Use **one** fresh-context reviewer on Sonnet (`model: sonnet` at
   dispatch). If fixes were applied, repeat the Sonnet pass on the fix delta
   only until one returns `clean enough to stop`. Variant B mockup reviews, and any change to
-  documented a11y, token or API guidance (`AI-PRIMER.md`, `docs/**`, the Hard
-  rules), are always Standard.
+  documented a11y, token or API guidance (`AI-PRIMER.md`,
+  `packages/design-system/docs/**`, its `README.md`, its `CLAUDE.md` Hard rules), are always Standard.
 - **Standard** — everything else. Each round uses at least **two independent
   fresh-context agents** inheriting the session's currently selected/default
   model (no model override).

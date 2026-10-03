@@ -188,8 +188,7 @@ describe('SettingRow', () => {
     // child governs only that child.
     //
     // What it does NOT catch: a `Children.map(trailing, c => <div>{c}</div>)`
-    // -style regression, when `trailing` is passed as a Fragment — the only
-    // pattern documented anywhere in this file, the JSDoc, and docs/components/SettingRow.md.
+    // -style regression, when `trailing` is passed as a Fragment (as below).
     // Verified directly: `Children.map`/`Children.toArray` treat a Fragment
     // as ONE opaque child, so that mutation does not change the DOM shape
     // this test inspects, and this assertion would still pass. Real

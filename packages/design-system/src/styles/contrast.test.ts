@@ -1186,9 +1186,9 @@ describe('an inset ring stays legible against every fill a .colored event can ta
  *
  * `structure.test.ts`'s "stated contrast ratios still hold" gate binds every
  * `N.NN:1` in a `.tokens.scss` / `.module.scss` / `.ts` file to a `@contrast`
- * annotation sitting beside it. `AI-PRIMER.md` + `docs/**` are outside that gate and has to
+ * annotation sitting beside it. `AI-PRIMER.md` + `docs/` are outside that gate and have to
  * stay outside it: Markdown has no comment syntax to hide an annotation in, so
- * the annotation would have to be prose too, and this file ships in the
+ * the annotation would have to be prose too, and these files ship in the
  * published tarball as the agent-facing primer — a number in it is read and
  * copied, not skimmed.
  *
