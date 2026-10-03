@@ -17,8 +17,15 @@ export interface DayCellProps {
 }
 
 /**
- * Internal: the day-number content for one cell in the month grid.
- * @see docs/components/Calendar.md
+ * Internal: the day-number content for one cell in the month grid. Background,
+ * border, and today/weekend tints come from MonthView's per-week `.dayColumn`
+ * background layers; this component only owns the day-number text and the
+ * gridcell ARIA role.
+ *
+ * @remarks
+ * **When NOT to use:** Do not render `DayCell` directly in application code —
+ * it is an internal building block consumed by `MonthView`. Use `Calendar` (or
+ * `MonthView`) from the design system and pass events via the `events` prop.
  */
 export function DayCell({ day, isFocused = false, onDayClick, onKeyDown, style }: DayCellProps) {
   const handleClick = () => onDayClick?.(day.date);

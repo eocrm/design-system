@@ -56,7 +56,7 @@
 <!-- props:end -->
 
 - **Mode detection** is by props: with `value` + `onValueChange` you get segmented; without, you get visual joining. Visual mode joins `<Button>` children with shared borders and outer-only rounded corners (toolbar action groups); segmented mode is a single-select radiogroup (view-mode toggles, timeframe filters). A discriminated union enforces "`value` AND `onValueChange` together OR neither".
-- **`<ButtonGroup.Item>`** (segmented only) renders `<button role="radio">` with roving tabindex and `aria-checked` driven by the parent's `value`; the parent walks items in DOM order via `querySelectorAll` on keydown, so no registration is needed. Using it in visual mode (no `value` on the parent) throws at render time: there is no `ButtonGroupContext` to register against, by design.
+- **`<ButtonGroup.Item>`** (segmented only) renders `<button role="radio">` with roving tabindex and `aria-checked` driven by the parent's `value`. Using it in visual mode (no `value` on the parent) throws at render time: it has no group to belong to, by design.
 - **Children differ by mode.** Visual: `<Button>` children. Segmented: `<ButtonGroup.Item>` children. Mixing the two is undefined behavior.
 - **Size propagation** — `size` on the group propagates to children. Per-child override wins.
 - **Keyboard nav (segmented only)** — Arrow keys move selection + focus; Home / End jump to ends; Tab moves IN/OUT of the group on the currently-selected item. Disabled items are skipped.

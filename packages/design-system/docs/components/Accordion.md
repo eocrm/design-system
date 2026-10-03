@@ -97,7 +97,7 @@ import { Accordion } from '@eocrm/design-system';
 - **Smooth animation** via CSS `grid-template-rows: 0fr → 1fr`. No JS measurement.
 - **Heading wrapping** — Trigger is wrapped in `<h3>` by default per WAI-ARIA APG. Override via `headerLevel` on Item.
 - **Keyboard**: ArrowDown/Up cycles between triggers, Home/End jumps to ends, Space/Enter toggles. Disabled items are skipped.
-- **Anatomy**: `Accordion.Item` shares its value, disabled/open state and stable ids with Trigger and Content via context. Content is `role="region"` with `aria-labelledby` pointing at its trigger. The Trigger's default indicator is a `<ChevronDown>` that rotates 180° when open.
+- **Anatomy**: Content is `role="region"` with `aria-labelledby` pointing at its trigger. The Trigger's default indicator is a `<ChevronDown>` that rotates 180° when open.
 
 #### When NOT to use
 

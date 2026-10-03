@@ -54,8 +54,13 @@ export interface WeekViewProps {
 }
 
 /**
- * Internal: 7-day hour grid.
- * @see docs/components/Calendar.md
+ * Internal: 7-day hour grid. Shows the week containing `cursor`, with an
+ * AllDayBand above and an HourGrid below.
+ *
+ * @remarks
+ * **When NOT to use:** Do not render `WeekView` directly in application code —
+ * use the `Calendar` shell component, which owns view state and navigation
+ * and dispatches into `WeekView` when `view === 'week'`.
  */
 export function WeekView({
   cursor,

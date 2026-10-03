@@ -9,8 +9,8 @@ export interface AvatarGroupContextValue {
 }
 
 /**
- * Internal context shared by `<AvatarGroup>` with its descendant `<Avatar>`s; `null` means standalone.
- * @see docs/components/Avatar.md
+ * Internal context shared by `<AvatarGroup>` with its descendant `<Avatar>`s.
+ * `null` means the avatar is standalone (not inside a group).
  */
 export const AvatarGroupContext = createContext<AvatarGroupContextValue | null>(null);
 

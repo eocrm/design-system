@@ -45,8 +45,31 @@ export interface MonthViewProps {
 }
 
 /**
- * Internal: the month grid renderer.
- * @see docs/components/Calendar.md
+ * Internal: the month grid renderer. Consumes a `MonthGrid` from `useMonth`,
+ * computes event bar placement via `layoutEventsForMonth`, and renders the
+ * weekday header + week rows. Implements WAI-ARIA grid keyboard navigation
+ * (arrow keys, Home/End, PageUp/PageDown, Enter/Space).
+ *
+ * @remarks
+ * **When NOT to use:** Do not render `MonthView` directly in application code —
+ * use the `Calendar` shell component which owns the `useMonth` state and the
+ * month navigation header. `MonthView` is a pure renderer with no month
+ * navigation state of its own.
+ *
+ * @example
+ * ```tsx
+ * // Inside a parent that owns the anchor date:
+ * const grid = useMonth(anchor);
+ * <MonthView
+ *   grid={grid}
+ *   events={events}
+ *   maxLanesPerWeek={3}
+ *   cursor={anchor}
+ *   onChange={setAnchor}
+ *   onDayClick={handleDayClick}
+ *   onEventClick={handleEventClick}
+ * />
+ * ```
  */
 export function MonthView({
   grid,
