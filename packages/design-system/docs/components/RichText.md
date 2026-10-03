@@ -39,3 +39,5 @@ const renderLink: RenderLink = ({ href }, fallback) => {
 **`renderMention`** (optional) — `(mention: { id, label }, defaultNode) => ReactNode` — same contract as `renderLink` but for `@`-mention marks (render an interactive member chip/popover trigger), or return `defaultNode` for the standard non-interactive mention span. Composes with `renderLink`. Render-time only — `toHtml`/`toMarkdown` and the model still emit the mention mark. Works in both `<RichText>` and `<RichTextEditor>` (where a substituted mention becomes an atomic chip).
 
 When NOT to use: plain text → `Text`. For editing → `<RichTextEditor>`. The model is immutable; render the doc returned by a transform, never mutate in place.
+
+- ❌ Hand-writing HTML to display rich content — feed a `RichDoc` to `<RichText>`.

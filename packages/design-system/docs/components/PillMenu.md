@@ -52,3 +52,33 @@ Renamed from `StatusMenu` — `StatusMenu` / `StatusMenuProps` / `StatusMenuStat
 - `options` omitted or empty → read-only mode: a static colored `<span>` chip, no button, no `aria-haspopup`. This is the read-only surface — there's no separate `readOnly` prop.
 - `disabled` blocks the trigger (dims via opacity, stays colored). `busy` marks a transition in flight — also non-interactive, no built-in spinner. It announces from the component's own polite live region and **does not change the trigger's accessible name** (contrast `EntityChip`: you activated this control, so the change is announced rather than renamed). `aria-busy` is also set, but reaches no screen reader on its own.
 - Not for a plain action menu (use `<DropdownMenu>`), a non-interactive status with no transition (use `<Badge>`), or picking from a long searchable list (use `<Select>`).
+
+Per-state colour override (`color` wins over `category`):
+
+```tsx
+<PillMenu
+  current={{ id: 'triage', name: 'Triage', color: 'amber' }}
+  options={[{ id: 'won', name: 'Won', category: 'won', color: 'emerald' }]}
+  onSelect={(id) => setStage(id)}
+/>
+```
+
+In a form column beside full-width Selects/Inputs, pass `fullWidth` and `label` (the trigger keeps its own name, "Change priority: High"):
+
+```tsx
+<Field label="Priority" error={errors.priority}>
+  <PillMenu
+    fullWidth
+    label="priority"
+    current={priority}
+    options={priorities}
+    onSelect={setPriority}
+  />
+</Field>
+```
+
+**Anti-patterns**
+
+- ❌ A small `<Badge>` wrapped inside a neutral `<Button>` to fake a coloured status trigger — that is what `PillMenu` replaces.
+- ❌ Raw hex strings in `color` — it is a `PaletteColor` name (`'amber'`, `'violet'`, …), not a CSS colour value.
+- ❌ Omitting `options` to "disable" the menu — that is read-only mode (no interactivity at all). For a transition that is temporarily blocked, keep `options` and pass `disabled`.

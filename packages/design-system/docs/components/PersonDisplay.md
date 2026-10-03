@@ -75,3 +75,22 @@
 - All Avatar props (`name`, `src`, `status`, `tooltip`) flow through `<PersonDisplay.Avatar>` except `size`.
 - `shrink` (boolean, default `false`): force content-width (`width: fit-content`). PersonDisplay shrink-wraps on its own, but a **stretching** flex/grid parent (`align-items: stretch` / `justify-self: stretch`) stretches it full-width, so a `Popover.Trigger`/`Tooltip` cloned onto it anchors to the wide box and centers right of the person. Add `shrink` on such an overlay trigger to re-anchor it to the avatar+name.
 - **Use for the standard "person row" — Avatar + name + 0–2 muted lines.** Not for Avatar-only badges (use `<Avatar>`), avatar stacks (use `<AvatarGroup>`), or click-anywhere row interactions (wrap PersonDisplay in your own Link).
+
+```tsx
+// Inline — a DefinitionList value, as tall as the text rows around it
+<PersonDisplay size="inline">
+  <PersonDisplay.Avatar name="Avery Liu" />
+  <PersonDisplay.Name href="/members/avery">Avery Liu</PersonDisplay.Name>
+</PersonDisplay>
+```
+
+`<PersonDisplay.Avatar>` is a thin wrapper around `<Avatar>`; it reads its size from the root and all other Avatar props (`status`, etc.) flow through. `<PersonDisplay.Name>` text size also follows the root `size`.
+
+- This is always a horizontal avatar-left layout; for a "profile hero" with a centered avatar above the name, compose by hand.
+
+**Anti-patterns**
+
+- ❌ Wrapping the whole PersonDisplay in a `<Link>` just to link the person — the Name owns that via `href`. (Wrap it only for click-anywhere row interactions, as above.)
+- ❌ `size="sm"` for a person among text values (a `DefinitionList`, a sentence) — the 24px avatar makes that row taller than its neighbours. Use `size="inline"`.
+- ❌ Descriptions under `size="inline"` — the second line is exactly the extra height `inline` exists to avoid.
+- ❌ Wrapping `<PersonDisplay.Avatar>` in a Fragment or a custom component — the root identifies the Avatar slot by element type, so a wrapped Avatar lands in the text column. Render it as a direct child; use `{shouldShow ? <PersonDisplay.Avatar … /> : null}` for conditional rendering (`null`/`false` are ignored).

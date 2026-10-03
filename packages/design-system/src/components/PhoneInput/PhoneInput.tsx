@@ -93,36 +93,8 @@ function seedNational(value: string | null): string {
 }
 
 /**
- * International phone field — a searchable country picker (DS `Select`) plus a
- * national-number field (DS `Input`) that emits **E.164**. Controlled on a single
- * `value: string | null`; country + formatting are derived internally. Country
- * names are localized via `Intl.DisplayNames`; metadata + validation come from
- * `libphonenumber-js`.
- *
- * @example
- * const [phone, setPhone] = useState<string | null>(null);
- * <PhoneInput value={phone} onChange={setPhone} defaultCountry="GB" />
- *
- * @example
- * // Inside a Field (label + error wiring injected automatically):
- * <Field label="Mobile" error={isValidPhone(phone) ? undefined : 'Invalid number'}>
- *   <PhoneInput value={phone} onChange={setPhone} />
- * </Field>
- *
- * @remarks When NOT to use
- * - A non-phone numeric field → `<Input type="tel">` or `<Input inputMode="numeric">`.
- *
- * @remarks Anti-patterns
- * - ❌ Treating it as uncontrolled — feed `onChange`'s E.164 back into `value`.
- * - ❌ Storing the formatted national string — persist the emitted **E.164**; the
- *   display is reconstructed from it.
- * - ❌ Validating by hand — call the exported `isValidPhone(e164)` and pass
- *   `invalid` (or wire it through `<Field error>`).
- *
- * @remarks Known limitations
- * - Format-as-you-type sets the caret to the end of the number field after each
- *   reformat; editing in the middle of the number bounces the caret to the end.
- * - `countries={[]}` (empty array) shows ALL countries, not none.
+ * International phone field: a searchable country picker plus a national-number input that emits E.164.
+ * @see docs/components/PhoneInput.md
  */
 export const PhoneInput = forwardRef<HTMLDivElement, PhoneInputProps>(function PhoneInput(
   {

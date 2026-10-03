@@ -148,107 +148,8 @@ export interface RailProps extends Omit<HTMLAttributes<HTMLElement>, 'aria-label
 }
 
 /**
- * Collapsible left-side navigation rail. Switches between a wide labelled
- * mode (`--rail-width-expanded`, default 240px) and a narrow icon-only mode
- * (`--rail-width-collapsed`, default 56px). Hand-rolled CSS transition on
- * width plus opacity-fade on the labels and titles.
- *
- * **Layout-owning primitive (Hard rule 4 exception).** Like `<Modal>`,
- * `<Drawer>`, and `<Page>`, `<Rail>` is a layout container by design — it
- * owns its own width and height behavior because that IS its job. The
- * consumer chooses where to put the rail (sticky aside, fixed sidebar, in-
- * flow column) by styling its parent; the rail itself is a 100%-height
- * flex column whose width animates.
- *
- * Compound API — combine the subcomponents below to build the rail you need:
- *
- * - `<Rail.Header>` — slot at the top for a brand mark / workspace switcher.
- * - `<Rail.Section title="…">` — visually-grouped collection of items.
- * - `<Rail.Item icon={…} as={NavLink} to="/">…</Rail.Item>` — a single nav link.
- * - `<Rail.Group icon={…} label="…">` — a parent with subitems. Expand inline
- *   when the rail is open; pops out as a hover flyout when collapsed.
- * - `<Rail.Spacer />` — flex-grow filler that pushes anything after it to the
- *   bottom of the scrolling body. Not needed to pin the Footer.
- * - `<Rail.CollapseToggle />` — the chevron button that toggles collapsed.
- * - `<Rail.Footer>` — slot at the bottom (user chip, theme switcher, etc.).
- *   Pinned outside the scroll box on its own.
- *
- * @example
- * // Uncontrolled — the rail manages its own state.
- * <Rail defaultCollapsed={false} aria-label="Main navigation">
- *   <Rail.Header><Logo src={logo} text="Acme" /></Rail.Header>
- *
- *   <Rail.Section title="Main">
- *     <Rail.Item icon={<Home />} as={NavLink} to="/">Dashboard</Rail.Item>
- *     <Rail.Item icon={<Users />} as={NavLink} to="/contacts">Contacts</Rail.Item>
- *   </Rail.Section>
- *
- *   <Rail.Section title="Operations">
- *     <Rail.Group icon={<Settings />} label="Settings">
- *       <Rail.Item as={NavLink} to="/settings/general">General</Rail.Item>
- *       <Rail.Item as={NavLink} to="/settings/security">Security</Rail.Item>
- *     </Rail.Group>
- *   </Rail.Section>
- *
- *   <Rail.Footer>
- *     <Rail.CollapseToggle />
- *   </Rail.Footer>
- * </Rail>
- *
- * @example
- * // Controlled — sync the rail with localStorage / URL state.
- * const [collapsed, setCollapsed] = useState(() => localStorage.getItem('rail') === '1');
- * <Rail
- *   collapsed={collapsed}
- *   onCollapsedChange={(c) => {
- *     setCollapsed(c);
- *     localStorage.setItem('rail', c ? '1' : '0');
- *   }}
- * >
- *   … same children …
- * </Rail>
- *
- * @example
- * // Responsive — forced icon-only on phone-width viewports, preference kept.
- * <Rail collapsed={collapsed} onCollapsedChange={setCollapsed} collapseBelow="sm">
- *   … same children …
- * </Rail>
- *
- * @remarks Responsive collapse
- * `collapseBelow` measures the **viewport** (`matchMedia`), not the rail's own
- * width — unlike `<Grid collapseBelow>` / `<Split collapseBelow>`, which use
- * container queries. Collapsing is what changes the rail's width, so a
- * container query would be circular; and collapsed drives React behavior
- * (tooltips, group flyouts) that CSS can't reach. The override is presentation
- * only: it never fires `onCollapsedChange` and never writes the consumer's
- * state, so a preference survives a narrow window untouched. While it's active
- * `<Rail.CollapseToggle>` renders nothing.
- *
- * @remarks Scrolling
- * Everything before the first `<Rail.Footer>` renders inside one scroll box;
- * the Footer sits outside it and stays pinned. That box only ever scrolls
- * vertically — the X axis is clipped, since the rail is a fixed-width nav and
- * labels are meant to be clipped as it collapses. When collapsed the scrollbar
- * is hidden entirely (`scrollbar-width: none`): a gutter is a quarter of the
- * 56px rail's inner width and shifts every item pill off-center. Wheel/trackpad
- * scrolling and scroll-into-view on Tab still work, and the bar returns the
- * moment the rail expands — the accepted cost is that a pointer-only user has
- * nothing to drag while collapsed. It opts out of the thin themed scrollbar
- * `reset.scss` applies everywhere else.
- *
- * @remarks When NOT to use
- * - For a top-bar / horizontal nav → use a `<Cluster>` + `<Link>` row.
- * - For a value picker (status, country) → use `<Select>`.
- * - For a focus-locked dialog navigation → use `<Modal>` / `<Drawer>`.
- *
- * @remarks Anti-patterns
- * - ❌ Forking the rail's width via inline style — the `--rail-width-*` tokens
- *   are the override surface. Rebind them in a parent stylesheet.
- * - ❌ Wrapping subcomponents in extra `<div>`s — the `[data-collapsed]`
- *   cascade is brittle to extra wrappers and the active-state CSS
- *   (`:has([aria-current="page"])`) won't reach where you expect.
- * - ❌ Multi-level group nesting (groups inside groups). v1 supports only one
- *   level — subitems are leaves.
+ * Collapsible left-side navigation rail (240px labelled / 56px icon-only); compound `Rail.Header`, `Section`, `Item`, `Group`, `Spacer`, `CollapseToggle`, `Footer`.
+ * @see docs/components/Rail.md
  */
 const RailRoot = forwardRef<HTMLElement, RailProps>(function Rail(
   {
@@ -358,10 +259,8 @@ const RailRoot = forwardRef<HTMLElement, RailProps>(function Rail(
 });
 
 /**
- * `<Rail>` — collapsible left-side navigation primitive. See `RailRoot` JSDoc
- * for the full per-prop and per-subcomponent contract. Subcomponents are
- * attached to the root via `Object.assign` (the canonical compound pattern
- * used by `<Card>`, `<Popover>`, `<DropdownMenu>`, etc.).
+ * Collapsible left-side navigation rail; subcomponents attached to the root via `Object.assign`.
+ * @see docs/components/Rail.md
  */
 export const Rail = Object.assign(RailRoot, {
   Header: RailHeader,

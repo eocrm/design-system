@@ -54,40 +54,8 @@ interface MasonryResponsive extends MasonryBaseProps, HTMLAttributes<HTMLDivElem
 export type MasonryProps = MasonryFixedColumns | MasonryResponsive;
 
 /**
- * Height-balanced masonry layout. Packs variable-height children into columns,
- * placing each into the currently-shortest column so the result reads
- * left→right in source order with balanced column heights (Pinterest-style).
- *
- * Pick exactly one of `columns` (fixed N) or `minColumnWidth` (responsive count
- * from container width). TypeScript enforces this; neither → `minColumnWidth="240px"`.
- *
- * Heights are measured on the client; a `ResizeObserver` rebalances on container
- * resize and when child content settles (e.g. images finish loading). Before
- * measurement (and without JS) children render round-robin across the columns.
- *
- * @example
- * // Responsive photo wall.
- * <Masonry minColumnWidth="220px" gap="md">
- *   {photos.map((p) => <Image key={p.id} src={p.src} alt={p.alt} aspectRatio={p.ratio} />)}
- * </Masonry>
- *
- * @example
- * // Fixed 3-column card wall.
- * <Masonry columns={3} gap="lg">
- *   {notes.map((n) => <Card key={n.id}>{n.body}</Card>)}
- * </Masonry>
- *
- * @remarks When NOT to use
- * - Equal-height tiles / true 2D rows → use `<Grid>`.
- * - A single vertical column → use `<Stack>`.
- * - Wrapping rows of unequal items (toolbars, tag lists) → use `<Cluster>`.
- *
- * @remarks Anti-patterns
- * - ❌ Interactive / stateful children (videos, focus-holding forms). Rebalancing
- *   re-parents items between columns, so React remounts them — Masonry is for
- *   display content (image walls, card galleries).
- * - ❌ Expecting a single top-to-bottom reading column. Items are distributed
- *   across columns; order is left→right by placement.
+ * Height-balanced masonry layout: packs variable-height children into the shortest column.
+ * @see docs/components/Masonry.md
  */
 export const Masonry = forwardRef<HTMLDivElement, MasonryProps>(function Masonry(
   { gap = 'md', columns, minColumnWidth, className, children, ...rest },

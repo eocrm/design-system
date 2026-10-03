@@ -5,8 +5,8 @@ import { Footer } from './Footer';
 import { Close } from './Close';
 
 /**
- * Compound `<Modal>` family. Subcomponents attached via Object.assign so
- * consumers write `<Modal.Header>` etc., not separate imports.
+ * Compound `<Modal>` family: `Modal.Header`, `Body`, `Footer` and `Close` attached via `Object.assign`.
+ * @see docs/components/Modal.md
  */
 export const Modal = Object.assign(ModalRoot, {
   Header,

@@ -44,54 +44,8 @@ const paddingClass: Record<CardPadding, string> = {
 };
 
 /**
- * A clickable Card whose entire surface is one navigation/action target.
- * Polymorphic like `<Link>`: renders an `<a>` by default; pass `as={RouterLink}`
- * for SPA routes or `as="button"` for an action. Carries `Card`'s surface
- * (`padding`, `tone`) plus a hover lift and a `:focus-visible` ring.
- *
- * Use when the WHOLE card is clickable. For non-interactive grouping use
- * `<Card>`; for inline text navigation use `<Link>`; for a form action use
- * `<Button>`.
- *
- * @example
- * // SPA route — pass your router's Link as `as`.
- * import { Link as RouterLink } from 'react-router-dom';
- * <LinkCard as={RouterLink} to="/contacts/42" padding="md">
- *   <Stack gap="xs">
- *     <Text weight="semibold">Acme Corp</Text>
- *     <Text size="sm" tone="muted">12 open deals</Text>
- *   </Stack>
- * </LinkCard>
- *
- * @example
- * // External link (native <a>) + a tone stripe.
- * <LinkCard href="https://status.example.com" tone="success">
- *   <Text weight="semibold">All systems operational</Text>
- * </LinkCard>
- *
- * @example
- * // Card-shaped action button.
- * <LinkCard as="button" type="button" onClick={openImporter}>
- *   <Text weight="semibold">Import contacts</Text>
- * </LinkCard>
- *
- * @remarks When NOT to use
- * - Non-interactive grouped content → `<Card>`.
- * - Inline text navigation ("View all →") → `<Link>`.
- * - A form action / trigger that isn't card-shaped → `<Button>`.
- *
- * @remarks Anti-patterns
- * - ❌ Nesting interactive controls (`<Button>` / `<Link>`) inside a LinkCard —
- *   nested interactives are invalid + confusing. Keep the card content
- *   non-interactive, or use a plain `<Card>` with explicit controls.
- * - ❌ `<LinkCard href="#" onClick={…}>` — a fake href breaks "open in new tab".
- *   Use `as="button"` for an action.
- * - ❌ `<LinkCard href="https://…" target="_blank">` without `rel="noopener noreferrer"` — security risk.
- *
- * @remarks A11y
- * - Renders a real `<a>` / `<button>` / router link, so it has native
- *   semantics; the children supply the accessible name — keep the primary
- *   label first. `:focus-visible` provides the keyboard ring.
+ * A clickable Card whose entire surface is one navigation or action target; polymorphic like `<Link>`.
+ * @see docs/components/LinkCard.md
  */
 export const LinkCard = forwardRef(function LinkCard<C extends ElementType = 'a'>(
   { as, padding = 'md', tone, className, children, ...props }: LinkCardProps<C>,

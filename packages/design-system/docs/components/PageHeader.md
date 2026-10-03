@@ -117,3 +117,19 @@
 - ❌ Putting an Avatar inside `<PageHeader.Title>` — muddles the `<h1>`'s text content for screen readers. Use `<PageHeader.Aside>` instead.
 - ❌ `position: sticky` directly on `<PageHeader>` — out of scope for v1. Wrap in your own sticky container if you need sticky behavior.
 - ❌ Passing both `href` and `onClick` to `<PageHeader.BackButton>` — onClick wins with a dev warn. Pick one.
+
+- **`<PageHeader.Title>` `size`** decouples visual size from semantic level: `<PageHeader.Title order={2} size="3xl">` renders an `<h2>` that looks like an h1; `order={2}` alone uses the default h2 size (`2xl`).
+- **`<PageHeader.BackButton>` as an anchor** relies on your router to intercept the click; use `onClick={() => router.back()}` for programmatic navigation.
+- **When NOT to use:** arbitrary section headers within a page that are not its primary heading — use `<Title order={2}>` directly; a sticky top bar — PageHeader is a regular block element.
+- ❌ Passing multiple `<PageHeader.Title>` (or any duplicate sub-component) — only the FIRST match is rendered; duplicates are silently dropped.
+
+```tsx
+// Next to Tabs — drop the bottom border:
+<PageHeader borderBottom={false}>
+  <PageHeader.Title>Reports</PageHeader.Title>
+</PageHeader>
+<Tabs value={tab} onChange={setTab}>...</Tabs>
+
+// Record detail — one line, ellipsis at the actions; badges go in Meta:
+<PageHeader.Title truncate>{task.key} {task.title}</PageHeader.Title>
+```

@@ -27,3 +27,6 @@
 - Props type omits `role` / `aria-live` / `aria-atomic` / `hidden` / `aria-hidden` — it spreads the rest of `HTMLAttributes<HTMLSpanElement>` FIRST so those can't be overridden.
 
 **When NOT to use:** don't wrap a library component that already owns its own transient-state region (see [Transient state and screen readers](../../AI-PRIMER.md#transient-state-and-screen-readers)) — two regions announcing one event talk over each other. Don't announce text that's already visible and focused — the user hears it twice. Don't reach for `assertive` for routine success. Prefer a string child over JSX — element children re-announce on every parent render even when the rendered text is unchanged.
+
+- ❌ Placing it inside a `<label>` or a `<button>` — inside a `<label>` it joins the control's accessible name via name-from-content; inside a `<button>` it is pruned as children-presentational. Render it as a sibling instead.
+- ❌ Mounting it conditionally (`{msg && <LiveRegion>…}`) — keep it mounted and pass an empty message.

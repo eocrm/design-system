@@ -19,31 +19,8 @@ export interface PopoverAnchorProps {
 }
 
 /**
- * Positions `Popover.Content` against its child WITHOUT injecting any interaction
- * or ARIA — only the floating-positioning ref. The counterpart to
- * `Popover.Trigger` (which also wires the click-toggle + `aria-haspopup` /
- * `aria-expanded` / `aria-controls`).
- *
- * Use it for a CONTROLLED popover whose anchor already owns its toggle + ARIA,
- * so that ARIA isn't duplicated onto a wrapper. Canonical case: an interactive
- * `FilterChip` (body `<button>` carries `aria-haspopup`/`aria-expanded` via
- * `onActivate`/`expanded`) hosting a controlled range-picker popover — wrapping
- * it in `Popover.Trigger` would redundantly stamp ARIA onto the chip's
- * `role="group"` root; `Popover.Anchor` injects nothing but the ref.
- *
- * @example
- * const [open, setOpen] = useState(false);
- * <Popover open={open} onOpenChange={setOpen}>
- *   <Popover.Anchor>
- *     <FilterChip onActivate={() => setOpen((o) => !o)} expanded={open} onDismiss={remove}>
- *       <FilterChip.Label>Range</FilterChip.Label>
- *       <FilterChip.Value>Jun 1 – Jul 31</FilterChip.Value>
- *     </FilterChip>
- *   </Popover.Anchor>
- *   <Popover.Content maxWidth={520}>
- *     <RangePicker />
- *   </Popover.Content>
- * </Popover>
+ * Positions `Popover.Content` against its child, injecting only the floating ref and no interaction or ARIA (`Popover.Anchor`).
+ * @see docs/components/Popover.md
  */
 export function Anchor({ children }: PopoverAnchorProps) {
   const ctx = usePopoverContext('Anchor');

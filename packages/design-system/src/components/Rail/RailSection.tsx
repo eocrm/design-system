@@ -16,17 +16,8 @@ export interface RailSectionProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * Visually-grouped collection of `<Rail.Item>` and `<Rail.Group>` children.
- * Renders a `<div role="group">` so the grouping is announced to screen
- * readers; the title is the group's `aria-label`. Visually, the title is a
- * small-caps muted line above the items in expanded mode, and is faded out
- * (height 0, opacity 0) when the rail collapses.
- *
- * @example
- * <Rail.Section title="Main">
- *   <Rail.Item icon={<Home />} as={NavLink} to="/">Dashboard</Rail.Item>
- *   <Rail.Item icon={<Users />} as={NavLink} to="/contacts">Contacts</Rail.Item>
- * </Rail.Section>
+ * Visually grouped collection of rail items, announced as a `role="group"` named by its title (`Rail.Section`).
+ * @see docs/components/Rail.md
  */
 export const RailSection = forwardRef<HTMLDivElement, RailSectionProps>(function RailSection(
   { title, className, children, ...props },

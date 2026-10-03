@@ -34,3 +34,16 @@
 - Both warnings can stack — they render in separate slots with separate live regions.
 - Sizes: `sm` / `md` (default) / `lg`. Same scale as `<Input>`.
 - `Omit<…, 'size' | 'type'>` — component locks `type` to password/text and shadows native `size`.
+
+Pair with `<PasswordStrengthMeter>` for the canonical signup form, and controlled reveal via `revealed` / `onRevealChange`:
+
+```tsx
+<PasswordInput name="password" capsLockWarning wrongLayoutWarning aria-describedby="pw-strength" />
+<PasswordStrengthMeter id="pw-strength" value={password} />
+```
+
+**When NOT to use:** non-secret single-line text — `<Input>`; multi-line secrets (paste-only API tokens) — `<Textarea>` (not shipped); systems that allow non-Latin passwords — do not set `wrongLayoutWarning`.
+
+- ❌ `revealable={false}` plus a non-password `<Input>` next to it for "Show in plaintext" UX — use `<Input>` directly.
+- ❌ Wrapping it in another `<label>` outside the component — it already renders the input; an outer label nests poorly.
+- ❌ Treating the default `<PasswordStrengthMeter>` scoring as a security control — it is a UX hint; pass `score` from zxcvbn or server-side validation.

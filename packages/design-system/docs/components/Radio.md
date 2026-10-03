@@ -29,3 +29,14 @@
 - `label` (ReactNode) — text rendered next to the ring; the whole `<label>` is the click target. Omit + pass `aria-label` for icon-only.
 - `invalid` — danger border + `aria-invalid='true'`. Hover preview is border-only and skips invalid (red stays red on hover).
 - **Prefer `<RadioGroup>`** for proper fieldset/legend a11y and centralized state. Standalone `<Radio>` is for embedding a single radio next to other controls.
+
+Inside a group (preferred): `<RadioGroup name="size" defaultValue="md" label="T-shirt size"><Radio value="sm" label="Small" />…</RadioGroup>`.
+
+**When NOT to use:** 10+ options — `<Select>`; multi-select — a set of `<Checkbox>`es; a single binary on/off — `<Switch>`.
+
+**Anti-patterns**
+
+- ❌ Standalone radios without a wrapping `<fieldset>` — fails AT grouping. Use `<RadioGroup>`.
+- ❌ Setting `checked` on a Radio inside a `<RadioGroup>` — the group's `value` already controls each child's checked state.
+- ❌ Omitting both `label` and `aria-label` — the radio is unlabelled to AT.
+- Inside a group, a Radio's `onChange` runs first, then the group's `onChange`.

@@ -39,35 +39,8 @@ export interface RichTextProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * Read-only renderer for a rich-text `RichDoc` — paragraphs, H1–H3, bullet/ordered
- * lists, blockquotes, code blocks, and inline marks (bold/italic/underline/strike/
- * code/link) — using the in-house engine (no editor libraries).
- *
- * This is the read-only half of the rich-text story: it **displays** stored rich
- * content (activity feeds, comments, audit views). Editing arrives later as
- * `<RichTextEditor>`.
- *
- * @example
- * // Display a document.
- * const doc = docFromText('Hello world');
- * <RichText value={doc} />;
- *
- * @example
- * // Build structured content with the engine constructors.
- * const doc = { blocks: [
- *   createBlock('heading', 'Notes', { level: 2 }),
- *   createBlock('paragraph', 'See the docs.'),
- * ] };
- * <RichText value={doc} />;
- *
- * @remarks When NOT to use
- * - Plain, unformatted text → use `<Text>`.
- * - Editing rich text → not yet; `<RichTextEditor>` is a later slice.
- *
- * @remarks Anti-patterns
- * - ❌ Mutating a `RichDoc` in place — every engine transform is immutable; render
- *   the returned doc.
- * - ❌ Hand-writing HTML to display rich content — feed a `RichDoc` to `<RichText>`.
+ * Read-only renderer for a `RichDoc` (paragraphs, headings, lists, quotes, code blocks, inline marks) on the in-house engine.
+ * @see docs/components/RichText.md
  */
 export const RichText = forwardRef<HTMLDivElement, RichTextProps>(function RichText(
   { value, renderLink, renderMention, className, ...props },

@@ -32,3 +32,18 @@ via `ResizeObserver`.
 
 **When NOT to use:** equal-height tiles → `<Grid>`; one column → `<Stack>`;
 wrapping rows → `<Cluster>`. Display content only — rebalancing remounts children.
+
+Fixed column count:
+
+```tsx
+<Masonry columns={3} gap="lg">
+  {notes.map((n) => (
+    <Card key={n.id}>{n.body}</Card>
+  ))}
+</Masonry>
+```
+
+Before measurement (and without JS) children render round-robin across the columns. Heights re-balance on container resize and when child content settles (e.g. images finish loading).
+
+- ❌ Interactive / stateful children (videos, focus-holding forms) — rebalancing re-parents items between columns, so React remounts them.
+- ❌ Expecting a single top-to-bottom reading column — items are distributed across columns; order is left→right by placement.

@@ -42,3 +42,29 @@ const [code, setCode] = useState('');
 - Roving tabindex — the whole group is one Tab stop. Arrows / Home / End move between boxes; Backspace on an empty box steps back. Deleting mid-code clears from that box onward, keeping the value contiguous.
 - Never masks. For a secret the user must not see → `<PasswordInput>`.
 - Not a native form control — it renders no named field, so nothing reaches `FormData`. Read the code from `onChange` / `onComplete` and submit it yourself. `required` sets `aria-required` on every box, not the group (`role="group"` doesn't support `aria-required`; a per-cell native `required` would instead pass a 1-of-`length` code as valid); validating completeness is yours.
+
+Inside a `<Field>`, the label and error wiring are supplied:
+
+```tsx
+<Field label="Invite code" error={error}>
+  <OtpInput length={4} type="alphanumeric" invalid={!!error} />
+</Field>
+```
+
+**When NOT to use**
+
+- A code the user copies rather than reads — a plain `<Input>` pastes just as well and does not fight the caret.
+- Codes longer than about eight characters — the boxes stop being scannable; use `<Input>`.
+- A password or PIN you need masked — `<PasswordInput>`. A one-time code is read off a phone and typed once; hiding it only costs the user the ability to spot a typo.
+
+**Anti-patterns**
+
+- ❌ Setting `maxLength` on the cells via `className` hacks or a fork — a one-character cap truncates an autofilled code to its first character.
+- ❌ Validating inside `onChange` and rejecting characters. The component already sanitizes; your form layer owns whether the code is correct.
+- ❌ Reading the code out of the DOM. It arrives in `onChange` / `onComplete`.
+
+**Accessibility**
+
+- The wrapper is a `role="group"`, named by `aria-labelledby`, then `aria-label`, then the localized default ("Verification code"; an empty `aria-label` also falls back). Each cell is named by position ("Digit 3 of 6").
+- There is deliberately no live region: `invalid` is a durable property already carried by `aria-invalid`, so announcing the outcome of a code check is the consumer's job.
+- A paste or autofill that delivers the whole code fills every box in one update; a screen reader announces only the cell focus lands on ("Digit 6 of 6"). Announce the result yourself (e.g. off `onComplete`) if silent multi-box fills would confuse your users.

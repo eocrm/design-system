@@ -18,13 +18,8 @@ export interface ModalCloseProps {
 }
 
 /**
- * Wraps any single element with an onClick that closes the modal.
- * Useful for Cancel buttons inside `<Modal.Footer>`.
- *
- * @example
- * <Modal.Close>
- *   <Button variant="secondary">Cancel</Button>
- * </Modal.Close>
+ * Wraps a single clickable element so activating it closes the modal (`Modal.Close`).
+ * @see docs/components/Modal.md
  */
 export function Close({ children }: ModalCloseProps) {
   const ctx = useModalContext('Close');

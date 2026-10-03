@@ -32,3 +32,13 @@ const [page, setPage] = useState(1);
 - For streams without a total → use `<CursorPagination>`.
 - For "load more" → use `<Button>` directly. **`<Button>` has no `loading` prop** — this line used to show one. Use `aria-disabled` and guard the handler, keeping the label stable: `<Button onClick={() => !isLoading && loadMore()} aria-disabled={isLoading || undefined}>Load more</Button>`. Native `disabled` would drop the button out of the tab order mid-interaction, and swapping the label renames a control the user just activated — see [Transient state and screen readers](../../AI-PRIMER.md#transient-state-and-screen-readers).
 - `paginationRange(currentPage, pageCount, siblingCount)` is exported as a pure utility for advanced consumers that want to compute the same item list themselves (e.g., to render a custom layout with the same windowing).
+
+```tsx
+// Tight display for a sidebar / narrow column
+<Pagination currentPage={5} pageCount={100} onPageChange={setPage} siblingCount={0} size="sm" />
+
+// Loading lock while data refetches
+<Pagination currentPage={page} pageCount={pageCount} onPageChange={setPage} disabled={isFetching} />
+```
+
+**A11y:** the wrapper is `<nav aria-label="Pagination">` (override `aria-label` when several paginations share a page). Prev/next buttons carry `aria-label="Previous page"` / `"Next page"` with the chevron icons `aria-hidden`; ellipses are decorative `<span aria-hidden>`, not focusable.

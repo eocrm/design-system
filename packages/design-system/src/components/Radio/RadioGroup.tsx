@@ -51,41 +51,8 @@ export interface RadioGroupProps extends Omit<HTMLAttributes<HTMLFieldSetElement
 }
 
 /**
- * Group wrapper for `<Radio>` children. Renders as `<fieldset>` + optional
- * `<legend>` for proper a11y grouping. Propagates `name`, selected `value`,
- * `onChange`, `size`, `disabled`, `invalid`, `required` to child radios via
- * context. Per-child explicit props still win.
- *
- * @example
- * <RadioGroup name="size" defaultValue="md" label="T-shirt size">
- *   <Radio value="sm" label="Small" />
- *   <Radio value="md" label="Medium" />
- *   <Radio value="lg" label="Large" />
- * </RadioGroup>
- *
- * @example
- * // Controlled:
- * const [plan, setPlan] = useState('free');
- * <RadioGroup name="plan" value={plan} onChange={setPlan} label="Plan">
- *   <Radio value="free" label="Free" />
- *   <Radio value="pro" label="Pro" />
- * </RadioGroup>
- *
- * @example
- * // Horizontal layout:
- * <RadioGroup name="orientation" defaultValue="left" orientation="horizontal">
- *   <Radio value="left" label="Left" />
- *   <Radio value="center" label="Center" />
- *   <Radio value="right" label="Right" />
- * </RadioGroup>
- *
- * @remarks When NOT to use
- * - For 10+ options → `<Select>`.
- * - For multi-select → a list of `<Checkbox>`es (no group component yet).
- *
- * @remarks Anti-patterns
- * - ❌ Setting `checked` on the child `<Radio>`s — the group handles that.
- * - ❌ Setting per-radio `name` inside a group — overridden by the group's `name`.
+ * Group wrapper for `<Radio>` children: a `<fieldset>` + optional `<legend>` that propagates name, value and shared props via context.
+ * @see docs/components/RadioGroup.md
  */
 export const RadioGroup = forwardRef<HTMLFieldSetElement, RadioGroupProps>(function RadioGroup(
   {

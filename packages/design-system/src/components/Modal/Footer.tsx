@@ -8,10 +8,8 @@ export interface ModalFooterProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * Pinned action bar at the bottom of the modal. `role="group"` so screen
- * readers announce the action set as a unit. `align='end'` (default)
- * right-aligns the actions; `'space-between'` splits primary actions to
- * opposite ends (e.g. a danger action on the left, save/cancel on the right).
+ * Pinned action bar at the bottom of the modal, announced as a `role="group"`.
+ * @see docs/components/Modal.md
  */
 export const Footer = forwardRef<HTMLDivElement, ModalFooterProps>(function Footer(
   { align = 'end', className, children, ...rest },

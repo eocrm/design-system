@@ -8,9 +8,8 @@ export interface ModalBodyProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * Scrollable content area between the Header and Footer. Default padding is
- * `var(--space-4)`. Pass `padding="none"` for edge-to-edge layouts (e.g. a
- * full-bleed Tabs strip).
+ * Scrollable content area between the Header and Footer; `padding="none"` for edge-to-edge content.
+ * @see docs/components/Modal.md
  */
 export const Body = forwardRef<HTMLDivElement, ModalBodyProps>(function Body(
   { padding = 'default', className, children, ...rest },

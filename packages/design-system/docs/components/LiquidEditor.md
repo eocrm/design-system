@@ -72,3 +72,13 @@ const VARS = [
 ```
 
 When NOT to use: plain prose → `Textarea`; static read-only code → playground `CodeBlock`. Don't expect it to validate syntax (feed `error` from the backend) or to produce its own preview (preview is consumer-rendered).
+
+Inside a `<Field>`, the label is associated automatically (`id` / `aria-labelledby`):
+
+```tsx
+<Field label="Formula">
+  <LiquidEditor value={formula} onChange={setFormula} variables={VARS} />
+</Field>
+```
+
+- ❌ Adding `margin`/positioning hoping the editor self-places — that is the parent's job (`<Stack>` / `<Cluster>` / a wrapper `className`).

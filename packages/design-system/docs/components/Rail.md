@@ -155,3 +155,27 @@ import { Home, Users, Settings } from 'lucide-react';
 - ❌ Multi-level group nesting (groups inside groups). v1 supports one level only.
 - ❌ Adding a synthetic "All deals" first subitem so the parent list stays reachable — that's what `Rail.Group`'s `as` prop is for. Make the group itself the link.
 - ❌ Putting an icon-less top-level item directly inside a section — when the rail collapses there's nothing visible. Items without icons belong inside a `<Rail.Group>`.
+
+- **`Rail.Item`** defaults to `<a href>`. Expanded it shows icon + label + optional `badge` on one row; collapsed (top-level) it shows the icon only, wrapped in a `<Tooltip>` so the label stays discoverable (only when the children are a string and the item is a direct rail child — group subitems show their labels in the flyout). A `badge` fades as the rail collapses.
+- **`Rail.Section title="…"`** renders `<div role="group">` with the title as `aria-label`; visually the title is a small-caps muted line above the items, faded out (height 0, opacity 0) when collapsed.
+- **`Rail.CollapseToggle`** is a ghost icon-only button whose `aria-label` flips between expand / collapse; its chevron rotates 180° when collapsed so it always points outward. Drop it in `<Rail.Footer>` or anywhere inside the rail. `Rail.Footer` typically holds a user chip, theme switcher or the toggle.
+- **`Rail.Spacer`:** when the item list overflows, the body scrolls and the spacer collapses to nothing, so items after it scroll WITH the content; only `Rail.Footer` stays outside the scroll box. Use the Footer for anything that must stay visible on a tall scroll.
+- **Group auto-open and timing:** the active-route auto-open is one-shot; pass a controlled `open` for exact sync. Re-entering the trigger or the flyout cancels the pending close.
+
+Controlled, persisted to localStorage (add `collapseBelow="sm"` for a forced collapse on phone-width viewports):
+
+```tsx
+const [collapsed, setCollapsed] = useState(() => localStorage.getItem('rail') === '1');
+<Rail
+  collapsed={collapsed}
+  onCollapsedChange={(c) => {
+    setCollapsed(c);
+    localStorage.setItem('rail', c ? '1' : '0');
+  }}
+>
+  …
+</Rail>;
+```
+
+- ❌ Wrapping subcomponents in extra `<div>`s — the `[data-collapsed]` cascade is brittle to extra wrappers and the active-state CSS (`:has([aria-current="page"])`) won't reach where you expect.
+- ❌ Putting non-`<Rail.Item>` children inside a `<Rail.Group>` — subitems should match the item shape so the active-state cascade reaches them.

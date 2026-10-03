@@ -129,12 +129,8 @@ const DESCRIPTION_TEXT_SIZE: Record<PersonDisplaySize, TextSize> = {
 // ----------------------------------------------------------------------------
 
 /**
- * Avatar slot — thin wrapper around `<Avatar>` that reads its `size`
- * from the PersonDisplay root context. All other Avatar props (`name`,
- * `src`, `status`, `tooltip`) flow through unchanged.
- *
- * @example
- * <PersonDisplay.Avatar name="Priya Mehta" src="/a/priya.png" status="online" />
+ * Avatar slot: a thin `<Avatar>` wrapper that takes its size from the PersonDisplay root (`PersonDisplay.Avatar`).
+ * @see docs/components/PersonDisplay.md
  */
 const PersonDisplayAvatar = forwardRef<HTMLSpanElement, PersonDisplayAvatarProps>(
   function PersonDisplayAvatar(props, ref) {
@@ -149,15 +145,8 @@ const PersonDisplayAvatar = forwardRef<HTMLSpanElement, PersonDisplayAvatarProps
 // ----------------------------------------------------------------------------
 
 /**
- * Name slot. Renders as plain `<Text>` by default; when `href` is set,
- * renders as `<Link>` (a real `<a>` element) — use for navigable
- * people. Text size follows the PersonDisplay root's `size`.
- *
- * @example
- * <PersonDisplay.Name>Marcus Vega</PersonDisplay.Name>
- *
- * @example
- * <PersonDisplay.Name href="/contacts/sarah-chen">Sarah Chen</PersonDisplay.Name>
+ * Name slot: plain text, or a real `<a>` link when `href` is set (`PersonDisplay.Name`).
+ * @see docs/components/PersonDisplay.md
  */
 const PersonDisplayName = forwardRef<HTMLElement, PersonDisplayNameProps>(
   function PersonDisplayName({ href, className, children, ...rest }, ref) {
@@ -203,27 +192,8 @@ const PersonDisplayName = forwardRef<HTMLElement, PersonDisplayNameProps>(
 // ----------------------------------------------------------------------------
 
 /**
- * One line of descriptive metadata (email, role, company, …). Repeat
- * the subcomponent to add more lines — each one stacks below the
- * previous. Renders muted text; children can be a string or any
- * `ReactNode` (e.g., inline `<Badge>` decorations).
- *
- * @example
- * <PersonDisplay.Description>sarah@acme.com</PersonDisplay.Description>
- *
- * @example
- * <PersonDisplay.Description>
- *   admin@acme.com <Badge tone="warning" size="sm">impersonating</Badge>
- * </PersonDisplay.Description>
- *
- * @remarks When NOT to use
- * - For INTERACTIVE content. A Description clips itself on the inline axis so a
- *   long unbroken value cannot paint outside a narrow container (#527), and a
- *   control flush with the line's left or right edge loses those bands of its
- *   focus ring. Put a link in `<PersonDisplay.Name href=…>`, which does not
- *   clip. The block axis is left `visible` precisely so a ring is never clipped
- *   top or bottom; `tests/focus-ring-geometry.baseline.json` records what is
- *   left rather than hiding it.
+ * One line of muted descriptive metadata; repeat for more lines, not for interactive content (`PersonDisplay.Description`).
+ * @see docs/components/PersonDisplay.md
  */
 const PersonDisplayDescription = forwardRef<HTMLSpanElement, PersonDisplayDescriptionProps>(
   function PersonDisplayDescription({ className, children, ...rest }, ref) {
@@ -249,74 +219,8 @@ const PersonDisplayDescription = forwardRef<HTMLSpanElement, PersonDisplayDescri
 // ----------------------------------------------------------------------------
 
 /**
- * Avatar + Name (+ optional Description lines) — the most-duplicated
- * "person row" composition across the CRM mockups. Compound API:
- * `<PersonDisplay>` root + `<PersonDisplay.Avatar>` + `<PersonDisplay.Name>` +
- * optional repeating `<PersonDisplay.Description>` children. Sizes
- * (`inline` / `sm` / `md` / `lg`) drive the Avatar size and the Name /
- * Description text sizes via context.
- *
- * Use it for contact rows, owner cells, audit actors, activity-timeline
- * authors, members lists, and detail-page owner sidebars. NOT for
- * Avatar-only badges (use `<Avatar>` directly) or stacks of avatars
- * (use `<AvatarGroup>`).
- *
- * @example
- * // Canonical: avatar + linked name + email
- * <PersonDisplay size="md">
- *   <PersonDisplay.Avatar name="Sarah Chen" src="/avatars/sarah.png" />
- *   <PersonDisplay.Name href="/contacts/sarah-chen">Sarah Chen</PersonDisplay.Name>
- *   <PersonDisplay.Description>sarah@acme.com</PersonDisplay.Description>
- * </PersonDisplay>
- *
- * @example
- * // Multiple description lines
- * <PersonDisplay size="md">
- *   <PersonDisplay.Avatar name="Marcus Vega" />
- *   <PersonDisplay.Name>Marcus Vega</PersonDisplay.Name>
- *   <PersonDisplay.Description>marcus@acme.com</PersonDisplay.Description>
- *   <PersonDisplay.Description>Account Executive</PersonDisplay.Description>
- * </PersonDisplay>
- *
- * @example
- * // Tight table cell — sm
- * <PersonDisplay size="sm">
- *   <PersonDisplay.Avatar name="Avery Liu" />
- *   <PersonDisplay.Name>Avery Liu</PersonDisplay.Name>
- * </PersonDisplay>
- *
- * @example
- * // A DefinitionList value — as tall as the text rows around it
- * <PersonDisplay size="inline">
- *   <PersonDisplay.Avatar name="Avery Liu" />
- *   <PersonDisplay.Name href="/members/avery">Avery Liu</PersonDisplay.Name>
- * </PersonDisplay>
- *
- * @remarks When NOT to use
- * - Avatar-only badges (no name beside the avatar) — use `<Avatar>` directly.
- * - Stacks of avatars (overlapping circles) — use `<AvatarGroup>`.
- * - A "profile hero" with centered avatar above the name — this primitive
- *   is always a horizontal Avatar-left layout. A vertical/centered variant
- *   is out of scope; compose by hand if needed.
- *
- * @remarks Anti-patterns
- * - Wrapping the entire PersonDisplay in a `<Link>` to make the whole
- *   row clickable. The Name owns the link via its `href` prop.
- * - `size="sm"` for a person among text values (a `DefinitionList`, a
- *   sentence) — the 24px avatar makes that row taller than its neighbours.
- *   Use `size="inline"`.
- * - Descriptions under `size="inline"` — the second line is exactly the
- *   extra height `inline` exists to avoid.
- * - Passing `size` to `<PersonDisplay.Avatar>` directly. Root's `size`
- *   controls all children — overriding the Avatar size in isolation
- *   makes the proportions wrong. The Avatar's `size` prop is omitted
- *   from `PersonDisplayAvatarProps` by design.
- * - Wrapping `<PersonDisplay.Avatar>` in a Fragment or a custom
- *   component. Root identifies the Avatar slot by element-type
- *   identity, so a wrapped Avatar lands inside the text column
- *   instead of the dedicated avatar slot. Render the Avatar as a
- *   direct child; use `{shouldShow ? <PersonDisplay.Avatar … /> : null}`
- *   for conditional rendering (`null`/`false` are safely ignored).
+ * Avatar + Name (+ optional Description lines): the standard horizontal "person row".
+ * @see docs/components/PersonDisplay.md
  */
 const PersonDisplayRoot = forwardRef<HTMLDivElement, PersonDisplayProps>(function PersonDisplayRoot(
   { size = 'md', shrink = false, className, children, ...rest },

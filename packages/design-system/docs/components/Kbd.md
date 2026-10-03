@@ -27,3 +27,17 @@ Inline keyboard-shortcut display: one `<kbd>` chip per key, joined with a faint 
 - Wrapper carries `aria-label = keys.join(' + ')` (override via prop); inner `<kbd>` and `+` separator are `aria-hidden`.
 
 **When NOT to use:** for inline code use `<Code>`; for chip-shaped text labels use `<Badge>`. `<kbd>` implies keyboard input semantically.
+
+```tsx
+<Tooltip
+  content={
+    <>
+      Save <Kbd keys={['⌘', 'S']} />
+    </>
+  }
+>
+  <Button>Save</Button>
+</Tooltip>
+```
+
+- ❌ Nesting a `<Kbd>` inside a button as its only label. Use the button's `aria-label` and render the Kbd as a separate visual hint.

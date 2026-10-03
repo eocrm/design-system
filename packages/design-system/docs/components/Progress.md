@@ -31,3 +31,29 @@
 - `label`: `false | true | ReactNode`. `true` shows `{n}%` (auto-suppressed when indeterminate); ReactNode renders in both modes (`label="Loading…"` is the canonical "indeterminate + text" pattern).
 - `role="progressbar"` is locked — `Omit<HTMLAttributes, 'role'>` prevents the consumer from overriding it.
 - Indeterminate `aria-valuetext` falls back to consumer-passed `aria-label`, then to the translated `progress.indeterminate` — not a hardcoded English string.
+
+Use for per-file upload bars, wizard step indicators, form-completion meters and disk-usage gauges — anything with a known total. Storage-usage panel:
+
+```tsx
+<Stack gap="xs">
+  <Title order={3} size="md">
+    Storage
+  </Title>
+  <Progress value={85} max={100} tone="warning" label />
+  <Text size="sm" tone="muted">
+    85 GB of 100 GB used
+  </Text>
+</Stack>
+```
+
+**When NOT to use**
+
+- An inline loading affordance next to a button — use indeterminate `<CircularProgress>`.
+- Celebrating completion — a done bar is a done bar; leave the default tone. `tone` communicates state during progress (warning near a threshold, danger when over), not success-on-finish (so no `tone="success"` at `value={100}`).
+- Arbitrary horizontal lines — use `<Divider>`.
+
+**Anti-patterns**
+
+- ❌ A hand-rolled `<div style={{ width: `${n}%`, … }}>` bar — use the primitive.
+- ❌ `<Progress role="…">` — `role` is locked to `progressbar`; TypeScript rejects the override.
+- ❌ A separate consumer-rendered label element — the `label` slot already handles spacing, font size and tabular-nums for stable digit widths.

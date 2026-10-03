@@ -113,85 +113,8 @@ export interface OtpInputProps extends Omit<
 }
 
 /**
- * One-time-code field — `length` single-character boxes that behave as one
- * control. Built for SMS / email verification codes: each box carries
- * `autocomplete="one-time-code"`, so iOS and Android offer the code from a
- * just-arrived message above the keyboard, and focus advances as the user
- * types.
- *
- * Every box selects its own content on focus. That one detail is what lets a
- * single change handler cover typing, pasting, and the platform dumping the
- * entire code into whichever box happens to be focused: whatever lands in a
- * box is spliced into the code from that position onward.
- *
- * @example
- * // Controlled, submitting as soon as the code is complete:
- * const [code, setCode] = useState('');
- * <OtpInput value={code} onChange={setCode} onComplete={verify} />
- *
- * @example
- * // Four alphanumeric characters, inside a Field that supplies the label
- * // and error wiring:
- * <Field label="Invite code" error={error}>
- *   <OtpInput length={4} type="alphanumeric" invalid={!!error} />
- * </Field>
- *
- * @example
- * // Uncontrolled, reading the code from onComplete:
- * <OtpInput id="otp" defaultValue="" required onComplete={verify} />
- *
- * @remarks When NOT to use
- * - A code the user copies rather than reads — a plain `<Input>` pastes just
- *   as well and does not fight the caret.
- * - Codes longer than about eight characters; the boxes stop being scannable.
- *   Use `<Input>`.
- * - A password or PIN you need masked → `<PasswordInput>`. OtpInput never
- *   masks: a one-time code is read off a phone and typed once, and hiding it
- *   only costs the user their ability to spot a typo.
- *
- * @remarks Anti-patterns
- * - ❌ Setting `maxLength` on the cells via `className` hacks or a fork — a
- *   one-character cap truncates an autofilled code to its first character and
- *   breaks the whole point of the component.
- * - ❌ Validating inside `onChange` and rejecting characters. The component
- *   already sanitizes; your form layer owns whether the code is *correct*.
- * - ❌ Reading the code out of the DOM. It arrives in `onChange` / `onComplete`.
- * - ❌ Expecting the value in `FormData` on submit — the component renders no
- *   named field, so nothing reaches a native form post. Read the code from
- *   `onChange` / `onComplete` and submit it yourself.
- *
- * @remarks Accessibility
- * - The wrapper is a `role="group"`, named by `aria-labelledby`, then
- *   `aria-label`, then the localized default. Each cell is named by position
- *   ("Digit 3 of 6").
- * - `aria-describedby` and `aria-required` are set on EVERY cell, not just the
- *   first — `role="group"` does not support `aria-required` at all (ARIA 1.2
- *   only allows it on `textbox` and a few other roles), and repeating it is
- *   the same trade already made for `aria-describedby`: a user who arrows to
- *   cell 4 and hears the error message (or "required") again is a smaller
- *   failure than one who lands there and never hears it at all.
- * - Roving tabindex: the group is a single Tab stop. Arrow keys, Home and End
- *   move between cells; Backspace on an empty cell steps back.
- * - Per Hard rule 10 this component has **no transient state**. `invalid` is a
- *   durable property the consumer supplies and is already carried by
- *   `aria-invalid`, so there is deliberately no live region here — announcing
- *   the outcome of a code check is the consumer's job.
- * - A paste or autofill that delivers the whole code at once fills every box
- *   in a single update; a screen reader announces only the cell focus lands
- *   on ("Digit 6 of 6"), not the five it silently filled behind it. This is a
- *   deliberate choice, not an oversight — it's a content change rather than
- *   the transient/async state Rule 10 governs, and the code's correctness is
- *   the consumer's to confirm. Announce the result yourself (e.g. off
- *   `onComplete`) if silent multi-box fills would confuse your users.
- *
- * @remarks Known limitations
- * - The WebOTP API (`navigator.credentials.get({ otp })`) is not used. It is
- *   Android-Chrome-only and needs the SMS body to end with an origin-bound
- *   line (`@example.com #123456`), which the sending side must opt into.
- *   `autocomplete="one-time-code"` covers iOS and the Android keyboard
- *   suggestion without any change to the message.
- * - Deleting a character in the middle clears the code from that cell onward,
- *   keeping the value contiguous. Typing over a cell replaces just that one.
+ * One-time-code field: `length` single-character boxes behaving as one control, with `autocomplete="one-time-code"` and auto-advance.
+ * @see docs/components/OtpInput.md
  */
 export const OtpInput = forwardRef<HTMLDivElement, OtpInputProps>(function OtpInput(
   {

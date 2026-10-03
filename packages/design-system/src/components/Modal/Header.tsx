@@ -13,10 +13,8 @@ export interface ModalHeaderProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * Title bar at the top of the modal. Auto-registers its heading id with
- * the modal's context so `<Content>` can wire `aria-labelledby`. Renders
- * a built-in × close button at the right edge unless `closeButton={false}`
- * (used for forced-step modals).
+ * Title bar at the top of the modal: names the dialog and shows a close button unless `closeButton={false}`.
+ * @see docs/components/Modal.md
  */
 export const Header = forwardRef<HTMLDivElement, ModalHeaderProps>(function Header(
   { closeButton = true, className, children, ...rest },

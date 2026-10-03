@@ -77,51 +77,8 @@ function clampSiblings(siblingCount: number): number {
 }
 
 /**
- * Numbered pagination — '◀ Previous   1 2 … 5 6 7 … 99 100   Next ▶'.
- * Controlled; consumer owns `currentPage`.
- *
- * @example
- * const [page, setPage] = useState(1);
- * <Pagination currentPage={page} pageCount={20} onPageChange={setPage} />
- *
- * @example
- * // Tight display for sidebar / narrow column:
- * <Pagination
- *   currentPage={5}
- *   pageCount={100}
- *   onPageChange={setPage}
- *   siblingCount={0}
- *   size="sm"
- * />
- *
- * @example
- * // Loading lock — disable while data refetches:
- * <Pagination
- *   currentPage={page}
- *   pageCount={pageCount}
- *   onPageChange={setPage}
- *   disabled={isFetching}
- * />
- *
- * @remarks When NOT to use
- * - Cursor / keyset pagination (no total page count) → use
- *   `<CursorPagination>`.
- * - "Load more" infinite scroll → just
- *   `<Button onClick={() => !isLoading && loadMore()} aria-disabled={isLoading || undefined}>Load more</Button>`.
- *   `Button` has no `loading` prop. `aria-disabled` keeps the control focusable
- *   and announcing instead of dropping it out of the tab order mid-interaction —
- *   but it does NOT block activation (see this package's Button anti-patterns),
- *   so the handler guard is required, not optional.
- *
- * @remarks A11y
- * - Wrapper is `<nav aria-label="Pagination">` (override via `aria-label`
- *   when multiple paginations sit on the same page).
- * - The current page stays focusable and is marked with
- *   `aria-current="page"`. Activating it is a no-op, so changing pages
- *   does not disable the focused control and discard keyboard focus.
- * - Prev/next chevron icons get `aria-hidden`; the buttons carry
- *   `aria-label="Previous page" / "Next page"` for screen readers.
- * - Ellipses are decorative `<span aria-hidden>` — not focusable.
+ * Controlled numbered pagination with sibling windowing (`◀ Previous 1 2 … 5 6 7 … 99 100 Next ▶`).
+ * @see docs/components/Pagination.md
  */
 export const Pagination = forwardRef<HTMLElement, PaginationProps>(function Pagination(
   {

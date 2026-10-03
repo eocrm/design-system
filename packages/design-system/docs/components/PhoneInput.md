@@ -31,3 +31,24 @@ const [phone, setPhone] = useState<string | null>(null);
 | …native | | | | plus native `<div>` attributes |
 
 <!-- props:end -->
+
+Inside a `<Field>` the label and error wiring are injected:
+
+```tsx
+<Field label="Mobile" error={isValidPhone(phone) ? undefined : 'Invalid number'}>
+  <PhoneInput value={phone} onChange={setPhone} />
+</Field>
+```
+
+**When NOT to use:** a non-phone numeric field — `<Input type="tel">` or `<Input inputMode="numeric">`.
+
+**Anti-patterns**
+
+- ❌ Treating it as uncontrolled — feed `onChange`'s E.164 back into `value`.
+- ❌ Storing the formatted national string — persist the emitted E.164; the display is reconstructed from it.
+- ❌ Validating by hand — call `isValidPhone(e164)` and pass `invalid` (or wire it through `<Field error>`).
+
+**Known limitations**
+
+- Format-as-you-type moves the caret to the end of the number field after each reformat; editing in the middle of the number bounces the caret to the end.
+- `countries={[]}` (empty array) shows ALL countries, not none.

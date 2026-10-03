@@ -38,3 +38,23 @@
 - `FormData.get(name)` returns the selected value on native `<form>` submit.
 - The group's `value` drives each child's `checked` — don't set `checked` per-child inside a group (the group already does it).
 - Per-child `onChange` fires BEFORE the group's `onChange` (both run on every selection — `preventDefault` does NOT gate the group's state update). Use per-child handlers for side-effects scoped to one option; the group's handler is the single source of truth for the selected value.
+
+```tsx
+// Controlled
+const [plan, setPlan] = useState('free');
+<RadioGroup name="plan" value={plan} onChange={setPlan} label="Plan">
+  <Radio value="free" label="Free" />
+  <Radio value="pro" label="Pro" />
+</RadioGroup>
+
+// Horizontal layout
+<RadioGroup name="orientation" defaultValue="left" orientation="horizontal">
+  <Radio value="left" label="Left" />
+  <Radio value="center" label="Center" />
+</RadioGroup>
+```
+
+**When NOT to use:** 10+ options — `<Select>`; multi-select — a list of `<Checkbox>`es (no group component yet).
+
+- ❌ Setting `checked` on the child `<Radio>`s — the group handles that.
+- ❌ Setting a per-radio `name` inside a group — overridden by the group's `name`.

@@ -98,3 +98,33 @@
 - **Escape is innermost-first across nested surfaces.** When one floating surface is open inside another — a `Select` listbox inside a `Popover`, a `ConfirmationPopover` opened from a `DropdownMenu` item, etc. — the first `Escape` closes only the **innermost** surface; the outer one (and any host `Modal`/`Drawer`) survives that press. Each press peels exactly one layer. Surfaces coordinate via the shared overlay registry (`isTopFloating`) — the most-recently-opened is innermost — so no per-pair wiring is needed.
 - **Tall content:** a Popover is capped at the viewport only when it holds a `<ScrollArea>`. Wrap the long part (a feed, a list) in `<ScrollArea maxHeight="md">`; the header above it stays put. Without one, a tall popover runs off-screen. Recipe (notification centre): `Popover.Content minWidth={380}` → `Stack` → header `Cluster` (`Popover.Heading` + "Mark all as read" Button) + `ScrollArea maxHeight="md" aria-label="Notifications"`.
 - For passive hover/focus hints → `<Tooltip>`. For lists of actions → `<DropdownMenu>`. For focus-locked dialogs → `<Modal>`.
+
+- `<Popover.Content>` is `role="dialog"` with `aria-modal="false"` and `tabIndex={-1}` so it can take focus on open, and renders an `aria-hidden` arrow that tracks the trigger.
+- `<Popover.Close>` wraps exactly one React element child (it throws otherwise); the child's own `onClick` chains and runs first. `<Popover.Heading>` unsubscribes its `aria-labelledby` registration on unmount.
+- **`<ScrollArea>` placement:** keep it a direct child of `<Popover.Content>`, or inside one wrapper element that is a direct child. That wrapper must lay its children out as a column — a `<Stack>`, or a plain element (div/form/Card). A row wrapper such as `<Cluster>` is not supported (the popover caps but the feed overflows it); deeper nesting leaves the popover uncapped. The popover then caps itself at the viewport and only the ScrollArea shrinks.
+- Controlled use is rare — usually let Popover manage state: `<Popover open={open} onOpenChange={setOpen}>…</Popover>`.
+- When you need a focus-locked confirmation, prefer `<Modal>`.
+
+`Popover.Anchor` with a controlled popover on an interactive `FilterChip`:
+
+```tsx
+const [open, setOpen] = useState(false);
+<Popover open={open} onOpenChange={setOpen}>
+  <Popover.Anchor>
+    <FilterChip onActivate={() => setOpen((o) => !o)} expanded={open} onDismiss={remove}>
+      <FilterChip.Label>Range</FilterChip.Label>
+      <FilterChip.Value>Jun 1 – Jul 31</FilterChip.Value>
+    </FilterChip>
+  </Popover.Anchor>
+  <Popover.Content maxWidth={520}>
+    <RangePicker />
+  </Popover.Content>
+</Popover>;
+```
+
+**Anti-patterns**
+
+- ❌ `<Popover.Trigger><Button disabled>…</Button></Popover.Trigger>` — disabled buttons do not fire click. Use `aria-disabled="true"` and intercept the click, or wrap in `<span>`.
+- ❌ `<Popover.Content>` with no `<Popover.Close>` and content that is not obviously dismissable by clicking outside — keyboard / screen-reader users get no clear close affordance. Rely on outside-click only when the popover is small and obvious.
+- ❌ Multiple `<Popover.Heading>` in one `<Popover.Content>` — the second mount overwrites `aria-labelledby`. One Heading per Popover.
+- ❌ A tall panel with no `<ScrollArea>` — it is not capped at the viewport and runs off-screen.

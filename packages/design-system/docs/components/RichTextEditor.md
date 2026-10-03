@@ -88,4 +88,22 @@ plain `@label` text in `toMarkdown`. Chips are inert references, not links.
 
 **Input rules:** typing a Markdown marker + space at the start of a paragraph auto-converts the block — `# `/`## `/`### ` → headings, `- `/`* `/`+ ` → bullet list, `1. ` → ordered list, `> ` → blockquote, a triple-backtick fence → code block. One Undo reverts the conversion.
 
+Read-only display of an existing document: `<RichTextEditor value={doc} onChange={() => {}} readOnly />` (or use `<RichText>`). `@`-mentions: `<RichTextEditor value={doc} onChange={setDoc} mentions={{ onQuery: (q) => searchUsers(q) }} />`.
+
+**Anti-patterns**
+
+- ❌ Treating it as uncontrolled — you MUST feed `onChange`'s doc back into `value`, or edits won't stick. Never mutate `value` in place.
+- ❌ Implementing your own undo/redo stack — history is tracked internally (⌘/Ctrl+Z, ⌘/Ctrl+⇧Z or ⌘/Ctrl+Y, toolbar buttons).
+- ❌ Hand-rolling a link UI or a toolbar by reaching into the DOM — press ⌘/Ctrl+K or pass `toolbar`; both route through the controlled `value`/`onChange` round-trip.
+- ❌ Pre-stripping pasted HTML to plain text — paste rich HTML directly; the editor parses it (sanitized) into the model. Seed stored content with `fromHtml` / `fromMarkdown`.
+- ❌ Hand-rolling HTML/Markdown from the model — use `toHtml` / `toMarkdown`.
+- ❌ Using mentions or `renderMention` for plain links — that is the link tool (⌘K) / `renderLink`. A mention chip is an inert reference carrying an `id`, not a navigable anchor; the two compose.
+- ❌ Returning thousands of unfiltered items from `onQuery` — filter server-side (or by `query`); the menu renders what you return.
+- ❌ Relying on Markdown to preserve mentions — `toMarkdown` is lossy (plain `@label`); use `toHtml`/`fromHtml` to round-trip the id.
+- ❌ Building a custom block drag/menu by reaching into the DOM — pass `blockControls`; insert/move/duplicate/delete route through `value`/`onChange` and are undoable.
+- ❌ Expecting Backspace to delete a whole block — it edits text; use the block menu's Delete (or select the block's text and delete).
+- ❌ Persisting or submitting the doc while an upload is in flight — gate your submit on `upload.onUploadingChange` (transient attachment blocks are skipped by `toHtml`/`toMarkdown`, but the model still carries them until they settle).
+- ❌ Relying on the picker `accept` for validation — it is only a hint and paste bypasses it; enforce size/type inside `onUpload` and reject to show an error.
+- ❌ Expecting image alignment/width to survive a Markdown round-trip — they serialize to HTML only; the stored RichDoc JSON is lossless.
+
 When NOT to use: read-only display → `<RichText>`. It's controlled — render `onChange`'s doc back into `value`, never mutate in place.

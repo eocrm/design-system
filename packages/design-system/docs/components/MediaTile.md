@@ -42,3 +42,7 @@
 - `revealOn`: `'hover'` (default — hover OR keyboard focus) · `'focus'` (focus only) · `'visible'` (always).
 - Bars render only when they have content; icon-only `actions` need `aria-label`s.
 - MediaTile clips + overlays only — the `media` (`<Image aspectRatio>`) owns the tile's aspect.
+
+**When NOT to use:** a plain, non-revealing image block — `<Image>` (optionally inside a `<Card>`); a colored icon chip — `<IconTile>`.
+
+- ❌ Putting the ONLY copy of critical info in a hover-revealed bar — it is hidden at rest for mouse users. Use `revealOn="visible"` if the info must always show.

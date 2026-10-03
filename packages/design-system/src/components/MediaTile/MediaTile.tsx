@@ -28,44 +28,8 @@ export interface MediaTileProps extends Omit<HTMLAttributes<HTMLDivElement>, 'ch
 }
 
 /**
- * Media tile for gallery / file-grid views — a full-bleed `media` body (an `<Image>`, or a
- * centered file-type icon) with a top bar (`title` + `meta`) and a bottom bar (`actions`),
- * each over a gradient gray scrim, **revealed on hover / keyboard focus** so the image isn't
- * permanently cluttered. Drop one per tile inside a `<Masonry>` / `<Grid>`.
- *
- * The reveal uses `opacity` (not `visibility`), so the action buttons stay in the tab order:
- * tabbing to a control fires `:focus-within` and reveals the bar. Set `revealOn="visible"` to
- * always show the bars, or `"focus"` to reveal only on keyboard focus.
- *
- * @example
- * <Masonry minColumnWidth="180px" gap="sm">
- *   {files.map((f) => (
- *     <MediaTile
- *       key={f.id}
- *       media={<Image src={f.thumbUrl} alt={f.name} aspectRatio={1} objectFit="cover" />}
- *       title={f.name}
- *       meta={formatBytes(f.size)}
- *       actions={
- *         <Cluster gap="xs">
- *           <Button iconOnly variant="ghost" size="sm" aria-label={`Download ${f.name}`} onClick={...}>
- *             <Download size={16} />
- *           </Button>
- *         </Cluster>
- *       }
- *     />
- *   ))}
- * </Masonry>
- *
- * @remarks When NOT to use
- * - A plain, non-revealing image block → `<Image>` (optionally inside a `<Card>`).
- * - A colored icon chip → `<IconTile>`.
- *
- * @remarks Anti-patterns
- * - ❌ Putting the ONLY copy of critical info in a hover-revealed bar — it's hidden at rest
- *   for mouse users until hover. Use `revealOn="visible"` if the info must always show.
- * - ❌ Omitting `aria-label` on icon-only action buttons — they're the tile's only labels.
- * - ❌ Expecting `MediaTile` to size the body — the `media` (`<Image aspectRatio>` or a fixed
- *   box) owns the tile's aspect; MediaTile only clips + overlays.
+ * Gallery / file-grid tile: a full-bleed media body with title/meta and action bars revealed on hover or keyboard focus.
+ * @see docs/components/MediaTile.md
  */
 // {...rest} last (Pattern A) so the consumer can add onClick / data-* to the tile.
 export const MediaTile = forwardRef<HTMLDivElement, MediaTileProps>(function MediaTile(

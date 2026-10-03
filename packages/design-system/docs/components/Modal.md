@@ -96,4 +96,11 @@ const [open, setOpen] = useState(false);
 - ❌ Moving focus yourself in an effect after `onOpenChange(false)` — you race Modal's own restore, which runs in a layout effect. Pass `returnFocusRef` instead.
 - ❌ Using `<Modal>` for popovers or non-blocking notifications. Use `<Popover>`, `<DropdownMenu>`, or wait for `<Toast>`.
 
+- **`<Modal.Footer>`** is `role="group"` so screen readers announce the action set as a unit.
+- **`<Modal.Close>`** requires exactly one React element child (it throws otherwise).
+- ❌ Long scrollable forms with sticky footers containing additional sticky elements inside Body — flexbox + sticky compose badly. Use `<Modal.Footer>` for the actions and let Body scroll.
+- ❌ Opening a modal from inside another modal without using `<Modal>` itself (e.g. a custom div with `position: fixed`) — skipping the stack registry breaks Esc routing and z-index ordering.
+- ❌ Passing neither a `<Modal.Header>` nor an `aria-label` — warns in development; screen-reader users get no announcement on open.
+- ❌ Inline confirms attached to a button — use `<ConfirmationPopover>`.
+
 **See also:** `<Drawer>` for edge-anchored variant.

@@ -120,69 +120,8 @@ function OptionContent({ option }: { option: PillMenuOption }) {
 }
 
 /**
- * Coloured value menu: a coloured pill trigger that opens a menu of values,
- * each row fully coloured to its own value — for a workflow status, a task
- * type, a priority, any small categorical value.
- * Composes `<DropdownMenu>` internally. Renders read-only (a static coloured
- * chip, no button) when `options` is omitted or empty.
- *
- * @example
- * // Task status with categories — colors resolve automatically
- * <PillMenu
- *   current={{ id: 'todo', name: 'To do', category: 'to_do' }}
- *   options={[
- *     { id: 'in_progress', name: 'In progress', category: 'in_progress' },
- *     { id: 'done', name: 'Done', category: 'done' },
- *   ]}
- *   onSelect={(id) => updateStatus(task.id, id)}
- * />
- *
- * @example
- * // Per-state custom color override — `color` wins over `category`
- * <PillMenu
- *   current={{ id: 'triage', name: 'Triage', color: 'amber' }}
- *   options={[{ id: 'won', name: 'Won', category: 'won', color: 'emerald' }]}
- *   onSelect={(id) => setStage(id)}
- * />
- *
- * @example
- * // A non-status value with icons and its own accessible label
- * <PillMenu
- *   label="type"
- *   current={{ id: 'bug', name: 'Bug', color: 'red', icon: <Bug size={14} /> }}
- *   options={[{ id: 'story', name: 'Story', color: 'green', icon: <BookOpen size={14} /> }]}
- *   onSelect={(id) => setType(id)}
- * />
- * // trigger is announced "Change type: Bug"
- *
- * @example
- * // In a form column beside full-width Selects/Inputs. Field wires `id`,
- * // the error text and `invalid`; the trigger keeps its own name
- * // ("Change priority: High"), so pass `label`. Without `fullWidth` the pill
- * // stays content-width in the field.
- * <Field label="Priority" error={errors.priority}>
- *   <PillMenu fullWidth label="priority" current={priority} options={priorities} onSelect={setPriority} />
- * </Field>
- *
- * @example
- * // Read-only — omit `options` for a static colored chip (no menu)
- * <PillMenu current={{ id: 'done', name: 'Done', category: 'done' }} />
- *
- * @remarks When NOT to use
- * - A single non-status action menu ("Actions", "⋯") — use `<DropdownMenu>`
- *   directly.
- * - Plain non-interactive status display with no transition affordance at
- *   all — use `<Badge>`.
- * - Picking from a long, searchable list of values — use `<Select>`.
- *
- * @remarks Anti-patterns
- * - ❌ A small `<Badge>` wrapped inside a neutral `<Button>` to fake a
- *   colored status trigger — that's exactly what `PillMenu` replaces.
- * - ❌ Raw hex strings in `color`. It's a `PaletteColor` name (`'amber'`,
- *   `'violet'`, …), not a CSS color value.
- * - ❌ Omitting `options` to "disable" the menu. Omitting `options` is
- *   read-only mode (no interactivity at all); for a transition that's
- *   temporarily blocked, keep `options` and pass `disabled` instead.
+ * Coloured value menu: a coloured pill trigger opening a menu of values (status, type, priority); read-only chip when `options` is omitted.
+ * @see docs/components/PillMenu.md
  */
 export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu(
   {

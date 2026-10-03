@@ -86,66 +86,8 @@ function getTextMetric(text: ReactNode): 'cap' | 'ex' {
 }
 
 /**
- * Brand logo lockup: a consumer-supplied mark image (`src`), optionally with a
- * wordmark beside it (default) or below, plus an optional muted subline. The
- * design system arranges and sizes the lockup; the mark itself is a
- * consumer-owned asset — import an SVG/PNG and pass its URL.
- *
- * The wordmark's font + weight are themeable via the `--logo-text-font` /
- * `--logo-text-font-weight` CSS variables (the `subtext` is unaffected).
- * Spacing is themeable via `--logo-gap` (mark → wordmark, default
- * `var(--space-2)`) and `--logo-text-gap` (wordmark → `subtext`, default
- * `var(--space-1)`).
- *
- * Where `text-box-trim` is supported the lockup trims the wordmark's
- * half-leading and aligns it to its cap edge — or its x-height edge when the
- * wordmark is entirely x-height glyphs, e.g. `text="eocrm"` — so it optically
- * centers against the mark. Adding a `subtext` also moves the wordmark's *under*
- * edge from the baseline down to the font's descent, so `--logo-text-gap` is
- * clear space rather than something the descenders eat into. That gap is
- * therefore measured from the descent line, not from the ink: with a
- * descender-free wordmark the visible space runs about 1.8–2.3× the token.
- * Browsers without `text-box-trim` (Firefox as of 2026-08) keep the untrimmed
- * leading and `--logo-text-gap` does not apply; the lockup reads looser and
- * taller there, never clipped.
- *
- * Because the trim is new, two things changed relative to previous versions on
- * supporting browsers. **Height:** most `subtext` lockups and every
- * `textPlacement="bottom"` lockup are shorter — a subtext-less
- * `textPlacement="bottom"` at `size="lg"` goes 74.4px → 59.6px with the
- * playground's Outfit wordmark. The plain side-by-side lockup keeps its height,
- * since the mark sets it. **Position:** the wordmark rises against the mark in
- * every shape, including those whose height is unchanged — side-by-side, its ink
- * centre sat 1.3/2.2/3.0px below the mark's *box* centre at sm/md/lg and now
- * sits within 0.1px. That is the correction, but it means every lockup with a
- * wordmark moved visually. All these figures are Chromium + Outfit-600 and are
- * not pinned by any test; re-measure in your own face. Size fixed-height brand
- * bars off the mark rather than the lockup; Logo.md has the per-shape figures.
- *
- * @example
- * // Mark + wordmark — the common app-header / auth lockup:
- * import logo from '../assets/eocrm-logo.svg';
- * <Logo src={logo} text="eocrm" size="lg" />
- *
- * @example
- * // Mark only — give it an accessible name when it stands alone:
- * <Logo src={logo} label="eocrm" />
- *
- * @example
- * // Wordmark below the mark, centered:
- * <Logo src={logo} text="eocrm" textPlacement="bottom" />
- *
- * @example
- * // With a small muted subline — a name + plan lockup:
- * <Logo src={logo} text="eocrm" subtext="Free trial" size="sm" />
- *
- * @remarks When NOT to use
- * - For a third-party brand mark (Google / Yandex SSO) → use `<BrandIcon>`.
- * - For arbitrary content images → `<Image>`; for avatars → `<Avatar>`.
- *
- * @remarks Anti-patterns
- * - ❌ Passing both `text` and `label` — double-announces. With `text` the mark
- *   is decorative (`alt=""`); `label` is only for a mark-only logo.
+ * Brand logo lockup: a consumer-supplied mark image, optionally with a wordmark beside or below and a muted subline.
+ * @see docs/components/Logo.md
  */
 export const Logo = forwardRef<HTMLDivElement, LogoProps>(function Logo(
   { src, text, subtext, textPlacement = 'end', size = 'md', label, className, ...props },

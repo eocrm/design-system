@@ -66,38 +66,8 @@ export interface PasswordInputProps extends Omit<
 }
 
 /**
- * Password text field with a trailing eye toggle that flips the input
- * `type` between `'password'` and `'text'`. Optional opt-in caps-lock and
- * wrong-keyboard-layout warnings. Pair with `<PasswordStrengthMeter>` for
- * the canonical signup-form pattern.
- *
- * @example
- * <PasswordInput placeholder="Password" />
- *
- * @example
- * // Controlled reveal:
- * const [revealed, setRevealed] = useState(false);
- * <PasswordInput revealed={revealed} onRevealChange={setRevealed} />
- *
- * @example
- * // Login form with both warnings:
- * <PasswordInput
- *   name="password"
- *   capsLockWarning
- *   wrongLayoutWarning
- *   aria-describedby="pw-strength"
- * />
- * <PasswordStrengthMeter id="pw-strength" value={password} />
- *
- * @remarks When NOT to use
- * - Non-secret single-line text → use `<Input>`.
- * - Multi-line secrets (paste-only API tokens) → use `<Textarea>` (not shipped).
- * - Systems that allow non-Latin passwords → do NOT set `wrongLayoutWarning`.
- *
- * @remarks Anti-patterns
- * - ❌ `revealable={false}` + a non-password `<Input>` next to it for "Show in plaintext" UX. Just use `<Input>` directly.
- * - ❌ Wrapping in another `<label>` outside the component — we already render the input; an outer label nests poorly.
- * - ❌ Treating the default `<PasswordStrengthMeter>` scoring as a security control. It's a UX hint; pass `score` from zxcvbn or server-side validation for production.
+ * Password text field with a trailing eye toggle and opt-in caps-lock / wrong-keyboard-layout warnings.
+ * @see docs/components/PasswordInput.md
  */
 export const PasswordInput = forwardRef<HTMLInputElement, PasswordInputProps>(
   function PasswordInput(

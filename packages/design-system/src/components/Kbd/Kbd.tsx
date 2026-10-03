@@ -40,34 +40,8 @@ const sizeClass: Record<KbdSize, string> = {
 };
 
 /**
- * Renders a keyboard shortcut as one or more `<kbd>` chips joined with an
- * inline `+` separator. Use for shortcut hints in tooltips, command-palette
- * rows, search inputs, and help/shortcut sheets.
- *
- * @example
- * // Single key
- * <Kbd keys={['Esc']} />
- *
- * @example
- * // Two-key combo
- * <Kbd keys={['⌘', 'K']} />
- *
- * @example
- * // Inside a Tooltip
- * <Tooltip content={<>Save <Kbd keys={['⌘', 'S']} /></>}>
- *   <Button>Save</Button>
- * </Tooltip>
- *
- * @remarks
- * **When NOT to use:**
- * - For inline code, use `<Code>` instead — `<kbd>` is for keyboard input.
- * - For arbitrary text chips, use `<Badge>` — the `<kbd>` element implies
- *   keyboard input semantically.
- * - Don't platform-translate inside the `keys` array. Pass what you want
- *   shown. Apps that want `'⌘'` on macOS and `'Ctrl'` elsewhere should
- *   branch at the application layer.
- * - Don't nest a `<Kbd>` inside a button as its only label. Use the
- *   button's `aria-label` and render the Kbd as a separate visual hint.
+ * Renders a keyboard shortcut as one or more `<kbd>` chips joined with an inline `+` separator.
+ * @see docs/components/Kbd.md
  */
 export const Kbd = forwardRef<HTMLSpanElement, KbdProps>(function Kbd(
   { keys, size = 'sm', 'aria-label': ariaLabel, className, ...props },

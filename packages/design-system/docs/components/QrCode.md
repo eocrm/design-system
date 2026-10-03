@@ -31,3 +31,6 @@
 - Clicking inverts; `title` carries a localized hint describing that, exposed as the accessible description. Pass your own `title` to override it.
 - Always render the underlying URL as selectable text too. The code is unusable to a screen-reader user, and to anyone reading on the device that shows it.
 - Treat the value as public. Anyone who can see the screen can scan it.
+
+- `logo` raises `level` to `'H'`, which packs more modules into the same box — each comes out smaller, so size the container up when you use it.
+- Pair the code with a visible caption (e.g. `<Text size="sm" tone="muted">Scan at the door</Text>` in a `<Stack align="center">`) for sighted users.

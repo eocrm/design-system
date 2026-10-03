@@ -36,3 +36,27 @@ const [start, setStart] = useState(0);
 - `items` accept `kind: 'pdf'` (or a `.pdf` src) → rendered in an `<iframe>` with a download action; mixed image+PDF galleries supported. A PDF without a `thumbnail` shows a document-icon placeholder in the strip; unsafe (non-http(s)) doc srcs show a "Preview unavailable" message.
 - Single item → chevrons, counter, and strip auto-hide. Empty `items` → renders nothing.
 - Reuses the DS overlay machinery (focus-trap, scroll-lock, Esc — yielding to open floating surfaces first like Modal/Drawer, stacking above modals).
+
+Mixed gallery (images + a PDF):
+
+```tsx
+<Lightbox
+  open={open}
+  onOpenChange={setOpen}
+  items={[
+    { src: shot.url, alt: 'Screenshot' },
+    { src: doc.url, alt: 'Contract.pdf', kind: 'pdf' },
+  ]}
+/>
+```
+
+**When NOT to use**
+
+- A single, always-visible image — use `<Image>` (optionally `interactive`).
+- An arbitrary modal dialog (not an image/PDF preview) — use `<Modal>`.
+
+**Anti-patterns**
+
+- ❌ Building your own `Modal` + `Image` + arrows — that is what this is.
+- ❌ Omitting `alt` on items — it is required and names the thumbnail and the stage.
+- ❌ Passing `index` without `onIndexChange` — navigation would be a no-op.

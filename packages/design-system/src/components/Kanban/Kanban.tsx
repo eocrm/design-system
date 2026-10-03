@@ -291,17 +291,8 @@ const clamp = (value: number, min: number, max: number) => Math.min(Math.max(val
 // ---------------------------------------------------------------------------
 
 /**
- * One draggable card inside a `<Kanban.Column>`. Renders a `<div>` with
- * the consumer's children. Must have a stable `id` prop.
- *
- * If the children subtree contains a `<Kanban.Handle>`, only the Handle
- * initiates drag (the card div gets `role="article"`). Otherwise the whole
- * card is draggable (dnd-kit applies `role="button"`).
- *
- * @remarks
- * Drag announcements name the card by its rendered text. Pass `aria-label` to
- * override that — worth doing when the card renders a lot besides its title
- * (assignee, due date, badges), since all of it otherwise gets read out.
+ * One draggable card inside a `<Kanban.Column>`; needs a stable `id`.
+ * @see docs/components/Kanban.md
  */
 export const KanbanCard = forwardRef<HTMLDivElement, KanbanCardProps>(function KanbanCard(
   { id, className, children, ...rest },
@@ -425,19 +416,8 @@ KanbanCard.displayName = 'KanbanCard';
 // ---------------------------------------------------------------------------
 
 /**
- * One swimlane in a `<Kanban>`. Renders a droppable `<div>` wrapping a
- * `SortableContext` so cards within it can reorder. Must have a stable `id`.
- *
- * Column layout (header, footer) goes before / after `<Kanban.Card>` children
- * — keep cards as a contiguous block.
- *
- * @remarks
- * Name the column — `aria-label` with its visible heading, or `aria-labelledby`
- * pointing at that heading's element. Either one names the column in the drag
- * announcements a screen reader hears ("…position 2 of 3 in Qualified");
- * without one they fall back to "column 2 of 3". Because a name is only useful
- * if the element it sits on has a role, a named column renders as
- * `role="group"`.
+ * One swimlane in a `<Kanban>`; needs a stable `id`.
+ * @see docs/components/Kanban.md
  */
 export const KanbanColumn = forwardRef<HTMLDivElement, KanbanColumnProps>(function KanbanColumn(
   { id, className, children, ...rest },
@@ -496,149 +476,8 @@ KanbanColumn.displayName = 'KanbanColumn';
 // ---------------------------------------------------------------------------
 
 /**
- * Multi-column drag-and-drop board. Compound API: `Kanban`, `Kanban.Column`,
- * `Kanban.Card`, `Kanban.Handle`. Built on `@dnd-kit/sortable`.
- *
- * Cards reflow live as the dragged card crosses column boundaries — the
- * target column shifts to make room in real time (matching Trello / Jira
- * UX). Internal `liveItems` state drives the live reflow; consumer state is
- * untouched until `onMove` fires on drop.
- *
- * Controlled-only: consumer holds their items state and applies the move in
- * `onMove`, then re-renders. `onMove` fires exactly once per drag (on drop),
- * never during drag.
- *
- * @example
- * // Basic Kanban with two columns and a Handle per card.
- * const [cols, setCols] = useState({
- *   todo: [{ id: 'a', title: 'Write tests' }, { id: 'b', title: 'Fix bug' }],
- *   done: [{ id: 'c', title: 'Ship it' }],
- * });
- *
- * const handleMove = ({ from, to, cardId }) => {
- *   setCols((prev) => {
- *     const fromCards = [...prev[from.columnId]];
- *     const [moved] = fromCards.splice(from.index, 1);
- *     const toCards = to.columnId === from.columnId
- *       ? fromCards
- *       : [...prev[to.columnId]];
- *     toCards.splice(to.index, 0, moved);
- *     return {
- *       ...prev,
- *       [from.columnId]: fromCards,
- *       [to.columnId]: toCards,
- *     };
- *   });
- * };
- *
- * <Kanban onMove={handleMove}>
- *   {Object.entries(cols).map(([colId, cards]) => (
- *     <Kanban.Column key={colId} id={colId}>
- *       <h3>{colId}</h3>
- *       {cards.map((card) => (
- *         <Kanban.Card key={card.id} id={card.id}>
- *           <Cluster justify="between">
- *             <span>{card.title}</span>
- *             <Kanban.Handle aria-label={`Drag ${card.title}`} />
- *           </Cluster>
- *         </Kanban.Card>
- *       ))}
- *     </Kanban.Column>
- *   ))}
- * </Kanban>
- *
- * @remarks Drop position semantics
- * The committed `to.index` is the slot the preview showed at the moment of
- * release, because both are read off the same `over`. Two documented
- * exceptions follow below; absent those, they cannot drift. `verticalListSortingStrategy` renders a column as
- * `arrayMove(cards, activeIndex, overIndex)` where
- * `overIndex = cards.indexOf(over.id)`, so the gap the user sees sits at
- * `overIndex`; `onMove` commits that same index. Where `over` is not a card
- * (`overIndex === -1`) the strategy displaces nothing, so the preview is the
- * card's live slot and that is what gets committed. Concretely:
- * - Drop on a sibling card → the active card lands at that card's slot in
- *   the destination as rendered mid-drag. The slot re-evaluates as the
- *   cursor moves, for the whole drag — not only at the column boundary
- *   (fixed in #376; before that a cross-column drop committed the entry
- *   slot while the preview kept tracking the cursor).
- * - Cross-column drop onto an empty column → index 0 of the destination.
- * - Cross-column drop in the column's padding past the last card → appended
- *   to the end of the destination, re-appended as long as the cursor stays
- *   in the padding.
- * - Within-column reorder onto a sibling card → arrayMove semantics: the
- *   active card ends at the over card's index in the column as currently
- *   rendered (for a drag that never left its column that's the card's
- *   pre-move index, since nothing re-seated it).
- * - Within-column drop on the source column's own padding past all cards →
- *   appended to the end of the source column. This is the one deliberate
- *   deviation from "commit === preview": `over` is the column, so the strategy
- *   displaces nothing and previews the card at whatever slot it currently
- *   occupies (its original one, or — if it visited another column and came
- *   back — wherever the return seated it, which can be several slots off).
- *   The commit appends anyway: snapping a dragged-to-the-bottom card back up
- *   reads as a dropped drag.
- * - Release without moving (cursor never left the card's own slot) or Escape
- *   → snap back; `onMove` does NOT fire.
- * - Release with the pointer outside the board → same cancel + snap back, no
- *   `onMove` (#387). "Outside" is measured against the columns' collective
- *   bounding box, not each column's own rect: releasing in the gutter between
- *   two columns commits to whichever is nearer, because that is plainly what
- *   the user meant. Only leaving the band of columns altogether cancels.
- *   Note the drop target is decided by the POINTER, while the card itself is
- *   clamped to the board (see below) — so a released card that appears to be
- *   parked on the last column has still cancelled if the cursor was past it.
- *
- * @remarks Auto-scroll and drag bounds
- * The board is its own horizontal scroll container, so a board wider than its
- * viewport auto-scrolls while a card is dragged near either edge — that is how
- * an off-screen column is reached. The dragged card is confined to the board's
- * scrollable content box (both axes): it stops at the outer edge of the first
- * and last column instead of following the cursor out of the board. That bound
- * is load-bearing, not cosmetic. The card is rendered IN FLOW (there is no
- * `DragOverlay`), so a card carried past the content edge would extend the
- * board's own `scrollWidth`, and auto-scroll would chase the edge it had just
- * created — measured at 8910px of `scrollLeft` after 4s against a real maximum
- * of 597, with the last column permanently out of reach (#373). With the bound
- * in place `scrollWidth` is constant for the whole drag and `scrollLeft`
- * plateaus at the real maximum. The same applies vertically at the bottom of a
- * long column.
- *
- * The bound is the card's NEAREST scrolling ancestor, which is the board unless
- * you make something inside it scroll. Capping a column (`overflow-y: auto` +
- * `max-height` on `<Kanban.Column>`, a common way to keep a long column from
- * stretching the board) hands that role to the column, and the dragged card is
- * then confined to its own column — it will not visibly cross into a
- * neighbouring one, though the drop still lands wherever the cursor is. Scroll
- * the board, not the columns, if you want the card to travel with the cursor.
- *
- * @remarks When NOT to use
- * - Single-column drag-to-reorder — use `<Sortable>` instead. It's simpler
- *   and doesn't carry the multi-column DndContext overhead.
- * - Pure display boards with no drag (read-only lists) — use `<Stack>` +
- *   `<Card>`. No need for dnd-kit wiring.
- * - Column reordering — not supported; columns render in source JSX order.
- * - Cross-column keyboard reorder — dnd-kit's `sortableKeyboardCoordinates`
- *   is scoped per `SortableContext` (i.e., per column). Keyboard drag works
- *   within a column only.
- *
- * @remarks Anti-patterns
- * - ❌ Expecting cross-column keyboard reorder. dnd-kit's keyboard
- *   coordinator is per-SortableContext. Cards keyboard-reorder within their
- *   column; cross-column keyboard move is out of scope.
- * - ❌ Non-contiguous cards within a column's children. The live-reinsertion
- *   architecture splits each column's children into [before-cards, cards,
- *   after-cards]. If you interleave non-card elements within the card block
- *   (e.g. `<Card><Divider><Card>`), the non-card ends up in an unexpected
- *   position after a reorder. Keep headers/footers strictly before/after the
- *   card block.
- * - ❌ Wrapping `<Kanban.Card>` inside a custom component. Both
- *   `containsHandle` and the card-extraction walk direct children only. A
- *   card wrapped in `<MyRow>` won't be extracted — it renders but won't be
- *   reorderable via live-reinsertion.
- * - ❌ Non-stable column / card ids. Ids must be stable across renders.
- *   Using array indices breaks dnd-kit's reconciliation during drag.
- * - ❌ Mutating state in place inside `onMove`. Always produce a new array /
- *   object — React needs a fresh reference to schedule a re-render.
+ * Multi-column drag-and-drop board with live cross-column reflow (`Kanban`, `Kanban.Column`, `Kanban.Card`, `Kanban.Handle`).
+ * @see docs/components/Kanban.md
  */
 const KanbanRoot = forwardRef<HTMLDivElement, KanbanProps>(function KanbanRoot(
   { onMove, className, children, ...rest },

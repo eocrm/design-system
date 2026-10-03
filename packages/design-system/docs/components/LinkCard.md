@@ -37,3 +37,5 @@
 - ❌ Nesting interactive controls (`<Button>` / `<Link>`) inside a LinkCard — nested interactives are invalid + confusing.
 - ❌ `<LinkCard href="#" onClick={…}>` — fake href breaks "open in new tab". Use `as="button"` for actions.
 - ❌ `<LinkCard href="https://…" target="_blank">` without `rel="noopener noreferrer"` — security risk.
+
+**A11y:** renders a real `<a>` / `<button>` / router link, so it has native semantics; the children supply the accessible name — keep the primary label first. `:focus-visible` provides the keyboard ring.

@@ -61,3 +61,27 @@ Multi mode buffers a draft until Apply; single mode commits per click.
 
 Don't use for form selects (use `<Select>`), action menus (use `<DropdownMenu>`),
 or single boolean toggles (use `<Checkbox>` or `<Switch>`).
+
+Multi mode (default) keeps a draft until Apply; Cancel, Esc and click-outside revert it. Single mode commits through `onApply` on each click and closes the panel.
+
+```tsx
+<OptionsPicker mode="single" selected={tenantId} onApply={setTenantId}>
+  <OptionsPicker.Trigger>
+    <Button variant="secondary">Tenant</Button>
+  </OptionsPicker.Trigger>
+  <OptionsPicker.Content
+    label="Filter tenant"
+    options={tenants.map((t) => ({ value: t.id, label: t.slug }))}
+  />
+</OptionsPicker>
+```
+
+`<OptionsPicker.Trigger>` takes a single ref-accepting element (typically a `<Button>`); open wiring and ARIA (`aria-haspopup`, `aria-expanded`, `aria-controls`) are injected, and your own ref on the child still receives the DOM node. `<OptionsPicker.Content>` hosts the search bar, the option list and (multi mode) the Apply/Cancel footer.
+
+OptionsPicker has no `name` attribute and no form association. Action menus (Edit / Delete / Archive) are commands, not filters — use `<DropdownMenu>`.
+
+**Anti-patterns**
+
+- ❌ Passing BOTH `options` and `groups` to Content — TypeScript rejects it. Pick one.
+- ❌ Calling `onApply` yourself inside Content's render — the picker owns the commit; treat `onApply(next)` as the single source of truth and update React state from it.
+- ❌ Controlling open state without passing both `open` and `onOpenChange` — partial control breaks invariants.
