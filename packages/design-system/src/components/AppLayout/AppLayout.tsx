@@ -9,6 +9,27 @@ import styles from './AppLayout.module.scss';
 
 export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
   /**
+   * System-wide banner slot — full WINDOW width, above the sidebar + content
+   * row. For messages that apply wherever the user is: maintenance, billing
+   * overdue, impersonation. Pass a `<Banner>` (or several, most severe first).
+   * Not sticky: it scrolls away with the page while the `topBar` stays pinned.
+   * Omit (or pass `null` / `false`) for no wrapper.
+   *
+   * With `sidebarPinned`, the pinned sidebar starts below this banner, so at
+   * scroll position 0 its bottom (a `Rail.Footer`) sits up to one banner height
+   * below the fold until the page scrolls past the banner. This is accepted —
+   * banners are temporary.
+   */
+  banner?: ReactNode;
+  /**
+   * Context banner slot — inside the content column, between the `topBar` and
+   * the padded content region, full-bleed within the column. For messages
+   * scoped to a module or route ("Email sending suspended" on the Email
+   * pages); the app decides which routes render it. Pass a `<Banner>`. Not
+   * sticky. Page-level messages belong in the content as `<Alert>` instead.
+   */
+  contextBanner?: ReactNode;
+  /**
    * Top bar slot — sits above the main content, spanning the content column to
    * the right of the sidebar (not the full window width). Omit for no top bar.
    */
@@ -84,7 +105,8 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
  * (`min-height: 100vh`).
  *
  * Replaces the ad-hoc `Stack` + `Cluster` shell composition consumers hand-rolled,
- * which couldn't express `min-height: 100vh` without raw CSS.
+ * which couldn't express `min-height: 100vh` without raw CSS. Optional `banner`
+ * (above everything) and `contextBanner` (under the top bar) slots host `<Banner>`s.
  *
  * @example
  * // Mounted once at the app root:
@@ -102,6 +124,17 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
  * // Tall pages: pin the sidebar so a Rail's footer/CollapseToggle stays glued
  * // to the viewport bottom instead of scrolling away with the page:
  * <AppLayout sidebar={<Rail>{nav}<Rail.Footer>{footer}</Rail.Footer></Rail>} sidebarPinned>
+ *   <Page>{routedContent}</Page>
+ * </AppLayout>
+ *
+ * @example
+ * // System banner above everything + a module-scoped one under the top bar:
+ * <AppLayout
+ *   banner={<Banner tone="info" title="Maintenance Saturday 22:00.">CRM will be read-only.</Banner>}
+ *   contextBanner={suspended && <Banner tone="danger" title="Email sending suspended." />}
+ *   topBar={<TopBar />}
+ *   sidebar={<Rail>{nav}</Rail>}
+ * >
  *   <Page>{routedContent}</Page>
  * </AppLayout>
  *
@@ -155,7 +188,8 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
  * @remarks Scrolling
  * This is a **page-scroll** shell: `min-height: 100vh` lets it grow with tall
  * content, so the whole window scrolls. The `topBar` is always pinned
- * (`position: sticky`) and never scrolls away, regardless of `sidebarPinned`.
+ * (`position: sticky`) and never scrolls away, regardless of `sidebarPinned`;
+ * `banner` and `contextBanner` are not sticky and scroll away with the page.
  * The `sidebar` scrolls away with the page unless `sidebarPinned` is set, in
  * which case it pins too. Only the main content region ever scrolls with the
  * page. For the common "fixed chrome + independently-scrolling content"
@@ -202,6 +236,8 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
  */
 export const AppLayout = forwardRef<HTMLDivElement, AppLayoutProps>(function AppLayout(
   {
+    banner,
+    contextBanner,
     topBar,
     sidebar,
     sidebarPinned,
@@ -252,17 +288,26 @@ export const AppLayout = forwardRef<HTMLDivElement, AppLayoutProps>(function App
 
   // Pattern A — props last: AppLayout is a consumer-overridable layout
   // primitive (like Stack/Card), so {...props} wins over our defaults.
-  // Topology: a row of [full-height sidebar | a column of (topBar, main)] — so
+  // Topology: banner above a row of [full-height sidebar | column of (topBar,
+  // contextBanner, main)] — so
   // the sidebar spans the whole height and the top bar sits only over the
   // content column, matching the CRM shell (see playground AppShell).
   return (
     <div ref={ref} className={clsx(styles.root, className)} {...props}>
-      {sidebar != null && !overlay && (
-        <div className={clsx(styles.sidebar, sidebarPinned && styles.sidebarPinned)}>{sidebar}</div>
-      )}
-      <div className={styles.body}>
-        {topBar != null && <div className={styles.topBar}>{topBar}</div>}
-        <div className={styles.main}>{children}</div>
+      {banner != null && banner !== false && <div className={styles.banner}>{banner}</div>}
+      <div className={styles.row}>
+        {sidebar != null && !overlay && (
+          <div className={clsx(styles.sidebar, sidebarPinned && styles.sidebarPinned)}>
+            {sidebar}
+          </div>
+        )}
+        <div className={styles.body}>
+          {topBar != null && <div className={styles.topBar}>{topBar}</div>}
+          {contextBanner != null && contextBanner !== false && (
+            <div className={styles.contextBanner}>{contextBanner}</div>
+          )}
+          <div className={styles.main}>{children}</div>
+        </div>
       </div>
       {overlayConfigured && (
         <Drawer

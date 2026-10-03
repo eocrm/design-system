@@ -293,6 +293,7 @@ Each component is fully JSDoc'd. Hover any usage in your editor for inline docs 
 - [`Popover`](docs/components/Popover.md) — non-modal floating panel for interactive content
 - [`ToastViewport`](docs/components/ToastViewport.md) — transient notifications
 - [`Alert`](docs/components/Alert.md) — persistent in-flow notification
+- [`Banner`](docs/components/Banner.md) — full-width system / app message bar
 - [`ConfirmationPopover`](docs/components/ConfirmationPopover.md) — opinionated "Are you sure?" preset
 - [`Tour`](docs/components/Tour.md) — guided tour / onboarding walkthrough
 - [`Modal`](docs/components/Modal.md) — focus-locked dialog

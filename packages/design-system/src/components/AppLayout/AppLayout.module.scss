@@ -11,13 +11,10 @@
 // shorthand, min-height, or min-width, so no disable is needed here.)
 @use './AppLayout.tokens';
 
+// Column: optional full-window banner above the [sidebar | column] row.
 .root {
   display: flex;
-  flex-direction: row;
-
-  // Explicit (it's the default) — the full-height sidebar depends on the row
-  // stretching its items to the row's height; don't change this to center/start.
-  align-items: stretch;
+  flex-direction: column;
   min-height: 100vh;
 
   // Own stacking context so a nested AppLayout's --z-app-chrome topBar can't
@@ -28,6 +25,25 @@
   // (Modal/Drawer/Popover — those escape to document.body regardless) or any
   // in-content `position: fixed` element.
   isolation: isolate;
+}
+
+.banner,
+.contextBanner {
+  flex: none;
+}
+
+// The original shell row. flex: 1 fills the root's min-height (and a
+// consumer's fixed `height: 100vh` override); min-height: 0 lets that
+// fixed-height mode shrink the row so Rail / main manage their own overflow.
+.row {
+  display: flex;
+  flex: 1;
+  flex-direction: row;
+
+  // Explicit (it's the default) — the full-height sidebar depends on the row
+  // stretching its items to the row's height; don't change this to center/start.
+  align-items: stretch;
+  min-height: 0;
 }
 
 // Full-height sidebar down the left (stretches to the row height). Sets its own

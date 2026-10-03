@@ -15,6 +15,22 @@ export interface Messages {
      * Drawer.Header, so without this the dialog would be unnamed. */
     sidebar: string;
   };
+  banner: {
+    /** aria-label on the Banner's dismiss (×) button. */
+    dismiss: string;
+    /**
+     * Visually hidden tone label read before a Banner's text ("Warning: …").
+     * A banner sits in app chrome, out of the page's context, so its tone
+     * must be spoken, not only shown by icon + colour.
+     */
+    tone: {
+      info: string;
+      success: string;
+      warning: string;
+      /** Spoken as "Error" — "Danger:" reads oddly aloud. */
+      danger: string;
+    };
+  };
   confirmationPopover: {
     /**
      * Announced from a polite live region while an async confirm is in flight.

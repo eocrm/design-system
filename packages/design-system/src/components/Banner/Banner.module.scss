@@ -1,0 +1,73 @@
+@use './Banner.tokens';
+
+// Full-width bar: no radius, bottom rule only. Single flex-wrap row so the
+// action + × drop below the text when the slot is narrow — no breakpoint.
+.banner {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: flex-start;
+  gap: var(--banner-row-gap) var(--banner-gap);
+  width: 100%;
+  padding: var(--banner-padding-y) var(--banner-padding-x);
+  background: var(--banner-bg-info);
+  border-bottom: var(--banner-border-width) solid var(--banner-rule-info);
+  color: var(--banner-fg);
+  font-size: var(--banner-font-size);
+  line-height: 1.5;
+}
+
+.banner[data-tone='success'] {
+  background: var(--banner-bg-success);
+  border-bottom-color: var(--banner-rule-success);
+}
+
+.banner[data-tone='warning'] {
+  background: var(--banner-bg-warning);
+  border-bottom-color: var(--banner-rule-warning);
+}
+
+.banner[data-tone='danger'] {
+  background: var(--banner-bg-danger);
+  border-bottom-color: var(--banner-rule-danger);
+}
+
+.icon {
+  display: flex;
+  flex: none;
+  align-items: center;
+  min-height: var(--banner-row-height);
+  color: var(--banner-icon-info);
+}
+
+.banner[data-tone='success'] .icon {
+  color: var(--banner-icon-success);
+}
+
+.banner[data-tone='warning'] .icon {
+  color: var(--banner-icon-warning);
+}
+
+.banner[data-tone='danger'] .icon {
+  color: var(--banner-icon-danger);
+}
+
+// Internal row distribution (not the component's own placement): the text
+// takes the free space and wraps; below --banner-text-min-width the action
+// and × move onto their own line.
+.text {
+  flex: 1 1 var(--banner-text-min-width);
+  min-width: 0;
+  padding-block: var(--banner-text-padding-y);
+}
+
+.title {
+  font-weight: var(--banner-title-font-weight);
+}
+
+.action {
+  display: flex;
+  flex: none;
+  align-items: center;
+  min-height: var(--banner-row-height);
+}

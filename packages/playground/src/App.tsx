@@ -23,6 +23,7 @@ import { TokensPage } from './pages/Tokens/TokensPage';
 import { ArchitecturePage } from './pages/Architecture/ArchitecturePage';
 import { AccordionDemo } from './pages/components/AccordionDemo';
 import { AlertDemo } from './pages/components/AlertDemo';
+import { BannerDemo } from './pages/components/BannerDemo';
 import { BreadcrumbDemo } from './pages/components/BreadcrumbDemo';
 import { ButtonDemo } from './pages/components/ButtonDemo';
 import { SocialButtonDemo } from './pages/components/SocialButtonDemo';
@@ -155,6 +156,7 @@ export default function App() {
             <Route path="/components/architecture" element={<ArchitecturePage />} />
             <Route path="/components/accordion" element={<AccordionDemo />} />
             <Route path="/components/alert" element={<AlertDemo />} />
+            <Route path="/components/banner" element={<BannerDemo />} />
             <Route path="/components/breadcrumb" element={<BreadcrumbDemo />} />
             <Route path="/components/button" element={<ButtonDemo />} />
             <Route path="/components/social-button" element={<SocialButtonDemo />} />
