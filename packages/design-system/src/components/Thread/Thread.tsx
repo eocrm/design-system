@@ -49,7 +49,8 @@ export interface ThreadProps extends HTMLAttributes<HTMLUListElement> {
    *   timestamp header), Jira/GitHub style, so a node taller than one line (e.g. a 24px
    *   `<Avatar>`) reads as centered against the name rather than top-aligned. Assumes the
    *   header line-box matches `--thread-header-line-height` (defaults to `<Text size="sm">`);
-   *   override that token if your header line differs.
+   *   override that token if your header line differs. Remove any old header
+   *   `lineHeight` override (e.g. `var(--size-sm)`) — it now double-compensates.
    * - `top` — top-aligned with the body (the node's top meets the body's top). Use when the
    *   node is about one line tall, or when you deliberately want top alignment.
    */

@@ -40,7 +40,7 @@ import { Switch } from '@eocrm/design-system';
 | Prop | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `size` | `SwitchSize` | no | — | Visual scale. Defaults to `'md'`. - `'sm'` — 28×16 track, 12px thumb, `--font-size-sm` label. - `'md'` — 36×20 track, 16px thumb, `--font-size-md` label (default). - `'lg'` — 44×24 track, 20px thumb, `--font-size-lg` label. Note: shadows the native HTML `<input size>` attribute (meaningless on checkboxes). |
-| `tone` | `SwitchTone` | no | — | Track color when checked. Defaults to `'accent'`. - `'accent'` — blue (default). - `'success'` — green. Use for affirmative toggles ("Enable notifications"). - `'danger'` — red. Use for destructive toggles ("Allow root access"). |
+| `tone` | `SwitchTone` | no | — | Track color when checked (the unchecked track is always neutral muted). Defaults to `'accent'`. - `'accent'` — blue (default). - `'success'` — green. Use for affirmative toggles ("Enable notifications"). - `'danger'` — red. Use for destructive toggles ("Allow root access"). |
 | `checked` | `boolean` | no | — | Controlled checked state. Pair with `onChange`. Omit (with optional `defaultChecked`) for uncontrolled use. |
 | `defaultChecked` | `boolean` | no | — | Initial checked state for uncontrolled use. Defaults to `false`. |
 | `onChange` | `((checked: boolean, e: ChangeEvent<HTMLInputElement, Element>) => void)` | no | — | Fires when the user toggles the switch. The first arg is the next boolean (convenience); the original change event is the second arg. Matches `<Checkbox>`'s signature. |
@@ -52,9 +52,6 @@ import { Switch } from '@eocrm/design-system';
 <!-- props:end -->
 
 - **Native `<input type="checkbox" role="switch">`**. Form submission works; AT announces as switch. `ref` and native attributes (`name`, `value`, `disabled`, `aria-label`) reach the input.
-- **Three tones** (`accent`/`success`/`danger`) for the checked track. Unchecked track is always neutral muted.
-- **`loading={true}`** shows a spinner inside the thumb, sets `aria-busy`, announces from its own polite live region, and ignores toggle attempts while keeping the input focusable. Consumer manages the optimistic-update flow. The switch's accessible **name does not change** while loading — you activated it, so the change is announced rather than renamed. `aria-busy` is set for tooling but reaches no screen reader on its own; the live region is what actually speaks.
-- **`onChange(checked, event)`** signature matches Checkbox — first arg is the next boolean, second is the raw event.
 
 #### Hard rule
 

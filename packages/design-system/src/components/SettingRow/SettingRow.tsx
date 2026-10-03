@@ -40,7 +40,9 @@ export interface SettingRowProps extends Omit<HTMLAttributes<HTMLDivElement>, 'c
    * the main control. A control that sizes itself to `width: 100%` (`Select`,
    * `Input`, `Textarea`) fills the ENTIRE trailing group and pushes any other
    * adornment onto a second line; wrap it in `<Constrain width="xs">` (or
-   * another named step) to size it instead.
+   * another named step) to size it instead. Plain truthiness check: an empty
+   * array or fragment still renders an empty wrapper (a stray gap) — pass
+   * `undefined` for "none".
    */
   trailing?: ReactNode;
   /**

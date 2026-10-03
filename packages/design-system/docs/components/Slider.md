@@ -39,8 +39,8 @@
 | `thumbLabels` | `readonly [string, string]` | no | — | Explicit accessible names for the minimum and maximum thumbs in range mode. These win over a root `aria-label` or `aria-labelledby`; use them when the thumbs need domain-specific names such as `['Start date', 'End date']`. When an entry is omitted OR empty — an empty string is not an explicit name — that thumb falls back to a root label suffixed with the localized “minimum” or “maximum” name. The two entries are resolved independently, so `['', 'End date']` names only the maximum thumb. |
 | `size` | `SliderSize` | no | — | Track + thumb sizing. Defaults to `'md'`. - `sm` — 4px track, 14px thumb. - `md` — 6px track, 18px thumb (default). - `lg` — 8px track, 22px thumb. |
 | `tone` | `SliderTone` | no | — | Fill color tone (the track segment between min and value). Defaults to `'default'` (accent). State-coded `success` / `warning` / `danger` for threshold-style sliders (e.g. disk usage approaching capacity). |
-| `orientation` | `SliderOrientation` | no | — | Orientation. Defaults to `'horizontal'`. |
-| `disabled` | `boolean` | no | — | Disabled state. Defaults to `false`. |
+| `orientation` | `SliderOrientation` | no | — | Orientation. Defaults to `'horizontal'`. Vertical defaults to 200px tall; override via `style={{ height }}`. |
+| `disabled` | `boolean` | no | — | Disabled state. Defaults to `false`. Thumbs become non-interactive (`tabIndex=-1`, `aria-disabled`, `pointer-events: none`, `cursor: not-allowed`). |
 | `name` | `string` | no | — | Native form-input name. When set, a hidden `<input>` (or two for range, with `-min`/`-max` suffixes) is rendered with the current value(s) so the slider works inside uncontrolled HTML forms without consumer JS serialization. When the slider is `disabled`, the hidden input(s) are NOT rendered so the form does not submit a stale disabled value. |
 | …native | | | | plus native `<div>` attributes |
 
@@ -50,14 +50,6 @@
 - **`value: number | [number, number]`** — discriminated union. `number` for single-thumb; tuple for range (two-thumb). `onChange` mirrors the shape.
 - **Range thumb names:** every range thumb must have a distinct accessible name. A root `aria-label="Price range"` produces “Price range, minimum” and “Price range, maximum” (localized); a root `aria-labelledby` is preserved and gets an appended localized suffix. Use `thumbLabels={['Lowest price', 'Highest price']}` when the names are domain-specific — explicit tuple labels win.
 - **`onChange` fires per pointer-move tick (high frequency).** Debounce in the consumer OR use `onChangeEnd` (fires at pointerup, or at blur when the value actually changed) for server-state / expensive logic.
-- `min`/`max`/`step` default to `0`/`100`/`1`. Fractional `step` (e.g. `0.1`) is the canonical way to do zoom/opacity controls.
-- `size`: `sm` (4px track / 14px thumb) / `md` (6/18, default) / `lg` (8/22).
-- `tone`: `default` (accent) / `success` / `warning` / `danger`. Use `warning`/`danger` for threshold-style sliders (disk usage, alert level).
-- `orientation`: `horizontal` (default) / `vertical`. Vertical defaults to 200px tall; override via `style={{ height }}`.
-- `marks`: `number[]` (auto-labeled) OR `SliderMark[]` (`{ value, label }`) for custom labels.
-- `label`: `false` (default) / `true` (show `{value}` bubble on hover/focus/drag) / `(v) => ReactNode` (custom formatter; also sets `aria-valuetext`).
-- `name`: when set, renders hidden `<input>`(s) so the slider works inside `<form action=...>`. Range mode emits TWO inputs with `-min` / `-max` suffixes. **Hidden inputs are NOT rendered when the slider is `disabled`** — prevents the form from submitting a stale disabled value (`disabled` is a no-op on `<input type="hidden">` per HTML spec).
-- `disabled`: thumbs become non-interactive (`tabIndex=-1`, `aria-disabled`, `pointer-events: none` + `cursor: not-allowed` on each thumb).
 
 #### Keyboard
 

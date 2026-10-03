@@ -37,7 +37,7 @@ export interface SwitchProps extends Omit<
   size?: SwitchSize;
 
   /**
-   * Track color when checked. Defaults to `'accent'`.
+   * Track color when checked (the unchecked track is always neutral muted). Defaults to `'accent'`.
    * - `'accent'` — blue (default).
    * - `'success'` — green. Use for affirmative toggles ("Enable notifications").
    * - `'danger'` — red. Use for destructive toggles ("Allow root access").

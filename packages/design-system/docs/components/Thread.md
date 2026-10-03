@@ -30,7 +30,7 @@
 |---|---|---|---|---|
 | `maxDepth` | `number` | no | — | Max visual nesting depth before replies render flat (no further indent). Once the cap is reached, deeper replies keep the same indent level so the thread stops marching right. Default `4`. |
 | `compact` | `boolean` | no | — | Tighter gaps for dense surfaces (sidebars, panels). The remapped tokens cascade to every nested item via CSS custom properties. Default `false`. |
-| `nodeAlign` | `ThreadNodeAlign` | no | — | Where the leading `node` sits relative to the comment body. - `header` (default) — vertically centered on the **first body line** (the author / timestamp header), Jira/GitHub style, so a node taller than one line (e.g. a 24px `<Avatar>`) reads as centered against the name rather than top-aligned. Assumes the header line-box matches `--thread-header-line-height` (defaults to `<Text size="sm">`); override that token if your header line differs. - `top` — top-aligned with the body (the node's top meets the body's top). Use when the node is about one line tall, or when you deliberately want top alignment. |
+| `nodeAlign` | `ThreadNodeAlign` | no | — | Where the leading `node` sits relative to the comment body. - `header` (default) — vertically centered on the **first body line** (the author / timestamp header), Jira/GitHub style, so a node taller than one line (e.g. a 24px `<Avatar>`) reads as centered against the name rather than top-aligned. Assumes the header line-box matches `--thread-header-line-height` (defaults to `<Text size="sm">`); override that token if your header line differs. Remove any old header `lineHeight` override (e.g. `var(--size-sm)`) — it now double-compensates. - `top` — top-aligned with the body (the node's top meets the body's top). Use when the node is about one line tall, or when you deliberately want top alignment. |
 | `children` | `ReactNode` | yes | — | The `<Thread.Item>`s. |
 | …native | | | | plus native `<ul>` attributes |
 
@@ -45,10 +45,7 @@
 
 <!-- props:end -->
 
-- `node` is a SLOT (pass `<Avatar size="sm">` / a small icon / `<Dot>`) — there's no built-in avatar. Match the node to `--thread-node-size` (default `sm` / 24px) so the rail/elbow connectors meet it cleanly; override `--thread-node-size` for a larger node. The rail branches to each reply with an elbow (`├─`/`└─`).
-- `nodeAlign` (default `header`): the node centers on the first body line — set your header (`<Avatar size="sm">` + author/timestamp) as the first child and it aligns automatically; no consumer line-height hack. **Remove any old `lineHeight: var(--size-sm)` (or similar) header override** — it now double-compensates and pushes the text off the node's centre. `nodeAlign="top"` top-aligns the node instead. If your header line-box differs from `<Text size="sm">`, override `--thread-header-line-height`.
 - Plain children are the comment body; any direct `<Thread.Item>` child is a reply. Don't wrap a reply in a Fragment / wrapper — the sort matches `Thread.Item` by identity and it won't be detected.
-- `maxDepth` (default `4`): once nesting hits the cap, deeper replies render flat (same indent) instead of marching further right. `compact` flows to every nested level via CSS vars.
 - **When NOT to use**: a flat activity feed with no parent/child nesting → `<Timeline>`; plain indentation with no connecting line → `<Indent>`.
 
 - Also not for a non-threaded vertical list (`<Stack>`) or an avatar + name/meta row (`<PersonDisplay>`; use it as an item's `node` / body, not instead of Thread).

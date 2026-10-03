@@ -74,11 +74,9 @@ import { Bell, Plus } from 'lucide-react';
 
 - **Compound API** — `TopBar.Start` / `TopBar.End` / `TopBar.Search` / `TopBar.IconButton`.
 - **Layout-owning primitive (Hard rule 4 exception)** — like `<Modal>`, `<Drawer>`, `<Page>`, `<Rail>`, the bar owns its own height (56px), sticky positioning, padding, background, and bottom border because that IS its job as a top-bar chrome.
-- **`as` prop** — `'header'` (default, carries the implicit `banner` landmark) or `'div'` (for nested toolbars where stacking two `<header>` landmarks would be wrong).
 - **`<TopBar.Start>`** — flex-grows (`flex: 1`) so a sibling `<TopBar.End>` is pushed to the right edge with no spacer needed.
 - **`<TopBar.End>`** — shrinks to its content. Use for trailing actions + avatar.
 - **`<TopBar.Search>`** — a real `<input type="search">` (browsers expose `role="searchbox"`). `placeholder` is consumer-controlled. `aria-label` defaults to the placeholder, then to `t('topBar.search')`. The `hotkey` prop renders a trailing `<kbd>` hint — purely **visual**; binding ⌘K to focus is the consumer's responsibility. Spread `value` / `onChange` through normally — they reach the underlying input. The component sets `autoComplete="off"` plus `data-1p-ignore` / `data-lpignore` / `data-form-type="other"` so password managers and browser autofill skip it.
-- **`<TopBar.IconButton>`** — wraps `<Button iconOnly variant="ghost" size="sm">` sized for the bar (32×32) plus an optional `indicator` boolean. The dot tone is `'danger'` by default; pick `'warning'` / `'info'` / `'accent'` for softer cues. **`aria-label` is required** — include count info there (`'Notifications, 3 unread'`); the dot itself is `aria-hidden`.
 - **i18n**: `topBar.label` (default `<header>` aria-label), `topBar.search` (default `<input>` aria-label fallback).
 
 #### When NOT to use

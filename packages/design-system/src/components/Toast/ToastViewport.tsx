@@ -41,7 +41,11 @@ function subscribeViewports(listener: () => void) {
 }
 
 export interface ToastViewportProps {
-  /** Default position for toasts that don't specify one. Default: 'bottom-right'. */
+  /**
+   * Default position for toasts that don't specify one. Default: 'bottom-right'.
+   * All 6 positions are supported; a per-call `position` is an escape hatch —
+   * a single global position is the recommended UX.
+   */
   position?: ToastPosition;
   /** Default duration (ms) for toasts without explicit duration. Default: 4000. */
   duration?: number;

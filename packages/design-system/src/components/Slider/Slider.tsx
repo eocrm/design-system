@@ -121,9 +121,12 @@ export interface SliderProps extends Omit<
    * threshold-style sliders (e.g. disk usage approaching capacity).
    */
   tone?: SliderTone;
-  /** Orientation. Defaults to `'horizontal'`. */
+  /** Orientation. Defaults to `'horizontal'`. Vertical defaults to 200px tall; override via `style={{ height }}`. */
   orientation?: SliderOrientation;
-  /** Disabled state. Defaults to `false`. */
+  /**
+   * Disabled state. Defaults to `false`. Thumbs become non-interactive
+   * (`tabIndex=-1`, `aria-disabled`, `pointer-events: none`, `cursor: not-allowed`).
+   */
   disabled?: boolean;
   /**
    * Native form-input name. When set, a hidden `<input>` (or two for range,

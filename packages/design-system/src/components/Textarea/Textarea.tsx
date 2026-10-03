@@ -33,7 +33,8 @@ export interface TextareaProps extends Omit<
   invalid?: boolean;
 
   /**
-   * Visual size. Defaults to `'md'`.
+   * Visual size. Defaults to `'md'`. Affects typography + padding only, not
+   * height — that comes from `minRows`.
    * - `'sm'` — tighter padding + `--font-size-sm`. Used in dense forms.
    * - `'md'` — default padding + `--font-size-md`. Most form contexts.
    * - `'lg'` — same padding as md but `--font-size-lg`. Hero / focus textareas.

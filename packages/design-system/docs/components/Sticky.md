@@ -33,8 +33,6 @@ Pins its box to the top of the scroll container while the page scrolls past — 
 
 <!-- props:end -->
 
-- `top`: `none` (default, `top:0`) / `xs` / `sm` / `md` / `lg` / `xl` are spacing-scale rhythm offsets. `topbar` clears the standard pinned `<TopBar>` height plus the normal content gap; use it for content inside an `<AppLayout>` instead of repurposing a spacing step.
-- `scroll`: cap the pinned box at the viewport height with internal `overflow-y:auto` + `overscroll-behavior:contain` — for a sidebar taller than the screen (pair with a non-`none` `top`). The bottom gap defaults to the selected rhythm offset; for `topbar`, it defaults to the content gap so the chrome height is not subtracted twice. Override `--sticky-bottom-gap` on the Sticky for a different bottom clearance.
 - Sticky defaults are emitted by the global token entry, so a consumer `:root` override loaded after `@eocrm/design-system/styles/tokens.scss` wins predictably. Override `--sticky-top-topbar` to match custom application chrome.
 - Inside a `<Split>` aside, pair with `align="stretch"` (else the content-height aside track gives nowhere to pin).
 - As a `<Split collapseBelow>` aside, it automatically becomes a plain block (no pin, no `scroll` cap/inner scroll) while the Split is stacked — no consumer shim needed. Applies only when the `Sticky` is the `aside` itself.

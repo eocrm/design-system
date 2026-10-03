@@ -84,7 +84,8 @@ export interface SelectProps<T = unknown> extends Omit<
   /**
    * Placed on the combobox trigger (the `<button>` / `<input>`), not the
    * wrapper div, so a `<label for>` — Field / SettingRow wire one — focuses
-   * the control when clicked (#568). Default: a generated id.
+   * the control when clicked (#568). Default: a generated id. Target the
+   * wrapper by `className` or a `data-*` attribute, not `#id`.
    */
   id?: string;
   // ─── data ─────────────────────────────────────────────────────────────────
@@ -126,7 +127,8 @@ export interface SelectProps<T = unknown> extends Omit<
   multiple?: boolean;
   /**
    * How the trigger renders the selected value(s) in multi mode. Ignored
-   * in single mode. See `SelectTriggerDisplay`. Defaults to `'chips'`.
+   * in single mode. See `SelectTriggerDisplay`. Defaults to `'chips'`. Use
+   * `'summary'` for table-filter UIs where chips would crowd the toolbar.
    */
   triggerDisplay?: SelectTriggerDisplay;
   /**

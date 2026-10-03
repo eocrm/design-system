@@ -34,13 +34,7 @@ beside results).
 
 <!-- props:end -->
 
-- `aside` (required ReactNode) — the narrow pane; `children` — the filling main pane.
-- `side`: `'start'` (default) or `'end'` — which edge the aside sits on (RTL-aware).
-- `asideWidth`: `'auto'` (default, intrinsic) or a CSS length like `'240px'` to pin the rail.
-- `gap`: `xs`/`sm`/`md` (default)/`lg`/`xl`/`2xl` — same scale as Stack/Cluster/Grid.
-- `align`: `'start'` (default) / `'stretch'` (full-height aside) / `'center'`.
-- `collapseBelow`: `sm` (480px) / `md` (640px) / `lg` (768px) — stack the panes vertically when the SPLIT'S OWN width (container query, not viewport) drops below the preset. Same scale as `Grid`'s `collapseBelow`. Use it whenever `asideWidth` pins a rail, else the rail squeezes `main` to nothing on narrow screens.
-- `main` has `min-width: 0` — long content shrinks/scrolls instead of overflowing.
+- `children` is the filling main pane (`min-width: 0` — long content shrinks/scrolls instead of overflowing).
 
 ```tsx
 // Settings screen: a 220px rail that becomes a horizontal strip when it stacks.

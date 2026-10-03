@@ -30,7 +30,7 @@ import { Textarea } from '@eocrm/design-system';
 | Prop | Type | Required | Default | Description |
 |---|---|---|---|---|
 | `invalid` | `boolean` | no | — | Toggles the error visual (red border + danger focus ring) and sets `aria-invalid="true"`. Pair with a visible error message and an `aria-describedby` pointer at the message id. |
-| `size` | `TextareaSize` | no | — | Visual size. Defaults to `'md'`. - `'sm'` — tighter padding + `--font-size-sm`. Used in dense forms. - `'md'` — default padding + `--font-size-md`. Most form contexts. - `'lg'` — same padding as md but `--font-size-lg`. Hero / focus textareas. Note: this collapses the native HTML `<textarea size>` attribute. Use `style={{ width }}` or a parent container for explicit width. |
+| `size` | `TextareaSize` | no | — | Visual size. Defaults to `'md'`. Affects typography + padding only, not height — that comes from `minRows`. - `'sm'` — tighter padding + `--font-size-sm`. Used in dense forms. - `'md'` — default padding + `--font-size-md`. Most form contexts. - `'lg'` — same padding as md but `--font-size-lg`. Hero / focus textareas. Note: this collapses the native HTML `<textarea size>` attribute. Use `style={{ width }}` or a parent container for explicit width. |
 | `disableAutofill` | `boolean` | no | — | Block browser autofill AND password managers from offering to fill this textarea. Same heuristic as Input — see Input's JSDoc for the full set of opt-out attributes applied. Smart default: when omitted, block iff `autoComplete` is also omitted (or `'off'`). Explicit autocomplete hints opt back IN to autofill. Pass `true` to force-block, `false` to force-allow. |
 | `minRows` | `number` | no | — | Minimum visible rows. The textarea never renders shorter than this, regardless of content. Default: `3`. Also seeds the native `rows` attribute for SSR / no-JS rendering. |
 | `maxRows` | `number` | no | — | Maximum visible rows. Beyond this, content scrolls inside the field instead of expanding further. Only meaningful when `autoGrow` is true. Default: `undefined` (unbounded growth). |
@@ -41,9 +41,6 @@ import { Textarea } from '@eocrm/design-system';
 
 <!-- props:end -->
 
-- **Auto-grow is on by default** (`autoGrow={true}`). When on, `resize` is forced to `'none'` because the two conflict.
-- **Counter** shows automatically when `maxLength` is set. Force on with `showCount`, force off with `showCount={false}`.
-- **Sizes** (`sm` / `md` / `lg`) affect typography + padding only, not height. Height comes from `minRows`.
 - **Smart autofill blocking** — same heuristic as Input.
 
 #### When NOT to use

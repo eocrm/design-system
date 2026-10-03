@@ -41,7 +41,6 @@
 
 <!-- props:end -->
 
-- `node` is a SLOT (pass `<Dot>` / `<Avatar size="sm">` / a small icon) — there's no built-in dot.
 - The last item's connector stops automatically (CSS `:last-child`); `compact` flows via CSS vars.
 
 ```tsx

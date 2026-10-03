@@ -33,7 +33,7 @@ toast.success('Saved', { id });
 <!-- prettier-ignore -->
 | Prop | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `position` | `ToastPosition` | no | — | Default position for toasts that don't specify one. Default: 'bottom-right'. |
+| `position` | `ToastPosition` | no | — | Default position for toasts that don't specify one. Default: 'bottom-right'. All 6 positions are supported; a per-call `position` is an escape hatch — a single global position is the recommended UX. |
 | `duration` | `number` | no | — | Default duration (ms) for toasts without explicit duration. Default: 4000. |
 | `maxVisible` | `number` | no | — | How many toasts are fully visible per position bucket. Default: 3. |
 | `gap` | `"sm" \| "md"` | no | — | Spacing between stacked toasts. Default: 'sm' (8px). |
@@ -45,8 +45,6 @@ toast.success('Saved', { id });
 - **Five tones.** `info`, `success`, `warning`, `error`, `loading`. `error` is `role="alert"` (assertive); the rest are `role="status"` (polite).
 - **Auto-dismiss defaults to 4000ms.** Per-call `duration` (ms or `'persistent'`). `loading` defaults to `'persistent'`.
 - **Pause on hover / focus / hidden tab.** Hovering the toast or tabbing into its action pauses the timer; document `visibilitychange` to `hidden` pauses all timers globally.
-- **maxVisible: 3 default.** Toasts beyond render as peek-collapsed cards behind the visible stack; hovering the stack fans them out. `expand: true` keeps the stack always fanned.
-- **All 6 positions supported** via `<ToastViewport position="…">`. Per-call `position` override exists as an escape hatch but a single global position is the recommended UX.
 
 #### When NOT to use
 

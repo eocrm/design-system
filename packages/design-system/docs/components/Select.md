@@ -57,13 +57,13 @@
 <!-- prettier-ignore -->
 | Prop | Type | Required | Default | Description |
 |---|---|---|---|---|
-| `id` | `string` | no | — | Placed on the combobox trigger (the `<button>` / `<input>`), not the wrapper div, so a `<label for>` — Field / SettingRow wire one — focuses the control when clicked. Default: a generated id. |
+| `id` | `string` | no | — | Placed on the combobox trigger (the `<button>` / `<input>`), not the wrapper div, so a `<label for>` — Field / SettingRow wire one — focuses the control when clicked. Default: a generated id. Target the wrapper by `className` or a `data-*` attribute, not `#id`. |
 | `options` | `SelectOptions<T>` | no | — | Sync options — flat list or list of groups. Ignored when `loadOptions` is provided (dev warning fires if both are non-empty). For grouped input, every element must carry an `options` field; mixing flat options with groups at the same level is not supported. |
 | `loadOptions` | `((query: string, signal: AbortSignal) => Promise<SelectOptions<T>>)` | no | — | Async fetcher that returns the options for a given query. When set, the Select switches to async mode: the local substring filter is bypassed (the server filters), loading/error/empty rows replace the listbox body, and `options` is ignored (with a dev warning). The `signal` argument is aborted whenever a newer query supersedes this one — wire it through to `fetch` to cancel in-flight requests. |
 | `loadOnOpen` | `boolean` | no | — | When `true` (default), defers the first `loadOptions` call until the user opens the listbox. Set to `false` to fetch eagerly on mount. |
 | `searchDebounceMs` | `number` | no | — | Debounce window (ms) between the last query keystroke and the next `loadOptions` call. Default `250`. |
 | `multiple` | `boolean` | no | — | Enables multi-select. `value` / `defaultValue` become `string[]` and `onChange` emits arrays. Picking a row toggles it in/out of the selection instead of replacing-and-closing. |
-| `triggerDisplay` | `SelectTriggerDisplay` | no | — | How the trigger renders the selected value(s) in multi mode. Ignored in single mode. See `SelectTriggerDisplay`. Defaults to `'chips'`. |
+| `triggerDisplay` | `SelectTriggerDisplay` | no | — | How the trigger renders the selected value(s) in multi mode. Ignored in single mode. See `SelectTriggerDisplay`. Defaults to `'chips'`. Use `'summary'` for table-filter UIs where chips would crowd the toolbar. |
 | `searchable` | `boolean` | no | — | Renders the trigger as a combobox text input with substring filtering over the (sync) options. In async mode the filter is delegated to the server. Required by `creatable`. |
 | `selectOnOpen` | `boolean` | no | — | When the searchable combobox opens, select the current text so the user can immediately type to replace it (type-to-search). Default `false`. Only affects the single searchable trigger. |
 | `creatable` | `boolean` | no | — | Adds a "+ Create <query>" row when the trimmed query has no exact label match. Activating it fires `onCreate(label)` and folds the new value into the selection. Requires `searchable` (throws in dev otherwise). |
@@ -97,13 +97,8 @@
 <!-- props:end -->
 
 - One generalist; the mode matrix is `multiple` × `triggerDisplay: 'chips' | 'summary'` × `searchable`.
-- `id` goes on the combobox trigger (the `<button>` / `<input>`), not the wrapper div, so a `<label for>` (Field / SettingRow) focuses it. Target the wrapper by `className` or a `data-*` attribute, not `#id`.
-- `triggerDisplay` defaults to `'chips'` when `multiple` is set. Use `'summary'` for table-filter UIs where chips would crowd the toolbar.
-- **Async**: pass `loadOptions(query, signal)`. Debounce (250ms default, configurable via `searchDebounceMs`) and `AbortSignal` cancellation are built-in. Do NOT debounce externally.
+- **Async**: pass `loadOptions(query, signal)`; debounce and `AbortSignal` cancellation are built in — do NOT debounce externally.
 - **Tag input pattern** = `multiple + searchable + creatable + triggerDisplay='chips'`. There is no separate `<Tags>` component.
-- **Form integration**: pass `name` (and `required`/`form` if needed). Hidden inputs render so `new FormData(form)` works. Multi mode renders one hidden input per selected value; `FormData.getAll(name)` returns the array.
-- **`clearable`** is opt-in (default `false`) — pass it to show the ✕ clear button once there's a value. Always suppressed when `disabled`/`readOnly`.
-- **`onChange` signature** is `(value, option | options | null)` — the second arg is the matched option(s), saving you a lookup.
 - **`''` is a normal option value, not a reserved "unset" sentinel.** The "one sentinel row plus N catalog ids" shape works directly — no `"__default__"` workaround:
 
   ```tsx
@@ -119,11 +114,9 @@
 
   The trigger shows "Use the default scheme" (not a blank or the placeholder), and `onChange` hands you that row's `SelectOption`. "Nothing selected" is resolved by lookup — the value matches no option — so a Select with no `''` row still shows its placeholder at `value=""`. Corollary for `clearable`: ✕ means "reset to the empty value", so it is hidden when the selected option already IS `value: ''`, and shown for a stale value that matches nothing.
 
-- **Render escape hatches**: `renderOption`, `renderValue`, `renderTag`, `renderEmpty`, `renderLoading`, `renderError`. Use when defaults don't suffice; default rendering is always token-correct.
 - For **action menus** (Edit/Delete/Duplicate buttons), use `<DropdownMenu>` — Select is for value selection, not actions.
 - For **free-form text**, use `<Input>`. Select always picks from a (possibly async) set.
 - Don't reach for `triggerDisplay='summary'` for tag input — chips communicate the active filter set at a glance.
-- `creatable` requires `searchable` (throws in dev). Passing both `options` and `loadOptions` is also flagged (loadOptions wins).
 
 **Keyboard / ARIA:** implements the WAI-ARIA combobox 1.2 pattern with a `role="listbox"` popup: Arrow keys, Home/End, typeahead, Enter/Space to select, Escape to dismiss. In chips mode, Backspace on an empty input removes the trailing chip; chip-to-chip arrow navigation (ArrowLeft from the empty input into the chips, ArrowLeft/Right cycling them) is not implemented.
 
