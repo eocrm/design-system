@@ -183,8 +183,10 @@ function renderTable(docName, typeName) {
     const tag = dfltType?.isStringLiteral() ? ` (default \`<${dfltType.value}>\`)` : '';
     lines.push(`| …native | | | plus native attributes of the \`as\` element${tag} |`);
   } else if (collapsed) {
+    const cellTag = declText.match(/\b(Th|Td)HTMLAttributes\b/)?.[1].toLowerCase();
     const m = declText.match(/HTML(\w+)Element/);
-    const native = m ? `native \`<${TAGS[m[1]] ?? m[1]}>\` attributes` : 'native HTML attributes';
+    const tag = cellTag ?? (m && (TAGS[m[1]] ?? m[1]));
+    const native = tag ? `native \`<${tag}>\` attributes` : 'native HTML attributes';
     lines.push(`| …native | | | plus ${native} |`);
   }
   return [`<!-- prettier-ignore -->\n${lines.join('\n')}`, ...examples].join('\n\n');

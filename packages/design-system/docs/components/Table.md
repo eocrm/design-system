@@ -64,7 +64,7 @@
 | `scope` | `'row' \| 'rowgroup' \| 'col' \| 'colgroup'` | no | Native HTML `<th scope>` attribute. Defaults to `'col'` (the cell labels its column). Use `'row'` for the leftmost cell that labels its row when rendering row-headers inside `<Table.Body>`. `'colgroup'` / `'rowgroup'` are valid HTML but rarely needed in practice. |
 | `sortDirection` | `'asc' \| 'desc' \| 'none'` | no | When set, the cell renders a sort indicator (up/down/unsorted chevron) and sets `aria-sort`. The consumer drives interactivity via `onClick`; this primitive only paints the indicator. Sortable headers also become keyboard-reachable (`tabIndex={0}` + Enter/Space → `onClick`). - `'asc'` → up chevron + `aria-sort="ascending"`. - `'desc'` → down chevron + `aria-sort="descending"`. - `'none'` → muted up/down chevron + `aria-sort="none"`. Omit to render a non-sortable header (no chevron, no `aria-sort`). |
 | `children` | `ReactNode` | no |  |
-| …native | | | plus native `<td>` attributes |
+| …native | | | plus native `<th>` attributes |
 
 ### `TableRowProps`
 

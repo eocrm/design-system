@@ -80,6 +80,7 @@ describe('docs/components props tables', () => {
       '- `hidden` (default) — clips.',
     );
     expect(withDefault('Max rows; default 24.', '2')).toBe('Max rows; default 24. Default: `2`.');
+    expect(withDefault('Ratio; default 2.5.', '2')).toBe('Ratio; default 2.5. Default: `2`.');
   });
 
   it('inserts a missing block after the first code fence, first line untouched', async () => {
@@ -111,5 +112,18 @@ describe('docs/components props tables', () => {
       .join('\n');
     const md = doc('Switch');
     expect(md).toContain(`**\`loading\`** example:\n\n<!-- prettier-ignore -->\n${srcFence}\n`);
+  });
+
+  it('names <th> for header cells and <td> for body cells', () => {
+    const md = doc('Table');
+    const after = (h: string) =>
+      md
+        .slice(md.indexOf(h))
+        .split('\n')
+        .find((l) => l.startsWith('| …native'));
+    expect(after('### `TableHeaderCellProps`')).toBe(
+      '| …native | | | plus native `<th>` attributes |',
+    );
+    expect(after('### `TableCellProps`')).toBe('| …native | | | plus native `<td>` attributes |');
   });
 });
