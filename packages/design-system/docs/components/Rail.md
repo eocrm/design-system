@@ -57,13 +57,12 @@ import { Home, Users, Settings } from 'lucide-react';
 
 **`collapseBelow`** example:
 
+<!-- prettier-ignore -->
 ```scss
 // Either mirror the breakpoint: a (max-width: 768px) media query setting
 // .shell { grid-template-columns: 56px 1fr; }…
 // …or follow the rail's own state attribute, no breakpoint duplication:
-.shell:has(nav[data-collapsed]) {
-  grid-template-columns: 56px 1fr;
-}
+.shell:has(nav[data-collapsed]) { grid-template-columns: 56px 1fr; }
 ```
 
 ### `RailCollapseToggleProps`

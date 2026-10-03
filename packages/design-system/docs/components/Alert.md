@@ -50,15 +50,10 @@ const [show, setShow] = useState(true);
 
 **`onDismiss`** example:
 
+<!-- prettier-ignore -->
 ```tsx
 const [show, setShow] = useState(true);
-{
-  show && (
-    <Alert tone="success" onDismiss={() => setShow(false)}>
-      Saved
-    </Alert>
-  );
-}
+{show && <Alert tone="success" onDismiss={() => setShow(false)}>Saved</Alert>}
 ```
 
 <!-- props:end -->

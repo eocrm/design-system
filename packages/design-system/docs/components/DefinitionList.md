@@ -32,7 +32,7 @@ For displaying entity properties — contact details, settings rows, metadata si
 | `termWidth` | `string` | no | CSS length applied to the term column in horizontal layout (e.g. `'180px'`, `'20%'`, `'max-content'`). Default `'max-content'` — column sizes to the longest term across all rows. Set explicitly when you need consistent alignment across multiple DefinitionLists on the same screen. |
 | `spacing` | `'sm' \| 'md' \| 'lg'` | no | Vertical padding per item. See `DefinitionListSpacing`. Default `'sm'`. |
 | `dividers` | `boolean` | no | Render a 1px border between items. Default `false` (clean, dense look). Set when migrating from a `Card.List` and you want to preserve the table-row separator visual. |
-| …native | | | plus native `<DList>` attributes |
+| …native | | | plus native `<dl>` attributes |
 
 ### `DefinitionListDescriptionProps`
 

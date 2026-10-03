@@ -26,7 +26,7 @@
 | `invalid` | `boolean` | no | Apply the invalid visual to every child + set `aria-invalid` on the fieldset. |
 | `required` | `boolean` | no | Mark every child as required (HTML form validation). |
 | `children` | `ReactNode` | yes |  |
-| …native | | | plus native `<FieldSet>` attributes |
+| …native | | | plus native `<fieldset>` attributes |
 
 <!-- props:end -->
 

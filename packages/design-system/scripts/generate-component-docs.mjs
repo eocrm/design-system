@@ -25,6 +25,14 @@ const CHECK = process.argv.includes('--check');
 const NO_PROPS = ['Palette', 'useBelowBreakpoint', 'useMonth'];
 
 const TAGS = {
+  Canvas: 'canvas',
+  DList: 'dl',
+  FieldSet: 'fieldset',
+  HR: 'hr',
+  TableCaption: 'caption',
+  TableCell: 'td',
+  TableRow: 'tr',
+  TableSection: 'tbody',
   Button: 'button',
   Input: 'input',
   TextArea: 'textarea',
@@ -159,7 +167,8 @@ function renderTable(docName, typeName) {
           .replace(/^`(.*)`$/, '$1')
       : '';
     const { text, fences } = extractFences(stripIssueRefs(doc));
-    for (const fence of fences) examples.push(`**\`${prop.name}\`** example:\n\n${fence}`);
+    for (const fence of fences)
+      examples.push(`**\`${prop.name}\`** example:\n\n<!-- prettier-ignore -->\n${fence}`);
     const type = (types.length > 1 ? types.filter((t) => t !== 'undefined') : types)
       .join(' | ')
       .replace(/`/g, "'");

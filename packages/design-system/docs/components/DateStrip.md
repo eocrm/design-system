@@ -30,7 +30,7 @@ const [day, setDay] = useState<string | null>(null);
 | `name` | `string` | no | Radio group `name` (also submitted with a form). Default: a generated id. |
 | `invalid` | `boolean` | no | Marks the group `aria-invalid` (the radios themselves do not support it). Field / SettingRow inject it. Default: `false`. |
 | `required` | `boolean` | no | Native `required` on the radios (the group then fails form validation until one is chosen). Field / SettingRow inject it; it used to land on the root as a stray attribute. |
-| …native | | | plus native `<FieldSet>` attributes |
+| …native | | | plus native `<fieldset>` attributes |
 
 <!-- props:end -->
 

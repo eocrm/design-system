@@ -43,7 +43,7 @@
 | Prop | Type | Required | Description |
 |---|---|---|---|
 | `children` | `ReactNode` | yes |  |
-| …native | | | plus native `<TableCaption>` attributes |
+| …native | | | plus native `<caption>` attributes |
 
 ### `TableCellProps`
 
@@ -53,7 +53,7 @@
 | `align` | `'start' \| 'center' \| 'end'` | no | Text alignment. Defaults to `'start'`. |
 | `truncate` | `boolean` | no | Suppress wrapping and ellipsize on overflow. Requires a constrained cell width (column-level CSS or `style={{ maxWidth: … }}`). |
 | `children` | `ReactNode` | no |  |
-| …native | | | plus native `<TableCell>` attributes |
+| …native | | | plus native `<td>` attributes |
 
 ### `TableHeaderCellProps`
 
@@ -64,7 +64,7 @@
 | `scope` | `'row' \| 'rowgroup' \| 'col' \| 'colgroup'` | no | Native HTML `<th scope>` attribute. Defaults to `'col'` (the cell labels its column). Use `'row'` for the leftmost cell that labels its row when rendering row-headers inside `<Table.Body>`. `'colgroup'` / `'rowgroup'` are valid HTML but rarely needed in practice. |
 | `sortDirection` | `'asc' \| 'desc' \| 'none'` | no | When set, the cell renders a sort indicator (up/down/unsorted chevron) and sets `aria-sort`. The consumer drives interactivity via `onClick`; this primitive only paints the indicator. Sortable headers also become keyboard-reachable (`tabIndex={0}` + Enter/Space → `onClick`). - `'asc'` → up chevron + `aria-sort="ascending"`. - `'desc'` → down chevron + `aria-sort="descending"`. - `'none'` → muted up/down chevron + `aria-sort="none"`. Omit to render a non-sortable header (no chevron, no `aria-sort`). |
 | `children` | `ReactNode` | no |  |
-| …native | | | plus native `<TableCell>` attributes |
+| …native | | | plus native `<td>` attributes |
 
 ### `TableRowProps`
 
@@ -73,7 +73,7 @@
 |---|---|---|---|
 | `selected` | `boolean` | no | Visual selected state. Pair with the consumer's own selection logic. Adds `aria-selected="true"` and a subtle accent tint that wins over hover/striped. |
 | `children` | `ReactNode` | yes |  |
-| …native | | | plus native `<TableRow>` attributes |
+| …native | | | plus native `<tr>` attributes |
 
 ### `TableSectionProps`
 
@@ -81,14 +81,14 @@
 | Prop | Type | Required | Description |
 |---|---|---|---|
 | `children` | `ReactNode` | yes |  |
-| …native | | | plus native `<TableSection>` attributes |
+| …native | | | plus native `<tbody>` attributes |
 
 <!-- props:end -->
 
 - Compound subcomponents: `Table`, `Table.Caption`, `Table.Header`, `Table.Body`, `Table.Footer`, `Table.Row`, `Table.HeaderCell`, `Table.Cell`. Renders native `<table>` / `<thead>` / `<tbody>` / `<tr>` / `<th>` / `<td>` / `<tfoot>` / `<caption>` — no ARIA-on-divs.
 - Visual modifiers on root: `density` (`'comfortable'` (default, 32px row) / `'dense'` (24px)), `hover` (default off — opt in for clickable / selectable row lists), `striped`, `bordered` (full-grid borders; default off — Atlassian-minimal style is just row dividers + header underline), `stickyHeader`, `scroll` (default `true` — wraps in `overflow-x: auto`).
 - `<Table.Row selected>` paints a tinted bg + `aria-selected="true"`. Selection state itself is the consumer's job.
-- `<Table.HeaderCell sortDirection>` is a visual hook: renders an up / down / unsorted chevron + sets `aria-sort`. Wire `onClick` to your own sort state. `<DataTable>` composes this seam.
+- `<Table.HeaderCell sortDirection>` is a visual hook: renders an up / down / unsorted chevron + sets `aria-sort`. Wire `onClick` to your own sort state. (`<DataTable>` does not use this prop: it sets `aria-sort` and draws its own chevron.)
 - `<Table.Cell align>` / `<Table.HeaderCell align>`: `'start' | 'center' | 'end'` (CSS logical, RTL-friendly). Right-aligned headers auto-flip the sort chevron to the start side.
 - `<Table.Cell truncate>` ellipses overflow text on one line. Requires a constrained cell width (`style={{ maxWidth }}` or `<col>`).
 - **`colSpan` / `rowSpan`** flow through to the native `<th>` / `<td>` via spread. Use for multi-row grouped headers (`rowSpan` on a corner cell + `colSpan` on group cells over a second `<Table.Row>`), category-grouped body rows (`rowSpan` on a leftmost cell), and footer total rows (`<Table.Cell colSpan={n}>Total</Table.Cell>`). Use `<Table.HeaderCell scope="row">` (instead of `<Table.Cell>`) for the leftmost cell when it labels its row to AT.

@@ -54,6 +54,7 @@ function handleMove(event: KanbanMoveEvent) {
 
 **`onMove`** example:
 
+<!-- prettier-ignore -->
 ```ts
 const [cols, setCols] = useState({ todo: ['a', 'b'], done: ['c'] });
 const handleMove = ({ from, to, cardId }) => {

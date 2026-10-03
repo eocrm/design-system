@@ -34,6 +34,7 @@
 
 **`error`** example:
 
+<!-- prettier-ignore -->
 ```tsx
 <div role="status" aria-live="polite">
   {submitted && errorCount > 0 ? `${errorCount} fields need attention` : ''}

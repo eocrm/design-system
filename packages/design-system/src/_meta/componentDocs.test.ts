@@ -66,7 +66,9 @@ describe('docs/components props tables', () => {
   });
 
   it("documents SocialButton's own variant default", () => {
-    expect(row('SocialButton', 'variant')).toMatch(/Default: `'secondary'`\. \|$/);
+    const r = row('SocialButton', 'variant');
+    expect(r).toContain('Defaults to `secondary`');
+    expect(r).not.toContain('Default: `');
   });
 
   it('has no Default column; @default goes into the description once', async () => {
@@ -74,6 +76,10 @@ describe('docs/components props tables', () => {
     const { withDefault } = await import(LIB);
     expect(withDefault('Size.', "'md'")).toBe("Size. Default: `'md'`.");
     expect(withDefault("Size. Defaults to `'md'`.", "'md'")).toBe("Size. Defaults to `'md'`.");
+    expect(withDefault('- `hidden` (default) — clips.', "'hidden'")).toBe(
+      '- `hidden` (default) — clips.',
+    );
+    expect(withDefault('Max rows; default 24.', '2')).toBe('Max rows; default 24. Default: `2`.');
   });
 
   it('inserts a missing block after the first code fence, first line untouched', async () => {
@@ -92,7 +98,18 @@ describe('docs/components props tables', () => {
   it('moves fenced code out of table cells into an example after the table', () => {
     const md = doc('Alert');
     expect(row('Alert', 'onDismiss')).toContain('(example below)');
-    expect(md).toMatch(/\*\*`onDismiss`\*\* example:\n\n```/);
+    expect(md).toMatch(/\*\*`onDismiss`\*\* example:\n\n<!-- prettier-ignore -->\n```/);
     expect(md.split('\n').filter((l) => l.startsWith('|') && l.includes('```'))).toEqual([]);
+  });
+
+  it('keeps extracted example fences byte-for-byte as in the source JSDoc', () => {
+    const src = readFileSync(resolve(PKG, 'src/components/Switch/Switch.tsx'), 'utf8');
+    const srcFence = src
+      .match(/^\s*\* ```tsx\n[\s\S]*?^\s*\* ```$/m)![0]
+      .split('\n')
+      .map((l) => l.replace(/^\s*\* ?/, ''))
+      .join('\n');
+    const md = doc('Switch');
+    expect(md).toContain(`**\`loading\`** example:\n\n<!-- prettier-ignore -->\n${srcFence}\n`);
   });
 });

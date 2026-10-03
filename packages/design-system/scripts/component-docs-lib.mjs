@@ -41,9 +41,13 @@ export function extractFences(description) {
 
 const escapeRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
+const unquote = (s) => s.replace(/['"`]/g, '');
+
 export function withDefault(description, value) {
   if (!value) return description;
-  const v = `\`?${escapeRe(value)}\`?`;
+  const v = `(?<![\\w-])${escapeRe(unquote(value))}(?![\\w-])`;
   const stated = new RegExp(`default(?:s to|:)?\\s*${v}|${v}\\s*\\(default\\)`, 'i');
-  return stated.test(description) ? description : `${description} Default: \`${value}\`.`.trim();
+  return stated.test(unquote(description))
+    ? description
+    : `${description} Default: \`${value}\`.`.trim();
 }

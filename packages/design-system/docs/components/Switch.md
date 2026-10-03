@@ -51,24 +51,20 @@ import { Switch } from '@eocrm/design-system';
 
 **`loading`** example:
 
+<!-- prettier-ignore -->
 ```tsx
 const [enabled, setEnabled] = useState(initial);
 const [saving, setSaving] = useState(false);
 
 const handleToggle = async (next: boolean) => {
   setSaving(true);
-  setEnabled(next); // optimistic
-  try {
-    await api.save(next);
-  } catch {
-    setEnabled(!next);
-  } finally {
-    // rollback
-    setSaving(false);
-  }
+  setEnabled(next);            // optimistic
+  try { await api.save(next); }
+  catch { setEnabled(!next); } // rollback
+  finally { setSaving(false); }
 };
 
-<Switch checked={enabled} loading={saving} onChange={handleToggle} />;
+<Switch checked={enabled} loading={saving} onChange={handleToggle} />
 ```
 
 <!-- props:end -->
