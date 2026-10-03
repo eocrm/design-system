@@ -5,6 +5,17 @@
 <VisuallyHidden as="div">…block content…</VisuallyHidden>
 ```
 
+<!-- props:start -->
+
+## Props
+
+| Prop    | Type               | Required | Default | Description                                                                                                                                                                                 |
+| ------- | ------------------ | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `as`    | `VisuallyHiddenAs` | no       | 'span'  | Element to render. `'span'` for inline text (the common case — a link suffix, a labelling phrase). `'div'` when the hidden content is itself block-level (e.g. wraps other block elements). |
+| …native |                    |          |         | plus native HTML attributes                                                                                                                                                                 |
+
+<!-- props:end -->
+
 - `as?: 'span' | 'div'` — default `'span'`. Use `'div'` when the hidden content wraps other block elements.
 - The "clip" technique (`position: absolute`, 1×1px, clipped) — NOT `display: none` / `visibility: hidden`, which would also remove it from assistive tech.
 - `forwardRef` to the rendered element; spreads `HTMLAttributes<HTMLElement>` last (consumer wins — nothing here is semantic to protect).

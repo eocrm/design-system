@@ -26,6 +26,20 @@ await api.save();
 toast.success('Saved', { id });
 ```
 
+<!-- props:start -->
+
+## Props
+
+| Prop         | Type            | Required | Default | Description                                                                   |
+| ------------ | --------------- | -------- | ------- | ----------------------------------------------------------------------------- |
+| `position`   | `ToastPosition` | no       | —       | Default position for toasts that don't specify one. Default: 'bottom-right'.  |
+| `duration`   | `number`        | no       | —       | Default duration (ms) for toasts without explicit duration. Default: 4000.    |
+| `maxVisible` | `number`        | no       | —       | How many toasts are fully visible per position bucket. Default: 3.            |
+| `gap`        | `"sm" \| "md"`  | no       | —       | Spacing between stacked toasts. Default: 'sm' (8px).                          |
+| `expand`     | `boolean`       | no       | —       | false (default): peek-collapsed stack, hover to fan out. true: always fanned. |
+
+<!-- props:end -->
+
 - **One viewport.** Mount exactly one `<ToastViewport>` at the app root. A second one logs a dev-warning and renders null.
 - **Five tones.** `info`, `success`, `warning`, `error`, `loading`. `error` is `role="alert"` (assertive); the rest are `role="status"` (polite).
 - **Auto-dismiss defaults to 4000ms.** Per-call `duration` (ms or `'persistent'`). `loading` defaults to `'persistent'`.

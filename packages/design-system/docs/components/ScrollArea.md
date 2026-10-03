@@ -6,6 +6,17 @@
 </ScrollArea>
 ```
 
+<!-- props:start -->
+
+## Props
+
+| Prop        | Type                  | Required | Default | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| ----------- | --------------------- | -------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `maxHeight` | `ScrollAreaMaxHeight` | no       | —       | Caps the area's height; past it, the content scrolls vertically. - `'sm'` — 240px. A short list inside a form or a card. - `'md'` — 400px. A popover feed (notifications, activity). - `'lg'` — 560px. A tall panel body. - `number` — px, for a one-off (`maxHeight={320}`). Prefer the scale. - `string` — any CSS length (`'50vh'`). Omitted: no cap of its own. The area fills the height its parent gives it, which is right as the flexible child of a bounded flex column. |
+| …native     |                       |          |         | plus native `<div>` attributes                                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+
+<!-- props:end -->
+
 - Pads its content by the focus-ring extent (4px) so focused children's rings aren't clipped.
 - `maxHeight`: `sm` (240px) / `md` (400px) / `lg` (560px), or a one-off `number` (px) / CSS length string. Prefer the scale. Omitted: no cap of its own, so it fills a bounded flex parent.
 - **Keyboard:** named (`aria-label` / `aria-labelledby`), it is always a `role="region"` landmark. It is a tab stop (`tabIndex=0`) only while it overflows AND holds nothing focusable (a dev warning fires if that happens unnamed). A feed of links adds no tab stop. Name the ones worth landmark navigation (feeds, logs), not decorative ones.

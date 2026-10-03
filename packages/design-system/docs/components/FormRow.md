@@ -9,6 +9,20 @@
 <FormRow columns={3}>{/* fixed, non-reflowing */}</FormRow>
 ```
 
+<!-- props:start -->
+
+## Props
+
+| Prop             | Type        | Required | Default | Description                                                                           |
+| ---------------- | ----------- | -------- | ------- | ------------------------------------------------------------------------------------- |
+| `columns`        | `2 \| 3`    | no       | —       | Fixed equal-width column count. Omit for responsive auto-fit (the default).           |
+| `minColumnWidth` | `string`    | no       | —       | Min field width before the row reflows to stacked (auto-fit mode). Default `'16rem'`. |
+| `gap`            | `GridGap`   | no       | —       | Gap between fields. Default `'lg'`.                                                   |
+| `children`       | `ReactNode` | yes      | —       | The fields (usually `<Field>`).                                                       |
+| …native          |             |          |         | plus native HTML attributes                                                           |
+
+<!-- props:end -->
+
 - Thin wrapper over `<Grid>`. Default: auto-fit, reflows to stacked when narrow
   (container-based, `minColumnWidth` default `'16rem'`). `columns={2|3}` = fixed count.
 - `gap` default `'lg'`. ❌ Not for a single field; ❌ not a general tile grid (use `<Grid>`).

@@ -19,6 +19,30 @@ import { Link as RouterLink } from 'react-router-dom';
 </Breadcrumb>
 ```
 
+<!-- props:start -->
+
+## Props
+
+### `BreadcrumbProps`
+
+| Prop        | Type        | Required | Default | Description                                                                                                                                                                                                                                                                                 |
+| ----------- | ----------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `children`  | `ReactNode` | yes      | —       | One or more `<Breadcrumb.Item>` children. The component injects the separator between items and auto-marks the last child as current (renders as `<span aria-current="page">` instead of a link).                                                                                           |
+| `separator` | `ReactNode` | no       | —       | Custom separator between items. Defaults to a small `<ChevronRight>` lucide icon. The separator renders inside a `<span aria-hidden="true">` wrapper automatically.                                                                                                                         |
+| `ariaLabel` | `string`    | no       | —       | Visible label for the `<nav>` element. Defaults to the i18n value at `breadcrumb.ariaLabel` (`'Breadcrumb'` in English) when omitted OR empty — an empty string is not an explicit name, so it takes the default too. Override when multiple breadcrumb instances coexist on the same page. |
+| `className` | `string`    | no       | —       | Pass-through className applied to the `<nav>` wrapper.                                                                                                                                                                                                                                      |
+
+### `BreadcrumbItemProps`
+
+| Prop        | Type        | Required | Default | Description                                                                                                                                                                                                                                          |
+| ----------- | ----------- | -------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `as`        | `C`         | no       | —       |                                                                                                                                                                                                                                                      |
+| `current`   | `boolean`   | no       | —       | Mark this item as the current page. Forced to `true` automatically for the last child of `<Breadcrumb>` (auto-current). When `true`, the item renders as `<span aria-current="page">` and ignores all link-related props (`as`, `to`, `href`, etc.). |
+| `children`  | `ReactNode` | no       | —       |                                                                                                                                                                                                                                                      |
+| `className` | `string`    | no       | —       |                                                                                                                                                                                                                                                      |
+
+<!-- props:end -->
+
 - **Compound API** — wrap each crumb in `<Breadcrumb.Item>`.
 - **Auto-current** — last child gets `aria-current="page"` and renders as `<span>`. Override with explicit `current` prop.
 - **Item is polymorphic** — same `as` pattern as Link.

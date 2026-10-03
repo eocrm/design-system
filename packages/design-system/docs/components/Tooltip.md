@@ -14,6 +14,24 @@
 </Tooltip>
 ```
 
+<!-- props:start -->
+
+## Props
+
+| Prop           | Type                                                          | Required | Default | Description                                                                                                                                                                                              |
+| -------------- | ------------------------------------------------------------- | -------- | ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `content`      | `ReactNode`                                                   | yes      | —       | Tooltip body. ReactNode so you can include inline `<kbd>` or icons. If `null`, `undefined`, or `""`, the trigger renders as-is with no listeners and no `aria-describedby` — useful for conditional UIs. |
+| `children`     | `ReactElement<unknown, string \| JSXElementConstructor<any>>` | yes      | —       | Exactly one React element that accepts a ref. Cloned to inject the tooltip's ref + listeners + aria. `<Button>` and raw `<button>` both qualify; a custom component without `forwardRef` does not.       |
+| `side`         | `TooltipSide`                                                 | no       | —       | Preferred side. Default `'top'`. Auto-flips on collision via Floating UI.                                                                                                                                |
+| `align`        | `TooltipAlign`                                                | no       | —       | Edge alignment. Default `'center'`.                                                                                                                                                                      |
+| `sideOffset`   | `number`                                                      | no       | —       | Gap in px between trigger and tooltip. Default `6` (room for the arrow).                                                                                                                                 |
+| `delay`        | `number`                                                      | no       | —       | Delay in ms before hover opens the tooltip. Default `400`. Keyboard focus is always immediate (a11y). Close is always immediate.                                                                         |
+| `open`         | `boolean`                                                     | no       | —       | Controlled open state. Provide alongside `onOpenChange` to drive open externally. Omit both to let Tooltip own its state (the common case).                                                              |
+| `onOpenChange` | `((open: boolean) => void)`                                   | no       | —       | Fired whenever Tooltip wants to change open state. Required when `open` is provided.                                                                                                                     |
+| `defaultOpen`  | `boolean`                                                     | no       | —       | Default open state for uncontrolled usage. Defaults to `false`.                                                                                                                                          |
+
+<!-- props:end -->
+
 - Wrapper API: `<Tooltip content="…">` cloneElement's its single child to inject the ref, listeners (`pointerenter` / `pointerleave` / `focus` / `blur`), and `aria-describedby`. Child must accept a ref — `<Button>` qualifies, as does a raw `<button>`.
 - Trigger MUST already have its own accessible name (visible text or `aria-label`). Tooltip is _supplementary description_ via `aria-describedby` — never the label.
 - `content` prop: `ReactNode`. If `null` / `undefined` / `''`, the trigger renders as-is with no listeners and no aria. Useful for conditional UIs.

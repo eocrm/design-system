@@ -16,6 +16,18 @@
 </Page>
 ```
 
+<!-- props:start -->
+
+## Props
+
+| Prop       | Type        | Required | Default | Description                                                                                                                                                                                                                                                                       |
+| ---------- | ----------- | -------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `gap`      | `StackGap`  | no       | —       | Vertical rhythm between top-level page sections. - `xs` (4) / `sm` (8) / `md` (12) — tighter than canonical; rare. - `lg` (16, **default**) — the canonical CRM page rhythm; matches every shipped mockup. - `xl` (24) / `2xl` (32) — looser; for spacious overview / hero pages. |
+| `children` | `ReactNode` | yes      | —       |                                                                                                                                                                                                                                                                                   |
+| …native    |             |          |         | plus native `<div>` attributes                                                                                                                                                                                                                                                    |
+
+<!-- props:end -->
+
 - `gap`: `'xs'` (4) / `'sm'` (8) / `'md'` (12) / `'lg'` (16, **default**) / `'xl'` (24) / `'2xl'` (32). The default `'lg'` is the canonical CRM page rhythm — match it across pages unless you have a specific reason.
 - Page is the OUTER wrapper at the page root. Inside it, sections compose with `<PageHeader>`, `<Card>`, `<Table>`, etc.
 - **Use Page at the page root, not nested.** For sub-regions (inside a card, modal, drawer), use `<Stack>` instead — those contexts have their own padding contract.

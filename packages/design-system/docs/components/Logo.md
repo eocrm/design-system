@@ -8,6 +8,22 @@ import logo from '../assets/eocrm-logo.svg'; // a consumer-owned asset
 <Logo src={logo} text="eocrm" subtext="Free trial" size="sm" />  // mark + name + muted subline
 ```
 
+<!-- props:start -->
+
+## Props
+
+| Prop            | Type                | Required | Default | Description                                                                                                                                                                 |
+| --------------- | ------------------- | -------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src`           | `string`            | yes      | —       | The brand mark image URL — typically an imported SVG/PNG asset. The mark is a **consumer-owned asset**; the design system ships no logo of its own.                         |
+| `text`          | `ReactNode`         | no       | —       | Wordmark rendered beside (or below) the mark — consumers pass `"eocrm"`. Omit for a mark-only logo.                                                                         |
+| `textPlacement` | `LogoTextPlacement` | no       | —       | Where the wordmark sits relative to the mark. Defaults to `'end'` (beside); `'bottom'` stacks it under the mark, centered.                                                  |
+| `size`          | `LogoSize`          | no       | —       | Mark size — `'sm'` (24) / `'md'` (32, default) / `'lg'` (40).                                                                                                               |
+| `label`         | `string`            | no       | —       | Accessible name for the mark when there's no `text` (used as the image `alt`). Omit for a decorative mark (`alt=""`), or when `text` is present (the wordmark is the name). |
+| `subtext`       | `ReactNode`         | no       | —       | Small, muted secondary line rendered under `text` — e.g. a plan or tagline (`subtext="Free trial"`). Only shown when `text` is present.                                     |
+| …native         |                     |          |         | plus native `<div>` attributes                                                                                                                                              |
+
+<!-- props:end -->
+
 - Arranges a **consumer-supplied** mark image (`src`, required — import an SVG/PNG) with an optional wordmark beside (default) or below (`textPlacement="bottom"`). The design system ships **no** logo of its own.
 - `size`: `sm` (24) / `md` (32, default) / `lg` (40) — the mark box; rendered as `<img object-fit:contain>` (no CSS recolor — the asset carries its own color).
 - `text` → wordmark + decorative mark (`alt=""`); `label` → the image `alt`/accessible name for a mark-only logo (never pass both). For third-party SSO marks use `<BrandIcon>`, not `<Logo>`.

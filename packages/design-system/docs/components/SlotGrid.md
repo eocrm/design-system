@@ -18,6 +18,24 @@
 />
 ```
 
+<!-- props:start -->
+
+## Props
+
+| Prop         | Type                    | Required | Default | Description                                                                                                                                                                 |
+| ------------ | ----------------------- | -------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `groups`     | `SlotGridGroup[]`       | yes      | —       | Groups in display order.                                                                                                                                                    |
+| `value`      | `string \| null`        | yes      | —       | Selected slot `key`, or `null`. A key not in `groups` checks nothing.                                                                                                       |
+| `onChange`   | `(key: string) => void` | yes      | —       | Called with the chosen slot's `key`. Controlled — update `value` yourself.                                                                                                  |
+| `empty`      | `ReactNode`             | no       | —       | Shown when no group has any slot. Default: the localized "No available times".                                                                                              |
+| `titleOrder` | `TitleOrder`            | no       | —       | Heading level of each group label. Default `3`.                                                                                                                             |
+| `name`       | `string`                | no       | —       | Radio group `name` (also submitted with a form). Default: a generated id.                                                                                                   |
+| `invalid`    | `boolean`               | no       | false   | Marks the group `aria-invalid` (the radios themselves do not support it). Field / SettingRow inject it.                                                                     |
+| `required`   | `boolean`               | no       | —       | Native `required` on the radios (the group then fails form validation until one is chosen). Field / SettingRow inject it; it used to land on the root as a stray attribute. |
+| …native      |                         |          |         | plus native `<div>` attributes                                                                                                                                              |
+
+<!-- props:end -->
+
 - Slot `label`s are yours, formatted in the business's timezone. `key` is what `onChange` returns; keep it unique across ALL groups (one exclusive choice).
 - Native radios with one `name`: one Tab stop for the whole grid, arrows move AND select in reading order (↓ goes to the next slot, not the one below). Tiles are `role="radio"` named by their label; each group is a `<fieldset>` named by its heading (`titleOrder`, default 3).
 - Groups with no slots are skipped; if none has slots, `empty` renders (default: localized "No available times").

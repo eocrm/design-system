@@ -16,6 +16,20 @@
 </FormSection>
 ```
 
+<!-- props:start -->
+
+## Props
+
+| Prop          | Type         | Required | Default | Description                                   |
+| ------------- | ------------ | -------- | ------- | --------------------------------------------- |
+| `title`       | `ReactNode`  | no       | —       | Section heading.                              |
+| `description` | `ReactNode`  | no       | —       | Secondary text under the heading.             |
+| `titleOrder`  | `TitleOrder` | no       | —       | Heading level for `title`. Default `2`.       |
+| `children`    | `ReactNode`  | yes      | —       | The fields (usually `<Field>` / `<FormRow>`). |
+| …native       |              |          |         | plus native HTML attributes                   |
+
+<!-- props:end -->
+
 - Heading (`title`, level via `titleOrder`, default 2) + `description` over a stack of fields.
 - Consecutive `<FormSection>`s get an automatic divider (adjacency, no margin).
 - Layout-family primitive — arranges its own children only. ❌ Not a `<Card>` (no surface), ❌ not a `<PageHeader>`.

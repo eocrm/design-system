@@ -9,6 +9,23 @@
 />
 ```
 
+<!-- props:start -->
+
+## Props
+
+| Prop           | Type                     | Required | Default | Description                                                                                                                                                                                                                                                                                                                                                      |
+| -------------- | ------------------------ | -------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `icon`         | `ReactNode`              | no       | —       | Icon rendered above the title. Pass a lucide icon, custom SVG, or any ReactNode. Sized by the consumer — recommended: sm=24, md=32, lg=48. Omit for an icon-less empty state.                                                                                                                                                                                    |
+| `title`        | `ReactNode`              | yes      | —       | Required title. Rendered as a semantic heading (default `<h3>`). Accepts ReactNode so inline emphasis works (e.g., `<>Found <strong>0</strong> results</>`). Keep it short and announceable — AT users hear it via heading navigation.                                                                                                                           |
+| `description`  | `ReactNode`              | no       | —       | Optional description rendered below the title.                                                                                                                                                                                                                                                                                                                   |
+| `actions`      | `ReactNode`              | no       | —       | Optional action(s) rendered below the description. Typically a `<Button>` or a `<Cluster gap="sm">` of buttons.                                                                                                                                                                                                                                                  |
+| `size`         | `EmptyStateSize`         | no       | —       | Visual size. Defaults to `'md'`. - `'sm'` — compact for inline / popover use (empty Select results, empty filter chips). Icon target 24px, font-size-sm title. - `'md'` — default for cards / sections (DataTable empty row, inbox empty). Icon target 32px, font-size-md title. - `'lg'` — hero / full-page empty states. Icon target 48px, font-size-xl title. |
+| `align`        | `EmptyStateAlign`        | no       | —       | Horizontal alignment of the stacked content. Defaults to `'center'`. Use `'start'` when the empty state sits in a tight column where centering would look stranded.                                                                                                                                                                                              |
+| `headingLevel` | `EmptyStateHeadingLevel` | no       | —       | Heading level for the `title`. Defaults to `3` (renders `<h3>`). Set higher (4–6) when the empty state lives deep inside the page's heading hierarchy. Set to `2` when the empty state IS the page's primary content. Values outside `1–6` clamp to `3`.                                                                                                         |
+| …native        |                          |          |         | plus native HTML attributes                                                                                                                                                                                                                                                                                                                                      |
+
+<!-- props:end -->
+
 - Four slots: `icon` (optional ReactNode), `title` (required ReactNode), `description` (optional), `actions` (optional). Stacked vertically.
 - `title` renders as a semantic heading — default `<h3>`. Override via `headingLevel: 1–6` (clamped) when the empty state lives at a different heading depth.
 - Three sizes — `sm` (inline / popover empties), `md` (card / section default), `lg` (hero / full-page).

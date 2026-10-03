@@ -28,6 +28,33 @@ with a `Popover` (or use `EmojiPickerPopover`).
 />
 ```
 
+<!-- props:start -->
+
+## Props
+
+### `EmojiPickerProps`
+
+| Prop       | Type                      | Required | Default | Description                                                                                                                                                                                                                                                                                                                                                                                                                                         |
+| ---------- | ------------------------- | -------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `invalid`  | `boolean`                 | no       | —       | Consumed so a Field / SettingRow wrapping the picker cannot leak it onto the root div. The picker has no value to validate, so it renders nothing.                                                                                                                                                                                                                                                                                                  |
+| `required` | `boolean`                 | no       | —       | Consumed for Field / SettingRow composition; the picker has no value, so nothing is forwarded.                                                                                                                                                                                                                                                                                                                                                      |
+| `onSelect` | `(emoji: string) => void` | yes      | —       | Fired with the chosen emoji character (e.g. `'👍'`) when the user clicks a cell or presses Enter/Space on a focused cell. This is the picker's single output — wire it to insert into an editor, set a reaction, etc.                                                                                                                                                                                                                               |
+| `recent`   | `string[]`                | no       | —       | Recently-used emoji characters (e.g. `['👍', '🎉', '❤️']`), most-recent first. When provided, a "Recently used" section renders at the top of the grid (only while not searching). The consumer owns persistence — keep the list yourself (e.g. in localStorage), update it in `onSelect`, and pass it back. Duplicates are de-duped; a char outside the curated set still renders (labelled by the char). Omit or pass `[]` for no recent section. |
+| …native    |                           |          |         | plus native `<div>` attributes                                                                                                                                                                                                                                                                                                                                                                                                                      |
+
+### `EmojiPickerPopoverProps`
+
+| Prop           | Type                        | Required | Default | Description                                                                                                                                                                                    |
+| -------------- | --------------------------- | -------- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `trigger`      | `ReactNode`                 | yes      | —       | The element that opens the picker. Must be a single element that accepts a ref (this library's `<Button>` or a raw `<button>`); the open/close + ARIA wiring is injected by `Popover.Trigger`. |
+| `onSelect`     | `(emoji: string) => void`   | yes      | —       | Fired with the chosen emoji character. Selecting always closes the popover (both controlled and uncontrolled).                                                                                 |
+| `recent`       | `string[]`                  | no       | —       | Recently-used emoji chars shown in a top "Recently used" section — see `EmojiPicker`.                                                                                                          |
+| `open`         | `boolean`                   | no       | —       | Controlled open state. Provide alongside `onOpenChange` to drive open externally. Omit both to let the wrapper own its state (the common case).                                                |
+| `onOpenChange` | `((open: boolean) => void)` | no       | —       | Fired whenever the popover wants to change open state. Required when `open` is provided.                                                                                                       |
+| `defaultOpen`  | `boolean`                   | no       | —       | Initial open state for uncontrolled usage. Defaults to `false`.                                                                                                                                |
+
+<!-- props:end -->
+
 `EmojiPickerPopover` takes `trigger` + `onSelect`, plus the standard
 controlled-open contract (`open` / `onOpenChange` / `defaultOpen`).
 

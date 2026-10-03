@@ -22,6 +22,19 @@ import { Link as RouterLink } from 'react-router-dom';
 <Link href="/x" variant="subtle" underline="none">Acme Inc</Link> {/* brand/nav — no hover underline */}
 ```
 
+<!-- props:start -->
+
+## Props
+
+| Prop        | Type            | Required | Default | Description                                                                   |
+| ----------- | --------------- | -------- | ------- | ----------------------------------------------------------------------------- |
+| `variant`   | `LinkVariant`   | no       | —       | Visual variant. See `LinkVariant` for descriptions.                           |
+| `underline` | `LinkUnderline` | no       | —       | Underline behavior. See `LinkUnderline` for descriptions. Default: `'hover'`. |
+| `children`  | `ReactNode`     | no       | —       |                                                                               |
+| `as`        | `C`             | no       | —       |                                                                               |
+
+<!-- props:end -->
+
 - **Polymorphic**: `as={Component}` forwards all of Component's props with full TypeScript inference.
 - **Library has no router dependency** — the `as` mechanism is consumer-driven.
 - **Three variants**:

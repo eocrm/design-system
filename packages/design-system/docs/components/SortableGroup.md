@@ -18,6 +18,28 @@ const [groups, setGroups] = useState<Record<string, Field[]>>(initial);
 </SortableGroup>;
 ```
 
+<!-- props:start -->
+
+## Props
+
+### `SortableGroupProps`
+
+| Prop       | Type                                   | Required | Default | Description                                                                                                                                               |
+| ---------- | -------------------------------------- | -------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `onMove`   | `((event: SortableMoveEvent) => void)` | no       | —       | Fires on every cross-container handoff (during the drag) AND on the final drop. Apply it to your controlled per-container state — see `moveSortableItem`. |
+| `children` | `ReactNode`                            | yes      | —       | The `<SortableGroup.Container>` lists.                                                                                                                    |
+
+### `SortableGroupContainerProps`
+
+| Prop       | Type        | Required | Default | Description                                                            |
+| ---------- | ----------- | -------- | ------- | ---------------------------------------------------------------------- |
+| `id`       | `Id`        | yes      | —       | Stable container id (the `container` reported in `SortableMoveEvent`). |
+| `items`    | `Id[]`      | yes      | —       | Ordered item ids in THIS container — the controlled source of truth.   |
+| `children` | `ReactNode` | yes      | —       | `<Sortable.Item>`s for the ids in `items`.                             |
+| …native    |             |          |         | plus native `<ol>` attributes                                          |
+
+<!-- props:end -->
+
 - Give each `Container` an `aria-label` (or `aria-labelledby`) — it names the `<ol>` for screen readers AND names the list in drag announcements ("…position 2 of 4 in In review").
 - Container ids and item ids share dnd-kit's one id namespace — keep them all unique.
 - Each `Container.items` must match its `<Sortable.Item>` child ids (it's the ordering source of truth).

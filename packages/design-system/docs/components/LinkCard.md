@@ -13,6 +13,19 @@
 <LinkCard as="button" type="button" onClick={openImporter}>Import contacts</LinkCard>
 ```
 
+<!-- props:start -->
+
+## Props
+
+| Prop       | Type          | Required | Default | Description                                                 |
+| ---------- | ------------- | -------- | ------- | ----------------------------------------------------------- |
+| `padding`  | `CardPadding` | no       | —       | Inner padding — same scale as `Card`. Defaults to `'md'`.   |
+| `tone`     | `CardTone`    | no       | —       | Optional left-edge tone stripe — same vocabulary as `Card`. |
+| `children` | `ReactNode`   | no       | —       |                                                             |
+| `as`       | `C`           | no       | —       |                                                             |
+
+<!-- props:end -->
+
 - A Card whose **whole surface** navigates/acts. Polymorphic like `<Link>` — `as` defaults to `<a>`; pass `as={RouterLink} to=…` for routes or `as="button"` for actions (the library has no router dep).
 - Carries `Card`'s `padding` (default `md`) + `tone` stripe (reuses `--card-*` tokens), plus a hover lift (border + shadow) and a `:focus-visible` ring.
 - Use `<Card>` for non-interactive grouping, `<Link>` for inline text, `<Button>` for form actions. **Don't nest** interactive controls inside it (invalid nested interactives).

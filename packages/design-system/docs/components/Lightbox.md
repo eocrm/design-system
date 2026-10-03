@@ -13,6 +13,24 @@ const [start, setStart] = useState(0);
 />;
 ```
 
+<!-- props:start -->
+
+## Props
+
+| Prop            | Type                        | Required | Default | Description                                                                                                                                                         |
+| --------------- | --------------------------- | -------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `open`          | `boolean`                   | yes      | —       | Controlled open state.                                                                                                                                              |
+| `onOpenChange`  | `(open: boolean) => void`   | yes      | —       | Fired when the Lightbox wants to close — Esc, backdrop click, the × button.                                                                                         |
+| `items`         | `LightboxItem[]`            | yes      | —       | The images. An empty array renders nothing.                                                                                                                         |
+| `defaultIndex`  | `number`                    | no       | —       | Initial image index (uncontrolled). Defaults to `0`. Clamped to range.                                                                                              |
+| `index`         | `number`                    | no       | —       | Controlled current index. When set, pair with `onIndexChange`.                                                                                                      |
+| `onIndexChange` | `((index: number) => void)` | no       | —       | Fired on navigation (chevron / arrow key / thumbnail click).                                                                                                        |
+| `loop`          | `boolean`                   | no       | —       | Wrap past the first/last image. Defaults to `true`.                                                                                                                 |
+| `className`     | `string`                    | no       | —       | className for the dialog container.                                                                                                                                 |
+| `aria-label`    | `string`                    | no       | —       | Accessible label for the dialog. Defaults to the i18n "Image gallery" when omitted OR empty — an empty string is not an explicit name, so it takes the default too. |
+
+<!-- props:end -->
+
 - Each `LightboxItem` is `{ src, alt, kind?, caption?, thumbnail? }` — `alt` is required.
 - `items` accept `kind: 'pdf'` (or a `.pdf` src) → rendered in an `<iframe>` with a download action; mixed image+PDF galleries supported. A PDF without a `thumbnail` shows a document-icon placeholder in the strip; unsafe (non-http(s)) doc srcs show a "Preview unavailable" message.
 - Single item → chevrons, counter, and strip auto-hide. Empty `items` → renders nothing.

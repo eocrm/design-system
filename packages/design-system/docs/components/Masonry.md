@@ -8,6 +8,20 @@
 </Masonry>
 ```
 
+<!-- props:start -->
+
+## Props
+
+| Prop             | Type         | Required | Default | Description                                                              |
+| ---------------- | ------------ | -------- | ------- | ------------------------------------------------------------------------ |
+| `gap`            | `MasonryGap` | no       | —       | `xs`(4) / `sm`(8) / `md`(12, default) / `lg`(16) / `xl`(24) / `2xl`(32). |
+| `children`       | `ReactNode`  | no       | —       |                                                                          |
+| `columns`        | `number`     | no       | —       | Fixed number of columns. Mutually exclusive with `minColumnWidth`.       |
+| `minColumnWidth` | `string`     | no       | —       |                                                                          |
+| …native          |              |          |         | plus native HTML attributes                                              |
+
+<!-- props:end -->
+
 Packs variable-height children into columns (greedy shortest-column-first) →
 left→right reading order, balanced heights. Measures on the client + rebalances
 via `ResizeObserver`.
