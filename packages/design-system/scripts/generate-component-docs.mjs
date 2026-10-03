@@ -8,12 +8,18 @@ import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
 import * as prettier from 'prettier';
+import {
+  START,
+  END,
+  insertBlock,
+  unknownTags,
+  extractFences,
+  withDefault,
+} from './component-docs-lib.mjs';
 
 const PKG = join(dirname(fileURLToPath(import.meta.url)), '..');
 const DOCS = join(PKG, 'docs');
 const COMPONENT_DOCS = join(DOCS, 'components');
-const START = '<!-- props:start -->';
-const END = '<!-- props:end -->';
 const CHECK = process.argv.includes('--check');
 
 const NO_PROPS = ['Palette', 'useBelowBreakpoint', 'useMonth'];
@@ -97,7 +103,7 @@ function literalUnion(t, optional) {
     .join(' | ');
 }
 
-function renderTable(typeName) {
+function renderTable(docName, typeName) {
   const sym = propsTypes.get(typeName);
   const declared = checker.getDeclaredTypeOfSymbol(sym);
   const parts = declared.isUnion() ? declared.types : [declared];
@@ -138,15 +144,27 @@ function renderTable(typeName) {
   }
   rows.sort((a, b) => fileOrder.indexOf(a.file) - fileOrder.indexOf(b.file) || a.pos - b.pos);
 
-  const lines = ['| Prop | Type | Required | Default | Description |', '|---|---|---|---|---|'];
+  const lines = ['| Prop | Type | Required | Description |', '|---|---|---|---|'];
+  const examples = [];
   for (const { prop, doc, types, required, seen } of rows) {
-    const def = prop.getJsDocTags(checker).find((t) => t.name === 'default');
-    const defText = def ? ts.displayPartsToString(def.text) : '';
+    const tags = prop.getJsDocTags(checker);
+    const unknown = unknownTags(tags.map((t) => t.name));
+    if (unknown.length)
+      fail(`${docName}: prop \`${prop.name}\` has unknown JSDoc tag @${unknown.join(', @')}`);
+    const def = tags.find((t) => t.name === 'default');
+    const defText = def
+      ? ts
+          .displayPartsToString(def.text)
+          .trim()
+          .replace(/^`(.*)`$/, '$1')
+      : '';
+    const { text, fences } = extractFences(stripIssueRefs(doc));
+    for (const fence of fences) examples.push(`**\`${prop.name}\`** example:\n\n${fence}`);
     const type = (types.length > 1 ? types.filter((t) => t !== 'undefined') : types)
       .join(' | ')
       .replace(/`/g, "'");
     lines.push(
-      `| \`${prop.name}\` | \`${cell(type)}\` | ${required && seen === parts.length ? 'yes' : 'no'} | ${defText ? cell(defText) : '—'} | ${cell(stripIssueRefs(doc))} |`,
+      `| \`${prop.name}\` | \`${cell(type)}\` | ${required && seen === parts.length ? 'yes' : 'no'} | ${cell(withDefault(text, defText))} |`,
     );
   }
   const declText = sym.declarations[0].getText();
@@ -154,13 +172,13 @@ function renderTable(typeName) {
     const dflt = sym.declarations[0].typeParameters?.[0]?.default;
     const dfltType = dflt && checker.getTypeFromTypeNode(dflt);
     const tag = dfltType?.isStringLiteral() ? ` (default \`<${dfltType.value}>\`)` : '';
-    lines.push(`| …native | | | | plus native attributes of the \`as\` element${tag} |`);
+    lines.push(`| …native | | | plus native attributes of the \`as\` element${tag} |`);
   } else if (collapsed) {
     const m = declText.match(/HTML(\w+)Element/);
     const native = m ? `native \`<${TAGS[m[1]] ?? m[1]}>\` attributes` : 'native HTML attributes';
-    lines.push(`| …native | | | | plus ${native} |`);
+    lines.push(`| …native | | | plus ${native} |`);
   }
-  return `<!-- prettier-ignore -->\n${lines.join('\n')}`;
+  return [`<!-- prettier-ignore -->\n${lines.join('\n')}`, ...examples].join('\n\n');
 }
 
 const prettierOptions = {
@@ -170,18 +188,6 @@ const prettierOptions = {
   proseWrap: 'preserve',
   parser: 'markdown',
 };
-
-function insertBlock(text, block) {
-  const s = text.indexOf(START);
-  const e = text.indexOf(END);
-  if (s !== -1 && e > s) return text.slice(0, s) + block + text.slice(e + END.length);
-  const lines = text.split('\n');
-  const open = lines.findIndex((l) => /^\s*```/.test(l));
-  const close = open === -1 ? -1 : lines.findIndex((l, i) => i > open && /^\s*```\s*$/.test(l));
-  if (close === -1) return `${text.replace(/\n*$/, '\n')}\n${block}\n`;
-  lines.splice(close + 1, 0, '', block);
-  return `<!-- prettier-ignore -->\n${lines.join('\n')}`;
-}
 
 const unresolved = docNames.filter((n) => typesFor(n).length === 0 && !NO_PROPS.includes(n));
 if (unresolved.length)
@@ -200,8 +206,8 @@ for (const name of docNames) {
   if (types.length === 0) continue;
   const body =
     types.length === 1
-      ? renderTable(types[0])
-      : types.map((t) => `### \`${t}\`\n\n${renderTable(t)}`).join('\n\n');
+      ? renderTable(name, types[0])
+      : types.map((t) => `### \`${t}\`\n\n${renderTable(name, t)}`).join('\n\n');
   const formatted = await prettier.format(`## Props\n\n${body}\n`, prettierOptions);
   const block = `${START}\n\n${formatted}\n${END}`;
   const file = join(COMPONENT_DOCS, `${name}.md`);

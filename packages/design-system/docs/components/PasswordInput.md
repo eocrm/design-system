@@ -11,17 +11,17 @@
 ## Props
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `size` | `'sm' \| 'md' \| 'lg'` | no | — | Field height + type scale. Same scale as `<Input>`. Defaults to `'md'`. |
-| `invalid` | `boolean` | no | — | Toggles the error visual + sets `aria-invalid="true"`. |
-| `revealed` | `boolean` | no | — | Controlled revealed state. Pair with `onRevealChange`. |
-| `defaultRevealed` | `boolean` | no | — | Initial revealed state for uncontrolled use. Defaults to `false`. |
-| `onRevealChange` | `((revealed: boolean) => void)` | no | — | Called when the user clicks the eye toggle. Receives the next revealed state. |
-| `revealable` | `boolean` | no | — | Whether to render the eye toggle button. Defaults to `true`. Set `revealable={false}` for compliance / kiosk screens where revealing is forbidden — the input then behaves like a plain locked-down `<input type='password'>`. |
-| `capsLockWarning` | `boolean` | no | — | Opt-in caps-lock detection. When `true`, on every keypress the input reads `event.getModifierState('CapsLock')`; when active, a warning icon + polite `aria-live` announce it. Cleared on blur. Defaults to `false`. Opt in on screens where caps-lock matters (login, password creation, password confirmation). |
-| `wrongLayoutWarning` | `boolean` | no | — | Opt-in wrong-keyboard-layout detection. When `true`, detects keystrokes that produce non-ASCII single characters (e.g., Cyrillic `ф` from a Russian layout). Shows a warning icon + polite live region. Cleared on blur. Heuristic, not deterministic — any non-ASCII keystroke triggers. Only enable when the system expects Latin-only password input. Defaults to `false`. |
-| …native | | | | plus native `<input>` attributes |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `size` | `'sm' \| 'md' \| 'lg'` | no | Field height + type scale. Same scale as `<Input>`. Defaults to `'md'`. |
+| `invalid` | `boolean` | no | Toggles the error visual + sets `aria-invalid="true"`. |
+| `revealed` | `boolean` | no | Controlled revealed state. Pair with `onRevealChange`. |
+| `defaultRevealed` | `boolean` | no | Initial revealed state for uncontrolled use. Defaults to `false`. |
+| `onRevealChange` | `((revealed: boolean) => void)` | no | Called when the user clicks the eye toggle. Receives the next revealed state. |
+| `revealable` | `boolean` | no | Whether to render the eye toggle button. Defaults to `true`. Set `revealable={false}` for compliance / kiosk screens where revealing is forbidden — the input then behaves like a plain locked-down `<input type='password'>`. |
+| `capsLockWarning` | `boolean` | no | Opt-in caps-lock detection. When `true`, on every keypress the input reads `event.getModifierState('CapsLock')`; when active, a warning icon + polite `aria-live` announce it. Cleared on blur. Defaults to `false`. Opt in on screens where caps-lock matters (login, password creation, password confirmation). |
+| `wrongLayoutWarning` | `boolean` | no | Opt-in wrong-keyboard-layout detection. When `true`, detects keystrokes that produce non-ASCII single characters (e.g., Cyrillic `ф` from a Russian layout). Shows a warning icon + polite live region. Cleared on blur. Heuristic, not deterministic — any non-ASCII keystroke triggers. Only enable when the system expects Latin-only password input. Defaults to `false`. |
+| …native | | | plus native `<input>` attributes |
 
 <!-- props:end -->
 

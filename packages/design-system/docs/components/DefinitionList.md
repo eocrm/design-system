@@ -26,38 +26,38 @@ For displaying entity properties — contact details, settings rows, metadata si
 ### `DefinitionListProps`
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `layout` | `'horizontal' \| 'stacked'` | no | — | Layout direction. See `DefinitionListLayout`. Default `'horizontal'`. |
-| `termWidth` | `string` | no | — | CSS length applied to the term column in horizontal layout (e.g. `'180px'`, `'20%'`, `'max-content'`). Default `'max-content'` — column sizes to the longest term across all rows. Set explicitly when you need consistent alignment across multiple DefinitionLists on the same screen. |
-| `spacing` | `'sm' \| 'md' \| 'lg'` | no | — | Vertical padding per item. See `DefinitionListSpacing`. Default `'sm'`. |
-| `dividers` | `boolean` | no | — | Render a 1px border between items. Default `false` (clean, dense look). Set when migrating from a `Card.List` and you want to preserve the table-row separator visual. |
-| …native | | | | plus native `<DList>` attributes |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `layout` | `'horizontal' \| 'stacked'` | no | Layout direction. See `DefinitionListLayout`. Default `'horizontal'`. |
+| `termWidth` | `string` | no | CSS length applied to the term column in horizontal layout (e.g. `'180px'`, `'20%'`, `'max-content'`). Default `'max-content'` — column sizes to the longest term across all rows. Set explicitly when you need consistent alignment across multiple DefinitionLists on the same screen. |
+| `spacing` | `'sm' \| 'md' \| 'lg'` | no | Vertical padding per item. See `DefinitionListSpacing`. Default `'sm'`. |
+| `dividers` | `boolean` | no | Render a 1px border between items. Default `false` (clean, dense look). Set when migrating from a `Card.List` and you want to preserve the table-row separator visual. |
+| …native | | | plus native `<DList>` attributes |
 
 ### `DefinitionListDescriptionProps`
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `icon` | `ReactNode` | no | — | Leading decorative icon, rendered inside the `<dd>` before children. Wrapped in an `aria-hidden` span — the `<dt>` carries the semantic label so the icon is purely visual. |
-| `children` | `ReactNode` | yes | — | The value content. Any ReactNode — text, Badges, Links, etc. |
-| …native | | | | plus native HTML attributes |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `icon` | `ReactNode` | no | Leading decorative icon, rendered inside the `<dd>` before children. Wrapped in an `aria-hidden` span — the `<dt>` carries the semantic label so the icon is purely visual. |
+| `children` | `ReactNode` | yes | The value content. Any ReactNode — text, Badges, Links, etc. |
+| …native | | | plus native HTML attributes |
 
 ### `DefinitionListItemProps`
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `children` | `ReactNode` | yes | — | A `DefinitionList.Term` and a `DefinitionList.Description`. |
-| …native | | | | plus native `<div>` attributes |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `children` | `ReactNode` | yes | A `DefinitionList.Term` and a `DefinitionList.Description`. |
+| …native | | | plus native `<div>` attributes |
 
 ### `DefinitionListTermProps`
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `children` | `ReactNode` | yes | — | The label text — kept short, terms are headings for their values. |
-| …native | | | | plus native HTML attributes |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `children` | `ReactNode` | yes | The label text — kept short, terms are headings for their values. |
+| …native | | | plus native HTML attributes |
 
 <!-- props:end -->
 

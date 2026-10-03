@@ -224,10 +224,6 @@ function containsHandle(children: ReactNode): boolean {
   return found;
 }
 
-/**
- * Drag-to-reorder list (single column) with `Sortable.Item` and `Sortable.Handle`, in list or grid arrangement.
- * @see docs/components/Sortable.md
- */
 const collapseClass: Record<CollapseBreakpoint, string> = {
   sm: styles.collapseSm,
   md: styles.collapseMd,
@@ -566,6 +562,10 @@ export const SortableHandle = forwardRef<HTMLButtonElement, SortableHandleProps>
 );
 SortableHandle.displayName = 'SortableHandle';
 
+/**
+ * Drag-to-reorder list (single column) with `Sortable.Item` and `Sortable.Handle`, in list or grid arrangement.
+ * @see docs/components/Sortable.md
+ */
 export const Sortable = Object.assign(SortableRoot, {
   Item: SortableItem,
   Handle: SortableHandle,

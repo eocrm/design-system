@@ -25,35 +25,35 @@ Multi mode buffers a draft until Apply; single mode commits per click.
 ### `OptionsPickerProps`
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `mode` | `"multi" \| "single"` | no | — |  |
-| `selected` | `string[] \| string \| null` | yes | — |  |
-| `onApply` | `(next: string[]) => void \| (next: string \| null) => void` | yes | — |  |
-| `onCancel` | `(() => void)` | no | — |  |
-| `open` | `boolean` | no | — |  |
-| `onOpenChange` | `((open: boolean) => void)` | no | — |  |
-| `children` | `ReactNode` | yes | — |  |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `mode` | `"multi" \| "single"` | no |  |
+| `selected` | `string[] \| string \| null` | yes |  |
+| `onApply` | `(next: string[]) => void \| (next: string \| null) => void` | yes |  |
+| `onCancel` | `(() => void)` | no |  |
+| `open` | `boolean` | no |  |
+| `onOpenChange` | `((open: boolean) => void)` | no |  |
+| `children` | `ReactNode` | yes |  |
 
 ### `OptionsPickerContentProps`
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `options` | `OptionsPickerOption[]` | no | — |  |
-| `groups` | `OptionsPickerGroup[]` | no | — |  |
-| `label` | `string` | yes | — | Accessible label on the panel (the dialog's `aria-label`). |
-| `emptyState` | `ReactNode` | no | — | Rendered when search produces zero matches. Defaults to the `optionsPicker.noMatches` i18n string (en: `'No matches'`). An EMPTY string counts as unset, matching every other label override in the library. There is no way to suppress the message entirely — a blank listbox reads as a broken filter rather than as a deliberate silence. |
-| `footerCount` | `((selected: number, total: number) => ReactNode)` | no | — | Footer count formatter (multi only). Default `'${selected} of ${total}'`. |
-| `searchable` | `boolean` | no | — | Whether to render the search bar at the top of the panel. Defaults to `true`. Hide it (`false`) for small/curated option lists where typing filters would just be noise — the selection-count header is hidden alongside the search input (the footer's `N of TOTAL` text still shows in multi mode). |
-| `className` | `string` | no | — |  |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `options` | `OptionsPickerOption[]` | no |  |
+| `groups` | `OptionsPickerGroup[]` | no |  |
+| `label` | `string` | yes | Accessible label on the panel (the dialog's `aria-label`). |
+| `emptyState` | `ReactNode` | no | Rendered when search produces zero matches. Defaults to the `optionsPicker.noMatches` i18n string (en: `'No matches'`). An EMPTY string counts as unset, matching every other label override in the library. There is no way to suppress the message entirely — a blank listbox reads as a broken filter rather than as a deliberate silence. |
+| `footerCount` | `((selected: number, total: number) => ReactNode)` | no | Footer count formatter (multi only). Default `'${selected} of ${total}'`. |
+| `searchable` | `boolean` | no | Whether to render the search bar at the top of the panel. Defaults to `true`. Hide it (`false`) for small/curated option lists where typing filters would just be noise — the selection-count header is hidden alongside the search input (the footer's `N of TOTAL` text still shows in multi mode). |
+| `className` | `string` | no |  |
 
 ### `OptionsPickerTriggerProps`
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `children` | `ReactElement<unknown, string \| JSXElementConstructor<any>>` | yes | — | Must be a single React element that accepts a ref (e.g. `<Button>`). |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `children` | `ReactElement<unknown, string \| JSXElementConstructor<any>>` | yes | Must be a single React element that accepts a ref (e.g. `<Button>`). |
 
 <!-- props:end -->
 

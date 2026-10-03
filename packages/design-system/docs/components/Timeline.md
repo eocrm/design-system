@@ -24,20 +24,20 @@
 ### `TimelineProps`
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `compact` | `boolean` | no | — | Tighter gutter, node box, and spacing for dense sidebar widgets. Default `false`. |
-| `children` | `ReactNode` | yes | — | `<Timeline.Item>`s. |
-| …native | | | | plus native `<ol>` attributes |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `compact` | `boolean` | no | Tighter gutter, node box, and spacing for dense sidebar widgets. Default `false`. |
+| `children` | `ReactNode` | yes | `<Timeline.Item>`s. |
+| …native | | | plus native `<ol>` attributes |
 
 ### `TimelineItemProps`
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `node` | `ReactNode` | yes | — | The gutter node — an `<Avatar>`, `<Dot>`, icon, etc. Centered in a fixed node box so the connector aligns regardless of node content. |
-| `children` | `ReactNode` | yes | — | The item content (right of the node) — e.g. name·type·time, body, system text. |
-| …native | | | | plus native `<li>` attributes |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `node` | `ReactNode` | yes | The gutter node — an `<Avatar>`, `<Dot>`, icon, etc. Centered in a fixed node box so the connector aligns regardless of node content. |
+| `children` | `ReactNode` | yes | The item content (right of the node) — e.g. name·type·time, body, system text. |
+| …native | | | plus native `<li>` attributes |
 
 <!-- props:end -->
 

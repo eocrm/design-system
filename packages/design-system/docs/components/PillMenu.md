@@ -30,17 +30,17 @@ Renamed from `StatusMenu` — `StatusMenu` / `StatusMenuProps` / `StatusMenuStat
 ## Props
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `current` | `PillMenuOption` | yes | — | The value currently shown on the trigger (or the read-only chip). |
-| `label` | `string` | no | — | What the value IS, for the trigger's accessible name: `label="type"` → "Change type: Bug". Default: the localized "status" ("Change status: …"). Pass it as it reads right after "Change" / "Изменить", lower-case, in the UI's language — it is data, not a translatable string. In ru that is the accusative: `label="категорию"`, not "категория". Inside a `<Field>`, pass the field's label here (`label="priority"` under "Priority"): the trigger keeps its own name, so the visible field label reaches AT only through this (WCAG 2.5.3). A dev warning fires if it's missing there. |
-| `options` | `PillMenuOption[]` | no | — | Transition targets, offered in the dropdown. Omitted or empty renders read-only mode: a static colored chip with no button, no menu, no aria-haspopup. |
-| `onSelect` | `((id: string \| number) => void)` | no | — | Fired with the chosen option's `id` when a transition target is picked. |
-| `disabled` | `boolean` | no | — | Disables the trigger. Stays colored, dims via opacity. |
-| `busy` | `boolean` | no | — | Transition in flight: the trigger is non-interactive and keeps its color. Announced from a polite live region the component owns — `aria-busy` is also set but reaches no screen reader on its own. The trigger's accessible name does not change (contrast `EntityChip`): you activated this control, so the change is announced rather than folded into the name. No effect in read-only mode (no `options`), which renders no trigger and so has nothing to mark busy. |
-| `fullWidth` | `boolean` | no | — | Stretch the trigger (or read-only chip) to its container's width, for a form column of full-width controls (`Input`, `Select`, `DatePicker` in vertical `Field`s). Icon + name stay at the start, the chevron moves to the end edge like a `Select` trigger, and the menu is at least as wide as the trigger. Keeps the full-colour fill. Defaults to `false` (content-width pill). |
-| `invalid` | `boolean` | no | — | Error state — sets `aria-invalid` on the trigger. `<Field error>` injects it for you. No visual change: the fill IS the value's colour, and the Field's error text carries the error. The read-only chip ignores it (a non-focusable chip isn't a control AT can report invalid). |
-| …native | | | | plus native HTML attributes |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `current` | `PillMenuOption` | yes | The value currently shown on the trigger (or the read-only chip). |
+| `label` | `string` | no | What the value IS, for the trigger's accessible name: `label="type"` → "Change type: Bug". Default: the localized "status" ("Change status: …"). Pass it as it reads right after "Change" / "Изменить", lower-case, in the UI's language — it is data, not a translatable string. In ru that is the accusative: `label="категорию"`, not "категория". Inside a `<Field>`, pass the field's label here (`label="priority"` under "Priority"): the trigger keeps its own name, so the visible field label reaches AT only through this (WCAG 2.5.3). A dev warning fires if it's missing there. |
+| `options` | `PillMenuOption[]` | no | Transition targets, offered in the dropdown. Omitted or empty renders read-only mode: a static colored chip with no button, no menu, no aria-haspopup. |
+| `onSelect` | `((id: string \| number) => void)` | no | Fired with the chosen option's `id` when a transition target is picked. |
+| `disabled` | `boolean` | no | Disables the trigger. Stays colored, dims via opacity. |
+| `busy` | `boolean` | no | Transition in flight: the trigger is non-interactive and keeps its color. Announced from a polite live region the component owns — `aria-busy` is also set but reaches no screen reader on its own. The trigger's accessible name does not change (contrast `EntityChip`): you activated this control, so the change is announced rather than folded into the name. No effect in read-only mode (no `options`), which renders no trigger and so has nothing to mark busy. |
+| `fullWidth` | `boolean` | no | Stretch the trigger (or read-only chip) to its container's width, for a form column of full-width controls (`Input`, `Select`, `DatePicker` in vertical `Field`s). Icon + name stay at the start, the chevron moves to the end edge like a `Select` trigger, and the menu is at least as wide as the trigger. Keeps the full-colour fill. Defaults to `false` (content-width pill). |
+| `invalid` | `boolean` | no | Error state — sets `aria-invalid` on the trigger. `<Field error>` injects it for you. No visual change: the fill IS the value's colour, and the Field's error text carries the error. The read-only chip ignores it (a non-focusable chip isn't a control AT can report invalid). |
+| …native | | | plus native HTML attributes |
 
 <!-- props:end -->
 

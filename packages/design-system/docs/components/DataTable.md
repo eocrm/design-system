@@ -1,9 +1,6 @@
 # `<DataTable>` — server-driven data table with column features
 
 - The table owns its polite live region; do not wrap it in another — two regions would fire for one event.
-  `skeletonMinDuration` (default `0`) keeps an appearing skeleton stable. The
-  table renders neither empty state nor arriving rows during the visual window;
-  `aria-busy` still follows actual `loading`, not the skeleton's visual tail.
 
 ```tsx
 const instance = useDataTable<Deal>({
@@ -26,23 +23,23 @@ const instance = useDataTable<Deal>({
 ## Props
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `instance` | `DataTableInstance<T>` | yes | — |  |
-| `density` | `'comfortable' \| 'dense'` | no | — |  |
-| `striped` | `boolean` | no | — |  |
-| `hover` | `boolean` | no | — | Hover highlight on body rows. Defaults TRUE (DataTable rows are usually interactive). |
-| `bordered` | `boolean` | no | — |  |
-| `loading` | `boolean` | no | — | Marks the table busy. Empty tables show skeleton rows; populated tables keep their rows mounted during a refetch so focus and local row state are preserved. Defaults to `false`. Announced from a polite live region the table owns, gated on the SKELETON rather than on this prop: a load shorter than `skeletonDelay` shows nothing and so says nothing, and a refetch over rows already on screen is silent because nothing visibly changes. The resolution is announced too — "Rows loaded" or "No rows loaded". `aria-busy` is also set, but reaches no screen reader on its own. |
-| `loadingRowCount` | `number` | no | — | Number of skeleton rows when `loading`. Defaults 10. |
-| `skeletonDelay` | `number` | no | — | Milliseconds to wait before showing skeleton rows for an empty initial load. Defaults to `0`; fast loads that finish inside the delay never show a skeleton. |
-| `skeletonMinDuration` | `number` | no | — | Minimum milliseconds skeleton rows remain visible after appearing. Defaults to `0`. Arriving rows and the empty state remain hidden until the visual tail finishes. `aria-busy` still follows actual `loading`, not the skeleton's visual tail. |
-| `emptyState` | `ReactNode` | no | — | Element shown when `data` is empty and not loading. Defaults to a stock <EmptyState>. |
-| `collapseBelow` | `'sm' \| 'md' \| 'lg'` | no | — | Stacks responsive data cells below this container-query breakpoint: `sm` (480px), `md` (640px), or `lg` (768px). Selection, expansion, sorting, row actions, and column visibility remain usable. Column sizing, pinning, and ordering state is retained, but resize/reorder controls and sticky pin presentation are unavailable while stacked and return after widening. This adds a wrapper with `container-type: inline-size`, so the breakpoint measures the table's available container width, not the viewport. Avoid an intrinsic-width parent such as `width: max-content`: inline-size containment can make the wrapper contribute zero intrinsic width there. |
-| `aria-label` | `string` | no | — | Required for a11y when no caption is provided. |
-| `caption` | `ReactNode` | no | — |  |
-| `dragWholeColumn` | `boolean` | no | — | Drag the whole column while reordering, not just its header cell. Default `true` — the dragged column's body cells travel with its header, and every column the drag displaces shifts its body cells too, so the header row and the body never disagree mid-drag. Costs one CSS-variable write per shifted column per frame; the cells move on the compositor, so the table body is not re-rendered during pointer movement. It does cost two full body reconciliations per drag — one at drag start, one at drag end — because the drag-active flag is component state and body rows are not memoized; that is the number to weigh for a very large table. Set `false` for the cheaper preview: only the dragged header cell follows the pointer and the body stays put until drop. Worth it for very large tables on low-end hardware, or to restore the previous behavior. Pinned columns never move under either setting — they are excluded from reordering entirely. The two settings also differ on **what a release means when no unpinned slot is under the column** — over a pinned column, or off the table entirely. Default: the drop commits the slot the preview is showing. The opt-out: the drop is discarded, because dnd-kit's own preview retracts (the header snaps back home) in that situation, and a commit would contradict it. See `docs/components/DataTable.md`, the column-drag bullet. |
-| `className` | `string` | no | — |  |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `instance` | `DataTableInstance<T>` | yes |  |
+| `density` | `'comfortable' \| 'dense'` | no |  |
+| `striped` | `boolean` | no |  |
+| `hover` | `boolean` | no | Hover highlight on body rows. Defaults TRUE (DataTable rows are usually interactive). |
+| `bordered` | `boolean` | no |  |
+| `loading` | `boolean` | no | Marks the table busy. Empty tables show skeleton rows; populated tables keep their rows mounted during a refetch so focus and local row state are preserved. Defaults to `false`. Announced from a polite live region the table owns, gated on the SKELETON rather than on this prop: a load shorter than `skeletonDelay` shows nothing and so says nothing, and a refetch over rows already on screen is silent because nothing visibly changes. The resolution is announced too — "Rows loaded" or "No rows loaded". `aria-busy` is also set, but reaches no screen reader on its own. |
+| `loadingRowCount` | `number` | no | Number of skeleton rows when `loading`. Defaults 10. |
+| `skeletonDelay` | `number` | no | Milliseconds to wait before showing skeleton rows for an empty initial load. Defaults to `0`; fast loads that finish inside the delay never show a skeleton. |
+| `skeletonMinDuration` | `number` | no | Minimum milliseconds skeleton rows remain visible after appearing. Defaults to `0`. Arriving rows and the empty state remain hidden until the visual tail finishes. `aria-busy` still follows actual `loading`, not the skeleton's visual tail. |
+| `emptyState` | `ReactNode` | no | Element shown when `data` is empty and not loading. Defaults to a stock <EmptyState>. |
+| `collapseBelow` | `'sm' \| 'md' \| 'lg'` | no | Stacks responsive data cells below this container-query breakpoint: `sm` (480px), `md` (640px), or `lg` (768px). Selection, expansion, sorting, row actions, and column visibility remain usable. Column sizing, pinning, and ordering state is retained, but resize/reorder controls and sticky pin presentation are unavailable while stacked and return after widening. This adds a wrapper with `container-type: inline-size`, so the breakpoint measures the table's available container width, not the viewport. Avoid an intrinsic-width parent such as `width: max-content`: inline-size containment can make the wrapper contribute zero intrinsic width there. |
+| `aria-label` | `string` | no | Required for a11y when no caption is provided. |
+| `caption` | `ReactNode` | no |  |
+| `dragWholeColumn` | `boolean` | no | Drag the whole column while reordering, not just its header cell. Default `true` — the dragged column's body cells travel with its header, and every column the drag displaces shifts its body cells too, so the header row and the body never disagree mid-drag. Costs one CSS-variable write per shifted column per frame; the cells move on the compositor, so the table body is not re-rendered during pointer movement. It does cost two full body reconciliations per drag — one at drag start, one at drag end — because the drag-active flag is component state and body rows are not memoized; that is the number to weigh for a very large table. Set `false` for the cheaper preview: only the dragged header cell follows the pointer and the body stays put until drop. Worth it for very large tables on low-end hardware, or to restore the previous behavior. Pinned columns never move under either setting — they are excluded from reordering entirely. The two settings also differ on **what a release means when no unpinned slot is under the column** — over a pinned column, or off the table entirely. Default: the drop commits the slot the preview is showing. The opt-out: the drop is discarded, because dnd-kit's own preview retracts (the header snaps back home) in that situation, and a commit would contradict it. See `docs/components/DataTable.md`, the column-drag bullet. |
+| `className` | `string` | no |  |
 
 <!-- props:end -->
 

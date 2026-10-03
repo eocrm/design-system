@@ -10,23 +10,23 @@ const [value, setValue] = useState<Date | null>(null);
 ## Props
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `value` | `Date \| null` | no | — | Selected date. `null` = no value. Pair with `onChange` for controlled use. |
-| `defaultValue` | `Date \| null` | no | — | Initial selected date for uncontrolled use. |
-| `onChange` | `((date: Date \| null) => void)` | no | — | Fires when the value changes. |
-| `locale` | `string` | no | — | Override locale (otherwise reads `useLocale()`). |
-| `min` | `Date` | no | — | Earliest selectable date (inclusive, day-granular). Gates both the grid and typed input. |
-| `max` | `Date` | no | — | Latest selectable date (inclusive). |
-| `isDateDisabled` | `((date: Date) => boolean)` | no | — | Per-date disable callback; applied per grid cell and to parsed typed input. |
-| `clearable` | `boolean` | no | — | Show the ✕ clear button when a value is set. Defaults to `true`. |
-| `invalid` | `boolean` | no | — | Toggle red border + focus ring + `aria-invalid="true"`. Pair with a visible error and `aria-describedby`. |
-| `name` | `string` | no | — | Form name. When set, renders a hidden mirror `<input>` with the ISO date so native `<form>` submission works. |
-| `size` | `'sm' \| 'md' \| 'lg'` | no | — | Field height + type scale. Same scale as `<Input>`. Defaults to `'md'`. Affects only the trigger row; the popover month grid is fixed-size. - `'sm'` — 24px tall. - `'md'` — 32px tall (default). - `'lg'` — 40px tall. |
-| `granularity` | `'day' \| 'minute'` | no | — | Picker precision. - `'day'` (default) — date only; behavior unchanged from prior releases. - `'minute'` — adds a manual-entry time input below the calendar grid. The trigger text shows `HH:mm` after the date. The hidden form mirror (when `name` is set) emits ISO local datetime (`2026-05-28T14:30`). Time is preserved across date re-picks. Picking from a `null` value defaults the time to `00:00`. |
-| `timeStep` | `number` | no | — | Minutes step for the `<TimeField>` popover and for rounding typed time input on commit. Defaults to `15`. Set `1` to disable rounding. Only meaningful when `granularity='minute'`. |
-| `hourCycle` | `'12' \| '24' \| 'auto'` | no | — | Display cycle for the embedded `<TimeField>` + the trigger's time tail. - `'24'` — `"HH:mm"` in the trigger; 24h hour list in the time popover. - `'12'` — `"h:mm AM/PM"` in the trigger; 12h hour list + AM/PM column. - `'auto'` (default) — derives from the active locale via Intl. en-US → `'12'`; ru-RU / de-DE / fr-FR → `'24'`. Only meaningful when `granularity='minute'`. Typed input is lenient regardless of cycle — both `"14:30"` and `"2:30 PM"` parse on blur. |
-| …native | | | | plus native `<input>` attributes |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `value` | `Date \| null` | no | Selected date. `null` = no value. Pair with `onChange` for controlled use. |
+| `defaultValue` | `Date \| null` | no | Initial selected date for uncontrolled use. |
+| `onChange` | `((date: Date \| null) => void)` | no | Fires when the value changes. |
+| `locale` | `string` | no | Override locale (otherwise reads `useLocale()`). |
+| `min` | `Date` | no | Earliest selectable date (inclusive, day-granular). Gates both the grid and typed input. |
+| `max` | `Date` | no | Latest selectable date (inclusive). |
+| `isDateDisabled` | `((date: Date) => boolean)` | no | Per-date disable callback; applied per grid cell and to parsed typed input. |
+| `clearable` | `boolean` | no | Show the ✕ clear button when a value is set. Defaults to `true`. |
+| `invalid` | `boolean` | no | Toggle red border + focus ring + `aria-invalid="true"`. Pair with a visible error and `aria-describedby`. |
+| `name` | `string` | no | Form name. When set, renders a hidden mirror `<input>` with the ISO date so native `<form>` submission works. |
+| `size` | `'sm' \| 'md' \| 'lg'` | no | Field height + type scale. Same scale as `<Input>`. Defaults to `'md'`. Affects only the trigger row; the popover month grid is fixed-size. - `'sm'` — 24px tall. - `'md'` — 32px tall (default). - `'lg'` — 40px tall. |
+| `granularity` | `'day' \| 'minute'` | no | Picker precision. - `'day'` (default) — date only; behavior unchanged from prior releases. - `'minute'` — adds a manual-entry time input below the calendar grid. The trigger text shows `HH:mm` after the date. The hidden form mirror (when `name` is set) emits ISO local datetime (`2026-05-28T14:30`). Time is preserved across date re-picks. Picking from a `null` value defaults the time to `00:00`. |
+| `timeStep` | `number` | no | Minutes step for the `<TimeField>` popover and for rounding typed time input on commit. Defaults to `15`. Set `1` to disable rounding. Only meaningful when `granularity='minute'`. |
+| `hourCycle` | `'12' \| '24' \| 'auto'` | no | Display cycle for the embedded `<TimeField>` + the trigger's time tail. - `'24'` — `"HH:mm"` in the trigger; 24h hour list in the time popover. - `'12'` — `"h:mm AM/PM"` in the trigger; 12h hour list + AM/PM column. - `'auto'` (default) — derives from the active locale via Intl. en-US → `'12'`; ru-RU / de-DE / fr-FR → `'24'`. Only meaningful when `granularity='minute'`. Typed input is lenient regardless of cycle — both `"14:30"` and `"2:30 PM"` parse on blur. |
+| …native | | | plus native `<input>` attributes |
 
 <!-- props:end -->
 

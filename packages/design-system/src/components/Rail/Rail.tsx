@@ -118,8 +118,8 @@ export interface RailProps extends Omit<HTMLAttributes<HTMLElement>, 'aria-label
    * basis here is the viewport rather than a container:
    *
    * ```scss
-   * // Either mirror the breakpoint…
-   * @media (max-width: 768px) { .shell { grid-template-columns: 56px 1fr; } }
+   * // Either mirror the breakpoint: a (max-width: 768px) media query setting
+   * // .shell { grid-template-columns: 56px 1fr; }…
    * // …or follow the rail's own state attribute, no breakpoint duplication:
    * .shell:has(nav[data-collapsed]) { grid-template-columns: 56px 1fr; }
    * ```

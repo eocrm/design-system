@@ -19,20 +19,20 @@
 ## Props
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `steps` | `TourStep[]` | yes | — | The steps, in order. Must be non-empty. |
-| `open` | `boolean` | yes | — | Controlled open state (required — like `Modal`, there is no uncontrolled mode: an uncontrolled tour could not be started or replayed). |
-| `onOpenChange` | `(open: boolean) => void` | yes | — | Called with `false` on Skip, Escape and Done. |
-| `onFinish` | `((reason: TourFinishReason) => void)` | no | — | Fires once per Skip / Escape / Done. NOT called when the consumer closes the tour itself by setting `open={false}` — only the tour's own end gestures fire it. Use it to persist "seen" state. |
-| `step` | `number` | no | — | Controlled step index. Control it when a step change must do something first — navigate to another page, open an accordion, switch a tab — then the Tour waits for the next target to mount. |
-| `onStepChange` | `((index: number) => void)` | no | — | Fires on every step change (Next, Back, arrow keys, `advanceOn`), controlled or not. |
-| `defaultStep` | `number` | no | — | Uncontrolled starting step. Default `0`. Every re-open starts here again. |
-| `modal` | `boolean` | no | — | `true` (default): dims the page with a spotlight cutout, blocks clicks outside it and traps focus — onboarding. `false`: card only, page stays usable — feature announcements. |
-| `targetTimeout` | `number` | no | — | Ms to wait for a step's target before falling back to a centered card. Default `5000` (room for a route change + data fetch). `Infinity` waits forever. |
-| `onTargetMissing` | `((step: TourStep, index: number) => void)` | no | — | Called when a step's target didn't appear within `targetTimeout`. Log it. |
-| `doneLabel` | `string` | no | — | Contextual label for the last step's button, e.g. `'Got it'` for a one-step announcement. Defaults to the i18n `tour.done` (`'Done'`). An empty string counts as unset. |
-| …native | | | | plus native `<div>` attributes |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `steps` | `TourStep[]` | yes | The steps, in order. Must be non-empty. |
+| `open` | `boolean` | yes | Controlled open state (required — like `Modal`, there is no uncontrolled mode: an uncontrolled tour could not be started or replayed). |
+| `onOpenChange` | `(open: boolean) => void` | yes | Called with `false` on Skip, Escape and Done. |
+| `onFinish` | `((reason: TourFinishReason) => void)` | no | Fires once per Skip / Escape / Done. NOT called when the consumer closes the tour itself by setting `open={false}` — only the tour's own end gestures fire it. Use it to persist "seen" state. |
+| `step` | `number` | no | Controlled step index. Control it when a step change must do something first — navigate to another page, open an accordion, switch a tab — then the Tour waits for the next target to mount. |
+| `onStepChange` | `((index: number) => void)` | no | Fires on every step change (Next, Back, arrow keys, `advanceOn`), controlled or not. |
+| `defaultStep` | `number` | no | Uncontrolled starting step. Default `0`. Every re-open starts here again. |
+| `modal` | `boolean` | no | `true` (default): dims the page with a spotlight cutout, blocks clicks outside it and traps focus — onboarding. `false`: card only, page stays usable — feature announcements. |
+| `targetTimeout` | `number` | no | Ms to wait for a step's target before falling back to a centered card. Default `5000` (room for a route change + data fetch). `Infinity` waits forever. |
+| `onTargetMissing` | `((step: TourStep, index: number) => void)` | no | Called when a step's target didn't appear within `targetTimeout`. Log it. |
+| `doneLabel` | `string` | no | Contextual label for the last step's button, e.g. `'Got it'` for a one-step announcement. Defaults to the i18n `tour.done` (`'Done'`). An empty string counts as unset. |
+| …native | | | plus native `<div>` attributes |
 
 <!-- props:end -->
 

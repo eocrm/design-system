@@ -27,13 +27,13 @@ import { Link as RouterLink } from 'react-router-dom';
 ## Props
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `variant` | `'default' \| 'muted' \| 'subtle'` | no | — | Visual variant. See `LinkVariant` for descriptions. |
-| `underline` | `'hover' \| 'always' \| 'none'` | no | — | Underline behavior. See `LinkUnderline` for descriptions. Default: `'hover'`. |
-| `children` | `ReactNode` | no | — |  |
-| `as` | `ElementType` | no | — |  |
-| …native | | | | plus native attributes of the `as` element (default `<a>`) |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `variant` | `'default' \| 'muted' \| 'subtle'` | no | Visual variant. See `LinkVariant` for descriptions. |
+| `underline` | `'hover' \| 'always' \| 'none'` | no | Underline behavior. See `LinkUnderline` for descriptions. Default: `'hover'`. |
+| `children` | `ReactNode` | no |  |
+| `as` | `ElementType` | no |  |
+| …native | | | plus native attributes of the `as` element (default `<a>`) |
 
 <!-- props:end -->
 

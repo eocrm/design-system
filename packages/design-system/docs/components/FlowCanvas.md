@@ -62,34 +62,34 @@ const [edges, setEdges] = useState<FlowCanvasEdge[]>([
 ## Props
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `nodes` | `FlowCanvasNode[]` | yes | — | Nodes to render. The canvas never mutates this array. |
-| `edges` | `FlowCanvasEdge[]` | yes | — | Directed edges between nodes. Edges referencing unknown ids are skipped (dev warning). |
-| `onNodeCreate` | `((position: FlowCanvasPoint) => void)` | no | — | Called when the user requests a node at a canvas point (double-click empty canvas). |
-| `onNodeMove` | `((id: string, position: FlowCanvasPoint) => void)` | no | — | Called when a node's position is committed (drag end, keyboard nudge). |
-| `onNodeOpen` | `((id: string) => void)` | no | — | Called when a node is opened (Enter/Space or double-click). |
-| `onNodeDelete` | `((id: string) => void)` | no | — | Called when deletion of the selected node is requested (Delete/Backspace). |
-| `onEdgeCreate` | `((from: string, to: string) => void)` | no | — | Called when the user draws or confirms a connection between two nodes. |
-| `onEdgeReconnect` | `((id: string, from: string, to: string) => void)` | no | — | Called when the user drags an existing edge's endpoint onto a different node, or confirms a keyboard rewire (`R` / `Shift+R`). `id` is the edge; `from`/`to` are its NEW endpoints. The canvas never mutates the edge — apply this to your state. Not fired on revert (empty-canvas drop, invalid target, or no change). Disabled by `readOnly` and `allowConnections={false}`. |
-| `onEdgeOpen` | `((id: string) => void)` | no | — | Called when an edge is opened (Enter/Space or double-click). |
-| `onEdgeDelete` | `((id: string) => void)` | no | — | Called when deletion of the selected edge is requested (Delete/Backspace). |
-| `isValidConnection` | `((from: string, to: string) => boolean)` | no | rejects self-loops and duplicate (from, to) pairs | Live validation while drawing a connection. Invalid targets can't be dropped on (pointer) and are skipped (keyboard). |
-| `selection` | `FlowCanvasSelection` | no | — | Controlled selection. Use with `onSelectionChange`. A selection whose id is not (or no longer) in `nodes`/`edges` acts as no selection — e.g. after applying a delete intent — until the id reappears in the graph. |
-| `defaultSelection` | `FlowCanvasSelection` | no | null | Initial selection when uncontrolled. Stale ids act as no selection. |
-| `onSelectionChange` | `((selection: FlowCanvasSelection) => void)` | no | — | Fires whenever the selection changes (click, focus, Escape). |
-| `readOnly` | `boolean` | no | false | Render-only mode: create/move/connect/delete are disabled; selection and open still work. |
-| `allowConnections` | `boolean` | no | true | When false, disables creating and rewiring connections — the node connect handle is hidden, pointer/keyboard connect (`C`, handle drag) and edge rewiring (`R`, endpoint drag) are inert. Node drag/move/delete/selection still work. `readOnly` overrides this (it disables everything). |
-| `confineNodesToView` | `boolean` | no | false | When true, a dragged node is clamped so its whole card stays within the currently-visible canvas area (accounting for pan/zoom). Applies to pointer drag, the committed `onNodeMove`, and Shift+Arrow nudges. |
-| `renderNodeActions` | `((id: string) => ReactNode)` | no | none | Render a floating toolbar anchored to the top-right corner of the selected NODE. Called with the node id; return `null` to show nothing for that node. The toolbar is a screen-positioned overlay (a sibling of the transformed stage, so it is not scaled) that follows pan/zoom. Pressing it never starts a pan or clears the selection. Only rendered for the current single selection. |
-| `renderEdgeActions` | `((id: string) => ReactNode)` | no | none | Render a floating toolbar anchored near the midpoint of the selected EDGE. Called with the edge id; return `null` to show nothing for that edge. Same screen-positioned, pan/zoom-following overlay as `renderNodeActions`; safe to host a `ConfirmationPopover` here. |
-| `controls` | `ReactNode` | no | none | Consumer-rendered controls shown in a top-left toolbar overlay. Put design- system `<Button>`s here (e.g. an "Add node" button wired to your own state). Stays pinned when the canvas is maximized. |
-| `maximizeControl` | `boolean` | no | true | Show the built-in maximize / restore toggle (top-right). Set false to drive maximize entirely via the `maximized` prop. |
-| `maximized` | `boolean` | no | — | Controlled maximize state. Use with `onMaximizedChange`. |
-| `defaultMaximized` | `boolean` | no | false | Initial maximize state when uncontrolled. |
-| `onMaximizedChange` | `((maximized: boolean) => void)` | no | — | Fires whenever maximize is toggled (button, `F` key, or Escape). |
-| `refitKey` | `string \| number \| boolean` | no | none | Re-fit signal. Whenever this value CHANGES, the canvas re-runs its fit-to-content — the same fit as the Fit control / `0` key — re-centering and re-zooming to frame all content. It does this WITHOUT remounting, so the viewport, selection, keyboard focus, and the built-in maximize focus management are all preserved (unlike forcing a re-fit with a changing React `key`, which remounts and drops focus to `<body>`). Bind it to whatever should trigger a re-center: `refitKey={maximized}` to re-fit on maximize enter/exit (the container resizes), or bump a counter after a programmatic re-arrange that moves every node. The FIRST value never fits on its own — the mount fit handles the first frame — so any initial value is safe. |
-| …native | | | | plus native `<div>` attributes |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `nodes` | `FlowCanvasNode[]` | yes | Nodes to render. The canvas never mutates this array. |
+| `edges` | `FlowCanvasEdge[]` | yes | Directed edges between nodes. Edges referencing unknown ids are skipped (dev warning). |
+| `onNodeCreate` | `((position: FlowCanvasPoint) => void)` | no | Called when the user requests a node at a canvas point (double-click empty canvas). |
+| `onNodeMove` | `((id: string, position: FlowCanvasPoint) => void)` | no | Called when a node's position is committed (drag end, keyboard nudge). |
+| `onNodeOpen` | `((id: string) => void)` | no | Called when a node is opened (Enter/Space or double-click). |
+| `onNodeDelete` | `((id: string) => void)` | no | Called when deletion of the selected node is requested (Delete/Backspace). |
+| `onEdgeCreate` | `((from: string, to: string) => void)` | no | Called when the user draws or confirms a connection between two nodes. |
+| `onEdgeReconnect` | `((id: string, from: string, to: string) => void)` | no | Called when the user drags an existing edge's endpoint onto a different node, or confirms a keyboard rewire (`R` / `Shift+R`). `id` is the edge; `from`/`to` are its NEW endpoints. The canvas never mutates the edge — apply this to your state. Not fired on revert (empty-canvas drop, invalid target, or no change). Disabled by `readOnly` and `allowConnections={false}`. |
+| `onEdgeOpen` | `((id: string) => void)` | no | Called when an edge is opened (Enter/Space or double-click). |
+| `onEdgeDelete` | `((id: string) => void)` | no | Called when deletion of the selected edge is requested (Delete/Backspace). |
+| `isValidConnection` | `((from: string, to: string) => boolean)` | no | Live validation while drawing a connection. Invalid targets can't be dropped on (pointer) and are skipped (keyboard). Default: `rejects self-loops and duplicate (from, to) pairs`. |
+| `selection` | `FlowCanvasSelection` | no | Controlled selection. Use with `onSelectionChange`. A selection whose id is not (or no longer) in `nodes`/`edges` acts as no selection — e.g. after applying a delete intent — until the id reappears in the graph. |
+| `defaultSelection` | `FlowCanvasSelection` | no | Initial selection when uncontrolled. Stale ids act as no selection. Default: `null`. |
+| `onSelectionChange` | `((selection: FlowCanvasSelection) => void)` | no | Fires whenever the selection changes (click, focus, Escape). |
+| `readOnly` | `boolean` | no | Render-only mode: create/move/connect/delete are disabled; selection and open still work. Default: `false`. |
+| `allowConnections` | `boolean` | no | When false, disables creating and rewiring connections — the node connect handle is hidden, pointer/keyboard connect (`C`, handle drag) and edge rewiring (`R`, endpoint drag) are inert. Node drag/move/delete/selection still work. `readOnly` overrides this (it disables everything). Default: `true`. |
+| `confineNodesToView` | `boolean` | no | When true, a dragged node is clamped so its whole card stays within the currently-visible canvas area (accounting for pan/zoom). Applies to pointer drag, the committed `onNodeMove`, and Shift+Arrow nudges. Default: `false`. |
+| `renderNodeActions` | `((id: string) => ReactNode)` | no | Render a floating toolbar anchored to the top-right corner of the selected NODE. Called with the node id; return `null` to show nothing for that node. The toolbar is a screen-positioned overlay (a sibling of the transformed stage, so it is not scaled) that follows pan/zoom. Pressing it never starts a pan or clears the selection. Only rendered for the current single selection. Default: `none`. |
+| `renderEdgeActions` | `((id: string) => ReactNode)` | no | Render a floating toolbar anchored near the midpoint of the selected EDGE. Called with the edge id; return `null` to show nothing for that edge. Same screen-positioned, pan/zoom-following overlay as `renderNodeActions`; safe to host a `ConfirmationPopover` here. Default: `none`. |
+| `controls` | `ReactNode` | no | Consumer-rendered controls shown in a top-left toolbar overlay. Put design- system `<Button>`s here (e.g. an "Add node" button wired to your own state). Stays pinned when the canvas is maximized. Default: `none`. |
+| `maximizeControl` | `boolean` | no | Show the built-in maximize / restore toggle (top-right). Set false to drive maximize entirely via the `maximized` prop. Default: `true`. |
+| `maximized` | `boolean` | no | Controlled maximize state. Use with `onMaximizedChange`. |
+| `defaultMaximized` | `boolean` | no | Initial maximize state when uncontrolled. Default: `false`. |
+| `onMaximizedChange` | `((maximized: boolean) => void)` | no | Fires whenever maximize is toggled (button, `F` key, or Escape). |
+| `refitKey` | `string \| number \| boolean` | no | Re-fit signal. Whenever this value CHANGES, the canvas re-runs its fit-to-content — the same fit as the Fit control / `0` key — re-centering and re-zooming to frame all content. It does this WITHOUT remounting, so the viewport, selection, keyboard focus, and the built-in maximize focus management are all preserved (unlike forcing a re-fit with a changing React `key`, which remounts and drops focus to `<body>`). Bind it to whatever should trigger a re-center: `refitKey={maximized}` to re-fit on maximize enter/exit (the container resizes), or bump a counter after a programmatic re-arrange that moves every node. The FIRST value never fits on its own — the mount fit handles the first frame — so any initial value is safe. Default: `none`. |
+| …native | | | plus native `<div>` attributes |
 
 <!-- props:end -->
 

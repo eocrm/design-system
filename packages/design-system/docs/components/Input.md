@@ -10,12 +10,12 @@
 ## Props
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `invalid` | `boolean` | no | — | Toggles the error visual (red border + focus ring) and sets `aria-invalid="true"`. Pair with a visible error message and `aria-describedby` pointing at the message id. |
-| `size` | `'sm' \| 'md' \| 'lg'` | no | — | Visual size. Defaults to `'md'`. - `'sm'` — 24px tall; toolbars, secondary forms. - `'md'` — 32px tall (default); most form contexts. - `'lg'` — 40px tall; hero search, mobile-friendly forms. Same scale as `<Select>`; fields have no `xs` (unlike `<Button>`). Note: this shadows the native HTML `<input size>` attribute (visible character count). If you need that legacy attribute, set width via `style` or a parent container. |
-| `disableAutofill` | `boolean` | no | — | Block browser autofill AND password managers from offering to fill this input. Applies the standard set of opt-out hints: - `autoComplete="off"` - `data-1p-ignore` (1Password) - `data-lpignore="true"` (LastPass) - `data-form-type="other"` (generic "not a login field") **Smart default**: when omitted, the input blocks autofill iff `autoComplete` is also omitted (or `'off'`). Explicit autocomplete hints (`autoComplete="email"`, `"current-password"`, `"username"`, etc.) opt back IN to autofill — the assumption is that a consumer specifying autoComplete actually wants password-manager interaction. Pass `disableAutofill={true}` to force-block even with an autocomplete hint, or `false` to force-allow. |
-| …native | | | | plus native `<input>` attributes |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `invalid` | `boolean` | no | Toggles the error visual (red border + focus ring) and sets `aria-invalid="true"`. Pair with a visible error message and `aria-describedby` pointing at the message id. |
+| `size` | `'sm' \| 'md' \| 'lg'` | no | Visual size. Defaults to `'md'`. - `'sm'` — 24px tall; toolbars, secondary forms. - `'md'` — 32px tall (default); most form contexts. - `'lg'` — 40px tall; hero search, mobile-friendly forms. Same scale as `<Select>`; fields have no `xs` (unlike `<Button>`). Note: this shadows the native HTML `<input size>` attribute (visible character count). If you need that legacy attribute, set width via `style` or a parent container. |
+| `disableAutofill` | `boolean` | no | Block browser autofill AND password managers from offering to fill this input. Applies the standard set of opt-out hints: - `autoComplete="off"` - `data-1p-ignore` (1Password) - `data-lpignore="true"` (LastPass) - `data-form-type="other"` (generic "not a login field") **Smart default**: when omitted, the input blocks autofill iff `autoComplete` is also omitted (or `'off'`). Explicit autocomplete hints (`autoComplete="email"`, `"current-password"`, `"username"`, etc.) opt back IN to autofill — the assumption is that a consumer specifying autoComplete actually wants password-manager interaction. Pass `disableAutofill={true}` to force-block even with an autocomplete hint, or `false` to force-allow. |
+| …native | | | plus native `<input>` attributes |
 
 <!-- props:end -->
 

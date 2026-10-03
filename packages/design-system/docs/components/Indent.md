@@ -17,12 +17,12 @@
 ## Props
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `level` | `number` | no | — | Nesting depth — multiplies the gutter. `0` = flush (no indent, e.g. a root-level comment). Defaults to `1` (one gutter). Negative values clamp to `0`. |
-| `gutter` | `'xs' \| 'sm' \| 'md' \| 'lg' \| 'xl' \| '2xl'` | no | — | Per-level indent size — a spacing step. Defaults to `'lg'` (16px per level). - `xs` 4px · `sm` 8px · `md` 12px · `lg` 16px · `xl` 24px · `2xl` 32px |
-| `children` | `ReactNode` | yes | — | The nested content to indent. Required — an Indent with nothing inside indents nothing. |
-| …native | | | | plus native `<div>` attributes |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `level` | `number` | no | Nesting depth — multiplies the gutter. `0` = flush (no indent, e.g. a root-level comment). Defaults to `1` (one gutter). Negative values clamp to `0`. |
+| `gutter` | `'xs' \| 'sm' \| 'md' \| 'lg' \| 'xl' \| '2xl'` | no | Per-level indent size — a spacing step. Defaults to `'lg'` (16px per level). - `xs` 4px · `sm` 8px · `md` 12px · `lg` 16px · `xl` 24px · `2xl` 32px |
+| `children` | `ReactNode` | yes | The nested content to indent. Required — an Indent with nothing inside indents nothing. |
+| …native | | | plus native `<div>` attributes |
 
 <!-- props:end -->
 

@@ -4,6 +4,7 @@ import { resolve } from 'node:path';
 
 const PKG = resolve(__dirname, '../..');
 const SCRIPT = resolve(PKG, 'scripts/generate-component-docs.mjs');
+const LIB: string = resolve(PKG, 'scripts/component-docs-lib.mjs');
 const doc = (n: string) => readFileSync(resolve(PKG, 'docs/components', `${n}.md`), 'utf8');
 
 describe('docs/components props tables', () => {
@@ -37,14 +38,14 @@ describe('docs/components props tables', () => {
       .split('\n')
       .find((l) => l.startsWith('| `type` |'))!;
     expect(row).toContain('\\|');
-    expect(row.split(/(?<!\\)\|/).length).toBe(7);
+    expect(row.split(/(?<!\\)\|/).length).toBe(6);
   });
 
   it('renders a polymorphic as-prop by its constraint and the default element', () => {
     const md = doc('Button');
-    expect(md).toContain("| `as` | `ElementType` | no | 'button' |");
+    expect(md).toMatch(/^\| `as` \| `ElementType` \| no \| .* Default: `'button'`\. \|$/m);
     expect(md).toContain(
-      '| …native | | | | plus native attributes of the `as` element (default `<button>`) |',
+      '| …native | | | plus native attributes of the `as` element (default `<button>`) |',
     );
   });
 
@@ -65,6 +66,33 @@ describe('docs/components props tables', () => {
   });
 
   it("documents SocialButton's own variant default", () => {
-    expect(row('SocialButton', 'variant')).toContain("| no | 'secondary' |");
+    expect(row('SocialButton', 'variant')).toMatch(/Default: `'secondary'`\. \|$/);
+  });
+
+  it('has no Default column; @default goes into the description once', async () => {
+    expect(doc('Button')).toContain('| Prop | Type | Required | Description |\n|---|---|---|---|');
+    const { withDefault } = await import(LIB);
+    expect(withDefault('Size.', "'md'")).toBe("Size. Default: `'md'`.");
+    expect(withDefault("Size. Defaults to `'md'`.", "'md'")).toBe("Size. Defaults to `'md'`.");
+  });
+
+  it('inserts a missing block after the first code fence, first line untouched', async () => {
+    const { insertBlock } = await import(LIB);
+    const md = '# Title\n\n```tsx\n<X />\n```\n\nProse.\n';
+    const out = insertBlock(md, 'BLOCK');
+    expect(out.split('\n')[0]).toBe('# Title');
+    expect(out).toBe('# Title\n\n```tsx\n<X />\n```\n\nBLOCK\n\nProse.\n');
+  });
+
+  it('rejects unknown JSDoc tags (a prose @media line truncates the description)', async () => {
+    const { unknownTags } = await import(LIB);
+    expect(unknownTags(['default', 'remarks', 'media'])).toEqual(['media']);
+  });
+
+  it('moves fenced code out of table cells into an example after the table', () => {
+    const md = doc('Alert');
+    expect(row('Alert', 'onDismiss')).toContain('(example below)');
+    expect(md).toMatch(/\*\*`onDismiss`\*\* example:\n\n```/);
+    expect(md.split('\n').filter((l) => l.startsWith('|') && l.includes('```'))).toEqual([]);
   });
 });

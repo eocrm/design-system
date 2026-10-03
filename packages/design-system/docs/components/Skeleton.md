@@ -12,16 +12,16 @@
 ## Props
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `variant` | `'text' \| 'circular' \| 'rectangular'` | no | — | Shape preset. Defaults to `'text'`. - `'text'` — inline-block; `height` defaults to `1em` so it sits on text baselines. Use inside paragraphs / labels for word-shaped placeholders. - `'circular'` — `border-radius: 50%`; when only one of `width`/`height` is set, the other matches (square). Avatar / icon placeholder. - `'rectangular'` — block, small radius. Image / card / button placeholder. |
-| `width` | `string \| number` | no | — | Explicit width. Number → px, string → as-is (e.g., `'60%'`, `'12rem'`). |
-| `height` | `string \| number` | no | — | Explicit height. Number → px, string → as-is. Defaults: `text` → `1em`, `circular` → matches `width` (square), `rectangular` → no default (consumer must size). |
-| `animation` | `'pulse' \| 'none'` | no | — | Animation. Defaults to `'pulse'`. - `'pulse'` — opacity 1 → 0.6 → 1, 1.5s ease-in-out infinite. - `'none'` — static. Use when stacking many skeletons to avoid motion overload. Regardless of this prop, animation is suppressed when the user has `prefers-reduced-motion: reduce`. |
-| `loading` | `boolean` | no | — | Whether the loading placeholder is needed. Defaults to `true`. Keep Skeleton mounted and drive this prop when using `minDuration`, so the component can finish its visibility window after loading completes. |
-| `delay` | `number` | no | — | Milliseconds to wait before rendering the placeholder. Defaults to `0`. A load that finishes inside this window never displays the Skeleton. |
-| `minDuration` | `number` | no | — | Minimum milliseconds to remain visible after the placeholder renders. Defaults to `0`. Prevents a Skeleton that appears just after `delay` from disappearing again within a frame or two. |
-| …native | | | | plus native `<span>` attributes |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `variant` | `'text' \| 'circular' \| 'rectangular'` | no | Shape preset. Defaults to `'text'`. - `'text'` — inline-block; `height` defaults to `1em` so it sits on text baselines. Use inside paragraphs / labels for word-shaped placeholders. - `'circular'` — `border-radius: 50%`; when only one of `width`/`height` is set, the other matches (square). Avatar / icon placeholder. - `'rectangular'` — block, small radius. Image / card / button placeholder. |
+| `width` | `string \| number` | no | Explicit width. Number → px, string → as-is (e.g., `'60%'`, `'12rem'`). |
+| `height` | `string \| number` | no | Explicit height. Number → px, string → as-is. Defaults: `text` → `1em`, `circular` → matches `width` (square), `rectangular` → no default (consumer must size). |
+| `animation` | `'pulse' \| 'none'` | no | Animation. Defaults to `'pulse'`. - `'pulse'` — opacity 1 → 0.6 → 1, 1.5s ease-in-out infinite. - `'none'` — static. Use when stacking many skeletons to avoid motion overload. Regardless of this prop, animation is suppressed when the user has `prefers-reduced-motion: reduce`. |
+| `loading` | `boolean` | no | Whether the loading placeholder is needed. Defaults to `true`. Keep Skeleton mounted and drive this prop when using `minDuration`, so the component can finish its visibility window after loading completes. |
+| `delay` | `number` | no | Milliseconds to wait before rendering the placeholder. Defaults to `0`. A load that finishes inside this window never displays the Skeleton. |
+| `minDuration` | `number` | no | Minimum milliseconds to remain visible after the placeholder renders. Defaults to `0`. Prevents a Skeleton that appears just after `delay` from disappearing again within a frame or two. |
+| …native | | | plus native `<span>` attributes |
 
 <!-- props:end -->
 

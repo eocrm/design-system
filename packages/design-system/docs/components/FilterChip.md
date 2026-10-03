@@ -25,32 +25,32 @@
 ### `FilterChipProps`
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `onDismiss` | `(() => void)` | no | — | Dismiss callback. When provided, the chip renders a trailing `×` button wired to this handler; the chip itself does NOT animate or unmount — the consumer's state update must remove the chip. Omit the prop to render a read-only chip with no dismiss button. |
-| `dismissLabel` | `string` | no | — | Override the dismiss button's `aria-label`. Defaults to the i18n value at `filterChip.dismiss` (`'Remove filter'` in English) when omitted OR empty — an empty string is not an explicit name, so it takes the default too. Pass a contextual label (e.g., `'Remove Event: auth.* filter'`) when the chip's filter category isn't obvious from the surrounding screen-reader context. |
-| `onActivate` | `(() => void)` | no | — | Makes the chip BODY interactive: when provided, the Label/Value content is wrapped in a `<button>` that fires `onActivate` on click and Enter/Space (native button keyboard). Use for *editable* filters — e.g. a date-range chip whose body re-opens its range-picker. Wire it to a controlled `<Popover open onOpenChange>` to open an editor popover. The dismiss ✕ stays a separate button whose click stops propagation, so removing the filter never fires `onActivate` (and never bubbles to an ancestor click handler). Omit for a read-only chip (current behavior). Controlled-only: FilterChip does NOT consume `Popover.Trigger`'s injected ref/ARIA, so wrapping it in `<Popover.Trigger>` won't auto-wire it — drive the popover's `open` yourself from this callback (see the example above). |
-| `expanded` | `boolean` | no | — | Open state of the disclosure the body opens (e.g. the editor popover), surfaced as `aria-expanded` on the body button (which also carries `aria-haspopup="dialog"`). Only meaningful with `onActivate`. Omit if the body doesn't toggle a disclosure. |
-| `children` | `ReactNode` | yes | — | One or two `FilterChip.Label` / `FilterChip.Value` subcomponents. Use both for `Label: Value` chips; pass just a Value for chips where the category is implicit (e.g., a tenant slug). |
-| …native | | | | plus native `<div>` attributes |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `onDismiss` | `(() => void)` | no | Dismiss callback. When provided, the chip renders a trailing `×` button wired to this handler; the chip itself does NOT animate or unmount — the consumer's state update must remove the chip. Omit the prop to render a read-only chip with no dismiss button. |
+| `dismissLabel` | `string` | no | Override the dismiss button's `aria-label`. Defaults to the i18n value at `filterChip.dismiss` (`'Remove filter'` in English) when omitted OR empty — an empty string is not an explicit name, so it takes the default too. Pass a contextual label (e.g., `'Remove Event: auth.* filter'`) when the chip's filter category isn't obvious from the surrounding screen-reader context. |
+| `onActivate` | `(() => void)` | no | Makes the chip BODY interactive: when provided, the Label/Value content is wrapped in a `<button>` that fires `onActivate` on click and Enter/Space (native button keyboard). Use for *editable* filters — e.g. a date-range chip whose body re-opens its range-picker. Wire it to a controlled `<Popover open onOpenChange>` to open an editor popover. The dismiss ✕ stays a separate button whose click stops propagation, so removing the filter never fires `onActivate` (and never bubbles to an ancestor click handler). Omit for a read-only chip (current behavior). Controlled-only: FilterChip does NOT consume `Popover.Trigger`'s injected ref/ARIA, so wrapping it in `<Popover.Trigger>` won't auto-wire it — drive the popover's `open` yourself from this callback (see the example above). |
+| `expanded` | `boolean` | no | Open state of the disclosure the body opens (e.g. the editor popover), surfaced as `aria-expanded` on the body button (which also carries `aria-haspopup="dialog"`). Only meaningful with `onActivate`. Omit if the body doesn't toggle a disclosure. |
+| `children` | `ReactNode` | yes | One or two `FilterChip.Label` / `FilterChip.Value` subcomponents. Use both for `Label: Value` chips; pass just a Value for chips where the category is implicit (e.g., a tenant slug). |
+| …native | | | plus native `<div>` attributes |
 
 ### `FilterChipLabelProps`
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `children` | `ReactNode` | yes | — | The category text — typically a noun describing the filter dimension (`Event`, `Tenant`, `Stage`, `Owner`). Rendered muted so the Value is the visual anchor. |
-| …native | | | | plus native `<span>` attributes |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `children` | `ReactNode` | yes | The category text — typically a noun describing the filter dimension (`Event`, `Tenant`, `Stage`, `Owner`). Rendered muted so the Value is the visual anchor. |
+| …native | | | plus native `<span>` attributes |
 
 ### `FilterChipValueProps`
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `color` | `PaletteColor` | no | — | Optional full `PaletteColor` (one of the 30 named categorical colors) for the leading dot. Use when the 6 semantic tones aren't enough to distinguish filter categories (e.g., per-tenant or per-tag color coding that matches an `OptionsPicker` group). Takes precedence over `tone` when both are set. Renders a bare `<Dot>` in that color. |
-| `tone` | `'neutral' \| 'info' \| 'success' \| 'warning' \| 'danger' \| 'purple'` | no | — | Optional dot tone. When set, prefixes a 6px colored circle before the value text — use to distinguish filter categories that share a screen (e.g., event filters get a tone-matched dot, tenant filters get no dot). Reuses Badge's tone palette: `neutral`, `info`, `success`, `warning`, `danger`, `purple`. Omit for plain text values. For a richer categorical color, use `color` instead. |
-| `children` | `ReactNode` | yes | — | The value text — what the filter is actually filtering by (`auth.*`, `beta`, `Won`). Pair with an optional `tone` / `color` dot to categorize. |
-| …native | | | | plus native `<span>` attributes |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `color` | `PaletteColor` | no | Optional full `PaletteColor` (one of the 30 named categorical colors) for the leading dot. Use when the 6 semantic tones aren't enough to distinguish filter categories (e.g., per-tenant or per-tag color coding that matches an `OptionsPicker` group). Takes precedence over `tone` when both are set. Renders a bare `<Dot>` in that color. |
+| `tone` | `'neutral' \| 'info' \| 'success' \| 'warning' \| 'danger' \| 'purple'` | no | Optional dot tone. When set, prefixes a 6px colored circle before the value text — use to distinguish filter categories that share a screen (e.g., event filters get a tone-matched dot, tenant filters get no dot). Reuses Badge's tone palette: `neutral`, `info`, `success`, `warning`, `danger`, `purple`. Omit for plain text values. For a richer categorical color, use `color` instead. |
+| `children` | `ReactNode` | yes | The value text — what the filter is actually filtering by (`auth.*`, `beta`, `Won`). Pair with an optional `tone` / `color` dot to categorize. |
+| …native | | | plus native `<span>` attributes |
 
 <!-- props:end -->
 

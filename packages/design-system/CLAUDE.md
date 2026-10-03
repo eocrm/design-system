@@ -114,8 +114,6 @@ This library's main consumer is AI coding agents building the EOCRM. They read `
 
 Skipping JSDoc means the agent has to guess from the literal string union. They guess wrong about half the time. Don't make them guess.
 
-The existing 8 components are fully JSDoc'd — match that pattern.
-
 **Spread order — pick deliberately:**
 
 ```tsx

@@ -28,13 +28,13 @@ import { Divider } from '@eocrm/design-system';
 ## Props
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `orientation` | `'horizontal' \| 'vertical'` | no | — | Layout direction. Defaults to `'horizontal'`. |
-| `variant` | `'solid' \| 'dashed'` | no | — | Line style. Defaults to `'solid'`. |
-| `size` | `'sm' \| 'md' \| 'lg'` | no | — | Line thickness tier. Defaults to `'sm'`. |
-| `children` | `ReactNode` | no | — | Optional centered label rendered between two line segments. Common pattern: `<Divider>OR</Divider>` for auth-form section breaks. When `children` is set, the root becomes `<div role="separator">` instead of `<hr>` (HTML `<hr>` cannot have children). Works with `orientation="vertical"` but renders awkwardly (text wraps across two short line segments). Avoid vertical + label combos. |
-| …native | | | | plus native HTML attributes |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `orientation` | `'horizontal' \| 'vertical'` | no | Layout direction. Defaults to `'horizontal'`. |
+| `variant` | `'solid' \| 'dashed'` | no | Line style. Defaults to `'solid'`. |
+| `size` | `'sm' \| 'md' \| 'lg'` | no | Line thickness tier. Defaults to `'sm'`. |
+| `children` | `ReactNode` | no | Optional centered label rendered between two line segments. Common pattern: `<Divider>OR</Divider>` for auth-form section breaks. When `children` is set, the root becomes `<div role="separator">` instead of `<hr>` (HTML `<hr>` cannot have children). Works with `orientation="vertical"` but renders awkwardly (text wraps across two short line segments). Avoid vertical + label combos. |
+| …native | | | plus native HTML attributes |
 
 <!-- props:end -->
 

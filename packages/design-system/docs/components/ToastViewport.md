@@ -31,13 +31,13 @@ toast.success('Saved', { id });
 ## Props
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `position` | `'top-left' \| 'top-center' \| 'top-right' \| 'bottom-left' \| 'bottom-center' \| 'bottom-right'` | no | — | Default position for toasts that don't specify one. Default: 'bottom-right'. All 6 positions are supported; a per-call `position` is an escape hatch — a single global position is the recommended UX. |
-| `duration` | `number` | no | — | Default duration (ms) for toasts without explicit duration. Default: 4000. |
-| `maxVisible` | `number` | no | — | How many toasts are fully visible per position bucket. Default: 3. |
-| `gap` | `'sm' \| 'md'` | no | — | Spacing between stacked toasts. Default: 'sm' (8px). |
-| `expand` | `boolean` | no | — | false (default): peek-collapsed stack, hover to fan out. true: always fanned. |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `position` | `'top-left' \| 'top-center' \| 'top-right' \| 'bottom-left' \| 'bottom-center' \| 'bottom-right'` | no | Default position for toasts that don't specify one. Default: 'bottom-right'. All 6 positions are supported; a per-call `position` is an escape hatch — a single global position is the recommended UX. |
+| `duration` | `number` | no | Default duration (ms) for toasts without explicit duration. Default: 4000. |
+| `maxVisible` | `number` | no | How many toasts are fully visible per position bucket. Default: 3. |
+| `gap` | `'sm' \| 'md'` | no | Spacing between stacked toasts. Default: 'sm' (8px). |
+| `expand` | `boolean` | no | false (default): peek-collapsed stack, hover to fan out. true: always fanned. |
 
 <!-- props:end -->
 

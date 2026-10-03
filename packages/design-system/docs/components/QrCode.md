@@ -10,12 +10,12 @@
 ## Props
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `value` | `string` | yes | — | The string to encode — a URL, an ID, a vCard. Encoded as UTF-8, so any script works. An empty string, or one past the largest symbol's capacity at the chosen `level` (~1273 bytes at `'H'`, ~2953 at `'L'`), renders a **disabled** button carrying a localized "unavailable" message instead of a code. It never throws — a long CRM field cannot white-screen a page. |
-| `logo` | `string` | no | — | URL of a **single-colour** SVG to place in the centre. It is used as a CSS alpha mask and filled with the code's current ink, so it recolours itself in both themes and in the inverted state — the file's own colours are discarded. Full-colour artwork and photographs are not supported. Setting this also raises the default `level` to `'H'`, because the punch-out destroys modules outright. |
-| `level` | `'L' \| 'M' \| 'Q' \| 'H'` | no | — | Error-correction level — how much damage the symbol survives. `'L'` ~7%, `'M'` ~15%, `'Q'` ~25%, `'H'` ~30%. Higher levels need a larger symbol for the same data. Defaults to `'H'` when `logo` is set, `'M'` otherwise. |
-| …native | | | | plus native `<button>` attributes |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `value` | `string` | yes | The string to encode — a URL, an ID, a vCard. Encoded as UTF-8, so any script works. An empty string, or one past the largest symbol's capacity at the chosen `level` (~1273 bytes at `'H'`, ~2953 at `'L'`), renders a **disabled** button carrying a localized "unavailable" message instead of a code. It never throws — a long CRM field cannot white-screen a page. |
+| `logo` | `string` | no | URL of a **single-colour** SVG to place in the centre. It is used as a CSS alpha mask and filled with the code's current ink, so it recolours itself in both themes and in the inverted state — the file's own colours are discarded. Full-colour artwork and photographs are not supported. Setting this also raises the default `level` to `'H'`, because the punch-out destroys modules outright. |
+| `level` | `'L' \| 'M' \| 'Q' \| 'H'` | no | Error-correction level — how much damage the symbol survives. `'L'` ~7%, `'M'` ~15%, `'Q'` ~25%, `'H'` ~30%. Higher levels need a larger symbol for the same data. Defaults to `'H'` when `logo` is set, `'M'` otherwise. |
+| …native | | | plus native `<button>` attributes |
 
 <!-- props:end -->
 

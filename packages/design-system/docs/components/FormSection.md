@@ -21,13 +21,13 @@
 ## Props
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `title` | `ReactNode` | no | — | Section heading. |
-| `description` | `ReactNode` | no | — | Secondary text under the heading. |
-| `titleOrder` | `1 \| 2 \| 3 \| 4 \| 5 \| 6` | no | — | Heading level for `title`. Default `2`. |
-| `children` | `ReactNode` | yes | — | The fields (usually `<Field>` / `<FormRow>`). |
-| …native | | | | plus native HTML attributes |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `title` | `ReactNode` | no | Section heading. |
+| `description` | `ReactNode` | no | Secondary text under the heading. |
+| `titleOrder` | `1 \| 2 \| 3 \| 4 \| 5 \| 6` | no | Heading level for `title`. Default `2`. |
+| `children` | `ReactNode` | yes | The fields (usually `<Field>` / `<FormRow>`). |
+| …native | | | plus native HTML attributes |
 
 <!-- props:end -->
 

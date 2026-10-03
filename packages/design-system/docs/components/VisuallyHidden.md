@@ -10,10 +10,10 @@
 ## Props
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `as` | `'span' \| 'div'` | no | 'span' | Element to render. `'span'` for inline text (the common case — a link suffix, a labelling phrase). `'div'` when the hidden content is itself block-level (e.g. wraps other block elements). |
-| …native | | | | plus native HTML attributes |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `as` | `'span' \| 'div'` | no | Element to render. `'span'` for inline text (the common case — a link suffix, a labelling phrase). `'div'` when the hidden content is itself block-level (e.g. wraps other block elements). Default: `'span'`. |
+| …native | | | plus native HTML attributes |
 
 <!-- props:end -->
 

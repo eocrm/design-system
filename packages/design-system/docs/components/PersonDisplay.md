@@ -30,40 +30,40 @@
 ### `PersonDisplayProps`
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `size` | `'inline' \| 'sm' \| 'md' \| 'lg'` | no | — | Visual size of the entire composition. `md` is the default — suits sidebars, members lists, and most card / table contexts. `sm` is the compact density for tight table cells; `lg` is the detail-page hero size. Propagates to the Avatar size and the Name / Description text sizes via context. `inline` fits a person into a text row: the Avatar is one line tall (`1lh`) and the Name inherits the surrounding text's size and weight (and colour, unless it has an `href` — then it's a subtle Link), so a person in a `DefinitionList` value or a table cell is exactly as tall as its plain-text neighbours. Follows the text size; no size decision per call site. Skip Descriptions — a second line defeats it. The root is a `<div>`, so not inside a `<p>`; in a line that also holds something taller than one line it top-aligns rather than sharing the baseline. |
-| `shrink` | `boolean` | no | — | Force the composition to shrink-wrap to its content (avatar + name) instead of stretching to fill a parent. Default `false`. The root is `inline-flex` and shrink-wraps on its own — but as a child of a *stretching* flex/grid container (a detail/sidebar card column with `align-items: stretch` / `justify-self: stretch`) CSS blockifies it and the parent stretches it to the full column width. The avatar+name then sit in the left portion and the trailing empty space joins the box, so a `Popover.Trigger` / `Tooltip` cloned onto the PersonDisplay anchors to that wide box and centers far to the right of the person. Set `shrink` on such an overlay trigger to keep it content-width (`width: fit-content`) regardless of the parent, so the overlay anchors to the visible avatar+name. |
-| `children` | `ReactNode` | yes | — | `<PersonDisplay.Avatar>` + `<PersonDisplay.Name>` (+ optional repeating `<PersonDisplay.Description>`) subcomponents in any order — Root sorts the Avatar into its own slot. |
-| …native | | | | plus native `<div>` attributes |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `size` | `'inline' \| 'sm' \| 'md' \| 'lg'` | no | Visual size of the entire composition. `md` is the default — suits sidebars, members lists, and most card / table contexts. `sm` is the compact density for tight table cells; `lg` is the detail-page hero size. Propagates to the Avatar size and the Name / Description text sizes via context. `inline` fits a person into a text row: the Avatar is one line tall (`1lh`) and the Name inherits the surrounding text's size and weight (and colour, unless it has an `href` — then it's a subtle Link), so a person in a `DefinitionList` value or a table cell is exactly as tall as its plain-text neighbours. Follows the text size; no size decision per call site. Skip Descriptions — a second line defeats it. The root is a `<div>`, so not inside a `<p>`; in a line that also holds something taller than one line it top-aligns rather than sharing the baseline. |
+| `shrink` | `boolean` | no | Force the composition to shrink-wrap to its content (avatar + name) instead of stretching to fill a parent. Default `false`. The root is `inline-flex` and shrink-wraps on its own — but as a child of a *stretching* flex/grid container (a detail/sidebar card column with `align-items: stretch` / `justify-self: stretch`) CSS blockifies it and the parent stretches it to the full column width. The avatar+name then sit in the left portion and the trailing empty space joins the box, so a `Popover.Trigger` / `Tooltip` cloned onto the PersonDisplay anchors to that wide box and centers far to the right of the person. Set `shrink` on such an overlay trigger to keep it content-width (`width: fit-content`) regardless of the parent, so the overlay anchors to the visible avatar+name. |
+| `children` | `ReactNode` | yes | `<PersonDisplay.Avatar>` + `<PersonDisplay.Name>` (+ optional repeating `<PersonDisplay.Description>`) subcomponents in any order — Root sorts the Avatar into its own slot. |
+| …native | | | plus native `<div>` attributes |
 
 ### `PersonDisplayAvatarProps`
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `name` | `string` | yes | — | The person's name. Required — used as the `alt`/`aria-label`, as the source of the initials, and as the seed for the deterministic fallback color. The same name always renders the same color. When `tooltip` is true, also used as the tooltip body. |
-| `src` | `string` | no | — | Image URL. When provided, the `<img>` is rendered with `alt={name}`. Empty/whitespace strings are treated as missing. If the image fails to load (404, network), the component automatically falls back to initials. |
-| `status` | `'online' \| 'busy' \| 'away' \| 'offline'` | no | — | Presence dot in the bottom-right. - `'online'` — green. - `'busy'` — red. - `'away'` — amber (the categorical amber, dark enough to read at dot size). - `'offline'` — gray. Omit to render no dot at all. Setting `status` changes the accessible name to `"{name}, {status}"` (localized), because colour alone cannot carry the status (WCAG 1.4.1); query with `getByRole('img', { name: 'Alex, online' })`. Each status also renders a distinct shape (filled / half / barred / hollow), so it survives colour-vision deficiency and greyscale; the dot stays `aria-hidden` so nothing is announced twice. |
-| `tooltip` | `boolean` | no | — | Whether to wrap the avatar in a `<Tooltip>` showing `name`. Defaults to `false` (back-compat — existing renders don't gain a hover affordance). Inside `<AvatarGroup>`, the group's `tooltip` prop becomes the default (which itself defaults to `true` for grouped avatars); explicit per-child still wins. |
-| …native | | | | plus native HTML attributes |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `name` | `string` | yes | The person's name. Required — used as the `alt`/`aria-label`, as the source of the initials, and as the seed for the deterministic fallback color. The same name always renders the same color. When `tooltip` is true, also used as the tooltip body. |
+| `src` | `string` | no | Image URL. When provided, the `<img>` is rendered with `alt={name}`. Empty/whitespace strings are treated as missing. If the image fails to load (404, network), the component automatically falls back to initials. |
+| `status` | `'online' \| 'busy' \| 'away' \| 'offline'` | no | Presence dot in the bottom-right. - `'online'` — green. - `'busy'` — red. - `'away'` — amber (the categorical amber, dark enough to read at dot size). - `'offline'` — gray. Omit to render no dot at all. Setting `status` changes the accessible name to `"{name}, {status}"` (localized), because colour alone cannot carry the status (WCAG 1.4.1); query with `getByRole('img', { name: 'Alex, online' })`. Each status also renders a distinct shape (filled / half / barred / hollow), so it survives colour-vision deficiency and greyscale; the dot stays `aria-hidden` so nothing is announced twice. |
+| `tooltip` | `boolean` | no | Whether to wrap the avatar in a `<Tooltip>` showing `name`. Defaults to `false` (back-compat — existing renders don't gain a hover affordance). Inside `<AvatarGroup>`, the group's `tooltip` prop becomes the default (which itself defaults to `true` for grouped avatars); explicit per-child still wins. |
+| …native | | | plus native HTML attributes |
 
 ### `PersonDisplayDescriptionProps`
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `children` | `ReactNode` | yes | — | One line of descriptive metadata — email, role, company, etc. Repeat the subcomponent for additional lines; each renders on its own row beneath the name. Accepts arbitrary `ReactNode` children so consumers can inline a `<Badge>` or other small decoration. |
-| …native | | | | plus native `<span>` attributes |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `children` | `ReactNode` | yes | One line of descriptive metadata — email, role, company, etc. Repeat the subcomponent for additional lines; each renders on its own row beneath the name. Accepts arbitrary `ReactNode` children so consumers can inline a `<Badge>` or other small decoration. |
+| …native | | | plus native `<span>` attributes |
 
 ### `PersonDisplayNameProps`
 
 <!-- prettier-ignore -->
-| Prop | Type | Required | Default | Description |
-|---|---|---|---|---|
-| `href` | `string` | no | — | When set, the name renders as a `<Link>` to this URL. Use for navigable people (contacts, members) where the row links to a detail page. Omit for read-only displays (audit actor, activity timeline) where the name is plain text. |
-| `children` | `ReactNode` | yes | — | The person's display name — usually a plain string. |
-| …native | | | | plus native HTML attributes |
+| Prop | Type | Required | Description |
+|---|---|---|---|
+| `href` | `string` | no | When set, the name renders as a `<Link>` to this URL. Use for navigable people (contacts, members) where the row links to a detail page. Omit for read-only displays (audit actor, activity timeline) where the name is plain text. |
+| `children` | `ReactNode` | yes | The person's display name — usually a plain string. |
+| …native | | | plus native HTML attributes |
 
 <!-- props:end -->
 
