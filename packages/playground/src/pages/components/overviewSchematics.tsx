@@ -188,6 +188,26 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       </Outline>
     </Row>
   ),
+  Banner: (
+    <Col gap={6}>
+      <Outline
+        w={220}
+        h={28}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 8,
+          padding: '0 10px',
+          borderRadius: 0,
+        }}
+      >
+        <Solid w={10} h={10} style={{ borderRadius: '50%' }} />
+        <Bar w={110} />
+        <Bar w={30} style={{ marginLeft: 'auto' }} />
+      </Outline>
+      <Box w={220} h={40} />
+    </Col>
+  ),
   Button: (
     <Row gap={8}>
       <Solid w={64} h={26} />
@@ -1341,26 +1361,6 @@ export const SCHEMATICS: Record<string, ReactNode> = {
         <Box w={46} h={24} />
       </Col>
     </Row>
-  ),
-  Banner: (
-    <Col gap={6}>
-      <Outline
-        w={220}
-        h={28}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 8,
-          padding: '0 10px',
-          borderRadius: 0,
-        }}
-      >
-        <Dot size={10} />
-        <Bar w={110} />
-        <Bar w={30} style={{ marginLeft: 'auto' }} />
-      </Outline>
-      <Box w={220} h={40} />
-    </Col>
   ),
   Avatar: (
     <Row gap={8}>

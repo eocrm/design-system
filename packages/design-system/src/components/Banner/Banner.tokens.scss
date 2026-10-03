@@ -13,7 +13,7 @@
   --banner-row-gap: var(--space-1);
   --banner-border-width: var(--border-width);
   --banner-font-size: var(--font-size-sm);
-  --banner-title-font-weight: var(--font-weight-medium);
+  --banner-title-font-weight: var(--font-weight-semibold);
 
   // Below this width the text block stops sharing its row and the action/×
   // wrap onto their own line (flex-wrap, no breakpoint).
