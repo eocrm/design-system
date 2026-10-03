@@ -1679,6 +1679,7 @@ Use this instead of `Card.List` + `Card.ListRow` whenever the data is genuinely 
 - **`sidebarPinned`** (default `false`): on pages taller than the viewport, pins the sidebar wrapper (`position: sticky; top: 0; height: 100dvh; overflow-y: auto`) so a `Rail`'s footer/`CollapseToggle` stays glued to the viewport bottom instead of scrolling away with the page. Don't reach for wrapping the sidebar slot in `<Sticky>` instead — the Rail pins its footer by filling its own `height: 100%` box, and `Sticky`'s `align-self: start` drops the row stretch that made that height definite, so the footer-pinning doesn't work. `100dvh` is always relative to the real browser viewport, not a nested scroll container — only use it when AppLayout is the outermost, page-scroll shell (its documented top-level use); nested inside another scrollable region, the sidebar sizes to the whole window and overflows it.
 - **`sidebarOverlayBelow`** (default: none): below a **viewport** threshold (`'sm'` 480 / `'md'` 640 / `'lg'` 768) the sidebar leaves the flow and renders in a left `<Drawer>`, so the content column gets the full viewport width — the fix for a 240px rail eating a phone screen. **AppLayout renders no trigger** — put a hamburger in your `topBar` and gate it with the `useBelowBreakpoint` hook (see below) so it only shows while the overlay is active. Because there's no built-in trigger, `sidebarOpen` + `onSidebarOpenChange` are technically optional props but **effectively required together**: with both omitted nothing can ever open the drawer. Once open, the drawer has a visible close button and a header that can be swiped left to dismiss, in addition to Esc/backdrop dismissal. `sidebarPinned` is ignored below the threshold (the drawer owns the sidebar's box there).
 - The `children` slot renders inside a plain `<div>`, not a `<main>` — `AppLayout` can be nested in a demo or documentation preview (never in product code, see above), so it must not unilaterally claim the page's `main` landmark. The consuming app owns that: wrap your top-level routed content in your own `<main>` once, at your app shell (not per-page), the way the playground's `AppShell` does.
+- `banner` / `contextBanner`: slots for `<Banner>`. `banner` spans the full window above the sidebar; `contextBanner` sits under the top bar, outside the content padding. Neither is sticky. With `sidebarPinned`, the footer of a pinned rail sits up to one banner height below the fold until the page scrolls past the banner.
 
 ### `<Grid>` — 2D layout primitive
 
@@ -2845,6 +2846,56 @@ const [show, setShow] = useState(true);
 - ❌ Multiple stacked Alerts above a page — pick one (most urgent tone) or compose into the page layout with explicit hierarchy.
 - ❌ A live Alert (the default) for content that exists when the page opens, especially one per list item — each is a live region and some screen readers queue an announcement per item. Pass `live={false}`.
 - ❌ `live={false}` for a message that appears in response to an action (a failed save) — it is never announced. For a must-hear reactive message use `tone="error"` (`role="alert"` is announced on insertion) or a Toast.
+
+### `<Banner>` — full-width system / app message bar
+
+Tinted, full-width bar for messages about the system or account, not the page: maintenance, "Email sending suspended", "Sending restored". Mount it ONLY in `<AppLayout>`'s `banner` (system-wide, above everything) or `contextBanner` (module/route-scoped, under the top bar) slot. For page content use `<Alert>`.
+
+```tsx
+import { AppLayout, Banner, Link } from '@eocrm/design-system';
+
+<AppLayout
+  banner={
+    <Banner
+      tone="warning"
+      title="Scheduled maintenance"
+      action={<Link href="/status">Details</Link>}
+    >
+      Sat 4 Oct, 22:00–23:00 CET. CRM will be read-only.
+    </Banner>
+  }
+  contextBanner={
+    inEmail &&
+    suspended && (
+      <Banner tone="danger" title="Email sending suspended.">
+        Bounce rate 7.2% (limit 5%).
+      </Banner>
+    )
+  }
+  topBar={<TopBar />}
+  sidebar={<Rail>{nav}</Rail>}
+>
+  {routes}
+</AppLayout>;
+```
+
+- `tone`: `info` (default) / `success` / `warning` / `danger`. Info = advance notice; warning = imminent/degrading; danger = broken now; success = condition resolved.
+- `title` renders bold and **inline** before the text. Keep the whole thing to one line on desktop.
+- `action`: one `<Link>` or `<Button size="xs">`. `onDismiss` shows the × button and is **controlled**: the app persists the dismissal.
+- **The tone is spoken.** A visually hidden, localised prefix ("Warning: ") comes before the text.
+- `icon`: overrides the tone's default icon; `icon={null}` hides it.
+- The tone is `danger`, not Alert's `error`.
+- **`live` defaults to `false`** (`role="note"`), because banners are usually present at load. Pass `live` for one that appears mid-session — but a Banner mounts together with its text, so `role="status"` is not reliably announced; only `tone="danger"` + `live` (`role="alert"`) is. For a must-hear non-danger message, add a `<LiveRegion>` or a toast alongside the banner.
+- Neither slot is sticky; only the TopBar pins.
+
+**Anti-patterns**
+
+- ❌ A Banner inside page content. Use `<Alert>`.
+- ❌ `onDismiss` on a `danger` banner while the condition still holds.
+- ❌ Routine stacks of banners in one slot. Show the most severe first.
+- ❌ A system-wide message in `contextBanner`, or a route-specific one in `banner`.
+- ❌ `live` on a banner that is present when the app loads.
+- ❌ Relying on `live` for a non-danger banner to be announced on appearing. Add a `<LiveRegion>` or a toast.
 
 ### `<ConfirmationPopover>` — opinionated "Are you sure?" preset
 

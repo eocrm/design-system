@@ -44,6 +44,15 @@
       "OptionsPicker"
     ]
   },
+  "Banner": {
+    "tier": "composition",
+    "cluster": "Feedback",
+    "composes": [
+      "Button",
+      "VisuallyHidden"
+    ],
+    "composedBy": []
+  },
   "BrandIcon": {
     "tier": "primitive",
     "cluster": "Display",
@@ -66,6 +75,7 @@
     "composes": [],
     "composedBy": [
       "Alert",
+      "Banner",
       "ButtonGroup",
       "Calendar",
       "ConfirmationPopover",
@@ -901,6 +911,7 @@
     "cluster": "Accessibility",
     "composes": [],
     "composedBy": [
+      "Banner",
       "DateStrip",
       "LiveRegion"
     ]

@@ -5,6 +5,7 @@ export type ComponentName =
   | 'Alert'
   | 'Avatar'
   | 'Badge'
+  | 'Banner'
   | 'BrandIcon'
   | 'Breadcrumb'
   | 'Button'

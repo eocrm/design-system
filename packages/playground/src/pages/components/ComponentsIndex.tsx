@@ -21,6 +21,12 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['Alert'],
   },
   {
+    to: '/components/banner',
+    name: 'Banner',
+    description: 'Full-width system / app message bar for the AppLayout banner slots.',
+    preview: SCHEMATICS['Banner'],
+  },
+  {
     to: '/components/button',
     name: 'Button',
     description: 'Action triggers with variants and sizes.',

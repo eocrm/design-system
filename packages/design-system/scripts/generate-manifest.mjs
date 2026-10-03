@@ -110,6 +110,7 @@ const CLUSTERS = {
 
   // Feedback
   Alert: 'Feedback',
+  Banner: 'Feedback',
   Toast: 'Feedback',
 
   // Navigation

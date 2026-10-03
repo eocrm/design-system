@@ -320,3 +320,93 @@ describe('AppLayout sidebarOverlayBelow', () => {
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
   });
 });
+
+describe('AppLayout banner slots', () => {
+  const original = Object.getOwnPropertyDescriptor(window, 'matchMedia');
+
+  afterEach(() => {
+    if (original) Object.defineProperty(window, 'matchMedia', original);
+    else delete (window as { matchMedia?: unknown }).matchMedia;
+  });
+
+  it('renders banner first, before the sidebar/content row', () => {
+    const { container } = render(
+      <AppLayout
+        banner={<span data-testid="banner">b</span>}
+        sidebar={<span data-testid="side">s</span>}
+        topBar={<span data-testid="top">t</span>}
+      >
+        <span data-testid="content">c</span>
+      </AppLayout>,
+    );
+    const root = container.firstChild as HTMLElement;
+    expect(root.firstChild).toContainElement(screen.getByTestId('banner'));
+    expect(root.firstChild).not.toContainElement(screen.getByTestId('side'));
+    // banner precedes sidebar in document order
+    expect(
+      screen.getByTestId('banner').compareDocumentPosition(screen.getByTestId('side')) &
+        Node.DOCUMENT_POSITION_FOLLOWING,
+    ).toBeTruthy();
+  });
+
+  it('renders contextBanner after the topBar and outside the padded content region', () => {
+    render(
+      <AppLayout
+        topBar={<span data-testid="top">t</span>}
+        contextBanner={<span data-testid="ctx">x</span>}
+      >
+        <span data-testid="content">c</span>
+      </AppLayout>,
+    );
+    const ctx = screen.getByTestId('ctx');
+    const top = screen.getByTestId('top');
+    const content = screen.getByTestId('content');
+    expect(top.compareDocumentPosition(ctx) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(ctx.compareDocumentPosition(content) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    // not inside the element that wraps children (the padded .main)
+    expect(content.parentElement).not.toContainElement(ctx);
+  });
+
+  it('omits banner wrappers when slots are absent', () => {
+    const { container, rerender } = render(
+      <AppLayout banner={<span>b</span>} contextBanner={<span>c</span>}>
+        x
+      </AppLayout>,
+    );
+    const withSlots = container.querySelectorAll('div').length;
+    rerender(<AppLayout>x</AppLayout>);
+    expect(container.querySelectorAll('div').length).toBe(withSlots - 2);
+  });
+
+  it('omits banner wrappers for falsy slot values', () => {
+    const { container, rerender } = render(
+      <AppLayout banner={<span>b</span>} contextBanner={<span>c</span>}>
+        x
+      </AppLayout>,
+    );
+    const withSlots = container.querySelectorAll('div').length;
+    rerender(
+      <AppLayout banner={false} contextBanner={null}>
+        x
+      </AppLayout>,
+    );
+    expect(container.querySelectorAll('div').length).toBe(withSlots - 2);
+  });
+
+  it('contextBanner and banner render in overlay mode', () => {
+    stubMatchMedia(400);
+    render(
+      <AppLayout
+        sidebar={<span>nav</span>}
+        sidebarOverlayBelow="md"
+        topBar={<span data-testid="top">t</span>}
+        contextBanner={<span data-testid="ctx">x</span>}
+        banner={<span data-testid="banner">b</span>}
+      >
+        c
+      </AppLayout>,
+    );
+    expect(screen.getByTestId('ctx')).toBeInTheDocument();
+    expect(screen.getByTestId('banner')).toBeInTheDocument();
+  });
+});
