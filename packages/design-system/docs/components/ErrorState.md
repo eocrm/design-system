@@ -65,3 +65,12 @@
 - **Loading → error in an existing page-level surface:** the example's Card is intentionally the stable page-level transition surface, not a recommendation to nest ErrorState in arbitrary cards. Keep that one `Card role="status" aria-busy={!failed}` mounted, with either loading content or `<ErrorState role={undefined}>` inside it. A live region mounted together with the error has no mutation to announce, and a page-sized assertive alert is inappropriate for this update.
 - For `tone="neutral"`, the `<section>` is not a screen-reader landmark unless it has an accessible name — pass `aria-label` / `aria-labelledby` when it IS the page's primary region (typical for a full-page 404).
 - No automatic `aria-hidden` on the icon — pass `aria-hidden="true"` for a decorative icon. No i18n — all copy is consumer-supplied.
+- Not for a status the tone scale doesn't cover (warning / success) — extend the `ErrorStateTone` union rather than repurposing `danger`.
+- ❌ Multiple primary buttons — one clear primary; secondaries are `variant="secondary"` / `ghost`. ❌ A long sentence as `title` — it is the page heading, keep it short.
+
+```tsx
+// Centered inside a Screen (standalone page)
+<Screen backdrop="accent">
+  <ErrorState title="Page not found" actions={<Button>Go home</Button>} />
+</Screen>
+```

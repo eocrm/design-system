@@ -39,3 +39,39 @@ const [value, setValue] = useState<DashboardCanvasValue>(initialLayout);
 `readOnly` turns off all editing (no handles, no keyboard editing) while section collapse toggles keep working — collapse is navigation, not editing. Independent of `readOnly`, at and below the `stackBelow` breakpoint (`'sm'` 480px / `'md'` 640px, the default / `'lg'` 768px) of the canvas's OWN width (a CSS container query, not the viewport) every container automatically re-templates to one column and editing turns off the same way — a `ResizeObserver` mirrors the breakpoint so a gesture can never half-start below it.
 
 When NOT to use: a single ordered list (priority queue, simple reordering) — use `Sortable`; fixed kanban-style columns — use `Kanban`; a free-form node/edge graph — use `FlowCanvas`. The canvas is ALWAYS a size container (named `dashboard-canvas`, unconditionally) — give it a parent with a concrete width; an intrinsic-width context (a `Cluster` item, `width: max-content`) renders it at width 0, same caveat as Grid's `collapseBelow`.
+
+A collapsed section's band is NOT a drop target — expand it first (no hover-to-expand). Escape or a pointer cancel mid-gesture restores the current `value` without firing `onChange`.
+
+#### Anti-patterns
+
+- ❌ Treating `value` as uncontrolled — passing it once with no `onChange`. Drags and resizes still preview live, but nothing persists past pointerup; the next render snaps the item back to the stale `value`.
+- ❌ Nesting a `DashboardCanvas` inside another one's `renderItem`: a nested canvas fights its parent for pointer capture and Escape handling.
+- ❌ Expecting the grid cell to draw a card-like surface. It is chrome-less by design so widgets with transparent bodies (charts, images) don't sit inside a redundant box — wrap `renderItem`'s output in `<Card>` for the boxed look.
+- ❌ Using it for a simple ordered list — see "When NOT to use" above.
+- ❌ Placing it in an intrinsic-width parent (a `Split` aside's default `auto` track, a `Cluster` item): the canvas is always a size container and renders at width 0. At and below `stackBelow` pointer + keyboard editing turns off (handles hidden, items not editing-focusable).
+
+#### More examples
+
+```tsx
+// Persist every completed gesture: keep the canvas controlled AND save.
+// Debounce / fire-and-forget is the caller's job.
+const handleChange = (next: DashboardCanvasValue) => {
+  setValue(next);
+  saveDashboardLayout(dashboardId, next);
+};
+
+// Read-only record view — same value shape, no editing affordances.
+<DashboardCanvas
+  value={savedLayout}
+  renderItem={(id) => <Card>{widgets[id].title}</Card>}
+  readOnly
+/>
+
+// Constraints computed from data, e.g. locking size for chart widgets.
+<DashboardCanvas
+  value={value}
+  onChange={setValue}
+  renderItem={(id) => <Card>{widgets[id].title}</Card>}
+  constraints={(id) => (widgets[id]?.kind === 'chart' ? { minW: 4, minH: 3, maxH: 6 } : undefined)}
+/>
+```

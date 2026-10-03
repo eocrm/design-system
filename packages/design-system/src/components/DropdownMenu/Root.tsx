@@ -19,68 +19,8 @@ export interface DropdownMenuProps {
 }
 
 /**
- * Action menu that opens from a trigger button. Compound API — pair `<Trigger>`,
- * `<Content>`, `<Item>`, and `<Separator>` as direct (or nested) children.
- * Implements the WAI-ARIA menu pattern: roving tabindex inside Content,
- * Arrow/Home/End nav, typeahead, Enter/Space to activate, Escape/Tab to
- * dismiss. Content portals to `document.body` and positions itself relative
- * to the trigger via Floating UI (auto-flip, viewport-aware).
- *
- * @example
- * <DropdownMenu>
- *   <DropdownMenu.Trigger>
- *     <Button variant="secondary">Actions</Button>
- *   </DropdownMenu.Trigger>
- *   <DropdownMenu.Content align="end">
- *     <DropdownMenu.Item onSelect={edit}>Edit</DropdownMenu.Item>
- *     <DropdownMenu.Item onSelect={duplicate} shortcut="⌘D">Duplicate</DropdownMenu.Item>
- *     <DropdownMenu.Separator />
- *     <DropdownMenu.Item onSelect={remove} tone="danger">Delete</DropdownMenu.Item>
- *   </DropdownMenu.Content>
- * </DropdownMenu>
- *
- * @example
- * // Table row kebab — minimal trigger via the ghost variant:
- * <DropdownMenu>
- *   <DropdownMenu.Trigger>
- *     <Button variant="ghost" aria-label="Row actions">⋯</Button>
- *   </DropdownMenu.Trigger>
- *   <DropdownMenu.Content align="end">
- *     <DropdownMenu.Item onSelect={() => view(row)}>View</DropdownMenu.Item>
- *     <DropdownMenu.Item onSelect={() => archive(row)}>Archive</DropdownMenu.Item>
- *   </DropdownMenu.Content>
- * </DropdownMenu>
- *
- * @example
- * // Controlled open (rare — usually let DropdownMenu manage state):
- * const [open, setOpen] = useState(false);
- * <DropdownMenu open={open} onOpenChange={setOpen}>...</DropdownMenu>
- *
- * @remarks When NOT to use
- * - For form value selection ("pick a status", "pick a country") → use
- *   `<Select>` (not yet shipped) so the value lives in form state.
- * - For an always-visible row of actions → use a `<Cluster>` of Buttons in
- *   a toolbar. Menus are for actions that don't deserve permanent screen real
- *   estate.
- * - For navigation between pages → use the sidebar or a `<Link>` (not yet
- *   shipped). Menu items are for *actions*, not page transitions.
- *
- * @remarks Anti-patterns
- * - ❌ Multiple `<DropdownMenu.Trigger>` inside one `<DropdownMenu>`. Use one
- *   DropdownMenu per trigger.
- * - ❌ Trigger child that doesn't accept a ref. The cloneElement contract
- *   needs `forwardRef` on the trigger element. `<Button>` qualifies; a raw
- *   `<button>` qualifies; a custom component that doesn't forward refs does
- *   not.
- * - ❌ `tone="danger"` for non-destructive actions like "Filter" or "Sort".
- *   Reserve danger for irreversible destructive operations.
- * - ❌ Nesting a full `<DropdownMenu>` root inside another DropdownMenu.
- *   Use `<DropdownMenu.Sub>` for nested menus — see the Sub component's
- *   JSDoc for the canonical pattern.
- * - ❌ Using DropdownMenu as a panel (a notification centre, a header with a
- *   "Mark all as read" button, rich feed rows). It is `role="menu"`, which
- *   may only hold menu items; a header button is invalid ARIA and unreachable
- *   by the menu's arrow keys. Use `Popover` + `ScrollArea` (#598).
+ * Action menu that opens from a trigger button, implementing the WAI-ARIA menu pattern.
+ * @see docs/components/DropdownMenu.md
  */
 export function DropdownMenuRoot({
   children,

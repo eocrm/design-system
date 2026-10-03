@@ -35,3 +35,25 @@
 - No `variant="error"` — error treatments need different a11y (live regions, retry actions). Use a future `<Alert>` or render a danger-tinted EmptyState with your own error message.
 - No automatic `aria-hidden` on the icon — consumer's icon may be semantic (e.g., a country-flag icon in a "No results for this region" state). If the icon is purely decorative, the consumer should pass `aria-hidden`.
 - The wrapper `<section>` only becomes a screen-reader landmark when it has an accessible name — pass `aria-label` (or `aria-labelledby`) when the empty state should be navigable as a region (typically when it IS the page's primary content with `headingLevel={1 | 2}`).
+- Not for a page-level 404 / 500 — use a dedicated error page.
+- For unusual layouts compose `<Stack>` + `<Button>` directly; this component is deliberately inflexible.
+- ❌ A long sentence as `title` — keep titles short; long strings hurt heading navigation.
+- ❌ Multiple primary action buttons — one clear next action; secondaries are `ghost`.
+
+```tsx
+// Multiple actions
+<EmptyState
+  icon={<Search size={32} />}
+  title="No results"
+  description="Try a different query or clear the filters."
+  actions={
+    <Cluster gap="sm" justify="center">
+      <Button onClick={clearFilters}>Clear filters</Button>
+      <Button variant="ghost" onClick={openSearch}>New search</Button>
+    </Cluster>
+  }
+/>
+
+// Inline (e.g. a Select dropdown's empty results)
+<EmptyState size="sm" icon={<SearchX size={24} />} title="No matches" />
+```

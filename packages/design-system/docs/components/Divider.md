@@ -38,6 +38,7 @@ import { Divider } from '@eocrm/design-system';
 
 <!-- props:end -->
 
+- **Without `children`** it renders a native `<hr>` (the right semantic for a thematic break).
 - **Default**: solid, size `'sm'` (1px), horizontal.
 - **Labeled** dividers use `<div role="separator">` instead of `<hr>` because HTML `<hr>` can't have children.
 - **Vertical** dividers stretch to the parent's height — works inside Cluster/Stack/Flex but needs a parent with known height. Falls back to `--space-3` minimum height as a sanity floor.

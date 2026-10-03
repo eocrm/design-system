@@ -27,3 +27,5 @@
 - Thin wrapper over `<Grid>`. Default: auto-fit, reflows to stacked when narrow
   (container-based, `minColumnWidth` default `'16rem'`). `columns={2|3}` = fixed count.
 - `gap` default `'lg'`. ❌ Not for a single field; ❌ not a general tile grid (use `<Grid>`).
+- Not for vertical stacking of fields — that is the default flow of `<FormSection>` / `<Stack>`.
+- ❌ Forcing `columns` for fields that should reflow on mobile — prefer the responsive default; reserve `columns` for rows that must stay side by side.

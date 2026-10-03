@@ -830,10 +830,10 @@ function EmptyRow({
 }
 
 /**
- * Generic forwardRef wrapper — TypeScript erases the `T` generic in a normal
- * forwardRef so we re-type via assertion. This is the standard pattern for
- * generic forwardRef components.
+ * Server-driven data table driven by a `useDataTable` instance.
+ * @see docs/components/DataTable.md
  */
+// Generic forwardRef: TS erases `T` in a plain forwardRef, so the type is re-asserted.
 export const DataTable = forwardRef(DataTableInner) as <T>(
   props: DataTableProps<T> & { ref?: Ref<HTMLTableElement> },
 ) => ReturnType<typeof DataTableInner>;

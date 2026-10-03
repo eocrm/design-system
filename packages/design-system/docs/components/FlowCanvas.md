@@ -96,3 +96,13 @@ const [edges, setEdges] = useState<FlowCanvasEdge[]>([
 When NOT to use: >100-node graphs (no virtualization); list/column reordering (use
 Kanban/Sortable); undirected/free-form drawing; as the only editing surface for complex
 attributes (anchor your own modals via the open callbacks — keep a form-based fallback).
+
+```tsx
+// Read-only diagram (record page): no editing intents, still zoomable
+<FlowCanvas nodes={nodes} edges={edges} readOnly aria-label="Deal workflow" />
+```
+
+- Not for undirected / free-form drawing (mind maps, whiteboards): edges are directed with arrowheads and the interaction model assumes a digraph.
+- The inline surface is selection + spatial arrangement only; editors belong to you (anchor modals / popovers via the open callbacks).
+- ❌ Hiding primary, always-needed actions solely behind Maximize or the `controls` slot — that is canvas chrome, not a substitute for the page's own toolbar.
+- ❌ Relying on maximize inside an ancestor that creates a containing block via `transform` / `filter` / `perspective` / `will-change`: in-page maximize uses `position: fixed`, so it anchors to that ancestor instead of the viewport and won't fill the screen.

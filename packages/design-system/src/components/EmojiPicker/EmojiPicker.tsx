@@ -72,55 +72,8 @@ interface VisibleCategory {
 }
 
 /**
- * Searchable emoji grid over a curated, common-first dataset (reactions +
- * everyday input — NOT the full Unicode set). Renders a search box and a
- * category-sectioned 8-column grid; calls `onSelect(char)` on click or
- * Enter/Space. Built on `Input`, `Text`, and a lucide `Search` icon, with
- * roving-tabindex keyboard navigation across the grid.
- *
- * This is the bare picker surface — pair it with a `Popover` (or use the
- * `EmojiPickerPopover` wrapper) to open it from a trigger.
- *
- * @example
- * // Inside a Popover you control:
- * <Popover>
- *   <Popover.Trigger>
- *     <Button variant="secondary" iconOnly aria-label="Add reaction">
- *       <Smile size={16} />
- *     </Button>
- *   </Popover.Trigger>
- *   <Popover.Content>
- *     <EmojiPicker onSelect={(char) => insertAtCaret(char)} />
- *   </Popover.Content>
- * </Popover>
- *
- * @example
- * // The batteries-included wrapper (opens + closes for you):
- * <EmojiPickerPopover
- *   trigger={<Button variant="ghost" iconOnly aria-label="Emoji"><Smile size={16} /></Button>}
- *   onSelect={(char) => appendToMessage(char)}
- * />
- *
- * @example
- * // A reaction toggle on a comment:
- * <EmojiPickerPopover
- *   trigger={<Button size="sm" variant="secondary">React</Button>}
- *   onSelect={(char) => toggleReaction(commentId, char)}
- * />
- *
- * @remarks When NOT to use
- * - A small fixed set of reactions (👍 ❤️ 🎉) — render a `Cluster` of
- *   `Button`s instead; a searchable grid is overkill for 3-6 choices.
- * - Inline emoji autocomplete inside an editor (`:smile` → 😄) — out of scope;
- *   that belongs to the editor's suggestion engine, not this chooser.
- * - Rendering the reactions a message already has (as chips/counts) — the
- *   consumer builds that display; this component only *chooses* an emoji.
- *
- * @remarks Anti-patterns
- * - ❌ Expecting the full ~1900-emoji Unicode set. This is a deliberately
- *   curated common set (see `emojiData.ts`); skin-tone/ZWJ variants are out.
- * - ❌ Using it as the reaction-count display. It is the chooser only — it has
- *   no notion of which emoji are already selected or how many times.
+ * Searchable emoji grid over a curated, common-first dataset (not the full Unicode set).
+ * @see docs/components/EmojiPicker.md
  */
 export const EmojiPicker = forwardRef<HTMLDivElement, EmojiPickerProps>(function EmojiPicker(
   // invalid/required consumed for Field composition only (#568).
@@ -348,25 +301,8 @@ export interface EmojiPickerPopoverProps {
 }
 
 /**
- * Batteries-included `<EmojiPicker>` in a `Popover`: pass a `trigger` and an
- * `onSelect`, and the wrapper handles opening, closing-on-select, and the
- * controlled/uncontrolled open contract.
- *
- * @example
- * <EmojiPickerPopover
- *   trigger={<Button variant="ghost" iconOnly aria-label="Emoji"><Smile size={16} /></Button>}
- *   onSelect={(char) => appendToMessage(char)}
- * />
- *
- * @example
- * // Controlled:
- * const [open, setOpen] = useState(false);
- * <EmojiPickerPopover
- *   open={open}
- *   onOpenChange={setOpen}
- *   trigger={<Button>Emoji</Button>}
- *   onSelect={setEmoji}
- * />
+ * Batteries-included `<EmojiPicker>` in a `Popover`: pass a `trigger` and an `onSelect`.
+ * @see docs/components/EmojiPicker.md
  */
 export function EmojiPickerPopover({
   trigger,

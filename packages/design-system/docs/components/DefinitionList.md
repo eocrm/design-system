@@ -70,3 +70,15 @@ Use this instead of `Card.List` + `Card.ListRow` whenever the data is genuinely 
 - ❌ Wrapping a `<DefinitionList.Description>` directly in `<DefinitionList>` without an enclosing `<DefinitionList.Item>` — the dev warning fires and grid layout breaks.
 - ❌ Putting interactive content in `<DefinitionList.Term>`. Use `<DefinitionList.Description>` for values, including ones containing `<Link>` or `<Button>`.
 - ❌ Stacking multiple `<DefinitionList.Description>` children under one Item to render "multiple values for one key." Works HTML-wise but doesn't have styling support — render multiple Items with the same Term text if you need that pattern.
+
+Not for tabular data with multiple columns per row — use `Table` / `DataTable`.
+
+```tsx
+// Stacked (settings-style)
+<DefinitionList layout="stacked">
+  <DefinitionList.Item>
+    <DefinitionList.Term>Workspace name</DefinitionList.Term>
+    <DefinitionList.Description>Acme Corp</DefinitionList.Description>
+  </DefinitionList.Item>
+</DefinitionList>
+```

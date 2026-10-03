@@ -77,6 +77,8 @@ const [open, setOpen] = useState(false);
 
 <!-- props:end -->
 
+- **Compound API:** `<Drawer.Header>` — title, auto-wired `aria-labelledby`, built-in × close button unless `closeButton={false}`, and the drag-to-close origin; `<Drawer.Body>` — scrollable content; `<Drawer.Footer>` — pinned action bar; `<Drawer.Close>` — wraps a clickable child so activating it dismisses the drawer.
+- **Dialog semantics:** same focus-lock and scroll-lock as Modal. Passing neither `<Drawer.Header>` nor `aria-label` fires a dev warning.
 - **Controlled-only.** `open` + `onOpenChange` always.
 - **Four sides:** `left`, `right` (default), `top`, `bottom`. Each slides in from its edge.
 - **Three sizes:** `sm` (320px), `md` (440px, default), `lg` (640px). Capped to `viewport - 32px` on narrow viewports; always edge-anchored, never fullscreen.
@@ -90,6 +92,7 @@ const [open, setOpen] = useState(false);
 
 - ❌ Same-side stacked drawers as a navigation pattern. They visually overlap — use route changes instead.
 - ❌ Drag from inside `<Drawer.Body>` does not close the drawer. Only Header is draggable (so Body scroll works correctly).
-- ❌ For center-anchored dialogs, use `<Modal>` not Drawer.
+- ❌ For center-anchored dialogs, use `<Modal>` not Drawer. For lightweight popovers use `<Popover>` or `<DropdownMenu>`; for non-blocking notifications use `<Toast>` (not yet shipped).
+- ❌ Worrying about a `position: fixed` ancestor — the Drawer portals to `document.body`, so render it at any level.
 
 **See also:** `<Modal>` for center-anchored variant.

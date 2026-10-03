@@ -91,3 +91,15 @@ The map form — and only the map form — renders an extra wrapper `<div>` arou
 - ❌ `<Grid as="ul">` with non-`<li>` children. The component doesn't enforce list semantics; consumers must.
 - ❌ Fraction spans (other than `'100%'`) on a Grid whose `columns` isn't 12 — the span is a fixed track count, so it overflows into implicit tracks on a non-12 grid.
 - ❌ A `collapseBelow` grid in an intrinsic-width context (`Split`'s default `auto` aside track, a `Cluster` item, `width: max-content`). `container-type: inline-size` makes the grid contribute zero intrinsic width, so it renders at width 0 — the grid must get its width from its parent; give the aside a concrete width instead. The element carrying the containment also becomes the containing block for absolutely-positioned descendants (layout containment) — the grid itself for the string form, the wrapper for the map form; same box geometry either way.
+- ❌ `<Grid>` for a list of clickable items — semantics matter; use `<ul><li>` or `<Grid as="ul">` with `<li>` children.
+- ❌ Inline `gridTemplateColumns` in `style` instead of `columns` / `minColumnWidth` — it bypasses tokens and the responsive default.
+- ❌ A numeric `Grid.Item` `span` larger than `columns` — it overflows into implicit tracks, like fraction spans on a non-12 grid.
+- Under a map-form `collapseBelow`, a `Grid.Item` span wider than a step's column count becomes a full row.
+
+```tsx
+// Photo gallery — auto-fit with a smaller minimum
+<Grid minColumnWidth="160px" gap="sm">{photos.map((p) => <img key={p.id} src={p.src} />)}</Grid>
+
+// Semantic element via `as`
+<Grid as="section" columns={3} gap="md" aria-labelledby="dashboard-title">...</Grid>
+```

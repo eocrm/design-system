@@ -32,32 +32,8 @@ export interface DropdownMenuRadioGroupProps extends HTMLAttributes<HTMLDivEleme
 }
 
 /**
- * Mutually exclusive selection group. Children should be
- * `<DropdownMenu.RadioItem>`s. Renders `<div role="radiogroup">` and provides
- * the current `value` and `onValueChange` to all descendant `RadioItem`s via
- * context so they don't need prop drilling.
- *
- * @example
- * <DropdownMenu.RadioGroup value={sort} onValueChange={setSort}>
- *   <DropdownMenu.RadioItem value="name">Name</DropdownMenu.RadioItem>
- *   <DropdownMenu.RadioItem value="date">Date</DropdownMenu.RadioItem>
- *   <DropdownMenu.RadioItem value="size">Size</DropdownMenu.RadioItem>
- * </DropdownMenu.RadioGroup>
- *
- * @example
- * // Wrapped in a Group + Label for accessible section heading:
- * <DropdownMenu.Group>
- *   <DropdownMenu.Label>Sort by</DropdownMenu.Label>
- *   <DropdownMenu.RadioGroup value={sort} onValueChange={setSort}>
- *     <DropdownMenu.RadioItem value="name">Name</DropdownMenu.RadioItem>
- *     <DropdownMenu.RadioItem value="date">Date</DropdownMenu.RadioItem>
- *   </DropdownMenu.RadioGroup>
- * </DropdownMenu.Group>
- *
- * @remarks When NOT to use
- * - For an action menu where you want one of many actions to fire. Use
- *   separate `<DropdownMenu.Item>`s — RadioGroup persists a selection.
- * - For multi-select. Use `<DropdownMenu.CheckboxItem>`s.
+ * Mutually exclusive selection group of `RadioItem`s, rendered as `role="radiogroup"`.
+ * @see docs/components/DropdownMenu.md
  */
 export const RadioGroup = forwardRef<HTMLDivElement, DropdownMenuRadioGroupProps>(
   function RadioGroup({ value, onValueChange, className, children, ...rest }, ref) {
@@ -128,50 +104,8 @@ export interface DropdownMenuRadioItemProps extends Omit<
 }
 
 /**
- * Single radio item inside a `<DropdownMenu.RadioGroup>`. `role="menuitemradio"`,
- * `aria-checked` reflects whether this item's `value` matches the group's
- * current value. Defaults to `closeOnSelect=true` — radio is "the selection
- * IS the action," so picking a value closes the menu chain.
- *
- * **Checked-state visual**: when the item's `value` matches the group's value,
- * the row is tinted with the info surface color (`--badge-bg-info` /
- * `--badge-fg-info`) and gets a 2px left accent (`--color-info`). No
- * default glyph is rendered. Provide a `<DropdownMenu.ItemIndicator>` as a
- * direct child if you want an additional indicator glyph alongside the tinted
- * row.
- *
- * Must be used inside `<DropdownMenu.RadioGroup>` — throws in dev otherwise.
- *
- * @example
- * <DropdownMenu.RadioGroup value={sort} onValueChange={setSort}>
- *   <DropdownMenu.RadioItem value="name">Name</DropdownMenu.RadioItem>
- *   <DropdownMenu.RadioItem value="date">Date</DropdownMenu.RadioItem>
- * </DropdownMenu.RadioGroup>
- *
- * @example
- * // Keep menu open after selection (e.g. live-preview):
- * <DropdownMenu.RadioItem value="compact" closeOnSelect={false}>
- *   Compact
- * </DropdownMenu.RadioItem>
- *
- * @example
- * // Disambiguate rows whose labels legitimately collide. `meta` joins the
- * // accessible name, so a screen reader announces "demo RU", while
- * // typeahead still matches the bare label "demo".
- * <DropdownMenu.RadioGroup value={workspace} onValueChange={setWorkspace}>
- *   <DropdownMenu.RadioItem value="demo-eu" meta="EU">demo</DropdownMenu.RadioItem>
- *   <DropdownMenu.RadioItem value="demo-ru" meta="RU">demo</DropdownMenu.RadioItem>
- * </DropdownMenu.RadioGroup>
- *
- * @remarks When NOT to use
- * - Outside a `<DropdownMenu.RadioGroup>` — throws in dev. Wrap in RadioGroup.
- * - For multi-select. Use `<DropdownMenu.CheckboxItem>` instead.
- *
- * @remarks Anti-patterns
- * - ❌ Nesting an `<ItemIndicator>` deeper than a direct child. Detection is
- *   shallow; deeper nesting won't render in the indicator slot.
- * - ❌ Carrying a per-item qualifier (region, tenant, count) in `shortcut`.
- *   That slot is a keyboard hint and is styled as one — use `meta`.
+ * Single radio item (`role="menuitemradio"`) inside a `RadioGroup`; closes the menu on select by default.
+ * @see docs/components/DropdownMenu.md
  */
 export const RadioItem = forwardRef<HTMLDivElement, DropdownMenuRadioItemProps>(function RadioItem(
   {

@@ -41,3 +41,32 @@ const [value, setValue] = useState<Date | null>(null);
 - ARIA: typed input has `aria-haspopup="dialog"` + `aria-expanded`. Popover wrapper is `role="dialog"` (labelled by `aria-label={t('datePicker.openCalendar')}`); the grid inside is `role="grid"` with `role="gridcell"` buttons that carry `aria-selected` / `aria-disabled` as appropriate.
 - Keyboard inside the grid: ←→↑↓ move focus by 1 day, Home/End to start/end of week, PageUp/PageDown step a month, Enter/Space selects, Escape closes and returns focus to the input. Tab leaves the grid.
 - **Granularity.** Pass `granularity="minute"` to add a `<TimeField>` below the calendar grid; the trigger text becomes `MM/DD/YYYY HH:mm` (24h locales) or `MM/DD/YYYY h:mm AM/PM` (12h locales) and the hidden form mirror emits ISO local datetime (`2026-05-28T14:30`). Defaults to `'day'` (backward compat — date-only). Picking a different date re-uses the existing time-of-day, so the grid feels like it "just changes the date"; picking from `null` defaults to `00:00`. The `<TimeField>` accepts free text (parsed on blur / Enter via `parseTime` — both 24h and AM/PM shapes) AND a chevron-toggled popover with hour + minute (+ AM/PM in 12h mode) lists, plus a "Now" footer button. `timeStep` (default `15`, in minutes) controls the minute-list row count AND rounds typed input in the time field on commit; set `timeStep={1}` to disable rounding. The trigger text-input parses exactly as typed — `timeStep` does not round trigger input. `hourCycle` (default `'auto'`) forwards to the embedded TimeField and controls the trigger text — `'12'` / `'24'` force a cycle, `'auto'` derives from locale (en-US → 12h, ru-RU → 24h).
+
+```tsx
+// Uncontrolled, today as the default
+<DatePicker defaultValue={new Date()} onChange={(d) => console.log(d)} />
+
+// Constrained
+<DatePicker
+  value={value}
+  onChange={setValue}
+  min={new Date()}
+  isDateDisabled={(d) => d.getDay() === 0 || d.getDay() === 6}
+/>
+
+// Form integration via the hidden mirror
+<form action="/dates"><DatePicker name="dob" /></form>
+```
+
+The popover is portaled into `document.body`, so it escapes overflow-hidden ancestors.
+
+#### When NOT to use
+
+- Datetime with seconds precision: only `granularity="minute"` is supported; compose with a separate input.
+- Time-only fields (no date): out of scope.
+- Free-form date strings without a clear locale: use a plain `<Input>`.
+
+#### Anti-patterns
+
+- ❌ Wrapping the picker in `<label htmlFor={id}>` while also passing `aria-label` — pick one. The wrapper label is preferred.
+- ❌ Using `value` without `onChange` and expecting state to update on user input — the picker is fully controlled when `value` is passed.

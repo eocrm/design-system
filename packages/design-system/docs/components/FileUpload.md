@@ -68,3 +68,44 @@
 - ❌ Storing the file list in the component (it has no internal state). Always pass `files` + the two callbacks.
 - ❌ Setting `multiple=true` and showing only one file slot via custom CSS. The component decides dropzone visibility from `multiple` + `files.length`; don't fight it.
 - ❌ Calling `onFilesAdded` from inside `onFileReject` (or vice versa) in an attempt to "auto-retry." Reject is terminal for that file; the user has to re-drop.
+
+#### Examples and limits
+
+```tsx
+// Single-file picker (controlled)
+function ProfileImage() {
+  const [files, setFiles] = useState<FileEntry[]>([]);
+  return (
+    <FileUpload
+      files={files}
+      accept="image/*"
+      maxSize={2 * 1024 * 1024}
+      onFilesAdded={(added) =>
+        setFiles(added.map((f) => ({ id: crypto.randomUUID(), file: f, status: 'pending' })))
+      }
+      onFileRemove={(entry) => setFiles((prev) => prev.filter((e) => e.id !== entry.id))}
+    />
+  );
+}
+
+// Status walkthrough — the consumer moves each entry pending → uploading → done / error
+const upload = async (entry: FileEntry) => {
+  setFiles((prev) =>
+    prev.map((e) => (e.id === entry.id ? { ...e, status: 'uploading', progress: 0 } : e)),
+  );
+  try {
+    await uploadToS3(entry.file, (pct) =>
+      setFiles((prev) => prev.map((e) => (e.id === entry.id ? { ...e, progress: pct } : e))),
+    );
+    setFiles((prev) =>
+      prev.map((e) => (e.id === entry.id ? { ...e, status: 'done', progress: 100 } : e)),
+    );
+  } catch (err) {
+    setFiles((prev) =>
+      prev.map((e) => (e.id === entry.id ? { ...e, status: 'error', error: String(err) } : e)),
+    );
+  }
+};
+```
+
+- When NOT to use: a hidden file-picker button with no dropzone (use `<Button>` + a raw `<input type="file" hidden>`); paste-from-clipboard image upload; directory upload (`webkitdirectory` is not exposed); image thumbnails of the picked files (generic file icons only); component-owned upload state.

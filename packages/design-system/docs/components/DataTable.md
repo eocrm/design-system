@@ -73,3 +73,19 @@ const instance = useDataTable<Deal>({
 - ❌ Using `<Table>` directly when you want any of: ordering, sizing, visibility, selection, sort indicator wiring. Compose `<DataTable>` instead — the primitive `<Table>` is for static read-only views.
 - ❌ Putting interactive controls in `renderExpandedRow` that need to participate in row selection or row click. The detail row is its own `<tr>`, not part of the main row — `onRowClick` doesn't fire from inside it (by design), and `rowSelection` only tracks main-row checkboxes.
 - ⚠ Pinned rows (passed via `pinnedRows`) ALSO render a chevron when `renderExpandedRow` is set — they're expandable just like main-body rows. Decide whether your starred/anchored rows should reveal detail; if not, omit `renderExpandedRow` or filter `expandedRows` state in the consumer to ignore pinned-row ids.
+
+#### `<ColumnVisibilityTrigger>`
+
+Companion for `<DataTable>`: a ghost Button trigger plus a DropdownMenu of CheckboxItems, one per column where `enableHide !== false`. When only one hidable column is visible its item renders disabled, so the table can never reach a zero-column state. Pass the same `instance` to both `<DataTable>` and `<ColumnVisibilityTrigger>` so visibility state stays in sync.
+
+```tsx
+// Custom label + right-aligned menu
+<ColumnVisibilityTrigger instance={instance} label="Manage columns" align="end" />
+
+// Icon-only trigger
+<ColumnVisibilityTrigger instance={instance} label={null} />
+```
+
+- When NOT to use: you want a different visibility UI (a settings drawer, a multi-select combobox, a Popover with column grouping) — build it against `instance.columns`, `instance.columnVisibility` and `instance.toggleColumnVisibility`; or every column has `enableHide: false` (the menu would be empty — don't render it).
+- ❌ Passing a different `instance` to the trigger than to `<DataTable>`: visibility changes in one won't reflect in the other.
+- ❌ Rendering it when every column has `enableHide: false` — check `instance.columns` first and suppress the trigger.

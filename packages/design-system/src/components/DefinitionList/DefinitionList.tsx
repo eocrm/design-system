@@ -90,51 +90,8 @@ function flattenChildren(children: ReactNode): ReactNode[] {
 }
 
 /**
- * Compound layout primitive for semantic key/value pairs. Renders proper
- * `<dl>`/`<div>`/`<dt>`/`<dd>` HTML so screen readers announce term-description
- * pairs natively. Use this — not `Card.List` — when every row has a label.
- *
- * Compound children: `DefinitionList.Item` (wraps a term + description pair),
- * `DefinitionList.Term` (the dt), `DefinitionList.Description` (the dd, with
- * optional leading `icon` prop).
- *
- * @example
- * // Horizontal contact properties with icons.
- * <DefinitionList dividers>
- *   <DefinitionList.Item>
- *     <DefinitionList.Term>Email</DefinitionList.Term>
- *     <DefinitionList.Description icon={<Mail size={14} />}>
- *       ada@example.com
- *     </DefinitionList.Description>
- *   </DefinitionList.Item>
- *   <DefinitionList.Item>
- *     <DefinitionList.Term>Phone</DefinitionList.Term>
- *     <DefinitionList.Description icon={<Phone size={14} />}>
- *       +1 (415) 555-0142
- *     </DefinitionList.Description>
- *   </DefinitionList.Item>
- * </DefinitionList>
- *
- * @example
- * // Stacked (settings-style).
- * <DefinitionList layout="stacked">
- *   <DefinitionList.Item>
- *     <DefinitionList.Term>Workspace name</DefinitionList.Term>
- *     <DefinitionList.Description>Acme Corp</DefinitionList.Description>
- *   </DefinitionList.Item>
- * </DefinitionList>
- *
- * @remarks When NOT to use
- * - For non-keyed lists (activity feeds, list of cards). Use `Card.List` or a
- *   plain `Stack` of cards.
- * - For tabular data with multiple columns per row. Use `Table` / `DataTable`.
- *
- * @remarks Anti-patterns
- * - ❌ Putting interactive content inside `<DefinitionList.Term>`. Terms are
- *   labels; values (including links/buttons) go in `<DefinitionList.Description>`.
- * - ❌ Multiple `<DefinitionList.Description>` children under one Item.
- *   Works HTML-wise but breaks the grid layout. Render multiple Items with
- *   the same Term text instead.
+ * Compound layout primitive for semantic key/value pairs, rendered as `<dl>` / `<dt>` / `<dd>`.
+ * @see docs/components/DefinitionList.md
  */
 const DefinitionListRoot = forwardRef<HTMLDListElement, DefinitionListProps>(
   function DefinitionListRoot(
@@ -185,10 +142,10 @@ const DefinitionListRoot = forwardRef<HTMLDListElement, DefinitionListProps>(
 DefinitionListRoot.displayName = 'DefinitionList';
 
 /**
- * Wrapper div for one term + description pair. Use as `DefinitionList.Item`.
- * In horizontal layout this renders `display: contents` so dt/dd participate
- * in the parent dl's grid.
+ * Wrapper for one term + description pair (`DefinitionList.Item`).
+ * @see docs/components/DefinitionList.md
  */
+// `display: contents` in horizontal layout so dt/dd join the parent dl's grid.
 export const DefinitionListItem = forwardRef<HTMLDivElement, DefinitionListItemProps>(
   function DefinitionListItem({ className, children, ...rest }, ref) {
     return (
@@ -201,7 +158,8 @@ export const DefinitionListItem = forwardRef<HTMLDivElement, DefinitionListItemP
 DefinitionListItem.displayName = 'DefinitionListItem';
 
 /**
- * The label of one entry. Renders as `<dt>`. Use as `DefinitionList.Term`.
+ * The label of one entry, rendered as `<dt>` (`DefinitionList.Term`).
+ * @see docs/components/DefinitionList.md
  */
 export const DefinitionListTerm = forwardRef<HTMLElement, DefinitionListTermProps>(
   function DefinitionListTerm({ className, children, ...rest }, ref) {
@@ -215,9 +173,8 @@ export const DefinitionListTerm = forwardRef<HTMLElement, DefinitionListTermProp
 DefinitionListTerm.displayName = 'DefinitionListTerm';
 
 /**
- * The value of one entry. Renders as `<dd>`. Use as `DefinitionList.Description`.
- * Accepts an optional leading `icon` rendered before children, wrapped in an
- * `aria-hidden` span (decorative — the dt carries the semantic label).
+ * The value of one entry, rendered as `<dd>` with an optional leading `icon` (`DefinitionList.Description`).
+ * @see docs/components/DefinitionList.md
  */
 export const DefinitionListDescription = forwardRef<HTMLElement, DefinitionListDescriptionProps>(
   function DefinitionListDescription({ icon, className, children, ...rest }, ref) {

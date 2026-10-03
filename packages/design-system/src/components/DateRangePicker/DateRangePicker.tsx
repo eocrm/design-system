@@ -134,42 +134,10 @@ const ICON_SIZE_FOR: Record<DateRangePickerSize, number> = {
 };
 
 /**
- * Single-field date-range input with a Floating-UI popover that shows
- * two months side-by-side. Locale-aware typed parsing, min/max +
- * `isDateDisabled`, clearable, hover preview between clicks, auto-swap
- * on out-of-order picks, and separate `nameStart`/`nameEnd` form
- * mirrors. Built on the same `DatePickerGrid` as `<DatePicker>` (with a
- * new `selectionMode='range'`).
- *
- * @example
- * <DateRangePicker defaultValue={{ start: new Date(), end: new Date() }} />
- *
- * @example
- * // Controlled, constrained to a 90-day window:
- * <DateRangePicker
- *   value={range}
- *   onChange={setRange}
- *   min={new Date()}
- *   max={new Date(Date.now() + 90 * 86_400_000)}
- * />
- *
- * @example
- * // Form-mirror, two separate fields:
- * <form action="/api/bookings">
- *   <DateRangePicker nameStart="bookingStart" nameEnd="bookingEnd" />
- * </form>
- *
- * @remarks When NOT to use
- * - Single date → use `<DatePicker>`.
- * - Seconds-precision tracking → only `granularity='minute'` is supported.
- * - Time-only fields (no date) → out of scope.
- * - Multi-date selection (3+ non-contiguous dates) → out of scope.
- *
- * @remarks Anti-patterns
- * - ❌ Passing `value` without `onChange` — picker is fully controlled
- *   when `value` is set; user input has no effect.
- * - ❌ Using `defaultValue` AND `value` together — pick one.
+ * Single-field date-range input with a two-month Floating-UI popover, hover preview and auto-swap.
+ * @see docs/components/DateRangePicker.md
  */
+// Built on `DatePickerGrid` with `selectionMode='range'`.
 export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps>(
   function DateRangePicker(
     {

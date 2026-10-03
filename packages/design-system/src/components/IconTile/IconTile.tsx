@@ -55,51 +55,7 @@ export interface IconTileProps extends Omit<HTMLAttributes<HTMLSpanElement>, 'co
 
 /**
  * A small decorative tile that frames a single icon, tinted by a Palette color.
- * Use for the colored icon accent beside a stat, list row, or section heading.
- *
- * Distinct from `<Avatar>` (a person — initials/photo) and `<Badge>` (a text
- * chip with a semantic tone). IconTile holds an icon and uses categorical
- * Palette color, not status semantics.
- *
- * @example
- * <IconTile color="blue" icon={<Zap size={16} />} />
- *
- * @example
- * // Circle, decorative beside text:
- * <Cluster gap="sm" align="center">
- *   <IconTile color="amber" shape="circle" icon={<MailPlus size={14} />} />
- *   <Text>alex@acme.co</Text>
- * </Cluster>
- *
- * @example
- * // Inline with text — follows the chip's font size, sizes the glyph itself:
- * <EntityChip
- *   prefix="ENG-15"
- *   label="Migrate billing exports"
- *   icon={<IconTile size="inline" color="violet" icon={<ListTodo />} />}
- * />
- *
- * @example
- * // Standalone + meaningful → give it a label:
- * <IconTile color="green" label="Verified" icon={<Check size={16} />} />
- *
- * @remarks When NOT to use
- * - A person → `<Avatar>` (initials / photo, round).
- * - Text or a status label → `<Badge>` (text chip with semantic `tone`).
- * - A plain icon with no tinted container → render the lucide icon directly
- *   (optionally in a `<Cluster>`). IconTile is specifically the tinted shape.
- *
- * @remarks Anti-patterns
- * - A decorative (default) IconTile used as the ONLY indicator of meaning with
- *   no nearby text — pass a `label` so AT users get the meaning.
- * - `size="xs"` inside a chip or text row — it is a fixed 20px and towers over
- *   the text. Use `size="inline"`.
- * - `size="inline"` as a standalone tile (stat, list-row lead) — it is only as
- *   big as the text around it. Use a fixed size.
- *
- * @remarks A11y
- * - Decorative by default (`aria-hidden="true"`). `label` makes it
- *   `role="img"` + `aria-label`; the icon then needs no separate `aria-hidden`.
+ * @see docs/components/IconTile.md
  */
 export const IconTile = forwardRef<HTMLSpanElement, IconTileProps>(function IconTile(
   { icon, color = 'slate', size = 'md', shape = 'square', label, className, style, ...rest },

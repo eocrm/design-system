@@ -58,3 +58,26 @@
 - Field owns the control `id` — to set one, use `<Field id>`, not the control.
 - Groups: `<Field asGroup>` around `<RadioGroup>` → label becomes a `role="group"` caption.
 - ❌ Don't wrap a single `<Checkbox>`/`<Switch>` (they self-label). ❌ No validation/state — pass `error` from your form layer.
+
+```tsx
+// Radio/checkbox group — label becomes a role="group" caption
+<Field asGroup label="Notify me" error={errors.notify}>
+  <RadioGroup name="notify">
+    <Radio value="all" label="All activity" />
+    <Radio value="mentions" label="Only mentions" />
+  </RadioGroup>
+</Field>
+```
+
+#### When NOT to use
+
+- A single `<Checkbox>` / `<Switch>` — they carry their own inline `label`; use the control's `label` prop instead of double-labeling.
+- Read-only key/value display — use `<DefinitionList>`.
+- Arranging multiple fields — that is `<FormRow>` / `<FormSection>` / `<Stack>`.
+
+#### Anti-patterns
+
+- ❌ Auto-wiring a raw native `<input>` and expecting `aria-invalid`: auto-clone injects the DS `invalid` prop. For a native element use the render-prop and spread `field` (it includes `aria-invalid`).
+- ❌ Passing both `required` and `optional`.
+- ⚠️ `label` / `description` / `error` treat `0`, `NaN`, `false`, `''`, an empty array and an empty fragment (`<></>`) as ABSENT. `error={errors.map(...)}` with no errors, `label={<></>}` or `description={[]}` render nothing — no `<label>`, no description, no error text, no `invalid` flip — so the control falls back to its own `aria-label` or ends up unnamed. A real but visually empty node (`label={<span />}`, `label="   "`) or an empty one-shot iterator (`Map.prototype.values()`, a generator) still counts as present. Pass `undefined` explicitly for "none" rather than a container that might be empty.
+- ⚠️ An absent `label` also removes the `required` / `optional` marker, since both live inside the `<label>`: `<Field label={0} required>` shows no `*`.

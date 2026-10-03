@@ -238,3 +238,62 @@
   `meta` renders after the label and before `shortcut` (the keyboard hint stays rightmost). It carries no `aria-hidden`, so it **joins the accessible name** — a screen reader announces "demo RU". Because it is a prop and not a child, it stays **out of the typeahead label**: type-to-select still matches the bare label.
 
 - ❌ Using DropdownMenu as a panel (a notification centre, a header with a "Mark all as read" button, rich feed rows). It is `role="menu"`, which may only hold menu items; a header button is invalid ARIA and unreachable by the menu's arrow keys. Use `Popover` + `ScrollArea`.
+
+#### More usage
+
+```tsx
+// Controlled open (rare — usually let DropdownMenu manage state)
+<DropdownMenu open={open} onOpenChange={setOpen}>...</DropdownMenu>
+
+// Table row kebab
+<DropdownMenu>
+  <DropdownMenu.Trigger>
+    <Button variant="ghost" aria-label="Row actions">⋯</Button>
+  </DropdownMenu.Trigger>
+  <DropdownMenu.Content align="end">
+    <DropdownMenu.Item onSelect={() => view(row)}>View</DropdownMenu.Item>
+    <DropdownMenu.Item onSelect={() => archive(row)}>Archive</DropdownMenu.Item>
+  </DropdownMenu.Content>
+</DropdownMenu>
+
+// CheckboxItem that applies then closes
+<DropdownMenu.CheckboxItem checked={isOn} onCheckedChange={setOn} closeOnSelect>
+  Apply and close
+</DropdownMenu.CheckboxItem>
+
+// RadioItem that keeps the menu open (e.g. live preview)
+<DropdownMenu.RadioItem value="compact" closeOnSelect={false}>Compact</DropdownMenu.RadioItem>
+
+// Custom glyph alongside the tinted checked row
+<DropdownMenu.CheckboxItem checked={isOn} onCheckedChange={setOn}>
+  <DropdownMenu.ItemIndicator><CheckIcon size={14} /></DropdownMenu.ItemIndicator>
+  Show archived
+</DropdownMenu.CheckboxItem>
+
+// Controlled submenu
+<DropdownMenu.Sub open={subOpen} onOpenChange={setSubOpen}>...</DropdownMenu.Sub>
+
+// Item with both trailing slots: `meta` qualifies the item and joins the accessible name
+// ("Duplicate 3 files"); `shortcut` is a keyboard hint.
+<DropdownMenu.Item onSelect={onDuplicate} meta="3 files" shortcut="⌘D">Duplicate</DropdownMenu.Item>
+```
+
+#### When NOT to use
+
+- An always-visible row of actions: use a `<Cluster>` of Buttons in a toolbar. Menus are for actions that don't deserve permanent screen space.
+- Navigation between pages: use the sidebar or a `<Link>`. Menu items are for actions, not page transitions.
+- `CheckboxItem` for a one-off action (use `Item`) or for mutually exclusive choices (use `RadioGroup`); `RadioGroup` for an action menu or for multi-select (use `CheckboxItem`s).
+- `Group` around a single Item, as a generic layout primitive (use `<Stack>` / `<Cluster>`), or around a `RadioGroup` that needs no visible Label (`RadioGroup` already has `role="radiogroup"`).
+- `Label` as a clickable item: it has no `role="menuitem"` and is not keyboard-focusable; use a disabled `Item` for a selectable header-style row. Outside a `Group` it carries no `aria-labelledby` wiring.
+- `Sub` for top-level sections (use `Group` + `Label`), beyond 2–3 nesting levels, or on touch-first surfaces — submenus rely on hover and lateral arrow keys.
+
+#### Rules and anti-patterns
+
+- `RadioItem` must be inside a `RadioGroup`, and `SubTrigger` inside a `Sub` — both throw in dev otherwise. A `Sub` holds exactly one `SubTrigger` and one `SubContent`.
+- `Content` renders only while the menu is open. `Separator` is a decorative `role="separator"`, not focusable.
+- ❌ Multiple `<DropdownMenu.Trigger>`s in one `<DropdownMenu>`: use one DropdownMenu per trigger.
+- ❌ `tone="danger"` for non-destructive actions like "Filter" or "Sort"; reserve it for irreversible destructive operations.
+- ❌ Nesting a full `<DropdownMenu>` root inside another; use `<DropdownMenu.Sub>`.
+- ❌ Putting `<ItemIndicator>` deeper than a direct child of CheckboxItem / RadioItem: the custom glyph is silently dropped (the row still looks selected). In a plain `<Item>` it just renders inline as any other child.
+- ❌ Using `shortcut` for text that is not a keyboard hint (a region code, a count, a status) — use `meta`.
+- ❌ Several checked CheckboxItems in a "pick one" context: switch to `RadioGroup`.

@@ -24,3 +24,12 @@
 - Sizes: `sm` (24px) / `md` (32px, default) / `lg` (40px). Same scale as `<Select>`. (`<Button>` exposes `xs/sm/md/lg`; fields don't ship `xs` yet.)
 - **Autofill is BLOCKED by default** — `<Input />` carries `autoComplete="off"` + the 1Password / LastPass / generic data-\* opt-out hints so password managers don't misfire on search / filter / free-text fields. Set `autoComplete="email"` (or `"username"`, `"current-password"`, etc.) to opt INTO autofill for real form fields. Force the behavior either way via `disableAutofill={true | false}`.
 - Validation logic lives in your form layer (React Hook Form + Zod recommended), not in the component.
+- Not for multi-line (`Textarea`), a fixed list (`Select`), date/time (`DatePicker` / `DateRangePicker`) or password reveal (`PasswordInput`).
+- ❌ Putting validation logic inside the component. ❌ Using `placeholder` as a label — it disappears on focus; pair the Input with a real `<label>`. ❌ `type="number"` for phone numbers or zip codes — it strips leading zeros; use `inputMode="numeric"`.
+
+```tsx
+<Input size="sm" placeholder="Filter…" />
+<Input size="lg" type="search" placeholder="Search the workspace" />
+<Input invalid value={value} aria-describedby="email-error" />
+<p id="email-error">Enter a valid email.</p>
+```

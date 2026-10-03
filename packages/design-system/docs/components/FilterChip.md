@@ -76,3 +76,18 @@ const [open, setOpen] = useState(false);
   <Popover.Content maxWidth={520}>{/* range picker */}</Popover.Content>
 </Popover>;
 ```
+
+```tsx
+// Mixed content — Value accepts any ReactNode
+<FilterChip.Value tone="success">
+  <Avatar size="2xs" name="Sarah" /> Sarah
+</FilterChip.Value>
+
+// Palette-color dot (matches an OptionsPicker group color)
+<FilterChip.Value color="violet">Design</FilterChip.Value>
+```
+
+- `<FilterChip.Label>` is the muted category lead-in (`Event`, `Tenant`, `Stage`); omit it for value-only chips where the category is implicit.
+- Not for tags on an entity (deal labels) — use `<Badge>`; tags don't carry a `Label: Value` shape.
+- ❌ Interactive children inside `<FilterChip.Label>` / `<FilterChip.Value>` — the dismiss button (and the `onActivate` body button) are the only interactive targets; nesting a Button breaks the `role="group"` composition and confuses screen readers.
+- ❌ Expecting the chip to animate out on `onDismiss` — the consumer's state update unmounts it; wrap it in your own transition if you need one.

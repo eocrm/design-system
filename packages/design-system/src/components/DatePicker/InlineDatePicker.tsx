@@ -85,43 +85,10 @@ export interface InlineDatePickerProps extends Omit<
 }
 
 /**
- * Inline single-date calendar — same month grid as `<DatePicker>` but
- * always rendered in flow (no input, no popover). Composes the shared
- * `<DatePickerGrid>` in single-mode.
- *
- * Cursor anchors to `value ?? new Date()` on mount. It re-anchors each
- * time `value` transitions from `null` to a non-null date (e.g., loading
- * an async initial value, or a consumer clearing and re-setting). After
- * a transition, subsequent non-null `value` changes do not move the
- * cursor — the consumer owns navigation into the new month via `ref`.
- *
- * @example
- * <InlineDatePicker value={date} onChange={setDate} />
- *
- * @example
- * // Constrained + form-mirror:
- * <form action="/api/dates">
- *   <InlineDatePicker name="dob" min={new Date()} />
- *   <button type="submit">Save</button>
- * </form>
- *
- * @example
- * // Disabled (read-only display):
- * <InlineDatePicker disabled defaultValue={new Date()} />
- *
- * @remarks When NOT to use
- * - Compact form field → use `<DatePicker>` (the popover variant).
- * - Choosing a range → use `<InlineDateRangePicker>`.
- * - Seconds-precision tracking → only `granularity='minute'` is supported.
- * - Time-only fields (no date) → out of scope.
- *
- * @remarks Anti-patterns
- * - ❌ Rendering multiple `<InlineDatePicker>`s in the same flex row
- *   without giving them their intrinsic width — the calendar gets
- *   squashed. Wrap in `<Stack>` or give each a column.
- * - ❌ Using `value` without `onChange` — the picker is controlled when
- *   `value` is set; user clicks have no effect.
+ * Inline single-date calendar: the `<DatePicker>` month grid always rendered in flow (no input, no popover).
+ * @see docs/components/InlineDatePicker.md
  */
+// Composes the shared `DatePickerGrid` in single mode.
 export const InlineDatePicker = forwardRef<HTMLDivElement, InlineDatePickerProps>(
   function InlineDatePicker(
     {

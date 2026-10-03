@@ -122,3 +122,21 @@ interface UseCropPreviewOptions extends ExtractCropOptions {
 - ❌ `<ImageCrop ref={ref}>` expecting `.getBlob()`. There's no imperative API. The extraction utility is a top-level export.
 - ❌ Calling `URL.revokeObjectURL(previewUrl)` from `useCropPreview` manually. The hook owns the URL lifecycle.
 - ❌ Cropping a circular avatar at the canvas level. Crop rectangular, then CSS-mask in the consumer.
+- Not for server-side cropping (send `value`'s `CropArea` coordinates to your backend instead of calling `extractCropBlob`), rotation (not supported), or multi-touch / pinch-zoom (single-pointer drag + slider zoom only).
+
+```tsx
+// Free aspect (no aspectRatio prop)
+<ImageCrop src={imageUrl} value={crop} onChange={setCrop} />
+
+// Canonical "pick → crop → save" flow inside a Modal
+<Modal isOpen onClose={cancel}>
+  <Modal.Header>Crop your photo</Modal.Header>
+  <Modal.Body>
+    <ImageCrop src={file} value={crop} onChange={setCrop} aspectRatio={1} />
+  </Modal.Body>
+  <Modal.Footer>
+    <Button variant="secondary" onClick={cancel}>Cancel</Button>
+    <Button onClick={handleSave} disabled={!crop}>Save</Button>
+  </Modal.Footer>
+</Modal>
+```

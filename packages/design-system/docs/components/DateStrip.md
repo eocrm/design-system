@@ -44,3 +44,13 @@ const [day, setDay] = useState<string | null>(null);
 - ❌ No `aria-label` on the strip — the month heading names the group. ❌ No `Date`/`toISOString()` for `date`.
 - ❌ In an intrinsic-width context (`Split`'s default `auto` aside track, a `Cluster` item, `width: max-content`) it renders at width 0 — `container-type: inline-size` zeroes its intrinsic-width contribution; give the parent a concrete width (e.g. `asideWidth` on a Split). It is also the containing block for absolutely-positioned descendants (layout containment).
 - When NOT to use: any-date picking → `<InlineDatePicker>`; events → `<Calendar>`; times → `<SlotGrid>`.
+- ❌ Building `date` from `toISOString()` of a local-midnight `Date` — it shifts a day west of UTC. Produce the business-timezone calendar day.
+- When NOT to use: scheduling or showing events → `<Calendar>`; free-form time entry → `<TimeField>`.
+
+```tsx
+// Booking time step: DateStrip picks the day, SlotGrid the time.
+<Stack gap="lg">
+  <DateStrip days={week} value={day} onChange={setDay} onPrevious={prev} onNext={next} />
+  <SlotGrid groups={slotsFor(day)} value={slot} onChange={setSlot} />
+</Stack>
+```

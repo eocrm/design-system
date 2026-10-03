@@ -43,3 +43,33 @@ const [range, setRange] = useState<DateRange | null>(null);
 - Keyboard inside a grid: ←→↑↓ move focus by 1 day, Home/End to start/end of week, PageUp/PageDown step a month, Enter/Space drives the same first-click → second-click flow, Escape closes and returns focus to the input. With selection-start set, the focused cell acts as the hover end so the preview range follows arrow keys.
 - Reuses `<DatePickerGrid>` via `selectionMode='range'` + `rangeStart`/`rangeEnd`/`hoverDate`/`onHoverDate` + `chevrons={false}`. The two grids share the same cursor; the picker renders its own prev/next chevrons outside them.
 - **Granularity.** Pass `granularity="minute"` to add dual `<TimeField>`s (start + end) below the two-month grid; the trigger text becomes `MM/DD/YYYY HH:mm — MM/DD/YYYY HH:mm` (24h locales) or `MM/DD/YYYY h:mm AM/PM — MM/DD/YYYY h:mm AM/PM` (12h locales) and the hidden form mirrors emit ISO local datetime. Defaults to `'day'` (backward compat). The start/end time inputs are shown and editable in the popover even before a range is picked — defaulting to `00:00` start / `23:59` end. Times set in this empty state are applied when the range is committed (no need to seed a placeholder range), and existing times are preserved across subsequent date picks. Same-day ranges silently clamp end-time to ≥ start-time on every commit; different-day ranges are not clamped. `timeStep` (default `15`, in minutes) applies to BOTH TimeFields, controlling each minute-list row count AND rounding typed input in the time fields on commit; set `timeStep={1}` to disable rounding. The trigger text-input parses exactly as typed — `timeStep` does not round trigger input. `hourCycle` (default `'auto'`) forwards to both embedded TimeFields and controls the trigger text — `'12'` / `'24'` force a cycle, `'auto'` derives from locale.
+
+```tsx
+// Uncontrolled
+<DateRangePicker defaultValue={{ start: new Date(), end: new Date() }} />
+
+// Controlled, constrained to a 90-day window
+<DateRangePicker
+  value={range}
+  onChange={setRange}
+  min={new Date()}
+  max={new Date(Date.now() + 90 * 86_400_000)}
+/>
+
+// Form mirror, two separate fields
+<form action="/api/bookings">
+  <DateRangePicker nameStart="bookingStart" nameEnd="bookingEnd" />
+</form>
+```
+
+#### When NOT to use
+
+- Single date: use `<DatePicker>`.
+- Seconds-precision tracking: only `granularity="minute"` is supported.
+- Time-only fields (no date): out of scope.
+- Multi-date selection (3+ non-contiguous dates): out of scope.
+
+#### Anti-patterns
+
+- ❌ Passing `value` without `onChange` — the picker is fully controlled when `value` is set; user input has no effect.
+- ❌ Using `defaultValue` AND `value` together — pick one.

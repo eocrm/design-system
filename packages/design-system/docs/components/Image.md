@@ -55,3 +55,20 @@ backgrounds → `background-image`; icons → lucide / inline SVG.
   ariaLabel={`Preview ${att.filename}`}
 />
 ```
+
+```tsx
+// Fixed 40px thumbnail (dense table cell) — no width:100% stretch
+<Image src={url} alt="report.pdf preview" size="lg" objectFit="cover" />
+
+// Logo contained on its muted box, square corners
+<Image src={logo} alt="Acme Corp" objectFit="contain" radius="none" />
+
+// Eager above-the-fold hero with a custom error fallback
+<Image src={hero} alt="Welcome aboard" loading="eager" aspectRatio={2} fallback={<EmptyState title="Couldn't load the hero image" />} />
+```
+
+The wrapper fills its container's width: give it an `aspectRatio` (or a height) so the box is reserved before the image arrives, unless you pass `size`. Native `width` / `height` attributes on the `<img>` are intrinsic-ratio hints only, not the rendered size.
+
+- ❌ Empty `alt` for a meaningful image — pass a real description.
+- ❌ No `aspectRatio` / height when you care about layout shift.
+- ❌ Wrapping `<Image>` in a `<Button>` / `<Link>` for a clickable thumbnail — it paints button/link chrome over it; use `interactive` / `onClick` for a flush trigger.

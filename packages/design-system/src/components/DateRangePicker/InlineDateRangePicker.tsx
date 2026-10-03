@@ -95,46 +95,10 @@ export interface InlineDateRangePickerProps extends Omit<
 }
 
 /**
- * Inline date-range calendar — same two-month grid as `<DateRangePicker>`
- * but always rendered in flow (no input, no popover). Composes two
- * `<DatePickerGrid>` instances in `selectionMode='range'` with the same
- * click-1 / click-2 / restart selection machine.
- *
- * Cursor anchors to `value?.start ?? new Date()` on mount. It re-anchors
- * each time `value` transitions from `null` to a non-null range (e.g.,
- * loading an async initial value, or a consumer clearing and re-setting).
- * After a transition, subsequent non-null `value` changes do not move
- * the cursor — the consumer owns navigation into the new month via `ref`.
- *
- * The external prev/next chevrons in the header shift both grids by
- * ±1 month at once. Keyboard cross-grid navigation works in both
- * directions (per-grid `onCursorChange` callbacks; right grid's
- * translates via `addMonths(c, -1)`).
- *
- * @example
- * <InlineDateRangePicker value={range} onChange={setRange} />
- *
- * @example
- * <form action="/api/bookings">
- *   <InlineDateRangePicker
- *     nameStart="bookingStart"
- *     nameEnd="bookingEnd"
- *     min={new Date()}
- *   />
- *   <button type="submit">Save</button>
- * </form>
- *
- * @remarks When NOT to use
- * - Compact form field → use `<DateRangePicker>` (the popover variant).
- * - Single-date selection → use `<InlineDatePicker>`.
- * - Seconds-precision tracking → only `granularity='minute'` is supported.
- * - Time-only fields (no date) → out of scope.
- *
- * @remarks Anti-patterns
- * - ❌ Wrapping in a narrow container (< ~32rem). The two grids need
- *   side-by-side room; squashing them clips the right grid.
- * - ❌ Using `value` without `onChange`.
+ * Inline date-range calendar: the two-month `<DateRangePicker>` grid always rendered in flow (no input, no popover).
+ * @see docs/components/InlineDateRangePicker.md
  */
+// Two `DatePickerGrid`s in range mode; the right grid's `onCursorChange` translates via `addMonths(c, -1)`.
 export const InlineDateRangePicker = forwardRef<HTMLDivElement, InlineDateRangePickerProps>(
   function InlineDateRangePicker(
     {

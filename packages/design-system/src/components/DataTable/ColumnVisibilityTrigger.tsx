@@ -33,53 +33,8 @@ export interface ColumnVisibilityTriggerProps<T = unknown> extends Omit<
 }
 
 /**
- * Built-in companion for `<DataTable>`. Renders a ghost Button trigger + DropdownMenu
- * of CheckboxItems — one per column where `enableHide !== false`.
- *
- * Guards against hiding the last visible hidable column: when only one
- * hidable column is currently visible, its menu item renders as disabled so
- * the table can never reach a zero-column state.
- *
- * Pair with `useDataTable` — pass the same `instance` to both `<DataTable>` and
- * `<ColumnVisibilityTrigger>` so visibility state stays in sync.
- *
- * @example
- * const instance = useDataTable<Row>({ columns, data, getRowId });
- * // Render the trigger somewhere above or beside the table.
- * <Cluster justify="end">
- *   <ColumnVisibilityTrigger instance={instance} />
- * </Cluster>
- * <DataTable instance={instance} />
- *
- * @example
- * // Custom label + right-aligned menu:
- * <ColumnVisibilityTrigger
- *   instance={instance}
- *   label="Manage columns"
- *   align="end"
- * />
- *
- * @example
- * // Icon-only trigger:
- * <ColumnVisibilityTrigger instance={instance} label={null} />
- *
- * @remarks When NOT to use
- * - When the consumer wants a different visibility UI (e.g. a settings drawer,
- *   a multi-select combobox, or a Popover with column grouping). Build it
- *   directly against `instance.columns`, `instance.columnVisibility`, and
- *   `instance.toggleColumnVisibility` — `ColumnVisibilityTrigger` is a
- *   convenience wrapper, not the only way to drive visibility state.
- * - When all columns have `enableHide: false`. The menu will be empty; don't
- *   render this component at all in that case.
- *
- * @remarks Anti-patterns
- * - ❌ Passing a different `instance` to `<ColumnVisibilityTrigger>` than to
- *   `<DataTable>`. Both must receive the same instance reference; split instances
- *   means visibility changes in the trigger won't reflect in the table (and
- *   vice versa).
- * - ❌ Rendering `<ColumnVisibilityTrigger>` when every column has
- *   `enableHide: false`. The dropdown will be empty — check `instance.columns`
- *   first and conditionally suppress the trigger.
+ * Built-in companion for `<DataTable>`: a ghost Button trigger plus a DropdownMenu of column-visibility CheckboxItems.
+ * @see docs/components/DataTable.md
  */
 function ColumnVisibilityTriggerInner<T>(
   {

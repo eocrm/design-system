@@ -32,23 +32,8 @@ export interface GridItemProps extends HTMLAttributes<HTMLElement> {
 }
 
 /**
- * A cell of `<Grid>` with an explicit column span. Opt-in — plain children
- * are still valid Grid cells. See `GridItemSpan` for the span model
- * (numeric tracks vs 12-col fractions).
- *
- * @example
- * // Dashboard widgets on a 12-column grid, collapsing under 640px.
- * <Grid columns={12} gap="md" collapseBelow="md">
- *   <Grid.Item span="25%"><Card>Small</Card></Grid.Item>
- *   <Grid.Item span="75%"><Card>Wide</Card></Grid.Item>
- *   <Grid.Item span="100%"><Card>Full row</Card></Grid.Item>
- * </Grid>
- *
- * @remarks Anti-patterns
- * - ❌ Fraction spans (other than `'100%'`) with `columns` ≠ 12 — the span
- *   is a fixed track count (e.g. `'50%'` = 6 tracks), so a 4-column grid
- *   overflows into implicit tracks.
- * - ❌ Numeric `span` larger than `columns` — same implicit-track overflow.
+ * A cell of `<Grid>` with an explicit column span.
+ * @see docs/components/Grid.md
  */
 export const GridItem = forwardRef<HTMLElement, GridItemProps>(function GridItem(
   { span, as = 'div', className, style, ...rest },

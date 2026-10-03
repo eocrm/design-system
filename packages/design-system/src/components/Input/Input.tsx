@@ -50,49 +50,8 @@ const AUTOFILL_DISABLED_PROPS = {
 };
 
 /**
- * Single-line text input. Forwards all native `<input>` attributes — `type`,
- * `placeholder`, `value`/`onChange`, `disabled`, `readOnly`, `pattern`,
- * `autoComplete`, `inputMode`, etc. (The native HTML `size` attribute is
- * shadowed by the component-level `size` prop — see `InputProps.size`.)
- *
- * The component is intentionally dumb. Validation logic lives in your form
- * layer (React Hook Form + Zod recommended); pass the result down via `invalid`.
- *
- * @example
- * // Controlled, with a real label:
- * <label>
- *   Email
- *   <Input
- *     type="email"
- *     autoComplete="email"
- *     value={email}
- *     onChange={(e) => setEmail(e.target.value)}
- *   />
- * </label>
- *
- * @example
- * // Sized:
- * <Input size="sm" placeholder="Filter…" />
- * <Input size="lg" type="search" placeholder="Search the workspace" />
- *
- * @example
- * // Error state:
- * <Input invalid value={value} aria-describedby="email-error" />
- * <p id="email-error">Enter a valid email.</p>
- *
- * @remarks When NOT to use
- * - Multi-line → use `Textarea`.
- * - Choosing from a fixed list → use `Select`.
- * - Date/time → use `DatePicker` / `DateRangePicker`.
- * - Password reveal/toggle → use `PasswordInput`.
- *
- * @remarks Anti-patterns
- * - ❌ Putting validation logic *inside* the component. The Input is dumb on
- *   purpose — validation lives in your form layer.
- * - ❌ Using `placeholder` as a label. Placeholders disappear on focus. Use a
- *   real `<label>` and pair the Input with it.
- * - ❌ `type="number"` for things like phone numbers or zip codes — strips
- *   leading zeros and breaks formatting. Use `inputMode="numeric"` instead.
+ * Single-line text input that forwards all native `<input>` attributes.
+ * @see docs/components/Input.md
  */
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   { invalid, size = 'md', disableAutofill, className, ...props },

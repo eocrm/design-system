@@ -18,32 +18,8 @@ export interface DotProps extends HTMLAttributes<HTMLSpanElement> {
 }
 
 /**
- * A bare, background-less colored circle (`--size-badge-dot`, 6px) for
- * color-coding affordances — a leading dot on a filter trigger / `FilterChip`,
- * a status indicator, a legend swatch. Unlike `<Badge dot>` it paints NO badge
- * surface; it is just the dot. Decorative: rendered `aria-hidden` by default —
- * always pair it with a visible label / accessible text (the dot alone conveys
- * nothing to assistive tech).
- *
- * Pass `color` for any of the 30 `PaletteColor`s, or `tone` for one of the 6
- * semantic `BadgeTone`s. `color` wins if both are set; neither → `neutral`.
- *
- * @example
- * // Palette color, paired with a label:
- * <Cluster gap="xs"><Dot color="violet" /> Range</Cluster>
- *
- * @example
- * // Semantic tone:
- * <Dot tone="success" />
- *
- * @remarks When NOT to use
- * - As a status pill WITH text → use `<Badge>` (it owns a surface + label).
- * - As the sole signal of meaning → a bare dot is decorative (`aria-hidden`);
- *   always accompany it with text or an accessible label.
- *
- * @remarks Anti-patterns
- * - ❌ Relying on the dot color alone to convey state to all users — color is
- *   not an accessible signal on its own; pair with text.
+ * A bare, background-less colored circle for color-coding affordances (leading dot, status indicator, legend swatch).
+ * @see docs/components/Dot.md
  */
 export const Dot = forwardRef<HTMLSpanElement, DotProps>(function Dot(
   { color, tone = 'neutral', className, style, 'aria-hidden': ariaHidden, ...props },

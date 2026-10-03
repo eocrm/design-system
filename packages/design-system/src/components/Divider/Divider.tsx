@@ -56,47 +56,8 @@ const SIZE_CLASS: Record<DividerSize, string> = {
 };
 
 /**
- * Thin separator primitive. Horizontal (default) or vertical, solid or
- * dashed, three size tiers, optional centered label.
- *
- * When no `children` are passed, renders a native `<hr>` (the right HTML
- * semantic for a thematic break). When `children` is set, the root becomes
- * `<div role="separator">` with two line spans flanking the label — HTML
- * `<hr>` cannot have children.
- *
- * No spacing prop — the parent owns layout per Rule 4. Use Stack's `gap`
- * around the Divider to control spacing.
- *
- * @example
- * // Default — horizontal solid line
- * <Divider />
- *
- * @example
- * // Vertical separator inside a toolbar Cluster
- * <Cluster gap="sm">
- *   <Button>Edit</Button>
- *   <Divider orientation="vertical" />
- *   <Button>Duplicate</Button>
- * </Cluster>
- *
- * @example
- * // Labeled (auth-form pattern)
- * <Divider>OR</Divider>
- *
- * @example
- * // Variants + sizes
- * <Divider variant="dashed" />
- * <Divider size="lg" />
- *
- * @remarks When NOT to use
- * - Below a heading → just use the heading's `border-bottom`.
- * - Between unrelated stacked sections → use Stack with `gap` instead.
- * - Tone-driven separators ("error" / "success") → use `<Alert>`.
- *
- * @remarks Anti-patterns
- * - ❌ `<Divider orientation="vertical">OR</Divider>` — text wraps awkwardly.
- * - ❌ `<Divider size="lg" />` for casual breaks. Reserve `lg` (3px) for strong hierarchy.
- * - ❌ `<Divider style={{ marginY: 16 }} />` — parent owns spacing.
+ * Thin separator primitive: horizontal or vertical, solid or dashed, three sizes, optional centered label.
+ * @see docs/components/Divider.md
  */
 export const Divider = forwardRef<HTMLElement, DividerProps>(function Divider(
   { orientation = 'horizontal', variant = 'solid', size = 'sm', children, className, ...props },

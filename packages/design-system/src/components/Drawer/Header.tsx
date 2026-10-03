@@ -14,10 +14,8 @@ export interface DrawerHeaderProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * Title bar at the top of the drawer. Auto-registers its heading id with
- * the drawer's context (drives aria-labelledby). Built-in × close button on
- * the right edge unless `closeButton={false}`. The Header is the drag-to-close
- * origin: touchstart/move/end on the Header drives the swipe gesture.
+ * Title bar at the top of the drawer: names the dialog, shows a close button and is the drag-to-close origin.
+ * @see docs/components/Drawer.md
  */
 export const Header = forwardRef<HTMLDivElement, DrawerHeaderProps>(function Header(
   { closeButton = true, className, children, ...rest },

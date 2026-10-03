@@ -165,33 +165,7 @@ export interface IconPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, 'o
 
 /**
  * Controlled single-select icon picker with a compact Popover radio grid.
- *
- * @example
- * const [icon, setIcon] = useState('flame');
- * <IconPicker value={icon} options={iconOptions} onChange={setIcon} />
- *
- * @example
- * <Field label="Status icon">
- *   <IconPicker value={icon} options={iconOptions} onChange={setIcon} />
- * </Field>
- *
- * @example
- * <Cluster gap="sm" align="center">
- *   <IconPicker value={icon} options={iconOptions} onChange={setIcon} />
- *   <Text>{icon}</Text>
- * </Cluster>
- *
- * @remarks When NOT to use
- * - For a small, always-visible set of mutually exclusive text choices; use
- *   `<RadioGroup>` instead.
- * - For actions rather than a persistent value; use `<DropdownMenu>`.
- * - For an uncontrolled selection; IconPicker is controlled-only.
- *
- * @remarks Anti-patterns
- * - Do not pass duplicate option values; values are React keys and stable selection identities.
- * - Do not use icon codes such as `"flame"` or `"zap"` as labels; provide readable names such
- *   as `"Flame"` or `"Lightning"`.
- * - Do not place buttons, links, or other focusable content inside an option glyph.
+ * @see docs/components/IconPicker.md
  */
 export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function IconPicker(
   {

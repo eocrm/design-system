@@ -35,3 +35,13 @@ const options = [
 - `<Field label>` names the trigger with the visible label plus the selected option, and forwards description and invalid state to that button; the dialog and radiogroup use only the visible Field label. These attributes do not sit on the role-less wrapper. `required` remains a visible Field marker rather than unsupported `aria-required` on the native button.
 - Use it for compact visual choices; use `Select` when visible option text matters.
 - Labels must be human-readable and values unique. Do not pass icon codes as labels.
+- Controlled-only. Not for a small always-visible set of text choices (use `<RadioGroup>`) or for actions rather than a persistent value (use `<DropdownMenu>`).
+- Do not place buttons, links or other focusable content inside an option glyph.
+
+```tsx
+const [icon, setIcon] = useState('flame');
+<Cluster gap="sm" align="center">
+  <IconPicker value={icon} options={iconOptions} onChange={setIcon} />
+  <Text>{icon}</Text>
+</Cluster>;
+```

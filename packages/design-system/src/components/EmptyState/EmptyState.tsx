@@ -70,68 +70,8 @@ function clampHeading(level: EmptyStateHeadingLevel | undefined): EmptyStateHead
 }
 
 /**
- * Empty-state container — opinionated "nothing here" treatment. Renders
- * an optional icon, a required title (as a semantic heading), an optional
- * description, and optional action(s), stacked vertically with token-correct
- * spacing.
- *
- * Use to keep empty states consistent across the app. For unusual layouts,
- * compose `<Stack>` + `<Button>` directly — this component is deliberately
- * inflexible.
- *
- * @example
- * <EmptyState
- *   icon={<Inbox size={32} />}
- *   title="No contacts yet"
- *   description="Add your first contact to get started."
- *   actions={<Button>Add contact</Button>}
- * />
- *
- * @example
- * // Multiple actions:
- * <EmptyState
- *   icon={<Search size={32} />}
- *   title="No results"
- *   description="Try a different query or clear the filters."
- *   actions={
- *     <Cluster gap="sm" justify="center">
- *       <Button onClick={clearFilters}>Clear filters</Button>
- *       <Button variant="ghost" onClick={openSearch}>New search</Button>
- *     </Cluster>
- *   }
- * />
- *
- * @example
- * // Inline (in a Select dropdown's empty results):
- * <EmptyState
- *   size="sm"
- *   icon={<SearchX size={24} />}
- *   title="No matches"
- * />
- *
- * @remarks When NOT to use
- * - **Loading state** → use `<Skeleton>`. Skeleton implies "data coming";
- *   EmptyState implies "nothing here, possibly forever."
- * - **Error state** → consumer renders a danger-tinted treatment. We
- *   intentionally don't ship `variant="error"` because errors have
- *   different a11y (live regions, retry actions) than empty states.
- * - **Page-level 404 / 500** → use a dedicated error page, not EmptyState.
- *
- * @remarks Anti-patterns
- * - Passing a long sentence as `title`. Keep titles short — long
- *   strings hurt heading-navigation UX.
- * - Multiple primary action buttons. Empty states should have ONE
- *   clear next action; secondaries are ghost variant.
- *
- * @remarks A11y
- * - The wrapper `<section>` only becomes a screen-reader landmark when it
- *   has an accessible name. Pass `aria-label` (or `aria-labelledby`) when
- *   the empty state should be navigable as a region — typically when it
- *   IS the page's primary content (with `headingLevel={1 | 2}`).
- * - The icon does NOT receive `aria-hidden` automatically — consumer's
- *   icon may be semantic (e.g., a country-flag icon in a "No results for
- *   this region" state). Pass `aria-hidden="true"` on the icon when it
- *   is purely decorative.
+ * Empty-state container: optional icon, required title heading, optional description and actions, stacked vertically.
+ * @see docs/components/EmptyState.md
  */
 export const EmptyState = forwardRef<HTMLElement, EmptyStateProps>(function EmptyState(
   {

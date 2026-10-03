@@ -66,71 +66,8 @@ export interface FieldProps extends Omit<HTMLAttributes<HTMLDivElement>, 'childr
 const MSG_SIZE: Record<FieldSize, TextSize> = { sm: 'xs', md: 'sm', lg: 'sm' };
 
 /**
- * Labeled-control unit — the editable sibling of `<DefinitionList>`. Wraps a
- * single control with its label, helper/error message, required marker, and the
- * `id` / `aria-labelledby` / `aria-describedby` / `aria-invalid` association by
- * construction. When a label is present, Field also injects `aria-labelledby`
- * onto the cloned child, so composite controls that forward unknown ARIA props
- * (Select, Slider, ColorPicker, IconPicker, FileUpload, TimeField) get an accessible name
- * automatically. For wrapped/nested DOM that doesn't forward props, use the
- * render-prop and spread `field` (it carries `aria-labelledby`).
- *
- * The common case auto-wires a single child via `cloneElement`. For wrapped,
- * nested, or native controls, pass a render-prop and spread the `field` object.
- *
- * Field owns NO validation/state — pass `error` from your form layer.
- *
- * @example
- * // Auto-wired (DS control):
- * <Field label="Work email" error={errors.email} required>
- *   <Input type="email" />
- * </Field>
- *
- * @example
- * // Render-prop escape hatch (wrapped / native control):
- * <Field label="Email" error={errors.email}>
- *   {(field) => <input type="email" {...field} />}
- * </Field>
- *
- * @example
- * // Radio/checkbox group — label becomes a role="group" caption:
- * <Field asGroup label="Notify me" error={errors.notify}>
- *   <RadioGroup name="notify">
- *     <Radio value="all" label="All activity" />
- *     <Radio value="mentions" label="Only mentions" />
- *   </RadioGroup>
- * </Field>
- *
- * @remarks When NOT to use
- * - A single `<Checkbox>` / `<Switch>` — they carry their own inline `label`; wrapping
- *   them in a top-labeled Field double-labels. Use the control's `label` prop instead.
- * - Read-only key/value display — use `<DefinitionList>`, not a Field.
- * - Arranging multiple fields — that's `<FormRow>` / `<FormSection>` / `<Stack>`, not Field.
- *
- * @remarks Anti-patterns
- * - ❌ Setting the control's `id` directly to "override" Field — Field owns the id so the
- *   label always matches. Pass `<Field id>` instead.
- * - ❌ Auto-wiring a raw native `<input>` and expecting `aria-invalid` — auto-clone injects
- *   the DS `invalid` prop (controls map it to `aria-invalid`). For a native element use the
- *   render-prop and spread `field` (it includes `aria-invalid`).
- * - ❌ Passing both `required` and `optional`.
- * - ⚠️ `label` / `description` / `error` treat `0`, `NaN`, `false`, `''`, an
- *   empty array, and an empty fragment (`<></>`) as ABSENT — not just the
- *   falsy cases. `error={errors.map(...)}` with no errors, `label={<></>}`,
- *   `description={[]}` all render nothing at all: no `<label>`, no
- *   description `<Text>`, no error `<Text>` (and no `invalid` flip for
- *   `error`) — the control falls back to its own `aria-label` if it has
- *   one, or ends up unnamed otherwise. This can't see a REAL but
- *   visually-empty node (`label={<span />}`, `label="   "`) — those still
- *   count as present, and neither can it see an EMPTY one-shot iterator
- *   (`Map.prototype.values()`, a generator) — those count as present too,
- *   since checking would drain the very iterator React needs to render.
- *   Pass `undefined` explicitly for "none" rather than a container that
- *   might be empty.
- * - ⚠️ An absent `label` also removes the `required`/`optional` marker —
- *   both live inside the `<label>` element, which isn't rendered at all
- *   when the label has no content. `<Field label={0} required>` shows no
- *   `*`; `<Field label={0} optional>` shows no `(optional)` either.
+ * Labeled-control unit, the editable sibling of `<DefinitionList>`: wires label, helper/error text and ARIA by construction.
+ * @see docs/components/Field.md
  */
 export const Field = forwardRef<HTMLDivElement, FieldProps>(function Field(
   {

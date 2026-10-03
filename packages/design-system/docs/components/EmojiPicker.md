@@ -68,3 +68,17 @@ localStorage), update it in `onSelect` (move-to-front + de-dupe + cap), pass it 
 of `Button`s; a searchable grid is overkill for 3-6 choices. Also not for inline
 `:smile`-style autocomplete (the editor's suggestion engine owns that) or for
 rendering existing reaction counts (the consumer builds that display).
+
+```tsx
+// Controlled wrapper
+const [open, setOpen] = useState(false);
+<EmojiPickerPopover open={open} onOpenChange={setOpen} trigger={<Button>Emoji</Button>} onSelect={setEmoji} />
+
+// Reaction toggle on a comment
+<EmojiPickerPopover
+  trigger={<Button size="sm" variant="secondary">React</Button>}
+  onSelect={(char) => toggleReaction(commentId, char)}
+/>
+```
+
+❌ Expecting it to show which emoji a message already has or how many times — it only chooses.

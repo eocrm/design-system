@@ -94,3 +94,11 @@ import { Link as RouterLink } from 'react-router-dom';
 - **`labelWeight`**: `'medium'` (default, matches a plain chip / the RichText `@mention`) applies to `label` only — `prefix` has no weight rule of its own and stays inherited (normal). `'semibold'` is the one value that also touches `prefix`, setting BOTH `prefix` and `label` together (a heavier key + title, e.g. a segmented task chip). Backed by a component token (`--entity-chip-label-font-weight-semibold`), not by wrapping `label` in a styled `<Text>` — see the anti-pattern below.
 - **When NOT to use**: plain status with no linked entity → `<Badge>`/`<PillMenu>`; standalone navigation with no icon/prefix/status chrome → `<Link>`; removable filter pills → `<FilterChip>`.
 - **Anti-pattern**: nesting a `<Badge>` inside another `<Badge>` to fake an entity-with-status chip — `EntityChip` replaces that composition. `status.color` and the chip's own `color` are `PaletteColor` names, never raw hex strings. Omitting a link target (`href`/`as`) is also an anti-pattern — an EntityChip should link to its entity. Nesting `<IconTile>`/`<Badge>` in `icon`/`trailing` to fake coloured parts is also an anti-pattern — use `before`/`after` segments instead. Wrapping `label` in a styled `<Text weight="semibold">` to get a heavier title is also an anti-pattern — use `labelWeight="semibold"`; it buys nothing anyway, since the clipped-label tooltip always renders the label's plain text regardless of how `label` is styled.
+- ❌ Block-level children (e.g. a `<div>`) inside `label` / `prefix` — the inline-safety contract requires span-only content.
+- ❌ An icon segment without a meaningful `label` — it is the segment's accessible name; a decorative glyph belongs in `icon`, not a segment.
+
+```tsx
+// Loading / unavailable — still live links with a target
+<EntityChip href="/contacts/7" label="Contact" loading />
+<EntityChip href="/contacts/9" label="Deleted contact" unavailable />
+```
