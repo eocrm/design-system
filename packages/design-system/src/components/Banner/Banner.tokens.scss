@@ -1,0 +1,42 @@
+@use '../TopBar/TopBar.tokens';
+
+// Banner.tokens.scss — Component-scoped tokens for <Banner>: the full-width
+// app/system message bar mounted in AppLayout's `banner` / `contextBanner`
+// slots. Per-tone tinted background + rule/icon colour, shared shape and type.
+:root {
+  --banner-fg: var(--color-fg);
+  --banner-padding-y: var(--space-2);
+
+  // Matches TopBar's inline padding so the icon lines up with TopBar content.
+  --banner-padding-x: var(--topbar-padding-x);
+  --banner-gap: var(--space-3);
+  --banner-row-gap: var(--space-1);
+  --banner-border-width: var(--border-width);
+  --banner-font-size: var(--font-size-sm);
+  --banner-title-font-weight: var(--font-weight-medium);
+
+  // Below this width the text block stops sharing its row and the action/×
+  // wrap onto their own line (flex-wrap, no breakpoint).
+  --banner-text-min-width: 16rem;
+
+  --banner-bg-info: var(--color-info-bg-subtle);
+  --banner-rule-info: var(--color-info);
+  --banner-icon-info: var(--color-info);
+
+  --banner-bg-success: var(--color-success-bg-subtle);
+  --banner-rule-success: var(--color-success);
+  --banner-icon-success: var(--color-success);
+
+  --banner-bg-warning: var(--color-warning-bg-subtle);
+
+  // warning uses --color-warning-strong, not --color-warning, which measures
+  // @contrast --color-warning on --color-warning-bg-subtle = 2.01:1 light
+  // @contrast --color-warning-strong on --color-warning-bg-subtle = 5.61:1 light
+  // below the 3:1 WCAG 1.4.11 minimum for the icon and rule. Dark is unaffected.
+  --banner-rule-warning: var(--color-warning-strong);
+  --banner-icon-warning: var(--color-warning-strong);
+
+  --banner-bg-danger: var(--color-danger-bg-subtle);
+  --banner-rule-danger: var(--color-danger);
+  --banner-icon-danger: var(--color-danger);
+}

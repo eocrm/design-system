@@ -129,6 +129,8 @@ export type {
 
 export { Alert } from './components/Alert';
 export type { AlertProps, AlertTone } from './components/Alert';
+export { Banner } from './components/Banner';
+export type { BannerProps, BannerTone } from './components/Banner';
 
 export { Avatar, AvatarGroup, avatarColorIndex } from './components/Avatar';
 export type { AvatarProps, AvatarSize, AvatarStatus, AvatarGroupProps } from './components/Avatar';

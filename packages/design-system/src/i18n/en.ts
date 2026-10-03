@@ -12,6 +12,10 @@ export const en: Messages = {
   appLayout: {
     sidebar: 'Sidebar navigation',
   },
+  banner: {
+    dismiss: 'Dismiss',
+    tone: { info: 'Information', success: 'Success', warning: 'Warning', danger: 'Error' },
+  },
   confirmationPopover: {
     pending: 'Working…',
     cancel: 'Cancel',

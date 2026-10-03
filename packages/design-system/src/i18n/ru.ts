@@ -13,6 +13,10 @@ export const ru: Messages = {
   appLayout: {
     sidebar: 'Боковая навигация',
   },
+  banner: {
+    dismiss: 'Закрыть',
+    tone: { info: 'Информация', success: 'Успешно', warning: 'Предупреждение', danger: 'Ошибка' },
+  },
   confirmationPopover: {
     pending: 'Выполняется…',
     cancel: 'Отмена',
