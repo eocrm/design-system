@@ -262,7 +262,7 @@ interface EntityChipOwnProps {
    * #590). Use `'semibold'` for a design that explicitly wants that.
    *
    * Don't reach for a styled `<Text weight="semibold">` around `label` to get
-   * a heavier title instead (see the component's `@remarks` anti-patterns) —
+   * a heavier title instead (see the clipped-label tooltip bullet in `docs/components/EntityChip.md`) —
    * it buys nothing: the clipped-label tooltip reads the label's own
    * `textContent` and always renders it plain, in the tooltip's own color,
    * regardless of what the label node carries. Only this prop changes the

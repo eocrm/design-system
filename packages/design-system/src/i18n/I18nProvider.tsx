@@ -31,24 +31,8 @@ export interface I18nProviderProps {
 }
 
 /**
- * Provides translated message strings to every descendant via React Context.
- *
- * Resolution: `locale` → built-in `en` or `ru` defaults → optional
- * `overrides` deep-merged on top. The merged `Messages` object is memoized
- * on `[locale, overrides]` so children don't re-render unless one of those
- * changes.
- *
- * @example
- * <I18nProvider locale="ru">
- *   <App />
- * </I18nProvider>
- *
- * @example
- * // Brand override — replace one string, keep the rest of ru defaults:
- * const overrides = useMemo(() => ({ alert: { dismiss: 'Скрыть' } }), []);
- * <I18nProvider locale="ru" overrides={overrides}>
- *   <App />
- * </I18nProvider>
+ * Provides the message catalog (`locale` plus optional `overrides`) to descendants.
+ * @see AI-PRIMER.md#localization-i18n
  */
 export function I18nProvider({ locale, overrides, children }: I18nProviderProps) {
   const value = useMemo<I18nContextValue>(() => {

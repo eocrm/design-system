@@ -27,6 +27,8 @@ import { AppProvider } from '@eocrm/design-system';
 
 It composes `LocaleProvider` + `I18nProvider` and mounts the toast viewport. **Routing is yours** (`<AppProvider>` ships no router), and the stylesheet import above is still required. The individual providers (`LocaleProvider`, `I18nProvider`, `ToastViewport`) remain exported for advanced cases like pinning a subtree to a different locale.
 
+**When NOT to use:** for a per-subtree locale / i18n override, nest `LocaleProvider` / `I18nProvider` directly — `AppProvider` is the single app root, so don't nest a second one. For a tiny embed or isolated test that only needs strings, use `I18nProvider` alone (or pass `toast={false}`) to avoid the toast viewport.
+
 **Rebranding via tokens:**
 
 ```tsx

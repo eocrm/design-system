@@ -53,49 +53,8 @@ export interface AppProviderProps {
 }
 
 /**
- * Root provider for a consuming app. Wrap your tree once to get the
- * design-system's app-level contexts wired in one place — instead of nesting
- * `LocaleProvider` + `I18nProvider` and remembering to mount `<ToastViewport>`.
- *
- * Composes (outermost → in): `LocaleProvider` (Intl locale = `intlLocale ?? locale`)
- * → `I18nProvider` (`locale` + `translations` overrides) → `children`, plus a
- * `<ToastViewport>` rendered inside the providers (so toast chrome is translated)
- * unless `toast={false}`.
- *
- * Routing is the app's own concern (`AppProvider` ships no router), and the
- * stylesheet import (`@eocrm/design-system/styles/global.scss`) is still
- * required at your entry point.
- *
- * @example
- * import '@eocrm/design-system/styles/global.scss';
- * import { AppProvider } from '@eocrm/design-system';
- *
- * <AppProvider locale="en" intlLocale="en-US">
- *   <YourRouter />
- * </AppProvider>;
- *
- * @example
- * // Russian UI + a couple of rebranded strings + top-right toasts:
- * const translations = useMemo(() => ({ alert: { dismiss: 'Скрыть' } }), []);
- * <AppProvider locale="ru" translations={translations} toast={{ position: 'top-right' }}>
- *   <App />
- * </AppProvider>;
- *
- * @example
- * // Rebrand: purple accent everywhere, lighter in dark, larger radius.
- * const tokens = useMemo(() => ({ '--color-accent': '#7c3aed', '--radius-md': '6px' }), []);
- * const darkTokens = useMemo(() => ({ '--color-accent': '#a78bfa' }), []);
- * <AppProvider locale="en" tokens={tokens} darkTokens={darkTokens}>
- *   <App />
- * </AppProvider>;
- *
- * @remarks When NOT to use
- * - **Per-subtree locale / i18n override** → nest `LocaleProvider` /
- *   `I18nProvider` directly. `AppProvider` is the single app root; don't nest a
- *   second `AppProvider`.
- * - **A tiny embed / isolated test that only needs strings** → use
- *   `I18nProvider` alone (or pass `toast={false}` here) so you don't get an
- *   unwanted toast viewport.
+ * App root: composes `LocaleProvider` + `I18nProvider` and mounts the toast viewport.
+ * @see docs/setup.md
  */
 export function AppProvider({
   locale,

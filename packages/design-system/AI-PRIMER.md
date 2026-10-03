@@ -18,7 +18,7 @@ Read this first. Each component's contract is its `docs/components/<Name>.md`; t
 
 ## Setup (once per consuming app)
 
-## See [docs/setup.md](docs/setup.md).
+See [docs/setup.md](docs/setup.md).
 
 ## Localization (i18n)
 

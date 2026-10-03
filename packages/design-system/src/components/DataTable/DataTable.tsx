@@ -129,117 +129,11 @@ export interface DataTableProps<T> {
    * entirely. Default: the drop commits the slot the preview is showing. The
    * opt-out: the drop is discarded, because dnd-kit's own preview retracts (the
    * header snaps back home) in that situation, and a commit would contradict
-   * it. See the component's `@remarks`.
+   * it. See `docs/components/DataTable.md`, the column-drag bullet.
    */
   dragWholeColumn?: boolean;
   className?: string;
 }
-
-/**
- * Tabular data component built on the `<Table>` primitive. Owns the column-axis
- * state machine (order / sizing / visibility / pinning) and row-axis state
- * (selection, expansion). Sort/search/pagination are server-driven — DataTable
- * fires `onSortChange` and exposes selection state for the consumer to act on.
- *
- * Accepts a `DataTableInstance<T>` from `useDataTable` (the only state-owning
- * surface). Pass companion components like `<ColumnVisibilityTrigger>` the same
- * `instance`.
- *
- * **Layout model.** The inner `<table>` uses `table-layout: fixed; width:
- * max-content; min-width: 100%` — column widths come authoritatively from the
- * `<colgroup>` (driven by `ColumnDef.size` + `columnSizing` state), and the
- * table grows to its column-sum width when that exceeds the parent. The Table
- * primitive's `.scrollWrap` then scrolls horizontally. This is required for
- * sticky pinning offsets to land at the right pixel; consumers don't choose.
- *
- * **Cell content.** Every cell inside DataTable gets `overflow: hidden;
- * text-overflow: ellipsis; white-space: nowrap` by default. Long content
- * truncates with an ellipsis at the column boundary instead of expanding the
- * column. If you need multi-line cells, render `<Table>` directly — DataTable
- * is opinionated about row height to keep pin offsets consistent across rows.
- *
- * **Responsive stack.** Set `collapseBelow` to stack data cells when this
- * table's containing block is at or below `sm` (480px), `md` (640px), or `lg`
- * (768px). This is a container query, not a viewport breakpoint, so adjacent
- * tables can respond independently. The wrapper uses inline-size containment;
- * do not place it in an intrinsic-width parent (`width: max-content`, for
- * example), where containment can collapse its intrinsic contribution to zero.
- * Selection, expansion, sorting, row actions, and column visibility stay
- * available in the stacked presentation. Column sizing, pinning, and ordering
- * state is retained, but resize/reorder controls and sticky pin presentation
- * are unavailable until the container widens again.
- *
- * @example
- * function Example() {
- *   const instance = useDataTable<Row>({
- *     data, columns, getRowId,
- *     enableRowSelection: true,
- *     onSortChange: setSort,
- *     sort,
- *   });
- *   return (
- *     <>
- *       <ColumnVisibilityTrigger instance={instance} />
- *       <DataTable instance={instance} aria-label="Deals" />
- *     </>
- *   );
- * }
- *
- * @example
- * // Column pinning + pinned rows
- * const instance = useDataTable({
- *   data, pinnedRows: starredDeals, columns, getRowId,
- *   defaultColumnPinning: { left: ['name'], right: ['actions'] },
- * });
- * <DataTable instance={instance} aria-label="Deals" />;
- *
- * @example
- * // Stack labeled data cells below 640px of available container width.
- * <DataTable instance={instance} aria-label="Deals" collapseBelow="md" />;
- *
- * @example
- * // Expandable rows — chevron auto-column at left, detail row below on expand:
- * const instance = useDataTable({
- *   data, columns, getRowId,
- *   renderExpandedRow: (row) => (
- *     <Stack gap="sm">
- *       <p>Full description: {row.description}</p>
- *       <Button onClick={() => archive(row.id)}>Archive</Button>
- *     </Stack>
- *   ),
- * });
- * <DataTable instance={instance} aria-label="Deals" />;
- *
- * @remarks Column reorder — a drag commits, it does not cancel
- * A column drag commits wherever the preview parked it, however far the pointer
- * roams: over a pinned column, past the table's edge, anywhere. There is no
- * "outside" to release into — the column is clamped to the unpinned band, so
- * the preview is always showing a real slot and the drop honors it (#383).
- * **Escape is the only cancel.** This deliberately differs from `<Kanban>`,
- * where releasing outside the columns cancels (#387): there the pointer can
- * genuinely aim somewhere else, here it cannot.
- *
- * `dragWholeColumn={false}` is the exception. Its preview is dnd-kit's own and
- * RETRACTS — the dragged header snaps back to its origin and the gap closes —
- * whenever no unpinned slot is under the column, so a release there is
- * discarded instead. Both paths follow the same rule: commit what the preview
- * last showed.
- *
- * @remarks When NOT to use
- * - For a static read-only table without column features — use `<Table>` directly.
- * - For huge datasets (10k+ rows on screen at once) — Phase 1 doesn't virtualize;
- *   this'll get slow. Future phase will add a virtualization escape hatch.
- * - For Excel-like cell editing or cell selection — out of scope; consumer composes.
- *
- * @remarks Anti-patterns
- * - ❌ Pre-sorting / pre-filtering `data` client-side then ALSO passing `sort`.
- *   DataTable assumes `data` is the server's pre-paginated, pre-sorted slice.
- *   Mixing creates ghost rows.
- * - ❌ Mutating `columns` identity across renders. The hook captures
- *   `defaultColumnOrder` from `columns` once; later identity changes won't
- *   trigger a re-derive. Pass a stable reference (e.g. defined outside render
- *   or memoized).
- */
 
 /**
  * #282: registers the active column-reorder drag as a floating surface so a
