@@ -1,13 +1,15 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-/** AI-PRIMER.md plus docs/tokens.md and every docs/components/*.md — the consumer-facing primer. */
+/** AI-PRIMER.md plus the docs/*.md it links and every docs/components/*.md — the consumer-facing primer. */
 const readPrimer = (): string => {
   const root = resolve(__dirname, '../..');
   const dir = resolve(root, 'docs/components');
   return [
     readFileSync(resolve(root, 'AI-PRIMER.md'), 'utf8'),
-    readFileSync(resolve(root, 'docs/tokens.md'), 'utf8'),
+    ...['tokens', 'setup', 'theming', 'transient-state'].map((f) =>
+      readFileSync(resolve(root, `docs/${f}.md`), 'utf8'),
+    ),
     ...readdirSync(dir)
       .sort()
       .map((f) => readFileSync(resolve(dir, f), 'utf8')),

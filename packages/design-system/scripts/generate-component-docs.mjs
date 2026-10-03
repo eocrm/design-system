@@ -194,7 +194,7 @@ for (const name of docNames) {
   if (!CHECK) writeFileSync(file, next);
 }
 
-const ISSUE_REF = /\(#\d+\)|\([^()\n]*#\d{3,}\b[^()\n]*\)/;
+const ISSUE_REF = /\(#\d+\)|\([^()\n]*#\d{3,}\b[^()\n]*\)|(^|[^&\w])#[0-9]{3,5}\b/m;
 const refs = [];
 const mdFiles = [
   join(PKG, 'AI-PRIMER.md'),

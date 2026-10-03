@@ -42,7 +42,7 @@ export interface TitleProps extends HTMLAttributes<HTMLHeadingElement> {
    * - `muted` — `--color-fg-muted`
    * - `subtle` — **@deprecated (#521): resolves to `muted`. Use `muted`.**
    *   In LIGHT theme the two neutrals were indistinguishable: OKLab ΔE 0.0261
-   *   when #521 was filed, 0.0365 after #522 retuned `--color-fg-muted`,
+   *   when the deprecation was filed, 0.0365 after `--color-fg-muted` was retuned,
    *   against the 0.065 floor this library's perceptual gates use. In DARK
    *   they were 0.0707 apart — a real step — so **this deprecation changes
    *   dark-theme appearance**: `subtle` text in dark gets lighter, moving from

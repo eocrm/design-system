@@ -102,7 +102,7 @@ export interface TabsProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChang
    * render the matching panel with that id. When omitted, NO tab carries
    * `aria-controls` at all — the internal id (sanitized React `useId`) named
    * below is the tab's own id, not a panel's, and pointing at it would be the
-   * dangling IDREF #501 removed.
+   * dangling IDREF that was removed.
    *
    * Only the active tab carries it, because consumers render only the active
    * panel; stamping every tab would point N-1 of them at elements that do not

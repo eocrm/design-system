@@ -33,7 +33,7 @@ they fall into two different groups — grep `:focus-visible` alongside `outline
 or `box-shadow: 0 0 0` for the current set rather than trusting a list here:
 
 - **Hand-rolled but real** — `AvatarGroup` and `IconPicker`, and only those
-  two, as of #515. `AvatarGroup` needs an inner layer between the chip and the
+  two, as of the focus-ring migration. `AvatarGroup` needs an inner layer between the chip and the
   overlapping avatars, so its ring is a `box-shadow` on purpose.
   `IconPicker` hand-rolls an `outline` with its own width token:
   `--icon-picker-focus-ring-width` is a documented public override in
@@ -46,7 +46,7 @@ or `box-shadow: 0 0 0` for the current set rather than trusting a list here:
   `ColorPicker` (x3), `ImageCrop` and `DashboardCanvas` used to be on this list
   — they hand-rolled with `--border-width-emphasis`, `--ring-width`'s own value
   under a global-primitive name, so the emission was identical and nothing
-  looked wrong. #515 migrated all five to `@include focus-ring(…)` (the first
+  looked wrong. The migration moved all five to `@include focus-ring(…)` (the first
   two outset, `DashboardCanvas` inset via `$offset`) and deleted the four inert
   `stylelint-disable-next-line` comments their raw `2px` offsets carried.
   `DashboardCanvas` passes `var(--color-accent)` explicitly rather than taking
@@ -59,7 +59,7 @@ or `box-shadow: 0 0 0` for the current set rather than trusting a list here:
   surface), `FlowCanvas` (deliberate), `LiquidEditor` (delegates to
   `.root:focus-within`) and `TopBar`'s `.searchInput`, which sets it under
   plain `:focus` and delegates the same way, to `.search:focus-within`. Do not
-  trust that list: since #519 it is a waiver table in `structure.test.ts`
+  trust that list: it is now a waiver table in `structure.test.ts`
   ("a focus ring is not suppressed without a recorded reason"), each entry
   carrying its own reason, and a fifth suppression fails the build until it is
   argued there. Read the table, not this paragraph.

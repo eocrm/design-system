@@ -56,8 +56,7 @@ export interface SettingRowProps extends Omit<HTMLAttributes<HTMLDivElement>, 'c
    * remove the explanation of what the setting is.
    *
    * **Not announced, deliberately** — `aria-describedby` is read on focus, so
-   * the form owns the submit-time summary. Same reasoning as `<Field error>`;
-   * see #494.
+   * the form owns the submit-time summary. Same reasoning as `<Field error>`.
    */
   error?: ReactNode;
   /** Marks the row required: shows `*` and injects `required` onto the control. */

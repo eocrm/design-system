@@ -86,7 +86,7 @@ export interface DashboardCanvasProps extends Omit<HTMLAttributes<HTMLDivElement
    *
    * Layouts are NOT converted between column counts — a `value` saved at one
    * `columns` renders at half width when the count doubles. Schemas written
-   * for the pre-#350 12-column grid (e.g. the eocrm layout-v2 spec) either
+   * for the earlier 12-column grid (e.g. the eocrm layout-v2 spec) either
    * pass `columns={12}` to match, or migrate their saved placements to 24.
    * @default 24
    */

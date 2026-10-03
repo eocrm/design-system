@@ -42,7 +42,7 @@ import { Link as RouterLink } from 'react-router-dom';
 - **Three variants**:
   - `default`: accent color, hover-underline. Inline CTA ("View all →").
   - `muted`: muted color, hover-accent. Low-emphasis nav (breadcrumb-style).
-  - `subtle`: foreground color, hover-accent + underline. Dense-surface name links. **Not deprecated** — this is `Link`'s own variant and is unrelated to `Text`/`Title`'s `tone="subtle"`, which #521 DID deprecate. Same word, opposite status: a grep for "subtle deprecated" will land on the tone, and `PersonDisplay.Name` uses this variant deliberately.
+  - `subtle`: foreground color, hover-accent + underline. Dense-surface name links. **Not deprecated** — this is `Link`'s own variant and is unrelated to `Text`/`Title`'s `tone="subtle"`, which WAS deprecated. Same word, opposite status: a grep for "subtle deprecated" will land on the tone, and `PersonDisplay.Name` uses this variant deliberately.
 - **`underline` prop** (`'hover'` | `'always'` | `'none'`, default `'hover'`) — orthogonal to `variant`:
   - `'hover'` (default, same as omitting it): each variant's existing look — `default`/`subtle` underline on hover only, `muted` never underlines.
   - `'always'`: underlined at rest and on hover, on every variant.

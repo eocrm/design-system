@@ -43,8 +43,6 @@ export interface FieldProps extends Omit<HTMLAttributes<HTMLDivElement>, 'childr
    *   {submitted && errorCount > 0 ? `${errorCount} fields need attention` : ''}
    * </div>
    * ```
-   *
-   * See #494 for the full reasoning.
    */
   error?: ReactNode;
   /** Marks the field required: shows `*` and injects `required` onto the control. */
