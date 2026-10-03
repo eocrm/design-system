@@ -6,7 +6,7 @@ Its web tokens are generated and versioned by `@eocrm/design-tokens`. Existing
 consumer imports remain unchanged: the design-system Sass entry points forward
 to the token package.
 
-Component contracts live in **JSDoc on the components themselves** — hover any import in your editor. AI agents consuming this package should read **[AI-PRIMER.md](./AI-PRIMER.md)** first.
+Component contracts live in **[`docs/components/<Name>.md`](./docs/components)** (props table, anti-patterns). AI agents consuming this package should read **[AI-PRIMER.md](./AI-PRIMER.md)** first.
 
 ---
 
@@ -78,7 +78,7 @@ If TypeScript can't resolve types, set `moduleResolution: "bundler"` (or `"node1
 
 ## Components
 
-Grouped for navigation. Every prop and variant is JSDoc'd at the source — hover any import in your editor. For canonical snippets + tokens table + anti-patterns, see [AI-PRIMER.md](./AI-PRIMER.md), which carries the same roster with usage examples.
+Grouped for navigation. Per-component contracts are in `docs/components/<Name>.md`; [AI-PRIMER.md](./AI-PRIMER.md) indexes them with the tokens table.
 
 **Typography**
 
@@ -227,6 +227,6 @@ The playground (live component gallery) deploys to GitHub Pages automatically as
 ## Where docs live (so you don't have to grep)
 
 - **README.md** (this file) — install, setup, bundler notes, publishing/deploy ops.
-- **[AI-PRIMER.md](./AI-PRIMER.md)** — concise primer for AI coding agents. Token table, anti-patterns, per-component snippets.
-- **JSDoc on each component** — full per-prop / per-variant contracts with `@example` blocks. Hover in your editor.
+- **[AI-PRIMER.md](./AI-PRIMER.md)** — concise primer for AI coding agents. Token table and component index.
+- **`docs/components/<Name>.md`** — per-component contract: props table, examples, anti-patterns. Also `docs/setup.md`, `docs/theming.md`, `docs/transient-state.md`.
 - **[CLAUDE.md](./CLAUDE.md)** — rules for someone **modifying this library** (not for consumers).

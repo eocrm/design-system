@@ -42,7 +42,7 @@ When adding `src/components/<Name>/`, the same change must add `packages/playgro
 
 Colors, spacing, radii, shadows, font sizes — all via `var(--...)`. If you need a shared value that is not a token, add it to `packages/design-tokens/src/tokens.json`, regenerate, and run `npm run tokens:check`. Never edit `src/styles/tokens.scss` or generated token files directly. Stylelint blocks `color: #fff` and `background: red`-style raw values.
 
-**Component tokens layer:** Within a component's `.module.scss`, prefer the component's own tokens (`var(--button-bg)`) over primitives (`var(--color-accent)`) directly. The component tokens live in `Component.tokens.scss` and default to the primitive — so the resolved value is identical, but the SCSS reads as "the button's background" instead of "the accent color we happen to use here." See `docs/superpowers/specs/2026-05-27-component-tokens-design.md` and AI-PRIMER.md's "Theming via component tokens" section. Not enforced by stylelint (yet); convention-only in v1.
+**Component tokens layer:** Within a component's `.module.scss`, prefer the component's own tokens (`var(--button-bg)`) over primitives (`var(--color-accent)`) directly. The component tokens live in `Component.tokens.scss` and default to the primitive — so the resolved value is identical, but the SCSS reads as "the button's background" instead of "the accent color we happen to use here." See `docs/superpowers/specs/2026-05-27-component-tokens-design.md` and `docs/theming.md`. Not enforced by stylelint (yet); convention-only in v1.
 
 ### 3a. Focus styling — `:focus-visible`, not `:focus`
 
@@ -106,9 +106,9 @@ Every component must:
 
 ### 7. Every exported prop, variant type, and component has JSDoc
 
-This library's main consumer is AI coding agents building the EOCRM. They read TypeScript types and JSDoc — that's their highest-fidelity signal for "how do I use this thing." Every exported member must carry JSDoc:
+This library's main consumer is AI coding agents building the EOCRM. They read `docs/components/<Name>.md` and TypeScript types. Per-prop JSDoc feeds that file's generated props table (`npm run build:docs`), so every exported member must carry JSDoc:
 
-- **Component function** — one-paragraph description + 2-3 `@example` blocks showing canonical usage (the most common pattern, an edge case, and integration with `Stack`/`Cluster` if relevant).
+- **Component function** — one-line summary + `@see docs/components/<Name>.md`; examples and anti-patterns live in that file.
 - **Each prop in `*Props`** — what it does, when to use each option, default value. For variants like `tone`/`variant`/`size`/`gap`, list every option with one-line guidance.
 - **Each exported union type** (`ButtonVariant`, `BadgeTone`, etc.) — short summary; details live on the prop that uses it.
 
@@ -138,7 +138,7 @@ Before completing a pull request that touches `packages/design-system/**`, you M
 
 **When this rule does NOT apply**: changes scoped to `packages/playground/**`, root `README.md`, root `CLAUDE.md`, GitHub workflows, the Makefile, or other non-library files. Push those normally.
 
-The skill holds the gates, the reviewer brief, the exit criteria, and the trivial-change escape hatch. Review effort is tiered: **Light** changes (docs, copy or JSDoc wording that does not change meaning; never `@remarks`, prop-doc semantics, documented a11y/token/API guidance, component behaviour, tokens or public API) get one fresh reviewer on Sonnet; **Standard** changes (everything else) get at least two fresh reviewers per round inheriting the session model. Fable only with dpws's explicit direction or approval. The skill defines the tiers and report-length caps. The first round reviews the complete branch diff. Later rounds review only commits since the previously reviewed head, together with the findings those commits are meant to fix.
+The skill holds the gates, the reviewer brief, the exit criteria, and the trivial-change escape hatch. Review effort is tiered: **Light** changes (docs, copy or JSDoc wording that does not change meaning; never prop-doc or `docs/components/**` semantics, documented a11y/token/API guidance, component behaviour, tokens or public API) get one fresh reviewer on Sonnet; **Standard** changes (everything else) get at least two fresh reviewers per round inheriting the session model. Fable only with dpws's explicit direction or approval. The skill defines the tiers and report-length caps. The first round reviews the complete branch diff. Later rounds review only commits since the previously reviewed head, together with the findings those commits are meant to fix.
 
 ### 9. Every user-facing string goes through i18n
 
@@ -215,8 +215,7 @@ Then:
 
 - Update `src/index.ts` (rule 5)
 - Add the playground demo (rule 2)
-- Add `docs/components/<Name>.md` (a one-section TL;DR + canonical snippet) and its index line in `AI-PRIMER.md`
-- Per-component "when NOT to use / anti-patterns" goes in the component's JSDoc (`@remarks` blocks), NOT in a separate markdown file
+- Add `docs/components/<Name>.md` (TL;DR, canonical snippet, "when NOT to use" / anti-patterns) and its index line in `AI-PRIMER.md`; component JSDoc is a one-line summary + `@see docs/components/<Name>.md`; run `npm run build:docs`
 
 ## Dependency policy & component gaps
 

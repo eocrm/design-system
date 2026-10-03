@@ -12,7 +12,7 @@ Two variants. Pick the one matching what you changed; if a PR touches both, run 
 Review effort is tiered. Set the tier from the full branch diff; across rounds it can only go up, never down.
 
 - **Light** — docs/markdown, copy and JSDoc wording that does not change
-  meaning (never `@remarks` or prop-doc semantics: they are the
+  meaning (never prop-doc or `docs/components/**` semantics: they are the
   agent-facing contract); no component behaviour, a11y semantics, tokens, or
   public API. Use **one** fresh-context reviewer on Sonnet (`model: sonnet` at
   dispatch). If fixes were applied, repeat the Sonnet pass on the fix delta
@@ -99,7 +99,7 @@ If a reviewer keeps catching the same class of issue (raw values, missing JSDoc,
 
 ### Trivial-change escape hatch
 
-A one-line doc typo or comment tweak doesn't need a full review loop. Use judgment — if the change couldn't plausibly introduce a regression, push without the cycle. Never for `@remarks`, prop docs, or documented a11y/token/API guidance. When unsure, run the cycle.
+A one-line doc typo or comment tweak doesn't need a full review loop. Use judgment — if the change couldn't plausibly introduce a regression, push without the cycle. Never for prop docs, `docs/components/**`, or documented a11y/token/API guidance. When unsure, run the cycle.
 
 ---
 
@@ -116,7 +116,7 @@ Mockups are the most visible artifact of the library — they're what a new engi
 1. **Run baseline gates** — `make test`, `make build` (typecheck + bundle), `make lint`. They must all pass before the draft PR is opened.
 2. **Open the draft PR** — commit and push the scoped branch, then create a draft pull request. All review rounds and fixes target this same draft.
 3. **Spawn the independent fresh-context review agents (per the tier; Standard = at least two)** against the complete branch diff, targeted at the changed mockup file(s), per the tier in "Reviewer model and freshness" (Standard: inherit the session model, no override). Record the reviewed head and brief each on these 10 review categories:
-   1. **Hard rule 6 compliance** — no inline `style={...}`, no raw HTML tags, no co-located `.module.scss`. Any escape-hatch mock has a matching entry in `packages/design-system/src/components/TODO.md` AND an inline `{/* TODO: replace when … */}` comment.
+   1. **Hard rule 6 compliance** — no inline `style={...}`, no raw HTML tags, no co-located `.module.scss`. Any escape-hatch mock has a matching entry in `packages/playground/TODO.md` AND an inline `{/* TODO: replace when … */}` comment.
    2. **Registry sync** — every library component used in the mockup is listed in that mockup's `usesComponents` array in `registry.ts`. No stale entries (a name listed that's no longer imported).
    3. **Imports** — only from `@eocrm/design-system`, never relative paths into the library (Rule 2). Demo-only deps from Rule 5 stay out.
    4. **Realism** — does the mockup look like a real CRM screen, or a contrived demo? Mock data plausible (names, dates, currency formatting). No "lorem ipsum" or `"Click me"` placeholder text.
@@ -140,7 +140,7 @@ Mockups are the most visible artifact of the library — they're what a new engi
 - 0 Critical, 0 Important findings across every reviewer in the final round (or each remaining one has an explicit documented skip).
 - Every reviewer in the final round (per tier) returns `clean enough to stop`.
 - All three gates (test, build, lint) green.
-- All open TODOs in `packages/design-system/src/components/TODO.md` that the changed mockup touches are either still open with a matching inline comment, OR ticked + the refactor done in this PR.
+- All open TODOs in `packages/playground/TODO.md` that the changed mockup touches are either still open with a matching inline comment, OR ticked + the refactor done in this PR.
 
 ### Trivial-change escape hatch
 
