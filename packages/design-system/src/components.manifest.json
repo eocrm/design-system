@@ -785,6 +785,15 @@
       "Tour"
     ]
   },
+  "StagePath": {
+    "tier": "composition",
+    "cluster": "Display",
+    "composes": [
+      "Tooltip",
+      "VisuallyHidden"
+    ],
+    "composedBy": []
+  },
   "Sticky": {
     "tier": "primitive",
     "cluster": "Layout",
@@ -884,7 +893,8 @@
       "Calendar",
       "EntityChip",
       "PasswordInput",
-      "Rail"
+      "Rail",
+      "StagePath"
     ]
   },
   "TopBar": {
@@ -913,7 +923,8 @@
     "composedBy": [
       "Banner",
       "DateStrip",
-      "LiveRegion"
+      "LiveRegion",
+      "StagePath"
     ]
   }
 }

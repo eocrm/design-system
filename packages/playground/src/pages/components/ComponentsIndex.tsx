@@ -270,6 +270,12 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['DefinitionList'],
   },
   {
+    to: '/components/stage-path',
+    name: 'StagePath',
+    description: 'Chevron row of record stages — done, current, upcoming; optional stage clicks.',
+    preview: SCHEMATICS['StagePath'],
+  },
+  {
     to: '/components/table',
     name: 'Table',
     description:

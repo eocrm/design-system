@@ -1,0 +1,231 @@
+@use './StagePath.tokens';
+
+// Shapes. Each stage's box is clipped to a chevron; the next stage overlaps it
+// by the arrow depth (minus the gap) so the tip nests into the next notch.
+// RTL mirrors the polygons (x -> 100% - x); padding/radius already use logical
+// properties.
+// chevron($shape, $d) is the outer chevron offset inward by $d, in the frame of
+// a box itself inset $d on every side (the focus layers' ::before / ::after), so
+// a band is $d thick on the slants too, not just on the flat edges. $d = 0 is
+// the stage's own shape.
+// ponytail: 0.5 / 0.25 come from the slant's length factor k = √(1 + (a / (h/2))²)
+// = 1.25 for the 12px arrow on the 32px height (tip x 100% - 1.25d, tip-side
+// top x 100% - a - 0.5d, notch apex a + 1.25d, notch top 2d in the stage frame;
+// minus the d inset). Holds for any $d; recompute the factors if
+// --stage-path-arrow or --stage-path-height changes.
+$a: var(--stage-path-arrow);
+$r: var(--ring-width);
+
+@function chevron($shape, $d: 0px, $rtl: false) {
+  $tip-top: calc(100% - #{$a} + 0.5 * #{$d});
+  $tip: calc(100% - 0.25 * #{$d});
+  $notch-top: $d;
+  $notch: calc(#{$a} + 0.25 * #{$d});
+  $start: 0;
+  $end: 100%;
+
+  @if $rtl {
+    $tip-top: calc(#{$a} - 0.5 * #{$d});
+    $tip: calc(0.25 * #{$d});
+    $notch-top: calc(100% - #{$d});
+    $notch: calc(100% - #{$a} - 0.25 * #{$d});
+    $start: 100%;
+    $end: 0;
+  }
+
+  @if $shape == middle {
+    @return polygon($notch-top 0, $tip-top 0, $tip 50%, $tip-top 100%, $notch-top 100%, $notch 50%);
+  }
+
+  @if $shape == first {
+    @return polygon($start 0, $tip-top 0, $tip 50%, $tip-top 100%, $start 100%);
+  }
+
+  @return polygon($notch-top 0, $end 0, $end 100%, $notch-top 100%, $notch 50%);
+}
+
+// --sp-inner / --sp-inner-2: the shape offset by one and two ring widths.
+@mixin shape($shape, $rtl: false) {
+  --sp-shape: #{chevron($shape, 0px, $rtl)};
+  --sp-inner: #{chevron($shape, $r, $rtl)};
+  --sp-inner-2: #{chevron($shape, calc(2 * #{$r}), $rtl)};
+}
+
+.path {
+  // Per-tone palette, read by the stage states below.
+  --sp-done-bg: var(--stage-path-done-bg);
+  --sp-done-fg: var(--stage-path-done-fg);
+  --sp-current-bg: var(--stage-path-current-bg);
+  --sp-current-fg: var(--stage-path-current-fg);
+  --sp-ring: var(--stage-path-ring);
+
+  // lets the path shrink in a flex row (e.g. a non-wrapping Cluster) so labels truncate instead of overflowing
+  min-width: 0;
+  display: flex;
+  width: 100%;
+  list-style: none;
+  /* stylelint-disable-next-line property-disallowed-list -- native <ol> margin reset */
+  margin: 0;
+  padding: 0;
+  font-size: var(--stage-path-font-size);
+  font-weight: var(--stage-path-font-weight);
+}
+
+.path[data-tone='success'] {
+  --sp-done-bg: var(--stage-path-done-bg-success);
+  --sp-done-fg: var(--stage-path-done-fg-success);
+  --sp-current-bg: var(--stage-path-current-bg-success);
+  --sp-current-fg: var(--stage-path-current-fg-success);
+  --sp-ring: var(--stage-path-ring-success);
+}
+
+.path[data-tone='danger'] {
+  --sp-done-bg: var(--stage-path-done-bg-danger);
+  --sp-done-fg: var(--stage-path-done-fg-danger);
+  --sp-current-bg: var(--stage-path-current-bg-danger);
+  --sp-current-fg: var(--stage-path-current-fg-danger);
+  --sp-ring: var(--stage-path-ring-danger);
+}
+
+// Internal row distribution: equal shares, shrinkable so labels can ellipsize.
+.stage {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.stage + .stage {
+  /* stylelint-disable-next-line property-disallowed-list -- internal interlock: each chevron overlaps its predecessor by the arrow depth so the tip nests into this stage's notch; not placement of the component */
+  margin-inline-start: calc(var(--stage-path-gap) - var(--stage-path-arrow));
+}
+
+.done {
+  --sp-fill: var(--sp-done-bg);
+  --sp-fg: var(--sp-done-fg);
+}
+
+.current {
+  --sp-fill: var(--sp-current-bg);
+  --sp-fg: var(--sp-current-fg);
+
+  font-weight: var(--stage-path-current-font-weight);
+}
+
+.upcoming {
+  --sp-fill: var(--stage-path-upcoming-bg);
+  --sp-fg: var(--stage-path-upcoming-fg);
+}
+
+// The painted chevron: a <button> (interactive) or <span> (read-only).
+.target {
+  @include shape(middle);
+
+  --sp-bg: var(--sp-fill);
+
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  height: var(--stage-path-height);
+  padding-inline: calc(var(--stage-path-arrow) + var(--stage-path-padding-x));
+  border: 0;
+  background: var(--sp-bg);
+  color: var(--sp-fg);
+  font: inherit;
+  white-space: nowrap;
+  clip-path: var(--sp-shape);
+}
+
+.stage:first-child .target {
+  @include shape(first);
+
+  padding-inline-start: var(--stage-path-padding-x);
+  border-start-start-radius: var(--stage-path-radius);
+  border-end-start-radius: var(--stage-path-radius);
+}
+
+.stage:last-child .target {
+  @include shape(last);
+
+  padding-inline-end: var(--stage-path-padding-x);
+  border-start-end-radius: var(--stage-path-radius);
+  border-end-end-radius: var(--stage-path-radius);
+}
+
+// A single stage is both first and last: a plain rounded box.
+.stage:only-child .target {
+  --sp-shape: none;
+  --sp-inner: none;
+  --sp-inner-2: none;
+}
+
+.path:dir(rtl) .target {
+  @include shape(middle, true);
+}
+
+.path:dir(rtl) .stage:first-child .target {
+  @include shape(first, true);
+}
+
+.path:dir(rtl) .stage:last-child .target {
+  @include shape(last, true);
+}
+
+.path:dir(rtl) .stage:only-child .target {
+  --sp-shape: none;
+  --sp-inner: none;
+  --sp-inner-2: none;
+}
+
+.button {
+  cursor: pointer;
+}
+
+.button:hover {
+  --sp-bg: color-mix(in srgb, var(--sp-fill), var(--sp-fg) var(--stage-path-hover-mix));
+}
+
+// Chevron-shaped focus ring. clip-path would cut off any outline, so the ring
+// is the stage's own background in the ring colour, with the fill redrawn
+// ring-width inside it on ::before, clipped to the same shape.
+.button:focus-visible,
+.target:focus-visible {
+  background: var(--sp-ring);
+}
+
+.button:focus-visible::before,
+.target:focus-visible::before,
+.current .target:focus-visible::after {
+  position: absolute;
+  inset: var(--ring-width);
+  border-radius: inherit;
+  background: var(--sp-bg);
+  clip-path: var(--sp-inner);
+  content: '';
+}
+
+// The current stage's fill IS the ring colour in every tone, so a plain ring
+// would vanish. Instead: fill, then a ring-width band in its text colour (an
+// AA pair with the fill), then the fill again on ::after.
+.current .target:focus-visible {
+  background: var(--sp-bg);
+}
+
+.current .target:focus-visible::before {
+  background: var(--sp-fg);
+}
+
+.current .target:focus-visible::after {
+  inset: calc(2 * var(--ring-width));
+  clip-path: var(--sp-inner-2);
+}
+
+.label {
+  position: relative; // above the focus ::before / ::after
+  z-index: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

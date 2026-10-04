@@ -274,6 +274,21 @@ const PAIRS: Pair[] = [
   ['muted text on subtle bg', '--color-fg-muted', '--color-bg-subtle', 4.5],
   ['muted text on sunken bg', '--color-fg-muted', '--color-bg-sunken', 4.5],
   ['muted text on accent tint', '--color-fg-muted', '--color-accent-bg-subtle', 4.5],
+  // StagePath (and Badge) paint text on these tone tints.
+  ['tone info text on tone info tint', '--color-tone-info-fg', '--color-tone-info-bg', 4.5],
+  [
+    'tone success text on tone success tint',
+    '--color-tone-success-fg',
+    '--color-tone-success-bg',
+    4.5,
+  ],
+  ['tone danger text on tone danger tint', '--color-tone-danger-fg', '--color-tone-danger-bg', 4.5],
+  [
+    'tone neutral text on tone neutral tint',
+    '--color-tone-neutral-fg',
+    '--color-tone-neutral-bg',
+    4.5,
+  ],
 ];
 
 describe.each([
@@ -291,6 +306,33 @@ describe.each([
     expect(contrast(tokenValue(fgName, source), tokenValue(bgName, source))).toBeGreaterThanOrEqual(
       minimum,
     );
+  });
+});
+
+/**
+ * StagePath's hovered stage is `color-mix(in srgb, fill, text hover-mix)` — the
+ * fill moved toward its own text colour, which LOWERS that pair's contrast. The
+ * mix is a straight sRGB lerp, i.e. `composite(fg, mix, bg)`. The percentage is
+ * read from the token file, so raising it past what these pins allow fails here.
+ */
+describe('StagePath hovered fills keep their text at AA', () => {
+  const mix =
+    parseFloat(
+      declaredValue(
+        '--stage-path-hover-mix',
+        readFileSync(resolve(__dirname, '../components/StagePath/StagePath.tokens.scss'), 'utf8'),
+      ) ?? 'NaN',
+    ) / 100;
+  it.each(
+    (['light', 'dark'] as const).flatMap((theme) =>
+      (['info', 'success', 'danger', 'neutral'] as const).map((tone) => [theme, tone] as const),
+    ),
+  )('%s %s', (theme, tone) => {
+    const source = theme === 'light' ? TOKENS : DARK;
+    const fg = tokenValue(`--color-tone-${tone}-fg`, source);
+    const hovered = composite(fg, mix, tokenValue(`--color-tone-${tone}-bg`, source));
+    expect(mix).toBeGreaterThan(0);
+    expect(contrast(fg, hovered)).toBeGreaterThanOrEqual(4.5);
   });
 });
 

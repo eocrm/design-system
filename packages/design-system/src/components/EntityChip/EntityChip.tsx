@@ -1,8 +1,6 @@
 import {
   Fragment,
   forwardRef,
-  useRef,
-  useState,
   type ComponentPropsWithoutRef,
   type ComponentPropsWithRef,
   type CSSProperties,
@@ -17,6 +15,7 @@ import { useTranslation } from '../../i18n/useTranslation';
 import { paletteTokens, type PaletteColor } from '../../palette';
 import { resolveStatusColor, type StatusCategory } from '../_internal/statusColor';
 import { chain } from '../_internal/refs';
+import { useClippedTooltip } from '../_internal/useClippedTooltip';
 import { Tooltip } from '../Tooltip';
 import styles from './EntityChip.module.scss';
 
@@ -440,30 +439,6 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
   // not-yet-loaded or unavailable entity has no known type/status (#582).
   const hasSegments = (before?.length ?? 0) > 0 || (after?.length ?? 0) > 0;
   const segmented = !loading && !unavailable && hasSegments;
-  // Full label on hover, but only when it is actually clipped: a controlled
-  // Tooltip that refuses to open otherwise, so a fully visible label gets no
-  // tooltip and no aria-describedby (it would be announced twice).
-  const labelRef = useRef<HTMLSpanElement>(null);
-  const [labelTipOpen, setLabelTipOpen] = useState(false);
-  // The clipped-label tooltip's own content (#590, #592): for a STRING
-  // `label`, use it directly — always fresh off the prop, so a label that
-  // changes while the tooltip is open shows the new text immediately, with
-  // no capture step at all. For any other `label` (styled node, icon, …),
-  // fall back to plain text captured from the label element's `textContent`
-  // when the tooltip opens — this is what keeps a styled label's color/
-  // weight from leaking into the tooltip, which reads badly on the dark
-  // tooltip background.
-  //
-  // The captured text falls back to the raw `label` node with `||`, not `??`:
-  // Tooltip treats `null`/`undefined`/`''` content as "disabled" (no listeners
-  // at all, see Tooltip.tsx), so a captured EMPTY string (a non-string label
-  // that renders no text, e.g. an icon) must not stick around as `''` — `??`
-  // only falls back on null/undefined and would leave the tooltip
-  // permanently disabled from that point on, even after `label` later becomes
-  // a long, genuinely clipped string (#592). Storing `null` instead of `''`
-  // for an empty capture, and falling back with `||`, means an empty capture
-  // always resolves back to the current `label`.
-  const [labelTipText, setLabelTipText] = useState<string | null>(null);
   // `hasSegments`, not `segmented`: a loading/unavailable chip with `before`/
   // `after` configured still gets the `truncate` class (below) even though
   // `segmented` itself stays gated off — its label can still be clipped, and
@@ -472,21 +447,13 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
   const clippable = truncate || hasSegments || labelMaxWidth != null;
   // Whether the label Tooltip is mounted: the loading branch never renders it.
   const labelTip = clippable && !loading;
-  // Whenever the label Tooltip unmounts while open (the chip stops being
-  // clippable, or starts loading — a refetch under the pointer), nothing is
-  // left to close it; reset during render so it can't remount already open.
-  if (!labelTip && labelTipOpen) setLabelTipOpen(false);
-  const onLabelTip = (next: boolean) => {
-    const el = labelRef.current;
-    if (next && el != null) setLabelTipText(el.textContent || null);
-    setLabelTipOpen(next && el != null && el.scrollWidth > el.clientWidth);
-  };
-  const labelTipContent = typeof label === 'string' ? label : labelTipText || label;
+  // Full label on hover/focus, only when actually clipped (see useClippedTooltip).
+  const labelTipState = useClippedTooltip<HTMLSpanElement>(label, labelTip);
   // Keyboard reachability for the clipped-label tooltip: its Tooltip trigger
   // is the label `<span>`, which is not itself focusable — focus lands on the
   // chip root. Chain onto the root's own onFocus/onBlur (preserving whatever
   // the consumer passed via `...rest`) so tabbing onto the chip opens the same
-  // controlled tooltip `onLabelTip` already opens on hover — only when it is
+  // controlled tooltip `labelTipState` already opens on hover — only when it is
   // actually clipped, and only when the chip has a clippable label at all.
   // `:focus-visible` gate mirrors Tooltip.tsx's `handleFocus` exactly,
   // including its jsdom fallback (matches() unsupported/throwing → open).
@@ -504,9 +471,9 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
       focusVisible = true;
     }
     if (!focusVisible) return;
-    onLabelTip(true);
+    labelTipState.onOpenChange(true);
   };
-  const handleRootBlur = () => onLabelTip(false);
+  const handleRootBlur = () => labelTipState.onOpenChange(false);
   // The state as real text, not just muted colour. Browsers do expose
   // `aria-disabled`, but it carries no meaning on a non-widget role such as
   // `generic`, so no AT conveys it — without this the state reached nobody using a screen reader,
@@ -572,9 +539,13 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
               doesn't insert extra space inside the name. No longer scopes
               hover styling (the fake-bold rule was dropped, see #345). */}
           {labelTip ? (
-            <Tooltip content={labelTipContent} open={labelTipOpen} onOpenChange={onLabelTip}>
+            <Tooltip
+              content={labelTipState.content}
+              open={labelTipState.open}
+              onOpenChange={labelTipState.onOpenChange}
+            >
               <span
-                ref={labelRef}
+                ref={labelTipState.ref}
                 className={clsx(
                   styles.label,
                   labelWeight === 'semibold' && styles.semibold,
@@ -642,7 +613,7 @@ export const EntityChip = forwardRef(function EntityChip<C extends ElementType =
       // The clipped-label tooltip's focus/blur handlers only when the label can
       // clip; otherwise {...rest} above already passed the consumer's own
       // onFocus/onBlur through untouched. (Behaviourally equivalent to always
-      // attaching — onLabelTip can't open without a clipped label — but it
+      // attaching — labelTipState can't open without a clipped label — but it
       // keeps a non-clipping chip's handlers exactly the consumer's.)
       {...(clippable
         ? {

@@ -105,6 +105,7 @@ const CLUSTERS: Record<string, string> = {
   Dot: 'Display',
   EntityChip: 'Display',
   Timeline: 'Display',
+  StagePath: 'Display',
   Thread: 'Display',
   BrandIcon: 'Display',
   Logo: 'Display',

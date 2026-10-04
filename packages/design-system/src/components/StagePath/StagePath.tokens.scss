@@ -1,0 +1,43 @@
+// StagePath.tokens.scss — Component-scoped tokens for <StagePath>: the chevron
+// row of ordered record stages. Done/current fills follow `tone`; upcoming is
+// neutral in every tone.
+:root {
+  --stage-path-height: var(--size-md);
+
+  // Horizontal depth of each chevron's tip (and of the next stage's notch).
+  --stage-path-arrow: var(--space-3);
+
+  // Visible gap between interlocked chevrons.
+  --stage-path-gap: var(--space-05);
+  --stage-path-padding-x: var(--space-2);
+  --stage-path-radius: var(--radius-md);
+  --stage-path-font-size: var(--font-size-md);
+  --stage-path-font-weight: var(--font-weight-medium);
+  --stage-path-current-font-weight: var(--font-weight-semibold);
+
+  // How far a hovered stage's fill moves toward its text colour. 8% keeps every
+  // tone's text at or above AA on the hovered fill (tightest: light danger);
+  // pinned for every hoverable fill in both themes by contrast.test.ts.
+  --stage-path-hover-mix: 8%;
+
+  --stage-path-upcoming-bg: var(--color-tone-neutral-bg);
+  --stage-path-upcoming-fg: var(--color-tone-neutral-fg);
+
+  --stage-path-done-bg: var(--color-tone-info-bg);
+  --stage-path-done-fg: var(--color-tone-info-fg);
+  --stage-path-current-bg: var(--color-accent);
+  --stage-path-current-fg: var(--color-accent-fg);
+  --stage-path-ring: var(--ring-accent);
+
+  --stage-path-done-bg-success: var(--color-tone-success-bg);
+  --stage-path-done-fg-success: var(--color-tone-success-fg);
+  --stage-path-current-bg-success: var(--color-success);
+  --stage-path-current-fg-success: var(--color-success-fg);
+  --stage-path-ring-success: var(--ring-success);
+
+  --stage-path-done-bg-danger: var(--color-tone-danger-bg);
+  --stage-path-done-fg-danger: var(--color-tone-danger-fg);
+  --stage-path-current-bg-danger: var(--color-danger);
+  --stage-path-current-fg-danger: var(--color-danger-fg);
+  --stage-path-ring-danger: var(--ring-danger);
+}

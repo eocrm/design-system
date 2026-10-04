@@ -1403,6 +1403,26 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       </Row>
     </Row>
   ),
+  StagePath: (
+    <Row gap={2}>
+      <Box w={44} h={20} style={{ clipPath: 'polygon(0 0, 80% 0, 100% 50%, 80% 100%, 0 100%)' }} />
+      <Box
+        w={44}
+        h={20}
+        style={{ clipPath: 'polygon(0 0, 80% 0, 100% 50%, 80% 100%, 0 100%, 20% 50%)' }}
+      />
+      <Solid
+        w={44}
+        h={20}
+        style={{ clipPath: 'polygon(0 0, 80% 0, 100% 50%, 80% 100%, 0 100%, 20% 50%)' }}
+      />
+      <Outline
+        w={44}
+        h={20}
+        style={{ clipPath: 'polygon(0 0, 100% 0, 100% 100%, 0 100%, 20% 50%)' }}
+      />
+    </Row>
+  ),
   Timeline: (
     <Row gap={8} style={{ alignItems: 'flex-start' }}>
       <Col gap={4} style={{ alignItems: 'center' }}>

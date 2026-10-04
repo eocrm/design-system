@@ -83,6 +83,7 @@ const CLUSTERS = {
   Dot: 'Display',
   EntityChip: 'Display',
   Timeline: 'Display',
+  StagePath: 'Display',
   Thread: 'Display',
   BrandIcon: 'Display',
   Logo: 'Display',

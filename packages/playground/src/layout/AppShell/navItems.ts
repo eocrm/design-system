@@ -99,6 +99,7 @@ import {
   Signpost,
   EyeOff,
   Megaphone,
+  ChevronsRight,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -254,6 +255,7 @@ export const componentGroups: { heading: string; items: NavItem[] }[] = [
       { to: '/components/person-display', label: 'PersonDisplay', icon: UserSquare, end: false },
       { to: '/components/progress', label: 'Progress', icon: Activity, end: false },
       { to: '/components/skeleton', label: 'Skeleton', icon: Square, end: false },
+      { to: '/components/stage-path', label: 'StagePath', icon: ChevronsRight, end: false },
       { to: '/components/table', label: 'Table', icon: TableIcon, end: false },
       { to: '/components/datatable', label: 'DataTable', icon: TableProperties, end: false },
       { to: '/components/rich-text', label: 'RichText', icon: Pilcrow, end: false },

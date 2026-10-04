@@ -90,6 +90,7 @@ export type ComponentName =
   | 'SortableGroup'
   | 'Split'
   | 'Stack'
+  | 'StagePath'
   | 'PillMenu'
   | 'Sticky'
   | 'ScrollArea'
