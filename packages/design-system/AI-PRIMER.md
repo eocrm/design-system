@@ -197,6 +197,7 @@ Each component's contract is its `docs/components/<Name>.md`; the props table th
 - [`PillMenu`](docs/components/PillMenu.md) — coloured value menu (status, type, priority…)
 - [`Dot`](docs/components/Dot.md) — bare palette/tone colored circle
 - [`Timeline`](docs/components/Timeline.md) — vertical activity-feed primitive
+- [`StagePath`](docs/components/StagePath.md) — chevron row of record stages (done / current / upcoming)
 - [`Thread`](docs/components/Thread.md) — nested-reply threading primitive
 - [`BrandIcon`](docs/components/BrandIcon.md) — third-party brand marks
 - [`Logo`](docs/components/Logo.md) — brand logo lockup
