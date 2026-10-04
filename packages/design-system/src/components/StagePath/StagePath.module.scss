@@ -20,6 +20,8 @@ $last-rtl: polygon(100% 0, 0 0, 0 100%, 100% 100%, calc(100% - #{$a}) 50%);
   --sp-current-fg: var(--stage-path-current-fg);
   --sp-ring: var(--stage-path-ring);
 
+  // lets the path shrink in a flex row (e.g. a non-wrapping Cluster) so labels truncate instead of overflowing
+  min-width: 0;
   display: flex;
   width: 100%;
   list-style: none;

@@ -5,7 +5,6 @@ import {
   PillMenu,
   Stack,
   StagePath,
-  Text,
   type StagePathTone,
 } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
@@ -88,9 +87,9 @@ const [tone, setTone] = useState<StagePathTone>('default');
       <Example
         title="Tones"
         description="default (in progress) / success (won) / danger (lost). Upcoming stages stay neutral."
-        code={`<StagePath stages={DEAL} value="proposal" />
-<StagePath stages={DEAL} value="proposal" tone="success" />
-<StagePath stages={DEAL} value="proposal" tone="danger" />`}
+        code={`<StagePath aria-label="Default tone" stages={DEAL} value="proposal" />
+<StagePath aria-label="Success tone" stages={DEAL} value="proposal" tone="success" />
+<StagePath aria-label="Danger tone" stages={DEAL} value="proposal" tone="danger" />`}
       >
         <Stack gap="sm">
           <StagePath aria-label="Default tone" stages={DEAL} value="proposal" />
@@ -103,7 +102,7 @@ const [tone, setTone] = useState<StagePathTone>('default');
         title="Narrow width"
         description="Stages share the width equally; labels ellipsize and show the full name in a tooltip on hover or keyboard focus."
         code={`<div style={{ maxWidth: 300 }}>
-  <StagePath stages={DEAL} value="proposal" onStageChange={() => {}} />
+  <StagePath aria-label="Narrow" stages={DEAL} value="proposal" onStageChange={() => {}} />
 </div>`}
       >
         <div style={{ maxWidth: 300 }}>
@@ -114,10 +113,9 @@ const [tone, setTone] = useState<StagePathTone>('default');
       <Example
         title="Right-to-left"
         description="Chevrons mirror under dir='rtl'."
-        code={`<div dir="rtl"><StagePath stages={DEAL} value="proposal" onStageChange={() => {}} /></div>`}
+        code={`<div dir="rtl"><StagePath aria-label="RTL" stages={DEAL} value="proposal" onStageChange={() => {}} /></div>`}
       >
         <div dir="rtl">
-          <Text tone="muted">dir=&quot;rtl&quot;</Text>
           <StagePath aria-label="RTL" stages={DEAL} value="proposal" onStageChange={() => {}} />
         </div>
       </Example>
