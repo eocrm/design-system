@@ -1,4 +1,7 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { createRef } from 'react';
+import { fireEvent } from '@testing-library/react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MediaTile, type MediaTileProps } from './MediaTile';
@@ -167,5 +170,74 @@ describe('MediaTile', () => {
     const root = container.firstChild as HTMLElement;
     expect(root.className).toMatch(/custom/);
     expect(root).toHaveAttribute('data-testid', 'tile');
+  });
+});
+
+describe('MediaTile — events from controls do not reach the tile', () => {
+  it.each(['overlay', 'below'] as const)(
+    '%s: clicking an action button does not fire the tile onClick',
+    async (placement) => {
+      const onClick = vi.fn();
+      const onAction = vi.fn();
+      renderTile({
+        captionPlacement: placement,
+        onClick,
+        actions: <button onClick={onAction}>Download</button>,
+      });
+      await userEvent.click(screen.getByRole('button', { name: 'Download' }));
+      expect(onAction).toHaveBeenCalledTimes(1);
+      expect(onClick).not.toHaveBeenCalled();
+    },
+  );
+
+  it.each(['overlay', 'below'] as const)(
+    '%s: keydown in the checkbox or an action does not reach the tile onKeyDown',
+    (placement) => {
+      const onKeyDown = vi.fn();
+      renderTile({ captionPlacement: placement, selectable: true, onKeyDown });
+      fireEvent.keyDown(screen.getByRole('checkbox'), { key: ' ' });
+      fireEvent.keyDown(screen.getByRole('button', { name: 'Del' }), { key: 'Enter' });
+      expect(onKeyDown).not.toHaveBeenCalled();
+    },
+  );
+});
+
+describe('MediaTile — reveal + selection CSS (source-pinned)', () => {
+  const scss = readFileSync(resolve(__dirname, 'MediaTile.module.scss'), 'utf8');
+  // The rule block that makes revealed controls visible + interactive.
+  const shownRule = scss.match(
+    /([^{}]*)\{\s*opacity: var\(--mediatile-opacity-shown\);\s*pointer-events: auto;/,
+  )!;
+  const shownSelectors = shownRule[1];
+
+  it('a checked checkbox (selected tile) is always shown', () => {
+    expect(shownSelectors).toMatch(/\.root\[data-selected\] \.select\b/);
+  });
+
+  it.each(['hover:hover', 'hover:focus-within', 'focus:focus-within', 'visible'])(
+    'reveal-%s shows the bars AND the chips (below-placement actions + select)',
+    (sel) => {
+      const re = new RegExp(`\\.reveal-${sel} :is\\(\\.bar, \\.chip\\)`);
+      expect(shownSelectors).toMatch(re);
+    },
+  );
+
+  it('(hover: none) makes reveal-hover bars and chips visible (both placements)', () => {
+    const block = scss.match(/@media \(hover: none\) \{[\s\S]*?\n\}/)![0];
+    expect(block).toMatch(/\.reveal-hover :is\(\.bar, \.chip\) \{/);
+    expect(block).toMatch(/opacity: var\(--mediatile-opacity-shown\);/);
+    expect(block).toMatch(/pointer-events: auto;/);
+  });
+
+  it('the selected ring is an ::after painted above the media, ignoring pointers', () => {
+    expect(scss).toMatch(/\.root \{[^}]*position: relative;/);
+    const ring = scss.match(/\.root\[data-selected\]::after \{[^}]*\}/)![0];
+    expect(ring).toMatch(/content: '';/);
+    expect(ring).toMatch(/position: absolute;/);
+    expect(ring).toMatch(/inset: 0;/);
+    expect(ring).toMatch(/pointer-events: none;/);
+    expect(ring).toMatch(
+      /box-shadow: inset 0 0 0 var\(--mediatile-selected-ring-width\) var\(--mediatile-selected-ring\);/,
+    );
   });
 });

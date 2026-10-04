@@ -51,7 +51,7 @@
     var(--mediatile-chip-offset) + var(--mediatile-select-chip-size) + var(--mediatile-bar-gap)
   );
 
-  // Selected tile: inset accent ring (outline, so it never affects layout).
+  // Selected tile: inset accent ring (::after box-shadow, so it never affects layout).
   --mediatile-selected-ring: var(--color-accent);
   --mediatile-selected-ring-width: var(--border-width-emphasis);
 }

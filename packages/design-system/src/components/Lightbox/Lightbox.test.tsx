@@ -495,4 +495,28 @@ describe('Lightbox — actions (#608)', () => {
     await user.keyboard('{Escape}');
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
+  it('arrow keys do not navigate while a DropdownMenu from an action is open', async () => {
+    const user = userEvent.setup();
+    const onIndexChange = vi.fn();
+    const actions = () => (
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <Button iconOnly variant="ghost" size="sm" aria-label="More">
+            …
+          </Button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content align="end">
+          <DropdownMenu.Item onSelect={() => {}}>Delete</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>
+    );
+    open({ actions, onIndexChange });
+    await user.click(screen.getByRole('button', { name: 'More' }));
+    expect(await screen.findByRole('menu')).toBeInTheDocument();
+    await user.keyboard('{ArrowRight}');
+    await user.keyboard('{ArrowLeft}');
+    expect(onIndexChange).not.toHaveBeenCalled();
+    expect(screen.getByAltText('Alpha')).toBeInTheDocument();
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+  });
 });

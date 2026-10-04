@@ -49,7 +49,8 @@ export interface PillMenuProps extends Omit<
   current: PillMenuOption;
   /**
    * What the value IS, for the trigger's accessible name: `label="type"` →
-   * "Change type: Bug". Default: the localized "status" ("Change status: …").
+   * "Change type: Bug". Default: a string `caption` ("Change Pipeline: …"),
+   * else the localized "status" ("Change status: …").
    * Pass it as it reads right after "Change" / "Изменить", lower-case, in the
    * UI's language — it is data, not a translatable string. In ru that is the
    * accusative: `label="категорию"`, not "категория".
@@ -65,10 +66,11 @@ export interface PillMenuProps extends Omit<
    * middle dot: `caption="Pipeline"` → "Pipeline · Faeton". For a trigger
    * that must say both what it picks and the current value.
    *
-   * Visual only — it does NOT name the trigger: `label` remains the
-   * accessible name ("Change pipeline: Faeton"). For WCAG 2.5.3
-   * (label-in-name) the caption's words should appear in `label`, so a
-   * voice user can say what they see. In the read-only chip (no accessible
+   * Names the trigger only as a fallback: `label` wins ("Change pipeline:
+   * Faeton"); with no `label`, a string caption is used ("Change Pipeline:
+   * Faeton") so the visible words stay in the accessible name (WCAG 2.5.3
+   * label-in-name). A non-string caption never names it — pass `label` then,
+   * containing the caption's words. In the read-only chip (no accessible
    * name override) the caption text is read along with the value; the dot is
    * `aria-hidden` in both. Muted by weight (regular vs the value's medium),
    * not colour: the palette fills leave no contrast headroom for a dimmer
@@ -250,7 +252,10 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
           aria-busy={busy || undefined}
           aria-invalid={invalid || undefined}
           aria-label={t('pillMenu.change', {
-            label: label || t('pillMenu.defaultLabel'),
+            label:
+              label ||
+              (typeof caption === 'string' && caption ? caption : undefined) ||
+              t('pillMenu.defaultLabel'),
             name: current.name,
           })}
         >

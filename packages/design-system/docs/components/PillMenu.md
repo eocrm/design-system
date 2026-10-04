@@ -25,8 +25,12 @@ Renamed from `StatusMenu` — `StatusMenu` / `StatusMenuProps` / `StatusMenuStat
 // → trigger announced "Change type: Bug"
 
 // Say what it picks AND the value — visible caption, muted, before a middle dot:
-<PillMenu label="pipeline" caption="Pipeline" current={pipeline} options={pipelines} onSelect={setPipeline} />
-// → shows "Pipeline · Faeton", announced "Change pipeline: Faeton"
+<PillMenu caption="Pipeline" current={pipeline} options={pipelines} onSelect={setPipeline} />
+// → shows "Pipeline · Faeton", announced "Change Pipeline: Faeton" (a string caption names the trigger when `label` is absent)
+
+// Pass `label` too when the name needs another form (e.g. ru accusative) — keep the caption's words in it:
+<PillMenu label="воронку" caption="Воронка" current={pipeline} options={pipelines} onSelect={setPipeline} />
+// → announced "Изменить воронку: Faeton"
 ```
 
 <!-- props:start -->
@@ -37,8 +41,8 @@ Renamed from `StatusMenu` — `StatusMenu` / `StatusMenuProps` / `StatusMenuStat
 | Prop | Type | Required | Description |
 |---|---|---|---|
 | `current` | `PillMenuOption` | yes | The value currently shown on the trigger (or the read-only chip). |
-| `label` | `string` | no | What the value IS, for the trigger's accessible name: `label="type"` → "Change type: Bug". Default: the localized "status" ("Change status: …"). Pass it as it reads right after "Change" / "Изменить", lower-case, in the UI's language — it is data, not a translatable string. In ru that is the accusative: `label="категорию"`, not "категория". Inside a `<Field>`, pass the field's label here (`label="priority"` under "Priority"): the trigger keeps its own name, so the visible field label reaches AT only through this (WCAG 2.5.3). A dev warning fires if it's missing there. |
-| `caption` | `ReactNode` | no | Visible caption rendered inside the pill before the value, separated by a middle dot: `caption="Pipeline"` → "Pipeline · Faeton". For a trigger that must say both what it picks and the current value. Visual only — it does NOT name the trigger: `label` remains the accessible name ("Change pipeline: Faeton"). For WCAG 2.5.3 (label-in-name) the caption's words should appear in `label`, so a voice user can say what they see. In the read-only chip (no accessible name override) the caption text is read along with the value; the dot is `aria-hidden` in both. Muted by weight (regular vs the value's medium), not colour: the palette fills leave no contrast headroom for a dimmer foreground. Omitted → no caption, no dot. |
+| `label` | `string` | no | What the value IS, for the trigger's accessible name: `label="type"` → "Change type: Bug". Default: a string `caption` ("Change Pipeline: …"), else the localized "status" ("Change status: …"). Pass it as it reads right after "Change" / "Изменить", lower-case, in the UI's language — it is data, not a translatable string. In ru that is the accusative: `label="категорию"`, not "категория". Inside a `<Field>`, pass the field's label here (`label="priority"` under "Priority"): the trigger keeps its own name, so the visible field label reaches AT only through this (WCAG 2.5.3). A dev warning fires if it's missing there. |
+| `caption` | `ReactNode` | no | Visible caption rendered inside the pill before the value, separated by a middle dot: `caption="Pipeline"` → "Pipeline · Faeton". For a trigger that must say both what it picks and the current value. Names the trigger only as a fallback: `label` wins ("Change pipeline: Faeton"); with no `label`, a string caption is used ("Change Pipeline: Faeton") so the visible words stay in the accessible name (WCAG 2.5.3 label-in-name). A non-string caption never names it — pass `label` then, containing the caption's words. In the read-only chip (no accessible name override) the caption text is read along with the value; the dot is `aria-hidden` in both. Muted by weight (regular vs the value's medium), not colour: the palette fills leave no contrast headroom for a dimmer foreground. Omitted → no caption, no dot. |
 | `options` | `PillMenuOption[]` | no | Transition targets, offered in the dropdown. Omitted or empty renders read-only mode: a static colored chip with no button, no menu, no aria-haspopup. |
 | `onSelect` | `((id: string \| number) => void)` | no | Fired with the chosen option's `id` when a transition target is picked. |
 | `disabled` | `boolean` | no | Disables the trigger. Stays colored, dims via opacity. |
@@ -82,5 +86,5 @@ In a form column beside full-width Selects/Inputs, pass `fullWidth` and `label` 
 
 - ❌ A small `<Badge>` wrapped inside a neutral `<Button>` to fake a coloured status trigger — that is what `PillMenu` replaces.
 - ❌ Raw hex strings in `color` — it is a `PaletteColor` name (`'amber'`, `'violet'`, …), not a CSS colour value.
-- ❌ `caption` instead of `label` — the caption is visual only and never names the trigger, which would still announce "Change status: …". Pass both, with the caption's words in `label` (WCAG 2.5.3 label-in-name).
+- ❌ A non-string `caption` (a node) without `label` — only a string caption falls back as the name; a node leaves "Change status: …", which fails WCAG 2.5.3 label-in-name. Pass `label` containing the caption's words.
 - ❌ Omitting `options` to "disable" the menu — that is read-only mode (no interactivity at all). For a transition that is temporarily blocked, keep `options` and pass `disabled`.

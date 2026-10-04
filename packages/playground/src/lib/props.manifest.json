@@ -3087,7 +3087,7 @@
           "type": "((item: LightboxItem, index: number) => ReactNode)",
           "required": false,
           "default": "",
-          "description": "Extra header actions for the current item (e.g. a Download `<Button>`, a\n`<DropdownMenu>` \"more\" menu). Called with the current item and its index on\nevery render, so it follows navigation. Rendered in the top-right toolbar\nBEFORE the close button. Use `<Button iconOnly variant=\"ghost\" size=\"sm\">`\n(or a DropdownMenu trigger built from one) — the toolbar re-themes ghost\nButtons for the dark scrim. Returning `null`/`undefined` renders nothing.\nREPLACES the built-in PDF download link: when `actions` is set, the\nLightbox renders no download action of its own — include your own\nDownload for PDF items if you want one."
+          "description": "Extra header actions for the current item (e.g. a Download `<Button>`, a\n`<DropdownMenu>` \"more\" menu). Called with the current item and its index on\nevery render, so it follows navigation. Rendered in the top-right toolbar\nBEFORE the close button. Use `<Button iconOnly variant=\"ghost\" size=\"sm\">`\n(or a DropdownMenu trigger built from one) — the toolbar re-themes ghost\nButtons for the dark scrim (ghost tokens, full radius, `sm` height = the\ntoolbar control size), so text Buttons render pill-shaped — keep actions\nicon-only. While a floating surface from an action (e.g. that menu) is open,\n←/→ and Esc go to it, not the gallery. Returning `null`/`undefined` renders nothing.\nREPLACES the built-in PDF download link: when `actions` is set, the\nLightbox renders no download action of its own — include your own\nDownload for PDF items if you want one."
         },
         {
           "name": "className",
@@ -3472,7 +3472,7 @@
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
           "default": "",
-          "description": "Tile controls (e.g. preview / download / delete icon buttons). With\n`captionPlacement=\"overlay\"` they sit in a centered bottom bar over a scrim;\nwith `\"below\"` they sit in a top-right cluster over the media. Either way they\nfollow `revealOn`."
+          "description": "Tile controls (e.g. preview / download / delete icon buttons). With\n`captionPlacement=\"overlay\"` they sit in a centered bottom bar over a scrim;\nwith `\"below\"` they sit in a top-right cluster over the media. Either way they\nfollow `revealOn`. Clicks and keydowns inside don't bubble to the tile, so a\ntile `onClick` (e.g. open preview) never fires from an action."
         },
         {
           "name": "captionPlacement",
@@ -3500,7 +3500,7 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Render a selection checkbox top-left over the media. Default `false`.\nOnly the checkbox toggles selection — clicking the tile does not (so a tile\n`onClick`, e.g. open preview, keeps working; checkbox clicks don't bubble to it)."
+          "description": "Render a selection checkbox top-left over the media. Default `false`.\nOnly the checkbox toggles selection — clicking the tile does not (so a tile\n`onClick`, e.g. open preview, keeps working; checkbox clicks and keys don't bubble to it).\nWith `revealOn=\"focus\"` an unselected checkbox is hidden and ignores the\npointer until focus-within, so mouse users can't reach it — pair\n`selectable` with `'hover'` or `'visible'`."
         },
         {
           "name": "selected",
@@ -4104,14 +4104,14 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "What the value IS, for the trigger's accessible name: `label=\"type\"` →\n\"Change type: Bug\". Default: the localized \"status\" (\"Change status: …\").\nPass it as it reads right after \"Change\" / \"Изменить\", lower-case, in the\nUI's language — it is data, not a translatable string. In ru that is the\naccusative: `label=\"категорию\"`, not \"категория\".\n\nInside a `<Field>`, pass the field's label here (`label=\"priority\"` under\n\"Priority\"): the trigger keeps its own name, so the visible field label\nreaches AT only through this (WCAG 2.5.3). A dev warning fires if it's\nmissing there."
+          "description": "What the value IS, for the trigger's accessible name: `label=\"type\"` →\n\"Change type: Bug\". Default: a string `caption` (\"Change Pipeline: …\"),\nelse the localized \"status\" (\"Change status: …\").\nPass it as it reads right after \"Change\" / \"Изменить\", lower-case, in the\nUI's language — it is data, not a translatable string. In ru that is the\naccusative: `label=\"категорию\"`, not \"категория\".\n\nInside a `<Field>`, pass the field's label here (`label=\"priority\"` under\n\"Priority\"): the trigger keeps its own name, so the visible field label\nreaches AT only through this (WCAG 2.5.3). A dev warning fires if it's\nmissing there."
         },
         {
           "name": "caption",
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
           "default": "",
-          "description": "Visible caption rendered inside the pill before the value, separated by a\nmiddle dot: `caption=\"Pipeline\"` → \"Pipeline · Faeton\". For a trigger\nthat must say both what it picks and the current value.\n\nVisual only — it does NOT name the trigger: `label` remains the\naccessible name (\"Change pipeline: Faeton\"). For WCAG 2.5.3\n(label-in-name) the caption's words should appear in `label`, so a\nvoice user can say what they see. In the read-only chip (no accessible\nname override) the caption text is read along with the value; the dot is\n`aria-hidden` in both. Muted by weight (regular vs the value's medium),\nnot colour: the palette fills leave no contrast headroom for a dimmer\nforeground. Omitted → no caption, no dot."
+          "description": "Visible caption rendered inside the pill before the value, separated by a\nmiddle dot: `caption=\"Pipeline\"` → \"Pipeline · Faeton\". For a trigger\nthat must say both what it picks and the current value.\n\nNames the trigger only as a fallback: `label` wins (\"Change pipeline:\nFaeton\"); with no `label`, a string caption is used (\"Change Pipeline:\nFaeton\") so the visible words stay in the accessible name (WCAG 2.5.3\nlabel-in-name). A non-string caption never names it — pass `label` then,\ncontaining the caption's words. In the read-only chip (no accessible\nname override) the caption text is read along with the value; the dot is\n`aria-hidden` in both. Muted by weight (regular vs the value's medium),\nnot colour: the palette fills leave no contrast headroom for a dimmer\nforeground. Omitted → no caption, no dot."
         },
         {
           "name": "options",

@@ -81,7 +81,10 @@ export interface LightboxProps {
    * every render, so it follows navigation. Rendered in the top-right toolbar
    * BEFORE the close button. Use `<Button iconOnly variant="ghost" size="sm">`
    * (or a DropdownMenu trigger built from one) — the toolbar re-themes ghost
-   * Buttons for the dark scrim. Returning `null`/`undefined` renders nothing.
+   * Buttons for the dark scrim (ghost tokens, full radius, `sm` height = the
+   * toolbar control size), so text Buttons render pill-shaped — keep actions
+   * icon-only. While a floating surface from an action (e.g. that menu) is open,
+   * ←/→ and Esc go to it, not the gallery. Returning `null`/`undefined` renders nothing.
    * REPLACES the built-in PDF download link: when `actions` is set, the
    * Lightbox renders no download action of its own — include your own
    * Download for PDF items if you want one.
@@ -208,12 +211,11 @@ export function Lightbox({
   useEffect(() => {
     if (!open || !isTop) return;
     function onKeyDown(e: KeyboardEvent) {
-      // #274: yield to an open floating surface — see Modal/Content.tsx.
-      if (
-        e.key === 'Escape' &&
-        (overlayStack.hasOpenFloating() || overlayStack.wasEscapeConsumed(e))
-      )
-        return;
+      // #274: yield to an open floating surface — see Modal/Content.tsx. Arrows too:
+      // with an `actions` menu open, ←/→ belong to the menu (submenus), and navigating
+      // would retarget the still-open menu's item at a different file.
+      if (overlayStack.hasOpenFloating()) return;
+      if (e.key === 'Escape' && overlayStack.wasEscapeConsumed(e)) return;
       if (e.key === 'Escape') {
         e.stopPropagation();
         close();

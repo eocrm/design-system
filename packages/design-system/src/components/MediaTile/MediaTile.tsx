@@ -1,4 +1,4 @@
-import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
+import { forwardRef, type HTMLAttributes, type ReactNode, type SyntheticEvent } from 'react';
 import clsx from 'clsx';
 import { Checkbox } from '../Checkbox';
 import { useTranslation } from '../../i18n/useTranslation';
@@ -22,7 +22,8 @@ export interface MediaTileProps extends Omit<HTMLAttributes<HTMLDivElement>, 'ch
    * Tile controls (e.g. preview / download / delete icon buttons). With
    * `captionPlacement="overlay"` they sit in a centered bottom bar over a scrim;
    * with `"below"` they sit in a top-right cluster over the media. Either way they
-   * follow `revealOn`.
+   * follow `revealOn`. Clicks and keydowns inside don't bubble to the tile, so a
+   * tile `onClick` (e.g. open preview) never fires from an action.
    */
   actions?: ReactNode;
   /**
@@ -48,7 +49,10 @@ export interface MediaTileProps extends Omit<HTMLAttributes<HTMLDivElement>, 'ch
   /**
    * Render a selection checkbox top-left over the media. Default `false`.
    * Only the checkbox toggles selection — clicking the tile does not (so a tile
-   * `onClick`, e.g. open preview, keeps working; checkbox clicks don't bubble to it).
+   * `onClick`, e.g. open preview, keeps working; checkbox clicks and keys don't bubble to it).
+   * With `revealOn="focus"` an unselected checkbox is hidden and ignores the
+   * pointer until focus-within, so mouse users can't reach it — pair
+   * `selectable` with `'hover'` or `'visible'`.
    */
   selectable?: boolean;
   /** Controlled selected state (only used when `selectable`). Sets `data-selected` + an accent ring on the tile. Default `false`. */
@@ -61,6 +65,10 @@ export interface MediaTileProps extends Omit<HTMLAttributes<HTMLDivElement>, 'ch
    */
   selectLabel?: string;
 }
+
+// The tile's own onClick / onKeyDown (e.g. open preview) must not fire from its
+// controls: the checkbox chip and the actions container swallow both.
+const stop = (e: SyntheticEvent) => e.stopPropagation();
 
 /**
  * Gallery / file-grid tile: full-bleed media with a title/meta caption, revealed actions and optional selection.
@@ -116,8 +124,8 @@ export const MediaTile = forwardRef<HTMLDivElement, MediaTileProps>(function Med
         {!below && hasCaption && <div className={clsx(styles.bar, styles.barTop)}>{caption}</div>}
 
         {selectable && (
-          // Stops the checkbox's clicks (label + synthetic input click) reaching a tile onClick.
-          <div className={clsx(styles.chip, styles.select)} onClick={(e) => e.stopPropagation()}>
+          // Stops the checkbox's clicks (label + synthetic input click) and keys reaching the tile.
+          <div className={clsx(styles.chip, styles.select)} onClick={stop} onKeyDown={stop}>
             <Checkbox
               checked={isSelected}
               onChange={(next) => onSelectedChange?.(next)}
@@ -136,6 +144,8 @@ export const MediaTile = forwardRef<HTMLDivElement, MediaTileProps>(function Med
             className={
               below ? clsx(styles.chip, styles.actionsTop) : clsx(styles.bar, styles.barBottom)
             }
+            onClick={stop}
+            onKeyDown={stop}
           >
             {actions}
           </div>

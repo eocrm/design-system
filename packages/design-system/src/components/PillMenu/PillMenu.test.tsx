@@ -432,6 +432,16 @@ describe('PillMenu — caption (#605)', () => {
     expect(screen.getByRole('button', { name: 'Change pipeline: Faeton' })).toBeInTheDocument();
   });
 
+  it('falls back to a string caption for the name when label is absent (WCAG 2.5.3)', () => {
+    render(<PillMenu caption="Pipeline" current={faeton} options={options} />);
+    expect(screen.getByRole('button', { name: 'Change Pipeline: Faeton' })).toBeInTheDocument();
+  });
+
+  it('ignores a non-string caption for the name (default label)', () => {
+    render(<PillMenu caption={<b>Pipeline</b>} current={faeton} options={options} />);
+    expect(screen.getByRole('button', { name: 'Change status: Faeton' })).toBeInTheDocument();
+  });
+
   it('renders no caption and no separator when caption is absent', () => {
     render(<PillMenu current={faeton} options={options} />);
     expect(screen.getByRole('button').textContent).not.toContain('·');
