@@ -437,6 +437,11 @@ describe('PillMenu — caption (#605)', () => {
     expect(screen.getByRole('button', { name: 'Change Pipeline: Faeton' })).toBeInTheDocument();
   });
 
+  it('ignores a blank string caption for the name (default label)', () => {
+    render(<PillMenu caption="  " current={faeton} options={options} />);
+    expect(screen.getByRole('button', { name: 'Change status: Faeton' })).toBeInTheDocument();
+  });
+
   it('ignores a non-string caption for the name (default label)', () => {
     render(<PillMenu caption={<b>Pipeline</b>} current={faeton} options={options} />);
     expect(screen.getByRole('button', { name: 'Change status: Faeton' })).toBeInTheDocument();

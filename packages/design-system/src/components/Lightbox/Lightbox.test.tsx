@@ -294,6 +294,14 @@ describe('Lightbox — Escape yields to open floating surfaces (#274)', () => {
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
+
+  it('arrows still navigate while a non-focus-holding floating surface (a Tooltip) is open', () => {
+    const onIndexChange = vi.fn();
+    open({ onIndexChange });
+    overlayStack.registerFloating('tooltip-probe');
+    fireEvent.keyDown(document, { key: 'ArrowRight' });
+    expect(onIndexChange).toHaveBeenCalledWith(1);
+  });
 });
 
 describe('Lightbox — nested overlay does not steal focus back on release (#551)', () => {

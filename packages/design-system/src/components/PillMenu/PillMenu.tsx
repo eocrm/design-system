@@ -67,7 +67,7 @@ export interface PillMenuProps extends Omit<
    * that must say both what it picks and the current value.
    *
    * Names the trigger only as a fallback: `label` wins ("Change pipeline:
-   * Faeton"); with no `label`, a string caption is used ("Change Pipeline:
+   * Faeton"); with no `label`, a non-blank string caption is used ("Change Pipeline:
    * Faeton") so the visible words stay in the accessible name (WCAG 2.5.3
    * label-in-name). A non-string caption never names it — pass `label` then,
    * containing the caption's words. In the read-only chip (no accessible
@@ -184,7 +184,7 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
     if (process.env.NODE_ENV !== 'production' && hasTrigger && fieldLabelledBy && !label) {
       // eslint-disable-next-line no-console
       console.warn(
-        '<PillMenu> received `aria-labelledby` (e.g. inside a <Field>) but no `label`. `aria-labelledby` is ignored — the trigger keeps its own name ("Change status: …") — so unless the field label is "status", it doesn\'t reach assistive tech. Pass `label` (e.g. label="priority").',
+        '<PillMenu> received `aria-labelledby` (e.g. inside a <Field>) but no `label`. `aria-labelledby` is ignored — the trigger keeps its own name ("Change <string caption, or status>: …") — so the field label doesn\'t reach assistive tech unless it matches. Pass `label` (e.g. label="priority").',
       );
     }
   }, [fieldLabelledBy, label, hasTrigger]);
@@ -254,7 +254,7 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
           aria-label={t('pillMenu.change', {
             label:
               label ||
-              (typeof caption === 'string' && caption ? caption : undefined) ||
+              (typeof caption === 'string' && caption.trim() ? caption : undefined) ||
               t('pillMenu.defaultLabel'),
             name: current.name,
           })}

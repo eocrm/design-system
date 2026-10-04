@@ -57,6 +57,19 @@ describe('MediaTile', () => {
     expect(container.querySelector('[class*="barTop"]')).toBeNull();
   });
 
+  it("a click on the overlay bar's empty scrim still reaches the tile onClick", () => {
+    const onClick = vi.fn();
+    const { container } = render(
+      <MediaTile
+        media={<div>M</div>}
+        actions={<button type="button">Del</button>}
+        onClick={onClick}
+      />,
+    );
+    fireEvent.click(container.querySelector('[class*="barBottom"]')!);
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+
   it('omits the bottom bar when there are no actions', () => {
     const { container } = render(<MediaTile media={<div>M</div>} title="x" />);
     expect(container.querySelector('[class*="barBottom"]')).toBeNull();

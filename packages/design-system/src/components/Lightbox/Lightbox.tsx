@@ -83,8 +83,9 @@ export interface LightboxProps {
    * (or a DropdownMenu trigger built from one) — the toolbar re-themes ghost
    * Buttons for the dark scrim (ghost tokens, full radius, `sm` height = the
    * toolbar control size), so text Buttons render pill-shaped — keep actions
-   * icon-only. While a floating surface from an action (e.g. that menu) is open,
-   * ←/→ and Esc go to it, not the gallery. Returning `null`/`undefined` renders nothing.
+   * icon-only. While an action's menu is open, Esc closes the menu first, and ←/→
+   * stay with the menu (not the gallery) while focus is in it; a Tooltip on an
+   * action doesn't block navigation. Returning `null`/`undefined` renders nothing.
    * REPLACES the built-in PDF download link: when `actions` is set, the
    * Lightbox renders no download action of its own — include your own
    * Download for PDF items if you want one.
@@ -99,6 +100,9 @@ export interface LightboxProps {
    */
   'aria-label'?: string;
 }
+
+// Portaled surfaces that own ←/→ while focused (DropdownMenu, Select-style listboxes).
+const ARROW_OWNING_SURFACE = '[data-dropdown-menu-content], [role="menu"], [role="listbox"]';
 
 const clampIndex = (i: number, n: number) => Math.min(Math.max(i, 0), Math.max(n - 1, 0));
 const wrapIndex = (i: number, n: number) => ((i % n) + n) % n;
@@ -211,11 +215,21 @@ export function Lightbox({
   useEffect(() => {
     if (!open || !isTop) return;
     function onKeyDown(e: KeyboardEvent) {
-      // #274: yield to an open floating surface — see Modal/Content.tsx. Arrows too:
-      // with an `actions` menu open, ←/→ belong to the menu (submenus), and navigating
-      // would retarget the still-open menu's item at a different file.
-      if (overlayStack.hasOpenFloating()) return;
-      if (e.key === 'Escape' && overlayStack.wasEscapeConsumed(e)) return;
+      // #274: yield Escape to an open floating surface — see Modal/Content.tsx.
+      if (
+        e.key === 'Escape' &&
+        (overlayStack.hasOpenFloating() || overlayStack.wasEscapeConsumed(e))
+      )
+        return;
+      // Arrows yield only while focus is IN a portaled menu/listbox (an `actions`
+      // menu): there ←/→ drive submenus, and navigating would retarget the open
+      // menu's item at a different file. Not hasOpenFloating() — a Tooltip on a
+      // focused action counts as floating and would kill arrow navigation.
+      if (
+        (e.key === 'ArrowRight' || e.key === 'ArrowLeft') &&
+        (document.activeElement as HTMLElement | null)?.closest(ARROW_OWNING_SURFACE)
+      )
+        return;
       if (e.key === 'Escape') {
         e.stopPropagation();
         close();
