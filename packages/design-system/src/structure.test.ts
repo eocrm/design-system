@@ -1157,6 +1157,30 @@ describe('stated contrast ratios still hold', () => {
  * shared a background one rule down, so the gate never saw both pieces
  * together. Fixed by hand; not by widening this gate.
  */
+/**
+ * `:dir()` does not survive production builds: CSS minifiers lower it to a
+ * `:lang(ar, he, …)` list, which never matches `dir="rtl"` on a page in a
+ * non-RTL language. StagePath shipped mirrored chevrons this way that worked
+ * on the dev server and not in the deployed playground. Use `[dir]` attribute
+ * selectors instead.
+ */
+describe('component styles do not use :dir()', () => {
+  const styleFiles = allFilesUnder(componentsDir).filter(({ label }) =>
+    /\.(module|tokens)\.scss$/.test(label),
+  );
+
+  it('found stylesheets to check', () => {
+    expect(styleFiles.length).toBeGreaterThan(50);
+  });
+
+  it('no stylesheet uses :dir()', () => {
+    const offenders = styleFiles
+      .filter(({ code }) => /:dir\(/.test(stripScssComments(code)))
+      .map(({ label }) => label);
+    expect(offenders).toEqual([]);
+  });
+});
+
 describe('a focus ring is not suppressed by a rule shared with :hover', () => {
   const styleFiles = allFilesUnder(componentsDir).filter(({ label }) =>
     /\.module\.scss$/.test(label),
