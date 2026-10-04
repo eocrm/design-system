@@ -439,7 +439,9 @@ describe('PillMenu — caption (#605)', () => {
 
   it('ignores a blank string caption for the name (default label)', () => {
     render(<PillMenu caption="  " current={faeton} options={options} />);
-    expect(screen.getByRole('button', { name: 'Change status: Faeton' })).toBeInTheDocument();
+    const trigger = screen.getByRole('button', { name: 'Change status: Faeton' });
+    // …and renders like no caption: no stray separator.
+    expect(trigger.textContent).not.toContain('·');
   });
 
   it('ignores a non-string caption for the name (default label)', () => {

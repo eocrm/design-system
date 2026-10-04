@@ -8,6 +8,7 @@ import { Lightbox, type LightboxItem, type LightboxProps } from './Lightbox';
 import { Modal } from '../Modal';
 import { Button } from '../Button';
 import { DropdownMenu } from '../DropdownMenu';
+import { Popover } from '../Popover';
 
 const ITEMS: LightboxItem[] = [
   { src: 'https://x/a.jpg', alt: 'Alpha', caption: 'Cap A' },
@@ -503,6 +504,37 @@ describe('Lightbox — actions (#608)', () => {
     await user.keyboard('{Escape}');
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
+  it('arrow keys do not navigate while a Popover from an action has focus', async () => {
+    const user = userEvent.setup();
+    const onIndexChange = vi.fn();
+    const actions = () => (
+      <Popover>
+        <Popover.Trigger>
+          <Button iconOnly variant="ghost" size="sm" aria-label="Delete">
+            ×
+          </Button>
+        </Popover.Trigger>
+        <Popover.Content aria-label="Confirm delete">
+          <button type="button">Confirm</button>
+        </Popover.Content>
+      </Popover>
+    );
+    open({ actions, onIndexChange });
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.click(await screen.findByRole('button', { name: 'Confirm' }));
+    fireEvent.keyDown(document.activeElement!, { key: 'ArrowRight' });
+    expect(onIndexChange).not.toHaveBeenCalled();
+  });
+
+  it('arrow keys do not navigate while an in-gallery text input has focus', () => {
+    const onIndexChange = vi.fn();
+    open({ onIndexChange, actions: () => <input aria-label="Rename" /> });
+    const input = screen.getByRole('textbox', { name: 'Rename' });
+    input.focus();
+    fireEvent.keyDown(input, { key: 'ArrowRight' });
+    expect(onIndexChange).not.toHaveBeenCalled();
+  });
+
   it('arrow keys do not navigate while a DropdownMenu from an action is open', async () => {
     const user = userEvent.setup();
     const onIndexChange = vi.fn();

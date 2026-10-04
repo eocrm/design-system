@@ -69,8 +69,8 @@ export interface MediaTileProps extends Omit<HTMLAttributes<HTMLDivElement>, 'ch
 // The tile's own onClick / onKeyDown (e.g. open preview) must not fire from its
 // controls: the checkbox chip and the actions container swallow both.
 const stop = (e: SyntheticEvent) => e.stopPropagation();
-// Actions container: stop only events from the controls inside it. The overlay bar
-// spans the tile's full width, so a click on its empty scrim still reaches the tile.
+// Overlay actions bar: stop only events from the controls inside it. The bar spans
+// the tile's full width, so a click on its empty scrim still reaches the tile.
 const stopFromChild = (e: SyntheticEvent) => {
   if (e.target !== e.currentTarget) e.stopPropagation();
 };
@@ -149,8 +149,11 @@ export const MediaTile = forwardRef<HTMLDivElement, MediaTileProps>(function Med
             className={
               below ? clsx(styles.chip, styles.actionsTop) : clsx(styles.bar, styles.barBottom)
             }
-            onClick={stopFromChild}
-            onKeyDown={stopFromChild}
+            // Below: the chip is a visible pill — a misclick in its padding/gap is
+            // still "on the controls". Overlay: the bar spans the tile, so its empty
+            // scrim is the tile.
+            onClick={below ? stop : stopFromChild}
+            onKeyDown={below ? stop : stopFromChild}
           >
             {actions}
           </div>

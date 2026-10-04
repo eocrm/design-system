@@ -83,8 +83,9 @@ export interface LightboxProps {
    * (or a DropdownMenu trigger built from one) — the toolbar re-themes ghost
    * Buttons for the dark scrim (ghost tokens, full radius, `sm` height = the
    * toolbar control size), so text Buttons render pill-shaped — keep actions
-   * icon-only. While an action's menu is open, Esc closes the menu first, and ←/→
-   * stay with the menu (not the gallery) while focus is in it; a Tooltip on an
+   * icon-only. While an action's menu or popover is open, Esc closes it first, and
+   * ←/→ stay with it (not the gallery) while focus is in it — likewise while focus
+   * is on a text input, combobox (Select) or expanded trigger; a Tooltip on an
    * action doesn't block navigation. Returning `null`/`undefined` renders nothing.
    * REPLACES the built-in PDF download link: when `actions` is set, the
    * Lightbox renders no download action of its own — include your own
@@ -101,8 +102,10 @@ export interface LightboxProps {
   'aria-label'?: string;
 }
 
-// Portaled surfaces that own ←/→ while focused (DropdownMenu, Select-style listboxes).
-const ARROW_OWNING_SURFACE = '[data-dropdown-menu-content], [role="menu"], [role="listbox"]';
+// In-dialog elements that own ←/→ while focused: text entry, a Select-style
+// combobox (focus stays on it while its listbox is open), any expanded trigger.
+const ARROW_OWNING_CONTROL =
+  'input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="combobox"], [aria-expanded="true"]';
 
 const clampIndex = (i: number, n: number) => Math.min(Math.max(i, 0), Math.max(n - 1, 0));
 const wrapIndex = (i: number, n: number) => ((i % n) + n) % n;
@@ -221,15 +224,18 @@ export function Lightbox({
         (overlayStack.hasOpenFloating() || overlayStack.wasEscapeConsumed(e))
       )
         return;
-      // Arrows yield only while focus is IN a portaled menu/listbox (an `actions`
-      // menu): there ←/→ drive submenus, and navigating would retarget the open
-      // menu's item at a different file. Not hasOpenFloating() — a Tooltip on a
-      // focused action counts as floating and would kill arrow navigation.
-      if (
-        (e.key === 'ArrowRight' || e.key === 'ArrowLeft') &&
-        (document.activeElement as HTMLElement | null)?.closest(ARROW_OWNING_SURFACE)
-      )
-        return;
+      // Arrows navigate only while focus is in the gallery itself. Focus outside the
+      // dialog means a portaled surface from an action has it (DropdownMenu,
+      // Popover/ConfirmationPopover, …) — navigating would retarget its still-open
+      // "Delete" at a different file. Not hasOpenFloating(): a Tooltip on a focused
+      // action is floating too, and must not kill navigation. Focus dropped to
+      // <body> (a focused action unmounted) still counts as the gallery.
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        const active = document.activeElement as HTMLElement | null;
+        const inGallery =
+          !active || active === document.body || !!dialogRef.current?.contains(active);
+        if (!inGallery || active?.matches(ARROW_OWNING_CONTROL)) return;
+      }
       if (e.key === 'Escape') {
         e.stopPropagation();
         close();

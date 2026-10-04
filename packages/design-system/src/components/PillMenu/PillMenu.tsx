@@ -126,14 +126,16 @@ function statusColorStyle(status: PillMenuOption): CSSProperties {
 function OptionContent({ option, caption }: { option: PillMenuOption; caption?: ReactNode }) {
   return (
     <>
-      {caption != null && (
-        <>
-          <span className={styles.caption}>{caption}</span>
-          <span className={styles.caption} aria-hidden="true">
-            ·
-          </span>
-        </>
-      )}
+      {caption != null &&
+        caption !== false &&
+        !(typeof caption === 'string' && !caption.trim()) && (
+          <>
+            <span className={styles.caption}>{caption}</span>
+            <span className={styles.caption} aria-hidden="true">
+              ·
+            </span>
+          </>
+        )}
       {option.icon != null && (
         <span className={styles.icon} aria-hidden="true">
           {option.icon}
