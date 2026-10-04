@@ -238,7 +238,7 @@ Each component's contract is its `docs/components/<Name>.md`; the props table th
 - [`Skeleton`](docs/components/Skeleton.md) — loading placeholder
 - [`Image`](docs/components/Image.md) — image with loading + error states
 - [`QrCode`](docs/components/QrCode.md) — scannable QR code
-- [`MediaTile`](docs/components/MediaTile.md) — media tile with revealed overlay bars
+- [`MediaTile`](docs/components/MediaTile.md) — media tile with caption, revealed actions and selection
 - [`Table`](docs/components/Table.md) — tabular data primitive
 - [`DataTable`](docs/components/DataTable.md) — server-driven data table with column features
 - [`Pagination`](docs/components/Pagination.md) — numbered nav with windowing

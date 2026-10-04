@@ -75,6 +75,18 @@ export interface LightboxProps {
   onIndexChange?: (index: number) => void;
   /** Wrap past the first/last image. Defaults to `true`. */
   loop?: boolean;
+  /**
+   * Extra header actions for the current item (e.g. a Download `<Button>`, a
+   * `<DropdownMenu>` "more" menu). Called with the current item and its index on
+   * every render, so it follows navigation. Rendered in the top-right toolbar
+   * BEFORE the close button. Use `<Button iconOnly variant="ghost" size="sm">`
+   * (or a DropdownMenu trigger built from one) — the toolbar re-themes ghost
+   * Buttons for the dark scrim. Returning `null`/`undefined` renders nothing.
+   * REPLACES the built-in PDF download link: when `actions` is set, the
+   * Lightbox renders no download action of its own — include your own
+   * Download for PDF items if you want one.
+   */
+  actions?: (item: LightboxItem, index: number) => ReactNode;
   /** className for the dialog container. */
   className?: string;
   /**
@@ -105,6 +117,7 @@ export function Lightbox({
   index,
   onIndexChange,
   loop = true,
+  actions,
   className,
   'aria-label': ariaLabel,
 }: LightboxProps) {
@@ -268,30 +281,35 @@ export function Lightbox({
       style={style}
       onClick={closeIfBackdrop}
     >
-      {docSrc && (
-        <a
-          className={styles.download}
-          href={docSrc}
-          download
-          // Open/save in a new tab: a cross-origin `download` is ignored by the
-          // browser, so without target the click would navigate the whole app
-          // away from the gallery. noopener/noreferrer guard the opened context.
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={t('lightbox.download')}
-        >
-          <Download size={20} aria-hidden="true" />
-        </a>
-      )}
+      {/* Top-right chrome: [consumer actions | built-in PDF download][close]. */}
+      <div className={styles.toolbar}>
+        {actions ? (
+          actions(currentItem, current)
+        ) : docSrc ? (
+          <a
+            className={styles.download}
+            href={docSrc}
+            download
+            // Open/save in a new tab: a cross-origin `download` is ignored by the
+            // browser, so without target the click would navigate the whole app
+            // away from the gallery. noopener/noreferrer guard the opened context.
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={t('lightbox.download')}
+          >
+            <Download size={20} aria-hidden="true" />
+          </a>
+        ) : null}
 
-      <button
-        type="button"
-        className={styles.close}
-        aria-label={t('lightbox.close')}
-        onClick={close}
-      >
-        <X size={20} aria-hidden="true" />
-      </button>
+        <button
+          type="button"
+          className={styles.close}
+          aria-label={t('lightbox.close')}
+          onClick={close}
+        >
+          <X size={20} aria-hidden="true" />
+        </button>
+      </div>
 
       <div className={styles.stage} onClick={closeIfBackdrop}>
         {multi && (

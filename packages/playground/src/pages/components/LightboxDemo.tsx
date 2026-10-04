@@ -6,8 +6,10 @@ import {
   Stack,
   Button,
   Text,
+  DropdownMenu,
   type LightboxItem,
 } from '@eocrm/design-system';
+import { Download, MoreHorizontal } from 'lucide-react';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -90,6 +92,72 @@ function MixedGallery() {
         document-icon placeholder for it.
       </Text>
       <Lightbox open={open} onOpenChange={setOpen} items={ATTACHMENTS} />
+    </Stack>
+  );
+}
+
+// Header actions (#608) + a tall portrait image (#607 — scaled to fit, not cropped).
+const FILES: LightboxItem[] = [
+  {
+    src: 'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1000&h=2400&fit=crop&q=80',
+    alt: 'Ridge panorama (tall)',
+    caption: 'Tall 1000×2400 image — scaled down to fit the stage',
+  },
+  ATTACHMENTS[1],
+  PHOTOS[1],
+];
+
+function WithActions() {
+  const [open, setOpen] = useState(false);
+  const [log, setLog] = useState('');
+  return (
+    <Stack gap="sm">
+      <Button variant="secondary" size="sm" onClick={() => setOpen(true)}>
+        Open with header actions
+      </Button>
+      <Text size="sm" tone="muted">
+        {log || 'Download + a “more” menu sit left of the close button and follow navigation.'}
+      </Text>
+      <Lightbox
+        open={open}
+        onOpenChange={setOpen}
+        items={FILES}
+        actions={(item, i) => (
+          <>
+            <Button
+              as="a"
+              href={item.src}
+              download
+              target="_blank"
+              rel="noopener noreferrer"
+              iconOnly
+              variant="ghost"
+              size="sm"
+              aria-label={`Download ${item.alt}`}
+            >
+              <Download size={20} aria-hidden="true" />
+            </Button>
+            <DropdownMenu>
+              <DropdownMenu.Trigger>
+                <Button iconOnly variant="ghost" size="sm" aria-label="More actions">
+                  <MoreHorizontal size={20} aria-hidden="true" />
+                </Button>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Content align="end">
+                <DropdownMenu.Item onSelect={() => setLog(`Rename: ${item.alt} (#${i + 1})`)}>
+                  Rename
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  tone="danger"
+                  onSelect={() => setLog(`Delete: ${item.alt} (#${i + 1})`)}
+                >
+                  Delete
+                </DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu>
+          </>
+        )}
+      />
     </Stack>
   );
 }
@@ -217,6 +285,63 @@ export function MixedGallery() {
 }`}
       >
         <MixedGallery />
+      </Example>
+
+      <Example
+        title="Header actions + tall image"
+        description="actions(item, index) renders consumer controls in the top-right toolbar, before the close button — use ghost iconOnly sm Buttons (the toolbar re-themes them for the scrim) and DropdownMenus built from them. Setting actions REPLACES the built-in PDF download, so include your own. The first item is a tall 1000×2400 image: it scales down to fit instead of being cropped."
+        code={`import { useState } from 'react';
+import { Download, MoreHorizontal } from 'lucide-react';
+import { Button, DropdownMenu, Lightbox, type LightboxItem } from '@eocrm/design-system';
+
+export function WithActions({ files }: { files: LightboxItem[] }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Button variant="secondary" size="sm" onClick={() => setOpen(true)}>
+        Open with header actions
+      </Button>
+      <Lightbox
+        open={open}
+        onOpenChange={setOpen}
+        items={files}
+        actions={(item) => (
+          <>
+            {/* actions replaces the built-in PDF download — provide your own */}
+            <Button
+              as="a"
+              href={item.src}
+              download
+              target="_blank"
+              rel="noopener noreferrer"
+              iconOnly
+              variant="ghost"
+              size="sm"
+              aria-label={\`Download \${item.alt}\`}
+            >
+              <Download size={20} aria-hidden="true" />
+            </Button>
+            <DropdownMenu>
+              <DropdownMenu.Trigger>
+                <Button iconOnly variant="ghost" size="sm" aria-label="More actions">
+                  <MoreHorizontal size={20} aria-hidden="true" />
+                </Button>
+              </DropdownMenu.Trigger>
+              <DropdownMenu.Content align="end">
+                <DropdownMenu.Item onSelect={() => rename(item)}>Rename</DropdownMenu.Item>
+                <DropdownMenu.Item tone="danger" onSelect={() => remove(item)}>
+                  Delete
+                </DropdownMenu.Item>
+              </DropdownMenu.Content>
+            </DropdownMenu>
+          </>
+        )}
+      />
+    </>
+  );
+}`}
+      >
+        <WithActions />
       </Example>
 
       <Example

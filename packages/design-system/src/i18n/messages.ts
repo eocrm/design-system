@@ -45,6 +45,16 @@ export interface Messages {
     /** Label on the primary "Confirm" button inside the confirmation popover. */
     confirm: string;
   };
+  mediaTile: {
+    /**
+     * Function leaf — the selection checkbox's accessible-name fallback when
+     * `selectLabel` is omitted and `title` is a string: `name` is the title
+     * ("Select report.pdf").
+     */
+    selectNamed: (params: { name: string }) => string;
+    /** Selection checkbox's accessible-name fallback when there is no string `title` to name it. */
+    select: string;
+  };
   image: {
     /**
      * Visible text + aria-label fallback shown when an image fails to load.

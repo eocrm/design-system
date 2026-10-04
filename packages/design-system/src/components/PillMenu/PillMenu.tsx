@@ -61,6 +61,21 @@ export interface PillMenuProps extends Omit<
    */
   label?: string;
   /**
+   * Visible caption rendered inside the pill before the value, separated by a
+   * middle dot: `caption="Pipeline"` → "Pipeline · Faeton". For a trigger
+   * that must say both what it picks and the current value.
+   *
+   * Visual only — it does NOT name the trigger: `label` remains the
+   * accessible name ("Change pipeline: Faeton"). For WCAG 2.5.3
+   * (label-in-name) the caption's words should appear in `label`, so a
+   * voice user can say what they see. In the read-only chip (no accessible
+   * name override) the caption text is read along with the value; the dot is
+   * `aria-hidden` in both. Muted by weight (regular vs the value's medium),
+   * not colour: the palette fills leave no contrast headroom for a dimmer
+   * foreground. Omitted → no caption, no dot.
+   */
+  caption?: ReactNode;
+  /**
    * Transition targets, offered in the dropdown. Omitted or empty renders
    * read-only mode: a static colored chip with no button, no menu, no
    * aria-haspopup.
@@ -105,10 +120,18 @@ function statusColorStyle(status: PillMenuOption): CSSProperties {
   return { '--pill-menu-bg': bg, '--pill-menu-fg': fg } as CSSProperties;
 }
 
-/** Renders the optional icon + name, shared by the pill and the read-only chip (rows use Item's icon slot). */
-function OptionContent({ option }: { option: PillMenuOption }) {
+/** Renders the optional caption + icon + name, shared by the pill and the read-only chip (rows use Item's icon slot). */
+function OptionContent({ option, caption }: { option: PillMenuOption; caption?: ReactNode }) {
   return (
     <>
+      {caption != null && (
+        <>
+          <span className={styles.caption}>{caption}</span>
+          <span className={styles.caption} aria-hidden="true">
+            ·
+          </span>
+        </>
+      )}
       {option.icon != null && (
         <span className={styles.icon} aria-hidden="true">
           {option.icon}
@@ -129,6 +152,7 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
     options,
     onSelect,
     label,
+    caption,
     disabled = false,
     busy = false,
     fullWidth = false,
@@ -201,7 +225,7 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
         className={clsx(styles.chip, fullWidth && styles.fullWidth, className)}
         style={mergedStyle}
       >
-        <OptionContent option={current} />
+        <OptionContent option={current} caption={caption} />
       </span>
     );
   }
@@ -230,7 +254,7 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
             name: current.name,
           })}
         >
-          <OptionContent option={current} />
+          <OptionContent option={current} caption={caption} />
           <svg
             width="10"
             height="6"

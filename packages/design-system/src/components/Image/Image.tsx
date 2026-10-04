@@ -42,6 +42,12 @@ export interface ImageProps extends Omit<
    */
   objectFit?: ImageObjectFit;
   /**
+   * Which part of the image stays in view when `objectFit` crops or letterboxes
+   * it. Any CSS `object-position` value. Defaults to `'center'`. Use `'top'` for
+   * document / screenshot thumbnails cropped square, so the header stays visible.
+   */
+  objectPosition?: string;
+  /**
    * Reserve the box at a fixed ratio to prevent layout shift while loading.
    * Number (`1.5`) or CSS string (`'16 / 9'`).
    */
@@ -127,6 +133,7 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
     src,
     alt,
     objectFit = 'cover',
+    objectPosition = 'center',
     aspectRatio,
     size,
     radius = 'md',
@@ -168,6 +175,7 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
           ? String(aspectRatio)
           : aspectRatio,
     '--image-object-fit': objectFit,
+    '--image-object-position': objectPosition,
     ...style,
   } as CSSProperties;
 

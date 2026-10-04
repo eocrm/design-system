@@ -23,6 +23,28 @@ function TaskTypeExample() {
   );
 }
 
+const PIPELINES: PillMenuOption[] = [
+  { id: 'faeton', name: 'Faeton', color: 'blue' },
+  { id: 'retail', name: 'Retail', color: 'violet' },
+  { id: 'partners', name: 'Partners', color: 'teal' },
+];
+
+function CaptionExample() {
+  const [pipeline, setPipeline] = useState<PillMenuOption>(PIPELINES[0]);
+  return (
+    <Cluster gap="md">
+      <PillMenu
+        label="pipeline"
+        caption="Pipeline"
+        current={pipeline}
+        options={PIPELINES.filter((p) => p.id !== pipeline.id)}
+        onSelect={(id) => setPipeline(PIPELINES.find((p) => p.id === id) ?? pipeline)}
+      />
+      <PillMenu caption="Pipeline" current={PIPELINES[2]} />
+    </Cluster>
+  );
+}
+
 function FormFieldExample() {
   const [type, setType] = useState<PillMenuOption>(TASK_TYPES[0]);
   return (
@@ -172,6 +194,37 @@ export function Demo() {
 }`}
       >
         <TaskTypeExample />
+      </Example>
+
+      <Example
+        title="Caption: what it picks + the value"
+        description="caption renders a muted label inside the pill before the value, separated by an aria-hidden middle dot — 'Pipeline · Faeton'. Visual only: label stays the trigger's accessible name ('Change pipeline: Faeton'), so put the caption's words in label too. Muted by weight, not colour, so it keeps AA on every palette fill. The second pill is the read-only chip."
+        code={`import { useState } from 'react';
+import { Cluster, PillMenu, type PillMenuOption } from '@eocrm/design-system';
+
+const PIPELINES: PillMenuOption[] = [
+  { id: 'faeton', name: 'Faeton', color: 'blue' },
+  { id: 'retail', name: 'Retail', color: 'violet' },
+  { id: 'partners', name: 'Partners', color: 'teal' },
+];
+
+export function Demo() {
+  const [pipeline, setPipeline] = useState<PillMenuOption>(PIPELINES[0]);
+  return (
+    <Cluster gap="md">
+      <PillMenu
+        label="pipeline"
+        caption="Pipeline"
+        current={pipeline}
+        options={PIPELINES.filter((p) => p.id !== pipeline.id)}
+        onSelect={(id) => setPipeline(PIPELINES.find((p) => p.id === id) ?? pipeline)}
+      />
+      <PillMenu caption="Pipeline" current={PIPELINES[2]} />
+    </Cluster>
+  );
+}`}
+      >
+        <CaptionExample />
       </Example>
 
       <Example

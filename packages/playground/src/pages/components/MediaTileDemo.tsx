@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   MediaTile,
   Image,
@@ -78,14 +79,143 @@ function fileActions(name: string) {
   );
 }
 
+function SelectableFileGrid() {
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const toggle = (id: string, next: boolean) =>
+    setSelected((prev) => {
+      const s = new Set(prev);
+      if (next) s.add(id);
+      else s.delete(id);
+      return s;
+    });
+  return (
+    <Stack gap="sm">
+      <Text size="sm" tone="muted">
+        {selected.size} selected
+      </Text>
+      <Masonry minColumnWidth="180px" gap="sm">
+        {FILES.map((f) => (
+          <MediaTile
+            key={f.id}
+            captionPlacement="below"
+            media={
+              f.src ? (
+                <Image
+                  src={f.src}
+                  alt={f.name}
+                  aspectRatio={1}
+                  objectFit="cover"
+                  objectPosition="top"
+                />
+              ) : (
+                iconBody
+              )
+            }
+            title={f.name}
+            meta={f.size}
+            selectable
+            selected={selected.has(f.id)}
+            onSelectedChange={(next) => toggle(f.id, next)}
+            revealOn={selected.size > 0 ? 'visible' : 'hover'}
+            actions={
+              <Button
+                iconOnly
+                variant="ghost"
+                size="sm"
+                aria-label={`Download ${f.name}`}
+                onClick={() => {}}
+              >
+                <Download size={16} />
+              </Button>
+            }
+          />
+        ))}
+      </Masonry>
+    </Stack>
+  );
+}
+
 export function MediaTileDemo() {
   return (
     <DemoLayout
       name="MediaTile"
       componentName="MediaTile"
-      description="Media tile for gallery / file-grid views — a full-bleed image (or a file-type icon), with a top bar (name + size) and a bottom bar (controls) over gradient gray scrims, revealed on hover / keyboard focus. Drop one per tile in a Masonry. For a plain image use Image."
+      description="Media tile for gallery / file-grid views — a full-bleed image (or a file-type icon) with a name + size caption (over the media, revealed on hover / focus, or in a solid bar below it), revealed controls, and optional multi-select. Drop one per tile in a Masonry. For a plain image use Image."
       files={getComponentFiles('MediaTile')}
     >
+      <Example
+        title="File grid — caption below + multi-select"
+        description='captionPlacement="below" keeps the name + size in a solid, always-visible bar. selectable adds a top-left checkbox (only it toggles selection); selected tiles get an accent ring. Actions sit top-right, revealed on hover / focus (always on touch). Once anything is selected the grid switches to revealOn="visible" so every checkbox shows. Images crop square from the top (objectPosition="top").'
+        code={`import { useState } from 'react';
+import { Download, FileText } from 'lucide-react';
+import { MediaTile, Image, Masonry, Stack, Text, Button } from '@eocrm/design-system';
+
+const files = [
+  { id: 'f1', name: 'lake-survey.jpg', size: '2.4 MB', src: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=400&q=70' },
+  { id: 'f2', name: 'north-meadow.png', size: '1.1 MB', src: 'https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?w=400&q=70' },
+  { id: 'f3', name: 'site-plan.pdf', size: '380 KB' },
+];
+
+const iconBody = (
+  <div
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      aspectRatio: '1',
+      background: 'var(--color-bg-muted)',
+      color: 'var(--color-fg-muted)',
+    }}
+  >
+    <FileText size={40} />
+  </div>
+);
+
+export function Demo() {
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const toggle = (id: string, next: boolean) =>
+    setSelected((prev) => {
+      const s = new Set(prev);
+      if (next) s.add(id);
+      else s.delete(id);
+      return s;
+    });
+  return (
+    <Stack gap="sm">
+      <Text size="sm" tone="muted">{selected.size} selected</Text>
+      <Masonry minColumnWidth="180px" gap="sm">
+        {files.map((f) => (
+          <MediaTile
+            key={f.id}
+            captionPlacement="below"
+            media={
+              f.src ? (
+                <Image src={f.src} alt={f.name} aspectRatio={1} objectFit="cover" objectPosition="top" />
+              ) : (
+                iconBody
+              )
+            }
+            title={f.name}
+            meta={f.size}
+            selectable
+            selected={selected.has(f.id)}
+            onSelectedChange={(next) => toggle(f.id, next)}
+            revealOn={selected.size > 0 ? 'visible' : 'hover'}
+            actions={
+              <Button iconOnly variant="ghost" size="sm" aria-label={\`Download \${f.name}\`} onClick={() => {}}>
+                <Download size={16} />
+              </Button>
+            }
+          />
+        ))}
+      </Masonry>
+    </Stack>
+  );
+}`}
+      >
+        <SelectableFileGrid />
+      </Example>
+
       <Example
         title="Files grid (Masonry of tiles)"
         description="Hover a tile (or Tab into it) to reveal the name + size on top and the preview / download / delete controls on the bottom, each on a gray scrim. The non-image file shows a centered icon."

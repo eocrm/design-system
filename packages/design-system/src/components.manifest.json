@@ -130,6 +130,7 @@
     "composes": [],
     "composedBy": [
       "DataTable",
+      "MediaTile",
       "OptionsPicker"
     ]
   },
@@ -511,9 +512,11 @@
     "composedBy": []
   },
   "MediaTile": {
-    "tier": "primitive",
+    "tier": "composition",
     "cluster": "Display",
-    "composes": [],
+    "composes": [
+      "Checkbox"
+    ],
     "composedBy": []
   },
   "Modal": {

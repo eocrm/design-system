@@ -21,6 +21,10 @@ export const en: Messages = {
     cancel: 'Cancel',
     confirm: 'Confirm',
   },
+  mediaTile: {
+    selectNamed: ({ name }) => `Select ${name as string}`,
+    select: 'Select',
+  },
   image: {
     loadError: 'Image failed to load',
     retry: 'Retry',

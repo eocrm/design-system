@@ -1,13 +1,26 @@
 @use './MediaTile.tokens';
 
 // Rule 4 note: the `position: relative/absolute` + `inset-*` + `flex` below are the
-// component's OWN internal overlay layout (the revealed bars), not consumer-facing
-// layout — the same overlay-child exception Image/Modal use.
+// component's OWN internal overlay layout (the revealed bars and chips over the
+// media), not consumer-facing layout — the same overlay-child exception Image/Modal use.
 
 .root {
-  position: relative;
   overflow: hidden;
   display: block;
+}
+
+.placement-below {
+  display: flex;
+  flex-direction: column;
+  background: var(--mediatile-surface);
+  border: var(--mediatile-border-width) solid var(--mediatile-border);
+}
+
+// Inset outline: paints over the media, never affects layout, and is not
+// clipped by a scrolling grid parent the way an outset ring would be.
+.root[data-selected] {
+  outline: var(--mediatile-selected-ring-width) solid var(--mediatile-selected-ring);
+  outline-offset: calc(-1 * var(--mediatile-selected-ring-width));
 }
 
 .radius-none {
@@ -26,26 +39,37 @@
   border-radius: var(--mediatile-radius-lg);
 }
 
+// Anchor for every overlay (bars, chips) — in both placements.
 .media {
+  position: relative;
   display: block;
 }
 
-.bar {
+// Revealable overlays: the overlay-placement bars and the chips.
+.bar,
+.chip {
   position: absolute;
+  opacity: var(--mediatile-opacity-hidden);
+  pointer-events: none;
+  transition: opacity var(--mediatile-reveal-transition);
+}
+
+.bar {
   inset-inline: 0;
   display: flex;
   align-items: center;
   gap: var(--mediatile-bar-gap);
   padding: var(--mediatile-bar-padding);
   color: var(--mediatile-fg);
-  opacity: var(--mediatile-opacity-hidden);
-  pointer-events: none;
-  transition: opacity var(--mediatile-reveal-transition);
 }
 
 .barTop {
   inset-block-start: 0;
   background: var(--mediatile-scrim-top);
+}
+
+.selectable .barTop {
+  padding-inline-start: var(--mediatile-select-clearance);
 }
 
 .barBottom {
@@ -54,13 +78,53 @@
   background: var(--mediatile-scrim-bottom);
 }
 
+.chip {
+  inset-block-start: var(--mediatile-chip-offset);
+  display: flex;
+  align-items: center;
+  gap: var(--mediatile-chip-gap);
+  padding: var(--mediatile-chip-padding);
+  color: var(--mediatile-chip-fg);
+  background: var(--mediatile-chip-bg);
+  border-radius: var(--mediatile-chip-radius);
+  box-shadow: var(--mediatile-chip-shadow);
+}
+
+.select {
+  inset-inline-start: var(--mediatile-chip-offset);
+}
+
+.actionsTop {
+  inset-inline-end: var(--mediatile-chip-offset);
+}
+
 // Reveal models — selected by the `reveal-*` modifier class on the root.
-.reveal-hover:hover .bar,
-.reveal-hover:focus-within .bar,
-.reveal-focus:focus-within .bar,
-.reveal-visible .bar {
+// A checked checkbox (selected tile) always shows.
+.reveal-hover:hover :is(.bar, .chip),
+.reveal-hover:focus-within :is(.bar, .chip),
+.reveal-focus:focus-within :is(.bar, .chip),
+.reveal-visible :is(.bar, .chip),
+.root[data-selected] .select {
   opacity: var(--mediatile-opacity-shown);
   pointer-events: auto;
+}
+
+// Touch devices can't hover: 'hover' degrades to 'visible' so the controls are reachable.
+@media (hover: none) {
+  .reveal-hover :is(.bar, .chip) {
+    opacity: var(--mediatile-opacity-shown);
+    pointer-events: auto;
+  }
+}
+
+// captionPlacement="below": solid, always-visible caption bar.
+.caption {
+  display: flex;
+  align-items: center;
+  gap: var(--mediatile-bar-gap);
+  padding: var(--mediatile-bar-padding);
+  color: var(--mediatile-caption-fg);
+  background: var(--mediatile-caption-bg);
 }
 
 .title {
@@ -79,8 +143,14 @@
   opacity: var(--mediatile-meta-opacity);
 }
 
+.caption .meta {
+  color: var(--mediatile-caption-meta-fg);
+  opacity: var(--mediatile-opacity-shown);
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .bar {
+  .bar,
+  .chip {
     transition: none;
   }
 }

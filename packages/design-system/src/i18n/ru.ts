@@ -22,6 +22,10 @@ export const ru: Messages = {
     cancel: 'Отмена',
     confirm: 'Подтвердить',
   },
+  mediaTile: {
+    selectNamed: ({ name }) => `Выбрать ${name as string}`,
+    select: 'Выбрать',
+  },
   image: {
     loadError: 'Не удалось загрузить изображение',
     retry: 'Повторить',
