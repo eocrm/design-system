@@ -362,6 +362,7 @@ export const ru: Messages = {
     dismiss: 'Закрыть',
     notifications: 'Уведомления',
   },
+  stagePath: { completed: 'завершён', upcoming: 'предстоит' },
   breadcrumb: {
     ariaLabel: 'Хлебные крошки',
   },

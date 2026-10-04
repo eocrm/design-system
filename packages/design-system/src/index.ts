@@ -551,6 +551,8 @@ export type {
 
 export { Breadcrumb } from './components/Breadcrumb';
 export type { BreadcrumbProps, BreadcrumbItemProps } from './components/Breadcrumb';
+export { StagePath } from './components/StagePath';
+export type { StagePathProps, StagePathStage, StagePathTone } from './components/StagePath';
 
 export { Rail, useRail, RailContext } from './components/Rail';
 export type {

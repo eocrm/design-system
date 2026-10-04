@@ -356,6 +356,7 @@ export const en: Messages = {
     dismiss: 'Dismiss',
     notifications: 'Notifications',
   },
+  stagePath: { completed: 'completed', upcoming: 'upcoming' },
   breadcrumb: {
     ariaLabel: 'Breadcrumb',
   },

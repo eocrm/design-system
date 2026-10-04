@@ -274,6 +274,21 @@ const PAIRS: Pair[] = [
   ['muted text on subtle bg', '--color-fg-muted', '--color-bg-subtle', 4.5],
   ['muted text on sunken bg', '--color-fg-muted', '--color-bg-sunken', 4.5],
   ['muted text on accent tint', '--color-fg-muted', '--color-accent-bg-subtle', 4.5],
+  // StagePath (and Badge) paint text on these tone tints.
+  ['tone info text on tone info tint', '--color-tone-info-fg', '--color-tone-info-bg', 4.5],
+  [
+    'tone success text on tone success tint',
+    '--color-tone-success-fg',
+    '--color-tone-success-bg',
+    4.5,
+  ],
+  ['tone danger text on tone danger tint', '--color-tone-danger-fg', '--color-tone-danger-bg', 4.5],
+  [
+    'tone neutral text on tone neutral tint',
+    '--color-tone-neutral-fg',
+    '--color-tone-neutral-bg',
+    4.5,
+  ],
 ];
 
 describe.each([

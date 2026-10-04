@@ -1,0 +1,165 @@
+// StagePath.module.scss
+@use './StagePath.tokens';
+
+// Shapes. Each stage's box is clipped to a chevron; the next stage overlaps it
+// by the arrow depth (minus the gap) so the tip nests into the next notch.
+// RTL mirrors the polygons; padding/radius already use logical properties.
+$a: var(--stage-path-arrow);
+$middle: polygon(0 0, calc(100% - #{$a}) 0, 100% 50%, calc(100% - #{$a}) 100%, 0 100%, #{$a} 50%);
+$first: polygon(0 0, calc(100% - #{$a}) 0, 100% 50%, calc(100% - #{$a}) 100%, 0 100%);
+$last: polygon(0 0, 100% 0, 100% 100%, 0 100%, #{$a} 50%);
+$middle-rtl: polygon(100% 0, #{$a} 0, 0 50%, #{$a} 100%, 100% 100%, calc(100% - #{$a}) 50%);
+$first-rtl: polygon(100% 0, #{$a} 0, 0 50%, #{$a} 100%, 100% 100%);
+$last-rtl: polygon(100% 0, 0 0, 0 100%, 100% 100%, calc(100% - #{$a}) 50%);
+
+.path {
+  // Per-tone palette, read by the stage states below.
+  --sp-done-bg: var(--stage-path-done-bg);
+  --sp-done-fg: var(--stage-path-done-fg);
+  --sp-current-bg: var(--stage-path-current-bg);
+  --sp-current-fg: var(--stage-path-current-fg);
+  --sp-ring: var(--stage-path-ring);
+
+  display: flex;
+  width: 100%;
+  list-style: none;
+  /* stylelint-disable-next-line property-disallowed-list -- native <ol> margin reset */
+  margin: 0;
+  padding: 0;
+  font-size: var(--stage-path-font-size);
+  font-weight: var(--stage-path-font-weight);
+}
+
+.path[data-tone='success'] {
+  --sp-done-bg: var(--stage-path-done-bg-success);
+  --sp-done-fg: var(--stage-path-done-fg-success);
+  --sp-current-bg: var(--stage-path-current-bg-success);
+  --sp-current-fg: var(--stage-path-current-fg-success);
+  --sp-ring: var(--stage-path-ring-success);
+}
+
+.path[data-tone='danger'] {
+  --sp-done-bg: var(--stage-path-done-bg-danger);
+  --sp-done-fg: var(--stage-path-done-fg-danger);
+  --sp-current-bg: var(--stage-path-current-bg-danger);
+  --sp-current-fg: var(--stage-path-current-fg-danger);
+  --sp-ring: var(--stage-path-ring-danger);
+}
+
+// Internal row distribution: equal shares, shrinkable so labels can ellipsize.
+.stage {
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.stage + .stage {
+  /* stylelint-disable-next-line property-disallowed-list -- internal interlock: each chevron overlaps its predecessor by the arrow depth so the tip nests into this stage's notch; not placement of the component */
+  margin-inline-start: calc(var(--stage-path-gap) - var(--stage-path-arrow));
+}
+
+.done {
+  --sp-fill: var(--sp-done-bg);
+  --sp-fg: var(--sp-done-fg);
+}
+
+.current {
+  --sp-fill: var(--sp-current-bg);
+  --sp-fg: var(--sp-current-fg);
+
+  font-weight: var(--stage-path-current-font-weight);
+}
+
+.upcoming {
+  --sp-fill: var(--stage-path-upcoming-bg);
+  --sp-fg: var(--stage-path-upcoming-fg);
+}
+
+// The painted chevron: a <button> (interactive) or <span> (read-only).
+.target {
+  --sp-shape: #{$middle};
+  --sp-bg: var(--sp-fill);
+
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-width: 0;
+  height: var(--stage-path-height);
+  padding-inline: calc(var(--stage-path-arrow) + var(--stage-path-padding-x));
+  border: 0;
+  background: var(--sp-bg);
+  color: var(--sp-fg);
+  font: inherit;
+  white-space: nowrap;
+  clip-path: var(--sp-shape);
+}
+
+.stage:first-child .target {
+  --sp-shape: #{$first};
+
+  padding-inline-start: var(--stage-path-padding-x);
+  border-start-start-radius: var(--stage-path-radius);
+  border-end-start-radius: var(--stage-path-radius);
+}
+
+.stage:last-child .target {
+  --sp-shape: #{$last};
+
+  padding-inline-end: var(--stage-path-padding-x);
+  border-start-end-radius: var(--stage-path-radius);
+  border-end-end-radius: var(--stage-path-radius);
+}
+
+// A single stage is both first and last: a plain rounded box.
+.stage:only-child .target {
+  --sp-shape: none;
+}
+
+.path:dir(rtl) .target {
+  --sp-shape: #{$middle-rtl};
+}
+
+.path:dir(rtl) .stage:first-child .target {
+  --sp-shape: #{$first-rtl};
+}
+
+.path:dir(rtl) .stage:last-child .target {
+  --sp-shape: #{$last-rtl};
+}
+
+.path:dir(rtl) .stage:only-child .target {
+  --sp-shape: none;
+}
+
+.button {
+  cursor: pointer;
+}
+
+.button:hover {
+  --sp-bg: color-mix(in srgb, var(--sp-fill), var(--sp-fg) var(--stage-path-hover-mix));
+}
+
+// Chevron-shaped focus ring. clip-path would cut off any outline, so the ring
+// is the stage's own background in the ring colour, with the fill redrawn
+// ring-width inside it on ::before, clipped to the same shape.
+.button:focus-visible {
+  background: var(--sp-ring);
+}
+
+.button:focus-visible::before {
+  position: absolute;
+  inset: var(--ring-width);
+  border-radius: inherit;
+  background: var(--sp-bg);
+  clip-path: var(--sp-shape);
+  content: '';
+}
+
+.label {
+  position: relative; // above the focus ::before
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

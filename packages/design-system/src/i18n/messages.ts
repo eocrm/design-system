@@ -740,6 +740,12 @@ export interface Messages {
     /** aria-label for the toast region (ToastViewport). */
     notifications: string;
   };
+  stagePath: {
+    /** Visually hidden state word after a done stage's label ("Lead, completed"). */
+    completed: string;
+    /** Visually hidden state word after an upcoming stage's label ("Negotiation, upcoming"). */
+    upcoming: string;
+  };
   breadcrumb: {
     /** aria-label fallback for the `<nav>` wrapping a Breadcrumb. */
     ariaLabel: string;
