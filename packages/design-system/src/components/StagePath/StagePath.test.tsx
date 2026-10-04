@@ -1,4 +1,3 @@
-// StagePath.test.tsx
 import { createRef } from 'react';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -71,6 +70,46 @@ describe('<StagePath>', () => {
     await user.keyboard('{Enter}');
     expect(onStageChange).toHaveBeenLastCalledWith('negotiation');
     expect(onStageChange).toHaveBeenCalledTimes(2);
+  });
+
+  it('keeps keyboard focus in the list when the activated stage becomes current', async () => {
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <StagePath stages={STAGES} value="proposal" onStageChange={() => {}} />,
+    );
+    screen.getByRole('button', { name: 'Negotiation, upcoming' }).focus();
+    await user.keyboard('{Enter}');
+    rerender(<StagePath stages={STAGES} value="negotiation" onStageChange={() => {}} />);
+    const current = screen.getAllByRole('listitem')[3].querySelector('span[tabindex="-1"]');
+    expect(current).not.toBeNull();
+    expect(document.activeElement).toBe(current);
+  });
+
+  it('does not steal focus from outside the list when value changes', async () => {
+    const { rerender } = render(
+      <>
+        <button type="button">Won</button>
+        <StagePath stages={STAGES} value="proposal" onStageChange={() => {}} />
+      </>,
+    );
+    const won = screen.getByRole('button', { name: 'Won' });
+    won.focus();
+    rerender(
+      <>
+        <button type="button">Won</button>
+        <StagePath stages={STAGES} value="negotiation" onStageChange={() => {}} />
+      </>,
+    );
+    expect(document.activeElement).toBe(won);
+  });
+
+  it('the current stage is a tabIndex=-1 span, not a button (never a Tab stop)', () => {
+    render(<StagePath stages={STAGES} value="proposal" onStageChange={() => {}} />);
+    const items = screen.getAllByRole('listitem');
+    expect(within(items[2]).queryByRole('button')).toBeNull();
+    const span = items[2].querySelector('span[tabindex]');
+    expect(span?.tagName).toBe('SPAN');
+    expect(span).toHaveAttribute('tabindex', '-1');
   });
 
   it('stage buttons are type="button" (never submit an enclosing form)', () => {

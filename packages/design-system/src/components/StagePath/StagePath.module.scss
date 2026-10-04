@@ -1,4 +1,3 @@
-// StagePath.module.scss
 @use './StagePath.tokens';
 
 // Shapes. Each stage's box is clipped to a chevron; the next stage overlaps it
@@ -11,6 +10,57 @@ $last: polygon(0 0, 100% 0, 100% 100%, 0 100%, #{$a} 50%);
 $middle-rtl: polygon(100% 0, #{$a} 0, 0 50%, #{$a} 100%, 100% 100%, calc(100% - #{$a}) 50%);
 $first-rtl: polygon(100% 0, #{$a} 0, 0 50%, #{$a} 100%, 100% 100%);
 $last-rtl: polygon(100% 0, 0 0, 0 100%, 100% 100%, calc(100% - #{$a}) 50%);
+
+// Focus-ring fill shapes: the outer chevron offset inward by r = ring width, in
+// the frame of the ::before box (itself inset r on every side), so the ring is
+// r thick on the slants too, not just on the flat edges.
+// ponytail: 0.5 / 0.25 come from the slant's length factor k = √(1 + (a / (h/2))²)
+// = 1.25 for the 12px arrow on the 32px height (tip x 100% - 1.25r, tip-side
+// top x 100% - a - 0.5r, notch apex a + 1.25r, notch top 2r in the stage frame;
+// minus the r inset). Recompute if --stage-path-arrow or --stage-path-height changes.
+$r: var(--ring-width);
+$tip-top: calc(100% - #{$a} + 0.5 * #{$r});
+$tip: calc(100% - 0.25 * #{$r});
+$notch-top: #{$r};
+$notch: calc(#{$a} + 0.25 * #{$r});
+$inner-middle: polygon(
+  #{$notch-top} 0,
+  #{$tip-top} 0,
+  #{$tip} 50%,
+  #{$tip-top} 100%,
+  #{$notch-top} 100%,
+  #{$notch} 50%
+);
+$inner-first: polygon(0 0, #{$tip-top} 0, #{$tip} 50%, #{$tip-top} 100%, 0 100%);
+$inner-last: polygon(#{$notch-top} 0, 100% 0, 100% 100%, #{$notch-top} 100%, #{$notch} 50%);
+
+// RTL: x → 100% - x.
+$tip-top-rtl: calc(#{$a} - 0.5 * #{$r});
+$tip-rtl: calc(0.25 * #{$r});
+$notch-top-rtl: calc(100% - #{$r});
+$notch-rtl: calc(100% - #{$a} - 0.25 * #{$r});
+$inner-middle-rtl: polygon(
+  #{$notch-top-rtl} 0,
+  #{$tip-top-rtl} 0,
+  #{$tip-rtl} 50%,
+  #{$tip-top-rtl} 100%,
+  #{$notch-top-rtl} 100%,
+  #{$notch-rtl} 50%
+);
+$inner-first-rtl: polygon(
+  100% 0,
+  #{$tip-top-rtl} 0,
+  #{$tip-rtl} 50%,
+  #{$tip-top-rtl} 100%,
+  100% 100%
+);
+$inner-last-rtl: polygon(
+  #{$notch-top-rtl} 0,
+  0 0,
+  0 100%,
+  #{$notch-top-rtl} 100%,
+  #{$notch-rtl} 50%
+);
 
 .path {
   // Per-tone palette, read by the stage states below.
@@ -80,6 +130,7 @@ $last-rtl: polygon(100% 0, 0 0, 0 100%, 100% 100%, calc(100% - #{$a}) 50%);
 // The painted chevron: a <button> (interactive) or <span> (read-only).
 .target {
   --sp-shape: #{$middle};
+  --sp-inner: #{$inner-middle};
   --sp-bg: var(--sp-fill);
 
   position: relative;
@@ -100,6 +151,7 @@ $last-rtl: polygon(100% 0, 0 0, 0 100%, 100% 100%, calc(100% - #{$a}) 50%);
 
 .stage:first-child .target {
   --sp-shape: #{$first};
+  --sp-inner: #{$inner-first};
 
   padding-inline-start: var(--stage-path-padding-x);
   border-start-start-radius: var(--stage-path-radius);
@@ -108,6 +160,7 @@ $last-rtl: polygon(100% 0, 0 0, 0 100%, 100% 100%, calc(100% - #{$a}) 50%);
 
 .stage:last-child .target {
   --sp-shape: #{$last};
+  --sp-inner: #{$inner-last};
 
   padding-inline-end: var(--stage-path-padding-x);
   border-start-end-radius: var(--stage-path-radius);
@@ -117,22 +170,27 @@ $last-rtl: polygon(100% 0, 0 0, 0 100%, 100% 100%, calc(100% - #{$a}) 50%);
 // A single stage is both first and last: a plain rounded box.
 .stage:only-child .target {
   --sp-shape: none;
+  --sp-inner: none;
 }
 
 .path:dir(rtl) .target {
   --sp-shape: #{$middle-rtl};
+  --sp-inner: #{$inner-middle-rtl};
 }
 
 .path:dir(rtl) .stage:first-child .target {
   --sp-shape: #{$first-rtl};
+  --sp-inner: #{$inner-first-rtl};
 }
 
 .path:dir(rtl) .stage:last-child .target {
   --sp-shape: #{$last-rtl};
+  --sp-inner: #{$inner-last-rtl};
 }
 
 .path:dir(rtl) .stage:only-child .target {
   --sp-shape: none;
+  --sp-inner: none;
 }
 
 .button {
@@ -146,16 +204,18 @@ $last-rtl: polygon(100% 0, 0 0, 0 100%, 100% 100%, calc(100% - #{$a}) 50%);
 // Chevron-shaped focus ring. clip-path would cut off any outline, so the ring
 // is the stage's own background in the ring colour, with the fill redrawn
 // ring-width inside it on ::before, clipped to the same shape.
-.button:focus-visible {
+.button:focus-visible,
+.target:focus-visible {
   background: var(--sp-ring);
 }
 
-.button:focus-visible::before {
+.button:focus-visible::before,
+.target:focus-visible::before {
   position: absolute;
   inset: var(--ring-width);
   border-radius: inherit;
   background: var(--sp-bg);
-  clip-path: var(--sp-shape);
+  clip-path: var(--sp-inner);
   content: '';
 }
 

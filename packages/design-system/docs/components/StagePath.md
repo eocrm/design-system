@@ -45,7 +45,7 @@ import { Button, Cluster, StagePath } from '@eocrm/design-system';
 - **Stage semantics.** `<ol>` with `aria-current="step"` on the current stage; done/upcoming stages carry visually hidden, localised "completed" / "upcoming" text, so state is never colour alone.
 - **Fills its container.** `width: 100%`, equal-width stages, labels ellipsize with a tooltip only when clipped. Beside other controls, use `<Cluster wrap={false}>` so the path takes the remaining width instead of wrapping onto its own line.
 - **Every non-current stage is clickable** when `onStageChange` is passed, including going backwards. Enforce business rules in the handler.
-- **Stage ids must be unique** (they are React keys). An empty `stages` array renders nothing (and warns, since no stage matches `value`).
+- **Stage ids must be unique** (they are React keys). An empty `stages` array renders an empty list (and warns, since no stage matches `value`).
 - One size (32px, matches `Button` `md`).
 
 #### When NOT to use

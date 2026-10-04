@@ -1,9 +1,9 @@
-// useClippedTooltip.ts
 import { useRef, useState, type ReactNode, type RefObject } from 'react';
 
 export interface ClippedTooltip<T extends HTMLElement> {
   /** Attach to the element whose text may be clipped by an ellipsis. */
   ref: RefObject<T | null>;
+  /** Pass to `<Tooltip open>`. */
   open: boolean;
   /** Pass to `<Tooltip onOpenChange>`; refuses to open unless the label overflows. */
   onOpenChange: (next: boolean) => void;

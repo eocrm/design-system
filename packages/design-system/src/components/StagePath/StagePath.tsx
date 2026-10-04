@@ -1,5 +1,12 @@
-// StagePath.tsx
-import { forwardRef, useEffect, type HTMLAttributes, type ReactNode } from 'react';
+import {
+  forwardRef,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  type HTMLAttributes,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 import clsx from 'clsx';
 import { Tooltip } from '../Tooltip';
 import { VisuallyHidden } from '../VisuallyHidden';
@@ -48,9 +55,11 @@ interface StageProps {
   stage: StagePathStage;
   state: StageState;
   onStageChange?: (id: string) => void;
+  /** Set on the current stage only: where focus lands when its button is replaced. */
+  currentRef?: RefObject<HTMLSpanElement | null>;
 }
 
-function Stage({ stage, state, onStageChange }: StageProps) {
+function Stage({ stage, state, onStageChange, currentRef }: StageProps) {
   const t = useTranslation();
   const tip = useClippedTooltip<HTMLSpanElement>(stage.label);
   const content = (
@@ -75,7 +84,15 @@ function Stage({ stage, state, onStageChange }: StageProps) {
         {content}
       </button>
     ) : (
-      <span className={styles.target}>{content}</span>
+      // Interactive current stage: focusable by script only (tabIndex -1, never a
+      // Tab stop) so a keyboard user's focus survives their button becoming this span.
+      <span
+        ref={currentRef}
+        className={styles.target}
+        tabIndex={onStageChange != null && state === 'current' ? -1 : undefined}
+      >
+        {content}
+      </span>
     );
   return (
     <li
@@ -95,9 +112,13 @@ function Stage({ stage, state, onStageChange }: StageProps) {
  * @see docs/components/StagePath.md
  */
 export const StagePath = forwardRef<HTMLOListElement, StagePathProps>(function StagePath(
-  { stages, value, tone = 'default', onStageChange, className, ...rest },
+  { stages, value, tone = 'default', onStageChange, className, onFocus, onBlur, ...rest },
   ref,
 ) {
+  const currentRef = useRef<HTMLSpanElement>(null);
+  // Was focus inside the list? Set on focusin; on focusout re-checked after the
+  // current commit, because removing a focused button may or may not fire blur.
+  const focusInside = useRef(false);
   const currentIndex = stages.findIndex((s) => s.id === value);
   const unknown = currentIndex === -1;
 
@@ -109,6 +130,14 @@ export const StagePath = forwardRef<HTMLOListElement, StagePathProps>(function S
     );
   }, [unknown, value]);
 
+  // Activating a stage remounts it as the current <span>, dropping focus to <body>
+  // (WCAG 2.4.3). Put it back on the current stage — never steal it from elsewhere.
+  useLayoutEffect(() => {
+    const active = document.activeElement;
+    if (focusInside.current && (active == null || active === document.body || !active.isConnected))
+      currentRef.current?.focus();
+  }, [value]);
+
   return (
     <ol
       ref={ref}
@@ -116,6 +145,17 @@ export const StagePath = forwardRef<HTMLOListElement, StagePathProps>(function S
       // {...rest} before data-tone: the tone attribute is the component's styling contract.
       {...rest}
       data-tone={tone}
+      onFocus={(e) => {
+        focusInside.current = true;
+        onFocus?.(e);
+      }}
+      onBlur={(e) => {
+        const list = e.currentTarget;
+        queueMicrotask(() => {
+          focusInside.current = list.contains(document.activeElement);
+        });
+        onBlur?.(e);
+      }}
     >
       {stages.map((stage, i) => {
         const state: StageState = unknown
@@ -125,7 +165,15 @@ export const StagePath = forwardRef<HTMLOListElement, StagePathProps>(function S
             : i === currentIndex
               ? 'current'
               : 'upcoming';
-        return <Stage key={stage.id} stage={stage} state={state} onStageChange={onStageChange} />;
+        return (
+          <Stage
+            key={stage.id}
+            stage={stage}
+            state={state}
+            onStageChange={onStageChange}
+            currentRef={state === 'current' ? currentRef : undefined}
+          />
+        );
       })}
     </ol>
   );

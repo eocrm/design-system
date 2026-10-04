@@ -15,8 +15,8 @@
   --stage-path-font-weight: var(--font-weight-medium);
   --stage-path-current-font-weight: var(--font-weight-semibold);
 
-  // How far a hovered stage's fill moves toward its text colour. Measured at
-  // 8% keeps light-theme danger text above AA (measured on the mixed fill) — do not raise it.
+  // How far a hovered stage's fill moves toward its text colour. 8% keeps every
+  // tone's text at or above AA on the hovered fill (tightest: light danger); do not raise.
   --stage-path-hover-mix: 8%;
 
   --stage-path-upcoming-bg: var(--color-tone-neutral-bg);
