@@ -60,6 +60,17 @@ describe('<StagePath>', () => {
     expect(rule('.current .target:focus-visible::after')).toMatch(/clip-path: var\(--sp-inner-2\)/);
   });
 
+  it('mirrors every chevron shape for RTL via [dir] attributes, not :dir()', () => {
+    // jsdom computes no clip-path; pin that each shape has its RTL rule, keyed
+    // on the dir attribute (production minifiers rewrite :dir() into :lang()).
+    const scss = readFileSync(resolve(__dirname, 'StagePath.module.scss'), 'utf8');
+    for (const sel of ['.target', '.stage:first-child .target', '.stage:last-child .target']) {
+      expect(scss).toContain(`#{$rtl} ${sel} {`);
+      expect(scss).toContain(`#{$ltr-in-rtl} ${sel} {`);
+    }
+    expect(scss).toMatch(/\$rtl: ':is\(\[dir="rtl"\] \.path, \.path\[dir="rtl"\]\)'/);
+  });
+
   it('speaks done and upcoming state as hidden text, not colour alone', () => {
     render(<StagePath stages={STAGES} value="proposal" />);
     const items = screen.getAllByRole('listitem');

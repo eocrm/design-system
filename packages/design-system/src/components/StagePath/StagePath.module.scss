@@ -165,6 +165,10 @@ $r: var(--ring-width);
 // `:dir(rtl)`: production CSS minifiers lower it to a `:lang(ar, he, …)` list,
 // which never matches `dir="rtl"` on a page in a non-RTL language. An LTR island
 // inside an RTL page gets its own reset below.
+// ponytail: one LTR-island level only — RTL re-nested inside that island
+// (rtl > ltr > rtl) and `dir="auto"` render LTR shapes. If a consumer needs
+// them, read `getComputedStyle(ol).direction` into a `data-dir` on the <ol>
+// and key these rules on it.
 $rtl: ':is([dir="rtl"] .path, .path[dir="rtl"])';
 $ltr-in-rtl: ':is([dir="rtl"] [dir="ltr"] .path, [dir="rtl"] .path[dir="ltr"])';
 

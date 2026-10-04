@@ -47,6 +47,7 @@ import { Button, Cluster, StagePath } from '@eocrm/design-system';
 - **Every non-current stage is clickable** when `onValueChange` is passed, including going backwards. Enforce business rules in the handler.
 - **Stage ids must be unique** (they are React keys). An empty `stages` array renders an empty list (and warns, since no stage matches `value`).
 - One size (32px, matches `Button` `md`).
+- **RTL follows the nearest `dir` attribute** (an ancestor's or the path's own). Set `dir="rtl"` / `dir="ltr"` explicitly; `dir="auto"` and RTL re-nested inside an LTR island inside an RTL page render LTR chevrons.
 - **No pending state.** Nothing changes while `onValueChange`'s work resolves, and a double click calls it twice. Guard in the handler, or render the path read-only (omit `onValueChange`) while saving.
 - **Geometry tokens are tuned together.** The chevron-shaped focus ring is computed for the default `--stage-path-arrow` / `--stage-path-height`; overriding either skews the ring's slanted edges.
 
