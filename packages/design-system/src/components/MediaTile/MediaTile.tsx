@@ -22,7 +22,7 @@ export interface MediaTileProps extends Omit<HTMLAttributes<HTMLDivElement>, 'ch
    * Tile controls (e.g. preview / download / delete icon buttons). With
    * `captionPlacement="overlay"` they sit in a centered bottom bar over a scrim;
    * with `"below"` they sit in a top-right cluster over the media. Either way they
-   * follow `revealOn`. Clicks and keydowns on the controls inside don't bubble to the tile (a click on the bar's empty scrim still does), so a
+   * follow `revealOn`. Clicks and keydowns on the controls inside don't bubble to the tile (in overlay placement a click on the bar's empty scrim still does; the below-placement chip swallows all clicks), so a
    * tile `onClick` (e.g. open preview) never fires from an action.
    */
   actions?: ReactNode;

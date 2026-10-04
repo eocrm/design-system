@@ -74,7 +74,7 @@ export interface PillMenuProps extends Omit<
    * name override) the caption text is read along with the value; the dot is
    * `aria-hidden` in both. Muted by weight (regular vs the value's medium),
    * not colour: the palette fills leave no contrast headroom for a dimmer
-   * foreground. Omitted → no caption, no dot.
+   * foreground. Omitted or blank → no caption, no dot.
    */
   caption?: ReactNode;
   /**

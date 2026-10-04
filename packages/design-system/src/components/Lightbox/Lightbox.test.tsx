@@ -526,6 +526,47 @@ describe('Lightbox — actions (#608)', () => {
     expect(onIndexChange).not.toHaveBeenCalled();
   });
 
+  it('arrow keys still navigate with focus on a thumbnail, a chevron or a closed menu trigger', () => {
+    const onIndexChange = vi.fn();
+    open({
+      onIndexChange,
+      loop: true,
+      actions: () => (
+        <>
+          <input type="checkbox" aria-label="Pick" />
+          <DropdownMenu>
+            <DropdownMenu.Trigger>
+              <Button iconOnly variant="ghost" size="sm" aria-label="More">
+                …
+              </Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content>
+              <DropdownMenu.Item onSelect={() => {}}>Delete</DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu>
+        </>
+      ),
+    });
+    for (const name of ['More', 'Next image', 'Pick']) {
+      const el = screen.getAllByRole(name === 'Pick' ? 'checkbox' : 'button', { name })[0];
+      el.focus();
+      fireEvent.keyDown(el, { key: 'ArrowRight' });
+    }
+    expect(onIndexChange).toHaveBeenCalledTimes(3);
+  });
+
+  it('arrow keys do not navigate while an arrow-driven radio in actions has focus', () => {
+    const onIndexChange = vi.fn();
+    open({
+      onIndexChange,
+      actions: () => <button type="button" role="radio" aria-checked="true" aria-label="Fit" />,
+    });
+    const radio = screen.getByRole('radio', { name: 'Fit' });
+    radio.focus();
+    fireEvent.keyDown(radio, { key: 'ArrowRight' });
+    expect(onIndexChange).not.toHaveBeenCalled();
+  });
+
   it('arrow keys do not navigate while an in-gallery text input has focus', () => {
     const onIndexChange = vi.fn();
     open({ onIndexChange, actions: () => <input aria-label="Rename" /> });

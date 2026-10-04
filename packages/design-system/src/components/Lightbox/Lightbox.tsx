@@ -85,8 +85,8 @@ export interface LightboxProps {
    * toolbar control size), so text Buttons render pill-shaped — keep actions
    * icon-only. While an action's menu or popover is open, Esc closes it first, and
    * ←/→ stay with it (not the gallery) while focus is in it — likewise while focus
-   * is on a text input, combobox (Select) or expanded trigger; a Tooltip on an
-   * action doesn't block navigation. Returning `null`/`undefined` renders nothing.
+   * is on a text field, combobox (Select), radio (ButtonGroup), slider, tab or
+   * expanded trigger; a Tooltip on an action doesn't block navigation. Returning `null`/`undefined` renders nothing.
    * REPLACES the built-in PDF download link: when `actions` is set, the
    * Lightbox renders no download action of its own — include your own
    * Download for PDF items if you want one.
@@ -103,9 +103,19 @@ export interface LightboxProps {
 }
 
 // In-dialog elements that own ←/→ while focused: text entry, a Select-style
-// combobox (focus stays on it while its listbox is open), any expanded trigger.
-const ARROW_OWNING_CONTROL =
-  'input, textarea, select, [contenteditable]:not([contenteditable="false"]), [role="combobox"], [aria-expanded="true"]';
+// combobox (focus stays on it while its listbox is open), arrow-driven widgets
+// (ButtonGroup radios, Slider, Tabs) and any expanded trigger.
+const ARROW_OWNING_CONTROL = [
+  'input:not([type="checkbox"], [type="button"], [type="submit"], [type="reset"], [type="file"], [type="image"])',
+  'textarea',
+  'select',
+  '[contenteditable]:not([contenteditable="false"])',
+  '[role="combobox"]',
+  '[role="radio"]',
+  '[role="slider"]',
+  '[role="tab"]',
+  '[aria-expanded="true"]',
+].join(', ');
 
 const clampIndex = (i: number, n: number) => Math.min(Math.max(i, 0), Math.max(n - 1, 0));
 const wrapIndex = (i: number, n: number) => ((i % n) + n) % n;
