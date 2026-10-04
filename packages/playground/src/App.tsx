@@ -63,6 +63,7 @@ import { RichTextDemo } from './pages/components/RichTextDemo';
 import { RichTextEditorDemo } from './pages/components/RichTextEditorDemo';
 import { TitleDemo } from './pages/components/TitleDemo';
 import { TimelineDemo } from './pages/components/TimelineDemo';
+import { StagePathDemo } from './pages/components/StagePathDemo';
 import { ThreadDemo } from './pages/components/ThreadDemo';
 import { CheckboxDemo } from './pages/components/CheckboxDemo';
 import { FieldDemo } from './pages/components/FieldDemo';
@@ -196,6 +197,7 @@ export default function App() {
             <Route path="/components/rich-text-editor" element={<RichTextEditorDemo />} />
             <Route path="/components/title" element={<TitleDemo />} />
             <Route path="/components/timeline" element={<TimelineDemo />} />
+            <Route path="/components/stage-path" element={<StagePathDemo />} />
             <Route path="/components/thread" element={<ThreadDemo />} />
             <Route path="/components/checkbox" element={<CheckboxDemo />} />
             <Route path="/components/field" element={<FieldDemo />} />
