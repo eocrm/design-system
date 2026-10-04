@@ -75,6 +75,23 @@ export interface LightboxProps {
   onIndexChange?: (index: number) => void;
   /** Wrap past the first/last image. Defaults to `true`. */
   loop?: boolean;
+  /**
+   * Extra header actions for the current item (e.g. a Download `<Button>`, a
+   * `<DropdownMenu>` "more" menu). Called with the current item and its index on
+   * every render, so it follows navigation. Rendered in the top-right toolbar
+   * BEFORE the close button. Use `<Button iconOnly variant="ghost" size="sm">`
+   * (or a DropdownMenu trigger built from one) — the toolbar re-themes ghost
+   * Buttons for the dark scrim (ghost tokens, full radius, `sm` height = the
+   * toolbar control size), so text Buttons render pill-shaped — keep actions
+   * icon-only. While an action's menu or popover is open, Esc closes it first, and
+   * ←/→ stay with it (not the gallery) while focus is in it — likewise while focus
+   * is on a text field, combobox (Select), radio (ButtonGroup), slider, tab or
+   * expanded trigger; a Tooltip on an action doesn't block navigation. Returning `null`/`undefined` renders nothing.
+   * REPLACES the built-in PDF download link: when `actions` is set, the
+   * Lightbox renders no download action of its own — include your own
+   * Download for PDF items if you want one.
+   */
+  actions?: (item: LightboxItem, index: number) => ReactNode;
   /** className for the dialog container. */
   className?: string;
   /**
@@ -84,6 +101,21 @@ export interface LightboxProps {
    */
   'aria-label'?: string;
 }
+
+// In-dialog elements that own ←/→ while focused: text entry, a Select-style
+// combobox (focus stays on it while its listbox is open), arrow-driven widgets
+// (ButtonGroup radios, Slider, Tabs) and any expanded trigger.
+const ARROW_OWNING_CONTROL = [
+  'input:not([type="checkbox"], [type="button"], [type="submit"], [type="reset"], [type="file"], [type="image"])',
+  'textarea',
+  'select',
+  '[contenteditable]:not([contenteditable="false"])',
+  '[role="combobox"]',
+  '[role="radio"]',
+  '[role="slider"]',
+  '[role="tab"]',
+  '[aria-expanded="true"]',
+].join(', ');
 
 const clampIndex = (i: number, n: number) => Math.min(Math.max(i, 0), Math.max(n - 1, 0));
 const wrapIndex = (i: number, n: number) => ((i % n) + n) % n;
@@ -105,6 +137,7 @@ export function Lightbox({
   index,
   onIndexChange,
   loop = true,
+  actions,
   className,
   'aria-label': ariaLabel,
 }: LightboxProps) {
@@ -195,12 +228,24 @@ export function Lightbox({
   useEffect(() => {
     if (!open || !isTop) return;
     function onKeyDown(e: KeyboardEvent) {
-      // #274: yield to an open floating surface — see Modal/Content.tsx.
+      // #274: yield Escape to an open floating surface — see Modal/Content.tsx.
       if (
         e.key === 'Escape' &&
         (overlayStack.hasOpenFloating() || overlayStack.wasEscapeConsumed(e))
       )
         return;
+      // Arrows navigate only while focus is in the gallery itself. Focus outside the
+      // dialog means a portaled surface from an action has it (DropdownMenu,
+      // Popover/ConfirmationPopover, …) — navigating would retarget its still-open
+      // "Delete" at a different file. Not hasOpenFloating(): a Tooltip on a focused
+      // action is floating too, and must not kill navigation. Focus dropped to
+      // <body> (a focused action unmounted) still counts as the gallery.
+      if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
+        const active = document.activeElement as HTMLElement | null;
+        const inGallery =
+          !active || active === document.body || !!dialogRef.current?.contains(active);
+        if (!inGallery || active?.matches(ARROW_OWNING_CONTROL)) return;
+      }
       if (e.key === 'Escape') {
         e.stopPropagation();
         close();
@@ -268,30 +313,35 @@ export function Lightbox({
       style={style}
       onClick={closeIfBackdrop}
     >
-      {docSrc && (
-        <a
-          className={styles.download}
-          href={docSrc}
-          download
-          // Open/save in a new tab: a cross-origin `download` is ignored by the
-          // browser, so without target the click would navigate the whole app
-          // away from the gallery. noopener/noreferrer guard the opened context.
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label={t('lightbox.download')}
-        >
-          <Download size={20} aria-hidden="true" />
-        </a>
-      )}
+      {/* Top-right chrome: [consumer actions | built-in PDF download][close]. */}
+      <div className={styles.toolbar}>
+        {actions ? (
+          actions(currentItem, current)
+        ) : docSrc ? (
+          <a
+            className={styles.download}
+            href={docSrc}
+            download
+            // Open/save in a new tab: a cross-origin `download` is ignored by the
+            // browser, so without target the click would navigate the whole app
+            // away from the gallery. noopener/noreferrer guard the opened context.
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={t('lightbox.download')}
+          >
+            <Download size={20} aria-hidden="true" />
+          </a>
+        ) : null}
 
-      <button
-        type="button"
-        className={styles.close}
-        aria-label={t('lightbox.close')}
-        onClick={close}
-      >
-        <X size={20} aria-hidden="true" />
-      </button>
+        <button
+          type="button"
+          className={styles.close}
+          aria-label={t('lightbox.close')}
+          onClick={close}
+        >
+          <X size={20} aria-hidden="true" />
+        </button>
+      </div>
 
       <div className={styles.stage} onClick={closeIfBackdrop}>
         {multi && (

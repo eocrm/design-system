@@ -24,4 +24,34 @@
   // Gradient scrims for the top and bottom bars.
   --mediatile-scrim-top: linear-gradient(to bottom, var(--mediatile-scrim), transparent);
   --mediatile-scrim-bottom: linear-gradient(to top, var(--mediatile-scrim), transparent);
+
+  // captionPlacement="below": the tile reads as a card — surface + hairline border,
+  // and a solid caption bar in normal text colour under the media.
+  --mediatile-surface: var(--color-bg);
+  --mediatile-border: var(--color-border);
+  --mediatile-border-width: var(--border-width);
+  --mediatile-caption-bg: var(--color-bg);
+  --mediatile-caption-fg: var(--color-fg);
+  --mediatile-caption-meta-fg: var(--color-fg-muted);
+
+  // Surface-coloured chips over the media (selection checkbox, top-right actions),
+  // so the controls stay visible over any image, light or dark.
+  --mediatile-chip-bg: var(--color-bg);
+  --mediatile-chip-fg: var(--color-fg);
+  --mediatile-chip-radius: var(--radius-sm);
+  --mediatile-chip-padding: var(--space-1);
+  --mediatile-chip-gap: var(--space-1);
+  --mediatile-chip-offset: var(--space-2); // inset from the media's corner
+  --mediatile-chip-shadow: var(--shadow-sm);
+
+  // Overlay placement + selectable: the top bar's inline-start padding clears the
+  // checkbox chip (offset + chip, i.e. md checkbox box + chip padding, + gap).
+  --mediatile-select-chip-size: calc(var(--size-checkbox-md) + 2 * var(--mediatile-chip-padding));
+  --mediatile-select-clearance: calc(
+    var(--mediatile-chip-offset) + var(--mediatile-select-chip-size) + var(--mediatile-bar-gap)
+  );
+
+  // Selected tile: inset accent ring (::after box-shadow, so it never affects layout).
+  --mediatile-selected-ring: var(--color-accent);
+  --mediatile-selected-ring-width: var(--border-width-emphasis);
 }

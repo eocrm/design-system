@@ -2814,6 +2814,13 @@
           "description": "How the image fills its box. Defaults to `'cover'`.\n- `'cover'` — fill + crop (no distortion). Best for thumbnails / heroes.\n- `'contain'` — whole image, letterboxed on the box background.\n- `'fill'` — stretch to the box (may distort).\n- `'none'` / `'scale-down'` — native size / the smaller of none|contain."
         },
         {
+          "name": "objectPosition",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Which part of the image stays in view when `objectFit` crops or letterboxes\nit. Any CSS `object-position` value. Defaults to `'center'`. Use `'top'` for\ndocument / screenshot thumbnails cropped square, so the header stays visible."
+        },
+        {
           "name": "aspectRatio",
           "type": "string | number",
           "required": false,
@@ -3074,6 +3081,13 @@
           "required": false,
           "default": "",
           "description": "Wrap past the first/last image. Defaults to `true`."
+        },
+        {
+          "name": "actions",
+          "type": "((item: LightboxItem, index: number) => ReactNode)",
+          "required": false,
+          "default": "",
+          "description": "Extra header actions for the current item (e.g. a Download `<Button>`, a\n`<DropdownMenu>` \"more\" menu). Called with the current item and its index on\nevery render, so it follows navigation. Rendered in the top-right toolbar\nBEFORE the close button. Use `<Button iconOnly variant=\"ghost\" size=\"sm\">`\n(or a DropdownMenu trigger built from one) — the toolbar re-themes ghost\nButtons for the dark scrim (ghost tokens, full radius, `sm` height = the\ntoolbar control size), so text Buttons render pill-shaped — keep actions\nicon-only. While a floating surface from an action (e.g. that menu) is open,\n←/→ and Esc go to it, not the gallery. Returning `null`/`undefined` renders nothing.\nREPLACES the built-in PDF download link: when `actions` is set, the\nLightbox renders no download action of its own — include your own\nDownload for PDF items if you want one."
         },
         {
           "name": "className",
@@ -3444,28 +3458,35 @@
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
           "default": "",
-          "description": "Top-bar leading content (e.g. the file name). Truncates with an ellipsis."
+          "description": "Caption leading content (e.g. the file name). Truncates with an ellipsis."
         },
         {
           "name": "meta",
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
           "default": "",
-          "description": "Top-bar trailing content (e.g. the file size). Sits at the end of the row."
+          "description": "Caption trailing content (e.g. the file size). Sits at the end of the row."
         },
         {
           "name": "actions",
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
           "default": "",
-          "description": "Bottom-bar controls (e.g. preview / download / delete icon buttons), centered."
+          "description": "Tile controls (e.g. preview / download / delete icon buttons). With\n`captionPlacement=\"overlay\"` they sit in a centered bottom bar over a scrim;\nwith `\"below\"` they sit in a top-right cluster over the media. Either way they\nfollow `revealOn`. Clicks and keydowns inside don't bubble to the tile, so a\ntile `onClick` (e.g. open preview) never fires from an action."
+        },
+        {
+          "name": "captionPlacement",
+          "type": "MediaTileCaptionPlacement",
+          "required": false,
+          "default": "",
+          "description": "Where `title` + `meta` render. Default `'overlay'`.\n- `'overlay'` — a top bar over a gradient scrim on the media, revealed per `revealOn`.\n  Compact, but the name is hidden at rest for mouse users.\n- `'below'` — a solid bar under the media in normal text colour, ALWAYS visible\n  (not affected by `revealOn`). Use for file grids where the name must be readable."
         },
         {
           "name": "revealOn",
           "type": "MediaTileReveal",
           "required": false,
           "default": "",
-          "description": "When the bars + scrims reveal. Default `'hover'`.\n- `'hover'` — on pointer hover OR keyboard focus-within (focus always included for a11y).\n- `'focus'` — only on focus-within (no mouse-over reveal).\n- `'visible'` — always shown."
+          "description": "When the overlay bars, `actions` and the selection checkbox reveal. Default `'hover'`.\n- `'hover'` — on pointer hover OR keyboard focus-within (focus always included for a11y).\n  On touch devices (`(hover: none)`) it behaves like `'visible'`.\n- `'focus'` — only on focus-within (no mouse-over reveal).\n- `'visible'` — always shown.\n\nA checked selection checkbox is always shown regardless."
         },
         {
           "name": "radius",
@@ -3473,6 +3494,34 @@
           "required": false,
           "default": "",
           "description": "Corner rounding (clips the media). Default `'md'`."
+        },
+        {
+          "name": "selectable",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Render a selection checkbox top-left over the media. Default `false`.\nOnly the checkbox toggles selection — clicking the tile does not (so a tile\n`onClick`, e.g. open preview, keeps working; checkbox clicks and keys don't bubble to it).\nWith `revealOn=\"focus\"` an unselected checkbox is hidden and ignores the\npointer until focus-within, so mouse users can't reach it — pair\n`selectable` with `'hover'` or `'visible'`."
+        },
+        {
+          "name": "selected",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Controlled selected state (only used when `selectable`). Sets `data-selected` + an accent ring on the tile. Default `false`."
+        },
+        {
+          "name": "onSelectedChange",
+          "type": "((next: boolean) => void)",
+          "required": false,
+          "default": "",
+          "description": "Fires with the next selected state when the checkbox is toggled."
+        },
+        {
+          "name": "selectLabel",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Accessible name of the selection checkbox, e.g. `\"Select report.pdf\"`.\nDefaults to the localized \"Select {title}\" when `title` is a string, else \"Select\"."
         }
       ]
     },
@@ -4055,7 +4104,14 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "What the value IS, for the trigger's accessible name: `label=\"type\"` →\n\"Change type: Bug\". Default: the localized \"status\" (\"Change status: …\").\nPass it as it reads right after \"Change\" / \"Изменить\", lower-case, in the\nUI's language — it is data, not a translatable string. In ru that is the\naccusative: `label=\"категорию\"`, not \"категория\".\n\nInside a `<Field>`, pass the field's label here (`label=\"priority\"` under\n\"Priority\"): the trigger keeps its own name, so the visible field label\nreaches AT only through this (WCAG 2.5.3). A dev warning fires if it's\nmissing there."
+          "description": "What the value IS, for the trigger's accessible name: `label=\"type\"` →\n\"Change type: Bug\". Default: a string `caption` (\"Change Pipeline: …\"),\nelse the localized \"status\" (\"Change status: …\").\nPass it as it reads right after \"Change\" / \"Изменить\", lower-case, in the\nUI's language — it is data, not a translatable string. In ru that is the\naccusative: `label=\"категорию\"`, not \"категория\".\n\nInside a `<Field>`, pass the field's label here (`label=\"priority\"` under\n\"Priority\"): the trigger keeps its own name, so the visible field label\nreaches AT only through this (WCAG 2.5.3). A dev warning fires if it's\nmissing there."
+        },
+        {
+          "name": "caption",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Visible caption rendered inside the pill before the value, separated by a\nmiddle dot: `caption=\"Pipeline\"` → \"Pipeline · Faeton\". For a trigger\nthat must say both what it picks and the current value.\n\nNames the trigger only as a fallback: `label` wins (\"Change pipeline:\nFaeton\"); with no `label`, a string caption is used (\"Change Pipeline:\nFaeton\") so the visible words stay in the accessible name (WCAG 2.5.3\nlabel-in-name). A non-string caption never names it — pass `label` then,\ncontaining the caption's words. In the read-only chip (no accessible\nname override) the caption text is read along with the value; the dot is\n`aria-hidden` in both. Muted by weight (regular vs the value's medium),\nnot colour: the palette fills leave no contrast headroom for a dimmer\nforeground. Omitted → no caption, no dot."
         },
         {
           "name": "options",
@@ -6084,6 +6140,7 @@
     "QrCodeLevel": "\"L\" | \"M\" | \"Q\" | \"H\"",
     "MediaTileReveal": "\"visible\" | \"hover\" | \"focus\"",
     "MediaTileRadius": "\"sm\" | \"md\" | \"lg\" | \"none\"",
+    "MediaTileCaptionPlacement": "\"overlay\" | \"below\"",
     "CropArea": "{ x: number; y: number; width: number; height: number }",
     "DataTableInstance": "DataTableInstance<T>",
     "DefinitionListLayout": "\"horizontal\" | \"stacked\"",

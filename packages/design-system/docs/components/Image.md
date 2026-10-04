@@ -14,6 +14,7 @@
 | `src` | `string` | yes | Image URL. Changing it resets the component to the loading state. |
 | `alt` | `string` | yes | Alternative text (required). Describe the image's content or function. Pass an empty string (`alt=""`) for purely decorative images. |
 | `objectFit` | `'cover' \| 'contain' \| 'fill' \| 'none' \| 'scale-down'` | no | How the image fills its box. Defaults to `'cover'`. - `'cover'` — fill + crop (no distortion). Best for thumbnails / heroes. - `'contain'` — whole image, letterboxed on the box background. - `'fill'` — stretch to the box (may distort). - `'none'` / `'scale-down'` — native size / the smaller of none\|contain. |
+| `objectPosition` | `string` | no | Which part of the image stays in view when `objectFit` crops or letterboxes it. Any CSS `object-position` value. Defaults to `'center'`. Use `'top'` for document / screenshot thumbnails cropped square, so the header stays visible. |
 | `aspectRatio` | `string \| number` | no | Reserve the box at a fixed ratio to prevent layout shift while loading. Number (`1.5`) or CSS string (`'16 / 9'`). |
 | `size` | `'xs' \| 'sm' \| 'md' \| 'lg'` | no | Render a fixed **square** box of this size (from the shared `--size-*` scale: `'xs'` 20 / `'sm'` 24 / `'md'` 32 / `'lg'` 40 px) instead of filling the container's width. Use for dense thumbnails (e.g. a 40px image cell in a table row) so you don't need a consumer-owned fixed-width wrapper. Omit for the default responsive behavior. When set, `aspectRatio` is ignored (the box is already square); pair with `objectFit="cover"` to crop. Note that a sized image's error tile is icon-only and **not retryable** — see the component description. |
 | `radius` | `'none' \| 'sm' \| 'md' \| 'lg' \| 'full'` | no | Corner rounding. Defaults to `'md'`. Pass `'none'` for square corners; for circular profile images use `<Avatar>`. |
@@ -53,6 +54,9 @@ backgrounds → `background-image`; icons → lucide / inline SVG.
 ```tsx
 // Fixed 40px thumbnail (dense table cell) — no width:100% stretch
 <Image src={url} alt="report.pdf preview" size="lg" objectFit="cover" />
+
+// Document / screenshot thumbnail cropped square from the TOP (keeps the header in view)
+<Image src={pageUrl} alt="invoice.pdf" aspectRatio={1} objectFit="cover" objectPosition="top" />
 
 // Logo contained on its muted box, square corners
 <Image src={logo} alt="Acme Corp" objectFit="contain" radius="none" />

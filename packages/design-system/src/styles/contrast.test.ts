@@ -1224,6 +1224,38 @@ describe('an inset ring stays legible against every fill a .colored event can ta
 });
 
 /**
+ * PillMenu (#605) paints text on every palette fill: the value at
+ * `--color-palette-<c>-fg`, and its optional caption at the SAME fg — muted by
+ * weight, not colour, because the tightest pair (light mint, 4.91:1) leaves no
+ * headroom: 90% opacity already drops it to 4.09:1. So this gates the pairs
+ * themselves and pins the caption rule to no colour/opacity change; a dimmer
+ * caption has to come back here with a composited figure that clears 4.5.
+ * Regular-weight 12-14px text: no large-text exemption.
+ */
+describe('PillMenu text clears AA on every palette fill', () => {
+  it.each(['light', 'dark'] as const)('%s', (theme) => {
+    const source = theme === 'dark' ? DARK : TOKENS;
+    expect(PALETTE_EVENT_FILLS.length, 'found the palette fills').toBeGreaterThan(20);
+    for (const bg of PALETTE_EVENT_FILLS) {
+      const fg = bg.replace(/-bg$/, '-fg');
+      expect(
+        contrast(tokenValue(fg, source), tokenValue(bg, source)),
+        `${fg} on ${bg}`,
+      ).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+
+  it('the caption keeps the full fg colour', () => {
+    const scss = stripComments(
+      readFileSync(resolve(__dirname, '../components/PillMenu/PillMenu.module.scss'), 'utf8'),
+    );
+    const rule = scss.match(/\.caption\s*\{([^}]*)\}/)?.[1];
+    expect(rule, '.caption rule').toBeDefined();
+    expect(rule).not.toMatch(/\b(opacity|color|filter)\s*:/);
+  });
+});
+
+/**
  * Every contrast figure `AI-PRIMER.md` + `docs/**` state in ENGLISH PROSE, recomputed.
  *
  * `structure.test.ts`'s "stated contrast ratios still hold" gate binds every

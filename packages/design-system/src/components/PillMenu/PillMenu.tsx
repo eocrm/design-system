@@ -49,7 +49,8 @@ export interface PillMenuProps extends Omit<
   current: PillMenuOption;
   /**
    * What the value IS, for the trigger's accessible name: `label="type"` →
-   * "Change type: Bug". Default: the localized "status" ("Change status: …").
+   * "Change type: Bug". Default: a string `caption` ("Change Pipeline: …"),
+   * else the localized "status" ("Change status: …").
    * Pass it as it reads right after "Change" / "Изменить", lower-case, in the
    * UI's language — it is data, not a translatable string. In ru that is the
    * accusative: `label="категорию"`, not "категория".
@@ -60,6 +61,22 @@ export interface PillMenuProps extends Omit<
    * missing there.
    */
   label?: string;
+  /**
+   * Visible caption rendered inside the pill before the value, separated by a
+   * middle dot: `caption="Pipeline"` → "Pipeline · Faeton". For a trigger
+   * that must say both what it picks and the current value.
+   *
+   * Names the trigger only as a fallback: `label` wins ("Change pipeline:
+   * Faeton"); with no `label`, a non-blank string caption is used ("Change Pipeline:
+   * Faeton") so the visible words stay in the accessible name (WCAG 2.5.3
+   * label-in-name). A non-string caption never names it — pass `label` then,
+   * containing the caption's words. In the read-only chip (no accessible
+   * name override) the caption text is read along with the value; the dot is
+   * `aria-hidden` in both. Muted by weight (regular vs the value's medium),
+   * not colour: the palette fills leave no contrast headroom for a dimmer
+   * foreground. Omitted or blank → no caption, no dot.
+   */
+  caption?: ReactNode;
   /**
    * Transition targets, offered in the dropdown. Omitted or empty renders
    * read-only mode: a static colored chip with no button, no menu, no
@@ -105,10 +122,20 @@ function statusColorStyle(status: PillMenuOption): CSSProperties {
   return { '--pill-menu-bg': bg, '--pill-menu-fg': fg } as CSSProperties;
 }
 
-/** Renders the optional icon + name, shared by the pill and the read-only chip (rows use Item's icon slot). */
-function OptionContent({ option }: { option: PillMenuOption }) {
+/** Renders the optional caption + icon + name, shared by the pill and the read-only chip (rows use Item's icon slot). */
+function OptionContent({ option, caption }: { option: PillMenuOption; caption?: ReactNode }) {
   return (
     <>
+      {caption != null &&
+        caption !== false &&
+        !(typeof caption === 'string' && !caption.trim()) && (
+          <>
+            <span className={styles.caption}>{caption}</span>
+            <span className={styles.caption} aria-hidden="true">
+              ·
+            </span>
+          </>
+        )}
       {option.icon != null && (
         <span className={styles.icon} aria-hidden="true">
           {option.icon}
@@ -129,6 +156,7 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
     options,
     onSelect,
     label,
+    caption,
     disabled = false,
     busy = false,
     fullWidth = false,
@@ -158,7 +186,7 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
     if (process.env.NODE_ENV !== 'production' && hasTrigger && fieldLabelledBy && !label) {
       // eslint-disable-next-line no-console
       console.warn(
-        '<PillMenu> received `aria-labelledby` (e.g. inside a <Field>) but no `label`. `aria-labelledby` is ignored — the trigger keeps its own name ("Change status: …") — so unless the field label is "status", it doesn\'t reach assistive tech. Pass `label` (e.g. label="priority").',
+        '<PillMenu> received `aria-labelledby` (e.g. inside a <Field>) but no `label`. `aria-labelledby` is ignored — the trigger keeps its own name ("Change <string caption, or status>: …") — so the field label doesn\'t reach assistive tech unless it matches. Pass `label` (e.g. label="priority").',
       );
     }
   }, [fieldLabelledBy, label, hasTrigger]);
@@ -201,7 +229,7 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
         className={clsx(styles.chip, fullWidth && styles.fullWidth, className)}
         style={mergedStyle}
       >
-        <OptionContent option={current} />
+        <OptionContent option={current} caption={caption} />
       </span>
     );
   }
@@ -226,11 +254,14 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
           aria-busy={busy || undefined}
           aria-invalid={invalid || undefined}
           aria-label={t('pillMenu.change', {
-            label: label || t('pillMenu.defaultLabel'),
+            label:
+              label ||
+              (typeof caption === 'string' && caption.trim() ? caption : undefined) ||
+              t('pillMenu.defaultLabel'),
             name: current.name,
           })}
         >
-          <OptionContent option={current} />
+          <OptionContent option={current} caption={caption} />
           <svg
             width="10"
             height="6"

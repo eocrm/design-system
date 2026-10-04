@@ -27,6 +27,7 @@ const [start, setStart] = useState(0);
 | `index` | `number` | no | Controlled current index. When set, pair with `onIndexChange`. |
 | `onIndexChange` | `((index: number) => void)` | no | Fired on navigation (chevron / arrow key / thumbnail click). |
 | `loop` | `boolean` | no | Wrap past the first/last image. Defaults to `true`. |
+| `actions` | `((item: LightboxItem, index: number) => ReactNode)` | no | Extra header actions for the current item (e.g. a Download `<Button>`, a `<DropdownMenu>` "more" menu). Called with the current item and its index on every render, so it follows navigation. Rendered in the top-right toolbar BEFORE the close button. Use `<Button iconOnly variant="ghost" size="sm">` (or a DropdownMenu trigger built from one) — the toolbar re-themes ghost Buttons for the dark scrim (ghost tokens, full radius, `sm` height = the toolbar control size), so text Buttons render pill-shaped — keep actions icon-only. While an action's menu or popover is open, Esc closes it first, and ←/→ stay with it (not the gallery) while focus is in it — likewise while focus is on a text field, combobox (Select), radio (ButtonGroup), slider, tab or expanded trigger; a Tooltip on an action doesn't block navigation. Returning `null`/`undefined` renders nothing. REPLACES the built-in PDF download link: when `actions` is set, the Lightbox renders no download action of its own — include your own Download for PDF items if you want one. |
 | `className` | `string` | no | className for the dialog container. |
 | `aria-label` | `string` | no | Accessible label for the dialog. Defaults to the i18n "Image gallery" when omitted OR empty — an empty string is not an explicit name, so it takes the default too. |
 
@@ -49,6 +50,47 @@ Mixed gallery (images + a PDF):
 />
 ```
 
+Header actions — `actions(item, index)` renders consumer controls in the top-right toolbar, before the close button, for the current item (re-rendered on navigation). Use `<Button iconOnly variant="ghost" size="sm">` (and DropdownMenu triggers built from one); the toolbar re-themes ghost Buttons for the dark scrim. The toolbar re-themes any Button inside it (ghost tokens, full radius, `sm` height = the toolbar control size), so a text Button renders pill-shaped — keep actions `variant="ghost" iconOnly`. A DropdownMenu, Popover or ConfirmationPopover opened from an action works normally — while focus is in it, ←/→ stay with it (no gallery navigation), and Esc closes it first, then the Lightbox. ←/→ also stay put while focus is on a text field, a Select (combobox), a ButtonGroup radio, a Slider, a Tab or an expanded trigger. A Tooltip on an action does not block ←/→.
+
+```tsx
+<Lightbox
+  open={open}
+  onOpenChange={setOpen}
+  items={files}
+  actions={(item) => (
+    <>
+      <Button
+        as="a"
+        href={item.src}
+        download
+        target="_blank"
+        rel="noopener noreferrer"
+        iconOnly
+        variant="ghost"
+        size="sm"
+        aria-label={t('download')}
+      >
+        <Download size={20} aria-hidden="true" />
+      </Button>
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <Button iconOnly variant="ghost" size="sm" aria-label={t('more')}>
+            <MoreHorizontal size={20} aria-hidden="true" />
+          </Button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content align="end">
+          <DropdownMenu.Item onSelect={() => rename(item)}>Rename</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>
+    </>
+  )}
+/>
+```
+
+**`actions` replaces the built-in PDF download.** Without `actions`, a PDF item gets a Download link automatically. With `actions` set, the Lightbox renders no download of its own — the consumer owns the whole header, so include a Download action yourself if PDFs (or images) should be downloadable.
+
+Tall or wide images are scaled down (`object-fit: contain`) to fit the stage — never cropped.
+
 **When NOT to use**
 
 - A single, always-visible image — use `<Image>` (optionally `interactive`).
@@ -59,3 +101,5 @@ Mixed gallery (images + a PDF):
 - ❌ Building your own `Modal` + `Image` + arrows — that is what this is.
 - ❌ Omitting `alt` on items — it is required and names the thumbnail and the stage.
 - ❌ Passing `index` without `onIndexChange` — navigation would be a no-op.
+- ❌ Passing `actions` and expecting the built-in PDF download to stay — `actions` replaces it; add your own Download action.
+- ❌ Primary/secondary Buttons in `actions` — they ignore the scrim re-theme and look out of place; use `variant="ghost" iconOnly size="sm"`.

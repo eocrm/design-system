@@ -18,11 +18,27 @@
   background: var(--lightbox-scrim);
 }
 
-.close {
+.toolbar {
+  // Re-theme ghost <Button>s passed via `actions` for the dark scrim, so a plain
+  // `<Button iconOnly variant="ghost" size="sm">` matches the built-in controls.
+  --button-bg-ghost: var(--lightbox-control-bg);
+  --button-bg-ghost-hover: var(--lightbox-control-bg-hover);
+  --button-fg-ghost: var(--lightbox-control-fg);
+  --button-ring: var(--lightbox-ring);
+  --button-radius: var(--radius-full);
+  --button-height-sm: var(--lightbox-control-size);
+
   position: absolute;
   top: var(--lightbox-padding);
   right: var(--lightbox-padding);
   z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: var(--lightbox-toolbar-gap);
+}
+
+.close,
+.download {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -36,30 +52,23 @@
   cursor: pointer;
 }
 
-// Download action for the current document — an <a> styled as an icon control,
-// sitting just left of the close button (overlay chrome, like .close/.chev).
+// Download action for the current document — an <a> styled as an icon control.
 .download {
-  position: absolute;
-  top: var(--lightbox-padding);
-  right: calc(var(--lightbox-padding) + var(--lightbox-control-size) + var(--space-2));
-  z-index: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--lightbox-control-size);
-  height: var(--lightbox-control-size);
-  border-radius: var(--radius-full);
-  background: var(--lightbox-control-bg);
-  color: var(--lightbox-control-fg);
   text-decoration: none;
-  cursor: pointer;
 }
 
+.close:hover,
 .download:hover {
   background: var(--lightbox-control-bg-hover);
 }
 
 .stage {
+  // Size container so the image can be bounded by the stage box (100cqw/100cqh):
+  // the flex child .imageWrap has no definite height, so a percentage max-height
+  // on the <img> would be ignored and a tall image cropped (#607). Safe: the
+  // stage's size comes from the column flex (flex: 1; min-height: 0), never
+  // from its contents.
+  container-type: size;
   flex: 1;
   position: relative;
   display: flex;
@@ -71,6 +80,7 @@
 .chev {
   position: absolute;
   top: 50%;
+  z-index: 1; // above the full-stage PDF wrap (.imageWrap:has(.doc))
   transform: translateY(-50%);
   display: flex;
   align-items: center;
@@ -130,8 +140,8 @@
 
 .image {
   display: block;
-  max-width: 100%;
-  max-height: 100%;
+  max-width: 100cqw;
+  max-height: 100cqh;
   object-fit: contain;
 }
 

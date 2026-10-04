@@ -51,12 +51,15 @@
 | `value` | `string` | yes | Value emitted to `onValueChange` when this item is selected. |
 | `disabled` | `boolean` | no | Per-item disabled. Group-level disabled is OR-merged. |
 | `className` | `string` | no | className merges onto the rendered <button>. |
+| `aria-label` | `string` | no | Accessible name for the radio, when the visible text is an abbreviation (`S` / `M` / `L` → "Small tiles"). Start it with the visible text where you can ("S, small tiles") so voice-control users can say what they see (WCAG 2.5.3). Omit it when `children` already reads as a full name. |
+| `aria-describedby` | `string` | no | id(s) of element(s) describing the option — forwarded to the radio. |
 | `children` | `ReactNode` | yes |  |
 
 <!-- props:end -->
 
 - **Mode detection** is by props: with `value` + `onValueChange` you get segmented; without, you get visual joining. Visual mode joins `<Button>` children with shared borders and outer-only rounded corners (toolbar action groups); segmented mode is a single-select radiogroup (view-mode toggles, timeframe filters). A discriminated union enforces "`value` AND `onValueChange` together OR neither".
 - **`<ButtonGroup.Item>`** (segmented only) renders `<button role="radio">` with roving tabindex and `aria-checked` driven by the parent's `value`. Using it in visual mode (no `value` on the parent) throws at render time: it has no group to belong to, by design.
+- **Abbreviated options** (`S` / `M` / `L`) take `aria-label` on the Item, forwarded to the radio: `<ButtonGroup.Item value="s" aria-label="S, small tiles">S</ButtonGroup.Item>`. Start the name with the visible text (WCAG 2.5.3); don't hide the letter and add visually-hidden text instead. `aria-describedby` is forwarded too.
 - **Children differ by mode.** Visual: `<Button>` children. Segmented: `<ButtonGroup.Item>` children. Mixing the two is undefined behavior.
 - **Size propagation** — `size` on the group propagates to children. Per-child override wins.
 - **Keyboard nav (segmented only)** — Arrow keys move selection + focus; Home / End jump to ends; Tab moves IN/OUT of the group on the currently-selected item. Disabled items are skipped.

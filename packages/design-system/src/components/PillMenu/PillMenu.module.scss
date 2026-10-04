@@ -99,3 +99,13 @@
   flex-shrink: 0;
   align-items: center;
 }
+
+// Optional visible caption before the value (#605) and its middle-dot
+// separator. Muted by WEIGHT at the full fg colour, not by opacity/colour:
+// the tightest palette pair (light mint) has no headroom above AA for a
+// dimmer foreground. contrast.test.ts measures it and pins both the palette
+// pairs and this rule's lack of a colour change.
+.caption {
+  flex-shrink: 0;
+  font-weight: var(--pill-menu-caption-font-weight);
+}

@@ -399,3 +399,60 @@ describe('PillMenu — inside a Field (#578)', () => {
     expect(scss.indexOf('.fullWidth {')).toBeGreaterThan(scss.search(/\.trigger,\s*\.chip\s*\{/));
   });
 });
+
+describe('PillMenu — caption (#605)', () => {
+  const faeton: PillMenuOption = { id: 'f', name: 'Faeton', color: 'blue' };
+
+  it.each([
+    [
+      'trigger',
+      () =>
+        render(
+          <PillMenu label="pipeline" caption="Pipeline" current={faeton} options={options} />,
+        ).getByRole('button'),
+    ],
+    [
+      'read-only chip',
+      () =>
+        render(<PillMenu caption="Pipeline" current={faeton} />).container
+          .firstElementChild as HTMLElement,
+    ],
+  ])('%s: caption, then an aria-hidden dot, then the name', (_mode, mount) => {
+    const pill = mount();
+    expect(pill.textContent).toMatch(/^Pipeline·Faeton/);
+    const [caption, dot] = Array.from(pill.children);
+    expect(caption).toHaveTextContent('Pipeline');
+    expect(caption).not.toHaveAttribute('aria-hidden');
+    expect(dot).toHaveTextContent('·');
+    expect(dot).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('leaves the trigger accessible name to label', () => {
+    render(<PillMenu label="pipeline" caption="Pipeline" current={faeton} options={options} />);
+    expect(screen.getByRole('button', { name: 'Change pipeline: Faeton' })).toBeInTheDocument();
+  });
+
+  it('falls back to a string caption for the name when label is absent (WCAG 2.5.3)', () => {
+    render(<PillMenu caption="Pipeline" current={faeton} options={options} />);
+    expect(screen.getByRole('button', { name: 'Change Pipeline: Faeton' })).toBeInTheDocument();
+  });
+
+  it('ignores a blank string caption for the name (default label)', () => {
+    render(<PillMenu caption="  " current={faeton} options={options} />);
+    const trigger = screen.getByRole('button', { name: 'Change status: Faeton' });
+    // …and renders like no caption: no stray separator.
+    expect(trigger.textContent).not.toContain('·');
+  });
+
+  it('ignores a non-string caption for the name (default label)', () => {
+    render(<PillMenu caption={<b>Pipeline</b>} current={faeton} options={options} />);
+    expect(screen.getByRole('button', { name: 'Change status: Faeton' })).toBeInTheDocument();
+  });
+
+  it('renders no caption and no separator when caption is absent', () => {
+    render(<PillMenu current={faeton} options={options} />);
+    expect(screen.getByRole('button').textContent).not.toContain('·');
+    render(<PillMenu current={done} />);
+    expect(screen.getByText('Done').textContent).toBe('Done');
+  });
+});

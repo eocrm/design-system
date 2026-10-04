@@ -96,6 +96,14 @@ describe('Image', () => {
     expect(wrapper.style.getPropertyValue('--image-object-fit')).toBe('contain');
   });
 
+  it('applies objectPosition via the --image-object-position custom property (default center)', () => {
+    const { container, rerender } = render(<Image src={SRC} alt="" />);
+    const wrapper = container.querySelector('span') as HTMLElement;
+    expect(wrapper.style.getPropertyValue('--image-object-position')).toBe('center');
+    rerender(<Image src={SRC} alt="" objectPosition="top" />);
+    expect(wrapper.style.getPropertyValue('--image-object-position')).toBe('top');
+  });
+
   it('applies the radius class (default md; none gives square corners)', () => {
     const { container, rerender } = render(<Image src={SRC} alt="" />);
     const wrapper = container.querySelector('span') as HTMLElement;

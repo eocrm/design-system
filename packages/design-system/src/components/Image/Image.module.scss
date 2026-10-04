@@ -72,6 +72,7 @@
   width: 100%;
   height: 100%;
   object-fit: var(--image-object-fit, cover); // intrinsic (Rule 4 OK; Avatar precedent)
+  object-position: var(--image-object-position, center);
   opacity: var(--opacity-hidden);
   transition: opacity var(--image-transition);
 }

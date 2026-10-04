@@ -10,6 +10,15 @@ export interface ButtonGroupItemProps {
   disabled?: boolean;
   /** className merges onto the rendered <button>. */
   className?: string;
+  /**
+   * Accessible name for the radio, when the visible text is an abbreviation
+   * (`S` / `M` / `L` → "Small tiles"). Start it with the visible text where you
+   * can ("S, small tiles") so voice-control users can say what they see
+   * (WCAG 2.5.3). Omit it when `children` already reads as a full name.
+   */
+  'aria-label'?: string;
+  /** id(s) of element(s) describing the option — forwarded to the radio. */
+  'aria-describedby'?: string;
   children: ReactNode;
 }
 
@@ -29,6 +38,8 @@ export function ButtonGroupItem({
   disabled = false,
   className,
   children,
+  'aria-label': ariaLabel,
+  'aria-describedby': ariaDescribedBy,
 }: ButtonGroupItemProps) {
   const ctx = useButtonGroupContext('Item');
 
@@ -40,6 +51,8 @@ export function ButtonGroupItem({
       type="button"
       role="radio"
       aria-checked={isSelected}
+      aria-label={ariaLabel}
+      aria-describedby={ariaDescribedBy}
       aria-disabled={effectiveDisabled || undefined}
       // Selected item holds the tab stop; when NOTHING is selected the group
       // would otherwise have no tab stop at all and be unreachable by keyboard

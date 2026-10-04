@@ -1,9 +1,14 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { useLayoutEffect, useState, type ReactNode } from 'react';
 import { act, render, screen, fireEvent } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { overlayStack } from '../_internal/overlay';
 import { Lightbox, type LightboxItem, type LightboxProps } from './Lightbox';
 import { Modal } from '../Modal';
+import { Button } from '../Button';
+import { DropdownMenu } from '../DropdownMenu';
+import { Popover } from '../Popover';
 
 const ITEMS: LightboxItem[] = [
   { src: 'https://x/a.jpg', alt: 'Alpha', caption: 'Cap A' },
@@ -290,6 +295,14 @@ describe('Lightbox — Escape yields to open floating surfaces (#274)', () => {
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
+
+  it('arrows still navigate while a non-focus-holding floating surface (a Tooltip) is open', () => {
+    const onIndexChange = vi.fn();
+    open({ onIndexChange });
+    overlayStack.registerFloating('tooltip-probe');
+    fireEvent.keyDown(document, { key: 'ArrowRight' });
+    expect(onIndexChange).toHaveBeenCalledWith(1);
+  });
 });
 
 describe('Lightbox — nested overlay does not steal focus back on release (#551)', () => {
@@ -391,5 +404,200 @@ describe('Lightbox — early load (#574)', () => {
       </LoadEarly>,
     );
     expect(screen.getByAltText('Alpha')).toHaveAttribute('data-state', 'loaded');
+  });
+});
+
+describe('Lightbox — tall image scaling (#607)', () => {
+  it('SCSS: the stage is a size container and the image is bounded by it', () => {
+    const scss = readFileSync(resolve(__dirname, 'Lightbox.module.scss'), 'utf8');
+    const stage = scss.match(/\.stage \{[\s\S]*?\n\}/)![0];
+    expect(stage).toMatch(/container-type: size;/);
+    // The stage's size must come from the flex column, not its contents.
+    expect(stage).toMatch(/flex: 1;/);
+    expect(stage).toMatch(/min-height: 0;/);
+    const image = scss.match(/\.image \{[\s\S]*?\n\}/)![0];
+    expect(image).toMatch(/max-width: 100cqw;/);
+    expect(image).toMatch(/max-height: 100cqh;/);
+    expect(image).toMatch(/object-fit: contain;/);
+    // Chevrons paint above the full-stage PDF wrap.
+    const chev = scss.match(/\.chev \{[\s\S]*?\n\}/)![0];
+    expect(chev).toMatch(/z-index: 1;/);
+  });
+});
+
+describe('Lightbox — actions (#608)', () => {
+  const pdfItem = { src: 'https://f/contract.pdf', alt: 'Contract.pdf', kind: 'pdf' as const };
+
+  it('receives the current item + index and follows navigation', async () => {
+    const actions = vi.fn((item: LightboxItem, i: number) => (
+      <Button iconOnly variant="ghost" size="sm" aria-label={`Act ${item.alt} ${i}`}>
+        x
+      </Button>
+    ));
+    open({ actions });
+    expect(screen.getByRole('button', { name: 'Act Alpha 0' })).toBeInTheDocument();
+    expect(actions).toHaveBeenLastCalledWith(ITEMS[0], 0);
+    await userEvent.click(screen.getByRole('button', { name: 'Next image' }));
+    expect(screen.getByRole('button', { name: 'Act Bravo 1' })).toBeInTheDocument();
+    expect(actions).toHaveBeenLastCalledWith(ITEMS[1], 1);
+  });
+
+  it('renders the actions before the close button in DOM order', () => {
+    open({ actions: () => <button type="button">Act</button> });
+    const act = screen.getByRole('button', { name: 'Act' });
+    const close = screen.getByRole('button', { name: 'Close gallery' });
+    expect(act.compareDocumentPosition(close) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(act.parentElement).toBe(close.parentElement);
+  });
+
+  it('null/undefined renders nothing extra', () => {
+    open({ actions: () => null });
+    const close = screen.getByRole('button', { name: 'Close gallery' });
+    expect(close.parentElement!.children).toHaveLength(1);
+  });
+
+  it('replaces the built-in PDF download when set; keeps it when not', () => {
+    const { unmount } = render(<Lightbox open onOpenChange={() => {}} items={[pdfItem]} />);
+    expect(screen.getByRole('link', { name: 'Download' })).toBeInTheDocument();
+    unmount();
+    render(
+      <Lightbox
+        open
+        onOpenChange={() => {}}
+        items={[pdfItem]}
+        actions={() => <button type="button">Mine</button>}
+      />,
+    );
+    expect(screen.queryByRole('link', { name: 'Download' })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Mine' })).toBeInTheDocument();
+  });
+
+  it('a DropdownMenu from an action works while open; Esc closes the menu first', async () => {
+    const user = userEvent.setup();
+    const onSelect = vi.fn();
+    const onOpenChange = vi.fn();
+    const actions = () => (
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <Button iconOnly variant="ghost" size="sm" aria-label="More">
+            …
+          </Button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content align="end">
+          <DropdownMenu.Item onSelect={onSelect}>Rename</DropdownMenu.Item>
+          <DropdownMenu.Item onSelect={() => {}}>Delete</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>
+    );
+    open({ actions, onOpenChange });
+
+    await user.click(screen.getByRole('button', { name: 'More' }));
+    await user.click(await screen.findByRole('menuitem', { name: 'Rename' }));
+    expect(onSelect).toHaveBeenCalledTimes(1);
+    expect(onOpenChange).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: 'More' }));
+    expect(await screen.findByRole('menu')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('menu')).toBeNull();
+    expect(onOpenChange).not.toHaveBeenCalled();
+    await user.keyboard('{Escape}');
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+  it('arrow keys do not navigate while a Popover from an action has focus', async () => {
+    const user = userEvent.setup();
+    const onIndexChange = vi.fn();
+    const actions = () => (
+      <Popover>
+        <Popover.Trigger>
+          <Button iconOnly variant="ghost" size="sm" aria-label="Delete">
+            ×
+          </Button>
+        </Popover.Trigger>
+        <Popover.Content aria-label="Confirm delete">
+          <button type="button">Confirm</button>
+        </Popover.Content>
+      </Popover>
+    );
+    open({ actions, onIndexChange });
+    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.click(await screen.findByRole('button', { name: 'Confirm' }));
+    fireEvent.keyDown(document.activeElement!, { key: 'ArrowRight' });
+    expect(onIndexChange).not.toHaveBeenCalled();
+  });
+
+  it('arrow keys still navigate with focus on a thumbnail, a chevron or a closed menu trigger', () => {
+    const onIndexChange = vi.fn();
+    open({
+      onIndexChange,
+      loop: true,
+      actions: () => (
+        <>
+          <input type="checkbox" aria-label="Pick" />
+          <DropdownMenu>
+            <DropdownMenu.Trigger>
+              <Button iconOnly variant="ghost" size="sm" aria-label="More">
+                …
+              </Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content>
+              <DropdownMenu.Item onSelect={() => {}}>Delete</DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu>
+        </>
+      ),
+    });
+    for (const name of ['More', 'Next image', 'Pick']) {
+      const el = screen.getAllByRole(name === 'Pick' ? 'checkbox' : 'button', { name })[0];
+      el.focus();
+      fireEvent.keyDown(el, { key: 'ArrowRight' });
+    }
+    expect(onIndexChange).toHaveBeenCalledTimes(3);
+  });
+
+  it('arrow keys do not navigate while an arrow-driven radio in actions has focus', () => {
+    const onIndexChange = vi.fn();
+    open({
+      onIndexChange,
+      actions: () => <button type="button" role="radio" aria-checked="true" aria-label="Fit" />,
+    });
+    const radio = screen.getByRole('radio', { name: 'Fit' });
+    radio.focus();
+    fireEvent.keyDown(radio, { key: 'ArrowRight' });
+    expect(onIndexChange).not.toHaveBeenCalled();
+  });
+
+  it('arrow keys do not navigate while an in-gallery text input has focus', () => {
+    const onIndexChange = vi.fn();
+    open({ onIndexChange, actions: () => <input aria-label="Rename" /> });
+    const input = screen.getByRole('textbox', { name: 'Rename' });
+    input.focus();
+    fireEvent.keyDown(input, { key: 'ArrowRight' });
+    expect(onIndexChange).not.toHaveBeenCalled();
+  });
+
+  it('arrow keys do not navigate while a DropdownMenu from an action is open', async () => {
+    const user = userEvent.setup();
+    const onIndexChange = vi.fn();
+    const actions = () => (
+      <DropdownMenu>
+        <DropdownMenu.Trigger>
+          <Button iconOnly variant="ghost" size="sm" aria-label="More">
+            …
+          </Button>
+        </DropdownMenu.Trigger>
+        <DropdownMenu.Content align="end">
+          <DropdownMenu.Item onSelect={() => {}}>Delete</DropdownMenu.Item>
+        </DropdownMenu.Content>
+      </DropdownMenu>
+    );
+    open({ actions, onIndexChange });
+    await user.click(screen.getByRole('button', { name: 'More' }));
+    expect(await screen.findByRole('menu')).toBeInTheDocument();
+    await user.keyboard('{ArrowRight}');
+    await user.keyboard('{ArrowLeft}');
+    expect(onIndexChange).not.toHaveBeenCalled();
+    expect(screen.getByAltText('Alpha')).toBeInTheDocument();
+    expect(screen.getByRole('menu')).toBeInTheDocument();
   });
 });

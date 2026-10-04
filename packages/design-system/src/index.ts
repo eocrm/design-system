@@ -487,7 +487,12 @@ export { QrCode } from './components/QrCode';
 export type { QrCodeProps, QrCodeLevel } from './components/QrCode';
 
 export { MediaTile } from './components/MediaTile';
-export type { MediaTileProps, MediaTileReveal, MediaTileRadius } from './components/MediaTile';
+export type {
+  MediaTileProps,
+  MediaTileReveal,
+  MediaTileRadius,
+  MediaTileCaptionPlacement,
+} from './components/MediaTile';
 
 export { ImageCrop, extractCropBlob, useCropPreview } from './components/ImageCrop';
 export type {

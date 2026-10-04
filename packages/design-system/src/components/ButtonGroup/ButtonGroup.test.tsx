@@ -117,6 +117,23 @@ describe('<ButtonGroup> (segmented mode)', () => {
     );
   }
 
+  it('forwards aria-label / aria-describedby to the radio (#609)', () => {
+    render(
+      <>
+        <p id="size-hint">Applies to the file grid</p>
+        <ButtonGroup value="s" onValueChange={() => {}} aria-label="Tile size">
+          <ButtonGroup.Item value="s" aria-label="S, small tiles" aria-describedby="size-hint">
+            S
+          </ButtonGroup.Item>
+          <ButtonGroup.Item value="l">L</ButtonGroup.Item>
+        </ButtonGroup>
+      </>,
+    );
+    const small = screen.getByRole('radio', { name: 'S, small tiles' });
+    expect(small).toHaveAccessibleDescription('Applies to the file grid');
+    expect(screen.getByRole('radio', { name: 'L' })).not.toHaveAttribute('aria-label');
+  });
+
   it('renders as role="radiogroup" with data-mode="segmented"', () => {
     render(<Controlled />);
     const group = screen.getByRole('radiogroup', { name: 'Choices' });
