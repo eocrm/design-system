@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { createRef } from 'react';
 import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -29,9 +31,33 @@ describe('<StagePath>', () => {
     expect(items[0]).toHaveAttribute('data-state', 'done');
     expect(items[1]).toHaveAttribute('data-state', 'done');
     expect(items[2]).toHaveAttribute('data-state', 'current');
-    expect(items[2]).toHaveAttribute('aria-current', 'step');
     expect(items[3]).toHaveAttribute('data-state', 'upcoming');
-    expect(items.filter((li) => li.hasAttribute('aria-current'))).toHaveLength(1);
+    const current = document.querySelectorAll('[aria-current]');
+    expect(current).toHaveLength(1);
+    expect(current[0]).toHaveAttribute('aria-current', 'step');
+    expect(items[2].firstElementChild).toBe(current[0]);
+  });
+
+  it('aria-current sits on the element focus returns to after a keyboard move', () => {
+    render(<StagePath stages={STAGES} value="proposal" onValueChange={() => {}} />);
+    const target = screen.getAllByRole('listitem')[2].querySelector('span[tabindex="-1"]');
+    expect(target).toHaveAttribute('aria-current', 'step');
+  });
+
+  it('the current stage gets its own focus ring (a fg band between two fill bands)', () => {
+    // jsdom computes no clip-path or ::before / ::after, so pin the structure
+    // the CSS keys on and the rule itself: the current stage's fill IS the ring
+    // colour, so its focus band must be the fg, not --sp-ring.
+    render(<StagePath stages={STAGES} value="proposal" onValueChange={() => {}} />);
+    const item = screen.getAllByRole('listitem')[2];
+    expect(item.className).toMatch(/current/);
+    expect(item.querySelector('[tabindex="-1"]')?.className).toMatch(/target/);
+    const scss = readFileSync(resolve(__dirname, 'StagePath.module.scss'), 'utf8');
+    const rule = (sel: string) =>
+      new RegExp(`(?<!,)\\n${sel.replace(/[.:()]/g, '\\$&')} \\{([^}]*)\\}`).exec(scss)?.[1] ?? '';
+    expect(rule('.current .target:focus-visible')).toMatch(/background: var\(--sp-bg\)/);
+    expect(rule('.current .target:focus-visible::before')).toMatch(/background: var\(--sp-fg\)/);
+    expect(rule('.current .target:focus-visible::after')).toMatch(/clip-path: var\(--sp-inner-2\)/);
   });
 
   it('speaks done and upcoming state as hidden text, not colour alone', () => {
@@ -52,34 +78,34 @@ describe('<StagePath>', () => {
     expect(screen.getByRole('list')).toHaveAttribute('data-tone', 'default');
   });
 
-  it('is read-only without onStageChange: no buttons', () => {
+  it('is read-only without onValueChange: no buttons', () => {
     render(<StagePath stages={STAGES} value="proposal" />);
     expect(screen.queryAllByRole('button')).toHaveLength(0);
   });
 
-  it('with onStageChange, every non-current stage is a button that reports its id', async () => {
+  it('with onValueChange, every non-current stage is a button that reports its id', async () => {
     const user = userEvent.setup();
-    const onStageChange = vi.fn();
-    render(<StagePath stages={STAGES} value="proposal" onStageChange={onStageChange} />);
+    const onValueChange = vi.fn();
+    render(<StagePath stages={STAGES} value="proposal" onValueChange={onValueChange} />);
     const buttons = screen.getAllByRole('button');
     expect(buttons).toHaveLength(3);
     expect(screen.queryByRole('button', { name: /Proposal/ })).toBeNull();
     await user.click(screen.getByRole('button', { name: 'Lead, completed' }));
-    expect(onStageChange).toHaveBeenLastCalledWith('lead');
+    expect(onValueChange).toHaveBeenLastCalledWith('lead');
     screen.getByRole('button', { name: 'Negotiation, upcoming' }).focus();
     await user.keyboard('{Enter}');
-    expect(onStageChange).toHaveBeenLastCalledWith('negotiation');
-    expect(onStageChange).toHaveBeenCalledTimes(2);
+    expect(onValueChange).toHaveBeenLastCalledWith('negotiation');
+    expect(onValueChange).toHaveBeenCalledTimes(2);
   });
 
   it('keeps keyboard focus in the list when the activated stage becomes current', async () => {
     const user = userEvent.setup();
     const { rerender } = render(
-      <StagePath stages={STAGES} value="proposal" onStageChange={() => {}} />,
+      <StagePath stages={STAGES} value="proposal" onValueChange={() => {}} />,
     );
     screen.getByRole('button', { name: 'Negotiation, upcoming' }).focus();
     await user.keyboard('{Enter}');
-    rerender(<StagePath stages={STAGES} value="negotiation" onStageChange={() => {}} />);
+    rerender(<StagePath stages={STAGES} value="negotiation" onValueChange={() => {}} />);
     const current = screen.getAllByRole('listitem')[3].querySelector('span[tabindex="-1"]');
     expect(current).not.toBeNull();
     expect(document.activeElement).toBe(current);
@@ -89,7 +115,7 @@ describe('<StagePath>', () => {
     const { rerender } = render(
       <>
         <button type="button">Won</button>
-        <StagePath stages={STAGES} value="proposal" onStageChange={() => {}} />
+        <StagePath stages={STAGES} value="proposal" onValueChange={() => {}} />
       </>,
     );
     const won = screen.getByRole('button', { name: 'Won' });
@@ -97,14 +123,14 @@ describe('<StagePath>', () => {
     rerender(
       <>
         <button type="button">Won</button>
-        <StagePath stages={STAGES} value="negotiation" onStageChange={() => {}} />
+        <StagePath stages={STAGES} value="negotiation" onValueChange={() => {}} />
       </>,
     );
     expect(document.activeElement).toBe(won);
   });
 
   it('the current stage is a tabIndex=-1 span, not a button (never a Tab stop)', () => {
-    render(<StagePath stages={STAGES} value="proposal" onStageChange={() => {}} />);
+    render(<StagePath stages={STAGES} value="proposal" onValueChange={() => {}} />);
     const items = screen.getAllByRole('listitem');
     expect(within(items[2]).queryByRole('button')).toBeNull();
     const span = items[2].querySelector('span[tabindex]');
@@ -113,7 +139,7 @@ describe('<StagePath>', () => {
   });
 
   it('stage buttons are type="button" (never submit an enclosing form)', () => {
-    render(<StagePath stages={STAGES} value="lead" onStageChange={() => {}} />);
+    render(<StagePath stages={STAGES} value="lead" onValueChange={() => {}} />);
     for (const b of screen.getAllByRole('button')) expect(b).toHaveAttribute('type', 'button');
   });
 
@@ -123,10 +149,9 @@ describe('<StagePath>', () => {
     expect(warn).not.toHaveBeenCalled();
     rerender(<StagePath stages={STAGES} value="ghost" />);
     rerender(<StagePath stages={STAGES} value="ghost" />);
-    for (const li of screen.getAllByRole('listitem')) {
+    for (const li of screen.getAllByRole('listitem'))
       expect(li).toHaveAttribute('data-state', 'upcoming');
-      expect(li).not.toHaveAttribute('aria-current');
-    }
+    expect(document.querySelector('[aria-current]')).toBeNull();
     expect(warn).toHaveBeenCalledTimes(1);
     expect(warn.mock.calls[0]![0]).toContain('ghost');
     warn.mockRestore();
@@ -162,5 +187,30 @@ describe('<StagePath>', () => {
     const tip = await screen.findByRole('tooltip');
     expect(tip).toHaveTextContent('Bold stage');
     expect(tip.querySelector('b')).toBeNull();
+  });
+
+  describe('keyboard focus', () => {
+    // Mirrors EntityChip / Tooltip tests: jsdom's :focus-visible heuristic is
+    // unreliable after earlier tests, so stub it.
+    let originalMatches: typeof Element.prototype.matches;
+    beforeEach(() => {
+      originalMatches = Element.prototype.matches;
+      Element.prototype.matches = function (this: Element, selector: string) {
+        if (selector === ':focus-visible') return true;
+        return originalMatches.call(this, selector);
+      } as typeof Element.prototype.matches;
+    });
+    afterEach(() => {
+      Element.prototype.matches = originalMatches;
+    });
+
+    it('tabbing onto a clipped stage button opens its tooltip', async () => {
+      const user = userEvent.setup();
+      render(<StagePath stages={STAGES} value="proposal" onValueChange={() => {}} />);
+      fakeClip(screen.getByText('Lead'), true);
+      await user.tab();
+      expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Lead, completed' }));
+      expect(await screen.findByRole('tooltip')).toHaveTextContent('Lead');
+    });
   });
 });

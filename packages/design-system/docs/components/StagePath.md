@@ -1,6 +1,6 @@
 # `<StagePath>` — chevron row of record stages
 
-A record's ordered stages as interlocking chevrons: done (tinted), current (solid), upcoming (neutral). Read-only by default; pass `onStageChange` to make every non-current stage a button. `tone` recolours done + current once the record reaches an outcome.
+A record's ordered stages as interlocking chevrons: done (tinted), current (solid), upcoming (neutral). Read-only by default; pass `onValueChange` to make every non-current stage a button. `tone` recolours done + current once the record reaches an outcome.
 
 ```tsx
 import { Button, Cluster, StagePath } from '@eocrm/design-system';
@@ -16,7 +16,7 @@ import { Button, Cluster, StagePath } from '@eocrm/design-system';
     ]}
     value={deal.stage}
     tone={deal.outcome === 'won' ? 'success' : deal.outcome === 'lost' ? 'danger' : 'default'}
-    onStageChange={(id) => moveDeal(deal.id, id)}
+    onValueChange={(id) => moveDeal(deal.id, id)}
   />
   <Button variant="success">Won</Button>
   <Button variant="danger-outline">Lost</Button>
@@ -36,17 +36,19 @@ import { Button, Cluster, StagePath } from '@eocrm/design-system';
 | `stages` | `StagePathStage[]` | yes | Ordered stages, first to last. |
 | `value` | `string` | yes | Id of the current stage. Stages before it render as done, after it as upcoming. An id not in `stages` renders every stage as upcoming (and warns in development) rather than throwing. |
 | `tone` | `'default' \| 'success' \| 'danger'` | no | Outcome colour for done + current stages. See `StagePathTone`. Default: `'default'`. |
-| `onStageChange` | `((id: string) => void)` | no | Makes the path interactive: every non-current stage renders as a button that calls this with its id. The current stage is never a button. Omit for a read-only path. Whether a move is allowed (e.g. backwards) is the consumer's rule — confirm or ignore inside the handler. |
+| `onValueChange` | `((id: string) => void)` | no | Makes the path interactive: every non-current stage renders as a button that calls this with its id. The current stage is never a button. Omit for a read-only path. Whether a move is allowed (e.g. backwards) is the consumer's rule — confirm or ignore inside the handler. |
 | …native | | | plus native `<ol>` attributes |
 
 <!-- props:end -->
 
-- **Always controlled.** `value` is required; there is no internal state. `onStageChange` is a request — update `value` when the move succeeds (after a confirmation or server call if needed).
-- **Stage semantics.** `<ol>` with `aria-current="step"` on the current stage; done/upcoming stages carry visually hidden, localised "completed" / "upcoming" text, so state is never colour alone.
+- **Always controlled.** `value` is required; there is no internal state. `onValueChange` is a request — update `value` when the move succeeds (after a confirmation or server call if needed).
+- **Stage semantics.** `<ol>` with `aria-current="step"` on the current stage's chevron (the element focus returns to after a keyboard move); done/upcoming stages carry visually hidden, localised "completed" / "upcoming" text, so state is never colour alone.
 - **Fills its container.** `width: 100%`, equal-width stages, labels ellipsize with a tooltip only when clipped. Beside other controls, use `<Cluster wrap={false}>` so the path takes the remaining width instead of wrapping onto its own line.
-- **Every non-current stage is clickable** when `onStageChange` is passed, including going backwards. Enforce business rules in the handler.
+- **Every non-current stage is clickable** when `onValueChange` is passed, including going backwards. Enforce business rules in the handler.
 - **Stage ids must be unique** (they are React keys). An empty `stages` array renders an empty list (and warns, since no stage matches `value`).
 - One size (32px, matches `Button` `md`).
+- **No pending state.** Nothing changes while `onValueChange`'s work resolves, and a double click calls it twice. Guard in the handler, or render the path read-only (omit `onValueChange`) while saving.
+- **Geometry tokens are tuned together.** The chevron-shaped focus ring is computed for the default `--stage-path-arrow` / `--stage-path-height`; overriding either skews the ring's slanted edges.
 
 #### When NOT to use
 

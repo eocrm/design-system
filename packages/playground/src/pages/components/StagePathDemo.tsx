@@ -33,7 +33,7 @@ export function StagePathDemo() {
     <DemoLayout
       name="StagePath"
       componentName="StagePath"
-      description="Chevron row of a record's ordered stages: done, current, upcoming. Read-only by default; pass onStageChange to make the other stages clickable. tone recolours done + current for a won / lost outcome."
+      description="Chevron row of a record's ordered stages: done, current, upcoming. Read-only by default; pass onValueChange to make the other stages clickable. tone recolours done + current for a won / lost outcome."
       files={getComponentFiles('StagePath')}
     >
       <Example
@@ -49,7 +49,7 @@ const [tone, setTone] = useState<StagePathTone>('default');
     stages={DEAL}
     value={stage}
     tone={tone}
-    onStageChange={(id) => { setStage(id); setTone('default'); }}
+    onValueChange={(id) => { setStage(id); setTone('default'); }}
   />
   <Button variant="success" onClick={() => setTone('success')}>Won</Button>
   <Button variant="danger-outline" onClick={() => setTone('danger')}>Lost</Button>
@@ -62,7 +62,7 @@ const [tone, setTone] = useState<StagePathTone>('default');
             stages={DEAL}
             value={stage}
             tone={tone}
-            onStageChange={(id) => {
+            onValueChange={(id) => {
               setStage(id);
               setTone('default');
             }}
@@ -78,7 +78,7 @@ const [tone, setTone] = useState<StagePathTone>('default');
 
       <Example
         title="Read-only"
-        description="No onStageChange: no buttons, no hover. For list rows, previews, and users without permission to move the record."
+        description="No onValueChange: no buttons, no hover. For list rows, previews, and users without permission to move the record."
         code={`<StagePath aria-label="Project stage" stages={PROJECT} value="done" />`}
       >
         <StagePath aria-label="Project stage" stages={PROJECT} value="done" />
@@ -102,21 +102,21 @@ const [tone, setTone] = useState<StagePathTone>('default');
         title="Narrow width"
         description="Stages share the width equally; labels ellipsize and show the full name in a tooltip on hover or keyboard focus."
         code={`<div style={{ maxWidth: 300 }}>
-  <StagePath aria-label="Narrow" stages={DEAL} value="proposal" onStageChange={() => {}} />
+  <StagePath aria-label="Narrow" stages={DEAL} value="proposal" onValueChange={() => {}} />
 </div>`}
       >
         <div style={{ maxWidth: 300 }}>
-          <StagePath aria-label="Narrow" stages={DEAL} value="proposal" onStageChange={() => {}} />
+          <StagePath aria-label="Narrow" stages={DEAL} value="proposal" onValueChange={() => {}} />
         </div>
       </Example>
 
       <Example
         title="Right-to-left"
         description="Chevrons mirror under dir='rtl'."
-        code={`<div dir="rtl"><StagePath aria-label="RTL" stages={DEAL} value="proposal" onStageChange={() => {}} /></div>`}
+        code={`<div dir="rtl"><StagePath aria-label="RTL" stages={DEAL} value="proposal" onValueChange={() => {}} /></div>`}
       >
         <div dir="rtl">
-          <StagePath aria-label="RTL" stages={DEAL} value="proposal" onStageChange={() => {}} />
+          <StagePath aria-label="RTL" stages={DEAL} value="proposal" onValueChange={() => {}} />
         </div>
       </Example>
     </DemoLayout>

@@ -310,6 +310,33 @@ describe.each([
 });
 
 /**
+ * StagePath's hovered stage is `color-mix(in srgb, fill, text hover-mix)` — the
+ * fill moved toward its own text colour, which LOWERS that pair's contrast. The
+ * mix is a straight sRGB lerp, i.e. `composite(fg, mix, bg)`. The percentage is
+ * read from the token file, so raising it past what these pins allow fails here.
+ */
+describe('StagePath hovered fills keep their text at AA', () => {
+  const mix =
+    parseFloat(
+      declaredValue(
+        '--stage-path-hover-mix',
+        readFileSync(resolve(__dirname, '../components/StagePath/StagePath.tokens.scss'), 'utf8'),
+      ) ?? 'NaN',
+    ) / 100;
+  it.each(
+    (['light', 'dark'] as const).flatMap((theme) =>
+      (['info', 'success', 'danger', 'neutral'] as const).map((tone) => [theme, tone] as const),
+    ),
+  )('%s %s', (theme, tone) => {
+    const source = theme === 'light' ? TOKENS : DARK;
+    const fg = tokenValue(`--color-tone-${tone}-fg`, source);
+    const hovered = composite(fg, mix, tokenValue(`--color-tone-${tone}-bg`, source));
+    expect(mix).toBeGreaterThan(0);
+    expect(contrast(fg, hovered)).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+/**
  * The slots below are the ones a component actually paints with. PAIRS proves
  * the strong variant clears its bar; this proves the components are still
  * pointed at it, so a token nobody re-aimed cannot quietly keep the old value.

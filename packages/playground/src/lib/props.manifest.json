@@ -5237,7 +5237,7 @@
           "description": "Outcome colour for done + current stages. See `StagePathTone`."
         },
         {
-          "name": "onStageChange",
+          "name": "onValueChange",
           "type": "((id: string) => void)",
           "required": false,
           "default": "",

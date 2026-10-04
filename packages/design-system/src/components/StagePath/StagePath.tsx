@@ -23,7 +23,7 @@ import styles from './StagePath.module.scss';
 export type StagePathTone = 'default' | 'success' | 'danger';
 
 export interface StagePathStage {
-  /** Stable id: matched against `value` and passed to `onStageChange`. */
+  /** Stable id: matched against `value` and passed to `onValueChange`. */
   id: string;
   /** Visible stage name. Ellipsizes when space runs out; the full label shows in a tooltip only when clipped. */
   label: ReactNode;
@@ -46,7 +46,7 @@ export interface StagePathProps extends Omit<HTMLAttributes<HTMLOListElement>, '
    * Omit for a read-only path. Whether a move is allowed (e.g. backwards) is
    * the consumer's rule — confirm or ignore inside the handler.
    */
-  onStageChange?: (id: string) => void;
+  onValueChange?: (id: string) => void;
 }
 
 type StageState = 'done' | 'current' | 'upcoming';
@@ -54,12 +54,12 @@ type StageState = 'done' | 'current' | 'upcoming';
 interface StageProps {
   stage: StagePathStage;
   state: StageState;
-  onStageChange?: (id: string) => void;
+  onValueChange?: (id: string) => void;
   /** Set on the current stage only: where focus lands when its button is replaced. */
   currentRef?: RefObject<HTMLSpanElement | null>;
 }
 
-function Stage({ stage, state, onStageChange, currentRef }: StageProps) {
+function Stage({ stage, state, onValueChange, currentRef }: StageProps) {
   const t = useTranslation();
   const tip = useClippedTooltip<HTMLSpanElement>(stage.label);
   const content = (
@@ -75,11 +75,11 @@ function Stage({ stage, state, onStageChange, currentRef }: StageProps) {
     </>
   );
   const target =
-    onStageChange != null && state !== 'current' ? (
+    onValueChange != null && state !== 'current' ? (
       <button
         type="button"
         className={clsx(styles.target, styles.button)}
-        onClick={() => onStageChange(stage.id)}
+        onClick={() => onValueChange(stage.id)}
       >
         {content}
       </button>
@@ -89,17 +89,14 @@ function Stage({ stage, state, onStageChange, currentRef }: StageProps) {
       <span
         ref={currentRef}
         className={styles.target}
-        tabIndex={onStageChange != null && state === 'current' ? -1 : undefined}
+        tabIndex={onValueChange != null && state === 'current' ? -1 : undefined}
+        aria-current={state === 'current' ? 'step' : undefined}
       >
         {content}
       </span>
     );
   return (
-    <li
-      className={clsx(styles.stage, styles[state])}
-      data-state={state}
-      aria-current={state === 'current' ? 'step' : undefined}
-    >
+    <li className={clsx(styles.stage, styles[state])} data-state={state}>
       <Tooltip content={tip.content} open={tip.open} onOpenChange={tip.onOpenChange}>
         {target}
       </Tooltip>
@@ -112,7 +109,7 @@ function Stage({ stage, state, onStageChange, currentRef }: StageProps) {
  * @see docs/components/StagePath.md
  */
 export const StagePath = forwardRef<HTMLOListElement, StagePathProps>(function StagePath(
-  { stages, value, tone = 'default', onStageChange, className, onFocus, onBlur, ...rest },
+  { stages, value, tone = 'default', onValueChange, className, onFocus, onBlur, ...rest },
   ref,
 ) {
   const currentRef = useRef<HTMLSpanElement>(null);
@@ -170,7 +167,7 @@ export const StagePath = forwardRef<HTMLOListElement, StagePathProps>(function S
             key={stage.id}
             stage={stage}
             state={state}
-            onStageChange={onStageChange}
+            onValueChange={onValueChange}
             currentRef={state === 'current' ? currentRef : undefined}
           />
         );
