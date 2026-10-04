@@ -60,6 +60,30 @@ describe('<StagePath>', () => {
     expect(rule('.current .target:focus-visible::after')).toMatch(/clip-path: var\(--sp-inner-2\)/);
   });
 
+  it('mirrors every chevron shape for RTL via [dir] attributes, not :dir()', () => {
+    // jsdom computes no clip-path; pin that each shape has its RTL rule, keyed
+    // on the dir attribute (production minifiers rewrite :dir() into :lang()).
+    const scss = readFileSync(resolve(__dirname, 'StagePath.module.scss'), 'utf8');
+    const esc = (x: string) => x.replace(/[.:()$#{}[\]]/g, '\\$&');
+    const shapes = {
+      '.target': 'middle',
+      '.stage:first-child .target': 'first',
+      '.stage:last-child .target': 'last',
+    };
+    for (const [sel, shape] of Object.entries(shapes)) {
+      expect(scss).toMatch(
+        new RegExp(`${esc(`#{$rtl} ${sel}`)} \\{\\s*@include shape\\(${shape}, true\\);`),
+      );
+      expect(scss).toMatch(
+        new RegExp(`${esc(`#{$ltr-in-rtl} ${sel}`)} \\{\\s*@include shape\\(${shape}\\);`),
+      );
+    }
+    expect(scss).toContain(`$rtl: ':is([dir="rtl"] .path, .path[dir="rtl"])';`);
+    expect(scss).toContain(
+      `$ltr-in-rtl: ':is([dir="rtl"] [dir="ltr"] .path, [dir="rtl"] .path[dir="ltr"])';`,
+    );
+  });
+
   it('speaks done and upcoming state as hidden text, not colour alone', () => {
     render(<StagePath stages={STAGES} value="proposal" />);
     const items = screen.getAllByRole('listitem');
