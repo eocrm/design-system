@@ -102,6 +102,98 @@ describe('MediaTile', () => {
     );
   });
 
+  describe("controls='bar'", () => {
+    const bar = (container: HTMLElement) =>
+      container.querySelector('[class*="controlBar"]') as HTMLElement;
+
+    it('defaults to chips: no control bar', () => {
+      const { container } = renderTile({ captionPlacement: 'below', selectable: true });
+      expect(bar(container)).toBeNull();
+      expect(container.querySelector('[class*="actionsTop"]')).not.toBeNull();
+    });
+
+    it('renders checkbox and actions in one bar, no chips', () => {
+      const { container } = renderTile({
+        captionPlacement: 'below',
+        controls: 'bar',
+        selectable: true,
+      });
+      const b = bar(container);
+      expect(b).toContainElement(screen.getByRole('checkbox'));
+      expect(b).toContainElement(screen.getByRole('button', { name: 'Del' }));
+      expect(container.querySelector('[class*="chip"]')).toBeNull();
+    });
+
+    it('is ignored in overlay placement', () => {
+      const { container } = renderTile({ controls: 'bar', selectable: true });
+      expect(bar(container)).toBeNull();
+      expect(container.querySelector('[class*="barBottom"]')).not.toBeNull();
+    });
+
+    it('a free-space click toggles selection both ways without reaching the tile', () => {
+      const onSelectedChange = vi.fn();
+      const onClick = vi.fn();
+      const props = {
+        captionPlacement: 'below',
+        controls: 'bar',
+        selectable: true,
+        onSelectedChange,
+        onClick,
+      } as const;
+      const { container, rerender } = renderTile(props);
+      fireEvent.click(bar(container));
+      expect(onSelectedChange).toHaveBeenLastCalledWith(true);
+      rerender(
+        <MediaTile
+          media={<div />}
+          title="photo.jpg"
+          actions={<button>Del</button>}
+          {...props}
+          selected
+        />,
+      );
+      fireEvent.click(bar(container));
+      expect(onSelectedChange).toHaveBeenLastCalledWith(false);
+      expect(onSelectedChange).toHaveBeenCalledTimes(2);
+      expect(onClick).not.toHaveBeenCalled();
+    });
+
+    it('checkbox and action clicks fire once and never reach the tile', async () => {
+      const onSelectedChange = vi.fn();
+      const onClick = vi.fn();
+      const onDel = vi.fn();
+      renderTile({
+        captionPlacement: 'below',
+        controls: 'bar',
+        selectable: true,
+        onSelectedChange,
+        onClick,
+        actions: <button onClick={onDel}>Del</button>,
+      });
+      await userEvent.click(screen.getByRole('checkbox'));
+      expect(onSelectedChange).toHaveBeenCalledTimes(1);
+      await userEvent.click(screen.getByRole('button', { name: 'Del' }));
+      expect(onDel).toHaveBeenCalledTimes(1);
+      expect(onSelectedChange).toHaveBeenCalledTimes(1);
+      expect(onClick).not.toHaveBeenCalled();
+    });
+
+    it('without selectable a free-space click does nothing and stays off the tile', () => {
+      const onClick = vi.fn();
+      const { container } = renderTile({ captionPlacement: 'below', controls: 'bar', onClick });
+      expect(screen.queryByRole('checkbox')).toBeNull();
+      fireEvent.click(bar(container));
+      expect(onClick).not.toHaveBeenCalled();
+    });
+
+    it('keys inside the bar never reach the tile', () => {
+      const onKeyDown = vi.fn();
+      renderTile({ captionPlacement: 'below', controls: 'bar', onKeyDown });
+      fireEvent.keyDown(screen.getByRole('button', { name: 'Del' }), { key: 'Enter' });
+      expect(onKeyDown).not.toHaveBeenCalled();
+    });
+  });
+
   it('renders no checkbox unless selectable', () => {
     renderTile();
     expect(screen.queryByRole('checkbox')).toBeNull();
@@ -224,7 +316,7 @@ describe('MediaTile — reveal + selection CSS (source-pinned)', () => {
   const shownSelectors = shownRule[1];
 
   it('a checked checkbox (selected tile) is always shown', () => {
-    expect(shownSelectors).toMatch(/\.root\[data-selected\] \.select\b/);
+    expect(shownSelectors).toMatch(/\.root\[data-selected\] :is\(\.select, \.controlBar\)/);
   });
 
   it.each(['hover:hover', 'hover:focus-within', 'focus:focus-within', 'visible'])(

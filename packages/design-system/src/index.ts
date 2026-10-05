@@ -492,6 +492,7 @@ export type {
   MediaTileReveal,
   MediaTileRadius,
   MediaTileCaptionPlacement,
+  MediaTileControls,
 } from './components/MediaTile';
 
 export { ImageCrop, extractCropBlob, useCropPreview } from './components/ImageCrop';

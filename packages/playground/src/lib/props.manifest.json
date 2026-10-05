@@ -3482,6 +3482,13 @@
           "description": "Where `title` + `meta` render. Default `'overlay'`.\n- `'overlay'` — a top bar over a gradient scrim on the media, revealed per `revealOn`.\n  Compact, but the name is hidden at rest for mouse users.\n- `'below'` — a solid bar under the media in normal text colour, ALWAYS visible\n  (not affected by `revealOn`). Use for file grids where the name must be readable."
         },
         {
+          "name": "controls",
+          "type": "MediaTileControls",
+          "required": false,
+          "default": "",
+          "description": "How the selection checkbox and `actions` are presented. Default `'chips'`.\nOnly applies with `captionPlacement=\"below\"`; ignored in overlay placement.\n- `'chips'` — two floating surface chips: checkbox top-left, actions top-right.\n- `'bar'` — one full-width solid bar across the top of the media (divider\n  below): checkbox at the start, actions at the end. Reads better over busy or\n  light images. Follows `revealOn`; the whole bar stays shown while selected.\n  When `selectable`, a click on the bar's free space toggles selection (a\n  pointer shortcut; the checkbox remains the keyboard control). Clicks and keys\n  anywhere in the bar never reach the tile `onClick` — the bar is a control\n  region, not the media."
+        },
+        {
           "name": "revealOn",
           "type": "MediaTileReveal",
           "required": false,
@@ -6141,6 +6148,7 @@
     "MediaTileReveal": "\"visible\" | \"hover\" | \"focus\"",
     "MediaTileRadius": "\"sm\" | \"md\" | \"lg\" | \"none\"",
     "MediaTileCaptionPlacement": "\"overlay\" | \"below\"",
+    "MediaTileControls": "\"chips\" | \"bar\"",
     "CropArea": "{ x: number; y: number; width: number; height: number }",
     "DataTableInstance": "DataTableInstance<T>",
     "DefinitionListLayout": "\"horizontal\" | \"stacked\"",

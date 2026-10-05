@@ -79,7 +79,7 @@ function fileActions(name: string) {
   );
 }
 
-function SelectableFileGrid() {
+function SelectableFileGrid({ controls }: { controls?: 'bar' }) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const toggle = (id: string, next: boolean) =>
     setSelected((prev) => {
@@ -98,6 +98,7 @@ function SelectableFileGrid() {
           <MediaTile
             key={f.id}
             captionPlacement="below"
+            controls={controls}
             media={
               f.src ? (
                 <Image
@@ -214,6 +215,29 @@ export function Demo() {
 }`}
       >
         <SelectableFileGrid />
+      </Example>
+
+      <Example
+        title='Control bar — controls="bar"'
+        description='With captionPlacement="below", controls="bar" puts the checkbox and actions in one full-width solid bar across the top of the media (divider below) instead of two chips — easier to read over busy or light images. Click the bar’s free space to toggle selection; the media itself stays free for opening. Revealed per revealOn, always on touch and while selected.'
+        code={`<MediaTile
+  captionPlacement="below"
+  controls="bar"
+  media={<Image src={f.src} alt={f.name} aspectRatio={1} objectFit="cover" />}
+  title={f.name}
+  meta={f.size}
+  selectable
+  selected={selected.has(f.id)}
+  onSelectedChange={(next) => toggle(f.id, next)}
+  revealOn={selected.size > 0 ? 'visible' : 'hover'}
+  actions={
+    <Button iconOnly variant="ghost" size="sm" aria-label={\`Download \${f.name}\`}>
+      <Download size={16} />
+    </Button>
+  }
+/>`}
+      >
+        <SelectableFileGrid controls="bar" />
       </Example>
 
       <Example

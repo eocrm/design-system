@@ -44,6 +44,9 @@
   --mediatile-chip-offset: var(--space-2); // inset from the media's corner
   --mediatile-chip-shadow: var(--shadow-sm);
 
+  // controls="bar": the strip uses the chip surface, with a hairline below it.
+  --mediatile-control-bar-divider: var(--color-border);
+
   // Overlay placement + selectable: the top bar's inline-start padding clears the
   // checkbox chip (offset + chip, i.e. md checkbox box + chip padding, + gap).
   --mediatile-select-chip-size: calc(var(--size-checkbox-md) + 2 * var(--mediatile-chip-padding));

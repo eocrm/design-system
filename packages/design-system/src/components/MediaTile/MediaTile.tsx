@@ -10,6 +10,8 @@ export type MediaTileReveal = 'hover' | 'focus' | 'visible';
 export type MediaTileRadius = 'none' | 'sm' | 'md' | 'lg';
 /** Where `title` + `meta` render: over the media, or in a solid bar below it. */
 export type MediaTileCaptionPlacement = 'overlay' | 'below';
+/** How the selection checkbox + actions are presented in `captionPlacement="below"`. */
+export type MediaTileControls = 'chips' | 'bar';
 
 export interface MediaTileProps extends Omit<HTMLAttributes<HTMLDivElement>, 'children' | 'title'> {
   /** Tile body — full-bleed media (an `<Image>`, or a centered file-type icon). */
@@ -34,6 +36,19 @@ export interface MediaTileProps extends Omit<HTMLAttributes<HTMLDivElement>, 'ch
    *   (not affected by `revealOn`). Use for file grids where the name must be readable.
    */
   captionPlacement?: MediaTileCaptionPlacement;
+  /**
+   * How the selection checkbox and `actions` are presented. Default `'chips'`.
+   * Only applies with `captionPlacement="below"`; ignored in overlay placement.
+   * - `'chips'` — two floating surface chips: checkbox top-left, actions top-right.
+   * - `'bar'` — one full-width solid bar across the top of the media (divider
+   *   below): checkbox at the start, actions at the end. Reads better over busy or
+   *   light images. Follows `revealOn`; the whole bar stays shown while selected.
+   *   When `selectable`, a click on the bar's free space toggles selection (a
+   *   pointer shortcut; the checkbox remains the keyboard control). Clicks and keys
+   *   anywhere in the bar never reach the tile `onClick` — the bar is a control
+   *   region, not the media.
+   */
+  controls?: MediaTileControls;
   /**
    * When the overlay bars, `actions` and the selection checkbox reveal. Default `'hover'`.
    * - `'hover'` — on pointer hover OR keyboard focus-within (focus always included for a11y).
@@ -87,6 +102,7 @@ export const MediaTile = forwardRef<HTMLDivElement, MediaTileProps>(function Med
     meta,
     actions,
     captionPlacement = 'overlay',
+    controls = 'chips',
     revealOn = 'hover',
     radius = 'md',
     selectable = false,
@@ -100,8 +116,21 @@ export const MediaTile = forwardRef<HTMLDivElement, MediaTileProps>(function Med
 ) {
   const t = useTranslation();
   const below = captionPlacement === 'below';
+  const bar = below && controls === 'bar';
   const hasCaption = title != null || meta != null;
   const isSelected = selectable && selected;
+  const checkbox = (
+    <Checkbox
+      checked={isSelected}
+      onChange={(next) => onSelectedChange?.(next)}
+      aria-label={
+        selectLabel ||
+        (typeof title === 'string' && title
+          ? t('mediaTile.selectNamed', { name: title })
+          : t('mediaTile.select'))
+      }
+    />
+  );
   const caption = (
     <>
       {title != null && <span className={styles.title}>{title}</span>}
@@ -128,35 +157,48 @@ export const MediaTile = forwardRef<HTMLDivElement, MediaTileProps>(function Med
 
         {!below && hasCaption && <div className={clsx(styles.bar, styles.barTop)}>{caption}</div>}
 
-        {selectable && (
-          // Stops the checkbox's clicks (label + synthetic input click) and keys reaching the tile.
-          <div className={clsx(styles.chip, styles.select)} onClick={stop} onKeyDown={stop}>
-            <Checkbox
-              checked={isSelected}
-              onChange={(next) => onSelectedChange?.(next)}
-              aria-label={
-                selectLabel ||
-                (typeof title === 'string' && title
-                  ? t('mediaTile.selectNamed', { name: title })
-                  : t('mediaTile.select'))
-              }
-            />
-          </div>
-        )}
+        {bar ? (
+          (selectable || actions != null) && (
+            // One control region: nothing in it reaches the tile. A click on its
+            // free space toggles selection (the spacer ignores the pointer, so free
+            // space is always the bar itself).
+            <div
+              className={clsx(styles.bar, styles.controlBar)}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (selectable && e.target === e.currentTarget) onSelectedChange?.(!isSelected);
+              }}
+              onKeyDown={stop}
+            >
+              {selectable && checkbox}
+              <span className={styles.spacer} />
+              {actions != null && <div className={styles.controlActions}>{actions}</div>}
+            </div>
+          )
+        ) : (
+          <>
+            {selectable && (
+              // Stops the checkbox's clicks (label + synthetic input click) and keys reaching the tile.
+              <div className={clsx(styles.chip, styles.select)} onClick={stop} onKeyDown={stop}>
+                {checkbox}
+              </div>
+            )}
 
-        {actions != null && (
-          <div
-            className={
-              below ? clsx(styles.chip, styles.actionsTop) : clsx(styles.bar, styles.barBottom)
-            }
-            // Below: the chip is a visible pill — a misclick in its padding/gap is
-            // still "on the controls". Overlay: the bar spans the tile, so its empty
-            // scrim is the tile.
-            onClick={below ? stop : stopFromChild}
-            onKeyDown={below ? stop : stopFromChild}
-          >
-            {actions}
-          </div>
+            {actions != null && (
+              <div
+                className={
+                  below ? clsx(styles.chip, styles.actionsTop) : clsx(styles.bar, styles.barBottom)
+                }
+                // Below: the chip is a visible pill — a misclick in its padding/gap is
+                // still "on the controls". Overlay: the bar spans the tile, so its empty
+                // scrim is the tile.
+                onClick={below ? stop : stopFromChild}
+                onKeyDown={below ? stop : stopFromChild}
+              >
+                {actions}
+              </div>
+            )}
+          </>
         )}
       </div>
 

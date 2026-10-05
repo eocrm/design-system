@@ -4,4 +4,5 @@ export type {
   MediaTileReveal,
   MediaTileRadius,
   MediaTileCaptionPlacement,
+  MediaTileControls,
 } from './MediaTile';
