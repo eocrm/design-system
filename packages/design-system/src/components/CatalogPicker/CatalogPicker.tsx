@@ -1,5 +1,6 @@
 import {
   forwardRef,
+  useEffect,
   useId,
   useMemo,
   useRef,
@@ -84,7 +85,33 @@ export const CatalogPicker = forwardRef<HTMLDivElement, CatalogPickerProps>(func
   const [active, setActive] = useState(0);
   const searchRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
+  const sentinelRef = useRef<HTMLSpanElement>(null);
+  const toolbarRef = useRef<HTMLDivElement>(null);
   const optionRefs = useRef<Array<HTMLDivElement | null>>([]);
+
+  // Sticky "stuck" detection: a 0-flow sentinel at the root's top edge leaves the nearest
+  // scrollable ancestor's viewport exactly when the toolbar pins. Drives the top-bleed
+  // pseudo only while pinned. No IntersectionObserver (jsdom/old browsers) = no bleed.
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    const toolbar = toolbarRef.current;
+    if (!sentinel || !toolbar || typeof IntersectionObserver === 'undefined') return;
+    let scroller: HTMLElement | null = sentinel.parentElement;
+    while (scroller && !/(auto|scroll)/.test(getComputedStyle(scroller).overflowY)) {
+      scroller = scroller.parentElement;
+    }
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        const stuck =
+          !entry.isIntersecting && entry.boundingClientRect.top < (entry.rootBounds?.top ?? 0);
+        if (stuck) toolbar.setAttribute('data-stuck', '');
+        else toolbar.removeAttribute('data-stuck');
+      },
+      { root: scroller },
+    );
+    io.observe(sentinel);
+    return () => io.disconnect();
+  }, []);
 
   const q = query.trim().toLocaleLowerCase();
   const visible = useMemo(
@@ -159,7 +186,8 @@ export const CatalogPicker = forwardRef<HTMLDivElement, CatalogPickerProps>(func
 
   return (
     <div ref={ref} className={clsx(styles.root, className)} {...rest}>
-      <div className={styles.toolbar}>
+      <span ref={sentinelRef} aria-hidden="true" className={styles.sentinel} />
+      <div ref={toolbarRef} className={styles.toolbar}>
         <div className={styles.search}>
           <Search size={16} aria-hidden className={styles.searchIcon} />
           <Input

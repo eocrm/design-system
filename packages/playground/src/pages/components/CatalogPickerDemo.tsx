@@ -6,6 +6,7 @@ import {
   Drawer,
   Stack,
   Text,
+  Title,
   WidgetPreview,
   type CatalogPickerItem,
 } from '@eocrm/design-system';
@@ -148,6 +149,39 @@ export function CatalogPickerDemo() {
             Last selected: {selected ?? 'none'}
           </Text>
         </Stack>
+      </Example>
+
+      <Example
+        title="Scroll container"
+        description="Inside a max-height scroller with a heading above the picker: at rest the heading is untouched; scrolled, the toolbar pins and no card shows above it."
+        code={`<div style={{ maxHeight: 360, overflow: 'auto', padding: 'var(--space-4)' }}>
+  <Title order={4}>Pick a widget</Title>
+  <Text size="sm" tone="muted">Anything in the catalog can be added.</Text>
+  <CatalogPicker label="Widget catalog" categories={CATEGORIES} items={ITEMS} onSelect={setSelected} />
+</div>`}
+      >
+        <div
+          style={{
+            maxHeight: 360,
+            overflow: 'auto',
+            border: 'var(--border-width) solid var(--color-border)',
+            borderRadius: 'var(--radius-md)',
+            padding: 'var(--space-4)',
+          }}
+        >
+          <Stack gap="xs">
+            <Title order={4}>Pick a widget</Title>
+            <Text size="sm" tone="muted">
+              Anything in the catalog can be added.
+            </Text>
+            <CatalogPicker
+              label="Widget catalog"
+              categories={CATEGORIES}
+              items={ITEMS}
+              onSelect={setSelected}
+            />
+          </Stack>
+        </div>
       </Example>
 
       <Example

@@ -164,14 +164,13 @@ function ConfigurableWidget({ id }: { id: string }) {
 }
 
 // --- Widget gallery ---------------------------------------------------------
-type Kind = 'kpi' | 'list' | 'chart' | 'standard' | 'pipeline';
+type Kind = 'kpi' | 'list' | 'chart' | 'standard';
 
 const GALLERY: Record<string, { kind: Kind; title: string; description: string }> = {
   deals: { kind: 'kpi', title: 'Open deals', description: 'Count of open deals.' },
   tasks: { kind: 'list', title: 'Tasks due', description: 'Tasks due soon.' },
   revenue: { kind: 'chart', title: 'Revenue', description: 'Monthly revenue.' },
   activity: { kind: 'standard', title: 'Recent activity', description: 'Latest changes.' },
-  pipeline: { kind: 'pipeline', title: 'Pipeline', description: 'Deals by stage.' },
 };
 
 const GALLERY_TASKS = [

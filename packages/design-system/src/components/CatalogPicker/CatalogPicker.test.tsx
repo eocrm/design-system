@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createRef } from 'react';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CatalogPicker, type CatalogPickerItem, type CatalogPickerProps } from './CatalogPicker';
 
@@ -205,9 +205,57 @@ describe('CatalogPicker — cascade (source-pinned)', () => {
 describe('CatalogPicker sticky toolbar bleed (source pin)', () => {
   it('extends the toolbar upward via a token-sized ::before in the toolbar background', () => {
     const scss = readFileSync(resolve(__dirname, 'CatalogPicker.module.scss'), 'utf8');
-    const block = scss.slice(scss.indexOf('&::before'));
+    const block = scss.slice(scss.indexOf('&[data-stuck]::before'));
     expect(block).toMatch(/inset-block-end:\s*100%/);
     expect(block).toMatch(/height:\s*var\(--catalog-picker-toolbar-bleed\)/);
     expect(block).toMatch(/background:\s*var\(--catalog-picker-toolbar-bg\)/);
+  });
+});
+
+describe('CatalogPicker stuck detection', () => {
+  const props = { label: 'Catalog', items: ITEMS, onSelect: () => {} };
+  afterEach(() => vi.unstubAllGlobals());
+
+  it('sets data-stuck while the sentinel is scrolled out above, clears it when back', () => {
+    let cb: IntersectionObserverCallback = () => {};
+    const disconnect = vi.fn();
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        constructor(c: IntersectionObserverCallback) {
+          cb = c;
+        }
+        observe() {}
+        disconnect = disconnect;
+      },
+    );
+    const { container, unmount } = render(<CatalogPicker {...props} />);
+    const toolbar = container.querySelector('[class*="toolbar"]') as HTMLElement;
+    const fire = (isIntersecting: boolean) =>
+      act(() =>
+        cb(
+          [
+            {
+              isIntersecting,
+              boundingClientRect: { top: -10 },
+              rootBounds: { top: 0 },
+            } as unknown as IntersectionObserverEntry,
+          ],
+          {} as IntersectionObserver,
+        ),
+      );
+    expect(toolbar).not.toHaveAttribute('data-stuck');
+    fire(false);
+    expect(toolbar).toHaveAttribute('data-stuck');
+    fire(true);
+    expect(toolbar).not.toHaveAttribute('data-stuck');
+    unmount();
+    expect(disconnect).toHaveBeenCalled();
+  });
+
+  it('without IntersectionObserver renders with no data-stuck and no crash', () => {
+    vi.stubGlobal('IntersectionObserver', undefined);
+    const { container } = render(<CatalogPicker {...props} />);
+    expect(container.querySelector('[data-stuck]')).toBeNull();
   });
 });

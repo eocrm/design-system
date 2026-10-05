@@ -6,6 +6,25 @@
   flex-direction: column;
   gap: var(--catalog-picker-gap);
   min-width: 0;
+
+  // Containing block for the out-of-flow stuck sentinel.
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- internal sentinel anchor
+  position: relative;
+}
+
+// Out-of-flow 1px probe at the root's top edge: adds no layout space or flex gap.
+.sentinel {
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- internal sentinel
+  position: absolute;
+  // stylelint-disable-next-line property-disallowed-list -- internal sentinel
+  inset-block-start: 0;
+  // stylelint-disable-next-line property-disallowed-list -- internal sentinel
+  inset-inline-start: 0;
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- internal sentinel
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+  visibility: hidden;
 }
 
 // Internal sticky header: keeps search + pills reachable while the parent
@@ -23,10 +42,9 @@
   background: var(--catalog-picker-toolbar-bg);
 
   // Covers the scrolling parent's top padding strip so cards never show above the
-  // pinned toolbar. Generic: sized by a token, not by Drawer/Modal's padding. At rest
-  // it paints (inert) up to the bleed above the picker, in the same colour as the
-  // toolbar; a non-scrolling parent with a different background would show a strip.
-  &::before {
+  // pinned toolbar. Generic: sized by a token, not by Drawer/Modal's padding. It is only painted while the toolbar is actually stuck (data-stuck, set by an
+  // IntersectionObserver), so nothing above the picker is overpainted at rest.
+  &[data-stuck]::before {
     content: '';
     // stylelint-disable-next-line declaration-property-value-disallowed-list -- bleed pseudo, internal
     position: absolute;
