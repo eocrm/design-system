@@ -722,7 +722,8 @@
       "DataTable",
       "Image",
       "ImageCrop",
-      "Lightbox"
+      "Lightbox",
+      "WidgetPreview"
     ]
   },
   "Slider": {
@@ -929,5 +930,13 @@
       "LiveRegion",
       "StagePath"
     ]
+  },
+  "WidgetPreview": {
+    "tier": "composition",
+    "cluster": "Display",
+    "composes": [
+      "Skeleton"
+    ],
+    "composedBy": []
   }
 }

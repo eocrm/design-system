@@ -1,0 +1,11 @@
+@use './WidgetPreview.tokens';
+
+.root {
+  display: block;
+  width: 100%;
+  aspect-ratio: var(--widget-preview-aspect);
+  padding: var(--widget-preview-padding);
+  overflow: hidden;
+  background: var(--widget-preview-bg);
+  border-radius: var(--widget-preview-radius);
+}

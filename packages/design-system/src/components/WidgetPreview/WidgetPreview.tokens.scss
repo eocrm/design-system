@@ -1,0 +1,20 @@
+:root {
+  // Decorative miniature of a widget kind (CatalogPicker previews).
+  --widget-preview-bg: var(--color-bg-subtle);
+  --widget-preview-radius: var(--radius-md);
+  --widget-preview-padding: var(--space-3);
+  --widget-preview-aspect: 16 / 10;
+
+  // Shape pieces on the preview box, and the one accent "hero" per kind.
+  --widget-preview-shape: var(--color-bg-muted);
+  --widget-preview-accent: var(--color-accent-bg-subtle);
+  --widget-preview-accent-strong: var(--color-accent);
+
+  // Shared by preview and loading shapes.
+  --widget-shape-gap: var(--space-2);
+  --widget-shape-line: var(--space-2);
+  --widget-shape-value: var(--space-6);
+  --widget-shape-avatar: var(--space-4);
+  --widget-shape-dot: var(--space-2);
+  --widget-shape-card: var(--space-5);
+}
