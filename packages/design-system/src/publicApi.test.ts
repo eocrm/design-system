@@ -4,19 +4,17 @@ import * as publicApi from './index';
 
 // Semantic public-API contract (#614) — replaces a raw SHA-256 of index.ts.
 // Membership, not counts: adding a component must not require editing this.
-// Component-index runtime exports deliberately absent from the barrel.
+// Compound components: parts are attached to the exported root (Object.assign),
+// so their standalone runtime exports are private. Each member must exist on the root.
+const COMPOUND_MEMBERS: Record<string, string[]> = {
+  PageHeader: ['Breadcrumb', 'BackButton', 'Aside', 'Title', 'Subtitle', 'Meta', 'Actions'],
+  Sortable: ['Item', 'Handle'],
+};
 const INTENTIONALLY_PRIVATE = new Set([
-  // Compound sub-parts: reached via PageHeader.* / Sortable.* members of the exported root.
-  'PageHeader/PageHeaderBreadcrumb',
-  'PageHeader/PageHeaderBackButton',
-  'PageHeader/PageHeaderAside',
-  'PageHeader/PageHeaderTitle',
-  'PageHeader/PageHeaderSubtitle',
-  'PageHeader/PageHeaderMeta',
-  'PageHeader/PageHeaderActions',
-  'Sortable/SortableHandle',
-  'Sortable/SortableItem',
-  'Sortable/SortableItemContext', // internal context for the compound parts
+  ...Object.entries(COMPOUND_MEMBERS).flatMap(([root, members]) =>
+    members.map((m) => `${root}/${root}${m}`),
+  ),
+  'Sortable/SortableItemContext', // internal context shared by the compound parts
 ]);
 // _internal names a public module exports on purpose: timeUtils is a shim over
 // DatePicker/utils (resolveHourCycle, roundTimeToStep) and formatTime is calendar's own.
@@ -28,17 +26,20 @@ const componentDirs = readdirSync(COMPONENTS_DIR, { withFileTypes: true })
   .map((d) => d.name)
   .filter((name) => existsSync(resolve(COMPONENTS_DIR, name, 'index.ts')));
 
-// Non-test, non-testutil modules directly in _internal/ plus the overlay barrel.
-const internalModules = [
-  ...readdirSync(INTERNAL_DIR)
-    .filter(
-      (f) => /\.tsx?$/.test(f) && !/\.test(util)?\.tsx?$/.test(f) && !f.endsWith('.testutil.ts'),
-    )
-    .map((f) => `./components/_internal/${f}`),
-  './components/_internal/overlay/index.ts',
-];
+// Every non-test, non-testutil module under _internal/, recursively.
+const internalModules = readdirSync(INTERNAL_DIR, { recursive: true })
+  .map(String)
+  .filter(
+    (f) => /\.tsx?$/.test(f) && !/\.test(util)?\.tsx?$/.test(f) && !f.endsWith('.testutil.ts'),
+  )
+  .map((f) => `./components/_internal/${f}`);
 
 describe('public API (src/index.ts)', () => {
+  it.each(Object.entries(COMPOUND_MEMBERS))('%s exposes its compound members', (root, members) => {
+    const exported = (publicApi as Record<string, unknown>)[root] as Record<string, unknown>;
+    expect(Object.keys(exported)).toEqual(expect.arrayContaining(members));
+  });
+
   it.each(componentDirs)('re-exports every runtime export of components/%s', async (name) => {
     const mod = (await import(`./components/${name}/index.ts`)) as Record<string, unknown>;
     const runtime = Object.keys(mod);
