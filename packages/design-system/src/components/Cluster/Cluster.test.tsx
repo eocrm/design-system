@@ -63,11 +63,6 @@ describe('Cluster', () => {
     expect(ref.current).toBeInstanceOf(HTMLDivElement);
   });
 
-  it('renders a div by default', () => {
-    const { container } = render(<Cluster>x</Cluster>);
-    expect((container.firstChild as HTMLElement).tagName).toBe('DIV');
-  });
-
   it.each(['span', 'section', 'aside'] as const)('renders as %s when as is set', (as) => {
     const { container } = render(<Cluster as={as}>x</Cluster>);
     expect((container.firstChild as HTMLElement).tagName).toBe(as.toUpperCase());

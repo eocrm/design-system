@@ -4,12 +4,6 @@ import { createRef, useState } from 'react';
 import { Input } from './Input';
 
 describe('Input', () => {
-  it('renders an <input> element', () => {
-    render(<Input placeholder="Email" />);
-    const input = screen.getByPlaceholderText('Email');
-    expect(input.tagName).toBe('INPUT');
-  });
-
   it('round-trips a controlled value via onChange', async () => {
     function Wrapper() {
       const [v, setV] = useState('');

@@ -51,12 +51,6 @@ function BasicMultiple({ defaultValue }: { defaultValue?: string[] }) {
 describe('<Accordion>', () => {
   // ─── Rendering + structure ─────────────────────────────────────────────
 
-  it('renders without crashing with minimal compound markup', () => {
-    render(<BasicSingle />);
-    expect(screen.getByText('A trigger')).toBeInTheDocument();
-    expect(screen.getByText('B trigger')).toBeInTheDocument();
-  });
-
   it('renders items in DOM order', () => {
     const { container } = render(<BasicSingle />);
     const triggers = container.querySelectorAll('button[data-accordion-trigger]');

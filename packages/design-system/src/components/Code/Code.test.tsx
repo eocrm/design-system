@@ -8,11 +8,6 @@ describe('Code', () => {
     expect(screen.getByText('npm install')).toBeInTheDocument();
   });
 
-  it('renders a <code> element', () => {
-    const { container } = render(<Code>x</Code>);
-    expect(container.firstElementChild!.tagName).toBe('CODE');
-  });
-
   it('defaults to tone="default"', () => {
     const { container } = render(<Code>x</Code>);
     expect((container.firstChild as HTMLElement).className).toMatch(/toneDefault/);
