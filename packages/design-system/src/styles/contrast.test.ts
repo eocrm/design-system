@@ -1904,7 +1904,7 @@ describe('a component hover is a visible step from what it replaces', () => {
     }
     expect(unjustified).toEqual([]);
 
-    // PIN THE EXCLUDED COUNT, not just the measured one. `measured >= 40`
+    // PIN THE EXCLUDED SET, not just the measured one. A measured floor
     // catches a LOSS; it cannot catch a failure to ADD. Nothing forces a
     // `-hover` token to have a base, so shipping `--x-fg-hover` with no `--x-fg`
     // leaves this gate silently — `absent` is an accepted reason and the
@@ -1916,7 +1916,7 @@ describe('a component hover is a visible step from what it replaces', () => {
     // NAMED, not counted — the same reasoning the measurement test states two
     // assertions later and this one did not follow. A bare count is swap-blind:
     // declaring a base for one token while adding a brand-new orphan hover
-    // leaves it at 30, and `measured >= 41` does not notice either because
+    // leaves it at 30, and the measured anchors do not notice either because
     // measured went up. The list makes both halves of that swap visible.
     expect(excluded.sort(), 'the excluded set changed').toEqual(EXCLUDED_HOVERS);
   });
@@ -2012,7 +2012,7 @@ describe('a component hover is a visible step from what it replaces', () => {
     expect(failures).toEqual([]);
     // Named, not counted. A count would let one token leave as another arrives.
     expect(droppedAtTheHover, 'in scope by the base rule, but unmeasurable').toEqual([]);
-    // THE GATE'S OWN GUARD, and the reason it is a count rather than a boolean.
+    // THE GATE'S OWN GUARD, and the reason it asserts named anchors, not just a boolean.
     // Every assertion above is inside `if (kind === 'opaque')`, so anything that
     // stops resolveColour resolving — a refactor of declaredValue, a moved
     // generated file, a renamed token — makes this whole block iterate over

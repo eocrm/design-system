@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { PALETTE_COLORS, paletteTokens } from './palette';
 
 it('PALETTE_COLORS contains no duplicates', () => {
@@ -29,4 +31,14 @@ it('every PALETTE_COLORS entry round-trips through paletteTokens', () => {
     expect(bg).toBe(`var(--color-palette-${color}-bg)`);
     expect(fg).toBe(`var(--color-palette-${color}-fg)`);
   }
+});
+
+it('PALETTE_COLORS matches the palette declared in the token source (both directions)', () => {
+  const scss = readFileSync(
+    resolve(__dirname, '../../../design-tokens/generated/web/tokens.scss'),
+    'utf8',
+  );
+  const declared = new Set([...scss.matchAll(/--color-palette-([a-z]+)-bg:/g)].map((m) => m[1]));
+  expect(declared.size).toBeGreaterThan(0);
+  expect([...new Set<string>(PALETTE_COLORS)].sort()).toEqual([...declared].sort());
 });
