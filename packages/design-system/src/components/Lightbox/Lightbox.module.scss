@@ -151,6 +151,18 @@
   display: none;
 }
 
+// A document fills the stage, so the browser's PDF viewer draws its own toolbar
+// (top edge) and scrollbar (right edge) where our floating chrome sits. Inset
+// the stage's content box past the top-right toolbar and, when present, the
+// chevrons — the absolutely positioned chevrons are unaffected by the padding.
+.stage:has(.doc) {
+  padding-top: calc(var(--lightbox-control-size) + var(--lightbox-gap));
+}
+
+.stage:has(.chev):has(.doc) {
+  padding-inline: calc(var(--lightbox-padding) + var(--lightbox-control-size) + var(--lightbox-gap));
+}
+
 // A document (PDF) has no intrinsic size to be `object-fit: contain`-ed like an
 // <img>, so the wrap is stretched to the stage and the iframe fills it.
 .imageWrap:has(.doc) {
