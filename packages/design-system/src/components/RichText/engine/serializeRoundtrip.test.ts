@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { toHtml } from './toHtml';
 import { toMarkdown } from './toMarkdown';
 import { fromHtml } from './fromHtml';

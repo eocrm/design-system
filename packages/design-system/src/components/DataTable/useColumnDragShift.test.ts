@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { createElement, useRef, type RefObject } from 'react';
 import { render, fireEvent } from '@testing-library/react';
 import {
