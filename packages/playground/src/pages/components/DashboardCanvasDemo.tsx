@@ -542,6 +542,7 @@ export function Demo() {
 
       <Example
         title="Widget gallery"
+        fullWidth
         description="DashboardWidget cells with an Add widget Drawer hosting CatalogPicker. Already-placed widgets are shown unavailable; picking one appends it below the others. Simulate loading shows the variant-matched skeletons."
         code={`const [value, setValue] = useState(initial);
 const [open, setOpen] = useState(false);

@@ -10,7 +10,9 @@ export type WidgetShapeMode = 'preview' | 'loading';
 
 // Loading mode repeats rows to fill a tall cell; the root clips the overflow.
 const LOADING_ROWS = 12;
-const PREVIEW_ROWS = 4;
+// 3 avatar rows fit the 16:10 box down to ~160px wide; dots are smaller so activity fits 4.
+const PREVIEW_ROWS: Partial<Record<WidgetShapeKind, number>> = { list: 3 };
+const PREVIEW_ROWS_DEFAULT = 4;
 const BAR_HEIGHTS = ['40%', '65%', '50%', '85%', '70%', '55%'];
 const PIPELINE_CARDS = [3, 2, 1];
 
@@ -36,7 +38,7 @@ export function WidgetShape({ kind, mode }: { kind: WidgetShapeKind; mode: Widge
       {...hero(on)}
     />
   );
-  const rows = preview ? PREVIEW_ROWS : LOADING_ROWS;
+  const rows = preview ? (PREVIEW_ROWS[kind] ?? PREVIEW_ROWS_DEFAULT) : LOADING_ROWS;
 
   let body;
   switch (kind) {

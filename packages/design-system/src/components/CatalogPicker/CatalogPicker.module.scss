@@ -21,6 +21,23 @@
   gap: var(--catalog-picker-item-gap);
   padding-block: var(--catalog-picker-toolbar-padding-block);
   background: var(--catalog-picker-toolbar-bg);
+
+  // Covers the scrolling parent's top padding strip so cards never show above the
+  // pinned toolbar. Generic: sized by a token, not by Drawer/Modal's padding. At rest
+  // it paints (inert) up to the bleed above the picker, in the same colour as the
+  // toolbar; a non-scrolling parent with a different background would show a strip.
+  &::before {
+    content: '';
+    // stylelint-disable-next-line declaration-property-value-disallowed-list -- bleed pseudo, internal
+    position: absolute;
+    // stylelint-disable-next-line property-disallowed-list -- bleed pseudo, internal
+    inset-block-end: 100%;
+    // stylelint-disable-next-line property-disallowed-list -- bleed pseudo, internal
+    inset-inline: 0;
+    height: var(--catalog-picker-toolbar-bleed);
+    background: var(--catalog-picker-toolbar-bg);
+    pointer-events: none;
+  }
 }
 
 .pills {

@@ -201,3 +201,13 @@ describe('CatalogPicker — cascade (source-pinned)', () => {
     expect(scss).toMatch(/\.pillInput:focus-visible \+ \.pillLabel\s*\{/);
   });
 });
+
+describe('CatalogPicker sticky toolbar bleed (source pin)', () => {
+  it('extends the toolbar upward via a token-sized ::before in the toolbar background', () => {
+    const scss = readFileSync(resolve(__dirname, 'CatalogPicker.module.scss'), 'utf8');
+    const block = scss.slice(scss.indexOf('&::before'));
+    expect(block).toMatch(/inset-block-end:\s*100%/);
+    expect(block).toMatch(/height:\s*var\(--catalog-picker-toolbar-bleed\)/);
+    expect(block).toMatch(/background:\s*var\(--catalog-picker-toolbar-bg\)/);
+  });
+});
