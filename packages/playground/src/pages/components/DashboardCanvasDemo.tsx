@@ -4,13 +4,19 @@ import {
   Badge,
   Button,
   Card,
+  CatalogPicker,
   Cluster,
   DashboardCanvas,
+  DashboardWidget,
+  Drawer,
   Input,
   Modal,
   Stack,
+  Switch,
   Text,
   Title,
+  WidgetPreview,
+  type CatalogPickerItem,
   type DashboardCanvasValue,
 } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
@@ -154,6 +160,127 @@ function ConfigurableWidget({ id }: { id: string }) {
         </Modal.Footer>
       </Modal>
     </Card>
+  );
+}
+
+// --- Widget gallery ---------------------------------------------------------
+type Kind = 'kpi' | 'list' | 'chart' | 'standard' | 'pipeline';
+
+const GALLERY: Record<string, { kind: Kind; title: string; description: string }> = {
+  deals: { kind: 'kpi', title: 'Open deals', description: 'Count of open deals.' },
+  tasks: { kind: 'list', title: 'Tasks due', description: 'Tasks due soon.' },
+  revenue: { kind: 'chart', title: 'Revenue', description: 'Monthly revenue.' },
+  activity: { kind: 'standard', title: 'Recent activity', description: 'Latest changes.' },
+  pipeline: { kind: 'pipeline', title: 'Pipeline', description: 'Deals by stage.' },
+};
+
+const GALLERY_TASKS = [
+  'Send proposal to Acme',
+  'Call Initech',
+  'Review contract',
+  'Plan onboarding',
+];
+const GALLERY_BARS = [40, 65, 50, 80, 55, 90];
+
+const GALLERY_INITIAL: DashboardCanvasValue = {
+  items: [
+    { id: 'deals', x: 0, y: 0, w: 8, h: 4 },
+    { id: 'tasks', x: 8, y: 0, w: 8, h: 4 },
+    { id: 'revenue', x: 16, y: 0, w: 8, h: 4 },
+  ],
+  sections: [],
+};
+
+function galleryWidget(id: string, loading: boolean) {
+  const g = GALLERY[id];
+  if (!g) return null;
+  if (g.kind === 'kpi')
+    return (
+      <DashboardWidget
+        variant="kpi"
+        title={g.title}
+        loading={loading}
+        value="34"
+        trend={{ label: '+12% vs last month', direction: 'up' }}
+      />
+    );
+  if (g.kind === 'list')
+    return (
+      <DashboardWidget variant="list" title={g.title} loading={loading}>
+        <Card.List>
+          {GALLERY_TASKS.map((t) => (
+            <Card.ListRow key={t}>{t}</Card.ListRow>
+          ))}
+        </Card.List>
+      </DashboardWidget>
+    );
+  if (g.kind === 'chart')
+    return (
+      <DashboardWidget variant="chart" title={g.title} loading={loading}>
+        <svg
+          viewBox="0 0 120 60"
+          preserveAspectRatio="none"
+          role="img"
+          aria-label="Revenue by month"
+          style={{ width: '100%', height: '100%', display: 'block' }}
+        >
+          {GALLERY_BARS.map((h, i) => (
+            <rect
+              key={i}
+              x={i * 20 + 4}
+              y={60 - (h * 56) / 100}
+              width={12}
+              height={(h * 56) / 100}
+              fill="var(--color-accent)"
+            />
+          ))}
+        </svg>
+      </DashboardWidget>
+    );
+  return (
+    <DashboardWidget title={g.title} loading={loading}>
+      <Text size="sm">{g.description}</Text>
+    </DashboardWidget>
+  );
+}
+
+function WidgetGallery() {
+  const [value, setValue] = useState<DashboardCanvasValue>(GALLERY_INITIAL);
+  const [open, setOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const placed = new Set(value.items.map((p) => String(p.id)));
+  const items: CatalogPickerItem[] = Object.entries(GALLERY).map(([id, g]) => ({
+    id,
+    title: g.title,
+    description: g.description,
+    preview: <WidgetPreview variant={g.kind === 'standard' ? 'activity' : g.kind} />,
+    disabledReason: placed.has(id) ? 'Already on dashboard' : undefined,
+  }));
+  const add = (id: string) => {
+    const y = Math.max(0, ...value.items.map((p) => p.y + p.h));
+    setValue({ ...value, items: [...value.items, { id, x: 0, y, w: 8, h: 4 }] });
+    setOpen(false);
+  };
+  return (
+    <Stack gap="md">
+      <Cluster gap="md">
+        <Button onClick={() => setOpen(true)}>Add widget</Button>
+        <Switch checked={loading} onChange={setLoading}>
+          Simulate loading
+        </Switch>
+      </Cluster>
+      <DashboardCanvas
+        value={value}
+        onChange={setValue}
+        renderItem={(id) => galleryWidget(String(id), loading)}
+      />
+      <Drawer open={open} onOpenChange={setOpen}>
+        <Drawer.Header>Add widget</Drawer.Header>
+        <Drawer.Body>
+          <CatalogPicker label="Widget catalog" items={items} onSelect={add} />
+        </Drawer.Body>
+      </Drawer>
+    </Stack>
   );
 }
 
@@ -411,6 +538,42 @@ export function Demo() {
             renderItem={renderWidget}
           />
         </ResizablePreview>
+      </Example>
+
+      <Example
+        title="Widget gallery"
+        description="DashboardWidget cells with an Add widget Drawer hosting CatalogPicker. Already-placed widgets are shown unavailable; picking one appends it below the others. Simulate loading shows the variant-matched skeletons."
+        code={`const [value, setValue] = useState(initial);
+const [open, setOpen] = useState(false);
+const placed = new Set(value.items.map((p) => String(p.id)));
+
+const add = (id) => {
+  const y = Math.max(0, ...value.items.map((p) => p.y + p.h));
+  setValue({ ...value, items: [...value.items, { id, x: 0, y, w: 8, h: 4 }] });
+  setOpen(false);
+};
+
+<Button onClick={() => setOpen(true)}>Add widget</Button>
+<DashboardCanvas
+  value={value}
+  onChange={setValue}
+  renderItem={(id) => <DashboardWidget variant="kpi" title="Open deals" value="34" loading={loading} />}
+/>
+<Drawer open={open} onOpenChange={setOpen}>
+  <Drawer.Header>Add widget</Drawer.Header>
+  <Drawer.Body>
+    <CatalogPicker
+      label="Widget catalog"
+      items={catalog.map((c) => ({
+        ...c,
+        disabledReason: placed.has(c.id) ? 'Already on dashboard' : undefined,
+      }))}
+      onSelect={add}
+    />
+  </Drawer.Body>
+</Drawer>`}
+      >
+        <WidgetGallery />
       </Example>
     </DemoLayout>
   );

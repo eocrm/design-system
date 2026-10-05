@@ -113,7 +113,7 @@ export const DashboardWidget = forwardRef<HTMLDivElement, DashboardWidgetProps>(
       variant === 'kpi' && styles.kpiBody,
       variant === 'chart' && styles.chartBody,
       variant === 'standard' && styles.scrollBody,
-      variant === 'list' && [styles.scrollBody, styles.flush],
+      variant === 'list' && [styles.scrollBody, !loading && styles.flush],
     );
     const content = loading ? (
       skeleton

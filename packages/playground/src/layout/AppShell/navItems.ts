@@ -1,5 +1,7 @@
 import {
   AlertCircle,
+  LayoutTemplate,
+  LibraryBig,
   Bell,
   Flag,
   Building2,
@@ -256,6 +258,19 @@ export const componentGroups: { heading: string; items: NavItem[] }[] = [
       { to: '/components/progress', label: 'Progress', icon: Activity, end: false },
       { to: '/components/skeleton', label: 'Skeleton', icon: Square, end: false },
       { to: '/components/stage-path', label: 'StagePath', icon: ChevronsRight, end: false },
+      {
+        to: '/components/widget-preview',
+        label: 'WidgetPreview',
+        icon: LayoutTemplate,
+        end: false,
+      },
+      { to: '/components/catalog-picker', label: 'CatalogPicker', icon: LibraryBig, end: false },
+      {
+        to: '/components/dashboard-widget',
+        label: 'DashboardWidget',
+        icon: PanelsTopLeft,
+        end: false,
+      },
       { to: '/components/table', label: 'Table', icon: TableIcon, end: false },
       { to: '/components/datatable', label: 'DataTable', icon: TableProperties, end: false },
       { to: '/components/rich-text', label: 'RichText', icon: Pilcrow, end: false },

@@ -692,6 +692,38 @@
         }
       ]
     },
+    "CatalogPicker": {
+      "props": [
+        {
+          "name": "items",
+          "type": "CatalogPickerItem[]",
+          "required": true,
+          "default": "",
+          "description": "The catalog. Rendered in the given order."
+        },
+        {
+          "name": "categories",
+          "type": "CatalogPickerCategory[]",
+          "required": false,
+          "default": "",
+          "description": "Category pills (after a leading localized \"All\"). Omit or pass `[]` for no pills."
+        },
+        {
+          "name": "onSelect",
+          "type": "(id: string) => void",
+          "required": true,
+          "default": "",
+          "description": "Called with the item id when an AVAILABLE item is clicked or activated with Enter/Space."
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "required": true,
+          "default": "",
+          "description": "Accessible name of the results listbox, e.g. \"Widget catalog\". Required."
+        }
+      ]
+    },
     "Checkbox": {
       "props": [
         {
@@ -1257,6 +1289,66 @@
           "required": false,
           "default": "false",
           "description": "View-only mode: identical geometry, but no drag/resize wiring, no resize\nhandles, and no keyboard editing — the canvas renders `value` and lets\nsection collapse toggles keep working. The canvas also disables editing\non its own, without this prop, once its own width drops to or below the\n`stackBelow` breakpoint (single-column stack) — `readOnly` is for a\nconsumer-chosen view mode, the width gate is automatic."
+        }
+      ]
+    },
+    "DashboardWidget": {
+      "props": [
+        {
+          "name": "variant",
+          "type": "DashboardWidgetVariant",
+          "required": false,
+          "default": "",
+          "description": "Presentation variant. Default `'standard'`.\n- `'standard'` — header (title + actions) over a padded scrolling body. Today's widget card.\n- `'list'` — stronger header with a divider; flush scrolling body so `Card.List` bleeds edge to edge.\n- `'kpi'` — compact muted title, a large `value`, optional `trend`; optional `children` below. No scrolling.\n- `'chart'` — compact header; flush non-scrolling body that fills the cell (give the plot `height: 100%`)."
+        },
+        {
+          "name": "title",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": true,
+          "default": "",
+          "description": "Widget title, rendered as the heading at `headerLevel`. Required."
+        },
+        {
+          "name": "actions",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Header actions, e.g. the edit-mode overflow `DropdownMenu`. Never wraps."
+        },
+        {
+          "name": "headerLevel",
+          "type": "\"h2\" | \"h3\" | \"h4\" | \"h5\" | \"h6\"",
+          "required": false,
+          "default": "",
+          "description": "Heading level of the title. Default `'h3'`."
+        },
+        {
+          "name": "value",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "KPI value (`variant=\"kpi\"` only), e.g. `\"128\"` or a formatted currency node."
+        },
+        {
+          "name": "trend",
+          "type": "DashboardWidgetTrend",
+          "required": false,
+          "default": "",
+          "description": "KPI trend (`variant=\"kpi\"` only)."
+        },
+        {
+          "name": "loading",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Show a variant-matched loading skeleton instead of the body (and, for kpi, instead of\n`value`/`trend`); title and actions stay. Adds visually hidden \"Loading…\" body text and\n`aria-busy`. Deliberately NO live region: a dashboard loads many widgets at once, so\nper-widget announcements would flood screen readers — announce \"dashboard loaded\" once\nat page level if needed. Default `false`."
+        },
+        {
+          "name": "children",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Widget body. Pass `ErrorState` / `EmptyState` here for error and empty states."
         }
       ]
     },
@@ -6021,6 +6113,17 @@
           "description": "Element to render. `'span'` for inline text (the common case — a link\nsuffix, a labelling phrase). `'div'` when the hidden content is itself\nblock-level (e.g. wraps other block elements)."
         }
       ]
+    },
+    "WidgetPreview": {
+      "props": [
+        {
+          "name": "variant",
+          "type": "\"list\" | \"kpi\" | \"chart\" | \"pipeline\" | \"activity\"",
+          "required": true,
+          "default": "",
+          "description": "Which widget kind the miniature depicts. Required.\n- `'kpi'` — label, a large value block (accent), a trend line.\n- `'list'` — rows of avatar + line; first avatar accented.\n- `'chart'` — a bar series (accented, one bar strong).\n- `'pipeline'` — stage columns of cards; current stage header strong.\n- `'activity'` — timeline rows with accented dots."
+        }
+      ]
     }
   },
   "types": {
@@ -6074,6 +6177,7 @@
     "EntityChipSegment": "{ kind: \"icon\"; icon: ReactNode; label: string; color?: PaletteColor; size?: number; } | { kind: \"text\"; text: ReactNode; color?: PaletteColor; tooltip?: ReactNode; size?: number; }",
     "EntityChipLabelWeight": "\"medium\" | \"semibold\"",
     "EntityChipLabelEllipsis": "\"start\" | \"end\"",
+    "CatalogPickerCategory": "{ id: string; label: string }",
     "ThreadNodeAlign": "\"header\" | \"top\"",
     "LogoSize": "\"sm\" | \"md\" | \"lg\"",
     "LogoTextPlacement": "\"end\" | \"bottom\"",
@@ -6198,6 +6302,7 @@
     "FieldRenderProps": "{ id: string; aria-describedby: string; aria-labelledby: string; aria-invalid: boolean; invalid: boolean; required: boolean; labelId: string }",
     "SettingRowControlWidth": "\"sm\" | \"md\" | \"xs\" | \"auto\"",
     "DashboardCanvasConstraintsProp": "Record<string, DashboardItemConstraints> | ((id: string | number) => DashboardItemConstraints)",
-    "DashboardCanvasValue": "{ items: DashboardPlacement[]; sections: DashboardSection[] }"
+    "DashboardCanvasValue": "{ items: DashboardPlacement[]; sections: DashboardSection[] }",
+    "DashboardWidgetVariant": "\"list\" | \"standard\" | \"kpi\" | \"chart\""
   }
 }
