@@ -6,6 +6,7 @@ import {
   textColorKeyFrom,
   bgColorKeyFrom,
 } from './colorMarks';
+import { PALETTE_COLORS } from '../../../palette';
 
 describe('colorMarks', () => {
   it('lists the default brand colors first, then the palette extras', () => {
@@ -15,7 +16,9 @@ describe('colorMarks', () => {
     expect(COLOR_KEYS).toContain('charcoal');
     expect(COLOR_KEYS.filter((k) => k === 'red')).toHaveLength(1);
     expect(COLOR_KEYS.filter((k) => k === 'green')).toHaveLength(1);
-    expect(COLOR_KEYS).toHaveLength(31);
+    // Parity with the source of truth: the 5 brand keys, then every palette colour not already one.
+    const brand = COLOR_KEYS.slice(0, 5);
+    expect(COLOR_KEYS).toEqual([...brand, ...PALETTE_COLORS.filter((c) => !brand.includes(c))]);
   });
 
   it('resolves the default keys to their semantic tokens', () => {

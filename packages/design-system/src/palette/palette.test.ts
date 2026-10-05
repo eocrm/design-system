@@ -1,8 +1,6 @@
-import { PALETTE_COLORS, paletteTokens, type PaletteColor } from './palette';
-
-it('PALETTE_COLORS has exactly 30 entries', () => {
-  expect(PALETTE_COLORS).toHaveLength(30);
-});
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { PALETTE_COLORS, paletteTokens } from './palette';
 
 it('PALETTE_COLORS contains no duplicates', () => {
   const set = new Set<string>(PALETTE_COLORS);
@@ -35,7 +33,12 @@ it('every PALETTE_COLORS entry round-trips through paletteTokens', () => {
   }
 });
 
-it('PaletteColor union has 30 members (length matches array)', () => {
-  const _typeCheck: PaletteColor = PALETTE_COLORS[0];
-  expect(_typeCheck).toBeDefined();
+it('PALETTE_COLORS matches the palette declared in the token source (both directions)', () => {
+  const scss = readFileSync(
+    resolve(__dirname, '../../../design-tokens/generated/web/tokens.scss'),
+    'utf8',
+  );
+  const declared = new Set([...scss.matchAll(/--color-palette-([a-z]+)-bg:/g)].map((m) => m[1]));
+  expect(declared.size).toBeGreaterThan(0);
+  expect([...new Set<string>(PALETTE_COLORS)].sort()).toEqual([...declared].sort());
 });

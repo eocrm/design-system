@@ -29,6 +29,7 @@ Missing any of these = component does not exist as far as the design system is c
 - **Components don't own layout.** No `margin`, `position`, `top/left/right/bottom`, `flex: 1`, `width` (other than `100%` of intrinsic) inside a component's `.module.scss`. Layout is the parent's job. See `packages/design-system/CLAUDE.md` (Rule 4).
 - **Use `Stack` / `Cluster` for layout**, not ad-hoc `display: flex` divs.
 - **Imports in playground always use `@eocrm/design-system`**, never relative paths into the library. Only exception: demo `?raw` source-display imports via the `@lib-source/*` alias.
+- **The test-placement principles** in `packages/design-system/CLAUDE.md` ("Test placement") apply to every package's tests, including `packages/design-tokens/test` (Vitest project names are design-system-specific).
 
 ## Planning proportionality
 

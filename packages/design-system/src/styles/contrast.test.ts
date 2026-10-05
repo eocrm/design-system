@@ -1904,7 +1904,7 @@ describe('a component hover is a visible step from what it replaces', () => {
     }
     expect(unjustified).toEqual([]);
 
-    // PIN THE EXCLUDED COUNT, not just the measured one. `measured >= 40`
+    // PIN THE EXCLUDED SET, not just the measured one. A measured floor
     // catches a LOSS; it cannot catch a failure to ADD. Nothing forces a
     // `-hover` token to have a base, so shipping `--x-fg-hover` with no `--x-fg`
     // leaves this gate silently — `absent` is an accepted reason and the
@@ -1916,7 +1916,7 @@ describe('a component hover is a visible step from what it replaces', () => {
     // NAMED, not counted — the same reasoning the measurement test states two
     // assertions later and this one did not follow. A bare count is swap-blind:
     // declaring a base for one token while adding a brand-new orphan hover
-    // leaves it at 30, and `measured >= 41` does not notice either because
+    // leaves it at 30, and the measured anchors do not notice either because
     // measured went up. The list makes both halves of that swap visible.
     expect(excluded.sort(), 'the excluded set changed').toEqual(EXCLUDED_HOVERS);
   });
@@ -1948,6 +1948,7 @@ describe('a component hover is a visible step from what it replaces', () => {
     // every number here moved up.
     const failures: string[] = [];
     let measured = 0;
+    const measuredNames: string[] = [];
     const droppedAtTheHover: string[] = [];
     for (const { dir, token, base } of candidates) {
       const from = resolveColour(base, source);
@@ -1964,6 +1965,7 @@ describe('a component hover is a visible step from what it replaces', () => {
       }
       if (from.kind !== 'opaque' || to.kind !== 'opaque') continue;
       measured += 1;
+      measuredNames.push(`${dir}/${token}`);
 
       if (hoverIsAFilter(dir, token)) {
         // Endorsed, but not unchecked. A filter hover means the TOKEN is doing
@@ -2010,22 +2012,29 @@ describe('a component hover is a visible step from what it replaces', () => {
     expect(failures).toEqual([]);
     // Named, not counted. A count would let one token leave as another arrives.
     expect(droppedAtTheHover, 'in scope by the base rule, but unmeasurable').toEqual([]);
-    // THE GATE'S OWN GUARD, and the reason it is a count rather than a boolean.
+    // THE GATE'S OWN GUARD, and the reason it asserts named anchors, not just a boolean.
     // Every assertion above is inside `if (kind === 'opaque')`, so anything that
     // stops resolveColour resolving — a refactor of declaredValue, a moved
     // generated file, a renamed token — makes this whole block iterate over
     // nothing and pass. Verified: hard-wiring resolveColour to return `absent`
     // left every test in this file green.
     //
-    // 41 is what the library measures today — instrumented, not estimated. It
-    // has been wrong three times: 37 when it was 39, 39 when the same commit
-    // made it 40, and 40 until color-mix resolution brought a 41st back in.
-    // A floor below the real number cannot see a partial loss, which is the
-    // whole job here. Deliberately not `> 0`, because losing 30 of 40 is the
-    // same class of failure as losing all 41. Re-instrument when it changes;
-    // guessing the delta is how it went stale both times.
-    expect(measured, 'the gate measured nothing — resolveColour is broken').toBeGreaterThanOrEqual(
-      41,
+    // NAMED anchors, not a count. The old `measured >= 41` floor was wrong three
+    // times (37, 39, 40) and went stale with every added hover token. One token
+    // per family that must stay measurable catches a resolver that stops
+    // resolving a whole class (plain, color-mix, border, checked, fg) without
+    // needing re-instrumentation when the library grows.
+    const ANCHORS = [
+      'Button/--button-bg-secondary-hover',
+      'Button/--button-bg-selected-hover',
+      'Link/--link-fg-subtle-hover',
+      'Switch/--switch-track-bg-hover',
+      'Checkbox/--checkbox-border-color-hover',
+      'OptionsPicker/--options-picker-group-header-bg-hover',
+    ];
+    expect(measured, 'the gate measured nothing — resolveColour is broken').toBeGreaterThan(0);
+    expect(measuredNames, 'a named anchor stopped being measured').toEqual(
+      expect.arrayContaining(ANCHORS),
     );
   });
 });

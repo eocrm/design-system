@@ -80,6 +80,9 @@ export const PALETTE_COLORS = [
   'charcoal',
 ] as const satisfies readonly PaletteColor[];
 
+// Compile-time exhaustiveness: fails tsc if a PaletteColor member is missing from the array.
+null as unknown as PaletteColor satisfies (typeof PALETTE_COLORS)[number];
+
 /**
  * Returns the CSS custom-property names for a palette color's bg and fg.
  * Use to apply palette colors to consumer-built components without
