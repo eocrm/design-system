@@ -31,7 +31,7 @@ emit_all() {
 
 printf 'changed files:\n%s\n' "$files" >&2
 
-FORCE='^(\.github/workflows/|scripts/ci-changes\.sh$|package\.json$|package-lock\.json$|\.npmrc$|\.nvmrc$|tsconfig[^/]*\.json$|\.prettierrc|\.prettierignore$|\.stylelintrc|playwright\.config\.|tests/|Makefile$)'
+FORCE='^(\.github/|scripts/ci-changes\.sh$|package\.json$|package-lock\.json$|\.npmrc$|\.nvmrc$|tsconfig[^/]*\.json$|\.prettierrc|\.prettierignore$|\.stylelintrc|playwright\.config\.|tests/|Makefile$)'
 if grep -Eq "$FORCE" <<<"$files"; then emit_all "root tooling / workflow change"; fi
 
 has() { grep -Eq "$1" <<<"$files" && echo true || echo false; }
