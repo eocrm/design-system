@@ -333,6 +333,12 @@ test('caches npm and Gradle dependencies in quality and release jobs', async () 
 
     assert.match(nodeStep, /uses: actions\/setup-node@v4/);
     assert.match(nodeStep, /cache: "npm"/);
+    if (workflow === qualityWorkflow) {
+      // Every Quality job sets up Node, not just the first one.
+      const nodeSteps = extractAllWorkflowSteps(workflow, 'Setup Node');
+      assert.ok(nodeSteps.length > 1);
+      for (const step of nodeSteps) assert.match(step, /cache: "npm"/);
+    }
     assert.match(javaStep, /uses: actions\/setup-java@v4/);
     assert.match(javaStep, /cache: "gradle"/);
     assert.match(javaStep, /packages\/design-tokens\/compose\/\*\*\/\*\.gradle\*/);
@@ -347,6 +353,12 @@ function extractWorkflowStep(workflow, name) {
   const next = workflow.indexOf('\n      - name:', start + 1);
   assert.notEqual(start, -1, `missing workflow step: ${name}`);
   return workflow.slice(start, next === -1 ? undefined : next);
+}
+
+function extractAllWorkflowSteps(workflow, name) {
+  return workflow
+    .split(/\n(?=      - name: )/)
+    .filter((chunk) => chunk.trimStart().startsWith(`- name: ${name}`));
 }
 
 async function createRepository() {
