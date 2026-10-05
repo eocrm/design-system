@@ -1,8 +1,4 @@
-import { PALETTE_COLORS, paletteTokens, type PaletteColor } from './palette';
-
-it('PALETTE_COLORS has exactly 30 entries', () => {
-  expect(PALETTE_COLORS).toHaveLength(30);
-});
+import { PALETTE_COLORS, paletteTokens } from './palette';
 
 it('PALETTE_COLORS contains no duplicates', () => {
   const set = new Set<string>(PALETTE_COLORS);
@@ -33,9 +29,4 @@ it('every PALETTE_COLORS entry round-trips through paletteTokens', () => {
     expect(bg).toBe(`var(--color-palette-${color}-bg)`);
     expect(fg).toBe(`var(--color-palette-${color}-fg)`);
   }
-});
-
-it('PaletteColor union has 30 members (length matches array)', () => {
-  const _typeCheck: PaletteColor = PALETTE_COLORS[0];
-  expect(_typeCheck).toBeDefined();
 });

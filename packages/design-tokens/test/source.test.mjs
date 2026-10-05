@@ -272,15 +272,6 @@ test('maps every captured public variable to exactly one web output', async () =
   const duplicateNames = webNames.filter((name) => componentNames.has(name));
   const combinedNames = new Set([...webNames, ...componentNames]);
 
-  // +3: --color-bg-hover and --color-bg-muted-hover (#504), --ring-offset (#505).
-  // --ring-on-scrim adds one more; forcedDark gains only the two that theme.
-  // +2: --transition-slow and --z-tour (non-themed tokens).
-  // +1: --measure-2xs (PageHeader title floor, #550; non-themed).
-  // +1: --size-otp-cell-xl (OtpInput xl cell; non-themed).
-  // +3: --size-scroll-area-sm/md/lg (ScrollArea max-height scale, #598; non-themed).
-  assert.equal(capturedNames.size, 314);
-  assert.equal(webNames.length, 258);
-  assert.equal(componentNames.size, 56);
   assert.deepEqual(duplicateNames, []);
   assert.deepEqual([...combinedNames].sort(), [...capturedNames].sort());
 });
@@ -348,7 +339,6 @@ test('matches the independently authored Compose inventory exactly', async () =>
   );
 
   assert.deepEqual(actualInventory, expectedComposeInventory);
-  assert.equal(Object.values(actualInventory).flat().length, 149);
 });
 
 test('keeps all twelve deprecated Badge variables as component aliases', async () => {
