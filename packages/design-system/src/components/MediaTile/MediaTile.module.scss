@@ -84,6 +84,27 @@
   background: var(--mediatile-scrim-bottom);
 }
 
+// controls="bar": one full-width solid control strip across the top of the media.
+.controlBar {
+  inset-block-start: 0;
+  color: var(--mediatile-chip-fg);
+  background: var(--mediatile-chip-bg);
+  border-block-end: var(--mediatile-border-width) solid var(--mediatile-control-bar-divider);
+}
+
+// Pushes the actions to the end. Ignores the pointer so a click on the free space
+// lands on .controlBar itself (which toggles selection).
+.spacer {
+  flex: 1;
+  pointer-events: none;
+}
+
+.controlActions {
+  display: flex;
+  align-items: center;
+  gap: var(--mediatile-chip-gap);
+}
+
 .chip {
   inset-block-start: var(--mediatile-chip-offset);
   display: flex;
@@ -110,7 +131,7 @@
 .reveal-hover:focus-within :is(.bar, .chip),
 .reveal-focus:focus-within :is(.bar, .chip),
 .reveal-visible :is(.bar, .chip),
-.root[data-selected] .select {
+.root[data-selected] :is(.select, .controlBar) {
   opacity: var(--mediatile-opacity-shown);
   pointer-events: auto;
 }

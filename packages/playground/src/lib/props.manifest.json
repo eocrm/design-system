@@ -692,6 +692,38 @@
         }
       ]
     },
+    "CatalogPicker": {
+      "props": [
+        {
+          "name": "items",
+          "type": "CatalogPickerItem[]",
+          "required": true,
+          "default": "",
+          "description": "The catalog. Rendered in the given order."
+        },
+        {
+          "name": "categories",
+          "type": "CatalogPickerCategory[]",
+          "required": false,
+          "default": "",
+          "description": "Category pills (after a leading localized \"All\"). Omit or pass `[]` for no pills."
+        },
+        {
+          "name": "onSelect",
+          "type": "(id: string) => void",
+          "required": true,
+          "default": "",
+          "description": "Called with the item id when an AVAILABLE item is clicked or activated with Enter/Space."
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "required": true,
+          "default": "",
+          "description": "Accessible name of the results listbox, e.g. \"Widget catalog\". Required."
+        }
+      ]
+    },
     "Checkbox": {
       "props": [
         {
@@ -1257,6 +1289,66 @@
           "required": false,
           "default": "false",
           "description": "View-only mode: identical geometry, but no drag/resize wiring, no resize\nhandles, and no keyboard editing — the canvas renders `value` and lets\nsection collapse toggles keep working. The canvas also disables editing\non its own, without this prop, once its own width drops to or below the\n`stackBelow` breakpoint (single-column stack) — `readOnly` is for a\nconsumer-chosen view mode, the width gate is automatic."
+        }
+      ]
+    },
+    "DashboardWidget": {
+      "props": [
+        {
+          "name": "variant",
+          "type": "DashboardWidgetVariant",
+          "required": false,
+          "default": "",
+          "description": "Presentation variant. Default `'standard'`.\n- `'standard'` — header (title + actions) over a padded scrolling body. Today's widget card.\n- `'list'` — same fixed header as `standard`; flush scrolling body so `Card.List` bleeds edge to edge.\n- `'kpi'` — compact muted title, a large `value`, optional `trend`; optional `children` below. No scrolling.\n- `'chart'` — compact header; flush non-scrolling body that fills the cell (give the plot `height: 100%`)."
+        },
+        {
+          "name": "title",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": true,
+          "default": "",
+          "description": "Widget title, rendered as the heading at `headerLevel`. Required."
+        },
+        {
+          "name": "actions",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Header actions, e.g. the edit-mode overflow `DropdownMenu`. Never wraps."
+        },
+        {
+          "name": "headerLevel",
+          "type": "\"h2\" | \"h3\" | \"h4\" | \"h5\" | \"h6\"",
+          "required": false,
+          "default": "",
+          "description": "Heading level of the title. Default `'h3'`."
+        },
+        {
+          "name": "value",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "KPI value (`variant=\"kpi\"` only), e.g. `\"128\"` or a formatted currency node."
+        },
+        {
+          "name": "trend",
+          "type": "DashboardWidgetTrend",
+          "required": false,
+          "default": "",
+          "description": "KPI trend (`variant=\"kpi\"` only)."
+        },
+        {
+          "name": "loading",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Show a variant-matched loading skeleton instead of the body (and, for kpi, instead of\n`value`/`trend`); title and actions stay. Adds visually hidden \"Loading…\" body text and\n`aria-busy`. Deliberately NO live region: a dashboard loads many widgets at once, so\nper-widget announcements would flood screen readers — announce \"dashboard loaded\" once\nat page level if needed. Default `false`."
+        },
+        {
+          "name": "children",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Widget body. Pass `ErrorState` / `EmptyState` here for error and empty states."
         }
       ]
     },
@@ -3052,7 +3144,7 @@
           "type": "LightboxItem[]",
           "required": true,
           "default": "",
-          "description": "The images and documents (mixed galleries are supported; see `kind` on\n`LightboxItem` for PDFs). A PDF without a `thumbnail` shows a document-icon\nplaceholder in the strip; an unsafe (non-http(s)) document `src` shows a\n\"Preview unavailable\" message. An empty array renders nothing."
+          "description": "The images and documents (mixed galleries are supported; see `kind` on\n`LightboxItem` for PDFs). A PDF without a `thumbnail` shows a document-icon\nplaceholder in the strip; an unsafe (non-http(s)) document `src` shows a\n\"Preview unavailable\" message. An empty array renders nothing and behaves as\nclosed (no inert page, scroll lock or focus trap) even while `open`."
         },
         {
           "name": "defaultIndex",
@@ -3087,7 +3179,7 @@
           "type": "((item: LightboxItem, index: number) => ReactNode)",
           "required": false,
           "default": "",
-          "description": "Extra header actions for the current item (e.g. a Download `<Button>`, a\n`<DropdownMenu>` \"more\" menu). Called with the current item and its index on\nevery render, so it follows navigation. Rendered in the top-right toolbar\nBEFORE the close button. Use `<Button iconOnly variant=\"ghost\" size=\"sm\">`\n(or a DropdownMenu trigger built from one) — the toolbar re-themes ghost\nButtons for the dark scrim (ghost tokens, full radius, `sm` height = the\ntoolbar control size), so text Buttons render pill-shaped — keep actions\nicon-only. While a floating surface from an action (e.g. that menu) is open,\n←/→ and Esc go to it, not the gallery. Returning `null`/`undefined` renders nothing.\nREPLACES the built-in PDF download link: when `actions` is set, the\nLightbox renders no download action of its own — include your own\nDownload for PDF items if you want one."
+          "description": "Extra header actions for the current item (e.g. a Download `<Button>`, a\n`<DropdownMenu>` \"more\" menu). Called with the current item and its index on\nevery render, so it follows navigation. Rendered in the top-right toolbar\nBEFORE the close button. Use `<Button iconOnly variant=\"ghost\" size=\"sm\">`\n(or a DropdownMenu trigger built from one) — the toolbar re-themes ghost\nButtons for the dark scrim (ghost tokens, full radius, `sm` height = the\ntoolbar control size), so text Buttons render pill-shaped — keep actions\nicon-only. While an action's menu or popover is open, Esc closes it first, and\n←/→ stay with it (not the gallery) while focus is in it — likewise while focus\nis on a text field, combobox (Select), radio (ButtonGroup), slider, tab or\nexpanded trigger; a Tooltip on an action doesn't block navigation. Returning `null`/`undefined` renders nothing.\nREPLACES the built-in PDF download link: when `actions` is set, the\nLightbox renders no download action of its own — include your own\nDownload for PDF items if you want one."
         },
         {
           "name": "className",
@@ -3472,7 +3564,7 @@
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
           "default": "",
-          "description": "Tile controls (e.g. preview / download / delete icon buttons). With\n`captionPlacement=\"overlay\"` they sit in a centered bottom bar over a scrim;\nwith `\"below\"` they sit in a top-right cluster over the media. Either way they\nfollow `revealOn`. Clicks and keydowns inside don't bubble to the tile, so a\ntile `onClick` (e.g. open preview) never fires from an action."
+          "description": "Tile controls (e.g. preview / download / delete icon buttons). With\n`captionPlacement=\"overlay\"` they sit in a centered bottom bar over a scrim;\nwith `\"below\"` they sit in a top-right cluster over the media. Either way they\nfollow `revealOn`. Clicks and keydowns on the controls inside don't bubble to the tile (in overlay placement a click on the bar's empty scrim still does; the below-placement chip swallows all clicks), so a\ntile `onClick` (e.g. open preview) never fires from an action."
         },
         {
           "name": "captionPlacement",
@@ -3480,6 +3572,13 @@
           "required": false,
           "default": "",
           "description": "Where `title` + `meta` render. Default `'overlay'`.\n- `'overlay'` — a top bar over a gradient scrim on the media, revealed per `revealOn`.\n  Compact, but the name is hidden at rest for mouse users.\n- `'below'` — a solid bar under the media in normal text colour, ALWAYS visible\n  (not affected by `revealOn`). Use for file grids where the name must be readable."
+        },
+        {
+          "name": "controls",
+          "type": "MediaTileControls",
+          "required": false,
+          "default": "",
+          "description": "How the selection checkbox and `actions` are presented. Default `'chips'`.\nOnly applies with `captionPlacement=\"below\"`; ignored in overlay placement.\n- `'chips'` — two floating surface chips: checkbox top-left, actions top-right.\n- `'bar'` — one full-width solid bar across the top of the media (divider\n  below): checkbox at the start, actions at the end. Reads better over busy or\n  light images. Follows `revealOn`; the whole bar stays shown while selected.\n  When `selectable`, a click on the bar's free space toggles selection (a\n  pointer shortcut; the checkbox remains the keyboard control). Clicks and keys\n  anywhere in the bar never reach the tile `onClick` — the bar is a control\n  region, not the media."
         },
         {
           "name": "revealOn",
@@ -4111,7 +4210,7 @@
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
           "default": "",
-          "description": "Visible caption rendered inside the pill before the value, separated by a\nmiddle dot: `caption=\"Pipeline\"` → \"Pipeline · Faeton\". For a trigger\nthat must say both what it picks and the current value.\n\nNames the trigger only as a fallback: `label` wins (\"Change pipeline:\nFaeton\"); with no `label`, a string caption is used (\"Change Pipeline:\nFaeton\") so the visible words stay in the accessible name (WCAG 2.5.3\nlabel-in-name). A non-string caption never names it — pass `label` then,\ncontaining the caption's words. In the read-only chip (no accessible\nname override) the caption text is read along with the value; the dot is\n`aria-hidden` in both. Muted by weight (regular vs the value's medium),\nnot colour: the palette fills leave no contrast headroom for a dimmer\nforeground. Omitted → no caption, no dot."
+          "description": "Visible caption rendered inside the pill before the value, separated by a\nmiddle dot: `caption=\"Pipeline\"` → \"Pipeline · Faeton\". For a trigger\nthat must say both what it picks and the current value.\n\nNames the trigger only as a fallback: `label` wins (\"Change pipeline:\nFaeton\"); with no `label`, a non-blank string caption is used (\"Change Pipeline:\nFaeton\") so the visible words stay in the accessible name (WCAG 2.5.3\nlabel-in-name). A non-string caption never names it — pass `label` then,\ncontaining the caption's words. In the read-only chip (no accessible\nname override) the caption text is read along with the value; the dot is\n`aria-hidden` in both. Muted by weight (regular vs the value's medium),\nnot colour: the palette fills leave no contrast headroom for a dimmer\nforeground. Omitted or blank → no caption, no dot."
         },
         {
           "name": "options",
@@ -6014,6 +6113,17 @@
           "description": "Element to render. `'span'` for inline text (the common case — a link\nsuffix, a labelling phrase). `'div'` when the hidden content is itself\nblock-level (e.g. wraps other block elements)."
         }
       ]
+    },
+    "WidgetPreview": {
+      "props": [
+        {
+          "name": "variant",
+          "type": "\"list\" | \"kpi\" | \"chart\" | \"pipeline\" | \"activity\"",
+          "required": true,
+          "default": "",
+          "description": "Which widget kind the miniature depicts. Required.\n- `'kpi'` — label, a large value block (accent), a trend line.\n- `'list'` — rows of avatar + line; first avatar accented.\n- `'chart'` — a bar series (accented, one bar strong).\n- `'pipeline'` — stage columns of cards; current stage header strong.\n- `'activity'` — timeline rows with accented dots."
+        }
+      ]
     }
   },
   "types": {
@@ -6067,6 +6177,7 @@
     "EntityChipSegment": "{ kind: \"icon\"; icon: ReactNode; label: string; color?: PaletteColor; size?: number; } | { kind: \"text\"; text: ReactNode; color?: PaletteColor; tooltip?: ReactNode; size?: number; }",
     "EntityChipLabelWeight": "\"medium\" | \"semibold\"",
     "EntityChipLabelEllipsis": "\"start\" | \"end\"",
+    "CatalogPickerCategory": "{ id: string; label: string }",
     "ThreadNodeAlign": "\"header\" | \"top\"",
     "LogoSize": "\"sm\" | \"md\" | \"lg\"",
     "LogoTextPlacement": "\"end\" | \"bottom\"",
@@ -6141,6 +6252,7 @@
     "MediaTileReveal": "\"visible\" | \"hover\" | \"focus\"",
     "MediaTileRadius": "\"sm\" | \"md\" | \"lg\" | \"none\"",
     "MediaTileCaptionPlacement": "\"overlay\" | \"below\"",
+    "MediaTileControls": "\"chips\" | \"bar\"",
     "CropArea": "{ x: number; y: number; width: number; height: number }",
     "DataTableInstance": "DataTableInstance<T>",
     "DefinitionListLayout": "\"horizontal\" | \"stacked\"",
@@ -6190,6 +6302,7 @@
     "FieldRenderProps": "{ id: string; aria-describedby: string; aria-labelledby: string; aria-invalid: boolean; invalid: boolean; required: boolean; labelId: string }",
     "SettingRowControlWidth": "\"sm\" | \"md\" | \"xs\" | \"auto\"",
     "DashboardCanvasConstraintsProp": "Record<string, DashboardItemConstraints> | ((id: string | number) => DashboardItemConstraints)",
-    "DashboardCanvasValue": "{ items: DashboardPlacement[]; sections: DashboardSection[] }"
+    "DashboardCanvasValue": "{ items: DashboardPlacement[]; sections: DashboardSection[] }",
+    "DashboardWidgetVariant": "\"list\" | \"standard\" | \"kpi\" | \"chart\""
   }
 }

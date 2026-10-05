@@ -1,0 +1,15 @@
+:root {
+  --dashboard-widget-compact-title-size: var(--font-size-sm);
+  --dashboard-widget-compact-title-fg: var(--color-fg-muted);
+  --dashboard-widget-compact-padding: var(--space-3);
+  --dashboard-widget-body-padding: var(--space-4);
+  --dashboard-widget-kpi-gap: var(--space-1);
+  --dashboard-widget-kpi-value-size: var(--font-size-3xl);
+  --dashboard-widget-kpi-value-weight: var(--font-weight-semibold);
+  --dashboard-widget-kpi-value-line-height: var(--line-height-tight);
+  --dashboard-widget-trend-size: var(--font-size-sm);
+  --dashboard-widget-trend-gap: var(--space-1);
+  --dashboard-widget-trend-positive: var(--color-success);
+  --dashboard-widget-trend-negative: var(--color-danger);
+  --dashboard-widget-trend-neutral: var(--color-fg-muted);
+}

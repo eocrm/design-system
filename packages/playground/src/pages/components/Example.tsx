@@ -7,12 +7,14 @@ export interface ExampleProps {
   title: string;
   description?: string;
   code: string;
+  /** Span every column of the demo's examples grid. */
+  fullWidth?: boolean;
   children: ReactNode;
 }
 
-export function Example({ title, description, code, children }: ExampleProps) {
+export function Example({ title, description, code, children, fullWidth }: ExampleProps) {
   return (
-    <section className={styles.example}>
+    <section className={fullWidth ? `${styles.example} ${styles.fullWidth}` : styles.example}>
       <header className={styles.header}>
         <h3 className={styles.title}>{title}</h3>
         {description && <p className={styles.description}>{description}</p>}

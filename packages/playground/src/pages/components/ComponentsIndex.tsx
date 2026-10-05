@@ -276,6 +276,25 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['StagePath'],
   },
   {
+    to: '/components/widget-preview',
+    name: 'WidgetPreview',
+    description: 'Decorative miniature of a dashboard widget kind, for catalog cards.',
+    preview: SCHEMATICS['WidgetPreview'],
+  },
+  {
+    to: '/components/catalog-picker',
+    name: 'CatalogPicker',
+    description: 'Searchable, category-filterable card picker for choosing one catalog item.',
+    preview: SCHEMATICS['CatalogPicker'],
+  },
+  {
+    to: '/components/dashboard-widget',
+    name: 'DashboardWidget',
+    description:
+      'Card for a DashboardCanvas cell: standard, list, KPI and chart, with loading skeleton.',
+    preview: SCHEMATICS['DashboardWidget'],
+  },
+  {
     to: '/components/table',
     name: 'Table',
     description:

@@ -36,6 +36,22 @@ describe('Lightbox', () => {
     expect(container.querySelector('[role="dialog"]')).toBeNull();
   });
 
+  it('releases inert + scroll lock and restores focus when items empty while open (#612)', () => {
+    const trigger = document.createElement('button');
+    document.body.appendChild(trigger);
+    trigger.focus();
+    const { container, rerender } = render(<Lightbox open onOpenChange={() => {}} items={ITEMS} />);
+    expect(container).toHaveAttribute('inert');
+    expect(document.body.style.position).toBe('fixed');
+
+    rerender(<Lightbox open onOpenChange={() => {}} items={[]} />);
+    expect(screen.queryByRole('dialog')).toBeNull();
+    expect(container).not.toHaveAttribute('inert');
+    expect(document.body.style.position).toBe('');
+    expect(document.activeElement).toBe(trigger);
+    trigger.remove();
+  });
+
   it('shows the defaultIndex image in a dialog', () => {
     open({ defaultIndex: 1 });
     expect(screen.getByRole('dialog')).toBeInTheDocument();

@@ -22,7 +22,7 @@ const [start, setStart] = useState(0);
 |---|---|---|---|
 | `open` | `boolean` | yes | Controlled open state. |
 | `onOpenChange` | `(open: boolean) => void` | yes | Fired when the Lightbox wants to close — Esc, backdrop click, the × button. |
-| `items` | `LightboxItem[]` | yes | The images and documents (mixed galleries are supported; see `kind` on `LightboxItem` for PDFs). A PDF without a `thumbnail` shows a document-icon placeholder in the strip; an unsafe (non-http(s)) document `src` shows a "Preview unavailable" message. An empty array renders nothing. |
+| `items` | `LightboxItem[]` | yes | The images and documents (mixed galleries are supported; see `kind` on `LightboxItem` for PDFs). A PDF without a `thumbnail` shows a document-icon placeholder in the strip; an unsafe (non-http(s)) document `src` shows a "Preview unavailable" message. An empty array renders nothing and behaves as closed (no inert page, scroll lock or focus trap) even while `open`. |
 | `defaultIndex` | `number` | no | Initial image index (uncontrolled). Defaults to `0`. Clamped to range. |
 | `index` | `number` | no | Controlled current index. When set, pair with `onIndexChange`. |
 | `onIndexChange` | `((index: number) => void)` | no | Fired on navigation (chevron / arrow key / thumbnail click). |

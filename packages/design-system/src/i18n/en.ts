@@ -371,6 +371,20 @@ export const en: Messages = {
     unavailable: '(unavailable)',
     loading: '(loading)',
   },
+  dashboardWidget: {
+    trendUp: 'Increase',
+    trendDown: 'Decrease',
+    trendFlat: 'No change',
+    loading: 'Loading…',
+  },
+  catalogPicker: {
+    search: 'Search…',
+    categories: 'Categories',
+    all: 'All',
+    resultCount: ({ count }) =>
+      `${count as number} ${(count as number) === 1 ? 'result' : 'results'}`,
+    noMatches: 'No matches',
+  },
   pillMenu: {
     change: ({ label, name }) => `Change ${label as string}: ${name as string}`,
     defaultLabel: 'status',

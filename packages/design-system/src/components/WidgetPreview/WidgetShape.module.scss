@@ -1,0 +1,123 @@
+@use './WidgetPreview.tokens';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+// Skeleton's own --skeleton-bg is the muted surface; previews sit ON a muted
+// box, so preview shapes take the darker shape colour instead.
+.root[data-mode='preview'] .piece {
+  --skeleton-bg: var(--widget-preview-shape);
+}
+
+.piece {
+  display: block;
+}
+
+.root[data-mode='preview'] .hero {
+  --skeleton-bg: var(--widget-preview-accent);
+}
+
+.root[data-mode='preview'] .heroStrong {
+  --skeleton-bg: var(--widget-preview-accent-strong);
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: var(--widget-shape-gap);
+  height: 100%;
+}
+
+.kpiLabel {
+  width: 40%;
+  height: var(--widget-shape-line);
+}
+
+.kpiValue {
+  width: 60%;
+  height: var(--widget-shape-value);
+}
+
+.kpiTrend {
+  width: 30%;
+  height: var(--widget-shape-line);
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--widget-shape-gap);
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--widget-shape-gap);
+}
+
+.avatar {
+  flex: none;
+  width: var(--widget-shape-avatar);
+  height: var(--widget-shape-avatar);
+}
+
+.dot {
+  flex: none;
+  width: var(--widget-shape-dot);
+  height: var(--widget-shape-dot);
+}
+
+.line {
+  flex: 1;
+  height: var(--widget-shape-line);
+}
+
+.lineShort {
+  flex: 0 1 60%;
+}
+
+.chart {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--widget-shape-gap);
+  height: 100%;
+}
+
+.barSlot {
+  display: flex;
+  flex: 1;
+  align-items: flex-end;
+  height: 100%;
+}
+
+.bar {
+  width: 100%;
+}
+
+.pipeline {
+  display: flex;
+  gap: var(--widget-shape-gap);
+  height: 100%;
+}
+
+.column {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--widget-shape-gap);
+}
+
+.stage {
+  height: var(--widget-shape-line);
+}
+
+.dealCard {
+  height: var(--widget-shape-card);
+}

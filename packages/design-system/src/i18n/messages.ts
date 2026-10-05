@@ -789,6 +789,28 @@ export interface Messages {
      */
     loading: string;
   };
+  dashboardWidget: {
+    /** Visually hidden prefix of a KPI trend going up ("Increase"). */
+    trendUp: string;
+    /** Visually hidden prefix of a KPI trend going down ("Decrease"). */
+    trendDown: string;
+    /** Visually hidden prefix of a flat KPI trend ("No change"). */
+    trendFlat: string;
+    /** Visually hidden body text while `loading` (read when browsing the widget; not a live region). */
+    loading: string;
+  };
+  catalogPicker: {
+    /** Placeholder + aria-label of the catalog search input. */
+    search: string;
+    /** Accessible name of the category pill group. */
+    categories: string;
+    /** Label of the first category pill that shows every item. */
+    all: string;
+    /** Function leaf — visible + announced result count ("12 results"). */
+    resultCount: (params: { count: number }) => string;
+    /** Empty-state title when search/category match nothing. */
+    noMatches: string;
+  };
   pillMenu: {
     /**
      * Function leaf — the trigger's accessible name: `label` is the consumer's

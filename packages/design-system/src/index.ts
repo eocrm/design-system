@@ -159,6 +159,12 @@ export type {
   StatusCategory,
 } from './components/EntityChip';
 
+export { CatalogPicker } from './components/CatalogPicker';
+export type {
+  CatalogPickerProps,
+  CatalogPickerItem,
+  CatalogPickerCategory,
+} from './components/CatalogPicker';
 export { PillMenu } from './components/PillMenu';
 export type { PillMenuProps, PillMenuOption, PillMenuCategory } from './components/PillMenu';
 
@@ -492,6 +498,7 @@ export type {
   MediaTileReveal,
   MediaTileRadius,
   MediaTileCaptionPlacement,
+  MediaTileControls,
 } from './components/MediaTile';
 
 export { ImageCrop, extractCropBlob, useCropPreview } from './components/ImageCrop';
@@ -558,6 +565,8 @@ export { Breadcrumb } from './components/Breadcrumb';
 export type { BreadcrumbProps, BreadcrumbItemProps } from './components/Breadcrumb';
 export { StagePath } from './components/StagePath';
 export type { StagePathProps, StagePathStage, StagePathTone } from './components/StagePath';
+export { WidgetPreview } from './components/WidgetPreview';
+export type { WidgetPreviewProps, WidgetPreviewVariant } from './components/WidgetPreview';
 
 export { Rail, useRail, RailContext } from './components/Rail';
 export type {
@@ -792,3 +801,9 @@ export type {
   DashboardCanvasValue,
   DashboardItemConstraints,
 } from './components/DashboardCanvas';
+export { DashboardWidget } from './components/DashboardWidget';
+export type {
+  DashboardWidgetProps,
+  DashboardWidgetVariant,
+  DashboardWidgetTrend,
+} from './components/DashboardWidget';

@@ -1,0 +1,193 @@
+@use '../../styles/mixins' as *;
+@use './CatalogPicker.tokens';
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--catalog-picker-gap);
+  min-width: 0;
+
+  // Containing block for the out-of-flow stuck sentinel.
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- internal sentinel anchor
+  position: relative;
+}
+
+// Out-of-flow 1px probe at the root's top edge: adds no layout space or flex gap.
+.sentinel {
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- internal sentinel
+  position: absolute;
+  // stylelint-disable-next-line property-disallowed-list -- internal sentinel
+  inset-block-start: 0;
+  // stylelint-disable-next-line property-disallowed-list -- internal sentinel
+  inset-inline-start: 0;
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- internal sentinel
+  width: 1px;
+  height: 1px;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+// Internal sticky header: keeps search + pills reachable while the parent
+// (Drawer.Body / Modal.Body) scrolls. Not consumer layout.
+.toolbar {
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- internal sticky header
+  position: sticky;
+  // stylelint-disable-next-line property-disallowed-list -- internal sticky header
+  top: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--catalog-picker-item-gap);
+  padding-block: var(--catalog-picker-toolbar-padding-block);
+  background: var(--catalog-picker-toolbar-bg);
+
+  // Covers the scrolling parent's top padding strip so cards never show above the
+  // pinned toolbar. Generic: sized by a token, not by Drawer/Modal's padding. It is only painted while the toolbar is actually stuck (data-stuck, set by an
+  // IntersectionObserver), so nothing above the picker is overpainted at rest.
+  &[data-stuck]::before {
+    content: '';
+    // stylelint-disable-next-line declaration-property-value-disallowed-list -- bleed pseudo, internal
+    position: absolute;
+    // stylelint-disable-next-line property-disallowed-list -- bleed pseudo, internal
+    inset-block-end: 100%;
+    // stylelint-disable-next-line property-disallowed-list -- bleed pseudo, internal
+    inset-inline: 0;
+    height: var(--catalog-picker-toolbar-bleed);
+    background: var(--catalog-picker-toolbar-bg);
+    pointer-events: none;
+  }
+}
+
+.pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--catalog-picker-pill-gap);
+}
+
+.pill {
+  position: relative;
+  display: inline-flex;
+  cursor: pointer;
+}
+
+// Native radio kept for semantics + arrow keys; visually replaced by the pill.
+.pillInput {
+  @include visually-hidden;
+}
+
+.pillLabel {
+  padding: var(--catalog-picker-pill-padding);
+  color: var(--catalog-picker-pill-fg);
+  font-size: var(--catalog-picker-title-size);
+  border: var(--border-width) solid var(--catalog-picker-pill-border);
+  border-radius: var(--radius-full);
+}
+
+.pillInput:checked + .pillLabel {
+  color: var(--catalog-picker-pill-fg-checked);
+  background: var(--catalog-picker-pill-bg-checked);
+  border-color: var(--catalog-picker-pill-bg-checked);
+}
+
+.pillInput:focus-visible + .pillLabel {
+  @include focus-ring(var(--catalog-picker-ring));
+}
+
+.search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.searchIcon {
+  flex-shrink: 0;
+  color: var(--catalog-picker-search-icon-fg);
+}
+
+// Internal row arrangement (mirrors EmojiPicker's `.searchInput`).
+.searchInput {
+  flex: 1;
+}
+
+.count {
+  color: var(--catalog-picker-meta-fg);
+  font-size: var(--catalog-picker-meta-size);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(var(--catalog-picker-item-min), 1fr));
+  gap: var(--catalog-picker-item-gap);
+}
+
+.option {
+  display: flex;
+  flex-direction: column;
+  gap: var(--catalog-picker-item-gap);
+  min-width: 0;
+  padding: var(--catalog-picker-item-padding);
+  background: var(--catalog-picker-item-bg);
+  border: var(--border-width) solid var(--catalog-picker-item-border);
+  border-radius: var(--catalog-picker-item-radius);
+  cursor: pointer;
+}
+
+.option:hover {
+  background: var(--catalog-picker-item-bg-hover);
+}
+
+.option:focus-visible {
+  @include focus-ring(var(--catalog-picker-ring));
+}
+
+.option[aria-disabled='true'] {
+  cursor: default;
+}
+
+// Dim the visuals, not the reason text (it must stay readable).
+.option[aria-disabled='true'] :is(.preview, .titleRow, .description) {
+  opacity: var(--catalog-picker-item-disabled-opacity);
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-05);
+  min-width: 0;
+}
+
+.titleRow {
+  display: flex;
+  align-items: center;
+  gap: var(--catalog-picker-item-gap);
+  min-width: 0;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: var(--catalog-picker-title-size);
+  font-weight: var(--catalog-picker-title-weight);
+}
+
+.badge {
+  flex: none;
+}
+
+.description {
+  display: -webkit-box;
+  overflow: hidden;
+  color: var(--catalog-picker-meta-fg);
+  font-size: var(--catalog-picker-meta-size);
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.reason {
+  color: var(--catalog-picker-meta-fg);
+  font-size: var(--catalog-picker-meta-size);
+  font-style: italic;
+}

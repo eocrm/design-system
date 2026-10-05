@@ -203,6 +203,8 @@ const PAIRS: Pair[] = [
   // Button danger-outline (#596): danger text (and its 1px border) on the page
   // surface; its hover tint is the 'danger text on danger tint' row above.
   ['danger text on page bg', '--color-danger', '--color-bg', 4.5],
+  // DashboardWidget KPI trend text sits on the Card surface (--color-bg).
+  ['success text on page bg', '--color-success', '--color-bg', 4.5],
   ['success-fg on solid success', '--color-success-fg', '--color-success', 4.5],
   ['accent-fg on solid accent', '--color-accent-fg', '--color-accent', 4.5],
   ['info text on info tint', '--color-info', '--color-info-bg-subtle', 4.5],

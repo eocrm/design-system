@@ -64,6 +64,9 @@ import { RichTextEditorDemo } from './pages/components/RichTextEditorDemo';
 import { TitleDemo } from './pages/components/TitleDemo';
 import { TimelineDemo } from './pages/components/TimelineDemo';
 import { StagePathDemo } from './pages/components/StagePathDemo';
+import { WidgetPreviewDemo } from './pages/components/WidgetPreviewDemo';
+import { CatalogPickerDemo } from './pages/components/CatalogPickerDemo';
+import { DashboardWidgetDemo } from './pages/components/DashboardWidgetDemo';
 import { ThreadDemo } from './pages/components/ThreadDemo';
 import { CheckboxDemo } from './pages/components/CheckboxDemo';
 import { FieldDemo } from './pages/components/FieldDemo';
@@ -198,6 +201,9 @@ export default function App() {
             <Route path="/components/title" element={<TitleDemo />} />
             <Route path="/components/timeline" element={<TimelineDemo />} />
             <Route path="/components/stage-path" element={<StagePathDemo />} />
+            <Route path="/components/widget-preview" element={<WidgetPreviewDemo />} />
+            <Route path="/components/catalog-picker" element={<CatalogPickerDemo />} />
+            <Route path="/components/dashboard-widget" element={<DashboardWidgetDemo />} />
             <Route path="/components/thread" element={<ThreadDemo />} />
             <Route path="/components/checkbox" element={<CheckboxDemo />} />
             <Route path="/components/field" element={<FieldDemo />} />

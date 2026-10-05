@@ -121,8 +121,18 @@
     "cluster": "Layout",
     "composes": [],
     "composedBy": [
+      "DashboardWidget",
       "LinkCard"
     ]
+  },
+  "CatalogPicker": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "EmptyState",
+      "Input"
+    ],
+    "composedBy": []
   },
   "Checkbox": {
     "tier": "primitive",
@@ -202,6 +212,16 @@
     "cluster": "Display",
     "composes": [
       "Accordion"
+    ],
+    "composedBy": []
+  },
+  "DashboardWidget": {
+    "tier": "composition",
+    "cluster": "Display",
+    "composes": [
+      "Card",
+      "VisuallyHidden",
+      "WidgetPreview"
     ],
     "composedBy": []
   },
@@ -309,6 +329,7 @@
     "cluster": "Display",
     "composes": [],
     "composedBy": [
+      "CatalogPicker",
       "DataTable"
     ]
   },
@@ -431,6 +452,7 @@
     "cluster": "Forms",
     "composes": [],
     "composedBy": [
+      "CatalogPicker",
       "ColorPicker",
       "EmojiPicker",
       "OptionsPicker",
@@ -722,7 +744,8 @@
       "DataTable",
       "Image",
       "ImageCrop",
-      "Lightbox"
+      "Lightbox",
+      "WidgetPreview"
     ]
   },
   "Slider": {
@@ -925,9 +948,20 @@
     "composes": [],
     "composedBy": [
       "Banner",
+      "DashboardWidget",
       "DateStrip",
       "LiveRegion",
       "StagePath"
+    ]
+  },
+  "WidgetPreview": {
+    "tier": "composition",
+    "cluster": "Display",
+    "composes": [
+      "Skeleton"
+    ],
+    "composedBy": [
+      "DashboardWidget"
     ]
   }
 }

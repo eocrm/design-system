@@ -377,6 +377,20 @@ export const ru: Messages = {
     unavailable: '(недоступно)',
     loading: '(загружается)',
   },
+  dashboardWidget: {
+    trendUp: 'Рост',
+    trendDown: 'Снижение',
+    trendFlat: 'Без изменений',
+    loading: 'Загрузка…',
+  },
+  catalogPicker: {
+    search: 'Поиск…',
+    categories: 'Категории',
+    all: 'Все',
+    resultCount: ({ count }) =>
+      `${count as number} ${ruPlural(count as number, ['результат', 'результата', 'результатов'])}`,
+    noMatches: 'Ничего не найдено',
+  },
   pillMenu: {
     change: ({ label, name }) => `Изменить ${label as string}: ${name as string}`,
     defaultLabel: 'статус',

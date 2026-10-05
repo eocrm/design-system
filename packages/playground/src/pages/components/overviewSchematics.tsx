@@ -1423,6 +1423,47 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       />
     </Row>
   ),
+  WidgetPreview: (
+    <Row gap={6}>
+      <Outline w={48} h={30} style={{ padding: 4 }}>
+        <Col gap={4}>
+          <Bar w={16} />
+          <Solid w={24} h={10} />
+        </Col>
+      </Outline>
+      <Outline w={48} h={30} style={{ padding: 4 }}>
+        <Row gap={3} style={{ alignItems: 'flex-end' }}>
+          <Box w={8} h={10} />
+          <Solid w={8} h={20} />
+          <Box w={8} h={14} />
+        </Row>
+      </Outline>
+    </Row>
+  ),
+  CatalogPicker: (
+    <Col gap={6}>
+      <Outline w={96} h={14} />
+      <Row gap={6}>
+        <Solid w={20} h={7} />
+        <Box w={20} h={7} />
+        <Box w={20} h={7} />
+      </Row>
+      <Row gap={6}>
+        <Outline w={30} h={24} />
+        <Outline w={30} h={24} />
+        <Outline w={30} h={24} />
+      </Row>
+    </Col>
+  ),
+  DashboardWidget: (
+    <Outline w={80} h={52} style={{ padding: 6 }}>
+      <Col gap={6}>
+        <Bar w={30} />
+        <Solid w={36} h={14} />
+        <Bar w={50} />
+      </Col>
+    </Outline>
+  ),
   Timeline: (
     <Row gap={8} style={{ alignItems: 'flex-start' }}>
       <Col gap={4} style={{ alignItems: 'center' }}>

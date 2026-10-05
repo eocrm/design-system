@@ -170,6 +170,7 @@ Each component's contract is its `docs/components/<Name>.md`; the props table th
 - [`Kanban`](docs/components/Kanban.md) — multi-column board (drag-to-reorder + cross-column drag with live reflow)
 - [`FlowCanvas`](docs/components/FlowCanvas.md) — pan/zoom canvas for directed node-edge diagrams
 - [`DashboardCanvas`](docs/components/DashboardCanvas.md) — 2D snap-grid dashboard
+- [`DashboardWidget`](docs/components/DashboardWidget.md) — DashboardCanvas cell card: standard / list / kpi / chart, with loading skeletons
 - [`LiquidEditor`](docs/components/LiquidEditor.md) — Liquid template editor
 - [`RichTextEditor`](docs/components/RichTextEditor.md) — controlled rich-text editor (contentEditable)
 - [`ImageCrop`](docs/components/ImageCrop.md) — controlled image cropper
@@ -222,6 +223,7 @@ Each component's contract is its `docs/components/<Name>.md`; the props table th
 - [`Select`](docs/components/Select.md) — value picker (single, multi, searchable, async, creatable)
 - [`OptionsPicker`](docs/components/OptionsPicker.md) — filter picker (multi/single, grouped, searchable)
 - [`EmojiPicker`](docs/components/EmojiPicker.md) — searchable emoji grid (reactions + input)
+- [`CatalogPicker`](docs/components/CatalogPicker.md) — searchable, category-filtered card picker for choosing one catalog item (Add widget)
 - [`EmptyState`](docs/components/EmptyState.md) — "nothing here" container
 - [`ErrorState`](docs/components/ErrorState.md) — page-level status / result screen
 - [`IconTile`](docs/components/IconTile.md) — palette-colored icon frame
@@ -239,6 +241,7 @@ Each component's contract is its `docs/components/<Name>.md`; the props table th
 - [`Image`](docs/components/Image.md) — image with loading + error states
 - [`QrCode`](docs/components/QrCode.md) — scannable QR code
 - [`MediaTile`](docs/components/MediaTile.md) — media tile with caption, revealed actions and selection
+- [`WidgetPreview`](docs/components/WidgetPreview.md) — decorative data-free miniature of a widget kind (for CatalogPicker)
 - [`Table`](docs/components/Table.md) — tabular data primitive
 - [`DataTable`](docs/components/DataTable.md) — server-driven data table with column features
 - [`Pagination`](docs/components/Pagination.md) — numbered nav with windowing
