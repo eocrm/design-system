@@ -124,6 +124,15 @@
       "LinkCard"
     ]
   },
+  "CatalogPicker": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "EmptyState",
+      "Input"
+    ],
+    "composedBy": []
+  },
   "Checkbox": {
     "tier": "primitive",
     "cluster": "Forms",
@@ -309,6 +318,7 @@
     "cluster": "Display",
     "composes": [],
     "composedBy": [
+      "CatalogPicker",
       "DataTable"
     ]
   },
@@ -431,6 +441,7 @@
     "cluster": "Forms",
     "composes": [],
     "composedBy": [
+      "CatalogPicker",
       "ColorPicker",
       "EmojiPicker",
       "OptionsPicker",

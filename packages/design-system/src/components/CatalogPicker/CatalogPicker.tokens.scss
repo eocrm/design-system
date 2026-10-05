@@ -1,0 +1,25 @@
+:root {
+  --catalog-picker-gap: var(--space-3);
+  --catalog-picker-toolbar-bg: var(--color-bg);
+  --catalog-picker-toolbar-padding-block: var(--space-2);
+  --catalog-picker-item-min: 11rem;
+  --catalog-picker-item-gap: var(--space-2);
+  --catalog-picker-item-padding: var(--space-2);
+  --catalog-picker-item-radius: var(--radius-md);
+  --catalog-picker-item-bg: var(--color-bg);
+  --catalog-picker-item-bg-hover: var(--color-bg-hover);
+  --catalog-picker-item-border: var(--color-border);
+  --catalog-picker-item-disabled-opacity: var(--opacity-disabled);
+  --catalog-picker-title-size: var(--font-size-sm);
+  --catalog-picker-title-weight: var(--font-weight-semibold);
+  --catalog-picker-meta-size: var(--font-size-xs);
+  --catalog-picker-meta-fg: var(--color-fg-muted);
+  --catalog-picker-search-icon-fg: var(--color-fg-subtle);
+  --catalog-picker-pill-gap: var(--space-1);
+  --catalog-picker-pill-padding: var(--space-1) var(--space-3);
+  --catalog-picker-pill-border: var(--color-border);
+  --catalog-picker-pill-fg: var(--color-fg);
+  --catalog-picker-pill-bg-checked: var(--color-accent);
+  --catalog-picker-pill-fg-checked: var(--color-accent-fg);
+  --catalog-picker-ring: var(--ring-accent);
+}

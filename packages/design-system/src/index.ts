@@ -159,6 +159,12 @@ export type {
   StatusCategory,
 } from './components/EntityChip';
 
+export { CatalogPicker } from './components/CatalogPicker';
+export type {
+  CatalogPickerProps,
+  CatalogPickerItem,
+  CatalogPickerCategory,
+} from './components/CatalogPicker';
 export { PillMenu } from './components/PillMenu';
 export type { PillMenuProps, PillMenuOption, PillMenuCategory } from './components/PillMenu';
 
