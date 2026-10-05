@@ -160,7 +160,9 @@
 }
 
 .stage:has(.chev):has(.doc) {
-  padding-inline: calc(var(--lightbox-padding) + var(--lightbox-control-size) + var(--lightbox-gap));
+  padding-inline: calc(
+    var(--lightbox-padding) + var(--lightbox-control-size) + var(--lightbox-gap)
+  );
 }
 
 // A document (PDF) has no intrinsic size to be `object-fit: contain`-ed like an

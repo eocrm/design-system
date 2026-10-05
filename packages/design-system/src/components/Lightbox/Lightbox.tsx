@@ -64,7 +64,8 @@ export interface LightboxProps {
    * The images and documents (mixed galleries are supported; see `kind` on
    * `LightboxItem` for PDFs). A PDF without a `thumbnail` shows a document-icon
    * placeholder in the strip; an unsafe (non-http(s)) document `src` shows a
-   * "Preview unavailable" message. An empty array renders nothing.
+   * "Preview unavailable" message. An empty array renders nothing and behaves as
+   * closed (no inert page, scroll lock or focus trap) even while `open`.
    */
   items: LightboxItem[];
   /** Initial image index (uncontrolled). Defaults to `0`. Clamped to range. */
@@ -130,7 +131,7 @@ const PORTAL_EXEMPT =
  * @see docs/components/Lightbox.md
  */
 export function Lightbox({
-  open,
+  open: openProp,
   onOpenChange,
   items,
   defaultIndex = 0,
@@ -144,6 +145,9 @@ export function Lightbox({
   const t = useTranslation();
   const id = useId();
   const n = items.length;
+  // An open Lightbox with nothing to show behaves as closed: no overlay-stack
+  // entry, inert background, scroll lock or focus trap (#612).
+  const open = openProp && n > 0;
   const isControlled = index !== undefined;
 
   const [internalIndex, setInternalIndex] = useState(() => clampIndex(defaultIndex, n));
