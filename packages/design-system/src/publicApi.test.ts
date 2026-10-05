@@ -20,11 +20,18 @@ const INTENTIONALLY_PRIVATE = new Set([
   // i18n internals; consumers use the providers/hooks
   ...['LocaleContext', 'I18nContext', 'deepMerge', 'lookupKey', 'en', 'ru'].map((n) => `i18n/${n}`),
 ]);
-// Util modules the barrel deliberately re-exports only a named subset of.
-const SELECTIVE_MODULES = new Set([
-  './components/DatePicker/utils',
-  './components/DateRangePicker/utils',
-]);
+// Util modules the barrel re-exports a named subset of: these names are deliberately NOT public.
+const PRIVATE_UTIL_NAMES: Record<string, string[]> = {
+  './components/DatePicker/utils': [
+    'formatDate',
+    'parseDate',
+    'getLocaleDateOrder',
+    'toIsoDate',
+    'isDateOutOfRange',
+    'parseTime',
+  ],
+  './components/DateRangePicker/utils': ['autoSwapRange', 'formatDateRange', 'parseDateRange'],
+};
 // _internal names a public module exports on purpose: timeUtils is a shim over
 // DatePicker/utils (resolveHourCycle, roundTimeToStep) and formatTime is calendar's own.
 const INTERNAL_NAME_ALSO_PUBLIC = new Set(['formatTime', 'resolveHourCycle', 'roundTimeToStep']);
@@ -76,11 +83,11 @@ for (const stmt of indexFile.statements) {
 }
 const exemptName = (spec: string, name: string) => {
   const dir = spec.split('/').pop()!;
-  return INTENTIONALLY_PRIVATE.has(`${dir}/${name}`);
+  return INTENTIONALLY_PRIVATE.has(`${dir}/${name}`) || !!PRIVATE_UTIL_NAMES[spec]?.includes(name);
 };
 
 describe('public API (src/index.ts)', () => {
-  it.each([...reexportedModules.keys()].filter((m) => !SELECTIVE_MODULES.has(m)))(
+  it.each([...reexportedModules.keys()])(
     're-exports every name (values and types) of %s',
     (spec) => {
       const missing = reexportedModules
@@ -90,14 +97,26 @@ describe('public API (src/index.ts)', () => {
     },
   );
 
-  // Discovery from index.ts cannot notice a whole module disappearing, so the
-  // non-component public modules are pinned by specifier here.
-  it.each(['./i18n', './app', './calendar', './palette', './hooks/useBelowBreakpoint'])(
-    'src/index.ts still re-exports %s',
-    (spec) => {
-      expect([...reexportedModules.keys()]).toContain(spec);
-    },
-  );
+  // Discovery from index.ts cannot notice a whole module disappearing, so every
+  // non-`./components/<Name>` specifier is pinned here. Pinned and discovered must match,
+  // so a new such re-export forces a conscious edit.
+  const PINNED_NON_COMPONENT_MODULES = [
+    './components/DatePicker/utils',
+    './components/DateRangePicker/utils',
+    './components/RichText/engine/renderLink',
+    './components/RichText/engine/renderMention',
+    './i18n',
+    './app',
+    './calendar',
+    './palette',
+    './hooks/useBelowBreakpoint',
+  ];
+  it('pins every non-component module specifier of src/index.ts', () => {
+    const discovered = [...reexportedModules.keys()].filter(
+      (m) => !/^\.\/components\/[^/]+$/.test(m),
+    );
+    expect(discovered.sort()).toEqual([...PINNED_NON_COMPONENT_MODULES].sort());
+  });
 
   it.each(componentDirs)('src/index.ts re-exports components/%s at all', (name) => {
     expect([...reexportedModules.keys()]).toContain(`./components/${name}`);

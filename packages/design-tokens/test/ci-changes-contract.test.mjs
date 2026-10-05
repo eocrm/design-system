@@ -9,8 +9,9 @@ const read = (p) => readFileSync(join(root, p), 'utf8');
 
 // Guard: tests outside the playground that read playground files must have those
 // paths listed in scripts/ci-changes.sh, or a playground-only PR would skip them.
-// Limits: regex over source, so it only sees literal `playground/<path>.<ext>` strings
-// and `'playground', 'a', 'b.ext'` segment lists; paths assembled dynamically are invisible.
+// Limits: regex over source. It sees any string literal containing `playground/<path>` (files or
+// directories) and `'playground'`/`"playground"` segment lists, so a segment path is only
+// checked up to its last literal segment. Paths assembled dynamically are invisible.
 // Fixture-only files are skipped (they write throwaway paths into temp repos).
 const SKIP = new Set(['ci-changes-contract.test.mjs', 'release-change-detection.test.mjs']);
 
@@ -23,9 +24,10 @@ function walk(dir) {
 
 function playgroundPaths(source) {
   const found = new Set();
-  for (const m of source.matchAll(/playground\/((?:[\w.-]+\/)*[\w-]+\.\w+)/g)) found.add(m[1]);
-  for (const m of source.matchAll(/'playground'((?:\s*,\s*'[^']+')+)/g)) {
-    found.add([...m[1].matchAll(/'([^']+)'/g)].map((x) => x[1]).join('/'));
+  for (const m of source.matchAll(/['"`][^'"`\n]*?playground\/((?:[\w.-]+\/?)+)/g))
+    found.add(m[1].replace(/\/$/, ''));
+  for (const m of source.matchAll(/(['"])playground\1((?:\s*,\s*(['"])[^'"]+\3)+)/g)) {
+    found.add([...m[2].matchAll(/(['"])([^'"]+)\1/g)].map((x) => x[2]).join('/'));
   }
   return [...found];
 }

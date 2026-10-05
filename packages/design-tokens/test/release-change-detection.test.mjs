@@ -335,7 +335,7 @@ test('caches npm and Gradle dependencies in quality and release jobs', async () 
     assert.match(nodeStep, /cache: "npm"/);
     if (workflow === qualityWorkflow) {
       // Every Quality job sets up Node, not just the first one.
-      const nodeSteps = extractAllWorkflowSteps(workflow, 'Setup Node');
+      const nodeSteps = extractAllWorkflowSteps(workflow, 'setup-node');
       assert.ok(nodeSteps.length > 1);
       for (const step of nodeSteps) assert.match(step, /cache: "npm"/);
     }
@@ -358,7 +358,7 @@ function extractWorkflowStep(workflow, name) {
 function extractAllWorkflowSteps(workflow, name) {
   return workflow
     .split(/\n(?=      - name: )/)
-    .filter((chunk) => chunk.trimStart().startsWith(`- name: ${name}`));
+    .filter((chunk) => chunk.includes(`uses: actions/${name}@`));
 }
 
 async function createRepository() {
