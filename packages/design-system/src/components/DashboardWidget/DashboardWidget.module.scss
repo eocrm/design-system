@@ -20,10 +20,6 @@
   padding: 0;
 }
 
-.root .header-list {
-  border-block-end: var(--border-width) solid var(--dashboard-widget-header-divider);
-}
-
 // kpi + chart: compact, muted, no divider.
 .root :is(.header-kpi, .header-chart) {
   padding: var(--dashboard-widget-compact-padding);

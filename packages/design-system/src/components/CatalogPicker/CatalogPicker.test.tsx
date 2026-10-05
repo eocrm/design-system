@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { createRef } from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { Drawer } from '../Drawer';
 import { CatalogPicker, type CatalogPickerItem, type CatalogPickerProps } from './CatalogPicker';
 
 const ITEMS: CatalogPickerItem[] = [
@@ -67,6 +68,7 @@ describe('CatalogPicker', () => {
     const tasks = options()[2];
     expect(tasks).toHaveAccessibleName('Tasks due');
     expect(tasks).toHaveAccessibleDescription('Your tasks this week Already on dashboard');
+    expect(options()[1]).toHaveAccessibleDescription('Monthly revenue New');
     expect(tasks).toHaveAttribute('aria-disabled', 'true');
     expect(screen.getByText('Already on dashboard')).toBeVisible();
   });
@@ -253,9 +255,63 @@ describe('CatalogPicker stuck detection', () => {
     expect(disconnect).toHaveBeenCalled();
   });
 
+  it('offsets the observer root by the scroller padding-top', () => {
+    const opts: IntersectionObserverInit[] = [];
+    vi.stubGlobal(
+      'IntersectionObserver',
+      class {
+        constructor(_c: IntersectionObserverCallback, o: IntersectionObserverInit) {
+          opts.push(o);
+        }
+        observe() {}
+        disconnect() {}
+      },
+    );
+    render(
+      <div style={{ overflowY: 'auto', paddingTop: '24px' }}>
+        <CatalogPicker {...props} />
+      </div>,
+    );
+    expect(opts[0].rootMargin).toBe('-24px 0px 0px 0px');
+  });
+
   it('without IntersectionObserver renders with no data-stuck and no crash', () => {
     vi.stubGlobal('IntersectionObserver', undefined);
     const { container } = render(<CatalogPicker {...props} />);
     expect(container.querySelector('[data-stuck]')).toBeNull();
+  });
+});
+
+describe('CatalogPicker inside a Drawer — Escape', () => {
+  const drawer = () => (
+    <Drawer open onOpenChange={onOpen}>
+      <Drawer.Header>Add</Drawer.Header>
+      <Drawer.Body>
+        <CatalogPicker label="Catalog" items={ITEMS} onSelect={() => {}} />
+      </Drawer.Body>
+    </Drawer>
+  );
+  const onOpen = vi.fn();
+  beforeEach(() => onOpen.mockClear());
+
+  it('Escape with a query clears it and does not close; empty query closes', async () => {
+    const user = userEvent.setup();
+    render(drawer());
+    const search = screen.getByRole('searchbox');
+    await user.type(search, 'rev');
+    await user.keyboard('{Escape}');
+    expect(search).toHaveValue('');
+    expect(onOpen).not.toHaveBeenCalled();
+    await user.keyboard('{Escape}');
+    expect(onOpen).toHaveBeenCalledWith(false);
+  });
+});
+
+describe('CatalogPicker — items change', () => {
+  it('moves focus to the search box when the focused option disappears', () => {
+    const { rerender } = render(<CatalogPicker label="C" items={ITEMS} onSelect={() => {}} />);
+    screen.getAllByRole('option')[0].focus();
+    rerender(<CatalogPicker label="C" items={[]} onSelect={() => {}} />);
+    expect(screen.getByRole('searchbox')).toHaveFocus();
   });
 });

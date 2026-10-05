@@ -1,4 +1,4 @@
-import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
+import { forwardRef, useId, type HTMLAttributes, type ReactNode } from 'react';
 import clsx from 'clsx';
 import { Minus, TrendingDown, TrendingUp } from 'lucide-react';
 import { Card } from '../Card';
@@ -27,7 +27,7 @@ export interface DashboardWidgetProps extends Omit<HTMLAttributes<HTMLDivElement
   /**
    * Presentation variant. Default `'standard'`.
    * - `'standard'` — header (title + actions) over a padded scrolling body. Today's widget card.
-   * - `'list'` — stronger header with a divider; flush scrolling body so `Card.List` bleeds edge to edge.
+   * - `'list'` — same fixed header as `standard`; flush scrolling body so `Card.List` bleeds edge to edge.
    * - `'kpi'` — compact muted title, a large `value`, optional `trend`; optional `children` below. No scrolling.
    * - `'chart'` — compact header; flush non-scrolling body that fills the cell (give the plot `height: 100%`).
    */
@@ -92,6 +92,7 @@ export const DashboardWidget = forwardRef<HTMLDivElement, DashboardWidgetProps>(
     ref,
   ) {
     const t = useTranslation();
+    const titleId = useId();
     const skeleton = (
       <>
         <WidgetShape kind={LOADING_SHAPE[variant]} mode="loading" />
@@ -105,7 +106,7 @@ export const DashboardWidget = forwardRef<HTMLDivElement, DashboardWidgetProps>(
         action={actions}
         className={styles[`header-${variant}`]}
       >
-        {title}
+        <span id={titleId}>{title}</span>
       </Card.Header>
     );
 
@@ -141,7 +142,13 @@ export const DashboardWidget = forwardRef<HTMLDivElement, DashboardWidgetProps>(
       variant === 'kpi' || variant === 'chart' ? (
         <Card.Body className={bodyClass}>{content}</Card.Body>
       ) : (
-        <Card.Body scroll data-scroll="" className={bodyClass}>
+        <Card.Body
+          scroll
+          data-scroll=""
+          role="group"
+          aria-labelledby={titleId}
+          className={bodyClass}
+        >
           {content}
         </Card.Body>
       );
@@ -153,7 +160,7 @@ export const DashboardWidget = forwardRef<HTMLDivElement, DashboardWidgetProps>(
         padding="none"
         data-variant={variant}
         aria-busy={loading || undefined}
-        className={clsx(styles.root, styles[`variant-${variant}`], className)}
+        className={clsx(styles.root, className)}
         {...rest}
       >
         {header}

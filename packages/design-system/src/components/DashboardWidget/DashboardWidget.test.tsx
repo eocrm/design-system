@@ -126,6 +126,22 @@ describe('DashboardWidget', () => {
   });
 });
 
+describe('DashboardWidget — scroll body name', () => {
+  it.each(['standard', 'list'] as const)('%s: scroll body is a group named by the title', (v) => {
+    render(
+      <DashboardWidget variant={v} title="Open deals" actions={<button>Menu</button>}>
+        x
+      </DashboardWidget>,
+    );
+    const g = screen.getByRole('group', { name: 'Open deals' });
+    expect(g).toHaveAttribute('data-scroll');
+  });
+  it.each(['kpi', 'chart'] as const)('%s: no group', (v) => {
+    render(<DashboardWidget variant={v} title="T" />);
+    expect(screen.queryByRole('group')).toBeNull();
+  });
+});
+
 describe('DashboardWidget — cascade + fill chain (source-pinned; jsdom cannot compute CSS)', () => {
   const scss = readFileSync(resolve(__dirname, 'DashboardWidget.module.scss'), 'utf8');
 
@@ -133,7 +149,6 @@ describe('DashboardWidget — cascade + fill chain (source-pinned; jsdom cannot 
   // order is not guaranteed, so every override of a Card rule must win on
   // specificity (a `.root` ancestor), never on source order.
   it.each([
-    /\.root \.header-list \{/,
     /\.root :is\(\.header-kpi, \.header-chart\) \{/,
     /\.root :is\(\.header-kpi, \.header-chart\) :is\(h2, h3, h4, h5, h6\) \{/,
     /\.root \.scrollBody \{/,

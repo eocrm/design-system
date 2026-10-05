@@ -62,7 +62,7 @@ import {
 <!-- prettier-ignore -->
 | Prop | Type | Required | Description |
 |---|---|---|---|
-| `variant` | `'standard' \| 'list' \| 'kpi' \| 'chart'` | no | Presentation variant. Default `'standard'`. - `'standard'` — header (title + actions) over a padded scrolling body. Today's widget card. - `'list'` — stronger header with a divider; flush scrolling body so `Card.List` bleeds edge to edge. - `'kpi'` — compact muted title, a large `value`, optional `trend`; optional `children` below. No scrolling. - `'chart'` — compact header; flush non-scrolling body that fills the cell (give the plot `height: 100%`). |
+| `variant` | `'standard' \| 'list' \| 'kpi' \| 'chart'` | no | Presentation variant. Default `'standard'`. - `'standard'` — header (title + actions) over a padded scrolling body. Today's widget card. - `'list'` — same fixed header as `standard`; flush scrolling body so `Card.List` bleeds edge to edge. - `'kpi'` — compact muted title, a large `value`, optional `trend`; optional `children` below. No scrolling. - `'chart'` — compact header; flush non-scrolling body that fills the cell (give the plot `height: 100%`). |
 | `title` | `ReactNode` | yes | Widget title, rendered as the heading at `headerLevel`. Required. |
 | `actions` | `ReactNode` | no | Header actions, e.g. the edit-mode overflow `DropdownMenu`. Never wraps. |
 | `headerLevel` | `'h2' \| 'h3' \| 'h4' \| 'h5' \| 'h6'` | no | Heading level of the title. Default `'h3'`. |
@@ -75,7 +75,7 @@ import {
 <!-- props:end -->
 
 - **Fills its cell.** It is a `<Card fill padding="none">`; `DashboardCanvas` sizes the cell, the widget fills it. The root is a `div` with a heading (no landmark; 20 regions on one dashboard is noise). Heading level is `headerLevel` (default `h3`).
-- **Variants.** `standard`: header + padded scrolling body. `list`: stronger header with divider, flush scrolling body. `kpi`: compact muted title, large `value`, optional `trend`, optional `children` below; does not scroll. `chart`: compact header, flush body that does not scroll and fills the remaining height, so give the plot `height: 100%`.
+- **Variants.** `standard`: header + padded scrolling body. `list`: same fixed header as `standard`, flush scrolling body so `Card.List` bleeds edge to edge. `kpi`: compact muted title, large `value`, optional `trend`, optional `children` below; does not scroll. `chart`: compact header, flush body that does not scroll and fills the remaining height, so give the plot `height: 100%`.
 - **Only `standard` and `list` scroll.** `kpi` and `chart` bodies are non-scrolling (`Card.Body` without `scroll`).
 - **`value` / `trend` are kpi only** and ignored on other variants.
 - **Trend.** Direction icon plus a visually hidden "Increase / Decrease / No change" before `label`. Colour is by `sentiment`, which defaults from direction (up positive, down negative, flat neutral). Set `sentiment` explicitly when the direction is not the judgement (churn, overdue tasks up = `negative`).

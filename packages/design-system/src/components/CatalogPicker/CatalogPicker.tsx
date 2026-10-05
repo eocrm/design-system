@@ -2,6 +2,7 @@ import {
   forwardRef,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -12,6 +13,7 @@ import {
 import clsx from 'clsx';
 import { Search } from 'lucide-react';
 import { Input } from '../Input';
+import { overlayStack } from '../_internal/overlay';
 import { EmptyState } from '../EmptyState';
 import { useTranslation } from '../../i18n/useTranslation';
 import styles from './CatalogPicker.module.scss';
@@ -100,6 +102,8 @@ export const CatalogPicker = forwardRef<HTMLDivElement, CatalogPickerProps>(func
     while (scroller && !/(auto|scroll)/.test(getComputedStyle(scroller).overflowY)) {
       scroller = scroller.parentElement;
     }
+    // sticky pins at the scroller's content-box top; the IO root is its padding box.
+    const padTop = scroller ? parseFloat(getComputedStyle(scroller).paddingTop) || 0 : 0;
     const io = new IntersectionObserver(
       ([entry]) => {
         const stuck =
@@ -107,11 +111,27 @@ export const CatalogPicker = forwardRef<HTMLDivElement, CatalogPickerProps>(func
         if (stuck) toolbar.setAttribute('data-stuck', '');
         else toolbar.removeAttribute('data-stuck');
       },
-      { root: scroller },
+      { root: scroller, rootMargin: `-${padTop}px 0px 0px 0px` },
     );
     io.observe(sentinel);
     return () => io.disconnect();
   }, []);
+
+  // Escape in a non-empty search clears it instead of closing the enclosing Drawer/Modal.
+  // Their Escape listener is document-capture, which runs before any element/React handler,
+  // so intercept at window-capture and mark the press consumed (#274).
+  const hasQuery = query !== '';
+  useEffect(() => {
+    if (!hasQuery) return;
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key !== 'Escape' || e.target !== searchRef.current) return;
+      overlayStack.consumeEscape(e);
+      e.preventDefault();
+      setQuery('');
+    };
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
+  }, [hasQuery]);
 
   const q = query.trim().toLocaleLowerCase();
   const visible = useMemo(
@@ -126,6 +146,16 @@ export const CatalogPicker = forwardRef<HTMLDivElement, CatalogPickerProps>(func
     setActive(0);
   }
   const current = Math.min(active, Math.max(visible.length - 1, 0));
+
+  // If the focused option vanishes (items prop shrank to nothing) focus would drop to <body>.
+  const focusInList = useRef(false);
+  const noneVisible = visible.length === 0;
+  useLayoutEffect(() => {
+    if (noneVisible && focusInList.current) {
+      focusInList.current = false;
+      searchRef.current?.focus();
+    }
+  }, [noneVisible]);
 
   const focusOption = (i: number) => {
     setActive(i);
@@ -195,6 +225,9 @@ export const CatalogPicker = forwardRef<HTMLDivElement, CatalogPickerProps>(func
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onFocus={() => {
+              focusInList.current = false;
+            }}
             placeholder={t('catalogPicker.search')}
             aria-label={t('catalogPicker.search')}
             aria-controls={visible.length > 0 ? listboxId : undefined}
@@ -241,8 +274,13 @@ export const CatalogPicker = forwardRef<HTMLDivElement, CatalogPickerProps>(func
           {visible.map((item, i) => {
             const descId = `${id}-d-${i}`;
             const reasonId = `${id}-r-${i}`;
+            const badgeId = `${id}-b-${i}`;
             const describedBy =
-              [item.description && descId, item.disabledReason && reasonId]
+              [
+                item.description && descId,
+                item.badge != null && badgeId,
+                item.disabledReason && reasonId,
+              ]
                 .filter(Boolean)
                 .join(' ') || undefined;
             return (
@@ -260,7 +298,13 @@ export const CatalogPicker = forwardRef<HTMLDivElement, CatalogPickerProps>(func
                 className={styles.option}
                 onClick={() => select(item)}
                 onKeyDown={(e) => onOptionKeyDown(e, i)}
-                onFocus={() => setActive(i)}
+                onFocus={() => {
+                  focusInList.current = true;
+                  setActive(i);
+                }}
+                onBlur={(e) => {
+                  if (e.relatedTarget) focusInList.current = false;
+                }}
               >
                 {item.preview != null && <div className={styles.preview}>{item.preview}</div>}
                 <div className={styles.body}>
@@ -268,7 +312,11 @@ export const CatalogPicker = forwardRef<HTMLDivElement, CatalogPickerProps>(func
                     <span id={`${id}-t-${i}`} className={styles.title}>
                       {item.title}
                     </span>
-                    {item.badge != null && <span className={styles.badge}>{item.badge}</span>}
+                    {item.badge != null && (
+                      <span id={badgeId} className={styles.badge}>
+                        {item.badge}
+                      </span>
+                    )}
                   </div>
                   {item.description && (
                     <span id={descId} className={styles.description}>

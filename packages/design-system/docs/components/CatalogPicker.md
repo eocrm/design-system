@@ -66,7 +66,7 @@ import { Badge, CatalogPicker, Drawer, WidgetPreview } from '@eocrm/design-syste
   - Changing the query or category resets the focus target to the first result.
 - **The toolbar is sticky** so search stays reachable while the drawer/modal body scrolls.
 - **Options must not contain interactive content.** Each card is a single `role="option"`; `preview` and `badge` are display-only.
-- Fills its container width; the grid auto-fits columns (about 2 in a Drawer, 3 to 4 in a Modal).
+- Fills its container width; the grid fills the row with as many columns as fit (about 2 in a Drawer, 3 to 4 in a Modal).
 
 #### When NOT to use
 
