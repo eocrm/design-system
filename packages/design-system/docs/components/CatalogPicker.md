@@ -6,7 +6,7 @@ A search box, optional category pills, a live result count and an auto-fill grid
 import { Badge, CatalogPicker, Drawer, WidgetPreview } from '@eocrm/design-system';
 
 <Drawer open={open} onOpenChange={setOpen}>
-  <Drawer.Header title="Add widget" />
+  <Drawer.Header>Add widget</Drawer.Header>
   <Drawer.Body>
     <CatalogPicker
       label="Widget catalog"
@@ -64,7 +64,6 @@ import { Badge, CatalogPicker, Drawer, WidgetPreview } from '@eocrm/design-syste
   - `↑` from the first row returns focus to the search field.
   - `Enter` / `Space` activate (no-op on an unavailable item).
   - Changing the query or category resets the focus target to the first result.
-- **The search field has no icon slot** (`Input` has none); the search icon is drawn beside it by the picker.
 - **The toolbar is sticky** so search stays reachable while the drawer/modal body scrolls.
 - **Options must not contain interactive content.** Each card is a single `role="option"`; `preview` and `badge` are display-only.
 - Fills its container width; the grid auto-fits columns (about 2 in a Drawer, 3 to 4 in a Modal).
@@ -80,6 +79,5 @@ import { Badge, CatalogPicker, Drawer, WidgetPreview } from '@eocrm/design-syste
 
 - ❌ Hiding unavailable items instead of passing `disabledReason`. Users then cannot tell why a widget is missing.
 - ❌ Putting buttons or links inside `preview` / `badge`. Options must not contain interactive content; nested controls are unreachable and invalid ARIA.
-- ❌ Wrapping the picker in your own `Drawer`-like overlay logic inside the component. It owns no overlay; put it in `Drawer.Body` / `Modal.Body`.
+- ❌ Building overlay behaviour into the picker — put it in `Drawer.Body` / `Modal.Body`.
 - ❌ Passing `label` as a placeholder-style hint. It is the listbox's accessible name ("Widget catalog").
-- ❌ Doing the add/configure work inside `items` rendering. Handle it in `onSelect`.
