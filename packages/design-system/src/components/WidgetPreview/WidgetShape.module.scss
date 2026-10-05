@@ -19,11 +19,11 @@
   display: block;
 }
 
-.hero {
+.root[data-mode='preview'] .hero {
   --skeleton-bg: var(--widget-preview-accent);
 }
 
-.heroStrong {
+.root[data-mode='preview'] .heroStrong {
   --skeleton-bg: var(--widget-preview-accent-strong);
 }
 

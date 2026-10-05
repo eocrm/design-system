@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { createRef } from 'react';
 import { render } from '@testing-library/react';
 import { WidgetPreview, type WidgetPreviewVariant } from './WidgetPreview';
@@ -34,7 +36,9 @@ describe('WidgetPreview', () => {
 
   it('preview pieces are static (no pulse)', () => {
     const { container } = render(<WidgetPreview variant="list" />);
-    container.querySelectorAll('[data-widget-shape] span').forEach((el) => {
+    const pieces = container.querySelectorAll('[data-widget-shape] span');
+    expect(pieces.length).toBeGreaterThan(0);
+    pieces.forEach((el) => {
       expect(el.className).not.toMatch(/pulse/);
     });
   });
@@ -55,5 +59,21 @@ describe('WidgetShape', () => {
   it('is aria-hidden', () => {
     const { container } = render(<WidgetShape kind="lines" mode="loading" />);
     expect(container.firstChild).toHaveAttribute('aria-hidden', 'true');
+  });
+});
+
+describe('WidgetShape.module.scss cascade', () => {
+  // jsdom can't compute the cascade, so pin the source shape: the accent rules
+  // must be scoped under the preview root (specificity) and follow the generic rule.
+  const scss = readFileSync(resolve(__dirname, 'WidgetShape.module.scss'), 'utf8');
+  const at = (sel: string) => scss.indexOf(sel);
+
+  it('hero rules are preview-scoped and come after the generic piece rule', () => {
+    const generic = at(".root[data-mode='preview'] .piece {");
+    const hero = at(".root[data-mode='preview'] .hero {");
+    const strong = at(".root[data-mode='preview'] .heroStrong {");
+    expect(generic).toBeGreaterThanOrEqual(0);
+    expect(hero).toBeGreaterThan(generic);
+    expect(strong).toBeGreaterThan(hero);
   });
 });
