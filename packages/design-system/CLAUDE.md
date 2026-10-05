@@ -34,6 +34,14 @@ filtered pipeline: `make test | grep …` reports grep's status, so a red
 design-tokens run looks green while the CI gate fails on it. The same mistake
 in `;`-chained gate commands has now shipped twice on this repo.
 
+#### Test placement (#614)
+
+- **Cheapest environment wins.** Pure logic and static source analysis go in `*.test.ts` and run in Node (Vitest project `unit`). DOM/component semantics go in `*.test.tsx` (project `dom`, jsdom). A `.test.ts` that genuinely needs DOM globals opts in with a first-line `// @vitest-environment jsdom`. Playwright only for real layout, geometry or focus that jsdom cannot prove.
+- **One invariant, one owner.** Don't re-prove a pure engine's behaviour through a rendered component; test the engine in Node and the wiring in jsdom.
+- **No raw source hashes or formatting snapshots** for public API — `src/publicApi.test.ts` checks exported names (values and types) against their source modules.
+- **No exact counts on extensible collections** (components, tokens, variants, registries) unless the number itself is a documented contract.
+- **CI is path-selected** (`scripts/ci-changes.sh`, `.github/workflows/quality.yml`). A new expensive stage gets a `changes` flag and joins the `check` aggregator's `needs`.
+
 ### 2. Every component has a playground demo
 
 When adding `src/components/<Name>/`, the same change must add `packages/playground/src/pages/components/<Name>Demo.tsx` and wire it into the playground's nav (see `packages/playground/CLAUDE.md` Hard rule 4 for the four files). Components without demos are invisible to the team and accumulate inconsistency.

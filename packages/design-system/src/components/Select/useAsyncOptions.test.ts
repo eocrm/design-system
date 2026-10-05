@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { act, configure, renderHook } from '@testing-library/react';
 import { useAsyncOptions } from './useAsyncOptions';
 import type { SelectOptions } from './Select';

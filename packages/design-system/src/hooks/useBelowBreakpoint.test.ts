@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { renderHook } from '@testing-library/react';
 import { useBelowBreakpoint } from './useBelowBreakpoint';
 import { stubMatchMedia } from '../components/_internal/matchMediaStub.testutil';

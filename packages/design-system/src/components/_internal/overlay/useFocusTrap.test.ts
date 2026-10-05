@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { renderHook } from '@testing-library/react';
 import { useRef, type RefObject } from 'react';
 import { useFocusTrap } from './useFocusTrap';

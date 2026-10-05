@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { pointFromDom, pointToDom, selectionRect, rangeRect } from './selection';
 
 // Build: <div root><p data-block-id="a">He<strong>ll</strong>o</p><p data-block-id="b"><br></p></div>

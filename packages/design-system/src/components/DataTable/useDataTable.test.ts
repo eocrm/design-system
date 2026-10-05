@@ -1,3 +1,4 @@
+// @vitest-environment jsdom
 import { renderHook, act } from '@testing-library/react';
 import { useDataTable } from './useDataTable';
 import type { ColumnDef } from './types';

@@ -1,9 +1,10 @@
 name: Quality
 
 # Two triggers:
-# - pull_request: every PR runs the full quality suite. This is the PR gate.
-# - workflow_call: release.yml chains us as the prerequisite job, so publishing
-#   can't happen if quality fails.
+# - pull_request: stages are path-selected by scripts/ci-changes.sh (#614) and
+#   run as parallel jobs; the `check` aggregator is the required PR gate.
+# - workflow_call: release.yml chains us as the prerequisite job. Anything but
+#   a pull_request event runs EVERY stage, so publishing can't skip a gate.
 
 on:
   pull_request:
@@ -13,7 +14,28 @@ permissions:
   contents: read
 
 jobs:
-  check:
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      ds: ${{ steps.detect.outputs.ds }}
+      tokens: ${{ steps.detect.outputs.tokens }}
+      compose: ${{ steps.detect.outputs.compose }}
+      playground: ${{ steps.detect.outputs.playground }}
+      package: ${{ steps.detect.outputs.package }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Detect affected stages
+        id: detect
+        run: >-
+          scripts/ci-changes.sh "${{ github.event_name }}"
+          "${{ github.event.pull_request.base.sha }}"
+          "${{ github.event.pull_request.head.sha }}"
+
+  static:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -24,6 +46,66 @@ jobs:
         with:
           node-version: "24"
           cache: "npm"
+
+      - name: Install
+        run: npm ci
+
+      - name: Prettier
+        run: npm run format:check
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Stylelint
+        run: npm run lint:css
+
+  test-ds:
+    needs: changes
+    if: needs.changes.outputs.ds == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install
+        run: npm ci
+
+      - name: Test
+        run: npm test -w @eocrm/design-system
+
+  tokens:
+    needs: changes
+    if: needs.changes.outputs.tokens == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install
+        run: npm ci
+
+      - name: Verify design-token contract
+        run: npm run tokens:check
+
+  compose:
+    needs: changes
+    if: needs.changes.outputs.compose == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -49,27 +131,26 @@ jobs:
       - name: Install Android SDK 36
         run: sdkmanager "platforms;android-36"
 
-      - name: Install
-        run: npm ci
-
-      - name: Verify design-token contract
-        run: npm run tokens:check
-
       - name: Verify Compose multiplatform artifact
         working-directory: packages/design-tokens/compose
         run: ./gradlew --no-daemon jvmTest testAndroidHostTest assemble
 
-      - name: Prettier
-        run: npm run format:check
+  playground:
+    needs: changes
+    if: needs.changes.outputs.playground == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Typecheck
-        run: npm run typecheck
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
 
-      - name: Test
-        run: npm test
-
-      - name: Stylelint
-        run: npm run lint:css
+      - name: Install
+        run: npm ci
 
       - name: Build playground (smoke-tests the library inside a real consumer)
         run: npm run build
@@ -98,6 +179,23 @@ jobs:
           name: playwright-report
           path: playwright-report/
           retention-days: 7
+
+  package:
+    needs: changes
+    if: needs.changes.outputs.package == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install
+        run: npm ci
 
       - name: Verify tarball contents
         run: |
@@ -146,3 +244,20 @@ jobs:
             }
           }
           NODE
+
+  check:
+    # The required status is `Quality / check`: this aggregator keeps that name.
+    # Skipped (path-selected out) jobs pass; failed or cancelled jobs fail it.
+    if: always()
+    needs: [changes, static, test-ds, tokens, compose, playground, package]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require every needed job to pass or be skipped
+        env:
+          RESULTS: ${{ toJSON(needs) }}
+        run: |
+          echo "$RESULTS" | jq -r 'to_entries[] | "\(.key): \(.value.result)"'
+          test "$(echo "$RESULTS" | jq -r '.changes.result')" = success \
+            || { echo "::error::changes job did not succeed"; exit 1; }
+          bad=$(echo "$RESULTS" | jq '[.[] | select(.result == "failure" or .result == "cancelled")] | length')
+          test "$bad" = 0 || { echo "::error::$bad Quality job(s) failed or were cancelled"; exit 1; }

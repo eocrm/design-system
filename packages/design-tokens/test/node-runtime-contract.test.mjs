@@ -7,7 +7,7 @@ import test from 'node:test';
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 
 const runtimeFiles = new Map([
-  ['.github/workflows/quality.yml', 1],
+  ['.github/workflows/quality.yml', 5],
   ['.github/workflows/release.yml', 2],
   ['.github/workflows/deploy-playground.yml', 1],
 ]);
