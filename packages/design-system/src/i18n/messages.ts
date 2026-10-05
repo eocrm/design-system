@@ -789,6 +789,16 @@ export interface Messages {
      */
     loading: string;
   };
+  dashboardWidget: {
+    /** Visually hidden prefix of a KPI trend going up ("Increase"). */
+    trendUp: string;
+    /** Visually hidden prefix of a KPI trend going down ("Decrease"). */
+    trendDown: string;
+    /** Visually hidden prefix of a flat KPI trend ("No change"). */
+    trendFlat: string;
+    /** Visually hidden body text while `loading` (read when browsing the widget; not a live region). */
+    loading: string;
+  };
   catalogPicker: {
     /** Placeholder + aria-label of the catalog search input. */
     search: string;

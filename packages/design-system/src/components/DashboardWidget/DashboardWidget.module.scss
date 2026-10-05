@@ -1,0 +1,68 @@
+@use './DashboardWidget.tokens';
+
+// Card.module.scss is a separate CSS module; its order relative to this one is
+// not guaranteed. Every override of a Card rule therefore wins on specificity
+// (a `.root` ancestor on the Card root), never on source order.
+
+.root :is(.kpiBody, .chartBody) {
+  // Internal Card.Body child: fills what the header leaves (Card builds the column).
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  padding: var(--dashboard-widget-compact-padding);
+}
+
+.root .scrollBody {
+  padding: var(--dashboard-widget-body-padding);
+}
+
+.root .flush {
+  padding: 0;
+}
+
+.root .header-list {
+  border-block-end: var(--border-width) solid var(--dashboard-widget-header-divider);
+}
+
+// kpi + chart: compact, muted, no divider.
+.root :is(.header-kpi, .header-chart) {
+  padding: var(--dashboard-widget-compact-padding);
+  padding-block-end: 0;
+  border-block-end: 0;
+}
+
+.root :is(.header-kpi, .header-chart) :is(h2, h3, h4, h5, h6) {
+  color: var(--dashboard-widget-compact-title-fg);
+  font-size: var(--dashboard-widget-compact-title-size);
+}
+
+.kpiBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--dashboard-widget-kpi-gap);
+}
+
+.value {
+  font-size: var(--dashboard-widget-kpi-value-size);
+  font-weight: var(--dashboard-widget-kpi-value-weight);
+  line-height: var(--dashboard-widget-kpi-value-line-height);
+}
+
+.trend {
+  display: flex;
+  align-items: center;
+  gap: var(--dashboard-widget-trend-gap);
+  font-size: var(--dashboard-widget-trend-size);
+}
+
+.trend[data-sentiment='positive'] {
+  color: var(--dashboard-widget-trend-positive);
+}
+
+.trend[data-sentiment='negative'] {
+  color: var(--dashboard-widget-trend-negative);
+}
+
+.trend[data-sentiment='neutral'] {
+  color: var(--dashboard-widget-trend-neutral);
+}

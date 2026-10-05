@@ -456,7 +456,10 @@ describe('transient state does not rely on aria-busy alone', () => {
       // at the first `>`, so an arrow function in the tag before the attribute
       // would false-alarm; `t` is hardcoded as the hook's binding; and an
       // element between the span and its `t()` would not match.
-      const namedState = /styles\.(srOnly|hiddenLabel)\}[^>]*>[^<]*\bt\(/.test(code);
+      // `<VisuallyHidden>` is the library primitive for the same span (DashboardWidget).
+      const namedState = /(styles\.(srOnly|hiddenLabel)\}|<VisuallyHidden)[^>]*>[^<]*\bt\(/.test(
+        code,
+      );
       expect(liveRegion || namedState).toBe(true);
     },
   );

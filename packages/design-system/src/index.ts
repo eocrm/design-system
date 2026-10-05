@@ -801,3 +801,9 @@ export type {
   DashboardCanvasValue,
   DashboardItemConstraints,
 } from './components/DashboardCanvas';
+export { DashboardWidget } from './components/DashboardWidget';
+export type {
+  DashboardWidgetProps,
+  DashboardWidgetVariant,
+  DashboardWidgetTrend,
+} from './components/DashboardWidget';

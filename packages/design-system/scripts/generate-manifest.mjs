@@ -95,6 +95,7 @@ const CLUSTERS = {
   Code: 'Display',
   CursorPagination: 'Display',
   DashboardCanvas: 'Display',
+  DashboardWidget: 'Display',
   DataTable: 'Display',
   EmptyState: 'Display',
   ErrorState: 'Display',

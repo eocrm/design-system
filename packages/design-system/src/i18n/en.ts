@@ -371,6 +371,12 @@ export const en: Messages = {
     unavailable: '(unavailable)',
     loading: '(loading)',
   },
+  dashboardWidget: {
+    trendUp: 'Increase',
+    trendDown: 'Decrease',
+    trendFlat: 'No change',
+    loading: 'Loading…',
+  },
   catalogPicker: {
     search: 'Search…',
     categories: 'Categories',

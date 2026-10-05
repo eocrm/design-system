@@ -121,6 +121,7 @@
     "cluster": "Layout",
     "composes": [],
     "composedBy": [
+      "DashboardWidget",
       "LinkCard"
     ]
   },
@@ -211,6 +212,16 @@
     "cluster": "Display",
     "composes": [
       "Accordion"
+    ],
+    "composedBy": []
+  },
+  "DashboardWidget": {
+    "tier": "composition",
+    "cluster": "Display",
+    "composes": [
+      "Card",
+      "VisuallyHidden",
+      "WidgetPreview"
     ],
     "composedBy": []
   },
@@ -937,6 +948,7 @@
     "composes": [],
     "composedBy": [
       "Banner",
+      "DashboardWidget",
       "DateStrip",
       "LiveRegion",
       "StagePath"
@@ -948,6 +960,8 @@
     "composes": [
       "Skeleton"
     ],
-    "composedBy": []
+    "composedBy": [
+      "DashboardWidget"
+    ]
   }
 }
