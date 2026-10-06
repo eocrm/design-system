@@ -9,8 +9,8 @@
   // Decorative, but must read at gallery-card size (#626): the strongest
   // non-text neutral as a fill, and a half-strength accent. The accent is
   // translucent, so it sits correctly on an overridden --widget-preview-bg;
-  // it resolves at :root, so a scoped --color-accent override does NOT reach
-  // it — override --widget-preview-accent too. Measured in contrast.test.ts.
+  // these resolve at :root, so a scoped --color-* override does NOT reach
+  // them — override the --widget-preview-* tokens. Measured in contrast.test.ts.
   --widget-preview-shape: var(--color-border-strong);
   --widget-preview-accent: color-mix(in srgb, var(--color-accent) 50%, transparent);
   --widget-preview-accent-strong: var(--color-accent);

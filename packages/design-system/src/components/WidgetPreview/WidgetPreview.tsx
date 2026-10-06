@@ -12,7 +12,7 @@ export interface WidgetPreviewProps extends HTMLAttributes<HTMLDivElement> {
    * - `'kpi'` — label, a large value block (strong accent), an accented trend line.
    * - `'list'` — rows of accented avatar + line; first avatar strong.
    * - `'chart'` — a bar series (accented, one bar strong).
-   * - `'pipeline'` — stage columns of cards; current stage header strong, its cards accented.
+   * - `'pipeline'` — stage columns of cards; current stage header strong and its cards accented; next stage header accented.
    * - `'activity'` — timeline rows with accented dots; first dot strong.
    */
   variant: WidgetPreviewVariant;
