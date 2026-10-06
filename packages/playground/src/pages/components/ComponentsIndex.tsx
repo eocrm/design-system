@@ -302,6 +302,13 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['DashboardWidget'],
   },
   {
+    to: '/components/stat-group',
+    name: 'StatGroup',
+    description:
+      'Responsive grid of KPI tiles: value, label, trend and footnote, with loading skeletons.',
+    preview: SCHEMATICS['StatGroup'],
+  },
+  {
     to: '/components/table',
     name: 'Table',
     description:
