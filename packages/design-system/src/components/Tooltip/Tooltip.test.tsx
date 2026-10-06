@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createRef, useState, type ReactNode } from 'react';
-import { act, configure, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useFakeTimersWithUserEvent } from '../_internal/fakeTimers.testutil';
 import { Tooltip } from './Tooltip';
