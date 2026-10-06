@@ -383,6 +383,10 @@ export const ru: Messages = {
     trendFlat: 'Без изменений',
     loading: 'Загрузка…',
   },
+  stat: {
+    loading: 'Загрузка…',
+    noData: 'Нет данных',
+  },
   catalogPicker: {
     search: 'Поиск…',
     categories: 'Категории',

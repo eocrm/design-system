@@ -1,0 +1,75 @@
+@use './StatTile.tokens';
+
+.root {
+  // Size container for the narrow rule below. Safe: the Grid track sizes the tile, not its content.
+  container-type: inline-size;
+  display: flex;
+  flex-direction: column;
+  gap: var(--stat-tile-gap);
+  min-width: 0;
+  padding: var(--stat-tile-padding);
+  border-radius: var(--stat-tile-radius);
+  background: var(--stat-tile-bg);
+}
+
+.label {
+  display: flex;
+  align-items: center;
+  gap: var(--stat-tile-label-gap);
+  min-width: 0;
+  color: var(--stat-tile-label-fg);
+  font-size: var(--stat-tile-label-size);
+}
+
+.icon {
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.value {
+  color: var(--stat-tile-value-fg);
+  font-size: var(--stat-tile-value-size);
+  font-weight: var(--stat-tile-value-weight);
+  line-height: var(--stat-tile-value-line-height);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.trend {
+  display: flex;
+  align-items: center;
+  gap: var(--stat-tile-trend-gap);
+  font-size: var(--stat-tile-trend-size);
+}
+
+.trend[data-sentiment='positive'] {
+  color: var(--stat-tile-trend-positive);
+}
+
+.trend[data-sentiment='negative'] {
+  color: var(--stat-tile-trend-negative);
+}
+
+.trend[data-sentiment='neutral'] {
+  color: var(--stat-tile-trend-neutral);
+}
+
+.footnote {
+  color: var(--stat-tile-footnote-fg);
+  font-size: var(--stat-tile-footnote-size);
+}
+
+// SCSS constant because container-query conditions can't read custom properties.
+// ponytail: fixed threshold; make it a prop if a widget needs another.
+$narrow-below: 160px;
+
+@container (max-width: #{$narrow-below}) {
+  .value {
+    font-size: var(--stat-tile-value-size-narrow);
+  }
+
+  // Decorative (the consumer's IconTile is aria-hidden by default), so display:none loses nothing.
+  .icon {
+    display: none;
+  }
+}

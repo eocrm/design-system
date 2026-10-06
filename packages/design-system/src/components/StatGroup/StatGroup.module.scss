@@ -1,0 +1,6 @@
+.root {
+  list-style: none;
+  // stylelint-disable-next-line property-disallowed-list -- native <ul> margin reset
+  margin: 0;
+  padding: 0;
+}

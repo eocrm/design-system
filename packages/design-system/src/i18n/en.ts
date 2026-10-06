@@ -377,6 +377,10 @@ export const en: Messages = {
     trendFlat: 'No change',
     loading: 'Loading…',
   },
+  stat: {
+    loading: 'Loading…',
+    noData: 'No data',
+  },
   catalogPicker: {
     search: 'Search…',
     categories: 'Categories',
