@@ -97,8 +97,8 @@ describe('eocrm rules have no inline off-switch', () => {
       if (e.isDirectory()) return e.name === 'node_modules' ? [] : walk(p);
       return /\.(tsx?|mjs|js)$/.test(e.name) ? [p] : [];
     });
-  const comment = /eslint(-disable(-next-line|-line)?|-enable)?\b/;
-  const bareDisable = /^\s*(\/\/|\/\*)\s*eslint-disable\s*(\*\/)?\s*$/;
+  const comments = /\/\/[^\n]*|\/\*[\s\S]*?\*\//g;
+  const directive = /^\s*eslint(-disable(?:-next-line|-line)?|-enable)?\b([\s\S]*)$/;
 
   it('no eslint comment mentions eocrm/ or blanket-disables the library', () => {
     const offenders = [];
@@ -106,13 +106,19 @@ describe('eocrm rules have no inline off-switch', () => {
       const src = join(root, pkg, 'src');
       if (!existsSync(src)) continue;
       for (const file of walk(src)) {
-        readFileSync(file, 'utf8')
-          .split('\n')
-          .forEach((line, i) => {
-            const mentions = comment.test(line) && line.includes('eocrm/');
-            const bare = pkg === 'design-system' && bareDisable.test(line);
-            if (mentions || bare) offenders.push(`${relative(root, file)}:${i + 1}`);
-          });
+        const code = readFileSync(file, 'utf8');
+        for (const m of code.matchAll(comments)) {
+          const body = m[0].replace(/^\/\/|^\/\*|\*\/$/g, '');
+          const d = directive.exec(body);
+          if (!d) continue;
+          const rules = d[2].replace(/--[\s\S]*$/, '').trim();
+          // A disable with an empty rule list silences every rule, eocrm included.
+          const bare = pkg === 'design-system' && d[1]?.startsWith('-disable') && rules === '';
+          if (body.includes('eocrm/') || bare) {
+            const line = code.slice(0, m.index).split('\n').length;
+            offenders.push(`${relative(root, file)}:${line}`);
+          }
+        }
       }
     }
     assert.deepEqual(offenders, []);
