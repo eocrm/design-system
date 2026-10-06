@@ -36,10 +36,10 @@ export interface DashboardWidgetProps extends Omit<HTMLAttributes<HTMLDivElement
   title: ReactNode;
   /**
    * Secondary, non-interactive header text such as freshness ("Updated 3 minutes ago") or
-   * status. Sits before `actions` and yields first in a narrow cell: it truncates (then hides
-   * visually, still read by screen readers) before the title shrinks, while `actions` never shrinks. Also describes the body region
-   * (`aria-describedby`) for `standard` / `list`. Repeat it in the refresh button's
-   * tooltip if it matters when truncated.
+   * status. Sits before `actions` and yields first in a narrow cell: it truncates (then
+   * hides visually, still read by screen readers) before the title shrinks, while `actions`
+   * never shrinks. Also describes the body region (`aria-describedby`) for `standard` /
+   * `list`. Repeat it in the refresh button's tooltip if it matters when truncated.
    */
   meta?: ReactNode;
   /** Header actions, e.g. the edit-mode overflow `DropdownMenu`. Never wraps. */

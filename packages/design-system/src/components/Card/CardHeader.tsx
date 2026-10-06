@@ -15,7 +15,8 @@ export interface CardHeaderProps extends HTMLAttributes<HTMLDivElement> {
   /**
    * Optional right-aligned slot — typically a `<Link>` or `<Button>` that
    * lets the user navigate to a full list or take a section-level action.
-   * Rendered inside a `<span>` that is flex-shrink: 0 so it never wraps.
+   * Rendered inside a `<span>` that never shrinks or wraps (flex-shrink: 0;
+   * with `meta`, min-width: max-content).
    */
   action?: ReactNode;
   /**
@@ -23,8 +24,9 @@ export interface CardHeaderProps extends HTMLAttributes<HTMLDivElement> {
    * ("Updated 3 minutes ago") or status. Muted and single-line; sits just
    * before `action` and is the first thing to give way at narrow widths: it
    * truncates with an ellipsis before the title gives up any width, while
-   * `action` keeps its width. In a `fill` Card it is also visually hidden
-   * (still read by screen readers) once only a sliver would show. Not part
+   * `action` keeps its width. In a `fill` Card (which needs a parent of
+   * definite width) it is also visually hidden, still read by screen
+   * readers, once only a sliver would show. Not part
    * of the heading's name. Put controls in `action`, never here. `false`
    * and `''` count as no meta.
    */
