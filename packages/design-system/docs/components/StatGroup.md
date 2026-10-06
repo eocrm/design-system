@@ -52,7 +52,7 @@ TL;DR: a `<ul>` grid of 1–8 [`StatTile`](StatTile.md)s for a dashboard widget 
 - ❌ Hand-composing `Grid` + `IconTile` + `Text` tiles. You lose the trend semantics, the "no data" text and the loading state.
 - ❌ `<StatTile>` outside a `StatGroup`. It renders an `<li>` and reads `loading` from the group.
 - ❌ `value="—"` for missing data. Pass `value={null}` so screen readers hear "No data" instead of silence or "em dash".
-- ❌ Unformatted values (`value={1240000}`). Format before passing, using compact notation for large amounts: `Intl.NumberFormat(locale, { style: 'currency', currency, notation: 'compact' })` gives `€1.2M`, not `€1,240,000`.
+- ❌ Unformatted values (`value={1240000}`). Format before passing, using compact notation for large amounts: `Intl.NumberFormat(locale, { style: 'currency', currency, notation: 'compact', maximumSignificantDigits: 3 })` gives `€1.24M`, not `€1,240,000`.
 - ❌ Colouring a "bad" increase with `direction: 'down'`. Keep `direction` truthful and set `sentiment: 'negative'`.
 - ❌ More than about 8 tiles in one widget. Split into two widgets.
 - ❌ Putting a `StatGroup` in a parent that sizes to its content (a `Cluster` item, `width: max-content`, an `auto` `Split` aside). Each tile is a size container, so it contributes no intrinsic width and the tiles collapse. Give the parent a concrete width; a `DashboardWidget` cell already has one.
