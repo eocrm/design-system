@@ -1049,30 +1049,6 @@ describe('stated contrast ratios still hold', () => {
 });
 
 /**
- * `:dir()` does not survive production builds: CSS minifiers lower it to a
- * `:lang(ar, he, …)` list, which never matches `dir="rtl"` on a page in a
- * non-RTL language. StagePath shipped mirrored chevrons this way that worked
- * on the dev server and not in the deployed playground. Use `[dir]` attribute
- * selectors instead.
- */
-describe('stylesheets do not use :dir()', () => {
-  // Every shipped stylesheet, not just component modules: partials and
-  // src/styles ship as source too, so the consumer's minifier sees them all.
-  const styleFiles = allFilesUnder(__dirname).filter(({ label }) => /\.scss$/.test(label));
-
-  it('found stylesheets to check', () => {
-    expect(styleFiles.length).toBeGreaterThan(50);
-  });
-
-  it('no stylesheet uses :dir()', () => {
-    const offenders = styleFiles
-      .filter(({ code }) => /:dir\(/.test(stripScssComments(code)))
-      .map(({ label }) => label);
-    expect(offenders).toEqual([]);
-  });
-});
-
-/**
  * A focus ring may not be suppressed by a rule it SHARES with `:hover`.
  *
  * This is the shape behind two live defects, not a style preference.
@@ -1450,73 +1426,6 @@ describe('a focus ring is not suppressed without a recorded reason', () => {
     // The design caution in #519: an allowlist that is cheap to append to gets
     // appended to. An entry has to carry an argued reason, not a placeholder.
     expect(waivers.filter((w) => w.reason.trim().length < 40).map((w) => w.selector)).toEqual([]);
-  });
-});
-
-/**
- * An `outline-offset` declaration may not sit in the same rule as
- * `@include focus-ring` — pass the offset as `$offset` instead. Order
- * doesn't matter: a declaration before the `@include` is just as dead as one
- * after it, so this bans either.
- *
- * This exact shape produced a review finding in every round of #513/#514,
- * shipped at call sites a prior round's pass had missed each time, including
- * once in the docs that told the next agent to write it. That repetition is
- * this repo's own stated trigger for a gate instead of another round of
- * review catching another instance. Nothing before this enforced it as an
- * INVARIANT — the `structure.test.ts` prose above is a snapshot of today's
- * tree, not a check that stops someone re-adding the shape tomorrow.
- *
- * Same brace-scan as the two gates above (lookbehind prefix, comments
- * stripped first), so it shares their blind spot: a shared rule whose body
- * contains a NESTED block is invisible, since `[^{}]*` cannot span into it.
- * Does not evaluate whether the offset value itself is correct — only that it
- * arrives through the mixin's parameter, not a second declaration.
- */
-describe('an outline-offset declaration does not sit in the same rule as @include focus-ring', () => {
-  const styleFiles = allFilesUnder(componentsDir).filter(({ label }) =>
-    /\.module\.scss$/.test(label),
-  );
-
-  it('found stylesheets to check', () => {
-    expect(styleFiles.length).toBeGreaterThan(50);
-  });
-
-  const offendersIn = (code: string): string[] =>
-    scssRules(stripScssComments(code))
-      .filter(
-        ([, body]) =>
-          /@include\s+focus-ring/.test(body) && /(^|[;\s])outline-offset\s*:/.test(body),
-      )
-      .map(([selector]) => selector);
-
-  it('the scan itself can fail', () => {
-    // Guards the guard — see the sibling gate above for why a regex that reads
-    // correctly is no longer taken as evidence that it fires.
-    expect(offendersIn('.a:focus-visible { @include focus-ring; outline-offset: 2px; }')).toEqual([
-      '.a:focus-visible',
-    ]);
-    // Order does not matter: a declaration BEFORE the include is just as dead.
-    expect(offendersIn('.a:focus-visible { outline-offset: 2px; @include focus-ring; }')).toEqual([
-      '.a:focus-visible',
-    ]);
-    // The sanctioned spelling.
-    expect(offendersIn('.a:focus-visible { @include focus-ring($offset: 1px); }')).toEqual([]);
-    // An outline-offset with no include beside it is not this gate's business.
-    expect(offendersIn('.a:focus-visible { outline-offset: 2px; }')).toEqual([]);
-    expect(offendersIn('// @include focus-ring; outline-offset: 2px;')).toEqual([]);
-    // The DOCUMENTED blind spot, pinned: a rule whose body holds a nested
-    // block is skipped, because `[^{}]*` cannot span into one.
-    expect(
-      offendersIn('.a:focus-visible { @include focus-ring; outline-offset: 2px; .i { top: 0; } }'),
-    ).toEqual([]);
-  });
-
-  it.each(styleFiles.map(({ label, code }) => [label, code]))('%s', (_label, code) => {
-    expect(
-      offendersIn(code),
-      'pass the offset via focus-ring($offset: …) instead of a separate outline-offset declaration',
-    ).toEqual([]);
   });
 });
 

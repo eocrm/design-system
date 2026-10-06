@@ -1,6 +1,6 @@
 {
   "extends": ["stylelint-config-standard-scss"],
-  "plugins": ["stylelint-declaration-strict-value"],
+  "plugins": ["stylelint-declaration-strict-value", "./tools/stylelint-plugin-eocrm/index.mjs"],
   "rules": {
     "scale-unlimited/declaration-strict-value": [
       [
@@ -65,7 +65,14 @@
           "justify-self",
           "grid-column",
           "grid-row"
-        ]
+        ],
+        "eocrm/focus-ring-offset-via-mixin": true
+      }
+    },
+    {
+      "files": ["packages/design-system/src/**/*.scss"],
+      "rules": {
+        "selector-pseudo-class-disallowed-list": ["dir"]
       }
     }
   ]
