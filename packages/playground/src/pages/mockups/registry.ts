@@ -47,6 +47,7 @@ export type ComponentName =
   | 'ImageCrop'
   | 'Indent'
   | 'Grid'
+  | 'Highlight'
   | 'Masonry'
   | 'MediaTile'
   | 'InlineDatePicker'

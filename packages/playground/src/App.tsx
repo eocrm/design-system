@@ -125,6 +125,7 @@ import { LinkDemo } from './pages/components/LinkDemo';
 import { LinkCardDemo } from './pages/components/LinkCardDemo';
 import { RailDemo } from './pages/components/RailDemo';
 import { ToastDemo } from './pages/components/ToastDemo';
+import { HighlightDemo } from './pages/components/HighlightDemo';
 import { TopBarDemo } from './pages/components/TopBarDemo';
 import { AppProvider } from '@eocrm/design-system';
 
@@ -266,6 +267,7 @@ export default function App() {
             <Route path="/components/date-strip" element={<DateStripDemo />} />
             <Route path="/components/slot-grid" element={<SlotGridDemo />} />
             <Route path="/components/toast" element={<ToastDemo />} />
+            <Route path="/components/highlight" element={<HighlightDemo />} />
           </Routes>
         </AppShell>
       </BrowserRouter>

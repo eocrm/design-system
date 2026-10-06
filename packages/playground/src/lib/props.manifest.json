@@ -1313,7 +1313,7 @@
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
           "default": "",
-          "description": "Secondary, non-interactive header text such as freshness (\"Updated 3 minutes ago\") or\nstatus. Sits before `actions` and yields first in a narrow cell: it truncates before\nthe title shrinks, while `actions` never shrinks. Also describes the body region\n(`aria-describedby`) for `standard` / `list`. Repeat it in the refresh button's\ntooltip if it matters when truncated."
+          "description": "Secondary, non-interactive header text such as freshness (\"Updated 3 minutes ago\") or\nstatus. Sits before `actions` and yields first in a narrow cell: it truncates (then\nhides visually, still read by screen readers) before the title shrinks, while `actions`\nnever shrinks. Also describes the body region (`aria-describedby`) for `standard` /\n`list`. Repeat it in the refresh button's tooltip if it matters when truncated."
         },
         {
           "name": "actions",
@@ -2773,6 +2773,52 @@
           "required": false,
           "default": "",
           "description": "Collapse to a single visual column when the GRID'S OWN width (container\nquery, not viewport) drops below the preset: `sm` 480px / `md` 640px /\n`lg` 768px. Every child spans the full row below the threshold —\n`Grid.Item` spans included. Only valid with `columns` (auto-fit grids\nalready reflow).\n\nConsumer inline `style={{ gridColumn }}` on a child still wins below the\nthreshold (inline beats any stylesheet rule) — don't do that; use\n`Grid.Item span` instead.\n\n❌ Anti-pattern: a `collapseBelow` grid must get its width from its\nparent. `container-type: inline-size` zeroes the grid's contribution to\nintrinsic sizing, so in an intrinsic-width context (`Split`'s default\n`auto` aside track, a `Cluster` item, `width: max-content`) it renders at\nwidth 0 — give the parent a concrete width instead. Whichever element\ncarries the containment also becomes the containing block for\nabsolutely-positioned descendants (layout containment) — the grid itself\nfor the string form, the wrapper below for the map form.\n\nAlso accepts a graduated breakpoint→columns map, e.g.\n`collapseBelow={{ md: 6, sm: 1 }}`: below 640px the grid re-templates to\n6 columns (item spans clamp to fit — a span wider than the step becomes a\nfull row), and below 480px to a single column. Use when jumping straight\nfrom N columns to 1 wastes tablet widths. When several breakpoints match,\nthe smallest wins. Only `Grid.Item` children get span clamping; plain\nchildren auto-place into the step's tracks.\n\n⚠️ The map form (and ONLY the map form) renders an extra wrapper `<div>`\naround the grid element — it carries `container-type: inline-size`,\nbecause re-templating the grid requires querying an ancestor, not the\ngrid itself. Consequences: a `> child` CSS selector aimed at the grid from\nits parent now hits the wrapper instead, and layout the parent applies to\n\"the Grid\" (`flex: 1`, `grid-column`, `align-self` via `className`) lands\non the grid *inside* the wrapper, where the parent's layout can't see it —\nput that layout on an element you control around the Grid. `ref`,\n`className`, `style`, `as` and all spread props stay on the grid element."
+        }
+      ]
+    },
+    "Highlight": {
+      "props": [
+        {
+          "name": "active",
+          "type": "boolean",
+          "required": true,
+          "default": "",
+          "description": "Turns the highlight on. Each false → true change starts it once: the ring\nshows, the optional scroll and focus run, and after `duration` it fades\nout and `onDone` fires. Setting it back to false early removes the ring at\nonce WITHOUT calling `onDone`. Keeping it `true` doesn't restart anything;\ntoggle false → true to highlight again."
+        },
+        {
+          "name": "duration",
+          "type": "number",
+          "required": false,
+          "default": "",
+          "description": "How long the ring holds before fading, in ms. `Infinity` keeps it on\nuntil `active` goes false. Default: `3000`."
+        },
+        {
+          "name": "onDone",
+          "type": "(() => void)",
+          "required": false,
+          "default": "",
+          "description": "Called once, after the fade ends (straight after `duration` under\n`prefers-reduced-motion`). Typically clears the consumer's `active`\nstate. Not called when `active` is cleared early or on unmount."
+        },
+        {
+          "name": "scrollIntoView",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "On activation, scroll the child to the vertical centre of its scroll\ncontainer. Smooth, or instant under `prefers-reduced-motion`.\nDefault: `false`."
+        },
+        {
+          "name": "focus",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "On activation, move focus to the child (`preventScroll`, so it never\nfights `scrollIntoView`). The child must be focusable: give a\nnon-interactive block (`Card`, `<section>`, `<tr>`) `tabIndex={-1}`.\nHighlight never adds it for you. Default: `false`."
+        },
+        {
+          "name": "children",
+          "type": "ReactElement<unknown, string | JSXElementConstructor<any>>",
+          "required": true,
+          "default": "",
+          "description": "Exactly one element that forwards `ref` and `className`: any DS\ncomponent, or a native element such as `<tr>` or `<li>`. Highlight\nrenders no wrapper of its own."
         }
       ]
     },
@@ -6128,7 +6174,7 @@
           "type": "\"list\" | \"kpi\" | \"chart\" | \"pipeline\" | \"activity\"",
           "required": true,
           "default": "",
-          "description": "Which widget kind the miniature depicts. Required.\n- `'kpi'` — label, a large value block (accent), a trend line.\n- `'list'` — rows of avatar + line; first avatar accented.\n- `'chart'` — a bar series (accented, one bar strong).\n- `'pipeline'` — stage columns of cards; current stage header strong.\n- `'activity'` — timeline rows with accented dots."
+          "description": "Which widget kind the miniature depicts. Required.\n- `'kpi'` — label, a large value block (strong accent), an accented trend line.\n- `'list'` — rows of accented avatar + line; first avatar strong.\n- `'chart'` — a bar series (accented, one bar strong).\n- `'pipeline'` — stage columns of cards; current stage header strong and its cards accented; next stage header accented.\n- `'activity'` — timeline rows with accented dots; first dot strong."
         }
       ]
     }
