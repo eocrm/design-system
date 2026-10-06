@@ -70,8 +70,9 @@ Extract the kpi variant's trend markup: lucide `TrendingUp/TrendingDown/Minus`
 (aria-hidden), visually hidden direction word, visible label, `data-sentiment`
 defaulted from direction (up→positive, down→negative, flat→neutral).
 `DashboardWidget` and `StatTile` both render it, passing their own `className`;
-size and colours stay per-component tokens. i18n keys move from
-`dashboardWidget.trendUp/trendDown/trendFlat` to `trend.up/down/flat` (en + ru).
+size and colours stay per-component tokens. i18n keys stay at
+`dashboardWidget.trendUp/trendDown/trendFlat`: consumers may override them via
+`I18nProvider overrides`, and a rename would silently drop those overrides.
 `DashboardWidget` behaviour and markup are unchanged — covered by its existing tests.
 
 ## Accessibility
@@ -84,7 +85,7 @@ size and colours stay per-component tokens. i18n keys move from
 - **Loading (Hard rule 10)**: loading is a property the user _arrives at_ while
   browsing tiles, so it lives in content: each tile's value slot renders a
   visually hidden `t('stat.loading')` in place of the value (skeletons are
-  aria-hidden). `aria-busy` on the list. **No live region, deliberately**: a
+  aria-hidden). `aria-busy` on the list. Footnotes hide while loading (they describe absent data); a trend skeleton always shows. The `<ul>` carries `role="list"` (Safari drops list semantics on `list-style: none`). **No live region, deliberately**: a
   dashboard loads many widgets at once; per-widget announcements flood screen
   readers (same rationale as `DashboardWidget`, documented in JSDoc + docs).
 
@@ -96,7 +97,7 @@ Column reflow itself is Grid's auto-fit.
 
 ## Styling / tokens
 
-`StatTile.tokens.scss` — `--stat-tile-bg` (subtle surface), `--stat-tile-radius`,
+`StatTile.tokens.scss` — `--stat-tile-bg` (`--color-bg-muted`; `bg-subtle` is invisible on a white card), `--stat-tile-radius`,
 `--stat-tile-padding`, `--stat-tile-gap`, label/value/trend/footnote size, weight
 and colour, trend positive/negative/neutral (`--color-success`, `--color-danger`,
 `--color-fg-muted`), narrow value size. No raw values; no layout properties on
@@ -113,7 +114,7 @@ the tile (Grid places it). Skeleton bars sized in tokens.
    ComponentsIndex, overviewSchematics, registry `ComponentName`.
 3. `src/index.ts` exports `StatGroup`, `StatTile`, `StatGroupProps`,
    `StatTileProps`, `StatTrend`.
-4. `docs/components/StatGroup.md` (covers both) + AI-PRIMER index line;
+4. `docs/components/StatGroup.md` + `StatTile.md` (the props-table generator owns `<X>Props` by doc-name prefix, as with Radio/RadioGroup) + AI-PRIMER index lines;
    `npm run build:docs`.
 5. CLUSTERS entry in `_meta/manifest.ts` and `scripts/generate-manifest.mjs`;
    `npm run build:manifest`.
