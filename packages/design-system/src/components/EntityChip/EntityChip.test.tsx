@@ -1,12 +1,18 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createRef, type ComponentProps, type ReactNode } from 'react';
-import { render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { parse, type Rule } from 'postcss';
 import { compile } from 'sass';
 import { I18nProvider } from '../../i18n/I18nProvider';
+import { TOOLTIP_DEFAULT_DELAY } from '../Tooltip/Tooltip';
 import { EntityChip, type EntityChipSegment } from './EntityChip';
+import {
+  findTooltip,
+  setupUser,
+  useFakeTimersWithUserEvent,
+} from '../_internal/fakeTimers.testutil';
 
 // A stub component used to verify polymorphic `as` forwarding. Looks like
 // react-router-dom's <Link> — accepts `to`, optionally `replace`, etc.
@@ -716,16 +722,31 @@ function fakeClip(el: HTMLElement, clipped: boolean) {
 }
 
 describe('<EntityChip> — tooltips and labelMaxWidth (#582)', () => {
+  useFakeTimersWithUserEvent();
   it('icon segment shows its label on hover, and only that tooltip', async () => {
-    const user = userEvent.setup();
+    const user = setupUser();
     render(<EntityChip href="/t" label="Fix" truncate before={TASK_BEFORE} />);
     await user.hover(screen.getByRole('img', { name: 'Bug' }));
-    expect(await screen.findByRole('tooltip')).toHaveTextContent('Bug');
+    expect(findTooltip()).toHaveTextContent('Bug');
     expect(screen.getAllByRole('tooltip')).toHaveLength(1);
   });
 
+  it('the tooltip is absent until the full Tooltip delay has elapsed', async () => {
+    const user = setupUser();
+    render(<EntityChip href="/t" label="Fix" truncate before={TASK_BEFORE} />);
+    await user.hover(screen.getByRole('img', { name: 'Bug' }));
+    act(() => {
+      vi.advanceTimersByTime(TOOLTIP_DEFAULT_DELAY - 1);
+    });
+    expect(screen.queryByRole('tooltip')).toBeNull();
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Bug');
+  });
+
   it('text segment shows its tooltip when given', async () => {
-    const user = userEvent.setup();
+    const user = setupUser();
     render(
       <EntityChip
         href="/t"
@@ -734,25 +755,25 @@ describe('<EntityChip> — tooltips and labelMaxWidth (#582)', () => {
       />,
     );
     await user.hover(screen.getByText('Reported'));
-    expect(await screen.findByRole('tooltip')).toHaveTextContent('Status: Reported');
+    expect(findTooltip()).toHaveTextContent('Status: Reported');
   });
 
   it('label tooltip shows the full label only when the label is clipped', async () => {
-    const user = userEvent.setup();
+    const user = setupUser();
     render(<EntityChip href="/t" label="A very long task title" truncate />);
     const label = screen.getByText('A very long task title');
     fakeClip(label, true);
     await user.hover(label);
-    expect(await screen.findByRole('tooltip')).toHaveTextContent('A very long task title');
+    expect(findTooltip()).toHaveTextContent('A very long task title');
   });
 
   it('an open label tooltip does not come back open after the chip stops and restarts being clippable', async () => {
-    const user = userEvent.setup();
+    const user = setupUser();
     const { rerender } = render(<EntityChip href="/t" label="A very long task title" truncate />);
     const label = screen.getByText('A very long task title');
     fakeClip(label, true);
     await user.hover(label);
-    expect(await screen.findByRole('tooltip')).toBeInTheDocument();
+    expect(findTooltip()).toBeInTheDocument();
     // Parent drops `truncate` while it's open: no Tooltip left to close it…
     rerender(<EntityChip href="/t" label="A very long task title" />);
     await user.unhover(screen.getByText('A very long task title'));
@@ -762,12 +783,12 @@ describe('<EntityChip> — tooltips and labelMaxWidth (#582)', () => {
   });
 
   it('an open label tooltip does not come back open after a loading round-trip', async () => {
-    const user = userEvent.setup();
+    const user = setupUser();
     const { rerender } = render(<EntityChip href="/t" label="A very long task title" truncate />);
     const label = screen.getByText('A very long task title');
     fakeClip(label, true);
     await user.hover(label);
-    expect(await screen.findByRole('tooltip')).toBeInTheDocument();
+    expect(findTooltip()).toBeInTheDocument();
     // A refetch under the pointer: the loading branch unmounts the label Tooltip…
     rerender(<EntityChip href="/t" label="A very long task title" truncate loading />);
     // …and when it resolves the tooltip must not remount already open.
@@ -776,12 +797,14 @@ describe('<EntityChip> — tooltips and labelMaxWidth (#582)', () => {
   });
 
   it('a fully visible label gets no tooltip and no aria-describedby', async () => {
-    const user = userEvent.setup();
+    const user = setupUser();
     render(<EntityChip href="/t" label="Short" truncate />);
     const label = screen.getByText('Short');
     fakeClip(label, false);
     await user.hover(label);
-    await new Promise((r) => setTimeout(r, 600)); // past Tooltip's 400ms delay
+    act(() => {
+      vi.advanceTimersByTime(TOOLTIP_DEFAULT_DELAY);
+    });
     expect(screen.queryByRole('tooltip')).toBeNull();
     expect(label).not.toHaveAttribute('aria-describedby');
   });
@@ -791,12 +814,12 @@ describe('<EntityChip> — tooltips and labelMaxWidth (#582)', () => {
     // set, neither of the other two clippable triggers. If `clippable` ever
     // drops the `hasSegments` term, this label gets no Tooltip wrapper at all
     // and this assertion fails (there is nothing to find/hover).
-    const user = userEvent.setup();
+    const user = setupUser();
     render(<EntityChip href="/t" label="A very long task title" before={TASK_BEFORE} />);
     const label = screen.getByText('A very long task title');
     fakeClip(label, true);
     await user.hover(label);
-    expect(await screen.findByRole('tooltip')).toHaveTextContent('A very long task title');
+    expect(findTooltip()).toHaveTextContent('A very long task title');
   });
 
   it('an unavailable chip with `before` segments still tooltips a clipped label (no truncate, #582 review)', async () => {
@@ -805,7 +828,7 @@ describe('<EntityChip> — tooltips and labelMaxWidth (#582)', () => {
     // case even though the chip keeps the `truncate` single-line class and can
     // still clip. `loading` never reaches this Tooltip at all (separate branch),
     // so only `unavailable` needed the `hasSegments` term.
-    const user = userEvent.setup();
+    const user = setupUser();
     render(
       <EntityChip
         href="/t"
@@ -818,7 +841,7 @@ describe('<EntityChip> — tooltips and labelMaxWidth (#582)', () => {
     const label = screen.getByText('A very long task title');
     fakeClip(label, true);
     await user.hover(label);
-    expect(await screen.findByRole('tooltip')).toHaveTextContent('A very long task title');
+    expect(findTooltip()).toHaveTextContent('A very long task title');
   });
 
   it('labelMaxWidth caps the label in ch, single-line, even without truncate/segments', () => {
@@ -837,6 +860,7 @@ describe('<EntityChip> — tooltips and labelMaxWidth (#582)', () => {
 });
 
 describe('<EntityChip> — keyboard focus opens the clipped-label tooltip (#582 review)', () => {
+  useFakeTimersWithUserEvent();
   // Mirrors Tooltip.test.tsx's `stubFocusVisible`: jsdom 29's `:focus-visible`
   // "last interaction was keyboard" heuristic flips to false once any prior
   // test has run, so userEvent.tab() would otherwise return false here too.
@@ -856,16 +880,16 @@ describe('<EntityChip> — keyboard focus opens the clipped-label tooltip (#582 
 
   it('tabbing onto the chip opens the tooltip when the label is clipped', async () => {
     stubFocusVisible(true);
-    const user = userEvent.setup();
+    const user = setupUser();
     render(<EntityChip href="/t" label="A very long task title" truncate />);
     fakeClip(screen.getByText('A very long task title'), true);
     await user.tab();
-    expect(await screen.findByRole('tooltip')).toHaveTextContent('A very long task title');
+    expect(findTooltip()).toHaveTextContent('A very long task title');
   });
 
   it('blurring the chip closes the tooltip', async () => {
     stubFocusVisible(true);
-    const user = userEvent.setup();
+    const user = setupUser();
     render(
       <>
         <EntityChip href="/t" label="A very long task title" truncate />
@@ -874,14 +898,14 @@ describe('<EntityChip> — keyboard focus opens the clipped-label tooltip (#582 
     );
     fakeClip(screen.getByText('A very long task title'), true);
     await user.tab();
-    expect(await screen.findByRole('tooltip')).toBeInTheDocument();
+    expect(findTooltip()).toBeInTheDocument();
     await user.tab();
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
   });
 
   it('does not open a tooltip on keyboard focus when the label is not clipped', async () => {
     stubFocusVisible(true);
-    const user = userEvent.setup();
+    const user = setupUser();
     render(<EntityChip href="/t" label="Short" truncate />);
     fakeClip(screen.getByText('Short'), false);
     await user.tab();
@@ -890,7 +914,7 @@ describe('<EntityChip> — keyboard focus opens the clipped-label tooltip (#582 
 
   it('preserves a consumer onFocus/onBlur passed through the polymorphic rest props', async () => {
     stubFocusVisible(true);
-    const user = userEvent.setup();
+    const user = setupUser();
     const onFocus = vi.fn();
     const onBlur = vi.fn();
     render(
@@ -918,22 +942,24 @@ describe('<EntityChip> — keyboard focus opens the clipped-label tooltip (#582 
     // term this chip never chains `handleRootFocus` onto the root at all
     // (below, #582 nice-to-have 4), so this assertion fails.
     stubFocusVisible(true);
-    const user = userEvent.setup();
+    const user = setupUser();
     render(<EntityChip href="/t" label="A very long task title" before={TASK_BEFORE} />);
     fakeClip(screen.getByText('A very long task title'), true);
     await user.tab();
-    expect(await screen.findByRole('tooltip')).toHaveTextContent('A very long task title');
+    expect(findTooltip()).toHaveTextContent('A very long task title');
   });
 
   it('does NOT open the tooltip on focus when :focus-visible is false, even past the delay', async () => {
     // Pins the `if (!focusVisible) return;` gate in handleRootFocus: a mouse
     // (non-keyboard) focus must not open the clipped-label tooltip.
     stubFocusVisible(false);
-    const user = userEvent.setup();
+    const user = setupUser();
     render(<EntityChip href="/t" label="A very long task title" truncate />);
     fakeClip(screen.getByText('A very long task title'), true);
     await user.tab();
-    await new Promise((r) => setTimeout(r, 600)); // past Tooltip's 400ms delay
+    act(() => {
+      vi.advanceTimersByTime(TOOLTIP_DEFAULT_DELAY);
+    });
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
   });
 
@@ -942,7 +968,7 @@ describe('<EntityChip> — keyboard focus opens the clipped-label tooltip (#582 
     // handleRootFocus/handleRootBlur at all — the consumer's own handlers
     // (from {...rest}) must still fire on their own.
     stubFocusVisible(true);
-    const user = userEvent.setup();
+    const user = setupUser();
     const onFocus = vi.fn();
     const onBlur = vi.fn();
     render(
@@ -960,6 +986,7 @@ describe('<EntityChip> — keyboard focus opens the clipped-label tooltip (#582 
 });
 
 describe('<EntityChip> — truncate class applies whenever segments are present (#582 review)', () => {
+  useFakeTimersWithUserEvent();
   it('an unavailable chip with segments keeps the truncate class and renders no segments', () => {
     const { container } = render(
       <EntityChip href="/t" label="L" unavailable before={TASK_BEFORE} after={TASK_AFTER} />,
@@ -987,6 +1014,7 @@ describe('<EntityChip> — truncate class applies whenever segments are present 
 });
 
 describe('<EntityChip> — .core shrink rule outranks .truncate > * regardless of source order (#582 review)', () => {
+  useFakeTimersWithUserEvent();
   const css = parse(compile(resolve(__dirname, './EntityChip.module.scss')).css);
 
   it('the core shrink/min-width rule is scoped under .segmented, out-specificing .truncate > *', () => {
@@ -1002,8 +1030,9 @@ describe('<EntityChip> — .core shrink rule outranks .truncate > * regardless o
 });
 
 describe('<EntityChip> — clipped-label tooltip is always plain text (#590)', () => {
+  useFakeTimersWithUserEvent();
   it('a clipped, styled label shows its text in the tooltip, never the styled element itself', async () => {
-    const user = userEvent.setup();
+    const user = setupUser();
     render(
       <EntityChip
         href="/t"
@@ -1019,24 +1048,25 @@ describe('<EntityChip> — clipped-label tooltip is always plain text (#590)', (
     const label = styled.parentElement as HTMLElement; // the labelRef wrapper Tooltip trigger
     fakeClip(label, true);
     await user.hover(label);
-    const tooltip = await screen.findByRole('tooltip');
+    const tooltip = findTooltip();
     expect(tooltip).toHaveTextContent('Title');
     expect(within(tooltip).queryByTestId('styled')).toBeNull();
   });
 
   it('a clipped, plain-string label still shows its text (unchanged behavior)', async () => {
-    const user = userEvent.setup();
+    const user = setupUser();
     render(<EntityChip href="/t" label="A very long task title" truncate />);
     const label = screen.getByText('A very long task title');
     fakeClip(label, true);
     await user.hover(label);
-    expect(await screen.findByRole('tooltip')).toHaveTextContent('A very long task title');
+    expect(findTooltip()).toHaveTextContent('A very long task title');
   });
 });
 
 describe('<EntityChip> — clipped-label tooltip never gets stuck disabled (#592)', () => {
+  useFakeTimersWithUserEvent();
   it('a non-string label that renders no text, then a rerender to a long clipped text label, still opens the tooltip with the text', async () => {
-    const user = userEvent.setup();
+    const user = setupUser();
     const { rerender } = render(
       <EntityChip href="/t" label={<svg data-testid="icon" />} truncate />,
     );
@@ -1047,51 +1077,56 @@ describe('<EntityChip> — clipped-label tooltip never gets stuck disabled (#592
     const iconLabel = screen.getByTestId('icon').parentElement as HTMLElement;
     fakeClip(iconLabel, false);
     await user.hover(iconLabel);
-    await new Promise((r) => setTimeout(r, 600)); // past Tooltip's 400ms delay
+    act(() => {
+      vi.advanceTimersByTime(TOOLTIP_DEFAULT_DELAY);
+    });
     await user.unhover(iconLabel);
 
     rerender(<EntityChip href="/t" label="A very long task title" truncate />);
     const label = screen.getByText('A very long task title');
     fakeClip(label, true);
     await user.hover(label);
-    expect(await screen.findByRole('tooltip')).toHaveTextContent('A very long task title');
+    expect(findTooltip()).toHaveTextContent('A very long task title');
   });
 
   // Same trap, but staying on the NON-string path (the string branch above
   // bypasses the captured-text fallback entirely): an empty capture must fall
   // back rather than stick as '' and disable the Tooltip.
   it('a non-string empty label, then a non-string long clipped label, still opens the tooltip', async () => {
-    const user = userEvent.setup();
+    const user = setupUser();
     const { rerender } = render(
       <EntityChip href="/t" label={<svg data-testid="icon" />} truncate />,
     );
     const iconLabel = screen.getByTestId('icon').parentElement as HTMLElement;
     fakeClip(iconLabel, true);
     await user.hover(iconLabel);
-    await new Promise((r) => setTimeout(r, 600));
+    act(() => {
+      vi.advanceTimersByTime(TOOLTIP_DEFAULT_DELAY);
+    });
     await user.unhover(iconLabel);
 
     rerender(<EntityChip href="/t" label={<b>A very long task title</b>} truncate />);
     const label = screen.getByText('A very long task title').parentElement as HTMLElement;
     fakeClip(label, true);
     await user.hover(label);
-    expect(await screen.findByRole('tooltip')).toHaveTextContent('A very long task title');
+    expect(findTooltip()).toHaveTextContent('A very long task title');
   });
 
   it('a string label that changes while the tooltip is open shows the new text (always fresh, never stale)', async () => {
-    const user = userEvent.setup();
+    const user = setupUser();
     const { rerender } = render(<EntityChip href="/t" label="Original title" truncate />);
     const label = screen.getByText('Original title');
     fakeClip(label, true);
     await user.hover(label);
-    expect(await screen.findByRole('tooltip')).toHaveTextContent('Original title');
+    expect(findTooltip()).toHaveTextContent('Original title');
 
     rerender(<EntityChip href="/t" label="Updated title" truncate />);
-    expect(await screen.findByRole('tooltip')).toHaveTextContent('Updated title');
+    expect(findTooltip()).toHaveTextContent('Updated title');
   });
 });
 
 describe('<EntityChip> — `labelWeight` (#590)', () => {
+  useFakeTimersWithUserEvent();
   it('defaults to no semibold class on prefix or label', () => {
     render(<EntityChip href="/t" prefix="ENG-5" label="Fix login bug" />);
     expect(screen.getByText('ENG-5').className).not.toMatch(/semibold/i);
@@ -1122,6 +1157,7 @@ describe('<EntityChip> — `labelWeight` (#590)', () => {
 });
 
 describe('<EntityChip> — labelEllipsis (#593)', () => {
+  useFakeTimersWithUserEvent();
   const URL_PATH = '/eocrm/design-system/pull/1116';
 
   it("'start' flips the clipped label to RTL around an LTR run that keeps the text order", () => {
@@ -1151,12 +1187,12 @@ describe('<EntityChip> — labelEllipsis (#593)', () => {
   });
 
   it("the clipped-label tooltip still shows the full text under 'start'", async () => {
-    const user = userEvent.setup();
+    const user = setupUser();
     render(<EntityChip href="/u" label={URL_PATH} truncate labelEllipsis="start" />);
     const label = screen.getByText(URL_PATH).parentElement!;
     fakeClip(label, true);
     await user.hover(label);
-    expect(await screen.findByRole('tooltip')).toHaveTextContent(URL_PATH);
+    expect(findTooltip()).toHaveTextContent(URL_PATH);
   });
 
   it("defaults to 'end', and 'start' is ignored on a chip whose label can't clip", () => {

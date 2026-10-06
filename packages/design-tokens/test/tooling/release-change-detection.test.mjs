@@ -5,8 +5,9 @@ import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
+import { parse } from 'yaml';
 
-const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
+const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
 const scriptPath = join(
   repositoryRoot,
   'packages/design-tokens/scripts/detect-library-changes.mjs',
@@ -249,116 +250,114 @@ test('falls back conservatively when shallow history omits the release tag', asy
 });
 
 test('serializes repository releases without cancelling partial-publication recovery', async () => {
-  const workflow = await readFile(workflowPath, 'utf8');
+  const { concurrency } = await readWorkflow(workflowPath);
 
-  assert.match(
-    workflow,
-    /^concurrency:\n  group: release-\$\{\{ github\.repository \}\}\n  cancel-in-progress: false$/m,
-  );
+  assert.deepEqual(concurrency, {
+    group: 'release-${{ github.repository }}',
+    'cancel-in-progress': false,
+  });
 });
 
 test('checks out full history and asks the detector about the surviving commit', async () => {
-  const workflow = await readFile(workflowPath, 'utf8');
-  const detectorJob = workflow.slice(
-    workflow.indexOf('  detect-library-changes:'),
-    workflow.indexOf('\n  publish:'),
-  );
+  const { jobs } = await readWorkflow(workflowPath);
+  const steps = jobs['detect-library-changes'].steps;
+  const detectIndex = steps.findIndex((s) => s.name === 'Detect library changes');
 
-  assert.match(detectorJob, /fetch-depth: 0[\s\S]*?name: Detect library changes/);
-  assert.match(detectorJob, /detect-library-changes\.mjs "\$\{\{ github\.sha \}\}"/);
+  assert.notEqual(detectIndex, -1, 'missing Detect library changes step');
+  const checkout = steps.findIndex((s) => s.uses?.startsWith('actions/checkout@'));
+  assert.ok(checkout !== -1 && checkout < detectIndex, 'checkout must precede detection');
+  assert.equal(steps[checkout].with['fetch-depth'], 0);
+  assert.match(steps[detectIndex].run, /detect-library-changes\.mjs "\$\{\{ github\.sha \}\}"/);
 });
 
 test('uses the shared stable-tag selector to compute the next release version', async () => {
-  const workflow = await readFile(workflowPath, 'utf8');
-  const versionStep = workflow.slice(
-    workflow.indexOf('      - name: Determine next version'),
-    workflow.indexOf('      - name: Synchronize release version'),
-  );
+  const versionStep = await releaseStep('Determine next version');
 
-  assert.match(versionStep, /latest-stable-release-tag\.mjs/);
-  assert.doesNotMatch(versionStep, /git tag --list/);
+  assert.match(versionStep.run, /latest-stable-release-tag\.mjs/);
+  assert.doesNotMatch(versionStep.run, /git tag --list/);
 });
 
 test('stages Compose publications locally and repairs every Maven file', async () => {
-  const workflow = await readFile(workflowPath, 'utf8');
-  const composeStep = workflow.slice(
-    workflow.indexOf('      - name: Publish Compose tokens'),
-    workflow.indexOf('      - name: Verify published artifacts'),
-  );
+  const composeStep = await releaseStep('Publish Compose tokens to GitHub Packages');
 
-  assert.match(composeStep, /publishToMavenLocal/);
-  assert.match(composeStep, /-Dmaven\.repo\.local="\$RUNNER_TEMP\/compose-maven"/);
-  assert.match(composeStep, /repair-compose-publication\.mjs/);
-  assert.doesNotMatch(composeStep, /grep -qiE '409/);
+  assert.match(composeStep.run, /publishToMavenLocal/);
+  assert.match(composeStep.run, /-Dmaven\.repo\.local="\$RUNNER_TEMP\/compose-maven"/);
+  assert.match(composeStep.run, /repair-compose-publication\.mjs/);
+  assert.doesNotMatch(composeStep.run, /grep -qiE '409/);
 });
 
 test('recognizes the npm 11 duplicate-version error for resumable releases', async () => {
-  const workflow = await readFile(workflowPath, 'utf8');
-  const npmPublishSteps = workflow.slice(
-    workflow.indexOf('      - name: Publish design tokens'),
-    workflow.indexOf('      - name: Publish Compose tokens'),
-  );
+  const npmPublishRuns = (
+    await Promise.all([
+      releaseStep('Publish design tokens to GitHub Packages'),
+      releaseStep('Publish design system to GitHub Packages'),
+    ])
+  )
+    .map((step) => step.run)
+    .join('\n');
 
   assert.equal(
-    npmPublishSteps.match(/cannot publish over the previously published versions/g)?.length,
+    npmPublishRuns.match(/cannot publish over the previously published versions/g)?.length,
     2,
   );
-  assert.equal(npmPublishSteps.match(/set \+e/g)?.length, 2);
+  assert.equal(npmPublishRuns.match(/set \+e/g)?.length, 2);
 });
 
 test('deploys the playground only after publish succeeds or an intentional no-change skip', async () => {
-  const workflow = await readFile(workflowPath, 'utf8');
-  const deployJob = workflow.slice(workflow.indexOf('  deploy-playground:'));
-  const normalizedJob = deployJob.replace(/\s+/g, ' ');
+  const deployJob = (await readWorkflow(workflowPath)).jobs['deploy-playground'];
 
-  assert.match(
-    normalizedJob,
-    /needs: \[quality, detect-library-changes, publish\] if: >- always\(\) && needs\.quality\.result == 'success' && needs\.detect-library-changes\.result == 'success' && \(needs\.publish\.result == 'success' \|\| \(needs\.publish\.result == 'skipped' && needs\.detect-library-changes\.outputs\.changed == 'false'\)\)/,
+  assert.deepEqual(deployJob.needs, ['quality', 'detect-library-changes', 'publish']);
+  assert.equal(
+    deployJob.if.replace(/\s+/g, ' '),
+    "always() && needs.quality.result == 'success' && needs.detect-library-changes.result == 'success' && (needs.publish.result == 'success' || (needs.publish.result == 'skipped' && needs.detect-library-changes.outputs.changed == 'false'))",
   );
 });
 
 test('caches npm and Gradle dependencies in quality and release jobs', async () => {
-  const [qualityWorkflow, releaseWorkflow] = await Promise.all([
-    readFile(qualityWorkflowPath, 'utf8'),
-    readFile(workflowPath, 'utf8'),
+  const [quality, release] = await Promise.all([
+    readWorkflow(qualityWorkflowPath),
+    readWorkflow(workflowPath),
   ]);
 
-  for (const workflow of [
-    qualityWorkflow,
-    releaseWorkflow.slice(releaseWorkflow.indexOf('  publish:')),
+  for (const { workflow, jobs } of [
+    { workflow: 'quality', jobs: Object.values(quality.jobs) },
+    { workflow: 'release', jobs: [release.jobs.publish] },
   ]) {
-    const nodeStep = extractWorkflowStep(workflow, 'Setup Node');
-    const javaStep = extractWorkflowStep(workflow, 'Setup Java');
-    const androidStep = extractWorkflowStep(workflow, 'Setup Android SDK');
+    const steps = jobs.flatMap((job) => job.steps ?? []);
+    const usesOf = (action) => steps.filter((s) => s.uses?.startsWith(`${action}@`));
+    const [javaStep, androidStep] = [
+      usesOf('actions/setup-java')[0],
+      usesOf('android-actions/setup-android')[0],
+    ];
+    const nodeSteps = usesOf('actions/setup-node');
 
-    assert.match(nodeStep, /uses: actions\/setup-node@v4/);
-    assert.match(nodeStep, /cache: "npm"/);
-    if (workflow === qualityWorkflow) {
-      // Every Quality job sets up Node, not just the first one.
-      const nodeSteps = extractAllWorkflowSteps(workflow, 'setup-node');
-      assert.ok(nodeSteps.length > 1);
-      for (const step of nodeSteps) assert.match(step, /cache: "npm"/);
+    // Every Quality job sets up Node, not just the first one.
+    assert.ok(nodeSteps.length > (workflow === 'quality' ? 1 : 0));
+    for (const step of nodeSteps) {
+      assert.equal(step.uses, 'actions/setup-node@v4');
+      assert.equal(step.with.cache, 'npm');
     }
-    assert.match(javaStep, /uses: actions\/setup-java@v4/);
-    assert.match(javaStep, /cache: "gradle"/);
-    assert.match(javaStep, /packages\/design-tokens\/compose\/\*\*\/\*\.gradle\*/);
-    assert.match(javaStep, /packages\/design-tokens\/compose\/gradle\.properties/);
-    assert.match(javaStep, /packages\/design-tokens\/compose\/\*\*\/gradle-wrapper\.properties/);
-    assert.doesNotMatch(androidStep, /cache/i);
+    assert.equal(javaStep.uses, 'actions/setup-java@v4');
+    assert.equal(javaStep.with.cache, 'gradle');
+    const paths = javaStep.with['cache-dependency-path'];
+    assert.match(paths, /packages\/design-tokens\/compose\/\*\*\/\*\.gradle\*/);
+    assert.match(paths, /packages\/design-tokens\/compose\/gradle\.properties/);
+    assert.match(paths, /packages\/design-tokens\/compose\/\*\*\/gradle-wrapper\.properties/);
+    assert.deepEqual(
+      Object.keys(androidStep.with ?? {}).filter((key) => /cache/i.test(key)),
+      [],
+    );
   }
 });
 
-function extractWorkflowStep(workflow, name) {
-  const start = workflow.indexOf(`      - name: ${name}`);
-  const next = workflow.indexOf('\n      - name:', start + 1);
-  assert.notEqual(start, -1, `missing workflow step: ${name}`);
-  return workflow.slice(start, next === -1 ? undefined : next);
+async function readWorkflow(path) {
+  return parse(await readFile(path, 'utf8'));
 }
 
-function extractAllWorkflowSteps(workflow, name) {
-  return workflow
-    .split(/\n(?=      - name: )/)
-    .filter((chunk) => chunk.includes(`uses: actions/${name}@`));
+async function releaseStep(name) {
+  const step = (await readWorkflow(workflowPath)).jobs.publish.steps.find((s) => s.name === name);
+  assert.ok(step, `missing release step: ${name}`);
+  return step;
 }
 
 async function createRepository() {

@@ -223,7 +223,7 @@ it('dismiss ✕ click stops propagation to an ancestor click handler', async () 
   const ancestorSpy = vi.fn();
   const onActivate = vi.fn();
   render(
-    // eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
+    // Click-only ancestor <div> on purpose: it observes whether a click bubbles out of the chip.
     <div onClick={ancestorSpy}>
       <FilterChip onActivate={onActivate} onDismiss={() => {}}>
         <FilterChip.Label>Event</FilterChip.Label>

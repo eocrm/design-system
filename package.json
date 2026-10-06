@@ -21,17 +21,23 @@
     "tokens:validate": "npm run validate -w @eocrm/design-tokens",
     "tokens:generate": "npm run generate -w @eocrm/design-tokens",
     "tokens:test": "npm test -w @eocrm/design-tokens",
+    "test:tooling": "npm run test:tooling -w @eocrm/design-tokens",
     "tokens:check": "npm run validate -w @eocrm/design-tokens && npm test -w @eocrm/design-tokens && npm run check -w @eocrm/design-tokens",
     "prepare": "husky",
-    "test:focus-geometry": "playwright test"
+    "test:focus-geometry": "playwright test",
+    "lint:ts": "eslint packages/design-system/src",
+    "test:lint-rules": "node --test \"tools/**/*.test.mjs\""
   },
   "devDependencies": {
     "@playwright/test": "1.62.1",
+    "eslint": "^10.12.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
     "husky": "^9.1.7",
     "prettier": "3.8.3",
     "stylelint": "^17.12.0",
     "stylelint-config-standard-scss": "^17.0.0",
     "stylelint-declaration-strict-value": "^1.11.1",
-    "typescript": "^6.0.3"
+    "typescript": "^6.0.3",
+    "typescript-eslint": "^8.71.1"
   }
 }

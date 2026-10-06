@@ -1,12 +1,13 @@
 import { createRef, useState } from 'react';
 import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { setupUser, useFakeTimersWithUserEvent } from '../_internal/fakeTimers.testutil';
 import { stubClientRects } from '../_internal/layoutStub.testutil';
 import { overlayStack } from '../_internal/overlay';
 import { Drawer } from '../Drawer';
 import { Modal } from '../Modal';
 import { Popover } from '../Popover';
-import { Tour, type TourProps, type TourStep } from './Tour';
+import { EXIT_FALLBACK_MS, Tour, type TourProps, type TourStep } from './Tour';
 
 const STEPS: TourStep[] = [
   { title: 'Welcome', body: 'Quick tour.' },
@@ -154,25 +155,37 @@ describe('Tour — navigation', () => {
     expect(screen.getByRole('dialog', { name: 'Filters' })).toBeInTheDocument();
   });
 
-  it('re-opening an uncontrolled tour starts again at defaultStep', async () => {
-    const user = userEvent.setup();
-    render(<Harness />);
-    await user.click(screen.getByRole('button', { name: 'Next' }));
-    await user.click(screen.getByRole('button', { name: 'Skip tour' }));
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    await user.click(screen.getByRole('button', { name: 'Start' }));
-    expect(screen.getByRole('dialog', { name: 'Welcome' })).toBeInTheDocument();
+  describe('re-opening', () => {
+    useFakeTimersWithUserEvent();
+
+    it('re-opening an uncontrolled tour starts again at defaultStep', async () => {
+      // Exit unmounts via the EXIT_FALLBACK_MS timer (jsdom has no transitionend).
+      const user = setupUser();
+      render(<Harness />);
+      await user.click(screen.getByRole('button', { name: 'Next' }));
+      await user.click(screen.getByRole('button', { name: 'Skip tour' }));
+      act(() => {
+        vi.advanceTimersByTime(EXIT_FALLBACK_MS);
+      });
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Start' }));
+      expect(screen.getByRole('dialog', { name: 'Welcome' })).toBeInTheDocument();
+    });
   });
 });
 
 describe('Tour — presence', () => {
+  useFakeTimersWithUserEvent();
+
   it('keeps the card mounted with data-state="closed" while exiting, then unmounts', async () => {
+    // Exit unmounts via EXIT_FALLBACK_MS (fake timers on, see hook above).
     const { rerender } = render(<Tour steps={STEPS} open onOpenChange={() => {}} />);
     rerender(<Tour steps={STEPS} open={false} onOpenChange={() => {}} />);
     expect(screen.getByRole('dialog', { hidden: true })).toHaveAttribute('data-state', 'closed');
-    await waitFor(() =>
-      expect(screen.queryByRole('dialog', { hidden: true })).not.toBeInTheDocument(),
-    );
+    act(() => {
+      vi.advanceTimersByTime(EXIT_FALLBACK_MS);
+    });
+    expect(screen.queryByRole('dialog', { hidden: true })).not.toBeInTheDocument();
   });
 });
 

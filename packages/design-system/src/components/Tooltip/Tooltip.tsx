@@ -94,6 +94,9 @@ function isInteractiveTarget(target: EventTarget | null): boolean {
   return target instanceof Element && target.closest(INTERACTIVE) !== null;
 }
 
+/** Default hover/focus open delay (ms). Exported for tests only; not public API. */
+export const TOOLTIP_DEFAULT_DELAY = 400;
+
 /**
  * Small floating label anchored to a single trigger, opening on hover or keyboard focus with a directional arrow.
  * @see docs/components/Tooltip.md
@@ -104,7 +107,7 @@ export function Tooltip({
   side = 'top',
   align = 'center',
   sideOffset = 6,
-  delay = 400,
+  delay = TOOLTIP_DEFAULT_DELAY,
   open: controlledOpen,
   onOpenChange,
   defaultOpen = false,

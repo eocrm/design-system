@@ -472,7 +472,7 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
           <div className={styles.errorState}>{t('imageCrop.loadError')}</div>
         )}
         {resolvedSrc && (
-          /* eslint-disable-next-line jsx-a11y/alt-text -- alt is intentionally empty; the cropping interaction IS the meaning, consumer overrides via rest if needed. */
+          /* alt is intentionally empty; the cropping interaction IS the meaning, consumer overrides via rest if needed. */
           <img
             ref={imageRef}
             src={resolvedSrc}
