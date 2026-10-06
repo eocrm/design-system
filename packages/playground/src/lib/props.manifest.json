@@ -5474,7 +5474,7 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Loading state for every tile: labels and icons stay; each value and trend becomes a\nskeleton with visually hidden \"Loading…\" in the value slot, and footnotes hide.\nSets `aria-busy` on the list. Deliberately NO live region: a dashboard loads many\nwidgets at once, so announcements would flood screen readers. Default `false`."
+          "description": "Loading state for every tile: labels and icons stay; each value and trend becomes a\nskeleton with visually hidden \"Loading…\" in the value slot, and footnotes hide.\nDeliberately NO live region: a dashboard loads many widgets at once, so announcements\nwould flood screen readers. No `aria-busy` either: it tells AT to defer reading the\nregion, which would hide that text. Default `false`."
         },
         {
           "name": "children",
