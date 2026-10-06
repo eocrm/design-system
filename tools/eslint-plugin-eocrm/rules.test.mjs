@@ -1,3 +1,7 @@
+import assert from 'node:assert/strict';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
+import { join, relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, it } from 'node:test';
 import { RuleTester } from 'eslint';
 import tseslint from 'typescript-eslint';
@@ -79,4 +83,38 @@ tester.run('aria-busy-needs-announcement', rules['aria-busy-needs-announcement']
       errors: [{ messageId: 'missing' }],
     },
   ],
+});
+
+// Guard: an inline disable would switch an eocrm policy rule off silently
+// (reportUnusedDisableDirectives is off), where the old Vitest gate had no
+// off-switch. No source may name eocrm/* in an eslint comment, and a bare
+// `eslint-disable` (all rules) is banned in the library, which eocrm covers.
+describe('eocrm rules have no inline off-switch', () => {
+  const root = fileURLToPath(new URL('../../packages', import.meta.url));
+  const walk = (dir) =>
+    readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
+      const p = join(dir, e.name);
+      if (e.isDirectory()) return e.name === 'node_modules' ? [] : walk(p);
+      return /\.(tsx?|mjs|js)$/.test(e.name) ? [p] : [];
+    });
+  const comment = /eslint(-disable(-next-line|-line)?|-enable)?\b/;
+  const bareDisable = /^\s*(\/\/|\/\*)\s*eslint-disable\s*(\*\/)?\s*$/;
+
+  it('no eslint comment mentions eocrm/ or blanket-disables the library', () => {
+    const offenders = [];
+    for (const pkg of readdirSync(root)) {
+      const src = join(root, pkg, 'src');
+      if (!existsSync(src)) continue;
+      for (const file of walk(src)) {
+        readFileSync(file, 'utf8')
+          .split('\n')
+          .forEach((line, i) => {
+            const mentions = comment.test(line) && line.includes('eocrm/');
+            const bare = pkg === 'design-system' && bareDisable.test(line);
+            if (mentions || bare) offenders.push(`${relative(root, file)}:${i + 1}`);
+          });
+      }
+    }
+    assert.deepEqual(offenders, []);
+  });
 });

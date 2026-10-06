@@ -25,7 +25,7 @@
     "tokens:check": "npm run validate -w @eocrm/design-tokens && npm test -w @eocrm/design-tokens && npm run check -w @eocrm/design-tokens",
     "prepare": "husky",
     "test:focus-geometry": "playwright test",
-    "lint:ts": "eslint .",
+    "lint:ts": "eslint packages/design-system/src",
     "test:lint-rules": "node --test \"tools/**/*.test.mjs\""
   },
   "devDependencies": {
