@@ -1,7 +1,7 @@
 import { forwardRef, useId, type HTMLAttributes, type ReactNode } from 'react';
 import clsx from 'clsx';
-import { Minus, TrendingDown, TrendingUp } from 'lucide-react';
 import { Card } from '../Card';
+import { Trend } from '../_internal/Trend';
 import { VisuallyHidden } from '../VisuallyHidden';
 import { WidgetShape, type WidgetShapeKind } from '../WidgetPreview/WidgetShape';
 import { useTranslation } from '../../i18n/useTranslation';
@@ -69,15 +69,6 @@ const LOADING_SHAPE: Record<DashboardWidgetVariant, WidgetShapeKind> = {
   chart: 'chart',
 };
 
-const DEFAULT_SENTIMENT = { up: 'positive', down: 'negative', flat: 'neutral' } as const;
-const TREND_ICON = { up: TrendingUp, down: TrendingDown, flat: Minus } as const;
-
-function TrendIcon({ direction }: { direction: DashboardWidgetTrend['direction'] }) {
-  const Icon = TREND_ICON[direction];
-  return <Icon size={16} aria-hidden="true" />;
-}
-const TREND_WORD = { up: 'trendUp', down: 'trendDown', flat: 'trendFlat' } as const;
-
 /**
  * Dashboard canvas-cell card with standard / list / kpi / chart presentation and a variant-matched loading skeleton.
  * @see docs/components/DashboardWidget.md
@@ -133,16 +124,7 @@ export const DashboardWidget = forwardRef<HTMLDivElement, DashboardWidgetProps>(
     ) : variant === 'kpi' ? (
       <>
         {value != null && <div className={styles.value}>{value}</div>}
-        {trend && (
-          <div
-            className={styles.trend}
-            data-sentiment={trend.sentiment ?? DEFAULT_SENTIMENT[trend.direction]}
-          >
-            <TrendIcon direction={trend.direction} />
-            <VisuallyHidden>{t(`dashboardWidget.${TREND_WORD[trend.direction]}`)} </VisuallyHidden>
-            <span>{trend.label}</span>
-          </div>
-        )}
+        {trend && <Trend trend={trend} className={styles.trend} />}
         {children}
       </>
     ) : (
