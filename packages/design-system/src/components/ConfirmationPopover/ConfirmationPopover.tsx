@@ -219,6 +219,7 @@ function FocusReturn({ returnFocusRef }: { returnFocusRef?: RefObject<HTMLElemen
     if (open) {
       return () => {
         queueMicrotask(() => {
+          // eslint-disable-next-line react-hooks/exhaustive-deps -- the generation counter must be read at cleanup time
           if (generationRef.current === generation) restore();
         });
       };

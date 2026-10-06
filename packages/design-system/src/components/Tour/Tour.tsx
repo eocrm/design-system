@@ -268,8 +268,9 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
   // the early return below), so it must not register as a floating surface
   // or handle Escape.
   const floatingId = useFloatingSurface(!closing && !!current);
+  const hasCurrent = !!current;
   useEffect(() => {
-    if (closing || !current) return;
+    if (closing || !hasCurrent) return;
     const onDocKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || !overlayStack.isTopFloating(floatingId)) return;
       // modal={false} leaves the rest of the page usable, so Escape typed
@@ -284,7 +285,7 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
     };
     document.addEventListener('keydown', onDocKeyDown, true);
     return () => document.removeEventListener('keydown', onDocKeyDown, true);
-  }, [closing, floatingId, !!current, modal]);
+  }, [closing, floatingId, hasCurrent, modal]);
 
   // ---- Positioning ----
   const side = current?.side ?? 'bottom';

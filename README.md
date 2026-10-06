@@ -51,13 +51,13 @@ Per-component contracts: [`packages/design-system/docs/components/<Name>.md`](./
 make install          # npm install (sets up workspaces AND installs git hooks)
 make up               # dev server at http://localhost:8080 + opens browser
 make test             # Vitest (library only)
-make lint             # stylelint
+make lint             # stylelint + ESLint
 make build            # production build of playground (also typechecks library)
 ```
 
 ### Git hooks (mandatory)
 
-`npm install` auto-installs a `pre-push` hook via Husky that runs **prettier**, **stylelint**, and **typecheck**. Pushes are blocked if any of those fail — this catches the static-analysis subset of the CI quality gate before you wait on CI.
+`npm install` auto-installs a `pre-push` hook via Husky that runs **prettier**, **stylelint**, **ESLint**, and **typecheck**. Pushes are blocked if any of those fail — this catches the static-analysis subset of the CI quality gate before you wait on CI.
 
 Verify the hook is wired:
 

@@ -68,7 +68,7 @@ Process for those:
 
 ## Git hooks
 
-**Hooks MUST be installed.** A `pre-push` hook (managed by Husky) runs prettier, stylelint, and typecheck before every push. It exists because the CI quality gate runs the same checks — local failures are cheaper than a red PR.
+**Hooks MUST be installed.** A `pre-push` hook (managed by Husky) runs prettier, stylelint, ESLint, and typecheck before every push. It exists because the CI quality gate runs the same checks — local failures are cheaper than a red PR.
 
 Installation is automatic: `npm install` (or `make install`) triggers the `prepare` script which sets `core.hooksPath` to `.husky/_` and wires every hook in `.husky/`.
 

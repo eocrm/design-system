@@ -61,6 +61,7 @@ export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function 
   forwardedRef,
 ) {
   const ctx = usePopoverContext('Content');
+  const { closeAll, setOpen } = ctx;
   const inOverlay = useInOverlay(ctx.triggerRef, ctx.open);
   // #274: hosts yield Escape while we're open — our capture listener
   // closes us (or one menu level) on the same press instead.
@@ -129,12 +130,12 @@ export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function 
         if (!overlayStack.isTopFloating(floatingId)) return;
         e.preventDefault();
         overlayStack.consumeEscape(e); // hosts yield even if we ran first (#274)
-        ctx.closeAll();
+        closeAll();
       }
     };
     document.addEventListener('keydown', onKeyDown, true);
     return () => document.removeEventListener('keydown', onKeyDown, true);
-  }, [ctx.open, ctx.closeAll, floatingId]);
+  }, [ctx.open, closeAll, floatingId]);
 
   // Outside-click closes.
   useEffect(() => {
@@ -155,11 +156,11 @@ export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function 
       // DropdownMenu's own outside-click exemption.
       const el = target instanceof Element ? target : target.parentElement;
       if (el?.closest('[data-dropdown-menu-content], [data-popover-content]')) return;
-      ctx.setOpen(false);
+      setOpen(false);
     };
     document.addEventListener('pointerdown', onPointerDown, true);
     return () => document.removeEventListener('pointerdown', onPointerDown, true);
-  }, [ctx.open, ctx.contentRef, ctx.triggerRef, ctx.setOpen]);
+  }, [ctx.open, ctx.contentRef, ctx.triggerRef, setOpen]);
 
   if (!ctx.open) return null;
 

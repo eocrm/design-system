@@ -228,6 +228,7 @@ export function ModalRoot({
     if (open) {
       return () => {
         queueMicrotask(() => {
+          // eslint-disable-next-line react-hooks/exhaustive-deps -- the generation counter must be read at cleanup time
           if (focusEffectGenerationRef.current === generation && isFocusLost()) restoreFocus();
         });
       };
@@ -254,7 +255,6 @@ export function ModalRoot({
     queueMicrotask(() => {
       if (cancelled) return;
       if (!headingId && !ariaLabel) {
-        // eslint-disable-next-line no-console
         console.warn(
           '<Modal> must be labelled. Either render <Modal.Header> or pass an `aria-label` prop. Screen-reader users get no announcement otherwise.',
         );

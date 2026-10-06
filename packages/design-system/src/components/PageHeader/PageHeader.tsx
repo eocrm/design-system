@@ -152,13 +152,11 @@ export function PageHeaderBackButton({
   const ariaLabel = ariaLabelProp || t('pageHeader.back');
   useEffect(() => {
     if (process.env.NODE_ENV !== 'production' && href && onClick) {
-      // eslint-disable-next-line no-console
       console.warn(
         '<PageHeader.BackButton> received both `href` and `onClick`. Rendering as <button>; `href` is ignored.',
       );
     }
     if (process.env.NODE_ENV !== 'production' && !href && !onClick) {
-      // eslint-disable-next-line no-console
       console.warn(
         '<PageHeader.BackButton> rendered without `href` or `onClick`. Rendering as a disabled <button>.',
       );

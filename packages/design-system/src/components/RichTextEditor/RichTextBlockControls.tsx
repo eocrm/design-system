@@ -183,10 +183,11 @@ export const RichTextBlockControls = memo(function RichTextBlockControls({
   // clearReflow then onDraggingChange(false), matching the original order.
   useEffect(() => {
     return () => {
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- clears the reflow on the root as it is at unmount
       clearReflow(dragRef.current, rootRef.current);
       dragRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- unmount-only cleanup
   }, []);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));

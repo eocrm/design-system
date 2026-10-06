@@ -124,6 +124,7 @@ export function DrawerRoot({
     if (open) {
       return () => {
         queueMicrotask(() => {
+          // eslint-disable-next-line react-hooks/exhaustive-deps -- the generation counter must be read at cleanup time
           if (focusEffectGenerationRef.current === generation && isFocusLost()) restoreFocus();
         });
       };
@@ -143,7 +144,6 @@ export function DrawerRoot({
     queueMicrotask(() => {
       if (cancelled) return;
       if (!headingId && !ariaLabel) {
-        // eslint-disable-next-line no-console
         console.warn(
           '<Drawer> must be labelled. Either render <Drawer.Header> or pass an `aria-label` prop.',
         );

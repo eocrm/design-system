@@ -19,7 +19,6 @@ describe('getFirstDayOfWeek', () => {
 
   it('uses the static fallback when Intl.Locale.getWeekInfo is missing', () => {
     const orig = (Intl.Locale.prototype as { getWeekInfo?: unknown }).getWeekInfo;
-    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
     delete (Intl.Locale.prototype as { getWeekInfo?: unknown }).getWeekInfo;
     try {
       expect(getFirstDayOfWeek('en-US')).toBe(0);
@@ -45,7 +44,6 @@ describe('getWeekendDays', () => {
 
   it('uses the static fallback when Intl.Locale.getWeekInfo is missing', () => {
     const orig = (Intl.Locale.prototype as { getWeekInfo?: unknown }).getWeekInfo;
-    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
     delete (Intl.Locale.prototype as { getWeekInfo?: unknown }).getWeekInfo;
     try {
       expect(getWeekendDays('ar-SA')).toEqual([5, 6]);
