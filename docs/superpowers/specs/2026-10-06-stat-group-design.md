@@ -85,7 +85,8 @@ size and colours stay per-component tokens. i18n keys stay at
 - **Loading (Hard rule 10)**: loading is a property the user _arrives at_ while
   browsing tiles, so it lives in content: each tile's value slot renders a
   visually hidden `t('stat.loading')` in place of the value (skeletons are
-  aria-hidden). No `aria-busy` on the list: it tells AT to defer reading the region, which would hide that text. Footnotes hide while loading (they describe absent data); a trend skeleton always shows. The `<ul>` carries `role="list"` (Safari drops list semantics on `list-style: none`). **No live region, deliberately**: a
+  aria-hidden). No `aria-busy`: the per-tile hidden text already carries the state.
+  Footnotes hide while loading (they describe absent data); a trend skeleton always shows. The `<ul>` carries `role="list"` (Safari drops list semantics on `list-style: none`). **No live region, deliberately**: a
   dashboard loads many widgets at once; per-widget announcements flood screen
   readers (same rationale as `DashboardWidget`, documented in JSDoc + docs).
 
