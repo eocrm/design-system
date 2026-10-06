@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 import stylelint from 'stylelint';
 import { readFileSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
+import scss from 'postcss-scss';
 
 const config = {
   customSyntax: 'postcss-scss',
@@ -61,6 +63,9 @@ test('interpolated #{&}:dir() is flagged (built-in skips it)', async () => {
 test(':is(:dir()) is flagged', async () => {
   assert.ok((await lint('.a:is(:dir(rtl)) { color: red; }')).includes(noDir));
 });
+test(':DIR() is flagged (case-insensitive)', async () => {
+  assert.ok((await lint('.a:DIR(rtl) { color: red; }')).includes(noDir));
+});
 test('.dir and [dir="rtl"] are ok', async () => {
   assert.deepEqual(await lint('.dir { color: red; }\n[dir="rtl"] .a { color: red; }'), []);
 });
@@ -108,18 +113,16 @@ test('real config: playground gets neither', async () => {
 });
 
 // Guard: disable comments in design-system SCSS may not blanket-disable or name the moved policy rules.
-const DISABLE = /(?:\/\/|\/\*)\s*stylelint-disable(?:-next-line|-line)?(?![\w-])(.*)/;
+// Parsed with postcss-scss so multi-line block comments are seen like stylelint sees them.
+const DISABLE = /^\s*stylelint-disable(?:-next-line|-line)?(?![\w-])([\s\S]*)$/;
 const protectedRule = /eocrm\/|selector-pseudo-class-disallowed-list/;
 function badDisables(src) {
   const bad = [];
-  src.split('\n').forEach((line, i) => {
-    const m = DISABLE.exec(line);
+  scss.parse(src).walkComments((c) => {
+    const m = DISABLE.exec(c.text);
     if (!m) return;
-    const rules = m[1]
-      .replace(/\*\/.*$/, '')
-      .replace(/\s--(?:\s.*)?$|^\s*--(?:\s.*)?$/, '')
-      .trim();
-    if (rules === '' || protectedRule.test(rules)) bad.push(i + 1);
+    const rules = m[1].replace(/(?:^|\s)--(?:\s[\s\S]*)?$/, '').trim();
+    if (rules === '' || protectedRule.test(rules)) bad.push(c.source.start.line);
   });
   return bad;
 }
@@ -127,6 +130,8 @@ test('disable-comment guard: detects each bad form', () => {
   for (const c of [
     '// stylelint-disable',
     '/* stylelint-disable */',
+    '/*\n  stylelint-disable\n*/',
+    '/*\n  stylelint-disable-next-line\n  -- reason\n*/',
     '// stylelint-disable-next-line -- reason',
     '/* stylelint-disable-line -- reason */',
     '// stylelint-disable eocrm/no-dir-pseudo-class',
@@ -141,11 +146,9 @@ test('disable-comment guard: detects each bad form', () => {
     assert.deepEqual(badDisables(c), [], c);
 });
 test('design-system SCSS has no blanket or moved-rule stylelint disables', () => {
-  const root = 'packages/design-system/src';
+  const root = fileURLToPath(new URL('../../packages/design-system/src', import.meta.url));
   const offenders = readdirSync(root, { recursive: true })
     .filter((f) => f.endsWith('.scss'))
-    .flatMap((f) =>
-      badDisables(readFileSync(join(root, f), 'utf8')).map((n) => `${root}/${f}:${n}`),
-    );
+    .flatMap((f) => badDisables(readFileSync(join(root, f), 'utf8')).map((n) => `${f}:${n}`));
   assert.deepEqual(offenders, []);
 });

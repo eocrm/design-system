@@ -9,7 +9,7 @@ export const messages = stylelint.utils.ruleMessages(ruleName, {
 const rule = (primary) => (root, result) => {
   if (!stylelint.utils.validateOptions(result, ruleName, { actual: primary })) return;
   root.walkRules((r) => {
-    if (/:dir\(/.test(r.selector)) {
+    if (/:dir\(/i.test(r.selector)) {
       stylelint.utils.report({ result, ruleName, node: r, message: messages.rejected });
     }
   });
