@@ -18,6 +18,23 @@ describe('DashboardWidget', () => {
     expect(root.querySelector('[data-scroll]')).toHaveTextContent('Body');
   });
 
+  it('meta renders in the header and describes the scrolling body group', () => {
+    render(
+      <DashboardWidget title="Pipeline" meta="Updated 3 minutes ago" actions={<button>R</button>}>
+        <p>Body</p>
+      </DashboardWidget>,
+    );
+    expect(screen.getByRole('heading', { name: 'Pipeline' })).not.toHaveTextContent('Updated');
+    expect(screen.getByRole('group', { name: 'Pipeline' })).toHaveAccessibleDescription(
+      'Updated 3 minutes ago',
+    );
+  });
+
+  it('no meta → body group has no description', () => {
+    render(<DashboardWidget title="Pipeline" />);
+    expect(screen.getByRole('group', { name: 'Pipeline' })).not.toHaveAttribute('aria-describedby');
+  });
+
   it('honours headerLevel', () => {
     render(<DashboardWidget title="T" headerLevel="h2" />);
     expect(screen.getByRole('heading', { level: 2, name: 'T' })).toBeInTheDocument();

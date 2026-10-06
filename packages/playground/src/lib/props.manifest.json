@@ -1309,6 +1309,13 @@
           "description": "Widget title, rendered as the heading at `headerLevel`. Required."
         },
         {
+          "name": "meta",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Secondary, non-interactive header text such as freshness (\"Updated 3 minutes ago\") or\nstatus. Sits before `actions` and yields first in a narrow cell: it truncates before\nthe title shrinks, while `actions` never shrinks. Also describes the body region\n(`aria-describedby`) for `standard` / `list`. Repeat it in the refresh button's\ntooltip if it matters when truncated."
+        },
+        {
           "name": "actions",
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,

@@ -10,7 +10,7 @@ import {
   Switch,
   Text,
 } from '@eocrm/design-system';
-import { MoreHorizontal } from 'lucide-react';
+import { MoreHorizontal, RefreshCw } from 'lucide-react';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -157,6 +157,40 @@ export function DashboardWidgetDemo() {
               </DashboardWidget>
             </div>
           </Grid>
+        </Stack>
+      </Example>
+
+      <Example
+        title="Header meta"
+        description="Freshness or status text in meta yields first: it truncates before the title shrinks, while actions keep their width. Cells below are 360, 240 and 180px wide."
+        code={`<DashboardWidget
+  title="Deals pipeline"
+  meta="Updated 1 second ago"
+  actions={
+    <Button size="xs" variant="ghost" iconOnly aria-label="Refresh">
+      <RefreshCw size={14} aria-hidden="true" />
+    </Button>
+  }
+>
+  …
+</DashboardWidget>`}
+      >
+        <Stack gap="md">
+          {[360, 240, 180].map((width) => (
+            <div key={width} style={{ height: 120, width }}>
+              <DashboardWidget
+                title="Deals pipeline"
+                meta="Updated 1 second ago"
+                actions={
+                  <Button size="xs" variant="ghost" iconOnly aria-label="Refresh">
+                    <RefreshCw size={14} aria-hidden="true" />
+                  </Button>
+                }
+              >
+                <Text>{width}px cell</Text>
+              </DashboardWidget>
+            </div>
+          ))}
         </Stack>
       </Example>
 

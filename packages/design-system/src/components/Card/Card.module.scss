@@ -111,6 +111,46 @@
   flex-shrink: 0;
 }
 
+// With meta: grid, not flex. Flex shrink is weighted by size, so the title
+// would always give up a fraction of a pixel and wrap; here the auto title
+// track reaches its one-line width before the 1fr meta track gets anything,
+// so meta (min 0, ellipsis) absorbs every narrowing until it is gone. The
+// action lands in an implicit auto column and never shrinks.
+.withMeta {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-auto-flow: column;
+}
+
+.meta {
+  // Sized by its 1fr track, never by content, so size containment is safe
+  // and lets .metaText ask how much room it got.
+  container-type: inline-size;
+  min-width: 0;
+  font-size: var(--card-meta-font-size);
+  color: var(--card-meta-fg);
+}
+
+.metaText {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: end;
+}
+
+// Below this a truncated meta is a clipped letter or a lone "…": hide it.
+// SCSS constant because container-query conditions can't read custom
+// properties (same as Image.module.scss).
+// ponytail: fixed threshold — fine for the muted sm text it sizes.
+$meta-hide-below: 48px;
+
+@container (max-width: #{$meta-hide-below}) {
+  .metaText {
+    visibility: hidden;
+  }
+}
+
 .body {
   min-height: 0;
   padding: var(--card-body-padding-y) var(--card-body-padding-x);

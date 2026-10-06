@@ -19,6 +19,15 @@ export interface CardHeaderProps extends HTMLAttributes<HTMLDivElement> {
    */
   action?: ReactNode;
   /**
+   * Optional secondary, non-interactive text beside the title — freshness
+   * ("Updated 3 minutes ago") or status. Muted and single-line; sits just
+   * before `action` and is the first thing to give way at narrow widths: it
+   * truncates with an ellipsis (and hides once only a sliver is left)
+   * before the title gives up any width, while `action` keeps its width. Not part of the heading's name. Put
+   * controls in `action`, never here.
+   */
+  meta?: ReactNode;
+  /**
    * Title content. Becomes the inner text of the heading element. Typically
    * a plain string, but can contain inline elements if needed.
    */
@@ -26,11 +35,11 @@ export interface CardHeaderProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * Title row subcomponent for `<Card>` with an optional right-aligned action slot.
+ * Title row subcomponent for `<Card>` with optional right-aligned meta text and action slot.
  * @see docs/components/Card.md
  */
 export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(function CardHeader(
-  { headerLevel = 'h3', action, children, className, ...rest },
+  { headerLevel = 'h3', action, meta, children, className, ...rest },
   ref,
 ) {
   // headerLevel is a string union of valid HTML heading tag names; cast to
@@ -38,8 +47,17 @@ export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(function C
   const Heading = headerLevel as 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
   // {...rest} last so consumer overrides win (Pattern A).
   return (
-    <div ref={ref} className={clsx(styles.header, className)} {...rest}>
+    <div
+      ref={ref}
+      className={clsx(styles.header, meta != null && styles.withMeta, className)}
+      {...rest}
+    >
       <Heading className={styles.title}>{children}</Heading>
+      {meta != null && (
+        <span className={styles.meta}>
+          <span className={styles.metaText}>{meta}</span>
+        </span>
+      )}
       {action != null && <span className={styles.action}>{action}</span>}
     </div>
   );

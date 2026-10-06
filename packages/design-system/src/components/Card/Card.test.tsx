@@ -296,6 +296,35 @@ describe('compound API', () => {
     expect(container.querySelectorAll('span').length).toBe(0);
   });
 
+  it('meta renders outside the heading, between title and action', () => {
+    const { container } = render(
+      <Card.Header meta="Updated 1 min ago" action={<button>Refresh</button>}>
+        T
+      </Card.Header>,
+    );
+    const header = container.firstElementChild!;
+    expect(header.className).toMatch(/withMeta/);
+    const [heading, meta, action] = Array.from(header.children);
+    expect(heading).toHaveTextContent(/^T$/);
+    expect(meta).toHaveTextContent('Updated 1 min ago');
+    expect(action).toContainElement(screen.getByRole('button'));
+  });
+
+  it('no meta → no withMeta class (plain flex header)', () => {
+    const { container } = render(<Card.Header action={<button>R</button>}>T</Card.Header>);
+    expect(container.firstElementChild!.className).not.toMatch(/withMeta/);
+  });
+
+  it('meta yields before the title: 1fr min-0 track, ellipsis, hidden when tiny', () => {
+    const { css } = compile(resolve(__dirname, 'Card.module.scss'));
+    const rule = (sel: string) => css.match(new RegExp(`\\.${sel} \\{([^}]*)\\}`))![1];
+    expect(rule('withMeta')).toMatch(/grid-template-columns: auto minmax\(0, 1fr\)/);
+    expect(rule('meta')).toMatch(/container-type: inline-size/);
+    expect(rule('metaText')).toMatch(/text-overflow: ellipsis/);
+    expect(css).toMatch(/@container \(max-width: \d+px\) \{\s*\.metaText \{\s*visibility: hidden/);
+    expect(rule('action')).toMatch(/flex-shrink: 0/);
+  });
+
   it('Card.List renders a <ul>', () => {
     const { container } = render(
       <Card.List>
