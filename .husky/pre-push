@@ -13,6 +13,9 @@ npm run format:check
 echo "▶ stylelint"
 npm run lint:css
 
+echo "▶ eslint"
+npm run lint:ts
+
 echo "▶ typecheck"
 npm run typecheck
 

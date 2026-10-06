@@ -11,7 +11,7 @@ help:
 	@echo "  make build-lib  Typecheck the library only"
 	@echo "  make test       Run unit tests in the library (Vitest, single run)"
 	@echo "  make test-watch Run unit tests in watch mode"
-	@echo "  make lint       Stylelint CSS/SCSS in both packages"
+	@echo "  make lint       Stylelint CSS/SCSS + ESLint policy rules (TS/TSX)"
 	@echo "  make install    Install npm dependencies (sets up workspaces)"
 	@echo "  make clean      Remove node_modules, dist, .tsbuildinfo"
 
@@ -35,6 +35,7 @@ test-watch:
 
 lint:
 	@npm run lint:css
+	@npm run lint:ts
 
 install:
 	@npm install

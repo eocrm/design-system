@@ -60,6 +60,12 @@ jobs:
       - name: Stylelint
         run: npm run lint:css
 
+      - name: ESLint
+        run: npm run lint:ts
+
+      - name: Lint-rule tests
+        run: npm run test:lint-rules
+
   test-ds:
     needs: changes
     if: needs.changes.outputs.ds == 'true'
