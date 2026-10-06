@@ -995,7 +995,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       };
       window.addEventListener('keydown', onKeyDown);
       return () => window.removeEventListener('keydown', onKeyDown);
-      // eslint-disable-next-line react-hooks/exhaustive-deps -- cancelPick is re-created per render but only reads current state
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- cancelPick is re-created per render but only calls setters + announce
     }, [dragging, pick]);
 
     // JS mirror of the CSS `@container dashboard-canvas (max-width: …)`
@@ -1034,7 +1034,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         setLive(null);
         if (pick) cancelPick();
       });
-      // eslint-disable-next-line react-hooks/exhaustive-deps -- cancelPick is re-created per render but only reads current state
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- cancelPick is re-created per render but only calls setters + announce
     }, [dragging, pick]);
 
     // readOnly OR the narrow-width gate flipping editing off mid-gesture

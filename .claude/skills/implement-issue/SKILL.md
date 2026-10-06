@@ -30,7 +30,7 @@ component, a docs change.
   `^packages/design-system/` nor the `release`/`quality`/`deploy-playground`
   workflow files (e.g. a `packages/playground`-only change).
 - **Gates:** `make test`, `make build-lib`, `make lint` (root Makefile);
-  `npm run format:check` (root). A Husky pre-push hook runs prettier + stylelint +
+  `npm run format:check` (root). A Husky pre-push hook runs prettier + stylelint + ESLint +
   typecheck. The required PR status check is **`Quality / check`**.
 
 ## Scope
