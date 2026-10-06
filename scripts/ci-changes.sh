@@ -9,7 +9,7 @@ set -euo pipefail
 
 # Keys go to $GITHUB_OUTPUT, or stdout on a dry run; the decision log is stderr.
 emit() { if [ -n "${GITHUB_OUTPUT:-}" ]; then echo "$1" >> "$GITHUB_OUTPUT"; else echo "$1"; fi; }
-keys=(ds tokens compose playground package)
+keys=(ds tokens compose playground package tooling)
 
 if [ "${1:-}" = "--files" ]; then
   files=$(cat "$2")
@@ -38,6 +38,8 @@ if grep -Eq "$FORCE" <<<"$files"; then emit_all "root tooling / workflow change"
 
 has() { grep -Eq "$1" <<<"$files" && echo true || echo false; }
 LIB='^packages/(design-system|design-tokens)/'
+# Release/workflow tooling and its tests (test:tooling); .github/ already forces all.
+TOOLING='^(scripts/|packages/design-tokens/scripts/|packages/design-tokens/test/tooling/)'
 # Playground files read by library/token tests (guarded by ci-changes-contract.test.mjs):
 #   contrast.test.ts -> props.manifest.json ; package-boundary.test.mjs -> TokensPage.tsx
 DS_EXTRA='^packages/playground/src/lib/props\.manifest\.json$'
@@ -48,6 +50,7 @@ for line in \
   "tokens=$(has2 "$LIB" "$TOK_EXTRA")" \
   "compose=$(has '^packages/design-tokens/')" \
   "playground=$(has '^packages/(design-system|design-tokens|playground)/')" \
-  "package=$(has "$LIB")"; do
+  "package=$(has "$LIB")" \
+  "tooling=$(has "$TOOLING")"; do
   emit "$line"; echo "$line" >&2
 done

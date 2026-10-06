@@ -4,7 +4,7 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 
-const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
 
 // Guard: tests outside the playground that read playground files must have those

@@ -22,6 +22,7 @@ jobs:
       compose: ${{ steps.detect.outputs.compose }}
       playground: ${{ steps.detect.outputs.playground }}
       package: ${{ steps.detect.outputs.package }}
+      tooling: ${{ steps.detect.outputs.tooling }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -98,6 +99,26 @@ jobs:
 
       - name: Verify design-token contract
         run: npm run tokens:check
+
+  tooling:
+    needs: changes
+    if: needs.changes.outputs.tooling == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install
+        run: npm ci
+
+      - name: Test release and workflow tooling
+        run: npm run test:tooling
 
   compose:
     needs: changes
@@ -249,7 +270,7 @@ jobs:
     # The required status is `Quality / check`: this aggregator keeps that name.
     # Skipped (path-selected out) jobs pass; failed or cancelled jobs fail it.
     if: always()
-    needs: [changes, static, test-ds, tokens, compose, playground, package]
+    needs: [changes, static, test-ds, tokens, tooling, compose, playground, package]
     runs-on: ubuntu-latest
     steps:
       - name: Require every needed job to pass or be skipped

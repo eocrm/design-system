@@ -5,9 +5,12 @@ import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import test from 'node:test';
-import { readMavenArtifact, verifyPublishedVersion } from '../scripts/verify-published-version.mjs';
+import {
+  readMavenArtifact,
+  verifyPublishedVersion,
+} from '../../scripts/verify-published-version.mjs';
 
-const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
+const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
 const scriptPath = resolve(
   repositoryRoot,
   'packages/design-tokens/scripts/set-release-version.mjs',
