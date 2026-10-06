@@ -84,6 +84,14 @@ inline: 'nearest', behavior })`. `behavior` is `'smooth'`, or `'auto'` under
 - `--highlight-glow` → an accent tint (`color-mix` of `--ring-accent` with
   `transparent`, following the existing `color-mix` precedent in
   `*.tokens.scss`)
+- `--highlight-glow-blur` → `var(--space-4)`
+- `--highlight-wave` → a stronger accent tint (`color-mix`, 55%), the colour
+  at each wave's leading edge
+- `--highlight-wave-reach` → `var(--space-6)` (how far inward a wave grows)
+- `--highlight-wave-blur` → `var(--space-3)` (soft leading edge)
+- `--highlight-wave-duration` → `1000ms` (per wave)
+- `--highlight-wave-count` → `3`
+- `--highlight-fade` → `var(--transition-slow)`
 
 Styling:
 
@@ -108,12 +116,12 @@ Styling:
   transition.
 - **No layout shift:** only outline and box-shadow are used, never border,
   margin or padding.
-- **Known limit:** Chrome doesn't paint `box-shadow` on `<tr>`, so table rows
-  get the ring only. The outline does paint. This goes in the docs.
+- **Works on `<tr>`:** ring and glow both paint (verified in Chromium).
 - **Replaces the child's own `box-shadow`/`outline` while highlighted** (e.g. a
   Card's elevation and tone stripe); they return when the highlight ends. The
   glow also paints beneath descendants' own backgrounds (a filled Card header,
-  `<td>` fills); the outline paints above them.
+  `<td>` fills); the outline normally paints above them (a positioned
+  descendant, or one with its own stacking context, can cover it).
 - Correct in light and dark through `--ring-accent`'s theme values.
 
 ## Testing (`Highlight.test.tsx`, jsdom, fake timers)

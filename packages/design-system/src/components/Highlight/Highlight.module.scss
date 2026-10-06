@@ -7,8 +7,6 @@
 // rules (e.g. Card's `.card[data-tone]`) regardless of bundle order.
 // While highlighted, the child's own `box-shadow` and `outline` are REPLACED:
 // Card elevation and the tone stripe come back when the highlight ends.
-// Known limit: Chrome doesn't paint box-shadow on <tr>, so table rows get the
-// ring only (the wave still pulses the outline colour).
 // No animation-fill-mode: after the last wave the base rule's steady ring and
 // glow are the rest state.
 .highlight.highlight[data-highlight] {
@@ -19,7 +17,7 @@
 }
 
 // Transition only on the fade-out, so entry doesn't flash currentcolor → accent.
-// Known edge: a `duration` under the waves' total (3 × 1000ms) cuts them short here.
+// Known edge: a `duration` under the waves' total (`--highlight-wave-count` × `--highlight-wave-duration`) cuts them short here.
 .highlight.highlight[data-highlight='fading'] {
   outline-color: transparent;
   box-shadow: inset 0 0 var(--highlight-glow-blur) transparent;
