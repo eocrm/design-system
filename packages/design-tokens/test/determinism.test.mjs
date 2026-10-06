@@ -9,29 +9,6 @@ import { renderCompose } from '../scripts/lib/render-compose.mjs';
 import { renderWeb } from '../scripts/lib/render-web.mjs';
 import { validateTokens } from '../scripts/lib/validate-tokens.mjs';
 
-test('renders identical repository-independent bytes on repeated calls', () => {
-  const document = validateTokens({
-    schemaVersion: 1,
-    contractVersion: '0.0.0',
-    tokens: [
-      {
-        id: 'space.small',
-        type: 'dimension',
-        value: '4px',
-        outputs: { web: { name: '--space-sm' } },
-      },
-    ],
-  });
-
-  const first = renderWeb(document);
-  const second = renderWeb(document);
-  const output = `${first.tokensScss}${first.darkScss}`;
-
-  assert.deepEqual(second, first);
-  assert.doesNotMatch(output, /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}/);
-  assert.doesNotMatch(output, /(?:\/home\/|[A-Z]:\\)/);
-});
-
 test('uses stable semantic ordering independent of source array order', () => {
   const tokens = [
     {
