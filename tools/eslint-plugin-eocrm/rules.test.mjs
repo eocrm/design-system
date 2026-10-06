@@ -124,3 +124,43 @@ describe('eocrm rules have no inline off-switch', () => {
     assert.deepEqual(offenders, []);
   });
 });
+
+// Scope: pins the `files`/`ignores` globs in eslint.config.mjs, which RuleTester cannot see.
+describe('eslint.config.mjs scopes the eocrm rules', async () => {
+  const { ESLint } = await import('eslint');
+  const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
+  const eslint = new ESLint({
+    cwd: repoRoot,
+    overrideConfigFile: join(repoRoot, 'eslint.config.mjs'),
+  });
+  const code = `const A = () => <div aria-busy={b} aria-label={a ?? t('k')} />;`;
+  const fired = async (filePath, src = code) =>
+    (await eslint.lintText(src, { filePath: join(repoRoot, filePath) }))[0].messages
+      .map((m) => m.ruleId)
+      .filter((r) => r?.startsWith('eocrm/'))
+      .sort();
+  const all = [
+    'eocrm/aria-busy-needs-announcement',
+    'eocrm/no-nullish-accessible-name',
+    'eocrm/no-nullish-translation-fallback',
+  ];
+  it('component source: all three fire', async () => {
+    assert.deepEqual(await fired('packages/design-system/src/components/X/X.tsx'), all);
+  });
+  it('_internal .ts: fires (JSX is invalid in .ts, so a non-JSX snippet)', async () => {
+    // ponytail: the other two rules are JSX-only, so a .ts file can only trip this one.
+    assert.deepEqual(
+      await fired(
+        'packages/design-system/src/components/_internal/x.ts',
+        `const a = { 'aria-label': x ?? t('k') };`,
+      ),
+      ['eocrm/no-nullish-translation-fallback'],
+    );
+  });
+  it('test files: none fire', async () => {
+    assert.deepEqual(await fired('packages/design-system/src/components/X/X.test.tsx'), []);
+  });
+  it('playground: none fire', async () => {
+    assert.deepEqual(await fired('packages/playground/src/x.tsx'), []);
+  });
+});
