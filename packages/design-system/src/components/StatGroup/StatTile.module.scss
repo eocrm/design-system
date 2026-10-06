@@ -10,6 +10,9 @@
   padding: var(--stat-tile-padding);
   border-radius: var(--stat-tile-radius);
   background: var(--stat-tile-bg);
+
+  // Skeleton defaults to bg-muted, the tile's own fill; one step darker keeps the loading bars visible.
+  --skeleton-bg: var(--stat-tile-skeleton-bg);
 }
 
 .label {
