@@ -2790,7 +2790,7 @@
           "type": "number",
           "required": false,
           "default": "",
-          "description": "How long the ring holds before fading, in ms. `Infinity` keeps it on\nuntil `active` goes false. Default: `3000`."
+          "description": "How long the ring holds before fading, in ms. Read when the highlight\nstarts; changing it mid-run has no effect. A non-finite value\n(`Infinity`, `NaN`) keeps it on until `active` goes false. Default: `3000`."
         },
         {
           "name": "onDone",
@@ -2818,7 +2818,7 @@
           "type": "ReactElement<unknown, string | JSXElementConstructor<any>>",
           "required": true,
           "default": "",
-          "description": "Exactly one element that forwards `ref` and `className`: any DS\ncomponent, or a native element such as `<tr>` or `<li>`. Highlight\nrenders no wrapper of its own."
+          "description": "Exactly one element that forwards `ref` and `className` to a DOM element\n(nothing else is needed): any DS component, or a native element such as\n`<tr>` or `<li>`. Highlight renders no wrapper of its own."
         }
       ]
     },

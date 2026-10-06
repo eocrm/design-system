@@ -16,5 +16,7 @@
   --highlight-wave-count: 3;
 
   // ─── Motion ────────────────────────────────────────────────────────────
-  --highlight-fade: var(--transition-slow); // Highlight.tsx FADE_MS mirrors this (260ms)
+  // Mirrored by FADE_MS in Highlight.tsx (260ms), so NOT themeable: override the
+  // visual fade and the onDone timing together, or not at all.
+  --highlight-fade: var(--transition-slow);
 }

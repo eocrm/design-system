@@ -238,4 +238,69 @@ describe('Highlight', () => {
     expect(onDone).toHaveBeenCalledTimes(1);
     expect(block()).not.toHaveAttribute('data-highlight');
   });
+
+  it('changing duration mid-hold keeps the original schedule', () => {
+    const onDone = vi.fn();
+    const el = (duration: number) => (
+      <Highlight active duration={duration} onDone={onDone}>
+        <div data-testid="block" />
+      </Highlight>
+    );
+    const { rerender } = render(el(1000));
+    act(() => vi.advanceTimersByTime(500));
+    rerender(el(5000));
+    act(() => vi.advanceTimersByTime(500));
+    expect(block()).toHaveAttribute('data-highlight', 'fading');
+    act(() => vi.advanceTimersByTime(260));
+    expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
+  it('changing duration during the fade still completes at +260', () => {
+    const onDone = vi.fn();
+    const el = (duration: number) => (
+      <Highlight active duration={duration} onDone={onDone}>
+        <div data-testid="block" />
+      </Highlight>
+    );
+    const { rerender } = render(el(1000));
+    act(() => vi.advanceTimersByTime(1100));
+    expect(block()).toHaveAttribute('data-highlight', 'fading');
+    rerender(el(5000));
+    act(() => vi.advanceTimersByTime(160));
+    expect(block()).not.toHaveAttribute('data-highlight');
+    expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
+  it('adds a separate fading class during the fade', () => {
+    render(
+      <Highlight active duration={1000}>
+        <div data-testid="block" />
+      </Highlight>,
+    );
+    const onClasses = block().className.split(' ');
+    expect(onClasses).toHaveLength(1);
+    act(() => vi.advanceTimersByTime(1000));
+    const fadingClasses = block().className.split(' ');
+    expect(fadingClasses).toHaveLength(2);
+    expect(fadingClasses[0]).toBe(onClasses[0]);
+  });
+
+  it('warns in development when the child drops the ref', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    function DropsRef({ className }: { className?: string }) {
+      return <div data-testid="block" className={className} />;
+    }
+    try {
+      render(
+        <Highlight active>
+          <DropsRef />
+        </Highlight>,
+      );
+      expect(warn).toHaveBeenCalledWith(
+        'Highlight: child did not attach the ref — it must forward ref and className to a DOM element',
+      );
+    } finally {
+      warn.mockRestore();
+    }
+  });
 });

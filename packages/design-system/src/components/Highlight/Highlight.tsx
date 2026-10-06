@@ -2,6 +2,7 @@ import {
   Children,
   cloneElement,
   useEffect,
+  useMemo,
   useRef,
   useState,
   type ReactElement,
@@ -23,8 +24,9 @@ export interface HighlightProps {
    */
   active: boolean;
   /**
-   * How long the ring holds before fading, in ms. `Infinity` keeps it on
-   * until `active` goes false. Default: `3000`.
+   * How long the ring holds before fading, in ms. Read when the highlight
+   * starts; changing it mid-run has no effect. A non-finite value
+   * (`Infinity`, `NaN`) keeps it on until `active` goes false. Default: `3000`.
    */
   duration?: number;
   /**
@@ -47,9 +49,9 @@ export interface HighlightProps {
    */
   focus?: boolean;
   /**
-   * Exactly one element that forwards `ref` and `className`: any DS
-   * component, or a native element such as `<tr>` or `<li>`. Highlight
-   * renders no wrapper of its own.
+   * Exactly one element that forwards `ref` and `className` to a DOM element
+   * (nothing else is needed): any DS component, or a native element such as
+   * `<tr>` or `<li>`. Highlight renders no wrapper of its own.
    */
   children: ReactElement;
 }
@@ -81,9 +83,6 @@ export function Highlight({
     ref?: Ref<HTMLElement>;
   }>;
   const nodeRef = useRef<HTMLElement | null>(null);
-  // Set when a run finishes, so a later `duration` change can't re-arm the
-  // timers and call onDone twice. Reset on each activation.
-  const doneRef = useRef(false);
   const [stage, setStage] = useState<Stage>('on');
 
   // Render-phase reset on a false → true change (React's "adjust state when a
@@ -94,36 +93,36 @@ export function Highlight({
     if (active) setStage('on');
   }
 
-  // Latest callbacks and flags, so a new identity on each render never
-  // restarts the timers or re-runs scroll/focus.
-  const latest = useRef({ onDone, scrollIntoView, focus });
+  // Latest props, read once at activation, so a new callback identity or a
+  // mid-run `duration` change never restarts the timers or re-runs scroll/focus.
+  const latest = useRef({ onDone, duration, scrollIntoView, focus });
   useEffect(() => {
-    latest.current = { onDone, scrollIntoView, focus };
+    latest.current = { onDone, duration, scrollIntoView, focus };
   });
 
-  // Activation side effects: scroll + focus, once per false → true change.
+  // One run per false → true change: scroll + focus, then hold → (fade) → done.
   useEffect(() => {
     if (!active) return;
-    doneRef.current = false;
     const node = nodeRef.current;
-    if (!node) return;
-    if (latest.current.scrollIntoView) {
-      node.scrollIntoView({
-        block: 'center',
-        inline: 'nearest',
-        behavior: prefersReducedMotion() ? 'auto' : 'smooth',
-      });
+    if (node) {
+      if (latest.current.scrollIntoView) {
+        node.scrollIntoView({
+          block: 'center',
+          inline: 'nearest',
+          behavior: prefersReducedMotion() ? 'auto' : 'smooth',
+        });
+      }
+      if (latest.current.focus) node.focus({ preventScroll: true });
+    } else if (process.env.NODE_ENV !== 'production') {
+      console.warn(
+        'Highlight: child did not attach the ref — it must forward ref and className to a DOM element',
+      );
     }
-    if (latest.current.focus) node.focus({ preventScroll: true });
-  }, [active]);
 
-  // Lifecycle timers: hold → (fade) → done.
-  useEffect(() => {
-    // Declared after the activation effect, so doneRef is already reset in the same commit.
-    if (!active || doneRef.current || !Number.isFinite(duration)) return;
+    const { duration: hold } = latest.current;
+    if (!Number.isFinite(hold)) return;
     let fadeTimer: ReturnType<typeof setTimeout> | undefined;
     const finish = () => {
-      doneRef.current = true;
       setStage('done');
       latest.current.onDone?.();
     };
@@ -134,20 +133,25 @@ export function Highlight({
         setStage('fading');
         fadeTimer = setTimeout(finish, FADE_MS);
       }
-    }, duration);
+    }, hold);
     return () => {
       clearTimeout(holdTimer);
       clearTimeout(fadeTimer);
     };
-  }, [active, duration]);
+  }, [active]);
+
+  const childRef = child.props.ref;
+  const ref = useMemo(() => mergeRefs(nodeRef, childRef), [childRef]);
 
   const phase = active && stage !== 'done' ? stage : undefined;
   const className =
-    [child.props.className, phase && styles.highlight].filter(Boolean).join(' ') || undefined;
+    [child.props.className, phase && styles.highlight, phase === 'fading' && styles.fading]
+      .filter(Boolean)
+      .join(' ') || undefined;
 
   return cloneElement(child, {
     className,
     'data-highlight': phase,
-    ref: mergeRefs(nodeRef, child.props.ref),
+    ref,
   } as object);
 }

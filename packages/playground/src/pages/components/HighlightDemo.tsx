@@ -30,14 +30,12 @@ const INITIAL_CANVAS: DashboardCanvasValue = {
 function WidgetAdded() {
   const [value, setValue] = useState<DashboardCanvasValue>(INITIAL_CANVAS);
   const [addedId, setAddedId] = useState<string | null>(null);
-  const [announcement, setAnnouncement] = useState('');
 
   const addWidget = () => {
     const id = `w${value.items.length + 1}`;
     const y = Math.max(0, ...value.items.map((p) => p.y + p.h));
     setValue({ ...value, items: [...value.items, { id, x: 0, y, w: 4, h: 3 }] });
     setAddedId(id);
-    setAnnouncement(`Widget ${id} added`);
   };
 
   return (
@@ -58,7 +56,6 @@ function WidgetAdded() {
           )}
         />
       </div>
-      <LiveRegion>{announcement}</LiveRegion>
     </Stack>
   );
 }
@@ -78,12 +75,14 @@ const INITIAL_CONTACTS: Contact[] = [
 function NewTableRow() {
   const [contacts, setContacts] = useState<Contact[]>(INITIAL_CONTACTS);
   const [addedId, setAddedId] = useState<string | null>(null);
+  const [announcement, setAnnouncement] = useState('');
 
   const createContact = () => {
     const n = contacts.length + 1;
     const id = `c${n}`;
     setContacts([{ id, name: `New contact ${n}`, email: `contact${n}@example.com` }, ...contacts]);
     setAddedId(id);
+    setAnnouncement(`New contact ${n} created`);
   };
 
   return (
@@ -107,6 +106,7 @@ function NewTableRow() {
           ))}
         </Table.Body>
       </Table>
+      <LiveRegion>{announcement}</LiveRegion>
     </Stack>
   );
 }
@@ -154,12 +154,12 @@ export function HighlightDemo() {
     <DemoLayout
       name="Highlight"
       componentName="Highlight"
-      description="A temporary inset attention ring and glow on any single block — a just-added widget, a newly created row, a deep-linked section — with optional scroll into view and focus. Renders no wrapper; pair it with a LiveRegion for screen-reader users."
+      description="A temporary inset attention ring and glow on any single block — a just-added widget, a newly created row, a deep-linked section — with optional scroll into view and focus. Renders no wrapper. With focus, the focus move announces it; without focus, pair it with a LiveRegion."
       files={getComponentFiles('Highlight')}
     >
       <Example
         title="Widget added to a dashboard"
-        description="'Add widget' appends a widget below the fold. Highlight scrolls it to the centre of the scroll box, focuses it (the Card has tabIndex={-1}), rings it for 3s, fades, then onDone clears addedId. A LiveRegion announces the addition."
+        description="'Add widget' appends a widget below the fold. Highlight scrolls it to the centre of the scroll box, focuses it (the Card has tabIndex={-1}), rings it for 3s, fades, then onDone clears addedId. The focus move is the announcement (the screen reader reads the focused widget), so there's no LiveRegion — adding one would announce it twice."
         code={`import { useState } from 'react';
 import {
   Button,
@@ -167,7 +167,6 @@ import {
   DashboardCanvas,
   type DashboardCanvasValue,
   Highlight,
-  LiveRegion,
   Stack,
 } from '@eocrm/design-system';
 
@@ -186,14 +185,12 @@ const INITIAL_CANVAS: DashboardCanvasValue = {
 export function Demo() {
   const [value, setValue] = useState<DashboardCanvasValue>(INITIAL_CANVAS);
   const [addedId, setAddedId] = useState<string | null>(null);
-  const [announcement, setAnnouncement] = useState('');
 
   const addWidget = () => {
     const id = \`w\${value.items.length + 1}\`;
     const y = Math.max(0, ...value.items.map((p) => p.y + p.h));
     setValue({ ...value, items: [...value.items, { id, x: 0, y, w: 4, h: 3 }] });
     setAddedId(id);
-    setAnnouncement(\`Widget \${id} added\`);
   };
 
   return (
@@ -219,7 +216,6 @@ export function Demo() {
           )}
         />
       </div>
-      <LiveRegion>{announcement}</LiveRegion>
     </Stack>
   );
 }`}
@@ -229,9 +225,9 @@ export function Demo() {
 
       <Example
         title="Just-created table row"
-        description="'Create contact' prepends a row and highlights it — no scroll or focus, the row is already in view. Table.Row forwards ref and className, so Highlight wraps it directly with no extra element in the tbody."
+        description="'Create contact' prepends a row and highlights it — no scroll or focus, the row is already in view. Table.Row forwards ref and className, so Highlight wraps it directly with no extra element in the tbody. Focus doesn't move, so a LiveRegion announces the new contact."
         code={`import { useState } from 'react';
-import { Button, Highlight, Stack, Table } from '@eocrm/design-system';
+import { Button, Highlight, LiveRegion, Stack, Table } from '@eocrm/design-system';
 
 interface Contact {
   id: string;
@@ -248,12 +244,14 @@ const INITIAL_CONTACTS: Contact[] = [
 export function Demo() {
   const [contacts, setContacts] = useState<Contact[]>(INITIAL_CONTACTS);
   const [addedId, setAddedId] = useState<string | null>(null);
+  const [announcement, setAnnouncement] = useState('');
 
   const createContact = () => {
     const n = contacts.length + 1;
     const id = \`c\${n}\`;
     setContacts([{ id, name: \`New contact \${n}\`, email: \`contact\${n}@example.com\` }, ...contacts]);
     setAddedId(id);
+    setAnnouncement(\`New contact \${n} created\`);
   };
 
   return (
@@ -277,6 +275,7 @@ export function Demo() {
           ))}
         </Table.Body>
       </Table>
+      <LiveRegion>{announcement}</LiveRegion>
     </Stack>
   );
 }`}
