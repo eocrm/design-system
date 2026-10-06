@@ -72,7 +72,8 @@
     {
       "files": ["packages/design-system/src/**/*.scss"],
       "rules": {
-        "selector-pseudo-class-disallowed-list": ["dir"]
+        "selector-pseudo-class-disallowed-list": ["dir"],
+        "eocrm/no-dir-pseudo-class": true
       }
     }
   ]

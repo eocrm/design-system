@@ -140,6 +140,25 @@ describe('Tooltip — hover open / close', () => {
     expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
   });
 
+  it('uses the documented 400ms default delay when no delay prop is passed', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+    render(
+      <Tooltip content="Hello">
+        <button type="button">Trigger</button>
+      </Tooltip>,
+    );
+    await user.hover(screen.getByRole('button', { name: 'Trigger' }));
+    // Literal 400 on purpose: pins the default documented in docs/components/Tooltip.md.
+    act(() => {
+      vi.advanceTimersByTime(399);
+    });
+    expect(screen.queryByRole('tooltip')).not.toBeInTheDocument();
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(screen.getByRole('tooltip')).toBeInTheDocument();
+  });
+
   it('cancels the pending open if pointerleave fires before the delay elapses', async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     render(

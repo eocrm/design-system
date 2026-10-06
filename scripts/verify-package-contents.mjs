@@ -3,6 +3,7 @@
 // packages/design-tokens/test/package-boundary.test.mjs (shared lists).
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 export const PACKAGES = [
@@ -58,14 +59,16 @@ export function verify(pkg, files, pkgJson) {
 }
 
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
   let failed = false;
   for (const pkg of PACKAGES) {
     const out = execFileSync('npm', ['pack', '--dry-run', '--json', '--workspace', pkg.name], {
       encoding: 'utf8',
+      cwd: repoRoot,
     });
     const [{ files }] = JSON.parse(out);
     const paths = files.map((f) => f.path);
-    const pkgJson = JSON.parse(readFileSync(`${pkg.dir}/package.json`, 'utf8'));
+    const pkgJson = JSON.parse(readFileSync(join(repoRoot, pkg.dir, 'package.json'), 'utf8'));
     const problems = verify(pkg, paths, pkgJson);
     if (problems.length) {
       failed = true;

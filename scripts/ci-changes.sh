@@ -47,7 +47,7 @@ TOK_EXTRA='^packages/playground/src/pages/Tokens/TokensPage\.tsx$'
 has2() { [ "$(has "$1")" = true ] || [ "$(has "$2")" = true ] && echo true || echo false; }
 for line in \
   "ds=$(has2 "$LIB" "$DS_EXTRA")" \
-  "tokens=$(has2 "$LIB" "$TOK_EXTRA")" \
+  "tokens=$(has2 "$LIB|^scripts/verify-package-contents\.mjs\$" "$TOK_EXTRA")" \
   "compose=$(has '^packages/design-tokens/')" \
   "playground=$(has '^packages/(design-system|design-tokens|playground)/')" \
   "package=$(has "$LIB|^scripts/verify-package-contents\.mjs\$")" \
