@@ -30,7 +30,7 @@ import { CatalogPicker, WidgetPreview } from '@eocrm/design-system';
 <!-- prettier-ignore -->
 | Prop | Type | Required | Description |
 |---|---|---|---|
-| `variant` | `'kpi' \| 'list' \| 'chart' \| 'pipeline' \| 'activity'` | yes | Which widget kind the miniature depicts. Required. - `'kpi'` — label, a large value block (accent), a trend line. - `'list'` — rows of avatar + line; first avatar accented. - `'chart'` — a bar series (accented, one bar strong). - `'pipeline'` — stage columns of cards; current stage header strong. - `'activity'` — timeline rows with accented dots. |
+| `variant` | `'kpi' \| 'list' \| 'chart' \| 'pipeline' \| 'activity'` | yes | Which widget kind the miniature depicts. Required. - `'kpi'` — label, a large value block (strong accent), an accented trend line. - `'list'` — rows of accented avatar + line; first avatar strong. - `'chart'` — a bar series (accented, one bar strong). - `'pipeline'` — stage columns of cards; current stage header strong and its cards accented; next stage header accented. - `'activity'` — timeline rows with accented dots; first dot strong. |
 | …native | | | plus native `<div>` attributes |
 
 <!-- props:end -->
@@ -39,7 +39,7 @@ import { CatalogPicker, WidgetPreview } from '@eocrm/design-system';
 - **Always `aria-hidden="true"`.** The attribute is applied after your props, so it cannot be overridden. It conveys nothing to assistive tech; put the information in the item's `title` / `description`.
 - **Data-free.** It takes no values. It depicts a kind of widget, never a real one.
 - **Fills its container width** with a fixed 16 / 10 aspect ratio. Size it by sizing the parent (the picker card does this).
-- Colours come from theme tokens, so dark mode follows automatically.
+- Colours come from theme tokens, so dark mode follows automatically. Neutral pieces use `--color-border-strong` on the preview box (`--color-bg-subtle`). Accented pieces use `--color-accent` at half strength, and one hero piece per variant uses it at full strength. To retune, override `--widget-preview-bg`, `--widget-preview-shape`, `--widget-preview-accent` and `--widget-preview-accent-strong` on an ancestor. The defaults are high-contrast, so a local override added only for visibility is no longer needed.
 
 #### When NOT to use
 

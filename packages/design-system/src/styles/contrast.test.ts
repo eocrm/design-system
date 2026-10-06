@@ -339,6 +339,42 @@ describe('StagePath hovered fills keep their text at AA', () => {
 });
 
 /**
+ * #626. WidgetPreview is decorative (aria-hidden), so no WCAG minimum applies —
+ * but its pieces once sat at ~1.05:1 on the preview box and vanished. These
+ * floors pin "visibly there" in both themes, deliberately tight (shape ships at
+ * 1.64 light): retuning --color-border-strong should be a conscious re-check.
+ * The accent is a translucent `color-mix(accent N%, transparent)`, i.e.
+ * `composite(accent, N, bg)`.
+ */
+describe('WidgetPreview pieces stay visible on the preview box', () => {
+  const file = readFileSync(
+    resolve(__dirname, '../components/WidgetPreview/WidgetPreview.tokens.scss'),
+    'utf8',
+  );
+  const alias = (name: string) => declaredValue(name, file)?.match(/^var\((--[a-z0-9-]+)\)$/)?.[1];
+  const accentMix = declaredValue('--widget-preview-accent', file)?.match(
+    /^color-mix\(in srgb, var\(--color-accent\) ([\d.]+)%, transparent\)$/,
+  );
+  it.each([
+    ['light', TOKENS],
+    ['dark', DARK],
+  ])('%s', (_theme, source) => {
+    // Fail readably if a token stops being a plain alias / the expected mix.
+    expect(accentMix, '--widget-preview-accent shape').toBeTruthy();
+    const color = (name: string) => {
+      const target = alias(name);
+      expect(target, `${name} must be a var() alias`).toBeDefined();
+      return tokenValue(target!, source);
+    };
+    const bg = color('--widget-preview-bg');
+    const accent = composite(tokenValue('--color-accent', source), Number(accentMix![1]) / 100, bg);
+    expect(contrast(color('--widget-preview-shape'), bg)).toBeGreaterThanOrEqual(1.6);
+    expect(contrast(accent, bg)).toBeGreaterThanOrEqual(2.2);
+    expect(contrast(color('--widget-preview-accent-strong'), bg)).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+/**
  * The slots below are the ones a component actually paints with. PAIRS proves
  * the strong variant clears its bar; this proves the components are still
  * pointed at it, so a token nobody re-aimed cannot quietly keep the old value.

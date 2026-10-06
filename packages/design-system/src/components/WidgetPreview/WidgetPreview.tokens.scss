@@ -5,9 +5,14 @@
   --widget-preview-padding: var(--space-3);
   --widget-preview-aspect: 16 / 10;
 
-  // Shape pieces on the preview box, and the one accent "hero" per kind.
-  --widget-preview-shape: var(--color-bg-muted);
-  --widget-preview-accent: var(--color-accent-bg-subtle);
+  // Shape pieces on the preview box, and the accent "hero" pieces per kind.
+  // Decorative, but must read at gallery-card size (#626): the strongest
+  // non-text neutral as a fill, and a half-strength accent. The accent is
+  // translucent, so it sits correctly on an overridden --widget-preview-bg;
+  // these resolve at :root, so a scoped --color-* override does NOT reach
+  // them — override the --widget-preview-* tokens. Measured in contrast.test.ts.
+  --widget-preview-shape: var(--color-border-strong);
+  --widget-preview-accent: color-mix(in srgb, var(--color-accent) 50%, transparent);
   --widget-preview-accent-strong: var(--color-accent);
 
   // Shared by preview and loading shapes.
