@@ -27,6 +27,13 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['Banner'],
   },
   {
+    to: '/components/highlight',
+    name: 'Highlight',
+    description:
+      'Temporary inset attention ring + glow on any block — a just-added widget, a new row, a deep-linked section. Optional scroll into view and focus.',
+    preview: SCHEMATICS['Highlight'],
+  },
+  {
     to: '/components/button',
     name: 'Button',
     description: 'Action triggers with variants and sizes.',

@@ -115,6 +115,7 @@ const CLUSTERS = {
   // Feedback
   Alert: 'Feedback',
   Banner: 'Feedback',
+  Highlight: 'Feedback',
   Toast: 'Feedback',
 
   // Navigation

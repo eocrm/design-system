@@ -32,6 +32,8 @@ export type { VisuallyHiddenProps, VisuallyHiddenAs } from './components/Visuall
 
 export { LiveRegion } from './components/LiveRegion';
 export type { LiveRegionProps, LiveRegionPoliteness } from './components/LiveRegion';
+export { Highlight } from './components/Highlight';
+export type { HighlightProps } from './components/Highlight';
 
 export { Card, CardBody } from './components/Card';
 export type { CardProps, CardPadding, CardTone, CardOverflow } from './components/Card';

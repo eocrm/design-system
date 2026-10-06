@@ -188,6 +188,13 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       </Outline>
     </Row>
   ),
+  Highlight: (
+    <Row gap={10} style={{ alignItems: 'center' }}>
+      <Panel w={60} h={44} />
+      <Panel w={60} h={44} style={{ outline: '2px solid var(--ring-accent)', outlineOffset: -2 }} />
+      <Panel w={60} h={44} />
+    </Row>
+  ),
   Banner: (
     <Col gap={6}>
       <Outline

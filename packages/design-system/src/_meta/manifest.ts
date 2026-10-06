@@ -137,6 +137,7 @@ const CLUSTERS: Record<string, string> = {
   // Feedback
   Alert: 'Feedback',
   Banner: 'Feedback',
+  Highlight: 'Feedback',
   Toast: 'Feedback',
 
   // Navigation

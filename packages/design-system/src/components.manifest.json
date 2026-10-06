@@ -407,6 +407,12 @@
       "FormRow"
     ]
   },
+  "Highlight": {
+    "tier": "primitive",
+    "cluster": "Feedback",
+    "composes": [],
+    "composedBy": []
+  },
   "IconPicker": {
     "tier": "composition",
     "cluster": "Forms",

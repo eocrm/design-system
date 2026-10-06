@@ -215,6 +215,7 @@ Each component's contract is its `docs/components/<Name>.md`; the props table th
 - [`ToastViewport`](docs/components/ToastViewport.md) — transient notifications
 - [`Alert`](docs/components/Alert.md) — persistent in-flow notification
 - [`Banner`](docs/components/Banner.md) — full-width system / app message bar
+- [`Highlight`](docs/components/Highlight.md) — temporary attention ring on any block (+ optional scroll/focus)
 - [`ConfirmationPopover`](docs/components/ConfirmationPopover.md) — opinionated "Are you sure?" preset
 - [`Tour`](docs/components/Tour.md) — guided tour / onboarding walkthrough
 - [`Modal`](docs/components/Modal.md) — focus-locked dialog

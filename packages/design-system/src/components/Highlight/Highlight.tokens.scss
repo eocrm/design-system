@@ -1,0 +1,22 @@
+:root {
+  // ─── Ring (1px solid inset outline) ────────────────────────────────────
+  --highlight-ring: var(--ring-accent);
+  --highlight-ring-peak: var(--color-accent-hover); // stronger accent in both themes
+  --highlight-ring-width: var(--border-width);
+
+  // ─── Glow (steady inset box-shadow) ────────────────────────────────────
+  --highlight-glow: color-mix(in srgb, var(--ring-accent) 32%, transparent);
+  --highlight-glow-blur: var(--space-4);
+
+  // ─── Waves (inset box-shadow bands rolling inward) ─────────────────────
+  --highlight-wave: color-mix(in srgb, var(--ring-accent) 55%, transparent);
+  --highlight-wave-reach: var(--space-6);
+  --highlight-wave-blur: var(--space-3);
+  --highlight-wave-duration: 1000ms;
+  --highlight-wave-count: 3;
+
+  // ─── Motion ────────────────────────────────────────────────────────────
+  // Mirrored by FADE_MS in Highlight.tsx (260ms), so NOT themeable: override the
+  // visual fade and the onDone timing together, or not at all.
+  --highlight-fade: var(--transition-slow);
+}

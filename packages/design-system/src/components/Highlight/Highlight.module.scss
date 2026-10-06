@@ -1,0 +1,59 @@
+@use './Highlight.tokens';
+
+// Inset on purpose: the child's own `overflow: hidden` (Card) and its
+// parent's `overflow: auto` (a DashboardCanvas cell) would clip an outset
+// ring or glow. Outline + box-shadow only, so there's no layout shift.
+// The tripled class (0,3,0) beats the child's own class+attribute rules
+// (e.g. Card's `.card[data-tone]`) regardless of bundle order. State is
+// class-based only, so the child just has to forward `ref` and `className`;
+// `data-highlight` is a hook for tests/consumers and no CSS reads it.
+// While highlighted, the child's own `box-shadow` and `outline` are REPLACED:
+// Card elevation and the tone stripe come back when the highlight ends.
+// No animation-fill-mode: after the last wave the base rule's steady ring and
+// glow are the rest state.
+.highlight.highlight.highlight {
+  outline: var(--highlight-ring-width) solid var(--highlight-ring);
+  outline-offset: calc(-1 * var(--highlight-ring-width));
+  box-shadow: inset 0 0 var(--highlight-glow-blur) var(--highlight-glow);
+  animation: highlight-wave var(--highlight-wave-duration) ease-out var(--highlight-wave-count);
+}
+
+// Must come after the rule above (same specificity).
+// Transition only on the fade-out, so entry doesn't flash currentcolor → accent.
+// Known edge: a `duration` under the waves' total (`--highlight-wave-count` × `--highlight-wave-duration`) cuts them short here.
+.highlight.highlight.fading {
+  outline-color: transparent;
+  box-shadow: inset 0 0 var(--highlight-glow-blur) transparent;
+  animation: none;
+  transition:
+    outline-color var(--highlight-fade),
+    box-shadow var(--highlight-fade);
+}
+
+// Each wave: a band starting at the edge that grows inward while fading out.
+// The steady glow layer is repeated in both frames so it stays visible while
+// the animation owns `box-shadow`.
+@keyframes highlight-wave {
+  from {
+    outline-color: var(--highlight-ring-peak);
+    box-shadow:
+      inset 0 0 var(--highlight-wave-blur) 0 var(--highlight-wave),
+      inset 0 0 var(--highlight-glow-blur) var(--highlight-glow);
+  }
+
+  to {
+    outline-color: var(--highlight-ring);
+    box-shadow:
+      inset 0 0 var(--highlight-wave-blur) var(--highlight-wave-reach) transparent,
+      inset 0 0 var(--highlight-glow-blur) var(--highlight-glow);
+  }
+}
+
+// Source order matters: this ties the fading rule at (0,3,0) and must come
+// after it so reduced motion also drops the fade transition.
+@media (prefers-reduced-motion: reduce) {
+  .highlight.highlight.highlight {
+    animation: none;
+    transition: none;
+  }
+}
