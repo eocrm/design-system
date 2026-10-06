@@ -15,8 +15,8 @@ TL;DR: label, large value, optional trend, footnote and icon, on a filled tile. 
 - `value={null}` / `undefined` shows "—" with visually hidden "No data". `0` is data and renders as `0`.
 - `trend` is the same shape as `DashboardWidgetTrend`. `sentiment` defaults from `direction` (up → positive, down → negative, flat → neutral); override it when up is bad.
 - `icon` is decorative and rendered as-is before the label; pass an `IconTile` (`size="sm"`). It hides in very narrow tiles.
-- Format large values compactly (`€1.24M`, not `€1,240,000`): the value is `3xl` in a tile about 11rem wide, and long numbers wrap.
-- The hidden trend words ("Increase / Decrease / No change") come from the `dashboardWidget.trendUp` / `trendDown` / `trendFlat` i18n keys, shared with `DashboardWidget`; override them there.
+- Format large values compactly (`€1.24M`, not `€1,240,000`): the value is `3xl` in a tile at least 11rem wide by default (`minColumnWidth`), and long numbers wrap. Use `Intl.NumberFormat(locale, { notation: 'compact' })`.
+- The hidden trend words ("Increase / Decrease / No change") come from the `dashboardWidget.trendUp` / `trendDown` / `trendFlat` i18n keys, shared with `DashboardWidget`; override with `<I18nProvider overrides={{ dashboardWidget: { trendUp: '…' } }}>`, which also changes `DashboardWidget`'s KPI trend.
 
 <!-- props:start -->
 
