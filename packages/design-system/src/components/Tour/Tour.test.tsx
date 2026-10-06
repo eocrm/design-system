@@ -1,6 +1,7 @@
 import { createRef, useState } from 'react';
-import { act, cleanup, configure, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { setupUser, useFakeTimersWithUserEvent } from '../_internal/fakeTimers.testutil';
 import { stubClientRects } from '../_internal/layoutStub.testutil';
 import { overlayStack } from '../_internal/overlay';
 import { Drawer } from '../Drawer';
@@ -31,11 +32,7 @@ beforeEach(() => {
   stubClientRects();
   overlayStack._reset();
 });
-afterEach(() => {
-  vi.restoreAllMocks();
-  vi.useRealTimers(); // the exit-fallback tests below opt into fake timers
-  configure({ asyncWrapper: async (cb) => cb() });
-});
+afterEach(() => vi.restoreAllMocks());
 
 describe('Tour — rendering', () => {
   it('renders nothing while closed', () => {
@@ -158,36 +155,30 @@ describe('Tour — navigation', () => {
     expect(screen.getByRole('dialog', { name: 'Filters' })).toBeInTheDocument();
   });
 
-  it('re-opening an uncontrolled tour starts again at defaultStep', async () => {
-    // Exit unmounts via the EXIT_FALLBACK_MS timer (jsdom has no transitionend).
-    vi.useFakeTimers({ shouldAdvanceTime: false });
-    // Same asyncWrapper override as Tooltip.test.tsx so user-event doesn't deadlock.
-    configure({
-      asyncWrapper: async (cb) => {
-        const result = await cb();
-        await new Promise<void>((resolve) => {
-          setTimeout(resolve, 0);
-          vi.advanceTimersByTime(0);
-        });
-        return result;
-      },
+  describe('re-opening', () => {
+    useFakeTimersWithUserEvent();
+
+    it('re-opening an uncontrolled tour starts again at defaultStep', async () => {
+      // Exit unmounts via the EXIT_FALLBACK_MS timer (jsdom has no transitionend).
+      const user = setupUser();
+      render(<Harness />);
+      await user.click(screen.getByRole('button', { name: 'Next' }));
+      await user.click(screen.getByRole('button', { name: 'Skip tour' }));
+      act(() => {
+        vi.advanceTimersByTime(EXIT_FALLBACK_MS);
+      });
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      await user.click(screen.getByRole('button', { name: 'Start' }));
+      expect(screen.getByRole('dialog', { name: 'Welcome' })).toBeInTheDocument();
     });
-    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-    render(<Harness />);
-    await user.click(screen.getByRole('button', { name: 'Next' }));
-    await user.click(screen.getByRole('button', { name: 'Skip tour' }));
-    act(() => {
-      vi.advanceTimersByTime(EXIT_FALLBACK_MS);
-    });
-    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
-    await user.click(screen.getByRole('button', { name: 'Start' }));
-    expect(screen.getByRole('dialog', { name: 'Welcome' })).toBeInTheDocument();
   });
 });
 
 describe('Tour — presence', () => {
+  useFakeTimersWithUserEvent();
+
   it('keeps the card mounted with data-state="closed" while exiting, then unmounts', async () => {
-    vi.useFakeTimers({ shouldAdvanceTime: false }); // exit unmounts via EXIT_FALLBACK_MS
+    // Exit unmounts via EXIT_FALLBACK_MS (fake timers on, see hook above).
     const { rerender } = render(<Tour steps={STEPS} open onOpenChange={() => {}} />);
     rerender(<Tour steps={STEPS} open={false} onOpenChange={() => {}} />);
     expect(screen.getByRole('dialog', { hidden: true })).toHaveAttribute('data-state', 'closed');

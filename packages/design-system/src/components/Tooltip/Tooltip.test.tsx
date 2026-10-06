@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { createRef, useState, type ReactNode } from 'react';
 import { act, configure, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useFakeTimersWithUserEvent } from '../_internal/fakeTimers.testutil';
 import { Tooltip } from './Tooltip';
 
 describe('Tooltip — initial render', () => {
@@ -116,27 +117,7 @@ describe('Tooltip — empty content', () => {
 });
 
 describe('Tooltip — hover open / close', () => {
-  beforeEach(() => {
-    vi.useFakeTimers();
-    // @testing-library/react's asyncWrapper has a setTimeout(0) drain step that
-    // only knows how to advance Jest fake timers. Override it to also advance
-    // Vitest fake timers so the internal act() wrapper doesn't deadlock.
-    configure({
-      asyncWrapper: async (cb) => {
-        const result = await cb();
-        await new Promise<void>((resolve) => {
-          setTimeout(resolve, 0);
-          vi.advanceTimersByTime(0);
-        });
-        return result;
-      },
-    });
-  });
-  afterEach(() => {
-    vi.useRealTimers();
-    // Restore the default asyncWrapper for all other test suites.
-    configure({ asyncWrapper: async (cb) => cb() });
-  });
+  useFakeTimersWithUserEvent();
 
   it('opens after the delay on pointerenter and closes on pointerleave', async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
@@ -403,23 +384,7 @@ describe('Tooltip — animation contract', () => {
 describe('Tooltip — cleanup + props preservation', () => {
   // Mirror the hover describe's asyncWrapper override so the timer-using
   // tests below don't deadlock inside Testing Library's internal act() drain.
-  beforeEach(() => {
-    vi.useFakeTimers();
-    configure({
-      asyncWrapper: async (cb) => {
-        const result = await cb();
-        await new Promise<void>((resolve) => {
-          setTimeout(resolve, 0);
-          vi.advanceTimersByTime(0);
-        });
-        return result;
-      },
-    });
-  });
-  afterEach(() => {
-    vi.useRealTimers();
-    configure({ asyncWrapper: async (cb) => cb() });
-  });
+  useFakeTimersWithUserEvent();
 
   it('does not throw when unmounted while a delay timer is pending', async () => {
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });

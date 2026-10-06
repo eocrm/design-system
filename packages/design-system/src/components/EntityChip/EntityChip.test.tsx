@@ -1,46 +1,18 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createRef, type ComponentProps, type ReactNode } from 'react';
-import { act, configure, render, screen, within } from '@testing-library/react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { parse, type Rule } from 'postcss';
 import { compile } from 'sass';
 import { I18nProvider } from '../../i18n/I18nProvider';
 import { TOOLTIP_DEFAULT_DELAY } from '../Tooltip/Tooltip';
 import { EntityChip, type EntityChipSegment } from './EntityChip';
-
-// Tooltip opens after a fixed delay: run it on fake timers (same recipe as
-// Tooltip.test.tsx) instead of sleeping. RTL's asyncWrapper only drains Jest
-// fake timers, so override it to also advance Vitest's.
-function useFakeTooltipTimers() {
-  beforeEach(() => {
-    vi.useFakeTimers({ shouldAdvanceTime: false });
-    configure({
-      asyncWrapper: async (cb) => {
-        const result = await cb();
-        await new Promise<void>((resolve) => {
-          setTimeout(resolve, 0);
-          vi.advanceTimersByTime(0);
-        });
-        return result;
-      },
-    });
-  });
-  afterEach(() => {
-    vi.useRealTimers();
-    configure({ asyncWrapper: async (cb) => cb() });
-  });
-}
-
-const setupUser = () => userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-
-// Elapse the tooltip delay, then return the open tooltip.
-function findTooltip() {
-  act(() => {
-    vi.advanceTimersByTime(TOOLTIP_DEFAULT_DELAY);
-  });
-  return screen.getByRole('tooltip');
-}
+import {
+  findTooltip,
+  setupUser,
+  useFakeTimersWithUserEvent,
+} from '../_internal/fakeTimers.testutil';
 
 // A stub component used to verify polymorphic `as` forwarding. Looks like
 // react-router-dom's <Link> — accepts `to`, optionally `replace`, etc.
@@ -750,13 +722,27 @@ function fakeClip(el: HTMLElement, clipped: boolean) {
 }
 
 describe('<EntityChip> — tooltips and labelMaxWidth (#582)', () => {
-  useFakeTooltipTimers();
+  useFakeTimersWithUserEvent();
   it('icon segment shows its label on hover, and only that tooltip', async () => {
     const user = setupUser();
     render(<EntityChip href="/t" label="Fix" truncate before={TASK_BEFORE} />);
     await user.hover(screen.getByRole('img', { name: 'Bug' }));
     expect(findTooltip()).toHaveTextContent('Bug');
     expect(screen.getAllByRole('tooltip')).toHaveLength(1);
+  });
+
+  it('the tooltip is absent until the full Tooltip delay has elapsed', async () => {
+    const user = setupUser();
+    render(<EntityChip href="/t" label="Fix" truncate before={TASK_BEFORE} />);
+    await user.hover(screen.getByRole('img', { name: 'Bug' }));
+    act(() => {
+      vi.advanceTimersByTime(TOOLTIP_DEFAULT_DELAY - 1);
+    });
+    expect(screen.queryByRole('tooltip')).toBeNull();
+    act(() => {
+      vi.advanceTimersByTime(1);
+    });
+    expect(screen.getByRole('tooltip')).toHaveTextContent('Bug');
   });
 
   it('text segment shows its tooltip when given', async () => {
@@ -874,7 +860,7 @@ describe('<EntityChip> — tooltips and labelMaxWidth (#582)', () => {
 });
 
 describe('<EntityChip> — keyboard focus opens the clipped-label tooltip (#582 review)', () => {
-  useFakeTooltipTimers();
+  useFakeTimersWithUserEvent();
   // Mirrors Tooltip.test.tsx's `stubFocusVisible`: jsdom 29's `:focus-visible`
   // "last interaction was keyboard" heuristic flips to false once any prior
   // test has run, so userEvent.tab() would otherwise return false here too.
@@ -1000,7 +986,7 @@ describe('<EntityChip> — keyboard focus opens the clipped-label tooltip (#582 
 });
 
 describe('<EntityChip> — truncate class applies whenever segments are present (#582 review)', () => {
-  useFakeTooltipTimers();
+  useFakeTimersWithUserEvent();
   it('an unavailable chip with segments keeps the truncate class and renders no segments', () => {
     const { container } = render(
       <EntityChip href="/t" label="L" unavailable before={TASK_BEFORE} after={TASK_AFTER} />,
@@ -1028,7 +1014,7 @@ describe('<EntityChip> — truncate class applies whenever segments are present 
 });
 
 describe('<EntityChip> — .core shrink rule outranks .truncate > * regardless of source order (#582 review)', () => {
-  useFakeTooltipTimers();
+  useFakeTimersWithUserEvent();
   const css = parse(compile(resolve(__dirname, './EntityChip.module.scss')).css);
 
   it('the core shrink/min-width rule is scoped under .segmented, out-specificing .truncate > *', () => {
@@ -1044,7 +1030,7 @@ describe('<EntityChip> — .core shrink rule outranks .truncate > * regardless o
 });
 
 describe('<EntityChip> — clipped-label tooltip is always plain text (#590)', () => {
-  useFakeTooltipTimers();
+  useFakeTimersWithUserEvent();
   it('a clipped, styled label shows its text in the tooltip, never the styled element itself', async () => {
     const user = setupUser();
     render(
@@ -1078,7 +1064,7 @@ describe('<EntityChip> — clipped-label tooltip is always plain text (#590)', (
 });
 
 describe('<EntityChip> — clipped-label tooltip never gets stuck disabled (#592)', () => {
-  useFakeTooltipTimers();
+  useFakeTimersWithUserEvent();
   it('a non-string label that renders no text, then a rerender to a long clipped text label, still opens the tooltip with the text', async () => {
     const user = setupUser();
     const { rerender } = render(
@@ -1140,7 +1126,7 @@ describe('<EntityChip> — clipped-label tooltip never gets stuck disabled (#592
 });
 
 describe('<EntityChip> — `labelWeight` (#590)', () => {
-  useFakeTooltipTimers();
+  useFakeTimersWithUserEvent();
   it('defaults to no semibold class on prefix or label', () => {
     render(<EntityChip href="/t" prefix="ENG-5" label="Fix login bug" />);
     expect(screen.getByText('ENG-5').className).not.toMatch(/semibold/i);
@@ -1171,7 +1157,7 @@ describe('<EntityChip> — `labelWeight` (#590)', () => {
 });
 
 describe('<EntityChip> — labelEllipsis (#593)', () => {
-  useFakeTooltipTimers();
+  useFakeTimersWithUserEvent();
   const URL_PATH = '/eocrm/design-system/pull/1116';
 
   it("'start' flips the clipped label to RTL around an LTR run that keeps the text order", () => {

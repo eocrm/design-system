@@ -1,42 +1,9 @@
-import { act, configure, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { Tooltip } from '../Tooltip';
-import { TOOLTIP_DEFAULT_DELAY } from '../Tooltip/Tooltip';
 import { useClippedTooltip } from './useClippedTooltip';
-
-// Tooltip opens after a fixed delay: run it on fake timers (same recipe as
-// Tooltip.test.tsx) instead of sleeping. RTL's asyncWrapper only drains Jest
-// fake timers, so override it to also advance Vitest's.
-function useFakeTooltipTimers() {
-  beforeEach(() => {
-    vi.useFakeTimers({ shouldAdvanceTime: false });
-    configure({
-      asyncWrapper: async (cb) => {
-        const result = await cb();
-        await new Promise<void>((resolve) => {
-          setTimeout(resolve, 0);
-          vi.advanceTimersByTime(0);
-        });
-        return result;
-      },
-    });
-  });
-  afterEach(() => {
-    vi.useRealTimers();
-    configure({ asyncWrapper: async (cb) => cb() });
-  });
-}
-
-const setupUser = () => userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-
-// Elapse the tooltip delay, then return the open tooltip.
-function findTooltip() {
-  act(() => {
-    vi.advanceTimersByTime(TOOLTIP_DEFAULT_DELAY);
-  });
-  return screen.getByRole('tooltip');
-}
+import { findTooltip, setupUser, useFakeTimersWithUserEvent } from './fakeTimers.testutil';
 
 // jsdom has no layout: fake the label's box to say whether it is clipped.
 function fakeClip(el: HTMLElement, clipped: boolean) {
@@ -58,7 +25,7 @@ function Probe({ label, enabled = true }: { label: ReactNode; enabled?: boolean 
 }
 
 describe('useClippedTooltip', () => {
-  useFakeTooltipTimers();
+  useFakeTimersWithUserEvent();
   it('opens on hover only when the label is clipped', async () => {
     const user = setupUser();
     render(<Probe label="A very long stage name" />);

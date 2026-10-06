@@ -1,44 +1,15 @@
 import { resolve } from 'node:path';
 import { parse, type Declaration, type Root, type Rule } from 'postcss';
 import { compile } from 'sass';
-import { act, configure, fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, useLayoutEffect, type ReactNode } from 'react';
-import { TOOLTIP_DEFAULT_DELAY } from '../Tooltip/Tooltip';
 import { Avatar, avatarColorIndex } from './Avatar';
-
-// Tooltip opens after a fixed delay: run it on fake timers (same recipe as
-// Tooltip.test.tsx) instead of sleeping. RTL's asyncWrapper only drains Jest
-// fake timers, so override it to also advance Vitest's.
-function useFakeTooltipTimers() {
-  beforeEach(() => {
-    vi.useFakeTimers({ shouldAdvanceTime: false });
-    configure({
-      asyncWrapper: async (cb) => {
-        const result = await cb();
-        await new Promise<void>((resolve) => {
-          setTimeout(resolve, 0);
-          vi.advanceTimersByTime(0);
-        });
-        return result;
-      },
-    });
-  });
-  afterEach(() => {
-    vi.useRealTimers();
-    configure({ asyncWrapper: async (cb) => cb() });
-  });
-}
-
-const setupUser = () => userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-
-// Elapse the tooltip delay, then return the open tooltip.
-function findTooltip() {
-  act(() => {
-    vi.advanceTimersByTime(TOOLTIP_DEFAULT_DELAY);
-  });
-  return screen.getByRole('tooltip');
-}
+import {
+  findTooltip,
+  setupUser,
+  useFakeTimersWithUserEvent,
+} from '../_internal/fakeTimers.testutil';
 
 // The presence shapes are pure CSS and jsdom computes no styles, so they are
 // asserted against the compiled stylesheet — the same way DataTable checks its
@@ -309,7 +280,7 @@ describe('Avatar', () => {
   });
 
   describe('tooltip delay', () => {
-    useFakeTooltipTimers();
+    useFakeTimersWithUserEvent();
 
     it('wraps in Tooltip when tooltip prop is true (visible on hover)', async () => {
       const user = setupUser();

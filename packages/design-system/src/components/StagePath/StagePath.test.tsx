@@ -1,43 +1,14 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createRef } from 'react';
-import { act, configure, render, screen, within } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { TOOLTIP_DEFAULT_DELAY } from '../Tooltip/Tooltip';
 import { StagePath, type StagePathStage } from './StagePath';
-
-// Tooltip opens after a fixed delay: run it on fake timers (same recipe as
-// Tooltip.test.tsx) instead of sleeping. RTL's asyncWrapper only drains Jest
-// fake timers, so override it to also advance Vitest's.
-function useFakeTooltipTimers() {
-  beforeEach(() => {
-    vi.useFakeTimers({ shouldAdvanceTime: false });
-    configure({
-      asyncWrapper: async (cb) => {
-        const result = await cb();
-        await new Promise<void>((resolve) => {
-          setTimeout(resolve, 0);
-          vi.advanceTimersByTime(0);
-        });
-        return result;
-      },
-    });
-  });
-  afterEach(() => {
-    vi.useRealTimers();
-    configure({ asyncWrapper: async (cb) => cb() });
-  });
-}
-
-const setupUser = () => userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
-
-// Elapse the tooltip delay, then return the open tooltip.
-function findTooltip() {
-  act(() => {
-    vi.advanceTimersByTime(TOOLTIP_DEFAULT_DELAY);
-  });
-  return screen.getByRole('tooltip');
-}
+import {
+  findTooltip,
+  setupUser,
+  useFakeTimersWithUserEvent,
+} from '../_internal/fakeTimers.testutil';
 
 const STAGES: StagePathStage[] = [
   { id: 'lead', label: 'Lead' },
@@ -52,7 +23,7 @@ function fakeClip(el: HTMLElement, clipped: boolean) {
 }
 
 describe('<StagePath>', () => {
-  useFakeTooltipTimers();
+  useFakeTimersWithUserEvent();
   it('renders an ordered list with one item per stage', () => {
     render(<StagePath aria-label="Deal stage" stages={STAGES} value="proposal" />);
     const list = screen.getByRole('list', { name: 'Deal stage' });
