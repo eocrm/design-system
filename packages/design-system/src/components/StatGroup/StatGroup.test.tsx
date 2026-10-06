@@ -46,7 +46,7 @@ describe('StatGroup', () => {
     );
   });
 
-  it('loading: aria-busy, labels and icons kept, value/trend/footnote replaced by skeletons + hidden text', () => {
+  it('loading: labels and icons kept, value/trend/footnote replaced by skeletons + hidden text', () => {
     render(
       <StatGroup aria-label="g" loading>
         <StatTile
@@ -60,7 +60,7 @@ describe('StatGroup', () => {
       </StatGroup>,
     );
     const list = screen.getByRole('list');
-    expect(list).toHaveAttribute('aria-busy', 'true');
+    expect(list).not.toHaveAttribute('aria-busy');
     const [first, second] = within(list).getAllByRole('listitem');
     expect(first).toHaveTextContent('Pipeline value');
     expect(screen.getByTestId('icon')).toBeInTheDocument();
@@ -73,13 +73,12 @@ describe('StatGroup', () => {
     expect(within(second).getByText('Loading…')).toBeInTheDocument();
   });
 
-  it('not loading: no aria-busy, no loading text', () => {
+  it('not loading: no loading text', () => {
     render(
       <StatGroup aria-label="g">
         <StatTile label="a" value="1" />
       </StatGroup>,
     );
-    expect(screen.getByRole('list')).not.toHaveAttribute('aria-busy');
     expect(screen.queryByText('Loading…')).toBeNull();
   });
 });

@@ -49,7 +49,7 @@ the app hand-composes `Grid` + `Cluster` + `IconTile` + `Text` with no trend.
 | `loading`        | `boolean`   | `false`   | Tiles keep label + icon; value/trend become skeletons. Provided to tiles via context.              |
 | `children`       | `ReactNode` | —         | `StatTile`s.                                                                                       |
 
-Renders `<Grid as="ul" minColumnWidth=… gap=…>` with `aria-busy` when loading.
+Renders `<Grid as="ul" minColumnWidth=… gap=…>` (no `aria-busy`, deliberately).
 Props spread last (Pattern A).
 
 ### `StatTile` — `forwardRef<HTMLLIElement>`, extends `Omit<HTMLAttributes<HTMLLIElement>, 'children'>`
@@ -85,7 +85,7 @@ size and colours stay per-component tokens. i18n keys stay at
 - **Loading (Hard rule 10)**: loading is a property the user _arrives at_ while
   browsing tiles, so it lives in content: each tile's value slot renders a
   visually hidden `t('stat.loading')` in place of the value (skeletons are
-  aria-hidden). `aria-busy` on the list. Footnotes hide while loading (they describe absent data); a trend skeleton always shows. The `<ul>` carries `role="list"` (Safari drops list semantics on `list-style: none`). **No live region, deliberately**: a
+  aria-hidden). No `aria-busy` on the list: it tells AT to defer reading the region, which would hide that text. Footnotes hide while loading (they describe absent data); a trend skeleton always shows. The `<ul>` carries `role="list"` (Safari drops list semantics on `list-style: none`). **No live region, deliberately**: a
   dashboard loads many widgets at once; per-widget announcements flood screen
   readers (same rationale as `DashboardWidget`, documented in JSDoc + docs).
 
@@ -106,7 +106,7 @@ the tile (Grid places it). Skeleton bars sized in tokens.
 ## Deliverables (Core invariant)
 
 1. `StatGroup.test.tsx` / `StatTile.test.tsx`: list semantics, ref, className
-   merge, prop spread, minColumnWidth clamping, loading (aria-busy, skeletons,
+   merge, prop spread, minColumnWidth clamping, loading (no aria-busy, skeletons,
    per-tile hidden text, labels kept), null value, trend sentiment default +
    override, footnote/icon render.
 2. Playground `StatGroupDemo.tsx` (wide, narrow cell, loading, sentiment

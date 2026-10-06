@@ -16,8 +16,9 @@ export interface StatGroupProps extends HTMLAttributes<HTMLUListElement> {
   /**
    * Loading state for every tile: labels and icons stay; each value and trend becomes a
    * skeleton with visually hidden "Loading…" in the value slot, and footnotes hide.
-   * Sets `aria-busy` on the list. Deliberately NO live region: a dashboard loads many
-   * widgets at once, so announcements would flood screen readers. Default `false`.
+   * Deliberately NO live region: a dashboard loads many widgets at once, so announcements
+   * would flood screen readers. No `aria-busy` either: it tells AT to defer reading the
+   * region, which would hide that text. Default `false`.
    */
   loading?: boolean;
   /** `StatTile` elements. */
@@ -43,8 +44,6 @@ export const StatGroup = forwardRef<HTMLUListElement, StatGroupProps>(function S
         minColumnWidth={`min(${minColumnWidth}, 100%)`}
         gap={gap}
         // The translated hidden "Loading…" text lives in each StatTile (by design: no live region).
-        // eslint-disable-next-line eocrm/aria-busy-needs-announcement
-        aria-busy={loading || undefined}
         className={clsx(styles.root, className)}
         {...rest}
       >
