@@ -121,7 +121,7 @@ export interface TourProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title' 
 }
 
 /** Unmount fallback when `transitionend` never fires (reduced motion, jsdom). */
-const EXIT_FALLBACK_MS = 300;
+export const EXIT_FALLBACK_MS = 300;
 /** Gap in px between target and card (room for the arrow). */
 const CARD_OFFSET = 12;
 /** Arrow keys inside these keep their native meaning (caret, option list). */

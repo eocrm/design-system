@@ -1,12 +1,12 @@
 import { createRef, useState } from 'react';
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, configure, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { stubClientRects } from '../_internal/layoutStub.testutil';
 import { overlayStack } from '../_internal/overlay';
 import { Drawer } from '../Drawer';
 import { Modal } from '../Modal';
 import { Popover } from '../Popover';
-import { Tour, type TourProps, type TourStep } from './Tour';
+import { EXIT_FALLBACK_MS, Tour, type TourProps, type TourStep } from './Tour';
 
 const STEPS: TourStep[] = [
   { title: 'Welcome', body: 'Quick tour.' },
@@ -31,7 +31,11 @@ beforeEach(() => {
   stubClientRects();
   overlayStack._reset();
 });
-afterEach(() => vi.restoreAllMocks());
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.useRealTimers(); // the exit-fallback tests below opt into fake timers
+  configure({ asyncWrapper: async (cb) => cb() });
+});
 
 describe('Tour — rendering', () => {
   it('renders nothing while closed', () => {
@@ -155,11 +159,27 @@ describe('Tour — navigation', () => {
   });
 
   it('re-opening an uncontrolled tour starts again at defaultStep', async () => {
-    const user = userEvent.setup();
+    // Exit unmounts via the EXIT_FALLBACK_MS timer (jsdom has no transitionend).
+    vi.useFakeTimers({ shouldAdvanceTime: false });
+    // Same asyncWrapper override as Tooltip.test.tsx so user-event doesn't deadlock.
+    configure({
+      asyncWrapper: async (cb) => {
+        const result = await cb();
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 0);
+          vi.advanceTimersByTime(0);
+        });
+        return result;
+      },
+    });
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     render(<Harness />);
     await user.click(screen.getByRole('button', { name: 'Next' }));
     await user.click(screen.getByRole('button', { name: 'Skip tour' }));
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    act(() => {
+      vi.advanceTimersByTime(EXIT_FALLBACK_MS);
+    });
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: 'Start' }));
     expect(screen.getByRole('dialog', { name: 'Welcome' })).toBeInTheDocument();
   });
@@ -167,12 +187,14 @@ describe('Tour — navigation', () => {
 
 describe('Tour — presence', () => {
   it('keeps the card mounted with data-state="closed" while exiting, then unmounts', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: false }); // exit unmounts via EXIT_FALLBACK_MS
     const { rerender } = render(<Tour steps={STEPS} open onOpenChange={() => {}} />);
     rerender(<Tour steps={STEPS} open={false} onOpenChange={() => {}} />);
     expect(screen.getByRole('dialog', { hidden: true })).toHaveAttribute('data-state', 'closed');
-    await waitFor(() =>
-      expect(screen.queryByRole('dialog', { hidden: true })).not.toBeInTheDocument(),
-    );
+    act(() => {
+      vi.advanceTimersByTime(EXIT_FALLBACK_MS);
+    });
+    expect(screen.queryByRole('dialog', { hidden: true })).not.toBeInTheDocument();
   });
 });
 

@@ -1,9 +1,43 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createRef } from 'react';
-import { render, screen, within } from '@testing-library/react';
+import { act, configure, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { TOOLTIP_DEFAULT_DELAY } from '../Tooltip/Tooltip';
 import { StagePath, type StagePathStage } from './StagePath';
+
+// Tooltip opens after a fixed delay: run it on fake timers (same recipe as
+// Tooltip.test.tsx) instead of sleeping. RTL's asyncWrapper only drains Jest
+// fake timers, so override it to also advance Vitest's.
+function useFakeTooltipTimers() {
+  beforeEach(() => {
+    vi.useFakeTimers({ shouldAdvanceTime: false });
+    configure({
+      asyncWrapper: async (cb) => {
+        const result = await cb();
+        await new Promise<void>((resolve) => {
+          setTimeout(resolve, 0);
+          vi.advanceTimersByTime(0);
+        });
+        return result;
+      },
+    });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    configure({ asyncWrapper: async (cb) => cb() });
+  });
+}
+
+const setupUser = () => userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+
+// Elapse the tooltip delay, then return the open tooltip.
+function findTooltip() {
+  act(() => {
+    vi.advanceTimersByTime(TOOLTIP_DEFAULT_DELAY);
+  });
+  return screen.getByRole('tooltip');
+}
 
 const STAGES: StagePathStage[] = [
   { id: 'lead', label: 'Lead' },
@@ -18,6 +52,7 @@ function fakeClip(el: HTMLElement, clipped: boolean) {
 }
 
 describe('<StagePath>', () => {
+  useFakeTooltipTimers();
   it('renders an ordered list with one item per stage', () => {
     render(<StagePath aria-label="Deal stage" stages={STAGES} value="proposal" />);
     const list = screen.getByRole('list', { name: 'Deal stage' });
@@ -108,7 +143,7 @@ describe('<StagePath>', () => {
   });
 
   it('with onValueChange, every non-current stage is a button that reports its id', async () => {
-    const user = userEvent.setup();
+    const user = setupUser();
     const onValueChange = vi.fn();
     render(<StagePath stages={STAGES} value="proposal" onValueChange={onValueChange} />);
     const buttons = screen.getAllByRole('button');
@@ -123,7 +158,7 @@ describe('<StagePath>', () => {
   });
 
   it('keeps keyboard focus in the list when the activated stage becomes current', async () => {
-    const user = userEvent.setup();
+    const user = setupUser();
     const { rerender } = render(
       <StagePath stages={STAGES} value="proposal" onValueChange={() => {}} />,
     );
@@ -190,7 +225,7 @@ describe('<StagePath>', () => {
   });
 
   it('shows the full label in a tooltip when it is clipped, and not otherwise', async () => {
-    const user = userEvent.setup();
+    const user = setupUser();
     render(<StagePath stages={STAGES} value="lead" />);
     const label = screen.getByText('Negotiation');
     fakeClip(label, false);
@@ -199,16 +234,16 @@ describe('<StagePath>', () => {
     await user.unhover(label);
     fakeClip(label, true);
     await user.hover(label);
-    expect(await screen.findByRole('tooltip')).toHaveTextContent('Negotiation');
+    expect(findTooltip()).toHaveTextContent('Negotiation');
   });
 
   it('clipped ReactNode label tooltips as plain text', async () => {
-    const user = userEvent.setup();
+    const user = setupUser();
     render(<StagePath stages={[{ id: 'a', label: <b>Bold stage</b> }]} value="a" />);
     const label = screen.getByText('Bold stage').parentElement!;
     fakeClip(label, true);
     await user.hover(label);
-    const tip = await screen.findByRole('tooltip');
+    const tip = findTooltip();
     expect(tip).toHaveTextContent('Bold stage');
     expect(tip.querySelector('b')).toBeNull();
   });
@@ -229,12 +264,12 @@ describe('<StagePath>', () => {
     });
 
     it('tabbing onto a clipped stage button opens its tooltip', async () => {
-      const user = userEvent.setup();
+      const user = setupUser();
       render(<StagePath stages={STAGES} value="proposal" onValueChange={() => {}} />);
       fakeClip(screen.getByText('Lead'), true);
       await user.tab();
       expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Lead, completed' }));
-      expect(await screen.findByRole('tooltip')).toHaveTextContent('Lead');
+      expect(findTooltip()).toHaveTextContent('Lead');
     });
   });
 });
