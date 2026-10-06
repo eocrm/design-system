@@ -60,8 +60,10 @@
 }
 
 // SCSS constant because container-query conditions can't read custom properties.
+// Container queries measure the content box: 136px content = 160px tile width
+// minus 2 x --stat-tile-padding (12px).
 // ponytail: fixed threshold; make it a prop if a widget needs another.
-$narrow-below: 160px;
+$narrow-below: 136px;
 
 @container (max-width: #{$narrow-below}) {
   .value {
