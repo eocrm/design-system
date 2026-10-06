@@ -55,3 +55,4 @@ TL;DR: a `<ul>` grid of 1–8 [`StatTile`](StatTile.md)s for a dashboard widget 
 - ❌ Unformatted values (`value={1240000}`). Format with `Intl.NumberFormat` (or the app's formatter) before passing.
 - ❌ Colouring a "bad" increase with `direction: 'down'`. Keep `direction` truthful and set `sentiment: 'negative'`.
 - ❌ More than about 8 tiles in one widget. Split into two widgets.
+- ❌ Putting a `StatGroup` in a parent that sizes to its content (a `Cluster` item, `width: max-content`, an `auto` `Split` aside). Each tile is a size container, so it contributes no intrinsic width and the tiles collapse. Give the parent a concrete width; a `DashboardWidget` cell already has one.
