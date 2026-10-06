@@ -150,8 +150,9 @@
 // by its 1fr track, never by content, so size containment is safe there and
 // lets .metaText hide once only a clipped letter or a lone "…" would show.
 // Not on other Cards: in a shrink-to-fit parent containment would zero
-// meta's width and hide it for good; those keep the plain ellipsis. (`fill`
-// already assumes a parent of definite size — see the prop's docs.)
+// meta's width and hide it for good; those keep the plain ellipsis. A fill
+// Card in a shrink-to-fit parent would hit the same trap; the meta JSDoc
+// warns about it.
 .fill .meta {
   container: card-meta / inline-size;
 }
