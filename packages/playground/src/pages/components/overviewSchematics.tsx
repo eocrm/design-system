@@ -1471,6 +1471,19 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       </Col>
     </Outline>
   ),
+  StatGroup: (
+    <Row gap={6}>
+      {[0, 1, 2].map((i) => (
+        <Box key={i} w={44} h={44} style={{ padding: 6 }}>
+          <Col gap={5}>
+            <Bar w={24} />
+            {i === 0 ? <Solid w={28} h={10} /> : <Bar w={28} />}
+            <Bar w={18} />
+          </Col>
+        </Box>
+      ))}
+    </Row>
+  ),
   Timeline: (
     <Row gap={8} style={{ alignItems: 'flex-start' }}>
       <Col gap={4} style={{ alignItems: 'center' }}>

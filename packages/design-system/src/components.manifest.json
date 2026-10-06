@@ -223,7 +223,9 @@
       "VisuallyHidden",
       "WidgetPreview"
     ],
-    "composedBy": []
+    "composedBy": [
+      "StatGroup"
+    ]
   },
   "DataTable": {
     "tier": "composition",
@@ -404,7 +406,8 @@
     "cluster": "Layout",
     "composes": [],
     "composedBy": [
-      "FormRow"
+      "FormRow",
+      "StatGroup"
     ]
   },
   "Highlight": {
@@ -751,6 +754,7 @@
       "Image",
       "ImageCrop",
       "Lightbox",
+      "StatGroup",
       "WidgetPreview"
     ]
   },
@@ -822,6 +826,17 @@
     "cluster": "Display",
     "composes": [
       "Tooltip",
+      "VisuallyHidden"
+    ],
+    "composedBy": []
+  },
+  "StatGroup": {
+    "tier": "composition",
+    "cluster": "Display",
+    "composes": [
+      "DashboardWidget",
+      "Grid",
+      "Skeleton",
       "VisuallyHidden"
     ],
     "composedBy": []
@@ -957,7 +972,8 @@
       "DashboardWidget",
       "DateStrip",
       "LiveRegion",
-      "StagePath"
+      "StagePath",
+      "StatGroup"
     ]
   },
   "WidgetPreview": {

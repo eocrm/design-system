@@ -809,3 +809,5 @@ export type {
   DashboardWidgetVariant,
   DashboardWidgetTrend,
 } from './components/DashboardWidget';
+export { StatGroup, StatTile } from './components/StatGroup';
+export type { StatGroupProps, StatTileProps, StatTrend } from './components/StatGroup';

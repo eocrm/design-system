@@ -5453,6 +5453,38 @@
         }
       ]
     },
+    "StatGroup": {
+      "props": [
+        {
+          "name": "minColumnWidth",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Minimum tile width before the grid drops a column (auto-fit). Any CSS length.\nClamped to the group's width, so in a cell narrower than one column a single\ntile shrinks instead of overflowing. Default `'11rem'`."
+        },
+        {
+          "name": "gap",
+          "type": "GridGap",
+          "required": false,
+          "default": "md",
+          "description": "Gap between tiles. `xs` (4) / `sm` (8) / `md` (12, default) / `lg` (16) / `xl` (24) / `2xl` (32)."
+        },
+        {
+          "name": "loading",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Loading state for every tile: labels and icons stay; each value and trend becomes a\nskeleton with visually hidden \"Loading…\" in the value slot, and footnotes hide.\nDeliberately NO live region: a dashboard loads many widgets at once, so announcements\nwould flood screen readers. No `aria-busy`: the per-tile hidden text already carries the state.\nDefault `false`."
+        },
+        {
+          "name": "children",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "`StatTile` elements."
+        }
+      ]
+    },
     "Sticky": {
       "props": [
         {

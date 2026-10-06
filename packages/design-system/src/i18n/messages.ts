@@ -799,6 +799,12 @@ export interface Messages {
     /** Visually hidden body text while `loading` (read when browsing the widget; not a live region). */
     loading: string;
   };
+  stat: {
+    /** Visually hidden text in a StatTile's value slot while its StatGroup is `loading` (read when browsing; not a live region). */
+    loading: string;
+    /** Visually hidden text beside the "—" shown when a StatTile's `value` is null/undefined. */
+    noData: string;
+  };
   catalogPicker: {
     /** Placeholder + aria-label of the catalog search input. */
     search: string;

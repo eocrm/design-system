@@ -1,5 +1,6 @@
 import {
   AlertCircle,
+  Gauge,
   LayoutTemplate,
   LibraryBig,
   Bell,
@@ -272,6 +273,7 @@ export const componentGroups: { heading: string; items: NavItem[] }[] = [
         icon: PanelsTopLeft,
         end: false,
       },
+      { to: '/components/stat-group', label: 'StatGroup', icon: Gauge, end: false },
       { to: '/components/table', label: 'Table', icon: TableIcon, end: false },
       { to: '/components/datatable', label: 'DataTable', icon: TableProperties, end: false },
       { to: '/components/rich-text', label: 'RichText', icon: Pilcrow, end: false },

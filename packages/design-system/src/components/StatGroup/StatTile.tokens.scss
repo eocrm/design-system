@@ -1,0 +1,22 @@
+:root {
+  --stat-tile-bg: var(--color-bg-muted);
+  --stat-tile-skeleton-bg: var(--color-bg-muted-hover);
+  --stat-tile-radius: var(--radius-md);
+  --stat-tile-padding: var(--space-3);
+  --stat-tile-gap: var(--space-1);
+  --stat-tile-label-gap: var(--space-2);
+  --stat-tile-label-size: var(--font-size-md);
+  --stat-tile-label-fg: var(--color-fg-muted);
+  --stat-tile-value-size: var(--font-size-3xl);
+  --stat-tile-value-size-narrow: var(--font-size-2xl);
+  --stat-tile-value-weight: var(--font-weight-semibold);
+  --stat-tile-value-line-height: var(--line-height-tight);
+  --stat-tile-value-fg: var(--color-fg);
+  --stat-tile-trend-size: var(--font-size-md);
+  --stat-tile-trend-gap: var(--space-1);
+  --stat-tile-trend-positive: var(--color-success);
+  --stat-tile-trend-negative: var(--color-danger);
+  --stat-tile-trend-neutral: var(--color-fg-muted);
+  --stat-tile-footnote-size: var(--font-size-sm);
+  --stat-tile-footnote-fg: var(--color-fg-muted);
+}
