@@ -81,7 +81,6 @@ describe('ErrorState', () => {
     );
     const actions = container.querySelector('[class*="actions"]')!;
     const extra = container.querySelector('[class*="extra"]')!;
-    // eslint-disable-next-line no-bitwise
     expect(actions.compareDocumentPosition(extra) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 

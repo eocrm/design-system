@@ -2,10 +2,13 @@ import tseslint from 'typescript-eslint';
 import reactHooks from 'eslint-plugin-react-hooks';
 import eocrm from './tools/eslint-plugin-eocrm/index.mjs';
 
-// ESLint here enforces EOCRM policy rules (#617). Third-party plugins are
-// registered only so existing `eslint-disable-next-line <plugin>/<rule>`
-// comments resolve; their rules are deliberately OFF (enabling them is a
-// separate decision).
+// EOCRM policy rules (#617) plus the typescript-eslint and react-hooks
+// recommended sets. Left off on purpose:
+// - `@typescript-eslint/no-unused-vars`: tsc's noUnusedLocals/Parameters
+//   already enforce it, and the `_`-prefixed rest-sibling strips are deliberate.
+// - The React Compiler rules (`react-hooks/refs`, `set-state-in-effect`, …):
+//   only worth it once a consumer adopts the compiler; the library ships
+//   uncompiled source and keeps latest-value refs by design.
 export default [
   {
     ignores: [
@@ -19,7 +22,7 @@ export default [
       'test-results/**',
     ],
   },
-  { linterOptions: { reportUnusedDisableDirectives: 'off' } },
+  { linterOptions: { reportUnusedDisableDirectives: 'error' } },
   {
     files: ['packages/*/src/**/*.{ts,tsx}'],
     languageOptions: {
@@ -31,7 +34,19 @@ export default [
       'react-hooks': reactHooks,
       eocrm,
     },
-    rules: {},
+    rules: {
+      ...tseslint.configs.recommended.reduce(
+        (rules, config) => ({ ...rules, ...config.rules }),
+        {},
+      ),
+      '@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/no-empty-object-type': [
+        'error',
+        { allowInterfaces: 'with-single-extends' },
+      ],
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'error',
+    },
   },
   {
     files: ['packages/design-system/src/**/*.{ts,tsx}'],

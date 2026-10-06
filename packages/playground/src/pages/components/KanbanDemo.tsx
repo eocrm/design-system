@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { GripVertical, MoreHorizontal } from 'lucide-react';
 import {
   Badge,
@@ -119,11 +119,11 @@ export function KanbanDemo() {
   const [boardB, setBoardB] = useState<Record<ColId, CardData[]>>(INITIAL_BOARD);
   const [boardC, setBoardC] = useState<Record<UnevenColId, CardData[]>>(INITIAL_UNEVEN);
   const [boardD, setBoardD] = useState<Record<string, CardData[]>>(INITIAL_PIPELINE);
-  const handleMoveD = useCallback(makeMoveHandler(setBoardD), [setBoardD]);
+  const handleMoveD = useMemo(() => makeMoveHandler(setBoardD), []);
   const [lastMove, setLastMove] = useState<string>('—');
-  const handleMoveA = useCallback(makeMoveHandler(setBoardA), [setBoardA]);
-  const handleMoveB = useCallback(makeMoveHandler(setBoardB), [setBoardB]);
-  const applyMoveC = useCallback(makeMoveHandler(setBoardC), [setBoardC]);
+  const handleMoveA = useMemo(() => makeMoveHandler(setBoardA), []);
+  const handleMoveB = useMemo(() => makeMoveHandler(setBoardB), []);
+  const applyMoveC = useMemo(() => makeMoveHandler(setBoardC), []);
   const handleMoveC = useCallback(
     (event: KanbanMoveEvent) => {
       setLastMove(

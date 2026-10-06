@@ -995,7 +995,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       };
       window.addEventListener('keydown', onKeyDown);
       return () => window.removeEventListener('keydown', onKeyDown);
-      // cancelPick is re-created per render but only reads current state.
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- cancelPick is re-created per render but only reads current state
     }, [dragging, pick]);
 
     // JS mirror of the CSS `@container dashboard-canvas (max-width: …)`
@@ -1051,6 +1051,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       // Deliberately keyed on the two raw gate inputs (not the derived
       // `editingEnabled`, recomputed every render); the closure is from the
       // render where either flipped, so `pick` is current.
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed on the raw gate inputs, see above
     }, [readOnly, isNarrow]);
 
     // An external value change mid-pick invalidates the pick's home/from
@@ -1061,6 +1062,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
     // clears `pick` before onChange in the same batch, so our own commits
     // never trip this.
     const prevValueRef = useRef(value);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- identity-guarded, runs after every commit by design
     useEffect(() => {
       if (prevValueRef.current === value) return;
       prevValueRef.current = value;

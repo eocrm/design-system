@@ -200,7 +200,7 @@ export const Slider = forwardRef<HTMLDivElement, SliderProps>(function Slider(
   const reactId = useId();
   const trackRef = useRef<HTMLDivElement>(null);
   const isRange = Array.isArray(value);
-  const thumbValues: number[] = isRange ? (value as [number, number]) : [value as number];
+  const thumbValues: number[] = useMemo(() => (Array.isArray(value) ? value : [value]), [value]);
   const thumbCount = thumbValues.length;
   const marksArr = useMemo(() => normalizeMarks(marks), [marks]);
   const range = max - min;

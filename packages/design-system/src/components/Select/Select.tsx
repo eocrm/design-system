@@ -443,7 +443,6 @@ const SelectImpl = forwardRef<HTMLDivElement, SelectProps>(function Select(
     Array.isArray(options) &&
     options.length > 0
   ) {
-    // eslint-disable-next-line no-console
     console.warn(
       '<Select> received both `options` and `loadOptions`. `loadOptions` wins; `options` is ignored.',
     );

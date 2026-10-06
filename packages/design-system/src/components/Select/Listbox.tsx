@@ -33,6 +33,7 @@ import styles from './Select.module.scss';
  */
 export function Listbox() {
   const ctx = useSelectContext('Listbox');
+  const { setOpen, closeAndFocusTrigger } = ctx;
   const t = useTranslation();
 
   // Deferred by a tick so a listbox that OPENS already loading still
@@ -124,11 +125,11 @@ export function Listbox() {
       const trigger = ctx.triggerRootRef.current;
       if (panel && panel.contains(target)) return;
       if (trigger && trigger.contains(target)) return;
-      ctx.setOpen(false);
+      setOpen(false);
     };
     document.addEventListener('pointerdown', onPointerDown, true);
     return () => document.removeEventListener('pointerdown', onPointerDown, true);
-  }, [ctx.open, ctx.listboxRef, ctx.triggerRootRef, ctx.setOpen]);
+  }, [ctx.open, ctx.listboxRef, ctx.triggerRootRef, setOpen]);
 
   // Escape closes and returns focus to the trigger. Capture-phase so a
   // future in-panel input (Phase 5/6 search input) can't stop the event
@@ -144,12 +145,12 @@ export function Listbox() {
         if (!overlayStack.isTopFloating(floatingId)) return;
         e.preventDefault();
         overlayStack.consumeEscape(e); // hosts yield even if we ran first (#274)
-        ctx.closeAndFocusTrigger();
+        closeAndFocusTrigger();
       }
     };
     document.addEventListener('keydown', onKeyDown, true);
     return () => document.removeEventListener('keydown', onKeyDown, true);
-  }, [ctx.open, ctx.closeAndFocusTrigger, floatingId]);
+  }, [ctx.open, closeAndFocusTrigger, floatingId]);
 
   // On open: pre-highlight the current selection (if any), else the
   // first non-disabled option. Trigger's ArrowUp handler may override

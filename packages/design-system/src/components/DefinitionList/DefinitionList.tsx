@@ -111,7 +111,6 @@ const DefinitionListRoot = forwardRef<HTMLDListElement, DefinitionListProps>(
       flattenChildren(children).forEach((child) => {
         if (child == null || typeof child === 'boolean') return;
         if (!isValidElement(child) || child.type !== DefinitionListItem) {
-          // eslint-disable-next-line no-console
           console.warn(
             '<DefinitionList> expects <DefinitionList.Item> children. Other children render but may break layout.',
           );

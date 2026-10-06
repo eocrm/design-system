@@ -371,6 +371,7 @@ export const KanbanCard = forwardRef<HTMLDivElement, KanbanCardProps>(function K
     boundsRef.current = measureKanbanDragBounds(node);
     const bounded = CSS.Transform.toString(clampKanbanTransform(transform, boundsRef.current));
     if (bounded) node.style.transform = bounded;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- transform is deliberately not a dependency, see above
   }, [isDragging, index, items]);
 
   const setRef = (node: HTMLDivElement | null) => {

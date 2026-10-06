@@ -17,6 +17,7 @@ export interface ContentProps {
  */
 export function Content({ children, className, style }: ContentProps) {
   const ctx = useDrawerContext('Content');
+  const { setOpen } = ctx;
 
   // Initial focus belongs to the OPEN transition only. isTop also flips
   // false → true when a nested overlay (e.g. a Modal opened from this drawer)
@@ -58,11 +59,11 @@ export function Content({ children, className, style }: ContentProps) {
       if (overlayStack.hasOpenFloating() || overlayStack.wasEscapeConsumed(e)) return;
       if (ctx.disableEscapeClose) return;
       e.preventDefault();
-      ctx.setOpen(false);
+      setOpen(false);
     }
     document.addEventListener('keydown', onKeyDown, true);
     return () => document.removeEventListener('keydown', onKeyDown, true);
-  }, [ctx.open, ctx.drawerId, ctx.disableEscapeClose, ctx.setOpen]);
+  }, [ctx.open, ctx.drawerId, ctx.disableEscapeClose, setOpen]);
 
   useFocusTrap(ctx.contentRef, ctx.open && ctx.isTop);
 

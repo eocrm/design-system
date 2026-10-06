@@ -153,7 +153,6 @@ function Segmented({
     queueMicrotask(() => {
       if (cancelled) return;
       if (!ariaLabel && !ariaLabelledBy) {
-        // eslint-disable-next-line no-console
         console.warn(
           '<ButtonGroup> in segmented mode requires an `aria-label` or `aria-labelledby` prop for screen readers.',
         );
@@ -169,6 +168,7 @@ function Segmented({
   // exactly like handleItemKeyDown below. Runs unconditionally but only sets
   // state when the answer actually changes, so it cannot loop.
   const [rovingFallbackValue, setRovingFallbackValue] = useState<string | null>(null);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- runs after every commit by design; the setter bails out when unchanged
   useEffect(() => {
     const root = groupRef.current;
     if (!root) return;

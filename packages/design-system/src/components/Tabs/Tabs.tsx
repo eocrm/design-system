@@ -249,7 +249,6 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     if (!IS_DEV) return;
     const ids = items.map((i) => i.id);
     if (new Set(ids).size !== ids.length) {
-      // eslint-disable-next-line no-console
       console.warn('[Tabs] items contains duplicate ids:', ids);
     }
   }, [items]);

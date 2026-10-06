@@ -184,7 +184,6 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
   const hasTrigger = options != null && options.length > 0;
   useEffect(() => {
     if (process.env.NODE_ENV !== 'production' && hasTrigger && fieldLabelledBy && !label) {
-      // eslint-disable-next-line no-console
       console.warn(
         '<PillMenu> received `aria-labelledby` (e.g. inside a <Field>) but no `label`. `aria-labelledby` is ignored — the trigger keeps its own name ("Change <string caption, or status>: …") — so the field label doesn\'t reach assistive tech unless it matches. Pass `label` (e.g. label="priority").',
       );

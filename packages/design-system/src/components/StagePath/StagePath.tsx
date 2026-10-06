@@ -121,7 +121,6 @@ export const StagePath = forwardRef<HTMLOListElement, StagePathProps>(function S
 
   useEffect(() => {
     if (process.env.NODE_ENV === 'production' || !unknown) return;
-    // eslint-disable-next-line no-console
     console.warn(
       `<StagePath> value "${value}" is not the id of any stage; every stage renders as upcoming.`,
     );

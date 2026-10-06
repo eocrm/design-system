@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { renderHook, act } from '@testing-library/react';
 import { useDataTable } from './useDataTable';
-import type { ColumnDef } from './types';
+import type { ColumnDef, SortState } from './types';
 
 type Row = { id: string; name: string; amount: number };
 
@@ -303,7 +303,7 @@ describe('useDataTable — sort helpers', () => {
   it('toggleSort cycles null → asc → desc → null', () => {
     const onChange = vi.fn();
     const { result, rerender } = renderHook(
-      (sort: any) =>
+      (sort: SortState | null) =>
         useDataTable({
           data: rows,
           columns: cols,
@@ -311,7 +311,7 @@ describe('useDataTable — sort helpers', () => {
           sort,
           onSortChange: onChange,
         }),
-      { initialProps: null as any },
+      { initialProps: null as SortState | null },
     );
     act(() => result.current.toggleSort('amount'));
     expect(onChange).toHaveBeenLastCalledWith({ columnId: 'amount', direction: 'asc' });

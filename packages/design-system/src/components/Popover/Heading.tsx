@@ -16,16 +16,16 @@ export interface PopoverHeadingProps extends HTMLAttributes<HTMLHeadingElement> 
  * @see docs/components/Popover.md
  */
 export function Heading({ as = 'h3', id: idProp, children, ...rest }: PopoverHeadingProps) {
-  const ctx = usePopoverContext('Heading');
+  const { setHeadingId } = usePopoverContext('Heading');
   const reactId = useId();
   const id = idProp ?? `popover-heading-${sanitizeId(reactId)}`;
 
   useLayoutEffect(() => {
-    ctx.setHeadingId(id);
-    return () => ctx.setHeadingId(null);
-    // ctx.setHeadingId is stable per Popover instance; id changes only if
+    setHeadingId(id);
+    return () => setHeadingId(null);
+    // setHeadingId is stable per Popover instance; id changes only if
     // consumer provides one — re-fire is correct in that case.
-  }, [ctx.setHeadingId, id]);
+  }, [setHeadingId, id]);
 
   // `createElement` keeps the dynamic tag type-safe across h2–h6 without
   // tripping JSX.IntrinsicElements' SVG-tag variance issue.

@@ -1,10 +1,11 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useUpload } from './useUpload';
+import type { UploadResult } from './useUpload';
 import { docFromText } from '../RichText/engine/model';
 import type { RichDoc } from '../RichText/engine/model';
 
 function harness(
-  onUpload: (f: File) => Promise<any>,
+  onUpload: (f: File) => Promise<UploadResult>,
   onUploadingChange?: (b: boolean) => void,
   overrides?: Partial<Parameters<typeof useUpload>[0]>,
 ) {
@@ -196,14 +197,14 @@ it('replace swaps a ready attachment in place, keeping align/alt', async () => {
 });
 
 it('drops a settle whose block was already removed', async () => {
-  let resolveUpload: (r: any) => void = () => {};
+  let resolveUpload: (r: UploadResult) => void = () => {};
   const onUpload = vi.fn(
     () =>
-      new Promise((res) => {
+      new Promise<UploadResult>((res) => {
         resolveUpload = res;
       }),
   );
-  const { result, getDoc } = harness(onUpload as any);
+  const { result, getDoc } = harness(onUpload);
   act(() => {
     result.current.uploadFiles([file('p.png')]);
   });

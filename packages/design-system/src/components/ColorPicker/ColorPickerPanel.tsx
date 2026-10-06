@@ -74,7 +74,6 @@ export const ColorPickerPanel = forwardRef<HTMLDivElement, ColorPickerPanelProps
     const [warned, setWarned] = useState(false);
     useEffect(() => {
       if (!warned && hexToHsv(value) === null && process.env.NODE_ENV !== 'production') {
-        // eslint-disable-next-line no-console
         console.warn(
           `<ColorPicker> received invalid value=${JSON.stringify(value)}; falling back to ${FALLBACK_HEX}.`,
         );

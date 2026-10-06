@@ -122,8 +122,9 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
   });
 
   useEffect(() => {
+    const typeahead = typeaheadRef.current;
     return () => {
-      if (typeaheadRef.current.timer) clearTimeout(typeaheadRef.current.timer);
+      if (typeahead.timer) clearTimeout(typeahead.timer);
     };
   }, []);
 

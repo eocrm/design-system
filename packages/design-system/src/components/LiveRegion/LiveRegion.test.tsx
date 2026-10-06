@@ -73,7 +73,7 @@ describe('<LiveRegion>', () => {
     // The type-level Omit above only stops a caller writing these props
     // directly. An untyped `...rest` forwarded from a parent can still put
     // them on the wire — the component must neutralize them at runtime too.
-    const extra: any = { hidden: true, 'aria-hidden': 'true' };
+    const extra: Record<string, unknown> = { hidden: true, 'aria-hidden': 'true' };
     render(<LiveRegion {...extra}>x</LiveRegion>);
     expect(region()).not.toHaveAttribute('hidden');
     expect(region()).not.toHaveAttribute('aria-hidden');

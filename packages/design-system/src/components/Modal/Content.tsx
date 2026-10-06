@@ -21,6 +21,7 @@ export interface ContentProps {
  */
 export function Content({ children, className, style }: ContentProps) {
   const ctx = useModalContext('Content');
+  const { setOpen } = ctx;
 
   // Initial focus on open. Try the ref first; if it points to a non-focusable
   // node, the browser .focus() no-ops and the focusin recapture in
@@ -68,11 +69,11 @@ export function Content({ children, className, style }: ContentProps) {
       if (modalStack.hasOpenFloating() || modalStack.wasEscapeConsumed(e)) return;
       if (ctx.disableEscapeClose) return;
       e.preventDefault();
-      ctx.setOpen(false);
+      setOpen(false);
     }
     document.addEventListener('keydown', onKeyDown, true);
     return () => document.removeEventListener('keydown', onKeyDown, true);
-  }, [ctx.open, ctx.modalId, ctx.disableEscapeClose, ctx.setOpen]);
+  }, [ctx.open, ctx.modalId, ctx.disableEscapeClose, setOpen]);
 
   // Focus trap — active only when this modal is on top of the stack.
   useFocusTrap(ctx.contentRef, ctx.open && ctx.isTop);

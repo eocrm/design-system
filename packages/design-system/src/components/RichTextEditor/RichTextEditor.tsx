@@ -571,6 +571,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       onQuery: mentions?.onQuery,
       onInsert: insertMentionItem,
     });
+    const recomputeMention = mention.recompute;
 
     // Shared by the keyboard shortcut and the toolbar: with a collapsed caret,
     // stage a pending mark for the next typed text (remembering where); with a
@@ -650,7 +651,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         // no per-keystroke double-recompute is reintroduced.
         if (mentionsEnabled) {
           const r = rootRef.current;
-          mention.recompute(r ? readSelection(r) : null);
+          recomputeMention(r ? readSelection(r) : null);
         }
       }
       const root = rootRef.current;
@@ -659,7 +660,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         writeSelection(root, pending);
         pendingSelectionRef.current = null;
       }
-    }, [value, syncHistoryFlags, mentionsEnabled, mention.recompute]);
+    }, [value, syncHistoryFlags, mentionsEnabled, recomputeMention]);
 
     // Native beforeinput (React's onBeforeInput is NOT the modern beforeinput —
     // it's a legacy textInput polyfill that carries no `inputType`).
@@ -893,11 +894,11 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
             if (id) setCaretBlockId(id);
           }
         }
-        if (mentionsEnabled) mention.recompute(sel);
+        if (mentionsEnabled) recomputeMention(sel);
       };
       document.addEventListener('selectionchange', onSelChange);
       return () => document.removeEventListener('selectionchange', onSelChange);
-    }, [toolbar, readOnly, controlsOn, mentionsEnabled, blockIdFromNode, mention.recompute]);
+    }, [toolbar, readOnly, controlsOn, mentionsEnabled, blockIdFromNode, recomputeMention]);
 
     // Initial mention computation: on mount, when mentions toggle on, or when the
     // trigger changes. The selectionchange listener above covers caret moves AND
@@ -908,8 +909,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     useEffect(() => {
       if (!mentionsEnabled) return;
       const root = rootRef.current;
-      mention.recompute(root ? readSelection(root) : null);
-    }, [mentionsEnabled, mentions?.trigger, mention.recompute]);
+      recomputeMention(root ? readSelection(root) : null);
+    }, [mentionsEnabled, mentions?.trigger, recomputeMention]);
 
     // Hover tracking (mouse). Listens on the SHELL (which wraps both the editable and
     // the gutter) so reaching from a block onto its controls keeps them alive:

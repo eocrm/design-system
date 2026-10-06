@@ -1,4 +1,5 @@
 // @vitest-environment jsdom
+import type { PointerEvent as ReactPointerEvent } from 'react';
 import { renderHook, act } from '@testing-library/react';
 import { useResizeHandle } from './useResizeHandle';
 
@@ -31,7 +32,7 @@ describe('useResizeHandle', () => {
         currentTarget: target,
         clientX: 50,
         pointerId: 1,
-      } as any);
+      } as unknown as ReactPointerEvent<HTMLElement>);
     });
     expect(result.current.isResizing).toBe(true);
 
@@ -62,7 +63,7 @@ describe('useResizeHandle', () => {
         currentTarget: target,
         clientX: 50,
         pointerId: 1,
-      } as any);
+      } as unknown as ReactPointerEvent<HTMLElement>);
     });
 
     act(() => {
@@ -87,7 +88,7 @@ describe('useResizeHandle', () => {
         currentTarget: target,
         clientX: 50,
         pointerId: 1,
-      } as any);
+      } as unknown as ReactPointerEvent<HTMLElement>);
     });
 
     act(() => {
@@ -112,7 +113,7 @@ describe('useResizeHandle', () => {
         currentTarget: target,
         clientX: 50,
         pointerId: 1,
-      } as any);
+      } as unknown as ReactPointerEvent<HTMLElement>);
     });
     expect(result.current.isResizing).toBe(true);
 
