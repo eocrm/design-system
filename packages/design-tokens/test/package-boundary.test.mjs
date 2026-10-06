@@ -134,3 +134,15 @@ async function run(command, arguments_, cwd = repositoryRoot) {
     });
   });
 }
+
+test('shared tarball verifier flags leaked paths and missing export targets', async () => {
+  const { PACKAGES, verify } = await import('../../../scripts/verify-package-contents.mjs');
+  const pkg = PACKAGES.find((p) => p.name === '@eocrm/design-system');
+  const pkgJson = { exports: { '.': { import: './src/index.ts' }, './x/*': './src/x/*.scss' } };
+  const problems = verify(pkg, ['README.md', 'package.json', 'src/x.test.tsx'], pkgJson);
+
+  assert.deepEqual(problems, [
+    '@eocrm/design-system tarball leaked: src/x.test.tsx',
+    '@eocrm/design-system tarball missing: src/index.ts',
+  ]);
+});

@@ -219,52 +219,7 @@ jobs:
         run: npm ci
 
       - name: Verify tarball contents
-        run: |
-          set -euo pipefail
-          npm pack --dry-run --json --workspace @eocrm/design-tokens > /tmp/tokens-pack.json
-          npm pack --dry-run --json --workspace @eocrm/design-system > /tmp/design-system-pack.json
-          node --input-type=module <<'NODE'
-          import { readFile } from 'node:fs/promises';
-
-          const checks = [
-            {
-              name: '@eocrm/design-tokens',
-              path: '/tmp/tokens-pack.json',
-              forbidden: [
-                /(?:^|\/)src\//,
-                /(?:^|\/)test\//,
-                /CLAUDE\.md$/,
-                /(?:^|\/)compose\//,
-                /(?:^|\/)scripts\//,
-              ],
-            },
-            {
-              name: '@eocrm/design-system',
-              path: '/tmp/design-system-pack.json',
-              forbidden: [
-                /\.test\.(?:t|j)sx?$/,
-                /\.spec\./,
-                /(?:^|\/)types\//,
-                /CLAUDE\.md$/,
-                /tsconfig/,
-                /(?:^|\/)compose\//,
-              ],
-            },
-          ];
-
-          for (const check of checks) {
-            const [{ files }] = JSON.parse(await readFile(check.path, 'utf8'));
-            const leaked = files
-              .map(({ path }) => path)
-              .filter((path) => check.forbidden.some((pattern) => pattern.test(path)));
-            if (leaked.length > 0) {
-              console.error(`::error::${check.name} tarball leaked:\n${leaked.join('\n')}`);
-              process.exitCode = 1;
-            } else {
-              console.log(`${check.name} tarball OK (${files.length} files)`);
-            }
-          }
-          NODE
+        run: node scripts/verify-package-contents.mjs
 
   check:
     # The required status is `Quality / check`: this aggregator keeps that name.

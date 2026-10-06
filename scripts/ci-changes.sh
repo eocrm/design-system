@@ -50,7 +50,7 @@ for line in \
   "tokens=$(has2 "$LIB" "$TOK_EXTRA")" \
   "compose=$(has '^packages/design-tokens/')" \
   "playground=$(has '^packages/(design-system|design-tokens|playground)/')" \
-  "package=$(has "$LIB")" \
+  "package=$(has "$LIB|^scripts/verify-package-contents\.mjs\$")" \
   "tooling=$(has "$TOOLING")"; do
   emit "$line"; echo "$line" >&2
 done
