@@ -39,7 +39,7 @@ import { CatalogPicker, WidgetPreview } from '@eocrm/design-system';
 - **Always `aria-hidden="true"`.** The attribute is applied after your props, so it cannot be overridden. It conveys nothing to assistive tech; put the information in the item's `title` / `description`.
 - **Data-free.** It takes no values. It depicts a kind of widget, never a real one.
 - **Fills its container width** with a fixed 16 / 10 aspect ratio. Size it by sizing the parent (the picker card does this).
-- Colours come from theme tokens, so dark mode follows automatically.
+- Colours come from theme tokens, so dark mode follows automatically. Neutral pieces use `--color-border-strong` and the accented ones a half-strength `--color-accent`, so the miniature reads on a light card. To retune it, override `--widget-preview-shape`, `--widget-preview-accent` and `--widget-preview-accent-strong` on an ancestor.
 
 #### When NOT to use
 

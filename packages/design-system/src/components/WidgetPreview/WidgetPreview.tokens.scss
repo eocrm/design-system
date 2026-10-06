@@ -5,9 +5,12 @@
   --widget-preview-padding: var(--space-3);
   --widget-preview-aspect: 16 / 10;
 
-  // Shape pieces on the preview box, and the one accent "hero" per kind.
-  --widget-preview-shape: var(--color-bg-muted);
-  --widget-preview-accent: var(--color-accent-bg-subtle);
+  // Shape pieces on the preview box, and the accent "hero" pieces per kind.
+  // Decorative, but must read at gallery-card size (#626): the strong neutral
+  // and a half-strength accent (translucent, so it follows any bg override),
+  // measured in contrast.test.ts.
+  --widget-preview-shape: var(--color-border-strong);
+  --widget-preview-accent: color-mix(in srgb, var(--color-accent) 50%, transparent);
   --widget-preview-accent-strong: var(--color-accent);
 
   // Shared by preview and loading shapes.
