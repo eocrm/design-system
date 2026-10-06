@@ -3,23 +3,26 @@
 // Inset on purpose: the child's own `overflow: hidden` (Card) and its
 // parent's `overflow: auto` (a DashboardCanvas cell) would clip an outset
 // ring or glow. Outline + box-shadow only, so there's no layout shift.
-// `[data-highlight]` lifts specificity above the child's own single-class rules
-// (CSS-module order between files isn't guaranteed).
+// The doubled class + attribute (0,3,0) beats the child's own class+attribute
+// rules (e.g. Card's `.card[data-tone]`) regardless of bundle order.
+// While highlighted, the child's own `box-shadow` and `outline` are REPLACED:
+// Card elevation and the tone stripe come back when the highlight ends.
 // Known limit: Chrome doesn't paint box-shadow on <tr>, so table rows get the
 // ring only.
-.highlight[data-highlight] {
+.highlight.highlight[data-highlight] {
   outline: var(--highlight-ring-width) solid var(--highlight-ring);
   outline-offset: calc(-1 * var(--highlight-ring-width));
   box-shadow: inset 0 0 var(--highlight-glow-blur) var(--highlight-glow);
-  transition:
-    outline-color var(--highlight-fade),
-    box-shadow var(--highlight-fade);
   animation: highlight-pulse var(--highlight-pulse-duration) ease-out;
 }
 
-.highlight[data-highlight='fading'] {
+// Transition only on the fade-out, so entry doesn't flash currentcolor → accent.
+.highlight.highlight[data-highlight='fading'] {
   outline-color: transparent;
   box-shadow: inset 0 0 var(--highlight-glow-blur) transparent;
+  transition:
+    outline-color var(--highlight-fade),
+    box-shadow var(--highlight-fade);
 }
 
 @keyframes highlight-pulse {
@@ -29,7 +32,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .highlight[data-highlight] {
+  .highlight.highlight[data-highlight] {
     animation: none;
     transition: none;
   }

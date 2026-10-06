@@ -100,6 +100,10 @@ Styling:
   margin or padding.
 - **Known limit:** Chrome doesn't paint `box-shadow` on `<tr>`, so table rows
   get the ring only. The outline does paint. This goes in the docs.
+- **Replaces the child's own `box-shadow`/`outline` while highlighted** (e.g. a
+  Card's elevation and tone stripe); they return when the highlight ends. The
+  glow also paints beneath descendants' own backgrounds (a filled Card header,
+  `<td>` fills); the outline paints above them.
 - Correct in light and dark through `--ring-accent`'s theme values.
 
 ## Testing (`Highlight.test.tsx`, jsdom, fake timers)
