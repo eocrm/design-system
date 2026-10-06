@@ -1,21 +1,20 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import stylelint from 'stylelint';
-import { readFileSync, readdirSync } from 'node:fs';
-import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import scss from 'postcss-scss';
+
+const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
 
 const config = {
   customSyntax: 'postcss-scss',
-  plugins: ['./tools/stylelint-plugin-eocrm/index.mjs'],
+  plugins: [fileURLToPath(new URL('./index.mjs', import.meta.url))],
   rules: {
     'eocrm/focus-ring-offset-via-mixin': true,
     'selector-pseudo-class-disallowed-list': ['dir'],
     'eocrm/no-dir-pseudo-class': true,
   },
 };
-const file = 'packages/design-system/src/components/X/X.module.scss';
+const file = `${repoRoot}packages/design-system/src/components/X/X.module.scss`;
 const lint = async (code) =>
   (await stylelint.lint({ code, codeFilename: file, config })).results[0].warnings.map(
     (w) => w.rule,
@@ -89,8 +88,8 @@ const realRules = async (codeFilename) =>
   (
     await stylelint.lint({
       code: '.a:dir(rtl) { color: red; }\n.b:focus-visible { @include focus-ring; outline-offset: 2px; }\n',
-      codeFilename,
-      configFile: '.stylelintrc.json',
+      codeFilename: `${repoRoot}${codeFilename}`,
+      configFile: `${repoRoot}.stylelintrc.json`,
     })
   ).results[0].warnings
     .map((w) => w.rule)
@@ -112,43 +111,24 @@ test('real config: playground gets neither', async () => {
   assert.deepEqual(await realRules('packages/playground/src/x.scss'), []);
 });
 
-// Guard: disable comments in design-system SCSS may not blanket-disable or name the moved policy rules.
-// Parsed with postcss-scss so multi-line block comments are seen like stylelint sees them.
-const DISABLE = /^\s*stylelint-disable(?:-next-line|-line)?(?![\w-])([\s\S]*)$/;
-const protectedRule = /eocrm\/|selector-pseudo-class-disallowed-list/;
-function badDisables(src) {
-  const bad = [];
-  scss.parse(src).walkComments((c) => {
-    const m = DISABLE.exec(c.text);
-    if (!m) return;
-    const rules = m[1].replace(/(?:^|\s)--(?:\s[\s\S]*)?$/, '').trim();
-    if (rules === '' || protectedRule.test(rules)) bad.push(c.source.start.line);
+// Guard: with disables ignored, no design-system SCSS may trip the moved policy rules, so no
+// disable form (any comment syntax) can switch them off. Other rules' warnings are expected.
+test('design-system SCSS trips no moved policy rule even with disables ignored', async () => {
+  const policy = new Set([
+    'selector-pseudo-class-disallowed-list',
+    'eocrm/no-dir-pseudo-class',
+    'eocrm/focus-ring-offset-via-mixin',
+  ]);
+  const { results } = await stylelint.lint({
+    files: `${repoRoot}packages/design-system/src/**/*.scss`,
+    configFile: `${repoRoot}.stylelintrc.json`,
+    ignoreDisables: true,
   });
-  return bad;
-}
-test('disable-comment guard: detects each bad form', () => {
-  for (const c of [
-    '// stylelint-disable',
-    '/* stylelint-disable */',
-    '/*\n  stylelint-disable\n*/',
-    '/*\n  stylelint-disable-next-line\n  -- reason\n*/',
-    '// stylelint-disable-next-line -- reason',
-    '/* stylelint-disable-line -- reason */',
-    '// stylelint-disable eocrm/no-dir-pseudo-class',
-    '// stylelint-disable-next-line selector-pseudo-class-disallowed-list -- x',
-  ])
-    assert.deepEqual(badDisables(c), [1], c);
-  for (const c of [
-    '// stylelint-disable property-disallowed-list -- reason',
-    '/* stylelint-disable-next-line scss/load-partial-extension */',
-    '// stylelint-enable',
-  ])
-    assert.deepEqual(badDisables(c), [], c);
-});
-test('design-system SCSS has no blanket or moved-rule stylelint disables', () => {
-  const root = fileURLToPath(new URL('../../packages/design-system/src', import.meta.url));
-  const offenders = readdirSync(root, { recursive: true })
-    .filter((f) => f.endsWith('.scss'))
-    .flatMap((f) => badDisables(readFileSync(join(root, f), 'utf8')).map((n) => `${f}:${n}`));
+  const offenders = results.flatMap((r) =>
+    r.warnings
+      // A blanket disable followed by a named one makes stylelint throw CssSyntaxError instead.
+      .filter((w) => policy.has(w.rule) || w.rule === 'CssSyntaxError')
+      .map((w) => `${r.source.replace(repoRoot, '')}:${w.line} ${w.rule}`),
+  );
   assert.deepEqual(offenders, []);
 });

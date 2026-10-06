@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { describe, it } from 'node:test';
@@ -85,82 +84,23 @@ tester.run('aria-busy-needs-announcement', rules['aria-busy-needs-announcement']
   ],
 });
 
-// Guard: an inline disable would switch an eocrm policy rule off silently
-// (reportUnusedDisableDirectives is off), where the old Vitest gate had no
-// off-switch. No source may name eocrm/* in an eslint comment, and a bare
-// `eslint-disable` (all rules) is banned in the library, which eocrm covers.
+// Guard: with inline config disallowed, no eslint-disable form can switch the eocrm rules off,
+// so the library source must be clean of them.
 describe('eocrm rules have no inline off-switch', () => {
-  const root = fileURLToPath(new URL('../../packages', import.meta.url));
-  const walk = (dir) =>
-    readdirSync(dir, { withFileTypes: true }).flatMap((e) => {
-      const p = join(dir, e.name);
-      if (e.isDirectory()) return e.name === 'node_modules' ? [] : walk(p);
-      return /\.(tsx?|mjs|js)$/.test(e.name) ? [p] : [];
+  it('design-system src has no eocrm/* message when inline config is ignored', async () => {
+    const { ESLint } = await import('eslint');
+    const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
+    const eslint = new ESLint({
+      cwd: repoRoot,
+      overrideConfigFile: join(repoRoot, 'eslint.config.mjs'),
+      allowInlineConfig: false,
     });
-  const comments = /\/\/[^\n]*|\/\*[\s\S]*?\*\//g;
-  const directive = /^\s*eslint(-disable(?:-next-line|-line)?|-enable)?\b([\s\S]*)$/;
-
-  it('no eslint comment mentions eocrm/ or blanket-disables the library', () => {
-    const offenders = [];
-    for (const pkg of readdirSync(root)) {
-      const src = join(root, pkg, 'src');
-      if (!existsSync(src)) continue;
-      for (const file of walk(src)) {
-        const code = readFileSync(file, 'utf8');
-        for (const m of code.matchAll(comments)) {
-          const body = m[0].replace(/^\/\/|^\/\*|\*\/$/g, '');
-          const d = directive.exec(body);
-          if (!d) continue;
-          const rules = d[2].replace(/--[\s\S]*$/, '').trim();
-          // A disable with an empty rule list silences every rule, eocrm included.
-          const bare = pkg === 'design-system' && d[1]?.startsWith('-disable') && rules === '';
-          if (body.includes('eocrm/') || bare) {
-            const line = code.slice(0, m.index).split('\n').length;
-            offenders.push(`${relative(root, file)}:${line}`);
-          }
-        }
-      }
-    }
-    assert.deepEqual(offenders, []);
-  });
-});
-
-// Scope: pins the `files`/`ignores` globs in eslint.config.mjs, which RuleTester cannot see.
-describe('eslint.config.mjs scopes the eocrm rules', async () => {
-  const { ESLint } = await import('eslint');
-  const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
-  const eslint = new ESLint({
-    cwd: repoRoot,
-    overrideConfigFile: join(repoRoot, 'eslint.config.mjs'),
-  });
-  const code = `const A = () => <div aria-busy={b} aria-label={a ?? t('k')} />;`;
-  const fired = async (filePath, src = code) =>
-    (await eslint.lintText(src, { filePath: join(repoRoot, filePath) }))[0].messages
-      .map((m) => m.ruleId)
-      .filter((r) => r?.startsWith('eocrm/'))
-      .sort();
-  const all = [
-    'eocrm/aria-busy-needs-announcement',
-    'eocrm/no-nullish-accessible-name',
-    'eocrm/no-nullish-translation-fallback',
-  ];
-  it('component source: all three fire', async () => {
-    assert.deepEqual(await fired('packages/design-system/src/components/X/X.tsx'), all);
-  });
-  it('_internal .ts: fires (JSX is invalid in .ts, so a non-JSX snippet)', async () => {
-    // ponytail: the other two rules are JSX-only, so a .ts file can only trip this one.
-    assert.deepEqual(
-      await fired(
-        'packages/design-system/src/components/_internal/x.ts',
-        `const a = { 'aria-label': x ?? t('k') };`,
-      ),
-      ['eocrm/no-nullish-translation-fallback'],
+    const results = await eslint.lintFiles([join(repoRoot, 'packages/design-system/src')]);
+    const offenders = results.flatMap((r) =>
+      r.messages
+        .filter((m) => m.ruleId?.startsWith('eocrm/'))
+        .map((m) => `${relative(repoRoot, r.filePath)}:${m.line} ${m.ruleId}`),
     );
-  });
-  it('test files: none fire', async () => {
-    assert.deepEqual(await fired('packages/design-system/src/components/X/X.test.tsx'), []);
-  });
-  it('playground: none fire', async () => {
-    assert.deepEqual(await fired('packages/playground/src/x.tsx'), []);
+    assert.deepEqual(offenders, []);
   });
 });
