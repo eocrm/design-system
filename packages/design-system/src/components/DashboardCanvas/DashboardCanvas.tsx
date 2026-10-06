@@ -1034,8 +1034,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         setLive(null);
         if (pick) cancelPick();
       });
-      // cancelPick is re-created per render but only reads current state.
-      // eslint-disable-next-line react-hooks/exhaustive-deps
+      // eslint-disable-next-line react-hooks/exhaustive-deps -- cancelPick is re-created per render but only reads current state
     }, [dragging, pick]);
 
     // readOnly OR the narrow-width gate flipping editing off mid-gesture

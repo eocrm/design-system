@@ -187,7 +187,7 @@ export const RichTextBlockControls = memo(function RichTextBlockControls({
       clearReflow(dragRef.current, rootRef.current);
       dragRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- unmount-only cleanup
   }, []);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 4 } }));

@@ -124,6 +124,39 @@ describe('eslint.config.mjs scopes the eocrm rules', async () => {
   });
 });
 
+// Scope: the recommended typescript-eslint + react-hooks rules apply as errors (a warning
+// would exit 0 and pass CI) to library source, library tests and the playground alike.
+describe('eslint.config.mjs applies the recommended rules everywhere', async () => {
+  const { ESLint } = await import('eslint');
+  const repoRoot = fileURLToPath(new URL('../../', import.meta.url));
+  const eslint = new ESLint({
+    cwd: repoRoot,
+    overrideConfigFile: join(repoRoot, 'eslint.config.mjs'),
+  });
+  const code = `const x: any = 1;
+function A() {
+  if (x) useState(0);
+  useEffect(() => { void x; }, [y]);
+  return null;
+}`;
+  const rules = [
+    '@typescript-eslint/no-explicit-any',
+    'react-hooks/exhaustive-deps',
+    'react-hooks/rules-of-hooks',
+  ];
+  for (const filePath of [
+    'packages/design-system/src/components/X/X.tsx',
+    'packages/design-system/src/components/X/X.test.tsx',
+    'packages/playground/src/x.tsx',
+  ]) {
+    it(`${filePath}: all fire as errors`, async () => {
+      const [r] = await eslint.lintText(code, { filePath: join(repoRoot, filePath) });
+      const errors = r.messages.filter((m) => m.severity === 2).map((m) => m.ruleId);
+      for (const rule of rules) assert.ok(errors.includes(rule), `${rule} missing: ${errors}`);
+    });
+  }
+});
+
 // Guard: with inline config disallowed, no eslint-disable form can switch the eocrm rules off,
 // so the library source must be clean of them.
 describe('eocrm rules have no inline off-switch', async () => {
