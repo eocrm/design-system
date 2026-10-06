@@ -8,7 +8,7 @@ const [justAdded, setJustAdded] = useState<string | null>(null);
 </Highlight>;
 ```
 
-Draws an inset accent ring and a soft glow on its single child for `duration` ms (default 3000), then fades it out and calls `onDone`. It renders **no wrapper**: it clones the child and adds a class, `data-highlight` and a ref. So it works on `<tr>`, `<li>`, grid cells and any DS component that forwards `ref` and `className`. It's decorative only: no role, `aria-*` or `tabIndex` changes. Announce the event yourself (for example `<LiveRegion>` "Widget added").
+Draws a 1px solid accent ring and a soft inset glow on its single child for `duration` ms (default 3000). On entry, three soft waves roll inward from the edge (about 3s in total), then the ring and glow hold steady. After `duration` it fades it out and calls `onDone`. It renders **no wrapper**: it clones the child and adds a class, `data-highlight` and a ref. So it works on `<tr>`, `<li>`, grid cells and any DS component that forwards `ref` and `className`. It's decorative only: no role, `aria-*` or `tabIndex` changes. Announce the event yourself (for example `<LiveRegion>` "Widget added").
 
 <!-- props:start -->
 
@@ -38,7 +38,7 @@ Draws an inset accent ring and a soft glow on its single child for `duration` ms
   ```
 
 - The ring is **inset**, so `overflow: hidden` on the child (`Card`) or `overflow: auto` on its parent (a canvas cell) never clips it.
-- Under `prefers-reduced-motion` the ring is static (no pulse, no fade). `onDone` fires straight after `duration`.
+- Under `prefers-reduced-motion` the ring and glow are static (no waves, no fade). `onDone` fires straight after `duration`.
 - `duration={Infinity}` keeps it on until `active` goes false.
 - While it's active, the highlight **replaces** the child's own `box-shadow` and `outline`: a `Card` loses its elevation shadow and tone stripe for the duration, and gets them back when the highlight ends.
 - The inset glow paints beneath the child's descendants' own backgrounds (a filled `Card` header, `<td>` fills), so it can be partly hidden there. The outline ring always paints above them.

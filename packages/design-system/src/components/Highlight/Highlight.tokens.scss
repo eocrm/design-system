@@ -1,14 +1,20 @@
 :root {
-  // ─── Ring (inset outline) ──────────────────────────────────────────────
+  // ─── Ring (1px solid inset outline) ────────────────────────────────────
   --highlight-ring: var(--ring-accent);
-  --highlight-ring-width: var(--ring-width);
+  --highlight-ring-peak: var(--color-accent-hover); // stronger accent in both themes
+  --highlight-ring-width: var(--border-width);
 
-  // ─── Glow (inset box-shadow) ───────────────────────────────────────────
-  --highlight-glow: color-mix(in srgb, var(--ring-accent) 22%, transparent);
-  --highlight-glow-peak: color-mix(in srgb, var(--ring-accent) 45%, transparent);
+  // ─── Glow (steady inset box-shadow) ────────────────────────────────────
+  --highlight-glow: color-mix(in srgb, var(--ring-accent) 32%, transparent);
   --highlight-glow-blur: var(--space-4);
 
+  // ─── Waves (inset box-shadow bands rolling inward) ─────────────────────
+  --highlight-wave: color-mix(in srgb, var(--ring-accent) 55%, transparent);
+  --highlight-wave-reach: var(--space-6);
+  --highlight-wave-blur: var(--space-3);
+  --highlight-wave-duration: 1000ms;
+  --highlight-wave-count: 3;
+
   // ─── Motion ────────────────────────────────────────────────────────────
-  --highlight-pulse-duration: 700ms;
   --highlight-fade: var(--transition-slow); // Highlight.tsx FADE_MS mirrors this (260ms)
 }

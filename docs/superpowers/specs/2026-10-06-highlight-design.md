@@ -78,20 +78,30 @@ inline: 'nearest', behavior })`. `behavior` is `'smooth'`, or `'auto'` under
 
 `Highlight.module.scss` + `Highlight.tokens.scss`, tokens only:
 
-- `--highlight-ring` → `var(--ring-accent)`
-- `--highlight-ring-width` → `var(--ring-width)`
+- `--highlight-ring` → `var(--ring-accent)` (1px solid accent ring)
+- `--highlight-ring-peak` → `var(--color-accent-hover)` (outline colour at each wave's start)
+- `--highlight-ring-width` → `var(--border-width)` (1px)
 - `--highlight-glow` → an accent tint (`color-mix` of `--ring-accent` with
   `transparent`, following the existing `color-mix` precedent in
   `*.tokens.scss`)
 
 Styling:
 
-- **Ring:** an inset `outline` (`outline-offset` = −ring width). Inset, so the
+- **Ring:** a 1px solid accent ring, drawn as an inset `outline` (`outline-offset` = −ring width). Inset, so the
   child's own `overflow: hidden` (`Card`) and the parent's `overflow: auto`
   (the `DashboardCanvas` cell) can't clip it. That's the same reasoning as
   `DashboardCanvas`'s inset focus ring.
-- **Glow:** an inset `box-shadow`. One soft pulse on entry (a CSS keyframe),
-  then it holds.
+- **Glow:** a blurred inset `box-shadow`, so the edge reads as light; the
+  softness comes from the glow and waves, not the line.
+- **Inward waves:** on entry, three waves (`highlight-wave`, 1000ms each,
+  `ease-out`). Each wave is an extra blurred inset `box-shadow` band that
+  starts at the edge and grows inward to `--space-6` while fading out; the
+  keyframes repeat the steady glow layer so it never drops out. Each wave also
+  pulses the outline from `--highlight-ring-peak` back to `--highlight-ring`.
+  No `animation-fill-mode`: after the last wave the steady ring and glow from
+  the base rule remain. Inward, because outward ripples would be clipped by
+  `Card`/canvas-cell overflow; finite (~3s), because endless motion over 5s
+  must be pausable (WCAG 2.2.2). A `duration` under 3000 cuts the waves short.
 - **Fading:** opacity can't apply to an outline alone, so the outline colour
   and the glow transition to transparent over `--transition-slow`.
 - **Reduced motion:** a static ring and glow, with no animation and no
