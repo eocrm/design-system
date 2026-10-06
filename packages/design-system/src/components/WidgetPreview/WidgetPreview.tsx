@@ -9,11 +9,11 @@ export type WidgetPreviewVariant = 'kpi' | 'list' | 'chart' | 'pipeline' | 'acti
 export interface WidgetPreviewProps extends HTMLAttributes<HTMLDivElement> {
   /**
    * Which widget kind the miniature depicts. Required.
-   * - `'kpi'` — label, a large value block (accent), a trend line.
-   * - `'list'` — rows of avatar + line; first avatar accented.
+   * - `'kpi'` — label, a large value block (strong accent), an accented trend line.
+   * - `'list'` — rows of accented avatar + line; first avatar strong.
    * - `'chart'` — a bar series (accented, one bar strong).
-   * - `'pipeline'` — stage columns of cards; current stage header strong.
-   * - `'activity'` — timeline rows with accented dots.
+   * - `'pipeline'` — stage columns of cards; current stage header strong, its cards accented.
+   * - `'activity'` — timeline rows with accented dots; first dot strong.
    */
   variant: WidgetPreviewVariant;
 }

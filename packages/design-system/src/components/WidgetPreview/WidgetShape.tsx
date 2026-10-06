@@ -30,11 +30,17 @@ export function WidgetShape({ kind, mode }: { kind: WidgetShapeKind; mode: Widge
     cls: string,
     on = false,
     variant: 'text' | 'circular' | 'rectangular' = 'rectangular',
+    strong = false,
   ) => (
     <Skeleton
       variant={variant}
       animation={animation}
-      className={clsx(styles.piece, cls, preview && on && styles.hero)}
+      className={clsx(
+        styles.piece,
+        cls,
+        preview && on && styles.hero,
+        preview && on && strong && styles.heroStrong,
+      )}
       {...hero(on)}
     />
   );
@@ -46,8 +52,8 @@ export function WidgetShape({ kind, mode }: { kind: WidgetShapeKind; mode: Widge
       body = (
         <div className={styles.kpi}>
           {piece(styles.kpiLabel)}
-          {piece(styles.kpiValue, true)}
-          {piece(styles.kpiTrend)}
+          {piece(styles.kpiValue, true, 'rectangular', true)}
+          {piece(styles.kpiTrend, true)}
         </div>
       );
       break;
@@ -57,11 +63,7 @@ export function WidgetShape({ kind, mode }: { kind: WidgetShapeKind; mode: Widge
         <div className={styles.rows}>
           {Array.from({ length: rows }, (_, i) => (
             <div key={i} className={styles.row}>
-              {piece(
-                kind === 'list' ? styles.avatar : styles.dot,
-                kind === 'activity' || i === 0,
-                'circular',
-              )}
+              {piece(kind === 'list' ? styles.avatar : styles.dot, true, 'circular', i === 0)}
               {piece(clsx(styles.line, i % 3 === 2 && styles.lineShort))}
             </div>
           ))}
@@ -108,7 +110,7 @@ export function WidgetShape({ kind, mode }: { kind: WidgetShapeKind; mode: Widge
                 {...hero(col < 2)}
               />
               {Array.from({ length: n }, (_, i) => (
-                <Fragment key={i}>{piece(styles.dealCard)}</Fragment>
+                <Fragment key={i}>{piece(styles.dealCard, col === 0)}</Fragment>
               ))}
             </div>
           ))}

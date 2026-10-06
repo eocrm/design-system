@@ -340,8 +340,9 @@ describe('StagePath hovered fills keep their text at AA', () => {
 
 /**
  * #626. WidgetPreview is decorative (aria-hidden), so no WCAG minimum applies —
- * but its pieces once sat at ~1.03:1 on the preview box and vanished. These
- * floors pin "visibly there" in both themes. The accent is a translucent
+ * but its pieces once sat at ~1.05:1 on the preview box and vanished. These
+ * floors pin "visibly there" in both themes, deliberately tight (shape ships at
+ * 1.64 light): retuning --color-border-strong should be a conscious re-check. The accent is a translucent
  * `color-mix(accent N%, transparent)`, i.e. `composite(accent, N, bg)`.
  */
 describe('WidgetPreview pieces stay visible on the preview box', () => {
@@ -357,7 +358,13 @@ describe('WidgetPreview pieces stay visible on the preview box', () => {
     ['light', TOKENS],
     ['dark', DARK],
   ])('%s', (_theme, source) => {
-    const color = (name: string) => tokenValue(alias(name)!, source);
+    // Fail readably if a token stops being a plain alias / the expected mix.
+    expect(accentMix, '--widget-preview-accent shape').not.toBeNull();
+    const color = (name: string) => {
+      const target = alias(name);
+      expect(target, `${name} must be a var() alias`).toBeDefined();
+      return tokenValue(target!, source);
+    };
     const bg = color('--widget-preview-bg');
     const accent = composite(tokenValue('--color-accent', source), Number(accentMix![1]) / 100, bg);
     expect(contrast(color('--widget-preview-shape'), bg)).toBeGreaterThanOrEqual(1.6);
