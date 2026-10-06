@@ -22,9 +22,11 @@ export interface CardHeaderProps extends HTMLAttributes<HTMLDivElement> {
    * Optional secondary, non-interactive text beside the title — freshness
    * ("Updated 3 minutes ago") or status. Muted and single-line; sits just
    * before `action` and is the first thing to give way at narrow widths: it
-   * truncates with an ellipsis (and hides once only a sliver is left)
-   * before the title gives up any width, while `action` keeps its width. Not part of the heading's name. Put
-   * controls in `action`, never here.
+   * truncates with an ellipsis before the title gives up any width, while
+   * `action` keeps its width. In a `fill` Card it is also visually hidden
+   * (still read by screen readers) once only a sliver would show. Not part
+   * of the heading's name. Put controls in `action`, never here. `false`
+   * and `''` count as no meta.
    */
   meta?: ReactNode;
   /**
@@ -45,15 +47,12 @@ export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(function C
   // headerLevel is a string union of valid HTML heading tag names; cast to
   // the union (not a single literal) so the JSX dispatch type is honest.
   const Heading = headerLevel as 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+  const hasMeta = meta != null && meta !== false && meta !== '';
   // {...rest} last so consumer overrides win (Pattern A).
   return (
-    <div
-      ref={ref}
-      className={clsx(styles.header, meta != null && styles.withMeta, className)}
-      {...rest}
-    >
+    <div ref={ref} className={clsx(styles.header, hasMeta && styles.withMeta, className)} {...rest}>
       <Heading className={styles.title}>{children}</Heading>
-      {meta != null && (
+      {hasMeta && (
         <span className={styles.meta}>
           <span className={styles.metaText}>{meta}</span>
         </span>

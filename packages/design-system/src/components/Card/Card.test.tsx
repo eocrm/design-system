@@ -315,14 +315,33 @@ describe('compound API', () => {
     expect(container.firstElementChild!.className).not.toMatch(/withMeta/);
   });
 
-  it('meta yields before the title: 1fr min-0 track, ellipsis, hidden when tiny', () => {
+  it('meta yields before the title: 1fr min-0 track, gap-free, action pinned', () => {
     const { css } = compile(resolve(__dirname, 'Card.module.scss'));
-    const rule = (sel: string) => css.match(new RegExp(`\\.${sel} \\{([^}]*)\\}`))![1];
-    expect(rule('withMeta')).toMatch(/grid-template-columns: auto minmax\(0, 1fr\)/);
-    expect(rule('meta')).toMatch(/container-type: inline-size/);
-    expect(rule('metaText')).toMatch(/text-overflow: ellipsis/);
-    expect(css).toMatch(/@container \(max-width: \d+px\) \{\s*\.metaText \{\s*visibility: hidden/);
-    expect(rule('action')).toMatch(/flex-shrink: 0/);
+    const rule = (sel: string) => css.match(new RegExp(`(?:^|\\n)${sel} \\{([^}]*)\\}`))![1];
+    expect(rule('\\.withMeta')).toMatch(/grid-template-columns: auto minmax\(0, 1fr\)/);
+    // A collapsed meta track must not keep a column gap that the title pays for.
+    expect(rule('\\.withMeta')).toMatch(/column-gap: 0/);
+    // Grid ignores flex-shrink; the action's floor must be its full width.
+    expect(rule('\\.withMeta \\.action')).toMatch(/min-width: max-content/);
+    expect(rule('\\.meta')).toMatch(/min-width: 0/);
+    expect(rule('\\.metaText')).toMatch(/text-overflow: ellipsis/);
+  });
+
+  it('meta hides only in fill Cards, and by clipping (stays in the a11y tree)', () => {
+    const { css } = compile(resolve(__dirname, 'Card.module.scss'));
+    // Containment only under .fill: in a shrink-to-fit parent it would zero meta.
+    expect(css).toMatch(/\.fill \.meta \{\s*container: card-meta ?\/ ?inline-size/);
+    expect(css).not.toMatch(/(?:^|\n)\.meta \{[^}]*container/);
+    expect(css).toMatch(
+      /@container card-meta \(max-width: \d+px\) \{\s*\.metaText \{\s*clip-path: inset\(50%\)/,
+    );
+    expect(css).not.toMatch(/visibility: hidden/);
+  });
+
+  it.each([false, ''] as const)('meta=%j counts as no meta', (meta) => {
+    const { container } = render(<Card.Header meta={meta}>T</Card.Header>);
+    expect(container.firstElementChild!.className).not.toMatch(/withMeta/);
+    expect(container.querySelectorAll('span')).toHaveLength(0);
   });
 
   it('Card.List renders a <ul>', () => {

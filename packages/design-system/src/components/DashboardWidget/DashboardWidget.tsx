@@ -36,8 +36,8 @@ export interface DashboardWidgetProps extends Omit<HTMLAttributes<HTMLDivElement
   title: ReactNode;
   /**
    * Secondary, non-interactive header text such as freshness ("Updated 3 minutes ago") or
-   * status. Sits before `actions` and yields first in a narrow cell: it truncates, then hides,
-   * before the title shrinks, while `actions` never shrinks. Also describes the body region
+   * status. Sits before `actions` and yields first in a narrow cell: it truncates (then hides
+   * visually, still read by screen readers) before the title shrinks, while `actions` never shrinks. Also describes the body region
    * (`aria-describedby`) for `standard` / `list`. Repeat it in the refresh button's
    * tooltip if it matters when truncated.
    */
@@ -103,6 +103,7 @@ export const DashboardWidget = forwardRef<HTMLDivElement, DashboardWidgetProps>(
     const t = useTranslation();
     const titleId = useId();
     const metaId = useId();
+    const hasMeta = meta != null && meta !== false && meta !== '';
     const skeleton = (
       <>
         <WidgetShape kind={LOADING_SHAPE[variant]} mode="loading" />
@@ -114,7 +115,7 @@ export const DashboardWidget = forwardRef<HTMLDivElement, DashboardWidgetProps>(
       <Card.Header
         headerLevel={headerLevel}
         action={actions}
-        meta={meta != null ? <span id={metaId}>{meta}</span> : undefined}
+        meta={hasMeta ? <span id={metaId}>{meta}</span> : undefined}
         className={styles[`header-${variant}`]}
       >
         <span id={titleId}>{title}</span>
@@ -158,7 +159,7 @@ export const DashboardWidget = forwardRef<HTMLDivElement, DashboardWidgetProps>(
           data-scroll=""
           role="group"
           aria-labelledby={titleId}
-          aria-describedby={meta != null ? metaId : undefined}
+          aria-describedby={hasMeta ? metaId : undefined}
           className={bodyClass}
         >
           {content}

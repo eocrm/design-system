@@ -30,6 +30,19 @@ describe('DashboardWidget', () => {
     );
   });
 
+  it('kpi: meta renders in the header; no body group to describe', () => {
+    const { container } = render(
+      <DashboardWidget variant="kpi" title="Open deals" meta="Live" value="128" />,
+    );
+    expect(screen.getByText('Live')).toBeInTheDocument();
+    expect(container.querySelector('[aria-describedby]')).toBeNull();
+  });
+
+  it('meta={false} → no meta span, no description', () => {
+    render(<DashboardWidget title="Pipeline" meta={false} />);
+    expect(screen.getByRole('group', { name: 'Pipeline' })).not.toHaveAttribute('aria-describedby');
+  });
+
   it('no meta → body group has no description', () => {
     render(<DashboardWidget title="Pipeline" />);
     expect(screen.getByRole('group', { name: 'Pipeline' })).not.toHaveAttribute('aria-describedby');
