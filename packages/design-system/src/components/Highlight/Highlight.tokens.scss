@@ -1,0 +1,14 @@
+:root {
+  // ─── Ring (inset outline) ──────────────────────────────────────────────
+  --highlight-ring: var(--ring-accent);
+  --highlight-ring-width: var(--ring-width);
+
+  // ─── Glow (inset box-shadow) ───────────────────────────────────────────
+  --highlight-glow: color-mix(in srgb, var(--ring-accent) 22%, transparent);
+  --highlight-glow-peak: color-mix(in srgb, var(--ring-accent) 45%, transparent);
+  --highlight-glow-blur: var(--space-4);
+
+  // ─── Motion ────────────────────────────────────────────────────────────
+  --highlight-pulse-duration: 700ms;
+  --highlight-fade: var(--transition-slow); // Highlight.tsx FADE_MS mirrors this (260ms)
+}
