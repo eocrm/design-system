@@ -39,4 +39,8 @@
   --card-title-font-size: var(--font-size-md);
   --card-title-font-weight: var(--font-weight-semibold);
   --card-title-fg: var(--color-fg);
+
+  // Header meta (secondary text beside the title)
+  --card-meta-font-size: var(--font-size-sm);
+  --card-meta-fg: var(--color-fg-muted);
 }

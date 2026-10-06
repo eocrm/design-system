@@ -15,9 +15,22 @@ export interface CardHeaderProps extends HTMLAttributes<HTMLDivElement> {
   /**
    * Optional right-aligned slot — typically a `<Link>` or `<Button>` that
    * lets the user navigate to a full list or take a section-level action.
-   * Rendered inside a `<span>` that is flex-shrink: 0 so it never wraps.
+   * Rendered inside a `<span>` that never shrinks or wraps (flex-shrink: 0;
+   * with `meta`, min-width: max-content).
    */
   action?: ReactNode;
+  /**
+   * Optional secondary, non-interactive text beside the title — freshness
+   * ("Updated 3 minutes ago") or status. Muted and single-line; sits just
+   * before `action` and is the first thing to give way at narrow widths: it
+   * truncates with an ellipsis before the title gives up any width, while
+   * `action` keeps its width. In a `fill` Card (which needs a parent of
+   * definite width) it is also visually hidden, still read by screen
+   * readers, once only a sliver would show. Not part
+   * of the heading's name. Put controls in `action`, never here. `false`
+   * and `''` count as no meta.
+   */
+  meta?: ReactNode;
   /**
    * Title content. Becomes the inner text of the heading element. Typically
    * a plain string, but can contain inline elements if needed.
@@ -26,20 +39,26 @@ export interface CardHeaderProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 /**
- * Title row subcomponent for `<Card>` with an optional right-aligned action slot.
+ * Title row subcomponent for `<Card>` with optional right-aligned meta text and action slot.
  * @see docs/components/Card.md
  */
 export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(function CardHeader(
-  { headerLevel = 'h3', action, children, className, ...rest },
+  { headerLevel = 'h3', action, meta, children, className, ...rest },
   ref,
 ) {
   // headerLevel is a string union of valid HTML heading tag names; cast to
   // the union (not a single literal) so the JSX dispatch type is honest.
   const Heading = headerLevel as 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+  const hasMeta = meta != null && meta !== false && meta !== '';
   // {...rest} last so consumer overrides win (Pattern A).
   return (
-    <div ref={ref} className={clsx(styles.header, className)} {...rest}>
+    <div ref={ref} className={clsx(styles.header, hasMeta && styles.withMeta, className)} {...rest}>
       <Heading className={styles.title}>{children}</Heading>
+      {hasMeta && (
+        <span className={styles.meta}>
+          <span className={styles.metaText}>{meta}</span>
+        </span>
+      )}
       {action != null && <span className={styles.action}>{action}</span>}
     </div>
   );
