@@ -113,6 +113,15 @@ test('real config: playground gets neither', async () => {
 
 // Guard: with disables ignored, no design-system SCSS may trip the moved policy rules, so no
 // disable form (any comment syntax) can switch them off. Other rules' warnings are expected.
+test('disable guard is non-vacuous: known-bad code is reported with disables ignored', async () => {
+  const { results } = await stylelint.lint({
+    code: '/* stylelint-disable-line */\n.a:dir(rtl) { color: red; }',
+    codeFilename: `${repoRoot}packages/design-system/src/components/X/X.module.scss`,
+    configFile: `${repoRoot}.stylelintrc.json`,
+    ignoreDisables: true,
+  });
+  assert.ok(results[0].warnings.some((w) => w.rule === 'eocrm/no-dir-pseudo-class'));
+});
 test('design-system SCSS trips no moved policy rule even with disables ignored', async () => {
   const policy = new Set([
     'selector-pseudo-class-disallowed-list',
