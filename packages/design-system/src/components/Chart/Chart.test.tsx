@@ -4,13 +4,17 @@ import { Chart, type ChartProps } from './Chart';
 
 function stubLayout(width = 400, height = 240) {
   const callbacks: ResizeObserverCallback[] = [];
+  const observed: Element[] = [];
+  const disconnect = vi.fn();
   class MockResizeObserver {
     constructor(cb: ResizeObserverCallback) {
       callbacks.push(cb);
     }
-    observe = vi.fn();
+    observe = (el: Element) => {
+      observed.push(el);
+    };
     unobserve = vi.fn();
-    disconnect = vi.fn();
+    disconnect = disconnect;
   }
   vi.stubGlobal('ResizeObserver', MockResizeObserver);
   const rect = vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockReturnValue({
@@ -31,6 +35,8 @@ function stubLayout(width = 400, height = 240) {
       });
     },
     rect,
+    observed,
+    disconnect,
   };
 }
 
@@ -157,11 +163,13 @@ describe('Chart', () => {
     const layout = stubLayout();
     const zero = [{ key: 'a', label: 'A', values: [0, 0, 0] }];
     const { container, rerender } = render(<Chart {...base} />);
+    const first = container.querySelector('svg')!.parentElement;
     rerender(<Chart {...base} series={zero} />);
+    expect(layout.disconnect).toHaveBeenCalled();
     rerender(<Chart {...base} />);
-    layout.rect.mockReturnValue({ width: 300, height: 200 } as DOMRect);
-    layout.fire();
-    expect(container.querySelector('svg')).toHaveAttribute('width', '300');
+    const plot = container.querySelector('svg')!.parentElement;
+    expect(plot).not.toBe(first);
+    expect(layout.observed[layout.observed.length - 1]).toBe(plot);
   });
 
   it('spreads native attributes but keeps the figure role and name', () => {
