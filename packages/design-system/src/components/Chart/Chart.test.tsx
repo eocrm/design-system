@@ -3,6 +3,9 @@ import { act, fireEvent, render, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event';
 import { Chart, type ChartProps } from './Chart';
 
+// LiveRegion writes after ANNOUNCE_DELAY_MS (50ms); wait past it or "empty" assertions pass vacuously.
+const PAST_ANNOUNCE_DELAY_MS = 120;
+
 function stubLayout(width = 400, height = 240) {
   const callbacks: ResizeObserverCallback[] = [];
   const observed: Element[] = [];
@@ -273,7 +276,7 @@ describe('legend', () => {
     expect(screen.getByText(`+${5 - shown}`)).toBeInTheDocument();
   });
 
-  it('compact mode keeps a hidden series past maxItems as a re-show toggle', async () => {
+  it('compact mode keeps a hidden series that would not fit as a re-show toggle', async () => {
     const layout = stubLayout(160, 100);
     const names = ['Alpha team', 'Bravo team', 'Charlie team', 'Delta team', 'Echo team'];
     const many: ChartProps = {
@@ -302,6 +305,48 @@ describe('legend', () => {
     expect(withHidden).toContain('Echo team');
     expect(withHidden.length).toBeLessThan(5);
     expect(screen.getByText(`+${5 - withHidden.length}`)).toBeInTheDocument();
+  });
+
+  it('compact mode fits the forced hidden item itself: a long hidden label pushes visible ones into +N', () => {
+    // 240px row: "Echo team regional pipeline" alone (189 + 28) plus the +N reserve already overflows,
+    // so no visible item may join it. Fitting only the first visible labels would also render Alpha + Bravo.
+    const layout = stubLayout(240, 100);
+    const names = [
+      'Alpha team',
+      'Bravo team',
+      'Charlie team',
+      'Delta team',
+      'Echo team regional pipeline',
+    ];
+    const many: ChartProps = {
+      ...base,
+      series: names.map((label, i) => ({ key: `s${i}`, label, values: [1, 2, 3] })),
+    };
+    render(<Chart {...many} hiddenSeries={['s4']} />);
+    layout.fire();
+    expect(screen.getAllByRole('button').map((b) => b.textContent)).toEqual([
+      'Echo team regional pipeline',
+    ]);
+    expect(screen.getByText('+4')).toBeInTheDocument();
+  });
+
+  it('compact mode does not force a comparison whose parent is hidden', () => {
+    // The comparison button is disabled while its parent is hidden, so it is not a re-show
+    // control and must compete for space like any visible item.
+    const layout = stubLayout(160, 100);
+    const many: ChartProps = {
+      ...base,
+      series: [
+        { key: 's0', label: 'Alpha team', values: [1, 2, 3] },
+        { key: 's0p', label: 'Previous period', values: [1, 1, 1], comparisonOf: 's0' },
+        { key: 's1', label: 'Bravo team', values: [2, 2, 2] },
+        { key: 's2', label: 'Charlie team', values: [3, 3, 3] },
+      ],
+    };
+    render(<Chart {...many} hiddenSeries={['s0']} />);
+    layout.fire();
+    expect(screen.getByRole('button', { name: 'Alpha team' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Previous period/ })).toBeNull();
   });
 
   it('ignores a controlled hiddenSeries that would hide every primary', () => {
@@ -413,7 +458,7 @@ describe('inspect', () => {
     expect(document.querySelector('[data-chart-tooltip]')).toHaveTextContent('W3');
     // LiveRegion writes after a delay: wait past it, or this passes vacuously.
     await act(async () => {
-      await new Promise((r) => setTimeout(r, 120));
+      await new Promise((r) => setTimeout(r, PAST_ANNOUNCE_DELAY_MS));
     });
     expect(document.querySelector('[aria-live="polite"]')).toBeEmptyDOMElement();
     await userEvent.unhover(plot);
@@ -430,7 +475,7 @@ describe('inspect', () => {
     );
     layout.fire();
     await act(async () => {
-      await new Promise((r) => setTimeout(r, 120));
+      await new Promise((r) => setTimeout(r, PAST_ANNOUNCE_DELAY_MS));
     });
     const lives = document.querySelectorAll('[aria-live="polite"]');
     expect(lives).toHaveLength(2);
@@ -472,6 +517,28 @@ describe('inspect', () => {
     fireEvent.pointerLeave(plot, { pointerType: 'touch' });
     expect(document.querySelector('[data-chart-tooltip]')).not.toBeNull();
     fireEvent.pointerLeave(plot, { pointerType: 'mouse' });
+    expect(document.querySelector('[data-chart-tooltip]')).toBeNull();
+  });
+
+  it('a tapped tooltip closes on a press outside the plot, without relying on focus', () => {
+    const layout = stubLayout();
+    render(
+      <>
+        <Chart {...base} />
+        <button type="button">elsewhere</button>
+      </>,
+    );
+    layout.fire();
+    const plot = screen.getByRole('group', { name: 'Deals won per week' });
+    // fireEvent does not move focus, like mobile Safari tapping a tabIndex div.
+    fireEvent.pointerDown(plot, { clientX: 399, pointerType: 'touch' });
+    fireEvent.pointerLeave(plot, { pointerType: 'touch' });
+    expect(plot).not.toHaveFocus();
+    fireEvent.pointerDown(plot, { clientX: 10, pointerType: 'touch' });
+    expect(document.querySelector('[data-chart-tooltip]')).not.toBeNull();
+    fireEvent.pointerDown(screen.getByRole('button', { name: 'elsewhere' }), {
+      pointerType: 'touch',
+    });
     expect(document.querySelector('[data-chart-tooltip]')).toBeNull();
   });
 

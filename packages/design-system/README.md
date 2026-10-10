@@ -74,6 +74,14 @@ The package ships **source files** (`.tsx`, `.module.scss`). Your bundler compil
 
 If TypeScript can't resolve types, set `moduleResolution: "bundler"` (or `"node16"`) in your `tsconfig.json`.
 
+**Tests.** Vitest works out of the box. Jest (CommonJS) must transform this package and its ESM-only dependencies (`d3-*`, `internmap`, used by `Chart`), and map `.module.scss` imports:
+
+```js
+// jest.config.js
+transformIgnorePatterns: ['/node_modules/(?!(@eocrm/design-system|d3-[^/]+|internmap)/)'],
+moduleNameMapper: { '\\.module\\.scss$': 'identity-obj-proxy' },
+```
+
 ---
 
 ## Components
