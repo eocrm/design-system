@@ -85,7 +85,9 @@ moduleNameMapper: { '\\.module\\.scss$': 'identity-obj-proxy' },
 ```
 
 - Install `identity-obj-proxy` as a dev dependency.
-- The transformer must compile TSX and ESM inside `node_modules`: with `babel-jest`, use a root `babel.config.js` (a `.babelrc` does not apply to `node_modules`) with the TypeScript and React presets; with `ts-jest`, enable `allowJs` for the d3 files.
+- The transformer must compile TSX and convert ESM to CommonJS inside `node_modules`:
+  - `babel-jest`: a root `babel.config.js` (a `.babelrc` does not apply to `node_modules`) with `@babel/preset-env` (`targets: { node: 'current' }`, which converts `import`/`export`), `@babel/preset-react` (`runtime: 'automatic'`) and `@babel/preset-typescript`.
+  - `ts-jest`: `preset: 'ts-jest/presets/js-with-ts'` (so `.js` files are transformed too), with `allowJs: true`, `jsx: 'react-jsx'` and `module: 'commonjs'` in the tsconfig it uses.
 
 ---
 
