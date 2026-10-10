@@ -254,4 +254,83 @@ describe('computeLayout', () => {
       expect(x.x + half).toBeLessThanOrEqual(220);
     }
   });
+
+  it('never overlaps x labels after clamping', () => {
+    for (let n = 2; n <= 30; n++)
+      for (const width of [120, 170, 240, 400])
+        for (const len of [3, 8, 14]) {
+          const categories = Array.from({ length: n }, (_, i) =>
+            String(i).padEnd(len, 'x').slice(0, len),
+          );
+          const l = computeLayout({
+            type: 'line',
+            categories,
+            series: resolveSeries(
+              'line',
+              [
+                s(
+                  'a',
+                  categories.map((_, i) => i),
+                ),
+              ],
+              n,
+            ).series,
+            width,
+            height: 120,
+            formatValue: fmt,
+          });
+          expect(l.xLabels[0].index).toBe(0);
+          for (let k = 1; k < l.xLabels.length; k++) {
+            const a = l.xLabels[k - 1];
+            const b = l.xLabels[k];
+            expect(b.x - (len * 7) / 2).toBeGreaterThanOrEqual(a.x + (len * 7) / 2 + 8);
+          }
+        }
+  });
+
+  it('keeps zeros in stacked areas on the series below', () => {
+    const series = resolveSeries('area', [s('a', [1, 1, 1]), s('b', [1, 0, 1])], 3).series;
+    const l = layout({ type: 'area', categories: ['a', 'b', 'c'], series });
+    const zeroY = l.yTicks.find((t) => t.value === 0)!.y;
+    expect(l.marks[1].points[1]!.y).toBeCloseTo(l.marks[0].points[1]!.y);
+    expect(l.marks[1].line).not.toContain(`,${zeroY}`);
+  });
+
+  it('turns NaN into a gap', () => {
+    const l = layout({ type: 'line', series: one([1, NaN, 3, 4]) });
+    expect(l.marks[0].points[1]).toBeNull();
+    expect(l.marks[0].line).not.toContain('NaN');
+  });
+
+  it('rescales y when the large series is hidden', () => {
+    const all = resolveSeries(
+      'line',
+      [s('a', [1, 2, 3, 4]), s('big', [100, 200, 300, 400])],
+      4,
+    ).series;
+    const full = layout({ type: 'line', series: all });
+    const some = layout({ type: 'line', series: visibleSeries(all, ['big']) });
+    expect(some.yTicks[some.yTicks.length - 1].value).toBeLessThan(
+      full.yTicks[full.yTicks.length - 1].value,
+    );
+  });
+
+  it('rounds only the outermost stacked segment and leaves a 2px joint', () => {
+    const series = resolveSeries(
+      'stacked-bar',
+      [s('a', [2, 2, 2, 2]), s('b', [2, 2, 2, 2])],
+      4,
+    ).series;
+    const l = layout({ type: 'stacked-bar', series });
+    expect(l.marks[0].bars![0]).not.toContain('Q');
+    expect(l.marks[1].bars![0]).toContain('Q');
+    const aTop = Number(/^M[^,]+,([\d.]+)h/.exec(l.marks[0].bars![0]!)![1]);
+    const bBottom = Number(/V([\d.]+)Z$/.exec(l.marks[1].bars![0]!)![1]);
+    expect(aTop - bBottom).toBeCloseTo(2);
+  });
+
+  it('categoryIndexAt is 0 with no categories', () => {
+    const l = layout({ type: 'line', categories: [], series: [] });
+    expect(categoryIndexAt(l, 50)).toBe(0);
+  });
 });

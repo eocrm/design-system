@@ -1,5 +1,5 @@
 import { scaleLinear } from 'd3-scale';
-import { area, line, stack, stackOffsetDiverging, type Series } from 'd3-shape';
+import { area, line, stack, stackOffsetDiverging, stackOffsetNone, type Series } from 'd3-shape';
 
 /** Chart form. `area` is always stacked. */
 export type ChartType = 'line' | 'bar' | 'stacked-bar' | 'area';
@@ -54,7 +54,7 @@ export interface ResolveResult {
 }
 
 const fit = (values: readonly (number | null)[], length: number) =>
-  Array.from({ length }, (_, i) => values[i] ?? null);
+  Array.from({ length }, (_, i) => (Number.isFinite(values[i]) ? (values[i] as number) : null));
 
 export function resolveSeries(
   type: ChartType,
@@ -255,7 +255,7 @@ export function computeLayout(input: LayoutInput): ChartLayout {
     ? stack<StackRow, string>()
         .keys(primaries.map((p) => p.key))
         .value((row, key) => row[key])
-        .offset(stackOffsetDiverging)(
+        .offset(type === 'area' ? stackOffsetNone : stackOffsetDiverging)(
         Array.from({ length: n }, (_, i) =>
           Object.fromEntries(primaries.map((p) => [p.key, p.values[i] ?? 0])),
         ),
@@ -298,10 +298,20 @@ export function computeLayout(input: LayoutInput): ChartLayout {
   const zeroY = y(0);
 
   const yTicks = tickValues.map((value, i) => ({ value, y: y(value), label: tickLabels[i] }));
-  const xLabels = thinLabels(categories, step).map((index) => {
+  // Clamp end labels inside the svg, then drop any label the clamping made collide.
+  const boxes = thinLabels(categories, step).map((index) => {
     const half = textWidth(categories[index]) / 2;
     const x = Math.min(Math.max(categoryX[index], half), Math.max(half, width - half));
-    return { index, x, label: categories[index] };
+    return { index, x, label: categories[index], half };
+  });
+  const hits = (a: (typeof boxes)[number], b: (typeof boxes)[number]) =>
+    b.x - b.half < a.x + a.half + LABEL_GAP;
+  const xLabels: typeof boxes = [];
+  boxes.forEach((b, i) => {
+    if (i === boxes.length - 1 && i > 0) {
+      while (xLabels.length > 1 && hits(xLabels[xLabels.length - 1], b)) xLabels.pop();
+    }
+    if (xLabels.length === 0 || !hits(xLabels[xLabels.length - 1], b)) xLabels.push(b);
   });
 
   const linePath = (values: readonly (number | null)[]) =>
@@ -403,11 +413,19 @@ export function computeLayout(input: LayoutInput): ChartLayout {
     for (const c of comparisons) marks.push(lineMarks(c));
   }
 
-  return { plot, yTicks, xLabels, categoryX, step, bandWidth, marks };
+  return {
+    plot,
+    yTicks,
+    xLabels: xLabels.map(({ index, x, label }) => ({ index, x, label })),
+    categoryX,
+    step,
+    bandWidth,
+    marks,
+  };
 }
 
-/** Category index under svg x coordinate `x`, clamped to the data. */
+/** Category index under svg x coordinate `x`, clamped to the data (0 when there are no categories). */
 export function categoryIndexAt(layout: ChartLayout, x: number): number {
   const n = layout.categoryX.length;
-  return Math.min(n - 1, Math.max(0, Math.floor((x - layout.plot.x) / layout.step)));
+  return Math.max(0, Math.min(n - 1, Math.max(0, Math.floor((x - layout.plot.x) / layout.step))));
 }
