@@ -26,7 +26,6 @@ import {
   computeLayout,
   markerPath,
   markerShape,
-  fitLegend,
   COMPACT_HEIGHT,
   isEmpty,
   DOT_RADIUS,
@@ -295,12 +294,6 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
       s.comparisonOf !== undefined && s.comparisonOf !== 'total' && hidden.includes(s.comparisonOf),
   }));
   const compact = rootSize.height > 0 && rootSize.height < COMPACT_HEIGHT;
-  const maxItems = compact
-    ? fitLegend(
-        legendItems.map((i) => i.label),
-        rootSize.width,
-      )
-    : legendItems.length;
 
   const columns = visible.map((s) => ({
     key: s.key,
@@ -338,7 +331,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
         <ChartLegend
           items={legendItems}
           hidden={hidden}
-          maxItems={maxItems}
+          fitWidth={compact ? rootSize.width : undefined}
           onToggle={toggle}
           onHoverKey={setHoverKey}
           onFocusKey={setFocusedKey}

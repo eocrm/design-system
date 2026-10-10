@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react';
 import { VisuallyHidden } from '../VisuallyHidden';
+import { fitLegend } from './chartModel';
 import styles from './Chart.module.scss';
 
 export interface ChartLegendItem {
@@ -24,23 +25,37 @@ const swatchStyle = (slot: number) =>
 export function ChartLegend({
   items,
   hidden,
-  maxItems,
+  fitWidth,
   onToggle,
   onHoverKey,
   onFocusKey,
 }: {
   items: ChartLegendItem[];
   hidden: readonly string[];
-  maxItems: number;
+  /** Compact mode: the row width the legend must fit on one line. Omit to show every item. */
+  fitWidth?: number;
   onToggle: (key: string) => void;
   onHoverKey: (key: string | null) => void;
   onFocusKey: (key: string | null) => void;
 }) {
-  // Hidden series always render (they count against the row) so they can be re-shown.
-  const isOff = (i: ChartLegendItem) => hidden.includes(i.key) || i.parentHidden;
-  const slots = Math.max(0, maxItems - items.filter(isOff).length);
-  let room = slots;
-  const shown = items.filter((i) => isOff(i) || room-- > 0);
+  // Items the user hid always render (so they can be re-shown); visible ones fill what fits, in source order.
+  const forced = (i: ChartLegendItem) => hidden.includes(i.key);
+  const optional = items.filter((i) => !forced(i));
+  const pick = (k: number) => {
+    let room = k;
+    return items.filter((i) => forced(i) || room-- > 0);
+  };
+  let k = optional.length;
+  if (fitWidth !== undefined) {
+    // Largest k whose row (plus the "+N" counter when something is left out) fits.
+    for (; k > 0; k--) {
+      const labels = pick(k).map((i) => i.label);
+      if (k < optional.length) labels.push('+99');
+      if (fitLegend(labels, fitWidth) >= labels.length) break;
+    }
+    if (k === 0 && !items.some(forced)) k = Math.min(1, optional.length);
+  }
+  const shown = pick(k);
   const more = items.length - shown.length;
   return (
     <ul className={styles.legend}>

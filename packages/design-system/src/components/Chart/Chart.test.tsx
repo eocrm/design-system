@@ -289,6 +289,21 @@ describe('legend', () => {
     expect(onChange).toHaveBeenCalledWith([]);
   });
 
+  it('compact mode fits the row over the shown items, hidden ones included', () => {
+    const layout = stubLayout(240, 100);
+    const names = ['Alpha team', 'Bravo team', 'Charlie team', 'Delta team', 'Echo team'];
+    const many: ChartProps = {
+      ...base,
+      series: names.map((label, i) => ({ key: `s${i}`, label, values: [1, 2, 3] })),
+    };
+    render(<Chart {...many} hiddenSeries={['s4']} />);
+    layout.fire();
+    const withHidden = screen.getAllByRole('button').map((b) => b.textContent);
+    expect(withHidden).toContain('Echo team');
+    expect(withHidden.length).toBeLessThan(5);
+    expect(screen.getByText(`+${5 - withHidden.length}`)).toBeInTheDocument();
+  });
+
   it('ignores a controlled hiddenSeries that would hide every primary', () => {
     stubLayout().fire();
     const { container } = render(<Chart {...three} hiddenSeries={['a', 'b', 'c']} />);
@@ -396,9 +411,30 @@ describe('inspect', () => {
     const plot = screen.getByRole('group', { name: 'Deals won per week' });
     await userEvent.pointer({ target: plot, coords: { clientX: 399, clientY: 50 } });
     expect(document.querySelector('[data-chart-tooltip]')).toHaveTextContent('W3');
-    expect(document.querySelector('[aria-live="polite"]')).toHaveTextContent('');
+    // LiveRegion writes after a delay: wait past it, or this passes vacuously.
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 120));
+    });
+    expect(document.querySelector('[aria-live="polite"]')).toBeEmptyDOMElement();
     await userEvent.unhover(plot);
     expect(document.querySelector('[data-chart-tooltip]')).toBeNull();
+  });
+
+  it('mounted charts announce nothing on load', async () => {
+    const layout = stubLayout();
+    render(
+      <>
+        <Chart {...base} />
+        <Chart {...base} label="Second" />
+      </>,
+    );
+    layout.fire();
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 120));
+    });
+    const lives = document.querySelectorAll('[aria-live="polite"]');
+    expect(lives).toHaveLength(2);
+    for (const live of lives) expect(live).toBeEmptyDOMElement();
   });
 
   it('the tooltip is hidden from assistive tech and lists only visible series', async () => {
