@@ -24,6 +24,8 @@
   --chart-dim-opacity: 0.25;
   --chart-band: var(--color-bg-muted);
   --chart-crosshair: var(--color-border-strong);
+  --chart-plot-radius: var(--radius-sm);
+  --chart-dot-ring: var(--color-bg);
   --chart-ring: var(--ring-accent);
 
   --chart-legend-gap: var(--space-3);
@@ -32,9 +34,9 @@
   --chart-legend-fg-off: var(--color-fg-subtle);
   --chart-swatch: var(--space-3);
 
-  --chart-tooltip-bg: var(--popover-bg);
-  --chart-tooltip-fg: var(--popover-fg);
-  --chart-tooltip-border: var(--popover-border-color);
+  --chart-tooltip-bg: var(--color-bg);
+  --chart-tooltip-fg: var(--color-fg);
+  --chart-tooltip-border: var(--color-border);
   --chart-tooltip-radius: var(--radius-md);
   --chart-tooltip-shadow: var(--shadow-md);
   --chart-tooltip-padding: var(--space-2);

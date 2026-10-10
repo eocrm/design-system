@@ -52,7 +52,7 @@ const base: ChartProps = {
 
 describe('Chart', () => {
   it('is a named figure, forwards ref and merges className', () => {
-    stubLayout().fire();
+    stubLayout();
     const ref = createRef<HTMLElement>();
     render(<Chart {...base} ref={ref} className="mine" data-testid="c" />);
     const fig = screen.getByRole('figure', { name: 'Deals won per week' });
@@ -79,7 +79,7 @@ describe('Chart', () => {
   });
 
   it('data table mirrors values through formatValue, null as No data', () => {
-    stubLayout().fire();
+    stubLayout();
     render(<Chart {...base} />);
     const table = screen.getByRole('table', { name: 'Deals won per week' });
     const rows = within(table).getAllByRole('row');
@@ -129,8 +129,8 @@ describe('Chart', () => {
         ]}
       />,
     );
-    expect(warn.mock.calls.flat().join(' ')).toMatch(/\[Chart\].*p/);
-    expect(warn.mock.calls.flat().join(' ')).toMatch(/\[Chart\].*8/);
+    expect(warn.mock.calls.flat().join(' ')).toMatch(/Ignored comparison series \(p\)/);
+    expect(warn.mock.calls.flat().join(' ')).toMatch(/\[Chart\] 1 series beyond/);
   });
 
   it('keeps hidden series across a re-render with new series arrays', () => {
@@ -140,11 +140,32 @@ describe('Chart', () => {
     rerender(
       <Chart {...base} series={base.series.map((x) => ({ ...x }))} hiddenSeries={['prev']} />,
     );
+    expect(container.querySelector('[data-series="won"]')).not.toBeNull();
     expect(container.querySelector('[data-series="prev"]')).toBeNull();
   });
 
+  it('measures a plot that mounts after an empty first render', () => {
+    const layout = stubLayout();
+    const zero = [{ key: 'a', label: 'A', values: [0, 0, 0] }];
+    const { container, rerender } = render(<Chart {...base} series={zero} />);
+    rerender(<Chart {...base} />);
+    layout.fire();
+    expect(container.querySelector('svg')).not.toBeNull();
+  });
+
+  it('re-observes the new plot after data, empty, data', () => {
+    const layout = stubLayout();
+    const zero = [{ key: 'a', label: 'A', values: [0, 0, 0] }];
+    const { container, rerender } = render(<Chart {...base} />);
+    rerender(<Chart {...base} series={zero} />);
+    rerender(<Chart {...base} />);
+    layout.rect.mockReturnValue({ width: 300, height: 200 } as DOMRect);
+    layout.fire();
+    expect(container.querySelector('svg')).toHaveAttribute('width', '300');
+  });
+
   it('spreads native attributes but keeps the figure role and name', () => {
-    render(<Chart {...base} role="img" aria-label="hijack" data-x="1" />);
+    render(<Chart {...base} role="img" aria-label="hijack" aria-labelledby="nope" data-x="1" />);
     const fig = screen.getByRole('figure', { name: 'Deals won per week' });
     expect(fig).toHaveAttribute('data-x', '1');
   });

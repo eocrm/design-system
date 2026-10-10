@@ -20,7 +20,7 @@
   position: relative;
   min-height: 0;
   overflow: hidden;
-  border-radius: var(--radius-sm);
+  border-radius: var(--chart-plot-radius);
   outline: none;
   touch-action: pan-y;
 
@@ -106,7 +106,7 @@
 .dot,
 .marker {
   fill: var(--chart-series-color);
-  stroke: var(--color-bg);
+  stroke: var(--chart-dot-ring);
   stroke-width: 2px;
 }
 

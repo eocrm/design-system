@@ -3,7 +3,6 @@ import {
   useEffect,
   useLayoutEffect,
   useMemo,
-  useRef,
   useState,
   type CSSProperties,
   type HTMLAttributes,
@@ -17,8 +16,10 @@ import { ChartTable } from './ChartTable';
 import {
   computeLayout,
   isEmpty,
+  DOT_RADIUS,
   LABEL_GAP,
   PALETTE_SIZE,
+  X_LABEL_BASELINE,
   resolveSeries,
   visibleSeries,
   type ChartSeries,
@@ -86,11 +87,10 @@ function useDevWarnings(dropped: string[], overflowCount: number) {
   }, [overflowCount]);
 }
 
-function useSize() {
-  const ref = useRef<HTMLDivElement>(null);
+function useSize<T extends HTMLElement>() {
+  const [el, setEl] = useState<T | null>(null);
   const [size, setSize] = useState({ width: 0, height: 0 });
   useLayoutEffect(() => {
-    const el = ref.current;
     if (!el || typeof ResizeObserver === 'undefined') return;
     const measure = () => {
       const { width, height } = el.getBoundingClientRect();
@@ -100,18 +100,19 @@ function useSize() {
           : { width: Math.floor(width), height: Math.floor(height) },
       );
     };
+    measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
-  return [ref, size] as const;
+  }, [el]);
+  return [setEl, size] as const;
 }
 
 /**
  * Time-series chart (line, bar, stacked bar, area) that fills a `DashboardWidget variant="chart"` body.
  * @see docs/components/Chart.md
  */
-// {...rest} FIRST (Pattern B) so the figure's role and accessible name always win.
+// {...rest} FIRST (Pattern B) so the figure's role and accessible name (incl. aria-labelledby) always win.
 export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
   {
     type,
@@ -142,7 +143,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
   const visible = useMemo(() => visibleSeries(resolved.series, hidden), [resolved.series, hidden]);
   const empty = isEmpty(categories, resolved.series);
 
-  const [plotRef, size] = useSize();
+  const [plotRef, size] = useSize<HTMLDivElement>();
   const layout = useMemo(
     () =>
       !empty && size.width > 0 && size.height > 0
@@ -173,6 +174,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
         ref={ref}
         role="figure"
         aria-label={label}
+        aria-labelledby={undefined}
         data-empty=""
         className={clsx(styles.root, className)}
       >
@@ -187,6 +189,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
       ref={ref}
       role="figure"
       aria-label={label}
+      aria-labelledby={undefined}
       className={clsx(styles.root, className)}
     >
       <div /* legend slot — Task 4 */ />
@@ -223,7 +226,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
                 </text>
               ))}
               {layout.xLabels.map((x) => (
-                <text key={x.index} x={x.x} y={size.height - 4} textAnchor="middle">
+                <text key={x.index} x={x.x} y={size.height - X_LABEL_BASELINE} textAnchor="middle">
                   {x.label}
                 </text>
               ))}
@@ -241,7 +244,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
                 {m.line && <path className={styles.line} d={m.line} />}
                 {m.bars?.map((d, i) => d && <path key={i} className={styles.bar} d={d} />)}
                 {m.dots.map((p, i) => (
-                  <circle key={i} className={styles.dot} cx={p.x} cy={p.y} r={3} />
+                  <circle key={i} className={styles.dot} cx={p.x} cy={p.y} r={DOT_RADIUS} />
                 ))}
               </g>
             ))}

@@ -18,6 +18,10 @@ export const PALETTE_SIZE = 8;
 // measure with canvas.measureText if labels clip or overlap in real fonts.
 export const CHAR_WIDTH = 7;
 export const LABEL_GAP = 8;
+/** Distance of the x-label baseline from the svg bottom edge. */
+export const X_LABEL_BASELINE = 4;
+/** Radius of the isolated-point dots. */
+export const DOT_RADIUS = 3;
 /** Below this root height the legend collapses to one row with a "+N" counter. */
 export const COMPACT_HEIGHT = 120;
 
