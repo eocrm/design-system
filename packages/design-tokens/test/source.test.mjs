@@ -167,8 +167,9 @@ test('keeps every deprecated Badge variables as component aliases', async () => 
 test('preserves the pre-migration web contract fixture with provenance and expanded dark scopes', async () => {
   const fixture = await readJson(fixturePath);
 
-  assert.equal(Object.keys(fixture.light).length, 311);
-  assert.equal(Object.keys(fixture.forcedDark).length, 119);
+  // +8 light / +7 forcedDark (series 6 is #008300 in both modes): --color-chart-series-1..8 (Chart palette, #632).
+  assert.equal(Object.keys(fixture.light).length, 319);
+  assert.equal(Object.keys(fixture.forcedDark).length, 126);
   assert.deepEqual(fixture.systemDark, fixture.forcedDark);
   assert.deepEqual(fixture.forcedLight, {});
   // Provenance now names the GENERATED files, because capture-web-contract.mjs
