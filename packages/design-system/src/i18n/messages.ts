@@ -808,7 +808,7 @@ export interface Messages {
   chart: {
     /** EmptyState title when every value is null/zero and no `emptyMessage` is given. */
     empty: string;
-    /** Accessible name of the focusable plot area; tells keyboard users how to read values. */
+    /** Accessible description of the focusable plot area (its name is the chart label); tells keyboard users how to read values. */
     keyboardHint: string;
     /** Header of the data table's first (category) column. */
     category: string;

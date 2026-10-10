@@ -239,6 +239,25 @@ describe('legend', () => {
     expect(container.querySelector('[data-dimmed]')).toBeNull();
   });
 
+  it('touch pointerenter does not dim', () => {
+    const layout = stubLayout();
+    const { container } = render(<Chart {...three} />);
+    layout.fire();
+    fireEvent.pointerEnter(screen.getByRole('button', { name: 'Bob' }), { pointerType: 'touch' });
+    expect(container.querySelector('[data-dimmed]')).toBeNull();
+  });
+
+  it('mouse-leave keeps the dimming of a still-focused legend button', async () => {
+    const layout = stubLayout();
+    const { container } = render(<Chart {...three} />);
+    layout.fire();
+    act(() => screen.getByRole('button', { name: 'Alice' }).focus());
+    await userEvent.hover(screen.getByRole('button', { name: 'Bob' }));
+    await userEvent.unhover(screen.getByRole('button', { name: 'Bob' }));
+    expect(container.querySelector('[data-series="a"]')).not.toHaveAttribute('data-dimmed');
+    expect(container.querySelector('[data-series="b"]')).toHaveAttribute('data-dimmed');
+  });
+
   it('compact mode shows fewer legend items plus a +N overflow count', () => {
     const layout = stubLayout(160, 100);
     const many: ChartProps = {
@@ -284,22 +303,23 @@ describe('inspect', () => {
   it('the plot is one named tab stop', () => {
     stubLayout();
     render(<Chart {...base} />);
-    const plot = screen.getByRole('group', { name: 'Chart values. Use arrow keys to inspect.' });
+    const plot = screen.getByRole('group', { name: 'Deals won per week' });
     expect(plot).toHaveAttribute('tabindex', '0');
+    expect(plot).toHaveAccessibleDescription('Chart values. Use arrow keys to inspect.');
   });
 
   it('arrow keys walk categories, announce values, Home/End jump, Escape clears', async () => {
     const layout = stubLayout();
     render(<Chart {...base} />);
     layout.fire();
-    const plot = screen.getByRole('group', { name: /arrow keys/ });
+    const plot = screen.getByRole('group', { name: 'Deals won per week' });
     plot.focus();
     await userEvent.keyboard('{ArrowRight}');
     const live = document.querySelector('[aria-live="polite"]')!;
-    expect(live).toHaveTextContent('W1: Deals won 3 deals, Previous period 2 deals');
+    expect(live).toHaveTextContent('W1: Deals won 3 deals, Previous period (Deals won) 2 deals');
     expect(document.querySelector('[data-chart-tooltip]')).toHaveTextContent('W1');
     await userEvent.keyboard('{ArrowRight}');
-    expect(live).toHaveTextContent('W2: Deals won No data, Previous period 4 deals');
+    expect(live).toHaveTextContent('W2: Deals won No data, Previous period (Deals won) 4 deals');
     await userEvent.keyboard('{End}');
     expect(live).toHaveTextContent(/^W3:/);
     await userEvent.keyboard('{Home}');
@@ -308,11 +328,32 @@ describe('inspect', () => {
     expect(document.querySelector('[data-chart-tooltip]')).toBeNull();
   });
 
+  it('live text names the parent of each comparison', async () => {
+    const layout = stubLayout();
+    render(
+      <Chart
+        {...base}
+        series={[
+          { key: 'a', label: 'Alice', values: [1, 2, 3] },
+          { key: 'b', label: 'Bob', values: [4, 5, 6] },
+          { key: 'a-prev', label: 'Previous period', values: [1, 1, 1], comparisonOf: 'a' },
+          { key: 'b-prev', label: 'Previous period', values: [2, 2, 2], comparisonOf: 'b' },
+        ]}
+      />,
+    );
+    layout.fire();
+    screen.getByRole('group', { name: 'Deals won per week' }).focus();
+    await userEvent.keyboard('{ArrowRight}');
+    const live = document.querySelector('[aria-live="polite"]')!;
+    expect(live).toHaveTextContent('Previous period (Alice) 1');
+    expect(live).toHaveTextContent('Previous period (Bob) 2');
+  });
+
   it('ArrowLeft from nothing starts at the last category', async () => {
     const layout = stubLayout();
     render(<Chart {...base} />);
     layout.fire();
-    screen.getByRole('group', { name: /arrow keys/ }).focus();
+    screen.getByRole('group', { name: 'Deals won per week' }).focus();
     await userEvent.keyboard('{ArrowLeft}');
     expect(document.querySelector('[aria-live="polite"]')).toHaveTextContent(/^W3:/);
   });
@@ -321,7 +362,7 @@ describe('inspect', () => {
     const layout = stubLayout();
     render(<Chart {...base} />);
     layout.fire();
-    const plot = screen.getByRole('group', { name: /arrow keys/ });
+    const plot = screen.getByRole('group', { name: 'Deals won per week' });
     await userEvent.pointer({ target: plot, coords: { clientX: 399, clientY: 50 } });
     expect(document.querySelector('[data-chart-tooltip]')).toHaveTextContent('W3');
     expect(document.querySelector('[aria-live="polite"]')).toHaveTextContent('');
@@ -333,7 +374,7 @@ describe('inspect', () => {
     const layout = stubLayout();
     render(<Chart {...base} hiddenSeries={['prev']} />);
     layout.fire();
-    screen.getByRole('group', { name: /arrow keys/ }).focus();
+    screen.getByRole('group', { name: 'Deals won per week' }).focus();
     await userEvent.keyboard('{ArrowRight}');
     const tip = document.querySelector('[data-chart-tooltip]')!;
     expect(tip).toHaveAttribute('aria-hidden', 'true');
@@ -349,7 +390,7 @@ describe('inspect', () => {
       </div>,
     );
     layout.fire();
-    screen.getByRole('group', { name: /arrow keys/ }).focus();
+    screen.getByRole('group', { name: 'Deals won per week' }).focus();
     await userEvent.keyboard('{Escape}');
     expect(onKeyDown).toHaveBeenCalled();
     expect(onKeyDown.mock.calls[0][0].defaultPrevented).toBe(false);
@@ -359,7 +400,7 @@ describe('inspect', () => {
     const layout = stubLayout();
     render(<Chart {...base} />);
     layout.fire();
-    const plot = screen.getByRole('group', { name: /arrow keys/ });
+    const plot = screen.getByRole('group', { name: 'Deals won per week' });
     fireEvent.pointerDown(plot, { clientX: 399, pointerType: 'touch' });
     fireEvent.pointerLeave(plot, { pointerType: 'touch' });
     expect(document.querySelector('[data-chart-tooltip]')).not.toBeNull();
@@ -371,7 +412,7 @@ describe('inspect', () => {
     const layout = stubLayout();
     const { container, rerender } = render(<Chart {...base} type="bar" />);
     layout.fire();
-    screen.getByRole('group', { name: /arrow keys/ }).focus();
+    screen.getByRole('group', { name: 'Deals won per week' }).focus();
     await userEvent.keyboard('{ArrowRight}');
     expect(container.querySelector('rect[class*="band"]')).not.toBeNull();
     expect(container.querySelector('line[class*="crosshair"]')).toBeNull();

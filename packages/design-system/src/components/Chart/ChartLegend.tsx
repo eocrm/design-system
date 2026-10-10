@@ -26,12 +26,14 @@ export function ChartLegend({
   hidden,
   maxItems,
   onToggle,
+  onHoverKey,
   onFocusKey,
 }: {
   items: ChartLegendItem[];
   hidden: readonly string[];
   maxItems: number;
   onToggle: (key: string) => void;
+  onHoverKey: (key: string | null) => void;
   onFocusKey: (key: string | null) => void;
 }) {
   const shown = items.slice(0, maxItems);
@@ -50,8 +52,9 @@ export function ChartLegend({
               disabled={item.parentHidden}
               style={swatchStyle(item.slot)}
               onClick={() => onToggle(item.key)}
-              onMouseEnter={() => onFocusKey(item.key)}
-              onMouseLeave={() => onFocusKey(null)}
+              // Pointer events, not mouse: touch emulates mouseenter but never mouseleave, which stuck the dimming.
+              onPointerEnter={(e) => e.pointerType !== 'touch' && onHoverKey(item.key)}
+              onPointerLeave={(e) => e.pointerType !== 'touch' && onHoverKey(null)}
               onFocus={() => onFocusKey(item.key)}
               onBlur={() => onFocusKey(null)}
             >

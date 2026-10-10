@@ -1,6 +1,7 @@
 import {
   forwardRef,
   useEffect,
+  useId,
   useLayoutEffect,
   useMemo,
   useState,
@@ -152,7 +153,10 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     defaultValue: [],
     onChange: onHiddenSeriesChange,
   });
-  const [focusKey, setFocusKey] = useState<string | null>(null);
+  const [hoverKey, setHoverKey] = useState<string | null>(null);
+  const [focusedKey, setFocusedKey] = useState<string | null>(null);
+  const focusKey = hoverKey ?? focusedKey;
+  const hintId = useId();
   const visible = useMemo(() => visibleSeries(resolved.series, hidden), [resolved.series, hidden]);
   const empty = isEmpty(categories, resolved.series);
 
@@ -219,6 +223,12 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     inspect(categoryIndexAt(layout, e.clientX - rect.left), 'pointer');
   };
 
+  const parentLabel = (s: ResolvedSeries) =>
+    resolved.series.find((p) => p.key === s.comparisonOf)?.label;
+  // Same label as the table header, so a comparison always names its parent.
+  const columnHeader = (s: ResolvedSeries) =>
+    parentLabel(s) ? `${s.label} (${parentLabel(s)})` : s.label;
+
   const rows =
     current === null
       ? []
@@ -243,11 +253,10 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
 
   const liveText =
     activeSource === 'keyboard' && current !== null
-      ? `${categories[current]}: ${rows.map((r) => `${r.label} ${r.value}`).join(', ')}`
+      ? `${categories[current]}: ${visible
+          .map((s, i) => `${columnHeader(s)} ${rows[i].value}`)
+          .join(', ')}`
       : '';
-
-  const parentLabel = (s: ResolvedSeries) =>
-    resolved.series.find((p) => p.key === s.comparisonOf)?.label;
   const known = hidden.filter((k) => resolved.series.some((s) => s.key === k));
   const visiblePrimaries = resolved.series.filter(
     (s) => s.comparisonOf === undefined && !hidden.includes(s.key),
@@ -287,7 +296,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
 
   const columns = visible.map((s) => ({
     key: s.key,
-    header: parentLabel(s) ? `${s.label} (${parentLabel(s)})` : s.label,
+    header: columnHeader(s),
     values: s.values,
   }));
 
@@ -323,16 +332,19 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
           hidden={hidden}
           maxItems={maxItems}
           onToggle={toggle}
-          onFocusKey={setFocusKey}
+          onHoverKey={setHoverKey}
+          onFocusKey={setFocusedKey}
         />
       ) : (
         <span />
       )}
+      <VisuallyHidden id={hintId}>{t('chart.keyboardHint')}</VisuallyHidden>
       <div
         ref={setPlotEl}
         className={styles.plot}
         role="group"
-        aria-label={t('chart.keyboardHint')}
+        aria-label={label}
+        aria-describedby={hintId}
         tabIndex={0}
         onKeyDown={onKeyDown}
         onPointerMove={onPointer}
