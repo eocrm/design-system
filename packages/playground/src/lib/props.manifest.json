@@ -724,6 +724,66 @@
         }
       ]
     },
+    "Chart": {
+      "props": [
+        {
+          "name": "type",
+          "type": "\"area\" | \"line\" | \"bar\" | \"stacked-bar\"",
+          "required": true,
+          "default": "",
+          "description": "Chart form. Required.\n- `'line'` — one line per series; trends over time. Comparison series dashed.\n- `'bar'` — grouped bars per category; compare a few series per bucket. Comparison bars outlined + light fill.\n- `'stacked-bar'` — bars stacked per category; parts of a total. Comparison only as `comparisonOf: 'total'` (dashed total line).\n- `'area'` — stacked areas; parts of a total over time. Same comparison rule as `stacked-bar`."
+        },
+        {
+          "name": "label",
+          "type": "string",
+          "required": true,
+          "default": "",
+          "description": "Accessible name of the figure and caption of its data table, e.g. \"Deals won per week\". Required."
+        },
+        {
+          "name": "categories",
+          "type": "string[]",
+          "required": true,
+          "default": "",
+          "description": "X-axis buckets, already formatted by the app (\"12 Jan\", \"W3\", \"Mar\"). `series[].values[i]` belongs to `categories[i]`."
+        },
+        {
+          "name": "series",
+          "type": "ChartSeries[]",
+          "required": true,
+          "default": "",
+          "description": "Series to plot, in a stable order: colour follows position (non-comparison series 1–8 get palette slots 1–8),\nso keep the order fixed when filtering. At most 8 primary series — fold the rest into an \"Other\" series in the app\n(series 9+ still render, dashed/outlined, with a dev warning). `values` shorter than `categories` are padded\nwith gaps; `null` is a gap (lines break, bars are absent). `comparisonOf` marks a de-emphasised comparison\n(e.g. previous period): a series key (line / bar) or `'total'` (stacked-bar / area)."
+        },
+        {
+          "name": "formatValue",
+          "type": "(n: number) => string",
+          "required": true,
+          "default": "",
+          "description": "Formats a number for axis ticks, tooltip and data table (the app owns i18n and currency). Required."
+        },
+        {
+          "name": "emptyMessage",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "EmptyState title when there are no categories or every value is null/zero. Default: translated \"No data for this period\"."
+        },
+        {
+          "name": "hiddenSeries",
+          "type": "string[]",
+          "required": false,
+          "default": "",
+          "description": "Controlled list of hidden series keys (legend toggles). Omit for uncontrolled. Unknown keys are ignored."
+        },
+        {
+          "name": "onHiddenSeriesChange",
+          "type": "((keys: string[]) => void)",
+          "required": false,
+          "default": "",
+          "description": "Called with the next hidden keys when the user toggles a legend item."
+        }
+      ]
+    },
     "Checkbox": {
       "props": [
         {
@@ -6203,10 +6263,10 @@
       "props": [
         {
           "name": "variant",
-          "type": "\"list\" | \"kpi\" | \"chart\" | \"pipeline\" | \"activity\"",
+          "type": "\"line\" | \"list\" | \"kpi\" | \"chart\" | \"pipeline\" | \"activity\"",
           "required": true,
           "default": "",
-          "description": "Which widget kind the miniature depicts. Required.\n- `'kpi'` — label, a large value block (strong accent), an accented trend line.\n- `'list'` — rows of accented avatar + line; first avatar strong.\n- `'chart'` — a bar series (accented, one bar strong).\n- `'pipeline'` — stage columns of cards; current stage header strong and its cards accented; next stage header accented.\n- `'activity'` — timeline rows with accented dots; first dot strong."
+          "description": "Which widget kind the miniature depicts. Required.\n- `'kpi'` — label, a large value block (strong accent), an accented trend line.\n- `'list'` — rows of accented avatar + line; first avatar strong.\n- `'chart'` — a bar series (accented, one bar strong).\n- `'line'` — a line series over a light area (strong accent line).\n- `'pipeline'` — stage columns of cards; current stage header strong and its cards accented; next stage header accented.\n- `'activity'` — timeline rows with accented dots; first dot strong."
         }
       ]
     }
@@ -6337,7 +6397,7 @@
     "MediaTileReveal": "\"visible\" | \"hover\" | \"focus\"",
     "MediaTileRadius": "\"sm\" | \"md\" | \"lg\" | \"none\"",
     "MediaTileCaptionPlacement": "\"overlay\" | \"below\"",
-    "MediaTileControls": "\"chips\" | \"bar\"",
+    "MediaTileControls": "\"bar\" | \"chips\"",
     "CropArea": "{ x: number; y: number; width: number; height: number }",
     "DataTableInstance": "DataTableInstance<T>",
     "DefinitionListLayout": "\"horizontal\" | \"stacked\"",
@@ -6388,6 +6448,7 @@
     "SettingRowControlWidth": "\"sm\" | \"md\" | \"xs\" | \"auto\"",
     "DashboardCanvasConstraintsProp": "Record<string, DashboardItemConstraints> | ((id: string | number) => DashboardItemConstraints)",
     "DashboardCanvasValue": "{ items: DashboardPlacement[]; sections: DashboardSection[] }",
-    "DashboardWidgetVariant": "\"list\" | \"standard\" | \"kpi\" | \"chart\""
+    "DashboardWidgetVariant": "\"list\" | \"standard\" | \"kpi\" | \"chart\"",
+    "ChartSeries": "{ key: string; label: string; values: (number | null)[]; comparisonOf?: string }"
   }
 }
