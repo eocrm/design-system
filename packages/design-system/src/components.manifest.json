@@ -134,6 +134,15 @@
     ],
     "composedBy": []
   },
+  "Chart": {
+    "tier": "composition",
+    "cluster": "Display",
+    "composes": [
+      "EmptyState",
+      "VisuallyHidden"
+    ],
+    "composedBy": []
+  },
   "Checkbox": {
     "tier": "primitive",
     "cluster": "Forms",
@@ -332,6 +341,7 @@
     "composes": [],
     "composedBy": [
       "CatalogPicker",
+      "Chart",
       "DataTable"
     ]
   },
@@ -969,6 +979,7 @@
     "composes": [],
     "composedBy": [
       "Banner",
+      "Chart",
       "DashboardWidget",
       "DateStrip",
       "LiveRegion",

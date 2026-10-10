@@ -119,6 +119,7 @@ const CLUSTERS: Record<string, string> = {
   DashboardCanvas: 'Display',
   DashboardWidget: 'Display',
   StatGroup: 'Display',
+  Chart: 'Display',
   DataTable: 'Display',
   EmptyState: 'Display',
   ErrorState: 'Display',

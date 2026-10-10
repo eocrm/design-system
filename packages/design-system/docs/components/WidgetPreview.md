@@ -30,7 +30,7 @@ import { CatalogPicker, WidgetPreview } from '@eocrm/design-system';
 <!-- prettier-ignore -->
 | Prop | Type | Required | Description |
 |---|---|---|---|
-| `variant` | `'kpi' \| 'list' \| 'chart' \| 'pipeline' \| 'activity'` | yes | Which widget kind the miniature depicts. Required. - `'kpi'` — label, a large value block (strong accent), an accented trend line. - `'list'` — rows of accented avatar + line; first avatar strong. - `'chart'` — a bar series (accented, one bar strong). - `'pipeline'` — stage columns of cards; current stage header strong and its cards accented; next stage header accented. - `'activity'` — timeline rows with accented dots; first dot strong. |
+| `variant` | `'kpi' \| 'list' \| 'chart' \| 'line' \| 'pipeline' \| 'activity'` | yes | Which widget kind the miniature depicts. Required. - `'kpi'` — label, a large value block (strong accent), an accented trend line. - `'list'` — rows of accented avatar + line; first avatar strong. - `'chart'` — a bar series (accented, one bar strong). - `'line'` — a line series over a light area (strong accent line). - `'pipeline'` — stage columns of cards; current stage header strong and its cards accented; next stage header accented. - `'activity'` — timeline rows with accented dots; first dot strong. |
 | …native | | | plus native `<div>` attributes |
 
 <!-- props:end -->

@@ -5,6 +5,7 @@ A widget card that fills its `DashboardCanvas` cell, in four presentations: `sta
 ```tsx
 import {
   Card,
+  Chart,
   DashboardCanvas,
   DashboardWidget,
   EmptyState,
@@ -40,7 +41,13 @@ import {
 
 // chart: the plot fills the cell
 <DashboardWidget variant="chart" title="Revenue">
-  <RevenueChart style={{ height: '100%' }} />
+  <Chart
+    type="line"
+    label="Revenue per month"
+    categories={months}
+    series={revenue}
+    formatValue={formatCurrency}
+  />
 </DashboardWidget>;
 
 // standard (default), with error and empty states as children
