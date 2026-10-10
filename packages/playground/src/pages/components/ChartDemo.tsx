@@ -53,6 +53,17 @@ function Cell({
   );
 }
 
+// Stable references: Chart re-derives its layout when `series`/`formatValue` change identity.
+const formatCount = (n: number) => fmt.format(n);
+const dealsSeries: ChartSeries[] = [
+  { key: 'won', label: 'Deals won', values: wave(2, 12) },
+  { key: 'prev', label: 'Previous period', values: wave(5, 12), comparisonOf: 'won' },
+];
+const dailySeries: ChartSeries[] = [
+  { key: 'calls', label: 'Calls', values: wave(3, 90, 8) },
+  { key: 'prev', label: 'Previous period', values: wave(7, 90, 8), comparisonOf: 'calls' },
+];
+
 export function ChartDemo() {
   const [type, setType] = useState<ChartType>('line');
   const [loading, setLoading] = useState(false);
@@ -102,19 +113,33 @@ export function ChartDemo() {
               type={type}
               label="Deals won per week"
               categories={weeks}
-              series={[
-                { key: 'won', label: 'Deals won', values: wave(2, 12) },
-                {
-                  key: 'prev',
-                  label: 'Previous period',
-                  values: wave(5, 12),
-                  comparisonOf: 'won',
-                },
-              ]}
-              formatValue={(n) => fmt.format(n)}
+              series={dealsSeries}
+              formatValue={formatCount}
             />
           </Cell>
         </Stack>
+      </Example>
+
+      <Example
+        title="Bars over 90 days"
+        description="90 daily buckets with a previous-period comparison. Grouped bars shrink to fit their slot instead of spilling into the next day."
+        code={`<Chart type="bar" label="Calls per day" categories={days}
+  series={[
+    { key: 'calls', label: 'Calls', values: [...90 values] },
+    { key: 'prev', label: 'Previous period', values: [...90 values], comparisonOf: 'calls' },
+  ]}
+  formatValue={(n) => fmt.format(n)}
+/>`}
+      >
+        <Cell title="Calls">
+          <Chart
+            type="bar"
+            label="Calls per day"
+            categories={days}
+            series={dailySeries}
+            formatValue={formatCount}
+          />
+        </Cell>
       </Example>
 
       <Example

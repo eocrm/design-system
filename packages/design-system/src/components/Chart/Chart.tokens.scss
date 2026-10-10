@@ -17,7 +17,8 @@
   --chart-grid: var(--color-border);
   --chart-axis-fg: var(--color-fg-muted);
   --chart-axis-size: var(--font-size-sm);
-  --chart-line-width: 2px;
+  --chart-line-width: var(--border-width-emphasis);
+  --chart-comparison-stroke: 1.5px;
   --chart-dash: 4 3;
   --chart-comparison-mix: 35%;
   --chart-area-opacity: 0.85;

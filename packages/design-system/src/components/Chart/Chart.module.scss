@@ -94,7 +94,7 @@
 .series[data-comparison] .bar {
   fill: var(--chart-comparison-fill);
   stroke: var(--chart-series-color);
-  stroke-width: 1.5px;
+  stroke-width: var(--chart-comparison-stroke);
 }
 
 .series[data-overflow] .bar {
