@@ -143,6 +143,42 @@ describe('barPath / markers', () => {
   });
 });
 
+describe('grouped bars', () => {
+  const extent = (d: string): [number, number] => {
+    const left = Number(/^M([^,]+),/.exec(d)![1]);
+    const w = /h([^v]+)v/.exec(d);
+    if (w) return [left, left + Number(w[1])];
+    return [left, Number([...d.matchAll(/Q([^,]+),/g)][1][1])];
+  };
+  it.each([
+    [90, 2],
+    [90, 8],
+    [30, 8],
+  ])('keeps %i categories x %i series inside their slot at 340px', (cats, groups) => {
+    const categories = Array.from({ length: cats }, (_, i) => `c${i}`);
+    const series = Array.from({ length: groups }, (_, j) =>
+      s(
+        `s${j}`,
+        categories.map((_, i) => i + j + 1),
+      ),
+    );
+    const l = layout({
+      type: 'bar',
+      categories,
+      series: resolveSeries('bar', series, cats).series,
+      width: 340,
+    });
+    const eps = 1e-6;
+    for (const m of l.marks) {
+      m.bars!.forEach((d, i) => {
+        const [a, b] = extent(d!);
+        expect(a).toBeGreaterThanOrEqual(l.categoryX[i] - l.bandWidth / 2 - eps);
+        expect(b).toBeLessThanOrEqual(l.categoryX[i] + l.bandWidth / 2 + eps);
+      });
+    }
+  });
+});
+
 describe('computeLayout', () => {
   const one = (values: (number | null)[]) =>
     resolveSeries('line', [s('a', values)], values.length).series;

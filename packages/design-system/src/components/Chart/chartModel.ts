@@ -22,6 +22,7 @@ export const LABEL_GAP = 8;
 export const X_LABEL_BASELINE = 4;
 /** Radius of the isolated-point dots. */
 export const DOT_RADIUS = 3;
+/** Radius of the keyboard/hover inspection marker on a line point. */
 export const MARKER_RADIUS = 4;
 /** Below this root height the legend collapses to one row with a "+N" counter. */
 export const COMPACT_HEIGHT = 120;
@@ -352,11 +353,13 @@ export function computeLayout(input: LayoutInput): ChartLayout {
     for (const x of series) marks.push(lineMarks(x));
   } else if (type === 'bar') {
     const groups = series.length;
-    const barWidth = Math.max(1, (bandWidth - MARK_GAP * (groups - 1)) / groups);
+    // Shrink the gap with the slot so a group never spills into its neighbours.
+    const gap = Math.min(MARK_GAP, bandWidth / (2 * groups));
+    const barWidth = (bandWidth - gap * (groups - 1)) / groups;
     series.forEach((x, j) => {
       const bars = x.values.map((v, i) => {
         if (v === null || v === 0) return null;
-        const bx = categoryX[i] - bandWidth / 2 + j * (barWidth + MARK_GAP);
+        const bx = categoryX[i] - bandWidth / 2 + j * (barWidth + gap);
         const top = Math.min(y(v), zeroY);
         const h = Math.max(1, Math.abs(zeroY - y(v)));
         return barPath({ x: bx, y: top, width: barWidth, height: h }, v > 0 ? 'top' : 'bottom');
