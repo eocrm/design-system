@@ -4,7 +4,7 @@ import { Skeleton } from '../Skeleton';
 import styles from './WidgetShape.module.scss';
 
 /** Internal: which widget silhouette to draw. `lines` = generic text lines (standard widget loading). */
-export type WidgetShapeKind = 'kpi' | 'list' | 'chart' | 'pipeline' | 'activity' | 'lines';
+export type WidgetShapeKind = 'kpi' | 'list' | 'chart' | 'line' | 'pipeline' | 'activity' | 'lines';
 /** Internal: `preview` = static + accent hero (WidgetPreview); `loading` = pulsing, neutral, fills its box. */
 export type WidgetShapeMode = 'preview' | 'loading';
 
@@ -91,6 +91,28 @@ export function WidgetShape({ kind, mode }: { kind: WidgetShapeKind; mode: Widge
             </div>
           ))}
         </div>
+      );
+      break;
+    case 'line':
+      // Data-free polyline in a 100×60 viewBox, stretched to the box; preview only
+      // (DashboardWidget never asks for a 'line' loading shape).
+      body = (
+        <svg
+          className={styles.lineChart}
+          viewBox="0 0 100 60"
+          preserveAspectRatio="none"
+          {...hero(true)}
+        >
+          <path
+            className={styles.lineArea}
+            d="M0,48 L20,36 L40,42 L60,20 L80,28 L100,10 L100,60 L0,60 Z"
+          />
+          <path
+            className={styles.linePath}
+            d="M0,48 L20,36 L40,42 L60,20 L80,28 L100,10"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
       );
       break;
     case 'pipeline':

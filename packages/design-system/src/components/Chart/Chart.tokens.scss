@@ -1,0 +1,48 @@
+// Chart.tokens.scss — component tokens for <Chart>. Series colours alias the
+// validated palette primitives; everything else defaults to existing primitives.
+:root {
+  --chart-series-1: var(--color-chart-series-1);
+  --chart-series-2: var(--color-chart-series-2);
+  --chart-series-3: var(--color-chart-series-3);
+  --chart-series-4: var(--color-chart-series-4);
+  --chart-series-5: var(--color-chart-series-5);
+  --chart-series-6: var(--color-chart-series-6);
+  --chart-series-7: var(--color-chart-series-7);
+  --chart-series-8: var(--color-chart-series-8);
+
+  // A `'total'` comparison has no series of its own: neutral ink.
+  --chart-total-comparison: var(--color-fg-muted);
+
+  --chart-gap: var(--space-2);
+  --chart-grid: var(--color-border);
+  --chart-axis-fg: var(--color-fg-muted);
+  --chart-axis-size: var(--font-size-sm);
+  --chart-line-width: var(--border-width-emphasis);
+  --chart-comparison-stroke: 1.5px;
+  --chart-dash: 4 3;
+  --chart-comparison-mix: 35%;
+  --chart-area-opacity: 0.85;
+  --chart-dim-opacity: 0.25;
+  --chart-band: var(--color-bg-muted);
+  --chart-crosshair: var(--color-border-strong);
+  --chart-plot-radius: var(--radius-sm);
+  --chart-dot-ring: var(--color-bg);
+  --chart-dot-ring-width: var(--border-width-emphasis);
+  --chart-ring: var(--ring-accent);
+
+  --chart-legend-gap: var(--space-3);
+  --chart-legend-size: var(--font-size-sm);
+  --chart-legend-fg: var(--color-fg);
+  --chart-legend-fg-off: var(--color-fg-subtle);
+  --chart-swatch: var(--space-3);
+  --chart-swatch-dash-width: var(--border-width-emphasis);
+
+  --chart-tooltip-bg: var(--color-bg);
+  --chart-tooltip-fg: var(--color-fg);
+  --chart-tooltip-border: var(--color-border);
+  --chart-tooltip-radius: var(--radius-md);
+  --chart-tooltip-shadow: var(--shadow-md);
+  --chart-tooltip-padding: var(--space-2);
+  --chart-tooltip-size: var(--font-size-sm);
+  --chart-tooltip-z: var(--z-tooltip);
+}

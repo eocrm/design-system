@@ -121,3 +121,20 @@
 .dealCard {
   height: var(--widget-shape-card);
 }
+
+.lineChart {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.lineArea {
+  fill: var(--widget-preview-accent);
+}
+
+.linePath {
+  fill: none;
+  stroke: var(--widget-preview-accent-strong);
+  stroke-width: var(--widget-shape-line-stroke);
+  stroke-linejoin: round;
+}

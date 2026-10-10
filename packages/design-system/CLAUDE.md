@@ -198,6 +198,10 @@ Before building or changing transient state UI, read `.claude/skills/transient-s
 - App-specific business logic — CRM code
 - `react-router`, `prismjs`, `prism-react-renderer`, `@types/prismjs` — playground-only deps. **Never import them from a library file**, even casually. They're not in this package's `dependencies` and will fail in the consumer.
 
+## Shipping TS source
+
+The package ships TypeScript source (`types: ./src/index.ts`), so consumers type-check our files. `@types/*` for any runtime dependency must therefore live in `dependencies`, not `devDependencies` (otherwise consumer `tsc` fails with TS7016).
+
 ## Changing shared tokens
 
 Tokens are CSS custom properties (NOT SCSS variables), so they're theme-able at runtime. Naming: `--<category>-<name>(-<modifier>)`. Examples: `--color-accent-hover`, `--space-3`, `--radius-md`, `--shadow-lg`.
@@ -228,7 +232,7 @@ Then:
 
 The CRM should NOT roll its own version of a design-system component. If something is missing, use a placeholder + token-correct native HTML, or request the component.
 
-**Dependency policy:** No UI / component libraries. Three narrow exceptions: (a) `@floating-ui/react-dom` for collision-aware positioning (DropdownMenu and any future popover-shaped component), (b) `@dnd-kit/core` + `@dnd-kit/sortable` + `@dnd-kit/utilities` for drag-and-drop sortable behavior (used by DataTable's column reorder and by Sortable), and (c) `qrcode-generator` for QR symbol encoding (used by QrCode). The last is an _algorithm_ dependency, not a UI one: it returns a boolean module matrix and nothing else — the SVG, the tokens, the ARIA and the interaction are all ours. Hand-rolling it would mean owning ~500 lines of Galois-field arithmetic, Reed–Solomon block interleaving and mask-penalty scoring, whose failure mode is a code that renders correctly and does not scan. Everything else — ARIA, focus, keyboard, dismissal — is hand-rolled per WAI-ARIA APG patterns. When CSS anchor positioning has acceptable browser support, Floating UI can be removed without changing public APIs.
+**Dependency policy:** No UI / component libraries. Four narrow exceptions: (a) `@floating-ui/react-dom` for collision-aware positioning (DropdownMenu and any future popover-shaped component), (b) `@dnd-kit/core` + `@dnd-kit/sortable` + `@dnd-kit/utilities` for drag-and-drop sortable behavior (used by DataTable's column reorder and by Sortable), and (c) `qrcode-generator` for QR symbol encoding (used by QrCode), and (d) `d3-scale` + `d3-shape` for chart math (used by Chart). The last two are _algorithm_ dependencies, not UI ones: qrcode-generator returns a boolean module matrix and nothing else; d3-scale/d3-shape only compute scales, stacking and path strings — the SVG, the tokens, the ARIA and the interaction are all ours. Hand-rolling QR encoding would mean owning ~500 lines of Galois-field arithmetic, Reed–Solomon block interleaving and mask-penalty scoring, whose failure mode is a code that renders correctly and does not scan. Everything else — ARIA, focus, keyboard, dismissal — is hand-rolled per WAI-ARIA APG patterns. When CSS anchor positioning has acceptable browser support, Floating UI can be removed without changing public APIs.
 
 See `AI-PRIMER.md` for the full component roster.
 

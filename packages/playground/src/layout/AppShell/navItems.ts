@@ -104,6 +104,7 @@ import {
   EyeOff,
   Megaphone,
   ChevronsRight,
+  ChartLine,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -274,6 +275,7 @@ export const componentGroups: { heading: string; items: NavItem[] }[] = [
         end: false,
       },
       { to: '/components/stat-group', label: 'StatGroup', icon: Gauge, end: false },
+      { to: '/components/chart', label: 'Chart', icon: ChartLine, end: false },
       { to: '/components/table', label: 'Table', icon: TableIcon, end: false },
       { to: '/components/datatable', label: 'DataTable', icon: TableProperties, end: false },
       { to: '/components/rich-text', label: 'RichText', icon: Pilcrow, end: false },

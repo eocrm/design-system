@@ -1484,6 +1484,19 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       ))}
     </Row>
   ),
+  Chart: (
+    <Col gap={6}>
+      <Row gap={6}>
+        <Bar w={20} />
+        <Bar w={20} />
+      </Row>
+      <Row gap={4} style={{ alignItems: 'flex-end' }}>
+        {[14, 24, 18, 32, 26].map((h, i) =>
+          i === 3 ? <Solid key={i} w={10} h={h} /> : <Box key={i} w={10} h={h} />,
+        )}
+      </Row>
+    </Col>
+  ),
   Timeline: (
     <Row gap={8} style={{ alignItems: 'flex-start' }}>
       <Col gap={4} style={{ alignItems: 'center' }}>

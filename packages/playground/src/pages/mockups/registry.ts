@@ -96,6 +96,7 @@ export type ComponentName =
   | 'CatalogPicker'
   | 'DashboardWidget'
   | 'StatGroup'
+  | 'Chart'
   | 'PillMenu'
   | 'Sticky'
   | 'ScrollArea'

@@ -1,6 +1,6 @@
 # `<WidgetPreview>` — decorative miniature of a widget kind
 
-A data-free, purely decorative miniature of a dashboard widget kind (KPI, list, chart, pipeline, activity). Built for the `preview` slot of `CatalogPicker` items so users can see what a widget looks like before adding it. Always `aria-hidden`; the surrounding card's title names the item.
+A data-free, purely decorative miniature of a dashboard widget kind (KPI, list, chart, line chart, pipeline, activity). Built for the `preview` slot of `CatalogPicker` items so users can see what a widget looks like before adding it. Always `aria-hidden`; the surrounding card's title names the item.
 
 ```tsx
 import { CatalogPicker, WidgetPreview } from '@eocrm/design-system';
@@ -30,12 +30,12 @@ import { CatalogPicker, WidgetPreview } from '@eocrm/design-system';
 <!-- prettier-ignore -->
 | Prop | Type | Required | Description |
 |---|---|---|---|
-| `variant` | `'kpi' \| 'list' \| 'chart' \| 'pipeline' \| 'activity'` | yes | Which widget kind the miniature depicts. Required. - `'kpi'` — label, a large value block (strong accent), an accented trend line. - `'list'` — rows of accented avatar + line; first avatar strong. - `'chart'` — a bar series (accented, one bar strong). - `'pipeline'` — stage columns of cards; current stage header strong and its cards accented; next stage header accented. - `'activity'` — timeline rows with accented dots; first dot strong. |
+| `variant` | `'kpi' \| 'list' \| 'chart' \| 'line' \| 'pipeline' \| 'activity'` | yes | Which widget kind the miniature depicts. Required. - `'kpi'` — label, a large value block (strong accent), an accented trend line. - `'list'` — rows of accented avatar + line; first avatar strong. - `'chart'` — a bar series (accented, one bar strong). - `'line'` — a line series over a light area (strong accent line). - `'pipeline'` — stage columns of cards; current stage header strong and its cards accented; next stage header accented. - `'activity'` — timeline rows with accented dots; first dot strong. |
 | …native | | | plus native `<div>` attributes |
 
 <!-- props:end -->
 
-- **Five variants**, pick one via `variant` (required): `kpi` (label, large value, trend line), `list` (avatar + line rows), `chart` (bar series), `pipeline` (stage columns of cards), `activity` (timeline rows with dots).
+- **Six variants**, pick one via `variant` (required): `kpi` (label, large value, trend line), `list` (avatar + line rows), `chart` (bar series), `line` (line series over a light area), `pipeline` (stage columns of cards), `activity` (timeline rows with dots).
 - **Always `aria-hidden="true"`.** The attribute is applied after your props, so it cannot be overridden. It conveys nothing to assistive tech; put the information in the item's `title` / `description`.
 - **Data-free.** It takes no values. It depicts a kind of widget, never a real one.
 - **Fills its container width** with a fixed 16 / 10 aspect ratio. Size it by sizing the parent (the picker card does this).

@@ -311,6 +311,26 @@ describe.each([
   });
 });
 
+describe.each([
+  ['light', TOKENS],
+  ['dark', DARK],
+])('chart series palette in %s theme', (_theme, source) => {
+  // WCAG 1.4.11: plotted marks are graphical objects needed to read the chart.
+  // Card/DashboardWidget surface is --color-bg in both themes. Exactly 8 slots.
+  // Series 6 (#008300) is identical in both themes, so it has no dark declaration.
+  it.each([1, 2, 3, 4, 5, 6, 7, 8])(
+    'chart series %i is a 3:1 graphical object on the card surface',
+    (n) => {
+      expect(
+        contrast(
+          tokenValue(`--color-chart-series-${n}`, n === 6 ? TOKENS : source),
+          tokenValue('--color-bg', source),
+        ),
+      ).toBeGreaterThanOrEqual(3);
+    },
+  );
+});
+
 /**
  * StagePath's hovered stage is `color-mix(in srgb, fill, text hover-mix)` — the
  * fill moved toward its own text colour, which LOWERS that pair's contrast. The

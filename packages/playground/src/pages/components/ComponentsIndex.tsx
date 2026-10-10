@@ -309,6 +309,13 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['StatGroup'],
   },
   {
+    to: '/components/chart',
+    name: 'Chart',
+    description:
+      'Line, bar, stacked bar or area time-series chart for a dashboard widget, with legend, tooltip and data table.',
+    preview: SCHEMATICS['Chart'],
+  },
+  {
     to: '/components/table',
     name: 'Table',
     description:

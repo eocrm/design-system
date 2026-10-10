@@ -52,7 +52,11 @@
     "@dnd-kit/utilities": "^3.2.2",
     "@eocrm/design-tokens": "0.0.0",
     "@floating-ui/react-dom": "^2.1.8",
+    "@types/d3-scale": "^4.0.9",
+    "@types/d3-shape": "^3.2.0",
     "clsx": "^2.1.1",
+    "d3-scale": "^4.0.2",
+    "d3-shape": "^3.2.0",
     "libphonenumber-js": "^1.13.7",
     "qrcode-generator": "^2.0.4"
   },
