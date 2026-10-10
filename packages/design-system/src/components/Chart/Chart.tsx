@@ -231,7 +231,8 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
   useEffect(() => {
     if (!pointerActive || !plotEl) return;
     const dismiss = (e: Event) => {
-      if (plotEl.contains(e.target as Node)) return;
+      // composedPath, not target: inside a shadow root the target is retargeted to the host.
+      if (e.composedPath().includes(plotEl)) return;
       setActive(null);
       setActiveSource(null);
     };
@@ -365,7 +366,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
         onKeyDown={onKeyDown}
         onPointerMove={onPointer}
         onPointerDown={onPointer}
-        // Touch fires pointerleave right after pointerup; keep the tapped tooltip (blur clears it).
+        // Touch fires pointerleave right after pointerup; keep the tapped tooltip (an outside press clears it).
         onPointerLeave={(e) =>
           e.pointerType !== 'touch' && activeSource === 'pointer' && inspect(null, null)
         }

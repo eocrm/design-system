@@ -74,13 +74,18 @@ The package ships **source files** (`.tsx`, `.module.scss`). Your bundler compil
 
 If TypeScript can't resolve types, set `moduleResolution: "bundler"` (or `"node16"`) in your `tsconfig.json`.
 
-**Tests.** Vitest works out of the box. Jest (CommonJS) must transform this package and its ESM-only dependencies (`d3-*`, `internmap`, used by `Chart`), and map `.module.scss` imports:
+**Tests.** Vitest works out of the box. Jest (CommonJS) must transform this package (TSX source) and its ESM-only dependencies (`d3-*`, `internmap`, used by `Chart`), and map `.module.scss` imports:
 
 ```js
-// jest.config.js
-transformIgnorePatterns: ['/node_modules/(?!(@eocrm/design-system|d3-[^/]+|internmap)/)'],
+// jest.config.js — the pattern covers npm/yarn and pnpm (node_modules/.pnpm/<name>@<version>/…) layouts
+transformIgnorePatterns: [
+  '/node_modules/(?!(\\.pnpm/)?(@eocrm[/+]design-system|d3-[^/@]+|internmap)[/@])',
+],
 moduleNameMapper: { '\\.module\\.scss$': 'identity-obj-proxy' },
 ```
+
+- Install `identity-obj-proxy` as a dev dependency.
+- The transformer must compile TSX and ESM inside `node_modules`: with `babel-jest`, use a root `babel.config.js` (a `.babelrc` does not apply to `node_modules`) with the TypeScript and React presets; with `ts-jest`, enable `allowJs` for the d3 files.
 
 ---
 
