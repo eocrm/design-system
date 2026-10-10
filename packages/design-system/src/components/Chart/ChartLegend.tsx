@@ -8,6 +8,8 @@ export interface ChartLegendItem {
   slot: number;
   comparison: boolean;
   overflow: boolean;
+  /** Last visible primary series: can't be hidden. */
+  locked: boolean;
   parentLabel?: string;
   parentHidden: boolean;
 }
@@ -39,15 +41,12 @@ export function ChartLegend({
       {shown.map((item) => {
         const on = !hidden.includes(item.key) && !item.parentHidden;
         return (
-          <li
-            key={item.key}
-            className={styles.legendEntry}
-            data-nested={item.comparison || undefined}
-          >
+          <li key={item.key} className={styles.legendEntry}>
             <button
               type="button"
               className={styles.legendItem}
               aria-pressed={on}
+              aria-disabled={item.locked || undefined}
               disabled={item.parentHidden}
               style={swatchStyle(item.slot)}
               onClick={() => onToggle(item.key)}

@@ -171,19 +171,22 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
 
   const parentLabel = (s: ResolvedSeries) =>
     resolved.series.find((p) => p.key === s.comparisonOf)?.label;
+  const known = hidden.filter((k) => resolved.series.some((s) => s.key === k));
+  const visiblePrimaries = resolved.series.filter(
+    (s) => s.comparisonOf === undefined && !hidden.includes(s.key),
+  );
   const toggle = (key: string) => {
-    if (hidden.includes(key)) {
-      setHidden(hidden.filter((k) => k !== key));
+    if (known.includes(key)) {
+      setHidden(known.filter((k) => k !== key));
       return;
     }
     const target = resolved.series.find((s) => s.key === key);
-    const visiblePrimaries = resolved.series.filter(
-      (s) => s.comparisonOf === undefined && !hidden.includes(s.key),
-    );
     // Never hide the last primary series: an empty plot is a dead end.
     if (target?.comparisonOf === undefined && visiblePrimaries.length <= 1) return;
-    setHidden([...hidden, key]);
+    setHidden([...known, key]);
   };
+  // A focused/hovered button can vanish (hidden, collapsed); never dim everything for a stale key.
+  const activeKey = focusKey !== null && visible.some((s) => s.key === focusKey) ? focusKey : null;
 
   const legendItems = resolved.series.map((s) => ({
     key: s.key,
@@ -191,6 +194,8 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     slot: s.slot,
     comparison: s.comparisonOf !== undefined,
     overflow: s.overflow,
+    locked:
+      s.comparisonOf === undefined && visiblePrimaries.length === 1 && visiblePrimaries[0] === s,
     parentLabel: parentLabel(s),
     parentHidden:
       s.comparisonOf !== undefined && s.comparisonOf !== 'total' && hidden.includes(s.comparisonOf),
@@ -293,9 +298,9 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
                 data-comparison={m.comparison || undefined}
                 data-overflow={m.overflow || undefined}
                 data-dimmed={
-                  focusKey !== null &&
-                  m.key !== focusKey &&
-                  resolved.series.find((s) => s.key === m.key)?.comparisonOf !== focusKey
+                  activeKey !== null &&
+                  m.key !== activeKey &&
+                  resolved.series.find((s) => s.key === m.key)?.comparisonOf !== activeKey
                     ? ''
                     : undefined
                 }

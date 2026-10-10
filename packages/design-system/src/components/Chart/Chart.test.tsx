@@ -220,6 +220,38 @@ describe('legend', () => {
     render(<Chart {...three} hiddenSeries={['b']} onHiddenSeriesChange={onChange} />);
     await userEvent.click(screen.getByRole('button', { name: 'Alice' }));
     expect(onChange).not.toHaveBeenCalled();
+    expect(screen.getByRole('button', { name: 'Alice' })).toHaveAttribute('aria-disabled', 'true');
+    expect(screen.getByRole('button', { name: 'Alice' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('does not re-emit stale hidden keys', async () => {
+    const onChange = vi.fn();
+    render(<Chart {...three} hiddenSeries={['gone']} onHiddenSeriesChange={onChange} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Bob' }));
+    expect(onChange).toHaveBeenCalledWith(['b']);
+  });
+
+  it('hovering a hidden series dims nothing', async () => {
+    const layout = stubLayout();
+    const { container } = render(<Chart {...three} hiddenSeries={['b']} />);
+    layout.fire();
+    await userEvent.hover(screen.getByRole('button', { name: 'Bob' }));
+    expect(container.querySelector('[data-dimmed]')).toBeNull();
+  });
+
+  it('compact mode shows fewer legend items plus a +N overflow count', () => {
+    const layout = stubLayout(160, 100);
+    const many: ChartProps = {
+      ...base,
+      series: ['Alpha team', 'Bravo team', 'Charlie team', 'Delta team', 'Echo team'].map(
+        (label, i) => ({ key: `s${i}`, label, values: [1, 2, 3] }),
+      ),
+    };
+    render(<Chart {...many} />);
+    layout.fire();
+    const shown = screen.getAllByRole('button').length;
+    expect(shown).toBeLessThan(5);
+    expect(screen.getByText(`+${5 - shown}`)).toBeInTheDocument();
   });
 
   it('controlled hiddenSeries drives the pressed state', () => {
