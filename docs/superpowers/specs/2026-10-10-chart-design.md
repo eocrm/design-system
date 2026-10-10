@@ -112,7 +112,7 @@ interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'> {
 4. **`ChartTooltip.tsx`** — positioned via existing `@floating-ui/react-dom`;
    lists visible series at the active category.
 5. **`ChartTable.tsx`** — visually hidden `<table>`, caption = `label`, one row per
-   category, one column per visible series, `null` → "—" with SR "No data".
+   category, one column per visible series, `null` → "No data" (the table is screen-reader-only).
 6. **Tokens** — `chart.series.1..8` (light/dark) in
    `packages/design-tokens/src/tokens.json`; `Chart.tokens.scss` for component
    tokens (`--chart-series-N`, `--chart-grid`, `--chart-axis-text`,
