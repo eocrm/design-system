@@ -5,7 +5,7 @@ import { render } from '@testing-library/react';
 import { WidgetPreview, type WidgetPreviewVariant } from './WidgetPreview';
 import { WidgetShape } from './WidgetShape';
 
-const VARIANTS: WidgetPreviewVariant[] = ['kpi', 'list', 'chart', 'pipeline', 'activity'];
+const VARIANTS: WidgetPreviewVariant[] = ['kpi', 'list', 'chart', 'line', 'pipeline', 'activity'];
 
 describe('WidgetPreview', () => {
   it.each(VARIANTS)('renders the %s shape in preview mode', (variant) => {

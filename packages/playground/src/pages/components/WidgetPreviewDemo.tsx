@@ -3,7 +3,7 @@ import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
 
-const VARIANTS = ['kpi', 'list', 'chart', 'pipeline', 'activity'] as const;
+const VARIANTS = ['kpi', 'list', 'chart', 'line', 'pipeline', 'activity'] as const;
 
 export function WidgetPreviewDemo() {
   return (
@@ -15,9 +15,9 @@ export function WidgetPreviewDemo() {
     >
       <Example
         title="Variants"
-        description="kpi, list, chart, pipeline and activity."
+        description="kpi, list, chart, line, pipeline and activity."
         code={`<Grid minColumnWidth="160px" gap="md">
-  {['kpi', 'list', 'chart', 'pipeline', 'activity'].map((variant) => (
+  {['kpi', 'list', 'chart', 'line', 'pipeline', 'activity'].map((variant) => (
     <Stack key={variant} gap="xs">
       <WidgetPreview variant={variant} />
       <Text size="sm" tone="muted">{variant}</Text>

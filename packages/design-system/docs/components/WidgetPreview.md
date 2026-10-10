@@ -1,6 +1,6 @@
 # `<WidgetPreview>` — decorative miniature of a widget kind
 
-A data-free, purely decorative miniature of a dashboard widget kind (KPI, list, chart, pipeline, activity). Built for the `preview` slot of `CatalogPicker` items so users can see what a widget looks like before adding it. Always `aria-hidden`; the surrounding card's title names the item.
+A data-free, purely decorative miniature of a dashboard widget kind (KPI, list, chart, line chart, pipeline, activity). Built for the `preview` slot of `CatalogPicker` items so users can see what a widget looks like before adding it. Always `aria-hidden`; the surrounding card's title names the item.
 
 ```tsx
 import { CatalogPicker, WidgetPreview } from '@eocrm/design-system';
@@ -35,7 +35,7 @@ import { CatalogPicker, WidgetPreview } from '@eocrm/design-system';
 
 <!-- props:end -->
 
-- **Five variants**, pick one via `variant` (required): `kpi` (label, large value, trend line), `list` (avatar + line rows), `chart` (bar series), `pipeline` (stage columns of cards), `activity` (timeline rows with dots).
+- **Six variants**, pick one via `variant` (required): `kpi` (label, large value, trend line), `list` (avatar + line rows), `chart` (bar series), `line` (line series over a light area), `pipeline` (stage columns of cards), `activity` (timeline rows with dots).
 - **Always `aria-hidden="true"`.** The attribute is applied after your props, so it cannot be overridden. It conveys nothing to assistive tech; put the information in the item's `title` / `description`.
 - **Data-free.** It takes no values. It depicts a kind of widget, never a real one.
 - **Fills its container width** with a fixed 16 / 10 aspect ratio. Size it by sizing the parent (the picker card does this).
