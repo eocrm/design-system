@@ -254,6 +254,17 @@ describe('computeLayout', () => {
     expect(l.marks[1].points[0]!.y).toBeLessThan(l.marks[0].points[0]!.y);
   });
 
+  it('area points follow the drawn top line for negative values', () => {
+    const series = resolveSeries(
+      'area',
+      [s('a', [2, 2, 2, 2]), s('b', [-1, -1, -1, -1])],
+      4,
+    ).series;
+    const m = layout({ type: 'area', series }).marks[1];
+    const topY = Number(m.line!.match(/^M[^,]+,([^L]+)/)![1]);
+    expect(m.points[0]!.y).toBeCloseTo(topY, 5);
+  });
+
   it('handles a single category', () => {
     const l = computeLayout({
       type: 'line',

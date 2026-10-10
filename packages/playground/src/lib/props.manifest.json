@@ -773,7 +773,7 @@
           "type": "string[]",
           "required": false,
           "default": "",
-          "description": "Controlled list of hidden series keys (legend toggles). Omit for uncontrolled. Unknown keys are ignored."
+          "description": "Controlled list of hidden series keys (legend toggles). Omit for uncontrolled. Unknown keys are ignored. If it would hide every primary series, it is ignored for primaries (the last primary can't be hidden)."
         },
         {
           "name": "onHiddenSeriesChange",

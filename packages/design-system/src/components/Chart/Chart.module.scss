@@ -107,7 +107,7 @@
 .marker {
   fill: var(--chart-series-color);
   stroke: var(--chart-dot-ring);
-  stroke-width: 2px;
+  stroke-width: var(--chart-dot-ring-width);
 }
 
 @media (prefers-reduced-motion: reduce) {

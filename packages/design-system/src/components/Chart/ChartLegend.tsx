@@ -36,7 +36,11 @@ export function ChartLegend({
   onHoverKey: (key: string | null) => void;
   onFocusKey: (key: string | null) => void;
 }) {
-  const shown = items.slice(0, maxItems);
+  // Hidden series always render (they count against the row) so they can be re-shown.
+  const isOff = (i: ChartLegendItem) => hidden.includes(i.key) || i.parentHidden;
+  const slots = Math.max(0, maxItems - items.filter(isOff).length);
+  let room = slots;
+  const shown = items.filter((i) => isOff(i) || room-- > 0);
   const more = items.length - shown.length;
   return (
     <ul className={styles.legend}>

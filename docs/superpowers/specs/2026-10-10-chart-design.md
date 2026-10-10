@@ -179,7 +179,7 @@ nav, overview grid, schematic and `ComponentName` union; `index.ts` export;
 `docs/components/Chart.md` + `AI-PRIMER.md` line; `CLUSTERS` in both manifests +
 `build:manifest`. WidgetPreview docs/demo/tests updated for `line`. Dependencies
 `d3-scale@^4.0.2`, `d3-shape@^3.2.0` (+ `@types/d3-scale@^4.0.9`,
-`@types/d3-shape@^3.2.0` as devDependencies).
+`@types/d3-shape@^3.2.0` as dependencies, since the shipped typings reference them).
 
 ## Out of scope
 

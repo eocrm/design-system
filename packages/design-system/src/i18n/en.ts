@@ -383,7 +383,7 @@ export const en: Messages = {
   },
   chart: {
     empty: 'No data for this period',
-    keyboardHint: 'Chart values. Use arrow keys to inspect.',
+    keyboardHint: 'Use arrow keys to inspect values. All values are also in the data table.',
     category: 'Category',
     noData: 'No data',
   },

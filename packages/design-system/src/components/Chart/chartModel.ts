@@ -6,9 +6,16 @@ export type ChartType = 'line' | 'bar' | 'stacked-bar' | 'area';
 
 /** One plotted series. `values[i]` belongs to `categories[i]`; `null` is a gap. */
 export interface ChartSeries {
+  /** Stable identity: legend toggles, `hiddenSeries` and `comparisonOf` refer to it. */
   key: string;
+  /** Human name shown in the legend, tooltip and data table. */
   label: string;
+  /** One value per category; `null` is a gap. */
   values: (number | null)[];
+  /**
+   * Marks this series as a comparison (e.g. previous period) of another: the `key` of its parent
+   * series, or `'total'` for the stacked sum. Supported on `line`, `bar` and `area`.
+   */
   comparisonOf?: string;
 }
 
@@ -372,7 +379,9 @@ export function computeLayout(input: LayoutInput): ChartLayout {
     primaries.forEach((x, j) => {
       const layer = layers[j];
       const points = x.values.map((v, i) =>
-        v === null ? null : { x: categoryX[i], y: y(v >= 0 ? layer[i][1] : layer[i][0]) },
+        v === null
+          ? null
+          : { x: categoryX[i], y: y(type === 'area' || v >= 0 ? layer[i][1] : layer[i][0]) },
       );
       if (type === 'stacked-bar') {
         const bars = x.values.map((v, i) => {

@@ -1,5 +1,5 @@
 import { createRef } from 'react';
-import { act, fireEvent, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Chart, type ChartProps } from './Chart';
 
@@ -273,6 +273,29 @@ describe('legend', () => {
     expect(screen.getByText(`+${5 - shown}`)).toBeInTheDocument();
   });
 
+  it('compact mode keeps a hidden series past maxItems as a re-show toggle', async () => {
+    const layout = stubLayout(160, 100);
+    const names = ['Alpha team', 'Bravo team', 'Charlie team', 'Delta team', 'Echo team'];
+    const many: ChartProps = {
+      ...base,
+      series: names.map((label, i) => ({ key: `s${i}`, label, values: [1, 2, 3] })),
+    };
+    const onChange = vi.fn();
+    render(<Chart {...many} hiddenSeries={['s4']} onHiddenSeriesChange={onChange} />);
+    layout.fire();
+    const echo = screen.getByRole('button', { name: 'Echo team' });
+    expect(echo).toHaveAttribute('aria-pressed', 'false');
+    await userEvent.click(echo);
+    expect(onChange).toHaveBeenCalledWith([]);
+  });
+
+  it('ignores a controlled hiddenSeries that would hide every primary', () => {
+    stubLayout().fire();
+    const { container } = render(<Chart {...three} hiddenSeries={['a', 'b', 'c']} />);
+    expect(container.querySelectorAll('svg [data-series]').length).toBeGreaterThanOrEqual(3);
+    expect(screen.getByRole('button', { name: 'Bob' })).toHaveAttribute('aria-pressed', 'true');
+  });
+
   it('controlled hiddenSeries drives the pressed state', () => {
     render(<Chart {...three} hiddenSeries={['b']} />);
     expect(screen.getByRole('button', { name: 'Bob' })).toHaveAttribute('aria-pressed', 'false');
@@ -305,7 +328,9 @@ describe('inspect', () => {
     render(<Chart {...base} />);
     const plot = screen.getByRole('group', { name: 'Deals won per week' });
     expect(plot).toHaveAttribute('tabindex', '0');
-    expect(plot).toHaveAccessibleDescription('Chart values. Use arrow keys to inspect.');
+    expect(plot).toHaveAccessibleDescription(
+      'Use arrow keys to inspect values. All values are also in the data table.',
+    );
   });
 
   it('arrow keys walk categories, announce values, Home/End jump, Escape clears', async () => {
@@ -316,14 +341,18 @@ describe('inspect', () => {
     plot.focus();
     await userEvent.keyboard('{ArrowRight}');
     const live = document.querySelector('[aria-live="polite"]')!;
-    expect(live).toHaveTextContent('W1: Deals won 3 deals, Previous period (Deals won) 2 deals');
+    await waitFor(() =>
+      expect(live).toHaveTextContent('W1: Deals won 3 deals, Previous period (Deals won) 2 deals'),
+    );
     expect(document.querySelector('[data-chart-tooltip]')).toHaveTextContent('W1');
     await userEvent.keyboard('{ArrowRight}');
-    expect(live).toHaveTextContent('W2: Deals won No data, Previous period (Deals won) 4 deals');
+    await waitFor(() =>
+      expect(live).toHaveTextContent('W2: Deals won No data, Previous period (Deals won) 4 deals'),
+    );
     await userEvent.keyboard('{End}');
-    expect(live).toHaveTextContent(/^W3:/);
+    await waitFor(() => expect(live).toHaveTextContent(/^W3:/));
     await userEvent.keyboard('{Home}');
-    expect(live).toHaveTextContent(/^W1:/);
+    await waitFor(() => expect(live).toHaveTextContent(/^W1:/));
     await userEvent.keyboard('{Escape}');
     expect(document.querySelector('[data-chart-tooltip]')).toBeNull();
   });
@@ -345,8 +374,8 @@ describe('inspect', () => {
     screen.getByRole('group', { name: 'Deals won per week' }).focus();
     await userEvent.keyboard('{ArrowRight}');
     const live = document.querySelector('[aria-live="polite"]')!;
-    expect(live).toHaveTextContent('Previous period (Alice) 1');
-    expect(live).toHaveTextContent('Previous period (Bob) 2');
+    await waitFor(() => expect(live).toHaveTextContent('Previous period (Alice) 1'));
+    await waitFor(() => expect(live).toHaveTextContent('Previous period (Bob) 2'));
   });
 
   it('ArrowLeft from nothing starts at the last category', async () => {
@@ -355,7 +384,9 @@ describe('inspect', () => {
     layout.fire();
     screen.getByRole('group', { name: 'Deals won per week' }).focus();
     await userEvent.keyboard('{ArrowLeft}');
-    expect(document.querySelector('[aria-live="polite"]')).toHaveTextContent(/^W3:/);
+    await waitFor(() =>
+      expect(document.querySelector('[aria-live="polite"]')).toHaveTextContent(/^W3:/),
+    );
   });
 
   it('pointer movement shows the tooltip without announcing', async () => {

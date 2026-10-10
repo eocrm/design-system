@@ -139,6 +139,7 @@
     "cluster": "Display",
     "composes": [
       "EmptyState",
+      "LiveRegion",
       "VisuallyHidden"
     ],
     "composedBy": []
@@ -537,6 +538,7 @@
       "VisuallyHidden"
     ],
     "composedBy": [
+      "Chart",
       "DateStrip"
     ]
   },

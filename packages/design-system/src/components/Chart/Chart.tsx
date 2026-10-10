@@ -19,6 +19,7 @@ import { mergeRefs } from '../_internal/refs';
 import { ChartLegend } from './ChartLegend';
 import { ChartTable } from './ChartTable';
 import { ChartTooltip } from './ChartTooltip';
+import { LiveRegion } from '../LiveRegion';
 import { VisuallyHidden } from '../VisuallyHidden';
 import {
   categoryIndexAt,
@@ -68,7 +69,7 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
   formatValue: (n: number) => string;
   /** EmptyState title when there are no categories or every value is null/zero. Default: translated "No data for this period". */
   emptyMessage?: ReactNode;
-  /** Controlled list of hidden series keys (legend toggles). Omit for uncontrolled. Unknown keys are ignored. */
+  /** Controlled list of hidden series keys (legend toggles). Omit for uncontrolled. Unknown keys are ignored. If it would hide every primary series, it is ignored for primaries (the last primary can't be hidden). */
   hiddenSeries?: string[];
   /** Called with the next hidden keys when the user toggles a legend item. */
   onHiddenSeriesChange?: (keys: string[]) => void;
@@ -148,11 +149,18 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
   );
   useDevWarnings(resolved.dropped, resolved.overflowCount);
 
-  const [hidden, setHidden] = useControllableState<string[]>({
+  const [rawHidden, setHidden] = useControllableState<string[]>({
     value: hiddenSeries,
     defaultValue: [],
     onChange: onHiddenSeriesChange,
   });
+  // A controlled set can hide every primary: ignore it for primaries so the plot is never blank.
+  const hidden = useMemo(() => {
+    const primaries = resolved.series.filter((s) => s.comparisonOf === undefined);
+    return primaries.length > 0 && primaries.every((s) => rawHidden.includes(s.key))
+      ? rawHidden.filter((k) => !primaries.some((s) => s.key === k))
+      : rawHidden;
+  }, [resolved.series, rawHidden]);
   const [hoverKey, setHoverKey] = useState<string | null>(null);
   const [focusedKey, setFocusedKey] = useState<string | null>(null);
   const focusKey = hoverKey ?? focusedKey;
@@ -454,7 +462,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
         title={current === null ? '' : categories[current]}
         rows={rows}
       />
-      <VisuallyHidden aria-live="polite">{liveText}</VisuallyHidden>
+      <LiveRegion>{liveText}</LiveRegion>
       <ChartTable
         caption={label}
         categoryHeader={t('chart.category')}
