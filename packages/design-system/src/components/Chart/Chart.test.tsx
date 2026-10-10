@@ -1,5 +1,6 @@
 import { createRef } from 'react';
 import { act, render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Chart, type ChartProps } from './Chart';
 
 function stubLayout(width = 400, height = 240) {
@@ -169,12 +170,80 @@ describe('Chart', () => {
     rerender(<Chart {...base} />);
     const plot = container.querySelector('svg')!.parentElement;
     expect(plot).not.toBe(first);
-    expect(layout.observed[layout.observed.length - 1]).toBe(plot);
+    expect(layout.observed).toContain(plot);
   });
 
   it('spreads native attributes but keeps the figure role and name', () => {
     render(<Chart {...base} role="img" aria-label="hijack" aria-labelledby="nope" data-x="1" />);
     const fig = screen.getByRole('figure', { name: 'Deals won per week' });
     expect(fig).toHaveAttribute('data-x', '1');
+  });
+});
+
+describe('legend', () => {
+  const three: ChartProps = {
+    ...base,
+    series: [
+      { key: 'a', label: 'Alice', values: [1, 2, 3] },
+      { key: 'a-prev', label: 'Previous period', values: [1, 1, 1], comparisonOf: 'a' },
+      { key: 'b', label: 'Bob', values: [2, 2, 2] },
+    ],
+  };
+
+  it('is absent for a single series', () => {
+    render(<Chart {...base} series={[base.series[0]]} />);
+    expect(screen.queryByRole('button')).toBeNull();
+  });
+
+  it('lists every series as a pressed toggle; comparisons name their parent', () => {
+    render(<Chart {...three} />);
+    expect(screen.getByRole('button', { name: 'Alice' })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'Previous period, Alice' })).toBeInTheDocument();
+  });
+
+  it('click hides a series and its comparison, and reports the change', async () => {
+    const layout = stubLayout();
+    const onChange = vi.fn();
+    const { container } = render(<Chart {...three} onHiddenSeriesChange={onChange} />);
+    layout.fire();
+    await userEvent.click(screen.getByRole('button', { name: 'Alice' }));
+    expect(onChange).toHaveBeenCalledWith(['a']);
+    expect(screen.getByRole('button', { name: 'Alice' })).toHaveAttribute('aria-pressed', 'false');
+    expect(container.querySelector('[data-series="a"]')).toBeNull();
+    expect(container.querySelector('[data-series="a-prev"]')).toBeNull();
+    // the table drops hidden columns too
+    expect(screen.queryByRole('columnheader', { name: 'Alice' })).toBeNull();
+  });
+
+  it('cannot hide the last visible primary series', async () => {
+    const onChange = vi.fn();
+    render(<Chart {...three} hiddenSeries={['b']} onHiddenSeriesChange={onChange} />);
+    await userEvent.click(screen.getByRole('button', { name: 'Alice' }));
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('controlled hiddenSeries drives the pressed state', () => {
+    render(<Chart {...three} hiddenSeries={['b']} />);
+    expect(screen.getByRole('button', { name: 'Bob' })).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  it('ignores hidden keys that no longer exist', () => {
+    stubLayout().fire();
+    const { container } = render(<Chart {...three} hiddenSeries={['gone']} />);
+    expect(container.querySelectorAll('svg [data-series]')).toHaveLength(3);
+  });
+
+  it('hovering or focusing an item dims the other series', async () => {
+    const layout = stubLayout();
+    const { container } = render(<Chart {...three} />);
+    layout.fire();
+    await userEvent.hover(screen.getByRole('button', { name: 'Bob' }));
+    expect(container.querySelector('[data-series="a"]')).toHaveAttribute('data-dimmed');
+    expect(container.querySelector('[data-series="b"]')).not.toHaveAttribute('data-dimmed');
+    await userEvent.unhover(screen.getByRole('button', { name: 'Bob' }));
+    expect(container.querySelector('[data-series="a"]')).not.toHaveAttribute('data-dimmed');
+    act(() => screen.getByRole('button', { name: 'Alice' }).focus());
+    expect(container.querySelector('[data-series="a-prev"]')).not.toHaveAttribute('data-dimmed');
+    expect(container.querySelector('[data-series="b"]')).toHaveAttribute('data-dimmed');
   });
 });

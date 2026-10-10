@@ -115,3 +115,78 @@
     transition: none;
   }
 }
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1) var(--chart-legend-gap);
+  padding: 0;
+  list-style: none;
+  font-size: var(--chart-legend-size);
+}
+
+.root[data-compact] .legend {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.legendEntry {
+  display: flex;
+  min-width: 0;
+}
+
+.legendItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--chart-legend-fg);
+  font: inherit;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &[aria-pressed='false'] {
+    color: var(--chart-legend-fg-off);
+    text-decoration: line-through;
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+
+  &:focus-visible {
+    @include focus-ring(var(--chart-ring));
+  }
+}
+
+.swatch {
+  flex-shrink: 0;
+  width: var(--chart-swatch);
+  height: var(--chart-swatch);
+  border-radius: var(--radius-sm);
+  background: var(--chart-series-color);
+
+  &[data-comparison],
+  &[data-overflow] {
+    height: 0;
+    border-top-width: var(--chart-swatch-dash-width);
+    border-top-style: dashed;
+    border-top-color: var(--chart-series-color);
+    border-radius: 0;
+    background: transparent;
+  }
+}
+
+.legendItem[aria-pressed='false'] .swatch {
+  opacity: var(--chart-dim-opacity);
+}
+
+.legendMore {
+  color: var(--chart-axis-fg);
+  white-space: nowrap;
+}

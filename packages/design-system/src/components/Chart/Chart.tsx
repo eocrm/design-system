@@ -12,9 +12,13 @@ import clsx from 'clsx';
 import { EmptyState } from '../EmptyState';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useControllableState } from '../_internal/useControllableState';
+import { mergeRefs } from '../_internal/refs';
+import { ChartLegend } from './ChartLegend';
 import { ChartTable } from './ChartTable';
 import {
   computeLayout,
+  fitLegend,
+  COMPACT_HEIGHT,
   isEmpty,
   DOT_RADIUS,
   LABEL_GAP,
@@ -135,15 +139,21 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
   );
   useDevWarnings(resolved.dropped, resolved.overflowCount);
 
-  const [hidden] = useControllableState<string[]>({
+  const [hidden, setHidden] = useControllableState<string[]>({
     value: hiddenSeries,
     defaultValue: [],
     onChange: onHiddenSeriesChange,
   });
+  const [focusKey, setFocusKey] = useState<string | null>(null);
   const visible = useMemo(() => visibleSeries(resolved.series, hidden), [resolved.series, hidden]);
   const empty = isEmpty(categories, resolved.series);
 
   const [plotRef, size] = useSize<HTMLDivElement>();
+  const [setRootEl, rootSize] = useSize<HTMLElement>();
+  const figureRef = useMemo(
+    () => mergeRefs(ref, (el: HTMLElement | null) => setRootEl(el)),
+    [ref, setRootEl],
+  );
   const layout = useMemo(
     () =>
       !empty && size.width > 0 && size.height > 0
@@ -161,6 +171,38 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
 
   const parentLabel = (s: ResolvedSeries) =>
     resolved.series.find((p) => p.key === s.comparisonOf)?.label;
+  const toggle = (key: string) => {
+    if (hidden.includes(key)) {
+      setHidden(hidden.filter((k) => k !== key));
+      return;
+    }
+    const target = resolved.series.find((s) => s.key === key);
+    const visiblePrimaries = resolved.series.filter(
+      (s) => s.comparisonOf === undefined && !hidden.includes(s.key),
+    );
+    // Never hide the last primary series: an empty plot is a dead end.
+    if (target?.comparisonOf === undefined && visiblePrimaries.length <= 1) return;
+    setHidden([...hidden, key]);
+  };
+
+  const legendItems = resolved.series.map((s) => ({
+    key: s.key,
+    label: s.label,
+    slot: s.slot,
+    comparison: s.comparisonOf !== undefined,
+    overflow: s.overflow,
+    parentLabel: parentLabel(s),
+    parentHidden:
+      s.comparisonOf !== undefined && s.comparisonOf !== 'total' && hidden.includes(s.comparisonOf),
+  }));
+  const compact = rootSize.height > 0 && rootSize.height < COMPACT_HEIGHT;
+  const maxItems = compact
+    ? fitLegend(
+        legendItems.map((i) => i.label),
+        rootSize.width,
+      )
+    : legendItems.length;
+
   const columns = visible.map((s) => ({
     key: s.key,
     header: parentLabel(s) ? `${s.label} (${parentLabel(s)})` : s.label,
@@ -186,13 +228,24 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
   return (
     <figure
       {...rest}
-      ref={ref}
+      ref={figureRef}
       role="figure"
       aria-label={label}
       aria-labelledby={undefined}
+      data-compact={compact || undefined}
       className={clsx(styles.root, className)}
     >
-      <div /* legend slot — Task 4 */ />
+      {legendItems.length > 1 ? (
+        <ChartLegend
+          items={legendItems}
+          hidden={hidden}
+          maxItems={maxItems}
+          onToggle={toggle}
+          onFocusKey={setFocusKey}
+        />
+      ) : (
+        <span />
+      )}
       <div ref={plotRef} className={styles.plot}>
         {layout && (
           <svg
@@ -239,6 +292,13 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
                 data-series={m.key}
                 data-comparison={m.comparison || undefined}
                 data-overflow={m.overflow || undefined}
+                data-dimmed={
+                  focusKey !== null &&
+                  m.key !== focusKey &&
+                  resolved.series.find((s) => s.key === m.key)?.comparisonOf !== focusKey
+                    ? ''
+                    : undefined
+                }
               >
                 {m.area && <path className={styles.area} d={m.area} />}
                 {m.line && <path className={styles.line} d={m.line} />}
