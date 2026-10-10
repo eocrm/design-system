@@ -387,6 +387,12 @@ export const ru: Messages = {
     loading: 'Загрузка…',
     noData: 'Нет данных',
   },
+  chart: {
+    empty: 'Нет данных за этот период',
+    keyboardHint: 'Значения графика. Используйте стрелки для просмотра.',
+    category: 'Категория',
+    noData: 'Нет данных',
+  },
   catalogPicker: {
     search: 'Поиск…',
     categories: 'Категории',

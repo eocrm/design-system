@@ -805,6 +805,16 @@ export interface Messages {
     /** Visually hidden text beside the "—" shown when a StatTile's `value` is null/undefined. */
     noData: string;
   };
+  chart: {
+    /** EmptyState title when every value is null/zero and no `emptyMessage` is given. */
+    empty: string;
+    /** Accessible name of the focusable plot area; tells keyboard users how to read values. */
+    keyboardHint: string;
+    /** Header of the data table's first (category) column. */
+    category: string;
+    /** Data-table cell text for a null value. */
+    noData: string;
+  };
   catalogPicker: {
     /** Placeholder + aria-label of the catalog search input. */
     search: string;

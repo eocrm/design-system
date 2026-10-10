@@ -381,6 +381,12 @@ export const en: Messages = {
     loading: 'Loading…',
     noData: 'No data',
   },
+  chart: {
+    empty: 'No data for this period',
+    keyboardHint: 'Chart values. Use arrow keys to inspect.',
+    category: 'Category',
+    noData: 'No data',
+  },
   catalogPicker: {
     search: 'Search…',
     categories: 'Categories',

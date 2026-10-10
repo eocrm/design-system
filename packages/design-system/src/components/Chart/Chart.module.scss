@@ -1,0 +1,117 @@
+@use './Chart.tokens';
+@use '../../styles/mixins' as *;
+
+.root {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: var(--chart-gap);
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.root[data-empty] {
+  grid-template-rows: minmax(0, 1fr);
+  place-items: center;
+}
+
+.plot {
+  position: relative;
+  min-height: 0;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  outline: none;
+  touch-action: pan-y;
+
+  &:focus-visible {
+    @include focus-ring(var(--chart-ring));
+  }
+}
+
+.svg {
+  display: block;
+}
+
+.grid line {
+  stroke: var(--chart-grid);
+  stroke-width: 1px;
+  shape-rendering: crispedges;
+}
+
+.axis text {
+  fill: var(--chart-axis-fg);
+  font-size: var(--chart-axis-size);
+  font-variant-numeric: tabular-nums;
+}
+
+.band {
+  fill: var(--chart-band);
+}
+
+.crosshair {
+  stroke: var(--chart-crosshair);
+  stroke-width: 1px;
+}
+
+.series {
+  // Declared here, not in tokens.scss: it mixes the per-series colour set inline.
+  --chart-comparison-fill: color-mix(
+    in srgb,
+    var(--chart-series-color) var(--chart-comparison-mix),
+    transparent
+  );
+
+  transition: opacity var(--transition-fast);
+
+  &[data-dimmed] {
+    opacity: var(--chart-dim-opacity);
+  }
+}
+
+.line {
+  fill: none;
+  stroke: var(--chart-series-color);
+  stroke-width: var(--chart-line-width);
+  stroke-linejoin: round;
+  stroke-linecap: round;
+}
+
+.series[data-comparison] .line,
+.series[data-overflow] .line {
+  stroke-dasharray: var(--chart-dash);
+}
+
+.area {
+  fill: var(--chart-series-color);
+  fill-opacity: var(--chart-area-opacity);
+}
+
+.bar {
+  fill: var(--chart-series-color);
+}
+
+.series[data-comparison] .bar {
+  fill: var(--chart-comparison-fill);
+  stroke: var(--chart-series-color);
+  stroke-width: 1.5px;
+}
+
+.series[data-overflow] .bar {
+  stroke: var(--chart-series-color);
+  stroke-dasharray: var(--chart-dash);
+  fill: var(--chart-comparison-fill);
+}
+
+.dot,
+.marker {
+  fill: var(--chart-series-color);
+  stroke: var(--color-bg);
+  stroke-width: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .series {
+    transition: none;
+  }
+}
