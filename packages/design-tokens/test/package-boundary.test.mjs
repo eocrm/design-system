@@ -27,6 +27,8 @@ test('preserves the design-system package and TypeScript export surfaces', async
     '.': {
       types: './src/index.ts',
       import: './src/index.ts',
+      // CommonJS resolvers (Jest) use require/default; without it the package does not resolve.
+      default: './src/index.ts',
     },
     './styles/global.scss': './src/styles/global.scss',
     './styles/tokens.scss': './src/styles/tokens.scss',

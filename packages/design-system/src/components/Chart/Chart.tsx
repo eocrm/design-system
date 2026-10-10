@@ -224,6 +224,22 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     inspect(next, 'keyboard');
   };
 
+  // A tap leaves the tooltip open (touch fires pointerleave right after pointerup, which
+  // we ignore). Dismiss it on the next press outside the plot instead of relying on the
+  // plot losing focus: mobile Safari does not reliably focus a tabIndex div on tap.
+  const pointerActive = activeSource === 'pointer' && current !== null;
+  useEffect(() => {
+    if (!pointerActive || !plotEl) return;
+    const dismiss = (e: Event) => {
+      // composedPath, not target: inside a shadow root the target is retargeted to the host.
+      if (e.composedPath().includes(plotEl)) return;
+      setActive(null);
+      setActiveSource(null);
+    };
+    document.addEventListener('pointerdown', dismiss, true);
+    return () => document.removeEventListener('pointerdown', dismiss, true);
+  }, [pointerActive, plotEl]);
+
   const onPointer = (e: PointerEvent<HTMLDivElement>) => {
     if (!layout) return;
     const rect = e.currentTarget.getBoundingClientRect();
@@ -350,7 +366,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
         onKeyDown={onKeyDown}
         onPointerMove={onPointer}
         onPointerDown={onPointer}
-        // Touch fires pointerleave right after pointerup; keep the tapped tooltip (blur clears it).
+        // Touch fires pointerleave right after pointerup; keep the tapped tooltip (an outside press clears it).
         onPointerLeave={(e) =>
           e.pointerType !== 'touch' && activeSource === 'pointer' && inspect(null, null)
         }

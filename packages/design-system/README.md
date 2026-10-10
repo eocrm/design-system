@@ -74,6 +74,21 @@ The package ships **source files** (`.tsx`, `.module.scss`). Your bundler compil
 
 If TypeScript can't resolve types, set `moduleResolution: "bundler"` (or `"node16"`) in your `tsconfig.json`.
 
+**Tests.** Vitest works out of the box. Jest (CommonJS) must transform this package (TSX source) and its ESM-only dependencies (`d3-*`, `internmap`, used by `Chart`), and map `.module.scss` imports:
+
+```js
+// jest.config.js — the pattern covers npm/yarn and pnpm (node_modules/.pnpm/<name>@<version>/…) layouts
+transformIgnorePatterns: [
+  '/node_modules/(?!(\\.pnpm/)?(@eocrm[/+]design-system|d3-[^/@]+|internmap)[/@])',
+],
+moduleNameMapper: { '\\.module\\.scss$': 'identity-obj-proxy' },
+```
+
+- Install `identity-obj-proxy` as a dev dependency.
+- The transformer must compile TSX and convert ESM to CommonJS inside `node_modules`:
+  - `babel-jest`: a root `babel.config.js` (a `.babelrc` does not apply to `node_modules`) with `@babel/preset-env` (`targets: { node: 'current' }`, which converts `import`/`export`), `@babel/preset-react` (`runtime: 'automatic'`) and `@babel/preset-typescript`.
+  - `ts-jest`: `preset: 'ts-jest/presets/js-with-ts'` (so `.js` files are transformed too), with `allowJs: true`, `jsx: 'react-jsx'` and `module: 'commonjs'` in the tsconfig it uses, and `isolatedModules: true` (transpile only). The package does not ship a `*.module.scss` type declaration, so a type-checking ts-jest reports TS2307 on its style imports unless you declare `*.module.scss` yourself.
+
 ---
 
 ## Components
