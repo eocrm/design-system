@@ -198,6 +198,10 @@ Before building or changing transient state UI, read `.claude/skills/transient-s
 - App-specific business logic — CRM code
 - `react-router`, `prismjs`, `prism-react-renderer`, `@types/prismjs` — playground-only deps. **Never import them from a library file**, even casually. They're not in this package's `dependencies` and will fail in the consumer.
 
+## Shipping TS source
+
+The package ships TypeScript source (`types: ./src/index.ts`), so consumers type-check our files. `@types/*` for any runtime dependency must therefore live in `dependencies`, not `devDependencies` (otherwise consumer `tsc` fails with TS7016).
+
 ## Changing shared tokens
 
 Tokens are CSS custom properties (NOT SCSS variables), so they're theme-able at runtime. Naming: `--<category>-<name>(-<modifier>)`. Examples: `--color-accent-hover`, `--space-3`, `--radius-md`, `--shadow-lg`.
