@@ -6,6 +6,8 @@ import {
   useState,
   type CSSProperties,
   type HTMLAttributes,
+  type KeyboardEvent,
+  type PointerEvent,
   type ReactNode,
 } from 'react';
 import clsx from 'clsx';
@@ -15,8 +17,13 @@ import { useControllableState } from '../_internal/useControllableState';
 import { mergeRefs } from '../_internal/refs';
 import { ChartLegend } from './ChartLegend';
 import { ChartTable } from './ChartTable';
+import { ChartTooltip } from './ChartTooltip';
+import { VisuallyHidden } from '../VisuallyHidden';
 import {
+  categoryIndexAt,
   computeLayout,
+  markerPath,
+  markerShape,
   fitLegend,
   COMPACT_HEIGHT,
   isEmpty,
@@ -109,7 +116,7 @@ function useSize<T extends HTMLElement>() {
     ro.observe(el);
     return () => ro.disconnect();
   }, [el]);
-  return [setEl, size] as const;
+  return [setEl, size, el] as const;
 }
 
 /**
@@ -148,7 +155,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
   const visible = useMemo(() => visibleSeries(resolved.series, hidden), [resolved.series, hidden]);
   const empty = isEmpty(categories, resolved.series);
 
-  const [plotRef, size] = useSize<HTMLDivElement>();
+  const [setPlotEl, size, plotEl] = useSize<HTMLDivElement>();
   const [setRootEl, rootSize] = useSize<HTMLElement>();
   const figureRef = useMemo(
     () => mergeRefs(ref, (el: HTMLElement | null) => setRootEl(el)),
@@ -168,6 +175,82 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
         : null,
     [empty, size.width, size.height, type, categories, visible, formatValue],
   );
+
+  const [active, setActive] = useState<number | null>(null);
+  const [activeSource, setActiveSource] = useState<'pointer' | 'keyboard' | null>(null);
+  const n = categories.length;
+  const current = active !== null && active < n ? active : null;
+
+  const inspect = (index: number | null, source: 'pointer' | 'keyboard' | null) => {
+    setActive(index);
+    setActiveSource(index === null ? null : source);
+  };
+
+  const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    let next: number | null;
+    switch (e.key) {
+      case 'ArrowRight':
+        next = current === null ? 0 : Math.min(n - 1, current + 1);
+        break;
+      case 'ArrowLeft':
+        next = current === null ? n - 1 : Math.max(0, current - 1);
+        break;
+      case 'Home':
+        next = 0;
+        break;
+      case 'End':
+        next = n - 1;
+        break;
+      case 'Escape':
+        if (current === null) return; // let a surrounding dialog close
+        next = null;
+        break;
+      default:
+        return;
+    }
+    e.preventDefault();
+    inspect(next, 'keyboard');
+  };
+
+  const onPointer = (e: PointerEvent<HTMLDivElement>) => {
+    if (!layout) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    inspect(categoryIndexAt(layout, e.clientX - rect.left), 'pointer');
+  };
+
+  const rows =
+    current === null
+      ? []
+      : visible.map((s) => ({
+          key: s.key,
+          label: s.label,
+          slot: s.slot,
+          comparison: s.comparisonOf !== undefined,
+          value:
+            s.values[current] === null
+              ? t('chart.noData')
+              : formatValue(s.values[current] as number),
+        }));
+
+  // Scalars first so `point` keeps its identity until x/y change (ChartTooltip's effect depends on it).
+  const anchor =
+    current !== null && layout && plotEl
+      ? (() => {
+          const rect = plotEl.getBoundingClientRect();
+          return { x: rect.left + layout.categoryX[current], y: rect.top + layout.plot.y };
+        })()
+      : null;
+  const anchorX = anchor?.x;
+  const anchorY = anchor?.y;
+  const point = useMemo(
+    () => (anchorX === undefined || anchorY === undefined ? null : { x: anchorX, y: anchorY }),
+    [anchorX, anchorY],
+  );
+
+  const liveText =
+    activeSource === 'keyboard' && current !== null
+      ? `${categories[current]}: ${rows.map((r) => `${r.label} ${r.value}`).join(', ')}`
+      : '';
 
   const parentLabel = (s: ResolvedSeries) =>
     resolved.series.find((p) => p.key === s.comparisonOf)?.label;
@@ -251,7 +334,18 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
       ) : (
         <span />
       )}
-      <div ref={plotRef} className={styles.plot}>
+      <div
+        ref={setPlotEl}
+        className={styles.plot}
+        role="group"
+        aria-label={t('chart.keyboardHint')}
+        tabIndex={0}
+        onKeyDown={onKeyDown}
+        onPointerMove={onPointer}
+        onPointerDown={onPointer}
+        onPointerLeave={() => activeSource === 'pointer' && inspect(null, null)}
+        onBlur={() => inspect(null, null)}
+      >
         {layout && (
           <svg
             className={styles.svg}
@@ -289,6 +383,24 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
                 </text>
               ))}
             </g>
+            {current !== null &&
+              (type === 'bar' || type === 'stacked-bar' ? (
+                <rect
+                  className={styles.band}
+                  x={layout.categoryX[current] - layout.step / 2}
+                  y={layout.plot.y}
+                  width={layout.step}
+                  height={layout.plot.height}
+                />
+              ) : (
+                <line
+                  className={styles.crosshair}
+                  x1={layout.categoryX[current]}
+                  x2={layout.categoryX[current]}
+                  y1={layout.plot.y}
+                  y2={layout.plot.y + layout.plot.height}
+                />
+              ))}
             {layout.marks.map((m) => (
               <g
                 key={m.key}
@@ -311,11 +423,24 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
                 {m.dots.map((p, i) => (
                   <circle key={i} className={styles.dot} cx={p.x} cy={p.y} r={DOT_RADIUS} />
                 ))}
+                {current !== null && m.kind !== 'bars' && m.points[current] && (
+                  <path
+                    className={styles.marker}
+                    d={markerPath(
+                      markerShape(m.slot),
+                      m.points[current]!.x,
+                      m.points[current]!.y,
+                      4,
+                    )}
+                  />
+                )}
               </g>
             ))}
           </svg>
         )}
       </div>
+      <ChartTooltip point={point} title={current === null ? '' : categories[current]} rows={rows} />
+      <VisuallyHidden aria-live="polite">{liveText}</VisuallyHidden>
       <ChartTable
         caption={label}
         categoryHeader={t('chart.category')}

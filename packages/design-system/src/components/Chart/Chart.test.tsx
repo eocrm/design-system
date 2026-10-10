@@ -279,3 +279,79 @@ describe('legend', () => {
     expect(container.querySelector('[data-series="b"]')).toHaveAttribute('data-dimmed');
   });
 });
+
+describe('inspect', () => {
+  it('the plot is one named tab stop', () => {
+    stubLayout();
+    render(<Chart {...base} />);
+    const plot = screen.getByRole('group', { name: 'Chart values. Use arrow keys to inspect.' });
+    expect(plot).toHaveAttribute('tabindex', '0');
+  });
+
+  it('arrow keys walk categories, announce values, Home/End jump, Escape clears', async () => {
+    const layout = stubLayout();
+    render(<Chart {...base} />);
+    layout.fire();
+    const plot = screen.getByRole('group', { name: /arrow keys/ });
+    plot.focus();
+    await userEvent.keyboard('{ArrowRight}');
+    const live = document.querySelector('[aria-live="polite"]')!;
+    expect(live).toHaveTextContent('W1: Deals won 3 deals, Previous period 2 deals');
+    expect(document.querySelector('[data-chart-tooltip]')).toHaveTextContent('W1');
+    await userEvent.keyboard('{ArrowRight}');
+    expect(live).toHaveTextContent('W2: Deals won No data, Previous period 4 deals');
+    await userEvent.keyboard('{End}');
+    expect(live).toHaveTextContent(/^W3:/);
+    await userEvent.keyboard('{Home}');
+    expect(live).toHaveTextContent(/^W1:/);
+    await userEvent.keyboard('{Escape}');
+    expect(document.querySelector('[data-chart-tooltip]')).toBeNull();
+  });
+
+  it('ArrowLeft from nothing starts at the last category', async () => {
+    const layout = stubLayout();
+    render(<Chart {...base} />);
+    layout.fire();
+    screen.getByRole('group', { name: /arrow keys/ }).focus();
+    await userEvent.keyboard('{ArrowLeft}');
+    expect(document.querySelector('[aria-live="polite"]')).toHaveTextContent(/^W3:/);
+  });
+
+  it('pointer movement shows the tooltip without announcing', async () => {
+    const layout = stubLayout();
+    render(<Chart {...base} />);
+    layout.fire();
+    const plot = screen.getByRole('group', { name: /arrow keys/ });
+    await userEvent.pointer({ target: plot, coords: { clientX: 399, clientY: 50 } });
+    expect(document.querySelector('[data-chart-tooltip]')).toHaveTextContent('W3');
+    expect(document.querySelector('[aria-live="polite"]')).toHaveTextContent('');
+    await userEvent.unhover(plot);
+    expect(document.querySelector('[data-chart-tooltip]')).toBeNull();
+  });
+
+  it('the tooltip is hidden from assistive tech and lists only visible series', async () => {
+    const layout = stubLayout();
+    render(<Chart {...base} hiddenSeries={['prev']} />);
+    layout.fire();
+    screen.getByRole('group', { name: /arrow keys/ }).focus();
+    await userEvent.keyboard('{ArrowRight}');
+    const tip = document.querySelector('[data-chart-tooltip]')!;
+    expect(tip).toHaveAttribute('aria-hidden', 'true');
+    expect(tip).not.toHaveTextContent('Previous period');
+  });
+
+  it('Escape with nothing active is not swallowed', async () => {
+    const layout = stubLayout();
+    const onKeyDown = vi.fn();
+    render(
+      <div onKeyDown={onKeyDown}>
+        <Chart {...base} />
+      </div>,
+    );
+    layout.fire();
+    screen.getByRole('group', { name: /arrow keys/ }).focus();
+    await userEvent.keyboard('{Escape}');
+    expect(onKeyDown).toHaveBeenCalled();
+    expect(onKeyDown.mock.calls[0][0].defaultPrevented).toBe(false);
+  });
+});

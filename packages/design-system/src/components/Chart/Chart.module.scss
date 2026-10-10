@@ -189,3 +189,46 @@
   color: var(--chart-axis-fg);
   white-space: nowrap;
 }
+
+.tooltip {
+  z-index: var(--chart-tooltip-z);
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+  max-width: var(--size-popover-max-width);
+  padding: var(--chart-tooltip-padding);
+  border-width: var(--border-width);
+  border-style: solid;
+  border-color: var(--chart-tooltip-border);
+  border-radius: var(--chart-tooltip-radius);
+  background: var(--chart-tooltip-bg);
+  color: var(--chart-tooltip-fg);
+  box-shadow: var(--chart-tooltip-shadow);
+  font-size: var(--chart-tooltip-size);
+  pointer-events: none;
+}
+
+.tooltipTitle {
+  font-weight: var(--font-weight-semibold);
+}
+
+.tooltipRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+
+  &[data-nested] {
+    padding-inline-start: var(--space-3);
+  }
+}
+
+.tooltipLabel {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tooltipValue {
+  font-variant-numeric: tabular-nums;
+}
