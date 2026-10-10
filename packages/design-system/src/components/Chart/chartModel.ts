@@ -22,6 +22,7 @@ export const LABEL_GAP = 8;
 export const X_LABEL_BASELINE = 4;
 /** Radius of the isolated-point dots. */
 export const DOT_RADIUS = 3;
+export const MARKER_RADIUS = 4;
 /** Below this root height the legend collapses to one row with a "+N" counter. */
 export const COMPACT_HEIGHT = 120;
 

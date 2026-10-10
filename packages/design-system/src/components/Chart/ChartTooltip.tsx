@@ -1,6 +1,6 @@
 import { useLayoutEffect, type CSSProperties } from 'react';
 import { createPortal } from 'react-dom';
-import { flip, offset, shift, useFloating } from '@floating-ui/react-dom';
+import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react-dom';
 import styles from './Chart.module.scss';
 
 export interface ChartTooltipRow {
@@ -23,10 +23,13 @@ const swatchStyle = (slot: number) =>
  * `point` must be referentially stable between renders with the same x/y.
  */
 export function ChartTooltip({
+  anchor,
   point,
   title,
   rows,
 }: {
+  /** The plot element; `point` is relative to its top-left. */
+  anchor: HTMLElement | null;
   point: { x: number; y: number } | null;
   title: string;
   rows: ChartTooltipRow[];
@@ -34,17 +37,23 @@ export function ChartTooltip({
   const { refs, floatingStyles } = useFloating({
     placement: 'top',
     transform: false,
+    whileElementsMounted: autoUpdate,
     middleware: [offset(8), flip(), shift({ padding: 8 })],
   });
 
   useLayoutEffect(() => {
-    if (!point) return;
-    const { x, y } = point;
+    if (!point || !anchor) return;
     refs.setReference({
-      getBoundingClientRect: () =>
-        ({ x, y, left: x, right: x, top: y, bottom: y, width: 0, height: 0 }) as DOMRect,
+      // contextElement lets autoUpdate find the scroll ancestors of the plot.
+      contextElement: anchor,
+      getBoundingClientRect() {
+        const r = anchor.getBoundingClientRect();
+        const x = r.left + point.x;
+        const y = r.top + point.y;
+        return { x, y, left: x, right: x, top: y, bottom: y, width: 0, height: 0 } as DOMRect;
+      },
     });
-  }, [point, refs]);
+  }, [point, anchor, refs]);
 
   if (!point) return null;
   return createPortal(

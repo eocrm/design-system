@@ -1,5 +1,5 @@
 import { createRef } from 'react';
-import { act, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Chart, type ChartProps } from './Chart';
 
@@ -353,5 +353,34 @@ describe('inspect', () => {
     await userEvent.keyboard('{Escape}');
     expect(onKeyDown).toHaveBeenCalled();
     expect(onKeyDown.mock.calls[0][0].defaultPrevented).toBe(false);
+  });
+
+  it('a touch tap keeps the tooltip after pointerleave; a mouse leave clears it', () => {
+    const layout = stubLayout();
+    render(<Chart {...base} />);
+    layout.fire();
+    const plot = screen.getByRole('group', { name: /arrow keys/ });
+    fireEvent.pointerDown(plot, { clientX: 399, pointerType: 'touch' });
+    fireEvent.pointerLeave(plot, { pointerType: 'touch' });
+    expect(document.querySelector('[data-chart-tooltip]')).not.toBeNull();
+    fireEvent.pointerLeave(plot, { pointerType: 'mouse' });
+    expect(document.querySelector('[data-chart-tooltip]')).toBeNull();
+  });
+
+  it('bar charts get a band; line charts get a crosshair and one marker per defined value', async () => {
+    const layout = stubLayout();
+    const { container, rerender } = render(<Chart {...base} type="bar" />);
+    layout.fire();
+    screen.getByRole('group', { name: /arrow keys/ }).focus();
+    await userEvent.keyboard('{ArrowRight}');
+    expect(container.querySelector('rect[class*="band"]')).not.toBeNull();
+    expect(container.querySelector('line[class*="crosshair"]')).toBeNull();
+    expect(container.querySelector('path[class*="marker"]')).toBeNull();
+    rerender(<Chart {...base} type="line" />);
+    expect(container.querySelector('rect[class*="band"]')).toBeNull();
+    expect(container.querySelector('line[class*="crosshair"]')).not.toBeNull();
+    expect(container.querySelectorAll('path[class*="marker"]')).toHaveLength(2);
+    await userEvent.keyboard('{ArrowRight}');
+    expect(container.querySelectorAll('path[class*="marker"]')).toHaveLength(1);
   });
 });

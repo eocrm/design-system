@@ -28,6 +28,7 @@ import {
   COMPACT_HEIGHT,
   isEmpty,
   DOT_RADIUS,
+  MARKER_RADIUS,
   LABEL_GAP,
   PALETTE_SIZE,
   X_LABEL_BASELINE,
@@ -232,16 +233,9 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
               : formatValue(s.values[current] as number),
         }));
 
-  // Scalars first so `point` keeps its identity until x/y change (ChartTooltip's effect depends on it).
-  const anchor =
-    current !== null && layout && plotEl
-      ? (() => {
-          const rect = plotEl.getBoundingClientRect();
-          return { x: rect.left + layout.categoryX[current], y: rect.top + layout.plot.y };
-        })()
-      : null;
-  const anchorX = anchor?.x;
-  const anchorY = anchor?.y;
+  // Plot-local scalars so `point` keeps its identity until x/y change; the tooltip resolves viewport coords itself.
+  const anchorX = current !== null && layout ? layout.categoryX[current] : undefined;
+  const anchorY = layout?.plot.y;
   const point = useMemo(
     () => (anchorX === undefined || anchorY === undefined ? null : { x: anchorX, y: anchorY }),
     [anchorX, anchorY],
@@ -343,7 +337,10 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
         onKeyDown={onKeyDown}
         onPointerMove={onPointer}
         onPointerDown={onPointer}
-        onPointerLeave={() => activeSource === 'pointer' && inspect(null, null)}
+        // Touch fires pointerleave right after pointerup; keep the tapped tooltip (blur clears it).
+        onPointerLeave={(e) =>
+          e.pointerType !== 'touch' && activeSource === 'pointer' && inspect(null, null)
+        }
         onBlur={() => inspect(null, null)}
       >
         {layout && (
@@ -430,7 +427,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
                       markerShape(m.slot),
                       m.points[current]!.x,
                       m.points[current]!.y,
-                      4,
+                      MARKER_RADIUS,
                     )}
                   />
                 )}
@@ -439,7 +436,12 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
           </svg>
         )}
       </div>
-      <ChartTooltip point={point} title={current === null ? '' : categories[current]} rows={rows} />
+      <ChartTooltip
+        anchor={plotEl}
+        point={point}
+        title={current === null ? '' : categories[current]}
+        rows={rows}
+      />
       <VisuallyHidden aria-live="polite">{liveText}</VisuallyHidden>
       <ChartTable
         caption={label}
