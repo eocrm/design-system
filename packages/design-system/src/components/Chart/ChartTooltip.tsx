@@ -79,8 +79,9 @@ export function ChartTooltip({
           <span className={styles.tooltipValue}>{r.value}</span>
         </div>
       ))}
-      {notes.map((note) => (
-        <div key={note} className={styles.tooltipNote}>
+      {/* Index key: two markers may share a label. */}
+      {notes.map((note, i) => (
+        <div key={i} className={styles.tooltipNote}>
           {note}
         </div>
       ))}

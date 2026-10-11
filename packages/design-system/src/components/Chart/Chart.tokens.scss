@@ -27,6 +27,7 @@
   --chart-crosshair: var(--color-border-strong);
   --chart-plot-radius: var(--radius-sm);
   --chart-dot-ring: var(--color-bg);
+  --chart-dot-ring-width: var(--border-width-emphasis);
 
   // Static markers (`markers` prop): tinted ink so both tones adapt to dark mode.
   --chart-marker-color: var(--color-fg-muted);
@@ -36,7 +37,8 @@
   --chart-marker-dash: 3 3;
   --chart-marker-label-fg: var(--color-fg-muted);
   --chart-marker-label-halo: var(--color-bg);
-  --chart-dot-ring-width: var(--border-width-emphasis);
+  --chart-marker-label-halo-width: 3px;
+
   --chart-ring: var(--ring-accent);
 
   --chart-legend-gap: var(--space-3);

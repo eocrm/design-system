@@ -76,7 +76,7 @@
   // Halo keeps the label legible over lines and areas.
   paint-order: stroke;
   stroke: var(--chart-marker-label-halo);
-  stroke-width: 3px;
+  stroke-width: var(--chart-marker-label-halo-width);
   stroke-linejoin: round;
   fill: var(--chart-marker-label-fg);
   font-size: var(--chart-axis-size);

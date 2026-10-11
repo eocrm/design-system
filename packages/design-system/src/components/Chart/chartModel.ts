@@ -1,8 +1,6 @@
 import { scaleLinear } from 'd3-scale';
 import {
-  area,
-  curveLinear,
-  curveMonotoneX,
+  curveCardinal,
   line,
   stack,
   stackOffsetDiverging,
@@ -459,9 +457,8 @@ export function computeLayout(input: LayoutInput): ChartLayout {
     if (xLabels.length === 0 || !hits(xLabels[xLabels.length - 1], b)) xLabels.push(b);
   });
 
-  // Monotone smoothing: passes through every point and never overshoots, so no
-  // invented peaks between buckets. Stacked-bar's total line stays straight over the bars.
-  const curve = type === 'stacked-bar' ? curveLinear : curveMonotoneX;
+  // Uniform Catmull-Rom: passes through every point, rounds peaks and flat runs (may overshoot slightly).
+  const curve = curveCardinal.tension(0);
   const linePath = (values: readonly (number | null)[]) =>
     line<number | null>()
       .curve(curve)
@@ -512,6 +509,8 @@ export function computeLayout(input: LayoutInput): ChartLayout {
   } else if (layers) {
     const posTotal = categories.map((_, i) => Math.max(0, ...layers.map((l) => l[i][1])));
     const negTotal = categories.map((_, i) => Math.min(0, ...layers.map((l) => l[i][0])));
+    const smooth =
+      type === 'area' ? smoothStack(primaries.map((p) => p.values.map((v) => v ?? 0))) : null;
     primaries.forEach((x, j) => {
       const layer = layers[j];
       const points = x.values.map((v, i) =>
@@ -541,20 +540,14 @@ export function computeLayout(input: LayoutInput): ChartLayout {
         });
         marks.push({ ...base(x), kind: 'bars', bars, points, dots: [] });
       } else {
-        const defined = (_: unknown, i: number) => x.values[i] !== null;
-        const areaPath =
-          area<[number, number]>()
-            .curve(curve)
-            .defined(defined)
-            .x((_, i) => categoryX[i])
-            .y0((d) => y(d[0]))
-            .y1((d) => y(d[1]))(layer as unknown as [number, number][]) ?? '';
-        const topLine =
-          line<[number, number]>()
-            .curve(curve)
-            .defined(defined)
-            .x((_, i) => categoryX[i])
-            .y((d) => y(d[1]))(layer as unknown as [number, number][]) ?? '';
+        const { area: areaPath, line: topLine } = stackedAreaPaths(
+          smooth!,
+          j,
+          x.values,
+          categoryX,
+          step,
+          y,
+        );
         marks.push({
           ...base(x),
           kind: 'area',
@@ -577,6 +570,74 @@ export function computeLayout(input: LayoutInput): ChartLayout {
     bandWidth,
     marks,
   };
+}
+
+/** Samples per category step when drawing smoothed stacked areas. */
+export const AREA_SAMPLES = 12;
+
+const hermite = (y0: number, y1: number, m0: number, m1: number, t: number) => {
+  const t2 = t * t;
+  const t3 = t2 * t;
+  return (
+    (2 * t3 - 3 * t2 + 1) * y0 + (t3 - 2 * t2 + t) * m0 + (-2 * t3 + 3 * t2) * y1 + (t3 - t2) * m1
+  );
+};
+
+/**
+ * Cumulative tops of smoothed stacked layers: `result[k][i][s]` is the top of layer k at sample s
+ * (0..AREA_SAMPLES) of the segment between categories i and i+1. Each layer's own thickness is
+ * interpolated (uniform Catmull-Rom, the same tangents as the line curve) and clamped to the sign of
+ * its endpoints, so a layer never turns inside out and boundaries never cross.
+ */
+export function smoothStack(layers: readonly (readonly number[])[]): number[][][] {
+  const below: number[][] = [];
+  return layers.map((v) => {
+    const n = v.length;
+    const m = v.map((_, i) => (v[Math.min(n - 1, i + 1)] - v[Math.max(0, i - 1)]) / 2);
+    const tops = Array.from({ length: Math.max(0, n - 1) }, (_, i) =>
+      Array.from({ length: AREA_SAMPLES + 1 }, (_, s) => {
+        let h = hermite(v[i], v[i + 1], m[i], m[i + 1], s / AREA_SAMPLES);
+        if (v[i] >= 0 && v[i + 1] >= 0) h = Math.max(0, h);
+        else if (v[i] <= 0 && v[i + 1] <= 0) h = Math.min(0, h);
+        return (below[i]?.[s] ?? 0) + h;
+      }),
+    );
+    tops.forEach((seg, i) => (below[i] = seg));
+    return tops;
+  });
+}
+
+/** Area polygon and top line of stacked layer `k` over its defined runs (null values break it). */
+function stackedAreaPaths(
+  smooth: number[][][],
+  k: number,
+  values: readonly (number | null)[],
+  categoryX: readonly number[],
+  step: number,
+  y: (v: number) => number,
+): { area: string; line: string } {
+  const r = (v: number) => Math.round(v * 100) / 100;
+  let area = '';
+  let line = '';
+  for (let a = 0; a < values.length; a++) {
+    if (values[a] === null) continue;
+    let b = a;
+    while (b + 1 < values.length && values[b + 1] !== null) b++;
+    if (b > a) {
+      const top: string[] = [];
+      const bottom: string[] = [];
+      for (let i = a; i < b; i++)
+        for (let s = i === a ? 0 : 1; s <= AREA_SAMPLES; s++) {
+          const x = r(categoryX[i] + (step * s) / AREA_SAMPLES);
+          top.push(`${x},${r(y(smooth[k][i][s]))}`);
+          bottom.push(`${x},${r(y(k === 0 ? 0 : smooth[k - 1][i][s]))}`);
+        }
+      line += `M${top.join('L')}`;
+      area += `M${top.join('L')}L${bottom.reverse().join('L')}Z`;
+    }
+    a = b;
+  }
+  return { area, line };
 }
 
 /** Category index under svg x coordinate `x`, clamped to the data (0 when there are no categories). */

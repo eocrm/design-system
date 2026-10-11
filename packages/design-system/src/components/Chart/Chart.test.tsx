@@ -613,3 +613,27 @@ describe('markers', () => {
     expect(warn.mock.calls.flat().join(' ')).toMatch(/Ignored markers \(x\)/);
   });
 });
+
+it('inspection markers paint after every series, so a later stacked area cannot cover them', async () => {
+  const layout = stubLayout();
+  const { container } = render(
+    <Chart
+      {...base}
+      type="area"
+      series={[
+        { key: 'a', label: 'A', values: [1, 2, 3] },
+        { key: 'b', label: 'B', values: [3, 2, 1] },
+      ]}
+    />,
+  );
+  layout.fire();
+  screen.getByRole('group', { name: 'Deals won per week' }).focus();
+  await userEvent.keyboard('{ArrowRight}');
+  const svg = container.querySelector('svg')!;
+  const lastArea = [...svg.querySelectorAll('path[class*="area"]')].at(-1)!;
+  const markers = [...svg.querySelectorAll('path[class*="marker"]')];
+  expect(markers).toHaveLength(2);
+  for (const m of markers) {
+    expect(lastArea.compareDocumentPosition(m) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  }
+});

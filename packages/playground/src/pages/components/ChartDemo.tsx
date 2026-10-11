@@ -72,7 +72,7 @@ const eventMarkers: ChartMarker[] = [
   { key: 'launch', label: 'Launch', at: firstSixWeeks[9] },
   { key: 'promo', label: 'Summer promo', from: firstSixWeeks[20], to: firstSixWeeks[29] },
 ];
-const markerSeries: ChartSeries[] = [{ key: 'calls', label: 'Calls', values: wave(3, 42, 8) }];
+const markerSeries: ChartSeries[] = [{ key: 'calls', label: 'Calls', values: wave(3, 42, 40) }];
 const dailySeries: ChartSeries[] = [
   { key: 'calls', label: 'Calls', values: wave(3, 90, 8) },
   { key: 'prev', label: 'Previous period', values: wave(7, 90, 8), comparisonOf: 'calls' },
@@ -240,7 +240,7 @@ export function ChartDemo() {
       <Example
         title="Markers"
         description="A vertical line at one category, or a shaded band over a range. Subtle bands mark recurring context like weekends; labelled markers also appear in the tooltip, the keyboard announcement and the data table."
-        code={`<Chart type="area" label="Calls per day" categories={days} series={series}
+        code={`<Chart type="area" label="Calls per day" categories={days} series={calls}
   markers={[
     { key: 'launch', label: 'Launch', at: '10 Jul' },
     { key: 'promo', label: 'Summer promo', from: '21 Jul', to: '30 Jul' },

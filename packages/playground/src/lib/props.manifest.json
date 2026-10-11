@@ -786,8 +786,8 @@
           "name": "markers",
           "type": "ChartMarker[]",
           "required": false,
-          "default": "'neutral'",
-          "description": "Static annotations pinned to `categories`: `{ key, label?, at }` draws a vertical line at one category,\n`{ key, label?, from, to }` shades a category range (inclusive), e.g. a campaign or weekends. `tone`:\n`'neutral'` (default, events) or `'subtle'` (recurring context). Labelled markers are also listed in the\ntooltip, the keyboard announcement and the data table; unlabelled ones are decorative. A marker naming an\nunknown category is ignored with a dev warning."
+          "default": "",
+          "description": "Static annotations pinned to `categories`: `{ key, label?, at }` draws a vertical line at one category,\n`{ key, label?, from, to }` shades a category range (inclusive), e.g. a campaign or weekends. `tone`:\n`'neutral'` for events (the tone default) or `'subtle'` for recurring context. Labelled markers are also listed in the\ntooltip, the keyboard announcement and the data table; unlabelled ones are decorative. A marker naming an\nunknown category is ignored with a dev warning."
         }
       ]
     },

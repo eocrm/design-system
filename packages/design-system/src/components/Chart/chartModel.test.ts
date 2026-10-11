@@ -5,6 +5,8 @@ import {
   fitLegend,
   isEmpty,
   layoutMarkers,
+  smoothStack,
+  AREA_SAMPLES,
   markerLabelsAt,
   markerPath,
   markerShape,
@@ -214,28 +216,37 @@ describe('computeLayout', () => {
     expect(m.line).not.toContain('NaN');
   });
 
-  it('smooths line and area without overshoot; stacked-bar total stays straight', () => {
-    // M/L/C take x,y pairs only, so every odd number is a y.
-    const ys = (d: string) =>
-      (d.match(/-?[\d.]+(e-?\d+)?/g) ?? []).map(Number).filter((_, i) => i % 2);
+  it('smooths lines (the stacked-bar total included) and rounds flat runs', () => {
     const values = [0, 10, 10, 0];
-    for (const type of ['line', 'area'] as const) {
-      const l = layout({ type, series: one(values) });
-      const d = l.marks[0].line!;
-      expect(d).toContain('C');
-      // Monotone: every control point stays within the data's own y range.
-      const top = Math.min(...l.marks[0].points.map((p) => p!.y));
-      const bottom = Math.max(...l.marks[0].points.map((p) => p!.y));
-      for (const y of ys(d)) {
-        expect(y).toBeGreaterThanOrEqual(top - 1e-6);
-        expect(y).toBeLessThanOrEqual(bottom + 1e-6);
-      }
-    }
+    const l = layout({ type: 'line', series: one(values) });
+    const d = l.marks[0].line!;
+    expect(d).toContain('C');
+    // Catmull-Rom bulges between the two equal 10s instead of drawing a flat segment.
+    const ys = (d.match(/-?[\d.]+(e-?\d+)?/g) ?? []).map(Number).filter((_, i) => i % 2);
+    expect(Math.min(...ys)).toBeLessThan(l.marks[0].points[1]!.y - 0.5);
     const stacked = layout({
       type: 'stacked-bar',
       series: resolveSeries('stacked-bar', [s('a', values), s('p', values, 'total')], 4).series,
     });
-    expect(stacked.marks.find((m) => m.kind === 'line')!.line).not.toContain('C');
+    expect(stacked.marks.find((m) => m.kind === 'line')!.line).toContain('C');
+  });
+
+  it('smoothed stacked layers hit the data exactly and never cross', () => {
+    const tops = smoothStack([
+      [0, 5, 10, 10],
+      [5, 0, 0, 5],
+    ]);
+    // s = 0 is the category itself: exact cumulative values.
+    expect(tops[0].map((seg) => seg[0])).toEqual([0, 5, 10]);
+    expect(tops[1].map((seg) => seg[0])).toEqual([5, 5, 10]);
+    expect(tops[1][2][AREA_SAMPLES]).toBe(15);
+    // B is 0 at categories 1 and 2: its band may be empty, never inverted.
+    for (let i = 0; i < 3; i++)
+      for (let k = 0; k <= AREA_SAMPLES; k++)
+        expect(tops[1][i][k]).toBeGreaterThanOrEqual(tops[0][i][k]);
+    const l = layout({ type: 'area', series: one([0, 10, 10, 0]) });
+    expect(l.marks[0].area).toMatch(/Z$/);
+    expect(l.marks[0].line).not.toContain('NaN');
   });
 
   it('drops null and zero bars, keeps the rest', () => {
@@ -458,7 +469,7 @@ describe('markers', () => {
       ],
       cats,
     );
-    const g = layoutMarkers(markers, { ...l, plot: { ...l.plot, width: l.plot.width } });
+    const g = layoutMarkers(markers, l);
     expect(g[0].label?.text).toBe('First event');
     expect(g[1].label).toBeUndefined();
     // 'd' sits half a step from the right edge (~42px at width 400) — "Late" (28px) fits right of it.

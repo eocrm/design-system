@@ -80,7 +80,7 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
   /**
    * Static annotations pinned to `categories`: `{ key, label?, at }` draws a vertical line at one category,
    * `{ key, label?, from, to }` shades a category range (inclusive), e.g. a campaign or weekends. `tone`:
-   * `'neutral'` (default, events) or `'subtle'` (recurring context). Labelled markers are also listed in the
+   * `'neutral'` for events (the tone default) or `'subtle'` for recurring context. Labelled markers are also listed in the
    * tooltip, the keyboard announcement and the data table; unlabelled ones are decorative. A marker naming an
    * unknown category is ignored with a dev warning.
    */
@@ -88,6 +88,7 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
 }
 
 const NO_MARKERS: ChartMarker[] = [];
+const NO_DROPPED: string[] = [];
 
 const seriesStyle = (slot: number) =>
   ({
@@ -172,7 +173,12 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     [type, series, categories.length],
   );
   const resolvedMarkers = useMemo(() => resolveMarkers(markers, categories), [markers, categories]);
-  useDevWarnings(resolved.dropped, resolved.overflowCount, resolvedMarkers.dropped);
+  useDevWarnings(
+    resolved.dropped,
+    resolved.overflowCount,
+    // No categories yet (loading): every marker would "miss"; don't cry wolf.
+    categories.length > 0 ? resolvedMarkers.dropped : NO_DROPPED,
+  );
 
   const [rawHidden, setHidden] = useControllableState<string[]>({
     value: hiddenSeries,
@@ -328,6 +334,12 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
   };
   // A focused/hovered button can vanish (hidden, collapsed); never dim everything for a stale key.
   const activeKey = focusKey !== null && visible.some((s) => s.key === focusKey) ? focusKey : null;
+  const dimmed = (key: string) =>
+    activeKey !== null &&
+    key !== activeKey &&
+    resolved.series.find((s) => s.key === key)?.comparisonOf !== activeKey
+      ? ''
+      : undefined;
 
   const legendItems = resolved.series.map((s) => ({
     key: s.key,
@@ -500,13 +512,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
                 data-series={m.key}
                 data-comparison={m.comparison || undefined}
                 data-overflow={m.overflow || undefined}
-                data-dimmed={
-                  activeKey !== null &&
-                  m.key !== activeKey &&
-                  resolved.series.find((s) => s.key === m.key)?.comparisonOf !== activeKey
-                    ? ''
-                    : undefined
-                }
+                data-dimmed={dimmed(m.key)}
               >
                 {m.area && <path className={styles.area} d={m.area} />}
                 {m.line && <path className={styles.line} d={m.line} />}
@@ -514,19 +520,32 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
                 {m.dots.map((p, i) => (
                   <circle key={i} className={styles.dot} cx={p.x} cy={p.y} r={DOT_RADIUS} />
                 ))}
-                {current !== null && m.kind !== 'bars' && m.points[current] && (
-                  <path
-                    className={styles.marker}
-                    d={markerPath(
-                      markerShape(m.slot),
-                      m.points[current]!.x,
-                      m.points[current]!.y,
-                      MARKER_RADIUS,
-                    )}
-                  />
-                )}
               </g>
             ))}
+            {/* Inspection markers in their own pass: a later stacked area would paint over them. */}
+            {current !== null &&
+              layout.marks.map(
+                (m) =>
+                  m.kind !== 'bars' &&
+                  m.points[current] && (
+                    <g
+                      key={m.key}
+                      className={styles.series}
+                      style={seriesStyle(m.slot)}
+                      data-dimmed={dimmed(m.key)}
+                    >
+                      <path
+                        className={styles.marker}
+                        d={markerPath(
+                          markerShape(m.slot),
+                          m.points[current]!.x,
+                          m.points[current]!.y,
+                          MARKER_RADIUS,
+                        )}
+                      />
+                    </g>
+                  ),
+              )}
             {!compact && (
               <g className={styles.markerLabels}>
                 {markerGeometry.map(
