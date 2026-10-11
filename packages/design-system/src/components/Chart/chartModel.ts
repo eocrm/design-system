@@ -1,5 +1,14 @@
 import { scaleLinear } from 'd3-scale';
-import { area, line, stack, stackOffsetDiverging, stackOffsetNone, type Series } from 'd3-shape';
+import {
+  area,
+  curveLinear,
+  curveMonotoneX,
+  line,
+  stack,
+  stackOffsetDiverging,
+  stackOffsetNone,
+  type Series,
+} from 'd3-shape';
 
 /** Chart form. `area` is always stacked. */
 export type ChartType = 'line' | 'bar' | 'stacked-bar' | 'area';
@@ -327,8 +336,12 @@ export function computeLayout(input: LayoutInput): ChartLayout {
     if (xLabels.length === 0 || !hits(xLabels[xLabels.length - 1], b)) xLabels.push(b);
   });
 
+  // Monotone smoothing: passes through every point and never overshoots, so no
+  // invented peaks between buckets. Stacked-bar's total line stays straight over the bars.
+  const curve = type === 'stacked-bar' ? curveLinear : curveMonotoneX;
   const linePath = (values: readonly (number | null)[]) =>
     line<number | null>()
+      .curve(curve)
       .defined((v) => v !== null)
       .x((_, i) => categoryX[i])
       .y((v) => y(v as number))(values as (number | null)[]) ?? '';
@@ -408,12 +421,14 @@ export function computeLayout(input: LayoutInput): ChartLayout {
         const defined = (_: unknown, i: number) => x.values[i] !== null;
         const areaPath =
           area<[number, number]>()
+            .curve(curve)
             .defined(defined)
             .x((_, i) => categoryX[i])
             .y0((d) => y(d[0]))
             .y1((d) => y(d[1]))(layer as unknown as [number, number][]) ?? '';
         const topLine =
           line<[number, number]>()
+            .curve(curve)
             .defined(defined)
             .x((_, i) => categoryX[i])
             .y((d) => y(d[1]))(layer as unknown as [number, number][]) ?? '';

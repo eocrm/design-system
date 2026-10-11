@@ -211,6 +211,30 @@ describe('computeLayout', () => {
     expect(m.line).not.toContain('NaN');
   });
 
+  it('smooths line and area without overshoot; stacked-bar total stays straight', () => {
+    // M/L/C take x,y pairs only, so every odd number is a y.
+    const ys = (d: string) =>
+      (d.match(/-?[\d.]+(e-?\d+)?/g) ?? []).map(Number).filter((_, i) => i % 2);
+    const values = [0, 10, 10, 0];
+    for (const type of ['line', 'area'] as const) {
+      const l = layout({ type, series: one(values) });
+      const d = l.marks[0].line!;
+      expect(d).toContain('C');
+      // Monotone: every control point stays within the data's own y range.
+      const top = Math.min(...l.marks[0].points.map((p) => p!.y));
+      const bottom = Math.max(...l.marks[0].points.map((p) => p!.y));
+      for (const y of ys(d)) {
+        expect(y).toBeGreaterThanOrEqual(top - 1e-6);
+        expect(y).toBeLessThanOrEqual(bottom + 1e-6);
+      }
+    }
+    const stacked = layout({
+      type: 'stacked-bar',
+      series: resolveSeries('stacked-bar', [s('a', values), s('p', values, 'total')], 4).series,
+    });
+    expect(stacked.marks.find((m) => m.kind === 'line')!.line).not.toContain('C');
+  });
+
   it('drops null and zero bars, keeps the rest', () => {
     const l = layout({ type: 'bar', series: one([1, null, 0, 4]) });
     expect(l.marks[0].bars!.map((b) => b !== null)).toEqual([true, false, false, true]);
@@ -261,7 +285,7 @@ describe('computeLayout', () => {
       4,
     ).series;
     const m = layout({ type: 'area', series }).marks[1];
-    const topY = Number(m.line!.match(/^M[^,]+,([^L]+)/)![1]);
+    const topY = Number(m.line!.match(/^M[^,]+,([^A-Za-z]+)/)![1]);
     expect(m.points[0]!.y).toBeCloseTo(topY, 5);
   });
 

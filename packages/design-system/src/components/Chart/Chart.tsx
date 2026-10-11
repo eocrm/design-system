@@ -46,10 +46,10 @@ export type { ChartSeries, ChartType } from './chartModel';
 export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'> {
   /**
    * Chart form. Required.
-   * - `'line'` — one line per series; trends over time. Comparison series dashed.
+   * - `'line'` — one smoothed line per series; trends over time. Comparison series dashed.
    * - `'bar'` — grouped bars per category; compare a few series per bucket. Comparison bars outlined + light fill.
    * - `'stacked-bar'` — bars stacked per category; parts of a total. Comparison only as `comparisonOf: 'total'` (dashed total line).
-   * - `'area'` — stacked areas; parts of a total over time. Same comparison rule as `stacked-bar`.
+   * - `'area'` — smoothed stacked areas; parts of a total over time. Same comparison rule as `stacked-bar`.
    */
   type: ChartType;
   /** Accessible name of the figure and caption of its data table, e.g. "Deals won per week". Required. */
