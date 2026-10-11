@@ -617,14 +617,9 @@ function smoothRun(v: readonly number[], samples: number): number[][] {
     if (x === 0 && i > 0 && i < n - 1 && prev * next >= 0) return 0;
     // Catmull-Rom, capped at 3x the gentler neighbouring slope (a Fritsch-Carlson-style bound) so a sharp spike
     // doesn't drag the curve far past its flatter neighbours.
-    // (Run ends have one real neighbour: use its slope.)
-    const gentler =
-      i === 0
-        ? Math.abs(next - x)
-        : i === n - 1
-          ? Math.abs(x - prev)
-          : Math.min(Math.abs(x - prev), Math.abs(next - x));
-    const cap = Math.max(3 * gentler, floor);
+    // Run ends: half their one real slope, which no cap would bind.
+    if (i === 0 || i === n - 1) return (next - prev) / 2;
+    const cap = Math.max(3 * Math.min(Math.abs(x - prev), Math.abs(next - x)), floor);
     return Math.max(-cap, Math.min(cap, (next - prev) / 2));
   });
   return Array.from({ length: Math.max(0, n - 1) }, (_, i) =>
@@ -656,28 +651,18 @@ function smoothLine(values: readonly (number | null)[], samples: number): (numbe
 
 /**
  * Cumulative tops of smoothed stacked layers: `result[k][i][s]` is the top of layer k at sample s of the
- * segment between categories i and i+1. Every running total is smoothed directly (the same curve as lines),
- * so the top layer is exactly the smoothed total. A top-down pass then keeps each lower top on its side of
- * the one above, so no layer turns inside out and boundaries never cross.
+ * segment between categories i and i+1. Each series' own values are smoothed (the same curve as lines,
+ * which never crosses 0 between same-signed values) and the curves are stacked. So a steady layer stays
+ * steady whatever its neighbours do, a series that is 0 has no thickness, and with non-negative data no
+ * layer turns inside out or crosses its neighbour.
  */
 export function smoothStack(layers: readonly (readonly number[])[], samples: number): number[][][] {
-  const sum = layers[0]?.map(() => 0) ?? [];
-  const tops = layers.map((v) => {
-    v.forEach((x, i) => (sum[i] += x));
-    return smoothRun(sum, samples);
+  let below: number[][] | null = null;
+  return layers.map((v) => {
+    const tops = smoothRun(v, samples).map((seg, i) => seg.map((h, s) => (below?.[i][s] ?? 0) + h));
+    below = tops;
+    return tops;
   });
-  for (let k = tops.length - 2; k >= 0; k--) {
-    const above = layers[k + 1];
-    tops[k].forEach((seg, i) =>
-      seg.forEach((t, s) => {
-        // A layer that is 0 at both ends has no thickness: the tops share one edge.
-        if (above[i] === 0 && above[i + 1] === 0) seg[s] = tops[k + 1][i][s];
-        else if (above[i] >= 0 && above[i + 1] >= 0) seg[s] = Math.min(t, tops[k + 1][i][s]);
-        else if (above[i] <= 0 && above[i + 1] <= 0) seg[s] = Math.max(t, tops[k + 1][i][s]);
-      }),
-    );
-  }
-  return tops;
 }
 
 const r2 = (v: number) => Math.round(v * 100) / 100;

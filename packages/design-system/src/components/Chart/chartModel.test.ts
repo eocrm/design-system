@@ -215,6 +215,13 @@ describe('computeLayout', () => {
     expect(m.line).not.toContain('NaN');
   });
 
+  // Largest vertical gap between two sampled paths over the same x samples.
+  const gap = (a: string, b: string) => {
+    const ya = ys(a);
+    const yb = ys(b);
+    expect(ya).toHaveLength(yb.length);
+    return Math.max(...ya.map((y, i) => Math.abs(y - yb[i])));
+  };
   // y of every vertex in an M/L path
   const ys = (d: string) =>
     (d.match(/-?[\d.]+(e-?\d+)?/g) ?? []).map(Number).filter((_, i) => i % 2);
@@ -266,24 +273,26 @@ describe('computeLayout', () => {
     expect(l.marks[1].line).toBe(l.marks[0].line);
   });
 
-  it('a total equal to a multi-layer stack follows its top even where a layer is clamped', () => {
+  it('a total equal to a multi-layer stack stays close to its top where a layer is clamped', () => {
     const series = resolveSeries(
       'area',
       [s('a', [0, 5, 0, 0]), s('b', [10, 10, 10, 10]), s('t', [10, 15, 10, 10], 'total')],
       4,
     ).series;
     const l = layout({ type: 'area', series });
-    expect(l.marks[2].line).toBe(l.marks[1].line);
+    // Differs only where a series hugs its 0 floor: a few % of the range at most.
+    expect(gap(l.marks[2].line!, l.marks[1].line!)).toBeLessThan(0.06 * l.plot.height);
   });
 
-  it('the stack top stays the smoothed total when an empty layer rides over a peak', () => {
+  it('the stack top stays close to the smoothed total when an empty layer rides over a peak', () => {
     const series = resolveSeries(
       'area',
       [s('a', [0, 10, 10, 0]), s('b', [10, 0, 0, 10]), s('t', [10, 10, 10, 10], 'total')],
       4,
     ).series;
     const l = layout({ type: 'area', series });
-    expect(l.marks[2].line).toBe(l.marks[1].line);
+    // Differs only where a series hugs its 0 floor: a few % of the range at most.
+    expect(gap(l.marks[2].line!, l.marks[1].line!)).toBeLessThan(0.06 * l.plot.height);
     // and the lower layer never pokes above it
     const S = 12;
     const tops = smoothStack(
@@ -307,7 +316,7 @@ describe('computeLayout', () => {
     }
   });
 
-  it('a total equal to the stack stays on it when the top layer has interior zeros', () => {
+  it('a total equal to the stack stays close to it when the top layer has interior zeros', () => {
     for (const [a, b] of [
       [
         [5, 5, 5, 5],
@@ -325,7 +334,8 @@ describe('computeLayout', () => {
         4,
       ).series;
       const l = layout({ type: 'area', series });
-      expect(l.marks[2].line).toBe(l.marks[1].line);
+      // Lifted only where a lower layer's own curve rides above the total: a few px at most.
+      expect(gap(l.marks[2].line!, l.marks[1].line!)).toBeLessThan(0.06 * l.plot.height);
     }
   });
 
@@ -342,6 +352,50 @@ describe('computeLayout', () => {
       for (let i = 0; i < layers[k].length - 1; i++)
         if (layers[k][i] === 0 && layers[k][i + 1] === 0)
           for (let s = 0; s <= S; s++) expect(tops[k][i][s]).toBe(tops[k - 1][i][s]);
+  });
+
+  it('a steady top layer keeps its thickness over a spiky layer below', () => {
+    const S = 12;
+    const tops = smoothStack(
+      [
+        [5, 0, 10, 399, 0, 6, 8],
+        [4, 4, 4, 4, 4, 4, 4],
+      ],
+      S,
+    );
+    for (let i = 0; i < 6; i++)
+      for (let k = 0; k <= S; k++) expect(tops[1][i][k] - tops[0][i][k]).toBeCloseTo(4, 9);
+  });
+
+  it('a steady layer is not crushed by a huge one-off spike in the layer above', () => {
+    const S = 12;
+    const tops = smoothStack(
+      [
+        [10, 10, 10, 10, 10, 10, 10],
+        [0, 0, 0, 500, 0, 0, 0],
+      ],
+      S,
+    );
+    for (const seg of tops[0]) for (const t of seg) expect(t).toBeGreaterThanOrEqual(9);
+    for (let i = 0; i < 6; i++)
+      for (let k = 0; k <= S; k++) expect(tops[1][i][k]).toBeGreaterThanOrEqual(tops[0][i][k]);
+  });
+
+  it('a steep first step keeps its slope at the run end', () => {
+    // Capping the end tangent by the 0.2-range floor instead of its own slope would bow this start.
+    const l = layout({ type: 'line', series: one([5, 60, 70, 80]) });
+    const pts = l.marks[0]
+      .line!.slice(1)
+      .split('L')
+      .map((p) => p.split(',').map(Number));
+    const [x0, y0] = pts[0];
+    const [x1, y1] = [l.categoryX[1], l.marks[0].points[1]!.y];
+    const dev = Math.max(
+      ...pts
+        .filter(([x]) => x <= x1)
+        .map(([x, y]) => Math.abs(y - (y0 + ((y1 - y0) * (x - x0)) / (x1 - x0)))),
+    );
+    expect(dev).toBeLessThan(0.05 * l.plot.height);
   });
 
   it('a climb from 0 at the start of a run is not bowed', () => {
