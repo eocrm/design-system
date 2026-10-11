@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import {
   ButtonGroup,
   Card,
@@ -139,18 +139,26 @@ function useLazyOrg(failNext: boolean, onFailed: () => void) {
   const [levels, setLevels] = useState<Record<string, Level>>({});
   const failRef = useRef(failNext);
   failRef.current = failNext;
+  const timers = useRef(new Set<ReturnType<typeof setTimeout>>());
+  useEffect(() => {
+    const pending = timers.current;
+    return () => pending.forEach(clearTimeout);
+  }, []);
 
   const fetchLevel = useCallback(
     (id: string, shown: number, more: boolean) => {
       setLevels((l) => ({ ...l, [id]: { status: more ? 'ready' : 'loading', shown, more } }));
-      setTimeout(() => {
-        if (failRef.current && !more) {
+      const fail = failRef.current && !more; // decided when the load starts
+      const timer = setTimeout(() => {
+        timers.current.delete(timer);
+        if (fail) {
           onFailed();
           setLevels((l) => ({ ...l, [id]: { status: 'error', shown: 0 } }));
         } else {
           setLevels((l) => ({ ...l, [id]: { status: 'ready', shown: shown + PAGE } }));
         }
       }, LATENCY_MS);
+      timers.current.add(timer);
     },
     [onFailed],
   );
@@ -252,6 +260,7 @@ export function TreeViewDemo() {
 
       <Example
         title="Org chart"
+        fullWidth
         description="The same data with view='chart'. It fills the card's width and scrolls horizontally inside itself; spatial keys: Down into children, Up to the parent, Left / Right between siblings."
         code={`<Card>
   <TreeView view="chart" aria-label="Organization chart" roots={[companyNode]} ... />
@@ -273,6 +282,7 @@ export function TreeViewDemo() {
 
       <Example
         title="Lazy loading"
+        fullWidth
         description="Each level loads on first expand (800ms), in pages of 3 with a 'N more not shown' row. Switch on 'Fail next load', then expand a node to see the error row and Retry. The toggle swaps the view and keeps expanded and selected state."
         code={`<TreeView
   view={view}
@@ -292,12 +302,20 @@ export function TreeViewDemo() {
   selectedId={selected}
   onSelect={setSelected}
   onRetry={retry}
-  overflowOf={(parentId) => ({
-    label: \`\${hidden} more not shown\`,
-    loading: loadingMore,
-    onLoadMore: () => loadNextPage(parentId),
-  })}
-/>`}
+  overflowOf={(parentId) => {
+    const level = parentId ? levels[parentId] : undefined;
+    if (!parentId || level?.status !== 'ready') return null;
+    const hidden = CHILDREN[parentId].length - level.shown;
+    if (hidden <= 0 && !level.more) return null; // nothing left: no row
+    return {
+      label: \`\${hidden} more not shown\`,
+      loading: level.more,
+      onLoadMore: () => fetchLevel(parentId, level.shown, true), // fetchLevel: your paged API call
+    };
+  }}
+/>
+
+// levels, CHILDREN, load, retry, toNode, toggle: see the demo source for the simulated API`}
       >
         <Stack gap="md">
           <Cluster gap="md">
