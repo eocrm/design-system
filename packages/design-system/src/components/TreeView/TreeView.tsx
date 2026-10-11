@@ -325,6 +325,10 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
     'aria-level': item.level,
     tabIndex: tabStop === item.key ? 0 : -1,
     onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => onItemKeyDown(e, item),
+    // Chart items wrap their subtree: a press on that space must not natively focus the ancestor item.
+    onMouseDown: (e: MouseEvent<HTMLDivElement>) => {
+      if (!(e.target as Element).closest('[data-row]')) e.preventDefault();
+    },
     onFocus: (e: FocusEvent<HTMLDivElement>) => {
       if (e.target === e.currentTarget) setFocusedKey(item.key);
     },
@@ -346,7 +350,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
           aria-selected={onSelect ? selectedId === node.id : undefined}
           data-kind="node"
         >
-          <div className={styles.row} {...rowClick(item)}>
+          <div className={styles.row} data-row="" {...rowClick(item)}>
             <span
               className={styles.toggle}
               aria-hidden="true"
@@ -405,7 +409,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
         aria-disabled={actionable ? undefined : 'true'}
         data-kind="status"
       >
-        <div className={styles.row} {...rowClick(item)}>
+        <div className={styles.row} data-row="" {...rowClick(item)}>
           <span className={styles.toggle} aria-hidden="true">
             {loading && <CircularProgress size="sm" aria-hidden="true" />}
           </span>

@@ -1,5 +1,5 @@
 import { createRef, useRef, useState, type Ref } from 'react';
-import { act, render, screen, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TreeView, type TreeViewChildren, type TreeViewNode, type TreeViewProps } from '.';
 
@@ -129,6 +129,19 @@ describe('TreeView', () => {
     expect(item('Sales')).toHaveFocus();
     await userEvent.keyboard('u');
     expect(item('Support')).toHaveFocus();
+  });
+
+  it('typeahead keys do not bubble to a parent onKeyDown', async () => {
+    const parent = vi.fn();
+    render(
+      <div onKeyDown={parent}>
+        <Harness initial={['Company']} />
+      </div>,
+    );
+    await userEvent.tab();
+    await userEvent.keyboard('s');
+    expect(item('Sales')).toHaveFocus();
+    expect(parent).not.toHaveBeenCalled();
   });
 
   it('typeahead continues through a space; a lone space still selects', async () => {
@@ -459,6 +472,13 @@ describe('TreeView async', () => {
 });
 
 describe('TreeView chart view', () => {
+  it('prevents native focus on subtree space but not on rows', () => {
+    render(<Harness view="chart" initial={['Company']} />);
+    expect(fireEvent.mouseDown(within(item('Company')).getByRole('group'))).toBe(false);
+    expect(fireEvent.mouseDown(row('Company'))).toBe(true);
+    expect(fireEvent.mouseDown(row('Sales'))).toBe(true);
+  });
+
   it('describes the keys and uses spatial arrows', async () => {
     render(<Harness view="chart" initial={['Company']} />);
     const tree = screen.getByRole('tree');
