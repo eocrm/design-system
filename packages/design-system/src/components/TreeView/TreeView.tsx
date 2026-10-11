@@ -1,6 +1,8 @@
 import {
   forwardRef,
+  useCallback,
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -13,6 +15,8 @@ import {
 import clsx from 'clsx';
 import { ChevronRight } from 'lucide-react';
 import { CircularProgress } from '../CircularProgress';
+import { LiveRegion } from '../LiveRegion';
+import { chain, mergeRefs } from '../_internal/refs';
 import { useTranslation } from '../../i18n/useTranslation';
 import {
   buildTree,
@@ -60,6 +64,13 @@ export interface TreeViewProps extends Omit<
   overflowOf?: (parentId: string | null) => TreeViewOverflow | null;
 }
 
+const has = (flat: TreeItem[], key: string | null) =>
+  key !== null && flat.some((i) => i.key === key);
+
+/** Visible node children of a level (`null` = roots), in order. */
+const levelNodes = (flat: TreeItem[], parentId: string | null) =>
+  flat.filter((i) => i.kind === 'node' && i.parentId === parentId);
+
 /**
  * Lazily loaded hierarchical tree (WAI-ARIA tree) in a file-explorer list or a top-down org-chart view.
  * @see docs/components/TreeView.md
@@ -76,6 +87,8 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
     onRetry,
     overflowOf,
     className,
+    onFocus,
+    onBlur,
     ...rest
   },
   ref,
@@ -89,35 +102,136 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
     buffer: '',
     timer: null,
   });
+  const rootEl = useRef<HTMLDivElement>(null);
+  const hadFocus = useRef(false);
+  const parents = useRef(new Map<string, string | null>());
+  const pendingFocus = useRef<{ parentId: string | null; count: number } | null>(null);
+  const watch = useRef<{
+    parentId: string | null;
+    kind: 'expand' | 'retry' | 'more';
+    seenPending?: boolean;
+  } | null>(null);
+  const announceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [message, setMessage] = useState('');
   useEffect(() => {
     const ta = typeahead.current;
     return () => {
       if (ta.timer) clearTimeout(ta.timer);
+      if (announceTimer.current) clearTimeout(announceTimer.current);
     };
   }, []);
 
-  const visible = (key: string | null) => key !== null && flat.some((i) => i.key === key);
   const selectedKey = onSelect && selectedId !== null ? nodeKey(selectedId) : null;
-  const tabStop = visible(focusedKey)
+  const tabStop = has(flat, focusedKey)
     ? focusedKey
-    : visible(selectedKey)
+    : has(flat, selectedKey)
       ? selectedKey
       : (flat[0]?.key ?? null);
 
-  const focusKey = (key: string) => {
+  const focusKey = useCallback((key: string) => {
     setFocusedKey(key);
     itemEls.current.get(key)?.focus();
+  }, []);
+
+  // Focus is in the tree, or was until the focused row unmounted (activeElement falls back to body).
+  const inTree = useCallback(
+    () =>
+      !!rootEl.current?.contains(document.activeElement) ||
+      (document.activeElement === document.body && hadFocus.current),
+    [],
+  );
+
+  /** The user started a load: announce it if it stays pending (keyed on item keys, never array identity). */
+  const startWatch = (parentId: string | null, kind: 'expand' | 'retry' | 'more') => {
+    if (announceTimer.current) clearTimeout(announceTimer.current);
+    announceTimer.current = null;
+    watch.current = { parentId, kind };
+    setMessage('');
+  };
+
+  const expand = (id: string) => {
+    startWatch(id, 'expand');
+    onExpandedChange(id, true);
   };
 
   const activate = (item: TreeItem) => {
     if (item.kind === 'node') onSelect?.(item.node.id);
-    // Task 3: error → onRetry, overflow → onLoadMore.
+    else if (item.kind === 'error' && onRetry) {
+      pendingFocus.current = { parentId: item.parentId, count: 0 };
+      startWatch(item.parentId, 'retry');
+      onRetry(item.parentId);
+    } else if (item.kind === 'overflow' && item.overflow.onLoadMore && !item.overflow.loading) {
+      pendingFocus.current = {
+        parentId: item.parentId,
+        count: levelNodes(flat, item.parentId).length,
+      };
+      startWatch(item.parentId, 'more');
+      item.overflow.onLoadMore();
+    }
   };
+
+  // Focus repair: the focused row vanished (ancestor collapsed, status row resolved) → nearest visible ancestor.
+  useLayoutEffect(() => {
+    if (focusedKey !== null && !has(flat, focusedKey)) {
+      if (inTree()) {
+        let key = parents.current.get(focusedKey) ?? null;
+        while (key !== null && !has(flat, key)) key = parents.current.get(key) ?? null;
+        const target = key ?? flat[0]?.key;
+        if (target) focusKey(target);
+        else setFocusedKey(null);
+      } else setFocusedKey(null);
+    }
+    parents.current = new Map(
+      flat.map((i) => [i.key, i.parentId === null ? null : nodeKey(i.parentId)]),
+    );
+  }, [flat, focusedKey, focusKey, inTree]);
+
+  // After retry / load-more: focus the first newly arrived node; give up once the level settles without one.
+  useEffect(() => {
+    const pending = pendingFocus.current;
+    if (!pending) return;
+    const nodes = levelNodes(flat, pending.parentId);
+    if (nodes.length > pending.count) {
+      pendingFocus.current = null;
+      if (inTree()) focusKey(nodes[pending.count].key);
+    } else if (
+      !flat.some(
+        (i) =>
+          i.parentId === pending.parentId &&
+          (i.kind === 'loading' ||
+            i.kind === 'error' ||
+            (i.kind === 'overflow' && i.overflow.loading)),
+      )
+    ) {
+      pendingFocus.current = null;
+    }
+  }, [flat, focusKey, inTree]);
+
+  // Announcements: "Loading…" once a user-triggered load is pending 300ms, "Couldn't load" on failure, success silent.
+  useEffect(() => {
+    const w = watch.current;
+    if (!w) return;
+    const pending =
+      w.kind === 'more'
+        ? flat.some((i) => i.kind === 'overflow' && i.parentId === w.parentId && i.overflow.loading)
+        : has(flat, `loading:${w.parentId}`);
+    if (pending) {
+      w.seenPending = true;
+      announceTimer.current ??= setTimeout(() => setMessage(t('treeView.loading')), 300);
+      return;
+    }
+    const failed = has(flat, `error:${w.parentId}`);
+    // The old error row can outlive a retry by a render (onRetry may start loading async): not a new failure.
+    if (failed && w.kind === 'retry' && !w.seenPending) return;
+    if (failed) setMessage(t('treeView.loadError'));
+    watch.current = null;
+    if (announceTimer.current) clearTimeout(announceTimer.current);
+    announceTimer.current = null;
+  }, [flat, t]);
 
   const run = (action: TreeAction) => {
     if (action.type === 'focus') focusKey(action.key);
-    else if (action.type === 'expand')
-      onExpandedChange(action.id, true); // Task 3: watch for announcements
+    else if (action.type === 'expand') expand(action.id);
     else if (action.type === 'collapse') onExpandedChange(action.id, false);
     else {
       const target = flat.find((i) => i.key === action.key);
@@ -162,7 +276,8 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
   const onToggleClick = (event: MouseEvent<HTMLSpanElement>, item: TreeItem & { kind: 'node' }) => {
     event.stopPropagation();
     focusKey(item.key);
-    onExpandedChange(item.node.id, !item.expanded);
+    if (item.expanded) onExpandedChange(item.node.id, false);
+    else expand(item.node.id);
   };
 
   const common = (item: TreeItem) => ({
@@ -216,33 +331,74 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
         </div>
       );
     }
-    if (item.kind === 'loading') {
-      return (
-        <div
-          key={item.key}
-          {...common(item)}
-          className={styles.item}
-          aria-label={t('treeView.loading')}
-          aria-disabled="true"
-          data-kind="status"
-        >
-          <div className={styles.row}>
-            <span className={styles.toggle} aria-hidden="true">
-              <CircularProgress size="sm" aria-hidden="true" />
-            </span>
-            <span className={styles.status}>{t('treeView.loading')}</span>
-          </div>
-        </div>
+    const loading =
+      item.kind === 'loading' || (item.kind === 'overflow' && !!item.overflow.loading);
+    let name = t('treeView.loading');
+    let text: ReactNode = name;
+    let actionable = false;
+    if (item.kind === 'error') {
+      actionable = !!onRetry;
+      name = actionable
+        ? `${t('treeView.loadError')}. ${t('treeView.retry')}`
+        : t('treeView.loadError');
+      text = actionable ? (
+        <>
+          {t('treeView.loadError')}. <span data-action="">{t('treeView.retry')}</span>
+        </>
+      ) : (
+        name
       );
+    } else if (item.kind === 'overflow' && !loading) {
+      actionable = !!item.overflow.onLoadMore;
+      name = text = item.overflow.label;
     }
-    // error + overflow rows: Task 3.
-    return null;
+    return (
+      <div
+        key={item.key}
+        {...common(item)}
+        className={styles.item}
+        aria-label={name}
+        aria-disabled={actionable ? undefined : 'true'}
+        data-kind="status"
+      >
+        <div className={styles.row}>
+          <span className={styles.toggle} aria-hidden="true">
+            {loading && <CircularProgress size="sm" aria-hidden="true" />}
+          </span>
+          <span
+            className={styles.status}
+            data-error={item.kind === 'error' ? '' : undefined}
+            data-action={item.kind === 'overflow' && actionable ? '' : undefined}
+          >
+            {text}
+          </span>
+        </div>
+      </div>
+    );
   };
 
   return (
     // {...rest} first (Pattern B): role, aria-label, data-view and the key handling must win.
-    <div {...rest} ref={ref} role="tree" data-view={view} className={clsx(styles.root, className)}>
+    <div
+      {...rest}
+      ref={mergeRefs(ref, rootEl)}
+      role="tree"
+      data-view={view}
+      className={clsx(styles.root, className)}
+      onFocus={chain(() => {
+        hadFocus.current = true;
+      }, onFocus)}
+      onBlur={chain((e: FocusEvent<HTMLDivElement>) => {
+        if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+        // Some browsers blur a focused row as it unmounts; that is not focus leaving the tree.
+        const left = e.target;
+        queueMicrotask(() => {
+          if (left.isConnected) hadFocus.current = false;
+        });
+      }, onBlur)}
+    >
       {items.map(renderItem)}
+      <LiveRegion>{message}</LiveRegion>
     </div>
   );
 });

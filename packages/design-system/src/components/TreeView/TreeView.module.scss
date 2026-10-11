@@ -76,7 +76,8 @@
   color: var(--tree-view-error-fg);
 }
 
-.status[data-action] {
+.status[data-action],
+.status [data-action] {
   cursor: pointer;
   text-decoration: underline;
 }

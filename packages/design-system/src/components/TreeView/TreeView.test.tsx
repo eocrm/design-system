@@ -1,5 +1,5 @@
-import { createRef, useState, type Ref } from 'react';
-import { render, screen, within } from '@testing-library/react';
+import { createRef, useRef, useState, type Ref } from 'react';
+import { act, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TreeView, type TreeViewChildren, type TreeViewNode, type TreeViewProps } from '.';
 
@@ -146,6 +146,13 @@ describe('TreeView', () => {
     expect(row).not.toHaveAttribute('aria-selected');
   });
 
+  it('moves focus to the nearest visible ancestor when the focused row disappears', async () => {
+    const { rerender } = render(<Harness expandedIds={new Set(['Company', 'Sales'])} />);
+    await userEvent.click(item('Team A'));
+    rerender(<Harness expandedIds={new Set(['Company'])} />);
+    expect(item('Sales')).toHaveFocus();
+  });
+
   it('keys from nested elements are ignored', async () => {
     const onSelect = vi.fn();
     render(
@@ -168,5 +175,191 @@ describe('TreeView', () => {
     screen.getByTestId('inner').focus();
     await userEvent.keyboard('{Enter}');
     expect(onSelect).not.toHaveBeenCalled();
+  });
+});
+
+function Async(props: {
+  failFirst?: boolean;
+  onRetry?: boolean;
+  pageSize?: number;
+  total?: number;
+}) {
+  const { failFirst = false, onRetry = true, pageSize = 2, total = 4 } = props;
+  const [expanded, setExpanded] = useState(new Set<string>());
+  const [kids, setKids] = useState<Record<string, TreeViewChildren>>({});
+  const [shown, setShown] = useState(pageSize);
+  const [moreLoading, setMoreLoading] = useState(false);
+  const attempts = useRef(0);
+  const load = (id: string) => {
+    setKids((k) => ({ ...k, [id]: undefined }));
+    const fail = failFirst && attempts.current++ === 0;
+    setTimeout(
+      () =>
+        setKids((k) => ({
+          ...k,
+          [id]: fail
+            ? { error: true }
+            : Array.from({ length: total }, (_, i) => n(`Child ${i + 1}`)),
+        })),
+      1000,
+    );
+  };
+  return (
+    <TreeView
+      aria-label="Async"
+      roots={[n('Root', true)]}
+      childrenOf={(id) => {
+        const list = kids[id];
+        return Array.isArray(list) ? list.slice(0, shown) : list; // new array identity every render
+      }}
+      expandedIds={expanded}
+      onExpandedChange={(id, open) => {
+        setExpanded((p) => (open ? new Set([...p, id]) : new Set([...p].filter((x) => x !== id))));
+        if (open && !(id in kids)) load(id);
+      }}
+      onRetry={onRetry ? load : undefined}
+      overflowOf={(p) =>
+        p === 'Root' && Array.isArray(kids.Root) && shown < total
+          ? {
+              label: `${total - shown} more not shown`,
+              loading: moreLoading,
+              onLoadMore: () => {
+                setMoreLoading(true);
+                setTimeout(() => {
+                  setShown((s) => s + pageSize);
+                  setMoreLoading(false);
+                }, 1000);
+              },
+            }
+          : null
+      }
+    />
+  );
+}
+const region = () => document.querySelector('[aria-live]')!;
+
+describe('TreeView async', () => {
+  beforeEach(() => vi.useFakeTimers({ shouldAdvanceTime: true }));
+  afterEach(() => vi.useRealTimers());
+  const user = () => userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
+  const tick = (ms: number) => act(() => vi.advanceTimersByTime(ms));
+  // LiveRegion writes its text ANNOUNCE_DELAY_MS (50) after the message commits, and a sync act() commits only
+  // when it exits — so a message set during one tick() reaches the region on the next one.
+  const PAST_ANNOUNCE_DELAY_MS = 100;
+
+  it('mounts silently and announces a slow user-triggered load after 300ms, success silent', async () => {
+    const u = user();
+    render(<Async />);
+    expect(region()).toHaveTextContent('');
+    await u.tab();
+    await u.keyboard('{ArrowRight}');
+    expect(item('Loading…')).toBeInTheDocument();
+    tick(200);
+    expect(region()).toHaveTextContent('');
+    tick(200);
+    tick(PAST_ANNOUNCE_DELAY_MS);
+    expect(region()).toHaveTextContent('Loading…');
+    tick(1000);
+    expect(item('Child 1')).toBeInTheDocument();
+    expect(item('Root')).toHaveFocus();
+  });
+
+  it('announces a failure, and Retry loads and focuses the first child', async () => {
+    const u = user();
+    render(<Async failFirst />);
+    await u.tab();
+    await u.keyboard('{ArrowRight}');
+    tick(1100);
+    tick(PAST_ANNOUNCE_DELAY_MS);
+    expect(region()).toHaveTextContent("Couldn't load");
+    const row = item("Couldn't load. Retry");
+    expect(row).not.toHaveAttribute('aria-disabled');
+    await u.keyboard('{ArrowRight}');
+    expect(row).toHaveFocus();
+    await u.keyboard('{Enter}');
+    tick(1100);
+    expect(item('Child 1')).toHaveFocus();
+  });
+
+  it('without onRetry the error row is inert text', async () => {
+    const u = user();
+    render(<Async failFirst onRetry={false} />);
+    await u.tab();
+    await u.keyboard('{ArrowRight}');
+    tick(1100);
+    expect(item("Couldn't load")).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  it('load-more shows loading on the row, then focuses the first new child', async () => {
+    const u = user();
+    render(<Async />);
+    await u.tab();
+    await u.keyboard('{ArrowRight}');
+    tick(1100);
+    await u.click(item('2 more not shown'));
+    expect(item('Loading…')).toHaveAttribute('aria-disabled', 'true');
+    tick(1100);
+    expect(item('Child 3')).toHaveFocus();
+    expect(screen.queryByRole('treeitem', { name: /more not shown/ })).toBeNull();
+  });
+
+  it('load-more that adds nothing leaves focus on a visible item', async () => {
+    const u = user();
+    render(<Async pageSize={0} total={1} />);
+    await u.tab();
+    await u.keyboard('{ArrowRight}');
+    tick(1100);
+    await u.click(item('1 more not shown'));
+    tick(1100);
+    expect(document.activeElement).toHaveAttribute('role', 'treeitem');
+  });
+
+  it('collapsing an ancestor moves focus to it', async () => {
+    const u = user();
+    const { container } = render(<Async />);
+    await u.tab();
+    await u.keyboard('{ArrowRight}');
+    tick(1100);
+    await u.keyboard('{ArrowRight}');
+    expect(item('Child 1')).toHaveFocus();
+    await u.click(container.querySelector('[data-toggle]')!);
+    expect(item('Root')).toHaveFocus();
+  });
+
+  it('does not re-announce the old failure when onRetry has not started loading yet', async () => {
+    // onRetry re-renders (e.g. sets a fetching flag) but the data still reports the old error for now.
+    function Stuck() {
+      const [, bump] = useState(0);
+      return (
+        <TreeView
+          aria-label="Stuck"
+          roots={[n('Root', true)]}
+          childrenOf={() => ({ error: true })}
+          expandedIds={new Set(['Root'])}
+          onExpandedChange={() => {}}
+          onRetry={() => bump((x) => x + 1)}
+        />
+      );
+    }
+    const u = user();
+    render(<Stuck />);
+    await u.click(item("Couldn't load. Retry"));
+    tick(PAST_ANNOUNCE_DELAY_MS);
+    expect(region()).toHaveTextContent('');
+  });
+
+  it('re-rendering with new array identities keeps focus and stays silent', async () => {
+    const u = user();
+    const { rerender } = render(<Async />);
+    await u.tab();
+    await u.keyboard('{ArrowRight}');
+    tick(1100);
+    tick(PAST_ANNOUNCE_DELAY_MS);
+    await u.keyboard('{ArrowRight}{ArrowDown}');
+    const message = region().textContent;
+    rerender(<Async />);
+    tick(500);
+    expect(item('Child 2')).toHaveFocus();
+    expect(region().textContent).toBe(message);
   });
 });
