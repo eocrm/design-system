@@ -276,6 +276,74 @@ describe('computeLayout', () => {
     expect(l.marks[2].line).toBe(l.marks[1].line);
   });
 
+  it('the stack top stays the smoothed total when an empty layer rides over a peak', () => {
+    const series = resolveSeries(
+      'area',
+      [s('a', [0, 10, 10, 0]), s('b', [10, 0, 0, 10]), s('t', [10, 10, 10, 10], 'total')],
+      4,
+    ).series;
+    const l = layout({ type: 'area', series });
+    expect(l.marks[2].line).toBe(l.marks[1].line);
+    // and the lower layer never pokes above it
+    const S = 12;
+    const tops = smoothStack(
+      [
+        [0, 10, 10, 0],
+        [10, 0, 0, 10],
+      ],
+      S,
+    );
+    for (let i = 0; i < 3; i++)
+      for (let k = 0; k <= S; k++) expect(tops[0][i][k]).toBeLessThanOrEqual(tops[1][i][k]);
+  });
+
+  it('keeps a 0 to 0 segment flat, so all-negative data gets no positive tick', () => {
+    for (const values of [
+      [-5, 0, 0, -3],
+      [-10, 0, 0, -10],
+    ]) {
+      const l = layout({ type: 'line', series: one(values) });
+      expect(l.yTicks[l.yTicks.length - 1].value).toBeLessThanOrEqual(0);
+    }
+  });
+
+  it('a total equal to the stack stays on it when the top layer has interior zeros', () => {
+    for (const [a, b] of [
+      [
+        [5, 5, 5, 5],
+        [10, 0, 0, 10],
+      ],
+      [
+        [20, 20, 20, 20],
+        [0, 0, 30, 0],
+      ],
+    ]) {
+      const total = a.map((v, i) => v + b[i]);
+      const series = resolveSeries(
+        'area',
+        [s('a', a), s('b', b), s('t', total, 'total')],
+        4,
+      ).series;
+      const l = layout({ type: 'area', series });
+      expect(l.marks[2].line).toBe(l.marks[1].line);
+    }
+  });
+
+  it('eases into a 0 floor without a corner', () => {
+    // [5, 0, 0, 3]: the curve reaches 0 flat (no kink), so the sample just before 0 is near 0.
+    const l = layout({ type: 'line', series: one([5, 0, 0, 3]) });
+    const zeroY = l.yTicks.find((t) => t.value === 0)!.y;
+    const pts = l.marks[0]
+      .line!.slice(1)
+      .split('L')
+      .map((p) => p.split(',').map(Number));
+    const atFirstZero = pts.findIndex(([x]) => Math.abs(x - l.categoryX[1]) < 0.01);
+    const [x0, y0] = pts[atFirstZero - 1];
+    const slopeIn = (zeroY - y0) / (l.categoryX[1] - x0);
+    const firstStep = (zeroY - l.marks[0].points[0]!.y) / (l.categoryX[1] - l.categoryX[0]);
+    expect(Math.abs(slopeIn)).toBeLessThan(Math.abs(firstStep) / 2);
+  });
+
   it('draws a two-point run straight', () => {
     const l = layout({ type: 'line', series: one([0, 10, null, null]) });
     const pts = l.marks[0]

@@ -604,12 +604,18 @@ const hermite = (y0: number, y1: number, m0: number, m1: number, t: number) => {
 function smoothRun(v: readonly number[], samples: number): number[][] {
   const n = v.length;
   // Two points: full slope at both ends, so the segment is straight rather than an S.
-  const m = v.map((_, i) =>
-    n === 2 ? v[1] - v[0] : (v[Math.min(n - 1, i + 1)] - v[Math.max(0, i - 1)]) / 2,
-  );
+  const m = v.map((x, i) => {
+    if (n === 2) return v[1] - v[0];
+    const prev = v[Math.max(0, i - 1)];
+    const next = v[Math.min(n - 1, i + 1)];
+    // A 0 between same-signed neighbours is a floor: ease into it flat instead of hitting the clamp.
+    if (x === 0 && prev * next >= 0) return 0;
+    return (next - prev) / 2;
+  });
   return Array.from({ length: Math.max(0, n - 1) }, (_, i) =>
     Array.from({ length: samples + 1 }, (_, s) => {
       const h = hermite(v[i], v[i + 1], m[i], m[i + 1], s / samples);
+      if (v[i] === 0 && v[i + 1] === 0) return 0;
       if (v[i] >= 0 && v[i + 1] >= 0) return Math.max(0, h);
       if (v[i] <= 0 && v[i + 1] <= 0) return Math.min(0, h);
       return h;
@@ -635,26 +641,26 @@ function smoothLine(values: readonly (number | null)[], samples: number): (numbe
 
 /**
  * Cumulative tops of smoothed stacked layers: `result[k][i][s]` is the top of layer k at sample s of the
- * segment between categories i and i+1. The cumulative tops are smoothed directly (the same curve as
- * lines), so the top layer is exactly the smoothed total; each top is then held on its own side of the
- * layer below, so a layer never turns inside out and boundaries never cross.
+ * segment between categories i and i+1. Every running total is smoothed directly (the same curve as lines),
+ * so the top layer is exactly the smoothed total. A top-down pass then keeps each lower top on its side of
+ * the one above, so no layer turns inside out and boundaries never cross.
  */
 export function smoothStack(layers: readonly (readonly number[])[], samples: number): number[][][] {
   const sum = layers[0]?.map(() => 0) ?? [];
-  let below: number[][] | null = null;
-  return layers.map((v) => {
+  const tops = layers.map((v) => {
     v.forEach((x, i) => (sum[i] += x));
-    const tops = smoothRun(sum, samples).map((seg, i) =>
-      seg.map((t, s) => {
-        const b = below?.[i][s] ?? 0;
-        if (v[i] >= 0 && v[i + 1] >= 0) return Math.max(t, b);
-        if (v[i] <= 0 && v[i + 1] <= 0) return Math.min(t, b);
-        return t;
+    return smoothRun(sum, samples);
+  });
+  for (let k = tops.length - 2; k >= 0; k--) {
+    const above = layers[k + 1];
+    tops[k].forEach((seg, i) =>
+      seg.forEach((t, s) => {
+        if (above[i] >= 0 && above[i + 1] >= 0) seg[s] = Math.min(t, tops[k + 1][i][s]);
+        else if (above[i] <= 0 && above[i + 1] <= 0) seg[s] = Math.max(t, tops[k + 1][i][s]);
       }),
     );
-    below = tops;
-    return tops;
-  });
+  }
+  return tops;
 }
 
 const r2 = (v: number) => Math.round(v * 100) / 100;
