@@ -1497,6 +1497,23 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       </Row>
     </Col>
   ),
+  TreeView: (
+    <Col gap={5}>
+      <Row gap={6}>
+        <Dot size={6} />
+        <Bar w={44} />
+      </Row>
+      <Row gap={6} style={{ paddingLeft: 12 }}>
+        <Dot size={6} />
+        <Bar w={36} />
+      </Row>
+      <Solid w={92} h={12} style={{ marginLeft: 12 }} />
+      <Row gap={6} style={{ paddingLeft: 12 }}>
+        <Dot size={6} />
+        <Bar w={40} />
+      </Row>
+    </Col>
+  ),
   Timeline: (
     <Row gap={8} style={{ alignItems: 'flex-start' }}>
       <Col gap={4} style={{ alignItems: 'center' }}>

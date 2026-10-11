@@ -316,6 +316,13 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['Chart'],
   },
   {
+    to: '/components/tree-view',
+    name: 'TreeView',
+    description:
+      'Lazily loaded hierarchy as a file-explorer list or a top-down org chart, with keyboard, selection and loading / error rows.',
+    preview: SCHEMATICS['TreeView'],
+  },
+  {
     to: '/components/table',
     name: 'Table',
     description:

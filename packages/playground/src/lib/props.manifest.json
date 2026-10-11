@@ -6262,6 +6262,80 @@
         }
       ]
     },
+    "TreeView": {
+      "props": [
+        {
+          "name": "aria-label",
+          "type": "string",
+          "required": true,
+          "default": "",
+          "description": "Accessible name of the tree, e.g. \"Organization structure\". Required."
+        },
+        {
+          "name": "view",
+          "type": "TreeViewView",
+          "required": false,
+          "default": "",
+          "description": "Presentation. Default `'list'`.\n- `'list'` — file-explorer rows indented per level with a chevron; ↑/↓ walk rows, →/← expand/collapse.\n- `'chart'` — classic top-down org chart of boxes with connector lines; scrolls horizontally inside itself\n  when wider than its container. Spatial keys: ↓ into children, ↑ to the parent, ←/→ between siblings."
+        },
+        {
+          "name": "roots",
+          "type": "TreeViewNode[]",
+          "required": true,
+          "default": "",
+          "description": "Top-level nodes."
+        },
+        {
+          "name": "childrenOf",
+          "type": "(id: string) => TreeViewChildren",
+          "required": true,
+          "default": "",
+          "description": "Children of an expanded node: the array once loaded, `undefined` while loading, `{ error: true }` on failure. Called only for expanded nodes."
+        },
+        {
+          "name": "expandedIds",
+          "type": "ReadonlySet<string>",
+          "required": true,
+          "default": "",
+          "description": "Ids of expanded nodes (controlled). Fetch a node's children when it appears here."
+        },
+        {
+          "name": "onExpandedChange",
+          "type": "(id: string, expanded: boolean) => void",
+          "required": true,
+          "default": "",
+          "description": "Called when the user expands or collapses a node."
+        },
+        {
+          "name": "selectedId",
+          "type": "string | null",
+          "required": false,
+          "default": "",
+          "description": "Selected node id (controlled). Ignored when `onSelect` is absent."
+        },
+        {
+          "name": "onSelect",
+          "type": "((id: string) => void)",
+          "required": false,
+          "default": "",
+          "description": "Called on click / Enter / Space on a node. Omit for a tree without selection (no `aria-selected`). Selection never follows focus."
+        },
+        {
+          "name": "onRetry",
+          "type": "((id: string) => void)",
+          "required": false,
+          "default": "",
+          "description": "Makes a failed level's \"Couldn't load. Retry\" row actionable; called with the parent id. Without it the row is inert text."
+        },
+        {
+          "name": "overflowOf",
+          "type": "((parentId: string | null) => TreeViewOverflow | null)",
+          "required": false,
+          "default": "",
+          "description": "\"N more not shown\" row at the end of a level (`parentId` `null` = root level), or `null` for none. Pass `onLoadMore` to make it actionable."
+        }
+      ]
+    },
     "VisuallyHidden": {
       "props": [
         {
@@ -6463,6 +6537,9 @@
     "DashboardCanvasConstraintsProp": "Record<string, DashboardItemConstraints> | ((id: string | number) => DashboardItemConstraints)",
     "DashboardCanvasValue": "{ items: DashboardPlacement[]; sections: DashboardSection[] }",
     "DashboardWidgetVariant": "\"list\" | \"standard\" | \"kpi\" | \"chart\"",
+    "TreeViewChildren": "TreeViewNode[] | { error: true; }",
+    "TreeViewOverflow": "{ label: string; onLoadMore?: (() => void); loading?: boolean }",
+    "TreeViewView": "\"list\" | \"chart\"",
     "ChartMarker": "(ChartMarkerBase & { at: string; from?: undefined; to?: undefined; }) | (ChartMarkerBase & { from: string; to: string; at?: undefined; })",
     "ChartSeries": "{ key: string; label: string; values: (number | null)[]; comparisonOf?: string }"
   }
