@@ -812,6 +812,14 @@ export type {
 export { StatGroup, StatTile } from './components/StatGroup';
 export type { StatGroupProps, StatTileProps, StatTrend } from './components/StatGroup';
 export { Chart } from './components/Chart';
+export { TreeView } from './components/TreeView';
+export type {
+  TreeViewChildren,
+  TreeViewNode,
+  TreeViewOverflow,
+  TreeViewProps,
+  TreeViewView,
+} from './components/TreeView';
 export type {
   ChartMarker,
   ChartMarkerTone,

@@ -395,6 +395,13 @@ export const ru: Messages = {
     noData: 'Нет данных',
     markers: 'Отметки',
   },
+  treeView: {
+    loading: 'Загрузка…',
+    loadError: 'Не удалось загрузить',
+    retry: 'Повторить',
+    chartHint:
+      'Стрелки вверх и вниз — переход между уровнями, влево и вправо — между соседними элементами.',
+  },
   catalogPicker: {
     search: 'Поиск…',
     categories: 'Категории',

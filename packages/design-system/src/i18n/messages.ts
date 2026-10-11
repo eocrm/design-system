@@ -817,6 +817,16 @@ export interface Messages {
     /** Header of the data table's marker column (labels of the annotations covering each category). */
     markers: string;
   };
+  treeView: {
+    /** Name and text of a level whose children are loading, and of an overflow row while it loads more ("Loading…"); also announced when a user-triggered load is slow. */
+    loading: string;
+    /** Name and text of a level whose children failed to load ("Couldn't load"); also announced. */
+    loadError: string;
+    /** Action appended to the error row's name and text when `onRetry` is passed ("Retry"). */
+    retry: string;
+    /** Description of a `view="chart"` tree: how the arrow keys move. */
+    chartHint: string;
+  };
   catalogPicker: {
     /** Placeholder + aria-label of the catalog search input. */
     search: string;
