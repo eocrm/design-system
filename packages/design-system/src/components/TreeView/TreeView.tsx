@@ -327,7 +327,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
     onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => onItemKeyDown(e, item),
     // Chart items wrap their subtree: a press on that space must not natively focus the ancestor item.
     onMouseDown: (e: MouseEvent<HTMLDivElement>) => {
-      if (!(e.target as Element).closest('[data-row]')) e.preventDefault();
+      if (e.button === 0 && !(e.target as Element).closest('[data-row]')) e.preventDefault();
     },
     onFocus: (e: FocusEvent<HTMLDivElement>) => {
       if (e.target === e.currentTarget) setFocusedKey(item.key);

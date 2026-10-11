@@ -15,8 +15,9 @@ const byId = new Map([...expanded].map((id, i) => [id, children[i]]));
   roots={roots.map(toNode)}
   childrenOf={(id) => {
     const q = byId.get(id);
-    if (!q || q.isPending || (q.isError && q.isFetching)) return undefined; // loading, incl. a retry in flight
-    return q.isError ? { error: true } : q.data.units.map(toNode);
+    // No data yet: failed (and not retrying) → error row, otherwise → loading row.
+    if (!q?.data) return q?.isError && !q.isFetching ? { error: true } : undefined;
+    return q.data.units.map(toNode); // loaded data stays even if a background refetch fails
   }}
   expandedIds={expanded}
   onExpandedChange={(id, open) =>
@@ -58,7 +59,7 @@ const byId = new Map([...expanded].map((id, i) => [id, children[i]]));
 <!-- props:end -->
 
 - **Nodes.** `TreeViewNode = { id: string; label: string; hasChildren: boolean; content?: ReactNode }`. `hasChildren` drives the chevron / toggle and `aria-expanded` even before the children load; `label` is the accessible name and the typeahead text.
-- **Lazy by contract.** `childrenOf(id)` is called only for expanded nodes: return the array once loaded, `undefined` while loading, including a query that is pending but not fetching (a "Loading…" row), `{ error: true }` on failure (a "Couldn't load. Retry" row; actionable only with `onRetry`). `childrenOf` must also return `undefined` while a retry is in flight (react-query v5 keeps `isError` true while refetching after an error, so check `isFetching` first), otherwise there is no loading row and a second failure is silent. Start the fetch when an id appears in `expandedIds`. A tree already in memory is fine too: return arrays immediately, don't fake loading.
+- **Lazy by contract.** `childrenOf(id)` is called only for expanded nodes: return the array once loaded, `undefined` while loading, including a query that is pending but not fetching (a "Loading…" row), `{ error: true }` on failure (a "Couldn't load. Retry" row; actionable only with `onRetry`). `childrenOf` must also return `undefined` while a retry is in flight (react-query v5 keeps `isError` true while refetching after an error: return the error only when there is no data and nothing is fetching), otherwise there is no loading row and a second failure is silent. Start the fetch when an id appears in `expandedIds`. A tree already in memory is fine too: return arrays immediately, don't fake loading.
 - **Controlled.** `expandedIds` / `onExpandedChange` and `selectedId` / `onSelect` are controlled. Omit `onSelect` for a tree without selection. Selection never follows focus: arrows move, Enter / Space / click select.
 - **Overflow.** `overflowOf(parentId)` (`null` = root level) returns `{ label, onLoadMore?, loading? }` (or `null`) and adds a muted "N more not shown" row at the end of a level. `onLoadMore` makes it actionable, `loading` marks the fetch in flight; focus then moves to the first new item (if nothing new arrives it stays on the overflow row).
 - **Rows** are named by `label`; `content` is visual only and must not contain buttons, links or inputs (a treeitem's content is not separately reachable). Put actions in the selection target (a drawer, a detail pane).
