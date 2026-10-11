@@ -19,6 +19,7 @@
       var(--tree-view-level) * var(--tree-view-indent) + var(--tree-view-row-padding-inline)
     )
     var(--tree-view-row-padding-inline);
+  padding-block: var(--tree-view-row-padding-block);
   border-radius: var(--tree-view-row-radius);
   cursor: default;
 }

@@ -110,12 +110,12 @@ function toNode(u: Unit): TreeViewNode {
     label: u.label,
     hasChildren: u.id in CHILDREN,
     content: (
-      <Cluster gap="sm">
+      <Stack gap="xs" align="start">
         <Text as="span">{u.label}</Text>
         <Text as="span" size="sm" tone="muted">
           {u.members} members
         </Text>
-      </Cluster>
+      </Stack>
     ),
   };
 }
@@ -242,10 +242,10 @@ export function TreeViewDemo() {
 />
 
 // node.content
-<Cluster gap="sm">
+<Stack gap="xs" align="start">
   <Text as="span">{u.label}</Text>
   <Text as="span" size="sm" tone="muted">{u.members} members</Text>
-</Cluster>`}
+</Stack>`}
       >
         <TreeView
           aria-label="Organization structure"
