@@ -482,4 +482,33 @@ describe('TreeView chart view', () => {
     expect(icon('Company')).toHaveClass('lucide-minus');
     expect(icon('Support')).toHaveClass('lucide-chevron-down');
   });
+
+  describe('chart opens centred on the tab stop', () => {
+    const rect = (left: number, width: number) =>
+      ({
+        left,
+        width,
+        right: left + width,
+        top: 0,
+        bottom: 0,
+        height: 0,
+        x: left,
+        y: 0,
+      }) as DOMRect;
+    afterEach(() => vi.restoreAllMocks());
+
+    it('scrolls its own container so the tab-stop item is centred (chart only)', () => {
+      vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+        this: HTMLElement,
+      ) {
+        return this.getAttribute('role') === 'tree' ? rect(0, 200) : rect(500, 100);
+      });
+      const { unmount } = render(<Harness view="chart" />);
+      // item centre 550 vs container centre 100
+      expect(screen.getByRole('tree').scrollLeft).toBe(450);
+      unmount();
+      render(<Harness view="list" />);
+      expect(screen.getByRole('tree').scrollLeft).toBe(0);
+    });
+  });
 });

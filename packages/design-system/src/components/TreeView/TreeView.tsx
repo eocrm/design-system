@@ -140,6 +140,17 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
       : (flat[0]?.key ?? null);
 
   const chart = view === 'chart';
+  // Open the chart centred on the tab-stop box, scrolling only the tree's own container (never the page).
+  // Keyed on view only: re-running on every render would fight the user's scrolling.
+  useLayoutEffect(() => {
+    const box = tabStop ? itemEls.current.get(tabStop) : undefined;
+    const root = rootEl.current;
+    if (!chart || !box || !root) return;
+    const b = box.getBoundingClientRect();
+    const c = root.getBoundingClientRect();
+    root.scrollLeft += b.left + b.width / 2 - (c.left + c.width / 2);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chart]);
   const focusKey = useCallback(
     (key: string) => {
       setFocusedKey(key);

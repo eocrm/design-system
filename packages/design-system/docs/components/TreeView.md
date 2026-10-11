@@ -63,7 +63,7 @@ const byId = new Map([...expanded].map((id, i) => [id, children[i]]));
 - **Rows** are named by `label`; `content` is visual only and must not contain buttons, links or inputs (a treeitem's content is not separately reachable). Put actions in the selection target (a drawer, a detail pane).
 - **Keyboard — list:** ↑/↓ move, → expands or enters, ← collapses or goes to the parent, Home/End, Enter/Space select, type to jump (the typeahead buffer resets after 500ms). **Chart:** ↓ expands or enters, ↑ collapses or goes to the parent, ←/→ move between siblings; the tree describes these keys to screen readers (merged with your own `aria-describedby`).
 - **Screen readers:** one tab stop; levels, positions and expanded state come from ARIA. A slow (≥ 300ms) user-triggered load is announced once ("Loading…"), a failure is announced; success is silent. After Retry focus stays on the status row while loading and moves to the first child when children arrive (if the retry fails again it stays on the Retry row).
-- **Sizing.** `list` grows with its content — put it in a scrolling parent for long trees. `chart` fills its parent's width and scrolls horizontally inside itself when the chart is wider; the focused box scrolls into view.
+- **Sizing.** `list` grows with its content — put it in a scrolling parent for long trees. `chart` fills its parent's width and scrolls horizontally inside itself when the chart is wider; it opens centred on the selected (or first) item, and the focused box scrolls into view.
 
 #### When NOT to use
 

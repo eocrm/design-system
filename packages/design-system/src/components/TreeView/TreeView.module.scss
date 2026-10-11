@@ -54,7 +54,7 @@
   block-size: 100%;
   transition: transform var(--transition-fast);
 
-  .toggle[data-expanded] > & {
+  .root[data-view='list'] .toggle[data-expanded] > & {
     transform: rotate(90deg);
   }
 
