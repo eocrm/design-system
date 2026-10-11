@@ -104,24 +104,41 @@ const CHILDREN: Record<string, Unit[]> = {
   ),
 };
 
-function toNode(u: Unit): TreeViewNode {
+/** Row content: one line in the list, name over member count in a chart box. */
+function UnitContent({ unit, view }: { unit: Unit; view: TreeViewView }) {
+  const name = <Text as="span">{unit.label}</Text>;
+  const count = (
+    <Text as="span" size="sm" tone="muted">
+      {unit.members} members
+    </Text>
+  );
+  return view === 'chart' ? (
+    <Stack gap="xs" align="start">
+      {name}
+      {count}
+    </Stack>
+  ) : (
+    <Cluster gap="sm">
+      {name}
+      {count}
+    </Cluster>
+  );
+}
+
+function toNode(u: Unit, view: TreeViewView = 'list'): TreeViewNode {
   return {
     id: u.id,
     label: u.label,
     hasChildren: u.id in CHILDREN,
-    content: (
-      <Stack gap="xs" align="start">
-        <Text as="span">{u.label}</Text>
-        <Text as="span" size="sm" tone="muted">
-          {u.members} members
-        </Text>
-      </Stack>
-    ),
+    content: <UnitContent unit={u} view={view} />,
   };
 }
 
-const ROOTS = [toNode(COMPANY)];
-const staticChildrenOf = (id: string): TreeViewChildren => CHILDREN[id]?.map(toNode);
+const LIST_ROOTS = [toNode(COMPANY)];
+const CHART_ROOTS = [toNode(COMPANY, 'chart')];
+const listChildrenOf = (id: string): TreeViewChildren => CHILDREN[id]?.map((u) => toNode(u));
+const chartChildrenOf = (id: string): TreeViewChildren =>
+  CHILDREN[id]?.map((u) => toNode(u, 'chart'));
 
 function toggle(set: ReadonlySet<string>, id: string, open: boolean) {
   const next = new Set(set);
@@ -174,11 +191,11 @@ function useLazyOrg(failNext: boolean, onFailed: () => void) {
 
   const retry = useCallback((id: string) => fetchLevel(id, 0, false), [fetchLevel]);
 
-  const childrenOf = (id: string): TreeViewChildren => {
+  const childrenOf = (id: string, view: TreeViewView): TreeViewChildren => {
     const lv = levels[id];
     if (lv?.status === 'error') return { error: true };
     if (!lv || lv.status === 'loading') return undefined;
-    return CHILDREN[id].slice(0, lv.shown).map(toNode);
+    return CHILDREN[id].slice(0, lv.shown).map((u) => toNode(u, view));
   };
 
   const overflowOf = (parentId: string | null): TreeViewOverflow | null => {
@@ -234,23 +251,23 @@ export function TreeViewDemo() {
         code={`<TreeView
   aria-label="Organization structure"
   roots={[companyNode]}
-  childrenOf={(id) => CHILDREN[id]?.map(toNode)}
+  childrenOf={(id) => CHILDREN[id]?.map((u) => toNode(u))}
   expandedIds={expanded}
   onExpandedChange={(id, open) => setExpanded((s) => toggle(s, id, open))}
   selectedId={selected}
   onSelect={setSelected}
 />
 
-// node.content
-<Stack gap="xs" align="start">
+// node.content: one line in the list (a chart box stacks them, see Org chart)
+<Cluster gap="sm">
   <Text as="span">{u.label}</Text>
   <Text as="span" size="sm" tone="muted">{u.members} members</Text>
-</Stack>`}
+</Cluster>`}
       >
         <TreeView
           aria-label="Organization structure"
-          roots={ROOTS}
-          childrenOf={staticChildrenOf}
+          roots={LIST_ROOTS}
+          childrenOf={listChildrenOf}
           expandedIds={listExpanded}
           onExpandedChange={(id, open) => setListExpanded((s) => toggle(s, id, open))}
           selectedId={listSelected}
@@ -261,17 +278,23 @@ export function TreeViewDemo() {
       <Example
         title="Org chart"
         fullWidth
-        description="The same data with view='chart'. It fills the card's width and scrolls horizontally inside itself; spatial keys: Down into children, Up to the parent, Left / Right between siblings."
+        description="The same data with view='chart'. It fills the card's width and scrolls horizontally inside itself; spatial keys: Down into children, Up to the parent, Left / Right between siblings. content is the app's: here the member count goes on its own line in a box."
         code={`<Card>
   <TreeView view="chart" aria-label="Organization chart" roots={[companyNode]} ... />
-</Card>`}
+</Card>
+
+// node.content for the chart: name over member count
+<Stack gap="xs" align="start">
+  <Text as="span">{u.label}</Text>
+  <Text as="span" size="sm" tone="muted">{u.members} members</Text>
+</Stack>`}
       >
         <Card>
           <TreeView
             view="chart"
             aria-label="Organization chart"
-            roots={ROOTS}
-            childrenOf={staticChildrenOf}
+            roots={CHART_ROOTS}
+            childrenOf={chartChildrenOf}
             expandedIds={chartExpanded}
             onExpandedChange={(id, open) => setChartExpanded((s) => toggle(s, id, open))}
             selectedId={chartSelected}
@@ -292,7 +315,7 @@ export function TreeViewDemo() {
     const level = levels[id];
     if (level?.status === 'error') return { error: true };
     if (!level || level.status === 'loading') return undefined; // "Loading…"
-    return CHILDREN[id].slice(0, level.shown).map(toNode);
+    return CHILDREN[id].slice(0, level.shown).map((u) => toNode(u, view));
   }}
   expandedIds={expanded}
   onExpandedChange={(id, open) => {
@@ -338,8 +361,8 @@ export function TreeViewDemo() {
             <TreeView
               view={view}
               aria-label="Organization structure (lazy)"
-              roots={ROOTS}
-              childrenOf={lazy.childrenOf}
+              roots={view === 'chart' ? CHART_ROOTS : LIST_ROOTS}
+              childrenOf={(id) => lazy.childrenOf(id, view)}
               expandedIds={lazyExpanded}
               onExpandedChange={(id, open) => {
                 setLazyExpanded((s) => toggle(s, id, open));
@@ -362,8 +385,8 @@ export function TreeViewDemo() {
       >
         <TreeView
           aria-label="Organization structure (reference)"
-          roots={ROOTS}
-          childrenOf={staticChildrenOf}
+          roots={LIST_ROOTS}
+          childrenOf={listChildrenOf}
           expandedIds={refExpanded}
           onExpandedChange={(id, open) => setRefExpanded((s) => toggle(s, id, open))}
         />
