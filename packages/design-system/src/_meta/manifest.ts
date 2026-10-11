@@ -120,6 +120,7 @@ const CLUSTERS: Record<string, string> = {
   DashboardWidget: 'Display',
   StatGroup: 'Display',
   Chart: 'Display',
+  TreeView: 'Display',
   DataTable: 'Display',
   EmptyState: 'Display',
   ErrorState: 'Display',

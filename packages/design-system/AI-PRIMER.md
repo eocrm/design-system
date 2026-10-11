@@ -174,6 +174,7 @@ Each component's contract is its `docs/components/<Name>.md`; the props table th
 - [`StatGroup`](docs/components/StatGroup.md) — responsive grid of KPI tiles for a dashboard widget, with loading skeletons
 - [`StatTile`](docs/components/StatTile.md) — one KPI tile (label, value, trend, footnote, icon) inside a StatGroup
 - [`Chart`](docs/components/Chart.md) — line / bar / stacked bar / area time-series chart for a chart DashboardWidget (smoothed lines, static markers, legend, tooltip, keyboard, data table, empty state)
+- [`TreeView`](docs/components/TreeView.md) — lazily loaded hierarchy (WAI-ARIA tree) as a file-explorer list or a top-down org chart, with loading / error-retry / load-more rows
 - [`LiquidEditor`](docs/components/LiquidEditor.md) — Liquid template editor
 - [`RichTextEditor`](docs/components/RichTextEditor.md) — controlled rich-text editor (contentEditable)
 - [`ImageCrop`](docs/components/ImageCrop.md) — controlled image cropper
