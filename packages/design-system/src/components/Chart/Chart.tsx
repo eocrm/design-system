@@ -206,9 +206,9 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
   const footnoteId = useId();
   const hasFootnote = footnote != null && footnote !== false && footnote !== '';
   const footnoteEl = hasFootnote && (
-    <p id={footnoteId} className={styles.footnote}>
+    <div id={footnoteId} className={styles.footnote}>
       {footnote}
-    </p>
+    </div>
   );
   const visible = useMemo(() => visibleSeries(resolved.series, hidden), [resolved.series, hidden]);
   const empty = isEmpty(categories, resolved.series);
