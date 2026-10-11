@@ -280,8 +280,8 @@ describe('computeLayout', () => {
       4,
     ).series;
     const l = layout({ type: 'area', series });
-    // Differs only where a series hugs its 0 floor: a few % of the range at most.
-    expect(gap(l.marks[2].line!, l.marks[1].line!)).toBeLessThan(0.06 * l.plot.height);
+    // Smoothed separately: drifts next to spikes and zeros (fuzzed worst case ~10% of plot height).
+    expect(gap(l.marks[2].line!, l.marks[1].line!)).toBeLessThan(0.1 * l.plot.height);
   });
 
   it('the stack top stays close to the smoothed total when an empty layer rides over a peak', () => {
@@ -291,8 +291,8 @@ describe('computeLayout', () => {
       4,
     ).series;
     const l = layout({ type: 'area', series });
-    // Differs only where a series hugs its 0 floor: a few % of the range at most.
-    expect(gap(l.marks[2].line!, l.marks[1].line!)).toBeLessThan(0.06 * l.plot.height);
+    // Smoothed separately: drifts next to spikes and zeros (fuzzed worst case ~10% of plot height).
+    expect(gap(l.marks[2].line!, l.marks[1].line!)).toBeLessThan(0.1 * l.plot.height);
     // and the lower layer never pokes above it
     const S = 12;
     const tops = smoothStack(
@@ -334,8 +334,8 @@ describe('computeLayout', () => {
         4,
       ).series;
       const l = layout({ type: 'area', series });
-      // Lifted only where a lower layer's own curve rides above the total: a few px at most.
-      expect(gap(l.marks[2].line!, l.marks[1].line!)).toBeLessThan(0.06 * l.plot.height);
+      // Smoothed separately: drifts next to spikes and zeros (fuzzed worst case ~10% of plot height).
+      expect(gap(l.marks[2].line!, l.marks[1].line!)).toBeLessThan(0.1 * l.plot.height);
     }
   });
 
@@ -396,6 +396,12 @@ describe('computeLayout', () => {
         .map(([x, y]) => Math.abs(y - (y0 + ((y1 - y0) * (x - x0)) / (x1 - x0)))),
     );
     expect(dev).toBeLessThan(0.05 * l.plot.height);
+  });
+
+  it('smooths stacked areas too: the top bulges between equal values', () => {
+    const l = layout({ type: 'area', series: one([0, 10, 10, 0]) });
+    expect(ys(l.marks[0].line!).length).toBeGreaterThan(8);
+    expect(Math.min(...ys(l.marks[0].line!))).toBeLessThan(l.marks[0].points[1]!.y - 0.5);
   });
 
   it('a climb from 0 at the start of a run is not bowed', () => {

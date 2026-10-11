@@ -613,12 +613,12 @@ function smoothRun(v: readonly number[], samples: number): number[][] {
     const prev = v[Math.max(0, i - 1)];
     const next = v[Math.min(n - 1, i + 1)];
     // An interior 0 between same-signed (or zero) neighbours is a floor: ease into it flat instead of
-    // hitting the sign clamp below. Run ends keep their slope, so a climb from 0 starts straight.
+    // hitting the sign clamp below. Run ends keep (half) their slope, so a climb from 0 starts nearly straight.
     if (x === 0 && i > 0 && i < n - 1 && prev * next >= 0) return 0;
-    // Catmull-Rom, capped at 3x the gentler neighbouring slope (a Fritsch-Carlson-style bound) so a sharp spike
-    // doesn't drag the curve far past its flatter neighbours.
     // Run ends: half their one real slope, which no cap would bind.
     if (i === 0 || i === n - 1) return (next - prev) / 2;
+    // Catmull-Rom, capped at 3x the gentler neighbouring slope (a Fritsch-Carlson-style bound) so a sharp spike
+    // doesn't drag the curve far past its flatter neighbours.
     const cap = Math.max(3 * Math.min(Math.abs(x - prev), Math.abs(next - x)), floor);
     return Math.max(-cap, Math.min(cap, (next - prev) / 2));
   });
