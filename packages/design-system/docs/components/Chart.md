@@ -47,6 +47,18 @@ import { Chart, DashboardWidget, ErrorState } from '@eocrm/design-system';
     ...weekends.map(([sat, sun]) => ({ key: sat, from: sat, to: sun, tone: 'subtle' as const })),
   ]}
 />;
+
+// Footnote: a short note under the plot; the plot fills the rest of the cell
+<DashboardWidget variant="chart" title="Revenue">
+  <Chart
+    type="line"
+    label="Revenue per month"
+    categories={months}
+    series={revenue}
+    formatValue={formatCurrency}
+    footnote={`${excluded} deals in other currencies not included`}
+  />
+</DashboardWidget>;
 ```
 
 <!-- props:start -->
@@ -65,6 +77,7 @@ import { Chart, DashboardWidget, ErrorState } from '@eocrm/design-system';
 | `hiddenSeries` | `string[]` | no | Controlled list of hidden series keys (legend toggles). Omit for uncontrolled. Unknown keys are ignored. If it would hide every primary series, it is ignored for primaries (the last primary can't be hidden). |
 | `onHiddenSeriesChange` | `((keys: string[]) => void)` | no | Called with the next hidden keys when the user toggles a legend item. |
 | `markers` | `ChartMarker[]` | no | Static annotations pinned to `categories`: `{ key, label?, at }` draws a vertical line at one category, `{ key, label?, from, to }` shades a category range (inclusive), e.g. a campaign or weekends. `tone`: `'neutral'` for events (the tone default) or `'subtle'` for recurring context. Labelled markers are also listed in the tooltip, the keyboard announcement and the data table; unlabelled ones are decorative. A marker naming an unknown category is ignored with a dev warning. |
+| `footnote` | `ReactNode` | no | Short note under the plot, e.g. "3 deals in other currencies not included" or why a comparison was omitted. Takes its own row (wraps, never truncates) and the plot fills the rest; also describes the plot for screen readers. Shown in the empty state too, where it often explains the emptiness. |
 | …native | | | plus native HTML attributes |
 
 <!-- props:end -->
@@ -76,6 +89,7 @@ import { Chart, DashboardWidget, ErrorState } from '@eocrm/design-system';
 - **Colour** follows a series' position among non-comparison series: 1–8 get the 8 validated palette colours (light + dark). Keep the order stable so filtering never repaints survivors.
 - **Comparison series** (`comparisonOf`): in `line` / `bar`, name the parent's key — it inherits the parent's colour, dashed (line) or outlined with a light fill (bar), sits after its parent in legend and tooltip, and hides with it. In `stacked-bar` / `area`, use `comparisonOf: 'total'` — a dashed neutral line of the previous period's total. Mismatches are ignored with a dev warning.
 - **Markers** (`markers`) are static annotations pinned to `categories`: `{ key, label?, at }` draws a dashed vertical line at the centre of one category; `{ key, label?, from, to }` shades whole buckets from `from` to `to` (inclusive, either order). Positions snap to buckets: there is no sub-bucket time. `tone: 'neutral'` (default) for events, `'subtle'` for recurring context such as weekends (one marker per weekend). Bands sit behind the grid and data, lines behind the data. Labels are drawn at the top of the plot when they fit (earlier markers win a collision; hidden when the chart is compact) and are always listed in the tooltip, the keyboard announcement and a "Markers" column of the data table. Unlabelled markers are decorative. A marker naming an unknown category is ignored with a dev warning. Building markers with `.map` inside an array literal widens `tone` to `string`: write `'subtle' as const`. Don't encode status with markers (no red "incident" tone): put the meaning in the label.
+- **Footnote** (`footnote`) is a short muted note in its own row under the plot, e.g. excluded currencies or why a comparison was dropped. It wraps (never truncates) and the plot shrinks to make room, so keep it to a line or two. It is also the plot's accessible description (after the key hint), and stays visible in the empty state, where it often explains why there is no data. Don't use it for errors (use `ErrorState`) or for legends.
 - **Legend** appears with more than one series. Hover or focus an item to highlight its series; click to hide/show it (`aria-pressed`). The last visible primary series can't be hidden: its button is `aria-disabled` but stays focusable. A comparison's button is disabled while its parent is hidden. Control with `hiddenSeries` / `onHiddenSeriesChange` to persist per widget. Below 120px height the legend shrinks to one row with a "+N" counter; overflow items are not rendered, so they are not keyboard-reachable (the data table still lists every series) — except hidden series, which always render so they can be re-shown (the "+N" counts only the remaining visible ones).
 - **Tooltip** on hover or tap shows every visible series at that bucket. On touch, tapping the plot shows it and it stays until you tap outside the plot. **Keyboard:** the plot is one tab stop (named by `label`, with the key hint as its description); ←/→ move, Home/End jump, Esc closes. Screen-reader users in browse mode never receive the arrow keys on the plot — they should read the data table instead. Values are announced politely only while a keyboard user inspects — never on load, so a dashboard of charts stays quiet.
 - **Screen readers** (browse mode: use the table, not the plot's arrow keys) get a visually hidden data table (caption = `label`) with exactly the plotted values (a null cell reads "No data"); the SVG is hidden from them. Identity never relies on colour alone: dashes for comparisons, marker shapes per series, labels everywhere.
@@ -93,6 +107,7 @@ import { Chart, DashboardWidget, ErrorState } from '@eocrm/design-system';
 #### Anti-patterns
 
 - ❌ Wrapping `Chart` in a fixed-height or scrolling div inside the widget body. The cell is the size.
+- ❌ Rendering a note next to `Chart` in the widget body (it steals the plot's height unpredictably). Use `footnote`.
 - ❌ Passing `loading` / error UI into `Chart`. Use `DashboardWidget loading` and an `ErrorState` child.
 - ❌ Reordering `series` by value each refresh — colours jump between entities.
 - ❌ Formatting inside `categories` with the value (`"W1: 3"`); values go in `series`, labels in `categories`.

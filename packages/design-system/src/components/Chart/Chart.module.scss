@@ -16,6 +16,21 @@
   place-items: center;
 }
 
+// The footnote takes its own row; the plot (or EmptyState) fills the rest.
+.root[data-footnote] {
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.root[data-empty][data-footnote] {
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.footnote {
+  color: var(--chart-footnote-fg);
+  font-size: var(--chart-footnote-size);
+  line-height: var(--chart-footnote-line-height);
+}
+
 .plot {
   position: relative;
   min-height: 0;

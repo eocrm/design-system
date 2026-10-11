@@ -118,6 +118,40 @@ describe('Chart', () => {
     expect(screen.queryByRole('table')).toBeNull();
   });
 
+  it('renders a footnote after the plot that describes it', () => {
+    stubLayout();
+    render(<Chart {...base} footnote="3 deals in other currencies not included" />);
+    const note = screen.getByText('3 deals in other currencies not included');
+    const plot = screen.getByRole('group', { name: 'Deals won per week' });
+    expect(plot.compareDocumentPosition(note) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(plot).toHaveAccessibleDescription(
+      'Use arrow keys to inspect values. All values are also in the data table. 3 deals in other currencies not included',
+    );
+    expect(screen.getByRole('figure')).toHaveAttribute('data-footnote');
+  });
+
+  it('keeps the footnote in the empty state', () => {
+    render(
+      <Chart
+        {...base}
+        series={[{ key: 'a', label: 'A', values: [0, null, 0] }]}
+        footnote="3 deals in other currencies not included"
+      />,
+    );
+    expect(screen.getByText('3 deals in other currencies not included')).toBeInTheDocument();
+    expect(screen.getByRole('figure')).toHaveAttribute('data-footnote');
+  });
+
+  it('renders no footnote element or attribute without the prop', () => {
+    stubLayout();
+    render(<Chart {...base} />);
+    expect(screen.getByRole('figure')).not.toHaveAttribute('data-footnote');
+    expect(screen.getByRole('group', { name: 'Deals won per week' })).toHaveAttribute(
+      'aria-describedby',
+      expect.not.stringContaining(' '),
+    );
+  });
+
   it('falls back to the translated empty title', () => {
     render(<Chart {...base} categories={[]} series={[]} />);
     expect(screen.getByText('No data for this period')).toBeInTheDocument();

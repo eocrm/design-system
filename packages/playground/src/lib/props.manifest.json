@@ -788,6 +788,13 @@
           "required": false,
           "default": "",
           "description": "Static annotations pinned to `categories`: `{ key, label?, at }` draws a vertical line at one category,\n`{ key, label?, from, to }` shades a category range (inclusive), e.g. a campaign or weekends. `tone`:\n`'neutral'` for events (the tone default) or `'subtle'` for recurring context. Labelled markers are also listed in the\ntooltip, the keyboard announcement and the data table; unlabelled ones are decorative. A marker naming an\nunknown category is ignored with a dev warning."
+        },
+        {
+          "name": "footnote",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Short note under the plot, e.g. \"3 deals in other currencies not included\" or why a comparison was omitted.\nTakes its own row (wraps, never truncates) and the plot fills the rest; also describes the plot for\nscreen readers. Shown in the empty state too, where it often explains the emptiness."
         }
       ]
     },

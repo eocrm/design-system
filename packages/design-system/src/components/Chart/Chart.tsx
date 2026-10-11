@@ -85,6 +85,12 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
    * unknown category is ignored with a dev warning.
    */
   markers?: ChartMarker[];
+  /**
+   * Short note under the plot, e.g. "3 deals in other currencies not included" or why a comparison was omitted.
+   * Takes its own row (wraps, never truncates) and the plot fills the rest; also describes the plot for
+   * screen readers. Shown in the empty state too, where it often explains the emptiness.
+   */
+  footnote?: ReactNode;
 }
 
 const NO_MARKERS: ChartMarker[] = [];
@@ -162,6 +168,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     hiddenSeries,
     onHiddenSeriesChange,
     markers = NO_MARKERS,
+    footnote,
     className,
     ...rest
   },
@@ -196,6 +203,13 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
   const [focusedKey, setFocusedKey] = useState<string | null>(null);
   const focusKey = hoverKey ?? focusedKey;
   const hintId = useId();
+  const footnoteId = useId();
+  const hasFootnote = footnote != null && footnote !== false && footnote !== '';
+  const footnoteEl = hasFootnote && (
+    <p id={footnoteId} className={styles.footnote}>
+      {footnote}
+    </p>
+  );
   const visible = useMemo(() => visibleSeries(resolved.series, hidden), [resolved.series, hidden]);
   const empty = isEmpty(categories, resolved.series);
 
@@ -370,9 +384,11 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
         aria-label={label}
         aria-labelledby={undefined}
         data-empty=""
+        data-footnote={hasFootnote || undefined}
         className={clsx(styles.root, className)}
       >
         <EmptyState title={emptyMessage || t('chart.empty')} size="sm" />
+        {footnoteEl}
       </figure>
     );
   }
@@ -385,6 +401,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
       aria-label={label}
       aria-labelledby={undefined}
       data-compact={compact || undefined}
+      data-footnote={hasFootnote || undefined}
       className={clsx(styles.root, className)}
     >
       {legendItems.length > 1 ? (
@@ -405,7 +422,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
         className={styles.plot}
         role="group"
         aria-label={label}
-        aria-describedby={hintId}
+        aria-describedby={hasFootnote ? `${hintId} ${footnoteId}` : hintId}
         tabIndex={0}
         onKeyDown={onKeyDown}
         onPointerMove={onPointer}
@@ -566,6 +583,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
           </svg>
         )}
       </div>
+      {footnoteEl}
       <ChartTooltip
         anchor={plotEl}
         point={point}

@@ -261,6 +261,27 @@ export function ChartDemo() {
       </Example>
 
       <Example
+        title="Footnote"
+        description="A short note under the plot, e.g. excluded currencies. It takes its own row and the plot fills the rest; it also describes the plot to screen readers and stays in the empty state."
+        code={`<Chart type="line" label="Deals won per week" categories={weeks} series={won}
+  footnote="3 deals in other currencies not included"
+/>`}
+      >
+        <Cell title="Deals won">
+          <Chart
+            type="line"
+            label="Deals won per week"
+            categories={weeks}
+            series={[
+              { key: 't', label: 'Deals won', values: weeks.map((_, i) => 4 + ((i * 7) % 9)) },
+            ]}
+            formatValue={(n) => fmt.format(n)}
+            footnote="3 deals in other currencies not included"
+          />
+        </Cell>
+      </Example>
+
+      <Example
         title="Empty"
         description="All zero or no data renders EmptyState."
         code={`<Chart type="bar" label="Tasks completed per week" categories={weeks}

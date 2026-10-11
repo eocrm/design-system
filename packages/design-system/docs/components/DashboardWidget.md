@@ -39,7 +39,7 @@ import {
   <Card.List>{/* rows */}</Card.List>
 </DashboardWidget>;
 
-// chart: the plot fills the cell
+// chart: the plot fills the cell; a note under it goes in Chart's `footnote`
 <DashboardWidget variant="chart" title="Revenue">
   <Chart
     type="line"
@@ -47,6 +47,7 @@ import {
     categories={months}
     series={revenue}
     formatValue={formatCurrency}
+    footnote="3 deals in other currencies not included"
   />
 </DashboardWidget>;
 
