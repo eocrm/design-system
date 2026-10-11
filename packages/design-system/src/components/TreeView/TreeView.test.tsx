@@ -36,6 +36,8 @@ function Harness(
   );
 }
 const item = (name: string) => screen.getByRole('treeitem', { name });
+// Selection / activation is wired to the row (the treeitem's first child), not the whole treeitem.
+const row = (name: string) => item(name).firstElementChild!;
 
 describe('TreeView', () => {
   it('is a named tree, forwards ref, merges className, keeps its role over a consumer role', () => {
@@ -85,7 +87,7 @@ describe('TreeView', () => {
     render(<Harness initial={['Company']} />);
     const stops = () => screen.getAllByRole('treeitem').filter((el) => el.tabIndex === 0);
     expect(stops()).toEqual([item('Company')]);
-    await userEvent.click(item('Support'));
+    await userEvent.click(row('Support'));
     expect(stops()).toEqual([item('Support')]);
     expect(item('Support')).toHaveAttribute('aria-selected', 'true');
     expect(item('Support')).toHaveFocus();
@@ -129,6 +131,35 @@ describe('TreeView', () => {
     expect(item('Support')).toHaveFocus();
   });
 
+  it('typeahead continues through a space; a lone space still selects', async () => {
+    const onSelect = vi.fn();
+    render(<Harness initial={['Company', 'Sales']} onSelect={onSelect} />);
+    await userEvent.tab();
+    await userEvent.keyboard('Team ');
+    expect(onSelect).not.toHaveBeenCalled();
+    await userEvent.keyboard('B');
+    expect(item('Team B')).toHaveFocus();
+    expect(onSelect).not.toHaveBeenCalled();
+    await act(() => new Promise((r) => setTimeout(r, 600)));
+    await userEvent.keyboard(' ');
+    expect(onSelect).toHaveBeenCalledWith('Team B');
+  });
+
+  it('selects on the row only: the chart children container and its space do not select', async () => {
+    const onSelect = vi.fn();
+    render(<Harness view="chart" initial={['Company']} onSelect={onSelect} />);
+    await userEvent.click(within(item('Company')).getByRole('group'));
+    expect(onSelect).not.toHaveBeenCalled();
+    await userEvent.click(within(item('Company')).getByText('Company'));
+    expect(onSelect).toHaveBeenCalledWith('Company');
+  });
+
+  it('renders no group for an expanded node with no children', () => {
+    render(<Harness initial={['Company']} childrenOf={() => []} />);
+    expect(item('Company')).toHaveAttribute('aria-expanded', 'true');
+    expect(within(item('Company')).queryByRole('group')).toBeNull();
+  });
+
   it('clicking the chevron toggles without selecting', async () => {
     const onSelect = vi.fn();
     const { container } = render(<Harness onSelect={onSelect} />);
@@ -148,7 +179,7 @@ describe('TreeView', () => {
 
   it('moves focus to the nearest visible ancestor when the focused row disappears', async () => {
     const { rerender } = render(<Harness expandedIds={new Set(['Company', 'Sales'])} />);
-    await userEvent.click(item('Team A'));
+    await userEvent.click(row('Team A'));
     rerender(<Harness expandedIds={new Set(['Company'])} />);
     expect(item('Sales')).toHaveFocus();
   });
@@ -342,7 +373,7 @@ describe('TreeView async', () => {
     await u.tab();
     await u.keyboard('{ArrowRight}');
     tick(1100);
-    await u.click(item('2 more not shown'));
+    await u.click(row('2 more not shown'));
     expect(item('Loading…')).toHaveAttribute('aria-disabled', 'true');
     tick(1100);
     expect(item('Child 3')).toHaveFocus();
@@ -355,7 +386,7 @@ describe('TreeView async', () => {
     await u.tab();
     await u.keyboard('{ArrowRight}');
     tick(1100);
-    await u.click(item('2 more not shown'));
+    await u.click(row('2 more not shown'));
     tick(PAST_ANNOUNCE_DELAY_MS);
     expect(region()).toHaveTextContent('');
     expect(item('Loading…')).toHaveFocus();
@@ -372,7 +403,7 @@ describe('TreeView async', () => {
     await u.tab();
     await u.keyboard('{ArrowRight}');
     tick(1100);
-    await u.click(item('1 more not shown'));
+    await u.click(row('1 more not shown'));
     tick(1100);
     expect(item('1 more not shown')).toHaveFocus();
   });
@@ -406,7 +437,7 @@ describe('TreeView async', () => {
     }
     const u = user();
     render(<Stuck />);
-    await u.click(item("Couldn't load. Retry"));
+    await u.click(row("Couldn't load. Retry"));
     tick(PAST_ANNOUNCE_DELAY_MS);
     expect(region()).toHaveTextContent('');
   });
@@ -509,6 +540,18 @@ describe('TreeView chart view', () => {
       unmount();
       render(<Harness view="list" />);
       expect(screen.getByRole('tree').scrollLeft).toBe(0);
+    });
+
+    it('centres once roots arrive after mounting empty', () => {
+      vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+        this: HTMLElement,
+      ) {
+        return this.getAttribute('role') === 'tree' ? rect(0, 200) : rect(500, 100);
+      });
+      const { rerender } = render(<Harness view="chart" roots={[]} />);
+      expect(screen.getByRole('tree').scrollLeft).toBe(0);
+      rerender(<Harness view="chart" roots={[n('Late')]} />);
+      expect(screen.getByRole('tree').scrollLeft).toBe(450);
     });
   });
 });

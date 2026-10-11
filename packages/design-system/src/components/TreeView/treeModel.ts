@@ -210,11 +210,14 @@ export function typeaheadMatch(
     0,
     flat.findIndex((item) => item.key === currentKey),
   );
-  const start = buffer.length > 1 ? i : i + 1;
   const needle = buffer.toLocaleLowerCase();
+  // A repeated single character ("ss") cycles through the matches for that character (APG).
+  const repeated = buffer.length > 1 && [...needle].every((c) => c === needle[0]);
+  const start = buffer.length > 1 && !repeated ? i : i + 1;
+  const prefix = repeated ? needle[0] : needle;
   for (let k = 0; k < flat.length; k++) {
     const item = flat[(start + k) % flat.length];
-    if (item.kind === 'node' && item.node.label.toLocaleLowerCase().startsWith(needle))
+    if (item.kind === 'node' && item.node.label.toLocaleLowerCase().startsWith(prefix))
       return item.key;
   }
   return null;

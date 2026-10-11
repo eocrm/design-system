@@ -15,7 +15,8 @@ const byId = new Map([...expanded].map((id, i) => [id, children[i]]));
   roots={roots.map(toNode)}
   childrenOf={(id) => {
     const q = byId.get(id);
-    return q?.isError ? { error: true } : q?.data?.units.map(toNode); // undefined = loading
+    if (!q || (q.isFetching && !q.data)) return undefined; // loading, incl. a retry in flight
+    return q.isError ? { error: true } : q.data.units.map(toNode);
   }}
   expandedIds={expanded}
   onExpandedChange={(id, open) =>
@@ -43,7 +44,7 @@ const byId = new Map([...expanded].map((id, i) => [id, children[i]]));
 | Prop | Type | Required | Description |
 |---|---|---|---|
 | `aria-label` | `string` | yes | Accessible name of the tree, e.g. "Organization structure". Required. |
-| `view` | `'list' \| 'chart'` | no | Presentation. Default `'list'`. - `'list'` — file-explorer rows indented per level with a chevron; ↑/↓ walk rows, →/← expand/collapse. - `'chart'` — classic top-down org chart of boxes with connector lines; scrolls horizontally inside itself when wider than its container. Spatial keys: ↓ into children, ↑ to the parent, ←/→ between siblings. |
+| `view` | `'list' \| 'chart'` | no | Presentation. Default `'list'`. - `'list'` — file-explorer rows indented per level with a chevron; ↑/↓ walk rows, →/← expand/collapse. - `'chart'` — classic top-down org chart of boxes with connector lines; scrolls horizontally inside itself when wider than its container. Spatial keys: ↓ expands or enters, ↑ collapses or goes to the parent, ←/→ between siblings. |
 | `roots` | `TreeViewNode[]` | yes | Top-level nodes. |
 | `childrenOf` | `(id: string) => TreeViewChildren` | yes | Children of an expanded node: the array once loaded, `undefined` while loading, `{ error: true }` on failure. Called only for expanded nodes. |
 | `expandedIds` | `ReadonlySet<string>` | yes | Ids of expanded nodes (controlled). Fetch a node's children when it appears here. |
@@ -57,13 +58,14 @@ const byId = new Map([...expanded].map((id, i) => [id, children[i]]));
 <!-- props:end -->
 
 - **Nodes.** `TreeViewNode = { id: string; label: string; hasChildren: boolean; content?: ReactNode }`. `hasChildren` drives the chevron / toggle and `aria-expanded` even before the children load; `label` is the accessible name and the typeahead text.
-- **Lazy by contract.** `childrenOf(id)` is called only for expanded nodes: return the array once loaded, `undefined` while loading (a "Loading…" row), `{ error: true }` on failure (a "Couldn't load. Retry" row; actionable only with `onRetry`). Start the fetch when an id appears in `expandedIds`. A tree already in memory is fine too: return arrays immediately, don't fake loading.
+- **Lazy by contract.** `childrenOf(id)` is called only for expanded nodes: return the array once loaded, `undefined` while loading (a "Loading…" row), `{ error: true }` on failure (a "Couldn't load. Retry" row; actionable only with `onRetry`). `childrenOf` must also return `undefined` while a retry is in flight (react-query v5 keeps `isError` true while refetching after an error, so check `isFetching` first), otherwise there is no loading row and a second failure is silent. Start the fetch when an id appears in `expandedIds`. A tree already in memory is fine too: return arrays immediately, don't fake loading.
 - **Controlled.** `expandedIds` / `onExpandedChange` and `selectedId` / `onSelect` are controlled. Omit `onSelect` for a tree without selection. Selection never follows focus: arrows move, Enter / Space / click select.
 - **Overflow.** `overflowOf(parentId)` (`null` = root level) returns `{ label, onLoadMore?, loading? }` (or `null`) and adds a muted "N more not shown" row at the end of a level. `onLoadMore` makes it actionable, `loading` marks the fetch in flight; focus then moves to the first new item (if nothing new arrives it stays on the overflow row).
 - **Rows** are named by `label`; `content` is visual only and must not contain buttons, links or inputs (a treeitem's content is not separately reachable). Put actions in the selection target (a drawer, a detail pane).
 - **Keyboard — list:** ↑/↓ move, → expands or enters, ← collapses or goes to the parent, Home/End, Enter/Space select, type to jump (the typeahead buffer resets after 500ms). **Chart:** ↓ expands or enters, ↑ collapses or goes to the parent, ←/→ move between siblings; the tree describes these keys to screen readers (merged with your own `aria-describedby`).
 - **Screen readers:** one tab stop; levels, positions and expanded state come from ARIA. A slow (≥ 300ms) user-triggered load is announced once ("Loading…"), a failure is announced; success is silent. After Retry focus stays on the status row while loading and moves to the first child when children arrive (if the retry fails again it stays on the Retry row).
-- **Sizing.** `list` grows with its content — put it in a scrolling parent for long trees. `chart` fills its parent's width and scrolls horizontally inside itself when the chart is wider; it opens centred on the selected (or first) item, and the focused box scrolls into view.
+- **Empty tree.** An empty tree is not useful and not valid ARIA (a `tree` needs items): until roots load render a `Skeleton`, `EmptyState` or `ErrorState` instead of `<TreeView roots={[]}>`. A node whose loaded children are `[]` renders no group.
+- **Sizing.** `list` grows with its content — put it in a scrolling parent for long trees. `chart` fills its parent's width and scrolls horizontally inside itself when the chart is wider; it opens centred on the selected (or first) item (when the view is chosen or the first items appear), and the focused box scrolls into view.
 
 #### When NOT to use
 

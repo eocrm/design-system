@@ -195,6 +195,22 @@ describe('keyAction — chart view (spatial)', () => {
   });
 });
 
+describe('typeaheadMatch repeated character', () => {
+  it('cycles through matches of the repeated character', () => {
+    const flat = flatten(
+      buildTree({
+        roots: ['Sales', 'Support', 'Sauna'].map((id) => n(id)),
+        childrenOf: () => undefined,
+        expandedIds: new Set(),
+      }),
+    );
+    // Focus follows each match, so the next repeat searches after the item the previous one landed on.
+    expect(typeaheadMatch(flat, 'node:Sales', 'ss')).toBe('node:Support');
+    expect(typeaheadMatch(flat, 'node:Support', 'sss')).toBe('node:Sauna');
+    expect(typeaheadMatch(flat, 'node:Sauna', 'ssss')).toBe('node:Sales');
+  });
+});
+
 describe('typeaheadMatch', () => {
   const flat = flatten(
     buildTree({

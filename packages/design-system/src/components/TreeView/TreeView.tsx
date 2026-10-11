@@ -45,7 +45,7 @@ export interface TreeViewProps extends Omit<
    * Presentation. Default `'list'`.
    * - `'list'` — file-explorer rows indented per level with a chevron; ↑/↓ walk rows, →/← expand/collapse.
    * - `'chart'` — classic top-down org chart of boxes with connector lines; scrolls horizontally inside itself
-   *   when wider than its container. Spatial keys: ↓ into children, ↑ to the parent, ←/→ between siblings.
+   *   when wider than its container. Spatial keys: ↓ expands or enters, ↑ collapses or goes to the parent, ←/→ between siblings.
    */
   view?: TreeViewView;
   /** Top-level nodes. */
@@ -141,7 +141,9 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
 
   const chart = view === 'chart';
   // Open the chart centred on the tab-stop box, scrolling only the tree's own container (never the page).
-  // Keyed on view only: re-running on every render would fight the user's scrolling.
+  // Keyed on view and on the tree gaining its first items (late roots); re-running on every render would
+  // fight the user's scrolling.
+  const hasItems = flat.length > 0;
   useLayoutEffect(() => {
     const box = tabStop ? itemEls.current.get(tabStop) : undefined;
     const root = rootEl.current;
@@ -150,7 +152,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
     const c = root.getBoundingClientRect();
     root.scrollLeft += b.left + b.width / 2 - (c.left + c.width / 2);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chart]);
+  }, [chart, hasItems]);
   const focusKey = useCallback(
     (key: string) => {
       setFocusedKey(key);
@@ -268,14 +270,15 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
 
   const onItemKeyDown = (event: KeyboardEvent<HTMLDivElement>, item: TreeItem) => {
     if (event.target !== event.currentTarget) return;
+    const ta = typeahead.current;
+    // Space continues a running typeahead ("Team B"); on its own it selects.
     if (
       event.key.length === 1 &&
-      event.key !== ' ' &&
+      (event.key !== ' ' || ta.timer) &&
       !event.ctrlKey &&
       !event.metaKey &&
       !event.altKey
     ) {
-      const ta = typeahead.current;
       if (ta.timer) clearTimeout(ta.timer);
       ta.buffer += event.key;
       ta.timer = setTimeout(() => {
@@ -285,6 +288,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
       const match = typeaheadMatch(flat, item.key, ta.buffer);
       if (match) focusKey(match);
       event.preventDefault();
+      event.stopPropagation();
       return;
     }
     const action = keyAction(flat, item.key, event.key, view);
@@ -307,6 +311,11 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
     else expand(item.node.id);
   };
 
+  // Click lives on the row, not the treeitem: in chart view the item also wraps its subtree and connector space.
+  const rowClick = (item: TreeItem) => ({
+    onClick: (e: MouseEvent<HTMLDivElement>) => onItemClick(e, item),
+  });
+
   const common = (item: TreeItem) => ({
     ref: (el: HTMLDivElement | null) => {
       if (el) itemEls.current.set(item.key, el);
@@ -319,7 +328,6 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
     onFocus: (e: FocusEvent<HTMLDivElement>) => {
       if (e.target === e.currentTarget) setFocusedKey(item.key);
     },
-    onClick: (e: MouseEvent<HTMLDivElement>) => onItemClick(e, item),
     style: { '--tree-view-level': item.level - 1 } as CSSProperties,
   });
 
@@ -338,7 +346,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
           aria-selected={onSelect ? selectedId === node.id : undefined}
           data-kind="node"
         >
-          <div className={styles.row}>
+          <div className={styles.row} {...rowClick(item)}>
             <span
               className={styles.toggle}
               aria-hidden="true"
@@ -359,7 +367,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
             </span>
             <span className={styles.content}>{node.content ?? node.label}</span>
           </div>
-          {item.expanded && (
+          {item.expanded && item.children.length > 0 && (
             <div role="group" className={clsx(styles.group, chart && styles.level)}>
               {item.children.map(renderItem)}
             </div>
@@ -397,7 +405,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
         aria-disabled={actionable ? undefined : 'true'}
         data-kind="status"
       >
-        <div className={styles.row}>
+        <div className={styles.row} {...rowClick(item)}>
           <span className={styles.toggle} aria-hidden="true">
             {loading && <CircularProgress size="sm" aria-hidden="true" />}
           </span>
