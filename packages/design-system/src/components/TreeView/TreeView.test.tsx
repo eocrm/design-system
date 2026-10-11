@@ -426,3 +426,39 @@ describe('TreeView async', () => {
     expect(region().textContent).toBe(message);
   });
 });
+
+describe('TreeView chart view', () => {
+  it('describes the keys and uses spatial arrows', async () => {
+    render(<Harness view="chart" initial={['Company']} />);
+    const tree = screen.getByRole('tree');
+    expect(tree).toHaveAttribute('data-view', 'chart');
+    expect(tree).toHaveAccessibleDescription(
+      'Use up and down arrows to move between levels, left and right arrows to move between siblings.',
+    );
+    await userEvent.tab();
+    await userEvent.keyboard('{ArrowDown}');
+    expect(item('Sales')).toHaveFocus();
+    await userEvent.keyboard('{ArrowRight}');
+    expect(item('Support')).toHaveFocus();
+    await userEvent.keyboard('{ArrowDown}');
+    expect(item('Support')).toHaveAttribute('aria-expanded', 'true');
+    await userEvent.keyboard('{ArrowUp}');
+    expect(item('Support')).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.keyboard('{ArrowUp}');
+    expect(item('Company')).toHaveFocus();
+  });
+
+  it('scrolls the focused box into view', async () => {
+    const spy = vi.fn();
+    Element.prototype.scrollIntoView = spy;
+    render(<Harness view="chart" initial={['Company']} />);
+    await userEvent.tab();
+    await userEvent.keyboard('{ArrowDown}');
+    expect(spy).toHaveBeenCalledWith({ block: 'nearest', inline: 'nearest' });
+  });
+
+  it('list view has no key hint', () => {
+    render(<Harness />);
+    expect(screen.getByRole('tree')).not.toHaveAttribute('aria-describedby');
+  });
+});

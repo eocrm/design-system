@@ -1,6 +1,7 @@
 import {
   forwardRef,
   useCallback,
+  useId,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -13,9 +14,10 @@ import {
   type ReactNode,
 } from 'react';
 import clsx from 'clsx';
-import { ChevronRight } from 'lucide-react';
+import { ChevronDown, ChevronRight, Minus } from 'lucide-react';
 import { CircularProgress } from '../CircularProgress';
 import { LiveRegion } from '../LiveRegion';
+import { VisuallyHidden } from '../VisuallyHidden';
 import { chain, mergeRefs } from '../_internal/refs';
 import { useTranslation } from '../../i18n/useTranslation';
 import {
@@ -96,6 +98,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
   ref,
 ) {
   const t = useTranslation();
+  const hintId = useId();
   const items = buildTree({ roots, childrenOf, expandedIds, overflowOf });
   const flat = flatten(items);
   const [focusedKey, setFocusedKey] = useState<string | null>(null);
@@ -136,10 +139,19 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
       ? selectedKey
       : (flat[0]?.key ?? null);
 
-  const focusKey = useCallback((key: string) => {
-    setFocusedKey(key);
-    itemEls.current.get(key)?.focus();
-  }, []);
+  const chart = view === 'chart';
+  const focusKey = useCallback(
+    (key: string) => {
+      setFocusedKey(key);
+      const el = itemEls.current.get(key);
+      if (!el) return;
+      if (!chart) return el.focus();
+      // The chart scrolls inside itself: bring the box into view without the browser's own jump.
+      el.focus({ preventScroll: true });
+      el.scrollIntoView?.({ block: 'nearest', inline: 'nearest' });
+    },
+    [chart],
+  );
 
   // Focus is in the tree, or was until the focused row unmounted (activeElement falls back to body).
   const inTree = useCallback(
@@ -323,12 +335,21 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
               data-expanded={item.expanded || undefined}
               onClick={node.hasChildren ? (e) => onToggleClick(e, item) : undefined}
             >
-              {node.hasChildren && <ChevronRight className={styles.chevron} />}
+              {node.hasChildren &&
+                (chart ? (
+                  item.expanded ? (
+                    <Minus className={styles.chevron} />
+                  ) : (
+                    <ChevronDown className={styles.chevron} />
+                  )
+                ) : (
+                  <ChevronRight className={styles.chevron} />
+                ))}
             </span>
             <span className={styles.content}>{node.content ?? node.label}</span>
           </div>
           {item.expanded && (
-            <div role="group" className={styles.group}>
+            <div role="group" className={clsx(styles.group, chart && styles.level)}>
               {item.children.map(renderItem)}
             </div>
           )}
@@ -388,6 +409,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
         {...rest}
         ref={mergeRefs(ref, rootEl)}
         role="tree"
+        aria-describedby={chart ? hintId : rest['aria-describedby']}
         data-view={view}
         className={clsx(styles.root, className)}
         onFocus={chain(() => {
@@ -402,9 +424,14 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
           });
         }, onBlur)}
       >
-        {items.map(renderItem)}
+        {chart ? (
+          <div className={styles.level}>{items.map(renderItem)}</div>
+        ) : (
+          items.map(renderItem)
+        )}
       </div>
       {/* Outside the tree: a tree may own only groups and treeitems. */}
+      {chart && <VisuallyHidden id={hintId}>{t('treeView.chartHint')}</VisuallyHidden>}
       <LiveRegion>{message}</LiveRegion>
     </>
   );

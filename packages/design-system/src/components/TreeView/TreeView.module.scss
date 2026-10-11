@@ -81,3 +81,117 @@
   cursor: pointer;
   text-decoration: underline;
 }
+
+// ---- view="chart" ----------------------------------------------------------
+.root[data-view='chart'] {
+  overflow: auto;
+  width: 100%;
+  padding: var(--tree-view-chart-padding);
+}
+
+.root[data-view='chart'] .level {
+  display: flex;
+  justify-content: safe center;
+  min-width: max-content;
+}
+
+.root[data-view='chart'] .group {
+  position: relative;
+  padding-block-start: var(--tree-view-level-gap);
+
+  // drop from the parent box to the sibling bar
+  &::before {
+    content: '';
+    position: absolute;
+    inset-block-start: 0;
+    inset-inline-start: 50%;
+    block-size: calc(var(--tree-view-level-gap) / 2);
+    border-inline-start: var(--tree-view-connector-width) solid var(--tree-view-connector);
+  }
+}
+
+.root[data-view='chart'] .item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  padding-inline: calc(var(--tree-view-sibling-gap) / 2);
+}
+
+// sibling bar halves + stub into each child (children of a group only)
+.root[data-view='chart'] .group > .item {
+  padding-block-start: calc(var(--tree-view-level-gap) / 2);
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    inset-block-start: 0;
+    inline-size: 50%;
+    block-size: calc(var(--tree-view-level-gap) / 2);
+    border-block-start: var(--tree-view-connector-width) solid var(--tree-view-connector);
+  }
+
+  &::before {
+    inset-inline-end: 50%;
+  }
+
+  &::after {
+    inset-inline-start: 50%;
+    border-inline-start: var(--tree-view-connector-width) solid var(--tree-view-connector);
+  }
+
+  &:first-child::before,
+  &:last-child::after {
+    border-block-start: 0;
+  }
+
+  &:only-child::before {
+    border: 0;
+  }
+}
+
+.root[data-view='chart'] .row {
+  position: relative;
+  max-inline-size: var(--tree-view-box-max-width);
+  min-height: 0;
+  padding: var(--tree-view-box-padding);
+  border: var(--tree-view-box-border-width) solid var(--tree-view-box-border);
+  border-radius: var(--tree-view-box-radius);
+  background: var(--tree-view-box-bg);
+}
+
+.root[data-view='chart'] .item[data-kind='node']:not([aria-selected='true']) > .row:hover {
+  background: var(--tree-view-row-hover-bg);
+}
+
+.root[data-view='chart'] .item[aria-selected='true'] > .row {
+  border-color: var(--tree-view-box-selected-border);
+  background: var(--tree-view-row-selected-bg);
+}
+
+.root[data-view='chart'] .item:focus-visible > .row {
+  @include focus-ring(var(--tree-view-ring));
+}
+
+.root[data-view='chart'] .item[data-kind='status'] > .row {
+  border-style: dashed;
+}
+
+// toggle sits on the box's bottom edge; leaves have no toggle in chart view
+.root[data-view='chart'] .toggle:not([data-toggle]) {
+  display: none;
+}
+
+.root[data-view='chart'] .toggle[data-toggle] {
+  position: absolute;
+  inset-block-start: 100%;
+
+  // RTL: physical left + physical translate stay centred in both directions (inset-inline-start would not).
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: var(--tree-view-box-border-width) solid var(--tree-view-box-border);
+  border-radius: 50%;
+  background: var(--tree-view-toggle-bg);
+  z-index: 1;
+}
