@@ -1,4 +1,5 @@
 import { VisuallyHidden } from '../VisuallyHidden';
+import { markerLabelsAt, type ResolvedMarker } from './chartModel';
 
 export interface ChartTableColumn {
   key: string;
@@ -14,6 +15,8 @@ export function ChartTable({
   categories,
   columns,
   formatValue,
+  markersHeader,
+  markers,
 }: {
   caption: string;
   categoryHeader: string;
@@ -21,7 +24,11 @@ export function ChartTable({
   categories: readonly string[];
   columns: ChartTableColumn[];
   formatValue: (n: number) => string;
+  markersHeader: string;
+  markers: readonly ResolvedMarker[];
 }) {
+  // Only labelled markers carry meaning; decorative bands add no column.
+  const hasNotes = markers.some((m) => m.label);
   return (
     <VisuallyHidden as="div">
       <table>
@@ -34,6 +41,7 @@ export function ChartTable({
                 {c.header}
               </th>
             ))}
+            {hasNotes && <th scope="col">{markersHeader}</th>}
           </tr>
         </thead>
         <tbody>
@@ -44,6 +52,7 @@ export function ChartTable({
                 const v = c.values[i];
                 return <td key={c.key}>{v === null ? noData : formatValue(v)}</td>;
               })}
+              {hasNotes && <td>{markerLabelsAt(markers, i).join(', ')}</td>}
             </tr>
           ))}
         </tbody>

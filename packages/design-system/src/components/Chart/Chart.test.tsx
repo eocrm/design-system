@@ -559,3 +559,81 @@ describe('inspect', () => {
     expect(container.querySelectorAll('path[class*="marker"]')).toHaveLength(1);
   });
 });
+
+describe('markers', () => {
+  const markers: ChartProps['markers'] = [
+    { key: 'launch', label: 'Launch', at: 'W2' },
+    { key: 'promo', label: 'Promo', from: 'W2', to: 'W3' },
+    { key: 'weekend', from: 'W1', to: 'W1', tone: 'subtle' },
+  ];
+
+  it('draws a band per range and a line per point, with labels', () => {
+    const layout = stubLayout();
+    const { container } = render(<Chart {...base} markers={markers} />);
+    layout.fire();
+    const bands = container.querySelectorAll('rect[class*="markerBand"]');
+    expect([...bands].map((b) => b.getAttribute('data-tone'))).toEqual(['neutral', 'subtle']);
+    expect(container.querySelectorAll('line[class*="markerLine"]')).toHaveLength(1);
+    const labels = [...container.querySelectorAll('[class*="markerLabels"] text')];
+    expect(labels.map((l) => l.textContent)).toContain('Launch');
+  });
+
+  it('lists labelled markers in the data table; decorative ones add nothing', () => {
+    stubLayout();
+    const { rerender } = render(<Chart {...base} markers={markers} />);
+    const table = screen.getByRole('table');
+    expect(within(table).getByRole('columnheader', { name: 'Markers' })).toBeInTheDocument();
+    const rows = within(table).getAllByRole('row');
+    expect(rows[1].lastElementChild).toHaveTextContent(/^$/);
+    expect(rows[2].lastElementChild).toHaveTextContent('Launch, Promo');
+    expect(rows[3].lastElementChild).toHaveTextContent('Promo');
+    rerender(<Chart {...base} markers={[{ key: 'weekend', from: 'W1', to: 'W1' }]} />);
+    expect(within(table).queryByRole('columnheader', { name: 'Markers' })).toBeNull();
+  });
+
+  it('names the markers of the inspected category in the tooltip and announcement', async () => {
+    const layout = stubLayout();
+    render(<Chart {...base} markers={markers} />);
+    layout.fire();
+    screen.getByRole('group', { name: 'Deals won per week' }).focus();
+    await userEvent.keyboard('{ArrowRight}{ArrowRight}');
+    const live = document.querySelector('[aria-live="polite"]')!;
+    await waitFor(() => expect(live).toHaveTextContent(/^W2: .*\. Launch, Promo$/));
+    expect(document.querySelector('[data-chart-tooltip]')).toHaveTextContent('Launch');
+  });
+
+  it('ignores markers naming an unknown category, with a dev warning', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const layout = stubLayout();
+    const { container } = render(
+      <Chart {...base} markers={[{ key: 'x', label: 'X', at: 'W9' }]} />,
+    );
+    layout.fire();
+    expect(container.querySelector('line[class*="markerLine"]')).toBeNull();
+    expect(warn.mock.calls.flat().join(' ')).toMatch(/Ignored markers \(x\)/);
+  });
+});
+
+it('inspection markers paint after every series, so a later stacked area cannot cover them', async () => {
+  const layout = stubLayout();
+  const { container } = render(
+    <Chart
+      {...base}
+      type="area"
+      series={[
+        { key: 'a', label: 'A', values: [1, 2, 3] },
+        { key: 'b', label: 'B', values: [3, 2, 1] },
+      ]}
+    />,
+  );
+  layout.fire();
+  screen.getByRole('group', { name: 'Deals won per week' }).focus();
+  await userEvent.keyboard('{ArrowRight}');
+  const svg = container.querySelector('svg')!;
+  const lastArea = [...svg.querySelectorAll('path[class*="area"]')].at(-1)!;
+  const markers = [...svg.querySelectorAll('path[class*="marker"]')];
+  expect(markers).toHaveLength(2);
+  for (const m of markers) {
+    expect(lastArea.compareDocumentPosition(m) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  }
+});

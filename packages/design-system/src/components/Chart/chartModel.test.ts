@@ -4,8 +4,12 @@ import {
   computeLayout,
   fitLegend,
   isEmpty,
+  layoutMarkers,
+  smoothStack,
+  markerLabelsAt,
   markerPath,
   markerShape,
+  resolveMarkers,
   resolveSeries,
   thinLabels,
   visibleSeries,
@@ -205,10 +209,297 @@ describe('computeLayout', () => {
     const m = l.marks[0];
     expect(m.kind).toBe('line');
     expect(m.points[1]).toBeNull();
-    // d3 emits one "M" per defined run: [1] and [3] are two runs.
-    expect(m.line!.match(/M/g)!.length).toBe(2);
+    // Both defined points are isolated: no path, a dot each.
+    expect(m.line).toBe('');
     expect(m.dots).toHaveLength(2);
     expect(m.line).not.toContain('NaN');
+  });
+
+  // Largest vertical gap between two sampled paths over the same x samples.
+  const gap = (a: string, b: string) => {
+    const ya = ys(a);
+    const yb = ys(b);
+    expect(ya).toHaveLength(yb.length);
+    return Math.max(...ya.map((y, i) => Math.abs(y - yb[i])));
+  };
+  // y of every vertex in an M/L path
+  const ys = (d: string) =>
+    (d.match(/-?[\d.]+(e-?\d+)?/g) ?? []).map(Number).filter((_, i) => i % 2);
+
+  it('smooths lines (the stacked-bar total included), rounding flat runs', () => {
+    const values = [0, 10, 10, 0];
+    const l = layout({ type: 'line', series: one(values) });
+    // Many short segments, not 3 straight ones; and it bulges between the two equal 10s.
+    expect(ys(l.marks[0].line!).length).toBeGreaterThan(values.length * 2);
+    expect(Math.min(...ys(l.marks[0].line!))).toBeLessThan(l.marks[0].points[1]!.y - 0.5);
+    const stacked = layout({
+      type: 'stacked-bar',
+      series: resolveSeries('stacked-bar', [s('a', values), s('p', values, 'total')], 4).series,
+    });
+    expect(ys(stacked.marks.find((m) => m.kind === 'line')!.line!).length).toBeGreaterThan(8);
+  });
+
+  it('keeps the overshoot inside the plot', () => {
+    for (const values of [
+      [0, 10, 10, 0],
+      [10, 0, 0, 10],
+    ]) {
+      const l = layout({ type: 'line', series: one(values) });
+      for (const y of ys(l.marks[0].line!)) {
+        expect(y).toBeGreaterThanOrEqual(l.plot.y - 1e-6);
+        expect(y).toBeLessThanOrEqual(l.plot.y + l.plot.height + 1e-6);
+      }
+    }
+  });
+
+  it('never smooths below 0 between non-negative values: no negative axis on counts', () => {
+    for (const type of ['line', 'area'] as const) {
+      for (const values of [
+        [5, 0, 0, 3],
+        [10, 0, 0, 10],
+      ]) {
+        const l = layout({ type, series: one(values) });
+        expect(l.yTicks[0].value).toBeGreaterThanOrEqual(0);
+        const zeroY = l.yTicks.find((t) => t.value === 0)!.y;
+        for (const y of ys(l.marks[0].line!)) expect(y).toBeLessThanOrEqual(zeroY + 1e-6);
+      }
+    }
+    // the same clamp keeps a single-layer area and its equal total on one curve
+    const values = [0, 0, 10, 10];
+    const l = layout({
+      type: 'area',
+      series: resolveSeries('area', [s('a', values), s('t', values, 'total')], 4).series,
+    });
+    expect(l.marks[1].line).toBe(l.marks[0].line);
+  });
+
+  it('a total equal to a multi-layer stack stays close to its top where a layer is clamped', () => {
+    const series = resolveSeries(
+      'area',
+      [s('a', [0, 5, 0, 0]), s('b', [10, 10, 10, 10]), s('t', [10, 15, 10, 10], 'total')],
+      4,
+    ).series;
+    const l = layout({ type: 'area', series });
+    // Smoothed separately: drifts next to spikes and zeros (fuzzed worst case ~10% of plot height).
+    expect(gap(l.marks[2].line!, l.marks[1].line!)).toBeLessThan(0.1 * l.plot.height);
+  });
+
+  it('the stack top stays close to the smoothed total when an empty layer rides over a peak', () => {
+    const series = resolveSeries(
+      'area',
+      [s('a', [0, 10, 10, 0]), s('b', [10, 0, 0, 10]), s('t', [10, 10, 10, 10], 'total')],
+      4,
+    ).series;
+    const l = layout({ type: 'area', series });
+    // Smoothed separately: drifts next to spikes and zeros (fuzzed worst case ~10% of plot height).
+    expect(gap(l.marks[2].line!, l.marks[1].line!)).toBeLessThan(0.1 * l.plot.height);
+    // and the lower layer never pokes above it
+    const S = 12;
+    const tops = smoothStack(
+      [
+        [0, 10, 10, 0],
+        [10, 0, 0, 10],
+      ],
+      S,
+    );
+    for (let i = 0; i < 3; i++)
+      for (let k = 0; k <= S; k++) expect(tops[0][i][k]).toBeLessThanOrEqual(tops[1][i][k]);
+  });
+
+  it('keeps a 0 to 0 segment flat, so all-negative data gets no positive tick', () => {
+    for (const values of [
+      [-5, 0, 0, -3],
+      [-10, 0, 0, -10],
+    ]) {
+      const l = layout({ type: 'line', series: one(values) });
+      expect(l.yTicks[l.yTicks.length - 1].value).toBeLessThanOrEqual(0);
+    }
+  });
+
+  it('a total equal to the stack stays close to it when the top layer has interior zeros', () => {
+    for (const [a, b] of [
+      [
+        [5, 5, 5, 5],
+        [10, 0, 0, 10],
+      ],
+      [
+        [20, 20, 20, 20],
+        [0, 0, 30, 0],
+      ],
+    ]) {
+      const total = a.map((v, i) => v + b[i]);
+      const series = resolveSeries(
+        'area',
+        [s('a', a), s('b', b), s('t', total, 'total')],
+        4,
+      ).series;
+      const l = layout({ type: 'area', series });
+      // Smoothed separately: drifts next to spikes and zeros (fuzzed worst case ~10% of plot height).
+      expect(gap(l.marks[2].line!, l.marks[1].line!)).toBeLessThan(0.1 * l.plot.height);
+    }
+  });
+
+  it('a stacked layer that is 0 at both ends of a segment has no thickness there', () => {
+    const S = 12;
+    const layers = [
+      [31, 80, 42, 31, 44, 0],
+      [2, 0, 64, 13, 0, 94],
+      [38, 0, 86, 0, 0, 0],
+      [0, 0, 0, 0, 23, 0],
+    ];
+    const tops = smoothStack(layers, S);
+    for (let k = 1; k < layers.length; k++)
+      for (let i = 0; i < layers[k].length - 1; i++)
+        if (layers[k][i] === 0 && layers[k][i + 1] === 0)
+          for (let s = 0; s <= S; s++) expect(tops[k][i][s]).toBe(tops[k - 1][i][s]);
+  });
+
+  it('a steady top layer keeps its thickness over a spiky layer below', () => {
+    const S = 12;
+    const tops = smoothStack(
+      [
+        [5, 0, 10, 399, 0, 6, 8],
+        [4, 4, 4, 4, 4, 4, 4],
+      ],
+      S,
+    );
+    for (let i = 0; i < 6; i++)
+      for (let k = 0; k <= S; k++) expect(tops[1][i][k] - tops[0][i][k]).toBeCloseTo(4, 9);
+  });
+
+  it('a steady layer is not crushed by a huge one-off spike in the layer above', () => {
+    const S = 12;
+    const tops = smoothStack(
+      [
+        [10, 10, 10, 10, 10, 10, 10],
+        [0, 0, 0, 500, 0, 0, 0],
+      ],
+      S,
+    );
+    for (const seg of tops[0]) for (const t of seg) expect(t).toBeGreaterThanOrEqual(9);
+    for (let i = 0; i < 6; i++)
+      for (let k = 0; k <= S; k++) expect(tops[1][i][k]).toBeGreaterThanOrEqual(tops[0][i][k]);
+  });
+
+  it('a steep first step keeps its slope at the run end', () => {
+    // Capping the end tangent by the 0.2-range floor instead of its own slope would bow this start.
+    const l = layout({ type: 'line', series: one([5, 60, 70, 80]) });
+    const pts = l.marks[0]
+      .line!.slice(1)
+      .split('L')
+      .map((p) => p.split(',').map(Number));
+    const [x0, y0] = pts[0];
+    const [x1, y1] = [l.categoryX[1], l.marks[0].points[1]!.y];
+    const dev = Math.max(
+      ...pts
+        .filter(([x]) => x <= x1)
+        .map(([x, y]) => Math.abs(y - (y0 + ((y1 - y0) * (x - x0)) / (x1 - x0)))),
+    );
+    expect(dev).toBeLessThan(0.05 * l.plot.height);
+  });
+
+  it('smooths stacked areas too: the top bulges between equal values', () => {
+    const l = layout({ type: 'area', series: one([0, 10, 10, 0]) });
+    expect(ys(l.marks[0].line!).length).toBeGreaterThan(8);
+    expect(Math.min(...ys(l.marks[0].line!))).toBeLessThan(l.marks[0].points[1]!.y - 0.5);
+  });
+
+  it('a climb from 0 at the start of a run is not bowed', () => {
+    const l = layout({ type: 'line', series: one([0, 10, 20, 30]) });
+    const pts = l.marks[0]
+      .line!.slice(1)
+      .split('L')
+      .map((p) => p.split(',').map(Number));
+    const [x0, y0] = pts[0];
+    const [x1, y1] = [l.categoryX[1], l.marks[0].points[1]!.y];
+    for (const [x, y] of pts.filter(([x]) => x <= x1))
+      // ~3px of ordinary Catmull-Rom end easing; a flat start tangent bows it ~7px.
+      expect(Math.abs(y - (y0 + ((y1 - y0) * (x - x0)) / (x1 - x0)))).toBeLessThan(5);
+  });
+
+  it('a sharp spike does not drag a flat neighbourhood far past its value', () => {
+    const S = 12;
+    // Uncapped Catmull-Rom dips the flat 10s to ~2.6 before the spike; the cap keeps it within 5% of the range.
+    const l = layout({ type: 'line', series: one([10, 10, 110, 10]) });
+    const y10 = l.marks[0].points[0]!.y;
+    const pxPerUnit = (l.marks[0].points[0]!.y - l.marks[0].points[2]!.y) / 100;
+    for (const y of ys(l.marks[0].line!)) expect(y).toBeLessThanOrEqual(y10 + 5 * pxPerUnit);
+    // In a stack, the steady layer under a one-off spike keeps most of its thickness.
+    const tops = smoothStack(
+      [
+        [10, 10, 10, 10],
+        [0, 0, 100, 0],
+      ],
+      S,
+    );
+    for (const k of tops[0][0]) expect(k).toBeGreaterThanOrEqual(5);
+  });
+
+  it('eases into a 0 floor without a corner', () => {
+    // [5, 0, 0, 3]: the curve reaches 0 flat (no kink), so the sample just before 0 is near 0.
+    const l = layout({ type: 'line', series: one([5, 0, 0, 3]) });
+    const zeroY = l.yTicks.find((t) => t.value === 0)!.y;
+    const pts = l.marks[0]
+      .line!.slice(1)
+      .split('L')
+      .map((p) => p.split(',').map(Number));
+    const atFirstZero = pts.findIndex(([x]) => Math.abs(x - l.categoryX[1]) < 0.01);
+    const [x0, y0] = pts[atFirstZero - 1];
+    const slopeIn = (zeroY - y0) / (l.categoryX[1] - x0);
+    const firstStep = (zeroY - l.marks[0].points[0]!.y) / (l.categoryX[1] - l.categoryX[0]);
+    // ~0.11x with the flat tangent; without it the capped tangent still gives ~0.3x.
+    expect(Math.abs(slopeIn)).toBeLessThan(Math.abs(firstStep) / 4);
+  });
+
+  it('draws a two-point run straight', () => {
+    const l = layout({ type: 'line', series: one([0, 10, null, null]) });
+    const pts = l.marks[0]
+      .line!.slice(1)
+      .split('L')
+      .map((p) => p.split(',').map(Number));
+    const [[x0, y0], [x1, y1]] = [pts[0], pts[pts.length - 1]];
+    for (const [x, y] of pts) expect(y).toBeCloseTo(y0 + ((y1 - y0) * (x - x0)) / (x1 - x0), 1);
+  });
+
+  it('keeps area overshoot inside the plot', () => {
+    const l = layout({ type: 'area', series: one([0, 10, 10, 0]) });
+    for (const y of ys(l.marks[0].line!)) expect(y).toBeGreaterThanOrEqual(l.plot.y - 1e-6);
+  });
+
+  it('breaks smoothed lines at gaps without NaN', () => {
+    const l = layout({ type: 'line', series: one([1, 2, null, 3]) });
+    expect(l.marks[0].line!.match(/M/g)).toHaveLength(1); // [3] is isolated: a dot, not a path
+    expect(l.marks[0].line).not.toContain('NaN');
+  });
+
+  it('a total comparison equal to the stack follows the area top', () => {
+    const values = [0, 10, 2, 8];
+    const l = layout({
+      type: 'area',
+      series: resolveSeries('area', [s('a', values), s('t', values, 'total')], 4).series,
+    });
+    expect(l.marks[1].line).toBe(l.marks[0].line);
+  });
+
+  it('smoothed stacked layers hit the data exactly and never cross', () => {
+    const S = 12;
+    const tops = smoothStack(
+      [
+        [0, 5, 10, 10],
+        [5, 0, 0, 5],
+      ],
+      S,
+    );
+    // s = 0 is the category itself: exact cumulative values.
+    expect(tops[0].map((seg) => seg[0])).toEqual([0, 5, 10]);
+    expect(tops[1].map((seg) => seg[0])).toEqual([5, 5, 10]);
+    expect(tops[1][2][S]).toBe(15);
+    // B is 0 at categories 1 and 2: its band may be empty, never inverted.
+    for (let i = 0; i < 3; i++)
+      for (let k = 0; k <= S; k++) expect(tops[1][i][k]).toBeGreaterThanOrEqual(tops[0][i][k]);
+    const l = layout({ type: 'area', series: one([0, 10, 10, 0]) });
+    expect(l.marks[0].area).toMatch(/Z$/);
+    expect(l.marks[0].line).not.toContain('NaN');
   });
 
   it('drops null and zero bars, keeps the rest', () => {
@@ -261,7 +552,7 @@ describe('computeLayout', () => {
       4,
     ).series;
     const m = layout({ type: 'area', series }).marks[1];
-    const topY = Number(m.line!.match(/^M[^,]+,([^L]+)/)![1]);
+    const topY = Number(m.line!.match(/^M[^,]+,([^A-Za-z]+)/)![1]);
     expect(m.points[0]!.y).toBeCloseTo(topY, 5);
   });
 
@@ -379,5 +670,68 @@ describe('computeLayout', () => {
   it('categoryIndexAt is 0 with no categories', () => {
     const l = layout({ type: 'line', categories: [], series: [] });
     expect(categoryIndexAt(l, 50)).toBe(0);
+  });
+});
+
+describe('markers', () => {
+  const cats = ['a', 'b', 'c', 'd'];
+
+  it('resolves at/from/to to category indices, normalising order and dropping unknowns', () => {
+    const r = resolveMarkers(
+      [
+        { key: 'l', label: 'L', at: 'b' },
+        { key: 'r', from: 'd', to: 'c', tone: 'subtle' },
+        { key: 'x', at: 'zz' },
+        { key: 'e', label: '', at: 'a' },
+      ],
+      cats,
+    );
+    expect(r.markers).toEqual([
+      { key: 'l', label: 'L', tone: 'neutral', kind: 'line', from: 1, to: 1 },
+      { key: 'r', label: undefined, tone: 'subtle', kind: 'band', from: 2, to: 3 },
+      { key: 'e', label: undefined, tone: 'neutral', kind: 'line', from: 0, to: 0 },
+    ]);
+    expect(r.dropped).toEqual(['x']);
+    expect(markerLabelsAt(r.markers, 1)).toEqual(['L']);
+    expect(markerLabelsAt(r.markers, 3)).toEqual([]);
+  });
+
+  it('places lines on the category centre and bands over whole buckets', () => {
+    const l = layout({ type: 'line', series: [] });
+    const { markers } = resolveMarkers(
+      [
+        { key: 'l', at: 'b' },
+        { key: 'r', from: 'b', to: 'c' },
+      ],
+      cats,
+    );
+    const [line, band] = layoutMarkers(markers, l);
+    expect(line.x).toBe(l.categoryX[1]);
+    expect(line.width).toBe(0);
+    expect(band.x).toBeCloseTo(l.categoryX[1] - l.step / 2);
+    expect(band.width).toBeCloseTo(2 * l.step);
+  });
+
+  it('drops labels that collide; flips a line label near the right edge', () => {
+    const l = layout({ type: 'line', series: [] });
+    const { markers } = resolveMarkers(
+      [
+        { key: 'a', label: 'First event', at: 'b' },
+        { key: 'b', label: 'Clashing', at: 'b' },
+        { key: 'c', label: 'Late', at: 'd' },
+      ],
+      cats,
+    );
+    const g = layoutMarkers(markers, l);
+    expect(g[0].label?.text).toBe('First event');
+    expect(g[1].label).toBeUndefined();
+    // 'd' sits half a step from the right edge (~42px at width 400) — "Late" (28px) fits right of it.
+    expect(g[2].label?.anchor).toBe('start');
+    const narrow = layoutMarkers(
+      resolveMarkers([{ key: 'z', label: 'Quarter end', at: 'd' }], cats).markers,
+      l,
+    );
+    expect(narrow[0].label?.anchor).toBe('end');
+    expect(narrow[0].label!.x).toBeLessThan(l.categoryX[3]);
   });
 });

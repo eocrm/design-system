@@ -49,6 +49,40 @@
   fill: var(--chart-band);
 }
 
+.markers {
+  pointer-events: none;
+}
+
+.markerBand {
+  fill: var(--chart-marker-color);
+  fill-opacity: var(--chart-marker-band-opacity);
+
+  &[data-tone='subtle'] {
+    fill-opacity: var(--chart-marker-band-subtle-opacity);
+  }
+}
+
+.markerLine {
+  stroke: var(--chart-marker-color);
+  stroke-width: 1px;
+  stroke-dasharray: var(--chart-marker-dash);
+
+  &[data-tone='subtle'] {
+    stroke: var(--chart-marker-subtle-color);
+  }
+}
+
+.markerLabels text {
+  // Halo keeps the label legible over lines and areas.
+  paint-order: stroke;
+  stroke: var(--chart-marker-label-halo);
+  stroke-width: var(--chart-marker-label-halo-width);
+  stroke-linejoin: round;
+  fill: var(--chart-marker-label-fg);
+  font-size: var(--chart-axis-size);
+  pointer-events: none;
+}
+
 .crosshair {
   stroke: var(--chart-crosshair);
   stroke-width: 1px;
@@ -227,6 +261,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.tooltipNote {
+  color: var(--chart-axis-fg);
 }
 
 .tooltipValue {

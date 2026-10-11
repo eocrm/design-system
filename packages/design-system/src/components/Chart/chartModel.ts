@@ -1,5 +1,5 @@
 import { scaleLinear } from 'd3-scale';
-import { area, line, stack, stackOffsetDiverging, stackOffsetNone, type Series } from 'd3-shape';
+import { stack, stackOffsetDiverging, stackOffsetNone, type Series } from 'd3-shape';
 
 /** Chart form. `area` is always stacked. */
 export type ChartType = 'line' | 'bar' | 'stacked-bar' | 'area';
@@ -19,6 +19,126 @@ export interface ChartSeries {
   comparisonOf?: string;
 }
 
+/**
+ * Marker tone.
+ * - `'neutral'` — default; a visible dashed line or grey band for events (launch, campaign).
+ * - `'subtle'` — a faint band or line for recurring context (weekends, off-hours) that must not compete with data.
+ */
+export type ChartMarkerTone = 'neutral' | 'subtle';
+
+interface ChartMarkerBase {
+  /** Stable identity (React key). */
+  key: string;
+  /** Short text drawn on the plot and listed in the tooltip, keyboard announcement and data table. Omit for decorative shading (weekends). */
+  label?: string;
+  /** Visual weight. Default `'neutral'`. */
+  tone?: ChartMarkerTone;
+}
+
+/**
+ * A static annotation pinned to categories: a vertical line at one category (`at`) or a shaded band over a
+ * category range (`from`…`to`, inclusive). Values are category labels from `categories`.
+ */
+export type ChartMarker =
+  | (ChartMarkerBase & {
+      /** Category the vertical line sits on (its centre). */
+      at: string;
+      from?: never;
+      to?: never;
+    })
+  | (ChartMarkerBase & {
+      /** First category of the band (inclusive). */
+      from: string;
+      /** Last category of the band (inclusive); may equal `from` for one bucket. */
+      to: string;
+      at?: never;
+    });
+
+export interface ResolvedMarker {
+  key: string;
+  label?: string;
+  tone: ChartMarkerTone;
+  kind: 'line' | 'band';
+  /** Category index range, inclusive; `from === to` for a line. */
+  from: number;
+  to: number;
+}
+
+/** Maps markers onto category indices; markers naming an unknown category are dropped. */
+export function resolveMarkers(
+  markers: readonly ChartMarker[],
+  categories: readonly string[],
+): { markers: ResolvedMarker[]; dropped: string[] } {
+  const resolved: ResolvedMarker[] = [];
+  const dropped: string[] = [];
+  for (const m of markers) {
+    const range = m.at === undefined ? [m.from, m.to] : [m.at, m.at];
+    const [a, b] = range.map((c) => categories.indexOf(c as string));
+    if (a < 0 || b < 0) {
+      dropped.push(m.key);
+      continue;
+    }
+    resolved.push({
+      key: m.key,
+      label: m.label || undefined,
+      tone: m.tone ?? 'neutral',
+      kind: m.at === undefined ? 'band' : 'line',
+      from: Math.min(a, b),
+      to: Math.max(a, b),
+    });
+  }
+  return { markers: resolved, dropped };
+}
+
+/** Labels of the markers covering category `i`, in marker order. */
+export function markerLabelsAt(markers: readonly ResolvedMarker[], i: number): string[] {
+  return markers.flatMap((m) => (m.label && m.from <= i && i <= m.to ? [m.label] : []));
+}
+
+export interface MarkerGeometry {
+  key: string;
+  kind: 'line' | 'band';
+  tone: ChartMarkerTone;
+  /** Line x, or band left edge. */
+  x: number;
+  /** Band width; 0 for a line. */
+  width: number;
+  /** Label to draw, or undefined when absent or it would collide/clip. */
+  label?: { text: string; x: number; anchor: 'start' | 'end' };
+}
+
+/** Marker geometry in svg coordinates. Labels that would overlap an earlier label or leave the plot are dropped. */
+export function layoutMarkers(
+  markers: readonly ResolvedMarker[],
+  layout: Pick<ChartLayout, 'plot' | 'categoryX' | 'step'>,
+): MarkerGeometry[] {
+  const { plot, categoryX, step } = layout;
+  const right = plot.x + plot.width;
+  const taken: [number, number][] = [];
+  return markers.map((m) => {
+    const x = m.kind === 'line' ? categoryX[m.from] : categoryX[m.from] - step / 2;
+    const width = m.kind === 'line' ? 0 : (m.to - m.from + 1) * step;
+    const g: MarkerGeometry = { key: m.key, kind: m.kind, tone: m.tone, x, width };
+    if (!m.label) return g;
+    const w = textWidth(m.label);
+    // Start just right of the line / inside the band's left edge; flip left of a line near the right edge.
+    let anchor: 'start' | 'end' = 'start';
+    let lx = x + MARKER_LABEL_INSET;
+    if (lx + w > right && m.kind === 'line') {
+      anchor = 'end';
+      lx = x - MARKER_LABEL_INSET;
+    }
+    const span: [number, number] = anchor === 'start' ? [lx, lx + w] : [lx - w, lx];
+    const fits = span[0] >= plot.x && span[1] <= right;
+    const free = taken.every(([a, b]) => span[1] + LABEL_GAP <= a || b + LABEL_GAP <= span[0]);
+    if (fits && free) {
+      taken.push(span);
+      g.label = { text: m.label, x: lx, anchor };
+    }
+    return g;
+  });
+}
+
 /** Distinct categorical colours; series past this reuse the palette with a dashed/outlined overflow style. */
 export const PALETTE_SIZE = 8;
 // ponytail: estimated glyph width at --font-size-sm (12px) instead of measuring text;
@@ -31,10 +151,13 @@ export const X_LABEL_BASELINE = 4;
 export const DOT_RADIUS = 3;
 /** Radius of the keyboard/hover inspection marker on a line point. */
 export const MARKER_RADIUS = 4;
+/** Baseline of marker labels below the plot top. */
+export const MARKER_LABEL_BASELINE = 12;
 /** Below this root height the legend collapses to one row with a "+N" counter. */
 export const COMPACT_HEIGHT = 120;
 
 const MARK_GAP = 2;
+const MARKER_LABEL_INSET = 4;
 const BAR_RADIUS = 4;
 const BAND_RATIO = 0.65;
 const PAD_TOP = 8;
@@ -290,6 +413,24 @@ export function computeLayout(input: LayoutInput): ChartLayout {
       }
   else for (const p of primaries) p.values.forEach(take);
   for (const c of comparisons) c.values.forEach(take);
+
+  // Smoothed curves can overshoot between points: sample them first and keep the overshoot inside the plot.
+  const samples = Math.max(2, Math.min(MAX_SAMPLES, Math.ceil(width / Math.max(1, n) / SAMPLE_PX)));
+  const smoothed = new Map(
+    (type === 'line' ? series : stacked ? comparisons : []).map((x) => [
+      x.key,
+      smoothLine(x.values, samples),
+    ]),
+  );
+  const areaStack =
+    type === 'area'
+      ? smoothStack(
+          primaries.map((p) => p.values.map((v) => v ?? 0)),
+          samples,
+        )
+      : null;
+  for (const segs of smoothed.values()) for (const seg of segs) seg?.forEach(take);
+  for (const layer of areaStack ?? []) for (const seg of layer) seg.forEach(take);
   if (min === max) max = min + 1;
 
   const plotTop = PAD_TOP;
@@ -327,11 +468,10 @@ export function computeLayout(input: LayoutInput): ChartLayout {
     if (xLabels.length === 0 || !hits(xLabels[xLabels.length - 1], b)) xLabels.push(b);
   });
 
-  const linePath = (values: readonly (number | null)[]) =>
-    line<number | null>()
-      .defined((v) => v !== null)
-      .x((_, i) => categoryX[i])
-      .y((v) => y(v as number))(values as (number | null)[]) ?? '';
+  const linePath = (key: string) =>
+    sampledRuns(smoothed.get(key) ?? [], categoryX, step, y)
+      .map((run) => `M${run.join('L')}`)
+      .join('');
   const pointsOf = (values: readonly (number | null)[]) =>
     values.map((v, i) => (v === null ? null : { x: categoryX[i], y: y(v) }));
   const dotsOf = (values: readonly (number | null)[], points: (Point | null)[]) =>
@@ -348,7 +488,7 @@ export function computeLayout(input: LayoutInput): ChartLayout {
     return {
       ...base(x),
       kind: 'line',
-      line: linePath(x.values),
+      line: linePath(x.key),
       points,
       dots: dotsOf(x.values, points),
     };
@@ -405,18 +545,21 @@ export function computeLayout(input: LayoutInput): ChartLayout {
         });
         marks.push({ ...base(x), kind: 'bars', bars, points, dots: [] });
       } else {
-        const defined = (_: unknown, i: number) => x.values[i] !== null;
-        const areaPath =
-          area<[number, number]>()
-            .defined(defined)
-            .x((_, i) => categoryX[i])
-            .y0((d) => y(d[0]))
-            .y1((d) => y(d[1]))(layer as unknown as [number, number][]) ?? '';
-        const topLine =
-          line<[number, number]>()
-            .defined(defined)
-            .x((_, i) => categoryX[i])
-            .y((d) => y(d[1]))(layer as unknown as [number, number][]) ?? '';
+        // Mask segments touching this series' gaps; the bottom edge is the layer below's top.
+        const mask = (segs: number[][]) =>
+          segs.map((seg, i) => (x.values[i] === null || x.values[i + 1] === null ? null : seg));
+        const flat = (segs: number[][]) => segs.map((seg) => seg.map(() => 0));
+        const tops = sampledRuns(mask(areaStack![j]), categoryX, step, y);
+        const bottoms = sampledRuns(
+          mask(j === 0 ? flat(areaStack![j]) : areaStack![j - 1]),
+          categoryX,
+          step,
+          y,
+        );
+        const topLine = tops.map((run) => `M${run.join('L')}`).join('');
+        const areaPath = tops
+          .map((run, r) => `M${run.join('L')}L${[...bottoms[r]].reverse().join('L')}Z`)
+          .join('');
         marks.push({
           ...base(x),
           kind: 'area',
@@ -439,6 +582,111 @@ export function computeLayout(input: LayoutInput): ChartLayout {
     bandWidth,
     marks,
   };
+}
+
+/** Pixels per straight sub-segment of a smoothed curve. */
+const SAMPLE_PX = 4;
+const MAX_SAMPLES = 32;
+/** Minimum tangent, as a share of the series' range: how far flat runs and gentle extremes may round. */
+const TANGENT_FLOOR = 0.2;
+
+const hermite = (y0: number, y1: number, m0: number, m1: number, t: number) => {
+  const t2 = t * t;
+  const t3 = t2 * t;
+  return (
+    (2 * t3 - 3 * t2 + 1) * y0 + (t3 - 2 * t2 + t) * m0 + (-2 * t3 + 3 * t2) * y1 + (t3 - t2) * m1
+  );
+};
+
+/**
+ * Uniform Catmull-Rom through `v`: `result[i][s]` is the value at sample s (0..samples) of the segment
+ * between points i and i+1. Passes through every point; may overshoot between them, but never across 0
+ * when both ends are on the same side (no negative counts, no inverted stack layers).
+ */
+function smoothRun(v: readonly number[], samples: number): number[][] {
+  const n = v.length;
+  // Overshoot budget: a tangent may always reach this much, so gentle troughs and flat runs still round.
+  const floor = TANGENT_FLOOR * (Math.max(...v) - Math.min(...v));
+  const m = v.map((x, i) => {
+    // Two points: full slope at both ends, so the segment is straight rather than an S.
+    if (n === 2) return v[1] - v[0];
+    const prev = v[Math.max(0, i - 1)];
+    const next = v[Math.min(n - 1, i + 1)];
+    // An interior 0 between same-signed (or zero) neighbours is a floor: ease into it flat instead of
+    // hitting the sign clamp below. Run ends keep (half) their slope, so a climb from 0 starts nearly straight.
+    if (x === 0 && i > 0 && i < n - 1 && prev * next >= 0) return 0;
+    // Run ends: half their one real slope, which no cap would bind.
+    if (i === 0 || i === n - 1) return (next - prev) / 2;
+    // Catmull-Rom, capped at 3x the gentler neighbouring slope (a Fritsch-Carlson-style bound) so a sharp spike
+    // doesn't drag the curve far past its flatter neighbours.
+    const cap = Math.max(3 * Math.min(Math.abs(x - prev), Math.abs(next - x)), floor);
+    return Math.max(-cap, Math.min(cap, (next - prev) / 2));
+  });
+  return Array.from({ length: Math.max(0, n - 1) }, (_, i) =>
+    Array.from({ length: samples + 1 }, (_, s) => {
+      const h = hermite(v[i], v[i + 1], m[i], m[i + 1], s / samples);
+      // Never across 0 between two values on the same side (no negative counts, no inverted layers).
+      if (v[i] >= 0 && v[i + 1] >= 0) return Math.max(0, h);
+      if (v[i] <= 0 && v[i + 1] <= 0) return Math.min(0, h);
+      return h;
+    }),
+  );
+}
+
+/** Smoothed segments of a series with gaps: each defined run is its own curve; `null` where a segment touches a gap. */
+function smoothLine(values: readonly (number | null)[], samples: number): (number[] | null)[] {
+  const segs: (number[] | null)[] = Array.from(
+    { length: Math.max(0, values.length - 1) },
+    () => null,
+  );
+  for (let a = 0; a < values.length; a++) {
+    if (values[a] === null) continue;
+    let b = a;
+    while (b + 1 < values.length && values[b + 1] !== null) b++;
+    smoothRun(values.slice(a, b + 1) as number[], samples).forEach((seg, i) => (segs[a + i] = seg));
+    a = b;
+  }
+  return segs;
+}
+
+/**
+ * Cumulative tops of smoothed stacked layers: `result[k][i][s]` is the top of layer k at sample s of the
+ * segment between categories i and i+1. Each series' own values are smoothed (the same curve as lines,
+ * which never crosses 0 between same-signed values) and the curves are stacked. So a steady layer stays
+ * steady whatever its neighbours do, a series that is 0 has no thickness, and with non-negative data no
+ * layer turns inside out or crosses its neighbour.
+ */
+export function smoothStack(layers: readonly (readonly number[])[], samples: number): number[][][] {
+  let below: number[][] | null = null;
+  return layers.map((v) => {
+    const tops = smoothRun(v, samples).map((seg, i) => seg.map((h, s) => (below?.[i][s] ?? 0) + h));
+    below = tops;
+    return tops;
+  });
+}
+
+const r2 = (v: number) => Math.round(v * 100) / 100;
+
+/** Point lists of each drawable run in `segs` (svg coordinates). */
+function sampledRuns(
+  segs: readonly (readonly number[] | null)[],
+  categoryX: readonly number[],
+  step: number,
+  y: (v: number) => number,
+): string[][] {
+  const runs: string[][] = [];
+  let run: string[] | null = null;
+  segs.forEach((seg, i) => {
+    if (!seg) {
+      run = null;
+      return;
+    }
+    if (!run) runs.push((run = []));
+    const samples = seg.length - 1;
+    for (let s = run.length === 0 ? 0 : 1; s <= samples; s++)
+      run.push(`${r2(categoryX[i] + (step * s) / samples)},${r2(y(seg[s]))}`);
+  });
+  return runs;
 }
 
 /** Category index under svg x coordinate `x`, clamped to the data (0 when there are no categories). */
