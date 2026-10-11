@@ -1,6 +1,6 @@
 # `<TreeView>` — lazily loaded hierarchy, as a file list or an org chart
 
-A WAI-ARIA tree for hierarchies the app loads level by level (organization units, folders, categories). Two views of the same data: `list` (file-explorer rows) and `chart` (classic top-down org chart). The app owns fetching, caching and errors; TreeView owns rendering, keyboard, focus, selection and the loading / error / "N more" rows.
+TL;DR: a WAI-ARIA tree for hierarchies the app loads level by level (organization units, folders, categories). Two views of the same data: `list` (file-explorer rows) and `chart` (classic top-down org chart). The app owns fetching, caching and errors; TreeView owns rendering, keyboard, focus, selection and the loading / error / "N more" rows.
 
 ```tsx
 import { TreeView, type TreeViewNode } from '@eocrm/design-system';
@@ -56,9 +56,10 @@ const byId = new Map([...expanded].map((id, i) => [id, children[i]]));
 
 <!-- props:end -->
 
-- **Lazy by contract.** `childrenOf(id)` is called only for expanded nodes: return the array once loaded, `undefined` while loading (a "Loading…" row), `{ error: true }` on failure (a "Couldn't load. Retry" row; actionable only with `onRetry`). Start the fetch when an id appears in `expandedIds`.
+- **Nodes.** `TreeViewNode = { id: string; label: string; hasChildren: boolean; content?: ReactNode }`. `hasChildren` drives the chevron / toggle and `aria-expanded` even before the children load; `label` is the accessible name and the typeahead text.
+- **Lazy by contract.** `childrenOf(id)` is called only for expanded nodes: return the array once loaded, `undefined` while loading (a "Loading…" row), `{ error: true }` on failure (a "Couldn't load. Retry" row; actionable only with `onRetry`). Start the fetch when an id appears in `expandedIds`. A tree already in memory is fine too: return arrays immediately, don't fake loading.
 - **Controlled.** `expandedIds` / `onExpandedChange` and `selectedId` / `onSelect` are controlled. Omit `onSelect` for a tree without selection. Selection never follows focus: arrows move, Enter / Space / click select.
-- **Overflow.** `overflowOf(parentId)` (`null` = root level) adds a muted "N more not shown" row at the end of a level. Add `onLoadMore` to make it actionable and `loading` while it fetches; focus then moves to the first new item (if nothing new arrives it stays on the overflow row).
+- **Overflow.** `overflowOf(parentId)` (`null` = root level) returns `{ label, onLoadMore?, loading? }` (or `null`) and adds a muted "N more not shown" row at the end of a level. `onLoadMore` makes it actionable, `loading` marks the fetch in flight; focus then moves to the first new item (if nothing new arrives it stays on the overflow row).
 - **Rows** are named by `label`; `content` is visual only and must not contain buttons, links or inputs (a treeitem's content is not separately reachable). Put actions in the selection target (a drawer, a detail pane).
 - **Keyboard — list:** ↑/↓ move, → expands or enters, ← collapses or goes to the parent, Home/End, Enter/Space select, type to jump (the typeahead buffer resets after 500ms). **Chart:** ↓ expands or enters, ↑ collapses or goes to the parent, ←/→ move between siblings; the tree describes these keys to screen readers (merged with your own `aria-describedby`).
 - **Screen readers:** one tab stop; levels, positions and expanded state come from ARIA. A slow (≥ 300ms) user-triggered load is announced once ("Loading…"), a failure is announced; success is silent. After Retry focus stays on the status row while loading and moves to the first child when children arrive (if the retry fails again it stays on the Retry row).
@@ -69,7 +70,6 @@ const byId = new Map([...expanded].map((id, i) => [id, children[i]]));
 - ❌ App navigation → `Rail` (with `Rail.Group`).
 - ❌ A flat or two-level list → `Card.List`, `Table`, `Accordion`.
 - ❌ Multi-select / checkbox trees, drag-and-drop reordering — not supported.
-- ❌ A whole tree that is already in memory and small → still fine, but return arrays immediately from `childrenOf`; don't fake loading.
 
 #### Anti-patterns
 
