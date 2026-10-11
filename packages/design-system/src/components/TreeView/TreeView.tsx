@@ -1,5 +1,6 @@
 import {
   forwardRef,
+  useEffect,
   useRef,
   useState,
   type CSSProperties,
@@ -88,6 +89,12 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
     buffer: '',
     timer: null,
   });
+  useEffect(() => {
+    const ta = typeahead.current;
+    return () => {
+      if (ta.timer) clearTimeout(ta.timer);
+    };
+  }, []);
 
   const visible = (key: string | null) => key !== null && flat.some((i) => i.key === key);
   const selectedKey = onSelect && selectedId !== null ? nodeKey(selectedId) : null;

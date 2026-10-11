@@ -23,7 +23,7 @@
   cursor: default;
 }
 
-.root[data-view='list'] .item[data-kind='node'] > .row:hover {
+.root[data-view='list'] .item[data-kind='node']:not([aria-selected='true']) > .row:hover {
   background: var(--tree-view-row-hover-bg);
 }
 
