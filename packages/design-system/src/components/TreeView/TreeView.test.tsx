@@ -180,11 +180,22 @@ describe('TreeView', () => {
 
 function Async(props: {
   failFirst?: boolean;
+  /** Number of loads that fail before one succeeds (default 1 with failFirst, else 0). */
+  fails?: number;
   onRetry?: boolean;
   pageSize?: number;
   total?: number;
+  /** onLoadMore flips `loading` a tick later, like react-query's fetchNextPage. */
+  asyncLoadMore?: boolean;
 }) {
-  const { failFirst = false, onRetry = true, pageSize = 2, total = 4 } = props;
+  const {
+    failFirst = false,
+    onRetry = true,
+    pageSize = 2,
+    total = 4,
+    asyncLoadMore = false,
+  } = props;
+  const fails = props.fails ?? (failFirst ? 1 : 0);
   const [expanded, setExpanded] = useState(new Set<string>());
   const [kids, setKids] = useState<Record<string, TreeViewChildren>>({});
   const [shown, setShown] = useState(pageSize);
@@ -192,7 +203,7 @@ function Async(props: {
   const attempts = useRef(0);
   const load = (id: string) => {
     setKids((k) => ({ ...k, [id]: undefined }));
-    const fail = failFirst && attempts.current++ === 0;
+    const fail = attempts.current++ < fails;
     setTimeout(
       () =>
         setKids((k) => ({
@@ -224,11 +235,15 @@ function Async(props: {
               label: `${total - shown} more not shown`,
               loading: moreLoading,
               onLoadMore: () => {
-                setMoreLoading(true);
-                setTimeout(() => {
-                  setShown((s) => s + pageSize);
-                  setMoreLoading(false);
-                }, 1000);
+                const start = () => {
+                  setMoreLoading(true);
+                  setTimeout(() => {
+                    setShown((s) => s + pageSize);
+                    setMoreLoading(false);
+                  }, 1000);
+                };
+                if (asyncLoadMore) setTimeout(start, 0);
+                else start();
               },
             }
           : null
@@ -260,8 +275,10 @@ describe('TreeView async', () => {
     tick(PAST_ANNOUNCE_DELAY_MS);
     expect(region()).toHaveTextContent('Loading…');
     tick(1000);
+    tick(PAST_ANNOUNCE_DELAY_MS);
     expect(item('Child 1')).toBeInTheDocument();
     expect(item('Root')).toHaveFocus();
+    expect(region()).toHaveTextContent('Loading…'); // success is silent: no new message
   });
 
   it('announces a failure, and Retry loads and focuses the first child', async () => {
@@ -279,6 +296,35 @@ describe('TreeView async', () => {
     await u.keyboard('{Enter}');
     tick(1100);
     expect(item('Child 1')).toHaveFocus();
+  });
+
+  it('a retry that fails again keeps focus on the Retry row', async () => {
+    const u = user();
+    render(<Async fails={2} />);
+    await u.tab();
+    await u.keyboard('{ArrowRight}');
+    tick(1100);
+    await u.keyboard('{ArrowRight}{Enter}');
+    expect(item('Loading…')).toHaveFocus();
+    tick(1100);
+    expect(item("Couldn't load. Retry")).toHaveFocus();
+  });
+
+  it('announces a failure once; later re-renders do not re-announce it', async () => {
+    const u = user();
+    const { rerender } = render(<Async failFirst />);
+    await u.tab();
+    await u.keyboard('{ArrowRight}');
+    tick(1100);
+    tick(PAST_ANNOUNCE_DELAY_MS);
+    expect(region()).toHaveTextContent("Couldn't load");
+    const observer = new MutationObserver(() => {});
+    observer.observe(region(), { childList: true, characterData: true, subtree: true });
+    rerender(<Async failFirst />);
+    await u.keyboard('{ArrowDown}{ArrowUp}');
+    tick(500);
+    expect(observer.takeRecords()).toEqual([]);
+    observer.disconnect();
   });
 
   it('without onRetry the error row is inert text', async () => {
@@ -303,6 +349,23 @@ describe('TreeView async', () => {
     expect(screen.queryByRole('treeitem', { name: /more not shown/ })).toBeNull();
   });
 
+  it('load-more whose loading flag flips a tick later still announces and focuses the first new child', async () => {
+    const u = user();
+    render(<Async asyncLoadMore />);
+    await u.tab();
+    await u.keyboard('{ArrowRight}');
+    tick(1100);
+    await u.click(item('2 more not shown'));
+    tick(PAST_ANNOUNCE_DELAY_MS);
+    expect(region()).toHaveTextContent('');
+    expect(item('Loading…')).toHaveFocus();
+    tick(300);
+    tick(PAST_ANNOUNCE_DELAY_MS);
+    expect(region()).toHaveTextContent('Loading…');
+    tick(1000);
+    expect(item('Child 3')).toHaveFocus();
+  });
+
   it('load-more that adds nothing leaves focus on a visible item', async () => {
     const u = user();
     render(<Async pageSize={0} total={1} />);
@@ -311,7 +374,7 @@ describe('TreeView async', () => {
     tick(1100);
     await u.click(item('1 more not shown'));
     tick(1100);
-    expect(document.activeElement).toHaveAttribute('role', 'treeitem');
+    expect(item('1 more not shown')).toHaveFocus();
   });
 
   it('collapsing an ancestor moves focus to it', async () => {

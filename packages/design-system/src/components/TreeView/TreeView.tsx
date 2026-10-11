@@ -67,6 +67,8 @@ export interface TreeViewProps extends Omit<
 const has = (flat: TreeItem[], key: string | null) =>
   key !== null && flat.some((i) => i.key === key);
 
+const parentKey = (item: TreeItem) => (item.parentId === null ? null : nodeKey(item.parentId));
+
 /** Visible node children of a level (`null` = roots), in order. */
 const levelNodes = (flat: TreeItem[], parentId: string | null) =>
   flat.filter((i) => i.kind === 'node' && i.parentId === parentId);
@@ -105,10 +107,12 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
   const rootEl = useRef<HTMLDivElement>(null);
   const hadFocus = useRef(false);
   const parents = useRef(new Map<string, string | null>());
-  const pendingFocus = useRef<{ parentId: string | null; count: number } | null>(null);
+  // The load the user last started. `count` (retry / load-more): node children of the level when it fired;
+  // the node at that index gets focus once it arrives.
   const watch = useRef<{
     parentId: string | null;
     kind: 'expand' | 'retry' | 'more';
+    count?: number;
     seenPending?: boolean;
   } | null>(null);
   const announceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -118,6 +122,10 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
     return () => {
       if (ta.timer) clearTimeout(ta.timer);
       if (announceTimer.current) clearTimeout(announceTimer.current);
+      // Null them so a reconnect (StrictMode, Activity) can start fresh timers.
+      ta.timer = null;
+      ta.buffer = '';
+      announceTimer.current = null;
     };
   }, []);
 
@@ -141,11 +149,15 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
     [],
   );
 
-  /** The user started a load: announce it if it stays pending (keyed on item keys, never array identity). */
-  const startWatch = (parentId: string | null, kind: 'expand' | 'retry' | 'more') => {
+  /** The user started a load: track it by item keys (never array identity) for focus and announcements. */
+  const startWatch = (
+    parentId: string | null,
+    kind: 'expand' | 'retry' | 'more',
+    count?: number,
+  ) => {
     if (announceTimer.current) clearTimeout(announceTimer.current);
     announceTimer.current = null;
-    watch.current = { parentId, kind };
+    watch.current = { parentId, kind, count };
     setMessage('');
   };
 
@@ -157,59 +169,44 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
   const activate = (item: TreeItem) => {
     if (item.kind === 'node') onSelect?.(item.node.id);
     else if (item.kind === 'error' && onRetry) {
-      pendingFocus.current = { parentId: item.parentId, count: 0 };
-      startWatch(item.parentId, 'retry');
+      startWatch(item.parentId, 'retry', 0);
       onRetry(item.parentId);
     } else if (item.kind === 'overflow' && item.overflow.onLoadMore && !item.overflow.loading) {
-      pendingFocus.current = {
-        parentId: item.parentId,
-        count: levelNodes(flat, item.parentId).length,
-      };
-      startWatch(item.parentId, 'more');
+      startWatch(item.parentId, 'more', levelNodes(flat, item.parentId).length);
       item.overflow.onLoadMore();
     }
   };
 
-  // Focus repair: the focused row vanished (ancestor collapsed, status row resolved) → nearest visible ancestor.
   useLayoutEffect(() => {
-    if (focusedKey !== null && !has(flat, focusedKey)) {
+    const w = watch.current;
+    // 1. Retry / load-more: focus the first newly arrived node.
+    let moved = false;
+    if (w?.count !== undefined) {
+      const nodes = levelNodes(flat, w.parentId);
+      if (nodes.length > w.count) {
+        const key = nodes[w.count].key;
+        w.count = undefined;
+        if (inTree()) {
+          focusKey(key);
+          moved = true;
+        }
+      }
+    }
+    // 2. Focus repair: the focused row vanished → a status row now in its level (error ↔ loading, overflow
+    //    still there), else the nearest visible ancestor, else the first item.
+    if (!moved && focusedKey !== null && !has(flat, focusedKey)) {
       if (inTree()) {
-        let key = parents.current.get(focusedKey) ?? null;
+        const parent = parents.current.get(focusedKey) ?? null;
+        const status = flat.find((i) => i.kind !== 'node' && parentKey(i) === parent);
+        let key = parent;
         while (key !== null && !has(flat, key)) key = parents.current.get(key) ?? null;
-        const target = key ?? flat[0]?.key;
+        const target = status?.key ?? key ?? flat[0]?.key;
         if (target) focusKey(target);
         else setFocusedKey(null);
       } else setFocusedKey(null);
     }
-    parents.current = new Map(
-      flat.map((i) => [i.key, i.parentId === null ? null : nodeKey(i.parentId)]),
-    );
-  }, [flat, focusedKey, focusKey, inTree]);
-
-  // After retry / load-more: focus the first newly arrived node; give up once the level settles without one.
-  useEffect(() => {
-    const pending = pendingFocus.current;
-    if (!pending) return;
-    const nodes = levelNodes(flat, pending.parentId);
-    if (nodes.length > pending.count) {
-      pendingFocus.current = null;
-      if (inTree()) focusKey(nodes[pending.count].key);
-    } else if (
-      !flat.some(
-        (i) =>
-          i.parentId === pending.parentId &&
-          (i.kind === 'loading' ||
-            i.kind === 'error' ||
-            (i.kind === 'overflow' && i.overflow.loading)),
-      )
-    ) {
-      pendingFocus.current = null;
-    }
-  }, [flat, focusKey, inTree]);
-
-  // Announcements: "Loading…" once a user-triggered load is pending 300ms, "Couldn't load" on failure, success silent.
-  useEffect(() => {
-    const w = watch.current;
+    parents.current = new Map(flat.map((i) => [i.key, parentKey(i)]));
+    // 3. Announcements: "Loading…" once the load is pending 300ms, "Couldn't load" on failure, success silent.
     if (!w) return;
     const pending =
       w.kind === 'more'
@@ -221,13 +218,20 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
       return;
     }
     const failed = has(flat, `error:${w.parentId}`);
-    // The old error row can outlive a retry by a render (onRetry may start loading async): not a new failure.
-    if (failed && w.kind === 'retry' && !w.seenPending) return;
+    // The consumer may start loading a render or a tick later (react-query): the row the user activated is
+    // still there and nothing is pending yet — keep waiting rather than reading it as the outcome.
+    const notStarted =
+      !w.seenPending &&
+      (w.kind === 'retry'
+        ? failed
+        : w.kind === 'more' &&
+          flat.some((i) => i.kind === 'overflow' && i.parentId === w.parentId));
+    if (notStarted) return;
     if (failed) setMessage(t('treeView.loadError'));
     watch.current = null;
     if (announceTimer.current) clearTimeout(announceTimer.current);
     announceTimer.current = null;
-  }, [flat, t]);
+  }, [flat, focusedKey, focusKey, inTree, t]);
 
   const run = (action: TreeAction) => {
     if (action.type === 'focus') focusKey(action.key);
@@ -378,27 +382,30 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
   };
 
   return (
-    // {...rest} first (Pattern B): role, aria-label, data-view and the key handling must win.
-    <div
-      {...rest}
-      ref={mergeRefs(ref, rootEl)}
-      role="tree"
-      data-view={view}
-      className={clsx(styles.root, className)}
-      onFocus={chain(() => {
-        hadFocus.current = true;
-      }, onFocus)}
-      onBlur={chain((e: FocusEvent<HTMLDivElement>) => {
-        if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
-        // Some browsers blur a focused row as it unmounts; that is not focus leaving the tree.
-        const left = e.target;
-        queueMicrotask(() => {
-          if (left.isConnected) hadFocus.current = false;
-        });
-      }, onBlur)}
-    >
-      {items.map(renderItem)}
+    <>
+      {/* {...rest} first (Pattern B): role, aria-label, data-view and the key handling must win. */}
+      <div
+        {...rest}
+        ref={mergeRefs(ref, rootEl)}
+        role="tree"
+        data-view={view}
+        className={clsx(styles.root, className)}
+        onFocus={chain(() => {
+          hadFocus.current = true;
+        }, onFocus)}
+        onBlur={chain((e: FocusEvent<HTMLDivElement>) => {
+          if (e.currentTarget.contains(e.relatedTarget as Node | null)) return;
+          // Some browsers blur a focused row as it unmounts; that is not focus leaving the tree.
+          const left = e.target;
+          queueMicrotask(() => {
+            if (left.isConnected) hadFocus.current = false;
+          });
+        }, onBlur)}
+      >
+        {items.map(renderItem)}
+      </div>
+      {/* Outside the tree: a tree may own only groups and treeitems. */}
       <LiveRegion>{message}</LiveRegion>
-    </div>
+    </>
   );
 });
