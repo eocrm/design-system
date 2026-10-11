@@ -6,7 +6,6 @@ import {
   isEmpty,
   layoutMarkers,
   smoothStack,
-  AREA_SAMPLES,
   markerLabelsAt,
   markerPath,
   markerShape,
@@ -210,40 +209,73 @@ describe('computeLayout', () => {
     const m = l.marks[0];
     expect(m.kind).toBe('line');
     expect(m.points[1]).toBeNull();
-    // d3 emits one "M" per defined run: [1] and [3] are two runs.
-    expect(m.line!.match(/M/g)!.length).toBe(2);
+    // Both defined points are isolated: no path, a dot each.
+    expect(m.line).toBe('');
     expect(m.dots).toHaveLength(2);
     expect(m.line).not.toContain('NaN');
   });
 
-  it('smooths lines (the stacked-bar total included) and rounds flat runs', () => {
+  // y of every vertex in an M/L path
+  const ys = (d: string) =>
+    (d.match(/-?[\d.]+(e-?\d+)?/g) ?? []).map(Number).filter((_, i) => i % 2);
+
+  it('smooths lines (the stacked-bar total included), rounding flat runs', () => {
     const values = [0, 10, 10, 0];
     const l = layout({ type: 'line', series: one(values) });
-    const d = l.marks[0].line!;
-    expect(d).toContain('C');
-    // Catmull-Rom bulges between the two equal 10s instead of drawing a flat segment.
-    const ys = (d.match(/-?[\d.]+(e-?\d+)?/g) ?? []).map(Number).filter((_, i) => i % 2);
-    expect(Math.min(...ys)).toBeLessThan(l.marks[0].points[1]!.y - 0.5);
+    // Many short segments, not 3 straight ones; and it bulges between the two equal 10s.
+    expect(ys(l.marks[0].line!).length).toBeGreaterThan(values.length * 2);
+    expect(Math.min(...ys(l.marks[0].line!))).toBeLessThan(l.marks[0].points[1]!.y - 0.5);
     const stacked = layout({
       type: 'stacked-bar',
       series: resolveSeries('stacked-bar', [s('a', values), s('p', values, 'total')], 4).series,
     });
-    expect(stacked.marks.find((m) => m.kind === 'line')!.line).toContain('C');
+    expect(ys(stacked.marks.find((m) => m.kind === 'line')!.line!).length).toBeGreaterThan(8);
+  });
+
+  it('keeps the overshoot inside the plot', () => {
+    for (const values of [
+      [0, 10, 10, 0],
+      [10, 0, 0, 10],
+    ]) {
+      const l = layout({ type: 'line', series: one(values) });
+      for (const y of ys(l.marks[0].line!)) {
+        expect(y).toBeGreaterThanOrEqual(l.plot.y - 1e-6);
+        expect(y).toBeLessThanOrEqual(l.plot.y + l.plot.height + 1e-6);
+      }
+    }
+  });
+
+  it('breaks smoothed lines at gaps without NaN', () => {
+    const l = layout({ type: 'line', series: one([1, 2, null, 3]) });
+    expect(l.marks[0].line!.match(/M/g)).toHaveLength(1); // [3] is isolated: a dot, not a path
+    expect(l.marks[0].line).not.toContain('NaN');
+  });
+
+  it('a total comparison equal to the stack follows the area top', () => {
+    const values = [0, 10, 2, 8];
+    const l = layout({
+      type: 'area',
+      series: resolveSeries('area', [s('a', values), s('t', values, 'total')], 4).series,
+    });
+    expect(l.marks[1].line).toBe(l.marks[0].line);
   });
 
   it('smoothed stacked layers hit the data exactly and never cross', () => {
-    const tops = smoothStack([
-      [0, 5, 10, 10],
-      [5, 0, 0, 5],
-    ]);
+    const S = 12;
+    const tops = smoothStack(
+      [
+        [0, 5, 10, 10],
+        [5, 0, 0, 5],
+      ],
+      S,
+    );
     // s = 0 is the category itself: exact cumulative values.
     expect(tops[0].map((seg) => seg[0])).toEqual([0, 5, 10]);
     expect(tops[1].map((seg) => seg[0])).toEqual([5, 5, 10]);
-    expect(tops[1][2][AREA_SAMPLES]).toBe(15);
+    expect(tops[1][2][S]).toBe(15);
     // B is 0 at categories 1 and 2: its band may be empty, never inverted.
     for (let i = 0; i < 3; i++)
-      for (let k = 0; k <= AREA_SAMPLES; k++)
-        expect(tops[1][i][k]).toBeGreaterThanOrEqual(tops[0][i][k]);
+      for (let k = 0; k <= S; k++) expect(tops[1][i][k]).toBeGreaterThanOrEqual(tops[0][i][k]);
     const l = layout({ type: 'area', series: one([0, 10, 10, 0]) });
     expect(l.marks[0].area).toMatch(/Z$/);
     expect(l.marks[0].line).not.toContain('NaN');
