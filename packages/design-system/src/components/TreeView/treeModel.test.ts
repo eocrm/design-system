@@ -217,4 +217,27 @@ describe('typeaheadMatch', () => {
   it('no match returns null; status rows are skipped', () => {
     expect(typeaheadMatch(flat, 'node:Sales', 'z')).toBeNull();
   });
+
+  it('never lands on loading or overflow rows, even when their label would match', () => {
+    const withLoading = flatten(
+      buildTree({
+        roots: [n('Sales', true), n('Support')],
+        childrenOf: () => undefined,
+        expandedIds: new Set(['Sales']),
+      }),
+    );
+    expect(withLoading.map((i) => i.kind)).toEqual(['node', 'loading', 'node']);
+    expect(typeaheadMatch(withLoading, 'node:Sales', 's')).toBe('node:Support');
+
+    const withOverflow = flatten(
+      buildTree({
+        roots: [n('Sales'), n('Other')],
+        childrenOf: () => undefined,
+        expandedIds: new Set(),
+        overflowOf: () => ({ label: 'support more' }),
+      }),
+    );
+    expect(withOverflow.map((i) => i.kind)).toEqual(['node', 'node', 'overflow']);
+    expect(typeaheadMatch(withOverflow, 'node:Sales', 'su')).toBeNull();
+  });
 });

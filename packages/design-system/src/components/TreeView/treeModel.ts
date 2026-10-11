@@ -28,6 +28,7 @@ export interface TreeViewOverflow {
 /** Presentation of a TreeView. */
 export type TreeViewView = 'list' | 'chart';
 
+/** One rendered row: a node (with its nested children) or a loading / error / overflow status row. */
 export type TreeItem =
   | {
       kind: 'node';
@@ -49,6 +50,7 @@ export type TreeItem =
       overflow: TreeViewOverflow;
     };
 
+/** Everything `buildTree` needs to derive the visible rows. */
 export interface TreeModelInput {
   roots: TreeViewNode[];
   childrenOf: (id: string) => TreeViewChildren;
@@ -56,12 +58,14 @@ export interface TreeModelInput {
   overflowOf?: (parentId: string | null) => TreeViewOverflow | null;
 }
 
+/** What a key press resolves to; the component performs it. */
 export type TreeAction =
   | { type: 'focus'; key: string }
   | { type: 'expand'; id: string }
   | { type: 'collapse'; id: string }
   | { type: 'activate'; key: string };
 
+/** Item key of the node with this id. */
 export const nodeKey = (id: string) => `node:${id}`;
 
 function level(
