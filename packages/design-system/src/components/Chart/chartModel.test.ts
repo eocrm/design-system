@@ -329,6 +329,37 @@ describe('computeLayout', () => {
     }
   });
 
+  it('a climb from 0 at the start of a run is not bowed', () => {
+    const l = layout({ type: 'line', series: one([0, 10, 20, 30]) });
+    const pts = l.marks[0]
+      .line!.slice(1)
+      .split('L')
+      .map((p) => p.split(',').map(Number));
+    const [x0, y0] = pts[0];
+    const [x1, y1] = [l.categoryX[1], l.marks[0].points[1]!.y];
+    for (const [x, y] of pts.filter(([x]) => x <= x1))
+      // ~3px of ordinary Catmull-Rom end easing; a flat start tangent bows it ~7px.
+      expect(Math.abs(y - (y0 + ((y1 - y0) * (x - x0)) / (x1 - x0)))).toBeLessThan(5);
+  });
+
+  it('a sharp spike does not drag a flat neighbourhood far past its value', () => {
+    const S = 12;
+    // Uncapped Catmull-Rom dips the flat 10s to ~2.6 before the spike; the cap keeps it within 5% of the range.
+    const l = layout({ type: 'line', series: one([10, 10, 110, 10]) });
+    const y10 = l.marks[0].points[0]!.y;
+    const pxPerUnit = (l.marks[0].points[0]!.y - l.marks[0].points[2]!.y) / 100;
+    for (const y of ys(l.marks[0].line!)) expect(y).toBeLessThanOrEqual(y10 + 5 * pxPerUnit);
+    // In a stack, the steady layer under a one-off spike keeps most of its thickness.
+    const tops = smoothStack(
+      [
+        [10, 10, 10, 10],
+        [0, 0, 100, 0],
+      ],
+      S,
+    );
+    for (const k of tops[0][0]) expect(k).toBeGreaterThanOrEqual(5);
+  });
+
   it('eases into a 0 floor without a corner', () => {
     // [5, 0, 0, 3]: the curve reaches 0 flat (no kink), so the sample just before 0 is near 0.
     const l = layout({ type: 'line', series: one([5, 0, 0, 3]) });
@@ -341,7 +372,8 @@ describe('computeLayout', () => {
     const [x0, y0] = pts[atFirstZero - 1];
     const slopeIn = (zeroY - y0) / (l.categoryX[1] - x0);
     const firstStep = (zeroY - l.marks[0].points[0]!.y) / (l.categoryX[1] - l.categoryX[0]);
-    expect(Math.abs(slopeIn)).toBeLessThan(Math.abs(firstStep) / 2);
+    // ~0.11x with the flat tangent, ~0.55x without it.
+    expect(Math.abs(slopeIn)).toBeLessThan(Math.abs(firstStep) / 4);
   });
 
   it('draws a two-point run straight', () => {

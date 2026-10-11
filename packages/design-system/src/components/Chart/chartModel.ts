@@ -587,6 +587,8 @@ export function computeLayout(input: LayoutInput): ChartLayout {
 /** Pixels per straight sub-segment of a smoothed curve. */
 const SAMPLE_PX = 4;
 const MAX_SAMPLES = 32;
+/** Minimum tangent, as a share of the series' range: how far flat runs and gentle extremes may round. */
+const TANGENT_FLOOR = 0.2;
 
 const hermite = (y0: number, y1: number, m0: number, m1: number, t: number) => {
   const t2 = t * t;
@@ -603,19 +605,25 @@ const hermite = (y0: number, y1: number, m0: number, m1: number, t: number) => {
  */
 function smoothRun(v: readonly number[], samples: number): number[][] {
   const n = v.length;
-  // Two points: full slope at both ends, so the segment is straight rather than an S.
+  // Overshoot budget: a tangent may always reach this much, so gentle troughs and flat runs still round.
+  const floor = TANGENT_FLOOR * (Math.max(...v) - Math.min(...v));
   const m = v.map((x, i) => {
+    // Two points: full slope at both ends, so the segment is straight rather than an S.
     if (n === 2) return v[1] - v[0];
     const prev = v[Math.max(0, i - 1)];
     const next = v[Math.min(n - 1, i + 1)];
-    // A 0 between same-signed neighbours is a floor: ease into it flat instead of hitting the clamp.
-    if (x === 0 && prev * next >= 0) return 0;
-    return (next - prev) / 2;
+    // An interior 0 between same-signed (or zero) neighbours is a floor: ease into it flat instead of
+    // hitting the sign clamp below. Run ends keep their slope, so a climb from 0 starts straight.
+    if (x === 0 && i > 0 && i < n - 1 && prev * next >= 0) return 0;
+    // Catmull-Rom, capped at 3x the gentler neighbouring slope (Fritsch-Carlson bound) so a sharp spike
+    // doesn't drag the curve far past its flatter neighbours.
+    const cap = Math.max(3 * Math.min(Math.abs(x - prev), Math.abs(next - x)), floor);
+    return Math.max(-cap, Math.min(cap, (next - prev) / 2));
   });
   return Array.from({ length: Math.max(0, n - 1) }, (_, i) =>
     Array.from({ length: samples + 1 }, (_, s) => {
       const h = hermite(v[i], v[i + 1], m[i], m[i + 1], s / samples);
-      if (v[i] === 0 && v[i + 1] === 0) return 0;
+      // Never across 0 between two values on the same side (no negative counts, no inverted layers).
       if (v[i] >= 0 && v[i + 1] >= 0) return Math.max(0, h);
       if (v[i] <= 0 && v[i + 1] <= 0) return Math.min(0, h);
       return h;
