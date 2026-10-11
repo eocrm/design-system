@@ -1,0 +1,33 @@
+// TreeView.tokens.scss — component tokens for <TreeView>; all default to primitives.
+:root {
+  --tree-view-row-height: var(--space-8);
+  --tree-view-gap: var(--space-2);
+  --tree-view-indent: var(--space-4);
+  --tree-view-toggle-size: var(--space-5);
+  --tree-view-row-radius: var(--radius-sm);
+  --tree-view-row-padding-inline: var(--space-2);
+  --tree-view-row-hover-bg: var(--color-bg-muted);
+  --tree-view-row-selected-bg: var(--color-accent-subtle-bg);
+  --tree-view-row-selected-fg: var(--color-accent);
+  --tree-view-fg: var(--color-fg);
+  --tree-view-status-fg: var(--color-fg-muted);
+  --tree-view-error-fg: var(--color-danger);
+  --tree-view-size: var(--font-size-md);
+  --tree-view-status-size: var(--font-size-sm);
+  --tree-view-ring: var(--ring-accent);
+
+  // view="chart"
+  --tree-view-box-bg: var(--color-bg);
+  --tree-view-box-border: var(--color-border);
+  --tree-view-box-border-width: var(--border-width);
+  --tree-view-box-radius: var(--radius-md);
+  --tree-view-box-padding: var(--space-2) var(--space-3);
+  --tree-view-box-max-width: 14rem;
+  --tree-view-box-selected-border: var(--color-accent);
+  --tree-view-connector: var(--color-border-strong);
+  --tree-view-connector-width: var(--border-width);
+  --tree-view-level-gap: var(--space-6);
+  --tree-view-sibling-gap: var(--space-3);
+  --tree-view-chart-padding: var(--space-4);
+  --tree-view-toggle-bg: var(--color-bg);
+}

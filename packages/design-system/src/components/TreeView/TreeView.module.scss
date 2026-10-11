@@ -1,0 +1,82 @@
+@use './TreeView.tokens';
+@use '../../styles/mixins' as *;
+
+.root {
+  color: var(--tree-view-fg);
+  font-size: var(--tree-view-size);
+}
+
+.item {
+  outline: none;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: var(--tree-view-gap);
+  min-height: var(--tree-view-row-height);
+  padding-inline: calc(
+      var(--tree-view-level) * var(--tree-view-indent) + var(--tree-view-row-padding-inline)
+    )
+    var(--tree-view-row-padding-inline);
+  border-radius: var(--tree-view-row-radius);
+  cursor: default;
+}
+
+.root[data-view='list'] .item[data-kind='node'] > .row:hover {
+  background: var(--tree-view-row-hover-bg);
+}
+
+.root[data-view='list'] .item[aria-selected='true'] > .row {
+  background: var(--tree-view-row-selected-bg);
+  color: var(--tree-view-row-selected-fg);
+}
+
+.root[data-view='list'] .item:focus-visible > .row {
+  @include focus-ring(var(--tree-view-ring));
+}
+
+.toggle {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  inline-size: var(--tree-view-toggle-size);
+  block-size: var(--tree-view-toggle-size);
+}
+
+.toggle[data-toggle] {
+  cursor: pointer;
+}
+
+.chevron {
+  inline-size: 100%;
+  block-size: 100%;
+  transition: transform var(--transition-fast);
+
+  .toggle[data-expanded] > & {
+    transform: rotate(90deg);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+  }
+}
+
+.content {
+  min-width: 0;
+}
+
+.status {
+  color: var(--tree-view-status-fg);
+  font-size: var(--tree-view-status-size);
+}
+
+.status[data-error] {
+  color: var(--tree-view-error-fg);
+}
+
+.status[data-action] {
+  cursor: pointer;
+  text-decoration: underline;
+}

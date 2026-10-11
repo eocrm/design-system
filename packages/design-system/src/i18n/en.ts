@@ -388,6 +388,13 @@ export const en: Messages = {
     noData: 'No data',
     markers: 'Markers',
   },
+  treeView: {
+    loading: 'Loading…',
+    loadError: "Couldn't load",
+    retry: 'Retry',
+    chartHint:
+      'Use up and down arrows to move between levels, left and right arrows to move between siblings.',
+  },
   catalogPicker: {
     search: 'Search…',
     categories: 'Categories',
