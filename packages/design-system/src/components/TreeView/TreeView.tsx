@@ -409,7 +409,11 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
         {...rest}
         ref={mergeRefs(ref, rootEl)}
         role="tree"
-        aria-describedby={chart ? hintId : rest['aria-describedby']}
+        aria-describedby={
+          chart
+            ? [rest['aria-describedby'], hintId].filter(Boolean).join(' ')
+            : rest['aria-describedby']
+        }
         data-view={view}
         className={clsx(styles.root, className)}
         onFocus={chain(() => {

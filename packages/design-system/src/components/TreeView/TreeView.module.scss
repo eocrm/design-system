@@ -97,7 +97,7 @@
 
 .root[data-view='chart'] .group {
   position: relative;
-  padding-block-start: var(--tree-view-level-gap);
+  padding-block-start: calc(var(--tree-view-level-gap) / 2);
 
   // drop from the parent box to the sibling bar
   &::before {
@@ -179,7 +179,7 @@
 }
 
 // toggle sits on the box's bottom edge; leaves have no toggle in chart view
-.root[data-view='chart'] .toggle:not([data-toggle]) {
+.root[data-view='chart'] .toggle:not([data-toggle]):empty {
   display: none;
 }
 

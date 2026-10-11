@@ -449,8 +449,12 @@ describe('TreeView chart view', () => {
   });
 
   it('scrolls the focused box into view', async () => {
+    const original = Element.prototype.scrollIntoView;
     const spy = vi.fn();
     Element.prototype.scrollIntoView = spy;
+    onTestFinished(() => {
+      Element.prototype.scrollIntoView = original;
+    });
     render(<Harness view="chart" initial={['Company']} />);
     await userEvent.tab();
     await userEvent.keyboard('{ArrowDown}');
@@ -460,5 +464,22 @@ describe('TreeView chart view', () => {
   it('list view has no key hint', () => {
     render(<Harness />);
     expect(screen.getByRole('tree')).not.toHaveAttribute('aria-describedby');
+  });
+
+  it('keeps a consumer aria-describedby next to the hint', () => {
+    render(
+      <>
+        <p id="mine">Mine</p>
+        <Harness view="chart" aria-describedby="mine" />
+      </>,
+    );
+    expect(screen.getByRole('tree')).toHaveAccessibleDescription(/^Mine Use up and down/);
+  });
+
+  it('toggle icon differs collapsed vs expanded', () => {
+    render(<Harness view="chart" initial={['Company']} />);
+    const icon = (name: string) => item(name).querySelector('[data-toggle] svg');
+    expect(icon('Company')).toHaveClass('lucide-minus');
+    expect(icon('Support')).toHaveClass('lucide-chevron-down');
   });
 });
