@@ -731,7 +731,7 @@
           "type": "\"area\" | \"line\" | \"bar\" | \"stacked-bar\"",
           "required": true,
           "default": "",
-          "description": "Chart form. Required.\n- `'line'` — one line per series; trends over time. Comparison series dashed.\n- `'bar'` — grouped bars per category; compare a few series per bucket. Comparison bars outlined + light fill.\n- `'stacked-bar'` — bars stacked per category; parts of a total. Comparison only as `comparisonOf: 'total'` (dashed total line).\n- `'area'` — stacked areas; parts of a total over time. Same comparison rule as `stacked-bar`."
+          "description": "Chart form. Required.\n- `'line'` — one smoothed line per series; trends over time. Comparison series dashed.\n- `'bar'` — grouped bars per category; compare a few series per bucket. Comparison bars outlined + light fill.\n- `'stacked-bar'` — bars stacked per category; parts of a total. Comparison only as `comparisonOf: 'total'` (dashed total line).\n- `'area'` — smoothed stacked areas; parts of a total over time. Same comparison rule as `stacked-bar`."
         },
         {
           "name": "label",
@@ -781,6 +781,13 @@
           "required": false,
           "default": "",
           "description": "Called with the next hidden keys when the user toggles a legend item."
+        },
+        {
+          "name": "markers",
+          "type": "ChartMarker[]",
+          "required": false,
+          "default": "'neutral'",
+          "description": "Static annotations pinned to `categories`: `{ key, label?, at }` draws a vertical line at one category,\n`{ key, label?, from, to }` shades a category range (inclusive), e.g. a campaign or weekends. `tone`:\n`'neutral'` (default, events) or `'subtle'` (recurring context). Labelled markers are also listed in the\ntooltip, the keyboard announcement and the data table; unlabelled ones are decorative. A marker naming an\nunknown category is ignored with a dev warning."
         }
       ]
     },
@@ -6449,6 +6456,7 @@
     "DashboardCanvasConstraintsProp": "Record<string, DashboardItemConstraints> | ((id: string | number) => DashboardItemConstraints)",
     "DashboardCanvasValue": "{ items: DashboardPlacement[]; sections: DashboardSection[] }",
     "DashboardWidgetVariant": "\"list\" | \"standard\" | \"kpi\" | \"chart\"",
+    "ChartMarker": "(ChartMarkerBase & { at: string; from?: undefined; to?: undefined; }) | (ChartMarkerBase & { from: string; to: string; at?: undefined; })",
     "ChartSeries": "{ key: string; label: string; values: (number | null)[]; comparisonOf?: string }"
   }
 }

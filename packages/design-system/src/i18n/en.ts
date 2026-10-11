@@ -386,6 +386,7 @@ export const en: Messages = {
     keyboardHint: 'Use arrow keys to inspect values. All values are also in the data table.',
     category: 'Category',
     noData: 'No data',
+    markers: 'Markers',
   },
   catalogPicker: {
     search: 'Search…',

@@ -28,6 +28,126 @@ export interface ChartSeries {
   comparisonOf?: string;
 }
 
+/**
+ * Marker tone.
+ * - `'neutral'` — default; a visible dashed line or grey band for events (launch, campaign).
+ * - `'subtle'` — a faint band or line for recurring context (weekends, off-hours) that must not compete with data.
+ */
+export type ChartMarkerTone = 'neutral' | 'subtle';
+
+interface ChartMarkerBase {
+  /** Stable identity (React key). */
+  key: string;
+  /** Short text drawn on the plot and listed in the tooltip, keyboard announcement and data table. Omit for decorative shading (weekends). */
+  label?: string;
+  /** Visual weight. Default `'neutral'`. */
+  tone?: ChartMarkerTone;
+}
+
+/**
+ * A static annotation pinned to categories: a vertical line at one category (`at`) or a shaded band over a
+ * category range (`from`…`to`, inclusive). Values are category labels from `categories`.
+ */
+export type ChartMarker =
+  | (ChartMarkerBase & {
+      /** Category the vertical line sits on (its centre). */
+      at: string;
+      from?: never;
+      to?: never;
+    })
+  | (ChartMarkerBase & {
+      /** First category of the band (inclusive). */
+      from: string;
+      /** Last category of the band (inclusive); may equal `from` for one bucket. */
+      to: string;
+      at?: never;
+    });
+
+export interface ResolvedMarker {
+  key: string;
+  label?: string;
+  tone: ChartMarkerTone;
+  kind: 'line' | 'band';
+  /** Category index range, inclusive; `from === to` for a line. */
+  from: number;
+  to: number;
+}
+
+/** Maps markers onto category indices; markers naming an unknown category are dropped. */
+export function resolveMarkers(
+  markers: readonly ChartMarker[],
+  categories: readonly string[],
+): { markers: ResolvedMarker[]; dropped: string[] } {
+  const resolved: ResolvedMarker[] = [];
+  const dropped: string[] = [];
+  for (const m of markers) {
+    const range = m.at === undefined ? [m.from, m.to] : [m.at, m.at];
+    const [a, b] = range.map((c) => categories.indexOf(c as string));
+    if (a < 0 || b < 0) {
+      dropped.push(m.key);
+      continue;
+    }
+    resolved.push({
+      key: m.key,
+      label: m.label || undefined,
+      tone: m.tone ?? 'neutral',
+      kind: m.at === undefined ? 'band' : 'line',
+      from: Math.min(a, b),
+      to: Math.max(a, b),
+    });
+  }
+  return { markers: resolved, dropped };
+}
+
+/** Labels of the markers covering category `i`, in marker order. */
+export function markerLabelsAt(markers: readonly ResolvedMarker[], i: number): string[] {
+  return markers.flatMap((m) => (m.label && m.from <= i && i <= m.to ? [m.label] : []));
+}
+
+export interface MarkerGeometry {
+  key: string;
+  kind: 'line' | 'band';
+  tone: ChartMarkerTone;
+  /** Line x, or band left edge. */
+  x: number;
+  /** Band width; 0 for a line. */
+  width: number;
+  /** Label to draw, or undefined when absent or it would collide/clip. */
+  label?: { text: string; x: number; anchor: 'start' | 'end' };
+}
+
+/** Marker geometry in svg coordinates. Labels that would overlap an earlier label or leave the plot are dropped. */
+export function layoutMarkers(
+  markers: readonly ResolvedMarker[],
+  layout: Pick<ChartLayout, 'plot' | 'categoryX' | 'step'>,
+): MarkerGeometry[] {
+  const { plot, categoryX, step } = layout;
+  const right = plot.x + plot.width;
+  const taken: [number, number][] = [];
+  return markers.map((m) => {
+    const x = m.kind === 'line' ? categoryX[m.from] : categoryX[m.from] - step / 2;
+    const width = m.kind === 'line' ? 0 : (m.to - m.from + 1) * step;
+    const g: MarkerGeometry = { key: m.key, kind: m.kind, tone: m.tone, x, width };
+    if (!m.label) return g;
+    const w = textWidth(m.label);
+    // Start just right of the line / inside the band's left edge; flip left of a line near the right edge.
+    let anchor: 'start' | 'end' = 'start';
+    let lx = x + MARKER_LABEL_INSET;
+    if (lx + w > right && m.kind === 'line') {
+      anchor = 'end';
+      lx = x - MARKER_LABEL_INSET;
+    }
+    const span: [number, number] = anchor === 'start' ? [lx, lx + w] : [lx - w, lx];
+    const fits = span[0] >= plot.x && span[1] <= right;
+    const free = taken.every(([a, b]) => span[1] + LABEL_GAP <= a || b + LABEL_GAP <= span[0]);
+    if (fits && free) {
+      taken.push(span);
+      g.label = { text: m.label, x: lx, anchor };
+    }
+    return g;
+  });
+}
+
 /** Distinct categorical colours; series past this reuse the palette with a dashed/outlined overflow style. */
 export const PALETTE_SIZE = 8;
 // ponytail: estimated glyph width at --font-size-sm (12px) instead of measuring text;
@@ -40,10 +160,13 @@ export const X_LABEL_BASELINE = 4;
 export const DOT_RADIUS = 3;
 /** Radius of the keyboard/hover inspection marker on a line point. */
 export const MARKER_RADIUS = 4;
+/** Baseline of marker labels below the plot top. */
+export const MARKER_LABEL_BASELINE = 12;
 /** Below this root height the legend collapses to one row with a "+N" counter. */
 export const COMPACT_HEIGHT = 120;
 
 const MARK_GAP = 2;
+const MARKER_LABEL_INSET = 4;
 const BAR_RADIUS = 4;
 const BAND_RATIO = 0.65;
 const PAD_TOP = 8;

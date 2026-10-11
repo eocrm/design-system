@@ -4,8 +4,11 @@ import {
   computeLayout,
   fitLegend,
   isEmpty,
+  layoutMarkers,
+  markerLabelsAt,
   markerPath,
   markerShape,
+  resolveMarkers,
   resolveSeries,
   thinLabels,
   visibleSeries,
@@ -403,5 +406,68 @@ describe('computeLayout', () => {
   it('categoryIndexAt is 0 with no categories', () => {
     const l = layout({ type: 'line', categories: [], series: [] });
     expect(categoryIndexAt(l, 50)).toBe(0);
+  });
+});
+
+describe('markers', () => {
+  const cats = ['a', 'b', 'c', 'd'];
+
+  it('resolves at/from/to to category indices, normalising order and dropping unknowns', () => {
+    const r = resolveMarkers(
+      [
+        { key: 'l', label: 'L', at: 'b' },
+        { key: 'r', from: 'd', to: 'c', tone: 'subtle' },
+        { key: 'x', at: 'zz' },
+        { key: 'e', label: '', at: 'a' },
+      ],
+      cats,
+    );
+    expect(r.markers).toEqual([
+      { key: 'l', label: 'L', tone: 'neutral', kind: 'line', from: 1, to: 1 },
+      { key: 'r', label: undefined, tone: 'subtle', kind: 'band', from: 2, to: 3 },
+      { key: 'e', label: undefined, tone: 'neutral', kind: 'line', from: 0, to: 0 },
+    ]);
+    expect(r.dropped).toEqual(['x']);
+    expect(markerLabelsAt(r.markers, 1)).toEqual(['L']);
+    expect(markerLabelsAt(r.markers, 3)).toEqual([]);
+  });
+
+  it('places lines on the category centre and bands over whole buckets', () => {
+    const l = layout({ type: 'line', series: [] });
+    const { markers } = resolveMarkers(
+      [
+        { key: 'l', at: 'b' },
+        { key: 'r', from: 'b', to: 'c' },
+      ],
+      cats,
+    );
+    const [line, band] = layoutMarkers(markers, l);
+    expect(line.x).toBe(l.categoryX[1]);
+    expect(line.width).toBe(0);
+    expect(band.x).toBeCloseTo(l.categoryX[1] - l.step / 2);
+    expect(band.width).toBeCloseTo(2 * l.step);
+  });
+
+  it('drops labels that collide; flips a line label near the right edge', () => {
+    const l = layout({ type: 'line', series: [] });
+    const { markers } = resolveMarkers(
+      [
+        { key: 'a', label: 'First event', at: 'b' },
+        { key: 'b', label: 'Clashing', at: 'b' },
+        { key: 'c', label: 'Late', at: 'd' },
+      ],
+      cats,
+    );
+    const g = layoutMarkers(markers, { ...l, plot: { ...l.plot, width: l.plot.width } });
+    expect(g[0].label?.text).toBe('First event');
+    expect(g[1].label).toBeUndefined();
+    // 'd' sits half a step from the right edge (~42px at width 400) — "Late" (28px) fits right of it.
+    expect(g[2].label?.anchor).toBe('start');
+    const narrow = layoutMarkers(
+      resolveMarkers([{ key: 'z', label: 'Quarter end', at: 'd' }], cats).markers,
+      l,
+    );
+    expect(narrow[0].label?.anchor).toBe('end');
+    expect(narrow[0].label!.x).toBeLessThan(l.categoryX[3]);
   });
 });

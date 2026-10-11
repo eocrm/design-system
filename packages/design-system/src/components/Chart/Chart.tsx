@@ -28,20 +28,25 @@ import {
   markerShape,
   COMPACT_HEIGHT,
   isEmpty,
+  layoutMarkers,
+  markerLabelsAt,
+  resolveMarkers,
   DOT_RADIUS,
+  MARKER_LABEL_BASELINE,
   MARKER_RADIUS,
   LABEL_GAP,
   PALETTE_SIZE,
   X_LABEL_BASELINE,
   resolveSeries,
   visibleSeries,
+  type ChartMarker,
   type ChartSeries,
   type ChartType,
   type ResolvedSeries,
 } from './chartModel';
 import styles from './Chart.module.scss';
 
-export type { ChartSeries, ChartType } from './chartModel';
+export type { ChartMarker, ChartMarkerTone, ChartSeries, ChartType } from './chartModel';
 
 export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'> {
   /**
@@ -72,7 +77,17 @@ export interface ChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'
   hiddenSeries?: string[];
   /** Called with the next hidden keys when the user toggles a legend item. */
   onHiddenSeriesChange?: (keys: string[]) => void;
+  /**
+   * Static annotations pinned to `categories`: `{ key, label?, at }` draws a vertical line at one category,
+   * `{ key, label?, from, to }` shades a category range (inclusive), e.g. a campaign or weekends. `tone`:
+   * `'neutral'` (default, events) or `'subtle'` (recurring context). Labelled markers are also listed in the
+   * tooltip, the keyboard announcement and the data table; unlabelled ones are decorative. A marker naming an
+   * unknown category is ignored with a dev warning.
+   */
+  markers?: ChartMarker[];
 }
+
+const NO_MARKERS: ChartMarker[] = [];
 
 const seriesStyle = (slot: number) =>
   ({
@@ -80,8 +95,17 @@ const seriesStyle = (slot: number) =>
       slot === 0 ? 'var(--chart-total-comparison)' : `var(--chart-series-${slot})`,
   }) as CSSProperties;
 
-function useDevWarnings(dropped: string[], overflowCount: number) {
+function useDevWarnings(dropped: string[], overflowCount: number, droppedMarkers: string[]) {
   const droppedKey = dropped.join('|');
+  const droppedMarkersKey = droppedMarkers.join('|');
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production') return;
+    if (droppedMarkersKey) {
+      console.warn(
+        `[Chart] Ignored markers (${droppedMarkersKey.split('|').join(', ')}): at/from/to must be one of categories.`,
+      );
+    }
+  }, [droppedMarkersKey]);
   useEffect(() => {
     if (process.env.NODE_ENV === 'production') return;
     if (droppedKey) {
@@ -136,6 +160,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     emptyMessage,
     hiddenSeries,
     onHiddenSeriesChange,
+    markers = NO_MARKERS,
     className,
     ...rest
   },
@@ -146,7 +171,8 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     () => resolveSeries(type, series, categories.length),
     [type, series, categories.length],
   );
-  useDevWarnings(resolved.dropped, resolved.overflowCount);
+  const resolvedMarkers = useMemo(() => resolveMarkers(markers, categories), [markers, categories]);
+  useDevWarnings(resolved.dropped, resolved.overflowCount, resolvedMarkers.dropped);
 
   const [rawHidden, setHidden] = useControllableState<string[]>({
     value: hiddenSeries,
@@ -186,6 +212,11 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
           })
         : null,
     [empty, size.width, size.height, type, categories, visible, formatValue],
+  );
+
+  const markerGeometry = useMemo(
+    () => (layout ? layoutMarkers(resolvedMarkers.markers, layout) : []),
+    [layout, resolvedMarkers.markers],
   );
 
   const [active, setActive] = useState<number | null>(null);
@@ -274,11 +305,12 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
     [anchorX, anchorY],
   );
 
+  const notes = current === null ? [] : markerLabelsAt(resolvedMarkers.markers, current);
   const liveText =
     activeSource === 'keyboard' && current !== null
       ? `${categories[current]}: ${visible
           .map((s, i) => `${columnHeader(s)} ${rows[i].value}`)
-          .join(', ')}`
+          .join(', ')}${notes.length ? `. ${notes.join(', ')}` : ''}`
       : '';
   const known = hidden.filter((k) => resolved.series.some((s) => s.key === k));
   const visiblePrimaries = resolved.series.filter(
@@ -380,6 +412,23 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
             aria-hidden="true"
             focusable="false"
           >
+            {/* Bands sit under the grid and data; lines under the data, labels over it. */}
+            <g className={styles.markers}>
+              {markerGeometry.map(
+                (m) =>
+                  m.kind === 'band' && (
+                    <rect
+                      key={m.key}
+                      className={styles.markerBand}
+                      data-tone={m.tone}
+                      x={m.x}
+                      y={layout.plot.y}
+                      width={m.width}
+                      height={layout.plot.height}
+                    />
+                  ),
+              )}
+            </g>
             <g className={styles.grid}>
               {layout.yTicks.map((tick) => (
                 <line
@@ -427,6 +476,22 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
                   y2={layout.plot.y + layout.plot.height}
                 />
               ))}
+            <g className={styles.markers}>
+              {markerGeometry.map(
+                (m) =>
+                  m.kind === 'line' && (
+                    <line
+                      key={m.key}
+                      className={styles.markerLine}
+                      data-tone={m.tone}
+                      x1={m.x}
+                      x2={m.x}
+                      y1={layout.plot.y}
+                      y2={layout.plot.y + layout.plot.height}
+                    />
+                  ),
+              )}
+            </g>
             {layout.marks.map((m) => (
               <g
                 key={m.key}
@@ -462,6 +527,23 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
                 )}
               </g>
             ))}
+            {!compact && (
+              <g className={styles.markerLabels}>
+                {markerGeometry.map(
+                  (m) =>
+                    m.label && (
+                      <text
+                        key={m.key}
+                        x={m.label.x}
+                        y={layout.plot.y + MARKER_LABEL_BASELINE}
+                        textAnchor={m.label.anchor}
+                      >
+                        {m.label.text}
+                      </text>
+                    ),
+                )}
+              </g>
+            )}
           </svg>
         )}
       </div>
@@ -470,6 +552,7 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
         point={point}
         title={current === null ? '' : categories[current]}
         rows={rows}
+        notes={notes}
       />
       <LiveRegion>{liveText}</LiveRegion>
       <ChartTable
@@ -479,6 +562,8 @@ export const Chart = forwardRef<HTMLElement, ChartProps>(function Chart(
         categories={categories}
         columns={columns}
         formatValue={formatValue}
+        markersHeader={t('chart.markers')}
+        markers={resolvedMarkers.markers}
       />
     </figure>
   );

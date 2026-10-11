@@ -33,6 +33,20 @@ import { Chart, DashboardWidget, ErrorState } from '@eocrm/design-system';
   ]}
   formatValue={formatCurrency}
 />;
+
+// Markers: an event line, a campaign band, weekends as subtle decorative bands
+<Chart
+  type="line"
+  label="Calls per day"
+  categories={days}
+  series={calls}
+  formatValue={formatCount}
+  markers={[
+    { key: 'launch', label: 'Launch', at: '10 Jul' },
+    { key: 'promo', label: 'Summer promo', from: '21 Jul', to: '30 Jul' },
+    ...weekends.map(([sat, sun]) => ({ key: sat, from: sat, to: sun, tone: 'subtle' as const })),
+  ]}
+/>;
 ```
 
 <!-- props:start -->
@@ -50,6 +64,7 @@ import { Chart, DashboardWidget, ErrorState } from '@eocrm/design-system';
 | `emptyMessage` | `ReactNode` | no | EmptyState title when there are no categories or every value is null/zero. Default: translated "No data for this period". |
 | `hiddenSeries` | `string[]` | no | Controlled list of hidden series keys (legend toggles). Omit for uncontrolled. Unknown keys are ignored. If it would hide every primary series, it is ignored for primaries (the last primary can't be hidden). |
 | `onHiddenSeriesChange` | `((keys: string[]) => void)` | no | Called with the next hidden keys when the user toggles a legend item. |
+| `markers` | `ChartMarker[]` | no | Static annotations pinned to `categories`: `{ key, label?, at }` draws a vertical line at one category, `{ key, label?, from, to }` shades a category range (inclusive), e.g. a campaign or weekends. `tone`: `'neutral'` (default, events) or `'subtle'` (recurring context). Labelled markers are also listed in the tooltip, the keyboard announcement and the data table; unlabelled ones are decorative. A marker naming an unknown category is ignored with a dev warning. |
 | …native | | | plus native HTML attributes |
 
 <!-- props:end -->
@@ -60,6 +75,7 @@ import { Chart, DashboardWidget, ErrorState } from '@eocrm/design-system';
 - **Y axis** always includes 0, with rounded ticks formatted by `formatValue`. In `bar` and `line`, negative values grow down from 0; `stacked-bar` diverges around 0 (positives up, negatives down); `area` stacks without a diverging offset, so negatives accumulate.
 - **Colour** follows a series' position among non-comparison series: 1–8 get the 8 validated palette colours (light + dark). Keep the order stable so filtering never repaints survivors.
 - **Comparison series** (`comparisonOf`): in `line` / `bar`, name the parent's key — it inherits the parent's colour, dashed (line) or outlined with a light fill (bar), sits after its parent in legend and tooltip, and hides with it. In `stacked-bar` / `area`, use `comparisonOf: 'total'` — a dashed neutral line of the previous period's total. Mismatches are ignored with a dev warning.
+- **Markers** (`markers`) are static annotations pinned to `categories`: `{ key, label?, at }` draws a dashed vertical line at the centre of one category; `{ key, label?, from, to }` shades whole buckets from `from` to `to` (inclusive, either order). Positions snap to buckets: there is no sub-bucket time. `tone: 'neutral'` (default) for events, `'subtle'` for recurring context such as weekends (one marker per weekend). Bands sit behind the grid and data, lines behind the data. Labels are drawn at the top of the plot when they fit (earlier markers win a collision; hidden when the chart is compact) and are always listed in the tooltip, the keyboard announcement and a "Markers" column of the data table. Unlabelled markers are decorative. A marker naming an unknown category is ignored with a dev warning. Don't encode status with markers (no red "incident" tone): put the meaning in the label.
 - **Legend** appears with more than one series. Hover or focus an item to highlight its series; click to hide/show it (`aria-pressed`). The last visible primary series can't be hidden: its button is `aria-disabled` but stays focusable. A comparison's button is disabled while its parent is hidden. Control with `hiddenSeries` / `onHiddenSeriesChange` to persist per widget. Below 120px height the legend shrinks to one row with a "+N" counter; overflow items are not rendered, so they are not keyboard-reachable (the data table still lists every series) — except hidden series, which always render so they can be re-shown (the "+N" counts only the remaining visible ones).
 - **Tooltip** on hover or tap shows every visible series at that bucket. On touch, tapping the plot shows it and it stays until you tap outside the plot. **Keyboard:** the plot is one tab stop (named by `label`, with the key hint as its description); ←/→ move, Home/End jump, Esc closes. Screen-reader users in browse mode never receive the arrow keys on the plot — they should read the data table instead. Values are announced politely only while a keyboard user inspects — never on load, so a dashboard of charts stays quiet.
 - **Screen readers** (browse mode: use the table, not the plot's arrow keys) get a visually hidden data table (caption = `label`) with exactly the plotted values (a null cell reads "No data"); the SVG is hidden from them. Identity never relies on colour alone: dashes for comparisons, marker shapes per series, labels everywhere.

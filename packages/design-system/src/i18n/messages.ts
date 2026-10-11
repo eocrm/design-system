@@ -814,6 +814,8 @@ export interface Messages {
     category: string;
     /** Data-table cell text for a null value. */
     noData: string;
+    /** Header of the data table's marker column (labels of the annotations covering each category). */
+    markers: string;
   };
   catalogPicker: {
     /** Placeholder + aria-label of the catalog search input. */

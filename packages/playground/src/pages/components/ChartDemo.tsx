@@ -6,6 +6,7 @@ import {
   DashboardWidget,
   Stack,
   Switch,
+  type ChartMarker,
   type ChartSeries,
   type ChartType,
 } from '@eocrm/design-system';
@@ -59,6 +60,19 @@ const dealsSeries: ChartSeries[] = [
   { key: 'won', label: 'Deals won', values: wave(2, 12) },
   { key: 'prev', label: 'Previous period', values: wave(5, 12), comparisonOf: 'won' },
 ];
+// Weekends of the first 6 weeks as subtle bands (Sat–Sun as one range), plus two events.
+const firstSixWeeks = days.slice(0, 42);
+const weekendMarkers: ChartMarker[] = firstSixWeeks.flatMap((d, i) =>
+  new Date(2026, 6, 1 + i).getDay() === 6 && i + 1 < firstSixWeeks.length
+    ? [{ key: `we-${d}`, from: d, to: firstSixWeeks[i + 1], tone: 'subtle' as const }]
+    : [],
+);
+const eventMarkers: ChartMarker[] = [
+  ...weekendMarkers,
+  { key: 'launch', label: 'Launch', at: firstSixWeeks[9] },
+  { key: 'promo', label: 'Summer promo', from: firstSixWeeks[20], to: firstSixWeeks[29] },
+];
+const markerSeries: ChartSeries[] = [{ key: 'calls', label: 'Calls', values: wave(3, 42, 8) }];
 const dailySeries: ChartSeries[] = [
   { key: 'calls', label: 'Calls', values: wave(3, 90, 8) },
   { key: 'prev', label: 'Previous period', values: wave(7, 90, 8), comparisonOf: 'calls' },
@@ -219,6 +233,29 @@ export function ChartDemo() {
               },
             ]}
             formatValue={(n) => fmt.format(n)}
+          />
+        </Cell>
+      </Example>
+
+      <Example
+        title="Markers"
+        description="A vertical line at one category, or a shaded band over a range. Subtle bands mark recurring context like weekends; labelled markers also appear in the tooltip, the keyboard announcement and the data table."
+        code={`<Chart type="area" label="Calls per day" categories={days} series={series}
+  markers={[
+    { key: 'launch', label: 'Launch', at: '10 Jul' },
+    { key: 'promo', label: 'Summer promo', from: '21 Jul', to: '30 Jul' },
+    { key: 'we-4', from: '4 Jul', to: '5 Jul', tone: 'subtle' }, // weekend, decorative
+  ]}
+/>`}
+      >
+        <Cell title="Calls">
+          <Chart
+            type="area"
+            label="Calls per day"
+            categories={firstSixWeeks}
+            series={markerSeries}
+            markers={eventMarkers}
+            formatValue={formatCount}
           />
         </Cell>
       </Example>

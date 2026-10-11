@@ -27,12 +27,15 @@ export function ChartTooltip({
   point,
   title,
   rows,
+  notes,
 }: {
   /** The plot element; `point` is relative to its top-left. */
   anchor: HTMLElement | null;
   point: { x: number; y: number } | null;
   title: string;
   rows: ChartTooltipRow[];
+  /** Labels of the markers covering this category. */
+  notes: string[];
 }) {
   const { refs, floatingStyles } = useFloating({
     placement: 'top',
@@ -74,6 +77,11 @@ export function ChartTooltip({
           />
           <span className={styles.tooltipLabel}>{r.label}</span>
           <span className={styles.tooltipValue}>{r.value}</span>
+        </div>
+      ))}
+      {notes.map((note) => (
+        <div key={note} className={styles.tooltipNote}>
+          {note}
         </div>
       ))}
     </div>,

@@ -812,4 +812,10 @@ export type {
 export { StatGroup, StatTile } from './components/StatGroup';
 export type { StatGroupProps, StatTileProps, StatTrend } from './components/StatGroup';
 export { Chart } from './components/Chart';
-export type { ChartProps, ChartSeries, ChartType } from './components/Chart';
+export type {
+  ChartMarker,
+  ChartMarkerTone,
+  ChartProps,
+  ChartSeries,
+  ChartType,
+} from './components/Chart';
