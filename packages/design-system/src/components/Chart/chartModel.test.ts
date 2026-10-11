@@ -245,6 +245,52 @@ describe('computeLayout', () => {
     }
   });
 
+  it('never smooths below 0 between non-negative values: no negative axis on counts', () => {
+    for (const type of ['line', 'area'] as const) {
+      for (const values of [
+        [5, 0, 0, 3],
+        [10, 0, 0, 10],
+      ]) {
+        const l = layout({ type, series: one(values) });
+        expect(l.yTicks[0].value).toBeGreaterThanOrEqual(0);
+        const zeroY = l.yTicks.find((t) => t.value === 0)!.y;
+        for (const y of ys(l.marks[0].line!)) expect(y).toBeLessThanOrEqual(zeroY + 1e-6);
+      }
+    }
+    // the same clamp keeps a single-layer area and its equal total on one curve
+    const values = [0, 0, 10, 10];
+    const l = layout({
+      type: 'area',
+      series: resolveSeries('area', [s('a', values), s('t', values, 'total')], 4).series,
+    });
+    expect(l.marks[1].line).toBe(l.marks[0].line);
+  });
+
+  it('a total equal to a multi-layer stack follows its top even where a layer is clamped', () => {
+    const series = resolveSeries(
+      'area',
+      [s('a', [0, 5, 0, 0]), s('b', [10, 10, 10, 10]), s('t', [10, 15, 10, 10], 'total')],
+      4,
+    ).series;
+    const l = layout({ type: 'area', series });
+    expect(l.marks[2].line).toBe(l.marks[1].line);
+  });
+
+  it('draws a two-point run straight', () => {
+    const l = layout({ type: 'line', series: one([0, 10, null, null]) });
+    const pts = l.marks[0]
+      .line!.slice(1)
+      .split('L')
+      .map((p) => p.split(',').map(Number));
+    const [[x0, y0], [x1, y1]] = [pts[0], pts[pts.length - 1]];
+    for (const [x, y] of pts) expect(y).toBeCloseTo(y0 + ((y1 - y0) * (x - x0)) / (x1 - x0), 1);
+  });
+
+  it('keeps area overshoot inside the plot', () => {
+    const l = layout({ type: 'area', series: one([0, 10, 10, 0]) });
+    for (const y of ys(l.marks[0].line!)) expect(y).toBeGreaterThanOrEqual(l.plot.y - 1e-6);
+  });
+
   it('breaks smoothed lines at gaps without NaN', () => {
     const l = layout({ type: 'line', series: one([1, 2, null, 3]) });
     expect(l.marks[0].line!.match(/M/g)).toHaveLength(1); // [3] is isolated: a dot, not a path

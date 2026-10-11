@@ -598,23 +598,27 @@ const hermite = (y0: number, y1: number, m0: number, m1: number, t: number) => {
 
 /**
  * Uniform Catmull-Rom through `v`: `result[i][s]` is the value at sample s (0..samples) of the segment
- * between points i and i+1. Passes through every point; may overshoot between them.
+ * between points i and i+1. Passes through every point; may overshoot between them, but never across 0
+ * when both ends are on the same side (no negative counts, no inverted stack layers).
  */
-export function smoothRun(v: readonly number[], samples: number): number[][] {
+function smoothRun(v: readonly number[], samples: number): number[][] {
   const n = v.length;
-  const m = v.map((_, i) => (v[Math.min(n - 1, i + 1)] - v[Math.max(0, i - 1)]) / 2);
+  // Two points: full slope at both ends, so the segment is straight rather than an S.
+  const m = v.map((_, i) =>
+    n === 2 ? v[1] - v[0] : (v[Math.min(n - 1, i + 1)] - v[Math.max(0, i - 1)]) / 2,
+  );
   return Array.from({ length: Math.max(0, n - 1) }, (_, i) =>
-    Array.from({ length: samples + 1 }, (_, s) =>
-      hermite(v[i], v[i + 1], m[i], m[i + 1], s / samples),
-    ),
+    Array.from({ length: samples + 1 }, (_, s) => {
+      const h = hermite(v[i], v[i + 1], m[i], m[i + 1], s / samples);
+      if (v[i] >= 0 && v[i + 1] >= 0) return Math.max(0, h);
+      if (v[i] <= 0 && v[i + 1] <= 0) return Math.min(0, h);
+      return h;
+    }),
   );
 }
 
 /** Smoothed segments of a series with gaps: each defined run is its own curve; `null` where a segment touches a gap. */
-export function smoothLine(
-  values: readonly (number | null)[],
-  samples: number,
-): (number[] | null)[] {
+function smoothLine(values: readonly (number | null)[], samples: number): (number[] | null)[] {
   const segs: (number[] | null)[] = Array.from(
     { length: Math.max(0, values.length - 1) },
     () => null,
@@ -631,20 +635,24 @@ export function smoothLine(
 
 /**
  * Cumulative tops of smoothed stacked layers: `result[k][i][s]` is the top of layer k at sample s of the
- * segment between categories i and i+1. Each layer's own thickness is smoothed (the same curve as lines)
- * and clamped to the sign of its endpoints, so a layer never turns inside out and boundaries never cross.
+ * segment between categories i and i+1. The cumulative tops are smoothed directly (the same curve as
+ * lines), so the top layer is exactly the smoothed total; each top is then held on its own side of the
+ * layer below, so a layer never turns inside out and boundaries never cross.
  */
 export function smoothStack(layers: readonly (readonly number[])[], samples: number): number[][][] {
-  const below: number[][] = [];
+  const sum = layers[0]?.map(() => 0) ?? [];
+  let below: number[][] | null = null;
   return layers.map((v) => {
-    const tops = smoothRun(v, samples).map((seg, i) =>
-      seg.map((h, s) => {
-        if (v[i] >= 0 && v[i + 1] >= 0) h = Math.max(0, h);
-        else if (v[i] <= 0 && v[i + 1] <= 0) h = Math.min(0, h);
-        return (below[i]?.[s] ?? 0) + h;
+    v.forEach((x, i) => (sum[i] += x));
+    const tops = smoothRun(sum, samples).map((seg, i) =>
+      seg.map((t, s) => {
+        const b = below?.[i][s] ?? 0;
+        if (v[i] >= 0 && v[i + 1] >= 0) return Math.max(t, b);
+        if (v[i] <= 0 && v[i + 1] <= 0) return Math.min(t, b);
+        return t;
       }),
     );
-    tops.forEach((seg, i) => (below[i] = seg));
+    below = tops;
     return tops;
   });
 }
