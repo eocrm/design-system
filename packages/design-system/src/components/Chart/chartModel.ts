@@ -615,9 +615,16 @@ function smoothRun(v: readonly number[], samples: number): number[][] {
     // An interior 0 between same-signed (or zero) neighbours is a floor: ease into it flat instead of
     // hitting the sign clamp below. Run ends keep their slope, so a climb from 0 starts straight.
     if (x === 0 && i > 0 && i < n - 1 && prev * next >= 0) return 0;
-    // Catmull-Rom, capped at 3x the gentler neighbouring slope (Fritsch-Carlson bound) so a sharp spike
+    // Catmull-Rom, capped at 3x the gentler neighbouring slope (a Fritsch-Carlson-style bound) so a sharp spike
     // doesn't drag the curve far past its flatter neighbours.
-    const cap = Math.max(3 * Math.min(Math.abs(x - prev), Math.abs(next - x)), floor);
+    // (Run ends have one real neighbour: use its slope.)
+    const gentler =
+      i === 0
+        ? Math.abs(next - x)
+        : i === n - 1
+          ? Math.abs(x - prev)
+          : Math.min(Math.abs(x - prev), Math.abs(next - x));
+    const cap = Math.max(3 * gentler, floor);
     return Math.max(-cap, Math.min(cap, (next - prev) / 2));
   });
   return Array.from({ length: Math.max(0, n - 1) }, (_, i) =>
@@ -663,7 +670,9 @@ export function smoothStack(layers: readonly (readonly number[])[], samples: num
     const above = layers[k + 1];
     tops[k].forEach((seg, i) =>
       seg.forEach((t, s) => {
-        if (above[i] >= 0 && above[i + 1] >= 0) seg[s] = Math.min(t, tops[k + 1][i][s]);
+        // A layer that is 0 at both ends has no thickness: the tops share one edge.
+        if (above[i] === 0 && above[i + 1] === 0) seg[s] = tops[k + 1][i][s];
+        else if (above[i] >= 0 && above[i + 1] >= 0) seg[s] = Math.min(t, tops[k + 1][i][s]);
         else if (above[i] <= 0 && above[i + 1] <= 0) seg[s] = Math.max(t, tops[k + 1][i][s]);
       }),
     );

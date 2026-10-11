@@ -329,6 +329,21 @@ describe('computeLayout', () => {
     }
   });
 
+  it('a stacked layer that is 0 at both ends of a segment has no thickness there', () => {
+    const S = 12;
+    const layers = [
+      [31, 80, 42, 31, 44, 0],
+      [2, 0, 64, 13, 0, 94],
+      [38, 0, 86, 0, 0, 0],
+      [0, 0, 0, 0, 23, 0],
+    ];
+    const tops = smoothStack(layers, S);
+    for (let k = 1; k < layers.length; k++)
+      for (let i = 0; i < layers[k].length - 1; i++)
+        if (layers[k][i] === 0 && layers[k][i + 1] === 0)
+          for (let s = 0; s <= S; s++) expect(tops[k][i][s]).toBe(tops[k - 1][i][s]);
+  });
+
   it('a climb from 0 at the start of a run is not bowed', () => {
     const l = layout({ type: 'line', series: one([0, 10, 20, 30]) });
     const pts = l.marks[0]
@@ -372,7 +387,7 @@ describe('computeLayout', () => {
     const [x0, y0] = pts[atFirstZero - 1];
     const slopeIn = (zeroY - y0) / (l.categoryX[1] - x0);
     const firstStep = (zeroY - l.marks[0].points[0]!.y) / (l.categoryX[1] - l.categoryX[0]);
-    // ~0.11x with the flat tangent, ~0.55x without it.
+    // ~0.11x with the flat tangent; without it the capped tangent still gives ~0.3x.
     expect(Math.abs(slopeIn)).toBeLessThan(Math.abs(firstStep) / 4);
   });
 
