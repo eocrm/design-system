@@ -153,8 +153,23 @@
 // `transform-origin: top` is a static approximation (panel scales from the
 // top edge). A future polish task can wire dynamic origin off Floating UI's
 // resolved placement so the panel grows toward the trigger on flip.
+// Sizing: never narrower than the trigger (or the widest it has been while
+// open), grows to the widest option up to `--select-listbox-max-width`, and
+// never past the viewport. The `--select-listbox-{min,available}-*` geometry
+// vars are written by Listbox.tsx's size middleware; the fallbacks cover
+// the first frame before it runs.
 .listbox {
   z-index: var(--z-popover);
+
+  // offsetWidth (border-box) feeds min-width back in; pin the box model so
+  // a consumer without the reset can't make the ratchet creep.
+  box-sizing: border-box;
+  min-width: min(
+    var(--select-listbox-min-width, 0px),
+    var(--select-listbox-available-width, 100vw)
+  );
+  max-width: min(var(--select-listbox-max-width), var(--select-listbox-available-width, 100vw));
+  max-height: min(var(--select-listbox-max-height), var(--select-listbox-available-height, 100vh));
   overflow-y: auto;
 
   // Don't chain wheel/touch scrolling past the panel's edge to the page —

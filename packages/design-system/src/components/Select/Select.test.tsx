@@ -100,6 +100,46 @@ describe('Select — open/close', () => {
     expect(trigger).toHaveAttribute('aria-expanded', 'true');
   });
 
+  it('sizes the panel from the trigger + viewport instead of pinning width to the trigger', async () => {
+    const user = userEvent.setup();
+    render(<Select options={STATUSES} />);
+    await user.click(screen.getByRole('combobox'));
+    const panel = document.querySelector<HTMLElement>(`.${styles.listbox}`)!;
+    await waitFor(() =>
+      expect(panel.style.getPropertyValue('--select-listbox-min-width')).toMatch(/px$/),
+    );
+    expect(panel.style.getPropertyValue('--select-listbox-available-width')).toMatch(/px$/);
+    expect(panel.style.getPropertyValue('--select-listbox-available-height')).toMatch(/px$/);
+    // Inline width/height would override the token caps in .listbox and
+    // force labels to wrap at the trigger's width.
+    expect(panel.style.width).toBe('');
+    expect(panel.style.maxHeight).toBe('');
+  });
+
+  it('min width ratchets to the widest the panel has been, so filtering does not shrink it', async () => {
+    const spy = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(250);
+    try {
+      const user = userEvent.setup();
+      render(<Select options={STATUSES} />);
+      await user.click(screen.getByRole('combobox'));
+      const panel = document.querySelector<HTMLElement>(`.${styles.listbox}`)!;
+      await waitFor(() =>
+        expect(panel.style.getPropertyValue('--select-listbox-min-width')).toBe('250px'),
+      );
+      // Content narrows (e.g. a filter drops the long rows); a re-measure
+      // must not pull the min width back down while the panel is open.
+      spy.mockReturnValue(100);
+      const reads = spy.mock.calls.length;
+      act(() => {
+        window.dispatchEvent(new Event('resize'));
+      });
+      await waitFor(() => expect(spy.mock.calls.length).toBeGreaterThan(reads));
+      expect(panel.style.getPropertyValue('--select-listbox-min-width')).toBe('250px');
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
   it('aria-controls points at the listbox id when open', async () => {
     const user = userEvent.setup();
     render(<Select options={STATUSES} />);
