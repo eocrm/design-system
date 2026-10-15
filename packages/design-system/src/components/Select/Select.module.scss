@@ -153,18 +153,20 @@
 // `transform-origin: top` is a static approximation (panel scales from the
 // top edge). A future polish task can wire dynamic origin off Floating UI's
 // resolved placement so the panel grows toward the trigger on flip.
-// Sizing: never narrower than the trigger, grows to the widest option up to
-// `--select-listbox-max-width`, and never past the viewport (the
-// `--select-listbox-*` geometry vars are written by Listbox.tsx's size
-// middleware). `scrollbar-gutter: stable` counts the scrollbar in the
-// intrinsic width so it doesn't steal room from the labels.
+// Sizing: never narrower than the trigger (or the widest it has been while
+// open), grows to the widest option up to `--select-listbox-max-width`, and
+// never past the viewport. The `--select-listbox-{min,available}-*` geometry
+// vars are written by Listbox.tsx's size middleware; the fallbacks cover
+// the first frame before it runs.
 .listbox {
   z-index: var(--z-popover);
-  min-width: min(var(--select-listbox-trigger-width), var(--select-listbox-available-width));
-  max-width: min(var(--select-listbox-max-width), var(--select-listbox-available-width));
-  max-height: min(var(--select-listbox-max-height), var(--select-listbox-available-height));
+  min-width: min(
+    var(--select-listbox-min-width, 0px),
+    var(--select-listbox-available-width, 100vw)
+  );
+  max-width: min(var(--select-listbox-max-width), var(--select-listbox-available-width, 100vw));
+  max-height: min(var(--select-listbox-max-height), var(--select-listbox-available-height, 100vh));
   overflow-y: auto;
-  scrollbar-gutter: stable;
 
   // Don't chain wheel/touch scrolling past the panel's edge to the page —
   // the listbox stays open while the page shifts underneath otherwise.

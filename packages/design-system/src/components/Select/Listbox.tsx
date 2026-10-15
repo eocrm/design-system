@@ -79,6 +79,7 @@ export function Listbox() {
   // handler closes us on the same press instead of the Modal/Drawer.
   const floatingId = useFloatingSurface(ctx.open);
 
+  const widestRef = useRef(0);
   const { refs, floatingStyles, isPositioned } = useFloating({
     open: ctx.open,
     placement: 'bottom-start',
@@ -94,17 +95,23 @@ export function Listbox() {
       offset(4),
       flip(),
       shift({ padding: 8 }),
-      // Publish trigger width + viewport room as CSS vars; `.listbox` turns
+      // Publish a min width + viewport room as CSS vars; `.listbox` turns
       // them into min/max width and max height. Width stays intrinsic so
       // option labels only wrap when the panel would hit its cap or the
-      // viewport edge — not because the trigger is narrow.
+      // viewport edge — not because the trigger is narrow. The min width
+      // ratchets to the widest the panel has been while open, so filtering
+      // or async rows don't make the right edge jump on every keystroke
+      // (the Listbox unmounts on close, which resets the ratchet).
       floatingSize({
         padding: 8,
         apply({ rects, availableWidth, availableHeight, elements }) {
           const s = elements.floating.style;
-          s.setProperty('--select-listbox-trigger-width', `${rects.reference.width}px`);
+          const minWidth = () => `${Math.max(rects.reference.width, widestRef.current)}px`;
+          s.setProperty('--select-listbox-min-width', minWidth());
           s.setProperty('--select-listbox-available-width', `${Math.max(0, availableWidth)}px`);
           s.setProperty('--select-listbox-available-height', `${Math.max(0, availableHeight)}px`);
+          widestRef.current = Math.max(widestRef.current, elements.floating.offsetWidth);
+          s.setProperty('--select-listbox-min-width', minWidth());
         },
       }),
     ],

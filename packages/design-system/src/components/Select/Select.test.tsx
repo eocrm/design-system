@@ -106,12 +106,29 @@ describe('Select — open/close', () => {
     await user.click(screen.getByRole('combobox'));
     const panel = document.querySelector<HTMLElement>(`.${styles.listbox}`)!;
     await waitFor(() =>
-      expect(panel.style.getPropertyValue('--select-listbox-trigger-width')).toMatch(/px$/),
+      expect(panel.style.getPropertyValue('--select-listbox-min-width')).toMatch(/px$/),
     );
     expect(panel.style.getPropertyValue('--select-listbox-available-width')).toMatch(/px$/);
     expect(panel.style.getPropertyValue('--select-listbox-available-height')).toMatch(/px$/);
-    // An inline width would force labels to wrap at the trigger's width.
+    // Inline width/height would override the token caps in .listbox and
+    // force labels to wrap at the trigger's width.
     expect(panel.style.width).toBe('');
+    expect(panel.style.maxHeight).toBe('');
+  });
+
+  it('min width ratchets to the widest the panel has been, so filtering does not shrink it', async () => {
+    const spy = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(250);
+    try {
+      const user = userEvent.setup();
+      render(<Select options={STATUSES} />);
+      await user.click(screen.getByRole('combobox'));
+      const panel = document.querySelector<HTMLElement>(`.${styles.listbox}`)!;
+      await waitFor(() =>
+        expect(panel.style.getPropertyValue('--select-listbox-min-width')).toBe('250px'),
+      );
+    } finally {
+      spy.mockRestore();
+    }
   });
 
   it('aria-controls points at the listbox id when open', async () => {
