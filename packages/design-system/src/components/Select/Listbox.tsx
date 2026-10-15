@@ -110,6 +110,9 @@ export function Listbox() {
           s.setProperty('--select-listbox-min-width', minWidth());
           s.setProperty('--select-listbox-available-width', `${Math.max(0, availableWidth)}px`);
           s.setProperty('--select-listbox-available-height', `${Math.max(0, availableHeight)}px`);
+          // Written twice on purpose: the first write lets a grown trigger
+          // widen the panel before it is measured; the second locks the
+          // measured width in as the new floor.
           widestRef.current = Math.max(widestRef.current, elements.floating.offsetWidth);
           s.setProperty('--select-listbox-min-width', minWidth());
         },

@@ -126,6 +126,15 @@ describe('Select — open/close', () => {
       await waitFor(() =>
         expect(panel.style.getPropertyValue('--select-listbox-min-width')).toBe('250px'),
       );
+      // Content narrows (e.g. a filter drops the long rows); a re-measure
+      // must not pull the min width back down while the panel is open.
+      spy.mockReturnValue(100);
+      const reads = spy.mock.calls.length;
+      act(() => {
+        window.dispatchEvent(new Event('resize'));
+      });
+      await waitFor(() => expect(spy.mock.calls.length).toBeGreaterThan(reads));
+      expect(panel.style.getPropertyValue('--select-listbox-min-width')).toBe('250px');
     } finally {
       spy.mockRestore();
     }

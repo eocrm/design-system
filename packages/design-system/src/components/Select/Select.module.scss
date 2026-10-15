@@ -160,6 +160,10 @@
 // the first frame before it runs.
 .listbox {
   z-index: var(--z-popover);
+
+  // offsetWidth (border-box) feeds min-width back in; pin the box model so
+  // a consumer without the reset can't make the ratchet creep.
+  box-sizing: border-box;
   min-width: min(
     var(--select-listbox-min-width, 0px),
     var(--select-listbox-available-width, 100vw)

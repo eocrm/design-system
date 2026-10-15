@@ -50,7 +50,7 @@
 />
 ```
 
-**Panel width.** The option panel is never narrower than the trigger and grows to fit its widest option, up to `--select-listbox-max-width` (20rem) and the viewport. Labels wrap only past that cap. While the panel is open it never shrinks, so filtering doesn't make it jump. A narrow trigger is fine: don't widen it just to stop options wrapping. Height caps at `--select-listbox-max-height` (320px) or the space available in the viewport. The panel is portalled to `<body>`, so override either token at `:root` or theme level (see `docs/theming.md`). Setting it on a wrapper around the Select does not reach the panel.
+**Panel width.** The option panel is never narrower than the trigger and grows to fit its widest option, up to `--select-listbox-max-width` (20rem) and the viewport. Labels wrap only past that cap. While the panel is open it never shrinks, so filtering doesn't make it jump. A narrow trigger is fine: don't widen it just to stop options wrapping. Height caps at `--select-listbox-max-height` (320px) or the space available in the viewport. The panel is portalled to `<body>`, so override either token at `:root` or through `AppProvider`'s `tokens` / `darkTokens` (see `docs/setup.md`). Setting it on a wrapper around the Select does not reach the panel.
 
 <!-- props:start -->
 
