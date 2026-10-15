@@ -6276,7 +6276,7 @@
           "type": "TreeViewView",
           "required": false,
           "default": "",
-          "description": "Presentation. Default `'list'`.\n- `'list'` — file-explorer rows indented per level with a chevron; ↑/↓ walk rows, →/← expand/collapse.\n- `'chart'` — classic top-down org chart of boxes with connector lines; scrolls horizontally inside itself\n  when wider than its container. Spatial keys: ↓ into children, ↑ to the parent, ←/→ between siblings."
+          "description": "Presentation. Default `'list'`.\n- `'list'` — file-explorer rows indented per level with a chevron; ↑/↓ walk rows, →/← expand/collapse.\n- `'chart'` — classic top-down org chart of boxes with connector lines; scrolls horizontally inside itself\n  when wider than its container. Spatial keys: ↓ expands or enters, ↑ collapses or goes to the parent, ←/→ between siblings."
         },
         {
           "name": "roots",

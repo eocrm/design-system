@@ -100,6 +100,20 @@ describe('Select — open/close', () => {
     expect(trigger).toHaveAttribute('aria-expanded', 'true');
   });
 
+  it('sizes the panel from the trigger + viewport instead of pinning width to the trigger', async () => {
+    const user = userEvent.setup();
+    render(<Select options={STATUSES} />);
+    await user.click(screen.getByRole('combobox'));
+    const panel = document.querySelector<HTMLElement>(`.${styles.listbox}`)!;
+    await waitFor(() =>
+      expect(panel.style.getPropertyValue('--select-listbox-trigger-width')).toMatch(/px$/),
+    );
+    expect(panel.style.getPropertyValue('--select-listbox-available-width')).toMatch(/px$/);
+    expect(panel.style.getPropertyValue('--select-listbox-available-height')).toMatch(/px$/);
+    // An inline width would force labels to wrap at the trigger's width.
+    expect(panel.style.width).toBe('');
+  });
+
   it('aria-controls points at the listbox id when open', async () => {
     const user = userEvent.setup();
     render(<Select options={STATUSES} />);

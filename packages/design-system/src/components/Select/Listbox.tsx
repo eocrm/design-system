@@ -94,15 +94,17 @@ export function Listbox() {
       offset(4),
       flip(),
       shift({ padding: 8 }),
-      // Match listbox width to trigger width and clamp height so a long
-      // option list scrolls inside the panel instead of pushing the
-      // viewport bounds.
+      // Publish trigger width + viewport room as CSS vars; `.listbox` turns
+      // them into min/max width and max height. Width stays intrinsic so
+      // option labels only wrap when the panel would hit its cap or the
+      // viewport edge — not because the trigger is narrow.
       floatingSize({
-        apply({ rects, elements }) {
-          Object.assign(elements.floating.style, {
-            width: `${rects.reference.width}px`,
-            maxHeight: '320px',
-          });
+        padding: 8,
+        apply({ rects, availableWidth, availableHeight, elements }) {
+          const s = elements.floating.style;
+          s.setProperty('--select-listbox-trigger-width', `${rects.reference.width}px`);
+          s.setProperty('--select-listbox-available-width', `${Math.max(0, availableWidth)}px`);
+          s.setProperty('--select-listbox-available-height', `${Math.max(0, availableHeight)}px`);
         },
       }),
     ],
