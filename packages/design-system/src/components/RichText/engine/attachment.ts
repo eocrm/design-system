@@ -29,6 +29,8 @@ export interface AttachmentAttrs {
   align?: 'left' | 'center' | 'right';
   /** Upload state. Defaults to `'ready'` when omitted. */
   status?: 'uploading' | 'ready' | 'error';
+  /** Failure reason shown on an `error` block (from an `UploadError`). */
+  uploadError?: string;
 }
 
 /** True for void blocks (no editable text; caret sits adjacent, never inside). */
@@ -138,7 +140,7 @@ export function updateAttachmentBlock(doc: RichDoc, id: string, patch: Attachmen
 export function clearAttachmentFields(
   doc: RichDoc,
   id: string,
-  keys: ('width' | 'height' | 'align' | 'alt')[],
+  keys: ('width' | 'height' | 'align' | 'alt' | 'uploadError')[],
 ): RichDoc {
   const idx = findBlockIndex(doc, id);
   if (idx === -1 || doc.blocks[idx].type !== 'attachment') return doc;

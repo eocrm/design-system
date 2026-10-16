@@ -193,7 +193,9 @@ export interface RichTextEditorProps extends Omit<
    * Enable file upload: a toolbar button (when `toolbar`) and clipboard-file paste.
    * `onUpload(file)` resolves with where the file landed; images render inline as a
    * preview, other files as a download chip. Reject `onUpload` to show a retry/remove
-   * error. `onUploadingChange` fires while any upload is in flight — wire it to your
+   * error; reject with `new UploadError(message)` to also show that (user-facing,
+   * localized) reason on the block — any other rejection shows only "Upload
+   * failed". `onUploadingChange` fires while any upload is in flight — wire it to your
    * submit button's disabled state. Validation (size/type) belongs in `onUpload`
    * (`accept` is only a native-picker hint and is bypassed by paste). Omit to
    * disable. Ignored when `readOnly`.

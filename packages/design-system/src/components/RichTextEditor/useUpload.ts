@@ -32,9 +32,22 @@ export interface UploadResult {
   alt?: string;
 }
 
+/**
+ * Reject `onUpload` with this to show `message` on the failed attachment block
+ * (e.g. the server's "The file may not be larger than 5 MB."). Any other
+ * rejection shows only the generic "Upload failed", so raw network/library
+ * errors never reach the user. Write `message` for end users, localized.
+ */
+export class UploadError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'UploadError';
+  }
+}
+
 /** Consumer config for `RichTextEditor`'s `upload` prop. */
 export interface UploadConfig {
-  /** Upload one file; resolve with where it landed, reject to show an error. */
+  /** Upload one file; resolve with where it landed, reject to show an error (reject with an `UploadError` to show its message). */
   onUpload: (file: File) => Promise<UploadResult>;
   /** Optional native file-picker filter, e.g. "image/*,.pdf". Convenience only —
    *  it does NOT enforce types (paste bypasses it); enforce in `onUpload`. */
@@ -130,8 +143,15 @@ export function useUpload({
               }),
             );
           },
-          () => {
-            applySettle(updateAttachmentBlock(getValue(), id, { status: 'error' }));
+          (err: unknown) => {
+            applySettle(
+              updateAttachmentBlock(getValue(), id, {
+                status: 'error',
+                // Opt-in only: a plain Error's message ("Failed to fetch", …) is
+                // not written for end users.
+                uploadError: err instanceof UploadError && err.message ? err.message : undefined,
+              }),
+            );
           },
         )
         .finally(() => setInflight(-1));
@@ -179,7 +199,11 @@ export function useUpload({
     (id: string) => {
       const file = filesRef.current.get(id);
       if (!file) return;
-      applySettle(updateAttachmentBlock(getValue(), id, { status: 'uploading' }));
+      applySettle(
+        clearAttachmentFields(updateAttachmentBlock(getValue(), id, { status: 'uploading' }), id, [
+          'uploadError',
+        ]),
+      );
       runUpload(id, file);
     },
     [getValue, applySettle, runUpload],

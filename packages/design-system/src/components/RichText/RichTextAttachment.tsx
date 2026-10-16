@@ -3,7 +3,11 @@
 // carry data-attachment-action + data-block-id hooks the editor delegates (so the
 // pure renderDoc stays callback-free). The read-only viewer renders the same markup;
 // its action buttons simply have no editor delegate.
+import { useId } from 'react';
+import { RotateCw, X } from 'lucide-react';
+import { Button } from '../Button';
 import { CircularProgress } from '../CircularProgress';
+import { Tooltip } from '../Tooltip';
 import { useTranslation } from '../../i18n';
 import type { Block } from './engine/model';
 import { safeHref } from './engine/safeHref';
@@ -14,6 +18,7 @@ import styles from './RichTextAttachment.module.scss';
 export function RichTextAttachment({ block }: { block: Block }) {
   const t = useTranslation();
   const name = block.name ?? '';
+  const errorId = useId();
 
   if (block.status === 'uploading') {
     return (
@@ -24,26 +29,48 @@ export function RichTextAttachment({ block }: { block: Block }) {
     );
   }
   if (block.status === 'error') {
+    const retry = t('richTextEditor.uploadRetry');
+    const remove = t('richTextEditor.uploadRemove');
+    // The failure (and its reason) is visible text, reachable in browse mode; the
+    // icon buttons also point aria-describedby at it so focusing Retry/Remove
+    // says WHY (a persistent state → property, per Hard rule 10).
     return (
       <span className={styles.attachmentError}>
         <span className={styles.attachmentName}>{name}</span>
-        <span className={styles.attachmentLabel}>{t('richTextEditor.uploadFailed')}</span>
-        <button
-          type="button"
-          data-attachment-action="retry"
-          data-block-id={block.id}
-          aria-label={name ? `${t('richTextEditor.uploadRetry')} ${name}` : undefined}
-        >
-          {t('richTextEditor.uploadRetry')}
-        </button>
-        <button
-          type="button"
-          data-attachment-action="remove"
-          data-block-id={block.id}
-          aria-label={name ? `${t('richTextEditor.uploadRemove')} ${name}` : undefined}
-        >
-          {t('richTextEditor.uploadRemove')}
-        </button>
+        <span id={errorId}>
+          <span className={styles.attachmentLabel}>{t('richTextEditor.uploadFailed')}</span>
+          {block.uploadError && (
+            <>
+              {' '}
+              <span className={styles.attachmentReason}>{block.uploadError}</span>
+            </>
+          )}
+        </span>
+        <Tooltip content={retry}>
+          <Button
+            size="xs"
+            iconOnly
+            data-attachment-action="retry"
+            data-block-id={block.id}
+            aria-label={name ? `${retry} ${name}` : retry}
+            aria-describedby={errorId}
+          >
+            <RotateCw size={14} aria-hidden="true" />
+          </Button>
+        </Tooltip>
+        <Tooltip content={remove}>
+          <Button
+            size="xs"
+            iconOnly
+            variant="danger-outline"
+            data-attachment-action="remove"
+            data-block-id={block.id}
+            aria-label={name ? `${remove} ${name}` : remove}
+            aria-describedby={errorId}
+          >
+            <X size={14} aria-hidden="true" />
+          </Button>
+        </Tooltip>
       </span>
     );
   }

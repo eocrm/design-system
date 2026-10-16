@@ -62,6 +62,10 @@
   color: var(--color-danger);
 }
 
+.attachmentReason {
+  color: var(--color-fg);
+}
+
 // Image alignment within the attachment figure. `text-align` aligns the inline
 // <img> child — an allowed property (not the forbidden margin/position/flex/width).
 // These are intentionally GLOBAL (attribute selectors, not CSS-module classes):

@@ -43,11 +43,26 @@ it('renders a spinner while uploading', () => {
   expect(screen.getByText('p.png')).toBeInTheDocument();
   expect(screen.getByLabelText('Uploading…')).toBeInTheDocument();
 });
-it('renders an error state with retry/remove action hooks', () => {
-  wrap(att({ status: 'error', name: 'p.png' }));
-  expect(screen.getByText(/upload failed/i)).toBeInTheDocument();
-  expect(document.querySelector('[data-attachment-action="retry"]')).toBeTruthy();
-  expect(document.querySelector('[data-attachment-action="remove"]')).toBeTruthy();
+it('renders an error state with icon retry/remove buttons carrying the action hooks', () => {
+  wrap(att({ id: 'b1', status: 'error', name: 'p.png' }));
+  const retry = screen.getByRole('button', { name: 'Retry p.png' });
+  const remove = screen.getByRole('button', { name: 'Remove p.png' });
+  expect(retry).toHaveAttribute('data-attachment-action', 'retry');
+  expect(retry).toHaveAttribute('data-block-id', 'b1');
+  expect(remove).toHaveAttribute('data-attachment-action', 'remove');
+  expect(retry).toHaveAccessibleDescription('Upload failed');
+});
+it('shows the UploadError reason on the failed block and describes the actions with it (#643)', () => {
+  wrap(att({ status: 'error', name: 'p.png', uploadError: 'Max 5 MB.' }));
+  expect(screen.getByText('Max 5 MB.')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Remove p.png' })).toHaveAccessibleDescription(
+    'Upload failed Max 5 MB.',
+  );
+});
+it('names the icon buttons even without a file name', () => {
+  wrap(att({ status: 'error' }));
+  expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Remove' })).toBeInTheDocument();
 });
 
 it('publishes the loaded image aspect for the height cap (#644)', () => {

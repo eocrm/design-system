@@ -1,5 +1,5 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
-import { useUpload } from './useUpload';
+import { UploadError, useUpload } from './useUpload';
 import type { UploadResult } from './useUpload';
 import { docFromText } from '../RichText/engine/model';
 import type { RichDoc } from '../RichText/engine/model';
@@ -62,6 +62,27 @@ it('marks error on reject and retry re-invokes onUpload', async () => {
   });
   await waitFor(() => expect(getDoc().blocks.some((b) => b.status === 'ready')).toBe(true));
   expect(onUpload).toHaveBeenCalledTimes(2);
+});
+
+it('stores an UploadError message on the error block, ignores plain Errors, clears on retry (#643)', async () => {
+  const onUpload = vi
+    .fn()
+    .mockRejectedValueOnce(new UploadError('Max 5 MB.'))
+    .mockRejectedValueOnce(new Error('Failed to fetch'));
+  const { result, getDoc } = harness(onUpload);
+  act(() => {
+    result.current.uploadFiles([file('p.png')]);
+  });
+  await waitFor(() =>
+    expect(getDoc().blocks.find((b) => b.status === 'error')?.uploadError).toBe('Max 5 MB.'),
+  );
+  const id = getDoc().blocks.find((b) => b.status === 'error')!.id;
+  act(() => {
+    result.current.retry(id);
+  });
+  expect(getDoc().blocks.find((b) => b.id === id)).not.toHaveProperty('uploadError');
+  await waitFor(() => expect(getDoc().blocks.find((b) => b.id === id)?.status).toBe('error'));
+  expect(getDoc().blocks.find((b) => b.id === id)).not.toHaveProperty('uploadError');
 });
 
 it('fires onUploadingChange(true) then (false) around a batch', async () => {
