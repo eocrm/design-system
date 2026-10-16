@@ -169,7 +169,8 @@ test('preserves the pre-migration web contract fixture with provenance and expan
 
   // +8 light / +7 forcedDark (series 6 is #008300 in both modes): --color-chart-series-1..8 (Chart palette, #632).
   // +1 light: --size-rich-text-image-max-height (RichText image cap, #644).
-  assert.equal(Object.keys(fixture.light).length, 320);
+  // +1 light: --size-sparkline (#642).
+  assert.equal(Object.keys(fixture.light).length, 321);
   assert.equal(Object.keys(fixture.forcedDark).length, 126);
   assert.deepEqual(fixture.systemDark, fixture.forcedDark);
   assert.deepEqual(fixture.forcedLight, {});

@@ -817,6 +817,18 @@ export interface Messages {
     /** Header of the data table's marker column (labels of the annotations covering each category). */
     markers: string;
   };
+  sparkline: {
+    /** Accessible name of a Sparkline with data: label plus the series summary. */
+    summary: (params: {
+      label: string;
+      first: string;
+      last: string;
+      min: string;
+      max: string;
+    }) => string;
+    /** Accessible name of a Sparkline with no finite values. */
+    noData: (params: { label: string }) => string;
+  };
   treeView: {
     /** Name and text of a level whose children are loading, and of an overflow row while it loads more ("Loading…"); also announced when a user-triggered load is slow. */
     loading: string;

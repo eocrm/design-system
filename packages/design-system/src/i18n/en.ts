@@ -381,6 +381,11 @@ export const en: Messages = {
     loading: 'Loading…',
     noData: 'No data',
   },
+  sparkline: {
+    summary: ({ label, first, last, min, max }) =>
+      `${label as string}: from ${first as string} to ${last as string}, low ${min as string}, high ${max as string}`,
+    noData: ({ label }) => `${label as string}: no data`,
+  },
   chart: {
     empty: 'No data for this period',
     keyboardHint: 'Use arrow keys to inspect values. All values are also in the data table.',

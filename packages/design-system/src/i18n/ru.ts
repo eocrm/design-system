@@ -387,6 +387,11 @@ export const ru: Messages = {
     loading: 'Загрузка…',
     noData: 'Нет данных',
   },
+  sparkline: {
+    summary: ({ label, first, last, min, max }) =>
+      `${label as string}: с ${first as string} до ${last as string}, минимум ${min as string}, максимум ${max as string}`,
+    noData: ({ label }) => `${label as string}: нет данных`,
+  },
   chart: {
     empty: 'Нет данных за этот период',
     keyboardHint:

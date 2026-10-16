@@ -1,0 +1,28 @@
+@use './Sparkline.tokens';
+
+.root {
+  width: 100%;
+  height: var(--sparkline-height);
+}
+
+.svg {
+  display: block;
+  overflow: visible;
+}
+
+.line {
+  fill: none;
+  stroke: var(--sparkline-color);
+  stroke-width: var(--sparkline-line-width);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.area {
+  fill: var(--sparkline-area-fill);
+}
+
+.bar,
+.dot {
+  fill: var(--sparkline-color);
+}
