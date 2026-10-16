@@ -413,15 +413,33 @@ function renderOptionRow<T>(
   // Consumer's `renderOption` wins over the default label rendering. The
   // create-row branch above intentionally does NOT pass through here —
   // "+ Create" is internal chrome the consumer doesn't know about.
-  const body = ctx.renderOption ? ctx.renderOption(opt, { active, selected }) : opt.label;
+  // Default render with a description: label and description get their own
+  // ids so the option's name stays the label alone and the description is
+  // announced as its accessible description (not concatenated into the name).
+  const optionId = ctx.getOptionId(opt.value);
+  const describe = !ctx.renderOption && !!opt.description;
+  const body = ctx.renderOption ? (
+    ctx.renderOption(opt, { active, selected })
+  ) : describe ? (
+    <>
+      <span id={`${optionId}-label`}>{opt.label}</span>
+      <span id={`${optionId}-desc`} className={styles.optionDescription}>
+        {opt.description}
+      </span>
+    </>
+  ) : (
+    opt.label
+  );
 
   return (
     <li
       key={opt.value}
-      id={ctx.getOptionId(opt.value)}
+      id={optionId}
       role="option"
       aria-selected={selected}
       aria-disabled={opt.disabled || undefined}
+      aria-labelledby={describe ? `${optionId}-label` : undefined}
+      aria-describedby={describe ? `${optionId}-desc` : undefined}
       className={clsx(
         styles.option,
         active && styles.optionActive,

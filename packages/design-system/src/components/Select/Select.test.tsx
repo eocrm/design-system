@@ -614,6 +614,43 @@ describe('Select — grouped options', () => {
   });
 });
 
+describe('Select — option description (#640)', () => {
+  it('default render shows description as a second line, named by label and described by it', async () => {
+    const user = userEvent.setup();
+    render(
+      <Select
+        options={[
+          {
+            value: 'unit',
+            label: 'Own units',
+            description: 'Not included in your plan',
+            disabled: true,
+          },
+          { value: 'all', label: 'All' },
+        ]}
+      />,
+    );
+    await user.click(screen.getByRole('combobox'));
+    const option = screen.getByRole('option', { name: 'Own units' });
+    expect(option).toHaveAccessibleDescription('Not included in your plan');
+    expect(screen.getByRole('option', { name: 'All' })).not.toHaveAttribute('aria-describedby');
+  });
+
+  it('renderOption replaces the default label/description layout', async () => {
+    const user = userEvent.setup();
+    render(
+      <Select
+        options={[{ value: 'a', label: 'A', description: 'Desc' }]}
+        renderOption={(o) => <b>{o.label}!</b>}
+      />,
+    );
+    await user.click(screen.getByRole('combobox'));
+    const option = screen.getByRole('option', { name: 'A!' });
+    expect(option).not.toHaveAttribute('aria-describedby');
+    expect(screen.queryByText('Desc')).not.toBeInTheDocument();
+  });
+});
+
 describe('Select — multi, summary, non-searchable', () => {
   const OWNERS = [
     { value: 'a', label: 'Alex' },
