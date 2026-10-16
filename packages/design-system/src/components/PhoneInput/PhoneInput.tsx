@@ -5,6 +5,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useId,
   type HTMLAttributes,
 } from 'react';
 import clsx from 'clsx';
@@ -51,6 +52,13 @@ export interface PhoneInputProps extends Omit<
    * `"flag"` mode) so they stay searchable + identifiable regardless of this.
    */
   countryDisplay?: CountryDisplay;
+  /**
+   * Overrides the country picker's full accessible name. By default the picker
+   * is named after the group — "<group label> Country" (e.g. "Phone Country") —
+   * so it never collides with a form's own Country field; with no group label
+   * it is just "Country". Set this when that composed name reads badly.
+   */
+  countryLabel?: string;
   /** Control size, forwarded to the Select + Input. Default `"md"`. */
   size?: PhoneInputSize;
   /** Error chrome on both controls (host/Field-driven). */
@@ -103,6 +111,7 @@ export const PhoneInput = forwardRef<HTMLDivElement, PhoneInputProps>(function P
     defaultCountry = 'US',
     countries,
     countryDisplay = 'code',
+    countryLabel,
     size = 'md',
     invalid,
     disabled,
@@ -119,6 +128,15 @@ export const PhoneInput = forwardRef<HTMLDivElement, PhoneInputProps>(function P
 ) {
   const t = useTranslation();
   const resolvedLocale = locale ?? 'en';
+  const countryWordId = `${useId()}-country`;
+  // Picker name, derived from the group's so two "Country" comboboxes in one
+  // form stay distinguishable (#638). labelledby wins, mirroring the group.
+  const countryWord = t('phoneInput.countryLabel');
+  const countryNaming = countryLabel
+    ? { 'aria-label': countryLabel }
+    : ariaLabelledby
+      ? { 'aria-labelledby': `${ariaLabelledby} ${countryWordId}` }
+      : { 'aria-label': ariaLabel ? `${ariaLabel} ${countryWord}` : countryWord };
 
   const options = useMemo<CountryOption[]>(
     () => getCountryOptions(resolvedLocale, countries),
@@ -200,6 +218,10 @@ export const PhoneInput = forwardRef<HTMLDivElement, PhoneInputProps>(function P
       aria-label={ariaLabelledby ? undefined : ariaLabel}
       aria-labelledby={ariaLabelledby}
     >
+      {/* `hidden` keeps it out of reading order; aria-labelledby still reads it. */}
+      <span id={countryWordId} hidden>
+        {countryWord}
+      </span>
       <Select
         className={styles.country}
         options={selectOptions}
@@ -213,7 +235,7 @@ export const PhoneInput = forwardRef<HTMLDivElement, PhoneInputProps>(function P
         size={size}
         invalid={invalid}
         disabled={disabled}
-        aria-label={t('phoneInput.countryLabel')}
+        {...countryNaming}
         placeholder={t('phoneInput.countrySearch')}
         // Rows always show the full name (+ flag in `flag` mode), single-line.
         renderOption={(opt) =>
