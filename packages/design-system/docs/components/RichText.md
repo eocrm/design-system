@@ -22,6 +22,7 @@ const doc = {
 | `value` | `RichDoc` | yes | The document to render. Build one with `emptyDoc()` / `createBlock()` or the transforms. |
 | `renderLink` | `RenderLink` | no | Substitute how a link renders. Called per link with `{ href, text }` and the default `<a>` node; return your own node (e.g. a task/member chip) or the `defaultNode` to keep the standard anchor. Render-time only — the document model is unchanged, so serialization still emits a plain link. Prose link styling (accent colour + underline) applies to BARE anchors only: an `<a>` you return with any `className` — including a DS `<Link>` — keeps its own decoration and colour entirely. |
 | `renderMention` | `RenderMention` | no | Substitute how an `@`-mention renders. Called per mention with `{ id, label }` and the default mention span; return your own node (e.g. an interactive member chip / popover trigger) or the `defaultNode` to keep the standard non-interactive span. Render-time only — the document model is unchanged, so serialization still emits the mention mark. Composes with `renderLink`. |
+| `imageMaxHeight` | `number` | no | Maximum DISPLAYED height of image attachments, in px. Default: the `--size-rich-text-image-max-height` token (480px). A taller image shrinks (width follows, aspect preserved) — render-time only; stored `width`/`height` are unchanged, so existing documents need no migration. |
 | …native | | | plus native `<div>` attributes |
 
 <!-- props:end -->

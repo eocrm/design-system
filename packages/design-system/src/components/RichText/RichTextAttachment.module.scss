@@ -16,9 +16,17 @@
 // (data-align) position it (left/center/right); `width` attr + `height: auto`
 // render the configured display size at natural aspect; `max-width: 100%` keeps a
 // wide image from overflowing (Rule 4: 100% allowed).
+// Height cap (#644): render-time only, stored width/height untouched. The width
+// shrinks to `cap × aspect` (aspect published by RichTextAttachment on load) so the
+// ratio holds; until then (or with no aspect) `max-height` alone bounds it. The
+// cap is overridable per instance via the `imageMaxHeight` prop, which sets
+// `--rich-text-image-max-height` on the RichText / RichTextEditor root.
 .attachmentImg {
+  --rich-text-image-cap: var(--rich-text-image-max-height, var(--size-rich-text-image-max-height));
+
   display: inline-block;
-  max-width: 100%;
+  max-width: min(100%, calc(var(--rich-text-image-cap) * var(--rich-text-image-aspect, 1000)));
+  max-height: var(--rich-text-image-cap);
   height: auto;
 }
 

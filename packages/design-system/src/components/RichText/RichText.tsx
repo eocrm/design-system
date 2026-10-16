@@ -4,6 +4,7 @@ import type { RichDoc } from './engine/model';
 import { renderDoc } from './engine/renderDoc';
 import type { RenderLink } from './engine/renderLink';
 import type { RenderMention } from './engine/renderMention';
+import { imageMaxHeightStyle } from './imageMaxHeightStyle';
 import styles from './RichText.module.scss';
 
 export interface RichTextProps extends HTMLAttributes<HTMLDivElement> {
@@ -36,6 +37,13 @@ export interface RichTextProps extends HTMLAttributes<HTMLDivElement> {
    * itself (or falls back to `defaultNode` while loading).
    */
   renderMention?: RenderMention;
+  /**
+   * Maximum DISPLAYED height of image attachments, in px. Default: the
+   * `--size-rich-text-image-max-height` token (480px). A taller image shrinks
+   * (width follows, aspect preserved) — render-time only; stored `width`/`height`
+   * are unchanged, so existing documents need no migration.
+   */
+  imageMaxHeight?: number;
 }
 
 /**
@@ -43,13 +51,18 @@ export interface RichTextProps extends HTMLAttributes<HTMLDivElement> {
  * @see docs/components/RichText.md
  */
 export const RichText = forwardRef<HTMLDivElement, RichTextProps>(function RichText(
-  { value, renderLink, renderMention, className, ...props },
+  { value, renderLink, renderMention, imageMaxHeight, className, style, ...props },
   ref,
 ) {
   // {...props} last so the consumer can override anything except the composed
-  // className (Pattern A — consumer wins).
+  // className and style (Pattern A — consumer wins).
   return (
-    <div ref={ref} className={clsx(styles.root, className)} {...props}>
+    <div
+      ref={ref}
+      className={clsx(styles.root, className)}
+      style={imageMaxHeightStyle(imageMaxHeight, style)}
+      {...props}
+    >
       {renderDoc(value, { renderLink, renderMention })}
     </div>
   );

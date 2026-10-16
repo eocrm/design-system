@@ -168,7 +168,8 @@ test('preserves the pre-migration web contract fixture with provenance and expan
   const fixture = await readJson(fixturePath);
 
   // +8 light / +7 forcedDark (series 6 is #008300 in both modes): --color-chart-series-1..8 (Chart palette, #632).
-  assert.equal(Object.keys(fixture.light).length, 319);
+  // +1 light: --size-rich-text-image-max-height (RichText image cap, #644).
+  assert.equal(Object.keys(fixture.light).length, 320);
   assert.equal(Object.keys(fixture.forcedDark).length, 126);
   assert.deepEqual(fixture.systemDark, fixture.forcedDark);
   assert.deepEqual(fixture.forcedLight, {});

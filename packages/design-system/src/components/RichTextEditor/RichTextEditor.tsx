@@ -65,6 +65,8 @@ import { RichTextBlockControls } from './RichTextBlockControls';
 import { RichTextAttachmentConfig } from './RichTextAttachmentConfig';
 import { useAttachmentConfig } from './useAttachmentConfig';
 import { RichTextImageResizer } from './RichTextImageResizer';
+import { capWidthToHeight } from './imageSize';
+import { imageMaxHeightStyle } from '../RichText/imageMaxHeightStyle';
 import { attachmentIsImage, isAttachmentSettled } from '../RichText/engine/attachment';
 import { safeHref } from '../RichText/engine/safeHref';
 import type { BlockAction } from './RichTextBlockMenu';
@@ -170,6 +172,14 @@ export interface RichTextEditorProps extends Omit<
    */
   renderMention?: RenderMention;
   /**
+   * Maximum DISPLAYED height of image attachments, in px. Default: the
+   * `--size-rich-text-image-max-height` token (480px). A taller image shrinks
+   * (width follows, aspect preserved); the resize handle and width slider stop
+   * where the image hits the cap. Render-time only — stored `width`/`height` are
+   * unchanged. Pass the same value to the read-only `<RichText>` so both agree.
+   */
+  imageMaxHeight?: number;
+  /**
    * Show Notion-style per-block controls: a left gutter that appears on the
    * hovered/focused block with an insert button (`＋`, adds an empty paragraph
    * below) and a drag handle (`⠿`) that opens a block menu (Turn into ▸,
@@ -224,10 +234,12 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       autolink = true,
       renderLink,
       renderMention,
+      imageMaxHeight,
       upload,
       invalid = false,
       required = false,
       className,
+      style,
       ...rest
     },
     ref,
@@ -1362,6 +1374,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         // decide whether to fall back to the i18n default.
         {...rest}
         ref={setRefs}
+        style={imageMaxHeightStyle(imageMaxHeight, style)}
         className={clsx(
           styles.root,
           readOnly && styles.readOnly,
@@ -1488,13 +1501,30 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
             !!safeHref(b.src ?? ''),
         )
       : undefined;
+    // Widest an image may be resized to: the content width, further limited so
+    // its height stays within the display cap (#644) — the handle/slider stop
+    // where the rendered image stops growing.
+    const imageWidthMax = (id: string) => {
+      const contentWidth = rootRef.current?.getBoundingClientRect().width ?? 600;
+      const img = rootRef.current?.querySelector<HTMLImageElement>(
+        `[data-block-id="${CSS.escape(id)}"] img`,
+      );
+      return img
+        ? capWidthToHeight(
+            contentWidth,
+            img.naturalWidth,
+            img.naturalHeight,
+            parseFloat(getComputedStyle(img).maxHeight),
+          )
+        : contentWidth;
+    };
     const imageResizerEl =
       !readOnly && usesShell && resizableImage ? (
         <RichTextImageResizer
           rootRef={shellRef}
           blockId={hoveredImageId!}
           layoutKey={`${blockOrderKey}:${resizableImage.width ?? ''}`}
-          maxWidth={rootRef.current?.getBoundingClientRect().width ?? 600}
+          maxWidth={imageWidthMax(hoveredImageId!)}
           onResize={onImageResize}
           onDraggingChange={setDragging}
           hidden={blockDragging}
@@ -1526,7 +1556,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
                   const b = el.getBoundingClientRect();
                   return { top: b.top, left: b.left, width: b.width, height: b.height };
                 }}
-                maxWidth={rootRef.current?.getBoundingClientRect().width ?? 600}
+                maxWidth={imageWidthMax(configBlock.id)}
                 accept={latest.current.upload?.accept}
                 onAltChange={(alt) => onConfigAlt(configBlock.id, alt)}
                 onAlignChange={(align) => onConfigAlign(configBlock.id, align)}

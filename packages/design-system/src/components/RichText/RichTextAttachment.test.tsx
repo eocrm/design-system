@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { I18nProvider } from '../../i18n';
 import { RichTextAttachment } from './RichTextAttachment';
 import type { Block } from './engine/model';
@@ -48,4 +48,15 @@ it('renders an error state with retry/remove action hooks', () => {
   expect(screen.getByText(/upload failed/i)).toBeInTheDocument();
   expect(document.querySelector('[data-attachment-action="retry"]')).toBeTruthy();
   expect(document.querySelector('[data-attachment-action="remove"]')).toBeTruthy();
+});
+
+it('publishes the loaded image aspect for the height cap (#644)', () => {
+  wrap(
+    att({ status: 'ready', src: 'http://u/p.png', mime: 'image/png', name: 'p.png', width: 700 }),
+  );
+  const img = document.querySelector('img')!;
+  Object.defineProperty(img, 'naturalWidth', { value: 300 });
+  Object.defineProperty(img, 'naturalHeight', { value: 400 });
+  fireEvent.load(img);
+  expect(img.style.getPropertyValue('--rich-text-image-aspect')).toBe('0.75');
 });

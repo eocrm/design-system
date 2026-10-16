@@ -66,6 +66,18 @@ export function RichTextAttachment({ block }: { block: Block }) {
         alt={block.alt ?? name}
         width={block.width}
         height={block.height}
+        // Publish the natural aspect so the SCSS height cap (#644) can shrink the
+        // WIDTH instead of squashing the image. Read from the loaded image, not the
+        // block: a resize stores width only (height cleared). Set imperatively so
+        // React (which owns no `style` here) never re-renders it away.
+        onLoad={(e) => {
+          const img = e.currentTarget;
+          if (img.naturalWidth && img.naturalHeight)
+            img.style.setProperty(
+              '--rich-text-image-aspect',
+              String(img.naturalWidth / img.naturalHeight),
+            );
+        }}
       />
     );
   }

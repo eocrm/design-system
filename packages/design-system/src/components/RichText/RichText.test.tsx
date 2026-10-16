@@ -23,6 +23,15 @@ describe('RichText', () => {
     expect(screen.getByRole('listitem')).toHaveTextContent('item');
   });
 
+  it('imageMaxHeight sets the image height cap on the root, merged with consumer style (#644)', () => {
+    const { container } = render(
+      <RichText value={docFromText('x')} imageMaxHeight={320} style={{ color: 'red' }} />,
+    );
+    const root = container.firstElementChild as HTMLElement;
+    expect(root.style.getPropertyValue('--rich-text-image-max-height')).toBe('320px');
+    expect(root.style.color).toBe('red');
+  });
+
   it('forwards ref to the root div', () => {
     const ref = { current: null as HTMLDivElement | null };
     render(<RichText ref={ref} value={docFromText('x')} />);
