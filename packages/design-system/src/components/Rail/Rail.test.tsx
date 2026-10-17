@@ -52,6 +52,22 @@ describe('Rail', () => {
     expect(head.contains(screen.getByRole('link', { name: 'Dashboard' }))).toBe(false);
   });
 
+  it('keeps Rail.Header children together in one inner box', () => {
+    // The header is a centring flex container; without the inner box an
+    // `<img/> Acme` brand would split into separate flex items.
+    render(
+      <Rail>
+        <Rail.Header data-testid="head">
+          <img alt="" /> Acme
+        </Rail.Header>
+      </Rail>,
+    );
+    const head = screen.getByTestId('head');
+    expect(head.childElementCount).toBe(1);
+    expect(head.firstElementChild).toHaveTextContent('Acme');
+    expect(head.firstElementChild?.querySelector('img')).not.toBeNull();
+  });
+
   it('leaves a non-leading Rail.Header in the scroll body', () => {
     render(
       <Rail>
@@ -687,12 +703,30 @@ describe('Rail — header brand geometry', () => {
   it('sizes the header to the top bar height and centres it vertically (#650)', () => {
     // Same border-box height as <TopBar> = the divider lands on the TopBar's
     // bottom border. min-height, so a taller brand grows rather than clips.
-    expect(tokens).toMatch(/--rail-header-height:\s*var\(--topbar-height\)/);
     const rule = scss.match(/^\.header\s*\{[^}]*\}/m)?.[0] ?? '';
-    expect(rule).toMatch(/min-height:\s*var\(--rail-header-height\)/);
-    expect(rule).toMatch(/align-content:\s*center/);
-    const collapsed = scss.match(/^\.collapsed \.header\s*\{[^}]*\}/m)?.[0] ?? '';
-    expect(collapsed).toMatch(/align-items:\s*center/);
+    expect(rule).toMatch(/min-height:\s*var\(--rail-header-height,\s*var\(--topbar-height\)\)/);
+    expect(rule).toMatch(/display:\s*flex;/);
+    expect(rule).toMatch(/align-items:\s*center;/);
+  });
+
+  it('resolves the header defaults on the element, not at :root (#650)', () => {
+    // A default written at :root resolves there once, so a --topbar-height or
+    // --rail-padding-x retuned on a wrapper never reaches the header. The
+    // tokens are declared guaranteed-invalid and the defaults are fallbacks in
+    // .header instead.
+    expect(tokens).toMatch(/--rail-header-height:\s*initial;/);
+    expect(tokens).toMatch(/--rail-header-padding:\s*initial;/);
+    const rule = scss.match(/^\.header\s*\{[^}]*\}/m)?.[0] ?? '';
+    // Inline inset = rail + item padding (the icon column); top inset = the
+    // divider width (centre in the full, even header height).
+    expect(rule).toMatch(/padding:\s*var\(\s*--rail-header-padding,/);
+    for (const ref of [
+      '--rail-header-divider-width',
+      '--rail-padding-x',
+      '--rail-item-padding-x',
+    ]) {
+      expect(rule).toContain(`var(${ref})`);
+    }
   });
 
   it('keeps the rail padding off the header so it runs edge to edge (#650)', () => {
@@ -705,32 +739,6 @@ describe('Rail — header brand geometry', () => {
       /^\.body\s*\{[^}]*padding:\s*var\(--rail-padding-y\)\s+var\(--rail-padding-x\)\s+0;/m,
     );
     expect(scss).toMatch(/^\.footerWrap\s*\{[^}]*padding:[^;]*var\(--rail-padding-x\)/m);
-  });
-
-  it('insets the header by rail + item padding so the brand lines up with the icons', () => {
-    // The item's content box starts at --rail-padding-x (8) +
-    // --rail-item-padding-x (12) = 20px from the rail edge; the full-width
-    // header has to supply both insets itself. The top inset mirrors the
-    // divider so the brand centres in the full (even) header height and lands
-    // on whole pixels — at 55px a 32px mark sits at y 11.5 and the mark and
-    // wordmark snap ~1px apart.
-    expect(tokens).toMatch(
-      /--rail-header-padding:\s*var\(--rail-header-divider-width,[^)]+\)\)\s+calc\(var\(--rail-padding-x,[^)]+\)\)\s*\+\s*var\(--rail-item-padding-x,[^)]+\)\)\)\s+0;/,
-    );
-  });
-
-  it('gives each padding reference a fallback that agrees with its token default', () => {
-    // An unresolvable var() makes the whole value invalid at computed-value
-    // time, so `padding` falls to its initial 0. The fallbacks restate the
-    // tokens' own defaults, so assert they AGREE rather than pin a literal.
-    for (const name of ['rail-header-divider-width', 'rail-padding-x', 'rail-item-padding-x']) {
-      const def = tokens.match(new RegExp(`--${name}:\\s*([^;]+);`))?.[1]?.trim();
-      const fallback = tokens
-        .match(new RegExp(`--rail-header-padding:[^;]*var\\(--${name},\\s*([^)]+\\))\\)`))?.[1]
-        ?.trim();
-      expect(def).toBeTruthy();
-      expect(fallback).toBe(def);
-    }
   });
 
   it('centers the brand only while collapsed, and drops the inset centering would measure against', () => {
