@@ -6,7 +6,7 @@
   --slider-min-width-vertical: 32px;
 
   // Track — bg + radius + per-orientation thickness
-  --slider-track-bg: var(--color-bg-muted);
+  --slider-track-bg: var(--color-border);
   --slider-track-radius: var(--radius-full);
   --slider-track-size-md-horizontal: 6px;
   --slider-track-size-sm-horizontal: 4px;
@@ -20,26 +20,22 @@
   --slider-fill-bg-tone-default: var(--color-accent);
   --slider-fill-bg-tone-success: var(--color-success);
 
-  // @contrast --color-warning on --color-bg-muted = 1.96:1 light
-  // @contrast --color-warning-strong on --color-bg-muted = 5.46:1 light
-  // @contrast --color-success on --color-bg-muted = 4.68:1 light
-  // @contrast --color-danger on --color-bg-muted = 4.96:1 light
-  // @contrast --color-accent on --color-bg-muted = 6.25:1 light
-  // @contrast --color-warning on --color-bg-muted = 8.97:1 dark
-  // @contrast --color-success on --color-bg-muted = 6.92:1 dark
-  // @contrast --color-danger on --color-bg-muted = 4.94:1 dark
-  // @contrast --color-accent on --color-bg-muted = 5.60:1 dark
-  // warning uses --color-warning-strong: the bare amber measures 1.96:1 against
-  // the track, below 1.4.11's 3:1 — and it is the ONLY tone that fails there
-  // (success 4.68:1, danger 4.96:1, accent 6.25:1), so the fill is wrong, not the
-  // track. Every figure above is LIGHT theme, and the rationale is a
-  // light-theme rationale: in dark the amber measures 8.97:1 against the track
-  // and nothing fails here at all (success 6.92:1, danger 4.94:1, accent 5.60:1).
-  // Light success and danger both read 4.17 (no `:1` — that is a HISTORICAL
-  // figure no current pair computes, so no annotation can bind it) until #484
-  // raised them — one
-  // number by coincidence, not by construction. Their dark values never moved.
-  // See #481.
+  // @contrast --color-warning on --color-border = 1.63:1 light
+  // @contrast --color-warning-strong on --color-border = 4.55:1 light
+  // @contrast --color-success on --color-border = 3.90:1 light
+  // @contrast --color-danger on --color-border = 4.13:1 light
+  // @contrast --color-accent on --color-border = 5.21:1 light
+  // @contrast --color-warning on --color-border = 6.77:1 dark
+  // @contrast --color-success on --color-border = 5.23:1 dark
+  // @contrast --color-danger on --color-border = 3.73:1 dark
+  // @contrast --color-accent on --color-border = 4.23:1 dark
+  // The track is --color-border, not --color-bg-muted (#647): a bg-muted track
+  // vanished on every bg-muted surface (StatTile, table headers, muted panels).
+  // warning uses --color-warning-strong: the bare amber measures 1.63:1 against
+  // the track, below 1.4.11's 3:1 — the ONLY tone that fails there (light success
+  // 3.90:1, danger 4.13:1, accent 5.21:1), so the fill is wrong, not the track.
+  // In dark nothing fails (amber 6.77:1, success 5.23:1, danger 3.73:1, accent
+  // 4.23:1). See #481.
   --slider-fill-bg-tone-warning: var(--color-warning-strong);
   --slider-fill-bg-tone-danger: var(--color-danger);
   --slider-fill-radius: var(--radius-full);
