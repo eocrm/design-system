@@ -276,6 +276,8 @@ export const TopBarSearch = forwardRef<HTMLInputElement, TopBarSearchProps>(func
           activeIndex={activeIndex}
           onActivate={setActive}
           onChoose={choose}
+          anchorRef={wrapperRef}
+          onClose={() => setOpen(false)}
         />
       )}
     </div>

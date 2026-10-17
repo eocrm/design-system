@@ -26,6 +26,30 @@
   --topbar-search-icon-size: 14px;
   --topbar-search-ring-focus: var(--ring-accent);
 
+  // ─── Search results panel (combobox mode) ─────────────────────────────
+  --topbar-results-max-width: 460px;
+  --topbar-results-max-height: 360px;
+  --topbar-results-bg: var(--color-bg);
+  --topbar-results-border-color: var(--color-border);
+  --topbar-results-radius: var(--radius-md);
+  --topbar-results-shadow: var(--shadow-lg);
+  --topbar-results-padding: var(--space-1);
+  --topbar-results-z: var(--z-popover);
+  --topbar-results-group-label-padding: var(--space-2);
+  --topbar-results-group-label-font-size: var(--font-size-xs);
+  --topbar-results-group-label-fg: var(--color-fg-muted);
+  --topbar-results-option-gap: var(--space-2);
+  --topbar-results-option-padding: var(--space-2);
+  --topbar-results-option-radius: var(--radius-sm);
+  --topbar-results-option-fg: var(--color-fg);
+  --topbar-results-option-bg-active: var(--color-bg-muted);
+  --topbar-results-icon-fg: var(--color-fg-muted);
+  --topbar-results-meta-fg: var(--color-fg-muted);
+  --topbar-results-meta-font-size: var(--font-size-xs);
+  --topbar-results-status-fg: var(--color-fg-muted);
+  --topbar-results-status-font-size: var(--font-size-sm);
+  --topbar-results-footer-border-color: var(--color-border);
+
   // ─── Icon button ──────────────────────────────────────────────────────
   --topbar-icon-button-size: 32px;
   --topbar-icon-button-radius: var(--radius-md);

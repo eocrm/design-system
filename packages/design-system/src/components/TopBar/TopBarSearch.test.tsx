@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TopBar } from './TopBar';
 import type { TopBarSearchGroup, TopBarSearchItem } from './TopBarSearch';
@@ -253,5 +253,28 @@ describe('TopBar.Search combobox mode', () => {
     );
     await userEvent.keyboard('{Enter}');
     expect(onSelect).toHaveBeenCalledWith(many[0], 0); // set changed -> reset to first
+  });
+
+  it('Escape closes the panel and prevents the native search clear', async () => {
+    render(<Harness />);
+    await userEvent.click(input());
+    const ev = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+    act(() => {
+      input().dispatchEvent(ev);
+    });
+    expect(ev.defaultPrevented).toBe(true);
+    expect(input()).toHaveAttribute('aria-expanded', 'false');
+    expect(input()).toHaveValue('a');
+  });
+
+  it('Escape with the panel closed is left to the browser', async () => {
+    render(<Harness />);
+    await userEvent.click(input());
+    await userEvent.keyboard('{Escape}');
+    const ev = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+    act(() => {
+      input().dispatchEvent(ev);
+    });
+    expect(ev.defaultPrevented).toBe(false);
   });
 });

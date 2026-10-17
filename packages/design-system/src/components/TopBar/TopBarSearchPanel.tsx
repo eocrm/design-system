@@ -1,6 +1,9 @@
-import { useEffect, useRef, type MouseEvent, type ReactNode } from 'react';
+import { useEffect, useRef, type MouseEvent, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
+import { autoUpdate, flip, offset, shift, size, useFloating } from '@floating-ui/react-dom';
 import clsx from 'clsx';
+import { mergeRefs } from '../_internal/refs';
+import { overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
 import type { TopBarSearchFooterAction, TopBarSearchItem } from './TopBarSearch';
 import styles from './TopBar.module.scss';
 
@@ -38,6 +41,10 @@ export interface TopBarSearchPanelProps {
   onActivate: (index: number) => void;
   /** Called when an option is clicked. */
   onChoose: (option: SearchOption) => void;
+  /** The search pill — Floating UI reference and overlay-elevation probe. */
+  anchorRef: RefObject<HTMLDivElement | null>;
+  /** Close request (Escape). */
+  onClose: () => void;
 }
 
 export const optionId = (listboxId: string, index: number) => `${listboxId}-opt-${index}`;
@@ -52,8 +59,53 @@ export function TopBarSearchPanel({
   activeIndex,
   onActivate,
   onChoose,
+  anchorRef,
+  onClose,
 }: TopBarSearchPanelProps) {
   const panelRef = useRef<HTMLDivElement | null>(null);
+
+  // #274/#280: hosts (Modal/Drawer) yield Escape while the panel is shown, and
+  // a deeper surface gets the press before us.
+  const floatingId = useFloatingSurface(shown);
+  const inOverlay = useInOverlay(anchorRef, shown);
+
+  useEffect(() => {
+    if (!shown) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape' || !overlayStack.isTopFloating(floatingId)) return;
+      e.preventDefault(); // also stops the native <input type="search"> clear
+      overlayStack.consumeEscape(e);
+      onClose();
+    };
+    document.addEventListener('keydown', onKeyDown, true);
+    return () => document.removeEventListener('keydown', onKeyDown, true);
+  }, [shown, floatingId, onClose]);
+
+  const { refs, floatingStyles } = useFloating({
+    open: shown,
+    placement: 'bottom-start',
+    // fixed + portal: escapes the sticky bar and any overflow/transform ancestor.
+    strategy: 'fixed',
+    transform: false,
+    middleware: [
+      offset(4),
+      flip(),
+      shift({ padding: 8 }),
+      // Publish geometry as CSS vars; `.results` turns them into min width
+      // (never narrower than the pill) and viewport-bounded max width/height.
+      size({
+        padding: 8,
+        apply({ rects, availableWidth, availableHeight, elements }) {
+          const s = elements.floating.style;
+          s.setProperty('--topbar-results-min-width', `${rects.reference.width}px`);
+          s.setProperty('--topbar-results-available-width', `${Math.max(0, availableWidth)}px`);
+          s.setProperty('--topbar-results-available-height', `${Math.max(0, availableHeight)}px`);
+        },
+      }),
+    ],
+    whileElementsMounted: autoUpdate,
+    elements: { reference: anchorRef.current },
+  });
 
   // Focus stays in the input, so keep the keyboard-active row visible by hand.
   useEffect(() => {
@@ -106,7 +158,9 @@ export function TopBarSearchPanel({
   if (!shown) return null;
   return createPortal(
     <div
-      ref={panelRef}
+      ref={mergeRefs<HTMLDivElement>(panelRef, refs.setFloating)}
+      style={floatingStyles}
+      data-in-overlay={inOverlay ? '' : undefined}
       id={id}
       role="listbox"
       aria-label={label}
