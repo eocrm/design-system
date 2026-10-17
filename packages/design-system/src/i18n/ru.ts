@@ -433,6 +433,11 @@ export const ru: Messages = {
   topBar: {
     label: 'Верхняя панель приложения',
     search: 'Поиск',
+    results: 'Результаты поиска',
+    noResults: 'Ничего не найдено',
+    loading: 'Поиск…',
+    resultCount: ({ count }) =>
+      `${count as number} ${ruPlural(count as number, ['результат', 'результата', 'результатов'])}`,
   },
   field: {
     optional: '(необязательно)',

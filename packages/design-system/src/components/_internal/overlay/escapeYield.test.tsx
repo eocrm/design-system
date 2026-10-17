@@ -15,6 +15,7 @@ import { DatePicker } from '../../DatePicker';
 import { DateRangePicker } from '../../DateRangePicker';
 import { TimeField } from '../../TimeField';
 import { Rail } from '../../Rail';
+import { TopBar } from '../../TopBar';
 import { Button } from '../../Button';
 import { LiquidEditor } from '../../LiquidEditor';
 import { LocaleProvider } from '../../../i18n/LocaleProvider';
@@ -61,6 +62,24 @@ describe('Escape yield contract per surface (#274)', () => {
     expect(screen.queryByText('Panel body')).toBeNull();
     expect(dialogOpen()).toBe(true);
     await user.keyboard('{Escape}');
+    expect(dialogOpen()).toBe(false);
+  });
+
+  it('TopBar.Search results: first Escape closes the panel, second the modal', () => {
+    function Search() {
+      const [open, setOpen] = useState(true);
+      return <TopBar.Search aria-label="Find" results={[]} open={open} onOpenChange={setOpen} />;
+    }
+    render(
+      <Host>
+        <Search />
+      </Host>,
+    );
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(screen.queryByRole('listbox')).toBeNull();
+    expect(dialogOpen()).toBe(true);
+    fireEvent.keyDown(document, { key: 'Escape' });
     expect(dialogOpen()).toBe(false);
   });
 

@@ -898,6 +898,14 @@ export interface Messages {
     label: string;
     /** Default aria-label on the `<TopBar.Search>` input when neither `aria-label` nor `placeholder` is set. */
     search: string;
+    /** aria-label of the `<TopBar.Search>` combobox results list. */
+    results: string;
+    /** Default `emptyMessage` row of the combobox results panel; also announced. */
+    noResults: string;
+    /** Loading row of the combobox results panel while `loading`; also announced. */
+    loading: string;
+    /** Function leaf — announced result count of the combobox results panel. */
+    resultCount: (params: { count: number }) => string;
   };
   field: {
     /** Marker appended to a Field's label when the field is optional. */

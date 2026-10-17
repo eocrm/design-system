@@ -543,6 +543,7 @@
       "Chart",
       "DateStrip",
       "RichTextEditor",
+      "TopBar",
       "TreeView"
     ]
   },
@@ -747,7 +748,9 @@
     "tier": "primitive",
     "cluster": "Layout",
     "composes": [],
-    "composedBy": []
+    "composedBy": [
+      "TopBar"
+    ]
   },
   "Select": {
     "tier": "primitive",
@@ -977,7 +980,9 @@
     "cluster": "Navigation",
     "composes": [
       "Button",
-      "Kbd"
+      "Kbd",
+      "LiveRegion",
+      "ScrollArea"
     ],
     "composedBy": []
   },

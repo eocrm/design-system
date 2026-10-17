@@ -61,6 +61,13 @@ import { Bell, Plus } from 'lucide-react';
 |---|---|---|---|
 | `hotkey` | `string \| string[]` | no | Optional hotkey hint shown after the input. Rendered internally via `<Kbd size="sm">`. Pass an **array** of key labels for a multi-key combo (`['⌘', 'K']` → two chips joined with `+`) or a single string for a one-chip hint (`'Esc'` → one chip). Note: `'⌘K'` is treated as a single chip — use the array form for multi-key combos. The hint is **visual only**; the library does not bind any keyboard shortcut to it. Omit for no hint. |
 | `className` | `string` | no | `className` for the wrapping `<div>` (the search surface itself). The input's own className lives on the underlying `<input>` via the spread input-props (use the standard `inputClassName` pattern if you need to target the inner element specifically — not exposed in v1). |
+| `results` | `TopBarSearchGroup[]` | no | Grouped results. Passing it (even `[]`) enables **combobox mode**: the input becomes `role="combobox"` and a results panel opens under it. Omit for a plain search input. The consumer filters; the component only renders, navigates and selects. |
+| `open` | `boolean` | no | Controlled panel visibility (combobox mode). Omit to let the component open the panel while the input has text and close it on Escape, blur, selection or clearing the input. |
+| `onOpenChange` | `((open: boolean) => void)` | no | Fired whenever the component wants to open or close the panel. |
+| `onSelect` | `((groupIndex: number, item: TopBarSearchItem) => void)` | no | Fired when a result row is chosen with Enter or a click, with the index of its group in `results` and the item. The panel closes first. |
+| `loading` | `boolean` | no | Results are being fetched: shows a loading row above any (stale) rows, sets `aria-busy` on the list and announces it. Default `false`. |
+| `emptyMessage` | `string` | no | Row shown when no group has items and `loading` is false. Defaults to `t('topBar.noResults')`. |
+| `footerAction` | `TopBarSearchFooterAction` | no | Trailing row after every group, reachable with ↑/↓ like a result (e.g. "View all results"). Omit for no footer. |
 | …native | | | plus native `<input>` attributes |
 
 ### `TopBarStartProps`
@@ -77,17 +84,56 @@ import { Bell, Plus } from 'lucide-react';
 - **`<TopBar.Start>`** — flex-grows (`flex: 1`) so a sibling `<TopBar.End>` is pushed to the right edge with no spacer needed.
 - **`<TopBar.End>`** — shrinks to its content. Use for trailing actions + avatar.
 - **`<TopBar.Search>`** — a real `<input type="search">` (browsers expose `role="searchbox"`). `placeholder` is consumer-controlled. `aria-label` defaults to the placeholder, then to `t('topBar.search')`. The `hotkey` prop renders a trailing `<kbd>` hint — purely **visual**; binding ⌘K to focus is the consumer's responsibility. Spread `value` / `onChange` through normally — they reach the underlying input. The component sets `autoComplete="off"` plus `data-1p-ignore` / `data-lpignore` / `data-form-type="other"` so password managers and browser autofill skip it.
-- **i18n**: `topBar.label` (default `<header>` aria-label), `topBar.search` (default `<input>` aria-label fallback).
+- **i18n**: `topBar.label` (default `<header>` aria-label), `topBar.search` (default `<input>` aria-label fallback); combobox mode adds `topBar.results` (list label), `topBar.noResults` (default `emptyMessage`), `topBar.loading`, `topBar.resultCount`.
+
+### Combobox mode (`results`)
+
+Passing `results` (even `[]`) turns `<TopBar.Search>` into a WAI-ARIA combobox with a results panel anchored under the search. The consumer owns the query and the filtering (or fetching); the component renders, navigates and selects.
+
+```tsx
+const [query, setQuery] = useState('');
+const results: TopBarSearchGroup[] = [
+  {
+    label: 'Contacts',
+    items: contacts.map((c) => ({
+      id: c.id,
+      label: c.name,
+      meta: c.email,
+      icon: <User size={16} />,
+    })),
+  },
+  { label: 'Deals', items: deals.map((d) => ({ id: d.id, label: d.title, meta: d.stage })) },
+];
+
+<TopBar.Search
+  placeholder="Search contacts, deals…"
+  value={query}
+  onChange={(e) => setQuery(e.target.value)}
+  results={results}
+  loading={isFetching}
+  onSelect={(groupIndex, item) => openRecord(groupIndex, item.id)}
+  footerAction={{ label: 'View all results', onSelect: () => openSearchPage(query) }}
+/>;
+```
+
+- **Opening** — uncontrolled, the panel opens while the input has text (and on ↓/↑) and closes on Esc, blur (Tab or a click outside), selection, or clearing the input. Pass `open` + `onOpenChange` to control it.
+- **Keyboard** — focus and the caret stay in the input (`aria-activedescendant`). ↑/↓ wrap across every group and the `footerAction` row; the first row is active when results change; Enter selects the active row. Esc closes the panel first; the next Esc reaches the input (clearing it) or a host Modal/Drawer.
+- **Mouse** — hover moves the active row; click selects. Clicks inside the panel never move focus out of the input.
+- **Rows** — `onSelect(groupIndex, item)` fires after the panel closes; look up your own record by `item.id`. Groups with no items are not rendered. `loading` shows a loading row above any stale rows and sets `aria-busy`; with no items and not loading, the `emptyMessage` row shows (default `t('topBar.noResults')`).
+- **A11y** — `role="combobox"` + `aria-expanded` / `aria-controls` / `aria-autocomplete="list"` on the input; the list is `role="listbox"` with `role="group"` sections named by their heading and `role="option"` rows with `aria-selected`. The loading state, the empty state and the result count are announced through a polite live region.
+- **Positioning** — portaled to `document.body` and placed by Floating UI under the search pill (at least its width, `--topbar-results-max-width` at most), at `--z-popover`, elevated above a host Modal/Drawer/Popover; the list scrolls inside a `<ScrollArea maxHeight="md">`.
 
 #### When NOT to use
 
 - ❌ Left-side navigation column — use `<Rail>`.
 - ❌ Page-local heading + actions — use `<PageHeader>`, not a TopBar.
 - ❌ Action toolbar attached to a specific section — use a `<Cluster>` inside that section; TopBar is for the application's top chrome.
-- ❌ Command-palette experience — `<TopBar.Search>` is a plain text input. Compose `<Popover>` + `<OptionsPicker>` for typeahead / result lists.
+- ❌ A full-screen command palette with commands, nested pages or a modal frame — combobox mode is a results dropdown under the top-bar search, nothing more.
+- ❌ Picking a form value from a list — use `<Select searchable>`; combobox mode navigates, it holds no value.
 
 #### Anti-patterns
 
+- ❌ Rendering your own results dropdown under `<TopBar.Search>` — pass `results` instead.
 - ❌ Wrapping the bar in another `position: sticky` container — the bar already sticks. Layered sticky parents stack at the wrong offset.
 - ❌ Reaching for `<TopBar.IconButton>` outside the bar — it's a topbar-scoped size + indicator pattern. Use `<Button iconOnly variant="ghost">` for general icon buttons.
 - ❌ Putting a `<Button variant="primary">` inside the bar — primary actions belong in the page body where they're discoverable; the topbar is for navigation, search, and global ambient actions only.
@@ -117,7 +163,7 @@ import { Bell, Plus } from 'lucide-react';
 ```
 
 - `<TopBar.Start>` typically holds a brand mark, workspace switcher and/or `<TopBar.Search>`; `<TopBar.End>` trailing `<TopBar.IconButton>`s and the user `<Avatar>`.
-- `<TopBar.Search>` is a 32px pill with a leading search icon; the native `type="search"` gives `role="searchbox"` and the browser's clear button. It has no keyboard-shortcut behaviour of its own.
+- `<TopBar.Search>` is a 32px pill with a leading search icon; the native `type="search"` gives `role="searchbox"` (`role="combobox"` in combobox mode) and the browser's clear button. It has no keyboard-shortcut behaviour of its own.
 - `<TopBar.IconButton>` is icon-only (the 32×32 size and `indicator` dot are bar-specific); for a labelled action use a regular `<Button>`.
 - ❌ A submit button inside the search wrapper: read the value from `onKeyDown` / `onChange` on Enter.
 - ❌ `placeholder` and `aria-label` set to different strings: the default aria-label IS the placeholder; override only when the placeholder is too terse alone.
