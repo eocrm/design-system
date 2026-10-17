@@ -1,8 +1,10 @@
-import { forwardRef, type HTMLAttributes, type ReactNode, type Ref } from 'react';
+import { forwardRef, useMemo, type HTMLAttributes, type ReactNode, type Ref } from 'react';
 import clsx from 'clsx';
 import { Grid, type GridGap } from '../Grid';
-import { StatGroupLoadingContext } from './StatGroupContext';
+import { StatGroupContext, type StatGroupVariant } from './StatGroupContext';
 import styles from './StatGroup.module.scss';
+
+export type { StatGroupVariant };
 
 export interface StatGroupProps extends HTMLAttributes<HTMLUListElement> {
   /**
@@ -21,6 +23,12 @@ export interface StatGroupProps extends HTMLAttributes<HTMLUListElement> {
    * Default `false`.
    */
   loading?: boolean;
+  /**
+   * Surface of every tile, so a group stays consistent. Default `'filled'`.
+   * - `'filled'` — muted fill, no border. Use inside a `Card` / `DashboardWidget`.
+   * - `'card'` — card background, border and shadow, matching `Card`s on a page background; avoid inside a Card (card-in-card).
+   */
+  variant?: StatGroupVariant;
   /** `StatTile` elements. */
   children?: ReactNode;
 }
@@ -31,11 +39,20 @@ export interface StatGroupProps extends HTMLAttributes<HTMLUListElement> {
  */
 // {...rest} last (Pattern A) so the consumer's aria-label / data-* / className reach the <ul>.
 export const StatGroup = forwardRef<HTMLUListElement, StatGroupProps>(function StatGroup(
-  { minColumnWidth = '11rem', gap = 'md', loading = false, className, children, ...rest },
+  {
+    minColumnWidth = '11rem',
+    gap = 'md',
+    loading = false,
+    variant = 'filled',
+    className,
+    children,
+    ...rest
+  },
   ref,
 ) {
+  const ctx = useMemo(() => ({ loading, variant }), [loading, variant]);
   return (
-    <StatGroupLoadingContext.Provider value={loading}>
+    <StatGroupContext.Provider value={ctx}>
       <Grid
         ref={ref as Ref<HTMLElement>}
         as="ul"
@@ -48,6 +65,6 @@ export const StatGroup = forwardRef<HTMLUListElement, StatGroupProps>(function S
       >
         {children}
       </Grid>
-    </StatGroupLoadingContext.Provider>
+    </StatGroupContext.Provider>
   );
 });

@@ -22,6 +22,8 @@
 
 TL;DR: a `<ul>` grid of 1–8 [`StatTile`](StatTile.md)s for a dashboard widget that shows several numbers at once. Tiles reflow by available width (`minColumnWidth`, auto-fit). In a cell narrower than one column a single tile shrinks instead of overflowing, and very narrow tiles drop the icon and shrink the value. Put it in `DashboardWidget` `variant="standard"`: its body scrolls if the tiles overflow the cell.
 
+**Surface:** `variant="filled"` (default) is a muted tile with no border — right inside a `Card` / `DashboardWidget`. `variant="card"` gives every tile the card background, border and shadow, for a group sitting directly on the page background next to other `Card`s. Don't use `card` inside a Card (card-in-card). The `Progress` track and skeletons stay visible on both surfaces.
+
 **Loading:** `loading` keeps labels and icons and replaces each value and trend with a skeleton, so the placeholder has the real layout. Each tile's value slot carries visually hidden "Loading…" (read when browsing the tiles); no `aria-busy`: the per-tile hidden text already carries the state. There is deliberately no live region: a dashboard loads many widgets at once, and per-widget announcements would flood screen readers. Announce "dashboard loaded" once at page level if needed. Footnotes hide while loading (they describe data that is not there yet).
 
 **Accessibility:** give the group a name (`aria-label`, or `aria-labelledby` pointing at the widget title). Screen readers read each tile in DOM order: label, value, trend ("Increase 12.4% vs previous period"), footnote.
@@ -36,6 +38,7 @@ TL;DR: a `<ul>` grid of 1–8 [`StatTile`](StatTile.md)s for a dashboard widget 
 | `minColumnWidth` | `string` | no | Minimum tile width before the grid drops a column (auto-fit). Any CSS length. Clamped to the group's width, so in a cell narrower than one column a single tile shrinks instead of overflowing. Default `'11rem'`. |
 | `gap` | `'xs' \| 'sm' \| 'md' \| 'lg' \| 'xl' \| '2xl'` | no | Gap between tiles. `xs` (4) / `sm` (8) / `md` (12, default) / `lg` (16) / `xl` (24) / `2xl` (32). |
 | `loading` | `boolean` | no | Loading state for every tile: labels and icons stay; each value and trend becomes a skeleton with visually hidden "Loading…" in the value slot, and footnotes hide. Deliberately NO live region: a dashboard loads many widgets at once, so announcements would flood screen readers. No `aria-busy`: the per-tile hidden text already carries the state. Default `false`. |
+| `variant` | `'filled' \| 'card'` | no | Surface of every tile, so a group stays consistent. Default `'filled'`. - `'filled'` — muted fill, no border. Use inside a `Card` / `DashboardWidget`. - `'card'` — card background, border and shadow, matching `Card`s on a page background; avoid inside a Card (card-in-card). |
 | `children` | `ReactNode` | no | `StatTile` elements. |
 | …native | | | plus native `<ul>` attributes |
 

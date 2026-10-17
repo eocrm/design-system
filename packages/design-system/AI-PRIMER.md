@@ -172,7 +172,7 @@ Each component's contract is its `docs/components/<Name>.md`; the props table th
 - [`DashboardCanvas`](docs/components/DashboardCanvas.md) — 2D snap-grid dashboard
 - [`DashboardWidget`](docs/components/DashboardWidget.md) — DashboardCanvas cell card: standard / list / kpi / chart, with loading skeletons
 - [`StatGroup`](docs/components/StatGroup.md) — responsive grid of KPI tiles for a dashboard widget, with loading skeletons
-- [`StatTile`](docs/components/StatTile.md) — one KPI tile (label, value, trend, footnote, icon) inside a StatGroup
+- [`StatTile`](docs/components/StatTile.md) — one KPI tile (label, value, trend, footnote, icon, sparkline, quota `progress`) inside a StatGroup (`filled` or `card` surface)
 - [`Sparkline`](docs/components/Sparkline.md) — compact static line / area / bar trend for KPI cards (StatTile slot, kpi DashboardWidget child); no axes, summary in the accessible name
 - [`Chart`](docs/components/Chart.md) — line / bar / stacked bar / area time-series chart for a chart DashboardWidget (smoothed lines, static markers, legend, tooltip, keyboard, data table, empty state)
 - [`TreeView`](docs/components/TreeView.md) — lazily loaded hierarchy (WAI-ARIA tree) as a file-explorer list or a top-down org chart, with loading / error-retry / load-more rows

@@ -181,4 +181,89 @@ describe('StatTile', () => {
     );
     expect(container.querySelector('[data-stat-sparkline-skeleton]')).toBeNull();
   });
+
+  it('progress: a small meter after the trend, named by the tile label (#648)', () => {
+    render(
+      <StatGroup aria-label="KPIs">
+        <StatTile
+          label="Storage"
+          value="1.2 GB / 5 GB"
+          trend={UP}
+          progress={{ value: 1.2, max: 5, tone: 'warning' }}
+          sparkline={<Sparkline label="Daily" values={[1, 2]} />}
+        />
+      </StatGroup>,
+    );
+    const bar = screen.getByRole('progressbar', { name: 'Storage' });
+    expect(bar).toHaveAttribute('aria-valuenow', '1.2');
+    expect(bar).toHaveAttribute('aria-valuemax', '5');
+    expect(bar.className).toMatch(/toneWarning/);
+    const trend = screen.getByText(UP.label);
+    const spark = screen.getByRole('img', { name: /^Daily:/ });
+    expect(trend.compareDocumentPosition(bar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(bar.compareDocumentPosition(spark) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('progress: progress-height skeleton while loading, none without the prop', () => {
+    const { container } = render(
+      <StatGroup aria-label="KPIs" loading>
+        <StatTile label="Storage" value="1" progress={{ value: 1, max: 5 }} />
+        <StatTile label="Seats" value="3" />
+      </StatGroup>,
+    );
+    expect(screen.queryByRole('progressbar')).toBeNull();
+    expect(container.querySelectorAll('[data-stat-progress-skeleton]')).toHaveLength(1);
+  });
+
+  it('variant="card" puts every tile on the card surface; default stays filled', () => {
+    const { rerender } = render(
+      <StatGroup aria-label="KPIs" variant="card">
+        <StatTile label="A" value="1" />
+        <StatTile label="B" value="2" />
+      </StatGroup>,
+    );
+    const tiles = screen.getAllByRole('listitem');
+    tiles.forEach((li) => expect(li.className).toMatch(/card/));
+    rerender(
+      <StatGroup aria-label="KPIs">
+        <StatTile label="A" value="1" />
+      </StatGroup>,
+    );
+    expect(screen.getByRole('listitem').className).not.toMatch(/card/);
+  });
+
+  it('progress: over-limit clamps the ARIA value to max; no meter for a non-positive limit or NaN', () => {
+    render(
+      <StatGroup aria-label="KPIs">
+        <StatTile
+          label="API calls"
+          value="10,412 / 10,000"
+          progress={{ value: 10412, max: 10000 }}
+        />
+        <StatTile label="Unlimited" value="12 / ∞" progress={{ value: 12, max: 0 }} />
+        <StatTile label="Loading limit" value="12" progress={{ value: 12, max: NaN }} />
+      </StatGroup>,
+    );
+    const bars = screen.getAllByRole('progressbar');
+    expect(bars).toHaveLength(1);
+    expect(bars[0]).toHaveAccessibleName('API calls');
+    expect(bars[0]).toHaveAttribute('aria-valuenow', '10000');
+  });
+
+  it('progress: a rich label still names the meter by its text', () => {
+    render(
+      <StatGroup aria-label="KPIs">
+        <StatTile
+          label={
+            <>
+              <strong>Storage</strong> used
+            </>
+          }
+          value="1 / 5"
+          progress={{ value: 1, max: 5 }}
+        />
+      </StatGroup>,
+    );
+    expect(screen.getByRole('progressbar')).toHaveAccessibleName('Storage used');
+  });
 });

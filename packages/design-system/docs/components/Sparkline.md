@@ -35,13 +35,14 @@ import { DashboardWidget, Sparkline, StatGroup, StatTile } from '@eocrm/design-s
 | `values` | `readonly (number \| null)[]` | yes | Values oldest → newest. `null` (or a non-finite number) = no data for that slot: a gap in a line/area, no bar. |
 | `type` | `'line' \| 'area' \| 'bar'` | no | Mark type. Default `'line'`. - `'line'` — smoothed line with a dot on the latest value. Trends of a rate or level. - `'area'` — the line over a filled area anchored at zero. Volumes / counts over time. - `'bar'` — one bar per value. Discrete per-period counts (daily signups). |
 | `formatValue` | `((n: number) => string)` | no | Formats numbers in the accessible summary. Default: `Intl.NumberFormat` for the current locale. |
+| `endDot` | `boolean` | no | Dot on the latest value (`line` / `area`; `bar` never has one). Default `true`. Turn off where the dot reads as a stray marker rather than emphasis, e.g. a dense row of `StatTile` sparklines. |
 | …native | | | plus native `<div>` attributes |
 
 <!-- props:end -->
 
 - **Name, not a table.** The summary (first, last, low, high) is folded into the accessible name; there is no data table. Empty or all-null `values` render nothing and are named "{label}: no data".
 - **Ignored attributes.** `role`, `aria-label` and `aria-labelledby` are ignored; the name is always derived from `label` and `values`.
-- **Marks.** `line` and `area` are smoothed and end in a dot on the last value; `bar` draws one bar per non-null value. A flat `line` is drawn mid-height (a flat positive area/bar fills from zero).
+- **Marks.** `line` and `area` are smoothed and end in a dot on the last value (`endDot={false}` removes it, e.g. in a dense row of tiles); `bar` draws one bar per non-null value. A flat `line` is drawn mid-height (a flat positive area/bar fills from zero).
 
 #### When NOT to use
 

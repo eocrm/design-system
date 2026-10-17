@@ -57,8 +57,22 @@
   color: var(--stat-tile-trend-neutral);
 }
 
+.card {
+  border: var(--border-width) solid var(--stat-tile-card-border-color);
+  border-radius: var(--stat-tile-card-radius);
+  background: var(--stat-tile-card-bg);
+  box-shadow: var(--stat-tile-card-shadow);
+
+  --skeleton-bg: var(--stat-tile-card-skeleton-bg);
+}
+
 .sparkline {
   min-width: 0;
+}
+
+// The bar is a pill; its placeholder should be one too.
+.progressSkeleton {
+  --skeleton-radius-rectangular: var(--radius-full);
 }
 
 .footnote {
@@ -68,7 +82,8 @@
 
 // SCSS constant because container-query conditions can't read custom properties.
 // Container queries measure the content box: 136px content = 160px tile width
-// minus 2 x --stat-tile-padding (12px).
+// minus 2 x --stat-tile-padding (12px); variant="card" adds a 1px border each side,
+// so there it fires at a 162px tile.
 // ponytail: fixed threshold; make it a prop if a widget needs another.
 $narrow-below: 136px;
 

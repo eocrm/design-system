@@ -54,6 +54,13 @@ it('names an empty series "no data" and draws nothing', () => {
   expect(container.querySelector('path, rect, circle')).toBeNull();
 });
 
+it('endDot={false} drops the end dot but keeps the line (#646)', () => {
+  stubWidth(120);
+  const { container } = wrap(<Sparkline label="L" values={[1, 3, 2]} type="area" endDot={false} />);
+  expect(container.querySelectorAll('path')).toHaveLength(2);
+  expect(container.querySelector('circle')).toBeNull();
+});
+
 it('draws a stroke path and end dot for line, a fill too for area, rects for bar', () => {
   stubWidth(120);
   const { container, rerender } = wrap(<Sparkline label="L" values={[1, 3, 2]} />);

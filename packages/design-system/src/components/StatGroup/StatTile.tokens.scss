@@ -1,3 +1,5 @@
+@use '../Card/Card.tokens';
+
 :root {
   --stat-tile-bg: var(--color-bg-muted);
   --stat-tile-skeleton-bg: var(--color-bg-muted-hover);
@@ -19,4 +21,15 @@
   --stat-tile-trend-neutral: var(--color-fg-muted);
   --stat-tile-footnote-size: var(--font-size-sm);
   --stat-tile-footnote-fg: var(--color-fg-muted);
+
+  // Matches Progress size="sm" track height (Progress.module.scss).
+  --stat-tile-progress-height: 4px;
+
+  // variant="card": the Card surface. Follows --card-* (tokens @used above), so a
+  // Card theme override reaches the tiles too.
+  --stat-tile-card-bg: var(--card-bg);
+  --stat-tile-card-border-color: var(--card-border-color);
+  --stat-tile-card-radius: var(--card-radius);
+  --stat-tile-card-shadow: var(--card-shadow);
+  --stat-tile-card-skeleton-bg: var(--color-bg-muted);
 }

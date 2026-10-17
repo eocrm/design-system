@@ -8,6 +8,8 @@
 <Progress value={3} max={10} label={`3 of 10`} />  // custom label slot
 ```
 
+The track is `--color-border` (as are `CircularProgress` and `Slider` tracks), so it stays visible on white, muted (`bg-muted`) and card surfaces alike — no per-surface `--progress-track-bg` override needed. For a quota meter in a KPI tile use `StatTile`'s `progress` prop.
+
 <!-- props:start -->
 
 ## Props
