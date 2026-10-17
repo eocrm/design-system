@@ -26,6 +26,12 @@ export interface SparklineProps extends Omit<HTMLAttributes<HTMLDivElement>, 'ch
   type?: SparklineType;
   /** Formats numbers in the accessible summary. Default: `Intl.NumberFormat` for the current locale. */
   formatValue?: (n: number) => string;
+  /**
+   * Dot on the latest value (`line` / `area`; `bar` never has one). Default `true`.
+   * Turn off where the dot reads as a stray marker rather than emphasis, e.g. a
+   * dense row of `StatTile` sparklines.
+   */
+  endDot?: boolean;
 }
 
 function useSize() {
@@ -56,7 +62,16 @@ function useSize() {
  */
 // {...rest} FIRST (Pattern B) so role="img" and the summary name always win.
 export const Sparkline = forwardRef<HTMLDivElement, SparklineProps>(function Sparkline(
-  { label, values, type = 'line', formatValue, className, 'aria-labelledby': _ignored, ...rest },
+  {
+    label,
+    values,
+    type = 'line',
+    formatValue,
+    endDot = true,
+    className,
+    'aria-labelledby': _ignored,
+    ...rest
+  },
   ref,
 ) {
   const t = useTranslation();
@@ -104,7 +119,7 @@ export const Sparkline = forwardRef<HTMLDivElement, SparklineProps>(function Spa
         {geometry?.bars?.map((b, i) => (
           <rect key={i} className={styles.bar} x={b.x} y={b.y} width={b.width} height={b.height} />
         ))}
-        {geometry?.dot && (
+        {endDot && geometry?.dot && (
           <circle
             className={styles.dot}
             cx={geometry.dot.cx}
