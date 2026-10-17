@@ -136,13 +136,37 @@ describe('TopBar.Search combobox mode', () => {
     await userEvent.click(input());
     fireEvent.keyDown(input(), { key: 'Enter', isComposing: true });
     expect(onSelect).not.toHaveBeenCalled();
+    // WebKit fires compositionend before the committing Enter: keyCode 229 only.
+    fireEvent.keyDown(input(), { key: 'Enter', keyCode: 229 });
+    expect(onSelect).not.toHaveBeenCalled();
   });
 
   it('hover moves the highlight', async () => {
     render(<Harness />);
     await userEvent.click(input());
-    await userEvent.hover(screen.getByRole('option', { name: /Alan/ }));
+    fireEvent.mouseMove(screen.getByRole('option', { name: /Alan/ }));
     expect(activeOption()).toHaveTextContent('Alan');
+  });
+
+  it('does not let a stationary pointer steal the keyboard highlight', async () => {
+    render(<Harness />);
+    await userEvent.click(input());
+    await userEvent.keyboard('{ArrowDown}');
+    expect(activeOption()).toHaveTextContent('Alan');
+    // Rows scrolling under a resting pointer fire mouseenter without movement.
+    fireEvent.mouseEnter(screen.getByRole('option', { name: 'Acme renewal' }));
+    expect(activeOption()).toHaveTextContent('Alan');
+  });
+
+  it('ArrowDown reopens a closed combobox; ArrowUp does nothing', async () => {
+    render(<Harness />);
+    await userEvent.click(input());
+    await userEvent.keyboard('{Escape}');
+    expect(input()).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.keyboard('{ArrowUp}');
+    expect(input()).toHaveAttribute('aria-expanded', 'false');
+    await userEvent.keyboard('{ArrowDown}');
+    expect(input()).toHaveAttribute('aria-expanded', 'true');
   });
 
   it('closes on blur and reopens on click', async () => {
@@ -299,7 +323,7 @@ describe('TopBar.Search combobox mode', () => {
   });
 
   // Review Focus 5
-  it('keeps rows visible while loading, marks busy and announces loading', async () => {
+  it('keeps rows visible while loading, marks busy and keeps announcing the count', async () => {
     render(<Harness loading />);
     await userEvent.click(input());
     const listbox = screen.getByRole('listbox');
@@ -307,6 +331,13 @@ describe('TopBar.Search combobox mode', () => {
     expect(screen.getByRole('option', { name: 'Ada' })).toBeInTheDocument();
     expect(listbox).toHaveTextContent('Searching…');
     expect(listbox).not.toHaveTextContent('No results');
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('3 results'));
+    expect(screen.getByRole('status')).not.toHaveTextContent('Searching…');
+  });
+
+  it('announces loading when there are no items yet', async () => {
+    render(<Harness results={[]} loading />);
+    await userEvent.click(input());
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Searching…'));
   });
 

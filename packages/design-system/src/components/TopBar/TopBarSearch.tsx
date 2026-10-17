@@ -1,6 +1,5 @@
 import {
   forwardRef,
-  useEffect,
   useId,
   useMemo,
   useRef,
@@ -26,7 +25,7 @@ import styles from './TopBar.module.scss';
 
 /** One result row in `<TopBar.Search>` combobox mode. */
 export interface TopBarSearchItem {
-  /** Unique across ALL groups — used as the React key. */
+  /** Unique across ALL groups. Identifies the result set: the highlight resets to the first row when the set of ids changes. */
   id: string;
   /** Primary text. Truncates to one line. */
   label: ReactNode;
@@ -109,7 +108,7 @@ export interface TopBarSearchProps extends Omit<
   onOpenChange?: (open: boolean) => void;
   /** Called on Enter or click on a result. The input text is left as is — clear it here if wanted. */
   onSelect?: (item: TopBarSearchItem, groupIndex: number) => void;
-  /** Shows a loading row and sets `aria-busy`; existing results stay visible. */
+  /** Shows a loading row and sets `aria-busy`; existing results stay visible and the live region keeps announcing their count. */
   loading?: boolean;
   /**
    * Row shown for a non-empty query with no results. Default `t('topBar.searchEmpty')`
@@ -185,10 +184,10 @@ export const TopBarSearch = forwardRef<HTMLInputElement, TopBarSearchProps>(func
   const empty = !loading && !hasItems ? emptyMessage || t('topBar.searchEmpty') : null;
   const announcement = !shown
     ? ''
-    : loading
-      ? t('topBar.searchLoading')
-      : hasItems
-        ? t('topBar.searchResults', { count: options.filter((o) => o.kind === 'item').length })
+    : hasItems
+      ? t('topBar.searchResults', { count: options.filter((o) => o.kind === 'item').length })
+      : loading
+        ? t('topBar.searchLoading')
         : typeof empty === 'string'
           ? empty
           : t('topBar.searchEmpty');
@@ -199,7 +198,12 @@ export const TopBarSearch = forwardRef<HTMLInputElement, TopBarSearchProps>(func
     .map((o) => (o.kind === 'item' ? o.item.id : '\u0000footer'))
     .join('\u0000');
   const [active, setActive] = useState(0);
-  useEffect(() => setActive(0), [signature]);
+  const [prevSignature, setPrevSignature] = useState(signature);
+  // Adjust state while rendering (not in an effect): no painted frame with a stale highlight.
+  if (signature !== prevSignature) {
+    setPrevSignature(signature);
+    setActive(0);
+  }
   const activeIndex = options.length === 0 ? -1 : Math.min(active, options.length - 1);
 
   const choose = (option: SearchOption) => {
@@ -241,7 +245,13 @@ export const TopBarSearch = forwardRef<HTMLInputElement, TopBarSearchProps>(func
       e.preventDefault();
       const step = e.key === 'ArrowDown' ? 1 : -1;
       setActive((activeIndex + step + options.length) % options.length);
-    } else if (e.key === 'Enter' && !e.nativeEvent.isComposing && shown && activeIndex >= 0) {
+    } else if (
+      e.key === 'Enter' &&
+      !e.nativeEvent.isComposing &&
+      e.keyCode !== 229 &&
+      shown &&
+      activeIndex >= 0
+    ) {
       e.preventDefault();
       choose(options[activeIndex]!);
     }

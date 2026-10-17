@@ -93,7 +93,7 @@ export function TopBarSearchPanel({
     return () => document.removeEventListener('keydown', onKeyDown, true);
   }, [shown, floatingId, onClose]);
 
-  const { refs, floatingStyles } = useFloating({
+  const { refs, floatingStyles, isPositioned } = useFloating({
     open: shown,
     placement: 'bottom-start',
     // fixed + portal: escapes the sticky bar and any overflow/transform ancestor.
@@ -121,9 +121,9 @@ export function TopBarSearchPanel({
 
   // Focus stays in the input, so keep the keyboard-active row visible by hand.
   useEffect(() => {
-    if (!shown) return;
+    if (!shown || !isPositioned) return;
     panelRef.current?.querySelector('[data-active]')?.scrollIntoView?.({ block: 'nearest' });
-  }, [shown, activeIndex]);
+  }, [shown, isPositioned, activeIndex]);
 
   const row = (
     index: number,
@@ -144,7 +144,10 @@ export function TopBarSearchPanel({
         tabIndex={item.href ? -1 : undefined}
         data-active={active ? '' : undefined}
         className={clsx(styles.option, active && styles.optionActive, className)}
-        onMouseEnter={() => onActivate(index)}
+        // mousemove, not mouseenter: rows scrolling under a resting pointer must not steal the highlight.
+        onMouseMove={() => {
+          if (!active) onActivate(index);
+        }}
         onClick={(e: MouseEvent) => {
           // Cmd/Ctrl/Shift-click on a link opens it the browser's way.
           if (item.href && (e.metaKey || e.ctrlKey || e.shiftKey)) return;

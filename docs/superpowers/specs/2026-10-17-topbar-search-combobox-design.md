@@ -119,9 +119,9 @@ remounts the input, so focus/caret survive.
 `role="combobox"`, `aria-expanded={shown}`, `aria-controls={listboxId}`
 (only while shown), `aria-activedescendant` (active option id while shown),
 `aria-autocomplete="list"`. Library-set attributes win over consumer spread
-for these (Pattern B for the ARIA contract); consumer `onKeyDown`, `onFocus`,
-`onChange`, `onBlur` are composed (called first; our handling skipped if
-`e.defaultPrevented`). Plain mode keeps Pattern A unchanged.
+for these (Pattern B for the ARIA contract); consumer handlers run first;
+`onFocus`, `onClick` and `onKeyDown` can suppress the library's handling via
+`e.preventDefault()`; change and blur always apply (typing opens, blur closes). Plain mode keeps Pattern A unchanged.
 
 ## Positioning / styling
 

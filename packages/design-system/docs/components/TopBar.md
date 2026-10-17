@@ -66,7 +66,7 @@ import { Bell, Plus } from 'lucide-react';
 | `defaultOpen` | `boolean` | no | Uncontrolled initial visibility. Default `false`. |
 | `onOpenChange` | `((open: boolean) => void)` | no | Called when the panel wants to open (focus, typing, ↓) or close (Esc, blur, selection). |
 | `onSelect` | `((item: TopBarSearchItem, groupIndex: number) => void)` | no | Called on Enter or click on a result. The input text is left as is — clear it here if wanted. |
-| `loading` | `boolean` | no | Shows a loading row and sets `aria-busy`; existing results stay visible. |
+| `loading` | `boolean` | no | Shows a loading row and sets `aria-busy`; existing results stay visible and the live region keeps announcing their count. |
 | `emptyMessage` | `ReactNode` | no | Row shown for a non-empty query with no results. Default `t('topBar.searchEmpty')` (also used when this is an empty string). A non-string node is rendered but the live region still announces the default text — pass a string to have it announced. |
 | `footerAction` | `TopBarSearchFooterAction` | no | Trailing row in the ↑/↓ cycle (e.g. "View all results"). Rendered whenever the panel is shown (results, loading row, or empty row), as the last row. |
 | …native | | | plus native `<input>` attributes |
@@ -104,10 +104,14 @@ const { data, isFetching } = useSearch(q); // your fetch; returns TopBarSearchGr
   results={data ?? []}
   loading={isFetching}
   onSelect={(item) => navigate(item.href ?? `/records/${item.id}`)}
-  footerAction={{
-    label: `View all results for “${q}”`,
-    onSelect: () => navigate(`/search?q=${q}`),
-  }}
+  footerAction={
+    q
+      ? {
+          label: `View all results for “${q}”`,
+          onSelect: () => navigate(`/search?q=${encodeURIComponent(q)}`),
+        }
+      : undefined
+  }
 />;
 // data: [{ label: 'Contacts', items: [{ id: 'c1', label: 'Ada Lovelace', meta: 'Contact', href: '/contacts/c1' }] }]
 ```
@@ -121,7 +125,8 @@ const { data, isFetching } = useSearch(q); // your fetch; returns TopBarSearchGr
 - The panel shows only for a non-empty query, a loading state, or when there are results. `loading` keeps existing results visible and sets `aria-busy`.
 - Result count, loading and empty states are announced via a live region. If `emptyMessage` is a non-string node, the live region announces the default `topBar.searchEmpty` instead — pass a string to have it announced. An empty-string `emptyMessage` falls back to the default.
 - Groups with no items are not rendered, so you may pass them as-is.
-- `open` / `defaultOpen` / `onOpenChange` control visibility if you need to; omit for uncontrolled.
+- `open` / `defaultOpen` / `onOpenChange` control visibility if you need to; omit for uncontrolled. With `defaultOpen` or a controlled `open` and the input never focused, the panel closes only via Esc, selection, or your `open` prop — there is no outside-click listener; outside-click dismissal comes from the input's blur.
+- Hide `footerAction` (pass `undefined`) while the query is empty — "View all results for “”" is noise.
 
 #### Shapes
 
@@ -138,7 +143,7 @@ const { data, isFetching } = useSearch(q); // your fetch; returns TopBarSearchGr
 <!-- prettier-ignore -->
 | Field | Type | Required | Description |
 |---|---|---|---|
-| `id` | `string` | yes | Unique across ALL groups — used as the React key. |
+| `id` | `string` | yes | Unique across ALL groups. Identifies the result set: the highlight resets to the first row when the set of ids changes. |
 | `label` | `ReactNode` | yes | Primary text. Truncates to one line. |
 | `meta` | `ReactNode` | no | Trailing muted text, e.g. the entity type or an email. |
 | `icon` | `ReactNode` | no | Leading decorative icon (e.g. `<User size={16} />`); hidden from assistive tech. |
@@ -169,7 +174,7 @@ const { data, isFetching } = useSearch(q); // your fetch; returns TopBarSearchGr
 - ❌ Reaching for `<TopBar.IconButton>` outside the bar — it's a topbar-scoped size + indicator pattern. Use `<Button iconOnly variant="ghost">` for general icon buttons.
 - ❌ Putting a `<Button variant="primary">` inside the bar — primary actions belong in the page body where they're discoverable; the topbar is for navigation, search, and global ambient actions only.
 - ❌ Keying or remounting `<TopBar.Search>` as results arrive — the input is never remounted by changing `results`, so don't add a `key` that does. Pass `[]` (not `undefined`) while there are no results: `undefined` turns combobox mode off (no role, no panel).
-- ❌ Duplicate `id`s across groups — ids must be unique across ALL groups (React keys, highlight tracking).
+- ❌ Duplicate `id`s across groups — ids must be unique across ALL groups (they identify the result set for highlight reset).
 - ❌ Clearing the input inside `onChange` — it fights typing; clear in `onSelect` if you want that.
 - ❌ Navigating in both `onSelect` and via the `<a>` default — the library already prevents the default on plain clicks; route only in `onSelect`.
 - ❌ Relying on the indicator dot to communicate count to assistive tech — the dot is decorative (`aria-hidden`); put the count in the `aria-label` instead.
