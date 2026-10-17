@@ -12,7 +12,7 @@ import clsx from 'clsx';
 import { useTranslation } from '../../i18n';
 import { LiveRegion } from '../LiveRegion';
 import { mergeRefs } from '../_internal/refs';
-import { overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
+import { overlayStack, useFloatingSurface } from '../_internal/overlay';
 import type { TopBarSearchFooterAction, TopBarSearchItem } from './TopBarSearch';
 import styles from './TopBar.module.scss';
 
@@ -50,8 +50,10 @@ export interface TopBarSearchPanelProps {
   onActivate: (index: number) => void;
   /** Called when an option is clicked. */
   onChoose: (option: SearchOption) => void;
-  /** The search pill — Floating UI reference and overlay-elevation probe. */
+  /** The search pill — Floating UI reference. */
   anchorRef: RefObject<HTMLDivElement | null>;
+  /** The pill sits inside a Modal/Drawer, so the panel elevates above it. Probed by the parent (a child's layout effect runs before the parent's ref attaches). */
+  inOverlay: boolean;
   /** Close request (Escape). */
   onClose: () => void;
   /** Loading row + `aria-busy`. */
@@ -77,6 +79,7 @@ export function TopBarSearchPanel({
   onActivate,
   onChoose,
   anchorRef,
+  inOverlay,
   onClose,
   loading,
   emptyMessage,
@@ -89,7 +92,6 @@ export function TopBarSearchPanel({
   // #274/#280: hosts (Modal/Drawer) yield Escape while the panel is shown, and
   // a deeper surface gets the press before us.
   const floatingId = useFloatingSurface(shown);
-  const inOverlay = useInOverlay(anchorRef, shown);
 
   // Latest onClose without resubscribing the document listener on every render.
   const onCloseRef = useRef(onClose);

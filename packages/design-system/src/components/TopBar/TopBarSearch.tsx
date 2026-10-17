@@ -15,6 +15,7 @@ import { Search } from 'lucide-react';
 import clsx from 'clsx';
 import { useTranslation } from '../../i18n';
 import { Kbd } from '../Kbd';
+import { useInOverlay } from '../_internal/overlay';
 import {
   TopBarSearchPanel,
   optionId,
@@ -181,6 +182,8 @@ export const TopBarSearch = forwardRef<HTMLInputElement, TopBarSearchProps>(func
 
   const hasItems = groups.length > 0;
   const shown = combobox && isOpen && (loading || hasItems || value.trim() !== '');
+  // Probed here, not in the panel: a child's layout effect runs before this wrapper's ref attaches.
+  const inOverlay = useInOverlay(wrapperRef, shown);
   const empty = !loading && !hasItems ? emptyMessage || t('topBar.searchEmpty') : null;
   const announcement = !shown
     ? ''
@@ -194,9 +197,8 @@ export const TopBarSearch = forwardRef<HTMLInputElement, TopBarSearchProps>(func
 
   // Reset to the first row when the SET of ids changes — not on every new
   // array identity, so a consumer rebuilding `results` inline keeps the highlight.
-  const signature = options
-    .map((o) => (o.kind === 'item' ? o.item.id : '\u0000footer'))
-    .join('\u0000');
+  // Item ids only: the footer is always last, so toggling it must not reset the highlight or re-announce.
+  const signature = options.flatMap((o) => (o.kind === 'item' ? [o.item.id] : [])).join('\u0000');
   const [active, setActive] = useState(0);
   const [prevSignature, setPrevSignature] = useState(signature);
   // Adjust state while rendering (not in an effect): no painted frame with a stale highlight.
@@ -301,6 +303,7 @@ export const TopBarSearch = forwardRef<HTMLInputElement, TopBarSearchProps>(func
           onActivate={setActive}
           onChoose={choose}
           anchorRef={wrapperRef}
+          inOverlay={inOverlay}
           onClose={() => setOpen(false)}
           loading={loading}
           emptyMessage={shown ? empty : null}

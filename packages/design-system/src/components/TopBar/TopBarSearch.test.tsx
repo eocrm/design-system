@@ -450,4 +450,35 @@ describe('TopBar.Search combobox mode', () => {
     await userEvent.click(input());
     expect(screen.getByRole('listbox')).toHaveAttribute('data-in-overlay', '');
   });
+
+  it('marks a panel shown on first mount (defaultOpen) data-in-overlay inside an open Modal', () => {
+    render(
+      <Modal open onOpenChange={() => {}}>
+        <Modal.Header>Title</Modal.Header>
+        <Modal.Body>
+          <TopBar.Search placeholder="Search" defaultValue="a" defaultOpen results={GROUPS} />
+        </Modal.Body>
+      </Modal>,
+    );
+    expect(screen.getByRole('listbox')).toHaveAttribute('data-in-overlay', '');
+  });
+
+  it('adding footerAction alone keeps the highlight on the same item', async () => {
+    const { rerender } = render(
+      <TopBar.Search placeholder="Search" defaultValue="a" results={GROUPS} />,
+    );
+    await userEvent.click(input());
+    await userEvent.keyboard('{ArrowDown}');
+    expect(activeOption()).toHaveTextContent('Alan');
+    rerender(
+      <TopBar.Search
+        placeholder="Search"
+        defaultValue="a"
+        results={GROUPS}
+        footerAction={{ label: 'View all', onSelect: () => {} }}
+      />,
+    );
+    expect(screen.getByRole('option', { name: /View all/ })).toBeInTheDocument();
+    expect(activeOption()).toHaveTextContent('Alan');
+  });
 });
