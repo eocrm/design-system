@@ -100,6 +100,89 @@
   color: var(--topbar-search-placeholder-fg);
 }
 
+// ─── Search results panel (combobox mode) ──────────────────────────────
+// stylelint-disable property-disallowed-list -- portalled floating surface:
+// Floating UI positions it; z-index and viewport-bounded geometry are its
+// job, exactly like Select's `.listbox`. The geometry vars are written by
+// TopBarSearchPanel's size middleware; fallbacks cover the first frame.
+.results {
+  z-index: var(--topbar-results-z);
+  box-sizing: border-box;
+  min-width: min(
+    var(--topbar-results-min-width, 0px),
+    var(--topbar-results-available-width, 100vw)
+  );
+  max-width: min(var(--topbar-results-max-width), var(--topbar-results-available-width, 100vw));
+  max-height: min(var(--topbar-results-max-height), var(--topbar-results-available-height, 100vh));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--topbar-results-padding);
+  background: var(--topbar-results-bg);
+  border: var(--border-width) solid var(--topbar-results-border-color);
+  border-radius: var(--topbar-results-radius);
+  box-shadow: var(--topbar-results-shadow);
+}
+// stylelint-enable property-disallowed-list
+
+.results[data-in-overlay] {
+  z-index: var(--z-overlay-floating);
+}
+
+.groupLabel {
+  padding: var(--topbar-results-group-label-padding);
+  color: var(--topbar-results-group-label-fg);
+  font-size: var(--topbar-results-group-label-font-size);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--topbar-results-option-gap);
+  padding: var(--topbar-results-option-padding);
+  border-radius: var(--topbar-results-option-radius);
+  color: var(--topbar-results-option-fg);
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- link rows look like the div rows
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.optionActive {
+  background: var(--topbar-results-option-bg-active);
+}
+
+// stylelint-disable property-disallowed-list -- row internals: the label
+// takes the remaining width so it truncates; icon and meta keep their size.
+.optionIcon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--topbar-results-icon-fg);
+}
+
+.optionLabel {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.optionMeta {
+  flex-shrink: 0;
+  color: var(--topbar-results-meta-fg);
+  font-size: var(--topbar-results-meta-font-size);
+}
+// stylelint-enable property-disallowed-list
+
+.footer {
+  border-top: var(--border-width) solid var(--topbar-results-footer-border-color);
+}
+
+.status {
+  padding: var(--topbar-results-option-padding);
+  color: var(--topbar-results-status-fg);
+  font-size: var(--topbar-results-status-font-size);
+}
+
 // ─── IconButton + notification indicator ────────────────────────────────
 // stylelint-disable property-disallowed-list -- icon button needs an
 // explicit width + position:relative so the indicator dot (absolute-

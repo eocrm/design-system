@@ -1,6 +1,14 @@
 import { useState } from 'react';
-import { Bell, HelpCircle, Plus, Settings as SettingsIcon, Wrench } from 'lucide-react';
-import { Avatar, Text, TopBar } from '@eocrm/design-system';
+import {
+  Bell,
+  Briefcase,
+  HelpCircle,
+  Plus,
+  Settings as SettingsIcon,
+  User,
+  Wrench,
+} from 'lucide-react';
+import { Avatar, Cluster, Stack, Switch, Text, TopBar } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -62,6 +70,71 @@ function BrandMark() {
       </span>
       Orbit CRM
     </div>
+  );
+}
+
+const PEOPLE = ['Ada Lovelace', 'Alan Turing', 'Grace Hopper', 'Katherine Johnson'];
+const DEALS = ['Acme renewal', 'Globex expansion', 'Initech pilot'];
+
+function ComboboxSearchExample() {
+  const [query, setQuery] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [picked, setPicked] = useState<string | null>(null);
+  const q = query.trim().toLowerCase();
+  const match = (list: string[]) => (q ? list.filter((s) => s.toLowerCase().includes(q)) : []);
+  const results = [
+    {
+      label: 'Contacts',
+      items: match(PEOPLE).map((s) => ({
+        id: `c:${s}`,
+        label: s,
+        meta: 'Contact',
+        icon: <User size={16} />,
+      })),
+    },
+    {
+      label: 'Deals',
+      items: match(DEALS).map((s) => ({
+        id: `d:${s}`,
+        label: s,
+        meta: 'Deal',
+        icon: <Briefcase size={16} />,
+      })),
+    },
+  ];
+  return (
+    <Stack gap="md">
+      <TopBarStage height={320}>
+        <TopBar>
+          <TopBar.Start>
+            <TopBar.Search
+              placeholder="Search contacts, deals…"
+              hotkey={['⌘', 'K']}
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              results={results}
+              loading={loading}
+              emptyMessage="No contacts or deals match"
+              onSelect={(item) => setPicked(String(item.label))}
+              footerAction={
+                query.trim()
+                  ? {
+                      label: `View all results for “${query}”`,
+                      onSelect: () => setPicked(`all: ${query}`),
+                    }
+                  : undefined
+              }
+            />
+          </TopBar.Start>
+        </TopBar>
+      </TopBarStage>
+      <Cluster gap="md">
+        <Switch checked={loading} onChange={setLoading}>
+          Loading
+        </Switch>
+        <Text tone="muted">Selected: {picked ?? '—'}</Text>
+      </Cluster>
+    </Stack>
   );
 }
 
@@ -153,6 +226,79 @@ export function Demo() {
             </TopBar.End>
           </TopBar>
         </TopBarStage>
+      </Example>
+
+      <Example
+        title="Combobox search (`results`)"
+        description="Pass `results` (grouped items) and TopBar.Search becomes an ARIA combobox: a listbox panel opens under the pill, arrows move the active row, Enter or click fires `onSelect`, Esc closes. `loading` adds a Searching… row while keeping stale results, `emptyMessage` customises the no-match row, and `footerAction` adds a trailing row."
+        code={`import { useState } from 'react';
+import { Briefcase, User } from 'lucide-react';
+import { Cluster, Stack, Switch, Text, TopBar } from '@eocrm/design-system';
+
+const PEOPLE = ['Ada Lovelace', 'Alan Turing', 'Grace Hopper', 'Katherine Johnson'];
+const DEALS = ['Acme renewal', 'Globex expansion', 'Initech pilot'];
+
+function ComboboxSearch() {
+  const [query, setQuery] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [picked, setPicked] = useState<string | null>(null);
+  const q = query.trim().toLowerCase();
+  const match = (list: string[]) => (q ? list.filter((s) => s.toLowerCase().includes(q)) : []);
+  const results = [
+    {
+      label: 'Contacts',
+      items: match(PEOPLE).map((s) => ({
+        id: \`c:\${s}\`,
+        label: s,
+        meta: 'Contact',
+        icon: <User size={16} />,
+      })),
+    },
+    {
+      label: 'Deals',
+      items: match(DEALS).map((s) => ({
+        id: \`d:\${s}\`,
+        label: s,
+        meta: 'Deal',
+        icon: <Briefcase size={16} />,
+      })),
+    },
+  ];
+  return (
+    <Stack gap="md">
+      <TopBar>
+        <TopBar.Start>
+          <TopBar.Search
+            placeholder="Search contacts, deals…"
+            hotkey={['⌘', 'K']}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            results={results}
+            loading={loading}
+            emptyMessage="No contacts or deals match"
+            onSelect={(item) => setPicked(String(item.label))}
+            footerAction={
+              query.trim()
+                ? {
+                    label: \`View all results for “\${query}”\`,
+                    onSelect: () => setPicked(\`all: \${query}\`),
+                  }
+                : undefined
+            }
+          />
+        </TopBar.Start>
+      </TopBar>
+      <Cluster gap="md">
+        <Switch checked={loading} onChange={setLoading}>
+          Loading
+        </Switch>
+        <Text tone="muted">Selected: {picked ?? '—'}</Text>
+      </Cluster>
+    </Stack>
+  );
+}`}
+      >
+        <ComboboxSearchExample />
       </Example>
 
       <Example

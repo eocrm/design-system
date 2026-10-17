@@ -61,6 +61,14 @@ import { Bell, Plus } from 'lucide-react';
 |---|---|---|---|
 | `hotkey` | `string \| string[]` | no | Optional hotkey hint shown after the input. Rendered internally via `<Kbd size="sm">`. Pass an **array** of key labels for a multi-key combo (`['⌘', 'K']` → two chips joined with `+`) or a single string for a one-chip hint (`'Esc'` → one chip). Note: `'⌘K'` is treated as a single chip — use the array form for multi-key combos. The hint is **visual only**; the library does not bind any keyboard shortcut to it. Omit for no hint. |
 | `className` | `string` | no | `className` for the wrapping `<div>` (the search surface itself). The input's own className lives on the underlying `<input>` via the spread input-props (use the standard `inputClassName` pattern if you need to target the inner element specifically — not exposed in v1). |
+| `results` | `TopBarSearchGroup[]` | no | Turns on combobox mode: the input gets `role="combobox"` and a results panel opens under it. Presence switches the mode — pass `[]` (not `undefined`) while there are no results yet. You filter or fetch; the library owns keyboard, focus, dismissal, positioning and announcements. The first row is highlighted whenever the set of ids changes, so Enter opens the top hit. |
+| `open` | `boolean` | no | Controlled panel visibility. Omit for uncontrolled. |
+| `defaultOpen` | `boolean` | no | Uncontrolled initial visibility. Default `false`. |
+| `onOpenChange` | `((open: boolean) => void)` | no | Called when the panel wants to open (focus, typing, ↓) or close (Esc, blur, selection). |
+| `onSelect` | `((item: TopBarSearchItem, groupIndex: number) => void)` | no | Called on Enter or click on a result. The input text is left as is — clear it here if wanted. |
+| `loading` | `boolean` | no | Shows a loading row and sets `aria-busy`; existing results stay visible and the live region keeps announcing their count. |
+| `emptyMessage` | `ReactNode` | no | Row shown for a non-empty query with no results. Default `t('topBar.searchEmpty')` (also used when this is an empty string). A non-string node is rendered but the live region still announces the default text — pass a string to have it announced. |
+| `footerAction` | `TopBarSearchFooterAction` | no | Trailing row in the ↑/↓ cycle (e.g. "View all results"). Rendered whenever the panel is shown (results, loading row, or empty row), as the last row. |
 | …native | | | plus native `<input>` attributes |
 
 ### `TopBarStartProps`
@@ -77,20 +85,102 @@ import { Bell, Plus } from 'lucide-react';
 - **`<TopBar.Start>`** — flex-grows (`flex: 1`) so a sibling `<TopBar.End>` is pushed to the right edge with no spacer needed.
 - **`<TopBar.End>`** — shrinks to its content. Use for trailing actions + avatar.
 - **`<TopBar.Search>`** — a real `<input type="search">` (browsers expose `role="searchbox"`). `placeholder` is consumer-controlled. `aria-label` defaults to the placeholder, then to `t('topBar.search')`. The `hotkey` prop renders a trailing `<kbd>` hint — purely **visual**; binding ⌘K to focus is the consumer's responsibility. Spread `value` / `onChange` through normally — they reach the underlying input. The component sets `autoComplete="off"` plus `data-1p-ignore` / `data-lpignore` / `data-form-type="other"` so password managers and browser autofill skip it.
-- **i18n**: `topBar.label` (default `<header>` aria-label), `topBar.search` (default `<input>` aria-label fallback).
+- **i18n**: `topBar.label` (default `<header>` aria-label), `topBar.search` (default `<input>` aria-label fallback), `topBar.searchEmpty` (default empty-results row), `topBar.searchLoading` (loading row + announcement), `topBar.searchResults` (result-count announcement).
+- **Type note**: `TopBarSearchProps` omits the native `onSelect` (text-selection event) and the legacy `results` input attribute in favour of the combobox props below.
+
+### Combobox mode (`results`)
+
+Passing `results` (even `[]`) turns the pill into an ARIA combobox with a results panel. You filter or fetch; the library owns keyboard, focus, dismissal, positioning and announcements.
+
+```tsx
+const [q, setQ] = useState('');
+const { data, isFetching } = useSearch(q); // your fetch; returns TopBarSearchGroup[]
+// If you debounce, set `loading` synchronously in onChange (see below) instead of waiting for isFetching.
+
+<TopBar.Search
+  placeholder="Search contacts, deals…"
+  hotkey={['⌘', 'K']}
+  value={q}
+  onChange={(e) => setQ(e.target.value)}
+  results={data ?? []}
+  loading={isFetching}
+  onSelect={(item) => navigate(item.href ?? `/records/${item.id}`)}
+  footerAction={
+    q
+      ? {
+          label: `View all results for “${q}”`,
+          onSelect: () => navigate(`/search?q=${encodeURIComponent(q)}`),
+        }
+      : undefined
+  }
+/>;
+// data: [{ label: 'Contacts', items: [{ id: 'c1', label: 'Ada Lovelace', meta: 'Contact', href: '/contacts/c1' }] }]
+```
+
+- The first row is highlighted every time the set of ids changes (so Enter opens the top hit); rebuilding `results` inline with the same ids keeps the highlight.
+- ↑ / ↓ move the highlight and wrap, including the `footerAction` row.
+- Enter or click calls `onSelect(item, groupIndex)`, closes the panel and keeps the input text (clear it in `onSelect` if wanted). A `footerAction` row calls its own `onSelect`.
+- Esc closes the panel (innermost overlay first) and does not clear the input; blur closes it.
+- Rows with `href` render as links: Cmd/Ctrl/Shift/middle-click and "copy link" work natively; a plain click or Enter still calls `onSelect` (the library prevents the default navigation).
+- The panel is at least as wide as the pill, height-capped, and scrolls itself — do not wrap results in `<ScrollArea>`.
+- The panel shows only for a non-empty query, a loading state, or when there are results. `loading` keeps existing results visible and sets `aria-busy`.
+- Result count, loading and empty states are announced via a live region. If `emptyMessage` is a non-string node, the live region announces the default `topBar.searchEmpty` instead — pass a string to have it announced. An empty-string `emptyMessage` falls back to the default.
+- Groups with no items are not rendered, so you may pass them as-is.
+- **Debounced fetch**: set `loading` to `true` synchronously in your `onChange`, independent of the debounced request. Otherwise the panel shows and announces "No results" for the new query until the fetch actually starts.
+- Enter or click while `loading` acts on the currently shown (previous) results.
+- In uncontrolled mode the "empty query" check follows typing (`onChange`). After a form reset or an imperative `.value =` write, use a controlled `value`.
+- `open` / `defaultOpen` / `onOpenChange` control visibility if you need to; omit for uncontrolled. With `defaultOpen` or a controlled `open` and the input never focused, the panel closes only via Esc, selection, or your `open` prop — there is no outside-click listener; outside-click dismissal comes from the input's blur.
+- Hide `footerAction` (pass `undefined`) while the query is empty — "View all results for “”" is noise.
+
+#### Shapes
+
+`TopBarSearchGroup` — one labelled block in `results`. Groups with no items are not rendered.
+
+<!-- prettier-ignore -->
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `label` | `string` | yes | Visible heading; also the group's accessible name. |
+| `items` | `TopBarSearchItem[]` | yes | Result rows in this group. |
+
+`TopBarSearchItem` — one result row.
+
+<!-- prettier-ignore -->
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `id` | `string` | yes | Unique across ALL groups. Identifies the result set: the highlight resets to the first row when the set of ids changes. |
+| `label` | `ReactNode` | yes | Primary text. Truncates to one line. |
+| `meta` | `ReactNode` | no | Trailing muted text, e.g. the entity type or an email. |
+| `icon` | `ReactNode` | no | Leading decorative icon (e.g. `<User size={16} />`); hidden from assistive tech. |
+| `href` | `string` | no | Renders the row as a link so Cmd/Ctrl/Shift/middle-click and "copy link" work natively. A plain click or Enter still calls `onSelect` (the library never navigates). |
+
+`TopBarSearchFooterAction` — the optional `footerAction`. It renders whenever the panel is shown (results, the loading row, or the empty row for a non-empty query), as the last row in the ↑/↓ cycle.
+
+<!-- prettier-ignore -->
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `label` | `ReactNode` | yes | Row content. |
+| `onSelect` | `() => void` | yes | Called on Enter or click. |
+| `href` | `string` | no | Optional link target, same semantics as `TopBarSearchItem.href`. |
 
 #### When NOT to use
 
+- ❌ Picking a form value from a list — use `<Select>`.
+- ❌ Filter chips / multi-select facets — use `<OptionsPicker>`.
+- ❌ A command palette in a modal — not covered by combobox mode.
 - ❌ Left-side navigation column — use `<Rail>`.
 - ❌ Page-local heading + actions — use `<PageHeader>`, not a TopBar.
 - ❌ Action toolbar attached to a specific section — use a `<Cluster>` inside that section; TopBar is for the application's top chrome.
-- ❌ Command-palette experience — `<TopBar.Search>` is a plain text input. Compose `<Popover>` + `<OptionsPicker>` for typeahead / result lists.
+- ❌ Wrapping `<TopBar.Search>` in `<Popover>` to show results — use combobox mode (`results`).
 
 #### Anti-patterns
 
 - ❌ Wrapping the bar in another `position: sticky` container — the bar already sticks. Layered sticky parents stack at the wrong offset.
 - ❌ Reaching for `<TopBar.IconButton>` outside the bar — it's a topbar-scoped size + indicator pattern. Use `<Button iconOnly variant="ghost">` for general icon buttons.
 - ❌ Putting a `<Button variant="primary">` inside the bar — primary actions belong in the page body where they're discoverable; the topbar is for navigation, search, and global ambient actions only.
+- ❌ Keying or remounting `<TopBar.Search>` as results arrive — the input is never remounted by changing `results`, so don't add a `key` that does. Pass `[]` (not `undefined`) while there are no results: `undefined` turns combobox mode off (no role, no panel).
+- ❌ Duplicate `id`s across groups — ids must be unique across ALL groups (they identify the result set for highlight reset).
+- ❌ Clearing the input inside `onChange` — it fights typing; clear in `onSelect` if you want that.
+- ❌ Navigating in both `onSelect` and via the `<a>` default — the library already prevents the default on plain clicks; route only in `onSelect`.
 - ❌ Relying on the indicator dot to communicate count to assistive tech — the dot is decorative (`aria-hidden`); put the count in the `aria-label` instead.
 
 ```tsx

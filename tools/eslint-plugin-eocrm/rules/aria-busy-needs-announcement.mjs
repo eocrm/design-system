@@ -58,6 +58,8 @@ export default {
         if (node.name.name === 'aria-busy') firstBusy ??= node;
       },
       JSXOpeningElement(node) {
+        // <LiveRegion> always renders role="status"/"alert".
+        if (node.name.type === 'JSXIdentifier' && node.name.name === 'LiveRegion') announced = true;
         const live = str(attr(node, 'aria-live'));
         if (live === 'off') return;
         const role = str(attr(node, 'role'));

@@ -543,6 +543,7 @@
       "Chart",
       "DateStrip",
       "RichTextEditor",
+      "TopBar",
       "TreeView"
     ]
   },
@@ -977,7 +978,8 @@
     "cluster": "Navigation",
     "composes": [
       "Button",
-      "Kbd"
+      "Kbd",
+      "LiveRegion"
     ],
     "composedBy": []
   },

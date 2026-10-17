@@ -15,6 +15,7 @@ import { DatePicker } from '../../DatePicker';
 import { DateRangePicker } from '../../DateRangePicker';
 import { TimeField } from '../../TimeField';
 import { Rail } from '../../Rail';
+import { TopBar } from '../../TopBar';
 import { Button } from '../../Button';
 import { LiquidEditor } from '../../LiquidEditor';
 import { LocaleProvider } from '../../../i18n/LocaleProvider';
@@ -457,5 +458,25 @@ describe('Surface-in-surface Escape ordering (#280)', () => {
     act(() => overlayStack.unregisterFloating('deeper-surface'));
     await user.keyboard('{Escape}');
     expect(screen.queryByRole('menu')).toBeNull();
+  });
+
+  it('TopBar.Search results panel: first Escape closes the panel, second the Modal', async () => {
+    render(
+      <Host>
+        <TopBar.Search
+          placeholder="Search"
+          defaultValue="a"
+          results={[{ label: 'G', items: [{ id: '1', label: 'One' }] }]}
+        />
+      </Host>,
+    );
+    const input = screen.getByRole('combobox', { name: 'Search' });
+    await userEvent.click(input);
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    await userEvent.keyboard('{Escape}');
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+    expect(dialogOpen()).toBe(true);
+    await userEvent.keyboard('{Escape}');
+    expect(dialogOpen()).toBe(false);
   });
 });
