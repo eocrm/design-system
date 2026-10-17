@@ -1,4 +1,11 @@
-import { useEffect, useRef, type MouseEvent, type ReactNode, type RefObject } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  type MouseEvent,
+  type ReactNode,
+  type RefObject,
+} from 'react';
 import { createPortal } from 'react-dom';
 import { autoUpdate, flip, offset, shift, size, useFloating } from '@floating-ui/react-dom';
 import clsx from 'clsx';
@@ -53,6 +60,8 @@ export interface TopBarSearchPanelProps {
   emptyMessage: ReactNode | null;
   /** Live-region text ('' when the panel is hidden). */
   announcement: string;
+  /** Identifies the result set; a change re-announces even when the text is identical. */
+  announceKey: string;
 }
 
 export const optionId = (listboxId: string, index: number) => `${listboxId}-opt-${index}`;
@@ -72,6 +81,7 @@ export function TopBarSearchPanel({
   loading,
   emptyMessage,
   announcement,
+  announceKey,
 }: TopBarSearchPanelProps) {
   const t = useTranslation();
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -81,17 +91,23 @@ export function TopBarSearchPanel({
   const floatingId = useFloatingSurface(shown);
   const inOverlay = useInOverlay(anchorRef, shown);
 
+  // Latest onClose without resubscribing the document listener on every render.
+  const onCloseRef = useRef(onClose);
+  useLayoutEffect(() => {
+    onCloseRef.current = onClose;
+  });
+
   useEffect(() => {
     if (!shown) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape' || !overlayStack.isTopFloating(floatingId)) return;
       e.preventDefault(); // also stops the native <input type="search"> clear
       overlayStack.consumeEscape(e);
-      onClose();
+      onCloseRef.current();
     };
     document.addEventListener('keydown', onKeyDown, true);
     return () => document.removeEventListener('keydown', onKeyDown, true);
-  }, [shown, floatingId, onClose]);
+  }, [shown, floatingId]);
 
   const { refs, floatingStyles, isPositioned } = useFloating({
     open: shown,
@@ -116,8 +132,12 @@ export function TopBarSearchPanel({
       }),
     ],
     whileElementsMounted: autoUpdate,
-    elements: { reference: anchorRef.current },
   });
+  const { setReference } = refs;
+  // Passive, not layout: a child's layout effect runs before the parent <div>'s ref is attached.
+  useEffect(() => {
+    if (shown) setReference(anchorRef.current);
+  }, [shown, setReference, anchorRef]);
 
   // Focus stays in the input, so keep the keyboard-active row visible by hand.
   useEffect(() => {
@@ -126,6 +146,7 @@ export function TopBarSearchPanel({
   }, [shown, isPositioned, activeIndex]);
 
   const row = (
+    key: string,
     index: number,
     item: { label: ReactNode; meta?: ReactNode; icon?: ReactNode; href?: string },
     className?: string,
@@ -135,7 +156,7 @@ export function TopBarSearchPanel({
     const Tag = item.href ? 'a' : 'div';
     return (
       <Tag
-        key={index}
+        key={key}
         id={optionId(id, index)}
         role="option"
         aria-selected={active}
@@ -172,7 +193,7 @@ export function TopBarSearchPanel({
 
   return (
     <>
-      <LiveRegion>{announcement}</LiveRegion>
+      <LiveRegion announceKey={announceKey}>{announcement}</LiveRegion>
       {shown &&
         createPortal(
           <div
@@ -201,12 +222,21 @@ export function TopBarSearchPanel({
                 >
                   {g.label}
                 </div>
-                {g.items.map((item, i) => row(g.start + i, item))}
+                {g.items.map((item, i) => row(item.id, g.start + i, item))}
               </div>
             ))}
-            {loading && <div className={styles.status}>{t('topBar.searchLoading')}</div>}
-            {emptyMessage != null && <div className={styles.status}>{emptyMessage}</div>}
-            {footer && row(footerIndex, footer.action, styles.footer)}
+            {loading && (
+              <div role="presentation" className={styles.status}>
+                {/* aria-hidden: the live region announces this same text. */}
+                <span aria-hidden="true">{t('topBar.searchLoading')}</span>
+              </div>
+            )}
+            {emptyMessage != null && (
+              <div role="presentation" className={styles.status}>
+                <span aria-hidden="true">{emptyMessage}</span>
+              </div>
+            )}
+            {footer && row('footer', footerIndex, footer.action, styles.footer)}
           </div>,
           document.body,
         )}

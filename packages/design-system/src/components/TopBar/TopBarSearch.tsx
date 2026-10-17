@@ -305,6 +305,7 @@ export const TopBarSearch = forwardRef<HTMLInputElement, TopBarSearchProps>(func
           loading={loading}
           emptyMessage={shown ? empty : null}
           announcement={announcement}
+          announceKey={signature}
         />
       )}
     </div>

@@ -95,6 +95,7 @@ Passing `results` (even `[]`) turns the pill into an ARIA combobox with a result
 ```tsx
 const [q, setQ] = useState('');
 const { data, isFetching } = useSearch(q); // your fetch; returns TopBarSearchGroup[]
+// If you debounce, set `loading` synchronously in onChange (see below) instead of waiting for isFetching.
 
 <TopBar.Search
   placeholder="Search contacts, deals…"
@@ -125,6 +126,9 @@ const { data, isFetching } = useSearch(q); // your fetch; returns TopBarSearchGr
 - The panel shows only for a non-empty query, a loading state, or when there are results. `loading` keeps existing results visible and sets `aria-busy`.
 - Result count, loading and empty states are announced via a live region. If `emptyMessage` is a non-string node, the live region announces the default `topBar.searchEmpty` instead — pass a string to have it announced. An empty-string `emptyMessage` falls back to the default.
 - Groups with no items are not rendered, so you may pass them as-is.
+- **Debounced fetch**: set `loading` to `true` synchronously in your `onChange`, independent of the debounced request. Otherwise the panel shows and announces "No results" for the new query until the fetch actually starts.
+- Enter or click while `loading` acts on the currently shown (previous) results.
+- In uncontrolled mode the "empty query" check follows typing (`onChange`). After a form reset or an imperative `.value =` write, use a controlled `value`.
 - `open` / `defaultOpen` / `onOpenChange` control visibility if you need to; omit for uncontrolled. With `defaultOpen` or a controlled `open` and the input never focused, the panel closes only via Esc, selection, or your `open` prop — there is no outside-click listener; outside-click dismissal comes from the input's blur.
 - Hide `footerAction` (pass `undefined`) while the query is empty — "View all results for “”" is noise.
 

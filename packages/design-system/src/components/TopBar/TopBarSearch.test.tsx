@@ -1,7 +1,8 @@
 import { useState } from 'react';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { I18nProvider } from '../../i18n/I18nProvider';
+import { Modal } from '../Modal';
 import { TopBar } from './TopBar';
 import type { TopBarSearchGroup, TopBarSearchItem } from './TopBarSearch';
 
@@ -354,5 +355,99 @@ describe('TopBar.Search combobox mode', () => {
       </I18nProvider>,
     );
     await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('3 результата'));
+  });
+
+  it('re-announces when the result set changes but the count stays the same', async () => {
+    const setA: TopBarSearchGroup[] = [
+      { label: 'G', items: ['a', 'b'].map((id) => ({ id, label: id })) },
+    ];
+    const setB: TopBarSearchGroup[] = [
+      { label: 'G', items: ['c', 'd'].map((id) => ({ id, label: id })) },
+    ];
+    const ui = (r: TopBarSearchGroup[]) => (
+      <TopBar.Search placeholder="Search" defaultValue="a" defaultOpen results={r} />
+    );
+    const { rerender } = render(ui(setA));
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('2 results'));
+    rerender(ui(setB));
+    expect(screen.getByRole('status').textContent).toBe(''); // cleared, then rewritten
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('2 results'));
+  });
+
+  it('keeps status rows out of the listbox accessibility tree (presentation, text hidden)', async () => {
+    render(<Harness loading />);
+    await userEvent.click(input());
+    const listbox = screen.getByRole('listbox');
+    const loadingText = within(listbox).getByText('Searching…');
+    expect(loadingText).toHaveAttribute('aria-hidden', 'true');
+    expect(loadingText.parentElement).toHaveAttribute('role', 'presentation');
+    for (const child of Array.from(listbox.children)) {
+      expect(['group', 'option', 'presentation']).toContain(child.getAttribute('role'));
+    }
+  });
+
+  it('falls back to the default empty text for emptyMessage=""', async () => {
+    render(<Harness results={[]} emptyMessage="" />);
+    await userEvent.click(input());
+    expect(screen.getByRole('listbox')).toHaveTextContent('No results');
+  });
+
+  it('footer with href is a link option; modifier-click is left to the browser', async () => {
+    const footer = vi.fn();
+    const user = userEvent.setup();
+    render(<Harness footerAction={{ label: 'View all', onSelect: footer, href: '/search' }} />);
+    await user.click(input());
+    const link = screen.getByRole('option', { name: 'View all' });
+    expect(link.tagName).toBe('A');
+    const prevented: boolean[] = [];
+    const record = (e: Event) => {
+      prevented.push(e.defaultPrevented);
+      e.preventDefault();
+    };
+    document.addEventListener('click', record);
+    try {
+      await user.keyboard('{Control>}');
+      await user.click(link);
+      await user.keyboard('{/Control}');
+      expect(footer).not.toHaveBeenCalled();
+      expect(prevented).toEqual([false]);
+      await user.click(link);
+      expect(footer).toHaveBeenCalledTimes(1);
+    } finally {
+      document.removeEventListener('click', record);
+    }
+  });
+
+  describe('scrolling the active row into view', () => {
+    const original = Element.prototype.scrollIntoView;
+    afterEach(() => {
+      Element.prototype.scrollIntoView = original;
+    });
+
+    it('scrolls the newly active row on arrow navigation (also with defaultOpen on first mount)', async () => {
+      const scroll = vi.fn();
+      Element.prototype.scrollIntoView = scroll;
+      render(<TopBar.Search placeholder="Search" defaultValue="a" defaultOpen results={GROUPS} />);
+      // Floating UI positions asynchronously; the effect is gated on isPositioned.
+      await waitFor(() => expect(scroll).toHaveBeenCalled());
+      scroll.mockClear();
+      input().focus();
+      await userEvent.keyboard('{ArrowDown}');
+      await waitFor(() => expect(scroll).toHaveBeenCalledTimes(1));
+      expect(scroll.mock.contexts[0]).toBe(screen.getByRole('option', { name: /Alan/ }));
+    });
+  });
+
+  it('marks the panel data-in-overlay inside an open Modal', async () => {
+    render(
+      <Modal open onOpenChange={() => {}}>
+        <Modal.Header>Title</Modal.Header>
+        <Modal.Body>
+          <TopBar.Search placeholder="Search" defaultValue="a" results={GROUPS} />
+        </Modal.Body>
+      </Modal>,
+    );
+    await userEvent.click(input());
+    expect(screen.getByRole('listbox')).toHaveAttribute('data-in-overlay', '');
   });
 });
