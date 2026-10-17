@@ -90,6 +90,7 @@
       "OptionsPicker",
       "PasswordInput",
       "Rail",
+      "RichText",
       "RichTextEditor",
       "SocialButton",
       "Toast",
@@ -541,6 +542,7 @@
     "composedBy": [
       "Chart",
       "DateStrip",
+      "RichTextEditor",
       "TreeView"
     ]
   },
@@ -707,7 +709,9 @@
     "tier": "composition",
     "cluster": "Display",
     "composes": [
-      "CircularProgress"
+      "Button",
+      "CircularProgress",
+      "Tooltip"
     ],
     "composedBy": [
       "RichTextEditor"
@@ -723,6 +727,7 @@
       "DropdownMenu",
       "EmojiPicker",
       "Input",
+      "LiveRegion",
       "Popover",
       "RichText",
       "Slider",
@@ -815,6 +820,12 @@
     "composes": [
       "Sortable"
     ],
+    "composedBy": []
+  },
+  "Sparkline": {
+    "tier": "primitive",
+    "cluster": "Display",
+    "composes": [],
     "composedBy": []
   },
   "Split": {
@@ -955,6 +966,7 @@
       "EntityChip",
       "PasswordInput",
       "Rail",
+      "RichText",
       "StagePath"
     ]
   },

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { I18nProvider } from '../../i18n';
 import { RichTextAttachment } from './RichTextAttachment';
 import type { Block } from './engine/model';
@@ -12,7 +12,7 @@ const att = (over: Partial<Block>): Block => ({
 const wrap = (b: Block) =>
   render(
     <I18nProvider locale="en">
-      <RichTextAttachment block={b} />
+      <RichTextAttachment block={b} editable />
     </I18nProvider>,
   );
 
@@ -43,9 +43,47 @@ it('renders a spinner while uploading', () => {
   expect(screen.getByText('p.png')).toBeInTheDocument();
   expect(screen.getByLabelText('Uploading…')).toBeInTheDocument();
 });
-it('renders an error state with retry/remove action hooks', () => {
-  wrap(att({ status: 'error', name: 'p.png' }));
-  expect(screen.getByText(/upload failed/i)).toBeInTheDocument();
-  expect(document.querySelector('[data-attachment-action="retry"]')).toBeTruthy();
-  expect(document.querySelector('[data-attachment-action="remove"]')).toBeTruthy();
+it('renders an error state with icon retry/remove buttons carrying the action hooks', () => {
+  wrap(att({ id: 'b1', status: 'error', name: 'p.png' }));
+  const retry = screen.getByRole('button', { name: 'Retry p.png' });
+  const remove = screen.getByRole('button', { name: 'Remove p.png' });
+  expect(retry).toHaveAttribute('data-attachment-action', 'retry');
+  expect(retry).toHaveAttribute('data-block-id', 'b1');
+  expect(remove).toHaveAttribute('data-attachment-action', 'remove');
+  expect(retry).toHaveAccessibleDescription('Upload failed');
+});
+it('shows the UploadError reason on the failed block and describes the actions with it (#643)', () => {
+  wrap(att({ status: 'error', name: 'p.png', uploadError: 'Max 5 MB.' }));
+  expect(screen.getByText('Max 5 MB.')).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Remove p.png' })).toHaveAccessibleDescription(
+    'Upload failed Max 5 MB.',
+  );
+});
+it('names the icon buttons even without a file name', () => {
+  wrap(att({ status: 'error' }));
+  expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Remove' })).toBeInTheDocument();
+});
+
+it('publishes the loaded image aspect for the height cap (#644)', () => {
+  wrap(
+    att({ status: 'ready', src: 'http://u/p.png', mime: 'image/png', name: 'p.png', width: 700 }),
+  );
+  const img = document.querySelector('img')!;
+  Object.defineProperty(img, 'naturalWidth', { value: 300 });
+  Object.defineProperty(img, 'naturalHeight', { value: 400 });
+  fireEvent.load(img);
+  expect(img.style.getPropertyValue('--rich-text-image-aspect')).toBe('0.75');
+});
+
+it('read-only (not editable) error block shows the failure but no inert actions', () => {
+  render(
+    <I18nProvider locale="en">
+      <RichTextAttachment
+        block={att({ status: 'error', name: 'p.png', uploadError: 'Max 5 MB.' })}
+      />
+    </I18nProvider>,
+  );
+  expect(screen.getByText('Max 5 MB.')).toBeInTheDocument();
+  expect(screen.queryByRole('button')).toBeNull();
 });

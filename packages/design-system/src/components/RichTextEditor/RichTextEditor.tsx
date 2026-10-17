@@ -65,6 +65,9 @@ import { RichTextBlockControls } from './RichTextBlockControls';
 import { RichTextAttachmentConfig } from './RichTextAttachmentConfig';
 import { useAttachmentConfig } from './useAttachmentConfig';
 import { RichTextImageResizer } from './RichTextImageResizer';
+import { LiveRegion } from '../LiveRegion';
+import { capWidthToHeight } from './imageSize';
+import { imageMaxHeightStyle } from '../RichText/imageMaxHeightStyle';
 import { attachmentIsImage, isAttachmentSettled } from '../RichText/engine/attachment';
 import { safeHref } from '../RichText/engine/safeHref';
 import type { BlockAction } from './RichTextBlockMenu';
@@ -170,6 +173,14 @@ export interface RichTextEditorProps extends Omit<
    */
   renderMention?: RenderMention;
   /**
+   * Maximum DISPLAYED height of image attachments, in px. Default: the
+   * `--size-rich-text-image-max-height` token (480px). A taller image shrinks
+   * (width follows, aspect preserved); the resize handle and width slider stop
+   * where the image hits the cap. Render-time only — stored `width`/`height` are
+   * unchanged. Pass the same value to the read-only `<RichText>` so both agree.
+   */
+  imageMaxHeight?: number;
+  /**
    * Show Notion-style per-block controls: a left gutter that appears on the
    * hovered/focused block with an insert button (`＋`, adds an empty paragraph
    * below) and a drag handle (`⠿`) that opens a block menu (Turn into ▸,
@@ -183,7 +194,9 @@ export interface RichTextEditorProps extends Omit<
    * Enable file upload: a toolbar button (when `toolbar`) and clipboard-file paste.
    * `onUpload(file)` resolves with where the file landed; images render inline as a
    * preview, other files as a download chip. Reject `onUpload` to show a retry/remove
-   * error. `onUploadingChange` fires while any upload is in flight — wire it to your
+   * error; reject with `new UploadError(message)` to also show that (user-facing,
+   * localized) reason on the block — any other rejection shows only "Upload
+   * failed". `onUploadingChange` fires while any upload is in flight — wire it to your
    * submit button's disabled state. Validation (size/type) belongs in `onUpload`
    * (`accept` is only a native-picker hint and is bypassed by paste). Omit to
    * disable. Ignored when `readOnly`.
@@ -224,10 +237,12 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       autolink = true,
       renderLink,
       renderMention,
+      imageMaxHeight,
       upload,
       invalid = false,
       required = false,
       className,
+      style,
       ...rest
     },
     ref,
@@ -493,6 +508,11 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     }, []);
 
     const uploadOn = !!upload && !readOnly;
+    // A failure usually lands while the user keeps typing elsewhere in the doc,
+    // so the block's visible text alone is never heard: announce it (Hard rule 10).
+    const [uploadFailure, setUploadFailure] = useState<{ name: string; reason?: string } | null>(
+      null,
+    );
     const uploader = useUpload({
       config: upload ?? { onUpload: async () => ({ url: '' }) },
       getValue: () => liveDocRef.current,
@@ -513,6 +533,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       // Cap a freshly-uploaded image's initial width to the editor content width
       // (mirrors the resizer's maxWidth measurement). `0` when unmounted → no cap.
       getContentWidth: () => rootRef.current?.getBoundingClientRect().width ?? 0,
+      onFailureChange: setUploadFailure,
     });
     // The paste/click handlers close over a stale `uploader`; mirror it in a ref so
     // we read the current one without re-subscribing the native paste listener.
@@ -1362,6 +1383,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         // decide whether to fall back to the i18n default.
         {...rest}
         ref={setRefs}
+        style={imageMaxHeightStyle(imageMaxHeight, style)}
         className={clsx(
           styles.root,
           readOnly && styles.readOnly,
@@ -1488,13 +1510,30 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
             !!safeHref(b.src ?? ''),
         )
       : undefined;
+    // Widest an image may be resized to: the content width, further limited so
+    // its height stays within the display cap (#644) — the handle/slider stop
+    // where the rendered image stops growing.
+    const imageWidthMax = (id: string) => {
+      const contentWidth = rootRef.current?.getBoundingClientRect().width ?? 600;
+      const img = rootRef.current?.querySelector<HTMLImageElement>(
+        `[data-block-id="${CSS.escape(id)}"] img`,
+      );
+      return img
+        ? capWidthToHeight(
+            contentWidth,
+            img.naturalWidth,
+            img.naturalHeight,
+            parseFloat(getComputedStyle(img).maxHeight),
+          )
+        : contentWidth;
+    };
     const imageResizerEl =
       !readOnly && usesShell && resizableImage ? (
         <RichTextImageResizer
           rootRef={shellRef}
           blockId={hoveredImageId!}
           layoutKey={`${blockOrderKey}:${resizableImage.width ?? ''}`}
-          maxWidth={rootRef.current?.getBoundingClientRect().width ?? 600}
+          maxWidth={imageWidthMax(hoveredImageId!)}
           onResize={onImageResize}
           onDraggingChange={setDragging}
           hidden={blockDragging}
@@ -1526,7 +1565,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
                   const b = el.getBoundingClientRect();
                   return { top: b.top, left: b.left, width: b.width, height: b.height };
                 }}
-                maxWidth={rootRef.current?.getBoundingClientRect().width ?? 600}
+                maxWidth={imageWidthMax(configBlock.id)}
                 accept={latest.current.upload?.accept}
                 onAltChange={(alt) => onConfigAlt(configBlock.id, alt)}
                 onAlignChange={(align) => onConfigAlign(configBlock.id, align)}
@@ -1590,9 +1629,22 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       />
     ) : null;
 
+    // Always mounted while uploads are on, so only its text changes. Outside the
+    // editable: inside the textbox it would join the document's content.
+    const uploadStatus = uploadOn ? (
+      <LiveRegion>
+        {uploadFailure
+          ? [`${t('richTextEditor.uploadFailed')}: ${uploadFailure.name}`, uploadFailure.reason]
+              .filter(Boolean)
+              .join('. ')
+          : ''}
+      </LiveRegion>
+    ) : null;
+
     if (!usesShell) {
       return (
         <>
+          {uploadStatus}
           {editable}
           {linkBubble}
           {mentionMenu}
@@ -1603,6 +1655,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       <div className={styles.shell} ref={shellRef}>
         {toolbarBar}
         {uploadInput}
+        {uploadStatus}
         {editable}
         {linkBubble}
         {mentionMenu}

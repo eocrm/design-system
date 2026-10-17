@@ -478,6 +478,7 @@ export type {
 export { RichTextEditor } from './components/RichTextEditor';
 export type { RichTextEditorProps } from './components/RichTextEditor';
 export type { MentionItem, MentionsConfig } from './components/RichTextEditor';
+export { UploadError } from './components/RichTextEditor';
 export type { UploadConfig, UploadResult } from './components/RichTextEditor';
 
 export { FileUpload } from './components/FileUpload';
@@ -812,6 +813,8 @@ export type {
 export { StatGroup, StatTile } from './components/StatGroup';
 export type { StatGroupProps, StatTileProps, StatTrend } from './components/StatGroup';
 export { Chart } from './components/Chart';
+export { Sparkline } from './components/Sparkline';
+export type { SparklineProps, SparklineType } from './components/Sparkline';
 export { TreeView } from './components/TreeView';
 export type {
   TreeViewChildren,

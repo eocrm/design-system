@@ -279,7 +279,7 @@ function buildBlock(block: Block, opts: ResolvedOptions): ReactElement {
           data-attachment=""
           data-align={block.align || undefined}
         >
-          <RichTextAttachment block={block} />
+          <RichTextAttachment block={block} editable={opts.editable} />
         </figure>
       );
     case 'paragraph':

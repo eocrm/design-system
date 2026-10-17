@@ -82,6 +82,12 @@ export interface Block {
   align?: 'left' | 'center' | 'right';
   /** Attachment upload state. `ready`/absent = final. */
   status?: 'uploading' | 'ready' | 'error';
+  /**
+   * Why the last upload failed, shown on the `error` block. Set only from an
+   * `UploadError` rejection; cleared on retry. Transient like `status` — an
+   * error block never serializes to HTML/Markdown.
+   */
+  uploadError?: string;
 }
 
 /** A rich-text document: an ordered list of blocks. */

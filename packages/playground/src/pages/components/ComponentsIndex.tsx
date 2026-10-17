@@ -316,6 +316,13 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['Chart'],
   },
   {
+    to: '/components/sparkline',
+    name: 'Sparkline',
+    description:
+      'Compact static line, area or bar trend for KPI cards, with the summary in its accessible name.',
+    preview: SCHEMATICS['Sparkline'],
+  },
+  {
     to: '/components/tree-view',
     name: 'TreeView',
     description:

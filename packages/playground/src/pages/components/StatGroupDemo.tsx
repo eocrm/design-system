@@ -3,6 +3,7 @@ import {
   DashboardWidget,
   Cluster,
   IconTile,
+  Sparkline,
   Stack,
   StatGroup,
   StatTile,
@@ -39,6 +40,7 @@ function Tiles() {
         label="Open deals"
         value="48"
         trend={{ label: 'vs previous period', direction: 'flat' }}
+        sparkline={<Sparkline label="Open deals per week" values={[40, 44, 43, 47, 46, 49, 48]} />}
         icon={<IconTile icon={<Handshake size={14} />} color="purple" size="sm" />}
       />
     </>

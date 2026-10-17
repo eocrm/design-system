@@ -254,6 +254,18 @@
   cursor: not-allowed;
 }
 
+// Default-render secondary line (`SelectOption.description`). Disabled rows
+// keep their disabled colour for both lines.
+.optionDescription {
+  display: block;
+  font-size: var(--select-option-description-font-size);
+  color: var(--select-option-description-fg);
+
+  .optionDisabled & {
+    color: inherit;
+  }
+}
+
 // Creatable "+ Create <query>" row. Italic + accent colour to visually
 // separate it from real options without inventing a new pattern.
 .optionCreate {

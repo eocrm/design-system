@@ -102,6 +102,25 @@ describe('PhoneInput', () => {
     expect(screen.getByRole('group', { name: 'Mobile' })).toBeInTheDocument();
   });
 
+  it('names the country picker after the group so it cannot collide with a form Country field (#638)', () => {
+    renderWith(
+      <>
+        <span id="lbl">Mobile</span>
+        <PhoneInput value={null} onChange={() => {}} aria-labelledby="lbl" />
+        <PhoneInput value={null} onChange={() => {}} aria-label="Fax" />
+        <PhoneInput
+          value={null}
+          onChange={() => {}}
+          aria-label="Work"
+          countryLabel="Work dial code"
+        />
+      </>,
+    );
+    expect(screen.getByRole('combobox', { name: 'Mobile Country' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Fax Country' })).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: 'Work dial code' })).toBeInTheDocument();
+  });
+
   it('changing the country reformats and re-emits E.164 with the new calling code', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();

@@ -1,4 +1,4 @@
-import { computeDisplaySize, measureImageFromFile } from './imageSize';
+import { capWidthToHeight, computeDisplaySize, measureImageFromFile } from './imageSize';
 
 describe('computeDisplaySize', () => {
   it('returns undefined when natural dimensions are missing or non-positive', () => {
@@ -38,5 +38,21 @@ describe('measureImageFromFile', () => {
     await expect(
       measureImageFromFile(new File(['x'], 'p.png', { type: 'image/png' })),
     ).resolves.toBeNull();
+  });
+});
+
+describe('capWidthToHeight (#644)', () => {
+  it('shrinks the max width so a tall image stays within the height cap', () => {
+    // 3:4 portrait, 480px cap → 360px wide at most.
+    expect(capWidthToHeight(700, 3000, 4000, 480)).toBe(360);
+  });
+
+  it('keeps the content width when the cap does not bind', () => {
+    expect(capWidthToHeight(700, 4000, 1000, 480)).toBe(700);
+  });
+
+  it('ignores the cap when the natural size or cap is unknown', () => {
+    expect(capWidthToHeight(700, 0, 0, 480)).toBe(700);
+    expect(capWidthToHeight(700, 3000, 4000, NaN)).toBe(700);
   });
 });

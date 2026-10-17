@@ -26,6 +26,11 @@ import {
   )}
 />;
 
+// kpi with a trend graphic: a Sparkline child renders under value/trend
+<DashboardWidget variant="kpi" title="Open deals" value="128">
+  <Sparkline label="Open deals per day" values={dailyCounts} />
+</DashboardWidget>;
+
 // kpi, where "up" is bad
 <DashboardWidget
   variant="kpi"

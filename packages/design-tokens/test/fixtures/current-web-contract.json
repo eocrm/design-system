@@ -288,10 +288,12 @@
     "--size-radio-lg": "var(--size-checkbox-lg)",
     "--size-radio-md": "var(--size-checkbox-md)",
     "--size-radio-sm": "var(--size-checkbox-sm)",
+    "--size-rich-text-image-max-height": "480px",
     "--size-scroll-area-lg": "560px",
     "--size-scroll-area-md": "400px",
     "--size-scroll-area-sm": "240px",
     "--size-sm": "24px",
+    "--size-sparkline": "40px",
     "--size-spinner": "14px",
     "--size-xl": "80px",
     "--size-xs": "20px",
@@ -2330,6 +2332,12 @@
           "selector": ":root"
         }
       ],
+      "--size-rich-text-image-max-height": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
       "--size-scroll-area-lg": [
         {
           "source": "packages/design-tokens/generated/web/tokens.scss",
@@ -2349,6 +2357,12 @@
         }
       ],
       "--size-sm": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
+      "--size-sparkline": [
         {
           "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"

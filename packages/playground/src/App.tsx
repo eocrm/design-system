@@ -69,6 +69,7 @@ import { CatalogPickerDemo } from './pages/components/CatalogPickerDemo';
 import { DashboardWidgetDemo } from './pages/components/DashboardWidgetDemo';
 import { StatGroupDemo } from './pages/components/StatGroupDemo';
 import { ChartDemo } from './pages/components/ChartDemo';
+import { SparklineDemo } from './pages/components/SparklineDemo';
 import { TreeViewDemo } from './pages/components/TreeViewDemo';
 import { ThreadDemo } from './pages/components/ThreadDemo';
 import { CheckboxDemo } from './pages/components/CheckboxDemo';
@@ -210,6 +211,7 @@ export default function App() {
             <Route path="/components/dashboard-widget" element={<DashboardWidgetDemo />} />
             <Route path="/components/stat-group" element={<StatGroupDemo />} />
             <Route path="/components/chart" element={<ChartDemo />} />
+            <Route path="/components/sparkline" element={<SparklineDemo />} />
             <Route path="/components/tree-view" element={<TreeViewDemo />} />
             <Route path="/components/thread" element={<ThreadDemo />} />
             <Route path="/components/checkbox" element={<CheckboxDemo />} />

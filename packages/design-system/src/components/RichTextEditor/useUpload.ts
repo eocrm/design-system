@@ -32,9 +32,22 @@ export interface UploadResult {
   alt?: string;
 }
 
+/**
+ * Reject `onUpload` with this to show `message` on the failed attachment block
+ * (e.g. the server's "The file may not be larger than 5 MB."). Any other
+ * rejection shows only the generic "Upload failed", so raw network/library
+ * errors never reach the user. Write `message` for end users, localized.
+ */
+export class UploadError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'UploadError';
+  }
+}
+
 /** Consumer config for `RichTextEditor`'s `upload` prop. */
 export interface UploadConfig {
-  /** Upload one file; resolve with where it landed, reject to show an error. */
+  /** Upload one file; resolve with where it landed, reject to show an error (reject with an `UploadError` to show its message). */
   onUpload: (file: File) => Promise<UploadResult>;
   /** Optional native file-picker filter, e.g. "image/*,.pdf". Convenience only —
    *  it does NOT enforce types (paste bypasses it); enforce in `onUpload`. */
@@ -58,6 +71,12 @@ interface UseUploadArgs {
   getContentWidth?: () => number;
   /** Current device pixel ratio (injectable for tests). */
   getDevicePixelRatio?: () => number;
+  /**
+   * Upload-failure feed for the editor's live region: `null` when an attempt
+   * starts (clears the last message, so a repeat failure re-announces), the
+   * file name + optional `UploadError` reason when it fails.
+   */
+  onFailureChange?: (failure: { name: string; reason?: string } | null) => void;
 }
 
 export function useUpload({
@@ -69,6 +88,7 @@ export function useUpload({
   measureImage = measureImageFromFile,
   getContentWidth = () => 0,
   getDevicePixelRatio = () => (typeof window !== 'undefined' && window.devicePixelRatio) || 1,
+  onFailureChange,
 }: UseUploadArgs) {
   const filesRef = useRef(new Map<string, File>()); // block id → File (for retry)
   const inflightRef = useRef(0);
@@ -86,6 +106,7 @@ export function useUpload({
   const runUpload = useCallback(
     (id: string, file: File) => {
       setInflight(1);
+      onFailureChange?.(null);
       config
         .onUpload(file)
         .then(
@@ -130,8 +151,14 @@ export function useUpload({
               }),
             );
           },
-          () => {
-            applySettle(updateAttachmentBlock(getValue(), id, { status: 'error' }));
+          (err: unknown) => {
+            // Opt-in only: a plain Error's message ("Failed to fetch", …) is not
+            // written for end users.
+            const reason = err instanceof UploadError && err.message ? err.message : undefined;
+            applySettle(
+              updateAttachmentBlock(getValue(), id, { status: 'error', uploadError: reason }),
+            );
+            onFailureChange?.({ name: file.name, reason });
           },
         )
         .finally(() => setInflight(-1));
@@ -144,6 +171,7 @@ export function useUpload({
       measureImage,
       getContentWidth,
       getDevicePixelRatio,
+      onFailureChange,
     ],
   );
 
@@ -179,7 +207,11 @@ export function useUpload({
     (id: string) => {
       const file = filesRef.current.get(id);
       if (!file) return;
-      applySettle(updateAttachmentBlock(getValue(), id, { status: 'uploading' }));
+      applySettle(
+        clearAttachmentFields(updateAttachmentBlock(getValue(), id, { status: 'uploading' }), id, [
+          'uploadError',
+        ]),
+      );
       runUpload(id, file);
     },
     [getValue, applySettle, runUpload],

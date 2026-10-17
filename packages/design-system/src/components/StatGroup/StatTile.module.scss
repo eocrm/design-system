@@ -57,6 +57,10 @@
   color: var(--stat-tile-trend-neutral);
 }
 
+.sparkline {
+  min-width: 0;
+}
+
 .footnote {
   color: var(--stat-tile-footnote-fg);
   font-size: var(--stat-tile-footnote-size);

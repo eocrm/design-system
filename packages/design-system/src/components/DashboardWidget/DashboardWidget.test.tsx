@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createRef } from 'react';
 import { render, screen } from '@testing-library/react';
+import { Sparkline } from '../Sparkline';
 import { DashboardWidget } from './DashboardWidget';
 
 describe('DashboardWidget', () => {
@@ -106,6 +107,15 @@ describe('DashboardWidget', () => {
     const trend = screen.getByText('x').closest('[data-sentiment]')!;
     expect(trend).toHaveAttribute('data-sentiment', expected);
     expect(trend).toHaveTextContent(`${word} x`);
+  });
+
+  it('kpi renders a Sparkline passed as children inside the kpi body (#642)', () => {
+    render(
+      <DashboardWidget variant="kpi" title="Contacts" value="1,204">
+        <Sparkline label="Contacts per day" values={[1, 2, 3]} />
+      </DashboardWidget>,
+    );
+    expect(screen.getByRole('img', { name: /^Contacts per day:/ })).toBeInTheDocument();
   });
 
   it.each([

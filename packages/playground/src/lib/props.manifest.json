@@ -4252,6 +4252,13 @@
           "description": "How the SELECTED country renders in the picker trigger. Default `\"code\"`.\n- `\"code\"` — calling code only (`+1`).\n- `\"iso\"` — ISO code + code (`US +1`).\n- `\"name\"` — full country name + code (`United States +1`).\n- `\"flag\"` — emoji flag + code (`🇺🇸 +1`). Note: emoji flags don't render on\n  Windows Chrome/Edge (they show the letters), so prefer `\"iso\"` there.\n\nThe dropdown rows always show the full country name + code (plus a flag in\n`\"flag\"` mode) so they stay searchable + identifiable regardless of this."
         },
         {
+          "name": "countryLabel",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Overrides the country picker's full accessible name. By default the picker\nis named after the group — \"<group label> Country\" (e.g. \"Phone Country\") —\nso it never collides with a form's own Country field; with no group label\nit is just \"Country\". Set this when that composed name reads badly."
+        },
+        {
           "name": "size",
           "type": "PhoneInputSize",
           "required": false,
@@ -4607,6 +4614,13 @@
           "required": false,
           "default": "",
           "description": "Substitute how an `@`-mention renders. Called per mention with `{ id, label }`\nand the default mention span; return your own node (e.g. an interactive member\nchip / popover trigger) or the `defaultNode` to keep the standard\nnon-interactive span. Render-time only — the document model is unchanged, so\nserialization still emits the mention mark. Composes with `renderLink`."
+        },
+        {
+          "name": "imageMaxHeight",
+          "type": "number",
+          "required": false,
+          "default": "",
+          "description": "Maximum DISPLAYED height of image attachments, in px. Default: the\n`--size-rich-text-image-max-height` token (480px). A taller image shrinks\n(width follows, aspect preserved) — render-time only; stored `width`/`height`\nare unchanged, so existing documents need no migration. There is no \"off\":\npass a large value to effectively remove the cap."
         }
       ]
     },
@@ -4697,6 +4711,13 @@
           "description": "Substitute how an `@`-mention renders. Called per mention with `{ id, label }`\nand the default mention span; return your own node (e.g. an interactive member\nchip / popover trigger) or the `defaultNode` to keep the standard\nnon-interactive span. A custom node renders as a non-editable **atomic chip** —\nthe caret steps over it as a single unit. Composes with `renderLink` (both\nusable together)."
         },
         {
+          "name": "imageMaxHeight",
+          "type": "number",
+          "required": false,
+          "default": "",
+          "description": "Maximum DISPLAYED height of image attachments, in px. Default: the\n`--size-rich-text-image-max-height` token (480px). A taller image shrinks\n(width follows, aspect preserved); the resize handle and width slider stop\nwhere the image hits the cap. Render-time only — stored `width`/`height` are\nunchanged. Pass the same value to the read-only `<RichText>` so both agree."
+        },
+        {
           "name": "blockControls",
           "type": "boolean",
           "required": false,
@@ -4708,7 +4729,7 @@
           "type": "UploadConfig",
           "required": false,
           "default": "",
-          "description": "Enable file upload: a toolbar button (when `toolbar`) and clipboard-file paste.\n`onUpload(file)` resolves with where the file landed; images render inline as a\npreview, other files as a download chip. Reject `onUpload` to show a retry/remove\nerror. `onUploadingChange` fires while any upload is in flight — wire it to your\nsubmit button's disabled state. Validation (size/type) belongs in `onUpload`\n(`accept` is only a native-picker hint and is bypassed by paste). Omit to\ndisable. Ignored when `readOnly`.\nWhen `blockControls` is also on, a ready image attachment can be configured\n(alt text, alignment, replace, open/download) via the block menu's\n\"Configure\" item. The width slider appears only for an image that renders as\na preview (a safe, fetchable src — an embed); an uploaded image whose\nobject-URL src renders as a download chip isn't resizable here. Alignment +\nwidth round-trip through HTML but not Markdown."
+          "description": "Enable file upload: a toolbar button (when `toolbar`) and clipboard-file paste.\n`onUpload(file)` resolves with where the file landed; images render inline as a\npreview, other files as a download chip. Reject `onUpload` to show a retry/remove\nerror; reject with `new UploadError(message)` to also show that (user-facing,\nlocalized) reason on the block — any other rejection shows only \"Upload\nfailed\". `onUploadingChange` fires while any upload is in flight — wire it to your\nsubmit button's disabled state. Validation (size/type) belongs in `onUpload`\n(`accept` is only a native-picker hint and is bypassed by paste). Omit to\ndisable. Ignored when `readOnly`.\nWhen `blockControls` is also on, a ready image attachment can be configured\n(alt text, alignment, replace, open/download) via the block menu's\n\"Configure\" item. The width slider appears only for an image that renders as\na preview (a safe, fetchable src — an embed); an uploaded image whose\nobject-URL src renders as a download chip isn't resizable here. Alignment +\nwidth round-trip through HTML but not Markdown."
         }
       ]
     },
@@ -5414,6 +5435,38 @@
           "required": true,
           "default": "",
           "description": "The `<SortableGroup.Container>` lists."
+        }
+      ]
+    },
+    "Sparkline": {
+      "props": [
+        {
+          "name": "label",
+          "type": "string",
+          "required": true,
+          "default": "",
+          "description": "What the series is, e.g. \"Contacts per day\". Starts the accessible name."
+        },
+        {
+          "name": "values",
+          "type": "readonly (number | null)[]",
+          "required": true,
+          "default": "",
+          "description": "Values oldest → newest. `null` (or a non-finite number) = no data for that slot: a gap in a line/area, no bar."
+        },
+        {
+          "name": "type",
+          "type": "SparklineType",
+          "required": false,
+          "default": "",
+          "description": "Mark type. Default `'line'`.\n- `'line'` — smoothed line with a dot on the latest value. Trends of a rate or level.\n- `'area'` — the line over a filled area anchored at zero. Volumes / counts over time.\n- `'bar'` — one bar per value. Discrete per-period counts (daily signups)."
+        },
+        {
+          "name": "formatValue",
+          "type": "((n: number) => string)",
+          "required": false,
+          "default": "",
+          "description": "Formats numbers in the accessible summary. Default: `Intl.NumberFormat` for the current locale."
         }
       ]
     },
@@ -6537,6 +6590,7 @@
     "DashboardCanvasConstraintsProp": "Record<string, DashboardItemConstraints> | ((id: string | number) => DashboardItemConstraints)",
     "DashboardCanvasValue": "{ items: DashboardPlacement[]; sections: DashboardSection[] }",
     "DashboardWidgetVariant": "\"list\" | \"standard\" | \"kpi\" | \"chart\"",
+    "SparklineType": "\"area\" | \"line\" | \"bar\"",
     "TreeViewChildren": "TreeViewNode[] | { error: true; }",
     "TreeViewOverflow": "{ label: string; onLoadMore?: (() => void); loading?: boolean }",
     "TreeViewView": "\"list\" | \"chart\"",

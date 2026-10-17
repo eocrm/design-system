@@ -36,6 +36,22 @@ export function computeDisplaySize(
 }
 
 /**
+ * Limit a resize `maxWidth` so the image's rendered HEIGHT stays within its
+ * display cap (#644): `min(maxWidth, capHeight × naturalWidth / naturalHeight)`.
+ * Returns `maxWidth` unchanged when the natural size is unknown (not yet loaded)
+ * or `capHeight` is not a positive number (e.g. jsdom applies no stylesheet).
+ */
+export function capWidthToHeight(
+  maxWidth: number,
+  naturalWidth: number | undefined,
+  naturalHeight: number | undefined,
+  capHeight: number,
+): number {
+  if (!naturalWidth || !naturalHeight || !(capHeight > 0)) return maxWidth;
+  return Math.min(maxWidth, (capHeight * naturalWidth) / naturalHeight);
+}
+
+/**
  * Measure an image File's natural pixel dimensions in the browser via
  * `createImageBitmap`. Resolves `null` for non-images, when the API is
  * unavailable (e.g. jsdom — so unit tests never block on image decoding), or on

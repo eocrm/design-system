@@ -105,6 +105,7 @@ import {
   Megaphone,
   ChevronsRight,
   ChartLine,
+  ChartSpline,
   ListTree,
   type LucideIcon,
 } from 'lucide-react';
@@ -277,6 +278,7 @@ export const componentGroups: { heading: string; items: NavItem[] }[] = [
       },
       { to: '/components/stat-group', label: 'StatGroup', icon: Gauge, end: false },
       { to: '/components/chart', label: 'Chart', icon: ChartLine, end: false },
+      { to: '/components/sparkline', label: 'Sparkline', icon: ChartSpline, end: false },
       { to: '/components/tree-view', label: 'TreeView', icon: ListTree, end: false },
       { to: '/components/table', label: 'Table', icon: TableIcon, end: false },
       { to: '/components/datatable', label: 'DataTable', icon: TableProperties, end: false },
