@@ -94,6 +94,30 @@ export function StatGroupDemo() {
       </Example>
 
       <Example
+        title="Card surface + quota meters"
+        description="variant='card' on a group that sits on the page background: every tile gets the card background, border and shadow. progress={{ value, max, tone }} adds a quota meter named by the tile label; its track stays visible on either surface. Toggle Loading for the progress-height skeletons."
+        code={`<StatGroup aria-label="Plan usage" variant="card" loading={loading}>
+  <StatTile label="Storage" value="1.2 GB / 5 GB" progress={{ value: 1.2, max: 5 }} />
+  <StatTile label="Seats" value="18 / 20" progress={{ value: 18, max: 20, tone: 'warning' }} />
+  <StatTile label="API calls today" value="10,412 / 10,000" progress={{ value: 10412, max: 10000, tone: 'danger' }} />
+</StatGroup>`}
+      >
+        <StatGroup aria-label="Plan usage" variant="card" loading={loading}>
+          <StatTile label="Storage" value="1.2 GB / 5 GB" progress={{ value: 1.2, max: 5 }} />
+          <StatTile
+            label="Seats"
+            value="18 / 20"
+            progress={{ value: 18, max: 20, tone: 'warning' }}
+          />
+          <StatTile
+            label="API calls today"
+            value="10,412 / 10,000"
+            progress={{ value: 10412, max: 10000, tone: 'danger' }}
+          />
+        </StatGroup>
+      </Example>
+
+      <Example
         title="Narrow cells"
         description="The same tiles in 320px and 200px cells: one column, and the 200px cell is narrower than minColumnWidth, so the tile shrinks instead of overflowing. Below ~160px of tile width the icon hides and the value steps down a size."
         code={`<div style={{ width: 200, height: 560 }}>

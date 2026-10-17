@@ -5467,6 +5467,13 @@
           "required": false,
           "default": "",
           "description": "Formats numbers in the accessible summary. Default: `Intl.NumberFormat` for the current locale."
+        },
+        {
+          "name": "endDot",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Dot on the latest value (`line` / `area`; `bar` never has one). Default `true`.\nTurn off where the dot reads as a stray marker rather than emphasis, e.g. a\ndense row of `StatTile` sparklines."
         }
       ]
     },
@@ -5602,6 +5609,13 @@
           "required": false,
           "default": "",
           "description": "Loading state for every tile: labels and icons stay; each value and trend becomes a\nskeleton with visually hidden \"Loading…\" in the value slot, and footnotes hide.\nDeliberately NO live region: a dashboard loads many widgets at once, so announcements\nwould flood screen readers. No `aria-busy`: the per-tile hidden text already carries the state.\nDefault `false`."
+        },
+        {
+          "name": "variant",
+          "type": "StatGroupVariant",
+          "required": false,
+          "default": "",
+          "description": "Surface of every tile, so a group stays consistent. Default `'filled'`.\n- `'filled'` — muted fill, no border. Use inside a `Card` / `DashboardWidget`.\n- `'card'` — card background, border and shadow, matching surrounding `Card`s on a\n  page background. Avoid it when the group already sits inside a Card (card-in-card)."
         },
         {
           "name": "children",
@@ -6590,6 +6604,7 @@
     "DashboardCanvasConstraintsProp": "Record<string, DashboardItemConstraints> | ((id: string | number) => DashboardItemConstraints)",
     "DashboardCanvasValue": "{ items: DashboardPlacement[]; sections: DashboardSection[] }",
     "DashboardWidgetVariant": "\"list\" | \"standard\" | \"kpi\" | \"chart\"",
+    "StatGroupVariant": "\"filled\" | \"card\"",
     "SparklineType": "\"area\" | \"line\" | \"bar\"",
     "TreeViewChildren": "TreeViewNode[] | { error: true; }",
     "TreeViewOverflow": "{ label: string; onLoadMore?: (() => void); loading?: boolean }",

@@ -1,15 +1,26 @@
-import { forwardRef, useContext, type HTMLAttributes, type ReactNode } from 'react';
+import { forwardRef, useContext, useId, type HTMLAttributes, type ReactNode } from 'react';
 import clsx from 'clsx';
+import { Progress, type ProgressTone } from '../Progress';
 import { Skeleton } from '../Skeleton';
 import { VisuallyHidden } from '../VisuallyHidden';
 import { Trend } from '../_internal/Trend';
 import type { DashboardWidgetTrend } from '../DashboardWidget/DashboardWidget';
 import { useTranslation } from '../../i18n/useTranslation';
-import { StatGroupLoadingContext } from './StatGroupContext';
+import { StatGroupContext } from './StatGroupContext';
 import styles from './StatTile.module.scss';
 
 /** Tile trend: same shape as `DashboardWidgetTrend` (`label`, `direction`, optional `sentiment`). */
 export type StatTrend = DashboardWidgetTrend;
+
+/** Quota / share meter under a tile's value. See `StatTileProps.progress`. */
+export interface StatProgress {
+  /** Amount used, in the same unit as `max`. */
+  value: number;
+  /** The limit. */
+  max: number;
+  /** Fill tone, e.g. `'warning'` near the limit, `'danger'` over it. Default `'default'`. */
+  tone?: ProgressTone;
+}
 
 export interface StatTileProps extends Omit<HTMLAttributes<HTMLLIElement>, 'children'> {
   /** What the number is, e.g. "Pipeline value". Read first by screen readers. */
@@ -35,6 +46,13 @@ export interface StatTileProps extends Omit<HTMLAttributes<HTMLLIElement>, 'chil
    * Replaced by a sparkline-height skeleton while the group is loading.
    */
   sparkline?: ReactNode;
+  /**
+   * Quota meter under the value/trend: "used / limit" tiles, e.g.
+   * `value="1.2 GB / 5 GB" progress={{ value: 1.2, max: 5 }}`. Renders a small
+   * `Progress` named by the tile `label` (no `aria-label` needed); progress-height
+   * skeleton while the group is loading. Put the readable "used / limit" text in `value`.
+   */
+  progress?: StatProgress;
 }
 
 /**
@@ -43,17 +61,22 @@ export interface StatTileProps extends Omit<HTMLAttributes<HTMLLIElement>, 'chil
  */
 // {...rest} last (Pattern A) so the consumer can add data-* / handlers to the <li>.
 export const StatTile = forwardRef<HTMLLIElement, StatTileProps>(function StatTile(
-  { label, value, trend, footnote, icon, sparkline, className, ...rest },
+  { label, value, trend, footnote, icon, sparkline, progress, className, ...rest },
   ref,
 ) {
   const t = useTranslation();
-  const loading = useContext(StatGroupLoadingContext);
+  const { loading, variant } = useContext(StatGroupContext);
+  const labelId = useId();
 
   return (
-    <li ref={ref} className={clsx(styles.root, className)} {...rest}>
+    <li
+      ref={ref}
+      className={clsx(styles.root, variant === 'card' && styles.card, className)}
+      {...rest}
+    >
       <div className={styles.label}>
         {icon != null && <span className={styles.icon}>{icon}</span>}
-        <span>{label}</span>
+        <span id={labelId}>{label}</span>
       </div>
       {loading ? (
         <>
@@ -65,6 +88,11 @@ export const StatTile = forwardRef<HTMLLIElement, StatTileProps>(function StatTi
           <div className={styles.trend}>
             <Skeleton variant="text" width="45%" />
           </div>
+          {progress && (
+            <div data-stat-progress-skeleton="">
+              <Skeleton variant="rectangular" height="var(--stat-tile-progress-height)" />
+            </div>
+          )}
           {sparkline != null && (
             <div className={styles.sparkline} data-stat-sparkline-skeleton="">
               <Skeleton
@@ -87,6 +115,15 @@ export const StatTile = forwardRef<HTMLLIElement, StatTileProps>(function StatTi
             )}
           </div>
           {trend && <Trend trend={trend} className={styles.trend} />}
+          {progress && (
+            <Progress
+              size="sm"
+              value={progress.value}
+              max={progress.max}
+              tone={progress.tone}
+              aria-labelledby={labelId}
+            />
+          )}
           {sparkline != null && <div className={styles.sparkline}>{sparkline}</div>}
           {footnote != null && <div className={styles.footnote}>{footnote}</div>}
         </>

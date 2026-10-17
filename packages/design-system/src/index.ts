@@ -811,7 +811,13 @@ export type {
   DashboardWidgetTrend,
 } from './components/DashboardWidget';
 export { StatGroup, StatTile } from './components/StatGroup';
-export type { StatGroupProps, StatTileProps, StatTrend } from './components/StatGroup';
+export type {
+  StatGroupProps,
+  StatGroupVariant,
+  StatProgress,
+  StatTileProps,
+  StatTrend,
+} from './components/StatGroup';
 export { Chart } from './components/Chart';
 export { Sparkline } from './components/Sparkline';
 export type { SparklineProps, SparklineType } from './components/Sparkline';

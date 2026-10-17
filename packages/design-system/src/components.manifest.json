@@ -679,7 +679,8 @@
     "cluster": "Display",
     "composes": [],
     "composedBy": [
-      "FileUpload"
+      "FileUpload",
+      "StatGroup"
     ]
   },
   "QrCode": {
@@ -861,6 +862,7 @@
     "composes": [
       "DashboardWidget",
       "Grid",
+      "Progress",
       "Skeleton",
       "VisuallyHidden"
     ],

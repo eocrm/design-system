@@ -57,6 +57,15 @@
   color: var(--stat-tile-trend-neutral);
 }
 
+.card {
+  border: var(--border-width) solid var(--stat-tile-card-border-color);
+  border-radius: var(--stat-tile-card-radius);
+  background: var(--stat-tile-card-bg);
+  box-shadow: var(--stat-tile-card-shadow);
+
+  --skeleton-bg: var(--stat-tile-card-skeleton-bg);
+}
+
 .sparkline {
   min-width: 0;
 }
