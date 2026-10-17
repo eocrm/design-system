@@ -46,11 +46,13 @@ export interface TopBarSearchItem {
 export interface TopBarSearchGroup {
   /** Visible heading; also the group's accessible name. */
   label: string;
+  /** Result rows in this group. */
   items: TopBarSearchItem[];
 }
 
 /** Trailing row in the ↑/↓ cycle, e.g. "View all results". */
 export interface TopBarSearchFooterAction {
+  /** Row content. */
   label: ReactNode;
   /** Called on Enter or click. */
   onSelect: () => void;
@@ -225,7 +227,7 @@ export const TopBarSearch = forwardRef<HTMLInputElement, TopBarSearchProps>(func
       e.preventDefault();
       const step = e.key === 'ArrowDown' ? 1 : -1;
       setActive((activeIndex + step + options.length) % options.length);
-    } else if (e.key === 'Enter' && shown && activeIndex >= 0) {
+    } else if (e.key === 'Enter' && !e.nativeEvent.isComposing && shown && activeIndex >= 0) {
       e.preventDefault();
       choose(options[activeIndex]!);
     }

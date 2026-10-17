@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TopBar } from './TopBar';
 import type { TopBarSearchGroup, TopBarSearchItem } from './TopBarSearch';
@@ -108,12 +108,33 @@ describe('TopBar.Search combobox mode', () => {
     const link = screen.getByRole('option', { name: 'Acme renewal' });
     expect(link.tagName).toBe('A');
     expect(link).toHaveAttribute('href', '/deals/d1');
-    await user.keyboard('{Control>}');
-    await user.click(link);
-    await user.keyboard('{/Control}');
+    // Record then swallow the click so jsdom doesn't log an unimplemented navigation.
+    const prevented: boolean[] = [];
+    const record = (e: Event) => {
+      prevented.push(e.defaultPrevented);
+      e.preventDefault();
+    };
+    document.addEventListener('click', record);
+    try {
+      await user.keyboard('{Control>}');
+      await user.click(link);
+      await user.keyboard('{/Control}');
+      expect(onSelect).not.toHaveBeenCalled();
+      expect(prevented).toEqual([false]);
+      await user.click(link);
+      expect(onSelect).toHaveBeenCalledWith(GROUPS[1]!.items[0], 1);
+      expect(prevented).toEqual([false, true]);
+    } finally {
+      document.removeEventListener('click', record);
+    }
+  });
+
+  it('ignores Enter while an IME composition is active', async () => {
+    const onSelect = vi.fn();
+    render(<Harness onSelect={onSelect} />);
+    await userEvent.click(input());
+    fireEvent.keyDown(input(), { key: 'Enter', isComposing: true });
     expect(onSelect).not.toHaveBeenCalled();
-    await user.click(link);
-    expect(onSelect).toHaveBeenCalledWith(GROUPS[1]!.items[0], 1);
   });
 
   it('hover moves the highlight', async () => {

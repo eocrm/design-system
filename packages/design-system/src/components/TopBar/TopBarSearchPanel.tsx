@@ -11,9 +11,13 @@ export type SearchOption =
 
 /** A non-empty group with the flat index of its first option. */
 export interface PanelGroup {
+  /** Group heading text. */
   label: string;
+  /** Index of the group in the consumer's `results`. */
   groupIndex: number;
+  /** Flat option index of the group's first item. */
   start: number;
+  /** The group's rows. */
   items: TopBarSearchItem[];
 }
 
@@ -24,10 +28,15 @@ export interface TopBarSearchPanelProps {
   shown: boolean;
   /** The listbox's accessible name (the input's name). */
   label: string;
+  /** Non-empty groups to render. */
   groups: PanelGroup[];
+  /** Flat ↑/↓ cycle: items, then the footer. */
   options: SearchOption[];
+  /** Index of the highlighted option, or -1. */
   activeIndex: number;
+  /** Called when hover moves the highlight. */
   onActivate: (index: number) => void;
+  /** Called when an option is clicked. */
   onChoose: (option: SearchOption) => void;
 }
 
