@@ -158,6 +158,8 @@ describe('StatTile', () => {
     );
     const spark = screen.getByRole('img', { name: /^Contacts per day:/ });
     const foot = screen.getByText('Last 90 days');
+    const trend = screen.getByText(UP.label);
+    expect(trend.compareDocumentPosition(spark) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(spark.compareDocumentPosition(foot) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
@@ -169,5 +171,14 @@ describe('StatTile', () => {
     );
     expect(screen.queryByRole('img', { name: /^S:/ })).toBeNull();
     expect(container.querySelector('[data-stat-sparkline-skeleton]')).not.toBeNull();
+  });
+
+  it('renders no sparkline skeleton for a tile without a sparkline while loading', () => {
+    const { container } = render(
+      <StatGroup aria-label="KPIs" loading>
+        <StatTile label="Contacts" value="1" />
+      </StatGroup>,
+    );
+    expect(container.querySelector('[data-stat-sparkline-skeleton]')).toBeNull();
   });
 });

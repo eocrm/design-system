@@ -41,12 +41,14 @@ const finite = (v: number | null | undefined): v is number => v != null && Numbe
 export function summarize(values: readonly (number | null)[]): SparklineSummary | null {
   const nums = values.filter(finite);
   if (nums.length === 0) return null;
-  return {
-    first: nums[0],
-    last: nums[nums.length - 1],
-    min: Math.min(...nums),
-    max: Math.max(...nums),
-  };
+  // Loop, not Math.min(...nums): spread overflows the stack on very large arrays.
+  let min = nums[0];
+  let max = nums[0];
+  for (const v of nums) {
+    if (v < min) min = v;
+    if (v > max) max = v;
+  }
+  return { first: nums[0], last: nums[nums.length - 1], min, max };
 }
 
 export function layoutSparkline(
@@ -62,7 +64,8 @@ export function layoutSparkline(
 
   // Area/bar read as quantities: anchor at zero when nothing is negative.
   const lo = type !== 'line' && s.min >= 0 ? 0 : s.min;
-  const hi = s.max;
+  // All-negative bars hang from a zero line at the top (mirror of the zero baseline).
+  const hi = type === 'bar' && s.max < 0 ? 0 : s.max;
   const y = scaleLinear()
     .domain(lo === hi ? [lo - 1, hi + 1] : [lo, hi]) // flat → mid height
     .range([height - pad, pad]);

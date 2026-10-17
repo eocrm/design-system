@@ -1,4 +1,4 @@
-import { layoutSparkline, summarize } from './sparklineModel';
+import { layoutSparkline, summarize, SPARKLINE_INSET } from './sparklineModel';
 
 describe('summarize', () => {
   it('returns first/last/min/max over finite values, skipping null and NaN', () => {
@@ -81,6 +81,16 @@ describe('layoutSparkline', () => {
       expect(Number.isFinite(r.y)).toBe(true);
       expect(r.height).toBe(0);
     });
+  });
+
+  it('bar: all-negative series hang from a zero line at the top inset', () => {
+    const g = layoutSparkline([-4, -2], 'bar', W, H)!;
+    const [a, b] = g.bars!;
+    expect(a.height).toBeGreaterThan(0);
+    expect(b.height).toBeGreaterThan(0);
+    expect(a.y).toBeCloseTo(SPARKLINE_INSET);
+    expect(b.y).toBeCloseTo(SPARKLINE_INSET);
+    expect(a.height).toBeCloseTo(b.height * 2);
   });
 
   it('bar: negative values hang from the zero line', () => {

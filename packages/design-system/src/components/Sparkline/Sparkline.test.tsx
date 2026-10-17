@@ -80,6 +80,26 @@ it('hides the svg from assistive tech', () => {
   expect(container.querySelector('svg')).toHaveAttribute('aria-hidden', 'true');
 });
 
+it('ignores aria-labelledby so the summary stays the name, keeps aria-describedby', () => {
+  wrap(
+    <>
+      <span id="other">Other</span>
+      <span id="desc">Desc</span>
+      <Sparkline
+        label="L"
+        values={[1, 2]}
+        aria-labelledby="other"
+        aria-describedby="desc"
+        data-testid="spark"
+      />
+    </>,
+  );
+  const root = screen.getByTestId('spark');
+  expect(root).not.toHaveAttribute('aria-labelledby');
+  expect(root).toHaveAccessibleName('L: from 1 to 2, low 1, high 2');
+  expect(root).toHaveAttribute('aria-describedby', 'desc');
+});
+
 it('forwards ref, merges className, and keeps its img contract over consumer props', () => {
   const ref = { current: null as HTMLDivElement | null };
   wrap(

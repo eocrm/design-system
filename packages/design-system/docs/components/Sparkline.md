@@ -1,6 +1,6 @@
 # `<Sparkline>` — compact trend graphic for KPI cards
 
-Static, axis-free line / area / bar trend with an intrinsic height (`--size-sparkline`, 40px) and full width. `role="img"` named "{label}: from {first} to {last}, low {min}, high {max}" (numbers through `formatValue`). `null` and non-finite values are gaps; area and bar anchor at zero for non-negative data. No hover, no tab stop, no animation.
+Static, axis-free line / area / bar trend with an intrinsic height (`--size-sparkline`, 40px) and full width. `role="img"` named "{label}: from {first} to {last}, low {min}, high {max}" (numbers through `formatValue`). `null` and non-finite values are gaps; area and bar anchor at zero for non-negative data. With negative data a line spans min..max, an area fills from the bottom (min), and bars hang from a zero line (all-negative series hang from the top). No hover, no tab stop, no animation.
 
 ```tsx
 import { DashboardWidget, Sparkline, StatGroup, StatTile } from '@eocrm/design-system';
@@ -40,11 +40,11 @@ import { DashboardWidget, Sparkline, StatGroup, StatTile } from '@eocrm/design-s
 <!-- props:end -->
 
 - **Name, not a table.** The summary (first, last, low, high) is folded into the accessible name; there is no data table. Empty or all-null `values` render nothing and are named "{label}: no data".
-- **Ignored attributes.** `role` and `aria-label` are ignored; the name is always derived from `label` and `values`.
+- **Ignored attributes.** `role`, `aria-label` and `aria-labelledby` are ignored; the name is always derived from `label` and `values`.
 - **Marks.** `line` and `area` are smoothed and end in a dot on the last value; `bar` draws one bar per non-null value. A flat series is drawn mid-height.
 
 #### When NOT to use
 
 - ❌ Values someone must read or compare exactly, axes or dates, several series, hover / keyboard inspection → `Chart`.
 - ❌ Wrapping it in `Constrain` or giving it a height: it brings its own.
-- ❌ Passing `role` / `aria-label` to rename it: they are ignored.
+- ❌ Passing `role` / `aria-label` / `aria-labelledby` to rename it: they are ignored.

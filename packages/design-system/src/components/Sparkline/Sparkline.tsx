@@ -51,11 +51,12 @@ function useSize() {
 
 /**
  * Compact, static, axis-free trend graphic (line / area / bar) for KPI cards.
+ * `role`, `aria-label` and `aria-labelledby` are ignored; the name is derived from `label` and `values`.
  * @see docs/components/Sparkline.md
  */
 // {...rest} FIRST (Pattern B) so role="img" and the summary name always win.
 export const Sparkline = forwardRef<HTMLDivElement, SparklineProps>(function Sparkline(
-  { label, values, type = 'line', formatValue, className, ...rest },
+  { label, values, type = 'line', formatValue, className, 'aria-labelledby': _ignored, ...rest },
   ref,
 ) {
   const t = useTranslation();
