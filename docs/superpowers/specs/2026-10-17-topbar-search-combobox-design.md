@@ -47,15 +47,22 @@ footerAction?: TopBarSearchFooterAction;
 ```
 
 `onSelect` is item-first (deliberate deviation from the issue's
-`(groupIndex, item)` ordering, agreed in brainstorming).
+`(groupIndex, item)` ordering, agreed in brainstorming). `TopBarSearchProps`
+omits the native `onSelect` (text-selection event) to make room.
+
+Combobox mode is decided per render (`results !== undefined`) inside ONE
+component — toggling `results` between `undefined` and an array never
+remounts the input, so focus/caret survive.
 
 ## Open state
 
 - Controlled when `open !== undefined`, else internal state (`defaultOpen`).
 - Requests open (`onOpenChange(true)`): input focus, input change, ArrowDown
   while closed.
-- Requests close (`onOpenChange(false)`): Escape, outside pointerdown, Tab
-  (blur), selecting an option / footer.
+- Requests close (`onOpenChange(false)`): Escape, input blur (covers Tab,
+  outside click and programmatic focus moves — the panel's mousedown is
+  prevented, so clicks inside it never blur), selecting an option / footer.
+- Clicking the already-focused input while closed reopens it.
 - **Panel renders** only when open AND there is something to show:
   `loading`, OR any group has items, OR the input's current value is
   non-empty (→ empty row). Focusing an empty input with no results shows
@@ -80,8 +87,10 @@ footerAction?: TopBarSearchFooterAction;
   render if present (no flash to empty).
 - Empty: `emptyMessage` row, non-option, shown when not loading, no items,
   value non-empty.
-- Live region: a `role="status"` VisuallyHidden region rendered
-  unconditionally in combobox mode, announcing `t('topBar.searchResults', {count})`,
+- Live region: `<LiveRegion>` rendered unconditionally in combobox mode (the
+  panel component stays mounted in combobox mode; only its portal is
+  conditional). The `eocrm/aria-busy-needs-announcement` lint rule learns to
+  count `<LiveRegion>`, announcing `t('topBar.searchResults', {count})`,
   loading, or the empty message (Hard rule 10).
 
 ## Keyboard / pointer
@@ -103,7 +112,7 @@ footerAction?: TopBarSearchFooterAction;
   (no navigation for `<a>`), `onSelect(item, groupIndex)`, close. Input
   value is NOT cleared by the library.
 - Middle-click (`auxclick`) on `href` row: browser default.
-- Outside pointerdown (not input wrapper, not panel) closes.
+- Outside click closes via the input's blur (no document listener needed).
 
 ## ARIA on the input (combobox mode only)
 
@@ -124,7 +133,11 @@ for these (Pattern B for the ARIA contract); consumer `onKeyDown`, `onFocus`,
   `--topbar-search-panel-min-width` (reference width) and
   `--topbar-search-panel-available-height`; `autoUpdate`.
 - `z-index: var(--z-popover)`; height capped to
-  `min(token max-height, available height)`; scroll via `ScrollArea`.
+  `min(token max-height, available height)` with the panel's own
+  `overflow-y: auto` + `overscroll-behavior: contain` (as Select's listbox).
+  **Deviation from the issue:** not `ScrollArea` — it makes itself a tab stop
+  when it overflows with no focusable content, which is exactly a combobox
+  panel (rows are never focusable; focus stays in the input).
 - `data-in-overlay` via `useInOverlay` like Popover/Select.
 - New component tokens in `TopBar.tokens.scss` (panel bg/border/radius/
   shadow/padding/max-width/max-height, option padding/radius/gap/active bg,
@@ -165,7 +178,7 @@ manifest change (same component).
 - `href` renders `<a role="option" href>`.
 - Esc closes and is `defaultPrevented`; inside a Modal, first Esc closes the
   panel only, Modal stays open.
-- Outside pointerdown closes; mousedown on panel keeps focus in input.
+- Blur (outside click / Tab) closes; mousedown on panel keeps focus in input.
 - Panel hidden for empty value + no results; empty row for non-empty value;
   loading row + `aria-busy`.
 - Live region text for count / loading / empty.
