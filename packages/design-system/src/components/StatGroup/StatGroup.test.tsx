@@ -1,5 +1,6 @@
 import { createRef } from 'react';
 import { render, screen, within } from '@testing-library/react';
+import { Sparkline } from '../Sparkline';
 import { StatGroup, StatTile } from './index';
 
 const UP = { label: '12.4% vs previous period', direction: 'up' } as const;
@@ -141,5 +142,32 @@ describe('StatTile', () => {
     expect(screen.getByTestId('icon')).toBeInTheDocument();
     expect(li.querySelector('[data-sentiment]')).toBeNull();
     expect(li).toHaveTextContent(/^Deals3$/);
+  });
+
+  it('renders the sparkline slot after the trend, before the footnote', () => {
+    render(
+      <StatGroup aria-label="KPIs">
+        <StatTile
+          label="Contacts"
+          value="1,204"
+          trend={UP}
+          sparkline={<Sparkline label="Contacts per day" values={[1, 2, 3]} />}
+          footnote="Last 90 days"
+        />
+      </StatGroup>,
+    );
+    const spark = screen.getByRole('img', { name: /^Contacts per day:/ });
+    const foot = screen.getByText('Last 90 days');
+    expect(spark.compareDocumentPosition(foot) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it('shows a sparkline-height skeleton instead of the slot while loading', () => {
+    const { container } = render(
+      <StatGroup aria-label="KPIs" loading>
+        <StatTile label="Contacts" value="1" sparkline={<Sparkline label="S" values={[1]} />} />
+      </StatGroup>,
+    );
+    expect(screen.queryByRole('img', { name: /^S:/ })).toBeNull();
+    expect(container.querySelector('[data-stat-sparkline-skeleton]')).not.toBeNull();
   });
 });

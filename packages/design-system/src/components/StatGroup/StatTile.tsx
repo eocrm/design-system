@@ -30,6 +30,11 @@ export interface StatTileProps extends Omit<HTMLAttributes<HTMLLIElement>, 'chil
   footnote?: ReactNode;
   /** Decorative icon before the label, typically `<IconTile size="sm" … />`. Hidden in very narrow tiles. */
   icon?: ReactNode;
+  /**
+   * Trend graphic under the value/trend, typically `<Sparkline label=… values=… />`.
+   * Replaced by a sparkline-height skeleton while the group is loading.
+   */
+  sparkline?: ReactNode;
 }
 
 /**
@@ -38,7 +43,7 @@ export interface StatTileProps extends Omit<HTMLAttributes<HTMLLIElement>, 'chil
  */
 // {...rest} last (Pattern A) so the consumer can add data-* / handlers to the <li>.
 export const StatTile = forwardRef<HTMLLIElement, StatTileProps>(function StatTile(
-  { label, value, trend, footnote, icon, className, ...rest },
+  { label, value, trend, footnote, icon, sparkline, className, ...rest },
   ref,
 ) {
   const t = useTranslation();
@@ -60,6 +65,11 @@ export const StatTile = forwardRef<HTMLLIElement, StatTileProps>(function StatTi
           <div className={styles.trend}>
             <Skeleton variant="text" width="45%" />
           </div>
+          {sparkline != null && (
+            <div className={styles.sparkline} data-stat-sparkline-skeleton="">
+              <Skeleton variant="rectangular" height="var(--size-sparkline)" />
+            </div>
+          )}
         </>
       ) : (
         <>
@@ -74,6 +84,7 @@ export const StatTile = forwardRef<HTMLLIElement, StatTileProps>(function StatTi
             )}
           </div>
           {trend && <Trend trend={trend} className={styles.trend} />}
+          {sparkline != null && <div className={styles.sparkline}>{sparkline}</div>}
           {footnote != null && <div className={styles.footnote}>{footnote}</div>}
         </>
       )}
