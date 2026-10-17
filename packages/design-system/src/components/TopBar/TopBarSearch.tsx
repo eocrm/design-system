@@ -117,7 +117,7 @@ export interface TopBarSearchProps extends Omit<
    * live region still announces the default text — pass a string to have it announced.
    */
   emptyMessage?: ReactNode;
-  /** Trailing row in the ↑/↓ cycle (e.g. "View all results"). Shown only alongside other panel content. */
+  /** Trailing row in the ↑/↓ cycle (e.g. "View all results"). Rendered whenever the panel is shown (results, loading row, or empty row), as the last row. */
   footerAction?: TopBarSearchFooterAction;
 }
 

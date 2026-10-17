@@ -68,7 +68,7 @@ import { Bell, Plus } from 'lucide-react';
 | `onSelect` | `((item: TopBarSearchItem, groupIndex: number) => void)` | no | Called on Enter or click on a result. The input text is left as is — clear it here if wanted. |
 | `loading` | `boolean` | no | Shows a loading row and sets `aria-busy`; existing results stay visible. |
 | `emptyMessage` | `ReactNode` | no | Row shown for a non-empty query with no results. Default `t('topBar.searchEmpty')` (also used when this is an empty string). A non-string node is rendered but the live region still announces the default text — pass a string to have it announced. |
-| `footerAction` | `TopBarSearchFooterAction` | no | Trailing row in the ↑/↓ cycle (e.g. "View all results"). Shown only alongside other panel content. |
+| `footerAction` | `TopBarSearchFooterAction` | no | Trailing row in the ↑/↓ cycle (e.g. "View all results"). Rendered whenever the panel is shown (results, loading row, or empty row), as the last row. |
 | …native | | | plus native `<input>` attributes |
 
 ### `TopBarStartProps`
@@ -123,6 +123,36 @@ const { data, isFetching } = useSearch(q); // your fetch; returns TopBarSearchGr
 - Groups with no items are not rendered, so you may pass them as-is.
 - `open` / `defaultOpen` / `onOpenChange` control visibility if you need to; omit for uncontrolled.
 
+#### Shapes
+
+`TopBarSearchGroup` — one labelled block in `results`. Groups with no items are not rendered.
+
+<!-- prettier-ignore -->
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `label` | `string` | yes | Visible heading; also the group's accessible name. |
+| `items` | `TopBarSearchItem[]` | yes | Result rows in this group. |
+
+`TopBarSearchItem` — one result row.
+
+<!-- prettier-ignore -->
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `id` | `string` | yes | Unique across ALL groups — used as the React key. |
+| `label` | `ReactNode` | yes | Primary text. Truncates to one line. |
+| `meta` | `ReactNode` | no | Trailing muted text, e.g. the entity type or an email. |
+| `icon` | `ReactNode` | no | Leading decorative icon (e.g. `<User size={16} />`); hidden from assistive tech. |
+| `href` | `string` | no | Renders the row as a link so Cmd/Ctrl/Shift/middle-click and "copy link" work natively. A plain click or Enter still calls `onSelect` (the library never navigates). |
+
+`TopBarSearchFooterAction` — the optional `footerAction`. It renders whenever the panel is shown (results, the loading row, or the empty row for a non-empty query), as the last row in the ↑/↓ cycle.
+
+<!-- prettier-ignore -->
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `label` | `ReactNode` | yes | Row content. |
+| `onSelect` | `() => void` | yes | Called on Enter or click. |
+| `href` | `string` | no | Optional link target, same semantics as `TopBarSearchItem.href`. |
+
 #### When NOT to use
 
 - ❌ Picking a form value from a list — use `<Select>`.
@@ -138,7 +168,7 @@ const { data, isFetching } = useSearch(q); // your fetch; returns TopBarSearchGr
 - ❌ Wrapping the bar in another `position: sticky` container — the bar already sticks. Layered sticky parents stack at the wrong offset.
 - ❌ Reaching for `<TopBar.IconButton>` outside the bar — it's a topbar-scoped size + indicator pattern. Use `<Button iconOnly variant="ghost">` for general icon buttons.
 - ❌ Putting a `<Button variant="primary">` inside the bar — primary actions belong in the page body where they're discoverable; the topbar is for navigation, search, and global ambient actions only.
-- ❌ Keying or remounting `<TopBar.Search>` as results arrive — toggling `results` between `undefined` and an array is fine, but remounting loses focus and open state.
+- ❌ Keying or remounting `<TopBar.Search>` as results arrive — the input is never remounted by changing `results`, so don't add a `key` that does. Pass `[]` (not `undefined`) while there are no results: `undefined` turns combobox mode off (no role, no panel).
 - ❌ Duplicate `id`s across groups — ids must be unique across ALL groups (React keys, highlight tracking).
 - ❌ Clearing the input inside `onChange` — it fights typing; clear in `onSelect` if you want that.
 - ❌ Navigating in both `onSelect` and via the `<a>` default — the library already prevents the default on plain clicks; route only in `onSelect`.
