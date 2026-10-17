@@ -98,6 +98,7 @@ const CLUSTERS = {
   DashboardWidget: 'Display',
   StatGroup: 'Display',
   Chart: 'Display',
+  Sparkline: 'Display',
   TreeView: 'Display',
   DataTable: 'Display',
   EmptyState: 'Display',

@@ -1497,6 +1497,21 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       </Row>
     </Col>
   ),
+  Sparkline: (
+    <Col gap={6}>
+      <Bar w={28} />
+      <svg width={84} height={32} viewBox="0 0 84 32" fill="none" aria-hidden="true">
+        <polyline
+          points="2,24 14,18 26,22 38,12 50,16 62,8 76,10"
+          stroke="var(--color-accent-subtle-bg)"
+          strokeWidth={2}
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+        <circle cx={76} cy={10} r={3.5} fill="var(--color-accent)" />
+      </svg>
+    </Col>
+  ),
   TreeView: (
     <Col gap={5}>
       <Row gap={6}>

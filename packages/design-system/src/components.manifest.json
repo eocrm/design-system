@@ -90,6 +90,7 @@
       "OptionsPicker",
       "PasswordInput",
       "Rail",
+      "RichText",
       "RichTextEditor",
       "SocialButton",
       "Toast",
@@ -707,7 +708,9 @@
     "tier": "composition",
     "cluster": "Display",
     "composes": [
-      "CircularProgress"
+      "Button",
+      "CircularProgress",
+      "Tooltip"
     ],
     "composedBy": [
       "RichTextEditor"
@@ -815,6 +818,12 @@
     "composes": [
       "Sortable"
     ],
+    "composedBy": []
+  },
+  "Sparkline": {
+    "tier": "primitive",
+    "cluster": "Display",
+    "composes": [],
     "composedBy": []
   },
   "Split": {
@@ -955,6 +964,7 @@
       "EntityChip",
       "PasswordInput",
       "Rail",
+      "RichText",
       "StagePath"
     ]
   },
