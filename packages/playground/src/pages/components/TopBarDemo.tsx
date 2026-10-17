@@ -1,14 +1,6 @@
-import { useMemo, useState } from 'react';
-import {
-  Bell,
-  Briefcase,
-  HelpCircle,
-  Plus,
-  Settings as SettingsIcon,
-  User,
-  Wrench,
-} from 'lucide-react';
-import { Avatar, Text, TopBar, type TopBarSearchGroup } from '@eocrm/design-system';
+import { useState } from 'react';
+import { Bell, HelpCircle, Plus, Settings as SettingsIcon, Wrench } from 'lucide-react';
+import { Avatar, Text, TopBar } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -70,63 +62,6 @@ function BrandMark() {
       </span>
       Orbit CRM
     </div>
-  );
-}
-
-const CONTACTS = ['Ada Lovelace', 'Alan Turing', 'Grace Hopper', 'Katherine Johnson'];
-const DEALS = ['Acme renewal', 'Globex expansion', 'Initech onboarding'];
-
-/** Combobox mode: grouped results, ↑/↓/Enter/Esc, footer row. */
-function ComboboxSearch() {
-  const [query, setQuery] = useState('');
-  const [picked, setPicked] = useState('');
-  const results = useMemo<TopBarSearchGroup[]>(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return [];
-    const match = (s: string) => s.toLowerCase().includes(q);
-    return [
-      {
-        label: 'Contacts',
-        items: CONTACTS.filter(match).map((label) => ({
-          id: `c-${label}`,
-          label,
-          meta: 'Contact',
-          icon: <User size={16} />,
-        })),
-      },
-      {
-        label: 'Deals',
-        items: DEALS.filter(match).map((label) => ({
-          id: `d-${label}`,
-          label,
-          meta: 'Deal',
-          icon: <Briefcase size={16} />,
-        })),
-      },
-    ];
-  }, [query]);
-
-  return (
-    <TopBarStage height={320}>
-      <TopBar>
-        <TopBar.Start>
-          <TopBar.Search
-            placeholder="Search contacts, deals…"
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            results={results}
-            onSelect={(_group, item) => setPicked(item.label)}
-            footerAction={{
-              label: `View all results for "${query}"`,
-              onSelect: () => setPicked(`all: ${query}`),
-            }}
-          />
-        </TopBar.Start>
-        <TopBar.End>
-          <Text tone="muted">{picked ? `Selected: ${picked}` : 'Type "a"'}</Text>
-        </TopBar.End>
-      </TopBar>
-    </TopBarStage>
   );
 }
 
@@ -439,56 +374,6 @@ export function Demo() {
             </TopBar.End>
           </TopBar>
         </TopBarStage>
-      </Example>
-      <Example
-        title="Combobox mode — grouped results under the search"
-        description="Pass `results` to turn TopBar.Search into a combobox: the panel opens under the input while it has text, ↑/↓ wrap across groups and the footer row, Enter or click selects, Esc and click-outside close, and focus stays in the input. The consumer filters; pass `loading` while fetching."
-        code={`import { useMemo, useState } from 'react';
-import { Briefcase, User } from 'lucide-react';
-import { TopBar, type TopBarSearchGroup } from '@eocrm/design-system';
-
-const CONTACTS = ['Ada Lovelace', 'Alan Turing', 'Grace Hopper'];
-const DEALS = ['Acme renewal', 'Globex expansion'];
-
-export function Demo() {
-  const [query, setQuery] = useState('');
-  const results = useMemo<TopBarSearchGroup[]>(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return [];
-    const match = (s: string) => s.toLowerCase().includes(q);
-    return [
-      {
-        label: 'Contacts',
-        items: CONTACTS.filter(match).map((label) => ({
-          id: \`c-\${label}\`, label, meta: 'Contact', icon: <User size={16} />,
-        })),
-      },
-      {
-        label: 'Deals',
-        items: DEALS.filter(match).map((label) => ({
-          id: \`d-\${label}\`, label, meta: 'Deal', icon: <Briefcase size={16} />,
-        })),
-      },
-    ];
-  }, [query]);
-
-  return (
-    <TopBar>
-      <TopBar.Start>
-        <TopBar.Search
-          placeholder="Search contacts, deals…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          results={results}
-          onSelect={(groupIndex, item) => openRecord(groupIndex, item.id)}
-          footerAction={{ label: 'View all results', onSelect: () => openSearchPage(query) }}
-        />
-      </TopBar.Start>
-    </TopBar>
-  );
-}`}
-      >
-        <ComboboxSearch />
       </Example>
     </DemoLayout>
   );

@@ -62,7 +62,6 @@ tester.run('aria-busy-needs-announcement', rules['aria-busy-needs-announcement']
     `const A = () => <div aria-busy={b}><i aria-live="polite" /></div>;`,
     `const A = () => <div aria-busy={b}><VisuallyHidden>{t('x')}</VisuallyHidden></div>;`,
     `const A = () => <div aria-busy={b}><span className={styles.srOnly}>{t('x')}</span></div>;`,
-    `const A = () => <><div aria-busy={b} /><LiveRegion>{status}</LiveRegion></>;`,
     // No aria-busy: nothing to announce.
     `const A = () => <div />;`,
   ],

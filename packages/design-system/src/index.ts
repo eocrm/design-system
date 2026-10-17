@@ -591,9 +591,6 @@ export type {
   TopBarStartProps,
   TopBarEndProps,
   TopBarSearchProps,
-  TopBarSearchGroup,
-  TopBarSearchItem,
-  TopBarSearchFooterAction,
   TopBarIconButtonProps,
   TopBarIndicatorTone,
 } from './components/TopBar';
