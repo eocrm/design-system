@@ -12,7 +12,12 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  padding: var(--rail-padding-y) var(--rail-padding-x);
+
+  // Only the bottom edge here: the top and inline padding move onto .body and
+  // .footerWrap so a pinned <Rail.Header> can sit flush at the top and run
+  // edge to edge (#650). The resolved geometry of every other child is
+  // unchanged.
+  padding-bottom: var(--rail-padding-y);
   background: var(--rail-bg);
   border-right: var(--rail-border-width) solid var(--rail-border-color);
   transition: var(--rail-collapse-transition);
@@ -34,6 +39,7 @@
   display: flex;
   flex-direction: column;
   gap: var(--rail-section-gap);
+  padding: var(--rail-padding-y) var(--rail-padding-x) 0;
   // stylelint-disable-next-line declaration-property-value-disallowed-list -- scroll long item lists
   overflow-y: auto;
 
@@ -65,17 +71,49 @@
 // stylelint-enable property-disallowed-list
 
 // ─── Header / Footer / Spacer ───────────────────────────────────────────
+// A leading <Rail.Header> is a direct child of .rail (hoisted out of .body by
+// Rail.tsx), so it stays pinned while the item list scrolls and spans the full
+// rail width — its divider meets the rail's border-right. Sized to
+// --rail-header-height (default --topbar-height) with the brand vertically
+// centred, so the divider continues an adjacent TopBar's bottom border.
+// The defaults are var() fallbacks HERE, not :root values, so they resolve on
+// this element (see Rail.tokens.scss).
+// Padding: the inline inset is the sum of the two an item icon sits behind
+// (--rail-padding-x + --rail-item-padding-x), putting the brand mark on the
+// icon column. The top inset equals the divider width, so the brand centres in
+// the FULL header height (window top edge → bottom of the divider). With a 1px
+// divider the content box above it is an odd 55px, which parks an even-height
+// mark on a half pixel (32px → y 11.5); the engine then snaps the image down
+// and the wordmark's baseline up, and the two visibly misalign by ~1px.
+// Centring in the even 56px puts the mark on a whole pixel.
 .header {
   flex-shrink: 0;
-
-  // Padded brand area + a header→nav divider by default (token-driven, override
-  // to 0 for a bare slot) so a DS-only consumer matches the mockup rail brand
-  // without raw CSS. Mirrors .flyoutHeader's border-bottom token pattern.
-  padding: var(--rail-header-padding);
+  display: flex;
+  align-items: center;
+  min-height: var(--rail-header-height, var(--topbar-height));
+  padding: var(
+    --rail-header-padding,
+    var(--rail-header-divider-width) calc(var(--rail-padding-x) + var(--rail-item-padding-x)) 0
+  );
   border-bottom: var(--rail-header-divider-width) solid var(--rail-border-color);
   // stylelint-disable-next-line declaration-property-value-disallowed-list -- collapse-mode clip per spec
   overflow: hidden;
 }
+
+// The consumer's children live in this plain block box, so their own flow is
+// exactly what it was before the header became a centring flex container:
+// inline children (`<img/> Acme`) stay on one line, block children stack.
+// stylelint-disable property-disallowed-list -- the inner box fills the header
+// row expanded and shrinks to its content collapsed so it can be centred.
+.headerInner {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.collapsed .headerInner {
+  flex: none;
+}
+// stylelint-enable property-disallowed-list
 
 // Collapsed = a 56px icon-only track. Center the brand there so the mark lands
 // within a pixel or two of the item icons' axis. They are not exactly equal, and
@@ -85,16 +123,15 @@
 // centre 29, i.e. (18 − 15) / 2 = 1.5px right. The rail's 1px border-right only
 // narrows that region (16 → 15) and so deepens the same overflow; it is not a
 // separate contributor.
-// Scoped to the collapsed state on purpose: expanded, the brand is already
-// aligned by --rail-header-padding's horizontal inset, and turning .header into
-// a centering flex row unconditionally would re-flow any consumer header that
-// renders more than one child.
+// Horizontal centering is scoped to the collapsed state on purpose: expanded,
+// the brand is already aligned by --rail-header-padding's horizontal inset and
+// .headerInner fills the row. Collapsed, .headerInner shrinks to its content
+// and that box is what gets centred. (Vertical centering applies in both states.)
 // The horizontal inset is dropped here because it is an *alignment* value for
-// the expanded rail; at 56px it would leave a 15px content box (56 − 2×8 rail
-// padding − 1px border-right − 2×12 header inset) that a 32px mark immediately
+// the expanded rail; at 56px it would leave a 15px content box (56 − 1px
+// border-right − 2×20 header inset) that a 32px mark immediately
 // overflows, and the centering would then be measured against the wrong box.
 .collapsed .header {
-  display: flex;
   justify-content: center;
   padding-inline: 0;
 }
@@ -127,8 +164,8 @@
   gap: var(--space-1);
 
   // Small top spacing so the footer area visually separates from the last
-  // scrolled item without needing a divider.
-  padding-top: var(--space-2);
+  // scrolled item without needing a divider; the inline inset is the rail's.
+  padding: var(--space-2) var(--rail-padding-x) 0;
 }
 
 // Direct <Rail.Footer> — visual styling only (no sticky now that the

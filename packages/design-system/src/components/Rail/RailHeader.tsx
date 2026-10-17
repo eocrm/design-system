@@ -9,9 +9,15 @@ export type RailHeaderProps = HTMLAttributes<HTMLDivElement>;
  * @see docs/components/Rail.md
  */
 export const RailHeader = forwardRef<HTMLDivElement, RailHeaderProps>(function RailHeader(
-  { className, ...props },
+  { className, children, ...props },
   ref,
 ) {
-  // {...props} last so consumer overrides win (Pattern A).
-  return <div ref={ref} className={clsx(styles.header, className)} {...props} />;
+  // {...props} last so consumer overrides win (Pattern A). Children sit in an
+  // inner block box so the header can centre them vertically without turning
+  // each child (or a bare text node) into its own flex item.
+  return (
+    <div ref={ref} className={clsx(styles.header, className)} {...props}>
+      <div className={styles.headerInner}>{children}</div>
+    </div>
+  );
 });

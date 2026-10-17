@@ -2,6 +2,8 @@
 // to the primitive that the SCSS would otherwise use directly. Consumers can
 // rebind any of these at a higher level (`.theme-foo :root { --rail-bg: … }`)
 // to retheme the rail without forking its module.scss.
+@use '../TopBar/TopBar.tokens';
+
 :root {
   // Width — the rail switches between two fixed widths via `[data-collapsed]`.
   --rail-width-expanded: 240px;
@@ -18,16 +20,20 @@
   // a DS-only consumer matches the mockup rail brand with no raw CSS. Divider
   // color reuses --rail-border-color. Override either token to `0` for a bare
   // header slot.
-  // The horizontal inset deliberately mirrors --rail-item-padding-x so the brand
-  // mark starts on the same x as the nav item icons below it (both then sit at
-  // --rail-padding-x + --rail-item-padding-x from the rail's edge). There is no
-  // top inset because --rail-padding-y already supplies it; the bottom gap down
-  // to the divider is the header's own.
-  // The var() carries its own fallback: an undefined --rail-item-padding-x would
-  // make this whole value invalid at computed-value time, and `padding` would
-  // fall back to its initial 0 — losing the bottom gap too, butting the brand
-  // straight into the divider.
-  --rail-header-padding: 0 var(--rail-item-padding-x, var(--space-3)) var(--space-2);
+  // Height and padding are declared `initial` (guaranteed-invalid) on purpose:
+  // their real defaults live as var() fallbacks in .header, so they resolve ON
+  // the header element. A default written here would resolve once at :root, and
+  // a --topbar-height / --rail-padding-x retuned on a theme wrapper, the
+  // AppLayout or the rail itself would never reach the header (#650). Setting
+  // either token anywhere above the rail still overrides the fallback.
+  // Defaults (see .header in Rail.module.scss):
+  //   --rail-header-height  → var(--topbar-height) — a min-height, so the
+  //     divider continues an adjacent TopBar's bottom border. `auto` = content
+  //     height. TopBar's tokens are @used above so it resolves without a TopBar.
+  //   --rail-header-padding → divider-width top, rail + item inline inset, 0
+  //     bottom — see the .header comment for why.
+  --rail-header-height: initial;
+  --rail-header-padding: initial;
   --rail-header-divider-width: var(--border-width);
 
   // Section grouping

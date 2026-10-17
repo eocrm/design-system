@@ -4588,7 +4588,7 @@
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": true,
           "default": "",
-          "description": "Rail children — typically a sequence of `<Rail.Header>`, `<Rail.Section>`,\n`<Rail.Group>`, `<Rail.Spacer>`, `<Rail.Footer>`. Order matters: the first\n`<Rail.Footer>` is the split point — everything before it goes in the\nscroll box, the Footer and anything after it stay outside and pinned to\nthe bottom. A `<Rail.Spacer>` is not needed for that; use it to push a\ntrailing *section* (settings, help) down inside the scrolling area."
+          "description": "Rail children — typically a sequence of `<Rail.Header>`, `<Rail.Section>`,\n`<Rail.Group>`, `<Rail.Spacer>`, `<Rail.Footer>`. Order matters: a leading\n`<Rail.Header>` is pinned above the scroll box, and the first\n`<Rail.Footer>` is the split point — everything before it goes in the\nscroll box, the Footer and anything after it stay outside and pinned to\nthe bottom. A `<Rail.Spacer>` is not needed for that; use it to push a\ntrailing *section* (settings, help) down inside the scrolling area."
         }
       ]
     },

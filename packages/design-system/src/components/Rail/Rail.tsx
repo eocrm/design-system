@@ -138,7 +138,8 @@ export interface RailProps extends Omit<HTMLAttributes<HTMLElement>, 'aria-label
   'aria-label'?: string;
   /**
    * Rail children — typically a sequence of `<Rail.Header>`, `<Rail.Section>`,
-   * `<Rail.Group>`, `<Rail.Spacer>`, `<Rail.Footer>`. Order matters: the first
+   * `<Rail.Group>`, `<Rail.Spacer>`, `<Rail.Footer>`. Order matters: a leading
+   * `<Rail.Header>` is pinned above the scroll box, and the first
    * `<Rail.Footer>` is the split point — everything before it goes in the
    * scroll box, the Footer and anything after it stay outside and pinned to
    * the bottom. A `<Rail.Spacer>` is not needed for that; use it to push a
@@ -206,7 +207,7 @@ const RailRoot = forwardRef<HTMLElement, RailProps>(function Rail(
   // the scrollable flow BEHIND the sticky footer, and the painting order
   // surprises (items appearing through the footer's background) made it
   // hard to keep reliable. Structural separation = no z-index gymnastics.
-  const { body, footer } = useMemo(() => {
+  const { header, body, footer } = useMemo(() => {
     const bodyChildren: ReactNode[] = [];
     const footerChildren: ReactNode[] = [];
     const arr = Children.toArray(children);
@@ -216,8 +217,16 @@ const RailRoot = forwardRef<HTMLElement, RailProps>(function Rail(
           ? Children.toArray((node.props as { children?: ReactNode }).children)
           : [node],
       );
+    const flat = flatten(arr);
+    // A LEADING <Rail.Header> is hoisted out of the scroll box into its own
+    // pinned slot (#650): it runs edge to edge across the rail and keeps its
+    // divider level with a sticky <TopBar>'s bottom border, which it couldn't
+    // do while scrolling away with the item list. Only the first child — a
+    // header placed further down stays where the consumer put it.
+    const first = flat[0];
+    const headerChild = isValidElement(first) && first.type === RailHeader ? first : null;
     let seenFooter = false;
-    for (const child of flatten(arr)) {
+    for (const child of headerChild ? flat.slice(1) : flat) {
       if (isValidElement(child) && child.type === RailFooter) {
         seenFooter = true;
         footerChildren.push(child);
@@ -238,7 +247,11 @@ const RailRoot = forwardRef<HTMLElement, RailProps>(function Rail(
       nodes.map((node, i) =>
         isValidElement(node) ? cloneElement(node, { key: `${prefix}-${i}` }) : node,
       );
-    return { body: reKey(bodyChildren, 'rail-body'), footer: reKey(footerChildren, 'rail-footer') };
+    return {
+      header: headerChild,
+      body: reKey(bodyChildren, 'rail-body'),
+      footer: reKey(footerChildren, 'rail-footer'),
+    };
   }, [children]);
 
   return (
@@ -251,6 +264,7 @@ const RailRoot = forwardRef<HTMLElement, RailProps>(function Rail(
         // {...props} last so consumer overrides win (Pattern A).
         {...props}
       >
+        {header}
         <div className={styles.body}>{body}</div>
         {footer.length > 0 && <div className={styles.footerWrap}>{footer}</div>}
       </nav>

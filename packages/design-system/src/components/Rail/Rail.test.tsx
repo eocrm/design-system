@@ -33,6 +33,54 @@ describe('Rail', () => {
     expect(screen.getByRole('navigation', { name: 'Custom rail' })).toBeInTheDocument();
   });
 
+  it('pins a leading Rail.Header outside the scroll body (#650)', () => {
+    render(
+      <Rail>
+        <>
+          <Rail.Header data-testid="head">Brand</Rail.Header>
+        </>
+        <Rail.Section title="Main">
+          <Rail.Item href="/">Dashboard</Rail.Item>
+        </Rail.Section>
+      </Rail>,
+    );
+    const nav = screen.getByRole('navigation');
+    const head = screen.getByTestId('head');
+    // Direct child of the <nav>, first, and a sibling (not ancestor) of the items.
+    expect(head.parentElement).toBe(nav);
+    expect(nav.firstElementChild).toBe(head);
+    expect(head.contains(screen.getByRole('link', { name: 'Dashboard' }))).toBe(false);
+  });
+
+  it('keeps Rail.Header children together in one inner box', () => {
+    // The header is a centring flex container; without the inner box an
+    // `<img/> Acme` brand would split into separate flex items.
+    render(
+      <Rail>
+        <Rail.Header data-testid="head">
+          <img alt="" /> Acme
+        </Rail.Header>
+      </Rail>,
+    );
+    const head = screen.getByTestId('head');
+    expect(head.childElementCount).toBe(1);
+    expect(head.firstElementChild).toHaveTextContent('Acme');
+    expect(head.firstElementChild?.querySelector('img')).not.toBeNull();
+  });
+
+  it('leaves a non-leading Rail.Header in the scroll body', () => {
+    render(
+      <Rail>
+        <Rail.Section title="Main">
+          <Rail.Item href="/">Dashboard</Rail.Item>
+        </Rail.Section>
+        <Rail.Header data-testid="head">Late</Rail.Header>
+      </Rail>,
+    );
+    const nav = screen.getByRole('navigation');
+    expect(screen.getByTestId('head').parentElement).not.toBe(nav);
+  });
+
   it('uses ru locale for the default aria-label when I18nProvider locale="ru"', () => {
     render(
       <I18nProvider locale="ru">
@@ -643,41 +691,54 @@ describe('Rail — header brand geometry', () => {
   const tokens = readFileSync(resolve(__dirname, 'Rail.tokens.scss'), 'utf8');
 
   it('keeps the header from shrinking under a long item list', () => {
-    // .header is a flex item of .body. At the default flex-shrink: 1 an
-    // overflowing item list compresses the header, and because the header also
-    // clips overflow the brand is cut off instead of the list scrolling.
+    // .header is a flex item of .rail. At the default flex-shrink: 1 a tall
+    // item list compresses the header, and because the header also clips
+    // overflow the brand is cut off instead of the list scrolling.
     // `0\s*;` not `0` — the looser form also matches `flex-shrink: 0.5`, which
     // compresses the header and clips the brand, i.e. the exact thing this pins
     // against.
     expect(scss).toMatch(/^\.header\s*\{[^}]*flex-shrink:\s*0\s*;/m);
   });
 
-  it('insets the header horizontally by the item padding so the brand lines up with the icons', () => {
-    // The item's content box starts at --rail-padding-x (8) +
-    // --rail-item-padding-x (12) = 20px, and the brand mark has to start there
-    // too. A 0 inset put it at 8px (12px off); the older --space-4 default put
-    // it at 8 + 16 = 24px (4px off).
-    expect(tokens).toMatch(
-      /--rail-header-padding:\s*0\s+var\(--rail-item-padding-x.*\)\s+var\(--space-2\)/,
-    );
+  it('sizes the header to the top bar height and centres it vertically (#650)', () => {
+    // Same border-box height as <TopBar> = the divider lands on the TopBar's
+    // bottom border. min-height, so a taller brand grows rather than clips.
+    const rule = scss.match(/^\.header\s*\{[^}]*\}/m)?.[0] ?? '';
+    expect(rule).toMatch(/min-height:\s*var\(--rail-header-height,\s*var\(--topbar-height\)\)/);
+    expect(rule).toMatch(/display:\s*flex;/);
+    expect(rule).toMatch(/align-items:\s*center;/);
   });
 
-  it('gives the item-padding reference a fallback so the padding cannot collapse wholesale', () => {
-    // An unresolvable var() makes the whole value invalid at computed-value
-    // time, so `padding` falls to its initial 0 — losing the bottom gap as well
-    // and butting the brand into the divider.
-    // Presence only — deliberately not pinned to a literal, so a coordinated
-    // retune of the spacing step stays green.
-    expect(tokens).toMatch(/var\(--rail-item-padding-x,\s*[^)]+\)\)/);
-    // The fallback restates --rail-item-padding-x's own default, so the two can
-    // drift. Assert they AGREE rather than that either equals a literal: only
-    // real drift goes red.
-    const itemDefault = tokens.match(/--rail-item-padding-x:\s*([^;]+);/)?.[1]?.trim();
-    const headerFallback = tokens
-      .match(/--rail-header-padding:[^;]*var\(--rail-item-padding-x,\s*([^)]+\))\)/)?.[1]
-      ?.trim();
-    expect(itemDefault).toBeTruthy();
-    expect(headerFallback).toBe(itemDefault);
+  it('resolves the header defaults on the element, not at :root (#650)', () => {
+    // A default written at :root resolves there once, so a --topbar-height or
+    // --rail-padding-x retuned on a wrapper never reaches the header. The
+    // tokens are declared guaranteed-invalid and the defaults are fallbacks in
+    // .header instead.
+    expect(tokens).toMatch(/--rail-header-height:\s*initial;/);
+    expect(tokens).toMatch(/--rail-header-padding:\s*initial;/);
+    const rule = scss.match(/^\.header\s*\{[^}]*\}/m)?.[0] ?? '';
+    // Inline inset = rail + item padding (the icon column); top inset = the
+    // divider width (centre in the full, even header height).
+    expect(rule).toMatch(/padding:\s*var\(\s*--rail-header-padding,/);
+    for (const ref of [
+      '--rail-header-divider-width',
+      '--rail-padding-x',
+      '--rail-item-padding-x',
+    ]) {
+      expect(rule).toContain(`var(${ref})`);
+    }
+  });
+
+  it('keeps the rail padding off the header so it runs edge to edge (#650)', () => {
+    // .rail keeps only its bottom padding; the top + inline insets live on the
+    // scroll body and footer wrapper instead.
+    const rail = scss.match(/^\.rail\s*\{[^}]*\}/m)?.[0] ?? '';
+    expect(rail).not.toMatch(/^\s*padding:/m);
+    expect(rail).toMatch(/padding-bottom:\s*var\(--rail-padding-y\)/);
+    expect(scss).toMatch(
+      /^\.body\s*\{[^}]*padding:\s*var\(--rail-padding-y\)\s+var\(--rail-padding-x\)\s+0;/m,
+    );
+    expect(scss).toMatch(/^\.footerWrap\s*\{[^}]*padding:[^;]*var\(--rail-padding-x\)/m);
   });
 
   it('centers the brand only while collapsed, and drops the inset centering would measure against', () => {
