@@ -26,8 +26,7 @@ export interface StatGroupProps extends HTMLAttributes<HTMLUListElement> {
   /**
    * Surface of every tile, so a group stays consistent. Default `'filled'`.
    * - `'filled'` — muted fill, no border. Use inside a `Card` / `DashboardWidget`.
-   * - `'card'` — card background, border and shadow, matching surrounding `Card`s on a
-   *   page background. Avoid it when the group already sits inside a Card (card-in-card).
+   * - `'card'` — card background, border and shadow, matching `Card`s on a page background; avoid inside a Card (card-in-card).
    */
   variant?: StatGroupVariant;
   /** `StatTile` elements. */

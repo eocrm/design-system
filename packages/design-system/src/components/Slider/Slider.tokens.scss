@@ -73,7 +73,10 @@
   // Mark (notch on track)
   --slider-mark-width: 2px;
   --slider-mark-height: 8px;
-  --slider-mark-bg: var(--color-border);
+
+  // border-strong, not border: the track is --color-border (#647), and a mark the
+  // track's own colour vanished (fully at lg, where mark and track are both 8px).
+  --slider-mark-bg: var(--color-border-strong);
   --slider-mark-radius: var(--radius-sm);
 
   // Mark filled — base + tones

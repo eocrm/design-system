@@ -51,8 +51,16 @@ export interface StatTileProps extends Omit<HTMLAttributes<HTMLLIElement>, 'chil
    * `value="1.2 GB / 5 GB" progress={{ value: 1.2, max: 5 }}`. Renders a small
    * `Progress` named by the tile `label` (no `aria-label` needed); progress-height
    * skeleton while the group is loading. Put the readable "used / limit" text in `value`.
+   * Over the limit, the bar shows full (ARIA value clamped to `max`); the text in
+   * `value` carries the overage. No meter renders when `max` is not positive or a
+   * number is not finite (an unlimited plan, a limit still loading).
    */
   progress?: StatProgress;
+}
+
+/** A meter needs a finite amount and a positive limit; otherwise Progress would go indeterminate ("Loading…"). */
+function meterable(p: StatProgress | undefined): p is StatProgress {
+  return !!p && Number.isFinite(p.value) && Number.isFinite(p.max) && p.max > 0;
 }
 
 /**
@@ -67,6 +75,7 @@ export const StatTile = forwardRef<HTMLLIElement, StatTileProps>(function StatTi
   const t = useTranslation();
   const { loading, variant } = useContext(StatGroupContext);
   const labelId = useId();
+  const meter = meterable(progress) ? progress : undefined;
 
   return (
     <li
@@ -88,8 +97,8 @@ export const StatTile = forwardRef<HTMLLIElement, StatTileProps>(function StatTi
           <div className={styles.trend}>
             <Skeleton variant="text" width="45%" />
           </div>
-          {progress && (
-            <div data-stat-progress-skeleton="">
+          {meter && (
+            <div className={styles.progressSkeleton} data-stat-progress-skeleton="">
               <Skeleton variant="rectangular" height="var(--stat-tile-progress-height)" />
             </div>
           )}
@@ -115,12 +124,13 @@ export const StatTile = forwardRef<HTMLLIElement, StatTileProps>(function StatTi
             )}
           </div>
           {trend && <Trend trend={trend} className={styles.trend} />}
-          {progress && (
+          {meter && (
             <Progress
               size="sm"
-              value={progress.value}
-              max={progress.max}
-              tone={progress.tone}
+              // ARIA forbids valuenow > valuemax; over-limit reads as full, `value` text says by how much.
+              value={Math.min(Math.max(meter.value, 0), meter.max)}
+              max={meter.max}
+              tone={meter.tone}
               aria-labelledby={labelId}
             />
           )}

@@ -197,6 +197,7 @@ describe('StatTile', () => {
     const bar = screen.getByRole('progressbar', { name: 'Storage' });
     expect(bar).toHaveAttribute('aria-valuenow', '1.2');
     expect(bar).toHaveAttribute('aria-valuemax', '5');
+    expect(bar.className).toMatch(/toneWarning/);
     const trend = screen.getByText(UP.label);
     const spark = screen.getByRole('img', { name: /^Daily:/ });
     expect(trend.compareDocumentPosition(bar) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -229,5 +230,40 @@ describe('StatTile', () => {
       </StatGroup>,
     );
     expect(screen.getByRole('listitem').className).not.toMatch(/card/);
+  });
+
+  it('progress: over-limit clamps the ARIA value to max; no meter for a non-positive limit or NaN', () => {
+    render(
+      <StatGroup aria-label="KPIs">
+        <StatTile
+          label="API calls"
+          value="10,412 / 10,000"
+          progress={{ value: 10412, max: 10000 }}
+        />
+        <StatTile label="Unlimited" value="12 / ∞" progress={{ value: 12, max: 0 }} />
+        <StatTile label="Loading limit" value="12" progress={{ value: 12, max: NaN }} />
+      </StatGroup>,
+    );
+    const bars = screen.getAllByRole('progressbar');
+    expect(bars).toHaveLength(1);
+    expect(bars[0]).toHaveAccessibleName('API calls');
+    expect(bars[0]).toHaveAttribute('aria-valuenow', '10000');
+  });
+
+  it('progress: a rich label still names the meter by its text', () => {
+    render(
+      <StatGroup aria-label="KPIs">
+        <StatTile
+          label={
+            <>
+              <strong>Storage</strong> used
+            </>
+          }
+          value="1 / 5"
+          progress={{ value: 1, max: 5 }}
+        />
+      </StatGroup>,
+    );
+    expect(screen.getByRole('progressbar')).toHaveAccessibleName('Storage used');
   });
 });
