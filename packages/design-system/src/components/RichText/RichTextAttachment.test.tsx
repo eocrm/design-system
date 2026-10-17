@@ -12,7 +12,7 @@ const att = (over: Partial<Block>): Block => ({
 const wrap = (b: Block) =>
   render(
     <I18nProvider locale="en">
-      <RichTextAttachment block={b} />
+      <RichTextAttachment block={b} editable />
     </I18nProvider>,
   );
 
@@ -74,4 +74,16 @@ it('publishes the loaded image aspect for the height cap (#644)', () => {
   Object.defineProperty(img, 'naturalHeight', { value: 400 });
   fireEvent.load(img);
   expect(img.style.getPropertyValue('--rich-text-image-aspect')).toBe('0.75');
+});
+
+it('read-only (not editable) error block shows the failure but no inert actions', () => {
+  render(
+    <I18nProvider locale="en">
+      <RichTextAttachment
+        block={att({ status: 'error', name: 'p.png', uploadError: 'Max 5 MB.' })}
+      />
+    </I18nProvider>,
+  );
+  expect(screen.getByText('Max 5 MB.')).toBeInTheDocument();
+  expect(screen.queryByRole('button')).toBeNull();
 });

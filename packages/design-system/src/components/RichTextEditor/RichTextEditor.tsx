@@ -65,6 +65,7 @@ import { RichTextBlockControls } from './RichTextBlockControls';
 import { RichTextAttachmentConfig } from './RichTextAttachmentConfig';
 import { useAttachmentConfig } from './useAttachmentConfig';
 import { RichTextImageResizer } from './RichTextImageResizer';
+import { LiveRegion } from '../LiveRegion';
 import { capWidthToHeight } from './imageSize';
 import { imageMaxHeightStyle } from '../RichText/imageMaxHeightStyle';
 import { attachmentIsImage, isAttachmentSettled } from '../RichText/engine/attachment';
@@ -507,6 +508,11 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     }, []);
 
     const uploadOn = !!upload && !readOnly;
+    // A failure usually lands while the user keeps typing elsewhere in the doc,
+    // so the block's visible text alone is never heard: announce it (Hard rule 10).
+    const [uploadFailure, setUploadFailure] = useState<{ name: string; reason?: string } | null>(
+      null,
+    );
     const uploader = useUpload({
       config: upload ?? { onUpload: async () => ({ url: '' }) },
       getValue: () => liveDocRef.current,
@@ -527,6 +533,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       // Cap a freshly-uploaded image's initial width to the editor content width
       // (mirrors the resizer's maxWidth measurement). `0` when unmounted → no cap.
       getContentWidth: () => rootRef.current?.getBoundingClientRect().width ?? 0,
+      onFailureChange: setUploadFailure,
     });
     // The paste/click handlers close over a stale `uploader`; mirror it in a ref so
     // we read the current one without re-subscribing the native paste listener.
@@ -1622,9 +1629,22 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       />
     ) : null;
 
+    // Always mounted while uploads are on, so only its text changes. Outside the
+    // editable: inside the textbox it would join the document's content.
+    const uploadStatus = uploadOn ? (
+      <LiveRegion>
+        {uploadFailure
+          ? [`${t('richTextEditor.uploadFailed')}: ${uploadFailure.name}`, uploadFailure.reason]
+              .filter(Boolean)
+              .join('. ')
+          : ''}
+      </LiveRegion>
+    ) : null;
+
     if (!usesShell) {
       return (
         <>
+          {uploadStatus}
           {editable}
           {linkBubble}
           {mentionMenu}
@@ -1635,6 +1655,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       <div className={styles.shell} ref={shellRef}>
         {toolbarBar}
         {uploadInput}
+        {uploadStatus}
         {editable}
         {linkBubble}
         {mentionMenu}

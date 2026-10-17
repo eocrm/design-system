@@ -71,6 +71,12 @@ interface UseUploadArgs {
   getContentWidth?: () => number;
   /** Current device pixel ratio (injectable for tests). */
   getDevicePixelRatio?: () => number;
+  /**
+   * Upload-failure feed for the editor's live region: `null` when an attempt
+   * starts (clears the last message, so a repeat failure re-announces), the
+   * file name + optional `UploadError` reason when it fails.
+   */
+  onFailureChange?: (failure: { name: string; reason?: string } | null) => void;
 }
 
 export function useUpload({
@@ -82,6 +88,7 @@ export function useUpload({
   measureImage = measureImageFromFile,
   getContentWidth = () => 0,
   getDevicePixelRatio = () => (typeof window !== 'undefined' && window.devicePixelRatio) || 1,
+  onFailureChange,
 }: UseUploadArgs) {
   const filesRef = useRef(new Map<string, File>()); // block id → File (for retry)
   const inflightRef = useRef(0);
@@ -99,6 +106,7 @@ export function useUpload({
   const runUpload = useCallback(
     (id: string, file: File) => {
       setInflight(1);
+      onFailureChange?.(null);
       config
         .onUpload(file)
         .then(
@@ -144,14 +152,13 @@ export function useUpload({
             );
           },
           (err: unknown) => {
+            // Opt-in only: a plain Error's message ("Failed to fetch", …) is not
+            // written for end users.
+            const reason = err instanceof UploadError && err.message ? err.message : undefined;
             applySettle(
-              updateAttachmentBlock(getValue(), id, {
-                status: 'error',
-                // Opt-in only: a plain Error's message ("Failed to fetch", …) is
-                // not written for end users.
-                uploadError: err instanceof UploadError && err.message ? err.message : undefined,
-              }),
+              updateAttachmentBlock(getValue(), id, { status: 'error', uploadError: reason }),
             );
+            onFailureChange?.({ name: file.name, reason });
           },
         )
         .finally(() => setInflight(-1));
@@ -164,6 +171,7 @@ export function useUpload({
       measureImage,
       getContentWidth,
       getDevicePixelRatio,
+      onFailureChange,
     ],
   );
 

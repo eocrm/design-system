@@ -4620,7 +4620,7 @@
           "type": "number",
           "required": false,
           "default": "",
-          "description": "Maximum DISPLAYED height of image attachments, in px. Default: the\n`--size-rich-text-image-max-height` token (480px). A taller image shrinks\n(width follows, aspect preserved) — render-time only; stored `width`/`height`\nare unchanged, so existing documents need no migration."
+          "description": "Maximum DISPLAYED height of image attachments, in px. Default: the\n`--size-rich-text-image-max-height` token (480px). A taller image shrinks\n(width follows, aspect preserved) — render-time only; stored `width`/`height`\nare unchanged, so existing documents need no migration. There is no \"off\":\npass a large value to effectively remove the cap."
         }
       ]
     },

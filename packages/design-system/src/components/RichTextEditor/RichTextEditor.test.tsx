@@ -7,7 +7,7 @@ import { RichTextEditor } from './RichTextEditor';
 import { docFromText, emptyDoc } from '../RichText/engine/model';
 import { I18nProvider } from '../../i18n';
 import type { RichDoc, Range } from '../RichText/engine/model';
-import type { UploadConfig } from './useUpload';
+import { UploadError, type UploadConfig } from './useUpload';
 
 // ESM exports are read-only live bindings, so `vi.spyOn(selection, …)` can't
 // replace `readSelection` under Vite. Mock the module with a factory that keeps
@@ -1406,6 +1406,27 @@ describe('upload', () => {
     pasteFile(box, new File(['x'], 'p.png', { type: 'image/png' }));
     await waitFor(() => expect(cfg.onUpload).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(document.querySelector('figure[data-block-id]')).toBeTruthy());
+  });
+
+  it('announces a failed upload in a live region outside the textbox (#643)', async () => {
+    const cfg: UploadConfig = {
+      onUpload: vi.fn().mockRejectedValue(new UploadError('Max 5 MB.')),
+    };
+    function Harness() {
+      const [doc, setDoc] = useState(docFromText('hi'));
+      return <RichTextEditor value={doc} onChange={setDoc} upload={cfg} />;
+    }
+    renderEditor(<Harness />);
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: firstBlockId(), offset: 0 },
+      focus: { blockId: firstBlockId(), offset: 0 },
+    });
+    const box = screen.getByRole('textbox');
+    const region = screen.getByRole('status');
+    expect(region).toHaveTextContent('');
+    expect(box).not.toContainElement(region);
+    pasteFile(box, new File(['x'], 'p.png', { type: 'image/png' }));
+    await waitFor(() => expect(region).toHaveTextContent('Upload failed: p.png. Max 5 MB.'));
   });
 
   it('no upload config → file paste is ignored (no attachment)', () => {

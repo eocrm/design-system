@@ -41,7 +41,7 @@ import { DashboardWidget, Sparkline, StatGroup, StatTile } from '@eocrm/design-s
 
 - **Name, not a table.** The summary (first, last, low, high) is folded into the accessible name; there is no data table. Empty or all-null `values` render nothing and are named "{label}: no data".
 - **Ignored attributes.** `role`, `aria-label` and `aria-labelledby` are ignored; the name is always derived from `label` and `values`.
-- **Marks.** `line` and `area` are smoothed and end in a dot on the last value; `bar` draws one bar per non-null value. A flat series is drawn mid-height.
+- **Marks.** `line` and `area` are smoothed and end in a dot on the last value; `bar` draws one bar per non-null value. A flat `line` is drawn mid-height (a flat positive area/bar fills from zero).
 
 #### When NOT to use
 

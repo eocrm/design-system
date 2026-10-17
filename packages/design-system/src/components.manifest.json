@@ -542,6 +542,7 @@
     "composedBy": [
       "Chart",
       "DateStrip",
+      "RichTextEditor",
       "TreeView"
     ]
   },
@@ -726,6 +727,7 @@
       "DropdownMenu",
       "EmojiPicker",
       "Input",
+      "LiveRegion",
       "Popover",
       "RichText",
       "Slider",

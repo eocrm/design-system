@@ -1503,7 +1503,7 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       <svg width={84} height={32} viewBox="0 0 84 32" fill="none" aria-hidden="true">
         <polyline
           points="2,24 14,18 26,22 38,12 50,16 62,8 76,10"
-          stroke="var(--color-accent-subtle-bg)"
+          stroke="var(--color-accent)"
           strokeWidth={2}
           strokeLinejoin="round"
           strokeLinecap="round"

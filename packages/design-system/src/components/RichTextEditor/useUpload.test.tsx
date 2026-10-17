@@ -85,6 +85,19 @@ it('stores an UploadError message on the error block, ignores plain Errors, clea
   expect(getDoc().blocks.find((b) => b.id === id)).not.toHaveProperty('uploadError');
 });
 
+it('reports the failure (name + UploadError reason) and clears it when an attempt starts', async () => {
+  const onFailureChange = vi.fn();
+  const onUpload = vi.fn().mockRejectedValue(new UploadError('Max 5 MB.'));
+  const { result } = harness(onUpload, undefined, { onFailureChange });
+  act(() => {
+    result.current.uploadFiles([file('p.png')]);
+  });
+  expect(onFailureChange).toHaveBeenLastCalledWith(null);
+  await waitFor(() =>
+    expect(onFailureChange).toHaveBeenLastCalledWith({ name: 'p.png', reason: 'Max 5 MB.' }),
+  );
+});
+
 it('fires onUploadingChange(true) then (false) around a batch', async () => {
   const onUploadingChange = vi.fn();
   const onUpload = vi.fn().mockResolvedValue({ url: 'http://u/p.png' });

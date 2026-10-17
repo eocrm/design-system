@@ -50,6 +50,8 @@
 />
 ```
 
+**Option descriptions.** `SelectOption.description` renders as a muted second line under the label in the default row and becomes the option's accessible description (the name stays the label). It is also matched by the searchable filter. A `renderOption` replaces the default label/description layout.
+
 **Panel width.** The option panel is never narrower than the trigger and grows to fit its widest option, up to `--select-listbox-max-width` (20rem) and the viewport. Labels wrap only past that cap. While the panel is open it never shrinks, so filtering doesn't make it jump. A narrow trigger is fine: don't widen it just to stop options wrapping. Height caps at `--select-listbox-max-height` (320px) or the space available in the viewport. The panel is portalled to `<body>`, so override either token at `:root` or through `AppProvider`'s `tokens` / `darkTokens` (see `docs/setup.md`). Setting it on a wrapper around the Select does not reach the panel.
 
 <!-- props:start -->

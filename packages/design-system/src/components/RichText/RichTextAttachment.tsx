@@ -1,8 +1,8 @@
 // RichTextAttachment.tsx — renders one attachment block's body (spinner / error /
 // image preview / file chip). Pure presentational: the error Retry/Remove buttons
 // carry data-attachment-action + data-block-id hooks the editor delegates (so the
-// pure renderDoc stays callback-free). The read-only viewer renders the same markup;
-// its action buttons simply have no editor delegate.
+// pure renderDoc stays callback-free). The read-only viewer renders the same markup
+// minus those buttons — it has no editor delegate, so they would do nothing.
 import { useId } from 'react';
 import { RotateCw, X } from 'lucide-react';
 import { Button } from '../Button';
@@ -15,7 +15,7 @@ import { attachmentIsImage } from './engine/attachment';
 import { AttachFileIcon } from './attachmentIcon';
 import styles from './RichTextAttachment.module.scss';
 
-export function RichTextAttachment({ block }: { block: Block }) {
+export function RichTextAttachment({ block, editable }: { block: Block; editable?: boolean }) {
   const t = useTranslation();
   const name = block.name ?? '';
   const errorId = useId();
@@ -46,31 +46,36 @@ export function RichTextAttachment({ block }: { block: Block }) {
             </>
           )}
         </span>
-        <Tooltip content={retry}>
-          <Button
-            size="xs"
-            iconOnly
-            data-attachment-action="retry"
-            data-block-id={block.id}
-            aria-label={name ? `${retry} ${name}` : retry}
-            aria-describedby={errorId}
-          >
-            <RotateCw size={14} aria-hidden="true" />
-          </Button>
-        </Tooltip>
-        <Tooltip content={remove}>
-          <Button
-            size="xs"
-            iconOnly
-            variant="danger-outline"
-            data-attachment-action="remove"
-            data-block-id={block.id}
-            aria-label={name ? `${remove} ${name}` : remove}
-            aria-describedby={errorId}
-          >
-            <X size={14} aria-hidden="true" />
-          </Button>
-        </Tooltip>
+        {/* Actions only where the editor delegates them; read-only they'd be inert. */}
+        {editable && (
+          <>
+            <Tooltip content={retry}>
+              <Button
+                size="xs"
+                iconOnly
+                data-attachment-action="retry"
+                data-block-id={block.id}
+                aria-label={name ? `${retry} ${name}` : retry}
+                aria-describedby={errorId}
+              >
+                <RotateCw size={14} aria-hidden="true" />
+              </Button>
+            </Tooltip>
+            <Tooltip content={remove}>
+              <Button
+                size="xs"
+                iconOnly
+                variant="danger-outline"
+                data-attachment-action="remove"
+                data-block-id={block.id}
+                aria-label={name ? `${remove} ${name}` : remove}
+                aria-describedby={errorId}
+              >
+                <X size={14} aria-hidden="true" />
+              </Button>
+            </Tooltip>
+          </>
+        )}
       </span>
     );
   }

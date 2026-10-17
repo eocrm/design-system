@@ -67,7 +67,10 @@ export const StatTile = forwardRef<HTMLLIElement, StatTileProps>(function StatTi
           </div>
           {sparkline != null && (
             <div className={styles.sparkline} data-stat-sparkline-skeleton="">
-              <Skeleton variant="rectangular" height="var(--size-sparkline)" />
+              <Skeleton
+                variant="rectangular"
+                height="var(--sparkline-height, var(--size-sparkline))"
+              />
             </div>
           )}
         </>

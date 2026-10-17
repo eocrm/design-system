@@ -41,7 +41,8 @@ export interface RichTextProps extends HTMLAttributes<HTMLDivElement> {
    * Maximum DISPLAYED height of image attachments, in px. Default: the
    * `--size-rich-text-image-max-height` token (480px). A taller image shrinks
    * (width follows, aspect preserved) — render-time only; stored `width`/`height`
-   * are unchanged, so existing documents need no migration.
+   * are unchanged, so existing documents need no migration. There is no "off":
+   * pass a large value to effectively remove the cap.
    */
   imageMaxHeight?: number;
 }

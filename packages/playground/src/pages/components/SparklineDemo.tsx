@@ -63,7 +63,7 @@ export function SparklineDemo() {
 
       <Example
         title="Gaps, flat, negative"
-        description="null = no data (the line breaks, the bar is absent). A flat series is drawn mid-height. Negative values: area and bar fall back to the series minimum as baseline."
+        description="null = no data (the line breaks, the bar is absent). A flat line is drawn mid-height. Negative values: an area fills from the series minimum; bars hang from a zero line."
         code={`<Sparkline label="With gaps" values={withGaps} />
 <Sparkline label="Flat" values={flat} />
 <Sparkline label="Negative" type="bar" values={negative} />`}
