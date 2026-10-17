@@ -426,6 +426,10 @@ export const en: Messages = {
   topBar: {
     label: 'Application top bar',
     search: 'Search',
+    searchEmpty: 'No results',
+    searchLoading: 'Searching…',
+    searchResults: ({ count }) =>
+      `${count as number} ${(count as number) === 1 ? 'result' : 'results'}`,
   },
   field: {
     optional: '(optional)',

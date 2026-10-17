@@ -1,6 +1,7 @@
 import { useState } from 'react';
-import { act, fireEvent, render, screen } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { I18nProvider } from '../../i18n/I18nProvider';
 import { TopBar } from './TopBar';
 import type { TopBarSearchGroup, TopBarSearchItem } from './TopBarSearch';
 
@@ -276,5 +277,51 @@ describe('TopBar.Search combobox mode', () => {
       input().dispatchEvent(ev);
     });
     expect(ev.defaultPrevented).toBe(false);
+  });
+
+  it('shows the empty row for a non-empty query and announces it', async () => {
+    render(<Harness results={[]} />);
+    await userEvent.click(input());
+    expect(screen.getByRole('listbox')).toHaveTextContent('No results');
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('No results'));
+  });
+
+  it('uses a custom emptyMessage', async () => {
+    render(<Harness results={[]} emptyMessage="Nothing for that" />);
+    await userEvent.click(input());
+    expect(screen.getByRole('listbox')).toHaveTextContent('Nothing for that');
+  });
+
+  it('announces the result count', async () => {
+    render(<Harness />);
+    await userEvent.click(input());
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('3 results'));
+  });
+
+  // Review Focus 5
+  it('keeps rows visible while loading, marks busy and announces loading', async () => {
+    render(<Harness loading />);
+    await userEvent.click(input());
+    const listbox = screen.getByRole('listbox');
+    expect(listbox).toHaveAttribute('aria-busy', 'true');
+    expect(screen.getByRole('option', { name: 'Ada' })).toBeInTheDocument();
+    expect(listbox).toHaveTextContent('Searching…');
+    expect(listbox).not.toHaveTextContent('No results');
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('Searching…'));
+  });
+
+  it('shows the panel while loading even for an empty query', async () => {
+    render(<TopBar.Search placeholder="Search" results={[]} loading />);
+    await userEvent.click(input());
+    expect(screen.getByRole('listbox')).toHaveTextContent('Searching…');
+  });
+
+  it('pluralises the count in Russian', async () => {
+    render(
+      <I18nProvider locale="ru">
+        <TopBar.Search placeholder="Поиск" defaultValue="a" defaultOpen results={GROUPS} />
+      </I18nProvider>,
+    );
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent('3 результата'));
   });
 });

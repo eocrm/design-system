@@ -178,6 +178,16 @@ export const TopBarSearch = forwardRef<HTMLInputElement, TopBarSearchProps>(func
 
   const hasItems = groups.length > 0;
   const shown = combobox && isOpen && (loading || hasItems || value.trim() !== '');
+  const empty = !loading && !hasItems ? emptyMessage || t('topBar.searchEmpty') : null;
+  const announcement = !shown
+    ? ''
+    : loading
+      ? t('topBar.searchLoading')
+      : hasItems
+        ? t('topBar.searchResults', { count: options.filter((o) => o.kind === 'item').length })
+        : typeof empty === 'string'
+          ? empty
+          : t('topBar.searchEmpty');
 
   // Reset to the first row when the SET of ids changes — not on every new
   // array identity, so a consumer rebuilding `results` inline keeps the highlight.
@@ -278,6 +288,9 @@ export const TopBarSearch = forwardRef<HTMLInputElement, TopBarSearchProps>(func
           onChoose={choose}
           anchorRef={wrapperRef}
           onClose={() => setOpen(false)}
+          loading={loading}
+          emptyMessage={shown ? empty : null}
+          announcement={announcement}
         />
       )}
     </div>

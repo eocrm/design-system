@@ -2,6 +2,8 @@ import { useEffect, useRef, type MouseEvent, type ReactNode, type RefObject } fr
 import { createPortal } from 'react-dom';
 import { autoUpdate, flip, offset, shift, size, useFloating } from '@floating-ui/react-dom';
 import clsx from 'clsx';
+import { useTranslation } from '../../i18n';
+import { LiveRegion } from '../LiveRegion';
 import { mergeRefs } from '../_internal/refs';
 import { overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
 import type { TopBarSearchFooterAction, TopBarSearchItem } from './TopBarSearch';
@@ -45,6 +47,12 @@ export interface TopBarSearchPanelProps {
   anchorRef: RefObject<HTMLDivElement | null>;
   /** Close request (Escape). */
   onClose: () => void;
+  /** Loading row + `aria-busy`. */
+  loading: boolean;
+  /** Empty row content, or `null` for no empty row. */
+  emptyMessage: ReactNode | null;
+  /** Live-region text ('' when the panel is hidden). */
+  announcement: string;
 }
 
 export const optionId = (listboxId: string, index: number) => `${listboxId}-opt-${index}`;
@@ -61,7 +69,11 @@ export function TopBarSearchPanel({
   onChoose,
   anchorRef,
   onClose,
+  loading,
+  emptyMessage,
+  announcement,
 }: TopBarSearchPanelProps) {
+  const t = useTranslation();
   const panelRef = useRef<HTMLDivElement | null>(null);
 
   // #274/#280: hosts (Modal/Drawer) yield Escape while the panel is shown, and
@@ -155,34 +167,46 @@ export function TopBarSearchPanel({
   const footer =
     footerIndex >= 0 ? (options[footerIndex] as Extract<SearchOption, { kind: 'footer' }>) : null;
 
-  if (!shown) return null;
-  return createPortal(
-    <div
-      ref={mergeRefs<HTMLDivElement>(panelRef, refs.setFloating)}
-      style={floatingStyles}
-      data-in-overlay={inOverlay ? '' : undefined}
-      id={id}
-      role="listbox"
-      aria-label={label}
-      className={styles.results}
-      // Keep focus (and the caret) in the input on any press inside the panel.
-      onMouseDown={(e) => e.preventDefault()}
-    >
-      {groups.map((g) => (
-        <div
-          key={g.groupIndex}
-          role="group"
-          aria-labelledby={`${id}-g${g.groupIndex}`}
-          className={styles.group}
-        >
-          <div id={`${id}-g${g.groupIndex}`} role="presentation" className={styles.groupLabel}>
-            {g.label}
-          </div>
-          {g.items.map((item, i) => row(g.start + i, item))}
-        </div>
-      ))}
-      {footer && row(footerIndex, footer.action, styles.footer)}
-    </div>,
-    document.body,
+  return (
+    <>
+      <LiveRegion>{announcement}</LiveRegion>
+      {shown &&
+        createPortal(
+          <div
+            ref={mergeRefs<HTMLDivElement>(panelRef, refs.setFloating)}
+            style={floatingStyles}
+            data-in-overlay={inOverlay ? '' : undefined}
+            id={id}
+            role="listbox"
+            aria-label={label}
+            className={styles.results}
+            // Keep focus (and the caret) in the input on any press inside the panel.
+            onMouseDown={(e) => e.preventDefault()}
+            aria-busy={loading || undefined}
+          >
+            {groups.map((g) => (
+              <div
+                key={g.groupIndex}
+                role="group"
+                aria-labelledby={`${id}-g${g.groupIndex}`}
+                className={styles.group}
+              >
+                <div
+                  id={`${id}-g${g.groupIndex}`}
+                  role="presentation"
+                  className={styles.groupLabel}
+                >
+                  {g.label}
+                </div>
+                {g.items.map((item, i) => row(g.start + i, item))}
+              </div>
+            ))}
+            {loading && <div className={styles.status}>{t('topBar.searchLoading')}</div>}
+            {emptyMessage != null && <div className={styles.status}>{emptyMessage}</div>}
+            {footer && row(footerIndex, footer.action, styles.footer)}
+          </div>,
+          document.body,
+        )}
+    </>
   );
 }

@@ -898,6 +898,12 @@ export interface Messages {
     label: string;
     /** Default aria-label on the `<TopBar.Search>` input when neither `aria-label` nor `placeholder` is set. */
     search: string;
+    /** Default `emptyMessage` of the `<TopBar.Search>` results panel; also announced. */
+    searchEmpty: string;
+    /** Loading row of the `<TopBar.Search>` results panel; also announced. */
+    searchLoading: string;
+    /** Live-region result count of the `<TopBar.Search>` results panel. */
+    searchResults: (params: { count: number }) => string;
   };
   field: {
     /** Marker appended to a Field's label when the field is optional. */
