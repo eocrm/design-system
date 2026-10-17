@@ -62,7 +62,13 @@ import { TopBar } from './TopBar';
 import type { TopBarSearchGroup, TopBarSearchItem } from './TopBarSearch';
 
 const GROUPS: TopBarSearchGroup[] = [
-  { label: 'Contacts', items: [{ id: 'c1', label: 'Ada' }, { id: 'c2', label: 'Alan', meta: 'Lead' }] },
+  {
+    label: 'Contacts',
+    items: [
+      { id: 'c1', label: 'Ada' },
+      { id: 'c2', label: 'Alan', meta: 'Lead' },
+    ],
+  },
   { label: 'Deals', items: [{ id: 'd1', label: 'Acme renewal', href: '/deals/d1' }] },
 ];
 
@@ -261,12 +267,24 @@ describe('TopBar.Search combobox mode', () => {
     const many: TopBarSearchItem[] = ['a', 'b', 'c', 'd'].map((id) => ({ id, label: id }));
     const onSelect = vi.fn();
     const { rerender } = render(
-      <TopBar.Search placeholder="Search" defaultValue="x" defaultOpen results={[{ label: 'G', items: many }]} onSelect={onSelect} />,
+      <TopBar.Search
+        placeholder="Search"
+        defaultValue="x"
+        defaultOpen
+        results={[{ label: 'G', items: many }]}
+        onSelect={onSelect}
+      />,
     );
     input().focus();
     await userEvent.keyboard('{ArrowUp}'); // wraps to 'd' (index 3)
     rerender(
-      <TopBar.Search placeholder="Search" defaultValue="x" defaultOpen results={[{ label: 'G', items: many.slice(0, 2) }]} onSelect={onSelect} />,
+      <TopBar.Search
+        placeholder="Search"
+        defaultValue="x"
+        defaultOpen
+        results={[{ label: 'G', items: many.slice(0, 2) }]}
+        onSelect={onSelect}
+      />,
     );
     await userEvent.keyboard('{Enter}');
     expect(onSelect).toHaveBeenCalledWith(many[0], 0); // set changed -> reset to first
@@ -338,7 +356,11 @@ export function TopBarSearchPanel({
     panelRef.current?.querySelector('[data-active]')?.scrollIntoView?.({ block: 'nearest' });
   }, [shown, activeIndex]);
 
-  const row = (index: number, item: { label: ReactNode; meta?: ReactNode; icon?: ReactNode; href?: string }, className?: string) => {
+  const row = (
+    index: number,
+    item: { label: ReactNode; meta?: ReactNode; icon?: ReactNode; href?: string },
+    className?: string,
+  ) => {
     const option = options[index]!;
     const active = index === activeIndex;
     const Tag = item.href ? 'a' : 'div';
@@ -373,7 +395,8 @@ export function TopBarSearchPanel({
   };
 
   const footerIndex = options.findIndex((o) => o.kind === 'footer');
-  const footer = footerIndex >= 0 ? (options[footerIndex] as Extract<SearchOption, { kind: 'footer' }>) : null;
+  const footer =
+    footerIndex >= 0 ? (options[footerIndex] as Extract<SearchOption, { kind: 'footer' }>) : null;
 
   if (!shown) return null;
   return createPortal(
@@ -387,7 +410,12 @@ export function TopBarSearchPanel({
       onMouseDown={(e) => e.preventDefault()}
     >
       {groups.map((g) => (
-        <div key={g.groupIndex} role="group" aria-labelledby={`${id}-g${g.groupIndex}`} className={styles.group}>
+        <div
+          key={g.groupIndex}
+          role="group"
+          aria-labelledby={`${id}-g${g.groupIndex}`}
+          className={styles.group}
+        >
           <div id={`${id}-g${g.groupIndex}`} role="presentation" className={styles.groupLabel}>
             {g.label}
           </div>
@@ -423,7 +451,12 @@ import clsx from 'clsx';
 import { useTranslation } from '../../i18n';
 import { Kbd } from '../Kbd';
 import { mergeRefs } from '../_internal/refs';
-import { TopBarSearchPanel, optionId, type PanelGroup, type SearchOption } from './TopBarSearchPanel';
+import {
+  TopBarSearchPanel,
+  optionId,
+  type PanelGroup,
+  type SearchOption,
+} from './TopBarSearchPanel';
 import styles from './TopBar.module.scss';
 
 /** One result row in `<TopBar.Search>` combobox mode. */
@@ -470,8 +503,10 @@ export interface TopBarSearchFooterAction {
  * replaced by the combobox `onSelect`). Spread `value` / `defaultValue` /
  * `onChange` / `name` / `id` through normally — they reach the input.
  */
-export interface TopBarSearchProps
-  extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'onSelect'> {
+export interface TopBarSearchProps extends Omit<
+  InputHTMLAttributes<HTMLInputElement>,
+  'type' | 'onSelect'
+> {
   /** (existing JSDoc — keep verbatim) */
   hotkey?: string | string[];
   /** (existing JSDoc — keep verbatim) */
@@ -565,7 +600,9 @@ export const TopBarSearch = forwardRef<HTMLInputElement, TopBarSearchProps>(func
 
   // Reset to the first row when the SET of ids changes — not on every new
   // array identity, so a consumer rebuilding `results` inline keeps the highlight.
-  const signature = options.map((o) => (o.kind === 'item' ? o.item.id : '\u0000footer')).join('\u0000');
+  const signature = options
+    .map((o) => (o.kind === 'item' ? o.item.id : '\u0000footer'))
+    .join('\u0000');
   const [active, setActive] = useState(0);
   useEffect(() => setActive(0), [signature]);
   const activeIndex = options.length === 0 ? -1 : Math.min(active, options.length - 1);
@@ -637,7 +674,8 @@ export const TopBarSearch = forwardRef<HTMLInputElement, TopBarSearchProps>(func
           role: 'combobox',
           'aria-expanded': shown,
           'aria-controls': shown ? listboxId : undefined,
-          'aria-activedescendant': shown && activeIndex >= 0 ? optionId(listboxId, activeIndex) : undefined,
+          'aria-activedescendant':
+            shown && activeIndex >= 0 ? optionId(listboxId, activeIndex) : undefined,
           'aria-autocomplete': 'list' as const,
         })}
         onChange={handleChange}
@@ -720,52 +758,52 @@ git commit -m "feat(TopBar): combobox state, keyboard and result rows for TopBar
 Append to `TopBarSearch.test.tsx` (inside the `describe`):
 
 ```tsx
-  it('Escape closes the panel and prevents the native search clear', async () => {
-    render(<Harness />);
-    await userEvent.click(input());
-    const ev = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
-    act(() => {
-      input().dispatchEvent(ev);
-    });
-    expect(ev.defaultPrevented).toBe(true);
-    expect(input()).toHaveAttribute('aria-expanded', 'false');
-    expect(input()).toHaveValue('a');
+it('Escape closes the panel and prevents the native search clear', async () => {
+  render(<Harness />);
+  await userEvent.click(input());
+  const ev = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+  act(() => {
+    input().dispatchEvent(ev);
   });
+  expect(ev.defaultPrevented).toBe(true);
+  expect(input()).toHaveAttribute('aria-expanded', 'false');
+  expect(input()).toHaveValue('a');
+});
 
-  it('Escape with the panel closed is left to the browser', async () => {
-    render(<Harness />);
-    await userEvent.click(input());
-    await userEvent.keyboard('{Escape}');
-    const ev = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
-    act(() => {
-      input().dispatchEvent(ev);
-    });
-    expect(ev.defaultPrevented).toBe(false);
+it('Escape with the panel closed is left to the browser', async () => {
+  render(<Harness />);
+  await userEvent.click(input());
+  await userEvent.keyboard('{Escape}');
+  const ev = new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true });
+  act(() => {
+    input().dispatchEvent(ev);
   });
+  expect(ev.defaultPrevented).toBe(false);
+});
 ```
 
 Append a case to `escapeYield.test.tsx` following that file's existing per-surface case style (Host wraps children in an open Modal; the first Escape closes only the surface, the second closes the Modal). Add `import { TopBar } from '../../TopBar';` and:
 
 ```tsx
-  it('TopBar.Search results panel: first Escape closes the panel, second the Modal', async () => {
-    render(
-      <Host>
-        <TopBar.Search
-          placeholder="Search"
-          defaultValue="a"
-          results={[{ label: 'G', items: [{ id: '1', label: 'One' }] }]}
-        />
-      </Host>,
-    );
-    const input = screen.getByRole('combobox', { name: 'Search' });
-    await userEvent.click(input);
-    expect(screen.getByRole('listbox')).toBeInTheDocument();
-    await userEvent.keyboard('{Escape}');
-    expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
-    expect(screen.getByRole('dialog', { name: 'Host' })).toBeInTheDocument();
-    await userEvent.keyboard('{Escape}');
-    expect(screen.queryByRole('dialog', { name: 'Host' })).not.toBeInTheDocument();
-  });
+it('TopBar.Search results panel: first Escape closes the panel, second the Modal', async () => {
+  render(
+    <Host>
+      <TopBar.Search
+        placeholder="Search"
+        defaultValue="a"
+        results={[{ label: 'G', items: [{ id: '1', label: 'One' }] }]}
+      />
+    </Host>,
+  );
+  const input = screen.getByRole('combobox', { name: 'Search' });
+  await userEvent.click(input);
+  expect(screen.getByRole('listbox')).toBeInTheDocument();
+  await userEvent.keyboard('{Escape}');
+  expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
+  expect(screen.getByRole('dialog', { name: 'Host' })).toBeInTheDocument();
+  await userEvent.keyboard('{Escape}');
+  expect(screen.queryByRole('dialog', { name: 'Host' })).not.toBeInTheDocument();
+});
 ```
 
 (Adapt `screen.getByRole('dialog', …)` / waiting to whatever the neighbouring cases in that file use to assert the Modal closed — copy their pattern exactly.)
@@ -798,48 +836,48 @@ Add to `TopBarSearchPanelProps`:
 At the top of the component body:
 
 ```tsx
-  // #274/#280: hosts (Modal/Drawer) yield Escape while the panel is shown, and
-  // a deeper surface gets the press before us.
-  const floatingId = useFloatingSurface(shown);
-  const inOverlay = useInOverlay(anchorRef, shown);
+// #274/#280: hosts (Modal/Drawer) yield Escape while the panel is shown, and
+// a deeper surface gets the press before us.
+const floatingId = useFloatingSurface(shown);
+const inOverlay = useInOverlay(anchorRef, shown);
 
-  useEffect(() => {
-    if (!shown) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || !overlayStack.isTopFloating(floatingId)) return;
-      e.preventDefault(); // also stops the native <input type="search"> clear
-      overlayStack.consumeEscape(e);
-      onClose();
-    };
-    document.addEventListener('keydown', onKeyDown, true);
-    return () => document.removeEventListener('keydown', onKeyDown, true);
-  }, [shown, floatingId, onClose]);
+useEffect(() => {
+  if (!shown) return;
+  const onKeyDown = (e: KeyboardEvent) => {
+    if (e.key !== 'Escape' || !overlayStack.isTopFloating(floatingId)) return;
+    e.preventDefault(); // also stops the native <input type="search"> clear
+    overlayStack.consumeEscape(e);
+    onClose();
+  };
+  document.addEventListener('keydown', onKeyDown, true);
+  return () => document.removeEventListener('keydown', onKeyDown, true);
+}, [shown, floatingId, onClose]);
 
-  const { refs, floatingStyles } = useFloating({
-    open: shown,
-    placement: 'bottom-start',
-    // fixed + portal: escapes the sticky bar and any overflow/transform ancestor.
-    strategy: 'fixed',
-    transform: false,
-    middleware: [
-      offset(4),
-      flip(),
-      shift({ padding: 8 }),
-      // Publish geometry as CSS vars; `.results` turns them into min width
-      // (never narrower than the pill) and viewport-bounded max width/height.
-      size({
-        padding: 8,
-        apply({ rects, availableWidth, availableHeight, elements }) {
-          const s = elements.floating.style;
-          s.setProperty('--topbar-results-min-width', `${rects.reference.width}px`);
-          s.setProperty('--topbar-results-available-width', `${Math.max(0, availableWidth)}px`);
-          s.setProperty('--topbar-results-available-height', `${Math.max(0, availableHeight)}px`);
-        },
-      }),
-    ],
-    whileElementsMounted: autoUpdate,
-    elements: { reference: anchorRef.current },
-  });
+const { refs, floatingStyles } = useFloating({
+  open: shown,
+  placement: 'bottom-start',
+  // fixed + portal: escapes the sticky bar and any overflow/transform ancestor.
+  strategy: 'fixed',
+  transform: false,
+  middleware: [
+    offset(4),
+    flip(),
+    shift({ padding: 8 }),
+    // Publish geometry as CSS vars; `.results` turns them into min width
+    // (never narrower than the pill) and viewport-bounded max width/height.
+    size({
+      padding: 8,
+      apply({ rects, availableWidth, availableHeight, elements }) {
+        const s = elements.floating.style;
+        s.setProperty('--topbar-results-min-width', `${rects.reference.width}px`);
+        s.setProperty('--topbar-results-available-width', `${Math.max(0, availableWidth)}px`);
+        s.setProperty('--topbar-results-available-height', `${Math.max(0, availableHeight)}px`);
+      },
+    }),
+  ],
+  whileElementsMounted: autoUpdate,
+  elements: { reference: anchorRef.current },
+});
 ```
 
 On the listbox `<div>`: `ref={mergeRefs<HTMLDivElement>(panelRef, refs.setFloating)}`, `style={floatingStyles}`, `data-in-overlay={inOverlay ? '' : undefined}`.
@@ -851,29 +889,29 @@ On the listbox `<div>`: `ref={mergeRefs<HTMLDivElement>(panelRef, refs.setFloati
 In `TopBar.tokens.scss`, after the `// ─── Search` block add:
 
 ```scss
-  // ─── Search results panel (combobox mode) ─────────────────────────────
-  --topbar-results-max-width: 460px;
-  --topbar-results-max-height: 360px;
-  --topbar-results-bg: var(--color-bg);
-  --topbar-results-border-color: var(--color-border);
-  --topbar-results-radius: var(--radius-md);
-  --topbar-results-shadow: var(--shadow-lg);
-  --topbar-results-padding: var(--space-1);
-  --topbar-results-z: var(--z-popover);
-  --topbar-results-group-label-padding: var(--space-2);
-  --topbar-results-group-label-font-size: var(--font-size-xs);
-  --topbar-results-group-label-fg: var(--color-fg-muted);
-  --topbar-results-option-gap: var(--space-2);
-  --topbar-results-option-padding: var(--space-2);
-  --topbar-results-option-radius: var(--radius-sm);
-  --topbar-results-option-fg: var(--color-fg);
-  --topbar-results-option-bg-active: var(--color-bg-muted);
-  --topbar-results-icon-fg: var(--color-fg-muted);
-  --topbar-results-meta-fg: var(--color-fg-muted);
-  --topbar-results-meta-font-size: var(--font-size-xs);
-  --topbar-results-status-fg: var(--color-fg-muted);
-  --topbar-results-status-font-size: var(--font-size-sm);
-  --topbar-results-footer-border-color: var(--color-border);
+// ─── Search results panel (combobox mode) ─────────────────────────────
+--topbar-results-max-width: 460px;
+--topbar-results-max-height: 360px;
+--topbar-results-bg: var(--color-bg);
+--topbar-results-border-color: var(--color-border);
+--topbar-results-radius: var(--radius-md);
+--topbar-results-shadow: var(--shadow-lg);
+--topbar-results-padding: var(--space-1);
+--topbar-results-z: var(--z-popover);
+--topbar-results-group-label-padding: var(--space-2);
+--topbar-results-group-label-font-size: var(--font-size-xs);
+--topbar-results-group-label-fg: var(--color-fg-muted);
+--topbar-results-option-gap: var(--space-2);
+--topbar-results-option-padding: var(--space-2);
+--topbar-results-option-radius: var(--radius-sm);
+--topbar-results-option-fg: var(--color-fg);
+--topbar-results-option-bg-active: var(--color-bg-muted);
+--topbar-results-icon-fg: var(--color-fg-muted);
+--topbar-results-meta-fg: var(--color-fg-muted);
+--topbar-results-meta-font-size: var(--font-size-xs);
+--topbar-results-status-fg: var(--color-fg-muted);
+--topbar-results-status-font-size: var(--font-size-sm);
+--topbar-results-footer-border-color: var(--color-border);
 ```
 
 - [ ] **Step 5: Styles**
@@ -1005,55 +1043,55 @@ Read `.claude/skills/transient-state-a11y/SKILL.md` first.
 Append inside the `describe`:
 
 ```tsx
-  it('shows the empty row for a non-empty query and announces it', async () => {
-    render(<Harness results={[]} />);
-    await userEvent.click(input());
-    expect(screen.getByRole('listbox')).toHaveTextContent('No results');
-    expect(await screen.findByRole('status')).toHaveTextContent('No results');
-  });
+it('shows the empty row for a non-empty query and announces it', async () => {
+  render(<Harness results={[]} />);
+  await userEvent.click(input());
+  expect(screen.getByRole('listbox')).toHaveTextContent('No results');
+  expect(await screen.findByRole('status')).toHaveTextContent('No results');
+});
 
-  it('uses a custom emptyMessage', async () => {
-    render(<Harness results={[]} emptyMessage="Nothing for that" />);
-    await userEvent.click(input());
-    expect(screen.getByRole('listbox')).toHaveTextContent('Nothing for that');
-  });
+it('uses a custom emptyMessage', async () => {
+  render(<Harness results={[]} emptyMessage="Nothing for that" />);
+  await userEvent.click(input());
+  expect(screen.getByRole('listbox')).toHaveTextContent('Nothing for that');
+});
 
-  it('announces the result count', async () => {
-    render(<Harness />);
-    await userEvent.click(input());
-    expect(await screen.findByRole('status')).toHaveTextContent('3 results');
-  });
+it('announces the result count', async () => {
+  render(<Harness />);
+  await userEvent.click(input());
+  expect(await screen.findByRole('status')).toHaveTextContent('3 results');
+});
 
-  // Review Focus 5
-  it('keeps rows visible while loading, marks busy and announces loading', async () => {
-    render(<Harness loading />);
-    await userEvent.click(input());
-    const listbox = screen.getByRole('listbox');
-    expect(listbox).toHaveAttribute('aria-busy', 'true');
-    expect(screen.getByRole('option', { name: 'Ada' })).toBeInTheDocument();
-    expect(listbox).toHaveTextContent('Searching…');
-    expect(listbox).not.toHaveTextContent('No results');
-    expect(await screen.findByRole('status')).toHaveTextContent('Searching…');
-  });
+// Review Focus 5
+it('keeps rows visible while loading, marks busy and announces loading', async () => {
+  render(<Harness loading />);
+  await userEvent.click(input());
+  const listbox = screen.getByRole('listbox');
+  expect(listbox).toHaveAttribute('aria-busy', 'true');
+  expect(screen.getByRole('option', { name: 'Ada' })).toBeInTheDocument();
+  expect(listbox).toHaveTextContent('Searching…');
+  expect(listbox).not.toHaveTextContent('No results');
+  expect(await screen.findByRole('status')).toHaveTextContent('Searching…');
+});
 
-  it('shows the panel while loading even for an empty query', async () => {
-    render(<TopBar.Search placeholder="Search" results={[]} loading />);
-    await userEvent.click(input());
-    expect(screen.getByRole('listbox')).toHaveTextContent('Searching…');
-  });
+it('shows the panel while loading even for an empty query', async () => {
+  render(<TopBar.Search placeholder="Search" results={[]} loading />);
+  await userEvent.click(input());
+  expect(screen.getByRole('listbox')).toHaveTextContent('Searching…');
+});
 ```
 
 Add a ru test in `TopBarSearch.test.tsx` (import `I18nProvider` from `'../../i18n/I18nProvider'`):
 
 ```tsx
-  it('pluralises the count in Russian', async () => {
-    render(
-      <I18nProvider locale="ru">
-        <TopBar.Search placeholder="Поиск" defaultValue="a" defaultOpen results={GROUPS} />
-      </I18nProvider>,
-    );
-    expect(await screen.findByRole('status')).toHaveTextContent('3 результата');
-  });
+it('pluralises the count in Russian', async () => {
+  render(
+    <I18nProvider locale="ru">
+      <TopBar.Search placeholder="Поиск" defaultValue="a" defaultOpen results={GROUPS} />
+    </I18nProvider>,
+  );
+  expect(await screen.findByRole('status')).toHaveTextContent('3 результата');
+});
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
@@ -1066,12 +1104,12 @@ Expected: new cases FAIL (no status region, no empty/loading rows).
 `messages.ts`, inside `topBar: { … }` after `search`:
 
 ```ts
-    /** Default `emptyMessage` of the `<TopBar.Search>` results panel; also announced. */
-    searchEmpty: string;
-    /** Loading row of the `<TopBar.Search>` results panel; also announced. */
-    searchLoading: string;
-    /** Live-region result count of the `<TopBar.Search>` results panel. */
-    searchResults: (params: { count: number }) => string;
+/** Default `emptyMessage` of the `<TopBar.Search>` results panel; also announced. */
+searchEmpty: string;
+/** Loading row of the `<TopBar.Search>` results panel; also announced. */
+searchLoading: string;
+/** Live-region result count of the `<TopBar.Search>` results panel. */
+searchResults: (params: { count: number }) => string;
 ```
 
 `en.ts`:
@@ -1097,35 +1135,35 @@ Expected: new cases FAIL (no status region, no empty/loading rows).
 In `TopBarSearchPanel.tsx` add `import { LiveRegion } from '../LiveRegion';` and props:
 
 ```tsx
-  /** Loading row + `aria-busy`. */
-  loading: boolean;
-  /** Empty row content, or `null` for no empty row. */
-  emptyMessage: ReactNode | null;
-  /** Live-region text ('' when the panel is hidden). */
-  announcement: string;
+/** Loading row + `aria-busy`. */
+loading: boolean;
+/** Empty row content, or `null` for no empty row. */
+emptyMessage: ReactNode | null;
+/** Live-region text ('' when the panel is hidden). */
+announcement: string;
 ```
 
 Change the render so the component returns the always-mounted live region plus the conditional portal:
 
 ```tsx
-  return (
-    <>
-      <LiveRegion>{announcement}</LiveRegion>
-      {shown &&
-        createPortal(
-          <div
-            /* …existing listbox attributes… */
-            aria-busy={loading || undefined}
-          >
-            {/* …existing groups… */}
-            {loading && <div className={styles.status}>{t('topBar.searchLoading')}</div>}
-            {emptyMessage != null && <div className={styles.status}>{emptyMessage}</div>}
-            {/* …existing footer… */}
-          </div>,
-          document.body,
-        )}
-    </>
-  );
+return (
+  <>
+    <LiveRegion>{announcement}</LiveRegion>
+    {shown &&
+      createPortal(
+        <div
+          /* …existing listbox attributes… */
+          aria-busy={loading || undefined}
+        >
+          {/* …existing groups… */}
+          {loading && <div className={styles.status}>{t('topBar.searchLoading')}</div>}
+          {emptyMessage != null && <div className={styles.status}>{emptyMessage}</div>}
+          {/* …existing footer… */}
+        </div>,
+        document.body,
+      )}
+  </>
+);
 ```
 
 (remove the earlier `if (!shown) return null;`; add `const t = useTranslation();` with `import { useTranslation } from '../../i18n';`.)
@@ -1133,16 +1171,16 @@ Change the render so the component returns the always-mounted live region plus t
 - [ ] **Step 5: TopBarSearch — compute and pass the new props**
 
 ```tsx
-  const empty = !loading && !hasItems ? (emptyMessage ?? t('topBar.searchEmpty')) : null;
-  const announcement = !shown
-    ? ''
-    : loading
-      ? t('topBar.searchLoading')
-      : hasItems
-        ? t('topBar.searchResults', { count: options.filter((o) => o.kind === 'item').length })
-        : typeof empty === 'string'
-          ? empty
-          : t('topBar.searchEmpty');
+const empty = !loading && !hasItems ? (emptyMessage ?? t('topBar.searchEmpty')) : null;
+const announcement = !shown
+  ? ''
+  : loading
+    ? t('topBar.searchLoading')
+    : hasItems
+      ? t('topBar.searchResults', { count: options.filter((o) => o.kind === 'item').length })
+      : typeof empty === 'string'
+        ? empty
+        : t('topBar.searchEmpty');
 ```
 
 Pass `loading={loading}`, `emptyMessage={shown ? empty : null}`, `announcement={announcement}`.
@@ -1152,8 +1190,8 @@ Pass `loading={loading}`, `emptyMessage={shown ? empty : null}`, `announcement={
 The `eocrm/aria-busy-needs-announcement` rule is per-file and does not yet recognise `<LiveRegion>` (which always renders `role="status"`/`"alert"`). In `tools/eslint-plugin-eocrm/rules/aria-busy-needs-announcement.mjs`, at the top of the `JSXOpeningElement(node)` visitor add:
 
 ```js
-        // <LiveRegion> always renders role="status"/"alert".
-        if (node.name.type === 'JSXIdentifier' && node.name.name === 'LiveRegion') announced = true;
+// <LiveRegion> always renders role="status"/"alert".
+if (node.name.type === 'JSXIdentifier' && node.name.name === 'LiveRegion') announced = true;
 ```
 
 In `tools/eslint-plugin-eocrm/rules.test.mjs`, add to the rule's `valid` list (next to the `VisuallyHidden` case):
@@ -1270,11 +1308,26 @@ function ComboboxSearchExample() {
   const [loading, setLoading] = useState(false);
   const [picked, setPicked] = useState<string | null>(null);
   const q = query.trim().toLowerCase();
-  const match = (list: string[]) =>
-    q ? list.filter((s) => s.toLowerCase().includes(q)) : [];
+  const match = (list: string[]) => (q ? list.filter((s) => s.toLowerCase().includes(q)) : []);
   const results = [
-    { label: 'Contacts', items: match(PEOPLE).map((s) => ({ id: `c:${s}`, label: s, meta: 'Contact', icon: <User size={16} /> })) },
-    { label: 'Deals', items: match(DEALS).map((s) => ({ id: `d:${s}`, label: s, meta: 'Deal', icon: <Briefcase size={16} /> })) },
+    {
+      label: 'Contacts',
+      items: match(PEOPLE).map((s) => ({
+        id: `c:${s}`,
+        label: s,
+        meta: 'Contact',
+        icon: <User size={16} />,
+      })),
+    },
+    {
+      label: 'Deals',
+      items: match(DEALS).map((s) => ({
+        id: `d:${s}`,
+        label: s,
+        meta: 'Deal',
+        icon: <Briefcase size={16} />,
+      })),
+    },
   ];
   return (
     <Stack gap="3">
@@ -1289,7 +1342,10 @@ function ComboboxSearchExample() {
               results={results}
               loading={loading}
               onSelect={(item) => setPicked(String(item.label))}
-              footerAction={{ label: `View all results for “${query}”`, onSelect: () => setPicked(`all: ${query}`) }}
+              footerAction={{
+                label: `View all results for “${query}”`,
+                onSelect: () => setPicked(`all: ${query}`),
+              }}
             />
           </TopBar.Start>
         </TopBar>
@@ -1337,7 +1393,7 @@ In `docs/components/TopBar.md`:
 
 - Replace the "❌ Command-palette experience — `<TopBar.Search>` is a plain text input. Compose `<Popover>` + `<OptionsPicker>`…" bullet with: "❌ Wrapping `<TopBar.Search>` in `<Popover>` to show results — use combobox mode (`results`)."
 - Add an i18n line entry for `topBar.searchEmpty`, `topBar.searchLoading`, `topBar.searchResults`.
-- After the bullet list that follows `<!-- props:end -->`, add a `### Combobox mode (\`results\`)` section with: a TL;DR snippet (controlled `value`, fetched `results`, `loading`, `onSelect` routing via `item.href`/id, `footerAction`); behaviour bullets (first row highlighted on every new id set; ↑/↓ wrap incl. footer; Enter/click → `onSelect(item, groupIndex)`, panel closes, text kept; Esc closes innermost-first and does not clear; blur closes; `href` rows open natively on Cmd/Ctrl/Shift/middle-click; panel at least as wide as the pill, height capped, scrolls; count/loading/empty announced); "When NOT to use" (picking a form value → `Select`; filter chips → `OptionsPicker`; a command palette in a modal → not covered); anti-patterns (toggling `results` between `undefined` and an array is fine but don't key/remount the search; ids must be unique across groups; don't clear the input inside `onChange`; don't navigate in both `onSelect` and via the `<a>` default — the library already prevents the default on plain clicks).
+- After the bullet list that follows `<!-- props:end -->`, add a `### Combobox mode (\`results\`)`section with: a TL;DR snippet (controlled`value`, fetched `results`, `loading`, `onSelect`routing via`item.href`/id, `footerAction`); behaviour bullets (first row highlighted on every new id set; ↑/↓ wrap incl. footer; Enter/click → `onSelect(item, groupIndex)`, panel closes, text kept; Esc closes innermost-first and does not clear; blur closes; `href`rows open natively on Cmd/Ctrl/Shift/middle-click; panel at least as wide as the pill, height capped, scrolls; count/loading/empty announced); "When NOT to use" (picking a form value →`Select`; filter chips → `OptionsPicker`; a command palette in a modal → not covered); anti-patterns (toggling `results`between`undefined`and an array is fine but don't key/remount the search; ids must be unique across groups; don't clear the input inside`onChange`; don't navigate in both `onSelect`and via the`<a>` default — the library already prevents the default on plain clicks).
 
 - [ ] **Step 2: Generated props table + primer**
 

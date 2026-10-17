@@ -111,7 +111,11 @@ export interface TopBarSearchProps extends Omit<
   onSelect?: (item: TopBarSearchItem, groupIndex: number) => void;
   /** Shows a loading row and sets `aria-busy`; existing results stay visible. */
   loading?: boolean;
-  /** Row shown for a non-empty query with no results. Default `t('topBar.searchEmpty')`. */
+  /**
+   * Row shown for a non-empty query with no results. Default `t('topBar.searchEmpty')`
+   * (also used when this is an empty string). A non-string node is rendered but the
+   * live region still announces the default text — pass a string to have it announced.
+   */
   emptyMessage?: ReactNode;
   /** Trailing row in the ↑/↓ cycle (e.g. "View all results"). Shown only alongside other panel content. */
   footerAction?: TopBarSearchFooterAction;
