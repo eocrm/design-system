@@ -2,9 +2,10 @@ import { shortcutMark } from './shortcuts';
 
 const key = (
   k: string,
-  mod: Partial<{ metaKey: boolean; ctrlKey: boolean; shiftKey: boolean }> = {},
+  mod: Partial<{ code: string; metaKey: boolean; ctrlKey: boolean; shiftKey: boolean }> = {},
 ) => ({
   key: k,
+  code: /^[a-z]$/i.test(k) ? `Key${k.toUpperCase()}` : '',
   metaKey: false,
   ctrlKey: false,
   shiftKey: false,
@@ -30,5 +31,12 @@ describe('shortcutMark', () => {
   it('returns null for ⌘B+Shift and non-shortcut keys', () => {
     expect(shortcutMark(key('b', { metaKey: true, shiftKey: true }))).toBeNull();
     expect(shortcutMark(key('a', { metaKey: true }))).toBeNull();
+  });
+
+  it('matches the physical key on a non-Latin layout (#654)', () => {
+    expect(shortcutMark(key('и', { code: 'KeyB', ctrlKey: true }))).toEqual({ type: 'bold' });
+    expect(shortcutMark(key('ч', { code: 'KeyX', ctrlKey: true, shiftKey: true }))).toEqual({
+      type: 'strike',
+    });
   });
 });

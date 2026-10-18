@@ -2,10 +2,13 @@
 // pure (key + modifiers → Mark | null); the editor reads it for both the
 // selection toggle and the collapsed-caret pending-mark path.
 import type { Mark } from '../RichText/engine/model';
+import { isLetterKey } from '../_internal/letterKey';
 
 /** The minimal keyboard-event shape the shortcut helpers read (matches `KeyboardEvent`). */
 export interface ShortcutKey {
   key: string;
+  /** Physical key — the fallback on non-Latin layouts (#654). */
+  code: string;
   metaKey: boolean;
   ctrlKey: boolean;
   shiftKey: boolean;
@@ -31,10 +34,9 @@ export interface ShortcutKey {
 export function shortcutMark(e: ShortcutKey): Mark | null {
   const mod = e.metaKey || e.ctrlKey;
   if (!mod) return null;
-  const k = e.key.toLowerCase();
-  if (k === 'b' && !e.shiftKey) return { type: 'bold' };
-  if (k === 'i' && !e.shiftKey) return { type: 'italic' };
-  if (k === 'u' && !e.shiftKey) return { type: 'underline' };
-  if (k === 'x' && e.shiftKey) return { type: 'strike' };
+  if (isLetterKey(e, 'b') && !e.shiftKey) return { type: 'bold' };
+  if (isLetterKey(e, 'i') && !e.shiftKey) return { type: 'italic' };
+  if (isLetterKey(e, 'u') && !e.shiftKey) return { type: 'underline' };
+  if (isLetterKey(e, 'x') && e.shiftKey) return { type: 'strike' };
   return null;
 }

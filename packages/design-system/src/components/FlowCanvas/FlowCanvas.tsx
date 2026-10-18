@@ -26,6 +26,7 @@ import {
   useScrollLock,
 } from '../_internal/overlay';
 import { useTranslation } from '../../i18n/useTranslation';
+import { isLetterKey } from '../_internal/letterKey';
 import { mergeAriaDescribedby, mergeRefs, sanitizeId } from '../_internal/refs';
 import { useControllableState } from '../_internal/useControllableState';
 import { computeLayout, ESTIMATED_NODE_SIZE } from './layout';
@@ -1130,7 +1131,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     }
     // Plain C starts keyboard connect mode; ctrl/cmd+C stays the browser's
     // copy shortcut.
-    if ((key === 'c' || key === 'C') && !ctrlKey && !metaKey) {
+    if (isLetterKey(event, 'c') && !ctrlKey && !metaKey) {
       if (!canConnect) return;
       // One gesture at a time (mirror of handleHandlePointerDown's guard):
       // C mid-pointer-draw must not replace the in-flight draw with a
@@ -1149,7 +1150,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     // Plain R starts a keyboard rewire of the selected edge's TARGET endpoint;
     // Shift+R rewires the SOURCE. Only acts when an edge is selected/focused;
     // ctrl/cmd+R stays the browser's reload.
-    if ((key === 'r' || key === 'R') && !ctrlKey && !metaKey) {
+    if (isLetterKey(event, 'r') && !ctrlKey && !metaKey) {
       if (!canConnect) return;
       if (connect?.mode === 'pointer') return; // one gesture at a time
       const edgeId =
@@ -1264,7 +1265,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
     }
     // E cycles through the origin node's edges (outgoing first, then
     // incoming); pressing E on a focused edge steps to the next one.
-    if (key === 'e' || key === 'E') {
+    if (isLetterKey(event, 'e')) {
       // Origin resolution on a focused edge applies the arrow branch's
       // staleness rule: the E-cycle only counts when it belongs to this edge
       // (its origin is the edge's from/to) — a cycle left over from an
@@ -1315,7 +1316,7 @@ export const FlowCanvas = forwardRef<HTMLDivElement, FlowCanvasProps>(function F
       fitTo(contentBounds);
       return;
     }
-    if ((key === 'f' || key === 'F') && !ctrlKey && !metaKey) {
+    if (isLetterKey(event, 'f') && !ctrlKey && !metaKey) {
       // Maximize works in readOnly too (viewing a large graph fullscreen is valid).
       event.preventDefault();
       setMaximizedAnnounced(!maximized);
