@@ -9,6 +9,8 @@ export interface ShortcutKey {
   key: string;
   /** Physical key — the fallback on non-Latin layouts (#654). */
   code: string;
+  /** Alt/AltGr held — disables the `code` fallback (AltGr letters are typing). */
+  altKey?: boolean;
   metaKey: boolean;
   ctrlKey: boolean;
   shiftKey: boolean;

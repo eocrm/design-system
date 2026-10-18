@@ -33,7 +33,7 @@
 
 <!-- props:end -->
 
-- Matches render as native `<mark>` (the HTML highlight role), so forced-colors mode and screen readers that report highlights see them — not just a colour change. Background is `--highlighted-text-mark-bg` (defaults to `--color-palette-yellow-bg`); matched text is always full-strength `--highlighted-text-mark-fg` (`--color-fg`) regardless of `tone` — muted and danger text fail AA contrast on the dark-theme yellow, and the stronger match text reads as emphasis anyway.
+- Matches render as native `<mark>` (the HTML highlight role), so screen readers that report highlights see them — not just a colour change. Background is `--highlighted-text-mark-bg` (defaults to `--color-palette-yellow-bg`); matched text is always full-strength `--highlighted-text-mark-fg` (`--color-fg`) regardless of `tone` — muted and danger text fail AA contrast on the dark-theme yellow, and the stronger match text reads as emphasis anyway.
 - `text` is always rendered as text, never parsed as HTML — safe for untrusted excerpts.
 - Ranges are forgiving: unsorted, overlapping, touching, out-of-range and empty ranges are all fine (merged / clamped / dropped).
 

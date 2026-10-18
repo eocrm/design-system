@@ -2,7 +2,13 @@ import { shortcutMark } from './shortcuts';
 
 const key = (
   k: string,
-  mod: Partial<{ code: string; metaKey: boolean; ctrlKey: boolean; shiftKey: boolean }> = {},
+  mod: Partial<{
+    code: string;
+    altKey: boolean;
+    metaKey: boolean;
+    ctrlKey: boolean;
+    shiftKey: boolean;
+  }> = {},
 ) => ({
   key: k,
   code: /^[a-z]$/i.test(k) ? `Key${k.toUpperCase()}` : '',
@@ -38,5 +44,9 @@ describe('shortcutMark', () => {
     expect(shortcutMark(key('ч', { code: 'KeyX', ctrlKey: true, shiftKey: true }))).toEqual({
       type: 'strike',
     });
+    // Polish AltGr+Shift+X types 'Ź' (AltGr = Ctrl+Alt on Windows) — not strike.
+    expect(
+      shortcutMark(key('Ź', { code: 'KeyX', ctrlKey: true, shiftKey: true, altKey: true })),
+    ).toBeNull();
   });
 });

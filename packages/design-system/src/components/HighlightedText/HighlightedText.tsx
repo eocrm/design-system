@@ -5,7 +5,12 @@ import styles from './HighlightedText.module.scss';
 
 export type { HighlightRange };
 
-export interface HighlightedTextProps extends Omit<TextProps, 'children'> {
+const NO_RANGES: readonly HighlightRange[] = [];
+
+export interface HighlightedTextProps extends Omit<
+  TextProps,
+  'children' | 'dangerouslySetInnerHTML'
+> {
   /**
    * The plain text to render. Always rendered as text, never parsed as HTML —
    * safe for untrusted search excerpts.
@@ -25,7 +30,7 @@ export interface HighlightedTextProps extends Omit<TextProps, 'children'> {
  * @see docs/components/HighlightedText.md
  */
 export const HighlightedText = forwardRef<HTMLElement, HighlightedTextProps>(
-  function HighlightedText({ text, ranges = [], ...rest }, ref) {
+  function HighlightedText({ text, ranges = NO_RANGES, ...rest }, ref) {
     const segments = useMemo(() => segmentHighlights(text, ranges), [text, ranges]);
     // Every Text prop (as/size/tone/weight/lineClamp/className/…) passes straight through.
     return (
