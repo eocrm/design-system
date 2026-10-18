@@ -427,6 +427,13 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['Code'],
   },
   {
+    to: '/components/highlighted-text',
+    name: 'HighlightedText',
+    description:
+      'Text with matched runs in <mark> — search-result excerpts with highlighted matches.',
+    preview: SCHEMATICS['HighlightedText'],
+  },
+  {
     to: '/components/divider',
     name: 'Divider',
     description: 'Thin separator. Horizontal/vertical, solid/dashed, optional label.',

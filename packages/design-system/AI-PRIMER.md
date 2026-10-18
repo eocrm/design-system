@@ -131,6 +131,7 @@ Each component's contract is its `docs/components/<Name>.md`; the props table th
 - [`Title`](docs/components/Title.md) — semantic heading
 - [`Text`](docs/components/Text.md) — body / inline text
 - [`Code`](docs/components/Code.md) — inline `<code>` chip
+- [`HighlightedText`](docs/components/HighlightedText.md) — `Text` with matched runs in `<mark>` (search excerpts)
 - [`Kbd`](docs/components/Kbd.md) — keyboard-shortcut chips
 
 ### Typography hard rule

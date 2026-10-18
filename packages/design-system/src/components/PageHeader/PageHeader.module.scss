@@ -144,6 +144,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: var(--page-header-meta-gap);
+
   // Separate the meta row from whatever sits above it (Title or Subtitle) —
   // grid row-gap is 0, so without this badges touch the title's descenders (#657).
   padding-block-start: var(--page-header-meta-gap-block);

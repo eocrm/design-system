@@ -1,0 +1,9 @@
+// HighlightedText.tokens.scss — Component-scoped tokens for <HighlightedText>'s matched runs.
+:root {
+  --highlighted-text-mark-bg: var(--color-palette-yellow-bg);
+
+  // Full-strength fg, not the surrounding tone: muted / danger drop below
+  // 4.5:1 on the dark-theme yellow (pinned in styles/contrast.test.ts).
+  --highlighted-text-mark-fg: var(--color-fg);
+  --highlighted-text-mark-radius: var(--radius-sm);
+}

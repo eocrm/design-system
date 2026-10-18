@@ -17,6 +17,7 @@ export type ComponentName =
   | 'CircularProgress'
   | 'Cluster'
   | 'Code'
+  | 'HighlightedText'
   | 'ColorPicker'
   | 'ConfirmationPopover'
   | 'Constrain'

@@ -1,0 +1,8 @@
+@use './HighlightedText.tokens';
+
+// No padding: the highlight must not shift the text it sits in.
+.mark {
+  border-radius: var(--highlighted-text-mark-radius);
+  background: var(--highlighted-text-mark-bg);
+  color: var(--highlighted-text-mark-fg);
+}

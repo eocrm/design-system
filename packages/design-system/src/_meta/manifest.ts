@@ -115,6 +115,7 @@ const CLUSTERS: Record<string, string> = {
   Calendar: 'Display',
   CircularProgress: 'Display',
   Code: 'Display',
+  HighlightedText: 'Display',
   CursorPagination: 'Display',
   DashboardCanvas: 'Display',
   DashboardWidget: 'Display',

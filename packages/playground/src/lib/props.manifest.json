@@ -2896,6 +2896,80 @@
         }
       ]
     },
+    "HighlightedText": {
+      "props": [
+        {
+          "name": "text",
+          "type": "string",
+          "required": true,
+          "default": "",
+          "description": "The plain text to render. Always rendered as text, never parsed as HTML —\nsafe for untrusted search excerpts."
+        },
+        {
+          "name": "ranges",
+          "type": "readonly HighlightRange[]",
+          "required": false,
+          "default": "",
+          "description": "Runs of `text` to highlight, as `{ start, length }` in UTF-16 code units\n(JavaScript string offsets — what most search APIs return). Out-of-range\nruns are clamped, empty ones dropped, overlapping or touching ones merged.\nOrder doesn't matter. Defaults to `[]` (plain text)."
+        },
+        {
+          "name": "htmlFor",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Associates a `<label>` with its form control. Only meaningful when\n`as=\"label\"` — passes through as the native `for` attribute."
+        },
+        {
+          "name": "as",
+          "type": "TextAs",
+          "required": false,
+          "default": "'p'",
+          "description": "Rendered element. Defaults to `'p'` (block, default body text). Use\n`'span'` for inline runs, `'div'` for block containers that can't be a\n`<p>` (e.g. when the body needs nested block-level elements that React\nwould warn about inside `<p>`), `'label'` for form labels (pair with\n`htmlFor`)."
+        },
+        {
+          "name": "size",
+          "type": "TextSize",
+          "required": false,
+          "default": "",
+          "description": "Visual size. Defaults to `'md'` (body text).\n- `xs` — 11px, dense metadata / captions\n- `sm` — 12px, small body / labels\n- `md` — 14px, body text (default)\n- `lg` — 16px, large body / lead text\n- `xl` — 20px, very large body (rare)\n- `inherit` — no fixed size; font-size AND line-height inherit from the\n  parent. For inline runs inside a heading (`as=\"span\"` inside a\n  `<Title>` / `<PageHeader.Title>`) that must keep the heading's size —\n  e.g. a muted task-key prefix. Tone / weight still apply — font-weight\n  stays Text's own (default `regular`), it does NOT inherit; pass\n  `weight` to match the heading if needed."
+        },
+        {
+          "name": "tone",
+          "type": "TextTone",
+          "required": false,
+          "default": "",
+          "description": "Color tone. Defaults to `'default'`.\n- `default` — `--color-fg`\n- `muted` — `--color-fg-muted` (for secondary copy)\n- `subtle` — **@deprecated (#521): resolves to `muted`. Use `muted`.**\n  In LIGHT theme the two neutrals were indistinguishable: OKLab ΔE 0.0261\n  when the deprecation was filed, 0.0365 after `--color-fg-muted` was retuned,\n  against the 0.065 floor this library's perceptual gates use. In DARK\n  they were 0.0707 apart — a real step — so **this deprecation changes\n  dark-theme appearance**: `subtle` text in dark gets lighter, moving from\n  `--color-fg-subtle` to `--color-fg-muted`. That is the accepted trade\n  (a tier that exists in one theme only is not a tier), but it is a\n  visual change, not the removal of a duplicate. `--text-fg-subtle` now\n  aliases `--text-fg-muted`, so nothing breaks at the type or build level;\n  if you need the old dark value back, override `--text-fg-subtle`.\n- `accent` — `--color-accent`\n- `danger` / `success` / `warning` — state-coded text"
+        },
+        {
+          "name": "weight",
+          "type": "TextWeight",
+          "required": false,
+          "default": "",
+          "description": "Font weight. Defaults to `'regular'`."
+        },
+        {
+          "name": "align",
+          "type": "TextAlign",
+          "required": false,
+          "default": "",
+          "description": "Text alignment. Defaults to `'left'`."
+        },
+        {
+          "name": "truncate",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Truncate to a single line with ellipsis. Defaults to `false`. Use inside\nnarrow containers (table cells, card list rows). Mutually exclusive with\n`lineClamp` — if both are set, `lineClamp` wins."
+        },
+        {
+          "name": "lineClamp",
+          "type": "number",
+          "required": false,
+          "default": "",
+          "description": "Clamp to N lines with ellipsis (uses `-webkit-line-clamp`). Defaults to\n`undefined`. Overrides `truncate` when set. Example: `lineClamp={2}` for\na 2-line description that ellipses on the third.\n\nIf you also pass `style.WebkitLineClamp`, the `lineClamp` prop takes\nprecedence — the component merges the dynamic line-clamp value into\n`style` AFTER spreading your `style`, so the prop wins."
+        }
+      ]
+    },
     "IconPicker": {
       "props": [
         {
@@ -6568,6 +6642,7 @@
     "StagePathTone": "\"success\" | \"danger\" | \"default\"",
     "TopBarElement": "\"div\" | \"header\"",
     "CodeTone": "\"danger\" | \"accent\" | \"default\" | \"muted\"",
+    "HighlightRange": "{ start: number; length: number }",
     "RichDoc": "{ blocks: Block[] }",
     "RenderLink": "(link: RichTextLink, defaultNode: ReactNode) => ReactNode",
     "RenderMention": "(mention: RichTextMention, defaultNode: ReactNode) => ReactNode",

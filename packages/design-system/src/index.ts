@@ -601,6 +601,9 @@ export type {
 export { Code } from './components/Code';
 export type { CodeProps, CodeTone } from './components/Code';
 
+export { HighlightedText } from './components/HighlightedText';
+export type { HighlightedTextProps, HighlightRange } from './components/HighlightedText';
+
 export { RichText } from './components/RichText';
 export type {
   RichTextProps,
