@@ -264,6 +264,29 @@ describe('RichTextEditor toolbar', () => {
     expect(kReachedHost).toBe(false);
   });
 
+  it('Ctrl+K opens the link editor on a non-Latin layout (#654)', async () => {
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 0 },
+      focus: { blockId: 'k', offset: 5 },
+    });
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'hello', marks: [] }] }],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} toolbar autoFocus />;
+    }
+    render(
+      <I18nProvider locale="en">
+        <Harness />
+      </I18nProvider>,
+    );
+    const editor = screen.getByRole('textbox', { name: 'Rich text editor' });
+    // Russian layout: the physical K key produces 'л'.
+    const notCancelled = fireEvent.keyDown(editor, { key: 'л', code: 'KeyK', ctrlKey: true });
+    expect(notCancelled).toBe(false);
+    expect(await screen.findByRole('group', { name: 'Edit link' })).toBeInTheDocument();
+  });
+
   it('Emoji toolbar button inserts the chosen emoji at the caret', async () => {
     const user = userEvent.setup();
     // Stub the live selection to a collapsed caret at offset 3 (end of 'hi ').

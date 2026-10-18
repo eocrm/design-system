@@ -1263,6 +1263,15 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       <Bar w={30} />
     </Row>
   ),
+  HighlightedText: (
+    <Row gap={4}>
+      <Bar w={30} />
+      <SolidBar w={24} />
+      <Bar w={40} />
+      <SolidBar w={18} />
+      <Bar w={22} />
+    </Row>
+  ),
   Divider: (
     <Col gap={8} style={{ width: 170, alignItems: 'center' }}>
       <Bar w={150} />

@@ -291,6 +291,9 @@ const PAIRS: Pair[] = [
     '--color-tone-neutral-bg',
     4.5,
   ],
+  // HighlightedText's <mark>: matched runs force full-strength fg because
+  // muted (4.14) and danger (3.65) fail on the dark yellow.
+  ['highlighted-text match on yellow mark', '--color-fg', '--color-palette-yellow-bg', 4.5],
 ];
 
 describe.each([

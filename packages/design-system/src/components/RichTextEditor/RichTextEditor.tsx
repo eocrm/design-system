@@ -42,6 +42,7 @@ import { readSelection, writeSelection, rangeRect } from './selection';
 import { applyInput } from './input';
 import { matchBlockRule, applyBlockRule } from './inputRules';
 import { runsText } from '../RichText/engine/inlines';
+import { isLetterKey } from '../_internal/letterKey';
 import { shortcutMark } from './shortcuts';
 import {
   activeMarks as deriveActiveMarks,
@@ -1046,14 +1047,14 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         // the paired historyUndo/historyRedo beforeinput (emitted by this same
         // keydown) is skipped there rather than double-applied.
         const mod = e.metaKey || e.ctrlKey;
-        if (mod && e.key.toLowerCase() === 'z' && !e.shiftKey) {
+        if (mod && isLetterKey(e, 'z') && !e.shiftKey) {
           e.preventDefault();
           e.stopPropagation();
           historyKeyAtRef.current = Date.now();
           onUndo();
           return;
         }
-        if (mod && (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey))) {
+        if (mod && (isLetterKey(e, 'y') || (isLetterKey(e, 'z') && e.shiftKey))) {
           e.preventDefault();
           e.stopPropagation();
           historyKeyAtRef.current = Date.now();
@@ -1070,7 +1071,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
             commit(moveBlockUnit(value, caretBlock, e.key === 'ArrowUp' ? -1 : 1), 'other');
             return;
           }
-          if (mod && !e.shiftKey && e.key.toLowerCase() === 'd') {
+          if (mod && !e.shiftKey && isLetterKey(e, 'd')) {
             e.preventDefault();
             e.stopPropagation();
             commit(duplicateBlockUnit(value, caretBlock), 'other');
@@ -1112,7 +1113,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         // ⌘/Ctrl+K opens the link editor (create or edit a link). Stop
         // propagation so the shortcut doesn't ALSO trigger a host app's global
         // ⌘K (command palette / search) while the editor is focused.
-        if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === 'k') {
+        if ((e.metaKey || e.ctrlKey) && !e.shiftKey && isLetterKey(e, 'k')) {
           e.preventDefault();
           e.stopPropagation();
           openLinkEditor();
