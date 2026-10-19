@@ -1,7 +1,12 @@
 import {
   forwardRef,
+  type ComponentPropsWithoutRef,
+  type ComponentPropsWithRef,
+  type ElementType,
+  type ForwardedRef,
   type HTMLAttributes,
   type KeyboardEvent,
+  type ReactElement,
   type ReactNode,
   type TdHTMLAttributes,
   type ThHTMLAttributes,
@@ -18,6 +23,12 @@ export type TableCellAlign = 'start' | 'center' | 'end';
 
 /** Sort state for a header cell. */
 export type TableSortDirection = 'asc' | 'desc' | 'none';
+
+/** Column-layout algorithm for the `<table>`. */
+export type TableLayout = 'auto' | 'fixed';
+
+/** Background tint + text colour for a cell or header cell. */
+export type TableCellTone = 'danger' | 'accent';
 
 export interface TableProps extends Omit<HTMLAttributes<HTMLTableElement>, 'children'> {
   /**
@@ -54,6 +65,15 @@ export interface TableProps extends Omit<HTMLAttributes<HTMLTableElement>, 'chil
    * manages their own scroll context.
    */
   scroll?: boolean;
+  /**
+   * Column-layout algorithm. Defaults to `'auto'`.
+   * - `'auto'`  — columns size to their content (native default).
+   * - `'fixed'` — `table-layout: fixed`: widths come from a native
+   *   `<colgroup><col style={{ width }} /></colgroup>` (or the first row), and
+   *   unsized columns split the rest equally. Use for grids of equal-width
+   *   number columns.
+   */
+  layout?: TableLayout;
   /** Compound-subcomponent children. */
   children?: ReactNode;
 }
@@ -100,6 +120,13 @@ export interface TableHeaderCellProps extends Omit<
    * Omit to render a non-sortable header (no chevron, no `aria-sort`).
    */
   sortDirection?: TableSortDirection;
+  /**
+   * Tints the header cell (top corners rounded) so a toned column reads as one
+   * band with its toned body cells. Exposed as `data-tone`. Default: none.
+   * - `'danger'` — overdue / at-risk column.
+   * - `'accent'` — the current / highlighted column (e.g. "Today").
+   */
+  tone?: TableCellTone;
   children?: ReactNode;
 }
 
@@ -111,8 +138,32 @@ export interface TableCellProps extends Omit<TdHTMLAttributes<HTMLTableCellEleme
    * cell width (column-level CSS or `style={{ maxWidth: … }}`).
    */
   truncate?: boolean;
+  /**
+   * Tints the cell background and colours its text. Exposed as `data-tone`.
+   * Default: none. Set it on every cell of the column (header included).
+   * - `'danger'` — overdue / at-risk column.
+   * - `'accent'` — the current / highlighted column (e.g. "Today").
+   */
+  tone?: TableCellTone;
   children?: ReactNode;
 }
+
+interface TableCellLinkOwnProps {
+  children?: ReactNode;
+}
+
+/**
+ * Public `Table.CellLink` prop type. Generic `C` defaults to `'a'`; pass
+ * `as={RouterLink}` to get that component's props (`to`, …) with inference.
+ */
+export type TableCellLinkProps<C extends ElementType = 'a'> = TableCellLinkOwnProps & {
+  /** Element or component to render. Defaults to `'a'`; use for router links. */
+  as?: C;
+} & Omit<ComponentPropsWithoutRef<C>, keyof TableCellLinkOwnProps | 'as'>;
+
+type TableCellLinkComponent = <C extends ElementType = 'a'>(
+  props: TableCellLinkProps<C> & { ref?: ComponentPropsWithRef<C>['ref'] },
+) => ReactElement | null;
 
 const sortAriaFor: Record<TableSortDirection, 'ascending' | 'descending' | 'none'> = {
   asc: 'ascending',
@@ -132,6 +183,7 @@ const TableRoot = forwardRef<HTMLTableElement, TableProps>(function TableRoot(
     hover = false,
     stickyHeader,
     scroll = true,
+    layout = 'auto',
     className,
     children,
     ...props
@@ -148,6 +200,7 @@ const TableRoot = forwardRef<HTMLTableElement, TableProps>(function TableRoot(
         bordered && styles.bordered,
         hover && styles.hover,
         stickyHeader && styles.stickyHeader,
+        layout === 'fixed' && styles.layoutFixed,
         className,
       )}
       // {...props} last so consumer overrides win (Pattern A).
@@ -226,6 +279,7 @@ const TableHeaderCell = forwardRef<HTMLTableCellElement, TableHeaderCellProps>(
     {
       align = 'start',
       sortDirection,
+      tone,
       scope = 'col',
       className,
       children,
@@ -256,6 +310,7 @@ const TableHeaderCell = forwardRef<HTMLTableCellElement, TableHeaderCellProps>(
       <th
         ref={ref}
         scope={scope}
+        data-tone={tone}
         aria-sort={sortable ? sortAriaFor[sortDirection] : undefined}
         tabIndex={sortable ? (tabIndex ?? 0) : tabIndex}
         onKeyDown={sortable ? handleKeyDown : onKeyDown}
@@ -278,12 +333,13 @@ const TableHeaderCell = forwardRef<HTMLTableCellElement, TableHeaderCellProps>(
 );
 
 const TableCell = forwardRef<HTMLTableCellElement, TableCellProps>(function TableCell(
-  { align = 'start', truncate, className, children, ...props },
+  { align = 'start', truncate, tone, className, children, ...props },
   ref,
 ) {
   return (
     <td
       ref={ref}
+      data-tone={tone}
       className={clsx(styles.td, styles[`align-${align}`], truncate && styles.truncate, className)}
       {...props}
     >
@@ -291,6 +347,23 @@ const TableCell = forwardRef<HTMLTableCellElement, TableCellProps>(function Tabl
     </td>
   );
 });
+
+/**
+ * Full-cell link inside `Table.Cell`: takes over the cell's padding so the whole cell is the hit area.
+ * @see docs/components/Table.md
+ */
+const TableCellLink = forwardRef(function TableCellLink<C extends ElementType = 'a'>(
+  { as, className, children, ...props }: TableCellLinkProps<C>,
+  ref: ForwardedRef<Element>,
+) {
+  const Component = (as || 'a') as ElementType;
+  return (
+    // {...props} first so the cellLink class (the cell's padding hook) is always kept.
+    <Component ref={ref} {...props} className={clsx(styles.cellLink, className)}>
+      {children}
+    </Component>
+  );
+}) as TableCellLinkComponent;
 
 /**
  * Compound `<Table>` family; subcomponents are attached as `Table.Body` etc.
@@ -304,4 +377,5 @@ export const Table = Object.assign(TableRoot, {
   Row: TableRow,
   HeaderCell: TableHeaderCell,
   Cell: TableCell,
+  CellLink: TableCellLink,
 });

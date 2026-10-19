@@ -5858,6 +5858,13 @@
           "description": "When `true` (default), the `<table>` is wrapped in a `<div>` with\n`overflow-x: auto` so wide tables scroll horizontally inside their\ncontainer. Set to `false` to render a bare `<table>` — the consumer\nmanages their own scroll context."
         },
         {
+          "name": "layout",
+          "type": "TableLayout",
+          "required": false,
+          "default": "",
+          "description": "Column-layout algorithm. Defaults to `'auto'`.\n- `'auto'`  — columns size to their content (native default).\n- `'fixed'` — `table-layout: fixed`: widths come from a native\n  `<colgroup><col style={{ width }} /></colgroup>` (or the first row), and\n  unsized columns split the rest equally. Use for grids of equal-width\n  number columns."
+        },
+        {
           "name": "children",
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
@@ -6637,6 +6644,7 @@
     "SortableArrangement": "\"list\" | \"grid\"",
     "CollapseBreakpoint": "\"sm\" | \"md\" | \"lg\"",
     "SortableMoveEvent": "{ id: string | number; from: { container: string | number; index: number; }; to: { container: string | number; index: number; } }",
+    "TableLayout": "\"auto\" | \"fixed\"",
     "TableDensity": "\"comfortable\" | \"dense\"",
     "PaginationSize": "\"sm\" | \"md\" | \"lg\"",
     "TextareaSize": "\"sm\" | \"md\" | \"lg\"",

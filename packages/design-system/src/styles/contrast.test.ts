@@ -197,6 +197,10 @@ const PAIRS: Pair[] = [
   ['danger text on danger tint', '--color-danger', '--color-danger-bg-subtle', 4.5],
   ['success text on success tint', '--color-success', '--color-success-bg-subtle', 4.5],
   ['accent text on accent tint', '--color-accent', '--color-accent-bg-subtle', 4.5],
+  // Table.CellLink on a toned cell, un-hovered: a muted zero dash on the tint.
+  // Muted on the accent tint is the 'muted text on accent tint' row. The
+  // hovered pairs are in the 'Table.CellLink hover keeps its text at AA' gate.
+  ['muted text on danger tint', '--color-fg-muted', '--color-danger-bg-subtle', 4.5],
   // The same tones in their OTHER three roles, so a future retune cannot fix
   // the text pair by breaking a fill.
   ['danger-fg on solid danger', '--color-danger-fg', '--color-danger', 4.5],
@@ -358,6 +362,57 @@ describe('StagePath hovered fills keep their text at AA', () => {
     const hovered = composite(fg, mix, tokenValue(`--color-tone-${tone}-bg`, source));
     expect(mix).toBeGreaterThan(0);
     expect(contrast(fg, hovered)).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+/**
+ * Table.CellLink hover paints `--table-cell-link-bg-hover`
+ * (`color-mix(--color-bg-overlay N%, transparent)`) over whatever the cell
+ * paints. That overlay DARKENS the surface, which helps a light fg in dark but
+ * hurts a dark fg in light. A toned cell's text steps to the tone's -hover
+ * colour; muted/subtle Text inside any hovered link takes the link colour
+ * (currentColor), so the link fg is the only text colour to pin. Every colour
+ * is read through Table.tokens.scss, the names the stylesheet actually paints.
+ */
+describe('Table.CellLink hover keeps its text at AA', () => {
+  const file = readFileSync(resolve(__dirname, '../components/Table/Table.tokens.scss'), 'utf8');
+  const mix = declaredValue('--table-cell-link-bg-hover', file)?.match(
+    /^color-mix\(in srgb, var\(--color-bg-overlay\) ([\d.]+)%, transparent\)$/,
+  );
+  const table = (name: string, source: string) => {
+    const target = declaredValue(name, file)?.match(/^var\((--[a-z0-9-]+)\)$/)?.[1];
+    expect(target, `${name} must be a var() alias`).toBeDefined();
+    return tokenValue(target!, source);
+  };
+  const hovered = (bg: string, source: string) => {
+    // e.g. `rgb(15 23 42 / 35%)`; the mix percentage scales its alpha.
+    const overlay = declaredValue('--color-bg-overlay', source)!.match(
+      /^rgb\((\d+) (\d+) (\d+) \/ ([\d.]+)%\)$/,
+    );
+    expect(overlay, '--color-bg-overlay shape').toBeTruthy();
+    const [r, g, b, a] = overlay!.slice(1).map(Number);
+    const hex = `#${[r, g, b].map((c) => c!.toString(16).padStart(2, '0')).join('')}`;
+    return composite(hex, (a! / 100) * (Number(mix![1]) / 100), bg);
+  };
+  // [label, link fg token, surface token under the overlay]
+  const SURFACES: [string, string, string][] = [
+    ['danger cell', '--table-cell-fg-danger-hover', '--table-cell-bg-danger'],
+    ['accent cell', '--table-cell-fg-accent-hover', '--table-cell-bg-accent'],
+    ['untoned on plain row', '--table-fg', '--table-bg'],
+    ['untoned on striped row', '--table-fg', '--table-row-bg-striped'],
+    ['untoned on hovered row', '--table-fg', '--table-row-bg-hover'],
+    ['untoned on selected row', '--table-row-fg-selected', '--table-row-bg-selected'],
+  ];
+  it.each(
+    (['light', 'dark'] as const).flatMap((theme) =>
+      SURFACES.map(([label, fg, bg]) => [theme, label, fg, bg] as const),
+    ),
+  )('%s %s', (theme, _label, fg, bg) => {
+    expect(mix, '--table-cell-link-bg-hover shape').toBeTruthy();
+    const source = theme === 'light' ? TOKENS : DARK;
+    expect(contrast(table(fg, source), hovered(table(bg, source), source))).toBeGreaterThanOrEqual(
+      4.5,
+    );
   });
 });
 
@@ -1873,9 +1928,9 @@ describe('a component hover is a visible step from what it replaces', () => {
   });
 
   /**
-   * The 30 hover tokens that are OUT of the gate, listed rather than counted.
+   * The 31 hover tokens that are OUT of the gate, listed rather than counted.
    *
-   * 26 are `absent` (no base token at all — the hover paints onto whatever
+   * 27 are `absent` (no base token at all — the hover paints onto whatever
    * surface is behind the element), 2 are `transparent`, 1 `translucent`, 1
    * `noncolour`. The docblock below used to say each member "has to justify
    * itself"; what actually happens is that the KIND has to be one of the four,
@@ -1916,6 +1971,7 @@ describe('a component hover is a visible step from what it replaces', () => {
     'Select/--select-retry-bg-hover',
     'Slider/--slider-thumb-shadow-hover',
     'Sortable/--sortable-handle-bg-hover',
+    'Table/--table-cell-link-bg-hover',
     'Table/--table-row-bg-hover',
     'Tabs/--tabs-vertical-tab-bg-hover',
   ];

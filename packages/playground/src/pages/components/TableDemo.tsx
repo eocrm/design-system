@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Table, Badge } from '@eocrm/design-system';
+import { Table, Badge, Text } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -45,6 +45,72 @@ function StaticTable() {
             <Table.Cell align="end">${row.amount.toLocaleString()}</Table.Cell>
           </Table.Row>
         ))}
+      </Table.Body>
+    </Table>
+  );
+}
+
+const WORK_BUCKETS: { key: string; label: string; tone?: 'danger' | 'accent' }[] = [
+  { key: 'overdue', label: 'Overdue', tone: 'danger' },
+  { key: 'today', label: 'Today', tone: 'accent' },
+  { key: 'upcoming', label: 'Upcoming' },
+  { key: 'undated', label: 'Undated' },
+  { key: 'noNext', label: 'No next action' },
+  { key: 'suggested', label: 'Suggested' },
+  { key: 'total', label: 'Total' },
+];
+
+const WORK_ROWS: { type: string; counts: number[] }[] = [
+  { type: 'Companies', counts: [4, 2, 11, 0, 3, 5] },
+  { type: 'Contacts', counts: [7, 5, 18, 6, 0, 9] },
+  { type: 'Deals', counts: [3, 0, 8, 2, 4, 1] },
+  { type: 'Projects', counts: [1, 3, 6, 0, 2, 0] },
+];
+
+function MyWorkGrid() {
+  return (
+    <Table layout="fixed">
+      <colgroup>
+        <col style={{ width: '23%' }} />
+        {WORK_BUCKETS.map((b) => (
+          <col key={b.key} />
+        ))}
+      </colgroup>
+      <Table.Header>
+        <Table.Row>
+          <Table.HeaderCell>Type</Table.HeaderCell>
+          {WORK_BUCKETS.map((b) => (
+            <Table.HeaderCell key={b.key} tone={b.tone} align="center">
+              {b.label}
+            </Table.HeaderCell>
+          ))}
+        </Table.Row>
+      </Table.Header>
+      <Table.Body>
+        {WORK_ROWS.map((row) => {
+          const counts = [...row.counts, row.counts.reduce((a, n) => a + n, 0)];
+          return (
+            <Table.Row key={row.type}>
+              <Table.HeaderCell scope="row">{row.type}</Table.HeaderCell>
+              {WORK_BUCKETS.map((b, i) => (
+                <Table.Cell key={b.key} tone={b.tone} align="center">
+                  <Table.CellLink
+                    href="#"
+                    aria-label={`${row.type}, ${b.label.toLowerCase()}: ${counts[i] || 'none'}`}
+                  >
+                    {counts[i] === 0 ? (
+                      <Text as="span" size="inherit" tone="muted">
+                        –
+                      </Text>
+                    ) : (
+                      counts[i]
+                    )}
+                  </Table.CellLink>
+                </Table.Cell>
+              ))}
+            </Table.Row>
+          );
+        })}
       </Table.Body>
     </Table>
   );
@@ -901,6 +967,80 @@ export function Demo() {
             </Table.Row>
           </Table.Body>
         </Table>
+      </Example>
+      <Example
+        title="Count grid with toned columns and full-cell links"
+        fullWidth
+        description={
+          'A “My work” grid: `layout="fixed"` with a `<colgroup>` (first column 23%, the rest equal), `tone` on the Overdue and Today header + body cells, and every count a `<Table.CellLink>` so the whole cell is clickable. Zeros render as a muted dash labelled “…: none”, because a dash has no spoken meaning; hovered, the dash takes the link colour. Each link carries an `aria-label` with its row and column.'
+        }
+        code={`import { Table, Text } from '@eocrm/design-system';
+
+const WORK_BUCKETS: { key: string; label: string; tone?: 'danger' | 'accent' }[] = [
+  { key: 'overdue', label: 'Overdue', tone: 'danger' },
+  { key: 'today', label: 'Today', tone: 'accent' },
+  { key: 'upcoming', label: 'Upcoming' },
+  { key: 'undated', label: 'Undated' },
+  { key: 'noNext', label: 'No next action' },
+  { key: 'suggested', label: 'Suggested' },
+  { key: 'total', label: 'Total' },
+];
+
+const WORK_ROWS: { type: string; counts: number[] }[] = [
+  { type: 'Companies', counts: [4, 2, 11, 0, 3, 5] },
+  { type: 'Contacts', counts: [7, 5, 18, 6, 0, 9] },
+  { type: 'Deals', counts: [3, 0, 8, 2, 4, 1] },
+  { type: 'Projects', counts: [1, 3, 6, 0, 2, 0] },
+];
+
+export function Demo() {
+  return (
+    <Table layout="fixed">
+      <colgroup>
+        <col style={{ width: '23%' }} />
+        {WORK_BUCKETS.map((b) => (
+          <col key={b.key} />
+        ))}
+      </colgroup>
+      <Table.Header>
+        <Table.Row>
+          <Table.HeaderCell>Type</Table.HeaderCell>
+          {WORK_BUCKETS.map((b) => (
+            <Table.HeaderCell key={b.key} tone={b.tone} align="center">
+              {b.label}
+            </Table.HeaderCell>
+          ))}
+        </Table.Row>
+      </Table.Header>
+      <Table.Body>
+        {WORK_ROWS.map((row) => {
+          const counts = [...row.counts, row.counts.reduce((a, n) => a + n, 0)];
+          return (
+            <Table.Row key={row.type}>
+              <Table.HeaderCell scope="row">{row.type}</Table.HeaderCell>
+              {WORK_BUCKETS.map((b, i) => (
+                <Table.Cell key={b.key} tone={b.tone} align="center">
+                  <Table.CellLink href="#" aria-label={\`\${row.type}, \${b.label.toLowerCase()}: \${counts[i] || 'none'}\`}>
+                    {counts[i] === 0 ? (
+                      <Text as="span" size="inherit" tone="muted">
+                        –
+                      </Text>
+                    ) : (
+                      counts[i]
+                    )}
+                  </Table.CellLink>
+                </Table.Cell>
+              ))}
+            </Table.Row>
+          );
+        })}
+      </Table.Body>
+    </Table>
+  );
+}
+`}
+      >
+        <MyWorkGrid />
       </Example>
     </DemoLayout>
   );
