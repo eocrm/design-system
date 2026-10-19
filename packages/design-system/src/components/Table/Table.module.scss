@@ -22,6 +22,12 @@
   background: var(--table-bg);
 }
 
+// Fixed layout only engages with a definite width; 100% is Rule 4's allowed value.
+.layoutFixed {
+  table-layout: fixed;
+  width: 100%;
+}
+
 // ─── Density ───────────────────────────────────────────────────────────────
 
 .density-comfortable .td,
@@ -34,6 +40,21 @@
 .density-dense .th {
   padding: var(--table-density-dense-padding-y) var(--table-density-dense-padding-x);
   font-size: var(--table-density-dense-font-size);
+}
+
+// Table.CellLink takes over its cell's padding so the whole cell is the hit
+// area — the cell drops its own via :has(), no negative margins. Declared
+// after the density rules so it wins on equal specificity.
+.td:has(> .cellLink) {
+  padding: 0;
+}
+
+.density-comfortable .cellLink {
+  padding: var(--table-density-comfortable-padding-y) var(--table-density-comfortable-padding-x);
+}
+
+.density-dense .cellLink {
+  padding: var(--table-density-dense-padding-y) var(--table-density-dense-padding-x);
 }
 
 // ─── Sections ──────────────────────────────────────────────────────────────
@@ -179,6 +200,56 @@
 
 .sortable:not(.sortableInactive) .sortIcon {
   color: var(--table-sort-icon-fg-active);
+}
+
+// ─── Cell tone ─────────────────────────────────────────────────────────────
+
+// Declared after .sortable so the tint survives a sortable header's hover, and
+// at (0,2,0) so it beats the sticky header's (0,1,0) background repeat.
+.td[data-tone='danger'],
+.th[data-tone='danger'] {
+  background: var(--table-cell-bg-danger);
+  color: var(--table-cell-fg-danger);
+}
+
+.td[data-tone='accent'],
+.th[data-tone='accent'] {
+  background: var(--table-cell-bg-accent);
+  color: var(--table-cell-fg-accent);
+}
+
+// Rounded top corners so the header and its toned body cells read as one band.
+.th[data-tone] {
+  border-start-start-radius: var(--table-cell-tone-header-radius);
+  border-start-end-radius: var(--table-cell-tone-header-radius);
+}
+
+// ─── Cell link ─────────────────────────────────────────────────────────────
+
+// Inherits the cell's text-align (block) and colour (tone). Padding comes from
+// the density rules above.
+.cellLink {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+
+  &:hover {
+    background: var(--table-cell-link-bg-hover);
+    text-decoration: underline;
+  }
+
+  // Inset ring so neighbouring cells don't paint over it.
+  &:focus-visible {
+    @include focus-ring(var(--table-cell-link-ring), $offset: calc(-1 * var(--ring-offset)));
+  }
+}
+
+[data-tone='danger'] > .cellLink:hover {
+  color: var(--table-cell-fg-danger-hover);
+}
+
+[data-tone='accent'] > .cellLink:hover {
+  color: var(--table-cell-fg-accent-hover);
 }
 
 // ─── Sticky header ─────────────────────────────────────────────────────────

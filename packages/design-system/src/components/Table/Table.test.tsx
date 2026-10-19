@@ -1,6 +1,6 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createRef } from 'react';
+import { createRef, forwardRef, type ReactNode } from 'react';
 import { Table } from './Table';
 
 describe('Table', () => {
@@ -414,5 +414,89 @@ describe('Table', () => {
     expect((firstRowCells[1] as HTMLTableCellElement).colSpan).toBe(2);
     expect((firstRowCells[2] as HTMLTableCellElement).colSpan).toBe(2);
     expect(headerRows[1].querySelectorAll('th')).toHaveLength(4);
+  });
+
+  it('layout="fixed" adds the fixed-layout class; default auto does not', () => {
+    const { container, rerender } = render(<Table layout="fixed" />);
+    expect(container.querySelector('table')!.className).toMatch(/layoutFixed/);
+    rerender(<Table />);
+    expect(container.querySelector('table')!.className).not.toMatch(/layoutFixed/);
+  });
+
+  it('tone on Table.Cell / Table.HeaderCell sets data-tone; omitted by default', () => {
+    const { container } = render(
+      <Table>
+        <Table.Header>
+          <Table.Row>
+            <Table.HeaderCell tone="danger">Overdue</Table.HeaderCell>
+            <Table.HeaderCell tone="accent">Today</Table.HeaderCell>
+            <Table.HeaderCell>Upcoming</Table.HeaderCell>
+          </Table.Row>
+        </Table.Header>
+        <Table.Body>
+          <Table.Row>
+            <Table.Cell tone="danger">3</Table.Cell>
+            <Table.Cell tone="accent">1</Table.Cell>
+            <Table.Cell>5</Table.Cell>
+          </Table.Row>
+        </Table.Body>
+      </Table>,
+    );
+    const ths = container.querySelectorAll('th');
+    const tds = container.querySelectorAll('td');
+    expect(ths[0]).toHaveAttribute('data-tone', 'danger');
+    expect(ths[1]).toHaveAttribute('data-tone', 'accent');
+    expect(ths[2]).not.toHaveAttribute('data-tone');
+    expect(tds[0]).toHaveAttribute('data-tone', 'danger');
+    expect(tds[1]).toHaveAttribute('data-tone', 'accent');
+    expect(tds[2]).not.toHaveAttribute('data-tone');
+  });
+
+  it('Table.CellLink renders an <a> carrying the padding-hook class, merges className, passes the accessible name', () => {
+    const ref = createRef<HTMLAnchorElement>();
+    render(
+      <Table>
+        <Table.Body>
+          <Table.Row>
+            <Table.Cell>
+              <Table.CellLink
+                ref={ref}
+                href="/deals?due=overdue"
+                aria-label="Deals, overdue: 3"
+                className="x"
+              >
+                3
+              </Table.CellLink>
+            </Table.Cell>
+          </Table.Row>
+        </Table.Body>
+      </Table>,
+    );
+    const link = screen.getByRole('link', { name: 'Deals, overdue: 3' });
+    expect(link).toHaveAttribute('href', '/deals?due=overdue');
+    expect(link.className).toMatch(/cellLink/);
+    expect(link).toHaveClass('x');
+    // The cell drops its padding via `:has(> .cellLink)`, so the link must be a direct child.
+    expect(link.parentElement?.tagName).toBe('TD');
+    expect(ref.current).toBe(link);
+  });
+
+  it('Table.CellLink `as` renders the given component with its props', () => {
+    const RouterLink = forwardRef<HTMLAnchorElement, { to: string; children?: ReactNode }>(
+      function RouterLink({ to, ...rest }, ref) {
+        return <a ref={ref} href={to} data-router="" {...rest} />;
+      },
+    );
+    const ref = createRef<HTMLAnchorElement>();
+    render(
+      <Table.CellLink as={RouterLink} to="/contacts" ref={ref}>
+        Contacts
+      </Table.CellLink>,
+    );
+    const link = screen.getByRole('link', { name: 'Contacts' });
+    expect(link).toHaveAttribute('href', '/contacts');
+    expect(link).toHaveAttribute('data-router');
+    expect(link.className).toMatch(/cellLink/);
+    expect(ref.current).toBe(link);
   });
 });

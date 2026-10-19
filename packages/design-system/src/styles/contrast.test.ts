@@ -197,6 +197,11 @@ const PAIRS: Pair[] = [
   ['danger text on danger tint', '--color-danger', '--color-danger-bg-subtle', 4.5],
   ['success text on success tint', '--color-success', '--color-success-bg-subtle', 4.5],
   ['accent text on accent tint', '--color-accent', '--color-accent-bg-subtle', 4.5],
+  // Table.CellLink hover on a toned cell: the hover overlay darkens the tint,
+  // which pulls the base tone under AA in light, so the hovered text steps to
+  // the -hover tone. These pin the solid pair; the overlay only widens it.
+  ['danger-hover text on danger tint', '--color-danger-hover', '--color-danger-bg-subtle', 4.5],
+  ['accent-hover text on accent tint', '--color-accent-hover', '--color-accent-bg-subtle', 4.5],
   // The same tones in their OTHER three roles, so a future retune cannot fix
   // the text pair by breaking a fill.
   ['danger-fg on solid danger', '--color-danger-fg', '--color-danger', 4.5],
@@ -1873,9 +1878,9 @@ describe('a component hover is a visible step from what it replaces', () => {
   });
 
   /**
-   * The 30 hover tokens that are OUT of the gate, listed rather than counted.
+   * The 31 hover tokens that are OUT of the gate, listed rather than counted.
    *
-   * 26 are `absent` (no base token at all — the hover paints onto whatever
+   * 27 are `absent` (no base token at all — the hover paints onto whatever
    * surface is behind the element), 2 are `transparent`, 1 `translucent`, 1
    * `noncolour`. The docblock below used to say each member "has to justify
    * itself"; what actually happens is that the KIND has to be one of the four,
@@ -1916,6 +1921,7 @@ describe('a component hover is a visible step from what it replaces', () => {
     'Select/--select-retry-bg-hover',
     'Slider/--slider-thumb-shadow-hover',
     'Sortable/--sortable-handle-bg-hover',
+    'Table/--table-cell-link-bg-hover',
     'Table/--table-row-bg-hover',
     'Tabs/--tabs-vertical-tab-bg-hover',
   ];

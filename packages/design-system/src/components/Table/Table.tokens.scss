@@ -56,4 +56,21 @@
 
   // Sortable focus ring
   --table-sortable-ring: var(--ring-accent);
+
+  // Cell tones (Table.Cell / Table.HeaderCell `tone`). Text-on-tint pairs are
+  // pinned in src/styles/contrast.test.ts for both themes.
+  --table-cell-bg-danger: var(--color-danger-bg-subtle);
+  --table-cell-fg-danger: var(--color-danger);
+  --table-cell-bg-accent: var(--color-accent-bg-subtle);
+  --table-cell-fg-accent: var(--color-accent);
+  --table-cell-tone-header-radius: var(--radius-md);
+
+  // Table.CellLink. The hover overlay darkens whatever the cell paints (plain,
+  // striped, hovered row or a tone tint). On a toned cell that pulls the base
+  // tone under AA in light, so hovered text steps to the tone's -hover colour
+  // (pairs also pinned in contrast.test.ts).
+  --table-cell-link-bg-hover: color-mix(in srgb, var(--color-bg-overlay) 25%, transparent);
+  --table-cell-fg-danger-hover: var(--color-danger-hover);
+  --table-cell-fg-accent-hover: var(--color-accent-hover);
+  --table-cell-link-ring: var(--ring-accent);
 }
