@@ -18,11 +18,11 @@ import {
   Zap,
 } from 'lucide-react';
 import {
-  Cluster,
   Field,
   IconPicker,
   Input,
   PALETTE_COLORS,
+  Split,
   Stack,
   Text,
   type IconPickerOption,
@@ -111,8 +111,14 @@ export function IconPickerDemo() {
   const [value, setValue] = useState('flame');
   const [colorIcon, setColorIcon] = useState('flame');
   const [color, setColor] = useState<PaletteColor>(PALETTE_COLORS[0]);
+  const [subsetIcon, setSubsetIcon] = useState('flame');
   const [subsetColor, setSubsetColor] = useState<PaletteColor>(subsetColors[0]);
   const [names, setNames] = useState({ sm: '', md: '', lg: '' });
+  const [sizeColors, setSizeColors] = useState<Record<'sm' | 'md' | 'lg', PaletteColor>>({
+    sm: PALETTE_COLORS[0],
+    md: PALETTE_COLORS[0],
+    lg: PALETTE_COLORS[0],
+  });
   const [sizeIcons, setSizeIcons] = useState({ sm: 'flag', md: 'flag', lg: 'flag' });
 
   return (
@@ -154,21 +160,32 @@ export function IconPickerDemo() {
       <Example
         title="Beside an Input"
         description="size matches Input heights at sm, md and lg. Without a visible label the picker needs an aria-label."
-        code={`<Cluster gap="sm">
-  <IconPicker size="md" aria-label="Status icon" value={icon} options={priorityIcons} onChange={setIcon} />
+        code={`<Split
+  gap="sm"
+  align="center"
+  aside={<IconPicker size="md" aria-label="Icon and colour" value={icon} options={priorityIcons} onChange={setIcon} color={color} onColorChange={setColor} />}
+>
   <Input size="md" aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} />
-</Cluster>`}
+</Split>`}
       >
         <Stack gap="sm">
           {sizes.map((size) => (
-            <Cluster key={size} gap="sm">
-              <IconPicker
-                size={size}
-                aria-label={`Status icon (${size})`}
-                value={sizeIcons[size]}
-                options={priorityIcons}
-                onChange={(v) => setSizeIcons((s) => ({ ...s, [size]: v }))}
-              />
+            <Split
+              key={size}
+              gap="sm"
+              align="center"
+              aside={
+                <IconPicker
+                  size={size}
+                  aria-label="Icon and colour"
+                  value={sizeIcons[size]}
+                  options={priorityIcons}
+                  onChange={(v) => setSizeIcons((s) => ({ ...s, [size]: v }))}
+                  color={sizeColors[size]}
+                  onColorChange={(c) => setSizeColors((s) => ({ ...s, [size]: c }))}
+                />
+              }
+            >
               <Input
                 size={size}
                 aria-label={`Name (${size})`}
@@ -176,7 +193,7 @@ export function IconPickerDemo() {
                 value={names[size]}
                 onChange={(e) => setNames((n) => ({ ...n, [size]: e.target.value }))}
               />
-            </Cluster>
+            </Split>
           ))}
         </Stack>
       </Example>
@@ -187,9 +204,9 @@ export function IconPickerDemo() {
       >
         <Field label="Appearance">
           <IconPicker
-            value={colorIcon}
+            value={subsetIcon}
             options={priorityIcons}
-            onChange={setColorIcon}
+            onChange={setSubsetIcon}
             color={subsetColor}
             onColorChange={setSubsetColor}
             colors={subsetColors}

@@ -1,5 +1,7 @@
 # `<IconPicker>` — choose one glyph from a consumer catalog
 
+**TL;DR:** controlled popover grid for choosing one icon from a consumer-curated catalog. Add `color` + `onColorChange` to also pick a palette colour, and `size` to match `Input` / `Select` heights.
+
 ```tsx
 const options = [
   { value: 'flame', label: 'Flame', icon: <Flame /> },
@@ -52,7 +54,47 @@ const [icon, setIcon] = useState('flame');
 
 ## Colour mode
 
-Pass `color` + `onColorChange` (both or neither) to also pick a palette colour. The trigger is tinted, the popover shows "Colour" and "Icon" groups, and picking does not close it. Narrow the offer with `colors`.
+Pass `color` + `onColorChange` (both or neither) to also pick a palette colour. The trigger is tinted, the popover shows "Colour" and "Icon" groups, and picking does not close it. `colors` defaults to all 30 palette colours; narrow it to a subset. A disabled picker keeps its tint, dimmed.
+
+```tsx
+<Field label="Appearance">
+  <IconPicker
+    value={icon}
+    options={iconOptions}
+    onChange={setIcon}
+    color={color}
+    onColorChange={setColor}
+  />
+</Field>
+```
+
+## Beside an Input
+
+`size` (`sm` / `md` / `lg`, 24 / 32 / 40px) matches `Input` / `Select` heights. With no visible label the picker needs an `aria-label`.
+
+```tsx
+<Split
+  gap="sm"
+  align="center"
+  aside={
+    <IconPicker
+      size="md"
+      aria-label="Icon and colour"
+      value={icon}
+      options={iconOptions}
+      onChange={setIcon}
+      color={color}
+      onColorChange={setColor}
+    />
+  }
+>
+  <Input size="md" aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} />
+</Split>
+```
+
+## Colour mode
+
+Pass `color` + `onColorChange` (both or neither) to also pick a palette colour. The trigger is tinted, the popover shows "Colour" and "Icon" groups, and picking does not close it. `colors` defaults to all 30 palette colours; narrow it to a subset. A disabled picker keeps its tint, dimmed.
 
 ```tsx
 <Field label="Appearance">

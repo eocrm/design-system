@@ -92,8 +92,7 @@ type IconPickerTokenStyle = CSSProperties & {
 };
 
 function swatchStyle(color: PaletteColor): IconPickerTokenStyle {
-  const { bg, fg } = paletteTokens(color);
-  return { '--icon-picker-swatch-bg': bg, '--icon-picker-swatch-fg': fg };
+  return { '--icon-picker-swatch-fg': paletteTokens(color).fg };
 }
 
 function readIconPickerTokenStyle(
