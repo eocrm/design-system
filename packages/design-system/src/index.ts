@@ -359,6 +359,9 @@ export type {
   PasswordStrengthScore,
 } from './components/PasswordStrengthMeter';
 
+export { CurrencySelect } from './components/CurrencySelect';
+export type { CurrencySelectProps, CurrencyDisplay } from './components/CurrencySelect';
+
 export { PhoneInput, isValidPhone } from './components/PhoneInput';
 export type {
   PhoneInputProps,

@@ -211,6 +211,14 @@
     "composes": [],
     "composedBy": []
   },
+  "CurrencySelect": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "Select"
+    ],
+    "composedBy": []
+  },
   "CursorPagination": {
     "tier": "composition",
     "cluster": "Display",
@@ -763,6 +771,7 @@
     "cluster": "Forms",
     "composes": [],
     "composedBy": [
+      "CurrencySelect",
       "PhoneInput"
     ]
   },

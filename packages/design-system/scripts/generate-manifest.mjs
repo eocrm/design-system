@@ -60,6 +60,7 @@ const CLUSTERS = {
   OtpInput: 'Forms',
   PasswordInput: 'Forms',
   PasswordStrengthMeter: 'Forms',
+  CurrencySelect: 'Forms',
   PhoneInput: 'Forms',
   Radio: 'Forms',
   OptionsPicker: 'Forms',

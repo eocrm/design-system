@@ -82,6 +82,7 @@ const CLUSTERS: Record<string, string> = {
   OtpInput: 'Forms',
   PasswordInput: 'Forms',
   PasswordStrengthMeter: 'Forms',
+  CurrencySelect: 'Forms',
   PhoneInput: 'Forms',
   Radio: 'Forms',
   OptionsPicker: 'Forms',

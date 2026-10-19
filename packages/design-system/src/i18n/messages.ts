@@ -591,6 +591,12 @@ export interface Messages {
     /** Placeholder in the national-number Input. */
     numberPlaceholder: string;
   };
+  currencySelect: {
+    /** Placeholder on the trigger when no currency is selected. */
+    placeholder: string;
+    /** Search placeholder for a currency picker with a text input (used by MoneyInput's internal picker). */
+    search: string;
+  };
   colorPicker: {
     /**
      * `aria-valuetext` for the saturation/brightness square, announced on
