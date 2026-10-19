@@ -47,6 +47,8 @@ const PLACEMENT_MAP: Record<
 };
 
 const COLUMNS = 4;
+// Also written to the swatch grid as --icon-picker-swatch-columns so CSS and Home/End agree.
+const SWATCH_COLUMNS = 6;
 
 const ICON_PICKER_TOKEN_NAMES = [
   '--icon-picker-trigger-size',
@@ -384,49 +386,84 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
     setOpen(next);
   };
 
-  const handleKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>) => {
-    const current = Number(event.currentTarget.dataset.iconIndex);
-    if (!Number.isInteger(current) || !options[current]) return;
+  // Shared roving-radio keyboard handler for the icon grid and the colour swatches.
+  const rovingKeyDown =
+    (
+      indexAttr: 'iconIndex' | 'colorIndex',
+      count: number,
+      columns: number,
+      focusAt: (index: number) => void,
+      selectAt: (index: number, viaArrow: boolean) => void,
+    ) =>
+    (event: ReactKeyboardEvent<HTMLButtonElement>) => {
+      const current = Number(event.currentTarget.dataset[indexAttr]);
+      if (!Number.isInteger(current) || current < 0 || current >= count) return;
 
-    const lastIndex = options.length - 1;
-    const rowStart = current - (current % COLUMNS);
-    let nextIndex: number | undefined;
-    let selectOnMove = false;
+      const lastIndex = count - 1;
+      const rowStart = current - (current % columns);
+      let nextIndex: number;
+      let selectOnMove = false;
 
-    switch (event.key) {
-      case 'ArrowLeft':
-      case 'ArrowUp':
-        nextIndex = current === 0 ? lastIndex : current - 1;
-        selectOnMove = true;
-        break;
-      case 'ArrowRight':
-      case 'ArrowDown':
-        nextIndex = current === lastIndex ? 0 : current + 1;
-        selectOnMove = true;
-        break;
-      case 'Home':
-        nextIndex = rowStart;
-        break;
-      case 'End':
-        nextIndex = Math.min(rowStart + COLUMNS - 1, lastIndex);
-        break;
-      case 'Enter':
-      case ' ':
-      case 'Spacebar':
-      case 'Space':
-        event.preventDefault();
-        commit(options[current]);
-        return;
-      default:
-        return;
-    }
+      switch (event.key) {
+        case 'ArrowLeft':
+        case 'ArrowUp':
+          nextIndex = current === 0 ? lastIndex : current - 1;
+          selectOnMove = true;
+          break;
+        case 'ArrowRight':
+        case 'ArrowDown':
+          nextIndex = current === lastIndex ? 0 : current + 1;
+          selectOnMove = true;
+          break;
+        case 'Home':
+          nextIndex = rowStart;
+          break;
+        case 'End':
+          nextIndex = Math.min(rowStart + columns - 1, lastIndex);
+          break;
+        case 'Enter':
+        case ' ':
+        case 'Spacebar':
+        case 'Space':
+          event.preventDefault();
+          selectAt(current, false);
+          return;
+        default:
+          return;
+      }
 
-    event.preventDefault();
-    focusCell(nextIndex);
-    if (selectOnMove && !unavailableRef.current) {
-      onChange(options[nextIndex].value);
-    }
-  };
+      event.preventDefault();
+      focusAt(nextIndex);
+      if (selectOnMove && !unavailableRef.current) selectAt(nextIndex, true);
+    };
+
+  const handleKeyDown = rovingKeyDown(
+    'iconIndex',
+    options.length,
+    COLUMNS,
+    focusCell,
+    (index, viaArrow) => {
+      const option = options[index];
+      if (!option) return;
+      // Arrows select without closing; Enter/Space commit (closes in icon-only mode).
+      if (viaArrow) onChange(option.value);
+      else commit(option);
+    },
+  );
+
+  const handleColorKeyDown = rovingKeyDown(
+    'colorIndex',
+    colors.length,
+    SWATCH_COLUMNS,
+    (index) => {
+      const target = colors[index];
+      if (target) colorRefs.current.get(target)?.focus();
+    },
+    (index) => {
+      const target = colors[index];
+      if (target) commitColor(target);
+    },
+  );
 
   const iconGrid = (
     <div
@@ -529,6 +566,9 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
                     className={styles.swatches}
                     role="radiogroup"
                     aria-labelledby={colorHeadingId}
+                    style={
+                      { '--icon-picker-swatch-columns': SWATCH_COLUMNS } as IconPickerTokenStyle
+                    }
                   >
                     {colors.map((paletteColor, index) => (
                       <button
@@ -552,6 +592,7 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
                         )}
                         style={swatchStyle(paletteColor)}
                         onClick={() => commitColor(paletteColor)}
+                        onKeyDown={handleColorKeyDown}
                       />
                     ))}
                   </div>

@@ -120,7 +120,7 @@
 // Six columns spread to the icon grid's width so both sections read as one panel.
 .swatches {
   display: grid;
-  grid-template-columns: repeat(6, var(--icon-picker-swatch-size));
+  grid-template-columns: repeat(var(--icon-picker-swatch-columns), var(--icon-picker-swatch-size));
   justify-content: space-between;
   gap: var(--icon-picker-swatch-gap);
   padding: var(--icon-picker-grid-padding);

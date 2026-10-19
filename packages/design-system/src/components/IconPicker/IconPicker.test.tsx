@@ -781,4 +781,104 @@ describe('IconPicker — colour mode', () => {
     );
     expect(screen.getByRole('button', { name: 'Look: Flame, Teal' })).toBeInTheDocument();
   });
+
+  describe('keyboard', () => {
+    const three: PaletteColor[] = ['red', 'teal', 'blue'];
+    const eight: PaletteColor[] = [
+      'red',
+      'coral',
+      'orange',
+      'amber',
+      'gold',
+      'yellow',
+      'olive',
+      'lime',
+    ];
+    const openPicker = async (user: ReturnType<typeof userEvent.setup>) =>
+      user.click(screen.getByRole('button', { name: 'Pick icon and colour: Flame, Teal' }));
+
+    it('Tab moves from the colour group to the icon group and Shift+Tab back', async () => {
+      const user = userEvent.setup();
+      render(<ColorHarness initialColor="teal" colors={three} />);
+      await openPicker(user);
+      await waitFor(() => expect(screen.getByRole('radio', { name: 'Teal' })).toHaveFocus());
+      await user.tab();
+      expect(screen.getByRole('radio', { name: 'Flame' })).toHaveFocus();
+      await user.tab({ shift: true });
+      expect(screen.getByRole('radio', { name: 'Teal' })).toHaveFocus();
+    });
+
+    it('arrows move and select colours, wrapping, without closing', async () => {
+      const user = userEvent.setup();
+      render(<ColorHarness initialColor="blue" colors={three} />);
+      await user.click(screen.getByRole('button', { name: /Pick icon and colour/ }));
+      await waitFor(() => expect(screen.getByRole('radio', { name: 'Blue' })).toHaveFocus());
+      await user.keyboard('{ArrowRight}');
+      expect(onColorChangeSpy).toHaveBeenLastCalledWith('red');
+      expect(screen.getByRole('radio', { name: 'Red' })).toHaveFocus();
+      expect(screen.getByRole('radio', { name: 'Red' })).toHaveAttribute('aria-checked', 'true');
+      await user.keyboard('{ArrowLeft}');
+      expect(onColorChangeSpy).toHaveBeenLastCalledWith('blue');
+      await user.keyboard('{ArrowDown}{ArrowUp}');
+      expect(onColorChangeSpy).toHaveBeenCalledTimes(4);
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+
+    it('Home/End move focus within the swatch row without selecting', async () => {
+      const user = userEvent.setup();
+      render(<ColorHarness initialColor="gold" colors={eight} />);
+      await user.click(screen.getByRole('button', { name: /Pick icon and colour/ }));
+      await waitFor(() => expect(screen.getByRole('radio', { name: 'Gold' })).toHaveFocus());
+      await user.keyboard('{End}');
+      expect(screen.getByRole('radio', { name: 'Yellow' })).toHaveFocus();
+      await user.keyboard('{Home}');
+      expect(screen.getByRole('radio', { name: 'Red' })).toHaveFocus();
+      expect(onColorChangeSpy).not.toHaveBeenCalled();
+    });
+
+    it('End on the last short row stops at the final swatch', async () => {
+      const user = userEvent.setup();
+      render(<ColorHarness initialColor="olive" colors={eight} />);
+      await user.click(screen.getByRole('button', { name: /Pick icon and colour/ }));
+      await waitFor(() => expect(screen.getByRole('radio', { name: 'Olive' })).toHaveFocus());
+      await user.keyboard('{Home}');
+      expect(screen.getByRole('radio', { name: 'Olive' })).toHaveFocus();
+      await user.keyboard('{End}');
+      expect(screen.getByRole('radio', { name: 'Lime' })).toHaveFocus();
+    });
+
+    it('Enter/Space on a dot commits and stays open; Esc closes and refocuses trigger', async () => {
+      const user = userEvent.setup();
+      render(<ColorHarness initialColor="teal" colors={three} />);
+      await user.click(screen.getByRole('button', { name: /Pick icon and colour/ }));
+      await waitFor(() => expect(screen.getByRole('radio', { name: 'Teal' })).toHaveFocus());
+      await user.keyboard('{Enter}');
+      expect(onColorChangeSpy).toHaveBeenLastCalledWith('teal');
+      await user.keyboard(' ');
+      expect(onColorChangeSpy).toHaveBeenCalledTimes(2);
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      await user.keyboard('{Escape}');
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /Pick icon and colour/ })).toHaveFocus();
+    });
+
+    it('arrow selection in the icon grid still fires onChange and does not close in colour mode', async () => {
+      const user = userEvent.setup();
+      render(<ColorHarness initialColor="teal" colors={three} />);
+      await user.click(screen.getByRole('button', { name: /Pick icon and colour/ }));
+      await waitFor(() => expect(screen.getByRole('radio', { name: 'Teal' })).toHaveFocus());
+      await user.tab();
+      await user.keyboard('{ArrowRight}');
+      expect(onChangeSpy).toHaveBeenLastCalledWith('zap');
+      expect(screen.getByRole('radio', { name: 'Lightning' })).toHaveFocus();
+      await user.keyboard('{Enter}');
+      expect(onChangeSpy).toHaveBeenCalledTimes(2);
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+
+    it('shares the swatch column count between TS and SCSS', () => {
+      const scss = readFileSync(resolve(__dirname, 'IconPicker.module.scss'), 'utf8');
+      expect(scss).toContain('repeat(var(--icon-picker-swatch-columns)');
+    });
+  });
 });
