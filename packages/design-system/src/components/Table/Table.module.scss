@@ -234,7 +234,16 @@
   font-weight: var(--table-cell-link-font-weight);
   text-decoration: none;
 
+  // Muted (and deprecated subtle) Text inside — e.g. a zero dash — takes the
+  // link's own colour: muted on the overlay falls under AA in light, even on
+  // an untoned hovered or striped row. currentColor in a custom property
+  // resolves where it is used, so Text's `color:` inherits the link colour
+  // (the cell fg, or the tone -hover colour below). Subtle is set too: it
+  // aliases muted at :root, so overriding muted alone would not reach it.
   &:hover {
+    --text-fg-muted: currentColor;
+    --text-fg-subtle: currentColor;
+
     background: var(--table-cell-link-bg-hover);
     text-decoration: underline;
   }
@@ -245,16 +254,14 @@
   }
 }
 
-// Muted Text inside (e.g. a zero dash) takes the hover tone too: muted on the
-// overlaid tint falls under AA in light.
+// The overlay pulls the base tone under AA in light, so hovered toned text
+// steps to the tone's -hover colour.
 [data-tone='danger'] > .cellLink:hover {
   color: var(--table-cell-fg-danger-hover);
-  --text-fg-muted: var(--table-cell-fg-danger-hover);
 }
 
 [data-tone='accent'] > .cellLink:hover {
   color: var(--table-cell-fg-accent-hover);
-  --text-fg-muted: var(--table-cell-fg-accent-hover);
 }
 
 // ─── Sticky header ─────────────────────────────────────────────────────────

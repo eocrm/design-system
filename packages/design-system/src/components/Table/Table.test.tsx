@@ -10,13 +10,17 @@ import { Table } from './Table';
 // compiled stylesheet (the Avatar / DataTable pattern). Sass drops the quotes
 // from attribute selectors, so write them unquoted.
 const stylesheet = parse(compile(resolve(__dirname, './Table.module.scss')).css);
+/** Declarations of the ONE rule whose selector list contains `selector` exactly. */
 function declarations(selector: string): Record<string, string> {
-  let rule: Rule | undefined;
+  const rules: Rule[] = [];
   stylesheet.walkRules((r) => {
-    if (r.selectors.some((s) => s.endsWith(selector))) rule = r;
+    if (r.selectors.includes(selector)) rules.push(r);
   });
+  if (rules.length !== 1) {
+    throw new Error(`"${selector}" matched ${rules.length} rules, expected exactly 1`);
+  }
   return Object.fromEntries(
-    (rule?.nodes ?? [])
+    rules[0]!.nodes
       .filter((n): n is Declaration => n.type === 'decl')
       .map((d) => [d.prop, d.value]),
   );
@@ -517,18 +521,21 @@ describe('Table', () => {
     expect(ref.current).toBe(link);
   });
 
-  it('CellLink styles: cell drops padding, truncate ellipsises the link, hovered toned link retones muted Text', () => {
+  it('CellLink styles: cell drops padding, truncate ellipsises the link, hovered link recolours muted Text', () => {
     expect(declarations('.td:has(> .cellLink)')).toMatchObject({ padding: '0' });
     expect(declarations('.truncate > .cellLink')).toMatchObject({
       overflow: 'hidden',
       'text-overflow': 'ellipsis',
       'white-space': 'nowrap',
     });
+    // Any hovered link, toned or not: muted/subtle Text takes the link colour.
+    expect(declarations('.cellLink:hover')).toMatchObject({
+      '--text-fg-muted': 'currentColor',
+      '--text-fg-subtle': 'currentColor',
+    });
     for (const tone of ['danger', 'accent']) {
-      const hover = `var(--table-cell-fg-${tone}-hover)`;
-      expect(declarations(`[data-tone=${tone}] > .cellLink:hover`)).toMatchObject({
-        color: hover,
-        '--text-fg-muted': hover,
+      expect(declarations(`[data-tone=${tone}] > .cellLink:hover`)).toEqual({
+        color: `var(--table-cell-fg-${tone}-hover)`,
       });
     }
   });
