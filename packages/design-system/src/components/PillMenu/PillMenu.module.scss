@@ -57,6 +57,12 @@
   }
 }
 
+// Coloured rows read as one block when flush (DropdownMenu's gap is 0);
+// separate them so each option is its own chip.
+.menu {
+  --dropdown-menu-gap: var(--pill-menu-option-gap);
+}
+
 // DropdownMenu's own hover/focus-visible rule is
 // `.item:hover:not([aria-disabled='true'])` — (0,3,0): the attribute
 // selector inside `:not()` counts toward specificity. A plain

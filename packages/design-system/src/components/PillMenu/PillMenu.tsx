@@ -282,7 +282,7 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
       <span role="status" aria-live="polite" className={styles.srOnly}>
         {busyText}
       </span>
-      <DropdownMenu.Content>
+      <DropdownMenu.Content className={styles.menu}>
         {options.map((option) => (
           <DropdownMenu.Item
             key={option.id}
