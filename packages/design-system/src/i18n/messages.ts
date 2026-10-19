@@ -5,6 +5,8 @@
 // As components migrate, they extend this interface with their own namespace,
 // e.g. `alert: { dismiss: string }`. Both en.ts and ru.ts must then populate
 // the new keys.
+import type { PaletteColor } from '../palette';
+
 export interface Messages {
   alert: {
     /** aria-label on the Alert's dismiss (×) button. */
@@ -616,7 +618,15 @@ export interface Messages {
   iconPicker: {
     /** Default accessible purpose for the IconPicker trigger. */
     triggerLabel: string;
+    /** Default purpose in colour mode (`color` passed); names the trigger and dialog. */
+    triggerLabelWithColor: string;
+    /** Visible heading naming the colour radiogroup in colour mode. */
+    colorLabel: string;
+    /** Visible heading naming the icon radiogroup in colour mode. */
+    iconLabel: string;
   };
+  /** Localized names for every categorical palette colour (`PaletteColor`). */
+  palette: Record<PaletteColor, string>;
   drawer: {
     /** aria-label for the Drawer header's close button. */
     close: string;

@@ -2991,7 +2991,7 @@
           "type": "(value: string) => void",
           "required": true,
           "default": "",
-          "description": "Fires exactly once with the chosen option value, including when it equals the controlled\n`value`, then closes the popover."
+          "description": "Fires exactly once with the chosen option value, including when it equals the controlled\n`value`. Closes the popover in icon-only mode; colour mode keeps it open."
         },
         {
           "name": "disabled",
@@ -2999,6 +2999,13 @@
           "required": false,
           "default": "false",
           "description": "Disables the trigger, prevents opening and selection, and closes an open picker."
+        },
+        {
+          "name": "size",
+          "type": "IconPickerSize",
+          "required": false,
+          "default": "md",
+          "description": "Trigger size, matching the sm/md/lg field heights."
         },
         {
           "name": "invalid",
@@ -3026,14 +3033,14 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Accessible picker purpose. It names the trigger with the selected icon appended and names\nthe dialog plus radiogroup without that suffix. Defaults to the localized\n`iconPicker.triggerLabel` value when omitted OR empty — an empty string is\nnot an explicit name, so it takes the default too."
+          "description": "Accessible picker purpose. It names the trigger with the selected icon appended and names\nthe dialog without that suffix (in icon-only mode it names the radiogroup too; in colour\nmode the radiogroups are named by their visible \"Colour\"/\"Icon\" headings). Defaults to the localized\n`iconPicker.triggerLabel` value when omitted OR empty — an empty string is\nnot an explicit name, so it takes the default too. In colour mode the default is\n`iconPicker.triggerLabelWithColor` and the trigger appends the colour name as well."
         },
         {
           "name": "aria-labelledby",
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Id(s) of external elements that provide the picker purpose. They name the dialog and\nradiogroup directly. The trigger also references hidden selected-option text so its name\nremains the visible purpose plus the current selection."
+          "description": "Id(s) of external elements that provide the picker purpose. They name the dialog directly\n(and the radiogroup in icon-only mode; colour-mode radiogroups use their visible headings).\nThe trigger also references hidden selected-option text, plus hidden colour-name text in\ncolour mode, so its name remains the visible purpose plus the current selection."
         },
         {
           "name": "aria-describedby",
@@ -3041,6 +3048,27 @@
           "required": false,
           "default": "",
           "description": "Id(s) of element(s) that describe the trigger button."
+        },
+        {
+          "name": "color",
+          "type": "PaletteColor",
+          "required": false,
+          "default": "",
+          "description": "Controlled palette colour. Passing it turns on colour mode."
+        },
+        {
+          "name": "onColorChange",
+          "type": "((color: PaletteColor) => void)",
+          "required": false,
+          "default": "",
+          "description": "Fires with the chosen palette colour; the popover stays open."
+        },
+        {
+          "name": "colors",
+          "type": "readonly PaletteColor[]",
+          "required": false,
+          "default": "PALETTE_COLORS",
+          "description": "Offered colours, in order."
         }
       ]
     },
@@ -6513,6 +6541,7 @@
     "CardOverflow": "\"hidden\" | \"visible\"",
     "CheckboxSize": "\"sm\" | \"md\" | \"lg\"",
     "IconPickerPopoverPlacement": "\"top\" | \"top-start\" | \"top-end\" | \"bottom\" | \"bottom-start\" | \"bottom-end\"",
+    "IconPickerSize": "\"sm\" | \"md\" | \"lg\"",
     "StackGap": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"2xl\"",
     "StackAlign": "\"start\" | \"end\" | \"center\" | \"stretch\"",
     "SwitchSize": "\"sm\" | \"md\" | \"lg\"",

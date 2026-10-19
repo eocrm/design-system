@@ -1,5 +1,7 @@
 :root {
   --icon-picker-trigger-size: var(--size-md);
+  --icon-picker-trigger-size-sm: var(--size-sm);
+  --icon-picker-trigger-size-lg: var(--size-lg);
   --icon-picker-cell-size: var(--size-lg);
   --icon-picker-grid-gap: var(--space-1);
   --icon-picker-grid-padding: var(--space-1);
@@ -21,4 +23,18 @@
   --icon-picker-disabled-fg: var(--color-fg-disabled);
   --icon-picker-cursor: pointer;
   --icon-picker-cursor-disabled: not-allowed;
+
+  // Colour mode (`color` passed).
+  --icon-picker-disabled-opacity: var(--opacity-disabled);
+  --icon-picker-section-gap: var(--space-1);
+  --icon-picker-heading-fg: var(--color-fg-muted);
+  --icon-picker-heading-font-size: var(--font-size-xs);
+  --icon-picker-heading-font-weight: var(--font-weight-medium);
+  --icon-picker-swatch-size: var(--size-xs);
+  --icon-picker-swatch-gap: var(--space-2);
+  --icon-picker-swatch-radius: var(--radius-full);
+  --icon-picker-swatch-hover-ring: var(--color-fg-muted);
+  --icon-picker-swatch-hover-ring-width: var(--border-width);
+  --icon-picker-swatch-selected-ring: var(--color-bg);
+  --icon-picker-swatch-selected-ring-width: var(--border-width-emphasis);
 }

@@ -11,6 +11,7 @@ import {
 } from 'react';
 import clsx from 'clsx';
 import { useTranslation } from '../../i18n/useTranslation';
+import { PALETTE_COLORS, paletteTokens, type PaletteColor } from '../../palette';
 import { mergeRefs } from '../_internal/refs';
 import { Popover, type PopoverAlign, type PopoverSide } from '../Popover';
 import styles from './IconPicker.module.scss';
@@ -46,9 +47,13 @@ const PLACEMENT_MAP: Record<
 };
 
 const COLUMNS = 4;
+// Also written to the swatch grid as --icon-picker-swatch-columns so CSS and Home/End agree.
+const SWATCH_COLUMNS = 6;
 
 const ICON_PICKER_TOKEN_NAMES = [
   '--icon-picker-trigger-size',
+  '--icon-picker-trigger-size-sm',
+  '--icon-picker-trigger-size-lg',
   '--icon-picker-cell-size',
   '--icon-picker-grid-gap',
   '--icon-picker-grid-padding',
@@ -70,11 +75,27 @@ const ICON_PICKER_TOKEN_NAMES = [
   '--icon-picker-disabled-fg',
   '--icon-picker-cursor',
   '--icon-picker-cursor-disabled',
+  '--icon-picker-disabled-opacity',
+  '--icon-picker-section-gap',
+  '--icon-picker-heading-fg',
+  '--icon-picker-heading-font-size',
+  '--icon-picker-heading-font-weight',
+  '--icon-picker-swatch-size',
+  '--icon-picker-swatch-gap',
+  '--icon-picker-swatch-radius',
+  '--icon-picker-swatch-hover-ring',
+  '--icon-picker-swatch-hover-ring-width',
+  '--icon-picker-swatch-selected-ring',
+  '--icon-picker-swatch-selected-ring-width',
 ] as const;
 
 type IconPickerTokenStyle = CSSProperties & {
   [token: `--icon-picker-${string}`]: string | number | undefined;
 };
+
+function swatchStyle(color: PaletteColor): IconPickerTokenStyle {
+  return { '--icon-picker-swatch-fg': paletteTokens(color).fg };
+}
 
 function readIconPickerTokenStyle(
   element: HTMLDivElement | null,
@@ -107,8 +128,14 @@ export interface IconPickerOption {
   icon: ReactNode;
 }
 
-/** Props for the controlled `<IconPicker>` popover and its root wrapper. */
-export interface IconPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
+/** Trigger size: `sm`/`md`/`lg` match the Field control heights. */
+export type IconPickerSize = 'sm' | 'md' | 'lg';
+
+/** Props shared by both modes of the controlled `<IconPicker>` popover and its root wrapper. */
+export interface IconPickerBaseProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'onChange' | 'color'
+> {
   /** Currently selected option value. Controlled — required. */
   value: string;
   /**
@@ -118,7 +145,7 @@ export interface IconPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, 'o
   options: IconPickerOption[];
   /**
    * Fires exactly once with the chosen option value, including when it equals the controlled
-   * `value`, then closes the popover.
+   * `value`. Closes the popover in icon-only mode; colour mode keeps it open.
    */
   onChange: (value: string) => void;
   /**
@@ -126,6 +153,8 @@ export interface IconPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, 'o
    * @default false
    */
   disabled?: boolean;
+  /** Trigger size, matching the sm/md/lg field heights. @default 'md' */
+  size?: IconPickerSize;
   /** Marks the focusable trigger invalid for Field composition. @default false */
   invalid?: boolean;
   /**
@@ -148,20 +177,38 @@ export interface IconPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, 'o
   popoverPlacement?: IconPickerPopoverPlacement;
   /**
    * Accessible picker purpose. It names the trigger with the selected icon appended and names
-   * the dialog plus radiogroup without that suffix. Defaults to the localized
+   * the dialog without that suffix (in icon-only mode it names the radiogroup too; in colour
+   * mode the radiogroups are named by their visible "Colour"/"Icon" headings). Defaults to the localized
    * `iconPicker.triggerLabel` value when omitted OR empty — an empty string is
-   * not an explicit name, so it takes the default too.
+   * not an explicit name, so it takes the default too. In colour mode the default is
+   * `iconPicker.triggerLabelWithColor` and the trigger appends the colour name as well.
    */
   'aria-label'?: string;
   /**
-   * Id(s) of external elements that provide the picker purpose. They name the dialog and
-   * radiogroup directly. The trigger also references hidden selected-option text so its name
-   * remains the visible purpose plus the current selection.
+   * Id(s) of external elements that provide the picker purpose. They name the dialog directly
+   * (and the radiogroup in icon-only mode; colour-mode radiogroups use their visible headings).
+   * The trigger also references hidden selected-option text, plus hidden colour-name text in
+   * colour mode, so its name remains the visible purpose plus the current selection.
    */
   'aria-labelledby'?: string;
   /** Id(s) of element(s) that describe the trigger button. */
   'aria-describedby'?: string;
 }
+
+/** Colour mode: `color` + `onColorChange` come together or not at all. */
+export type IconPickerColorProps =
+  | {
+      /** Controlled palette colour. Passing it turns on colour mode. */
+      color: PaletteColor;
+      /** Fires with the chosen palette colour; the popover stays open. */
+      onColorChange: (color: PaletteColor) => void;
+      /** Offered colours, in order. @default PALETTE_COLORS */
+      colors?: readonly PaletteColor[];
+    }
+  | { color?: never; onColorChange?: never; colors?: never };
+
+/** Props for the controlled `<IconPicker>` popover and its root wrapper. */
+export type IconPickerProps = IconPickerBaseProps & IconPickerColorProps;
 
 /**
  * Controlled single-select icon picker with a compact Popover radio grid.
@@ -172,8 +219,12 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
     value,
     options,
     onChange,
+    color,
+    onColorChange,
+    colors = PALETTE_COLORS,
     disabled = false,
     invalid = false,
+    size = 'md',
     // Consumed for Field compatibility; native button triggers do not support required state.
     required: _required = false,
     popoverPlacement = 'bottom-start',
@@ -205,18 +256,41 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
     ),
   );
   const focusWithinGridRef = useRef(false);
-  const pendingOpenFocusRef = useRef<string | null>(null);
-  const selectedLabelId = `${useId()}-selected`;
+  const pendingOpenFocusRef = useRef<(() => HTMLButtonElement | undefined) | null>(null);
+  const colorRefs = useRef(new Map<PaletteColor, HTMLButtonElement>());
+  const baseId = useId();
+  const selectedLabelId = `${baseId}-selected`;
+  const colorNameId = `${baseId}-color`;
+  const colorHeadingId = `${baseId}-color-heading`;
+  const iconHeadingId = `${baseId}-icon-heading`;
+  const colorMode = color !== undefined;
+  const colorName = colorMode ? t(`palette.${color}`) : '';
+  const checkedColorIndex = colorMode ? colors.indexOf(color) : -1;
+  const [activeColor, setActiveColor] = useState<PaletteColor | null>(colorMode ? color : null);
+  // Roving stop follows focus by value (survives reordering `colors`); falls back to the
+  // checked colour, then the first dot, if the active one is no longer offered.
+  const activeColorIndex = activeColor === null ? -1 : colors.indexOf(activeColor);
+  const tabbableColorIndex =
+    activeColorIndex >= 0 ? activeColorIndex : Math.max(0, checkedColorIndex);
+  const tintStyle: IconPickerTokenStyle | undefined = colorMode
+    ? {
+        '--icon-picker-tint-bg': paletteTokens(color).bg,
+        '--icon-picker-tint-fg': paletteTokens(color).fg,
+      }
+    : undefined;
   const selected = options.find((option) => option.value === value);
   const selectedIndex = options.findIndex((option) => option.value === value);
   const optionValues = JSON.stringify(options.map((option) => option.value));
   const unavailable = disabled || options.length === 0;
   const unavailableRef = useRef(unavailable);
   unavailableRef.current = unavailable;
-  const purpose = ariaLabel || t('iconPicker.triggerLabel');
-  const triggerLabel = selected ? `${purpose}: ${selected.label}` : purpose;
-  const triggerLabelledBy =
-    ariaLabelledBy && selected ? `${ariaLabelledBy} ${selectedLabelId}` : ariaLabelledBy;
+  const purpose =
+    ariaLabel || t(colorMode ? 'iconPicker.triggerLabelWithColor' : 'iconPicker.triggerLabel');
+  const selectionLabel = [selected?.label, colorName].filter(Boolean).join(', ');
+  const triggerLabel = selectionLabel ? `${purpose}: ${selectionLabel}` : purpose;
+  const triggerLabelledBy = ariaLabelledBy
+    ? clsx(ariaLabelledBy, selected && selectedLabelId, colorMode && colorNameId)
+    : undefined;
   const { side, align } = PLACEMENT_MAP[popoverPlacement];
   const purposeLabelProps = ariaLabelledBy
     ? { 'aria-labelledby': ariaLabelledBy }
@@ -253,10 +327,10 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
 
   useLayoutEffect(() => {
     if (!open || pendingOpenFocusRef.current === null) return;
-    const valueToFocus = pendingOpenFocusRef.current;
+    const getFocusTarget = pendingOpenFocusRef.current;
     pendingOpenFocusRef.current = null;
     queueMicrotask(() => {
-      const cell = cellRefs.current.get(valueToFocus);
+      const cell = getFocusTarget();
       if (cell?.isConnected) {
         cell.focus({ preventScroll: true });
       }
@@ -287,8 +361,19 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
   const commit = (option: IconPickerOption) => {
     if (unavailableRef.current) return;
     onChange(option.value);
+    if (colorMode) {
+      // Colour mode stays open (the user usually sets both); keep the roving stop on the pick.
+      activeIndexRef.current = options.indexOf(option);
+      setActiveValue(option.value);
+      return;
+    }
     setOpen(false);
     triggerRef.current?.focus({ preventScroll: true });
+  };
+
+  const commitColor = (next: PaletteColor) => {
+    if (unavailableRef.current) return;
+    onColorChange?.(next);
   };
 
   const handleOpenChange = (next: boolean) => {
@@ -298,7 +383,12 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
       const seedValue = options[seedIndex]?.value ?? null;
       activeIndexRef.current = seedIndex;
       setActiveValue(seedValue);
-      pendingOpenFocusRef.current = seedValue;
+      const seedColorIndex = Math.max(0, checkedColorIndex);
+      const seedColor = colorMode ? colors[seedColorIndex] : undefined;
+      setActiveColor(seedColor ?? null);
+      pendingOpenFocusRef.current = seedColor
+        ? () => colorRefs.current.get(seedColor)
+        : () => (seedValue === null ? undefined : cellRefs.current.get(seedValue));
     } else {
       pendingOpenFocusRef.current = null;
       focusWithinGridRef.current = false;
@@ -306,49 +396,136 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
     setOpen(next);
   };
 
-  const handleKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>) => {
-    const current = Number(event.currentTarget.dataset.iconIndex);
-    if (!Number.isInteger(current) || !options[current]) return;
+  // Shared roving-radio keyboard handler for the icon grid and the colour swatches.
+  const rovingKeyDown =
+    (
+      indexAttr: 'iconIndex' | 'colorIndex',
+      count: number,
+      columns: number,
+      focusAt: (index: number) => void,
+      selectAt: (index: number, viaArrow: boolean) => void,
+    ) =>
+    (event: ReactKeyboardEvent<HTMLButtonElement>) => {
+      const current = Number(event.currentTarget.dataset[indexAttr]);
+      if (!Number.isInteger(current) || current < 0 || current >= count) return;
 
-    const lastIndex = options.length - 1;
-    const rowStart = current - (current % COLUMNS);
-    let nextIndex: number | undefined;
-    let selectOnMove = false;
+      const lastIndex = count - 1;
+      const rowStart = current - (current % columns);
+      let nextIndex: number;
+      let selectOnMove = false;
 
-    switch (event.key) {
-      case 'ArrowLeft':
-      case 'ArrowUp':
-        nextIndex = current === 0 ? lastIndex : current - 1;
-        selectOnMove = true;
-        break;
-      case 'ArrowRight':
-      case 'ArrowDown':
-        nextIndex = current === lastIndex ? 0 : current + 1;
-        selectOnMove = true;
-        break;
-      case 'Home':
-        nextIndex = rowStart;
-        break;
-      case 'End':
-        nextIndex = Math.min(rowStart + COLUMNS - 1, lastIndex);
-        break;
-      case 'Enter':
-      case ' ':
-      case 'Spacebar':
-      case 'Space':
-        event.preventDefault();
-        commit(options[current]);
-        return;
-      default:
-        return;
-    }
+      switch (event.key) {
+        case 'ArrowLeft':
+        case 'ArrowUp':
+          nextIndex = current === 0 ? lastIndex : current - 1;
+          selectOnMove = true;
+          break;
+        case 'ArrowRight':
+        case 'ArrowDown':
+          nextIndex = current === lastIndex ? 0 : current + 1;
+          selectOnMove = true;
+          break;
+        case 'Home':
+          nextIndex = rowStart;
+          break;
+        case 'End':
+          nextIndex = Math.min(rowStart + columns - 1, lastIndex);
+          break;
+        case 'Enter':
+        case ' ':
+        case 'Spacebar':
+        case 'Space':
+          event.preventDefault();
+          selectAt(current, false);
+          return;
+        default:
+          return;
+      }
 
-    event.preventDefault();
-    focusCell(nextIndex);
-    if (selectOnMove && !unavailableRef.current) {
-      onChange(options[nextIndex].value);
-    }
-  };
+      event.preventDefault();
+      focusAt(nextIndex);
+      if (selectOnMove && !unavailableRef.current) selectAt(nextIndex, true);
+    };
+
+  const handleKeyDown = rovingKeyDown(
+    'iconIndex',
+    options.length,
+    COLUMNS,
+    focusCell,
+    (index, viaArrow) => {
+      const option = options[index];
+      if (!option) return;
+      // Arrows select without closing; Enter/Space commit (closes in icon-only mode).
+      if (viaArrow) onChange(option.value);
+      else commit(option);
+    },
+  );
+
+  const handleColorKeyDown = rovingKeyDown(
+    'colorIndex',
+    colors.length,
+    SWATCH_COLUMNS,
+    (index) => {
+      const target = colors[index];
+      if (!target) return;
+      setActiveColor(target);
+      colorRefs.current.get(target)?.focus();
+    },
+    (index) => {
+      const target = colors[index];
+      if (target) commitColor(target);
+    },
+  );
+
+  const iconGrid = (
+    <div
+      className={styles.grid}
+      role="radiogroup"
+      style={colorMode ? undefined : portaledTokenStyle}
+      onFocusCapture={() => {
+        focusWithinGridRef.current = true;
+      }}
+      onBlurCapture={(event) => {
+        if (
+          !(event.relatedTarget instanceof Node) ||
+          !event.currentTarget.contains(event.relatedTarget)
+        ) {
+          focusWithinGridRef.current = false;
+        }
+      }}
+      {...(colorMode ? { 'aria-labelledby': iconHeadingId } : purposeLabelProps)}
+    >
+      {options.map((option, index) => (
+        <button
+          key={option.value}
+          ref={(element) => {
+            if (element) {
+              cellRefs.current.set(option.value, element);
+            } else {
+              cellRefs.current.delete(option.value);
+            }
+          }}
+          type="button"
+          role="radio"
+          aria-label={option.label}
+          aria-checked={option.value === value}
+          tabIndex={option.value === renderedActiveValue ? 0 : -1}
+          data-icon-index={index}
+          className={clsx(
+            styles.cell,
+            colorMode && styles.tinted,
+            option.value === value && styles.selected,
+          )}
+          onClick={() => commit(option)}
+          onKeyDown={handleKeyDown}
+        >
+          <span className={styles.glyph} aria-hidden="true">
+            {option.icon}
+          </span>
+        </button>
+      ))}
+    </div>
+  );
 
   return (
     // {...rest} last so consumers can set native root attributes.
@@ -363,13 +540,19 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
           {selected.label}
         </span>
       )}
+      {ariaLabelledBy && colorMode && (
+        <span id={colorNameId} className={styles.visuallyHidden}>
+          {colorName}
+        </span>
+      )}
       <Popover open={open} onOpenChange={handleOpenChange}>
         <Popover.Trigger>
           <button
             ref={triggerRef}
             id={id}
             type="button"
-            className={styles.trigger}
+            className={clsx(styles.trigger, styles[`size-${size}`], colorMode && styles.tinted)}
+            style={tintStyle}
             disabled={unavailable}
             aria-label={ariaLabelledBy ? undefined : triggerLabel}
             aria-labelledby={triggerLabelledBy}
@@ -384,49 +567,61 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
           </button>
         </Popover.Trigger>
         <Popover.Content side={side} align={align} {...purposeLabelProps}>
-          <div
-            className={styles.grid}
-            role="radiogroup"
-            style={portaledTokenStyle}
-            onFocusCapture={() => {
-              focusWithinGridRef.current = true;
-            }}
-            onBlurCapture={(event) => {
-              if (
-                !(event.relatedTarget instanceof Node) ||
-                !event.currentTarget.contains(event.relatedTarget)
-              ) {
-                focusWithinGridRef.current = false;
-              }
-            }}
-            {...purposeLabelProps}
-          >
-            {options.map((option, index) => (
-              <button
-                key={option.value}
-                ref={(element) => {
-                  if (element) {
-                    cellRefs.current.set(option.value, element);
-                  } else {
-                    cellRefs.current.delete(option.value);
-                  }
-                }}
-                type="button"
-                role="radio"
-                aria-label={option.label}
-                aria-checked={option.value === value}
-                tabIndex={option.value === renderedActiveValue ? 0 : -1}
-                data-icon-index={index}
-                className={clsx(styles.cell, option.value === value && styles.selected)}
-                onClick={() => commit(option)}
-                onKeyDown={handleKeyDown}
-              >
-                <span className={styles.glyph} aria-hidden="true">
-                  {option.icon}
-                </span>
-              </button>
-            ))}
-          </div>
+          {colorMode ? (
+            <div className={styles.panel} style={{ ...portaledTokenStyle, ...tintStyle }}>
+              {colors.length > 0 && (
+                <>
+                  <span id={colorHeadingId} className={styles.heading}>
+                    {t('iconPicker.colorLabel')}
+                  </span>
+                  {/* Internal var, deliberately not in ICON_PICKER_TOKEN_NAMES. */}
+                  <div
+                    className={styles.swatches}
+                    role="radiogroup"
+                    aria-labelledby={colorHeadingId}
+                    style={
+                      { '--icon-picker-swatch-columns': SWATCH_COLUMNS } as IconPickerTokenStyle
+                    }
+                  >
+                    {colors.map((paletteColor, index) => (
+                      <button
+                        key={paletteColor}
+                        ref={(element) => {
+                          if (element) {
+                            colorRefs.current.set(paletteColor, element);
+                          } else {
+                            colorRefs.current.delete(paletteColor);
+                          }
+                        }}
+                        type="button"
+                        role="radio"
+                        aria-label={t(`palette.${paletteColor}`)}
+                        aria-checked={paletteColor === color}
+                        tabIndex={index === tabbableColorIndex ? 0 : -1}
+                        data-color-index={index}
+                        className={clsx(
+                          styles.swatch,
+                          paletteColor === color && styles.swatchSelected,
+                        )}
+                        style={swatchStyle(paletteColor)}
+                        onClick={() => {
+                          setActiveColor(paletteColor);
+                          commitColor(paletteColor);
+                        }}
+                        onKeyDown={handleColorKeyDown}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+              <span id={iconHeadingId} className={styles.heading}>
+                {t('iconPicker.iconLabel')}
+              </span>
+              {iconGrid}
+            </div>
+          ) : (
+            iconGrid
+          )}
         </Popover.Content>
       </Popover>
     </div>

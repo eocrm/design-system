@@ -156,7 +156,7 @@ Each component's contract is its `docs/components/<Name>.md`; the props table th
 - [`OtpInput`](docs/components/OtpInput.md) — one-time-code field
 - [`Checkbox`](docs/components/Checkbox.md) — checkbox with native input + custom paint
 - [`ColorPicker`](docs/components/ColorPicker.md) — controlled HEX color picker (popover + inline)
-- [`IconPicker`](docs/components/IconPicker.md) — choose one glyph from a consumer catalog
+- [`IconPicker`](docs/components/IconPicker.md) — choose one glyph (optionally + palette colour) from a consumer catalog
 - [`Switch`](docs/components/Switch.md) — binary toggle
 - [`Radio`](docs/components/Radio.md) — single radio button
 - [`RadioGroup`](docs/components/RadioGroup.md) — fieldset wrapper for related radios
