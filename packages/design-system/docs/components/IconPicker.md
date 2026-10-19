@@ -49,3 +49,42 @@ const [icon, setIcon] = useState('flame');
   <Text>{icon}</Text>
 </Cluster>;
 ```
+
+## Colour mode
+
+Pass `color` + `onColorChange` (both or neither) to also pick a palette colour. The trigger is tinted, the popover shows "Colour" and "Icon" groups, and picking does not close it. Narrow the offer with `colors`.
+
+```tsx
+<Field label="Appearance">
+  <IconPicker
+    value={icon}
+    options={iconOptions}
+    onChange={setIcon}
+    color={color}
+    onColorChange={setColor}
+  />
+</Field>
+```
+
+## Beside an Input
+
+`size` (`sm` / `md` / `lg`, 24 / 32 / 40px) matches `Input` / `Select` heights. With no visible label the picker needs an `aria-label`.
+
+```tsx
+<Cluster gap="sm">
+  <IconPicker
+    size="md"
+    aria-label="Status icon"
+    value={icon}
+    options={iconOptions}
+    onChange={setIcon}
+  />
+  <Input size="md" aria-label="Name" value={name} onChange={(e) => setName(e.target.value)} />
+</Cluster>
+```
+
+## When NOT to use
+
+- ❌ Pairing IconPicker with a separate colour `PillMenu` / `Select` — use colour mode.
+- ❌ Using it for arbitrary hex values — use `ColorPicker`.
+- ❌ A picker beside a Name input with no `aria-label`.

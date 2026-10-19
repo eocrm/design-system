@@ -34,11 +34,13 @@
 ### Task 1: `size` prop
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/IconPicker/IconPicker.tsx`
 - Modify: `packages/design-system/src/components/IconPicker/IconPicker.module.scss`, `IconPicker.tokens.scss`
 - Test: `packages/design-system/src/components/IconPicker/IconPicker.test.tsx`
 
 **Interfaces:**
+
 - Produces: `export type IconPickerSize = 'sm' | 'md' | 'lg'`; `IconPickerProps.size?: IconPickerSize` (default `'md'`); the trigger gets the class `styles[\`size-${size}\`]`.
 
 - [ ] **Step 1: Write failing tests**
@@ -46,7 +48,9 @@
 ```tsx
 it.each(['sm', 'md', 'lg'] as const)('applies the %s size class to the trigger', (size) => {
   render(<IconPicker value="flame" options={options} onChange={() => {}} size={size} />);
-  expect(screen.getByRole('button', { name: 'Pick icon: Flame' }).className).toContain(`size-${size}`);
+  expect(screen.getByRole('button', { name: 'Pick icon: Flame' }).className).toContain(
+    `size-${size}`,
+  );
 });
 
 it('defaults to md', () => {
@@ -67,20 +71,24 @@ For Review Focus #2, assert in the SCSS (a stylelint-free text check is fine, re
 ### Task 2: Colour mode — props, i18n, trigger, popover sections, pointer behaviour
 
 **Files:**
+
 - Modify: `IconPicker.tsx`, `IconPicker.module.scss`, `IconPicker.tokens.scss`
 - Modify: `packages/design-system/src/i18n/messages.ts`, `en.ts`, `ru.ts`
 - Modify: `packages/design-system/src/index.ts` only if new types need re-exporting (`IconPickerSize` must be exported)
 - Test: `IconPicker.test.tsx`
 
 **Interfaces:**
+
 - Consumes: Task 1 `size`.
 - Produces:
+
   ```ts
   type IconPickerColorProps =
     | { color: PaletteColor; onColorChange: (color: PaletteColor) => void; colors?: PaletteColor[] }
     | { color?: never; onColorChange?: never; colors?: never };
   export type IconPickerProps = IconPickerBaseProps & IconPickerColorProps;
   ```
+
   - New i18n keys: `iconPicker.colorLabel` ('Colour' / 'Цвет'), `iconPicker.iconLabel` ('Icon' / 'Значок'), and `iconPicker.triggerLabelWithColor` ('Pick icon and colour' / 'Выбрать значок и цвет').
   - A new top-level `palette` namespace with one key per `PaletteColor` (`palette.teal` = 'Teal' / 'Бирюзовый', and so on for all 30, with natural Russian names). It is typed in `messages.ts` as `Record<PaletteColor, string>`.
   - Popover structure in colour mode: heading `Colour` (id A) followed by `role="radiogroup" aria-labelledby=A` of `role="radio"` dots, each with `aria-label` set to the localized colour name, `aria-checked`, and `data-color-index`. Then heading `Icon` (id B) followed by the existing icon radiogroup, labelled by B.
@@ -90,14 +98,20 @@ For Review Focus #2, assert in the SCSS (a stylelint-free text check is fine, re
 ```tsx
 it('names the trigger with icon and colour', () => {
   render(<ColorHarness initialColor="teal" />);
-  expect(screen.getByRole('button', { name: 'Pick icon and colour: Flame, Teal' })).toBeInTheDocument();
+  expect(
+    screen.getByRole('button', { name: 'Pick icon and colour: Flame, Teal' }),
+  ).toBeInTheDocument();
 });
 
 it('tints the trigger with palette vars', () => {
   render(<ColorHarness initialColor="teal" />);
   const trigger = screen.getByRole('button', { name: /Pick icon and colour/ });
-  expect(trigger.style.getPropertyValue('--icon-picker-tint-bg')).toBe('var(--color-palette-teal-bg)');
-  expect(trigger.style.getPropertyValue('--icon-picker-tint-fg')).toBe('var(--color-palette-teal-fg)');
+  expect(trigger.style.getPropertyValue('--icon-picker-tint-bg')).toBe(
+    'var(--color-palette-teal-bg)',
+  );
+  expect(trigger.style.getPropertyValue('--icon-picker-tint-fg')).toBe(
+    'var(--color-palette-teal-fg)',
+  );
 });
 
 it('renders Colour and Icon radiogroups labelled by visible headings', async () => {
@@ -152,10 +166,12 @@ it('Field label + aria-labelledby path appends icon and colour', () => {
 ### Task 3: Colour-mode keyboard
 
 **Files:**
+
 - Modify: `IconPicker.tsx`
 - Test: `IconPicker.test.tsx`
 
 **Interfaces:**
+
 - Consumes: Task 2 DOM (`data-color-index` dots, the colour radiogroup).
 - Produces: nothing new publicly.
 
@@ -185,12 +201,14 @@ it('arrow selection in the icon grid still fires onChange and does not close in 
 ### Task 4: Docs, primer, playground demo
 
 **Files:**
+
 - Modify: `packages/design-system/docs/components/IconPicker.md` (prose, then `npm run build:docs` from `packages/design-system` for the props table)
 - Modify: `packages/design-system/AI-PRIMER.md:159` to read `— choose one glyph (optionally + palette colour) from a consumer catalog`
 - Modify: `packages/playground/src/pages/components/IconPickerDemo.tsx`
 - Regenerate: `packages/playground/src/lib/props.manifest.json` (`npm run build:props` from `packages/playground`)
 
 **Interfaces:**
+
 - Consumes: the public API from Tasks 1–3.
 
 - [ ] **Step 1: Update the docs.** Add:

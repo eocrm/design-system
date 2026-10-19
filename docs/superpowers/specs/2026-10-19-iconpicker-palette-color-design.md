@@ -26,12 +26,12 @@ CRM forms pair an `IconPicker` (32px bordered square) with a `PillMenu` colour c
 
 Additions to `IconPickerProps`:
 
-| Prop | Type | Notes |
-|---|---|---|
-| `size` | `'sm' \| 'md' \| 'lg'` | Trigger box size. Default `'md'` (32px — today's size, so no change for existing users). Applies in both modes. |
-| `color` | `PaletteColor` | Controlled colour. Passing it turns on colour mode. |
-| `onColorChange` | `(color: PaletteColor) => void` | Required together with `color`. |
-| `colors` | `PaletteColor[]` | Optional subset/order of offered colours. Default `PALETTE_COLORS` (all 30). Ignored without `color`. |
+| Prop            | Type                            | Notes                                                                                                           |
+| --------------- | ------------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `size`          | `'sm' \| 'md' \| 'lg'`          | Trigger box size. Default `'md'` (32px — today's size, so no change for existing users). Applies in both modes. |
+| `color`         | `PaletteColor`                  | Controlled colour. Passing it turns on colour mode.                                                             |
+| `onColorChange` | `(color: PaletteColor) => void` | Required together with `color`.                                                                                 |
+| `colors`        | `PaletteColor[]`                | Optional subset/order of offered colours. Default `PALETTE_COLORS` (all 30). Ignored without `color`.           |
 
 - **Two separate controlled pairs** (`value`/`onChange` for the icon, `color`/`onColorChange` for colour), not one `{icon, color}` object — they bind 1:1 to two form fields / DB columns. _(Claude's call; user did not object.)_
 - `color` + `onColorChange` must come together — enforce in the type (union: both present or both absent), not with a runtime warning.

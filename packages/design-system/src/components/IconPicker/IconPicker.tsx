@@ -562,6 +562,7 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
                   <span id={colorHeadingId} className={styles.heading}>
                     {t('iconPicker.colorLabel')}
                   </span>
+                  {/* Internal var, deliberately not in ICON_PICKER_TOKEN_NAMES. */}
                   <div
                     className={styles.swatches}
                     role="radiogroup"
