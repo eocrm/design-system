@@ -135,6 +135,7 @@
   border-radius: var(--icon-picker-swatch-radius);
   background: var(--icon-picker-swatch-fg);
   cursor: var(--icon-picker-cursor);
+  forced-color-adjust: none;
 }
 
 // Inset bg-coloured ring inside a thicker fg border, so the outset focus ring stays distinct.

@@ -262,7 +262,9 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
   const colorMode = color !== undefined;
   const colorName = colorMode ? t(`palette.${color}`) : '';
   const checkedColorIndex = colorMode ? colors.indexOf(color) : -1;
-  const tabbableColorIndex = Math.max(0, checkedColorIndex);
+  const [activeColorIndex, setActiveColorIndex] = useState(() => Math.max(0, checkedColorIndex));
+  // Roving stop follows focus (not the checked colour); clamp if `colors` shrinks.
+  const tabbableColorIndex = Math.min(activeColorIndex, Math.max(0, colors.length - 1));
   const tintStyle: IconPickerTokenStyle | undefined = colorMode
     ? {
         '--icon-picker-tint-bg': paletteTokens(color).bg,
@@ -374,7 +376,9 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
       const seedValue = options[seedIndex]?.value ?? null;
       activeIndexRef.current = seedIndex;
       setActiveValue(seedValue);
-      const seedColor = colorMode ? colors[tabbableColorIndex] : undefined;
+      const seedColorIndex = Math.max(0, checkedColorIndex);
+      setActiveColorIndex(seedColorIndex);
+      const seedColor = colorMode ? colors[seedColorIndex] : undefined;
       pendingOpenFocusRef.current = seedColor
         ? () => colorRefs.current.get(seedColor)
         : () => (seedValue === null ? undefined : cellRefs.current.get(seedValue));
@@ -456,7 +460,9 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
     SWATCH_COLUMNS,
     (index) => {
       const target = colors[index];
-      if (target) colorRefs.current.get(target)?.focus();
+      if (!target) return;
+      setActiveColorIndex(index);
+      colorRefs.current.get(target)?.focus();
     },
     (index) => {
       const target = colors[index];
@@ -591,7 +597,10 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
                           paletteColor === color && styles.swatchSelected,
                         )}
                         style={swatchStyle(paletteColor)}
-                        onClick={() => commitColor(paletteColor)}
+                        onClick={() => {
+                          setActiveColorIndex(index);
+                          commitColor(paletteColor);
+                        }}
                         onKeyDown={handleColorKeyDown}
                       />
                     ))}

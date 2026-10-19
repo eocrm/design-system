@@ -56,6 +56,8 @@ const [icon, setIcon] = useState('flame');
 
 Pass `color` + `onColorChange` (both or neither) to also pick a palette colour. The trigger is tinted, the popover shows "Colour" and "Icon" groups, and picking does not close it. `colors` defaults to all 30 palette colours; narrow it to a subset. A disabled picker keeps its tint, dimmed.
 
+Keyboard in colour mode: Tab moves between the Colour and Icon groups, arrows move and select, picking keeps the popover open, Esc closes and returns focus to the trigger.
+
 ```tsx
 <Field label="Appearance">
   <IconPicker
@@ -70,7 +72,7 @@ Pass `color` + `onColorChange` (both or neither) to also pick a palette colour. 
 
 ## Beside an Input
 
-`size` (`sm` / `md` / `lg`, 24 / 32 / 40px) matches `Input` / `Select` heights. With no visible label the picker needs an `aria-label`.
+`size` (`sm` / `md` / `lg`, 24 / 32 / 40px) matches `Input` / `Select` heights. Without a label it is still named "Pick icon and colour"; when that is too generic, give it a specific purpose via `aria-label` or `<Field label>`.
 
 ```tsx
 <Split
@@ -79,7 +81,7 @@ Pass `color` + `onColorChange` (both or neither) to also pick a palette colour. 
   aside={
     <IconPicker
       size="md"
-      aria-label="Icon and colour"
+      aria-label="Icon and colour" // localize this
       value={icon}
       options={iconOptions}
       onChange={setIcon}
@@ -96,4 +98,4 @@ Pass `color` + `onColorChange` (both or neither) to also pick a palette colour. 
 
 - ❌ Pairing IconPicker with a separate colour `PillMenu` / `Select` — use colour mode.
 - ❌ Using it for arbitrary hex values — use `ColorPicker`.
-- ❌ A picker beside a Name input with no `aria-label`.
+- ❌ A picker beside a Name input left with the generic default name when a specific purpose (`aria-label` or `<Field label>`) would help.

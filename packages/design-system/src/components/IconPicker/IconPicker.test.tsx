@@ -834,6 +834,8 @@ describe('IconPicker — colour mode', () => {
       await user.keyboard('{Home}');
       expect(screen.getByRole('radio', { name: 'Red' })).toHaveFocus();
       expect(onColorChangeSpy).not.toHaveBeenCalled();
+      await user.tab();
+      expect(screen.getByRole('radio', { name: 'Flame' })).toHaveFocus();
     });
 
     it('End on the last short row stops at the final swatch', async () => {
@@ -874,6 +876,26 @@ describe('IconPicker — colour mode', () => {
       await user.keyboard('{Enter}');
       expect(onChangeSpy).toHaveBeenCalledTimes(2);
       expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+
+    it('Tab leaves the Colour group after arrows even if the consumer ignores onColorChange', async () => {
+      const user = userEvent.setup();
+      render(
+        <IconPicker
+          value="flame"
+          options={options}
+          onChange={() => {}}
+          color="teal"
+          onColorChange={() => {}}
+          colors={three}
+        />,
+      );
+      await user.click(screen.getByRole('button', { name: /Pick icon and colour/ }));
+      await waitFor(() => expect(screen.getByRole('radio', { name: 'Teal' })).toHaveFocus());
+      await user.keyboard('{ArrowRight}');
+      expect(screen.getByRole('radio', { name: 'Blue' })).toHaveFocus();
+      await user.tab();
+      expect(screen.getByRole('radio', { name: 'Flame' })).toHaveFocus();
     });
 
     it('shares the swatch column count between TS and SCSS', () => {

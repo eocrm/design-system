@@ -159,7 +159,7 @@ export function IconPickerDemo() {
       </Example>
       <Example
         title="Beside an Input"
-        description="size matches Input heights at sm, md and lg. Without a visible label the picker needs an aria-label."
+        description='size matches Input heights at sm, md and lg. Without a label it is still named "Pick icon and colour"; set aria-label (localized) or use Field label for a specific purpose.'
         code={`<Split
   gap="sm"
   align="center"
