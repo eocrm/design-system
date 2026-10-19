@@ -231,6 +231,7 @@
 .cellLink {
   display: block;
   color: inherit;
+  font-weight: var(--table-cell-link-font-weight);
   text-decoration: none;
 
   &:hover {

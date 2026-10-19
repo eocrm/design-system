@@ -73,4 +73,7 @@
   --table-cell-fg-danger-hover: var(--color-danger-hover);
   --table-cell-fg-accent-hover: var(--color-accent-hover);
   --table-cell-link-ring: var(--ring-accent);
+
+  // Semibold marks a whole-cell link as actionable without link-blue text.
+  --table-cell-link-font-weight: var(--font-weight-semibold);
 }

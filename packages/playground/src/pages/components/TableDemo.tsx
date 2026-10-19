@@ -80,7 +80,7 @@ function MyWorkGrid() {
         <Table.Row>
           <Table.HeaderCell>Type</Table.HeaderCell>
           {WORK_BUCKETS.map((b) => (
-            <Table.HeaderCell key={b.key} tone={b.tone} align="end">
+            <Table.HeaderCell key={b.key} tone={b.tone} align="center">
               {b.label}
             </Table.HeaderCell>
           ))}
@@ -93,7 +93,7 @@ function MyWorkGrid() {
             <Table.Row key={row.type}>
               <Table.HeaderCell scope="row">{row.type}</Table.HeaderCell>
               {WORK_BUCKETS.map((b, i) => (
-                <Table.Cell key={b.key} tone={b.tone} align="end">
+                <Table.Cell key={b.key} tone={b.tone} align="center">
                   <Table.CellLink
                     href="#"
                     aria-label={`${row.type}, ${b.label.toLowerCase()}: ${counts[i]}`}
@@ -1006,7 +1006,7 @@ export function Demo() {
         <Table.Row>
           <Table.HeaderCell>Type</Table.HeaderCell>
           {WORK_BUCKETS.map((b) => (
-            <Table.HeaderCell key={b.key} tone={b.tone} align="end">
+            <Table.HeaderCell key={b.key} tone={b.tone} align="center">
               {b.label}
             </Table.HeaderCell>
           ))}
@@ -1019,7 +1019,7 @@ export function Demo() {
             <Table.Row key={row.type}>
               <Table.HeaderCell scope="row">{row.type}</Table.HeaderCell>
               {WORK_BUCKETS.map((b, i) => (
-                <Table.Cell key={b.key} tone={b.tone} align="end">
+                <Table.Cell key={b.key} tone={b.tone} align="center">
                   <Table.CellLink href="#" aria-label={\`\${row.type}, \${b.label.toLowerCase()}: \${counts[i]}\`}>
                     {counts[i] === 0 ? (
                       <Text as="span" size="inherit" tone="muted">
