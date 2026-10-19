@@ -1,0 +1,65 @@
+@use '../Input/Input.tokens';
+
+.root {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: var(--space-1);
+  align-items: center;
+}
+
+.currency {
+  // keep the picker compact so the amount gets the room
+  max-width: var(--size-control-currency);
+}
+
+.amount {
+  width: 100%;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+// Static currency prefix (single-currency mode): mirrors Input's chrome per size.
+.prefix {
+  display: inline-flex;
+  align-items: center;
+  border: var(--border-width) solid var(--input-border-color);
+  border-radius: var(--input-radius);
+  background: var(--input-bg-disabled);
+  color: var(--input-fg);
+  line-height: var(--input-line-height);
+}
+
+.prefix-sm {
+  height: var(--input-height-sm);
+  padding: 0 var(--input-padding-x-sm);
+  font-size: var(--input-font-size-sm);
+}
+
+.prefix-md {
+  height: var(--input-height-md);
+  padding: 0 var(--input-padding-x-md);
+  font-size: var(--input-font-size-md);
+}
+
+.prefix-lg {
+  height: var(--input-height-lg);
+  padding: 0 var(--input-padding-x-lg);
+  font-size: var(--input-font-size-lg);
+}
+
+.prefix-invalid {
+  border-color: var(--input-border-color-invalid);
+}
+
+.prefix-disabled {
+  border-color: var(--input-border-color-disabled);
+  color: var(--input-fg-disabled);
+}
+
+// Dropdown rows: keep "CODE — Name" on a single line.
+.option {
+  display: block;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}

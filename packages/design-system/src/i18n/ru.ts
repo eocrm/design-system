@@ -282,6 +282,10 @@ export const ru: Messages = {
     placeholder: 'Выберите валюту',
     search: 'Поиск валют…',
   },
+  moneyInput: {
+    currencyLabel: 'Валюта',
+    amountLabel: 'Сумма',
+  },
   colorPicker: {
     saturationBrightnessValue: (params) =>
       `насыщенность ${params.s} процентов, яркость ${params.v} процентов`,

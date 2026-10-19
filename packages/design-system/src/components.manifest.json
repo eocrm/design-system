@@ -217,7 +217,9 @@
     "composes": [
       "Select"
     ],
-    "composedBy": []
+    "composedBy": [
+      "MoneyInput"
+    ]
   },
   "CursorPagination": {
     "tier": "composition",
@@ -493,6 +495,7 @@
       "CatalogPicker",
       "ColorPicker",
       "EmojiPicker",
+      "MoneyInput",
       "OptionsPicker",
       "PhoneInput",
       "RichTextEditor"
@@ -588,6 +591,15 @@
     "cluster": "Overlays",
     "composes": [
       "Button"
+    ],
+    "composedBy": []
+  },
+  "MoneyInput": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "CurrencySelect",
+      "Input"
     ],
     "composedBy": []
   },

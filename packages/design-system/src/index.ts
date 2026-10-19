@@ -361,6 +361,8 @@ export type {
 
 export { CurrencySelect } from './components/CurrencySelect';
 export type { CurrencySelectProps, CurrencyDisplay } from './components/CurrencySelect';
+export { MoneyInput } from './components/MoneyInput';
+export type { MoneyInputProps, MoneyInputSize, MoneyValue } from './components/MoneyInput';
 
 export { PhoneInput, isValidPhone } from './components/PhoneInput';
 export type {

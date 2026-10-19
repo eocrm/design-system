@@ -1,4 +1,4 @@
-/** Shared currency parse/format helpers for CurrencyInput / CurrencySelect. Amounts stay strings (never JS numbers). */
+/** Shared currency parse/format helpers for MoneyInput / CurrencySelect. Amounts stay strings (never JS numbers). */
 
 export type CurrencyDisplay = 'code' | 'symbol' | 'both';
 
@@ -88,10 +88,15 @@ export function parseAmount(
   return { negative, int, frac };
 }
 
+/** Prefix '-' only for a negative with a non-zero digit (never '-0' / '-0.00'). */
+const signed = (negative: boolean, body: string) =>
+  (negative && /[1-9]/.test(body) ? '-' : '') + body;
+
 export function draftToCanonical(d: AmountDraft): string | null {
   if (!d.int && d.frac === null) return null;
   const int = d.int.replace(/^0+(?=\d)/, '') || '0';
-  return `${d.negative ? '-' : ''}${int}${d.frac ? `.${d.frac}` : ''}`;
+  const body = `${int}${d.frac ? `.${d.frac}` : ''}`;
+  return signed(d.negative, body);
 }
 
 export function canonicalToDraft(s: string | null): AmountDraft | null {
@@ -119,10 +124,10 @@ export function formatDraft(
 export function roundAmount(canonical: string, precision: number): string {
   const negative = canonical.startsWith('-');
   const [int, frac = ''] = (negative ? canonical.slice(1) : canonical).split('.');
-  if (frac.length <= precision) return canonical;
+  if (frac.length <= precision) return signed(negative, canonical.slice(negative ? 1 : 0));
   let n = BigInt(int + frac.slice(0, precision));
   if (frac[precision] >= '5') n += 1n;
   const s = n.toString().padStart(precision + 1, '0');
   const cut = s.length - precision;
-  return (negative ? '-' : '') + (precision ? `${s.slice(0, cut)}.${s.slice(cut)}` : s);
+  return signed(negative, precision ? `${s.slice(0, cut)}.${s.slice(cut)}` : s);
 }

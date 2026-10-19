@@ -597,6 +597,12 @@ export interface Messages {
     /** Search placeholder for a currency picker with a text input (used by MoneyInput's internal picker). */
     search: string;
   };
+  moneyInput: {
+    /** aria-label for the currency picker (composed with the group label). */
+    currencyLabel: string;
+    /** aria-label for the amount Input. */
+    amountLabel: string;
+  };
   colorPicker: {
     /**
      * `aria-valuetext` for the saturation/brightness square, announced on

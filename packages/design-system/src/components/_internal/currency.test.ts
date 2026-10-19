@@ -102,4 +102,17 @@ describe('roundAmount', () => {
     expect(roundAmount('-12.345', 2)).toBe('-12.35');
     expect(roundAmount('12', 2)).toBe('12');
   });
+  it('never returns negative zero', () => {
+    expect(roundAmount('-0.004', 2)).toBe('0.00');
+    expect(roundAmount('-0.4', 0)).toBe('0');
+    expect(roundAmount('-0.00', 2)).toBe('0.00');
+  });
+});
+
+describe('draftToCanonical negative zero', () => {
+  it('drops the sign when every digit is zero', () => {
+    expect(draftToCanonical({ negative: true, int: '0', frac: null })).toBe('0');
+    expect(draftToCanonical({ negative: true, int: '0', frac: '00' })).toBe('0.00');
+    expect(draftToCanonical({ negative: true, int: '0', frac: '01' })).toBe('-0.01');
+  });
 });
