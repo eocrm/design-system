@@ -25,7 +25,8 @@
   // Segmented item — disabled
   --button-group-item-opacity-disabled: var(--opacity-disabled);
 
-  // Segmented item — sizes
+  // Segmented — sizes. Height = the outer TRACK (matches Button --size-*);
+  // each item renders at this minus 2 × --button-group-segmented-padding.
   --button-group-item-height-xs: var(--size-xs);
   --button-group-item-height-sm: var(--size-sm);
   --button-group-item-height-md: var(--size-md);

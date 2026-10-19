@@ -102,27 +102,33 @@
   @include focus-ring;
 }
 
-// Size variants — match Button's --size-* scale for visual consistency.
+// Size variants — the TRACK matches Button's --size-* height, so a segmented
+// control lines up with a same-size Button. Items give back the track's
+// padding on both sides.
 .sizeXs {
-  height: var(--button-group-item-height-xs);
+  height: calc(var(--button-group-item-height-xs) - 2 * var(--button-group-segmented-padding));
   padding: 0 var(--button-group-item-padding-x-xs);
   font-size: var(--button-group-item-font-size-xs);
+
+  // 16px item: pin the line box so an inherited taller line-height (e.g.
+  // 1.5 × 11px = 16.5px from a consumer ancestor) can't overflow it.
+  line-height: var(--line-height-none);
 }
 
 .sizeSm {
-  height: var(--button-group-item-height-sm);
+  height: calc(var(--button-group-item-height-sm) - 2 * var(--button-group-segmented-padding));
   padding: 0 var(--button-group-item-padding-x-sm);
   font-size: var(--button-group-item-font-size-sm);
 }
 
 .sizeMd {
-  height: var(--button-group-item-height-md);
+  height: calc(var(--button-group-item-height-md) - 2 * var(--button-group-segmented-padding));
   padding: 0 var(--button-group-item-padding-x-md);
   font-size: var(--button-group-item-font-size-md);
 }
 
 .sizeLg {
-  height: var(--button-group-item-height-lg);
+  height: calc(var(--button-group-item-height-lg) - 2 * var(--button-group-segmented-padding));
   padding: 0 var(--button-group-item-padding-x-lg);
   font-size: var(--button-group-item-font-size-lg);
 }
