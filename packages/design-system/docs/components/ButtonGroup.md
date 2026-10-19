@@ -62,6 +62,7 @@
 - **Abbreviated options** (`S` / `M` / `L`) take `aria-label` on the Item, forwarded to the radio: `<ButtonGroup.Item value="s" aria-label="S, small tiles">S</ButtonGroup.Item>`. Start the name with the visible text (WCAG 2.5.3); don't hide the letter and add visually-hidden text instead. `aria-describedby` is forwarded too.
 - **Children differ by mode.** Visual: `<Button>` children. Segmented: `<ButtonGroup.Item>` children. Mixing the two is undefined behavior.
 - **Size propagation** — `size` on the group propagates to children. Per-child override wins.
+- **Segmented height = Button height** — the segmented TRACK (not each item) is the `--size-*` height, so a `size="md"` segmented control lines up with a `size="md"` Button. Items render at that height minus the track padding on both sides.
 - **Keyboard nav (segmented only)** — Arrow keys move selection + focus; Home / End jump to ends; Tab moves IN/OUT of the group on the currently-selected item. Disabled items are skipped.
 - **ARIA** — visual mode is `role="group"`; segmented mode is `role="radiogroup"` (requires `aria-label`).
 

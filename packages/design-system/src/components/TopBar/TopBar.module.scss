@@ -47,6 +47,8 @@
 // width so it doesn't stretch across an entire wide viewport, and a
 // min-width: 0 so it can shrink inside the Start cluster's flex row.
 .search {
+  --kbd-bg: var(--topbar-search-kbd-bg);
+
   display: flex;
   align-items: center;
   gap: var(--topbar-search-gap);

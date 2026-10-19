@@ -109,6 +109,9 @@
   height: calc(var(--button-group-item-height-xs) - 2 * var(--button-group-segmented-padding));
   padding: 0 var(--button-group-item-padding-x-xs);
   font-size: var(--button-group-item-font-size-xs);
+
+  // 16px item; the default 1.5 line box (18px) would overflow it.
+  line-height: var(--line-height-none);
 }
 
 .sizeSm {
