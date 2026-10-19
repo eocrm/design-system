@@ -58,6 +58,7 @@
   background: var(--icon-picker-hover-bg);
 }
 
+// Order: `.selected` (below) must stay after `.cell.tinted:hover` so the selected state wins on hover.
 .cell.tinted:hover {
   background: var(--icon-picker-tint-bg);
 }
@@ -73,6 +74,7 @@
   cursor: var(--icon-picker-cursor-disabled);
 }
 
+// Order: must stay after `.trigger:disabled` (equal specificity) to override its neutral colours.
 // A read-only record still shows its stored colour: keep the tint, dim it.
 .tinted:disabled {
   border-color: transparent;
@@ -127,6 +129,8 @@
 }
 
 .swatch {
+  // 20px swatches meet WCAG 2.5.8 (target size) only via the spacing exception:
+  // do not shrink `--icon-picker-swatch-gap`.
   box-sizing: border-box;
   width: var(--icon-picker-swatch-size);
   height: var(--icon-picker-swatch-size);
@@ -136,6 +140,11 @@
   background: var(--icon-picker-swatch-fg);
   cursor: var(--icon-picker-cursor);
   forced-color-adjust: none;
+}
+
+// Hover recolours the border only; the selected swatch keeps its own ring.
+.swatch:not(.swatchSelected):hover {
+  border-color: var(--icon-picker-swatch-hover-border);
 }
 
 // Inset bg-coloured ring inside a thicker fg border, so the outset focus ring stays distinct.

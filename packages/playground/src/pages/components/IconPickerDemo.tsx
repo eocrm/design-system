@@ -177,7 +177,7 @@ export function IconPickerDemo() {
               aside={
                 <IconPicker
                   size={size}
-                  aria-label="Icon and colour"
+                  aria-label={`Icon and colour (${size})`}
                   value={sizeIcons[size]}
                   options={priorityIcons}
                   onChange={(v) => setSizeIcons((s) => ({ ...s, [size]: v }))}

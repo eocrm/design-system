@@ -898,6 +898,34 @@ describe('IconPicker — colour mode', () => {
       expect(screen.getByRole('radio', { name: 'Flame' })).toHaveFocus();
     });
 
+    it('keeps the roving stop on the same colour when colors is reordered while open', async () => {
+      const user = userEvent.setup();
+      const { rerender } = render(
+        <IconPicker
+          value="flame"
+          options={options}
+          onChange={() => {}}
+          color="teal"
+          onColorChange={() => {}}
+          colors={three}
+        />,
+      );
+      await user.click(screen.getByRole('button', { name: /Pick icon and colour/ }));
+      await waitFor(() => expect(screen.getByRole('radio', { name: 'Teal' })).toHaveFocus());
+      rerender(
+        <IconPicker
+          value="flame"
+          options={options}
+          onChange={() => {}}
+          color="teal"
+          onColorChange={() => {}}
+          colors={['blue', 'red', 'teal']}
+        />,
+      );
+      expect(screen.getByRole('radio', { name: 'Teal' })).toHaveAttribute('tabindex', '0');
+      expect(screen.getByRole('radio', { name: 'Blue' })).toHaveAttribute('tabindex', '-1');
+    });
+
     it('shares the swatch column count between TS and SCSS', () => {
       const scss = readFileSync(resolve(__dirname, 'IconPicker.module.scss'), 'utf8');
       expect(scss).toContain('repeat(var(--icon-picker-swatch-columns)');

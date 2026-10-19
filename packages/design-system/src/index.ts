@@ -63,6 +63,8 @@ export type {
 export { IconPicker } from './components/IconPicker';
 export type {
   IconPickerProps,
+  IconPickerBaseProps,
+  IconPickerColorProps,
   IconPickerOption,
   IconPickerPopoverPlacement,
   IconPickerSize,

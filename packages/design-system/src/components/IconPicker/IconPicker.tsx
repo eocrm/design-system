@@ -83,6 +83,7 @@ const ICON_PICKER_TOKEN_NAMES = [
   '--icon-picker-swatch-size',
   '--icon-picker-swatch-gap',
   '--icon-picker-swatch-radius',
+  '--icon-picker-swatch-hover-border',
   '--icon-picker-swatch-selected-ring',
   '--icon-picker-swatch-selected-ring-width',
 ] as const;
@@ -175,16 +176,18 @@ export interface IconPickerBaseProps extends Omit<
   popoverPlacement?: IconPickerPopoverPlacement;
   /**
    * Accessible picker purpose. It names the trigger with the selected icon appended and names
-   * the dialog plus radiogroup without that suffix. Defaults to the localized
+   * the dialog without that suffix (in icon-only mode it names the radiogroup too; in colour
+   * mode the radiogroups are named by their visible "Colour"/"Icon" headings). Defaults to the localized
    * `iconPicker.triggerLabel` value when omitted OR empty — an empty string is
    * not an explicit name, so it takes the default too. In colour mode the default is
    * `iconPicker.triggerLabelWithColor` and the trigger appends the colour name as well.
    */
   'aria-label'?: string;
   /**
-   * Id(s) of external elements that provide the picker purpose. They name the dialog and
-   * radiogroup directly. The trigger also references hidden selected-option text so its name
-   * remains the visible purpose plus the current selection.
+   * Id(s) of external elements that provide the picker purpose. They name the dialog directly
+   * (and the radiogroup in icon-only mode; colour-mode radiogroups use their visible headings).
+   * The trigger also references hidden selected-option text, plus hidden colour-name text in
+   * colour mode, so its name remains the visible purpose plus the current selection.
    */
   'aria-labelledby'?: string;
   /** Id(s) of element(s) that describe the trigger button. */
@@ -262,9 +265,12 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
   const colorMode = color !== undefined;
   const colorName = colorMode ? t(`palette.${color}`) : '';
   const checkedColorIndex = colorMode ? colors.indexOf(color) : -1;
-  const [activeColorIndex, setActiveColorIndex] = useState(() => Math.max(0, checkedColorIndex));
-  // Roving stop follows focus (not the checked colour); clamp if `colors` shrinks.
-  const tabbableColorIndex = Math.min(activeColorIndex, Math.max(0, colors.length - 1));
+  const [activeColor, setActiveColor] = useState<PaletteColor | null>(colorMode ? color : null);
+  // Roving stop follows focus by value (survives reordering `colors`); falls back to the
+  // checked colour, then the first dot, if the active one is no longer offered.
+  const activeColorIndex = activeColor === null ? -1 : colors.indexOf(activeColor);
+  const tabbableColorIndex =
+    activeColorIndex >= 0 ? activeColorIndex : Math.max(0, checkedColorIndex);
   const tintStyle: IconPickerTokenStyle | undefined = colorMode
     ? {
         '--icon-picker-tint-bg': paletteTokens(color).bg,
@@ -377,8 +383,8 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
       activeIndexRef.current = seedIndex;
       setActiveValue(seedValue);
       const seedColorIndex = Math.max(0, checkedColorIndex);
-      setActiveColorIndex(seedColorIndex);
       const seedColor = colorMode ? colors[seedColorIndex] : undefined;
+      setActiveColor(seedColor ?? null);
       pendingOpenFocusRef.current = seedColor
         ? () => colorRefs.current.get(seedColor)
         : () => (seedValue === null ? undefined : cellRefs.current.get(seedValue));
@@ -461,7 +467,7 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
     (index) => {
       const target = colors[index];
       if (!target) return;
-      setActiveColorIndex(index);
+      setActiveColor(target);
       colorRefs.current.get(target)?.focus();
     },
     (index) => {
@@ -598,7 +604,7 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
                         )}
                         style={swatchStyle(paletteColor)}
                         onClick={() => {
-                          setActiveColorIndex(index);
+                          setActiveColor(paletteColor);
                           commitColor(paletteColor);
                         }}
                         onKeyDown={handleColorKeyDown}

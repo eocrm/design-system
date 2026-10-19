@@ -625,7 +625,7 @@ export interface Messages {
     /** Visible heading naming the icon radiogroup in colour mode. */
     iconLabel: string;
   };
-  /** Localized names for the 30 categorical palette colours (`PaletteColor`). */
+  /** Localized names for every categorical palette colour (`PaletteColor`). */
   palette: Record<PaletteColor, string>;
   drawer: {
     /** aria-label for the Drawer header's close button. */
