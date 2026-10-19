@@ -1,7 +1,7 @@
 import { forwardRef, useMemo, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
 import { Select, type SelectOption, type SelectProps } from '../Select';
-import { useTranslation } from '../../i18n';
+import { useLocale, useTranslation } from '../../i18n';
 import {
   currencyDisplayText,
   currencyName,
@@ -45,7 +45,7 @@ interface CurrencySelectCommon
    * Dropdown rows always read `CODE — Name` so they stay identifiable and searchable.
    */
   currencyDisplay?: CurrencyDisplay;
-  /** BCP-47 locale for currency names and symbols. Defaults to `"en"`. */
+  /** BCP-47 locale for currency names and symbols. Defaults to the active i18n locale (`useLocale()`). */
   locale?: string;
   /** Show a search input. Default: on when more than 7 currencies are offered. */
   searchable?: boolean;
@@ -87,7 +87,7 @@ export const CurrencySelect = forwardRef<HTMLDivElement, CurrencySelectProps>(
     const {
       currencies,
       currencyDisplay = 'code',
-      locale = 'en',
+      locale,
       searchable,
       placeholder,
       className,
@@ -97,6 +97,8 @@ export const CurrencySelect = forwardRef<HTMLDivElement, CurrencySelectProps>(
       ...rest
     } = props;
     const t = useTranslation();
+    const appLocale = useLocale();
+    const loc = locale ?? appLocale;
 
     const codes = useMemo(() => {
       const valid = currencies.filter(isValidCurrency);
@@ -113,16 +115,16 @@ export const CurrencySelect = forwardRef<HTMLDivElement, CurrencySelectProps>(
     const options = useMemo<SelectOption<CurrencyData>[]>(
       () =>
         codes.map((code) => {
-          const name = currencyName(code, locale);
+          const name = currencyName(code, loc);
           return {
             value: code,
-            label: currencyDisplayText(code, currencyDisplay, locale),
+            label: currencyDisplayText(code, currencyDisplay, loc),
             // Full search terms, so filtering matches by name/symbol in any display mode.
-            description: `${code} ${name} ${currencySymbol(code, locale)}`,
+            description: `${code} ${name} ${currencySymbol(code, loc)}`,
             data: { code, name },
           };
         }),
-      [codes, currencyDisplay, locale],
+      [codes, currencyDisplay, loc],
     );
 
     const common = {

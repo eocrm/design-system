@@ -21,7 +21,7 @@ const [cur, setCur] = useState<string | null>('EUR');
 |---|---|---|---|
 | `currencies` | `string[]` | yes | ISO 4217 codes to offer, in display order (e.g. `['USD', 'EUR']`). Required; there is no "all currencies" default. Invalid codes are dropped with a dev warning. |
 | `currencyDisplay` | `'code' \| 'symbol' \| 'both'` | no | How the SELECTED currency renders in the trigger. Default `"code"`. - `"code"` — `EUR`. - `"symbol"` — `€`. - `"both"` — `EUR €`. Dropdown rows always read `CODE — Name` so they stay identifiable and searchable. |
-| `locale` | `string` | no | BCP-47 locale for currency names and symbols. Defaults to `"en"`. |
+| `locale` | `string` | no | BCP-47 locale for currency names and symbols. Defaults to the active i18n locale (`useLocale()`). |
 | `searchable` | `boolean` | no | Show a search input. Default: on when more than 7 currencies are offered. |
 | `multiple` | `false \| true` | no | Single mode (default). |
 | `value` | `string \| null \| string[]` | yes | Controlled ISO code; `null` = nothing selected. |

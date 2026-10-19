@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { CurrencySelect } from './CurrencySelect';
+import { LocaleProvider } from '../../i18n';
 
 describe('CurrencySelect', () => {
   it('shows the placeholder when value is null', () => {
@@ -122,6 +123,17 @@ describe('CurrencySelect', () => {
     render(<CurrencySelect currencies={[]} value={null} onChange={() => {}} />);
     expect(warn).toHaveBeenCalled();
     warn.mockRestore();
+  });
+
+  it('defaults names to the LocaleProvider locale', async () => {
+    const ru = new Intl.DisplayNames('ru', { type: 'currency' }).of('EUR')!;
+    render(
+      <LocaleProvider locale="ru">
+        <CurrencySelect currencies={['EUR']} value={null} onChange={() => {}} />
+      </LocaleProvider>,
+    );
+    await userEvent.click(screen.getByRole('combobox'));
+    expect(screen.getByRole('option', { name: new RegExp(`EUR — ${ru}`) })).toBeInTheDocument();
   });
 
   it('forwards ref and merges className', () => {
