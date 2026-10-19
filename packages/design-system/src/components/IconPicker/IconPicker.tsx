@@ -83,7 +83,8 @@ const ICON_PICKER_TOKEN_NAMES = [
   '--icon-picker-swatch-size',
   '--icon-picker-swatch-gap',
   '--icon-picker-swatch-radius',
-  '--icon-picker-swatch-hover-border',
+  '--icon-picker-swatch-hover-ring',
+  '--icon-picker-swatch-hover-ring-width',
   '--icon-picker-swatch-selected-ring',
   '--icon-picker-swatch-selected-ring-width',
 ] as const;

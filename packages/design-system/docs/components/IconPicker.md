@@ -66,6 +66,8 @@ const options = [
 
 <!-- props:end -->
 
+`color` and `onColorChange` are required together (both or neither), even though the table above shows each as optional.
+
 - The consumer owns icon values, labels, glyphs, ordering, and controlled state.
 - `<Field label>` names the trigger with the visible label plus the selected option, and forwards description and invalid state to that button; the dialog and radiogroup use only the visible Field label. These attributes do not sit on the role-less wrapper. `required` remains a visible Field marker rather than unsupported `aria-required` on the native button.
 - Use it for compact visual choices; use `Select` when visible option text matters.
@@ -85,7 +87,7 @@ const [icon, setIcon] = useState('flame');
 
 Pass `color` + `onColorChange` (both or neither) to also pick a palette colour. The trigger is tinted, the popover shows "Colour" and "Icon" groups, and picking does not close it. `colors` defaults to every palette colour; narrow it to a subset. A disabled picker keeps its tint, dimmed.
 
-Wrapping: `IconPickerProps` is a union, so extend the parts instead: `type MyProps = IconPickerBaseProps & IconPickerColorProps & { ... }`. For a record whose colour may be unset, pass a fallback: `color={record.color ?? 'slate'}`.
+Wrapping: `IconPickerColorProps` is a union, so intersect with a type alias, not `interface extends`: `type MyProps = IconPickerBaseProps & IconPickerColorProps & { ... }`. To narrow safely, use `Omit<IconPickerBaseProps, ...> & IconPickerColorProps` (never `Omit` the union itself). For a record whose colour may be unset, pass a fallback: `color={record.color ?? 'slate'}`.
 
 Keyboard in colour mode: Tab moves between the Colour and Icon groups, arrows move and select, picking keeps the popover open, Esc closes and returns focus to the trigger.
 

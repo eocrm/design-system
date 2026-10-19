@@ -43,6 +43,7 @@
 
 // Colour mode: palette tint from the runtime `--icon-picker-tint-*` vars set
 // inline from paletteTokens() (IconTile's technique), no neutral border.
+// Order: `.selected` (below) must stay after `.tinted` (equal specificity) to override its transparent border.
 .tinted {
   border-color: transparent;
   background: var(--icon-picker-tint-bg);
@@ -58,7 +59,6 @@
   background: var(--icon-picker-hover-bg);
 }
 
-// Order: `.selected` (below) must stay after `.cell.tinted:hover` so the selected state wins on hover.
 .cell.tinted:hover {
   background: var(--icon-picker-tint-bg);
 }
@@ -142,9 +142,11 @@
   forced-color-adjust: none;
 }
 
-// Hover recolours the border only; the selected swatch keeps its own ring.
-.swatch:not(.swatchSelected):hover {
-  border-color: var(--icon-picker-swatch-hover-border);
+// Hover: a thin muted outline outside the dot, readable on every swatch colour and
+// distinct from the thicker accent focus ring and the selected ring. Skipped while focused.
+.swatch:not(.swatchSelected, :focus-visible):hover {
+  outline: var(--icon-picker-swatch-hover-ring-width) solid var(--icon-picker-swatch-hover-ring);
+  outline-offset: var(--ring-offset);
 }
 
 // Inset bg-coloured ring inside a thicker fg border, so the outset focus ring stays distinct.
