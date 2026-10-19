@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { createRef, useState, type CSSProperties } from 'react';
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -539,4 +541,30 @@ describe('IconPicker — empty aria-label', () => {
     render(<IconPicker value="flame" options={options} onChange={() => {}} aria-label="" />);
     expect(screen.getByRole('button', { name: 'Pick icon: Flame' })).toBeInTheDocument();
   });
+});
+
+it.each(['sm', 'md', 'lg'] as const)('applies the %s size class to the trigger', (size) => {
+  render(<IconPicker value="flame" options={options} onChange={() => {}} size={size} />);
+  expect(screen.getByRole('button', { name: 'Pick icon: Flame' }).className).toContain(
+    `size-${size}`,
+  );
+});
+
+it('defaults to md', () => {
+  render(<IconPicker value="flame" options={options} onChange={() => {}} />);
+  expect(screen.getByRole('button', { name: 'Pick icon: Flame' }).className).toContain('size-md');
+});
+
+// jsdom has no cascade, so the size->token wiring is guarded on the SCSS source.
+it('resolves each size class through its trigger-size token', () => {
+  const scss = readFileSync(resolve(__dirname, 'IconPicker.module.scss'), 'utf8');
+  const rule = (name: string) => scss.match(new RegExp(`\\.${name}\\s*\\{([^}]*)\\}`))?.[1] ?? '';
+  for (const [name, token] of [
+    ['size-sm', '--icon-picker-trigger-size-sm'],
+    ['size-md', '--icon-picker-trigger-size'],
+    ['size-lg', '--icon-picker-trigger-size-lg'],
+  ]) {
+    expect(rule(name)).toContain(`width: var(${token});`);
+    expect(rule(name)).toContain(`height: var(${token});`);
+  }
 });

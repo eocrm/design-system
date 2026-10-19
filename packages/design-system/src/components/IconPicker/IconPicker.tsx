@@ -49,6 +49,8 @@ const COLUMNS = 4;
 
 const ICON_PICKER_TOKEN_NAMES = [
   '--icon-picker-trigger-size',
+  '--icon-picker-trigger-size-sm',
+  '--icon-picker-trigger-size-lg',
   '--icon-picker-cell-size',
   '--icon-picker-grid-gap',
   '--icon-picker-grid-padding',
@@ -107,6 +109,9 @@ export interface IconPickerOption {
   icon: ReactNode;
 }
 
+/** Trigger size: `sm`/`md`/`lg` match the Field control heights. */
+export type IconPickerSize = 'sm' | 'md' | 'lg';
+
 /** Props for the controlled `<IconPicker>` popover and its root wrapper. */
 export interface IconPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
   /** Currently selected option value. Controlled — required. */
@@ -126,6 +131,8 @@ export interface IconPickerProps extends Omit<HTMLAttributes<HTMLDivElement>, 'o
    * @default false
    */
   disabled?: boolean;
+  /** Trigger size, matching the sm/md/lg field heights. @default 'md' */
+  size?: IconPickerSize;
   /** Marks the focusable trigger invalid for Field composition. @default false */
   invalid?: boolean;
   /**
@@ -174,6 +181,7 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
     onChange,
     disabled = false,
     invalid = false,
+    size = 'md',
     // Consumed for Field compatibility; native button triggers do not support required state.
     required: _required = false,
     popoverPlacement = 'bottom-start',
@@ -369,7 +377,7 @@ export const IconPicker = forwardRef<HTMLDivElement, IconPickerProps>(function I
             ref={triggerRef}
             id={id}
             type="button"
-            className={styles.trigger}
+            className={clsx(styles.trigger, styles[`size-${size}`])}
             disabled={unavailable}
             aria-label={ariaLabelledBy ? undefined : triggerLabel}
             aria-labelledby={triggerLabelledBy}

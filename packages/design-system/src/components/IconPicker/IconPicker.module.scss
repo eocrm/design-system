@@ -26,9 +26,19 @@
   cursor: var(--icon-picker-cursor);
 }
 
-.trigger {
+.size-sm {
+  width: var(--icon-picker-trigger-size-sm);
+  height: var(--icon-picker-trigger-size-sm);
+}
+
+.size-md {
   width: var(--icon-picker-trigger-size);
   height: var(--icon-picker-trigger-size);
+}
+
+.size-lg {
+  width: var(--icon-picker-trigger-size-lg);
+  height: var(--icon-picker-trigger-size-lg);
 }
 
 .cell {

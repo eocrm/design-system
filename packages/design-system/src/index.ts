@@ -65,6 +65,7 @@ export type {
   IconPickerProps,
   IconPickerOption,
   IconPickerPopoverPlacement,
+  IconPickerSize,
 } from './components/IconPicker';
 
 export { Stack } from './components/Stack';
