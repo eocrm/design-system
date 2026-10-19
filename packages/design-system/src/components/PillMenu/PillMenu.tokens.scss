@@ -3,6 +3,8 @@
 // primitive/token it replaces — overriding any of these at :root re-themes
 // PillMenu without touching globals. Convention: --pill-menu-<part>.
 // See docs/superpowers/specs/2026-05-27-component-tokens-design.md
+@use '../DropdownMenu/DropdownMenu.tokens';
+
 :root {
   --pill-menu-radius: var(--radius-md);
   --pill-menu-padding-y: var(--space-1);
