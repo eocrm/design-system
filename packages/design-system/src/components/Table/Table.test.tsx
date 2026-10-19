@@ -1,7 +1,26 @@
+import { resolve } from 'node:path';
+import { parse, type Declaration, type Rule } from 'postcss';
+import { compile } from 'sass';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, forwardRef, type ReactNode } from 'react';
 import { Table } from './Table';
+
+// jsdom computes no styles, so CSS-only behaviour is asserted against the
+// compiled stylesheet (the Avatar / DataTable pattern). Sass drops the quotes
+// from attribute selectors, so write them unquoted.
+const stylesheet = parse(compile(resolve(__dirname, './Table.module.scss')).css);
+function declarations(selector: string): Record<string, string> {
+  let rule: Rule | undefined;
+  stylesheet.walkRules((r) => {
+    if (r.selectors.some((s) => s.endsWith(selector))) rule = r;
+  });
+  return Object.fromEntries(
+    (rule?.nodes ?? [])
+      .filter((n): n is Declaration => n.type === 'decl')
+      .map((d) => [d.prop, d.value]),
+  );
+}
 
 describe('Table', () => {
   it('renders a native <table> with the default structure', () => {
@@ -476,8 +495,6 @@ describe('Table', () => {
     expect(link).toHaveAttribute('href', '/deals?due=overdue');
     expect(link.className).toMatch(/cellLink/);
     expect(link).toHaveClass('x');
-    // The cell drops its padding via `:has(> .cellLink)`, so the link must be a direct child.
-    expect(link.parentElement?.tagName).toBe('TD');
     expect(ref.current).toBe(link);
   });
 
@@ -498,5 +515,21 @@ describe('Table', () => {
     expect(link).toHaveAttribute('data-router');
     expect(link.className).toMatch(/cellLink/);
     expect(ref.current).toBe(link);
+  });
+
+  it('CellLink styles: cell drops padding, truncate ellipsises the link, hovered toned link retones muted Text', () => {
+    expect(declarations('.td:has(> .cellLink)')).toMatchObject({ padding: '0' });
+    expect(declarations('.truncate > .cellLink')).toMatchObject({
+      overflow: 'hidden',
+      'text-overflow': 'ellipsis',
+      'white-space': 'nowrap',
+    });
+    for (const tone of ['danger', 'accent']) {
+      const hover = `var(--table-cell-fg-${tone}-hover)`;
+      expect(declarations(`[data-tone=${tone}] > .cellLink:hover`)).toMatchObject({
+        color: hover,
+        '--text-fg-muted': hover,
+      });
+    }
   });
 });

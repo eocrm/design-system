@@ -197,11 +197,10 @@ const PAIRS: Pair[] = [
   ['danger text on danger tint', '--color-danger', '--color-danger-bg-subtle', 4.5],
   ['success text on success tint', '--color-success', '--color-success-bg-subtle', 4.5],
   ['accent text on accent tint', '--color-accent', '--color-accent-bg-subtle', 4.5],
-  // Table.CellLink hover on a toned cell: the hover overlay darkens the tint,
-  // which pulls the base tone under AA in light, so the hovered text steps to
-  // the -hover tone. These pin the solid pair; the overlay only widens it.
-  ['danger-hover text on danger tint', '--color-danger-hover', '--color-danger-bg-subtle', 4.5],
-  ['accent-hover text on accent tint', '--color-accent-hover', '--color-accent-bg-subtle', 4.5],
+  // Table.CellLink on a toned cell, un-hovered: a muted zero dash on the tint.
+  // (Muted on the accent tint is pinned below.) The hovered pairs, on the
+  // overlaid tint, are in their own gate after PAIRS.
+  ['muted text on danger tint', '--color-fg-muted', '--color-danger-bg-subtle', 4.5],
   // The same tones in their OTHER three roles, so a future retune cannot fix
   // the text pair by breaking a fill.
   ['danger-fg on solid danger', '--color-danger-fg', '--color-danger', 4.5],
@@ -363,6 +362,44 @@ describe('StagePath hovered fills keep their text at AA', () => {
     const hovered = composite(fg, mix, tokenValue(`--color-tone-${tone}-bg`, source));
     expect(mix).toBeGreaterThan(0);
     expect(contrast(fg, hovered)).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+/**
+ * Table.CellLink hover on a toned cell paints `--table-cell-link-bg-hover`
+ * (`color-mix(--color-bg-overlay N%, transparent)`) over the tint. That overlay
+ * DARKENS the tint, which helps a light fg in dark but hurts a dark fg in light:
+ * the base tone, and muted Text, fall under AA there. So the hovered text — and
+ * muted Text inside the link, via a --text-fg-muted override — steps to the
+ * -hover tone. This pins that painted pair, in both themes.
+ */
+describe('Table.CellLink hover on a toned cell keeps its text at AA', () => {
+  const mix = declaredValue(
+    '--table-cell-link-bg-hover',
+    readFileSync(resolve(__dirname, '../components/Table/Table.tokens.scss'), 'utf8'),
+  )?.match(/^color-mix\(in srgb, var\(--color-bg-overlay\) ([\d.]+)%, transparent\)$/);
+  it.each(
+    (['light', 'dark'] as const).flatMap((theme) =>
+      (['danger', 'accent'] as const).map((tone) => [theme, tone] as const),
+    ),
+  )('%s %s', (theme, tone) => {
+    expect(mix, '--table-cell-link-bg-hover shape').toBeTruthy();
+    const source = theme === 'light' ? TOKENS : DARK;
+    // e.g. `rgb(15 23 42 / 35%)`; the mix percentage scales its alpha.
+    const overlay = declaredValue('--color-bg-overlay', source)!.match(
+      /^rgb\((\d+) (\d+) (\d+) \/ ([\d.]+)%\)$/,
+    );
+    expect(overlay, '--color-bg-overlay shape').toBeTruthy();
+    const [r, g, b, a] = overlay!.slice(1).map(Number);
+    const hex = `#${[r, g, b].map((c) => c!.toString(16).padStart(2, '0')).join('')}`;
+    const hovered = composite(
+      hex,
+      (a! / 100) * (Number(mix![1]) / 100),
+      tokenValue(`--color-${tone}-bg-subtle`, source),
+    );
+    expect(contrast(tokenValue(`--color-${tone}-hover`, source), hovered)).toBeGreaterThanOrEqual(
+      4.5,
+    );
   });
 });
 

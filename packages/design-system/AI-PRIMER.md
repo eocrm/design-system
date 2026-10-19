@@ -249,7 +249,7 @@ Each component's contract is its `docs/components/<Name>.md`; the props table th
 - [`QrCode`](docs/components/QrCode.md) — scannable QR code
 - [`MediaTile`](docs/components/MediaTile.md) — media tile with caption, revealed actions and selection
 - [`WidgetPreview`](docs/components/WidgetPreview.md) — decorative data-free miniature of a widget kind (for CatalogPicker)
-- [`Table`](docs/components/Table.md) — tabular data primitive
+- [`Table`](docs/components/Table.md) — tabular data primitive; also count grids (`layout="fixed"`, toned columns, whole-cell `Table.CellLink`)
 - [`DataTable`](docs/components/DataTable.md) — server-driven data table with column features
 - [`Pagination`](docs/components/Pagination.md) — numbered nav with windowing
 - [`CursorPagination`](docs/components/CursorPagination.md) — prev / next for streams without total

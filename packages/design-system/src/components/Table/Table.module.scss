@@ -245,12 +245,16 @@
   }
 }
 
+// Muted Text inside (e.g. a zero dash) takes the hover tone too: muted on the
+// overlaid tint falls under AA in light.
 [data-tone='danger'] > .cellLink:hover {
   color: var(--table-cell-fg-danger-hover);
+  --text-fg-muted: var(--table-cell-fg-danger-hover);
 }
 
 [data-tone='accent'] > .cellLink:hover {
   color: var(--table-cell-fg-accent-hover);
+  --text-fg-muted: var(--table-cell-fg-accent-hover);
 }
 
 // ─── Sticky header ─────────────────────────────────────────────────────────
@@ -278,6 +282,13 @@
 // stylelint-disable property-disallowed-list -- max-width: 0 is the standard flex/table-cell ellipsis trick (forces the cell to honour text-overflow). This is an internal-child modifier, not a public layout constraint on the component boundary.
 .truncate {
   max-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+// The link is the block that holds the text, so it needs its own ellipsis.
+.truncate > .cellLink {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;

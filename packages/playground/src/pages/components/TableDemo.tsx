@@ -96,7 +96,7 @@ function MyWorkGrid() {
                 <Table.Cell key={b.key} tone={b.tone} align="center">
                   <Table.CellLink
                     href="#"
-                    aria-label={`${row.type}, ${b.label.toLowerCase()}: ${counts[i]}`}
+                    aria-label={`${row.type}, ${b.label.toLowerCase()}: ${counts[i] || 'none'}`}
                   >
                     {counts[i] === 0 ? (
                       <Text as="span" size="inherit" tone="muted">
@@ -972,7 +972,7 @@ export function Demo() {
         title="Count grid with toned columns and full-cell links"
         fullWidth
         description={
-          'A “My work” grid: `layout="fixed"` with a `<colgroup>` (first column 23%, the rest equal), `tone` on the Overdue and Today header + body cells, and every count a `<Table.CellLink>` so the whole cell is clickable. Zeros render as a muted dash; each link carries an `aria-label` with its row and column.'
+          'A “My work” grid: `layout="fixed"` with a `<colgroup>` (first column 23%, the rest equal), `tone` on the Overdue and Today header + body cells, and every count a `<Table.CellLink>` so the whole cell is clickable. Zeros render as a muted dash labelled “none” (label-in-name); each link carries an `aria-label` with its row and column.'
         }
         code={`import { Table, Text } from '@eocrm/design-system';
 
@@ -1020,7 +1020,7 @@ export function Demo() {
               <Table.HeaderCell scope="row">{row.type}</Table.HeaderCell>
               {WORK_BUCKETS.map((b, i) => (
                 <Table.Cell key={b.key} tone={b.tone} align="center">
-                  <Table.CellLink href="#" aria-label={\`\${row.type}, \${b.label.toLowerCase()}: \${counts[i]}\`}>
+                  <Table.CellLink href="#" aria-label={\`\${row.type}, \${b.label.toLowerCase()}: \${counts[i] || 'none'}\`}>
                     {counts[i] === 0 ? (
                       <Text as="span" size="inherit" tone="muted">
                         –
