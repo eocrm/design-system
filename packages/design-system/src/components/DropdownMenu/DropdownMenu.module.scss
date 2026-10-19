@@ -76,9 +76,10 @@
 // at rest it fits exactly inside `.content`'s clip edge (overflow-y: auto;
 // overflow-x: hidden), first and last item included. The real reason is
 // --dropdown-menu-gap defaults to 0 — items are flush, so an OUTSET ring would
-// paint over the item above and below. (PillMenu sets a gap; inset is kept
-// there too for one consistent ring and the checked-accent note below.) (A *scrolled* menu still clips whichever
-// item straddles the scrollport edge, same as any inset call site.)
+// paint over the item above and below. PillMenu sets a gap; inset is kept
+// there too for one consistent ring and the checked-accent note below. A
+// *scrolled* menu still clips whichever item straddles the scrollport edge,
+// same as any inset call site.
 // What the inset ring covers: a checked item's left accent bar below
 // (box-shadow: inset ...-accent-width-checked, = --border-width-emphasis =
 // 2px) sits in exactly the same outermost 2px the ring occupies, and outline

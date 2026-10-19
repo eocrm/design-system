@@ -110,7 +110,8 @@
   padding: 0 var(--button-group-item-padding-x-xs);
   font-size: var(--button-group-item-font-size-xs);
 
-  // 16px item; the default 1.5 line box (18px) would overflow it.
+  // 16px item: pin the line box so an inherited taller line-height (e.g.
+  // 1.5 × 11px = 16.5px from a consumer ancestor) can't overflow it.
   line-height: var(--line-height-none);
 }
 
