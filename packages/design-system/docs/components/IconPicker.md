@@ -19,15 +19,19 @@ const options = [
 |---|---|---|---|
 | `value` | `string` | yes | Currently selected option value. Controlled — required. |
 | `options` | `IconPickerOption[]` | yes | Consumer-curated icons rendered in the supplied order. Values must be stable and unique. An empty list disables the trigger. |
-| `onChange` | `(value: string) => void` | yes | Fires exactly once with the chosen option value, including when it equals the controlled `value`, then closes the popover. |
+| `onChange` | `(value: string) => void` | yes | Fires exactly once with the chosen option value, including when it equals the controlled `value`. Closes the popover in icon-only mode; colour mode keeps it open. |
 | `disabled` | `boolean` | no | Disables the trigger, prevents opening and selection, and closes an open picker. Default: `false`. |
+| `size` | `'sm' \| 'md' \| 'lg'` | no | Trigger size, matching the sm/md/lg field heights. Default: `'md'`. |
 | `invalid` | `boolean` | no | Marks the focusable trigger invalid for Field composition. Default: `false`. |
 | `required` | `boolean` | no | Consumed for Field composition so Field can render its visible required marker. Native buttons do not support `aria-required`, so this does not add required semantics to the trigger. Default: `false`. |
 | `popoverPlacement` | `'top' \| 'top-start' \| 'top-end' \| 'bottom' \| 'bottom-start' \| 'bottom-end'` | no | Preferred popover placement. Floating UI may flip it to remain visible. - `'top'` — above, centered. - `'top-start'` — above, start-aligned. - `'top-end'` — above, end-aligned. - `'bottom'` — below, centered. - `'bottom-start'` — below, start-aligned. - `'bottom-end'` — below, end-aligned. Default: `'bottom-start'`. |
-| `aria-label` | `string` | no | Accessible picker purpose. It names the trigger with the selected icon appended and names the dialog plus radiogroup without that suffix. Defaults to the localized `iconPicker.triggerLabel` value when omitted OR empty — an empty string is not an explicit name, so it takes the default too. |
+| `aria-label` | `string` | no | Accessible picker purpose. It names the trigger with the selected icon appended and names the dialog plus radiogroup without that suffix. Defaults to the localized `iconPicker.triggerLabel` value when omitted OR empty — an empty string is not an explicit name, so it takes the default too. In colour mode the default is `iconPicker.triggerLabelWithColor` and the trigger appends the colour name as well. |
 | `aria-labelledby` | `string` | no | Id(s) of external elements that provide the picker purpose. They name the dialog and radiogroup directly. The trigger also references hidden selected-option text so its name remains the visible purpose plus the current selection. |
 | `aria-describedby` | `string` | no | Id(s) of element(s) that describe the trigger button. |
-| …native | | | plus native `<div>` attributes |
+| `color` | `PaletteColor` | no | Controlled palette colour. Passing it turns on colour mode. |
+| `onColorChange` | `(color: PaletteColor) => void` | no | Fires with the chosen palette colour; the popover stays open. |
+| `colors` | `readonly PaletteColor[]` | no | Offered colours, in order. Default: `PALETTE_COLORS`. |
+| …native | | | plus native HTML attributes |
 
 <!-- props:end -->
 

@@ -1210,7 +1210,7 @@ describe('a focus ring goes through the focus-ring mixin', () => {
   const waivers = [
     {
       file: 'IconPicker/IconPicker.module.scss',
-      selector: '.trigger:focus-visible, .cell:focus-visible',
+      selector: '.trigger:focus-visible, .cell:focus-visible, .swatch:focus-visible',
       // `--icon-picker-focus-ring-width` is a documented public override in
       // IconPicker.tsx's consumer token list, and `focus-ring` has no width
       // parameter. Calling the mixin would silently stop that override

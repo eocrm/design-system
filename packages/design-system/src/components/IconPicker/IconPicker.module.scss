@@ -41,6 +41,14 @@
   height: var(--icon-picker-trigger-size-lg);
 }
 
+// Colour mode: palette tint from the runtime `--icon-picker-tint-*` vars set
+// inline from paletteTokens() (IconTile's technique), no neutral border.
+.tinted {
+  border-color: transparent;
+  background: var(--icon-picker-tint-bg);
+  color: var(--icon-picker-tint-fg);
+}
+
 .cell {
   width: var(--icon-picker-cell-size);
   height: var(--icon-picker-cell-size);
@@ -50,11 +58,27 @@
   background: var(--icon-picker-hover-bg);
 }
 
+.cell.tinted:hover {
+  background: var(--icon-picker-tint-bg);
+}
+
+.cell.tinted:not(.selected):hover {
+  border-color: var(--icon-picker-tint-fg);
+}
+
 .trigger:disabled {
   border-color: var(--icon-picker-disabled-border);
   background: var(--icon-picker-disabled-bg);
   color: var(--icon-picker-disabled-fg);
   cursor: var(--icon-picker-cursor-disabled);
+}
+
+// A read-only record still shows its stored colour: keep the tint, dim it.
+.tinted:disabled {
+  border-color: transparent;
+  background: var(--icon-picker-tint-bg);
+  color: var(--icon-picker-tint-fg);
+  opacity: var(--icon-picker-disabled-opacity);
 }
 
 // The focus-ring mechanism (outline + offset, #505), spelled out rather than
@@ -69,7 +93,8 @@
 // this comment called the grid a scroller and used that to hold the component
 // back from the migration; it was simply false.
 .trigger:focus-visible,
-.cell:focus-visible {
+.cell:focus-visible,
+.swatch:focus-visible {
   outline: var(--icon-picker-focus-ring-width) solid var(--icon-picker-focus-ring);
   outline-offset: var(--ring-offset);
 }
@@ -78,6 +103,45 @@
   border-width: var(--icon-picker-selected-border-width);
   border-color: var(--icon-picker-selected-border);
   box-shadow: inset 0 0 0 var(--icon-picker-selected-ring-width) var(--icon-picker-selected-ring);
+}
+
+.panel {
+  display: grid;
+  gap: var(--icon-picker-section-gap);
+}
+
+.heading {
+  padding-inline: var(--icon-picker-grid-padding);
+  color: var(--icon-picker-heading-fg);
+  font-size: var(--icon-picker-heading-font-size);
+  font-weight: var(--icon-picker-heading-font-weight);
+}
+
+// Six columns spread to the icon grid's width so both sections read as one panel.
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(6, var(--icon-picker-swatch-size));
+  justify-content: space-between;
+  gap: var(--icon-picker-swatch-gap);
+  padding: var(--icon-picker-grid-padding);
+}
+
+.swatch {
+  box-sizing: border-box;
+  width: var(--icon-picker-swatch-size);
+  height: var(--icon-picker-swatch-size);
+  padding: 0;
+  border: var(--icon-picker-border-width) solid var(--icon-picker-swatch-fg);
+  border-radius: var(--icon-picker-swatch-radius);
+  background: var(--icon-picker-swatch-bg);
+  cursor: var(--icon-picker-cursor);
+}
+
+// Inset bg-coloured ring inside a thicker fg border, so the outset focus ring stays distinct.
+.swatchSelected {
+  border-width: var(--icon-picker-selected-border-width);
+  box-shadow: inset 0 0 0 var(--icon-picker-swatch-selected-ring-width)
+    var(--icon-picker-swatch-selected-ring);
 }
 
 .glyph {

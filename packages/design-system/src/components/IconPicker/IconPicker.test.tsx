@@ -1,10 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createRef, useState, type CSSProperties } from 'react';
-import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { IconPicker, type IconPickerOption, type IconPickerPopoverPlacement } from './IconPicker';
 import { Field } from '../Field';
+import type { PaletteColor } from '../../palette';
 
 const options: IconPickerOption[] = [
   { value: 'flame', label: 'Flame', icon: <svg data-testid="flame-icon" /> },
@@ -567,4 +568,217 @@ it('resolves each size class through its trigger-size token', () => {
     expect(rule(name)).toContain(`width: var(${token});`);
     expect(rule(name)).toContain(`height: var(${token});`);
   }
+});
+
+describe('IconPicker — colour mode', () => {
+  const onChangeSpy = vi.fn();
+  const onColorChangeSpy = vi.fn();
+  beforeEach(() => {
+    onChangeSpy.mockReset();
+    onColorChangeSpy.mockReset();
+  });
+
+  function ColorHarness({
+    initialColor,
+    colors,
+    disabled,
+  }: {
+    initialColor: PaletteColor;
+    colors?: PaletteColor[];
+    disabled?: boolean;
+  }) {
+    const [value, setValue] = useState('flame');
+    const [color, setColor] = useState<PaletteColor>(initialColor);
+    return (
+      <IconPicker
+        value={value}
+        options={options}
+        onChange={(next) => {
+          onChangeSpy(next);
+          setValue(next);
+        }}
+        color={color}
+        onColorChange={(next) => {
+          onColorChangeSpy(next);
+          setColor(next);
+        }}
+        colors={colors}
+        disabled={disabled}
+      />
+    );
+  }
+
+  it('requires onColorChange together with color (type-level)', () => {
+    // @ts-expect-error — color without onColorChange is rejected by the type.
+    const element = <IconPicker value="flame" options={options} onChange={() => {}} color="teal" />;
+    expect(element).toBeTruthy();
+  });
+
+  it('names the trigger with icon and colour', () => {
+    render(<ColorHarness initialColor="teal" />);
+    expect(
+      screen.getByRole('button', { name: 'Pick icon and colour: Flame, Teal' }),
+    ).toBeInTheDocument();
+  });
+
+  it('tints the trigger with palette vars', () => {
+    render(<ColorHarness initialColor="teal" />);
+    const trigger = screen.getByRole('button', { name: /Pick icon and colour/ });
+    expect(trigger.style.getPropertyValue('--icon-picker-tint-bg')).toBe(
+      'var(--color-palette-teal-bg)',
+    );
+    expect(trigger.style.getPropertyValue('--icon-picker-tint-fg')).toBe(
+      'var(--color-palette-teal-fg)',
+    );
+    expect(trigger.className).toMatch(/tinted/);
+    expect(trigger.className).toContain('size-md');
+  });
+
+  it('renders Colour and Icon radiogroups labelled by visible headings', async () => {
+    const user = userEvent.setup();
+    render(<ColorHarness initialColor="teal" />);
+    await user.click(screen.getByRole('button', { name: /Pick icon and colour/ }));
+    expect(screen.getByRole('dialog', { name: 'Pick icon and colour' })).toBeInTheDocument();
+    expect(screen.getByRole('radiogroup', { name: 'Colour' })).toBeInTheDocument();
+    expect(screen.getByRole('radiogroup', { name: 'Icon' })).toBeInTheDocument();
+    expect(screen.getByText('Colour')).toBeVisible();
+    expect(screen.getByText('Icon')).toBeVisible();
+    expect(screen.getAllByRole('radio', { name: /^(Red|Teal|Charcoal)$/ })).toHaveLength(3);
+    expect(screen.getByRole('radio', { name: 'Teal' })).toHaveAttribute('aria-checked', 'true');
+    expect(screen.getByRole('radio', { name: 'Red' })).toHaveAttribute('aria-checked', 'false');
+    await waitFor(() => expect(screen.getByRole('radio', { name: 'Teal' })).toHaveFocus());
+  });
+
+  it('tints the icon cells with the selected colour', async () => {
+    const user = userEvent.setup();
+    render(<ColorHarness initialColor="teal" />);
+    await user.click(screen.getByRole('button', { name: /Pick icon and colour/ }));
+    const iconGroup = screen.getByRole('radiogroup', { name: 'Icon' });
+    const panel = iconGroup.parentElement!;
+    expect(panel.style.getPropertyValue('--icon-picker-tint-bg')).toBe(
+      'var(--color-palette-teal-bg)',
+    );
+    expect(screen.getByRole('radio', { name: 'Flame' }).className).toMatch(/tinted/);
+  });
+
+  it('clicking a colour or icon commits without closing', async () => {
+    const user = userEvent.setup();
+    render(<ColorHarness initialColor="teal" />);
+    await user.click(screen.getByRole('button', { name: /Pick icon and colour/ }));
+    await user.click(screen.getByRole('radio', { name: 'Blue' }));
+    expect(onColorChangeSpy).toHaveBeenCalledTimes(1);
+    expect(onColorChangeSpy).toHaveBeenCalledWith('blue');
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Blue' })).toHaveAttribute('aria-checked', 'true');
+    await user.click(screen.getByRole('radio', { name: 'Lightning' }));
+    expect(onChangeSpy).toHaveBeenCalledTimes(1);
+    expect(onChangeSpy).toHaveBeenCalledWith('zap');
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Pick icon and colour: Lightning, Blue' }),
+    ).toBeInTheDocument();
+  });
+
+  it('respects the colors subset and order', async () => {
+    const user = userEvent.setup();
+    render(<ColorHarness initialColor="teal" colors={['blue', 'teal']} />);
+    await user.click(screen.getByRole('button', { name: /Pick icon and colour/ }));
+    const dots = within(screen.getByRole('radiogroup', { name: 'Colour' })).getAllByRole('radio');
+    expect(dots.map((dot) => dot.getAttribute('aria-label'))).toEqual(['Blue', 'Teal']);
+    expect(dots.map((dot) => dot.getAttribute('data-color-index'))).toEqual(['0', '1']);
+    expect(dots.map((dot) => dot.tabIndex)).toEqual([-1, 0]);
+  });
+
+  it('unknown color: trigger tinted, no dot checked, focus lands on first dot', async () => {
+    const user = userEvent.setup();
+    render(<ColorHarness initialColor="teal" colors={['blue', 'red']} />);
+    const trigger = screen.getByRole('button', { name: 'Pick icon and colour: Flame, Teal' });
+    expect(trigger.style.getPropertyValue('--icon-picker-tint-bg')).toBe(
+      'var(--color-palette-teal-bg)',
+    );
+    await user.click(trigger);
+    const dots = within(screen.getByRole('radiogroup', { name: 'Colour' })).getAllByRole('radio');
+    for (const dot of dots) expect(dot).toHaveAttribute('aria-checked', 'false');
+    expect(dots.map((dot) => dot.tabIndex)).toEqual([0, -1]);
+    await waitFor(() => expect(screen.getByRole('radio', { name: 'Blue' })).toHaveFocus());
+  });
+
+  it('colors={[]} hides the colour section but keeps the icon grid', async () => {
+    const user = userEvent.setup();
+    render(<ColorHarness initialColor="teal" colors={[]} />);
+    await user.click(screen.getByRole('button', { name: 'Pick icon and colour: Flame, Teal' }));
+    expect(screen.queryByRole('radiogroup', { name: 'Colour' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Colour')).not.toBeInTheDocument();
+    expect(screen.getByRole('radiogroup', { name: 'Icon' })).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole('radio', { name: 'Flame' })).toHaveFocus());
+  });
+
+  it('disabled colour mode keeps the tint and cannot open', async () => {
+    const user = userEvent.setup();
+    render(<ColorHarness initialColor="teal" disabled />);
+    const trigger = screen.getByRole('button', { name: 'Pick icon and colour: Flame, Teal' });
+    expect(trigger).toBeDisabled();
+    expect(trigger.className).toMatch(/tinted/);
+    expect(trigger.style.getPropertyValue('--icon-picker-tint-bg')).toBe(
+      'var(--color-palette-teal-bg)',
+    );
+    await user.click(trigger);
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    // jsdom has no cascade: guard that the disabled tint dims via the opacity token.
+    const scss = readFileSync(resolve(__dirname, 'IconPicker.module.scss'), 'utf8');
+    const rule = scss.match(/\.tinted:disabled\s*\{([^}]*)\}/)?.[1] ?? '';
+    expect(rule).toContain('opacity: var(--icon-picker-disabled-opacity);');
+    expect(rule).toContain('background: var(--icon-picker-tint-bg);');
+  });
+
+  it('icon-only mode is unchanged: label "Pick icon: Flame", closes on pick, no Colour group', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    render(<IconPicker value="flame" options={options} onChange={onChange} />);
+    const trigger = screen.getByRole('button', { name: 'Pick icon: Flame' });
+    expect(trigger.className).not.toMatch(/tinted/);
+    expect(trigger.style.getPropertyValue('--icon-picker-tint-bg')).toBe('');
+    await user.click(trigger);
+    expect(screen.queryByRole('radiogroup', { name: 'Colour' })).not.toBeInTheDocument();
+    expect(screen.queryByText('Icon')).not.toBeInTheDocument();
+    expect(screen.getByRole('radiogroup', { name: 'Pick icon' })).toBeInTheDocument();
+    expect(screen.getByRole('radio', { name: 'Flame' }).className).not.toMatch(/tinted/);
+    await user.click(screen.getByRole('radio', { name: 'Lightning' }));
+    expect(onChange).toHaveBeenCalledWith('zap');
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+  });
+
+  it('Field label + aria-labelledby path appends icon and colour', async () => {
+    const user = userEvent.setup();
+    render(
+      <Field label="Appearance">
+        <IconPicker
+          value="flame"
+          options={options}
+          onChange={() => {}}
+          color="teal"
+          onColorChange={() => {}}
+        />
+      </Field>,
+    );
+    const trigger = screen.getByRole('button', { name: 'Appearance Flame Teal' });
+    expect(trigger).not.toHaveAttribute('aria-label');
+    await user.click(trigger);
+    // The dialog is named by the purpose alone.
+    expect(screen.getByRole('dialog', { name: 'Appearance' })).toBeInTheDocument();
+  });
+
+  it('uses a consumer aria-label as the colour-mode purpose', () => {
+    render(
+      <IconPicker
+        aria-label="Look"
+        value="flame"
+        options={options}
+        onChange={() => {}}
+        color="teal"
+        onColorChange={() => {}}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Look: Flame, Teal' })).toBeInTheDocument();
+  });
 });
