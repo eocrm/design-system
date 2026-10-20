@@ -21,6 +21,16 @@
   {tags.map((t) => <Badge key={t.id} tone={t.tone}>{t.label}</Badge>)}
 </Cluster>
 
+// Pill left + two buttons right while they fit; buttons drop under the pill
+// at full width (equal columns) when they don't — no breakpoint to guess:
+<Cluster stretchWrapped gap="sm">
+  <Badge tone="info">In review</Badge>
+  <Grid columns={2} gap="sm">
+    <Button variant="secondary">Reject</Button>
+    <Button>Approve</Button>
+  </Grid>
+</Cluster>
+
 // Inline, inside a <button>/<a>/<label> where a <div> is invalid HTML —
 // as="span" renders inline-flex (e.g. icon + label in a ButtonGroup.Item):
 <ButtonGroup.Item value="list">
@@ -44,6 +54,7 @@
 | `align` | `'start' \| 'center' \| 'end' \| 'baseline'` | no | Vertical alignment. - `start` / `center` (default) / `end` / `baseline`. |
 | `minWidth0` | `boolean` | no | Lets the container shrink below its content's intrinsic width (`min-width: 0`), so a `<Text truncate>` inside can ellipsize instead of being hard-cut by a clipping ancestor. Reach for it when this Cluster is an item of a **row** flex container (or a grid item) that clips — a `Calendar` `renderEvent` chip, a `Card.Header` row. Without it the flex default (`min-width: auto`) floors the container at its content's min-content width and the ellipsis never appears. That floor applies because a Cluster sets no `overflow` — per CSS Flexbox §4.5 a flex item keeps its automatic minimum size while its computed `overflow` is non-scrollable (`visible` or `clip`); the scrollable values (`hidden`/`auto`/`scroll`) drop it to `0`. That is why a `<Text truncate>` (overflow hidden) never needs this and a Cluster around it does. It is a **no-op** inside a column `Stack` (the automatic minimum size applies only on the flex MAIN axis, so there is no horizontal floor), and inside a plain block or a table cell (the automatic minimum size applies to flex and grid ITEMS only, so `min-width: auto` is just `0` there). A table cell is a no-op for a different reason than it looks: auto table layout floors the cell at its content's min-content width regardless, so what makes text truncate there is `table-layout: fixed` or a `max-width` on the cell — not this prop. Opt-in rather than the default on purpose: a container that CAN shrink also VOLUNTEERS for shrink, so turning it on where the content is NOT truncatable (buttons, badges, icons) lets that content be clipped instead. Set it on the container whose text should give way, not on one holding controls. Related: `<Constrain flex="grow">` applies the same `min-width: 0` but also forces `flex: 1 1 0`, and renders a `<div>` — reach for this prop when you want only the shrink permission, or when you are inside a `<button>`/`<a>`/`<label>` where a `<div>` is invalid HTML. Default: `false`. |
 | `maxWidthFull` | `boolean` | no | Caps the cluster at its container's width (`max-width: 100%`). Meant for `as="span"` inside running text: an inline cluster otherwise sizes to its content, so a `<Text as="span" truncate>` child with a long title makes the cluster overflow the paragraph instead of ellipsizing at the line edge. Combine with `wrap={false}` + a truncating child. The chip is one inline box: if the text before it leaves too little room on the line, the whole chip wraps to the next line, then ellipsizes at the full paragraph width. Phrasing-safe (still a span) — unlike `<Constrain maxWidth>`, which renders a `<div>` that is invalid inside `<p>`. For an entity link row (icon, KEY, title, status, adornments) prefer `<EntityChip truncate trailing={…}>`, which does exactly this. Default: `false`. |
+| `stretchWrapped` | `boolean` | no | Content-driven switch between one row and stacked. While the children fit on one line they stay content-sized and the free space collects between the first child and the rest (the rest sit at the end). When they no longer fit, every child that wraps onto its own line stretches to fill that line. Canonical case: a status pill plus a `<Grid columns={2}>` of two buttons — pill left and buttons right while there is room, buttons dropping under the pill at full width (equal columns) when there is not. No breakpoint to guess, unlike `Grid collapseBelow`. How: an invisible `::before` spacer soaks up a shared line's slack, so no child stretches there; a non-first child alone on a wrapped line takes the whole line. Children wrapped together share it. Limits: `justify` is inert while this is on (the spacer owns the slack); `wrap={false}` makes it moot (nothing wraps); a consumer `order` on children breaks it — don't. The spacer adds one gap, so it switches to stacked about one gap earlier than the content alone would require. Default: `false`. |
 | `wrap` | `boolean` | no | Whether children wrap to additional lines when the container is narrow. - `true` (default) — natural for toolbars and tag lists. - `false` — use sparingly, when overflow is preferable to wrapping (e.g. inside a narrow table cell with fixed-width action buttons). |
 | …native | | | plus native HTML attributes |
 
@@ -78,4 +89,6 @@ Use it for button rows, toolbars, tag lists and breadcrumbs: anywhere you would 
 - ❌ Cluster as a 2-column layout. Use `<Grid columns={2}>` for "two columns, always".
 - ❌ `style={{ marginLeft: 'auto' }}` on a child to push it right. Use `justify="between"` (with a sibling on the left) or split into two Clusters in the parent.
 - ❌ `minWidth0` on a Cluster holding buttons or badges: it lets the container shrink, so non-truncatable content gets clipped. Use it on the container whose TEXT should give way.
+- ❌ `Grid collapseBelow` with a guessed pixel threshold to stack a pill + buttons row. The right width depends on content and locale; use `stretchWrapped` and let the content decide.
+- ❌ `stretchWrapped` with `justify`, `wrap={false}` or a child `order`: `justify` is inert, `wrap={false}` never wraps so nothing switches, `order` breaks the spacer.
 - ❌ `as="span"` as a general styling hook. Reach for it only when block content is invalid HTML (inside `<button>`, `<a>`, `<label>`); in normal flow the default block `div` is what you want.

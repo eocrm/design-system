@@ -27,6 +27,29 @@
   min-width: 0;
 }
 
+// Opt-in, via `stretchWrapped` (#668). flex-grow distributes free space PER
+// FLEX LINE. On a line shared by several children, the `::before` spacer
+// (grow 999, basis 0) soaks up the slack, so the content-sized children
+// (grow 1 is negligible next to 999) do not stretch; the spacer sits between
+// the first child (`order: -1`, ahead of it) and the rest, pushing them to the
+// end. A non-first child alone on a wrapped line has no spacer on that line, so
+// its grow 1 takes the whole line. The spacer costs one extra gap, so the
+// switch happens ~one gap early.
+.stretchWrapped {
+  &::before {
+    content: '';
+    flex: 999 1 0;
+  }
+
+  > :first-child {
+    order: -1;
+  }
+
+  > :not(:first-child) {
+    flex: 1 1 auto;
+  }
+}
+
 // Opt-in, via `maxWidthFull` (#571): an inline (`as="span"`) cluster sizes to
 // its content, and with a nowrap truncating child that content is the full
 // title — so it overflows the line instead of ellipsizing at its edge.

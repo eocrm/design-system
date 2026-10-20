@@ -949,6 +949,13 @@
           "description": "Caps the cluster at its container's width (`max-width: 100%`). Meant for\n`as=\"span\"` inside running text: an inline cluster otherwise sizes to its\ncontent, so a `<Text as=\"span\" truncate>` child with a long title makes\nthe cluster overflow the paragraph instead of ellipsizing at the line\nedge. Combine with `wrap={false}` + a truncating child. The chip is one\ninline box: if the text before it leaves too little room on the line, the\nwhole chip wraps to the next line, then ellipsizes at the full paragraph\nwidth. Phrasing-safe (still a span) — unlike `<Constrain maxWidth>`, which\nrenders a `<div>` that is invalid inside `<p>` (#571).\n\nFor an entity link row (icon, KEY, title, status, adornments) prefer\n`<EntityChip truncate trailing={…}>`, which does exactly this."
         },
         {
+          "name": "stretchWrapped",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "Content-driven switch between one row and stacked. While the children fit\non one line they stay content-sized and the free space collects between\nthe first child and the rest (the rest sit at the end). When they no\nlonger fit, every child that wraps onto its own line stretches to fill\nthat line.\n\nCanonical case: a status pill plus a `<Grid columns={2}>` of two buttons —\npill left and buttons right while there is room, buttons dropping under the\npill at full width (equal columns) when there is not. No breakpoint to guess,\nunlike `Grid collapseBelow`.\n\nHow: an invisible `::before` spacer soaks up a shared line's slack, so no\nchild stretches there; a non-first child alone on a wrapped line takes the\nwhole line. Children wrapped together share it.\n\nLimits: `justify` is inert while this is on (the spacer owns the slack);\n`wrap={false}` makes it moot (nothing wraps); a consumer `order` on\nchildren breaks it — don't. The spacer adds one gap, so it switches to\nstacked about one gap earlier than the content alone would require."
+        },
+        {
           "name": "wrap",
           "type": "boolean",
           "required": false,

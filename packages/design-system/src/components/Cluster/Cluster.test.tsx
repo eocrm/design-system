@@ -168,6 +168,15 @@ describe('Cluster', () => {
   });
 });
 
+describe('stretchWrapped (#668)', () => {
+  it('applies the stretchWrapped class only when the prop is set', () => {
+    const { container: off } = render(<Cluster>x</Cluster>);
+    const { container: on } = render(<Cluster stretchWrapped>x</Cluster>);
+    expect((off.firstChild as HTMLElement).className).not.toMatch(/stretchWrapped/);
+    expect((on.firstChild as HTMLElement).className).toMatch(/stretchWrapped/);
+  });
+});
+
 describe('maxWidthFull (#571)', () => {
   it('applies the class only when set, and stays a span with as="span"', () => {
     const { container: off } = render(<Cluster as="span">x</Cluster>);
