@@ -27,11 +27,36 @@ function makeId() {
   return `id-${Math.random().toString(36).slice(2)}`;
 }
 
-function BasicSquare() {
+const RATIOS = [
+  { label: 'Free', value: undefined },
+  { label: '1:1', value: 1 },
+  { label: '3:4', value: 3 / 4 },
+  { label: '4:3', value: 4 / 3 },
+  { label: '9:16', value: 9 / 16 },
+  { label: '16:9', value: 16 / 9 },
+] as const;
+
+function AspectRatios() {
+  const [ratio, setRatio] = useState<number | undefined>(1);
   const [crop, setCrop] = useState<CropArea | null>(null);
   return (
     <Stack gap="sm">
-      <ImageCrop src={SAMPLE_IMAGE} value={crop} onChange={setCrop} aspectRatio={1} />
+      <Cluster gap="sm" align="center">
+        {RATIOS.map((r) => (
+          <Button
+            key={r.label}
+            size="sm"
+            variant={ratio === r.value ? 'primary' : 'secondary'}
+            onClick={() => {
+              setRatio(r.value);
+              setCrop(null); // aspectRatio changes don't refit value — reset to the new default
+            }}
+          >
+            {r.label}
+          </Button>
+        ))}
+      </Cluster>
+      <ImageCrop src={SAMPLE_IMAGE} value={crop} onChange={setCrop} aspectRatio={ratio} />
       <Text size="sm" tone="muted">
         Crop:{' '}
         <Code>
@@ -196,18 +221,43 @@ export function ImageCropDemo() {
       componentName="ImageCrop"
     >
       <Example
-        title="Basic (square aspect)"
-        description="aspectRatio={1}. The crop box stays square. Drag it to move, drag a corner (or scroll the wheel) to resize, double-click or press Reset to restore the default crop."
+        title="Aspect ratios"
+        description="aspectRatio={1}, {3/4}, {4/3}, {9/16}, {16/9} or omitted (free). Switching the ratio passes value={null} so the box snaps to the new default. Drag the box to move, drag a corner (or scroll) to resize, double-click or press Reset to restore the default crop."
         code={`import { useState } from 'react';
-import { Code, ImageCrop, Stack, Text, type CropArea } from '@eocrm/design-system';
+import { Button, Cluster, Code, ImageCrop, Stack, Text, type CropArea } from '@eocrm/design-system';
 
 const SAMPLE_IMAGE = 'https://picsum.photos/seed/eocrm-imagecrop/1200/800';
 
-export function BasicSquare() {
+const RATIOS = [
+  { label: 'Free', value: undefined },
+  { label: '1:1', value: 1 },
+  { label: '3:4', value: 3 / 4 },
+  { label: '4:3', value: 4 / 3 },
+  { label: '9:16', value: 9 / 16 },
+  { label: '16:9', value: 16 / 9 },
+] as const;
+
+export function AspectRatios() {
+  const [ratio, setRatio] = useState<number | undefined>(1);
   const [crop, setCrop] = useState<CropArea | null>(null);
   return (
     <Stack gap="sm">
-      <ImageCrop src={SAMPLE_IMAGE} value={crop} onChange={setCrop} aspectRatio={1} />
+      <Cluster gap="sm" align="center">
+        {RATIOS.map((r) => (
+          <Button
+            key={r.label}
+            size="sm"
+            variant={ratio === r.value ? 'primary' : 'secondary'}
+            onClick={() => {
+              setRatio(r.value);
+              setCrop(null); // aspectRatio changes don't refit value — reset to the new default
+            }}
+          >
+            {r.label}
+          </Button>
+        ))}
+      </Cluster>
+      <ImageCrop src={SAMPLE_IMAGE} value={crop} onChange={setCrop} aspectRatio={ratio} />
       <Text size="sm" tone="muted">
         Crop:{' '}
         <Code>
@@ -220,7 +270,7 @@ export function BasicSquare() {
   );
 }`}
       >
-        <BasicSquare />
+        <AspectRatios />
       </Example>
 
       <Example

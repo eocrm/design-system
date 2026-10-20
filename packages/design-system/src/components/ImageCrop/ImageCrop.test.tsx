@@ -180,6 +180,27 @@ describe('ImageCrop', () => {
       expect(fired.y).toBeCloseTo(80);
     });
 
+    it('value reset to null after init (e.g. ratio switch) fires the new default crop', () => {
+      const onChange = vi.fn();
+      const square: CropArea = { x: 180, y: 80, width: 640, height: 640 };
+      const { container, rerender } = render(
+        <ImageCrop src="data:,placeholder" value={square} onChange={onChange} aspectRatio={1} />,
+      );
+      mockViewportRect(container, { width: 400, height: 400 });
+      fireImageLoad(container, 1000, 800);
+      expect(onChange).not.toHaveBeenCalled();
+      rerender(
+        <ImageCrop src="data:,placeholder" value={null} onChange={onChange} aspectRatio={16 / 9} />,
+      );
+      expect(onChange).toHaveBeenCalledTimes(1);
+      const fired = onChange.mock.calls[0][0] as CropArea;
+      // 1000×800 image, 16:9: largest box 1000×562.5 → 80% = 800×450, centered.
+      expect(fired.width).toBeCloseTo(800);
+      expect(fired.height).toBeCloseTo(450);
+      expect(fired.x).toBeCloseTo(100);
+      expect(fired.y).toBeCloseTo(175);
+    });
+
     it('controlled value: image is fitted, still, with a transform from fitImage', () => {
       const value: CropArea = { x: 100, y: 50, width: 400, height: 400 };
       const { container } = render(

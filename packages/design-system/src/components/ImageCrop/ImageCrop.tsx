@@ -156,23 +156,24 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
     [imageNatural, viewport],
   );
 
-  // Initialize value on first load if consumer passed null. Fire onChange
-  // once with the default so the consumer's controlled state catches up.
-  const initializedRef = useRef(false);
+  // Whenever the consumer passes null (first load, or later — e.g. after a
+  // ratio switch), fire onChange once with the default so the controlled
+  // state catches up. The ref re-arms as soon as a real value comes back, so
+  // a consumer that keeps null (ignores onChange) doesn't get a loop.
+  const defaultFiredRef = useRef(false);
   useEffect(() => {
-    if (loadState !== 'loaded' || !imageNatural || initializedRef.current) return;
-    if (value === null && fit) {
-      initializedRef.current = true;
-      onChange(defaultCropArea(imageNatural, aspectRatio));
-    } else if (value !== null) {
-      initializedRef.current = true;
+    if (value !== null) {
+      defaultFiredRef.current = false;
+      return;
     }
+    if (loadState !== 'loaded' || !imageNatural || !fit || defaultFiredRef.current) return;
+    defaultFiredRef.current = true;
+    onChange(defaultCropArea(imageNatural, aspectRatio));
   }, [loadState, imageNatural, value, fit, aspectRatio, onChange]);
 
-  // Reset initialization flag on src change so the new image gets its
-  // default crop applied.
+  // Re-arm on src change so the new image gets its default crop applied.
   useEffect(() => {
-    initializedRef.current = false;
+    defaultFiredRef.current = false;
   }, [resolvedSrc]);
 
   // Gesture state lives in a ref so handlers read it synchronously.
