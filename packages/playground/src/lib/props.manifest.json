@@ -3428,6 +3428,27 @@
           "required": false,
           "default": "",
           "description": "Disable all interaction (move, resize). Default `false`. Image still renders."
+        },
+        {
+          "name": "showReset",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Render the on-canvas Reset button. Default `false`; double-click reset works regardless."
+        },
+        {
+          "name": "aspectRatios",
+          "type": "ImageCropAspectOption[]",
+          "required": false,
+          "default": "",
+          "description": "Options for an on-canvas aspect-ratio switcher. Labels are consumer strings (your i18n).\nControlled: the option whose `value === aspectRatio` shows as selected, and picking one calls\n`onAspectRatioChange`, then `onChange`/`onChangeEnd` with that ratio's default crop.\nOmit or pass `[]` for no switcher."
+        },
+        {
+          "name": "onAspectRatioChange",
+          "type": "((ratio: number) => void)",
+          "required": false,
+          "default": "",
+          "description": "Fires when an option is picked in the switcher (`undefined` = free aspect). Update your `aspectRatio` state here."
         }
       ]
     },
@@ -6969,6 +6990,7 @@
     "MediaTileRadius": "\"sm\" | \"md\" | \"lg\" | \"none\"",
     "MediaTileCaptionPlacement": "\"overlay\" | \"below\"",
     "MediaTileControls": "\"bar\" | \"chips\"",
+    "ImageCropAspectOption": "{ label: string; value?: number }",
     "CropArea": "{ x: number; y: number; width: number; height: number }",
     "DataTableInstance": "DataTableInstance<T>",
     "DefinitionListLayout": "\"horizontal\" | \"stacked\"",

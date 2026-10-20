@@ -108,47 +108,81 @@
   width: var(--image-crop-handle-size);
   height: var(--image-crop-handle-size);
   box-sizing: border-box;
-  border: 0 solid var(--image-crop-handle-color);
+}
+
+// Corner hit areas straddle the outline (half outside the box); the visible bracket hugs the box corner.
+.handle_nw,
+.handle_ne,
+.handle_sw,
+.handle_se {
+  &::before {
+    content: '';
+    position: absolute;
+    width: calc(var(--image-crop-handle-size) / 2 + var(--image-crop-handle-thickness));
+    height: calc(var(--image-crop-handle-size) / 2 + var(--image-crop-handle-thickness));
+    box-sizing: border-box;
+    border: 0 solid var(--image-crop-handle-color);
+  }
 }
 
 .handle_nw {
-  top: calc(-1 * var(--image-crop-handle-thickness));
-  left: calc(-1 * var(--image-crop-handle-thickness));
-  border-top-width: var(--image-crop-handle-thickness);
-  border-left-width: var(--image-crop-handle-thickness);
+  top: calc(-0.5 * var(--image-crop-handle-size));
+  left: calc(-0.5 * var(--image-crop-handle-size));
 
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
   cursor: nwse-resize;
+
+  &::before {
+    top: calc(var(--image-crop-handle-size) / 2 - var(--image-crop-handle-thickness));
+    left: calc(var(--image-crop-handle-size) / 2 - var(--image-crop-handle-thickness));
+    border-top-width: var(--image-crop-handle-thickness);
+    border-left-width: var(--image-crop-handle-thickness);
+  }
 }
 
 .handle_ne {
-  top: calc(-1 * var(--image-crop-handle-thickness));
-  right: calc(-1 * var(--image-crop-handle-thickness));
-  border-top-width: var(--image-crop-handle-thickness);
-  border-right-width: var(--image-crop-handle-thickness);
+  top: calc(-0.5 * var(--image-crop-handle-size));
+  right: calc(-0.5 * var(--image-crop-handle-size));
 
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
   cursor: nesw-resize;
+
+  &::before {
+    top: calc(var(--image-crop-handle-size) / 2 - var(--image-crop-handle-thickness));
+    right: calc(var(--image-crop-handle-size) / 2 - var(--image-crop-handle-thickness));
+    border-top-width: var(--image-crop-handle-thickness);
+    border-right-width: var(--image-crop-handle-thickness);
+  }
 }
 
 .handle_sw {
-  bottom: calc(-1 * var(--image-crop-handle-thickness));
-  left: calc(-1 * var(--image-crop-handle-thickness));
-  border-bottom-width: var(--image-crop-handle-thickness);
-  border-left-width: var(--image-crop-handle-thickness);
+  bottom: calc(-0.5 * var(--image-crop-handle-size));
+  left: calc(-0.5 * var(--image-crop-handle-size));
 
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
   cursor: nesw-resize;
+
+  &::before {
+    bottom: calc(var(--image-crop-handle-size) / 2 - var(--image-crop-handle-thickness));
+    left: calc(var(--image-crop-handle-size) / 2 - var(--image-crop-handle-thickness));
+    border-bottom-width: var(--image-crop-handle-thickness);
+    border-left-width: var(--image-crop-handle-thickness);
+  }
 }
 
 .handle_se {
-  right: calc(-1 * var(--image-crop-handle-thickness));
-  bottom: calc(-1 * var(--image-crop-handle-thickness));
-  border-bottom-width: var(--image-crop-handle-thickness);
-  border-right-width: var(--image-crop-handle-thickness);
+  right: calc(-0.5 * var(--image-crop-handle-size));
+  bottom: calc(-0.5 * var(--image-crop-handle-size));
 
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
   cursor: nwse-resize;
+
+  &::before {
+    bottom: calc(var(--image-crop-handle-size) / 2 - var(--image-crop-handle-thickness));
+    right: calc(var(--image-crop-handle-size) / 2 - var(--image-crop-handle-thickness));
+    border-bottom-width: var(--image-crop-handle-thickness);
+    border-right-width: var(--image-crop-handle-thickness);
+  }
 }
 
 // Edge handles are invisible hit strips along the box edges.
@@ -225,20 +259,15 @@
   @include visually-hidden;
 }
 
-// Floating pill over the canvas bottom; sits in the reserved TOOLBAR_RESERVE band.
+// Positioning wrapper over the canvas bottom; sits in the reserved TOOLBAR_RESERVE band.
 .toolbar {
   position: absolute;
   bottom: var(--image-crop-toolbar-offset);
   left: 50%;
   display: flex;
   align-items: center;
-  padding: var(--image-crop-toolbar-padding);
-  background: var(--image-crop-toolbar-bg);
-  border-radius: var(--image-crop-toolbar-radius);
-  backdrop-filter: blur(var(--image-crop-toolbar-blur));
+  gap: var(--image-crop-toolbar-gap);
+  max-width: 100%;
+  overflow-x: auto;
   transform: translateX(-50%);
-
-  // Ghost Button reads on the dark pill.
-  --button-fg-ghost: var(--image-crop-toolbar-fg);
-  --button-bg-ghost-hover: var(--image-crop-toolbar-hover-bg);
 }

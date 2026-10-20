@@ -14,6 +14,7 @@ import {
 } from 'react';
 import clsx from 'clsx';
 import { Button } from '../Button';
+import { ButtonGroup } from '../ButtonGroup';
 import { Skeleton } from '../Skeleton';
 import { useTranslation } from '../../i18n/useTranslation';
 import type { CropArea } from './extractCropBlob';
@@ -30,10 +31,10 @@ import styles from './ImageCrop.module.scss';
 
 // Mirrors --image-crop-fit-padding (var(--space-4)); TS needs a number for layout math.
 const FIT_PADDING = 16;
-// Bottom space kept free for the on-canvas toolbar.
+// Bottom space kept free for the on-canvas toolbar (one row of sm buttons + offset); 0 when no toolbar renders.
 const TOOLBAR_RESERVE = 56;
 // Smallest crop box edge, in screen px.
-const MIN_BOX_PX = 32;
+const MIN_BOX_PX = 48;
 // Box scale per wheel pixel: one 100px mouse notch ≈ ×1.06; deltaY > 0 grows.
 const WHEEL_K = Math.log(1.06) / 100;
 // px per DOM_DELTA_LINE (pages use the window height).
@@ -46,6 +47,12 @@ const EDGES: Handle[] = ['n', 's', 'e', 'w'];
 
 // Re-export from the utility so consumers have a single import for the type.
 export type { CropArea } from './extractCropBlob';
+
+/** One option in the on-canvas aspect-ratio switcher. `value` omitted = free aspect. */
+export interface ImageCropAspectOption {
+  label: string;
+  value?: number;
+}
 
 export interface ImageCropProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
   /**
@@ -74,6 +81,19 @@ export interface ImageCropProps extends Omit<HTMLAttributes<HTMLDivElement>, 'on
    * Disable all interaction (move, resize). Default `false`. Image still renders.
    */
   disabled?: boolean;
+  /**
+   * Render the on-canvas Reset button. Default `false`; double-click reset works regardless.
+   */
+  showReset?: boolean;
+  /**
+   * Options for an on-canvas aspect-ratio switcher. Labels are consumer strings (your i18n).
+   * Controlled: the option whose `value === aspectRatio` shows as selected, and picking one calls
+   * `onAspectRatioChange`, then `onChange`/`onChangeEnd` with that ratio's default crop.
+   * Omit or pass `[]` for no switcher.
+   */
+  aspectRatios?: ImageCropAspectOption[];
+  /** Fires when an option is picked in the switcher (`undefined` = free aspect). Update your `aspectRatio` state here. */
+  onAspectRatioChange?: (ratio: number | undefined) => void;
 }
 
 /**
@@ -81,7 +101,19 @@ export interface ImageCropProps extends Omit<HTMLAttributes<HTMLDivElement>, 'on
  * @see docs/components/ImageCrop.md
  */
 export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function ImageCrop(
-  { src, value, onChange, onChangeEnd, aspectRatio, disabled = false, className, ...rest },
+  {
+    src,
+    value,
+    onChange,
+    onChangeEnd,
+    aspectRatio,
+    disabled = false,
+    showReset = false,
+    aspectRatios,
+    onAspectRatioChange,
+    className,
+    ...rest
+  },
   ref,
 ) {
   const t = useTranslation();
@@ -148,12 +180,15 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
     };
   }, []);
 
+  const hasRatios = !!aspectRatios?.length;
+  const hasToolbar = showReset || hasRatios;
+  const toolbarReserve = hasToolbar ? TOOLBAR_RESERVE : 0;
   const fit = useMemo(
     () =>
       imageNatural && viewport.width > 0 && viewport.height > 0
-        ? fitImage(viewport, imageNatural, FIT_PADDING, TOOLBAR_RESERVE)
+        ? fitImage(viewport, imageNatural, FIT_PADDING, toolbarReserve)
         : null,
-    [imageNatural, viewport],
+    [imageNatural, viewport, toolbarReserve],
   );
 
   // Whenever the consumer passes null (first load, or later — e.g. after a
@@ -317,11 +352,19 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
     return () => el.removeEventListener('wheel', onWheel);
   }, [interactive]);
 
-  const reset = () => {
+  const resetTo = (ratio: number | undefined) => {
     if (!imageNatural) return;
-    const d = defaultCropArea(imageNatural, aspectRatio);
+    const d = defaultCropArea(imageNatural, ratio);
     onChange(d);
     commitEnd(d);
+  };
+  const reset = () => resetTo(aspectRatio);
+  const selectedRatio = aspectRatios?.findIndex((o) => o.value === aspectRatio) ?? -1;
+  const pickRatio = (i: string) => {
+    const option = aspectRatios?.[Number(i)];
+    if (!option || option.value === aspectRatio) return;
+    onAspectRatioChange?.(option.value);
+    resetTo(option.value);
   };
 
   // Keyboard: arrows nudge the box, Shift+arrows resize it, Home/End jump to the image corners.
@@ -437,11 +480,28 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
             ))}
           </div>
         )}
-        {loadState === 'loaded' && (
+        {loadState === 'loaded' && hasToolbar && (
           <div className={styles.toolbar} onDoubleClick={(e) => e.stopPropagation()}>
-            <Button variant="ghost" size="sm" disabled={disabled} onClick={reset}>
-              {t('imageCrop.reset')}
-            </Button>
+            {hasRatios && (
+              <ButtonGroup
+                size="sm"
+                disabled={disabled}
+                value={selectedRatio >= 0 ? String(selectedRatio) : ''}
+                onValueChange={pickRatio}
+                aria-label={t('imageCrop.aspectRatio')}
+              >
+                {aspectRatios.map((o, i) => (
+                  <ButtonGroup.Item key={i} value={String(i)}>
+                    {o.label}
+                  </ButtonGroup.Item>
+                ))}
+              </ButtonGroup>
+            )}
+            {showReset && (
+              <Button variant="secondary" size="sm" disabled={disabled} onClick={reset}>
+                {t('imageCrop.reset')}
+              </Button>
+            )}
           </div>
         )}
       </div>

@@ -105,7 +105,9 @@
     "composes": [
       "Button"
     ],
-    "composedBy": []
+    "composedBy": [
+      "ImageCrop"
+    ]
   },
   "Calendar": {
     "tier": "composition",
@@ -478,6 +480,7 @@
     "cluster": "Forms",
     "composes": [
       "Button",
+      "ButtonGroup",
       "Skeleton"
     ],
     "composedBy": []

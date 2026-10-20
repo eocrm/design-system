@@ -386,6 +386,7 @@ export const en: Messages = {
     loadError: "Couldn't load image",
     reset: 'Reset',
     label: 'Crop area',
+    aspectRatio: 'Aspect ratio',
     keyboardHint:
       'Drag the box to move it, drag corners to resize. Arrow keys move, Shift+Arrow keys resize.',
   },

@@ -204,7 +204,13 @@ describe('ImageCrop', () => {
     it('controlled value: image is fitted, still, with a transform from fitImage', () => {
       const value: CropArea = { x: 100, y: 50, width: 400, height: 400 };
       const { container } = render(
-        <ImageCrop src="data:,placeholder" value={value} onChange={() => {}} aspectRatio={1} />,
+        <ImageCrop
+          src="data:,placeholder"
+          value={value}
+          onChange={() => {}}
+          aspectRatio={1}
+          showReset
+        />,
       );
       mockViewportRect(container, { width: 400, height: 400 });
       fireImageLoad(container, 1000, 800);
@@ -212,6 +218,23 @@ describe('ImageCrop', () => {
       // scale 0.368, offset (16, 32.8) — independent of value.
       expect(img.style.transform).toMatch(/translate\(16px, 32\.8/);
       expect(img.style.transform).toContain('scale(0.368)');
+    });
+
+    it('no toolbar: nothing reserved, image uses the full viewport height', () => {
+      const { container } = render(
+        <ImageCrop
+          src="data:,placeholder"
+          value={{ x: 0, y: 0, width: 100, height: 100 }}
+          onChange={() => {}}
+          aspectRatio={1}
+        />,
+      );
+      mockViewportRect(container, { width: 400, height: 400 });
+      fireImageLoad(container, 400, 800);
+      // 400×800 in 400×400: height-limited; 0.48 = 384/800 only when no band is reserved.
+      expect(container.querySelector<HTMLImageElement>('img')!.style.transform).toContain(
+        'scale(0.48)',
+      );
     });
 
     it('aspectRatio=1 with null value: default crop is square', () => {
@@ -254,6 +277,7 @@ describe('ImageCrop', () => {
           onChange={onChange}
           onChangeEnd={onChangeEnd}
           aspectRatio={1}
+          showReset
           {...props}
         />,
       );
@@ -476,6 +500,12 @@ describe('ImageCrop', () => {
         fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
         expect(onChangeEnd).toHaveBeenCalledTimes(1);
         expect(last(onChange).width).toBeCloseTo(640);
+      });
+
+      it('Reset button and toolbar are absent by default', () => {
+        const { container } = setup({ showReset: false });
+        expect(screen.queryByRole('button', { name: 'Reset' })).toBeNull();
+        expect(container.querySelector('[class*="toolbar"]')).toBeNull();
       });
 
       it('Reset button is hidden while loading', () => {
@@ -859,5 +889,83 @@ describe('ImageCrop — early load (#574)', () => {
       </LoadEarly>,
     );
     expect(container.querySelector('[class*="skeleton"]')).toBeNull();
+  });
+
+  describe('aspect-ratio switcher', () => {
+    const OPTIONS = [
+      { label: '1:1', value: 1 },
+      { label: '16:9', value: 16 / 9 },
+      { label: 'Free' },
+    ];
+    function setup(props: Partial<React.ComponentProps<typeof ImageCrop>> = {}) {
+      const onChange = vi.fn();
+      const onChangeEnd = vi.fn();
+      const onAspectRatioChange = vi.fn();
+      const utils = render(
+        <ImageCrop
+          src="data:,placeholder"
+          value={{ x: 0, y: 0, width: 100, height: 100 }}
+          onChange={onChange}
+          onChangeEnd={onChangeEnd}
+          aspectRatio={1}
+          aspectRatios={OPTIONS}
+          onAspectRatioChange={onAspectRatioChange}
+          {...props}
+        />,
+      );
+      mockViewportRect(utils.container, { width: 400, height: 400 });
+      fireImageLoad(utils.container, 1000, 800);
+      onChange.mockClear();
+      return { ...utils, onChange, onChangeEnd, onAspectRatioChange };
+    }
+
+    it('no aspectRatios: no ratio group', () => {
+      setup({ aspectRatios: undefined });
+      expect(screen.queryByRole('radiogroup')).toBeNull();
+      setup({ aspectRatios: [] });
+      expect(screen.queryByRole('radiogroup')).toBeNull();
+    });
+
+    it('renders a named group with labels; the matching option is selected', () => {
+      setup();
+      expect(screen.getByRole('radiogroup', { name: 'Aspect ratio' })).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: '1:1' })).toHaveAttribute('aria-checked', 'true');
+      expect(screen.getByRole('radio', { name: '16:9' })).toHaveAttribute('aria-checked', 'false');
+      expect(screen.getByRole('radio', { name: 'Free' })).toHaveAttribute('aria-checked', 'false');
+    });
+
+    it('clicking 16:9 reports the ratio and commits its default crop', () => {
+      const { onChange, onChangeEnd, onAspectRatioChange } = setup();
+      fireEvent.click(screen.getByRole('radio', { name: '16:9' }));
+      const d = { x: 100, y: 175, width: 800, height: 450 };
+      expect(onAspectRatioChange).toHaveBeenCalledWith(16 / 9);
+      expect(onChange).toHaveBeenCalledWith(d);
+      expect(onChangeEnd).toHaveBeenCalledWith(d);
+    });
+
+    it('clicking Free passes undefined and the image-ratio default', () => {
+      const { onChange, onChangeEnd, onAspectRatioChange } = setup();
+      fireEvent.click(screen.getByRole('radio', { name: 'Free' }));
+      const d = { x: 100, y: 80, width: 800, height: 640 };
+      expect(onAspectRatioChange).toHaveBeenCalledWith(undefined);
+      expect(onChange).toHaveBeenCalledWith(d);
+      expect(onChangeEnd).toHaveBeenCalledWith(d);
+    });
+
+    it('clicking the selected option does nothing', () => {
+      const { onChange, onChangeEnd, onAspectRatioChange } = setup();
+      fireEvent.click(screen.getByRole('radio', { name: '1:1' }));
+      expect(onAspectRatioChange).not.toHaveBeenCalled();
+      expect(onChange).not.toHaveBeenCalled();
+      expect(onChangeEnd).not.toHaveBeenCalled();
+    });
+
+    it('disabled disables the ratio items', () => {
+      const { onAspectRatioChange } = setup({ disabled: true });
+      const item = screen.getByRole('radio', { name: '16:9' });
+      expect(item).toHaveAttribute('aria-disabled', 'true');
+      fireEvent.click(item);
+      expect(onAspectRatioChange).not.toHaveBeenCalled();
+    });
   });
 });

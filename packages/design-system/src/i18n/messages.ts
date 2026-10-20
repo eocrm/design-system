@@ -740,6 +740,8 @@ export interface Messages {
     reset: string;
     /** Accessible name of the crop group. */
     label: string;
+    /** Accessible name of the aspect-ratio switcher. */
+    aspectRatio: string;
     /** Screen-reader description of pointer and keyboard controls. */
     keyboardHint: string;
   };

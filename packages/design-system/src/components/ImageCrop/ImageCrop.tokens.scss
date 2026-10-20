@@ -19,16 +19,8 @@
   --image-crop-grid-opacity: 0;
   --image-crop-grid-opacity-active: 1;
 
-  // Floating toolbar pill
-  --image-crop-toolbar-bg: var(--color-bg-overlay-strong);
-  --image-crop-toolbar-fg: var(--color-fg-on-overlay);
-
-  // The pill is dark in both themes; a translucent white wash reads on it (Lightbox's 24% on the same surface).
-  --image-crop-toolbar-hover-bg: color-mix(in srgb, var(--color-fg-on-overlay) 24%, transparent);
-
-  --image-crop-toolbar-radius: var(--radius-full);
-  --image-crop-toolbar-padding: var(--space-1);
-  --image-crop-toolbar-blur: 8px;
+  // Toolbar positioning
+  --image-crop-toolbar-gap: var(--space-2);
   --image-crop-toolbar-offset: var(--space-3);
 
   // Error state
