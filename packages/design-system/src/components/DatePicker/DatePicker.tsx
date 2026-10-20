@@ -3,6 +3,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   type FocusEvent,
@@ -175,7 +176,10 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
       : formatDate(value, locale)
     : '';
   const [draft, setDraft] = useState(formattedValue);
+  // True while the trigger holds text the user typed and hasn't committed.
+  const typedRef = useRef(false);
   useEffect(() => {
+    typedRef.current = false;
     setDraft(formattedValue);
   }, [formattedValue]);
 
@@ -217,16 +221,18 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
 
   const commit = useCallback(
     (raw: string) => {
+      typedRef.current = false;
       if (raw.trim() === '') {
         setValue(null);
-        return;
+        return null;
       }
       const parsed = granularity === 'minute' ? parseDateTime(raw, locale) : parseDate(raw, locale);
       if (parsed != null && !isDateOutOfRange(parsed, min, max, isDateDisabled)) {
         setValue(parsed);
-      } else {
-        setDraft(formattedValue); // revert
+        return parsed;
       }
+      setDraft(formattedValue); // revert
+      return null;
     },
     [granularity, locale, min, max, isDateDisabled, setValue, formattedValue],
   );
@@ -251,24 +257,54 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
     [refs.floating],
   );
 
-  // Outside-click / Tab-away close. Commits the trigger draft only when the
-  // user actually typed into it (draft ≠ formatted value) — after a day pick
-  // or time commit the draft is re-synced, so a stale draft can't overwrite
-  // the new value. `openRef` dedupes the pointerdown and focus-out paths,
-  // which can both land on the same tick.
+  // Deferred close paths read the LATEST draft through this ref — a timer's
+  // render-time closure would otherwise commit a stale draft.
+  const latestRef = useRef({ draft, commit });
+  useLayoutEffect(() => {
+    latestRef.current = { draft, commit };
+  });
+  // Commit the trigger draft only when the user actually typed into it —
+  // after a day pick or time commit the draft is re-synced (and the flag
+  // cleared), so this never overwrites the new value with a stale one.
+  const commitTypedDraft = useCallback(() => {
+    if (typedRef.current) latestRef.current.commit(latestRef.current.draft);
+  }, []);
+
+  // No commits / closes from timers that land after unmount.
+  const mountedRef = useRef(true);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
+  // Close paths (trigger blur, outside click, Tab-away) can land on the same
+  // tick; the first to claim the close wins, the rest no-op.
   const openRef = useRef(open);
   useEffect(() => {
     openRef.current = open;
   }, [open]);
-  const closeKeepingDraft = useCallback(() => {
-    if (!openRef.current) return;
+  const claimClose = useCallback(() => {
+    if (!openRef.current) return false;
     openRef.current = false;
-    if (draft !== formattedValue) commit(draft);
-    setOpen(false);
-  }, [commit, draft, formattedValue]);
+    return true;
+  }, []);
+  const finishClose = useCallback(
+    (refocusTrigger: boolean) => {
+      if (!mountedRef.current) return;
+      commitTypedDraft();
+      setOpen(false);
+      if (refocusTrigger) inputRef.current?.focus();
+    },
+    [commitTypedDraft],
+  );
 
   const handleInputBlur = useCallback(
     (e: FocusEvent<HTMLInputElement>) => {
+      // Leaving the trigger for anywhere — including into the grid or the
+      // time input — commits a typed date, so the popover then works on it.
+      commitTypedDraft();
       // Defer so focus transitions to a sibling inside the wrapper (clear
       // button, open-calendar button) — or programmatic focus into the
       // portaled popover (ArrowDown into the grid) — can complete before
@@ -276,14 +312,14 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
       // `onMouseDown={preventDefault}` to keep input focus on grid clicks;
       // this defer handles keyboard-driven focus moves.
       window.setTimeout(() => {
-        if (!isInsidePicker(document.activeElement)) {
-          commit(draft);
+        if (mountedRef.current && !isInsidePicker(document.activeElement)) {
+          claimClose();
           setOpen(false);
         }
       }, 0);
       onBlur?.(e);
     },
-    [commit, draft, onBlur, isInsidePicker],
+    [commitTypedDraft, claimClose, onBlur, isInsidePicker],
   );
 
   const handleInputFocus = useCallback(
@@ -301,6 +337,12 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
     (e: KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
+        // Commit a typed date now (not on the blur that follows) so the grid
+        // opens — and takes focus — on it.
+        if (typedRef.current) {
+          const typed = commit(draft);
+          if (typed) setCursor(typed);
+        }
         setOpen(true);
         // Bump the tick to schedule a focus-into-grid on the next commit.
         // Going through a state-driven effect (rather than `setTimeout(0)`)
@@ -403,21 +445,21 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
   useEffect(() => {
     if (!open) return;
     const handler = (e: PointerEvent) => {
-      if (isInsidePicker(e.target)) return;
+      if (isInsidePicker(e.target) || !claimClose()) return;
       const active = document.activeElement;
       // #666: focus in the popover (e.g. a time typed into the embedded
       // TimeField) — blur it so TimeField's deferred focus-out commit runs,
       // then close on the next tick, after that commit.
       if (active instanceof HTMLElement && isInPopover(active)) {
         active.blur();
-        window.setTimeout(closeKeepingDraft, 0);
+        window.setTimeout(() => finishClose(false), 0);
       } else {
-        closeKeepingDraft();
+        finishClose(false);
       }
     };
     document.addEventListener('pointerdown', handler, true);
     return () => document.removeEventListener('pointerdown', handler, true);
-  }, [open, isInsidePicker, isInPopover, closeKeepingDraft]);
+  }, [open, isInsidePicker, isInPopover, claimClose, finishClose]);
 
   // #272: inside a Modal/Drawer the popover's base z (--z-popover, below
   // --z-modal) paints it behind the host — elevate when the trigger sits in
@@ -455,7 +497,10 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
         type="text"
         className={styles.input}
         value={draft}
-        onChange={(e) => setDraft(e.target.value)}
+        onChange={(e) => {
+          typedRef.current = true;
+          setDraft(e.target.value);
+        }}
         onFocus={handleInputFocus}
         onBlur={handleInputBlur}
         onClick={handleInputClick}
@@ -512,16 +557,17 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
             aria-label={t('datePicker.openCalendar')}
             onMouseDown={(e) => e.preventDefault()} // keep input focus on grid click
             onBlur={(e) => {
-              // #666: focus left the popover (Tab past its last stop) — close
-              // without refocusing the trigger. React bubbles this from the
+              // #666: focus left the popover (Tab past its last stop — it's
+              // portaled to the end of body) — close and return focus to the
+              // trigger so Tab continues in page order. React bubbles this from the
               // TimeField clock portal too. Deferred so TimeField's own
               // deferred focus-out commit lands first. A disconnected target
               // means the focused node was unmounted (clock closing; only
               // real browsers fire blur for that), not a focus move.
               const target = e.target;
               window.setTimeout(() => {
-                if (target.isConnected && !isInsidePicker(document.activeElement)) {
-                  closeKeepingDraft();
+                if (target.isConnected && !isInsidePicker(document.activeElement) && claimClose()) {
+                  finishClose(true);
                 }
               }, 0);
             }}

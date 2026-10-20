@@ -421,7 +421,8 @@ describe('DatePicker', () => {
       await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
       await new Promise((r) => setTimeout(r, 0));
       expectDay15At1430(onChange);
-      expect(document.activeElement).not.toBe(screen.getByRole('textbox', { name: 'Date' }));
+      // Tab-away returns focus to the trigger so the next Tab continues in page order.
+      expect(document.activeElement).toBe(screen.getByRole('textbox', { name: 'Date' }));
     });
 
     it('picking a different date preserves existing time-of-day', async () => {
@@ -744,10 +745,12 @@ describe('DatePicker — outside click / Tab-away close paths (#666)', () => {
       expect(document.activeElement?.closest('[data-timefield-popover="true"]')).not.toBeNull(),
     );
     const row = document.activeElement as HTMLElement;
-    // Clicking the grid header area closes the clock and unmounts the focused
-    // row; simulate the blur Chrome fires on removal (jsdom doesn't).
+    // Clicking the grid closes the clock and unmounts the focused row. Chrome
+    // fires focus-out for the removal (jsdom doesn't) — dispatch it while the
+    // row is still connected, then unmount it on the same tick.
+    fireEvent.focusOut(row);
     fireEvent.pointerDown(screen.getByRole('dialog'));
-    fireEvent.blur(row);
+    expect(row.isConnected).toBe(false);
     await new Promise((r) => setTimeout(r, 0));
     expect(document.querySelector('[data-timefield-popover="true"]')).toBeNull();
     expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -775,5 +778,94 @@ describe('DatePicker — outside click / Tab-away close paths (#666)', () => {
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange.mock.calls[0][0]!.getDate()).toBe(20);
     expect(input).toHaveValue('05/20/2026');
+  });
+
+  it.each([
+    ['outside click', 'click'],
+    ['Tab away', 'tab'],
+  ] as const)(
+    '%s after typing a date in the trigger then a time keeps both (minute mode)',
+    async (_, how) => {
+      const user = userEvent.setup();
+      const onChange = vi.fn<(d: Date | null) => void>();
+      renderWithOutside(
+        <DatePicker
+          aria-label="Due"
+          granularity="minute"
+          hourCycle="24"
+          defaultValue={new Date(2026, 4, 1, 9, 0)}
+          onChange={onChange}
+        />,
+      );
+      const input = screen.getByRole('textbox', { name: 'Due' });
+      await user.click(input);
+      await user.clear(input);
+      await user.type(input, '05/20/2026 10:00{ArrowDown}');
+      await waitFor(() => expect(document.activeElement?.getAttribute('role')).toBe('gridcell'));
+      const timeInput = screen.getByRole('textbox', { name: 'Time' });
+      timeInput.focus();
+      await user.clear(timeInput);
+      await user.type(timeInput, '16:45');
+      if (how === 'click') {
+        await user.click(screen.getByRole('button', { name: 'Outside' }));
+      } else {
+        await user.tab(); // clock chevron
+        await user.tab(); // out of the popover
+      }
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      await new Promise((r) => setTimeout(r, 0));
+      const calls = onChange.mock.calls.map(([d]) => [
+        d!.getDate(),
+        d!.getHours(),
+        d!.getMinutes(),
+      ]);
+      expect(calls).toEqual([
+        [20, 10, 0],
+        [20, 16, 45],
+      ]);
+      expect(input).toHaveDisplayValue('05/20/2026 16:45');
+    },
+  );
+
+  it('outside click with an untouched focused trigger fires no onChange', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    renderWithOutside(
+      <DatePicker aria-label="Due" defaultValue={new Date(2026, 4, 1)} onChange={onChange} />,
+    );
+    await user.click(screen.getByRole('textbox', { name: 'Due' }));
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: 'Outside' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    await new Promise((r) => setTimeout(r, 0));
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('no onChange after unmount when an outside click is followed by unmount', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const { unmount } = render(
+      <DatePicker
+        aria-label="Due"
+        granularity="minute"
+        hourCycle="24"
+        defaultValue={new Date(2026, 4, 1, 9, 0)}
+        onChange={onChange}
+      />,
+      { wrapper: wrap() },
+    );
+    const input = screen.getByRole('textbox', { name: 'Due' });
+    await user.click(input);
+    await user.clear(input);
+    await user.type(input, '05/20/2026 10:00{ArrowDown}');
+    onChange.mockClear();
+    const timeInput = screen.getByRole('textbox', { name: 'Time' });
+    timeInput.focus();
+    await user.clear(timeInput);
+    await user.type(timeInput, '16:45');
+    fireEvent.pointerDown(document.body);
+    unmount();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(onChange).not.toHaveBeenCalled();
   });
 });

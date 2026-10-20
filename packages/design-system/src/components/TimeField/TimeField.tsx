@@ -229,8 +229,9 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
       // Defer so popover interactions (which move focus into the listbox)
       // don't fire a commit-and-revert before the click handler runs.
       window.setTimeout(() => {
+        if (!wrapperRef.current) return; // unmounted meanwhile — no onChange
         const active = document.activeElement;
-        const insideWrapper = wrapperRef.current?.contains(active);
+        const insideWrapper = wrapperRef.current.contains(active);
         const insideFloating = refs.floating.current?.contains(active);
         if (!insideWrapper && !insideFloating) {
           commit();
