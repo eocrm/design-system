@@ -190,6 +190,29 @@ describe('TimeField', () => {
     await waitFor(() => expect(onChange).toHaveBeenCalledWith({ hours: 14, minutes: 30 }));
   });
 
+  it('typing then Tab → chevron → Tab away commits exactly once', async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <>
+        <Driver initial={{ hours: 9, minutes: 0 }} onChange={onChange} hourCycle="24" />
+        <button type="button">After</button>
+      </>,
+      { wrapper: wrap() },
+    );
+    const input = screen.getByRole('textbox', { name: 'Time' });
+    await user.clear(input);
+    await user.type(input, '14:30');
+    await user.tab(); // chevron — still inside the field, no commit yet
+    await new Promise((r) => setTimeout(r, 0));
+    expect(onChange).not.toHaveBeenCalled();
+    await user.tab();
+    expect(screen.getByRole('button', { name: 'After' })).toHaveFocus();
+    await waitFor(() => expect(onChange).toHaveBeenCalledWith({ hours: 14, minutes: 30 }));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(onChange).toHaveBeenCalledTimes(1);
+  });
+
   it('typing "1430" (no colon) and blurring commits onChange({ hours: 14, minutes: 30 })', async () => {
     const onChange = vi.fn();
     const user = userEvent.setup();

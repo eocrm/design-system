@@ -6,6 +6,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type FocusEvent,
   type HTMLAttributes,
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react';
@@ -45,8 +46,8 @@ export interface TimeFieldProps extends Omit<
    */
   value: TimeValue | null;
   /**
-   * Fired when the user commits a new time, either by typing + blur /
-   * Enter, by clicking a row in the popover, or by clicking the Now button.
+   * Fired when the user commits a new time, either by typing + focus
+   * leaving the field (input, chevron or clock) / Enter, by clicking a row in the popover, or by clicking the Now button.
    * The emitted value is always 24-hour internal regardless of display cycle.
    */
   onChange: (value: TimeValue) => void;
@@ -140,6 +141,7 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
     required = false,
     id: idProp,
     className,
+    onBlur,
     ...rest
   },
   ref,
@@ -219,18 +221,25 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
     onChange({ hours: rounded.hours, minutes: rounded.minutes });
   }, [draft, formattedValue, onChange, step, value]);
 
-  const handleInputBlur = useCallback(() => {
-    // Defer so popover interactions (which move focus into the listbox)
-    // don't fire a commit-and-revert before the click handler runs.
-    window.setTimeout(() => {
-      const active = document.activeElement;
-      const insideWrapper = wrapperRef.current?.contains(active);
-      const insideFloating = refs.floating.current?.contains(active);
-      if (!insideWrapper && !insideFloating) {
-        commit();
-      }
-    }, 0);
-  }, [commit, refs.floating]);
+  // Commit when focus leaves the whole field (input, chevron, or the portaled
+  // clock — React bubbles its focus-out here too), not just the input:
+  // input → Tab → chevron → Tab away must still commit the typed time.
+  const handleFocusOut = useCallback(
+    (e: FocusEvent<HTMLDivElement>) => {
+      // Defer so popover interactions (which move focus into the listbox)
+      // don't fire a commit-and-revert before the click handler runs.
+      window.setTimeout(() => {
+        const active = document.activeElement;
+        const insideWrapper = wrapperRef.current?.contains(active);
+        const insideFloating = refs.floating.current?.contains(active);
+        if (!insideWrapper && !insideFloating) {
+          commit();
+        }
+      }, 0);
+      onBlur?.(e);
+    },
+    [commit, onBlur, refs.floating],
+  );
 
   const handleInputKeyDown = useCallback(
     (e: ReactKeyboardEvent<HTMLInputElement>) => {
@@ -563,6 +572,7 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
       aria-labelledby={ariaLabelledBy}
       {...rest}
       ref={setWrapperRef}
+      onBlur={handleFocusOut}
       className={clsx(styles.timeField, isDisabled && styles.disabled, className)}
     >
       <input
@@ -585,7 +595,6 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
         aria-controls={open ? popoverId : undefined}
         disabled={isDisabled}
         onChange={(e) => setDraft(e.target.value)}
-        onBlur={handleInputBlur}
         onKeyDown={handleInputKeyDown}
       />
       <button

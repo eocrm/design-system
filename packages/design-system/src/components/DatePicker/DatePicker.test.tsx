@@ -375,6 +375,55 @@ describe('DatePicker', () => {
       expect(got.getMinutes()).toBe(30);
     });
 
+    async function pickDayAndTypeTime(onChange: (d: Date | null) => void) {
+      const user = userEvent.setup();
+      render(
+        <>
+          <DatePicker granularity="minute" hourCycle="24" onChange={onChange} aria-label="Date" />
+          <button type="button">Outside</button>
+        </>,
+        { wrapper: wrap() },
+      );
+      await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+      const [cell15] = screen.getAllByRole('gridcell', { name: /^15$/ });
+      await user.click(cell15);
+      const timeInput = screen.getByRole('textbox', { name: 'Time' });
+      await waitFor(() => expect(document.activeElement).toBe(timeInput));
+      await user.clear(timeInput);
+      await user.type(timeInput, '14:30');
+      return user;
+    }
+
+    function expectDay15At1430(onChange: ReturnType<typeof vi.fn<(d: Date | null) => void>>) {
+      expect(onChange).toHaveBeenCalledTimes(2); // day pick + time commit, nothing stale after
+      const got = onChange.mock.calls.at(-1)![0]!;
+      expect(got.getDate()).toBe(15);
+      expect(got.getHours()).toBe(14);
+      expect(got.getMinutes()).toBe(30);
+      expect(screen.getByRole('textbox', { name: 'Date' })).toHaveDisplayValue(/14:30/);
+    }
+
+    it('outside click keeps a time typed into the time input (#666)', async () => {
+      const onChange = vi.fn<(d: Date | null) => void>();
+      const user = await pickDayAndTypeTime(onChange);
+      await user.click(screen.getByRole('button', { name: 'Outside' }));
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      await new Promise((r) => setTimeout(r, 0));
+      expectDay15At1430(onChange);
+    });
+
+    it('tabbing out of the popover closes it and keeps the typed time (#666)', async () => {
+      const onChange = vi.fn<(d: Date | null) => void>();
+      const user = await pickDayAndTypeTime(onChange);
+      await user.tab(); // clock chevron
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      await user.tab(); // past the popover (portaled last in body)
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      await new Promise((r) => setTimeout(r, 0));
+      expectDay15At1430(onChange);
+      expect(document.activeElement).not.toBe(screen.getByRole('textbox', { name: 'Date' }));
+    });
+
     it('picking a different date preserves existing time-of-day', async () => {
       const user = userEvent.setup();
       const onChange = vi.fn<(d: Date | null) => void>();

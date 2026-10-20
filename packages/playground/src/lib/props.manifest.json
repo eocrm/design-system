@@ -6422,7 +6422,7 @@
           "type": "(value: TimeValue) => void",
           "required": true,
           "default": "",
-          "description": "Fired when the user commits a new time, either by typing + blur /\nEnter, by clicking a row in the popover, or by clicking the Now button.\nThe emitted value is always 24-hour internal regardless of display cycle."
+          "description": "Fired when the user commits a new time, either by typing + focus\nleaving the field (input, chevron or clock) / Enter, by clicking a row in the popover, or by clicking the Now button.\nThe emitted value is always 24-hour internal regardless of display cycle."
         },
         {
           "name": "step",
