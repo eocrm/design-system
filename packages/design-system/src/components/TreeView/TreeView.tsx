@@ -82,6 +82,26 @@ const parentKey = (item: TreeItem) => (item.parentId === null ? null : nodeKey(i
 const levelNodes = (flat: TreeItem[], parentId: string | null) =>
   flat.filter((i) => i.kind === 'node' && i.parentId === parentId);
 
+/** Chart: write each highlighted path's accent segment (parent centre → farthest highlighted child centre). */
+function measurePaths(root: HTMLElement) {
+  root.querySelectorAll<HTMLElement>('[data-highlighted-path]').forEach((group) => {
+    const left = group.getBoundingClientRect().left;
+    const centre = (row: Element | null | undefined) => {
+      const r = row?.getBoundingClientRect();
+      return r ? r.left + r.width / 2 - left : 0;
+    };
+    const xs = [
+      centre(group.parentElement?.firstElementChild),
+      ...Array.from(group.children, (child) =>
+        child.hasAttribute('data-highlighted') ? centre(child.firstElementChild) : null,
+      ).filter((x) => x !== null),
+    ];
+    const start = Math.min(...xs);
+    group.style.setProperty('--tree-view-path-start', `${start}px`);
+    group.style.setProperty('--tree-view-path-width', `${Math.max(...xs) - start}px`);
+  });
+}
+
 /**
  * Lazily loaded hierarchical tree (WAI-ARIA tree) in a file-explorer list or a top-down org-chart view.
  * @see docs/components/TreeView.md
@@ -163,34 +183,25 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
   }, [chart, hasItems]);
   // Chart: the horizontal accent segment of a highlighted path runs from the parent box centre to the
   // farthest highlighted child centre; CSS can't know those offsets, so measure them (physical px, RTL-safe).
+  // One observer per chart view; re-measure on render only when the rendered items or highlights change
+  // (`flat` and a consumer's inline Set are new every render, e.g. on each arrow-key focus move).
   useLayoutEffect(() => {
     const root = rootEl.current;
-    if (!chart || !root) return;
-    const measure = () =>
-      root.querySelectorAll<HTMLElement>('[data-highlighted-path]').forEach((group) => {
-        const left = group.getBoundingClientRect().left;
-        const centre = (row: Element | null | undefined) => {
-          const r = row?.getBoundingClientRect();
-          return r ? r.left + r.width / 2 - left : 0;
-        };
-        const xs = [
-          centre(group.parentElement?.firstElementChild),
-          ...Array.from(group.children, (child) =>
-            child.hasAttribute('data-highlighted') ? centre(child.firstElementChild) : null,
-          ).filter((x) => x !== null),
-        ];
-        const start = Math.min(...xs);
-        group.style.setProperty('--tree-view-path-start', `${start}px`);
-        group.style.setProperty('--tree-view-path-width', `${Math.max(...xs) - start}px`);
-      });
-    measure();
-    if (typeof ResizeObserver === 'undefined') return;
-    const observer = new ResizeObserver(measure);
+    if (!chart || !root || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => measurePaths(root));
     observer.observe(root);
     // The chart's top level is max-content wide: it resizes when boxes do without a re-render (late fonts).
     if (root.firstElementChild) observer.observe(root.firstElementChild);
     return () => observer.disconnect();
-  }, [chart, flat, highlightedIds]);
+  }, [chart]);
+  const pathKey = chart
+    ? flat
+        .map((i) => (i.kind === 'node' && highlightedIds?.has(i.node.id) ? `*${i.key}` : i.key))
+        .join('\n')
+    : '';
+  useLayoutEffect(() => {
+    if (chart && rootEl.current) measurePaths(rootEl.current);
+  }, [chart, pathKey]);
 
   const focusKey = useCallback(
     (key: string) => {

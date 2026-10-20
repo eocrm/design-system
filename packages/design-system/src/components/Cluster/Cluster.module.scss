@@ -30,11 +30,13 @@
 // Opt-in, via `stretchWrapped` (#668). flex-grow distributes free space PER
 // FLEX LINE. On a line shared by several children, the `::before` spacer
 // (grow 999, basis 0) soaks up the slack, so the content-sized children
-// (grow 1 is negligible next to 999) do not stretch; the spacer sits between
-// the first child (`order: -1`, ahead of it) and the rest, pushing them to the
-// end. A non-first child alone on a wrapped line has no spacer on that line, so
-// its grow 1 takes the whole line. The spacer costs one extra gap, so the
-// switch happens ~one gap early.
+// get a negligible share (grow 1 next to 999: at most 1px per 1000px of
+// slack); the spacer sits between the first child (`order: -1`, ahead of it)
+// and the rest, pushing them to the end. A non-first child alone on a wrapped
+// line has no spacer on that line, so its grow 1 takes the whole line. The
+// spacer costs one extra gap, so the switch happens ~one gap early. It also
+// exists with a single child or `as="span"`: one trailing gap of width,
+// harmless.
 .stretchWrapped {
   &::before {
     content: '';

@@ -118,9 +118,11 @@ export interface ClusterProps extends HTMLAttributes<HTMLElement> {
    * pill at full width (equal columns) when there is not. No breakpoint to guess,
    * unlike `Grid collapseBelow`.
    *
-   * How: an invisible `::before` spacer soaks up a shared line's slack, so no
-   * child stretches there; a non-first child alone on a wrapped line takes the
-   * whole line. Children wrapped together share it.
+   * How: an invisible `::before` spacer soaks up a shared line's slack, so the
+   * children there get a negligible share (at most 1px per 1000px of slack); a
+   * non-first child alone on a wrapped line takes the whole line. Children
+   * wrapped together share it. The spacer is there with a single child or
+   * `as="span"` too, adding one trailing gap of width (harmless).
    *
    * Limits: `justify` is inert while this is on (the spacer owns the slack);
    * `wrap={false}` makes it moot (nothing wraps); a consumer `order` on

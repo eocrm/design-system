@@ -19,11 +19,12 @@ test('OptionsPicker options keep their hidden inputs inside the scrolling list (
   for (let i = 0; i < (await triggers.count()) && !result; i++) {
     await triggers.nth(i).click();
     result = await page.evaluate(() => {
-      const list = [...document.querySelectorAll<HTMLElement>('[role=listbox]')].find(
-        (l) => l.scrollHeight > l.clientHeight,
-      );
+      // Only the open popover's list: a document-wide lookup could match another listbox.
+      const list = [
+        ...document.querySelectorAll<HTMLElement>('[data-popover-content] [role=listbox]'),
+      ].find((l) => l.scrollHeight > l.clientHeight);
       if (!list) return null;
-      const panel = list.parentElement!.closest<HTMLElement>('[role=dialog], [popover]') ?? list;
+      const panel = list.closest<HTMLElement>('[data-popover-content]')!;
       const inputs = [...panel.querySelectorAll<HTMLInputElement>('input[type=checkbox]')];
       return {
         count: inputs.length,

@@ -37,8 +37,11 @@
   @include focus-ring(var(--tree-view-ring));
 }
 
-// highlightedIds: accent inline-start edge (inset shadow: no layout shift)
+// highlightedIds: accent inline-start edge (inset shadow: no layout shift). Square start corners keep it a
+// straight bar instead of a crescent following the row radius.
 .root[data-view='list'] .item[data-highlighted] > .row {
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
   box-shadow: inset var(--tree-view-highlight-width) 0 0 var(--tree-view-highlight-color);
 }
 
@@ -240,4 +243,24 @@
   border-radius: 50%;
   background: var(--tree-view-toggle-bg);
   z-index: 1;
+}
+
+// Forced colors drops box-shadow (list edge) and forces author colours (chart path); system colours
+// survive. Every highlight rule reads --tree-view-highlight-color, so remap it; the list edge becomes a real
+// border whose width comes out of the start padding (no shift).
+@media (forced-colors: active) {
+  .root {
+    --tree-view-highlight-color: Highlight;
+  }
+
+  .root[data-view='list'] .item[data-highlighted] > .row {
+    --tree-view-highlight-inset: calc(
+      var(--tree-view-row-padding-inline) - var(--tree-view-highlight-width)
+    );
+
+    border-inline-start: var(--tree-view-highlight-width) solid var(--tree-view-highlight-color);
+    padding-inline-start: calc(
+      var(--tree-view-level) * var(--tree-view-indent) + var(--tree-view-highlight-inset)
+    );
+  }
 }
