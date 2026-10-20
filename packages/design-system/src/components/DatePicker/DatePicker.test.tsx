@@ -841,7 +841,7 @@ describe('DatePicker — outside click / Tab-away close paths (#666)', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('no onChange after unmount when an outside click is followed by unmount', async () => {
+  it('TimeField: no onChange from its deferred commit after the DatePicker unmounts', async () => {
     const user = userEvent.setup();
     const onChange = vi.fn();
     const { unmount } = render(
@@ -867,5 +867,78 @@ describe('DatePicker — outside click / Tab-away close paths (#666)', () => {
     unmount();
     await new Promise((r) => setTimeout(r, 0));
     expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('a same-day grid pick discards half-typed trigger text', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn<(d: Date | null) => void>();
+    renderWithOutside(
+      <DatePicker
+        aria-label="Due"
+        granularity="minute"
+        hourCycle="24"
+        defaultValue={new Date(2026, 4, 1, 9, 0)}
+        onChange={onChange}
+      />,
+    );
+    const input = screen.getByRole('textbox', { name: 'Due' });
+    await user.click(input);
+    await user.clear(input);
+    await user.type(input, '05/20/2026 10:00');
+    await user.click(screen.getAllByRole('gridcell', { name: /^1$/ })[0]);
+    await user.click(screen.getByRole('button', { name: 'Outside' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    await new Promise((r) => setTimeout(r, 0));
+    for (const [d] of onChange.mock.calls) {
+      expect([d!.getDate(), d!.getHours()]).toEqual([1, 9]);
+    }
+    expect(input).toHaveDisplayValue('05/01/2026 09:00');
+  });
+
+  it('the calendar toggle keeps half-typed trigger text', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    renderWithOutside(
+      <DatePicker aria-label="Due" defaultValue={new Date(2026, 4, 1)} onChange={onChange} />,
+    );
+    const input = screen.getByRole('textbox', { name: 'Due' });
+    await user.click(input);
+    await user.click(screen.getByRole('button', { name: 'Open calendar' })); // closes
+    await user.clear(input);
+    await user.type(input, '05/2');
+    await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+    expect(input).toHaveFocus();
+    expect(input).toHaveValue('05/2');
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('Clear discards typed trigger text — exactly one onChange(null)', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    renderWithOutside(
+      <DatePicker aria-label="Due" defaultValue={new Date(2026, 4, 1)} onChange={onChange} />,
+    );
+    const input = screen.getByRole('textbox', { name: 'Due' });
+    await user.click(input);
+    await user.clear(input);
+    await user.type(input, '05/20/2026');
+    await user.click(screen.getByRole('button', { name: 'Clear' }));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(onChange.mock.calls).toEqual([[null]]);
+    expect(input).toHaveValue('');
+    expect(input).toHaveFocus();
+  });
+
+  it('Shift+Tab from the first popover stop closes it and refocuses the trigger', async () => {
+    const user = userEvent.setup();
+    renderWithOutside(<DatePicker aria-label="Due" defaultValue={new Date(2026, 4, 1)} />);
+    const input = screen.getByRole('textbox', { name: 'Due' });
+    await user.click(input);
+    await user.keyboard('{ArrowDown}');
+    const firstStop = screen.getByRole('button', { name: 'Previous month' });
+    firstStop.focus();
+    await user.tab({ shift: true });
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(input).toHaveFocus();
   });
 });

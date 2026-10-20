@@ -3,7 +3,6 @@ import {
   useCallback,
   useEffect,
   useId,
-  useLayoutEffect,
   useRef,
   useState,
   type FocusEvent,
@@ -257,28 +256,6 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
     [refs.floating],
   );
 
-  // Deferred close paths read the LATEST draft through this ref — a timer's
-  // render-time closure would otherwise commit a stale draft.
-  const latestRef = useRef({ draft, commit });
-  useLayoutEffect(() => {
-    latestRef.current = { draft, commit };
-  });
-  // Commit the trigger draft only when the user actually typed into it —
-  // after a day pick or time commit the draft is re-synced (and the flag
-  // cleared), so this never overwrites the new value with a stale one.
-  const commitTypedDraft = useCallback(() => {
-    if (typedRef.current) latestRef.current.commit(latestRef.current.draft);
-  }, []);
-
-  // No commits / closes from timers that land after unmount.
-  const mountedRef = useRef(true);
-  useEffect(() => {
-    mountedRef.current = true;
-    return () => {
-      mountedRef.current = false;
-    };
-  }, []);
-
   // Close paths (trigger blur, outside click, Tab-away) can land on the same
   // tick; the first to claim the close wins, the rest no-op.
   const openRef = useRef(open);
@@ -290,21 +267,19 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
     openRef.current = false;
     return true;
   }, []);
-  const finishClose = useCallback(
-    (refocusTrigger: boolean) => {
-      if (!mountedRef.current) return;
-      commitTypedDraft();
-      setOpen(false);
-      if (refocusTrigger) inputRef.current?.focus();
-    },
-    [commitTypedDraft],
-  );
+  // No typed-draft commit here: every way of leaving the trigger already
+  // committed it (blur / ArrowDown), so a stale draft can't land late.
+  const finishClose = useCallback((refocusTrigger: boolean) => {
+    if (!inputRef.current) return; // unmounted meanwhile
+    setOpen(false);
+    if (refocusTrigger) inputRef.current.focus();
+  }, []);
 
   const handleInputBlur = useCallback(
     (e: FocusEvent<HTMLInputElement>) => {
       // Leaving the trigger for anywhere — including into the grid or the
       // time input — commits a typed date, so the popover then works on it.
-      commitTypedDraft();
+      if (typedRef.current) commit(draft);
       // Defer so focus transitions to a sibling inside the wrapper (clear
       // button, open-calendar button) — or programmatic focus into the
       // portaled popover (ArrowDown into the grid) — can complete before
@@ -312,14 +287,11 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
       // `onMouseDown={preventDefault}` to keep input focus on grid clicks;
       // this defer handles keyboard-driven focus moves.
       window.setTimeout(() => {
-        if (mountedRef.current && !isInsidePicker(document.activeElement)) {
-          claimClose();
-          setOpen(false);
-        }
+        if (!isInsidePicker(document.activeElement) && claimClose()) finishClose(false);
       }, 0);
       onBlur?.(e);
     },
-    [commitTypedDraft, claimClose, onBlur, isInsidePicker],
+    [commit, draft, claimClose, finishClose, onBlur, isInsidePicker],
   );
 
   const handleInputFocus = useCallback(
@@ -406,6 +378,11 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
         }
       }
       setValue(withTime);
+      // The pick wins over half-typed trigger text. A same-day pick doesn't
+      // change the value, so the draft re-sync effect won't run — reset here
+      // (a changed value re-syncs the draft via that effect).
+      typedRef.current = false;
+      setDraft(formattedValue);
       if (granularity === 'minute') {
         // #666: stay open and hand off to the time input; Enter / Escape /
         // outside click close as usual.
@@ -415,13 +392,15 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
       setOpen(false);
       inputRef.current?.focus();
     },
-    [granularity, value, setValue, timeStep],
+    [granularity, value, setValue, timeStep, formattedValue],
   );
 
   const handleClear = useCallback(
     (e: MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
       e.stopPropagation();
+      typedRef.current = false; // discard typed text — one onChange(null)
+      setDraft('');
       setValue(null);
       inputRef.current?.focus();
     },
@@ -524,6 +503,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
           type="button"
           className={styles.clearButton}
           aria-label={t('datePicker.clear')}
+          onMouseDown={(e) => e.preventDefault()} // keep focus (and typed text) in the trigger
           onClick={handleClear}
         >
           <X size={ICON_SIZE_FOR[size]} />
@@ -533,6 +513,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
         type="button"
         className={styles.openButton}
         aria-label={t('datePicker.openCalendar')}
+        onMouseDown={(e) => e.preventDefault()} // keep focus (and typed text) in the trigger
         onClick={handleToggle}
         disabled={disabled}
       >
