@@ -36,10 +36,12 @@
 ### Task 1: Pure crop geometry
 
 **Files:**
+
 - Create: `packages/design-system/src/components/ImageCrop/cropGeometry.ts`
 - Test: `packages/design-system/src/components/ImageCrop/cropGeometry.test.ts`
 
 **Interfaces:**
+
 - Produces:
   - `type Size = { width: number; height: number }`
   - `type Handle = 'n' | 's' | 'e' | 'w' | 'nw' | 'ne' | 'sw' | 'se'`
@@ -54,7 +56,11 @@
 
 ```ts
 it('fitImage contains the image in the padded area', () => {
-  expect(fitImage({ width: 400, height: 400 }, IMG, 16, 56)).toEqual({ scale: 0.368, offsetX: 16, offsetY: 16 + (328 - 294.4) / 2 });
+  expect(fitImage({ width: 400, height: 400 }, IMG, 16, 56)).toEqual({
+    scale: 0.368,
+    offsetX: 16,
+    offsetY: 16 + (328 - 294.4) / 2,
+  });
 });
 it('defaultCropArea square = 80% of 800', () => {
   expect(defaultCropArea(IMG, 1)).toEqual({ x: 180, y: 80, width: 640, height: 640 });
@@ -68,10 +74,20 @@ it('default crop can move on both axes (the bug)', () => {
   expect(a.y).toBeGreaterThan(0);
 });
 it('moveCrop clamps to image', () => {
-  expect(moveCrop(SQ, 10_000, -10_000, IMG)).toMatchObject({ x: 360, y: 0, width: 640, height: 640 });
+  expect(moveCrop(SQ, 10_000, -10_000, IMG)).toMatchObject({
+    x: 360,
+    y: 0,
+    width: 640,
+    height: 640,
+  });
 });
 it('resizeCrop se with ratio grows from top-left anchor', () => {
-  expect(resizeCrop(SQ, 'se', 50, 50, IMG, 87, 1)).toEqual({ x: 180, y: 80, width: 690, height: 690 });
+  expect(resizeCrop(SQ, 'se', 50, 50, IMG, 87, 1)).toEqual({
+    x: 180,
+    y: 80,
+    width: 690,
+    height: 690,
+  });
 });
 it('resizeCrop ratio-locked stops at edge on both axes', () => {
   const r = resizeCrop(SQ, 'se', 500, 500, IMG, 87, 1);
@@ -79,7 +95,9 @@ it('resizeCrop ratio-locked stops at edge on both axes', () => {
 });
 it('resizeCrop nw moves origin, keeps se corner', () => {
   const r = resizeCrop(SQ, 'nw', -50, -50, IMG, 87, 1);
-  expect(r.x + r.width).toBe(820); expect(r.y + r.height).toBe(720); expect(r.width).toBe(690);
+  expect(r.x + r.width).toBe(820);
+  expect(r.y + r.height).toBe(720);
+  expect(r.width).toBe(690);
 });
 it('resizeCrop free edge e changes width only', () => {
   expect(resizeCrop(FREE, 'e', 50, 999, IMG, 87)).toEqual({ ...FREE, width: 850 });
@@ -90,13 +108,20 @@ it('resizeCrop respects min size', () => {
 it('min size clamps to tiny image', () => {
   const tiny = { width: 20, height: 20 };
   const r = scaleCrop(defaultCropArea(tiny, 1), 0.01, tiny, 87, 1);
-  expect(r.width).toBeLessThanOrEqual(20); expect(r.x).toBeGreaterThanOrEqual(0);
+  expect(r.width).toBeLessThanOrEqual(20);
+  expect(r.x).toBeGreaterThanOrEqual(0);
 });
 it('scaleCrop grows around center and clamps', () => {
-  expect(scaleCrop(SQ, 1.06, IMG, 87, 1)).toEqual({ x: 160.8, y: 60.8, width: 678.4, height: 678.4 });
+  expect(scaleCrop(SQ, 1.06, IMG, 87, 1)).toEqual({
+    x: 160.8,
+    y: 60.8,
+    width: 678.4,
+    height: 678.4,
+  });
   expect(scaleCrop(SQ, 10, IMG, 87, 1)).toEqual({ x: 100, y: 0, width: 800, height: 800 });
 });
 ```
+
 (`SQ = defaultCropArea(IMG, 1)`, `FREE = defaultCropArea(IMG)`. Use `toBeCloseTo` per field where floats bite.)
 
 - [ ] **Step 2: Run, expect FAIL** — `cd packages/design-system && npx vitest run src/components/ImageCrop/cropGeometry` → module not found.
@@ -109,11 +134,13 @@ it('scaleCrop grows around center and clamps', () => {
 ### Task 2: Component — still image, movable + resizable box, props removed
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/ImageCrop/ImageCrop.tsx`
 - Modify: `ImageCrop.module.scss`, `ImageCrop.tokens.scss`
 - Modify: `ImageCrop.test.tsx` (drop `zoom` describe + slider assertions; replace `drag` describe)
 
 **Interfaces:**
+
 - Consumes: everything from Task 1.
 - Produces: `ImageCropProps` without `minZoom/maxZoom/showZoomControl`. DOM contract tests in Task 3 rely on: box element `data-crop-box` (class `cropBox`), handles `data-handle="<Handle>"`, viewport class `viewport`, `cropBoxActive` class on box while dragging/resizing.
 - Module-level constants in `ImageCrop.tsx`: `FIT_PADDING = 16`, `TOOLBAR_RESERVE = 56`, `MIN_BOX_PX = 32` (TS needs numbers for layout math; mirror padding with a `--image-crop-fit-padding` token comment).
@@ -125,17 +152,26 @@ Styles: `.cropBox` keeps border + scrim, gains `cursor: move`; `.handle` L-corne
 - [ ] **Step 1: Write/replace failing tests** (400×400 viewport, 1000×800 image → scale 0.368)
 
 ```ts
-it('box is positioned from value', /* SQ → left = 16 + 180*0.368, width = 640*0.368 */);
-it('dragging the box moves the crop', /* pointerdown box at (200,200), move to (236.8,200) → onChange x≈280 */);
-it('drag clamps to image', /* move +1000px → x 360 */);
+it('box is positioned from value' /* SQ → left = 16 + 180*0.368, width = 640*0.368 */);
+it(
+  'dragging the box moves the crop' /* pointerdown box at (200,200), move to (236.8,200) → onChange x≈280 */,
+);
+it('drag clamps to image' /* move +1000px → x 360 */);
 it('pointerup fires onChangeEnd once with last value');
-it('se handle resizes with ratio and does not move the box', /* +18.4px → width≈690, x stays 180; onChange calls never show a moved x */);
-it('edge handles only render in free aspect', /* aspectRatio=1 → 4 handles; undefined → 8 */);
+it(
+  'se handle resizes with ratio and does not move the box' /* +18.4px → width≈690, x stays 180; onChange calls never show a moved x */,
+);
+it('edge handles only render in free aspect' /* aspectRatio=1 → 4 handles; undefined → 8 */);
 it('cropBoxActive class while dragging, removed on pointerup');
-it('out-of-bounds value renders without throwing and next drag clamps', /* value {x:-50,y:0,width:2000,height:2000} */);
+it(
+  'out-of-bounds value renders without throwing and next drag clamps' /* value {x:-50,y:0,width:2000,height:2000} */,
+);
 it('disabled: pointerdown on box/handle does nothing');
-it('removed props are gone', /* @ts-expect-error <ImageCrop maxZoom={2} .../> in a type-only test line; no slider role in DOM */);
+it(
+  'removed props are gone' /* @ts-expect-error <ImageCrop maxZoom={2} .../> in a type-only test line; no slider role in DOM */,
+);
 ```
+
 Keep existing rendering/loading, object URL, default-crop (update expected numbers to 80% values), misc, extractCropBlob, useCropPreview, #574 tests.
 
 - [ ] **Step 2: Run, expect FAIL.**
@@ -148,10 +184,12 @@ Keep existing rendering/loading, object URL, default-crop (update expected numbe
 ### Task 3: Wheel, double-click, Reset toolbar, keyboard, a11y, i18n
 
 **Files:**
+
 - Modify: `ImageCrop.tsx`, `ImageCrop.module.scss`, `ImageCrop.tokens.scss`, `ImageCrop.test.tsx`
 - Modify: `packages/design-system/src/i18n/{messages.ts,en.ts,ru.ts}`
 
 **Interfaces:**
+
 - Consumes: `scaleCrop`, `moveCrop`, `resizeCrop` ('se' with dx/dy for Shift+Arrows), `defaultCropArea`.
 - i18n: `imageCrop: { loadError, reset: 'Reset' / 'Сбросить', label: 'Crop area' / 'Область обрезки', keyboardHint: 'Drag the box to move it, drag corners to resize. Arrow keys move, Shift+Arrow keys resize.' / Russian equivalent }`; delete `zoom`.
 
@@ -160,10 +198,14 @@ Behavior: wheel listener attached natively (`addEventListener('wheel', h, { pass
 - [ ] **Step 1: Failing tests**
 
 ```ts
-it('wheel down grows box 6% around center', /* SQ → width 678.4, x 160.8 */);
+it('wheel down grows box 6% around center' /* SQ → width 678.4, x 160.8 */);
 it('wheel up shrinks box');
-it('wheel fires onChangeEnd once after 200ms', /* vi.useFakeTimers, 3 ticks, advance 200 → 1 call */);
-it('wheel when disabled does not preventDefault', /* dispatch WheelEvent cancelable → defaultPrevented false */);
+it(
+  'wheel fires onChangeEnd once after 200ms' /* vi.useFakeTimers, 3 ticks, advance 200 → 1 call */,
+);
+it(
+  'wheel when disabled does not preventDefault' /* dispatch WheelEvent cancelable → defaultPrevented false */,
+);
 it('double-click resets to default crop and fires onChangeEnd');
 it('Reset button resets; hidden while loading');
 it('ArrowRight moves x by 5; Shift+ArrowRight grows width by 5 (ratio keeps height)');
@@ -171,6 +213,7 @@ it('Home/End jump to corners');
 it('PageUp does nothing');
 it('viewport has role=group, accessible name "Crop area", description = keyboard hint');
 ```
+
 - [ ] **Step 2: Run, expect FAIL.**
 - [ ] **Step 3: Implement.**
 - [ ] **Step 4: Run** vitest ImageCrop → PASS; full `npx vitest run` in `packages/design-system` → PASS (catches i18n key-parity tests); `node --test tools/eslint-plugin-eocrm/rules.test.mjs` from root → PASS.
@@ -181,6 +224,7 @@ it('viewport has role=group, accessible name "Crop area", description = keyboard
 ### Task 4: Docs, playground, manifest, release bump
 
 **Files:**
+
 - Modify: `packages/design-system/docs/components/ImageCrop.md` — "Breaking in 0.6.0" note at top (delete `minZoom`/`maxZoom`/`showZoomControl`, no replacement; shorter component, floating Reset); rewrite interaction bullets (box drag, handles, wheel, dblclick, keyboard); hard rules: drop the pinch/rotation line's zoom wording, keep the rest. Then `npm run build:docs` (in `packages/design-system`).
 - Modify: `packages/playground/src/pages/components/ImageCropDemo.tsx` — descriptions: drop "Pattern-A", "slider", "Hand-rolled on <canvas>", "drag/zoom"; free-aspect section describes edge handles.
 - Modify: `packages/playground/src/pages/components/SliderDemo.tsx:340` — drop "the canonical ImageCrop zoom control".

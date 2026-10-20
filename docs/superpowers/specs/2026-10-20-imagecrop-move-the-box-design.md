@@ -42,19 +42,19 @@ bottom, as the prototype does).
 
 **Default crop** (when `value === null`): centered box with `aspectRatio` (or the image's own
 ratio when free), sized to **80%** of the largest such box that fits in the image. Fired once via
-`onChange` exactly as today. *(My call — 100% would recreate the locked-axis bug.)*
+`onChange` exactly as today. _(My call — 100% would recreate the locked-axis bug.)_
 
 **Drag box.** Pointer down inside the box → move. Clamped to image bounds. Pointer capture as
 today. `onChange` per move, `onChangeEnd` on pointerup.
 
 **Resize.** 4 corner handles always; with free aspect also 4 edge handles. Opposite corner/edge is
 the anchor. With `aspectRatio`, keep ratio and clamp to image bounds without breaking the ratio.
-Minimum box size: 32 viewport px on the shorter side *(my call)*. Pointer down outside the box does
-nothing *(my call)*.
+Minimum box size: 32 viewport px on the shorter side _(my call)_. Pointer down outside the box does
+nothing _(my call)_.
 
 **Wheel** over the viewport: scale the box ±6% per tick around its center, clamped to image
 bounds and the minimum; `preventDefault` only while the pointer is over the viewport (non-passive
-listener). `onChangeEnd` fires debounced (~200ms after the last wheel tick) *(my call)*.
+listener). `onChangeEnd` fires debounced (~200ms after the last wheel tick) _(my call)_.
 
 **Double-click** in the viewport: reset to the default crop (fires `onChange` + `onChangeEnd`).
 
@@ -73,9 +73,9 @@ Home/End move box to top-left / bottom-right. Each key fires `onChange` and `onC
 PageDown removed.
 
 **A11y**: viewport gets `role="group"` + `aria-label` (i18n `imageCrop.label`, "Crop area") and an
-`aria-describedby` hint with the keyboard instructions (i18n). No live region *(my call — position
+`aria-describedby` hint with the keyboard instructions (i18n). No live region _(my call — position
 changes are continuous and would be noisy; transient-state skill only applies to loading/error,
-which keep current behavior)*.
+which keep current behavior)_.
 
 **Unchanged**: object-URL lifecycle, load/error/skeleton, ResizeObserver, `disabled` (dims, no
 interaction), the #574 render-time src reset, `{...rest}` spread.
