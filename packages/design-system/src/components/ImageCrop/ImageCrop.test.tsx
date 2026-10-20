@@ -407,18 +407,88 @@ describe('ImageCrop', () => {
         expect(onChangeEnd).toHaveBeenCalledWith(last(onChange));
       });
 
-      it('Reset button resets once; hidden while loading', () => {
-        const { container, onChange, onChangeEnd } = setup(
-          {},
-          { x: 0, y: 0, width: 100, height: 100 },
-        );
+      it('Reset button resets once', () => {
+        const { onChange, onChangeEnd } = setup({}, { x: 0, y: 0, width: 100, height: 100 });
         fireEvent.doubleClick(screen.getByRole('button', { name: 'Reset' }));
         fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
         expect(onChangeEnd).toHaveBeenCalledTimes(1);
         expect(last(onChange).width).toBeCloseTo(640);
-        const loading = render(<ImageCrop src="data:,x" value={null} onChange={() => {}} />);
-        expect(loading.container.querySelector('button')).toBeNull();
-        expect(container).toBeTruthy();
+      });
+
+      it('Reset button is hidden while loading', () => {
+        const { container } = render(<ImageCrop src="data:,x" value={null} onChange={() => {}} />);
+        expect(container.querySelector('button')).toBeNull();
+      });
+
+      it('deltaY 0 neither resizes nor preventDefaults', () => {
+        const { container, onChange } = setup();
+        const ev = wheel(vp(container), 0);
+        expect(ev.defaultPrevented).toBe(false);
+        expect(onChange).not.toHaveBeenCalled();
+      });
+
+      it('wheel before image load does not preventDefault', () => {
+        const { container } = render(
+          <ImageCrop
+            src="data:,x"
+            value={{ x: 0, y: 0, width: 10, height: 10 }}
+            onChange={() => {}}
+          />,
+        );
+        expect(wheel(vp(container), 100).defaultPrevented).toBe(false);
+      });
+
+      it('ticks between renders compound', () => {
+        const { container, onChange } = setup();
+        wheel(vp(container), 100);
+        wheel(vp(container), 100);
+        expect(last(onChange).width).toBeCloseTo(640 * 1.06 * 1.06);
+      });
+
+      it('unmount cancels the pending wheel onChangeEnd', () => {
+        vi.useFakeTimers();
+        try {
+          const { container, onChangeEnd, unmount } = setup();
+          wheel(vp(container), 100);
+          unmount();
+          vi.advanceTimersByTime(300);
+          expect(onChangeEnd).not.toHaveBeenCalled();
+        } finally {
+          vi.useRealTimers();
+        }
+      });
+
+      it.each([
+        ['Reset click', () => fireEvent.click(screen.getByRole('button', { name: 'Reset' }))],
+        [
+          'arrow key',
+          () =>
+            fireEvent.keyDown(document.querySelector('[class*="viewport"]')!, {
+              key: 'ArrowRight',
+            }),
+        ],
+        [
+          'drag',
+          () => {
+            const box = document.querySelector('[data-crop-box]')!;
+            fireEvent.pointerDown(box, { clientX: 200, clientY: 200, pointerId: 1 });
+            fireEvent.pointerUp(box, { clientX: 200, clientY: 200, pointerId: 1 });
+          },
+        ],
+      ])('%s supersedes a pending wheel onChangeEnd', (_n, act2) => {
+        vi.useFakeTimers();
+        try {
+          const { container, onChangeEnd } = setup();
+          wheel(vp(container), 100);
+          act2();
+          expect(onChangeEnd).toHaveBeenCalledTimes(1);
+          act(() => {
+            vi.advanceTimersByTime(300);
+          });
+          expect(onChangeEnd).toHaveBeenCalledTimes(1);
+        } finally {
+          vi.useRealTimers();
+        }
       });
 
       it('ArrowRight moves x by 5; Shift+ArrowRight grows width by 5 keeping ratio', () => {

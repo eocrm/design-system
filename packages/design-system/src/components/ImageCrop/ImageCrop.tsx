@@ -222,6 +222,7 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
     } catch {
       // jsdom or pre-PointerEvents browsers — drag still works via pointermove.
     }
+    clearTimeout(wheelEndTimer.current);
     const start = normalizeCrop(value, imageNatural, aspectRatio);
     dragRef.current = { mode, startX: e.clientX, startY: e.clientY, start, last: start };
     setIsDragging(true);
@@ -258,7 +259,7 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
     }
     dragRef.current = null;
     setIsDragging(false);
-    onChangeEnd?.(drag.last);
+    commitEnd(drag.last);
   };
 
   const interactive = !disabled && loadState === 'loaded' && !!imageNatural && !!fit;
@@ -268,13 +269,18 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
   latest.current = { value, imageNatural, fit, aspectRatio, onChange, onChangeEnd };
   const wheelEndTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   useEffect(() => () => clearTimeout(wheelEndTimer.current), []);
+  // Every committed change supersedes a pending wheel debounce.
+  const commitEnd = (area: CropArea) => {
+    clearTimeout(wheelEndTimer.current);
+    onChangeEnd?.(area);
+  };
 
   useEffect(() => {
     const el = viewportRef.current;
     if (!el || !interactive) return;
     const onWheel = (e: WheelEvent) => {
       const { value, imageNatural, fit, aspectRatio, onChange, onChangeEnd } = latest.current;
-      if (!value || !imageNatural || !fit) return;
+      if (!value || !imageNatural || !fit || e.deltaY === 0) return;
       e.preventDefault();
       const next = scaleCrop(
         normalizeCrop(value, imageNatural, aspectRatio),
@@ -297,7 +303,7 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
     if (!imageNatural) return;
     const d = defaultCropArea(imageNatural, aspectRatio);
     onChange(d);
-    onChangeEnd?.(d);
+    commitEnd(d);
   };
 
   // Keyboard: arrows nudge the box, Shift+arrows resize it, Home/End jump to the image corners.
@@ -329,7 +335,7 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
     }
     e.preventDefault();
     onChange(next);
-    onChangeEnd?.(next);
+    commitEnd(next);
   };
 
   const imageStyle: CSSProperties =

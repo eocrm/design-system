@@ -235,8 +235,7 @@
   padding: var(--image-crop-toolbar-padding);
   background: var(--image-crop-toolbar-bg);
   border-radius: var(--image-crop-toolbar-radius);
-  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- blur radius, matches Modal blur variant
-  backdrop-filter: blur(8px);
+  backdrop-filter: blur(var(--image-crop-toolbar-blur));
   transform: translateX(-50%);
 
   // Ghost Button reads on the dark pill.
