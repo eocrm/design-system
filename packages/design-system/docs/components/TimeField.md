@@ -14,7 +14,7 @@ const [time, setTime] = useState<TimeValue | null>({ hours: 9, minutes: 0 });
 | Prop | Type | Required | Description |
 |---|---|---|---|
 | `value` | `TimeValue \| null` | yes | Selected time. `null` disables the field — the field cannot be activated until the parent supplies a value (used by the picker family to gate time selection on a date being chosen first). |
-| `onChange` | `(value: TimeValue) => void` | yes | Fired when the user commits a new time, either by typing + blur / Enter, by clicking a row in the popover, or by clicking the Now button. The emitted value is always 24-hour internal regardless of display cycle. |
+| `onChange` | `(value: TimeValue) => void` | yes | Fired when the user commits a new time, either by typing + focus leaving the field (input, chevron or clock) / Enter, by clicking a row in the popover, or by clicking the Now button. The emitted value is always 24-hour internal regardless of display cycle. |
 | `step` | `number` | no | Minutes step. Default `15`. Controls the row count in the minutes column (e.g., 15 → 4 rows: 00/15/30/45) AND rounds typed input on commit. Set `1` to disable rounding. |
 | `hourCycle` | `'12' \| '24' \| 'auto'` | no | Display + parse cycle. - `'24'` — hour list 00–23, text input shows `HH:mm`, no AM/PM column. - `'12'` — hour list `12, 1, 2, …, 11` with an AM/PM column; text input shows `h:mm AM/PM`. - `'auto'` (default) — reads the active locale via `Intl.DateTimeFormat`; en-US → 12h, ru-RU → 24h. Typed input is lenient regardless of cycle — both 24h (`14:30`) and AM/PM (`2:30 PM`) shapes parse in either mode. |
 | `locale` | `string` | no | Locale override for `hourCycle='auto'` detection + text formatting. Defaults to the active `<LocaleProvider>` / browser locale. |

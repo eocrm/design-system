@@ -8,7 +8,7 @@ import type { DataTableInstance } from './types';
 
 export interface ColumnVisibilityTriggerProps<T = unknown> extends Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
-  'children' | 'onChange'
+  'children' | 'onChange' | 'color'
 > {
   /** The `useDataTable` instance to read column state from and dispatch visibility changes to. */
   instance: DataTableInstance<T>;

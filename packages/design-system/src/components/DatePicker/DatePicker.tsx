@@ -3,6 +3,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   type FocusEvent,
@@ -86,7 +87,9 @@ export interface DatePickerProps extends Omit<
    *   (when `name` is set) emits ISO local datetime (`2026-05-28T14:30`).
    *
    * Time is preserved across date re-picks. Picking from a `null` value
-   * defaults the time to `00:00`.
+   * defaults the time to `00:00`. In `'minute'` mode picking a day keeps the
+   * popover open and moves focus to the time input; Enter there (or Escape /
+   * outside click) closes it.
    */
   granularity?: DateTimeGranularity;
 
@@ -159,9 +162,22 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
 
   const [uncontrolled, setUncontrolled] = useState<Date | null>(defaultValue);
   const value = valueProp !== undefined ? valueProp : uncontrolled;
+  // Latest value for the embedded TimeField's commit, so a late time commit
+  // can't resurrect a value Clear (or a day pick) just replaced. Synced every
+  // render (a controlled parent may reject a change); written ahead of the
+  // re-render only when uncontrolled, where the set always lands. Accepted
+  // trade-off: a controlled parent that applies onChange asynchronously can
+  // still let a late deferred time commit resurrect a cleared value.
+  const valueRef = useRef(value);
+  useLayoutEffect(() => {
+    valueRef.current = value;
+  });
   const setValue = useCallback(
     (next: Date | null) => {
-      if (valueProp === undefined) setUncontrolled(next);
+      if (valueProp === undefined) {
+        valueRef.current = next;
+        setUncontrolled(next);
+      }
       onChange?.(next);
     },
     [valueProp, onChange],
@@ -173,7 +189,10 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
       : formatDate(value, locale)
     : '';
   const [draft, setDraft] = useState(formattedValue);
+  // True while the trigger holds text the user typed and hasn't committed.
+  const typedRef = useRef(false);
   useEffect(() => {
+    typedRef.current = false;
     setDraft(formattedValue);
   }, [formattedValue]);
 
@@ -205,24 +224,76 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
     focusable?.focus();
   }, [focusGridTick, refs.floating]);
 
+  // #666: same tick pattern for the minute-mode day pick — the time input
+  // is `disabled` until the new value renders, so focus it after commit.
+  const [focusTimeTick, setFocusTimeTick] = useState(0);
+  useEffect(() => {
+    if (focusTimeTick === 0) return;
+    document.getElementById(`${inputId}-time`)?.focus();
+  }, [focusTimeTick, inputId]);
+
   const commit = useCallback(
     (raw: string) => {
+      typedRef.current = false;
       if (raw.trim() === '') {
         setValue(null);
-        return;
+        return null;
       }
       const parsed = granularity === 'minute' ? parseDateTime(raw, locale) : parseDate(raw, locale);
       if (parsed != null && !isDateOutOfRange(parsed, min, max, isDateDisabled)) {
         setValue(parsed);
-      } else {
-        setDraft(formattedValue); // revert
+        return parsed;
       }
+      setDraft(formattedValue); // revert
+      return null;
     },
     [granularity, locale, min, max, isDateDisabled, setValue, formattedValue],
   );
 
+  // Focus / pointer targets that count as "still inside" the picker. The
+  // embedded <TimeField> renders its clock into document.body (a SIBLING
+  // portal — not a descendant of refs.floating), so it's matched by its
+  // data attribute; otherwise moving into the clock would close the calendar
+  // mid-interaction.
+  const isInsidePicker = useCallback(
+    (el: EventTarget | null) =>
+      el instanceof Node &&
+      (wrapperRef.current?.contains(el) ||
+        refs.floating.current?.contains(el) ||
+        (el instanceof Element && el.closest('[data-timefield-popover="true"]') != null)),
+    [refs.floating],
+  );
+
+  const isInPopover = useCallback(
+    (el: Element) =>
+      refs.floating.current?.contains(el) || el.closest('[data-timefield-popover="true"]') != null,
+    [refs.floating],
+  );
+
+  // Close paths (trigger blur, outside click, Tab-away) can land on the same
+  // tick; the first to claim the close wins, the rest no-op.
+  const openRef = useRef(open);
+  useEffect(() => {
+    openRef.current = open;
+  }, [open]);
+  const claimClose = useCallback(() => {
+    if (!openRef.current) return false;
+    openRef.current = false;
+    return true;
+  }, []);
+  // No typed-draft commit here: every way of leaving the trigger already
+  // committed it (blur / ArrowDown), so a stale draft can't land late.
+  const finishClose = useCallback((refocusTrigger: boolean) => {
+    if (!inputRef.current) return; // unmounted meanwhile
+    setOpen(false);
+    if (refocusTrigger) inputRef.current.focus();
+  }, []);
+
   const handleInputBlur = useCallback(
     (e: FocusEvent<HTMLInputElement>) => {
+      // Leaving the trigger for anywhere — including into the grid or the
+      // time input — commits a typed date, so the popover then works on it.
+      if (typedRef.current) commit(draft);
       // Defer so focus transitions to a sibling inside the wrapper (clear
       // button, open-calendar button) — or programmatic focus into the
       // portaled popover (ArrowDown into the grid) — can complete before
@@ -230,28 +301,11 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
       // `onMouseDown={preventDefault}` to keep input focus on grid clicks;
       // this defer handles keyboard-driven focus moves.
       window.setTimeout(() => {
-        const active = document.activeElement;
-        const insideWrapper = wrapperRef.current?.contains(active);
-        const insideFloating = refs.floating.current?.contains(active);
-        // The embedded <TimeField> renders its popover into document.body
-        // (a SIBLING portal — not a descendant of refs.floating). When the
-        // user clicks the time chevron, focus moves through the TimeField
-        // input and on into one of the listbox rows via the auto-focus rAF
-        // effect; that row lives inside the sibling portal. Without this
-        // exemption the deferred blur check would see "outside floating"
-        // and close the calendar mid-interaction. Mirrors the same
-        // [data-timefield-popover] exemption used by the click-outside
-        // handler below.
-        const insideTimeFieldPopover =
-          active instanceof Element && active.closest('[data-timefield-popover="true"]') != null;
-        if (!insideWrapper && !insideFloating && !insideTimeFieldPopover) {
-          commit(draft);
-          setOpen(false);
-        }
+        if (!isInsidePicker(document.activeElement) && claimClose()) finishClose(false);
       }, 0);
       onBlur?.(e);
     },
-    [commit, draft, onBlur, refs.floating],
+    [commit, draft, claimClose, finishClose, onBlur, isInsidePicker],
   );
 
   const handleInputFocus = useCallback(
@@ -269,6 +323,12 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
     (e: KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'ArrowDown') {
         e.preventDefault();
+        // Commit a typed date now (not on the blur that follows) so the grid
+        // opens — and takes focus — on it.
+        if (typedRef.current) {
+          const typed = commit(draft);
+          if (typed) setCursor(typed);
+        }
         setOpen(true);
         // Bump the tick to schedule a focus-into-grid on the next commit.
         // Going through a state-driven effect (rather than `setTimeout(0)`)
@@ -332,32 +392,71 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
         }
       }
       setValue(withTime);
+      // The pick wins over half-typed trigger text. The setDraft only matters
+      // for a same-day pick (value unchanged, so the draft re-sync effect
+      // doesn't run); any other pick re-syncs the draft via that effect.
+      typedRef.current = false;
+      setDraft(formattedValue);
+      if (granularity === 'minute') {
+        // #666: stay open and hand off to the time input; Enter / Escape /
+        // outside click close as usual.
+        setFocusTimeTick((t) => t + 1);
+        return;
+      }
       setOpen(false);
       inputRef.current?.focus();
     },
-    [granularity, value, setValue, timeStep],
+    [granularity, value, setValue, timeStep, formattedValue],
   );
 
   const handleClear = useCallback(
     (e: MouseEvent<HTMLButtonElement>) => {
       e.preventDefault();
       e.stopPropagation();
+      typedRef.current = false; // discard typed text — one onChange(null)
+      // Focus in the popover (kept there by keepTriggerFocus): blur it first so
+      // TimeField's commit is deferred past this re-render and sees the
+      // cleared value — Clear wins over a typed time.
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && isInPopover(active)) active.blur();
+      setDraft('');
       setValue(null);
       inputRef.current?.focus();
     },
-    [setValue],
+    [setValue, isInPopover],
   );
 
-  const handleToggle = useCallback((e: MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    setOpen((v) => {
-      const next = !v;
-      // On open, transfer focus to the input so the popover's
-      // ArrowDown contract works and the input is ready for typing.
-      if (next) inputRef.current?.focus();
-      return next;
-    });
-  }, []);
+  // ✕ / 📅 never move focus on mousedown while focus is in the picker (or it's
+  // open): half-typed trigger text isn't blur-committed, and no browser
+  // (Safari / Firefox-mac don't focus clicked buttons) gets a focus-out that
+  // closes the popover before the click. The click handlers do the rest.
+  const keepTriggerFocus = useCallback(
+    (e: MouseEvent<HTMLButtonElement>) => {
+      if (openRef.current || isInsidePicker(document.activeElement)) e.preventDefault();
+    },
+    [isInsidePicker],
+  );
+
+  const handleToggle = useCallback(
+    (e: MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      if (claimClose()) {
+        // Close on the next tick, like an outside click, so the embedded
+        // TimeField's commit lands first. Safari / Firefox-mac don't focus a
+        // clicked button: focus may still be in the popover (blur it so
+        // TimeField commits) or already blurred with that commit pending.
+        const active = document.activeElement;
+        if (active instanceof HTMLElement && isInPopover(active)) active.blur();
+        window.setTimeout(() => finishClose(true), 0);
+        return;
+      }
+      // Open, with focus in the input so the popover's ArrowDown contract
+      // works and the input is ready for typing.
+      setOpen(true);
+      inputRef.current?.focus();
+    },
+    [isInPopover, claimClose, finishClose],
+  );
 
   // Click outside closes (separate from blur to handle the case where
   // focus moved into the grid via mouse, then user clicks somewhere else).
@@ -365,22 +464,21 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
   useEffect(() => {
     if (!open) return;
     const handler = (e: PointerEvent) => {
-      const target = e.target as Node | null;
-      if (!target) return;
-      const floating = refs.floating.current;
-      if (wrapperRef.current?.contains(target) || floating?.contains(target)) return;
-      // The embedded <TimeField> renders its popover into document.body
-      // (sibling portal). Treat any click inside it as "inside" so this
-      // popover doesn't auto-close mid-time-pick.
-      if (target instanceof Element && target.closest('[data-timefield-popover="true"]')) {
-        return;
+      if (isInsidePicker(e.target) || !claimClose()) return;
+      const active = document.activeElement;
+      // #666: focus in the popover (e.g. a time typed into the embedded
+      // TimeField) — blur it so TimeField's deferred focus-out commit runs,
+      // then close on the next tick, after that commit.
+      if (active instanceof HTMLElement && isInPopover(active)) {
+        active.blur();
+        window.setTimeout(() => finishClose(false), 0);
+      } else {
+        finishClose(false);
       }
-      commit(draft);
-      setOpen(false);
     };
     document.addEventListener('pointerdown', handler, true);
     return () => document.removeEventListener('pointerdown', handler, true);
-  }, [open, refs.floating, commit, draft]);
+  }, [open, isInsidePicker, isInPopover, claimClose, finishClose]);
 
   // #272: inside a Modal/Drawer the popover's base z (--z-popover, below
   // --z-modal) paints it behind the host — elevate when the trigger sits in
@@ -418,7 +516,10 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
         type="text"
         className={styles.input}
         value={draft}
-        onChange={(e) => setDraft(e.target.value)}
+        onChange={(e) => {
+          typedRef.current = true;
+          setDraft(e.target.value);
+        }}
         onFocus={handleInputFocus}
         onBlur={handleInputBlur}
         onClick={handleInputClick}
@@ -442,6 +543,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
           type="button"
           className={styles.clearButton}
           aria-label={t('datePicker.clear')}
+          onMouseDown={keepTriggerFocus}
           onClick={handleClear}
         >
           <X size={ICON_SIZE_FOR[size]} />
@@ -451,6 +553,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
         type="button"
         className={styles.openButton}
         aria-label={t('datePicker.openCalendar')}
+        onMouseDown={keepTriggerFocus}
         onClick={handleToggle}
         disabled={disabled}
       >
@@ -474,6 +577,38 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
             aria-modal="false"
             aria-label={t('datePicker.openCalendar')}
             onMouseDown={(e) => e.preventDefault()} // keep input focus on grid click
+            onBlur={(e) => {
+              // #666: focus left the popover (Tab past its last stop — it's
+              // portaled to the end of body) — close and return focus to the
+              // trigger so Tab continues in page order. React bubbles this from the
+              // TimeField clock portal too. Deferred so TimeField's own
+              // deferred focus-out commit lands first. A disconnected target
+              // means the focused node was unmounted (clock closing; only
+              // real browsers fire blur for that), not a focus move.
+              const target = e.target;
+              window.setTimeout(() => {
+                if (target.isConnected && !isInsidePicker(document.activeElement) && claimClose()) {
+                  finishClose(true);
+                }
+              }, 0);
+            }}
+            onKeyDown={(e) => {
+              // #666: Enter in the time input (TimeField commits first, its
+              // clock closed) finishes the pick. Rows in the clock bubble here
+              // through the React tree too, hence the target check. Deferred so
+              // TimeField re-renders with its commit before losing focus —
+              // otherwise its blur re-commits from a stale closure.
+              if (
+                e.key === 'Enter' &&
+                (e.target as HTMLElement).id === `${inputId}-time` &&
+                !document.querySelector('[data-timefield-popover="true"]')
+              ) {
+                window.setTimeout(() => {
+                  setOpen(false);
+                  inputRef.current?.focus();
+                }, 0);
+              }
+            }}
           >
             <DatePickerGrid
               cursor={cursor}
@@ -499,8 +634,10 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
                   disabled={value == null || disabled}
                   aria-label={t('datePicker.timeLabel')}
                   onChange={(time) => {
-                    if (value == null) return;
-                    setValue(combineDateAndTime(value, time.hours, time.minutes));
+                    // Cleared meanwhile → Clear wins; the time is dropped.
+                    const current = valueRef.current;
+                    if (current == null) return;
+                    setValue(combineDateAndTime(current, time.hours, time.minutes));
                   }}
                 />
               </div>

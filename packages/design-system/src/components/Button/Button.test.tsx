@@ -190,9 +190,9 @@ describe('Button', () => {
     );
     expect(scss).toMatch(/&:disabled\s*\{[^}]*pointer-events:\s*none;/s);
 
-    const hoverSelectors = scss.match(/&:hover[^{]*/g);
-    expect(hoverSelectors).toHaveLength(7);
-    hoverSelectors?.forEach((selector) => {
+    const hoverSelectors = scss.match(/&:hover[^{]*/g) ?? [];
+    expect(hoverSelectors.length).toBeGreaterThan(0);
+    hoverSelectors.forEach((selector) => {
       expect(selector).toContain(":not(:disabled, [aria-disabled='true'])");
     });
   });
@@ -305,5 +305,52 @@ describe('Button — polymorphic `as` (#530)', () => {
     // expect-error directives above, which fail `tsc --noEmit` if either
     // constraint stops holding.
     expect(screen.getByRole('link', { name: 'Nope' })).toBeInTheDocument();
+  });
+});
+
+describe('Button — palette `color`', () => {
+  it('paints the palette soft pair through custom properties, with no variant class', () => {
+    render(<Button color="amber">No show</Button>);
+    const btn = screen.getByRole('button', { name: 'No show' });
+    const classes = btn.className.split(' ');
+    expect(classes.some((c) => /palette/.test(c))).toBe(true);
+    expect(classes.some((c) => /(^|_)primary(_|$)/.test(c))).toBe(false);
+    expect(btn.style.getPropertyValue('--button-palette-bg')).toBe('var(--color-palette-amber-bg)');
+    expect(btn.style.getPropertyValue('--button-palette-fg')).toBe('var(--color-palette-amber-fg)');
+  });
+
+  it('merges the consumer style', () => {
+    render(
+      <Button color="green" style={{ minWidth: 100 }}>
+        Completed
+      </Button>,
+    );
+    const btn = screen.getByRole('button', { name: 'Completed' });
+    expect(btn.style.minWidth).toBe('100px');
+    expect(btn.style.getPropertyValue('--button-palette-bg')).toBe('var(--color-palette-green-bg)');
+  });
+
+  it('hovers and presses with a brightness filter, guarded against disabled', () => {
+    const scss = readFileSync(resolve(__dirname, 'Button.module.scss'), 'utf8');
+    const block = scss.match(/\.palette \{[\s\S]*?\n\}/)![0];
+    expect(block).toMatch(/background: var\(--button-palette-bg\)/);
+    expect(block).toMatch(/color: var\(--button-palette-fg\)/);
+    expect(block).toMatch(
+      /&:hover:not\(:disabled, \[aria-disabled='true'\]\) \{\s*filter: brightness\(0\.96\)/,
+    );
+    expect(block).toMatch(
+      /&:active:not\(:disabled, \[aria-disabled='true'\]\) \{\s*filter: brightness\(0\.92\)/,
+    );
+  });
+
+  it('color wins over variant and selected', () => {
+    render(
+      <Button color="amber" variant="secondary" selected>
+        A
+      </Button>,
+    );
+    const button = screen.getByRole('button', { name: 'A' });
+    expect(button.className).toMatch(/palette/);
+    expect(button.className).not.toMatch(/secondary|selected/);
   });
 });

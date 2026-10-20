@@ -167,6 +167,9 @@ describe('parseAmount / draftToCanonical', () => {
     expect(parse('-5')).toBe('5');
     expect(parse('-5', { ...en, allowNegative: true })).toBe('-5');
     expect(draftToCanonical({ negative: true, int: '', frac: null })).toBeNull();
+    // A lone decimal separator is a partial draft, never '0' (#663).
+    expect(draftToCanonical({ negative: false, int: '', frac: '' })).toBeNull();
+    expect(draftToCanonical({ negative: false, int: '', frac: '5' })).toBe('0.5');
   });
   it('canonical edge cases', () => {
     expect(parse('12.')).toBe('12');
@@ -195,6 +198,9 @@ describe('canonicalToDraft / formatDraft', () => {
   });
   it('null round-trip', () => {
     expect(canonicalToDraft(null)).toBeNull();
+    // Leading zeros strip like typed input (#663).
+    expect(f('0012.5', { locale: 'en-US', precision: 2, pad: true })).toBe('12.50');
+    expect(f('-000.5', { locale: 'en-US', precision: 2, pad: true })).toBe('-0.50');
   });
 });
 

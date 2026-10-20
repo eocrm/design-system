@@ -214,7 +214,8 @@ const signed = (negative: boolean, body: string) =>
   (negative && /[1-9]/.test(body) ? '-' : '') + body;
 
 export function draftToCanonical(d: AmountDraft): string | null {
-  if (!d.int && d.frac === null) return null;
+  // A lone decimal separator ('.', ',') is a partial draft, not zero (#663).
+  if (!d.int && !d.frac) return null;
   const int = d.int.replace(/^0+(?=\d)/, '') || '0';
   const body = `${int}${d.frac ? `.${d.frac}` : ''}`;
   return signed(d.negative, body);
@@ -224,7 +225,8 @@ export function canonicalToDraft(s: string | null): AmountDraft | null {
   if (s === null || s === '') return null;
   const negative = s.startsWith('-');
   const [int, frac] = (negative ? s.slice(1) : s).split('.');
-  return { negative, int, frac: frac ?? null };
+  // Strip leading zeros so an external '0012.5' displays like typed input would (#663).
+  return { negative, int: int.replace(/^0+(?=\d)/, ''), frac: frac ?? null };
 }
 
 export function formatDraft(
@@ -233,7 +235,8 @@ export function formatDraft(
 ): string {
   const { group, decimal } = localeSeparators(opts.locale);
   const sign = d.negative ? '-' : '';
-  if (!d.int && d.frac === null) return sign;
+  // A lone separator shows as itself, not '0.': a synthesized 0 would parse back as an amount (#663).
+  if (!d.int && !d.frac) return d.frac === null || opts.precision === 0 ? sign : sign + decimal;
   const int = (d.int || '0').replace(/\B(?=(\d{3})+$)/g, group);
   if (opts.precision === 0) return sign + int;
   let frac = d.frac === null ? null : d.frac.slice(0, opts.precision);

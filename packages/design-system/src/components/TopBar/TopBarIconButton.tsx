@@ -19,7 +19,7 @@ export type TopBarIndicatorTone = 'danger' | 'warning' | 'info' | 'accent';
  */
 export interface TopBarIconButtonProps extends Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
-  'children'
+  'children' | 'color'
 > {
   /**
    * Icon to render inside the button. Typically a single lucide icon

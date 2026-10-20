@@ -1372,6 +1372,47 @@ describe('PillMenu text clears AA on every palette fill', () => {
 });
 
 /**
+ * `<Button color>` paints the same palette pairs and darkens on hover/press with
+ * `filter: brightness()`, which multiplies the gamma-encoded sRGB channels of
+ * fill AND text alike (browsers run CSS filter shorthands in sRGB). Pins both
+ * factors against Button.module.scss so a deeper press has to come back here.
+ */
+describe('Button palette colors clear AA when hovered and pressed', () => {
+  const scss = stripComments(
+    readFileSync(resolve(__dirname, '../components/Button/Button.module.scss'), 'utf8'),
+  );
+  const factors = [
+    ...(scss.match(/\.palette \{[\s\S]*?\n\}/)?.[0] ?? '').matchAll(/brightness\(([\d.]+)\)/g),
+  ].map((m) => Number(m[1]));
+  const dim = (hex: string, f: number) =>
+    `#${[1, 3, 5]
+      .map((i) =>
+        Math.round(parseInt(hex.slice(i, i + 2), 16) * f)
+          .toString(16)
+          .padStart(2, '0'),
+      )
+      .join('')}`;
+
+  it('reads the hover and pressed factors', () => {
+    expect(factors).toEqual([0.96, 0.92]);
+  });
+
+  it.each(['light', 'dark'] as const)('%s', (theme) => {
+    const source = theme === 'dark' ? DARK : TOKENS;
+    expect(PALETTE_EVENT_FILLS.length, 'found the palette fills').toBeGreaterThan(20);
+    for (const f of factors) {
+      for (const bg of PALETTE_EVENT_FILLS) {
+        const fg = bg.replace(/-bg$/, '-fg');
+        expect(
+          contrast(dim(tokenValue(fg, source), f), dim(tokenValue(bg, source), f)),
+          `${fg} on ${bg} at brightness(${f})`,
+        ).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+  });
+});
+
+/**
  * Every contrast figure `AI-PRIMER.md` + `docs/**` state in ENGLISH PROSE, recomputed.
  *
  * `structure.test.ts`'s "stated contrast ratios still hold" gate binds every

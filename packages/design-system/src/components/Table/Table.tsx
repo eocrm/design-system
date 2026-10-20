@@ -121,7 +121,7 @@ export interface TableHeaderCellProps extends Omit<
    */
   sortDirection?: TableSortDirection;
   /**
-   * Tints the header cell (top corners rounded) so a toned column reads as one
+   * Tints the header cell (top corners rounded, square under `bordered`) so a toned column reads as one
    * band with its toned body cells. Exposed as `data-tone`. Default: none.
    * - `'danger'` — overdue / at-risk column.
    * - `'accent'` — the current / highlighted column (e.g. "Today").
