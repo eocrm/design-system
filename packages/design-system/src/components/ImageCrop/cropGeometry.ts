@@ -30,6 +30,14 @@ export function defaultCropArea(image: Size, aspectRatio?: number): CropArea {
   return { x: (image.width - width) / 2, y: (image.height - height) / 2, width, height };
 }
 
+/** Pull a (possibly out-of-bounds) area into the image: shrink to fit holding the ratio, then clamp position. */
+export function normalizeCrop(area: CropArea, image: Size, aspectRatio?: number): CropArea {
+  const ratio = aspectRatio ?? area.width / area.height;
+  const width = Math.min(area.width, image.width, image.height * ratio);
+  const height = width / ratio;
+  return moveCrop({ ...area, width, height }, 0, 0, image);
+}
+
 export function moveCrop(area: CropArea, dx: number, dy: number, image: Size): CropArea {
   return {
     ...area,

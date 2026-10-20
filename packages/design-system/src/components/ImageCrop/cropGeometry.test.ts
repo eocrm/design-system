@@ -1,4 +1,11 @@
-import { defaultCropArea, fitImage, moveCrop, resizeCrop, scaleCrop } from './cropGeometry';
+import {
+  defaultCropArea,
+  fitImage,
+  moveCrop,
+  normalizeCrop,
+  resizeCrop,
+  scaleCrop,
+} from './cropGeometry';
 
 const IMG = { width: 1000, height: 800 };
 const SQ = defaultCropArea(IMG, 1);
@@ -69,5 +76,13 @@ describe('cropGeometry', () => {
   it('scaleCrop grows around center and clamps', () => {
     expectArea(scaleCrop(SQ, 1.06, IMG, 87, 1), { x: 160.8, y: 60.8, width: 678.4, height: 678.4 });
     expectArea(scaleCrop(SQ, 10, IMG, 87, 1), { x: 100, y: 0, width: 800, height: 800 });
+  });
+  it('normalizeCrop pulls an out-of-bounds area into the image', () => {
+    const r = normalizeCrop({ x: -50, y: 0, width: 2000, height: 2000 }, IMG, 1);
+    expectArea(r, { x: 0, y: 0, width: 800, height: 800 });
+    expectArea(normalizeCrop({ x: 900, y: 700, width: 200, height: 100 }, IMG), {
+      x: 800,
+      y: 700,
+    });
   });
 });

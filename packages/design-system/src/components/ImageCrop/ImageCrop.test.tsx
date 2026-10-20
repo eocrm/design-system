@@ -300,13 +300,38 @@ describe('ImageCrop', () => {
       expect(box.className).not.toMatch(/cropBoxActive/);
     });
 
-    it('out-of-bounds value renders without throwing and next drag clamps', () => {
-      const { box, onChange } = setup({}, { x: -50, y: 0, width: 2000, height: 2000 });
+    const OOB: CropArea = { x: -50, y: 0, width: 2000, height: 2000 };
+    const inside = (a: CropArea) => {
+      expect(a.x).toBeGreaterThanOrEqual(0);
+      expect(a.y).toBeGreaterThanOrEqual(0);
+      expect(a.x + a.width).toBeLessThanOrEqual(1000 + 1e-6);
+      expect(a.y + a.height).toBeLessThanOrEqual(800 + 1e-6);
+    };
+
+    it('out-of-bounds value: next drag emits an in-image area', () => {
+      const { box, onChange } = setup({}, OOB);
       fireEvent.pointerDown(box, { clientX: 200, clientY: 200, pointerId: 1 });
       fireEvent.pointerMove(box, { clientX: 220, clientY: 200, pointerId: 1 });
-      const fired = last(onChange);
-      expect(Number.isFinite(fired.x)).toBe(true);
-      expect(fired.x).toBeLessThanOrEqual(0);
+      inside(last(onChange));
+    });
+
+    it('out-of-bounds value: next resize and key press emit in-image areas', () => {
+      const { handle, onChange, container } = setup({}, OOB);
+      fireEvent.pointerDown(handle('se'), { clientX: 300, clientY: 300, pointerId: 1 });
+      fireEvent.pointerMove(handle('se'), { clientX: 280, clientY: 280, pointerId: 1 });
+      inside(last(onChange));
+      onChange.mockClear();
+      fireEvent.keyDown(container.querySelector('[class*="viewport"]')!, { key: 'ArrowRight' });
+      inside(last(onChange));
+    });
+
+    it('pointercancel ends the gesture like pointerup', () => {
+      const { box, onChangeEnd } = setup();
+      fireEvent.pointerDown(box, { clientX: 200, clientY: 200, pointerId: 1 });
+      fireEvent.pointerMove(box, { clientX: 220, clientY: 200, pointerId: 1 });
+      fireEvent.pointerCancel(box, { pointerId: 1 });
+      expect(box.className).not.toMatch(/cropBoxActive/);
+      expect(onChangeEnd).toHaveBeenCalledTimes(1);
     });
 
     it('disabled: pointerdown on box/handle does nothing', () => {

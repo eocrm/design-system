@@ -15,7 +15,14 @@ import clsx from 'clsx';
 import { Skeleton } from '../Skeleton';
 import { useTranslation } from '../../i18n/useTranslation';
 import type { CropArea } from './extractCropBlob';
-import { defaultCropArea, fitImage, moveCrop, resizeCrop, type Handle } from './cropGeometry';
+import {
+  defaultCropArea,
+  fitImage,
+  moveCrop,
+  normalizeCrop,
+  resizeCrop,
+  type Handle,
+} from './cropGeometry';
 import styles from './ImageCrop.module.scss';
 
 // Mirrors --image-crop-fit-padding (var(--space-4)); TS needs a number for layout math.
@@ -207,7 +214,8 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
     } catch {
       // jsdom or pre-PointerEvents browsers — drag still works via pointermove.
     }
-    dragRef.current = { mode, startX: e.clientX, startY: e.clientY, start: value, last: value };
+    const start = normalizeCrop(value, imageNatural, aspectRatio);
+    dragRef.current = { mode, startX: e.clientX, startY: e.clientY, start, last: start };
     setIsDragging(true);
   };
 
@@ -248,26 +256,27 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
   // Keyboard: arrows nudge the box, Home/End jump to the image corners.
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (disabled || !imageNatural || !value) return;
+    const from = normalizeCrop(value, imageNatural, aspectRatio);
     const STEP = 5; // source-image pixels
     let next: CropArea;
     switch (e.key) {
       case 'ArrowLeft':
-        next = moveCrop(value, -STEP, 0, imageNatural);
+        next = moveCrop(from, -STEP, 0, imageNatural);
         break;
       case 'ArrowRight':
-        next = moveCrop(value, STEP, 0, imageNatural);
+        next = moveCrop(from, STEP, 0, imageNatural);
         break;
       case 'ArrowUp':
-        next = moveCrop(value, 0, -STEP, imageNatural);
+        next = moveCrop(from, 0, -STEP, imageNatural);
         break;
       case 'ArrowDown':
-        next = moveCrop(value, 0, STEP, imageNatural);
+        next = moveCrop(from, 0, STEP, imageNatural);
         break;
       case 'Home':
-        next = moveCrop(value, -Infinity, -Infinity, imageNatural);
+        next = moveCrop(from, -Infinity, -Infinity, imageNatural);
         break;
       case 'End':
-        next = moveCrop(value, Infinity, Infinity, imageNatural);
+        next = moveCrop(from, Infinity, Infinity, imageNatural);
         break;
       default:
         return;
@@ -325,6 +334,8 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
             onPointerDown={(e) => startDrag(e, 'move')}
             onPointerMove={handlePointerMove}
             onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+            onLostPointerCapture={handlePointerUp}
           >
             <div className={styles.grid} />
             {handles.map((h) => (
