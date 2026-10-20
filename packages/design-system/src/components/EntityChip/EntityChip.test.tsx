@@ -263,7 +263,7 @@ describe('<EntityChip>', () => {
       expect(block).toMatch(/white-space:\s*nowrap/);
       expect(block).toMatch(/>\s*\*\s*\{\s*flex-shrink:\s*0/);
       expect(block).toMatch(
-        />\s*\.label\s*\{[^}]*flex-shrink:\s*1[^}]*min-width:\s*0[^}]*overflow:\s*hidden[^}]*text-overflow:\s*ellipsis/,
+        />\s*\.label\s*\{[^}]*flex-shrink:\s*1[^}]*min-width:\s*0[^}]*overflow-x:\s*clip;\s*overflow-y:\s*visible;\s*text-overflow:\s*ellipsis/,
       );
     });
 
@@ -854,7 +854,7 @@ describe('<EntityChip> — tooltips and labelMaxWidth (#582)', () => {
   it('.capped makes the label single-line with an ellipsis', () => {
     const scss = readFileSync(resolve(__dirname, 'EntityChip.module.scss'), 'utf8');
     expect(scss).toMatch(
-      /\.capped\s*\{[^}]*overflow:\s*hidden;[^}]*text-overflow:\s*ellipsis;[^}]*white-space:\s*nowrap;/,
+      /\.capped\s*\{[^}]*overflow-x:\s*clip;\s*overflow-y:\s*visible;[^}]*text-overflow:\s*ellipsis;[^}]*white-space:\s*nowrap;/,
     );
   });
 });
@@ -1207,5 +1207,14 @@ describe('<EntityChip> — labelEllipsis (#593)', () => {
   it('.ellipsisStart sets direction: rtl', () => {
     const scss = readFileSync(resolve(__dirname, 'EntityChip.module.scss'), 'utf8');
     expect(scss).toMatch(/\.ellipsisStart\s*\{[^}]*direction:\s*rtl;/);
+  });
+
+  it('EntityChip.module.scss clips only the inline axis — overflow: hidden clips descenders at line-height 1 (#678)', () => {
+    const scss = readFileSync(resolve(__dirname, 'EntityChip.module.scss'), 'utf8');
+    // `.chip.segmented` is the rounded clip for the palette segments and keeps
+    // `overflow: hidden`; its descenders sit inside the core's padding.
+    const labels = scss.replace(/\.chip\.segmented\s*\{[^}]*\}/, '');
+    expect(labels).not.toMatch(/overflow:\s*hidden/);
+    expect(labels).toContain('overflow-y: visible');
   });
 });

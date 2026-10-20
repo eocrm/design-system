@@ -115,7 +115,11 @@
   > .label {
     flex-shrink: 1;
     min-width: 0;
-    overflow: hidden;
+
+    // Clip the inline axis only: the block axis would also be clipped by
+    // the hidden keyword, cutting descenders at line-height 1 (#678).
+    overflow-x: clip;
+    overflow-y: visible;
     text-overflow: ellipsis;
   }
 }
@@ -178,7 +182,8 @@
   > .label {
     flex-shrink: 1;
     min-width: 0;
-    overflow: hidden;
+    overflow-x: clip;
+    overflow-y: visible;
     text-overflow: ellipsis;
   }
 }
@@ -251,7 +256,8 @@
 // `labelMaxWidth` (#582): the label alone is capped (max-width set inline in
 // `ch`) and ellipsizes on one line — also on a chip that otherwise wraps.
 .capped {
-  overflow: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
