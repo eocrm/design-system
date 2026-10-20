@@ -55,11 +55,3 @@
   border-color: var(--input-border-color-disabled);
   color: var(--input-fg-disabled);
 }
-
-// Dropdown rows: keep "CODE — Name" on a single line.
-.option {
-  display: block;
-  overflow: hidden;
-  white-space: nowrap;
-  text-overflow: ellipsis;
-}

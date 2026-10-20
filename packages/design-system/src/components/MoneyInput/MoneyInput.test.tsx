@@ -193,4 +193,150 @@ describe('MoneyInput', () => {
     expect(ref.current).toBe(screen.getByRole('group'));
     expect(ref.current).toHaveClass('extra');
   });
+
+  describe('caret-preserving editing', () => {
+    const at = (pos: number) => ({ initialSelectionStart: pos, initialSelectionEnd: pos });
+
+    it('mid-string insert keeps caret after the inserted digit', async () => {
+      render(<Harness initial={{ amount: '1234', currency: 'JPY' }} />);
+      await userEvent.type(amountBox(), '5', at(1));
+      expect(amountBox().value).toBe('15,234');
+      expect(amountBox().selectionStart).toBe(2);
+    });
+
+    it('backspace over a group separator deletes the digit before it', async () => {
+      render(<Harness initial={{ amount: '1234', currency: 'JPY' }} />);
+      await userEvent.type(amountBox(), '{Backspace}', at(2));
+      expect(amountBox().value).toBe('234');
+      expect(amountBox().selectionStart).toBe(0);
+    });
+
+    it('Delete before a separator deletes the digit after it', async () => {
+      render(<Harness initial={{ amount: '1234', currency: 'JPY' }} />);
+      await userEvent.type(amountBox(), '{Delete}', at(1));
+      expect(amountBox().value).toBe('134');
+      expect(amountBox().selectionStart).toBe(1);
+    });
+
+    it('rejects a second decimal', async () => {
+      const onChange = vi.fn();
+      render(<Harness onChange={onChange} />);
+      await userEvent.type(amountBox(), '12.5');
+      onChange.mockClear();
+      await userEvent.type(amountBox(), '.', at(1));
+      expect(amountBox().value).toBe('12.5');
+      expect(amountBox().selectionStart).toBe(1);
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('rejects digits past precision', async () => {
+      const onChange = vi.fn();
+      render(<Harness onChange={onChange} initial={{ amount: null, currency: 'EUR' }} />);
+      await userEvent.type(amountBox(), '12.34');
+      onChange.mockClear();
+      await userEvent.type(amountBox(), '5', at(3));
+      expect(amountBox().value).toBe('12.34');
+      expect(amountBox().selectionStart).toBe(3);
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('rejects a decimal for a zero-precision currency', async () => {
+      render(<Harness initial={{ amount: null, currency: 'JPY' }} />);
+      await userEvent.type(amountBox(), '12.');
+      expect(amountBox().value).toBe('12');
+    });
+
+    it('rejects "-" when not allowed', async () => {
+      const onChange = vi.fn();
+      render(<Harness onChange={onChange} />);
+      await userEvent.type(amountBox(), '-');
+      expect(amountBox().value).toBe('');
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('rejects "-" mid-number and a second "-" when allowed', async () => {
+      render(<Harness allowNegative initial={{ amount: '12', currency: 'JPY' }} />);
+      await userEvent.type(amountBox(), '-', at(1));
+      expect(amountBox().value).toBe('12');
+      expect(amountBox().selectionStart).toBe(1);
+      await userEvent.type(amountBox(), '-', at(0));
+      expect(amountBox().value).toBe('-12');
+      await userEvent.type(amountBox(), '-', at(0));
+      expect(amountBox().value).toBe('-12');
+    });
+
+    it('allowNegative: "-" alone displays "-" with a null amount; then "5" → "-5"', async () => {
+      const onChange = vi.fn();
+      render(
+        <Harness allowNegative onChange={onChange} initial={{ amount: '7', currency: 'JPY' }} />,
+      );
+      await userEvent.clear(amountBox());
+      await userEvent.type(amountBox(), '-');
+      expect(amountBox().value).toBe('-');
+      expect(onChange).toHaveBeenLastCalledWith({ amount: null, currency: 'JPY' });
+      await userEvent.type(amountBox(), '5');
+      expect(amountBox().value).toBe('-5');
+      expect(onChange).toHaveBeenLastCalledWith({ amount: '-5', currency: 'JPY' });
+    });
+
+    it('de-DE numpad dot becomes the decimal', async () => {
+      const onChange = vi.fn();
+      render(
+        <LocaleProvider locale="de-DE">
+          <Harness onChange={onChange} initial={{ amount: null, currency: 'EUR' }} />
+        </LocaleProvider>,
+      );
+      await userEvent.type(amountBox(), '12.5');
+      expect(amountBox().value).toBe('12,5');
+      expect(amountBox().selectionStart).toBe(4);
+      expect(onChange).toHaveBeenLastCalledWith({ amount: '12.5', currency: 'EUR' });
+    });
+
+    it('de-DE dot is still the decimal for a 3-digit currency (KWD)', async () => {
+      const onChange = vi.fn();
+      render(
+        <LocaleProvider locale="de-DE">
+          <Harness
+            onChange={onChange}
+            currencies={['KWD', 'EUR']}
+            initial={{ amount: null, currency: 'KWD' }}
+          />
+        </LocaleProvider>,
+      );
+      await userEvent.type(amountBox(), '1.234');
+      expect(amountBox().value).toBe('1,234');
+      expect(onChange).toHaveBeenLastCalledWith({ amount: '1.234', currency: 'KWD' });
+    });
+
+    it('paste parses leniently and truncates', async () => {
+      const onChange = vi.fn();
+      render(<Harness onChange={onChange} />);
+      await userEvent.click(amountBox());
+      await userEvent.paste('$1,234.5678');
+      expect(amountBox().value).toBe('1,234.56');
+      expect(onChange).toHaveBeenLastCalledWith({ amount: '1234.56', currency: 'USD' });
+    });
+
+    it('trailing decimal is kept while focused', async () => {
+      const onChange = vi.fn();
+      render(<Harness onChange={onChange} />);
+      await userEvent.type(amountBox(), '12.');
+      expect(amountBox().value).toBe('12.');
+      expect(onChange).toHaveBeenLastCalledWith({ amount: '12', currency: 'USD' });
+    });
+
+    it('displays an over-precise external amount rounded, without emitting', () => {
+      const onChange = vi.fn();
+      render(
+        <MoneyInput
+          aria-label="Price"
+          value={{ amount: '1.005', currency: 'USD' }}
+          currencies={['EUR', 'USD']}
+          onChange={onChange}
+        />,
+      );
+      expect(amountBox().value).toBe('1.01');
+      expect(onChange).not.toHaveBeenCalled();
+    });
+  });
 });

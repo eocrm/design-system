@@ -7,6 +7,7 @@ import {
   useState,
   type ChangeEvent,
   type HTMLAttributes,
+  type KeyboardEvent,
 } from 'react';
 import clsx from 'clsx';
 import { CurrencySelect } from '../CurrencySelect';
@@ -20,6 +21,7 @@ import {
   draftToCanonical,
   formatDraft,
   isValidCurrency,
+  localeSeparators,
   parseAmount,
   roundAmount,
   type AmountDraft,
@@ -120,17 +122,21 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
   const precision = isValidCurrency(currency) ? currencyPrecision(currency) : FALLBACK_PRECISION;
 
   // Ruling B: a value currency outside `currencies` still shows in the picker (never emitted).
-  const offered = useMemo(() => {
-    if (!isValidCurrency(currency) || currencies.includes(currency)) return currencies;
-    if (process.env.NODE_ENV !== 'production') {
+  const outside = isValidCurrency(currency) && !currencies.includes(currency);
+  const offered = useMemo(
+    () => (outside ? [...currencies, currency] : currencies),
+    [outside, currencies, currency],
+  );
+  useEffect(() => {
+    if (outside && process.env.NODE_ENV !== 'production') {
       console.warn(`<MoneyInput>: value.currency "${currency}" is not in \`currencies\`.`);
     }
-    return [...currencies, currency];
-  }, [currencies, currency]);
+  }, [outside, currency]);
   const single = offered.length === 1 && isValidCurrency(offered[0]);
 
   const display = (amount: string | null, prec: number, l: string) => {
-    const d = canonicalToDraft(amount);
+    // Over-precise external amounts display rounded (never emitted).
+    const d = canonicalToDraft(amount ? roundAmount(amount, prec) : amount);
     return d ? formatDraft(d, { locale: l, precision: prec, pad: true }) : '';
   };
 
@@ -153,13 +159,63 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
 
   const parse = (s: string) => parseAmount(s, { locale: loc, precision, allowNegative });
 
-  const onAmountChange = (e: ChangeEvent<HTMLInputElement>) => {
+  const { group, decimal } = localeSeparators(loc);
+  const isSignificant = (c: string) => (c >= '0' && c <= '9') || c === decimal || c === '-';
+
+  /**
+   * Shared edit path. Writes the DOM value + caret directly so React's controlled-value
+   * reconciliation finds nothing to change and never throws the caret to the end.
+   */
+  const applyEdit = (input: HTMLInputElement, raw: string, caret: number) => {
+    const prev = text;
+    const typed = raw.length === prev.length + 1;
+    const decimals = raw.split(decimal).length - 1;
+    const dash = raw.indexOf('-');
+    const fracDigits = decimals ? raw.slice(raw.indexOf(decimal) + 1).replace(/\D/g, '').length : 0;
+    const reject =
+      typed &&
+      (decimals > 1 ||
+        (decimals === 1 && fracDigits > precision) ||
+        (dash !== -1 && (!allowNegative || dash !== 0 || raw.lastIndexOf('-') !== 0)));
+    if (reject) {
+      input.value = prev;
+      input.setSelectionRange(caret - 1, caret - 1);
+      return;
+    }
     dirty.current = true;
-    const draft = parse(e.target.value);
-    // Caret goes to the end: React moves it when the controlled value differs.
-    setText(draft ? formatDraft(draft, { locale: loc, precision, pad: false }) : '');
+    const draft = parse(raw);
+    const next = draft ? formatDraft(draft, { locale: loc, precision, pad: false }) : '';
+    // Caret lands after the same count of significant chars (digits, decimal, '-') it followed in `raw`.
+    let n = [...raw.slice(0, caret)].filter(isSignificant).length;
+    let pos = 0;
+    while (n > 0 && pos < next.length) if (isSignificant(next[pos++])) n--;
+    input.value = next;
+    input.setSelectionRange(pos, pos);
+    setText(next);
     const amount = draft ? draftToCanonical(draft) : null;
     if (amount !== synced.current.amount) emit(amount, currency);
+  };
+
+  const onAmountChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const input = e.target;
+    applyEdit(input, input.value, input.selectionStart ?? input.value.length);
+  };
+
+  const onAmountKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    const input = e.currentTarget;
+    const { selectionStart: start, selectionEnd: end, value: v } = input;
+    if (readOnly || start === null || end === null) return;
+    if (start === end) {
+      // Step over a group separator so the deletion hits the digit beyond it.
+      if (e.key === 'Backspace' && v[start - 1] === group)
+        input.setSelectionRange(start - 1, start - 1);
+      if (e.key === 'Delete' && v[start] === group) input.setSelectionRange(start + 1, start + 1);
+    }
+    // Numpad '.' in a comma-decimal locale types the decimal (any precision).
+    if (e.key === '.' && decimal !== '.' && !v.includes(decimal)) {
+      e.preventDefault();
+      applyEdit(input, v.slice(0, start) + decimal + v.slice(end), start + 1);
+    }
   };
 
   const onBlur = () => {
@@ -249,6 +305,7 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
         autoComplete="off"
         value={text}
         onChange={onAmountChange}
+        onKeyDown={onAmountKeyDown}
         onFocus={() => {
           dirty.current = false;
         }}
