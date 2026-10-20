@@ -27,6 +27,37 @@
   min-width: 0;
 }
 
+// Opt-in, via `stretchWrapped` (#668). flex-grow distributes free space PER
+// FLEX LINE. On a line shared by several children, the `::before` spacer
+// (grow 999, basis 0) soaks up the slack, so the content-sized children
+// get a negligible share (grow 1 next to 999: at most 1px per 1000px of
+// slack); the spacer sits between the first child (`order: -1`, ahead of it)
+// and the rest, pushing them to the end. A non-first child alone on a wrapped
+// line has no spacer on that line, so its grow 1 takes the whole line.
+// Line breaking still counts the gap before the spacer, so a negative start
+// margin of one gap cancels it: the spacer adds no width, the switch happens
+// exactly when the content stops fitting, and a full-width first child keeps
+// the spacer on its own line instead of pushing it onto the second.
+// Child rules sit in `:where()` (zero specificity) so a child's own `flex`
+// or `max-width` class wins for that child.
+.stretchWrapped {
+  &::before {
+    content: '';
+    flex: 999 1 0;
+    /* stylelint-disable-next-line property-disallowed-list -- cancels the gap before the invisible spacer so it adds no width to line breaking; not layout on the component boundary. */
+    margin-inline-start: calc(-1 * var(--cluster-gap-current, 0px));
+  }
+}
+
+:where(.stretchWrapped > :first-child) {
+  order: -1;
+  max-width: 100%;
+}
+
+:where(.stretchWrapped > :not(:first-child)) {
+  flex: 1 1 auto;
+}
+
 // Opt-in, via `maxWidthFull` (#571): an inline (`as="span"`) cluster sizes to
 // its content, and with a nowrap truncating child that content is the full
 // title — so it overflows the line instead of ellipsizing at its edge.
@@ -46,27 +77,39 @@
 }
 
 .gapXs {
-  gap: var(--cluster-gap-xs);
+  --cluster-gap-current: var(--cluster-gap-xs);
+
+  gap: var(--cluster-gap-current);
 }
 
 .gapSm {
-  gap: var(--cluster-gap-sm);
+  --cluster-gap-current: var(--cluster-gap-sm);
+
+  gap: var(--cluster-gap-current);
 }
 
 .gapMd {
-  gap: var(--cluster-gap-md);
+  --cluster-gap-current: var(--cluster-gap-md);
+
+  gap: var(--cluster-gap-current);
 }
 
 .gapLg {
-  gap: var(--cluster-gap-lg);
+  --cluster-gap-current: var(--cluster-gap-lg);
+
+  gap: var(--cluster-gap-current);
 }
 
 .gapXl {
-  gap: var(--cluster-gap-xl);
+  --cluster-gap-current: var(--cluster-gap-xl);
+
+  gap: var(--cluster-gap-current);
 }
 
 .gap2xl {
-  gap: var(--cluster-gap-2xl);
+  --cluster-gap-current: var(--cluster-gap-2xl);
+
+  gap: var(--cluster-gap-current);
 }
 
 .justifyStart {

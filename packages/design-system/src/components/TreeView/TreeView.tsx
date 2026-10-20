@@ -64,6 +64,13 @@ export interface TreeViewProps extends Omit<
   onRetry?: (id: string) => void;
   /** "N more not shown" row at the end of a level (`parentId` `null` = root level), or `null` for none. Pass `onLoadMore` to make it actionable. */
   overflowOf?: (parentId: string | null) => TreeViewOverflow | null;
+  /**
+   * Ids to paint as a path, e.g. the selected node's ancestor ids plus its own id (TreeView cannot derive
+   * ancestors: `childrenOf` is only called for expanded nodes). Visual only — no ARIA, no effect on
+   * selection or focus. Ids not rendered are ignored. List view: accent edge on the rows; chart view: accent
+   * boxes and the connector lines between highlighted parents and children.
+   */
+  highlightedIds?: ReadonlySet<string>;
 }
 
 const has = (flat: TreeItem[], key: string | null) =>
@@ -74,6 +81,26 @@ const parentKey = (item: TreeItem) => (item.parentId === null ? null : nodeKey(i
 /** Visible node children of a level (`null` = roots), in order. */
 const levelNodes = (flat: TreeItem[], parentId: string | null) =>
   flat.filter((i) => i.kind === 'node' && i.parentId === parentId);
+
+/** Chart: write each highlighted path's accent segment (parent centre → farthest highlighted child centre). */
+function measurePaths(root: HTMLElement) {
+  root.querySelectorAll<HTMLElement>('[data-highlighted-path]').forEach((group) => {
+    const left = group.getBoundingClientRect().left;
+    const centre = (row: Element | null | undefined) => {
+      const r = row?.getBoundingClientRect();
+      return r ? r.left + r.width / 2 - left : 0;
+    };
+    const xs = [
+      centre(group.parentElement?.firstElementChild),
+      ...Array.from(group.children, (child) =>
+        child.hasAttribute('data-highlighted') ? centre(child.firstElementChild) : null,
+      ).filter((x) => x !== null),
+    ];
+    const start = Math.min(...xs);
+    group.style.setProperty('--tree-view-path-start', `${start}px`);
+    group.style.setProperty('--tree-view-path-width', `${Math.max(...xs) - start}px`);
+  });
+}
 
 /**
  * Lazily loaded hierarchical tree (WAI-ARIA tree) in a file-explorer list or a top-down org-chart view.
@@ -90,6 +117,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
     onSelect,
     onRetry,
     overflowOf,
+    highlightedIds,
     className,
     onFocus,
     onBlur,
@@ -153,6 +181,30 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
     root.scrollLeft += b.left + b.width / 2 - (c.left + c.width / 2);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chart, hasItems]);
+  // Chart: the horizontal accent segment of a highlighted path runs from the parent box centre to the
+  // farthest highlighted child centre; CSS can't know those offsets, so measure them (physical px, RTL-safe).
+  // One observer per chart view; re-measure on render only when the rendered items or highlights change
+  // (`flat` and a consumer's inline Set are new every render, e.g. on each arrow-key focus move).
+  useLayoutEffect(() => {
+    const root = rootEl.current;
+    if (!chart || !root || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(() => measurePaths(root));
+    observer.observe(root);
+    // The chart's top level is max-content wide: it resizes when boxes do without a re-render (late fonts).
+    if (root.firstElementChild) observer.observe(root.firstElementChild);
+    // Limit: only the root and top level are observed. A deeper box resizing without changing the top
+    // level's width or pathKey leaves its segment stale until the next path change.
+    return () => observer.disconnect();
+  }, [chart]);
+  const pathKey = chart
+    ? flat
+        .map((i) => (i.kind === 'node' && highlightedIds?.has(i.node.id) ? `*${i.key}` : i.key))
+        .join('\n')
+    : '';
+  useLayoutEffect(() => {
+    if (chart && rootEl.current) measurePaths(rootEl.current);
+  }, [chart, pathKey]);
+
   const focusKey = useCallback(
     (key: string) => {
       setFocusedKey(key);
@@ -338,6 +390,11 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
   const renderItem = (item: TreeItem): ReactNode => {
     if (item.kind === 'node') {
       const { node } = item;
+      const highlighted = !!highlightedIds?.has(node.id);
+      const path =
+        chart &&
+        highlighted &&
+        item.children.some((c) => c.kind === 'node' && !!highlightedIds?.has(c.node.id));
       return (
         <div
           key={item.key}
@@ -349,6 +406,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
           aria-expanded={node.hasChildren ? item.expanded : undefined}
           aria-selected={onSelect ? selectedId === node.id : undefined}
           data-kind="node"
+          data-highlighted={highlighted ? '' : undefined}
         >
           <div className={styles.row} data-row="" {...rowClick(item)}>
             <span
@@ -372,7 +430,11 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
             <span className={styles.content}>{node.content ?? node.label}</span>
           </div>
           {item.expanded && item.children.length > 0 && (
-            <div role="group" className={clsx(styles.group, chart && styles.level)}>
+            <div
+              role="group"
+              className={clsx(styles.group, chart && styles.level)}
+              data-highlighted-path={path ? '' : undefined}
+            >
               {item.children.map(renderItem)}
             </div>
           )}

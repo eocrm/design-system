@@ -949,6 +949,13 @@
           "description": "Caps the cluster at its container's width (`max-width: 100%`). Meant for\n`as=\"span\"` inside running text: an inline cluster otherwise sizes to its\ncontent, so a `<Text as=\"span\" truncate>` child with a long title makes\nthe cluster overflow the paragraph instead of ellipsizing at the line\nedge. Combine with `wrap={false}` + a truncating child. The chip is one\ninline box: if the text before it leaves too little room on the line, the\nwhole chip wraps to the next line, then ellipsizes at the full paragraph\nwidth. Phrasing-safe (still a span) — unlike `<Constrain maxWidth>`, which\nrenders a `<div>` that is invalid inside `<p>` (#571).\n\nFor an entity link row (icon, KEY, title, status, adornments) prefer\n`<EntityChip truncate trailing={…}>`, which does exactly this."
         },
         {
+          "name": "stretchWrapped",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "Content-driven switch between one row and stacked. While the children fit\non one line they stay content-sized and the free space collects between\nthe first child and the rest (the rest sit at the end). When they no\nlonger fit, every child that wraps onto its own line stretches to fill\nthat line.\n\nCanonical case: a status pill plus a `<Grid columns={2}>` of two buttons —\npill left and buttons right while there is room, buttons dropping under the\npill at full width (equal columns) when there is not. No breakpoint to guess,\nunlike `Grid collapseBelow`.\n\nHow: an invisible `::before` spacer soaks up a shared line's slack, so the\nchildren there get a negligible share (at most 1px per 1000px of slack); a\nnon-first child alone on a wrapped line takes the whole line. Children\nwrapped together share it. The spacer cancels its own gap, so it adds no\nwidth: the switch happens exactly when the content stops fitting, also\nwith a single child or `as=\"span\"`.\n\nLimits: `justify` is inert while this is on (the spacer owns the slack);\n`wrap={false}` makes it moot (nothing wraps); a consumer `order` on\nchildren breaks it — don't. A child's own `flex` (via its `className`)\noverrides the stretch for that child. \"First child\" means the first\nELEMENT: a leading bare text node is not it — wrap text in an element\n(e.g. `<Text>`)."
+        },
+        {
           "name": "wrap",
           "type": "boolean",
           "required": false,
@@ -6818,6 +6825,13 @@
           "required": false,
           "default": "",
           "description": "\"N more not shown\" row at the end of a level (`parentId` `null` = root level), or `null` for none. Pass `onLoadMore` to make it actionable."
+        },
+        {
+          "name": "highlightedIds",
+          "type": "ReadonlySet<string>",
+          "required": false,
+          "default": "",
+          "description": "Ids to paint as a path, e.g. the selected node's ancestor ids plus its own id (TreeView cannot derive\nancestors: `childrenOf` is only called for expanded nodes). Visual only — no ARIA, no effect on\nselection or focus. Ids not rendered are ignored. List view: accent edge on the rows; chart view: accent\nboxes and the connector lines between highlighted parents and children."
         }
       ]
     },

@@ -140,6 +140,17 @@ const listChildrenOf = (id: string): TreeViewChildren => CHILDREN[id]?.map((u) =
 const chartChildrenOf = (id: string): TreeViewChildren =>
   CHILDREN[id]?.map((u) => toNode(u, 'chart'));
 
+// Each unit's parent id, to derive the selected unit's ancestor path for highlightedIds.
+const PARENT: Record<string, string> = Object.fromEntries(
+  Object.entries(CHILDREN).flatMap(([parent, units]) => units.map((u) => [u.id, parent])),
+);
+/** The id and all its ancestor ids. */
+function pathTo(id: string | null): ReadonlySet<string> {
+  const ids = new Set<string>();
+  for (let x = id ?? undefined; x; x = PARENT[x]) ids.add(x);
+  return ids;
+}
+
 function toggle(set: ReadonlySet<string>, id: string, open: boolean) {
   const next = new Set(set);
   if (open) next.add(id);
@@ -233,6 +244,12 @@ export function TreeViewDemo() {
   const lazy = useLazyOrg(failNext, clearFail);
   const [lazyExpanded, setLazyExpanded] = useState<ReadonlySet<string>>(() => new Set());
   const [lazySelected, setLazySelected] = useState<string | null>(null);
+
+  const [pathView, setPathView] = useState<TreeViewView>('chart');
+  const [pathExpanded, setPathExpanded] = useState<ReadonlySet<string>>(
+    () => new Set(['company', 'sales']),
+  );
+  const [pathSelected, setPathSelected] = useState<string | null>('sales/outbound');
 
   const [refExpanded, setRefExpanded] = useState<ReadonlySet<string>>(
     () => new Set(['company', 'r-d']),
@@ -372,6 +389,57 @@ export function TreeViewDemo() {
               onSelect={setLazySelected}
               onRetry={lazy.retry}
               overflowOf={lazy.overflowOf}
+            />
+          </Card>
+        </Stack>
+      </Example>
+
+      <Example
+        title="Highlight path to selected"
+        fullWidth
+        description="highlightedIds gets the selected unit's ancestor ids plus its own id: the list marks those rows with an accent edge, the chart paints the boxes and the connector lines between them. Visual only: selection and ARIA are unchanged. Select another unit to move the path."
+        code={`// parentOf: your data's child -> parent map (the tree can't derive ancestors of unloaded levels)
+function pathTo(id: string | null) {
+  const ids = new Set<string>();
+  for (let x = id ?? undefined; x; x = parentOf[x]) ids.add(x);
+  return ids;
+}
+
+<TreeView
+  view="chart"
+  aria-label="Organization chart"
+  roots={[companyNode]}
+  childrenOf={childrenOf}
+  expandedIds={expanded}
+  onExpandedChange={(id, open) => setExpanded((s) => toggle(s, id, open))}
+  selectedId={selected}
+  onSelect={setSelected}
+  highlightedIds={pathTo(selected)}
+/>`}
+      >
+        <Stack gap="md">
+          <ButtonGroup
+            aria-label="Highlight demo view"
+            value={pathView}
+            onValueChange={(v) => setPathView(v as TreeViewView)}
+          >
+            {views.map((v) => (
+              <ButtonGroup.Item key={v.value} value={v.value}>
+                {v.label}
+              </ButtonGroup.Item>
+            ))}
+          </ButtonGroup>
+          <Card>
+            <TreeView
+              view={pathView}
+              aria-label="Organization structure (highlighted path)"
+              roots={pathView === 'chart' ? CHART_ROOTS : LIST_ROOTS}
+              childrenOf={pathView === 'chart' ? chartChildrenOf : listChildrenOf}
+              expandedIds={pathExpanded}
+              onExpandedChange={(id, open) => setPathExpanded((s) => toggle(s, id, open))}
+              selectedId={pathSelected}
+              onSelect={setPathSelected}
+              highlightedIds={pathTo(pathSelected)}
             />
           </Card>
         </Stack>

@@ -107,6 +107,35 @@ export interface ClusterProps extends HTMLAttributes<HTMLElement> {
    */
   maxWidthFull?: boolean;
   /**
+   * Content-driven switch between one row and stacked. While the children fit
+   * on one line they stay content-sized and the free space collects between
+   * the first child and the rest (the rest sit at the end). When they no
+   * longer fit, every child that wraps onto its own line stretches to fill
+   * that line.
+   *
+   * Canonical case: a status pill plus a `<Grid columns={2}>` of two buttons —
+   * pill left and buttons right while there is room, buttons dropping under the
+   * pill at full width (equal columns) when there is not. No breakpoint to guess,
+   * unlike `Grid collapseBelow`.
+   *
+   * How: an invisible `::before` spacer soaks up a shared line's slack, so the
+   * children there get a negligible share (at most 1px per 1000px of slack); a
+   * non-first child alone on a wrapped line takes the whole line. Children
+   * wrapped together share it. The spacer cancels its own gap, so it adds no
+   * width: the switch happens exactly when the content stops fitting, also
+   * with a single child or `as="span"`.
+   *
+   * Limits: `justify` is inert while this is on (the spacer owns the slack);
+   * `wrap={false}` makes it moot (nothing wraps); a consumer `order` on
+   * children breaks it — don't. A child's own `flex` (via its `className`)
+   * overrides the stretch for that child. "First child" means the first
+   * ELEMENT: a leading bare text node is not it — wrap text in an element
+   * (e.g. `<Text>`).
+   *
+   * @default false
+   */
+  stretchWrapped?: boolean;
+  /**
    * Whether children wrap to additional lines when the container is narrow.
    * - `true` (default) — natural for toolbars and tag lists.
    * - `false` — use sparingly, when overflow is preferable to wrapping
@@ -150,6 +179,7 @@ export const Cluster = forwardRef<HTMLElement, ClusterProps>(function Cluster(
     align = 'center',
     wrap = true,
     minWidth0 = false,
+    stretchWrapped = false,
     maxWidthFull = false,
     className,
     ...props
@@ -175,6 +205,7 @@ export const Cluster = forwardRef<HTMLElement, ClusterProps>(function Cluster(
         alignClass[align],
         wrap && styles.wrap,
         minWidth0 && styles.minWidth0,
+        stretchWrapped && styles.stretchWrapped,
         maxWidthFull && styles.maxWidthFull,
         className,
       )}

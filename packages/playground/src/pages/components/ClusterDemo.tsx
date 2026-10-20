@@ -3,6 +3,7 @@ import { Cluster } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { Button } from '@eocrm/design-system';
 import { Badge } from '@eocrm/design-system';
+import { Grid } from '@eocrm/design-system';
 import { Dot } from '@eocrm/design-system';
 import { Text } from '@eocrm/design-system';
 import { ButtonGroup } from '@eocrm/design-system';
@@ -347,6 +348,47 @@ export function Demo() {
               </Text>
             </Cluster>
           </ChipButton>
+        </Stack>
+      </Example>
+
+      <Example
+        title="Switch to stacked when it no longer fits"
+        description="stretchWrapped: while the children fit they stay content-sized, the pill at the start and the buttons at the end. When they don't, the buttons wrap under the pill and fill the line, two equal columns. The content decides, so there is no breakpoint to guess. Compare the 400px and 240px containers; the 300px one starts with a title as wide as the container."
+        code={`import { Badge, Button, Cluster, Grid } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Cluster stretchWrapped gap="sm">
+      <Badge tone="info">In review</Badge>
+      <Grid columns={2} gap="sm">
+        <Button variant="secondary">Reject</Button>
+        <Button>Approve</Button>
+      </Grid>
+    </Cluster>
+  );
+}`}
+      >
+        <Stack gap="md">
+          {[400, 240].map((w) => (
+            <div key={w} data-testid={`stretch-wrapped-${w}`} style={{ width: w }}>
+              <Cluster stretchWrapped gap="sm">
+                <Badge tone="info">In review</Badge>
+                <Grid columns={2} gap="sm">
+                  <Button variant="secondary">Reject</Button>
+                  <Button>Approve</Button>
+                </Grid>
+              </Cluster>
+            </div>
+          ))}
+          <div data-testid="stretch-wrapped-long-300" style={{ width: 300 }}>
+            <Cluster stretchWrapped gap="sm">
+              <Text weight="semibold">Quarterly renewal for Northwind Traders, EMEA region</Text>
+              <Grid columns={2} gap="sm">
+                <Button variant="secondary">Reject</Button>
+                <Button>Approve</Button>
+              </Grid>
+            </Cluster>
+          </div>
         </Stack>
       </Example>
 

@@ -37,6 +37,19 @@
   @include focus-ring(var(--tree-view-ring));
 }
 
+// highlightedIds: accent inline-start edge (inset shadow: no layout shift). Square start corners keep it a
+// straight bar instead of a crescent following the row radius.
+.root[data-view='list'] .item[data-highlighted] > .row {
+  border-start-start-radius: 0;
+  border-end-start-radius: 0;
+  box-shadow: inset var(--tree-view-highlight-width) 0 0 var(--tree-view-highlight-color);
+}
+
+// Not :dir(rtl) (minifiers lower it to :lang(…)); see StagePath.module.scss.
+:is([dir='rtl'] .root, .root[dir='rtl'])[data-view='list'] .item[data-highlighted] > .row {
+  box-shadow: inset calc(-1 * var(--tree-view-highlight-width)) 0 0 var(--tree-view-highlight-color);
+}
+
 .toggle {
   display: inline-flex;
   flex: none;
@@ -166,9 +179,46 @@
   background: var(--tree-view-row-hover-bg);
 }
 
+// highlightedIds box border. Same specificity as the selected rule below and deliberately ahead of it, so a
+// selected node on the path keeps --tree-view-box-selected-border.
+.root[data-view='chart'] .item[data-highlighted] > .row {
+  border-color: var(--tree-view-highlight-color);
+}
+
 .root[data-view='chart'] .item[aria-selected='true'] > .row {
   border-color: var(--tree-view-box-selected-border);
   background: var(--tree-view-row-selected-bg);
+}
+
+// highlightedIds lines. Accent lines start on the same edge as the neutral line they replace and are wider,
+// so they fully cover it (no centring: a half-pixel offset would blur).
+.root[data-view='chart'] [data-highlighted-path] {
+  &::before {
+    border-inline-start-width: var(--tree-view-highlight-width);
+    border-inline-start-color: var(--tree-view-highlight-color);
+  }
+
+  > .item[data-highlighted]::after {
+    border-inline-start-width: var(--tree-view-highlight-width);
+    border-inline-start-color: var(--tree-view-highlight-color);
+  }
+
+  // measured segment of the sibling bar: physical left/width from TreeView.tsx; the extra highlight width
+  // covers the vertical line at the far end and closes the corner
+  &::after {
+    content: '';
+    position: absolute;
+    inset-block-start: calc(var(--tree-view-level-gap) / 2);
+    left: var(--tree-view-path-start);
+    width: calc(var(--tree-view-path-width) + var(--tree-view-highlight-width));
+    border-block-start: var(--tree-view-highlight-width) solid var(--tree-view-highlight-color);
+    z-index: 1;
+  }
+}
+
+// RTL: vertical lines sit just left of the centre (border-inline-start is the right border)
+:is([dir='rtl'] .root, .root[dir='rtl'])[data-view='chart'] [data-highlighted-path]::after {
+  translate: calc(-1 * var(--tree-view-highlight-width)) 0;
 }
 
 .root[data-view='chart'] .item:focus-visible > .row {
@@ -195,4 +245,24 @@
   border-radius: 50%;
   background: var(--tree-view-toggle-bg);
   z-index: 1;
+}
+
+// Forced colors drops box-shadow (list edge) and forces author colours (chart path); system colours
+// survive. Every highlight rule reads --tree-view-highlight-color, so remap it; the list edge becomes a real
+// border whose width comes out of the start padding (no shift).
+@media (forced-colors: active) {
+  .root {
+    --tree-view-highlight-color: Highlight;
+  }
+
+  .root[data-view='list'] .item[data-highlighted] > .row {
+    --tree-view-highlight-inset: calc(
+      var(--tree-view-row-padding-inline) - var(--tree-view-highlight-width)
+    );
+
+    border-inline-start: var(--tree-view-highlight-width) solid var(--tree-view-highlight-color);
+    padding-inline-start: calc(
+      var(--tree-view-level) * var(--tree-view-indent) + var(--tree-view-highlight-inset)
+    );
+  }
 }
