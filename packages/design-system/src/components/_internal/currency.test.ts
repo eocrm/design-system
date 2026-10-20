@@ -1,0 +1,234 @@
+import {
+  canonicalToDraft,
+  currencyDisplayText,
+  currencyName,
+  currencyPrecision,
+  currencySymbol,
+  draftToCanonical,
+  formatDraft,
+  isValidCurrency,
+  localeSeparators,
+  parseAmount,
+  parseLocalAmount,
+  roundAmount,
+} from './currency';
+
+const en = { locale: 'en-US', precision: 2, allowNegative: false };
+const de = { locale: 'de-DE', precision: 2, allowNegative: false };
+const parse = (t: string, o = en) => {
+  const d = parseAmount(t, o);
+  if (!d || d === 'invalid') throw new Error(`unparsed: ${t}`);
+  return draftToCanonical(d);
+};
+
+describe('currency Intl helpers', () => {
+  it('precision', () => {
+    expect(currencyPrecision('USD')).toBe(2);
+    expect(currencyPrecision('JPY')).toBe(0);
+    expect(currencyPrecision('KWD')).toBe(3);
+  });
+  it('symbol / name / displayText', () => {
+    expect(currencySymbol('CAD', 'en')).toBe('CA$');
+    expect(currencyName('EUR', 'en')).toBe('Euro');
+    expect(currencyDisplayText('EUR', 'code', 'en')).toBe('EUR');
+    expect(currencyDisplayText('EUR', 'symbol', 'en')).toBe('€');
+    expect(currencyDisplayText('EUR', 'both', 'en')).toBe('EUR €');
+  });
+  it('isValidCurrency never throws', () => {
+    expect(isValidCurrency('EUR')).toBe(true);
+    expect(isValidCurrency('XX')).toBe(false);
+  });
+});
+
+describe('localeSeparators', () => {
+  it('resolves group/decimal', () => {
+    expect(localeSeparators('en-US')).toEqual({ group: ',', decimal: '.' });
+    expect(localeSeparators('de-DE')).toEqual({ group: '.', decimal: ',' });
+    const fr = localeSeparators('fr-FR');
+    expect(fr.decimal).toBe(',');
+    expect(fr.group).toMatch(/\s/u);
+  });
+});
+
+describe('parseAmount / draftToCanonical', () => {
+  it('parses per locale', () => {
+    expect(parse('$1,234.56')).toBe('1234.56');
+    expect(parse('1 234,56 €', { ...de, locale: 'fr-FR' })).toBe('1234.56');
+    expect(parse('1.234,56', de)).toBe('1234.56');
+  });
+  it('both separators present: the last one is the decimal, whatever the locale', () => {
+    const ru = { ...de, locale: 'ru-RU' };
+    expect(parse('1,234.56', ru)).toBe('1234.56');
+    expect(parse('1,234.56', de)).toBe('1234.56');
+    expect(parse('1.234,56')).toBe('1234.56');
+    expect(parse('1.234,56', ru)).toBe('1234.56');
+  });
+  it('a separator repeated more than once is grouping', () => {
+    expect(parse('1.234.567')).toBe('1234567');
+    expect(parse('1,234,567', de)).toBe('1234567');
+    expect(parse('1.234.567,8')).toBe('1234567.8');
+  });
+  it('sign forms: U+2212, accounting parentheses, trailing minus', () => {
+    const neg = { ...en, allowNegative: true };
+    expect(parse('\u22125', neg)).toBe('-5');
+    expect(parse('($1,234.50)', neg)).toBe('-1234.50');
+    expect(parse('5-', neg)).toBe('-5');
+    expect(parse('(5)')).toBe('5');
+  });
+  it('rejects anything but one numeric core with currency affixes', () => {
+    const neg = { ...en, allowNegative: true };
+    for (const t of [
+      '5 (approx)',
+      '1,234.50 (EUR)',
+      'Total (USD) 99',
+      '1,234.50 (incl. VAT)',
+      '5 - 10',
+    ])
+      expect(parseAmount(t, neg)).toBe('invalid');
+    // One letter word per side is an affix (ruling round 5).
+    expect(parse('Total 1,234.50.')).toBe('1234.50');
+    expect(parse('1,234.50.')).toBe('1234.50');
+    expect(parse('USD 1,234.50')).toBe('1234.50');
+    expect(parse('-$5', neg)).toBe('-5');
+    expect(parse('$-5', neg)).toBe('-5');
+  });
+  it('affixes: any-case words with an optional period, symbols, leading +', () => {
+    const ru = { ...de, locale: 'ru-RU' };
+    expect(parse('1\u00a0234,56 руб.', ru)).toBe('1234.56');
+    expect(parse('1 234,56 руб', ru)).toBe('1234.56');
+    expect(parse('1 234,56 р.', ru)).toBe('1234.56');
+    expect(parse('1 234,56 ₽.', ru)).toBe('1234.56');
+    expect(parse('usd 12')).toBe('12');
+    expect(parse('+5')).toBe('5');
+    expect(parse('US$ 5')).toBe('5');
+  });
+  it('ambiguous grouping is invalid, never guessed', () => {
+    const ru = { ...de, locale: 'ru-RU' };
+    for (const t of [
+      '100\n200',
+      '100\t200',
+      '5 10',
+      '1 2 3',
+      '12,34',
+      '1,2',
+      '1..5',
+      '1,,5',
+      '12.34.56',
+      '1.234,5.6',
+    ])
+      expect(parseAmount(t, en), t).toBe('invalid');
+    expect(parseAmount('15.01.2024', ru)).toBe('invalid');
+    expect(parseAmount('1.234 567', en)).toBe('invalid');
+    expect(parse('100 200')).toBe('100200');
+    expect(parse('1,234')).toBe('1234');
+  });
+  it('magnitude words and glued letters are invalid', () => {
+    const ru = { ...de, locale: 'ru-RU' };
+    for (const t of ['$5K', '10K', '$1.2M', '$2 million', '3bn', '5 usd2'])
+      expect(parseAmount(t, en), t).toBe('invalid');
+    for (const t of ['5 тыс.', '3 тр', '1,5 млн', '2 млрд'])
+      expect(parseAmount(t, ru), t).toBe('invalid');
+  });
+  it('prefix label words, ISO / rouble suffix words', () => {
+    const ru = { ...de, locale: 'ru-RU' };
+    expect(parse('Total 1,234.50.')).toBe('1234.50');
+    expect(parse('Итого: 1 234,56 ₽', ru)).toBe('1234.56');
+    expect(parse('Price: $5')).toBe('5');
+    expect(parse('1 234,56 руб.', ru)).toBe('1234.56');
+    expect(parse('USD 5')).toBe('5');
+    expect(parse('5 usd')).toBe('5');
+    expect(parse('руб.10', ru)).toBe('10');
+    expect(parse('Rs.100')).toBe('100');
+  });
+  it('a lone decimal + exactly 3 digits is ambiguous below precision 3', () => {
+    const ru = { ...de, locale: 'ru-RU' };
+    expect(parseAmount('1,234', ru)).toBe('invalid');
+    expect(parseAmount('1.234', en)).toBe('invalid');
+    expect(parseAmount('1.234', { ...en, precision: 0 })).toBe('invalid');
+    expect(parse('1.234', { ...en, precision: 3 })).toBe('1.234');
+    // A lone separator that is neither the locale group nor decimal + 3 digits: ambiguous.
+    expect(parseAmount('1.234', ru)).toBe('invalid');
+    expect(parse('1.23', ru)).toBe('1.23');
+    expect(parse('1,234')).toBe('1234');
+    expect(parse('1.234', de)).toBe('1234');
+    expect(parse('1,2345', ru)).toBe('1.2345');
+    expect(parse('$1,234.5678')).toBe('1234.5678');
+  });
+  it('numpad-dot rule', () => {
+    expect(parse('12.50', de)).toBe('12.50');
+    expect(parse('1.234', { ...de, precision: 3 })).toBe('1234');
+    expect(parse('1.234', de)).toBe('1234');
+  });
+  it('truncates, empties, negatives', () => {
+    // Full fraction is returned; truncation is the caller's (whole-value paste) job.
+    expect(parse('1.23456')).toBe('1.23456');
+    expect(parseAmount('', en)).toBeNull();
+    expect(parseAmount('  € ', en)).toBeNull();
+    expect(parse('-5')).toBe('5');
+    expect(parse('-5', { ...en, allowNegative: true })).toBe('-5');
+    expect(draftToCanonical({ negative: true, int: '', frac: null })).toBeNull();
+  });
+  it('canonical edge cases', () => {
+    expect(parse('12.')).toBe('12');
+    expect(parse('007')).toBe('7');
+    expect(parse('0')).toBe('0');
+    expect(parse('.5')).toBe('0.5');
+  });
+});
+
+describe('canonicalToDraft / formatDraft', () => {
+  const f = (s: string, o: { locale: string; precision: number; pad: boolean }) =>
+    formatDraft(canonicalToDraft(s)!, o);
+  it('formats', () => {
+    expect(f('1234.5', { locale: 'en-US', precision: 2, pad: true })).toBe('1,234.50');
+    expect(f('1234.5', { locale: 'de-DE', precision: 2, pad: false })).toBe('1.234,5');
+    expect(
+      formatDraft(
+        { negative: false, int: '12', frac: '' },
+        { locale: 'en-US', precision: 2, pad: false },
+      ),
+    ).toBe('12.');
+    expect(f('12345678901234567890.12', { locale: 'en-US', precision: 2, pad: false })).toBe(
+      '12,345,678,901,234,567,890.12',
+    );
+    expect(f('12', { locale: 'en-US', precision: 0, pad: true })).toBe('12');
+  });
+  it('null round-trip', () => {
+    expect(canonicalToDraft(null)).toBeNull();
+  });
+});
+
+describe('roundAmount', () => {
+  it('rounds half-up on strings', () => {
+    expect(roundAmount('12.345', 2)).toBe('12.35');
+    expect(roundAmount('9.995', 2)).toBe('10.00');
+    expect(roundAmount('12.5', 0)).toBe('13');
+    expect(roundAmount('-12.345', 2)).toBe('-12.35');
+    expect(roundAmount('12', 2)).toBe('12');
+  });
+  it('never returns negative zero', () => {
+    expect(roundAmount('-0.004', 2)).toBe('0.00');
+    expect(roundAmount('-0.4', 0)).toBe('0');
+    expect(roundAmount('-0.00', 2)).toBe('0.00');
+  });
+});
+
+describe('draftToCanonical negative zero', () => {
+  it('drops the sign when every digit is zero', () => {
+    expect(draftToCanonical({ negative: true, int: '0', frac: null })).toBe('0');
+    expect(draftToCanonical({ negative: true, int: '0', frac: '00' })).toBe('0.00');
+    expect(draftToCanonical({ negative: true, int: '0', frac: '01' })).toBe('-0.01');
+  });
+});
+
+describe('parseLocalAmount (strict own-locale)', () => {
+  it('only the locale decimal is a decimal; no cross-locale guessing', () => {
+    const c = (t: string, o = en) => draftToCanonical(parseLocalAmount(t, o)!);
+    expect(c('1,234.5')).toBe('1234.5');
+    expect(c('12.340.5')).toBe('12.34');
+    expect(c('1.23', de)).toBe('123');
+    expect(c('1.234,5', de)).toBe('1234.5');
+    expect(c('-5', { ...en, allowNegative: true })).toBe('-5');
+    expect(c('-5')).toBe('5');
+  });
+});

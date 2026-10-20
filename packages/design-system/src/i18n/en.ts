@@ -272,6 +272,14 @@ export const en: Messages = {
     numberLabel: 'Phone number',
     numberPlaceholder: 'Phone number',
   },
+  currencySelect: {
+    placeholder: 'Select currency',
+    search: 'Search currencies…',
+  },
+  moneyInput: {
+    currencyLabel: 'Currency',
+    amountLabel: 'Amount',
+  },
   colorPicker: {
     saturationBrightnessValue: (params) =>
       `saturation ${params.s} percent, brightness ${params.v} percent`,

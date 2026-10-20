@@ -152,6 +152,8 @@ Each component's contract is its `docs/components/<Name>.md`; the props table th
 - [`Textarea`](docs/components/Textarea.md) — multi-line text
 - [`PasswordInput`](docs/components/PasswordInput.md) — password field with eye toggle + optional warnings
 - [`PasswordStrengthMeter`](docs/components/PasswordStrengthMeter.md) — 4-segment strength visualization
+- [`CurrencySelect`](docs/components/CurrencySelect.md) — ISO 4217 currency picker over Select
+- [`MoneyInput`](docs/components/MoneyInput.md) — currency picker + formatted decimal-string amount (`MoneyValue`)
 - [`PhoneInput`](docs/components/PhoneInput.md) — E.164 phone field with country picker
 - [`OtpInput`](docs/components/OtpInput.md) — one-time-code field
 - [`Checkbox`](docs/components/Checkbox.md) — checkbox with native input + custom paint

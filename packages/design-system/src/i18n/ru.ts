@@ -278,6 +278,14 @@ export const ru: Messages = {
     numberLabel: 'Номер телефона',
     numberPlaceholder: 'Номер телефона',
   },
+  currencySelect: {
+    placeholder: 'Выберите валюту',
+    search: 'Поиск валют…',
+  },
+  moneyInput: {
+    currencyLabel: 'Валюта',
+    amountLabel: 'Сумма',
+  },
   colorPicker: {
     saturationBrightnessValue: (params) =>
       `насыщенность ${params.s} процентов, яркость ${params.v} процентов`,

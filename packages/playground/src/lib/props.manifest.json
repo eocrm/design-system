@@ -1239,6 +1239,178 @@
         }
       ]
     },
+    "CurrencySelect": {
+      "props": [
+        {
+          "name": "currencies",
+          "type": "string[]",
+          "required": true,
+          "default": "",
+          "description": "ISO 4217 codes to offer, in display order (e.g. `['USD', 'EUR']`). Required; there is no \"all currencies\" default. Invalid codes are dropped with a dev warning."
+        },
+        {
+          "name": "currencyDisplay",
+          "type": "CurrencyDisplay",
+          "required": false,
+          "default": "",
+          "description": "How the SELECTED currency renders in the trigger. Default `\"code\"`.\n- `\"code\"` — `EUR`.\n- `\"symbol\"` — `€`.\n- `\"both\"` — `EUR €`.\n\nDropdown rows always read `CODE — Name` so they stay identifiable and searchable."
+        },
+        {
+          "name": "locale",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "BCP-47 locale for currency names and symbols. Defaults to the active i18n locale (`useLocale()`)."
+        },
+        {
+          "name": "searchable",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Show a search input. Default: on when more than 7 currencies are offered."
+        },
+        {
+          "name": "multiple",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Single mode (default).\nMulti mode: pick several currencies."
+        },
+        {
+          "name": "value",
+          "type": "string | string[] | null",
+          "required": true,
+          "default": "",
+          "description": "Controlled ISO code; `null` = nothing selected.\nControlled ISO codes."
+        },
+        {
+          "name": "onChange",
+          "type": "((code: string | null) => void) | ((codes: string[]) => void)",
+          "required": true,
+          "default": "",
+          "description": "Fires with the picked code, or `null` when cleared.\nFires with the full selection on every toggle."
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Placed on the combobox trigger (the `<button>` / `<input>`), not the\nwrapper div, so a `<label for>` — Field / SettingRow wire one — focuses\nthe control when clicked (#568). Default: a generated id. Target the\nwrapper by `className` or a `data-*` attribute, not `#id`."
+        },
+        {
+          "name": "selectOnOpen",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "When the searchable combobox opens, select the current text so the user\ncan immediately type to replace it (type-to-search). Default `false`.\nOnly affects the single searchable trigger."
+        },
+        {
+          "name": "open",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Controlled open state. Pair with `onOpenChange`. Omit both to let\nSelect own its open state (the common case)."
+        },
+        {
+          "name": "defaultOpen",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Initial open state for uncontrolled usage. Defaults to `false`."
+        },
+        {
+          "name": "onOpenChange",
+          "type": "((open: boolean) => void)",
+          "required": false,
+          "default": "",
+          "description": "Fires whenever Select wants to change open state."
+        },
+        {
+          "name": "size",
+          "type": "SelectSize",
+          "required": false,
+          "default": "",
+          "description": "Trigger height + type scale. See `SelectSize`. Defaults to `'md'`."
+        },
+        {
+          "name": "invalid",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Marks the trigger as invalid — applies the error border + sets\n`aria-invalid=\"true\"`. Pair with an external error message linked via\n`aria-describedby`."
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Placeholder shown when nothing is selected. In searchable mode, also\nthe input's `placeholder` until the user types."
+        },
+        {
+          "name": "clearable",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Shows a `✕` button in the trigger that clears the selection. Opt-in:\ndefaults to `false`. Always forced `false` when `disabled` or `readOnly`.\n\n\"Clear\" means \"reset to the empty value\" (`''` / `[]`), so the button\nonly appears when the current value differs from that. A Select whose\nselected option IS `value: ''` is already at the cleared value and shows\nno ✕; a value matching no option (a stale id) does show one."
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Disables the trigger entirely — non-interactive, dimmed, focusable\nonly via assistive tech. Hidden form inputs are also disabled."
+        },
+        {
+          "name": "readOnly",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Read-only — trigger is focusable but cannot open or change the\nselection. Useful for displaying a value inside a form that's not yet\neditable."
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Name attribute for native form submission. In multi mode, one hidden\n`<input>` per selected value is emitted (so `FormData.getAll(name)`\nreturns the array)."
+        },
+        {
+          "name": "required",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Marks the field as required. The trigger exposes `aria-required=\"true\"` to\nassistive technology. Hidden inputs still serialize named values, but they do\nnot participate in native constraint validation; validate the selection in\nyour form layer."
+        },
+        {
+          "name": "form",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "`form` attribute forwarded to the hidden `<input>` elements."
+        },
+        {
+          "name": "aria-label",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Accessible name for the trigger. Use this when a visible `<label>` is\nnot present. Mutually exclusive with `aria-labelledby`."
+        },
+        {
+          "name": "aria-labelledby",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "ID of an element that labels the trigger. Use when the label is a\nsibling node (e.g. a `<Field>` label)."
+        },
+        {
+          "name": "aria-describedby",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "ID of an element that describes the trigger — e.g. an error message\nor helper hint paired with `invalid`."
+        }
+      ]
+    },
     "CursorPagination": {
       "props": [
         {
@@ -3955,6 +4127,136 @@
         }
       ]
     },
+    "MoneyInput": {
+      "props": [
+        {
+          "name": "value",
+          "type": "MoneyValue",
+          "required": true,
+          "default": "",
+          "description": "Controlled value. `amount` is a canonical decimal string or `null`; `currency` an ISO 4217 code."
+        },
+        {
+          "name": "onChange",
+          "type": "(value: MoneyValue) => void",
+          "required": true,
+          "default": "",
+          "description": "Fires on every amount edit and currency switch. Never fires for blur-without-edit or external value changes."
+        },
+        {
+          "name": "currencies",
+          "type": "string[]",
+          "required": true,
+          "default": "",
+          "description": "ISO 4217 codes to offer. Exactly one renders a static prefix instead of a picker."
+        },
+        {
+          "name": "currencyDisplay",
+          "type": "CurrencyDisplay",
+          "required": false,
+          "default": "\"code\"",
+          "description": "How the selected currency renders: `\"code\"` (default), `\"symbol\"` or `\"both\"`."
+        },
+        {
+          "name": "currencyLabel",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Overrides the currency picker's accessible name (default: \"<group label> Currency\")."
+        },
+        {
+          "name": "allowNegative",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Allow a leading minus. Default `false`."
+        },
+        {
+          "name": "locale",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "BCP-47 locale for separators and currency names. Defaults to the i18n locale."
+        },
+        {
+          "name": "size",
+          "type": "MoneyInputSize",
+          "required": false,
+          "default": "",
+          "description": "Control size, forwarded to both controls. Default `\"md\"`."
+        },
+        {
+          "name": "invalid",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Error chrome on both controls."
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Disable both controls."
+        },
+        {
+          "name": "readOnly",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Make both controls read-only."
+        },
+        {
+          "name": "required",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Mark the amount required."
+        },
+        {
+          "name": "placeholder",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Placeholder for the amount field."
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Emits hidden `<name>` (canonical amount) and `<name>_currency` inputs for native form posts."
+        },
+        {
+          "name": "id",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Stable id; placed on the amount field so an external `<label htmlFor>` focuses it."
+        },
+        {
+          "name": "aria-label",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Accessible name when used STANDALONE (outside `<Field>`)."
+        },
+        {
+          "name": "aria-labelledby",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Ids of elements labelling the group (injected by `<Field>`)."
+        },
+        {
+          "name": "aria-describedby",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Ids of description/error elements; forwarded to the amount field (injected by `<Field>`)."
+        }
+      ]
+    },
     "OptionsPicker": {
       "props": [
         {
@@ -6623,6 +6925,9 @@
     "OtpInputType": "\"numeric\" | \"alphanumeric\"",
     "PasswordInputSize": "\"sm\" | \"md\" | \"lg\"",
     "PasswordStrengthScore": "0 | 1 | 2 | 3 | 4",
+    "CurrencyDisplay": "\"symbol\" | \"code\" | \"both\"",
+    "MoneyInputSize": "\"sm\" | \"md\" | \"lg\"",
+    "MoneyValue": "{ amount: string | null; currency: string }",
     "PhoneInputSize": "\"sm\" | \"md\" | \"lg\"",
     "CountryDisplay": "\"name\" | \"code\" | \"flag\" | \"iso\"",
     "SelectOption": "SelectOption<T>",
@@ -6648,7 +6953,7 @@
     "TableDensity": "\"comfortable\" | \"dense\"",
     "PaginationSize": "\"sm\" | \"md\" | \"lg\"",
     "TextareaSize": "\"sm\" | \"md\" | \"lg\"",
-    "TextareaResize": "\"none\" | \"vertical\" | \"both\"",
+    "TextareaResize": "\"none\" | \"both\" | \"vertical\"",
     "LiquidVariable": "{ code: string; label?: string; type?: string; group?: string; description?: string; collection?: boolean }",
     "LiquidPreviewStatus": "\"error\" | \"loading\" | \"idle\"",
     "LiquidPreviewPlacement": "\"right\" | \"bottom\"",

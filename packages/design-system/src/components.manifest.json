@@ -211,6 +211,16 @@
     "composes": [],
     "composedBy": []
   },
+  "CurrencySelect": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "Select"
+    ],
+    "composedBy": [
+      "MoneyInput"
+    ]
+  },
   "CursorPagination": {
     "tier": "composition",
     "cluster": "Display",
@@ -485,6 +495,7 @@
       "CatalogPicker",
       "ColorPicker",
       "EmojiPicker",
+      "MoneyInput",
       "OptionsPicker",
       "PhoneInput",
       "RichTextEditor"
@@ -580,6 +591,15 @@
     "cluster": "Overlays",
     "composes": [
       "Button"
+    ],
+    "composedBy": []
+  },
+  "MoneyInput": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "CurrencySelect",
+      "Input"
     ],
     "composedBy": []
   },
@@ -763,6 +783,7 @@
     "cluster": "Forms",
     "composes": [],
     "composedBy": [
+      "CurrencySelect",
       "PhoneInput"
     ]
   },

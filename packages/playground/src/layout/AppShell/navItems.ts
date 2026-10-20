@@ -109,6 +109,8 @@ import {
   ChartSpline,
   ListTree,
   type LucideIcon,
+  Banknote,
+  Coins,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -208,6 +210,8 @@ export const componentGroups: { heading: string; items: NavItem[] }[] = [
         end: false,
       },
       { to: '/components/phone-input', label: 'PhoneInput', icon: Phone, end: false },
+      { to: '/components/money-input', label: 'MoneyInput', icon: Banknote, end: false },
+      { to: '/components/currency-select', label: 'CurrencySelect', icon: Coins, end: false },
       { to: '/components/otp-input', label: 'OtpInput', icon: RectangleEllipsis, end: false },
       { to: '/components/options-picker', label: 'OptionsPicker', icon: ListFilter, end: false },
       { to: '/components/emoji-picker', label: 'EmojiPicker', icon: Smile, end: false },
