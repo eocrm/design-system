@@ -67,10 +67,13 @@ export function parseAmount(
 ): AmountDraft | null {
   let { group, decimal } = localeSeparators(opts.locale);
   const keep = new RegExp(`[^0-9\\-.,${escapeRe(group)}${escapeRe(decimal)}]`, 'g');
-  let s = text.replace(keep, '');
+  // Sign forms: U+2212 minus, accounting parentheses '(1,234.50)', trailing minus '5-'.
+  const t = text.replace(/\u2212/g, '-');
+  const parens = /\(.*\)/.test(t);
+  let s = t.replace(keep, '');
   if (!s) return null;
 
-  const negative = opts.allowNegative && s.startsWith('-');
+  const negative = opts.allowNegative && (s.startsWith('-') || s.endsWith('-') || parens);
   s = s.replace(/-/g, '');
 
   // Cross-locale paste: a separator repeated more than once groups (the other one is the decimal);

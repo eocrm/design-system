@@ -6,6 +6,8 @@ import {
   useRef,
   useState,
   type ChangeEvent,
+  type ClipboardEvent,
+  type DragEvent,
   type HTMLAttributes,
   type KeyboardEvent,
 } from 'react';
@@ -199,9 +201,9 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
    * Shared edit path. Writes the DOM value + caret directly so React's controlled-value
    * reconciliation finds nothing to change and never throws the caret to the end.
    */
-  const applyEdit = (input: HTMLInputElement, raw: string, caret: number, pasted = false) => {
+  const applyEdit = (input: HTMLInputElement, raw: string, caret: number, inserted = false) => {
     const prev = text;
-    const typed = !pasted && raw.length === prev.length + 1;
+    const typed = !inserted && raw.length === prev.length + 1;
     const count = (str: string, c: string) => str.split(c).length - 1;
     const fracDigitsOf = (str: string) =>
       str.includes(decimal) ? str.slice(str.indexOf(decimal) + 1).replace(/\D/g, '').length : 0;
@@ -235,8 +237,8 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
       return;
     }
     dirty.current = true;
-    // Only a paste may carry foreign separators; local edits are in our own format.
-    const draft = pasted ? parse(raw) : parseOwn(raw);
+    // `raw` is always own-locale here: pastes/drops are normalised in insertText first.
+    const draft = parseOwn(raw);
     const next = draft ? formatDraft(draft, { locale: loc, precision, pad: false }) : '';
     // Caret lands after the same count of significant chars (digits, decimal, '-') it followed in `raw`.
     const before = raw.slice(0, caret);
@@ -252,22 +254,41 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
     if (amount !== synced.current.amount) emit(amount, currency);
   };
 
-  // Set by paste/drop (which fire before the change), so a paste over a selection — which may
-  // not grow the text — still takes the lenient cross-locale parser. Cleared by any keydown.
-  const pasting = useRef(false);
-  const markPaste = () => {
-    pasting.current = true;
+  /**
+   * Paste/drop: parse ONLY the incoming segment leniently (cross-locale separators, sign forms),
+   * rewrite it as own-locale plain text, splice it over the selection and run the own-locale path.
+   * Own formatted text never meets the lenient parser, so a group dot can't become a decimal.
+   */
+  const insertText = (input: HTMLInputElement, segment: string) => {
+    if (readOnly) return;
+    const d = parseAmount(segment, { locale: loc, precision, allowNegative: true });
+    if (!d) return;
+    if (d.negative && !allowNegative && !text.startsWith('-')) return; // never drop a sign silently
+    const own = (d.negative ? '-' : '') + d.int + (d.frac === null ? '' : decimal + d.frac);
+    const start = input.selectionStart ?? text.length;
+    const end = input.selectionEnd ?? text.length;
+    const raw = text.slice(0, start) + own + text.slice(end);
+    applyEdit(input, raw, start + own.length, true);
   };
 
+  const onAmountPaste = (e: ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    insertText(e.currentTarget, e.clipboardData.getData('text/plain'));
+  };
+
+  // ponytail: drop inserts at the current selection, not the pointer position.
+  const onAmountDrop = (e: DragEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    insertText(e.currentTarget, e.dataTransfer.getData('text/plain'));
+  };
+
+  // Typed / deleted / cut / undo edits only: own-locale, never lenient.
   const onAmountChange = (e: ChangeEvent<HTMLInputElement>) => {
     const input = e.target;
-    const pasted = pasting.current;
-    pasting.current = false;
-    applyEdit(input, input.value, input.selectionStart ?? input.value.length, pasted);
+    applyEdit(input, input.value, input.selectionStart ?? input.value.length);
   };
 
   const onAmountKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    pasting.current = false;
     const input = e.currentTarget;
     const { selectionStart: start, selectionEnd: end, value: v } = input;
     if (readOnly || start === null || end === null) return;
@@ -382,8 +403,8 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
         value={text}
         onChange={onAmountChange}
         onKeyDown={onAmountKeyDown}
-        onPaste={markPaste}
-        onDrop={markPaste}
+        onPaste={onAmountPaste}
+        onDrop={onAmountDrop}
         onFocus={() => {
           dirty.current = false;
         }}

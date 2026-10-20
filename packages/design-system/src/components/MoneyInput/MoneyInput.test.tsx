@@ -1,5 +1,5 @@
 import { createRef, useState } from 'react';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MoneyInput, type MoneyValue } from './MoneyInput';
 import { Field } from '../Field';
@@ -494,6 +494,63 @@ describe('MoneyInput', () => {
       await pasteOver('1,5');
       expect(amountBox().value).toBe('1');
       expect(onChange).toHaveBeenLastCalledWith({ amount: '1', currency: 'JPY' });
+    });
+    const deDE = (ui: React.ReactElement) =>
+      render(<LocaleProvider locale="de-DE">{ui}</LocaleProvider>);
+
+    it('a no-op paste leaves nothing behind: a later non-key deletion stays own-locale', async () => {
+      const onChange = vi.fn();
+      deDE(<Harness onChange={onChange} initial={{ amount: null, currency: 'EUR' }} />);
+      await userEvent.type(amountBox(), '1234');
+      await userEvent.paste('');
+      fireEvent.change(amountBox(), { target: { value: '1.23' } });
+      expect(amountBox().value).toBe('123');
+      expect(onChange).toHaveBeenLastCalledWith({ amount: '123', currency: 'EUR' });
+    });
+
+    it('de: partial paste into own text never reads a group dot as a decimal', async () => {
+      const onChange = vi.fn();
+      deDE(<Harness onChange={onChange} initial={{ amount: null, currency: 'EUR' }} />);
+      await userEvent.type(amountBox(), '1234');
+      amountBox().setSelectionRange(3, 5);
+      await userEvent.paste('5');
+      expect(amountBox().value).toBe('125');
+      expect(amountBox().selectionStart).toBe(3);
+      expect(onChange).toHaveBeenLastCalledWith({ amount: '125', currency: 'EUR' });
+      await userEvent.clear(amountBox());
+      await userEvent.type(amountBox(), '12345');
+      amountBox().setSelectionRange(3, 6);
+      await userEvent.paste('67');
+      expect(amountBox().value).toBe('1.267');
+      expect(onChange).toHaveBeenLastCalledWith({ amount: '1267', currency: 'EUR' });
+    });
+
+    it('paste reads U+2212 and accounting parentheses as negative when allowed', async () => {
+      const onChange = vi.fn();
+      render(<Harness allowNegative onChange={onChange} />);
+      await pasteOver('−5');
+      expect(onChange).toHaveBeenLastCalledWith({ amount: '-5', currency: 'USD' });
+      await pasteOver('(1,234.50)');
+      expect(amountBox().value).toBe('-1,234.50');
+      expect(onChange).toHaveBeenLastCalledWith({ amount: '-1234.50', currency: 'USD' });
+    });
+
+    it('paste of a negative is rejected when negatives are off', async () => {
+      const onChange = vi.fn();
+      render(<Harness onChange={onChange} />);
+      await pasteOver('−5');
+      await pasteOver('(1,234.50)');
+      await pasteOver('5-');
+      expect(amountBox().value).toBe('');
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('drop of cross-locale text into an empty en field parses leniently', () => {
+      const onChange = vi.fn();
+      render(<Harness onChange={onChange} />);
+      fireEvent.drop(amountBox(), { dataTransfer: { getData: () => '1.234,56' } });
+      expect(amountBox().value).toBe('1,234.56');
+      expect(onChange).toHaveBeenLastCalledWith({ amount: '1234.56', currency: 'USD' });
     });
   });
 

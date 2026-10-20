@@ -63,6 +63,13 @@ describe('parseAmount / draftToCanonical', () => {
     expect(parse('1,234,567', de)).toBe('1234567');
     expect(parse('1.234.567,8')).toBe('1234567.8');
   });
+  it('sign forms: U+2212, accounting parentheses, trailing minus', () => {
+    const neg = { ...en, allowNegative: true };
+    expect(parse('\u22125', neg)).toBe('-5');
+    expect(parse('($1,234.50)', neg)).toBe('-1234.50');
+    expect(parse('5-', neg)).toBe('-5');
+    expect(parse('(5)')).toBe('5');
+  });
   it('numpad-dot rule', () => {
     expect(parse('12.50', de)).toBe('12.50');
     expect(parse('1.234', { ...de, precision: 3 })).toBe('1234');
