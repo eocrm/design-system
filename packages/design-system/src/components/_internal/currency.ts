@@ -65,13 +65,19 @@ export function parseAmount(
   text: string,
   opts: { locale: string; precision: number; allowNegative: boolean },
 ): AmountDraft | null {
-  const { group, decimal } = localeSeparators(opts.locale);
+  let { group, decimal } = localeSeparators(opts.locale);
   const keep = new RegExp(`[^0-9\\-.,${escapeRe(group)}${escapeRe(decimal)}]`, 'g');
   let s = text.replace(keep, '');
   if (!s) return null;
 
   const negative = opts.allowNegative && s.startsWith('-');
   s = s.replace(/-/g, '');
+
+  // Both '.' and ',' present (cross-locale paste): the LAST one is the decimal, the other groups.
+  if (s.includes('.') && s.includes(',')) {
+    decimal = s.lastIndexOf('.') > s.lastIndexOf(',') ? '.' : ',';
+    group = decimal === '.' ? ',' : '.';
+  }
 
   // Numpad-dot rule: in a comma-decimal locale, a lone '.' followed by 1..precision digits is a decimal point.
   if (decimal === ',' && opts.precision <= 2 && !s.includes(',')) {

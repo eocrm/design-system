@@ -243,9 +243,9 @@ describe('MoneyInput', () => {
       render(<Harness onChange={onChange} initial={{ amount: null, currency: 'EUR' }} />);
       await userEvent.type(amountBox(), '12.34');
       onChange.mockClear();
-      await userEvent.type(amountBox(), '5', at(3));
+      await userEvent.type(amountBox(), '5', at(5));
       expect(amountBox().value).toBe('12.34');
-      expect(amountBox().selectionStart).toBe(3);
+      expect(amountBox().selectionStart).toBe(5);
       expect(onChange).not.toHaveBeenCalled();
     });
 
@@ -389,5 +389,81 @@ describe('MoneyInput', () => {
       expect(onChange).not.toHaveBeenCalled();
       warn.mockRestore();
     });
+
+    it('typing inside a full fraction overwrites the next digit; at the end it rejects', async () => {
+      const onChange = vi.fn();
+      render(<Harness onChange={onChange} initial={{ amount: '12.00', currency: 'USD' }} />);
+      await userEvent.type(amountBox(), '5', at(3));
+      expect(amountBox().value).toBe('12.50');
+      expect(amountBox().selectionStart).toBe(4);
+      expect(onChange).toHaveBeenLastCalledWith({ amount: '12.50', currency: 'USD' });
+      await userEvent.type(amountBox(), '7', at(5));
+      expect(amountBox().value).toBe('12.50');
+    });
+
+    it('Backspace after the decimal deletes the digit before it', async () => {
+      const onChange = vi.fn();
+      render(<Harness onChange={onChange} initial={{ amount: '1234.50', currency: 'USD' }} />);
+      await userEvent.type(amountBox(), '{Backspace}', at(6));
+      expect(amountBox().value).toBe('123.50');
+      expect(amountBox().selectionStart).toBe(3);
+      expect(onChange).toHaveBeenLastCalledWith({ amount: '123.50', currency: 'USD' });
+    });
+
+    it('Delete before the decimal deletes the digit after it', async () => {
+      render(<Harness initial={{ amount: '1234.50', currency: 'USD' }} />);
+      await userEvent.type(amountBox(), '{Delete}', at(5));
+      expect(amountBox().value).toBe('1,234.0');
+      expect(amountBox().selectionStart).toBe(6);
+    });
+
+    it('de-DE: deleting a digit after a group separator never turns it into a decimal', async () => {
+      const onChange = vi.fn();
+      render(
+        <LocaleProvider locale="de-DE">
+          <Harness onChange={onChange} initial={{ amount: null, currency: 'EUR' }} />
+        </LocaleProvider>,
+      );
+      await userEvent.type(amountBox(), '1234');
+      expect(amountBox().value).toBe('1.234');
+      await userEvent.type(amountBox(), '{Backspace}');
+      expect(amountBox().value).toBe('123');
+      expect(onChange).toHaveBeenLastCalledWith({ amount: '123', currency: 'EUR' });
+    });
+
+    it('typing a group separator after the decimal is a no-op', async () => {
+      render(<Harness initial={{ amount: '1234.5', currency: 'EUR' }} />);
+      await userEvent.type(amountBox(), ',', at(7));
+      expect(amountBox().value).toBe('1,234.50');
+    });
+
+    it('allowNegative=false still lets an external negative be edited', async () => {
+      const onChange = vi.fn();
+      render(<Harness onChange={onChange} initial={{ amount: '-5', currency: 'JPY' }} />);
+      await userEvent.type(amountBox(), '3', at(2));
+      expect(onChange).toHaveBeenCalled();
+      expect(amountBox().value).not.toBe('-5');
+    });
+  });
+
+  it('single-currency mode with an invalid value.currency uses the offered currency', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const onChange = vi.fn();
+    const { container } = render(
+      <MoneyInput
+        aria-label="Price"
+        name="price"
+        value={{ amount: null, currency: '' }}
+        currencies={['EUR']}
+        onChange={onChange}
+      />,
+    );
+    expect(container.querySelector<HTMLInputElement>('input[name="price_currency"]')?.value).toBe(
+      'EUR',
+    );
+    await userEvent.type(amountBox(), '5');
+    expect(onChange).toHaveBeenLastCalledWith({ amount: '5', currency: 'EUR' });
+    expect(warn).toHaveBeenCalled();
+    warn.mockRestore();
   });
 });

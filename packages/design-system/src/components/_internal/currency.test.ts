@@ -51,6 +51,13 @@ describe('parseAmount / draftToCanonical', () => {
     expect(parse('1 234,56 €', { ...de, locale: 'fr-FR' })).toBe('1234.56');
     expect(parse('1.234,56', de)).toBe('1234.56');
   });
+  it('both separators present: the last one is the decimal, whatever the locale', () => {
+    const ru = { ...de, locale: 'ru-RU' };
+    expect(parse('1,234.56', ru)).toBe('1234.56');
+    expect(parse('1,234.56', de)).toBe('1234.56');
+    expect(parse('1.234,56')).toBe('1234.56');
+    expect(parse('1.234,56', ru)).toBe('1234.56');
+  });
   it('numpad-dot rule', () => {
     expect(parse('12.50', de)).toBe('12.50');
     expect(parse('1.234', { ...de, precision: 3 })).toBe('1234');

@@ -125,21 +125,28 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
   const currencyWordId = `${uid}-currency`;
   const nameId = `${uid}-name`;
 
-  const { currency } = value;
-  const precision = isValidCurrency(currency) ? currencyPrecision(currency) : FALLBACK_PRECISION;
-
+  const valueCurrency = value.currency;
   // Ruling B: a value currency outside `currencies` still shows in the picker (never emitted).
-  const outside = isValidCurrency(currency) && !currencies.includes(currency);
+  const outside = isValidCurrency(valueCurrency) && !currencies.includes(valueCurrency);
   const offered = useMemo(
-    () => (outside ? [...currencies, currency] : currencies),
-    [outside, currencies, currency],
+    () => (outside ? [...currencies, valueCurrency] : currencies),
+    [outside, currencies, valueCurrency],
   );
-  useEffect(() => {
-    if (outside && process.env.NODE_ENV !== 'production') {
-      console.warn(`<MoneyInput>: value.currency "${currency}" is not in \`currencies\`.`);
-    }
-  }, [outside, currency]);
   const single = offered.length === 1 && isValidCurrency(offered[0]);
+  // Single mode shows offered[0] as a static prefix, so an invalid value.currency ('') must not
+  // be emitted/posted behind it: offered[0] is the effective currency.
+  const currency = single ? offered[0] : valueCurrency;
+  const replaced = currency !== valueCurrency;
+  useEffect(() => {
+    if (process.env.NODE_ENV === 'production') return;
+    if (outside)
+      console.warn(`<MoneyInput>: value.currency "${valueCurrency}" is not in \`currencies\`.`);
+    if (replaced)
+      console.warn(
+        `<MoneyInput>: value.currency "${valueCurrency}" is invalid; using "${currency}".`,
+      );
+  }, [outside, replaced, valueCurrency, currency]);
+  const precision = isValidCurrency(currency) ? currencyPrecision(currency) : FALLBACK_PRECISION;
 
   const malformed = value.amount !== null && !CANONICAL.test(value.amount);
   useEffect(() => {
@@ -178,6 +185,8 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
   const parse = (s: string) => parseAmount(s, { locale: loc, precision, allowNegative });
 
   const { group, decimal } = localeSeparators(loc);
+  // Our own display: group chars are never decimals (so '1.23' after a de-DE deletion stays 123).
+  const parseOwn = (s: string) => parse(s.split(group).join(''));
   const isSignificant = (c: string) => (c >= '0' && c <= '9') || c === decimal || c === '-';
 
   /**
@@ -187,11 +196,25 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
   const applyEdit = (input: HTMLInputElement, raw: string, caret: number) => {
     const prev = text;
     const typed = raw.length === prev.length + 1;
-    // Ruling D: a '-' when negatives are off rejects the whole edit (typed or pasted), never drops the sign.
-    const unsignedOnly = !allowNegative && raw.includes('-');
-    const decimals = raw.split(decimal).length - 1;
+    const count = (str: string, c: string) => str.split(c).length - 1;
+    const fracDigitsOf = (str: string) =>
+      str.includes(decimal) ? str.slice(str.indexOf(decimal) + 1).replace(/\D/g, '').length : 0;
+    // A digit typed inside a full fraction overwrites the next digit ('12.|00' + '5' → '12.5|0').
+    if (
+      typed &&
+      count(raw, decimal) === 1 &&
+      fracDigitsOf(raw) > precision &&
+      /\d/.test(raw[caret - 1]) &&
+      caret - 1 > raw.indexOf(decimal) &&
+      /\d/.test(raw[caret] ?? '')
+    ) {
+      raw = raw.slice(0, caret) + raw.slice(caret + 1);
+    }
+    // Ruling D: ADDING a '-' when negatives are off rejects the edit (typed or pasted), never drops the sign.
+    const unsignedOnly = !allowNegative && count(raw, '-') > count(prev, '-');
+    const decimals = count(raw, decimal);
     const dash = raw.indexOf('-');
-    const fracDigits = decimals ? raw.slice(raw.indexOf(decimal) + 1).replace(/\D/g, '').length : 0;
+    const fracDigits = fracDigitsOf(raw);
     const reject =
       unsignedOnly ||
       (typed &&
@@ -200,13 +223,14 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
           (dash !== -1 && (dash !== 0 || raw.lastIndexOf('-') !== 0))));
     if (reject) {
       // Back to where the insertion started (caret - 1 for a typed char).
-      const back = Math.max(0, caret - (raw.length - prev.length));
+      const back = Math.max(0, caret - Math.max(0, raw.length - prev.length));
       input.value = prev;
       input.setSelectionRange(back, back);
       return;
     }
     dirty.current = true;
-    const draft = parse(raw);
+    // Only a paste may carry foreign separators; local edits are in our own format.
+    const draft = raw.length > prev.length + 1 ? parse(raw) : parseOwn(raw);
     const next = draft ? formatDraft(draft, { locale: loc, precision, pad: false }) : '';
     // Caret lands after the same count of significant chars (digits, decimal, '-') it followed in `raw`.
     const before = raw.slice(0, caret);
@@ -232,10 +256,12 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
     const { selectionStart: start, selectionEnd: end, value: v } = input;
     if (readOnly || start === null || end === null) return;
     if (start === end) {
-      // Step over a group separator so the deletion hits the digit beyond it.
-      if (e.key === 'Backspace' && v[start - 1] === group)
+      // Step over a group separator — or a decimal with a fraction after it (deleting that would
+      // scale the amount 10^n) — so the deletion hits the digit beyond it.
+      const stepOver = (i: number) => v[i] === group || (v[i] === decimal && i + 1 < v.length);
+      if (e.key === 'Backspace' && stepOver(start - 1))
         input.setSelectionRange(start - 1, start - 1);
-      if (e.key === 'Delete' && v[start] === group) input.setSelectionRange(start + 1, start + 1);
+      if (e.key === 'Delete' && stepOver(start)) input.setSelectionRange(start + 1, start + 1);
     }
     // Numpad '.' in a comma-decimal locale types the decimal (any precision).
     if (e.key === '.' && decimal !== '.' && !v.includes(decimal)) {
@@ -245,7 +271,7 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
   };
 
   const onBlur = () => {
-    const draft = parse(text);
+    const draft = parseOwn(text);
     const canonical = draft ? draftToCanonical(draft) : null;
     if (!draft || canonical === null) {
       setText('');
@@ -284,6 +310,8 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
 
   return (
     <div
+      // {...rest} first so the component's structural ARIA contract
+      // (role=group + the resolved labelledby/label) can't be clobbered.
       {...rest}
       ref={ref}
       className={clsx(styles.root, className)}

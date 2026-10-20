@@ -1,5 +1,4 @@
 import { forwardRef, useEffect, useMemo, type HTMLAttributes } from 'react';
-import clsx from 'clsx';
 import { Select, type SelectOption, type SelectProps } from '../Select';
 import { useLocale, useTranslation } from '../../i18n';
 import {
@@ -100,9 +99,14 @@ export const CurrencySelect = forwardRef<HTMLDivElement, CurrencySelectProps>(
     const appLocale = useLocale();
     const loc = locale ?? appLocale;
 
-    const codes = useMemo(() => currencies.filter(isValidCurrency), [currencies]);
+    const [codes, invalid] = useMemo(
+      () => [
+        currencies.filter(isValidCurrency),
+        currencies.filter((c) => !isValidCurrency(c)).join(', '),
+      ],
+      [currencies],
+    );
     // Warn in an effect keyed on content (strings), so equal arrays don't re-warn per render.
-    const invalid = currencies.filter((c) => !isValidCurrency(c)).join(', ');
     const empty = !codes.length;
     useEffect(() => {
       if (process.env.NODE_ENV === 'production') return;
@@ -127,7 +131,7 @@ export const CurrencySelect = forwardRef<HTMLDivElement, CurrencySelectProps>(
 
     const common = {
       ...rest,
-      className: clsx(className),
+      className,
       options,
       searchable: searchable ?? codes.length > SEARCH_AUTO_THRESHOLD,
       placeholder: placeholder || t('currencySelect.placeholder'),
