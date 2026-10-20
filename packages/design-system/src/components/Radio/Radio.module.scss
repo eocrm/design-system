@@ -2,6 +2,8 @@
 @use './Radio.tokens';
 
 .radio {
+  // Anchors the visually-hidden input so a scrolling ancestor clips it (#670).
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: var(--radio-gap);
