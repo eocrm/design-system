@@ -476,8 +476,7 @@
     "tier": "composition",
     "cluster": "Forms",
     "composes": [
-      "Skeleton",
-      "Slider"
+      "Skeleton"
     ],
     "composedBy": []
   },
@@ -814,7 +813,6 @@
     "composes": [],
     "composedBy": [
       "ColorPicker",
-      "ImageCrop",
       "RichTextEditor"
     ]
   },
