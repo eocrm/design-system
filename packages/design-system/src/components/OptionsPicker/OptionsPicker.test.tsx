@@ -146,7 +146,7 @@ it('multi mode: Apply commits the draft and closes the panel', async () => {
   await user.click(screen.getByRole('button', { name: 'Open' }));
   await user.click(screen.getAllByRole('checkbox')[0]);
   await user.click(screen.getByRole('button', { name: 'Apply' }));
-  expect(onApply).toHaveBeenCalledWith(['one']);
+  expect(onApply).toHaveBeenCalledWith(['one'], expect.anything());
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });
 
@@ -351,7 +351,7 @@ it('single mode: clicking a row commits via onApply and closes', async () => {
   );
   await user.click(screen.getByRole('button', { name: 'Open' }));
   await user.click(screen.getAllByRole('radio')[1]);
-  expect(onApply).toHaveBeenCalledWith('two');
+  expect(onApply).toHaveBeenCalledWith('two', flatOptions[1]);
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });
 
@@ -560,7 +560,7 @@ it('C2: Cmd+Enter commits the draft', async () => {
   // Toggle 'one' via checkbox click then commit with Cmd+Enter
   await user.click(screen.getByRole('checkbox', { name: 'One' }));
   await user.keyboard('{Meta>}{Enter}{/Meta}');
-  expect(onApply).toHaveBeenCalledWith(['one']);
+  expect(onApply).toHaveBeenCalledWith(['one'], expect.anything());
   expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
 });
 
@@ -578,7 +578,7 @@ it('C2: Ctrl+Enter commits the draft', async () => {
   await user.click(screen.getByRole('button', { name: 'Open' }));
   await user.click(screen.getByRole('checkbox', { name: 'Two' }));
   await user.keyboard('{Control>}{Enter}{/Control}');
-  expect(onApply).toHaveBeenCalledWith(['two']);
+  expect(onApply).toHaveBeenCalledWith(['two'], expect.anything());
 });
 
 it('C2: plain Enter on focused option still toggles (Cmd+Enter reorder does not break it)', async () => {
@@ -676,5 +676,63 @@ it('I8: clicking label text in single mode commits via onApply', async () => {
   );
   await user.click(screen.getByRole('button', { name: 'Open' }));
   await user.click(screen.getByText('One'));
-  expect(onApply).toHaveBeenCalledWith('one');
+  expect(onApply).toHaveBeenCalledWith('one', expect.anything());
+});
+
+it('multi onApply receives the selected options in draft order', async () => {
+  const user = userEvent.setup();
+  const onApply = vi.fn();
+  render(
+    <OptionsPicker selected={[]} onApply={onApply}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" options={flatOptions} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  const boxes = screen.getAllByRole('checkbox');
+  await user.click(boxes[1]);
+  await user.click(boxes[0]);
+  await user.click(screen.getByRole('button', { name: /apply/i }));
+  expect(onApply).toHaveBeenCalledWith(['two', 'one'], [flatOptions[1], flatOptions[0]]);
+});
+
+it('multi onApply resolves options from groups and falls back for unknown values', async () => {
+  const user = userEvent.setup();
+  const onApply = vi.fn();
+  render(
+    <OptionsPicker selected={['gone']} onApply={onApply}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content
+        label="Filter"
+        groups={[{ id: 'g', label: 'G', options: flatOptions }]}
+      />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  await user.click(
+    screen.getAllByRole('checkbox').find((c) => c.getAttribute('aria-label') !== 'G')!,
+  );
+  await user.click(screen.getByRole('button', { name: /apply/i }));
+  const [values, opts] = onApply.mock.calls[0];
+  expect(opts).toHaveLength(values.length);
+  expect(opts[0]).toEqual({ value: 'gone', label: 'gone' });
+});
+
+it('an existing one-arg onApply callback still type-checks', () => {
+  const multi = (_v: string[]) => {};
+  const single = (_v: string | null) => {};
+  render(
+    <>
+      <OptionsPicker selected={[]} onApply={multi}>
+        <OptionsPicker.Content label="F" options={flatOptions} />
+      </OptionsPicker>
+      <OptionsPicker mode="single" selected={null} onApply={single}>
+        <OptionsPicker.Content label="F" options={flatOptions} />
+      </OptionsPicker>
+    </>,
+  );
 });

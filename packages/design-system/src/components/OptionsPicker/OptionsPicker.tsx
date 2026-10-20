@@ -69,7 +69,8 @@ export interface OptionsPickerGroup {
 interface MultiProps {
   mode?: 'multi';
   selected: string[];
-  onApply: (next: string[]) => void;
+  /** Called on Apply with the committed values and their option objects, in the same order. */
+  onApply: (next: string[], options: OptionsPickerOption[]) => void;
   onCancel?: () => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -79,7 +80,8 @@ interface MultiProps {
 interface SingleProps {
   mode: 'single';
   selected: string | null;
-  onApply: (next: string | null) => void;
+  /** Called on pick with the value and its option object (`null` / `null` when nothing is picked). */
+  onApply: (next: string | null, option: OptionsPickerOption | null) => void;
   onCancel?: () => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -134,7 +136,7 @@ interface PickerContextValue {
   open: boolean;
   setOpen: (next: boolean) => void;
   /** Called when Apply (multi) or click (single) commits draft to consumer. */
-  commit: (next: string[]) => void;
+  commit: (next: string[], options: OptionsPickerOption[]) => void;
   /** Called on Cancel/Esc/click-outside. */
   cancel: () => void;
   /** Stable id for the Content panel; shared with Trigger for aria-controls. */
@@ -209,12 +211,12 @@ function OptionsPickerRoot(props: OptionsPickerProps) {
   );
 
   const commit = useCallback(
-    (next: string[]) => {
+    (next: string[], options: OptionsPickerOption[]) => {
       justCommittedRef.current = true;
       if (mode === 'multi') {
-        (props as MultiProps).onApply(next);
+        (props as MultiProps).onApply(next, options);
       } else {
-        (props as SingleProps).onApply(next[0] ?? null);
+        (props as SingleProps).onApply(next[0] ?? null, options[0] ?? null);
       }
       setOpen(false);
     },
@@ -354,6 +356,16 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
       [filter],
     );
 
+    const optionByValue = useMemo(
+      () => new Map(getAllOptions(props).map((o) => [o.value, o])),
+      [props],
+    );
+    // Unknown values (e.g. a preselected value not in `options`) fall back to value-as-label.
+    const resolveOption = useCallback(
+      (value: string): OptionsPickerOption => optionByValue.get(value) ?? { value, label: value },
+      [optionByValue],
+    );
+
     const toggle = useCallback(
       (value: string) => {
         if (ctx.mode === 'multi') {
@@ -361,10 +373,10 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
             prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value],
           );
         } else {
-          ctx.commit([value]);
+          ctx.commit([value], [resolveOption(value)]);
         }
       },
-      [ctx],
+      [ctx, resolveOption],
     );
 
     const toggleGroup = useCallback(
@@ -437,7 +449,7 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
           setFocusedValue(visibleOptionsInOrder[visibleOptionsInOrder.length - 1]!.value);
         } else if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && ctx.mode === 'multi') {
           e.preventDefault();
-          ctx.commit(draft);
+          ctx.commit(draft, draft.map(resolveOption));
         } else if (e.key === 'Enter' || e.key === ' ') {
           if (focusedValue) {
             e.preventDefault();
@@ -449,7 +461,7 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
           ctx.cancel();
         }
       },
-      [visibleOptionsInOrder, focusedValue, toggle, ctx, draft],
+      [visibleOptionsInOrder, focusedValue, toggle, ctx, draft, resolveOption],
     );
 
     return (
@@ -605,7 +617,11 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
                 >
                   {t('optionsPicker.cancel')}
                 </Button>
-                <Button variant="primary" size="sm" onClick={() => ctx.commit(draft)}>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => ctx.commit(draft, draft.map(resolveOption))}
+                >
                   {t('optionsPicker.apply')}
                 </Button>
               </Cluster>
