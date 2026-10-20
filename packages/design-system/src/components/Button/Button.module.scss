@@ -20,7 +20,8 @@
   transition:
     background var(--transition-fast),
     border-color var(--transition-fast),
-    color var(--transition-fast);
+    color var(--transition-fast),
+    filter var(--transition-fast);
 
   &:focus-visible {
     @include focus-ring(var(--button-ring));
@@ -149,7 +150,7 @@
   }
 }
 
-// Palette `color` — the soft pair is injected inline as --button-palette-bg/fg
+// Palette `color` (wins over variant) — the soft pair is injected inline as --button-palette-bg/fg
 // (same as PillMenu). One filter darkens fill AND text for all 30 colors, so
 // no per-color hover tokens; contrast.test.ts pins AA at both factors.
 .palette {

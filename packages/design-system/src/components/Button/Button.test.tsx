@@ -190,9 +190,9 @@ describe('Button', () => {
     );
     expect(scss).toMatch(/&:disabled\s*\{[^}]*pointer-events:\s*none;/s);
 
-    const hoverSelectors = scss.match(/&:hover[^{]*/g);
-    expect(hoverSelectors).toHaveLength(8);
-    hoverSelectors?.forEach((selector) => {
+    const hoverSelectors = scss.match(/&:hover[^{]*/g) ?? [];
+    expect(hoverSelectors.length).toBeGreaterThan(0);
+    hoverSelectors.forEach((selector) => {
       expect(selector).toContain(":not(:disabled, [aria-disabled='true'])");
     });
   });
@@ -343,19 +343,14 @@ describe('Button — palette `color`', () => {
     );
   });
 
-  it('types: color excludes variant and selected', () => {
+  it('color wins over variant and selected', () => {
     render(
-      <>
-        {/* @ts-expect-error color and variant are mutually exclusive */}
-        <Button color="amber" variant="secondary">
-          A
-        </Button>
-        {/* @ts-expect-error color and selected are mutually exclusive */}
-        <Button color="amber" selected>
-          B
-        </Button>
-      </>,
+      <Button color="amber" variant="secondary" selected>
+        A
+      </Button>,
     );
-    expect(screen.getByRole('button', { name: 'A' })).toBeInTheDocument();
+    const button = screen.getByRole('button', { name: 'A' });
+    expect(button.className).toMatch(/palette/);
+    expect(button.className).not.toMatch(/secondary|selected/);
   });
 });

@@ -207,7 +207,7 @@ export function AppliedFilters() {
 
       <Example
         title="Palette color (status quick actions)"
-        description="color paints the Button with a palette color's soft pair — the same fill and text as a PillMenu or Badge of that color, in both themes. Use it for a quick action that moves a record to a status, so the button matches the status pill it sets and follows a tenant's recolouring. It replaces variant and selected (the pair does not compile). Palette colors carry no meaning: destructive is still the danger variant."
+        description="color paints the Button with a palette color's soft pair — the same fill and text as a PillMenu or Badge of that color, in both themes. Use it for a quick action that moves a record to a status, so the button matches the status pill it sets and follows a tenant's recolouring. It wins over variant and selected — pass one or the other. Palette colors carry no meaning: destructive is still the danger variant."
         code={`import { useState } from 'react';
 import {
   Button,

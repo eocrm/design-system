@@ -533,6 +533,10 @@ describe('Table', () => {
       '--text-fg-muted': 'currentColor',
       '--text-fg-subtle': 'currentColor',
     });
+    // The cell-wide overlay is the hover signal; no underline (#665).
+    expect(declarations('.cellLink:hover')).not.toHaveProperty('text-decoration');
+    // Full-grid borders stay square at a toned header (#664).
+    expect(declarations('.bordered .th[data-tone]')).toEqual({ 'border-radius': '0' });
     for (const tone of ['danger', 'accent']) {
       expect(declarations(`[data-tone=${tone}] > .cellLink:hover`)).toEqual({
         color: `var(--table-cell-fg-${tone}-hover)`,
