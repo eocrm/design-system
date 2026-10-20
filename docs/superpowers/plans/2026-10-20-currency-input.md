@@ -46,27 +46,41 @@
 ```ts
 export type CurrencyDisplay = 'code' | 'symbol' | 'both';
 /** Parsed, in-progress amount. `frac === null` → no decimal point typed; `''` → trailing point. */
-export interface AmountDraft { negative: boolean; int: string; frac: string | null }
+export interface AmountDraft {
+  negative: boolean;
+  int: string;
+  frac: string | null;
+}
 export function currencyPrecision(code: string): number;
-export function currencySymbol(code: string, locale: string): string;        // 'symbol' display: en → 'CA$', '€', '¥'
-export function currencyName(code: string, locale: string): string;          // DisplayNames, fallback = code
+export function currencySymbol(code: string, locale: string): string; // 'symbol' display: en → 'CA$', '€', '¥'
+export function currencyName(code: string, locale: string): string; // DisplayNames, fallback = code
 export function currencyDisplayText(code: string, display: CurrencyDisplay, locale: string): string; // 'EUR' | '€' | 'EUR €'
-export function isValidCurrency(code: string): boolean;                      // Intl accepts it
+export function isValidCurrency(code: string): boolean; // Intl accepts it
 export function localeSeparators(locale: string): { group: string; decimal: string };
-export function parseAmount(text: string, opts: { locale: string; precision: number; allowNegative: boolean }): AmountDraft | null; // null = empty
-export function draftToCanonical(d: AmountDraft): string | null;             // '-' alone → null, '12.' → '12', strips leading zeros ('007' → '7', keeps '0')
+export function parseAmount(
+  text: string,
+  opts: { locale: string; precision: number; allowNegative: boolean },
+): AmountDraft | null; // null = empty
+export function draftToCanonical(d: AmountDraft): string | null; // '-' alone → null, '12.' → '12', strips leading zeros ('007' → '7', keeps '0')
 export function canonicalToDraft(s: string | null): AmountDraft | null;
-export function formatDraft(d: AmountDraft, opts: { locale: string; precision: number; pad: boolean }): string;
-export function roundAmount(canonical: string, precision: number): string;  // string half-up
+export function formatDraft(
+  d: AmountDraft,
+  opts: { locale: string; precision: number; pad: boolean },
+): string;
+export function roundAmount(canonical: string, precision: number): string; // string half-up
 ```
 
 - [ ] **Step 1: Write failing tests** (`describe` per function), including these assertions:
 
 ```ts
-expect(currencyPrecision('USD')).toBe(2); expect(currencyPrecision('JPY')).toBe(0); expect(currencyPrecision('KWD')).toBe(3);
-expect(currencySymbol('CAD', 'en')).toBe('CA$'); expect(currencyName('EUR', 'en')).toBe('Euro');
+expect(currencyPrecision('USD')).toBe(2);
+expect(currencyPrecision('JPY')).toBe(0);
+expect(currencyPrecision('KWD')).toBe(3);
+expect(currencySymbol('CAD', 'en')).toBe('CA$');
+expect(currencyName('EUR', 'en')).toBe('Euro');
 expect(currencyDisplayText('EUR', 'both', 'en')).toBe('EUR €');
-expect(isValidCurrency('EUR')).toBe(true); expect(isValidCurrency('XX')).toBe(false);
+expect(isValidCurrency('EUR')).toBe(true);
+expect(isValidCurrency('XX')).toBe(false);
 expect(localeSeparators('en-US')).toEqual({ group: ',', decimal: '.' });
 expect(localeSeparators('de-DE')).toEqual({ group: '.', decimal: ',' });
 expect(localeSeparators('fr-FR').decimal).toBe(','); // group is U+202F — assert via /\s/u
@@ -75,21 +89,42 @@ const de = { locale: 'de-DE', precision: 2, allowNegative: false };
 expect(draftToCanonical(parseAmount('$1,234.56', en)!)).toBe('1234.56');
 expect(draftToCanonical(parseAmount('1 234,56 €', { ...de, locale: 'fr-FR' })!)).toBe('1234.56');
 expect(draftToCanonical(parseAmount('1.234,56', de)!)).toBe('1234.56');
-expect(draftToCanonical(parseAmount('12.50', de)!)).toBe('12.50');      // numpad-dot rule
+expect(draftToCanonical(parseAmount('12.50', de)!)).toBe('12.50'); // numpad-dot rule
 expect(draftToCanonical(parseAmount('1.234', { ...de, precision: 3 })!)).toBe('1234'); // rule off for precision 3
-expect(draftToCanonical(parseAmount('1.234', de)!)).toBe('1234');      // 3 digits after '.' > precision → group
-expect(draftToCanonical(parseAmount('1.23456', en)!)).toBe('1.23');    // truncates
-expect(parseAmount('', en)).toBeNull(); expect(parseAmount('  € ', en)).toBeNull();
-expect(draftToCanonical(parseAmount('-5', en)!)).toBe('5');            // negative dropped when not allowed
+expect(draftToCanonical(parseAmount('1.234', de)!)).toBe('1234'); // 3 digits after '.' > precision → group
+expect(draftToCanonical(parseAmount('1.23456', en)!)).toBe('1.23'); // truncates
+expect(parseAmount('', en)).toBeNull();
+expect(parseAmount('  € ', en)).toBeNull();
+expect(draftToCanonical(parseAmount('-5', en)!)).toBe('5'); // negative dropped when not allowed
 expect(draftToCanonical(parseAmount('-5', { ...en, allowNegative: true })!)).toBe('-5');
 expect(draftToCanonical({ negative: true, int: '', frac: null })).toBeNull();
-expect(formatDraft(canonicalToDraft('1234.5')!, { locale: 'en-US', precision: 2, pad: true })).toBe('1,234.50');
-expect(formatDraft(canonicalToDraft('1234.5')!, { locale: 'de-DE', precision: 2, pad: false })).toBe('1.234,5');
-expect(formatDraft({ negative: false, int: '12', frac: '' }, { locale: 'en-US', precision: 2, pad: false })).toBe('12.');
-expect(formatDraft(canonicalToDraft('12345678901234567890.12')!, { locale: 'en-US', precision: 2, pad: false })).toBe('12,345,678,901,234,567,890.12');
-expect(formatDraft(canonicalToDraft('12')!, { locale: 'en-US', precision: 0, pad: true })).toBe('12');
-expect(roundAmount('12.345', 2)).toBe('12.35'); expect(roundAmount('9.995', 2)).toBe('10.00');
-expect(roundAmount('12.5', 0)).toBe('13'); expect(roundAmount('-12.345', 2)).toBe('-12.35'); expect(roundAmount('12', 2)).toBe('12');
+expect(formatDraft(canonicalToDraft('1234.5')!, { locale: 'en-US', precision: 2, pad: true })).toBe(
+  '1,234.50',
+);
+expect(
+  formatDraft(canonicalToDraft('1234.5')!, { locale: 'de-DE', precision: 2, pad: false }),
+).toBe('1.234,5');
+expect(
+  formatDraft(
+    { negative: false, int: '12', frac: '' },
+    { locale: 'en-US', precision: 2, pad: false },
+  ),
+).toBe('12.');
+expect(
+  formatDraft(canonicalToDraft('12345678901234567890.12')!, {
+    locale: 'en-US',
+    precision: 2,
+    pad: false,
+  }),
+).toBe('12,345,678,901,234,567,890.12');
+expect(formatDraft(canonicalToDraft('12')!, { locale: 'en-US', precision: 0, pad: true })).toBe(
+  '12',
+);
+expect(roundAmount('12.345', 2)).toBe('12.35');
+expect(roundAmount('9.995', 2)).toBe('10.00');
+expect(roundAmount('12.5', 0)).toBe('13');
+expect(roundAmount('-12.345', 2)).toBe('-12.35');
+expect(roundAmount('12', 2)).toBe('12');
 ```
 
 - [ ] **Step 2: Run** `npx vitest run src/components/_internal/currency.test.ts`. Expected: FAIL (module not found).
@@ -114,14 +149,48 @@ expect(roundAmount('12.5', 0)).toBe('13'); expect(roundAmount('-12.345', 2)).toB
 - Produces:
 
 ```ts
-type Passthrough = Pick<SelectProps, 'size' | 'invalid' | 'disabled' | 'readOnly' | 'required' | 'name' | 'form' | 'placeholder' | 'clearable' | 'open' | 'defaultOpen' | 'onOpenChange' | 'id' | 'aria-label' | 'aria-labelledby' | 'aria-describedby' | 'selectOnOpen'>;
-interface CurrencySelectCommon extends Passthrough, Omit<HTMLAttributes<HTMLDivElement>, 'onChange' | 'defaultValue'> {
-  currencies: string[]; currencyDisplay?: CurrencyDisplay; locale?: string; searchable?: boolean;
+type Passthrough = Pick<
+  SelectProps,
+  | 'size'
+  | 'invalid'
+  | 'disabled'
+  | 'readOnly'
+  | 'required'
+  | 'name'
+  | 'form'
+  | 'placeholder'
+  | 'clearable'
+  | 'open'
+  | 'defaultOpen'
+  | 'onOpenChange'
+  | 'id'
+  | 'aria-label'
+  | 'aria-labelledby'
+  | 'aria-describedby'
+  | 'selectOnOpen'
+>;
+interface CurrencySelectCommon
+  extends Passthrough, Omit<HTMLAttributes<HTMLDivElement>, 'onChange' | 'defaultValue'> {
+  currencies: string[];
+  currencyDisplay?: CurrencyDisplay;
+  locale?: string;
+  searchable?: boolean;
 }
 export type CurrencySelectProps =
-  | (CurrencySelectCommon & { multiple?: false; value: string | null; onChange: (code: string | null) => void })
-  | (CurrencySelectCommon & { multiple: true; value: string[]; onChange: (codes: string[]) => void; triggerDisplay?: 'chips' | 'summary' });
-export const CurrencySelect: ForwardRefExoticComponent<CurrencySelectProps & RefAttributes<HTMLDivElement>>;
+  | (CurrencySelectCommon & {
+      multiple?: false;
+      value: string | null;
+      onChange: (code: string | null) => void;
+    })
+  | (CurrencySelectCommon & {
+      multiple: true;
+      value: string[];
+      onChange: (codes: string[]) => void;
+      triggerDisplay?: 'chips' | 'summary';
+    });
+export const CurrencySelect: ForwardRefExoticComponent<
+  CurrencySelectProps & RefAttributes<HTMLDivElement>
+>;
 // index.ts also re-exports type CurrencyDisplay (from _internal/currency)
 ```
 
@@ -137,7 +206,7 @@ export const CurrencySelect: ForwardRefExoticComponent<CurrencySelectProps & Ref
   - `dev-warns on an invalid code`: `console.warn` spy called for `['EUR','XX']`.
   - `forwards ref and merges className`; `invalid sets aria-invalid`; `disabled disables the trigger`.
 - [ ] **Step 2: Run** `npx vitest run src/components/CurrencySelect`. Expected: FAIL.
-- [ ] **Step 3: Implement.** Option shape: `{ value: code, label: currencyDisplayText(...), description: \`${code} ${name} ${symbol}\` }`. `renderOption` renders `${code} — ${name}` in a single-line ellipsis span (copy `.option` from `PhoneInput.module.scss`). Single mode maps `null` → `''` into Select and `''` → `null` out. The placeholder default is `t('currencySelect.placeholder')`. When searchable, Select's search placeholder is the same prop, so pass `t('currencySelect.search')` only if the consumer gave no `placeholder` **and** a value is set. Otherwise use the placeholder. JSDoc is a one-line summary + `@see docs/components/CurrencySelect.md`, with prop JSDoc on every prop.
+- [ ] **Step 3: Implement.** Option shape: `{ value: code, label: currencyDisplayText(...), description: \`${code} ${name} ${symbol}\` }`. `renderOption` renders `${code} — ${name}`in a single-line ellipsis span (copy`.option`from`PhoneInput.module.scss`). Single mode maps `null`→`''`into Select and`''`→`null`out. The placeholder default is`t('currencySelect.placeholder')`. When searchable, Select's search placeholder is the same prop, so pass `t('currencySelect.search')`only if the consumer gave no`placeholder`**and** a value is set. Otherwise use the placeholder. JSDoc is a one-line summary +`@see docs/components/CurrencySelect.md`, with prop JSDoc on every prop.
 - [ ] **Step 4: Run** the tests. Expected: PASS.
 - [ ] **Step 5: Wire up:** exports in `src/index.ts` (`CurrencySelect`, types `CurrencySelectProps`, `CurrencyDisplay`); `CLUSTERS` in both maps; `npm run build:manifest`; write `docs/components/CurrencySelect.md` (TL;DR, snippet, "When NOT to use": an amount+currency pair → `MoneyInput`; anti-patterns: passing `options`, expecting an "all currencies" default); `npm run build:docs`; AI-PRIMER line.
 - [ ] **Step 6: Run** `make test` (exit 0) and `npm run typecheck -w @eocrm/design-system`.
@@ -160,14 +229,33 @@ export const CurrencySelect: ForwardRefExoticComponent<CurrencySelectProps & Ref
 - Produces:
 
 ```ts
-export interface MoneyValue { amount: string | null; currency: string }
+export interface MoneyValue {
+  amount: string | null;
+  currency: string;
+}
 export type MoneyInputSize = 'sm' | 'md' | 'lg';
-export interface MoneyInputProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange' | 'defaultValue'> {
-  value: MoneyValue; onChange: (value: MoneyValue) => void; currencies: string[];
-  currencyDisplay?: CurrencyDisplay; currencyLabel?: string; allowNegative?: boolean; locale?: string;
-  size?: MoneyInputSize; invalid?: boolean; disabled?: boolean; readOnly?: boolean; required?: boolean;
-  placeholder?: string; name?: string; id?: string;
-  'aria-label'?: string; 'aria-labelledby'?: string; 'aria-describedby'?: string;
+export interface MoneyInputProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'onChange' | 'defaultValue'
+> {
+  value: MoneyValue;
+  onChange: (value: MoneyValue) => void;
+  currencies: string[];
+  currencyDisplay?: CurrencyDisplay;
+  currencyLabel?: string;
+  allowNegative?: boolean;
+  locale?: string;
+  size?: MoneyInputSize;
+  invalid?: boolean;
+  disabled?: boolean;
+  readOnly?: boolean;
+  required?: boolean;
+  placeholder?: string;
+  name?: string;
+  id?: string;
+  'aria-label'?: string;
+  'aria-labelledby'?: string;
+  'aria-describedby'?: string;
 }
 export const MoneyInput: ForwardRefExoticComponent<MoneyInputProps & RefAttributes<HTMLDivElement>>;
 ```

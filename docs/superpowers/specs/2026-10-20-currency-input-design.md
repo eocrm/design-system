@@ -106,21 +106,32 @@ triggerDisplay?: 'chips' | 'summary';
 ## `<MoneyInput>`
 
 ```ts
-interface MoneyValue { amount: string | null; currency: string }
-interface MoneyInputProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange' | 'defaultValue'> {
-  value: MoneyValue;                       // controlled
+interface MoneyValue {
+  amount: string | null;
+  currency: string;
+}
+interface MoneyInputProps extends Omit<
+  HTMLAttributes<HTMLDivElement>,
+  'onChange' | 'defaultValue'
+> {
+  value: MoneyValue; // controlled
   onChange: (value: MoneyValue) => void;
-  currencies: string[];                       // REQUIRED; 1 => static prefix, ≥2 => picker
-  currencyDisplay?: CurrencyDisplay;          // default 'code'; also used for the static prefix
-  currencyLabel?: string;                     // overrides picker accessible name
-  allowNegative?: boolean;                    // default false
-  locale?: string;                            // default useLocale()
+  currencies: string[]; // REQUIRED; 1 => static prefix, ≥2 => picker
+  currencyDisplay?: CurrencyDisplay; // default 'code'; also used for the static prefix
+  currencyLabel?: string; // overrides picker accessible name
+  allowNegative?: boolean; // default false
+  locale?: string; // default useLocale()
   size?: 'sm' | 'md' | 'lg';
-  invalid?: boolean; disabled?: boolean; readOnly?: boolean; required?: boolean;
-  placeholder?: string;                       // amount placeholder
-  name?: string;                              // hidden inputs: `${name}` (amount) + `${name}Currency`? — see below
-  id?: string;                                // on the amount input
-  'aria-label'?; 'aria-labelledby'?; 'aria-describedby'?;
+  invalid?: boolean;
+  disabled?: boolean;
+  readOnly?: boolean;
+  required?: boolean;
+  placeholder?: string; // amount placeholder
+  name?: string; // hidden inputs: `${name}` (amount) + `${name}Currency`? — see below
+  id?: string; // on the amount input
+  'aria-label'?;
+  'aria-labelledby'?;
+  'aria-describedby'?;
 }
 ```
 
