@@ -1,8 +1,5 @@
 // ImageCrop.tokens.scss — component-scoped tokens for <ImageCrop>. Covers viewport surface, crop-box border, error state, and disabled mute. Cursor keywords and the scrim's literal 50% black stay raw in .module.scss.
 :root {
-  // Image fit padding (mirrored by FIT_PADDING in ImageCrop.tsx)
-  --image-crop-fit-padding: var(--space-4);
-
   // Viewport surface
   --image-crop-viewport-bg: var(--color-bg-muted);
   --image-crop-viewport-radius: var(--radius-md);
@@ -20,6 +17,8 @@
   --image-crop-grid-opacity-active: 1;
 
   // Toolbar positioning
+  // Room so overflow-x clipping doesn't cut button focus rings.
+  --image-crop-toolbar-padding: var(--space-1);
   --image-crop-toolbar-gap: var(--space-2);
   --image-crop-toolbar-offset: var(--space-3);
 

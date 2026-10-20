@@ -3441,11 +3441,11 @@
           "type": "ImageCropAspectOption[]",
           "required": false,
           "default": "",
-          "description": "Options for an on-canvas aspect-ratio switcher. Labels are consumer strings (your i18n).\nControlled: the option whose `value === aspectRatio` shows as selected, and picking one calls\n`onAspectRatioChange`, then `onChange`/`onChangeEnd` with that ratio's default crop.\nOmit or pass `[]` for no switcher."
+          "description": "Options for an on-canvas aspect-ratio switcher. Labels are consumer strings (your i18n).\nControlled: the option whose `value === aspectRatio` shows as selected, and picking one calls\n`onAspectRatioChange`, then `onChange`/`onChangeEnd` with that ratio's default crop.\nOmit or pass `[]` for no switcher. Requires `onAspectRatioChange` and a controlled\n`aspectRatio`; without them the pick commits a crop in the old ratio."
         },
         {
           "name": "onAspectRatioChange",
-          "type": "((ratio: number) => void)",
+          "type": "((ratio: ImageCropAspectRatio) => void)",
           "required": false,
           "default": "",
           "description": "Fires when an option is picked in the switcher (`undefined` = free aspect). Update your `aspectRatio` state here."
@@ -6991,6 +6991,7 @@
     "MediaTileCaptionPlacement": "\"overlay\" | \"below\"",
     "MediaTileControls": "\"bar\" | \"chips\"",
     "ImageCropAspectOption": "{ label: string; value?: number }",
+    "ImageCropAspectRatio": "number",
     "CropArea": "{ x: number; y: number; width: number; height: number }",
     "DataTableInstance": "DataTableInstance<T>",
     "DefinitionListLayout": "\"horizontal\" | \"stacked\"",

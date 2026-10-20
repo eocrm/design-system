@@ -744,6 +744,8 @@ export interface Messages {
     aspectRatio: string;
     /** Screen-reader description of pointer and keyboard controls. */
     keyboardHint: string;
+    /** Current crop area announced as the viewport's value (rounded source px). */
+    areaValue: (params: { x: number; y: number; width: number; height: number }) => string;
   };
   kanban: {
     /** aria-label for the Kanban scroll container (the board itself). */

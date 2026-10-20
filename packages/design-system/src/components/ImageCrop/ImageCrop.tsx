@@ -29,7 +29,7 @@ import {
 } from './cropGeometry';
 import styles from './ImageCrop.module.scss';
 
-// Mirrors --image-crop-fit-padding (var(--space-4)); TS needs a number for layout math.
+// Padding around the fitted image, in px (--space-4); TS needs a number for layout math.
 const FIT_PADDING = 16;
 // Bottom space kept free for the on-canvas toolbar (one row of sm buttons + offset); 0 when no toolbar renders.
 const TOOLBAR_RESERVE = 56;
@@ -50,9 +50,14 @@ export type { CropArea } from './extractCropBlob';
 
 /** One option in the on-canvas aspect-ratio switcher. `value` omitted = free aspect. */
 export interface ImageCropAspectOption {
+  /** Visible option text. A consumer string, so it is your i18n. */
   label: string;
+  /** Aspect ratio (width / height) this option selects. Omit for free aspect. */
   value?: number;
 }
+
+/** Aspect ratio passed to `onAspectRatioChange`; `undefined` means free aspect. */
+export type ImageCropAspectRatio = number | undefined;
 
 export interface ImageCropProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
   /**
@@ -89,16 +94,22 @@ export interface ImageCropProps extends Omit<HTMLAttributes<HTMLDivElement>, 'on
    * Options for an on-canvas aspect-ratio switcher. Labels are consumer strings (your i18n).
    * Controlled: the option whose `value === aspectRatio` shows as selected, and picking one calls
    * `onAspectRatioChange`, then `onChange`/`onChangeEnd` with that ratio's default crop.
-   * Omit or pass `[]` for no switcher.
+   * Omit or pass `[]` for no switcher. Requires `onAspectRatioChange` and a controlled
+   * `aspectRatio`; without them the pick commits a crop in the old ratio.
    */
   aspectRatios?: ImageCropAspectOption[];
   /** Fires when an option is picked in the switcher (`undefined` = free aspect). Update your `aspectRatio` state here. */
-  onAspectRatioChange?: (ratio: number | undefined) => void;
+  onAspectRatioChange?: (ratio: ImageCropAspectRatio) => void;
 }
 
 /**
  * Controlled, inline image-crop primitive: drag and resize a crop box over a still image.
  * @see docs/components/ImageCrop.md
+ *
+ * @remarks Why role="application"
+ * The 2D crop box has no standard ARIA pattern. Like ColorPicker's SVSquare, the viewport uses
+ * `role="application"` so screen readers pass arrow keys through, with `aria-valuetext` giving
+ * the current area. Toolbar controls inside it keep their own roles.
  */
 export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function ImageCrop(
   {
@@ -118,6 +129,7 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
 ) {
   const t = useTranslation();
   const hintId = useId();
+  const toolbarRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
 
@@ -256,6 +268,8 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
     if (disabled || !imageNatural || !value || !fit || e.button !== 0 || dragRef.current) return;
     e.preventDefault();
     e.stopPropagation();
+    // preventDefault suppresses the native focus shift; keep arrows working right after a click.
+    viewportRef.current?.focus({ preventScroll: true });
     try {
       e.currentTarget.setPointerCapture(e.pointerId);
     } catch {
@@ -327,6 +341,8 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
     const onWheel = (e: WheelEvent) => {
       const { value, imageNatural, fit, aspectRatio, onChange, onChangeEnd } = latest.current;
       if (!value || !imageNatural || !fit || e.deltaY === 0) return;
+      // Over the toolbar the wheel scrolls it (or the page), never resizes the box.
+      if (toolbarRef.current?.contains(e.target as Node)) return;
       e.preventDefault();
       const px =
         e.deltaY *
@@ -369,6 +385,8 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
 
   // Keyboard: arrows nudge the box, Shift+arrows resize it, Home/End jump to the image corners.
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    // Keys bubbling from toolbar controls (ratio radios, Reset) belong to them.
+    if (e.target !== e.currentTarget) return;
     if (disabled || !imageNatural || !value || !fit) return;
     const from = normalizeCrop(value, imageNatural, aspectRatio);
     const STEP = 5; // source-image pixels
@@ -431,8 +449,18 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
       <div
         ref={viewportRef}
         className={styles.viewport}
-        role="group"
+        role="application"
         aria-label={t('imageCrop.label')}
+        aria-valuetext={
+          shown
+            ? t('imageCrop.areaValue', {
+                x: Math.round(shown.x),
+                y: Math.round(shown.y),
+                width: Math.round(shown.width),
+                height: Math.round(shown.height),
+              })
+            : undefined
+        }
         aria-describedby={hintId}
         tabIndex={disabled ? -1 : 0}
         onKeyDown={handleKeyDown}
@@ -481,7 +509,11 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
           </div>
         )}
         {loadState === 'loaded' && hasToolbar && (
-          <div className={styles.toolbar} onDoubleClick={(e) => e.stopPropagation()}>
+          <div
+            ref={toolbarRef}
+            className={styles.toolbar}
+            onDoubleClick={(e) => e.stopPropagation()}
+          >
             {hasRatios && (
               <ButtonGroup
                 size="sm"

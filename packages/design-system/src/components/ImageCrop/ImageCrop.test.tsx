@@ -629,10 +629,33 @@ describe('ImageCrop', () => {
         expect(onChange).not.toHaveBeenCalled();
       });
 
-      it('viewport is a named group described by the keyboard hint', () => {
+      it('viewport is a named application described by the keyboard hint, with the area as value text', () => {
         setup();
-        const group = screen.getByRole('group', { name: 'Crop area' });
-        expect(group).toHaveAccessibleDescription(/Shift\+Arrow keys resize/);
+        const app = screen.getByRole('application', { name: 'Crop area' });
+        expect(app).toHaveAccessibleDescription(/Shift\+Arrow keys resize/);
+        expect(app).toHaveAttribute(
+          'aria-valuetext',
+          expect.stringMatching(/^\d+, \d+ — \d+×\d+ px$/),
+        );
+      });
+
+      it('pointerdown on the box focuses the viewport', () => {
+        const { container, box } = setup();
+        fireEvent.pointerDown(box, { clientX: 200, clientY: 200, pointerId: 1 });
+        expect(document.activeElement).toBe(vp(container));
+      });
+
+      it('wheel over the toolbar does not resize or preventDefault', () => {
+        const { onChange } = setup();
+        const ev = wheel(screen.getByRole('button', { name: 'Reset' }), 100);
+        expect(ev.defaultPrevented).toBe(false);
+        expect(onChange).not.toHaveBeenCalled();
+      });
+
+      it('arrow key on a focused Reset button does not move the box', () => {
+        const { onChange } = setup();
+        fireEvent.keyDown(screen.getByRole('button', { name: 'Reset' }), { key: 'ArrowRight' });
+        expect(onChange).not.toHaveBeenCalled();
       });
     });
   });
@@ -950,6 +973,14 @@ describe('ImageCrop — early load (#574)', () => {
       expect(onAspectRatioChange).toHaveBeenCalledWith(undefined);
       expect(onChange).toHaveBeenCalledWith(d);
       expect(onChangeEnd).toHaveBeenCalledWith(d);
+    });
+
+    it('arrow on a ratio radio commits exactly once (no box nudge)', () => {
+      const { onChange, onChangeEnd } = setup();
+      fireEvent.keyDown(screen.getByRole('radio', { name: '1:1' }), { key: 'ArrowRight' });
+      expect(onChange).toHaveBeenCalledTimes(1);
+      expect(onChangeEnd).toHaveBeenCalledTimes(1);
+      expect(onChange).toHaveBeenCalledWith({ x: 100, y: 175, width: 800, height: 450 });
     });
 
     it('clicking the selected option does nothing', () => {

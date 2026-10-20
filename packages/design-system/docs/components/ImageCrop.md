@@ -1,4 +1,4 @@
-> **Breaking in 0.6.0:** `minZoom`, `maxZoom` and `showZoomControl` are deleted, with no replacement. The component is now a still image with a draggable, resizable crop box, so it is shorter (no slider row). A floating Reset button is opt-in via `showReset`. Scroll-wheel over the cropper now resizes the box (it no longer zooms the image). The i18n key `imageCrop.zoom` is removed (new keys: `imageCrop.reset`, `imageCrop.label`, `imageCrop.keyboardHint`); delete any `I18nProvider` override of `imageCrop.zoom`.
+> **Breaking in 0.6.0:** `minZoom`, `maxZoom` and `showZoomControl` are deleted, with no replacement. The component is now a still image with a draggable, resizable crop box, so it is shorter (no slider row). A floating Reset button is opt-in via `showReset`. Scroll-wheel over the cropper now resizes the box (it no longer zooms the image). The i18n key `imageCrop.zoom` is removed (new keys: `imageCrop.reset`, `imageCrop.label`, `imageCrop.keyboardHint`, `imageCrop.aspectRatio`, `imageCrop.areaValue`); delete any `I18nProvider` override of `imageCrop.zoom`.
 
 # `<ImageCrop>` — controlled image cropper
 
@@ -33,8 +33,8 @@ const handleSave = async () => {
 | `aspectRatio` | `number` | no | Fixed aspect ratio for the crop box (e.g. `1` for square, `16/9`). Omit for free aspect — edge handles then appear too. Toggling it at runtime does NOT re-fit `value`; pass a fresh `value` (or `null`) with the change. |
 | `disabled` | `boolean` | no | Disable all interaction (move, resize). Default `false`. Image still renders. |
 | `showReset` | `boolean` | no | Render the on-canvas Reset button. Default `false`; double-click reset works regardless. |
-| `aspectRatios` | `ImageCropAspectOption[]` | no | Options for an on-canvas aspect-ratio switcher. Labels are consumer strings (your i18n). Controlled: the option whose `value === aspectRatio` shows as selected, and picking one calls `onAspectRatioChange`, then `onChange`/`onChangeEnd` with that ratio's default crop. Omit or pass `[]` for no switcher. |
-| `onAspectRatioChange` | `((ratio: number) => void)` | no | Fires when an option is picked in the switcher (`undefined` = free aspect). Update your `aspectRatio` state here. |
+| `aspectRatios` | `ImageCropAspectOption[]` | no | Options for an on-canvas aspect-ratio switcher. Labels are consumer strings (your i18n). Controlled: the option whose `value === aspectRatio` shows as selected, and picking one calls `onAspectRatioChange`, then `onChange`/`onChangeEnd` with that ratio's default crop. Omit or pass `[]` for no switcher. Requires `onAspectRatioChange` and a controlled `aspectRatio`; without them the pick commits a crop in the old ratio. |
+| `onAspectRatioChange` | `((ratio: ImageCropAspectRatio) => void)` | no | Fires when an option is picked in the switcher (`undefined` = free aspect). Update your `aspectRatio` state here. |
 | …native | | | plus native `<div>` attributes |
 
 <!-- props:end -->

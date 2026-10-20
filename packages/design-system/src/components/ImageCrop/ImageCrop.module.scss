@@ -267,6 +267,7 @@
   display: flex;
   align-items: center;
   gap: var(--image-crop-toolbar-gap);
+  padding: var(--image-crop-toolbar-padding);
   max-width: 100%;
   overflow-x: auto;
   transform: translateX(-50%);
