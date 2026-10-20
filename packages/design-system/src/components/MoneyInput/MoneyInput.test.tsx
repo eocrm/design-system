@@ -437,12 +437,63 @@ describe('MoneyInput', () => {
       expect(amountBox().value).toBe('1,234.50');
     });
 
-    it('allowNegative=false still lets an external negative be edited', async () => {
+    it('allowNegative=false keeps an external negative sign while editing', async () => {
       const onChange = vi.fn();
       render(<Harness onChange={onChange} initial={{ amount: '-5', currency: 'JPY' }} />);
       await userEvent.type(amountBox(), '3', at(2));
-      expect(onChange).toHaveBeenCalled();
-      expect(amountBox().value).not.toBe('-5');
+      expect(amountBox().value).toBe('-53');
+      expect(onChange).toHaveBeenLastCalledWith({ amount: '-53', currency: 'JPY' });
+    });
+
+    const pasteOver = async (text: string) => {
+      amountBox().focus();
+      amountBox().setSelectionRange(0, amountBox().value.length);
+      await userEvent.paste(text);
+    };
+
+    it('paste over a full selection uses the paste parser (en)', async () => {
+      const onChange = vi.fn();
+      render(<Harness onChange={onChange} initial={{ amount: '1234.50', currency: 'USD' }} />);
+      await pasteOver('1.234,56');
+      expect(amountBox().value).toBe('1,234.56');
+      expect(onChange).toHaveBeenLastCalledWith({ amount: '1234.56', currency: 'USD' });
+    });
+
+    it('paste over a full selection uses the paste parser (de)', async () => {
+      const onChange = vi.fn();
+      render(
+        <LocaleProvider locale="de-DE">
+          <Harness onChange={onChange} initial={{ amount: '1234.50', currency: 'EUR' }} />
+        </LocaleProvider>,
+      );
+      await pasteOver('1,234.56');
+      expect(amountBox().value).toBe('1.234,56');
+      expect(onChange).toHaveBeenLastCalledWith({ amount: '1234.56', currency: 'EUR' });
+    });
+
+    it('de: pasting "2.5" over "100" reads the numpad dot as a decimal', async () => {
+      const onChange = vi.fn();
+      render(
+        <LocaleProvider locale="de-DE">
+          <Harness onChange={onChange} initial={{ amount: null, currency: 'EUR' }} />
+        </LocaleProvider>,
+      );
+      await userEvent.type(amountBox(), '100');
+      await pasteOver('2.5');
+      expect(amountBox().value).toBe('2,5');
+      expect(onChange).toHaveBeenLastCalledWith({ amount: '2.5', currency: 'EUR' });
+    });
+
+    it('de JPY: pasting "1,5" over "12" is parsed (truncated), not rejected', async () => {
+      const onChange = vi.fn();
+      render(
+        <LocaleProvider locale="de-DE">
+          <Harness onChange={onChange} initial={{ amount: '12', currency: 'JPY' }} />
+        </LocaleProvider>,
+      );
+      await pasteOver('1,5');
+      expect(amountBox().value).toBe('1');
+      expect(onChange).toHaveBeenLastCalledWith({ amount: '1', currency: 'JPY' });
     });
   });
 

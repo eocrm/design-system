@@ -73,8 +73,14 @@ export function parseAmount(
   const negative = opts.allowNegative && s.startsWith('-');
   s = s.replace(/-/g, '');
 
-  // Both '.' and ',' present (cross-locale paste): the LAST one is the decimal, the other groups.
-  if (s.includes('.') && s.includes(',')) {
+  // Cross-locale paste: a separator repeated more than once groups (the other one is the decimal);
+  // else with both '.' and ',' present, the LAST one is the decimal and the other groups.
+  const dots = s.split('.').length - 1;
+  const commas = s.split(',').length - 1;
+  if (dots > 1 || commas > 1) {
+    group = dots > 1 ? '.' : ',';
+    decimal = group === '.' ? ',' : '.';
+  } else if (dots && commas) {
     decimal = s.lastIndexOf('.') > s.lastIndexOf(',') ? '.' : ',';
     group = decimal === '.' ? ',' : '.';
   }

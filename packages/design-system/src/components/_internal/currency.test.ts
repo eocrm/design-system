@@ -58,6 +58,11 @@ describe('parseAmount / draftToCanonical', () => {
     expect(parse('1.234,56')).toBe('1234.56');
     expect(parse('1.234,56', ru)).toBe('1234.56');
   });
+  it('a separator repeated more than once is grouping', () => {
+    expect(parse('1.234.567')).toBe('1234567');
+    expect(parse('1,234,567', de)).toBe('1234567');
+    expect(parse('1.234.567,8')).toBe('1234567.8');
+  });
   it('numpad-dot rule', () => {
     expect(parse('12.50', de)).toBe('12.50');
     expect(parse('1.234', { ...de, precision: 3 })).toBe('1234');

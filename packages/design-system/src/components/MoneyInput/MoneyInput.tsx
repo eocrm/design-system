@@ -182,7 +182,13 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
     onChange({ amount, currency: cur });
   };
 
-  const parse = (s: string) => parseAmount(s, { locale: loc, precision, allowNegative });
+  // An existing sign survives edits even when negatives are off; only ADDING a '-' is rejected.
+  const parse = (s: string) =>
+    parseAmount(s, {
+      locale: loc,
+      precision,
+      allowNegative: allowNegative || text.startsWith('-'),
+    });
 
   const { group, decimal } = localeSeparators(loc);
   // Our own display: group chars are never decimals (so '1.23' after a de-DE deletion stays 123).
@@ -193,9 +199,9 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
    * Shared edit path. Writes the DOM value + caret directly so React's controlled-value
    * reconciliation finds nothing to change and never throws the caret to the end.
    */
-  const applyEdit = (input: HTMLInputElement, raw: string, caret: number) => {
+  const applyEdit = (input: HTMLInputElement, raw: string, caret: number, pasted = false) => {
     const prev = text;
-    const typed = raw.length === prev.length + 1;
+    const typed = !pasted && raw.length === prev.length + 1;
     const count = (str: string, c: string) => str.split(c).length - 1;
     const fracDigitsOf = (str: string) =>
       str.includes(decimal) ? str.slice(str.indexOf(decimal) + 1).replace(/\D/g, '').length : 0;
@@ -230,7 +236,7 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
     }
     dirty.current = true;
     // Only a paste may carry foreign separators; local edits are in our own format.
-    const draft = raw.length > prev.length + 1 ? parse(raw) : parseOwn(raw);
+    const draft = pasted ? parse(raw) : parseOwn(raw);
     const next = draft ? formatDraft(draft, { locale: loc, precision, pad: false }) : '';
     // Caret lands after the same count of significant chars (digits, decimal, '-') it followed in `raw`.
     const before = raw.slice(0, caret);
@@ -246,12 +252,22 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
     if (amount !== synced.current.amount) emit(amount, currency);
   };
 
+  // Set by paste/drop (which fire before the change), so a paste over a selection — which may
+  // not grow the text — still takes the lenient cross-locale parser. Cleared by any keydown.
+  const pasting = useRef(false);
+  const markPaste = () => {
+    pasting.current = true;
+  };
+
   const onAmountChange = (e: ChangeEvent<HTMLInputElement>) => {
     const input = e.target;
-    applyEdit(input, input.value, input.selectionStart ?? input.value.length);
+    const pasted = pasting.current;
+    pasting.current = false;
+    applyEdit(input, input.value, input.selectionStart ?? input.value.length, pasted);
   };
 
   const onAmountKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
+    pasting.current = false;
     const input = e.currentTarget;
     const { selectionStart: start, selectionEnd: end, value: v } = input;
     if (readOnly || start === null || end === null) return;
@@ -366,6 +382,8 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
         value={text}
         onChange={onAmountChange}
         onKeyDown={onAmountKeyDown}
+        onPaste={markPaste}
+        onDrop={markPaste}
         onFocus={() => {
           dirty.current = false;
         }}
