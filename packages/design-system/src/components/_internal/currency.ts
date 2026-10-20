@@ -61,11 +61,21 @@ export function localeSeparators(locale: string): { group: string; decimal: stri
 
 /** Space-like grouping chars allowed inside a pasted number (one kind per number). */
 const SPACE_GROUP = /[   '’]/g;
-// One affix token: currency symbols and/or one letter word with an optional '.' ('руб.', 'US$').
-const AFFIX_TOKEN = /^(?:\p{Sc}*\p{L}+\.?\p{Sc}*|\p{Sc}+)$/u;
+// One affix token: currency symbols and/or one letter word ('US$', 'руб.', prefix label 'Total:').
+const PREFIX_TOKEN = /^(?:\p{Sc}*\p{L}+[.:]?\p{Sc}*|\p{Sc}+)$/u;
+const SUFFIX_TOKEN = /^(?:\p{Sc}*\p{L}+\.?\p{Sc}*|\p{Sc}+)$/u;
+const SUFFIX_WORDS = new Set(['руб', 'р']);
+let isoCodes: Set<string> | undefined;
+/** A real ISO 4217 code (not merely well-formed), so magnitude words ('K', 'bn', 'млн') never pass. */
+const isIsoCode = (w: string) =>
+  (isoCodes ??= new Set(Intl.supportedValuesOf('currency'))).has(w.toUpperCase());
 
-/** Splits one affix side into sign marks; null when anything but symbols / ONE word / sign remains. */
-function readAffix(side: string, open: string, signs: string) {
+/**
+ * Splits one affix side into sign marks; null when anything but symbols / ONE word / sign remains.
+ * A prefix word is a free label ('Total', 'Итого:'); a suffix word must be a currency
+ * (ISO code or 'руб'/'р') — anything else may be a magnitude ('5 тыс.', '$2 million').
+ */
+function readAffix(side: string, open: string, signs: string, suffix: boolean) {
   const marks = { open: 0, minus: 0, plus: 0 };
   for (const c of side) {
     if (c === open) marks.open++;
@@ -74,8 +84,11 @@ function readAffix(side: string, open: string, signs: string) {
   }
   const rest = side.replace(new RegExp(`[\\${open}${signs.replace('-', '\\-')}]`, 'g'), ' ');
   const tokens = rest.split(/[   ]+/).filter(Boolean);
-  if (!tokens.every((tk) => AFFIX_TOKEN.test(tk))) return null;
-  if (tokens.filter((tk) => /\p{L}/u.test(tk)).length > 1) return null;
+  if (!tokens.every((tk) => (suffix ? SUFFIX_TOKEN : PREFIX_TOKEN).test(tk))) return null;
+  const words = tokens.map((tk) => tk.replace(/[^\p{L}]/gu, '')).filter(Boolean);
+  if (words.length > 1) return null;
+  if (suffix && words.length && !SUFFIX_WORDS.has(words[0].toLowerCase()) && !isIsoCode(words[0]))
+    return null;
   return marks;
 }
 
@@ -94,11 +107,15 @@ export function parseAmount(
   if (first < 0) return null;
   let last = t.length - 1;
   while (!/\d/.test(t[last])) last--;
-  const from = first > 0 && /[.,]/.test(t[first - 1]) ? first - 1 : first; // '.5'
+  // '.5' — but a separator glued to a word belongs to it ('Rs.100', 'руб.10').
+  const leadingSep = /[.,]/.test(t[first - 1] ?? '') && !/\p{L}/u.test(t[first - 2] ?? '');
+  const from = leadingSep ? first - 1 : first;
+  // Letters glued to the number ('5K', '3bn', 'USD5') are magnitudes or noise.
+  if (/\p{L}/u.test(t[from - 1] ?? '') || /\p{L}/u.test(t[last + 1] ?? '')) return 'invalid';
   const core = t.slice(from, last + 1);
 
-  const pre = readAffix(t.slice(0, from), '(', '-+');
-  const post = readAffix(t.slice(last + 1), ')', '-');
+  const pre = readAffix(t.slice(0, from), '(', '-+', false);
+  const post = readAffix(t.slice(last + 1), ')', '-', true);
   if (!pre || !post) return 'invalid';
   const parens = pre.open + post.open;
   const signs = pre.minus + pre.plus + post.minus;
@@ -135,6 +152,8 @@ export function parseAmount(
       dec = c;
     else if (c === lg || c === '.') grp = c;
     else dec = c;
+    // '1,234' / '1.234' as a decimal below precision 3 could equally be grouping: don't guess.
+    if (dec && fracLen === 3 && opts.precision < 3) return 'invalid';
   }
   const spaces = new Set(core.match(SPACE_GROUP) ?? []);
   if (spaces.size) {
@@ -154,7 +173,8 @@ export function parseAmount(
   } else if (!/^\d*$/.test(intPart)) return 'invalid';
 
   const int = grp ? intPart.split(grp).join('') : intPart;
-  const frac = fracPart === null ? null : fracPart.slice(0, opts.precision);
+  // Full fraction: the caller truncates (whole-value paste) or rejects the overflow (partial paste).
+  const frac = fracPart;
   return { negative, int, frac };
 }
 

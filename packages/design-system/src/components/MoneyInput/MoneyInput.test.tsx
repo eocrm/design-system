@@ -651,6 +651,23 @@ describe('MoneyInput', () => {
       expect(amountBox().value).toBe('12.34');
       expect(onChange).not.toHaveBeenCalled();
     });
+    it('a partial paste overflowing the fraction is rejected before truncation', async () => {
+      const onChange = vi.fn();
+      render(<Harness onChange={onChange} />);
+      await userEvent.type(amountBox(), '12');
+      onChange.mockClear();
+      await pasteAt(2, '.567');
+      expect(amountBox().value).toBe('12');
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('rejects magnitude-suffixed pastes', async () => {
+      const onChange = vi.fn();
+      render(<Harness onChange={onChange} />);
+      for (const t of ['$5K', '$1.2M', '$2 million']) await pasteOver(t);
+      expect(amountBox().value).toBe('');
+      expect(onChange).not.toHaveBeenCalled();
+    });
   });
 
   it('single-currency mode with an invalid value.currency uses the offered currency', async () => {

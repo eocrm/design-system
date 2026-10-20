@@ -122,13 +122,41 @@ describe('parseAmount / draftToCanonical', () => {
     expect(parse('100 200')).toBe('100200');
     expect(parse('1,234')).toBe('1234');
   });
+  it('magnitude words and glued letters are invalid', () => {
+    const ru = { ...de, locale: 'ru-RU' };
+    for (const t of ['$5K', '10K', '$1.2M', '$2 million', '3bn', '5 usd2'])
+      expect(parseAmount(t, en), t).toBe('invalid');
+    for (const t of ['5 тыс.', '3 тр', '1,5 млн', '2 млрд'])
+      expect(parseAmount(t, ru), t).toBe('invalid');
+  });
+  it('prefix label words, ISO / rouble suffix words', () => {
+    const ru = { ...de, locale: 'ru-RU' };
+    expect(parse('Total 1,234.50.')).toBe('1234.50');
+    expect(parse('Итого: 1 234,56 ₽', ru)).toBe('1234.56');
+    expect(parse('Price: $5')).toBe('5');
+    expect(parse('1 234,56 руб.', ru)).toBe('1234.56');
+    expect(parse('USD 5')).toBe('5');
+    expect(parse('5 usd')).toBe('5');
+    expect(parse('руб.10', ru)).toBe('10');
+    expect(parse('Rs.100')).toBe('100');
+  });
+  it('a lone decimal + exactly 3 digits is ambiguous below precision 3', () => {
+    const ru = { ...de, locale: 'ru-RU' };
+    expect(parseAmount('1,234', ru)).toBe('invalid');
+    expect(parseAmount('1.234', en)).toBe('invalid');
+    expect(parseAmount('1.234', { ...en, precision: 0 })).toBe('invalid');
+    expect(parse('1.234', { ...en, precision: 3 })).toBe('1.234');
+    expect(parse('1,2345', ru)).toBe('1.2345');
+    expect(parse('$1,234.5678')).toBe('1234.5678');
+  });
   it('numpad-dot rule', () => {
     expect(parse('12.50', de)).toBe('12.50');
     expect(parse('1.234', { ...de, precision: 3 })).toBe('1234');
     expect(parse('1.234', de)).toBe('1234');
   });
   it('truncates, empties, negatives', () => {
-    expect(parse('1.23456')).toBe('1.23');
+    // Full fraction is returned; truncation is the caller's (whole-value paste) job.
+    expect(parse('1.23456')).toBe('1.23456');
     expect(parseAmount('', en)).toBeNull();
     expect(parseAmount('  € ', en)).toBeNull();
     expect(parse('-5')).toBe('5');
