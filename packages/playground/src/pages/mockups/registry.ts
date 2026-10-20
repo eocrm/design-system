@@ -72,6 +72,8 @@ export type ComponentName =
   | 'PasswordInput'
   | 'PasswordStrengthMeter'
   | 'PhoneInput'
+  | 'MoneyInput'
+  | 'CurrencySelect'
   | 'PersonDisplay'
   | 'Popover'
   | 'Tour'

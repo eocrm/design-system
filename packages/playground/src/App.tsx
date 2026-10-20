@@ -39,6 +39,8 @@ import { OtpInputDemo } from './pages/components/OtpInputDemo';
 import { PasswordInputDemo } from './pages/components/PasswordInputDemo';
 import { PasswordStrengthMeterDemo } from './pages/components/PasswordStrengthMeterDemo';
 import { PhoneInputDemo } from './pages/components/PhoneInputDemo';
+import { MoneyInputDemo } from './pages/components/MoneyInputDemo';
+import { CurrencySelectDemo } from './pages/components/CurrencySelectDemo';
 import { PaginationDemo } from './pages/components/PaginationDemo';
 import { ProgressDemo } from './pages/components/ProgressDemo';
 import { QrCodeDemo } from './pages/components/QrCodeDemo';
@@ -190,6 +192,8 @@ export default function App() {
               element={<PasswordStrengthMeterDemo />}
             />
             <Route path="/components/phone-input" element={<PhoneInputDemo />} />
+            <Route path="/components/money-input" element={<MoneyInputDemo />} />
+            <Route path="/components/currency-select" element={<CurrencySelectDemo />} />
             <Route path="/components/select" element={<SelectDemo />} />
             <Route path="/components/setting-row" element={<SettingRowDemo />} />
             <Route path="/components/skeleton" element={<SkeletonDemo />} />

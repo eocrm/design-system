@@ -178,6 +178,19 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['PhoneInput'],
   },
   {
+    to: '/components/money-input',
+    name: 'MoneyInput',
+    description:
+      'Money field — currency picker + formatted amount, emitting a decimal-string MoneyValue.',
+    preview: SCHEMATICS['MoneyInput'],
+  },
+  {
+    to: '/components/currency-select',
+    name: 'CurrencySelect',
+    description: 'Currency picker over Select — ISO 4217 codes with localized names.',
+    preview: SCHEMATICS['CurrencySelect'],
+  },
+  {
     to: '/components/otp-input',
     name: 'OtpInput',
     description:

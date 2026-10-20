@@ -696,6 +696,21 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       <Bar w={78} />
     </Outline>
   ),
+  MoneyInput: (
+    <Outline w={190} h={32} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: 8 }}>
+      <Solid w={30} h={16} style={{ borderRadius: 2 }} />
+      <Box w={8} h={5} style={{ clipPath: 'polygon(0 0,100% 0,50% 100%)' }} />
+      <Box w={2} h={16} />
+      <Bar w={66} />
+    </Outline>
+  ),
+  CurrencySelect: (
+    <Outline w={120} h={32} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: 8 }}>
+      <Solid w={30} h={16} style={{ borderRadius: 2 }} />
+      <Bar w={36} />
+      <Box w={8} h={5} style={{ clipPath: 'polygon(0 0,100% 0,50% 100%)' }} />
+    </Outline>
+  ),
   OtpInput: (
     <Row gap={6}>
       <Outline
