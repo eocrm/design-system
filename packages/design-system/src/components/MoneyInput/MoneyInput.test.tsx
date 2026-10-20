@@ -87,6 +87,8 @@ describe('MoneyInput', () => {
     const { rerender } = render(ui('1'));
     rerender(ui('3.1'));
     expect(amountBox().value).toBe('3.10');
+    rerender(ui('0012.5'));
+    expect(amountBox().value).toBe('12.50');
     expect(onChange).not.toHaveBeenCalled();
   });
 
@@ -132,6 +134,16 @@ describe('MoneyInput', () => {
     expect(screen.getByRole('combobox')).toHaveTextContent('GBP');
     expect(onChange).not.toHaveBeenCalled();
     warn.mockRestore();
+  });
+
+  it('a lone decimal separator does not emit, and blur clears it', async () => {
+    const onChange = vi.fn();
+    render(<Harness onChange={onChange} />);
+    await userEvent.type(amountBox(), '.');
+    expect(onChange).not.toHaveBeenCalled();
+    await userEvent.tab();
+    expect(amountBox().value).toBe('');
+    expect(onChange).not.toHaveBeenCalled();
   });
 
   it('clearing the field emits null', async () => {

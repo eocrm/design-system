@@ -224,6 +224,12 @@
   border-start-end-radius: var(--table-cell-tone-header-radius);
 }
 
+// Full-grid borders meet square at every corner; a rounded toned header would
+// break the grid lines (#664).
+.bordered .th[data-tone] {
+  border-radius: 0;
+}
+
 // ─── Cell link ─────────────────────────────────────────────────────────────
 
 // Inherits the cell's text-align (block) and colour (tone). Padding comes from
@@ -245,7 +251,6 @@
     --text-fg-subtle: currentColor;
 
     background: var(--table-cell-link-bg-hover);
-    text-decoration: underline;
   }
 
   // Inset ring so neighbouring cells don't paint over it.
