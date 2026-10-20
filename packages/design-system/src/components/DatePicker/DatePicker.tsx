@@ -86,7 +86,9 @@ export interface DatePickerProps extends Omit<
    *   (when `name` is set) emits ISO local datetime (`2026-05-28T14:30`).
    *
    * Time is preserved across date re-picks. Picking from a `null` value
-   * defaults the time to `00:00`.
+   * defaults the time to `00:00`. In `'minute'` mode picking a day keeps the
+   * popover open and moves focus to the time input; Enter there (or Escape /
+   * outside click) closes it.
    */
   granularity?: DateTimeGranularity;
 
@@ -204,6 +206,14 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
     const focusable = dialog?.querySelector<HTMLButtonElement>('[role="gridcell"][tabindex="0"]');
     focusable?.focus();
   }, [focusGridTick, refs.floating]);
+
+  // #666: same tick pattern for the minute-mode day pick — the time input
+  // is `disabled` until the new value renders, so focus it after commit.
+  const [focusTimeTick, setFocusTimeTick] = useState(0);
+  useEffect(() => {
+    if (focusTimeTick === 0) return;
+    document.getElementById(`${inputId}-time`)?.focus();
+  }, [focusTimeTick, inputId]);
 
   const commit = useCallback(
     (raw: string) => {
@@ -332,6 +342,12 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
         }
       }
       setValue(withTime);
+      if (granularity === 'minute') {
+        // #666: stay open and hand off to the time input; Enter / Escape /
+        // outside click close as usual.
+        setFocusTimeTick((t) => t + 1);
+        return;
+      }
       setOpen(false);
       inputRef.current?.focus();
     },
@@ -474,6 +490,23 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
             aria-modal="false"
             aria-label={t('datePicker.openCalendar')}
             onMouseDown={(e) => e.preventDefault()} // keep input focus on grid click
+            onKeyDown={(e) => {
+              // #666: Enter in the time input (TimeField commits first, its
+              // clock closed) finishes the pick. Rows in the clock bubble here
+              // through the React tree too, hence the target check. Deferred so
+              // TimeField re-renders with its commit before losing focus —
+              // otherwise its blur re-commits from a stale closure.
+              if (
+                e.key === 'Enter' &&
+                (e.target as HTMLElement).id === `${inputId}-time` &&
+                !document.querySelector('[data-timefield-popover="true"]')
+              ) {
+                window.setTimeout(() => {
+                  setOpen(false);
+                  inputRef.current?.focus();
+                }, 0);
+              }
+            }}
           >
             <DatePickerGrid
               cursor={cursor}

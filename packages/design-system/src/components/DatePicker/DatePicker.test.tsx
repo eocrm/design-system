@@ -101,6 +101,7 @@ describe('DatePicker', () => {
     expect(onChange).toHaveBeenCalledTimes(1);
     expect(onChange.mock.calls[0][0]!.getDate()).toBe(15);
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(document.activeElement).toBe(screen.getByRole('textbox'));
   });
 
   it('clear button resets the value and keeps focus on the input', async () => {
@@ -327,6 +328,51 @@ describe('DatePicker', () => {
       const got = onChange.mock.calls[0][0] as Date;
       expect(got.getHours()).toBe(0);
       expect(got.getMinutes()).toBe(0);
+    });
+
+    it('picking a day keeps the popover open and moves focus to the time input (#666)', async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn<(d: Date | null) => void>();
+      render(<DatePicker granularity="minute" onChange={onChange} aria-label="Date" />, {
+        wrapper: wrap(),
+      });
+      await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+      const [cell15] = screen.getAllByRole('gridcell', { name: /^15$/ });
+      await user.click(cell15);
+      expect(onChange).toHaveBeenCalledTimes(1);
+      expect(onChange.mock.calls[0][0]!.getDate()).toBe(15);
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      const timeInput = screen.getByRole('textbox', { name: 'Time' });
+      await waitFor(() => expect(document.activeElement).toBe(timeInput));
+      // The deferred blur-close must not fire when focus moves into the popover.
+      await new Promise((r) => setTimeout(r, 0));
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+    });
+
+    it('Enter in the time input commits, closes the popover and refocuses the input (#666)', async () => {
+      const user = userEvent.setup();
+      const onChange = vi.fn<(d: Date | null) => void>();
+      render(
+        <DatePicker granularity="minute" hourCycle="24" onChange={onChange} aria-label="Date" />,
+        { wrapper: wrap() },
+      );
+      const input = screen.getByRole('textbox', { name: 'Date' });
+      await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+      const [cell15] = screen.getAllByRole('gridcell', { name: /^15$/ });
+      await user.click(cell15);
+      const timeInput = screen.getByRole('textbox', { name: 'Time' });
+      await waitFor(() => expect(document.activeElement).toBe(timeInput));
+      await user.clear(timeInput);
+      await user.type(timeInput, '14:30{Enter}');
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+      expect(document.activeElement).toBe(input);
+      // Let TimeField's deferred blur-commit run: it must not re-fire onChange.
+      await new Promise((r) => setTimeout(r, 0));
+      expect(onChange).toHaveBeenCalledTimes(2); // day pick + time commit
+      const got = onChange.mock.calls.at(-1)![0]!;
+      expect(got.getDate()).toBe(15);
+      expect(got.getHours()).toBe(14);
+      expect(got.getMinutes()).toBe(30);
     });
 
     it('picking a different date preserves existing time-of-day', async () => {

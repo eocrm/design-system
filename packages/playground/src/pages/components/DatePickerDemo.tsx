@@ -319,7 +319,7 @@ export function Demo() {
 
       <Example
         title="Granularity: minute"
-        description="`granularity='minute'` adds a manual-entry time input below the calendar grid; the trigger text becomes `MM/DD/YYYY HH:mm` (or `MM/DD/YYYY h:mm AM/PM` in 12h locales) and the hidden form mirror emits ISO local datetime (`2026-05-28T14:30`). Picking a different date preserves the existing time-of-day; picking from `null` defaults to `00:00`. The embedded `<TimeField>` also exposes a Now button in its popover footer."
+        description="`granularity='minute'` adds a manual-entry time input below the calendar grid; the trigger text becomes `MM/DD/YYYY HH:mm` (or `MM/DD/YYYY h:mm AM/PM` in 12h locales) and the hidden form mirror emits ISO local datetime (`2026-05-28T14:30`). Picking a different date preserves the existing time-of-day; picking from `null` defaults to `00:00`. Picking a day keeps the popover open and focuses the time input; Enter there closes it. The embedded `<TimeField>` also exposes a Now button in its popover footer."
         code={`import { useState } from 'react';
 import { DatePicker, Stack, toIsoDateTime } from '@eocrm/design-system';
 
