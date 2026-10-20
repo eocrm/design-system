@@ -662,14 +662,17 @@ describe('highlightedIds', () => {
 });
 
 describe('onHoverChange', () => {
-  it.each(['list', 'chart'] as const)('fires the node id on enter and null on leave (%s)', (view) => {
-    const onHoverChange = vi.fn();
-    render(<Harness view={view} onHoverChange={onHoverChange} />);
-    fireEvent.pointerEnter(row('Company'));
-    expect(onHoverChange).toHaveBeenLastCalledWith('Company');
-    fireEvent.pointerLeave(row('Company'));
-    expect(onHoverChange).toHaveBeenLastCalledWith(null);
-  });
+  it.each(['list', 'chart'] as const)(
+    'fires the node id on enter and null on leave (%s)',
+    (view) => {
+      const onHoverChange = vi.fn();
+      render(<Harness view={view} onHoverChange={onHoverChange} />);
+      fireEvent.pointerEnter(row('Company'));
+      expect(onHoverChange).toHaveBeenLastCalledWith('Company');
+      fireEvent.pointerLeave(row('Company'));
+      expect(onHoverChange).toHaveBeenLastCalledWith(null);
+    },
+  );
 
   it('status rows do not fire', () => {
     const onHoverChange = vi.fn();
