@@ -3,8 +3,8 @@
 .tile {
   display: inline-grid;
   place-items: center;
-  background: var(--icon-tile-bg);
-  color: var(--icon-tile-fg);
+  background: var(--icon-tile-bg, transparent);
+  color: var(--icon-tile-fg, currentColor);
 }
 
 .size-xs {

@@ -296,7 +296,7 @@ describe('PillMenu — general value menu (#572)', () => {
   it('row icons take the row colour, not the menu grey', () => {
     const scss = readFileSync(resolve(__dirname, 'PillMenu.module.scss'), 'utf8');
     expect(scss).toMatch(
-      /\.option\.option\s*\{[^}]*--dropdown-menu-icon-fg:\s*var\(--pill-menu-fg\)/,
+      /\.option\.option\s*\{[^}]*--dropdown-menu-icon-fg:\s*var\(--pill-menu-fg, currentColor\)/,
     );
   });
 });

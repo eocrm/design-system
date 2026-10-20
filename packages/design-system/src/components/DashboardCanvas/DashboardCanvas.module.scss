@@ -136,9 +136,9 @@
 // `<Card>`). Only gesture-state affordances below get their own chrome.
 .item {
   // stylelint-disable-next-line property-disallowed-list -- DashboardCanvasItem's sanctioned job: per-cell grid placement (Grid.Item precedent), not consumer layout (Rule 4 exemption)
-  grid-column: var(--dc-col);
+  grid-column: var(--dc-col, auto);
   // stylelint-disable-next-line property-disallowed-list -- see grid-column comment above
-  grid-row: var(--dc-row);
+  grid-row: var(--dc-row, auto);
   position: relative; // anchor for the internal resize handles
   overflow: auto;
 }
@@ -299,8 +299,8 @@
 // — so the correct (section, y, x) stack order falls out for free; no JS
 // re-render needed for the reflow itself, only for the editing gate
 // (DashboardCanvas.tsx's `isNarrow`/`editingEnabled`).
-// Specificity: the base `.item` rule above (`grid-column: var(--dc-col);
-// grid-row: var(--dc-row);`) is one class = (0,1,0). `.canvas.stackXx
+// Specificity: the base `.item` rule above (`grid-column: var(--dc-col, auto);
+// grid-row: var(--dc-row, auto);`) is one class = (0,1,0). `.canvas.stackXx
 // .item` below is three classes = (0,3,0), which beats it unconditionally —
 // no reliance on this file's own source order surviving bundling (#318
 // precedent; same reasoning as Grid's `.collapsible.collapseXx` double
@@ -314,7 +314,7 @@
   // stylelint-disable-next-line property-disallowed-list -- below-breakpoint override is DashboardCanvas's own placement mechanism, same sanction as the base .item rule above
   grid-column: 1 / -1;
   // stylelint-disable-next-line property-disallowed-list -- see grid-column comment above
-  grid-row: var(--dc-h-span);
+  grid-row: var(--dc-h-span, auto);
 }
 
 @container dashboard-canvas (max-width: #{bp.$collapse-sm}) {

@@ -333,8 +333,8 @@ describe('Button — palette `color`', () => {
   it('hovers and presses with a brightness filter, guarded against disabled', () => {
     const scss = readFileSync(resolve(__dirname, 'Button.module.scss'), 'utf8');
     const block = scss.match(/\.palette \{[\s\S]*?\n\}/)![0];
-    expect(block).toMatch(/background: var\(--button-palette-bg\)/);
-    expect(block).toMatch(/color: var\(--button-palette-fg\)/);
+    expect(block).toMatch(/background: var\(--button-palette-bg, transparent\)/);
+    expect(block).toMatch(/color: var\(--button-palette-fg, currentColor\)/);
     expect(block).toMatch(
       /&:hover:not\(:disabled, \[aria-disabled='true'\]\) \{\s*filter: brightness\(0\.96\)/,
     );

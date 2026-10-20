@@ -154,8 +154,8 @@
 // (same as PillMenu). One filter darkens fill AND text for all 30 colors, so
 // no per-color hover tokens; contrast.test.ts pins AA at both factors.
 .palette {
-  background: var(--button-palette-bg);
-  color: var(--button-palette-fg);
+  background: var(--button-palette-bg, transparent);
+  color: var(--button-palette-fg, currentColor);
 
   &:hover:not(:disabled, [aria-disabled='true']) {
     filter: brightness(0.96);

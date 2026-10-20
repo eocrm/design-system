@@ -880,7 +880,7 @@ describe('Popover — viewport cap with a ScrollArea (#598)', () => {
     )![0];
     expect(block).toMatch(/display: flex;/);
     expect(block).toMatch(/flex-direction: column;/);
-    expect(block).toMatch(/max-height: var\(--popover-available-height\);/);
+    expect(block).toMatch(/max-height: var\(--popover-available-height, none\);/);
     // A ScrollArea only in a `hidden` view must not cap the visible one: every
     // one-level `:has()` branch skips hidden wrappers.
     const oneLevel = scss.match(/:has\(> \[data-scroll-area\], > [^)]*\)[^)]*\)/g) ?? [];

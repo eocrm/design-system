@@ -130,7 +130,7 @@
 // (0,2,0) specificity the old `.collapsible.stepXx` pair had.
 @container (max-width: #{bp.$collapse-lg}) {
   .grid.stepLg {
-    grid-template-columns: var(--grid-columns-lg);
+    grid-template-columns: var(--grid-columns-lg, none);
 
     > .item {
       // stylelint-disable-next-line property-disallowed-list -- graduated collapse override is Grid's own placement mechanism, same sanction as `.item` above
@@ -141,7 +141,7 @@
 
 @container (max-width: #{bp.$collapse-md}) {
   .grid.stepMd {
-    grid-template-columns: var(--grid-columns-md);
+    grid-template-columns: var(--grid-columns-md, none);
 
     > .item {
       // stylelint-disable-next-line property-disallowed-list -- graduated collapse override is Grid's own placement mechanism, same sanction as `.item` above
@@ -152,7 +152,7 @@
 
 @container (max-width: #{bp.$collapse-sm}) {
   .grid.stepSm {
-    grid-template-columns: var(--grid-columns-sm);
+    grid-template-columns: var(--grid-columns-sm, none);
 
     > .item {
       // stylelint-disable-next-line property-disallowed-list -- graduated collapse override is Grid's own placement mechanism, same sanction as `.item` above

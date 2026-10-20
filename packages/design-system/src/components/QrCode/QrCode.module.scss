@@ -62,11 +62,11 @@
   position: absolute;
   top: 50%;
   left: 50%;
-  width: var(--qr-logo-size);
+  width: var(--qr-logo-size, 0);
   aspect-ratio: 1;
   translate: -50% -50%;
   background: var(--qr-ink);
-  mask-image: var(--qr-logo-src);
+  mask-image: var(--qr-logo-src, none);
   mask-repeat: no-repeat;
   mask-position: center;
   mask-size: contain;

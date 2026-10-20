@@ -90,8 +90,8 @@
   // background-COLOR, not the shorthand: `.striped` paints its band as a
   // background-image, and the shorthand would reset it depending on source
   // order. Longhands compose regardless of order.
-  background-color: var(--calendar-event-color-bg);
-  color: var(--calendar-event-color-fg);
+  background-color: var(--calendar-event-color-bg, transparent);
+  color: var(--calendar-event-color-fg, currentColor);
 }
 
 .striped {
@@ -104,8 +104,8 @@
   // geometry.
   background-image: linear-gradient(
     to right,
-    var(--calendar-event-stripe-color) 0,
-    var(--calendar-event-stripe-color) var(--calendar-event-color-stripe-width),
+    var(--calendar-event-stripe-color, currentColor) 0,
+    var(--calendar-event-stripe-color, currentColor) var(--calendar-event-color-stripe-width),
     transparent var(--calendar-event-color-stripe-width)
   );
 
@@ -114,7 +114,7 @@
   // same colour makes the leading edge read as ONE solid 4px band instead of a
   // sliver of tone beside the palette border. Measured — without it the band is
   // legible but competes.
-  border-left-color: var(--calendar-event-stripe-color);
+  border-left-color: var(--calendar-event-stripe-color, currentColor);
 }
 
 // Tones — non-allDay (tinted background, strong-color foreground)

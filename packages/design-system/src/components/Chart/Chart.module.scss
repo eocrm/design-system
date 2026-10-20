@@ -107,7 +107,7 @@
   // Declared here, not in tokens.scss: it mixes the per-series colour set inline.
   --chart-comparison-fill: color-mix(
     in srgb,
-    var(--chart-series-color) var(--chart-comparison-mix),
+    var(--chart-series-color, currentColor) var(--chart-comparison-mix),
     transparent
   );
 
@@ -120,7 +120,7 @@
 
 .line {
   fill: none;
-  stroke: var(--chart-series-color);
+  stroke: var(--chart-series-color, currentColor);
   stroke-width: var(--chart-line-width);
   stroke-linejoin: round;
   stroke-linecap: round;
@@ -132,29 +132,29 @@
 }
 
 .area {
-  fill: var(--chart-series-color);
+  fill: var(--chart-series-color, currentColor);
   fill-opacity: var(--chart-area-opacity);
 }
 
 .bar {
-  fill: var(--chart-series-color);
+  fill: var(--chart-series-color, currentColor);
 }
 
 .series[data-comparison] .bar {
   fill: var(--chart-comparison-fill);
-  stroke: var(--chart-series-color);
+  stroke: var(--chart-series-color, currentColor);
   stroke-width: var(--chart-comparison-stroke);
 }
 
 .series[data-overflow] .bar {
-  stroke: var(--chart-series-color);
+  stroke: var(--chart-series-color, currentColor);
   stroke-dasharray: var(--chart-dash);
   fill: var(--chart-comparison-fill);
 }
 
 .dot,
 .marker {
-  fill: var(--chart-series-color);
+  fill: var(--chart-series-color, currentColor);
   stroke: var(--chart-dot-ring);
   stroke-width: var(--chart-dot-ring-width);
 }
@@ -217,14 +217,14 @@
   width: var(--chart-swatch);
   height: var(--chart-swatch);
   border-radius: var(--radius-sm);
-  background: var(--chart-series-color);
+  background: var(--chart-series-color, currentColor);
 
   &[data-comparison],
   &[data-overflow] {
     height: 0;
     border-top-width: var(--chart-swatch-dash-width);
     border-top-style: dashed;
-    border-top-color: var(--chart-series-color);
+    border-top-color: var(--chart-series-color, currentColor);
     border-radius: 0;
     background: transparent;
   }
