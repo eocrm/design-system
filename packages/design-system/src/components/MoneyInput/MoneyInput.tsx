@@ -264,10 +264,14 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
     if (!d || d === 'invalid') return;
     const start = input.selectionStart ?? text.length;
     const end = input.selectionEnd ?? text.length;
-    // A negative must replace from index 0, and only where a sign is allowed (never dropped silently).
-    if (d.negative && (start !== 0 || (!allowNegative && !text.startsWith('-')))) return;
+    const whole = start === 0 && end === text.length; // also true for an empty field
+    // A negative must replace the whole value, and only where a sign is allowed (never dropped silently).
+    if (d.negative && (!whole || (!allowNegative && !text.startsWith('-')))) return;
     const own = (d.negative ? '-' : '') + d.int + (d.frac === null ? '' : decimal + d.frac);
     const raw = text.slice(0, start) + own + text.slice(end);
+    // A partial paste must not overflow the fraction (it would silently drop digits).
+    const at = raw.indexOf(decimal);
+    if (!whole && at >= 0 && raw.slice(at + 1).replace(/\D/g, '').length > precision) return;
     applyEdit(input, raw, start + own.length, true);
   };
 

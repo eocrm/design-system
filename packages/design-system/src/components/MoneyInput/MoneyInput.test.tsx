@@ -600,11 +600,55 @@ describe('MoneyInput', () => {
         '1,234.50 (EUR)',
         'Total (USD) 99',
         '1,234.50 (incl. VAT)',
-        'Total 1,234.50.',
         '5 - 10',
       ])
         await pasteOver(t);
       expect(amountBox().value).toBe('');
+      expect(onChange).not.toHaveBeenCalled();
+    });
+    it('ru: pastes a rouble amount with a word affix', async () => {
+      const onChange = vi.fn();
+      render(
+        <LocaleProvider locale="ru-RU">
+          <Harness
+            onChange={onChange}
+            currencies={['RUB', 'EUR']}
+            initial={{ amount: null, currency: 'RUB' }}
+          />
+        </LocaleProvider>,
+      );
+      await pasteOver('1 234,56 руб.');
+      expect(amountBox().value).toBe('1 234,56');
+      expect(onChange).toHaveBeenLastCalledWith({ amount: '1234.56', currency: 'RUB' });
+    });
+
+    it('rejects ambiguous grouping pastes', async () => {
+      const onChange = vi.fn();
+      render(<Harness onChange={onChange} />);
+      for (const t of ['100\n200', '5 10', '12,34', '1..5']) await pasteOver(t);
+      expect(amountBox().value).toBe('');
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('a negative paste must replace the whole value', async () => {
+      const onChange = vi.fn();
+      render(
+        <Harness allowNegative onChange={onChange} initial={{ amount: null, currency: 'JPY' }} />,
+      );
+      await userEvent.type(amountBox(), '12');
+      onChange.mockClear();
+      await pasteAt(0, '-5');
+      expect(amountBox().value).toBe('12');
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('a partial paste that overflows the fraction is rejected', async () => {
+      const onChange = vi.fn();
+      render(<Harness onChange={onChange} />);
+      await userEvent.type(amountBox(), '12.34');
+      onChange.mockClear();
+      await pasteAt(3, '9');
+      expect(amountBox().value).toBe('12.34');
       expect(onChange).not.toHaveBeenCalled();
     });
   });

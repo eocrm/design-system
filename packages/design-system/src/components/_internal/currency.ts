@@ -59,60 +59,103 @@ export function localeSeparators(locale: string): { group: string; decimal: stri
   };
 }
 
-const SP = '[\\s\\u00a0\\u202f]*';
-// Currency affix: an ISO code ('USD') or an optional 1–2 letter prefix + symbol ('$', 'US$', 'CA$').
-const AFFIX = `(?:[A-Z]{3}|[A-Z]{0,2}\\p{Sc})`;
-// One numeric core: digits with '.', ',', spaces/NBSP/narrow NBSP and apostrophes as separators.
-const CORE = `((?:\\d|[.,]\\d)[\\d.,'\\u2019\\s\\u00a0\\u202f]*?)`;
-const SIGNED = new RegExp(
-  `^(?:${AFFIX}${SP})?(-)?${SP}(?:${AFFIX}${SP})?${CORE}${SP}(?:${AFFIX})?${SP}(-)?$`,
-  'u',
-);
-const PARENS = new RegExp(
-  `^(?:${AFFIX}${SP})?\\(${SP}(?:${AFFIX}${SP})?${CORE}${SP}(?:${AFFIX})?${SP}\\)${SP}(?:${AFFIX})?$`,
-  'u',
-);
+/** Space-like grouping chars allowed inside a pasted number (one kind per number). */
+const SPACE_GROUP = /[   '’]/g;
+// One affix token: currency symbols and/or one letter word with an optional '.' ('руб.', 'US$').
+const AFFIX_TOKEN = /^(?:\p{Sc}*\p{L}+\.?\p{Sc}*|\p{Sc}+)$/u;
+
+/** Splits one affix side into sign marks; null when anything but symbols / ONE word / sign remains. */
+function readAffix(side: string, open: string, signs: string) {
+  const marks = { open: 0, minus: 0, plus: 0 };
+  for (const c of side) {
+    if (c === open) marks.open++;
+    else if (c === '-' && signs.includes('-')) marks.minus++;
+    else if (c === '+' && signs.includes('+')) marks.plus++;
+  }
+  const rest = side.replace(new RegExp(`[\\${open}${signs.replace('-', '\\-')}]`, 'g'), ' ');
+  const tokens = rest.split(/[   ]+/).filter(Boolean);
+  if (!tokens.every((tk) => AFFIX_TOKEN.test(tk))) return null;
+  if (tokens.filter((tk) => /\p{L}/u.test(tk)).length > 1) return null;
+  return marks;
+}
 
 /**
- * Lenient parse of a PASTED segment. It must be exactly one number with optional currency
- * symbols/codes, a leading/trailing minus (incl. U+2212) or accounting parentheses — anything
- * else (words, a second number, stray parentheses) is `'invalid'`; no digits at all is `null`.
- * Inside the core, cross-locale separators are resolved (see below).
+ * Lenient parse of a PASTED segment: exactly one number, with optional currency symbols / one word
+ * per side, a sign ('-', '−', '+', trailing '-') or accounting parentheses. Grouping must be
+ * unambiguous (first group 1–3 digits, then exactly 3, one group char kind); the cross-locale rules
+ * pick the decimal. Anything doubtful → `'invalid'`; no digits at all → `null`.
  */
 export function parseAmount(
   text: string,
   opts: { locale: string; precision: number; allowNegative: boolean },
 ): AmountDraft | null | 'invalid' {
-  const t = text
-    .replace(/−/g, '-')
-    .trim()
-    .replace(/(\d)\.$/, '$1'); // trailing sentence period
-  if (!/\d/.test(t)) return null;
-  const m = SIGNED.exec(t);
-  const p = m ? null : PARENS.exec(t);
-  if (!m && !p) return 'invalid';
-  if (m && m[1] && m[3]) return 'invalid'; // both leading and trailing minus
-  const negative = opts.allowNegative && (p ? true : !!(m![1] || m![3]));
-  let s = (m ? m[2] : p![1]).replace(/[\s  '’]/g, '');
+  const t = text.replace(/−/g, '-').trim().replace(/\.$/, ''); // trailing sentence period
+  const first = t.search(/\d/);
+  if (first < 0) return null;
+  let last = t.length - 1;
+  while (!/\d/.test(t[last])) last--;
+  const from = first > 0 && /[.,]/.test(t[first - 1]) ? first - 1 : first; // '.5'
+  const core = t.slice(from, last + 1);
 
-  let { group, decimal } = localeSeparators(opts.locale);
-  // Cross-locale: a separator repeated more than once groups (the other one is the decimal);
-  // else with both '.' and ',' present, the LAST one is the decimal and the other groups.
-  const dots = s.split('.').length - 1;
-  const commas = s.split(',').length - 1;
-  if (dots > 1 || commas > 1) {
-    group = dots > 1 ? '.' : ',';
-    decimal = group === '.' ? ',' : '.';
-  } else if (dots && commas) {
-    decimal = s.lastIndexOf('.') > s.lastIndexOf(',') ? '.' : ',';
-    group = decimal === '.' ? ',' : '.';
-  } else if (decimal === ',' && opts.precision <= 2 && dots === 1) {
-    // Numpad-dot rule: in a comma-decimal locale, a lone '.' followed by 1..precision digits is a decimal point.
-    const frac = s.slice(s.indexOf('.') + 1);
-    if (frac.length >= 1 && frac.length <= opts.precision) s = s.replace('.', ',');
+  const pre = readAffix(t.slice(0, from), '(', '-+');
+  const post = readAffix(t.slice(last + 1), ')', '-');
+  if (!pre || !post) return 'invalid';
+  const parens = pre.open + post.open;
+  const signs = pre.minus + pre.plus + post.minus;
+  if (pre.open > 1 || post.open > 1 || parens === 1 || signs > 1 || (parens && signs)) {
+    return 'invalid';
+  }
+  const negative = opts.allowNegative && (parens === 2 || pre.minus + post.minus === 1);
+
+  if (!/^[\d.,]+$/.test(core.replace(SPACE_GROUP, ''))) return 'invalid'; // tab, newline, '-', letters
+  const { group: lg, decimal: ld } = localeSeparators(opts.locale);
+  const count = (c: string) => core.split(c).length - 1;
+  const dots = count('.');
+  const commas = count(',');
+  let dec: string | null = null;
+  let grp: string | null = null;
+  if (dots && commas) {
+    dec = core.lastIndexOf('.') > core.lastIndexOf(',') ? '.' : ',';
+    grp = dec === '.' ? ',' : '.';
+    if (count(dec) > 1) return 'invalid';
+  } else if (dots > 1 || commas > 1) {
+    grp = dots ? '.' : ',';
+  } else if (dots || commas) {
+    const c = dots ? '.' : ',';
+    const fracLen = core.length - core.indexOf(c) - 1;
+    if (c === ld) dec = c;
+    // Numpad-dot rule: in a comma-decimal locale, a lone '.' + 1..precision digits is a decimal.
+    else if (
+      c === '.' &&
+      ld === ',' &&
+      opts.precision <= 2 &&
+      fracLen >= 1 &&
+      fracLen <= opts.precision
+    )
+      dec = c;
+    else if (c === lg || c === '.') grp = c;
+    else dec = c;
+  }
+  const spaces = new Set(core.match(SPACE_GROUP) ?? []);
+  if (spaces.size) {
+    if (grp || spaces.size > 1) return 'invalid'; // one group char kind
+    grp = [...spaces][0];
   }
 
-  return toDraft(s.split(group).join(''), decimal, opts.precision, negative);
+  const at = dec ? core.indexOf(dec) : -1;
+  const intPart = at < 0 ? core : core.slice(0, at);
+  const fracPart = at < 0 ? null : core.slice(at + 1);
+  if (fracPart !== null && !/^\d*$/.test(fracPart)) return 'invalid';
+  if (grp) {
+    const groups = intPart.split(grp);
+    if (!/^\d{1,3}$/.test(groups[0]) || !groups.slice(1).every((g) => /^\d{3}$/.test(g))) {
+      return 'invalid';
+    }
+  } else if (!/^\d*$/.test(intPart)) return 'invalid';
+
+  const int = grp ? intPart.split(grp).join('') : intPart;
+  const frac = fracPart === null ? null : fracPart.slice(0, opts.precision);
+  return { negative, int, frac };
 }
 
 /**

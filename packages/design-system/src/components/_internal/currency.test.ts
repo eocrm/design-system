@@ -82,14 +82,45 @@ describe('parseAmount / draftToCanonical', () => {
       '1,234.50 (EUR)',
       'Total (USD) 99',
       '1,234.50 (incl. VAT)',
-      'Total 1,234.50.',
       '5 - 10',
     ])
       expect(parseAmount(t, neg)).toBe('invalid');
+    // One letter word per side is an affix (ruling round 5).
+    expect(parse('Total 1,234.50.')).toBe('1234.50');
     expect(parse('1,234.50.')).toBe('1234.50');
     expect(parse('USD 1,234.50')).toBe('1234.50');
     expect(parse('-$5', neg)).toBe('-5');
     expect(parse('$-5', neg)).toBe('-5');
+  });
+  it('affixes: any-case words with an optional period, symbols, leading +', () => {
+    const ru = { ...de, locale: 'ru-RU' };
+    expect(parse('1\u00a0234,56 руб.', ru)).toBe('1234.56');
+    expect(parse('1 234,56 руб', ru)).toBe('1234.56');
+    expect(parse('1 234,56 р.', ru)).toBe('1234.56');
+    expect(parse('1 234,56 ₽.', ru)).toBe('1234.56');
+    expect(parse('usd 12')).toBe('12');
+    expect(parse('+5')).toBe('5');
+    expect(parse('US$ 5')).toBe('5');
+  });
+  it('ambiguous grouping is invalid, never guessed', () => {
+    const ru = { ...de, locale: 'ru-RU' };
+    for (const t of [
+      '100\n200',
+      '100\t200',
+      '5 10',
+      '1 2 3',
+      '12,34',
+      '1,2',
+      '1..5',
+      '1,,5',
+      '12.34.56',
+      '1.234,5.6',
+    ])
+      expect(parseAmount(t, en), t).toBe('invalid');
+    expect(parseAmount('15.01.2024', ru)).toBe('invalid');
+    expect(parseAmount('1.234 567', en)).toBe('invalid');
+    expect(parse('100 200')).toBe('100200');
+    expect(parse('1,234')).toBe('1234');
   });
   it('numpad-dot rule', () => {
     expect(parse('12.50', de)).toBe('12.50');
