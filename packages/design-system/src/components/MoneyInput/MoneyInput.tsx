@@ -25,6 +25,7 @@ import {
   isValidCurrency,
   localeSeparators,
   parseAmount,
+  parseLocalAmount,
   roundAmount,
   type AmountDraft,
   type CurrencyDisplay,
@@ -184,17 +185,15 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
     onChange({ amount, currency: cur });
   };
 
+  const { group, decimal } = localeSeparators(loc);
+  // Our own text is strictly own-locale: group chars are never decimals (de '1.23' stays 123).
   // An existing sign survives edits even when negatives are off; only ADDING a '-' is rejected.
-  const parse = (s: string) =>
-    parseAmount(s, {
+  const parseOwn = (s: string) =>
+    parseLocalAmount(s, {
       locale: loc,
       precision,
       allowNegative: allowNegative || text.startsWith('-'),
     });
-
-  const { group, decimal } = localeSeparators(loc);
-  // Our own display: group chars are never decimals (so '1.23' after a de-DE deletion stays 123).
-  const parseOwn = (s: string) => parse(s.split(group).join(''));
   const isSignificant = (c: string) => (c >= '0' && c <= '9') || c === decimal || c === '-';
 
   /**
@@ -225,10 +224,9 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
     const fracDigits = fracDigitsOf(raw);
     const reject =
       unsignedOnly ||
-      (typed &&
-        (decimals > 1 ||
-          (decimals === 1 && fracDigits > precision) ||
-          (dash !== -1 && (dash !== 0 || raw.lastIndexOf('-') !== 0))));
+      ((typed || inserted) &&
+        (decimals > 1 || (dash !== -1 && (dash !== 0 || raw.lastIndexOf('-') !== 0)))) ||
+      (typed && decimals === 1 && fracDigits > precision);
     if (reject) {
       // Back to where the insertion started (caret - 1 for a typed char).
       const back = Math.max(0, caret - Math.max(0, raw.length - prev.length));
@@ -261,12 +259,14 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
    */
   const insertText = (input: HTMLInputElement, segment: string) => {
     if (readOnly) return;
+    // When in doubt, reject (no change, no emit) rather than guess.
     const d = parseAmount(segment, { locale: loc, precision, allowNegative: true });
-    if (!d) return;
-    if (d.negative && !allowNegative && !text.startsWith('-')) return; // never drop a sign silently
-    const own = (d.negative ? '-' : '') + d.int + (d.frac === null ? '' : decimal + d.frac);
+    if (!d || d === 'invalid') return;
     const start = input.selectionStart ?? text.length;
     const end = input.selectionEnd ?? text.length;
+    // A negative must replace from index 0, and only where a sign is allowed (never dropped silently).
+    if (d.negative && (start !== 0 || (!allowNegative && !text.startsWith('-')))) return;
+    const own = (d.negative ? '-' : '') + d.int + (d.frac === null ? '' : decimal + d.frac);
     const raw = text.slice(0, start) + own + text.slice(end);
     applyEdit(input, raw, start + own.length, true);
   };

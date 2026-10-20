@@ -59,24 +59,44 @@ export function localeSeparators(locale: string): { group: string; decimal: stri
   };
 }
 
-const escapeRe = (s: string) => s.replace(/[\\^$.*+?()[\]{}|-]/g, '\\$&');
+const SP = '[\\s\\u00a0\\u202f]*';
+// Currency affix: an ISO code ('USD') or an optional 1–2 letter prefix + symbol ('$', 'US$', 'CA$').
+const AFFIX = `(?:[A-Z]{3}|[A-Z]{0,2}\\p{Sc})`;
+// One numeric core: digits with '.', ',', spaces/NBSP/narrow NBSP and apostrophes as separators.
+const CORE = `((?:\\d|[.,]\\d)[\\d.,'\\u2019\\s\\u00a0\\u202f]*?)`;
+const SIGNED = new RegExp(
+  `^(?:${AFFIX}${SP})?(-)?${SP}(?:${AFFIX}${SP})?${CORE}${SP}(?:${AFFIX})?${SP}(-)?$`,
+  'u',
+);
+const PARENS = new RegExp(
+  `^(?:${AFFIX}${SP})?\\(${SP}(?:${AFFIX}${SP})?${CORE}${SP}(?:${AFFIX})?${SP}\\)${SP}(?:${AFFIX})?$`,
+  'u',
+);
 
+/**
+ * Lenient parse of a PASTED segment. It must be exactly one number with optional currency
+ * symbols/codes, a leading/trailing minus (incl. U+2212) or accounting parentheses — anything
+ * else (words, a second number, stray parentheses) is `'invalid'`; no digits at all is `null`.
+ * Inside the core, cross-locale separators are resolved (see below).
+ */
 export function parseAmount(
   text: string,
   opts: { locale: string; precision: number; allowNegative: boolean },
-): AmountDraft | null {
+): AmountDraft | null | 'invalid' {
+  const t = text
+    .replace(/−/g, '-')
+    .trim()
+    .replace(/(\d)\.$/, '$1'); // trailing sentence period
+  if (!/\d/.test(t)) return null;
+  const m = SIGNED.exec(t);
+  const p = m ? null : PARENS.exec(t);
+  if (!m && !p) return 'invalid';
+  if (m && m[1] && m[3]) return 'invalid'; // both leading and trailing minus
+  const negative = opts.allowNegative && (p ? true : !!(m![1] || m![3]));
+  let s = (m ? m[2] : p![1]).replace(/[\s  '’]/g, '');
+
   let { group, decimal } = localeSeparators(opts.locale);
-  const keep = new RegExp(`[^0-9\\-.,${escapeRe(group)}${escapeRe(decimal)}]`, 'g');
-  // Sign forms: U+2212 minus, accounting parentheses '(1,234.50)', trailing minus '5-'.
-  const t = text.replace(/\u2212/g, '-');
-  const parens = /\(.*\)/.test(t);
-  let s = t.replace(keep, '');
-  if (!s) return null;
-
-  const negative = opts.allowNegative && (s.startsWith('-') || s.endsWith('-') || parens);
-  s = s.replace(/-/g, '');
-
-  // Cross-locale paste: a separator repeated more than once groups (the other one is the decimal);
+  // Cross-locale: a separator repeated more than once groups (the other one is the decimal);
   // else with both '.' and ',' present, the LAST one is the decimal and the other groups.
   const dots = s.split('.').length - 1;
   const commas = s.split(',').length - 1;
@@ -86,19 +106,37 @@ export function parseAmount(
   } else if (dots && commas) {
     decimal = s.lastIndexOf('.') > s.lastIndexOf(',') ? '.' : ',';
     group = decimal === '.' ? ',' : '.';
+  } else if (decimal === ',' && opts.precision <= 2 && dots === 1) {
+    // Numpad-dot rule: in a comma-decimal locale, a lone '.' followed by 1..precision digits is a decimal point.
+    const frac = s.slice(s.indexOf('.') + 1);
+    if (frac.length >= 1 && frac.length <= opts.precision) s = s.replace('.', ',');
   }
 
-  // Numpad-dot rule: in a comma-decimal locale, a lone '.' followed by 1..precision digits is a decimal point.
-  if (decimal === ',' && opts.precision <= 2 && !s.includes(',')) {
-    const m = /^[^.]*\.(\d+)$/.exec(s);
-    if (m && m[1].length <= opts.precision) s = s.replace('.', ',');
-  }
+  return toDraft(s.split(group).join(''), decimal, opts.precision, negative);
+}
 
-  s = s.split(group).join('');
+/**
+ * Strict parse of the field's OWN text: only the locale group char is stripped and only the
+ * locale decimal is a decimal. No cross-locale or numpad guessing.
+ */
+export function parseLocalAmount(
+  text: string,
+  opts: { locale: string; precision: number; allowNegative: boolean },
+): AmountDraft | null {
+  const { group, decimal } = localeSeparators(opts.locale);
+  const s = [...text.split(group).join('')]
+    .filter((c) => (c >= '0' && c <= '9') || c === decimal || c === '-')
+    .join('');
+  if (!s) return null;
+  const negative = opts.allowNegative && s.startsWith('-');
+  return toDraft(s.replace(/-/g, ''), decimal, opts.precision, negative);
+}
+
+function toDraft(s: string, decimal: string, precision: number, negative: boolean) {
   const at = s.indexOf(decimal);
   const digits = (v: string) => v.replace(/\D/g, '');
   const int = digits(at < 0 ? s : s.slice(0, at));
-  const frac = at < 0 ? null : digits(s.slice(at + 1)).slice(0, opts.precision);
+  const frac = at < 0 ? null : digits(s.slice(at + 1)).slice(0, precision);
   if (!int && frac === null && !negative) return null;
   return { negative, int, frac };
 }

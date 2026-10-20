@@ -552,6 +552,61 @@ describe('MoneyInput', () => {
       expect(amountBox().value).toBe('1,234.56');
       expect(onChange).toHaveBeenLastCalledWith({ amount: '1234.56', currency: 'USD' });
     });
+    const pasteAt = async (pos: number, text: string, end = pos) => {
+      amountBox().focus();
+      amountBox().setSelectionRange(pos, end);
+      await userEvent.paste(text);
+    };
+
+    it('rejects a paste that would add a second decimal', async () => {
+      const onChange = vi.fn();
+      render(<Harness onChange={onChange} initial={{ amount: null, currency: 'USD' }} />);
+      await userEvent.type(amountBox(), '12.34');
+      onChange.mockClear();
+      await pasteAt(5, '0.5');
+      expect(amountBox().value).toBe('12.34');
+      await pasteAt(2, '1.5');
+      expect(amountBox().value).toBe('12.34');
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('de: rejects a paste that would add a second decimal', async () => {
+      const onChange = vi.fn();
+      deDE(<Harness onChange={onChange} initial={{ amount: null, currency: 'EUR' }} />);
+      await userEvent.type(amountBox(), '12,34');
+      onChange.mockClear();
+      await pasteAt(5, '0,5');
+      expect(amountBox().value).toBe('12,34');
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('rejects a negative pasted mid-value', async () => {
+      const onChange = vi.fn();
+      render(
+        <Harness allowNegative onChange={onChange} initial={{ amount: null, currency: 'JPY' }} />,
+      );
+      await userEvent.type(amountBox(), '12');
+      onChange.mockClear();
+      await pasteAt(2, '−5');
+      expect(amountBox().value).toBe('12');
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('rejects pastes with extra words, numbers or stray parentheses', async () => {
+      const onChange = vi.fn();
+      render(<Harness allowNegative onChange={onChange} />);
+      for (const t of [
+        '5 (approx)',
+        '1,234.50 (EUR)',
+        'Total (USD) 99',
+        '1,234.50 (incl. VAT)',
+        'Total 1,234.50.',
+        '5 - 10',
+      ])
+        await pasteOver(t);
+      expect(amountBox().value).toBe('');
+      expect(onChange).not.toHaveBeenCalled();
+    });
   });
 
   it('single-currency mode with an invalid value.currency uses the offered currency', async () => {

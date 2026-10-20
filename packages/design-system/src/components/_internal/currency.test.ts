@@ -9,12 +9,17 @@ import {
   isValidCurrency,
   localeSeparators,
   parseAmount,
+  parseLocalAmount,
   roundAmount,
 } from './currency';
 
 const en = { locale: 'en-US', precision: 2, allowNegative: false };
 const de = { locale: 'de-DE', precision: 2, allowNegative: false };
-const parse = (t: string, o = en) => draftToCanonical(parseAmount(t, o)!);
+const parse = (t: string, o = en) => {
+  const d = parseAmount(t, o);
+  if (!d || d === 'invalid') throw new Error(`unparsed: ${t}`);
+  return draftToCanonical(d);
+};
 
 describe('currency Intl helpers', () => {
   it('precision', () => {
@@ -69,6 +74,22 @@ describe('parseAmount / draftToCanonical', () => {
     expect(parse('($1,234.50)', neg)).toBe('-1234.50');
     expect(parse('5-', neg)).toBe('-5');
     expect(parse('(5)')).toBe('5');
+  });
+  it('rejects anything but one numeric core with currency affixes', () => {
+    const neg = { ...en, allowNegative: true };
+    for (const t of [
+      '5 (approx)',
+      '1,234.50 (EUR)',
+      'Total (USD) 99',
+      '1,234.50 (incl. VAT)',
+      'Total 1,234.50.',
+      '5 - 10',
+    ])
+      expect(parseAmount(t, neg)).toBe('invalid');
+    expect(parse('1,234.50.')).toBe('1234.50');
+    expect(parse('USD 1,234.50')).toBe('1234.50');
+    expect(parse('-$5', neg)).toBe('-5');
+    expect(parse('$-5', neg)).toBe('-5');
   });
   it('numpad-dot rule', () => {
     expect(parse('12.50', de)).toBe('12.50');
@@ -133,5 +154,17 @@ describe('draftToCanonical negative zero', () => {
     expect(draftToCanonical({ negative: true, int: '0', frac: null })).toBe('0');
     expect(draftToCanonical({ negative: true, int: '0', frac: '00' })).toBe('0.00');
     expect(draftToCanonical({ negative: true, int: '0', frac: '01' })).toBe('-0.01');
+  });
+});
+
+describe('parseLocalAmount (strict own-locale)', () => {
+  it('only the locale decimal is a decimal; no cross-locale guessing', () => {
+    const c = (t: string, o = en) => draftToCanonical(parseLocalAmount(t, o)!);
+    expect(c('1,234.5')).toBe('1234.5');
+    expect(c('12.340.5')).toBe('12.34');
+    expect(c('1.23', de)).toBe('123');
+    expect(c('1.234,5', de)).toBe('1234.5');
+    expect(c('-5', { ...en, allowNegative: true })).toBe('-5');
+    expect(c('-5')).toBe('5');
   });
 });
