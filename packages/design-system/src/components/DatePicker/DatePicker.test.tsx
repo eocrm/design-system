@@ -935,10 +935,76 @@ describe('DatePicker — outside click / Tab-away close paths (#666)', () => {
     const input = screen.getByRole('textbox', { name: 'Due' });
     await user.click(input);
     await user.keyboard('{ArrowDown}');
-    const firstStop = screen.getByRole('button', { name: 'Previous month' });
-    firstStop.focus();
+    const dialog = screen.getByRole('dialog');
+    await waitFor(() => expect(dialog).toContainElement(document.activeElement as HTMLElement));
+    // Shift+Tab back through the popover's stops to its first one.
+    const prev = screen.getByRole('button', { name: 'Previous month' });
+    for (let i = 0; i < 5 && document.activeElement !== prev; i++) {
+      await user.tab({ shift: true });
+    }
+    expect(prev).toHaveFocus();
     await user.tab({ shift: true });
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     expect(input).toHaveFocus();
+  });
+
+  async function typeTimeAfterArrowDown(onChange: (d: Date | null) => void) {
+    const user = userEvent.setup();
+    renderWithOutside(
+      <DatePicker
+        aria-label="Due"
+        granularity="minute"
+        hourCycle="24"
+        defaultValue={new Date(2026, 4, 1, 9, 0)}
+        onChange={onChange}
+      />,
+    );
+    const input = screen.getByRole('textbox', { name: 'Due' });
+    await user.click(input);
+    await user.keyboard('{ArrowDown}');
+    const timeInput = screen.getByRole('textbox', { name: 'Time' });
+    timeInput.focus();
+    await user.clear(timeInput);
+    await user.type(timeInput, '11:00');
+    return { user, input };
+  }
+
+  it('Clear after typing a time wins — final value null, trigger empty', async () => {
+    const onChange = vi.fn<(d: Date | null) => void>();
+    const { user, input } = await typeTimeAfterArrowDown(onChange);
+    await user.click(screen.getByRole('button', { name: 'Clear' }));
+    await new Promise((r) => setTimeout(r, 0));
+    const calls = onChange.mock.calls.map(([d]) => d);
+    expect(calls.at(-1)).toBeNull();
+    expect(calls.filter((d) => d === null)).toHaveLength(1);
+    expect(input).toHaveValue('');
+  });
+
+  it('📅 toggle-close from the time input keeps the typed time; focus not on body', async () => {
+    const onChange = vi.fn<(d: Date | null) => void>();
+    const { user, input } = await typeTimeAfterArrowDown(onChange);
+    await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    await new Promise((r) => setTimeout(r, 0));
+    const last = onChange.mock.calls.at(-1)![0]!;
+    expect([last.getDate(), last.getHours(), last.getMinutes()]).toEqual([1, 11, 0]);
+    expect(input).toHaveDisplayValue('05/01/2026 11:00');
+    expect(document.activeElement).not.toBe(document.body);
+  });
+
+  it('📅 toggle-close from the grid closes; focus not on body', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    renderWithOutside(
+      <DatePicker aria-label="Due" defaultValue={new Date(2026, 4, 1)} onChange={onChange} />,
+    );
+    await user.click(screen.getByRole('textbox', { name: 'Due' }));
+    await user.keyboard('{ArrowDown}');
+    await waitFor(() => expect(document.activeElement?.getAttribute('role')).toBe('gridcell'));
+    await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.activeElement).not.toBe(document.body);
+    expect(onChange).not.toHaveBeenCalled();
   });
 });

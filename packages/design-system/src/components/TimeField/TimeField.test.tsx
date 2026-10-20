@@ -213,6 +213,23 @@ describe('TimeField', () => {
     expect(onChange).toHaveBeenCalledTimes(1);
   });
 
+  it('focus moving to a known outside element commits synchronously', async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <>
+        <Driver initial={{ hours: 9, minutes: 0 }} onChange={onChange} hourCycle="24" />
+        <button type="button">After</button>
+      </>,
+      { wrapper: wrap() },
+    );
+    const input = screen.getByRole('textbox', { name: 'Time' });
+    await user.clear(input);
+    await user.type(input, '14:30');
+    screen.getByRole('button', { name: 'After' }).focus(); // no timer flush
+    expect(onChange).toHaveBeenCalledWith({ hours: 14, minutes: 30 });
+  });
+
   it('typing "1430" (no colon) and blurring commits onChange({ hours: 14, minutes: 30 })', async () => {
     const onChange = vi.fn();
     const user = userEvent.setup();

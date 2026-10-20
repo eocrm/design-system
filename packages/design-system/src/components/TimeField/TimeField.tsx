@@ -226,6 +226,18 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
   // input → Tab → chevron → Tab away must still commit the typed time.
   const handleFocusOut = useCallback(
     (e: FocusEvent<HTMLDivElement>) => {
+      // Focus moved to a known element outside the field — commit now, before
+      // that element's click handler runs (it may unmount or clear us).
+      const to = e.relatedTarget;
+      if (
+        to instanceof Node &&
+        !wrapperRef.current?.contains(to) &&
+        !refs.floating.current?.contains(to)
+      ) {
+        commit();
+        onBlur?.(e);
+        return;
+      }
       // Defer so popover interactions (which move focus into the listbox)
       // don't fire a commit-and-revert before the click handler runs.
       window.setTimeout(() => {

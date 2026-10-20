@@ -161,8 +161,16 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
 
   const [uncontrolled, setUncontrolled] = useState<Date | null>(defaultValue);
   const value = valueProp !== undefined ? valueProp : uncontrolled;
+  // Latest value, updated synchronously on every set — the embedded
+  // TimeField's commit reads it so a late time commit can't resurrect a value
+  // that Clear (or a day pick) just replaced.
+  const valueRef = useRef(value);
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
   const setValue = useCallback(
     (next: Date | null) => {
+      valueRef.current = next;
       if (valueProp === undefined) setUncontrolled(next);
       onChange?.(next);
     },
@@ -378,9 +386,9 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
         }
       }
       setValue(withTime);
-      // The pick wins over half-typed trigger text. A same-day pick doesn't
-      // change the value, so the draft re-sync effect won't run — reset here
-      // (a changed value re-syncs the draft via that effect).
+      // The pick wins over half-typed trigger text. The setDraft only matters
+      // for a same-day pick (value unchanged, so the draft re-sync effect
+      // doesn't run); any other pick re-syncs the draft via that effect.
       typedRef.current = false;
       setDraft(formattedValue);
       if (granularity === 'minute') {
@@ -406,6 +414,13 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
     },
     [setValue],
   );
+
+  // ✕ / 📅 clicks keep focus in the trigger when it has it, so half-typed text
+  // isn't blur-committed. From the popover, focus moves normally — that
+  // focus-out is what commits a time typed into the embedded TimeField.
+  const keepTriggerFocus = useCallback((e: MouseEvent<HTMLButtonElement>) => {
+    if (document.activeElement === inputRef.current) e.preventDefault();
+  }, []);
 
   const handleToggle = useCallback((e: MouseEvent<HTMLButtonElement>) => {
     e.preventDefault();
@@ -503,7 +518,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
           type="button"
           className={styles.clearButton}
           aria-label={t('datePicker.clear')}
-          onMouseDown={(e) => e.preventDefault()} // keep focus (and typed text) in the trigger
+          onMouseDown={keepTriggerFocus}
           onClick={handleClear}
         >
           <X size={ICON_SIZE_FOR[size]} />
@@ -513,7 +528,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
         type="button"
         className={styles.openButton}
         aria-label={t('datePicker.openCalendar')}
-        onMouseDown={(e) => e.preventDefault()} // keep focus (and typed text) in the trigger
+        onMouseDown={keepTriggerFocus}
         onClick={handleToggle}
         disabled={disabled}
       >
@@ -594,8 +609,10 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
                   disabled={value == null || disabled}
                   aria-label={t('datePicker.timeLabel')}
                   onChange={(time) => {
-                    if (value == null) return;
-                    setValue(combineDateAndTime(value, time.hours, time.minutes));
+                    // Cleared meanwhile → Clear wins; the time is dropped.
+                    const current = valueRef.current;
+                    if (current == null) return;
+                    setValue(combineDateAndTime(current, time.hours, time.minutes));
                   }}
                 />
               </div>
