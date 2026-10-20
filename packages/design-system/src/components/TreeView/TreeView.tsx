@@ -192,6 +192,8 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
     observer.observe(root);
     // The chart's top level is max-content wide: it resizes when boxes do without a re-render (late fonts).
     if (root.firstElementChild) observer.observe(root.firstElementChild);
+    // Limit: only the root and top level are observed. A deeper box resizing without changing the top
+    // level's width or pathKey leaves its segment stale until the next path change.
     return () => observer.disconnect();
   }, [chart]);
   const pathKey = chart
@@ -392,7 +394,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
       const path =
         chart &&
         highlighted &&
-        item.children.some((c) => c.kind === 'node' && highlightedIds!.has(c.node.id));
+        item.children.some((c) => c.kind === 'node' && !!highlightedIds?.has(c.node.id));
       return (
         <div
           key={item.key}

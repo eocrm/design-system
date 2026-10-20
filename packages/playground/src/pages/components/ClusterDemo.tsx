@@ -353,7 +353,7 @@ export function Demo() {
 
       <Example
         title="Switch to stacked when it no longer fits"
-        description="stretchWrapped: while the children fit they stay content-sized, the pill at the start and the buttons at the end. When they don't, the buttons wrap under the pill and fill the line, two equal columns. The content decides, so there is no breakpoint to guess (it switches about one gap early). Compare the 400px and 240px containers."
+        description="stretchWrapped: while the children fit they stay content-sized, the pill at the start and the buttons at the end. When they don't, the buttons wrap under the pill and fill the line, two equal columns. The content decides, so there is no breakpoint to guess. Compare the 400px and 240px containers; the 300px one starts with a title as wide as the container."
         code={`import { Badge, Button, Cluster, Grid } from '@eocrm/design-system';
 
 export function Demo() {
@@ -380,6 +380,15 @@ export function Demo() {
               </Cluster>
             </div>
           ))}
+          <div data-testid="stretch-wrapped-long-300" style={{ width: 300 }}>
+            <Cluster stretchWrapped gap="sm">
+              <Text weight="semibold">Quarterly renewal for Northwind Traders, EMEA region</Text>
+              <Grid columns={2} gap="sm">
+                <Button variant="secondary">Reject</Button>
+                <Button>Approve</Button>
+              </Grid>
+            </Cluster>
+          </div>
         </Stack>
       </Example>
 

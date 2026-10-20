@@ -45,3 +45,26 @@ test('TreeView chart highlight segment spans parent centre to highlighted child 
     expect(Math.abs(g.left + g.width - g.accent - g.max)).toBeLessThanOrEqual(1);
   }
 });
+
+test('TreeView chart: a selected node on the highlighted path keeps the selected border (#671)', async ({
+  page,
+}) => {
+  await page.goto('/components/tree-view');
+  const tree = page.getByRole('tree', { name: 'Organization structure (highlighted path)' });
+  await tree.evaluate((root) =>
+    root.style.setProperty('--tree-view-box-selected-border', 'rgb(255, 0, 0)'),
+  );
+  const item = tree.locator('[role="treeitem"][data-highlighted]').last();
+  await item.locator(':scope > *').first().click();
+  await expect(item).toHaveAttribute('aria-selected', 'true');
+  const colours = await tree.evaluate((root) =>
+    [...root.querySelectorAll<HTMLElement>('[role="treeitem"][data-highlighted]')].map((i) => [
+      i.getAttribute('aria-selected'),
+      getComputedStyle(i.firstElementChild!).borderTopColor,
+    ]),
+  );
+  for (const [selected, colour] of colours) {
+    if (selected === 'true') expect(colour).toBe('rgb(255, 0, 0)');
+    else expect(colour).not.toBe('rgb(255, 0, 0)');
+  }
+});

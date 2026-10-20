@@ -179,17 +179,19 @@
   background: var(--tree-view-row-hover-bg);
 }
 
+// highlightedIds box border. Same specificity as the selected rule below and deliberately ahead of it, so a
+// selected node on the path keeps --tree-view-box-selected-border.
+.root[data-view='chart'] .item[data-highlighted] > .row {
+  border-color: var(--tree-view-highlight-color);
+}
+
 .root[data-view='chart'] .item[aria-selected='true'] > .row {
   border-color: var(--tree-view-box-selected-border);
   background: var(--tree-view-row-selected-bg);
 }
 
-// highlightedIds. Accent lines start on the same edge as the neutral line they replace and are wider, so
-// they fully cover it (no centring: a half-pixel offset would blur).
-.root[data-view='chart'] .item[data-highlighted] > .row {
-  border-color: var(--tree-view-highlight-color);
-}
-
+// highlightedIds lines. Accent lines start on the same edge as the neutral line they replace and are wider,
+// so they fully cover it (no centring: a half-pixel offset would blur).
 .root[data-view='chart'] [data-highlighted-path] {
   &::before {
     border-inline-start-width: var(--tree-view-highlight-width);

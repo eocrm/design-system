@@ -121,13 +121,16 @@ export interface ClusterProps extends HTMLAttributes<HTMLElement> {
    * How: an invisible `::before` spacer soaks up a shared line's slack, so the
    * children there get a negligible share (at most 1px per 1000px of slack); a
    * non-first child alone on a wrapped line takes the whole line. Children
-   * wrapped together share it. The spacer is there with a single child or
-   * `as="span"` too, adding one trailing gap of width (harmless).
+   * wrapped together share it. The spacer cancels its own gap, so it adds no
+   * width: the switch happens exactly when the content stops fitting, also
+   * with a single child or `as="span"`.
    *
    * Limits: `justify` is inert while this is on (the spacer owns the slack);
    * `wrap={false}` makes it moot (nothing wraps); a consumer `order` on
-   * children breaks it — don't. The spacer adds one gap, so it switches to
-   * stacked about one gap earlier than the content alone would require.
+   * children breaks it — don't. A child's own `flex` (via its `className`)
+   * overrides the stretch for that child. "First child" means the first
+   * ELEMENT: a leading bare text node is not it — wrap text in an element
+   * (e.g. `<Text>`).
    *
    * @default false
    */

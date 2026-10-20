@@ -71,6 +71,8 @@ Fractions assume a 12-column grid — pair them with `columns={12}` on the paren
 
 Only valid on a fixed-`columns` Grid (auto-fit grids already reflow). Presets: `'sm'` 480px / `'md'` 640px / `'lg'` 768px. This is a **container query on the Grid's own width, not the viewport** — it fires based on the space the Grid itself has, not the browser window, so it collapses correctly inside a narrow sidebar or split pane even on a wide screen — provided the pane gives the grid a definite width. Below the threshold every child spans the full row, `Grid.Item` spans included.
 
+For "one row while the content fits, stacked when it doesn't", use `<Cluster stretchWrapped>` instead of guessing a threshold.
+
 Also takes a graduated breakpoint→columns map instead of a single string, for a step-down rather than straight-to-1-column collapse — `Grid.Item` spans clamp to fit each step:
 
 ```tsx
