@@ -681,3 +681,99 @@ describe('DatePicker — Escape cascade with the embedded clock (#274)', () => {
     expect(screen.queryByRole('dialog')).toBeNull();
   });
 });
+
+describe('DatePicker — outside click / Tab-away close paths (#666)', () => {
+  function renderWithOutside(ui: ReactNode) {
+    render(
+      <>
+        {ui}
+        <button type="button">Outside</button>
+      </>,
+      { wrapper: wrap() },
+    );
+  }
+
+  it('outside click closes the calendar while focus is on a clock row', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    renderWithOutside(
+      <DatePicker
+        aria-label="Due"
+        granularity="minute"
+        hourCycle="24"
+        defaultValue={new Date(2026, 5, 15, 14, 30)}
+        onChange={onChange}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+    await user.click(screen.getByRole('button', { name: /Open time list/i }));
+    await waitFor(() =>
+      expect(document.activeElement?.closest('[data-timefield-popover="true"]')).not.toBeNull(),
+    );
+    await user.click(screen.getByRole('button', { name: 'Outside' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(document.querySelector('[data-timefield-popover="true"]')).toBeNull();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('outside click closes the calendar while focus is on the trigger Open-calendar button', async () => {
+    const user = userEvent.setup();
+    renderWithOutside(<DatePicker aria-label="Due" />);
+    const openButton = screen.getByRole('button', { name: 'Open calendar' });
+    await user.click(openButton);
+    openButton.focus();
+    await user.click(screen.getByRole('button', { name: 'Outside' }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+
+  it('closing a clock row from inside the calendar keeps the calendar open', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    renderWithOutside(
+      <DatePicker
+        aria-label="Due"
+        granularity="minute"
+        hourCycle="24"
+        defaultValue={new Date(2026, 5, 15, 14, 30)}
+        onChange={onChange}
+      />,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open calendar' }));
+    await user.click(screen.getByRole('button', { name: /Open time list/i }));
+    await waitFor(() =>
+      expect(document.activeElement?.closest('[data-timefield-popover="true"]')).not.toBeNull(),
+    );
+    const row = document.activeElement as HTMLElement;
+    // Clicking the grid header area closes the clock and unmounts the focused
+    // row; simulate the blur Chrome fires on removal (jsdom doesn't).
+    fireEvent.pointerDown(screen.getByRole('dialog'));
+    fireEvent.blur(row);
+    await new Promise((r) => setTimeout(r, 0));
+    expect(document.querySelector('[data-timefield-popover="true"]')).toBeNull();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['outside click', 'click'],
+    ['Tab out of the grid', 'tab'],
+  ] as const)('%s commits a date typed into the trigger before ArrowDown', async (_, how) => {
+    const user = userEvent.setup();
+    const onChange = vi.fn<(d: Date | null) => void>();
+    renderWithOutside(
+      <DatePicker aria-label="Due" defaultValue={new Date(2026, 4, 1)} onChange={onChange} />,
+    );
+    const input = screen.getByRole('textbox', { name: 'Due' });
+    await user.click(input);
+    await user.clear(input);
+    await user.type(input, '05/20/2026{ArrowDown}');
+    await waitFor(() => expect(document.activeElement?.getAttribute('role')).toBe('gridcell'));
+    if (how === 'click') await user.click(screen.getByRole('button', { name: 'Outside' }));
+    else await user.tab();
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    await new Promise((r) => setTimeout(r, 0));
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(onChange.mock.calls[0][0]!.getDate()).toBe(20);
+    expect(input).toHaveValue('05/20/2026');
+  });
+});

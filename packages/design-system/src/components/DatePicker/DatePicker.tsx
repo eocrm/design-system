@@ -245,6 +245,28 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
     [refs.floating],
   );
 
+  const isInPopover = useCallback(
+    (el: Element) =>
+      refs.floating.current?.contains(el) || el.closest('[data-timefield-popover="true"]') != null,
+    [refs.floating],
+  );
+
+  // Outside-click / Tab-away close. Commits the trigger draft only when the
+  // user actually typed into it (draft ≠ formatted value) — after a day pick
+  // or time commit the draft is re-synced, so a stale draft can't overwrite
+  // the new value. `openRef` dedupes the pointerdown and focus-out paths,
+  // which can both land on the same tick.
+  const openRef = useRef(open);
+  useEffect(() => {
+    openRef.current = open;
+  }, [open]);
+  const closeKeepingDraft = useCallback(() => {
+    if (!openRef.current) return;
+    openRef.current = false;
+    if (draft !== formattedValue) commit(draft);
+    setOpen(false);
+  }, [commit, draft, formattedValue]);
+
   const handleInputBlur = useCallback(
     (e: FocusEvent<HTMLInputElement>) => {
       // Defer so focus transitions to a sibling inside the wrapper (clear
@@ -383,20 +405,19 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
     const handler = (e: PointerEvent) => {
       if (isInsidePicker(e.target)) return;
       const active = document.activeElement;
-      if (active instanceof HTMLElement && active !== inputRef.current && isInsidePicker(active)) {
-        // #666: focus is in the popover (e.g. a time typed into the embedded
-        // TimeField). Blur it so TimeField's blur-commit runs; the popover's
-        // focus-out handler then closes us. Committing the trigger draft here
-        // would overwrite that time with a stale value.
+      // #666: focus in the popover (e.g. a time typed into the embedded
+      // TimeField) — blur it so TimeField's deferred focus-out commit runs,
+      // then close on the next tick, after that commit.
+      if (active instanceof HTMLElement && isInPopover(active)) {
         active.blur();
-        return;
+        window.setTimeout(closeKeepingDraft, 0);
+      } else {
+        closeKeepingDraft();
       }
-      commit(draft);
-      setOpen(false);
     };
     document.addEventListener('pointerdown', handler, true);
     return () => document.removeEventListener('pointerdown', handler, true);
-  }, [open, isInsidePicker, commit, draft]);
+  }, [open, isInsidePicker, isInPopover, closeKeepingDraft]);
 
   // #272: inside a Modal/Drawer the popover's base z (--z-popover, below
   // --z-modal) paints it behind the host — elevate when the trigger sits in
@@ -491,16 +512,16 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
             aria-label={t('datePicker.openCalendar')}
             onMouseDown={(e) => e.preventDefault()} // keep input focus on grid click
             onBlur={(e) => {
-              // #666: focus left the popover (Tab past its last stop, or the
-              // outside-pointerdown blur above) — close without refocusing the
-              // trigger. React bubbles this from the TimeField clock portal too.
-              // Deferred like the Enter path so TimeField's own deferred
-              // blur-commit lands first. A disconnected target means the
-              // focused node was unmounted (clock closing), not a focus move.
+              // #666: focus left the popover (Tab past its last stop) — close
+              // without refocusing the trigger. React bubbles this from the
+              // TimeField clock portal too. Deferred so TimeField's own
+              // deferred focus-out commit lands first. A disconnected target
+              // means the focused node was unmounted (clock closing; only
+              // real browsers fire blur for that), not a focus move.
               const target = e.target;
               window.setTimeout(() => {
                 if (target.isConnected && !isInsidePicker(document.activeElement)) {
-                  setOpen(false);
+                  closeKeepingDraft();
                 }
               }, 0);
             }}
