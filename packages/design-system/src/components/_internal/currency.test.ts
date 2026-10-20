@@ -146,6 +146,11 @@ describe('parseAmount / draftToCanonical', () => {
     expect(parseAmount('1.234', en)).toBe('invalid');
     expect(parseAmount('1.234', { ...en, precision: 0 })).toBe('invalid');
     expect(parse('1.234', { ...en, precision: 3 })).toBe('1.234');
+    // A lone separator that is neither the locale group nor decimal + 3 digits: ambiguous.
+    expect(parseAmount('1.234', ru)).toBe('invalid');
+    expect(parse('1.23', ru)).toBe('1.23');
+    expect(parse('1,234')).toBe('1234');
+    expect(parse('1.234', de)).toBe('1234');
     expect(parse('1,2345', ru)).toBe('1.2345');
     expect(parse('$1,234.5678')).toBe('1234.5678');
   });

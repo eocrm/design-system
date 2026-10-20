@@ -656,7 +656,7 @@ describe('MoneyInput', () => {
       render(<Harness onChange={onChange} />);
       await userEvent.type(amountBox(), '12');
       onChange.mockClear();
-      await pasteAt(2, '.567');
+      await pasteAt(2, '.5678');
       expect(amountBox().value).toBe('12');
       expect(onChange).not.toHaveBeenCalled();
     });

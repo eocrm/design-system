@@ -67,8 +67,11 @@ const SUFFIX_TOKEN = /^(?:\p{Sc}*\p{L}+\.?\p{Sc}*|\p{Sc}+)$/u;
 const SUFFIX_WORDS = new Set(['руб', 'р']);
 let isoCodes: Set<string> | undefined;
 /** A real ISO 4217 code (not merely well-formed), so magnitude words ('K', 'bn', 'млн') never pass. */
+// Without Intl.supportedValuesOf no suffix word counts as a currency (reject, never throw).
 const isIsoCode = (w: string) =>
-  (isoCodes ??= new Set(Intl.supportedValuesOf('currency'))).has(w.toUpperCase());
+  (isoCodes ??= new Set(
+    typeof Intl.supportedValuesOf === 'function' ? Intl.supportedValuesOf('currency') : [],
+  )).has(w.toUpperCase());
 
 /**
  * Splits one affix side into sign marks; null when anything but symbols / ONE word / sign remains.
@@ -150,6 +153,8 @@ export function parseAmount(
       fracLen <= opts.precision
     )
       dec = c;
+    // Neither the locale's group nor its decimal + exactly 3 digits (ru '1.234'): don't guess.
+    else if (c !== lg && fracLen === 3) return 'invalid';
     else if (c === lg || c === '.') grp = c;
     else dec = c;
     // '1,234' / '1.234' as a decimal below precision 3 could equally be grouping: don't guess.
