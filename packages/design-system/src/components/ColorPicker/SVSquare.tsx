@@ -38,8 +38,7 @@ export interface SVSquareProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onC
  * @remarks Why role="application"
  * 2D pointer-driven controls don't have a standard ARIA pattern (slider is
  * 1D, button is binary). The accepted compromise is `role="application"`
- * with an aria-valuetext describing the current state — same precedent as
- * ImageCrop's viewport in this library.
+ * with an aria-valuetext describing the current state.
  */
 export const SVSquare = forwardRef<HTMLDivElement, SVSquareProps>(function SVSquare(
   { hue, s, v, onChange, onChangeEnd, disabled = false, className, ...rest },

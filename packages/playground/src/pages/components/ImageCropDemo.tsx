@@ -191,13 +191,13 @@ export function ImageCropDemo() {
   return (
     <DemoLayout
       name="ImageCrop"
-      description="Controlled image-crop primitive. Pattern-A drag (crop box centered, image dragged, slider-controlled zoom). Hand-rolled on <canvas>. extractCropBlob utility for the consumer's Save handler."
+      description="Controlled image-crop primitive. Still image with a draggable, resizable crop box (corner handles; edge handles in free aspect; scroll to resize, double-click to reset). extractCropBlob utility for the consumer's Save handler."
       files={getComponentFiles('ImageCrop')}
       componentName="ImageCrop"
     >
       <Example
         title="Basic (square aspect)"
-        description="aspectRatio={1}. The crop box is centered as a square inside the viewport. Drag the image to reposition; zoom slider scales it."
+        description="aspectRatio={1}. The crop box stays square. Drag it to move, drag a corner (or scroll the wheel) to resize, double-click or press Reset to restore the default crop."
         code={`import { useState } from 'react';
 import { Code, ImageCrop, Stack, Text, type CropArea } from '@eocrm/design-system';
 
@@ -225,7 +225,7 @@ export function BasicSquare() {
 
       <Example
         title="Landscape (16:9)"
-        description="aspectRatio={16/9}. Crop box matches the configured ratio inside the viewport."
+        description="aspectRatio={16/9}. The crop box keeps the configured ratio while you move and resize it."
         code={`import { useState } from 'react';
 import { ImageCrop, type CropArea } from '@eocrm/design-system';
 
@@ -241,7 +241,7 @@ export function Landscape() {
 
       <Example
         title="Free aspect (no aspectRatio prop)"
-        description="Crop box fills the entire viewport. The user controls the cropped region via zoom only (zooming in shows less of the source)."
+        description="Corner and edge handles resize the box on one or both axes independently. Shift+Arrow keys resize one axis at a time."
         code={`import { useState } from 'react';
 import { ImageCrop, type CropArea } from '@eocrm/design-system';
 
@@ -257,7 +257,7 @@ export function FreeAspect() {
 
       <Example
         title="FileUpload integration"
-        description="The canonical pick → crop → save flow using the useCropPreview hook. Live 256×256 preview re-encodes on every drag/zoom (debounced 120ms). Toggle the format buttons (JPEG/PNG/WebP) and the encoder swaps live with a CircularProgress spinner during the re-encode. The Download button reuses the hook's previewBlob — no second encode — and saves locally; your real Save handler would POST previewBlob to your upload endpoint."
+        description="The canonical pick → crop → save flow using the useCropPreview hook. Live 256×256 preview re-encodes on every move/resize (debounced 120ms). Toggle the format buttons (JPEG/PNG/WebP) and the encoder swaps live with a CircularProgress spinner during the re-encode. The Download button reuses the hook's previewBlob — no second encode — and saves locally; your real Save handler would POST previewBlob to your upload endpoint."
         code={`import { useEffect, useState } from 'react';
 import {
   Button,
@@ -403,7 +403,7 @@ export function FileUploadIntegration() {
 
       <Example
         title="Disabled"
-        description="Viewport is grayed (--opacity-disabled); drag and zoom both no-op."
+        description="Viewport is grayed (--opacity-disabled); move and resize both no-op."
         code={`import { useState } from 'react';
 import { ImageCrop, type CropArea } from '@eocrm/design-system';
 

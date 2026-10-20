@@ -3399,56 +3399,35 @@
           "type": "CropArea | null",
           "required": true,
           "default": "",
-          "description": "Controlled crop area in SOURCE-IMAGE pixel coordinates. Pass `null` to\nuse the component's default centered crop (the largest centered region\nmatching `aspectRatio` at zoom=1). The component computes the visual\nposition from this + the image's natural size + the viewport size."
+          "description": "Controlled crop area in SOURCE-IMAGE pixel coordinates. Pass `null` to\nuse the component's default centered crop (80% of the largest centered\nregion matching `aspectRatio`)."
         },
         {
           "name": "onChange",
           "type": "(area: CropArea) => void",
           "required": true,
           "default": "",
-          "description": "Fires on every drag/zoom tick. High frequency. Also fires once on first image load when `value` is `null`, with the computed default crop; after that the consumer owns the state."
+          "description": "Fires on every drag/resize tick. High frequency. Also fires once on first image load when `value` is `null`, with the computed default crop; after that the consumer owns the state."
         },
         {
           "name": "onChangeEnd",
           "type": "((area: CropArea) => void)",
           "required": false,
           "default": "",
-          "description": "Fires once when the user releases the drag or releases the zoom slider thumb."
+          "description": "Fires once when the user releases a drag or resize."
         },
         {
           "name": "aspectRatio",
           "type": "number",
           "required": false,
-          "default": "value",
-          "description": "Fixed aspect ratio for the crop box (e.g. `1` for square, `16/9` for\nlandscape, `4/3` for traditional photo). Omit for free aspect — the crop\nbox fills the entire viewport and the user controls the cropped region\nvia zoom only.\n\nTypically a stable prop from the consumer (set once per page). Toggling\n`aspectRatio` at runtime updates the crop box dimensions but does NOT\nautomatically re-fit `value` to the new ratio — pass a fresh `value`\n(or `null` for the new default) when you change ratios."
-        },
-        {
-          "name": "minZoom",
-          "type": "number",
-          "required": false,
           "default": "",
-          "description": "Minimum zoom level. Default `1` (image fits viewport at zoom=1)."
-        },
-        {
-          "name": "maxZoom",
-          "type": "number",
-          "required": false,
-          "default": "",
-          "description": "Maximum zoom level. Default `3`."
-        },
-        {
-          "name": "showZoomControl",
-          "type": "boolean",
-          "required": false,
-          "default": "",
-          "description": "Render the embedded `<Slider>` zoom control below the canvas. Default\n`true`. Set `false` for a pure canvas with no zoom UI — but the\ncomponent's internal zoom state isn't exposed (v2 feature)."
+          "description": "Fixed aspect ratio for the crop box (e.g. `1` for square, `16/9`). Omit\nfor free aspect — edge handles then appear too. Toggling it at runtime\ndoes NOT re-fit `value`; pass a fresh `value` (or `null`) with the change."
         },
         {
           "name": "disabled",
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Disable all interaction (drag, zoom). Default `false`. Image still\nrenders; the zoom slider is also disabled."
+          "description": "Disable all interaction (move, resize). Default `false`. Image still renders."
         }
       ]
     },
