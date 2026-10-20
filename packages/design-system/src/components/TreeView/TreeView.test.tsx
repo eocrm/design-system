@@ -660,3 +660,22 @@ describe('highlightedIds', () => {
     expect(item('Sales')).toHaveAttribute('data-highlighted');
   });
 });
+
+describe('onHoverChange', () => {
+  it.each(['list', 'chart'] as const)('fires the node id on enter and null on leave (%s)', (view) => {
+    const onHoverChange = vi.fn();
+    render(<Harness view={view} onHoverChange={onHoverChange} />);
+    fireEvent.pointerEnter(row('Company'));
+    expect(onHoverChange).toHaveBeenLastCalledWith('Company');
+    fireEvent.pointerLeave(row('Company'));
+    expect(onHoverChange).toHaveBeenLastCalledWith(null);
+  });
+
+  it('status rows do not fire', () => {
+    const onHoverChange = vi.fn();
+    render(<Harness initial={['Company', 'Support']} onHoverChange={onHoverChange} />);
+    fireEvent.pointerEnter(row('Loading…'));
+    fireEvent.pointerLeave(row('Loading…'));
+    expect(onHoverChange).not.toHaveBeenCalled();
+  });
+});
