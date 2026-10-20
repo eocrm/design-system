@@ -3,6 +3,7 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   type FocusEvent,
@@ -164,14 +165,18 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
   // Latest value, updated synchronously on every set — the embedded
   // TimeField's commit reads it so a late time commit can't resurrect a value
   // that Clear (or a day pick) just replaced.
+  // Synced every render (a controlled parent may reject a change), and written
+  // ahead of the re-render only when uncontrolled — where the set always lands.
   const valueRef = useRef(value);
-  useEffect(() => {
+  useLayoutEffect(() => {
     valueRef.current = value;
-  }, [value]);
+  });
   const setValue = useCallback(
     (next: Date | null) => {
-      valueRef.current = next;
-      if (valueProp === undefined) setUncontrolled(next);
+      if (valueProp === undefined) {
+        valueRef.current = next;
+        setUncontrolled(next);
+      }
       onChange?.(next);
     },
     [valueProp, onChange],
@@ -422,16 +427,26 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
     if (document.activeElement === inputRef.current) e.preventDefault();
   }, []);
 
-  const handleToggle = useCallback((e: MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    setOpen((v) => {
-      const next = !v;
-      // On open, transfer focus to the input so the popover's
-      // ArrowDown contract works and the input is ready for typing.
-      if (next) inputRef.current?.focus();
-      return next;
-    });
-  }, []);
+  const handleToggle = useCallback(
+    (e: MouseEvent<HTMLButtonElement>) => {
+      e.preventDefault();
+      if (claimClose()) {
+        // Close on the next tick, like an outside click, so the embedded
+        // TimeField's commit lands first. Safari / Firefox-mac don't focus a
+        // clicked button: focus may still be in the popover (blur it so
+        // TimeField commits) or already blurred with that commit pending.
+        const active = document.activeElement;
+        if (active instanceof HTMLElement && isInPopover(active)) active.blur();
+        window.setTimeout(() => finishClose(true), 0);
+        return;
+      }
+      // Open, with focus in the input so the popover's ArrowDown contract
+      // works and the input is ready for typing.
+      setOpen(true);
+      inputRef.current?.focus();
+    },
+    [isInPopover, claimClose, finishClose],
+  );
 
   // Click outside closes (separate from blur to handle the case where
   // focus moved into the grid via mouse, then user clicks somewhere else).

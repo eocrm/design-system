@@ -238,8 +238,11 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
         onBlur?.(e);
         return;
       }
-      // Defer so popover interactions (which move focus into the listbox)
-      // don't fire a commit-and-revert before the click handler runs.
+      // Destination unknown (relatedTarget null: click on something
+      // non-focusable, Safari / Firefox-mac button clicks, window blur) or
+      // inside the field — defer so popover interactions (which move focus
+      // into the listbox) don't fire a commit-and-revert before the click
+      // handler runs.
       window.setTimeout(() => {
         if (!wrapperRef.current) return; // unmounted meanwhile — no onChange
         const active = document.activeElement;
