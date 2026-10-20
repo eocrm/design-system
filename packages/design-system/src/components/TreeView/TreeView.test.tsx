@@ -575,3 +575,46 @@ describe('TreeView chart view', () => {
     });
   });
 });
+
+describe('highlightedIds', () => {
+  it('marks highlighted nodes with data-highlighted and leaves aria untouched', () => {
+    render(
+      <Harness
+        initial={['Company', 'Sales']}
+        highlightedIds={new Set(['Company', 'Sales', 'Team A'])}
+      />,
+    );
+    expect(item('Team A')).toHaveAttribute('data-highlighted');
+    expect(item('Team B')).not.toHaveAttribute('data-highlighted');
+    expect(item('Company')).not.toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('ignores ids that are not rendered', () => {
+    const { container } = render(<Harness highlightedIds={new Set(['Nope'])} />);
+    expect(container.querySelector('[data-highlighted]')).toBeNull();
+  });
+
+  it('flags a chart group only when parent and a child are highlighted', () => {
+    const group = (name: string) => within(item(name)).getAllByRole('group')[0] as HTMLElement;
+    const { rerender } = render(
+      <Harness
+        view="chart"
+        initial={['Company', 'Sales']}
+        highlightedIds={new Set(['Company', 'Sales'])}
+      />,
+    );
+    expect(group('Company')).toHaveAttribute('data-highlighted-path');
+    expect(group('Sales')).not.toHaveAttribute('data-highlighted-path');
+    rerender(
+      <Harness view="chart" initial={['Company', 'Sales']} highlightedIds={new Set(['Company'])} />,
+    );
+    expect(group('Company')).not.toHaveAttribute('data-highlighted-path');
+  });
+
+  it('keeps selection styling and highlight together', async () => {
+    render(<Harness initial={['Company']} highlightedIds={new Set(['Sales'])} />);
+    await userEvent.click(row('Sales'));
+    expect(item('Sales')).toHaveAttribute('aria-selected', 'true');
+    expect(item('Sales')).toHaveAttribute('data-highlighted');
+  });
+});

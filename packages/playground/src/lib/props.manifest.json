@@ -6818,6 +6818,13 @@
           "required": false,
           "default": "",
           "description": "\"N more not shown\" row at the end of a level (`parentId` `null` = root level), or `null` for none. Pass `onLoadMore` to make it actionable."
+        },
+        {
+          "name": "highlightedIds",
+          "type": "ReadonlySet<string>",
+          "required": false,
+          "default": "",
+          "description": "Ids to paint as a path, e.g. the selected node's ancestor ids plus its own id (TreeView cannot derive\nancestors: `childrenOf` is only called for expanded nodes). Visual only — no ARIA, no effect on\nselection or focus. Ids not rendered are ignored. List view: accent edge on the rows; chart view: accent\nboxes and the connector lines between highlighted parents and children."
         }
       ]
     },

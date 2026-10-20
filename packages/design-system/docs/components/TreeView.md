@@ -54,6 +54,7 @@ const byId = new Map([...expanded].map((id, i) => [id, children[i]]));
 | `onSelect` | `((id: string) => void)` | no | Called on click / Enter / Space on a node. Omit for a tree without selection (no `aria-selected`). Selection never follows focus. |
 | `onRetry` | `((id: string) => void)` | no | Makes a failed level's "Couldn't load. Retry" row actionable; called with the parent id. Without it the row is inert text. |
 | `overflowOf` | `((parentId: string \| null) => TreeViewOverflow \| null)` | no | "N more not shown" row at the end of a level (`parentId` `null` = root level), or `null` for none. Pass `onLoadMore` to make it actionable. |
+| `highlightedIds` | `ReadonlySet<string>` | no | Ids to paint as a path, e.g. the selected node's ancestor ids plus its own id (TreeView cannot derive ancestors: `childrenOf` is only called for expanded nodes). Visual only — no ARIA, no effect on selection or focus. Ids not rendered are ignored. List view: accent edge on the rows; chart view: accent boxes and the connector lines between highlighted parents and children. |
 | …native | | | plus native `<div>` attributes |
 
 <!-- props:end -->
@@ -66,6 +67,18 @@ const byId = new Map([...expanded].map((id, i) => [id, children[i]]));
 - **Keyboard — list:** ↑/↓ move, → expands or enters, ← collapses or goes to the parent, Home/End, Enter/Space select, type to jump (the typeahead buffer resets after 500ms). **Chart:** ↓ expands or enters, ↑ collapses or goes to the parent, ←/→ move between siblings; the tree describes these keys to screen readers (merged with your own `aria-describedby`).
 - **Screen readers:** one tab stop; levels, positions and expanded state come from ARIA. A slow (≥ 300ms) user-triggered load is announced once ("Loading…"), a failure is announced; success is silent. After Retry focus stays on the status row while loading and moves to the first child when children arrive (if the retry fails again it stays on the Retry row).
 - **Empty tree.** An empty tree is not useful and not valid ARIA (a `tree` needs items): until roots load render a `Skeleton`, `EmptyState` or `ErrorState` instead of `<TreeView roots={[]}>`. A node whose loaded children are `[]` renders no group.
+- **Highlighted path.** Pass `highlightedIds` the selected unit's ancestor ids plus its own id to paint the reporting line: list rows get an accent inline-start edge; chart boxes, and the connectors between a highlighted parent and its highlighted children, turn accent. TreeView cannot derive ancestors itself (`childrenOf` is only called for expanded nodes), so build the set from your data's parent map. Ids not rendered are ignored.
+
+  ```tsx
+  <TreeView
+    view="chart"
+    selectedId={selected}
+    onSelect={setSelected}
+    highlightedIds={pathTo(selected)} // selected id + its ancestor ids, from your parent map
+    {...rest}
+  />
+  ```
+
 - **Sizing.** `list` grows with its content — put it in a scrolling parent for long trees. `chart` fills its parent's width and scrolls horizontally inside itself when the chart is wider; it opens centred on the selected (or first) item (when the view is chosen or the first items appear), and the focused box scrolls into view.
 
 #### When NOT to use
@@ -79,4 +92,5 @@ const byId = new Map([...expanded].map((id, i) => [id, children[i]]));
 - ❌ Buttons, links or menus inside `content`.
 - ❌ Returning `undefined` forever on a failed fetch — return `{ error: true }`.
 - ❌ Selecting on focus (opening a drawer on every arrow key).
+- ❌ Using `highlightedIds` as selection — it is visual only and sets no ARIA; keep `selectedId` for the selected node.
 - ❌ Wrapping the chart view in a fixed-width scroller — it scrolls itself.
