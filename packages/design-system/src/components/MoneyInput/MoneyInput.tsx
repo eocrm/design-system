@@ -81,6 +81,13 @@ export interface MoneyInputProps extends Omit<
 }
 
 const FALLBACK_PRECISION = 2;
+const CANONICAL = /^-?\d+(\.\d+)?$/;
+
+/** Pads a canonical amount's fraction to `prec` digits (`"13"` → `"13.00"`). */
+const padCanonical = (amount: string, prec: number) => {
+  const [int, frac = ''] = amount.split('.');
+  return prec ? `${int}.${frac.padEnd(prec, '0')}` : int;
+};
 
 /**
  * Money field: a currency picker plus a formatted decimal-string amount.
@@ -134,9 +141,19 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
   }, [outside, currency]);
   const single = offered.length === 1 && isValidCurrency(offered[0]);
 
+  const malformed = value.amount !== null && !CANONICAL.test(value.amount);
+  useEffect(() => {
+    if (malformed && process.env.NODE_ENV !== 'production') {
+      console.warn(
+        `<MoneyInput>: value.amount "${value.amount}" is not a canonical decimal string.`,
+      );
+    }
+  }, [malformed, value.amount]);
+
   const display = (amount: string | null, prec: number, l: string) => {
-    // Over-precise external amounts display rounded (never emitted).
-    const d = canonicalToDraft(amount ? roundAmount(amount, prec) : amount);
+    // Malformed amounts display empty; over-precise ones display rounded. Neither is emitted.
+    if (amount === null || !CANONICAL.test(amount)) return '';
+    const d = canonicalToDraft(roundAmount(amount, prec));
     return d ? formatDraft(d, { locale: l, precision: prec, pad: true }) : '';
   };
 
@@ -144,6 +161,7 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
   // What we last emitted/displayed for; our own echoes must not resync (and clobber typing).
   const synced = useRef({ amount: value.amount, currency, locale: loc });
   const dirty = useRef(false);
+  const amountRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const s = synced.current;
@@ -169,24 +187,32 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
   const applyEdit = (input: HTMLInputElement, raw: string, caret: number) => {
     const prev = text;
     const typed = raw.length === prev.length + 1;
+    // Ruling D: a '-' when negatives are off rejects the whole edit (typed or pasted), never drops the sign.
+    const unsignedOnly = !allowNegative && raw.includes('-');
     const decimals = raw.split(decimal).length - 1;
     const dash = raw.indexOf('-');
     const fracDigits = decimals ? raw.slice(raw.indexOf(decimal) + 1).replace(/\D/g, '').length : 0;
     const reject =
-      typed &&
-      (decimals > 1 ||
-        (decimals === 1 && fracDigits > precision) ||
-        (dash !== -1 && (!allowNegative || dash !== 0 || raw.lastIndexOf('-') !== 0)));
+      unsignedOnly ||
+      (typed &&
+        (decimals > 1 ||
+          (decimals === 1 && fracDigits > precision) ||
+          (dash !== -1 && (dash !== 0 || raw.lastIndexOf('-') !== 0))));
     if (reject) {
+      // Back to where the insertion started (caret - 1 for a typed char).
+      const back = Math.max(0, caret - (raw.length - prev.length));
       input.value = prev;
-      input.setSelectionRange(caret - 1, caret - 1);
+      input.setSelectionRange(back, back);
       return;
     }
     dirty.current = true;
     const draft = parse(raw);
     const next = draft ? formatDraft(draft, { locale: loc, precision, pad: false }) : '';
     // Caret lands after the same count of significant chars (digits, decimal, '-') it followed in `raw`.
-    let n = [...raw.slice(0, caret)].filter(isSignificant).length;
+    const before = raw.slice(0, caret);
+    let n = [...before].filter(isSignificant).length;
+    // formatDraft synthesizes a '0' for a missing integer part ('.' → '0.'); step over it too.
+    if (draft && !draft.int && draft.frac !== null && before.includes(decimal)) n++;
     let pos = 0;
     while (n > 0 && pos < next.length) if (isSignificant(next[pos++])) n--;
     input.value = next;
@@ -237,7 +263,12 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
   const onCurrencyChange = (code: string | null) => {
     if (!code) return;
     const prec = currencyPrecision(code);
-    const amount = value.amount === null ? null : roundAmount(value.amount, prec);
+    let amount = value.amount;
+    if (amount !== null && CANONICAL.test(amount)) {
+      amount = roundAmount(amount, prec);
+      // Ruling E: unfocused → padded canonical, matching what blur would emit for the same display.
+      if (document.activeElement !== amountRef.current) amount = padCanonical(amount, prec);
+    }
     setText(display(amount, prec, loc));
     emit(amount, code);
   };
@@ -299,6 +330,7 @@ export const MoneyInput = forwardRef<HTMLDivElement, MoneyInputProps>(function M
         />
       )}
       <Input
+        ref={amountRef}
         className={styles.amount}
         id={id}
         inputMode={allowNegative ? 'text' : 'decimal'}

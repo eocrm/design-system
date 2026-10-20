@@ -1,4 +1,4 @@
-import { forwardRef, useMemo, type HTMLAttributes } from 'react';
+import { forwardRef, useEffect, useMemo, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
 import { Select, type SelectOption, type SelectProps } from '../Select';
 import { useLocale, useTranslation } from '../../i18n';
@@ -100,17 +100,15 @@ export const CurrencySelect = forwardRef<HTMLDivElement, CurrencySelectProps>(
     const appLocale = useLocale();
     const loc = locale ?? appLocale;
 
-    const codes = useMemo(() => {
-      const valid = currencies.filter(isValidCurrency);
-      if (process.env.NODE_ENV !== 'production') {
-        const bad = currencies.filter((c) => !isValidCurrency(c));
-        if (bad.length)
-          console.warn(`<CurrencySelect>: ignoring invalid currency codes: ${bad.join(', ')}`);
-        if (!valid.length)
-          console.warn('<CurrencySelect>: `currencies` is empty; nothing to pick.');
-      }
-      return valid;
-    }, [currencies]);
+    const codes = useMemo(() => currencies.filter(isValidCurrency), [currencies]);
+    // Warn in an effect keyed on content (strings), so equal arrays don't re-warn per render.
+    const invalid = currencies.filter((c) => !isValidCurrency(c)).join(', ');
+    const empty = !codes.length;
+    useEffect(() => {
+      if (process.env.NODE_ENV === 'production') return;
+      if (invalid) console.warn(`<CurrencySelect>: ignoring invalid currency codes: ${invalid}`);
+      if (empty) console.warn('<CurrencySelect>: `currencies` is empty; nothing to pick.');
+    }, [invalid, empty]);
 
     const options = useMemo<SelectOption<CurrencyData>[]>(
       () =>

@@ -90,6 +90,15 @@ describe('MoneyInput', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  it('switching currency while the amount is unfocused emits the padded canonical', async () => {
+    const onChange = vi.fn();
+    render(<Harness onChange={onChange} initial={{ amount: '13', currency: 'JPY' }} />);
+    await userEvent.click(screen.getByRole('combobox'));
+    await userEvent.click(screen.getByRole('option', { name: /USD/ }));
+    expect(onChange).toHaveBeenCalledWith({ amount: '13.00', currency: 'USD' });
+    expect(amountBox().value).toBe('13.00');
+  });
+
   it('switching currency rounds', async () => {
     const onChange = vi.fn();
     render(<Harness onChange={onChange} initial={{ amount: '12.34', currency: 'EUR' }} />);
@@ -337,6 +346,48 @@ describe('MoneyInput', () => {
       );
       expect(amountBox().value).toBe('1.01');
       expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('typing ".5" into an empty field yields 0.5', async () => {
+      const onChange = vi.fn();
+      render(<Harness onChange={onChange} />);
+      await userEvent.type(amountBox(), '.5');
+      expect(amountBox().value).toBe('0.5');
+      expect(onChange).toHaveBeenLastCalledWith({ amount: '0.5', currency: 'USD' });
+    });
+
+    it('allowNegative: typing "-.5" yields -0.5', async () => {
+      const onChange = vi.fn();
+      render(<Harness allowNegative onChange={onChange} />);
+      await userEvent.type(amountBox(), '-.5');
+      expect(amountBox().value).toBe('-0.5');
+      expect(onChange).toHaveBeenLastCalledWith({ amount: '-0.5', currency: 'USD' });
+    });
+
+    it('rejects a pasted negative when allowNegative is false', async () => {
+      const onChange = vi.fn();
+      render(<Harness onChange={onChange} />);
+      await userEvent.click(amountBox());
+      await userEvent.paste('-500');
+      expect(amountBox().value).toBe('');
+      expect(onChange).not.toHaveBeenCalled();
+    });
+
+    it('malformed external amount displays empty and warns, without throwing or emitting', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const onChange = vi.fn();
+      render(
+        <MoneyInput
+          aria-label="Price"
+          value={{ amount: '12.3a5', currency: 'USD' }}
+          currencies={['EUR', 'USD']}
+          onChange={onChange}
+        />,
+      );
+      expect(amountBox().value).toBe('');
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('12.3a5'));
+      expect(onChange).not.toHaveBeenCalled();
+      warn.mockRestore();
     });
   });
 });

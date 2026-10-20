@@ -118,6 +118,15 @@ describe('CurrencySelect', () => {
     warn.mockRestore();
   });
 
+  it('warns once per code list, not on every render with an equal array', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const ui = () => <CurrencySelect currencies={['EUR', 'XX']} value={null} onChange={() => {}} />;
+    const { rerender } = render(ui());
+    rerender(ui());
+    expect(warn).toHaveBeenCalledTimes(1);
+    warn.mockRestore();
+  });
+
   it('dev-warns on empty currencies', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     render(<CurrencySelect currencies={[]} value={null} onChange={() => {}} />);
