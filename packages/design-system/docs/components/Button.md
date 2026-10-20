@@ -29,6 +29,15 @@
   <Button variant="secondary">Cancel</Button>
   <Button type="submit">Save</Button>
 </Cluster>
+
+// Status quick actions painted like the status pill they set. `noShow` / `completed`
+// are your status records, each with a `color: PaletteColor` that also feeds the
+// PillMenuOption, so a tenant recolouring a status recolours its button too.
+<Cluster gap="sm">
+  <PillMenu current={current} options={statuses} onSelect={setStatusId} />
+  <Button size="sm" color={noShow.color} onClick={() => setStatusId(noShow.id)}>No show</Button>
+  <Button size="sm" color={completed.color} onClick={() => setStatusId(completed.id)}>Completed</Button>
+</Cluster>
 ```
 
 <!-- props:start -->
@@ -38,10 +47,11 @@
 <!-- prettier-ignore -->
 | Prop | Type | Required | Description |
 |---|---|---|---|
-| `variant` | `'primary' \| 'secondary' \| 'ghost' \| 'danger' \| 'danger-outline' \| 'success'` | no | Visual variant. - `primary` (default) — the section's main action. Use **one** per page section. - `secondary` — supporting actions like "Cancel", "Export", "Filter". - `ghost` — tertiary actions in dense UIs (toolbar buttons, row actions). - `danger` — destructive operations only (Delete, Revoke, Remove). Pair with a confirmation if irreversible. - `danger-outline` — a destructive action that must not dominate: surface fill, danger text and border. For a Remove repeated on every row, or a destructive action beside a primary one. Use filled `danger` for the confirm step itself. - `success` — **transient confirmation only**, not an initial state. Flip to `success` for ~1.5s after an action resolves (Save → "Saved!"), then flip back. Never render a button as `success` on mount — it has no action-intent meaning, only post-action feedback. See the `@example` below for the timer pattern. |
 | `size` | `'xs' \| 'sm' \| 'md' \| 'lg'` | no | Control height (matches the shared `--size-*` scale used by Input and Avatar). - `xs` (20px) — icon-only or very dense inline actions (row controls, chip-adjacent buttons). Pass `aria-label` when icon-only. Below WCAG 2.5.5 Level AAA touch-target guidance; reserve for desktop-first surfaces. - `sm` (24px) — dense toolbars, tables, inline actions. - `md` (32px, default) — most contexts. - `lg` (40px) — marketing-style empty states or emphasized primary actions. |
 | `iconOnly` | `boolean` | no | Render the button as a square icon-only target — `aspect-ratio` is forced to 1 so width tracks the size's `height` token (`xs` → 20×20, `sm` → 24×24, `md` → 32×32, `lg` → 40×40) and `padding` is tightened to a small inset (4px) so the icon has breathing room without changing the outer shape. **Always pass `aria-label`** when `iconOnly` is set, otherwise the button has no accessible name. Pass a single icon as `children`. Use for inline density (row controls, chip-adjacent actions, toolbar affordances). For an icon + short text label, leave `iconOnly` off — the button will lay out as a normal rectangle with the existing gap. |
+| `variant` | `'primary' \| 'secondary' \| 'ghost' \| 'danger' \| 'danger-outline' \| 'success'` | no | Visual variant. - `primary` (default) — the section's main action. Use **one** per page section. - `secondary` — supporting actions like "Cancel", "Export", "Filter". - `ghost` — tertiary actions in dense UIs (toolbar buttons, row actions). - `danger` — destructive operations only (Delete, Revoke, Remove). Pair with a confirmation if irreversible. - `danger-outline` — a destructive action that must not dominate: surface fill, danger text and border. For a Remove repeated on every row, or a destructive action beside a primary one. Use filled `danger` for the confirm step itself. - `success` — **transient confirmation only**, not an initial state. Flip to `success` for ~1.5s after an action resolves (Save → "Saved!"), then flip back. Never render a button as `success` on mount — it has no action-intent meaning, only post-action feedback. See the `@example` below for the timer pattern. |
 | `selected` | `boolean` | no | Controlled persistent paint for an applied filter or toolbar value. Selected paint applies only to `secondary` and `ghost` Buttons; `primary`, `danger`, and `success` retain their intent paint. This prop is visual only and does not add toggle-button semantics. Pass native `aria-pressed` explicitly only when activating the Button itself toggles the selected state; menu and disclosure triggers keep their own semantics. The consumer owns the state. Not for transient success feedback or for mutually exclusive `<ButtonGroup>` choices. Defaults to `undefined` (not selected). |
+| `color` | `PaletteColor` | no | Paint the button with a palette color's soft pair (`--color-palette-<color>-bg` fill, `-fg` text) — the same pair a palette-colored `<PillMenu>` or `<Badge color>` uses, in both themes. For a quick action that moves a record to a status and must look like that status's pill (amber "No show" beside an amber status PillMenu). Not a decorative stand-in for `danger`/`success`: palette colors carry no meaning. Excludes `variant` and `selected`. Hover/pressed darken via `filter: brightness()`. Defaults to `undefined` (use `variant`). |
 | `as` | `ElementType` | no | Render a different element — the case that matters is `as="a"` with `href`, for a link that must LOOK like a button (an external console, a download, an IdP hand-off). The element named here is what actually renders, and its own attributes are typed: `href` is REQUIRED when `as="a"` (an anchor without one is neither focusable nor a link) and rejected otherwise; `target`/`rel`/`download` come through. Never navigate from `onClick`. Reach for `<Link>` first. `<Link>` is link-SHAPED navigation — inline text in a sentence, a table cell, a breadcrumb. `<Button as="a">` is for a destination that sits in a row of buttons and must carry their weight. Either way the element is a real anchor, so assistive tech announces a link and the browser gives middle-click, "open in new tab", and the status bar preview — none of which a `<button onClick={() => navigate()}>` has. `type="button"` is emitted only for a real `<button>`; an anchor never gets it. Everything else — variant, size, `iconOnly`, `selected`, the focus ring — is unchanged. Default: `'button'`. |
 | …native | | | plus native attributes of the `as` element (default `<button>`) |
 
@@ -77,6 +87,7 @@
 - ❌ Toggle state (on/off) → `Switch` or `Checkbox`, not a Button with internal state.
 - ❌ Mutually exclusive choices → `<ButtonGroup>`, which supplies the group-level selection semantics.
 - ❌ A clickable table row → make the row itself the interactive surface; don't nest a button.
+- ❌ Decorative color for an ordinary action → `variant`. `color` is only for an action that must match a palette-colored `<PillMenu>` / `<Badge color>` (a status or category it sets); resolve it from the same source as that pill so a recolored status carries its button along.
 - On touch-first surfaces prefer `size="sm"` or larger: `xs` (20px×~28px, or 20×20 with `iconOnly`) is below WCAG 2.5.5 Level AAA touch-target guidance (24×24); acceptable here because the CRM is desktop-first.
 
 #### Anti-patterns
@@ -86,6 +97,8 @@
 - ❌ Overriding padding/height via `className`. A different visual size is a missing variant: request it.
 - ❌ `variant="ghost"` for the page's primary action. Users won't discover it.
 - ❌ `<Button variant="success">Save</Button>` on initial mount. Start as `primary` and flip to `success` after the action resolves.
+- ❌ `<Button color="red">Delete</Button>` or `color="green"` for a confirm. Palette colors carry no meaning; destructive is `variant="danger"`, post-action feedback is `variant="success"`.
+- ❌ `<Button color="amber" variant="secondary">`. `color` replaces `variant` (and `selected`); the pair does not compile.
 - ❌ `size="xs"` for the primary or most prominent action. `xs` is for inline density, not emphasis; reach for `md` or `lg`.
 - ❌ `<Button iconOnly><X /></Button>` without `aria-label`: screen readers announce nothing.
 - ❌ Assuming `selected` adds toggle semantics. It is paint only; pass `aria-pressed` explicitly when activating the Button toggles that state, and not on menu or disclosure triggers.

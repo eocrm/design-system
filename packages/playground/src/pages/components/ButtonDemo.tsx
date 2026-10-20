@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
 import { Check, Pencil, Plus, Search, Trash2, X } from 'lucide-react';
-import { Button, Cluster } from '@eocrm/design-system';
+import {
+  Button,
+  Cluster,
+  PALETTE_COLORS,
+  PillMenu,
+  type PaletteColor,
+  type PillMenuOption,
+} from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -59,6 +66,28 @@ function AppliedFilters() {
       >
         Owner: Alex Rivera
       </Button>
+    </Cluster>
+  );
+}
+
+const STATUSES: (PillMenuOption & { color: PaletteColor })[] = [
+  { id: 'scheduled', name: 'Scheduled', color: 'blue' },
+  { id: 'no-show', name: 'No show', color: 'amber' },
+  { id: 'completed', name: 'Completed', color: 'green' },
+];
+
+function StatusQuickActions() {
+  const [statusId, setStatusId] = useState<string | number>('scheduled');
+  const current = STATUSES.find((s) => s.id === statusId)!;
+
+  return (
+    <Cluster gap="sm" align="center">
+      <PillMenu current={current} options={STATUSES} onSelect={setStatusId} />
+      {STATUSES.filter((s) => s.id !== statusId && s.id !== 'scheduled').map((s) => (
+        <Button key={s.id} size="sm" color={s.color} onClick={() => setStatusId(s.id)}>
+          {s.name}
+        </Button>
+      ))}
     </Cluster>
   );
 }
@@ -174,6 +203,68 @@ export function AppliedFilters() {
 }`}
       >
         <AppliedFilters />
+      </Example>
+
+      <Example
+        title="Palette color (status quick actions)"
+        description="color paints the Button with a palette color's soft pair — the same fill and text as a PillMenu or Badge of that color, in both themes. Use it for a quick action that moves a record to a status, so the button matches the status pill it sets and follows a tenant's recolouring. It replaces variant and selected (the pair does not compile). Palette colors carry no meaning: destructive is still the danger variant."
+        code={`import { useState } from 'react';
+import {
+  Button,
+  Cluster,
+  PillMenu,
+  type PaletteColor,
+  type PillMenuOption,
+} from '@eocrm/design-system';
+
+const STATUSES: (PillMenuOption & { color: PaletteColor })[] = [
+  { id: 'scheduled', name: 'Scheduled', color: 'blue' },
+  { id: 'no-show', name: 'No show', color: 'amber' },
+  { id: 'completed', name: 'Completed', color: 'green' },
+];
+
+export function StatusQuickActions() {
+  const [statusId, setStatusId] = useState<string | number>('scheduled');
+  const current = STATUSES.find((s) => s.id === statusId)!;
+
+  return (
+    <Cluster gap="sm" align="center">
+      <PillMenu current={current} options={STATUSES} onSelect={setStatusId} />
+      {STATUSES.filter((s) => s.id !== statusId && s.id !== 'scheduled').map((s) => (
+        <Button key={s.id} size="sm" color={s.color} onClick={() => setStatusId(s.id)}>
+          {s.name}
+        </Button>
+      ))}
+    </Cluster>
+  );
+}`}
+      >
+        <StatusQuickActions />
+      </Example>
+
+      <Example
+        title="All palette colors"
+        code={`import { Button, Cluster, PALETTE_COLORS } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Cluster gap="sm">
+      {PALETTE_COLORS.map((color) => (
+        <Button key={color} size="sm" color={color}>
+          {color}
+        </Button>
+      ))}
+    </Cluster>
+  );
+}`}
+      >
+        <Cluster gap="sm">
+          {PALETTE_COLORS.map((color) => (
+            <Button key={color} size="sm" color={color}>
+              {color}
+            </Button>
+          ))}
+        </Cluster>
       </Example>
 
       <Example

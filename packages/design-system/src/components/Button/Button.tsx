@@ -2,11 +2,13 @@ import {
   forwardRef,
   type ComponentPropsWithRef,
   type ComponentPropsWithoutRef,
+  type CSSProperties,
   type ElementType,
   type ForwardedRef,
   type ReactElement,
 } from 'react';
 import clsx from 'clsx';
+import { paletteTokens, type PaletteColor } from '../../palette/palette';
 import styles from './Button.module.scss';
 
 /** Visual variant. See ButtonProps#variant for when to use each. */
@@ -21,24 +23,7 @@ export type ButtonVariant =
 /** Control height. See ButtonProps#size for when to use each. */
 export type ButtonSize = 'xs' | 'sm' | 'md' | 'lg';
 
-interface ButtonOwnProps {
-  /**
-   * Visual variant.
-   * - `primary` (default) — the section's main action. Use **one** per page section.
-   * - `secondary` — supporting actions like "Cancel", "Export", "Filter".
-   * - `ghost` — tertiary actions in dense UIs (toolbar buttons, row actions).
-   * - `danger` — destructive operations only (Delete, Revoke, Remove). Pair with a confirmation if irreversible.
-   * - `danger-outline` — a destructive action that must not dominate: surface
-   *   fill, danger text and border. For a Remove repeated on every row, or a
-   *   destructive action beside a primary one. Use filled `danger` for the
-   *   confirm step itself.
-   * - `success` — **transient confirmation only**, not an initial state. Flip to
-   *   `success` for ~1.5s after an action resolves (Save → "Saved!"), then
-   *   flip back. Never render a button as `success` on mount — it has no
-   *   action-intent meaning, only post-action feedback. See the `@example`
-   *   below for the timer pattern.
-   */
-  variant?: ButtonVariant;
+interface ButtonBaseProps {
   /**
    * Control height (matches the shared `--size-*` scale used by Input and Avatar).
    * - `xs` (20px) — icon-only or very dense inline actions (row controls,
@@ -63,19 +48,62 @@ interface ButtonOwnProps {
    * button will lay out as a normal rectangle with the existing gap.
    */
   iconOnly?: boolean;
-  /**
-   * Controlled persistent paint for an applied filter or toolbar value.
-   * Selected paint applies only to `secondary` and `ghost` Buttons;
-   * `primary`, `danger`, and `success` retain their intent paint. This prop is
-   * visual only and does not add toggle-button semantics. Pass native
-   * `aria-pressed` explicitly only when activating the Button itself toggles
-   * the selected state; menu and disclosure triggers keep their own semantics.
-   * The consumer owns the state. Not for transient success feedback or for
-   * mutually exclusive `<ButtonGroup>` choices. Defaults to `undefined` (not
-   * selected).
-   */
-  selected?: boolean;
 }
+
+/**
+ * Paint is EITHER a `variant` (+ `selected`) OR a palette `color` — never both.
+ * A union so `<Button color="amber" variant="secondary">` is a type error.
+ */
+type ButtonPaintProps =
+  | {
+      /**
+       * Visual variant.
+       * - `primary` (default) — the section's main action. Use **one** per page section.
+       * - `secondary` — supporting actions like "Cancel", "Export", "Filter".
+       * - `ghost` — tertiary actions in dense UIs (toolbar buttons, row actions).
+       * - `danger` — destructive operations only (Delete, Revoke, Remove). Pair with a confirmation if irreversible.
+       * - `danger-outline` — a destructive action that must not dominate: surface
+       *   fill, danger text and border. For a Remove repeated on every row, or a
+       *   destructive action beside a primary one. Use filled `danger` for the
+       *   confirm step itself.
+       * - `success` — **transient confirmation only**, not an initial state. Flip to
+       *   `success` for ~1.5s after an action resolves (Save → "Saved!"), then
+       *   flip back. Never render a button as `success` on mount — it has no
+       *   action-intent meaning, only post-action feedback. See the `@example`
+       *   below for the timer pattern.
+       */
+      variant?: ButtonVariant;
+      /**
+       * Controlled persistent paint for an applied filter or toolbar value.
+       * Selected paint applies only to `secondary` and `ghost` Buttons;
+       * `primary`, `danger`, and `success` retain their intent paint. This prop is
+       * visual only and does not add toggle-button semantics. Pass native
+       * `aria-pressed` explicitly only when activating the Button itself toggles
+       * the selected state; menu and disclosure triggers keep their own semantics.
+       * The consumer owns the state. Not for transient success feedback or for
+       * mutually exclusive `<ButtonGroup>` choices. Defaults to `undefined` (not
+       * selected).
+       */
+      selected?: boolean;
+      color?: never;
+    }
+  | {
+      /**
+       * Paint the button with a palette color's soft pair
+       * (`--color-palette-<color>-bg` fill, `-fg` text) — the same pair a
+       * palette-colored `<PillMenu>` or `<Badge color>` uses, in both themes.
+       * For a quick action that moves a record to a status and must look like
+       * that status's pill (amber "No show" beside an amber status PillMenu).
+       * Not a decorative stand-in for `danger`/`success`: palette colors carry
+       * no meaning. Excludes `variant` and `selected`. Hover/pressed darken via
+       * `filter: brightness()`. Defaults to `undefined` (use `variant`).
+       */
+      color: PaletteColor;
+      variant?: never;
+      selected?: never;
+    };
+
+type ButtonOwnProps = ButtonBaseProps & ButtonPaintProps;
 
 /**
  * Polymorphic props helper. Intersects the component's own props with the
@@ -145,13 +173,16 @@ export const Button = forwardRef(function Button<C extends ElementType = 'button
     size = 'md',
     iconOnly = false,
     selected,
+    color,
     className,
+    style,
     ...props
   }: ButtonProps<C>,
   ref: ForwardedRef<Element>,
 ) {
   const Component = (as || 'button') as ElementType;
-  const paintsSelected = selected && (variant === 'secondary' || variant === 'ghost');
+  const palette = color ? paletteTokens(color) : undefined;
+  const paintsSelected = !palette && selected && (variant === 'secondary' || variant === 'ghost');
 
   // `type="button"` is a <button>-only guarantee — it stops the button
   // submitting an ancestor form. An anchor's `type` is a MIME hint, so
@@ -166,12 +197,21 @@ export const Button = forwardRef(function Button<C extends ElementType = 'button
       {...defaultType}
       className={clsx(
         styles.button,
-        styles[variant],
+        palette ? styles.palette : styles[variant],
         styles[size],
         iconOnly && styles.iconOnly,
         paintsSelected && styles.selected,
         className,
       )}
+      style={
+        palette
+          ? ({
+              '--button-palette-bg': palette.bg,
+              '--button-palette-fg': palette.fg,
+              ...style,
+            } as CSSProperties)
+          : style
+      }
       // {...props} last so consumers can supply native semantics such as aria-pressed.
       {...props}
     />

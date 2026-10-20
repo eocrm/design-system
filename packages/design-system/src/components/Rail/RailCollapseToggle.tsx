@@ -8,7 +8,7 @@ import styles from './Rail.module.scss';
 
 export interface RailCollapseToggleProps extends Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
-  'aria-label' | 'children'
+  'aria-label' | 'children' | 'color'
 > {
   /**
    * Override the auto-generated aria-label (defaults to `t('rail.expand')` /

@@ -399,13 +399,6 @@
     "Button": {
       "props": [
         {
-          "name": "variant",
-          "type": "ButtonVariant",
-          "required": false,
-          "default": "primary",
-          "description": "Visual variant.\n- `primary` (default) — the section's main action. Use **one** per page section.\n- `secondary` — supporting actions like \"Cancel\", \"Export\", \"Filter\".\n- `ghost` — tertiary actions in dense UIs (toolbar buttons, row actions).\n- `danger` — destructive operations only (Delete, Revoke, Remove). Pair with a confirmation if irreversible.\n- `danger-outline` — a destructive action that must not dominate: surface\n  fill, danger text and border. For a Remove repeated on every row, or a\n  destructive action beside a primary one. Use filled `danger` for the\n  confirm step itself.\n- `success` — **transient confirmation only**, not an initial state. Flip to\n  `success` for ~1.5s after an action resolves (Save → \"Saved!\"), then\n  flip back. Never render a button as `success` on mount — it has no\n  action-intent meaning, only post-action feedback. See the `@example`\n  below for the timer pattern."
-        },
-        {
           "name": "size",
           "type": "ButtonSize",
           "required": false,
@@ -420,11 +413,25 @@
           "description": "Render the button as a square icon-only target — `aspect-ratio` is forced\nto 1 so width tracks the size's `height` token (`xs` → 20×20, `sm` → 24×24,\n`md` → 32×32, `lg` → 40×40) and `padding` is tightened to a small inset\n(4px) so the icon has breathing room without changing the outer shape.\n\n**Always pass `aria-label`** when `iconOnly` is set, otherwise the button\nhas no accessible name. Pass a single icon as `children`.\n\nUse for inline density (row controls, chip-adjacent actions, toolbar\naffordances). For an icon + short text label, leave `iconOnly` off — the\nbutton will lay out as a normal rectangle with the existing gap."
         },
         {
+          "name": "variant",
+          "type": "ButtonVariant",
+          "required": false,
+          "default": "primary",
+          "description": "Visual variant.\n- `primary` (default) — the section's main action. Use **one** per page section.\n- `secondary` — supporting actions like \"Cancel\", \"Export\", \"Filter\".\n- `ghost` — tertiary actions in dense UIs (toolbar buttons, row actions).\n- `danger` — destructive operations only (Delete, Revoke, Remove). Pair with a confirmation if irreversible.\n- `danger-outline` — a destructive action that must not dominate: surface\n  fill, danger text and border. For a Remove repeated on every row, or a\n  destructive action beside a primary one. Use filled `danger` for the\n  confirm step itself.\n- `success` — **transient confirmation only**, not an initial state. Flip to\n  `success` for ~1.5s after an action resolves (Save → \"Saved!\"), then\n  flip back. Never render a button as `success` on mount — it has no\n  action-intent meaning, only post-action feedback. See the `@example`\n  below for the timer pattern."
+        },
+        {
           "name": "selected",
           "type": "boolean",
           "required": false,
           "default": "",
           "description": "Controlled persistent paint for an applied filter or toolbar value.\nSelected paint applies only to `secondary` and `ghost` Buttons;\n`primary`, `danger`, and `success` retain their intent paint. This prop is\nvisual only and does not add toggle-button semantics. Pass native\n`aria-pressed` explicitly only when activating the Button itself toggles\nthe selected state; menu and disclosure triggers keep their own semantics.\nThe consumer owns the state. Not for transient success feedback or for\nmutually exclusive `<ButtonGroup>` choices. Defaults to `undefined` (not\nselected)."
+        },
+        {
+          "name": "color",
+          "type": "PaletteColor",
+          "required": false,
+          "default": "",
+          "description": "Paint the button with a palette color's soft pair\n(`--color-palette-<color>-bg` fill, `-fg` text) — the same pair a\npalette-colored `<PillMenu>` or `<Badge color>` uses, in both themes.\nFor a quick action that moves a record to a status and must look like\nthat status's pill (amber \"No show\" beside an amber status PillMenu).\nNot a decorative stand-in for `danger`/`success`: palette colors carry\nno meaning. Excludes `variant` and `selected`. Hover/pressed darken via\n`filter: brightness()`. Defaults to `undefined` (use `variant`)."
         },
         {
           "name": "as",
@@ -1798,7 +1805,7 @@
           "type": "DateTimeGranularity",
           "required": false,
           "default": "'day'",
-          "description": "Picker precision.\n\n- `'day'` (default) — date only; behavior unchanged from prior releases.\n- `'minute'` — adds a manual-entry time input below the calendar grid.\n  The trigger text shows `HH:mm` after the date. The hidden form mirror\n  (when `name` is set) emits ISO local datetime (`2026-05-28T14:30`).\n\nTime is preserved across date re-picks. Picking from a `null` value\ndefaults the time to `00:00`."
+          "description": "Picker precision.\n\n- `'day'` (default) — date only; behavior unchanged from prior releases.\n- `'minute'` — adds a manual-entry time input below the calendar grid.\n  The trigger text shows `HH:mm` after the date. The hidden form mirror\n  (when `name` is set) emits ISO local datetime (`2026-05-28T14:30`).\n\nTime is preserved across date re-picks. Picking from a `null` value\ndefaults the time to `00:00`. In `'minute'` mode picking a day keeps the\npopover open and moves focus to the time input; Enter there (or Escape /\noutside click) closes it."
         },
         {
           "name": "timeStep",
