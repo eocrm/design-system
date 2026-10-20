@@ -94,7 +94,11 @@ describe('ImageCrop', () => {
 
     it('removes skeleton and renders crop box once image loads', () => {
       const { container } = render(
-        <ImageCrop src="data:,placeholder" value={null} onChange={() => {}} />,
+        <ImageCrop
+          src="data:,placeholder"
+          value={{ x: 0, y: 0, width: 100, height: 100 }}
+          onChange={() => {}}
+        />,
       );
       mockViewportRect(container);
       fireImageLoad(container);
@@ -113,15 +117,13 @@ describe('ImageCrop', () => {
       expect(screen.getByText(/Couldn't load image/i)).toBeInTheDocument();
     });
 
-    it('disabled: adds disabled class and disables zoom slider', () => {
+    it('disabled: adds disabled class', () => {
       const { container } = render(
         <ImageCrop src="data:,placeholder" value={null} onChange={() => {}} disabled />,
       );
       const root = container.firstElementChild as HTMLElement;
       expect(root.className).toMatch(/disabled/);
-      // Zoom slider has aria-disabled on its thumb when disabled.
-      const sliderThumb = container.querySelector('[role="slider"]');
-      expect(sliderThumb).toHaveAttribute('aria-disabled', 'true');
+      expect(container.querySelector('[role="slider"]')).not.toBeInTheDocument();
     });
   });
 
@@ -171,25 +173,68 @@ describe('ImageCrop', () => {
       fireImageLoad(container, 1000, 800);
       expect(onChange).toHaveBeenCalledTimes(1);
       const fired = onChange.mock.calls[0][0] as CropArea;
-      // 1000×800 image, aspectRatio=1, default centered square should be 800×800.
-      expect(fired.width).toBe(800);
-      expect(fired.height).toBe(800);
-      expect(fired.x).toBe(100); // (1000 - 800) / 2
-      expect(fired.y).toBe(0); // (800 - 800) / 2
+      // 1000×800 image, aspectRatio=1: largest square 800 → 80% = 640, centered.
+      expect(fired.width).toBeCloseTo(640);
+      expect(fired.height).toBeCloseTo(640);
+      expect(fired.x).toBeCloseTo(180);
+      expect(fired.y).toBeCloseTo(80);
     });
 
-    it('controlled value: image rendered with transform reflecting value position', () => {
+    it('value reset to null after init (e.g. ratio switch) fires the new default crop', () => {
+      const onChange = vi.fn();
+      const square: CropArea = { x: 180, y: 80, width: 640, height: 640 };
+      const { container, rerender } = render(
+        <ImageCrop src="data:,placeholder" value={square} onChange={onChange} aspectRatio={1} />,
+      );
+      mockViewportRect(container, { width: 400, height: 400 });
+      fireImageLoad(container, 1000, 800);
+      expect(onChange).not.toHaveBeenCalled();
+      rerender(
+        <ImageCrop src="data:,placeholder" value={null} onChange={onChange} aspectRatio={16 / 9} />,
+      );
+      expect(onChange).toHaveBeenCalledTimes(1);
+      const fired = onChange.mock.calls[0][0] as CropArea;
+      // 1000×800 image, 16:9: largest box 1000×562.5 → 80% = 800×450, centered.
+      expect(fired.width).toBeCloseTo(800);
+      expect(fired.height).toBeCloseTo(450);
+      expect(fired.x).toBeCloseTo(100);
+      expect(fired.y).toBeCloseTo(175);
+    });
+
+    it('controlled value: image is fitted, still, with a transform from fitImage', () => {
       const value: CropArea = { x: 100, y: 50, width: 400, height: 400 };
       const { container } = render(
-        <ImageCrop src="data:,placeholder" value={value} onChange={() => {}} aspectRatio={1} />,
+        <ImageCrop
+          src="data:,placeholder"
+          value={value}
+          onChange={() => {}}
+          aspectRatio={1}
+          showReset
+        />,
       );
       mockViewportRect(container, { width: 400, height: 400 });
       fireImageLoad(container, 1000, 800);
       const img = container.querySelector<HTMLImageElement>('img')!;
-      // scale = boxW / value.width = 400 / 400 = 1; box centered at (0, 0) — but viewport is 400×400 too.
-      // boxLeft = 0, boxTop = 0, originX = 0 - 100*1 = -100, originY = 0 - 50*1 = -50.
-      expect(img.style.transform).toContain('translate(-100px, -50px)');
-      expect(img.style.transform).toContain('scale(1)');
+      // scale 0.368, offset (16, 32.8) — independent of value.
+      expect(img.style.transform).toMatch(/translate\(16px, 32\.8/);
+      expect(img.style.transform).toContain('scale(0.368)');
+    });
+
+    it('no toolbar: nothing reserved, image uses the full viewport height', () => {
+      const { container } = render(
+        <ImageCrop
+          src="data:,placeholder"
+          value={{ x: 0, y: 0, width: 100, height: 100 }}
+          onChange={() => {}}
+          aspectRatio={1}
+        />,
+      );
+      mockViewportRect(container, { width: 400, height: 400 });
+      fireImageLoad(container, 400, 800);
+      // 400×800 in 400×400: height-limited; 0.48 = 384/800 only when no band is reserved.
+      expect(container.querySelector<HTMLImageElement>('img')!.style.transform).toContain(
+        'scale(0.48)',
+      );
     });
 
     it('aspectRatio=1 with null value: default crop is square', () => {
@@ -203,7 +248,7 @@ describe('ImageCrop', () => {
       expect(fired.width).toBe(fired.height);
     });
 
-    it('aspectRatio undefined: default crop matches image aspect (no constraint)', () => {
+    it('aspectRatio undefined: default crop is 80% of the image', () => {
       const onChange = vi.fn();
       const { container } = render(
         <ImageCrop src="data:,placeholder" value={null} onChange={onChange} />,
@@ -211,150 +256,407 @@ describe('ImageCrop', () => {
       mockViewportRect(container, { width: 400, height: 400 });
       fireImageLoad(container, 1000, 800);
       const fired = onChange.mock.calls[0][0] as CropArea;
-      // Free aspect = viewport aspect = 1 (400×400 viewport). Default centered crop should be
-      // 800×800 in a 1000×800 image (limited by the smaller dimension).
-      expect(fired.width).toBe(800);
-      expect(fired.height).toBe(800);
+      // Free aspect = image aspect: 80% of the whole image.
+      expect(fired.width).toBeCloseTo(800);
+      expect(fired.height).toBeCloseTo(640);
     });
   });
 
-  describe('drag', () => {
-    it('pointerdown on image starts drag (adds imageDragging class)', () => {
-      const { container } = render(
-        <ImageCrop
-          src="data:,placeholder"
-          value={{ x: 100, y: 50, width: 400, height: 400 }}
-          onChange={() => {}}
-          aspectRatio={1}
-        />,
-      );
-      mockViewportRect(container);
-      fireImageLoad(container, 1000, 800);
-      const img = container.querySelector('img')!;
-      fireEvent.pointerDown(img, { clientX: 200, clientY: 200, pointerId: 1 });
-      expect(img.className).toMatch(/imageDragging/);
-    });
-
-    it('pointermove during drag fires onChange with shifted value', () => {
+  describe('crop box', () => {
+    const SQ: CropArea = { x: 180, y: 80, width: 640, height: 640 };
+    function setup(
+      props: Partial<React.ComponentProps<typeof ImageCrop>> = {},
+      value: CropArea | null = SQ,
+    ) {
       const onChange = vi.fn();
-      const value: CropArea = { x: 100, y: 50, width: 400, height: 400 };
-      const { container } = render(
-        <ImageCrop src="data:,placeholder" value={value} onChange={onChange} aspectRatio={1} />,
-      );
-      mockViewportRect(container, { width: 400, height: 400 });
-      fireImageLoad(container, 1000, 800);
-      onChange.mockClear();
-      const img = container.querySelector('img')!;
-      fireEvent.pointerDown(img, { clientX: 200, clientY: 200, pointerId: 1 });
-      fireEvent.pointerMove(img, { clientX: 250, clientY: 220, pointerId: 1 });
-      // scale = 1; dx = 50, dy = 20. Sign-flipped: new x = 100 - 50 = 50, new y = 50 - 20 = 30.
-      // width/height unchanged.
-      const fired = onChange.mock.calls.at(-1)?.[0] as CropArea;
-      expect(fired.x).toBe(50);
-      expect(fired.y).toBe(30);
-      expect(fired.width).toBe(400);
-      expect(fired.height).toBe(400);
-    });
-
-    it('pointerup ends drag and fires onChangeEnd', () => {
       const onChangeEnd = vi.fn();
-      const { container } = render(
+      const utils = render(
         <ImageCrop
           src="data:,placeholder"
-          value={{ x: 100, y: 50, width: 400, height: 400 }}
-          onChange={() => {}}
+          value={value}
+          onChange={onChange}
           onChangeEnd={onChangeEnd}
           aspectRatio={1}
+          showReset
+          {...props}
         />,
       );
-      mockViewportRect(container);
-      fireImageLoad(container, 1000, 800);
-      const img = container.querySelector('img')!;
-      fireEvent.pointerDown(img, { clientX: 200, clientY: 200, pointerId: 1 });
-      fireEvent.pointerMove(img, { clientX: 250, clientY: 220, pointerId: 1 });
-      fireEvent.pointerUp(img, { clientX: 250, clientY: 220, pointerId: 1 });
-      expect(onChangeEnd).toHaveBeenCalled();
+      mockViewportRect(utils.container, { width: 400, height: 400 });
+      fireImageLoad(utils.container, 1000, 800);
+      onChange.mockClear();
+      const box = utils.container.querySelector<HTMLElement>('[data-crop-box]')!;
+      const handle = (h: string) =>
+        utils.container.querySelector<HTMLElement>(`[data-handle="${h}"]`)!;
+      return { ...utils, onChange, onChangeEnd, box, handle };
+    }
+    const last = (fn: ReturnType<typeof vi.fn>) => fn.mock.calls.at(-1)?.[0] as CropArea;
+
+    it('box is positioned from value', () => {
+      const { box } = setup();
+      expect(parseFloat(box.style.left)).toBeCloseTo(16 + 180 * 0.368);
+      expect(parseFloat(box.style.width)).toBeCloseTo(640 * 0.368);
     });
 
-    it('drag clamps so value.x stays in [0, imageWidth - width]', () => {
-      const onChange = vi.fn();
-      const { container } = render(
-        <ImageCrop
-          src="data:,placeholder"
-          value={{ x: 100, y: 50, width: 400, height: 400 }}
-          onChange={onChange}
-          aspectRatio={1}
-        />,
-      );
-      mockViewportRect(container, { width: 400, height: 400 });
-      fireImageLoad(container, 1000, 800);
-      onChange.mockClear();
-      const img = container.querySelector('img')!;
-      fireEvent.pointerDown(img, { clientX: 200, clientY: 200, pointerId: 1 });
-      // Huge rightward drag — should clamp x at 0 (can't go below).
-      fireEvent.pointerMove(img, { clientX: 5000, clientY: 200, pointerId: 1 });
-      const fired = onChange.mock.calls.at(-1)?.[0] as CropArea;
-      expect(fired.x).toBe(0);
+    it('dragging the box moves the crop', () => {
+      const { box, onChange } = setup();
+      fireEvent.pointerDown(box, { clientX: 200, clientY: 200, pointerId: 1 });
+      fireEvent.pointerMove(box, { clientX: 236.8, clientY: 200, pointerId: 1 });
+      expect(last(onChange).x).toBeCloseTo(280);
+      expect(last(onChange).y).toBeCloseTo(80);
     });
 
-    it('disabled: pointerdown does not start drag', () => {
-      const onChange = vi.fn();
-      const { container } = render(
-        <ImageCrop
-          src="data:,placeholder"
-          value={{ x: 100, y: 50, width: 400, height: 400 }}
-          onChange={onChange}
-          disabled
-        />,
-      );
-      mockViewportRect(container);
-      fireImageLoad(container);
+    it('drag clamps to image', () => {
+      const { box, onChange } = setup();
+      fireEvent.pointerDown(box, { clientX: 200, clientY: 200, pointerId: 1 });
+      fireEvent.pointerMove(box, { clientX: 1200, clientY: 200, pointerId: 1 });
+      expect(last(onChange).x).toBeCloseTo(360);
+    });
+
+    it('pointerup fires onChangeEnd once with last value', () => {
+      const { box, onChange, onChangeEnd } = setup();
+      fireEvent.pointerDown(box, { clientX: 200, clientY: 200, pointerId: 1 });
+      fireEvent.pointerMove(box, { clientX: 220, clientY: 200, pointerId: 1 });
+      fireEvent.pointerUp(box, { clientX: 220, clientY: 200, pointerId: 1 });
+      expect(onChangeEnd).toHaveBeenCalledTimes(1);
+      expect(onChangeEnd).toHaveBeenCalledWith(last(onChange));
+    });
+
+    it('se handle resizes with ratio and does not move the box', () => {
+      const { handle, onChange } = setup();
+      fireEvent.pointerDown(handle('se'), { clientX: 300, clientY: 300, pointerId: 1 });
+      fireEvent.pointerMove(handle('se'), { clientX: 318.4, clientY: 318.4, pointerId: 1 });
+      const fired = last(onChange);
+      expect(fired.width).toBeCloseTo(690);
+      expect(fired.height).toBeCloseTo(690);
+      for (const [a] of onChange.mock.calls) expect((a as CropArea).x).toBe(180);
+    });
+
+    it('edge handles only render in free aspect', () => {
+      expect(setup().container.querySelectorAll('[data-handle]')).toHaveLength(4);
+      const free = setup({ aspectRatio: undefined });
+      expect(free.container.querySelectorAll('[data-handle]').length).toBe(8);
+    });
+
+    it('cropBoxActive class while dragging, removed on pointerup', () => {
+      const { box } = setup();
+      fireEvent.pointerDown(box, { clientX: 200, clientY: 200, pointerId: 1 });
+      expect(box.className).toMatch(/cropBoxActive/);
+      fireEvent.pointerUp(box, { clientX: 200, clientY: 200, pointerId: 1 });
+      expect(box.className).not.toMatch(/cropBoxActive/);
+    });
+
+    const OOB: CropArea = { x: -50, y: 0, width: 2000, height: 2000 };
+    const inside = (a: CropArea) => {
+      expect(a.x).toBeGreaterThanOrEqual(0);
+      expect(a.y).toBeGreaterThanOrEqual(0);
+      expect(a.x + a.width).toBeLessThanOrEqual(1000 + 1e-6);
+      expect(a.y + a.height).toBeLessThanOrEqual(800 + 1e-6);
+    };
+
+    it('out-of-bounds value: next drag emits an in-image area', () => {
+      const { box, onChange } = setup({}, OOB);
+      fireEvent.pointerDown(box, { clientX: 200, clientY: 200, pointerId: 1 });
+      fireEvent.pointerMove(box, { clientX: 220, clientY: 200, pointerId: 1 });
+      inside(last(onChange));
+    });
+
+    it('out-of-bounds value: next resize and key press emit in-image areas', () => {
+      const { handle, onChange, container } = setup({}, OOB);
+      fireEvent.pointerDown(handle('se'), { clientX: 300, clientY: 300, pointerId: 1 });
+      fireEvent.pointerMove(handle('se'), { clientX: 280, clientY: 280, pointerId: 1 });
+      inside(last(onChange));
       onChange.mockClear();
-      const img = container.querySelector('img')!;
-      fireEvent.pointerDown(img, { clientX: 200, clientY: 200, pointerId: 1 });
-      fireEvent.pointerMove(img, { clientX: 250, clientY: 220, pointerId: 1 });
+      fireEvent.keyDown(container.querySelector('[class*="viewport"]')!, { key: 'ArrowRight' });
+      inside(last(onChange));
+    });
+
+    it('out-of-bounds value: box is drawn inside the image', () => {
+      const { box } = setup({}, OOB);
+      const [l, t, w, h] = ['left', 'top', 'width', 'height'].map((k) =>
+        parseFloat(box.style[k as 'left']),
+      );
+      // fit for 1000×800 in 400×400: scale 0.368, offset (16, 32.8), image 368×294.4.
+      expect(l).toBeGreaterThanOrEqual(16 - 1e-6);
+      expect(t).toBeGreaterThanOrEqual(32.8 - 1e-6);
+      expect(l + w).toBeLessThanOrEqual(16 + 368 + 1e-6);
+      expect(t + h).toBeLessThanOrEqual(32.8 + 294.4 + 1e-6);
+    });
+
+    it('non-primary mouse button does not start a gesture', () => {
+      const { box, onChange } = setup();
+      fireEvent.pointerDown(box, { clientX: 200, clientY: 200, pointerId: 1, button: 2 });
+      fireEvent.pointerMove(box, { clientX: 250, clientY: 200, pointerId: 1 });
+      expect(onChange).not.toHaveBeenCalled();
+      expect(box.className).not.toMatch(/cropBoxActive/);
+    });
+
+    it('a second pointer is ignored while a gesture is active', () => {
+      const { box, handle, onChange, onChangeEnd } = setup();
+      fireEvent.pointerDown(box, { clientX: 200, clientY: 200, pointerId: 1 });
+      fireEvent.pointerDown(handle('se'), { clientX: 300, clientY: 300, pointerId: 2 });
+      fireEvent.pointerMove(box, { clientX: 500, clientY: 500, pointerId: 2 });
+      expect(onChange).not.toHaveBeenCalled();
+      fireEvent.pointerUp(box, { clientX: 500, clientY: 500, pointerId: 2 });
+      expect(onChangeEnd).not.toHaveBeenCalled();
+      expect(box.className).toMatch(/cropBoxActive/);
+      fireEvent.pointerMove(box, { clientX: 236.8, clientY: 200, pointerId: 1 });
+      expect(last(onChange)).toMatchObject({ width: 640 });
+      expect(last(onChange).x).toBeCloseTo(280);
+    });
+
+    it('pointercancel ends the gesture like pointerup', () => {
+      const { box, onChangeEnd } = setup();
+      fireEvent.pointerDown(box, { clientX: 200, clientY: 200, pointerId: 1 });
+      fireEvent.pointerMove(box, { clientX: 220, clientY: 200, pointerId: 1 });
+      fireEvent.pointerCancel(box, { pointerId: 1 });
+      expect(box.className).not.toMatch(/cropBoxActive/);
+      expect(onChangeEnd).toHaveBeenCalledTimes(1);
+    });
+
+    it('disabled: pointerdown on box/handle does nothing', () => {
+      const { box, handle, onChange } = setup({ disabled: true });
+      fireEvent.pointerDown(box, { clientX: 200, clientY: 200, pointerId: 1 });
+      fireEvent.pointerMove(box, { clientX: 250, clientY: 220, pointerId: 1 });
+      fireEvent.pointerDown(handle('se'), { clientX: 300, clientY: 300, pointerId: 1 });
+      fireEvent.pointerMove(handle('se'), { clientX: 320, clientY: 320, pointerId: 1 });
       expect(onChange).not.toHaveBeenCalled();
     });
-  });
 
-  describe('zoom', () => {
-    it('Slider onChange updates crop area dimensions (smaller at higher zoom)', () => {
-      const onChange = vi.fn();
-      // Image is 1000x800; viewport 400x400 with aspectRatio=1 → boxW=boxH=400.
-      // Default fitted crop is imageHeight × imageHeight = 800×800. Tests asserts
-      // that zoom>1 yields width < the default-fitted 800 (NOT < boxW; see the
-      // handleZoomChange comment in ImageCrop.tsx about zoom=1 being the fitted
-      // default, not boxW).
-      const value: CropArea = { x: 100, y: 0, width: 800, height: 800 };
-      const { container } = render(
-        <ImageCrop src="data:,placeholder" value={value} onChange={onChange} aspectRatio={1} />,
-      );
-      mockViewportRect(container, { width: 400, height: 400 });
-      fireImageLoad(container, 1000, 800);
-      onChange.mockClear();
-      // Find the embedded zoom slider thumb and fire ArrowRight (Slider step
-      // is 0.01, so zoom goes 1 → 1.01).
-      const sliderThumb = container.querySelector<HTMLElement>('[role="slider"]')!;
-      sliderThumb.focus();
-      fireEvent.keyDown(sliderThumb, { key: 'ArrowRight' });
-      const fired = onChange.mock.calls.at(-1)?.[0] as CropArea;
-      // At zoom > 1, width should be less than the default-fitted 800.
-      expect(fired.width).toBeLessThan(800);
-      expect(fired.height).toBeLessThan(800);
-      // And specifically: approximately 800 / 1.01 ≈ 792 (we relax to <795).
-      expect(fired.width).toBeLessThan(795);
+    it('removed props are gone', () => {
+      const { container } = setup();
+      // @ts-expect-error maxZoom was removed
+      const el = <ImageCrop src="x" value={null} onChange={() => {}} maxZoom={2} />;
+      expect(el).toBeTruthy();
+      expect(container.querySelector('[role="slider"]')).not.toBeInTheDocument();
     });
 
-    it('showZoomControl=false: no slider rendered', () => {
-      const { container } = render(
-        <ImageCrop
-          src="data:,placeholder"
-          value={null}
-          onChange={() => {}}
-          showZoomControl={false}
-        />,
-      );
-      expect(container.querySelector('[role="slider"]')).not.toBeInTheDocument();
+    describe('wheel / reset / keyboard / a11y', () => {
+      const vp = (c: HTMLElement) => c.querySelector<HTMLElement>('[class*="viewport"]')!;
+      const wheel = (el: HTMLElement, deltaY: number, deltaMode = 0) => {
+        const ev = new WheelEvent('wheel', { deltaY, deltaMode, cancelable: true, bubbles: true });
+        act(() => {
+          el.dispatchEvent(ev);
+        });
+        return ev;
+      };
+
+      it('wheel down grows box 6% around center', () => {
+        const { container, onChange } = setup();
+        const ev = wheel(vp(container), 100);
+        expect(ev.defaultPrevented).toBe(true);
+        expect(last(onChange).width).toBeCloseTo(678.4);
+        expect(last(onChange).x).toBeCloseTo(160.8);
+      });
+
+      it('wheel scales by delta magnitude (trackpad pixels, line mode)', () => {
+        const { container, onChange } = setup();
+        wheel(vp(container), 4);
+        expect(last(onChange).width).toBeCloseTo(640 * 1.06 ** 0.04);
+        wheel(vp(container), 3, WheelEvent.DOM_DELTA_LINE);
+        expect(last(onChange).width).toBeCloseTo(640 * 1.06 ** 0.04 * 1.06 ** 0.48);
+      });
+
+      it('wheel up shrinks box', () => {
+        const { container, onChange } = setup();
+        wheel(vp(container), -100);
+        expect(last(onChange).width).toBeCloseTo(640 / 1.06);
+      });
+
+      it('wheel fires onChangeEnd once after 200ms', () => {
+        vi.useFakeTimers();
+        try {
+          const { container, onChangeEnd } = setup();
+          for (let i = 0; i < 3; i++) wheel(vp(container), 100);
+          expect(onChangeEnd).not.toHaveBeenCalled();
+          act(() => {
+            vi.advanceTimersByTime(200);
+          });
+          expect(onChangeEnd).toHaveBeenCalledTimes(1);
+        } finally {
+          vi.useRealTimers();
+        }
+      });
+
+      it('wheel when disabled does not preventDefault', () => {
+        const { container, onChange } = setup({ disabled: true });
+        const ev = wheel(vp(container), 100);
+        expect(ev.defaultPrevented).toBe(false);
+        expect(onChange).not.toHaveBeenCalled();
+      });
+
+      it('double-click resets to default crop and fires onChangeEnd', () => {
+        const { container, onChange, onChangeEnd } = setup(
+          {},
+          { x: 0, y: 0, width: 100, height: 100 },
+        );
+        fireEvent.doubleClick(vp(container));
+        expect(last(onChange)).toEqual({ x: 180, y: 80, width: 640, height: 640 });
+        expect(onChangeEnd).toHaveBeenCalledWith(last(onChange));
+      });
+
+      it('Reset button resets once', () => {
+        const { onChange, onChangeEnd } = setup({}, { x: 0, y: 0, width: 100, height: 100 });
+        fireEvent.doubleClick(screen.getByRole('button', { name: 'Reset' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
+        expect(onChangeEnd).toHaveBeenCalledTimes(1);
+        expect(last(onChange).width).toBeCloseTo(640);
+      });
+
+      it('Reset button and toolbar are absent by default', () => {
+        const { container } = setup({ showReset: false });
+        expect(screen.queryByRole('button', { name: 'Reset' })).toBeNull();
+        expect(container.querySelector('[class*="toolbar"]')).toBeNull();
+      });
+
+      it('Reset button is hidden while loading', () => {
+        const { container } = render(<ImageCrop src="data:,x" value={null} onChange={() => {}} />);
+        expect(container.querySelector('button')).toBeNull();
+      });
+
+      it('deltaY 0 neither resizes nor preventDefaults', () => {
+        const { container, onChange } = setup();
+        const ev = wheel(vp(container), 0);
+        expect(ev.defaultPrevented).toBe(false);
+        expect(onChange).not.toHaveBeenCalled();
+      });
+
+      it('wheel before image load does not preventDefault', () => {
+        const { container } = render(
+          <ImageCrop
+            src="data:,x"
+            value={{ x: 0, y: 0, width: 10, height: 10 }}
+            onChange={() => {}}
+          />,
+        );
+        expect(wheel(vp(container), 100).defaultPrevented).toBe(false);
+      });
+
+      it('ticks between renders compound', () => {
+        const { container, onChange } = setup();
+        wheel(vp(container), 100);
+        wheel(vp(container), 100);
+        expect(last(onChange).width).toBeCloseTo(640 * 1.06 * 1.06);
+      });
+
+      it('unmount cancels the pending wheel onChangeEnd', () => {
+        vi.useFakeTimers();
+        try {
+          const { container, onChangeEnd, unmount } = setup();
+          wheel(vp(container), 100);
+          unmount();
+          vi.advanceTimersByTime(300);
+          expect(onChangeEnd).not.toHaveBeenCalled();
+        } finally {
+          vi.useRealTimers();
+        }
+      });
+
+      it.each([
+        ['Reset click', () => fireEvent.click(screen.getByRole('button', { name: 'Reset' }))],
+        [
+          'arrow key',
+          () =>
+            fireEvent.keyDown(document.querySelector('[class*="viewport"]')!, {
+              key: 'ArrowRight',
+            }),
+        ],
+        [
+          'drag',
+          () => {
+            const box = document.querySelector('[data-crop-box]')!;
+            fireEvent.pointerDown(box, { clientX: 200, clientY: 200, pointerId: 1 });
+            fireEvent.pointerUp(box, { clientX: 200, clientY: 200, pointerId: 1 });
+          },
+        ],
+      ])('%s supersedes a pending wheel onChangeEnd', (_n, act2) => {
+        vi.useFakeTimers();
+        try {
+          const { container, onChangeEnd } = setup();
+          wheel(vp(container), 100);
+          act2();
+          expect(onChangeEnd).toHaveBeenCalledTimes(1);
+          act(() => {
+            vi.advanceTimersByTime(300);
+          });
+          expect(onChangeEnd).toHaveBeenCalledTimes(1);
+        } finally {
+          vi.useRealTimers();
+        }
+      });
+
+      it('ArrowRight moves x by 5; Shift+ArrowRight grows width by 5 keeping ratio', () => {
+        const { container, onChange, onChangeEnd } = setup(
+          {},
+          { x: 100, y: 100, width: 400, height: 400 },
+        );
+        fireEvent.keyDown(vp(container), { key: 'ArrowRight' });
+        expect(last(onChange).x).toBe(105);
+        expect(onChangeEnd).toHaveBeenCalledTimes(1);
+        fireEvent.keyDown(vp(container), { key: 'ArrowRight', shiftKey: true });
+        expect(last(onChange)).toMatchObject({ x: 100, width: 405, height: 405 });
+      });
+
+      it('Shift+Arrow resizes one axis in free mode', () => {
+        const { container, onChange } = setup(
+          { aspectRatio: undefined },
+          { x: 100, y: 100, width: 400, height: 300 },
+        );
+        fireEvent.keyDown(vp(container), { key: 'ArrowDown', shiftKey: true });
+        expect(last(onChange)).toMatchObject({ width: 400, height: 305 });
+      });
+
+      it('Home/End jump to corners', () => {
+        const { container, onChange } = setup();
+        fireEvent.keyDown(vp(container), { key: 'Home' });
+        expect(last(onChange)).toMatchObject({ x: 0, y: 0 });
+        fireEvent.keyDown(vp(container), { key: 'End' });
+        expect(last(onChange)).toMatchObject({ x: 360, y: 160 });
+      });
+
+      it('arrow key at the image edge emits nothing', () => {
+        const { container, onChange, onChangeEnd } = setup(
+          {},
+          { x: 0, y: 80, width: 640, height: 640 },
+        );
+        fireEvent.keyDown(vp(container), { key: 'ArrowLeft' });
+        expect(onChange).not.toHaveBeenCalled();
+        expect(onChangeEnd).not.toHaveBeenCalled();
+      });
+
+      it('PageUp does nothing', () => {
+        const { container, onChange } = setup();
+        fireEvent.keyDown(vp(container), { key: 'PageUp' });
+        expect(onChange).not.toHaveBeenCalled();
+      });
+
+      it('viewport is a named application described by the keyboard hint, with the area as value text', () => {
+        setup();
+        const app = screen.getByRole('application', { name: 'Crop area' });
+        expect(app).toHaveAccessibleDescription(/Shift\+Arrow keys resize/);
+        expect(app).toHaveAttribute(
+          'aria-valuetext',
+          expect.stringMatching(/^\d+, \d+ — \d+×\d+ px$/),
+        );
+      });
+
+      it('pointerdown on the box focuses the viewport', () => {
+        const { container, box } = setup();
+        fireEvent.pointerDown(box, { clientX: 200, clientY: 200, pointerId: 1 });
+        expect(document.activeElement).toBe(vp(container));
+      });
+
+      it('wheel over the toolbar does not resize or preventDefault', () => {
+        const { onChange } = setup();
+        const ev = wheel(screen.getByRole('button', { name: 'Reset' }), 100);
+        expect(ev.defaultPrevented).toBe(false);
+        expect(onChange).not.toHaveBeenCalled();
+      });
+
+      it('arrow key on a focused Reset button does not move the box', () => {
+        const { onChange } = setup();
+        fireEvent.keyDown(screen.getByRole('button', { name: 'Reset' }), { key: 'ArrowRight' });
+        expect(onChange).not.toHaveBeenCalled();
+      });
     });
   });
 
@@ -610,5 +912,91 @@ describe('ImageCrop — early load (#574)', () => {
       </LoadEarly>,
     );
     expect(container.querySelector('[class*="skeleton"]')).toBeNull();
+  });
+
+  describe('aspect-ratio switcher', () => {
+    const OPTIONS = [
+      { label: '1:1', value: 1 },
+      { label: '16:9', value: 16 / 9 },
+      { label: 'Free' },
+    ];
+    function setup(props: Partial<React.ComponentProps<typeof ImageCrop>> = {}) {
+      const onChange = vi.fn();
+      const onChangeEnd = vi.fn();
+      const onAspectRatioChange = vi.fn();
+      const utils = render(
+        <ImageCrop
+          src="data:,placeholder"
+          value={{ x: 0, y: 0, width: 100, height: 100 }}
+          onChange={onChange}
+          onChangeEnd={onChangeEnd}
+          aspectRatio={1}
+          aspectRatios={OPTIONS}
+          onAspectRatioChange={onAspectRatioChange}
+          {...props}
+        />,
+      );
+      mockViewportRect(utils.container, { width: 400, height: 400 });
+      fireImageLoad(utils.container, 1000, 800);
+      onChange.mockClear();
+      return { ...utils, onChange, onChangeEnd, onAspectRatioChange };
+    }
+
+    it('no aspectRatios: no ratio group', () => {
+      setup({ aspectRatios: undefined });
+      expect(screen.queryByRole('radiogroup')).toBeNull();
+      setup({ aspectRatios: [] });
+      expect(screen.queryByRole('radiogroup')).toBeNull();
+    });
+
+    it('renders a named group with labels; the matching option is selected', () => {
+      setup();
+      expect(screen.getByRole('radiogroup', { name: 'Aspect ratio' })).toBeInTheDocument();
+      expect(screen.getByRole('radio', { name: '1:1' })).toHaveAttribute('aria-checked', 'true');
+      expect(screen.getByRole('radio', { name: '16:9' })).toHaveAttribute('aria-checked', 'false');
+      expect(screen.getByRole('radio', { name: 'Free' })).toHaveAttribute('aria-checked', 'false');
+    });
+
+    it('clicking 16:9 reports the ratio and commits its default crop', () => {
+      const { onChange, onChangeEnd, onAspectRatioChange } = setup();
+      fireEvent.click(screen.getByRole('radio', { name: '16:9' }));
+      const d = { x: 100, y: 175, width: 800, height: 450 };
+      expect(onAspectRatioChange).toHaveBeenCalledWith(16 / 9);
+      expect(onChange).toHaveBeenCalledWith(d);
+      expect(onChangeEnd).toHaveBeenCalledWith(d);
+    });
+
+    it('clicking Free passes undefined and the image-ratio default', () => {
+      const { onChange, onChangeEnd, onAspectRatioChange } = setup();
+      fireEvent.click(screen.getByRole('radio', { name: 'Free' }));
+      const d = { x: 100, y: 80, width: 800, height: 640 };
+      expect(onAspectRatioChange).toHaveBeenCalledWith(undefined);
+      expect(onChange).toHaveBeenCalledWith(d);
+      expect(onChangeEnd).toHaveBeenCalledWith(d);
+    });
+
+    it('arrow on a ratio radio commits exactly once (no box nudge)', () => {
+      const { onChange, onChangeEnd } = setup();
+      fireEvent.keyDown(screen.getByRole('radio', { name: '1:1' }), { key: 'ArrowRight' });
+      expect(onChange).toHaveBeenCalledTimes(1);
+      expect(onChangeEnd).toHaveBeenCalledTimes(1);
+      expect(onChange).toHaveBeenCalledWith({ x: 100, y: 175, width: 800, height: 450 });
+    });
+
+    it('clicking the selected option does nothing', () => {
+      const { onChange, onChangeEnd, onAspectRatioChange } = setup();
+      fireEvent.click(screen.getByRole('radio', { name: '1:1' }));
+      expect(onAspectRatioChange).not.toHaveBeenCalled();
+      expect(onChange).not.toHaveBeenCalled();
+      expect(onChangeEnd).not.toHaveBeenCalled();
+    });
+
+    it('disabled disables the ratio items', () => {
+      const { onAspectRatioChange } = setup({ disabled: true });
+      const item = screen.getByRole('radio', { name: '16:9' });
+      expect(item).toHaveAttribute('aria-disabled', 'true');
+      fireEvent.click(item);
+      expect(onAspectRatioChange).not.toHaveBeenCalled();
+    });
   });
 });

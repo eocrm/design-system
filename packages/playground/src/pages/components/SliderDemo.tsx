@@ -337,7 +337,7 @@ export function Vertical() {
 
       <Example
         title="Fractional step (zoom-style)"
-        description="min=1, max=3, step=0.1 — the canonical ImageCrop zoom control. label=true shows the current value as a bubble."
+        description="min=1, max=3, step=0.1 — fractional values such as zoom or scale. label=true shows the current value as a bubble."
         code={`import { useState } from 'react';
 import { Code, Slider, Stack, Text } from '@eocrm/design-system';
 

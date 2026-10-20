@@ -390,7 +390,12 @@ export const ru: Messages = {
   },
   imageCrop: {
     loadError: 'Не удалось загрузить изображение',
-    zoom: 'Масштаб',
+    reset: 'Сбросить',
+    label: 'Область обрезки',
+    aspectRatio: 'Соотношение сторон',
+    keyboardHint:
+      'Перетащите рамку, чтобы переместить её, перетащите углы, чтобы изменить размер. Стрелки перемещают, Shift+стрелки меняют размер, Home и End переносят в углы. Двойной щелчок сбрасывает.',
+    areaValue: (params) => `${params.x}, ${params.y} — ${params.width}×${params.height} пикс.`,
   },
   kanban: {
     board: 'Канбан-доска',

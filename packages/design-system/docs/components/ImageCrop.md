@@ -1,3 +1,5 @@
+> **Breaking in 0.6.0:** `minZoom`, `maxZoom` and `showZoomControl` are deleted, with no replacement. The component is now a still image with a draggable, resizable crop box, so it is shorter (no slider row). A floating Reset button is opt-in via `showReset`. Scroll-wheel over the cropper now resizes the box (it no longer zooms the image). The i18n key `imageCrop.zoom` is removed (new keys: `imageCrop.reset`, `imageCrop.label`, `imageCrop.keyboardHint`, `imageCrop.aspectRatio`, `imageCrop.areaValue`); delete any `I18nProvider` override of `imageCrop.zoom`.
+
 # `<ImageCrop>` — controlled image cropper
 
 ```tsx
@@ -25,25 +27,46 @@ const handleSave = async () => {
 | Prop | Type | Required | Description |
 |---|---|---|---|
 | `src` | `string \| File \| Blob` | yes | Image source. String URLs (HTTP/HTTPS, data:, blob:) pass through. File/Blob are normalized to object URLs internally via `URL.createObjectURL()`, with cleanup on unmount and `src` change. |
-| `value` | `CropArea \| null` | yes | Controlled crop area in SOURCE-IMAGE pixel coordinates. Pass `null` to use the component's default centered crop (the largest centered region matching `aspectRatio` at zoom=1). The component computes the visual position from this + the image's natural size + the viewport size. |
-| `onChange` | `(area: CropArea) => void` | yes | Fires on every drag/zoom tick. High frequency. Also fires once on first image load when `value` is `null`, with the computed default crop; after that the consumer owns the state. |
-| `onChangeEnd` | `((area: CropArea) => void)` | no | Fires once when the user releases the drag or releases the zoom slider thumb. |
-| `aspectRatio` | `number` | no | Fixed aspect ratio for the crop box (e.g. `1` for square, `16/9` for landscape, `4/3` for traditional photo). Omit for free aspect — the crop box fills the entire viewport and the user controls the cropped region via zoom only. Typically a stable prop from the consumer (set once per page). Toggling `aspectRatio` at runtime updates the crop box dimensions but does NOT automatically re-fit `value` to the new ratio — pass a fresh `value` (or `null` for the new default) when you change ratios. |
-| `minZoom` | `number` | no | Minimum zoom level. Default `1` (image fits viewport at zoom=1). |
-| `maxZoom` | `number` | no | Maximum zoom level. Default `3`. |
-| `showZoomControl` | `boolean` | no | Render the embedded `<Slider>` zoom control below the canvas. Default `true`. Set `false` for a pure canvas with no zoom UI — but the component's internal zoom state isn't exposed (v2 feature). |
-| `disabled` | `boolean` | no | Disable all interaction (drag, zoom). Default `false`. Image still renders; the zoom slider is also disabled. |
+| `value` | `CropArea \| null` | yes | Controlled crop area in SOURCE-IMAGE pixel coordinates. Pass `null` to use the component's default centered crop (80% of the largest centered region matching `aspectRatio`). |
+| `onChange` | `(area: CropArea) => void` | yes | Fires on every drag/resize tick. High frequency. Also fires once on first image load when `value` is `null`, with the computed default crop; after that the consumer owns the state. |
+| `onChangeEnd` | `((area: CropArea) => void)` | no | Fires on commit: when a drag/resize is released, ~200ms after the last wheel tick, on each key press, and on Reset/double-click. |
+| `aspectRatio` | `number` | no | Fixed aspect ratio for the crop box (e.g. `1` for square, `16/9`). Omit for free aspect — edge handles then appear too. Toggling it at runtime does NOT re-fit `value`; pass a fresh `value` (or `null`) with the change. |
+| `disabled` | `boolean` | no | Disable all interaction (move, resize). Default `false`. Image still renders. |
+| `showReset` | `boolean` | no | Render the on-canvas Reset button. Default `false`; double-click reset works regardless. |
+| `aspectRatios` | `ImageCropAspectOption[]` | no | Options for an on-canvas aspect-ratio switcher. Labels are consumer strings (your i18n). Controlled: the option whose `value === aspectRatio` shows as selected, and picking one calls `onAspectRatioChange`, then `onChange`/`onChangeEnd` with that ratio's default crop. Omit or pass `[]` for no switcher. Requires `onAspectRatioChange` and a controlled `aspectRatio`; without them the pick commits a crop in the old ratio. |
+| `onAspectRatioChange` | `((ratio: ImageCropAspectRatio) => void)` | no | Fires when an option is picked in the switcher (`undefined` = free aspect). Update your `aspectRatio` state here. |
 | …native | | | plus native `<div>` attributes |
 
 <!-- props:end -->
 
-- **Pattern A drag**: the crop box is centered in the viewport; the user drags the IMAGE to reposition. Zoom adjusts via the embedded `<Slider>`. No corner / edge resize handles.
-- **`aspectRatio?: number`** — pass `1` for square, `16/9` for landscape, etc. Omit for free aspect (crop box fills the viewport; zoom controls effective cropped region).
-- **`onChange` fires per drag/zoom tick (high frequency).** Debounce in the consumer OR use `onChangeEnd` (fires on pointerup / slider release).
+- **Move the box**: the image is still; drag the crop box to reposition it (clamped to the image).
+- **Resize**: the box never shrinks below 48 screen px per side. Corner handles always (ratio-locked when `aspectRatio` is set); edge handles appear in free aspect. Scroll wheel resizes around the box center, proportional to scroll distance (≈6% per mouse-wheel notch; scroll down grows, up shrinks).
+- **Reset**: double-click (always) or the floating Reset button (opt-in via `showReset`) restores the default crop (80% of the largest fitting box).
+- **`aspectRatio?: number`** — pass `1` for square, `16/9` for landscape, etc. Omit for free aspect (edge handles appear).
+- **Aspect-ratio switcher**: pass `aspectRatios` + `onAspectRatioChange` for an on-canvas segmented control (stock `ButtonGroup`). You still own `aspectRatio`; picking an option reports it, then commits that ratio's default crop through `onChange`/`onChangeEnd`. Labels are your strings. With neither switcher nor `showReset`, no toolbar renders and the image uses the full viewport.
+
+```tsx
+const [ratio, setRatio] = useState<number | undefined>(1);
+<ImageCrop
+  src={file}
+  value={crop}
+  onChange={setCrop}
+  aspectRatio={ratio}
+  aspectRatios={[
+    { label: '1:1', value: 1 },
+    { label: '3:4', value: 3 / 4 },
+    { label: '16:9', value: 16 / 9 },
+    { label: 'Free' },
+  ]}
+  onAspectRatioChange={setRatio}
+/>;
+```
+
+- **`onChange` fires per drag/resize tick (high frequency).** Debounce in the consumer OR use `onChangeEnd` (fires on drag/resize release, ~200ms after the last wheel tick, on each key press, and on Reset/double-click).
 - **`extractCropBlob(src, area, options?)`** is a top-level utility (NOT a ref method). Call it in the Save handler to produce the cropped Blob. Supports `type` (PNG/JPEG/WebP), `quality` (0..1 for lossy), and `outputWidth` (proportional resize — useful for capping avatar size).
-- **Keyboard** (when the viewport is focused): Arrow keys pan by 5px (source coords). Home/End jump to top-left / bottom-right. PageUp/Down zoom by ±0.25.
+- **Keyboard** (when the crop area — `role="application"` "Crop area", whose `aria-valuetext` reads the current position and size — is focused; a screen-reader-only hint describes the keys): Arrow keys move the box by 5 source px. Shift+Arrows resize (Right/Down grow, Left/Up shrink; ratio-locked with `aspectRatio`, one axis in free mode). Home/End jump to top-left / bottom-right. Double-click resets to the default crop.
 - **Loading state**: shows `<Skeleton variant="rectangular">` until the image's `onload` fires. Errors show "Couldn't load image" in danger tone.
-- **`disabled`**: drag and zoom both disabled. Viewport opacity dimmed.
+- **`disabled`**: move, resize, wheel, keyboard, Reset and the ratio switcher all disabled. Viewport opacity dimmed.
 
 #### `CropArea` (in source-image pixels)
 
@@ -120,7 +143,7 @@ interface UseCropPreviewOptions extends ExtractCropOptions {
 - ❌ `<ImageCrop ref={ref}>` expecting `.getBlob()`. There's no imperative API. The extraction utility is a top-level export.
 - ❌ Calling `URL.revokeObjectURL(previewUrl)` from `useCropPreview` manually. The hook owns the URL lifecycle.
 - ❌ Cropping a circular avatar at the canvas level. Crop rectangular, then CSS-mask in the consumer.
-- Not for server-side cropping (send `value`'s `CropArea` coordinates to your backend instead of calling `extractCropBlob`), rotation (not supported), or multi-touch / pinch-zoom (single-pointer drag + slider zoom only).
+- Not for server-side cropping (send `value`'s `CropArea` coordinates to your backend instead of calling `extractCropBlob`), rotation (not supported), or pinch gestures (not supported; there is no zoom).
 
 ```tsx
 // Free aspect (no aspectRatio prop)

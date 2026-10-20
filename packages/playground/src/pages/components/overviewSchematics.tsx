@@ -393,13 +393,13 @@ export const SCHEMATICS: Record<string, ReactNode> = {
         h={66}
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       >
-        <Dashed w={40} h={40} />
+        <Dashed w={70} h={44} style={{ position: 'relative' }}>
+          <Dot size={8} style={{ position: 'absolute', top: -4, left: -4 }} />
+          <Dot size={8} style={{ position: 'absolute', top: -4, right: -4 }} />
+          <Dot size={8} style={{ position: 'absolute', bottom: -4, left: -4 }} />
+          <Dot solid size={8} style={{ position: 'absolute', bottom: -4, right: -4 }} />
+        </Dashed>
       </Box>
-      <Row style={{ gap: 0, alignItems: 'center' }}>
-        <Box w={60} h={4} style={{ borderRadius: 0 }} />
-        <Dot solid size={10} />
-        <Box w={60} h={4} style={{ borderRadius: 0 }} />
-      </Row>
     </Col>
   ),
   IconTile: (

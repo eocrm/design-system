@@ -736,8 +736,16 @@ export interface Messages {
   imageCrop: {
     /** Shown in place of the image when it fails to load. */
     loadError: string;
-    /** aria-label for the zoom slider. */
-    zoom: string;
+    /** Reset-crop button label. */
+    reset: string;
+    /** Accessible name of the crop group. */
+    label: string;
+    /** Accessible name of the aspect-ratio switcher. */
+    aspectRatio: string;
+    /** Screen-reader description of pointer and keyboard controls. */
+    keyboardHint: string;
+    /** Current crop area announced as the viewport's value (rounded source px). */
+    areaValue: (params: { x: number; y: number; width: number; height: number }) => string;
   };
   kanban: {
     /** aria-label for the Kanban scroll container (the board itself). */

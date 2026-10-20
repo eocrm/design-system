@@ -4,7 +4,6 @@
 .root {
   display: flex;
   flex-direction: column;
-  gap: var(--image-crop-gap);
   width: 100%;
 }
 
@@ -46,22 +45,13 @@
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
   max-height: none;
 
-  // CSS keyword for the grab cursor affordance.
+  // CSS keyword — the crop box owns all pointer interaction.
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
-  cursor: grab;
-}
-
-.imageDragging {
-  // CSS keyword.
-  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
-  cursor: grabbing;
+  pointer-events: none;
 }
 
 .cropBox {
   position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
   border: var(--border-width) solid var(--image-crop-cropbox-border-color);
 
   // The box-shadow trick paints a dim overlay everywhere OUTSIDE the box
@@ -71,9 +61,165 @@
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- crop scrim needs higher contrast than --color-bg-overlay
   box-shadow: 0 0 0 9999px rgb(0 0 0 / 50%);
 
-  // CSS keyword — dim layer doesn't intercept drag events on the image below.
+  // CSS keyword.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  cursor: move;
+
+  // CSS keyword; box + handle gestures aren't browser scroll/zoom. The scrim and toolbar still scroll the page.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  touch-action: none;
+}
+
+.grid {
+  position: absolute;
+  inset: 0;
+  opacity: var(--image-crop-grid-opacity);
+
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- thirds lines are gradient stops with literal percentages
+  background:
+    linear-gradient(
+      to right,
+      transparent calc(33.333% - var(--border-width)),
+      var(--image-crop-grid-color) 0 33.333%,
+      transparent 0 calc(66.666% - var(--border-width)),
+      var(--image-crop-grid-color) 0 66.666%,
+      transparent 0
+    ),
+    linear-gradient(
+      to bottom,
+      transparent calc(33.333% - var(--border-width)),
+      var(--image-crop-grid-color) 0 33.333%,
+      transparent 0 calc(66.666% - var(--border-width)),
+      var(--image-crop-grid-color) 0 66.666%,
+      transparent 0
+    );
+
+  // CSS keyword — grid never intercepts the box's pointer events.
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
   pointer-events: none;
+}
+
+.cropBoxActive .grid {
+  opacity: var(--image-crop-grid-opacity-active);
+}
+
+.handle {
+  position: absolute;
+  width: var(--image-crop-handle-size);
+  height: var(--image-crop-handle-size);
+  box-sizing: border-box;
+}
+
+// Corner hit areas straddle the outline (half outside the box); the visible bracket hugs the box corner.
+.handle_nw,
+.handle_ne,
+.handle_sw,
+.handle_se {
+  &::before {
+    content: '';
+    position: absolute;
+    width: calc(var(--image-crop-handle-size) / 2 + var(--image-crop-handle-thickness));
+    height: calc(var(--image-crop-handle-size) / 2 + var(--image-crop-handle-thickness));
+    box-sizing: border-box;
+    border: 0 solid var(--image-crop-handle-color);
+  }
+}
+
+.handle_nw {
+  top: calc(-0.5 * var(--image-crop-handle-size));
+  left: calc(-0.5 * var(--image-crop-handle-size));
+
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  cursor: nwse-resize;
+
+  &::before {
+    top: calc(var(--image-crop-handle-size) / 2 - var(--image-crop-handle-thickness));
+    left: calc(var(--image-crop-handle-size) / 2 - var(--image-crop-handle-thickness));
+    border-top-width: var(--image-crop-handle-thickness);
+    border-left-width: var(--image-crop-handle-thickness);
+  }
+}
+
+.handle_ne {
+  top: calc(-0.5 * var(--image-crop-handle-size));
+  right: calc(-0.5 * var(--image-crop-handle-size));
+
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  cursor: nesw-resize;
+
+  &::before {
+    top: calc(var(--image-crop-handle-size) / 2 - var(--image-crop-handle-thickness));
+    right: calc(var(--image-crop-handle-size) / 2 - var(--image-crop-handle-thickness));
+    border-top-width: var(--image-crop-handle-thickness);
+    border-right-width: var(--image-crop-handle-thickness);
+  }
+}
+
+.handle_sw {
+  bottom: calc(-0.5 * var(--image-crop-handle-size));
+  left: calc(-0.5 * var(--image-crop-handle-size));
+
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  cursor: nesw-resize;
+
+  &::before {
+    bottom: calc(var(--image-crop-handle-size) / 2 - var(--image-crop-handle-thickness));
+    left: calc(var(--image-crop-handle-size) / 2 - var(--image-crop-handle-thickness));
+    border-bottom-width: var(--image-crop-handle-thickness);
+    border-left-width: var(--image-crop-handle-thickness);
+  }
+}
+
+.handle_se {
+  right: calc(-0.5 * var(--image-crop-handle-size));
+  bottom: calc(-0.5 * var(--image-crop-handle-size));
+
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  cursor: nwse-resize;
+
+  &::before {
+    bottom: calc(var(--image-crop-handle-size) / 2 - var(--image-crop-handle-thickness));
+    right: calc(var(--image-crop-handle-size) / 2 - var(--image-crop-handle-thickness));
+    border-bottom-width: var(--image-crop-handle-thickness);
+    border-right-width: var(--image-crop-handle-thickness);
+  }
+}
+
+// Edge handles are invisible hit strips along the box edges.
+.handle_n,
+.handle_s {
+  left: var(--image-crop-handle-size);
+  right: var(--image-crop-handle-size);
+  width: auto;
+
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  cursor: ns-resize;
+}
+
+.handle_n {
+  top: calc(-0.5 * var(--image-crop-handle-size));
+}
+
+.handle_s {
+  bottom: calc(-0.5 * var(--image-crop-handle-size));
+}
+
+.handle_e,
+.handle_w {
+  top: var(--image-crop-handle-size);
+  bottom: var(--image-crop-handle-size);
+  height: auto;
+
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  cursor: ew-resize;
+}
+
+.handle_e {
+  right: calc(-0.5 * var(--image-crop-handle-size));
+}
+
+.handle_w {
+  left: calc(-0.5 * var(--image-crop-handle-size));
 }
 
 .skeleton {
@@ -98,20 +244,31 @@
   text-align: center;
 }
 
-.zoomControl {
-  width: 100%;
-}
-
 .disabled .viewport {
   opacity: var(--image-crop-opacity-disabled);
 }
 
-.disabled .image {
+.disabled .cropBox,
+.disabled .handle {
   // CSS keyword.
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
   cursor: not-allowed;
+}
 
-  // CSS keyword.
-  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
-  pointer-events: none;
+.srOnly {
+  @include visually-hidden;
+}
+
+// Positioning wrapper over the canvas bottom; sits in the reserved TOOLBAR_RESERVE band.
+.toolbar {
+  position: absolute;
+  bottom: var(--image-crop-toolbar-offset);
+  left: 50%;
+  display: flex;
+  align-items: center;
+  gap: var(--image-crop-toolbar-gap);
+  padding: var(--image-crop-toolbar-padding);
+  max-width: 100%;
+  overflow-x: auto;
+  transform: translateX(-50%);
 }

@@ -2,6 +2,7 @@ import {
   forwardRef,
   useCallback,
   useEffect,
+  useId,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -12,14 +13,51 @@ import {
   type PointerEvent,
 } from 'react';
 import clsx from 'clsx';
-import { Slider } from '../Slider';
+import { Button } from '../Button';
+import { ButtonGroup } from '../ButtonGroup';
 import { Skeleton } from '../Skeleton';
 import { useTranslation } from '../../i18n/useTranslation';
 import type { CropArea } from './extractCropBlob';
+import {
+  defaultCropArea,
+  fitImage,
+  moveCrop,
+  normalizeCrop,
+  resizeCrop,
+  scaleCrop,
+  type Handle,
+} from './cropGeometry';
 import styles from './ImageCrop.module.scss';
+
+// Padding around the fitted image, in px (--space-4); TS needs a number for layout math.
+const FIT_PADDING = 16;
+// Bottom space kept free for the on-canvas toolbar (one row of sm buttons + offset); 0 when no toolbar renders.
+const TOOLBAR_RESERVE = 56;
+// Smallest crop box edge, in screen px.
+const MIN_BOX_PX = 48;
+// Box scale per wheel pixel: one 100px mouse notch ≈ ×1.06; deltaY > 0 grows.
+const WHEEL_K = Math.log(1.06) / 100;
+// px per DOM_DELTA_LINE (pages use the window height).
+const WHEEL_LINE_PX = 16;
+// Quiet period after the last wheel tick before onChangeEnd fires.
+const WHEEL_END_MS = 200;
+
+const CORNERS: Handle[] = ['nw', 'ne', 'sw', 'se'];
+const EDGES: Handle[] = ['n', 's', 'e', 'w'];
 
 // Re-export from the utility so consumers have a single import for the type.
 export type { CropArea } from './extractCropBlob';
+
+/** One option in the on-canvas aspect-ratio switcher. `value` omitted = free aspect. */
+export interface ImageCropAspectOption {
+  /** Visible option text. A consumer string, so it is your i18n. */
+  label: string;
+  /** Aspect ratio (width / height) this option selects. Omit for free aspect. */
+  value?: number;
+}
+
+/** Aspect ratio passed to `onAspectRatioChange`; `undefined` means free aspect. */
+export type ImageCropAspectRatio = number | undefined;
 
 export interface ImageCropProps extends Omit<HTMLAttributes<HTMLDivElement>, 'onChange'> {
   /**
@@ -30,124 +68,48 @@ export interface ImageCropProps extends Omit<HTMLAttributes<HTMLDivElement>, 'on
   src: string | File | Blob;
   /**
    * Controlled crop area in SOURCE-IMAGE pixel coordinates. Pass `null` to
-   * use the component's default centered crop (the largest centered region
-   * matching `aspectRatio` at zoom=1). The component computes the visual
-   * position from this + the image's natural size + the viewport size.
+   * use the component's default centered crop (80% of the largest centered
+   * region matching `aspectRatio`).
    */
   value: CropArea | null;
-  /** Fires on every drag/zoom tick. High frequency. Also fires once on first image load when `value` is `null`, with the computed default crop; after that the consumer owns the state. */
+  /** Fires on every drag/resize tick. High frequency. Also fires once on first image load when `value` is `null`, with the computed default crop; after that the consumer owns the state. */
   onChange: (area: CropArea) => void;
-  /** Fires once when the user releases the drag or releases the zoom slider thumb. */
+  /** Fires on commit: when a drag/resize is released, ~200ms after the last wheel tick, on each key press, and on Reset/double-click. */
   onChangeEnd?: (area: CropArea) => void;
   /**
-   * Fixed aspect ratio for the crop box (e.g. `1` for square, `16/9` for
-   * landscape, `4/3` for traditional photo). Omit for free aspect — the crop
-   * box fills the entire viewport and the user controls the cropped region
-   * via zoom only.
-   *
-   * Typically a stable prop from the consumer (set once per page). Toggling
-   * `aspectRatio` at runtime updates the crop box dimensions but does NOT
-   * automatically re-fit `value` to the new ratio — pass a fresh `value`
-   * (or `null` for the new default) when you change ratios.
+   * Fixed aspect ratio for the crop box (e.g. `1` for square, `16/9`). Omit
+   * for free aspect — edge handles then appear too. Toggling it at runtime
+   * does NOT re-fit `value`; pass a fresh `value` (or `null`) with the change.
    */
   aspectRatio?: number;
-  /** Minimum zoom level. Default `1` (image fits viewport at zoom=1). */
-  minZoom?: number;
-  /** Maximum zoom level. Default `3`. */
-  maxZoom?: number;
   /**
-   * Render the embedded `<Slider>` zoom control below the canvas. Default
-   * `true`. Set `false` for a pure canvas with no zoom UI — but the
-   * component's internal zoom state isn't exposed (v2 feature).
-   */
-  showZoomControl?: boolean;
-  /**
-   * Disable all interaction (drag, zoom). Default `false`. Image still
-   * renders; the zoom slider is also disabled.
+   * Disable all interaction (move, resize). Default `false`. Image still renders.
    */
   disabled?: boolean;
+  /**
+   * Render the on-canvas Reset button. Default `false`; double-click reset works regardless.
+   */
+  showReset?: boolean;
+  /**
+   * Options for an on-canvas aspect-ratio switcher. Labels are consumer strings (your i18n).
+   * Controlled: the option whose `value === aspectRatio` shows as selected, and picking one calls
+   * `onAspectRatioChange`, then `onChange`/`onChangeEnd` with that ratio's default crop.
+   * Omit or pass `[]` for no switcher. Requires `onAspectRatioChange` and a controlled
+   * `aspectRatio`; without them the pick commits a crop in the old ratio.
+   */
+  aspectRatios?: ImageCropAspectOption[];
+  /** Fires when an option is picked in the switcher (`undefined` = free aspect). Update your `aspectRatio` state here. */
+  onAspectRatioChange?: (ratio: ImageCropAspectRatio) => void;
 }
 
 /**
- * Compute the viewport-space crop box dimensions given the viewport and
- * optional aspect ratio. Returns the largest centered rectangle inside the
- * viewport that satisfies the ratio. If `aspectRatio` is undefined, the box
- * fills the viewport.
- */
-function computeCropBox(
-  viewportWidth: number,
-  viewportHeight: number,
-  aspectRatio: number | undefined,
-): { boxW: number; boxH: number } {
-  if (aspectRatio === undefined) {
-    return { boxW: viewportWidth, boxH: viewportHeight };
-  }
-  // Largest centered rectangle in viewport satisfying aspectRatio.
-  const fitByWidth = viewportWidth;
-  const fitByHeight = viewportHeight * aspectRatio;
-  const boxW = Math.min(fitByWidth, fitByHeight);
-  const boxH = boxW / aspectRatio;
-  return { boxW, boxH };
-}
-
-/**
- * Default centered crop region: the largest centered rectangle with the
- * box's aspect that fits inside the image. At zoom=1 the image renders at
- * `scale = boxW / cropW`, which is exactly the contain-fit scale — the
- * image is fully visible inside the viewport (with bands on whichever axis
- * has slack). Higher zoom shrinks the crop region (zooms in).
- *
- * This is the standard "image-fits-on-screen first, then pick a crop"
- * model. The previous cover-mode default (image fills viewport on both
- * axes at zoom=1) was changed at user request — for photo-cropping flows,
- * seeing the whole image at the lowest zoom is more important than
- * never having gray bands.
- */
-function defaultCropArea(
-  imageWidth: number,
-  imageHeight: number,
-  boxW: number,
-  boxH: number,
-): CropArea {
-  const boxAspect = boxW / boxH;
-  const imageAspect = imageWidth / imageHeight;
-  let cropW: number;
-  let cropH: number;
-  if (imageAspect > boxAspect) {
-    // Image is wider than the box. Match heights; trim sides.
-    cropH = imageHeight;
-    cropW = cropH * boxAspect;
-  } else {
-    // Image is taller. Match widths; trim top/bottom.
-    cropW = imageWidth;
-    cropH = cropW / boxAspect;
-  }
-  return {
-    x: (imageWidth - cropW) / 2,
-    y: (imageHeight - cropH) / 2,
-    width: cropW,
-    height: cropH,
-  };
-}
-
-/**
- * Clamp a crop area so it stays inside the image bounds. Preserves width
- * and height; only shifts x/y if needed.
- */
-function clampCropArea(area: CropArea, imageWidth: number, imageHeight: number): CropArea {
-  const maxX = Math.max(0, imageWidth - area.width);
-  const maxY = Math.max(0, imageHeight - area.height);
-  return {
-    x: Math.max(0, Math.min(maxX, area.x)),
-    y: Math.max(0, Math.min(maxY, area.y)),
-    width: area.width,
-    height: area.height,
-  };
-}
-
-/**
- * Controlled, inline image-crop primitive: drag the image under a centered crop box, zoom via a slider.
+ * Controlled, inline image-crop primitive: drag and resize a crop box over a still image.
  * @see docs/components/ImageCrop.md
+ *
+ * @remarks Why role="application"
+ * The 2D crop box has no standard ARIA pattern. Like ColorPicker's SVSquare, the viewport uses
+ * `role="application"` so screen readers pass arrow keys through, with `aria-valuetext` giving
+ * the current area. Toolbar controls inside it keep their own roles.
  */
 export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function ImageCrop(
   {
@@ -156,16 +118,18 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
     onChange,
     onChangeEnd,
     aspectRatio,
-    minZoom = 1,
-    maxZoom = 3,
-    showZoomControl = true,
     disabled = false,
+    showReset = false,
+    aspectRatios,
+    onAspectRatioChange,
     className,
     ...rest
   },
   ref,
 ) {
   const t = useTranslation();
+  const hintId = useId();
+  const toolbarRef = useRef<HTMLDivElement>(null);
   const viewportRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
 
@@ -228,54 +192,55 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
     };
   }, []);
 
-  // Internal zoom state (1.0 = fit). The embedded Slider drives this; we
-  // recompute value whenever zoom changes.
-  const [zoom, setZoom] = useState<number>(minZoom);
-
-  // Compute viewport-space crop box dimensions.
-  const { boxW, boxH } = useMemo(
-    () => computeCropBox(viewport.width, viewport.height, aspectRatio),
-    [viewport.width, viewport.height, aspectRatio],
+  const hasRatios = !!aspectRatios?.length;
+  const hasToolbar = showReset || hasRatios;
+  const toolbarReserve = hasToolbar ? TOOLBAR_RESERVE : 0;
+  const fit = useMemo(
+    () =>
+      imageNatural && viewport.width > 0 && viewport.height > 0
+        ? fitImage(viewport, imageNatural, FIT_PADDING, toolbarReserve)
+        : null,
+    [imageNatural, viewport, toolbarReserve],
   );
 
-  // Initialize value on first load if consumer passed null. Fire onChange
-  // once with the default so the consumer's controlled state catches up.
-  const initializedRef = useRef(false);
+  // Whenever the consumer passes null (first load, or later — e.g. after a
+  // ratio switch), fire onChange once with the default so the controlled
+  // state catches up. The ref re-arms as soon as a real value comes back, so
+  // a consumer that keeps null (ignores onChange) doesn't get a loop.
+  const defaultFiredRef = useRef(false);
   useEffect(() => {
-    if (loadState !== 'loaded' || !imageNatural || initializedRef.current) return;
-    if (value === null && boxW > 0 && boxH > 0) {
-      const defaultArea = defaultCropArea(imageNatural.width, imageNatural.height, boxW, boxH);
-      initializedRef.current = true;
-      onChange(defaultArea);
-    } else if (value !== null) {
-      initializedRef.current = true;
+    if (value !== null) {
+      defaultFiredRef.current = false;
+      return;
     }
-  }, [loadState, imageNatural, value, boxW, boxH, onChange]);
+    if (loadState !== 'loaded' || !imageNatural || !fit || defaultFiredRef.current) return;
+    defaultFiredRef.current = true;
+    onChange(defaultCropArea(imageNatural, aspectRatio));
+  }, [loadState, imageNatural, value, fit, aspectRatio, onChange]);
 
-  // Reset initialization flag on src change so the new image gets its
-  // default crop applied.
+  // Re-arm on src change so the new image gets its default crop applied.
   useEffect(() => {
-    initializedRef.current = false;
+    defaultFiredRef.current = false;
   }, [resolvedSrc]);
 
-  // Clean up any in-flight drag if disabled flips to true mid-gesture —
-  // otherwise the .imageDragging cursor stays stuck until the next pointerdown.
+  // Gesture state lives in a ref so handlers read it synchronously.
+  const dragRef = useRef<{
+    mode: 'move' | Handle;
+    pointerId: number;
+    startX: number;
+    startY: number;
+    start: CropArea;
+    last: CropArea;
+  } | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  // Drop an in-flight gesture if disabled flips mid-drag.
   useEffect(() => {
     if (disabled) {
-      dragStateRef.current = null;
+      dragRef.current = null;
       setIsDragging(false);
     }
   }, [disabled]);
-
-  // Drag state: pointer-down captures the starting position and the value
-  // snapshot. Drag is in a ref (not state) so handlers read it synchronously.
-  const dragStateRef = useRef<{
-    startX: number;
-    startY: number;
-    startValue: CropArea;
-    scale: number;
-  } | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
 
   const handleImageLoad = useCallback(() => {
     const img = imageRef.current;
@@ -299,164 +264,184 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
     setLoadState('error');
   }, []);
 
-  // Compute visual scale + image translate position from the current value.
-  // The image is rendered with transform: translate + scale.
-  const imageTransform = useMemo(() => {
-    if (!imageNatural || !value || boxW === 0 || boxH === 0) {
-      return { display: 'none' as const };
+  const startDrag = (e: PointerEvent<HTMLElement>, mode: 'move' | Handle) => {
+    if (disabled || !imageNatural || !value || !fit || e.button !== 0 || dragRef.current) return;
+    e.preventDefault();
+    e.stopPropagation();
+    // preventDefault suppresses the native focus shift; keep arrows working right after a click.
+    viewportRef.current?.focus({ preventScroll: true });
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // jsdom or pre-PointerEvents browsers — drag still works via pointermove.
     }
-    const scale = boxW / value.width;
-    const boxLeft = (viewport.width - boxW) / 2;
-    const boxTop = (viewport.height - boxH) / 2;
-    const originX = boxLeft - value.x * scale;
-    const originY = boxTop - value.y * scale;
-    return {
-      transform: `translate(${originX}px, ${originY}px) scale(${scale})`,
-    } satisfies CSSProperties;
-  }, [imageNatural, value, boxW, boxH, viewport.width, viewport.height]);
+    clearTimeout(wheelEndTimer.current);
+    const start = normalizeCrop(value, imageNatural, aspectRatio);
+    dragRef.current = {
+      mode,
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      start,
+      last: start,
+    };
+    setIsDragging(true);
+  };
 
-  // Apply a new crop value with clamping, then fire onChange.
-  const applyValue = useCallback(
-    (next: CropArea) => {
-      if (!imageNatural) return;
-      const clamped = clampCropArea(next, imageNatural.width, imageNatural.height);
-      onChange(clamped);
-    },
-    [imageNatural, onChange],
-  );
+  const handlePointerMove = (e: PointerEvent<HTMLElement>) => {
+    const drag = dragRef.current;
+    if (disabled || !drag || drag.pointerId !== e.pointerId || !imageNatural || !fit) return;
+    const dx = (e.clientX - drag.startX) / fit.scale;
+    const dy = (e.clientY - drag.startY) / fit.scale;
+    const next =
+      drag.mode === 'move'
+        ? moveCrop(drag.start, dx, dy, imageNatural)
+        : resizeCrop(
+            drag.start,
+            drag.mode,
+            dx,
+            dy,
+            imageNatural,
+            MIN_BOX_PX / fit.scale,
+            aspectRatio,
+          );
+    drag.last = next;
+    onChange(next);
+  };
 
-  const handlePointerDown = useCallback(
-    (e: PointerEvent<HTMLImageElement>) => {
-      if (disabled || !imageNatural || !value || boxW === 0) return;
+  const handlePointerUp = (e: PointerEvent<HTMLElement>) => {
+    const drag = dragRef.current;
+    if (disabled || !drag || drag.pointerId !== e.pointerId) return;
+    try {
+      e.currentTarget.releasePointerCapture(e.pointerId);
+    } catch {
+      // ignore — same rationale as pointerdown.
+    }
+    dragRef.current = null;
+    setIsDragging(false);
+    commitEnd(drag.last);
+  };
+
+  const interactive = !disabled && loadState === 'loaded' && !!imageNatural && !!fit;
+
+  // Latest props/geometry for the native wheel listener (attached once per `interactive`).
+  const latest = useRef({ value, imageNatural, fit, aspectRatio, onChange, onChangeEnd });
+  latest.current = { value, imageNatural, fit, aspectRatio, onChange, onChangeEnd };
+  const wheelEndTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(wheelEndTimer.current), []);
+  // Every committed change supersedes a pending wheel debounce.
+  const commitEnd = (area: CropArea) => {
+    clearTimeout(wheelEndTimer.current);
+    onChangeEnd?.(area);
+  };
+
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el || !interactive) return;
+    const onWheel = (e: WheelEvent) => {
+      const { value, imageNatural, fit, aspectRatio, onChange, onChangeEnd } = latest.current;
+      if (!value || !imageNatural || !fit || e.deltaY === 0) return;
+      // Over the toolbar the wheel scrolls it (or the page), never resizes the box.
+      if (toolbarRef.current?.contains(e.target as Node)) return;
       e.preventDefault();
-      try {
-        e.currentTarget.setPointerCapture(e.pointerId);
-      } catch {
-        // jsdom or pre-PointerEvents browsers — drag still works via pointermove.
-      }
-      const scale = boxW / value.width;
-      dragStateRef.current = {
-        startX: e.clientX,
-        startY: e.clientY,
-        startValue: { ...value },
-        scale,
-      };
-      setIsDragging(true);
-    },
-    [disabled, imageNatural, value, boxW],
-  );
+      const px =
+        e.deltaY *
+        (e.deltaMode === WheelEvent.DOM_DELTA_LINE
+          ? WHEEL_LINE_PX
+          : e.deltaMode === WheelEvent.DOM_DELTA_PAGE
+            ? window.innerHeight
+            : 1);
+      const next = scaleCrop(
+        normalizeCrop(value, imageNatural, aspectRatio),
+        Math.exp(px * WHEEL_K),
+        imageNatural,
+        MIN_BOX_PX / fit.scale,
+        aspectRatio,
+      );
+      // Consecutive ticks before the parent re-renders must compound.
+      latest.current.value = next;
+      onChange(next);
+      clearTimeout(wheelEndTimer.current);
+      wheelEndTimer.current = setTimeout(() => onChangeEnd?.(next), WHEEL_END_MS);
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [interactive]);
 
-  const handlePointerMove = useCallback(
-    (e: PointerEvent<HTMLImageElement>) => {
-      if (disabled || !dragStateRef.current) return;
-      const { startX, startY, startValue, scale } = dragStateRef.current;
-      const dx = e.clientX - startX;
-      const dy = e.clientY - startY;
-      // Sign flip: pointer right pans image right (in viewport) which moves
-      // the crop region LEFT (the user is showing more of the right side).
-      const next: CropArea = {
-        x: startValue.x - dx / scale,
-        y: startValue.y - dy / scale,
-        width: startValue.width,
-        height: startValue.height,
-      };
-      applyValue(next);
-    },
-    [applyValue, disabled],
-  );
+  const resetTo = (ratio: number | undefined) => {
+    if (!imageNatural) return;
+    const d = defaultCropArea(imageNatural, ratio);
+    onChange(d);
+    commitEnd(d);
+  };
+  const reset = () => resetTo(aspectRatio);
+  const selectedRatio = aspectRatios?.findIndex((o) => o.value === aspectRatio) ?? -1;
+  const pickRatio = (i: string) => {
+    const option = aspectRatios?.[Number(i)];
+    if (!option || option.value === aspectRatio) return;
+    onAspectRatioChange?.(option.value);
+    resetTo(option.value);
+  };
 
-  const handlePointerUp = useCallback(
-    (e: PointerEvent<HTMLImageElement>) => {
-      if (disabled || !dragStateRef.current) return;
-      try {
-        e.currentTarget.releasePointerCapture(e.pointerId);
-      } catch {
-        // ignore — same rationale as pointerdown.
-      }
-      dragStateRef.current = null;
-      setIsDragging(false);
-      if (value) onChangeEnd?.(value);
-    },
-    [disabled, onChangeEnd, value],
-  );
+  // Keyboard: arrows nudge the box, Shift+arrows resize it, Home/End jump to the image corners.
+  const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    // Keys bubbling from toolbar controls (ratio radios, Reset) belong to them.
+    if (e.target !== e.currentTarget) return;
+    if (disabled || !imageNatural || !value || !fit) return;
+    const from = normalizeCrop(value, imageNatural, aspectRatio);
+    const STEP = 5; // source-image pixels
+    const arrows: Record<string, [number, number]> = {
+      ArrowLeft: [-STEP, 0],
+      ArrowRight: [STEP, 0],
+      ArrowUp: [0, -STEP],
+      ArrowDown: [0, STEP],
+    };
+    const arrow = arrows[e.key];
+    let next: CropArea;
+    if (arrow && e.shiftKey) {
+      // Ratio-locked: any grow/shrink key moves both axes so the ratio solver has room.
+      const [dx, dy] =
+        aspectRatio === undefined ? arrow : [arrow[0] + arrow[1], arrow[0] + arrow[1]];
+      next = resizeCrop(from, 'se', dx, dy, imageNatural, MIN_BOX_PX / fit.scale, aspectRatio);
+    } else if (arrow) {
+      next = moveCrop(from, arrow[0], arrow[1], imageNatural);
+    } else if (e.key === 'Home') {
+      next = moveCrop(from, -Infinity, -Infinity, imageNatural);
+    } else if (e.key === 'End') {
+      next = moveCrop(from, Infinity, Infinity, imageNatural);
+    } else {
+      return;
+    }
+    e.preventDefault();
+    if (
+      next.x === from.x &&
+      next.y === from.y &&
+      next.width === from.width &&
+      next.height === from.height
+    ) {
+      return;
+    }
+    onChange(next);
+    commitEnd(next);
+  };
 
-  // Zoom handler — recompute value dimensions, keep center, clamp.
-  // zoom=1 corresponds to the DEFAULT fitted crop (the largest crop that fits
-  // the image inside the box), NOT boxW pixels. Otherwise, switching from the
-  // default to zoom=1.01 would snap value.width from defaultArea.width (often
-  // hundreds of px) down to boxW (often much smaller) and the image would
-  // appear to jump scale by a large factor.
-  const handleZoomChange = useCallback(
-    (sliderValue: number | [number, number]) => {
-      if (disabled || !imageNatural || !value || boxW === 0) return;
-      const newZoom = typeof sliderValue === 'number' ? sliderValue : sliderValue[0];
-      setZoom(newZoom);
-      const defaultArea = defaultCropArea(imageNatural.width, imageNatural.height, boxW, boxH);
-      const newWidth = defaultArea.width / newZoom;
-      const newHeight = defaultArea.height / newZoom;
-      const centerX = value.x + value.width / 2;
-      const centerY = value.y + value.height / 2;
-      const next: CropArea = {
-        x: centerX - newWidth / 2,
-        y: centerY - newHeight / 2,
-        width: newWidth,
-        height: newHeight,
-      };
-      applyValue(next);
-    },
-    [applyValue, boxW, boxH, disabled, imageNatural, value],
-  );
-
-  const handleZoomChangeEnd = useCallback(() => {
-    if (value) onChangeEnd?.(value);
-  }, [onChangeEnd, value]);
-
-  // Keyboard handler — arrows pan, Home/End jump, PageUp/Down zoom.
-  const handleKeyDown = useCallback(
-    (e: KeyboardEvent<HTMLDivElement>) => {
-      if (disabled || !imageNatural || !value) return;
-      const PAN_STEP = 5; // source-image pixels
-      const ZOOM_STEP = 0.25;
-      let next: CropArea | null = null;
-      switch (e.key) {
-        case 'ArrowLeft':
-          next = { ...value, x: value.x - PAN_STEP };
-          break;
-        case 'ArrowRight':
-          next = { ...value, x: value.x + PAN_STEP };
-          break;
-        case 'ArrowUp':
-          next = { ...value, y: value.y - PAN_STEP };
-          break;
-        case 'ArrowDown':
-          next = { ...value, y: value.y + PAN_STEP };
-          break;
-        case 'Home':
-          next = { ...value, x: 0, y: 0 };
-          break;
-        case 'End':
-          next = {
-            ...value,
-            x: imageNatural.width - value.width,
-            y: imageNatural.height - value.height,
-          };
-          break;
-        case 'PageUp':
-          handleZoomChange(Math.min(maxZoom, zoom + ZOOM_STEP));
-          e.preventDefault();
-          return;
-        case 'PageDown':
-          handleZoomChange(Math.max(minZoom, zoom - ZOOM_STEP));
-          e.preventDefault();
-          return;
-        default:
-          return;
-      }
-      e.preventDefault();
-      if (next) applyValue(next);
-    },
-    [applyValue, disabled, handleZoomChange, imageNatural, maxZoom, minZoom, value, zoom],
-  );
+  const imageStyle: CSSProperties =
+    fit && imageNatural
+      ? { transform: `translate(${fit.offsetX}px, ${fit.offsetY}px) scale(${fit.scale})` }
+      : { display: 'none' };
+  // Draw the normalized area so a stale / out-of-bounds value never paints outside the image.
+  const shown =
+    fit && value && imageNatural ? normalizeCrop(value, imageNatural, aspectRatio) : null;
+  const boxStyle: CSSProperties | undefined =
+    fit && shown
+      ? {
+          left: fit.offsetX + shown.x * fit.scale,
+          top: fit.offsetY + shown.y * fit.scale,
+          width: shown.width * fit.scale,
+          height: shown.height * fit.scale,
+        }
+      : undefined;
+  const handles = aspectRatio === undefined ? [...CORNERS, ...EDGES] : CORNERS;
 
   return (
     // {...rest} last so a consumer-provided onClick / aria-* / data-* overrides nothing the component owns.
@@ -464,9 +449,26 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
       <div
         ref={viewportRef}
         className={styles.viewport}
+        role="application"
+        aria-label={t('imageCrop.label')}
+        aria-valuetext={
+          shown
+            ? t('imageCrop.areaValue', {
+                x: Math.round(shown.x),
+                y: Math.round(shown.y),
+                width: Math.round(shown.width),
+                height: Math.round(shown.height),
+              })
+            : undefined
+        }
+        aria-describedby={hintId}
         tabIndex={disabled ? -1 : 0}
         onKeyDown={handleKeyDown}
+        onDoubleClick={interactive ? reset : undefined}
       >
+        <span id={hintId} className={styles.srOnly}>
+          {t('imageCrop.keyboardHint')}
+        </span>
         {loadState === 'loading' && <Skeleton variant="rectangular" className={styles.skeleton} />}
         {loadState === 'error' && (
           <div className={styles.errorState}>{t('imageCrop.loadError')}</div>
@@ -477,36 +479,64 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
             ref={imageRef}
             src={resolvedSrc}
             alt=""
-            className={clsx(styles.image, isDragging && styles.imageDragging)}
-            style={imageTransform}
+            className={styles.image}
+            style={imageStyle}
             onLoad={handleImageLoad}
             onError={handleImageError}
-            onPointerDown={handlePointerDown}
-            onPointerMove={handlePointerMove}
-            onPointerUp={handlePointerUp}
             draggable={false}
           />
         )}
-        {loadState === 'loaded' && (
+        {loadState === 'loaded' && boxStyle && (
           <div
-            className={styles.cropBox}
-            style={{ width: boxW, height: boxH } satisfies CSSProperties}
-          />
+            data-crop-box=""
+            className={clsx(styles.cropBox, isDragging && styles.cropBoxActive)}
+            style={boxStyle}
+            onPointerDown={(e) => startDrag(e, 'move')}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerUp}
+            onPointerCancel={handlePointerUp}
+            onLostPointerCapture={handlePointerUp}
+          >
+            <div className={styles.grid} />
+            {handles.map((h) => (
+              <div
+                key={h}
+                data-handle={h}
+                className={clsx(styles.handle, styles[`handle_${h}`])}
+                onPointerDown={(e) => startDrag(e, h)}
+              />
+            ))}
+          </div>
+        )}
+        {loadState === 'loaded' && hasToolbar && (
+          <div
+            ref={toolbarRef}
+            className={styles.toolbar}
+            onDoubleClick={(e) => e.stopPropagation()}
+          >
+            {hasRatios && (
+              <ButtonGroup
+                size="sm"
+                disabled={disabled}
+                value={selectedRatio >= 0 ? String(selectedRatio) : ''}
+                onValueChange={pickRatio}
+                aria-label={t('imageCrop.aspectRatio')}
+              >
+                {aspectRatios.map((o, i) => (
+                  <ButtonGroup.Item key={i} value={String(i)}>
+                    {o.label}
+                  </ButtonGroup.Item>
+                ))}
+              </ButtonGroup>
+            )}
+            {showReset && (
+              <Button variant="secondary" size="sm" disabled={disabled} onClick={reset}>
+                {t('imageCrop.reset')}
+              </Button>
+            )}
+          </div>
         )}
       </div>
-      {showZoomControl && (
-        <Slider
-          className={styles.zoomControl}
-          value={zoom}
-          onChange={handleZoomChange}
-          onChangeEnd={handleZoomChangeEnd}
-          min={minZoom}
-          max={maxZoom}
-          step={0.01}
-          disabled={disabled || loadState !== 'loaded'}
-          aria-label={t('imageCrop.zoom')}
-        />
-      )}
     </div>
   );
 });

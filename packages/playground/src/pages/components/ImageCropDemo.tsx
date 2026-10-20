@@ -27,11 +27,29 @@ function makeId() {
   return `id-${Math.random().toString(36).slice(2)}`;
 }
 
-function BasicSquare() {
+const RATIOS = [
+  { label: 'Free' },
+  { label: '1:1', value: 1 },
+  { label: '3:4', value: 3 / 4 },
+  { label: '4:3', value: 4 / 3 },
+  { label: '9:16', value: 9 / 16 },
+  { label: '16:9', value: 16 / 9 },
+];
+
+function AspectRatios() {
+  const [ratio, setRatio] = useState<number | undefined>(1);
   const [crop, setCrop] = useState<CropArea | null>(null);
   return (
     <Stack gap="sm">
-      <ImageCrop src={SAMPLE_IMAGE} value={crop} onChange={setCrop} aspectRatio={1} />
+      <ImageCrop
+        src={SAMPLE_IMAGE}
+        value={crop}
+        onChange={setCrop}
+        aspectRatio={ratio}
+        aspectRatios={RATIOS}
+        onAspectRatioChange={setRatio}
+        showReset
+      />
       <Text size="sm" tone="muted">
         Crop:{' '}
         <Code>
@@ -184,30 +202,57 @@ function FileUploadIntegration() {
 
 function DisabledDemo() {
   const [crop, setCrop] = useState<CropArea | null>(null);
-  return <ImageCrop src={SAMPLE_IMAGE} value={crop} onChange={setCrop} aspectRatio={1} disabled />;
+  return (
+    <ImageCrop
+      src={SAMPLE_IMAGE}
+      value={crop}
+      onChange={setCrop}
+      aspectRatio={1}
+      disabled
+      showReset
+    />
+  );
 }
 
 export function ImageCropDemo() {
   return (
     <DemoLayout
       name="ImageCrop"
-      description="Controlled image-crop primitive. Pattern-A drag (crop box centered, image dragged, slider-controlled zoom). Hand-rolled on <canvas>. extractCropBlob utility for the consumer's Save handler."
+      description="Controlled image-crop primitive. Still image with a draggable, resizable crop box (corner handles; edge handles in free aspect; scroll to resize, double-click to reset). extractCropBlob utility for the consumer's Save handler."
       files={getComponentFiles('ImageCrop')}
       componentName="ImageCrop"
     >
       <Example
-        title="Basic (square aspect)"
-        description="aspectRatio={1}. The crop box is centered as a square inside the viewport. Drag the image to reposition; zoom slider scales it."
+        title="Aspect ratios"
+        description="aspectRatio={1}, {3/4}, {4/3}, {9/16}, {16/9} or omitted (free). The ratio switcher is built in (aspectRatios + onAspectRatioChange); picking one snaps the box to that ratio's default crop. Drag the box to move, drag a corner (or scroll) to resize, double-click or press Reset (showReset) to restore the default crop."
         code={`import { useState } from 'react';
 import { Code, ImageCrop, Stack, Text, type CropArea } from '@eocrm/design-system';
 
 const SAMPLE_IMAGE = 'https://picsum.photos/seed/eocrm-imagecrop/1200/800';
 
-export function BasicSquare() {
+const RATIOS = [
+  { label: 'Free' },
+  { label: '1:1', value: 1 },
+  { label: '3:4', value: 3 / 4 },
+  { label: '4:3', value: 4 / 3 },
+  { label: '9:16', value: 9 / 16 },
+  { label: '16:9', value: 16 / 9 },
+];
+
+export function AspectRatios() {
+  const [ratio, setRatio] = useState<number | undefined>(1);
   const [crop, setCrop] = useState<CropArea | null>(null);
   return (
     <Stack gap="sm">
-      <ImageCrop src={SAMPLE_IMAGE} value={crop} onChange={setCrop} aspectRatio={1} />
+      <ImageCrop
+        src={SAMPLE_IMAGE}
+        value={crop}
+        onChange={setCrop}
+        aspectRatio={ratio}
+        aspectRatios={RATIOS}
+        onAspectRatioChange={setRatio}
+        showReset
+      />
       <Text size="sm" tone="muted">
         Crop:{' '}
         <Code>
@@ -220,12 +265,12 @@ export function BasicSquare() {
   );
 }`}
       >
-        <BasicSquare />
+        <AspectRatios />
       </Example>
 
       <Example
         title="Landscape (16:9)"
-        description="aspectRatio={16/9}. Crop box matches the configured ratio inside the viewport."
+        description="aspectRatio={16/9}. The crop box keeps the configured ratio while you move and resize it."
         code={`import { useState } from 'react';
 import { ImageCrop, type CropArea } from '@eocrm/design-system';
 
@@ -241,7 +286,7 @@ export function Landscape() {
 
       <Example
         title="Free aspect (no aspectRatio prop)"
-        description="Crop box fills the entire viewport. The user controls the cropped region via zoom only (zooming in shows less of the source)."
+        description="Corner and edge handles resize the box on one or both axes independently. Shift+Arrow keys resize one axis at a time."
         code={`import { useState } from 'react';
 import { ImageCrop, type CropArea } from '@eocrm/design-system';
 
@@ -257,7 +302,7 @@ export function FreeAspect() {
 
       <Example
         title="FileUpload integration"
-        description="The canonical pick → crop → save flow using the useCropPreview hook. Live 256×256 preview re-encodes on every drag/zoom (debounced 120ms). Toggle the format buttons (JPEG/PNG/WebP) and the encoder swaps live with a CircularProgress spinner during the re-encode. The Download button reuses the hook's previewBlob — no second encode — and saves locally; your real Save handler would POST previewBlob to your upload endpoint."
+        description="The canonical pick → crop → save flow using the useCropPreview hook. Live 256×256 preview re-encodes on every move/resize (debounced 120ms). Toggle the format buttons (JPEG/PNG/WebP) and the encoder swaps live with a CircularProgress spinner during the re-encode. The Download button reuses the hook's previewBlob — no second encode — and saves locally; your real Save handler would POST previewBlob to your upload endpoint."
         code={`import { useEffect, useState } from 'react';
 import {
   Button,
@@ -403,7 +448,7 @@ export function FileUploadIntegration() {
 
       <Example
         title="Disabled"
-        description="Viewport is grayed (--opacity-disabled); drag and zoom both no-op."
+        description="Viewport is grayed (--opacity-disabled); move and resize both no-op."
         code={`import { useState } from 'react';
 import { ImageCrop, type CropArea } from '@eocrm/design-system';
 
@@ -411,7 +456,7 @@ const SAMPLE_IMAGE = 'https://picsum.photos/seed/eocrm-imagecrop/1200/800';
 
 export function DisabledDemo() {
   const [crop, setCrop] = useState<CropArea | null>(null);
-  return <ImageCrop src={SAMPLE_IMAGE} value={crop} onChange={setCrop} aspectRatio={1} disabled />;
+  return <ImageCrop src={SAMPLE_IMAGE} value={crop} onChange={setCrop} aspectRatio={1} disabled showReset />;
 }`}
       >
         <DisabledDemo />

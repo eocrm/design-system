@@ -518,6 +518,8 @@ export type {
 export { ImageCrop, extractCropBlob, useCropPreview } from './components/ImageCrop';
 export type {
   ImageCropProps,
+  ImageCropAspectOption,
+  ImageCropAspectRatio,
   CropArea,
   ExtractCropOptions,
   UseCropPreviewOptions,

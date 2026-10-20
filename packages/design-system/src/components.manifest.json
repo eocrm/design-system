@@ -85,6 +85,7 @@
       "FileUpload",
       "FlowCanvas",
       "Image",
+      "ImageCrop",
       "LiquidEditor",
       "Modal",
       "OptionsPicker",
@@ -104,7 +105,9 @@
     "composes": [
       "Button"
     ],
-    "composedBy": []
+    "composedBy": [
+      "ImageCrop"
+    ]
   },
   "Calendar": {
     "tier": "composition",
@@ -476,8 +479,9 @@
     "tier": "composition",
     "cluster": "Forms",
     "composes": [
-      "Skeleton",
-      "Slider"
+      "Button",
+      "ButtonGroup",
+      "Skeleton"
     ],
     "composedBy": []
   },
@@ -814,7 +818,6 @@
     "composes": [],
     "composedBy": [
       "ColorPicker",
-      "ImageCrop",
       "RichTextEditor"
     ]
   },
