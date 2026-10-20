@@ -64,7 +64,7 @@ const [ratio, setRatio] = useState<number | undefined>(1);
 
 - **`onChange` fires per drag/resize tick (high frequency).** Debounce in the consumer OR use `onChangeEnd` (fires on drag/resize release, ~200ms after the last wheel tick, on each key press, and on Reset/double-click).
 - **`extractCropBlob(src, area, options?)`** is a top-level utility (NOT a ref method). Call it in the Save handler to produce the cropped Blob. Supports `type` (PNG/JPEG/WebP), `quality` (0..1 for lossy), and `outputWidth` (proportional resize — useful for capping avatar size).
-- **Keyboard** (when the crop area, `role="group"` "Crop area", is focused; a screen-reader-only hint describes the keys): Arrow keys move the box by 5 source px. Shift+Arrows resize (Right/Down grow, Left/Up shrink; ratio-locked with `aspectRatio`, one axis in free mode). Home/End jump to top-left / bottom-right.
+- **Keyboard** (when the crop area — `role="application"` "Crop area", whose `aria-valuetext` reads the current position and size — is focused; a screen-reader-only hint describes the keys): Arrow keys move the box by 5 source px. Shift+Arrows resize (Right/Down grow, Left/Up shrink; ratio-locked with `aspectRatio`, one axis in free mode). Home/End jump to top-left / bottom-right. Double-click resets to the default crop.
 - **Loading state**: shows `<Skeleton variant="rectangular">` until the image's `onload` fires. Errors show "Couldn't load image" in danger tone.
 - **`disabled`**: move, resize, wheel, keyboard, Reset and the ratio switcher all disabled. Viewport opacity dimmed.
 

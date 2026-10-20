@@ -395,7 +395,7 @@ export const ru: Messages = {
     aspectRatio: 'Соотношение сторон',
     keyboardHint:
       'Перетащите рамку, чтобы переместить её, перетащите углы, чтобы изменить размер. Стрелки перемещают, Shift+стрелки меняют размер, Home и End переносят в углы. Двойной щелчок сбрасывает.',
-    areaValue: (params) => `${params.x}, ${params.y} — ${params.width}×${params.height} px`,
+    areaValue: (params) => `${params.x}, ${params.y} — ${params.width}×${params.height} пикс.`,
   },
   kanban: {
     board: 'Канбан-доска',
