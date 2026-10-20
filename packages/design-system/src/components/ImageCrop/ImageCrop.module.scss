@@ -20,10 +20,6 @@
   // CSS keyword; prevents browser text selection during drag.
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
   user-select: none;
-
-  // CSS keyword; gestures belong to the crop box, not browser scrolling/zoom.
-  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
-  touch-action: none;
 }
 
 .viewport:focus-visible {
@@ -68,6 +64,10 @@
   // CSS keyword.
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
   cursor: move;
+
+  // CSS keyword; box + handle gestures aren't browser scroll/zoom. The scrim and toolbar still scroll the page.
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
+  touch-action: none;
 }
 
 .grid {

@@ -394,9 +394,9 @@ export const SCHEMATICS: Record<string, ReactNode> = {
         style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
       >
         <Dashed w={70} h={44} style={{ position: 'relative' }}>
-          <Dot solid size={8} style={{ position: 'absolute', top: -4, left: -4 }} />
-          <Dot solid size={8} style={{ position: 'absolute', top: -4, right: -4 }} />
-          <Dot solid size={8} style={{ position: 'absolute', bottom: -4, left: -4 }} />
+          <Dot size={8} style={{ position: 'absolute', top: -4, left: -4 }} />
+          <Dot size={8} style={{ position: 'absolute', top: -4, right: -4 }} />
+          <Dot size={8} style={{ position: 'absolute', bottom: -4, left: -4 }} />
           <Dot solid size={8} style={{ position: 'absolute', bottom: -4, right: -4 }} />
         </Dashed>
       </Box>

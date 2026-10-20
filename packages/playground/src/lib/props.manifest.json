@@ -3413,7 +3413,7 @@
           "type": "((area: CropArea) => void)",
           "required": false,
           "default": "",
-          "description": "Fires once when the user releases a drag or resize."
+          "description": "Fires on commit: when a drag/resize is released, ~200ms after the last wheel tick, on each key press, and on Reset/double-click."
         },
         {
           "name": "aspectRatio",

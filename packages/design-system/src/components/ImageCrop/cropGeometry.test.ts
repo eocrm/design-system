@@ -61,6 +61,14 @@ describe('cropGeometry', () => {
     expect(r.y + r.height).toBeCloseTo(720);
     expect(r.width).toBeCloseTo(690);
   });
+  it('resizeCrop ratio-locked corner follows the dominant axis', () => {
+    expectArea(resizeCrop(SQ, 'se', 0, 50, IMG, 87, 1), { x: 180, y: 80, width: 690, height: 690 });
+    expectArea(resizeCrop(SQ, 'se', 50, 0, IMG, 87, 1), { x: 180, y: 80, width: 690, height: 690 });
+    const r = resizeCrop(SQ, 'nw', 0, -50, IMG, 87, 1);
+    expectArea(r, { width: 690, height: 690 });
+    expect(r.x + r.width).toBeCloseTo(820);
+    expect(r.y + r.height).toBeCloseTo(720);
+  });
   it('resizeCrop free edge e changes width only', () => {
     expectArea(resizeCrop(FREE, 'e', 50, 999, IMG, 87), { ...FREE, width: 850 });
   });

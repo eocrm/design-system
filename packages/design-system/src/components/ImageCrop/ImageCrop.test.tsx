@@ -325,6 +325,40 @@ describe('ImageCrop', () => {
       inside(last(onChange));
     });
 
+    it('out-of-bounds value: box is drawn inside the image', () => {
+      const { box } = setup({}, OOB);
+      const [l, t, w, h] = ['left', 'top', 'width', 'height'].map((k) =>
+        parseFloat(box.style[k as 'left']),
+      );
+      // fit for 1000×800 in 400×400: scale 0.368, offset (16, 32.8), image 368×294.4.
+      expect(l).toBeGreaterThanOrEqual(16 - 1e-6);
+      expect(t).toBeGreaterThanOrEqual(32.8 - 1e-6);
+      expect(l + w).toBeLessThanOrEqual(16 + 368 + 1e-6);
+      expect(t + h).toBeLessThanOrEqual(32.8 + 294.4 + 1e-6);
+    });
+
+    it('non-primary mouse button does not start a gesture', () => {
+      const { box, onChange } = setup();
+      fireEvent.pointerDown(box, { clientX: 200, clientY: 200, pointerId: 1, button: 2 });
+      fireEvent.pointerMove(box, { clientX: 250, clientY: 200, pointerId: 1 });
+      expect(onChange).not.toHaveBeenCalled();
+      expect(box.className).not.toMatch(/cropBoxActive/);
+    });
+
+    it('a second pointer is ignored while a gesture is active', () => {
+      const { box, handle, onChange, onChangeEnd } = setup();
+      fireEvent.pointerDown(box, { clientX: 200, clientY: 200, pointerId: 1 });
+      fireEvent.pointerDown(handle('se'), { clientX: 300, clientY: 300, pointerId: 2 });
+      fireEvent.pointerMove(box, { clientX: 500, clientY: 500, pointerId: 2 });
+      expect(onChange).not.toHaveBeenCalled();
+      fireEvent.pointerUp(box, { clientX: 500, clientY: 500, pointerId: 2 });
+      expect(onChangeEnd).not.toHaveBeenCalled();
+      expect(box.className).toMatch(/cropBoxActive/);
+      fireEvent.pointerMove(box, { clientX: 236.8, clientY: 200, pointerId: 1 });
+      expect(last(onChange)).toMatchObject({ width: 640 });
+      expect(last(onChange).x).toBeCloseTo(280);
+    });
+
     it('pointercancel ends the gesture like pointerup', () => {
       const { box, onChangeEnd } = setup();
       fireEvent.pointerDown(box, { clientX: 200, clientY: 200, pointerId: 1 });
@@ -353,8 +387,8 @@ describe('ImageCrop', () => {
 
     describe('wheel / reset / keyboard / a11y', () => {
       const vp = (c: HTMLElement) => c.querySelector<HTMLElement>('[class*="viewport"]')!;
-      const wheel = (el: HTMLElement, deltaY: number) => {
-        const ev = new WheelEvent('wheel', { deltaY, cancelable: true, bubbles: true });
+      const wheel = (el: HTMLElement, deltaY: number, deltaMode = 0) => {
+        const ev = new WheelEvent('wheel', { deltaY, deltaMode, cancelable: true, bubbles: true });
         act(() => {
           el.dispatchEvent(ev);
         });
@@ -367,6 +401,14 @@ describe('ImageCrop', () => {
         expect(ev.defaultPrevented).toBe(true);
         expect(last(onChange).width).toBeCloseTo(678.4);
         expect(last(onChange).x).toBeCloseTo(160.8);
+      });
+
+      it('wheel scales by delta magnitude (trackpad pixels, line mode)', () => {
+        const { container, onChange } = setup();
+        wheel(vp(container), 4);
+        expect(last(onChange).width).toBeCloseTo(640 * 1.06 ** 0.04);
+        wheel(vp(container), 3, WheelEvent.DOM_DELTA_LINE);
+        expect(last(onChange).width).toBeCloseTo(640 * 1.06 ** 0.04 * 1.06 ** 0.48);
       });
 
       it('wheel up shrinks box', () => {
@@ -518,6 +560,16 @@ describe('ImageCrop', () => {
         expect(last(onChange)).toMatchObject({ x: 0, y: 0 });
         fireEvent.keyDown(vp(container), { key: 'End' });
         expect(last(onChange)).toMatchObject({ x: 360, y: 160 });
+      });
+
+      it('arrow key at the image edge emits nothing', () => {
+        const { container, onChange, onChangeEnd } = setup(
+          {},
+          { x: 0, y: 80, width: 640, height: 640 },
+        );
+        fireEvent.keyDown(vp(container), { key: 'ArrowLeft' });
+        expect(onChange).not.toHaveBeenCalled();
+        expect(onChangeEnd).not.toHaveBeenCalled();
       });
 
       it('PageUp does nothing', () => {

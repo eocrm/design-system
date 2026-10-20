@@ -79,8 +79,10 @@ export function resizeCrop(
     if (north || south) height = clamp(height, min, maxH);
   } else {
     if (handle.length === 1) return start;
-    if (width / height > aspectRatio) width = height * aspectRatio;
-    else height = width / aspectRatio;
+    // Follow the axis the pointer moved more (relative), so a one-axis drag still resizes.
+    if (Math.abs(width / start.width - 1) < Math.abs(height / start.height - 1)) {
+      width = height * aspectRatio;
+    }
     width = clamp(width, Math.max(min, min * aspectRatio), Math.min(maxW, maxH * aspectRatio));
     height = width / aspectRatio;
   }

@@ -34,8 +34,10 @@ const FIT_PADDING = 16;
 const TOOLBAR_RESERVE = 56;
 // Smallest crop box edge, in screen px.
 const MIN_BOX_PX = 32;
-// Per-wheel-tick box scale; deltaY > 0 grows.
-const WHEEL_FACTOR = 1.06;
+// Box scale per wheel pixel: one 100px mouse notch ≈ ×1.06; deltaY > 0 grows.
+const WHEEL_K = Math.log(1.06) / 100;
+// px per DOM_DELTA_LINE (pages use the window height).
+const WHEEL_LINE_PX = 16;
 // Quiet period after the last wheel tick before onChangeEnd fires.
 const WHEEL_END_MS = 200;
 
@@ -60,7 +62,7 @@ export interface ImageCropProps extends Omit<HTMLAttributes<HTMLDivElement>, 'on
   value: CropArea | null;
   /** Fires on every drag/resize tick. High frequency. Also fires once on first image load when `value` is `null`, with the computed default crop; after that the consumer owns the state. */
   onChange: (area: CropArea) => void;
-  /** Fires once when the user releases a drag or resize. */
+  /** Fires on commit: when a drag/resize is released, ~200ms after the last wheel tick, on each key press, and on Reset/double-click. */
   onChangeEnd?: (area: CropArea) => void;
   /**
    * Fixed aspect ratio for the crop box (e.g. `1` for square, `16/9`). Omit
@@ -176,6 +178,7 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
   // Gesture state lives in a ref so handlers read it synchronously.
   const dragRef = useRef<{
     mode: 'move' | Handle;
+    pointerId: number;
     startX: number;
     startY: number;
     start: CropArea;
@@ -214,7 +217,7 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
   }, []);
 
   const startDrag = (e: PointerEvent<HTMLElement>, mode: 'move' | Handle) => {
-    if (disabled || !imageNatural || !value || !fit) return;
+    if (disabled || !imageNatural || !value || !fit || e.button !== 0 || dragRef.current) return;
     e.preventDefault();
     e.stopPropagation();
     try {
@@ -224,13 +227,20 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
     }
     clearTimeout(wheelEndTimer.current);
     const start = normalizeCrop(value, imageNatural, aspectRatio);
-    dragRef.current = { mode, startX: e.clientX, startY: e.clientY, start, last: start };
+    dragRef.current = {
+      mode,
+      pointerId: e.pointerId,
+      startX: e.clientX,
+      startY: e.clientY,
+      start,
+      last: start,
+    };
     setIsDragging(true);
   };
 
   const handlePointerMove = (e: PointerEvent<HTMLElement>) => {
     const drag = dragRef.current;
-    if (disabled || !drag || !imageNatural || !fit) return;
+    if (disabled || !drag || drag.pointerId !== e.pointerId || !imageNatural || !fit) return;
     const dx = (e.clientX - drag.startX) / fit.scale;
     const dy = (e.clientY - drag.startY) / fit.scale;
     const next =
@@ -251,9 +261,9 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
 
   const handlePointerUp = (e: PointerEvent<HTMLElement>) => {
     const drag = dragRef.current;
-    if (disabled || !drag) return;
+    if (disabled || !drag || drag.pointerId !== e.pointerId) return;
     try {
-      (e.currentTarget as HTMLElement).releasePointerCapture(e.pointerId);
+      e.currentTarget.releasePointerCapture(e.pointerId);
     } catch {
       // ignore — same rationale as pointerdown.
     }
@@ -282,9 +292,16 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
       const { value, imageNatural, fit, aspectRatio, onChange, onChangeEnd } = latest.current;
       if (!value || !imageNatural || !fit || e.deltaY === 0) return;
       e.preventDefault();
+      const px =
+        e.deltaY *
+        (e.deltaMode === WheelEvent.DOM_DELTA_LINE
+          ? WHEEL_LINE_PX
+          : e.deltaMode === WheelEvent.DOM_DELTA_PAGE
+            ? window.innerHeight
+            : 1);
       const next = scaleCrop(
         normalizeCrop(value, imageNatural, aspectRatio),
-        e.deltaY > 0 ? WHEEL_FACTOR : 1 / WHEEL_FACTOR,
+        Math.exp(px * WHEEL_K),
         imageNatural,
         MIN_BOX_PX / fit.scale,
         aspectRatio,
@@ -334,6 +351,14 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
       return;
     }
     e.preventDefault();
+    if (
+      next.x === from.x &&
+      next.y === from.y &&
+      next.width === from.width &&
+      next.height === from.height
+    ) {
+      return;
+    }
     onChange(next);
     commitEnd(next);
   };
@@ -342,13 +367,16 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
     fit && imageNatural
       ? { transform: `translate(${fit.offsetX}px, ${fit.offsetY}px) scale(${fit.scale})` }
       : { display: 'none' };
+  // Draw the normalized area so a stale / out-of-bounds value never paints outside the image.
+  const shown =
+    fit && value && imageNatural ? normalizeCrop(value, imageNatural, aspectRatio) : null;
   const boxStyle: CSSProperties | undefined =
-    fit && value
+    fit && shown
       ? {
-          left: fit.offsetX + value.x * fit.scale,
-          top: fit.offsetY + value.y * fit.scale,
-          width: value.width * fit.scale,
-          height: value.height * fit.scale,
+          left: fit.offsetX + shown.x * fit.scale,
+          top: fit.offsetY + shown.y * fit.scale,
+          width: shown.width * fit.scale,
+          height: shown.height * fit.scale,
         }
       : undefined;
   const handles = aspectRatio === undefined ? [...CORNERS, ...EDGES] : CORNERS;
