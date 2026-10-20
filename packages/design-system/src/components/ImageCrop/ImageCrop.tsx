@@ -2,6 +2,7 @@ import {
   forwardRef,
   useCallback,
   useEffect,
+  useId,
   useLayoutEffect,
   useMemo,
   useRef,
@@ -12,6 +13,7 @@ import {
   type PointerEvent,
 } from 'react';
 import clsx from 'clsx';
+import { Button } from '../Button';
 import { Skeleton } from '../Skeleton';
 import { useTranslation } from '../../i18n/useTranslation';
 import type { CropArea } from './extractCropBlob';
@@ -21,6 +23,7 @@ import {
   moveCrop,
   normalizeCrop,
   resizeCrop,
+  scaleCrop,
   type Handle,
 } from './cropGeometry';
 import styles from './ImageCrop.module.scss';
@@ -31,6 +34,10 @@ const FIT_PADDING = 16;
 const TOOLBAR_RESERVE = 56;
 // Smallest crop box edge, in screen px.
 const MIN_BOX_PX = 32;
+// Per-wheel-tick box scale; deltaY > 0 grows.
+const WHEEL_FACTOR = 1.06;
+// Quiet period after the last wheel tick before onChangeEnd fires.
+const WHEEL_END_MS = 200;
 
 const CORNERS: Handle[] = ['nw', 'ne', 'sw', 'se'];
 const EDGES: Handle[] = ['n', 's', 'e', 'w'];
@@ -76,6 +83,7 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
   ref,
 ) {
   const t = useTranslation();
+  const hintId = useId();
   const viewportRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement>(null);
 
@@ -253,36 +261,75 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
     onChangeEnd?.(drag.last);
   };
 
-  // Keyboard: arrows nudge the box, Home/End jump to the image corners.
+  const interactive = !disabled && loadState === 'loaded' && !!imageNatural && !!fit;
+
+  // Latest props/geometry for the native wheel listener (attached once per `interactive`).
+  const latest = useRef({ value, imageNatural, fit, aspectRatio, onChange, onChangeEnd });
+  latest.current = { value, imageNatural, fit, aspectRatio, onChange, onChangeEnd };
+  const wheelEndTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  useEffect(() => () => clearTimeout(wheelEndTimer.current), []);
+
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el || !interactive) return;
+    const onWheel = (e: WheelEvent) => {
+      const { value, imageNatural, fit, aspectRatio, onChange, onChangeEnd } = latest.current;
+      if (!value || !imageNatural || !fit) return;
+      e.preventDefault();
+      const next = scaleCrop(
+        normalizeCrop(value, imageNatural, aspectRatio),
+        e.deltaY > 0 ? WHEEL_FACTOR : 1 / WHEEL_FACTOR,
+        imageNatural,
+        MIN_BOX_PX / fit.scale,
+        aspectRatio,
+      );
+      // Consecutive ticks before the parent re-renders must compound.
+      latest.current.value = next;
+      onChange(next);
+      clearTimeout(wheelEndTimer.current);
+      wheelEndTimer.current = setTimeout(() => onChangeEnd?.(next), WHEEL_END_MS);
+    };
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => el.removeEventListener('wheel', onWheel);
+  }, [interactive]);
+
+  const reset = () => {
+    if (!imageNatural) return;
+    const d = defaultCropArea(imageNatural, aspectRatio);
+    onChange(d);
+    onChangeEnd?.(d);
+  };
+
+  // Keyboard: arrows nudge the box, Shift+arrows resize it, Home/End jump to the image corners.
   const handleKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
-    if (disabled || !imageNatural || !value) return;
+    if (disabled || !imageNatural || !value || !fit) return;
     const from = normalizeCrop(value, imageNatural, aspectRatio);
     const STEP = 5; // source-image pixels
+    const arrows: Record<string, [number, number]> = {
+      ArrowLeft: [-STEP, 0],
+      ArrowRight: [STEP, 0],
+      ArrowUp: [0, -STEP],
+      ArrowDown: [0, STEP],
+    };
+    const arrow = arrows[e.key];
     let next: CropArea;
-    switch (e.key) {
-      case 'ArrowLeft':
-        next = moveCrop(from, -STEP, 0, imageNatural);
-        break;
-      case 'ArrowRight':
-        next = moveCrop(from, STEP, 0, imageNatural);
-        break;
-      case 'ArrowUp':
-        next = moveCrop(from, 0, -STEP, imageNatural);
-        break;
-      case 'ArrowDown':
-        next = moveCrop(from, 0, STEP, imageNatural);
-        break;
-      case 'Home':
-        next = moveCrop(from, -Infinity, -Infinity, imageNatural);
-        break;
-      case 'End':
-        next = moveCrop(from, Infinity, Infinity, imageNatural);
-        break;
-      default:
-        return;
+    if (arrow && e.shiftKey) {
+      // Ratio-locked: any grow/shrink key moves both axes so the ratio solver has room.
+      const [dx, dy] =
+        aspectRatio === undefined ? arrow : [arrow[0] + arrow[1], arrow[0] + arrow[1]];
+      next = resizeCrop(from, 'se', dx, dy, imageNatural, MIN_BOX_PX / fit.scale, aspectRatio);
+    } else if (arrow) {
+      next = moveCrop(from, arrow[0], arrow[1], imageNatural);
+    } else if (e.key === 'Home') {
+      next = moveCrop(from, -Infinity, -Infinity, imageNatural);
+    } else if (e.key === 'End') {
+      next = moveCrop(from, Infinity, Infinity, imageNatural);
+    } else {
+      return;
     }
     e.preventDefault();
     onChange(next);
+    onChangeEnd?.(next);
   };
 
   const imageStyle: CSSProperties =
@@ -306,9 +353,16 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
       <div
         ref={viewportRef}
         className={styles.viewport}
+        role="group"
+        aria-label={t('imageCrop.label')}
+        aria-describedby={hintId}
         tabIndex={disabled ? -1 : 0}
         onKeyDown={handleKeyDown}
+        onDoubleClick={interactive ? reset : undefined}
       >
+        <span id={hintId} className={styles.srOnly}>
+          {t('imageCrop.keyboardHint')}
+        </span>
         {loadState === 'loading' && <Skeleton variant="rectangular" className={styles.skeleton} />}
         {loadState === 'error' && (
           <div className={styles.errorState}>{t('imageCrop.loadError')}</div>
@@ -346,6 +400,13 @@ export const ImageCrop = forwardRef<HTMLDivElement, ImageCropProps>(function Ima
                 onPointerDown={(e) => startDrag(e, h)}
               />
             ))}
+          </div>
+        )}
+        {loadState === 'loaded' && (
+          <div className={styles.toolbar} onDoubleClick={(e) => e.stopPropagation()}>
+            <Button variant="ghost" size="sm" disabled={disabled} onClick={reset}>
+              {t('imageCrop.reset')}
+            </Button>
           </div>
         )}
       </div>

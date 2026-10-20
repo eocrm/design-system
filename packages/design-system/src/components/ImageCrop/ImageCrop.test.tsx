@@ -350,6 +350,118 @@ describe('ImageCrop', () => {
       expect(el).toBeTruthy();
       expect(container.querySelector('[role="slider"]')).not.toBeInTheDocument();
     });
+
+    describe('wheel / reset / keyboard / a11y', () => {
+      const vp = (c: HTMLElement) => c.querySelector<HTMLElement>('[class*="viewport"]')!;
+      const wheel = (el: HTMLElement, deltaY: number) => {
+        const ev = new WheelEvent('wheel', { deltaY, cancelable: true, bubbles: true });
+        act(() => {
+          el.dispatchEvent(ev);
+        });
+        return ev;
+      };
+
+      it('wheel down grows box 6% around center', () => {
+        const { container, onChange } = setup();
+        const ev = wheel(vp(container), 100);
+        expect(ev.defaultPrevented).toBe(true);
+        expect(last(onChange).width).toBeCloseTo(678.4);
+        expect(last(onChange).x).toBeCloseTo(160.8);
+      });
+
+      it('wheel up shrinks box', () => {
+        const { container, onChange } = setup();
+        wheel(vp(container), -100);
+        expect(last(onChange).width).toBeCloseTo(640 / 1.06);
+      });
+
+      it('wheel fires onChangeEnd once after 200ms', () => {
+        vi.useFakeTimers();
+        try {
+          const { container, onChangeEnd } = setup();
+          for (let i = 0; i < 3; i++) wheel(vp(container), 100);
+          expect(onChangeEnd).not.toHaveBeenCalled();
+          act(() => {
+            vi.advanceTimersByTime(200);
+          });
+          expect(onChangeEnd).toHaveBeenCalledTimes(1);
+        } finally {
+          vi.useRealTimers();
+        }
+      });
+
+      it('wheel when disabled does not preventDefault', () => {
+        const { container, onChange } = setup({ disabled: true });
+        const ev = wheel(vp(container), 100);
+        expect(ev.defaultPrevented).toBe(false);
+        expect(onChange).not.toHaveBeenCalled();
+      });
+
+      it('double-click resets to default crop and fires onChangeEnd', () => {
+        const { container, onChange, onChangeEnd } = setup(
+          {},
+          { x: 0, y: 0, width: 100, height: 100 },
+        );
+        fireEvent.doubleClick(vp(container));
+        expect(last(onChange)).toEqual({ x: 180, y: 80, width: 640, height: 640 });
+        expect(onChangeEnd).toHaveBeenCalledWith(last(onChange));
+      });
+
+      it('Reset button resets once; hidden while loading', () => {
+        const { container, onChange, onChangeEnd } = setup(
+          {},
+          { x: 0, y: 0, width: 100, height: 100 },
+        );
+        fireEvent.doubleClick(screen.getByRole('button', { name: 'Reset' }));
+        fireEvent.click(screen.getByRole('button', { name: 'Reset' }));
+        expect(onChangeEnd).toHaveBeenCalledTimes(1);
+        expect(last(onChange).width).toBeCloseTo(640);
+        const loading = render(<ImageCrop src="data:,x" value={null} onChange={() => {}} />);
+        expect(loading.container.querySelector('button')).toBeNull();
+        expect(container).toBeTruthy();
+      });
+
+      it('ArrowRight moves x by 5; Shift+ArrowRight grows width by 5 keeping ratio', () => {
+        const { container, onChange, onChangeEnd } = setup(
+          {},
+          { x: 100, y: 100, width: 400, height: 400 },
+        );
+        fireEvent.keyDown(vp(container), { key: 'ArrowRight' });
+        expect(last(onChange).x).toBe(105);
+        expect(onChangeEnd).toHaveBeenCalledTimes(1);
+        fireEvent.keyDown(vp(container), { key: 'ArrowRight', shiftKey: true });
+        expect(last(onChange)).toMatchObject({ x: 100, width: 405, height: 405 });
+      });
+
+      it('Shift+Arrow resizes one axis in free mode', () => {
+        const { container, onChange } = setup(
+          { aspectRatio: undefined },
+          { x: 100, y: 100, width: 400, height: 300 },
+        );
+        fireEvent.keyDown(vp(container), { key: 'ArrowDown', shiftKey: true });
+        expect(last(onChange)).toMatchObject({ width: 400, height: 305 });
+      });
+
+      it('Home/End jump to corners', () => {
+        const { container, onChange } = setup();
+        fireEvent.keyDown(vp(container), { key: 'Home' });
+        expect(last(onChange)).toMatchObject({ x: 0, y: 0 });
+        fireEvent.keyDown(vp(container), { key: 'End' });
+        expect(last(onChange)).toMatchObject({ x: 360, y: 160 });
+      });
+
+      it('PageUp does nothing', () => {
+        const { container, onChange } = setup();
+        fireEvent.keyDown(vp(container), { key: 'PageUp' });
+        expect(onChange).not.toHaveBeenCalled();
+      });
+
+      it('viewport is a named group described by the keyboard hint', () => {
+        setup();
+        const group = screen.getByRole('group', { name: 'Crop area' });
+        expect(group).toHaveAccessibleDescription(/Shift\+Arrow keys resize/);
+      });
+    });
   });
 
   describe('extractCropBlob utility', () => {

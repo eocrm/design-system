@@ -384,7 +384,10 @@ export const en: Messages = {
   },
   imageCrop: {
     loadError: "Couldn't load image",
-    zoom: 'Zoom',
+    reset: 'Reset',
+    label: 'Crop area',
+    keyboardHint:
+      'Drag the box to move it, drag corners to resize. Arrow keys move, Shift+Arrow keys resize.',
   },
   kanban: {
     board: 'Kanban board',

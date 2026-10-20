@@ -19,6 +19,14 @@
   --image-crop-grid-opacity: 0;
   --image-crop-grid-opacity-active: 1;
 
+  // Floating toolbar pill
+  --image-crop-toolbar-bg: var(--color-bg-overlay-strong);
+  --image-crop-toolbar-fg: var(--color-fg-on-overlay);
+  --image-crop-toolbar-hover-bg: var(--color-bg-overlay);
+  --image-crop-toolbar-radius: var(--radius-full);
+  --image-crop-toolbar-padding: var(--space-1);
+  --image-crop-toolbar-offset: var(--space-3);
+
   // Error state
   --image-crop-error-gap: var(--space-2);
   --image-crop-error-padding: var(--space-4);

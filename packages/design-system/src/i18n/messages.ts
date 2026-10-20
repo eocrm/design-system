@@ -736,8 +736,12 @@ export interface Messages {
   imageCrop: {
     /** Shown in place of the image when it fails to load. */
     loadError: string;
-    /** aria-label for the zoom slider. */
-    zoom: string;
+    /** Reset-crop button label. */
+    reset: string;
+    /** Accessible name of the crop group. */
+    label: string;
+    /** Screen-reader description of pointer and keyboard controls. */
+    keyboardHint: string;
   };
   kanban: {
     /** aria-label for the Kanban scroll container (the board itself). */

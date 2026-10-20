@@ -220,3 +220,26 @@
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- CSS keyword
   cursor: not-allowed;
 }
+
+.srOnly {
+  @include visually-hidden;
+}
+
+// Floating pill over the canvas bottom; sits in the reserved TOOLBAR_RESERVE band.
+.toolbar {
+  position: absolute;
+  bottom: var(--image-crop-toolbar-offset);
+  left: 50%;
+  display: flex;
+  align-items: center;
+  padding: var(--image-crop-toolbar-padding);
+  background: var(--image-crop-toolbar-bg);
+  border-radius: var(--image-crop-toolbar-radius);
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- blur radius, matches Modal blur variant
+  backdrop-filter: blur(8px);
+  transform: translateX(-50%);
+
+  // Ghost Button reads on the dark pill.
+  --button-fg-ghost: var(--image-crop-toolbar-fg);
+  --button-bg-ghost-hover: var(--image-crop-toolbar-hover-bg);
+}
