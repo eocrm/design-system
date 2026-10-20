@@ -1007,19 +1007,64 @@ describe('DatePicker — outside click / Tab-away close paths (#666)', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('📅 toggle-close keeps a typed time when the click does not focus the button (Safari)', async () => {
+  // Real mousedown → click gap: the click lands a macrotask later.
+  async function mouseDownGapClick(button: HTMLElement) {
+    expect(fireEvent.mouseDown(button)).toBe(false); // defaultPrevented
+    await new Promise((r) => setTimeout(r, 30));
+    fireEvent.mouseUp(button);
+    fireEvent.click(button);
+  }
+
+  it('📅 toggle-close with a mousedown→click gap keeps a typed time', async () => {
     const onChange = vi.fn<(d: Date | null) => void>();
     const { input } = await typeTimeAfterArrowDown(onChange);
-    const timeInput = screen.getByRole('textbox', { name: 'Time' });
-    // Safari / Firefox-mac: the time input blurs to nowhere (relatedTarget
-    // null), the button never takes focus, then the click lands.
-    timeInput.blur();
-    fireEvent.click(screen.getByRole('button', { name: 'Open calendar' }));
+    await mouseDownGapClick(screen.getByRole('button', { name: 'Open calendar' }));
     await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
     await new Promise((r) => setTimeout(r, 0));
     const last = onChange.mock.calls.at(-1)![0]!;
     expect([last.getDate(), last.getHours(), last.getMinutes()]).toEqual([1, 11, 0]);
     expect(input).toHaveFocus();
+  });
+
+  it('✕ with a mousedown→click gap from the time input — Clear wins', async () => {
+    const onChange = vi.fn<(d: Date | null) => void>();
+    const { input } = await typeTimeAfterArrowDown(onChange);
+    await mouseDownGapClick(screen.getByRole('button', { name: 'Clear' }));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(onChange.mock.calls).toEqual([[null]]);
+    expect(input).toHaveValue('');
+    expect(input).toHaveFocus();
+  });
+
+  it('controlled (sync parent): ✕ from the time input — Clear wins', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn<(d: Date | null) => void>();
+    function Controlled() {
+      const [v, setV] = useState<Date | null>(new Date(2026, 4, 1, 9, 0));
+      return (
+        <DatePicker
+          aria-label="Due"
+          granularity="minute"
+          hourCycle="24"
+          value={v}
+          onChange={(d) => {
+            onChange(d);
+            setV(d);
+          }}
+        />
+      );
+    }
+    render(<Controlled />, { wrapper: wrap() });
+    const input = screen.getByRole('textbox', { name: 'Due' });
+    await user.click(input);
+    const timeInput = screen.getByRole('textbox', { name: 'Time' });
+    timeInput.focus();
+    await user.clear(timeInput);
+    await user.type(timeInput, '11:00');
+    await user.click(screen.getByRole('button', { name: 'Clear' }));
+    await new Promise((r) => setTimeout(r, 0));
+    expect(onChange.mock.calls).toEqual([[null]]);
+    expect(input).toHaveValue('');
   });
 
   it('controlled: a rejected change does not desync the time commit', async () => {

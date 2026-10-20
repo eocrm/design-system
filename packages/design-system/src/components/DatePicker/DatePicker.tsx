@@ -162,11 +162,12 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
 
   const [uncontrolled, setUncontrolled] = useState<Date | null>(defaultValue);
   const value = valueProp !== undefined ? valueProp : uncontrolled;
-  // Latest value, updated synchronously on every set — the embedded
-  // TimeField's commit reads it so a late time commit can't resurrect a value
-  // that Clear (or a day pick) just replaced.
-  // Synced every render (a controlled parent may reject a change), and written
-  // ahead of the re-render only when uncontrolled — where the set always lands.
+  // Latest value for the embedded TimeField's commit, so a late time commit
+  // can't resurrect a value Clear (or a day pick) just replaced. Synced every
+  // render (a controlled parent may reject a change); written ahead of the
+  // re-render only when uncontrolled, where the set always lands. Accepted
+  // trade-off: a controlled parent that applies onChange asynchronously can
+  // still let a late deferred time commit resurrect a cleared value.
   const valueRef = useRef(value);
   useLayoutEffect(() => {
     valueRef.current = value;
@@ -413,19 +414,28 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
       e.preventDefault();
       e.stopPropagation();
       typedRef.current = false; // discard typed text — one onChange(null)
+      // Focus in the popover (kept there by keepTriggerFocus): blur it first so
+      // TimeField's commit is deferred past this re-render and sees the
+      // cleared value — Clear wins over a typed time.
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && isInPopover(active)) active.blur();
       setDraft('');
       setValue(null);
       inputRef.current?.focus();
     },
-    [setValue],
+    [setValue, isInPopover],
   );
 
-  // ✕ / 📅 clicks keep focus in the trigger when it has it, so half-typed text
-  // isn't blur-committed. From the popover, focus moves normally — that
-  // focus-out is what commits a time typed into the embedded TimeField.
-  const keepTriggerFocus = useCallback((e: MouseEvent<HTMLButtonElement>) => {
-    if (document.activeElement === inputRef.current) e.preventDefault();
-  }, []);
+  // ✕ / 📅 never move focus on mousedown while focus is in the picker (or it's
+  // open): half-typed trigger text isn't blur-committed, and no browser
+  // (Safari / Firefox-mac don't focus clicked buttons) gets a focus-out that
+  // closes the popover before the click. The click handlers do the rest.
+  const keepTriggerFocus = useCallback(
+    (e: MouseEvent<HTMLButtonElement>) => {
+      if (openRef.current || isInsidePicker(document.activeElement)) e.preventDefault();
+    },
+    [isInsidePicker],
+  );
 
   const handleToggle = useCallback(
     (e: MouseEvent<HTMLButtonElement>) => {
