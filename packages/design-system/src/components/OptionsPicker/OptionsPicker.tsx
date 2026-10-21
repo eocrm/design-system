@@ -69,6 +69,11 @@ export interface OptionsPickerGroup {
 
 interface MultiProps {
   mode?: 'multi';
+  /**
+   * Committed selection: `string[]` (multi) or `string | null` (single).
+   * Multi: pass a stable array (state, or memoized) — a new array identity on
+   * every render resets the open panel's draft.
+   */
   selected: string[];
   /** Called on Apply with the committed values and their option objects, in the same order. */
   onApply: (next: string[], options: OptionsPickerOption[]) => void;
@@ -80,6 +85,7 @@ interface MultiProps {
 
 interface SingleProps {
   mode: 'single';
+  /** Committed value, or `null` when nothing is picked. */
   selected: string | null;
   /** Called on pick with the value and its option object (`null` / `null` when nothing is picked). */
   onApply: (next: string | null, option: OptionsPickerOption | null) => void;
@@ -547,21 +553,26 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
               : null;
     const emptyText =
       (typeof props.emptyState === 'string' && props.emptyState) || t('optionsPicker.noMatches');
-    // Hard rule 10: one unconditional live region (async only); text set in an
-    // effect so a panel that opens straight into a state still announces it.
-    // The visible state rows are aria-hidden so readers meet each once.
+    // Hard rule 10: one live region (async only), mounted with the panel —
+    // Popover.Content renders nothing while closed. The text is '' while
+    // closed and set in an effect, so the region mounts empty on every open
+    // and the open-time state arrives after it (a region that mounts with
+    // its text announces nothing). The visible state rows are aria-hidden so
+    // readers meet each once.
     const [statusText, setStatusText] = useState('');
     useEffect(() => {
       setStatusText(
-        asyncState === 'loading'
-          ? t('optionsPicker.statusLoading')
-          : asyncState === 'error'
-            ? t('optionsPicker.loadFailed')
-            : asyncState === 'empty'
-              ? emptyText
-              : '',
+        !ctx.open
+          ? ''
+          : asyncState === 'loading'
+            ? t('optionsPicker.statusLoading')
+            : asyncState === 'error'
+              ? t('optionsPicker.loadFailed')
+              : asyncState === 'empty'
+                ? emptyText
+                : '',
       );
-    }, [asyncState, emptyText, t]);
+    }, [ctx.open, asyncState, emptyText, t]);
 
     const allOptionsForCount = useMemo(() => getAllOptions(props), [props]);
 
@@ -606,7 +617,15 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
           e.preventDefault();
           ctx.commit(draft, draft.map(resolveOption));
         } else if (e.key === 'Enter' || e.key === ' ') {
-          if (focusedValue) {
+          // Enter acts on the row only from the search input or the panel —
+          // never on a focused button (Retry / Apply / Cancel). Space also
+          // stays a space in the search input and a press on a button.
+          const target = e.target as HTMLElement;
+          const handles =
+            e.key === 'Enter'
+              ? target === searchInputRef.current || target === e.currentTarget
+              : target !== searchInputRef.current && target.tagName !== 'BUTTON';
+          if (focusedValue && handles) {
             e.preventDefault();
             toggle(focusedValue);
           }
@@ -775,7 +794,18 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
                   {t('optionsPicker.loadFailed')}
                 </Text>
                 {/* Name stays plain: the status region keeps the failure text, so folding it in double-reads (as in Select/Error.tsx). */}
-                <Button variant="secondary" size="sm" onClick={asyncResult.retry}>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    // Back to "nothing settled this open": the hook still holds
+                    // the last good answer (maybe a previous open's), so show
+                    // loading until the retry settles, not those rows.
+                    setFetchedSinceOpen(false);
+                    setSettledSinceOpen(false);
+                    asyncResult.retry();
+                  }}
+                >
                   {t('optionsPicker.retry')}
                 </Button>
               </Cluster>

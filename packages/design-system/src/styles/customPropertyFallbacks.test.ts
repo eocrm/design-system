@@ -1,7 +1,9 @@
 // #673: a custom property set only inline (via `style`) is undefined when the
 // component renders without it, so `var(--x)` with no fallback silently
 // drops the whole declaration. Every fallback-less read must name a property
-// that some stylesheet declares.
+// that some stylesheet declares. Heuristic limit: a property declared under
+// ANY selector counts as declared everywhere, so a read in a scope the
+// declaration never reaches still passes.
 
 import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';

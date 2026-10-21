@@ -28,7 +28,7 @@ Multi mode buffers a draft until Apply; single mode commits per click.
 | Prop | Type | Required | Description |
 |---|---|---|---|
 | `mode` | `"multi" \| "single"` | no |  |
-| `selected` | `string[] \| string \| null` | yes |  |
+| `selected` | `string[] \| string \| null` | yes | Committed selection: `string[]` (multi) or `string \| null` (single). Multi: pass a stable array (state, or memoized) — a new array identity on every render resets the open panel's draft. |
 | `onApply` | `(next: string[], options: OptionsPickerOption[]) => void \| (next: string \| null, option: OptionsPickerOption \| null) => void` | yes | Called on Apply with the committed values and their option objects, in the same order. |
 | `onCancel` | `(() => void)` | no |  |
 | `open` | `boolean` | no |  |
@@ -118,5 +118,6 @@ OptionsPicker has no `name` attribute and no form association. Action menus (Edi
 
 - ❌ Passing BOTH `options` and `groups` to Content — TypeScript rejects it. Pick one.
 - ❌ Calling `onApply` yourself inside Content's render — the picker owns the commit; treat `onApply(next)` as the single source of truth and update React state from it.
+- ❌ Multi-mode `selected` as a fresh array each render (e.g. `selected={ids.filter(…)}` inline) — a new identity resets the open panel's draft. Keep it in state or `useMemo`.
 - ❌ Async mode with `groups`, or restoring `selected` from a URL without `selectedOptions` (rows show raw ids).
 - ❌ Controlling open state without passing both `open` and `onOpenChange` — partial control breaks invariants.

@@ -16,8 +16,9 @@ export interface UseAsyncOptionsArgs<R extends readonly unknown[]> {
   /** Current search query string. Empty string is a valid fetch trigger. */
   query: string;
   /**
-   * When `false`, no fetches happen. Select wires it to "has the popover ever
-   * opened"; OptionsPicker to "is the panel open now" (a fresh fetch per open).
+   * When `false`, no fetches happen (going `false` aborts the in-flight one).
+   * Select wires it to "has the popover ever opened"; OptionsPicker to "is
+   * the panel open now" (a fresh fetch per open).
    */
   enabled: boolean;
   /** Debounce window before firing `loadOptions` after a query change. */
@@ -118,6 +119,15 @@ export function useAsyncOptions<R extends readonly unknown[]>(
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     };
   }, [query, enabled, debounceMs, retryToken, runFetch, loadOptions]);
+
+  // Disabled (OptionsPicker closing) aborts the in-flight request: its answer
+  // has no reader. Select's gate never returns to false.
+  useEffect(() => {
+    if (enabled) return;
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setLoading(false);
+  }, [enabled]);
 
   // Abort on unmount so a still-in-flight request can't write into a
   // dead component.

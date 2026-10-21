@@ -445,6 +445,23 @@ it('keyboard: Enter on focused option toggles (multi)', async () => {
   expect(screen.getAllByRole('checkbox')[0]).toBeChecked();
 });
 
+it('keyboard: Space typed in the search keeps the space and toggles nothing', async () => {
+  const user = userEvent.setup();
+  render(
+    <OptionsPicker selected={[]} onApply={() => {}}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" options={[{ value: 'js', label: 'John Smith' }]} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  await user.keyboard('{ArrowDown}');
+  await user.type(screen.getByRole('textbox'), 'John Smith');
+  expect(screen.getByRole('textbox')).toHaveValue('John Smith');
+  expect(screen.getByRole('checkbox', { name: 'John Smith' })).not.toBeChecked();
+});
+
 it('keyboard: Esc cancels and closes the panel', async () => {
   const user = userEvent.setup();
   const onApply = vi.fn();
@@ -1062,6 +1079,73 @@ describe('async loadOptions', () => {
       ]);
       expect(region().textContent).toBe('');
     });
+  });
+
+  it('the region mounts empty on open and its loading text arrives after mount', async () => {
+    const user = setupUser();
+    const { fn } = deferredLoad();
+    renderAsync({ loadOptions: fn });
+    const records: MutationRecord[] = [];
+    const observer = new MutationObserver((r) => records.push(...r));
+    observer.observe(document.body, { childList: true, subtree: true, characterData: true });
+    await open(user);
+    await act(async () => {});
+    records.push(...observer.takeRecords());
+    observer.disconnect();
+    const node = region();
+    expect(node.textContent).toBe('Loading options…');
+    // Inserted empty: its text came in a later mutation inside the mounted region.
+    const inserted = records.find((r) => [...r.addedNodes].some((n) => n.contains(node)))!;
+    expect(inserted).toBeDefined();
+    expect(records.indexOf(inserted)).toBeLessThan(
+      records.findIndex((r) => r.target === node || node.contains(r.target)),
+    );
+  });
+
+  it('Retry shows loading, not the last answer, until the retry settles', async () => {
+    const user = setupUser();
+    const { fn, calls } = deferredLoad();
+    renderAsync({ loadOptions: fn });
+    await open(user);
+    await elapse(250);
+    await act(async () => calls[0]!.resolve([members[0]!]));
+    await user.click(screen.getByRole('button', { name: /cancel/i }));
+    await open(user);
+    await elapse(250);
+    await act(async () => calls[1]!.reject(new Error('boom')));
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+    const visibleLoading = () =>
+      screen
+        .queryAllByText('Loading options…')
+        .filter((el) => el.closest('[role="status"]') === null);
+    // Debounce window and the in-flight retry alike.
+    for (const ms of [0, 250]) {
+      await elapse(ms);
+      expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
+      expect(visibleLoading()).toHaveLength(1);
+      expect(region().textContent).toBe('Loading options…');
+    }
+    expect(calls).toHaveLength(3);
+    await act(async () => calls[2]!.resolve([members[1]!]));
+    expect(screen.getAllByRole('checkbox').map((c) => c.closest('label')!.textContent)).toEqual([
+      'Bob',
+    ]);
+  });
+
+  it('Enter on Retry retries; it does not toggle the highlighted row', async () => {
+    const user = setupUser();
+    const { fn, calls } = deferredLoad();
+    renderAsync({ loadOptions: fn, selectedOptions: [members[0]!] }, { selected: ['ann'] });
+    await open(user);
+    await elapse(250);
+    await act(async () => calls[0]!.reject(new Error('boom')));
+    await user.keyboard('{ArrowDown}');
+    expect(screen.getByRole('listbox').getAttribute('aria-activedescendant')).toMatch(/-opt-ann$/);
+    screen.getByRole('button', { name: 'Retry' }).focus();
+    await user.keyboard('{Enter}');
+    expect(screen.getByRole('checkbox', { name: 'Ann' })).toBeChecked();
+    await elapse(250);
+    expect(calls).toHaveLength(2);
   });
 
   it('a search after the first answer keeps the rows on screen while it is in flight', async () => {

@@ -89,6 +89,28 @@ describe('useAsyncOptions', () => {
     expect(signals[1].aborted).toBe(false);
   });
 
+  it('aborts the in-flight request when enabled goes false, and clears loading', async () => {
+    const signals: AbortSignal[] = [];
+    const loadOptions = vi.fn(
+      (_q: string, signal: AbortSignal) =>
+        new Promise<typeof A>(() => {
+          signals.push(signal);
+        }),
+    );
+    const { result, rerender } = renderHook(
+      ({ enabled }) => useAsyncOptions({ loadOptions, query: '', enabled, debounceMs: 100 }),
+      { initialProps: { enabled: true } },
+    );
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(150);
+    });
+    expect(signals).toHaveLength(1);
+    expect(result.current.loading).toBe(true);
+    rerender({ enabled: false });
+    expect(signals[0].aborted).toBe(true);
+    expect(result.current.loading).toBe(false);
+  });
+
   it('renders error state on rejection (non-abort)', async () => {
     const loadOptions = vi.fn(async () => {
       throw new Error('boom');

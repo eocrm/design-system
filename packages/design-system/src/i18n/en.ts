@@ -96,8 +96,8 @@ export const en: Messages = {
     nextDay: 'Next day',
     previousAgenda: 'Previous week',
     nextAgenda: 'Next week',
-    moreEvents: ({ count }) => `${count as number} more events`,
-    moreEventsShort: ({ count }) => `+${count as number} more`,
+    moreEvents: ({ count }) => `${count} more events`,
+    moreEventsShort: ({ count }) => `+${count} more`,
     viewMonth: 'Month',
     viewWeek: 'Week',
     viewDay: 'Day',
@@ -115,7 +115,7 @@ export const en: Messages = {
   dateStrip: {
     previousWeek: 'Previous week',
     nextWeek: 'Next week',
-    free: ({ count }) => `${count as number} free`,
+    free: ({ count }) => `${count} free`,
     noTimes: 'No times',
     day: ({ date, availability }) => `${date as string}, ${availability as string}`,
     range: ({ range }) => `${range as string}`,
@@ -227,7 +227,7 @@ export const en: Messages = {
     statusLoading: 'Loading options…',
     loadFailed: 'Failed to load options.',
     retry: 'Retry',
-    selectedCount: ({ count }) => `${count as number} selected`,
+    selectedCount: ({ count }) => `${count} selected`,
   },
   emojiPicker: {
     search: 'Search emoji',
@@ -458,8 +458,7 @@ export const en: Messages = {
     search: 'Search…',
     categories: 'Categories',
     all: 'All',
-    resultCount: ({ count }) =>
-      `${count as number} ${(count as number) === 1 ? 'result' : 'results'}`,
+    resultCount: ({ count }) => `${count} ${(count as number) === 1 ? 'result' : 'results'}`,
     noMatches: 'No matches',
   },
   pillMenu: {
@@ -482,8 +481,7 @@ export const en: Messages = {
     search: 'Search',
     searchEmpty: 'No results',
     searchLoading: 'Searching…',
-    searchResults: ({ count }) =>
-      `${count as number} ${(count as number) === 1 ? 'result' : 'results'}`,
+    searchResults: ({ count }) => `${count} ${(count as number) === 1 ? 'result' : 'results'}`,
   },
   field: {
     optional: '(optional)',
