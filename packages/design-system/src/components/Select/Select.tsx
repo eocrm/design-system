@@ -15,7 +15,7 @@ import styles from './Select.module.scss';
 import { SelectContext, type SelectContextValue } from './context';
 import { sanitizeId } from '../_internal/refs';
 import { useSelectState } from './useSelectState';
-import { useAsyncOptions } from './useAsyncOptions';
+import { useAsyncOptions } from '../_internal/useAsyncOptions';
 import { flattenOptions, findOption, findOptions, hasExactLabelMatch } from './utils';
 import type { FlatRow } from './utils';
 import { Trigger } from './Trigger';

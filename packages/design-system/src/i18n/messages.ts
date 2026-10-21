@@ -487,6 +487,14 @@ export interface Messages {
     cancel: string;
     /** Copy shown when the filter query has no matches. */
     noMatches: string;
+    /** Live-region + row text while an async `loadOptions` request is in flight. */
+    statusLoading: string;
+    /** Live-region + row text when `loadOptions` rejects. */
+    loadFailed: string;
+    /** Retry button in the async error row. */
+    retry: string;
+    /** Async-mode multi footer: how many values the draft holds. */
+    selectedCount: (params: { count: number }) => string;
   };
   emojiPicker: {
     /** Placeholder + aria-label for the emoji search input. */

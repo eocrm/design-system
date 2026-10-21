@@ -1,10 +1,9 @@
 // @vitest-environment jsdom
 import { act, configure, renderHook } from '@testing-library/react';
 import { useAsyncOptions } from './useAsyncOptions';
-import type { SelectOptions } from './Select';
 
-const A: SelectOptions = [{ value: 'a', label: 'A' }];
-const B: SelectOptions = [{ value: 'b', label: 'B' }];
+const A = [{ value: 'a', label: 'A' }];
+const B = [{ value: 'b', label: 'B' }];
 
 describe('useAsyncOptions', () => {
   beforeEach(() => {

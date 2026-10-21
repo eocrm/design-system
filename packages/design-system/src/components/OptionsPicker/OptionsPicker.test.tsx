@@ -1,8 +1,13 @@
 import { createRef } from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { OptionsPicker } from './OptionsPicker';
+import {
+  OptionsPicker,
+  type OptionsPickerContentProps,
+  type OptionsPickerOption,
+} from './OptionsPicker';
 import { Button } from '../Button';
+import { setupUser, useFakeTimersWithUserEvent } from '../_internal/fakeTimers.testutil';
 
 const flatOptions = [
   { value: 'one', label: 'One' },
@@ -735,4 +740,231 @@ it('an existing one-arg onApply callback still type-checks', () => {
       </OptionsPicker>
     </>,
   );
+});
+
+describe('async loadOptions', () => {
+  useFakeTimersWithUserEvent();
+
+  const members: OptionsPickerOption[] = [
+    { value: 'ann', label: 'Ann' },
+    { value: 'bob', label: 'Bob' },
+  ];
+
+  type Load = (q: string, signal: AbortSignal) => Promise<OptionsPickerOption[]>;
+
+  // A loadOptions whose every call returns a promise the test settles by hand.
+  function deferredLoad() {
+    const calls: {
+      query: string;
+      resolve: (o: OptionsPickerOption[]) => void;
+      reject: (e: Error) => void;
+    }[] = [];
+    const fn = vi.fn<Load>(
+      (query) =>
+        new Promise((resolve, reject) => {
+          calls.push({ query, resolve, reject });
+        }),
+    );
+    return { fn, calls };
+  }
+
+  const elapse = (ms: number) =>
+    act(async () => {
+      await vi.advanceTimersByTimeAsync(ms);
+    });
+
+  function renderAsync(
+    contentProps: Partial<OptionsPickerContentProps> & { loadOptions: Load },
+    root: { selected?: string[]; onApply?: (v: string[], o: OptionsPickerOption[]) => void } = {},
+  ) {
+    return render(
+      <OptionsPicker selected={root.selected ?? []} onApply={root.onApply ?? (() => {})}>
+        <OptionsPicker.Trigger>
+          <Button>Open</Button>
+        </OptionsPicker.Trigger>
+        <OptionsPicker.Content {...(contentProps as OptionsPickerContentProps)} label="Members" />
+      </OptionsPicker>,
+    );
+  }
+
+  const open = (user: ReturnType<typeof setupUser>) =>
+    user.click(screen.getByRole('button', { name: 'Open' }));
+  const region = () => document.querySelector('[role="status"][aria-live="polite"]')!;
+
+  it("fetches '' when the panel opens, after searchDebounceMs (default 250)", async () => {
+    const user = setupUser();
+    const loadOptions = vi.fn<Load>(async () => members);
+    renderAsync({ loadOptions });
+    expect(loadOptions).not.toHaveBeenCalled();
+    await open(user);
+    await elapse(249);
+    expect(loadOptions).not.toHaveBeenCalled();
+    await elapse(1);
+    expect(loadOptions).toHaveBeenCalledTimes(1);
+    expect(loadOptions.mock.calls[0]![0]).toBe('');
+    expect(screen.getByRole('checkbox', { name: 'Ann' })).toBeInTheDocument();
+  });
+
+  it('typing debounces into one fetch with the query; rows are the server answer, no client filter on top', async () => {
+    const user = setupUser();
+    const loadOptions = vi.fn<Load>(async (q) =>
+      q === 'an' ? [{ value: 'zed', label: 'Zed' }] : members,
+    );
+    renderAsync({ loadOptions, searchDebounceMs: 100 });
+    await open(user);
+    await elapse(100);
+    expect(loadOptions).toHaveBeenCalledTimes(1);
+    await user.type(screen.getByRole('textbox'), 'an');
+    await elapse(100);
+    expect(loadOptions).toHaveBeenCalledTimes(2);
+    expect(loadOptions.mock.calls[1]![0]).toBe('an');
+    // 'Zed' does not contain 'an' — a client filter would hide it.
+    expect(screen.getByRole('checkbox', { name: 'Zed' })).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: 'Ann' })).not.toBeInTheDocument();
+  });
+
+  it('a stale response for an earlier query does not replace a newer one', async () => {
+    const user = setupUser();
+    const { fn, calls } = deferredLoad();
+    renderAsync({ loadOptions: fn });
+    await open(user);
+    await elapse(250);
+    await user.type(screen.getByRole('textbox'), 'b');
+    await elapse(250);
+    expect(calls.map((c) => c.query)).toEqual(['', 'b']);
+    await act(async () => calls[1]!.resolve([members[1]!]));
+    await act(async () => calls[0]!.resolve(members));
+    expect(screen.getAllByRole('checkbox').map((c) => c.closest('label')!.textContent)).toEqual([
+      'Bob',
+    ]);
+  });
+
+  it("reopening fires a fresh '' fetch", async () => {
+    const user = setupUser();
+    const loadOptions = vi.fn<Load>(async () => members);
+    renderAsync({ loadOptions });
+    await open(user);
+    await elapse(250);
+    await user.click(screen.getByRole('button', { name: /cancel/i }));
+    await open(user);
+    await elapse(250);
+    expect(loadOptions.mock.calls.map((c) => c[0])).toEqual(['', '']);
+  });
+
+  it('loading row while in flight; error row with Retry that re-fires loadOptions', async () => {
+    const user = setupUser();
+    const { fn, calls } = deferredLoad();
+    renderAsync({ loadOptions: fn });
+    await open(user);
+    await elapse(250);
+    const visible = (re: RegExp) =>
+      screen.queryAllByText(re).filter((el) => el.closest('[role="status"]') === null);
+    expect(visible(/loading options/i)).toHaveLength(1);
+    await act(async () => calls[0]!.reject(new Error('boom')));
+    expect(visible(/loading options/i)).toHaveLength(0);
+    expect(visible(/failed to load options/i)).toHaveLength(1);
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+    await elapse(250);
+    expect(fn).toHaveBeenCalledTimes(2);
+    await act(async () => calls[1]!.resolve(members));
+    expect(visible(/failed to load options/i)).toHaveLength(0);
+    expect(screen.getByRole('checkbox', { name: 'Bob' })).toBeInTheDocument();
+  });
+
+  it('empty state (optionsPicker.noMatches / emptyState) only once the settled loadedQuery equals the current query', async () => {
+    const user = setupUser();
+    const loadOptions = vi.fn<Load>(async () => []);
+    renderAsync({ loadOptions, emptyState: 'Nobody here' });
+    await open(user);
+    expect(screen.queryAllByText('Nobody here')).toHaveLength(0);
+    await elapse(250);
+    expect(screen.getAllByText('Nobody here').length).toBeGreaterThan(0);
+    await user.type(screen.getByRole('textbox'), 'x');
+    // Debounce window: the answer on screen is for '' — not a result for 'x'.
+    expect(screen.queryAllByText('Nobody here')).toHaveLength(0);
+    await elapse(250);
+    expect(screen.getAllByText('Nobody here').length).toBeGreaterThan(0);
+  });
+
+  it('live region role=status is present before any fetch and announces loading, then load failure, then no matches', async () => {
+    const user = setupUser();
+    const { fn, calls } = deferredLoad();
+    renderAsync({ loadOptions: fn });
+    await open(user);
+    const node = region();
+    expect(node).toBeInTheDocument();
+    expect(node.textContent).toBe('');
+    await elapse(250);
+    expect(region()).toBe(node);
+    expect(node.textContent).toBe('Loading options…');
+    const loadingRow = screen
+      .getAllByText('Loading options…')
+      .find((el) => el.closest('[role="status"]') === null)!;
+    expect(loadingRow.closest('[aria-hidden="true"]')).not.toBeNull();
+
+    await act(async () => calls[0]!.reject(new Error('boom')));
+    expect(region()).toBe(node);
+    expect(node.textContent).toBe('Failed to load options.');
+    const errorRow = screen
+      .getAllByText('Failed to load options.')
+      .find((el) => el.closest('[role="status"]') === null)!;
+    expect(errorRow.closest('[aria-hidden="true"]')).not.toBeNull();
+    expect(
+      screen.getByRole('button', { name: 'Retry' }).closest('[aria-hidden="true"]'),
+    ).toBeNull();
+
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
+    await elapse(250);
+    await act(async () => calls[1]!.resolve([]));
+    expect(region()).toBe(node);
+    expect(node.textContent).toBe('No matches');
+    const emptyRow = screen
+      .getAllByText('No matches')
+      .find((el) => el.closest('[role="status"]') === null)!;
+    expect(emptyRow.closest('[aria-hidden="true"]')).not.toBeNull();
+  });
+
+  it('multi footer reads "N selected" and footerCount is not called in async mode', async () => {
+    const user = setupUser();
+    const footerCount = vi.fn(() => 'custom');
+    renderAsync({ loadOptions: async () => members, footerCount }, { selected: ['ann', 'bob'] });
+    await open(user);
+    await elapse(250);
+    expect(screen.getByText('2 selected')).toBeInTheDocument();
+    expect(footerCount).not.toHaveBeenCalled();
+  });
+
+  it('shows the search input even with searchable={false}', async () => {
+    const user = setupUser();
+    renderAsync({ loadOptions: async () => members, searchable: false });
+    await open(user);
+    expect(screen.getByRole('textbox')).toBeInTheDocument();
+  });
+
+  it('onApply carries the label of a value picked from a server answer', async () => {
+    const user = setupUser();
+    const onApply = vi.fn();
+    renderAsync({ loadOptions: async () => members }, { onApply });
+    await open(user);
+    await elapse(250);
+    await user.click(screen.getByRole('checkbox', { name: 'Bob' }));
+    await user.click(screen.getByRole('button', { name: /apply/i }));
+    expect(onApply).toHaveBeenCalledWith(['bob'], [members[1]]);
+  });
+
+  it('options + loadOptions together: loadOptions wins and console.warn fires once (dev)', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const user = setupUser();
+    renderAsync({
+      loadOptions: async () => members,
+      ...({ options: flatOptions } as object),
+    });
+    await open(user);
+    await elapse(250);
+    expect(screen.getByRole('checkbox', { name: 'Ann' })).toBeInTheDocument();
+    expect(screen.queryByRole('checkbox', { name: 'One' })).not.toBeInTheDocument();
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls[0]![0]).toMatch(/loadOptions/);
+    warn.mockRestore();
+  });
 });
