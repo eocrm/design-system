@@ -29,7 +29,7 @@ import { useTranslation } from '../../i18n';
 import { useRail } from './Rail';
 import { RailGroupContext, RailGroupDuplicateContext } from './RailGroupContext';
 import { type PolymorphicProps } from './RailItem';
-import { overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
+import { isTourHeld, overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
 import styles from './Rail.module.scss';
 
 /**
@@ -283,6 +283,17 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
   // popovers (#272); its base z sits at --z-popover otherwise.
   const inOverlay = useInOverlay(triggerRef, popoverOpen);
 
+  // #684: focus or the pointer moving into the tour layer while the tour
+  // points into this flyout (or its trigger) isn't leaving — the tour focuses
+  // its card on every step, and the user moves to Next.
+  const scheduleLeaveClose = useCallback(
+    (e: { relatedTarget: EventTarget | null }) => {
+      if (isTourHeld(e.relatedTarget, refs.floating.current, triggerRef.current)) return;
+      scheduleClose();
+    },
+    [refs.floating, scheduleClose],
+  );
+
   const isSequentiallyFocusable = useCallback((candidate: HTMLElement, checkVisible = true) => {
     if (candidate.tabIndex < 0) return false;
     if (candidate.matches(':disabled')) return false;
@@ -381,6 +392,8 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
       if (!target) return;
       if (triggerRef.current?.contains(target)) return;
       if (refs.floating.current?.contains(target)) return;
+      // #684: a tour pointing into the flyout doesn't dismiss it.
+      if (isTourHeld(target, refs.floating.current, triggerRef.current)) return;
       clearOpenTimer();
       clearCloseTimer();
       setPopoverOpen(false);
@@ -442,11 +455,11 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
   );
 
   const handlePointerLeave = useCallback(
-    (_e: ReactPointerEvent<HTMLElement>) => {
+    (e: ReactPointerEvent<HTMLElement>) => {
       if (!collapsed) return;
-      scheduleClose();
+      scheduleLeaveClose(e);
     },
-    [collapsed, scheduleClose],
+    [collapsed, scheduleLeaveClose],
   );
 
   const handleTriggerFocus = useCallback(() => {
@@ -462,10 +475,13 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
     clearCloseTimer();
   }, [collapsed, clearCloseTimer]);
 
-  const handleFlyoutPointerLeave = useCallback(() => {
-    if (!collapsed) return;
-    scheduleClose();
-  }, [collapsed, scheduleClose]);
+  const handleFlyoutPointerLeave = useCallback(
+    (e: ReactPointerEvent<HTMLElement>) => {
+      if (!collapsed) return;
+      scheduleLeaveClose(e);
+    },
+    [collapsed, scheduleLeaveClose],
+  );
 
   // Clicking a subitem inside the flyout — or the linkable group's own
   // collapsed-mode link — should dismiss the flyout: any navigation should
@@ -582,7 +598,7 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
             onPointerEnter={composeHandlers(rest.onPointerEnter, handlePointerEnter)}
             onPointerLeave={composeHandlers(rest.onPointerLeave, handlePointerLeave)}
             onFocus={composeHandlers(rest.onFocus, collapsed ? handleTriggerFocus : undefined)}
-            onBlur={composeHandlers(rest.onBlur, collapsed ? scheduleClose : undefined)}
+            onBlur={composeHandlers(rest.onBlur, collapsed ? scheduleLeaveClose : undefined)}
             onClick={composeHandlers(rest.onClick, collapsed ? handleFlyoutClick : undefined)}
             onKeyDown={composeHandlers(
               rest.onKeyDown,
@@ -625,7 +641,7 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
           onPointerEnter={handlePointerEnter}
           onPointerLeave={handlePointerLeave}
           onFocus={collapsed ? handleTriggerFocus : undefined}
-          onBlur={collapsed ? scheduleClose : undefined}
+          onBlur={collapsed ? scheduleLeaveClose : undefined}
         >
           <span className={styles.itemIcon} aria-hidden="true">
             {icon}
@@ -678,7 +694,7 @@ export const RailGroup = forwardRef<HTMLDivElement, RailGroupImplProps>(function
             onFocus={clearCloseTimer}
             onBlur={(e) => {
               if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
-                scheduleClose();
+                scheduleLeaveClose(e);
               }
             }}
           >

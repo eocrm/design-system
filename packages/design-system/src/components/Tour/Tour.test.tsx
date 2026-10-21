@@ -1,10 +1,11 @@
 import { createRef, useState } from 'react';
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { setupUser, useFakeTimersWithUserEvent } from '../_internal/fakeTimers.testutil';
 import { stubClientRects } from '../_internal/layoutStub.testutil';
 import { overlayStack } from '../_internal/overlay';
 import { Drawer } from '../Drawer';
+import { DropdownMenu } from '../DropdownMenu';
 import { Modal } from '../Modal';
 import { Popover } from '../Popover';
 import { EXIT_FALLBACK_MS, Tour, type TourProps, type TourStep } from './Tour';
@@ -424,6 +425,45 @@ describe('Tour — overlay elevation', () => {
       expect(el).not.toHaveAttribute('data-tour-active-target');
     });
 
+    it.each([
+      ['modal, interactive', { interactive: true }, {}],
+      ['modal, not interactive', {}, {}],
+      ['modal={false}, interactive', { interactive: true }, { modal: false }],
+      ['modal={false}, not interactive', {}, { modal: false }],
+    ] as const)(
+      'marks the current step target and moves the marker on step change (%s)',
+      async (_, stepProps, tourProps) => {
+        const user = userEvent.setup();
+        const a = addTarget('a');
+        const b = addTarget('b');
+        render(
+          <Tour
+            steps={[
+              { target: 'a', title: 'A', ...stepProps },
+              { target: 'b', title: 'B', ...stepProps },
+            ]}
+            open
+            onOpenChange={() => {}}
+            {...tourProps}
+          />,
+        );
+        await waitFor(() => expect(a).toHaveAttribute('data-tour-current-target', ''));
+        expect(b).not.toHaveAttribute('data-tour-current-target');
+        await user.click(screen.getByRole('button', { name: 'Next' }));
+        await waitFor(() => expect(b).toHaveAttribute('data-tour-current-target', ''));
+        expect(a).not.toHaveAttribute('data-tour-current-target');
+      },
+    );
+
+    it('removes the current-target marker on close', async () => {
+      const user = userEvent.setup();
+      const el = addTarget();
+      render(<Harness steps={[{ target: 'it', title: 'Look' }]} />);
+      await waitFor(() => expect(el).toHaveAttribute('data-tour-current-target', ''));
+      await user.keyboard('{Escape}');
+      await waitFor(() => expect(el).not.toHaveAttribute('data-tour-current-target'));
+    });
+
     it('elevates a Popover whose Trigger button IS the interactive target', async () => {
       const user = userEvent.setup();
       render(
@@ -459,6 +499,43 @@ describe('Tour — overlay elevation', () => {
 });
 
 describe('Tour — advanceOn', () => {
+  it('keeps a menu opened from an interactive step open through Next (#684 repro)', async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <DropdownMenu>
+          <DropdownMenu.Trigger>
+            <button type="button" data-tour="menu-trigger">
+              Actions
+            </button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content data-tour="menu-panel">
+            <DropdownMenu.Item data-tour="menu-item" onSelect={() => {}}>
+              Archive
+            </DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu>
+        <Tour
+          steps={[
+            { target: 'menu-trigger', title: 'Open it', interactive: true, advanceOn: 'click' },
+            { target: 'menu-panel', title: 'The menu' },
+            { target: 'menu-item', title: 'Archive here' },
+          ]}
+          open
+          onOpenChange={() => {}}
+        />
+      </>,
+    );
+    await user.click(await screen.findByRole('button', { name: 'Actions' }));
+    expect(await screen.findByRole('dialog', { name: 'The menu' })).toBeInTheDocument();
+    const next = screen.getByRole('button', { name: 'Next' });
+    fireEvent.pointerDown(next);
+    fireEvent.click(next);
+    const card = await screen.findByRole('dialog', { name: 'Archive here' });
+    await waitFor(() => expect(card).not.toHaveAttribute('data-waiting'));
+    expect(screen.getByRole('menuitem', { name: 'Archive' })).toBeInTheDocument();
+  });
+
   const STEPS2: TourStep[] = [
     { target: 'go', title: 'Click it', interactive: true, advanceOn: 'click' },
     { title: 'Next one' },

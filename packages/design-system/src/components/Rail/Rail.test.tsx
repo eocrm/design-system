@@ -6,6 +6,7 @@ import userEvent from '@testing-library/user-event';
 import { I18nProvider } from '../../i18n/I18nProvider';
 import { stubMatchMedia } from '../_internal/matchMediaStub.testutil';
 import { Rail, useRail } from './Rail';
+import { markTourTarget } from '../_internal/overlay/tourHold.testutil';
 
 describe('Rail', () => {
   it('renders a <nav> landmark with the default aria-label', () => {
@@ -1485,4 +1486,63 @@ describe('Rail — empty aria-label', () => {
     // The icon is aria-hidden, so an empty aria-label leaves no name at all.
     expect(screen.getByRole('button', { name: 'Collapse navigation' })).toBeInTheDocument();
   });
+});
+
+describe('Rail — Group flyout tour hold (#684)', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  function openFlyout() {
+    render(
+      <>
+        <Rail defaultCollapsed>
+          <Rail.Section title="Ops">
+            <Rail.Group icon={<span aria-hidden />} label="Settings">
+              <Rail.Item href="/a">Sub A</Rail.Item>
+            </Rail.Group>
+          </Rail.Section>
+        </Rail>
+        <button type="button">Elsewhere</button>
+        {/* Rendered by React like the real Tour card: React's synthetic
+            pointerleave only reports a relatedTarget it manages. */}
+        <div data-tour-portal-root="">
+          <button type="button">Tour next</button>
+        </div>
+      </>,
+    );
+    const trigger = screen.getByRole('button', { name: /Settings/ });
+    act(() => {
+      fireEvent.pointerEnter(trigger);
+      vi.advanceTimersByTime(100);
+    });
+    act(() => trigger.focus());
+    const flyout = screen.getByRole('dialog', { name: 'Settings' });
+    return { flyout, tourButton: screen.getByRole('button', { name: 'Tour next' }) };
+  }
+
+  it('stays open on pointerdown in the tour layer while the tour points into it', () => {
+    const { flyout, tourButton } = openFlyout();
+    markTourTarget(within(flyout).getByRole('link', { name: 'Sub A' }));
+    act(() => tourButton.focus()); // trigger blur → scheduleClose
+    fireEvent.pointerDown(tourButton);
+    fireEvent.pointerLeave(flyout, { relatedTarget: tourButton }); // hover-out to the card
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    expect(screen.getByRole('dialog', { name: 'Settings' })).toBeInTheDocument();
+  });
+
+  it.each(['pointerdown', 'focus'] as const)(
+    'closes as before once the tour points elsewhere (%s)',
+    (how) => {
+      const { tourButton } = openFlyout();
+      markTourTarget(screen.getByRole('button', { name: 'Elsewhere' }));
+      if (how === 'pointerdown') fireEvent.pointerDown(tourButton);
+      else act(() => tourButton.focus());
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
+      expect(screen.queryByRole('dialog', { name: 'Settings' })).toBeNull();
+    },
+  );
 });

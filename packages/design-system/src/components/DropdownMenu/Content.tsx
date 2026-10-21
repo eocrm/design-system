@@ -18,7 +18,7 @@ import {
 } from '@floating-ui/react-dom';
 import clsx from 'clsx';
 import { useDropdownMenuContext } from './context';
-import { overlayStack } from '../_internal/overlay';
+import { isTourHeld, overlayStack } from '../_internal/overlay';
 import { mergeRefs } from '../_internal/refs';
 import styles from './DropdownMenu.module.scss';
 
@@ -144,6 +144,9 @@ export const Content = forwardRef<HTMLDivElement, DropdownMenuContentProps>(func
       const trigger = ctx.triggerRef.current;
       if (content && content.contains(target)) return;
       if (trigger && trigger.contains(target)) return;
+      // #684: a tour pointing into this menu — its Next/card/blocker press
+      // must not dismiss the surface the next step is about to feature.
+      if (isTourHeld(target, content, trigger)) return;
       // If the click is inside a deeper submenu panel or any popover panel,
       // let that surface handle it.
       const allPanels = document.querySelectorAll(

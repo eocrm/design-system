@@ -1,12 +1,13 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createRef } from 'react';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Popover } from './Popover';
 import { DropdownMenu } from '../DropdownMenu';
 import { ConfirmationPopover } from '../ConfirmationPopover';
 import { ScrollArea } from '../ScrollArea';
+import { addTourLayer, markTourTarget } from '../_internal/overlay/tourHold.testutil';
 
 describe('Popover — initial render', () => {
   it('renders nothing portaled on mount when defaultOpen is false', () => {
@@ -957,5 +958,40 @@ describe('Popover — viewport cap with a ScrollArea (#598)', () => {
       expect(form).not.toMatch(/:has\(\s*\[data-scroll-area\]/);
       for (const part of form.slice(5, -1).split(',')) expect(part.trim()).toMatch(/^>/);
     }
+  });
+});
+
+describe('Popover — tour hold (#684)', () => {
+  async function openPopover() {
+    const user = userEvent.setup();
+    render(
+      <>
+        <Popover>
+          <Popover.Trigger>
+            <button type="button">Open</button>
+          </Popover.Trigger>
+          <Popover.Content>
+            <button type="button">Inside</button>
+          </Popover.Content>
+        </Popover>
+        <button type="button">Elsewhere</button>
+      </>,
+    );
+    await user.click(screen.getByRole('button', { name: 'Open' }));
+    return addTourLayer();
+  }
+
+  it('stays open on pointerdown in the tour layer while the tour points into it', async () => {
+    const tourButton = await openPopover();
+    markTourTarget(screen.getByRole('button', { name: 'Inside' }));
+    fireEvent.pointerDown(tourButton);
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
+  it('closes as before once the tour points elsewhere', async () => {
+    const tourButton = await openPopover();
+    markTourTarget(screen.getByRole('button', { name: 'Elsewhere' }));
+    fireEvent.pointerDown(tourButton);
+    expect(screen.queryByRole('dialog')).toBeNull();
   });
 });

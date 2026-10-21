@@ -26,7 +26,12 @@ import { Button } from '../Button';
 import { Cluster } from '../Cluster';
 import { Stack } from '../Stack';
 import { useTranslation } from '../../i18n/useTranslation';
-import { overlayStack, useFloatingSurface, useFocusTrap } from '../_internal/overlay';
+import {
+  TOUR_CURRENT_TARGET,
+  overlayStack,
+  useFloatingSurface,
+  useFocusTrap,
+} from '../_internal/overlay';
 import { mergeRefs, sanitizeId } from '../_internal/refs';
 import { useControllableState } from '../_internal/useControllableState';
 import { Spotlight } from './Spotlight';
@@ -380,6 +385,17 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
     found.setAttribute('data-tour-active-target', '');
     return () => found.removeAttribute('data-tour-active-target');
   }, [modal, interactive, found, closing]);
+
+  // ---- Current-target marker (#684) ----
+  // Every step's found target (modal or not, interactive or not) — floating
+  // surfaces read it via isTourHeld so the tour pointing into an open menu
+  // doesn't dismiss that menu when the user presses Next or the card takes
+  // focus. Separate from data-tour-active-target, which drives elevation.
+  useEffect(() => {
+    if (!found || closing) return;
+    found.setAttribute(TOUR_CURRENT_TARGET, '');
+    return () => found.removeAttribute(TOUR_CURRENT_TARGET);
+  }, [found, closing]);
 
   // ---- Exit: unmount after the fade ----
   useEffect(() => {

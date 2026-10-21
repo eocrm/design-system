@@ -13,7 +13,7 @@ import { useTranslation } from '../../i18n/useTranslation';
 import { emptyStateText } from './emptyStateText';
 import { useSelectContext, type SelectContextValue } from './context';
 import { mergeRefs } from '../_internal/refs';
-import { overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
+import { isTourHeld, overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
 import type { SelectOption } from './utils-types';
 import { isCreateRow } from './utils';
 import { Empty } from './Empty';
@@ -137,6 +137,8 @@ export function Listbox() {
       const trigger = ctx.triggerRootRef.current;
       if (panel && panel.contains(target)) return;
       if (trigger && trigger.contains(target)) return;
+      // #684: a tour pointing into this listbox doesn't dismiss it.
+      if (isTourHeld(target, panel, trigger)) return;
       setOpen(false);
     };
     document.addEventListener('pointerdown', onPointerDown, true);

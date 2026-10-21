@@ -11,7 +11,7 @@ import {
   type MouseEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
+import { isTourHeld, overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
 import clsx from 'clsx';
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react-dom';
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, X } from 'lucide-react';
@@ -293,7 +293,9 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
           // exemption in the click-outside handler below.
           const insideTimeFieldPopover =
             active instanceof Element && active.closest('[data-timefield-popover="true"]') != null;
-          if (!insideWrapper && !insideFloating && !insideTimeFieldPopover) {
+          // #684: a tour pointing into the picker took focus — not a dismiss.
+          const tourHeld = isTourHeld(active, refs.floating.current, wrapperRef.current);
+          if (!insideWrapper && !insideFloating && !insideTimeFieldPopover && !tourHeld) {
             commit(draft);
             setOpen(false);
             setSelectionStart(null);
@@ -478,6 +480,8 @@ export const DateRangePicker = forwardRef<HTMLInputElement, DateRangePickerProps
         if (target instanceof Element && target.closest('[data-timefield-popover="true"]')) {
           return;
         }
+        // #684: a tour pointing into the picker doesn't dismiss it.
+        if (isTourHeld(target, floating, wrapperRef.current)) return;
         commit(draft);
         setOpen(false);
         setSelectionStart(null);

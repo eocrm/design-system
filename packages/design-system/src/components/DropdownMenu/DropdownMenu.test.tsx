@@ -5,6 +5,7 @@ import { resolve } from 'node:path';
 import { createRef, useState, type ReactNode } from 'react';
 import { DropdownMenu } from './DropdownMenu';
 import { ConfirmationPopover } from '../ConfirmationPopover';
+import { addTourLayer, markTourTarget } from '../_internal/overlay/tourHold.testutil';
 
 /** Raw SCSS, so a CSS-only contract can be asserted in a CSS-less DOM. */
 const dropdownScss = readFileSync(resolve(__dirname, './DropdownMenu.module.scss'), 'utf8');
@@ -2477,5 +2478,58 @@ describe('DropdownMenu — a popover opened from a menu item (#528)', () => {
     await user.keyboard('{Escape}');
     await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
     expect(screen.getByRole('menu')).toBeInTheDocument();
+  });
+});
+
+describe('DropdownMenu — tour hold (#684)', () => {
+  function renderMenus() {
+    const user = userEvent.setup();
+    render(
+      <>
+        {['A', 'B'].map((name) => (
+          <DropdownMenu key={name}>
+            <DropdownMenu.Trigger>
+              <button type="button">{`Open ${name}`}</button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content aria-label={`Menu ${name}`}>
+              <DropdownMenu.Item onSelect={() => {}}>{`Item ${name}`}</DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu>
+        ))}
+        <button type="button">Elsewhere</button>
+      </>,
+    );
+    return user;
+  }
+
+  it('stays open on pointerdown in the tour layer while the tour points into it', async () => {
+    const user = renderMenus();
+    await user.click(screen.getByRole('button', { name: 'Open A' }));
+    const tourButton = addTourLayer();
+    markTourTarget(screen.getByRole('menuitem', { name: 'Item A' }));
+    fireEvent.pointerDown(tourButton);
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+    // The trigger itself as the target holds too.
+    markTourTarget(screen.getByRole('button', { name: 'Open A' }));
+    fireEvent.pointerDown(tourButton);
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+  });
+
+  it('closes as before once the tour points elsewhere', async () => {
+    const user = renderMenus();
+    await user.click(screen.getByRole('button', { name: 'Open A' }));
+    const tourButton = addTourLayer();
+    markTourTarget(screen.getByRole('button', { name: 'Elsewhere' }));
+    fireEvent.pointerDown(tourButton);
+    expect(screen.queryByRole('menu')).toBeNull();
+  });
+
+  it('does not hold a surface the tour does not point into', async () => {
+    const user = renderMenus();
+    await user.click(screen.getByRole('button', { name: 'Open B' }));
+    const tourButton = addTourLayer();
+    markTourTarget(screen.getByRole('button', { name: 'Open A' }));
+    fireEvent.pointerDown(tourButton);
+    expect(screen.queryByRole('menu')).toBeNull();
   });
 });

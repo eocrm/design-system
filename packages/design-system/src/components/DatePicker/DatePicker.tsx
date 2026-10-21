@@ -12,7 +12,7 @@ import {
   type MouseEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
+import { isTourHeld, overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
 import clsx from 'clsx';
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react-dom';
 import { Calendar as CalendarIcon, X } from 'lucide-react';
@@ -270,6 +270,13 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
     [refs.floating],
   );
 
+  // #684: a tour pointing into the picker (calendar or trigger) doesn't
+  // dismiss it when its card takes focus or its layer is pressed.
+  const isTourHolding = useCallback(
+    (el: EventTarget | null) => isTourHeld(el, refs.floating.current, wrapperRef.current),
+    [refs.floating],
+  );
+
   // Close paths (trigger blur, outside click, Tab-away) can land on the same
   // tick; the first to claim the close wins, the rest no-op.
   const openRef = useRef(open);
@@ -301,11 +308,12 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
       // `onMouseDown={preventDefault}` to keep input focus on grid clicks;
       // this defer handles keyboard-driven focus moves.
       window.setTimeout(() => {
-        if (!isInsidePicker(document.activeElement) && claimClose()) finishClose(false);
+        const active = document.activeElement;
+        if (!isInsidePicker(active) && !isTourHolding(active) && claimClose()) finishClose(false);
       }, 0);
       onBlur?.(e);
     },
-    [commit, draft, claimClose, finishClose, onBlur, isInsidePicker],
+    [commit, draft, claimClose, finishClose, onBlur, isInsidePicker, isTourHolding],
   );
 
   const handleInputFocus = useCallback(
@@ -464,7 +472,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
   useEffect(() => {
     if (!open) return;
     const handler = (e: PointerEvent) => {
-      if (isInsidePicker(e.target) || !claimClose()) return;
+      if (isInsidePicker(e.target) || isTourHolding(e.target) || !claimClose()) return;
       const active = document.activeElement;
       // #666: focus in the popover (e.g. a time typed into the embedded
       // TimeField) — blur it so TimeField's deferred focus-out commit runs,
@@ -478,7 +486,7 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
     };
     document.addEventListener('pointerdown', handler, true);
     return () => document.removeEventListener('pointerdown', handler, true);
-  }, [open, isInsidePicker, isInPopover, claimClose, finishClose]);
+  }, [open, isInsidePicker, isTourHolding, isInPopover, claimClose, finishClose]);
 
   // #272: inside a Modal/Drawer the popover's base z (--z-popover, below
   // --z-modal) paints it behind the host — elevate when the trigger sits in
@@ -587,7 +595,13 @@ export const DatePicker = forwardRef<HTMLInputElement, DatePickerProps>(function
               // real browsers fire blur for that), not a focus move.
               const target = e.target;
               window.setTimeout(() => {
-                if (target.isConnected && !isInsidePicker(document.activeElement) && claimClose()) {
+                const active = document.activeElement;
+                if (
+                  target.isConnected &&
+                  !isInsidePicker(active) &&
+                  !isTourHolding(active) &&
+                  claimClose()
+                ) {
                   finishClose(true);
                 }
               }, 0);
