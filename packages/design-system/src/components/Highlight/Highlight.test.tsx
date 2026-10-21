@@ -1,5 +1,5 @@
 import { act, render, screen } from '@testing-library/react';
-import { createRef, useState } from 'react';
+import { createRef, useState, type Ref } from 'react';
 import { Highlight } from './Highlight';
 
 function mockReducedMotion(reduce: boolean) {
@@ -16,6 +16,21 @@ function mockReducedMotion(reduce: boolean) {
 }
 
 const block = () => screen.getByTestId('block');
+const overlay = () => document.querySelector<HTMLElement>('[data-highlight-overlay]');
+
+function stubRect(el: HTMLElement, top: number, left = 0, width = 200, height = 100) {
+  el.getBoundingClientRect = () =>
+    ({
+      top,
+      left,
+      width,
+      height,
+      right: left + width,
+      bottom: top + height,
+      x: left,
+      y: top,
+    }) as DOMRect;
+}
 
 beforeEach(() => {
   vi.useFakeTimers();
@@ -40,16 +55,137 @@ describe('Highlight', () => {
     expect(block()).not.toHaveAttribute('data-highlight');
   });
 
-  it('merges className and keeps the child ref', () => {
+  it('keeps the child ref', () => {
     const ref = createRef<HTMLDivElement>();
     render(
       <Highlight active>
-        <div data-testid="block" className="own" ref={ref} />
+        <div data-testid="block" ref={ref} />
       </Highlight>,
     );
-    expect(block().className).toMatch(/^own \S+$/);
     expect(block()).toHaveAttribute('data-highlight', 'on');
     expect(ref.current).toBe(block());
+  });
+
+  it('leaves the child className, style and box-shadow untouched', () => {
+    render(
+      <Highlight active duration={1000}>
+        <div data-testid="block" className="x" style={{ color: 'red' }} />
+      </Highlight>,
+    );
+    expect(block()).toHaveAttribute('class', 'x');
+    expect(block()).toHaveAttribute('style', 'color: red;');
+    expect(block().style.boxShadow).toBe('');
+    expect(block()).toHaveAttribute('data-highlight', 'on');
+    act(() => vi.advanceTimersByTime(1000));
+    expect(block()).toHaveAttribute('class', 'x');
+    expect(block()).toHaveAttribute('style', 'color: red;');
+  });
+
+  it('portals an overlay while active and removes it after onDone', () => {
+    const onDone = vi.fn();
+    const { container } = render(
+      <Highlight active onDone={onDone}>
+        <div data-testid="block" />
+      </Highlight>,
+    );
+    const el = overlay();
+    expect(el).not.toBeNull();
+    expect(container).not.toContainElement(el);
+    expect(el).toHaveAttribute('aria-hidden', 'true');
+    expect(el).toHaveAttribute('data-stage', 'on');
+    expect(el).not.toHaveAttribute('data-in-overlay');
+    act(() => vi.advanceTimersByTime(3000));
+    expect(overlay()).toHaveAttribute('data-stage', 'fading');
+    act(() => vi.advanceTimersByTime(260));
+    expect(onDone).toHaveBeenCalledTimes(1);
+    expect(overlay()).toBeNull();
+  });
+
+  it('paints the overlay with the palette colour', () => {
+    const { rerender } = render(
+      <Highlight active color="green">
+        <div data-testid="block" />
+      </Highlight>,
+    );
+    expect(overlay()!.style.getPropertyValue('--highlight-color')).toBe(
+      'var(--color-palette-green-fg)',
+    );
+    rerender(
+      <Highlight active>
+        <div data-testid="block" />
+      </Highlight>,
+    );
+    expect(overlay()!.style.getPropertyValue('--highlight-color')).toBe('');
+  });
+
+  it('elevates the overlay when the child is inside a Modal', () => {
+    render(
+      <div data-modal-portal-root="">
+        <Highlight active>
+          <div data-testid="block" />
+        </Highlight>
+      </div>,
+    );
+    expect(overlay()).toHaveAttribute('data-in-overlay', '');
+    expect(block()).not.toHaveAttribute('data-in-overlay');
+  });
+
+  it('places the overlay over the visible rect and hides it when fully clipped', () => {
+    const { rerender } = render(
+      <div data-testid="scroller" style={{ overflow: 'auto' }}>
+        <Highlight active={false}>
+          <div data-testid="block" />
+        </Highlight>
+      </div>,
+    );
+    stubRect(screen.getByTestId('scroller'), 0, 0, 1000, 300);
+    stubRect(block(), 250);
+    rerender(
+      <div data-testid="scroller" style={{ overflow: 'auto' }}>
+        <Highlight active>
+          <div data-testid="block" />
+        </Highlight>
+      </div>,
+    );
+    // Clipped by the scroller's bottom edge at 300.
+    expect(overlay()).not.toHaveAttribute('hidden');
+    const { top, left, width, height } = overlay()!.style;
+    expect({ top, left, width, height }).toEqual({
+      top: '250px',
+      left: '0px',
+      width: '200px',
+      height: '50px',
+    });
+
+    stubRect(block(), 400);
+    act(() => window.dispatchEvent(new Event('resize')));
+    expect(overlay()).toHaveAttribute('hidden');
+  });
+
+  it('removes the overlay when the child unmounts', () => {
+    function Maybe({ show, ref }: { show: boolean; ref?: Ref<HTMLDivElement> }) {
+      return show ? <div ref={ref} data-testid="block" /> : null;
+    }
+    const { rerender, unmount } = render(
+      <Highlight active duration={Infinity}>
+        <Maybe show />
+      </Highlight>,
+    );
+    expect(overlay()).not.toBeNull();
+    rerender(
+      <Highlight active duration={Infinity}>
+        <Maybe show={false} />
+      </Highlight>,
+    );
+    expect(overlay()).toBeNull();
+    rerender(
+      <Highlight active duration={Infinity}>
+        <Maybe show />
+      </Highlight>,
+    );
+    expect(overlay()).not.toBeNull();
+    unmount();
+    expect(overlay()).toBeNull();
   });
 
   it('runs on → fading → done and calls onDone once', () => {
@@ -271,24 +407,10 @@ describe('Highlight', () => {
     expect(onDone).toHaveBeenCalledTimes(1);
   });
 
-  it('adds a separate fading class during the fade', () => {
-    render(
-      <Highlight active duration={1000}>
-        <div data-testid="block" />
-      </Highlight>,
-    );
-    const onClasses = block().className.split(' ');
-    expect(onClasses).toHaveLength(1);
-    act(() => vi.advanceTimersByTime(1000));
-    const fadingClasses = block().className.split(' ');
-    expect(fadingClasses).toHaveLength(2);
-    expect(fadingClasses[0]).toBe(onClasses[0]);
-  });
-
   it('warns in development when the child drops the ref', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    function DropsRef({ className }: { className?: string }) {
-      return <div data-testid="block" className={className} />;
+    function DropsRef() {
+      return <div data-testid="block" />;
     }
     try {
       render(
@@ -297,7 +419,7 @@ describe('Highlight', () => {
         </Highlight>,
       );
       expect(warn).toHaveBeenCalledWith(
-        'Highlight: child did not attach the ref — it must forward ref and className to a DOM element',
+        'Highlight: child did not attach the ref — it must forward ref to a DOM element',
       );
     } finally {
       warn.mockRestore();

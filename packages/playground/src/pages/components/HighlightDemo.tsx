@@ -5,8 +5,10 @@ import {
   Card,
   DashboardCanvas,
   type DashboardCanvasValue,
+  Grid,
   Highlight,
   LiveRegion,
+  type PaletteColor,
   Stack,
   Table,
   Text,
@@ -113,6 +115,41 @@ function NewTableRow() {
 
 const SECTIONS = ['Profile', 'Security', 'Billing'];
 
+const COLORS: PaletteColor[] = ['green', 'amber', 'violet'];
+
+function PaletteColours() {
+  const [active, setActive] = useState<PaletteColor | null>(null);
+
+  return (
+    <Stack gap="sm" align="start">
+      <Cluster gap="sm">
+        {COLORS.map((color) => (
+          <Button key={color} variant="secondary" onClick={() => setActive(color)}>
+            Highlight {color}
+          </Button>
+        ))}
+      </Cluster>
+      <Grid columns={3} gap="md" style={{ width: '100%' }}>
+        {COLORS.map((color) => (
+          <Highlight
+            key={color}
+            active={active === color}
+            color={color}
+            onDone={() => setActive(null)}
+          >
+            <Card tone="accent">
+              <Card.Header>{color}</Card.Header>
+              <Card.Body>
+                <Text tone="muted">Shadow and tone stripe stay while it's highlighted.</Text>
+              </Card.Body>
+            </Card>
+          </Highlight>
+        ))}
+      </Grid>
+    </Stack>
+  );
+}
+
 function DeepLinkedSection() {
   const [linked, setLinked] = useState(false);
 
@@ -154,12 +191,12 @@ export function HighlightDemo() {
     <DemoLayout
       name="Highlight"
       componentName="Highlight"
-      description="A temporary inset attention ring and glow on any single block — a just-added widget, a newly created row, a deep-linked section — with optional scroll into view and focus. Renders no wrapper. With focus, the focus move announces it; without focus, pair it with a LiveRegion."
+      description="A temporary attention ring with outward waves around any single block — a just-added widget, a newly created row, a deep-linked section — with optional scroll into view and focus. Drawn on a fixed overlay, so scroll containers and neighbours never clip it, and the child itself is untouched. With focus, the focus move announces it; without focus, pair it with a LiveRegion."
       files={getComponentFiles('Highlight')}
     >
       <Example
         title="Widget added to a dashboard"
-        description="'Add widget' appends a widget below the fold. Highlight scrolls it to the centre of the scroll box, focuses it (the Card has tabIndex={-1}), rings it for 3s, fades, then onDone clears addedId. The focus move is the announcement (the screen reader reads the focused widget), so there's no LiveRegion — adding one would announce it twice."
+        description="'Add widget' appends a widget below the fold. Highlight scrolls it to the centre of the scroll box, focuses it (the Card has tabIndex={-1}), rings it for 3s, fades, then onDone clears addedId. The canvas cell is overflow: auto and the widget fills it, yet the waves spill over the neighbouring widgets — they're drawn on an overlay, not on the Card. The focus move is the announcement (the screen reader reads the focused widget), so there's no LiveRegion — adding one would announce it twice."
         code={`import { useState } from 'react';
 import {
   Button,
@@ -225,7 +262,7 @@ export function Demo() {
 
       <Example
         title="Just-created table row"
-        description="'Create contact' prepends a row and highlights it — no scroll or focus, the row is already in view. Table.Row forwards ref and className, so Highlight wraps it directly with no extra element in the tbody. Focus doesn't move, so a LiveRegion announces the new contact."
+        description="'Create contact' prepends a row and highlights it — no scroll or focus, the row is already in view. Table.Row forwards ref, so Highlight wraps it directly with no extra element in the tbody. Focus doesn't move, so a LiveRegion announces the new contact."
         code={`import { useState } from 'react';
 import { Button, Highlight, LiveRegion, Stack, Table } from '@eocrm/design-system';
 
@@ -285,11 +322,46 @@ export function Demo() {
 
       <Example
         title="Deep-linked section"
-        description="'Jump to Billing' scrolls the Billing card into view, focuses it and keeps the ring on (duration={Infinity}) until 'Clear' turns active off. Under prefers-reduced-motion the ring is static and the scroll is instant."
+        description="'Jump to Billing' scrolls the Billing card into view, focuses it and keeps the ring on (duration={Infinity}) until 'Clear' turns active off. Scroll the box: the ring follows the card's visible part and is hidden once the card leaves the box. Under prefers-reduced-motion the ring is static and the scroll is instant."
         code={`import { useState } from 'react';
 import { Button, Card, Cluster, Highlight, Stack, Text } from '@eocrm/design-system';
 
 const SECTIONS = ['Profile', 'Security', 'Billing'];
+
+const COLORS: PaletteColor[] = ['green', 'amber', 'violet'];
+
+function PaletteColours() {
+  const [active, setActive] = useState<PaletteColor | null>(null);
+
+  return (
+    <Stack gap="sm" align="start">
+      <Cluster gap="sm">
+        {COLORS.map((color) => (
+          <Button key={color} variant="secondary" onClick={() => setActive(color)}>
+            Highlight {color}
+          </Button>
+        ))}
+      </Cluster>
+      <Grid columns={3} gap="md" style={{ width: '100%' }}>
+        {COLORS.map((color) => (
+          <Highlight
+            key={color}
+            active={active === color}
+            color={color}
+            onDone={() => setActive(null)}
+          >
+            <Card tone="accent">
+              <Card.Header>{color}</Card.Header>
+              <Card.Body>
+                <Text tone="muted">Shadow and tone stripe stay while it's highlighted.</Text>
+              </Card.Body>
+            </Card>
+          </Highlight>
+        ))}
+      </Grid>
+    </Stack>
+  );
+}
 
 export function Demo() {
   const [linked, setLinked] = useState(false);
@@ -328,6 +400,59 @@ export function Demo() {
 }`}
       >
         <DeepLinkedSection />
+      </Example>
+
+      <Example
+        title="Palette colours, Cards in a grid"
+        description="color takes a palette colour for the ring and waves (the saturated fg half, readable in both themes); unset is the accent. The waves pass over the neighbouring cards, and each Card keeps its shadow and tone stripe — Highlight changes nothing on the child."
+        code={`import { useState } from 'react';
+import {
+  Button,
+  Card,
+  Cluster,
+  Grid,
+  Highlight,
+  type PaletteColor,
+  Stack,
+  Text,
+} from '@eocrm/design-system';
+
+const COLORS: PaletteColor[] = ['green', 'amber', 'violet'];
+
+export function Demo() {
+  const [active, setActive] = useState<PaletteColor | null>(null);
+
+  return (
+    <Stack gap="sm" align="start">
+      <Cluster gap="sm">
+        {COLORS.map((color) => (
+          <Button key={color} variant="secondary" onClick={() => setActive(color)}>
+            Highlight {color}
+          </Button>
+        ))}
+      </Cluster>
+      <Grid columns={3} gap="md" style={{ width: '100%' }}>
+        {COLORS.map((color) => (
+          <Highlight
+            key={color}
+            active={active === color}
+            color={color}
+            onDone={() => setActive(null)}
+          >
+            <Card tone="accent">
+              <Card.Header>{color}</Card.Header>
+              <Card.Body>
+                <Text tone="muted">Shadow and tone stripe stay while it's highlighted.</Text>
+              </Card.Body>
+            </Card>
+          </Highlight>
+        ))}
+      </Grid>
+    </Stack>
+  );
+}`}
+      >
+        <PaletteColours />
       </Example>
     </DemoLayout>
   );
