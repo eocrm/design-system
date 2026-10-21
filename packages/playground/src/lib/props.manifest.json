@@ -1523,6 +1523,20 @@
           "description": "Optional extra controls in a section's header (a title editor, a\n`DropdownMenu` trigger) rendered by section id, to the right of the\ntitle. Keep it small — the header row is not a general-purpose toolbar.\nPointer presses inside the slot never start a band-reorder drag."
         },
         {
+          "name": "highlightedSectionId",
+          "type": "string | number",
+          "required": false,
+          "default": "",
+          "description": "Id of a section whose band to highlight (scrolls into view, then a ring\nwith outward waves, same as `Highlight`) — e.g. a section the user just added. Collapsed bands\nhighlight too. Does not move focus. Clear it in `onSectionHighlightDone`;\nsetting the same id again after that re-triggers."
+        },
+        {
+          "name": "onSectionHighlightDone",
+          "type": "(() => void)",
+          "required": false,
+          "default": "",
+          "description": "Fires once the highlight run on `highlightedSectionId` has finished."
+        },
+        {
           "name": "constraints",
           "type": "DashboardCanvasConstraintsProp",
           "required": false,
@@ -1581,6 +1595,13 @@
           "required": false,
           "default": "",
           "description": "Header actions, e.g. the edit-mode overflow `DropdownMenu`. Never wraps."
+        },
+        {
+          "name": "actionsReveal",
+          "type": "DashboardWidgetActionsReveal",
+          "required": false,
+          "default": "",
+          "description": "When `actions` are visible. Default `'always'`.\n- `'always'` — always shown.\n- `'hover'` — dimmed to invisible until the card is hovered or holds focus (they stay in the\n  tab order, and Tab into the card reveals them); an open menu launched from an action keeps\n  them shown. On touch / `(hover: none)` they stay visible. They keep their layout width."
         },
         {
           "name": "headerLevel",
@@ -3325,7 +3346,7 @@
           "type": "ImageObjectFit",
           "required": false,
           "default": "",
-          "description": "How the image fills its box. Defaults to `'cover'`.\n- `'cover'` — fill + crop (no distortion). Best for thumbnails / heroes.\n- `'contain'` — whole image, letterboxed on the box background.\n- `'fill'` — stretch to the box (may distort).\n- `'none'` / `'scale-down'` — native size / the smaller of none|contain."
+          "description": "How the image fills its box. Defaults to `'cover'`.\n- `'cover'` — fill + crop (no distortion). Best for thumbnails / heroes.\n- `'contain'` — whole image, letterboxed; the bars show the surface, or the muted box with `background=\"muted\"`.\n- `'fill'` — stretch to the box (may distort).\n- `'none'` / `'scale-down'` — native size / the smaller of none|contain."
         },
         {
           "name": "objectPosition",
@@ -7020,7 +7041,7 @@
     "DefinitionListLayout": "\"horizontal\" | \"stacked\"",
     "DefinitionListSpacing": "\"sm\" | \"md\" | \"lg\"",
     "LinkVariant": "\"default\" | \"muted\" | \"subtle\"",
-    "LinkUnderline": "\"none\" | \"hover\" | \"always\"",
+    "LinkUnderline": "\"none\" | \"always\" | \"hover\"",
     "AccordionVariant": "\"bordered\" | \"borderless\"",
     "AccordionSize": "\"sm\" | \"md\" | \"lg\"",
     "AccordionGap": "\"sm\" | \"md\" | \"lg\"",
@@ -7067,6 +7088,7 @@
     "DashboardCanvasConstraintsProp": "Record<string, DashboardItemConstraints> | ((id: string | number) => DashboardItemConstraints)",
     "DashboardCanvasValue": "{ items: DashboardPlacement[]; sections: DashboardSection[] }",
     "DashboardWidgetVariant": "\"list\" | \"standard\" | \"kpi\" | \"chart\"",
+    "DashboardWidgetActionsReveal": "\"always\" | \"hover\"",
     "StatGroupVariant": "\"filled\" | \"card\"",
     "SparklineType": "\"area\" | \"line\" | \"bar\"",
     "TreeViewChildren": "TreeViewNode[] | { error: true; }",
