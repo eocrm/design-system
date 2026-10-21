@@ -409,6 +409,7 @@ export const en: Messages = {
     done: 'Done',
     progress: ({ current, total }) => `Step ${current} of ${total}`,
     waiting: 'Loading step…',
+    clickHint: 'Click the highlighted element to continue',
   },
   toast: {
     dismiss: 'Dismiss',

@@ -1,11 +1,14 @@
 // Tour.tokens.scss — Component-scoped tokens for <Tour>. Each defaults to a
-// shared token, except two raw values with no shared-token equivalent —
+// shared token, except a few raw values with no shared-token equivalent —
 // each is Tour-local geometry/motion, not a reusable spacing/duration:
 // --tour-scrim-spread (200vmax) is the cutout's box-shadow spread, sized to
 // cover the viewport from any cutout position — inherently viewport-relative,
-// not a --space-* token. --tour-pulse-duration (1600ms) is the interactive-
-// step pulse ring's animation length — Tour-specific motion, not one of the
+// not a --space-* token. --tour-wave-duration (2200ms) / --tour-wave-delay
+// (1100ms, half the duration so two waves alternate evenly) are the
+// interactive-step wave cue's timing — Tour-specific motion, not one of the
 // shared --transition-* durations (same reasoning as --modal-content-width-full).
+// --tour-wave-glow (22px) is the waves' inner-glow blur — a shadow blur, not
+// a --space-* step.
 :root {
   --tour-z: var(--z-tour);
 
@@ -26,11 +29,14 @@
   --tour-scrim-spread: 200vmax;
   --tour-spotlight-radius: var(--radius-md);
 
-  // Interactive-step pulse ring
-  --tour-pulse-color: var(--color-accent);
-  --tour-pulse-width: var(--border-width);
-  --tour-pulse-spread: var(--space-2);
-  --tour-pulse-duration: 1600ms;
+  // Interactive-step wave cue (attention-waves mixin). White on the scrim in
+  // both themes.
+  --tour-wave-color: var(--ring-on-scrim);
+  --tour-wave-duration: 2200ms;
+  --tour-wave-delay: 1100ms;
+  --tour-wave-reach: var(--space-5);
+  --tour-wave-edge: var(--border-width-emphasis);
+  --tour-wave-glow: 22px;
 
   // Card
   --tour-card-bg: var(--color-bg);

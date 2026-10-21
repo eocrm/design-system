@@ -32,24 +32,21 @@
     height var(--tour-glide);
 }
 
-// Interactive step: clicks pass through the cutout to the target; a pulsing
-// ring says "you can click this".
+// Interactive step: clicks pass through the cutout to the target, and waves
+// grow outward from the cutout edge to say "you can click this" (#683). The spotlight is position: fixed inline, so the
+// mixin's pseudo-elements anchor to it.
 .spotlight[data-interactive] {
   pointer-events: none;
-  outline: var(--tour-pulse-width) solid var(--tour-pulse-color);
-  animation: tour-pulse var(--tour-pulse-duration) ease-out infinite;
-}
 
-@keyframes tour-pulse {
-  from {
-    outline-offset: 0;
-    outline-color: var(--tour-pulse-color);
-  }
-
-  to {
-    outline-offset: var(--tour-pulse-spread);
-    outline-color: transparent;
-  }
+  @include attention-waves(
+    var(--tour-wave-color),
+    var(--tour-wave-duration),
+    var(--tour-wave-delay),
+    var(--tour-wave-reach),
+    var(--tour-wave-edge),
+    var(--tour-wave-glow),
+    var(--tour-spotlight-radius)
+  );
 }
 
 .blocker {
@@ -134,7 +131,8 @@
   }
 }
 
-.progress {
+.progress,
+.hint {
   font-size: var(--tour-progress-size);
   color: var(--tour-card-muted-fg);
 }
@@ -189,8 +187,9 @@
     transition: none;
   }
 
+  // The waves are hidden (mixin); a static ring keeps the cue.
   .spotlight[data-interactive] {
-    animation: none;
+    outline: var(--tour-wave-edge) solid var(--tour-wave-color);
   }
 }
 

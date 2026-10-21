@@ -344,6 +344,8 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
   // re-render.
   const advanceOn = current?.advanceOn;
   const interactive = current?.interactive;
+  // Same condition the effect below uses to actually listen for the click.
+  const clickToContinue = advanceOn === 'click' && (!modal || !!interactive);
   useEffect(() => {
     if (advanceOn !== 'click') return;
     if (modal && !interactive) {
@@ -491,6 +493,7 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
               </div>
             )}
           </Stack>
+          {clickToContinue && <span className={styles.hint}>{t('tour.clickHint')}</span>}
           <Cluster justify={isLast ? 'end' : 'between'} gap="sm">
             {!isLast && (
               <Button variant="ghost" size="sm" onClick={() => finish('skipped')}>
@@ -503,7 +506,12 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
                   {t('tour.back')}
                 </Button>
               )}
-              <Button size="sm" onClick={goNext}>
+              {/* Secondary on click-to-continue steps: the target is the primary action. */}
+              <Button
+                variant={clickToContinue ? 'secondary' : undefined}
+                size="sm"
+                onClick={goNext}
+              >
                 {isLast ? doneLabel || t('tour.done') : t('tour.next')}
               </Button>
             </Cluster>

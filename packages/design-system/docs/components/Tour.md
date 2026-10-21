@@ -38,8 +38,8 @@
 
 - **Targets are `data-tour` values**, not selectors or refs: put `data-tour="x"` on the element, `target: 'x'` on the step. No `target` → centered step.
 - **Cross-page tours:** mount `<Tour>` once in the app shell, control `step`, navigate inside `onStepChange`. The Tour waits for the next target (`targetTimeout`, default 5000ms, `Infinity` = forever), then falls back to a centered card and calls `onTargetMissing`.
-- **"Click it to continue":** `{ interactive: true, advanceOn: 'click' }` — target stays clickable and joins the focus trap; the tour advances after its click handler runs.
-- Strings (`Next`, `Back`, `Skip tour`, `Done`, `Step n of m`) come from i18n `tour.*`; only `doneLabel` is a prop.
+- **"Click it to continue":** `{ interactive: true, advanceOn: 'click' }` — target stays clickable and joins the focus trap; the tour advances after its click handler runs. The card shows a "Click the highlighted element to continue" hint (`tour.clickHint`) and demotes Next to `secondary` so the target reads as the primary action; in modal mode, waves grow outward from the spotlight edge (a static ring under reduced motion). Same hint + secondary Next with `modal={false}` (no spotlight there).
+- Strings (`Next`, `Back`, `Skip tour`, `Done`, `Step n of m`, the click hint) come from i18n `tour.*`; only `doneLabel` is a prop.
 
 **Anti-patterns:**
 

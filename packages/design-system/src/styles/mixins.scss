@@ -85,3 +85,58 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+// Two soft rings that grow OUTWARD from the host's edge and fade — an
+// "act here" cue (Tour click-to-continue, Highlight). Emits ::before/::after,
+// so the host must be positioned (relative/absolute/fixed) and must not use
+// its own pseudo-elements. Parameterised by colour so any caller can tint it;
+// the glow goes through color-mix() so a var() colour works.
+// One `attention-wave` keyframes block serves every caller: the per-host
+// geometry reaches it through --wave-reach / --wave-radius, set here.
+// --wave-peak (0.9) is the rings' starting opacity — a motion constant of
+// this cue, not a theme value, so it is local rather than an --opacity-* token.
+// Reduced motion hides both rings; the caller supplies a static cue.
+@mixin attention-waves($color, $duration, $delay, $reach, $edge, $glow, $radius) {
+  --wave-reach: #{$reach};
+  --wave-radius: #{$radius};
+  --wave-peak: 0.9;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border: #{$edge} solid #{$color};
+    border-radius: inherit;
+    box-shadow: inset 0 0 #{$glow} calc(#{$glow} / 4) color-mix(in srgb, #{$color} 55%, transparent);
+    opacity: var(--opacity-hidden);
+    pointer-events: none;
+    animation: attention-wave #{$duration} cubic-bezier(0.2, 0.6, 0.4, 1) infinite;
+  }
+
+  &::after {
+    animation-delay: #{$delay};
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    &::before,
+    &::after {
+      display: none;
+    }
+  }
+
+  @at-root {
+    @keyframes attention-wave {
+      0% {
+        inset: 0;
+        opacity: var(--wave-peak);
+      }
+
+      100% {
+        inset: calc(-1 * var(--wave-reach));
+        opacity: var(--opacity-hidden);
+        border-radius: calc(var(--wave-radius) + var(--wave-reach));
+      }
+    }
+  }
+}

@@ -546,6 +546,50 @@ describe('Tour — advanceOn', () => {
     el.click();
     await waitFor(() => expect(onStepChange).toHaveBeenCalledWith(1));
   });
+
+  it('shows the click hint and a secondary Next on a click-to-continue step', () => {
+    addTarget();
+    render(<Tour steps={STEPS2} open onOpenChange={() => {}} />);
+    expect(screen.getByText('Click the highlighted element to continue')).toBeInTheDocument();
+    const next = screen.getByRole('button', { name: 'Next' });
+    expect(next.className).toMatch(/secondary/);
+    expect(next.className).not.toMatch(/primary/);
+  });
+
+  it('keeps the primary Next and no hint on look-only and interactive-without-advanceOn steps', async () => {
+    addTarget();
+    render(
+      <Tour
+        steps={[
+          { target: 'go', title: 'Look' },
+          { target: 'go', title: 'Try', interactive: true },
+          { title: 'End' },
+        ]}
+        open
+        onOpenChange={() => {}}
+      />,
+    );
+    for (let i = 0; i < 2; i++) {
+      expect(screen.queryByText('Click the highlighted element to continue')).toBeNull();
+      const next = screen.getByRole('button', { name: 'Next' });
+      expect(next.className).toMatch(/primary/);
+      await userEvent.click(next);
+    }
+  });
+
+  it('shows the hint on advanceOn click steps with modal={false}', () => {
+    addTarget();
+    render(
+      <Tour
+        steps={[{ target: 'go', title: 'Look', advanceOn: 'click' }, { title: 'B' }]}
+        open
+        modal={false}
+        onOpenChange={() => {}}
+      />,
+    );
+    expect(screen.getByText('Click the highlighted element to continue')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Next' }).className).toMatch(/secondary/);
+  });
 });
 
 describe('Tour — focus', () => {
