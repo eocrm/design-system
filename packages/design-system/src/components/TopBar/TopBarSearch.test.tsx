@@ -500,9 +500,20 @@ describe('TopBar.Search — tour hold (#684)', () => {
   it('stays open on pointerdown in the tour layer while the tour points into it', async () => {
     const tourButton = await openSearch();
     markTourTarget(screen.getByRole('listbox'));
-    fireEvent.pointerDown(tourButton);
-    act(() => tourButton.focus());
+    act(() => tourButton.focus()); // held blur
     expect(screen.getByRole('listbox')).toBeInTheDocument();
+    fireEvent.pointerDown(tourButton); // focus is out — the pointerdown handler decides
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+  });
+
+  it('a held panel still closes on a later outside press once the tour points elsewhere', async () => {
+    const tourButton = await openSearch();
+    markTourTarget(screen.getByRole('listbox'));
+    act(() => tourButton.focus()); // blur swallowed by the hold — input no longer focused
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    markTourTarget(screen.getByRole('button', { name: 'Elsewhere' }));
+    fireEvent.pointerDown(tourButton);
+    expect(screen.queryByRole('listbox')).toBeNull();
   });
 
   it('closes as before once the tour points elsewhere', async () => {
