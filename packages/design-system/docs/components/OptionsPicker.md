@@ -42,7 +42,7 @@ Multi mode buffers a draft until Apply; single mode commits per click.
 |---|---|---|---|
 | `options` | `OptionsPickerOption[]` | no |  |
 | `groups` | `OptionsPickerGroup[]` | no |  |
-| `loadOptions` | `(query: string, signal: AbortSignal) => Promise<OptionsPickerOption[]>` | no | Server search: called with the search query (`''` on every open) after `searchDebounceMs`, and its answer replaces the list — no client-side filtering on top. Flat options only. The previous request is aborted via `signal` when a newer one starts. Takes precedence over `options` / `groups` (dev warning if both are passed). |
+| `loadOptions` | `(query: string, signal: AbortSignal) => Promise<OptionsPickerOption[]>` | no | Server search: called with the search query (`''` on every open) after `searchDebounceMs`, and its answer replaces the list — no client-side filtering on top. Flat options only. The previous request is aborted via `signal` when a newer one starts. Takes precedence over `options` / `groups` (dev warning if both are passed). The latest function is always the one called; a new identity (e.g. an inline arrow) does not refetch. |
 | `selectedOptions` | `OptionsPickerOption[]` | no | Option objects for currently selected values that may not be in any server answer (e.g. values restored from a URL), so they can be labelled. |
 | `searchDebounceMs` | `number` | no | Delay between the last keystroke (or opening) and the `loadOptions` call. Default `250`. |
 | `label` | `string` | yes | Accessible label on the panel (the dialog's `aria-label`). |
@@ -102,8 +102,8 @@ For lists too large to ship to the client, pass `loadOptions` to Content instead
 </OptionsPicker>
 ```
 
-- **Fetching.** `loadOptions(query, signal)` returns a flat `OptionsPickerOption[]`. It is called with `''` on every open and after `searchDebounceMs` (default `250`) following each keystroke; the previous request is aborted via `signal`, so pass it to `fetch`. The server's answer replaces the list: there is no client-side filtering on top. The search input is always shown (`searchable` is ignored).
-- **Rows.** Loading, error (with a Retry action) and "No matches" rows are built in. Groups are not supported in async mode (flat only). `loadOptions` wins over `options` / `groups` (dev warning if both are passed).
+- **Fetching.** `loadOptions(query, signal)` returns a flat `OptionsPickerOption[]`. It is called with `''` on every open and after `searchDebounceMs` (default `250`) following each keystroke; the previous request is aborted via `signal`, so pass it to `fetch`. The latest `loadOptions` is always the one called, and a new function identity does not refetch, so an inline arrow is fine. The server's answer replaces the list: there is no client-side filtering on top. The search input is always shown (`searchable` is ignored).
+- **Rows.** Loading, error (with a Retry action whose accessible name carries the failure, e.g. "Failed to load options. Retry") and "No matches" rows are built in. Groups are not supported in async mode (flat only). `loadOptions` wins over `options` / `groups` (dev warning if both are passed).
 - **Selected rows are pinned** above the server results (snapshot taken on open and on each query change); ticking or unticking never moves rows under the pointer.
 - **Labels.** Selected values are labelled from a cache of every answer seen while the picker is mounted plus `selectedOptions`; an unknown value falls back to its raw string. **Pass `selectedOptions` for values restored from URL/state** (e.g. a deep link), otherwise their rows read as raw ids.
 - **`onApply` second argument.** Multi: `onApply(values, options)`; single: `onApply(value, option | null)`. Use it to label the trigger and keep `selectedOptions` for the next render. Also works for static `options` / `groups`.
