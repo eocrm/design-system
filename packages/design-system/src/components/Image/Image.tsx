@@ -39,7 +39,7 @@ export interface ImageProps extends Omit<
   /**
    * How the image fills its box. Defaults to `'cover'`.
    * - `'cover'` — fill + crop (no distortion). Best for thumbnails / heroes.
-   * - `'contain'` — whole image, letterboxed on the box background.
+   * - `'contain'` — whole image, letterboxed; the bars show the surface, or the muted box with `background="muted"`.
    * - `'fill'` — stretch to the box (may distort).
    * - `'none'` / `'scale-down'` — native size / the smaller of none|contain.
    */

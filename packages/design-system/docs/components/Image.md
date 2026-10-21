@@ -13,7 +13,7 @@
 |---|---|---|---|
 | `src` | `string` | yes | Image URL. Changing it resets the component to the loading state. |
 | `alt` | `string` | yes | Alternative text (required). Describe the image's content or function. Pass an empty string (`alt=""`) for purely decorative images. |
-| `objectFit` | `'cover' \| 'contain' \| 'fill' \| 'none' \| 'scale-down'` | no | How the image fills its box. Defaults to `'cover'`. - `'cover'` — fill + crop (no distortion). Best for thumbnails / heroes. - `'contain'` — whole image, letterboxed on the box background. - `'fill'` — stretch to the box (may distort). - `'none'` / `'scale-down'` — native size / the smaller of none\|contain. |
+| `objectFit` | `'cover' \| 'contain' \| 'fill' \| 'none' \| 'scale-down'` | no | How the image fills its box. Defaults to `'cover'`. - `'cover'` — fill + crop (no distortion). Best for thumbnails / heroes. - `'contain'` — whole image, letterboxed; the bars show the surface, or the muted box with `background="muted"`. - `'fill'` — stretch to the box (may distort). - `'none'` / `'scale-down'` — native size / the smaller of none\|contain. |
 | `objectPosition` | `string` | no | Which part of the image stays in view when `objectFit` crops or letterboxes it. Any CSS `object-position` value. Defaults to `'center'`. Use `'top'` for document / screenshot thumbnails cropped square, so the header stays visible. |
 | `aspectRatio` | `string \| number` | no | Reserve the box at a fixed ratio to prevent layout shift while loading. Number (`1.5`) or CSS string (`'16 / 9'`). |
 | `size` | `'xs' \| 'sm' \| 'md' \| 'lg'` | no | Render a fixed **square** box of this size (from the shared `--size-*` scale: `'xs'` 20 / `'sm'` 24 / `'md'` 32 / `'lg'` 40 px) instead of filling the container's width. Use for dense thumbnails (e.g. a 40px image cell in a table row) so you don't need a consumer-owned fixed-width wrapper. Omit for the default responsive behavior. When set, `aspectRatio` is ignored (the box is already square); pair with `objectFit="cover"` to crop. Note that a sized image's error tile is icon-only and **not retryable** — see the component description. |
@@ -37,6 +37,8 @@ it has a fixed `size`.
 **The error tile depends on `size`.** Without `size` it is icon + message + a **Retry** button when the box can hold them (about 96×104px or more at the default tokens; a longer custom `image.retry` label needs a wider box; the message is kept to two lines, then truncated with an ellipsis). A smaller box gets the icon alone: Retry is removed and the message stays for screen readers, so nothing is left clipped but still focusable. A fluid `Image` with no `aspectRatio` gets a 40px height on error rather than collapsing to 0, so it shows that icon-only tile. A height you set yourself (className/style) still wins. Reserve the box if you want the retry. With `size` (all four of `xs`/`sm`/`md`/`lg` — 20/24/32/40px) it is the **icon alone**, scaled to the box, and the failure is **not retryable**: none of those squares can hold the message _and_ an `sm` Button, and the one that used to render there sat outside the wrapper's `overflow: hidden`, painted nowhere yet still focusable. A screen reader still gets the failure — the sized icon is named `"{alt}: Image failed to load"` (just the phrase when `alt=""`), where the fluid tile leaves the phrase to its visible text. Need a control on a failed thumbnail at those sizes? Pass `fallback`: at a fixed `size` it renders in a slot filling the box, so it can't escape the wrapper, but sizing it to fit 20-40px is on you.
 
 **Backdrop.** `background` defaults to `'none'`: once loaded, the box has no fill, so transparent logos/PNGs show the surface behind them. The skeleton and error tile keep the muted fill. Pass `background="muted"` for the old backdrop (e.g. letterboxed `objectFit="contain"`).
+
+Changed: the loaded state used to paint the muted fill by default; pass `background="muted"` to keep that look.
 
 **Transparent logos**
 
@@ -69,7 +71,7 @@ backgrounds → `background-image`; icons → lucide / inline SVG.
 <Image src={pageUrl} alt="invoice.pdf" aspectRatio={1} objectFit="cover" objectPosition="top" />
 
 // Logo contained on its muted box, square corners
-<Image src={logo} alt="Acme Corp" objectFit="contain" radius="none" />
+<Image src={logo} alt="Acme Corp" objectFit="contain" background="muted" radius="none" />
 
 // Eager above-the-fold hero with a custom error fallback
 <Image src={hero} alt="Welcome aboard" loading="eager" aspectRatio={2} fallback={<EmptyState title="Couldn't load the hero image" />} />
