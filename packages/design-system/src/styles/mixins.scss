@@ -91,8 +91,9 @@
 // so the host must be positioned (relative/absolute/fixed) and must not use
 // its own pseudo-elements. Parameterised by colour so any caller can tint it;
 // the glow goes through color-mix() so a var() colour works.
-// One `attention-wave` keyframes block serves every caller: the per-host
-// geometry reaches it through --wave-reach / --wave-radius, set here.
+// Each including module gets one `attention-wave` keyframes block (CSS Modules
+// hash the name per file); per-host geometry reaches it through --wave-reach /
+// --wave-radius, set here, so every host in that module shares the block.
 // --wave-peak (0.9) is the rings' starting opacity — a motion constant of
 // this cue, not a theme value, so it is local rather than an --opacity-* token.
 // Reduced motion hides both rings; the caller supplies a static cue.

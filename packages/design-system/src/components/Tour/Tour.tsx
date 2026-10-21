@@ -344,8 +344,9 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
   // re-render.
   const advanceOn = current?.advanceOn;
   const interactive = current?.interactive;
-  // Same condition the effect below uses to actually listen for the click.
-  const clickToContinue = advanceOn === 'click' && (!modal || !!interactive);
+  // Same condition the effect below uses to actually listen for the click —
+  // including `found`: no target (waiting / centered fallback), no listener.
+  const clickToContinue = advanceOn === 'click' && (!modal || !!interactive) && !!found;
   useEffect(() => {
     if (advanceOn !== 'click') return;
     if (modal && !interactive) {
@@ -444,7 +445,7 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
         <Spotlight
           target={found}
           padding={current.spotlightPadding ?? 8}
-          interactive={!!current.interactive}
+          interactive={!!current.interactive && !!found}
           state={state}
           glide={glide}
         />

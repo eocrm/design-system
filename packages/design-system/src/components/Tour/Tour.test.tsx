@@ -577,6 +577,21 @@ describe('Tour — advanceOn', () => {
     }
   });
 
+  it('no hint, primary Next and no wave cue while the target is missing', async () => {
+    vi.spyOn(console, 'warn').mockImplementation(() => {});
+    render(<Tour steps={STEPS2} open targetTimeout={20} onOpenChange={() => {}} />);
+    const check = () => {
+      expect(screen.queryByText('Click the highlighted element to continue')).toBeNull();
+      expect(screen.getByRole('button', { name: 'Next' }).className).toMatch(/primary/);
+      expect(document.querySelector('[data-tour-spotlight]')).not.toHaveAttribute(
+        'data-interactive',
+      );
+    };
+    check(); // waiting
+    await waitFor(() => expect(screen.getByRole('dialog')).toHaveAttribute('data-centered'));
+    check(); // centered fallback
+  });
+
   it('shows the hint on advanceOn click steps with modal={false}', () => {
     addTarget();
     render(
