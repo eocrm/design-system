@@ -1217,4 +1217,10 @@ describe('<EntityChip> — labelEllipsis (#593)', () => {
     expect(labels).not.toMatch(/overflow:\s*hidden/);
     expect(labels).toContain('overflow-y: visible');
   });
+
+  it('EntityChip.module.scss centres truncate chips so a tall trailing adornment does not push the text up', () => {
+    const scss = readFileSync(resolve(__dirname, 'EntityChip.module.scss'), 'utf8');
+    const block = scss.match(/^\.truncate\s*\{([\s\S]*?)^\}/m)?.[1] ?? '';
+    expect(block).toMatch(/align-items:\s*center;/);
+  });
 });

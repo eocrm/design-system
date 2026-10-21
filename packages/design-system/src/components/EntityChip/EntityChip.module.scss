@@ -108,6 +108,11 @@
   min-width: 0;
   white-space: nowrap;
 
+  // Single-line, so centring is safe and keeps the text centred when a
+  // trailing adornment is taller than the line. Non-truncate chips keep
+  // baseline because their label can wrap.
+  align-items: center;
+
   > * {
     flex-shrink: 0;
   }
