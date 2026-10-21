@@ -404,17 +404,18 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
     // the WHOLE next open-ids array on a click, never which id changed;
     // exactly one differs per click (its own toggle is the only way this
     // fires), so the symmetric difference recovers it.
+    const highlightKnown = value.sections.some((s) => s.id === highlightedSectionId);
     useEffect(() => {
       if (
         highlightedSectionId != null &&
-        process.env.NODE_ENV !== 'production' &&
-        !value.sections.some((s) => s.id === highlightedSectionId)
+        !highlightKnown &&
+        process.env.NODE_ENV !== 'production'
       ) {
         console.warn(
           `[DashboardCanvas] highlightedSectionId "${highlightedSectionId}" matches no section.`,
         );
       }
-    }, [highlightedSectionId, value.sections]);
+    }, [highlightedSectionId, highlightKnown]);
 
     const openSectionIds = value.sections
       .filter((section) => !section.collapsed)

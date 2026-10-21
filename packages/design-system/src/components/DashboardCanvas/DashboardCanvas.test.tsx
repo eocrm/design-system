@@ -1555,15 +1555,25 @@ describe('DashboardCanvas overlay & portal gating (#362)', () => {
 
 describe('DashboardCanvas highlightedSectionId', () => {
   const overlays = () => document.querySelectorAll('[data-highlight-overlay]');
+  let definedScroll = false;
   const band = (id: string) => document.querySelector(`[data-dc-section="${id}"]`);
 
   beforeEach(() => {
     vi.useFakeTimers();
-    Element.prototype.scrollIntoView = vi.fn();
+    if (!Element.prototype.scrollIntoView) {
+      Element.prototype.scrollIntoView = () => {};
+      definedScroll = true;
+    }
+    vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(() => {});
   });
   afterEach(() => {
     vi.useRealTimers();
     vi.restoreAllMocks();
+    if (definedScroll) {
+      // @ts-expect-error -- remove the jsdom stub we defined
+      delete Element.prototype.scrollIntoView;
+      definedScroll = false;
+    }
   });
 
   it('highlights the band of highlightedSectionId and calls onSectionHighlightDone', () => {
@@ -1646,5 +1656,43 @@ describe('DashboardCanvas highlightedSectionId', () => {
     );
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('nope'));
     expect(overlays()).toHaveLength(0);
+  });
+
+  it('warns once for an unknown id across sections re-renders', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { rerender } = render(
+      <DashboardCanvas value={baseValue()} renderItem={renderItem} highlightedSectionId="nope" />,
+    );
+    rerender(
+      <DashboardCanvas value={baseValue()} renderItem={renderItem} highlightedSectionId="nope" />,
+    );
+    expect(warn).toHaveBeenCalledTimes(1);
+  });
+
+  it('clearing the id early removes the overlay without calling onSectionHighlightDone', () => {
+    const onDone = vi.fn();
+    const { rerender } = render(
+      <DashboardCanvas
+        value={baseValue()}
+        renderItem={renderItem}
+        highlightedSectionId="s1"
+        onSectionHighlightDone={onDone}
+      />,
+    );
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    rerender(
+      <DashboardCanvas
+        value={baseValue()}
+        renderItem={renderItem}
+        onSectionHighlightDone={onDone}
+      />,
+    );
+    expect(overlays()).toHaveLength(0);
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+    expect(onDone).not.toHaveBeenCalled();
   });
 });
