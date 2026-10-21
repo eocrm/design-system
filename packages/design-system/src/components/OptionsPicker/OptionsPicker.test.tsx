@@ -893,7 +893,6 @@ describe('async loadOptions', () => {
     await open(user);
     const node = region();
     expect(node).toBeInTheDocument();
-    expect(node.textContent).toBe('');
     await elapse(250);
     expect(region()).toBe(node);
     expect(node.textContent).toBe('Loading options…');
@@ -950,6 +949,84 @@ describe('async loadOptions', () => {
     await user.click(screen.getByRole('checkbox', { name: 'Bob' }));
     await user.click(screen.getByRole('button', { name: /apply/i }));
     expect(onApply).toHaveBeenCalledWith(['bob'], [members[1]]);
+  });
+
+  describe("reopen does not show the previous open's state", () => {
+    // Close, reopen, and stop inside the new debounce window.
+    async function reopen(user: ReturnType<typeof setupUser>) {
+      await user.click(screen.getByRole('button', { name: /cancel/i }));
+      await open(user);
+      await elapse(100);
+    }
+    const visibleText = (text: string) =>
+      screen.queryAllByText(text).filter((el) => el.closest('[role="status"]') === null);
+
+    it('after an empty answer: loading, not "No matches"', async () => {
+      const user = setupUser();
+      renderAsync({ loadOptions: async () => [] });
+      await open(user);
+      await elapse(250);
+      expect(region().textContent).toBe('No matches');
+      await reopen(user);
+      expect(visibleText('No matches')).toHaveLength(0);
+      expect(visibleText('Loading options…')).toHaveLength(1);
+      expect(region().textContent).toBe('Loading options…');
+    });
+
+    it('after an error: loading, not the old failure', async () => {
+      const user = setupUser();
+      const loadOptions = vi
+        .fn<Load>()
+        .mockRejectedValueOnce(new Error('boom'))
+        .mockResolvedValue(members);
+      renderAsync({ loadOptions });
+      await open(user);
+      await elapse(250);
+      expect(region().textContent).toBe('Failed to load options.');
+      await reopen(user);
+      expect(visibleText('Failed to load options.')).toHaveLength(0);
+      expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+      expect(region().textContent).toBe('Loading options…');
+      await elapse(150);
+      expect(screen.getByRole('checkbox', { name: 'Ann' })).toBeInTheDocument();
+    });
+
+    it('after rows: stale rows hidden, loading shown and announced until the fresh answer', async () => {
+      const user = setupUser();
+      const { fn, calls } = deferredLoad();
+      renderAsync({ loadOptions: fn });
+      await open(user);
+      await elapse(250);
+      await act(async () => calls[0]!.resolve(members));
+      expect(screen.getAllByRole('checkbox')).toHaveLength(2);
+      await reopen(user);
+      expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
+      expect(visibleText('Loading options…')).toHaveLength(1);
+      expect(region().textContent).toBe('Loading options…');
+      await elapse(150);
+      // Fresh request in flight: still loading, still no stale rows.
+      expect(calls).toHaveLength(2);
+      expect(screen.queryAllByRole('checkbox')).toHaveLength(0);
+      await act(async () => calls[1]!.resolve([members[1]!]));
+      expect(screen.getAllByRole('checkbox').map((c) => c.closest('label')!.textContent)).toEqual([
+        'Bob',
+      ]);
+      expect(region().textContent).toBe('');
+    });
+  });
+
+  it('a search after the first answer keeps the rows on screen while it is in flight', async () => {
+    const user = setupUser();
+    const { fn, calls } = deferredLoad();
+    renderAsync({ loadOptions: fn });
+    await open(user);
+    await elapse(250);
+    await act(async () => calls[0]!.resolve(members));
+    await user.type(screen.getByRole('textbox'), 'b');
+    await elapse(250);
+    expect(calls).toHaveLength(2);
+    expect(screen.getAllByRole('checkbox')).toHaveLength(2);
+    expect(region().textContent).toBe('');
   });
 
   it('options + loadOptions together: loadOptions wins and console.warn fires once (dev)', async () => {

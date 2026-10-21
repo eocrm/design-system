@@ -371,13 +371,43 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
     const [filter, setFilter] = useState('');
 
     const async = isAsync(props);
+    const consumerLoad = async ? props.loadOptions : undefined;
+    // The hook's state outlives a close, so until a request of THIS open has
+    // settled its rows / error / loadedQuery belong to the previous open.
+    // Tracked here (not in the shared hook) by flagging when loadOptions is
+    // actually invoked; reset on close.
+    const [fetchedSinceOpen, setFetchedSinceOpen] = useState(false);
+    const trackedLoad = useMemo(
+      () =>
+        consumerLoad &&
+        ((q: string, signal: AbortSignal) => {
+          setFetchedSinceOpen(true);
+          return consumerLoad(q, signal);
+        }),
+      [consumerLoad],
+    );
+    const [settledSinceOpen, setSettledSinceOpen] = useState(false);
+    useEffect(() => {
+      if (!ctx.open) {
+        setFetchedSinceOpen(false);
+        setSettledSinceOpen(false);
+      }
+    }, [ctx.open]);
     // `enabled` follows the open state, so every open fetches '' afresh.
     const asyncResult = useAsyncOptions({
-      loadOptions: async ? props.loadOptions : undefined,
+      loadOptions: trackedLoad,
       query: filter,
       enabled: ctx.open,
       debounceMs: (async ? props.searchDebounceMs : undefined) ?? 250,
     });
+    // Latches on the first settle of this open (later searches keep their
+    // rows during the refetch). Set during render — React's "adjust state on
+    // change" pattern — so no frame paints a stale 'loading'. runFetch flips
+    // `loading` in the same batch as the fetched flag, so this cannot latch
+    // on the previous open's state.
+    if (fetchedSinceOpen && !asyncResult.loading && !settledSinceOpen) {
+      setSettledSinceOpen(true);
+    }
 
     // Mirrors Select: `loadOptions` wins over static options; warn once per
     // mount in dev. Stripped in prod builds.
@@ -461,10 +491,10 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
     // Async: the server's answer IS the list (no client filter). An error
     // replaces it with the error row, as in Select.
     const visibleFlat = useMemo(() => {
-      if (async) return asyncResult.error ? [] : asyncResult.options;
+      if (async) return asyncResult.error || !settledSinceOpen ? [] : asyncResult.options;
       if (isGrouped(props)) return [];
       return (props.options ?? []).filter(matchesFilter);
-    }, [async, asyncResult.error, asyncResult.options, props, matchesFilter]);
+    }, [async, asyncResult.error, asyncResult.options, settledSinceOpen, props, matchesFilter]);
 
     const visibleGroups = useMemo(() => {
       if (!isGrouped(props)) return [];
@@ -479,13 +509,15 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
     // screen — during the debounce window the rows are the previous query's.
     const asyncState = !async
       ? null
-      : asyncResult.error
-        ? 'error'
-        : asyncResult.loading && !hasAnyVisible
-          ? 'loading'
-          : !asyncResult.loading && !hasAnyVisible && asyncResult.loadedQuery === filter
-            ? 'empty'
-            : null;
+      : !settledSinceOpen
+        ? 'loading'
+        : asyncResult.error
+          ? 'error'
+          : asyncResult.loading && !hasAnyVisible
+            ? 'loading'
+            : !asyncResult.loading && !hasAnyVisible && asyncResult.loadedQuery === filter
+              ? 'empty'
+              : null;
     const emptyText =
       (typeof props.emptyState === 'string' && props.emptyState) || t('optionsPicker.noMatches');
     // Hard rule 10: one unconditional live region (async only); text set in an
