@@ -98,8 +98,8 @@ export const ru: Messages = {
     previousAgenda: 'Предыдущая неделя',
     nextAgenda: 'Следующая неделя',
     moreEvents: ({ count }) =>
-      `ещё ${count} ${ruPlural(count as number, ['событие', 'события', 'событий'])}`,
-    moreEventsShort: ({ count }) => `+${count}`,
+      `ещё ${count as number} ${ruPlural(count as number, ['событие', 'события', 'событий'])}`,
+    moreEventsShort: ({ count }) => `+${count as number}`,
     viewMonth: 'Месяц',
     viewWeek: 'Неделя',
     viewDay: 'День',
@@ -118,7 +118,7 @@ export const ru: Messages = {
     previousWeek: 'Предыдущая неделя',
     nextWeek: 'Следующая неделя',
     free: ({ count }) =>
-      `${count} ${ruPlural(count as number, ['свободное', 'свободных', 'свободных'])}`,
+      `${count as number} ${ruPlural(count as number, ['свободное', 'свободных', 'свободных'])}`,
     noTimes: 'Всё занято',
     day: ({ date, availability }) => `${date as string}, ${availability as string}`,
     range: ({ range }) => `${range as string}`,
@@ -466,7 +466,7 @@ export const ru: Messages = {
     categories: 'Категории',
     all: 'Все',
     resultCount: ({ count }) =>
-      `${count} ${ruPlural(count as number, ['результат', 'результата', 'результатов'])}`,
+      `${count as number} ${ruPlural(count as number, ['результат', 'результата', 'результатов'])}`,
     noMatches: 'Ничего не найдено',
   },
   pillMenu: {
@@ -490,7 +490,7 @@ export const ru: Messages = {
     searchEmpty: 'Ничего не найдено',
     searchLoading: 'Поиск…',
     searchResults: ({ count }) =>
-      `${count} ${ruPlural(count as number, ['результат', 'результата', 'результатов'])}`,
+      `${count as number} ${ruPlural(count as number, ['результат', 'результата', 'результатов'])}`,
   },
   field: {
     optional: '(необязательно)',
