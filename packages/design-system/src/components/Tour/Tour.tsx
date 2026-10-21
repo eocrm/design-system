@@ -194,6 +194,7 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
   const uid = sanitizeId(useId());
   const titleId = `tour-title-${uid}`;
   const bodyId = `tour-body-${uid}`;
+  const hintId = `tour-hint-${uid}`;
   const cardRef = useRef<HTMLDivElement | null>(null);
   const arrowRef = useRef<HTMLSpanElement | null>(null);
 
@@ -473,7 +474,10 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
         role="dialog"
         aria-modal={modal}
         aria-labelledby={titleId}
-        aria-describedby={current.body != null ? bodyId : undefined}
+        aria-describedby={
+          [current.body != null && bodyId, clickToContinue && hintId].filter(Boolean).join(' ') ||
+          undefined
+        }
         tabIndex={-1}
         data-state={state}
         data-side={centered ? undefined : resolvedSide}
@@ -510,7 +514,11 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
               </div>
             )}
           </Stack>
-          {clickToContinue && <span className={styles.hint}>{t('tour.clickHint')}</span>}
+          {clickToContinue && (
+            <span id={hintId} className={styles.hint}>
+              {t('tour.clickHint')}
+            </span>
+          )}
           <Cluster justify={isLast ? 'end' : 'between'} gap="sm">
             {!isLast && (
               <Button variant="ghost" size="sm" onClick={() => finish('skipped')}>

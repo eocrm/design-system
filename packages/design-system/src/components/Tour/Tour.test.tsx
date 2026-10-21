@@ -536,6 +536,48 @@ describe('Tour — advanceOn', () => {
     expect(screen.getByRole('menuitem', { name: 'Archive' })).toBeInTheDocument();
   });
 
+  it('an interactive step on a menu item keeps it clickable and advances (#684)', async () => {
+    const user = userEvent.setup();
+    const onStepChange = vi.fn();
+    render(
+      <>
+        <DropdownMenu>
+          <DropdownMenu.Trigger>
+            <button type="button" data-tour="menu-trigger">
+              Actions
+            </button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content data-tour="menu-panel">
+            <DropdownMenu.Item data-tour="menu-item" onSelect={() => {}}>
+              Archive
+            </DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu>
+        <Tour
+          steps={[
+            { target: 'menu-trigger', title: 'Open it', interactive: true, advanceOn: 'click' },
+            { target: 'menu-panel', title: 'The menu' },
+            { target: 'menu-item', title: 'Archive here', interactive: true, advanceOn: 'click' },
+            { title: 'Done' },
+          ]}
+          open
+          onOpenChange={() => {}}
+          onStepChange={onStepChange}
+        />
+      </>,
+    );
+    await user.click(await screen.findByRole('button', { name: 'Actions' }));
+    await screen.findByRole('dialog', { name: 'The menu' });
+    const next = screen.getByRole('button', { name: 'Next' });
+    fireEvent.pointerDown(next);
+    fireEvent.click(next);
+    await screen.findByRole('dialog', { name: 'Archive here' });
+    onStepChange.mockClear();
+    await user.click(screen.getByRole('menuitem', { name: 'Archive' }));
+    expect(await screen.findByRole('dialog', { name: 'Done' })).toBeInTheDocument();
+    expect(onStepChange).toHaveBeenCalledWith(3);
+  });
+
   const STEPS2: TourStep[] = [
     { target: 'go', title: 'Click it', interactive: true, advanceOn: 'click' },
     { title: 'Next one' },
@@ -631,6 +673,30 @@ describe('Tour — advanceOn', () => {
     const next = screen.getByRole('button', { name: 'Next' });
     expect(next.className).toMatch(/secondary/);
     expect(next.className).not.toMatch(/primary/);
+  });
+
+  it('includes the click hint in the dialog description only on click-to-continue steps', () => {
+    addTarget();
+    render(
+      <Tour
+        steps={[
+          { target: 'go', title: 'Click it', body: 'Body', interactive: true, advanceOn: 'click' },
+          { title: 'Plain' },
+        ]}
+        open
+        onOpenChange={() => {}}
+      />,
+    );
+    const hint = screen.getByText('Click the highlighted element to continue');
+    expect(hint.id).toBeTruthy();
+    const ids = screen.getByRole('dialog').getAttribute('aria-describedby')!.split(' ');
+    expect(ids).toContain(hint.id);
+    expect(ids).toHaveLength(2);
+  });
+
+  it('has no aria-describedby on a step without body or hint', () => {
+    render(<Tour steps={[{ title: 'Plain' }]} open onOpenChange={() => {}} />);
+    expect(screen.getByRole('dialog')).not.toHaveAttribute('aria-describedby');
   });
 
   it('keeps the primary Next and no hint on look-only and interactive-without-advanceOn steps', async () => {
