@@ -369,6 +369,10 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
 
     const [draft, setDraft] = useState<string[]>(ctx.selected);
     const [filter, setFilter] = useState('');
+    // Async only: the selected values pinned above the server rows. A snapshot
+    // — taken on open and on every query change, never on tick/untick — so
+    // rows don't move under the pointer.
+    const [pinned, setPinned] = useState<string[]>(ctx.selected);
 
     const async = isAsync(props);
     const consumerLoad = async ? props.loadOptions : undefined;
@@ -429,6 +433,7 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
     useEffect(() => {
       if (ctx.open) {
         setDraft(ctx.selected);
+        setPinned(ctx.selected);
         setFilter('');
       }
     }, [ctx.open, ctx.selected]);
@@ -454,11 +459,19 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
       () => new Map((async ? asyncResult.options : getAllOptions(props)).map((o) => [o.value, o])),
       [async, asyncResult.options, props],
     );
+    // Async label cache: every server answer and `selectedOptions` seen while
+    // mounted, so a pinned value keeps its label after a search omits it.
+    // Never cleared. The current answer still wins via `optionByValue`.
+    const labelCache = useRef(new Map<string, OptionsPickerOption>());
+    const selectedOptions = async ? props.selectedOptions : undefined;
     // Unknown values (e.g. a preselected value not in `options`) fall back to value-as-label.
-    const resolveOption = useCallback(
-      (value: string): OptionsPickerOption => optionByValue.get(value) ?? { value, label: value },
-      [optionByValue],
-    );
+    const resolveOption = useMemo(() => {
+      const cache = labelCache.current;
+      for (const o of asyncResult.options) cache.set(o.value, o);
+      for (const o of selectedOptions ?? []) cache.set(o.value, o);
+      return (value: string): OptionsPickerOption =>
+        optionByValue.get(value) ?? cache.get(value) ?? { value, label: value };
+    }, [optionByValue, asyncResult.options, selectedOptions]);
 
     const toggle = useCallback(
       (value: string) => {
@@ -488,13 +501,19 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
       [ctx.mode],
     );
 
-    // Async: the server's answer IS the list (no client filter). An error
-    // replaces it with the error row, as in Select.
+    // Async: the server's answer IS the list (no client filter), minus the
+    // pinned values that are rendered above it. An error replaces it with the
+    // error row, as in Select; pinned rows stay in every state.
+    const serverRows = useMemo(() => {
+      if (!async || asyncResult.error || !settledSinceOpen) return [];
+      return asyncResult.options.filter((o) => !pinned.includes(o.value));
+    }, [async, asyncResult.error, asyncResult.options, settledSinceOpen, pinned]);
+
     const visibleFlat = useMemo(() => {
-      if (async) return asyncResult.error || !settledSinceOpen ? [] : asyncResult.options;
+      if (async) return [...pinned.map(resolveOption), ...serverRows];
       if (isGrouped(props)) return [];
       return (props.options ?? []).filter(matchesFilter);
-    }, [async, asyncResult.error, asyncResult.options, settledSinceOpen, props, matchesFilter]);
+    }, [async, pinned, resolveOption, serverRows, props, matchesFilter]);
 
     const visibleGroups = useMemo(() => {
       if (!isGrouped(props)) return [];
@@ -505,17 +524,23 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
 
     const hasAnyVisible = isGrouped(props) ? visibleGroups.length > 0 : visibleFlat.length > 0;
 
-    // Async state row. Empty only once the settled answer is for the query on
-    // screen — during the debounce window the rows are the previous query's.
+    // Async state row, rendered below the pinned rows. Driven by the server
+    // answer alone: pinned rows never suppress it. Empty means the server
+    // returned nothing for the settled query on screen (during the debounce
+    // window the rows are the previous query's) — it describes the search, so
+    // it shows even with pinned rows above it. An answer holding only pinned
+    // values is not empty: those values matched.
     const asyncState = !async
       ? null
       : !settledSinceOpen
         ? 'loading'
         : asyncResult.error
           ? 'error'
-          : asyncResult.loading && !hasAnyVisible
+          : asyncResult.loading && serverRows.length === 0
             ? 'loading'
-            : !asyncResult.loading && !hasAnyVisible && asyncResult.loadedQuery === filter
+            : !asyncResult.loading &&
+                asyncResult.options.length === 0 &&
+                asyncResult.loadedQuery === filter
               ? 'empty'
               : null;
     const emptyText =
@@ -613,7 +638,10 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
                 ref={searchInputRef}
                 type="text"
                 value={filter}
-                onChange={(e) => setFilter(e.currentTarget.value)}
+                onChange={(e) => {
+                  setFilter(e.currentTarget.value);
+                  setPinned(draft);
+                }}
                 placeholder={searchPlaceholder}
                 aria-label={searchPlaceholder}
                 className={styles.searchInput}
@@ -635,26 +663,6 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
           >
             {!async && !hasAnyVisible && (
               <Text size="sm" tone="muted" className={styles.empty}>
-                {props.emptyState || t('optionsPicker.noMatches')}
-              </Text>
-            )}
-            {asyncState === 'loading' && (
-              <Text size="sm" tone="muted" className={styles.empty} aria-hidden="true">
-                {t('optionsPicker.statusLoading')}
-              </Text>
-            )}
-            {asyncState === 'error' && (
-              <Cluster gap="sm" justify="center" className={styles.empty}>
-                <Text size="sm" tone="muted" aria-hidden="true">
-                  {t('optionsPicker.loadFailed')}
-                </Text>
-                <Button variant="secondary" size="sm" onClick={asyncResult.retry}>
-                  {t('optionsPicker.retry')}
-                </Button>
-              </Cluster>
-            )}
-            {asyncState === 'empty' && (
-              <Text size="sm" tone="muted" className={styles.empty} aria-hidden="true">
                 {props.emptyState || t('optionsPicker.noMatches')}
               </Text>
             )}
@@ -753,6 +761,27 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
                   onToggle={toggle}
                 />
               ))}
+            {/* Async state rows sit below the pinned rows (server rows are empty then). */}
+            {asyncState === 'loading' && (
+              <Text size="sm" tone="muted" className={styles.empty} aria-hidden="true">
+                {t('optionsPicker.statusLoading')}
+              </Text>
+            )}
+            {asyncState === 'error' && (
+              <Cluster gap="sm" justify="center" className={styles.empty}>
+                <Text size="sm" tone="muted" aria-hidden="true">
+                  {t('optionsPicker.loadFailed')}
+                </Text>
+                <Button variant="secondary" size="sm" onClick={asyncResult.retry}>
+                  {t('optionsPicker.retry')}
+                </Button>
+              </Cluster>
+            )}
+            {asyncState === 'empty' && (
+              <Text size="sm" tone="muted" className={styles.empty} aria-hidden="true">
+                {props.emptyState || t('optionsPicker.noMatches')}
+              </Text>
+            )}
           </div>
 
           {ctx.mode === 'multi' && (

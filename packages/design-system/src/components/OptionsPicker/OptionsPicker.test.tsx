@@ -1029,6 +1029,153 @@ describe('async loadOptions', () => {
     expect(region().textContent).toBe('');
   });
 
+  describe('pinned selection (snapshot) and label cache', () => {
+    const rowLabels = () =>
+      screen.queryAllByRole('checkbox').map((c) => c.closest('label')!.textContent);
+    const zed = { value: 'zed', label: 'Zed' };
+
+    it('selected values the answer omits are pinned above server rows, labelled from selectedOptions', async () => {
+      const user = setupUser();
+      renderAsync(
+        { loadOptions: async () => members, selectedOptions: [zed] },
+        { selected: ['zed'] },
+      );
+      await open(user);
+      await elapse(250);
+      expect(rowLabels()).toEqual(['Zed', 'Ann', 'Bob']);
+      expect(screen.getByRole('checkbox', { name: 'Zed' })).toBeChecked();
+    });
+
+    it('a value ticked from one answer stays labelled after a search that omits it', async () => {
+      const user = setupUser();
+      const loadOptions = vi.fn<Load>(async (q) => (q === 'b' ? [members[1]!] : [zed, ...members]));
+      renderAsync({ loadOptions });
+      await open(user);
+      await elapse(250);
+      await user.click(screen.getByRole('checkbox', { name: 'Zed' }));
+      await user.type(screen.getByRole('textbox'), 'b');
+      await elapse(250);
+      expect(rowLabels()).toEqual(['Zed', 'Bob']);
+      expect(screen.getByRole('checkbox', { name: 'Zed' })).toBeChecked();
+    });
+
+    it('a pinned value that is also in the answer is not repeated', async () => {
+      const user = setupUser();
+      renderAsync({ loadOptions: async () => members }, { selected: ['bob'] });
+      await open(user);
+      await elapse(250);
+      expect(rowLabels()).toEqual(['Bob', 'Ann']);
+    });
+
+    it('ticking a server row does not move it until the query changes; then it is pinned', async () => {
+      const user = setupUser();
+      renderAsync({ loadOptions: async () => members });
+      await open(user);
+      await elapse(250);
+      await user.click(screen.getByRole('checkbox', { name: 'Bob' }));
+      expect(rowLabels()).toEqual(['Ann', 'Bob']);
+      await user.type(screen.getByRole('textbox'), 'x');
+      await elapse(250);
+      expect(rowLabels()).toEqual(['Bob', 'Ann']);
+    });
+
+    it('unticking a pinned row leaves it pinned (unticked) until the query changes; then it drops out', async () => {
+      const user = setupUser();
+      const loadOptions = vi.fn<Load>(async (q) => (q === '' ? members : [members[0]!]));
+      renderAsync({ loadOptions, selectedOptions: [zed] }, { selected: ['zed'] });
+      await open(user);
+      await elapse(250);
+      await user.click(screen.getByRole('checkbox', { name: 'Zed' }));
+      expect(rowLabels()).toEqual(['Zed', 'Ann', 'Bob']);
+      expect(screen.getByRole('checkbox', { name: 'Zed' })).not.toBeChecked();
+      await user.type(screen.getByRole('textbox'), 'a');
+      await elapse(250);
+      expect(rowLabels()).toEqual(['Ann']);
+    });
+
+    it('reopen resets the snapshot to the committed selection', async () => {
+      const user = setupUser();
+      renderAsync({ loadOptions: async () => members });
+      await open(user);
+      await elapse(250);
+      await user.click(screen.getByRole('checkbox', { name: 'Bob' }));
+      await user.type(screen.getByRole('textbox'), 'x');
+      await elapse(250);
+      expect(rowLabels()).toEqual(['Bob', 'Ann']);
+      await user.click(screen.getByRole('button', { name: /cancel/i }));
+      await open(user);
+      await elapse(250);
+      expect(rowLabels()).toEqual(['Ann', 'Bob']);
+      expect(screen.getByRole('checkbox', { name: 'Bob' })).not.toBeChecked();
+    });
+
+    it('unknown selected value renders its raw value as label and onApply returns {value, label: value}', async () => {
+      const user = setupUser();
+      const onApply = vi.fn();
+      renderAsync({ loadOptions: async () => members }, { selected: ['ghost'], onApply });
+      await open(user);
+      await elapse(250);
+      expect(rowLabels()).toEqual(['ghost', 'Ann', 'Bob']);
+      await user.click(screen.getByRole('button', { name: /apply/i }));
+      expect(onApply).toHaveBeenCalledWith(['ghost'], [{ value: 'ghost', label: 'ghost' }]);
+    });
+
+    it('pinned rows come first in arrow-key order', async () => {
+      const user = setupUser();
+      renderAsync({ loadOptions: async () => members }, { selected: ['bob'] });
+      await open(user);
+      await elapse(250);
+      await user.keyboard('{ArrowDown}');
+      expect(screen.getByRole('listbox')).toHaveAttribute(
+        'aria-activedescendant',
+        expect.stringMatching(/-opt-bob$/),
+      );
+      await user.keyboard('{ArrowDown}');
+      expect(screen.getByRole('listbox')).toHaveAttribute(
+        'aria-activedescendant',
+        expect.stringMatching(/-opt-ann$/),
+      );
+    });
+
+    it('single mode: the selected value is pinned', async () => {
+      const user = setupUser();
+      render(
+        <OptionsPicker mode="single" selected="bob" onApply={() => {}}>
+          <OptionsPicker.Trigger>
+            <Button>Open</Button>
+          </OptionsPicker.Trigger>
+          <OptionsPicker.Content loadOptions={async () => members} label="Members" />
+        </OptionsPicker>,
+      );
+      await open(user);
+      await elapse(250);
+      expect(screen.getAllByRole('radio').map((r) => r.closest('label')!.textContent)).toEqual([
+        'Bob',
+        'Ann',
+      ]);
+    });
+
+    it('pinned rows stay visible during loading, error and empty', async () => {
+      const user = setupUser();
+      const { fn, calls } = deferredLoad();
+      renderAsync({ loadOptions: fn, selectedOptions: [zed] }, { selected: ['zed'] });
+      await open(user);
+      // Before this open's first fetch settles.
+      expect(rowLabels()).toEqual(['Zed']);
+      expect(region().textContent).toBe('Loading options…');
+      await elapse(250);
+      expect(rowLabels()).toEqual(['Zed']);
+      await act(async () => calls[0]!.reject(new Error('boom')));
+      expect(rowLabels()).toEqual(['Zed']);
+      expect(region().textContent).toBe('Failed to load options.');
+      await user.click(screen.getByRole('button', { name: 'Retry' }));
+      await elapse(250);
+      await act(async () => calls[1]!.resolve([]));
+      expect(rowLabels()).toEqual(['Zed']);
+      expect(region().textContent).toBe('No matches');
+    });
+  });
+
   it('options + loadOptions together: loadOptions wins and console.warn fires once (dev)', async () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const user = setupUser();
