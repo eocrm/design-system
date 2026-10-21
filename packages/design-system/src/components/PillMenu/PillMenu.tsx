@@ -236,10 +236,9 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
 
   if (!hasTrigger) {
     return (
-      // {...rest} first so a consumer prop can't collide with the chip's
-      // own className/style resolution below.
+      // Spread order: current.attrs, then {...rest} (an instance data-* wins),
+      // then the chip's own ref/className/style resolution.
       <span
-        // attrs first so {...rest} (and the chip's own className/style) win
         {...current.attrs}
         {...rest}
         ref={ref as Ref<HTMLSpanElement>}
@@ -259,9 +258,8 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
       }}
     >
       <DropdownMenu.Trigger>
-        {/* {...rest} first so consumer-supplied props can't override the
-            trigger's aria-label / disabled / aria-busy contract. */}
-        {/* attrs first so {...rest} and the trigger's aria/disabled contract win */}
+        {/* Spread order: current.attrs, then {...rest} (an instance data-*
+            wins), then the trigger's aria-label / disabled / aria-busy contract. */}
         <button
           {...current.attrs}
           {...rest}
