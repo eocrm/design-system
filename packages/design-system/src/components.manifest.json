@@ -236,7 +236,8 @@
     "tier": "composition",
     "cluster": "Display",
     "composes": [
-      "Accordion"
+      "Accordion",
+      "Highlight"
     ],
     "composedBy": []
   },
@@ -440,7 +441,9 @@
     "tier": "primitive",
     "cluster": "Feedback",
     "composes": [],
-    "composedBy": []
+    "composedBy": [
+      "DashboardCanvas"
+    ]
   },
   "HighlightedText": {
     "tier": "composition",

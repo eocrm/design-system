@@ -6,6 +6,7 @@ import type {
 import { GripVertical } from 'lucide-react';
 import { useTranslation } from '../../i18n/useTranslation';
 import { Accordion } from '../Accordion';
+import { Highlight } from '../Highlight';
 import type { ContainerRef, DashboardSection } from './engine';
 import { DashboardCanvasItem, sortByPosition } from './DashboardCanvasItem';
 import type { CanvasGestures } from './DashboardCanvasItem';
@@ -32,6 +33,9 @@ interface DashboardCanvasSectionProps {
   setContainerEl: (cref: ContainerRef, el: HTMLElement | null) => void;
   /** Registers the band root for reorder insertion-index hit-testing. */
   setBandEl: (id: string | number, el: HTMLElement | null) => void;
+  /** True while this band is the consumer's `highlightedSectionId`. */
+  highlighted: boolean;
+  onHighlightDone?: () => void;
 }
 
 /**
@@ -71,6 +75,8 @@ export function DashboardCanvasSection({
   onHeaderKeyDown,
   setContainerEl,
   setBandEl,
+  highlighted,
+  onHighlightDone,
 }: DashboardCanvasSectionProps) {
   const t = useTranslation();
   const { id, title, collapsed, items } = section;
@@ -91,69 +97,71 @@ export function DashboardCanvasSection({
     (gestures.movingId != null || gestures.pickedId != null);
 
   return (
-    <Accordion.Item
-      value={String(id)}
-      ref={(el) => setBandEl(id, el)}
-      data-dc-section={String(id)}
-      data-dragging={dragging ? '' : undefined}
-    >
-      <Accordion.Trigger
-        aria-label={t(
-          collapsed ? 'dashboardCanvas.sectionExpand' : 'dashboardCanvas.sectionCollapse',
-          { title },
-        )}
-        onKeyDown={gestures.readOnly ? undefined : (e) => onHeaderKeyDown(e, id)}
-        actions={
-          <>
-            {renderSectionHeader != null && (
-              <div data-dc-section-actions>{renderSectionHeader(id)}</div>
-            )}
-            {!gestures.readOnly && (
-              <div
-                className={styles.sectionDragHandle}
-                data-dc-section-handle
-                aria-hidden="true"
-                onPointerDown={(e) => onHeaderPointerDown(e, id)}
-              >
-                <GripVertical size={14} aria-hidden="true" />
-              </div>
-            )}
-          </>
-        }
+    <Highlight active={highlighted} scrollIntoView onDone={onHighlightDone}>
+      <Accordion.Item
+        value={String(id)}
+        ref={(el) => setBandEl(id, el)}
+        data-dc-section={String(id)}
+        data-dragging={dragging ? '' : undefined}
       >
-        {title}
-      </Accordion.Trigger>
-      <Accordion.Content>
-        {/* .sizer: the square-cell measuring box, INSIDE Accordion.Content's
+        <Accordion.Trigger
+          aria-label={t(
+            collapsed ? 'dashboardCanvas.sectionExpand' : 'dashboardCanvas.sectionCollapse',
+            { title },
+          )}
+          onKeyDown={gestures.readOnly ? undefined : (e) => onHeaderKeyDown(e, id)}
+          actions={
+            <>
+              {renderSectionHeader != null && (
+                <div data-dc-section-actions>{renderSectionHeader(id)}</div>
+              )}
+              {!gestures.readOnly && (
+                <div
+                  className={styles.sectionDragHandle}
+                  data-dc-section-handle
+                  aria-hidden="true"
+                  onPointerDown={(e) => onHeaderPointerDown(e, id)}
+                >
+                  <GripVertical size={14} aria-hidden="true" />
+                </div>
+              )}
+            </>
+          }
+        >
+          {title}
+        </Accordion.Trigger>
+        <Accordion.Content>
+          {/* .sizer: the square-cell measuring box, INSIDE Accordion.Content's
             body padding — its width is the grid's own width, so the `cqw`
             row unit stays square in section bodies too (same wrapper as the
             top-level grid; see DashboardCanvas.tsx). */}
-        <div className={styles.sizer}>
-          <div
-            className={styles.container}
-            data-dc-container={String(id)}
-            data-dc-empty={items.length === 0 ? '' : undefined}
-            inert={collapsed}
-            ref={(el) => setContainerEl(containerRef, el)}
-          >
-            {sortByPosition(items).map((item) => (
-              <DashboardCanvasItem
-                key={item.id}
-                placement={item}
-                container={containerRef}
-                gestures={itemGestures}
-              >
-                {renderItem(item.id)}
-              </DashboardCanvasItem>
-            ))}
-            {showDropHint && (
-              <div className={styles.dropHint} data-dc-drop-hint aria-hidden="true">
-                {t('dashboardCanvas.dropHint')}
-              </div>
-            )}
+          <div className={styles.sizer}>
+            <div
+              className={styles.container}
+              data-dc-container={String(id)}
+              data-dc-empty={items.length === 0 ? '' : undefined}
+              inert={collapsed}
+              ref={(el) => setContainerEl(containerRef, el)}
+            >
+              {sortByPosition(items).map((item) => (
+                <DashboardCanvasItem
+                  key={item.id}
+                  placement={item}
+                  container={containerRef}
+                  gestures={itemGestures}
+                >
+                  {renderItem(item.id)}
+                </DashboardCanvasItem>
+              ))}
+              {showDropHint && (
+                <div className={styles.dropHint} data-dc-drop-hint aria-hidden="true">
+                  {t('dashboardCanvas.dropHint')}
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </Accordion.Content>
-    </Accordion.Item>
+        </Accordion.Content>
+      </Accordion.Item>
+    </Highlight>
   );
 }

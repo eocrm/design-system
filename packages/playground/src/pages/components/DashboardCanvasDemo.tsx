@@ -321,6 +321,19 @@ export function DashboardCanvasDemo() {
   const [narrowValue, setNarrowValue] = useState<DashboardCanvasValue>(NARROW_VALUE);
   const [configValue, setConfigValue] = useState<DashboardCanvasValue>(CONFIG_VALUE);
 
+  const [highlightedSection, setHighlightedSection] = useState<string | number>();
+  const addSection = () => {
+    const id = `section-${value.sections.length + 1}`;
+    setValue({
+      ...value,
+      sections: [
+        ...value.sections,
+        { id, title: `New section ${value.sections.length + 1}`, collapsed: false, items: [] },
+      ],
+    });
+    setHighlightedSection(id);
+  };
+
   const renderSectionHeader = (id: string | number) => (
     <Badge tone="neutral">{value.sections.find((s) => s.id === id)?.items.length ?? 0}</Badge>
   );
@@ -375,6 +388,7 @@ function renderWidget(id) {
 
 export function Demo() {
   // 24 columns (the default); cells are square, so the layout scales with width.
+  const [highlighted, setHighlighted] = useState<string | number>();
   const [value, setValue] = useState<DashboardCanvasValue>({
     items: [
       { id: 'revenue', x: 0, y: 0, w: 8, h: 4 },
@@ -400,26 +414,45 @@ export function Demo() {
     ],
   });
 
+  const addSection = () => {
+    const id = 'section-' + (value.sections.length + 1);
+    setValue({
+      ...value,
+      sections: [...value.sections, { id, title: 'New section', collapsed: false, items: [] }],
+    });
+    setHighlighted(id); // scrolls the new band into view and pulses it
+  };
+
   return (
+    <>
+      <Button onClick={addSection}>Add section</Button>
     <DashboardCanvas
       value={value}
       onChange={setValue}
+      highlightedSectionId={highlighted}
+      onSectionHighlightDone={() => setHighlighted(undefined)}
       constraints={{ revenue: { minW: 4, maxH: 4 }, quota: { minW: 6 } }}
       renderItem={renderWidget}
       renderSectionHeader={(id) => (
         <Badge tone="neutral">{value.sections.find((s) => s.id === id)?.items.length ?? 0}</Badge>
       )}
     />
+    </>
   );
 }`}
       >
         <Stack gap="md">
+          <Cluster>
+            <Button onClick={addSection}>Add section</Button>
+          </Cluster>
           <DashboardCanvas
             value={value}
             onChange={setValue}
             constraints={CONSTRAINTS}
             renderItem={renderWidget}
             renderSectionHeader={renderSectionHeader}
+            highlightedSectionId={highlightedSection}
+            onSectionHighlightDone={() => setHighlightedSection(undefined)}
           />
           <Accordion type="single" collapsible>
             <Accordion.Item value="json">
