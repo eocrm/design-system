@@ -6,6 +6,9 @@ import { getComponentFiles } from '../../lib/componentFiles';
 
 const PHOTO = 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=600&q=80';
 const PORTRAIT = 'https://images.unsplash.com/photo-1517849845537-4d257902454a?w=500&q=80';
+const LOGO = `data:image/svg+xml,${encodeURIComponent(
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 90"><circle cx="80" cy="45" r="30" fill="#6366f1"/><rect x="62" y="37" width="36" height="16" rx="4" fill="#fff"/></svg>',
+)}`;
 const BROKEN = 'https://example.com/does-not-exist.jpg';
 
 const GALLERY = [
@@ -297,6 +300,39 @@ export function Demo() {
               4 / 3
             </Text>
           </Stack>
+        </Cluster>
+      </Example>
+
+      <Example
+        title="Transparent logos (background)"
+        description="Default `none`: a loaded transparent image shows the surface behind it. `muted` restores the muted backdrop."
+        code={`import { Image, Cluster } from '@eocrm/design-system';
+
+// LOGO: a transparent SVG data URI
+export function Demo() {
+  return (
+    <Cluster gap="md">
+      {(['none', 'muted'] as const).map((b) => (
+        <div key={b} style={{ width: 160 }}>
+          <Image src={LOGO} alt="Logo" background={b} objectFit="contain" aspectRatio="16 / 9" />
+        </div>
+      ))}
+    </Cluster>
+  );
+}`}
+      >
+        <Cluster gap="md">
+          {(['none', 'muted'] as const).map((b) => (
+            <div key={b} style={{ width: 160 }}>
+              <Image
+                src={LOGO}
+                alt="Logo"
+                background={b}
+                objectFit="contain"
+                aspectRatio="16 / 9"
+              />
+            </div>
+          ))}
         </Cluster>
       </Example>
 

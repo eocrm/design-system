@@ -22,6 +22,9 @@ export type ImageRadius = 'none' | 'sm' | 'md' | 'lg' | 'full';
 /** Fixed square size, aligned to the shared `--size-*` scale (xs 20 / sm 24 / md 32 / lg 40 px). */
 export type ImageSize = 'xs' | 'sm' | 'md' | 'lg';
 
+/** Backdrop behind a loaded image: the muted surface fill, or none. */
+export type ImageBackground = 'muted' | 'none';
+
 export interface ImageProps extends Omit<
   ImgHTMLAttributes<HTMLImageElement>,
   'alt' | 'children' | 'src' | 'loading' | 'onClick'
@@ -68,6 +71,13 @@ export interface ImageProps extends Omit<
    * circular profile images use `<Avatar>`.
    */
   radius?: ImageRadius;
+  /**
+   * Backdrop behind the loaded image. Defaults to `'none'`, so transparent
+   * assets (logos, PNG/SVG) show their surface. Pass `'muted'` for the muted
+   * fill (letterboxed `contain` images). The loading skeleton and the error
+   * tile keep their fill either way.
+   */
+  background?: ImageBackground;
   /**
    * Custom node rendered in place of the default broken-image placeholder when
    * the image fails to load. Overrides the icon + message + retry entirely.
@@ -137,6 +147,7 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
     aspectRatio,
     size,
     radius = 'md',
+    background = 'none',
     fallback,
     loading = 'lazy',
     interactive,
@@ -216,6 +227,7 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
       )}
       style={wrapperStyle}
       data-state={state}
+      data-background={background}
     >
       {isInteractive ? (
         <button

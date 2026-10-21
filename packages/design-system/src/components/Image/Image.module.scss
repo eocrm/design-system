@@ -10,6 +10,11 @@
   background: var(--image-bg);
 }
 
+// Transparent assets show their surface once loaded; skeleton/error keep the fill.
+.wrapper[data-background='none'][data-state='loaded'] {
+  background: transparent;
+}
+
 // Fixed-square `size` variant — opt-in, overrides the default width:100% (the
 // compound `.wrapper.sizeX` selector beats `.wrapper` so order is irrelevant).
 // A component-owned fixed size, mirroring Avatar's size scale; `flex-shrink: 0`
