@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { createRef, useState } from 'react';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -237,6 +239,27 @@ describe('Tour — targets', () => {
     await waitFor(() => expect(screen.getByRole('status').textContent).toBe(''));
     expect(dialog).not.toHaveAttribute('data-waiting');
     expect(dialog).not.toHaveAttribute('data-centered');
+  });
+
+  it('shows an aria-hidden loading row while waiting, gone once the target mounts', async () => {
+    render(<Tour steps={[{ target: 'later', title: 'Later' }]} open onOpenChange={() => {}} />);
+    const row = screen
+      .getByText('Loading step…', { selector: '[class*="waiting"]' })
+      .closest('[aria-hidden]');
+    expect(row).toHaveAttribute('aria-hidden', 'true');
+    expect(row!.querySelector('[role="progressbar"]')).not.toBeNull();
+    act(() => {
+      addTarget('later');
+    });
+    await waitFor(() =>
+      expect(document.querySelector('[aria-hidden="true"] [class*="waiting"]')).toBeNull(),
+    );
+  });
+
+  it('does not fade the card while waiting', () => {
+    const scss = readFileSync(resolve(__dirname, './Tour.module.scss'), 'utf8');
+    const rule = /\.card\[data-waiting\]\s*\{([^}]*)\}/.exec(scss);
+    expect(rule?.[1] ?? '').not.toMatch(/opacity/);
   });
 
   it('falls back to centered and calls onTargetMissing after the timeout', async () => {

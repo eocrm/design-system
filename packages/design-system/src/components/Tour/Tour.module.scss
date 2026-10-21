@@ -112,10 +112,6 @@
   transform-origin: left center;
 }
 
-.card[data-waiting] {
-  opacity: var(--tour-waiting-opacity);
-}
-
 .card[data-state='closed'] {
   opacity: var(--tour-opacity-hidden);
   transform: scale(0.95);
@@ -132,7 +128,8 @@
 }
 
 .progress,
-.hint {
+.hint,
+.waiting {
   font-size: var(--tour-progress-size);
   color: var(--tour-card-muted-fg);
 }

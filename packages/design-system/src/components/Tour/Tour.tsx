@@ -24,6 +24,7 @@ import {
 import clsx from 'clsx';
 import { Button } from '../Button';
 import { Cluster } from '../Cluster';
+import { CircularProgress } from '../CircularProgress';
 import { Stack } from '../Stack';
 import { useTranslation } from '../../i18n/useTranslation';
 import {
@@ -531,6 +532,13 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
             <span id={hintId} className={styles.hint}>
               {t('tour.clickHint')}
             </span>
+          )}
+          {/* Visual only: the status region below is the single announcement. */}
+          {waiting && (
+            <Cluster gap="sm" align="center" aria-hidden="true">
+              <CircularProgress size="sm" />
+              <span className={styles.waiting}>{t('tour.waiting')}</span>
+            </Cluster>
           )}
           <Cluster justify={isLast ? 'end' : 'between'} gap="sm">
             {!isLast && (

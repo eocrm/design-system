@@ -164,6 +164,7 @@
     "composes": [],
     "composedBy": [
       "RichText",
+      "Tour",
       "TreeView"
     ]
   },
@@ -1024,6 +1025,7 @@
     "cluster": "Overlays",
     "composes": [
       "Button",
+      "CircularProgress",
       "Cluster",
       "Stack"
     ],
