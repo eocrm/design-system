@@ -126,6 +126,19 @@ export interface TourProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title' 
 }
 
 /** Unmount fallback when `transitionend` never fires (reduced motion, jsdom). */
+// DropdownMenu's trigger toggles on pointerdown, so a bare click() wouldn't
+// activate it; replay the full primary-pointer sequence a real click produces.
+function activate(el: HTMLElement) {
+  const init = { bubbles: true, cancelable: true, button: 0 };
+  const Ptr = typeof window.PointerEvent === 'function' ? window.PointerEvent : MouseEvent;
+  const ptr = { ...init, isPrimary: true, pointerType: 'mouse' };
+  el.dispatchEvent(new Ptr('pointerdown', ptr));
+  el.dispatchEvent(new MouseEvent('mousedown', init));
+  el.dispatchEvent(new Ptr('pointerup', ptr));
+  el.dispatchEvent(new MouseEvent('mouseup', init));
+  el.dispatchEvent(new MouseEvent('click', init));
+}
+
 export const EXIT_FALLBACK_MS = 300;
 /** Gap in px between target and card (room for the arrow). */
 const CARD_OFFSET = 12;
@@ -535,7 +548,8 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
               <Button
                 variant={clickToContinue ? 'secondary' : undefined}
                 size="sm"
-                onClick={goNext}
+                // The advanceOn listener on the target advances; Next only clicks it.
+                onClick={clickToContinue && found ? () => activate(found) : goNext}
               >
                 {isLast ? doneLabel || t('tour.done') : t('tour.next')}
               </Button>

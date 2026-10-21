@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { setupUser, useFakeTimersWithUserEvent } from '../_internal/fakeTimers.testutil';
 import { stubClientRects } from '../_internal/layoutStub.testutil';
 import { overlayStack } from '../_internal/overlay';
+import { Button } from '../Button';
 import { Drawer } from '../Drawer';
 import { DropdownMenu } from '../DropdownMenu';
 import { Modal } from '../Modal';
@@ -534,6 +535,69 @@ describe('Tour — advanceOn', () => {
     const card = await screen.findByRole('dialog', { name: 'Archive here' });
     await waitFor(() => expect(card).not.toHaveAttribute('data-waiting'));
     expect(screen.getByRole('menuitem', { name: 'Archive' })).toBeInTheDocument();
+  });
+
+  it('Next on a click-to-continue step opens the DropdownMenu trigger and advances once', async () => {
+    const user = userEvent.setup();
+    const onStepChange = vi.fn();
+    render(
+      <>
+        <DropdownMenu>
+          <DropdownMenu.Trigger>
+            <button type="button" data-tour="menu-trigger">
+              Actions
+            </button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content data-tour="menu-panel">
+            <DropdownMenu.Item onSelect={() => {}}>Archive</DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu>
+        <Tour
+          steps={[
+            { target: 'menu-trigger', title: 'Open it', interactive: true, advanceOn: 'click' },
+            { target: 'menu-panel', title: 'The menu' },
+          ]}
+          open
+          onOpenChange={() => {}}
+          onStepChange={onStepChange}
+        />
+      </>,
+    );
+    await screen.findByRole('dialog', { name: 'Open it' });
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    const card = await screen.findByRole('dialog', { name: 'The menu' });
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+    await waitFor(() => expect(card).not.toHaveAttribute('data-waiting'));
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+    expect(onStepChange).toHaveBeenCalledTimes(1);
+    expect(onStepChange).toHaveBeenCalledWith(1);
+  });
+
+  it('Next on a click-to-continue Button step fires its onClick once and advances once', async () => {
+    const user = userEvent.setup();
+    const spy = vi.fn();
+    const onStepChange = vi.fn();
+    render(
+      <>
+        <Button onClick={spy} data-tour="btn">
+          Do it
+        </Button>
+        <Tour
+          steps={[
+            { target: 'btn', title: 'Press it', interactive: true, advanceOn: 'click' },
+            { title: 'After' },
+          ]}
+          open
+          onOpenChange={() => {}}
+          onStepChange={onStepChange}
+        />
+      </>,
+    );
+    await screen.findByRole('dialog', { name: 'Press it' });
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    await screen.findByRole('dialog', { name: 'After' });
+    expect(spy).toHaveBeenCalledTimes(1);
+    expect(onStepChange).toHaveBeenCalledTimes(1);
   });
 
   it('an interactive step on a menu item keeps it clickable and advances (#684)', async () => {
