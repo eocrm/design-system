@@ -251,6 +251,12 @@ export function TreeViewDemo() {
   );
   const [pathSelected, setPathSelected] = useState<string | null>('sales/outbound');
 
+  const [hoverView, setHoverView] = useState<TreeViewView>('chart');
+  const [hoverExpanded, setHoverExpanded] = useState<ReadonlySet<string>>(
+    () => new Set(['company', 'sales']),
+  );
+  const [hovered, setHovered] = useState<string | null>(null);
+
   const [refExpanded, setRefExpanded] = useState<ReadonlySet<string>>(
     () => new Set(['company', 'r-d']),
   );
@@ -440,6 +446,56 @@ function pathTo(id: string | null) {
               selectedId={pathSelected}
               onSelect={setPathSelected}
               highlightedIds={pathTo(pathSelected)}
+            />
+          </Card>
+        </Stack>
+      </Example>
+
+      <Example
+        title="Hover chain"
+        fullWidth
+        description="onHoverChange reports the node under the pointer (null on leave). Feed its ancestors into highlightedIds to paint the reporting line on hover. Pointer only: keyboard focus and selection are untouched. If you collapse or remove the hovered node, clear your hover state, since no leave event fires for an unmounted node."
+        code={`const [hovered, setHovered] = useState<string | null>(null);
+
+<TreeView
+  view="chart"
+  aria-label="Organization chart"
+  roots={[companyNode]}
+  childrenOf={childrenOf}
+  expandedIds={expanded}
+  onExpandedChange={(id, open) => {
+    setExpanded((s) => toggle(s, id, open));
+    setHovered(null); // the hovered node may have just unmounted
+  }}
+  onHoverChange={setHovered}
+  highlightedIds={pathTo(hovered)} // hovered id + its ancestors, from your parent map
+/>`}
+      >
+        <Stack gap="md">
+          <ButtonGroup
+            aria-label="Hover demo view"
+            value={hoverView}
+            onValueChange={(v) => setHoverView(v as TreeViewView)}
+          >
+            {views.map((v) => (
+              <ButtonGroup.Item key={v.value} value={v.value}>
+                {v.label}
+              </ButtonGroup.Item>
+            ))}
+          </ButtonGroup>
+          <Card>
+            <TreeView
+              view={hoverView}
+              aria-label="Organization structure (hover chain)"
+              roots={hoverView === 'chart' ? CHART_ROOTS : LIST_ROOTS}
+              childrenOf={hoverView === 'chart' ? chartChildrenOf : listChildrenOf}
+              expandedIds={hoverExpanded}
+              onExpandedChange={(id, open) => {
+                setHoverExpanded((s) => toggle(s, id, open));
+                setHovered(null);
+              }}
+              onHoverChange={setHovered}
+              highlightedIds={pathTo(hovered)}
             />
           </Card>
         </Stack>

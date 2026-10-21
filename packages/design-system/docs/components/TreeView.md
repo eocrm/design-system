@@ -55,6 +55,7 @@ const byId = new Map([...expanded].map((id, i) => [id, children[i]]));
 | `onRetry` | `((id: string) => void)` | no | Makes a failed level's "Couldn't load. Retry" row actionable; called with the parent id. Without it the row is inert text. |
 | `overflowOf` | `((parentId: string \| null) => TreeViewOverflow \| null)` | no | "N more not shown" row at the end of a level (`parentId` `null` = root level), or `null` for none. Pass `onLoadMore` to make it actionable. |
 | `highlightedIds` | `ReadonlySet<string>` | no | Ids to paint as a path, e.g. the selected node's ancestor ids plus its own id (TreeView cannot derive ancestors: `childrenOf` is only called for expanded nodes). Visual only — no ARIA, no effect on selection or focus. Ids not rendered are ignored. List view: accent edge on the rows; chart view: accent boxes and the connector lines between highlighted parents and children. |
+| `onHoverChange` | `((id: string \| null) => void)` | no | Pointer entered/left a node's row (list) or box (chart); `null` on leave. Pointer only — no ARIA, focus or selection effect. Pair with `highlightedIds` to paint a hover chain. |
 | …native | | | plus native `<div>` attributes |
 
 <!-- props:end -->
@@ -77,6 +78,22 @@ const byId = new Map([...expanded].map((id, i) => [id, children[i]]));
     highlightedIds={pathTo(selected)} // selected id + its ancestor ids, from your parent map
     {...rest}
   />
+  ```
+
+- **Hover.** `onHoverChange(id | null)` fires when the pointer enters or leaves a node's whole row (list) or box (chart); `null` on leave. Status rows (loading / error / overflow) don't fire; pointer only, with no effect on focus, selection or ARIA. Pair it with `highlightedIds` to paint the hovered node's chain. If the hovered node unmounts (collapsed or removed) no `null` is emitted, so clear your hover state when you collapse or remove nodes.
+
+  ```tsx
+  const [hovered, setHovered] = useState<string | null>(null);
+
+  <TreeView
+    onHoverChange={setHovered}
+    highlightedIds={pathTo(hovered)} // hovered id + its ancestor ids, from your parent map
+    onExpandedChange={(id, open) => {
+      toggle(id, open);
+      setHovered(null); // the hovered node may have just unmounted
+    }}
+    {...rest}
+  />;
   ```
 
 - **Sizing.** `list` grows with its content — put it in a scrolling parent for long trees. `chart` fills its parent's width and scrolls horizontally inside itself when the chart is wider; it opens centred on the selected (or first) item (when the view is chosen or the first items appear), and the focused box scrolls into view.

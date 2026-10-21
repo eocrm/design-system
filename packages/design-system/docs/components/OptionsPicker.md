@@ -29,7 +29,7 @@ Multi mode buffers a draft until Apply; single mode commits per click.
 |---|---|---|---|
 | `mode` | `"multi" \| "single"` | no |  |
 | `selected` | `string[] \| string \| null` | yes |  |
-| `onApply` | `(next: string[]) => void \| (next: string \| null) => void` | yes |  |
+| `onApply` | `(next: string[], options: OptionsPickerOption[]) => void \| (next: string \| null, option: OptionsPickerOption \| null) => void` | yes | Called on Apply with the committed values and their option objects, in the same order. |
 | `onCancel` | `(() => void)` | no |  |
 | `open` | `boolean` | no |  |
 | `onOpenChange` | `((open: boolean) => void)` | no |  |
@@ -42,10 +42,13 @@ Multi mode buffers a draft until Apply; single mode commits per click.
 |---|---|---|---|
 | `options` | `OptionsPickerOption[]` | no |  |
 | `groups` | `OptionsPickerGroup[]` | no |  |
+| `loadOptions` | `(query: string, signal: AbortSignal) => Promise<OptionsPickerOption[]>` | no | Server search: called with the search query (`''` on every open) after `searchDebounceMs`, and its answer replaces the list — no client-side filtering on top. Flat options only. The previous request is aborted via `signal` when a newer one starts. Takes precedence over `options` / `groups` (dev warning if both are passed). |
+| `selectedOptions` | `OptionsPickerOption[]` | no | Option objects for currently selected values that may not be in any server answer (e.g. values restored from a URL), so they can be labelled. |
+| `searchDebounceMs` | `number` | no | Delay between the last keystroke (or opening) and the `loadOptions` call. Default `250`. |
 | `label` | `string` | yes | Accessible label on the panel (the dialog's `aria-label`). |
-| `emptyState` | `ReactNode` | no | Rendered when search produces zero matches. Defaults to the `optionsPicker.noMatches` i18n string (en: `'No matches'`). An EMPTY string counts as unset, matching every other label override in the library. There is no way to suppress the message entirely — a blank listbox reads as a broken filter rather than as a deliberate silence. |
-| `footerCount` | `((selected: number, total: number) => ReactNode)` | no | Footer count formatter (multi only). Default `'${selected} of ${total}'`. |
-| `searchable` | `boolean` | no | Whether to render the search bar at the top of the panel. Defaults to `true`. Hide it (`false`) for small/curated option lists where typing filters would just be noise — the selection-count header is hidden alongside the search input (the footer's `N of TOTAL` text still shows in multi mode). |
+| `emptyState` | `ReactNode` | no | Rendered when search produces zero matches. Defaults to the `optionsPicker.noMatches` i18n string (en: `'No matches'`). With `loadOptions` the visible row is hidden from assistive tech and a live region announces it instead — this text when it is a string, otherwise the default. An EMPTY string counts as unset, matching every other label override in the library. There is no way to suppress the message entirely — a blank listbox reads as a broken filter rather than as a deliberate silence. |
+| `footerCount` | `((selected: number, total: number) => ReactNode)` | no | Footer count formatter (multi only). Default `'${selected} of ${total}'`. Not called with `loadOptions` — there is no known total, so the footer reads `optionsPicker.selectedCount` (en: `'N selected'`). |
+| `searchable` | `boolean` | no | Whether to render the search bar at the top of the panel. Defaults to `true`. Hide it (`false`) for small/curated option lists where typing filters would just be noise — the selection-count header is hidden alongside the search input (the footer's `N of TOTAL` text still shows in multi mode). Ignored with `loadOptions`: server search needs the input, so it always shows. |
 | `className` | `string` | no |  |
 
 ### `OptionsPickerTriggerProps`
@@ -76,6 +79,37 @@ Multi mode (default) keeps a draft until Apply; Cancel, Esc and click-outside re
 </OptionsPicker>
 ```
 
+## Async (server search)
+
+For lists too large to ship to the client, pass `loadOptions` to Content instead of `options` / `groups`.
+
+```tsx
+<OptionsPicker
+  selected={ids}
+  onApply={(next, options) => {
+    setIds(next);
+    setPicked(options); // use these to label the trigger
+  }}
+>
+  <OptionsPicker.Trigger>
+    <Button variant="secondary">{picked.map((o) => o.label).join(', ') || 'Members'}</Button>
+  </OptionsPicker.Trigger>
+  <OptionsPicker.Content
+    label="Filter members"
+    loadOptions={(query, signal) => fetchMembers(query, signal)} // returns { value, label }[]
+    selectedOptions={picked} // labels for values restored from URL/state
+  />
+</OptionsPicker>
+```
+
+- **Fetching.** `loadOptions(query, signal)` returns a flat `OptionsPickerOption[]`. It is called with `''` on every open and after `searchDebounceMs` (default `250`) following each keystroke; the previous request is aborted via `signal`, so pass it to `fetch`. The server's answer replaces the list: there is no client-side filtering on top. The search input is always shown (`searchable` is ignored).
+- **Rows.** Loading, error (with a Retry action) and "No matches" rows are built in. Groups are not supported in async mode (flat only). `loadOptions` wins over `options` / `groups` (dev warning if both are passed).
+- **Selected rows are pinned** above the server results (snapshot taken on open and on each query change); ticking or unticking never moves rows under the pointer.
+- **Labels.** Selected values are labelled from a cache of every answer seen while the panel was open plus `selectedOptions`; an unknown value falls back to its raw string. **Pass `selectedOptions` for values restored from URL/state** (e.g. a deep link), otherwise their rows read as raw ids.
+- **`onApply` second argument.** Multi: `onApply(values, options)`; single: `onApply(value, option | null)`. Use it to label the trigger and keep `selectedOptions` for the next render. Also works for static `options` / `groups`.
+- **Footer.** Multi mode reads "N selected"; `footerCount` is not called (there is no known total).
+- **Screen readers (Hard rule 10).** One polite live region announces loading, failure and no-matches (a failure reads "Failed to load options.", no-matches uses `emptyState` when it is a string, otherwise the default). The visible loading / error / empty rows are hidden from assistive tech so nothing is announced twice. Success is silent: the list is the result.
+
 `<OptionsPicker.Trigger>` takes a single ref-accepting element (typically a `<Button>`); open wiring and ARIA (`aria-haspopup`, `aria-expanded`, `aria-controls`) are injected, and your own ref on the child still receives the DOM node. `<OptionsPicker.Content>` hosts the search bar, the option list and (multi mode) the Apply/Cancel footer.
 
 OptionsPicker has no `name` attribute and no form association. Action menus (Edit / Delete / Archive) are commands, not filters — use `<DropdownMenu>`.
@@ -84,4 +118,5 @@ OptionsPicker has no `name` attribute and no form association. Action menus (Edi
 
 - ❌ Passing BOTH `options` and `groups` to Content — TypeScript rejects it. Pick one.
 - ❌ Calling `onApply` yourself inside Content's render — the picker owns the commit; treat `onApply(next)` as the single source of truth and update React state from it.
+- ❌ Async mode with `groups`, or restoring `selected` from a URL without `selectedOptions` (rows show raw ids).
 - ❌ Controlling open state without passing both `open` and `onOpenChange` — partial control breaks invariants.
