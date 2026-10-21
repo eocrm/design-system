@@ -12,6 +12,8 @@ Draws a steady 1px ring just outside its single child, with two waves growing ou
 
 **How it's drawn:** the ring and waves are on a separate overlay (`aria-hidden`, `pointer-events: none`), portaled to `<body>` and `position: fixed` over the child. It tracks scroll, resize and layout shift. So the waves pass over neighbouring elements and are never clipped by a scroll container, a table's scroll wrapper or a `Card`'s `overflow`. The ring covers the child's **visible** part: the child's rect clipped by every ancestor with `overflow` ≠ `visible` and by the viewport. If the child is scrolled fully out of view, the overlay is hidden. The overlay sits above page content but below fixed app chrome (`--z-app-chrome`), so the top bar covers it when the child scrolls underneath, and dropdowns open above it. Inside a `Modal`, `Drawer`, `Popover` or `Tour`, it rises with its host.
 
+**Known limit:** the ring can paint over sticky elements (e.g. a sticky table header) that the highlighted element scrolls under during a run, unless that sticky element's container clips it.
+
 **Announcing it:** with `focus`, the focus move IS the announcement (the screen reader reads the focused block), so don't also fire a `LiveRegion`. Without `focus`, announce the event with `<LiveRegion>` (for example "Contact created").
 
 <!-- props:start -->

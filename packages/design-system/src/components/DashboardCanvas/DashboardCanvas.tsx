@@ -78,8 +78,8 @@ export interface DashboardCanvasProps extends Omit<HTMLAttributes<HTMLDivElement
    */
   renderSectionHeader?: (id: string | number) => ReactNode;
   /**
-   * Id of a section whose band to highlight (scrolls into view, then a brief
-   * outline pulse) — e.g. a section the user just added. Collapsed bands
+   * Id of a section whose band to highlight (scrolls into view, then a ring
+   * with outward waves, same as `Highlight`) — e.g. a section the user just added. Collapsed bands
    * highlight too. Does not move focus. Clear it in `onSectionHighlightDone`;
    * setting the same id again after that re-triggers.
    */
@@ -396,14 +396,6 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       commit(toggleSection(value, sectionId));
     };
 
-    // Sections are composed from a single shared `<Accordion type="multiple">`
-    // (one Item per band) — `value` mirrors which bands are OPEN (inverse of
-    // `collapsed`). Reads `value`, not the render-facing `shown` (computed
-    // below): collapsed never changes mid-gesture, and `value` avoids a
-    // declaration-order dependency on `shown`. Accordion always hands back
-    // the WHOLE next open-ids array on a click, never which id changed;
-    // exactly one differs per click (its own toggle is the only way this
-    // fires), so the symmetric difference recovers it.
     const highlightKnown = value.sections.some((s) => s.id === highlightedSectionId);
     useEffect(() => {
       if (
@@ -417,6 +409,14 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       }
     }, [highlightedSectionId, highlightKnown]);
 
+    // Sections are composed from a single shared `<Accordion type="multiple">`
+    // (one Item per band) — `value` mirrors which bands are OPEN (inverse of
+    // `collapsed`). Reads `value`, not the render-facing `shown` (computed
+    // below): collapsed never changes mid-gesture, and `value` avoids a
+    // declaration-order dependency on `shown`. Accordion always hands back
+    // the WHOLE next open-ids array on a click, never which id changed;
+    // exactly one differs per click (its own toggle is the only way this
+    // fires), so the symmetric difference recovers it.
     const openSectionIds = value.sections
       .filter((section) => !section.collapsed)
       .map((section) => String(section.id));
