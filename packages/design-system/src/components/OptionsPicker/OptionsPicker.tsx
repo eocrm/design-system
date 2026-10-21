@@ -107,7 +107,8 @@ type AsyncContentProps = {
    * `searchDebounceMs`, and its answer replaces the list — no client-side
    * filtering on top. Flat options only. The previous request is aborted via
    * `signal` when a newer one starts. Takes precedence over `options` /
-   * `groups` (dev warning if both are passed).
+   * `groups` (dev warning if both are passed). The latest function is always
+   * the one called; a new identity (e.g. an inline arrow) does not refetch.
    */
   loadOptions: (query: string, signal: AbortSignal) => Promise<OptionsPickerOption[]>;
   /**
@@ -198,12 +199,14 @@ function usePickerContext(label: string): PickerContextValue {
 function OptionsPickerRoot(props: OptionsPickerProps) {
   const mode: OptionsPickerMode = props.mode ?? 'multi';
 
-  // Normalize selected to string[] internally.
+  // Normalize selected to string[] internally. Keyed on the value itself, not
+  // `props` (a new object every parent render): Content resets its draft /
+  // filter / pinned snapshot when this identity changes.
+  const rawSelected = props.selected;
   const normalizedSelected = useMemo<string[]>(() => {
-    if (mode === 'multi') return (props as MultiProps).selected;
-    const sv = (props as SingleProps).selected;
-    return sv == null ? [] : [sv];
-  }, [mode, props]);
+    if (mode === 'multi') return rawSelected as string[];
+    return rawSelected == null ? [] : [rawSelected as string];
+  }, [mode, rawSelected]);
 
   // Open state — controlled or uncontrolled.
   const [internalOpen, setInternalOpen] = useState(false);
@@ -375,21 +378,20 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
     const [pinned, setPinned] = useState<string[]>(ctx.selected);
 
     const async = isAsync(props);
-    const consumerLoad = async ? props.loadOptions : undefined;
+    // Latest consumer loadOptions, read at call time: the hook re-arms (and
+    // aborts the in-flight request) on a new function identity, so an inline
+    // arrow would refetch on every parent render. trackedLoad stays stable.
+    const loadRef = useRef(async ? props.loadOptions : undefined);
+    loadRef.current = async ? props.loadOptions : undefined;
     // The hook's state outlives a close, so until a request of THIS open has
     // settled its rows / error / loadedQuery belong to the previous open.
     // Tracked here (not in the shared hook) by flagging when loadOptions is
     // actually invoked; reset on close.
     const [fetchedSinceOpen, setFetchedSinceOpen] = useState(false);
-    const trackedLoad = useMemo(
-      () =>
-        consumerLoad &&
-        ((q: string, signal: AbortSignal) => {
-          setFetchedSinceOpen(true);
-          return consumerLoad(q, signal);
-        }),
-      [consumerLoad],
-    );
+    const trackedLoad = useCallback((q: string, signal: AbortSignal) => {
+      setFetchedSinceOpen(true);
+      return loadRef.current!(q, signal);
+    }, []);
     const [settledSinceOpen, setSettledSinceOpen] = useState(false);
     useEffect(() => {
       if (!ctx.open) {
@@ -399,7 +401,7 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
     }, [ctx.open]);
     // `enabled` follows the open state, so every open fetches '' afresh.
     const asyncResult = useAsyncOptions({
-      loadOptions: trackedLoad,
+      loadOptions: async ? trackedLoad : undefined,
       query: filter,
       enabled: ctx.open,
       debounceMs: (async ? props.searchDebounceMs : undefined) ?? 250,
@@ -772,7 +774,15 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
                 <Text size="sm" tone="muted" aria-hidden="true">
                   {t('optionsPicker.loadFailed')}
                 </Text>
-                <Button variant="secondary" size="sm" onClick={asyncResult.retry}>
+                {/* Hard rule 10: the failure persists, so a reader tabbing here
+                    later needs it in the name — the row text is aria-hidden and
+                    the region only announced it once. */}
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={asyncResult.retry}
+                  aria-label={`${t('optionsPicker.loadFailed')} ${t('optionsPicker.retry')}`}
+                >
                   {t('optionsPicker.retry')}
                 </Button>
               </Cluster>

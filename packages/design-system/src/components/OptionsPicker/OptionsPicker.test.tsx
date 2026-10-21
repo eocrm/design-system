@@ -391,6 +391,24 @@ it('single mode: pre-selected row reflects in the radio', async () => {
   expect(radios[1]).toBeChecked();
 });
 
+it('single mode: a parent re-render while open keeps the typed filter', async () => {
+  const user = userEvent.setup();
+  const ui = () => (
+    <OptionsPicker mode="single" selected="two" onApply={() => {}}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" options={flatOptions} />
+    </OptionsPicker>
+  );
+  const { rerender } = render(ui());
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  await user.type(screen.getByRole('textbox'), 'on');
+  rerender(ui());
+  expect(screen.getByRole('textbox')).toHaveValue('on');
+  expect(screen.getAllByRole('radio')).toHaveLength(1);
+});
+
 it('keyboard: ↓/↑ moves focused option via aria-activedescendant', async () => {
   const user = userEvent.setup();
   render(
@@ -790,6 +808,39 @@ describe('async loadOptions', () => {
   const open = (user: ReturnType<typeof setupUser>) =>
     user.click(screen.getByRole('button', { name: 'Open' }));
   const region = () => document.querySelector('[role="status"][aria-live="polite"]')!;
+  // Hard rule 10: the persisting failure is folded into the Retry button's name.
+  const retryName = 'Failed to load options. Retry';
+
+  it('a new loadOptions identity while open neither refetches nor aborts; the latest one serves the next query', async () => {
+    const user = setupUser();
+    const first = deferredLoad();
+    const second = vi.fn<Load>(async () => members);
+    const ui = (load: Load) => (
+      <OptionsPicker selected={[]} onApply={() => {}}>
+        <OptionsPicker.Trigger>
+          <Button>Open</Button>
+        </OptionsPicker.Trigger>
+        {/* Inline arrow, as a consumer would write it: a new identity per render. */}
+        <OptionsPicker.Content label="Members" loadOptions={(q, s) => load(q, s)} />
+      </OptionsPicker>
+    );
+    const { rerender } = render(ui(first.fn));
+    await open(user);
+    await elapse(250);
+    expect(first.fn).toHaveBeenCalledTimes(1);
+    const signal = first.fn.mock.calls[0]![1];
+    rerender(ui(second));
+    await elapse(500);
+    expect(first.fn).toHaveBeenCalledTimes(1);
+    expect(second).not.toHaveBeenCalled();
+    expect(signal.aborted).toBe(false);
+    await act(async () => first.calls[0]!.reject(new Error('boom')));
+    expect(screen.getByRole('button', { name: retryName })).toBeInTheDocument();
+    await user.type(screen.getByRole('textbox'), 'b');
+    await elapse(250);
+    expect(second.mock.calls.map((c) => c[0])).toEqual(['b']);
+    expect(first.fn).toHaveBeenCalledTimes(1);
+  });
 
   it("fetches '' when the panel opens, after searchDebounceMs (default 250)", async () => {
     const user = setupUser();
@@ -863,7 +914,7 @@ describe('async loadOptions', () => {
     await act(async () => calls[0]!.reject(new Error('boom')));
     expect(visible(/loading options/i)).toHaveLength(0);
     expect(visible(/failed to load options/i)).toHaveLength(1);
-    await user.click(screen.getByRole('button', { name: 'Retry' }));
+    await user.click(screen.getByRole('button', { name: retryName }));
     await elapse(250);
     expect(fn).toHaveBeenCalledTimes(2);
     await act(async () => calls[1]!.resolve(members));
@@ -909,10 +960,10 @@ describe('async loadOptions', () => {
       .find((el) => el.closest('[role="status"]') === null)!;
     expect(errorRow.closest('[aria-hidden="true"]')).not.toBeNull();
     expect(
-      screen.getByRole('button', { name: 'Retry' }).closest('[aria-hidden="true"]'),
+      screen.getByRole('button', { name: retryName }).closest('[aria-hidden="true"]'),
     ).toBeNull();
 
-    await user.click(screen.getByRole('button', { name: 'Retry' }));
+    await user.click(screen.getByRole('button', { name: retryName }));
     await elapse(250);
     await act(async () => calls[1]!.resolve([]));
     expect(region()).toBe(node);
@@ -985,7 +1036,7 @@ describe('async loadOptions', () => {
       expect(region().textContent).toBe('Failed to load options.');
       await reopen(user);
       expect(visibleText('Failed to load options.')).toHaveLength(0);
-      expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: retryName })).not.toBeInTheDocument();
       expect(region().textContent).toBe('Loading options…');
       await elapse(150);
       expect(screen.getByRole('checkbox', { name: 'Ann' })).toBeInTheDocument();
@@ -1168,7 +1219,7 @@ describe('async loadOptions', () => {
       await act(async () => calls[0]!.reject(new Error('boom')));
       expect(rowLabels()).toEqual(['Zed']);
       expect(region().textContent).toBe('Failed to load options.');
-      await user.click(screen.getByRole('button', { name: 'Retry' }));
+      await user.click(screen.getByRole('button', { name: retryName }));
       await elapse(250);
       await act(async () => calls[1]!.resolve([]));
       expect(rowLabels()).toEqual(['Zed']);
