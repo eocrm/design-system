@@ -808,8 +808,6 @@ describe('async loadOptions', () => {
   const open = (user: ReturnType<typeof setupUser>) =>
     user.click(screen.getByRole('button', { name: 'Open' }));
   const region = () => document.querySelector('[role="status"][aria-live="polite"]')!;
-  // Hard rule 10: the persisting failure is folded into the Retry button's name.
-  const retryName = 'Failed to load options. Retry';
 
   it('a new loadOptions identity while open neither refetches nor aborts; the latest one serves the next query', async () => {
     const user = setupUser();
@@ -835,7 +833,7 @@ describe('async loadOptions', () => {
     expect(second).not.toHaveBeenCalled();
     expect(signal.aborted).toBe(false);
     await act(async () => first.calls[0]!.reject(new Error('boom')));
-    expect(screen.getByRole('button', { name: retryName })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument();
     await user.type(screen.getByRole('textbox'), 'b');
     await elapse(250);
     expect(second.mock.calls.map((c) => c[0])).toEqual(['b']);
@@ -914,7 +912,7 @@ describe('async loadOptions', () => {
     await act(async () => calls[0]!.reject(new Error('boom')));
     expect(visible(/loading options/i)).toHaveLength(0);
     expect(visible(/failed to load options/i)).toHaveLength(1);
-    await user.click(screen.getByRole('button', { name: retryName }));
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
     await elapse(250);
     expect(fn).toHaveBeenCalledTimes(2);
     await act(async () => calls[1]!.resolve(members));
@@ -960,10 +958,10 @@ describe('async loadOptions', () => {
       .find((el) => el.closest('[role="status"]') === null)!;
     expect(errorRow.closest('[aria-hidden="true"]')).not.toBeNull();
     expect(
-      screen.getByRole('button', { name: retryName }).closest('[aria-hidden="true"]'),
+      screen.getByRole('button', { name: 'Retry' }).closest('[aria-hidden="true"]'),
     ).toBeNull();
 
-    await user.click(screen.getByRole('button', { name: retryName }));
+    await user.click(screen.getByRole('button', { name: 'Retry' }));
     await elapse(250);
     await act(async () => calls[1]!.resolve([]));
     expect(region()).toBe(node);
@@ -1036,7 +1034,7 @@ describe('async loadOptions', () => {
       expect(region().textContent).toBe('Failed to load options.');
       await reopen(user);
       expect(visibleText('Failed to load options.')).toHaveLength(0);
-      expect(screen.queryByRole('button', { name: retryName })).not.toBeInTheDocument();
+      expect(screen.queryByRole('button', { name: 'Retry' })).not.toBeInTheDocument();
       expect(region().textContent).toBe('Loading options…');
       await elapse(150);
       expect(screen.getByRole('checkbox', { name: 'Ann' })).toBeInTheDocument();
@@ -1219,7 +1217,7 @@ describe('async loadOptions', () => {
       await act(async () => calls[0]!.reject(new Error('boom')));
       expect(rowLabels()).toEqual(['Zed']);
       expect(region().textContent).toBe('Failed to load options.');
-      await user.click(screen.getByRole('button', { name: retryName }));
+      await user.click(screen.getByRole('button', { name: 'Retry' }));
       await elapse(250);
       await act(async () => calls[1]!.resolve([]));
       expect(rowLabels()).toEqual(['Zed']);

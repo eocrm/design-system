@@ -774,15 +774,8 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
                 <Text size="sm" tone="muted" aria-hidden="true">
                   {t('optionsPicker.loadFailed')}
                 </Text>
-                {/* Hard rule 10: the failure persists, so a reader tabbing here
-                    later needs it in the name — the row text is aria-hidden and
-                    the region only announced it once. */}
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  onClick={asyncResult.retry}
-                  aria-label={`${t('optionsPicker.loadFailed')} ${t('optionsPicker.retry')}`}
-                >
+                {/* Name stays plain: the status region keeps the failure text, so folding it in double-reads (as in Select/Error.tsx). */}
+                <Button variant="secondary" size="sm" onClick={asyncResult.retry}>
                   {t('optionsPicker.retry')}
                 </Button>
               </Cluster>
