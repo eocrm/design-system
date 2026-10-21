@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 /**
  * Integration tests for <Modal>. The three hooks (useFocusTrap, useScrollLock,
  * useOverlayStack) have their own unit tests; these tests exercise the
@@ -1044,5 +1046,13 @@ describe('Modal — replace-mode nested close restores focus (#551)', () => {
     await user.click(screen.getByRole('button', { name: 'Done' }));
     await new Promise((r) => setTimeout(r, 0));
     expect(document.activeElement).toBe(screen.getByRole('dialog', { name: 'outer' }));
+  });
+});
+
+describe('Modal — footer wrapping (#688)', () => {
+  it('wraps footer actions instead of clipping them (#688)', () => {
+    const scss = readFileSync(resolve(__dirname, './Modal.module.scss'), 'utf8');
+    const block = scss.match(/\.footer \{[\s\S]*?\n\}/)![0];
+    expect(block).toMatch(/flex-wrap:\s*wrap/);
   });
 });

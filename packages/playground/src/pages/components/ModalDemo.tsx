@@ -19,6 +19,7 @@ export function ModalDemo() {
       <ForcedStepExample />
       <StackedExample />
       <NoHeaderExample />
+      <FooterWrapExample />
     </DemoLayout>
   );
 }
@@ -581,5 +582,66 @@ function NoHeaderInline() {
         </Modal.Footer>
       </Modal>
     </>
+  );
+}
+
+function FooterWrapExample() {
+  const [open, setOpen] = useState(false);
+  return (
+    <Example
+      title="Footer actions wrap"
+      description='In a narrow `size="sm"` modal, footer actions that do not fit wrap onto a second row instead of clipping the first button off the edge.'
+      code={`import { useState } from 'react';
+import { Button, Cluster, Modal } from '@eocrm/design-system';
+
+export function FooterWrapExample() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <Cluster>
+        <Button variant="secondary" onClick={() => setOpen(true)}>
+          Open (three actions)
+        </Button>
+      </Cluster>
+      <Modal open={open} onOpenChange={setOpen} size="sm">
+        <Modal.Header>Remove widgets?</Modal.Header>
+        <Modal.Body>The selected widgets will be removed from this dashboard.</Modal.Body>
+        <Modal.Footer>
+          <Modal.Close>
+            <Button variant="secondary">Cancel</Button>
+          </Modal.Close>
+          <Button variant="secondary" onClick={() => setOpen(false)}>
+            Move widgets to top level
+          </Button>
+          <Button variant="danger" onClick={() => setOpen(false)}>
+            Remove widgets
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </>
+  );
+}`}
+    >
+      <Cluster>
+        <Button variant="secondary" onClick={() => setOpen(true)}>
+          Open (three actions)
+        </Button>
+      </Cluster>
+      <Modal open={open} onOpenChange={setOpen} size="sm">
+        <Modal.Header>Remove widgets?</Modal.Header>
+        <Modal.Body>The selected widgets will be removed from this dashboard.</Modal.Body>
+        <Modal.Footer>
+          <Modal.Close>
+            <Button variant="secondary">Cancel</Button>
+          </Modal.Close>
+          <Button variant="secondary" onClick={() => setOpen(false)}>
+            Move widgets to top level
+          </Button>
+          <Button variant="danger" onClick={() => setOpen(false)}>
+            Remove widgets
+          </Button>
+        </Modal.Footer>
+      </Modal>
+    </Example>
   );
 }
