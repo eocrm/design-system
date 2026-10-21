@@ -1552,3 +1552,147 @@ describe('DashboardCanvas overlay & portal gating (#362)', () => {
     expect(onChange).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('DashboardCanvas highlightedSectionId', () => {
+  const overlays = () => document.querySelectorAll('[data-highlight-overlay]');
+  let definedScroll = false;
+  const band = (id: string) => document.querySelector(`[data-dc-section="${id}"]`);
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    if (!Element.prototype.scrollIntoView) {
+      Element.prototype.scrollIntoView = () => {};
+      definedScroll = true;
+    }
+    vi.spyOn(Element.prototype, 'scrollIntoView').mockImplementation(() => {});
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.restoreAllMocks();
+    if (definedScroll) {
+      // @ts-expect-error -- remove the jsdom stub we defined
+      delete Element.prototype.scrollIntoView;
+      definedScroll = false;
+    }
+  });
+
+  it('highlights the band of highlightedSectionId and calls onSectionHighlightDone', () => {
+    const onDone = vi.fn();
+    render(
+      <DashboardCanvas
+        value={baseValue()}
+        renderItem={renderItem}
+        highlightedSectionId="s1"
+        onSectionHighlightDone={onDone}
+      />,
+    );
+    expect(overlays()).toHaveLength(1);
+    expect(band('s1')).toHaveAttribute('data-highlight');
+    expect(band('s2')).not.toHaveAttribute('data-highlight');
+    act(() => {
+      vi.advanceTimersByTime(3000 + 260);
+    });
+    expect(onDone).toHaveBeenCalledTimes(1);
+    expect(overlays()).toHaveLength(0);
+  });
+
+  it('re-triggers when highlightedSectionId changes to another section', () => {
+    const onDone = vi.fn();
+    const { rerender } = render(
+      <DashboardCanvas
+        value={baseValue()}
+        renderItem={renderItem}
+        highlightedSectionId="s1"
+        onSectionHighlightDone={onDone}
+      />,
+    );
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    rerender(
+      <DashboardCanvas
+        value={baseValue()}
+        renderItem={renderItem}
+        highlightedSectionId="s2"
+        onSectionHighlightDone={onDone}
+      />,
+    );
+    expect(band('s1')).not.toHaveAttribute('data-highlight');
+    expect(band('s2')).toHaveAttribute('data-highlight');
+    expect(overlays()).toHaveLength(1);
+    act(() => {
+      vi.advanceTimersByTime(3000 + 260);
+    });
+    expect(onDone).toHaveBeenCalledTimes(1);
+  });
+
+  it('highlights a collapsed section band', () => {
+    render(
+      <DashboardCanvas value={baseValue()} renderItem={renderItem} highlightedSectionId="s2" />,
+    );
+    expect(band('s2')).toHaveAttribute('data-highlight');
+    expect(overlays()).toHaveLength(1);
+  });
+
+  it('does not move focus', () => {
+    render(
+      <>
+        <button>outside</button>
+        <DashboardCanvas value={baseValue()} renderItem={renderItem} highlightedSectionId="s1" />
+      </>,
+    );
+    const outside = screen.getByText('outside');
+    outside.focus();
+    act(() => {
+      vi.advanceTimersByTime(3000 + 260);
+    });
+    expect(document.activeElement).toBe(outside);
+  });
+
+  it('warns in dev for an unknown section id', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    render(
+      <DashboardCanvas value={baseValue()} renderItem={renderItem} highlightedSectionId="nope" />,
+    );
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('nope'));
+    expect(overlays()).toHaveLength(0);
+  });
+
+  it('warns once for an unknown id across sections re-renders', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const { rerender } = render(
+      <DashboardCanvas value={baseValue()} renderItem={renderItem} highlightedSectionId="nope" />,
+    );
+    rerender(
+      <DashboardCanvas value={baseValue()} renderItem={renderItem} highlightedSectionId="nope" />,
+    );
+    expect(warn).toHaveBeenCalledTimes(1);
+  });
+
+  it('clearing the id early removes the overlay without calling onSectionHighlightDone', () => {
+    const onDone = vi.fn();
+    const { rerender } = render(
+      <DashboardCanvas
+        value={baseValue()}
+        renderItem={renderItem}
+        highlightedSectionId="s1"
+        onSectionHighlightDone={onDone}
+      />,
+    );
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    rerender(
+      <DashboardCanvas
+        value={baseValue()}
+        renderItem={renderItem}
+        onSectionHighlightDone={onDone}
+      />,
+    );
+    expect(overlays()).toHaveLength(0);
+    act(() => {
+      vi.advanceTimersByTime(5000);
+    });
+    expect(onDone).not.toHaveBeenCalled();
+  });
+});

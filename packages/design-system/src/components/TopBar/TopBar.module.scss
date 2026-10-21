@@ -130,6 +130,12 @@
   z-index: var(--z-overlay-floating);
 }
 
+// #685: the tour's current target is INSIDE this surface — drop just under the
+// scrim (--z-tour) so only the target is lit, not the whole panel.
+.results[data-in-overlay]:has([data-tour-current-target]) {
+  z-index: calc(var(--z-tour) - 1);
+}
+
 .groupLabel {
   padding: var(--topbar-results-group-label-padding);
   color: var(--topbar-results-group-label-fg);

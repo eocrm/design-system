@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { I18nProvider } from '../../i18n/I18nProvider';
 import { Modal } from '../Modal';
 import { TopBar } from './TopBar';
+import { addTourLayer, markTourTarget } from '../_internal/overlay/tourHold.testutil';
 import type { TopBarSearchGroup, TopBarSearchItem } from './TopBarSearch';
 
 const GROUPS: TopBarSearchGroup[] = [
@@ -480,5 +481,45 @@ describe('TopBar.Search combobox mode', () => {
     );
     expect(screen.getByRole('option', { name: /View all/ })).toBeInTheDocument();
     expect(activeOption()).toHaveTextContent('Alan');
+  });
+});
+
+describe('TopBar.Search — tour hold (#684)', () => {
+  async function openSearch() {
+    render(
+      <>
+        <Harness />
+        <button type="button">Elsewhere</button>
+      </>,
+    );
+    await userEvent.click(input());
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    return addTourLayer();
+  }
+
+  it('stays open on pointerdown in the tour layer while the tour points into it', async () => {
+    const tourButton = await openSearch();
+    markTourTarget(screen.getByRole('listbox'));
+    act(() => tourButton.focus()); // held blur
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    fireEvent.pointerDown(tourButton); // focus is out — the pointerdown handler decides
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+  });
+
+  it('a held panel still closes on a later outside press once the tour points elsewhere', async () => {
+    const tourButton = await openSearch();
+    markTourTarget(screen.getByRole('listbox'));
+    act(() => tourButton.focus()); // blur swallowed by the hold — input no longer focused
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    markTourTarget(screen.getByRole('button', { name: 'Elsewhere' }));
+    fireEvent.pointerDown(tourButton);
+    expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
+  it('closes as before once the tour points elsewhere', async () => {
+    const tourButton = await openSearch();
+    markTourTarget(screen.getByRole('button', { name: 'Elsewhere' }));
+    act(() => tourButton.focus());
+    expect(screen.queryByRole('listbox')).toBeNull();
   });
 });

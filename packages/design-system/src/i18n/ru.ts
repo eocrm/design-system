@@ -415,6 +415,7 @@ export const ru: Messages = {
     done: 'Готово',
     progress: ({ current, total }) => `Шаг ${current} из ${total}`,
     waiting: 'Загрузка шага…',
+    clickHint: 'Нажмите на выделенный элемент, чтобы продолжить',
   },
   toast: {
     dismiss: 'Закрыть',

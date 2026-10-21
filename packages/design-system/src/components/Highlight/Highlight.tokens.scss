@@ -1,19 +1,32 @@
+// Highlight.tokens.scss — Component-scoped tokens for <Highlight>. Each
+// defaults to a shared token, except the wave timing/glow, which mirror
+// Tour's wave cue (Tour.tokens.scss) so the two attention cues match:
+// --highlight-wave-duration (2200ms) / --highlight-wave-delay (1100ms, half
+// the duration so two waves alternate evenly) are cue-specific motion, not
+// shared --transition-* durations; --highlight-wave-glow (22px) is a shadow
+// blur, not a --space-* step.
 :root {
-  // ─── Ring (1px solid inset outline) ────────────────────────────────────
-  --highlight-ring: var(--ring-accent);
-  --highlight-ring-peak: var(--color-accent-hover); // stronger accent in both themes
+  // Ring + wave colour. Overridden inline by the `color` prop.
+  --highlight-color: var(--ring-accent);
+
+  // ─── Steady ring (1px, just outside the element) ───────────────────────
   --highlight-ring-width: var(--border-width);
 
-  // ─── Glow (steady inset box-shadow) ────────────────────────────────────
-  --highlight-glow: color-mix(in srgb, var(--ring-accent) 32%, transparent);
-  --highlight-glow-blur: var(--space-4);
+  // Set inline per overlay from the child's computed border-radius; this is
+  // the declared default. Has a unit so the waves' calc() stays valid.
+  --highlight-radius: 0px;
 
-  // ─── Waves (inset box-shadow bands rolling inward) ─────────────────────
-  --highlight-wave: color-mix(in srgb, var(--ring-accent) 55%, transparent);
-  --highlight-wave-reach: var(--space-6);
-  --highlight-wave-blur: var(--space-3);
-  --highlight-wave-duration: 1000ms;
-  --highlight-wave-count: 3;
+  // Above page content, below fixed app chrome (the top bar covers the ring
+  // when the element scrolls under it) and below dropdowns. Inside a Modal /
+  // Drawer / Popover / Tour host the overlay elevates to --z-overlay-floating.
+  --highlight-z: calc(var(--z-app-chrome) - 1);
+
+  // ─── Waves (attention-waves mixin, outward) ────────────────────────────
+  --highlight-wave-duration: 2200ms;
+  --highlight-wave-delay: 1100ms;
+  --highlight-wave-reach: var(--space-5);
+  --highlight-wave-edge: var(--border-width-emphasis);
+  --highlight-wave-glow: 22px;
 
   // ─── Motion ────────────────────────────────────────────────────────────
   // Mirrored by FADE_MS in Highlight.tsx (260ms), so NOT themeable: override the

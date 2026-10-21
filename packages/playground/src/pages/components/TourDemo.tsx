@@ -3,6 +3,7 @@ import {
   Button,
   Card,
   Cluster,
+  DropdownMenu,
   Input,
   Stack,
   Text,
@@ -42,6 +43,7 @@ export function TourDemo() {
   const [onboarding, setOnboarding] = useState(false);
   const [announce, setAnnounce] = useState(false);
   const [interactive, setInteractive] = useState(false);
+  const [menuTour, setMenuTour] = useState(false);
   const [crossOpen, setCrossOpen] = useState(false);
   const [crossStep, setCrossStep] = useState(0);
   const [page, setPage] = useState<'list' | 'detail'>('list');
@@ -154,6 +156,58 @@ export function TourDemo() {
               advanceOn: 'click',
             },
             { title: 'Nice!', body: 'That is all there is to it.' },
+          ]}
+        />
+      </Example>
+
+      <Example
+        title="Menu walkthrough (pointing into an open menu)"
+        description="Click the trigger, then the tour points at the open menu and one of its items. The menu stays open and only the target is lit."
+        code={`steps={[
+  { target: 'demo-menu', title: 'Open the menu', body: 'Click “Actions”.', interactive: true, advanceOn: 'click' },
+  { target: 'demo-menu-content', title: 'Your actions', body: 'Everything you can do with a deal.' },
+  { target: 'demo-menu-item', title: 'Duplicate', body: 'Click “Duplicate” to finish.', interactive: true, advanceOn: 'click' },
+]}`}
+      >
+        <Cluster gap="sm">
+          <DropdownMenu>
+            <DropdownMenu.Trigger>
+              <Button variant="secondary" data-tour="demo-menu">
+                Actions
+              </Button>
+            </DropdownMenu.Trigger>
+            <DropdownMenu.Content data-tour="demo-menu-content">
+              <DropdownMenu.Item onSelect={() => {}}>Edit</DropdownMenu.Item>
+              <DropdownMenu.Item data-tour="demo-menu-item" onSelect={() => {}}>
+                Duplicate
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu>
+          <Button onClick={() => setMenuTour(true)}>Start</Button>
+        </Cluster>
+        <Tour
+          open={menuTour}
+          onOpenChange={setMenuTour}
+          steps={[
+            {
+              target: 'demo-menu',
+              title: 'Open the menu',
+              body: 'Click “Actions”.',
+              interactive: true,
+              advanceOn: 'click',
+            },
+            {
+              target: 'demo-menu-content',
+              title: 'Your actions',
+              body: 'Everything you can do with a deal.',
+            },
+            {
+              target: 'demo-menu-item',
+              title: 'Duplicate',
+              body: 'Click “Duplicate” to finish.',
+              interactive: true,
+              advanceOn: 'click',
+            },
           ]}
         />
       </Example>

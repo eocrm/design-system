@@ -9,7 +9,8 @@ import {
   type Ref,
 } from 'react';
 import { mergeRefs } from '../_internal/refs';
-import styles from './Highlight.module.scss';
+import type { PaletteColor } from '../../palette/palette';
+import { HighlightOverlay } from './HighlightOverlay';
 
 /** Mirrors `--highlight-fade` (`--transition-slow`, 260ms). */
 const FADE_MS = 260;
@@ -17,7 +18,7 @@ const FADE_MS = 260;
 export interface HighlightProps {
   /**
    * Turns the highlight on. Each false → true change starts it once: the ring
-   * shows, the optional scroll and focus run, and after `duration` it fades
+   * and waves show, the optional scroll and focus run, and after `duration` it fades
    * out and `onDone` fires. Setting it back to false early removes the ring at
    * once WITHOUT calling `onDone`. Keeping it `true` doesn't restart anything;
    * toggle false → true to highlight again.
@@ -49,9 +50,17 @@ export interface HighlightProps {
    */
   focus?: boolean;
   /**
-   * Exactly one element that forwards `ref` and `className` to a DOM element
-   * (nothing else is needed): any DS component, or a native element such as
-   * `<tr>` or `<li>`. Highlight renders no wrapper of its own.
+   * Ring and wave colour, from the shared palette (its saturated `fg` half,
+   * readable in both themes). Unset = the accent ring colour. Use a palette
+   * colour when the highlight should match the thing it points to (e.g. a
+   * category colour); leave it unset otherwise.
+   */
+  color?: PaletteColor;
+  /**
+   * Exactly one element that forwards `ref` to a DOM element (nothing else is
+   * needed): any DS component, or a native element such as `<tr>` or `<li>`.
+   * Highlight renders no wrapper and changes nothing on the child but a
+   * `data-highlight` attribute; the ring is drawn on a separate overlay.
    */
   children: ReactElement;
 }
@@ -67,7 +76,7 @@ function prefersReducedMotion(): boolean {
 }
 
 /**
- * Temporary attention ring + glow on any single block, with optional scroll and focus.
+ * Temporary attention ring + outward waves around any single block, with optional scroll and focus.
  * @see docs/components/Highlight.md
  */
 export function Highlight({
@@ -76,13 +85,14 @@ export function Highlight({
   onDone,
   scrollIntoView = false,
   focus = false,
+  color,
   children,
 }: HighlightProps) {
-  const child = Children.only(children) as ReactElement<{
-    className?: string;
-    ref?: Ref<HTMLElement>;
-  }>;
+  const child = Children.only(children) as ReactElement<{ ref?: Ref<HTMLElement> }>;
   const nodeRef = useRef<HTMLElement | null>(null);
+  // The node in state too, so the overlay renders on the commit after attach
+  // and goes away if the child detaches.
+  const [node, setNode] = useState<HTMLElement | null>(null);
   const [stage, setStage] = useState<Stage>('on');
 
   // Render-phase reset on a false → true change (React's "adjust state when a
@@ -115,7 +125,7 @@ export function Highlight({
       if (latest.current.focus) node.focus({ preventScroll: true });
     } else if (process.env.NODE_ENV !== 'production') {
       console.warn(
-        'Highlight: child did not attach the ref — it must forward ref and className to a DOM element',
+        'Highlight: child did not attach the ref — it must forward ref to a DOM element',
       );
     }
 
@@ -141,17 +151,14 @@ export function Highlight({
   }, [active]);
 
   const childRef = child.props.ref;
-  const ref = useMemo(() => mergeRefs(nodeRef, childRef), [childRef]);
+  const ref = useMemo(() => mergeRefs(nodeRef, setNode, childRef), [childRef]);
 
   const phase = active && stage !== 'done' ? stage : undefined;
-  const className =
-    [child.props.className, phase && styles.highlight, phase === 'fading' && styles.fading]
-      .filter(Boolean)
-      .join(' ') || undefined;
 
-  return cloneElement(child, {
-    className,
-    'data-highlight': phase,
-    ref,
-  } as object);
+  return (
+    <>
+      {cloneElement(child, { 'data-highlight': phase, ref } as object)}
+      {phase && node && <HighlightOverlay target={node} stage={phase} color={color} />}
+    </>
+  );
 }

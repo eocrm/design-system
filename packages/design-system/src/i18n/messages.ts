@@ -781,6 +781,8 @@ export interface Messages {
     progress: (params: { current: number; total: number }) => string;
     /** Announced via a live region while a step's target hasn't mounted yet. */
     waiting: string;
+    /** Visible hint on a click-to-continue step (`advanceOn: 'click'`). */
+    clickHint: string;
   };
   toast: {
     /** aria-label for an individual toast's dismiss button. */

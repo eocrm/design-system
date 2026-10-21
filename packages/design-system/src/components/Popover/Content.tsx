@@ -13,7 +13,7 @@ import {
 import clsx from 'clsx';
 import { usePopoverContext } from './context';
 import { mergeRefs } from '../_internal/refs';
-import { overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
+import { isTourHeld, overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
 import styles from './Popover.module.scss';
 
 /** Which side of the trigger the popover prefers. Floating UI auto-flips if it doesn't fit. */
@@ -147,6 +147,8 @@ export const Content = forwardRef<HTMLDivElement, PopoverContentProps>(function 
       const trigger = ctx.triggerRef.current;
       if (panel && panel.contains(target)) return;
       if (trigger && trigger.contains(target)) return;
+      // #684: a tour pointing into this popover doesn't dismiss it.
+      if (isTourHeld(target, panel, trigger)) return;
       // A floating surface (DropdownMenu / nested Popover / ConfirmationPopover)
       // opened from WITHIN this popover portals to document.body, so it is not a
       // DOM descendant of `panel` — without this a pointerdown inside it would

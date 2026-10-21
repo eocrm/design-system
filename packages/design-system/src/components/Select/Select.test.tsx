@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import React, { createRef } from 'react';
 import { Select, type SelectOption } from './Select';
 import { Field } from '../Field';
+import { addTourLayer, markTourTarget } from '../_internal/overlay/tourHold.testutil';
 import styles from './Select.module.scss';
 
 const STATUSES: SelectOption[] = [
@@ -1932,5 +1933,33 @@ describe('Select — label targets the combobox (#568)', () => {
     const { container } = render(<Select id="status" options={[]} value="" onChange={() => {}} />);
     expect(screen.getByRole('combobox')).toHaveAttribute('id', 'status');
     expect(container.querySelectorAll('#status')).toHaveLength(1);
+  });
+});
+
+describe('Select — tour hold (#684)', () => {
+  async function openSelect() {
+    const user = userEvent.setup();
+    render(
+      <>
+        <Select options={STATUSES} aria-label="Status" />
+        <button type="button">Elsewhere</button>
+      </>,
+    );
+    await user.click(screen.getByRole('combobox'));
+    return addTourLayer();
+  }
+
+  it('stays open on pointerdown in the tour layer while the tour points into it', async () => {
+    const tourButton = await openSelect();
+    markTourTarget(screen.getByRole('option', { name: 'Pending' }));
+    fireEvent.pointerDown(tourButton);
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+  });
+
+  it('closes as before once the tour points elsewhere', async () => {
+    const tourButton = await openSelect();
+    markTourTarget(screen.getByRole('button', { name: 'Elsewhere' }));
+    fireEvent.pointerDown(tourButton);
+    expect(screen.queryByRole('listbox')).toBeNull();
   });
 });

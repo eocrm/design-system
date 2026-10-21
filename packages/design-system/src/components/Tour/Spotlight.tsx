@@ -66,8 +66,17 @@ export function Spotlight({ target, padding, interactive, state, glide }: Spotli
       window.addEventListener('resize', update);
       return () => window.removeEventListener('resize', update);
     }
+    // Enter animations/transitions (e.g. a menu sliding in) move the target
+    // without any scroll/resize, so re-measure when one ends (#685).
+    document.addEventListener('animationend', update, true);
+    document.addEventListener('transitionend', update, true);
     // Tracks scroll (any ancestor), resize and layout shift of the target.
-    return autoUpdate(target, ref.current, update);
+    const stop = autoUpdate(target, ref.current, update);
+    return () => {
+      stop();
+      document.removeEventListener('animationend', update, true);
+      document.removeEventListener('transitionend', update, true);
+    };
   }, [target, padding]);
 
   const right = hole.left + hole.width;

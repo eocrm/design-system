@@ -1,4 +1,4 @@
-import { render } from '@testing-library/react';
+import { fireEvent, render } from '@testing-library/react';
 import { holeFor, Spotlight } from './Spotlight';
 
 function rect(top: number, left: number, width: number, height: number) {
@@ -47,6 +47,21 @@ describe('Spotlight', () => {
     expect(spot.style.width).toBe('96px');
     expect(spot.style.height).toBe('36px');
     expect(spot).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('re-measures when an enter animation ends', () => {
+    const el = target();
+    const { container } = render(
+      <Spotlight target={el} padding={8} interactive={false} state="open" glide={false} />,
+    );
+    const spot = container.querySelector<HTMLElement>('[data-tour-spotlight]')!;
+    vi.spyOn(el, 'getBoundingClientRect').mockReturnValue(rect(200, 60, 80, 20));
+    fireEvent.animationEnd(el);
+    expect(spot.style.top).toBe('192px');
+    vi.spyOn(el, 'getBoundingClientRect').mockReturnValue(rect(300, 70, 80, 20));
+    fireEvent.transitionEnd(document.body);
+    expect(spot.style.top).toBe('292px');
+    expect(spot.style.left).toBe('62px');
   });
 
   it('renders four blockers framing the cutout', () => {

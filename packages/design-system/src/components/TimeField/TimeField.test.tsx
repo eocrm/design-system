@@ -1,11 +1,12 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, type ReactNode, useState } from 'react';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
 import { TimeField, type TimeValue } from './TimeField';
 import { Field } from '../Field';
+import { addTourLayer, markTourTarget } from '../_internal/overlay/tourHold.testutil';
 
 function wrap(locale = 'en-US') {
   return ({ children }: { children: ReactNode }) => (
@@ -1072,5 +1073,37 @@ describe('TimeField in Field (#568)', () => {
     expectNoWiringLeak(container, errSpy);
     expect(container.querySelector('input[type="text"]')).toHaveAttribute('aria-required', 'true');
     errSpy.mockRestore();
+  });
+});
+
+describe('TimeField — tour hold (#684)', () => {
+  async function openClock() {
+    const user = userEvent.setup();
+    render(
+      <>
+        <Driver hourCycle="24" />
+        <button type="button">Elsewhere</button>
+      </>,
+      { wrapper: wrap() },
+    );
+    await user.click(screen.getByRole('button', { name: /Time, Open time list/i }));
+    const hours = await screen.findByRole('listbox', { name: 'Hours' });
+    return { hours, tourButton: addTourLayer() };
+  }
+
+  it('stays open on pointerdown in the tour layer while the tour points into it', async () => {
+    const { hours, tourButton } = await openClock();
+    markTourTarget(hours);
+    act(() => tourButton.focus());
+    fireEvent.pointerDown(tourButton);
+    await act(() => new Promise((r) => setTimeout(r, 10)));
+    expect(screen.getByRole('listbox', { name: 'Hours' })).toBeInTheDocument();
+  });
+
+  it('closes as before once the tour points elsewhere', async () => {
+    const { tourButton } = await openClock();
+    markTourTarget(screen.getByRole('button', { name: 'Elsewhere' }));
+    fireEvent.pointerDown(tourButton);
+    await waitFor(() => expect(screen.queryByRole('listbox', { name: 'Hours' })).toBeNull());
   });
 });

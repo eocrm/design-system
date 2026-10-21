@@ -9,3 +9,4 @@ export {
   type OverlayStackState,
 } from './useOverlayStack';
 export { isFocusLost, restoreFocusTo } from './focusRestore';
+export { TOUR_CURRENT_TARGET, isTourHeld } from './tourHold';

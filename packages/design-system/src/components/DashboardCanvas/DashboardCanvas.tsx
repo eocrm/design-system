@@ -77,6 +77,15 @@ export interface DashboardCanvasProps extends Omit<HTMLAttributes<HTMLDivElement
    * Pointer presses inside the slot never start a band-reorder drag.
    */
   renderSectionHeader?: (id: string | number) => ReactNode;
+  /**
+   * Id of a section whose band to highlight (scrolls into view, then a ring
+   * with outward waves, same as `Highlight`) — e.g. a section the user just added. Collapsed bands
+   * highlight too. Does not move focus. Clear it in `onSectionHighlightDone`;
+   * setting the same id again after that re-triggers.
+   */
+  highlightedSectionId?: string | number;
+  /** Fires once the highlight run on `highlightedSectionId` has finished. */
+  onSectionHighlightDone?: () => void;
   /** Per-item size constraints, consulted when clamping resize gestures. */
   constraints?: DashboardCanvasConstraintsProp;
   /**
@@ -309,6 +318,8 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       onChange,
       renderItem,
       renderSectionHeader,
+      highlightedSectionId,
+      onSectionHighlightDone,
       constraints,
       columns = DASHBOARD_COLUMNS,
       stackBelow = 'md',
@@ -384,6 +395,19 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       // threshold — it's navigation, not editing.
       commit(toggleSection(value, sectionId));
     };
+
+    const highlightKnown = value.sections.some((s) => s.id === highlightedSectionId);
+    useEffect(() => {
+      if (
+        highlightedSectionId != null &&
+        !highlightKnown &&
+        process.env.NODE_ENV !== 'production'
+      ) {
+        console.warn(
+          `[DashboardCanvas] highlightedSectionId "${highlightedSectionId}" matches no section.`,
+        );
+      }
+    }, [highlightedSectionId, highlightKnown]);
 
     // Sections are composed from a single shared `<Accordion type="multiple">`
     // (one Item per band) — `value` mirrors which bands are OPEN (inverse of
@@ -1166,6 +1190,8 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
                   onHeaderKeyDown={onHeaderKeyDown}
                   setContainerEl={setContainerEl}
                   setBandEl={setBandEl}
+                  highlighted={section.id === highlightedSectionId}
+                  onHighlightDone={onSectionHighlightDone}
                 />
               </Fragment>
             ))}

@@ -164,6 +164,7 @@
     "composes": [],
     "composedBy": [
       "RichText",
+      "Tour",
       "TreeView"
     ]
   },
@@ -236,7 +237,8 @@
     "tier": "composition",
     "cluster": "Display",
     "composes": [
-      "Accordion"
+      "Accordion",
+      "Highlight"
     ],
     "composedBy": []
   },
@@ -440,7 +442,9 @@
     "tier": "primitive",
     "cluster": "Feedback",
     "composes": [],
-    "composedBy": []
+    "composedBy": [
+      "DashboardCanvas"
+    ]
   },
   "HighlightedText": {
     "tier": "composition",
@@ -1021,6 +1025,7 @@
     "cluster": "Overlays",
     "composes": [
       "Button",
+      "CircularProgress",
       "Cluster",
       "Stack"
     ],

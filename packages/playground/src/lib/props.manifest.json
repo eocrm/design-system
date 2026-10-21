@@ -1523,6 +1523,20 @@
           "description": "Optional extra controls in a section's header (a title editor, a\n`DropdownMenu` trigger) rendered by section id, to the right of the\ntitle. Keep it small — the header row is not a general-purpose toolbar.\nPointer presses inside the slot never start a band-reorder drag."
         },
         {
+          "name": "highlightedSectionId",
+          "type": "string | number",
+          "required": false,
+          "default": "",
+          "description": "Id of a section whose band to highlight (scrolls into view, then a ring\nwith outward waves, same as `Highlight`) — e.g. a section the user just added. Collapsed bands\nhighlight too. Does not move focus. Clear it in `onSectionHighlightDone`;\nsetting the same id again after that re-triggers."
+        },
+        {
+          "name": "onSectionHighlightDone",
+          "type": "(() => void)",
+          "required": false,
+          "default": "",
+          "description": "Fires once the highlight run on `highlightedSectionId` has finished."
+        },
+        {
           "name": "constraints",
           "type": "DashboardCanvasConstraintsProp",
           "required": false,
@@ -1581,6 +1595,13 @@
           "required": false,
           "default": "",
           "description": "Header actions, e.g. the edit-mode overflow `DropdownMenu`. Never wraps."
+        },
+        {
+          "name": "actionsReveal",
+          "type": "DashboardWidgetActionsReveal",
+          "required": false,
+          "default": "",
+          "description": "When `actions` are visible. Default `'always'`.\n- `'always'` — always shown.\n- `'hover'` — dimmed to invisible until the card is hovered or holds focus (they stay in the\n  tab order, and Tab into the card reveals them); an open menu launched from an action keeps\n  them shown. On touch / `(hover: none)` they stay visible. They keep their layout width."
         },
         {
           "name": "headerLevel",
@@ -3043,7 +3064,7 @@
           "type": "boolean",
           "required": true,
           "default": "",
-          "description": "Turns the highlight on. Each false → true change starts it once: the ring\nshows, the optional scroll and focus run, and after `duration` it fades\nout and `onDone` fires. Setting it back to false early removes the ring at\nonce WITHOUT calling `onDone`. Keeping it `true` doesn't restart anything;\ntoggle false → true to highlight again."
+          "description": "Turns the highlight on. Each false → true change starts it once: the ring\nand waves show, the optional scroll and focus run, and after `duration` it fades\nout and `onDone` fires. Setting it back to false early removes the ring at\nonce WITHOUT calling `onDone`. Keeping it `true` doesn't restart anything;\ntoggle false → true to highlight again."
         },
         {
           "name": "duration",
@@ -3074,11 +3095,18 @@
           "description": "On activation, move focus to the child (`preventScroll`, so it never\nfights `scrollIntoView`). The child must be focusable: give a\nnon-interactive block (`Card`, `<section>`, `<tr>`) `tabIndex={-1}`.\nHighlight never adds it for you. Default: `false`."
         },
         {
+          "name": "color",
+          "type": "PaletteColor",
+          "required": false,
+          "default": "",
+          "description": "Ring and wave colour, from the shared palette (its saturated `fg` half,\nreadable in both themes). Unset = the accent ring colour. Use a palette\ncolour when the highlight should match the thing it points to (e.g. a\ncategory colour); leave it unset otherwise."
+        },
+        {
           "name": "children",
           "type": "ReactElement<unknown, string | JSXElementConstructor<any>>",
           "required": true,
           "default": "",
-          "description": "Exactly one element that forwards `ref` and `className` to a DOM element\n(nothing else is needed): any DS component, or a native element such as\n`<tr>` or `<li>`. Highlight renders no wrapper of its own."
+          "description": "Exactly one element that forwards `ref` to a DOM element (nothing else is\nneeded): any DS component, or a native element such as `<tr>` or `<li>`.\nHighlight renders no wrapper and changes nothing on the child but a\n`data-highlight` attribute; the ring is drawn on a separate overlay."
         }
       ]
     },
@@ -3318,7 +3346,7 @@
           "type": "ImageObjectFit",
           "required": false,
           "default": "",
-          "description": "How the image fills its box. Defaults to `'cover'`.\n- `'cover'` — fill + crop (no distortion). Best for thumbnails / heroes.\n- `'contain'` — whole image, letterboxed on the box background.\n- `'fill'` — stretch to the box (may distort).\n- `'none'` / `'scale-down'` — native size / the smaller of none|contain."
+          "description": "How the image fills its box. Defaults to `'cover'`.\n- `'cover'` — fill + crop (no distortion). Best for thumbnails / heroes.\n- `'contain'` — whole image, letterboxed; the bars show the surface, or the muted box with `background=\"muted\"`.\n- `'fill'` — stretch to the box (may distort).\n- `'none'` / `'scale-down'` — native size / the smaller of none|contain."
         },
         {
           "name": "objectPosition",
@@ -3347,6 +3375,13 @@
           "required": false,
           "default": "",
           "description": "Corner rounding. Defaults to `'md'`. Pass `'none'` for square corners; for\ncircular profile images use `<Avatar>`."
+        },
+        {
+          "name": "background",
+          "type": "ImageBackground",
+          "required": false,
+          "default": "",
+          "description": "Backdrop behind the loaded image. Defaults to `'none'`, so transparent\nassets (logos, PNG/SVG) show their surface. Pass `'muted'` for the muted\nfill (letterboxed `contain` images). The loading skeleton and the error\ntile keep their fill either way."
         },
         {
           "name": "fallback",
@@ -6990,6 +7025,7 @@
     "UploadConfig": "{ onUpload: (file: File) => Promise<UploadResult>; accept?: string; onUploadingChange?: ((uploading: boolean) => void) }",
     "FileEntry": "{ id: string; file: File; status: \"error\" | \"done\" | \"pending\" | \"uploading\"; progress?: number; error?: string }",
     "FileRejectReason": "\"invalid-type\" | \"too-large\" | \"too-many\" | \"duplicate\" | \"custom\"",
+    "ImageBackground": "\"none\" | \"muted\"",
     "ImageObjectFit": "\"fill\" | \"none\" | \"cover\" | \"contain\" | \"scale-down\"",
     "ImageRadius": "\"sm\" | \"md\" | \"lg\" | \"none\" | \"full\"",
     "ImageSize": "\"sm\" | \"md\" | \"lg\" | \"xs\"",
@@ -7005,7 +7041,7 @@
     "DefinitionListLayout": "\"horizontal\" | \"stacked\"",
     "DefinitionListSpacing": "\"sm\" | \"md\" | \"lg\"",
     "LinkVariant": "\"default\" | \"muted\" | \"subtle\"",
-    "LinkUnderline": "\"none\" | \"hover\" | \"always\"",
+    "LinkUnderline": "\"none\" | \"always\" | \"hover\"",
     "AccordionVariant": "\"bordered\" | \"borderless\"",
     "AccordionSize": "\"sm\" | \"md\" | \"lg\"",
     "AccordionGap": "\"sm\" | \"md\" | \"lg\"",
@@ -7052,6 +7088,7 @@
     "DashboardCanvasConstraintsProp": "Record<string, DashboardItemConstraints> | ((id: string | number) => DashboardItemConstraints)",
     "DashboardCanvasValue": "{ items: DashboardPlacement[]; sections: DashboardSection[] }",
     "DashboardWidgetVariant": "\"list\" | \"standard\" | \"kpi\" | \"chart\"",
+    "DashboardWidgetActionsReveal": "\"always\" | \"hover\"",
     "StatGroupVariant": "\"filled\" | \"card\"",
     "SparklineType": "\"area\" | \"line\" | \"bar\"",
     "TreeViewChildren": "TreeViewNode[] | { error: true; }",

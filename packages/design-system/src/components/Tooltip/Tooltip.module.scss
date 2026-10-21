@@ -7,6 +7,9 @@
 .content {
   position: relative;
   max-width: 240px;
+
+  // Long unbroken strings (URLs, IDs) would otherwise overflow the bubble.
+  overflow-wrap: anywhere;
   padding: var(--tooltip-padding-y) var(--tooltip-padding-x);
   background: var(--tooltip-bg);
   color: var(--tooltip-fg);

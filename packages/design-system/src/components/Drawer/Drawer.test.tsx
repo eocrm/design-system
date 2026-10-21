@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import {
   StrictMode,
   useEffect,
@@ -665,5 +667,13 @@ describe('Drawer — replace-mode nested close restores focus (#551)', () => {
     await user.click(screen.getByRole('button', { name: 'Done' }));
     await new Promise((r) => setTimeout(r, 0));
     expect(document.activeElement).toBe(screen.getByRole('dialog', { name: 'outer' }));
+  });
+});
+
+describe('Drawer — footer wrapping (#688)', () => {
+  it('wraps footer actions instead of clipping them (#688)', () => {
+    const scss = readFileSync(resolve(__dirname, './Drawer.module.scss'), 'utf8');
+    const block = scss.match(/\.footer \{[\s\S]*?\n\}/)![0];
+    expect(block).toMatch(/flex-wrap:\s*wrap/);
   });
 });

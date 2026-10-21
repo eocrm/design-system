@@ -400,6 +400,14 @@ describe('Tooltip — animation contract', () => {
   });
 });
 
+describe('Tooltip — long content wrapping (#679)', () => {
+  it('wraps unbroken content inside the bubble (#679)', () => {
+    const scss = readFileSync(resolve(__dirname, './Tooltip.module.scss'), 'utf8');
+    const block = scss.match(/\.content \{[\s\S]*?\n\}/)![0];
+    expect(block).toMatch(/overflow-wrap:\s*anywhere/);
+  });
+});
+
 describe('Tooltip — cleanup + props preservation', () => {
   // Mirror the hover describe's asyncWrapper override so the timer-using
   // tests below don't deadlock inside Testing Library's internal act() drain.

@@ -501,7 +501,13 @@ export type {
 } from './components/FileUpload';
 
 export { Image } from './components/Image';
-export type { ImageProps, ImageObjectFit, ImageRadius, ImageSize } from './components/Image';
+export type {
+  ImageProps,
+  ImageBackground,
+  ImageObjectFit,
+  ImageRadius,
+  ImageSize,
+} from './components/Image';
 
 export { QrCode } from './components/QrCode';
 export type { QrCodeProps, QrCodeLevel } from './components/QrCode';
@@ -828,6 +834,7 @@ export type {
   DashboardWidgetProps,
   DashboardWidgetVariant,
   DashboardWidgetTrend,
+  DashboardWidgetActionsReveal,
 } from './components/DashboardWidget';
 export { StatGroup, StatTile } from './components/StatGroup';
 export type {

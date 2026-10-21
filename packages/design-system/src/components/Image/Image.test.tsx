@@ -1,6 +1,8 @@
 import { createRef, useLayoutEffect, type ReactNode } from 'react';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { Image } from './Image';
 
 const SRC = 'https://example.com/photo.jpg';
@@ -479,5 +481,26 @@ describe('Image — early load (#574)', () => {
       </LoadEarly>,
     );
     expect(container.firstElementChild).toHaveAttribute('data-state', 'loaded');
+  });
+
+  describe('background', () => {
+    it('defaults to no backdrop behind a loaded image', () => {
+      const { container } = render(<Image src={SRC} alt="A photo" />);
+      fireEvent.load(getImg(container));
+      expect(
+        container.querySelector('[data-state="loaded"]')!.getAttribute('data-background'),
+      ).toBe('none');
+    });
+
+    it('background="muted" restores the backdrop', () => {
+      const { container } = render(<Image src={SRC} alt="A photo" background="muted" />);
+      expect(container.querySelector('[data-background="muted"]')).not.toBeNull();
+    });
+
+    it('keeps the muted skeleton/error fill with background="none"', () => {
+      const scss = readFileSync(resolve(__dirname, 'Image.module.scss'), 'utf8');
+      expect(scss).toMatch(/\.wrapper\[data-background='none'\]\[data-state='loaded'\]\s*\{/);
+      expect(scss).not.toMatch(/\[data-background='none'\]\s*\{/);
+    });
   });
 });

@@ -1,8 +1,9 @@
-import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, type ReactNode, useState } from 'react';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
 import { DatePicker } from './DatePicker';
+import { addTourLayer, markTourTarget } from '../_internal/overlay/tourHold.testutil';
 
 function wrap(locale = 'en-US') {
   return ({ children }: { children: ReactNode }) => (
@@ -1100,4 +1101,49 @@ describe('DatePicker — outside click / Tab-away close paths (#666)', () => {
     expect(calls).toEqual([null, [1, 11, 0]]);
     expect(input).toHaveDisplayValue('05/01/2026 11:00');
   });
+});
+
+describe('DatePicker — tour hold (#684)', () => {
+  async function openPicker() {
+    const user = userEvent.setup();
+    render(
+      <>
+        <DatePicker aria-label="Due" />
+        <button type="button">Elsewhere</button>
+      </>,
+      { wrapper: wrap() },
+    );
+    await user.click(screen.getByRole('textbox'));
+    const dialog = await screen.findByRole('dialog');
+    return { dialog, tourButton: addTourLayer() };
+  }
+  // Let the deferred (setTimeout 0) close checks run.
+  const tick = () => act(() => new Promise((r) => setTimeout(r, 10)));
+
+  it('stays open on pointerdown in the tour layer while the tour points into it', async () => {
+    const { dialog, tourButton } = await openPicker();
+    markTourTarget(dialog);
+    act(() => tourButton.focus()); // input blur → deferred close check
+    await tick();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    fireEvent.pointerDown(tourButton);
+    await tick();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+    // Focus inside the calendar, then the tour takes it → popover onBlur path.
+    act(() => within(dialog).getAllByRole('button')[0]!.focus());
+    act(() => tourButton.focus());
+    await tick();
+    expect(screen.getByRole('dialog')).toBeInTheDocument();
+  });
+
+  it.each(['pointerdown', 'focus'] as const)(
+    'closes as before once the tour points elsewhere (%s)',
+    async (how) => {
+      const { tourButton } = await openPicker();
+      markTourTarget(screen.getByRole('button', { name: 'Elsewhere' }));
+      if (how === 'pointerdown') fireEvent.pointerDown(tourButton);
+      else act(() => tourButton.focus());
+      await waitFor(() => expect(screen.queryByRole('dialog')).toBeNull());
+    },
+  );
 });

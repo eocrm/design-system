@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { createRef } from 'react';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { Sparkline } from '../Sparkline';
 import { DashboardWidget } from './DashboardWidget';
 
@@ -201,5 +202,31 @@ describe('DashboardWidget — cascade + fill chain (source-pinned; jsdom cannot 
   it('kpi/chart bodies are Card.Body siblings so Card establishes the fill column', () => {
     const { container } = render(<DashboardWidget variant="kpi" title="K" value="1" />);
     expect((container.firstChild as HTMLElement).className).toMatch(/fillWithBody/);
+  });
+});
+
+describe('DashboardWidget — actionsReveal', () => {
+  it('sets data-actions-reveal, default always', () => {
+    const { container, rerender } = render(<DashboardWidget title="T" />);
+    expect(container.firstChild).toHaveAttribute('data-actions-reveal', 'always');
+    rerender(<DashboardWidget title="T" actionsReveal="hover" />);
+    expect(container.firstChild).toHaveAttribute('data-actions-reveal', 'hover');
+  });
+
+  it('keeps hover-revealed actions focusable', async () => {
+    render(<DashboardWidget title="T" actionsReveal="hover" actions={<button>Menu</button>} />);
+    await userEvent.setup().tab();
+    expect(screen.getByRole('button', { name: 'Menu' })).toHaveFocus();
+  });
+
+  it('hides hover-revealed actions with opacity only (source-pinned)', () => {
+    const scss = readFileSync(resolve(__dirname, 'DashboardWidget.module.scss'), 'utf8');
+    const hidden = scss.match(/\[data-actions-reveal='hover'\] \.revealActions \{([^}]*)\}/);
+    expect(hidden?.[1]).toMatch(/opacity:/);
+    expect(hidden?.[1]).not.toMatch(/visibility|display/);
+    expect(scss).toContain(':hover');
+    expect(scss).toContain(':focus-within');
+    expect(scss).toContain(":has([aria-expanded='true'])");
+    expect(scss).toMatch(/@media \(hover: none\)/);
   });
 });

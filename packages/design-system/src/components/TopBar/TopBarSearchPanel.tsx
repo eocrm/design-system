@@ -12,7 +12,7 @@ import clsx from 'clsx';
 import { useTranslation } from '../../i18n';
 import { LiveRegion } from '../LiveRegion';
 import { mergeRefs } from '../_internal/refs';
-import { overlayStack, useFloatingSurface } from '../_internal/overlay';
+import { isTourHeld, overlayStack, useFloatingSurface } from '../_internal/overlay';
 import type { TopBarSearchFooterAction, TopBarSearchItem } from './TopBarSearch';
 import styles from './TopBar.module.scss';
 
@@ -110,6 +110,27 @@ export function TopBarSearchPanel({
     document.addEventListener('keydown', onKeyDown, true);
     return () => document.removeEventListener('keydown', onKeyDown, true);
   }, [shown, floatingId]);
+
+  // Outside press closes — but only once focus is already outside the field.
+  // While the input has focus, blur owns the decision (and a press that keeps
+  // focus, mousedown-prevented, keeps the panel open as before). This covers a
+  // tour holding the panel (#684): the hold swallowed the blur, so without
+  // this a later outside press would leave it stuck open.
+  useEffect(() => {
+    if (!shown) return;
+    const onPointerDown = (e: PointerEvent) => {
+      const target = e.target as Node | null;
+      if (!target) return;
+      const panel = panelRef.current;
+      const anchor = anchorRef.current;
+      if (panel?.contains(target) || anchor?.contains(target)) return;
+      if (anchor?.contains(document.activeElement)) return;
+      if (isTourHeld(target, panel, anchor)) return;
+      onCloseRef.current();
+    };
+    document.addEventListener('pointerdown', onPointerDown, true);
+    return () => document.removeEventListener('pointerdown', onPointerDown, true);
+  }, [shown, anchorRef]);
 
   const { refs, floatingStyles, isPositioned } = useFloating({
     open: shown,

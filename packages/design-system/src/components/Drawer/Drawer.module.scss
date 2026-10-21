@@ -199,6 +199,7 @@
 // ─── Footer ─────────────────────────────────────────────────────────────
 .footer {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: var(--drawer-footer-gap);
   padding: var(--drawer-footer-padding);

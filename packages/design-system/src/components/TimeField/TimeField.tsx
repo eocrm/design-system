@@ -11,7 +11,7 @@ import {
   type KeyboardEvent as ReactKeyboardEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
+import { isTourHeld, overlayStack, useFloatingSurface, useInOverlay } from '../_internal/overlay';
 import clsx from 'clsx';
 import { autoUpdate, flip, offset, shift, useFloating } from '@floating-ui/react-dom';
 import { Check, ChevronDown } from 'lucide-react';
@@ -305,7 +305,13 @@ export const TimeField = forwardRef<HTMLDivElement, TimeFieldProps>(function Tim
     const onPointerDown = (e: PointerEvent) => {
       const target = e.target as Node | null;
       const floating = refs.floating.current;
-      if (target && !wrapperRef.current?.contains(target) && !floating?.contains(target)) {
+      if (
+        target &&
+        !wrapperRef.current?.contains(target) &&
+        !floating?.contains(target) &&
+        // #684: a tour pointing into the clock doesn't dismiss it.
+        !isTourHeld(target, floating, wrapperRef.current)
+      ) {
         commit();
         setOpen(false);
       }

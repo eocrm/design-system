@@ -15,7 +15,7 @@ import { Search } from 'lucide-react';
 import clsx from 'clsx';
 import { useTranslation } from '../../i18n';
 import { Kbd } from '../Kbd';
-import { useInOverlay } from '../_internal/overlay';
+import { isTourHeld, useInOverlay } from '../_internal/overlay';
 import {
   TopBarSearchPanel,
   optionId,
@@ -226,6 +226,9 @@ export const TopBarSearch = forwardRef<HTMLInputElement, TopBarSearchProps>(func
   const handleBlur = (e: FocusEvent<HTMLInputElement>) => {
     onBlur?.(e);
     // Panel presses are mousedown-prevented, so a blur always means focus left.
+    // #684: unless a tour pointing into the panel took focus to its card.
+    const panel = document.getElementById(listboxId);
+    if (isTourHeld(e.relatedTarget, panel, wrapperRef.current)) return;
     if (combobox) setOpen(false);
   };
   const handleClick = (e: MouseEvent<HTMLInputElement>) => {
