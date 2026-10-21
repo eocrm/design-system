@@ -671,6 +671,98 @@ describe('Tour — advanceOn', () => {
     expect(onStepChange).toHaveBeenCalledTimes(1);
   });
 
+  describe("next: 'skip' on a click-to-continue step", () => {
+    const setup = () => {
+      const spy = vi.fn();
+      const onStepChange = vi.fn();
+      render(
+        <>
+          <Button onClick={spy} data-tour="btn">
+            Do it
+          </Button>
+          <Tour
+            steps={[
+              {
+                target: 'btn',
+                title: 'Press it',
+                interactive: true,
+                advanceOn: 'click',
+                next: 'skip',
+              },
+              { title: 'After' },
+            ]}
+            open
+            onOpenChange={() => {}}
+            onStepChange={onStepChange}
+          />
+        </>,
+      );
+      return { spy, onStepChange };
+    };
+
+    it('Next advances once without calling the target onClick', async () => {
+      const user = userEvent.setup();
+      const { spy, onStepChange } = setup();
+      await screen.findByRole('dialog', { name: 'Press it' });
+      await user.click(screen.getByRole('button', { name: 'Next' }));
+      await screen.findByRole('dialog', { name: 'After' });
+      expect(spy).not.toHaveBeenCalled();
+      expect(onStepChange).toHaveBeenCalledTimes(1);
+    });
+
+    it('ArrowRight advances once without calling the target onClick', async () => {
+      const user = userEvent.setup();
+      const { spy, onStepChange } = setup();
+      const card = await screen.findByRole('dialog', { name: 'Press it' });
+      await waitFor(() => expect(card).toHaveFocus());
+      await user.keyboard('{ArrowRight}');
+      await screen.findByRole('dialog', { name: 'After' });
+      expect(spy).not.toHaveBeenCalled();
+      expect(onStepChange).toHaveBeenCalledTimes(1);
+    });
+
+    it('Done on a last skip step finishes without calling the target onClick', async () => {
+      const user = userEvent.setup();
+      const spy = vi.fn();
+      const onFinish = vi.fn();
+      render(
+        <>
+          <Button onClick={spy} data-tour="btn">
+            Do it
+          </Button>
+          <Tour
+            steps={[
+              {
+                target: 'btn',
+                title: 'Last',
+                interactive: true,
+                advanceOn: 'click',
+                next: 'skip',
+              },
+            ]}
+            open
+            onOpenChange={() => {}}
+            onFinish={onFinish}
+          />
+        </>,
+      );
+      await screen.findByRole('dialog', { name: 'Last' });
+      await user.click(screen.getByRole('button', { name: 'Done' }));
+      expect(onFinish).toHaveBeenCalledWith('completed');
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('a real click on the target still advances exactly once', async () => {
+      const user = userEvent.setup();
+      const { spy, onStepChange } = setup();
+      await screen.findByRole('dialog', { name: 'Press it' });
+      await user.click(screen.getByRole('button', { name: 'Do it' }));
+      await screen.findByRole('dialog', { name: 'After' });
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(onStepChange).toHaveBeenCalledTimes(1);
+    });
+  });
+
   it('an interactive step on a menu item keeps it clickable and advances (#684)', async () => {
     const user = userEvent.setup();
     const onStepChange = vi.fn();

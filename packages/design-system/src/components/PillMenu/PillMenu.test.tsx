@@ -456,3 +456,69 @@ describe('PillMenu — caption (#605)', () => {
     expect(screen.getByText('Done').textContent).toBe('Done');
   });
 });
+
+describe('PillMenu — option attrs', () => {
+  it('spreads current.attrs onto the trigger button', () => {
+    render(
+      <PillMenu
+        current={{ ...inProgress, attrs: { 'data-tour': 'status-pill' } }}
+        options={options}
+      />,
+    );
+    expect(screen.getByRole('button')).toHaveAttribute('data-tour', 'status-pill');
+  });
+
+  it('spreads current.attrs onto the read-only chip', () => {
+    const { container } = render(
+      <PillMenu current={{ ...inProgress, attrs: { 'data-tour': 'chip' } }} options={[]} />,
+    );
+    expect(container.querySelector('[data-tour="chip"]')).toHaveTextContent('In progress');
+  });
+
+  it('spreads option.attrs onto its menu row, and the component-owned data-tone wins', async () => {
+    const user = userEvent.setup();
+    render(
+      <PillMenu
+        current={toDo}
+        options={[toDo, { ...done, attrs: { 'data-tour': 'done-row', 'data-tone': 'danger' } }]}
+      />,
+    );
+    await user.click(screen.getByRole('button'));
+    const row = await screen.findByRole('menuitem', { name: 'Done' });
+    expect(row).toHaveAttribute('data-tour', 'done-row');
+    expect(row).toHaveAttribute('data-tone', 'default');
+  });
+
+  it('current.attrs also lands on its own menu row when current is an entry of options; own attrs avoid it', async () => {
+    const user = userEvent.setup();
+    const tagged: PillMenuOption = { ...inProgress, attrs: { 'data-tour': 'stage' } };
+    const { unmount } = render(<PillMenu current={tagged} options={[toDo, tagged]} />);
+    await user.click(screen.getByRole('button'));
+    await screen.findByRole('menuitem', { name: 'In progress' });
+    expect(document.querySelectorAll('[data-tour="stage"]')).toHaveLength(2);
+    unmount();
+
+    render(
+      <PillMenu
+        current={{ ...inProgress, attrs: { 'data-tour': 'stage' } }}
+        options={[toDo, inProgress]}
+      />,
+    );
+    await user.click(screen.getByRole('button'));
+    await screen.findByRole('menuitem', { name: 'In progress' });
+    const matches = document.querySelectorAll('[data-tour="stage"]');
+    expect(matches).toHaveLength(1);
+    expect(matches[0]).toBe(screen.getByRole('button'));
+  });
+
+  it('a data-* passed on <PillMenu> itself beats current.attrs', () => {
+    render(
+      <PillMenu
+        current={{ ...inProgress, attrs: { 'data-tour': 'from-attrs' } }}
+        options={options}
+        data-tour="from-rest"
+      />,
+    );
+    expect(screen.getByRole('button')).toHaveAttribute('data-tour', 'from-rest');
+  });
+});

@@ -77,6 +77,17 @@ export interface TourStep {
    * step with `modal={false}`. Ignored (dev warning) otherwise.
    */
   advanceOn?: 'click';
+  /**
+   * What the card's Next / Done / ArrowRight does on a click-to-continue step
+   * (`advanceOn: 'click'`). Ignored on any other step.
+   * - `'click'` (default) — activates the target (a full pointer sequence), so
+   *   the step's own action runs, then the tour advances.
+   * - `'skip'` — advances without touching the target. Choose it when the
+   *   target's action has side effects Next shouldn't trigger (a delete, a
+   *   save, a navigation). The hint, the secondary Next and the waves stay;
+   *   a real click on the target still advances.
+   */
+  next?: 'click' | 'skip';
 }
 
 export interface TourProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title' | 'children'> {
@@ -372,7 +383,9 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
   const clickToContinue = advanceOn === 'click' && (!modal || !!interactive) && !!found;
   // A synthetic click on a disabled control never fires, so skip activating it.
   const advance = () =>
-    clickToContinue && found && !found.matches(':disabled') ? activate(found) : goNext();
+    clickToContinue && current?.next !== 'skip' && found && !found.matches(':disabled')
+      ? activate(found)
+      : goNext();
   useEffect(() => {
     if (advanceOn !== 'click') return;
     if (modal && !interactive) {

@@ -35,6 +35,22 @@ export interface PillMenuOption {
   category?: PillMenuCategory;
   /** Explicit palette color — wins over `category` (per-state custom colors). */
   color?: PaletteColor;
+  /**
+   * Extra `data-*` attributes spread onto this value's interactive element:
+   * the trigger button (or the read-only chip) when it is `current`, its menu
+   * row when it is one of `options` (e.g. `{ 'data-tour': 'status-pill' }` to
+   * target it from a `Tour`, or a test/analytics id). Spread first, so a key
+   * here can't override the `id` / `role` / `aria-*` / handlers the component
+   * owns; on a menu row it also can't override the row's own `data-tone`.
+   * A `data-*` passed on `<PillMenu>` itself (via `{...rest}`) beats
+   * `current.attrs`.
+   *
+   * Anti-pattern: when `current` is the same object as an entry in `options`
+   * (`current={options.find(...)}`), its attrs land on BOTH the pill and that
+   * menu row (duplicate `data-tour` / `data-testid` while open). Give
+   * `current` its own attrs: `current={{ ...opt, attrs: { 'data-tour': 'stage-pill' } }}`.
+   */
+  attrs?: Record<`data-${string}`, string>;
 }
 
 // `aria-labelledby` is omitted: the trigger's name is component-owned (see
@@ -220,9 +236,10 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
 
   if (!hasTrigger) {
     return (
-      // {...rest} first so a consumer prop can't collide with the chip's
-      // own className/style resolution below.
+      // Spread order: current.attrs, then {...rest} (an instance data-* wins),
+      // then the chip's own ref/className/style resolution.
       <span
+        {...current.attrs}
         {...rest}
         ref={ref as Ref<HTMLSpanElement>}
         className={clsx(styles.chip, fullWidth && styles.fullWidth, className)}
@@ -241,9 +258,10 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
       }}
     >
       <DropdownMenu.Trigger>
-        {/* {...rest} first so consumer-supplied props can't override the
-            trigger's aria-label / disabled / aria-busy contract. */}
+        {/* Spread order: current.attrs, then {...rest} (an instance data-*
+            wins), then the trigger's aria-label / disabled / aria-busy contract. */}
         <button
+          {...current.attrs}
           {...rest}
           ref={ref as Ref<HTMLButtonElement>}
           type="button"
@@ -285,6 +303,8 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
       <DropdownMenu.Content className={styles.menu}>
         {options.map((option) => (
           <DropdownMenu.Item
+            // attrs first so they cannot override the row handlers or data-tone
+            {...option.attrs}
             key={option.id}
             onSelect={() => onSelect?.(option.id)}
             className={styles.option}
