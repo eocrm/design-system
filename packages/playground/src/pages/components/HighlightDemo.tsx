@@ -328,41 +328,6 @@ import { Button, Card, Cluster, Highlight, Stack, Text } from '@eocrm/design-sys
 
 const SECTIONS = ['Profile', 'Security', 'Billing'];
 
-const COLORS: PaletteColor[] = ['green', 'amber', 'violet'];
-
-function PaletteColours() {
-  const [active, setActive] = useState<PaletteColor | null>(null);
-
-  return (
-    <Stack gap="sm" align="start">
-      <Cluster gap="sm">
-        {COLORS.map((color) => (
-          <Button key={color} variant="secondary" onClick={() => setActive(color)}>
-            Highlight {color}
-          </Button>
-        ))}
-      </Cluster>
-      <Grid columns={3} gap="md" style={{ width: '100%' }}>
-        {COLORS.map((color) => (
-          <Highlight
-            key={color}
-            active={active === color}
-            color={color}
-            onDone={() => setActive(null)}
-          >
-            <Card tone="accent">
-              <Card.Header>{color}</Card.Header>
-              <Card.Body>
-                <Text tone="muted">Shadow and tone stripe stay while it's highlighted.</Text>
-              </Card.Body>
-            </Card>
-          </Highlight>
-        ))}
-      </Grid>
-    </Stack>
-  );
-}
-
 export function Demo() {
   const [linked, setLinked] = useState(false);
 
