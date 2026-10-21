@@ -90,6 +90,15 @@ export function OptionsPickerDemo() {
   const [failNext, setFailNext] = useState(false);
   const failRef = useRef(false);
   failRef.current = failNext;
+  // One-shot: the switch turns itself off after one failed request, so Retry then succeeds.
+  const takeFail = () => {
+    const fail = failRef.current;
+    if (fail) {
+      failRef.current = false;
+      setFailNext(false);
+    }
+    return fail;
+  };
 
   const [multiFlat, setMultiFlat] = useState<string[]>(['lead']);
   const [multiGrouped, setMultiGrouped] = useState<string[]>([
@@ -255,7 +264,7 @@ export function Demo() {
 
       <Example
         title="Async members (server search)"
-        description="loadOptions(query, signal) fetches 20 of 1000 members, 400ms latency, debounced. The first fetch happens on open with an empty query. Selected rows stay pinned above the results. Switch on 'Fail next request', then open the picker or type to see the error row and Retry (the switch stays on until you turn it off). The trigger text is labelled from onApply's second argument."
+        description="loadOptions(query, signal) fetches 20 of 1000 members, 400ms latency, debounced. The first fetch happens on open with an empty query. Selected rows stay pinned above the results. Switch on 'Fail next request' (one-shot, it turns itself off), then open the picker or type to see the error row; Retry then succeeds. The trigger text is labelled from onApply's second argument."
         code={`import { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { Button, OptionsPicker, type OptionsPickerOption } from '@eocrm/design-system';
@@ -312,7 +321,7 @@ export function Demo() {
               </OptionsPicker.Trigger>
               <OptionsPicker.Content
                 label="Filter members"
-                loadOptions={(query, signal) => fetchMembers(query, signal, failRef.current)}
+                loadOptions={(query, signal) => fetchMembers(query, signal, takeFail())}
                 selectedOptions={asyncOptions}
               />
             </OptionsPicker>
