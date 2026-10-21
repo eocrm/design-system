@@ -1,10 +1,9 @@
 // @vitest-environment jsdom
 import { act, configure, renderHook } from '@testing-library/react';
 import { useAsyncOptions } from './useAsyncOptions';
-import type { SelectOptions } from './Select';
 
-const A: SelectOptions = [{ value: 'a', label: 'A' }];
-const B: SelectOptions = [{ value: 'b', label: 'B' }];
+const A = [{ value: 'a', label: 'A' }];
+const B = [{ value: 'b', label: 'B' }];
 
 describe('useAsyncOptions', () => {
   beforeEach(() => {
@@ -88,6 +87,28 @@ describe('useAsyncOptions', () => {
     await vi.advanceTimersByTimeAsync(150);
     expect(signals[0].aborted).toBe(true);
     expect(signals[1].aborted).toBe(false);
+  });
+
+  it('aborts the in-flight request when enabled goes false, and clears loading', async () => {
+    const signals: AbortSignal[] = [];
+    const loadOptions = vi.fn(
+      (_q: string, signal: AbortSignal) =>
+        new Promise<typeof A>(() => {
+          signals.push(signal);
+        }),
+    );
+    const { result, rerender } = renderHook(
+      ({ enabled }) => useAsyncOptions({ loadOptions, query: '', enabled, debounceMs: 100 }),
+      { initialProps: { enabled: true } },
+    );
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(150);
+    });
+    expect(signals).toHaveLength(1);
+    expect(result.current.loading).toBe(true);
+    rerender({ enabled: false });
+    expect(signals[0].aborted).toBe(true);
+    expect(result.current.loading).toBe(false);
   });
 
   it('renders error state on rejection (non-abort)', async () => {

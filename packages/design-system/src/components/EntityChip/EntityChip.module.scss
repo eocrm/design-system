@@ -88,7 +88,7 @@
 }
 
 .status {
-  color: var(--entity-chip-status-fg);
+  color: var(--entity-chip-status-fg, currentColor);
 }
 
 // Trailing adornments (priority icon, badge): centered on the line like the
@@ -108,6 +108,11 @@
   min-width: 0;
   white-space: nowrap;
 
+  // Single-line, so centring is safe and keeps the text centred when a
+  // trailing adornment is taller than the line. Non-truncate chips keep
+  // baseline because their label can wrap.
+  align-items: center;
+
   > * {
     flex-shrink: 0;
   }
@@ -115,7 +120,11 @@
   > .label {
     flex-shrink: 1;
     min-width: 0;
-    overflow: hidden;
+
+    // Clip the inline axis only: the block axis would also be clipped by
+    // the hidden keyword, cutting descenders at line-height 1 (#678).
+    overflow-x: clip;
+    overflow-y: visible;
     text-overflow: ellipsis;
   }
 }
@@ -129,7 +138,7 @@
   height: var(--entity-chip-dot-size);
   border-radius: var(--radius-full);
   background: currentcolor;
-  color: var(--entity-chip-status-fg);
+  color: var(--entity-chip-status-fg, currentColor);
   // stylelint-disable-next-line property-disallowed-list -- internal child of the chip's OWN flex row, centering the circle on the line while the chip itself aligns on text baseline
   align-self: center;
 }
@@ -178,7 +187,8 @@
   > .label {
     flex-shrink: 1;
     min-width: 0;
-    overflow: hidden;
+    overflow-x: clip;
+    overflow-y: visible;
     text-overflow: ellipsis;
   }
 }
@@ -204,8 +214,8 @@
   align-self: stretch;
   padding-top: var(--entity-chip-padding-top);
   padding-bottom: var(--entity-chip-padding-bottom);
-  background: var(--entity-chip-segment-bg);
-  color: var(--entity-chip-segment-fg);
+  background: var(--entity-chip-segment-bg, transparent);
+  color: var(--entity-chip-segment-fg, currentColor);
 }
 
 .segmentIcon {
@@ -251,7 +261,8 @@
 // `labelMaxWidth` (#582): the label alone is capped (max-width set inline in
 // `ch`) and ellipsizes on one line — also on a chip that otherwise wraps.
 .capped {
-  overflow: hidden;
+  overflow-x: clip;
+  overflow-y: visible;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

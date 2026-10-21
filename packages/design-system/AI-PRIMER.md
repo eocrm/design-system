@@ -230,7 +230,7 @@ Each component's contract is its `docs/components/<Name>.md`; the props table th
 - [`Lightbox`](docs/components/Lightbox.md) — full-screen image & document gallery overlay
 - [`Drawer`](docs/components/Drawer.md) — edge-anchored slide-in panel
 - [`Select`](docs/components/Select.md) — value picker (single, multi, searchable, async, creatable)
-- [`OptionsPicker`](docs/components/OptionsPicker.md) — filter picker (multi/single, grouped, searchable)
+- [`OptionsPicker`](docs/components/OptionsPicker.md) — filter picker (multi/single, grouped, searchable; async server search via `loadOptions`)
 - [`EmojiPicker`](docs/components/EmojiPicker.md) — searchable emoji grid (reactions + input)
 - [`CatalogPicker`](docs/components/CatalogPicker.md) — searchable, category-filtered card picker for choosing one catalog item (Add widget)
 - [`EmptyState`](docs/components/EmptyState.md) — "nothing here" container

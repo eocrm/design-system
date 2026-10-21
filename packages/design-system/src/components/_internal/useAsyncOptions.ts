@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { SelectOptions } from './Select';
 
 /**
  * Args accepted by `useAsyncOptions`.
@@ -11,12 +10,16 @@ import type { SelectOptions } from './Select';
  * each call. `debounceMs` is the delay between the last `query` change and
  * the actual `loadOptions` invocation.
  */
-export interface UseAsyncOptionsArgs<T = unknown> {
+export interface UseAsyncOptionsArgs<R extends readonly unknown[]> {
   /** Async fetcher. Receives the current query and an `AbortSignal`. */
-  loadOptions?: (query: string, signal: AbortSignal) => Promise<SelectOptions<T>>;
+  loadOptions?: (query: string, signal: AbortSignal) => Promise<R>;
   /** Current search query string. Empty string is a valid fetch trigger. */
   query: string;
-  /** When `false`, no fetches happen. Wired to "has the popover ever opened". */
+  /**
+   * When `false`, no fetches happen (going `false` aborts the in-flight one).
+   * Select wires it to "has the popover ever opened"; OptionsPicker to "is
+   * the panel open now" (a fresh fetch per open).
+   */
   enabled: boolean;
   /** Debounce window before firing `loadOptions` after a query change. */
   debounceMs: number;
@@ -31,8 +34,8 @@ export interface UseAsyncOptionsArgs<T = unknown> {
  * is set on non-abort rejections and cleared at the start of each new
  * fetch. `retry()` re-runs the current query (no debounce).
  */
-export interface UseAsyncOptionsReturn<T = unknown> {
-  options: SelectOptions<T>;
+export interface UseAsyncOptionsReturn<R extends readonly unknown[]> {
+  options: R;
   loading: boolean;
   error: Error | null;
   /** The query `options` belongs to; `null` until the first request settles. */
@@ -51,16 +54,17 @@ export interface UseAsyncOptionsReturn<T = unknown> {
  *    "abc".
  * 3. Lifecycle — aborts on unmount.
  *
- * The hook is gated by `enabled`: until the popover has opened at least
- * once, no fetches fire. This matches the `loadOnOpen` prop semantic on
- * `<Select>`.
+ * The hook is gated by `enabled`: while it is false no fetches fire. Select
+ * passes "has opened at least once" (its `loadOnOpen` semantic); OptionsPicker
+ * passes "is open now", so every open refetches. Shared by both — not
+ * exported from the package root.
  */
-export function useAsyncOptions<T = unknown>(
-  args: UseAsyncOptionsArgs<T>,
-): UseAsyncOptionsReturn<T> {
+export function useAsyncOptions<R extends readonly unknown[]>(
+  args: UseAsyncOptionsArgs<R>,
+): UseAsyncOptionsReturn<R> {
   const { loadOptions, query, enabled, debounceMs } = args;
 
-  const [options, setOptions] = useState<SelectOptions<T>>([] as SelectOptions<T>);
+  const [options, setOptions] = useState<R>([] as unknown as R);
   const [loading, setLoading] = useState<boolean>(false);
   // The query `options` actually belongs to, or null before the first settle.
   // Callers cannot infer this from `loading`: it is false for the whole
@@ -115,6 +119,15 @@ export function useAsyncOptions<T = unknown>(
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     };
   }, [query, enabled, debounceMs, retryToken, runFetch, loadOptions]);
+
+  // Disabled (OptionsPicker closing) aborts the in-flight request: its answer
+  // has no reader. Select's gate never returns to false.
+  useEffect(() => {
+    if (enabled) return;
+    abortRef.current?.abort();
+    abortRef.current = null;
+    setLoading(false);
+  }, [enabled]);
 
   // Abort on unmount so a still-in-flight request can't write into a
   // dead component.

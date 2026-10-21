@@ -1,6 +1,12 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { Button, OptionsPicker, Stack } from '@eocrm/design-system';
+import {
+  Button,
+  OptionsPicker,
+  Stack,
+  Switch,
+  type OptionsPickerOption,
+} from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
@@ -51,7 +57,49 @@ const groupedOptions = [
   },
 ];
 
+// Fake server: 1000 generated members, 400ms latency, abort-aware.
+const MEMBERS: OptionsPickerOption[] = Array.from({ length: 1000 }, (_, i) => ({
+  value: `m${i + 1}`,
+  label: `Member ${String(i + 1).padStart(4, '0')}`,
+}));
+
+function fetchMembers(
+  query: string,
+  signal: AbortSignal,
+  fail: boolean,
+): Promise<OptionsPickerOption[]> {
+  return new Promise((resolve, reject) => {
+    const abort = () => {
+      clearTimeout(timer);
+      reject(new DOMException('Aborted', 'AbortError'));
+    };
+    const timer = setTimeout(() => {
+      signal.removeEventListener('abort', abort);
+      if (fail) return reject(new Error('Server unavailable'));
+      const q = query.trim().toLowerCase();
+      resolve(MEMBERS.filter((m) => m.label.toLowerCase().includes(q)).slice(0, 20));
+    }, 400);
+    if (signal.aborted) return abort();
+    signal.addEventListener('abort', abort, { once: true });
+  });
+}
+
 export function OptionsPickerDemo() {
+  const [asyncSelected, setAsyncSelected] = useState<string[]>([]);
+  const [asyncOptions, setAsyncOptions] = useState<OptionsPickerOption[]>([]);
+  const [failNext, setFailNext] = useState(false);
+  const failRef = useRef(false);
+  failRef.current = failNext;
+  // One-shot: the switch turns itself off after one failed request, so Retry then succeeds.
+  const takeFail = () => {
+    const fail = failRef.current;
+    if (fail) {
+      failRef.current = false;
+      setFailNext(false);
+    }
+    return fail;
+  };
+
   const [multiFlat, setMultiFlat] = useState<string[]>(['lead']);
   const [multiGrouped, setMultiGrouped] = useState<string[]>([
     'auth.login_succeeded',
@@ -211,6 +259,76 @@ export function Demo() {
             </OptionsPicker.Trigger>
             <OptionsPicker.Content label="Filter stage" options={flatOptions} />
           </OptionsPicker>
+        </InputExample>
+      </Example>
+
+      <Example
+        title="Async members (server search)"
+        description="loadOptions(query, signal) fetches 20 of 1000 members, 400ms latency, debounced. The first fetch happens on open with an empty query. Selected rows stay pinned above the results. Switch on 'Fail next request' (one-shot, it turns itself off), then open the picker or type to see the error row; Retry then succeeds. The trigger text is labelled from onApply's second argument."
+        code={`import { useState } from 'react';
+import { ChevronDown } from 'lucide-react';
+import { Button, OptionsPicker, type OptionsPickerOption } from '@eocrm/design-system';
+
+// fetchMembers: your API call; pass signal to fetch() so stale requests are cancelled
+export function Demo() {
+  const [ids, setIds] = useState<string[]>([]);
+  const [options, setOptions] = useState<OptionsPickerOption[]>([]);
+
+  return (
+    <OptionsPicker
+      selected={ids}
+      onApply={(next, nextOptions) => {
+        setIds(next);
+        setOptions(nextOptions);
+      }}
+    >
+      <OptionsPicker.Trigger>
+        <Button variant="secondary">
+          {options.length ? options.map((o) => o.label).join(', ') : 'Members'}
+          <ChevronDown size={14} />
+        </Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content
+        label="Filter members"
+        loadOptions={(query, signal) => fetchMembers(query, signal)}
+        selectedOptions={options} // labels for values restored from URL/state
+      />
+    </OptionsPicker>
+  );
+}`}
+      >
+        <InputExample width="auto">
+          <Stack gap="sm">
+            <OptionsPicker
+              selected={asyncSelected}
+              onApply={(next, nextOptions) => {
+                setAsyncSelected(next);
+                setAsyncOptions(nextOptions);
+              }}
+            >
+              <OptionsPicker.Trigger>
+                <Button variant="secondary">
+                  {asyncOptions.length
+                    ? asyncOptions.length > 2
+                      ? `${asyncOptions
+                          .slice(0, 2)
+                          .map((o) => o.label)
+                          .join(', ')} +${asyncOptions.length - 2}`
+                      : asyncOptions.map((o) => o.label).join(', ')
+                    : 'Members'}{' '}
+                  <ChevronDown size={14} />
+                </Button>
+              </OptionsPicker.Trigger>
+              <OptionsPicker.Content
+                label="Filter members"
+                loadOptions={(query, signal) => fetchMembers(query, signal, takeFail())}
+                selectedOptions={asyncOptions}
+              />
+            </OptionsPicker>
+            <Switch checked={failNext} onChange={setFailNext}>
+              Fail next request
+            </Switch>
+          </Stack>
         </InputExample>
       </Example>
 

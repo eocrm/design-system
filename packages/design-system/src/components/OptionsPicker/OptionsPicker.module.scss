@@ -209,3 +209,8 @@ button.groupHeader {
 .rowFocused {
   background: var(--options-picker-row-bg-focused);
 }
+
+// Async-mode live region (Hard rule 10) — announced, never painted.
+.srOnly {
+  @include visually-hidden;
+}

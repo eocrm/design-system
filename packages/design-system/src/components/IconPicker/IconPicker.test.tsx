@@ -728,7 +728,7 @@ describe('IconPicker — colour mode', () => {
     const scss = readFileSync(resolve(__dirname, 'IconPicker.module.scss'), 'utf8');
     const rule = scss.match(/\.tinted:disabled\s*\{([^}]*)\}/)?.[1] ?? '';
     expect(rule).toContain('opacity: var(--icon-picker-disabled-opacity);');
-    expect(rule).toContain('background: var(--icon-picker-tint-bg);');
+    expect(rule).toContain('background: var(--icon-picker-tint-bg, transparent);');
   });
 
   it('icon-only mode is unchanged: label "Pick icon: Flame", closes on pick, no Colour group', async () => {
@@ -928,7 +928,7 @@ describe('IconPicker — colour mode', () => {
 
     it('shares the swatch column count between TS and SCSS', () => {
       const scss = readFileSync(resolve(__dirname, 'IconPicker.module.scss'), 'utf8');
-      expect(scss).toContain('repeat(var(--icon-picker-swatch-columns)');
+      expect(scss).toMatch(/repeat\(\s*var\(--icon-picker-swatch-columns, 1\)/);
     });
   });
 });

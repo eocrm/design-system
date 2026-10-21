@@ -230,6 +230,10 @@ export const ru: Messages = {
     apply: 'Применить',
     cancel: 'Отмена',
     noMatches: 'Совпадений не найдено',
+    statusLoading: 'Загрузка вариантов…',
+    loadFailed: 'Не удалось загрузить варианты.',
+    retry: 'Повторить',
+    selectedCount: ({ count }) => `Выбрано: ${count}`,
   },
   emojiPicker: {
     search: 'Поиск эмодзи',

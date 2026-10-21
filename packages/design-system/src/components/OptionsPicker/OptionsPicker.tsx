@@ -19,6 +19,7 @@ import {
 import clsx from 'clsx';
 import { Search } from 'lucide-react';
 import { mergeRefs } from '../_internal/refs';
+import { useAsyncOptions } from '../_internal/useAsyncOptions';
 import { Popover } from '../Popover';
 import { Button } from '../Button';
 import { Checkbox } from '../Checkbox';
@@ -68,8 +69,14 @@ export interface OptionsPickerGroup {
 
 interface MultiProps {
   mode?: 'multi';
+  /**
+   * Committed selection: `string[]` (multi) or `string | null` (single).
+   * Multi: pass a stable array (state, or memoized) — a new array identity on
+   * every render resets the open panel's draft.
+   */
   selected: string[];
-  onApply: (next: string[]) => void;
+  /** Called on Apply with the committed values and their option objects, in the same order. */
+  onApply: (next: string[], options: OptionsPickerOption[]) => void;
   onCancel?: () => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -78,8 +85,10 @@ interface MultiProps {
 
 interface SingleProps {
   mode: 'single';
+  /** Committed value, or `null` when nothing is picked. */
   selected: string | null;
-  onApply: (next: string | null) => void;
+  /** Called on pick with the value and its option object (`null` / `null` when nothing is picked). */
+  onApply: (next: string | null, option: OptionsPickerOption | null) => void;
   onCancel?: () => void;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -91,36 +100,70 @@ export type OptionsPickerProps = MultiProps | SingleProps;
 type FlatContentProps = {
   options: OptionsPickerOption[];
   groups?: never;
+  loadOptions?: never;
 };
 type GroupedContentProps = {
   groups: OptionsPickerGroup[];
   options?: never;
+  loadOptions?: never;
+};
+type AsyncContentProps = {
+  /**
+   * Server search: called with the search query (`''` on every open) after
+   * `searchDebounceMs`, and its answer replaces the list — no client-side
+   * filtering on top. Flat options only. The previous request is aborted via
+   * `signal` when a newer one starts. Takes precedence over `options` /
+   * `groups` (dev warning if both are passed). The latest function is always
+   * the one called; a new identity (e.g. an inline arrow) does not refetch.
+   */
+  loadOptions: (query: string, signal: AbortSignal) => Promise<OptionsPickerOption[]>;
+  /**
+   * Option objects for currently selected values that may not be in any
+   * server answer (e.g. values restored from a URL), so they can be labelled.
+   */
+  selectedOptions?: OptionsPickerOption[];
+  /** Delay between the last keystroke (or opening) and the `loadOptions` call. Default `250`. */
+  searchDebounceMs?: number;
+  options?: never;
+  groups?: never;
 };
 type SharedContentProps = {
   /** Accessible label on the panel (the dialog's `aria-label`). */
   label: string;
   /**
    * Rendered when search produces zero matches. Defaults to the
-   * `optionsPicker.noMatches` i18n string (en: `'No matches'`).
+   * `optionsPicker.noMatches` i18n string (en: `'No matches'`). With
+   * `loadOptions` the visible row is hidden from assistive tech and a live
+   * region announces it instead — this text when it is a string, otherwise the
+   * default.
    *
    * An EMPTY string counts as unset, matching every other label override in
    * the library. There is no way to suppress the message entirely — a blank
    * listbox reads as a broken filter rather than as a deliberate silence.
    */
   emptyState?: ReactNode;
-  /** Footer count formatter (multi only). Default `'${selected} of ${total}'`. */
+  /**
+   * Footer count formatter (multi only). Default `'${selected} of ${total}'`.
+   * Not called with `loadOptions` — there is no known total, so the footer
+   * reads `optionsPicker.selectedCount` (en: `'N selected'`).
+   */
   footerCount?: (selected: number, total: number) => ReactNode;
   /**
    * Whether to render the search bar at the top of the panel. Defaults to
    * `true`. Hide it (`false`) for small/curated option lists where typing
    * filters would just be noise — the selection-count header is hidden
    * alongside the search input (the footer's `N of TOTAL` text still
-   * shows in multi mode).
+   * shows in multi mode). Ignored with `loadOptions`: server search needs
+   * the input, so it always shows.
    */
   searchable?: boolean;
   className?: string;
 };
-export type OptionsPickerContentProps = (FlatContentProps | GroupedContentProps) &
+export type OptionsPickerContentProps = (
+  | FlatContentProps
+  | GroupedContentProps
+  | AsyncContentProps
+) &
   SharedContentProps;
 
 // ----------------------------------------------------------------------------
@@ -134,7 +177,7 @@ interface PickerContextValue {
   open: boolean;
   setOpen: (next: boolean) => void;
   /** Called when Apply (multi) or click (single) commits draft to consumer. */
-  commit: (next: string[]) => void;
+  commit: (next: string[], options: OptionsPickerOption[]) => void;
   /** Called on Cancel/Esc/click-outside. */
   cancel: () => void;
   /** Stable id for the Content panel; shared with Trigger for aria-controls. */
@@ -162,12 +205,14 @@ function usePickerContext(label: string): PickerContextValue {
 function OptionsPickerRoot(props: OptionsPickerProps) {
   const mode: OptionsPickerMode = props.mode ?? 'multi';
 
-  // Normalize selected to string[] internally.
+  // Normalize selected to string[] internally. Keyed on the value itself, not
+  // `props` (a new object every parent render): Content resets its draft /
+  // filter / pinned snapshot when this identity changes.
+  const rawSelected = props.selected;
   const normalizedSelected = useMemo<string[]>(() => {
-    if (mode === 'multi') return (props as MultiProps).selected;
-    const sv = (props as SingleProps).selected;
-    return sv == null ? [] : [sv];
-  }, [mode, props]);
+    if (mode === 'multi') return rawSelected as string[];
+    return rawSelected == null ? [] : [rawSelected as string];
+  }, [mode, rawSelected]);
 
   // Open state — controlled or uncontrolled.
   const [internalOpen, setInternalOpen] = useState(false);
@@ -209,12 +254,12 @@ function OptionsPickerRoot(props: OptionsPickerProps) {
   );
 
   const commit = useCallback(
-    (next: string[]) => {
+    (next: string[], options: OptionsPickerOption[]) => {
       justCommittedRef.current = true;
       if (mode === 'multi') {
-        (props as MultiProps).onApply(next);
+        (props as MultiProps).onApply(next, options);
       } else {
-        (props as SingleProps).onApply(next[0] ?? null);
+        (props as SingleProps).onApply(next[0] ?? null, options[0] ?? null);
       }
       setOpen(false);
     },
@@ -290,7 +335,14 @@ const OptionsPickerTrigger = forwardRef<HTMLButtonElement, OptionsPickerTriggerP
 function isGrouped(
   props: OptionsPickerContentProps,
 ): props is GroupedContentProps & SharedContentProps {
-  return 'groups' in props && props.groups !== undefined;
+  // `loadOptions` wins over `groups` when a consumer passes both.
+  return !props.loadOptions && 'groups' in props && props.groups !== undefined;
+}
+
+function isAsync(
+  props: OptionsPickerContentProps,
+): props is AsyncContentProps & SharedContentProps {
+  return props.loadOptions !== undefined;
 }
 
 function getAllOptions(props: OptionsPickerContentProps): OptionsPickerOption[] {
@@ -312,7 +364,7 @@ function tristate(groupOptionValues: string[], draft: string[]): TriState {
 }
 
 /**
- * The picker panel: search bar, options list and (multi mode) Apply/Cancel footer; takes `options` or `groups`, not both.
+ * The picker panel: search bar, options list and (multi mode) Apply/Cancel footer; takes `options`, `groups` or `loadOptions`.
  * @see docs/components/OptionsPicker.md
  */
 const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProps>(
@@ -326,6 +378,62 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
 
     const [draft, setDraft] = useState<string[]>(ctx.selected);
     const [filter, setFilter] = useState('');
+    // Async only: the selected values pinned above the server rows. A snapshot
+    // — taken on open and on every query change, never on tick/untick — so
+    // rows don't move under the pointer.
+    const [pinned, setPinned] = useState<string[]>(ctx.selected);
+
+    const async = isAsync(props);
+    // Latest consumer loadOptions, read at call time: the hook re-arms (and
+    // aborts the in-flight request) on a new function identity, so an inline
+    // arrow would refetch on every parent render. trackedLoad stays stable.
+    const loadRef = useRef(async ? props.loadOptions : undefined);
+    loadRef.current = async ? props.loadOptions : undefined;
+    // The hook's state outlives a close, so until a request of THIS open has
+    // settled its rows / error / loadedQuery belong to the previous open.
+    // Tracked here (not in the shared hook) by flagging when loadOptions is
+    // actually invoked; reset on close.
+    const [fetchedSinceOpen, setFetchedSinceOpen] = useState(false);
+    const trackedLoad = useCallback((q: string, signal: AbortSignal) => {
+      setFetchedSinceOpen(true);
+      return loadRef.current!(q, signal);
+    }, []);
+    const [settledSinceOpen, setSettledSinceOpen] = useState(false);
+    useEffect(() => {
+      if (!ctx.open) {
+        setFetchedSinceOpen(false);
+        setSettledSinceOpen(false);
+      }
+    }, [ctx.open]);
+    // `enabled` follows the open state, so every open fetches '' afresh.
+    const asyncResult = useAsyncOptions({
+      loadOptions: async ? trackedLoad : undefined,
+      query: filter,
+      enabled: ctx.open,
+      debounceMs: (async ? props.searchDebounceMs : undefined) ?? 250,
+    });
+    // Latches on the first settle of this open (later searches keep their
+    // rows during the refetch). Set during render — React's "adjust state on
+    // change" pattern — so no frame paints a stale 'loading'. runFetch flips
+    // `loading` in the same batch as the fetched flag, so this cannot latch
+    // on the previous open's state.
+    if (fetchedSinceOpen && !asyncResult.loading && !settledSinceOpen) {
+      setSettledSinceOpen(true);
+    }
+
+    // Mirrors Select: `loadOptions` wins over static options; warn once per
+    // mount in dev. Stripped in prod builds.
+    const conflictingSources =
+      async &&
+      ((props as { options?: unknown[] }).options?.length ||
+        (props as { groups?: unknown[] }).groups?.length);
+    useEffect(() => {
+      if (process.env.NODE_ENV !== 'production' && conflictingSources) {
+        console.warn(
+          '<OptionsPicker.Content> received both `options`/`groups` and `loadOptions`. `loadOptions` wins; `options`/`groups` are ignored.',
+        );
+      }
+    }, [conflictingSources]);
 
     // Ref for the search input — used to focus it on open (see effect below).
     const searchInputRef = useRef<HTMLInputElement>(null);
@@ -333,6 +441,7 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
     useEffect(() => {
       if (ctx.open) {
         setDraft(ctx.selected);
+        setPinned(ctx.selected);
         setFilter('');
       }
     }, [ctx.open, ctx.selected]);
@@ -354,6 +463,24 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
       [filter],
     );
 
+    const optionByValue = useMemo(
+      () => new Map((async ? asyncResult.options : getAllOptions(props)).map((o) => [o.value, o])),
+      [async, asyncResult.options, props],
+    );
+    // Async label cache: every server answer and `selectedOptions` seen while
+    // mounted, so a pinned value keeps its label after a search omits it.
+    // Never cleared. The current answer still wins via `optionByValue`.
+    const labelCache = useRef(new Map<string, OptionsPickerOption>());
+    const selectedOptions = async ? props.selectedOptions : undefined;
+    // Unknown values (e.g. a preselected value not in `options`) fall back to value-as-label.
+    const resolveOption = useMemo(() => {
+      const cache = labelCache.current;
+      for (const o of asyncResult.options) cache.set(o.value, o);
+      for (const o of selectedOptions ?? []) cache.set(o.value, o);
+      return (value: string): OptionsPickerOption =>
+        optionByValue.get(value) ?? cache.get(value) ?? { value, label: value };
+    }, [optionByValue, asyncResult.options, selectedOptions]);
+
     const toggle = useCallback(
       (value: string) => {
         if (ctx.mode === 'multi') {
@@ -361,10 +488,10 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
             prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value],
           );
         } else {
-          ctx.commit([value]);
+          ctx.commit([value], [resolveOption(value)]);
         }
       },
-      [ctx],
+      [ctx, resolveOption],
     );
 
     const toggleGroup = useCallback(
@@ -382,10 +509,19 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
       [ctx.mode],
     );
 
+    // Async: the server's answer IS the list (no client filter), minus the
+    // pinned values that are rendered above it. An error replaces it with the
+    // error row, as in Select; pinned rows stay in every state.
+    const serverRows = useMemo(() => {
+      if (!async || asyncResult.error || !settledSinceOpen) return [];
+      return asyncResult.options.filter((o) => !pinned.includes(o.value));
+    }, [async, asyncResult.error, asyncResult.options, settledSinceOpen, pinned]);
+
     const visibleFlat = useMemo(() => {
+      if (async) return [...pinned.map(resolveOption), ...serverRows];
       if (isGrouped(props)) return [];
       return (props.options ?? []).filter(matchesFilter);
-    }, [props, matchesFilter]);
+    }, [async, pinned, resolveOption, serverRows, props, matchesFilter]);
 
     const visibleGroups = useMemo(() => {
       if (!isGrouped(props)) return [];
@@ -395,6 +531,48 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
     }, [props, matchesFilter]);
 
     const hasAnyVisible = isGrouped(props) ? visibleGroups.length > 0 : visibleFlat.length > 0;
+
+    // Async state row, rendered below the pinned rows. Driven by the server
+    // answer alone: pinned rows never suppress it. Empty means the server
+    // returned nothing for the settled query on screen (during the debounce
+    // window the rows are the previous query's) — it describes the search, so
+    // it shows even with pinned rows above it. An answer holding only pinned
+    // values is not empty: those values matched.
+    const asyncState = !async
+      ? null
+      : !settledSinceOpen
+        ? 'loading'
+        : asyncResult.error
+          ? 'error'
+          : asyncResult.loading && serverRows.length === 0
+            ? 'loading'
+            : !asyncResult.loading &&
+                asyncResult.options.length === 0 &&
+                asyncResult.loadedQuery === filter
+              ? 'empty'
+              : null;
+    const emptyText =
+      (typeof props.emptyState === 'string' && props.emptyState) || t('optionsPicker.noMatches');
+    // Hard rule 10: one live region (async only), mounted with the panel —
+    // Popover.Content renders nothing while closed. The text is '' while
+    // closed and set in an effect, so the region mounts empty on every open
+    // and the open-time state arrives after it (a region that mounts with
+    // its text announces nothing). The visible state rows are aria-hidden so
+    // readers meet each once.
+    const [statusText, setStatusText] = useState('');
+    useEffect(() => {
+      setStatusText(
+        !ctx.open
+          ? ''
+          : asyncState === 'loading'
+            ? t('optionsPicker.statusLoading')
+            : asyncState === 'error'
+              ? t('optionsPicker.loadFailed')
+              : asyncState === 'empty'
+                ? emptyText
+                : '',
+      );
+    }, [ctx.open, asyncState, emptyText, t]);
 
     const allOptionsForCount = useMemo(() => getAllOptions(props), [props]);
 
@@ -437,9 +615,16 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
           setFocusedValue(visibleOptionsInOrder[visibleOptionsInOrder.length - 1]!.value);
         } else if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && ctx.mode === 'multi') {
           e.preventDefault();
-          ctx.commit(draft);
+          ctx.commit(draft, draft.map(resolveOption));
         } else if (e.key === 'Enter' || e.key === ' ') {
-          if (focusedValue) {
+          // Enter acts on the row from the search input or the panel; Space
+          // only from the panel itself — in the search it types a space, and
+          // every native control (row checkbox/radio, Retry/Apply/Cancel, a
+          // consumer emptyState link) keeps its own Enter/Space.
+          const handles =
+            e.target === e.currentTarget ||
+            (e.key === 'Enter' && e.target === searchInputRef.current);
+          if (focusedValue && handles) {
             e.preventDefault();
             toggle(focusedValue);
           }
@@ -449,7 +634,7 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
           ctx.cancel();
         }
       },
-      [visibleOptionsInOrder, focusedValue, toggle, ctx, draft],
+      [visibleOptionsInOrder, focusedValue, toggle, ctx, draft, resolveOption],
     );
 
     return (
@@ -466,19 +651,28 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
           the borders.
         */}
         <div>
-          {searchable && (
+          {(searchable || async) && (
             <div className={styles.searchBar}>
               <Search size={14} aria-hidden className={styles.searchIcon} />
               <Input
                 ref={searchInputRef}
                 type="text"
                 value={filter}
-                onChange={(e) => setFilter(e.currentTarget.value)}
+                onChange={(e) => {
+                  setFilter(e.currentTarget.value);
+                  setPinned(draft);
+                }}
                 placeholder={searchPlaceholder}
                 aria-label={searchPlaceholder}
                 className={styles.searchInput}
               />
             </div>
+          )}
+
+          {async && (
+            <span role="status" aria-live="polite" className={styles.srOnly}>
+              {statusText}
+            </span>
           )}
 
           <div
@@ -487,7 +681,7 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
             aria-multiselectable={ctx.mode === 'multi'}
             aria-activedescendant={focusedValue ? `${contentId}-opt-${focusedValue}` : undefined}
           >
-            {!hasAnyVisible && (
+            {!async && !hasAnyVisible && (
               <Text size="sm" tone="muted" className={styles.empty}>
                 {props.emptyState || t('optionsPicker.noMatches')}
               </Text>
@@ -587,12 +781,52 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
                   onToggle={toggle}
                 />
               ))}
+            {/* Async state rows sit below the pinned rows (server rows are empty then). */}
+            {asyncState === 'loading' && (
+              <Text size="sm" tone="muted" className={styles.empty} aria-hidden="true">
+                {t('optionsPicker.statusLoading')}
+              </Text>
+            )}
+            {asyncState === 'error' && (
+              <Cluster gap="sm" justify="center" className={styles.empty}>
+                <Text size="sm" tone="muted" aria-hidden="true">
+                  {t('optionsPicker.loadFailed')}
+                </Text>
+                {/* Name stays plain: the status region keeps the failure text, so folding it in double-reads (as in Select/Error.tsx). */}
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  onClick={() => {
+                    // Back to "nothing settled this open": the hook still holds
+                    // the last good answer (maybe a previous open's), so show
+                    // loading until the retry settles, not those rows.
+                    setFetchedSinceOpen(false);
+                    setSettledSinceOpen(false);
+                    asyncResult.retry();
+                    // Retry unmounts with this click; keep focus in the panel.
+                    searchInputRef.current?.focus();
+                  }}
+                >
+                  {t('optionsPicker.retry')}
+                </Button>
+              </Cluster>
+            )}
+            {asyncState === 'empty' && (
+              <Text size="sm" tone="muted" className={styles.empty} aria-hidden="true">
+                {props.emptyState || t('optionsPicker.noMatches')}
+              </Text>
+            )}
           </div>
 
           {ctx.mode === 'multi' && (
             <div className={styles.footer}>
               <Text size="xs" tone="muted">
-                {(props.footerCount ?? defaultFooterCount)(draft.length, allOptionsForCount.length)}
+                {async
+                  ? t('optionsPicker.selectedCount', { count: draft.length })
+                  : (props.footerCount ?? defaultFooterCount)(
+                      draft.length,
+                      allOptionsForCount.length,
+                    )}
               </Text>
               <Cluster gap="sm">
                 <Button
@@ -605,7 +839,11 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
                 >
                   {t('optionsPicker.cancel')}
                 </Button>
-                <Button variant="primary" size="sm" onClick={() => ctx.commit(draft)}>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => ctx.commit(draft, draft.map(resolveOption))}
+                >
                   {t('optionsPicker.apply')}
                 </Button>
               </Cluster>

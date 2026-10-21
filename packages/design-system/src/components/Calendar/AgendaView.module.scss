@@ -183,7 +183,7 @@
 .colored {
   // The agenda row is never filled, so `color` drives the leading dot (which
   // inherits currentColor) rather than a background.
-  color: var(--calendar-event-color-fg);
+  color: var(--calendar-event-color-fg, currentColor);
 }
 
 .striped {
@@ -203,8 +203,8 @@
   // drag shadow. This file has neither.)
   background-image: linear-gradient(
     to right,
-    var(--calendar-event-stripe-color) 0,
-    var(--calendar-event-stripe-color) var(--calendar-event-color-stripe-width),
+    var(--calendar-event-stripe-color, currentColor) 0,
+    var(--calendar-event-stripe-color, currentColor) var(--calendar-event-color-stripe-width),
     transparent var(--calendar-event-color-stripe-width)
   );
 }

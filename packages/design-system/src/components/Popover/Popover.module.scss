@@ -54,7 +54,7 @@
 .content:has(> [data-scroll-area], > :not([hidden]) > [data-scroll-area]) {
   display: flex;
   flex-direction: column;
-  max-height: var(--popover-available-height);
+  max-height: var(--popover-available-height, none);
 
   > * {
     flex-shrink: 0;

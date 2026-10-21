@@ -71,6 +71,8 @@ export interface TreeViewProps extends Omit<
    * boxes and the connector lines between highlighted parents and children.
    */
   highlightedIds?: ReadonlySet<string>;
+  /** Pointer entered/left a node's row (list) or box (chart); `null` on leave. Pointer only — no ARIA, focus or selection effect. Pair with `highlightedIds` to paint a hover chain. */
+  onHoverChange?: (id: string | null) => void;
 }
 
 const has = (flat: TreeItem[], key: string | null) =>
@@ -118,6 +120,7 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
     onRetry,
     overflowOf,
     highlightedIds,
+    onHoverChange,
     className,
     onFocus,
     onBlur,
@@ -408,7 +411,13 @@ export const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(function TreeV
           data-kind="node"
           data-highlighted={highlighted ? '' : undefined}
         >
-          <div className={styles.row} data-row="" {...rowClick(item)}>
+          <div
+            className={styles.row}
+            data-row=""
+            {...rowClick(item)}
+            onPointerEnter={() => onHoverChange?.(node.id)}
+            onPointerLeave={() => onHoverChange?.(null)}
+          >
             <span
               className={styles.toggle}
               aria-hidden="true"

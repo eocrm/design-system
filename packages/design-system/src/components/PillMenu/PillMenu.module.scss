@@ -13,8 +13,8 @@
   font-family: inherit;
   font-size: var(--pill-menu-font-size);
   font-weight: var(--pill-menu-font-weight);
-  background: var(--pill-menu-bg);
-  color: var(--pill-menu-fg);
+  background: var(--pill-menu-bg, transparent);
+  color: var(--pill-menu-fg, currentColor);
   white-space: nowrap;
 
   // Content-width even as a stretching flex/grid item (a vertical Field, a
@@ -76,21 +76,21 @@
 .option.option {
   // Item's icon slot defaults to a muted grey; on a coloured row the glyph
   // takes the row's colour, like the pill's.
-  --dropdown-menu-icon-fg: var(--pill-menu-fg);
+  --dropdown-menu-icon-fg: var(--pill-menu-fg, currentColor);
 
-  background: var(--pill-menu-bg);
-  color: var(--pill-menu-fg);
+  background: var(--pill-menu-bg, transparent);
+  color: var(--pill-menu-fg, currentColor);
 }
 
 .option.option:hover:not([aria-disabled='true']) {
-  background: var(--pill-menu-bg);
-  color: var(--pill-menu-fg);
+  background: var(--pill-menu-bg, transparent);
+  color: var(--pill-menu-fg, currentColor);
   filter: brightness(0.94);
 }
 
 .option.option:focus-visible:not([aria-disabled='true']) {
-  background: var(--pill-menu-bg);
-  color: var(--pill-menu-fg);
+  background: var(--pill-menu-bg, transparent);
+  color: var(--pill-menu-fg, currentColor);
   filter: brightness(0.94);
 }
 

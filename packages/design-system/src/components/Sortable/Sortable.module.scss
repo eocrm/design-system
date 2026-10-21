@@ -145,7 +145,7 @@
 // specificity the old `.collapsible.stepXx` pair had.
 @container (max-width: #{bp.$collapse-lg}) {
   .grid.stepLg {
-    grid-template-columns: var(--sortable-columns-lg);
+    grid-template-columns: var(--sortable-columns-lg, none);
 
     > .item {
       // stylelint-disable-next-line property-disallowed-list -- graduated collapse override is Sortable's own placement mechanism, mirrors Grid
@@ -156,7 +156,7 @@
 
 @container (max-width: #{bp.$collapse-md}) {
   .grid.stepMd {
-    grid-template-columns: var(--sortable-columns-md);
+    grid-template-columns: var(--sortable-columns-md, none);
 
     > .item {
       // stylelint-disable-next-line property-disallowed-list -- graduated collapse override is Sortable's own placement mechanism, mirrors Grid
@@ -167,7 +167,7 @@
 
 @container (max-width: #{bp.$collapse-sm}) {
   .grid.stepSm {
-    grid-template-columns: var(--sortable-columns-sm);
+    grid-template-columns: var(--sortable-columns-sm, none);
 
     > .item {
       // stylelint-disable-next-line property-disallowed-list -- graduated collapse override is Sortable's own placement mechanism, mirrors Grid

@@ -224,6 +224,10 @@ export const en: Messages = {
     apply: 'Apply',
     cancel: 'Cancel',
     noMatches: 'No matches',
+    statusLoading: 'Loading options…',
+    loadFailed: 'Failed to load options.',
+    retry: 'Retry',
+    selectedCount: ({ count }) => `${count} selected`,
   },
   emojiPicker: {
     search: 'Search emoji',
