@@ -834,6 +834,7 @@ export type {
   DashboardWidgetProps,
   DashboardWidgetVariant,
   DashboardWidgetTrend,
+  DashboardWidgetActionsReveal,
 } from './components/DashboardWidget';
 export { StatGroup, StatTile } from './components/StatGroup';
 export type {

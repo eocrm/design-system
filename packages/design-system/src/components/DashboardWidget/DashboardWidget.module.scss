@@ -62,3 +62,34 @@
 .trend[data-sentiment='neutral'] {
   color: var(--dashboard-widget-trend-neutral);
 }
+
+// actionsReveal="hover": opacity only, so the actions keep their layout width and
+// stay in the tab order (visibility/display would remove them from it).
+// inline-flex, not contents: a display:contents box has no opacity to apply.
+.revealActions {
+  display: inline-flex;
+  align-items: center;
+}
+
+[data-actions-reveal='hover'] .revealActions {
+  opacity: var(--opacity-hidden);
+  transition: opacity var(--dashboard-widget-reveal-transition);
+}
+
+[data-actions-reveal='hover']:hover .revealActions,
+[data-actions-reveal='hover']:focus-within .revealActions,
+[data-actions-reveal='hover'] .revealActions:has([aria-expanded='true']) {
+  opacity: var(--opacity-visible);
+}
+
+@media (hover: none) {
+  [data-actions-reveal='hover'] .revealActions {
+    opacity: var(--opacity-visible);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-actions-reveal='hover'] .revealActions {
+    transition: none;
+  }
+}

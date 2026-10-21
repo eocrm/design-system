@@ -56,6 +56,11 @@ import {
   />
 </DashboardWidget>;
 
+// quiet view-mode header: actions appear on hover / focus
+<DashboardWidget title="Pipeline" actions={menu} actionsReveal="hover">
+  {/* body */}
+</DashboardWidget>;
+
 // standard (default), with error and empty states as children
 <DashboardWidget title="Recent activity" loading={isLoading}>
   {error ? (
@@ -79,6 +84,7 @@ import {
 | `title` | `ReactNode` | yes | Widget title, rendered as the heading at `headerLevel`. Required. |
 | `meta` | `ReactNode` | no | Secondary, non-interactive header text such as freshness ("Updated 3 minutes ago") or status. Sits before `actions` and yields first in a narrow cell: it truncates (then hides visually, still read by screen readers) before the title shrinks, while `actions` never shrinks. Also describes the body region (`aria-describedby`) for `standard` / `list`. Repeat it in the refresh button's tooltip if it matters when truncated. |
 | `actions` | `ReactNode` | no | Header actions, e.g. the edit-mode overflow `DropdownMenu`. Never wraps. |
+| `actionsReveal` | `'always' \| 'hover'` | no | When `actions` are visible. Default `'always'`. - `'always'` — always shown. - `'hover'` — dimmed to invisible until the card is hovered or holds focus (they stay in the tab order, and Tab into the card reveals them); an open menu launched from an action keeps them shown. On touch / `(hover: none)` they stay visible. They keep their layout width. |
 | `headerLevel` | `'h2' \| 'h3' \| 'h4' \| 'h5' \| 'h6'` | no | Heading level of the title. Default `'h3'`. |
 | `value` | `ReactNode` | no | KPI value (`variant="kpi"` only), e.g. `"128"` or a formatted currency node. |
 | `trend` | `DashboardWidgetTrend` | no | KPI trend (`variant="kpi"` only). |
@@ -97,6 +103,7 @@ import {
 - **No live region, on purpose.** A dashboard loads 10 to 20 widgets at once; a live region per widget would flood a screen reader. If you want an announcement, make one at page level ("Dashboard loaded") once all widgets settle. That is the app's job.
 - **Error and empty states** are the app's `ErrorState` / `EmptyState`, passed as `children` (for kpi, as `value` or `children`).
 - **`actions`** (e.g. an edit-mode `DropdownMenu`) sit at the header's end and never wrap.
+- **`actionsReveal="hover"`** (default `'always'`) is for quiet view-mode headers: the actions are transparent until the card is hovered or holds focus (`:focus-within`, so Tab into the card reveals them), and stay shown while a menu launched from them is open. They are hidden with opacity only: they keep their layout width (the title and meta do not jump) and stay in the tab order. On touch / `(hover: none)` they are always visible.
 - **`meta`** is secondary, non-interactive header text (freshness such as "Updated 3 minutes ago", or status). It sits just before `actions`, muted and on one line, and yields first in a narrow cell: it truncates with an ellipsis, then hides visually (screen readers still read it) once only a sliver is left, before the title gives up any width, while `actions` keeps its width. For `standard` / `list` it also describes the body region (`aria-describedby`). If the text matters when truncated, repeat it in the refresh button's tooltip.
 
 #### When NOT to use
@@ -107,6 +114,7 @@ import {
 
 #### Anti-patterns
 
+- ❌ `actionsReveal="hover"` when the only way to reach an essential action is that header. Touch users see it, but mouse users get no visible cue; keep primary actions visible.
 - ❌ Wrapping `DashboardWidget` in another `Card`. It already is one.
 - ❌ Freshness or status text in `actions`. `actions` never shrinks, so the title gets crushed in a narrow cell; use `meta`.
 - ❌ Buttons or links in `meta`. They can be truncated out of reach; controls go in `actions`.

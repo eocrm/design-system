@@ -10,6 +10,9 @@ import styles from './DashboardWidget.module.scss';
 /** Presentation variant of a dashboard widget card. */
 export type DashboardWidgetVariant = 'standard' | 'list' | 'kpi' | 'chart';
 
+/** When header `actions` are visible. */
+export type DashboardWidgetActionsReveal = 'always' | 'hover';
+
 /** KPI trend/delta shown under the value. */
 export interface DashboardWidgetTrend {
   /** Visible delta text, e.g. "+12% vs last month". */
@@ -44,6 +47,14 @@ export interface DashboardWidgetProps extends Omit<HTMLAttributes<HTMLDivElement
   meta?: ReactNode;
   /** Header actions, e.g. the edit-mode overflow `DropdownMenu`. Never wraps. */
   actions?: ReactNode;
+  /**
+   * When `actions` are visible. Default `'always'`.
+   * - `'always'` — always shown.
+   * - `'hover'` — dimmed to invisible until the card is hovered or holds focus (they stay in the
+   *   tab order, and Tab into the card reveals them); an open menu launched from an action keeps
+   *   them shown. On touch / `(hover: none)` they stay visible. They keep their layout width.
+   */
+  actionsReveal?: DashboardWidgetActionsReveal;
   /** Heading level of the title. Default `'h3'`. */
   headerLevel?: 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
   /** KPI value (`variant="kpi"` only), e.g. `"128"` or a formatted currency node. */
@@ -80,6 +91,7 @@ export const DashboardWidget = forwardRef<HTMLDivElement, DashboardWidgetProps>(
       variant = 'standard',
       title,
       actions,
+      actionsReveal = 'always',
       meta,
       headerLevel = 'h3',
       value,
@@ -105,7 +117,13 @@ export const DashboardWidget = forwardRef<HTMLDivElement, DashboardWidgetProps>(
     const header = (
       <Card.Header
         headerLevel={headerLevel}
-        action={actions}
+        action={
+          actionsReveal === 'hover' && actions != null ? (
+            <span className={styles.revealActions}>{actions}</span>
+          ) : (
+            actions
+          )
+        }
         meta={hasMeta ? <span id={metaId}>{meta}</span> : undefined}
         className={styles[`header-${variant}`]}
       >
@@ -154,6 +172,7 @@ export const DashboardWidget = forwardRef<HTMLDivElement, DashboardWidgetProps>(
         fill
         padding="none"
         data-variant={variant}
+        data-actions-reveal={actionsReveal}
         aria-busy={loading || undefined}
         className={clsx(styles.root, className)}
         {...rest}

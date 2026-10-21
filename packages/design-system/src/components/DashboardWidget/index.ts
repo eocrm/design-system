@@ -3,4 +3,5 @@ export type {
   DashboardWidgetProps,
   DashboardWidgetVariant,
   DashboardWidgetTrend,
+  DashboardWidgetActionsReveal,
 } from './DashboardWidget';

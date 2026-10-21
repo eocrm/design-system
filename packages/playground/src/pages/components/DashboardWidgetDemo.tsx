@@ -161,6 +161,20 @@ export function DashboardWidgetDemo() {
       </Example>
 
       <Example
+        title="Quiet headers in view mode"
+        description='actionsReveal="hover" hides the actions until the card is hovered or focused. Tab into the card, or open the menu and move the pointer away: they stay shown.'
+        code={`<DashboardWidget title="Pipeline" actions={<Menu />} actionsReveal="hover">
+  <Text size="sm">Hover or Tab into this card.</Text>
+</DashboardWidget>`}
+      >
+        <div style={CELL}>
+          <DashboardWidget title="Pipeline" actions={<Menu />} actionsReveal="hover">
+            <Text size="sm">Hover or Tab into this card.</Text>
+          </DashboardWidget>
+        </div>
+      </Example>
+
+      <Example
         title="Header meta"
         description="Freshness or status text in meta yields first: it truncates before the title shrinks, while actions keep their width. Cells below are 360, 240 and 180px wide."
         code={`<DashboardWidget
