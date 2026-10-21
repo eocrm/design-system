@@ -463,6 +463,12 @@
   z-index: var(--z-overlay-floating);
 }
 
+// #685: the tour's current target is INSIDE this surface — drop just under the
+// scrim (--z-tour) so only the target is lit, not the whole panel.
+.flyout[data-in-overlay]:has([data-tour-current-target]) {
+  z-index: calc(var(--z-tour) - 1);
+}
+
 .flyoutHeader {
   padding: var(--rail-flyout-header-padding);
   font-weight: var(--rail-flyout-header-font-weight);

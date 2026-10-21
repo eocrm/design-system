@@ -33,6 +33,12 @@
   z-index: var(--z-overlay-floating);
 }
 
+// #685: the tour's current target is INSIDE this surface — drop just under the
+// scrim (--z-tour) so only the target is lit, not the whole panel.
+.content[data-in-overlay]:has([data-tour-current-target]) {
+  z-index: calc(var(--z-tour) - 1);
+}
+
 // #598: a popover holding a <ScrollArea> caps itself at the viewport
 // (`--popover-available-height`, written by Content.tsx's size middleware)
 // and becomes a flex column in which the ScrollArea is the ONLY child that

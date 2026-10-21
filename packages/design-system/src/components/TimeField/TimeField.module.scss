@@ -100,6 +100,12 @@
   z-index: var(--z-overlay-floating);
 }
 
+// #685: the tour's current target is INSIDE this surface — drop just under the
+// scrim (--z-tour) so only the target is lit, not the whole panel.
+.timePopover[data-in-overlay]:has([data-tour-current-target]) {
+  z-index: calc(var(--z-tour) - 1);
+}
+
 // Two-column layout for the hour + minute lists, with a thin divider.
 .timeColumns {
   display: flex;

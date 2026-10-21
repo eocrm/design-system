@@ -97,6 +97,12 @@
   z-index: var(--z-overlay-floating);
 }
 
+// #685: the tour's current target is INSIDE this surface — drop just under the
+// scrim (--z-tour) so only the target is lit, not the whole panel.
+.popover[data-in-overlay]:has([data-tour-current-target]) {
+  z-index: calc(var(--z-tour) - 1);
+}
+
 // Size modifiers — drive wrapper padding, inner input height + font, and
 // clear/open button slot dimensions. The chevrons inside the popover grid
 // are NOT controlled here; they belong to DatePickerGrid.

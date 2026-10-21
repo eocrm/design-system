@@ -108,6 +108,12 @@
   z-index: var(--z-overlay-floating);
 }
 
+// #685: the tour's current target is INSIDE this surface — drop just under the
+// scrim (--z-tour) so only the target is lit, not the whole panel.
+.popover[data-in-overlay]:has([data-tour-current-target]) {
+  z-index: calc(var(--z-tour) - 1);
+}
+
 // External chevrons (prev/next), rendered by DateRangePicker. Centered
 // vertically above the two grids; same shape as the grid's own chevrons.
 .popoverHeader {
