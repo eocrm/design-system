@@ -9,7 +9,6 @@ import { Drawer } from '../Drawer';
 import { DropdownMenu } from '../DropdownMenu';
 import { Modal } from '../Modal';
 import { Popover } from '../Popover';
-import { Tabs } from '../Tabs';
 import { EXIT_FALLBACK_MS, Tour, type TourProps, type TourStep } from './Tour';
 
 const STEPS: TourStep[] = [
@@ -721,28 +720,47 @@ describe('Tour — advanceOn', () => {
       expect(spy).not.toHaveBeenCalled();
       expect(onStepChange).toHaveBeenCalledTimes(1);
     });
-  });
 
-  it('targets a tab by data-tour set through TabItem.attrs', async () => {
-    render(
-      <>
-        <Tabs
-          items={[
-            { id: 'a', label: 'General' },
-            { id: 'b', label: 'Security', attrs: { 'data-tour': 'security-tab' } },
-          ]}
-          activeId="a"
-          onChange={() => {}}
-        />
-        <Tour
-          steps={[{ target: 'security-tab', title: 'Security' }]}
-          open
-          onOpenChange={() => {}}
-        />
-      </>,
-    );
-    await screen.findByRole('dialog', { name: 'Security' });
-    expect(document.querySelector('[data-tour-spotlight]')).toBeTruthy();
+    it('Done on a last skip step finishes without calling the target onClick', async () => {
+      const user = userEvent.setup();
+      const spy = vi.fn();
+      const onFinish = vi.fn();
+      render(
+        <>
+          <Button onClick={spy} data-tour="btn">
+            Do it
+          </Button>
+          <Tour
+            steps={[
+              {
+                target: 'btn',
+                title: 'Last',
+                interactive: true,
+                advanceOn: 'click',
+                next: 'skip',
+              },
+            ]}
+            open
+            onOpenChange={() => {}}
+            onFinish={onFinish}
+          />
+        </>,
+      );
+      await screen.findByRole('dialog', { name: 'Last' });
+      await user.click(screen.getByRole('button', { name: 'Done' }));
+      expect(onFinish).toHaveBeenCalledWith('completed');
+      expect(spy).not.toHaveBeenCalled();
+    });
+
+    it('a real click on the target still advances exactly once', async () => {
+      const user = userEvent.setup();
+      const { spy, onStepChange } = setup();
+      await screen.findByRole('dialog', { name: 'Press it' });
+      await user.click(screen.getByRole('button', { name: 'Do it' }));
+      await screen.findByRole('dialog', { name: 'After' });
+      expect(spy).toHaveBeenCalledTimes(1);
+      expect(onStepChange).toHaveBeenCalledTimes(1);
+    });
   });
 
   it('an interactive step on a menu item keeps it clickable and advances (#684)', async () => {

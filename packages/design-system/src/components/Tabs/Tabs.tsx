@@ -52,8 +52,8 @@ export interface TabItem {
   /**
    * Extra `data-*` attributes spread onto this tab's `role="tab"` button
    * (e.g. `{ 'data-tour': 'security-tab' }` to target it from a `Tour`, or a
-   * test/analytics id). Spread BEFORE the component's own attributes, so a
-   * key here can never override a `data-*` state attribute Tabs sets itself.
+   * test/analytics id). Spread first, so a key here can't override the
+   * `id` / `role` / `aria-*` / handlers Tabs owns on the button.
    */
   attrs?: Record<`data-${string}`, string>;
 }
@@ -413,6 +413,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
           const panelId = panelIdPrefix ? `${prefix}-${item.id}-panel` : undefined;
           const tab = (
             <button
+              // attrs first so they can't override the component-owned id/role/aria/handlers below
               {...item.attrs}
               key={item.id}
               ref={(el) => {
