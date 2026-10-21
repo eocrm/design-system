@@ -462,6 +462,43 @@ it('keyboard: Space typed in the search keeps the space and toggles nothing', as
   expect(screen.getByRole('checkbox', { name: 'John Smith' })).not.toBeChecked();
 });
 
+it('keyboard: Space on a focused row checkbox toggles that row, not the highlighted one', async () => {
+  const user = userEvent.setup();
+  render(
+    <OptionsPicker selected={[]} onApply={() => {}}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" options={flatOptions} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  await user.keyboard('{ArrowDown}');
+  expect(screen.getByRole('listbox').getAttribute('aria-activedescendant')).toMatch(/-opt-one$/);
+  screen.getByRole('checkbox', { name: 'Two' }).focus();
+  await user.keyboard(' ');
+  expect(screen.getByRole('checkbox', { name: 'Two' })).toBeChecked();
+  expect(screen.getByRole('checkbox', { name: 'One' })).not.toBeChecked();
+});
+
+it('keyboard: Space on Apply applies; it does not toggle the highlighted row', async () => {
+  const user = userEvent.setup();
+  const onApply = vi.fn();
+  render(
+    <OptionsPicker selected={[]} onApply={onApply}>
+      <OptionsPicker.Trigger>
+        <Button>Open</Button>
+      </OptionsPicker.Trigger>
+      <OptionsPicker.Content label="Filter" options={flatOptions} />
+    </OptionsPicker>,
+  );
+  await user.click(screen.getByRole('button', { name: 'Open' }));
+  await user.keyboard('{ArrowDown}');
+  screen.getByRole('button', { name: /apply/i }).focus();
+  await user.keyboard(' ');
+  expect(onApply).toHaveBeenCalledWith([], []);
+});
+
 it('keyboard: Esc cancels and closes the panel', async () => {
   const user = userEvent.setup();
   const onApply = vi.fn();
@@ -1126,6 +1163,8 @@ describe('async loadOptions', () => {
       expect(region().textContent).toBe('Loading options…');
     }
     expect(calls).toHaveLength(3);
+    // Retry unmounted with its click: focus moved to the search, not <body>.
+    expect(document.activeElement).toBe(screen.getByRole('textbox'));
     await act(async () => calls[2]!.resolve([members[1]!]));
     expect(screen.getAllByRole('checkbox').map((c) => c.closest('label')!.textContent)).toEqual([
       'Bob',

@@ -617,14 +617,13 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
           e.preventDefault();
           ctx.commit(draft, draft.map(resolveOption));
         } else if (e.key === 'Enter' || e.key === ' ') {
-          // Enter acts on the row only from the search input or the panel —
-          // never on a focused button (Retry / Apply / Cancel). Space also
-          // stays a space in the search input and a press on a button.
-          const target = e.target as HTMLElement;
+          // Enter acts on the row from the search input or the panel; Space
+          // only from the panel itself — in the search it types a space, and
+          // every native control (row checkbox/radio, Retry/Apply/Cancel, a
+          // consumer emptyState link) keeps its own Enter/Space.
           const handles =
-            e.key === 'Enter'
-              ? target === searchInputRef.current || target === e.currentTarget
-              : target !== searchInputRef.current && target.tagName !== 'BUTTON';
+            e.target === e.currentTarget ||
+            (e.key === 'Enter' && e.target === searchInputRef.current);
           if (focusedValue && handles) {
             e.preventDefault();
             toggle(focusedValue);
@@ -804,6 +803,8 @@ const OptionsPickerContent = forwardRef<HTMLDivElement, OptionsPickerContentProp
                     setFetchedSinceOpen(false);
                     setSettledSinceOpen(false);
                     asyncResult.retry();
+                    // Retry unmounts with this click; keep focus in the panel.
+                    searchInputRef.current?.focus();
                   }}
                 >
                   {t('optionsPicker.retry')}
