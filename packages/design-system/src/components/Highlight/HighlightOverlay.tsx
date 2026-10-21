@@ -67,7 +67,7 @@ export function HighlightOverlay({
   const elevated = useInOverlay(targetRef, true);
 
   useLayoutEffect(() => {
-    setRadius(getComputedStyle(target).borderRadius || '0px');
+    setRadius(getComputedStyle(target).borderTopLeftRadius || '0px');
     const update = () => {
       const next = visibleRect(target);
       setBox((prev) => (sameBox(prev, next) ? prev : next));

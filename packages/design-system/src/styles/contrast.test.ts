@@ -1077,6 +1077,13 @@ describe('a tone stays in sync with the roles derived from it', () => {
       const declared = declaredValue(name, lightbox);
       expect(declared, `${name} is declared`).toBe('var(--ring-on-scrim)');
     }
+    // Tour's wave outline lands on the same scrim.
+    const tour = stripComments(
+      readFileSync(resolve(COMPONENTS_DIR_FOR_SCRIM, 'Tour/Tour.tokens.scss'), 'utf8'),
+    );
+    expect(declaredValue('--tour-wave-color', tour), '--tour-wave-color is declared').toBe(
+      'var(--ring-on-scrim)',
+    );
     // The thumbnails are <Image interactive>, which paints its OWN ring from
     // --image-ring; Lightbox has to hand it the scrim ring or the default
     // --ring-accent comes back at 2.47:1 on the strip in light.

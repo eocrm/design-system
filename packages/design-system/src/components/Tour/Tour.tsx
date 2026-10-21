@@ -126,9 +126,11 @@ export interface TourProps extends Omit<HTMLAttributes<HTMLDivElement>, 'title' 
   doneLabel?: string;
 }
 
-/** Unmount fallback when `transitionend` never fires (reduced motion, jsdom). */
-// DropdownMenu's trigger toggles on pointerdown, so a bare click() wouldn't
-// activate it; replay the full primary-pointer sequence a real click produces.
+/**
+ * Activates a click-to-continue target. DropdownMenu's trigger toggles on
+ * pointerdown, so a bare click() wouldn't activate it; replay the full
+ * primary-pointer sequence a real click produces.
+ */
 function activate(el: HTMLElement) {
   const init = { bubbles: true, cancelable: true, button: 0 };
   const Ptr = typeof window.PointerEvent === 'function' ? window.PointerEvent : MouseEvent;
@@ -140,6 +142,7 @@ function activate(el: HTMLElement) {
   el.dispatchEvent(new MouseEvent('click', init));
 }
 
+/** Unmount fallback when `transitionend` never fires (reduced motion, jsdom). */
 export const EXIT_FALLBACK_MS = 300;
 /** Gap in px between target and card (room for the arrow). */
 const CARD_OFFSET = 12;
@@ -367,6 +370,9 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
   // Same condition the effect below uses to actually listen for the click —
   // including `found`: no target (waiting / centered fallback), no listener.
   const clickToContinue = advanceOn === 'click' && (!modal || !!interactive) && !!found;
+  // A synthetic click on a disabled control never fires, so skip activating it.
+  const advance = () =>
+    clickToContinue && found && !found.matches(':disabled') ? activate(found) : goNext();
   useEffect(() => {
     if (advanceOn !== 'click') return;
     if (modal && !interactive) {
@@ -434,7 +440,7 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
     if ((e.target as HTMLElement).closest(EDITABLE)) return;
     e.preventDefault();
     if (e.key === 'ArrowLeft') goBack();
-    else if (!isLast) setIndex(index + 1);
+    else if (!isLast) advance();
   };
 
   // Dev-only: an empty `steps` array or an out-of-range `step`/`defaultStep`.
@@ -557,7 +563,7 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
                 variant={clickToContinue ? 'secondary' : undefined}
                 size="sm"
                 // The advanceOn listener on the target advances; Next only clicks it.
-                onClick={clickToContinue && found ? () => activate(found) : goNext}
+                onClick={advance}
               >
                 {isLast ? doneLabel || t('tour.done') : t('tour.next')}
               </Button>

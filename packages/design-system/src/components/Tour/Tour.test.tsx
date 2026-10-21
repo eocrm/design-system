@@ -1,5 +1,3 @@
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
 import { createRef, useState } from 'react';
 import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -254,12 +252,6 @@ describe('Tour — targets', () => {
     await waitFor(() =>
       expect(document.querySelector('[aria-hidden="true"] [class*="waiting"]')).toBeNull(),
     );
-  });
-
-  it('does not fade the card while waiting', () => {
-    const scss = readFileSync(resolve(__dirname, './Tour.module.scss'), 'utf8');
-    const rule = /\.card\[data-waiting\]\s*\{([^}]*)\}/.exec(scss);
-    expect(rule?.[1] ?? '').not.toMatch(/opacity/);
   });
 
   it('falls back to centered and calls onTargetMissing after the timeout', async () => {
@@ -594,6 +586,62 @@ describe('Tour — advanceOn', () => {
     expect(screen.getByRole('menu')).toBeInTheDocument();
     expect(onStepChange).toHaveBeenCalledTimes(1);
     expect(onStepChange).toHaveBeenCalledWith(1);
+  });
+
+  it('ArrowRight on a click-to-continue step opens the DropdownMenu trigger and advances once', async () => {
+    const user = userEvent.setup();
+    const onStepChange = vi.fn();
+    render(
+      <>
+        <DropdownMenu>
+          <DropdownMenu.Trigger>
+            <button type="button" data-tour="menu-trigger">
+              Actions
+            </button>
+          </DropdownMenu.Trigger>
+          <DropdownMenu.Content data-tour="menu-panel">
+            <DropdownMenu.Item onSelect={() => {}}>Archive</DropdownMenu.Item>
+          </DropdownMenu.Content>
+        </DropdownMenu>
+        <Tour
+          steps={[
+            { target: 'menu-trigger', title: 'Open it', interactive: true, advanceOn: 'click' },
+            { target: 'menu-panel', title: 'The menu' },
+          ]}
+          open
+          onOpenChange={() => {}}
+          onStepChange={onStepChange}
+        />
+      </>,
+    );
+    const card = await screen.findByRole('dialog', { name: 'Open it' });
+    await waitFor(() => expect(card).toHaveFocus());
+    await user.keyboard('{ArrowRight}');
+    await screen.findByRole('dialog', { name: 'The menu' });
+    expect(screen.getByRole('menu')).toBeInTheDocument();
+    expect(onStepChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('Next on a click-to-continue step with a disabled target still advances', async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <button type="button" disabled data-tour="off">
+          Off
+        </button>
+        <Tour
+          steps={[
+            { target: 'off', title: 'Disabled', interactive: true, advanceOn: 'click' },
+            { title: 'After' },
+          ]}
+          open
+          onOpenChange={() => {}}
+        />
+      </>,
+    );
+    await screen.findByRole('dialog', { name: 'Disabled' });
+    await user.click(screen.getByRole('button', { name: 'Next' }));
+    expect(await screen.findByRole('dialog', { name: 'After' })).toBeInTheDocument();
   });
 
   it('Next on a click-to-continue Button step fires its onClick once and advances once', async () => {

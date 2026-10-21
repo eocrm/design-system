@@ -16,6 +16,8 @@ Draws a steady 1px ring just outside its single child, with two waves growing ou
 
 **Announcing it:** with `focus`, the focus move IS the announcement (the screen reader reads the focused block), so don't also fire a `LiveRegion`. Without `focus`, announce the event with `<LiveRegion>` (for example "Contact created").
 
+**Removed tokens:** `--highlight-ring-peak`, `--highlight-glow`, `--highlight-glow-blur`, `--highlight-wave`, `--highlight-wave-blur` and `--highlight-wave-count` no longer exist. Use `--highlight-color` and the `--highlight-wave-*` tokens (`-duration`, `-delay`, `-reach`, `-edge`, `-glow`).
+
 <!-- props:start -->
 
 ## Props

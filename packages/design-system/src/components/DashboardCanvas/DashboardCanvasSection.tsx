@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import type {
   KeyboardEvent as ReactKeyboardEvent,
   PointerEvent as ReactPointerEvent,
@@ -96,11 +97,13 @@ export function DashboardCanvasSection({
     !gestures.readOnly &&
     (gestures.movingId != null || gestures.pickedId != null);
 
+  const bandRef = useCallback((el: HTMLElement | null) => setBandEl(id, el), [id, setBandEl]);
+
   return (
     <Highlight active={highlighted} scrollIntoView onDone={onHighlightDone}>
       <Accordion.Item
         value={String(id)}
-        ref={(el) => setBandEl(id, el)}
+        ref={bandRef}
         data-dc-section={String(id)}
         data-dragging={dragging ? '' : undefined}
       >

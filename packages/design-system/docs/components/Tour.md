@@ -14,6 +14,8 @@
 />
 ```
 
+**Removed tokens:** `--tour-pulse-color`, `--tour-pulse-width`, `--tour-pulse-spread` and `--tour-pulse-duration` are replaced by the `--tour-wave-*` tokens. `--tour-waiting-opacity` was removed (the waiting card stays opaque).
+
 <!-- props:start -->
 
 ## Props
