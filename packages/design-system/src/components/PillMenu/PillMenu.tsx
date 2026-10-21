@@ -35,6 +35,15 @@ export interface PillMenuOption {
   category?: PillMenuCategory;
   /** Explicit palette color — wins over `category` (per-state custom colors). */
   color?: PaletteColor;
+  /**
+   * Extra `data-*` attributes spread onto this value's interactive element:
+   * the trigger button (or the read-only chip) when it is `current`, its menu
+   * row when it is one of `options` (e.g. `{ 'data-tour': 'status-pill' }` to
+   * target it from a `Tour`, or a test/analytics id). Spread BEFORE the
+   * component's own attributes, so a key here can never override a `data-*`
+   * state attribute PillMenu / DropdownMenu sets itself.
+   */
+  attrs?: Record<`data-${string}`, string>;
 }
 
 // `aria-labelledby` is omitted: the trigger's name is component-owned (see
@@ -223,6 +232,7 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
       // {...rest} first so a consumer prop can't collide with the chip's
       // own className/style resolution below.
       <span
+        {...current.attrs}
         {...rest}
         ref={ref as Ref<HTMLSpanElement>}
         className={clsx(styles.chip, fullWidth && styles.fullWidth, className)}
@@ -244,6 +254,7 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
         {/* {...rest} first so consumer-supplied props can't override the
             trigger's aria-label / disabled / aria-busy contract. */}
         <button
+          {...current.attrs}
           {...rest}
           ref={ref as Ref<HTMLButtonElement>}
           type="button"
@@ -285,6 +296,7 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
       <DropdownMenu.Content className={styles.menu}>
         {options.map((option) => (
           <DropdownMenu.Item
+            {...option.attrs}
             key={option.id}
             onSelect={() => onSelect?.(option.id)}
             className={styles.option}

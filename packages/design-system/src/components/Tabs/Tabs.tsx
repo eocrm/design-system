@@ -49,6 +49,13 @@ export interface TabItem {
    * `aria-hidden`; give controls an accessible label. Adds a Tab stop.
    */
   actions?: ReactNode;
+  /**
+   * Extra `data-*` attributes spread onto this tab's `role="tab"` button
+   * (e.g. `{ 'data-tour': 'security-tab' }` to target it from a `Tour`, or a
+   * test/analytics id). Spread BEFORE the component's own attributes, so a
+   * key here can never override a `data-*` state attribute Tabs sets itself.
+   */
+  attrs?: Record<`data-${string}`, string>;
 }
 
 /**
@@ -406,6 +413,7 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
           const panelId = panelIdPrefix ? `${prefix}-${item.id}-panel` : undefined;
           const tab = (
             <button
+              {...item.attrs}
               key={item.id}
               ref={(el) => {
                 tabRefs.current[item.id] = el;

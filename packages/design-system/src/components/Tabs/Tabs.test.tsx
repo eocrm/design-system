@@ -1031,3 +1031,20 @@ describe('aria-controls points only at a panel that exists (#501)', () => {
     }
   });
 });
+
+describe('TabItem.attrs', () => {
+  it('spreads data-* onto that item\'s role="tab" button only', () => {
+    render(
+      <Tabs
+        items={[items[0], { ...items[1], attrs: { 'data-tour': 'activity-tab' } }, items[2]]}
+        activeId="a"
+        onChange={noop}
+      />,
+    );
+    expect(screen.getByRole('tab', { name: /Activity/ })).toHaveAttribute(
+      'data-tour',
+      'activity-tab',
+    );
+    expect(screen.getByRole('tab', { name: /Overview/ })).not.toHaveAttribute('data-tour');
+  });
+});

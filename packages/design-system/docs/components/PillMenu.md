@@ -56,6 +56,7 @@ Renamed from `StatusMenu` — `StatusMenu` / `StatusMenuProps` / `StatusMenuStat
 - A coloured pill trigger that opens a menu of values, each row coloured to its own value — a workflow status, a task type, a priority. Composes `<DropdownMenu>` internally.
 - `icon?: ReactNode` on `current` and on each option renders before the name in the pill and in its row, `aria-hidden` (decorative — the name is announced). Size it to the text (~14px, at most 16px — menu rows use a fixed 16px slot).
 - `current` / each option: `{ id, name, category?, color? }`. `category` (`to_do` / `in_progress` / `open` / `done` / `won` / `lost`) maps to a default palette color (slate / blue / violet / green / green / red); `color` (a `PaletteColor`) overrides it per-status.
+- `attrs` (`Record<`data-${string}`, string>`) on `current` is spread onto the trigger button (or the read-only chip); on an option, onto its menu row. It goes before the component's own attributes, so a key can't override them. Use it to target a pill from a `Tour` or to add a test/analytics id: `current={{ id: 1, name: 'Open', attrs: { 'data-tour': 'status-pill' } }}`, then `<Tour steps={[{ target: 'status-pill', title: '...' }]} />`.
 - Not for a plain action menu (use `<DropdownMenu>`), a non-interactive status with no transition (use `<Badge>`), or picking from a long searchable list (use `<Select>`).
 
 Per-state colour override (`color` wins over `category`):
