@@ -1573,7 +1573,7 @@
           "type": "DashboardWidgetVariant",
           "required": false,
           "default": "",
-          "description": "Presentation variant. Default `'standard'`.\n- `'standard'` — header (title + actions) over a padded scrolling body. Today's widget card.\n- `'list'` — same fixed header as `standard`; flush scrolling body so `Card.List` bleeds edge to edge.\n- `'kpi'` — compact muted title, a large `value`, optional `trend`; optional `children` below. No scrolling.\n- `'chart'` — compact header; flush non-scrolling body that fills the cell (give the plot `height: 100%`)."
+          "description": "Presentation variant. Default `'standard'`.\n- `'standard'` — header (title + actions) over a padded scrolling body. Today's widget card.\n- `'list'` — same fixed header as `standard`; flush scrolling body so `Card.List` bleeds edge to edge.\n- `'kpi'` — compact muted title, a large `value`, optional `trend`; optional `children` below. No scrolling.\n- `'chart'` — compact header; flush non-scrolling body that fills the cell (give the plot `height: 100%`).\n- `'stats'` — compact header and padding over a scrolling body, for a `StatGroup` KPI strip; unlike `standard` it leaves vertical slack in a 3-row cell."
         },
         {
           "name": "title",
@@ -7087,7 +7087,7 @@
     "SettingRowControlWidth": "\"sm\" | \"md\" | \"xs\" | \"auto\"",
     "DashboardCanvasConstraintsProp": "Record<string, DashboardItemConstraints> | ((id: string | number) => DashboardItemConstraints)",
     "DashboardCanvasValue": "{ items: DashboardPlacement[]; sections: DashboardSection[] }",
-    "DashboardWidgetVariant": "\"list\" | \"standard\" | \"kpi\" | \"chart\"",
+    "DashboardWidgetVariant": "\"list\" | \"standard\" | \"kpi\" | \"chart\" | \"stats\"",
     "DashboardWidgetActionsReveal": "\"always\" | \"hover\"",
     "StatGroupVariant": "\"filled\" | \"card\"",
     "SparklineType": "\"area\" | \"line\" | \"bar\"",

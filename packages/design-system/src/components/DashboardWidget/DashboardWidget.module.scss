@@ -20,14 +20,19 @@
   padding: 0;
 }
 
-// kpi + chart: compact, muted, no divider.
-.root :is(.header-kpi, .header-chart) {
+// stats: a StatGroup KPI strip; compact padding leaves vertical slack in a 3-row cell.
+.root .statsBody {
+  padding: var(--dashboard-widget-compact-padding);
+}
+
+// kpi + chart + stats: compact, muted, no divider.
+.root :is(.header-kpi, .header-chart, .header-stats) {
   padding: var(--dashboard-widget-compact-padding);
   padding-block-end: 0;
   border-block-end: 0;
 }
 
-.root :is(.header-kpi, .header-chart) :is(h2, h3, h4, h5, h6) {
+.root :is(.header-kpi, .header-chart, .header-stats) :is(h2, h3, h4, h5, h6) {
   color: var(--dashboard-widget-compact-title-fg);
   font-size: var(--dashboard-widget-compact-title-size);
 }

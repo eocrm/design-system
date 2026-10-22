@@ -2,11 +2,15 @@ import { useState } from 'react';
 import {
   Button,
   Card,
+  DashboardCanvas,
+  type DashboardCanvasValue,
   DashboardWidget,
   DropdownMenu,
   ErrorState,
   Grid,
   Stack,
+  StatGroup,
+  StatTile,
   Switch,
   Text,
 } from '@eocrm/design-system';
@@ -25,6 +29,14 @@ const TASKS = [
   'Schedule onboarding call',
   'Review renewal pricing',
 ];
+
+const STATS_VALUE: DashboardCanvasValue = {
+  items: [
+    { id: 'standard', x: 0, y: 0, w: 24, h: 3 },
+    { id: 'stats', x: 0, y: 3, w: 24, h: 3 },
+  ],
+  sections: [],
+};
 
 const BARS = [40, 65, 50, 80, 55, 90, 70];
 
@@ -76,7 +88,7 @@ export function DashboardWidgetDemo() {
     <DemoLayout
       name="DashboardWidget"
       componentName="DashboardWidget"
-      description="Card that fills a DashboardCanvas cell in four presentations (standard, list, kpi, chart). Owns the header, body chrome and a variant-matched loading skeleton; the app owns data, error state and the actions menu."
+      description="Card that fills a DashboardCanvas cell in five presentations (standard, list, kpi, chart, stats). Owns the header, body chrome and a variant-matched loading skeleton; the app owns data, error state and the actions menu."
       files={getComponentFiles('DashboardWidget')}
     >
       <Example
@@ -158,6 +170,51 @@ export function DashboardWidgetDemo() {
             </div>
           </Grid>
         </Stack>
+      </Example>
+
+      <Example
+        title="Stats variant (KPI strip)"
+        description='variant="stats" is for a StatGroup: compact header and padding, so a 3-row cell leaves vertical slack instead of scrolling. Top: standard; bottom: stats.'
+        code={`<DashboardWidget variant="stats" title="Key metrics">
+  <StatGroup aria-label="Key metrics">
+    <StatTile
+      label="Pipeline value"
+      value="€1.2M"
+      trend={{ label: '12.4% vs previous period', direction: 'up' }}
+    />
+    <StatTile label="Win rate" value="32%" footnote="Last 90 days" />
+    <StatTile
+      label="Overdue tasks"
+      value="17"
+      trend={{ label: '4 vs previous period', direction: 'up', sentiment: 'negative' }}
+    />
+  </StatGroup>
+</DashboardWidget>`}
+      >
+        <DashboardCanvas
+          value={STATS_VALUE}
+          readOnly
+          renderItem={(id) => (
+            <DashboardWidget
+              variant={id === 'stats' ? 'stats' : 'standard'}
+              title={`Key metrics (${id})`}
+            >
+              <StatGroup aria-label="Key metrics">
+                <StatTile
+                  label="Pipeline value"
+                  value="€1.2M"
+                  trend={{ label: '12.4% vs previous period', direction: 'up' }}
+                />
+                <StatTile label="Win rate" value="32%" footnote="Last 90 days" />
+                <StatTile
+                  label="Overdue tasks"
+                  value="17"
+                  trend={{ label: '4 vs previous period', direction: 'up', sentiment: 'negative' }}
+                />
+              </StatGroup>
+            </DashboardWidget>
+          )}
+        />
       </Example>
 
       <Example

@@ -1,6 +1,6 @@
 # `<DashboardWidget>` — card for a DashboardCanvas cell
 
-A widget card that fills its `DashboardCanvas` cell, in four presentations: `standard`, `list`, `kpi` and `chart`. Owns the header (title, actions), the body chrome and a variant-matched loading skeleton. The app keeps data, error state, permissions and the overflow menu.
+A widget card that fills its `DashboardCanvas` cell, in five presentations: `standard`, `list`, `kpi`, `chart` and `stats`. Owns the header (title, actions), the body chrome and a variant-matched loading skeleton. The app keeps data, error state, permissions and the overflow menu.
 
 ```tsx
 import {
@@ -56,6 +56,11 @@ import {
   />
 </DashboardWidget>;
 
+// stats: a StatGroup KPI strip; compact padding leaves slack in a 3-row cell
+<DashboardWidget variant="stats" title="Key metrics">
+  <StatGroup aria-label="Key metrics">{/* StatTiles */}</StatGroup>
+</DashboardWidget>;
+
 // quiet view-mode header: actions appear on hover / focus
 <DashboardWidget title="Pipeline" actions={menu} actionsReveal="hover">
   {/* body */}
@@ -80,7 +85,7 @@ import {
 <!-- prettier-ignore -->
 | Prop | Type | Required | Description |
 |---|---|---|---|
-| `variant` | `'standard' \| 'list' \| 'kpi' \| 'chart'` | no | Presentation variant. Default `'standard'`. - `'standard'` — header (title + actions) over a padded scrolling body. Today's widget card. - `'list'` — same fixed header as `standard`; flush scrolling body so `Card.List` bleeds edge to edge. - `'kpi'` — compact muted title, a large `value`, optional `trend`; optional `children` below. No scrolling. - `'chart'` — compact header; flush non-scrolling body that fills the cell (give the plot `height: 100%`). |
+| `variant` | `'standard' \| 'list' \| 'kpi' \| 'chart' \| 'stats'` | no | Presentation variant. Default `'standard'`. - `'standard'` — header (title + actions) over a padded scrolling body. Today's widget card. - `'list'` — same fixed header as `standard`; flush scrolling body so `Card.List` bleeds edge to edge. - `'kpi'` — compact muted title, a large `value`, optional `trend`; optional `children` below. No scrolling. - `'chart'` — compact header; flush non-scrolling body that fills the cell (give the plot `height: 100%`). - `'stats'` — compact header and padding over a scrolling body, for a `StatGroup` KPI strip; unlike `standard` it leaves vertical slack in a 3-row cell. |
 | `title` | `ReactNode` | yes | Widget title, rendered as the heading at `headerLevel`. Required. |
 | `meta` | `ReactNode` | no | Secondary, non-interactive header text such as freshness ("Updated 3 minutes ago") or status. Sits before `actions` and yields first in a narrow cell: it truncates (then hides visually, still read by screen readers) before the title shrinks, while `actions` never shrinks. Also describes the body region (`aria-describedby`) for `standard` / `list`. Repeat it in the refresh button's tooltip if it matters when truncated. |
 | `actions` | `ReactNode` | no | Header actions, e.g. the edit-mode overflow `DropdownMenu`. Never wraps. |
@@ -95,8 +100,8 @@ import {
 <!-- props:end -->
 
 - **Fills its cell.** It is a `<Card fill padding="none">`; `DashboardCanvas` sizes the cell, the widget fills it. The root is a `div` with a heading (no landmark; 20 regions on one dashboard is noise). Heading level is `headerLevel` (default `h3`).
-- **Variants.** `standard`: header + padded scrolling body. `list`: same fixed header as `standard`, flush scrolling body so `Card.List` bleeds edge to edge. `kpi`: compact muted title, large `value`, optional `trend`, optional `children` below; does not scroll. `chart`: compact header, flush body that does not scroll and fills the remaining height, so give the plot `height: 100%`.
-- **Only `standard` and `list` scroll.** `kpi` and `chart` bodies are non-scrolling (`Card.Body` without `scroll`).
+- **Variants.** `standard`: header + padded scrolling body. `list`: same fixed header as `standard`, flush scrolling body so `Card.List` bleeds edge to edge. `kpi`: compact muted title, large `value`, optional `trend`, optional `children` below; does not scroll. `chart`: compact header, flush body that does not scroll and fills the remaining height, so give the plot `height: 100%`. `stats`: compact header and padding over a scrolling body, for a [`StatGroup`](StatGroup.md) KPI strip; scrolls only on real overflow.
+- **Only `standard`, `list` and `stats` scroll.** `kpi` and `chart` bodies are non-scrolling (`Card.Body` without `scroll`).
 - **`value` / `trend` are kpi only** and ignored on other variants.
 - **Trend.** Direction icon plus a visually hidden "Increase / Decrease / No change" before `label`. Colour is by `sentiment`, which defaults from direction (up positive, down negative, flat neutral). Set `sentiment` explicitly when the direction is not the judgement (churn, overdue tasks up = `negative`).
 - **`loading`** swaps the body (for kpi, the value and trend) for a skeleton matching the variant (standard: lines, list: rows, kpi: value + trend, chart: bars). Title and actions stay. The skeleton is `aria-hidden`; the body instead contains visually hidden "Loading..." text and the root gets `aria-busy` as a hint.
@@ -118,7 +123,8 @@ import {
 - ❌ Wrapping `DashboardWidget` in another `Card`. It already is one.
 - ❌ Freshness or status text in `actions`. `actions` never shrinks, so the title gets crushed in a narrow cell; use `meta`.
 - ❌ Buttons or links in `meta`. They can be truncated out of reach; controls go in `actions`.
-- ❌ Passing `value` / `trend` to `standard`, `list` or `chart`. They are ignored; put content in `children`.
+- ❌ `standard` for a `StatGroup` KPI strip in a 3-row widget: the roomy padding leaves no slack and the strip scrolls. Use `stats`.
+- ❌ Passing `value` / `trend` to `standard`, `list`, `chart` or `stats`. They are ignored; put content in `children`.
 - ❌ Rendering your own `Skeleton` in `children` instead of `loading`. You lose the variant-matched shape, the hidden "Loading..." text and `aria-busy`.
 - ❌ Adding a live region (`role="status"`, `aria-live`) to each widget while loading.
 - ❌ Relying on direction-derived colour when up is bad. Set `sentiment`.
