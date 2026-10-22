@@ -32,6 +32,17 @@ describe('DashboardWidget', () => {
     );
   });
 
+  it('stats: meta describes the scrolling body group', () => {
+    render(
+      <DashboardWidget variant="stats" title="Pipeline" meta="Updated 3 minutes ago">
+        x
+      </DashboardWidget>,
+    );
+    expect(screen.getByRole('group', { name: 'Pipeline' })).toHaveAccessibleDescription(
+      'Updated 3 minutes ago',
+    );
+  });
+
   it('kpi: meta renders in the header; no body group to describe', () => {
     const { container } = render(
       <DashboardWidget variant="kpi" title="Open deals" meta="Live" value="128" />,
@@ -179,7 +190,9 @@ describe('DashboardWidget — stats variant (#692)', () => {
     const g = screen.getByRole('group', { name: 'Pipeline' });
     expect(g).toHaveAttribute('data-scroll');
     expect(g.className).toMatch(/statsBody/);
-    expect(container.innerHTML).toMatch(/header-stats/);
+    expect(screen.getByRole('heading', { name: 'Pipeline' }).parentElement?.className).toMatch(
+      /header-stats/,
+    );
   });
 });
 

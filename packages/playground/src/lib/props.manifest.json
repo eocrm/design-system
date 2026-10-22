@@ -1587,7 +1587,7 @@
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
           "default": "",
-          "description": "Secondary, non-interactive header text such as freshness (\"Updated 3 minutes ago\") or\nstatus. Sits before `actions` and yields first in a narrow cell: it truncates (then\nhides visually, still read by screen readers) before the title shrinks, while `actions`\nnever shrinks. Also describes the body region (`aria-describedby`) for `standard` /\n`list`. Repeat it in the refresh button's tooltip if it matters when truncated."
+          "description": "Secondary, non-interactive header text such as freshness (\"Updated 3 minutes ago\") or\nstatus. Sits before `actions` and yields first in a narrow cell: it truncates (then\nhides visually, still read by screen readers) before the title shrinks, while `actions`\nnever shrinks. Also describes the body region (`aria-describedby`) for `standard` / `list` /\n`stats`. Repeat it in the refresh button's tooltip if it matters when truncated."
         },
         {
           "name": "actions",
