@@ -1,5 +1,6 @@
-import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
+import { forwardRef, useEffect, useRef, type HTMLAttributes, type ReactNode } from 'react';
 import clsx from 'clsx';
+import { mergeRefs } from '../_internal/refs';
 import styles from './Sticky.module.scss';
 
 /**
@@ -39,9 +40,10 @@ export interface StickyProps extends HTMLAttributes<HTMLDivElement> {
    */
   layer?: boolean;
   /**
-   * Paint the pinned box with the page background and a bottom divider so content
-   * scrolling underneath doesn't show through. Always on while set (not only when
-   * pinned). Default `false`.
+   * Paint the box with the page background always; while pinned, also a bottom
+   * divider and a strip over the gap above it (the `top` offset), so content
+   * scrolling underneath doesn't show through. Pinned state is tracked with an
+   * IntersectionObserver (`data-pinned`). For page-level bars. Default `false`.
    */
   surface?: boolean;
   /** The content to pin. Required — a `Sticky` with nothing inside pins nothing. */
@@ -56,12 +58,34 @@ export const Sticky = forwardRef<HTMLDivElement, StickyProps>(function Sticky(
   { top = 'none', scroll = false, layer = false, surface = false, className, children, ...rest },
   ref,
 ) {
+  const innerRef = useRef<HTMLDivElement>(null);
+  // Pinned detection without a sentinel (Sticky must stay a single element): shrink
+  // the observer root by the top offset so a pinned box is partly outside it.
+  useEffect(() => {
+    const el = innerRef.current;
+    if (!surface || !el || typeof IntersectionObserver === 'undefined') return;
+    const topPx = parseFloat(getComputedStyle(el).top) || 0;
+    const io = new IntersectionObserver(
+      ([entry]) => {
+        const pinned = entry.intersectionRatio < 1 && entry.boundingClientRect.top <= topPx + 1;
+        if (pinned) el.setAttribute('data-pinned', '');
+        else el.removeAttribute('data-pinned');
+      },
+      { threshold: [1], rootMargin: `-${topPx + 1}px 0px 0px 0px` },
+    );
+    io.observe(el);
+    return () => {
+      io.disconnect();
+      el.removeAttribute('data-pinned');
+    };
+  }, [surface, top]);
+
   // {...rest} last so consumer overrides win (Pattern A) — Sticky locks no attrs.
   // `data-sticky` is an internal cross-component contract: Split.module.scss
   // targets it to unstick a collapsed aside (#558). Rename both together.
   return (
     <div
-      ref={ref}
+      ref={mergeRefs<HTMLDivElement>(ref, innerRef)}
       data-sticky=""
       className={clsx(
         styles.sticky,

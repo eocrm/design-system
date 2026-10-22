@@ -1189,6 +1189,8 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
           <div
             className={styles.container}
             data-dc-container="top"
+            // Intentional one-time shift: padding follows the target, so bands below
+            // move once when the drag crosses into another container.
             data-dc-drop-target={live?.kind === 'move' && live.target === 'top' ? '' : undefined}
             data-dc-empty={shown.items.length === 0 ? '' : undefined}
             ref={(el) => setContainerEl(TOP_CONTAINER, el)}

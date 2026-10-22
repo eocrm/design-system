@@ -6107,7 +6107,7 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Paint the pinned box with the page background and a bottom divider so content\nscrolling underneath doesn't show through. Always on while set (not only when\npinned). Default `false`."
+          "description": "Paint the box with the page background always; while pinned, also a bottom\ndivider and a strip over the gap above it (the `top` offset), so content\nscrolling underneath doesn't show through. Pinned state is tracked with an\nIntersectionObserver (`data-pinned`). For page-level bars. Default `false`."
         },
         {
           "name": "children",

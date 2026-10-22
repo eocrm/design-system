@@ -82,13 +82,17 @@
   z-index: var(--sticky-layer-z);
 }
 
-// Opt-in `surface`: page background + bottom divider. The box-shadow is the
-// box's own size shifted up by the top offset, so it paints the gap between
-// the pinned bar and whatever it is offset from (e.g. the TopBar).
-// ponytail: divider is always on while set; "only when pinned" needs an
-// IntersectionObserver sentinel if wanted.
+// Opt-in `surface`: page background always; while pinned (`data-pinned`, set by
+// an IntersectionObserver in Sticky.tsx) also a bottom divider and a box-shadow
+// that is the box's own size shifted up by the top offset, painting the gap
+// between the bar and whatever it is offset from (e.g. the TopBar). The border
+// is transparent unpinned so pinning causes no 1px layout jump.
 .surface {
   background: var(--sticky-surface-bg);
+  border-block-end: var(--border-width) solid transparent;
+}
+
+.surface[data-pinned] {
   box-shadow: 0 calc(-1 * var(--sticky-offset, 0px)) 0 0 var(--sticky-surface-bg);
-  border-block-end: var(--border-width) solid var(--sticky-surface-border-color);
+  border-block-end-color: var(--sticky-surface-border-color);
 }
