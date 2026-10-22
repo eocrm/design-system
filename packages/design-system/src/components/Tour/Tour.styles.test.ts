@@ -15,7 +15,8 @@ describe('Tour styles', () => {
   it('makes a [data-tour-inert] target and its descendants pointer-inert (#697)', () => {
     const scss = readFileSync(resolve(__dirname, './Tour.module.scss'), 'utf8');
     const m = scss.match(/:global\(\[data-tour-inert\]\)[^{]*\{([^}]*)\}/);
-    expect(m?.[0]).toMatch(/:global\(\[data-tour-inert\] \*\)/);
+    // Chained attribute (>= 4) lifts specificity above library pointer-events:auto rules.
+    expect(m?.[0]).toMatch(/:global\((\[data-tour-inert\]){4,} \*\)/);
     expect(m?.[1]).toMatch(/pointer-events:\s*none/);
   });
 

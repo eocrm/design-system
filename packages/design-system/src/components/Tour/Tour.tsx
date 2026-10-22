@@ -157,6 +157,8 @@ function activate(el: HTMLElement) {
 export const EXIT_FALLBACK_MS = 300;
 /** Gap in px between target and card (room for the arrow). */
 const CARD_OFFSET = 12;
+/** Viewport edge padding for shift(); mirrored by `--tour-card-viewport-gap` in Tour.tokens.scss. */
+const CARD_VIEWPORT_PADDING = 8;
 /** Arrow keys inside these keep their native meaning (caret, option list). */
 const EDITABLE = 'input, textarea, select, [contenteditable]:not([contenteditable="false"])';
 
@@ -337,7 +339,12 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
     strategy: 'fixed',
     // CSS `transform` stays free for the entrance scale (as in Popover).
     transform: false,
-    middleware: [offset(CARD_OFFSET), flip(), shift({ padding: 8 }), arrow({ element: arrowRef })],
+    middleware: [
+      offset(CARD_OFFSET),
+      flip(),
+      shift({ padding: CARD_VIEWPORT_PADDING }),
+      arrow({ element: arrowRef }),
+    ],
     whileElementsMounted: autoUpdate,
     elements: { reference: found },
   });
