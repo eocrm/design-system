@@ -18,4 +18,10 @@ describe('Tour styles', () => {
     expect(m?.[0]).toMatch(/:global\(\[data-tour-inert\] \*\)/);
     expect(m?.[1]).toMatch(/pointer-events:\s*none/);
   });
+
+  it('card width is intrinsic, independent of its in-flight left (#698)', () => {
+    const scss = readFileSync(resolve(__dirname, './Tour.module.scss'), 'utf8');
+    const card = scss.match(/\n\.card \{([^}]*)\}/);
+    expect(card?.[1]).toMatch(/width:\s*max-content/);
+  });
 });
