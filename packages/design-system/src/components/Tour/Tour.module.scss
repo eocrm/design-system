@@ -60,13 +60,26 @@
   pointer-events: none;
 }
 
+// A non-interactive modal step lights its target but blocks the pointer on it
+// and everything inside (Tour.tsx sets the marker). Global: the target is
+// consumer DOM. The chained attribute raises both selectors to (0,4,0)
+// so library `pointer-events: auto` rules (e.g. MediaTile reveal, (0,3,0)) lose
+// without !important. Not `inert`, which would hide the panel from assistive tech.
+// stylelint-disable selector-pseudo-class-no-unknown -- CSS Modules :global() escape hatch
+:global([data-tour-inert][data-tour-inert][data-tour-inert][data-tour-inert]),
+:global([data-tour-inert][data-tour-inert][data-tour-inert][data-tour-inert] *) {
+  pointer-events: none;
+}
+// stylelint-enable selector-pseudo-class-no-unknown
+
 // ---------- Card ----------
 
 .card {
   z-index: var(--tour-z);
   box-sizing: border-box;
+  width: max-content; // intrinsic: independent of the in-flight `left` (#698)
   min-width: var(--tour-card-min-width);
-  max-width: var(--tour-card-max-width);
+  max-width: min(var(--tour-card-max-width), calc(100vw - 2 * var(--tour-card-viewport-gap)));
   padding: var(--tour-card-padding);
   background: var(--tour-card-bg);
   color: var(--tour-card-fg);

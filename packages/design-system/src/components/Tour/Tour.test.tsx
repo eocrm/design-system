@@ -441,6 +441,70 @@ describe('Tour — overlay elevation', () => {
       expect(el).not.toHaveAttribute('data-tour-active-target');
     });
 
+    it('marks the target data-tour-inert on a modal non-interactive step, and unmarks on advance/close (#697)', async () => {
+      const user = userEvent.setup();
+      const el = addTarget();
+      render(
+        <Harness
+          steps={[
+            { target: 'it', title: 'Look' },
+            { target: 'it', title: 'Try', interactive: true },
+          ]}
+        />,
+      );
+      await waitFor(() => expect(el).toHaveAttribute('data-tour-inert', ''));
+      await user.click(screen.getByRole('button', { name: 'Next' }));
+      await waitFor(() => expect(el).not.toHaveAttribute('data-tour-inert'));
+    });
+
+    it('unmarks data-tour-inert when the tour closes (#697)', async () => {
+      const user = userEvent.setup();
+      const el = addTarget();
+      render(<Harness steps={[{ target: 'it', title: 'Look' }]} />);
+      await waitFor(() => expect(el).toHaveAttribute('data-tour-inert', ''));
+      await user.keyboard('{Escape}');
+      await waitFor(() => expect(el).not.toHaveAttribute('data-tour-inert'));
+    });
+
+    it('does not set data-tour-inert on interactive steps or with modal={false} (#697)', async () => {
+      const el = addTarget();
+      const { rerender } = render(
+        <Tour
+          steps={[{ target: 'it', title: 'Try', interactive: true }]}
+          open
+          onOpenChange={() => {}}
+        />,
+      );
+      await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument());
+      expect(el).not.toHaveAttribute('data-tour-inert');
+      rerender(
+        <Tour
+          steps={[{ target: 'it', title: 'Look' }]}
+          open
+          modal={false}
+          onOpenChange={() => {}}
+        />,
+      );
+      await waitFor(() => expect(screen.getByRole('dialog')).toBeInTheDocument());
+      expect(el).not.toHaveAttribute('data-tour-inert');
+    });
+
+    it('Tab from the card never reaches a button inside an inert panel target (#697)', async () => {
+      const user = userEvent.setup();
+      const panel = document.createElement('div');
+      panel.dataset.tour = 'it';
+      const inner = document.createElement('button');
+      inner.textContent = 'inside';
+      panel.appendChild(inner);
+      document.body.appendChild(panel);
+      render(<Tour steps={[{ target: 'it', title: 'Look' }]} open onOpenChange={() => {}} />);
+      await waitFor(() => expect(panel).toHaveAttribute('data-tour-inert', ''));
+      for (let i = 0; i < 8; i++) {
+        await user.tab();
+        expect(document.activeElement).not.toBe(inner);
+      }
+    });
+
     it.each([
       ['modal, interactive', { interactive: true }, {}],
       ['modal, not interactive', {}, {}],

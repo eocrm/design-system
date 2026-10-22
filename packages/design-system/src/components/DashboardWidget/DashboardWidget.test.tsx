@@ -32,6 +32,17 @@ describe('DashboardWidget', () => {
     );
   });
 
+  it('stats: meta describes the scrolling body group', () => {
+    render(
+      <DashboardWidget variant="stats" title="Pipeline" meta="Updated 3 minutes ago">
+        x
+      </DashboardWidget>,
+    );
+    expect(screen.getByRole('group', { name: 'Pipeline' })).toHaveAccessibleDescription(
+      'Updated 3 minutes ago',
+    );
+  });
+
   it('kpi: meta renders in the header; no body group to describe', () => {
     const { container } = render(
       <DashboardWidget variant="kpi" title="Open deals" meta="Live" value="128" />,
@@ -124,6 +135,7 @@ describe('DashboardWidget', () => {
     ['list', 'list'],
     ['kpi', 'kpi'],
     ['chart', 'chart'],
+    ['stats', 'kpi'],
   ] as const)('loading %s renders the %s shape and keeps title + actions', (variant, kind) => {
     const { container } = render(
       <DashboardWidget variant={variant} title="W" actions={<button>Menu</button>} loading>
@@ -167,16 +179,36 @@ describe('DashboardWidget', () => {
   });
 });
 
-describe('DashboardWidget — scroll body name', () => {
-  it.each(['standard', 'list'] as const)('%s: scroll body is a group named by the title', (v) => {
-    render(
-      <DashboardWidget variant={v} title="Open deals" actions={<button>Menu</button>}>
-        x
+describe('DashboardWidget — stats variant (#692)', () => {
+  it('renders data-variant, the scrolling stats body and the compact header', () => {
+    const { container } = render(
+      <DashboardWidget variant="stats" title="Pipeline">
+        <p>tiles</p>
       </DashboardWidget>,
     );
-    const g = screen.getByRole('group', { name: 'Open deals' });
+    expect(container.firstChild).toHaveAttribute('data-variant', 'stats');
+    const g = screen.getByRole('group', { name: 'Pipeline' });
     expect(g).toHaveAttribute('data-scroll');
+    expect(g.className).toMatch(/statsBody/);
+    expect(screen.getByRole('heading', { name: 'Pipeline' }).parentElement?.className).toMatch(
+      /header-stats/,
+    );
   });
+});
+
+describe('DashboardWidget — scroll body name', () => {
+  it.each(['standard', 'list', 'stats'] as const)(
+    '%s: scroll body is a group named by the title',
+    (v) => {
+      render(
+        <DashboardWidget variant={v} title="Open deals" actions={<button>Menu</button>}>
+          x
+        </DashboardWidget>,
+      );
+      const g = screen.getByRole('group', { name: 'Open deals' });
+      expect(g).toHaveAttribute('data-scroll');
+    },
+  );
   it.each(['kpi', 'chart'] as const)('%s: no group', (v) => {
     render(<DashboardWidget variant={v} title="T" />);
     expect(screen.queryByRole('group')).toBeNull();
@@ -190,10 +222,11 @@ describe('DashboardWidget — cascade + fill chain (source-pinned; jsdom cannot 
   // order is not guaranteed, so every override of a Card rule must win on
   // specificity (a `.root` ancestor), never on source order.
   it.each([
-    /\.root :is\(\.header-kpi, \.header-chart\) \{/,
-    /\.root :is\(\.header-kpi, \.header-chart\) :is\(h2, h3, h4, h5, h6\) \{/,
+    /\.root :is\(\.header-kpi, \.header-chart, \.header-stats\) \{/,
+    /\.root :is\(\.header-kpi, \.header-chart, \.header-stats\) :is\(h2, h3, h4, h5, h6\) \{/,
     /\.root \.scrollBody \{/,
     /\.root \.flush \{/,
+    /\.root \.statsBody \{/,
     /\.root :is\(\.kpiBody, \.chartBody\) \{/,
   ])('overrides Card rules via a .root-scoped selector: %s', (re) => {
     expect(scss).toMatch(re);

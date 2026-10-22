@@ -8,7 +8,7 @@ import { useTranslation } from '../../i18n/useTranslation';
 import styles from './DashboardWidget.module.scss';
 
 /** Presentation variant of a dashboard widget card. */
-export type DashboardWidgetVariant = 'standard' | 'list' | 'kpi' | 'chart';
+export type DashboardWidgetVariant = 'standard' | 'list' | 'kpi' | 'chart' | 'stats';
 
 /** When header `actions` are visible. */
 export type DashboardWidgetActionsReveal = 'always' | 'hover';
@@ -33,6 +33,7 @@ export interface DashboardWidgetProps extends Omit<HTMLAttributes<HTMLDivElement
    * - `'list'` — same fixed header as `standard`; flush scrolling body so `Card.List` bleeds edge to edge.
    * - `'kpi'` — compact muted title, a large `value`, optional `trend`; optional `children` below. No scrolling.
    * - `'chart'` — compact header; flush non-scrolling body that fills the cell (give the plot `height: 100%`).
+   * - `'stats'` — compact header and padding over a scrolling body, for a `StatGroup` KPI strip; unlike `standard` it leaves vertical slack in a 3-row cell.
    */
   variant?: DashboardWidgetVariant;
   /** Widget title, rendered as the heading at `headerLevel`. Required. */
@@ -41,8 +42,8 @@ export interface DashboardWidgetProps extends Omit<HTMLAttributes<HTMLDivElement
    * Secondary, non-interactive header text such as freshness ("Updated 3 minutes ago") or
    * status. Sits before `actions` and yields first in a narrow cell: it truncates (then
    * hides visually, still read by screen readers) before the title shrinks, while `actions`
-   * never shrinks. Also describes the body region (`aria-describedby`) for `standard` /
-   * `list`. Repeat it in the refresh button's tooltip if it matters when truncated.
+   * never shrinks. Also describes the body region (`aria-describedby`) for `standard` / `list` /
+   * `stats`. Repeat it in the refresh button's tooltip if it matters when truncated.
    */
   meta?: ReactNode;
   /** Header actions, e.g. the edit-mode overflow `DropdownMenu`. Never wraps. */
@@ -78,10 +79,11 @@ const LOADING_SHAPE: Record<DashboardWidgetVariant, WidgetShapeKind> = {
   list: 'list',
   kpi: 'kpi',
   chart: 'chart',
+  stats: 'kpi',
 };
 
 /**
- * Dashboard canvas-cell card with standard / list / kpi / chart presentation and a variant-matched loading skeleton.
+ * Dashboard canvas-cell card with standard / list / kpi / chart / stats presentation and a variant-matched loading skeleton.
  * @see docs/components/DashboardWidget.md
  */
 // {...rest} last (Pattern A) so the consumer can add data-* / handlers to the Card root.
@@ -134,6 +136,7 @@ export const DashboardWidget = forwardRef<HTMLDivElement, DashboardWidgetProps>(
     const bodyClass = clsx(
       variant === 'kpi' && styles.kpiBody,
       variant === 'chart' && styles.chartBody,
+      variant === 'stats' && styles.statsBody,
       variant === 'standard' && styles.scrollBody,
       variant === 'list' && [styles.scrollBody, !loading && styles.flush],
     );
@@ -149,7 +152,7 @@ export const DashboardWidget = forwardRef<HTMLDivElement, DashboardWidgetProps>(
       children
     );
     // Always a Card.Body: Card only builds its fill column (header fixed, body flexes)
-    // for a direct Card.Body child. Only standard/list scroll.
+    // for a direct Card.Body child. Only standard/list/stats scroll.
     const body =
       variant === 'kpi' || variant === 'chart' ? (
         <Card.Body className={bodyClass}>{content}</Card.Body>

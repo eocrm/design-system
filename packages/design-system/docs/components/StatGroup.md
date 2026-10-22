@@ -20,7 +20,7 @@
 </DashboardWidget>
 ```
 
-TL;DR: a `<ul>` grid of 1–8 [`StatTile`](StatTile.md)s for a dashboard widget that shows several numbers at once. Tiles reflow by available width (`minColumnWidth`, auto-fit). In a cell narrower than one column a single tile shrinks instead of overflowing, and very narrow tiles drop the icon and shrink the value. Put it in `DashboardWidget` `variant="standard"`: its body scrolls if the tiles overflow the cell.
+TL;DR: a `<ul>` grid of 1–8 [`StatTile`](StatTile.md)s for a dashboard widget that shows several numbers at once. Tiles reflow by available width (`minColumnWidth`, auto-fit). In a cell narrower than one column a single tile shrinks instead of overflowing, and very narrow tiles drop the icon and shrink the value. Put it in `DashboardWidget` `variant="stats"` (compact padding, leaves slack in a 3-row cell; `standard` also works): its body scrolls if the tiles overflow the cell.
 
 **Surface:** `variant="filled"` (default) is a muted tile with no border — right inside a `Card` / `DashboardWidget`. `variant="card"` gives every tile the card background, border and shadow, for a group sitting directly on the page background next to other `Card`s. Don't use `card` inside a Card (card-in-card). The `Progress` track and skeletons stay visible on both surfaces.
 

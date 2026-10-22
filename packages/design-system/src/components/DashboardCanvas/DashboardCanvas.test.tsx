@@ -658,6 +658,78 @@ describe('DashboardCanvas pointer gestures', () => {
   });
 });
 
+describe('DashboardCanvas stacked drops, ghost clamp, trailing space (#694 #695 #696)', () => {
+  let restoreRects: () => void;
+  beforeEach(() => {
+    restoreRects = stubCanvasRects();
+  });
+  afterEach(() => {
+    restoreRects();
+  });
+
+  // 12 columns of 40px, 48px rows (stubbed): tasks/deals stack in column 0,
+  // email sits to their right.
+  const stacked = (): DashboardCanvasValue => ({
+    items: [
+      { id: 'tasks', x: 0, y: 0, w: 6, h: 6 },
+      { id: 'deals', x: 0, y: 6, w: 6, h: 6 },
+      { id: 'email', x: 6, y: 0, w: 6, h: 4 },
+    ],
+    sections: [],
+  });
+
+  function start() {
+    const onChange = vi.fn();
+    const utils = render(
+      <DashboardCanvas
+        value={stacked()}
+        onChange={onChange}
+        renderItem={renderItem}
+        columns={12}
+      />,
+    );
+    const root = screen.getByRole('group', { name: 'Dashboard canvas' });
+    // Grab email 10px inside its left edge (x 240).
+    fireEvent.pointerDown(itemEl(utils.container, 'email'), {
+      clientX: 250,
+      clientY: 10,
+      pointerId: 1,
+      button: 0,
+    });
+    return { ...utils, onChange, root };
+  }
+
+  it('dropping on the lower half of a stacked widget inserts after it, no gap', () => {
+    const { onChange, root } = start();
+    // Pointer (100, 216) = cell (2.5, 4.5): lower half of tasks (rows 0-6).
+    fireEvent.pointerMove(root, { clientX: 100, clientY: 216, pointerId: 1 });
+    fireEvent.pointerUp(root, { clientX: 100, clientY: 216, pointerId: 1 });
+    const items = (onChange.mock.calls[0][0] as DashboardCanvasValue).items;
+    const at = (id: string) => items.find((i) => i.id === id);
+    expect(at('tasks')).toMatchObject({ x: 0, y: 0 });
+    expect(at('email')).toMatchObject({ x: 0, y: 6 });
+    expect(at('deals')).toMatchObject({ y: 10 });
+  });
+
+  it('sets --dc-trailing-rows to the dragged h only while a move-drag is active', () => {
+    const { root } = start();
+    expect(root.style.getPropertyValue('--dc-trailing-rows')).toBe('');
+    fireEvent.pointerMove(root, { clientX: 100, clientY: 216, pointerId: 1 });
+    expect(root.style.getPropertyValue('--dc-trailing-rows')).toBe('4');
+    fireEvent.pointerUp(root, { clientX: 100, clientY: 216, pointerId: 1 });
+    expect(root.style.getPropertyValue('--dc-trailing-rows')).toBe('');
+  });
+
+  it('keeps the ghost inside the canvas when the pointer leaves far right', () => {
+    const { container, root } = start();
+    fireEvent.pointerMove(root, { clientX: 5000, clientY: 20, pointerId: 1 });
+    const ghost = container.querySelector('[data-dc-ghost]') as HTMLElement;
+    const left = Number(/translate\((-?[\d.]+)px/.exec(ghost.style.transform)![1]);
+    // Root stub is 1000px wide, ghost 240px (6 cols x 40).
+    expect(left).toBe(1000 - 240);
+  });
+});
+
 // --- keyboard editing + announcements (Task 4) ------------------------------
 // Pure engine math — no getBoundingClientRect stubs needed: the keyboard paths
 // never measure pixels, they step grid cells directly.
@@ -1170,6 +1242,26 @@ describe('DashboardCanvas empty sections (#353)', () => {
     expect(container.querySelector('[data-dc-container="top"]')).not.toHaveAttribute(
       'data-dc-empty',
     );
+  });
+
+  it('marks only the hovered container as the trailing-space drop target', () => {
+    const { container, root } = renderCanvas();
+    const top = container.querySelector('[data-dc-container="top"]');
+    const s1 = container.querySelector('[data-dc-container="s1"]');
+    fireEvent.pointerDown(itemEl(container, 'b'), {
+      clientX: 10,
+      clientY: 10,
+      pointerId: 1,
+      button: 0,
+    });
+    fireEvent.pointerMove(root, { clientX: 20, clientY: 20, pointerId: 1 });
+    expect(top).toHaveAttribute('data-dc-drop-target');
+    expect(s1).not.toHaveAttribute('data-dc-drop-target');
+    fireEvent.pointerMove(root, { clientX: 55, clientY: 615, pointerId: 1 });
+    expect(top).not.toHaveAttribute('data-dc-drop-target');
+    expect(s1).toHaveAttribute('data-dc-drop-target');
+    fireEvent.pointerUp(root, { clientX: 55, clientY: 615, pointerId: 1 });
+    expect(s1).not.toHaveAttribute('data-dc-drop-target');
   });
 
   it('a single-jump pointer drag into the empty section commits applyMove into it', () => {

@@ -157,6 +157,8 @@ function activate(el: HTMLElement) {
 export const EXIT_FALLBACK_MS = 300;
 /** Gap in px between target and card (room for the arrow). */
 const CARD_OFFSET = 12;
+/** Viewport edge padding for shift(); mirrored by `--tour-card-viewport-gap` in Tour.tokens.scss. */
+const CARD_VIEWPORT_PADDING = 8;
 /** Arrow keys inside these keep their native meaning (caret, option list). */
 const EDITABLE = 'input, textarea, select, [contenteditable]:not([contenteditable="false"])';
 
@@ -337,7 +339,12 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
     strategy: 'fixed',
     // CSS `transform` stays free for the entrance scale (as in Popover).
     transform: false,
-    middleware: [offset(CARD_OFFSET), flip(), shift({ padding: 8 }), arrow({ element: arrowRef })],
+    middleware: [
+      offset(CARD_OFFSET),
+      flip(),
+      shift({ padding: CARD_VIEWPORT_PADDING }),
+      arrow({ element: arrowRef }),
+    ],
     whileElementsMounted: autoUpdate,
     elements: { reference: found },
   });
@@ -418,6 +425,18 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
     if (!(modal && interactive && found) || closing) return;
     found.setAttribute('data-tour-active-target', '');
     return () => found.removeAttribute('data-tour-active-target');
+  }, [modal, interactive, found, closing]);
+
+  // ---- Inert target (#697) ----
+  // A non-interactive modal step lights its target but must not let the
+  // pointer through to it (e.g. a lifted, open menu panel). Marker + global
+  // pointer-events rule instead of the `inert` attribute, which would also
+  // hide the panel from assistive tech. Keyboard is already contained: the
+  // focus trap only extends to the target on interactive steps.
+  useEffect(() => {
+    if (!(modal && !interactive && found) || closing) return;
+    found.setAttribute('data-tour-inert', '');
+    return () => found.removeAttribute('data-tour-inert');
   }, [modal, interactive, found, closing]);
 
   // ---- Current-target marker (#684) ----

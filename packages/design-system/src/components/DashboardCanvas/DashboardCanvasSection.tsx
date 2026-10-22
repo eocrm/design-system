@@ -20,6 +20,8 @@ interface DashboardCanvasSectionProps {
   gestures: CanvasGestures;
   /** True while this band is being pointer-reordered (styling hook). */
   dragging: boolean;
+  /** True while a move-drag hovers this body grid (it alone gets trailing drop space). */
+  dropTarget: boolean;
   /** Band-reorder drag zone: the dedicated grip handle only (see remarks below). */
   onHeaderPointerDown: (
     event: ReactPointerEvent<HTMLDivElement>,
@@ -72,6 +74,7 @@ export function DashboardCanvasSection({
   renderSectionHeader,
   gestures,
   dragging,
+  dropTarget,
   onHeaderPointerDown,
   onHeaderKeyDown,
   setContainerEl,
@@ -143,6 +146,7 @@ export function DashboardCanvasSection({
               className={styles.container}
               data-dc-container={String(id)}
               data-dc-empty={items.length === 0 ? '' : undefined}
+              data-dc-drop-target={dropTarget ? '' : undefined}
               inert={collapsed}
               ref={(el) => setContainerEl(containerRef, el)}
             >

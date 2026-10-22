@@ -312,3 +312,52 @@ export function cellFromPoint(
     y: Math.max(rawY, 0),
   };
 }
+
+/**
+ * Where a drop lands when the pointer is over another item: the hovered
+ * item's upper half inserts the dragged item before it (at its `y`), the
+ * lower half after it (below its bottom), so stacked widgets reorder instead
+ * of snapping to the ghost's origin cell. x follows the ghost (`fallback.x`)
+ * clamped inside the hovered item's column span when the dragged item fits in
+ * it, otherwise it aligns to the hovered item's left edge (kept on-grid). `px`/`py` are the pointer in
+ * fractional cell units relative to the container. Callers pass the ORIGINAL
+ * pre-drag `items`, never the live preview — a preview reflows the hovered
+ * item and would flip the half under a stationary pointer (oscillation).
+ * Over empty cells or the dragged item itself, returns `fallback`.
+ */
+export function insertionCell(
+  items: readonly DashboardPlacement[],
+  id: string | number,
+  w: number,
+  px: number,
+  py: number,
+  fallback: { x: number; y: number },
+  columns: number = DASHBOARD_COLUMNS,
+): { x: number; y: number } {
+  const t = items.find(
+    (i) => i.id !== id && i.x <= px && px < i.x + i.w && i.y <= py && py < i.y + i.h,
+  );
+  if (!t) return fallback;
+  return {
+    x:
+      w <= t.w
+        ? Math.min(Math.max(fallback.x, t.x), t.x + t.w - w)
+        : Math.max(0, Math.min(t.x, columns - w)),
+    y: py < t.y + t.h / 2 ? t.y : t.y + t.h,
+  };
+}
+
+/** Clamps a ghost's top-left into `[0, bounds - size]` per axis (never negative). */
+export function clampGhost(
+  left: number,
+  top: number,
+  w: number,
+  h: number,
+  boundsW: number,
+  boundsH: number,
+): { left: number; top: number } {
+  return {
+    left: Math.min(Math.max(left, 0), Math.max(0, boundsW - w)),
+    top: Math.min(Math.max(top, 0), Math.max(0, boundsH - h)),
+  };
+}

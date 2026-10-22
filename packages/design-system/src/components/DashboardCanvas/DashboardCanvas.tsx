@@ -17,6 +17,8 @@ import {
   applyMove,
   applyResize,
   cellFromPoint,
+  clampGhost,
+  insertionCell,
   reorderSection,
   toggleSection,
 } from './engine';
@@ -301,6 +303,10 @@ type LiveState =
       kind: 'move';
       id: string | number;
       value: DashboardCanvasValue;
+      /** Dragged item's row span — sizes the trailing drop space. */
+      h: number;
+      /** `containerKey` of the hovered drop target — only it gets the trailing space. */
+      target: string;
       /** Canvas-relative px box for the cursor-following ghost. */
       ghost: { left: number; top: number; width: number; height: number };
     }
@@ -611,7 +617,25 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         // left edge to the cursor column.
         const originX = event.clientX - drag.grabDX;
         const originY = event.clientY - drag.grabDY;
-        const cell = cellFromPoint(originX, originY, rect, colWidth, rowHeight, gap, columns);
+        const origin = cellFromPoint(originX, originY, rect, colWidth, rowHeight, gap, columns);
+        // #694: over another widget the POINTER picks insert-before/after
+        // (hit-tested against the ORIGINAL value, never the preview, so the
+        // preview can't flip the half under a still pointer).
+        const colPitch = colWidth + gap;
+        const rowPitch = rowHeight + gap;
+        const dragged = itemsOf(value, drag.from).find((p) => p.id === drag.id);
+        const cell =
+          dragged && colPitch > 0 && rowPitch > 0
+            ? insertionCell(
+                itemsOf(value, drag.target),
+                drag.id,
+                dragged.w,
+                (event.clientX - rect.left) / colPitch,
+                (event.clientY - rect.top) / rowPitch,
+                origin,
+                columns,
+              )
+            : origin;
         if (
           !drag.preview ||
           drag.previewKey !== drag.targetKey ||
@@ -625,16 +649,22 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
           drag.cell = cell;
         }
         const rootRect = rootRef.current?.getBoundingClientRect();
+        // #695: keep the ghost inside the root so it can't grow a scrollbar.
+        const ghost = clampGhost(
+          originX - (rootRect?.left ?? 0),
+          originY - (rootRect?.top ?? 0),
+          drag.ghostW,
+          drag.ghostH,
+          rootRect?.width ?? Infinity,
+          rootRect?.height ?? Infinity,
+        );
         setLive({
           kind: 'move',
           id: drag.id,
           value: drag.preview,
-          ghost: {
-            left: originX - (rootRect?.left ?? 0),
-            top: originY - (rootRect?.top ?? 0),
-            width: drag.ghostW,
-            height: drag.ghostH,
-          },
+          h: dragged?.h ?? 0,
+          target: drag.targetKey,
+          ghost: { ...ghost, width: drag.ghostW, height: drag.ghostH },
         });
         return;
       }
@@ -1134,7 +1164,12 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         aria-describedby={mergeAriaDescribedby(ariaDescribedby, instructionsId)}
         className={clsx(styles.canvas, stackClass[stackBelow], className)}
         // Consumer style spreads last so its own custom properties win.
-        style={{ ['--dc-cols' as string]: columns, ...style }}
+        style={{
+          ['--dc-cols' as string]: columns,
+          // #696: trailing drop space height, only during a move-drag.
+          ...(live?.kind === 'move' && { ['--dc-trailing-rows' as string]: live.h }),
+          ...style,
+        }}
         data-readonly={readOnly ? '' : undefined}
         data-narrow={isNarrow ? '' : undefined}
         data-dragging={dragging ? '' : undefined}
@@ -1154,6 +1189,9 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
           <div
             className={styles.container}
             data-dc-container="top"
+            // Intentional one-time shift: padding follows the target, so bands below
+            // move once when the drag crosses into another container.
+            data-dc-drop-target={live?.kind === 'move' && live.target === 'top' ? '' : undefined}
             data-dc-empty={shown.items.length === 0 ? '' : undefined}
             ref={(el) => setContainerEl(TOP_CONTAINER, el)}
           >
@@ -1186,6 +1224,10 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
                   renderSectionHeader={renderSectionHeader}
                   gestures={gestures}
                   dragging={live?.kind === 'section' && live.id === section.id}
+                  dropTarget={
+                    live?.kind === 'move' &&
+                    live.target === containerKey({ kind: 'section', id: section.id })
+                  }
                   onHeaderPointerDown={onHeaderPointerDown}
                   onHeaderKeyDown={onHeaderKeyDown}
                   setContainerEl={setContainerEl}

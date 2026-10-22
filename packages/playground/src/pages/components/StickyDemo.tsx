@@ -1,7 +1,53 @@
-import { Sticky, Split, Stack, Card, Text, Title } from '@eocrm/design-system';
+import { useState } from 'react';
+import {
+  Button,
+  Card,
+  Cluster,
+  DashboardCanvas,
+  Split,
+  Stack,
+  Sticky,
+  Text,
+  Title,
+  type DashboardCanvasValue,
+} from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
+
+const CANVAS_VALUE: DashboardCanvasValue = {
+  items: Array.from({ length: 12 }, (_, i) => ({
+    id: `w${i + 1}`,
+    x: (i % 3) * 8,
+    y: Math.floor(i / 3) * 4,
+    w: 8,
+    h: 4,
+  })),
+  sections: [],
+};
+
+function PinnedToolbarOverCanvas() {
+  const [value, setValue] = useState(CANVAS_VALUE);
+  return (
+    <Stack gap="md">
+      <Sticky top="topbar" layer surface data-testid="sticky-toolbar">
+        <Cluster gap="sm">
+          <Button>Save layout</Button>
+          <Text tone="muted">Edit toolbar</Text>
+        </Cluster>
+      </Sticky>
+      <DashboardCanvas
+        value={value}
+        onChange={setValue}
+        renderItem={(id) => (
+          <Card>
+            <Text>Widget {String(id)}</Text>
+          </Card>
+        )}
+      />
+    </Stack>
+  );
+}
 
 const MAIN_ROWS = Array.from({ length: 14 }, (_, i) => i + 1);
 
@@ -262,6 +308,30 @@ export function Demo() {
             ))}
           </Stack>
         </Split>
+      </Example>
+
+      <Example
+        title="Page-level toolbar: layer + surface"
+        description="layer lifts the pinned bar above positioned content (here DashboardCanvas cells) so its buttons stay clickable while the grid scrolls underneath; surface gives it the page background and a bottom divider so content does not show through. Avoid layer on a Split aside that hosts inline popovers: it creates a stacking context."
+        code={`import { useState } from 'react';
+import { Button, Cluster, DashboardCanvas, Stack, Sticky, Text } from '@eocrm/design-system';
+
+export function Demo({ initial }) {
+  const [value, setValue] = useState(initial);
+  return (
+    <Stack gap="md">
+      <Sticky top="topbar" layer surface>
+        <Cluster gap="sm">
+          <Button>Save layout</Button>
+          <Text tone="muted">Edit toolbar</Text>
+        </Cluster>
+      </Sticky>
+      <DashboardCanvas value={value} onChange={setValue} renderItem={(id) => <Text>{id}</Text>} />
+    </Stack>
+  );
+}`}
+      >
+        <PinnedToolbarOverCanvas />
       </Example>
     </DemoLayout>
   );

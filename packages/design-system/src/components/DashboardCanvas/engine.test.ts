@@ -3,9 +3,11 @@ import {
   applyMove,
   applyResize,
   cellFromPoint,
+  clampGhost,
   clampPlacement,
   collides,
   compact,
+  insertionCell,
   placeWithPushDown,
   reorderSection,
   stackOrder,
@@ -705,4 +707,58 @@ describe('engine property test (seeded, #337 review)', () => {
       }
     },
   );
+});
+
+describe('insertionCell', () => {
+  const items = [p('tasks', 0, 0, 24, 6), p('deals', 0, 6, 24, 6), p('email', 24, 0, 24, 4)];
+  const fb = { x: 7, y: 7 };
+  const at = (id: string, w: number, px: number, py: number, list = items) =>
+    insertionCell(list, id, w, px, py, fb, 48);
+
+  it('lower half of tasks inserts after it, and the move reorders without a gap', () => {
+    expect(at('email', 24, 10, 4.5)).toEqual({ x: 0, y: 6 });
+    const top = { kind: 'top' } as const;
+    const value = { items, sections: [] } as DashboardCanvasValue;
+    const next = applyMove(value, top, top, 'email', 0, 6, 48);
+    expect(byId(next.items, 'tasks')).toMatchObject({ y: 0 });
+    expect(byId(next.items, 'email')).toMatchObject({ x: 0, y: 6 });
+    expect(byId(next.items, 'deals')).toMatchObject({ y: 10 });
+  });
+
+  it('upper half inserts before, lower half after', () => {
+    expect(at('email', 24, 10, 6.5)).toEqual({ x: 0, y: 6 });
+    expect(at('email', 24, 10, 11)).toEqual({ x: 0, y: 12 });
+    expect(at('email', 24, 10, 1)).toEqual({ x: 0, y: 0 });
+  });
+
+  it('clamps x so the dragged width fits, flooring at 0', () => {
+    const list = [p('a', 40, 0, 8, 4)];
+    expect(at('b', 24, 41, 1, list)).toEqual({ x: 24, y: 0 });
+    expect(at('b', 60, 41, 1, list)).toEqual({ x: 0, y: 0 });
+  });
+
+  it('follows the ghost column inside the hovered span when the dragged item fits', () => {
+    const list = [p('big', 0, 0, 24, 6)];
+    const x = (fx: number) => insertionCell(list, 'm', 6, 5, 1, { x: fx, y: 0 }, 48).x;
+    expect(x(10)).toBe(10);
+    expect(x(22)).toBe(18);
+    expect(x(-3)).toBe(0);
+  });
+
+  it('returns the fallback over empty cells or the dragged item itself', () => {
+    expect(at('email', 24, 30, 20)).toBe(fb);
+    expect(at('email', 24, 30, 1)).toBe(fb);
+  });
+});
+
+describe('clampGhost', () => {
+  it('clamps into the bounds', () => {
+    expect(clampGhost(900, 50, 200, 100, 800, 600)).toEqual({ left: 600, top: 50 });
+    expect(clampGhost(-5, -5, 200, 100, 800, 600)).toEqual({ left: 0, top: 0 });
+    expect(clampGhost(10, 700, 200, 100, 800, 600)).toEqual({ left: 10, top: 500 });
+  });
+
+  it('never goes negative when the ghost is larger than the bounds', () => {
+    expect(clampGhost(50, 50, 900, 700, 800, 600)).toEqual({ left: 0, top: 0 });
+  });
 });

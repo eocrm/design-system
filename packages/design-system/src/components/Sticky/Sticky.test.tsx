@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { render } from '@testing-library/react';
+import { act, render } from '@testing-library/react';
 import { createRef } from 'react';
 import { Sticky } from './Sticky';
 import type { StickyTop } from './Sticky';
@@ -87,6 +87,34 @@ describe('Sticky', () => {
     );
   });
 
+  it('adds neither layer nor surface by default', () => {
+    const { container } = render(<Sticky>x</Sticky>);
+    const cls = (container.firstChild as HTMLElement).className;
+    expect(cls).not.toMatch(/layer/);
+    expect(cls).not.toMatch(/surface/);
+  });
+
+  it('layer and surface add their classes alongside top/scroll/className', () => {
+    const { container } = render(
+      <Sticky top="topbar" scroll layer surface className="my-cls">
+        x
+      </Sticky>,
+    );
+    const cls = (container.firstChild as HTMLElement).className;
+    expect(cls).toMatch(/layer/);
+    expect(cls).toMatch(/surface/);
+    expect(cls).toMatch(/top-topbar/);
+    expect(cls).toMatch(/scroll/);
+    expect(cls).toMatch(/my-cls/);
+  });
+
+  it('layer sits below the TopBar and surface uses page background + divider tokens', () => {
+    expect(tokens).toContain('--sticky-layer-z: calc(var(--topbar-z-index) - 1);');
+    expect(tokens).toContain('--sticky-surface-bg: var(--app-layout-content-background);');
+    expect(tokens).toContain('--sticky-surface-border-color: var(--color-border);');
+    expect(scss).toContain('z-index: var(--sticky-layer-z);');
+  });
+
   it('merges className and spreads other attrs', () => {
     const { container } = render(
       <Sticky className="my-cls" data-foo="bar">
@@ -96,5 +124,50 @@ describe('Sticky', () => {
     const el = container.firstChild as HTMLElement;
     expect(el.className).toMatch(/my-cls/);
     expect(el).toHaveAttribute('data-foo', 'bar');
+  });
+
+  describe('surface pinned state', () => {
+    type Cb = (e: Partial<IntersectionObserverEntry>[]) => void;
+    let cb: Cb;
+    const disconnect = vi.fn();
+    const ctor = vi.fn();
+    beforeEach(() => {
+      ctor.mockClear();
+      disconnect.mockClear();
+      vi.stubGlobal(
+        'IntersectionObserver',
+        class {
+          constructor(c: Cb) {
+            cb = c;
+            ctor();
+          }
+          observe() {}
+          disconnect = disconnect;
+        },
+      );
+    });
+    afterEach(() => vi.unstubAllGlobals());
+
+    it('sets data-pinned only while the observer reports the box pinned', () => {
+      const { container } = render(<Sticky surface>x</Sticky>);
+      const el = container.firstChild as HTMLElement;
+      act(() => cb([{ intersectionRatio: 0.9, boundingClientRect: { top: 0 } as DOMRect }]));
+      expect(el).toHaveAttribute('data-pinned');
+      act(() => cb([{ intersectionRatio: 1, boundingClientRect: { top: 80 } as DOMRect }]));
+      expect(el).not.toHaveAttribute('data-pinned');
+    });
+
+    it('creates no observer without surface and disconnects on unmount', () => {
+      render(<Sticky>x</Sticky>);
+      expect(ctor).not.toHaveBeenCalled();
+      const { unmount } = render(<Sticky surface>x</Sticky>);
+      unmount();
+      expect(disconnect).toHaveBeenCalled();
+    });
+
+    it('paints the strip shadow and divider colour only under [data-pinned]', () => {
+      expect(scss).toMatch(/\.surface\[data-pinned\]\s*\{[^}]*box-shadow/);
+      expect(scss).not.toMatch(/\.surface\s*\{[^}]*box-shadow/);
+    });
   });
 });

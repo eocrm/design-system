@@ -2,6 +2,7 @@
 // styles/tokens.scss entry (not the lazy component module) so later consumer
 // :root overrides win predictably.
 @use '../TopBar/TopBar.tokens';
+@use '../AppLayout/AppLayout.tokens';
 
 :root {
   --sticky-top-xs: var(--space-1);
@@ -10,4 +11,7 @@
   --sticky-top-lg: var(--space-4);
   --sticky-top-xl: var(--space-6);
   --sticky-top-topbar: calc(var(--topbar-height, 56px) + var(--space-4));
+  --sticky-layer-z: calc(var(--topbar-z-index) - 1);
+  --sticky-surface-bg: var(--app-layout-content-background);
+  --sticky-surface-border-color: var(--color-border);
 }

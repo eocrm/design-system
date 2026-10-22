@@ -1573,7 +1573,7 @@
           "type": "DashboardWidgetVariant",
           "required": false,
           "default": "",
-          "description": "Presentation variant. Default `'standard'`.\n- `'standard'` — header (title + actions) over a padded scrolling body. Today's widget card.\n- `'list'` — same fixed header as `standard`; flush scrolling body so `Card.List` bleeds edge to edge.\n- `'kpi'` — compact muted title, a large `value`, optional `trend`; optional `children` below. No scrolling.\n- `'chart'` — compact header; flush non-scrolling body that fills the cell (give the plot `height: 100%`)."
+          "description": "Presentation variant. Default `'standard'`.\n- `'standard'` — header (title + actions) over a padded scrolling body. Today's widget card.\n- `'list'` — same fixed header as `standard`; flush scrolling body so `Card.List` bleeds edge to edge.\n- `'kpi'` — compact muted title, a large `value`, optional `trend`; optional `children` below. No scrolling.\n- `'chart'` — compact header; flush non-scrolling body that fills the cell (give the plot `height: 100%`).\n- `'stats'` — compact header and padding over a scrolling body, for a `StatGroup` KPI strip; unlike `standard` it leaves vertical slack in a 3-row cell."
         },
         {
           "name": "title",
@@ -1587,7 +1587,7 @@
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": false,
           "default": "",
-          "description": "Secondary, non-interactive header text such as freshness (\"Updated 3 minutes ago\") or\nstatus. Sits before `actions` and yields first in a narrow cell: it truncates (then\nhides visually, still read by screen readers) before the title shrinks, while `actions`\nnever shrinks. Also describes the body region (`aria-describedby`) for `standard` /\n`list`. Repeat it in the refresh button's tooltip if it matters when truncated."
+          "description": "Secondary, non-interactive header text such as freshness (\"Updated 3 minutes ago\") or\nstatus. Sits before `actions` and yields first in a narrow cell: it truncates (then\nhides visually, still read by screen readers) before the title shrinks, while `actions`\nnever shrinks. Also describes the body region (`aria-describedby`) for `standard` / `list` /\n`stats`. Repeat it in the refresh button's tooltip if it matters when truncated."
         },
         {
           "name": "actions",
@@ -6096,6 +6096,20 @@
           "description": "Cap the pinned box at the viewport height and scroll its content internally,\nso a column TALLER than the screen stays fully reachable (the overflow scrolls\nwithin the box instead of below the fold). Sets `max-height` to\n`calc(100dvh - top offset - bottom gap)`, `overflow-y: auto`, and\n`overscroll-behavior: contain` (page scroll doesn't chain from the box). The\nbottom gap defaults to the selected rhythm offset; `top=\"topbar\"` instead\ndefaults it to the standard content gap so chrome height is not subtracted\ntwice. Set `--sticky-bottom-gap` on this element to override either default.\nDefault `false`. Pair with a non-`none` `top` to leave breathing room. The cap is\nviewport-relative (`dvh`), so this assumes the page (or a viewport-tall\nancestor) is the scroll context — not a short fixed-height scroll container."
         },
         {
+          "name": "layer",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Raise the pinned box above positioned/stacked page content (e.g. DashboardCanvas\ncells) so a page-level sticky bar is not painted over or click-blocked by them.\nSets `z-index` just below the TopBar. Default `false`. Caveat: `z-index` on a\nsticky box creates a stacking context, so don't use it on a Split aside that\nhosts inline (non-portaled) popovers, which would be trapped inside it."
+        },
+        {
+          "name": "surface",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Paint the box with the page background always; while pinned, also a bottom\ndivider and a strip over the gap above it (the `top` offset), so content\nscrolling underneath doesn't show through. Pinned state is tracked with an\nIntersectionObserver (`data-pinned`). For page-level bars. Default `false`."
+        },
+        {
           "name": "children",
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": true,
@@ -7087,7 +7101,7 @@
     "SettingRowControlWidth": "\"sm\" | \"md\" | \"xs\" | \"auto\"",
     "DashboardCanvasConstraintsProp": "Record<string, DashboardItemConstraints> | ((id: string | number) => DashboardItemConstraints)",
     "DashboardCanvasValue": "{ items: DashboardPlacement[]; sections: DashboardSection[] }",
-    "DashboardWidgetVariant": "\"list\" | \"standard\" | \"kpi\" | \"chart\"",
+    "DashboardWidgetVariant": "\"list\" | \"standard\" | \"kpi\" | \"chart\" | \"stats\"",
     "DashboardWidgetActionsReveal": "\"always\" | \"hover\"",
     "StatGroupVariant": "\"filled\" | \"card\"",
     "SparklineType": "\"area\" | \"line\" | \"bar\"",

@@ -173,7 +173,7 @@ Each component's contract is its `docs/components/<Name>.md`; the props table th
 - [`Kanban`](docs/components/Kanban.md) — multi-column board (drag-to-reorder + cross-column drag with live reflow)
 - [`FlowCanvas`](docs/components/FlowCanvas.md) — pan/zoom canvas for directed node-edge diagrams
 - [`DashboardCanvas`](docs/components/DashboardCanvas.md) — 2D snap-grid dashboard
-- [`DashboardWidget`](docs/components/DashboardWidget.md) — DashboardCanvas cell card: standard / list / kpi / chart, with loading skeletons
+- [`DashboardWidget`](docs/components/DashboardWidget.md) — DashboardCanvas cell card: standard / list / kpi / chart / stats (StatGroup strip), with loading skeletons
 - [`StatGroup`](docs/components/StatGroup.md) — responsive grid of KPI tiles for a dashboard widget, with loading skeletons
 - [`StatTile`](docs/components/StatTile.md) — one KPI tile (label, value, trend, footnote, icon, sparkline, quota `progress`) inside a StatGroup (`filled` or `card` surface)
 - [`Sparkline`](docs/components/Sparkline.md) — compact static line / area / bar trend for KPI cards (StatTile slot, kpi DashboardWidget child); no axes, summary in the accessible name
