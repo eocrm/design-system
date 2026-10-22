@@ -17,6 +17,8 @@ import {
   applyMove,
   applyResize,
   cellFromPoint,
+  clampGhost,
+  insertionCell,
   reorderSection,
   toggleSection,
 } from './engine';
@@ -611,7 +613,25 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         // left edge to the cursor column.
         const originX = event.clientX - drag.grabDX;
         const originY = event.clientY - drag.grabDY;
-        const cell = cellFromPoint(originX, originY, rect, colWidth, rowHeight, gap, columns);
+        const origin = cellFromPoint(originX, originY, rect, colWidth, rowHeight, gap, columns);
+        // #694: over another widget the POINTER picks insert-before/after
+        // (hit-tested against the ORIGINAL value, never the preview, so the
+        // preview can't flip the half under a still pointer).
+        const colPitch = colWidth + gap;
+        const rowPitch = rowHeight + gap;
+        const dragged = itemsOf(value, drag.from).find((p) => p.id === drag.id);
+        const cell =
+          dragged && colPitch > 0 && rowPitch > 0
+            ? insertionCell(
+                itemsOf(value, drag.target),
+                drag.id,
+                dragged.w,
+                (event.clientX - rect.left) / colPitch,
+                (event.clientY - rect.top) / rowPitch,
+                origin,
+                columns,
+              )
+            : origin;
         if (
           !drag.preview ||
           drag.previewKey !== drag.targetKey ||
@@ -625,16 +645,20 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
           drag.cell = cell;
         }
         const rootRect = rootRef.current?.getBoundingClientRect();
+        // #695: keep the ghost inside the root so it can't grow a scrollbar.
+        const ghost = clampGhost(
+          originX - (rootRect?.left ?? 0),
+          originY - (rootRect?.top ?? 0),
+          drag.ghostW,
+          drag.ghostH,
+          rootRect?.width ?? Infinity,
+          rootRect?.height ?? Infinity,
+        );
         setLive({
           kind: 'move',
           id: drag.id,
           value: drag.preview,
-          ghost: {
-            left: originX - (rootRect?.left ?? 0),
-            top: originY - (rootRect?.top ?? 0),
-            width: drag.ghostW,
-            height: drag.ghostH,
-          },
+          ghost: { ...ghost, width: drag.ghostW, height: drag.ghostH },
         });
         return;
       }
@@ -1005,6 +1029,12 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
     // it as a floating surface makes a host Modal/Drawer yield that Escape
     // (FlowCanvas #282). The pick's own Escape lands on the focused item.
     const dragging = live != null;
+    const movingH =
+      live?.kind === 'move'
+        ? [...value.items, ...value.sections.flatMap((section) => section.items)].find(
+            (p) => p.id === live.id,
+          )?.h
+        : undefined;
     useFloatingSurface(dragging || pick != null);
     // Window-level Escape: cancels a pointer drag wherever focus sits, and
     // is the belt-and-braces exit for a pick whose item lost focus (the
@@ -1134,7 +1164,12 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         aria-describedby={mergeAriaDescribedby(ariaDescribedby, instructionsId)}
         className={clsx(styles.canvas, stackClass[stackBelow], className)}
         // Consumer style spreads last so its own custom properties win.
-        style={{ ['--dc-cols' as string]: columns, ...style }}
+        style={{
+          ['--dc-cols' as string]: columns,
+          // #696: trailing drop space, only during a move-drag.
+          ...(movingH != null && { ['--dc-trailing-rows' as string]: movingH }),
+          ...style,
+        }}
         data-readonly={readOnly ? '' : undefined}
         data-narrow={isNarrow ? '' : undefined}
         data-dragging={dragging ? '' : undefined}

@@ -76,6 +76,15 @@
   user-select: none;
 }
 
+// #696: while a move-drag is active, pad each container by the dragged item's
+// height so there is always room to drop below the last row. The dot
+// background paints on the padding box, so the strip stays dotted.
+.canvas[data-dragging]:not([data-readonly], [data-narrow]) .container {
+  padding-block-end: calc(
+    var(--dc-trailing-rows, 0) * (var(--dc-row-unit) + var(--dashboard-canvas-gap))
+  );
+}
+
 // One container grid — used for both the top-level items and each section's
 // body. `--dc-cols` is stamped inline on the canvas root (24 by default) and
 // inherits down. Below-breakpoint re-templating to a single column: see the
