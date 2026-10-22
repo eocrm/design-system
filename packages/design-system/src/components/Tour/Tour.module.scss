@@ -60,6 +60,16 @@
   pointer-events: none;
 }
 
+// A non-interactive modal step lights its target but blocks the pointer on it
+// and everything inside (Tour.tsx sets the marker). Global: the target is
+// consumer DOM. Not `inert`, which would hide the panel from assistive tech.
+// stylelint-disable selector-pseudo-class-no-unknown -- CSS Modules :global() escape hatch
+:global([data-tour-inert]),
+:global([data-tour-inert] *) {
+  pointer-events: none;
+}
+// stylelint-enable selector-pseudo-class-no-unknown
+
 // ---------- Card ----------
 
 .card {

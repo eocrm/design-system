@@ -420,6 +420,18 @@ const TourSession = forwardRef<HTMLDivElement, TourSessionProps>(function TourSe
     return () => found.removeAttribute('data-tour-active-target');
   }, [modal, interactive, found, closing]);
 
+  // ---- Inert target (#697) ----
+  // A non-interactive modal step lights its target but must not let the
+  // pointer through to it (e.g. a lifted, open menu panel). Marker + global
+  // pointer-events rule instead of the `inert` attribute, which would also
+  // hide the panel from assistive tech. Keyboard is already contained: the
+  // focus trap only extends to the target on interactive steps.
+  useEffect(() => {
+    if (!(modal && !interactive && found) || closing) return;
+    found.setAttribute('data-tour-inert', '');
+    return () => found.removeAttribute('data-tour-inert');
+  }, [modal, interactive, found, closing]);
+
   // ---- Current-target marker (#684) ----
   // Every step's found target (modal or not, interactive or not) — floating
   // surfaces read it via isTourHeld so the tour pointing into an open menu

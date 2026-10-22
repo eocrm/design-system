@@ -11,4 +11,11 @@ describe('Tour styles', () => {
     const rules = [...scss.matchAll(/[^{}]*\[data-waiting\][^{}]*\{([^}]*)\}/g)];
     for (const [, body] of rules) expect(body).not.toMatch(/opacity/);
   });
+
+  it('makes a [data-tour-inert] target and its descendants pointer-inert (#697)', () => {
+    const scss = readFileSync(resolve(__dirname, './Tour.module.scss'), 'utf8');
+    const m = scss.match(/:global\(\[data-tour-inert\]\)[^{]*\{([^}]*)\}/);
+    expect(m?.[0]).toMatch(/:global\(\[data-tour-inert\] \*\)/);
+    expect(m?.[1]).toMatch(/pointer-events:\s*none/);
+  });
 });
