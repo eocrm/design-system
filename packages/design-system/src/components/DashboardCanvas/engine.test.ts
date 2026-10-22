@@ -737,6 +737,14 @@ describe('insertionCell', () => {
     expect(at('b', 60, 41, 1, list)).toEqual({ x: 0, y: 0 });
   });
 
+  it('follows the ghost column inside the hovered span when the dragged item fits', () => {
+    const list = [p('big', 0, 0, 24, 6)];
+    const x = (fx: number) => insertionCell(list, 'm', 6, 5, 1, { x: fx, y: 0 }, 48).x;
+    expect(x(10)).toBe(10);
+    expect(x(22)).toBe(18);
+    expect(x(-3)).toBe(0);
+  });
+
   it('returns the fallback over empty cells or the dragged item itself', () => {
     expect(at('email', 24, 30, 20)).toBe(fb);
     expect(at('email', 24, 30, 1)).toBe(fb);

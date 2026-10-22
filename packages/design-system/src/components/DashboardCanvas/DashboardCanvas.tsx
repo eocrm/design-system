@@ -303,6 +303,8 @@ type LiveState =
       kind: 'move';
       id: string | number;
       value: DashboardCanvasValue;
+      /** Dragged item's row span — sizes the trailing drop space. */
+      h: number;
       /** Canvas-relative px box for the cursor-following ghost. */
       ghost: { left: number; top: number; width: number; height: number };
     }
@@ -658,6 +660,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
           kind: 'move',
           id: drag.id,
           value: drag.preview,
+          h: dragged?.h ?? 0,
           ghost: { ...ghost, width: drag.ghostW, height: drag.ghostH },
         });
         return;
@@ -1029,12 +1032,6 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
     // it as a floating surface makes a host Modal/Drawer yield that Escape
     // (FlowCanvas #282). The pick's own Escape lands on the focused item.
     const dragging = live != null;
-    const movingH =
-      live?.kind === 'move'
-        ? [...value.items, ...value.sections.flatMap((section) => section.items)].find(
-            (p) => p.id === live.id,
-          )?.h
-        : undefined;
     useFloatingSurface(dragging || pick != null);
     // Window-level Escape: cancels a pointer drag wherever focus sits, and
     // is the belt-and-braces exit for a pick whose item lost focus (the
@@ -1167,7 +1164,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         style={{
           ['--dc-cols' as string]: columns,
           // #696: trailing drop space, only during a move-drag.
-          ...(movingH != null && { ['--dc-trailing-rows' as string]: movingH }),
+          ...(live?.kind === 'move' && { ['--dc-trailing-rows' as string]: live.h }),
           ...style,
         }}
         data-readonly={readOnly ? '' : undefined}

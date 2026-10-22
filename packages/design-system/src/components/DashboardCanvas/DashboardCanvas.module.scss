@@ -77,7 +77,8 @@
 }
 
 // #696: while a move-drag is active, pad each container by the dragged item's
-// height so there is always room to drop below the last row. The dot
+// height so there is always room to drop below the last row. The padding is
+// h x (row + gap), one gap more than the item's own height. The dot
 // background paints on the padding box, so the strip stays dotted.
 .canvas[data-dragging]:not([data-readonly], [data-narrow]) .container {
   padding-block-end: calc(
