@@ -65,4 +65,5 @@ When NOT to use: arranging children → `<Stack>`/`<Cluster>`; a fixed overlay a
 
 - `position: sticky` pins to the nearest scrolling ancestor, so an `overflow: hidden/auto` ancestor that isn't the intended scroll container breaks it.
 - ❌ `margin` / `padding` on it for spacing: it carries sticky position only; spacing comes from the parent layout primitive.
+- ℹ️ `surface` is for page-level bars: it paints the page background (also over the gap above the bar when `top` is set).
 - ❌ `layer` on a `Split` aside that hosts inline (non-portaled) popovers: `z-index` on a sticky box creates a stacking context that traps them. `layer` and `surface` are both opt-in (default `false`); `surface`'s divider is always on while set, not only when pinned.

@@ -82,10 +82,13 @@
   z-index: var(--sticky-layer-z);
 }
 
-// Opt-in `surface`: page background + bottom divider.
+// Opt-in `surface`: page background + bottom divider. The box-shadow is the
+// box's own size shifted up by the top offset, so it paints the gap between
+// the pinned bar and whatever it is offset from (e.g. the TopBar).
 // ponytail: divider is always on while set; "only when pinned" needs an
 // IntersectionObserver sentinel if wanted.
 .surface {
   background: var(--sticky-surface-bg);
+  box-shadow: 0 calc(-1 * var(--sticky-offset, 0px)) 0 0 var(--sticky-surface-bg);
   border-block-end: var(--border-width) solid var(--sticky-surface-border-color);
 }

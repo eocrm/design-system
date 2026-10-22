@@ -152,7 +152,7 @@ export const DashboardWidget = forwardRef<HTMLDivElement, DashboardWidgetProps>(
       children
     );
     // Always a Card.Body: Card only builds its fill column (header fixed, body flexes)
-    // for a direct Card.Body child. Only standard/list scroll.
+    // for a direct Card.Body child. Only standard/list/stats scroll.
     const body =
       variant === 'kpi' || variant === 'chart' ? (
         <Card.Body className={bodyClass}>{content}</Card.Body>

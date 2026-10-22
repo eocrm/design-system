@@ -1244,6 +1244,26 @@ describe('DashboardCanvas empty sections (#353)', () => {
     );
   });
 
+  it('marks only the hovered container as the trailing-space drop target', () => {
+    const { container, root } = renderCanvas();
+    const top = container.querySelector('[data-dc-container="top"]');
+    const s1 = container.querySelector('[data-dc-container="s1"]');
+    fireEvent.pointerDown(itemEl(container, 'b'), {
+      clientX: 10,
+      clientY: 10,
+      pointerId: 1,
+      button: 0,
+    });
+    fireEvent.pointerMove(root, { clientX: 20, clientY: 20, pointerId: 1 });
+    expect(top).toHaveAttribute('data-dc-drop-target');
+    expect(s1).not.toHaveAttribute('data-dc-drop-target');
+    fireEvent.pointerMove(root, { clientX: 55, clientY: 615, pointerId: 1 });
+    expect(top).not.toHaveAttribute('data-dc-drop-target');
+    expect(s1).toHaveAttribute('data-dc-drop-target');
+    fireEvent.pointerUp(root, { clientX: 55, clientY: 615, pointerId: 1 });
+    expect(s1).not.toHaveAttribute('data-dc-drop-target');
+  });
+
   it('a single-jump pointer drag into the empty section commits applyMove into it', () => {
     const { container, onChange, value, root } = renderCanvas();
     fireEvent.pointerDown(itemEl(container, 'b'), {

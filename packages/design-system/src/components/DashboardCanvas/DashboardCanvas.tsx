@@ -305,6 +305,8 @@ type LiveState =
       value: DashboardCanvasValue;
       /** Dragged item's row span — sizes the trailing drop space. */
       h: number;
+      /** `containerKey` of the hovered drop target — only it gets the trailing space. */
+      target: string;
       /** Canvas-relative px box for the cursor-following ghost. */
       ghost: { left: number; top: number; width: number; height: number };
     }
@@ -661,6 +663,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
           id: drag.id,
           value: drag.preview,
           h: dragged?.h ?? 0,
+          target: drag.targetKey,
           ghost: { ...ghost, width: drag.ghostW, height: drag.ghostH },
         });
         return;
@@ -1163,7 +1166,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         // Consumer style spreads last so its own custom properties win.
         style={{
           ['--dc-cols' as string]: columns,
-          // #696: trailing drop space, only during a move-drag.
+          // #696: trailing drop space height, only during a move-drag.
           ...(live?.kind === 'move' && { ['--dc-trailing-rows' as string]: live.h }),
           ...style,
         }}
@@ -1186,6 +1189,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
           <div
             className={styles.container}
             data-dc-container="top"
+            data-dc-drop-target={live?.kind === 'move' && live.target === 'top' ? '' : undefined}
             data-dc-empty={shown.items.length === 0 ? '' : undefined}
             ref={(el) => setContainerEl(TOP_CONTAINER, el)}
           >
@@ -1218,6 +1222,10 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
                   renderSectionHeader={renderSectionHeader}
                   gestures={gestures}
                   dragging={live?.kind === 'section' && live.id === section.id}
+                  dropTarget={
+                    live?.kind === 'move' &&
+                    live.target === containerKey({ kind: 'section', id: section.id })
+                  }
                   onHeaderPointerDown={onHeaderPointerDown}
                   onHeaderKeyDown={onHeaderKeyDown}
                   setContainerEl={setContainerEl}
