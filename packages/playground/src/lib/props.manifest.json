@@ -6096,6 +6096,20 @@
           "description": "Cap the pinned box at the viewport height and scroll its content internally,\nso a column TALLER than the screen stays fully reachable (the overflow scrolls\nwithin the box instead of below the fold). Sets `max-height` to\n`calc(100dvh - top offset - bottom gap)`, `overflow-y: auto`, and\n`overscroll-behavior: contain` (page scroll doesn't chain from the box). The\nbottom gap defaults to the selected rhythm offset; `top=\"topbar\"` instead\ndefaults it to the standard content gap so chrome height is not subtracted\ntwice. Set `--sticky-bottom-gap` on this element to override either default.\nDefault `false`. Pair with a non-`none` `top` to leave breathing room. The cap is\nviewport-relative (`dvh`), so this assumes the page (or a viewport-tall\nancestor) is the scroll context — not a short fixed-height scroll container."
         },
         {
+          "name": "layer",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Raise the pinned box above positioned/stacked page content (e.g. DashboardCanvas\ncells) so a page-level sticky bar is not painted over or click-blocked by them.\nSets `z-index` just below the TopBar. Default `false`. Caveat: `z-index` on a\nsticky box creates a stacking context, so don't use it on a Split aside that\nhosts inline (non-portaled) popovers, which would be trapped inside it."
+        },
+        {
+          "name": "surface",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Paint the pinned box with the page background and a bottom divider so content\nscrolling underneath doesn't show through. Always on while set (not only when\npinned). Default `false`."
+        },
+        {
           "name": "children",
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": true,

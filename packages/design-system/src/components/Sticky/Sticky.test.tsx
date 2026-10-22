@@ -87,6 +87,34 @@ describe('Sticky', () => {
     );
   });
 
+  it('adds neither layer nor surface by default', () => {
+    const { container } = render(<Sticky>x</Sticky>);
+    const cls = (container.firstChild as HTMLElement).className;
+    expect(cls).not.toMatch(/layer/);
+    expect(cls).not.toMatch(/surface/);
+  });
+
+  it('layer and surface add their classes alongside top/scroll/className', () => {
+    const { container } = render(
+      <Sticky top="topbar" scroll layer surface className="my-cls">
+        x
+      </Sticky>,
+    );
+    const cls = (container.firstChild as HTMLElement).className;
+    expect(cls).toMatch(/layer/);
+    expect(cls).toMatch(/surface/);
+    expect(cls).toMatch(/top-topbar/);
+    expect(cls).toMatch(/scroll/);
+    expect(cls).toMatch(/my-cls/);
+  });
+
+  it('layer sits below the TopBar and surface uses page background + divider tokens', () => {
+    expect(tokens).toContain('--sticky-layer-z: calc(var(--topbar-z-index) - 1);');
+    expect(tokens).toContain('--sticky-surface-bg: var(--app-layout-content-background);');
+    expect(tokens).toContain('--sticky-surface-border-color: var(--color-border);');
+    expect(scss).toContain('z-index: var(--sticky-layer-z);');
+  });
+
   it('merges className and spreads other attrs', () => {
     const { container } = render(
       <Sticky className="my-cls" data-foo="bar">

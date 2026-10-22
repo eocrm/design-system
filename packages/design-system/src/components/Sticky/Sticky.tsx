@@ -30,6 +30,20 @@ export interface StickyProps extends HTMLAttributes<HTMLDivElement> {
    * ancestor) is the scroll context — not a short fixed-height scroll container.
    */
   scroll?: boolean;
+  /**
+   * Raise the pinned box above positioned/stacked page content (e.g. DashboardCanvas
+   * cells) so a page-level sticky bar is not painted over or click-blocked by them.
+   * Sets `z-index` just below the TopBar. Default `false`. Caveat: `z-index` on a
+   * sticky box creates a stacking context, so don't use it on a Split aside that
+   * hosts inline (non-portaled) popovers, which would be trapped inside it.
+   */
+  layer?: boolean;
+  /**
+   * Paint the pinned box with the page background and a bottom divider so content
+   * scrolling underneath doesn't show through. Always on while set (not only when
+   * pinned). Default `false`.
+   */
+  surface?: boolean;
   /** The content to pin. Required — a `Sticky` with nothing inside pins nothing. */
   children: ReactNode;
 }
@@ -39,7 +53,7 @@ export interface StickyProps extends HTMLAttributes<HTMLDivElement> {
  * @see docs/components/Sticky.md
  */
 export const Sticky = forwardRef<HTMLDivElement, StickyProps>(function Sticky(
-  { top = 'none', scroll = false, className, children, ...rest },
+  { top = 'none', scroll = false, layer = false, surface = false, className, children, ...rest },
   ref,
 ) {
   // {...rest} last so consumer overrides win (Pattern A) — Sticky locks no attrs.
@@ -49,7 +63,14 @@ export const Sticky = forwardRef<HTMLDivElement, StickyProps>(function Sticky(
     <div
       ref={ref}
       data-sticky=""
-      className={clsx(styles.sticky, styles[`top-${top}`], scroll && styles.scroll, className)}
+      className={clsx(
+        styles.sticky,
+        styles[`top-${top}`],
+        scroll && styles.scroll,
+        layer && styles.layer,
+        surface && styles.surface,
+        className,
+      )}
       {...rest}
     >
       {children}

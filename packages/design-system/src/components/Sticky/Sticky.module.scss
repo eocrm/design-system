@@ -74,3 +74,18 @@
   overflow-y: auto;
   overscroll-behavior: contain;
 }
+
+// Opt-in `layer`: keeps a page-level sticky bar above positioned content (e.g.
+// DashboardCanvas cells), still under the TopBar. z-index is this layout
+// primitive's job, like position:sticky.
+.layer {
+  z-index: var(--sticky-layer-z);
+}
+
+// Opt-in `surface`: page background + bottom divider.
+// ponytail: divider is always on while set; "only when pinned" needs an
+// IntersectionObserver sentinel if wanted.
+.surface {
+  background: var(--sticky-surface-bg);
+  border-block-end: var(--border-width) solid var(--sticky-surface-border-color);
+}
