@@ -44,7 +44,7 @@ const RAW_DARK = readFileSync(
  * body — including the one nested inside `@media`, whose closing brace is left
  * standing.
  */
-const ACCENT_BLOCK = /:root\[data-accent='[a-z]+'\][^{]*\{[^{}]*\}/g;
+const ACCENT_BLOCK = /:root\[data-accent='[a-z]+'\][^{};]*\{[^{}]*\}/g;
 
 /**
  * The BASE themes — what renders with no `data-accent` on <html>. The accent
@@ -376,35 +376,24 @@ const PAIRS: Pair[] = [
   ['highlighted-text match on yellow mark', '--color-fg', '--color-palette-yellow-bg', 4.5],
 ];
 
-/**
- * The rows an accent can move: any pair with an accent token on either side.
- * Read from PAIRS by name rather than listed, so an accent row added there is
- * gated under every accent without a second edit here.
- */
-const ACCENT_PAIRS = PAIRS.filter(([, fg, bg]) =>
-  [fg, bg].some((name) => name.startsWith('--color-accent')),
-);
-
 describe.each(THEMED_ACCENTS)(
   'shipped colour pairs clear WCAG in %s theme, %s accent',
-  (_theme, accent, source) => {
-    // A non-default accent re-runs only the rows it can move; every other row
-    // resolves identically under it and is already gated by the default run.
-    it.each(accent === 'default' ? PAIRS : ACCENT_PAIRS)(
-      '%s',
-      (_label, fgName, bgName, minimum) => {
-        // No light-value fallback here. A token with no dark declaration genuinely
-        // DOES render its light value in dark (dark.scss layers overrides on :root),
-        // so a fallback would not be wrong — it would just be indistinguishable from
-        // a token nobody thought about. tokenValue still resolves alias CHAINS
-        // across scopes (that is how --color-presence-away, which has no dark
-        // declaration at all, answers correctly here); what it refuses is borrowing
-        // a light LITERAL to answer for dark. Silence is the thing to avoid.
-        expect(
-          contrast(tokenValue(fgName, source), tokenValue(bgName, source)),
-        ).toBeGreaterThanOrEqual(minimum);
-      },
-    );
+  (_theme, _accent, source) => {
+    // Every row under every accent. Filtering to the rows that NAME an accent
+    // token would miss any that reach one through an alias — the accent tint
+    // already has two such aliases (row-pinned, table-row-selected).
+    it.each(PAIRS)('%s', (_label, fgName, bgName, minimum) => {
+      // No light-value fallback here. A token with no dark declaration genuinely
+      // DOES render its light value in dark (dark.scss layers overrides on :root),
+      // so a fallback would not be wrong — it would just be indistinguishable from
+      // a token nobody thought about. tokenValue still resolves alias CHAINS
+      // across scopes (that is how --color-presence-away, which has no dark
+      // declaration at all, answers correctly here); what it refuses is borrowing
+      // a light LITERAL to answer for dark. Silence is the thing to avoid.
+      expect(
+        contrast(tokenValue(fgName, source), tokenValue(bgName, source)),
+      ).toBeGreaterThanOrEqual(minimum);
+    });
   },
 );
 
@@ -527,12 +516,12 @@ describe('Table.CellLink hover keeps its text at AA', () => {
     ['untoned on selected row', '--table-row-fg-selected', '--table-row-bg-selected'],
   ];
   it.each(
-    // Every accent re-runs only the accent cell; the other surfaces carry no
-    // accent token, so they would resolve identically.
+    // Every surface under every accent, not just the accent cell: the
+    // selected row reaches the accent tint through an alias
+    // (--table-row-bg-selected -> --color-table-row-bg-selected ->
+    // --color-accent-bg-subtle), and a filter by label could not see that.
     THEMED_ACCENTS.flatMap(([theme, accent, source]) =>
-      SURFACES.filter(([label]) => accent === 'default' || label === 'accent cell').map(
-        ([label, fg, bg]) => [theme, accent, label, fg, bg, source] as const,
-      ),
+      SURFACES.map(([label, fg, bg]) => [theme, accent, label, fg, bg, source] as const),
     ),
   )('%s %s accent: %s', (_theme, _accent, _label, fg, bg, source) => {
     expect(mix, '--table-cell-link-bg-hover shape').toBeTruthy();
@@ -549,8 +538,8 @@ describe('Table.CellLink hover keeps its text at AA', () => {
  * 1.64 light): retuning --color-border-strong should be a conscious re-check.
  * The accent is a translucent `color-mix(accent N%, transparent)`, i.e.
  * `composite(accent, N, bg)`, and it is measured under every accent. Teal
- * pine's light accent is #0b6d67 rather than the spec's #17736d because of
- * this gate: the spec value composited to 2.13:1 here; #0b6d67 reads 2.22.
+ * pine's light accent is darker than the spec's #17736d because of this gate:
+ * the spec value composited under 2.2 here, so the accent moved, not the floor.
  */
 describe('WidgetPreview pieces stay visible on the preview box', () => {
   const file = readFileSync(
@@ -1059,9 +1048,9 @@ describe('a tone stays in sync with the roles derived from it', () => {
       // rule, and then widening this gate, is #490.
       //
       // The floor is NOT re-anchored per accent. Teal pine was tuned TO it —
-      // its hover was nudged off the spec value to clear 0.065 (0.0714 light,
-      // 0.0707 dark) — so a new accent meets the blue's bar or is retuned until
-      // it does; the bar never comes down to meet the accent.
+      // its hover was nudged off the spec value to clear 0.065 — so a new
+      // accent meets the blue's bar or is retuned until it does; the bar never
+      // comes down to meet the accent.
       for (const tone of tonesFor(accent)) {
         const base = tokenValue(`--color-${tone}`, source);
         const hover = tokenValue(`--color-${tone}-hover`, source);
