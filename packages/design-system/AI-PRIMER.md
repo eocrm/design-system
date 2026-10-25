@@ -20,6 +20,8 @@ Read this first. Each component's contract is its `docs/components/<Name>.md`; t
 
 See [docs/setup.md](docs/setup.md).
 
+Accent: blue by default; `<html data-accent="tealpine">` switches to Teal pine (see [README.md](./README.md#accent)).
+
 ## Localization (i18n)
 
 Every user-facing string the library renders — visible text, aria-labels, placeholders, default empty/loading copy — flows through a single React Context. Wrap your app once; every component picks up the right copy. There are NO `labels` / `cancelLabel` / `searchPlaceholder` props on any component.

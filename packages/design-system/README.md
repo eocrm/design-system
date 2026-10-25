@@ -63,6 +63,22 @@ If you need only the tokens (you're providing your own reset), import `@eocrm/de
 
 ---
 
+## Accent
+
+The accent family defaults to blue. To switch the whole app to **Teal pine**, set `data-accent="tealpine"` on `<html>` (omit the attribute for blue):
+
+```html
+<html data-accent="tealpine" data-theme="dark"></html>
+```
+
+It swaps `--color-accent`, `-hover`, `-pressed`, `-fg`, `-bg-subtle`, `-subtle-bg` and `--ring-accent`, in light, forced dark (`data-theme="dark"`) and OS dark. It ships in the existing `tokens.scss` / `dark.scss`, so there is no new import. `<AppProvider tokens/darkTokens>` overrides win over `data-accent` in every theme (see [docs/setup.md](docs/setup.md)). Info colours stay blue under any accent; DropdownMenu checked items, the OptionsPicker selected row and StagePath done states follow the accent.
+
+Compose: `EocrmTealPineLightTokens` / `EocrmTealPineDarkTokens` sit beside `EocrmLightTokens` / `EocrmDarkTokens`; only accent colours differ.
+
+**Known issue:** in light theme, Teal pine is close in hue to `--color-success` and falls under the library's distinguishability floor for accent-vs-success. Review success/accent pairings visually before switching the CRM.
+
+---
+
 ## Bundler notes
 
 The package ships **source files** (`.tsx`, `.module.scss`). Your bundler compiles them.
