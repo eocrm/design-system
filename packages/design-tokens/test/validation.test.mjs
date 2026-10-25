@@ -435,3 +435,48 @@ test('uses locale-independent Kotlin names', () => {
   assert.equal(toKotlinProperty('color.background-subtle'), 'colorBackgroundSubtle');
   assert.equal(toKotlinType('categorical-palette'), 'CategoricalPalette');
 });
+
+test('rejects invalid accent overrides', () => {
+  const themed = { light: '#111111', dark: '#222222' };
+  const base = [
+    token({ id: 'color.accent', value: themed }),
+    token({ id: 'color.flat', value: '#000000', outputs: { web: { name: '--color-flat' } } }),
+    token({
+      id: 'space.small',
+      type: 'dimension',
+      value: { light: '4px', dark: '4px' },
+      outputs: { web: { name: '--space-small' } },
+    }),
+  ];
+  const good = { light: '#17736d', dark: '#6dcfc4' };
+  const cases = [
+    ['/accents/tealpine/nope.token', 'unknown-accent-token', { 'nope.token': good }],
+    ['/accents/tealpine/space.small', 'accent-non-color', { 'space.small': good }],
+    ['/accents/tealpine/color.flat', 'accent-unthemed', { 'color.flat': good }],
+    [
+      '/accents/tealpine/color.accent/light',
+      'accent-alias',
+      { 'color.accent': { ...good, light: { alias: 'color.flat' } } },
+    ],
+    [
+      '/accents/tealpine/color.accent/dark',
+      'invalid-token-value',
+      { 'color.accent': { ...good, dark: '#12' } },
+    ],
+  ];
+  for (const [path, code, overrides] of cases) {
+    assert.throws(
+      () => validateTokens({ ...document(base), accents: { tealpine: overrides } }),
+      (error) => error.issues.some((i) => i.path === path && i.code === code),
+      code,
+    );
+  }
+});
+
+test('accepts a valid accent set', () => {
+  const input = {
+    ...document([token({ id: 'color.accent', value: { light: '#111111', dark: '#222222' } })]),
+    accents: { tealpine: { 'color.accent': { light: '#17736d', dark: '#6dcfc4' } } },
+  };
+  assert.equal(validateTokens(input), input);
+});

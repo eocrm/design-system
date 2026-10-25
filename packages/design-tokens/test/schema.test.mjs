@@ -74,3 +74,25 @@ test('rejects recursively nested themed values', async () => {
 
   await assert.rejects(loadTokenDocument(file), /\/tokens\/0\/value/);
 });
+
+test('accepts an accents map and rejects malformed accents', async () => {
+  const dir = await mkdtemp(join(tmpdir(), 'eocrm-tokens-schema-'));
+  const file = join(dir, 'tokens.json');
+  const base = validDocument('1.2.3');
+  base.tokens[0] = {
+    ...base.tokens[0],
+    id: 'color.accent',
+    value: { light: '#000000', dark: '#ffffff' },
+  };
+  const withAccents = (accents) => ({ ...base, accents });
+  const override = { 'color.accent': { light: '#17736d', dark: '#6dcfc4' } };
+
+  await writeFile(file, JSON.stringify(withAccents({ tealpine: override })));
+  await assert.doesNotReject(loadTokenDocument(file));
+
+  await writeFile(file, JSON.stringify(withAccents({ Teal: override })));
+  await assert.rejects(loadTokenDocument(file), /accents/);
+
+  await writeFile(file, JSON.stringify(withAccents({ tealpine: 'nope' })));
+  await assert.rejects(loadTokenDocument(file), /accents/);
+});
