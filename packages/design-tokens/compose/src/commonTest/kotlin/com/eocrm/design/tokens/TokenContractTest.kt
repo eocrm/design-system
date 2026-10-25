@@ -14,4 +14,23 @@ class TokenContractTest {
         assertEquals(30, EocrmLightTokens.categoricalPalette.size)
         assertEquals(1, EocrmTokenContract.schemaVersion)
     }
+
+    @Test
+    fun tealPineOverridesOnlyAccentColors() {
+        assertEquals(Color(0xFF17736D), EocrmTealPineLightTokens.colors.accent)
+        assertEquals(Color(0xFF6DCFC4), EocrmTealPineDarkTokens.colors.accent)
+        assertEquals(
+            EocrmLightTokens.colors.copy(
+                accent = EocrmTealPineLightTokens.colors.accent,
+                accentHover = EocrmTealPineLightTokens.colors.accentHover,
+                accentPressed = EocrmTealPineLightTokens.colors.accentPressed,
+                accentForeground = EocrmTealPineLightTokens.colors.accentForeground,
+                accentBackgroundSubtle = EocrmTealPineLightTokens.colors.accentBackgroundSubtle,
+                accentSubtleBackground = EocrmTealPineLightTokens.colors.accentSubtleBackground,
+            ),
+            EocrmTealPineLightTokens.colors,
+        )
+        assertEquals(EocrmLightTokens.dimensions, EocrmTealPineLightTokens.dimensions)
+        assertEquals(EocrmDarkTokens.semanticTones, EocrmTealPineDarkTokens.semanticTones)
+    }
 }

@@ -122,6 +122,68 @@ test('renders themed dimensions and typography into distinct light and dark inst
   );
 });
 
+test('renders accent theme objects overriding only colors tokens', () => {
+  const document = validateTokens({
+    schemaVersion: 1,
+    contractVersion: '1.2.3',
+    tokens: [
+      composeToken(
+        'color.accent',
+        'color',
+        { light: '#0000ff', dark: '#8888ff' },
+        'colors',
+        'accent',
+      ),
+      composeToken(
+        'color.background',
+        'color',
+        { light: '#ffffff', dark: '#111111' },
+        'colors',
+        'background',
+      ),
+      composeToken('space.4', 'dimension', '16px', 'dimensions', 'space4'),
+      composeToken('font.size.medium', 'dimension', '14px', 'typography', 'fontSizeMedium'),
+      composeToken(
+        'tone.info.background',
+        'color',
+        { light: '#deebff', dark: '#16324f' },
+        'semanticTones',
+        'infoBackground',
+      ),
+      composeToken(
+        'tone.info.foreground',
+        'color',
+        { light: '#0747a6', dark: '#9dc3ff' },
+        'semanticTones',
+        'infoForeground',
+      ),
+      composeToken('avatar.foreground', 'color', '#ffffff', 'avatarPalette', 'foreground'),
+      {
+        id: 'ring.accent',
+        type: 'color',
+        value: { light: '#0000ff', dark: '#8888ff' },
+        outputs: { web: { name: '--ring-accent' } },
+      },
+    ],
+    accents: {
+      tealpine: {
+        'color.accent': { light: '#17736d', dark: '#6dcfc4' },
+        'ring.accent': { light: '#17736d', dark: '#6dcfc4' },
+      },
+    },
+  });
+
+  const contract = renderCompose(document).get('EocrmTokenContract.kt');
+
+  const objectBody = (name) =>
+    contract.match(new RegExp(`public object ${name} \\{[\\s\\S]*?\\n\\}`))[0];
+  assert.match(objectBody('EocrmLightTokens'), /accent = Color\(0xFF0000FF\)/);
+  assert.match(objectBody('EocrmDarkTokens'), /accent = Color\(0xFF8888FF\)/);
+  assert.match(objectBody('EocrmTealPineLightTokens'), /accent = Color\(0xFF17736D\)/);
+  assert.match(objectBody('EocrmTealPineDarkTokens'), /accent = Color\(0xFF6DCFC4\)/);
+  assert.match(objectBody('EocrmTealPineLightTokens'), /background = Color\(0xFFFFFFFF\)/);
+});
+
 test('reports an actionable Compose boundary error for a valid web-only document', () => {
   const document = validateTokens({
     schemaVersion: 1,

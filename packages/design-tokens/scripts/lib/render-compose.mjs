@@ -151,18 +151,36 @@ public object EocrmTokenContract {
 
 ${renderThemeObject('EocrmLightTokens', 'light', groups)}
 
-${renderThemeObject('EocrmDarkTokens', 'dark', groups)}
+${renderThemeObject('EocrmDarkTokens', 'dark', groups)}${renderAccentObjects(document, groups)}
 `;
 }
 
-function renderThemeObject(name, theme, groups) {
+const ACCENT_DISPLAY_NAMES = { tealpine: 'TealPine' };
+
+// Accent overrides are literal colours, so they replace the resolved value in the
+// `colors` group only; tokens without a Compose output (e.g. ring.accent) are ignored.
+function renderAccentObjects(document, groups) {
+  return Object.entries(document.accents ?? {})
+    .map(([accent, overrides]) => {
+      const display = ACCENT_DISPLAY_NAMES[accent] ?? accent[0].toUpperCase() + accent.slice(1);
+      return ['light', 'dark']
+        .map(
+          (theme) =>
+            `\n\n${renderThemeObject(`Eocrm${display}${theme === 'light' ? 'Light' : 'Dark'}Tokens`, theme, groups, overrides)}`,
+        )
+        .join('');
+    })
+    .join('');
+}
+
+function renderThemeObject(name, theme, groups, overrides = {}) {
   const avatarForeground = groups.avatarPalette.find((token) => token.composeName === 'foreground');
   const avatarColors = groups.avatarPalette.filter((token) =>
     token.composeName.startsWith('palette'),
   );
   return `public object ${name} {
     public val colors: EocrmColors = EocrmColors(
-${groups.colors.map((token) => `        ${token.composeName} = ${renderColor(resolve(token, theme))},`).join('\n')}
+${groups.colors.map((token) => `        ${token.composeName} = ${renderColor(overrides[token.id]?.[theme] ?? resolve(token, theme))},`).join('\n')}
     )
     public val dimensions: EocrmDimensions = ${instanceName('Dimensions', groups.dimensions, theme)}
     public val typography: EocrmTypography = ${instanceName('Typography', groups.typography, theme)}
