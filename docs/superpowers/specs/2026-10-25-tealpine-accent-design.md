@@ -77,19 +77,20 @@ consumers (web CRM via Sass, mobile via Kotlin Compose).
 
 | Token id | light | dark |
 |---|---|---|
-| `color.accent` | `#17736d` | `#6dcfc4` |
-| `color.accent.hover` | `#135f5a` | `#93ddd4` |
-| `color.accent.pressed` | `#0e4a46` | `#c6efea` |
+| `color.accent` | `#0b6d67` | `#6dcfc4` |
+| `color.accent.hover` | `#085752` | `#9ddfd7` |
+| `color.accent.pressed` | `#054440` | `#c6efea` |
 | `color.accent.foreground` | `#ffffff` | `#1d2125` |
 | `color.accent.background.subtle` | `#ddeeec` | `#173f3c` |
 | `color.accent.subtle.background` | `#ddeeec` | `#173f3c` |
-| `ring.accent` | `#17736d` | `#6dcfc4` |
+| `ring.accent` | `#0b6d67` | `#6dcfc4` |
 
 Measured: accent vs white 5.66, vs dark bg `#1d2125` 8.77; hover 7.47 / 10.44;
 pressed 10.06 / 13.06; accent text on subtle tint 4.72 (light) / 6.27 (dark).
 Light steps darken, dark steps lighten — same direction as blue.
 
-**Hover values are provisional:** both hover steps fail the existing
+**As shipped (updated during implementation):** the light family was darkened from the mockup's `#17736d` to `#0b6d67` to pass the WidgetPreview accent-mix floor, and both hovers were nudged to clear the 0.065 hover gate; the logo keeps `#17736D`. Original note —
+**Hover values were provisional:** both hover steps fail the existing
 "every -hover stays a visible step from its base" gate in `contrast.test.ts`
 (light 0.0641, dark 0.0581 vs floor 0.065). Builder nudges `hover` light
 (darker) and dark (lighter) to the nearest values clearing 0.065 while
