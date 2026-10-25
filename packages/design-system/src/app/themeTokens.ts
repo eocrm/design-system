@@ -59,8 +59,9 @@ const OS_DARK_SELECTOR =
 /**
  * Build the CSS for consumer token overrides, mirroring `dark.scss`'s scopes so
  * the cascade resolves correctly:
- * - `tokens` → `:root {}` (wins in light by source order) AND re-emitted into
- *   the dark scopes so a single map applies in both themes.
+ * - `tokens` → `:root {}` plus accent-aware twins (`:root:root[data-accent]`) that
+ *   win over the generated `data-accent` blocks by specificity, AND re-emitted
+ *   into the dark scopes so a single map applies in both themes.
  * - `darkTokens` → layered AFTER `tokens` inside the dark scopes only.
  *
  * Returns `null` when there is nothing to emit, so `<AppProvider>` renders no
