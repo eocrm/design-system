@@ -272,3 +272,13 @@
   --z-tooltip: 1300;
   --z-tour: 1150;
 }
+
+:root[data-accent='tealpine'] {
+  --color-accent: #17736d;
+  --color-accent-bg-subtle: #ddeeec;
+  --color-accent-fg: #ffffff;
+  --color-accent-hover: #135d58;
+  --color-accent-pressed: #0e4a46;
+  --color-accent-subtle-bg: #ddeeec;
+  --ring-accent: #17736d;
+}
