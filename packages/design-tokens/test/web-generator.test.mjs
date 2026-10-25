@@ -162,3 +162,30 @@ test('renders accent override blocks with higher specificity than the theme bloc
   for (const s of selectors) assert.match(s, /\[data-accent='tealpine'\]/);
   assert.equal(`${tokensScss}${darkScss}`.match(/--color-accent-subtle/g).length, 1);
 });
+
+test('emits accent dark overrides even when equal to the light override', () => {
+  const document = validateTokens({
+    schemaVersion: 1,
+    contractVersion: '0.0.0',
+    tokens: [
+      {
+        id: 'color.accent',
+        type: 'color',
+        value: { light: '#0000ff', dark: '#8888ff' },
+        outputs: { web: { name: '--color-accent' } },
+      },
+    ],
+    accents: { tealpine: { 'color.accent': { light: '#ffffff', dark: '#ffffff' } } },
+  });
+
+  const { darkScss } = renderWeb(document);
+
+  assert.match(
+    darkScss,
+    /\[data-accent='tealpine'\]\[data-theme='dark'\] \{\n  --color-accent: #ffffff;/,
+  );
+  assert.match(
+    darkScss,
+    /\[data-accent='tealpine'\]:not\(\[data-theme='light'\]\) \{\n    --color-accent: #ffffff;/,
+  );
+});

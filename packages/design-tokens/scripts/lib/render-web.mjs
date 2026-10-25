@@ -62,7 +62,7 @@ function renderAccents(accents, webTokens) {
       return {
         name,
         light: overrides.map((o) => declaration(o.name, o.light)),
-        dark: overrides.filter((o) => o.dark !== o.light).map((o) => declaration(o.name, o.dark)),
+        dark: overrides.map((o) => declaration(o.name, o.dark)),
       };
     })
     .filter((accent) => accent.light.length > 0);
