@@ -141,7 +141,7 @@ describe('AppProvider', () => {
     const style = container.querySelector('style[data-eocrm-tokens]');
     expect(style).not.toBeNull();
     const css = style?.textContent ?? '';
-    expect(css).toContain(':root {');
+    expect(css).toContain(':root, :root:root[data-accent] {');
     expect(css).toContain('--color-accent: #7c3aed;');
     expect(css).toContain("[data-theme='dark']");
     expect(css).toContain('--color-accent: #a78bfa;');
