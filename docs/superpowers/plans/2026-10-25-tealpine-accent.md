@@ -14,17 +14,17 @@
 
 - Blue token output with no `data-accent` stays byte-identical: existing generated declarations unchanged, only new blocks appended.
 - Accent name: `tealpine`. Web attribute: `data-accent="tealpine"` on `<html>`. Compose objects: `EocrmTealPineLightTokens`, `EocrmTealPineDarkTokens`.
-- Final Teal pine values (hover nudged from spec to clear the 0.065 OKLab hover gate; measured 0.0706 light / 0.0707 dark):
+- Final Teal pine values (light accent family darkened in Task 6 to pass the WidgetPreview accent-mix 2.2 floor; hover steps clear 0.065). The LOGO keeps the landing brand `#17736D` (see logo line):
 
   | Token id | light | dark |
   |---|---|---|
-  | `color.accent` | `#17736d` | `#6dcfc4` |
-  | `color.accent.hover` | `#135d58` | `#9ddfd7` |
-  | `color.accent.pressed` | `#0e4a46` | `#c6efea` |
+  | `color.accent` | `#0b6d67` | `#6dcfc4` |
+  | `color.accent.hover` | `#085752` | `#9ddfd7` |
+  | `color.accent.pressed` | `#054440` | `#c6efea` |
   | `color.accent.foreground` | `#ffffff` | `#1d2125` |
   | `color.accent.background.subtle` | `#ddeeec` | `#173f3c` |
   | `color.accent.subtle.background` | `#ddeeec` | `#173f3c` |
-  | `ring.accent` | `#17736d` | `#6dcfc4` |
+  | `ring.accent` | `#0b6d67` | `#6dcfc4` |
 - `schemaVersion` stays `1`.
 - The 0.065 hover gate in `contrast.test.ts` is NOT lowered. If any Teal pine value fails another existing gate, adjust the Teal pine value (record the measurement in the commit message), never the gate.
 - Shared token values edited only in `packages/design-tokens/src/tokens.json`; never hand-edit generated Sass/Kotlin. Run `npm run tokens:check` after token changes.
