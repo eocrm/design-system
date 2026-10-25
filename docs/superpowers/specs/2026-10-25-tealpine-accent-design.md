@@ -48,7 +48,7 @@ consumers (web CRM via Sass, mobile via Kotlin Compose).
   `<html>`); DS ships tokens + documents the attribute. No AppProvider
   `accent` prop (AppProvider does not own `data-theme` either).
 - **Info-as-selection repointed to accent (user: 1-A).** Components that use
-  the info family to mean *selected* switch to the accent family:
+  the info family to mean _selected_ switch to the accent family:
   DropdownMenu checked item (bar, bg, fg), OptionsPicker selected row,
   StagePath done steps. This visibly changes blue output for those three
   (e.g. dark `#579dff` → `#68a7ff`); accepted. The "byte-identical blue"
@@ -75,15 +75,15 @@ consumers (web CRM via Sass, mobile via Kotlin Compose).
 
 ### Values
 
-| Token id | light | dark |
-|---|---|---|
-| `color.accent` | `#0b6d67` | `#6dcfc4` |
-| `color.accent.hover` | `#085752` | `#9ddfd7` |
-| `color.accent.pressed` | `#054440` | `#c6efea` |
-| `color.accent.foreground` | `#ffffff` | `#1d2125` |
+| Token id                         | light     | dark      |
+| -------------------------------- | --------- | --------- |
+| `color.accent`                   | `#0b6d67` | `#6dcfc4` |
+| `color.accent.hover`             | `#085752` | `#9ddfd7` |
+| `color.accent.pressed`           | `#054440` | `#c6efea` |
+| `color.accent.foreground`        | `#ffffff` | `#1d2125` |
 | `color.accent.background.subtle` | `#ddeeec` | `#173f3c` |
 | `color.accent.subtle.background` | `#ddeeec` | `#173f3c` |
-| `ring.accent` | `#0b6d67` | `#6dcfc4` |
+| `ring.accent`                    | `#0b6d67` | `#6dcfc4` |
 
 Measured: accent vs white 5.66, vs dark bg `#1d2125` 8.77; hover 7.47 / 10.44;
 pressed 10.06 / 13.06; accent text on subtle tint 4.72 (light) / 6.27 (dark).

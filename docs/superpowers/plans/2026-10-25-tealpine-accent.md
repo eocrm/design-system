@@ -16,15 +16,16 @@
 - Accent name: `tealpine`. Web attribute: `data-accent="tealpine"` on `<html>`. Compose objects: `EocrmTealPineLightTokens`, `EocrmTealPineDarkTokens`.
 - Final Teal pine values (light accent family darkened in Task 6 to pass the WidgetPreview accent-mix 2.2 floor; hover steps clear 0.065). The LOGO keeps the landing brand `#17736D` (see logo line):
 
-  | Token id | light | dark |
-  |---|---|---|
-  | `color.accent` | `#0b6d67` | `#6dcfc4` |
-  | `color.accent.hover` | `#085752` | `#9ddfd7` |
-  | `color.accent.pressed` | `#054440` | `#c6efea` |
-  | `color.accent.foreground` | `#ffffff` | `#1d2125` |
+  | Token id                         | light     | dark      |
+  | -------------------------------- | --------- | --------- |
+  | `color.accent`                   | `#0b6d67` | `#6dcfc4` |
+  | `color.accent.hover`             | `#085752` | `#9ddfd7` |
+  | `color.accent.pressed`           | `#054440` | `#c6efea` |
+  | `color.accent.foreground`        | `#ffffff` | `#1d2125` |
   | `color.accent.background.subtle` | `#ddeeec` | `#173f3c` |
   | `color.accent.subtle.background` | `#ddeeec` | `#173f3c` |
-  | `ring.accent` | `#0b6d67` | `#6dcfc4` |
+  | `ring.accent`                    | `#0b6d67` | `#6dcfc4` |
+
 - `schemaVersion` stays `1`.
 - The 0.065 hover gate in `contrast.test.ts` is NOT lowered. If any Teal pine value fails another existing gate, adjust the Teal pine value (record the measurement in the commit message), never the gate.
 - Shared token values edited only in `packages/design-tokens/src/tokens.json`; never hand-edit generated Sass/Kotlin. Run `npm run tokens:check` after token changes.
@@ -44,11 +45,13 @@
 ### Task 1: Schema + validation for `accents`
 
 **Files:**
+
 - Modify: `packages/design-tokens/src/schema.json`
 - Modify: `packages/design-tokens/scripts/lib/validate-tokens.mjs`
 - Test: `packages/design-tokens/test/schema.test.mjs`, `packages/design-tokens/test/validation.test.mjs`
 
 **Interfaces:**
+
 - Produces: document shape `document.accents?: Record<string, Record<tokenId, {light: string, dark: string}>>`; `validateTokens(document)` returns the document (unchanged contract) and throws `TokenSemanticError` with new issue codes below.
 
 - [ ] **Step 1: Failing tests.** In `schema.test.mjs`: a document with `accents: { tealpine: { 'color.accent': { light: '#17736d', dark: '#6dcfc4' } } }` validates against the schema; accent name `Teal` (uppercase) and a non-object value are rejected. In `validation.test.mjs`, test `rejects invalid accent overrides` asserting issue codes at these paths:
@@ -66,19 +69,23 @@
 ### Task 2: Web output + Teal pine source values
 
 **Files:**
+
 - Modify: `packages/design-tokens/scripts/lib/render-web.mjs`
 - Modify: `packages/design-tokens/src/tokens.json` (add `accents.tealpine` with the Global Constraints values)
 - Regenerate: `packages/design-tokens/generated/web/{tokens,dark}.scss` via the package's generate script
 - Test: `packages/design-tokens/test/web-generator.test.mjs` (and update `test/fixtures/current-web-contract.json` only if `check-web-compat` requires it — base declarations must not change)
 
 **Interfaces:**
+
 - Consumes: `document.accents` from Task 1.
 - Produces: in `tokensScss`, after the `:root {}` block, per accent (sorted by name):
+
   ```scss
   :root[data-accent='tealpine'] {
     <light overrides, sorted by web name>
   }
   ```
+
   In `darkScss`: after the `:root[data-theme='dark']` block, `:root[data-accent='tealpine'][data-theme='dark'] { <dark overrides> }`; inside the existing `@media` block, after the `:root:not([data-theme='light'])` rule, `:root[data-accent='tealpine']:not([data-theme='light']) { … }`. Overrides whose token has no web output are skipped. Dark block omits values equal to the light override (mirror existing logic).
 
 - [ ] **Step 1: Failing test** `renders accent override blocks with higher specificity than the theme blocks`: fixture with `color.background` + `color.accent` (themed) + `color.accent.subtle` aliasing accent; `accents.tealpine` overriding only `color.accent`. Assert exact `tokensScss`/`darkScss` strings: the three blocks above, alias token NOT redeclared in any accent block (Review Focus 4), no selector containing `data-accent` other than `='tealpine'` (Review Focus 2), the media-query accent selector contains `:not([data-theme='light'])` (Review Focus 1). Also assert a document with no `accents` renders exactly as before (existing test stays green).
@@ -90,11 +97,13 @@
 ### Task 3: Compose output
 
 **Files:**
+
 - Modify: `packages/design-tokens/scripts/lib/render-compose.mjs`
 - Regenerate: `packages/design-tokens/compose/src/commonMain/kotlin/com/eocrm/design/tokens/EocrmTokenContract.kt`
 - Test: `packages/design-tokens/test/compose-generator.test.mjs`, `packages/design-tokens/compose/src/commonTest/kotlin/com/eocrm/design/tokens/TokenContractTest.kt`
 
 **Interfaces:**
+
 - Produces: `public object EocrmTealPineLightTokens` / `EocrmTealPineDarkTokens` in `EocrmTokenContract.kt`, same members as `EocrmLightTokens`/`EocrmDarkTokens`; `colors` uses accent overrides for tokens with a `colors` Compose output, everything else identical. Object name = `Eocrm${PascalCase(accentName)}${Light|Dark}Tokens` with `tealpine` → `TealPine` (explicit display-name map `{ tealpine: 'TealPine' }` in the renderer; unknown accent names fall back to first-letter capitalisation).
 
 - [ ] **Step 1: Failing test** `renders accent theme objects`: fixture accent overriding a `colors` token and a web-only token (`ring.accent`-like, Review Focus 5). Assert `EocrmTokenContract.kt` contains both objects, overridden colour as `Color(0xFF17736D)` in light, base objects unchanged, no crash for web-only override. Kotlin test: `EocrmTealPineLightTokens.colors.accent == Color(0xFF17736D)` and `EocrmTealPineDarkTokens.colors.accent == Color(0xFF6DCFC4)`, and every non-accent colour equals `EocrmLightTokens`/`EocrmDarkTokens`.
@@ -106,11 +115,13 @@
 ### Task 4: AppProvider overrides beat `data-accent`
 
 **Files:**
+
 - Modify: `packages/design-system/src/app/themeTokens.ts` (`buildThemeTokenCss`)
 - Test: `packages/design-system/src/app/themeTokens.test.ts`
 - Docs: `packages/design-system/docs/setup.md` (one sentence: AppProvider overrides win over `data-accent`)
 
 **Interfaces:**
+
 - `buildThemeTokenCss(tokens?, darkTokens?): string | null` — signature unchanged. Each scope gains an accent-aware selector that STRICTLY out-specifies the matching accent block (no reliance on `<style>` order):
   - light: `:root, :root:root[data-accent]` — (0,3,0) > accent light (0,2,0)
   - forced dark: `:root[data-theme='dark'], :root:root[data-accent][data-theme='dark']` — (0,4,0) > (0,3,0)
@@ -126,12 +137,14 @@
 ### Task 5: Selection states use accent, not info
 
 **Files:**
+
 - Modify: `packages/design-system/src/components/DropdownMenu/DropdownMenu.tokens.scss:37-39`
 - Modify: `packages/design-system/src/components/OptionsPicker/OptionsPicker.tokens.scss:13`
 - Modify: `packages/design-system/src/components/StagePath/StagePath.tokens.scss:26-27`
 - Test: `packages/design-system/src/styles/contrast.test.ts` (existing StagePath and accent-tint rows), component tests if they pin token names
 
 **Interfaces:** mirror Select (`Select.tokens.scss:82-83`):
+
 - `--dropdown-menu-item-bg-checked: var(--color-accent-subtle-bg)`; `--dropdown-menu-item-fg-checked: var(--color-fg)`; `--dropdown-menu-item-accent-checked: var(--color-accent)`
 - `--options-picker-row-bg-selected: var(--color-accent-subtle-bg)`
 - `--stage-path-done-bg: var(--color-accent-subtle-bg)`; `--stage-path-done-fg: var(--color-fg)`. If StagePath's hovered-fill AA gate (`contrast.test.ts` "StagePath hovered fills keep their text at AA") fails, pick the nearest accent-family token pair that passes and record the ratio in the commit.
@@ -145,9 +158,11 @@ Leave TopBar indicator, Card/LinkCard stripe, LiquidEditor filter, Badge/Alert/B
 ### Task 6: Contrast gates cover Teal pine
 
 **Files:**
+
 - Modify: `packages/design-system/src/styles/contrast.test.ts`
 
 **Interfaces:**
+
 - Add a helper `accentScope(source: string, accent: string, theme: 'light' | 'dark'): string` that returns the text of the accent block(s) for that theme (light → `:root[data-accent='X']` block in TOKENS; dark → the `[data-theme='dark']` accent block in DARK). Resolve teal values by layering: look in the accent scope first, then fall back to the normal theme resolution (`tokenValue`). Do not change `tokenValue`/`declaredValue` semantics for existing callers (`declaredValue` throws on differing duplicates — scope inputs must be single blocks).
 - Parameterise the existing accent-keyed checks over `accent ∈ ['default', 'tealpine']`: accent WCAG rows (`accent text on accent tint`, `accent-fg on solid accent`, muted on accent tint, ring rows), the "every -hover stays a visible step" gate (accent tone only for tealpine), table accent-cell hover, `--widget-preview-accent` mix, ring-on-event-fill, selection rows from Task 5.
 - Add one test asserting the OS-dark media-query accent block equals the forced-dark accent block (same declarations).
@@ -161,12 +176,14 @@ Leave TopBar indicator, Card/LinkCard stripe, LiquidEditor filter, Badge/Alert/B
 ### Task 7: Playground — accent toggle + Teal pine logo
 
 **Files:**
+
 - Create: `packages/playground/src/assets/eocrm-logo-tealpine.svg`
 - Modify: `packages/playground/src/layout/AppShell/AppShell.tsx` (toggle beside the theme toggle, ~line 245)
 - Modify: `packages/playground/src/pages/components/LogoDemo.tsx` (one example with the teal asset)
 - Modify: `packages/playground/src/pages/mockups/Login/Login.tsx` (+ any other mockup/AppShell importing `eocrm-logo.svg` as a brand logo — `grep -rn eocrm-logo packages/playground/src`; QrCodeDemo masks the logo so leave it)
 
 **Interfaces:**
+
 - `ACCENT_KEY = 'eocrm-playground-accent'`; state `'blue' | 'tealpine'`, default `'blue'`; effect sets `document.documentElement.dataset.accent = 'tealpine'` or `delete …dataset.accent`. Expose current accent to mockups via a tiny `useAccent()` hook in `packages/playground/src/layout/AppShell/` (read `document.documentElement.dataset.accent` with a `MutationObserver` on the attribute) so Login can pick the logo asset. Toggle: DS `IconButton` + `Tooltip` like the theme toggle; label "Accent: Blue" / "Accent: Teal pine".
 
 - [ ] **Step 1:** Create the SVG per Global Constraints.
@@ -178,6 +195,7 @@ Leave TopBar indicator, Card/LinkCard stripe, LiquidEditor filter, Badge/Alert/B
 ### Task 8: Docs
 
 **Files:**
+
 - Modify: `packages/design-system/README.md` — "Accent" section: set `data-accent="tealpine"` on `<html>` (omit for blue), works with `data-theme`, AppProvider overrides win, Compose `EocrmTealPineLightTokens`/`EocrmTealPineDarkTokens`; known issue: Teal pine vs `--color-success` light OKLab ΔE 0.060 (< 0.065 floor) — review visually before switching.
 - Modify: `packages/design-system/AI-PRIMER.md` — one index line pointing to the README section.
 - Modify: `packages/design-tokens/README.md` — document the `accents` source key and validation rules.
