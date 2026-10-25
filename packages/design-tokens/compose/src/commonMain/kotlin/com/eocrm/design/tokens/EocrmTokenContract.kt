@@ -407,11 +407,11 @@ public object EocrmDarkTokens {
 
 public object EocrmTealPineLightTokens {
     public val colors: EocrmColors = EocrmColors(
-        accent = Color(0xFF17736D),
+        accent = Color(0xFF0B6D67),
         accentBackgroundSubtle = Color(0xFFDDEEEC),
         accentForeground = Color(0xFFFFFFFF),
-        accentHover = Color(0xFF135D58),
-        accentPressed = Color(0xFF0E4A46),
+        accentHover = Color(0xFF085752),
+        accentPressed = Color(0xFF054440),
         accentSubtleBackground = Color(0xFFDDEEEC),
         background = Color(0xFFFFFFFF),
         backgroundDangerSubtle = Color(0xFFFFEBE6),

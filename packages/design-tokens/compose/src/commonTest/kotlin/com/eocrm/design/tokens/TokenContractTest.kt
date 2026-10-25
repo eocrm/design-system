@@ -17,7 +17,7 @@ class TokenContractTest {
 
     @Test
     fun tealPineOverridesOnlyAccentColors() {
-        assertEquals(Color(0xFF17736D), EocrmTealPineLightTokens.colors.accent)
+        assertEquals(Color(0xFF0B6D67), EocrmTealPineLightTokens.colors.accent)
         assertEquals(Color(0xFF6DCFC4), EocrmTealPineDarkTokens.colors.accent)
         assertEquals(
             EocrmLightTokens.colors.copy(
