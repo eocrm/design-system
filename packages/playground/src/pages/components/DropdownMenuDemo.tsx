@@ -427,7 +427,7 @@ export function ViewSettingsExample() {
 
       <Example
         title="Custom indicators (ItemIndicator)"
-        description="Checked items already get the info-tinted row + 2px left accent for free. Use <DropdownMenu.ItemIndicator> as a direct child to add a custom glyph on top — a Pin icon, a colored dot for a label-color picker, a custom animated check, etc. Indicators only render when the parent item is checked / selected."
+        description="Checked items already get the accent-tinted row + 2px left accent for free. Use <DropdownMenu.ItemIndicator> as a direct child to add a custom glyph on top — a Pin icon, a colored dot for a label-color picker, a custom animated check, etc. Indicators only render when the parent item is checked / selected."
         code={`import { useState } from 'react';
 import { Pin } from 'lucide-react';
 import { Button, Cluster, DropdownMenu } from '@eocrm/design-system';
