@@ -303,6 +303,14 @@ const PAIRS: Pair[] = [
   // with all of them still rendering on it.
   ['danger text on the duplicate danger tint', '--color-danger', '--color-bg-danger-subtle', 4.5],
   ['accent text on the duplicate accent tint', '--color-accent', '--color-accent-subtle-bg', 4.5],
+  // DropdownMenu checked item / OptionsPicker selected row / StagePath done
+  // step: selection is accent-tinted and keeps --color-fg on top.
+  [
+    'fg on the accent tint (checked / selected / done)',
+    '--color-fg',
+    '--color-accent-subtle-bg',
+    4.5,
+  ],
   // #511. --color-fg-subtle is certified for these two surfaces and no others.
   // It is NOT pinned against --color-bg-muted, and that omission is the rule
   // rather than an oversight: at 4.38/4.29 it would fail. This is a decline,
@@ -473,6 +481,21 @@ describe('StagePath hovered fills keep their text at AA', () => {
     const fg = tokenValue(`--color-tone-${tone}-fg`, source);
     const hovered = composite(fg, mix, tokenValue(`--color-tone-${tone}-bg`, source));
     expect(mix).toBeGreaterThan(0);
+    expect(contrast(fg, hovered)).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
+describe('StagePath default done fill (accent tint) keeps its text at AA when hovered', () => {
+  const mix =
+    parseFloat(
+      declaredValue(
+        '--stage-path-hover-mix',
+        readFileSync(resolve(__dirname, '../components/StagePath/StagePath.tokens.scss'), 'utf8'),
+      ) ?? 'NaN',
+    ) / 100;
+  it.each(THEMED_ACCENTS)('%s, %s accent', (_theme, _accent, source) => {
+    const fg = tokenValue('--color-fg', source);
+    const hovered = composite(fg, mix, tokenValue('--color-accent-subtle-bg', source));
     expect(contrast(fg, hovered)).toBeGreaterThanOrEqual(4.5);
   });
 });

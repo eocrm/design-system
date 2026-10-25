@@ -33,10 +33,10 @@
   --dropdown-menu-item-fg-danger: var(--color-danger);
   --dropdown-menu-item-bg-danger-hover: var(--color-bg-danger-subtle);
 
-  // Item — checked state (info-tinted with left accent)
-  --dropdown-menu-item-bg-checked: var(--badge-bg-info);
-  --dropdown-menu-item-fg-checked: var(--badge-fg-info);
-  --dropdown-menu-item-accent-checked: var(--color-info);
+  // Item — checked state (accent-tinted with left accent)
+  --dropdown-menu-item-bg-checked: var(--color-accent-subtle-bg);
+  --dropdown-menu-item-fg-checked: var(--color-fg);
+  --dropdown-menu-item-accent-checked: var(--color-accent);
   --dropdown-menu-item-accent-width-checked: var(--border-width-emphasis);
 
   // Icon slot
