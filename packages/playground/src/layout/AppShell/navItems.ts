@@ -1,4 +1,5 @@
 import {
+  BookOpen,
   AlertCircle,
   Gauge,
   LayoutTemplate,
@@ -132,6 +133,7 @@ export const mockupItems: NavItem[] = [
   { to: '/mockups/custom-fields', label: 'Custom fields', icon: SquarePen, end: false },
   { to: '/mockups/roles', label: 'Roles', icon: ShieldCheck, end: false },
   { to: '/mockups/login', label: 'Login', icon: LogIn, end: false },
+  { to: '/mockups/docs', label: 'Developer docs', icon: BookOpen, end: false },
   { to: '/mockups/404', label: 'Not found', icon: Compass, end: false },
   { to: '/mockups/error', label: 'Error', icon: TriangleAlert, end: false },
 ];
