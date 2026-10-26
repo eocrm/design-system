@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Profiler, createRef, useState, type FormEvent } from 'react';
 import { Input } from './Input';
+import { Modal } from '../Modal';
 import { I18nProvider } from '../../i18n/I18nProvider';
 
 describe('Input', () => {
@@ -207,6 +208,47 @@ describe('Input suggestions', () => {
     await user.type(input, 'zzz');
     expect(screen.queryByRole('listbox')).toBeNull();
     expect(input).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('drops a stale highlight when the suggestions shrink, and Enter then does nothing', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const props = { 'aria-label': 'Workspace', onChange, defaultValue: 'x' };
+    const { rerender } = render(<Input {...props} suggestions={['a', 'b', 'c']} />);
+    const input = screen.getByRole('combobox');
+    await user.click(input);
+    await user.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}');
+    expect(input).toHaveAttribute('aria-activedescendant');
+    rerender(<Input {...props} suggestions={['a', 'b']} />);
+    expect(input).not.toHaveAttribute('aria-activedescendant');
+    await user.keyboard('{Enter}');
+    expect(input).toHaveValue('x');
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('forces autofill off even with a real autoComplete', () => {
+    render(<Input aria-label="W" autoComplete="email" suggestions={SUGGESTIONS} />);
+    expect(screen.getByRole('combobox')).toHaveAttribute('autocomplete', 'off');
+  });
+
+  it('yields Escape to the open list inside a Modal, then closes the Modal', async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    render(
+      <Modal open onOpenChange={onOpenChange}>
+        <Modal.Header>Title</Modal.Header>
+        <Modal.Body>
+          <Input aria-label="Workspace" suggestions={SUGGESTIONS} />
+        </Modal.Body>
+      </Modal>,
+    );
+    await user.click(screen.getByRole('combobox'));
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('listbox')).toBeNull();
+    expect(onOpenChange).not.toHaveBeenCalled();
+    await user.keyboard('{Escape}');
+    expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
   it('moves the highlight with wrap-around and selects on Enter', async () => {

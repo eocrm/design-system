@@ -111,6 +111,13 @@ describe('TableOfContents', () => {
     });
   });
 
+  it('lets a consumer aria-label override the default nav name', () => {
+    mountHeadings({ a: 0, b: 400, c: 800 });
+    render(<TableOfContents items={ITEMS} aria-label="Contents" />);
+    expect(screen.getByRole('navigation', { name: 'Contents' })).toBeInTheDocument();
+    expect(screen.queryByRole('navigation', { name: 'On this page' })).toBeNull();
+  });
+
   describe('click', () => {
     it('scrolls below the offset, pushes the hash, marks and focuses the heading', async () => {
       const user = userEvent.setup();
@@ -191,6 +198,18 @@ describe('TableOfContents', () => {
       expect(push).toHaveBeenCalledTimes(1);
       expect(replace).toHaveBeenCalledTimes(1);
       expect(location.hash).toBe('#c');
+    });
+
+    it('replaces instead of pushing when a non-ASCII id is already current', async () => {
+      const user = userEvent.setup();
+      const push = vi.spyOn(history, 'pushState');
+      const replace = vi.spyOn(history, 'replaceState');
+      mountHeadings({ раздел: 0 });
+      render(<TableOfContents items={[{ id: 'раздел', label: 'Раздел', level: 2 }]} />);
+      await user.click(link('Раздел'));
+      await user.click(link('Раздел'));
+      expect(push).toHaveBeenCalledTimes(1);
+      expect(replace).toHaveBeenCalledTimes(1);
     });
 
     it('scrolls instantly under reduced motion', async () => {

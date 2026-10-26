@@ -50,7 +50,8 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
    * it opens on focus, click or ↓ showing every suggestion, then filters by
    * case-insensitive substring once the user types. ↑/↓ + Enter or a click
    * fills the value and fires `onChange` exactly as typing would. Ignored when
-   * empty or `readOnly`. Default: none (a plain textbox). For a fixed set of
+   * empty or `readOnly`. Browser autofill is forced off while active (even with an
+   * `autoComplete` hint) so its dropdown can't stack on this one. Default: none (a plain textbox). For a fixed set of
    * allowed values use `<Select>` instead.
    */
   suggestions?: readonly string[];
@@ -79,7 +80,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   // `false` always wins over the heuristic.
   const hasAutocompleteHint =
     typeof props.autoComplete === 'string' && props.autoComplete !== 'off';
-  const blockAutofill = disableAutofill ?? !hasAutocompleteHint;
+  const blockAutofill = combobox.enabled || (disableAutofill ?? !hasAutocompleteHint);
 
   return (
     <>
@@ -89,6 +90,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         aria-invalid={invalid || undefined}
         {...(blockAutofill ? AUTOFILL_DISABLED_PROPS : {})}
         {...props}
+        {...(combobox.enabled ? AUTOFILL_DISABLED_PROPS : {})}
         // After {...props} so the combobox ARIA contract wins; its handlers
         // already chain the consumer's.
         {...combobox.inputProps}

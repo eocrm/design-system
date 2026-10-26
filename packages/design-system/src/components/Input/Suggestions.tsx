@@ -64,13 +64,22 @@ export function useSuggestions(
   const [active, setActive] = useState(-1);
 
   const enabled = !!suggestions?.length && !readOnly;
+  // Deduped (first occurrence wins, order kept): the value is the row key and identity.
+  const all = enabled ? [...new Set(suggestions)] : [];
+  // A changed list (by value, not identity) invalidates the highlighted row.
+  const listKey = JSON.stringify(all);
+  const [seenKey, setSeenKey] = useState(listKey);
+  if (seenKey !== listKey) {
+    setSeenKey(listKey);
+    setActive(-1);
+  }
   if (!enabled) return { enabled, inputProps: {}, inputRef, popup: null };
 
-  // Deduped (first occurrence wins, order kept): the value is the row key and identity.
-  const all = [...new Set(suggestions)];
   const needle = query?.toLowerCase();
   const visible = needle == null ? all : all.filter((s) => s.toLowerCase().includes(needle));
   const shown = open && visible.length > 0;
+  // Clamp: `visible` can shrink under a highlighted row (filter, or the parent's new list).
+  const activeIdx = active < visible.length ? active : -1;
 
   const optionId = (i: number) => `${listboxId}-${i}`;
   const openAll = () => {
@@ -82,7 +91,8 @@ export function useSuggestions(
     setOpen(false);
     setActive(-1);
   };
-  const choose = (value: string) => {
+  const choose = (value: string | undefined) => {
+    if (value === undefined) return;
     if (inputRef.current) setNativeValue(inputRef.current, value);
     close();
   };
@@ -95,13 +105,13 @@ export function useSuggestions(
       const delta = e.key === 'ArrowDown' ? 1 : -1;
       // Closed: open with every suggestion and start from nothing highlighted.
       const n = shown ? visible.length : all.length;
-      const from = shown ? active : -1;
+      const from = shown ? activeIdx : -1;
       if (!shown) openAll();
       setActive(from < 0 ? (delta > 0 ? 0 : n - 1) : (from + delta + n) % n);
-    } else if (e.key === 'Enter' && shown && active >= 0) {
+    } else if (e.key === 'Enter' && shown && activeIdx >= 0) {
       // No highlight: Enter stays native (e.g. submits the form).
       e.preventDefault();
-      choose(visible[active]!);
+      choose(visible[activeIdx]);
     } else if (
       e.key === 'Escape' &&
       shown &&
@@ -120,7 +130,7 @@ export function useSuggestions(
     'aria-expanded': shown,
     // Only while the listbox exists — it is unmounted when collapsed.
     'aria-controls': shown ? listboxId : undefined,
-    'aria-activedescendant': shown && active >= 0 ? optionId(active) : undefined,
+    'aria-activedescendant': shown && activeIdx >= 0 ? optionId(activeIdx) : undefined,
     onFocus: chain<FocusEvent<HTMLInputElement>>(handlers.onFocus, openAll),
     onClick: chain<MouseEvent<HTMLInputElement>>(handlers.onClick, () => {
       if (!open) openAll();
@@ -141,7 +151,7 @@ export function useSuggestions(
       floatingIdRef={floatingIdRef}
       listboxId={listboxId}
       visible={visible}
-      active={active}
+      active={activeIdx}
       optionId={optionId}
       onActivate={setActive}
       onChoose={choose}

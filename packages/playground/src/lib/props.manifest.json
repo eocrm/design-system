@@ -3628,7 +3628,7 @@
           "type": "readonly string[]",
           "required": false,
           "default": "",
-          "description": "Values to suggest while the value stays free text (e.g. the user's other\nworkspace slugs). Makes the input an ARIA combobox with a suggestion list:\nit opens on focus, click or ↓ showing every suggestion, then filters by\ncase-insensitive substring once the user types. ↑/↓ + Enter or a click\nfills the value and fires `onChange` exactly as typing would. Ignored when\nempty or `readOnly`. Default: none (a plain textbox). For a fixed set of\nallowed values use `<Select>` instead."
+          "description": "Values to suggest while the value stays free text (e.g. the user's other\nworkspace slugs). Makes the input an ARIA combobox with a suggestion list:\nit opens on focus, click or ↓ showing every suggestion, then filters by\ncase-insensitive substring once the user types. ↑/↓ + Enter or a click\nfills the value and fires `onChange` exactly as typing would. Ignored when\nempty or `readOnly`. Browser autofill is forced off while active (even with an\n`autoComplete` hint) so its dropdown can't stack on this one. Default: none (a plain textbox). For a fixed set of\nallowed values use `<Select>` instead."
         }
       ]
     },
