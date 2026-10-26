@@ -39,6 +39,8 @@ import {
   Stack,
   Sticky,
   Table,
+  TableOfContents,
+  type TableOfContentsItem,
   Tabs,
   Text,
   Title,
@@ -176,33 +178,29 @@ function RequestSamples({ lang, onChange }: LangState) {
   );
 }
 
-/** Article + right-hand "On this page" column. */
-function Article({ toc, children }: { toc: { id: string; label: string }[]; children: ReactNode }) {
+/** Article + right-hand "On this page" column (a collapsed disclosure above the content once stacked). */
+function Article({ toc, children }: { toc: TableOfContentsItem[]; children: ReactNode }) {
+  const [narrow, setNarrow] = useState(false);
   return (
     <Split
       side="end"
       asideWidth="200px"
       gap="2xl"
+      align="stretch"
       collapseBelow="lg"
+      onCollapsedChange={setNarrow}
       aside={
-        // TODO: replace when TableOfContents ships — see packages/playground/TODO.md
-        <Sticky top="topbar">
-          <Stack gap="xs">
-            <Text size="xs" weight="semibold" tone="muted">
-              On this page
-            </Text>
-            {toc.map((t) => (
-              <Link key={t.id} href={`#${t.id}`} variant="muted">
-                <Text as="span" size="sm">
-                  {t.label}
-                </Text>
-              </Link>
-            ))}
-          </Stack>
-        </Sticky>
+        narrow ? null : (
+          <Sticky top="topbar">
+            <TableOfContents items={toc} />
+          </Sticky>
+        )
       }
     >
-      <Page gap="xl">{children}</Page>
+      <Page gap="xl">
+        {narrow && <TableOfContents items={toc} collapsed />}
+        {children}
+      </Page>
     </Split>
   );
 }
@@ -282,10 +280,10 @@ function ApiOverviewPage() {
   return (
     <Article
       toc={[
-        { id: 'base-url', label: 'Base URL' },
-        { id: 'auth', label: 'Authentication' },
-        { id: 'rate-limits', label: 'Rate limits' },
-        { id: 'errors', label: 'Errors' },
+        { id: 'base-url', label: 'Base URL', level: 2 },
+        { id: 'auth', label: 'Authentication', level: 2 },
+        { id: 'rate-limits', label: 'Rate limits', level: 2 },
+        { id: 'errors', label: 'Errors', level: 2 },
       ]}
     >
       <PageHeader borderBottom={false}>
@@ -479,10 +477,10 @@ function ListContactsPage({ langState }: { langState: LangState }) {
   return (
     <Article
       toc={[
-        { id: 'params', label: 'Query parameters' },
-        { id: 'request', label: 'Request' },
-        { id: 'try-it', label: 'Try it' },
-        { id: 'response', label: 'Response' },
+        { id: 'params', label: 'Query parameters', level: 2 },
+        { id: 'request', label: 'Request', level: 2 },
+        { id: 'try-it', label: 'Try it', level: 2 },
+        { id: 'response', label: 'Response', level: 2 },
       ]}
     >
       <PageHeader borderBottom={false}>
@@ -601,8 +599,8 @@ function AiAssistantsPage() {
   return (
     <Article
       toc={[
-        { id: 'connect', label: 'Connect' },
-        { id: 'ask', label: 'What you can ask' },
+        { id: 'connect', label: 'Connect', level: 2 },
+        { id: 'ask', label: 'What you can ask', level: 2 },
       ]}
     >
       <PageHeader borderBottom={false}>

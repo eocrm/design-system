@@ -1766,6 +1766,15 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       <Dashed w={214} h={50} />
     </Col>
   ),
+  TableOfContents: (
+    <Col gap={6} style={{ alignItems: 'flex-start' }}>
+      <Bar w={96} />
+      <Bar w={120} />
+      <SolidBar w={104} />
+      <Bar w={112} />
+      <Bar w={88} />
+    </Col>
+  ),
   Tabs: (
     <Col style={{ position: 'relative', gap: 8, alignItems: 'flex-start' }}>
       <Row gap={10} style={{ alignItems: 'center' }}>
