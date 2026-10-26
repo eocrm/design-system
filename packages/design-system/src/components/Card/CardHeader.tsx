@@ -79,6 +79,7 @@ export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(function C
     >
       <Heading className={styles.title}>{children}</Heading>
       {hasControls && <span className={styles.controls}>{controls}</span>}
+      {hasControls && !hasMeta && <span aria-hidden="true" />}
       {hasMeta && (
         <span className={styles.meta}>
           <span className={styles.metaText}>{meta}</span>

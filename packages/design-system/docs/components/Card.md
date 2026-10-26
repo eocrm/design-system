@@ -113,7 +113,7 @@
 - `Card.Body`: padded `<div>` content section. Add `scroll` beneath a Header in a `fill` Card to make Body the flexible vertical scroll region while Header stays fixed. Card intentionally owns this layout because it relates only its own compound pieces; the parent still owns the Card's definite outer height. `scroll` also sets `tabIndex={0}`, because a scroll container with no focusable descendant is unreachable by keyboard (axe `scrollable-region-focusable`) — pair it with `role="group"` and an `aria-label` when the content is worth naming, and pass `tabIndex={-1}` to opt out if the body already contains something focusable.
 - `Card.List`: semantic `<ul>` with list-reset styling — screen readers announce "list with N items".
 - `Card.ListRow`: `<li>` with padded content and bottom dividing border; last-child border suppressed automatically.
-- **Never nest Card in Card** — except a nested editable sub-section inside a `Card.Body`, which must use `Card.Header surface="subtle"`. `controls` holds the sub-section's inline controls and `action` its remove button:
+- **Never nest Card in Card** — except an editable, repeatable sub-group (e.g. a condition group) inside a `Card.Body`, using `Card.Header surface="subtle"`; never for display-only content or as a layout wrapper. `controls` holds the sub-section's inline controls and `action` its remove button:
 
 ```tsx
 <Card>
@@ -148,7 +148,7 @@
 
 #### When NOT to use
 
-- ❌ As the only child of another Card, or as a layout primitive (use `Stack` / `Cluster` / `Grid`). Card is for semantic grouping.
+- ❌ Inside another Card, except the editable sub-group exception above (`Card.Header surface="subtle"` in a `Card.Body`). Never as the only child of another Card, or as a layout primitive (use `Stack` / `Cluster` / `Grid`). Card is for semantic grouping.
 - ❌ For every container. If the page looks like a deck of cards, nothing is visually grouped.
 - ❌ `Card.Body` outside a Card. It owns padding and sizing only as part of Card's compound structure.
 

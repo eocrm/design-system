@@ -131,17 +131,21 @@
   padding-inline-start: var(--card-section-gap);
 }
 
-// With controls: grid so the controls hug the title and the 1fr track pushes
-// action to the end. Gaps live in padding, as with meta.
+// With controls: the title is the shrinkable track (ellipsis) and controls
+// keep their content width; column 3 is meta (truncates before the title) or an empty
+// spacer, so action always lands in column 4, right-aligned. Gaps live in
+// padding, as with meta.
 .withControls {
   display: grid;
   grid-auto-flow: column;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, auto) max-content minmax(0, 1fr) max-content;
   column-gap: 0;
 }
 
-.withControls.withMeta {
-  grid-template-columns: auto auto minmax(0, 1fr) auto;
+.withControls .title {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .withControls .action {
@@ -150,6 +154,7 @@
 }
 
 .controls {
+  min-width: max-content;
   padding-inline-start: var(--card-section-gap);
 }
 
