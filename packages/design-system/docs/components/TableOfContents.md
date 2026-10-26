@@ -15,20 +15,23 @@ const toc = [
 function GuidePage() {
   const [narrow, setNarrow] = useState(false);
   return (
-    // side="start" so the stacked aside lands ABOVE the article. One TOC always:
-    // a pinned rail when wide, the collapsed disclosure when Split stacks.
+    // Exactly one TOC at a time: a pinned rail while wide; once Split stacks, the
+    // aside is dropped (null renders no cell) and a collapsed TOC leads the main pane.
     <Split
-      side="start"
+      side="end"
       asideWidth="240px"
       align="stretch"
       collapseBelow="md"
       onCollapsedChange={setNarrow}
       aside={
-        <Sticky top="topbar">
-          <TableOfContents items={toc} collapsed={narrow} />
-        </Sticky>
+        narrow ? null : (
+          <Sticky top="topbar">
+            <TableOfContents items={toc} />
+          </Sticky>
+        )
       }
     >
+      {narrow && <TableOfContents items={toc} collapsed />}
       <article>
         <h2 id="overview">Overview</h2>
         <h3 id="install">Install</h3>
@@ -38,8 +41,6 @@ function GuidePage() {
   );
 }
 ```
-
-Why not `side="end"` with `aside={narrow ? null : …}`: `Split` always renders the aside cell, so a `null` aside leaves an empty grid row (a stray gap) when stacked, and with `side="end"` the stacked aside sits after the article. Keep the TOC in the aside and flip `collapsed` instead.
 
 <!-- props:start -->
 
@@ -69,4 +70,4 @@ When NOT to use: app or page-level navigation → `Rail` / `Tabs`; short pages w
 
 - ❌ Omitting the `<Sticky top="topbar">` wrapper and expecting the rail to pin: the component is not sticky.
 - ❌ `items` ids that don't match heading ids: the entry renders but never becomes active, and clicking falls back to native jump (no TopBar offset).
-- ❌ Rendering a rail TOC and a separate collapsed TOC together: that yields two "On this page" navs. Render one and flip `collapsed`.
+- ❌ Rendering the rail TOC and the collapsed TOC together: that yields two "On this page" navs. Render one at a time (`narrow ? null : rail`, `narrow && collapsed`).

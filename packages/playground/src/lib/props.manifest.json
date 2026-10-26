@@ -6023,9 +6023,9 @@
         {
           "name": "aside",
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
-          "required": true,
+          "required": false,
           "default": "",
-          "description": "The narrow, intrinsic-width pane — a vertical `Tabs` rail, filter list, or nav column."
+          "description": "The narrow, intrinsic-width pane — a vertical `Tabs` rail, filter list, or nav column.\n`null` / `false` / `undefined` renders no aside cell at all (no empty track or gap),\nso content can be conditionally moved out of the aside; `main` then fills the split."
         },
         {
           "name": "side",
@@ -6323,6 +6323,24 @@
           "required": false,
           "default": "",
           "description": "Compound-subcomponent children."
+        }
+      ]
+    },
+    "TableOfContents": {
+      "props": [
+        {
+          "name": "items",
+          "type": "readonly TableOfContentsItem[]",
+          "required": true,
+          "default": "",
+          "description": "Entries in document order. An empty list renders nothing."
+        },
+        {
+          "name": "collapsed",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Render a `<details>` disclosure (summary \"On this page · <active>\") instead\nof the heading + list. Use where there is no room for a side rail, e.g. on\nnarrow viewports above the content. Default `false`."
         }
       ]
     },
@@ -7061,6 +7079,7 @@
     "FlowCanvasSelection": "{ type: \"node\" | \"edge\"; id: string; } | null",
     "FlowCanvasPoint": "{ x: number; y: number }",
     "PersonDisplaySize": "\"sm\" | \"md\" | \"lg\" | \"inline\"",
+    "TableOfContentsItem": "{ id: string; label: string; level: 2 | 3 }",
     "TabsActivationMode": "\"auto\" | \"manual\"",
     "TabsOrientation": "\"auto\" | \"horizontal\" | \"vertical\"",
     "EmptyStateSize": "\"sm\" | \"md\" | \"lg\"",

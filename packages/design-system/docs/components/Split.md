@@ -23,7 +23,7 @@ beside results).
 <!-- prettier-ignore -->
 | Prop | Type | Required | Description |
 |---|---|---|---|
-| `aside` | `ReactNode` | yes | The narrow, intrinsic-width pane — a vertical `Tabs` rail, filter list, or nav column. |
+| `aside` | `ReactNode` | no | The narrow, intrinsic-width pane — a vertical `Tabs` rail, filter list, or nav column. `null` / `false` / `undefined` renders no aside cell at all (no empty track or gap), so content can be conditionally moved out of the aside; `main` then fills the split. |
 | `side` | `'start' \| 'end'` | no | Which side `aside` sits on. - `'start'` (default) — leading edge (left in LTR). - `'end'` — trailing edge (right in LTR). |
 | `asideWidth` | `string` | no | `aside` column width. - `'auto'` (default) — intrinsic; sizes to the pane's content. - a CSS length (e.g. `'240px'`) — pins the column so `main` doesn't reflow when `aside` content changes width. |
 | `gap` | `'xs' \| 'sm' \| 'md' \| 'lg' \| 'xl' \| '2xl'` | no | Gap between the two panes, in pixels: `xs` (4) / `sm` (8) / `md` (12, default) / `lg` (16) / `xl` (24) / `2xl` (32). Same scale as Stack, Cluster, and Grid. |

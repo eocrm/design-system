@@ -22,8 +22,12 @@ export type SplitGap = 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
 export type SplitAlign = 'start' | 'stretch' | 'center';
 
 export interface SplitProps extends HTMLAttributes<HTMLDivElement> {
-  /** The narrow, intrinsic-width pane — a vertical `Tabs` rail, filter list, or nav column. */
-  aside: ReactNode;
+  /**
+   * The narrow, intrinsic-width pane — a vertical `Tabs` rail, filter list, or nav column.
+   * `null` / `false` / `undefined` renders no aside cell at all (no empty track or gap),
+   * so content can be conditionally moved out of the aside; `main` then fills the split.
+   */
+  aside?: ReactNode;
   /**
    * Which side `aside` sits on.
    * - `'start'` (default) — leading edge (left in LTR).
@@ -189,7 +193,8 @@ export const Split = forwardRef<HTMLDivElement, SplitProps>(function Split(
     return () => observer.disconnect();
   }, [collapseBelow]);
 
-  const asideCell = <div className={styles.aside}>{aside}</div>;
+  const hasAside = aside !== null && aside !== undefined && aside !== false;
+  const asideCell = hasAside ? <div className={styles.aside}>{aside}</div> : null;
   const mainCell = <div className={styles.main}>{children}</div>;
   return (
     <div
@@ -200,6 +205,7 @@ export const Split = forwardRef<HTMLDivElement, SplitProps>(function Split(
         side === 'end' ? styles.sideEnd : styles.sideStart,
         gapClass[gap],
         alignClass[align],
+        !hasAside && styles.noAside,
         collapseBelow && styles.collapsible,
         collapseBelow && collapseClass[collapseBelow],
         className,

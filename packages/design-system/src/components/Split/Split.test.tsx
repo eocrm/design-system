@@ -16,6 +16,22 @@ describe('Split', () => {
     expect(screen.getByTestId('main')).toBeInTheDocument();
   });
 
+  it('renders no aside cell for a null/false aside, and onCollapsedChange still fires', () => {
+    const onCollapsedChange = vi.fn();
+    const { container, rerender } = render(
+      <Split aside={null} collapseBelow="md" onCollapsedChange={onCollapsedChange}>
+        <span data-testid="main" />
+      </Split>,
+    );
+    const root = container.firstElementChild!;
+    expect(root.querySelector('[class*="aside"]')).toBeNull();
+    expect(screen.getByTestId('main')).toBeInTheDocument();
+    expect(onCollapsedChange).toHaveBeenCalled();
+    expect(root).toHaveAttribute('data-collapsed');
+    rerender(<Split aside={false}>x</Split>);
+    expect(container.firstElementChild!.querySelector('[class*="aside"]')).toBeNull();
+  });
+
   it('wraps aside and main in distinct cells inside one container', () => {
     const { container } = render(
       <Split aside={<span data-testid="aside" />}>

@@ -32,6 +32,12 @@
     minmax(0, var(--split-aside-width, auto));
 }
 
+// No aside cell: one full-width track. Same specificity as `.sideX.collapsible`
+// and declared after it, so it wins.
+.split.noAside {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 // Aside cell — intrinsic width comes from the grid track; min-width:0 lets very
 // long aside content shrink rather than blow out the `auto` track. (Also gives
 // the class a real declaration so CSS Modules emits it for the `.aside` hook.)
