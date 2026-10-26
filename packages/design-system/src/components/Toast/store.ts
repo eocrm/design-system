@@ -43,6 +43,8 @@ export const EXIT_ANIMATION_MS = 250;
 
 let state: StoreState = { toasts: [] };
 const listeners = new Set<Listener>();
+/** Pending post-exit removals by id, so reviving an exiting toast can cancel its own. */
+const exitTimers = new Map<string, ReturnType<typeof setTimeout>>();
 
 function notify() {
   listeners.forEach((l) => l());
@@ -67,9 +69,10 @@ export const store = {
   },
   add(input: ToastInput): string {
     // Reusing an id is an implicit update — lets `toast.success('done', { id })`
-    // mutate an existing loading toast in place.
+    // mutate an existing loading toast in place. It also revives a toast that
+    // is mid-exit, so re-firing a stable id is never silently lost.
     if (state.toasts.some((t) => t.id === input.id)) {
-      return store.update(input.id, input);
+      return store.update(input.id, { ...input, status: 'visible' });
     }
     const entry: ToastEntry = { ...input, createdAt: Date.now(), status: 'visible' };
     state = { toasts: [...state.toasts, entry] };
@@ -77,6 +80,10 @@ export const store = {
     return entry.id;
   },
   update(id: string, partial: ToastUpdate): string {
+    if (partial.status === 'visible') {
+      clearTimeout(exitTimers.get(id));
+      exitTimers.delete(id);
+    }
     state = {
       toasts: state.toasts.map((t) => (t.id === id ? { ...t, ...partial } : t)),
     };
@@ -85,23 +92,34 @@ export const store = {
   },
   dismiss(id?: string): void {
     // Capture the ids now so the deferred removal can't take toasts added
-    // during the exit window (#713).
+    // during the exit window (#713). Already-exiting toasts keep their pending
+    // removal rather than arming a second one.
     const ids = new Set(
-      state.toasts.filter((t) => id === undefined || t.id === id).map((t) => t.id),
+      state.toasts
+        .filter((t) => t.status !== 'exiting' && (id === undefined || t.id === id))
+        .map((t) => t.id),
     );
     if (ids.size === 0) return;
     state = {
       toasts: state.toasts.map((t) => (ids.has(t.id) ? { ...t, status: 'exiting' } : t)),
     };
     notify();
-    setTimeout(() => {
-      state = { toasts: state.toasts.filter((t) => !ids.has(t.id)) };
-      notify();
-    }, EXIT_ANIMATION_MS);
+    ids.forEach((exitId) => {
+      exitTimers.set(
+        exitId,
+        setTimeout(() => {
+          exitTimers.delete(exitId);
+          state = { toasts: state.toasts.filter((t) => t.id !== exitId) };
+          notify();
+        }, EXIT_ANIMATION_MS),
+      );
+    });
   },
   /** Test-only: synchronously clears state. NOT exported from the package. */
   _reset(): void {
     state = { toasts: [] };
+    exitTimers.forEach(clearTimeout);
+    exitTimers.clear();
     nextSeq = 0;
     listeners.clear();
   },

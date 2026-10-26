@@ -98,6 +98,30 @@ describe('toast store', () => {
     ]);
   });
 
+  it('re-dismissing an exiting toast does not remove a later toast reusing its id', () => {
+    store.add(baseInput({ id: 'a' }));
+    store.dismiss('a');
+    vi.advanceTimersByTime(100);
+    store.dismiss();
+    vi.advanceTimersByTime(EXIT_ANIMATION_MS - 100);
+    expect(store.getSnapshot().toasts).toEqual([]);
+    store.add(baseInput({ id: 'a' }));
+    vi.advanceTimersByTime(EXIT_ANIMATION_MS);
+    expect(store.getSnapshot().toasts).toEqual([
+      expect.objectContaining({ id: 'a', status: 'visible' }),
+    ]);
+  });
+
+  it('re-adding an exiting id revives it and cancels its pending removal', () => {
+    store.add(baseInput({ id: 'a' }));
+    store.dismiss();
+    store.add(baseInput({ id: 'a', message: 'Again' }));
+    vi.advanceTimersByTime(EXIT_ANIMATION_MS);
+    expect(store.getSnapshot().toasts).toEqual([
+      expect.objectContaining({ id: 'a', message: 'Again', status: 'visible' }),
+    ]);
+  });
+
   it('subscribe() listener fires on add/update/dismiss', () => {
     const listener = vi.fn();
     store.subscribe(listener);
