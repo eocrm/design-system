@@ -193,11 +193,11 @@ export const Image = forwardRef<HTMLImageElement, ImageProps>(function Image(
   const isInteractive = interactive || onClick != null;
 
   const imgNode = (
-    // {...rest} FIRST (Pattern B): the state machine owns src/alt/key/onLoad/onError,
-    // so a careless spread can't break them.
+    // {...rest} FIRST (Pattern B): the state machine owns src/alt/onLoad/onError,
+    // so a careless spread can't break them. `key` stays before the spread (#707).
     <img
-      {...rest}
       key={`${src}|${reloadNonce}`}
+      {...rest}
       ref={ref}
       src={src}
       alt={state === 'error' ? '' : alt}

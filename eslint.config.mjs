@@ -46,6 +46,7 @@ export default [
       ],
       'react-hooks/rules-of-hooks': 'error',
       'react-hooks/exhaustive-deps': 'error',
+      'eocrm/key-before-spread': 'error',
     },
   },
   {

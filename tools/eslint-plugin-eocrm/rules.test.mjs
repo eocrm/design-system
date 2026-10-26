@@ -85,6 +85,19 @@ tester.run('aria-busy-needs-announcement', rules['aria-busy-needs-announcement']
   ],
 });
 
+tester.run('key-before-spread', rules['key-before-spread'], {
+  valid: [
+    `<i key={a} {...p} />`,
+    `<i {...p} id={a} />`,
+    `<i key={a} id="x" />`,
+    `<i {...p} data-key={a} />`,
+  ],
+  invalid: [
+    { code: `<i {...p} key={a} />`, errors: [{ messageId: 'afterSpread' }] },
+    { code: `<i a="1" {...p} b="2" key={a} />`, errors: [{ messageId: 'afterSpread' }] },
+  ],
+});
+
 // Scope: pins the `files`/`ignores` globs in eslint.config.mjs, which RuleTester cannot see.
 describe('eslint.config.mjs scopes the eocrm rules', async () => {
   const { ESLint } = await import('eslint');
