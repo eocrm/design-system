@@ -154,6 +154,7 @@ const CLUSTERS: Record<string, string> = {
   Link: 'Navigation',
   LinkCard: 'Navigation',
   Rail: 'Navigation',
+  TableOfContents: 'Navigation',
   Tabs: 'Navigation',
   TopBar: 'Navigation',
 

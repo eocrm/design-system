@@ -219,6 +219,7 @@ Each component's contract is its `docs/components/<Name>.md`; the props table th
 - [`Accordion`](docs/components/Accordion.md) — vertically-stacked collapsible panels
 - [`Breadcrumb`](docs/components/Breadcrumb.md) — navigation trail
 - [`Rail`](docs/components/Rail.md) — collapsible left-side navigation
+- [`TableOfContents`](docs/components/TableOfContents.md) — "On this page" h2/h3 navigation with scroll-spy
 - [`TopBar`](docs/components/TopBar.md) — sticky application top bar; `TopBar.Search` with `results` is the global-search combobox
 - [`DropdownMenu`](docs/components/DropdownMenu.md) — action menus from a trigger
 - [`Tooltip`](docs/components/Tooltip.md) — small floating label on hover / keyboard focus

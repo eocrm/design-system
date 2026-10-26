@@ -132,6 +132,7 @@ const CLUSTERS = {
   Link: 'Navigation',
   LinkCard: 'Navigation',
   Rail: 'Navigation',
+  TableOfContents: 'Navigation',
   Tabs: 'Navigation',
   TopBar: 'Navigation',
 
