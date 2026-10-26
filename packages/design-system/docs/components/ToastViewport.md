@@ -26,6 +26,10 @@ await api.save();
 toast.success('Saved', { id });
 ```
 
+Reusing an `id` updates that toast in place. If it is still animating out
+(dismissed less than 250ms ago), it is shown again as a new toast with a fresh
+timer. `toast.update` and `toast.promise` never bring back a dismissed toast.
+
 <!-- props:start -->
 
 ## Props

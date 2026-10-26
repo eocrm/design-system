@@ -114,8 +114,11 @@ describe('toast store', () => {
 
   it('re-adding an exiting id revives it and cancels its pending removal', () => {
     store.add(baseInput({ id: 'a' }));
+    const { createdAt } = store.getSnapshot().toasts[0];
     store.dismiss();
     store.add(baseInput({ id: 'a', message: 'Again' }));
+    // A new createdAt remounts the viewport's <Toast> (keyed on it).
+    expect(store.getSnapshot().toasts[0].createdAt).toBeGreaterThan(createdAt);
     vi.advanceTimersByTime(EXIT_ANIMATION_MS);
     expect(store.getSnapshot().toasts).toEqual([
       expect.objectContaining({ id: 'a', message: 'Again', status: 'visible' }),
