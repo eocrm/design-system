@@ -6,9 +6,11 @@
   --link-radius: var(--radius-sm);
   --link-icon-gap: var(--space-1);
 
-  // Variant: default
-  --link-fg-default: var(--color-accent);
-  --link-fg-default-hover: var(--color-accent-hover);
+  // Variant: default. --color-link-fg defaults to the accent; an accent set may
+  // override it when its accent is too close to body text to read as a link.
+  --link-fg-default: var(--color-link-fg);
+  --link-fg-default-hover: var(--color-link-fg-hover);
+  --link-font-weight-default: inherit;
 
   // Variant: muted
   --link-fg-muted: var(--color-fg-muted);
@@ -17,4 +19,10 @@
   // Variant: subtle
   --link-fg-subtle: var(--color-fg);
   --link-fg-subtle-hover: var(--color-accent);
+}
+
+// Teal pine's accent sits close to the navy body text, so its default links
+// also step up in weight (the colour alone can't carry the difference).
+:root[data-accent='tealpine'] {
+  --link-font-weight-default: var(--font-weight-medium);
 }

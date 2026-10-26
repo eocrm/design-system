@@ -18,19 +18,24 @@ interface ResizeObserverHarness {
 }
 
 function stubResizeObserver(): ResizeObserverHarness {
-  let callback: ResizeObserverCallback | undefined;
-  const observed = new Set<Element>();
+  // Tabs runs two observers, so each resize goes to every callback observing
+  // that target. `observe` / `disconnect` record the ORIENTATION observer only:
+  // the #710 overflow observer is the one whose first target is the tablist,
+  // and it is tested on its own below.
+  const observed = new Map<Element, ResizeObserverCallback[]>();
   const observe = vi.fn();
   const disconnect = vi.fn();
   class MockResizeObserver {
-    constructor(cb: ResizeObserverCallback) {
-      callback = cb;
-    }
+    private overflow: boolean | undefined;
+    constructor(private cb: ResizeObserverCallback) {}
     observe = (target: Element) => {
-      observed.add(target);
-      observe(target);
+      this.overflow ??= target.getAttribute('role') === 'tablist';
+      observed.set(target, [...(observed.get(target) ?? []), this.cb]);
+      if (!this.overflow) observe(target);
     };
-    disconnect = disconnect;
+    disconnect = () => {
+      if (!this.overflow) disconnect();
+    };
     unobserve = vi.fn();
   }
   vi.stubGlobal('ResizeObserver', MockResizeObserver);
@@ -38,15 +43,18 @@ function stubResizeObserver(): ResizeObserverHarness {
     observe,
     disconnect,
     resize(target, borderBoxWidth, contentBoxWidth = borderBoxWidth) {
-      if (!observed.has(target)) return;
+      const callbacks = observed.get(target);
+      if (!callbacks) return;
       vi.spyOn(target, 'getBoundingClientRect').mockReturnValue({
         width: borderBoxWidth,
       } as DOMRect);
       act(() => {
-        callback?.(
-          [{ target, contentRect: { width: contentBoxWidth } } as ResizeObserverEntry],
-          null as unknown as ResizeObserver,
-        );
+        for (const cb of callbacks) {
+          cb(
+            [{ target, contentRect: { width: contentBoxWidth } } as ResizeObserverEntry],
+            null as unknown as ResizeObserver,
+          );
+        }
       });
     },
   };
@@ -572,6 +580,34 @@ describe('Tabs', () => {
     await user.keyboard('{Backspace}');
     await user.keyboard('{Escape}');
     expect(onChange).not.toHaveBeenCalled();
+  });
+
+  describe('phantom scrollbar (#710)', () => {
+    afterEach(() => vi.unstubAllGlobals());
+
+    // jsdom has no layout: the tablist's width comes from the stubbed
+    // getBoundingClientRect, the wrapper's from a clientWidth override.
+    const setup = () => {
+      const observer = stubResizeObserver();
+      render(<Tabs items={items} activeId="a" onChange={noop} />);
+      const list = screen.getByRole('tablist');
+      const wrap = list.parentElement as HTMLDivElement;
+      Object.defineProperty(wrap, 'clientWidth', { configurable: true, value: 454 });
+      return { observer, list, wrap };
+    };
+
+    it('marks a strip that fits to within a rounding pixel', () => {
+      const { observer, list, wrap } = setup();
+      observer.resize(list, 454.59375);
+      expect(wrap).toHaveAttribute('data-fits');
+    });
+
+    it('leaves a genuinely overflowing strip scrollable', () => {
+      const { observer, list, wrap } = setup();
+      observer.resize(list, 454.59375);
+      observer.resize(list, 520);
+      expect(wrap).not.toHaveAttribute('data-fits');
+    });
   });
 
   describe('active indicator', () => {

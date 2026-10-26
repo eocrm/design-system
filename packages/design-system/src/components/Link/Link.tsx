@@ -12,7 +12,10 @@ import styles from './Link.module.scss';
 
 /**
  * Visual variant. Defaults to `'default'`.
- * - `'default'` — accent color, no underline at rest, underline + accent-hover on hover.
+ * - `'default'` — link color (`--color-link-fg`, the accent unless the accent set
+ *   overrides it), no underline at rest, underline + hover color on hover. Under
+ *   `data-accent="tealpine"` it is also medium weight, except inside headings,
+ *   `<strong>`/`<b>` and `<th>`.
  *   Use for inline CTA links ("View all →", "Read more").
  * - `'muted'` — muted color, no underline, accent-hover on hover.
  *   Use inside breadcrumbs or any low-emphasis nav.

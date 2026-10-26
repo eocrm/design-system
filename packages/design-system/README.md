@@ -71,9 +71,9 @@ The accent family defaults to blue. To switch the whole app to **Teal pine**, se
 <html data-accent="tealpine" data-theme="dark"></html>
 ```
 
-It swaps `--color-accent`, `-hover`, `-pressed`, `-fg`, `-bg-subtle`, `-subtle-bg` and `--ring-accent`, in light, forced dark (`data-theme="dark"`) and OS dark. It ships in the existing `tokens.scss` / `dark.scss`, so there is no new import. `AppProvider`'s `tokens` / `darkTokens` overrides win over `data-accent` in every theme (see [docs/setup.md](docs/setup.md)). Info colours stay blue under any accent; DropdownMenu checked items, the OptionsPicker selected row and StagePath done states follow the accent.
+It swaps `--color-accent`, `-hover`, `-pressed`, `-fg`, `-bg-subtle`, `-subtle-bg` and `--ring-accent`, plus the default `Link` colour (`--color-link-fg` / `-hover`), in light, forced dark (`data-theme="dark"`) and OS dark. It ships in the existing `tokens.scss` / `dark.scss`, so there is no new import. `AppProvider`'s `tokens` / `darkTokens` overrides win over `data-accent` in every theme (see [docs/setup.md](docs/setup.md)). Info colours stay blue under any accent; DropdownMenu checked items, the OptionsPicker selected row and StagePath done states follow the accent. In light theme, default `Link`s use a slightly brighter teal than the accent (`#007676`, AA on every grey surface) at medium weight (not inside headings, `<strong>` or `<th>`), because the accent alone sits too close to the navy body text to read as a link.
 
-Compose: `EocrmTealPineLightTokens` / `EocrmTealPineDarkTokens` sit beside `EocrmLightTokens` / `EocrmDarkTokens`; only accent colours differ.
+Compose: `EocrmTealPineLightTokens` / `EocrmTealPineDarkTokens` sit beside `EocrmLightTokens` / `EocrmDarkTokens`; only accent colours differ. The link colour tokens are web-only (Compose has no `Link`), so Compose links keep the accent colour.
 
 **Known issue:** in light theme, Teal pine and `--color-success` are close in hue (both green-teal). Review success/accent pairings visually before switching the CRM.
 
