@@ -72,7 +72,6 @@ export const ru: Messages = {
     copyFailed: 'Не удалось скопировать',
     wrap: 'Переносить строки',
     plainText: 'Текст',
-    code: 'Код',
   },
   slider: {
     minimum: 'минимум',

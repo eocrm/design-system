@@ -172,8 +172,6 @@ export interface Messages {
     wrap: string;
     /** Header label when there is no `title` and the language is not a known one. */
     plainText: string;
-    /** Accessible name of the scrollable body (`maxHeight` set) when there is no `title`. */
-    code: string;
   };
   slider: {
     /** Accessible-name suffix for the first thumb in a range slider. */

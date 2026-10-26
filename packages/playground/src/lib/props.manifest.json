@@ -1003,7 +1003,7 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Header label in single-sample mode. Defaults to a one-item `samples`\nentry's `label`, else the language name (`JSON`, `Bash`…), else \"Plain\ntext\". Also names the single-sample body (default \"Code\")."
+          "description": "Header label in single-sample mode. Defaults to a one-item `samples`\nentry's `label`, else the language name (`JSON`, `Bash`…), else \"Plain\ntext\". Also names the body (single-sample) or the sample tabs (multi-sample)."
         },
         {
           "name": "samples",

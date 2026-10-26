@@ -170,7 +170,6 @@ function RequestSamples({ lang, onChange }: LangState) {
         { id: 'js', label: 'JavaScript', code: SAMPLES.js, language: 'javascript' },
         { id: 'python', label: 'Python', code: SAMPLES.python, language: 'python' },
       ]}
-      syncKey={LANG_KEY}
       activeSampleId={lang}
       onSampleChange={onChange}
     />

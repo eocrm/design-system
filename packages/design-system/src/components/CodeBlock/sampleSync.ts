@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from 'react';
+import { useCallback, useSyncExternalStore } from 'react';
 
 // In-memory only: no window, no storage. Module-level state is per-page-load,
 // which is the scope a syncKey is meant to span.
@@ -20,15 +20,17 @@ export function subscribeSynced(key: string, onChange: () => void): () => void {
   listeners.set(key, set);
   return () => {
     set.delete(onChange);
+    if (set.size === 0 && listeners.get(key) === set) listeners.delete(key);
   };
 }
 
 export function useSyncedSample(key: string | undefined): string | undefined {
-  return useSyncExternalStore(
-    (onChange) => (key === undefined ? () => {} : subscribeSynced(key, onChange)),
-    () => (key === undefined ? undefined : getSynced(key)),
-    () => undefined,
+  const subscribe = useCallback(
+    (onChange: () => void) => (key === undefined ? () => {} : subscribeSynced(key, onChange)),
+    [key],
   );
+  const getSnapshot = useCallback(() => (key === undefined ? undefined : getSynced(key)), [key]);
+  return useSyncExternalStore(subscribe, getSnapshot, () => undefined);
 }
 
 export function resolveActiveSample(

@@ -38,7 +38,7 @@ function usePersistedSample(storageKey: string) {
 |---|---|---|---|
 | `code` | `string` | no | Single-sample mode: the source. Ignored when `samples` is set. |
 | `language` | `(string & {}) \| CodeBlockLanguage` | no | Single-sample mode: grammar for highlighting — `'json'`, `'bash'`, `'javascript'`, `'typescript'` or `'python'` (aliases `sh`, `shell`, `js`, `ts`, `py`). Anything else renders as plain text. |
-| `title` | `string` | no | Header label in single-sample mode. Defaults to a one-item `samples` entry's `label`, else the language name (`JSON`, `Bash`…), else "Plain text". Also names the single-sample body (default "Code"). |
+| `title` | `string` | no | Header label in single-sample mode. Defaults to a one-item `samples` entry's `label`, else the language name (`JSON`, `Bash`…), else "Plain text". Also names the body (single-sample) or the sample tabs (multi-sample). |
 | `samples` | `readonly CodeBlockSample[]` | no | Multi-sample mode: 2+ samples render as tabs. Wins over `code`/`language`. |
 | `activeSampleId` | `string` | no | Controlled active sample id. Wins over `syncKey` and the user's own pick. |
 | `defaultSampleId` | `string` | no | Initial sample id when uncontrolled and nothing is synced. Defaults to the first sample. |
@@ -53,7 +53,7 @@ function usePersistedSample(storageKey: string) {
 
 - **Languages:** `json`, `bash`, `javascript`, `typescript`, `python` (aliases `sh`, `shell`, `js`, `ts`, `py`). Unknown languages render as plain text.
 - **Header label** is `title`, then the label of a one-item `samples` array, then the language name, then "Plain text".
-- **Accessibility:** the code body is always keyboard-focusable. Single mode is a `role="group"` named by `title` (fallback "Code"); multi mode is a tabpanel labelled by its tab.
+- **Accessibility:** the code body is always keyboard-focusable. Single mode is a `role="group"` named by the header label (`title`, else the one-item sample label, else the language name, else "Plain text"); multi mode is a tabpanel labelled by its tab, and `title` names the tablist.
 - **`highlightLines` is visual only.** Explain the emphasis in the surrounding prose.
 - **`syncKey` is in-memory** (per page load) and is for UNCONTROLLED blocks. The library never touches storage. To persist, own the choice as ONE piece of state shared by every block of the group (the `usePersistedSample` hook above, called once at page/layout level, or React context) and give every block `activeSampleId={lang}` + `onSampleChange={setLang}`. Controlled blocks don't need `syncKey`: the shared state keeps them in step. Do NOT give each block its own `useState` plus `syncKey`: the controlled `activeSampleId` wins over `syncKey`, so return visits would leave blocks out of sync. `defaultSampleId` is only the static initial choice.
 - **Sample ids** are used in DOM ids: don't put spaces in them.

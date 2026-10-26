@@ -26,6 +26,7 @@ export const LANGUAGE_LABELS: Record<CodeBlockLanguage, string> = {
 };
 
 // prism-react-renderer ships no bash grammar; register a small one once.
+// Prism is a shared singleton: any consumer of the same prism-react-renderer instance sees it.
 if (!Prism.languages.bash) {
   const variable = /\$(?:\w+|\{[^}]*\})/;
   Prism.languages.bash = {

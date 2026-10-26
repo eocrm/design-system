@@ -85,25 +85,26 @@
   overflow-y: auto;
 }
 
-// inline-grid shrink-wraps to the longest line but never less than the body,
+// inline-block shrink-wraps to the longest line but never less than the body,
 // so a highlighted line's tint spans the full scroll width, not just the viewport.
 .lines {
-  display: inline-grid;
+  display: inline-block;
   min-width: 100%;
   font: inherit;
 }
 
+// Inline-block, not block: block-level lines make innerText add a break on top
+// of the '\n' between them. min-height gives an empty line its line box.
 .line {
+  display: inline-block;
+  min-width: 100%;
+  min-height: 1lh;
+  vertical-align: top;
   padding-inline: var(--code-block-padding-x);
 
   // Every line reserves the bar so highlighting never shifts text; a logical
   // border (not an inset box-shadow) keeps the bar on the start side in RTL.
   border-inline-start: var(--border-width-strong) solid transparent;
-
-  // An empty line still needs a line box.
-  &::after {
-    content: '\200b';
-  }
 
   &[data-highlighted] {
     border-inline-start-color: var(--code-block-line-highlight-bar);

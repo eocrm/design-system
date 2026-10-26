@@ -171,7 +171,7 @@ describe('CodeBlock', () => {
   it('the body is always a focusable, named region', () => {
     const { container, rerender } = render(<CodeBlock code="x" />);
     expect(body(container)).toHaveAttribute('tabindex', '0');
-    expect(screen.getByRole('group', { name: 'Code' })).toBe(body(container));
+    expect(screen.getByRole('group', { name: 'Plain text' })).toBe(body(container));
 
     rerender(<CodeBlock code="x" title="Request" maxHeight="sm" />);
     expect(body(container).className).toMatch(/maxSm/);
@@ -181,6 +181,9 @@ describe('CodeBlock', () => {
     rerender(<CodeBlock samples={SAMPLES} />);
     expect(body(container)).toHaveAttribute('tabindex', '0');
     expect(screen.getByRole('tabpanel', { name: 'cURL' })).toBe(body(container));
+
+    rerender(<CodeBlock samples={SAMPLES} title="Request" />);
+    expect(screen.getByRole('tablist', { name: 'Request' })).toBeInTheDocument();
   });
 
   it('highlightLines marks only the listed lines', () => {

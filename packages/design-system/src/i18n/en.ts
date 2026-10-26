@@ -71,7 +71,6 @@ export const en: Messages = {
     copyFailed: "Couldn't copy",
     wrap: 'Wrap lines',
     plainText: 'Plain text',
-    code: 'Code',
   },
   slider: {
     minimum: 'minimum',

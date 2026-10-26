@@ -1,4 +1,12 @@
-import { Fragment, forwardRef, useEffect, useId, useState, type HTMLAttributes } from 'react';
+import {
+  Fragment,
+  forwardRef,
+  useEffect,
+  useId,
+  useMemo,
+  useState,
+  type HTMLAttributes,
+} from 'react';
 import clsx from 'clsx';
 import { Check, Copy, WrapText, X } from 'lucide-react';
 import { useTranslation } from '../../i18n';
@@ -47,7 +55,7 @@ export interface CodeBlockProps extends Omit<HTMLAttributes<HTMLDivElement>, 'ti
   /**
    * Header label in single-sample mode. Defaults to a one-item `samples`
    * entry's `label`, else the language name (`JSON`, `Bash`…), else "Plain
-   * text". Also names the single-sample body (default "Code").
+   * text". Also names the body (single-sample) or the sample tabs (multi-sample).
    */
   title?: string;
   /** Multi-sample mode: 2+ samples render as tabs. Wins over `code`/`language`. */
@@ -126,7 +134,10 @@ export const CodeBlock = forwardRef<HTMLDivElement, CodeBlockProps>(function Cod
     { controlled: activeSampleId, synced, own: localPick, fallback: defaultSampleId },
   );
   const active = list.find((s) => s.id === activeId) ?? list[0];
-  const lines = tokenizeLines(active.code, active.language);
+  const lines = useMemo(
+    () => tokenizeLines(active.code, active.language),
+    [active.code, active.language],
+  );
   const highlighted = highlightedLineSet(highlightLines, lines.length);
   const lang = active.language;
   const label =
@@ -174,9 +185,12 @@ export const CodeBlock = forwardRef<HTMLDivElement, CodeBlockProps>(function Cod
             activeId={active.id}
             onChange={pick}
             panelIdPrefix={prefix}
+            aria-label={title}
           />
         ) : (
-          <span className={styles.title}>{label}</span>
+          <span id={`${prefix}-label`} className={styles.title}>
+            {label}
+          </span>
         )}
         <div className={styles.actions}>
           <Tooltip content={t('codeBlock.wrap')}>
@@ -225,19 +239,18 @@ export const CodeBlock = forwardRef<HTMLDivElement, CodeBlockProps>(function Cod
         className={clsx(styles.body, wrap && styles.wrap, maxHeight && MAX_HEIGHT_CLASS[maxHeight])}
         // Always a tab stop: wrap-off lines overflow horizontally, and APG gives
         // a tabpanel without focusable content tabIndex=0. Multi: the tabpanel
-        // named by its tab. Single: a named group, since a bare <pre> may not
-        // carry aria-label.
+        // named by its tab. Single: a group named by the header label, since a
+        // bare <pre> may not carry a name.
         role={multi ? 'tabpanel' : 'group'}
         id={multi ? `${prefix}-${active.id}-panel` : undefined}
-        aria-labelledby={multi ? `${prefix}-${active.id}-tab` : undefined}
-        aria-label={multi ? undefined : title || t('codeBlock.code')}
+        aria-labelledby={multi ? `${prefix}-${active.id}-tab` : `${prefix}-label`}
         tabIndex={0}
       >
         <code className={styles.lines}>
           {lines.map((tokens, i) => (
             // Index keys: lines are derived wholesale from `code` and hold no state.
-            // The '\n' between grid items is not rendered but keeps textContent
-            // and selection-copy faithful.
+            // Lines are inline-blocks, so the '\n' between them is a real rendered
+            // break: selection-copy, innerText and textContent all keep blank lines.
             <Fragment key={i}>
               {i > 0 && '\n'}
               <span
