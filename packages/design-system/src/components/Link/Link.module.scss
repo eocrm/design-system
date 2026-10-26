@@ -40,6 +40,13 @@
   }
 }
 
+// Already-bold text (headings, <strong>, table headers) keeps its own weight:
+// an accent's link weight would otherwise render the link LIGHTER than its
+// context. A semibold <Text> span isn't a bold element; see Link.md.
+:is(strong, b, th, h1, h2, h3, h4, h5, h6) .default {
+  font-weight: inherit;
+}
+
 .muted {
   color: var(--link-fg-muted);
 

@@ -13,7 +13,7 @@ import { Link as RouterLink } from 'react-router-dom';
 <Link as={RouterLink} to="/contacts">Contacts</Link>
 
 // Variants
-<Link href="/x">View all</Link>                                  {/* default — accent, hover-underline */}
+<Link href="/x">View all</Link>                                  {/* default — link colour, hover-underline */}
 <Link href="/x" variant="muted">Subdued nav</Link>               {/* breadcrumb-style */}
 <Link href="/x" variant="subtle">Contact name</Link>             {/* fg color, hover-accent */}
 
@@ -40,7 +40,7 @@ import { Link as RouterLink } from 'react-router-dom';
 - **Polymorphic**: `as={Component}` forwards all of Component's props with full TypeScript inference.
 - **Library has no router dependency** — the `as` mechanism is consumer-driven.
 - **Three variants**:
-  - `default`: accent color, hover-underline. Inline CTA ("View all →").
+  - `default`: link colour (`--color-link-fg`; the accent unless the accent set overrides it — `tealpine` uses a brighter teal at medium weight), hover-underline. Inline CTA ("View all →").
   - `muted`: muted color, hover-accent. Low-emphasis nav (breadcrumb-style).
   - `subtle`: foreground color, hover-accent + underline. Dense-surface name links. **Not deprecated** — this is `Link`'s own variant and is unrelated to `Text`/`Title`'s `tone="subtle"`, which WAS deprecated. Same word, opposite status: a grep for "subtle deprecated" will land on the tone, and `PersonDisplay.Name` uses this variant deliberately.
 - **`underline` prop** (`'hover'` | `'always'` | `'none'`, default `'hover'`) — orthogonal to `variant`:
@@ -62,3 +62,4 @@ import { Link as RouterLink } from 'react-router-dom';
 - ❌ Forgetting `rel="noopener noreferrer"` on `target="_blank"` links.
 - ❌ Using `variant="default"` for low-emphasis nav like breadcrumbs.
 - ❌ A Link inside running text/body copy without `underline="always"` — color alone isn't a sufficient visual cue (WCAG 1.4.1).
+- ❌ A `default` Link inside `<Text weight="semibold">` (or `bold`) under `data-accent="tealpine"` — the link renders at the accent's medium weight, lighter than the words around it. Wrap the bold run in `<strong>` or give the Link a matching weight via `className`.

@@ -248,6 +248,26 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
     return () => observer.disconnect();
   }, [orientation, hasEndContent, autoOrientationBreakpoint]);
 
+  // Scroll only on real overflow. A strip sized to its own content (a
+  // shrink-to-fit flex item) has a fractional width, and at non-integer DPRs
+  // scrollWidth rounds 1px past clientWidth, so the UA shows a scrollbar for
+  // nothing (#710). Within 1px counts as fitting: `data-fits` turns the
+  // scrollbar off. Without ResizeObserver the strip simply stays scrollable.
+  useLayoutEffect(() => {
+    const wrap = scrollWrapRef.current;
+    const list = wrap?.firstElementChild;
+    if (!wrap || !list || typeof ResizeObserver === 'undefined') return;
+    const update = () => {
+      wrap.toggleAttribute('data-fits', list.getBoundingClientRect().width - wrap.clientWidth <= 1);
+    };
+    const observer = new ResizeObserver(update);
+    update();
+    observer.observe(list);
+    observer.observe(wrap);
+    return () => observer.disconnect();
+    // endContent re-parents the strip, which remounts the wrapper.
+  }, [hasEndContent]);
+
   // Dev-only: warn on duplicate ids. The ref map would silently collapse them
   // and roving tabindex would behave unpredictably. Run as an effect (not in
   // render) so it fires once per items change and doesn't double-warn in
