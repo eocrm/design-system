@@ -20,6 +20,7 @@ export function renderWeb(document) {
     )
     .map((token) => declaration(token.outputs.web.name, selectTheme(token.value, 'dark'), webNames))
     .filter(Boolean);
+  const accents = renderAccents(document.accents ?? {}, webTokens);
   const header = `${HEADER}${document.schemaVersion}\n`;
 
   return {
@@ -28,25 +29,43 @@ export function renderWeb(document) {
   color-scheme: light;
 ${lightDeclarations.join('\n')}
 }
-`,
+${accents.map((accent) => `\n:root[data-accent='${accent.name}'] {\n${accent.light.join('\n')}\n}\n`).join('')}`,
     darkScss: `${header}
 :root[data-theme='dark'] {
   color-scheme: dark;
 ${darkDeclarations.join('\n')}
 }
-
+${accents.map((accent) => `\n:root[data-accent='${accent.name}'][data-theme='dark'] {\n${accent.dark.join('\n')}\n}\n`).join('')}
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
     color-scheme: dark;
 ${darkDeclarations.map((line) => `  ${line}`).join('\n')}
   }
-}
+${accents.map((accent) => `\n  :root[data-accent='${accent.name}']:not([data-theme='light']) {\n${accent.dark.map((line) => `  ${line}`).join('\n')}\n  }\n`).join('')}}
 
 :root[data-theme='light'] {
   color-scheme: light;
 }
 `,
   };
+}
+
+// Per accent: literal-colour overrides of tokens that have a web output. Values are
+// never aliases (validated), so aliases of an overridden token follow it via var().
+function renderAccents(accents, webTokens) {
+  return Object.keys(accents)
+    .sort(compareCodeUnits)
+    .map((name) => {
+      const overrides = webTokens
+        .filter((token) => accents[name][token.id])
+        .map((token) => ({ name: token.outputs.web.name, ...accents[name][token.id] }));
+      return {
+        name,
+        light: overrides.map((o) => declaration(o.name, o.light)),
+        dark: overrides.map((o) => declaration(o.name, o.dark)),
+      };
+    })
+    .filter((accent) => accent.light.length > 0);
 }
 
 function declaration(name, value, webNames) {

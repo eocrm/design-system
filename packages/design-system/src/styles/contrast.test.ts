@@ -29,13 +29,89 @@ const readPrimer = (): string => {
  * if anyone retunes a primitive, not merely if they edit a component.
  */
 
-const TOKENS = readFileSync(
+const RAW_TOKENS = readFileSync(
   resolve(__dirname, '../../../design-tokens/generated/web/tokens.scss'),
   'utf8',
 );
-const DARK = readFileSync(
+const RAW_DARK = readFileSync(
   resolve(__dirname, '../../../design-tokens/generated/web/dark.scss'),
   'utf8',
+);
+
+/**
+ * Every `:root[data-accent='…']…{…}` override block, whatever its theme
+ * qualifier. Accent blocks hold declarations only, so `[^{}]*` is the whole
+ * body — including the one nested inside `@media`, whose closing brace is left
+ * standing.
+ */
+const ACCENT_BLOCK = /:root\[data-accent='[a-z]+'\][^{};]*\{[^{}]*\}/g;
+
+/**
+ * The BASE themes — what renders with no `data-accent` on <html>. The accent
+ * blocks are cut out rather than tolerated, and only they are: they re-declare
+ * the accent tokens with different values by design, which would make
+ * declaredValue() refuse every accent token and let tokenValue() answer from
+ * whichever block came first. Stripping exactly those blocks keeps the
+ * duplicate-declaration protection intact for everything else, including the
+ * accent tokens' own forced-dark / prefers-color-scheme pair. An accent is read
+ * through accentSource() below, never by leaving its block in here.
+ */
+const TOKENS = RAW_TOKENS.replace(ACCENT_BLOCK, '');
+const DARK = RAW_DARK.replace(ACCENT_BLOCK, '');
+
+/**
+ * `default` plus every accent the generator emits, read from the file rather
+ * than listed, so a new accent joins every accent-keyed gate below without
+ * anyone remembering to add it. `default` is the base blue: no block at all.
+ */
+const ACCENTS = [
+  'default',
+  ...new Set([...RAW_TOKENS.matchAll(/:root\[data-accent='([a-z]+)'\]/g)].map((m) => m[1]!)),
+];
+
+/** The body of the one rule block whose selector is exactly `selector`. */
+function blockBody(source: string, selector: string): string {
+  const bodies = [...stripComments(source).matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+    .filter((m) => m[1]!.trim() === selector)
+    .map((m) => m[2]!);
+  // Exactly one: a second block under the same selector would be the
+  // last-wins hole declaredValue() exists to close, one level up.
+  if (bodies.length !== 1) throw new Error(`${selector} has ${bodies.length} blocks, expected 1`);
+  return bodies[0]!;
+}
+
+/**
+ * The declarations `accent` overrides in `theme`, as one block's text: light is
+ * `:root[data-accent='X']` in tokens.scss, dark is the FORCED-dark block in
+ * dark.scss. Its prefers-color-scheme twin is not read here; a test below pins
+ * it to this one instead, so reading either is reading both.
+ */
+function accentScope(accent: string, theme: 'light' | 'dark'): string {
+  return theme === 'light'
+    ? blockBody(RAW_TOKENS, `:root[data-accent='${accent}']`)
+    : blockBody(RAW_DARK, `:root[data-accent='${accent}'][data-theme='dark']`);
+}
+
+/**
+ * A source for tokenValue() that resolves as `theme` does with `accent` set.
+ *
+ * Layering by PREPENDING works because tokenValue() takes the first declaration
+ * in scope, and the accent block is the one CSS picks (its selector out-ranks
+ * `:root` and `:root[data-theme='dark']`). It also layers at every step of an
+ * alias chain, so `--table-cell-bg-accent -> --color-accent-bg-subtle` lands on
+ * the override without each gate knowing which tokens an accent touches.
+ * declaredValue() deliberately cannot read this source — the accent token is
+ * declared twice with different values — so a gate that needs the override
+ * ALONE reads accentScope().
+ */
+function accentSource(theme: 'light' | 'dark', accent: string): string {
+  const base = theme === 'light' ? TOKENS : DARK;
+  return accent === 'default' ? base : `${accentScope(accent, theme)}\n${base}`;
+}
+
+/** [theme, accent, source] for every theme × accent the accent-keyed gates run over. */
+const THEMED_ACCENTS = (['light', 'dark'] as const).flatMap((theme) =>
+  ACCENTS.map((accent) => [theme, accent, accentSource(theme, accent)] as const),
 );
 
 /**
@@ -227,6 +303,14 @@ const PAIRS: Pair[] = [
   // with all of them still rendering on it.
   ['danger text on the duplicate danger tint', '--color-danger', '--color-bg-danger-subtle', 4.5],
   ['accent text on the duplicate accent tint', '--color-accent', '--color-accent-subtle-bg', 4.5],
+  // DropdownMenu checked item / OptionsPicker selected row / StagePath done
+  // step: selection is accent-tinted and keeps --color-fg on top.
+  [
+    'fg on the accent tint (checked / selected / done)',
+    '--color-fg',
+    '--color-accent-subtle-bg',
+    4.5,
+  ],
   // #511. --color-fg-subtle is certified for these two surfaces and no others.
   // It is NOT pinned against --color-bg-muted, and that omission is the rule
   // rather than an oversight: at 4.38/4.29 it would fail. This is a decline,
@@ -300,22 +384,58 @@ const PAIRS: Pair[] = [
   ['highlighted-text match on yellow mark', '--color-fg', '--color-palette-yellow-bg', 4.5],
 ];
 
-describe.each([
-  ['light', TOKENS],
-  ['dark', DARK],
-])('shipped colour pairs clear WCAG in %s theme', (_theme, source) => {
-  it.each(PAIRS)('%s', (_label, fgName, bgName, minimum) => {
-    // No light-value fallback here. A token with no dark declaration genuinely
-    // DOES render its light value in dark (dark.scss layers overrides on :root),
-    // so a fallback would not be wrong — it would just be indistinguishable from
-    // a token nobody thought about. tokenValue still resolves alias CHAINS
-    // across scopes (that is how --color-presence-away, which has no dark
-    // declaration at all, answers correctly here); what it refuses is borrowing
-    // a light LITERAL to answer for dark. Silence is the thing to avoid.
-    expect(contrast(tokenValue(fgName, source), tokenValue(bgName, source))).toBeGreaterThanOrEqual(
-      minimum,
-    );
+describe.each(THEMED_ACCENTS)(
+  'shipped colour pairs clear WCAG in %s theme, %s accent',
+  (_theme, _accent, source) => {
+    // Every row under every accent. Filtering to the rows that NAME an accent
+    // token would miss any that reach one through an alias — the accent tint
+    // already has two such aliases (row-pinned, table-row-selected).
+    it.each(PAIRS)('%s', (_label, fgName, bgName, minimum) => {
+      // No light-value fallback here. A token with no dark declaration genuinely
+      // DOES render its light value in dark (dark.scss layers overrides on :root),
+      // so a fallback would not be wrong — it would just be indistinguishable from
+      // a token nobody thought about. tokenValue still resolves alias CHAINS
+      // across scopes (that is how --color-presence-away, which has no dark
+      // declaration at all, answers correctly here); what it refuses is borrowing
+      // a light LITERAL to answer for dark. Silence is the thing to avoid.
+      expect(
+        contrast(tokenValue(fgName, source), tokenValue(bgName, source)),
+      ).toBeGreaterThanOrEqual(minimum);
+    });
+  },
+);
+
+describe('the accent overrides are wired the way the gates assume', () => {
+  it('the generated accents are found at all', () => {
+    // Guards the guard: if the selector shape changed, ACCENTS would collapse
+    // to ['default'] and every accent-keyed gate below would quietly run blue
+    // only. Membership, not a count — accents are an extensible set.
+    expect(ACCENTS).toContain('tealpine');
+    // And the base themes really are accent-free, or declaredValue() would be
+    // refusing (or tokenValue() misreading) the accent tokens again.
+    expect(`${TOKENS}${DARK}`).not.toContain('data-accent');
   });
+
+  it.each(ACCENTS.filter((accent) => accent !== 'default'))(
+    '%s: OS dark declares exactly what forced dark declares',
+    (accent) => {
+      // Every dark accent gate reads the FORCED-dark block only. The
+      // prefers-color-scheme copy is what most users actually get, and nothing
+      // else reads it — so it is pinned declaration-for-declaration here, or it
+      // could drift with the whole suite green.
+      const declarations = (body: string) =>
+        [...body.matchAll(/(--[a-z0-9-]+):\s*([^;]+);/g)]
+          .map((m) => `${m[1]}: ${m[2]!.trim()}`)
+          .sort();
+      const forced = declarations(accentScope(accent, 'dark'));
+      expect(forced.length, 'the forced-dark block declares something').toBeGreaterThan(0);
+      expect(
+        declarations(
+          blockBody(RAW_DARK, `:root[data-accent='${accent}']:not([data-theme='light'])`),
+        ),
+      ).toEqual(forced);
+    },
+  );
 });
 
 describe.each([
@@ -365,6 +485,21 @@ describe('StagePath hovered fills keep their text at AA', () => {
   });
 });
 
+describe('StagePath default done fill (accent tint) keeps its text at AA when hovered', () => {
+  const mix =
+    parseFloat(
+      declaredValue(
+        '--stage-path-hover-mix',
+        readFileSync(resolve(__dirname, '../components/StagePath/StagePath.tokens.scss'), 'utf8'),
+      ) ?? 'NaN',
+    ) / 100;
+  it.each(THEMED_ACCENTS)('%s, %s accent', (_theme, _accent, source) => {
+    const fg = tokenValue('--color-fg', source);
+    const hovered = composite(fg, mix, tokenValue('--color-accent-subtle-bg', source));
+    expect(contrast(fg, hovered)).toBeGreaterThanOrEqual(4.5);
+  });
+});
+
 /**
  * Table.CellLink hover paints `--table-cell-link-bg-hover`
  * (`color-mix(--color-bg-overlay N%, transparent)`) over whatever the cell
@@ -404,12 +539,15 @@ describe('Table.CellLink hover keeps its text at AA', () => {
     ['untoned on selected row', '--table-row-fg-selected', '--table-row-bg-selected'],
   ];
   it.each(
-    (['light', 'dark'] as const).flatMap((theme) =>
-      SURFACES.map(([label, fg, bg]) => [theme, label, fg, bg] as const),
+    // Every surface under every accent, not just the accent cell: the
+    // selected row reaches the accent tint through an alias
+    // (--table-row-bg-selected -> --color-table-row-bg-selected ->
+    // --color-accent-bg-subtle), and a filter by label could not see that.
+    THEMED_ACCENTS.flatMap(([theme, accent, source]) =>
+      SURFACES.map(([label, fg, bg]) => [theme, accent, label, fg, bg, source] as const),
     ),
-  )('%s %s', (theme, _label, fg, bg) => {
+  )('%s %s accent: %s', (_theme, _accent, _label, fg, bg, source) => {
     expect(mix, '--table-cell-link-bg-hover shape').toBeTruthy();
-    const source = theme === 'light' ? TOKENS : DARK;
     expect(contrast(table(fg, source), hovered(table(bg, source), source))).toBeGreaterThanOrEqual(
       4.5,
     );
@@ -422,7 +560,9 @@ describe('Table.CellLink hover keeps its text at AA', () => {
  * floors pin "visibly there" in both themes, deliberately tight (shape ships at
  * 1.64 light): retuning --color-border-strong should be a conscious re-check.
  * The accent is a translucent `color-mix(accent N%, transparent)`, i.e.
- * `composite(accent, N, bg)`.
+ * `composite(accent, N, bg)`, and it is measured under every accent. Teal
+ * pine's light accent is darker than the spec's #17736d because of this gate:
+ * the spec value composited under 2.2 here, so the accent moved, not the floor.
  */
 describe('WidgetPreview pieces stay visible on the preview box', () => {
   const file = readFileSync(
@@ -433,10 +573,7 @@ describe('WidgetPreview pieces stay visible on the preview box', () => {
   const accentMix = declaredValue('--widget-preview-accent', file)?.match(
     /^color-mix\(in srgb, var\(--color-accent\) ([\d.]+)%, transparent\)$/,
   );
-  it.each([
-    ['light', TOKENS],
-    ['dark', DARK],
-  ])('%s', (_theme, source) => {
+  it.each(THEMED_ACCENTS)('%s, %s accent', (_theme, _accent, source) => {
     // Fail readably if a token stops being a plain alias / the expected mix.
     expect(accentMix, '--widget-preview-accent shape').toBeTruthy();
     const color = (name: string) => {
@@ -888,142 +1025,163 @@ describe('the published ΔE figures for the subtle-tone deprecation still hold',
  * exists to catch and twice did not.
  */
 describe('a tone stays in sync with the roles derived from it', () => {
-  it.each([
-    ['light', TOKENS],
-    ['dark', DARK],
-  ])('every -hover stays a visible step from its base in %s', (_theme, source) => {
-    // Darkening --color-danger collapsed its hover step to 0.025 — a third of
-    // what it was, on the DESTRUCTIVE button, where the affordance matters most.
-    // Ordering still held, which is why "ordering is unchanged" was the wrong
-    // thing to check on its own.
-    //
-    // The floor is 0.065, anchored to the smallest step among THE THREE TONES
-    // THIS GATE COVERS, either theme, before #484 touched anything (light
-    // accent, 0.0662). Not the library's smallest and not the smallest
-    // primitive: --entity-chip-bg-hover is 0.0000, and --color-table-header-bg's
-    // light hover step was 0.0266 until #504 re-pointed it to 0.0453 — still
-    // under this anchor, which is the point, but the old figure survived the
-    // change that made it false and is corrected here. Two earlier versions of this sentence
-    // claimed each of those wider scopes and both were false. That anchor is deliberate: the
-    // first version of this gate used 0.05, chosen as "just under the observed
-    // floor of 0.058" — but 0.058 was a number #484 had itself created by
-    // retuning dark accent without its hover, so the gate was calibrated to
-    // accept the very regression it was written to catch. Anchor to what the
-    // library managed BEFORE the change under review, never to what it manages
-    // after. Read it as a tripwire, not a floor with room: light accent sits at
-    // 0.0662, so the headroom is 0.0012 — 1.8%. Any deliberate move here is
-    // expected to fail this and be re-argued, which is the intent.
-    //
-    // #484 moved two other steps and both are recorded here rather than
-    // chased: dark accent 0.091 -> 0.058 was retuned back to 0.091, and light
-    // success 0.102 -> 0.075 was left, because 0.075 is still healthier than
-    // the pre-existing weakest step and shrinking a step is not by itself a
-    // defect — falling below what the library already shipped is.
-    //
-    // This covers three tones, not the library. Plenty of other base/-hover
-    // pairs sit below this floor — --button-bg-secondary-hover,
-    // --color-table-header-bg, and --entity-chip-bg-hover at exactly 0.0000,
-    // where the real hover is a filter rather than the token. No count is
-    // quoted: four sweeps produced three different totals because no
-    // theme-scoping rule for component tokens is written down. Pinning that
-    // rule, and then widening this gate, is #490.
-    for (const tone of ['accent', 'danger', 'success'] as const) {
-      const base = tokenValue(`--color-${tone}`, source);
-      const hover = tokenValue(`--color-${tone}-hover`, source);
-      expect(deltaE(base, hover), `${tone} hover step`).toBeGreaterThanOrEqual(0.065);
-      // Magnitude alone would pass a hover that moved the WRONG way. The
-      // direction is theme-dependent: light hovers darken, dark hovers lighten.
-      // A single "hover is darker" assertion would be wrong in half the library.
-      const moved = luminance(hover) - luminance(base);
-      expect(Math.sign(moved), `${tone} hover direction`).toBe(_theme === 'dark' ? 1 : -1);
-    }
-  });
+  // An accent overrides the accent tone and nothing else, so under a
+  // non-default accent these gates re-run for that one tone; danger and success
+  // would resolve identically and are already gated by the default run.
+  const tonesFor = (accent: string) =>
+    accent === 'default' ? (['accent', 'danger', 'success'] as const) : (['accent'] as const);
 
-  it.each([
-    ['light', TOKENS],
-    ['dark', DARK],
-  ])('every --ring-* is its tone exactly, in %s', (_theme, source) => {
-    // Rewritten for #505. The old version pinned each ring's RGB to its
-    // primitive while the rings were TRANSLUCENT rgb() literals, which is what
-    // made a light-accent exemption necessary: that ring was a deliberately
-    // lighter blue so it would read against the accent fill it surrounds.
-    //
-    // That exemption is gone, and not by widening it — the reason for it is
-    // gone. The rings are opaque now and the separation from the fill comes
-    // from `outline-offset` in the focus-ring mixin, which shows the real
-    // surface behind the element instead of asking one colour to contrast with
-    // two things at once. No ring could have done both: 3:1 on white caps
-    // luminance at 0.300, and 3:1 on #0052cc (L 0.1039) needs L >= 0.412 to be
-    // the lighter of the pair.
-    //
-    // An earlier version of this comment quoted 0.337 for that floor and called
-    // the constraint impossible full stop. Both were wrong — the floor is
-    // 0.412, and the comparison is two-sided, so a ring DARKER than the accent
-    // (L <= 0.0013) also clears 3:1; #000000 scores 21:1 on white and 3.08:1 on
-    // the fill. It is excluded because it is black — 1.30:1 on the dark theme's
-    // background, and no longer tracking the tone it belongs to — not because
-    // no such colour exists. The conclusion held; the proof did not, which is
-    // the failure mode this file's own prose keeps warning about. The old ring
-    // measured 1.64:1 composited on white — the worst of the three, on the tone
-    // every focus ring in the library resolves through, and #490 did not catch
-    // it because it only measured danger and success.
-    //
-    // So the relationship is now exact equality with no holes, which is
-    // stronger than the hue-band #490 proposed and needs no second end pinned:
-    // there is nothing left that is allowed to differ.
-    for (const tone of ['accent', 'danger', 'success'] as const) {
-      const declared = [...source.matchAll(new RegExp(`--ring-${tone}:\\s*([^;\n]+);`, 'g'))].map(
-        (m) => m[1],
-      );
-      // dark.scss declares every ring twice — once under [data-theme='dark'],
-      // once under prefers-color-scheme. Reading only the first let the second
-      // copy be mutated freely.
-      expect(new Set(declared).size, `--ring-${tone} declarations agree`).toBeLessThanOrEqual(1);
-      const ring = declared[0];
-      // No fallback to the light source. All three are declared in both files;
-      // if one is ever dropped, failing here is better than silently comparing
-      // a light triple against a dark tone.
-      expect(ring, `--ring-${tone} is declared in ${_theme}`).toBeDefined();
-      // Opaque, and said plainly. A ring that regains alpha fails 1.4.11 again
-      // — 40% was what put danger at 1.94:1 and success at 1.81:1 — and it
-      // would fail here first, with a reason, rather than in the ratio check
-      // below with a baffling composite.
-      expect(ring, `--ring-${tone} is an opaque hex`).toMatch(/^#[0-9a-f]{6}$/);
-      expect(ring, `--ring-${tone} vs --color-${tone}`).toBe(tokenValue(`--color-${tone}`, source));
-    }
-  });
-
-  it.each([
-    ['light', TOKENS],
-    ['dark', DARK],
-  ])('every --ring-* clears 1.4.11 against every surface it lands on in %s', (_theme, source) => {
-    // The measurement #490 asked for and did not have: it checked the rings
-    // against WHITE only. A ring on --color-bg-subtle, on --color-bg-sunken, or
-    // inside a Modal composites differently, and sunken is consistently the
-    // worst of them — light danger reads 5.41 on white but 4.58 on sunken.
-    //
-    // Every page surface, not a chosen one. (The note above about sunken being
-    // the worst of them is LIGHT-theme only: in dark, sunken is the BEST surface
-    // for all three rings and --color-bg-muted is the worst.) --color-bg-overlay is excluded on
-    // purpose: it is translucent, so what a ring contrasts with there is the
-    // page showing through it, which is already covered by the four below.
-    const SURFACES = [
-      '--color-bg',
-      '--color-bg-subtle',
-      '--color-bg-sunken',
-      '--color-bg-muted',
-    ] as const;
-    for (const tone of ['accent', 'danger', 'success'] as const) {
-      const ring = tokenValue(`--ring-${tone}`, source);
-      for (const surface of SURFACES) {
-        const ratio = contrast(ring, tokenValue(surface, source));
-        // 3:1 is WCAG 1.4.11 for a non-text indicator. The margin is real and
-        // meant to stay real — the tightest pair here is 4.33:1, so this is not
-        // a tripwire sitting on the current value the way the hover floors are.
-        expect(ratio, `--ring-${tone} on ${surface}`).toBeGreaterThanOrEqual(3.0);
+  it.each(THEMED_ACCENTS)(
+    'every -hover stays a visible step from its base in %s, %s accent',
+    (_theme, accent, source) => {
+      // Darkening --color-danger collapsed its hover step to 0.025 — a third of
+      // what it was, on the DESTRUCTIVE button, where the affordance matters most.
+      // Ordering still held, which is why "ordering is unchanged" was the wrong
+      // thing to check on its own.
+      //
+      // The floor is 0.065, anchored to the smallest step among THE THREE TONES
+      // THIS GATE COVERS, either theme, before #484 touched anything (light
+      // accent, 0.0662). Not the library's smallest and not the smallest
+      // primitive: --entity-chip-bg-hover is 0.0000, and --color-table-header-bg's
+      // light hover step was 0.0266 until #504 re-pointed it to 0.0453 — still
+      // under this anchor, which is the point, but the old figure survived the
+      // change that made it false and is corrected here. Two earlier versions of this sentence
+      // claimed each of those wider scopes and both were false. That anchor is deliberate: the
+      // first version of this gate used 0.05, chosen as "just under the observed
+      // floor of 0.058" — but 0.058 was a number #484 had itself created by
+      // retuning dark accent without its hover, so the gate was calibrated to
+      // accept the very regression it was written to catch. Anchor to what the
+      // library managed BEFORE the change under review, never to what it manages
+      // after. Read it as a tripwire, not a floor with room: light accent sits at
+      // 0.0662, so the headroom is 0.0012 — 1.8%. Any deliberate move here is
+      // expected to fail this and be re-argued, which is the intent.
+      //
+      // #484 moved two other steps and both are recorded here rather than
+      // chased: dark accent 0.091 -> 0.058 was retuned back to 0.091, and light
+      // success 0.102 -> 0.075 was left, because 0.075 is still healthier than
+      // the pre-existing weakest step and shrinking a step is not by itself a
+      // defect — falling below what the library already shipped is.
+      //
+      // This covers three tones, not the library. Plenty of other base/-hover
+      // pairs sit below this floor — --button-bg-secondary-hover,
+      // --color-table-header-bg, and --entity-chip-bg-hover at exactly 0.0000,
+      // where the real hover is a filter rather than the token. No count is
+      // quoted: four sweeps produced three different totals because no
+      // theme-scoping rule for component tokens is written down. Pinning that
+      // rule, and then widening this gate, is #490.
+      //
+      // The floor is NOT re-anchored per accent. Teal pine was tuned TO it —
+      // its hover was nudged off the spec value to clear 0.065 — so a new
+      // accent meets the blue's bar or is retuned until it does; the bar never
+      // comes down to meet the accent.
+      for (const tone of tonesFor(accent)) {
+        const base = tokenValue(`--color-${tone}`, source);
+        const hover = tokenValue(`--color-${tone}-hover`, source);
+        expect(deltaE(base, hover), `${tone} hover step`).toBeGreaterThanOrEqual(0.065);
+        // Magnitude alone would pass a hover that moved the WRONG way. The
+        // direction is theme-dependent: light hovers darken, dark hovers lighten.
+        // A single "hover is darker" assertion would be wrong in half the library.
+        const moved = luminance(hover) - luminance(base);
+        expect(Math.sign(moved), `${tone} hover direction`).toBe(_theme === 'dark' ? 1 : -1);
       }
-    }
-  });
+    },
+  );
+
+  it.each(THEMED_ACCENTS)(
+    'every --ring-* is its tone exactly, in %s, %s accent',
+    (_theme, accent, source) => {
+      // Rewritten for #505. The old version pinned each ring's RGB to its
+      // primitive while the rings were TRANSLUCENT rgb() literals, which is what
+      // made a light-accent exemption necessary: that ring was a deliberately
+      // lighter blue so it would read against the accent fill it surrounds.
+      //
+      // That exemption is gone, and not by widening it — the reason for it is
+      // gone. The rings are opaque now and the separation from the fill comes
+      // from `outline-offset` in the focus-ring mixin, which shows the real
+      // surface behind the element instead of asking one colour to contrast with
+      // two things at once. No ring could have done both: 3:1 on white caps
+      // luminance at 0.300, and 3:1 on #0052cc (L 0.1039) needs L >= 0.412 to be
+      // the lighter of the pair.
+      //
+      // An earlier version of this comment quoted 0.337 for that floor and called
+      // the constraint impossible full stop. Both were wrong — the floor is
+      // 0.412, and the comparison is two-sided, so a ring DARKER than the accent
+      // (L <= 0.0013) also clears 3:1; #000000 scores 21:1 on white and 3.08:1 on
+      // the fill. It is excluded because it is black — 1.30:1 on the dark theme's
+      // background, and no longer tracking the tone it belongs to — not because
+      // no such colour exists. The conclusion held; the proof did not, which is
+      // the failure mode this file's own prose keeps warning about. The old ring
+      // measured 1.64:1 composited on white — the worst of the three, on the tone
+      // every focus ring in the library resolves through, and #490 did not catch
+      // it because it only measured danger and success.
+      //
+      // So the relationship is now exact equality with no holes, which is
+      // stronger than the hue-band #490 proposed and needs no second end pinned:
+      // there is nothing left that is allowed to differ.
+      //
+      // Under a non-default accent the ring is read from the accent block ALONE:
+      // the layered source declares --ring-accent twice by construction (override
+      // first, base after), so the agreement check below would fail on the
+      // layering rather than on the tokens. The forced/OS-dark agreement it
+      // stands in for is the accent media-query test above.
+      for (const tone of tonesFor(accent)) {
+        const declared = [
+          ...(accent === 'default' ? source : accentScope(accent, _theme)).matchAll(
+            new RegExp(`--ring-${tone}:\\s*([^;\n]+);`, 'g'),
+          ),
+        ].map((m) => m[1]);
+        // dark.scss declares every ring twice — once under [data-theme='dark'],
+        // once under prefers-color-scheme. Reading only the first let the second
+        // copy be mutated freely.
+        expect(new Set(declared).size, `--ring-${tone} declarations agree`).toBeLessThanOrEqual(1);
+        const ring = declared[0];
+        // No fallback to the light source. All three are declared in both files;
+        // if one is ever dropped, failing here is better than silently comparing
+        // a light triple against a dark tone.
+        expect(ring, `--ring-${tone} is declared in ${_theme}`).toBeDefined();
+        // Opaque, and said plainly. A ring that regains alpha fails 1.4.11 again
+        // — 40% was what put danger at 1.94:1 and success at 1.81:1 — and it
+        // would fail here first, with a reason, rather than in the ratio check
+        // below with a baffling composite.
+        expect(ring, `--ring-${tone} is an opaque hex`).toMatch(/^#[0-9a-f]{6}$/);
+        expect(ring, `--ring-${tone} vs --color-${tone}`).toBe(
+          tokenValue(`--color-${tone}`, source),
+        );
+      }
+    },
+  );
+
+  it.each(THEMED_ACCENTS)(
+    'every --ring-* clears 1.4.11 against every surface it lands on in %s, %s accent',
+    (_theme, accent, source) => {
+      // The measurement #490 asked for and did not have: it checked the rings
+      // against WHITE only. A ring on --color-bg-subtle, on --color-bg-sunken, or
+      // inside a Modal composites differently, and sunken is consistently the
+      // worst of them — light danger reads 5.41 on white but 4.58 on sunken.
+      //
+      // Every page surface, not a chosen one. (The note above about sunken being
+      // the worst of them is LIGHT-theme only: in dark, sunken is the BEST surface
+      // for all three rings and --color-bg-muted is the worst.) --color-bg-overlay is excluded on
+      // purpose: it is translucent, so what a ring contrasts with there is the
+      // page showing through it, which is already covered by the four below.
+      const SURFACES = [
+        '--color-bg',
+        '--color-bg-subtle',
+        '--color-bg-sunken',
+        '--color-bg-muted',
+      ] as const;
+      for (const tone of tonesFor(accent)) {
+        const ring = tokenValue(`--ring-${tone}`, source);
+        for (const surface of SURFACES) {
+          const ratio = contrast(ring, tokenValue(surface, source));
+          // 3:1 is WCAG 1.4.11 for a non-text indicator. The margin is real and
+          // meant to stay real — the tightest pair here is 4.33:1, so this is not
+          // a tripwire sitting on the current value the way the hover floors are.
+          expect(ratio, `--ring-${tone} on ${surface}`).toBeGreaterThanOrEqual(3.0);
+        }
+      }
+    },
+  );
 
   it('an inset ring stays inside the border box', () => {
     // Several call sites draw the ring inset with `calc(-1 * var(--ring-offset))`,
@@ -1334,8 +1492,7 @@ const PALETTE_EVENT_FILLS = [...TOKENS.matchAll(/--color-palette-([a-z]+)-bg:/g)
  * side is the page surface, which the four-surface gate above covers.
  */
 describe('an inset ring stays legible against every fill a .colored event can take', () => {
-  it.each(['light', 'dark'] as const)('%s', (theme) => {
-    const source = theme === 'dark' ? DARK : TOKENS;
+  it.each(THEMED_ACCENTS)('%s, %s accent', (_theme, _accent, source) => {
     const ring = tokenValue('--ring-accent', source);
     expect(PALETTE_EVENT_FILLS.length, 'found the palette fills').toBeGreaterThan(20);
     for (const fill of PALETTE_EVENT_FILLS) {

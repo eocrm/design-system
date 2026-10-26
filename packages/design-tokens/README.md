@@ -68,6 +68,16 @@ The artifact supports JVM, Android, iOS device (`iosArm64`), and Apple Silicon
 iOS simulator (`iosSimulatorArm64`). It intentionally does not publish an
 Intel `iosX64` target.
 
+## Accents
+
+`tokens.json` may have a root `accents` key: `{ "<name>": { "<tokenId>": { "light": "#rrggbb", "dark": "#rrggbb" } } }`. Each accent emits a `[data-accent='<name>']` block overriding those tokens in every theme block (light, forced dark, OS dark), and a Compose `Eocrm<Name>LightTokens` / `Eocrm<Name>DarkTokens` pair. The validator rejects:
+
+- `unknown-accent-token` — the token id does not exist
+- `accent-non-color` — the token is not a colour
+- `accent-unthemed` — the base token is not light/dark themed
+- `accent-alias` — the value is an alias instead of a colour
+- `invalid-token-value` — a malformed colour
+
 ## Contributing
 
 `src/tokens.json` is the only editable source of token values. Do not edit

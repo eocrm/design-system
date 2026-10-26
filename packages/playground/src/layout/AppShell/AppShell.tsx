@@ -9,6 +9,7 @@ import {
   Sun,
   Moon,
   Menu,
+  Palette,
   type LucideIcon,
 } from 'lucide-react';
 import {
@@ -33,6 +34,8 @@ import {
 } from '@eocrm/design-system';
 import styles from './AppShell.module.scss';
 import eocrmLogo from '../../assets/eocrm-logo.svg';
+import eocrmLogoTealPine from '../../assets/eocrm-logo-tealpine.svg';
+import { ACCENT_KEY, AccentContext, useAccent, type Accent } from './accent';
 
 const SIDEBAR_COLLAPSED_KEY = 'eocrm-playground-sidebar-collapsed';
 
@@ -84,13 +87,10 @@ function GithubMark() {
     collapsed. Reads collapsed state from RailContext. */
 function BrandMark() {
   const { collapsed } = useRail();
+  const logo = useAccent() === 'tealpine' ? eocrmLogoTealPine : eocrmLogo;
   return (
     <div className={styles.brand} data-collapsed={collapsed || undefined}>
-      {collapsed ? (
-        <Logo src={eocrmLogo} size="md" />
-      ) : (
-        <Logo src={eocrmLogo} size="md" text="eocrm" />
-      )}
+      {collapsed ? <Logo src={logo} size="md" /> : <Logo src={logo} size="md" text="eocrm" />}
     </div>
   );
 }
@@ -139,6 +139,23 @@ export function AppShell({ children }: { children: ReactNode }) {
     setTheme((prev) => THEME_ORDER[(THEME_ORDER.indexOf(prev) + 1) % THEME_ORDER.length]);
   const ThemeIcon = THEME_META[theme].icon;
 
+  // Persisted accent: blue (default, no attribute) | tealpine (data-accent).
+  const [accent, setAccent] = useState<Accent>(() => {
+    if (typeof window === 'undefined') return 'blue';
+    return window.localStorage.getItem(ACCENT_KEY) === 'tealpine' ? 'tealpine' : 'blue';
+  });
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(ACCENT_KEY, accent);
+    const root = document.documentElement;
+    if (accent === 'tealpine') {
+      root.dataset.accent = accent;
+    } else {
+      delete root.dataset.accent;
+    }
+  }, [accent]);
+  const accentLabel = accent === 'tealpine' ? 'Accent: Teal pine' : 'Accent: Blue';
+
   // ⌘K / Ctrl+K focuses the component search (the TopBar hotkey hint, made real).
   const searchRef = useRef<CommandSearchHandle>(null);
   useEffect(() => {
@@ -155,7 +172,11 @@ export function AppShell({ children }: { children: ReactNode }) {
   // Full-bleed routes render outside the shell chrome (no Rail / TopBar) so they
   // read like real standalone screens, not pages inside the CRM.
   if (FULL_BLEED_PATHS.has(pathname)) {
-    return <main>{children}</main>;
+    return (
+      <AccentContext.Provider value={accent}>
+        <main>{children}</main>
+      </AccentContext.Provider>
+    );
   }
 
   const inComponents = pathname.startsWith('/components');
@@ -165,98 +186,108 @@ export function AppShell({ children }: { children: ReactNode }) {
     : { to: '/components', label: 'Components', icon: Component };
 
   return (
-    <AppLayout
-      sidebarPinned
-      sidebarOverlayBelow="lg"
-      sidebarOpen={navOpen}
-      onSidebarOpenChange={setNavOpen}
-      sidebar={
-        <Rail
-          collapsed={collapsed && !isOverlayNav}
-          onCollapsedChange={setCollapsed}
-          aria-label={inComponents ? 'Component navigation' : 'Mockup navigation'}
-          className={styles.appRail}
-        >
-          <Rail.Header>
-            <BrandMark />
-          </Rail.Header>
+    <AccentContext.Provider value={accent}>
+      <AppLayout
+        sidebarPinned
+        sidebarOverlayBelow="lg"
+        sidebarOpen={navOpen}
+        onSidebarOpenChange={setNavOpen}
+        sidebar={
+          <Rail
+            collapsed={collapsed && !isOverlayNav}
+            onCollapsedChange={setCollapsed}
+            aria-label={inComponents ? 'Component navigation' : 'Mockup navigation'}
+            className={styles.appRail}
+          >
+            <Rail.Header>
+              <BrandMark />
+            </Rail.Header>
 
-          {inComponents ? (
-            <>
-              <Rail.Section>
-                {renderRailItem(componentOverview)}
-                {renderRailItem(tokensReference)}
-                {renderRailItem(architectureReference)}
-              </Rail.Section>
-              {componentGroups.map(({ heading, items }) => (
-                <Rail.Section key={heading} title={heading}>
-                  {items.map(renderRailItem)}
+            {inComponents ? (
+              <>
+                <Rail.Section>
+                  {renderRailItem(componentOverview)}
+                  {renderRailItem(tokensReference)}
+                  {renderRailItem(architectureReference)}
                 </Rail.Section>
-              ))}
-            </>
-          ) : (
-            <Rail.Section title="Mockups">{mockupItems.map(renderRailItem)}</Rail.Section>
-          )}
+                {componentGroups.map(({ heading, items }) => (
+                  <Rail.Section key={heading} title={heading}>
+                    {items.map(renderRailItem)}
+                  </Rail.Section>
+                ))}
+              </>
+            ) : (
+              <Rail.Section title="Mockups">{mockupItems.map(renderRailItem)}</Rail.Section>
+            )}
 
-          {/* No Rail.Spacer here: Rail renders the Footer outside its scroll
+            {/* No Rail.Spacer here: Rail renders the Footer outside its scroll
               box, so the mode-switch link (Mockups ↔ Components) and the
               collapse-toggle stay visible on their own when the section list
               above overflows. A spacer as the last body child would be a
               no-op. */}
-          <Rail.Footer>
-            <Rail.Item as={NavLink} to={switchLink.to} icon={<switchLink.icon size={16} />}>
-              {switchLink.label}
-            </Rail.Item>
-            {!inComponents && (
-              <Rail.Item
-                href="https://github.com/eocrm/design-system"
-                target="_blank"
-                rel="noopener noreferrer"
-                icon={<GithubMark />}
-              >
-                GitHub
+            <Rail.Footer>
+              <Rail.Item as={NavLink} to={switchLink.to} icon={<switchLink.icon size={16} />}>
+                {switchLink.label}
               </Rail.Item>
-            )}
-            {!isOverlayNav && <Rail.CollapseToggle />}
-          </Rail.Footer>
-        </Rail>
-      }
-      topBar={
-        <TopBar>
-          <TopBar.Start>
-            {isOverlayNav && (
-              <TopBar.IconButton
-                aria-label="Open navigation"
-                aria-expanded={navOpen}
-                onClick={() => setNavOpen(true)}
-              >
-                <Menu size={16} />
+              {!inComponents && (
+                <Rail.Item
+                  href="https://github.com/eocrm/design-system"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  icon={<GithubMark />}
+                >
+                  GitHub
+                </Rail.Item>
+              )}
+              {!isOverlayNav && <Rail.CollapseToggle />}
+            </Rail.Footer>
+          </Rail>
+        }
+        topBar={
+          <TopBar>
+            <TopBar.Start>
+              {isOverlayNav && (
+                <TopBar.IconButton
+                  aria-label="Open navigation"
+                  aria-expanded={navOpen}
+                  onClick={() => setNavOpen(true)}
+                >
+                  <Menu size={16} />
+                </TopBar.IconButton>
+              )}
+              <CommandSearch ref={searchRef} />
+            </TopBar.Start>
+            <TopBar.End>
+              <TopBar.IconButton aria-label="Create new">
+                <Plus size={16} />
               </TopBar.IconButton>
-            )}
-            <CommandSearch ref={searchRef} />
-          </TopBar.Start>
-          <TopBar.End>
-            <TopBar.IconButton aria-label="Create new">
-              <Plus size={16} />
-            </TopBar.IconButton>
-            <TopBar.IconButton aria-label="Notifications" indicator>
-              <Bell size={16} />
-            </TopBar.IconButton>
-            <Tooltip content={THEME_META[theme].label} side="bottom">
-              <TopBar.IconButton aria-label={THEME_META[theme].label} onClick={cycleTheme}>
-                <ThemeIcon size={16} />
+              <TopBar.IconButton aria-label="Notifications" indicator>
+                <Bell size={16} />
               </TopBar.IconButton>
-            </Tooltip>
-            <Avatar name="Alex Rivera" size="sm" />
-          </TopBar.End>
-        </TopBar>
-      }
-    >
-      {/* AppLayout's content region is a plain div (it can be legitimately
+              <Tooltip content={accentLabel} side="bottom">
+                <TopBar.IconButton
+                  aria-label={accentLabel}
+                  onClick={() => setAccent((a) => (a === 'blue' ? 'tealpine' : 'blue'))}
+                >
+                  <Palette size={16} />
+                </TopBar.IconButton>
+              </Tooltip>
+              <Tooltip content={THEME_META[theme].label} side="bottom">
+                <TopBar.IconButton aria-label={THEME_META[theme].label} onClick={cycleTheme}>
+                  <ThemeIcon size={16} />
+                </TopBar.IconButton>
+              </Tooltip>
+              <Avatar name="Alex Rivera" size="sm" />
+            </TopBar.End>
+          </TopBar>
+        }
+      >
+        {/* AppLayout's content region is a plain div (it can be legitimately
           nested — demos, docs — so it doesn't claim the landmark itself).
           AppShell is the one place that's ever the outermost shell, so it
           owns the page's single <main> landmark. */}
-      <main>{children}</main>
-    </AppLayout>
+        <main>{children}</main>
+      </AppLayout>
+    </AccentContext.Provider>
   );
 }

@@ -3,6 +3,7 @@ import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
 import eocrmLogo from '../../assets/eocrm-logo.svg';
+import eocrmLogoTealPine from '../../assets/eocrm-logo-tealpine.svg';
 
 export function LogoDemo() {
   return (
@@ -23,6 +24,19 @@ export function Demo() {
 }`}
       >
         <Logo src={eocrmLogo} text="eocrm" />
+      </Example>
+
+      <Example
+        title="Teal pine mark"
+        description="The mark is the consumer's asset — swap the file with the accent. This one is the Teal pine variant (light top chevron, brand-teal body)."
+        code={`import logo from '../assets/eocrm-logo-tealpine.svg';
+import { Logo } from '@eocrm/design-system';
+
+export function Demo() {
+  return <Logo src={logo} text="eocrm" />;
+}`}
+      >
+        <Logo src={eocrmLogoTealPine} text="eocrm" />
       </Example>
 
       <Example

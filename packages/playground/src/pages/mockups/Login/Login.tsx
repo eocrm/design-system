@@ -20,11 +20,14 @@ import {
   Title,
 } from '@eocrm/design-system';
 import eocrmLogo from '../../../assets/eocrm-logo.svg';
+import eocrmLogoTealPine from '../../../assets/eocrm-logo-tealpine.svg';
+import { useAccent } from '../../../layout/AppShell/accent';
 
 // Loose client-side shape check only — real validation is server-side.
 const EMAIL_RE = /.+@.+\..+/;
 
 export function Login() {
+  const logo = useAccent() === 'tealpine' ? eocrmLogoTealPine : eocrmLogo;
   const [step, setStep] = useState<'email' | 'password'>('email');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -89,7 +92,7 @@ export function Login() {
       }
     >
       <Stack gap="lg" align="center">
-        <Logo src={eocrmLogo} text="eocrm" size="lg" />
+        <Logo src={logo} text="eocrm" size="lg" />
 
         <Constrain maxWidth="md">
           <Card padding="lg">

@@ -46,11 +46,22 @@ function declarations(entries: Array<[string, string]>, indent: string): string 
   return entries.map(([key, value]) => `${indent}${key}: ${value};`).join('\n');
 }
 
+// Each scope also lists an accent-aware selector (`:root:root[data-accent]`) that
+// STRICTLY out-specifies the matching generated `data-accent` block, so overrides
+// win over an accent regardless of <style> order. Specificity: light (0,3,0) >
+// accent light (0,2,0); dark/OS-dark (0,4,0) > accent dark (0,3,0). Dark (0,4,0)
+// also beats light (0,3,0), so `darkTokens` still win in dark with an accent set.
+const LIGHT_SELECTOR = ':root, :root:root[data-accent]';
+const DARK_SELECTOR = ":root[data-theme='dark'], :root:root[data-accent][data-theme='dark']";
+const OS_DARK_SELECTOR =
+  ":root:not([data-theme='light']), :root:root[data-accent]:not([data-theme='light'])";
+
 /**
  * Build the CSS for consumer token overrides, mirroring `dark.scss`'s scopes so
  * the cascade resolves correctly:
- * - `tokens` → `:root {}` (wins in light by source order) AND re-emitted into
- *   the dark scopes so a single map applies in both themes.
+ * - `tokens` → `:root {}` plus accent-aware twins (`:root:root[data-accent]`) that
+ *   win over the generated `data-accent` blocks by specificity, AND re-emitted
+ *   into the dark scopes so a single map applies in both themes.
  * - `darkTokens` → layered AFTER `tokens` inside the dark scopes only.
  *
  * Returns `null` when there is nothing to emit, so `<AppProvider>` renders no
@@ -64,17 +75,17 @@ export function buildThemeTokenCss(tokens?: TokenMap, darkTokens?: TokenMap): st
   const blocks: string[] = [];
 
   if (base.length > 0) {
-    blocks.push(`:root {\n${declarations(base, '  ')}\n}`);
+    blocks.push(`${LIGHT_SELECTOR} {\n${declarations(base, '  ')}\n}`);
   }
 
   // tokens re-emitted into dark so a single map applies in dark too; darkTokens
   // layered after so they win.
   const darkScope = [...base, ...dark];
   if (darkScope.length > 0) {
-    blocks.push(`:root[data-theme='dark'] {\n${declarations(darkScope, '  ')}\n}`);
+    blocks.push(`${DARK_SELECTOR} {\n${declarations(darkScope, '  ')}\n}`);
     blocks.push(
       `@media (prefers-color-scheme: dark) {\n` +
-        `  :root:not([data-theme='light']) {\n` +
+        `  ${OS_DARK_SELECTOR} {\n` +
         `${declarations(darkScope, '    ')}\n` +
         `  }\n}`,
     );

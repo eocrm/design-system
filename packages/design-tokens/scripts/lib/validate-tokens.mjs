@@ -186,9 +186,45 @@ export function validateTokens(document) {
   }
 
   validateComposeGroupStructure(document, issues);
+  validateAccents(document, tokensById, issues);
 
   if (issues.length > 0) throw new TokenSemanticError(issues);
   return document;
+}
+
+function validateAccents(document, tokensById, issues) {
+  for (const [accent, overrides] of Object.entries(document.accents ?? {})) {
+    for (const [id, value] of Object.entries(overrides)) {
+      const path = `/accents/${accent}/${id}`;
+      const base = tokensById.get(id)?.token;
+      if (!base) {
+        issues.push(issue(path, 'unknown-accent-token', `unknown accent token ${id}`));
+        continue;
+      }
+      if (base.type !== 'color') {
+        issues.push(issue(path, 'accent-non-color', `accent token ${id} must be a color`));
+      }
+      if (!isThemed(base.value)) {
+        issues.push(issue(path, 'accent-unthemed', `accent token ${id} must have a themed base`));
+      }
+      for (const theme of ['light', 'dark']) {
+        const branch = value[theme];
+        if (isAlias(branch)) {
+          issues.push(
+            issue(`${path}/${theme}`, 'accent-alias', 'accent overrides must be literal colors'),
+          );
+        } else if (!isSupportedCssColor(branch)) {
+          issues.push(
+            issue(
+              `${path}/${theme}`,
+              'invalid-token-value',
+              'color token has an invalid resolved value',
+            ),
+          );
+        }
+      }
+    }
+  }
 }
 
 function validateComposeGroupStructure(document, issues) {

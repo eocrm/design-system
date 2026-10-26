@@ -48,4 +48,4 @@ const darkTokens = useMemo(() => ({ '--color-accent': '#a78bfa' }), []);
 </AppProvider>;
 ```
 
-`tokens` apply in light **and** dark; `darkTokens` refine the dark scope only. They're emitted as a single declarative `<style>` that layers over the [dark theme](theming.md#dark-theme) correctly. Any design token can be overridden — see the generated `@eocrm/design-tokens` Sass contract for the full CSS custom-property set. Contributors change shared values only in `packages/design-tokens/src/tokens.json`; `src/styles/tokens.scss` remains the stable consumer entry point.
+`tokens` apply in light **and** dark; `darkTokens` refine the dark scope only. They're emitted as a single declarative `<style>` that layers over the [dark theme](theming.md#dark-theme) correctly, and they win over a `data-accent` preset's token blocks. Any design token can be overridden — see the generated `@eocrm/design-tokens` Sass contract for the full CSS custom-property set. Contributors change shared values only in `packages/design-tokens/src/tokens.json`; `src/styles/tokens.scss` remains the stable consumer entry point.
