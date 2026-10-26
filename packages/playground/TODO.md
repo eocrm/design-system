@@ -59,7 +59,9 @@ A `<nav aria-label="On this page">` list of in-page anchor links (optionally nes
 
 **When this ships:** replace the aside in `Article`, then tick this checkbox.
 
-### [ ] `<AppLayout>` — let the content region be the `<main>` landmark
+### [x] `<AppLayout>` — let the content region be the `<main>` landmark
+
+**Shipped:** 2026-10-26 — `mainLandmark` prop
 
 **Filed:** 2026-10-26
 **Mocked in:**

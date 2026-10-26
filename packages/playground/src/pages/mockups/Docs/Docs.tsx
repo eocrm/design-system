@@ -744,6 +744,7 @@ export function Docs() {
 
   return (
     <AppLayout
+      mainLandmark
       sidebarPinned
       sidebar={
         <Rail aria-label="Documentation" collapseBelow="md">
@@ -815,8 +816,7 @@ export function Docs() {
         </TopBar>
       }
     >
-      {/* TODO: replace when AppLayout can own the main landmark — see packages/playground/TODO.md */}
-      <main>{content}</main>
+      {content}
     </AppLayout>
   );
 }

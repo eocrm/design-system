@@ -193,6 +193,13 @@
           "description": "Fires whenever the overlay sidebar opens or closes — close button, Esc, backdrop click, swipe, or programmatic. Pair with `sidebarOpen` — see its doc."
         },
         {
+          "name": "mainLandmark",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Render the content region as a `<main>` landmark instead of a plain `<div>`.\nPass it on the outermost app shell so the page gets its single `main`\nlandmark without a wrapper element. Leave it off (default) for nested\nuse — demos, documentation previews — so the page never gets two `main`s."
+        },
+        {
           "name": "children",
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": true,
