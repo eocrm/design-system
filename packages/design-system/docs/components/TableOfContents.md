@@ -17,6 +17,8 @@ function GuidePage() {
   return (
     // Exactly one TOC at a time: a pinned rail while wide; once Split stacks, the
     // aside is dropped (null renders no cell) and a collapsed TOC leads the main pane.
+    // align="stretch" is required for the pin: Split defaults to align="start", so the aside
+    // cell would be only as tall as the TOC and Sticky would have nothing to pin within.
     <Split
       side="end"
       asideWidth="240px"

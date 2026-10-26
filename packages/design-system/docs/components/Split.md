@@ -44,6 +44,7 @@ beside results).
 ```
 
 - Collapsed panes stack in **DOM order**: aside → main for `side="start"` (default), main → aside for `side="end"`. No CSS `order` flip — visual order stays in sync with tab order. Need the aside on top when stacked? Use `side="start"`.
+- A pinned `<Sticky>` aside needs `align="stretch"`: the default `align="start"` makes the aside cell only as tall as its content, leaving nothing to pin within.
 - A `<Sticky>` passed as `aside` becomes a plain block while collapsed (no pin, no `scroll` cap) — don't shim it.
 - `onCollapsedChange(collapsed)` — fires on mount with the initial state (twice under StrictMode in dev), then on every change; the root also carries `data-collapsed`. It measures the split's own content width against the same inclusive threshold as the container query, so it agrees with the CSS (`useBelowBreakpoint` measures the viewport and does not, beside an app sidebar). Use it to move content YOU own so DOM order = visual order in both states — never CSS `order`:
 

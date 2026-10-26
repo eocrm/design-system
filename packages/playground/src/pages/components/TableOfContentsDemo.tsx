@@ -51,13 +51,19 @@ function WithRail() {
       aside={
         narrow ? null : (
           <Sticky top="topbar">
-            <TableOfContents items={SECTIONS} />
+            <TableOfContents aria-label="On this page (sticky rail example)" items={SECTIONS} />
           </Sticky>
         )
       }
     >
       <Stack gap="xl">
-        {narrow && <TableOfContents items={SECTIONS} collapsed />}
+        {narrow && (
+          <TableOfContents
+            aria-label="On this page (sticky rail example, narrow)"
+            items={SECTIONS}
+            collapsed
+          />
+        )}
         <Article />
       </Stack>
     </Split>
@@ -97,7 +103,7 @@ export function TableOfContentsDemo() {
         description="A disclosure for narrow layouts. The summary shows the active heading; choosing an entry closes it."
         code={`<TableOfContents items={toc} collapsed />`}
       >
-        <TableOfContents items={SECTIONS} collapsed />
+        <TableOfContents aria-label="On this page (collapsed example)" items={SECTIONS} collapsed />
       </Example>
 
       <Example
