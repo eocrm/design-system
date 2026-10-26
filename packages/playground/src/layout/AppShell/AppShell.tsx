@@ -164,6 +164,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const searchRef = useRef<CommandSearchHandle>(null);
   useEffect(() => {
     const onKey = (e: globalThis.KeyboardEvent) => {
+      // No search mounted (self-chromed docs mockup) → leave ⌘K to the page.
+      if (!searchRef.current) return;
       if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
         e.preventDefault();
         searchRef.current?.focus();
@@ -175,7 +177,7 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   // Full-bleed routes render outside the shell chrome (no Rail / TopBar) so they
   // read like real standalone screens, not pages inside the CRM.
-  if (pathname.startsWith(SELF_CHROMED_PREFIX)) {
+  if (pathname === SELF_CHROMED_PREFIX || pathname.startsWith(`${SELF_CHROMED_PREFIX}/`)) {
     return <AccentContext.Provider value={accent}>{children}</AccentContext.Provider>;
   }
   if (FULL_BLEED_PATHS.has(pathname)) {

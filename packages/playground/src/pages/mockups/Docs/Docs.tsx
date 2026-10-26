@@ -1,6 +1,18 @@
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { NavLink, Link as RouterLink, useLocation } from 'react-router';
-import { ArrowLeft, Bot, BookOpen, Braces, FileJson, Home, KeyRound } from 'lucide-react';
+import {
+  ArrowLeft,
+  Bot,
+  Braces,
+  Building2,
+  CalendarDays,
+  FileJson,
+  Handshake,
+  Home,
+  KeyRound,
+  ListChecks,
+  Users,
+} from 'lucide-react';
 import {
   Alert,
   AppLayout,
@@ -52,11 +64,21 @@ const METHOD_COLOR: Record<Method, PaletteColor> = {
   DELETE: 'red',
 };
 
+const RESOURCE_ICONS: Record<string, ReactNode> = {
+  contacts: <Users size={16} />,
+  companies: <Building2 size={16} />,
+  deals: <Handshake size={16} />,
+  tasks: <ListChecks size={16} />,
+  appointments: <CalendarDays size={16} />,
+};
+
+const OP_SLUGS = ['list', 'create', 'get', 'update', 'delete'];
+
 const RESOURCES: {
   slug: string;
   label: string;
   ops: { method: Method; path: string; summary: string }[];
-}[] = ['contacts', 'companies', 'deals', 'tasks', 'appointments'].map((slug) => {
+}[] = Object.keys(RESOURCE_ICONS).map((slug) => {
   const label = slug[0].toUpperCase() + slug.slice(1);
   const one = label.replace(/ies$/, 'y').replace(/s$/, '').toLowerCase();
   const id = slug === 'tasks' ? '{taskKey}' : '{id}';
@@ -98,23 +120,25 @@ function MethodBadge({ method }: { method: Method }) {
 }
 
 function CodeSample({ children }: { children: string }) {
-  // TODO: replace when CodeBlock ships — see packages/playground/TODO.md
   return (
-    <pre
-      style={{
-        margin: 0,
-        padding: 'var(--space-4)',
-        background: 'var(--color-bg-sunken)',
-        border: '1px solid var(--color-border)',
-        borderRadius: 'var(--radius-md)',
-        fontFamily: 'var(--font-family-mono)',
-        fontSize: 13,
-        lineHeight: 1.6,
-        overflowX: 'auto',
-      }}
-    >
-      <code>{children}</code>
-    </pre>
+    <>
+      {/* TODO: replace when CodeBlock ships — see packages/playground/TODO.md */}
+      <pre
+        style={{
+          margin: 0,
+          padding: 'var(--space-4)',
+          background: 'var(--color-bg-sunken)',
+          border: 'var(--border-width) solid var(--color-border)',
+          borderRadius: 'var(--radius-md)',
+          fontFamily: 'var(--font-family-mono)',
+          fontSize: 'var(--font-size-code)',
+          lineHeight: 'var(--line-height-normal)',
+          overflowX: 'auto',
+        }}
+      >
+        <code>{children}</code>
+      </pre>
+    </>
   );
 }
 
@@ -147,8 +171,11 @@ function LanguageTabs() {
         ]}
         activeId={lang}
         onChange={(id) => setLang(id as keyof typeof SAMPLES)}
+        panelIdPrefix="lang"
       />
-      <CodeSample>{SAMPLES[lang]}</CodeSample>
+      <Stack role="tabpanel" id={`lang-${lang}-panel`} aria-labelledby={`lang-${lang}-tab`}>
+        <CodeSample>{SAMPLES[lang]}</CodeSample>
+      </Stack>
     </Stack>
   );
 }
@@ -227,7 +254,7 @@ function HomePage() {
             </Text>
           </Stack>
         </LinkCard>
-        <LinkCard href="/openapi-public.json" download padding="lg">
+        <LinkCard href="https://docs.eocrm.io/openapi-public.json" download padding="lg">
           <Stack gap="sm">
             <FileJson size={20} aria-hidden="true" />
             <Text weight="semibold">OpenAPI spec</Text>
@@ -365,8 +392,19 @@ function TryIt() {
   const query = new URLSearchParams({ ...(search && { search }), per_page: perPage }).toString();
   const url = `https://${workspace || 'acme'}.eocrm.io/api/v1/contacts?${query}`;
 
+  const perPageNum = Number(perPage);
+  const perPageError =
+    Number.isInteger(perPageNum) && perPageNum >= 1 && perPageNum <= 100
+      ? undefined
+      : 'Enter a whole number from 1 to 100.';
+  const workspaceError = /^[a-z0-9-]+$/.test(workspace)
+    ? undefined
+    : 'Lowercase letters, digits and hyphens only.';
+  const blocked = state === 'sending' || !apiKey || !!perPageError || !!workspaceError;
+
   // ponytail: canned response after a fake delay; the real site would fetch `url`.
   const send = () => {
+    if (blocked) return;
     setState('sending');
     window.setTimeout(() => {
       setResult(
@@ -390,7 +428,7 @@ function TryIt() {
           <Code>{url}</Code>
         </Cluster>
         <FormRow>
-          <Field label="Workspace" description="Your workspace slug.">
+          <Field label="Workspace" description="Your workspace slug." error={workspaceError}>
             <Input value={workspace} onChange={(e) => setWorkspace(e.target.value)} />
           </Field>
           <Field label="API key" description="Used only for this request; never stored." required>
@@ -405,7 +443,7 @@ function TryIt() {
           <Field label="search" optional>
             <Input value={search} onChange={(e) => setSearch(e.target.value)} />
           </Field>
-          <Field label="per_page" optional>
+          <Field label="per_page" optional error={perPageError}>
             <Input
               type="number"
               min={1}
@@ -416,7 +454,7 @@ function TryIt() {
           </Field>
         </FormRow>
         <Cluster gap="md">
-          <Button onClick={send} disabled={state === 'sending' || !apiKey}>
+          <Button onClick={send} aria-disabled={blocked || undefined}>
             {state === 'sending' ? 'Sending…' : 'Send request'}
           </Button>
           {result && state === 'done' && (
@@ -579,18 +617,26 @@ function AiAssistantsPage() {
           items={Object.entries(CLIENTS).map(([id, v]) => ({ id, label: v.label }))}
           activeId={client}
           onChange={(id) => setClient(id as keyof typeof CLIENTS)}
+          panelIdPrefix="client"
         />
-        <Stack gap="sm">
-          {c.steps.map((s, i) => (
-            <Cluster key={s} gap="sm" wrap={false} align="start">
-              <Badge color="teal" size="sm">
-                {i + 1}
-              </Badge>
-              <Text>{s}</Text>
-            </Cluster>
-          ))}
+        <Stack
+          gap="md"
+          role="tabpanel"
+          id={`client-${client}-panel`}
+          aria-labelledby={`client-${client}-tab`}
+        >
+          <Stack gap="sm">
+            {c.steps.map((s, i) => (
+              <Cluster key={s} gap="sm" wrap={false} align="start">
+                <Badge color="teal" size="sm">
+                  {i + 1}
+                </Badge>
+                <Text>{s}</Text>
+              </Cluster>
+            ))}
+          </Stack>
+          <CodeSample>{c.snippet}</CodeSample>
         </Stack>
-        <CodeSample>{c.snippet}</CodeSample>
         <Alert tone="info">
           The assistant acts as you: it sees and changes only what your role allows.
         </Alert>
@@ -614,12 +660,39 @@ function AiAssistantsPage() {
   );
 }
 
-function PlaceholderPage({ title }: { title: string }) {
+/** Endpoint pages other than List contacts: header only, body not mocked. */
+function EndpointStubPage({ resource, opSlug }: { resource?: string; opSlug?: string }) {
+  const r = RESOURCES.find((x) => x.slug === resource);
+  const op = r?.ops[OP_SLUGS.indexOf(opSlug ?? '')];
   return (
     <Page>
       <PageHeader borderBottom={false}>
-        <PageHeader.Title>{title}</PageHeader.Title>
-        <PageHeader.Subtitle>Not part of this mockup — see “List contacts”.</PageHeader.Subtitle>
+        {r && (
+          <PageHeader.Breadcrumb>
+            <Breadcrumb>
+              <Breadcrumb.Item as={RouterLink} to={`${BASE}/api`}>
+                API reference
+              </Breadcrumb.Item>
+              <Breadcrumb.Item>{r.label}</Breadcrumb.Item>
+            </Breadcrumb>
+          </PageHeader.Breadcrumb>
+        )}
+        <PageHeader.Title>{op?.summary ?? 'Page not found'}</PageHeader.Title>
+        {op && (
+          <PageHeader.Meta>
+            <Cluster gap="sm">
+              <MethodBadge method={op.method} />
+              <Code>{op.path}</Code>
+            </Cluster>
+          </PageHeader.Meta>
+        )}
+        <PageHeader.Subtitle>
+          This mockup only fills in{' '}
+          <Link as={RouterLink} to={`${BASE}/api/contacts/list`}>
+            List contacts
+          </Link>
+          ; every endpoint page follows the same layout.
+        </PageHeader.Subtitle>
       </PageHeader>
     </Page>
   );
@@ -634,6 +707,24 @@ const railItem = (to: string, label: string, icon?: ReactNode, badge?: ReactNode
 export function Docs() {
   const { pathname } = useLocation();
   const accent = useAccent();
+  const searchRef = useRef<HTMLInputElement>(null);
+  const activeGroup = pathname.split('/')[4]; // /mockups/docs/api/<resource>/…
+  const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set([activeGroup]));
+  // Navigating into a resource opens its group (e.g. from a breadcrumb or link).
+  useEffect(() => {
+    if (activeGroup)
+      setOpenGroups((prev) => (prev.has(activeGroup) ? prev : new Set(prev).add(activeGroup)));
+  }, [activeGroup]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') {
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
   const sub = pathname.slice(BASE.length).replace(/\/$/, '');
 
   let content: ReactNode;
@@ -641,7 +732,10 @@ export function Docs() {
   else if (sub === '/api') content = <ApiOverviewPage />;
   else if (sub === '/api/contacts/list') content = <ListContactsPage />;
   else if (sub === '/ai-assistants') content = <AiAssistantsPage />;
-  else content = <PlaceholderPage title={sub.split('/').pop() ?? ''} />;
+  else {
+    const [, , resource, opSlug] = sub.split('/');
+    content = <EndpointStubPage resource={resource} opSlug={opSlug} />;
+  }
 
   return (
     <AppLayout
@@ -665,13 +759,21 @@ export function Docs() {
             {RESOURCES.map((r) => (
               <Rail.Group
                 key={r.slug}
-                icon={<BookOpen size={16} />}
+                icon={RESOURCE_ICONS[r.slug]}
                 label={r.label}
-                defaultOpen={pathname.startsWith(`${BASE}/api/${r.slug}`)}
+                open={openGroups.has(r.slug)}
+                onOpenChange={(open) =>
+                  setOpenGroups((prev) => {
+                    const next = new Set(prev);
+                    if (open) next.add(r.slug);
+                    else next.delete(r.slug);
+                    return next;
+                  })
+                }
               >
                 {r.ops.map((op, i) =>
                   railItem(
-                    `${BASE}/api/${r.slug}/${['list', 'create', 'get', 'update', 'delete'][i]}`,
+                    `${BASE}/api/${r.slug}/${OP_SLUGS[i]}`,
                     op.summary,
                     undefined,
                     <MethodBadge method={op.method} />,
@@ -690,7 +792,12 @@ export function Docs() {
       topBar={
         <TopBar>
           <TopBar.Start>
-            <TopBar.Search placeholder="Search docs…" hotkey="⌘K" aria-label="Search docs" />
+            <TopBar.Search
+              ref={searchRef}
+              placeholder="Search docs…"
+              hotkey={['⌘', 'K']}
+              aria-label="Search docs"
+            />
           </TopBar.Start>
           <TopBar.End>
             <Link href="https://status.eocrm.io" variant="muted">

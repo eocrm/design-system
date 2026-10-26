@@ -50,10 +50,10 @@ A raw `<pre><code>` with inline token-based styles, no copy button, no highlight
 - `packages/playground/src/pages/mockups/Docs/Docs.tsx` (`Article` aside)
 
 **What's needed:**
-A `<nav aria-label="On this page">` list of in-page anchor links (optionally nested by heading level) that marks the section currently in view with `aria-current="location"`. Sits in a `Sticky` aside.
+A `<nav aria-label="On this page">` list of in-page anchor links (optionally nested by heading level) that marks the section currently in view with `aria-current="location"`. Sits in a `Sticky` aside. Target headings need a `scroll-margin-top` that clears a pinned `TopBar`, or anchor jumps land under the bar.
 
 **Current workaround:**
-`Sticky` + `Stack` of muted `Link`s; no active-section tracking, no landmark.
+`Sticky` + `Stack` of muted `Link`s; no active-section tracking, no landmark, and anchor jumps land under the pinned TopBar.
 
 **When this ships:** replace the aside in `Article`, then tick this checkbox.
 

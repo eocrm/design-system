@@ -3,6 +3,7 @@
 export type ComponentName =
   | 'Accordion'
   | 'Alert'
+  | 'AppLayout'
   | 'Avatar'
   | 'Badge'
   | 'Banner'
@@ -468,7 +469,9 @@ export const MOCKUPS = [
       'docs.eocrm.io — public API reference and AI-assistant (MCP) setup: docs rail, on-page TOC, endpoint pages with language-tabbed samples.',
     usesComponents: [
       'Alert',
+      'AppLayout',
       'Badge',
+      'Breadcrumb',
       'Button',
       'Card',
       'Cluster',
