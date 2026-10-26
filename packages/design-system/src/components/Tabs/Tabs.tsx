@@ -413,9 +413,9 @@ export const Tabs = forwardRef<HTMLDivElement, TabsProps>(function Tabs(
           const panelId = panelIdPrefix ? `${prefix}-${item.id}-panel` : undefined;
           const tab = (
             <button
+              key={item.id}
               // attrs first so they can't override the component-owned id/role/aria/handlers below
               {...item.attrs}
-              key={item.id}
               ref={(el) => {
                 tabRefs.current[item.id] = el;
                 // React 19 ref-callback cleanup — runs when the element unmounts

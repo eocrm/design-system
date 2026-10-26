@@ -1,0 +1,6 @@
+// RelativeDateInput.tokens.scss — component-scoped tokens for <RelativeDateInput>.
+
+:root {
+  // Fits four digits plus the Input's padding; the amount never needs more (max 1000).
+  --relative-date-input-amount-width: 5rem;
+}

@@ -270,6 +270,13 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       </Outline>
     </Row>
   ),
+  RelativeDateInput: (
+    <Row gap={6} style={{ alignItems: 'center' }}>
+      <Box w={48} h={20} style={{ borderRadius: 999 }} />
+      <Box w={28} h={20} style={{ borderRadius: 999 }} />
+      <Solid w={48} h={20} style={{ borderRadius: 999 }} />
+    </Row>
+  ),
   'Date pickers': (
     <Col gap={6}>
       <Outline
@@ -1076,6 +1083,16 @@ export const SCHEMATICS: Record<string, ReactNode> = {
         <Bar w={36} />
         <Bar w={64} />
       </Row>
+    </Col>
+  ),
+  List: (
+    <Col gap={10}>
+      {[70, 92, 56].map((w, i) => (
+        <Row key={i} gap={8}>
+          <Dot solid size={7} />
+          <Bar w={w} />
+        </Row>
+      ))}
     </Col>
   ),
   Table: (

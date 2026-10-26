@@ -1,0 +1,42 @@
+// List.tokens.scss — Component-scoped tokens for <List>. Item gap per size, marker column, bullet dot, plain-number marker and the badge number.
+:root {
+  // Row gap per `gap` size
+  --list-gap-xs: var(--space-1);
+  --list-gap-sm: var(--space-2);
+  --list-gap-md: var(--space-3);
+
+  // Marker column — hanging indent; item text wraps under itself, not the marker
+  --list-marker-gap: var(--space-2);
+  --list-marker-width: var(--size-badge);
+  --list-line-height: var(--line-height-normal);
+  --list-marker-height: calc(var(--list-line-height) * 1em);
+
+  // Marker colour — muted, a graphic/text on the page surface
+  --list-marker-fg: var(--color-fg-muted);
+
+  // Bullet dot
+  --list-bullet-size: var(--size-badge-dot);
+
+  // Plain number
+  --list-number-font-weight: var(--font-weight-medium);
+  --list-number-font-size: 1em;
+
+  // Badge number
+  --list-badge-size: var(--size-badge);
+  --list-badge-radius: var(--radius-full);
+  --list-badge-bg: var(--color-accent-bg-subtle);
+  --list-badge-fg: var(--color-accent);
+  --list-badge-font-size: var(--font-size-xs);
+  --list-badge-font-weight: var(--font-weight-semibold);
+
+  // size="heading" — marker scaled to the first line of a Title size="xl" (20px x tight line height).
+  // Derived from the same globals Title.tokens.scss aliases, not from --title-* themselves: those are only
+  // emitted with Title's lazily loaded stylesheet, so they may be undefined when a List renders without a Title.
+  --list-heading-marker-height: calc(var(--line-height-tight) * var(--font-size-xl));
+  --list-heading-marker-width: var(--space-6);
+  --list-heading-bullet-size: var(--space-2);
+  --list-heading-number-font-size: var(--font-size-lg);
+  --list-heading-badge-size: var(--space-6);
+  --list-heading-badge-radius: var(--radius-sm);
+  --list-heading-badge-font-size: var(--font-size-md);
+}

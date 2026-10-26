@@ -1,0 +1,15 @@
+@use './RelativeDateInput.tokens';
+
+// Library controls fill their parent by default (width: 100%); in this row each
+// sizes to its content instead, so the controls sit side by side and wrap.
+.row > * {
+  width: auto;
+}
+
+.row .amount {
+  max-width: var(--relative-date-input-amount-width);
+}
+
+.row .select {
+  width: auto;
+}

@@ -1,0 +1,103 @@
+@use './List.tokens';
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--list-gap-sm);
+
+  // UA reset — <ul>/<ol> ship with default margin and padding.
+  // stylelint-disable-next-line property-disallowed-list -- UA reset for list default margin
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  line-height: var(--list-line-height);
+}
+
+.list[data-size='heading'] {
+  --list-marker-height: var(--list-heading-marker-height);
+  --list-marker-width: var(--list-heading-marker-width);
+  --list-bullet-size: var(--list-heading-bullet-size);
+  --list-number-font-size: var(--list-heading-number-font-size);
+  --list-badge-size: var(--list-heading-badge-size);
+  --list-badge-radius: var(--list-heading-badge-radius);
+  --list-badge-font-size: var(--list-heading-badge-font-size);
+}
+
+.list[data-variant='number'] {
+  // Nested <ol>s start a fresh counter instance, so numbering restarts per list.
+  counter-reset: list-item-number;
+}
+
+.list[data-variant='number'] > .item {
+  counter-increment: list-item-number;
+}
+
+.list[data-gap='xs'] {
+  gap: var(--list-gap-xs);
+}
+
+.list[data-gap='md'] {
+  gap: var(--list-gap-md);
+}
+
+.item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--list-marker-gap);
+}
+
+// One line tall, so a marker centres on the FIRST text line of a multi-line item.
+.marker {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--list-marker-width);
+  height: var(--list-marker-height);
+  color: var(--list-marker-fg);
+}
+
+.bullet {
+  width: var(--list-bullet-size);
+  height: var(--list-bullet-size);
+  border-radius: 50%;
+  background: currentcolor;
+}
+
+.number::before,
+.badge::before {
+  content: counter(list-item-number);
+}
+
+.number {
+  font-size: var(--list-number-font-size);
+  font-weight: var(--list-number-font-weight);
+  font-variant-numeric: tabular-nums;
+}
+
+.badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: var(--list-badge-size);
+  height: var(--list-badge-size);
+  border-radius: var(--list-badge-radius);
+  background: var(--list-badge-bg);
+  color: var(--list-badge-fg);
+  font-size: var(--list-badge-font-size);
+  font-weight: var(--list-badge-font-weight);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+// Block, not flex: inline children (text + <code>) must flow as one line of prose.
+// min-width: 0 lets long words wrap inside the flex row instead of overflowing.
+.content {
+  min-width: 0;
+}
+
+// A nested list sits under its parent's text; padding, not margin, keeps the layout rule.
+.list[data-nested='true'] {
+  padding-block-start: var(--list-gap-xs);
+}

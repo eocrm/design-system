@@ -555,6 +555,16 @@ export type {
   CellContext,
 } from './components/DataTable';
 
+export { List } from './components/List';
+export type {
+  ListProps,
+  ListItemProps,
+  ListVariant,
+  ListGap,
+  ListSize,
+  ListNumberStyle,
+} from './components/List';
+
 export { DefinitionList } from './components/DefinitionList';
 export type {
   DefinitionListProps,
@@ -758,6 +768,21 @@ export type {
 
 export { DatePicker } from './components/DatePicker';
 export type { DatePickerProps, DatePickerSize } from './components/DatePicker';
+
+export {
+  RelativeDateInput,
+  parseRelativeDate,
+  formatRelativeDate,
+} from './components/RelativeDateInput';
+export type {
+  RelativeDateInputProps,
+  RelativeDatePreset,
+  RelativeDateValue,
+  RelativeDateOptions,
+  RelativePeriod,
+  RelativeScope,
+  RelativeUnit,
+} from './components/RelativeDateInput';
 
 export { DateStrip } from './components/DateStrip';
 export type { DateStripProps, DateStripDay } from './components/DateStrip';

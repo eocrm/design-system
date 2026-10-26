@@ -92,6 +92,7 @@
       "OptionsPicker",
       "PasswordInput",
       "Rail",
+      "RelativeDateInput",
       "RichText",
       "RichTextEditor",
       "SocialButton",
@@ -178,6 +179,7 @@
       "ConfirmationPopover",
       "DateStrip",
       "OptionsPicker",
+      "RelativeDateInput",
       "RichTextEditor",
       "Tour"
     ]
@@ -286,7 +288,8 @@
       "TimeField"
     ],
     "composedBy": [
-      "DateRangePicker"
+      "DateRangePicker",
+      "RelativeDateInput"
     ]
   },
   "DateRangePicker": {
@@ -518,6 +521,7 @@
       "MoneyInput",
       "OptionsPicker",
       "PhoneInput",
+      "RelativeDateInput",
       "RichTextEditor"
     ]
   },
@@ -570,6 +574,12 @@
       "Button",
       "DropdownMenu"
     ],
+    "composedBy": []
+  },
+  "List": {
+    "tier": "primitive",
+    "cluster": "Display",
+    "composes": [],
     "composedBy": []
   },
   "LiveRegion": {
@@ -756,6 +766,21 @@
     ],
     "composedBy": []
   },
+  "RelativeDateInput": {
+    "tier": "composition",
+    "cluster": "Forms",
+    "composes": [
+      "Button",
+      "Cluster",
+      "DatePicker",
+      "Input",
+      "Select",
+      "Stack",
+      "Switch",
+      "Text"
+    ],
+    "composedBy": []
+  },
   "RichText": {
     "tier": "composition",
     "cluster": "Display",
@@ -805,7 +830,8 @@
     "composes": [],
     "composedBy": [
       "CurrencySelect",
-      "PhoneInput"
+      "PhoneInput",
+      "RelativeDateInput"
     ]
   },
   "SettingRow": {
@@ -893,6 +919,7 @@
       "ColorPicker",
       "ConfirmationPopover",
       "Page",
+      "RelativeDateInput",
       "RichTextEditor",
       "Tour"
     ]
@@ -928,7 +955,9 @@
     "tier": "primitive",
     "cluster": "Forms",
     "composes": [],
-    "composedBy": []
+    "composedBy": [
+      "RelativeDateInput"
+    ]
   },
   "Table": {
     "tier": "primitive",
@@ -967,6 +996,7 @@
       "HighlightedText",
       "OptionsPicker",
       "PersonDisplay",
+      "RelativeDateInput",
       "RichTextEditor",
       "SettingRow",
       "SlotGrid",

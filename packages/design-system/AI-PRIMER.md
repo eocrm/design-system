@@ -187,6 +187,7 @@ Each component's contract is its `docs/components/<Name>.md`; the props table th
 - [`ImageCrop`](docs/components/ImageCrop.md) — controlled image cropper
 - [`Card`](docs/components/Card.md) — bordered container
 - [`DefinitionList`](docs/components/DefinitionList.md) — semantic key/value pairs (dl / dt / dd)
+- [`List`](docs/components/List.md) — bulleted / numbered prose lists (ul / ol), optional badge step numbers
 - [`Stack`](docs/components/Stack.md) — vertical layout
 - [`Page`](docs/components/Page.md) — page-root layout primitive
 - [`Cluster`](docs/components/Cluster.md) — horizontal layout that wraps
@@ -263,6 +264,7 @@ Each component's contract is its `docs/components/<Name>.md`; the props table th
 - [`Calendar`](docs/components/Calendar.md) — month / week / day / agenda views
 - [`DatePicker`](docs/components/DatePicker.md) — single-date input + popover
 - [`DateRangePicker`](docs/components/DateRangePicker.md) — date-range input + two-month popover
+- [`RelativeDateInput`](docs/components/RelativeDateInput.md) — editor for a relative date / date-range expression string (`today+7d`, `last:30d`)
 - [`InlineDatePicker`](docs/components/InlineDatePicker.md) — single-date calendar in flow
 - [`InlineDateRangePicker`](docs/components/InlineDateRangePicker.md) — date-range calendar in flow
 - [`DateStrip`](docs/components/DateStrip.md) — week of selectable day tiles

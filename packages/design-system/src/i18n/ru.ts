@@ -607,4 +607,55 @@ export const ru: Messages = {
     colorStone: 'Каменный',
     colorCharcoal: 'Угольный',
   },
+  relativeDateInput: {
+    today: 'Сегодня',
+    now: 'Сейчас',
+    boundary: ({ edge, scope, period }) => {
+      // Genitive: «начало этой недели», «конец следующего квартала».
+      const feminine = period === 'week';
+      const scopes = feminine
+        ? { this: 'этой', last: 'прошлой', next: 'следующей' }
+        : { this: 'этого', last: 'прошлого', next: 'следующего' };
+      const periods = { week: 'недели', month: 'месяца', quarter: 'квартала', year: 'года' };
+      return `${edge === 'start' ? 'Начало' : 'Конец'} ${scopes[scope]} ${periods[period]}`;
+    },
+    units: ({ unit, n }) => {
+      const forms = {
+        d: ['день', 'дня', 'дней'],
+        w: ['неделя', 'недели', 'недель'],
+        mo: ['месяц', 'месяца', 'месяцев'],
+        y: ['год', 'года', 'лет'],
+        h: ['час', 'часа', 'часов'],
+        min: ['минута', 'минуты', 'минут'],
+      } as const;
+      return ruPlural(n, forms[unit]);
+    },
+    calendarPeriod: ({ scope, period }) => {
+      // «Текущая неделя», «Прошлый квартал»: the adjective agrees with the period's gender.
+      const scopes =
+        period === 'week'
+          ? { this: 'Текущая', last: 'Прошлая', next: 'Следующая' }
+          : { this: 'Текущий', last: 'Прошлый', next: 'Следующий' };
+      const periods = { week: 'неделя', month: 'месяц', quarter: 'квартал', year: 'год' };
+      return `${scopes[scope]} ${periods[period]}`;
+    },
+    periodToDate: ({ period }) =>
+      `С начала ${{ week: 'недели', month: 'месяца', quarter: 'квартала', year: 'года' }[period]}`,
+    kinds: {
+      past: 'Последние',
+      coming: 'Ближайшие',
+      calendar: 'Календарный период',
+      toDate: 'С начала периода',
+    },
+    exactDate: 'Точная дата',
+    date: 'Дата',
+    sign: 'Направление',
+    amount: 'Количество',
+    unit: 'Единица',
+    anchor: 'Точка отсчёта',
+    kind: 'Тип периода',
+    period: 'Период',
+    errorRange: ({ min, max }) => `Введите целое число от ${min} до ${max}`,
+    unrecognised: ({ value }) => `Нераспознанное значение: ${value}`,
+  },
 };

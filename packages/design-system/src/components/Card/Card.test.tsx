@@ -276,6 +276,48 @@ describe('compound API', () => {
     }
   });
 
+  describe('Card.Header surface + controls', () => {
+    it('surface="subtle" sets data-surface and the subtle class; default has neither', () => {
+      const { container, rerender } = render(<Card.Header>T</Card.Header>);
+      const header = container.firstElementChild as HTMLElement;
+      expect(header).not.toHaveAttribute('data-surface');
+      const baseClass = header.className;
+      rerender(<Card.Header surface="subtle">T</Card.Header>);
+      expect(header).toHaveAttribute('data-surface', 'subtle');
+      expect(header.className).not.toBe(baseClass);
+    });
+
+    it('controls sit beside the heading, outside it', () => {
+      render(<Card.Header controls={<button>Match all</button>}>Group</Card.Header>);
+      const heading = screen.getByRole('heading', { name: 'Group' });
+      const btn = screen.getByRole('button', { name: 'Match all' });
+      expect(heading.contains(btn)).toBe(false);
+      expect(btn.closest('span')?.parentElement).toBe(heading.parentElement);
+    });
+
+    it('DOM order is heading, controls, meta, action', () => {
+      const { container } = render(
+        <Card.Header controls={<i data-testid="c" />} meta="M" action={<b data-testid="a" />}>
+          T
+        </Card.Header>,
+      );
+      // Items sit in one inner grid (the header is its size container).
+      const kids = Array.from(container.firstElementChild!.firstElementChild!.children);
+      expect(kids.map((k) => k.tagName)).toEqual(['H3', 'SPAN', 'SPAN', 'SPAN']);
+      expect(kids[1]).toContainElement(screen.getByTestId('c'));
+      expect(kids[2]).toHaveTextContent('M');
+      expect(kids[3]).toContainElement(screen.getByTestId('a'));
+    });
+
+    it('without action, controls still get a fourth (placeholder) grid item', () => {
+      const { container } = render(<Card.Header controls={<i />}>T</Card.Header>);
+      const kids = container.firstElementChild!.firstElementChild!.children;
+      expect(kids).toHaveLength(4);
+      expect(kids[3]).toHaveAttribute('aria-hidden', 'true');
+      expect(kids[3]).toBeEmptyDOMElement();
+    });
+  });
+
   it('Card.Header renders <div> with default <h3> title', () => {
     const { container } = render(<Card.Header>Title</Card.Header>);
     expect(container.querySelector('h3')).toHaveTextContent('Title');

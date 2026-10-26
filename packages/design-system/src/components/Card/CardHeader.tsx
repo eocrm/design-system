@@ -13,10 +13,28 @@ export interface CardHeaderProps extends HTMLAttributes<HTMLDivElement> {
    */
   headerLevel?: CardHeaderLevel;
   /**
+   * `'subtle'` paints the header on a tinted (sunken) surface, for a nested editable
+   * sub-section inside a `Card.Body` (e.g. a condition group). Defaults to
+   * `'default'`.
+   */
+  surface?: 'default' | 'subtle';
+  /**
+   * Optional interactive slot right after the title (e.g. a `ButtonGroup`
+   * mode switch). Rendered outside the heading, so it is not part of the
+   * heading's name. Order: title, controls, meta, action. Controls never
+   * shrink: on a wide header the title ellipsizes down to a short minimum
+   * width; on a narrow header (under ~360px of content) the controls wrap onto
+   * a second row under the title, which keeps the first row with meta and
+   * action. Keep titles short, or pass a `title` attribute for long ones.
+   */
+  controls?: ReactNode;
+  /**
    * Optional right-aligned slot — typically a `<Link>` or `<Button>` that
    * lets the user navigate to a full list or take a section-level action.
    * Rendered inside a `<span>` that never shrinks or wraps (flex-shrink: 0;
-   * with `meta`, min-width: max-content).
+   * with `meta` or `controls`, min-width: max-content). Beside `controls` it is
+   * the removal/section action of a nested sub-group (e.g. a ghost delete
+   * button), right-aligned after any meta.
    */
   action?: ReactNode;
   /**
@@ -27,8 +45,8 @@ export interface CardHeaderProps extends HTMLAttributes<HTMLDivElement> {
    * `action` keeps its width. In a `fill` Card (which needs a parent of
    * definite width) it is also visually hidden, still read by screen
    * readers, once only a sliver would show. Not part
-   * of the heading's name. Put controls in `action`, never here. `false`
-   * and `''` count as no meta.
+   * of the heading's name. Put controls in `controls` or `action`, never
+   * here. `false` and `''` count as no meta.
    */
   meta?: ReactNode;
   /**
@@ -43,23 +61,53 @@ export interface CardHeaderProps extends HTMLAttributes<HTMLDivElement> {
  * @see docs/components/Card.md
  */
 export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(function CardHeader(
-  { headerLevel = 'h3', action, meta, children, className, ...rest },
+  { headerLevel = 'h3', surface = 'default', controls, action, meta, children, className, ...rest },
   ref,
 ) {
   // headerLevel is a string union of valid HTML heading tag names; cast to
   // the union (not a single literal) so the JSX dispatch type is honest.
   const Heading = headerLevel as 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
   const hasMeta = meta != null && meta !== false && meta !== '';
+  const hasControls = controls != null && controls !== false && controls !== '';
+  const title = <Heading className={styles.title}>{children}</Heading>;
+  const metaNode = hasMeta && (
+    <span className={styles.meta}>
+      <span className={styles.metaText}>{meta}</span>
+    </span>
+  );
+  const actionNode = action != null ? <span className={styles.action}>{action}</span> : null;
   // {...rest} last so consumer overrides win (Pattern A).
   return (
-    <div ref={ref} className={clsx(styles.header, hasMeta && styles.withMeta, className)} {...rest}>
-      <Heading className={styles.title}>{children}</Heading>
-      {hasMeta && (
-        <span className={styles.meta}>
-          <span className={styles.metaText}>{meta}</span>
-        </span>
+    <div
+      ref={ref}
+      className={clsx(
+        styles.header,
+        hasMeta && styles.withMeta,
+        hasControls && styles.withControls,
+        surface === 'subtle' && styles.subtle,
+        className,
       )}
-      {action != null && <span className={styles.action}>{action}</span>}
+      data-surface={surface === 'subtle' ? 'subtle' : undefined}
+      {...rest}
+    >
+      {hasControls ? (
+        // The header is the size container; this inner grid is what its
+        // container query re-lays out (a container can't restyle itself).
+        <div className={styles.controlsGrid}>
+          {title}
+          <span className={styles.controls}>{controls}</span>
+          {!hasMeta && <span aria-hidden="true" />}
+          {metaNode}
+          {/* Placeholder keeps the column count fixed when there is no action. */}
+          {actionNode ?? <span aria-hidden="true" />}
+        </div>
+      ) : (
+        <>
+          {title}
+          {metaNode}
+          {actionNode}
+        </>
+      )}
     </div>
   );
 });

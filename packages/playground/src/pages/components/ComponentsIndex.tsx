@@ -60,6 +60,13 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['Date pickers'],
   },
   {
+    to: '/components/relative-date-input',
+    name: 'RelativeDateInput',
+    description:
+      'Editor for a relative date or range expression (today+7d, last:30d). Point and range modes, presets.',
+    preview: SCHEMATICS['RelativeDateInput'],
+  },
+  {
     to: '/components/empty-state',
     name: 'EmptyState',
     description:
@@ -288,6 +295,12 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     name: 'DefinitionList',
     description: 'Semantic key/value pairs with optional icon on the value.',
     preview: SCHEMATICS['DefinitionList'],
+  },
+  {
+    to: '/components/list',
+    name: 'List',
+    description: 'Bulleted and numbered prose lists with first-line markers and badge steps.',
+    preview: SCHEMATICS['List'],
   },
   {
     to: '/components/stage-path',

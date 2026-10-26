@@ -303,9 +303,9 @@ export const PillMenu = forwardRef<HTMLElement, PillMenuProps>(function PillMenu
       <DropdownMenu.Content className={styles.menu}>
         {options.map((option) => (
           <DropdownMenu.Item
+            key={option.id}
             // attrs first so they cannot override the row handlers or data-tone
             {...option.attrs}
-            key={option.id}
             onSelect={() => onSelect?.(option.id)}
             className={styles.option}
             style={statusColorStyle(option)}

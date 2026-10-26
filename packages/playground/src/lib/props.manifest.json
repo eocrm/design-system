@@ -3978,6 +3978,45 @@
         }
       ]
     },
+    "List": {
+      "props": [
+        {
+          "name": "variant",
+          "type": "ListVariant",
+          "required": false,
+          "default": "",
+          "description": "Marker style. See `ListVariant`. Default `'bullet'`."
+        },
+        {
+          "name": "gap",
+          "type": "ListGap",
+          "required": false,
+          "default": "",
+          "description": "Space between items. See `ListGap`. Default `'sm'`."
+        },
+        {
+          "name": "size",
+          "type": "ListSize",
+          "required": false,
+          "default": "",
+          "description": "Marker scale; use `'heading'` when each item starts with a `Title size=\"xl\"`. See `ListSize`. Default `'body'`."
+        },
+        {
+          "name": "numberStyle",
+          "type": "ListNumberStyle",
+          "required": false,
+          "default": "",
+          "description": "Number look; only applies to `variant=\"number\"`. See `ListNumberStyle`. Default `'plain'`."
+        },
+        {
+          "name": "children",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "`List.Item` elements. A nested `List` goes inside a `List.Item`."
+        }
+      ]
+    },
     "LiveRegion": {
       "props": [
         {
@@ -5137,6 +5176,66 @@
           "required": true,
           "default": "",
           "description": "Rail children — typically a sequence of `<Rail.Header>`, `<Rail.Section>`,\n`<Rail.Group>`, `<Rail.Spacer>`, `<Rail.Footer>`. Order matters: a leading\n`<Rail.Header>` is pinned above the scroll box, and the first\n`<Rail.Footer>` is the split point — everything before it goes in the\nscroll box, the Footer and anything after it stay outside and pinned to\nthe bottom. A `<Rail.Spacer>` is not needed for that; use it to push a\ntrailing *section* (settings, help) down inside the scrolling area."
+        }
+      ]
+    },
+    "RelativeDateInput": {
+      "props": [
+        {
+          "name": "mode",
+          "type": "\"point\" | \"range\"",
+          "required": true,
+          "default": "",
+          "description": "What the expression describes.\n- `'point'` — one date: an anchor (today, now, start/end of a period) plus a signed offset, or an exact date.\n- `'range'` — a date range: last/next N units, a whole this/last/next period, or a period to date."
+        },
+        {
+          "name": "allowNow",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Datetime fields: offers the Now anchor with hour/minute offsets, and a minute-granular exact date (UTC `YYYY-MM-DDTHH:mm:ssZ`). Default `false`."
+        },
+        {
+          "name": "value",
+          "type": "string | null",
+          "required": true,
+          "default": "",
+          "description": "The controlled expression (see the grammar in the docs), or `null` for none. `null` shows the defaults (`today` / `this:month`) without emitting them. A value that doesn't parse shows the defaults plus an \"Unrecognised value\" note."
+        },
+        {
+          "name": "onChange",
+          "type": "(expr: string | null) => void",
+          "required": true,
+          "default": "",
+          "description": "Fires with the next canonical expression after a valid edit, and only when it differs from `value`. Invalid drafts (an out-of-range amount, an exact date not yet picked) never fire it."
+        },
+        {
+          "name": "presets",
+          "type": "readonly RelativeDatePreset[]",
+          "required": false,
+          "default": "",
+          "description": "Quick-pick toggle buttons rendered above the controls. The one whose `value` equals the canonical form of `value` is pressed (`last:07d` presses `last:7d`)."
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Disables every control, presets included. Default `false`."
+        },
+        {
+          "name": "invalid",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Error chrome on the controls (`aria-invalid`), e.g. from `<Field error>`. Default `false`. The Exact-date Switch is never marked invalid."
+        },
+        {
+          "name": "required",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Consumed for `<Field asGroup required>` composition, so Field can show its required\nmarker. Adds no ARIA: `role=\"group\"` does not support `aria-required` (ARIA 1.2), and\nthe controls always show a value. Default `false`."
         }
       ]
     },
@@ -7166,6 +7265,10 @@
     "ImageCropAspectRatio": "number",
     "CropArea": "{ x: number; y: number; width: number; height: number }",
     "DataTableInstance": "DataTableInstance<T>",
+    "ListVariant": "\"number\" | \"bullet\"",
+    "ListGap": "\"sm\" | \"md\" | \"xs\"",
+    "ListSize": "\"body\" | \"heading\"",
+    "ListNumberStyle": "\"plain\" | \"badge\"",
     "DefinitionListLayout": "\"horizontal\" | \"stacked\"",
     "DefinitionListSpacing": "\"sm\" | \"md\" | \"lg\"",
     "LinkVariant": "\"default\" | \"muted\" | \"subtle\"",
@@ -7206,6 +7309,7 @@
     "CalendarView": "\"month\" | \"week\" | \"day\" | \"agenda\"",
     "RenderEvent": "(event: CalendarEvent, ctx: RenderEventContext) => ReactNode",
     "DatePickerSize": "\"sm\" | \"md\" | \"lg\"",
+    "RelativeDatePreset": "{ label: string; value: string }",
     "DateStripDay": "{ date: string; free: number }",
     "SlotGridGroup": "{ label: string; slots: SlotGridSlot[] }",
     "DateRangePickerSize": "\"sm\" | \"md\" | \"lg\"",

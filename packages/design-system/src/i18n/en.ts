@@ -600,4 +600,33 @@ export const en: Messages = {
     colorStone: 'Stone',
     colorCharcoal: 'Charcoal',
   },
+  relativeDateInput: {
+    today: 'Today',
+    now: 'Now',
+    boundary: ({ edge, scope, period }) =>
+      `${edge === 'start' ? 'Start' : 'End'} of ${scope} ${period}`,
+    units: ({ unit, n }) => {
+      const words = { d: 'day', w: 'week', mo: 'month', y: 'year', h: 'hour', min: 'minute' };
+      return n === 1 ? words[unit] : `${words[unit]}s`;
+    },
+    calendarPeriod: ({ scope, period }) =>
+      `${{ this: 'This', last: 'Last', next: 'Next' }[scope]} ${period}`,
+    periodToDate: ({ period }) => `${period[0].toUpperCase()}${period.slice(1)} to date`,
+    kinds: {
+      past: 'Past',
+      coming: 'Coming',
+      calendar: 'Calendar period',
+      toDate: 'Period to date',
+    },
+    exactDate: 'Exact date',
+    date: 'Date',
+    sign: 'Direction',
+    amount: 'Amount',
+    unit: 'Unit',
+    anchor: 'Anchor',
+    kind: 'Range type',
+    period: 'Period',
+    errorRange: ({ min, max }) => `Enter a whole number from ${min} to ${max}`,
+    unrecognised: ({ value }) => `Unrecognised value: ${value}`,
+  },
 };

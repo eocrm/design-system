@@ -563,6 +563,26 @@ describe('TableOfContents link text clears AA on the page background', () => {
 });
 
 /**
+ * List markers sit on the page background. The bullet and plain number are
+ * decorative, but drawn muted they stay a 3:1 graphic; the badge number is
+ * text (4.5:1) on its subtle accent surface.
+ */
+describe('List markers clear their contrast bars', () => {
+  const file = readFileSync(resolve(__dirname, '../components/List/List.tokens.scss'), 'utf8');
+  it.each(THEMED_ACCENTS)('%s, %s accent', (_theme, _accent, source) => {
+    const layered = `${file}\n${source}`;
+    expect(
+      contrast(tokenValue('--list-badge-fg', layered), tokenValue('--list-badge-bg', layered)),
+      '--list-badge-fg on --list-badge-bg',
+    ).toBeGreaterThanOrEqual(4.5);
+    expect(
+      contrast(tokenValue('--list-marker-fg', layered), tokenValue('--color-bg', layered)),
+      '--list-marker-fg on --color-bg',
+    ).toBeGreaterThanOrEqual(3);
+  });
+});
+
+/**
  * Table.CellLink hover paints `--table-cell-link-bg-hover`
  * (`color-mix(--color-bg-overlay N%, transparent)`) over whatever the cell
  * paints. That overlay DARKENS the surface, which helps a light fg in dark but
@@ -2418,5 +2438,31 @@ describe('a component hover is a visible step from what it replaces', () => {
     expect(measuredNames, 'a named anchor stopped being measured').toEqual(
       expect.arrayContaining(ANCHORS),
     );
+  });
+});
+
+/** Card.Header surface="subtle": title and meta text on the tinted header surface. */
+describe('Card subtle header text clears AA on its surface', () => {
+  const read = (name: string) =>
+    readFileSync(resolve(__dirname, `../components/${name}/${name}.tokens.scss`), 'utf8');
+  const file = ['Card', 'ButtonGroup', 'Button'].map(read).join('\n');
+  it.each(THEMED_ACCENTS)('%s, %s accent', (_theme, _accent, source) => {
+    const layered = `${file}\n${source}`;
+    // The documented condition group puts a segmented ButtonGroup and a ghost
+    // delete Button on this header. When it shared --color-bg-muted with both,
+    // the track vanished and the hover did nothing. Inequality, not the 0.04
+    // hover floor above: sunken vs muted measures 0.027 deltaE in light (0.083
+    // dark) — a visible step on screen, but under that floor, and no existing
+    // surface clears it in both themes without borrowing a hover token.
+    const header = tokenValue('--card-header-bg-subtle', layered);
+    for (const other of ['--button-group-segmented-bg', '--button-bg-ghost-hover']) {
+      expect(header, `--card-header-bg-subtle vs ${other}`).not.toBe(tokenValue(other, layered));
+    }
+    for (const fg of ['--card-title-fg', '--card-meta-fg']) {
+      expect(
+        contrast(tokenValue(fg, layered), tokenValue('--card-header-bg-subtle', layered)),
+        `${fg} on --card-header-bg-subtle`,
+      ).toBeGreaterThanOrEqual(4.5);
+    }
   });
 });

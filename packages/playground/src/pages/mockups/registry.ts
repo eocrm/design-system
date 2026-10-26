@@ -27,6 +27,7 @@ export type ComponentName =
   | 'DashboardCanvas'
   | 'DataTable'
   | 'DatePicker'
+  | 'RelativeDateInput'
   | 'DateRangePicker'
   | 'DateStrip'
   | 'DefinitionList'
@@ -62,6 +63,7 @@ export type ComponentName =
   | 'LiquidEditor'
   | 'Link'
   | 'LinkCard'
+  | 'List'
   | 'LiveRegion'
   | 'Logo'
   | 'Modal'
@@ -485,6 +487,7 @@ export const MOCKUPS = [
       'Input',
       'Link',
       'LinkCard',
+      'List',
       'LiveRegion',
       'Logo',
       'Page',
