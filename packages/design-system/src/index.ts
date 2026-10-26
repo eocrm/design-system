@@ -619,6 +619,14 @@ export type {
 
 export { Code } from './components/Code';
 export type { CodeProps, CodeTone } from './components/Code';
+export { CodeBlock } from './components/CodeBlock';
+export type {
+  CodeBlockProps,
+  CodeBlockSample,
+  CodeBlockHighlightLines,
+  CodeBlockMaxHeight,
+  CodeBlockLanguage,
+} from './components/CodeBlock';
 
 export { HighlightedText } from './components/HighlightedText';
 export type { HighlightedTextProps, HighlightRange } from './components/HighlightedText';

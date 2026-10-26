@@ -18,7 +18,7 @@
 
 <!-- props:end -->
 
-- **Inline only.** Block code with syntax highlighting belongs in the playground's `CodeBlock` (Prism), not the library.
+- **Inline only.** Multi-line or syntax-highlighted code belongs in [`CodeBlock`](CodeBlock.md).
 
 - The chip background is intentionally `--color-bg-muted` so it subordinates to body text.
 
@@ -30,6 +30,6 @@
 
 #### Anti-patterns
 
-- ❌ `<Code>multi-line\nblock</Code>`: Code is inline only; the chip background doesn't extend across newlines. Use the playground's `CodeBlock`, or `<pre><Code>...</Code></pre>` for a static block inside the library.
+- ❌ `<Code>multi-line\nblock</Code>`: Code is inline only; the chip background doesn't extend across newlines. Use `CodeBlock`, or `<pre><Code>...</Code></pre>` for a static block inside the library.
 - ❌ `<Code style={{ background: '#xxx' }}>`: a different background is a token-vocabulary conversation.
 - ❌ Wrapping a `<Button>` or `<Link>` in `<Code>` to style it code-like. Code is for content semantics (it IS code), not visual styling.
