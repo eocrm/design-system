@@ -99,3 +99,40 @@ A long docs article (an API endpoint page, the API introduction, the MCP setup p
 - `docs/components/TableOfContents.md` plus an AI-PRIMER line
 - A `CLUSTERS` entry in both manifest maps (cluster: Navigation), then `npm run build:manifest`
 - The docs mockup's `Article` aside replaced by `TableOfContents` (driven by `Split onCollapsedChange`), and the TODO entry ticked
+
+---
+
+## Part 3 — `Input` suggestions (issue #705)
+
+### Intent
+
+Some fields need free text plus suggestions. The docs site's Try it **Workspace** field is prefilled with the member's last-used workspace slug and suggests their other slugs, while any slug can still be typed. `Select` only picks from a set, `TopBar.Search` is search-specific, and `Input` has no suggestions. The docs app currently shims it with a native `<datalist>`.
+
+### Decided by dpws
+
+- **A DS-styled suggestion list, not a native `<datalist>`.** It must look and behave the same in every browser, and it must not depend on browser autocomplete, which `Input` turns off by default with `autoComplete="off"`.
+- The API from the issue: `<Input suggestions={string[]} />`. The value stays free-form.
+
+### Behaviour (Claude's calls — check these)
+
+- With a non-empty `suggestions`, the input becomes an ARIA 1.2 combobox: `role="combobox"`, `aria-autocomplete="list"`, `aria-expanded`, `aria-controls`, and `aria-activedescendant` while an option is highlighted. The popup is a `role="listbox"` of `role="option"`s, named `t('input.suggestions')` (en "Suggestions", ru "Подсказки"). Without `suggestions`, `Input` is unchanged.
+- **Opening:** on focus, on click and on ↓. Until the user edits the text after opening, it shows **all** suggestions, so a prefilled value doesn't hide the others (the workspace case). Once the user types, it filters by case-insensitive substring, in the given order.
+- **Keyboard:** ↓/↑ move the highlight with wrap-around; nothing is highlighted at first. Enter on a highlighted option fills the value and closes. Enter with nothing highlighted does what Enter normally does (e.g. submits the form). Esc closes; Esc while closed does nothing special. Tab closes without selecting.
+- **Mouse:** clicking an option fills the value and closes. Blur closes.
+- **No matches, or an empty list:** the popup stays closed. There's no "no results" row; it's free text, so nothing is wrong.
+- **Selection fires the consumer's `onChange`** exactly as typing would, in both controlled and uncontrolled use.
+- **Positioning:** uses the library's existing `@floating-ui/react-dom` (dependency exception (a)). Matches the input's width, flips when there's no space, and caps its height with internal scroll.
+- **SSR-safe:** the popup renders only when open, client-side.
+- **Styling:** tokens only, matching `Select`'s option list. Reuse `Select` / `TopBar.Search` listbox pieces where they fit without contorting them; that's the builder's call.
+
+### Non-goals
+
+- Async or loaded suggestions, grouping, rich option content, and highlighting matched text. `Select`/`TopBar.Search` cover the rich cases.
+- Replacing `Select` `creatable`.
+
+### Completion
+
+- Tests: combobox ARIA, open/filter rules, keyboard, mouse, `onChange` in controlled and uncontrolled use, and no popup without suggestions.
+- Docs: `Input.md` gains a suggestions section, with "When NOT to use" pointing to `Select` for fixed sets.
+- Playground: the Input demo gains a suggestions example. The docs mockup's Try it **Workspace** field uses it, with suggestions like `acme`, `acme-staging`, `northwind`.
+- Close issue #705 after release with the published version.

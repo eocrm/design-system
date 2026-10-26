@@ -204,6 +204,51 @@ export const TableOfContents: ForwardRefExoticComponent<
 
 ---
 
+### Task 6: `Input` suggestions (issue #705)
+
+**Files:**
+
+- Modify: `packages/design-system/src/components/Input/Input.tsx` (+ `Input.module.scss`, `Input.tokens.scss` if needed); a new internal `packages/design-system/src/components/Input/Suggestions.tsx` for the popup + listbox if it keeps `Input.tsx` focused
+- Test: `packages/design-system/src/components/Input/Input.test.tsx` (or `Suggestions.test.tsx`)
+- Modify: i18n `messages.ts`/`en.ts`/`ru.ts`: `input.suggestions` = 'Suggestions' / 'Подсказки'
+- Modify: `packages/design-system/docs/components/Input.md` (a suggestions section, plus "When NOT to use: fixed set → `Select`"), then `npm run build:docs`
+- Modify: the playground Input demo (`packages/playground/src/pages/components/InputDemo.tsx`): add a suggestions example
+- Modify: `packages/playground/src/pages/mockups/Docs/Docs.tsx`: Try it **Workspace** `Input` gets `suggestions={['acme', 'acme-staging', 'northwind']}`
+
+**Interfaces:**
+
+- Produces: `InputProps.suggestions?: readonly string[]` (JSDoc'd). There are no other new public exports.
+
+**Behaviour:** exactly spec Part 3. In short:
+
+- **ARIA:** the input becomes an ARIA 1.2 combobox, and the popup is a `role="listbox"` of options named `t('input.suggestions')`, positioned with `@floating-ui/react-dom` (`useFloating` + `flip` + `size` to match the input's width and cap the height).
+- **Opening:** on focus, click or ↓. It shows all suggestions until the user edits the text after opening, then filters by case-insensitive substring.
+- **Keyboard:** ↓/↑ wrap around, with nothing highlighted at first. Enter on a highlighted option selects it and closes. Enter with nothing highlighted acts natively. Esc closes. Tab closes without selecting.
+- **Mouse and blur:** clicking an option selects it (`onMouseDown` `preventDefault`, so focus stays). Blur closes.
+- **No matches:** the popup stays closed.
+- **`onChange`:** selection fires the consumer's `onChange` like typing does. Set the value through the native value setter, then dispatch a bubbling `input` event, so both controlled and uncontrolled use work.
+- **Without `suggestions`** (or with an empty array): `Input` renders exactly as before, with no combobox role.
+
+- [ ] **Step 1: Failing tests:**
+  - no `suggestions` → no `combobox` role (the existing tests stay green)
+  - `suggestions` → `role="combobox"` with `aria-expanded="false"`; on focus it is `true` and the listbox shows all 3 options, even when the value is `'acme'`
+  - typing `'north'` → only `northwind`; typing `'zzz'` → listbox closed and `aria-expanded="false"`
+  - ↓ sets `aria-activedescendant` to the first option; ↑ from the first wraps to the last; Enter → the value is the option, `onChange` is called with that value, and it closes
+  - Enter with no highlight inside a `<form onSubmit>` → submit fires
+  - Esc closes; Tab closes and the value is unchanged
+  - clicking an option → the value is set, focus stays on the input, and it closes
+  - uncontrolled (`defaultValue`) and controlled (`value` + `onChange` with state) both update
+  - ru locale → the listbox is named "Подсказки"
+- [ ] **Step 2: Run, expect FAIL**: `npx vitest run src/components/Input`
+- [ ] **Step 3: Implement**, following the library hard rules (JSDoc, tokens only, `:focus-visible`, no layout props except the popup's own floating positioning, i18n).
+- [ ] **Step 4: Run, expect PASS.** Then `npm run build:docs`, and `make test` / `make build` / `make lint` from the root, each exiting 0.
+- [ ] **Step 5: Visual check:**
+  - Run the playground on port 8090+ in the background, and stop it afterwards.
+  - The Try it Workspace field shows all three on focus, filters as you type, keyboard selection works, and it looks right in light and dark.
+- [ ] **Step 6: Commit**: `feat(input): suggestions prop (#705)`
+
+---
+
 ## After the tasks
 
 Pause with a live playground link for dpws to check, then run `pre-push-review` (variant A + B) on one PR.
