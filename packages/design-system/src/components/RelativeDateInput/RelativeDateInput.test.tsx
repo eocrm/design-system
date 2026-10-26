@@ -469,6 +469,16 @@ describe('RelativeDateInput — misc', () => {
     expect(group.className.split(' ').length).toBeGreaterThan(1);
   });
 
+  it('inside Field asGroup, an unrecognised value describes the controls', () => {
+    render(
+      <Field asGroup label="Due date">
+        <RelativeDateInput mode="point" value="garbage" onChange={() => {}} />
+      </Field>,
+    );
+    expect(combo('Anchor')).toHaveAccessibleDescription('Unrecognised value: garbage');
+    expect(amount()).toHaveAccessibleDescription('Unrecognised value: garbage');
+  });
+
   it('unnamed, the root has no group role', () => {
     const ref = createRef<HTMLDivElement>();
     render(<RelativeDateInput ref={ref} mode="point" value="today" onChange={() => {}} />);

@@ -35,7 +35,7 @@ const [period, setPeriod] = useState<string | null>('last:7d');
 />;
 
 // Inside a Field with an error. asGroup: Field is the group, its label names it (no
-// htmlFor onto a div) and the error describes it; Field injects `invalid` and `required`.
+// htmlFor onto a div) and the error describes it; Field injects `required`, and `invalid` only when it has an `error`.
 // Pass no aria-label here: unnamed, the control renders no group role of its own.
 <Field asGroup required label="Due date" error="Pick a due date">
   <RelativeDateInput mode="point" value={due} onChange={setDue} />
@@ -70,7 +70,7 @@ const [period, setPeriod] = useState<string | null>('last:7d');
 - **An unrecognised incoming `value`** (one that does not parse in this `mode` / `allowNow`) shows the defaults plus an "Unrecognised value: …" note and emits nothing until the user edits.
 - **Presets** are toggle buttons (`aria-pressed`); choosing one emits its `value`. Their `label` is yours (translate it yourself). Clicking a pressed preset keeps it selected (radio-like; it never un-presses to `null`). A preset whose `value` does not parse in this `mode` / `allowNow` renders disabled, never emits, and logs a dev-mode `console.warn`.
 - **`invalid`** marks the selects, amount and date picker invalid. The Exact-date `Switch` is intentionally not marked: it is a mode toggle, not the erroneous value.
-- **Group role:** with `aria-label` or `aria-labelledby` the root is a named `role="group"`; without one (e.g. inside `<Field asGroup>`, which is the group) it has no role, so there is no nameless nested group. `required` (injected by Field) is consumed for Field's marker and adds no ARIA, since `role="group"` does not support `aria-required`.
+- **Group role:** with `aria-label` or `aria-labelledby` the root is a named `role="group"`; without one (e.g. inside `<Field asGroup>`, which is the group) it has no role, so there is no nameless nested group. Outside a `Field`, always pass `aria-label` / `aria-labelledby`: an unnamed RelativeDateInput has no group semantics. The "Unrecognised value" note describes every control as well as a named root. `required` (injected by Field) is consumed for Field's marker and adds no ARIA, since `role="group"` does not support `aria-required`.
 - **Leaving Now** for another anchor resets the offset (unit to days, amount to 0) and emits the bare anchor, since `now-3h` has no day equivalent.
 - `allowNow` gates three things together: the `now` anchor, the `h` / `min` units (only on `now`), and a minute-precision exact datetime in UTC (`YYYY-MM-DDTHH:mm:ssZ`).
 

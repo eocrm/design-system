@@ -168,10 +168,10 @@
 }
 
 // SCSS constant because container-query conditions can't read custom
-// properties (same as Image.module.scss). Sized for a two-option ButtonGroup
-// plus an icon action beside the title minimum.
+// properties (same as Image.module.scss). Sized for the 96px title floor, a
+// two-option ButtonGroup (~175px) and an icon action, plus gaps (~323px).
 // ponytail: fixed threshold; wider controls overflow between it and their real need.
-$controls-wrap-below: 320px;
+$controls-wrap-below: 360px;
 
 // Narrow: controls move to a second row under the title (order, not
 // grid-column, so auto-placement does it). Row 1 is title · meta · action.

@@ -23,7 +23,7 @@ export interface CardHeaderProps extends HTMLAttributes<HTMLDivElement> {
    * mode switch). Rendered outside the heading, so it is not part of the
    * heading's name. Order: title, controls, meta, action. Controls never
    * shrink: on a wide header the title ellipsizes down to a short minimum
-   * width; on a narrow header (under ~320px of content) the controls wrap onto
+   * width; on a narrow header (under ~360px of content) the controls wrap onto
    * a second row under the title, which keeps the first row with meta and
    * action. Keep titles short, or pass a `title` attribute for long ones.
    */

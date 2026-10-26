@@ -45,8 +45,9 @@
   --card-title-font-weight: var(--font-weight-semibold);
   --card-title-fg: var(--color-fg);
 
-  // Title floor beside `controls` before they wrap under it.
-  --card-title-min-width: var(--space-16);
+  // Title floor beside `controls` before they wrap under it: 96px keeps a
+  // word like "Conditions" whole. No 96px step exists, hence the calc.
+  --card-title-min-width: calc(var(--space-12) * 2);
 
   // Header meta (secondary text beside the title)
   --card-meta-font-size: var(--font-size-sm);

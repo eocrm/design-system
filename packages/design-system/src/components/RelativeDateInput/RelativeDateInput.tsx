@@ -256,7 +256,10 @@ export const RelativeDateInput = forwardRef<HTMLDivElement, RelativeDateInputPro
 
     const opt = (v: string, label: string) => ({ value: v, label });
     const pickOne = (fn: (v: string) => void) => (v: string | string[]) => fn(v as string);
-    const common = { size: 'sm' as const, disabled, invalid };
+    // The note also describes every control: unnamed (inside `<Field asGroup>`) the root
+    // is a plain div, whose aria-describedby screen readers never announce.
+    const noteRef = unrecognised ? noteId : undefined;
+    const common = { size: 'sm' as const, disabled, invalid, 'aria-describedby': noteRef };
 
     const amountInput = (
       <Input
@@ -265,7 +268,7 @@ export const RelativeDateInput = forwardRef<HTMLDivElement, RelativeDateInputPro
         inputMode="numeric"
         aria-label={t('relativeDateInput.amount')}
         invalid={invalid || amountError}
-        aria-describedby={amountError ? errorId : undefined}
+        aria-describedby={clsx(amountError && errorId, noteRef) || undefined}
         value={draft.amount}
         onChange={(e) => commit({ amount: e.target.value })}
       />
@@ -402,10 +405,10 @@ export const RelativeDateInput = forwardRef<HTMLDivElement, RelativeDateInputPro
     const canonical = parsedValue ? formatRelativeDate(parsedValue) : value;
     const shown = drafted && formatRelativeDate(drafted) === canonical ? canonical : null;
 
-    const describedBy = clsx(ariaDescribedby, unrecognised && noteId) || undefined;
     // Only a named group is a group; unnamed (e.g. inside `<Field asGroup>`, which is
     // the group) it would be an extra, nameless landmark for screen readers.
     const named = rest['aria-label'] != null || rest['aria-labelledby'] != null;
+    const describedBy = clsx(ariaDescribedby, named && noteRef) || undefined;
     // A preset must parse in this mode, or choosing it would emit an unrecognised value.
     const isValidPreset = (p: RelativeDatePreset) => parse(p.value) !== null;
     const badPresets = (presets ?? [])

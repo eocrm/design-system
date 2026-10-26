@@ -121,14 +121,14 @@ export function Demo() {
         title="Invalid inside a Field"
         description="asGroup: the Field label captions the group, and its error marks the controls invalid."
         code={`<Stack gap="sm">
-  <Field asGroup label="Due date" error="Pick a due date">
+  <Field asGroup required label="Due date" error="Pick a due date">
     <RelativeDateInput mode="point" value={value} onChange={setValue} />
   </Field>
   <Code>{value ?? 'null'}</Code>
 </Stack>`}
       >
         <Stack gap="sm">
-          <Field asGroup label="Due date" error="Pick a due date">
+          <Field asGroup required label="Due date" error="Pick a due date">
             <RelativeDateInput mode="point" value={invalid} onChange={setInvalid} />
           </Field>
           <Code>{invalid ?? 'null'}</Code>
