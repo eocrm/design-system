@@ -607,4 +607,37 @@ export const ru: Messages = {
     colorStone: 'Каменный',
     colorCharcoal: 'Угольный',
   },
+  relativeDateInput: {
+    today: 'Сегодня',
+    now: 'Сейчас',
+    boundary: ({ edge, scope, period }) => {
+      // Genitive: «начало этой недели», «конец следующего квартала».
+      const feminine = period === 'week';
+      const scopes = feminine
+        ? { this: 'этой', last: 'прошлой', next: 'следующей' }
+        : { this: 'этого', last: 'прошлого', next: 'следующего' };
+      const periods = { week: 'недели', month: 'месяца', quarter: 'квартала', year: 'года' };
+      return `${edge === 'start' ? 'Начало' : 'Конец'} ${scopes[scope]} ${periods[period]}`;
+    },
+    units: { d: 'дней', w: 'недель', mo: 'месяцев', y: 'лет', h: 'часов', min: 'минут' },
+    periods: { week: 'неделя', month: 'месяц', quarter: 'квартал', year: 'год' },
+    kinds: {
+      lastN: 'Последние N',
+      nextN: 'Следующие N',
+      this: 'Текущий',
+      last: 'Прошлый',
+      next: 'Следующий',
+      toDate: 'С начала периода',
+    },
+    exactDate: 'Точная дата',
+    date: 'Дата',
+    sign: 'Направление',
+    amount: 'Количество',
+    unit: 'Единица',
+    anchor: 'Точка отсчёта',
+    kind: 'Тип периода',
+    period: 'Период',
+    errorRange: ({ min, max }) => `Введите целое число от ${min} до ${max}`,
+    unrecognised: ({ value }) => `Нераспознанное значение: ${value}`,
+  },
 };

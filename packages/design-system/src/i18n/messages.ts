@@ -1161,6 +1161,51 @@ export interface Messages {
     /** aria-label on the charcoal palette color badge. */
     colorCharcoal: string;
   };
+  relativeDateInput: {
+    /** Point anchor option: today (start of the current day). */
+    today: string;
+    /** Point anchor option: the current moment (only with `allowNow`). */
+    now: string;
+    /** Function leaf — a period-boundary anchor option ("End of next quarter"). */
+    boundary: (params: {
+      edge: 'start' | 'end';
+      scope: 'this' | 'last' | 'next';
+      period: 'week' | 'month' | 'quarter' | 'year';
+    }) => string;
+    /** Offset / rolling-range unit options. */
+    units: { d: string; w: string; mo: string; y: string; h: string; min: string };
+    /** Period options of a range (`this:quarter`, `last:week`…). */
+    periods: { week: string; month: string; quarter: string; year: string };
+    /** Range kind options. */
+    kinds: {
+      lastN: string;
+      nextN: string;
+      this: string;
+      last: string;
+      next: string;
+      toDate: string;
+    };
+    /** Label of the "Exact date" switch (point mode). */
+    exactDate: string;
+    /** aria-label on the exact-date DatePicker. */
+    date: string;
+    /** aria-label on the offset sign select (+ / −). */
+    sign: string;
+    /** aria-label on the numeric amount input. */
+    amount: string;
+    /** aria-label on the unit select. */
+    unit: string;
+    /** aria-label on the point anchor select. */
+    anchor: string;
+    /** aria-label on the range kind select. */
+    kind: string;
+    /** aria-label on the range period select. */
+    period: string;
+    /** Function leaf — inline error under an out-of-range or non-integer amount. */
+    errorRange: (params: { min: number; max: number }) => string;
+    /** Function leaf — muted note when the incoming `value` doesn't parse. */
+    unrecognised: (params: { value: string }) => string;
+  };
 }
 
 /** Supported locale codes. v1 ships English and Russian. */
