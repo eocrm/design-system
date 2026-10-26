@@ -27,9 +27,9 @@ export interface ToastEntry {
 /** Input shape accepted by `store.add` — `createdAt` and `status` are computed internally. */
 export type ToastInput = Omit<ToastEntry, 'createdAt' | 'status'>;
 
-/** Partial shape accepted by `store.update` — internal-only fields are also acceptable
- *  (the viewport uses this to flip a toast to `exiting` before removal). */
-export type ToastUpdate = Partial<Omit<ToastEntry, 'id' | 'createdAt'>>;
+/** Partial shape accepted by `store.update`. `status` is owned by `dismiss` (and a
+ *  re-`add`), so an update never resurrects a dismissed toast. */
+export type ToastUpdate = Partial<Omit<ToastEntry, 'id' | 'createdAt' | 'status'>>;
 
 type Listener = () => void;
 
@@ -43,6 +43,9 @@ export const EXIT_ANIMATION_MS = 250;
 
 let state: StoreState = { toasts: [] };
 const listeners = new Set<Listener>();
+/** Exiting id → the id set its pending removal will delete. Re-adding the id
+ *  drops it from that set, cancelling its removal. */
+const pendingExit = new Map<string, Set<string>>();
 
 function notify() {
   listeners.forEach((l) => l());
@@ -66,11 +69,25 @@ export const store = {
     };
   },
   add(input: ToastInput): string {
-    // Reusing an id is an implicit update — lets `toast.success('done', { id })`
-    // mutate an existing loading toast in place.
-    if (state.toasts.some((t) => t.id === input.id)) {
-      return store.update(input.id, input);
+    const existing = state.toasts.find((t) => t.id === input.id);
+    // Re-firing an id mid-exit shows it again as a fresh toast. The new
+    // `createdAt` is part of the viewport's React key, so it remounts with a
+    // fresh auto-dismiss timer.
+    if (existing?.status === 'exiting') {
+      pendingExit.get(input.id)?.delete(input.id);
+      pendingExit.delete(input.id);
+      const createdAt = Math.max(Date.now(), existing.createdAt + 1);
+      state = {
+        toasts: state.toasts.map((t) =>
+          t.id === input.id ? { ...input, createdAt, status: 'visible' } : t,
+        ),
+      };
+      notify();
+      return input.id;
     }
+    // Reusing a live id is an implicit update — lets `toast.success('done', { id })`
+    // mutate an existing loading toast in place.
+    if (existing) return store.update(input.id, input);
     const entry: ToastEntry = { ...input, createdAt: Date.now(), status: 'visible' };
     state = { toasts: [...state.toasts, entry] };
     notify();
@@ -84,28 +101,32 @@ export const store = {
     return id;
   },
   dismiss(id?: string): void {
-    if (id === undefined) {
-      state = { toasts: state.toasts.map((t) => ({ ...t, status: 'exiting' })) };
-      notify();
-      setTimeout(() => {
-        state = { toasts: [] };
-        notify();
-      }, EXIT_ANIMATION_MS);
-      return;
-    }
-    if (!state.toasts.some((t) => t.id === id)) return;
+    // Capture the ids now so the deferred removal can't take toasts added
+    // during the exit window (#713). Already-exiting toasts keep their pending
+    // removal rather than arming a second one.
+    const ids = new Set(
+      state.toasts
+        .filter((t) => t.status !== 'exiting' && (id === undefined || t.id === id))
+        .map((t) => t.id),
+    );
+    if (ids.size === 0) return;
     state = {
-      toasts: state.toasts.map((t) => (t.id === id ? { ...t, status: 'exiting' } : t)),
+      toasts: state.toasts.map((t) => (ids.has(t.id) ? { ...t, status: 'exiting' } : t)),
     };
     notify();
+    ids.forEach((exitId) => pendingExit.set(exitId, ids));
     setTimeout(() => {
-      state = { toasts: state.toasts.filter((t) => t.id !== id) };
+      if (ids.size === 0) return;
+      ids.forEach((exitId) => pendingExit.delete(exitId));
+      state = { toasts: state.toasts.filter((t) => !ids.has(t.id)) };
       notify();
     }, EXIT_ANIMATION_MS);
   },
   /** Test-only: synchronously clears state. NOT exported from the package. */
   _reset(): void {
     state = { toasts: [] };
+    pendingExit.forEach((ids) => ids.clear());
+    pendingExit.clear();
     nextSeq = 0;
     listeners.clear();
   },

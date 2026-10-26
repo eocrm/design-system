@@ -88,6 +88,43 @@ describe('toast store', () => {
     expect(store.getSnapshot().toasts).toEqual([]);
   });
 
+  it('dismiss() with no id keeps toasts added during the exit window', () => {
+    store.add(baseInput({ id: 'a' }));
+    store.dismiss();
+    store.add(baseInput({ id: 'b' }));
+    vi.advanceTimersByTime(EXIT_ANIMATION_MS);
+    expect(store.getSnapshot().toasts).toEqual([
+      expect.objectContaining({ id: 'b', status: 'visible' }),
+    ]);
+  });
+
+  it('re-dismissing an exiting toast does not remove a later toast reusing its id', () => {
+    store.add(baseInput({ id: 'a' }));
+    store.dismiss('a');
+    vi.advanceTimersByTime(100);
+    store.dismiss();
+    vi.advanceTimersByTime(EXIT_ANIMATION_MS - 100);
+    expect(store.getSnapshot().toasts).toEqual([]);
+    store.add(baseInput({ id: 'a' }));
+    vi.advanceTimersByTime(EXIT_ANIMATION_MS);
+    expect(store.getSnapshot().toasts).toEqual([
+      expect.objectContaining({ id: 'a', status: 'visible' }),
+    ]);
+  });
+
+  it('re-adding an exiting id revives it and cancels its pending removal', () => {
+    store.add(baseInput({ id: 'a' }));
+    const { createdAt } = store.getSnapshot().toasts[0];
+    store.dismiss();
+    store.add(baseInput({ id: 'a', message: 'Again' }));
+    // A new createdAt remounts the viewport's <Toast> (keyed on it).
+    expect(store.getSnapshot().toasts[0].createdAt).toBeGreaterThan(createdAt);
+    vi.advanceTimersByTime(EXIT_ANIMATION_MS);
+    expect(store.getSnapshot().toasts).toEqual([
+      expect.objectContaining({ id: 'a', message: 'Again', status: 'visible' }),
+    ]);
+  });
+
   it('subscribe() listener fires on add/update/dismiss', () => {
     const listener = vi.fn();
     store.subscribe(listener);

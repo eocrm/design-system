@@ -140,7 +140,11 @@ export function ToastViewport({
             }}
           >
             {list.map((entry, idx) => (
-              <Toast key={entry.id} entry={entry} isPeek={!isExpanded && idx >= maxVisible} />
+              <Toast
+                key={`${entry.id}:${entry.createdAt}`}
+                entry={entry}
+                isPeek={!isExpanded && idx >= maxVisible}
+              />
             ))}
           </ol>
         );

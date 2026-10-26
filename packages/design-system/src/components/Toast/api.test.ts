@@ -1,5 +1,5 @@
 import { toast, _setViewportConfig } from './api';
-import { store } from './store';
+import { store, EXIT_ANIMATION_MS } from './store';
 
 describe('toast api', () => {
   beforeEach(() => {
@@ -125,6 +125,21 @@ describe('toast api', () => {
       tone: 'success',
       message: 'Uploaded file.pdf',
     });
+  });
+
+  it('toast.promise settling during the exit window does not resurrect a dismissed toast', async () => {
+    let resolve!: (v: string) => void;
+    const wrapped = toast.promise(new Promise<string>((r) => (resolve = r)), {
+      loading: 'Uploading',
+      success: 'Uploaded',
+      error: 'Failed',
+    });
+    toast.dismiss();
+    resolve('ok');
+    await wrapped;
+    expect(store.getSnapshot().toasts[0]).toMatchObject({ tone: 'success', status: 'exiting' });
+    vi.advanceTimersByTime(EXIT_ANIMATION_MS);
+    expect(store.getSnapshot().toasts).toEqual([]);
   });
 
   it('toast.promise: loading then error on reject (and rethrows)', async () => {

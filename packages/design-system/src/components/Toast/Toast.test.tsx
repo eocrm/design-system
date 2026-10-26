@@ -66,6 +66,30 @@ describe('<ToastViewport>', () => {
     expect(screen.queryByText('Saved')).not.toBeInTheDocument();
   });
 
+  it('a toast re-fired by id while exiting gets a fresh auto-dismiss timer', () => {
+    renderViewport({ duration: 1000 });
+    act(() => {
+      toast.success('Saved', { id: 'save' });
+    });
+    act(() => {
+      vi.advanceTimersByTime(1100);
+    });
+    act(() => {
+      toast.success('Saved again', { id: 'save' });
+    });
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+    expect(screen.getByText('Saved again')).toBeInTheDocument();
+    act(() => {
+      vi.advanceTimersByTime(1000);
+    });
+    act(() => {
+      vi.advanceTimersByTime(300);
+    });
+    expect(screen.queryByText('Saved again')).not.toBeInTheDocument();
+  });
+
   it('duration: persistent does not auto-dismiss', () => {
     renderViewport({ duration: 1000 });
     act(() => {

@@ -8,7 +8,8 @@ export interface ToastOptions {
   duration?: number | 'persistent';
   /** Per-call override of the viewport's default position. */
   position?: ToastPosition;
-  /** Stable id (else auto-generated). Reusing an existing id triggers an update. */
+  /** Stable id (else auto-generated). Reusing a live toast's id updates it in place;
+   *  reusing the id of a toast that is still animating out shows it again as new. */
   id?: string;
   /** Single primary action button rendered inside the toast. */
   action?: { label: string; onClick: () => void };
@@ -156,7 +157,6 @@ export const toast = Object.assign(
             tone: 'success',
             message: successMsg,
             duration: viewportConfig.duration,
-            status: 'visible',
           });
           return value;
         },
@@ -166,7 +166,6 @@ export const toast = Object.assign(
             tone: 'error',
             message: errorMsg,
             duration: viewportConfig.duration,
-            status: 'visible',
           });
           throw err;
         },
