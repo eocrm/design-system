@@ -3995,6 +3995,13 @@
           "description": "Space between items. See `ListGap`. Default `'sm'`."
         },
         {
+          "name": "size",
+          "type": "ListSize",
+          "required": false,
+          "default": "",
+          "description": "Marker scale; use `'heading'` when each item starts with a `Title size=\"xl\"`. See `ListSize`. Default `'body'`."
+        },
+        {
           "name": "numberStyle",
           "type": "ListNumberStyle",
           "required": false,
@@ -7253,6 +7260,7 @@
     "DataTableInstance": "DataTableInstance<T>",
     "ListVariant": "\"number\" | \"bullet\"",
     "ListGap": "\"sm\" | \"md\" | \"xs\"",
+    "ListSize": "\"body\" | \"heading\"",
     "ListNumberStyle": "\"plain\" | \"badge\"",
     "DefinitionListLayout": "\"horizontal\" | \"stacked\"",
     "DefinitionListSpacing": "\"sm\" | \"md\" | \"lg\"",

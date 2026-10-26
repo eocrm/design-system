@@ -561,6 +561,7 @@ export type {
   ListItemProps,
   ListVariant,
   ListGap,
+  ListSize,
   ListNumberStyle,
 } from './components/List';
 

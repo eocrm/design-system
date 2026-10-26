@@ -1,4 +1,4 @@
-import { Alert, Card, Constrain, List, Stack, Text } from '@eocrm/design-system';
+import { Alert, Card, Constrain, List, Stack, Text, Title } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -91,6 +91,44 @@ export function Demo() {
               leave the page.
             </List.Item>
             <List.Item>Paste the token into your client and save.</List.Item>
+          </List>
+        </Constrain>
+      </Example>
+
+      <Example
+        title="Heading steps"
+        description="size='heading' centres the marker on the first line of a Title size='xl'; the badge becomes a rounded square."
+        code={`import { List, Text, Title } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <List variant="number" numberStyle="badge" size="heading" gap="md">
+      <List.Item>
+        <Title order={3} size="xl">Create a token</Title>
+        <Text tone="muted">Open Settings, choose Integrations and create a token.</Text>
+      </List.Item>
+      <List.Item>
+        <Title order={3} size="xl">Connect your client</Title>
+        <Text tone="muted">Paste the token into the client and save.</Text>
+      </List.Item>
+    </List>
+  );
+}`}
+      >
+        <Constrain width="sm">
+          <List variant="number" numberStyle="badge" size="heading" gap="md">
+            <List.Item>
+              <Title order={3} size="xl">
+                Create a token
+              </Title>
+              <Text tone="muted">Open Settings, choose Integrations and create a token.</Text>
+            </List.Item>
+            <List.Item>
+              <Title order={3} size="xl">
+                Connect your client
+              </Title>
+              <Text tone="muted">Paste the token into the client and save.</Text>
+            </List.Item>
           </List>
         </Constrain>
       </Example>

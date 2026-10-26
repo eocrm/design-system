@@ -18,6 +18,12 @@ TL;DR: `<List>` for bullets, `<List variant="number">` for ordered steps, `numbe
     <code>Retry-After</code> — seconds to wait after a 429.
   </List.Item>
 </List>
+
+<List variant="number" numberStyle="badge" size="heading" gap="md">
+  <List.Item>
+    <Title order={3} size="xl">Create a token</Title>
+  </List.Item>
+</List>
 ```
 
 <!-- props:start -->
@@ -31,6 +37,7 @@ TL;DR: `<List>` for bullets, `<List variant="number">` for ordered steps, `numbe
 |---|---|---|---|
 | `variant` | `'bullet' \| 'number'` | no | Marker style. See `ListVariant`. Default `'bullet'`. |
 | `gap` | `'xs' \| 'sm' \| 'md'` | no | Space between items. See `ListGap`. Default `'sm'`. |
+| `size` | `'body' \| 'heading'` | no | Marker scale; use `'heading'` when each item starts with a `Title size="xl"`. See `ListSize`. Default `'body'`. |
 | `numberStyle` | `'plain' \| 'badge'` | no | Number look; only applies to `variant="number"`. See `ListNumberStyle`. Default `'plain'`. |
 | `children` | `ReactNode` | no | `List.Item` elements. A nested `List` goes inside a `List.Item`. |
 | …native | | | plus native HTML attributes |
@@ -50,6 +57,7 @@ TL;DR: `<List>` for bullets, `<List variant="number">` for ordered steps, `numbe
 - Text inherits size and colour, so it works inside `Card`, `Alert` and prose-width containers.
 - Nest by putting a `List` inside a `List.Item`; it indents one level.
 - `numberStyle` has no effect on bullets.
+- `size="heading"` fits markers to a `Title size="xl"` first line; the badge turns into a rounded square.
 
 When NOT to use: key–value pairs → `DefinitionList`; rows of records → `Card.List` / `Table`; interactive or selectable rows → `Card.List`; custom markers or icons (unsupported).
 

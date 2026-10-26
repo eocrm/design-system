@@ -24,11 +24,20 @@ export type ListGap = 'xs' | 'sm' | 'md';
  */
 export type ListNumberStyle = 'plain' | 'badge';
 
+/**
+ * Marker scale.
+ * - `'body'` (default) — marker sized to body text.
+ * - `'heading'` — marker sized and centred on the first line of a `Title size="xl"`; a badge becomes a rounded square.
+ */
+export type ListSize = 'body' | 'heading';
+
 export interface ListProps extends HTMLAttributes<HTMLElement> {
   /** Marker style. See `ListVariant`. Default `'bullet'`. */
   variant?: ListVariant;
   /** Space between items. See `ListGap`. Default `'sm'`. */
   gap?: ListGap;
+  /** Marker scale; use `'heading'` when each item starts with a `Title size="xl"`. See `ListSize`. Default `'body'`. */
+  size?: ListSize;
   /** Number look; only applies to `variant="number"`. See `ListNumberStyle`. Default `'plain'`. */
   numberStyle?: ListNumberStyle;
   /** `List.Item` elements. A nested `List` goes inside a `List.Item`. */
@@ -53,7 +62,15 @@ const DepthCtx = createContext(0);
  * @see docs/components/List.md
  */
 const ListRoot = forwardRef<HTMLElement, ListProps>(function ListRoot(
-  { variant = 'bullet', gap = 'sm', numberStyle = 'plain', className, children, ...rest },
+  {
+    variant = 'bullet',
+    gap = 'sm',
+    size = 'body',
+    numberStyle = 'plain',
+    className,
+    children,
+    ...rest
+  },
   ref,
 ) {
   const depth = useContext(DepthCtx);
@@ -67,6 +84,7 @@ const ListRoot = forwardRef<HTMLElement, ListProps>(function ListRoot(
           role="list"
           data-gap={gap}
           data-variant={variant}
+          data-size={size}
           data-nested={depth > 0 ? 'true' : undefined}
           className={clsx(styles.list, className)}
           // {...rest} last so consumer overrides win (Pattern A).

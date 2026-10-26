@@ -14,6 +14,16 @@
 }
 
 // Nested <ol>s start a fresh counter instance, so numbering restarts per list.
+.list[data-size='heading'] {
+  --list-marker-height: var(--list-heading-marker-height);
+  --list-marker-width: var(--list-heading-marker-width);
+  --list-bullet-size: var(--list-heading-bullet-size);
+  --list-number-font-size: var(--list-heading-number-font-size);
+  --list-badge-size: var(--list-heading-badge-size);
+  --list-badge-radius: var(--list-heading-badge-radius);
+  --list-badge-font-size: var(--list-heading-badge-font-size);
+}
+
 .list[data-variant='number'] {
   counter-reset: list-item-number;
 }
@@ -43,7 +53,7 @@
   align-items: center;
   justify-content: center;
   min-width: var(--list-marker-width);
-  height: calc(var(--list-line-height) * 1em);
+  height: var(--list-marker-height);
   color: var(--list-marker-fg);
 }
 
@@ -60,6 +70,7 @@
 }
 
 .number {
+  font-size: var(--list-number-font-size);
   font-weight: var(--list-number-font-weight);
   font-variant-numeric: tabular-nums;
 }
@@ -71,7 +82,7 @@
   flex: none;
   width: var(--list-badge-size);
   height: var(--list-badge-size);
-  border-radius: 50%;
+  border-radius: var(--list-badge-radius);
   background: var(--list-badge-bg);
   color: var(--list-badge-fg);
   font-size: var(--list-badge-font-size);

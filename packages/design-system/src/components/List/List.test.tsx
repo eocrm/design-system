@@ -66,6 +66,13 @@ describe('List', () => {
     expect(container.querySelectorAll('[class*="bullet"]')).toHaveLength(3);
   });
 
+  it('exposes the marker scale as data-size', () => {
+    const { rerender } = render(<List>{items}</List>);
+    expect(screen.getByRole('list')).toHaveAttribute('data-size', 'body');
+    rerender(<List size="heading">{items}</List>);
+    expect(screen.getByRole('list')).toHaveAttribute('data-size', 'heading');
+  });
+
   it('marks a nested list', () => {
     render(
       <List>

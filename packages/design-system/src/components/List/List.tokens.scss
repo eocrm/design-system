@@ -9,6 +9,7 @@
   --list-marker-gap: var(--space-2);
   --list-marker-width: var(--size-badge);
   --list-line-height: var(--line-height-normal);
+  --list-marker-height: calc(var(--list-line-height) * 1em);
 
   // Marker colour — muted, a graphic/text on the page surface
   --list-marker-fg: var(--color-fg-muted);
@@ -18,11 +19,22 @@
 
   // Plain number
   --list-number-font-weight: var(--font-weight-medium);
+  --list-number-font-size: inherit;
 
   // Badge number
   --list-badge-size: var(--size-badge);
+  --list-badge-radius: var(--radius-full);
   --list-badge-bg: var(--color-accent-bg-subtle);
   --list-badge-fg: var(--color-accent);
   --list-badge-font-size: var(--font-size-xs);
   --list-badge-font-weight: var(--font-weight-semibold);
+
+  // size="heading" — marker scaled to the first line of a Title size="xl" (20px x tight line height)
+  --list-heading-marker-height: calc(var(--line-height-tight) * var(--font-size-xl));
+  --list-heading-marker-width: var(--space-6);
+  --list-heading-bullet-size: var(--space-2);
+  --list-heading-number-font-size: var(--font-size-lg);
+  --list-heading-badge-size: var(--space-6);
+  --list-heading-badge-radius: var(--radius-sm);
+  --list-heading-badge-font-size: var(--font-size-md);
 }
