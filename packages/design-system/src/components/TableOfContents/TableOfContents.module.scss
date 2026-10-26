@@ -1,4 +1,3 @@
-@use './TableOfContents.tokens';
 @use '../../styles/mixins' as *;
 
 .root {
@@ -30,7 +29,7 @@
   display: block;
   padding-block: var(--table-of-contents-link-padding-y);
   padding-inline: var(--table-of-contents-link-padding-x);
-  border-inline-start: var(--table-of-contents-bar-width) solid transparent;
+  border-inline-start: var(--table-of-contents-bar-width) solid var(--table-of-contents-rail-color);
   font-size: var(--table-of-contents-link-font-size);
   color: var(--table-of-contents-link-fg);
   text-decoration: none;
@@ -69,4 +68,14 @@
 
 .details[open] > .summary {
   padding-block-end: var(--table-of-contents-gap);
+}
+
+// Forced colors replaces author colours, so the transparent rail would paint on
+// every link and the accent would become LinkText. System colours survive.
+@media (forced-colors: active) {
+  .root {
+    --table-of-contents-bar-color: Highlight;
+    --table-of-contents-link-fg-active: Highlight;
+    --table-of-contents-rail-color: Canvas;
+  }
 }

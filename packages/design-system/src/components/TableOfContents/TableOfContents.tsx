@@ -116,7 +116,9 @@ export const TableOfContents = forwardRef<HTMLElement, TableOfContentsProps>(
         top: target.getBoundingClientRect().top + window.scrollY - offsetRef.current,
         behavior: prefersReducedMotion() ? 'auto' : 'smooth',
       });
-      history.pushState(null, '', `#${id}`);
+      // Re-clicking the current entry must not stack history entries.
+      if (location.hash === `#${id}`) history.replaceState(null, '', `#${id}`);
+      else history.pushState(null, '', `#${id}`);
       setActiveId(id);
 
       // Hold the clicked entry while the smooth scroll passes the others.
