@@ -1,6 +1,6 @@
 import { Fragment, forwardRef, useEffect, useId, useState, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
-import { Check, Copy, WrapText } from 'lucide-react';
+import { Check, Copy, WrapText, X } from 'lucide-react';
 import { useTranslation } from '../../i18n';
 import { Button } from '../Button';
 import { LiveRegion } from '../LiveRegion';
@@ -61,7 +61,8 @@ export interface CodeBlockProps extends Omit<HTMLAttributes<HTMLDivElement>, 'ti
   /**
    * Blocks sharing a `syncKey` switch together: picking `py` in one selects
    * `py` in every block with the same key that has a `py` sample. In-memory,
-   * per page load.
+   * per page load; for uncontrolled blocks (controlled blocks sharing one state
+   * don't need it).
    */
   syncKey?: string;
   /** Lines to emphasise (visual only — explain the emphasis in prose). */
@@ -191,7 +192,9 @@ export const CodeBlock = forwardRef<HTMLDivElement, CodeBlockProps>(function Cod
               <WrapText aria-hidden="true" />
             </Button>
           </Tooltip>
-          <Tooltip content={t('codeBlock.copy')}>
+          <Tooltip
+            content={copyStatus === 'failed' ? t('codeBlock.copyFailed') : t('codeBlock.copy')}
+          >
             <Button
               variant="ghost"
               size="sm"
@@ -199,7 +202,13 @@ export const CodeBlock = forwardRef<HTMLDivElement, CodeBlockProps>(function Cod
               aria-label={t('codeBlock.copy')}
               onClick={copy}
             >
-              {copyStatus === 'copied' ? <Check aria-hidden="true" /> : <Copy aria-hidden="true" />}
+              {copyStatus === 'copied' ? (
+                <Check aria-hidden="true" />
+              ) : copyStatus === 'failed' ? (
+                <X aria-hidden="true" />
+              ) : (
+                <Copy aria-hidden="true" />
+              )}
             </Button>
           </Tooltip>
         </div>

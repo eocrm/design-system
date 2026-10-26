@@ -38,3 +38,19 @@ it('highlightedLineSet normalises reversed ranges and ignores out-of-range', () 
   expect([...highlightedLineSet([[7, 5], 99, 0, 2], 6)].sort()).toEqual([2, 5, 6]);
   expect(highlightedLineSet(undefined, 6).size).toBe(0);
 });
+
+it.each(['rust', 'sql', 'extend', 'constructor', '__proto__'])(
+  'language %s is not on the allow-list → plain',
+  (lang) => {
+    expect(tokenizeLines('let a = 1;\nb', lang)).toEqual([
+      [{ content: 'let a = 1;', key: 'plain' }],
+      [{ content: 'b', key: 'plain' }],
+    ]);
+  },
+);
+it('bash: # starts a comment only at line start or after whitespace', () => {
+  const [url] = tokenizeLines('curl https://a.io/#frag -H "X"', 'bash');
+  expect(url.some((t) => t.key === 'comment')).toBe(false);
+  const [note] = tokenizeLines('echo hi # note', 'bash');
+  expect(note.some((t) => t.key === 'comment')).toBe(true);
+});

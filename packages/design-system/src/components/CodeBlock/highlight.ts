@@ -29,7 +29,7 @@ export const LANGUAGE_LABELS: Record<CodeBlockLanguage, string> = {
 if (!Prism.languages.bash) {
   const variable = /\$(?:\w+|\{[^}]*\})/;
   Prism.languages.bash = {
-    comment: { pattern: /(^|[^"{\\$])#.*/, lookbehind: true },
+    comment: { pattern: /(^|\s)#.*/, lookbehind: true },
     string: [
       {
         pattern: /"(?:\\[\s\S]|[^"\\])*"/,
@@ -76,7 +76,9 @@ const keyOf = (types: string[]): SyntaxKey => {
 /** One array of merged tokens per rendered line. Unknown languages render as plain text. */
 export function tokenizeLines(code: string, language?: string): CodeToken[][] {
   const src = code.replace(/\r\n?/g, '\n').replace(/\n$/, '');
-  const grammar = language && Prism.languages[ALIASES[language] ?? language];
+  const name = language && (Object.hasOwn(ALIASES, language) ? ALIASES[language] : language);
+  // Allow-list: Prism bundles ~40 grammars (and helpers like `extend`) we don't style.
+  const grammar = name && Object.hasOwn(LANGUAGE_LABELS, name) && Prism.languages[name];
   if (!grammar) return src.split('\n').map((l) => [{ content: l, key: 'plain' as const }]);
 
   return normalizeTokens(Prism.tokenize(src, grammar)).map((line) => {

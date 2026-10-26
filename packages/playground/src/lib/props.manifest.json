@@ -1038,7 +1038,7 @@
           "type": "string",
           "required": false,
           "default": "",
-          "description": "Blocks sharing a `syncKey` switch together: picking `py` in one selects\n`py` in every block with the same key that has a `py` sample. In-memory,\nper page load."
+          "description": "Blocks sharing a `syncKey` switch together: picking `py` in one selects\n`py` in every block with the same key that has a `py` sample. In-memory,\nper page load; for uncontrolled blocks (controlled blocks sharing one state\ndon't need it)."
         },
         {
           "name": "highlightLines",

@@ -3,18 +3,30 @@
 ```tsx
 <CodeBlock language="json" code={'{ "id": 42 }'} />;
 
-const [lang, setLang] = useState<string>();
-useEffect(() => setLang(localStorage.getItem('api-lang') ?? undefined), []); // client-only read
+// Persist the choice: ONE shared state for every block of the group (see below).
+const [lang, setLang] = usePersistedSample('api-lang');
 
-<CodeBlock
-  samples={samples}
-  syncKey="api-lang"
-  activeSampleId={lang}
-  onSampleChange={(id) => {
-    setLang(id);
-    localStorage.setItem('api-lang', id);
-  }}
-/>;
+<CodeBlock samples={samples} activeSampleId={lang} onSampleChange={setLang} />;
+```
+
+```tsx
+// Call once at page/layout level and pass the same pair to every block.
+function usePersistedSample(storageKey: string) {
+  const [id, setId] = useState<string>();
+  // Client-only read in an effect so server and client render the same first frame.
+  useEffect(() => {
+    try {
+      setId(localStorage.getItem(storageKey) ?? undefined);
+    } catch {} // storage blocked
+  }, [storageKey]);
+  const set = (next: string) => {
+    setId(next);
+    try {
+      localStorage.setItem(storageKey, next);
+    } catch {} // storage blocked
+  };
+  return [id, set] as const;
+}
 ```
 
 <!-- props:start -->
@@ -31,7 +43,7 @@ useEffect(() => setLang(localStorage.getItem('api-lang') ?? undefined), []); // 
 | `activeSampleId` | `string` | no | Controlled active sample id. Wins over `syncKey` and the user's own pick. |
 | `defaultSampleId` | `string` | no | Initial sample id when uncontrolled and nothing is synced. Defaults to the first sample. |
 | `onSampleChange` | `((id: string) => void)` | no | Called with the new id when the user picks a tab in THIS block (not when a synced block changes it). |
-| `syncKey` | `string` | no | Blocks sharing a `syncKey` switch together: picking `py` in one selects `py` in every block with the same key that has a `py` sample. In-memory, per page load. |
+| `syncKey` | `string` | no | Blocks sharing a `syncKey` switch together: picking `py` in one selects `py` in every block with the same key that has a `py` sample. In-memory, per page load; for uncontrolled blocks (controlled blocks sharing one state don't need it). |
 | `highlightLines` | `CodeBlockHighlightLines` | no | Lines to emphasise (visual only — explain the emphasis in prose). |
 | `maxHeight` | `'xs' \| 'sm' \| 'md' \| 'lg' \| 'xl'` | no | Caps the body height; the body scrolls inside it (it is always a focusable, named region). `xs` 200px · `sm` 320px · `md` 448px · `lg` 640px · `xl` 800px. Default: no cap. |
 | `defaultWrap` | `boolean` | no | Initial state of the wrap-lines toggle. Default `false` (long lines scroll horizontally). |
@@ -43,7 +55,8 @@ useEffect(() => setLang(localStorage.getItem('api-lang') ?? undefined), []); // 
 - **Header label** is `title`, then the label of a one-item `samples` array, then the language name, then "Plain text".
 - **Accessibility:** the code body is always keyboard-focusable. Single mode is a `role="group"` named by `title` (fallback "Code"); multi mode is a tabpanel labelled by its tab.
 - **`highlightLines` is visual only.** Explain the emphasis in the surrounding prose.
-- **`syncKey` is in-memory** (per page load). The library never touches storage: persist the choice in the app by owning it as state and passing it as `activeSampleId` (see the example). Read storage in an effect, not during render, so server and client render the same first frame. `defaultSampleId` is only the static initial choice.
+- **`syncKey` is in-memory** (per page load) and is for UNCONTROLLED blocks. The library never touches storage. To persist, own the choice as ONE piece of state shared by every block of the group (the `usePersistedSample` hook above, called once at page/layout level, or React context) and give every block `activeSampleId={lang}` + `onSampleChange={setLang}`. Controlled blocks don't need `syncKey`: the shared state keeps them in step. Do NOT give each block its own `useState` plus `syncKey`: the controlled `activeSampleId` wins over `syncKey`, so return visits would leave blocks out of sync. `defaultSampleId` is only the static initial choice.
+- **Sample ids** are used in DOM ids: don't put spaces in them.
 - **Active sample precedence:** controlled `activeSampleId`, then `syncKey`, then the user's own pick, then `defaultSampleId`, then the first sample. An `activeSampleId` that matches no sample id falls through to the next rule.
 - Renders identically on the server (SSR-safe).
 

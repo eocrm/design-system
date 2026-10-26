@@ -73,6 +73,10 @@ describe('CodeBlock', () => {
       expect(
         await within(screen.getByRole('status')).findByText("Couldn't copy"),
       ).toBeInTheDocument();
+      // Visible cue too: the button keeps its name, the icon swaps to X.
+      const button = screen.getByRole('button', { name: 'Copy code' });
+      expect(button.querySelector('.lucide-x')).not.toBeNull();
+      expect(button.querySelector('.lucide-copy')).toBeNull();
     });
 
     it("announces Couldn't copy when navigator.clipboard is missing", async () => {
