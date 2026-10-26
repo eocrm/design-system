@@ -3,6 +3,10 @@ import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
 
+function MaybeStep({ show, children }: { show: boolean; children: string }) {
+  return show ? <List.Item>{children}</List.Item> : null;
+}
+
 export function ListDemo() {
   return (
     <DemoLayout
@@ -126,6 +130,36 @@ export function Demo() {
       </Example>
 
       <Example
+        title="Conditional items"
+        description="Numbers are CSS counters, so a wrapper that renders nothing leaves no gap: this reads 1, 2, 3."
+        code={`import { List } from '@eocrm/design-system';
+
+function MaybeStep({ show, children }: { show: boolean; children: string }) {
+  return show ? <List.Item>{children}</List.Item> : null;
+}
+
+export function Demo() {
+  return (
+    <List variant="number" numberStyle="badge">
+      <MaybeStep show>First step</MaybeStep>
+      <MaybeStep show={false}>Hidden step</MaybeStep>
+      <MaybeStep show>Second step</MaybeStep>
+      <MaybeStep show>Third step</MaybeStep>
+    </List>
+  );
+}`}
+      >
+        <Constrain width="sm">
+          <List variant="number" numberStyle="badge">
+            <MaybeStep show>First step</MaybeStep>
+            <MaybeStep show={false}>Hidden step</MaybeStep>
+            <MaybeStep show>Second step</MaybeStep>
+            <MaybeStep show>Third step</MaybeStep>
+          </List>
+        </Constrain>
+      </Example>
+
+      <Example
         title="Nested"
         description="A List inside a List.Item indents one level. Numbering restarts per list."
         code={`import { List } from '@eocrm/design-system';
@@ -146,10 +180,10 @@ export function Demo() {
 }`}
       >
         <Constrain width="sm">
-          <List>
+          <List variant="number">
             <List.Item>
               Response headers
-              <List gap="xs">
+              <List variant="number" gap="xs">
                 <List.Item>X-RateLimit-Limit</List.Item>
                 <List.Item>X-RateLimit-Remaining</List.Item>
               </List>

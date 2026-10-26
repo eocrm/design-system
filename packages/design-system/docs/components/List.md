@@ -45,7 +45,7 @@ TL;DR: `<List>` for bullets, `<List variant="number">` for ordered steps, `numbe
 
 <!-- props:end -->
 
-- Numbers come from item position, so adding or removing items keeps them correct. There is no `start` prop.
+- Numbers come from CSS counters, so adding, removing or conditionally rendering items keeps them contiguous. There is no `start` prop.
 - Markers are `aria-hidden`; the list carries an explicit `role="list"` so Safari/VoiceOver keeps list semantics.
 - Text inherits size and colour, so it works inside `Card`, `Alert` and prose-width containers.
 - Nest by putting a `List` inside a `List.Item`; it indents one level.
@@ -54,5 +54,5 @@ TL;DR: `<List>` for bullets, `<List variant="number">` for ordered steps, `numbe
 When NOT to use: key–value pairs → `DefinitionList`; rows of records → `Card.List` / `Table`; interactive or selectable rows → `Card.List`; custom markers or icons (unsupported).
 
 - ❌ Raw `<ul>` / `<ol>` or `Stack` + `Dot` composites for prose lists: use `List`.
-- ❌ Children other than `List.Item`: markers and numbering won't render.
+- ❌ Children other than `List.Item` (a `div`, text, a raw `li`): they get no marker and are not counted. Wrapper components are fine if they render `List.Item`.
 - ❌ Using `numberStyle="badge"` with `variant="bullet"` expecting badges: it is ignored.

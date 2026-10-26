@@ -31,10 +31,22 @@ describe('List', () => {
     markers.forEach((m) => expect(m).toHaveAttribute('aria-hidden', 'true'));
   });
 
-  it('numbers plain items 1, 2, 3', () => {
+  it('leaves numbering to CSS counters (no JS-computed number text)', () => {
     const { container } = render(<List variant="number">{items}</List>);
-    const nums = [...container.querySelectorAll('li > span')].map((m) => m.textContent);
-    expect(nums).toEqual(['1', '2', '3']);
+    expect(screen.getByRole('list')).toHaveAttribute('data-variant', 'number');
+    container.querySelectorAll('li > span').forEach((m) => expect(m.textContent).toBe(''));
+  });
+
+  it('renders around a wrapper that returns null', () => {
+    const Maybe = ({ show }: { show: boolean }) => (show ? <List.Item>Shown</List.Item> : null);
+    render(
+      <List variant="number">
+        <Maybe show={false} />
+        <Maybe show />
+        <List.Item>Plain</List.Item>
+      </List>,
+    );
+    expect(screen.getAllByRole('listitem')).toHaveLength(2);
   });
 
   it('draws badge numbers with the badge class', () => {
@@ -44,7 +56,7 @@ describe('List', () => {
       </List>,
     );
     const badges = container.querySelectorAll('li > span > span');
-    expect([...badges].map((b) => b.textContent)).toEqual(['1', '2', '3']);
+    expect(badges).toHaveLength(3);
     badges.forEach((b) => expect(b.className).toMatch(/badge/));
   });
 
@@ -52,20 +64,6 @@ describe('List', () => {
     const { container } = render(<List numberStyle="badge">{items}</List>);
     expect(container.querySelector('[class*="badge"]')).toBeNull();
     expect(container.querySelectorAll('[class*="bullet"]')).toHaveLength(3);
-  });
-
-  it('keeps numbering correct when an item is removed', () => {
-    const { container, rerender } = render(<List variant="number">{items}</List>);
-    rerender(
-      <List variant="number">
-        <List.Item>One</List.Item>
-        <List.Item>Three</List.Item>
-      </List>,
-    );
-    expect([...container.querySelectorAll('li > span')].map((m) => m.textContent)).toEqual([
-      '1',
-      '2',
-    ]);
   });
 
   it('marks a nested list', () => {

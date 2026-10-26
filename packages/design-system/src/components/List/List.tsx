@@ -1,14 +1,4 @@
-import {
-  Children,
-  Fragment,
-  createContext,
-  forwardRef,
-  isValidElement,
-  useContext,
-  type HTMLAttributes,
-  type ReactElement,
-  type ReactNode,
-} from 'react';
+import { createContext, forwardRef, useContext, type HTMLAttributes, type ReactNode } from 'react';
 import clsx from 'clsx';
 import styles from './List.module.scss';
 
@@ -53,27 +43,10 @@ export interface ListItemProps extends HTMLAttributes<HTMLLIElement> {
 interface ListContext {
   variant: ListVariant;
   numberStyle: ListNumberStyle;
-  /** 1-based position of the item being rendered. */
-  index: number;
-  depth: number;
 }
 
-const Ctx = createContext<ListContext>({
-  variant: 'bullet',
-  numberStyle: 'plain',
-  index: 0,
-  depth: 0,
-});
+const Ctx = createContext<ListContext>({ variant: 'bullet', numberStyle: 'plain' });
 const DepthCtx = createContext(0);
-
-/** Children with React Fragments unwrapped (recursively), so numbering counts real items. */
-function flatten(children: ReactNode): ReactNode[] {
-  return Children.toArray(children).flatMap((child) =>
-    isValidElement(child) && child.type === Fragment
-      ? flatten((child as ReactElement<{ children?: ReactNode }>).props.children)
-      : [child],
-  );
-}
 
 /**
  * Semantic bulleted or numbered list of prose items (`<ul>` / `<ol>` with `List.Item`).
@@ -87,22 +60,21 @@ const ListRoot = forwardRef<HTMLElement, ListProps>(function ListRoot(
   const Tag = variant === 'number' ? 'ol' : 'ul';
   return (
     <DepthCtx.Provider value={depth + 1}>
-      <Tag
-        ref={ref as never}
-        // Explicit role: Safari/VoiceOver drops list semantics under `list-style: none`.
-        role="list"
-        data-gap={gap}
-        data-nested={depth > 0 ? 'true' : undefined}
-        className={clsx(styles.list, className)}
-        // {...rest} last so consumer overrides win (Pattern A).
-        {...rest}
-      >
-        {flatten(children).map((child, i) => (
-          <Ctx.Provider key={i} value={{ variant, numberStyle, index: i + 1, depth }}>
-            {child}
-          </Ctx.Provider>
-        ))}
-      </Tag>
+      <Ctx.Provider value={{ variant, numberStyle }}>
+        <Tag
+          ref={ref as never}
+          // Explicit role: Safari/VoiceOver drops list semantics under `list-style: none`.
+          role="list"
+          data-gap={gap}
+          data-variant={variant}
+          data-nested={depth > 0 ? 'true' : undefined}
+          className={clsx(styles.list, className)}
+          // {...rest} last so consumer overrides win (Pattern A).
+          {...rest}
+        >
+          {children}
+        </Tag>
+      </Ctx.Provider>
     </DepthCtx.Provider>
   );
 });
@@ -112,12 +84,13 @@ export const ListItem = forwardRef<HTMLLIElement, ListItemProps>(function ListIt
   { className, children, ...rest },
   ref,
 ) {
-  const { variant, numberStyle, index } = useContext(Ctx);
+  const { variant, numberStyle } = useContext(Ctx);
   const inner =
     variant === 'bullet' ? (
       <span className={styles.bullet} />
     ) : (
-      <span className={numberStyle === 'badge' ? styles.badge : styles.number}>{index}</span>
+      // Number comes from a CSS counter on ::before, so it survives wrappers that render 0 or 2 items.
+      <span className={numberStyle === 'badge' ? styles.badge : styles.number} />
     );
   return (
     <li ref={ref} className={clsx(styles.item, className)} {...rest}>

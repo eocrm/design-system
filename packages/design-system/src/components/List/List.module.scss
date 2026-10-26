@@ -13,6 +13,15 @@
   line-height: var(--list-line-height);
 }
 
+// Nested <ol>s start a fresh counter instance, so numbering restarts per list.
+.list[data-variant='number'] {
+  counter-reset: list-item-number;
+}
+
+.list[data-variant='number'] > .item {
+  counter-increment: list-item-number;
+}
+
 .list[data-gap='xs'] {
   gap: var(--list-gap-xs);
 }
@@ -43,6 +52,11 @@
   height: var(--list-bullet-size);
   border-radius: 50%;
   background: currentcolor;
+}
+
+.number::before,
+.badge::before {
+  content: counter(list-item-number);
 }
 
 .number {
