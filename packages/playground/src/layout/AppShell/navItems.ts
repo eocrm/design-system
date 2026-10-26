@@ -57,6 +57,7 @@ import {
   Square,
   Table as TableIcon,
   TableProperties,
+  ListChecks,
   ListOrdered,
   LayoutPanelLeft,
   LayoutPanelTop,
@@ -258,6 +259,7 @@ export const componentGroups: { heading: string; items: NavItem[] }[] = [
       { to: '/components/code', label: 'Code', icon: CodeIcon, end: false },
       { to: '/components/code-block', label: 'CodeBlock', icon: SquareTerminal, end: false },
       { to: '/components/definition-list', label: 'DefinitionList', icon: List, end: false },
+      { to: '/components/list', label: 'List', icon: ListChecks, end: false },
       {
         to: '/components/highlighted-text',
         label: 'HighlightedText',

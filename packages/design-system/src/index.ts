@@ -555,6 +555,15 @@ export type {
   CellContext,
 } from './components/DataTable';
 
+export { List } from './components/List';
+export type {
+  ListProps,
+  ListItemProps,
+  ListVariant,
+  ListGap,
+  ListNumberStyle,
+} from './components/List';
+
 export { DefinitionList } from './components/DefinitionList';
 export type {
   DefinitionListProps,

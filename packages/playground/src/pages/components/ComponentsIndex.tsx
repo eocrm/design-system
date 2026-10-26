@@ -297,6 +297,12 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['DefinitionList'],
   },
   {
+    to: '/components/list',
+    name: 'List',
+    description: 'Bulleted and numbered prose lists with first-line markers and badge steps.',
+    preview: SCHEMATICS['List'],
+  },
+  {
     to: '/components/stage-path',
     name: 'StagePath',
     description: 'Chevron row of record stages — done, current, upcoming; optional stage clicks.',

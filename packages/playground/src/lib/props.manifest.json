@@ -3978,6 +3978,38 @@
         }
       ]
     },
+    "List": {
+      "props": [
+        {
+          "name": "variant",
+          "type": "ListVariant",
+          "required": false,
+          "default": "",
+          "description": "Marker style. See `ListVariant`. Default `'bullet'`."
+        },
+        {
+          "name": "gap",
+          "type": "ListGap",
+          "required": false,
+          "default": "",
+          "description": "Space between items. See `ListGap`. Default `'sm'`."
+        },
+        {
+          "name": "numberStyle",
+          "type": "ListNumberStyle",
+          "required": false,
+          "default": "",
+          "description": "Number look; only applies to `variant=\"number\"`. See `ListNumberStyle`. Default `'plain'`."
+        },
+        {
+          "name": "children",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "`List.Item` elements. A nested `List` goes inside a `List.Item`."
+        }
+      ]
+    },
     "LiveRegion": {
       "props": [
         {
@@ -7219,6 +7251,9 @@
     "ImageCropAspectRatio": "number",
     "CropArea": "{ x: number; y: number; width: number; height: number }",
     "DataTableInstance": "DataTableInstance<T>",
+    "ListVariant": "\"number\" | \"bullet\"",
+    "ListGap": "\"sm\" | \"md\" | \"xs\"",
+    "ListNumberStyle": "\"plain\" | \"badge\"",
     "DefinitionListLayout": "\"horizontal\" | \"stacked\"",
     "DefinitionListSpacing": "\"sm\" | \"md\" | \"lg\"",
     "LinkVariant": "\"default\" | \"muted\" | \"subtle\"",

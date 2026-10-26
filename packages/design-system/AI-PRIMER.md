@@ -187,6 +187,7 @@ Each component's contract is its `docs/components/<Name>.md`; the props table th
 - [`ImageCrop`](docs/components/ImageCrop.md) — controlled image cropper
 - [`Card`](docs/components/Card.md) — bordered container
 - [`DefinitionList`](docs/components/DefinitionList.md) — semantic key/value pairs (dl / dt / dd)
+- [`List`](docs/components/List.md) — bulleted / numbered prose lists (ul / ol), optional badge step numbers
 - [`Stack`](docs/components/Stack.md) — vertical layout
 - [`Page`](docs/components/Page.md) — page-root layout primitive
 - [`Cluster`](docs/components/Cluster.md) — horizontal layout that wraps

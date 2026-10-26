@@ -94,6 +94,7 @@ const CLUSTERS = {
   Logo: 'Display',
   Calendar: 'Display',
   DefinitionList: 'Display',
+  List: 'Display',
   CircularProgress: 'Display',
   Code: 'Display',
   CodeBlock: 'Display',

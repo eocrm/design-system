@@ -29,6 +29,7 @@ import {
   Input,
   Link,
   LinkCard,
+  List,
   LiveRegion,
   Logo,
   Page,
@@ -315,8 +316,20 @@ function ApiOverviewPage() {
       <Section id="rate-limits" title="Rate limits">
         <Text>
           Limits apply per key. When you exceed one the API answers <Code>429</Code> with a{' '}
-          <Code>Retry-After</Code> header.
+          <Code>Retry-After</Code> header. Every response carries:
         </Text>
+        <List gap="xs">
+          <List.Item>
+            <Code>X-RateLimit-Limit</Code> — requests allowed per minute for the key.
+          </List.Item>
+          <List.Item>
+            <Code>X-RateLimit-Remaining</Code> — requests left in the current window.
+          </List.Item>
+          <List.Item>
+            <Code>Retry-After</Code> — seconds to wait before retrying; sent with a <Code>429</Code>
+            .
+          </List.Item>
+        </List>
       </Section>
 
       <Section id="errors" title="Errors">
@@ -627,16 +640,13 @@ function AiAssistantsPage() {
           id={`client-${client}-panel`}
           aria-labelledby={`client-${client}-tab`}
         >
-          <Stack gap="sm">
-            {c.steps.map((s, i) => (
-              <Cluster key={s} gap="sm" wrap={false} align="start">
-                <Badge color="teal" size="sm">
-                  {i + 1}
-                </Badge>
-                <Text>{s}</Text>
-              </Cluster>
+          <List variant="number" numberStyle="badge">
+            {c.steps.map((step) => (
+              <List.Item key={step}>
+                <Text>{step}</Text>
+              </List.Item>
             ))}
-          </Stack>
+          </List>
           <CodeBlock
             title={c.title}
             language={client === 'claude-code' ? 'bash' : undefined}

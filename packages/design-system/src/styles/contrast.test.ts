@@ -563,6 +563,26 @@ describe('TableOfContents link text clears AA on the page background', () => {
 });
 
 /**
+ * List markers sit on the page background. The bullet and plain number are
+ * decorative, but drawn muted they stay a 3:1 graphic; the badge number is
+ * text (4.5:1) on its subtle accent surface.
+ */
+describe('List markers clear their contrast bars', () => {
+  const file = readFileSync(resolve(__dirname, '../components/List/List.tokens.scss'), 'utf8');
+  it.each(THEMED_ACCENTS)('%s, %s accent', (_theme, _accent, source) => {
+    const layered = `${file}\n${source}`;
+    expect(
+      contrast(tokenValue('--list-badge-fg', layered), tokenValue('--list-badge-bg', layered)),
+      '--list-badge-fg on --list-badge-bg',
+    ).toBeGreaterThanOrEqual(4.5);
+    expect(
+      contrast(tokenValue('--list-marker-fg', layered), tokenValue('--color-bg', layered)),
+      '--list-marker-fg on --color-bg',
+    ).toBeGreaterThanOrEqual(3);
+  });
+});
+
+/**
  * Table.CellLink hover paints `--table-cell-link-bg-hover`
  * (`color-mix(--color-bg-overlay N%, transparent)`) over whatever the cell
  * paints. That overlay DARKENS the surface, which helps a light fg in dark but

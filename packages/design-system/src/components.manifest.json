@@ -576,6 +576,12 @@
     ],
     "composedBy": []
   },
+  "List": {
+    "tier": "primitive",
+    "cluster": "Display",
+    "composes": [],
+    "composedBy": []
+  },
   "LiveRegion": {
     "tier": "composition",
     "cluster": "Accessibility",

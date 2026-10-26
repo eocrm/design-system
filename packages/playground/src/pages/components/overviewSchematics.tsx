@@ -1085,6 +1085,16 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       </Row>
     </Col>
   ),
+  List: (
+    <Col gap={10}>
+      {[70, 92, 56].map((w, i) => (
+        <Row key={i} gap={8}>
+          <Dot solid size={7} />
+          <Bar w={w} />
+        </Row>
+      ))}
+    </Col>
+  ),
   Table: (
     <Outline
       w={210}

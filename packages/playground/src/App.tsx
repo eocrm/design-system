@@ -113,6 +113,7 @@ import { ConstrainDemo } from './pages/components/ConstrainDemo';
 import { IndentDemo } from './pages/components/IndentDemo';
 import { DataTableDemo } from './pages/components/DataTableDemo';
 import { DefinitionListDemo } from './pages/components/DefinitionListDemo';
+import { ListDemo } from './pages/components/ListDemo';
 import { EmptyStateDemo } from './pages/components/EmptyStateDemo';
 import { ErrorStateDemo } from './pages/components/ErrorStateDemo';
 import { ScreenDemo } from './pages/components/ScreenDemo';
@@ -262,6 +263,7 @@ export default function App() {
             <Route path="/components/indent" element={<IndentDemo />} />
             <Route path="/components/datatable" element={<DataTableDemo />} />
             <Route path="/components/definition-list" element={<DefinitionListDemo />} />
+            <Route path="/components/list" element={<ListDemo />} />
             <Route path="/components/empty-state" element={<EmptyStateDemo />} />
             <Route path="/components/error-state" element={<ErrorStateDemo />} />
             <Route path="/components/screen" element={<ScreenDemo />} />
