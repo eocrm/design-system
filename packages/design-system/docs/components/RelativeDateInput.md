@@ -34,9 +34,10 @@ const [period, setPeriod] = useState<string | null>('last:7d');
   aria-label="Period"
 />;
 
-// Inside a Field with an error.
-<Field label="Due date" error="Pick a due date">
-  <RelativeDateInput mode="point" invalid value={due} onChange={setDue} />
+// Inside a Field with an error. asGroup: the label captions the group (no htmlFor
+// onto a div) and the error describes it; Field injects `invalid` into the control.
+<Field asGroup label="Due date" error="Pick a due date">
+  <RelativeDateInput mode="point" value={due} onChange={setDue} />
 </Field>;
 ```
 
@@ -51,7 +52,7 @@ const [period, setPeriod] = useState<string | null>('last:7d');
 | `allowNow` | `boolean` | no | Datetime fields: offers the Now anchor with hour/minute offsets, and a minute-granular exact date (UTC `YYYY-MM-DDTHH:mm:ssZ`). Default `false`. |
 | `value` | `string \| null` | yes | The controlled expression (see the grammar in the docs), or `null` for none. `null` shows the defaults (`today` / `this:month`) without emitting them. A value that doesn't parse shows the defaults plus an "Unrecognised value" note. |
 | `onChange` | `(expr: string \| null) => void` | yes | Fires with the next canonical expression after a valid edit, and only when it differs from `value`. Invalid drafts (an out-of-range amount, an exact date not yet picked) never fire it. |
-| `presets` | `readonly RelativeDatePreset[]` | no | Quick-pick toggle buttons rendered above the controls. The one whose `value` equals `value` is pressed. |
+| `presets` | `readonly RelativeDatePreset[]` | no | Quick-pick toggle buttons rendered above the controls. The one whose `value` equals the canonical form of `value` is pressed (`last:07d` presses `last:7d`). |
 | `disabled` | `boolean` | no | Disables every control, presets included. Default `false`. |
 | `invalid` | `boolean` | no | Error chrome on the controls (`aria-invalid`), e.g. from `<Field error>`. Default `false`. |
 | …native | | | plus native `<div>` attributes |

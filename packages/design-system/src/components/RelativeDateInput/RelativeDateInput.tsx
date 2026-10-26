@@ -46,7 +46,7 @@ export interface RelativeDateInputProps extends Omit<
   value: string | null;
   /** Fires with the next canonical expression after a valid edit, and only when it differs from `value`. Invalid drafts (an out-of-range amount, an exact date not yet picked) never fire it. */
   onChange: (expr: string | null) => void;
-  /** Quick-pick toggle buttons rendered above the controls. The one whose `value` equals `value` is pressed. */
+  /** Quick-pick toggle buttons rendered above the controls. The one whose `value` equals the canonical form of `value` is pressed (`last:07d` presses `last:7d`). */
   presets?: readonly RelativeDatePreset[];
   /** Disables every control, presets included. Default `false`. */
   disabled?: boolean;
@@ -386,10 +386,13 @@ export const RelativeDateInput = forwardRef<HTMLDivElement, RelativeDateInputPro
       );
     }
 
-    // The expression the controls currently show: `value` only while the draft agrees
-    // with it, so no preset reads as pressed over an invalid or unpicked draft.
+    // The expression the controls currently show, only while the draft agrees with
+    // `value` (compared canonically, so `last:07d` presses a `last:7d` preset), so
+    // no preset reads as pressed over an invalid or unpicked draft.
     const drafted = toValue(draft, mode);
-    const shown = drafted && formatRelativeDate(drafted) === value ? value : null;
+    const parsedValue = parse(value);
+    const canonical = parsedValue ? formatRelativeDate(parsedValue) : value;
+    const shown = drafted && formatRelativeDate(drafted) === canonical ? canonical : null;
 
     const describedBy = clsx(ariaDescribedby, unrecognised && noteId) || undefined;
 

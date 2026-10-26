@@ -295,6 +295,20 @@ describe('RelativeDateInput — value handling', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
+  it.each([
+    ['range', 'Period', 'This month', 'this:month'],
+    ['point', 'Anchor', 'Today', 'today'],
+  ] as const)(
+    'after an unrecognised value in %s mode, re-picking the shown default commits it',
+    async (mode, control, option, expr) => {
+      const onChange = vi.fn();
+      render(<Host mode={mode} initial="garbage" onChange={onChange} />);
+      await pick(control, option);
+      expect(onChange).toHaveBeenLastCalledWith(expr);
+      expect(screen.queryByText(/Unrecognised/)).not.toBeInTheDocument();
+    },
+  );
+
   it('follows a controlled value, and null shows the defaults without emitting', () => {
     const onChange = vi.fn();
     const { rerender } = render(
@@ -336,6 +350,23 @@ describe('RelativeDateInput — presets', () => {
     expect(onChange).toHaveBeenLastCalledWith('last:30d');
     expect(other).toHaveAttribute('aria-pressed', 'true');
     expect(amount()).toHaveValue('30');
+  });
+});
+
+describe('RelativeDateInput — presets with a non-canonical value', () => {
+  it('presses the preset matching the canonical form', () => {
+    render(
+      <RelativeDateInput
+        mode="range"
+        value="last:07d"
+        onChange={() => {}}
+        presets={[{ label: 'Last 7 days', value: 'last:7d' }]}
+      />,
+    );
+    expect(screen.getByRole('button', { name: 'Last 7 days' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
   });
 });
 

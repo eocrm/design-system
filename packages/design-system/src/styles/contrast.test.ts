@@ -2421,11 +2421,23 @@ describe('a component hover is a visible step from what it replaces', () => {
   });
 });
 
-/** Card.Header surface="subtle": title and meta text on the muted header surface. */
+/** Card.Header surface="subtle": title and meta text on the tinted header surface. */
 describe('Card subtle header text clears AA on its surface', () => {
-  const file = readFileSync(resolve(__dirname, '../components/Card/Card.tokens.scss'), 'utf8');
+  const read = (name: string) =>
+    readFileSync(resolve(__dirname, `../components/${name}/${name}.tokens.scss`), 'utf8');
+  const file = ['Card', 'ButtonGroup', 'Button'].map(read).join('\n');
   it.each(THEMED_ACCENTS)('%s, %s accent', (_theme, _accent, source) => {
     const layered = `${file}\n${source}`;
+    // The documented condition group puts a segmented ButtonGroup and a ghost
+    // delete Button on this header. When it shared --color-bg-muted with both,
+    // the track vanished and the hover did nothing. Inequality, not the 0.04
+    // hover floor above: sunken vs muted measures 0.027 deltaE in light (0.083
+    // dark) — a visible step on screen, but under that floor, and no existing
+    // surface clears it in both themes without borrowing a hover token.
+    const header = tokenValue('--card-header-bg-subtle', layered);
+    for (const other of ['--button-group-segmented-bg', '--button-bg-ghost-hover']) {
+      expect(header, `--card-header-bg-subtle vs ${other}`).not.toBe(tokenValue(other, layered));
+    }
     for (const fg of ['--card-title-fg', '--card-meta-fg']) {
       expect(
         contrast(tokenValue(fg, layered), tokenValue('--card-header-bg-subtle', layered)),

@@ -13,7 +13,7 @@ export interface CardHeaderProps extends HTMLAttributes<HTMLDivElement> {
    */
   headerLevel?: CardHeaderLevel;
   /**
-   * `'subtle'` paints the header on a muted surface, for a nested editable
+   * `'subtle'` paints the header on a tinted (sunken) surface, for a nested editable
    * sub-section inside a `Card.Body` (e.g. a condition group). Defaults to
    * `'default'`.
    */
@@ -21,14 +21,17 @@ export interface CardHeaderProps extends HTMLAttributes<HTMLDivElement> {
   /**
    * Optional interactive slot right after the title (e.g. a `ButtonGroup`
    * mode switch). Rendered outside the heading, so it is not part of the
-   * heading's name. Order: title, controls, meta, action.
+   * heading's name. Order: title, controls, meta, action. Controls never
+   * shrink; with controls the title ellipsizes instead.
    */
   controls?: ReactNode;
   /**
    * Optional right-aligned slot — typically a `<Link>` or `<Button>` that
    * lets the user navigate to a full list or take a section-level action.
    * Rendered inside a `<span>` that never shrinks or wraps (flex-shrink: 0;
-   * with `meta`, min-width: max-content).
+   * with `meta` or `controls`, min-width: max-content). Beside `controls` it is
+   * the removal/section action of a nested sub-group (e.g. a ghost delete
+   * button), right-aligned after any meta.
    */
   action?: ReactNode;
   /**
@@ -39,8 +42,8 @@ export interface CardHeaderProps extends HTMLAttributes<HTMLDivElement> {
    * `action` keeps its width. In a `fill` Card (which needs a parent of
    * definite width) it is also visually hidden, still read by screen
    * readers, once only a sliver would show. Not part
-   * of the heading's name. Put controls in `action`, never here. `false`
-   * and `''` count as no meta.
+   * of the heading's name. Put controls in `controls` or `action`, never
+   * here. `false` and `''` count as no meta.
    */
   meta?: ReactNode;
   /**

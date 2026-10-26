@@ -30,7 +30,11 @@
   --card-section-padding-y: var(--space-3);
   --card-section-padding-x: var(--space-4);
   --card-section-border-color: var(--color-border);
-  --card-header-bg-subtle: var(--color-bg-muted);
+
+  // Sunken, not muted: muted is the segmented ButtonGroup track and the ghost
+  // Button hover, so a muted header swallowed both. bg-subtle was the other
+  // candidate, but in light it sits ~1 step off --card-bg and the tint vanishes.
+  --card-header-bg-subtle: var(--color-bg-sunken);
 
   // Body section spacing
   --card-body-padding-y: var(--space-3);

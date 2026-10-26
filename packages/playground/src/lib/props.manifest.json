@@ -5175,7 +5175,7 @@
           "type": "readonly RelativeDatePreset[]",
           "required": false,
           "default": "",
-          "description": "Quick-pick toggle buttons rendered above the controls. The one whose `value` equals `value` is pressed."
+          "description": "Quick-pick toggle buttons rendered above the controls. The one whose `value` equals the canonical form of `value` is pressed (`last:07d` presses `last:7d`)."
         },
         {
           "name": "disabled",
