@@ -109,6 +109,7 @@ export type ComponentName =
   | 'ScrollArea'
   | 'Switch'
   | 'Table'
+  | 'TableOfContents'
   | 'Tabs'
   | 'Text'
   | 'Textarea'
@@ -494,6 +495,7 @@ export const MOCKUPS = [
       'Stack',
       'Sticky',
       'Table',
+      'TableOfContents',
       'Tabs',
       'Text',
       'Title',

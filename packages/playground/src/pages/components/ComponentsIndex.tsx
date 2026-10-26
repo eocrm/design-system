@@ -589,6 +589,13 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['TopBar'],
   },
   {
+    to: '/components/table-of-contents',
+    name: 'TableOfContents',
+    description:
+      '"On this page" navigation: in-page heading links with scroll-spy and a collapsed disclosure mode.',
+    preview: SCHEMATICS['TableOfContents'],
+  },
+  {
     to: '/components/tabs',
     name: 'Tabs',
     description: 'Horizontal tab strip with optional count chips.',

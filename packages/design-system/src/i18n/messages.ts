@@ -96,6 +96,10 @@ export interface Messages {
     /** Per-box accessible name in `alphanumeric` mode. */
     character: (params: { index: number; total: number }) => string;
   };
+  input: {
+    /** Accessible name of the `<Input suggestions>` listbox. */
+    suggestions: string;
+  };
   passwordInput: {
     /** aria-label on the show-password toggle when the password is hidden. */
     show: string;
@@ -172,6 +176,10 @@ export interface Messages {
     wrap: string;
     /** Header label when there is no `title` and the language is not a known one. */
     plainText: string;
+  };
+  tableOfContents: {
+    /** Accessible name of the `<nav>`, its visible heading, and the collapsed summary. */
+    label: string;
   };
   slider: {
     /** Accessible-name suffix for the first thumb in a range slider. */

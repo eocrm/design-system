@@ -37,4 +37,18 @@
   --input-font-size-sm: var(--font-size-sm);
   --input-font-size-md: var(--font-size-md);
   --input-font-size-lg: var(--font-size-lg);
+
+  // Suggestions popup — same values as Select's listbox + option rows.
+  --input-suggestions-bg: var(--color-bg);
+  --input-suggestions-border-color: var(--color-border);
+  --input-suggestions-radius: var(--radius-md);
+  --input-suggestions-shadow: var(--shadow-md);
+  --input-suggestions-padding: var(--space-1);
+  --input-suggestions-max-height: 320px;
+  --input-suggestion-padding-y: var(--space-2);
+  --input-suggestion-padding-x: var(--space-3);
+  --input-suggestion-font-size: var(--font-size-md);
+  --input-suggestion-fg: var(--color-fg);
+  --input-suggestion-radius: var(--radius-sm);
+  --input-suggestion-bg-active: var(--color-bg-muted);
 }

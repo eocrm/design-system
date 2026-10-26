@@ -210,6 +210,9 @@ export type {
   PersonDisplaySize,
 } from './components/PersonDisplay';
 
+export { TableOfContents } from './components/TableOfContents';
+export type { TableOfContentsItem, TableOfContentsProps } from './components/TableOfContents';
+
 export { Tabs } from './components/Tabs';
 export type {
   TabsProps,

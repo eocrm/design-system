@@ -7,6 +7,11 @@
 // stable source order.
 @use '../components/Sticky/Sticky.tokens';
 
+// TableOfContents reads Sticky's --sticky-top-topbar, so its tokens @use
+// Sticky's; emitting them here keeps that re-emission in the same stable
+// global source order instead of a lazily loaded component stylesheet.
+@use '../components/TableOfContents/TableOfContents.tokens';
+
 // Package export subpaths include the extension; omitting it makes Sass
 // resolve the unexported "./styles/_tokens" partial instead.
 // stylelint-disable-next-line scss/load-partial-extension

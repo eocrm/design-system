@@ -543,6 +543,26 @@ describe('CodeBlock syntax colours and header title clear AA on their surfaces',
 });
 
 /**
+ * TableOfContents links sit on the page background: muted when inactive,
+ * accent when current. Both carry text, so both need AA.
+ */
+describe('TableOfContents link text clears AA on the page background', () => {
+  const file = readFileSync(
+    resolve(__dirname, '../components/TableOfContents/TableOfContents.tokens.scss'),
+    'utf8',
+  );
+  it.each(THEMED_ACCENTS)('%s, %s accent', (_theme, _accent, source) => {
+    const layered = `${file}\n${source}`;
+    for (const fg of ['--table-of-contents-link-fg', '--table-of-contents-link-fg-active']) {
+      expect(
+        contrast(tokenValue(fg, layered), tokenValue('--color-bg', layered)),
+        `${fg} on --color-bg`,
+      ).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+});
+
+/**
  * Table.CellLink hover paints `--table-cell-link-bg-hover`
  * (`color-mix(--color-bg-overlay N%, transparent)`) over whatever the cell
  * paints. That overlay DARKENS the surface, which helps a light fg in dark but

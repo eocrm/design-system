@@ -8,6 +8,7 @@ import { getComponentFiles } from '../../lib/componentFiles';
 export function InputDemo() {
   const [value, setValue] = useState('priya@acme.com');
   const [invalidValue, setInvalidValue] = useState('not-an-email');
+  const [workspace, setWorkspace] = useState('acme');
 
   return (
     <DemoLayout
@@ -97,6 +98,35 @@ export function Demo() {
       >
         <InputExample>
           <Input invalid value={invalidValue} onChange={(e) => setInvalidValue(e.target.value)} />
+        </InputExample>
+      </Example>
+
+      <Example
+        title="Suggestions"
+        description="Free text with suggestions. Focus shows every suggestion; typing filters them; ↑/↓ + Enter or a click fills the value. Any value can still be typed — for a fixed set, use Select."
+        code={`import { useState } from 'react';
+import { Input } from '@eocrm/design-system';
+
+export function Demo() {
+  const [workspace, setWorkspace] = useState('acme');
+
+  return (
+    <Input
+      aria-label="Workspace"
+      value={workspace}
+      onChange={(e) => setWorkspace(e.target.value)}
+      suggestions={['acme', 'acme-staging', 'northwind']}
+    />
+  );
+}`}
+      >
+        <InputExample>
+          <Input
+            aria-label="Workspace"
+            value={workspace}
+            onChange={(e) => setWorkspace(e.target.value)}
+            suggestions={['acme', 'acme-staging', 'northwind']}
+          />
         </InputExample>
       </Example>
 

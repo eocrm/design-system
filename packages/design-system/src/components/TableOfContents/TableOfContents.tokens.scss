@@ -1,0 +1,26 @@
+// TableOfContents.tokens.scss — Component-scoped tokens for <TableOfContents>. Link colours, the active bar, level-3 indent and the scroll offset the spy and click-scroll measure from.
+// Emitted from the stable styles/tokens.scss entry (not the lazy component module), like Sticky's, which it @uses.
+@use '../Sticky/Sticky.tokens';
+
+:root {
+  // Links
+  --table-of-contents-link-fg: var(--color-fg-muted);
+  --table-of-contents-link-fg-hover: var(--color-fg);
+  --table-of-contents-link-fg-active: var(--color-accent);
+  --table-of-contents-link-font-size: var(--font-size-sm);
+  --table-of-contents-link-padding-y: var(--space-1);
+  --table-of-contents-link-padding-x: var(--space-3);
+  --table-of-contents-gap: var(--space-2);
+  --table-of-contents-summary-fg: var(--color-fg);
+
+  // Active bar — the rail is the same width, transparent, so the label never shifts
+  --table-of-contents-bar-width: var(--border-width-emphasis);
+  --table-of-contents-bar-color: var(--color-accent);
+  --table-of-contents-rail-color: transparent;
+
+  // Level 3 indent, added to the link's own inline padding
+  --table-of-contents-nested-indent: var(--space-3);
+
+  // Sticky-topbar clearance: a heading counts as reached at this y, and a click scrolls it here
+  --table-of-contents-scroll-offset: var(--sticky-top-topbar);
+}

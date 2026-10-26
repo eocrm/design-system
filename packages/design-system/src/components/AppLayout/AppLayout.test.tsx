@@ -18,8 +18,32 @@ describe('AppLayout', () => {
     expect(screen.getByTestId('content')).toBeInTheDocument();
     // Deliberately a <div>, not a <main> — AppLayout can legitimately be
     // nested (demos, docs), so it must not unilaterally claim the `main`
-    // landmark. The consuming app owns that; see AppShell.tsx.
+    // landmark by default; the app opts in with `mainLandmark` (next test).
     expect(screen.queryByRole('main')).not.toBeInTheDocument();
+  });
+
+  it('mainLandmark renders the content region as <main> with the same class and keeps ref on the root', () => {
+    const ref = createRef<HTMLDivElement>();
+    const { container, rerender } = render(
+      <AppLayout>
+        <span data-testid="content">x</span>
+      </AppLayout>,
+    );
+    const defaultRegion = screen.getByTestId('content').parentElement!;
+    expect(defaultRegion.nodeName).toBe('DIV');
+    expect(screen.queryByRole('main')).toBeNull();
+    const defaultClass = defaultRegion.className;
+
+    rerender(
+      <AppLayout mainLandmark ref={ref}>
+        <span data-testid="content">x</span>
+      </AppLayout>,
+    );
+    const main = screen.getByRole('main');
+    expect(main).toContainElement(screen.getByTestId('content'));
+    expect(main.className).toBe(defaultClass);
+    expect(ref.current).toBe(container.firstChild);
+    expect(ref.current?.nodeName).toBe('DIV');
   });
 
   it('renders the topBar slot when provided, omits its wrapper when not', () => {

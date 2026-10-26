@@ -938,6 +938,14 @@
       "DataTable"
     ]
   },
+  "TableOfContents": {
+    "tier": "composition",
+    "cluster": "Navigation",
+    "composes": [
+      "Text"
+    ],
+    "composedBy": []
+  },
   "Tabs": {
     "tier": "primitive",
     "cluster": "Navigation",
@@ -961,7 +969,8 @@
       "PersonDisplay",
       "RichTextEditor",
       "SettingRow",
-      "SlotGrid"
+      "SlotGrid",
+      "TableOfContents"
     ]
   },
   "Textarea": {

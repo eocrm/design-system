@@ -43,6 +43,9 @@ export const ru: Messages = {
     digit: ({ index, total }) => `Цифра ${index} из ${total}`,
     character: ({ index, total }) => `Символ ${index} из ${total}`,
   },
+  input: {
+    suggestions: 'Подсказки',
+  },
   passwordInput: {
     show: 'Показать пароль',
     hide: 'Скрыть пароль',
@@ -72,6 +75,9 @@ export const ru: Messages = {
     copyFailed: 'Не удалось скопировать',
     wrap: 'Переносить строки',
     plainText: 'Текст',
+  },
+  tableOfContents: {
+    label: 'На этой странице',
   },
   slider: {
     minimum: 'минимум',

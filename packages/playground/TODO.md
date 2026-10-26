@@ -44,9 +44,10 @@ A raw `<pre><code>` with inline token-based styles, no copy button, no highlight
 
 **When this ships:** replace `CodeSample` in the Docs mockup, then tick this checkbox.
 
-### [ ] `<TableOfContents>` — "On this page" nav with scroll-spy
+### [x] `<TableOfContents>` — "On this page" nav with scroll-spy
 
 **Filed:** 2026-10-26
+**Shipped:** 2026-10-26 — `<TableOfContents>` with scroll-spy and a collapsed mode; the Docs mockup `Article` now uses it.
 **Mocked in:**
 
 - `packages/playground/src/pages/mockups/Docs/Docs.tsx` (`Article` aside)
@@ -57,9 +58,11 @@ A `<nav aria-label="On this page">` list of in-page anchor links (optionally nes
 **Current workaround:**
 `Sticky` + `Stack` of muted `Link`s; no active-section tracking, no landmark, and anchor jumps land under the pinned TopBar.
 
-**When this ships:** replace the aside in `Article`, then tick this checkbox.
+**Resolution:** use `<Sticky top="topbar"><TableOfContents items={toc} /></Sticky>`.
 
-### [ ] `<AppLayout>` — let the content region be the `<main>` landmark
+### [x] `<AppLayout>` — let the content region be the `<main>` landmark
+
+**Shipped:** 2026-10-26 — `mainLandmark` prop
 
 **Filed:** 2026-10-26
 **Mocked in:**

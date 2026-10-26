@@ -23,7 +23,7 @@ beside results).
 <!-- prettier-ignore -->
 | Prop | Type | Required | Description |
 |---|---|---|---|
-| `aside` | `ReactNode` | yes | The narrow, intrinsic-width pane — a vertical `Tabs` rail, filter list, or nav column. |
+| `aside` | `ReactNode` | no | The narrow, intrinsic-width pane — a vertical `Tabs` rail, filter list, or nav column. `null` / `false` / `undefined` renders no aside cell at all (no empty track or gap), so content can be conditionally moved out of the aside; `main` then fills the split. |
 | `side` | `'start' \| 'end'` | no | Which side `aside` sits on. - `'start'` (default) — leading edge (left in LTR). - `'end'` — trailing edge (right in LTR). |
 | `asideWidth` | `string` | no | `aside` column width. - `'auto'` (default) — intrinsic; sizes to the pane's content. - a CSS length (e.g. `'240px'`) — pins the column so `main` doesn't reflow when `aside` content changes width. |
 | `gap` | `'xs' \| 'sm' \| 'md' \| 'lg' \| 'xl' \| '2xl'` | no | Gap between the two panes, in pixels: `xs` (4) / `sm` (8) / `md` (12, default) / `lg` (16) / `xl` (24) / `2xl` (32). Same scale as Stack, Cluster, and Grid. |
@@ -35,6 +35,7 @@ beside results).
 <!-- props:end -->
 
 - `children` is the filling main pane (`min-width: 0` — long content shrinks/scrolls instead of overflowing).
+- An empty `aside` (`null` / `false` / `undefined`) renders no aside track even with `asideWidth`. To keep the track reserved (e.g. while data loads), pass an empty fragment (`<></>`) or a placeholder.
 
 ```tsx
 // Settings screen: a 220px rail that becomes a horizontal strip when it stacks.
@@ -44,6 +45,7 @@ beside results).
 ```
 
 - Collapsed panes stack in **DOM order**: aside → main for `side="start"` (default), main → aside for `side="end"`. No CSS `order` flip — visual order stays in sync with tab order. Need the aside on top when stacked? Use `side="start"`.
+- A pinned `<Sticky>` aside needs `align="stretch"`: the default `align="start"` makes the aside cell only as tall as its content, leaving nothing to pin within.
 - A `<Sticky>` passed as `aside` becomes a plain block while collapsed (no pin, no `scroll` cap) — don't shim it.
 - `onCollapsedChange(collapsed)` — fires on mount with the initial state (twice under StrictMode in dev), then on every change; the root also carries `data-collapsed`. It measures the split's own content width against the same inclusive threshold as the container query, so it agrees with the CSS (`useBelowBreakpoint` measures the viewport and does not, beside an app sidebar). Use it to move content YOU own so DOM order = visual order in both states — never CSS `order`:
 

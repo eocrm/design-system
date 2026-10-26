@@ -91,6 +91,7 @@ import { EntityChipDemo } from './pages/components/EntityChipDemo';
 import { DotDemo } from './pages/components/DotDemo';
 import { BrandIconDemo } from './pages/components/BrandIconDemo';
 import { LogoDemo } from './pages/components/LogoDemo';
+import { TableOfContentsDemo } from './pages/components/TableOfContentsDemo';
 import { TabsDemo } from './pages/components/TabsDemo';
 import { DropdownMenuDemo } from './pages/components/DropdownMenuDemo';
 import { TooltipDemo } from './pages/components/TooltipDemo';
@@ -238,6 +239,7 @@ export default function App() {
             <Route path="/components/dot" element={<DotDemo />} />
             <Route path="/components/brand-icon" element={<BrandIconDemo />} />
             <Route path="/components/logo" element={<LogoDemo />} />
+            <Route path="/components/table-of-contents" element={<TableOfContentsDemo />} />
             <Route path="/components/tabs" element={<TabsDemo />} />
             <Route path="/components/dropdown-menu" element={<DropdownMenuDemo />} />
             <Route path="/components/tooltip" element={<TooltipDemo />} />

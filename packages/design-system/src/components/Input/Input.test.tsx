@@ -1,7 +1,9 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createRef, useState } from 'react';
+import { Profiler, createRef, useState, type FormEvent } from 'react';
 import { Input } from './Input';
+import { Modal } from '../Modal';
+import { I18nProvider } from '../../i18n/I18nProvider';
 
 describe('Input', () => {
   it('round-trips a controlled value via onChange', async () => {
@@ -138,5 +140,299 @@ describe('Input', () => {
     const input = container.querySelector('input')!;
     expect(input).not.toHaveAttribute('autocomplete');
     expect(input).not.toHaveAttribute('data-1p-ignore');
+  });
+});
+
+describe('Input suggestions', () => {
+  const SUGGESTIONS = ['acme', 'acme-staging', 'northwind'];
+
+  function Uncontrolled(props: { onChange?: (v: string) => void; defaultValue?: string }) {
+    return (
+      <Input
+        aria-label="Workspace"
+        suggestions={SUGGESTIONS}
+        defaultValue={props.defaultValue}
+        onChange={(e) => props.onChange?.(e.target.value)}
+      />
+    );
+  }
+
+  function Controlled({ onChange }: { onChange?: (v: string) => void }) {
+    const [v, setV] = useState('');
+    return (
+      <Input
+        aria-label="Workspace"
+        suggestions={SUGGESTIONS}
+        value={v}
+        onChange={(e) => {
+          setV(e.target.value);
+          onChange?.(e.target.value);
+        }}
+      />
+    );
+  }
+
+  const optionNames = () => screen.queryAllByRole('option').map((o) => o.textContent);
+
+  it('is a plain input without suggestions or with an empty list', () => {
+    const { rerender } = render(<Input aria-label="Workspace" />);
+    expect(screen.queryByRole('combobox')).toBeNull();
+    rerender(<Input aria-label="Workspace" suggestions={[]} />);
+    expect(screen.queryByRole('combobox')).toBeNull();
+    expect(screen.getByRole('textbox')).not.toHaveAttribute('aria-expanded');
+  });
+
+  it('is a collapsed combobox until focused, then lists every suggestion even when prefilled', async () => {
+    const user = userEvent.setup();
+    render(<Uncontrolled defaultValue="acme" />);
+    const input = screen.getByRole('combobox');
+    expect(input).toHaveAttribute('aria-expanded', 'false');
+    expect(input).toHaveAttribute('aria-autocomplete', 'list');
+    expect(input).not.toHaveAttribute('aria-controls');
+    expect(screen.queryByRole('listbox')).toBeNull();
+    await user.click(input);
+    expect(input).toHaveAttribute('aria-expanded', 'true');
+    const listbox = screen.getByRole('listbox', { name: 'Suggestions' });
+    expect(input).toHaveAttribute('aria-controls', listbox.id);
+    expect(optionNames()).toEqual(SUGGESTIONS);
+    expect(input).not.toHaveAttribute('aria-activedescendant');
+  });
+
+  it('filters by case-insensitive substring once the user types, and closes on no match', async () => {
+    const user = userEvent.setup();
+    render(<Uncontrolled />);
+    const input = screen.getByRole('combobox');
+    await user.type(input, 'NORTH');
+    expect(optionNames()).toEqual(['northwind']);
+    await user.clear(input);
+    await user.type(input, 'zzz');
+    expect(screen.queryByRole('listbox')).toBeNull();
+    expect(input).toHaveAttribute('aria-expanded', 'false');
+  });
+
+  it('drops a stale highlight when the suggestions shrink, and Enter then does nothing', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const props = { 'aria-label': 'Workspace', onChange, defaultValue: 'x' };
+    const { rerender } = render(<Input {...props} suggestions={['a', 'b', 'c']} />);
+    const input = screen.getByRole('combobox');
+    await user.click(input);
+    await user.keyboard('{ArrowDown}{ArrowDown}{ArrowDown}');
+    expect(input).toHaveAttribute('aria-activedescendant');
+    rerender(<Input {...props} suggestions={['a', 'b']} />);
+    expect(input).not.toHaveAttribute('aria-activedescendant');
+    await user.keyboard('{Enter}');
+    expect(input).toHaveValue('x');
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('forces autofill off even with a real autoComplete', () => {
+    render(<Input aria-label="W" autoComplete="email" suggestions={SUGGESTIONS} />);
+    expect(screen.getByRole('combobox')).toHaveAttribute('autocomplete', 'off');
+  });
+
+  it('yields Escape to the open list inside a Modal, then closes the Modal', async () => {
+    const user = userEvent.setup();
+    const onOpenChange = vi.fn();
+    render(
+      <Modal open onOpenChange={onOpenChange}>
+        <Modal.Header>Title</Modal.Header>
+        <Modal.Body>
+          <Input aria-label="Workspace" suggestions={SUGGESTIONS} />
+        </Modal.Body>
+      </Modal>,
+    );
+    await user.click(screen.getByRole('combobox'));
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('listbox')).toBeNull();
+    expect(onOpenChange).not.toHaveBeenCalled();
+    await user.keyboard('{Escape}');
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it('moves the highlight with wrap-around and selects on Enter', async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(<Uncontrolled onChange={onChange} />);
+    const input = screen.getByRole('combobox');
+    await user.click(input);
+    await user.keyboard('{ArrowDown}');
+    const options = screen.getAllByRole('option');
+    expect(input).toHaveAttribute('aria-activedescendant', options[0]!.id);
+    expect(options[0]).toHaveAttribute('aria-selected', 'true');
+    await user.keyboard('{ArrowUp}');
+    expect(input).toHaveAttribute('aria-activedescendant', options[2]!.id);
+    await user.keyboard('{ArrowDown}');
+    expect(input).toHaveAttribute('aria-activedescendant', options[0]!.id);
+    await user.keyboard('{Enter}');
+    expect(input).toHaveValue('acme');
+    expect(onChange).toHaveBeenLastCalledWith('acme');
+    expect(screen.queryByRole('listbox')).toBeNull();
+    expect(input).toHaveAttribute('aria-expanded', 'false');
+    expect(input).not.toHaveAttribute('aria-activedescendant');
+  });
+
+  it('opens on ArrowDown after Escape closed it', async () => {
+    const user = userEvent.setup();
+    render(<Uncontrolled />);
+    const input = screen.getByRole('combobox');
+    await user.click(input);
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('listbox')).toBeNull();
+    await user.keyboard('{ArrowDown}');
+    expect(optionNames()).toEqual(SUGGESTIONS);
+  });
+
+  it('leaves Enter native when nothing is highlighted (submits the form)', async () => {
+    const onSubmit = vi.fn((e: FormEvent) => e.preventDefault());
+    const user = userEvent.setup();
+    render(
+      <form onSubmit={onSubmit}>
+        <Uncontrolled />
+      </form>,
+    );
+    await user.click(screen.getByRole('combobox'));
+    await user.keyboard('{Enter}');
+    expect(onSubmit).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not submit the form when Enter picks a highlighted option', async () => {
+    const onSubmit = vi.fn((e: FormEvent) => e.preventDefault());
+    const user = userEvent.setup();
+    render(
+      <form onSubmit={onSubmit}>
+        <Uncontrolled />
+      </form>,
+    );
+    await user.click(screen.getByRole('combobox'));
+    await user.keyboard('{ArrowDown}{Enter}');
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it('closes on Escape, and on Tab without changing the value', async () => {
+    const user = userEvent.setup();
+    render(
+      <>
+        <Uncontrolled defaultValue="x" />
+        <button type="button">next</button>
+      </>,
+    );
+    const input = screen.getByRole('combobox');
+    await user.click(input);
+    await user.keyboard('{Escape}');
+    expect(screen.queryByRole('listbox')).toBeNull();
+    expect(input).toHaveAttribute('aria-expanded', 'false');
+    await user.click(input);
+    await user.keyboard('{ArrowDown}');
+    await user.tab();
+    expect(screen.queryByRole('listbox')).toBeNull();
+    expect(input).toHaveValue('x');
+  });
+
+  it('selects a clicked option, keeps focus on the input and closes', async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(<Uncontrolled onChange={onChange} />);
+    const input = screen.getByRole('combobox');
+    await user.click(input);
+    await user.click(screen.getByRole('option', { name: 'northwind' }));
+    expect(input).toHaveValue('northwind');
+    expect(onChange).toHaveBeenLastCalledWith('northwind');
+    expect(input).toHaveFocus();
+    expect(screen.queryByRole('listbox')).toBeNull();
+  });
+
+  it('updates a controlled value through onChange', async () => {
+    const onChange = vi.fn();
+    const user = userEvent.setup();
+    render(<Controlled onChange={onChange} />);
+    const input = screen.getByRole('combobox');
+    await user.type(input, 'stag');
+    expect(optionNames()).toEqual(['acme-staging']);
+    await user.keyboard('{ArrowDown}{Enter}');
+    expect(input).toHaveValue('acme-staging');
+    expect(onChange).toHaveBeenLastCalledWith('acme-staging');
+  });
+
+  it('names the listbox in the active locale', async () => {
+    const user = userEvent.setup();
+    render(
+      <I18nProvider locale="ru">
+        <Uncontrolled />
+      </I18nProvider>,
+    );
+    await user.click(screen.getByRole('combobox'));
+    expect(screen.getByRole('listbox', { name: 'Подсказки' })).toBeInTheDocument();
+  });
+
+  it('still calls consumer focus and keydown handlers', async () => {
+    const onFocus = vi.fn();
+    const onKeyDown = vi.fn();
+    const user = userEvent.setup();
+    render(
+      <Input
+        aria-label="Workspace"
+        suggestions={SUGGESTIONS}
+        onFocus={onFocus}
+        onKeyDown={onKeyDown}
+      />,
+    );
+    await user.click(screen.getByRole('combobox'));
+    await user.keyboard('{ArrowDown}');
+    expect(onFocus).toHaveBeenCalledTimes(1);
+    expect(onKeyDown).toHaveBeenCalled();
+  });
+
+  it('renders duplicate suggestions once, in first-occurrence order', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const user = userEvent.setup();
+    render(<Input aria-label="Workspace" suggestions={['acme', 'northwind', 'acme']} />);
+    await user.click(screen.getByRole('combobox'));
+    expect(optionNames()).toEqual(['acme', 'northwind']);
+    expect(error).not.toHaveBeenCalled();
+    error.mockRestore();
+  });
+
+  it('is a plain textbox when readOnly', () => {
+    render(<Input aria-label="Workspace" suggestions={SUGGESTIONS} readOnly />);
+    expect(screen.queryByRole('combobox')).toBeNull();
+  });
+
+  it('ignores Enter and arrows while an IME is composing', async () => {
+    const onSubmit = vi.fn((e: FormEvent) => e.preventDefault());
+    const user = userEvent.setup();
+    render(
+      <form onSubmit={onSubmit}>
+        <Uncontrolled />
+      </form>,
+    );
+    const input = screen.getByRole('combobox');
+    await user.click(input);
+    fireEvent.keyDown(input, { key: 'ArrowDown', isComposing: true });
+    expect(input).not.toHaveAttribute('aria-activedescendant');
+    await user.keyboard('{ArrowDown}');
+    const enter = fireEvent.keyDown(input, { key: 'Enter', isComposing: true });
+    expect(enter).toBe(true); // not prevented: the IME commits the composition
+    expect(input).toHaveValue('');
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
+  });
+
+  // The popup machinery mounts only while the list is shown, so a plain or
+  // closed Input must not re-render on mount (e.g. via a Floating UI ref setState).
+  it.each([
+    ['without suggestions', undefined],
+    ['with suggestions while closed', SUGGESTIONS],
+  ])('commits once on mount %s', (_, suggestions) => {
+    const onRender = vi.fn();
+    const ref = createRef<HTMLInputElement>();
+    render(
+      <Profiler id="input" onRender={onRender}>
+        <Input ref={ref} aria-label="Workspace" suggestions={suggestions} />
+      </Profiler>,
+    );
+    expect(onRender).toHaveBeenCalledTimes(1);
+    expect(onRender.mock.calls[0]![1]).toBe('mount');
+    expect(ref.current).toBeInstanceOf(HTMLInputElement);
   });
 });

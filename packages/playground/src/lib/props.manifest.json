@@ -193,6 +193,13 @@
           "description": "Fires whenever the overlay sidebar opens or closes — close button, Esc, backdrop click, swipe, or programmatic. Pair with `sidebarOpen` — see its doc."
         },
         {
+          "name": "mainLandmark",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Render the content region as a `<main>` landmark instead of a plain `<div>`.\nPass it on the outermost app shell so the page gets its single `main`\nlandmark without a wrapper element. Leave it off (default) for nested\nuse — demos, documentation previews — so the page never gets two `main`s."
+        },
+        {
           "name": "children",
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": true,
@@ -3614,7 +3621,14 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Block browser autofill AND password managers from offering to fill\nthis input. Applies the standard set of opt-out hints:\n- `autoComplete=\"off\"`\n- `data-1p-ignore` (1Password)\n- `data-lpignore=\"true\"` (LastPass)\n- `data-form-type=\"other\"` (generic \"not a login field\")\n\n**Smart default**: when omitted, the input blocks autofill iff `autoComplete`\nis also omitted (or `'off'`). Explicit autocomplete hints\n(`autoComplete=\"email\"`, `\"current-password\"`, `\"username\"`, etc.) opt back\nIN to autofill — the assumption is that a consumer specifying autoComplete\nactually wants password-manager interaction. Pass `disableAutofill={true}`\nto force-block even with an autocomplete hint, or `false` to force-allow."
+          "description": "Block browser autofill AND password managers from offering to fill\nthis input. Applies the standard set of opt-out hints:\n- `autoComplete=\"off\"`\n- `data-1p-ignore` (1Password)\n- `data-lpignore=\"true\"` (LastPass)\n- `data-form-type=\"other\"` (generic \"not a login field\")\n\n**Smart default**: when omitted, the input blocks autofill iff `autoComplete`\nis also omitted (or `'off'`). Explicit autocomplete hints\n(`autoComplete=\"email\"`, `\"current-password\"`, `\"username\"`, etc.) opt back\nIN to autofill — the assumption is that a consumer specifying autoComplete\nactually wants password-manager interaction. Pass `disableAutofill={true}`\nto force-block even with an autocomplete hint, or `false` to force-allow\n(except while `suggestions` is active, which always blocks)."
+        },
+        {
+          "name": "suggestions",
+          "type": "readonly string[]",
+          "required": false,
+          "default": "",
+          "description": "Values to suggest while the value stays free text (e.g. the user's other\nworkspace slugs). Makes the input an ARIA combobox with a suggestion list:\nit opens on focus, click or ↓ showing every suggestion, then filters by\ncase-insensitive substring once the user types. ↑/↓ + Enter or a click\nfills the value and fires `onChange` exactly as typing would. Ignored when\nempty or `readOnly`. Browser autofill is forced off while active (even with\nan `autoComplete` hint) so its dropdown can't stack on this one. Default:\nnone (a plain textbox). For a fixed set of allowed values use `<Select>`\ninstead."
         }
       ]
     },
@@ -6016,9 +6030,9 @@
         {
           "name": "aside",
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
-          "required": true,
+          "required": false,
           "default": "",
-          "description": "The narrow, intrinsic-width pane — a vertical `Tabs` rail, filter list, or nav column."
+          "description": "The narrow, intrinsic-width pane — a vertical `Tabs` rail, filter list, or nav column.\n`null` / `false` / `undefined` renders no aside cell at all (no empty track or gap),\nso content can be conditionally moved out of the aside; `main` then fills the split."
         },
         {
           "name": "side",
@@ -6316,6 +6330,24 @@
           "required": false,
           "default": "",
           "description": "Compound-subcomponent children."
+        }
+      ]
+    },
+    "TableOfContents": {
+      "props": [
+        {
+          "name": "items",
+          "type": "readonly TableOfContentsItem[]",
+          "required": true,
+          "default": "",
+          "description": "Entries in document order. An empty list renders nothing."
+        },
+        {
+          "name": "collapsed",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Render a `<details>` disclosure (summary \"On this page · <active>\") instead\nof the heading + list. Use where there is no room for a side rail, e.g. on\nnarrow viewports above the content. Default `false`."
         }
       ]
     },
@@ -7054,6 +7086,7 @@
     "FlowCanvasSelection": "{ type: \"node\" | \"edge\"; id: string; } | null",
     "FlowCanvasPoint": "{ x: number; y: number }",
     "PersonDisplaySize": "\"sm\" | \"md\" | \"lg\" | \"inline\"",
+    "TableOfContentsItem": "{ id: string; label: string; level: 2 | 3 }",
     "TabsActivationMode": "\"auto\" | \"manual\"",
     "TabsOrientation": "\"auto\" | \"horizontal\" | \"vertical\"",
     "EmptyStateSize": "\"sm\" | \"md\" | \"lg\"",

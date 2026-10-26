@@ -101,6 +101,13 @@ export interface AppLayoutProps extends HTMLAttributes<HTMLDivElement> {
   sidebarOpen?: boolean;
   /** Fires whenever the overlay sidebar opens or closes — close button, Esc, backdrop click, swipe, or programmatic. Pair with `sidebarOpen` — see its doc. */
   onSidebarOpenChange?: (open: boolean) => void;
+  /**
+   * Render the content region as a `<main>` landmark instead of a plain `<div>`.
+   * Pass it on the outermost app shell so the page gets its single `main`
+   * landmark without a wrapper element. Leave it off (default) for nested
+   * use — demos, documentation previews — so the page never gets two `main`s.
+   */
+  mainLandmark?: boolean;
   /** Main content slot — fills the remaining space below the top bar. */
   children: ReactNode;
 }
@@ -117,6 +124,7 @@ export const AppLayout = forwardRef<HTMLDivElement, AppLayoutProps>(function App
     sidebar,
     sidebarPinned,
     sidebarOverlayBelow,
+    mainLandmark,
     sidebarOpen,
     onSidebarOpenChange,
     children,
@@ -126,6 +134,7 @@ export const AppLayout = forwardRef<HTMLDivElement, AppLayoutProps>(function App
   ref,
 ) {
   const t = useTranslation();
+  const Main = mainLandmark ? 'main' : 'div';
   const overlay = useBelowBreakpoint(sidebarOverlayBelow) && sidebar != null;
   // Whether the Drawer should exist AT ALL, independent of the live viewport
   // threshold. Kept mounted across the crossing (see below) rather than
@@ -181,7 +190,7 @@ export const AppLayout = forwardRef<HTMLDivElement, AppLayoutProps>(function App
           {contextBanner != null && contextBanner !== false && (
             <div className={styles.contextBanner}>{contextBanner}</div>
           )}
-          <div className={styles.main}>{children}</div>
+          <Main className={styles.main}>{children}</Main>
         </div>
       </div>
       {overlayConfigured && (
