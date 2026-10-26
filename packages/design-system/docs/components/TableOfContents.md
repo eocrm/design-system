@@ -3,37 +3,43 @@
 Lists a long page's h2/h3 headings as in-page links, highlights the one being read (scroll-spy), and scrolls to a heading on click clear of the pinned TopBar. It does not make itself sticky — wrap it in `<Sticky top="topbar">`.
 
 ```tsx
-const items = [
+import { useState } from 'react';
+import { Split, Sticky, TableOfContents } from '@eocrm/design-system';
+
+const toc = [
   { id: 'overview', label: 'Overview', level: 2 },
   { id: 'install', label: 'Install', level: 3 },
   { id: 'usage', label: 'Usage', level: 2 },
-];
+] as const;
 
-// Wide viewports: a pinned rail beside the content.
-<Split
-  side="end"
-  asideWidth="240px"
-  align="stretch"
-  collapseBelow="md"
-  onCollapsedChange={setNarrow}
-  aside={
-    <Sticky top="topbar">
-      <TableOfContents items={items} />
-    </Sticky>
-  }
->
-  <article>
-    <h2 id="overview">Overview</h2>
-    <h3 id="install">Install</h3>
-    <h2 id="usage">Usage</h2>
-  </article>
-</Split>;
-
-// Narrow viewports: a disclosure above the content (drive it from Split's onCollapsedChange).
-{
-  narrow ? <TableOfContents items={items} collapsed /> : null;
+function GuidePage() {
+  const [narrow, setNarrow] = useState(false);
+  return (
+    // side="start" so the stacked aside lands ABOVE the article. One TOC always:
+    // a pinned rail when wide, the collapsed disclosure when Split stacks.
+    <Split
+      side="start"
+      asideWidth="240px"
+      align="stretch"
+      collapseBelow="md"
+      onCollapsedChange={setNarrow}
+      aside={
+        <Sticky top="topbar">
+          <TableOfContents items={toc} collapsed={narrow} />
+        </Sticky>
+      }
+    >
+      <article>
+        <h2 id="overview">Overview</h2>
+        <h3 id="install">Install</h3>
+        <h2 id="usage">Usage</h2>
+      </article>
+    </Split>
+  );
 }
 ```
+
+Why not `side="end"` with `aside={narrow ? null : …}`: `Split` always renders the aside cell, so a `null` aside leaves an empty grid row (a stray gap) when stacked, and with `side="end"` the stacked aside sits after the article. Keep the TOC in the aside and flip `collapsed` instead.
 
 <!-- props:start -->
 
@@ -63,4 +69,4 @@ When NOT to use: app or page-level navigation → `Rail` / `Tabs`; short pages w
 
 - ❌ Omitting the `<Sticky top="topbar">` wrapper and expecting the rail to pin: the component is not sticky.
 - ❌ `items` ids that don't match heading ids: the entry renders but never becomes active, and clicking falls back to native jump (no TopBar offset).
-- ❌ Rendering both the rail and the collapsed form at once: that yields two "On this page" navs.
+- ❌ Rendering a rail TOC and a separate collapsed TOC together: that yields two "On this page" navs. Render one and flip `collapsed`.
