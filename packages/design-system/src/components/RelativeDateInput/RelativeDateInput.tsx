@@ -55,7 +55,8 @@ export interface RelativeDateInputProps extends Omit<
 }
 
 type Mode = RelativeDateInputProps['mode'];
-type RangeKind = 'lastN' | 'nextN' | 'this' | 'last' | 'next' | 'toDate';
+/** Range kinds: rolling past/coming N units, a whole calendar period, or a period to date. */
+type RangeKind = 'past' | 'coming' | 'calendar' | 'toDate';
 
 /** Every edit state the controls show; one shape for both modes. */
 interface Draft {
@@ -66,6 +67,7 @@ interface Draft {
   anchor: string;
   sign: 1 | -1;
   kind: RangeKind;
+  scope: RelativeScope;
   period: RelativePeriod;
   /** Raw numeric text, kept as typed so an invalid draft survives re-renders. */
   amount: string;
@@ -75,7 +77,8 @@ interface Draft {
 const PERIODS: RelativePeriod[] = ['week', 'month', 'quarter', 'year'];
 const SCOPES: RelativeScope[] = ['this', 'last', 'next'];
 const DATE_UNITS: RelativeUnit[] = ['d', 'w', 'mo', 'y'];
-const KINDS: RangeKind[] = ['lastN', 'nextN', 'this', 'last', 'next', 'toDate'];
+const KINDS: RangeKind[] = ['past', 'coming', 'calendar', 'toDate'];
+const CALENDAR = SCOPES.flatMap((scope) => PERIODS.map((period) => ({ scope, period })));
 const BOUNDARIES = (['start', 'end'] as const).flatMap((edge) =>
   SCOPES.flatMap((scope) => PERIODS.map((period) => ({ edge, scope, period }))),
 );
@@ -85,16 +88,27 @@ const defaults = (mode: Mode): Draft => ({
   date: null,
   anchor: 'today',
   sign: 1,
-  kind: 'this',
+  kind: 'calendar',
+  scope: 'this',
   period: 'month',
   amount: mode === 'point' ? '0' : '7',
   unit: 'd',
 });
 
-/** The draft for an incoming value. An exact date keeps `prev`'s relative fields, so toggling Exact date off restores them. */
+/** Hours and minutes exist only on Now. */
+const normalize = (d: Draft, mode: Mode): Draft =>
+  mode === 'point' && d.anchor !== 'now' && (d.unit === 'h' || d.unit === 'min')
+    ? { ...d, unit: 'd' }
+    : d;
+
+/**
+ * The draft for an incoming value. Fields the value doesn't carry keep `prev`'s
+ * (an exact date keeps the relative fields; a whole period keeps the rolling
+ * amount/unit), so switching back restores what the user had.
+ */
 function fromValue(parsed: RelativeDateValue | null, mode: Mode, prev: Draft): Draft {
-  const d = defaults(mode);
-  if (!parsed) return d;
+  if (!parsed) return defaults(mode);
+  const base = { ...prev, exact: false };
   switch (parsed.kind) {
     case 'exact':
       return { ...prev, exact: true, date: parsed.date };
@@ -105,26 +119,29 @@ function fromValue(parsed: RelativeDateValue | null, mode: Mode, prev: Draft): D
           ? parsed.anchor
           : `${parsed.edge}:${parsed.scope}:${parsed.period}`;
       const o = parsed.offset;
-      return o
-        ? { ...d, anchor, sign: o.sign, amount: String(o.n), unit: o.unit }
-        : { ...d, anchor };
+      return normalize(
+        o
+          ? { ...base, anchor, sign: o.sign, amount: String(o.n), unit: o.unit }
+          : { ...base, anchor, amount: '0' },
+        mode,
+      );
     }
     case 'rolling':
       return {
-        ...d,
-        kind: parsed.dir === 'last' ? 'lastN' : 'nextN',
+        ...base,
+        kind: parsed.dir === 'last' ? 'past' : 'coming',
         amount: String(parsed.n),
         unit: parsed.unit,
       };
     case 'period':
-      return { ...d, kind: parsed.scope, period: parsed.period };
+      return { ...base, kind: 'calendar', scope: parsed.scope, period: parsed.period };
     case 'toDate':
-      return { ...d, kind: 'toDate', period: parsed.period };
+      return { ...base, kind: 'toDate', period: parsed.period };
   }
 }
 
 const usesAmount = (d: Draft, mode: Mode) =>
-  mode === 'point' ? !d.exact : d.kind === 'lastN' || d.kind === 'nextN';
+  mode === 'point' ? !d.exact : d.kind === 'past' || d.kind === 'coming';
 
 const amountLimits = (mode: Mode) =>
   mode === 'point' ? { min: 0, max: OFFSET_MAX } : { min: ROLLING_MIN, max: ROLLING_MAX };
@@ -140,14 +157,14 @@ function amountOf(d: Draft, mode: Mode): number | null {
 /** The value a draft stands for, or `null` while it is incomplete or invalid. */
 function toValue(d: Draft, mode: Mode): RelativeDateValue | null {
   if (mode === 'point' && d.exact) return d.date ? { kind: 'exact', date: d.date } : null;
-  if (mode === 'range' && (d.kind === 'this' || d.kind === 'last' || d.kind === 'next'))
-    return { kind: 'period', scope: d.kind, period: d.period };
+  if (mode === 'range' && d.kind === 'calendar')
+    return { kind: 'period', scope: d.scope, period: d.period };
   if (mode === 'range' && d.kind === 'toDate') return { kind: 'toDate', period: d.period };
   const n = amountOf(d, mode);
   if (n === null) return null;
   if (mode === 'range') {
     const unit = d.unit as 'd' | 'w' | 'mo' | 'y';
-    return { kind: 'rolling', dir: d.kind === 'lastN' ? 'last' : 'next', n, unit };
+    return { kind: 'rolling', dir: d.kind === 'past' ? 'last' : 'next', n, unit };
   }
   const offset = { sign: d.sign, n, unit: d.unit };
   if (d.anchor === 'today' || d.anchor === 'now')
@@ -209,21 +226,19 @@ export const RelativeDateInput = forwardRef<HTMLDivElement, RelativeDateInputPro
     const parse = (v: string | null) =>
       v === null ? null : parseRelativeDate(v, { mode, allowNow });
     const [draft, setDraft] = useState(() => fromValue(parse(value), mode, defaults(mode)));
-    // Re-derive the draft whenever `value` changes (render-phase update, no effect).
-    const [seen, setSeen] = useState(value);
-    if (value !== seen) {
-      setSeen(value);
-      setDraft((prev) => fromValue(parse(value), mode, prev));
+    // Re-derive the draft whenever `value`, `mode` or `allowNow` changes (render-phase
+    // update, no effect). A new mode starts from that mode's defaults.
+    const [seen, setSeen] = useState({ value, mode, allowNow });
+    if (value !== seen.value || mode !== seen.mode || allowNow !== seen.allowNow) {
+      setSeen({ value, mode, allowNow });
+      setDraft((prev) => fromValue(parse(value), mode, mode === seen.mode ? prev : defaults(mode)));
     }
 
     const unrecognised = value !== null && parse(value) === null;
     const amountError = usesAmount(draft, mode) && amountOf(draft, mode) === null;
 
     const commit = (patch: Partial<Draft>) => {
-      const next = { ...draft, ...patch };
-      // Hours and minutes exist only on Now.
-      if (mode === 'point' && next.anchor !== 'now' && (next.unit === 'h' || next.unit === 'min'))
-        next.unit = 'd';
+      const next = normalize({ ...draft, ...patch }, mode);
       setDraft(next);
       const v = toValue(next, mode);
       if (!v) return;
@@ -254,17 +269,38 @@ export const RelativeDateInput = forwardRef<HTMLDivElement, RelativeDateInputPro
         {...common}
         className={styles.select}
         aria-label={t('relativeDateInput.unit')}
-        options={units.map((u) => opt(u, t(`relativeDateInput.units.${u as RelativeUnit}`)))}
+        // Labels agree with the current amount ("1 day", ru «21 день»); an invalid amount reads as plural.
+        options={units.map((u) =>
+          opt(u, t('relativeDateInput.units', { unit: u, n: amountOf(draft, mode) ?? 0 })),
+        )}
         value={draft.unit}
         onChange={pickOne((u) => commit({ unit: u as RelativeUnit }))}
       />
     );
-    const periodSelect = (
+    const periodLabel = t('relativeDateInput.period');
+    const calendarSelect = (
       <Select
         {...common}
         className={styles.select}
-        aria-label={t('relativeDateInput.period')}
-        options={PERIODS.map((p) => opt(p, t(`relativeDateInput.periods.${p}`)))}
+        aria-label={periodLabel}
+        options={CALENDAR.map((c) =>
+          opt(`${c.scope}:${c.period}`, t('relativeDateInput.calendarPeriod', c)),
+        )}
+        value={`${draft.scope}:${draft.period}`}
+        onChange={pickOne((v) => {
+          const [scope, period] = v.split(':') as [RelativeScope, RelativePeriod];
+          commit({ scope, period });
+        })}
+      />
+    );
+    const toDateSelect = (
+      <Select
+        {...common}
+        className={styles.select}
+        aria-label={periodLabel}
+        options={PERIODS.map((period) =>
+          opt(period, t('relativeDateInput.periodToDate', { period })),
+        )}
         value={draft.period}
         onChange={pickOne((p) => commit({ period: p as RelativePeriod }))}
       />
@@ -272,7 +308,6 @@ export const RelativeDateInput = forwardRef<HTMLDivElement, RelativeDateInputPro
 
     let controls;
     if (mode === 'range') {
-      const rolling = draft.kind === 'lastN' || draft.kind === 'nextN';
       controls = (
         <>
           <Select
@@ -283,13 +318,15 @@ export const RelativeDateInput = forwardRef<HTMLDivElement, RelativeDateInputPro
             value={draft.kind}
             onChange={pickOne((k) => commit({ kind: k as RangeKind }))}
           />
-          {rolling ? (
+          {draft.kind === 'calendar' ? (
+            calendarSelect
+          ) : draft.kind === 'toDate' ? (
+            toDateSelect
+          ) : (
             <>
               {amountInput}
               {unitSelect}
             </>
-          ) : (
-            periodSelect
           )}
         </>
       );
@@ -349,6 +386,11 @@ export const RelativeDateInput = forwardRef<HTMLDivElement, RelativeDateInputPro
       );
     }
 
+    // The expression the controls currently show: `value` only while the draft agrees
+    // with it, so no preset reads as pressed over an invalid or unpicked draft.
+    const drafted = toValue(draft, mode);
+    const shown = drafted && formatRelativeDate(drafted) === value ? value : null;
+
     const describedBy = clsx(ariaDescribedby, unrecognised && noteId) || undefined;
 
     return (
@@ -369,9 +411,14 @@ export const RelativeDateInput = forwardRef<HTMLDivElement, RelativeDateInputPro
                 size="sm"
                 variant="secondary"
                 disabled={disabled}
-                selected={p.value === value}
-                aria-pressed={p.value === value}
-                onClick={() => p.value !== value && onChange(p.value)}
+                selected={p.value === shown}
+                aria-pressed={p.value === shown}
+                onClick={() =>
+                  p.value === value
+                    ? // Same value, diverged draft (e.g. Exact date on, nothing picked): restore it.
+                      setDraft(fromValue(parse(value), mode, draft))
+                    : onChange(p.value)
+                }
               >
                 {p.label}
               </Button>

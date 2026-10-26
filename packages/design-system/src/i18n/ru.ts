@@ -619,14 +619,32 @@ export const ru: Messages = {
       const periods = { week: 'недели', month: 'месяца', quarter: 'квартала', year: 'года' };
       return `${edge === 'start' ? 'Начало' : 'Конец'} ${scopes[scope]} ${periods[period]}`;
     },
-    units: { d: 'дней', w: 'недель', mo: 'месяцев', y: 'лет', h: 'часов', min: 'минут' },
-    periods: { week: 'неделя', month: 'месяц', quarter: 'квартал', year: 'год' },
+    units: ({ unit, n }) => {
+      const forms = {
+        d: ['день', 'дня', 'дней'],
+        w: ['неделя', 'недели', 'недель'],
+        mo: ['месяц', 'месяца', 'месяцев'],
+        y: ['год', 'года', 'лет'],
+        h: ['час', 'часа', 'часов'],
+        min: ['минута', 'минуты', 'минут'],
+      } as const;
+      return ruPlural(n, forms[unit]);
+    },
+    calendarPeriod: ({ scope, period }) => {
+      // «Текущая неделя», «Прошлый квартал»: the adjective agrees with the period's gender.
+      const scopes =
+        period === 'week'
+          ? { this: 'Текущая', last: 'Прошлая', next: 'Следующая' }
+          : { this: 'Текущий', last: 'Прошлый', next: 'Следующий' };
+      const periods = { week: 'неделя', month: 'месяц', quarter: 'квартал', year: 'год' };
+      return `${scopes[scope]} ${periods[period]}`;
+    },
+    periodToDate: ({ period }) =>
+      `С начала ${{ week: 'недели', month: 'месяца', quarter: 'квартала', year: 'года' }[period]}`,
     kinds: {
-      lastN: 'Последние N',
-      nextN: 'Следующие N',
-      this: 'Текущий',
-      last: 'Прошлый',
-      next: 'Следующий',
+      past: 'Последние',
+      coming: 'Ближайшие',
+      calendar: 'Календарный период',
       toDate: 'С начала периода',
     },
     exactDate: 'Точная дата',

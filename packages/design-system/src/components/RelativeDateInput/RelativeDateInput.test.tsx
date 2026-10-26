@@ -140,7 +140,7 @@ describe('RelativeDateInput — exact date', () => {
 describe('RelativeDateInput — range', () => {
   it('shows a rolling range', () => {
     render(<Host mode="range" initial="last:30d" />);
-    expect(combo('Range type')).toHaveTextContent('Last N');
+    expect(combo('Range type')).toHaveTextContent('Past');
     expect(amount()).toHaveValue('30');
     expect(combo('Unit')).toHaveTextContent('days');
   });
@@ -148,8 +148,9 @@ describe('RelativeDateInput — range', () => {
   it('switches to a whole period', async () => {
     const onChange = vi.fn();
     render(<Host mode="range" initial="last:30d" onChange={onChange} />);
-    await pick('Range type', 'This');
-    await pick('Period', 'quarter');
+    await pick('Range type', 'Calendar period');
+    expect(onChange).toHaveBeenLastCalledWith('this:month');
+    await pick('Period', 'This quarter');
     expect(onChange).toHaveBeenLastCalledWith('this:quarter');
     expect(screen.queryByRole('textbox', { name: 'Amount' })).not.toBeInTheDocument();
   });
@@ -157,8 +158,62 @@ describe('RelativeDateInput — range', () => {
   it('To date emits this:{period}:to_date', async () => {
     const onChange = vi.fn();
     render(<Host mode="range" initial="this:quarter" onChange={onChange} />);
-    await pick('Range type', 'To date');
+    await pick('Range type', 'Period to date');
     expect(onChange).toHaveBeenLastCalledWith('this:quarter:to_date');
+    expect(combo('Period')).toHaveTextContent('Quarter to date');
+  });
+});
+
+describe('RelativeDateInput — labels', () => {
+  it.each([
+    ['last:week', 'Last week'],
+    ['next:year', 'Next year'],
+    ['this:month:to_date', 'Month to date'],
+  ])('en: %s reads %j', (value, label) => {
+    render(<Host mode="range" initial={value} />);
+    expect(combo('Period')).toHaveTextContent(label);
+  });
+
+  it.each([
+    ['this:week', 'Текущая неделя'],
+    ['last:quarter', 'Прошлый квартал'],
+    ['next:year', 'Следующий год'],
+    ['this:month:to_date', 'С начала месяца'],
+  ])('ru: %s reads %j (gender agreement)', (value, label) => {
+    render(
+      <I18nProvider locale="ru">
+        <Host mode="range" initial={value} />
+      </I18nProvider>,
+    );
+    expect(screen.getByRole('combobox', { name: 'Период' })).toHaveTextContent(label);
+  });
+
+  it('en units are singular for 1', () => {
+    render(<Host mode="point" initial="today+1d" />);
+    expect(combo('Unit')).toHaveTextContent(/^day$/);
+  });
+
+  it.each([
+    ['1', 'день'],
+    ['2', 'дня'],
+    ['5', 'дней'],
+    ['21', 'день'],
+  ])('ru units pluralise by the amount: %s %s', (n, word) => {
+    render(
+      <I18nProvider locale="ru">
+        <Host mode="point" initial={`today+${n}d`} />
+      </I18nProvider>,
+    );
+    expect(screen.getByRole('combobox', { name: 'Единица' })).toHaveTextContent(
+      new RegExp(`^${word}$`),
+    );
+  });
+
+  it('no range label contains a literal N', async () => {
+    render(<Host mode="range" initial="last:30d" />);
+    await userEvent.click(combo('Range type'));
+    for (const option of screen.getAllByRole('option'))
+      expect(option.textContent).not.toMatch(/\bN\b/);
   });
 });
 
@@ -195,6 +250,42 @@ describe('RelativeDateInput — validation', () => {
   });
 });
 
+describe('RelativeDateInput — draft preservation', () => {
+  it('an offset of 0 keeps the sign and unit for the next edit', async () => {
+    const onChange = vi.fn();
+    render(<Host mode="point" initial="today-7w" onChange={onChange} />);
+    await typeAmount('0');
+    expect(onChange).toHaveBeenLastCalledWith('today');
+    expect(combo('Direction')).toHaveTextContent('−');
+    expect(combo('Unit')).toHaveTextContent('weeks');
+    await typeAmount('3');
+    expect(onChange).toHaveBeenLastCalledWith('today-3w');
+  });
+
+  it('a calendar period keeps the rolling amount and unit', async () => {
+    const onChange = vi.fn();
+    render(<Host mode="range" initial="last:30w" onChange={onChange} />);
+    await pick('Range type', 'Calendar period');
+    await pick('Period', 'This week');
+    expect(onChange).toHaveBeenLastCalledWith('this:week');
+    await pick('Range type', 'Past');
+    expect(onChange).toHaveBeenLastCalledWith('last:30w');
+  });
+
+  it('re-derives when mode or allowNow changes', () => {
+    const onChange = vi.fn();
+    const { rerender } = render(<RelativeDateInput mode="point" value="now" onChange={onChange} />);
+    expect(screen.getByText('Unrecognised value: now')).toBeInTheDocument();
+    rerender(<RelativeDateInput mode="point" allowNow value="now" onChange={onChange} />);
+    expect(combo('Anchor')).toHaveTextContent('Now');
+    expect(screen.queryByText(/Unrecognised/)).not.toBeInTheDocument();
+    rerender(<RelativeDateInput mode="range" value="last:30d" onChange={onChange} />);
+    expect(combo('Range type')).toHaveTextContent('Past');
+    expect(amount()).toHaveValue('30');
+    expect(onChange).not.toHaveBeenCalled();
+  });
+});
+
 describe('RelativeDateInput — value handling', () => {
   it('an unrecognised value shows a note and the defaults, emitting nothing', () => {
     const onChange = vi.fn();
@@ -210,11 +301,11 @@ describe('RelativeDateInput — value handling', () => {
       <RelativeDateInput mode="range" value="last:30d" onChange={onChange} />,
     );
     rerender(<RelativeDateInput mode="range" value="next:7d" onChange={onChange} />);
-    expect(combo('Range type')).toHaveTextContent('Next N');
+    expect(combo('Range type')).toHaveTextContent('Coming');
     expect(amount()).toHaveValue('7');
     rerender(<RelativeDateInput mode="range" value={null} onChange={onChange} />);
-    expect(combo('Range type')).toHaveTextContent('This');
-    expect(combo('Period')).toHaveTextContent('month');
+    expect(combo('Range type')).toHaveTextContent('Calendar period');
+    expect(combo('Period')).toHaveTextContent('This month');
     expect(onChange).not.toHaveBeenCalled();
   });
 
@@ -245,6 +336,20 @@ describe('RelativeDateInput — presets', () => {
     expect(onChange).toHaveBeenLastCalledWith('last:30d');
     expect(other).toHaveAttribute('aria-pressed', 'true');
     expect(amount()).toHaveValue('30');
+  });
+});
+
+describe('RelativeDateInput — presets while exact', () => {
+  it('no preset is pressed while Exact date is on with nothing picked', async () => {
+    render(<Host mode="point" initial="today" presets={[{ label: 'Today', value: 'today' }]} />);
+    const preset = screen.getByRole('button', { name: 'Today' });
+    expect(preset).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.click(screen.getByRole('switch', { name: 'Exact date' }));
+    expect(preset).toHaveAttribute('aria-pressed', 'false');
+    // Choosing it again restores the relative controls it stands for.
+    await userEvent.click(preset);
+    expect(preset).toHaveAttribute('aria-pressed', 'true');
+    expect(combo('Anchor')).toHaveTextContent('Today');
   });
 });
 

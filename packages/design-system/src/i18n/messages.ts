@@ -1172,17 +1172,27 @@ export interface Messages {
       scope: 'this' | 'last' | 'next';
       period: 'week' | 'month' | 'quarter' | 'year';
     }) => string;
-    /** Offset / rolling-range unit options. */
-    units: { d: string; w: string; mo: string; y: string; h: string; min: string };
-    /** Period options of a range (`this:quarter`, `last:week`…). */
-    periods: { week: string; month: string; quarter: string; year: string };
+    /**
+     * Function leaf — a unit option, agreeing with the current amount `n`
+     * ("1 day" / "7 days"; ru «1 день» / «2 дня» / «5 дней»). `n` is 0 while the amount is invalid.
+     */
+    units: (params: { unit: 'd' | 'w' | 'mo' | 'y' | 'h' | 'min'; n: number }) => string;
+    /** Function leaf — a whole calendar period option ("This week", "Last quarter"). */
+    calendarPeriod: (params: {
+      scope: 'this' | 'last' | 'next';
+      period: 'week' | 'month' | 'quarter' | 'year';
+    }) => string;
+    /** Function leaf — a period-to-date option ("Month to date"). */
+    periodToDate: (params: { period: 'week' | 'month' | 'quarter' | 'year' }) => string;
     /** Range kind options. */
     kinds: {
-      lastN: string;
-      nextN: string;
-      this: string;
-      last: string;
-      next: string;
+      /** Rolling window ending now: "Past · 30 · days" (`last:30d`). */
+      past: string;
+      /** Rolling window starting now: "Coming · 7 · days" (`next:7d`). */
+      coming: string;
+      /** A whole week/month/quarter/year: this, last or next. */
+      calendar: string;
+      /** The current period up to today. */
       toDate: string;
     };
     /** Label of the "Exact date" switch (point mode). */

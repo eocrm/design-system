@@ -605,15 +605,18 @@ export const en: Messages = {
     now: 'Now',
     boundary: ({ edge, scope, period }) =>
       `${edge === 'start' ? 'Start' : 'End'} of ${scope} ${period}`,
-    units: { d: 'days', w: 'weeks', mo: 'months', y: 'years', h: 'hours', min: 'minutes' },
-    periods: { week: 'week', month: 'month', quarter: 'quarter', year: 'year' },
+    units: ({ unit, n }) => {
+      const words = { d: 'day', w: 'week', mo: 'month', y: 'year', h: 'hour', min: 'minute' };
+      return n === 1 ? words[unit] : `${words[unit]}s`;
+    },
+    calendarPeriod: ({ scope, period }) =>
+      `${{ this: 'This', last: 'Last', next: 'Next' }[scope]} ${period}`,
+    periodToDate: ({ period }) => `${period[0].toUpperCase()}${period.slice(1)} to date`,
     kinds: {
-      lastN: 'Last N',
-      nextN: 'Next N',
-      this: 'This',
-      last: 'Last',
-      next: 'Next',
-      toDate: 'To date',
+      past: 'Past',
+      coming: 'Coming',
+      calendar: 'Calendar period',
+      toDate: 'Period to date',
     },
     exactDate: 'Exact date',
     date: 'Date',
