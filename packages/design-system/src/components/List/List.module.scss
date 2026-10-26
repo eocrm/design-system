@@ -13,7 +13,6 @@
   line-height: var(--list-line-height);
 }
 
-// Nested <ol>s start a fresh counter instance, so numbering restarts per list.
 .list[data-size='heading'] {
   --list-marker-height: var(--list-heading-marker-height);
   --list-marker-width: var(--list-heading-marker-width);
@@ -25,6 +24,7 @@
 }
 
 .list[data-variant='number'] {
+  // Nested <ol>s start a fresh counter instance, so numbering restarts per list.
   counter-reset: list-item-number;
 }
 

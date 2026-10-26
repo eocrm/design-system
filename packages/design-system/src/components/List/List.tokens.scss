@@ -19,7 +19,7 @@
 
   // Plain number
   --list-number-font-weight: var(--font-weight-medium);
-  --list-number-font-size: inherit;
+  --list-number-font-size: 1em;
 
   // Badge number
   --list-badge-size: var(--size-badge);
@@ -29,7 +29,9 @@
   --list-badge-font-size: var(--font-size-xs);
   --list-badge-font-weight: var(--font-weight-semibold);
 
-  // size="heading" — marker scaled to the first line of a Title size="xl" (20px x tight line height)
+  // size="heading" — marker scaled to the first line of a Title size="xl" (20px x tight line height).
+  // Derived from the same globals Title.tokens.scss aliases, not from --title-* themselves: those are only
+  // emitted with Title's lazily loaded stylesheet, so they may be undefined when a List renders without a Title.
   --list-heading-marker-height: calc(var(--line-height-tight) * var(--font-size-xl));
   --list-heading-marker-width: var(--space-6);
   --list-heading-bullet-size: var(--space-2);

@@ -20,7 +20,7 @@ export type ListGap = 'xs' | 'sm' | 'md';
 /**
  * How `variant="number"` draws its numbers.
  * - `'plain'` (default) — a muted figure.
- * - `'badge'` — a small circular accent badge (numbered steps). Ignored for bullets.
+ * - `'badge'` — an accent badge for numbered steps: circular at body size, a rounded square at `size="heading"`. Ignored for bullets.
  */
 export type ListNumberStyle = 'plain' | 'badge';
 

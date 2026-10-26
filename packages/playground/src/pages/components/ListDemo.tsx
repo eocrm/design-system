@@ -204,10 +204,10 @@ export function Demo() {
 
 export function Demo() {
   return (
-    <List>
+    <List variant="number">
       <List.Item>
         Response headers
-        <List gap="xs">
+        <List variant="number" gap="xs">
           <List.Item>X-RateLimit-Limit</List.Item>
           <List.Item>X-RateLimit-Remaining</List.Item>
         </List>
