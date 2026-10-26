@@ -84,22 +84,18 @@ export const store = {
     return id;
   },
   dismiss(id?: string): void {
-    if (id === undefined) {
-      state = { toasts: state.toasts.map((t) => ({ ...t, status: 'exiting' })) };
-      notify();
-      setTimeout(() => {
-        state = { toasts: [] };
-        notify();
-      }, EXIT_ANIMATION_MS);
-      return;
-    }
-    if (!state.toasts.some((t) => t.id === id)) return;
+    // Capture the ids now so the deferred removal can't take toasts added
+    // during the exit window (#713).
+    const ids = new Set(
+      state.toasts.filter((t) => id === undefined || t.id === id).map((t) => t.id),
+    );
+    if (ids.size === 0) return;
     state = {
-      toasts: state.toasts.map((t) => (t.id === id ? { ...t, status: 'exiting' } : t)),
+      toasts: state.toasts.map((t) => (ids.has(t.id) ? { ...t, status: 'exiting' } : t)),
     };
     notify();
     setTimeout(() => {
-      state = { toasts: state.toasts.filter((t) => t.id !== id) };
+      state = { toasts: state.toasts.filter((t) => !ids.has(t.id)) };
       notify();
     }, EXIT_ANIMATION_MS);
   },

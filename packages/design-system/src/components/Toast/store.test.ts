@@ -88,6 +88,16 @@ describe('toast store', () => {
     expect(store.getSnapshot().toasts).toEqual([]);
   });
 
+  it('dismiss() with no id keeps toasts added during the exit window', () => {
+    store.add(baseInput({ id: 'a' }));
+    store.dismiss();
+    store.add(baseInput({ id: 'b' }));
+    vi.advanceTimersByTime(EXIT_ANIMATION_MS);
+    expect(store.getSnapshot().toasts).toEqual([
+      expect.objectContaining({ id: 'b', status: 'visible' }),
+    ]);
+  });
+
   it('subscribe() listener fires on add/update/dismiss', () => {
     const listener = vi.fn();
     store.subscribe(listener);
