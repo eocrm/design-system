@@ -78,7 +78,7 @@ export function useSuggestions(
   const needle = query?.toLowerCase();
   const visible = needle == null ? all : all.filter((s) => s.toLowerCase().includes(needle));
   const shown = open && visible.length > 0;
-  // Clamp: `visible` can shrink under a highlighted row (filter, or the parent's new list).
+  // Defensive guard: `visible` can shrink under a highlighted row (the listKey reset covers list changes).
   const activeIdx = active < visible.length ? active : -1;
 
   const optionId = (i: number) => `${listboxId}-${i}`;

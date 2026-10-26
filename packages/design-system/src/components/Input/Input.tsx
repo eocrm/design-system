@@ -41,7 +41,8 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
    * (`autoComplete="email"`, `"current-password"`, `"username"`, etc.) opt back
    * IN to autofill — the assumption is that a consumer specifying autoComplete
    * actually wants password-manager interaction. Pass `disableAutofill={true}`
-   * to force-block even with an autocomplete hint, or `false` to force-allow.
+   * to force-block even with an autocomplete hint, or `false` to force-allow
+   * (except while `suggestions` is active, which always blocks).
    */
   disableAutofill?: boolean;
   /**
@@ -50,9 +51,10 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
    * it opens on focus, click or ↓ showing every suggestion, then filters by
    * case-insensitive substring once the user types. ↑/↓ + Enter or a click
    * fills the value and fires `onChange` exactly as typing would. Ignored when
-   * empty or `readOnly`. Browser autofill is forced off while active (even with an
-   * `autoComplete` hint) so its dropdown can't stack on this one. Default: none (a plain textbox). For a fixed set of
-   * allowed values use `<Select>` instead.
+   * empty or `readOnly`. Browser autofill is forced off while active (even with
+   * an `autoComplete` hint) so its dropdown can't stack on this one. Default:
+   * none (a plain textbox). For a fixed set of allowed values use `<Select>`
+   * instead.
    */
   suggestions?: readonly string[];
 }
@@ -77,10 +79,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
 
   // Smart default: when `disableAutofill` is undefined, block autofill iff
   // the consumer hasn't set a meaningful `autoComplete`. Explicit `true` /
-  // `false` always wins over the heuristic.
+  // `false` always wins over the heuristic (except while `suggestions` is active).
   const hasAutocompleteHint =
     typeof props.autoComplete === 'string' && props.autoComplete !== 'off';
-  const blockAutofill = combobox.enabled || (disableAutofill ?? !hasAutocompleteHint);
+  const blockAutofill = disableAutofill ?? !hasAutocompleteHint;
 
   return (
     <>
@@ -90,6 +92,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
         aria-invalid={invalid || undefined}
         {...(blockAutofill ? AUTOFILL_DISABLED_PROPS : {})}
         {...props}
+        // Suggestions force autofill off, beating any consumer autoComplete.
         {...(combobox.enabled ? AUTOFILL_DISABLED_PROPS : {})}
         // After {...props} so the combobox ARIA contract wins; its handlers
         // already chain the consumer's.

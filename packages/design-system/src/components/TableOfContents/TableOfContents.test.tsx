@@ -212,6 +212,19 @@ describe('TableOfContents', () => {
       expect(replace).toHaveBeenCalledTimes(1);
     });
 
+    it('keeps an id containing ":" raw in the URL and replaces on re-click', async () => {
+      const user = userEvent.setup();
+      const push = vi.spyOn(history, 'pushState');
+      const replace = vi.spyOn(history, 'replaceState');
+      mountHeadings({ ':r1:': 0 });
+      render(<TableOfContents items={[{ id: ':r1:', label: 'Colon', level: 2 }]} />);
+      await user.click(link('Colon'));
+      expect(location.hash).toBe('#:r1:');
+      await user.click(link('Colon'));
+      expect(push).toHaveBeenCalledTimes(1);
+      expect(replace).toHaveBeenCalledTimes(1);
+    });
+
     it('scrolls instantly under reduced motion', async () => {
       const user = userEvent.setup();
       mockReducedMotion(true);

@@ -3621,14 +3621,14 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Block browser autofill AND password managers from offering to fill\nthis input. Applies the standard set of opt-out hints:\n- `autoComplete=\"off\"`\n- `data-1p-ignore` (1Password)\n- `data-lpignore=\"true\"` (LastPass)\n- `data-form-type=\"other\"` (generic \"not a login field\")\n\n**Smart default**: when omitted, the input blocks autofill iff `autoComplete`\nis also omitted (or `'off'`). Explicit autocomplete hints\n(`autoComplete=\"email\"`, `\"current-password\"`, `\"username\"`, etc.) opt back\nIN to autofill — the assumption is that a consumer specifying autoComplete\nactually wants password-manager interaction. Pass `disableAutofill={true}`\nto force-block even with an autocomplete hint, or `false` to force-allow."
+          "description": "Block browser autofill AND password managers from offering to fill\nthis input. Applies the standard set of opt-out hints:\n- `autoComplete=\"off\"`\n- `data-1p-ignore` (1Password)\n- `data-lpignore=\"true\"` (LastPass)\n- `data-form-type=\"other\"` (generic \"not a login field\")\n\n**Smart default**: when omitted, the input blocks autofill iff `autoComplete`\nis also omitted (or `'off'`). Explicit autocomplete hints\n(`autoComplete=\"email\"`, `\"current-password\"`, `\"username\"`, etc.) opt back\nIN to autofill — the assumption is that a consumer specifying autoComplete\nactually wants password-manager interaction. Pass `disableAutofill={true}`\nto force-block even with an autocomplete hint, or `false` to force-allow\n(except while `suggestions` is active, which always blocks)."
         },
         {
           "name": "suggestions",
           "type": "readonly string[]",
           "required": false,
           "default": "",
-          "description": "Values to suggest while the value stays free text (e.g. the user's other\nworkspace slugs). Makes the input an ARIA combobox with a suggestion list:\nit opens on focus, click or ↓ showing every suggestion, then filters by\ncase-insensitive substring once the user types. ↑/↓ + Enter or a click\nfills the value and fires `onChange` exactly as typing would. Ignored when\nempty or `readOnly`. Browser autofill is forced off while active (even with an\n`autoComplete` hint) so its dropdown can't stack on this one. Default: none (a plain textbox). For a fixed set of\nallowed values use `<Select>` instead."
+          "description": "Values to suggest while the value stays free text (e.g. the user's other\nworkspace slugs). Makes the input an ARIA combobox with a suggestion list:\nit opens on focus, click or ↓ showing every suggestion, then filters by\ncase-insensitive substring once the user types. ↑/↓ + Enter or a click\nfills the value and fires `onChange` exactly as typing would. Ignored when\nempty or `readOnly`. Browser autofill is forced off while active (even with\nan `autoComplete` hint) so its dropdown can't stack on this one. Default:\nnone (a plain textbox). For a fixed set of allowed values use `<Select>`\ninstead."
         }
       ]
     },

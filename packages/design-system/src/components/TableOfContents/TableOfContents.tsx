@@ -117,10 +117,15 @@ export const TableOfContents = forwardRef<HTMLElement, TableOfContentsProps>(
         behavior: prefersReducedMotion() ? 'auto' : 'smooth',
       });
       // Re-clicking the current entry must not stack history entries.
-      // location.hash is percent-encoded, so compare against the encoded id.
-      const hash = `#${encodeURIComponent(id)}`;
-      if (location.hash === hash) history.replaceState(null, '', hash);
-      else history.pushState(null, '', hash);
+      // location.hash is percent-encoded for non-ASCII ids, so compare decoded.
+      let same = false;
+      try {
+        same = decodeURIComponent(location.hash.slice(1)) === id;
+      } catch {
+        // malformed % escape: treat as a different hash
+      }
+      if (same) history.replaceState(null, '', `#${id}`);
+      else history.pushState(null, '', `#${id}`);
       setActiveId(id);
 
       // Hold the clicked entry while the smooth scroll passes the others.
