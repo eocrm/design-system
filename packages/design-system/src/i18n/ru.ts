@@ -66,6 +66,14 @@ export const ru: Messages = {
     invertHint: 'Нажмите, чтобы поменять цвета кода местами, если сканер его не читает',
     error: 'QR-код недоступен',
   },
+  codeBlock: {
+    copy: 'Скопировать код',
+    copied: 'Скопировано',
+    copyFailed: 'Не удалось скопировать',
+    wrap: 'Переносить строки',
+    plainText: 'Текст',
+    code: 'Код',
+  },
   slider: {
     minimum: 'минимум',
     maximum: 'максимум',

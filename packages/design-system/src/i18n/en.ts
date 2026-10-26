@@ -65,6 +65,14 @@ export const en: Messages = {
     invertHint: "Click to swap the code's colours for a scanner that won't read it",
     error: 'QR code unavailable',
   },
+  codeBlock: {
+    copy: 'Copy code',
+    copied: 'Copied',
+    copyFailed: "Couldn't copy",
+    wrap: 'Wrap lines',
+    plainText: 'Plain text',
+    code: 'Code',
+  },
   slider: {
     minimum: 'minimum',
     maximum: 'maximum',

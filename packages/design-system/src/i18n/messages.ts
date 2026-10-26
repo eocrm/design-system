@@ -161,6 +161,20 @@ export interface Messages {
      */
     error: string;
   };
+  codeBlock: {
+    /** Accessible name + tooltip of the icon-only copy button. */
+    copy: string;
+    /** Announced from the polite live region after a successful copy. */
+    copied: string;
+    /** Announced when the clipboard write rejects or the Clipboard API is missing. */
+    copyFailed: string;
+    /** Accessible name + tooltip of the icon-only wrap toggle (`aria-pressed`). */
+    wrap: string;
+    /** Header label when there is no `title` and the language is not a known one. */
+    plainText: string;
+    /** Accessible name of the scrollable body (`maxHeight` set) when there is no `title`. */
+    code: string;
+  };
   slider: {
     /** Accessible-name suffix for the first thumb in a range slider. */
     minimum: string;
