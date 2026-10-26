@@ -440,6 +440,13 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['Code'],
   },
   {
+    to: '/components/code-block',
+    name: 'CodeBlock',
+    description:
+      'Highlighted, copyable code sample — single block or tabbed samples with a shared language choice.',
+    preview: SCHEMATICS['CodeBlock'],
+  },
+  {
     to: '/components/highlighted-text',
     name: 'HighlightedText',
     description:

@@ -61,6 +61,7 @@ import { DateStripDemo } from './pages/components/DateStripDemo';
 import { SlotGridDemo } from './pages/components/SlotGridDemo';
 import { CardDemo } from './pages/components/CardDemo';
 import { CodeDemo } from './pages/components/CodeDemo';
+import { CodeBlockDemo } from './pages/components/CodeBlockDemo';
 import { HighlightedTextDemo } from './pages/components/HighlightedTextDemo';
 import { TextDemo } from './pages/components/TextDemo';
 import { RichTextDemo } from './pages/components/RichTextDemo';
@@ -207,6 +208,7 @@ export default function App() {
             <Route path="/components/table" element={<TableDemo />} />
             <Route path="/components/card" element={<CardDemo />} />
             <Route path="/components/code" element={<CodeDemo />} />
+            <Route path="/components/code-block" element={<CodeBlockDemo />} />
             <Route path="/components/highlighted-text" element={<HighlightedTextDemo />} />
             <Route path="/components/text" element={<TextDemo />} />
             <Route path="/components/rich-text" element={<RichTextDemo />} />

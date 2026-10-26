@@ -18,6 +18,7 @@ export type ComponentName =
   | 'CircularProgress'
   | 'Cluster'
   | 'Code'
+  | 'CodeBlock'
   | 'HighlightedText'
   | 'ColorPicker'
   | 'ConfirmationPopover'
@@ -476,6 +477,7 @@ export const MOCKUPS = [
       'Card',
       'Cluster',
       'Code',
+      'CodeBlock',
       'Field',
       'FormRow',
       'Grid',

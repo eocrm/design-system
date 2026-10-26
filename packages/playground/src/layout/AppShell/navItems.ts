@@ -102,6 +102,7 @@ import {
   Smile,
   Workflow,
   QrCode,
+  SquareTerminal,
   Signpost,
   EyeOff,
   Megaphone,
@@ -248,6 +249,7 @@ export const componentGroups: { heading: string; items: NavItem[] }[] = [
         end: false,
       },
       { to: '/components/code', label: 'Code', icon: CodeIcon, end: false },
+      { to: '/components/code-block', label: 'CodeBlock', icon: SquareTerminal, end: false },
       { to: '/components/definition-list', label: 'DefinitionList', icon: List, end: false },
       {
         to: '/components/highlighted-text',

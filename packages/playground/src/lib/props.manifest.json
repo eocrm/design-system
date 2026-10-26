@@ -982,6 +982,87 @@
         }
       ]
     },
+    "CodeBlock": {
+      "props": [
+        {
+          "name": "code",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Single-sample mode: the source. Ignored when `samples` is set."
+        },
+        {
+          "name": "language",
+          "type": "CodeBlockLanguage | (string & {})",
+          "required": false,
+          "default": "",
+          "description": "Single-sample mode: grammar for highlighting — `'json'`, `'bash'`,\n`'javascript'`, `'typescript'` or `'python'` (aliases `sh`, `shell`, `js`,\n`ts`, `py`). Anything else renders as plain text."
+        },
+        {
+          "name": "title",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Header label in single-sample mode. Defaults to a one-item `samples`\nentry's `label`, else the language name (`JSON`, `Bash`…), else \"Plain\ntext\". Also names the single-sample body (default \"Code\")."
+        },
+        {
+          "name": "samples",
+          "type": "readonly CodeBlockSample[]",
+          "required": false,
+          "default": "",
+          "description": "Multi-sample mode: 2+ samples render as tabs. Wins over `code`/`language`."
+        },
+        {
+          "name": "activeSampleId",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Controlled active sample id. Wins over `syncKey` and the user's own pick."
+        },
+        {
+          "name": "defaultSampleId",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Initial sample id when uncontrolled and nothing is synced. Defaults to the first sample."
+        },
+        {
+          "name": "onSampleChange",
+          "type": "((id: string) => void)",
+          "required": false,
+          "default": "",
+          "description": "Called with the new id when the user picks a tab in THIS block (not when a synced block changes it)."
+        },
+        {
+          "name": "syncKey",
+          "type": "string",
+          "required": false,
+          "default": "",
+          "description": "Blocks sharing a `syncKey` switch together: picking `py` in one selects\n`py` in every block with the same key that has a `py` sample. In-memory,\nper page load."
+        },
+        {
+          "name": "highlightLines",
+          "type": "CodeBlockHighlightLines",
+          "required": false,
+          "default": "",
+          "description": "Lines to emphasise (visual only — explain the emphasis in prose)."
+        },
+        {
+          "name": "maxHeight",
+          "type": "CodeBlockMaxHeight",
+          "required": false,
+          "default": "",
+          "description": "Caps the body height; the body scrolls inside it (it is always a focusable, named region).\n`xs` 200px · `sm` 320px · `md` 448px · `lg` 640px · `xl` 800px. Default: no cap."
+        },
+        {
+          "name": "defaultWrap",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Initial state of the wrap-lines toggle. Default `false` (long lines scroll horizontally)."
+        }
+      ]
+    },
     "ColorPicker": {
       "props": [
         {
@@ -7065,6 +7146,10 @@
     "StagePathTone": "\"success\" | \"danger\" | \"default\"",
     "TopBarElement": "\"div\" | \"header\"",
     "CodeTone": "\"danger\" | \"accent\" | \"default\" | \"muted\"",
+    "CodeBlockSample": "{ id: string; label: string; code: string; language?: CodeBlockLanguage | (string & {}) }",
+    "CodeBlockHighlightLines": "readonly (number | readonly [number, number])[]",
+    "CodeBlockMaxHeight": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\"",
+    "CodeBlockLanguage": "\"json\" | \"bash\" | \"javascript\" | \"typescript\" | \"python\"",
     "HighlightRange": "{ start: number; length: number }",
     "RichDoc": "{ blocks: Block[] }",
     "RenderLink": "(link: RichTextLink, defaultNode: ReactNode) => ReactNode",

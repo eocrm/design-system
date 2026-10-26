@@ -22,6 +22,7 @@ import {
   Card,
   Cluster,
   Code,
+  CodeBlock,
   Field,
   FormRow,
   Grid,
@@ -119,29 +120,6 @@ function MethodBadge({ method }: { method: Method }) {
   );
 }
 
-function CodeSample({ children }: { children: string }) {
-  return (
-    <>
-      {/* TODO: replace when CodeBlock ships — see packages/playground/TODO.md */}
-      <pre
-        style={{
-          margin: 0,
-          padding: 'var(--space-4)',
-          background: 'var(--color-bg-sunken)',
-          border: 'var(--border-width) solid var(--color-border)',
-          borderRadius: 'var(--radius-md)',
-          fontFamily: 'var(--font-family-mono)',
-          fontSize: 'var(--font-size-code)',
-          lineHeight: 'var(--line-height-normal)',
-          overflowX: 'auto',
-        }}
-      >
-        <code>{children}</code>
-      </pre>
-    </>
-  );
-}
-
 const SAMPLES = {
   curl: `curl ${HOST}/contacts?search=ana&per_page=25 \\
   -H "Authorization: Bearer $EOCRM_API_KEY"`,
@@ -159,24 +137,43 @@ res = requests.get(
 contacts = res.json()["data"]`,
 };
 
-function LanguageTabs() {
-  const [lang, setLang] = useState<keyof typeof SAMPLES>('curl');
+const LANG_KEY = 'docs-lang';
+
+/** Shared language choice, persisted. Read after mount so SSR and client agree on the first frame. */
+function useLang() {
+  const [lang, setLang] = useState<string>();
+  useEffect(() => {
+    try {
+      setLang(localStorage.getItem(LANG_KEY) ?? undefined);
+    } catch {
+      /* storage unavailable */
+    }
+  }, []);
+  const onChange = (id: string) => {
+    setLang(id);
+    try {
+      localStorage.setItem(LANG_KEY, id);
+    } catch {
+      /* storage unavailable */
+    }
+  };
+  return { lang, onChange };
+}
+
+type LangState = ReturnType<typeof useLang>;
+
+function RequestSamples({ lang, onChange }: LangState) {
   return (
-    <Stack gap="sm">
-      <Tabs
-        items={[
-          { id: 'curl', label: 'cURL' },
-          { id: 'js', label: 'JavaScript' },
-          { id: 'python', label: 'Python' },
-        ]}
-        activeId={lang}
-        onChange={(id) => setLang(id as keyof typeof SAMPLES)}
-        panelIdPrefix="lang"
-      />
-      <Stack role="tabpanel" id={`lang-${lang}-panel`} aria-labelledby={`lang-${lang}-tab`}>
-        <CodeSample>{SAMPLES[lang]}</CodeSample>
-      </Stack>
-    </Stack>
+    <CodeBlock
+      samples={[
+        { id: 'curl', label: 'cURL', code: SAMPLES.curl, language: 'bash' },
+        { id: 'js', label: 'JavaScript', code: SAMPLES.js, language: 'javascript' },
+        { id: 'python', label: 'Python', code: SAMPLES.python, language: 'python' },
+      ]}
+      syncKey={LANG_KEY}
+      activeSampleId={lang}
+      onSampleChange={onChange}
+    />
   );
 }
 
@@ -222,7 +219,7 @@ function Section({ id, title, children }: { id: string; title: string; children:
   );
 }
 
-function HomePage() {
+function HomePage({ langState }: { langState: LangState }) {
   return (
     <Page gap="2xl">
       <Stack gap="md">
@@ -276,7 +273,7 @@ function HomePage() {
           </Text>
           , then:
         </Text>
-        <LanguageTabs />
+        <RequestSamples {...langState} />
       </Stack>
     </Page>
   );
@@ -303,7 +300,7 @@ function ApiOverviewPage() {
         <Text>
           Every workspace has its own host. Replace <Code>acme</Code> with your workspace slug.
         </Text>
-        <CodeSample>{HOST}</CodeSample>
+        <CodeBlock title="Base URL" code={HOST} />
       </Section>
 
       <Section id="auth" title="Authentication">
@@ -311,7 +308,7 @@ function ApiOverviewPage() {
           Send a tenant API key as a bearer token. Keys start with <Code>eok_</Code> followed by 48
           letters and digits.
         </Text>
-        <CodeSample>{'Authorization: Bearer eok_…'}</CodeSample>
+        <CodeBlock title="Header" code="Authorization: Bearer eok_…" />
         <Alert tone="warning" title="Keep keys server-side">
           A key acts with the permissions of the role it was issued for. Never ship it in browser or
           mobile code.
@@ -473,13 +470,13 @@ function TryIt() {
             ? 'Sending request'
             : result && `Response ${result.status} in ${result.ms} milliseconds`}
         </LiveRegion>
-        {result && <CodeSample>{result.body}</CodeSample>}
+        {result && <CodeBlock language="json" code={result.body} />}
       </Stack>
     </Card>
   );
 }
 
-function ListContactsPage() {
+function ListContactsPage({ langState }: { langState: LangState }) {
   return (
     <Article
       toc={[
@@ -541,7 +538,7 @@ function ListContactsPage() {
       </Section>
 
       <Section id="request" title="Request">
-        <LanguageTabs />
+        <RequestSamples {...langState} />
       </Section>
 
       <Section id="try-it" title="Try it">
@@ -557,7 +554,7 @@ function ListContactsPage() {
             application/json
           </Text>
         </Cluster>
-        <CodeSample>{SAMPLE_RESPONSE}</CodeSample>
+        <CodeBlock language="json" code={SAMPLE_RESPONSE} />
       </Section>
     </Article>
   );
@@ -635,7 +632,7 @@ function AiAssistantsPage() {
               </Cluster>
             ))}
           </Stack>
-          <CodeSample>{c.snippet}</CodeSample>
+          <CodeBlock language={client === 'claude-code' ? 'bash' : undefined} code={c.snippet} />
         </Stack>
         <Alert tone="info">
           The assistant acts as you: it sees and changes only what your role allows.
@@ -725,12 +722,13 @@ export function Docs() {
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
   }, []);
+  const langState = useLang();
   const sub = pathname.slice(BASE.length).replace(/\/$/, '');
 
   let content: ReactNode;
-  if (sub === '') content = <HomePage />;
+  if (sub === '') content = <HomePage langState={langState} />;
   else if (sub === '/api') content = <ApiOverviewPage />;
-  else if (sub === '/api/contacts/list') content = <ListContactsPage />;
+  else if (sub === '/api/contacts/list') content = <ListContactsPage langState={langState} />;
   else if (sub === '/ai-assistants') content = <AiAssistantsPage />;
   else {
     const [, , resource, opSlug] = sub.split('/');
