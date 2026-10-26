@@ -14,6 +14,7 @@ import { Settings } from './pages/mockups/Settings/Settings';
 import { CustomFields } from './pages/mockups/CustomFields/CustomFields';
 import { Roles } from './pages/mockups/Roles/Roles';
 import { Login } from './pages/mockups/Login/Login';
+import { Docs } from './pages/mockups/Docs/Docs';
 import { NotFound } from './pages/mockups/NotFound/NotFound';
 import { NotFoundStandalone } from './pages/mockups/NotFound/NotFoundStandalone';
 import { AppError } from './pages/mockups/AppError/AppError';
@@ -158,6 +159,7 @@ export default function App() {
             <Route path="/mockups/roles" element={<Roles />} />
             <Route path="/mockups/audit" element={<Audit />} />
             <Route path="/mockups/login" element={<Login />} />
+            <Route path="/mockups/docs/*" element={<Docs />} />
             <Route path="/mockups/404" element={<NotFound />} />
             <Route path="/mockups/404-standalone" element={<NotFoundStandalone />} />
             <Route path="/mockups/error" element={<AppError />} />

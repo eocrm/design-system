@@ -27,6 +27,51 @@ Keep entries terse but specific. The "Mocked in" path is load-bearing — the im
 
 ## Open
 
+### [ ] `<CodeBlock>` — multi-line code with copy button (and optional highlighting)
+
+**Filed:** 2026-10-26
+**Mocked in:**
+
+- `packages/playground/src/pages/mockups/Docs/Docs.tsx` (`CodeSample`)
+
+**What's needed:**
+Block-level `<pre><code>` surface: sunken background, border, radius, mono font, horizontal scroll, a copy-to-clipboard button (announced on success), optional `language` + highlighting, optional title/filename bar. Should compose with `Tabs` for language switching (cURL / JS / Python). `Code` is inline-only and its docs push block code to the playground's Prism `CodeBlock` — but any consumer-facing docs/integration/API-key screen in the CRM needs this too.
+
+**Current workaround:**
+A raw `<pre><code>` with inline token-based styles, no copy button, no highlighting.
+
+**When this ships:** replace `CodeSample` in the Docs mockup, then tick this checkbox.
+
+### [ ] `<TableOfContents>` — "On this page" nav with scroll-spy
+
+**Filed:** 2026-10-26
+**Mocked in:**
+
+- `packages/playground/src/pages/mockups/Docs/Docs.tsx` (`Article` aside)
+
+**What's needed:**
+A `<nav aria-label="On this page">` list of in-page anchor links (optionally nested by heading level) that marks the section currently in view with `aria-current="location"`. Sits in a `Sticky` aside. Target headings need a `scroll-margin-top` that clears a pinned `TopBar`, or anchor jumps land under the bar.
+
+**Current workaround:**
+`Sticky` + `Stack` of muted `Link`s; no active-section tracking, no landmark, and anchor jumps land under the pinned TopBar.
+
+**When this ships:** replace the aside in `Article`, then tick this checkbox.
+
+### [ ] `<AppLayout>` — let the content region be the `<main>` landmark
+
+**Filed:** 2026-10-26
+**Mocked in:**
+
+- `packages/playground/src/pages/mockups/Docs/Docs.tsx` (`<main>` around page content)
+
+**What's needed:**
+An opt-in (e.g. `contentAs="main"`) so an app that owns the outermost shell gets its single `<main>` landmark without wrapping children in a raw element. The content region is a plain `div` today because AppLayout may be nested.
+
+**Current workaround:**
+Raw `<main>` inside AppLayout's children (same as the playground's own `AppShell`).
+
+**When this ships:** drop the raw `<main>`, then tick this checkbox.
+
 ### [ ] `<Drawer>` — needs to expose its dialog's DOM id for `aria-controls`
 
 **Filed:** 2026-07-28

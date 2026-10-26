@@ -3,6 +3,7 @@
 export type ComponentName =
   | 'Accordion'
   | 'Alert'
+  | 'AppLayout'
   | 'Avatar'
   | 'Badge'
   | 'Banner'
@@ -458,6 +459,43 @@ export const MOCKUPS = [
       'Stack',
       'Text',
       'Title',
+    ],
+  },
+  {
+    slug: 'docs',
+    title: 'Developer docs',
+    path: '/mockups/docs',
+    blurb:
+      'docs.eocrm.io — public API reference and AI-assistant (MCP) setup: docs rail, on-page TOC, endpoint pages with language-tabbed samples.',
+    usesComponents: [
+      'Alert',
+      'AppLayout',
+      'Badge',
+      'Breadcrumb',
+      'Button',
+      'Card',
+      'Cluster',
+      'Code',
+      'Field',
+      'FormRow',
+      'Grid',
+      'Input',
+      'Link',
+      'LinkCard',
+      'LiveRegion',
+      'Logo',
+      'Page',
+      'PageHeader',
+      'PasswordInput',
+      'Rail',
+      'Split',
+      'Stack',
+      'Sticky',
+      'Table',
+      'Tabs',
+      'Text',
+      'Title',
+      'TopBar',
     ],
   },
   {

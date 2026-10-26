@@ -62,6 +62,10 @@ const FULL_BLEED_PATHS = new Set([
   '/mockups/error-standalone',
 ]);
 
+// The docs-site mockup brings its own AppLayout (rail + top bar + main
+// landmark), so it renders with no playground chrome and no wrapper at all.
+const SELF_CHROMED_PREFIX = '/mockups/docs';
+
 /** Renders a `Rail.Item` polymorphic as the NavLink so active styling
     (aria-current="page") flows through automatically. */
 function renderRailItem({ to, label, icon: Icon, end }: NavItem) {
@@ -160,6 +164,8 @@ export function AppShell({ children }: { children: ReactNode }) {
   const searchRef = useRef<CommandSearchHandle>(null);
   useEffect(() => {
     const onKey = (e: globalThis.KeyboardEvent) => {
+      // No search mounted (self-chromed docs mockup) → leave ⌘K to the page.
+      if (!searchRef.current) return;
       if ((e.metaKey || e.ctrlKey) && (e.key === 'k' || e.key === 'K')) {
         e.preventDefault();
         searchRef.current?.focus();
@@ -171,6 +177,9 @@ export function AppShell({ children }: { children: ReactNode }) {
 
   // Full-bleed routes render outside the shell chrome (no Rail / TopBar) so they
   // read like real standalone screens, not pages inside the CRM.
+  if (pathname === SELF_CHROMED_PREFIX || pathname.startsWith(`${SELF_CHROMED_PREFIX}/`)) {
+    return <AccentContext.Provider value={accent}>{children}</AccentContext.Provider>;
+  }
   if (FULL_BLEED_PATHS.has(pathname)) {
     return (
       <AccentContext.Provider value={accent}>
