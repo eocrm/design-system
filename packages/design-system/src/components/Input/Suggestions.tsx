@@ -60,7 +60,8 @@ export function useSuggestions(
   const [active, setActive] = useState(-1);
 
   const enabled = !!suggestions?.length && !readOnly;
-  const all = enabled ? suggestions! : [];
+  // Deduped (first occurrence wins, order kept): the value is the row key and identity.
+  const all = enabled ? [...new Set(suggestions)] : [];
   const needle = query?.toLowerCase();
   const visible = needle == null ? all : all.filter((s) => s.toLowerCase().includes(needle));
   const shown = open && visible.length > 0;
@@ -126,7 +127,8 @@ export function useSuggestions(
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.defaultPrevented) return;
+    // Mid-IME-composition Enter/arrows belong to the IME (commit / candidate pick).
+    if (e.defaultPrevented || e.nativeEvent.isComposing) return;
     if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
       e.preventDefault();
       const delta = e.key === 'ArrowDown' ? 1 : -1;
@@ -150,7 +152,8 @@ export function useSuggestions(
     role: 'combobox',
     'aria-autocomplete': 'list',
     'aria-expanded': shown,
-    'aria-controls': listboxId,
+    // Only while the listbox exists — it is unmounted when collapsed.
+    'aria-controls': shown ? listboxId : undefined,
     'aria-activedescendant': shown && active >= 0 ? optionId(active) : undefined,
     onFocus: chain<FocusEvent<HTMLInputElement>>(handlers.onFocus, openAll),
     onClick: chain<MouseEvent<HTMLInputElement>>(handlers.onClick, () => {

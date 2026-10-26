@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, useState, type FormEvent } from 'react';
 import { Input } from './Input';
@@ -187,6 +187,7 @@ describe('Input suggestions', () => {
     const input = screen.getByRole('combobox');
     expect(input).toHaveAttribute('aria-expanded', 'false');
     expect(input).toHaveAttribute('aria-autocomplete', 'list');
+    expect(input).not.toHaveAttribute('aria-controls');
     expect(screen.queryByRole('listbox')).toBeNull();
     await user.click(input);
     expect(input).toHaveAttribute('aria-expanded', 'true');
@@ -339,5 +340,39 @@ describe('Input suggestions', () => {
     await user.keyboard('{ArrowDown}');
     expect(onFocus).toHaveBeenCalledTimes(1);
     expect(onKeyDown).toHaveBeenCalled();
+  });
+
+  it('renders duplicate suggestions once, in first-occurrence order', async () => {
+    const error = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const user = userEvent.setup();
+    render(<Input aria-label="Workspace" suggestions={['acme', 'northwind', 'acme']} />);
+    await user.click(screen.getByRole('combobox'));
+    expect(optionNames()).toEqual(['acme', 'northwind']);
+    expect(error).not.toHaveBeenCalled();
+    error.mockRestore();
+  });
+
+  it('is a plain textbox when readOnly', () => {
+    render(<Input aria-label="Workspace" suggestions={SUGGESTIONS} readOnly />);
+    expect(screen.queryByRole('combobox')).toBeNull();
+  });
+
+  it('ignores Enter and arrows while an IME is composing', async () => {
+    const onSubmit = vi.fn((e: FormEvent) => e.preventDefault());
+    const user = userEvent.setup();
+    render(
+      <form onSubmit={onSubmit}>
+        <Uncontrolled />
+      </form>,
+    );
+    const input = screen.getByRole('combobox');
+    await user.click(input);
+    fireEvent.keyDown(input, { key: 'ArrowDown', isComposing: true });
+    expect(input).not.toHaveAttribute('aria-activedescendant');
+    await user.keyboard('{ArrowDown}');
+    const enter = fireEvent.keyDown(input, { key: 'Enter', isComposing: true });
+    expect(enter).toBe(true); // not prevented: the IME commits the composition
+    expect(input).toHaveValue('');
+    expect(screen.getByRole('listbox')).toBeInTheDocument();
   });
 });
