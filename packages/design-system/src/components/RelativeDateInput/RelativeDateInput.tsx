@@ -1,4 +1,4 @@
-import { forwardRef, useId, useState, type HTMLAttributes } from 'react';
+import { forwardRef, useEffect, useId, useState, type HTMLAttributes } from 'react';
 import clsx from 'clsx';
 import { Button } from '../Button';
 import { Cluster } from '../Cluster';
@@ -50,8 +50,14 @@ export interface RelativeDateInputProps extends Omit<
   presets?: readonly RelativeDatePreset[];
   /** Disables every control, presets included. Default `false`. */
   disabled?: boolean;
-  /** Error chrome on the controls (`aria-invalid`), e.g. from `<Field error>`. Default `false`. */
+  /** Error chrome on the controls (`aria-invalid`), e.g. from `<Field error>`. Default `false`. The Exact-date Switch is never marked invalid. */
   invalid?: boolean;
+  /**
+   * Consumed for `<Field asGroup required>` composition, so Field can show its required
+   * marker. Adds no ARIA: `role="group"` does not support `aria-required` (ARIA 1.2), and
+   * the controls always show a value. Default `false`.
+   */
+  required?: boolean;
 }
 
 type Mode = RelativeDateInputProps['mode'];
@@ -95,10 +101,10 @@ const defaults = (mode: Mode): Draft => ({
   unit: 'd',
 });
 
-/** Hours and minutes exist only on Now. */
+/** Hours and minutes exist only on Now; leaving Now resets the offset (3h is not 3d). */
 const normalize = (d: Draft, mode: Mode): Draft =>
   mode === 'point' && d.anchor !== 'now' && (d.unit === 'h' || d.unit === 'min')
-    ? { ...d, unit: 'd' }
+    ? { ...d, unit: 'd', amount: '0' }
     : d;
 
 /**
@@ -212,6 +218,8 @@ export const RelativeDateInput = forwardRef<HTMLDivElement, RelativeDateInputPro
       presets,
       disabled = false,
       invalid = false,
+      // Consumed, not spread: `required` is not a valid attribute on a div.
+      required: _required,
       className,
       'aria-describedby': ariaDescribedby,
       ...rest
@@ -395,6 +403,22 @@ export const RelativeDateInput = forwardRef<HTMLDivElement, RelativeDateInputPro
     const shown = drafted && formatRelativeDate(drafted) === canonical ? canonical : null;
 
     const describedBy = clsx(ariaDescribedby, unrecognised && noteId) || undefined;
+    // Only a named group is a group; unnamed (e.g. inside `<Field asGroup>`, which is
+    // the group) it would be an extra, nameless landmark for screen readers.
+    const named = rest['aria-label'] != null || rest['aria-labelledby'] != null;
+    // A preset must parse in this mode, or choosing it would emit an unrecognised value.
+    const isValidPreset = (p: RelativeDatePreset) => parse(p.value) !== null;
+    const badPresets = (presets ?? [])
+      .filter((p) => !isValidPreset(p))
+      .map((p) => p.value)
+      .join(', ');
+    // Keyed on content (a string), so equal arrays don't re-warn per render.
+    useEffect(() => {
+      if (process.env.NODE_ENV === 'production' || !badPresets) return;
+      console.warn(
+        `<RelativeDateInput>: ignoring presets that don't parse in this mode: ${badPresets}`,
+      );
+    }, [badPresets]);
 
     return (
       // {...rest} first so the group role and merged aria-describedby win.
@@ -402,7 +426,7 @@ export const RelativeDateInput = forwardRef<HTMLDivElement, RelativeDateInputPro
         gap="sm"
         {...rest}
         ref={ref}
-        role="group"
+        role={named ? 'group' : undefined}
         aria-describedby={describedBy}
         className={className}
       >
@@ -413,7 +437,7 @@ export const RelativeDateInput = forwardRef<HTMLDivElement, RelativeDateInputPro
                 key={p.value}
                 size="sm"
                 variant="secondary"
-                disabled={disabled}
+                disabled={disabled || !isValidPreset(p)}
                 selected={p.value === shown}
                 aria-pressed={p.value === shown}
                 onClick={() =>

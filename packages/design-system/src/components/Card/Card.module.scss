@@ -131,15 +131,24 @@
   padding-inline-start: var(--card-section-gap);
 }
 
-// With controls: the title is the shrinkable track (ellipsis) and controls
-// keep their content width; column 3 is meta (truncates before the title) or an empty
-// spacer, so action always lands in column 4, right-aligned. Gaps live in
-// padding, as with meta.
+// With controls: the header is an inline-size container and an inner grid
+// holds the items, so a container query can re-lay them out. Wide: title ·
+// controls · meta (or an empty spacer) · action (or an empty placeholder), so
+// action always lands in column 4, right-aligned. The title track keeps a
+// short minimum (ellipsis below its natural width); meta truncates before the
+// title gives up anything. Gaps live in padding, as with meta.
 .withControls {
+  display: block;
+  container: card-header / inline-size;
+}
+
+.controlsGrid {
   display: grid;
   grid-auto-flow: column;
-  grid-template-columns: minmax(0, auto) max-content minmax(0, 1fr) max-content;
-  column-gap: 0;
+  grid-template-columns:
+    minmax(var(--card-title-min-width), auto) max-content minmax(0, 1fr)
+    max-content;
+  align-items: center;
 }
 
 .withControls .title {
@@ -156,6 +165,27 @@
 .controls {
   min-width: max-content;
   padding-inline-start: var(--card-section-gap);
+}
+
+// SCSS constant because container-query conditions can't read custom
+// properties (same as Image.module.scss). Sized for a two-option ButtonGroup
+// plus an icon action beside the title minimum.
+// ponytail: fixed threshold; wider controls overflow between it and their real need.
+$controls-wrap-below: 320px;
+
+// Narrow: controls move to a second row under the title (order, not
+// grid-column, so auto-placement does it). Row 1 is title · meta · action.
+@container card-header (max-width: #{$controls-wrap-below}) {
+  .controlsGrid {
+    grid-auto-flow: row;
+    grid-template-columns: minmax(0, auto) minmax(0, 1fr) max-content;
+    row-gap: var(--card-section-gap);
+  }
+
+  .controls {
+    order: 1;
+    padding-inline-start: 0;
+  }
 }
 
 .subtle {

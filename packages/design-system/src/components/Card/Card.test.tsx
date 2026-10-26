@@ -301,11 +301,20 @@ describe('compound API', () => {
           T
         </Card.Header>,
       );
-      const kids = Array.from(container.firstElementChild!.children);
+      // Items sit in one inner grid (the header is its size container).
+      const kids = Array.from(container.firstElementChild!.firstElementChild!.children);
       expect(kids.map((k) => k.tagName)).toEqual(['H3', 'SPAN', 'SPAN', 'SPAN']);
       expect(kids[1]).toContainElement(screen.getByTestId('c'));
       expect(kids[2]).toHaveTextContent('M');
       expect(kids[3]).toContainElement(screen.getByTestId('a'));
+    });
+
+    it('without action, controls still get a fourth (placeholder) grid item', () => {
+      const { container } = render(<Card.Header controls={<i />}>T</Card.Header>);
+      const kids = container.firstElementChild!.firstElementChild!.children;
+      expect(kids).toHaveLength(4);
+      expect(kids[3]).toHaveAttribute('aria-hidden', 'true');
+      expect(kids[3]).toBeEmptyDOMElement();
     });
   });
 

@@ -316,7 +316,7 @@ function ApiOverviewPage() {
       <Section id="rate-limits" title="Rate limits">
         <Text>
           Limits apply per key. When you exceed one the API answers <Code>429</Code> with a{' '}
-          <Code>Retry-After</Code> header. Every response carries:
+          <Code>Retry-After</Code> header. Responses carry:
         </Text>
         <List gap="xs">
           <List.Item>
@@ -326,8 +326,7 @@ function ApiOverviewPage() {
             <Code>X-RateLimit-Remaining</Code> — requests left in the current window.
           </List.Item>
           <List.Item>
-            <Code>Retry-After</Code> — seconds to wait before retrying; sent with a <Code>429</Code>
-            .
+            <Code>Retry-After</Code> — seconds to wait before retrying; <Code>429</Code> only.
           </List.Item>
         </List>
       </Section>

@@ -57,6 +57,7 @@ TL;DR: `<List>` for bullets, `<List variant="number">` for ordered steps, `numbe
 - Text inherits size and colour, so it works inside `Card`, `Alert` and prose-width containers.
 - Nest by putting a `List` inside a `List.Item`; it indents one level.
 - `numberStyle` has no effect on bullets.
+- With `numberStyle="badge"` the numbers are visual only; screen readers announce the list position ("1 of 3") rather than the badge text.
 - `size="heading"` fits markers to a `Title size="xl"` first line; the badge turns into a rounded square.
 
 When NOT to use: key–value pairs → `DefinitionList`; rows of records → `Card.List` / `Table`; interactive or selectable rows → `Card.List`; custom markers or icons (unsupported).

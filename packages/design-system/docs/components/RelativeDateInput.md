@@ -34,9 +34,10 @@ const [period, setPeriod] = useState<string | null>('last:7d');
   aria-label="Period"
 />;
 
-// Inside a Field with an error. asGroup: the label captions the group (no htmlFor
-// onto a div) and the error describes it; Field injects `invalid` into the control.
-<Field asGroup label="Due date" error="Pick a due date">
+// Inside a Field with an error. asGroup: Field is the group, its label names it (no
+// htmlFor onto a div) and the error describes it; Field injects `invalid` and `required`.
+// Pass no aria-label here: unnamed, the control renders no group role of its own.
+<Field asGroup required label="Due date" error="Pick a due date">
   <RelativeDateInput mode="point" value={due} onChange={setDue} />
 </Field>;
 ```
@@ -54,7 +55,8 @@ const [period, setPeriod] = useState<string | null>('last:7d');
 | `onChange` | `(expr: string \| null) => void` | yes | Fires with the next canonical expression after a valid edit, and only when it differs from `value`. Invalid drafts (an out-of-range amount, an exact date not yet picked) never fire it. |
 | `presets` | `readonly RelativeDatePreset[]` | no | Quick-pick toggle buttons rendered above the controls. The one whose `value` equals the canonical form of `value` is pressed (`last:07d` presses `last:7d`). |
 | `disabled` | `boolean` | no | Disables every control, presets included. Default `false`. |
-| `invalid` | `boolean` | no | Error chrome on the controls (`aria-invalid`), e.g. from `<Field error>`. Default `false`. |
+| `invalid` | `boolean` | no | Error chrome on the controls (`aria-invalid`), e.g. from `<Field error>`. Default `false`. The Exact-date Switch is never marked invalid. |
+| `required` | `boolean` | no | Consumed for `<Field asGroup required>` composition, so Field can show its required marker. Adds no ARIA: `role="group"` does not support `aria-required` (ARIA 1.2), and the controls always show a value. Default `false`. |
 | …native | | | plus native `<div>` attributes |
 
 <!-- props:end -->
@@ -66,7 +68,10 @@ const [period, setPeriod] = useState<string | null>('last:7d');
 - **Only valid expressions are emitted.** An out-of-range or non-integer amount shows an inline error and does not call `onChange` until it is valid. `onChange` also does not fire when the edit would produce the current `value`.
 - **It never emits `null`.** `null` _in_ means "no value" and shows the defaults (`today` / `this:month`) without emitting them. To let users clear a filter, give them your own chip or reset button that sets your state to `null` (see the "Clearing" pattern below).
 - **An unrecognised incoming `value`** (one that does not parse in this `mode` / `allowNow`) shows the defaults plus an "Unrecognised value: …" note and emits nothing until the user edits.
-- **Presets** are toggle buttons (`aria-pressed`); choosing one emits its `value`. Their `label` is yours (translate it yourself).
+- **Presets** are toggle buttons (`aria-pressed`); choosing one emits its `value`. Their `label` is yours (translate it yourself). Clicking a pressed preset keeps it selected (radio-like; it never un-presses to `null`). A preset whose `value` does not parse in this `mode` / `allowNow` renders disabled, never emits, and logs a dev-mode `console.warn`.
+- **`invalid`** marks the selects, amount and date picker invalid. The Exact-date `Switch` is intentionally not marked: it is a mode toggle, not the erroneous value.
+- **Group role:** with `aria-label` or `aria-labelledby` the root is a named `role="group"`; without one (e.g. inside `<Field asGroup>`, which is the group) it has no role, so there is no nameless nested group. `required` (injected by Field) is consumed for Field's marker and adds no ARIA, since `role="group"` does not support `aria-required`.
+- **Leaving Now** for another anchor resets the offset (unit to days, amount to 0) and emits the bare anchor, since `now-3h` has no day equivalent.
 - `allowNow` gates three things together: the `now` anchor, the `h` / `min` units (only on `now`), and a minute-precision exact datetime in UTC (`YYYY-MM-DDTHH:mm:ssZ`).
 
 ```tsx

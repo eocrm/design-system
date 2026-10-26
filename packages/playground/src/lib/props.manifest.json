@@ -5228,7 +5228,14 @@
           "type": "boolean",
           "required": false,
           "default": "",
-          "description": "Error chrome on the controls (`aria-invalid`), e.g. from `<Field error>`. Default `false`."
+          "description": "Error chrome on the controls (`aria-invalid`), e.g. from `<Field error>`. Default `false`. The Exact-date Switch is never marked invalid."
+        },
+        {
+          "name": "required",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Consumed for `<Field asGroup required>` composition, so Field can show its required\nmarker. Adds no ARIA: `role=\"group\"` does not support `aria-required` (ARIA 1.2), and\nthe controls always show a value. Default `false`."
         }
       ]
     },

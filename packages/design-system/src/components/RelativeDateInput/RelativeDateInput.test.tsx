@@ -2,6 +2,7 @@ import { createRef, useState } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { I18nProvider } from '../../i18n/I18nProvider';
+import { Field } from '../Field';
 import { RelativeDateInput, type RelativeDateInputProps } from './RelativeDateInput';
 
 type Props = Omit<RelativeDateInputProps, 'value' | 'onChange'> & {
@@ -84,11 +85,13 @@ describe('RelativeDateInput — point', () => {
     expect(screen.queryByRole('option', { name: 'hours' })).not.toBeInTheDocument();
   });
 
-  it('leaving Now with a minute offset falls back to days', async () => {
+  it('leaving Now with an hour offset resets to the bare anchor in days', async () => {
     const onChange = vi.fn();
-    render(<Host mode="point" allowNow initial="now-30min" onChange={onChange} />);
+    render(<Host mode="point" allowNow initial="now-3h" onChange={onChange} />);
     await pick('Anchor', 'Today');
-    expect(onChange).toHaveBeenLastCalledWith('today-30d');
+    expect(onChange).toHaveBeenLastCalledWith('today');
+    expect(amount()).toHaveValue('0');
+    expect(combo('Unit')).toHaveTextContent('days');
   });
 
   it('a boundary anchor keeps its offset', async () => {
@@ -353,6 +356,36 @@ describe('RelativeDateInput — presets', () => {
   });
 });
 
+describe('RelativeDateInput — presets that do not parse', () => {
+  it('renders them disabled, never emits them, and warns once', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const onChange = vi.fn();
+    const { rerender } = render(
+      <RelativeDateInput
+        mode="point"
+        value="today"
+        onChange={onChange}
+        presets={[{ label: 'Now', value: 'now' }]}
+      />,
+    );
+    const preset = screen.getByRole('button', { name: 'Now' });
+    expect(preset).toBeDisabled();
+    await userEvent.click(preset);
+    expect(onChange).not.toHaveBeenCalled();
+    rerender(
+      <RelativeDateInput
+        mode="point"
+        value="today"
+        onChange={onChange}
+        presets={[{ label: 'Now', value: 'now' }]}
+      />,
+    );
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls[0][0]).toContain('now');
+    warn.mockRestore();
+  });
+});
+
 describe('RelativeDateInput — presets with a non-canonical value', () => {
   it('presses the preset matching the canonical form', () => {
     render(
@@ -434,5 +467,28 @@ describe('RelativeDateInput — misc', () => {
     expect(ref.current).toBe(group);
     expect(group).toHaveClass('extra');
     expect(group.className.split(' ').length).toBeGreaterThan(1);
+  });
+
+  it('unnamed, the root has no group role', () => {
+    const ref = createRef<HTMLDivElement>();
+    render(<RelativeDateInput ref={ref} mode="point" value="today" onChange={() => {}} />);
+    expect(ref.current).not.toHaveAttribute('role');
+  });
+
+  it('inside Field asGroup: the label names the one group, required and error wire up', () => {
+    const ref = createRef<HTMLDivElement>();
+    render(
+      <Field asGroup required label="Due date" error="Pick a due date">
+        <RelativeDateInput ref={ref} mode="point" value="today+7d" onChange={() => {}} />
+      </Field>,
+    );
+    const groups = screen.getAllByRole('group');
+    expect(groups).toHaveLength(1);
+    expect(groups[0]).toHaveAccessibleName(/Due date/);
+    expect(groups[0]).toHaveAttribute('aria-invalid', 'true');
+    expect(groups[0]).toHaveAccessibleDescription('Pick a due date');
+    expect(ref.current).not.toHaveAttribute('required');
+    expect(ref.current).not.toHaveAttribute('aria-required');
+    expect(amount()).toHaveAttribute('aria-invalid', 'true');
   });
 });
