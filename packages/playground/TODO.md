@@ -27,7 +27,9 @@ Keep entries terse but specific. The "Mocked in" path is load-bearing — the im
 
 ## Open
 
-### [ ] `<CodeBlock>` — multi-line code with copy button (and optional highlighting)
+### [x] `<CodeBlock>` — multi-line code with copy button (and optional highlighting)
+
+**Shipped:** 2026-10-26 — `CodeBlock` with highlighting, copy, sample tabs and `syncKey`; the Docs mockup now uses it.
 
 **Filed:** 2026-10-26
 **Mocked in:**

@@ -95,6 +95,7 @@ const CLUSTERS = {
   DefinitionList: 'Display',
   CircularProgress: 'Display',
   Code: 'Display',
+  CodeBlock: 'Display',
   HighlightedText: 'Display',
   CursorPagination: 'Display',
   DashboardCanvas: 'Display',

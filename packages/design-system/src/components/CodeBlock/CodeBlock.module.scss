@@ -1,0 +1,146 @@
+@use './CodeBlock.tokens';
+@use '../../styles/mixins' as *;
+
+.root {
+  border: var(--border-width) solid var(--code-block-border-color);
+  border-radius: var(--code-block-radius);
+  background: var(--code-block-bg);
+  color: var(--code-block-fg);
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-height: var(--size-md);
+  padding-inline: var(--code-block-padding-x) var(--space-2);
+  border-bottom: var(--border-width) solid var(--code-block-border-color);
+  border-start-start-radius: inherit;
+  border-start-end-radius: inherit;
+  background: var(--code-block-header-bg);
+
+  // The header's own border is the divider; the tab strip's baseline would double it.
+  --tabs-border-color: transparent;
+}
+
+// Tabs' own scroll wrapper already has min-width: 0, so a long strip scrolls
+// inside the header; the title needs the same to truncate instead of pushing.
+.title {
+  @include truncate;
+
+  min-width: 0;
+  font-size: var(--font-size-sm);
+  color: var(--color-fg-muted);
+}
+
+.actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: var(--space-1);
+}
+
+.body {
+  overflow-x: auto;
+  padding-block: var(--code-block-padding-y);
+  font-family: var(--font-family-mono);
+  font-size: var(--code-block-font-size);
+  line-height: var(--code-block-line-height);
+  white-space: pre;
+  tab-size: 2;
+
+  &:focus-visible {
+    @include focus-ring($offset: calc(var(--ring-width) * -1));
+  }
+}
+
+.wrap {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+// The body's own internal scroll box (like ScrollArea), not outer layout.
+.maxXs {
+  max-height: var(--measure-xs);
+  overflow-y: auto;
+}
+
+.maxSm {
+  max-height: var(--measure-sm);
+  overflow-y: auto;
+}
+
+.maxMd {
+  max-height: var(--measure-md);
+  overflow-y: auto;
+}
+
+.maxLg {
+  max-height: var(--measure-lg);
+  overflow-y: auto;
+}
+
+.maxXl {
+  max-height: var(--measure-xl);
+  overflow-y: auto;
+}
+
+// inline-block shrink-wraps to the longest line but never less than the body,
+// so a highlighted line's tint spans the full scroll width, not just the viewport.
+.lines {
+  display: inline-block;
+  min-width: 100%;
+  font: inherit;
+}
+
+// Inline-block, not block: block-level lines make innerText add a break on top
+// of the '\n' between them. min-height gives an empty line its line box.
+.line {
+  display: inline-block;
+  min-width: 100%;
+  min-height: 1lh;
+  vertical-align: top;
+  padding-inline: var(--code-block-padding-x);
+
+  // Every line reserves the bar so highlighting never shifts text; a logical
+  // border (not an inset box-shadow) keeps the bar on the start side in RTL.
+  border-inline-start: var(--border-width-strong) solid transparent;
+
+  &[data-highlighted] {
+    border-inline-start-color: var(--code-block-line-highlight-bar);
+    background: var(--code-block-line-highlight-bg);
+  }
+}
+
+.keyword {
+  color: var(--code-block-syntax-keyword);
+}
+
+.string {
+  color: var(--code-block-syntax-string);
+}
+
+.number {
+  color: var(--code-block-syntax-number);
+}
+
+.comment {
+  color: var(--code-block-syntax-comment);
+  font-style: italic;
+}
+
+.function {
+  color: var(--code-block-syntax-function);
+}
+
+.property {
+  color: var(--code-block-syntax-property);
+}
+
+.punctuation {
+  color: var(--code-block-syntax-punctuation);
+}
+
+.plain {
+  color: var(--code-block-syntax-plain);
+}

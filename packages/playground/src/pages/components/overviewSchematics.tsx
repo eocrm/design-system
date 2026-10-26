@@ -1278,6 +1278,24 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       <Bar w={30} />
     </Row>
   ),
+  CodeBlock: (
+    <Col gap={0} style={{ width: 150 }}>
+      <Outline
+        w="100%"
+        h={14}
+        style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 8px' }}
+      >
+        <Bar w={26} />
+        <SolidBar w={18} />
+      </Outline>
+      <Col gap={6} style={{ padding: 8 }}>
+        <Bar w={100} />
+        <Bar w={70} style={{ marginLeft: 12 }} />
+        <Bar w={84} style={{ marginLeft: 12 }} />
+        <Bar w={40} />
+      </Col>
+    </Col>
+  ),
   HighlightedText: (
     <Row gap={4}>
       <Bar w={30} />
