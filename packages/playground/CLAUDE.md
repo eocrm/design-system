@@ -86,7 +86,7 @@ Skipping 1–3 → users can navigate to the URL but the page is unreachable thr
 
 ### 5. Demo-only deps stay here
 
-`react-router`, `prismjs`, `prism-react-renderer`, `@types/prismjs`, `@types/node` — these are in the playground's `package.json`. They MUST NOT appear in `@eocrm/design-system`'s `dependencies`. If you find yourself wanting to use one of these in a library component, you're solving the problem in the wrong layer.
+`react-router`, `prismjs`, `@types/prismjs`, `@types/node` — these are in the playground's `package.json`. They MUST NOT appear in `@eocrm/design-system`'s `dependencies`. (`prism-react-renderer` is now also a library dependency, used by CodeBlock's tokenizer.) If you find yourself wanting to use one of these in a library component, you're solving the problem in the wrong layer.
 
 ### 6. Mockups build EXCLUSIVELY from `@eocrm/design-system` components
 
