@@ -501,6 +501,40 @@ describe('StagePath default done fill (accent tint) keeps its text at AA when ho
 });
 
 /**
+ * CodeBlock paints eight syntax colours on its surface and on a highlighted
+ * line. The component tokens are aliases, so the file is layered in front of
+ * the theme source and tokenValue() follows the chain to a literal.
+ */
+describe('CodeBlock syntax colours clear AA on the surface and the highlighted line', () => {
+  const file = readFileSync(
+    resolve(__dirname, '../components/CodeBlock/CodeBlock.tokens.scss'),
+    'utf8',
+  );
+  const SYNTAX = [
+    'keyword',
+    'string',
+    'number',
+    'comment',
+    'function',
+    'property',
+    'punctuation',
+    'plain',
+  ];
+  it.each(THEMED_ACCENTS)('%s, %s accent', (_theme, _accent, source) => {
+    const layered = `${file}\n${source}`;
+    for (const bg of ['--code-block-bg', '--code-block-line-highlight-bg']) {
+      for (const key of SYNTAX) {
+        const fg = `--code-block-syntax-${key}`;
+        expect(
+          contrast(tokenValue(fg, layered), tokenValue(bg, layered)),
+          `${fg} on ${bg}`,
+        ).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+  });
+});
+
+/**
  * Table.CellLink hover paints `--table-cell-link-bg-hover`
  * (`color-mix(--color-bg-overlay N%, transparent)`) over whatever the cell
  * paints. That overlay DARKENS the surface, which helps a light fg in dark but

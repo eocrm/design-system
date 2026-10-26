@@ -1,0 +1,27 @@
+// CodeBlock.tokens.scss — Component-scoped tokens for <CodeBlock>. Surface, highlighted line and the eight syntax colours. `--code-*` belongs to the inline <Code> chip.
+:root {
+  // Surface
+  --code-block-bg: var(--color-bg-subtle);
+  --code-block-border-color: var(--color-border);
+  --code-block-radius: var(--radius-md);
+  --code-block-header-bg: var(--color-bg);
+  --code-block-fg: var(--color-fg);
+  --code-block-font-size: var(--font-size-code);
+  --code-block-line-height: var(--line-height-normal);
+  --code-block-padding-y: var(--space-3);
+  --code-block-padding-x: var(--space-4);
+
+  // Highlighted line
+  --code-block-line-highlight-bg: var(--color-accent-bg-subtle);
+  --code-block-line-highlight-bar: var(--color-accent);
+
+  // Syntax — every colour is gated at AA on the surface and the highlighted line
+  --code-block-syntax-keyword: var(--color-palette-violet-fg);
+  --code-block-syntax-string: var(--color-palette-green-fg);
+  --code-block-syntax-number: var(--color-warning-strong);
+  --code-block-syntax-comment: var(--color-fg-muted);
+  --code-block-syntax-function: var(--color-palette-blue-fg);
+  --code-block-syntax-property: var(--color-palette-teal-fg);
+  --code-block-syntax-punctuation: var(--color-fg-muted);
+  --code-block-syntax-plain: var(--code-block-fg);
+}
