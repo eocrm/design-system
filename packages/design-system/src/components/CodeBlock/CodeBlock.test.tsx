@@ -42,6 +42,11 @@ describe('CodeBlock', () => {
       expect(container.querySelectorAll('[data-line]')).toHaveLength(2);
     });
 
+    it('keeps blank lines free of stray newlines', () => {
+      const { container } = render(<CodeBlock code={'a\n\nb'} language="python" />);
+      expect(body(container).textContent).toBe('a\n\nb');
+    });
+
     it("a one-item samples array shows that sample's label", () => {
       render(<CodeBlock samples={[{ ...SAMPLES[1], label: 'Client' }]} />);
       expect(screen.getByText('Client')).toBeInTheDocument();

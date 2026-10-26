@@ -563,6 +563,7 @@ function ListContactsPage({ langState }: { langState: LangState }) {
 const CLIENTS = {
   claude: {
     label: 'Claude',
+    title: 'Server URL',
     steps: [
       'Open Settings → Connectors → Add custom connector.',
       'Paste the server URL below and click Add.',
@@ -572,6 +573,7 @@ const CLIENTS = {
   },
   chatgpt: {
     label: 'ChatGPT',
+    title: 'Server URL',
     steps: [
       'Open Settings → Connectors → Create.',
       'Paste the server URL below.',
@@ -581,11 +583,13 @@ const CLIENTS = {
   },
   'claude-code': {
     label: 'Claude Code',
+    title: 'Command',
     steps: ['Run this in your terminal, then /mcp to sign in.'],
     snippet: 'claude mcp add --transport http eocrm https://acme.eocrm.io/mcp',
   },
   codex: {
     label: 'Codex',
+    title: '~/.codex/config.toml',
     steps: ['Add this to ~/.codex/config.toml, then restart Codex.'],
     snippet: `[mcp_servers.eocrm]
 url = "https://acme.eocrm.io/mcp"`,
@@ -632,7 +636,11 @@ function AiAssistantsPage() {
               </Cluster>
             ))}
           </Stack>
-          <CodeBlock language={client === 'claude-code' ? 'bash' : undefined} code={c.snippet} />
+          <CodeBlock
+            title={c.title}
+            language={client === 'claude-code' ? 'bash' : undefined}
+            code={c.snippet}
+          />
         </Stack>
         <Alert tone="info">
           The assistant acts as you: it sees and changes only what your role allows.

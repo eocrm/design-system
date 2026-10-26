@@ -28,6 +28,11 @@ it('drops exactly one trailing newline', () =>
   expect(text(tokenizeLines('a\nb\n', 'json'))).toEqual(['a', 'b']));
 it('splits CRLF without leaving \\r', () =>
   expect(text(tokenizeLines('a\r\nb', 'bash'))).toEqual(['a', 'b']));
+it('blank lines are empty, with no stray newline tokens', () => {
+  const lines = tokenizeLines('a\n\nb', 'python');
+  expect(text(lines)).toEqual(['a', '', 'b']);
+  expect(lines.flat().some((t) => t.content.includes('\n'))).toBe(false);
+});
 it('empty code → one empty line', () => expect(tokenizeLines('', 'json')).toHaveLength(1));
 it('highlightedLineSet normalises reversed ranges and ignores out-of-range', () => {
   expect([...highlightedLineSet([[7, 5], 99, 0, 2], 6)].sort()).toEqual([2, 5, 6]);

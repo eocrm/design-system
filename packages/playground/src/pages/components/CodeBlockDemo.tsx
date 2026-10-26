@@ -53,6 +53,10 @@ const LONG = JSON.stringify(
   2,
 );
 
+const LONG_CURL = `curl -X POST https://acme.eocrm.io/api/v1/contacts -H "Authorization: Bearer $EOCRM_API_KEY" -H "Content-Type: application/json" -d '{"first_name":"Ana","last_name":"Kovač","email":"ana@northwind.io"}'`;
+
+const RUST = 'fn main() {\n    println!("hello");\n}';
+
 const SNIPPET = `function greet(name) {
   const msg = 'Hello, ' + name;
   console.log(msg);
@@ -116,19 +120,15 @@ export function CodeBlockDemo() {
         description="Starts with long lines wrapped; the toggle in the header switches back."
         code={`<CodeBlock defaultWrap language="bash" code={LONG_CURL} />`}
       >
-        <CodeBlock
-          defaultWrap
-          language="bash"
-          code={`curl -X POST https://acme.eocrm.io/api/v1/contacts -H "Authorization: Bearer $EOCRM_API_KEY" -H "Content-Type: application/json" -d '{"first_name":"Ana","last_name":"Kovač","email":"ana@northwind.io"}'`}
-        />
+        <CodeBlock defaultWrap language="bash" code={LONG_CURL} />
       </Example>
 
       <Example
         title="Unknown language"
         description="A language outside the supported list renders as plain text."
-        code={`<CodeBlock language="rust" code={'fn main() {}'} />`}
+        code={`<CodeBlock language="rust" code={RUST} />`}
       >
-        <CodeBlock language="rust" code={'fn main() {\n    println!("hello");\n}'} />
+        <CodeBlock language="rust" code={RUST} />
       </Example>
     </DemoLayout>
   );

@@ -1280,10 +1280,14 @@ export const SCHEMATICS: Record<string, ReactNode> = {
   ),
   CodeBlock: (
     <Col gap={0} style={{ width: 150 }}>
-      <Box h={14} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 8px' }}>
+      <Outline
+        w="100%"
+        h={14}
+        style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '0 8px' }}
+      >
         <Bar w={26} />
         <SolidBar w={18} />
-      </Box>
+      </Outline>
       <Col gap={6} style={{ padding: 8 }}>
         <Bar w={100} />
         <Bar w={70} style={{ marginLeft: 12 }} />

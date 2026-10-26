@@ -81,7 +81,9 @@ export function tokenizeLines(code: string, language?: string): CodeToken[][] {
 
   return normalizeTokens(Prism.tokenize(src, grammar)).map((line) => {
     const out: CodeToken[] = [];
-    for (const { types, content } of line) {
+    for (const { types, content, empty } of line) {
+      // normalizeTokens pads blank lines with a "\n" token; it would add a second line box.
+      if (empty) continue;
       const key = keyOf(types);
       const last = out[out.length - 1];
       if (last?.key === key) last.content += content;
