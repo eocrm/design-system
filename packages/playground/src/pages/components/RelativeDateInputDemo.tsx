@@ -120,13 +120,19 @@ export function Demo() {
       <Example
         title="Invalid inside a Field"
         description="invalid sets aria-invalid on the controls; the Field supplies the message."
-        code={`<Field label="Due date" error="Pick a due date">
-  <RelativeDateInput mode="point" invalid value={value} onChange={setValue} />
-</Field>`}
+        code={`<Stack gap="sm">
+  <Field label="Due date" error="Pick a due date">
+    <RelativeDateInput mode="point" invalid value={value} onChange={setValue} />
+  </Field>
+  <Code>{value ?? 'null'}</Code>
+</Stack>`}
       >
-        <Field label="Due date" error="Pick a due date">
-          <RelativeDateInput mode="point" invalid value={invalid} onChange={setInvalid} />
-        </Field>
+        <Stack gap="sm">
+          <Field label="Due date" error="Pick a due date">
+            <RelativeDateInput mode="point" invalid value={invalid} onChange={setInvalid} />
+          </Field>
+          <Code>{invalid ?? 'null'}</Code>
+        </Stack>
       </Example>
     </DemoLayout>
   );
