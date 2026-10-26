@@ -10,6 +10,12 @@ const SAMPLES: CodeBlockSample[] = [
 
 const body = (container: HTMLElement) => container.querySelector('pre') as HTMLPreElement;
 
+const originalClipboard = Object.getOwnPropertyDescriptor(navigator, 'clipboard');
+afterEach(() => {
+  if (originalClipboard) Object.defineProperty(navigator, 'clipboard', originalClipboard);
+  else delete (navigator as { clipboard?: unknown }).clipboard;
+});
+
 function mockClipboard(writeText: unknown) {
   Object.defineProperty(navigator, 'clipboard', {
     value: writeText === undefined ? undefined : { writeText },
@@ -34,7 +40,12 @@ describe('CodeBlock', () => {
       const { container } = render(<CodeBlock code={'a\nb\n'} />);
       expect(body(container).textContent).toBe('a\nb');
       expect(container.querySelectorAll('[data-line]')).toHaveLength(2);
-      expect(body(container)).not.toHaveAttribute('role');
+    });
+
+    it("a one-item samples array shows that sample's label", () => {
+      render(<CodeBlock samples={[{ ...SAMPLES[1], label: 'Client' }]} />);
+      expect(screen.getByText('Client')).toBeInTheDocument();
+      expect(screen.queryByRole('tab')).not.toBeInTheDocument();
     });
   });
 
@@ -148,15 +159,19 @@ describe('CodeBlock', () => {
     expect(body(other.container).className).toMatch(/wrap/);
   });
 
-  it('maxHeight makes the body a named, focusable scroll box', () => {
+  it('the body is always a focusable, named region', () => {
     const { container, rerender } = render(<CodeBlock code="x" />);
-    expect(body(container)).not.toHaveAttribute('tabindex');
-    rerender(<CodeBlock code="x" maxHeight="sm" />);
-    expect(body(container).className).toMatch(/maxSm/);
     expect(body(container)).toHaveAttribute('tabindex', '0');
     expect(screen.getByRole('group', { name: 'Code' })).toBe(body(container));
+
     rerender(<CodeBlock code="x" title="Request" maxHeight="sm" />);
+    expect(body(container).className).toMatch(/maxSm/);
+    expect(body(container)).toHaveAttribute('tabindex', '0');
     expect(screen.getByRole('group', { name: 'Request' })).toBe(body(container));
+
+    rerender(<CodeBlock samples={SAMPLES} />);
+    expect(body(container)).toHaveAttribute('tabindex', '0');
+    expect(screen.getByRole('tabpanel', { name: 'cURL' })).toBe(body(container));
   });
 
   it('highlightLines marks only the listed lines', () => {

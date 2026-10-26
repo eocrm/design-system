@@ -45,9 +45,9 @@ export interface CodeBlockProps extends Omit<HTMLAttributes<HTMLDivElement>, 'ti
    */
   language?: CodeBlockLanguage | (string & {});
   /**
-   * Header label in single-sample mode. Defaults to the language name
-   * (`JSON`, `Bash`…) or "Plain text". Also names the scroll region when
-   * `maxHeight` is set.
+   * Header label in single-sample mode. Defaults to a one-item `samples`
+   * entry's `label`, else the language name (`JSON`, `Bash`…), else "Plain
+   * text". Also names the single-sample body (default "Code").
    */
   title?: string;
   /** Multi-sample mode: 2+ samples render as tabs. Wins over `code`/`language`. */
@@ -67,7 +67,7 @@ export interface CodeBlockProps extends Omit<HTMLAttributes<HTMLDivElement>, 'ti
   /** Lines to emphasise (visual only — explain the emphasis in prose). */
   highlightLines?: CodeBlockHighlightLines;
   /**
-   * Caps the body height and makes it a focusable, named scroll region.
+   * Caps the body height; the body scrolls inside it (it is always a focusable, named region).
    * `xs` 200px · `sm` 320px · `md` 448px · `lg` 640px · `xl` 800px. Default: no cap.
    */
   maxHeight?: CodeBlockMaxHeight;
@@ -130,6 +130,7 @@ export const CodeBlock = forwardRef<HTMLDivElement, CodeBlockProps>(function Cod
   const lang = active.language;
   const label =
     title ||
+    (samples?.length === 1 && samples[0].label) ||
     (lang && Object.hasOwn(LANGUAGE_LABELS, lang)
       ? LANGUAGE_LABELS[lang as CodeBlockLanguage]
       : t('codeBlock.plainText'));
@@ -160,8 +161,6 @@ export const CodeBlock = forwardRef<HTMLDivElement, CodeBlockProps>(function Cod
     if (syncKey !== undefined) setSynced(syncKey, id);
     onSampleChange?.(id);
   };
-
-  const scrollable = maxHeight !== undefined;
 
   // {...props} first so the root's ref and className composition win (Pattern B);
   // the ARIA-bearing structure lives on children consumers cannot reach.
@@ -214,18 +213,16 @@ export const CodeBlock = forwardRef<HTMLDivElement, CodeBlockProps>(function Cod
             : null}
       </LiveRegion>
       <pre
-        className={clsx(
-          styles.body,
-          wrap && styles.wrap,
-          scrollable && MAX_HEIGHT_CLASS[maxHeight],
-        )}
-        // Multi: the tabpanel named by its tab. Single + maxHeight: a named
-        // group, since a bare <pre> may not carry aria-label.
-        role={multi ? 'tabpanel' : scrollable ? 'group' : undefined}
+        className={clsx(styles.body, wrap && styles.wrap, maxHeight && MAX_HEIGHT_CLASS[maxHeight])}
+        // Always a tab stop: wrap-off lines overflow horizontally, and APG gives
+        // a tabpanel without focusable content tabIndex=0. Multi: the tabpanel
+        // named by its tab. Single: a named group, since a bare <pre> may not
+        // carry aria-label.
+        role={multi ? 'tabpanel' : 'group'}
         id={multi ? `${prefix}-${active.id}-panel` : undefined}
         aria-labelledby={multi ? `${prefix}-${active.id}-tab` : undefined}
-        aria-label={!multi && scrollable ? title || t('codeBlock.code') : undefined}
-        tabIndex={scrollable ? 0 : undefined}
+        aria-label={multi ? undefined : title || t('codeBlock.code')}
+        tabIndex={0}
       >
         <code className={styles.lines}>
           {lines.map((tokens, i) => (

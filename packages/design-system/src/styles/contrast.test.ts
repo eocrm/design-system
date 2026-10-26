@@ -505,7 +505,7 @@ describe('StagePath default done fill (accent tint) keeps its text at AA when ho
  * line. The component tokens are aliases, so the file is layered in front of
  * the theme source and tokenValue() follows the chain to a literal.
  */
-describe('CodeBlock syntax colours clear AA on the surface and the highlighted line', () => {
+describe('CodeBlock syntax colours and header title clear AA on their surfaces', () => {
   const file = readFileSync(
     resolve(__dirname, '../components/CodeBlock/CodeBlock.tokens.scss'),
     'utf8',
@@ -531,6 +531,14 @@ describe('CodeBlock syntax colours clear AA on the surface and the highlighted l
         ).toBeGreaterThanOrEqual(4.5);
       }
     }
+    // The single-sample header title.
+    expect(
+      contrast(
+        tokenValue('--color-fg-muted', layered),
+        tokenValue('--code-block-header-bg', layered),
+      ),
+      '--color-fg-muted on --code-block-header-bg',
+    ).toBeGreaterThanOrEqual(4.5);
   });
 });
 
