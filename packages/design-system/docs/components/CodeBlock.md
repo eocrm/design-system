@@ -3,14 +3,17 @@
 ```tsx
 <CodeBlock language="json" code={'{ "id": 42 }'} />;
 
+const [lang, setLang] = useState<string>();
+useEffect(() => setLang(localStorage.getItem('api-lang') ?? undefined), []); // client-only read
+
 <CodeBlock
+  samples={samples}
   syncKey="api-lang"
-  samples={[
-    { id: 'curl', label: 'cURL', language: 'bash', code: 'curl https://api.example.com/v1/deals' },
-    { id: 'py', label: 'Python', language: 'python', code: 'requests.get(url)' },
-  ]}
-  defaultSampleId={localStorage.getItem('api-lang') ?? undefined}
-  onSampleChange={(id) => localStorage.setItem('api-lang', id)}
+  activeSampleId={lang}
+  onSampleChange={(id) => {
+    setLang(id);
+    localStorage.setItem('api-lang', id);
+  }}
 />;
 ```
 
@@ -40,7 +43,7 @@
 - **Header label** is `title`, then the label of a one-item `samples` array, then the language name, then "Plain text".
 - **Accessibility:** the code body is always keyboard-focusable. Single mode is a `role="group"` named by `title` (fallback "Code"); multi mode is a tabpanel labelled by its tab.
 - **`highlightLines` is visual only.** Explain the emphasis in the surrounding prose.
-- **`syncKey` is in-memory** (per page load). The library never touches storage: persist the choice in the app via `defaultSampleId` + `onSampleChange`.
+- **`syncKey` is in-memory** (per page load). The library never touches storage: persist the choice in the app by owning it as state and passing it as `activeSampleId` (see the example). Read storage in an effect, not during render, so server and client render the same first frame. `defaultSampleId` is only the static initial choice.
 - **Active sample precedence:** controlled `activeSampleId`, then `syncKey`, then the user's own pick, then `defaultSampleId`, then the first sample. An `activeSampleId` that matches no sample id falls through to the next rule.
 - Renders identically on the server (SSR-safe).
 
