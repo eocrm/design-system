@@ -2420,3 +2420,17 @@ describe('a component hover is a visible step from what it replaces', () => {
     );
   });
 });
+
+/** Card.Header surface="subtle": title and meta text on the muted header surface. */
+describe('Card subtle header text clears AA on its surface', () => {
+  const file = readFileSync(resolve(__dirname, '../components/Card/Card.tokens.scss'), 'utf8');
+  it.each(THEMED_ACCENTS)('%s, %s accent', (_theme, _accent, source) => {
+    const layered = `${file}\n${source}`;
+    for (const fg of ['--card-title-fg', '--card-meta-fg']) {
+      expect(
+        contrast(tokenValue(fg, layered), tokenValue('--card-header-bg-subtle', layered)),
+        `${fg} on --card-header-bg-subtle`,
+      ).toBeGreaterThanOrEqual(4.5);
+    }
+  });
+});

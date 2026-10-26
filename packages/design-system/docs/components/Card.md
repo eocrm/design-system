@@ -44,6 +44,8 @@
 | Prop | Type | Required | Description |
 |---|---|---|---|
 | `headerLevel` | `'h2' \| 'h3' \| 'h4' \| 'h5' \| 'h6'` | no | Heading level for the title text. Defaults to `'h3'` (assumes the page has an h1/h2 above). Override when this section sits beneath an h1 directly (`headerLevel="h2"`) or further nested (`headerLevel="h4"`). |
+| `surface` | `'default' \| 'subtle'` | no | `'subtle'` paints the header on a muted surface, for a nested editable sub-section inside a `Card.Body` (e.g. a condition group). Defaults to `'default'`. |
+| `controls` | `ReactNode` | no | Optional interactive slot right after the title (e.g. a `ButtonGroup` mode switch). Rendered outside the heading, so it is not part of the heading's name. Order: title, controls, meta, action. |
 | `action` | `ReactNode` | no | Optional right-aligned slot — typically a `<Link>` or `<Button>` that lets the user navigate to a full list or take a section-level action. Rendered inside a `<span>` that never shrinks or wraps (flex-shrink: 0; with `meta`, min-width: max-content). |
 | `meta` | `ReactNode` | no | Optional secondary, non-interactive text beside the title — freshness ("Updated 3 minutes ago") or status. Muted and single-line; sits just before `action` and is the first thing to give way at narrow widths: it truncates with an ellipsis before the title gives up any width, while `action` keeps its width. In a `fill` Card (which needs a parent of definite width) it is also visually hidden, still read by screen readers, once only a sliver would show. Not part of the heading's name. Put controls in `action`, never here. `false` and `''` count as no meta. |
 | `children` | `ReactNode` | yes | Title content. Becomes the inner text of the heading element. Typically a plain string, but can contain inline elements if needed. |
@@ -111,7 +113,35 @@
 - `Card.Body`: padded `<div>` content section. Add `scroll` beneath a Header in a `fill` Card to make Body the flexible vertical scroll region while Header stays fixed. Card intentionally owns this layout because it relates only its own compound pieces; the parent still owns the Card's definite outer height. `scroll` also sets `tabIndex={0}`, because a scroll container with no focusable descendant is unreachable by keyboard (axe `scrollable-region-focusable`) — pair it with `role="group"` and an `aria-label` when the content is worth naming, and pass `tabIndex={-1}` to opt out if the body already contains something focusable.
 - `Card.List`: semantic `<ul>` with list-reset styling — screen readers announce "list with N items".
 - `Card.ListRow`: `<li>` with padded content and bottom dividing border; last-child border suppressed automatically.
-- **Never nest Card in Card.**
+- **Never nest Card in Card** — except a nested editable sub-section inside a `Card.Body`, which must use `Card.Header surface="subtle"`. `controls` holds the sub-section's inline controls and `action` its remove button:
+
+```tsx
+<Card>
+  <Card.Header>Rules</Card.Header>
+  <Card.Body>
+    <Card>
+      <Card.Header
+        surface="subtle"
+        controls={
+          <ButtonGroup value={mode} onValueChange={setMode} aria-label="Match">
+            <ButtonGroup.Item value="all">Match all</ButtonGroup.Item>
+            <ButtonGroup.Item value="any">Match any</ButtonGroup.Item>
+          </ButtonGroup>
+        }
+        action={
+          <Button iconOnly variant="ghost" aria-label="Delete group">
+            <X size={12} />
+          </Button>
+        }
+      >
+        Group
+      </Card.Header>
+      <Card.Body>…conditions…</Card.Body>
+    </Card>
+  </Card.Body>
+</Card>
+```
+
 - `Card.Header` sits flush with the card edge inside `<Card padding="none">`. It renders a `<div>` holding the heading element plus an optional `<span>` wrapping `action` (with `meta`, a muted `<span>` between them and the header switches to a grid). Under an `h1` with no `h2` above, pass `headerLevel="h2"`.
 - `Card.List` / `Card.ListRow`: row dividers use a `:last-child` selector to suppress the final bottom border. Fragments are transparent, but wrapping rows in an extra `<div>` or other element breaks the match and leaves a stray divider on the last row. Render rows as direct children (or via `.map`).
 - `Card.Body` keeps `scroll` for a bounded `fill` Card (Grid, Sortable or DashboardCanvas cell); for page-level scrolling let the page or `AppLayout` own the scroll area. Keep it a direct child of Card (Fragments are transparent) so Card can detect the compound structure.

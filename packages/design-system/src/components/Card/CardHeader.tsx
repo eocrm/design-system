@@ -13,6 +13,18 @@ export interface CardHeaderProps extends HTMLAttributes<HTMLDivElement> {
    */
   headerLevel?: CardHeaderLevel;
   /**
+   * `'subtle'` paints the header on a muted surface, for a nested editable
+   * sub-section inside a `Card.Body` (e.g. a condition group). Defaults to
+   * `'default'`.
+   */
+  surface?: 'default' | 'subtle';
+  /**
+   * Optional interactive slot right after the title (e.g. a `ButtonGroup`
+   * mode switch). Rendered outside the heading, so it is not part of the
+   * heading's name. Order: title, controls, meta, action.
+   */
+  controls?: ReactNode;
+  /**
    * Optional right-aligned slot — typically a `<Link>` or `<Button>` that
    * lets the user navigate to a full list or take a section-level action.
    * Rendered inside a `<span>` that never shrinks or wraps (flex-shrink: 0;
@@ -43,17 +55,30 @@ export interface CardHeaderProps extends HTMLAttributes<HTMLDivElement> {
  * @see docs/components/Card.md
  */
 export const CardHeader = forwardRef<HTMLDivElement, CardHeaderProps>(function CardHeader(
-  { headerLevel = 'h3', action, meta, children, className, ...rest },
+  { headerLevel = 'h3', surface = 'default', controls, action, meta, children, className, ...rest },
   ref,
 ) {
   // headerLevel is a string union of valid HTML heading tag names; cast to
   // the union (not a single literal) so the JSX dispatch type is honest.
   const Heading = headerLevel as 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
   const hasMeta = meta != null && meta !== false && meta !== '';
+  const hasControls = controls != null && controls !== false && controls !== '';
   // {...rest} last so consumer overrides win (Pattern A).
   return (
-    <div ref={ref} className={clsx(styles.header, hasMeta && styles.withMeta, className)} {...rest}>
+    <div
+      ref={ref}
+      className={clsx(
+        styles.header,
+        hasMeta && styles.withMeta,
+        hasControls && styles.withControls,
+        surface === 'subtle' && styles.subtle,
+        className,
+      )}
+      data-surface={surface === 'subtle' ? 'subtle' : undefined}
+      {...rest}
+    >
       <Heading className={styles.title}>{children}</Heading>
+      {hasControls && <span className={styles.controls}>{controls}</span>}
       {hasMeta && (
         <span className={styles.meta}>
           <span className={styles.metaText}>{meta}</span>

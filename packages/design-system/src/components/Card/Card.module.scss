@@ -131,6 +131,32 @@
   padding-inline-start: var(--card-section-gap);
 }
 
+// With controls: grid so the controls hug the title and the 1fr track pushes
+// action to the end. Gaps live in padding, as with meta.
+.withControls {
+  display: grid;
+  grid-auto-flow: column;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  column-gap: 0;
+}
+
+.withControls.withMeta {
+  grid-template-columns: auto auto minmax(0, 1fr) auto;
+}
+
+.withControls .action {
+  min-width: max-content;
+  padding-inline-start: var(--card-section-gap);
+}
+
+.controls {
+  padding-inline-start: var(--card-section-gap);
+}
+
+.subtle {
+  background: var(--card-header-bg-subtle);
+}
+
 .meta {
   min-width: 0;
   padding-inline-start: var(--card-section-gap);

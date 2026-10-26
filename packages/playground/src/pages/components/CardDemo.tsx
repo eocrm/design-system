@@ -1,4 +1,6 @@
-import { Card } from '@eocrm/design-system';
+import { Card, ButtonGroup } from '@eocrm/design-system';
+import { useState } from 'react';
+import { X } from 'lucide-react';
 import { Cluster } from '@eocrm/design-system';
 import { Stack } from '@eocrm/design-system';
 import { Badge } from '@eocrm/design-system';
@@ -502,6 +504,74 @@ export function Demo() {
           </Card.List>
         </Card>
       </Example>
+      <Example
+        title="Nested condition group"
+        description='The one sanctioned Card-in-Card: an editable sub-section inside a Card.Body. It must use Card.Header surface="subtle"; controls holds the mode switch, action the delete button.'
+        code={`import { Button, ButtonGroup, Card } from '@eocrm/design-system';
+import { X } from 'lucide-react';
+
+export function Demo() {
+  const [mode, setMode] = useState('all');
+  return (
+    <Card style={{ maxWidth: 520 }}>
+      <Card.Header>Segment rules</Card.Header>
+      <Card.Body>
+        <Card>
+          <Card.Header
+            surface="subtle"
+            controls={
+              <ButtonGroup value={mode} onValueChange={setMode} aria-label="Match">
+                <ButtonGroup.Item value="all">Match all</ButtonGroup.Item>
+                <ButtonGroup.Item value="any">Match any</ButtonGroup.Item>
+              </ButtonGroup>
+            }
+            action={
+              <Button iconOnly variant="ghost" aria-label="Delete group">
+                <X size={12} />
+              </Button>
+            }
+          >
+            Group
+          </Card.Header>
+          <Card.Body>Stage is Proposal</Card.Body>
+        </Card>
+      </Card.Body>
+    </Card>
+  );
+}`}
+      >
+        <NestedGroup />
+      </Example>
     </DemoLayout>
+  );
+}
+
+function NestedGroup() {
+  const [mode, setMode] = useState('all');
+  return (
+    <Card style={{ maxWidth: 520 }}>
+      <Card.Header>Segment rules</Card.Header>
+      <Card.Body>
+        <Card>
+          <Card.Header
+            surface="subtle"
+            controls={
+              <ButtonGroup value={mode} onValueChange={setMode} aria-label="Match">
+                <ButtonGroup.Item value="all">Match all</ButtonGroup.Item>
+                <ButtonGroup.Item value="any">Match any</ButtonGroup.Item>
+              </ButtonGroup>
+            }
+            action={
+              <Button iconOnly variant="ghost" aria-label="Delete group">
+                <X size={12} />
+              </Button>
+            }
+          >
+            Group
+          </Card.Header>
+          <Card.Body>Stage is Proposal</Card.Body>
+        </Card>
+      </Card.Body>
+    </Card>
   );
 }
