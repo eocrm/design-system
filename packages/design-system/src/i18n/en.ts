@@ -42,6 +42,9 @@ export const en: Messages = {
     digit: ({ index, total }) => `Digit ${index} of ${total}`,
     character: ({ index, total }) => `Character ${index} of ${total}`,
   },
+  input: {
+    suggestions: 'Suggestions',
+  },
   passwordInput: {
     show: 'Show password',
     hide: 'Hide password',

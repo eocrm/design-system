@@ -1,5 +1,7 @@
-import { forwardRef, type InputHTMLAttributes } from 'react';
+import { forwardRef, useMemo, type InputHTMLAttributes } from 'react';
 import clsx from 'clsx';
+import { mergeRefs } from '../_internal/refs';
+import { useSuggestions } from './Suggestions';
 import styles from './Input.module.scss';
 
 /**
@@ -42,6 +44,16 @@ export interface InputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 
    * to force-block even with an autocomplete hint, or `false` to force-allow.
    */
   disableAutofill?: boolean;
+  /**
+   * Values to suggest while the value stays free text (e.g. the user's other
+   * workspace slugs). Makes the input an ARIA combobox with a suggestion list:
+   * it opens on focus, click or ↓ showing every suggestion, then filters by
+   * case-insensitive substring once the user types. ↑/↓ + Enter or a click
+   * fills the value and fires `onChange` exactly as typing would. Ignored when
+   * empty or `readOnly`. Default: none (a plain textbox). For a fixed set of
+   * allowed values use `<Select>` instead.
+   */
+  suggestions?: readonly string[];
 }
 
 const AUTOFILL_DISABLED_PROPS = {
@@ -56,9 +68,12 @@ const AUTOFILL_DISABLED_PROPS = {
  * @see docs/components/Input.md
  */
 export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
-  { invalid, size = 'md', disableAutofill, className, ...props },
+  { invalid, size = 'md', disableAutofill, suggestions, className, ...props },
   ref,
 ) {
+  const combobox = useSuggestions(suggestions, props.readOnly, props);
+  const mergedRef = useMemo(() => mergeRefs(ref, combobox.inputRef), [ref, combobox.inputRef]);
+
   // Smart default: when `disableAutofill` is undefined, block autofill iff
   // the consumer hasn't set a meaningful `autoComplete`. Explicit `true` /
   // `false` always wins over the heuristic.
@@ -67,12 +82,18 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   const blockAutofill = disableAutofill ?? !hasAutocompleteHint;
 
   return (
-    <input
-      ref={ref}
-      aria-invalid={invalid || undefined}
-      {...(blockAutofill ? AUTOFILL_DISABLED_PROPS : {})}
-      {...props}
-      className={clsx(styles.input, styles[`size-${size}`], invalid && styles.invalid, className)}
-    />
+    <>
+      <input
+        ref={mergedRef}
+        aria-invalid={invalid || undefined}
+        {...(blockAutofill ? AUTOFILL_DISABLED_PROPS : {})}
+        {...props}
+        // After {...props} so the combobox ARIA contract wins; its handlers
+        // already chain the consumer's.
+        {...combobox.inputProps}
+        className={clsx(styles.input, styles[`size-${size}`], invalid && styles.invalid, className)}
+      />
+      {combobox.popup}
+    </>
   );
 });

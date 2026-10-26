@@ -151,7 +151,7 @@ Each component's contract is its `docs/components/<Name>.md`; the props table th
 - [`ButtonGroup`](docs/components/ButtonGroup.md) — joined Buttons + segmented control
 - [`Link`](docs/components/Link.md) — polymorphic styled anchor
 - [`LinkCard`](docs/components/LinkCard.md) — clickable, full-surface Card
-- [`Input`](docs/components/Input.md) — single-line text
+- [`Input`](docs/components/Input.md) — single-line text, optional free-text `suggestions`
 - [`Textarea`](docs/components/Textarea.md) — multi-line text
 - [`PasswordInput`](docs/components/PasswordInput.md) — password field with eye toggle + optional warnings
 - [`PasswordStrengthMeter`](docs/components/PasswordStrengthMeter.md) — 4-segment strength visualization

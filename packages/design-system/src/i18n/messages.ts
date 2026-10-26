@@ -96,6 +96,10 @@ export interface Messages {
     /** Per-box accessible name in `alphanumeric` mode. */
     character: (params: { index: number; total: number }) => string;
   };
+  input: {
+    /** Accessible name of the `<Input suggestions>` listbox. */
+    suggestions: string;
+  };
   passwordInput: {
     /** aria-label on the show-password toggle when the password is hidden. */
     show: string;

@@ -60,3 +60,40 @@
     @include focus-ring(var(--input-ring-invalid));
   }
 }
+
+// `suggestions` popup. Width and the viewport room for max-height are written
+// by Suggestions.tsx's Floating UI `size` middleware; position comes from its
+// inline floating styles. Mirrors Select's option list.
+.suggestions {
+  z-index: var(--z-popover);
+  box-sizing: border-box;
+  max-height: min(
+    var(--input-suggestions-max-height),
+    var(--input-suggestions-available-height, 100vh)
+  );
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--input-suggestions-padding);
+  list-style: none;
+  background: var(--input-suggestions-bg);
+  border: var(--border-width) solid var(--input-suggestions-border-color);
+  border-radius: var(--input-suggestions-radius);
+  box-shadow: var(--input-suggestions-shadow);
+}
+
+.suggestions[data-in-overlay] {
+  z-index: var(--z-overlay-floating);
+}
+
+.suggestion {
+  padding: var(--input-suggestion-padding-y) var(--input-suggestion-padding-x);
+  font-size: var(--input-suggestion-font-size);
+  color: var(--input-suggestion-fg);
+  cursor: pointer;
+  border-radius: var(--input-suggestion-radius);
+  overflow-wrap: anywhere;
+}
+
+.suggestionActive {
+  background: var(--input-suggestion-bg-active);
+}

@@ -43,6 +43,9 @@ export const ru: Messages = {
     digit: ({ index, total }) => `Цифра ${index} из ${total}`,
     character: ({ index, total }) => `Символ ${index} из ${total}`,
   },
+  input: {
+    suggestions: 'Подсказки',
+  },
   passwordInput: {
     show: 'Показать пароль',
     hide: 'Скрыть пароль',

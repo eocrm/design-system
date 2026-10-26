@@ -423,7 +423,11 @@ function TryIt() {
         </Cluster>
         <FormRow>
           <Field label="Workspace" description="Your workspace slug." error={workspaceError}>
-            <Input value={workspace} onChange={(e) => setWorkspace(e.target.value)} />
+            <Input
+              value={workspace}
+              onChange={(e) => setWorkspace(e.target.value)}
+              suggestions={['acme', 'acme-staging', 'northwind']}
+            />
           </Field>
           <Field label="API key" description="Used only for this request; never stored." required>
             <PasswordInput
