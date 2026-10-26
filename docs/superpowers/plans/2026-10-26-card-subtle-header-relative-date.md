@@ -231,6 +231,42 @@ export interface RelativeDateInputProps extends Omit<
 
 ---
 
+### Task 6: `List` (#708)
+
+**Files:**
+
+- Create: `packages/design-system/src/components/List/List.tsx` (+ the `List.Item` compound), `List.module.scss`, `List.tokens.scss`, `index.ts`, `List.test.tsx`
+- Modify: `src/index.ts` exports; `src/styles/contrast.test.ts` (the badge number fg on the badge bg, and the bullet/number marker colour on `--color-bg` ≥ 3:1 as a graphic, for every theme × accent); `docs/components/List.md` + `npm run build:docs`; `AI-PRIMER.md`; `CLUSTERS` in both maps (`List: 'Display'`) + `npm run build:manifest`
+- Create: `packages/playground/src/pages/components/ListDemo.tsx` + the four wiring points + the `registry.ts` union
+- Modify: `packages/playground/src/pages/mockups/Docs/Docs.tsx`. Turn the AI assistants steps into `<List variant="number" numberStyle="badge">` and add a bulleted list of rate-limit headers (`X-RateLimit-Limit`, `X-RateLimit-Remaining`, `Retry-After`, each with a short description) on the API introduction. Update that mockup's `usesComponents`.
+
+**Interfaces:**
+
+- Produces: `List`, `ListProps` (`variant?: 'bullet' | 'number'`, `gap?: 'xs' | 'sm' | 'md'`, `numberStyle?: 'plain' | 'badge'`), `ListItemProps`
+
+**Behaviour:** spec Part 3 exactly.
+
+- `<ul>`/`<ol>` + `<li>`, with an explicit `role="list"`.
+- Markers are `aria-hidden` and aligned to the first line.
+- Hanging indent, and nested lists indent.
+- `numberStyle` is ignored for bullets.
+
+- [ ] **Step 1: Failing tests:**
+  - `variant="bullet"` renders a `<ul role="list">` and `variant="number"` an `<ol role="list">`
+  - items are `<li>`, and `getAllByRole('listitem')` returns 3
+  - markers are `aria-hidden`
+  - with `numberStyle="badge"` the markers read 1, 2, 3 (via text or a data attribute, whichever the implementation exposes) and carry the badge class
+  - `numberStyle` on bullets has no effect
+  - a nested `List` gets the nested indent class or data attribute
+  - the ref goes to `ul`/`ol`, `className` is merged, and attrs pass through
+- [ ] **Step 2: Run, expect FAIL**: `npx vitest run src/components/List`
+- [ ] **Step 3: Implement**, with tokens only and no layout props on the root beyond its own internal list layout.
+- [ ] **Step 4: Run, expect PASS**, plus `npx vitest run src/styles/contrast.test.ts`. Then `npm run build:docs && npm run build:manifest`, and `make test` / `make build` / `make lint` from the root, each exiting 0.
+- [ ] **Step 5: Visual check:** port 8095 (stop it, plus `pkill -f "[m]cp-chrome"`, afterwards). Check `/components/list` and `/mockups/docs/ai-assistants` and `/mockups/docs/api` in light and dark: markers on the first line with multi-line items, and badges aligned.
+- [ ] **Step 6: Commit**: `feat(list): List component (#708)` (stage files explicitly)
+
+---
+
 ## After the tasks
 
 Pause with a live playground link for dpws to check, then run `pre-push-review` (variant A) on one PR. After release, comment the version on #700 and #701 and close them.

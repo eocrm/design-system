@@ -101,3 +101,30 @@ interface RelativeDateInputProps {
   - the Card demo gets a "nested condition group" example
   - a new `RelativeDateInputDemo` with all four wiring points and the union entry
 - After release: comment the published version on #700 and #701 and close them.
+
+---
+
+## Part 3 — `List` (#708)
+
+### Intent
+
+Bulleted and numbered lists of prose items (docs pages: consent-screen facts, rate-limit headers, error extras; CRM help text). Raw `<ul>/<ol>` is forbidden to consumers, and hand-composed `Stack`/`Cluster`/`Dot` lists come out styled differently every time.
+
+### Decisions (Claude's)
+
+- **API:** `<List variant="bullet" | "number" gap="xs" | "sm" | "md" numberStyle="plain" | "badge">` with `<List.Item>` children.
+  - Defaults: `variant="bullet"`, `gap="sm"`, `numberStyle="plain"`.
+  - `numberStyle` only applies to `variant="number"`. `"badge"` renders each number as a small circular badge, matching the numbered-step look the docs mockup uses today.
+- **Semantics:** `<ul>` / `<ol>` with `<li>`. The native markers are replaced by component-drawn ones, so add `role="list"` explicitly. Safari/VoiceOver drops list semantics when `list-style: none`.
+- **Markers:** drawn by the component and aligned to the **first text line**, not centred on a multi-line item. Markers are decorative (`aria-hidden`), since screen readers already announce list position. Numbers come from CSS counters or the item index, so they stay correct when items are added or removed. Marker colour is a muted token; the badge uses a subtle accent surface with contrast pinned.
+- **Layout:** item text wraps under itself, not under the marker (hanging indent). Lists nest: a `List` inside a `List.Item` indents one level. Text inherits size and colour from context, so the list works inside `Card`, `Text` measure containers and `Alert` bodies.
+- **Non-goals:** a `start` attribute, custom markers or icons, definition lists (`DefinitionList` exists), and interactive lists (`Card.List` / `Table`).
+
+### Completion
+
+- Tests, docs (`List.md` with "When NOT to use": key–value pairs → `DefinitionList`, rows of records → `Card.List`/`Table`), the AI-PRIMER line, and `CLUSTERS` (`List: 'Display'`) in both maps.
+- A playground demo with the four wiring points.
+- The docs mockup:
+  - the AI assistants "Connect" steps (today a `Cluster` + numbered `Badge` per step) become `<List variant="number" numberStyle="badge">`
+  - one bulleted list on the API introduction (rate-limit headers)
+- After release: comment on #708 and close it.
