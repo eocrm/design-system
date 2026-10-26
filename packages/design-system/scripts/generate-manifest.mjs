@@ -44,6 +44,7 @@ const CLUSTERS = {
   ColorPicker: 'Forms',
   DatePicker: 'Forms',
   DatePickers: 'Forms',
+  RelativeDateInput: 'Forms',
   DateStrip: 'Forms',
   SlotGrid: 'Forms',
   DateRangePicker: 'Forms',

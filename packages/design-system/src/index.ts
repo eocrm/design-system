@@ -759,6 +759,21 @@ export type {
 export { DatePicker } from './components/DatePicker';
 export type { DatePickerProps, DatePickerSize } from './components/DatePicker';
 
+export {
+  RelativeDateInput,
+  parseRelativeDate,
+  formatRelativeDate,
+} from './components/RelativeDateInput';
+export type {
+  RelativeDateInputProps,
+  RelativeDatePreset,
+  RelativeDateValue,
+  RelativeDateOptions,
+  RelativePeriod,
+  RelativeScope,
+  RelativeUnit,
+} from './components/RelativeDateInput';
+
 export { DateStrip } from './components/DateStrip';
 export type { DateStripProps, DateStripDay } from './components/DateStrip';
 

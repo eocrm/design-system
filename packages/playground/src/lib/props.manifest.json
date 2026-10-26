@@ -5140,6 +5140,59 @@
         }
       ]
     },
+    "RelativeDateInput": {
+      "props": [
+        {
+          "name": "mode",
+          "type": "\"point\" | \"range\"",
+          "required": true,
+          "default": "",
+          "description": "What the expression describes.\n- `'point'` — one date: an anchor (today, now, start/end of a period) plus a signed offset, or an exact date.\n- `'range'` — a date range: last/next N units, a whole this/last/next period, or a period to date."
+        },
+        {
+          "name": "allowNow",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Datetime fields: offers the Now anchor with hour/minute offsets, and a minute-granular exact date (UTC `YYYY-MM-DDTHH:mm:ssZ`). Default `false`."
+        },
+        {
+          "name": "value",
+          "type": "string | null",
+          "required": true,
+          "default": "",
+          "description": "The controlled expression (see the grammar in the docs), or `null` for none. `null` shows the defaults (`today` / `this:month`) without emitting them. A value that doesn't parse shows the defaults plus an \"Unrecognised value\" note."
+        },
+        {
+          "name": "onChange",
+          "type": "(expr: string | null) => void",
+          "required": true,
+          "default": "",
+          "description": "Fires with the next canonical expression after a valid edit, and only when it differs from `value`. Invalid drafts (an out-of-range amount, an exact date not yet picked) never fire it."
+        },
+        {
+          "name": "presets",
+          "type": "readonly RelativeDatePreset[]",
+          "required": false,
+          "default": "",
+          "description": "Quick-pick toggle buttons rendered above the controls. The one whose `value` equals `value` is pressed."
+        },
+        {
+          "name": "disabled",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Disables every control, presets included. Default `false`."
+        },
+        {
+          "name": "invalid",
+          "type": "boolean",
+          "required": false,
+          "default": "",
+          "description": "Error chrome on the controls (`aria-invalid`), e.g. from `<Field error>`. Default `false`."
+        }
+      ]
+    },
     "RichText": {
       "props": [
         {
@@ -7206,6 +7259,7 @@
     "CalendarView": "\"month\" | \"week\" | \"day\" | \"agenda\"",
     "RenderEvent": "(event: CalendarEvent, ctx: RenderEventContext) => ReactNode",
     "DatePickerSize": "\"sm\" | \"md\" | \"lg\"",
+    "RelativeDatePreset": "{ label: string; value: string }",
     "DateStripDay": "{ date: string; free: number }",
     "SlotGridGroup": "{ label: string; slots: SlotGridSlot[] }",
     "DateRangePickerSize": "\"sm\" | \"md\" | \"lg\"",

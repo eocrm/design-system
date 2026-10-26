@@ -53,6 +53,7 @@ import { SliderDemo } from './pages/components/SliderDemo';
 import { SortableDemo } from './pages/components/SortableDemo';
 import { SortableGroupDemo } from './pages/components/SortableGroupDemo';
 import { PillMenuDemo } from './pages/components/PillMenuDemo';
+import { RelativeDateInputDemo } from './pages/components/RelativeDateInputDemo';
 import { SwitchDemo } from './pages/components/SwitchDemo';
 import { TableDemo } from './pages/components/TableDemo';
 import { TextareaDemo } from './pages/components/TextareaDemo';
@@ -178,6 +179,7 @@ export default function App() {
             <Route path="/components/social-button" element={<SocialButtonDemo />} />
             <Route path="/components/button-group" element={<ButtonGroupDemo />} />
             <Route path="/components/datepickers" element={<DatePickersDemo />} />
+            <Route path="/components/relative-date-input" element={<RelativeDateInputDemo />} />
             <Route path="/components/input" element={<InputDemo />} />
             <Route path="/components/liquid-editor" element={<LiquidEditorDemo />} />
             <Route path="/components/kanban" element={<KanbanDemo />} />

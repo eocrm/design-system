@@ -27,6 +27,7 @@ export type ComponentName =
   | 'DashboardCanvas'
   | 'DataTable'
   | 'DatePicker'
+  | 'RelativeDateInput'
   | 'DateRangePicker'
   | 'DateStrip'
   | 'DefinitionList'

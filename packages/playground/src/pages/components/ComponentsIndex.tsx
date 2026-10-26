@@ -60,6 +60,13 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['Date pickers'],
   },
   {
+    to: '/components/relative-date-input',
+    name: 'RelativeDateInput',
+    description:
+      'Editor for a relative date or range expression (today+7d, last:30d). Point and range modes, presets.',
+    preview: SCHEMATICS['RelativeDateInput'],
+  },
+  {
     to: '/components/empty-state',
     name: 'EmptyState',
     description:
