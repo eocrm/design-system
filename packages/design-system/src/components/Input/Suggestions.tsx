@@ -1,7 +1,7 @@
 import {
-  useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useRef,
   useState,
   type FocusEvent,
@@ -9,7 +9,7 @@ import {
   type KeyboardEvent,
   type MouseEvent,
   type ReactNode,
-  type Ref,
+  type RefObject,
   type ChangeEvent,
 } from 'react';
 import { createPortal } from 'react-dom';
@@ -38,21 +38,25 @@ function setNativeValue(input: HTMLInputElement, value: string) {
 /**
  * Internal: `<Input suggestions>` — an ARIA 1.2 list-autocomplete combobox.
  * Returns props to spread on the `<input>` (consumer handlers chained first),
- * a ref for the Floating UI reference, and the portalled listbox. With no
- * suggestions it returns nothing and the input stays a plain textbox.
+ * a ref the input must carry while `enabled`, and the portalled listbox. With
+ * no suggestions it returns nothing and the input stays a plain textbox. The
+ * popup machinery (Floating UI, overlay stack) lives in `<SuggestionsPopup>`,
+ * mounted only while the list is shown, so a closed or plain Input renders once.
  */
 export function useSuggestions(
   suggestions: readonly string[] | undefined,
   readOnly: boolean | undefined,
   handlers: Handlers,
 ): {
+  enabled: boolean;
   inputProps: InputHTMLAttributes<HTMLInputElement>;
-  inputRef: Ref<HTMLInputElement>;
+  inputRef: RefObject<HTMLInputElement | null>;
   popup: ReactNode;
 } {
-  const t = useTranslation();
   const listboxId = useId();
   const inputRef = useRef<HTMLInputElement | null>(null);
+  // Set by the mounted popup: its overlay-stack id, for the Escape gate.
+  const floatingIdRef = useRef<string | null>(null);
   const [open, setOpen] = useState(false);
   // null = not edited since opening: show every suggestion, so a prefilled
   // value doesn't hide the others.
@@ -60,56 +64,13 @@ export function useSuggestions(
   const [active, setActive] = useState(-1);
 
   const enabled = !!suggestions?.length && !readOnly;
+  if (!enabled) return { enabled, inputProps: {}, inputRef, popup: null };
+
   // Deduped (first occurrence wins, order kept): the value is the row key and identity.
-  const all = enabled ? [...new Set(suggestions)] : [];
+  const all = [...new Set(suggestions)];
   const needle = query?.toLowerCase();
   const visible = needle == null ? all : all.filter((s) => s.toLowerCase().includes(needle));
   const shown = open && visible.length > 0;
-
-  // #274/#280: hosts (Modal/Drawer) yield Escape while we're shown.
-  const floatingId = useFloatingSurface(shown);
-  const inOverlay = useInOverlay(inputRef, shown);
-
-  const { refs, floatingStyles, isPositioned } = useFloating({
-    open: shown,
-    placement: 'bottom-start',
-    transform: false,
-    middleware: [
-      offset(4),
-      flip(),
-      size({
-        padding: 8,
-        apply({ rects, availableHeight, elements }) {
-          // The popup's own floating geometry: the input's width, and the
-          // viewport room `.suggestions` caps its max-height with.
-          elements.floating.style.width = `${rects.reference.width}px`;
-          elements.floating.style.setProperty(
-            '--input-suggestions-available-height',
-            `${Math.max(0, availableHeight)}px`,
-          );
-        },
-      }),
-    ],
-    whileElementsMounted: autoUpdate,
-  });
-
-  // Focus stays in the input (activedescendant), so keep the active row visible by hand.
-  const listRef = useRef<HTMLUListElement | null>(null);
-  useEffect(() => {
-    if (!shown || !isPositioned || active < 0) return;
-    listRef.current?.children[active]?.scrollIntoView?.({ block: 'nearest' });
-  }, [shown, isPositioned, active]);
-
-  const { setReference } = refs;
-  const setInputRef = useCallback(
-    (node: HTMLInputElement | null) => {
-      inputRef.current = node;
-      setReference(node);
-    },
-    [setReference],
-  );
-
-  if (!enabled) return { inputProps: {}, inputRef: setInputRef, popup: null };
 
   const optionId = (i: number) => `${listboxId}-${i}`;
   const openAll = () => {
@@ -141,7 +102,12 @@ export function useSuggestions(
       // No highlight: Enter stays native (e.g. submits the form).
       e.preventDefault();
       choose(visible[active]!);
-    } else if (e.key === 'Escape' && shown && overlayStack.isTopFloating(floatingId)) {
+    } else if (
+      e.key === 'Escape' &&
+      shown &&
+      floatingIdRef.current &&
+      overlayStack.isTopFloating(floatingIdRef.current)
+    ) {
       e.preventDefault(); // also stops the native <input type="search"> clear
       overlayStack.consumeEscape(e.nativeEvent);
       close();
@@ -169,42 +135,116 @@ export function useSuggestions(
     onBlur: chain<FocusEvent<HTMLInputElement>>(handlers.onBlur, close),
   };
 
-  const popup =
-    shown &&
-    createPortal(
-      <ul
-        ref={(node) => {
-          listRef.current = node;
-          refs.setFloating(node);
-        }}
-        id={listboxId}
-        role="listbox"
-        aria-label={t('input.suggestions')}
-        style={floatingStyles}
-        data-in-overlay={inOverlay ? '' : undefined}
-        className={styles.suggestions}
-        // Keep focus (and the caret) in the input on any press inside the list.
-        onMouseDown={(e) => e.preventDefault()}
-      >
-        {visible.map((s, i) => (
-          <li
-            key={s}
-            id={optionId(i)}
-            role="option"
-            aria-selected={i === active}
-            className={clsx(styles.suggestion, i === active && styles.suggestionActive)}
-            // mousemove, not mouseenter: rows scrolling under a resting pointer must not steal the highlight.
-            onMouseMove={() => {
-              if (i !== active) setActive(i);
-            }}
-            onClick={() => choose(s)}
-          >
-            {s}
-          </li>
-        ))}
-      </ul>,
-      document.body,
-    );
+  const popup = shown && (
+    <SuggestionsPopup
+      inputRef={inputRef}
+      floatingIdRef={floatingIdRef}
+      listboxId={listboxId}
+      visible={visible}
+      active={active}
+      optionId={optionId}
+      onActivate={setActive}
+      onChoose={choose}
+    />
+  );
 
-  return { inputProps, inputRef: setInputRef, popup };
+  return { enabled, inputProps, inputRef, popup };
+}
+
+function SuggestionsPopup({
+  inputRef,
+  floatingIdRef,
+  listboxId,
+  visible,
+  active,
+  optionId,
+  onActivate,
+  onChoose,
+}: {
+  inputRef: RefObject<HTMLInputElement | null>;
+  floatingIdRef: RefObject<string | null>;
+  listboxId: string;
+  visible: string[];
+  active: number;
+  optionId: (i: number) => string;
+  onActivate: (i: number) => void;
+  onChoose: (value: string) => void;
+}) {
+  const t = useTranslation();
+  // #274/#280: hosts (Modal/Drawer) yield Escape while we're shown.
+  const floatingId = useFloatingSurface(true);
+  const inOverlay = useInOverlay(inputRef, true);
+  useLayoutEffect(() => {
+    floatingIdRef.current = floatingId;
+    return () => {
+      floatingIdRef.current = null;
+    };
+  }, [floatingIdRef, floatingId]);
+
+  const { refs, floatingStyles, isPositioned } = useFloating({
+    open: true,
+    placement: 'bottom-start',
+    transform: false,
+    middleware: [
+      offset(4),
+      flip(),
+      size({
+        padding: 8,
+        apply({ rects, availableHeight, elements }) {
+          // The popup's own floating geometry: the input's width, and the
+          // viewport room `.suggestions` caps its max-height with.
+          elements.floating.style.width = `${rects.reference.width}px`;
+          elements.floating.style.setProperty(
+            '--input-suggestions-available-height',
+            `${Math.max(0, availableHeight)}px`,
+          );
+        },
+      }),
+    ],
+    whileElementsMounted: autoUpdate,
+  });
+  const { setReference } = refs;
+  useLayoutEffect(() => setReference(inputRef.current), [setReference, inputRef]);
+
+  // Focus stays in the input (activedescendant), so keep the active row visible by hand.
+  const listRef = useRef<HTMLUListElement | null>(null);
+  useEffect(() => {
+    if (!isPositioned || active < 0) return;
+    listRef.current?.children[active]?.scrollIntoView?.({ block: 'nearest' });
+  }, [isPositioned, active]);
+
+  return createPortal(
+    <ul
+      ref={(node) => {
+        listRef.current = node;
+        refs.setFloating(node);
+      }}
+      id={listboxId}
+      role="listbox"
+      aria-label={t('input.suggestions')}
+      style={floatingStyles}
+      data-in-overlay={inOverlay ? '' : undefined}
+      className={styles.suggestions}
+      // Keep focus (and the caret) in the input on any press inside the list.
+      onMouseDown={(e) => e.preventDefault()}
+    >
+      {visible.map((s, i) => (
+        <li
+          key={s}
+          id={optionId(i)}
+          role="option"
+          aria-selected={i === active}
+          className={clsx(styles.suggestion, i === active && styles.suggestionActive)}
+          // mousemove, not mouseenter: rows scrolling under a resting pointer must not steal the highlight.
+          onMouseMove={() => {
+            if (i !== active) onActivate(i);
+          }}
+          onClick={() => onChoose(s)}
+        >
+          {s}
+        </li>
+      ))}
+    </ul>,
+    document.body,
+  );
 }

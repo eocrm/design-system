@@ -35,6 +35,7 @@ beside results).
 <!-- props:end -->
 
 - `children` is the filling main pane (`min-width: 0` — long content shrinks/scrolls instead of overflowing).
+- An empty `aside` (`null` / `false` / `undefined`) renders no aside track even with `asideWidth`. To keep the track reserved (e.g. while data loads), pass an empty fragment (`<></>`) or a placeholder.
 
 ```tsx
 // Settings screen: a 220px rail that becomes a horizontal strip when it stacks.

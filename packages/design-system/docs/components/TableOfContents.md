@@ -63,7 +63,8 @@ function GuidePage() {
 - Only the **window** scrolls: scroll-spy and click-scroll ignore inner scroll containers.
 - Click scrolls smoothly (instantly under `prefers-reduced-motion`) to the heading's top minus `--sticky-top-topbar`, updates the URL hash (`pushState`, or `replaceState` when the hash is unchanged) and focuses the heading. A heading that isn't focusable gets `tabindex="-1"` added, and keeps it.
 - Modifier clicks (cmd/ctrl/shift/alt, non-primary button) and ids with no matching element fall through to native link behaviour.
-- Scrolled to the bottom of the page, the last item is active (short final sections can't otherwise reach the top).
+- Scrolled to the bottom of the page, the last item is active (short final sections can't otherwise reach the top). A page too short to scroll counts as scrolled to the bottom, so its last item is active.
+- The hash update uses `history.pushState` / `replaceState`, which fire no `hashchange`: router or `hashchange` listeners don't see the jump.
 - `collapsed` renders a `<details>` disclosure (summary "On this page · active heading"); choosing an entry closes it.
 - Empty `items` renders nothing.
 - For `#hash` links opened directly (not via a click) to clear the bar, add `html { scroll-padding-top: var(--sticky-top-topbar); }` to the app's global CSS.

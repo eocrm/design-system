@@ -9,6 +9,8 @@
 // Resolves --table-of-contents-scroll-offset to px for the script (offsetHeight).
 // Absolute so it takes no space; translated above its own start so its height
 // never adds scrollable overflow below a short (collapsed) nav.
+// Hard rule 4: `position` is allowed here because this is an internal, visually
+// hidden measurement probe that never affects layout (cf. Avatar/Lightbox).
 .probe {
   position: absolute;
   inline-size: 0;

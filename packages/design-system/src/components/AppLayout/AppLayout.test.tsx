@@ -18,7 +18,7 @@ describe('AppLayout', () => {
     expect(screen.getByTestId('content')).toBeInTheDocument();
     // Deliberately a <div>, not a <main> — AppLayout can legitimately be
     // nested (demos, docs), so it must not unilaterally claim the `main`
-    // landmark. The consuming app owns that; see AppShell.tsx.
+    // landmark by default; the app opts in with `mainLandmark` (next test).
     expect(screen.queryByRole('main')).not.toBeInTheDocument();
   });
 

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { createRef, useState, type FormEvent } from 'react';
+import { Profiler, createRef, useState, type FormEvent } from 'react';
 import { Input } from './Input';
 import { I18nProvider } from '../../i18n/I18nProvider';
 
@@ -374,5 +374,23 @@ describe('Input suggestions', () => {
     expect(enter).toBe(true); // not prevented: the IME commits the composition
     expect(input).toHaveValue('');
     expect(screen.getByRole('listbox')).toBeInTheDocument();
+  });
+
+  // The popup machinery mounts only while the list is shown, so a plain or
+  // closed Input must not re-render on mount (e.g. via a Floating UI ref setState).
+  it.each([
+    ['without suggestions', undefined],
+    ['with suggestions while closed', SUGGESTIONS],
+  ])('commits once on mount %s', (_, suggestions) => {
+    const onRender = vi.fn();
+    const ref = createRef<HTMLInputElement>();
+    render(
+      <Profiler id="input" onRender={onRender}>
+        <Input ref={ref} aria-label="Workspace" suggestions={suggestions} />
+      </Profiler>,
+    );
+    expect(onRender).toHaveBeenCalledTimes(1);
+    expect(onRender.mock.calls[0]![1]).toBe('mount');
+    expect(ref.current).toBeInstanceOf(HTMLInputElement);
   });
 });

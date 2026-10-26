@@ -84,7 +84,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(function Input(
   return (
     <>
       <input
-        ref={mergedRef}
+        // Plain consumer ref unless it's a combobox (no extra commit either way).
+        ref={combobox.enabled ? mergedRef : ref}
         aria-invalid={invalid || undefined}
         {...(blockAutofill ? AUTOFILL_DISABLED_PROPS : {})}
         {...props}
