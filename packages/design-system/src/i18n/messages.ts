@@ -173,6 +173,10 @@ export interface Messages {
     /** Header label when there is no `title` and the language is not a known one. */
     plainText: string;
   };
+  tableOfContents: {
+    /** Accessible name of the `<nav>`, its visible heading, and the collapsed summary. */
+    label: string;
+  };
   slider: {
     /** Accessible-name suffix for the first thumb in a range slider. */
     minimum: string;

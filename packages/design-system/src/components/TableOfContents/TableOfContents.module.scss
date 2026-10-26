@@ -1,0 +1,72 @@
+@use './TableOfContents.tokens';
+@use '../../styles/mixins' as *;
+
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: var(--table-of-contents-gap);
+}
+
+// Resolves --table-of-contents-scroll-offset to px for the script (offsetHeight).
+// Absolute so it takes no space; translated above its own start so its height
+// never adds scrollable overflow below a short (collapsed) nav.
+.probe {
+  position: absolute;
+  inline-size: 0;
+  block-size: var(--table-of-contents-scroll-offset);
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-100%);
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  list-style: none;
+}
+
+.link {
+  display: block;
+  padding-block: var(--table-of-contents-link-padding-y);
+  padding-inline: var(--table-of-contents-link-padding-x);
+  border-inline-start: var(--table-of-contents-bar-width) solid transparent;
+  font-size: var(--table-of-contents-link-font-size);
+  color: var(--table-of-contents-link-fg);
+  text-decoration: none;
+
+  &:hover {
+    color: var(--table-of-contents-link-fg-hover);
+  }
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+
+  &[aria-current='location'] {
+    border-inline-start-color: var(--table-of-contents-bar-color);
+    color: var(--table-of-contents-link-fg-active);
+  }
+}
+
+.nested {
+  padding-inline-start: calc(
+    var(--table-of-contents-link-padding-x) + var(--table-of-contents-nested-indent)
+  );
+}
+
+.summary {
+  padding-block: var(--table-of-contents-link-padding-y);
+  font-size: var(--table-of-contents-link-font-size);
+  font-weight: var(--font-weight-semibold);
+  color: var(--table-of-contents-summary-fg);
+  cursor: pointer;
+
+  &:focus-visible {
+    @include focus-ring;
+  }
+}
+
+.details[open] > .summary {
+  padding-block-end: var(--table-of-contents-gap);
+}

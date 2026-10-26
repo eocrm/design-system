@@ -73,6 +73,9 @@ export const ru: Messages = {
     wrap: 'Переносить строки',
     plainText: 'Текст',
   },
+  tableOfContents: {
+    label: 'На этой странице',
+  },
   slider: {
     minimum: 'минимум',
     maximum: 'максимум',

@@ -72,6 +72,9 @@ export const en: Messages = {
     wrap: 'Wrap lines',
     plainText: 'Plain text',
   },
+  tableOfContents: {
+    label: 'On this page',
+  },
   slider: {
     minimum: 'minimum',
     maximum: 'maximum',
