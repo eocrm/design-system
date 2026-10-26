@@ -563,6 +563,32 @@ describe('TableOfContents link text clears AA on the page background', () => {
 });
 
 /**
+ * Default Link text uses --color-link-fg, which an accent set may override
+ * apart from its accent (tealpine brightens it to separate links from body
+ * text). Links appear on the page and on the grey and accent-tinted surfaces,
+ * so the override needs AA on each, not just on --color-bg.
+ */
+describe('default Link text clears AA on every light-to-sunken surface', () => {
+  const file = readFileSync(resolve(__dirname, '../components/Link/Link.tokens.scss'), 'utf8');
+  it.each(THEMED_ACCENTS)('%s, %s accent', (_theme, _accent, source) => {
+    const layered = `${file}\n${source}`;
+    for (const fg of ['--link-fg-default', '--link-fg-default-hover']) {
+      for (const bg of [
+        '--color-bg',
+        '--color-bg-muted',
+        '--color-bg-sunken',
+        '--color-accent-bg-subtle',
+      ]) {
+        expect(
+          contrast(tokenValue(fg, layered), tokenValue(bg, layered)),
+          `${fg} on ${bg}`,
+        ).toBeGreaterThanOrEqual(4.5);
+      }
+    }
+  });
+});
+
+/**
  * List markers sit on the page background. The bullet and plain number are
  * decorative, but drawn muted they stay a 3:1 graphic; the badge number is
  * text (4.5:1) on its subtle accent surface.

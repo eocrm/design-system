@@ -32,6 +32,7 @@
 
 .default {
   color: var(--link-fg-default);
+  font-weight: var(--link-font-weight-default);
 
   &:hover {
     color: var(--link-fg-default-hover);

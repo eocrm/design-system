@@ -171,7 +171,8 @@ test('preserves the pre-migration web contract fixture with provenance and expan
   // +1 light: --size-rich-text-image-max-height (RichText image cap, #644).
   // +1 light: --size-sparkline (#642).
   // +1 light: --size-control-currency (MoneyInput picker width).
-  assert.equal(Object.keys(fixture.light).length, 322);
+  // +2 light: --color-link-fg / --color-link-fg-hover (accent-overridable link colour).
+  assert.equal(Object.keys(fixture.light).length, 324);
   assert.equal(Object.keys(fixture.forcedDark).length, 126);
   assert.deepEqual(fixture.systemDark, fixture.forcedDark);
   assert.deepEqual(fixture.forcedLight, {});

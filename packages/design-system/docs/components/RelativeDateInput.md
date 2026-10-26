@@ -99,11 +99,11 @@ The canonical strings the component reads and writes. Anything else does not par
 | point | anchor `{+\|-}{N}{unit}` | Offset, N 0–1000: `today+7d`, `now-30min`, `end:next:quarter+1d` |
 | point | `YYYY-MM-DD` | Exact date |
 | point | `YYYY-MM-DDTHH:mm:ssZ` | Exact UTC datetime (`allowNow` only) |
-| range | `last:{N}{d\|w\|mo\|y}` / `next:{N}{d\|w\|mo\|y}` | Rolling past / coming, N 1–1000: `last:30d` |
+| range | `last:{N}{d\|w\|m\|y}` / `next:{N}{d\|w\|m\|y}` | Rolling past / coming, N 1–1000: `last:30d` |
 | range | `{this\|last\|next}:{week\|month\|quarter\|year}` | Whole calendar period: `this:week` |
 | range | `this:{week\|month\|quarter\|year}:to_date` | Period to date: `this:month:to_date` |
 
-Units are `d` (days), `w` (weeks), `mo` (months), `y` (years), `h` (hours), `min` (minutes). `h` and `min` are valid only on the `now` anchor. **These spellings must match the eocrm server**; the component and the server parse the same strings. Absolute values are not part of the range grammar.
+Units are `d` (days), `w` (weeks), `m` (months), `y` (years), `h` (hours), `min` (minutes). `h` and `min` are valid only on the `now` anchor. **These spellings must match the eocrm server**; the component and the server parse the same strings. Absolute values are not part of the range grammar.
 
 `parseRelativeDate(expr, { mode, allowNow })` returns a structured `RelativeDateValue`, or `null` if `expr` is not valid; `formatRelativeDate(value)` returns the canonical string. They round-trip every canonical expression.
 

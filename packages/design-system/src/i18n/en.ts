@@ -606,7 +606,7 @@ export const en: Messages = {
     boundary: ({ edge, scope, period }) =>
       `${edge === 'start' ? 'Start' : 'End'} of ${scope} ${period}`,
     units: ({ unit, n }) => {
-      const words = { d: 'day', w: 'week', mo: 'month', y: 'year', h: 'hour', min: 'minute' };
+      const words = { d: 'day', w: 'week', m: 'month', y: 'year', h: 'hour', min: 'minute' };
       return n === 1 ? words[unit] : `${words[unit]}s`;
     },
     calendarPeriod: ({ scope, period }) =>

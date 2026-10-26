@@ -82,7 +82,7 @@ interface Draft {
 
 const PERIODS: RelativePeriod[] = ['week', 'month', 'quarter', 'year'];
 const SCOPES: RelativeScope[] = ['this', 'last', 'next'];
-const DATE_UNITS: RelativeUnit[] = ['d', 'w', 'mo', 'y'];
+const DATE_UNITS: RelativeUnit[] = ['d', 'w', 'm', 'y'];
 const KINDS: RangeKind[] = ['past', 'coming', 'calendar', 'toDate'];
 const CALENDAR = SCOPES.flatMap((scope) => PERIODS.map((period) => ({ scope, period })));
 const BOUNDARIES = (['start', 'end'] as const).flatMap((edge) =>
@@ -169,7 +169,7 @@ function toValue(d: Draft, mode: Mode): RelativeDateValue | null {
   const n = amountOf(d, mode);
   if (n === null) return null;
   if (mode === 'range') {
-    const unit = d.unit as 'd' | 'w' | 'mo' | 'y';
+    const unit = d.unit as 'd' | 'w' | 'm' | 'y';
     return { kind: 'rolling', dir: d.kind === 'past' ? 'last' : 'next', n, unit };
   }
   const offset = { sign: d.sign, n, unit: d.unit };
@@ -185,7 +185,7 @@ function toValue(d: Draft, mode: Mode): RelativeDateValue | null {
     edge,
     scope,
     period,
-    offset: offset as { sign: 1 | -1; n: number; unit: 'd' | 'w' | 'mo' | 'y' },
+    offset: offset as { sign: 1 | -1; n: number; unit: 'd' | 'w' | 'm' | 'y' },
   };
 }
 

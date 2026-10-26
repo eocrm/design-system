@@ -1,6 +1,6 @@
 export type RelativePeriod = 'week' | 'month' | 'quarter' | 'year';
 export type RelativeScope = 'this' | 'last' | 'next';
-export type RelativeUnit = 'd' | 'w' | 'mo' | 'y' | 'h' | 'min';
+export type RelativeUnit = 'd' | 'w' | 'm' | 'y' | 'h' | 'min';
 export type RelativeDateValue =
   | {
       kind: 'anchor';
@@ -12,10 +12,10 @@ export type RelativeDateValue =
       edge: 'start' | 'end';
       scope: RelativeScope;
       period: RelativePeriod;
-      offset?: { sign: 1 | -1; n: number; unit: 'd' | 'w' | 'mo' | 'y' };
+      offset?: { sign: 1 | -1; n: number; unit: 'd' | 'w' | 'm' | 'y' };
     }
   | { kind: 'exact'; date: string } // 'YYYY-MM-DD' or 'YYYY-MM-DDTHH:mm:ssZ'
-  | { kind: 'rolling'; dir: 'last' | 'next'; n: number; unit: 'd' | 'w' | 'mo' | 'y' }
+  | { kind: 'rolling'; dir: 'last' | 'next'; n: number; unit: 'd' | 'w' | 'm' | 'y' }
   | { kind: 'period'; scope: RelativeScope; period: RelativePeriod }
   | { kind: 'toDate'; period: RelativePeriod };
 
@@ -28,11 +28,11 @@ export const OFFSET_MAX = 1000;
 export const ROLLING_MIN = 1;
 export const ROLLING_MAX = 1000;
 
-const ANCHOR_RE = /^(today|now)(?:([+-])(\d{1,4})(d|w|mo|y|h|min))?$/;
+const ANCHOR_RE = /^(today|now)(?:([+-])(\d{1,4})(d|w|m|y|h|min))?$/;
 const BOUNDARY_RE =
-  /^(start|end):(this|last|next):(week|month|quarter|year)(?:([+-])(\d{1,4})(d|w|mo|y))?$/;
+  /^(start|end):(this|last|next):(week|month|quarter|year)(?:([+-])(\d{1,4})(d|w|m|y))?$/;
 const EXACT_RE = /^(\d{4})-(\d{2})-(\d{2})(?:T(\d{2}):(\d{2}):(\d{2})Z)?$/;
-const ROLLING_RE = /^(last|next):(\d{1,4})(d|w|mo|y)$/;
+const ROLLING_RE = /^(last|next):(\d{1,4})(d|w|m|y)$/;
 const PERIOD_RE = /^(this|last|next):(week|month|quarter|year)$/;
 const TO_DATE_RE = /^this:(week|month|quarter|year):to_date$/;
 
@@ -79,7 +79,7 @@ export function parseRelativeDate(
         period: m[3] as RelativePeriod,
       };
       return o.offset
-        ? { ...base, offset: o.offset as { sign: 1 | -1; n: number; unit: 'd' | 'w' | 'mo' | 'y' } }
+        ? { ...base, offset: o.offset as { sign: 1 | -1; n: number; unit: 'd' | 'w' | 'm' | 'y' } }
         : base;
     }
     m = EXACT_RE.exec(expr);
@@ -95,7 +95,7 @@ export function parseRelativeDate(
       kind: 'rolling',
       dir: m[1] as 'last' | 'next',
       n,
-      unit: m[3] as 'd' | 'w' | 'mo' | 'y',
+      unit: m[3] as 'd' | 'w' | 'm' | 'y',
     };
   }
   m = PERIOD_RE.exec(expr);

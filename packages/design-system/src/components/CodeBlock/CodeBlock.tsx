@@ -180,13 +180,18 @@ export const CodeBlock = forwardRef<HTMLDivElement, CodeBlockProps>(function Cod
     <div {...props} ref={ref} className={clsx(styles.root, className)}>
       <div className={styles.header}>
         {multi ? (
-          <Tabs
-            items={list.map(({ id, label: tabLabel }) => ({ id, label: tabLabel }))}
-            activeId={active.id}
-            onChange={pick}
-            panelIdPrefix={prefix}
-            aria-label={title}
-          />
+          // Gives the strip the header's free space. Shrink-wrapped, its scroll
+          // wrapper sat at the tabs' fractional width and DPR rounding showed a
+          // 1px scrollbar although every tab fit (#710).
+          <div className={styles.tabs}>
+            <Tabs
+              items={list.map(({ id, label: tabLabel }) => ({ id, label: tabLabel }))}
+              activeId={active.id}
+              onChange={pick}
+              panelIdPrefix={prefix}
+              aria-label={title}
+            />
+          </div>
         ) : (
           <span id={`${prefix}-label`} className={styles.title}>
             {label}

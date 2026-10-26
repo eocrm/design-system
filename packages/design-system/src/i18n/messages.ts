@@ -1176,7 +1176,7 @@ export interface Messages {
      * Function leaf — a unit option, agreeing with the current amount `n`
      * ("1 day" / "7 days"; ru «1 день» / «2 дня» / «5 дней»). `n` is 0 while the amount is invalid.
      */
-    units: (params: { unit: 'd' | 'w' | 'mo' | 'y' | 'h' | 'min'; n: number }) => string;
+    units: (params: { unit: 'd' | 'w' | 'm' | 'y' | 'h' | 'min'; n: number }) => string;
     /** Function leaf — a whole calendar period option ("This week", "Last quarter"). */
     calendarPeriod: (params: {
       scope: 'this' | 'last' | 'next';

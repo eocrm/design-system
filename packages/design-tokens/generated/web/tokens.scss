@@ -56,6 +56,8 @@
   --color-fg-subtle: #687388;
   --color-info: #0052cc;
   --color-info-bg-subtle: #ebf3ff;
+  --color-link-fg: var(--color-accent);
+  --color-link-fg-hover: var(--color-accent-hover);
   --color-palette-amber-bg: #fff7d6;
   --color-palette-amber-fg: #7a5300;
   --color-palette-blue-bg: #deebff;
@@ -280,5 +282,7 @@
   --color-accent-hover: #085752;
   --color-accent-pressed: #054440;
   --color-accent-subtle-bg: #ddeeec;
+  --color-link-fg: #007676;
+  --color-link-fg-hover: #006666;
   --ring-accent: #0b6d67;
 }

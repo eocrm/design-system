@@ -24,8 +24,14 @@
   --tabs-border-color: transparent;
 }
 
-// Tabs' own scroll wrapper already has min-width: 0, so a long strip scrolls
-// inside the header; the title needs the same to truncate instead of pushing.
+// The tab strip fills the free space (flex: 1) and may shrink below its
+// content (min-width: 0), so a long strip scrolls inside the header. The title
+// needs the same min-width to truncate instead of pushing.
+.tabs {
+  flex: 1;
+  min-width: 0;
+}
+
 .title {
   @include truncate;
 

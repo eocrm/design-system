@@ -108,6 +108,8 @@
     "--color-fg-subtle": "#687388",
     "--color-info": "#0052cc",
     "--color-info-bg-subtle": "#ebf3ff",
+    "--color-link-fg": "var(--color-accent)",
+    "--color-link-fg-hover": "var(--color-accent-hover)",
     "--color-palette-amber-bg": "#fff7d6",
     "--color-palette-amber-fg": "#7a5300",
     "--color-palette-blue-bg": "#deebff",
@@ -1248,6 +1250,18 @@
         }
       ],
       "--color-info-bg-subtle": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
+      "--color-link-fg": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
+      "--color-link-fg-hover": [
         {
           "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
