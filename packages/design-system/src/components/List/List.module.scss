@@ -13,7 +13,9 @@
   line-height: var(--list-line-height);
 }
 
-.list[data-size='heading'] {
+// Set on this list's own markers, not on the list, so a nested body-size List
+// (rendered inside .content) keeps the :root body values (#711).
+.list[data-size='heading'] > .item > .marker {
   --list-marker-height: var(--list-heading-marker-height);
   --list-marker-width: var(--list-heading-marker-width);
   --list-bullet-size: var(--list-heading-bullet-size);
