@@ -97,9 +97,9 @@ if (!Prism.languages.csharp) {
   // Before (greedy) `string`, so `[Route("api/[controller]")]` is matched (and coloured) whole.
   Prism.languages.insertBefore('csharp', 'string', {
     attribute: {
-      // The lookahead (end of line, identifier, next `[`) rejects `[Foo, Bar],` / `[Key] = 1` initializers.
+      // The lookahead (end of line, identifier, next `[`, comment) rejects `[Foo, Bar],` / `[Key] = 1` initializers.
       pattern:
-        /^(\s*)\[(?:\w+:\s*)?[A-Z](?:"(?:\\.|[^"\\\r\n])*"|\[[^\]\r\n]*\]|[^\]"\r\n])*\](?=[ \t]*(?:$|[\w[]))/m,
+        /^(\s*)\[(?:\w+:\s*)?[A-Z](?:"(?:\\.|[^"\\\r\n])*"|\[[^\]\r\n]*\]|[^\]"\r\n])*\](?=[ \t]*(?:$|[\w[]|\/[/*]))/m,
       lookbehind: true,
       greedy: true,
       alias: 'builtin',

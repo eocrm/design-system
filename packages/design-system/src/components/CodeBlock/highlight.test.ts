@@ -104,6 +104,12 @@ it.each([
 it('C# attribute followed by code on the same line', () => {
   const [line] = tokenizeLines('[Obsolete] public void M() {}', 'csharp');
   expect(line[0]).toEqual({ content: '[Obsolete]', key: 'keyword' });
+  for (const src of ['[Obsolete] // why', '[HttpGet("x")] /* c */']) {
+    expect(tokenizeLines(src, 'csharp')[0][0]).toEqual({
+      content: src.split(/ [/]/)[0],
+      key: 'keyword',
+    });
+  }
 });
 it('C# indexers / collection expressions at line start are not attributes', () => {
   for (const src of ['[0]', '    [One, Two];', '    [Foo, Bar],', '    [Key] = 1,']) {
