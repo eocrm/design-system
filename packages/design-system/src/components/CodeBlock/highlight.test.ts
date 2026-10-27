@@ -39,7 +39,7 @@ it('highlightedLineSet normalises reversed ranges and ignores out-of-range', () 
   expect(highlightedLineSet(undefined, 6).size).toBe(0);
 });
 
-it.each(['rust', 'sql', 'extend', 'constructor', '__proto__'])(
+it.each(['ruby', 'sql', 'extend', 'constructor', '__proto__'])(
   'language %s is not on the allow-list → plain',
   (lang) => {
     expect(tokenizeLines('let a = 1;\nb', lang)).toEqual([
@@ -53,4 +53,72 @@ it('bash: # starts a comment only at line start or after whitespace', () => {
   expect(url.some((t) => t.key === 'comment')).toBe(false);
   const [note] = tokenizeLines('echo hi # note', 'bash');
   expect(note.some((t) => t.key === 'comment')).toBe(true);
+});
+
+it.each([
+  ['go', 'func main() { x := "hi" }'],
+  ['kotlin', 'fun main() { val s = "hi" }'],
+  ['java', 'public static void main(String[] a) { var s = "hi"; }'],
+  ['csharp', 'public static void Main() { var s = "hi"; }'],
+  ['rust', 'fn main() { let s = "hi"; }'],
+])('%s: keyword and string are highlighted', (lang, src) => {
+  const [line] = tokenizeLines(src, lang);
+  expect(line.some((t) => t.key === 'keyword')).toBe(true);
+  expect(line.some((t) => t.key === 'string' && t.content === '"hi"')).toBe(true);
+});
+it.each([
+  ['golang', 'go'],
+  ['kt', 'kotlin'],
+  ['kts', 'kotlin'],
+  ['cs', 'csharp'],
+  ['c#', 'csharp'],
+  ['rs', 'rust'],
+])('alias %s tokenizes exactly like %s', (alias, canonical) => {
+  // Each grammar keywords a different subset of `src`, so any wrong mapping changes the output.
+  const src = 'fn func fun nameof native let "a"';
+  expect(tokenizeLines(src, alias)).toEqual(tokenizeLines(src, canonical));
+  for (const other of ['go', 'kotlin', 'csharp', 'rust', 'java', 'typescript']) {
+    if (other !== canonical) {
+      expect(tokenizeLines(src, alias)).not.toEqual(tokenizeLines(src, other));
+    }
+  }
+});
+it('java/C#: PascalCase types are highlighted, ALL_CAPS constants are not', () => {
+  const [line] = tokenizeLines('int n = HttpStatus.OK + MAX_SIZE;', 'java');
+  expect(line.find((t) => t.content === 'HttpStatus')?.key).toBe('function');
+  expect(line.some((t) => t.key === 'function' && /OK|MAX_SIZE/.test(t.content))).toBe(false);
+});
+it('java annotation, C# attribute and char literals are not plain', () => {
+  const [ann] = tokenizeLines("@Override char c = 'x';", 'java');
+  expect(ann.find((t) => t.content === '@Override')?.key).toBe('keyword');
+  expect(ann.find((t) => t.content === "'x'")?.key).toBe('string');
+  expect(tokenizeLines('[HttpGet]', 'csharp')[0][0].key).toBe('keyword');
+});
+it.each([
+  '[HttpGet("{id}")]',
+  '[Route("api/[controller]")]',
+  '[assembly: InternalsVisibleTo("T")]',
+])('C# attribute %s is one keyword token', (src) =>
+  expect(tokenizeLines(src, 'csharp')[0]).toEqual([{ content: src, key: 'keyword' }]),
+);
+it('C# attribute followed by code on the same line', () => {
+  const [line] = tokenizeLines('[Obsolete] public void M() {}', 'csharp');
+  expect(line[0]).toEqual({ content: '[Obsolete]', key: 'keyword' });
+  for (const src of ['[Obsolete] // why', '[HttpGet("x")] /* c */']) {
+    expect(tokenizeLines(src, 'csharp')[0][0]).toEqual({
+      content: src.split(/ [/]/)[0],
+      key: 'keyword',
+    });
+  }
+});
+it('C# indexers / collection expressions at line start are not attributes', () => {
+  for (const src of ['[0]', '    [One, Two];', '    [Foo, Bar],', '    [Key] = 1,']) {
+    expect(tokenizeLines(src, 'csharp')[0].some((t) => t.key === 'keyword')).toBe(false);
+  }
+});
+it('C# raw and @$ strings stay one string token', () => {
+  const lines = tokenizeLines('var j = """\n  { "a": 1 }\n  """;', 'csharp');
+  expect(lines[1]).toEqual([{ content: '  { "a": 1 }', key: 'string' }]);
+  const [v] = tokenizeLines('var p = @$"C:\\{dir}";', 'csharp');
+  expect(v.find((t) => t.key === 'string')?.content).toBe('@$"C:\\{dir}"');
 });

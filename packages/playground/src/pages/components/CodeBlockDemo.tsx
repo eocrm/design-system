@@ -55,7 +55,72 @@ const LONG = JSON.stringify(
 
 const LONG_CURL = `curl -X POST https://acme.eocrm.io/api/v1/contacts -H "Authorization: Bearer $EOCRM_API_KEY" -H "Content-Type: application/json" -d '{"first_name":"Ana","last_name":"Kovač","email":"ana@northwind.io"}'`;
 
-const RUST = 'fn main() {\n    println!("hello");\n}';
+const RUBY = 'def greet(name)\n  puts "Hello, #{name}"\nend';
+
+const TYPED: CodeBlockSample[] = [
+  {
+    id: 'go',
+    label: 'Go',
+    language: 'go',
+    code: `func fetchContact(id string) (*Contact, error) {
+	res, err := http.Get("https://acme.eocrm.io/api/v1/contacts/" + id)
+	if err != nil {
+		return nil, err // network failure
+	}
+	defer res.Body.Close()
+	var c Contact
+	return &c, json.NewDecoder(res.Body).Decode(&c)
+}`,
+  },
+  {
+    id: 'kotlin',
+    label: 'Kotlin',
+    language: 'kotlin',
+    code: `data class Contact(val id: String, val email: String?)
+
+suspend fun fetchContact(id: String): Contact {
+    val res = client.get("https://acme.eocrm.io/api/v1/contacts/$id")
+    return res.body() // throws on 4xx
+}`,
+  },
+  {
+    id: 'java',
+    label: 'Java',
+    language: 'java',
+    code: `public record Contact(String id, String email) {}
+
+@Override
+public Contact fetchContact(String id) throws IOException {
+    var req = HttpRequest.newBuilder(URI.create(BASE + "/contacts/" + id)).build();
+    return mapper.readValue(client.send(req, ofString()).body(), Contact.class);
+}`,
+  },
+  {
+    id: 'csharp',
+    label: 'C#',
+    language: 'csharp',
+    code: `public record Contact(string Id, string? Email);
+
+[HttpGet("{id}")]
+public async Task<Contact?> FetchContact(string id)
+{
+    var res = await _http.GetAsync($"/api/v1/contacts/{id}");
+    return await res.Content.ReadFromJsonAsync<Contact>(); // null on 204
+}`,
+  },
+  {
+    id: 'rust',
+    label: 'Rust',
+    language: 'rust',
+    code: `#[derive(Debug, Deserialize)]
+struct Contact { id: String, email: Option<String> }
+
+async fn fetch_contact(id: &str) -> Result<Contact, reqwest::Error> {
+    let url = format!("https://acme.eocrm.io/api/v1/contacts/{id}");
+    reqwest::get(url).await?.json::<Contact>().await
+}`,
+  },
+];
 
 const SNIPPET = `function greet(name) {
   const msg = 'Hello, ' + name;
@@ -100,6 +165,14 @@ export function CodeBlockDemo() {
       </Example>
 
       <Example
+        title="Typed languages"
+        description="Go, Kotlin, Java, C# and Rust grammars."
+        code={`<CodeBlock samples={TYPED} />`}
+      >
+        <CodeBlock samples={TYPED} />
+      </Example>
+
+      <Example
         title="maxHeight"
         description="The body scrolls inside the cap and stays keyboard-focusable."
         code={`<CodeBlock language="json" code={LONG} maxHeight="sm" />`}
@@ -126,9 +199,9 @@ export function CodeBlockDemo() {
       <Example
         title="Unknown language"
         description="A language outside the supported list renders as plain text."
-        code={`<CodeBlock language="rust" code={RUST} />`}
+        code={`<CodeBlock language="ruby" code={RUBY} />`}
       >
-        <CodeBlock language="rust" code={RUST} />
+        <CodeBlock language="ruby" code={RUBY} />
       </Example>
     </DemoLayout>
   );

@@ -1003,7 +1003,7 @@
           "type": "CodeBlockLanguage | (string & {})",
           "required": false,
           "default": "",
-          "description": "Single-sample mode: grammar for highlighting — `'json'`, `'bash'`,\n`'javascript'`, `'typescript'` or `'python'` (aliases `sh`, `shell`, `js`,\n`ts`, `py`). Anything else renders as plain text."
+          "description": "Single-sample mode: grammar for highlighting — `'json'`, `'bash'`,\n`'javascript'`, `'typescript'`, `'python'`, `'go'`, `'kotlin'`, `'java'`,\n`'csharp'` or `'rust'` (aliases `sh`, `shell`, `js`, `ts`, `py`, `golang`,\n`kt`, `kts`, `cs`, `c#`, `rs`). Anything else renders as plain text."
         },
         {
           "name": "title",
@@ -7285,7 +7285,7 @@
     "CodeBlockSample": "{ id: string; label: string; code: string; language?: CodeBlockLanguage | (string & {}) }",
     "CodeBlockHighlightLines": "readonly (number | readonly [number, number])[]",
     "CodeBlockMaxHeight": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\"",
-    "CodeBlockLanguage": "\"json\" | \"bash\" | \"javascript\" | \"typescript\" | \"python\"",
+    "CodeBlockLanguage": "\"json\" | \"bash\" | \"javascript\" | \"typescript\" | \"python\" | \"go\" | \"kotlin\" | \"java\" | \"csharp\" | \"rust\"",
     "HighlightRange": "{ start: number; length: number }",
     "RichDoc": "{ blocks: Block[] }",
     "RenderLink": "(link: RichTextLink, defaultNode: ReactNode) => ReactNode",

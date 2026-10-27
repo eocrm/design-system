@@ -48,8 +48,9 @@ export interface CodeBlockProps extends Omit<HTMLAttributes<HTMLDivElement>, 'ti
   code?: string;
   /**
    * Single-sample mode: grammar for highlighting — `'json'`, `'bash'`,
-   * `'javascript'`, `'typescript'` or `'python'` (aliases `sh`, `shell`, `js`,
-   * `ts`, `py`). Anything else renders as plain text.
+   * `'javascript'`, `'typescript'`, `'python'`, `'go'`, `'kotlin'`, `'java'`,
+   * `'csharp'` or `'rust'` (aliases `sh`, `shell`, `js`, `ts`, `py`, `golang`,
+   * `kt`, `kts`, `cs`, `c#`, `rs`). Anything else renders as plain text.
    */
   language?: CodeBlockLanguage | (string & {});
   /**
