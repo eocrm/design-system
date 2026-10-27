@@ -97,7 +97,7 @@ export function Demo() {
 
       <Example
         title="Heading steps"
-        description="size='heading' centres the marker on the first line of a Title size='xl'; the badge becomes a rounded square."
+        description="size='heading' centres the marker on the first line of a Title size='xl'; the badge becomes a rounded square. A List nested in a step keeps its own (body) size."
         code={`import { List, Text, Title } from '@eocrm/design-system';
 
 export function Demo() {
@@ -110,6 +110,10 @@ export function Demo() {
       <List.Item>
         <Title order={3} size="xl">Connect your client</Title>
         <Text tone="muted">Paste the token into the client and save.</Text>
+        <List variant="number" numberStyle="badge">
+          <List.Item>Open Customize, then Connectors.</List.Item>
+          <List.Item>Choose Add custom connector.</List.Item>
+        </List>
       </List.Item>
     </List>
   );
@@ -128,6 +132,10 @@ export function Demo() {
                 Connect your client
               </Title>
               <Text tone="muted">Paste the token into the client and save.</Text>
+              <List variant="number" numberStyle="badge">
+                <List.Item>Open Customize, then Connectors.</List.Item>
+                <List.Item>Choose Add custom connector.</List.Item>
+              </List>
             </List.Item>
           </List>
         </Constrain>
