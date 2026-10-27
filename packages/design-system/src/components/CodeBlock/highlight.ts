@@ -1,6 +1,16 @@
 import { Prism, normalizeTokens } from 'prism-react-renderer';
 
-export type CodeBlockLanguage = 'json' | 'bash' | 'javascript' | 'typescript' | 'python';
+export type CodeBlockLanguage =
+  | 'json'
+  | 'bash'
+  | 'javascript'
+  | 'typescript'
+  | 'python'
+  | 'go'
+  | 'kotlin'
+  | 'java'
+  | 'csharp'
+  | 'rust';
 
 export type SyntaxKey =
   | 'keyword'
@@ -23,6 +33,11 @@ export const LANGUAGE_LABELS: Record<CodeBlockLanguage, string> = {
   javascript: 'JavaScript',
   typescript: 'TypeScript',
   python: 'Python',
+  go: 'Go',
+  kotlin: 'Kotlin',
+  java: 'Java',
+  csharp: 'C#',
+  rust: 'Rust',
 };
 
 // prism-react-renderer ships no bash grammar; register a small one once.
@@ -47,12 +62,52 @@ if (!Prism.languages.bash) {
   };
 }
 
+// Nor Java / C#: both are C-like, so extend `clike` (comments, punctuation, functions) with their keywords.
+const pascalCase = /\b[A-Z]\w*\b/;
+if (!Prism.languages.java) {
+  Prism.languages.java = Prism.languages.extend('clike', {
+    keyword:
+      /\b(?:abstract|assert|break|case|catch|class|const|continue|default|do|else|enum|exports|extends|final|finally|for|goto|if|implements|import|instanceof|interface|module|native|new|non-sealed|null|package|permits|private|protected|public|record|requires|return|sealed|static|strictfp|super|switch|synchronized|this|throw|throws|transient|try|var|void|volatile|while|yield|boolean|byte|char|double|float|int|long|short)\b/,
+    string: {
+      pattern: /"""[\s\S]*?"""|"(?:\\.|[^"\\\r\n])*"|'(?:\\.|[^'\\\r\n]){1,6}'/,
+      greedy: true,
+    },
+    number: /\b0x[\da-f_]+l?\b|(?:\b\d[\d_]*\.?[\d_]*|\B\.\d[\d_]*)(?:e[+-]?\d[\d_]*)?[dfl]?/i,
+    'class-name': pascalCase,
+  });
+  Prism.languages.insertBefore('java', 'class-name', {
+    annotation: { pattern: /@\w+/, alias: 'builtin' },
+  });
+}
+if (!Prism.languages.csharp) {
+  Prism.languages.csharp = Prism.languages.extend('clike', {
+    keyword:
+      /\b(?:abstract|as|async|await|base|bool|break|byte|case|catch|char|checked|class|const|continue|decimal|default|delegate|do|double|else|enum|event|explicit|extern|finally|fixed|float|for|foreach|get|goto|if|implicit|in|init|int|interface|internal|is|lock|long|namespace|new|null|object|operator|out|override|params|partial|private|protected|public|readonly|record|ref|required|return|sbyte|sealed|set|short|sizeof|stackalloc|static|string|struct|switch|this|throw|try|typeof|uint|ulong|unchecked|unsafe|ushort|using|var|virtual|void|volatile|when|where|while|yield)\b/,
+    string: {
+      pattern: /\$?@"(?:""|[^"])*"|\$?"(?:\\.|[^"\\\r\n])*"|'(?:\\.|[^'\\\r\n]){1,6}'/,
+      greedy: true,
+    },
+    number:
+      /\b0x[\da-f_]+\b|(?:\b\d[\d_]*\.?[\d_]*|\B\.\d[\d_]*)(?:e[+-]?\d[\d_]*)?(?:ul|lu|[dfmlu])?/i,
+    'class-name': pascalCase,
+  });
+  Prism.languages.insertBefore('csharp', 'class-name', {
+    attribute: { pattern: /^(\s*)\[[^\]\r\n]+\](?=\s*$)/m, lookbehind: true, alias: 'builtin' },
+  });
+}
+
 const ALIASES: Record<string, string> = {
   shell: 'bash',
   sh: 'bash',
   js: 'javascript',
   ts: 'typescript',
   py: 'python',
+  golang: 'go',
+  kt: 'kotlin',
+  kts: 'kotlin',
+  cs: 'csharp',
+  'c#': 'csharp',
+  rs: 'rust',
 };
 
 const KEY_BY_TYPE: Record<string, SyntaxKey> = {};

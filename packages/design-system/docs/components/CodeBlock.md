@@ -37,7 +37,7 @@ function usePersistedSample(storageKey: string) {
 | Prop | Type | Required | Description |
 |---|---|---|---|
 | `code` | `string` | no | Single-sample mode: the source. Ignored when `samples` is set. |
-| `language` | `(string & {}) \| CodeBlockLanguage` | no | Single-sample mode: grammar for highlighting — `'json'`, `'bash'`, `'javascript'`, `'typescript'` or `'python'` (aliases `sh`, `shell`, `js`, `ts`, `py`). Anything else renders as plain text. |
+| `language` | `(string & {}) \| CodeBlockLanguage` | no | Single-sample mode: grammar for highlighting — `'json'`, `'bash'`, `'javascript'`, `'typescript'`, `'python'`, `'go'`, `'kotlin'`, `'java'`, `'csharp'` or `'rust'` (aliases `sh`, `shell`, `js`, `ts`, `py`, `golang`, `kt`, `kts`, `cs`, `c#`, `rs`). Anything else renders as plain text. |
 | `title` | `string` | no | Header label in single-sample mode. Defaults to a one-item `samples` entry's `label`, else the language name (`JSON`, `Bash`…), else "Plain text". Also names the body (single-sample) or the sample tabs (multi-sample). |
 | `samples` | `readonly CodeBlockSample[]` | no | Multi-sample mode: 2+ samples render as tabs. Wins over `code`/`language`. |
 | `activeSampleId` | `string` | no | Controlled active sample id. Wins over `syncKey` and the user's own pick. |
@@ -51,7 +51,7 @@ function usePersistedSample(storageKey: string) {
 
 <!-- props:end -->
 
-- **Languages:** `json`, `bash`, `javascript`, `typescript`, `python` (aliases `sh`, `shell`, `js`, `ts`, `py`). Unknown languages render as plain text.
+- **Languages:** `json`, `bash`, `javascript`, `typescript`, `python`, `go`, `kotlin`, `java`, `csharp`, `rust` (aliases `sh`, `shell`, `js`, `ts`, `py`, `golang`, `kt`, `kts`, `cs`, `c#`, `rs`). Unknown languages render as plain text.
 - **Header label** is `title`, then the label of a one-item `samples` array, then the language name, then "Plain text".
 - **Accessibility:** the code body is always keyboard-focusable. Single mode is a `role="group"` named by the header label (`title`, else the one-item sample label, else the language name, else "Plain text"); multi mode is a tabpanel labelled by its tab, and `title` names the tablist.
 - **`highlightLines` is visual only.** Explain the emphasis in the surrounding prose.

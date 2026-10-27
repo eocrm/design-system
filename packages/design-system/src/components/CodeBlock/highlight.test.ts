@@ -39,7 +39,7 @@ it('highlightedLineSet normalises reversed ranges and ignores out-of-range', () 
   expect(highlightedLineSet(undefined, 6).size).toBe(0);
 });
 
-it.each(['rust', 'sql', 'extend', 'constructor', '__proto__'])(
+it.each(['ruby', 'sql', 'extend', 'constructor', '__proto__'])(
   'language %s is not on the allow-list → plain',
   (lang) => {
     expect(tokenizeLines('let a = 1;\nb', lang)).toEqual([
@@ -53,4 +53,25 @@ it('bash: # starts a comment only at line start or after whitespace', () => {
   expect(url.some((t) => t.key === 'comment')).toBe(false);
   const [note] = tokenizeLines('echo hi # note', 'bash');
   expect(note.some((t) => t.key === 'comment')).toBe(true);
+});
+
+it.each([
+  ['go', 'func main() { x := "hi" }'],
+  ['kotlin', 'fun main() { val s = "hi" }'],
+  ['java', 'public static void main(String[] a) { var s = "hi"; }'],
+  ['csharp', 'public static void Main() { var s = "hi"; }'],
+  ['rust', 'fn main() { let s = "hi"; }'],
+])('%s: keyword and string are highlighted', (lang, src) => {
+  const [line] = tokenizeLines(src, lang);
+  expect(line.some((t) => t.key === 'keyword')).toBe(true);
+  expect(line.some((t) => t.key === 'string' && t.content === '"hi"')).toBe(true);
+});
+it.each(['golang', 'kt', 'kts', 'cs', 'c#', 'rs'])('alias %s resolves to a grammar', (alias) => {
+  expect(tokenizeLines('fn func fun void "a"', alias)[0].some((t) => t.key !== 'plain')).toBe(true);
+});
+it('java annotation, C# attribute and char literals are not plain', () => {
+  const [ann] = tokenizeLines("@Override char c = 'x';", 'java');
+  expect(ann.find((t) => t.content === '@Override')?.key).toBe('keyword');
+  expect(ann.find((t) => t.content === "'x'")?.key).toBe('string');
+  expect(tokenizeLines('[HttpGet]', 'csharp')[0][0].key).toBe('keyword');
 });
