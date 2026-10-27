@@ -56,7 +56,7 @@ TL;DR: `<List>` for bullets, `<List variant="number">` for ordered steps, `numbe
 - Markers are `aria-hidden`; the list carries an explicit `role="list"` so Safari/VoiceOver keeps list semantics.
 - Text inherits size and colour, so it works inside `Card`, `Alert` and prose-width containers.
 - Nest by putting a `List` inside a `List.Item`; it indents one level. A nested `List` uses its own `size`, so a body list inside a `size="heading"` step keeps body markers.
-- To theme a `size="heading"` List's markers, override the `--list-heading-*` tokens; `--list-badge-size`, `--list-marker-*` and the other generic marker tokens only reach body-size lists.
+- On a `size="heading"` List, marker size, shape and font size come from the `--list-heading-*` tokens: overriding `--list-marker-height`/`-width`, `--list-bullet-size`, `--list-number-font-size` or `--list-badge-size`/`-radius`/`-font-size` has no effect there. Colour, weight and gap tokens (`--list-marker-fg`, `--list-badge-bg`/`-fg`, `--list-*-font-weight`, `--list-marker-gap`) apply to both sizes.
 - `numberStyle` has no effect on bullets.
 - With `numberStyle="badge"` the numbers are visual only; screen readers announce the list position ("1 of 3") rather than the badge text.
 - `size="heading"` fits markers to a `Title size="xl"` first line; the badge turns into a rounded square.
