@@ -63,7 +63,7 @@ if (!Prism.languages.bash) {
 }
 
 // Nor Java / C#: both are C-like, so extend `clike` (comments, punctuation, functions) with their keywords.
-// Needs a lowercase letter, so ALL_CAPS constants stay plain.
+// Needs a lowercase letter, so ALL_CAPS constants stay plain (as do `T`, `IO`, `URL`).
 const pascalCase = /\b[A-Z]\w*[a-z]\w*\b/;
 if (!Prism.languages.java) {
   Prism.languages.java = Prism.languages.extend('clike', {
@@ -97,7 +97,9 @@ if (!Prism.languages.csharp) {
   // Before (greedy) `string`, so `[Route("api/[controller]")]` is matched (and coloured) whole.
   Prism.languages.insertBefore('csharp', 'string', {
     attribute: {
-      pattern: /^(\s*)\[(?:\w+:\s*)?[A-Z](?:"(?:\\.|[^"\\\r\n])*"|\[[^\]\r\n]*\]|[^\]"\r\n])*\]/m,
+      // The lookahead (end of line, identifier, next `[`) rejects `[Foo, Bar],` / `[Key] = 1` initializers.
+      pattern:
+        /^(\s*)\[(?:\w+:\s*)?[A-Z](?:"(?:\\.|[^"\\\r\n])*"|\[[^\]\r\n]*\]|[^\]"\r\n])*\](?=[ \t]*(?:$|[\w[]))/m,
       lookbehind: true,
       greedy: true,
       alias: 'builtin',

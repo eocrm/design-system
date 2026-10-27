@@ -74,10 +74,14 @@ it.each([
   ['c#', 'csharp'],
   ['rs', 'rust'],
 ])('alias %s tokenizes exactly like %s', (alias, canonical) => {
-  // Each grammar keywords a different word here, so a wrong mapping changes the output.
-  const src = 'fn func fun void "a"';
+  // Each grammar keywords a different subset of `src`, so any wrong mapping changes the output.
+  const src = 'fn func fun nameof native let "a"';
   expect(tokenizeLines(src, alias)).toEqual(tokenizeLines(src, canonical));
-  expect(tokenizeLines(src, alias)).not.toEqual(tokenizeLines(src, 'ruby'));
+  for (const other of ['go', 'kotlin', 'csharp', 'rust', 'java', 'typescript']) {
+    if (other !== canonical) {
+      expect(tokenizeLines(src, alias)).not.toEqual(tokenizeLines(src, other));
+    }
+  }
 });
 it('java/C#: PascalCase types are highlighted, ALL_CAPS constants are not', () => {
   const [line] = tokenizeLines('int n = HttpStatus.OK + MAX_SIZE;', 'java');
@@ -101,8 +105,10 @@ it('C# attribute followed by code on the same line', () => {
   const [line] = tokenizeLines('[Obsolete] public void M() {}', 'csharp');
   expect(line[0]).toEqual({ content: '[Obsolete]', key: 'keyword' });
 });
-it('C# array indexing at line start is not an attribute', () => {
-  expect(tokenizeLines('[0]', 'csharp')[0][0].key).not.toBe('keyword');
+it('C# indexers / collection expressions at line start are not attributes', () => {
+  for (const src of ['[0]', '    [One, Two];', '    [Foo, Bar],', '    [Key] = 1,']) {
+    expect(tokenizeLines(src, 'csharp')[0].some((t) => t.key === 'keyword')).toBe(false);
+  }
 });
 it('C# raw and @$ strings stay one string token', () => {
   const lines = tokenizeLines('var j = """\n  { "a": 1 }\n  """;', 'csharp');
