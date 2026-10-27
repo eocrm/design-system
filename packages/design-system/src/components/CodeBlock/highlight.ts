@@ -63,7 +63,8 @@ if (!Prism.languages.bash) {
 }
 
 // Nor Java / C#: both are C-like, so extend `clike` (comments, punctuation, functions) with their keywords.
-const pascalCase = /\b[A-Z]\w*\b/;
+// Needs a lowercase letter, so ALL_CAPS constants stay plain.
+const pascalCase = /\b[A-Z]\w*[a-z]\w*\b/;
 if (!Prism.languages.java) {
   Prism.languages.java = Prism.languages.extend('clike', {
     keyword:

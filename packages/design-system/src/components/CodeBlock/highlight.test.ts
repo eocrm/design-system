@@ -66,8 +66,23 @@ it.each([
   expect(line.some((t) => t.key === 'keyword')).toBe(true);
   expect(line.some((t) => t.key === 'string' && t.content === '"hi"')).toBe(true);
 });
-it.each(['golang', 'kt', 'kts', 'cs', 'c#', 'rs'])('alias %s resolves to a grammar', (alias) => {
-  expect(tokenizeLines('fn func fun void "a"', alias)[0].some((t) => t.key !== 'plain')).toBe(true);
+it.each([
+  ['golang', 'go'],
+  ['kt', 'kotlin'],
+  ['kts', 'kotlin'],
+  ['cs', 'csharp'],
+  ['c#', 'csharp'],
+  ['rs', 'rust'],
+])('alias %s tokenizes exactly like %s', (alias, canonical) => {
+  // Each grammar keywords a different word here, so a wrong mapping changes the output.
+  const src = 'fn func fun void "a"';
+  expect(tokenizeLines(src, alias)).toEqual(tokenizeLines(src, canonical));
+  expect(tokenizeLines(src, alias)).not.toEqual(tokenizeLines(src, 'ruby'));
+});
+it('java/C#: PascalCase types are highlighted, ALL_CAPS constants are not', () => {
+  const [line] = tokenizeLines('int n = HttpStatus.OK + MAX_SIZE;', 'java');
+  expect(line.find((t) => t.content === 'HttpStatus')?.key).toBe('function');
+  expect(line.some((t) => t.key === 'function' && /OK|MAX_SIZE/.test(t.content))).toBe(false);
 });
 it('java annotation, C# attribute and char literals are not plain', () => {
   const [ann] = tokenizeLines("@Override char c = 'x';", 'java');

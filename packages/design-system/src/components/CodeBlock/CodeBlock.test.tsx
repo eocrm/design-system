@@ -30,6 +30,8 @@ describe('CodeBlock', () => {
       expect(screen.getByText('Response')).toBeInTheDocument();
       rerender(<CodeBlock code="{}" language="json" />);
       expect(screen.getByText('JSON')).toBeInTheDocument();
+      rerender(<CodeBlock code="{}" language="csharp" />);
+      expect(screen.getByText('C#')).toBeInTheDocument();
       rerender(<CodeBlock code="x" language="cobol" />);
       expect(screen.getByText('Plain text')).toBeInTheDocument();
       rerender(<CodeBlock code="x" language="constructor" />);
