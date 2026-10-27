@@ -82,17 +82,25 @@ if (!Prism.languages.java) {
 if (!Prism.languages.csharp) {
   Prism.languages.csharp = Prism.languages.extend('clike', {
     keyword:
-      /\b(?:abstract|as|async|await|base|bool|break|byte|case|catch|char|checked|class|const|continue|decimal|default|delegate|do|double|else|enum|event|explicit|extern|finally|fixed|float|for|foreach|get|goto|if|implicit|in|init|int|interface|internal|is|lock|long|namespace|new|null|object|operator|out|override|params|partial|private|protected|public|readonly|record|ref|required|return|sbyte|sealed|set|short|sizeof|stackalloc|static|string|struct|switch|this|throw|try|typeof|uint|ulong|unchecked|unsafe|ushort|using|var|virtual|void|volatile|when|where|while|yield)\b/,
+      /\b(?:abstract|as|async|await|base|bool|break|byte|case|catch|char|checked|class|const|continue|decimal|default|delegate|do|double|dynamic|else|enum|event|explicit|extern|finally|fixed|float|for|foreach|get|goto|if|implicit|in|init|int|interface|internal|is|lock|long|namespace|nameof|new|null|object|operator|out|override|params|partial|private|protected|public|readonly|record|ref|required|return|sbyte|sealed|set|short|sizeof|stackalloc|static|string|struct|switch|this|throw|try|typeof|uint|ulong|unchecked|unsafe|ushort|using|var|virtual|void|volatile|when|where|while|with|yield)\b/,
+    // Raw `"""`, verbatim `@"` / `$@"` / `@$"`, regular / interpolated, char.
     string: {
-      pattern: /\$?@"(?:""|[^"])*"|\$?"(?:\\.|[^"\\\r\n])*"|'(?:\\.|[^'\\\r\n]){1,6}'/,
+      pattern:
+        /\$*"""[\s\S]*?"""|(?:\$@|@\$|@)"(?:""|[^"])*"|\$?"(?:\\.|[^"\\\r\n])*"|'(?:\\.|[^'\\\r\n]){1,6}'/,
       greedy: true,
     },
     number:
       /\b0x[\da-f_]+\b|(?:\b\d[\d_]*\.?[\d_]*|\B\.\d[\d_]*)(?:e[+-]?\d[\d_]*)?(?:ul|lu|[dfmlu])?/i,
     'class-name': pascalCase,
   });
-  Prism.languages.insertBefore('csharp', 'class-name', {
-    attribute: { pattern: /^(\s*)\[[^\]\r\n]+\](?=\s*$)/m, lookbehind: true, alias: 'builtin' },
+  // Before (greedy) `string`, so `[Route("api/[controller]")]` is matched (and coloured) whole.
+  Prism.languages.insertBefore('csharp', 'string', {
+    attribute: {
+      pattern: /^(\s*)\[(?:\w+:\s*)?[A-Z](?:"(?:\\.|[^"\\\r\n])*"|\[[^\]\r\n]*\]|[^\]"\r\n])*\]/m,
+      lookbehind: true,
+      greedy: true,
+      alias: 'builtin',
+    },
   });
 }
 

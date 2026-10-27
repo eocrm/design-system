@@ -75,3 +75,23 @@ it('java annotation, C# attribute and char literals are not plain', () => {
   expect(ann.find((t) => t.content === "'x'")?.key).toBe('string');
   expect(tokenizeLines('[HttpGet]', 'csharp')[0][0].key).toBe('keyword');
 });
+it.each([
+  '[HttpGet("{id}")]',
+  '[Route("api/[controller]")]',
+  '[assembly: InternalsVisibleTo("T")]',
+])('C# attribute %s is one keyword token', (src) =>
+  expect(tokenizeLines(src, 'csharp')[0]).toEqual([{ content: src, key: 'keyword' }]),
+);
+it('C# attribute followed by code on the same line', () => {
+  const [line] = tokenizeLines('[Obsolete] public void M() {}', 'csharp');
+  expect(line[0]).toEqual({ content: '[Obsolete]', key: 'keyword' });
+});
+it('C# array indexing at line start is not an attribute', () => {
+  expect(tokenizeLines('[0]', 'csharp')[0][0].key).not.toBe('keyword');
+});
+it('C# raw and @$ strings stay one string token', () => {
+  const lines = tokenizeLines('var j = """\n  { "a": 1 }\n  """;', 'csharp');
+  expect(lines[1]).toEqual([{ content: '  { "a": 1 }', key: 'string' }]);
+  const [v] = tokenizeLines('var p = @$"C:\\{dir}";', 'csharp');
+  expect(v.find((t) => t.key === 'string')?.content).toBe('@$"C:\\{dir}"');
+});
