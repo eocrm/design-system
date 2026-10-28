@@ -12,7 +12,10 @@ export interface AgentAvatarMember {
 }
 
 export interface AgentAvatarProps extends HTMLAttributes<HTMLSpanElement> {
-  /** Agent label; drives the accessible name. */
+  /**
+   * Agent label; drives the accessible name (an empty label reads as "?",
+   * like `Avatar`). Unused when `decorative`.
+   */
   name: string;
   /** Agent mark, rendered monochrome in the tile. Defaults to a lucide `Bot`. */
   mark?: ReactNode;
@@ -23,7 +26,14 @@ export interface AgentAvatarProps extends HTMLAttributes<HTMLSpanElement> {
   member?: AgentAvatarMember | null;
   /** Diameter, same scale as `Avatar`. The member badge is hidden at `inline`. */
   size?: AvatarSize;
-  /** Internal: PersonDisplay passes true; renders aria-hidden with no role/label. */
+  /**
+   * Hide the avatar from assistive tech (`aria-hidden`, no role or label). Use
+   * when visible text next to it already names the agent and the member, e.g.
+   * a Thread node beside a "Scout for Sarah Chen" byline; otherwise both are
+   * announced. Without such text keep the default: a `role="img"` named
+   * "{agent}, on behalf of {member}". `PersonDisplay.AgentAvatar` always sets
+   * it. Defaults to `false`.
+   */
   decorative?: boolean;
 }
 
@@ -45,7 +55,7 @@ const avatarSizeClass: Record<AvatarSize, string> = {
 
 /**
  * AI agent tile with an optional badge of the member it acts for.
- * @see docs/components/Avatar.md
+ * @see docs/components/AgentAvatar.md
  */
 export const AgentAvatar = forwardRef<HTMLSpanElement, AgentAvatarProps>(function AgentAvatar(
   { name, mark, member, size = 'md', decorative, className, ...props },

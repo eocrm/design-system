@@ -361,7 +361,9 @@ describe('PersonDisplay — AgentAvatar + OnBehalfOf (#717)', () => {
     );
     const row = agentRow(container);
     expect(row).not.toBeNull();
-    expect(row).toHaveTextContent(`${AGENT}for Ada Lovelace`);
+    // Exact textContent (toHaveTextContent collapses whitespace): name-from-
+    // content must not glue the Name to "for".
+    expect(row?.textContent).toBe(`${AGENT} for Ada Lovelace`);
     // The row is the column's first item; Descriptions follow it.
     expect(row?.parentElement?.firstElementChild).toBe(row);
     expect(row?.nextElementSibling).toHaveTextContent('CLI session');
@@ -434,6 +436,34 @@ describe('PersonDisplay — AgentAvatar + OnBehalfOf (#717)', () => {
       'title',
       'for Ada Lovelace',
     );
+  });
+
+  it('multi-node text children (`{first} {last}`) are one string with a title', () => {
+    const [first, last] = ['Ada', 'Lovelace'];
+    const { container } = render(
+      <PersonDisplay>
+        <PersonDisplay.Name>
+          {AGENT} {2}
+        </PersonDisplay.Name>
+        <PersonDisplay.OnBehalfOf>
+          {first} {last}
+        </PersonDisplay.OnBehalfOf>
+      </PersonDisplay>,
+    );
+    expect(agentRow(container)!.children[0]).toHaveAttribute('title', `${AGENT} 2`);
+    const member = container.querySelector('[class*="onBehalfOfMember"]');
+    expect(member).toHaveAttribute('title', 'for Ada Lovelace');
+    expect(member?.textContent).toBe('Ada Lovelace');
+  });
+
+  it.each([[[]], [['', ' ']]])('all-empty array children (%j) are an erased member', (kids) => {
+    render(
+      <PersonDisplay>
+        <PersonDisplay.Name>{AGENT}</PersonDisplay.Name>
+        <PersonDisplay.OnBehalfOf>{kids}</PersonDisplay.OnBehalfOf>
+      </PersonDisplay>,
+    );
+    expect(screen.getByTitle('for a former member')).toHaveTextContent('for a former member');
   });
 
   it('no title when children are not a string', () => {
@@ -553,7 +583,7 @@ describe('PersonDisplay — AgentAvatar + OnBehalfOf (#717)', () => {
       const t: Record<string, string> = {};
       tokens.walkDecls((d) => void (t[d.prop] = d.value));
       expect(t['--person-display-agent-row-gap']).toBe('var(--space-1)');
-      expect(t['--person-display-on-behalf-of-member-min-width']).toBe('4ch');
+      expect(t['--person-display-on-behalf-of-member-min-width']).toBe('6ch');
     });
   });
 });

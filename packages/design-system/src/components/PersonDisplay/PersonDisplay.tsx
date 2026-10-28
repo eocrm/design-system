@@ -78,16 +78,26 @@ export interface PersonDisplayAvatarProps extends Omit<AvatarProps, 'size'> {}
 /** `AgentAvatar` props minus `size` (from context) and `decorative` (always on). */
 export interface PersonDisplayAgentAvatarProps extends Omit<
   AgentAvatarProps,
-  'size' | 'decorative'
-> {}
+  'size' | 'decorative' | 'name'
+> {
+  /**
+   * Agent label. Not announced here: the avatar is decorative, and the
+   * visible `PersonDisplay.Name` (pass the same label) names the agent.
+   */
+  name: string;
+}
 
 export interface PersonDisplayOnBehalfOfProps extends HTMLAttributes<HTMLSpanElement> {
   /**
    * The member the agent acts for, rendered after a muted "for" prefix. A
    * plain name, or a `<Link>` to the member. Omit (or pass an empty string)
-   * when the member was erased: renders "for a former member". The root span
-   * is `display: contents` (its prefix and member join the Name's row), so
-   * box styles passed via `className`/`style` on it don't paint.
+   * when the member was erased: renders "for a former member". Plain-text
+   * children (a string, a number, or text-only nodes like `{first} {last}`)
+   * give the member box a hover `title` of the full "for {member}" text (the
+   * erased copy when erased), which shadows a consumer `title` on
+   * OnBehalfOf; a `<Link>` or other element child gets none. The root span is
+   * `display: contents` (its prefix and member join the Name's row), so box
+   * styles passed via `className`/`style` on it don't paint.
    */
   children?: ReactNode;
 }
@@ -132,6 +142,18 @@ function useSize(): PersonDisplaySize {
 
 function useAgentRow(): boolean {
   return useContext(PersonDisplayContext)?.agentRow ?? false;
+}
+
+/**
+ * Children as one plain string when they are text only: a string, a number,
+ * or an array of them (JSX `{first} {last}`). Otherwise undefined.
+ */
+function plainText(children: ReactNode): string | undefined {
+  const isText = (c: unknown): c is string | number =>
+    typeof c === 'string' || typeof c === 'number';
+  if (isText(children)) return String(children);
+  if (Array.isArray(children) && children.every(isText)) return children.join('');
+  return undefined;
 }
 
 const AVATAR_SIZE: Record<PersonDisplaySize, AvatarSize> = {
@@ -196,8 +218,8 @@ const PersonDisplayAgentAvatar = forwardRef<HTMLSpanElement, PersonDisplayAgentA
 const PersonDisplayName = forwardRef<HTMLElement, PersonDisplayNameProps>(
   function PersonDisplayName({ href, className, children, ...rest }, ref) {
     const size = useSize();
-    // In the agent row the Name may ellipsise, so a string carries its full text.
-    const title = useAgentRow() && typeof children === 'string' ? children : undefined;
+    // In the agent row the Name may ellipsise, so plain text carries its full text.
+    const title = useAgentRow() ? plainText(children) : undefined;
     // inline: bare text, so it inherits the row's size, weight and colour.
     const content =
       size === 'inline' ? (
@@ -249,14 +271,12 @@ const PersonDisplayOnBehalfOf = forwardRef<HTMLSpanElement, PersonDisplayOnBehal
     const size = useSize();
     const t = useTranslation();
     const prefix = t('personDisplay.onBehalfOfPrefix');
-    const former =
-      children == null ||
-      children === false ||
-      (typeof children === 'string' && children.trim() === '');
+    const plain = plainText(children);
+    const former = children == null || children === false || plain?.trim() === '';
     const text = former
       ? t('personDisplay.onBehalfOfFormer')
-      : typeof children === 'string'
-        ? `${prefix} ${children}`
+      : plain !== undefined
+        ? `${prefix} ${plain}`
         : undefined;
     const textProps = {
       size: size === 'inline' ? 'inherit' : NAME_TEXT_SIZE[size],
@@ -270,6 +290,9 @@ const PersonDisplayOnBehalfOf = forwardRef<HTMLSpanElement, PersonDisplayOnBehal
         // {...rest} last so consumer overrides win (Pattern A)
         {...rest}
       >
+        {/* Leading space: name-from-content (a row link, a cell) would
+            otherwise glue the Name to "for". A whitespace-only flex item is
+            not rendered, so it adds no width. */}{' '}
         {/* `display: contents` makes prefix and member items of the agent row:
             the prefix never shrinks, the member ellipsises (and carries the
             title, as the box the pointer can hover). Separate nodes also
@@ -282,7 +305,7 @@ const PersonDisplayOnBehalfOf = forwardRef<HTMLSpanElement, PersonDisplayOnBehal
           </>
         )}
         <Text as="span" className={styles.onBehalfOfMember} title={text} {...textProps}>
-          {former ? text : children}
+          {former ? text : (plain ?? children)}
         </Text>
       </span>
     );

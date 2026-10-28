@@ -39,6 +39,14 @@ describe('AgentAvatar', () => {
     expect(container.querySelector(BADGE)).toBeNull();
   });
 
+  // Pinned current behaviour: an empty agent name labels as '?', like Avatar.
+  it.each(['', '  '])('empty agent name (%j) labels as "?"', (name) => {
+    const { rerender } = render(<AgentAvatar name={name} />);
+    expect(screen.getByRole('img', { name: '?' })).toBeInTheDocument();
+    rerender(<AgentAvatar name={name} member={{ name: 'Ada Lovelace' }} />);
+    expect(screen.getByRole('img', { name: '?, on behalf of Ada Lovelace' })).toBeInTheDocument();
+  });
+
   it('member: badge with the member Avatar, label "on behalf of"', () => {
     const { container } = render(
       <AgentAvatar name="Claude Code · demo laptop" member={{ name: 'Ada Lovelace' }} />,

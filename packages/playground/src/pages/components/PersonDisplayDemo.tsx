@@ -552,8 +552,8 @@ export function Demo() {
 
       <Example
         title="Agent — as a Thread node"
-        description="AgentAvatar at size sm is the Thread.Item node; the body header is an inline PersonDisplay (Name + OnBehalfOf, so the 'for' copy is localized)."
-        code={`<Thread.Item node={<AgentAvatar name="Scout" mark={Sparkle} member={{ name: 'Sarah Chen' }} size="sm" />}>
+        description="AgentAvatar at size sm is the Thread.Item node; the body header is an inline PersonDisplay (Name + OnBehalfOf, so the 'for' copy is localized). The node is decorative: the header already names Scout and Sarah Chen, so they are not announced twice."
+        code={`<Thread.Item node={<AgentAvatar name="Scout" mark={Sparkle} member={{ name: 'Sarah Chen' }} size="sm" decorative />}>
   <PersonDisplay size="inline">
     <PersonDisplay.Name>Scout</PersonDisplay.Name>
     <PersonDisplay.OnBehalfOf>Sarah Chen</PersonDisplay.OnBehalfOf>
@@ -564,7 +564,13 @@ export function Demo() {
         <Thread>
           <Thread.Item
             node={
-              <AgentAvatar name="Scout" mark={Sparkle} member={{ name: 'Sarah Chen' }} size="sm" />
+              <AgentAvatar
+                name="Scout"
+                mark={Sparkle}
+                member={{ name: 'Sarah Chen' }}
+                size="sm"
+                decorative
+              />
             }
           >
             <Stack gap="xs">
