@@ -58,6 +58,41 @@
   min-width: 0;
 }
 
+// Name + OnBehalfOf on one line; rendered only when an OnBehalfOf is present.
+// OnBehalfOf shrinks first (100:1) down to its token floor, then the Name
+// gives way. Both truncate as BLOCK containers: a flex container does not
+// paint `text-overflow` (see `.description`). Inline axis only, `clip visible`
+// for the same focus-ring reason as `.description`; reserving ring room on the
+// block axis would need padding + a compensating negative `margin`, which
+// stylelint's property-disallowed-list bans in component modules. The Name's
+// own Link ring is outside its own clip; a Link inside OnBehalfOf sits at the
+// clip's inline end, so OnBehalfOf pads that end by the ring's extent.
+.agentRow {
+  display: flex;
+  align-items: baseline;
+  gap: var(--person-display-agent-row-gap);
+  min-width: 0;
+}
+
+.agentRow > .name {
+  display: block;
+  flex-shrink: 1;
+  min-width: 0;
+  overflow: clip visible;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.onBehalfOf {
+  display: block;
+  flex-shrink: 100;
+  min-width: var(--person-display-on-behalf-of-min-width);
+  padding-inline-end: calc(var(--ring-width) + var(--ring-offset));
+  overflow: clip visible;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .description {
   display: inline-flex;
   align-items: center;

@@ -12,9 +12,11 @@
   user-select: none;
 }
 
-// Clips the tile into a circle without clipping the badge sibling.
+// The circular tile; clips the mark (incl. non-SVG marks) to the circle. The
+// badge is the tile's sibling, not a descendant, so this clip never reaches it.
 .tile {
   display: flex;
+  overflow: hidden;
   align-items: center;
   justify-content: center;
   width: 100%;

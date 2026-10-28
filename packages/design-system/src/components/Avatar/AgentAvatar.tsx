@@ -80,12 +80,21 @@ export const AgentAvatar = forwardRef<HTMLSpanElement, AgentAvatarProps>(functio
       </span>
     );
 
-  // {...props} first so component-owned ARIA (role, aria-label) wins.
+  // {...props} first so component-owned ARIA (role, aria-label) wins. Decorative
+  // strips consumer role/label; otherwise aria-labelledby is dropped so it can't
+  // override the computed aria-label.
   return (
     <span
       {...props}
       ref={ref}
-      {...(decorative ? { 'aria-hidden': true } : { role: 'img', 'aria-label': label })}
+      {...(decorative
+        ? {
+            'aria-hidden': true,
+            role: undefined,
+            'aria-label': undefined,
+            'aria-labelledby': undefined,
+          }
+        : { role: 'img', 'aria-label': label, 'aria-labelledby': undefined })}
       className={clsx(styles.agent, avatarSizeClass[size], sizeClass[size], className)}
       data-agent-avatar=""
     >

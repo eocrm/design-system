@@ -9,7 +9,14 @@ import {
   type Ref,
 } from 'react';
 import clsx from 'clsx';
-import { Avatar, type AvatarProps, type AvatarSize } from '../Avatar';
+import {
+  AgentAvatar,
+  Avatar,
+  type AgentAvatarProps,
+  type AvatarProps,
+  type AvatarSize,
+} from '../Avatar';
+import { useTranslation } from '../../i18n';
 import { Text, type TextSize } from '../Text';
 import { Link } from '../Link';
 import styles from './PersonDisplay.module.scss';
@@ -57,14 +64,31 @@ export interface PersonDisplayProps extends HTMLAttributes<HTMLDivElement> {
    */
   shrink?: boolean;
   /**
-   * `<PersonDisplay.Avatar>` + `<PersonDisplay.Name>` (+ optional repeating
-   * `<PersonDisplay.Description>`) subcomponents in any order — Root sorts
-   * the Avatar into its own slot.
+   * `<PersonDisplay.Avatar>` (or `<PersonDisplay.AgentAvatar>`) +
+   * `<PersonDisplay.Name>` (+ optional `<PersonDisplay.OnBehalfOf>` and
+   * repeating `<PersonDisplay.Description>`) subcomponents in any order — Root
+   * sorts the avatar into its own slot. With an `OnBehalfOf`, Name and
+   * OnBehalfOf share one truncating row above the Descriptions.
    */
   children: ReactNode;
 }
 
 export interface PersonDisplayAvatarProps extends Omit<AvatarProps, 'size'> {}
+
+/** `AgentAvatar` props minus `size` (from context) and `decorative` (always on). */
+export interface PersonDisplayAgentAvatarProps extends Omit<
+  AgentAvatarProps,
+  'size' | 'decorative'
+> {}
+
+export interface PersonDisplayOnBehalfOfProps extends HTMLAttributes<HTMLSpanElement> {
+  /**
+   * The member the agent acts for, rendered after a muted "for" prefix. A
+   * plain name, or a `<Link>` to the member. Omit (or pass an empty string)
+   * when the member was erased: renders "for a former member".
+   */
+  children?: ReactNode;
+}
 
 export interface PersonDisplayNameProps extends HTMLAttributes<HTMLElement> {
   /**
@@ -94,12 +118,18 @@ export interface PersonDisplayDescriptionProps extends HTMLAttributes<HTMLSpanEl
 
 interface PersonDisplayContextValue {
   size: PersonDisplaySize;
+  /** An OnBehalfOf is present, so Name sits in the truncating agent row. */
+  agentRow: boolean;
 }
 
 const PersonDisplayContext = createContext<PersonDisplayContextValue | null>(null);
 
 function useSize(): PersonDisplaySize {
   return useContext(PersonDisplayContext)?.size ?? 'md';
+}
+
+function useAgentRow(): boolean {
+  return useContext(PersonDisplayContext)?.agentRow ?? false;
 }
 
 const AVATAR_SIZE: Record<PersonDisplaySize, AvatarSize> = {
@@ -140,6 +170,19 @@ const PersonDisplayAvatar = forwardRef<HTMLSpanElement, PersonDisplayAvatarProps
   },
 );
 
+/**
+ * Agent slot: a decorative `<AgentAvatar>` sized from the PersonDisplay root (`PersonDisplay.AgentAvatar`).
+ * @see docs/components/PersonDisplay.md
+ */
+const PersonDisplayAgentAvatar = forwardRef<HTMLSpanElement, PersonDisplayAgentAvatarProps>(
+  function PersonDisplayAgentAvatar(props, ref) {
+    const size = useSize();
+    // {...props} first so context size and decorative win (Pattern B): the
+    // visible Name + OnBehalfOf already carry both identities.
+    return <AgentAvatar {...props} ref={ref} size={AVATAR_SIZE[size]} decorative />;
+  },
+);
+
 // ----------------------------------------------------------------------------
 // Name
 // ----------------------------------------------------------------------------
@@ -151,6 +194,8 @@ const PersonDisplayAvatar = forwardRef<HTMLSpanElement, PersonDisplayAvatarProps
 const PersonDisplayName = forwardRef<HTMLElement, PersonDisplayNameProps>(
   function PersonDisplayName({ href, className, children, ...rest }, ref) {
     const size = useSize();
+    // In the agent row the Name may ellipsise, so a string carries its full text.
+    const title = useAgentRow() && typeof children === 'string' ? children : undefined;
     // inline: bare text, so it inherits the row's size, weight and colour.
     const content =
       size === 'inline' ? (
@@ -167,6 +212,7 @@ const PersonDisplayName = forwardRef<HTMLElement, PersonDisplayNameProps>(
           href={href}
           variant="subtle"
           className={clsx(styles.name, className)}
+          title={title}
           // {...rest} last so consumer overrides win (Pattern A)
           {...rest}
         >
@@ -178,10 +224,61 @@ const PersonDisplayName = forwardRef<HTMLElement, PersonDisplayNameProps>(
       <span
         ref={ref as Ref<HTMLSpanElement>}
         className={clsx(styles.name, className)}
+        title={title}
         // {...rest} last so consumer overrides win (Pattern A)
         {...rest}
       >
         {content}
+      </span>
+    );
+  },
+);
+
+// ----------------------------------------------------------------------------
+// OnBehalfOf
+// ----------------------------------------------------------------------------
+
+/**
+ * Muted "for {member}" after the Name, for an agent acting for a member (`PersonDisplay.OnBehalfOf`).
+ * @see docs/components/PersonDisplay.md
+ */
+const PersonDisplayOnBehalfOf = forwardRef<HTMLSpanElement, PersonDisplayOnBehalfOfProps>(
+  function PersonDisplayOnBehalfOf({ className, children, ...rest }, ref) {
+    const size = useSize();
+    const t = useTranslation();
+    const prefix = t('personDisplay.onBehalfOfPrefix');
+    const former =
+      children == null ||
+      children === false ||
+      (typeof children === 'string' && children.trim() === '');
+    const text = former
+      ? t('personDisplay.onBehalfOfFormer')
+      : typeof children === 'string'
+        ? `${prefix} ${children}`
+        : undefined;
+    return (
+      <span
+        ref={ref}
+        className={clsx(styles.onBehalfOf, className)}
+        title={text}
+        // {...rest} last so consumer overrides win (Pattern A)
+        {...rest}
+      >
+        <Text
+          as="span"
+          size={size === 'inline' ? 'inherit' : NAME_TEXT_SIZE[size]}
+          tone="muted"
+          weight="regular"
+        >
+          {/* Prefix and member stay separate nodes: children may be a Link. */}
+          {former ? (
+            text
+          ) : (
+            <>
+              {prefix} {children}
+            </>
+          )}
+        </Text>
       </span>
     );
   },
@@ -231,16 +328,33 @@ const PersonDisplayRoot = forwardRef<HTMLDivElement, PersonDisplayProps>(functio
   // Descriptions stack vertically). Consumers write children in
   // natural source order; the split layout is internal.
   const avatarChildren: ReactNode[] = [];
-  const columnChildren: ReactNode[] = [];
+  let columnChildren: ReactNode[] = [];
+  const rowChildren: ReactNode[] = [];
+  const otherChildren: ReactNode[] = [];
+  let agentRow = false;
   Children.forEach(children, (child) => {
-    if (isValidElement(child) && child.type === PersonDisplayAvatar) {
+    const type = isValidElement(child) ? child.type : null;
+    if (type === PersonDisplayAvatar || type === PersonDisplayAgentAvatar) {
       avatarChildren.push(child);
-    } else {
-      columnChildren.push(child);
+      return;
     }
+    columnChildren.push(child);
+    if (type === PersonDisplayName || type === PersonDisplayOnBehalfOf) rowChildren.push(child);
+    else otherChildren.push(child);
+    if (type === PersonDisplayOnBehalfOf) agentRow = true;
   });
+  // Only with an OnBehalfOf: Name + OnBehalfOf share one row, first in the
+  // column. Without one the column keeps its source order and no wrapper.
+  if (agentRow) {
+    columnChildren = [
+      <div key="agent-row" className={styles.agentRow}>
+        {rowChildren}
+      </div>,
+      ...otherChildren,
+    ];
+  }
   return (
-    <PersonDisplayContext.Provider value={{ size }}>
+    <PersonDisplayContext.Provider value={{ size, agentRow }}>
       {/* {...rest} first so internally-computed data-size (load-bearing for SCSS gap)
             can't be stomped by a consumer (Pattern B — data-size is the only locked attr). */}
       <div
@@ -262,6 +376,8 @@ const PersonDisplayRoot = forwardRef<HTMLDivElement, PersonDisplayProps>(functio
 
 export const PersonDisplay = Object.assign(PersonDisplayRoot, {
   Avatar: PersonDisplayAvatar,
+  AgentAvatar: PersonDisplayAgentAvatar,
   Name: PersonDisplayName,
+  OnBehalfOf: PersonDisplayOnBehalfOf,
   Description: PersonDisplayDescription,
 });

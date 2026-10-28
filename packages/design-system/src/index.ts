@@ -212,6 +212,8 @@ export { PersonDisplay } from './components/PersonDisplay';
 export type {
   PersonDisplayProps,
   PersonDisplayAvatarProps,
+  PersonDisplayAgentAvatarProps,
+  PersonDisplayOnBehalfOfProps,
   PersonDisplayNameProps,
   PersonDisplayDescriptionProps,
   PersonDisplaySize,

@@ -57,6 +57,9 @@ describe('AgentAvatar', () => {
     expect(
       screen.getByRole('img', { name: 'Claude Code, on behalf of a former member' }),
     ).toBeInTheDocument();
+    const placeholder = container.querySelector(BADGE)!;
+    expect(placeholder.querySelector('svg')).not.toBeNull();
+    expect(placeholder).not.toHaveTextContent('?');
   });
 
   it.each([
@@ -75,6 +78,34 @@ describe('AgentAvatar', () => {
     expect(root).toHaveAttribute('aria-hidden', 'true');
     expect(root).not.toHaveAttribute('role');
     expect(root).not.toHaveAttribute('aria-label');
+  });
+
+  it('decorative: strips consumer role and aria-label/labelledby', () => {
+    const { container } = render(
+      <AgentAvatar decorative name="Claude Code" role="img" aria-label="x" aria-labelledby="y" />,
+    );
+    const root = container.firstChild as HTMLElement;
+    expect(root).toHaveAttribute('aria-hidden', 'true');
+    for (const attr of ['role', 'aria-label', 'aria-labelledby']) {
+      expect(root).not.toHaveAttribute(attr);
+    }
+  });
+
+  it('consumer aria-labelledby does not override the computed name', () => {
+    const { container } = render(
+      <>
+        <span id="other">Other</span>
+        <AgentAvatar name="Claude Code" aria-labelledby="other" />
+      </>,
+    );
+    expect(container.querySelector('[data-agent-avatar]')).not.toHaveAttribute('aria-labelledby');
+    expect(screen.getByRole('img', { name: 'Claude Code' })).toBeInTheDocument();
+  });
+
+  it('the badge sits outside the clipping tile', () => {
+    const { container } = render(<AgentAvatar name="Claude Code" member={{ name: 'Ada' }} />);
+    const badge = container.querySelector(BADGE)!;
+    expect(badge.closest('[class*="tile"]')).toBeNull();
   });
 
   it('component ARIA wins over consumer props', () => {
@@ -110,6 +141,10 @@ describe('AgentAvatar', () => {
       expect(rule, 'rule exists').toBeDefined();
       expect(decl(rule, 'width')?.value).toBe('100%');
       expect(decl(rule, 'height')?.value).toBe('100%');
+    });
+
+    it('tile clips non-SVG marks to its circle', () => {
+      expect(decl(compiledRule('.tile'), 'overflow')?.value).toBe('hidden');
     });
 
     it('tile uses --agent-avatar-bg, not the hashed palette', () => {
