@@ -1,8 +1,14 @@
 import { useState } from 'react';
-import { Avatar, AvatarGroup, Cluster, Stack } from '@eocrm/design-system';
+import { AgentAvatar, Avatar, AvatarGroup, Cluster, Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
+
+const Sparkle = (
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z" />
+  </svg>
+);
 
 const TEAM = [
   'Alex Rivera',
@@ -269,6 +275,41 @@ export function Demo() {
               <Avatar key={n} name={n} />
             ))}
           </AvatarGroup>
+        </Stack>
+      </Example>
+      <Example
+        title="AgentAvatar"
+        description="AI agent tile with an optional badge of the member it acts for. Rows: member omitted (agent alone), member with initials, member with photo, erased (null). The badge is hidden at inline. Without mark the tile shows a Bot icon."
+        code={`import { AgentAvatar } from '@eocrm/design-system';
+
+<AgentAvatar name="Scout" mark={<Sparkle />} size="lg" />
+<AgentAvatar name="Scout" size="lg" member={{ name: 'Sarah Chen' }} />
+<AgentAvatar name="Scout" size="lg" member={{ name: 'Avery Liu', src }} />
+<AgentAvatar name="Scout" size="lg" member={null} />`}
+      >
+        <Stack gap="md">
+          {[
+            ['alone', undefined],
+            ['initials', { name: 'Sarah Chen' }],
+            ['photo', { name: 'Avery Liu', src: 'https://i.pravatar.cc/64?img=12' }],
+            ['erased', null],
+          ].map(([label, member]) => (
+            <Cluster key={label as string} gap="md" align="center">
+              {(['inline', 'sm', 'md', 'lg', 'xl'] as const).map((size) => (
+                <AgentAvatar
+                  key={size}
+                  name="Scout"
+                  mark={Sparkle}
+                  member={member as { name: string; src?: string } | null | undefined}
+                  size={size}
+                />
+              ))}
+              <AgentAvatar
+                name="Scout (fallback mark)"
+                member={member as { name: string; src?: string } | null | undefined}
+              />
+            </Cluster>
+          ))}
         </Stack>
       </Example>
     </DemoLayout>

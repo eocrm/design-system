@@ -1,8 +1,33 @@
-import { Badge, DefinitionList, Link, PersonDisplay, Stack } from '@eocrm/design-system';
+import {
+  AgentAvatar,
+  Badge,
+  Card,
+  CardBody,
+  Cluster,
+  DefinitionList,
+  IconTile,
+  Link,
+  PersonDisplay,
+  Stack,
+  Text,
+  Thread,
+} from '@eocrm/design-system';
+import { CalendarPlus } from 'lucide-react';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { InputExample } from './InputExample';
 import { getComponentFiles } from '../../lib/componentFiles';
+
+// Generic sparkle, currentColor: stands in for a vendor's brand mark.
+const Sparkle = (
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z" />
+  </svg>
+);
+
+const LONG_AGENT = 'Quarterly pipeline reconciliation assistant';
+const LONG_MEMBER = 'Bartholomew Featherstonehaugh-Villiers';
+const SIZES = ['inline', 'sm', 'md', 'lg'] as const;
 
 export function PersonDisplayDemo() {
   return (
@@ -313,6 +338,218 @@ export function Demo() {
             </DefinitionList.Description>
           </DefinitionList.Item>
         </DefinitionList>
+      </Example>
+      <Example
+        title="Agent on behalf of a member"
+        description="PersonDisplay.AgentAvatar + PersonDisplay.OnBehalfOf: an AI agent acting for a member. The agent tile carries the member's badge (none at inline). Name and OnBehalfOf share one truncating row: the muted 'for' prefix never shrinks, the member ellipsises, then the Name."
+        code={`import { PersonDisplay } from '@eocrm/design-system';
+
+const Sparkle = (
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z" />
+  </svg>
+);
+
+export function Demo() {
+  return (
+    <PersonDisplay size="md">
+      <PersonDisplay.AgentAvatar name="Scout" mark={Sparkle} member={{ name: 'Sarah Chen' }} />
+      <PersonDisplay.Name>Scout</PersonDisplay.Name>
+      <PersonDisplay.OnBehalfOf>Sarah Chen</PersonDisplay.OnBehalfOf>
+      <PersonDisplay.Description>Drafted the follow-up</PersonDisplay.Description>
+    </PersonDisplay>
+  );
+}`}
+      >
+        <InputExample width="auto">
+          <Stack gap="md" data-testid="agent-sizes">
+            {SIZES.map((size) => (
+              <PersonDisplay key={size} size={size}>
+                <PersonDisplay.AgentAvatar
+                  name="Scout"
+                  mark={Sparkle}
+                  member={{ name: 'Sarah Chen' }}
+                />
+                <PersonDisplay.Name>Scout</PersonDisplay.Name>
+                <PersonDisplay.OnBehalfOf>Sarah Chen</PersonDisplay.OnBehalfOf>
+                {size !== 'inline' && (
+                  <PersonDisplay.Description>Drafted the follow-up</PersonDisplay.Description>
+                )}
+              </PersonDisplay>
+            ))}
+          </Stack>
+        </InputExample>
+      </Example>
+
+      <Example
+        title="Agent — fallback mark and member states"
+        description="Without mark the tile falls back to a Bot icon. Member states: alone (no OnBehalfOf), a member with a photo or initials, and an erased member (empty OnBehalfOf renders 'for a former member' with a placeholder badge)."
+        code={`<PersonDisplay.AgentAvatar name="Scout" />
+<PersonDisplay.AgentAvatar name="Scout" member={{ name: 'Sarah Chen', src: '/sarah.png' }} />
+<PersonDisplay.AgentAvatar name="Scout" member={null} />
+<PersonDisplay.OnBehalfOf />`}
+      >
+        <InputExample width="auto">
+          <Stack gap="md">
+            <PersonDisplay>
+              <PersonDisplay.AgentAvatar name="Scout" />
+              <PersonDisplay.Name>Scout (fallback mark, alone)</PersonDisplay.Name>
+            </PersonDisplay>
+            <PersonDisplay>
+              <PersonDisplay.AgentAvatar name="Scout" mark={Sparkle} />
+              <PersonDisplay.Name>Scout (alone)</PersonDisplay.Name>
+            </PersonDisplay>
+            <PersonDisplay>
+              <PersonDisplay.AgentAvatar
+                name="Scout"
+                mark={Sparkle}
+                member={{ name: 'Sarah Chen' }}
+              />
+              <PersonDisplay.Name>Scout</PersonDisplay.Name>
+              <PersonDisplay.OnBehalfOf>Sarah Chen</PersonDisplay.OnBehalfOf>
+            </PersonDisplay>
+            <PersonDisplay>
+              <PersonDisplay.AgentAvatar
+                name="Scout"
+                mark={Sparkle}
+                member={{ name: 'Avery Liu', src: 'https://i.pravatar.cc/64?img=12' }}
+              />
+              <PersonDisplay.Name>Scout (member photo)</PersonDisplay.Name>
+              <PersonDisplay.OnBehalfOf>Avery Liu</PersonDisplay.OnBehalfOf>
+            </PersonDisplay>
+            <PersonDisplay>
+              <PersonDisplay.AgentAvatar name="Scout" mark={Sparkle} member={null} />
+              <PersonDisplay.Name>Scout</PersonDisplay.Name>
+              <PersonDisplay.OnBehalfOf />
+            </PersonDisplay>
+          </Stack>
+        </InputExample>
+      </Example>
+
+      <Example
+        title="Agent — truncation in a 360px card"
+        description="A long agent label and a long member at inline, sm and md. The 'for' prefix stays whole, the member ellipsises, then the Name."
+        code={`<Card style={{ width: 360 }}>
+  <PersonDisplay size="sm">
+    <PersonDisplay.AgentAvatar name={longAgent} member={{ name: longMember }} />
+    <PersonDisplay.Name>{longAgent}</PersonDisplay.Name>
+    <PersonDisplay.OnBehalfOf>{longMember}</PersonDisplay.OnBehalfOf>
+  </PersonDisplay>
+</Card>`}
+      >
+        <div style={{ width: 360 }} data-testid="agent-card-360">
+          <Card>
+            <CardBody>
+              <Stack gap="md">
+                {(['inline', 'sm', 'md'] as const).map((size) => (
+                  <PersonDisplay key={size} size={size}>
+                    <PersonDisplay.AgentAvatar
+                      name={LONG_AGENT}
+                      mark={Sparkle}
+                      member={{ name: LONG_MEMBER }}
+                    />
+                    <PersonDisplay.Name>{LONG_AGENT}</PersonDisplay.Name>
+                    <PersonDisplay.OnBehalfOf>{LONG_MEMBER}</PersonDisplay.OnBehalfOf>
+                  </PersonDisplay>
+                ))}
+              </Stack>
+            </CardBody>
+          </Card>
+        </div>
+      </Example>
+
+      <Example
+        title="Agent — links in the truncating row"
+        description="A Link inside OnBehalfOf and a Name href: both keep their focus ring inside the clipping row."
+        code={`<PersonDisplay size="sm">
+  <PersonDisplay.AgentAvatar name="Scout" mark={Sparkle} member={{ name: 'Sarah Chen' }} />
+  <PersonDisplay.Name href="#scout">Scout</PersonDisplay.Name>
+  <PersonDisplay.OnBehalfOf>
+    <Link href="#sarah-chen">Sarah Chen</Link>
+  </PersonDisplay.OnBehalfOf>
+</PersonDisplay>`}
+      >
+        <InputExample width={360}>
+          <Stack gap="md">
+            <PersonDisplay size="sm">
+              <PersonDisplay.AgentAvatar
+                name="Scout"
+                mark={Sparkle}
+                member={{ name: 'Sarah Chen' }}
+              />
+              <PersonDisplay.Name href="#scout">Scout</PersonDisplay.Name>
+              <PersonDisplay.OnBehalfOf>
+                <Link href="#sarah-chen">Sarah Chen</Link>
+              </PersonDisplay.OnBehalfOf>
+            </PersonDisplay>
+            <PersonDisplay size="inline">
+              <PersonDisplay.AgentAvatar
+                name="Scout"
+                mark={Sparkle}
+                member={{ name: 'Sarah Chen' }}
+              />
+              <PersonDisplay.Name href="#scout">Scout</PersonDisplay.Name>
+              <PersonDisplay.OnBehalfOf>
+                <Link href="#sarah-chen">Sarah Chen</Link>
+              </PersonDisplay.OnBehalfOf>
+            </PersonDisplay>
+          </Stack>
+        </InputExample>
+      </Example>
+
+      <Example
+        title="Agent — activity row"
+        description="Event IconTile, an inline PersonDisplay and a muted timestamp on one line, the action below."
+        code={`<Cluster gap="sm" align="center">
+  <IconTile size="xs" icon={<CalendarPlus />} />
+  <PersonDisplay size="inline">…</PersonDisplay>
+  <Text size="sm" tone="muted">2h ago</Text>
+</Cluster>
+<Text size="sm">Scheduled a demo with Acme</Text>`}
+      >
+        <InputExample width={360}>
+          <Stack gap="xs">
+            <Cluster gap="sm" align="center" wrap={false}>
+              <IconTile size="xs" icon={<CalendarPlus />} />
+              <PersonDisplay size="inline">
+                <PersonDisplay.AgentAvatar
+                  name="Scout"
+                  mark={Sparkle}
+                  member={{ name: 'Sarah Chen' }}
+                />
+                <PersonDisplay.Name>Scout</PersonDisplay.Name>
+                <PersonDisplay.OnBehalfOf>Sarah Chen</PersonDisplay.OnBehalfOf>
+              </PersonDisplay>
+              <Text size="sm" tone="muted">
+                2h ago
+              </Text>
+            </Cluster>
+            <Text size="sm">Scheduled a demo with Acme</Text>
+          </Stack>
+        </InputExample>
+      </Example>
+
+      <Example
+        title="Agent — as a Thread node"
+        description="AgentAvatar at size sm is the Thread.Item node; the body header uses an inline PersonDisplay."
+        code={`<Thread.Item node={<AgentAvatar name="Scout" mark={Sparkle} member={{ name: 'Sarah Chen' }} size="sm" />}>
+  …
+</Thread.Item>`}
+      >
+        <Thread>
+          <Thread.Item
+            node={
+              <AgentAvatar name="Scout" mark={Sparkle} member={{ name: 'Sarah Chen' }} size="sm" />
+            }
+          >
+            <Stack gap="xs">
+              <Text size="sm">
+                <strong>Scout</strong> for Sarah Chen · 5m ago
+              </Text>
+              <Text size="sm">Summarised the renewal call and drafted next steps.</Text>
+            </Stack>
+          </Thread.Item>
+        </Thread>
       </Example>
     </DemoLayout>
   );
