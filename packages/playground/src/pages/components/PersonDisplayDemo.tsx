@@ -429,18 +429,22 @@ export function Demo() {
       <Example
         title="Agent — truncation in a 360px card"
         description="A long agent label and a long member at inline, sm and md. The 'for' prefix stays whole, the member ellipsises, then the Name."
-        code={`<Card style={{ width: 360 }}>
-  <PersonDisplay size="sm">
-    <PersonDisplay.AgentAvatar name={longAgent} member={{ name: longMember }} />
-    <PersonDisplay.Name>{longAgent}</PersonDisplay.Name>
-    <PersonDisplay.OnBehalfOf>{longMember}</PersonDisplay.OnBehalfOf>
-  </PersonDisplay>
-</Card>`}
+        code={`<InputExample width={360}>
+  <Card>
+    <CardBody>
+      <PersonDisplay size="sm">
+        <PersonDisplay.AgentAvatar name={longAgent} member={{ name: longMember }} />
+        <PersonDisplay.Name>{longAgent}</PersonDisplay.Name>
+        <PersonDisplay.OnBehalfOf>{longMember}</PersonDisplay.OnBehalfOf>
+      </PersonDisplay>
+    </CardBody>
+  </Card>
+</InputExample>`}
       >
-        <div style={{ width: 360 }} data-testid="agent-card-360">
+        <InputExample width={360}>
           <Card>
             <CardBody>
-              <Stack gap="md">
+              <Stack gap="md" data-testid="agent-card-360">
                 {(['inline', 'sm', 'md'] as const).map((size) => (
                   <PersonDisplay key={size} size={size}>
                     <PersonDisplay.AgentAvatar
@@ -455,7 +459,7 @@ export function Demo() {
               </Stack>
             </CardBody>
           </Card>
-        </div>
+        </InputExample>
       </Example>
 
       <Example
@@ -531,8 +535,12 @@ export function Demo() {
 
       <Example
         title="Agent — as a Thread node"
-        description="AgentAvatar at size sm is the Thread.Item node; the body header uses an inline PersonDisplay."
+        description="AgentAvatar at size sm is the Thread.Item node; the body header is an inline PersonDisplay (Name + OnBehalfOf, so the 'for' copy is localized)."
         code={`<Thread.Item node={<AgentAvatar name="Scout" mark={Sparkle} member={{ name: 'Sarah Chen' }} size="sm" />}>
+  <PersonDisplay size="inline">
+    <PersonDisplay.Name>Scout</PersonDisplay.Name>
+    <PersonDisplay.OnBehalfOf>Sarah Chen</PersonDisplay.OnBehalfOf>
+  </PersonDisplay>
   …
 </Thread.Item>`}
       >
@@ -543,9 +551,15 @@ export function Demo() {
             }
           >
             <Stack gap="xs">
-              <Text size="sm">
-                <strong>Scout</strong> for Sarah Chen · 5m ago
-              </Text>
+              <Cluster gap="xs" align="center">
+                <PersonDisplay size="inline">
+                  <PersonDisplay.Name>Scout</PersonDisplay.Name>
+                  <PersonDisplay.OnBehalfOf>Sarah Chen</PersonDisplay.OnBehalfOf>
+                </PersonDisplay>
+                <Text size="sm" tone="muted">
+                  · 5m ago
+                </Text>
+              </Cluster>
               <Text size="sm">Summarised the renewal call and drafted next steps.</Text>
             </Stack>
           </Thread.Item>

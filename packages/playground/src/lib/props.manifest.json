@@ -4797,7 +4797,7 @@
           "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
           "required": true,
           "default": "",
-          "description": "`<PersonDisplay.Avatar>` + `<PersonDisplay.Name>` (+ optional repeating\n`<PersonDisplay.Description>`) subcomponents in any order — Root sorts\nthe Avatar into its own slot."
+          "description": "`<PersonDisplay.Avatar>` (or `<PersonDisplay.AgentAvatar>`) +\n`<PersonDisplay.Name>` (+ optional `<PersonDisplay.OnBehalfOf>` and\nrepeating `<PersonDisplay.Description>`) subcomponents in any order — Root\nsorts the avatar into its own slot. With an `OnBehalfOf`, Name and\nOnBehalfOf share one truncating row above the Descriptions."
         }
       ]
     },

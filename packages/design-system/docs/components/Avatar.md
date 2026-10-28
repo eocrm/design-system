@@ -45,3 +45,23 @@
 - ❌ Adding your own visually-hidden status text next to the avatar. It is announced twice, and inside the no-`src` branch (a `role="img"`) ARIA prunes children as presentational, so it would be silent there anyway.
 - ❌ Using Avatar for a non-person icon. Use an icon component.
 - ❌ Wrapping the result in `role="img"` again. With `src`, the inner `<img>` is the labeled image; without it, the wrapper has `role="img" aria-label={name}`, plus the localized `status` when set (`"Alex, online"`).
+
+## `AgentAvatar` — AI agent tile with the acting member
+
+```tsx
+// Agent acting for a member: monochrome tile + the member's avatar as a badge
+<AgentAvatar name="Scout" member={{ name: 'Sarah Chen', src: '/avatars/sarah.png' }} />
+
+// Agent alone (no `member`): no badge
+<AgentAvatar name="Scout" />
+
+// Erased member (`null` or an empty name): placeholder badge, "former member" label
+<AgentAvatar name="Scout" member={null} />
+
+// Custom mark; rendered monochrome in the tile
+<AgentAvatar name="Scout" mark={<ScoutLogo />} member={{ name: 'Sarah Chen' }} size="lg" />
+```
+
+- Same `size` scale as `Avatar`. At `inline` the member badge is hidden (too small to read); the label still names the member.
+- Accessible name: `role="img"` with `"{agent}, on behalf of {member}"` (localized), `"{agent}, on behalf of a former member"` when erased, or just the agent name when `member` is omitted.
+- Use standalone for a Thread / activity node where the agent is the actor. For a row with a name, use `PersonDisplay.AgentAvatar` instead (see [PersonDisplay](PersonDisplay.md)); there it is decorative.

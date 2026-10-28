@@ -10,6 +10,13 @@ const Sparkle = (
   </svg>
 );
 
+const AGENT_ROWS: { label: string; member?: { name: string; src?: string } | null }[] = [
+  { label: 'alone' },
+  { label: 'initials', member: { name: 'Sarah Chen' } },
+  { label: 'photo', member: { name: 'Avery Liu', src: 'https://i.pravatar.cc/64?img=12' } },
+  { label: 'erased', member: null },
+];
+
 const TEAM = [
   'Alex Rivera',
   'Priya Patel',
@@ -288,26 +295,12 @@ export function Demo() {
 <AgentAvatar name="Scout" size="lg" member={null} />`}
       >
         <Stack gap="md">
-          {[
-            ['alone', undefined],
-            ['initials', { name: 'Sarah Chen' }],
-            ['photo', { name: 'Avery Liu', src: 'https://i.pravatar.cc/64?img=12' }],
-            ['erased', null],
-          ].map(([label, member]) => (
-            <Cluster key={label as string} gap="md" align="center">
+          {AGENT_ROWS.map(({ label, member }) => (
+            <Cluster key={label} gap="md" align="center">
               {(['inline', 'sm', 'md', 'lg', 'xl'] as const).map((size) => (
-                <AgentAvatar
-                  key={size}
-                  name="Scout"
-                  mark={Sparkle}
-                  member={member as { name: string; src?: string } | null | undefined}
-                  size={size}
-                />
+                <AgentAvatar key={size} name="Scout" mark={Sparkle} member={member} size={size} />
               ))}
-              <AgentAvatar
-                name="Scout (fallback mark)"
-                member={member as { name: string; src?: string } | null | undefined}
-              />
+              <AgentAvatar name="Scout (fallback mark)" member={member} />
             </Cluster>
           ))}
         </Stack>

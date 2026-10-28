@@ -38,10 +38,10 @@ a new component directory). Usable alone, e.g. as a `Thread.Item` `node`.
 
 ```tsx
 <AgentAvatar
-  name="Claude Code · demo laptop"   // agent label; drives the accessible name
-  mark={<ClaudeMark />}              // optional ReactNode (app-supplied SVG)
+  name="Claude Code · demo laptop" // agent label; drives the accessible name
+  mark={<ClaudeMark />} // optional ReactNode (app-supplied SVG)
   member={{ name: 'Ada Lovelace', src: '/ada.png' }} // optional
-  size="sm"                          // AvatarSize, same scale as Avatar
+  size="sm" // AvatarSize, same scale as Avatar
 />
 ```
 
@@ -89,8 +89,11 @@ text already carries both identities and would otherwise be announced twice.
 
 ```tsx
 <PersonDisplay size="md">
-  <PersonDisplay.AgentAvatar name="Claude Code · demo laptop" mark={<ClaudeMark />}
-    member={{ name: 'Ada Lovelace', src }} />
+  <PersonDisplay.AgentAvatar
+    name="Claude Code · demo laptop"
+    mark={<ClaudeMark />}
+    member={{ name: 'Ada Lovelace', src }}
+  />
   <PersonDisplay.Name>Claude Code · demo laptop</PersonDisplay.Name>
   <PersonDisplay.OnBehalfOf>Ada Lovelace</PersonDisplay.OnBehalfOf>
 </PersonDisplay>
@@ -121,7 +124,7 @@ text already carries both identities and would otherwise be announced twice.
   - **"for …" never shrinks to nothing** (my call, from the builder check). At
     `inline` it is the only place the member appears. `OnBehalfOf` has a
     minimum width of a few characters plus the ellipsis (e.g. `min-width:
-    min(<token-ish ~6ch>, max-content)`). Below that, `Name` gives way and
+min(<token-ish ~6ch>, max-content)`). Below that, `Name` gives way and
     ellipsises.
   - Each ellipsised element carries its full text in `title` **only when its
     children are a string** (builder's call on the exact mechanism; don't

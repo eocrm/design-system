@@ -35,23 +35,32 @@
 ### Task 1: `AgentAvatar` + i18n
 
 **Files:**
+
 - Create: `packages/design-system/src/components/Avatar/AgentAvatar.tsx`, `AgentAvatar.module.scss`, `AgentAvatar.test.tsx`
 - Modify: `src/components/Avatar/Avatar.tokens.scss` (agent tokens), `src/components/Avatar/index.ts`, `src/index.ts:140-141`, `src/i18n/messages.ts:481`, `src/i18n/en.ts:223`, `src/i18n/ru.ts:226`
 
 **Interfaces:**
+
 - Produces:
+
   ```ts
-  export interface AgentAvatarMember { name: string; src?: string }
+  export interface AgentAvatarMember {
+    name: string;
+    src?: string;
+  }
   export interface AgentAvatarProps extends HTMLAttributes<HTMLSpanElement> {
-    name: string;                       // agent label
-    mark?: ReactNode;                   // default <Bot />
-    member?: AgentAvatarMember | null;  // see Global Constraints
-    size?: AvatarSize;                  // default 'md', like Avatar
+    name: string; // agent label
+    mark?: ReactNode; // default <Bot />
+    member?: AgentAvatarMember | null; // see Global Constraints
+    size?: AvatarSize; // default 'md', like Avatar
     /** internal: PersonDisplay passes true; renders aria-hidden, no role/label */
     decorative?: boolean;
   }
-  export const AgentAvatar: ForwardRefExoticComponent<AgentAvatarProps & RefAttributes<HTMLSpanElement>>;
+  export const AgentAvatar: ForwardRefExoticComponent<
+    AgentAvatarProps & RefAttributes<HTMLSpanElement>
+  >;
   ```
+
   The DOM has root `span[data-agent-avatar]`, a mark wrapper `[data-part="mark"]` (aria-hidden), and a badge `[data-part="badge"]` (aria-hidden, contains an `<Avatar>` or a placeholder with `data-erased`).
   i18n: `t('avatar.agent.onBehalfOf', { agent, member })`, `t('avatar.agent.onBehalfOfFormer', { agent })`, `t('personDisplay.onBehalfOfPrefix')`, `t('personDisplay.onBehalfOfFormer')`. Add a `personDisplay` section to messages/en/ru if absent.
 
@@ -75,16 +84,26 @@
 ### Task 2: `PersonDisplay.AgentAvatar` + `PersonDisplay.OnBehalfOf`
 
 **Files:**
+
 - Modify: `src/components/PersonDisplay/PersonDisplay.tsx`, `PersonDisplay.module.scss`, `PersonDisplay.tokens.scss`, `PersonDisplay.test.tsx`, `index.ts`, `src/index.ts:204-211`
 
 **Interfaces:**
+
 - Consumes: `AgentAvatar`, `AgentAvatarProps`, and the i18n keys from Task 1.
 - Produces:
+
   ```ts
-  export interface PersonDisplayAgentAvatarProps extends Omit<AgentAvatarProps, 'size' | 'decorative'> {}
-  export interface PersonDisplayOnBehalfOfProps extends HTMLAttributes<HTMLSpanElement> { children?: ReactNode }
-  PersonDisplay.AgentAvatar; PersonDisplay.OnBehalfOf;
+  export interface PersonDisplayAgentAvatarProps extends Omit<
+    AgentAvatarProps,
+    'size' | 'decorative'
+  > {}
+  export interface PersonDisplayOnBehalfOfProps extends HTMLAttributes<HTMLSpanElement> {
+    children?: ReactNode;
+  }
+  PersonDisplay.AgentAvatar;
+  PersonDisplay.OnBehalfOf;
   ```
+
   Root: `PersonDisplay.AgentAvatar` children are sorted into the avatar slot (like `PersonDisplay.Avatar`). If any child is `PersonDisplay.OnBehalfOf`, Root wraps the `Name` + `OnBehalfOf` children in `<div className={styles.agentRow}>` as the first column item, and the Descriptions follow. Otherwise the output is unchanged.
 
 - [ ] **Step 1: Write failing tests** in `PersonDisplay.test.tsx`:
@@ -92,7 +111,7 @@
   - `OnBehalfOf with no children renders "for a former member"`.
   - `OnBehalfOf accepts a Link child` → `getByRole('link', { name: 'Ada Lovelace' })`.
   - `AgentAvatar inside PersonDisplay is aria-hidden and sized from context` (it.each over sizes) → no `img` role in the tree from it; at `inline` there's no badge, and at `md` the badge is present.
-  - `without OnBehalfOf the DOM is unchanged` → snapshot the existing `Avatar`+`Name`+`Description` composition *before* the change (write this test first and let it pass against the current code), and it must still pass after.
+  - `without OnBehalfOf the DOM is unchanged` → snapshot the existing `Avatar`+`Name`+`Description` composition _before_ the change (write this test first and let it pass against the current code), and it must still pass after.
   - `title carries the full text when children are strings` → Name/OnBehalfOf truncating elements have `title="Claude Code · demo laptop"` / `title="for Ada Lovelace"`; no `title` when children aren't a string.
   - `ru prefix` → `от имени:`.
   - Compiled-stylesheet assertions (Review Focus 1): the `.agentRow` rule is `display: flex` + `min-width: 0`; the OnBehalfOf rule has `flex-shrink` greater than Name's (it shrinks first) and a `min-width` built from the `--person-display-on-behalf-of-min-width` token; both truncating rules use `overflow: hidden`, `text-overflow: ellipsis`, `white-space: nowrap` on a **block** container (the existing comment explains why flex containers don't paint the ellipsis), plus padding from ring tokens (`--ring-width` + `--ring-offset`) with a matching negative inline/block margin compensation **on the internal element only**, so the focus ring paints inside the clip.
@@ -104,10 +123,12 @@
 ### Task 3: Playground demos + focus-ring geometry
 
 **Files:**
+
 - Modify: `packages/playground/src/pages/components/PersonDisplayDemo.tsx`, `packages/playground/src/pages/components/AvatarDemo.tsx`
 - Possibly modify: `tests/focus-ring-geometry.baseline.json` — **only** if entries for existing controls shift; adding new clipped entries is a failure of Task 2's padding approach, so go back and fix the CSS.
 
 **Interfaces:**
+
 - Consumes: the `@eocrm/design-system` exports `AgentAvatar` and `PersonDisplay.AgentAvatar/OnBehalfOf`.
 
 - [ ] **Step 1: PersonDisplay demo section "Agent on behalf of a member"**, following the page's existing section/`DemoLayout` pattern:
@@ -127,6 +148,7 @@
 ### Task 4: Docs, primer, manifest
 
 **Files:**
+
 - Modify: `packages/design-system/docs/components/PersonDisplay.md`, `docs/components/Avatar.md`, `AI-PRIMER.md` (Avatar + PersonDisplay index lines), `src/_meta/manifest.ts` + `scripts/generate-manifest.mjs` (add `AgentAvatar: 'Display'` to `CLUSTERS` in both, beside `Avatar`), the generated manifest output; the JSDoc on the new exports is a one-line summary + `@see docs/components/<Name>.md`.
 
 - [ ] **Step 1:** Docs. In PersonDisplay.md, add an "Agent acting for a member" section: usage, the three member states, inline behaviour, the fact that the avatar is decorative inside PersonDisplay. Anti-patterns: don't use for humans; don't recolour brand marks; don't pick the brand from a client-chosen name; don't add a kind chip. Avatar.md: an `AgentAvatar` section (standalone/Thread node use, accessible names). Then `cd packages/design-system && npm run build:docs`.

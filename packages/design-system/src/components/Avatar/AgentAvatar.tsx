@@ -45,7 +45,7 @@ const avatarSizeClass: Record<AvatarSize, string> = {
 
 /**
  * AI agent tile with an optional badge of the member it acts for.
- * @see docs/components/AgentAvatar.md
+ * @see docs/components/Avatar.md
  */
 export const AgentAvatar = forwardRef<HTMLSpanElement, AgentAvatarProps>(function AgentAvatar(
   { name, mark, member, size = 'md', decorative, className, ...props },
