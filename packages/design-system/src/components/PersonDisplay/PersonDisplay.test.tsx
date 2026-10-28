@@ -529,7 +529,21 @@ describe('PersonDisplay — AgentAvatar + OnBehalfOf (#717)', () => {
       expect(decls('.agentRow')).toMatchObject({
         display: 'flex',
         'min-width': '0',
-        gap: 'var(--person-display-agent-row-gap)',
+      });
+      expect(decls('.agentRow').gap).toBeUndefined();
+    });
+
+    // One visible gap on both sides of the prefix. A row `gap` would ADD to the
+    // member's ring padding (8px after "for" vs 4px before it), so the prefix
+    // carries the gap before itself and the member's start padding doubles as
+    // the gap after it — never less than the ring room a Link inside needs.
+    it('spaces the prefix evenly: gap before it, gap-or-ring-room after it', () => {
+      const gap = 'var(--person-display-agent-row-gap)';
+      const room = 'var(--person-display-ring-room)';
+      expect(decls('.onBehalfOfPrefix')['padding-inline-start']).toBe(gap);
+      expect(decls('.onBehalfOfMember')).toMatchObject({
+        'padding-inline-start': 'var(--person-display-member-padding-start)',
+        'padding-inline-end': room,
       });
     });
 
@@ -569,20 +583,26 @@ describe('PersonDisplay — AgentAvatar + OnBehalfOf (#717)', () => {
     // it. A Link in the member box is flush with BOTH clip edges; measured in
     // Chromium with end-only padding, the start band was clipped by its full
     // 4px. Padding both inline ends keeps an untruncated Link's ring whole.
-    it('the member box keeps a ch floor plus ring room at both inline ends', () => {
+    it('the member box keeps a ch floor plus its padding at both inline ends', () => {
       const room = 'var(--person-display-ring-room)';
       const member = decls('.onBehalfOfMember');
-      expect(member).toMatchObject({
-        'min-width': `calc(var(--person-display-on-behalf-of-member-min-width) + 2 * ${room})`,
-        'padding-inline': room,
-      });
-      expect(member['padding-inline-end']).toBeUndefined();
+      expect(member['min-width']).toBe(
+        'calc(var(--person-display-on-behalf-of-member-min-width) + var(--person-display-member-padding-x))',
+      );
     });
 
     it('declares the row tokens', () => {
       const t: Record<string, string> = {};
       tokens.walkDecls((d) => void (t[d.prop] = d.value));
       expect(t['--person-display-agent-row-gap']).toBe('var(--space-1)');
+      // Prettier wraps long values; compare them with whitespace stripped.
+      const bare = (prop: string) => t[prop]?.replace(/\s+/g, '');
+      expect(bare('--person-display-member-padding-start')).toBe(
+        'max(var(--person-display-agent-row-gap),var(--person-display-ring-room))',
+      );
+      expect(bare('--person-display-member-padding-x')).toBe(
+        'calc(var(--person-display-member-padding-start)+var(--person-display-ring-room))',
+      );
       expect(t['--person-display-on-behalf-of-member-min-width']).toBe('6ch');
       expect(t['--person-display-ring-room']).toBe('calc(var(--ring-width) + var(--ring-offset))');
     });

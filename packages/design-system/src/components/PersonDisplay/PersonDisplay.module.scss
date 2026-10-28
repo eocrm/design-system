@@ -80,10 +80,12 @@
 // modules. A Name `href` is its own clip box, so its ring is outside the clip;
 // a Link in the member box is flush with both clip edges, so that box pads
 // both inline ends by the ring's extent (see `.onBehalfOfMember`).
+// No row `gap`: it would ADD to the member's start padding, leaving 8px after
+// "for" and 4px before it. The prefix pads the gap before itself, and the
+// member's start padding is the gap after it (never less than the ring room).
 .agentRow {
   display: flex;
   align-items: baseline;
-  gap: var(--person-display-agent-row-gap);
   min-width: 0;
 }
 
@@ -102,6 +104,7 @@
 
 .onBehalfOfPrefix {
   flex-shrink: 0;
+  padding-inline-start: var(--person-display-agent-row-gap);
   white-space: nowrap;
 }
 
@@ -116,9 +119,10 @@
   display: block;
   flex-shrink: 100;
   min-width: calc(
-    var(--person-display-on-behalf-of-member-min-width) + 2 * var(--person-display-ring-room)
+    var(--person-display-on-behalf-of-member-min-width) + var(--person-display-member-padding-x)
   );
-  padding-inline: var(--person-display-ring-room);
+  padding-inline-start: var(--person-display-member-padding-start);
+  padding-inline-end: var(--person-display-ring-room);
   overflow: clip visible;
   text-overflow: ellipsis;
   white-space: nowrap;
