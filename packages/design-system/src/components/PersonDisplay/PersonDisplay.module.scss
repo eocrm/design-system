@@ -116,10 +116,9 @@
   display: block;
   flex-shrink: 100;
   min-width: calc(
-    var(--person-display-on-behalf-of-member-min-width) + 2 *
-      (var(--ring-width) + var(--ring-offset))
+    var(--person-display-on-behalf-of-member-min-width) + 2 * var(--person-display-ring-room)
   );
-  padding-inline: calc(var(--ring-width) + var(--ring-offset));
+  padding-inline: var(--person-display-ring-room);
   overflow: clip visible;
   text-overflow: ellipsis;
   white-space: nowrap;

@@ -570,11 +570,11 @@ describe('PersonDisplay — AgentAvatar + OnBehalfOf (#717)', () => {
     // Chromium with end-only padding, the start band was clipped by its full
     // 4px. Padding both inline ends keeps an untruncated Link's ring whole.
     it('the member box keeps a ch floor plus ring room at both inline ends', () => {
-      const ring = 'var(--ring-width) + var(--ring-offset)';
+      const room = 'var(--person-display-ring-room)';
       const member = decls('.onBehalfOfMember');
       expect(member).toMatchObject({
-        'min-width': `calc(var(--person-display-on-behalf-of-member-min-width) + 2 * (${ring}))`,
-        'padding-inline': `calc(${ring})`,
+        'min-width': `calc(var(--person-display-on-behalf-of-member-min-width) + 2 * ${room})`,
+        'padding-inline': room,
       });
       expect(member['padding-inline-end']).toBeUndefined();
     });
@@ -584,6 +584,7 @@ describe('PersonDisplay — AgentAvatar + OnBehalfOf (#717)', () => {
       tokens.walkDecls((d) => void (t[d.prop] = d.value));
       expect(t['--person-display-agent-row-gap']).toBe('var(--space-1)');
       expect(t['--person-display-on-behalf-of-member-min-width']).toBe('6ch');
+      expect(t['--person-display-ring-room']).toBe('calc(var(--ring-width) + var(--ring-offset))');
     });
   });
 });

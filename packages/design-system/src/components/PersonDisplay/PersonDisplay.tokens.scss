@@ -15,4 +15,8 @@
   // before the Name ellipsises.
   --person-display-agent-row-gap: var(--space-1);
   --person-display-on-behalf-of-member-min-width: 6ch;
+
+  // A focus ring's full extent past its element's border box: the member box
+  // pads each inline end by it so a Link inside keeps its ring.
+  --person-display-ring-room: calc(var(--ring-width) + var(--ring-offset));
 }
