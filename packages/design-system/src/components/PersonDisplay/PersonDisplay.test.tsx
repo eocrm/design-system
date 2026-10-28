@@ -3,7 +3,9 @@ import { resolve } from 'node:path';
 import { render, screen } from '@testing-library/react';
 import { parse, type Declaration, type Rule } from 'postcss';
 import { compile } from 'sass';
-import { PersonDisplay } from './PersonDisplay';
+import { I18nProvider } from '../../i18n/I18nProvider';
+import { Link } from '../Link';
+import { PersonDisplay, type PersonDisplaySize } from './PersonDisplay';
 
 it('renders Avatar + Name + Description together', () => {
   render(
@@ -258,6 +260,15 @@ describe('PersonDisplay stylesheet — self-containment (#527)', () => {
     expect(decl(rule('.root'), 'max-width')).toMatchObject({ value: '100%' });
   });
 
+  // As a flex-row item (an activity row: IconTile + PersonDisplay + timestamp)
+  // the root's automatic minimum is its min-content width — the whole nowrap
+  // agent row. Measured in Chromium at 360px with a long agent + member: the
+  // row overflowed by 36px and crushed the IconTile to 0px. `min-width: 0`
+  // lets the root shrink so its own truncation takes over.
+  it('the root can shrink below its min-content as a flex item', () => {
+    expect(decl(rule('.root'), 'min-width')).toMatchObject({ value: '0' });
+  });
+
   // The INLINE axis only, and the order matters: `overflow` is x-then-y, so
   // `visible clip` clips the block axis instead — verified in Chromium, where
   // it reports `overflow-x: visible`. #527 is a horizontal escape, and the
@@ -311,5 +322,340 @@ describe('PersonDisplay — size="inline" (#579)', () => {
       });
     });
     expect(va).toBe('top');
+  });
+});
+
+describe('PersonDisplay — AgentAvatar + OnBehalfOf (#717)', () => {
+  // Written first, against the pre-#717 code: without OnBehalfOf the output
+  // must stay DOM-identical (no agent-row wrapper, no new attributes).
+  it('without OnBehalfOf the DOM is unchanged', () => {
+    const { container } = render(
+      <PersonDisplay>
+        <PersonDisplay.Avatar name="Sarah Chen" />
+        <PersonDisplay.Name href="/c/sarah">Sarah Chen</PersonDisplay.Name>
+        <PersonDisplay.Description>sarah@acme.com</PersonDisplay.Description>
+      </PersonDisplay>,
+    );
+    const column = container.querySelector('[class*="column"]') as HTMLElement;
+    const kids = Array.from(column.children);
+    expect(kids).toHaveLength(2);
+    expect(kids[0]).toBe(screen.getByRole('link', { name: 'Sarah Chen' }));
+    expect(kids[1]).toHaveTextContent('sarah@acme.com');
+    expect(kids[1].className).toMatch(/description/);
+    expect(container.querySelector('[class*="agentRow"]')).toBeNull();
+    expect(container.querySelector('[title]')).toBeNull();
+  });
+
+  const AGENT = 'Claude Code · demo laptop';
+  const agentRow = (container: HTMLElement) =>
+    container.querySelector('[class*="agentRow"]') as HTMLElement | null;
+
+  it('OnBehalfOf renders "for" + member in one row with the Name', () => {
+    const { container } = render(
+      <PersonDisplay>
+        <PersonDisplay.AgentAvatar name={AGENT} member={{ name: 'Ada Lovelace' }} />
+        <PersonDisplay.Name>{AGENT}</PersonDisplay.Name>
+        <PersonDisplay.OnBehalfOf>Ada Lovelace</PersonDisplay.OnBehalfOf>
+        <PersonDisplay.Description>CLI session</PersonDisplay.Description>
+      </PersonDisplay>,
+    );
+    const row = agentRow(container);
+    expect(row).not.toBeNull();
+    // Exact textContent (toHaveTextContent collapses whitespace): name-from-
+    // content must not glue the Name to "for".
+    expect(row?.textContent).toBe(`${AGENT} for Ada Lovelace`);
+    // The row is the column's first item; Descriptions follow it.
+    expect(row?.parentElement?.firstElementChild).toBe(row);
+    expect(row?.nextElementSibling).toHaveTextContent('CLI session');
+  });
+
+  it.each([undefined, '', '  '])(
+    'OnBehalfOf with no member (%j) renders the former-member copy',
+    (member) => {
+      render(
+        <PersonDisplay>
+          <PersonDisplay.Name>{AGENT}</PersonDisplay.Name>
+          <PersonDisplay.OnBehalfOf>{member}</PersonDisplay.OnBehalfOf>
+        </PersonDisplay>,
+      );
+      expect(screen.getByText('for a former member')).toBeInTheDocument();
+      expect(screen.getByTitle('for a former member')).toBeInTheDocument();
+    },
+  );
+
+  it('OnBehalfOf accepts a Link child', () => {
+    render(
+      <PersonDisplay>
+        <PersonDisplay.Name>{AGENT}</PersonDisplay.Name>
+        <PersonDisplay.OnBehalfOf>
+          <Link href="/m/ada">Ada Lovelace</Link>
+        </PersonDisplay.OnBehalfOf>
+      </PersonDisplay>,
+    );
+    expect(screen.getByRole('link', { name: 'Ada Lovelace' })).toHaveAttribute('href', '/m/ada');
+  });
+
+  it.each<PersonDisplaySize>(['inline', 'sm', 'md', 'lg'])(
+    'AgentAvatar inside PersonDisplay is aria-hidden and sized from context (%s)',
+    (size) => {
+      const { container } = render(
+        <PersonDisplay size={size}>
+          {/* Consumer ARIA must not resurface it as an image. */}
+          <PersonDisplay.AgentAvatar
+            name={AGENT}
+            member={{ name: 'Ada Lovelace' }}
+            role="img"
+            aria-label="x"
+          />
+          <PersonDisplay.Name>{AGENT}</PersonDisplay.Name>
+          <PersonDisplay.OnBehalfOf>Ada Lovelace</PersonDisplay.OnBehalfOf>
+        </PersonDisplay>,
+      );
+      expect(screen.queryByRole('img')).toBeNull();
+      const agent = container.querySelector('[data-agent-avatar]') as HTMLElement;
+      // Sorted into the avatar slot: the root's first child, outside the column.
+      expect(container.firstElementChild?.firstElementChild).toBe(agent);
+      expect(agent).toHaveAttribute('aria-hidden', 'true');
+      expect(agent).not.toHaveAttribute('aria-label');
+      expect(agent.className).toMatch(new RegExp(`_${size}_`));
+      expect(agent.querySelector('[data-part="badge"]') !== null).toBe(size !== 'inline');
+    },
+  );
+
+  it('title carries the full text when children are strings', () => {
+    const { container } = render(
+      <PersonDisplay>
+        <PersonDisplay.Name>{AGENT}</PersonDisplay.Name>
+        <PersonDisplay.OnBehalfOf>Ada Lovelace</PersonDisplay.OnBehalfOf>
+      </PersonDisplay>,
+    );
+    const name = agentRow(container)!.children[0];
+    expect(name).toHaveAttribute('title', AGENT);
+    // The member box is the truncating, hoverable element.
+    expect(container.querySelector('[class*="onBehalfOfMember"]')).toHaveAttribute(
+      'title',
+      'for Ada Lovelace',
+    );
+  });
+
+  it('multi-node text children (`{first} {last}`) are one string with a title', () => {
+    const [first, last] = ['Ada', 'Lovelace'];
+    const { container } = render(
+      <PersonDisplay>
+        <PersonDisplay.Name>
+          {AGENT} {2}
+        </PersonDisplay.Name>
+        <PersonDisplay.OnBehalfOf>
+          {first} {last}
+        </PersonDisplay.OnBehalfOf>
+      </PersonDisplay>,
+    );
+    expect(agentRow(container)!.children[0]).toHaveAttribute('title', `${AGENT} 2`);
+    const member = container.querySelector('[class*="onBehalfOfMember"]');
+    expect(member).toHaveAttribute('title', 'for Ada Lovelace');
+    expect(member?.textContent).toBe('Ada Lovelace');
+  });
+
+  it.each([[[]], [['', ' ']]])('all-empty array children (%j) are an erased member', (kids) => {
+    render(
+      <PersonDisplay>
+        <PersonDisplay.Name>{AGENT}</PersonDisplay.Name>
+        <PersonDisplay.OnBehalfOf>{kids}</PersonDisplay.OnBehalfOf>
+      </PersonDisplay>,
+    );
+    expect(screen.getByTitle('for a former member')).toHaveTextContent('for a former member');
+  });
+
+  it('nullish parts inside array children render as nothing: all missing is the former-member copy', () => {
+    render(
+      <PersonDisplay>
+        <PersonDisplay.Name>{AGENT}</PersonDisplay.Name>
+        <PersonDisplay.OnBehalfOf>{[undefined, ' ', undefined]}</PersonDisplay.OnBehalfOf>
+      </PersonDisplay>,
+    );
+    expect(screen.getByTitle('for a former member')).toHaveTextContent('for a former member');
+  });
+
+  it('one missing part still yields the title', () => {
+    render(
+      <PersonDisplay>
+        <PersonDisplay.Name>{AGENT}</PersonDisplay.Name>
+        <PersonDisplay.OnBehalfOf>{['Ada', ' ', null]}</PersonDisplay.OnBehalfOf>
+      </PersonDisplay>,
+    );
+    expect(screen.getByTitle('for Ada')).toBeInTheDocument();
+  });
+
+  it('a boolean child is the former-member copy, not a bare "for"', () => {
+    render(
+      <PersonDisplay>
+        <PersonDisplay.Name>{AGENT}</PersonDisplay.Name>
+        <PersonDisplay.OnBehalfOf>{true}</PersonDisplay.OnBehalfOf>
+      </PersonDisplay>,
+    );
+    expect(screen.getByTitle('for a former member')).toBeInTheDocument();
+  });
+
+  it('a Name whose text parts are all missing gets no blank title', () => {
+    const { container } = render(
+      <PersonDisplay>
+        <PersonDisplay.Name>{[undefined, ' ', null]}</PersonDisplay.Name>
+        <PersonDisplay.OnBehalfOf>Ada</PersonDisplay.OnBehalfOf>
+      </PersonDisplay>,
+    );
+    expect(container.querySelector('[title=" "]')).toBeNull();
+  });
+
+  it('Name renders before OnBehalfOf whatever the child order', () => {
+    const { container } = render(
+      <PersonDisplay>
+        <PersonDisplay.OnBehalfOf>Ada Scout</PersonDisplay.OnBehalfOf>
+        <PersonDisplay.Name>{AGENT}</PersonDisplay.Name>
+      </PersonDisplay>,
+    );
+    expect(container.querySelector('[class*="agentRow"]')?.textContent).toBe(
+      `${AGENT} for Ada Scout`,
+    );
+  });
+
+  it('no title when children are not a string', () => {
+    const { container } = render(
+      <PersonDisplay>
+        <PersonDisplay.Name>
+          <b>{AGENT}</b>
+        </PersonDisplay.Name>
+        <PersonDisplay.OnBehalfOf>
+          <Link href="/m/ada">Ada Lovelace</Link>
+        </PersonDisplay.OnBehalfOf>
+      </PersonDisplay>,
+    );
+    expect(container.querySelector('[title]')).toBeNull();
+  });
+
+  it('ru prefix', () => {
+    render(
+      <I18nProvider locale="ru">
+        <PersonDisplay>
+          <PersonDisplay.Name>{AGENT}</PersonDisplay.Name>
+          <PersonDisplay.OnBehalfOf>Ada Lovelace</PersonDisplay.OnBehalfOf>
+        </PersonDisplay>
+      </I18nProvider>,
+    );
+    expect(screen.getByText('от имени:')).toBeInTheDocument();
+    expect(screen.getByTitle('от имени: Ada Lovelace')).toHaveTextContent('Ada Lovelace');
+  });
+
+  it('OnBehalfOf is muted, regular weight, at the Name size', () => {
+    const { container } = render(
+      <PersonDisplay size="lg">
+        <PersonDisplay.Name>{AGENT}</PersonDisplay.Name>
+        <PersonDisplay.OnBehalfOf>Ada Lovelace</PersonDisplay.OnBehalfOf>
+      </PersonDisplay>,
+    );
+    // Prefix and member are separate Text nodes: the prefix never shrinks,
+    // the member is its own ellipsis box.
+    const [prefix, member] = Array.from(agentRow(container)!.children[1].children);
+    expect(prefix).toHaveTextContent('for');
+    expect(prefix.className).toMatch(/onBehalfOfPrefix/);
+    expect(member).toHaveTextContent('Ada Lovelace');
+    expect(member.className).toMatch(/onBehalfOfMember/);
+    for (const text of [prefix, member]) {
+      expect(text.className).toMatch(/sizeLg/);
+      expect(text.className).toMatch(/toneMuted/);
+      expect(text.className).toMatch(/weightRegular/);
+    }
+  });
+
+  describe('stylesheet (Review Focus 1)', () => {
+    const css = parse(compile(resolve(__dirname, './PersonDisplay.module.scss')).css);
+    const tokens = parse(compile(resolve(__dirname, './PersonDisplay.tokens.scss')).css);
+    function decls(selector: string): Record<string, string> {
+      const out: Record<string, string> = {};
+      css.walkRules((r) => {
+        if (r.selectors.includes(selector)) r.walkDecls((d) => void (out[d.prop] = d.value));
+      });
+      return out;
+    }
+
+    it('the agent row is a shrinkable flex row', () => {
+      expect(decls('.agentRow')).toMatchObject({
+        display: 'flex',
+        'min-width': '0',
+      });
+      expect(decls('.agentRow').gap).toBeUndefined();
+    });
+
+    // One visible gap on both sides of the prefix. A row `gap` would ADD to the
+    // member's ring padding (8px after "for" vs 4px before it), so the prefix
+    // carries the gap before itself and the member's start padding doubles as
+    // the gap after it — never less than the ring room a Link inside needs.
+    it('spaces the prefix evenly: gap before it, gap-or-ring-room after it', () => {
+      const gap = 'var(--person-display-agent-row-gap)';
+      const room = 'var(--person-display-ring-room)';
+      expect(decls('.onBehalfOfPrefix')['padding-inline-start']).toBe(gap);
+      expect(decls('.onBehalfOfMember')).toMatchObject({
+        'padding-inline-start': 'var(--person-display-member-padding-start)',
+        'padding-inline-end': room,
+      });
+    });
+
+    // OnBehalfOf dissolves into the row (a nested flex wrapper's min-content
+    // floor is the member's whole nowrap text). The member shrinks first, to
+    // its own floor; the full prefix never shrinks; then the Name gives way.
+    it('OnBehalfOf shrinks first, down to prefix + a few member chars', () => {
+      const name = decls('.agentRow > .name');
+      const member = decls('.onBehalfOfMember');
+      expect(decls('.onBehalfOf')).toMatchObject({ display: 'contents' });
+      expect(Number(member['flex-shrink'])).toBeGreaterThan(Number(name['flex-shrink']));
+      expect(name['min-width']).toBe('0');
+      expect(decls('.onBehalfOfPrefix')).toMatchObject({
+        'flex-shrink': '0',
+        'white-space': 'nowrap',
+      });
+    });
+
+    // Block containers: a flex container does not paint the ellipsis (see
+    // `.description`). Inline axis only, like `.description`, so a focused
+    // Link's top/bottom ring bands are not clipped; `margin` compensation is
+    // banned by stylelint, so the block axis can't reserve ring room instead.
+    it.each(['.agentRow > .name', '.onBehalfOfMember'])(
+      '%s truncates with an ellipsis',
+      (selector) => {
+        expect(decls(selector)).toMatchObject({
+          display: 'block',
+          overflow: 'clip visible',
+          'text-overflow': 'ellipsis',
+          'white-space': 'nowrap',
+        });
+      },
+    );
+
+    // The floor is set on the element holding the text (so `ch` is its font),
+    // and the ring padding (both ends) is added on top so border-box can't eat
+    // it. A Link in the member box is flush with BOTH clip edges; measured in
+    // Chromium with end-only padding, the start band was clipped by its full
+    // 4px. Padding both inline ends keeps an untruncated Link's ring whole.
+    it('the member box keeps a ch floor plus its padding at both inline ends', () => {
+      const member = decls('.onBehalfOfMember');
+      expect(member['min-width']).toBe(
+        'calc(var(--person-display-on-behalf-of-member-min-width) + var(--person-display-member-padding-x))',
+      );
+    });
+
+    it('declares the row tokens', () => {
+      const t: Record<string, string> = {};
+      tokens.walkDecls((d) => void (t[d.prop] = d.value));
+      expect(t['--person-display-agent-row-gap']).toBe('var(--space-1)');
+      // Prettier wraps long values; compare them with whitespace stripped.
+      const bare = (prop: string) => t[prop]?.replace(/\s+/g, '');
+      expect(bare('--person-display-member-padding-start')).toBe(
+        'max(var(--person-display-agent-row-gap),var(--person-display-ring-room))',
+      );
+      expect(bare('--person-display-member-padding-x')).toBe(
+        'calc(var(--person-display-member-padding-start)+var(--person-display-ring-room))',
+      );
+      expect(t['--person-display-on-behalf-of-member-min-width']).toBe('6ch');
+      expect(t['--person-display-ring-room']).toBe('calc(var(--ring-width) + var(--ring-offset))');
+    });
   });
 });

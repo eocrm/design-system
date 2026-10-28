@@ -1,8 +1,21 @@
 import { useState } from 'react';
-import { Avatar, AvatarGroup, Cluster, Stack } from '@eocrm/design-system';
+import { AgentAvatar, Avatar, AvatarGroup, Cluster, Stack } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
+
+const Sparkle = (
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z" />
+  </svg>
+);
+
+const AGENT_ROWS: { label: string; member?: { name: string; src?: string } | null }[] = [
+  { label: 'alone' },
+  { label: 'initials', member: { name: 'Sarah Chen' } },
+  { label: 'photo', member: { name: 'Avery Liu', src: 'https://i.pravatar.cc/64?img=12' } },
+  { label: 'erased', member: null },
+];
 
 const TEAM = [
   'Alex Rivera',
@@ -269,6 +282,27 @@ export function Demo() {
               <Avatar key={n} name={n} />
             ))}
           </AvatarGroup>
+        </Stack>
+      </Example>
+      <Example
+        title="AgentAvatar"
+        description="AI agent tile with an optional badge of the member it acts for. Rows: member omitted (agent alone), member with initials, member with photo, erased (null). The badge is hidden at inline. Without mark the tile shows a Bot icon."
+        code={`import { AgentAvatar } from '@eocrm/design-system';
+
+<AgentAvatar name="Scout" mark={<Sparkle />} size="lg" />
+<AgentAvatar name="Scout" size="lg" member={{ name: 'Sarah Chen' }} />
+<AgentAvatar name="Scout" size="lg" member={{ name: 'Avery Liu', src }} />
+<AgentAvatar name="Scout" size="lg" member={null} />`}
+      >
+        <Stack gap="md">
+          {AGENT_ROWS.map(({ label, member }) => (
+            <Cluster key={label} gap="md" align="center">
+              {(['inline', 'sm', 'md', 'lg', 'xl'] as const).map((size) => (
+                <AgentAvatar key={size} name="Scout" mark={Sparkle} member={member} size={size} />
+              ))}
+              <AgentAvatar name="Scout (fallback mark)" member={member} />
+            </Cluster>
+          ))}
         </Stack>
       </Example>
     </DemoLayout>

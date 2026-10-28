@@ -1,0 +1,117 @@
+@use './Avatar.tokens';
+
+// Root carries the Avatar size class (diameter); position:relative anchors the
+// .badge (Rule 4 escape hatch for an internal child, same as Avatar's .presence).
+.agent {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: var(--avatar-radius);
+  user-select: none;
+}
+
+// The circular tile; clips the mark (incl. non-SVG marks) to the circle. The
+// badge is the tile's sibling, not a descendant, so this clip never reaches it.
+.tile {
+  display: flex;
+  overflow: hidden;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--agent-avatar-bg);
+  color: var(--agent-avatar-fg);
+}
+
+.mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mark svg {
+  width: 100%;
+  height: 100%;
+}
+
+.inline .mark {
+  width: var(--agent-avatar-mark-size-inline);
+  height: var(--agent-avatar-mark-size-inline);
+}
+
+.sm .mark {
+  width: var(--agent-avatar-mark-size-sm);
+  height: var(--agent-avatar-mark-size-sm);
+}
+
+.md .mark {
+  width: var(--agent-avatar-mark-size-md);
+  height: var(--agent-avatar-mark-size-md);
+}
+
+.lg .mark {
+  width: var(--agent-avatar-mark-size-lg);
+  height: var(--agent-avatar-mark-size-lg);
+}
+
+.xl .mark {
+  width: var(--agent-avatar-mark-size-xl);
+  height: var(--agent-avatar-mark-size-xl);
+}
+
+// Member badge, bottom-right, with a surface ring. The inner <Avatar> keeps
+// its own size class, so force it to fill the sized badge box.
+.badge {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  border-radius: var(--avatar-radius);
+  box-shadow: 0 0 0 var(--agent-avatar-badge-ring-width) var(--agent-avatar-badge-ring-color);
+  font-size: var(--agent-avatar-badge-font-size);
+}
+
+.badge > span {
+  width: 100%;
+  height: 100%;
+  font-size: inherit;
+}
+
+.erased {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--agent-avatar-bg);
+  color: var(--agent-avatar-fg);
+}
+
+.erased svg {
+  width: 70%;
+  height: 70%;
+}
+
+.sm .badge {
+  width: var(--agent-avatar-badge-size-sm);
+  height: var(--agent-avatar-badge-size-sm);
+}
+
+.md .badge {
+  width: var(--agent-avatar-badge-size-md);
+  height: var(--agent-avatar-badge-size-md);
+}
+
+.lg .badge {
+  width: var(--agent-avatar-badge-size-lg);
+  height: var(--agent-avatar-badge-size-lg);
+}
+
+.xl .badge {
+  width: var(--agent-avatar-badge-size-xl);
+  height: var(--agent-avatar-badge-size-xl);
+}

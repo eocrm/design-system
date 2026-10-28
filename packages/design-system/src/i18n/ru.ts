@@ -233,6 +233,14 @@ export const ru: Messages = {
       away: 'нет на месте',
       offline: 'не в сети',
     },
+    agent: {
+      onBehalfOf: (params) => `${params.agent}, от имени: ${params.member}`,
+      onBehalfOfFormer: (params) => `${params.agent}, от имени бывшего участника`,
+    },
+  },
+  personDisplay: {
+    onBehalfOfPrefix: 'от имени:',
+    onBehalfOfFormer: 'от имени бывшего участника',
   },
   avatarGroup: {
     overflow: (params) => `Ещё ${params.count}`,

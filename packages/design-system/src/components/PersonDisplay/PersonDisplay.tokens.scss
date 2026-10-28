@@ -9,4 +9,27 @@
 
   // Inner description (single metadata line) gap between atoms.
   --person-display-description-gap: var(--space-1);
+
+  // Agent row (Name, OnBehalfOf prefix, member) gap; and the member's floor
+  // (in the member text's own `ch`) it shrinks to, after the full prefix,
+  // before the Name ellipsises.
+  --person-display-agent-row-gap: var(--space-1);
+  --person-display-on-behalf-of-member-min-width: 6ch;
+
+  // A focus ring's full extent past its element's border box: the member box
+  // pads each inline end by it so a Link inside keeps its ring.
+  --person-display-ring-room: calc(var(--ring-width) + var(--ring-offset));
+
+  // The member's start padding is also the gap after the prefix: the row gap,
+  // or the ring room a Link inside needs, whichever is larger — so "for" sits
+  // evenly between the Name and the member.
+  --person-display-member-padding-start: max(
+    var(--person-display-agent-row-gap),
+    var(--person-display-ring-room)
+  );
+
+  // Both inline paddings together, which the member's floor adds on top of its ch.
+  --person-display-member-padding-x: calc(
+    var(--person-display-member-padding-start) + var(--person-display-ring-room)
+  );
 }

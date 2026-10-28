@@ -102,6 +102,7 @@ const CLUSTERS: Record<string, string> = {
 
   // Display
   Avatar: 'Display',
+  AgentAvatar: 'Display',
   Image: 'Display',
   QrCode: 'Display',
   MediaTile: 'Display',

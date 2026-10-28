@@ -45,3 +45,5 @@
 - ❌ Adding your own visually-hidden status text next to the avatar. It is announced twice, and inside the no-`src` branch (a `role="img"`) ARIA prunes children as presentational, so it would be silent there anyway.
 - ❌ Using Avatar for a non-person icon. Use an icon component.
 - ❌ Wrapping the result in `role="img"` again. With `src`, the inner `<img>` is the labeled image; without it, the wrapper has `role="img" aria-label={name}`, plus the localized `status` when set (`"Alex, online"`).
+
+For an AI agent acting on behalf of a member, see [`AgentAvatar`](AgentAvatar.md).

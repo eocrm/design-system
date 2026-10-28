@@ -80,6 +80,7 @@ const CLUSTERS = {
 
   // Display
   Avatar: 'Display',
+  AgentAvatar: 'Display',
   Image: 'Display',
   QrCode: 'Display',
   MediaTile: 'Display',

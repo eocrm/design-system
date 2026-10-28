@@ -491,6 +491,17 @@ export interface Messages {
       away: string;
       offline: string;
     };
+    /** Accessible name of a standalone AgentAvatar that acts for a member. */
+    agent: {
+      onBehalfOf: (params: { agent: string; member: string }) => string;
+      onBehalfOfFormer: (params: { agent: string }) => string;
+    };
+  };
+  personDisplay: {
+    /** Visible prefix before the member an agent acts for ("for Ada"). */
+    onBehalfOfPrefix: string;
+    /** Visible text when the member was erased. */
+    onBehalfOfFormer: string;
   };
   avatarGroup: {
     /** aria-label on the overflow chip: how many avatars are not shown. */

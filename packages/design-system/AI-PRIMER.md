@@ -203,8 +203,9 @@ Each component's contract is its `docs/components/<Name>.md`; the props table th
 - [`Divider`](docs/components/Divider.md) — separator primitive
 - [`PageHeader`](docs/components/PageHeader.md) — top-of-page heading area
 - [`Avatar`](docs/components/Avatar.md) — profile circle
+- [`AgentAvatar`](docs/components/AgentAvatar.md) — AI agent tile with the acting member badge (`decorative` beside a byline that names both)
 - [`AvatarGroup`](docs/components/AvatarGroup.md) — Slack-style stacked row of avatars
-- [`PersonDisplay`](docs/components/PersonDisplay.md) — Avatar + name (+ optional description lines)
+- [`PersonDisplay`](docs/components/PersonDisplay.md) — Avatar + name (+ optional description lines; `AgentAvatar` + `OnBehalfOf` for an agent acting for a member)
 - [`Badge`](docs/components/Badge.md) — status / category pill
 - [`EntityChip`](docs/components/EntityChip.md) — inline entity-link chip
 - [`PillMenu`](docs/components/PillMenu.md) — coloured value menu (status, type, priority…)
