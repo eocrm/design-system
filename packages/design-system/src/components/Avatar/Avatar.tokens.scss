@@ -49,6 +49,23 @@
   --avatar-presence-hollow-width: var(--border-width-emphasis);
   --avatar-presence-bar-height: var(--border-width-emphasis);
 
+  // AgentAvatar — neutral tile (never the name-hashed palette, so a brand mark
+  // is not recoloured), mark = a fraction of the tile, badge = the member.
+  --agent-avatar-bg: var(--color-bg-muted);
+  --agent-avatar-fg: var(--color-fg-muted);
+  --agent-avatar-mark-size-inline: calc(var(--avatar-size-inline) * 0.6);
+  --agent-avatar-mark-size-sm: calc(var(--avatar-size-sm) * 0.6);
+  --agent-avatar-mark-size-md: calc(var(--avatar-size-md) * 0.6);
+  --agent-avatar-mark-size-lg: calc(var(--avatar-size-lg) * 0.6);
+  --agent-avatar-mark-size-xl: calc(var(--avatar-size-xl) * 0.6);
+  --agent-avatar-badge-size-sm: calc(var(--avatar-size-sm) * 0.5);
+  --agent-avatar-badge-size-md: calc(var(--avatar-size-md) * 0.5);
+  --agent-avatar-badge-size-lg: calc(var(--avatar-size-lg) * 0.5);
+  --agent-avatar-badge-size-xl: calc(var(--avatar-size-xl) * 0.45);
+  --agent-avatar-badge-font-size: 0.4em;
+  --agent-avatar-badge-ring-width: var(--avatar-presence-ring-width);
+  --agent-avatar-badge-ring-color: var(--avatar-presence-ring-color);
+
   // In-group ring (stacked siblings)
   --avatar-in-group-ring-width: var(--border-width-emphasis);
   --avatar-in-group-ring-color: var(--color-bg);

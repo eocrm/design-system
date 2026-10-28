@@ -227,6 +227,14 @@ export const en: Messages = {
       away: 'away',
       offline: 'offline',
     },
+    agent: {
+      onBehalfOf: (params) => `${params.agent}, on behalf of ${params.member}`,
+      onBehalfOfFormer: (params) => `${params.agent}, on behalf of a former member`,
+    },
+  },
+  personDisplay: {
+    onBehalfOfPrefix: 'for',
+    onBehalfOfFormer: 'for a former member',
   },
   avatarGroup: {
     overflow: (params) => `${params.count} more avatars`,

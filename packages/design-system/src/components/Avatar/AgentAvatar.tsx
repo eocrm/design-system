@@ -1,0 +1,100 @@
+import { forwardRef, type HTMLAttributes, type ReactNode } from 'react';
+import clsx from 'clsx';
+import { Bot, User } from 'lucide-react';
+import { useTranslation } from '../../i18n';
+import { Avatar, type AvatarSize } from './Avatar';
+import avatarStyles from './Avatar.module.scss';
+import styles from './AgentAvatar.module.scss';
+
+export interface AgentAvatarMember {
+  name: string;
+  src?: string;
+}
+
+export interface AgentAvatarProps extends HTMLAttributes<HTMLSpanElement> {
+  /** Agent label; drives the accessible name. */
+  name: string;
+  /** Agent mark, rendered monochrome in the tile. Defaults to a lucide `Bot`. */
+  mark?: ReactNode;
+  /**
+   * The member the agent acts for. Omit for an agent alone (no badge); `null`
+   * or an empty name for an erased member (placeholder badge).
+   */
+  member?: AgentAvatarMember | null;
+  /** Diameter, same scale as `Avatar`. The member badge is hidden at `inline`. */
+  size?: AvatarSize;
+  /** Internal: PersonDisplay passes true; renders aria-hidden with no role/label. */
+  decorative?: boolean;
+}
+
+const sizeClass: Record<AvatarSize, string> = {
+  inline: styles.inline,
+  sm: styles.sm,
+  md: styles.md,
+  lg: styles.lg,
+  xl: styles.xl,
+};
+
+const avatarSizeClass: Record<AvatarSize, string> = {
+  inline: avatarStyles.inline,
+  sm: avatarStyles.sm,
+  md: avatarStyles.md,
+  lg: avatarStyles.lg,
+  xl: avatarStyles.xl,
+};
+
+/**
+ * AI agent tile with an optional badge of the member it acts for.
+ * @see docs/components/AgentAvatar.md
+ */
+export const AgentAvatar = forwardRef<HTMLSpanElement, AgentAvatarProps>(function AgentAvatar(
+  { name, mark, member, size = 'md', decorative, className, ...props },
+  ref,
+) {
+  const t = useTranslation();
+  const agent = name.trim() === '' ? '?' : name.trim();
+  const memberName = member?.name.trim() ?? '';
+  const erased = member === null || (member !== undefined && memberName === '');
+
+  const label = erased
+    ? t('avatar.agent.onBehalfOfFormer', { agent })
+    : member
+      ? t('avatar.agent.onBehalfOf', { agent, member: memberName })
+      : agent;
+
+  const badge =
+    size === 'inline' || member === undefined ? null : (
+      <span
+        aria-hidden="true"
+        className={styles.badge}
+        data-part="badge"
+        data-erased={erased || undefined}
+      >
+        {erased ? (
+          <span className={styles.erased}>
+            <User />
+          </span>
+        ) : (
+          <Avatar size="sm" name={memberName} src={member?.src} />
+        )}
+      </span>
+    );
+
+  // {...props} first so component-owned ARIA (role, aria-label) wins.
+  return (
+    <span
+      {...props}
+      ref={ref}
+      {...(decorative ? { 'aria-hidden': true } : { role: 'img', 'aria-label': label })}
+      className={clsx(styles.agent, avatarSizeClass[size], sizeClass[size], className)}
+      data-agent-avatar=""
+    >
+      <span className={styles.tile}>
+        <span aria-hidden="true" className={styles.mark} data-part="mark">
+          {mark ?? <Bot />}
+        </span>
+      </span>
+      {badge}
+    </span>
+  );
+});

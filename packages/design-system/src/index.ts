@@ -137,8 +137,15 @@ export type { AlertProps, AlertTone } from './components/Alert';
 export { Banner } from './components/Banner';
 export type { BannerProps, BannerTone } from './components/Banner';
 
-export { Avatar, AvatarGroup, avatarColorIndex } from './components/Avatar';
-export type { AvatarProps, AvatarSize, AvatarStatus, AvatarGroupProps } from './components/Avatar';
+export { AgentAvatar, Avatar, AvatarGroup, avatarColorIndex } from './components/Avatar';
+export type {
+  AgentAvatarMember,
+  AgentAvatarProps,
+  AvatarProps,
+  AvatarSize,
+  AvatarStatus,
+  AvatarGroupProps,
+} from './components/Avatar';
 
 export { Badge } from './components/Badge';
 export type {
