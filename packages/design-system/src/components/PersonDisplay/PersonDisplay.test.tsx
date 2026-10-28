@@ -584,7 +584,6 @@ describe('PersonDisplay — AgentAvatar + OnBehalfOf (#717)', () => {
     // Chromium with end-only padding, the start band was clipped by its full
     // 4px. Padding both inline ends keeps an untruncated Link's ring whole.
     it('the member box keeps a ch floor plus its padding at both inline ends', () => {
-      const room = 'var(--person-display-ring-room)';
       const member = decls('.onBehalfOfMember');
       expect(member['min-width']).toBe(
         'calc(var(--person-display-on-behalf-of-member-min-width) + var(--person-display-member-padding-x))',
