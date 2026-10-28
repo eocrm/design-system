@@ -59,14 +59,19 @@
 }
 
 // Name + OnBehalfOf on one line; rendered only when an OnBehalfOf is present.
-// OnBehalfOf shrinks first (100:1) down to its token floor, then the Name
-// gives way. Both truncate as BLOCK containers: a flex container does not
-// paint `text-overflow` (see `.description`). Inline axis only, `clip visible`
-// for the same focus-ring reason as `.description`; reserving ring room on the
-// block axis would need padding + a compensating negative `margin`, which
-// stylelint's property-disallowed-list bans in component modules. The Name's
-// own Link ring is outside its own clip; a Link inside OnBehalfOf sits at the
-// clip's inline end, so OnBehalfOf pads that end by the ring's extent.
+// OnBehalfOf is `display: contents`, so the row's items are Name, the prefix
+// and the member. The member shrinks first (100:1) down to a few characters,
+// the prefix never shrinks, then the Name gives way — in every locale. (A
+// nested flex wrapper can't do this: its min-content floor is the member's
+// whole nowrap text, so it refused to shrink and the Name collapsed — seen in
+// Chromium.) Text truncates in BLOCK containers: a flex container does not
+// paint `text-overflow` (see `.description`). Inline axis only, `clip
+// visible`, for the same focus-ring reason as `.description`; reserving ring
+// room on the block axis would need padding + a compensating negative
+// `margin`, which stylelint's property-disallowed-list bans in component
+// modules. A Name `href` is its own clip box, so its ring is outside the clip;
+// a Link in the member box sits at the clip's inline end, so that box pads
+// its end by the ring's extent.
 .agentRow {
   display: flex;
   align-items: baseline;
@@ -84,9 +89,22 @@
 }
 
 .onBehalfOf {
+  display: contents;
+}
+
+.onBehalfOfPrefix {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+// The floor sits on the element holding the text, so `ch` is the member
+// text's own; the ring padding is added on top so border-box can't eat it.
+.onBehalfOfMember {
   display: block;
   flex-shrink: 100;
-  min-width: var(--person-display-on-behalf-of-min-width);
+  min-width: calc(
+    var(--person-display-on-behalf-of-member-min-width) + var(--ring-width) + var(--ring-offset)
+  );
   padding-inline-end: calc(var(--ring-width) + var(--ring-offset));
   overflow: clip visible;
   text-overflow: ellipsis;
@@ -136,7 +154,10 @@
   // outside (`.description :focus-visible { outline-offset: … }`) ties Link's
   // own `.link:focus-visible` at (0,2,0) and wins only on bundle order — a
   // specificity race over a consumer's own focus style.
-  // So: put a control in `PersonDisplay.Name`, which does not clip.
+  // So: put a control in `PersonDisplay.Name`, which does not clip — except in
+  // the agent row (with an OnBehalfOf), where Name clips its inline axis too;
+  // there use `Name href` (its own ring is outside its own clip) or a Link in
+  // `OnBehalfOf` (its member box reserves ring room at the inline end).
   overflow: clip visible;
   white-space: nowrap;
 }

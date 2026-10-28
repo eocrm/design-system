@@ -10,8 +10,9 @@
   // Inner description (single metadata line) gap between atoms.
   --person-display-description-gap: var(--space-1);
 
-  // Agent row (Name + OnBehalfOf): gap, and the floor OnBehalfOf shrinks to
-  // ("for A…") before the Name starts to ellipsise.
+  // Agent row (Name, OnBehalfOf prefix, member) gap; and the member's floor
+  // (in the member text's own `ch`) it shrinks to, after the full prefix,
+  // before the Name ellipsises.
   --person-display-agent-row-gap: var(--space-1);
-  --person-display-on-behalf-of-min-width: 6ch;
+  --person-display-on-behalf-of-member-min-width: 4ch;
 }

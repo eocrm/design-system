@@ -85,7 +85,9 @@ export interface PersonDisplayOnBehalfOfProps extends HTMLAttributes<HTMLSpanEle
   /**
    * The member the agent acts for, rendered after a muted "for" prefix. A
    * plain name, or a `<Link>` to the member. Omit (or pass an empty string)
-   * when the member was erased: renders "for a former member".
+   * when the member was erased: renders "for a former member". The root span
+   * is `display: contents` (its prefix and member join the Name's row), so
+   * box styles passed via `className`/`style` on it don't paint.
    */
   children?: ReactNode;
 }
@@ -256,28 +258,31 @@ const PersonDisplayOnBehalfOf = forwardRef<HTMLSpanElement, PersonDisplayOnBehal
       : typeof children === 'string'
         ? `${prefix} ${children}`
         : undefined;
+    const textProps = {
+      size: size === 'inline' ? 'inherit' : NAME_TEXT_SIZE[size],
+      tone: 'muted',
+      weight: 'regular',
+    } as const;
     return (
       <span
         ref={ref}
         className={clsx(styles.onBehalfOf, className)}
-        title={text}
         // {...rest} last so consumer overrides win (Pattern A)
         {...rest}
       >
-        <Text
-          as="span"
-          size={size === 'inline' ? 'inherit' : NAME_TEXT_SIZE[size]}
-          tone="muted"
-          weight="regular"
-        >
-          {/* Prefix and member stay separate nodes: children may be a Link. */}
-          {former ? (
-            text
-          ) : (
-            <>
-              {prefix} {children}
-            </>
-          )}
+        {/* `display: contents` makes prefix and member items of the agent row:
+            the prefix never shrinks, the member ellipsises (and carries the
+            title, as the box the pointer can hover). Separate nodes also
+            because children may be a Link. */}
+        {!former && (
+          <>
+            <Text as="span" className={styles.onBehalfOfPrefix} {...textProps}>
+              {prefix}
+            </Text>{' '}
+          </>
+        )}
+        <Text as="span" className={styles.onBehalfOfMember} title={text} {...textProps}>
+          {former ? text : children}
         </Text>
       </span>
     );
