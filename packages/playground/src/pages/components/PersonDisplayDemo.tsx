@@ -4,6 +4,7 @@ import {
   Card,
   CardBody,
   Cluster,
+  Constrain,
   DefinitionList,
   IconTile,
   Link,
@@ -464,7 +465,7 @@ export function Demo() {
 
       <Example
         title="Agent — links in the truncating row"
-        description="A Link inside OnBehalfOf and a Name href: both keep their focus ring inside the clipping row."
+        description="A Link inside OnBehalfOf and a Name href: both keep their whole focus ring in the clipping row. Only a member Link that is itself truncated loses its trailing ring band, since it runs past the clip edge."
         code={`<PersonDisplay size="sm">
   <PersonDisplay.AgentAvatar name="Scout" mark={Sparkle} member={{ name: 'Sarah Chen' }} />
   <PersonDisplay.Name href="#scout">Scout</PersonDisplay.Name>
@@ -503,32 +504,48 @@ export function Demo() {
 
       <Example
         title="Agent — activity row"
-        description="Event IconTile, an inline PersonDisplay and a muted timestamp on one line, the action below."
-        code={`<Cluster gap="sm" align="center">
-  <IconTile size="xs" icon={<CalendarPlus />} />
+        description="Event IconTile, an inline PersonDisplay and a muted timestamp on one line, the action below. With a long label and member in 360px, the PersonDisplay truncates between the IconTile and timestamp (each wrapped in a no-flex Constrain so it keeps its size)."
+        code={`<Cluster gap="sm" align="center" wrap={false}>
+  <Constrain flex="none">
+    <IconTile size="xs" icon={<CalendarPlus />} />
+  </Constrain>
   <PersonDisplay size="inline">…</PersonDisplay>
-  <Text size="sm" tone="muted">2h ago</Text>
+  <Constrain flex="none">
+    <Text size="sm" tone="muted">2h ago</Text>
+  </Constrain>
 </Cluster>
 <Text size="sm">Scheduled a demo with Acme</Text>`}
       >
         <InputExample width={360}>
-          <Stack gap="xs">
-            <Cluster gap="sm" align="center" wrap={false}>
-              <IconTile size="xs" icon={<CalendarPlus />} />
-              <PersonDisplay size="inline">
-                <PersonDisplay.AgentAvatar
-                  name="Scout"
-                  mark={Sparkle}
-                  member={{ name: 'Sarah Chen' }}
-                />
-                <PersonDisplay.Name>Scout</PersonDisplay.Name>
-                <PersonDisplay.OnBehalfOf>Sarah Chen</PersonDisplay.OnBehalfOf>
-              </PersonDisplay>
-              <Text size="sm" tone="muted">
-                2h ago
-              </Text>
-            </Cluster>
-            <Text size="sm">Scheduled a demo with Acme</Text>
+          <Stack gap="md" data-testid="agent-activity-360">
+            {[
+              { agent: 'Scout', member: 'Sarah Chen' },
+              { agent: LONG_AGENT, member: LONG_MEMBER },
+            ].map(({ agent, member }) => (
+              <Stack key={agent} gap="xs">
+                <Cluster gap="sm" align="center" wrap={false}>
+                  {/* flex="none": only the PersonDisplay gives way */}
+                  <Constrain flex="none">
+                    <IconTile size="xs" icon={<CalendarPlus />} />
+                  </Constrain>
+                  <PersonDisplay size="inline">
+                    <PersonDisplay.AgentAvatar
+                      name={agent}
+                      mark={Sparkle}
+                      member={{ name: member }}
+                    />
+                    <PersonDisplay.Name>{agent}</PersonDisplay.Name>
+                    <PersonDisplay.OnBehalfOf>{member}</PersonDisplay.OnBehalfOf>
+                  </PersonDisplay>
+                  <Constrain flex="none">
+                    <Text size="sm" tone="muted">
+                      2h ago
+                    </Text>
+                  </Constrain>
+                </Cluster>
+                <Text size="sm">Scheduled a demo with Acme</Text>
+              </Stack>
+            ))}
           </Stack>
         </InputExample>
       </Example>

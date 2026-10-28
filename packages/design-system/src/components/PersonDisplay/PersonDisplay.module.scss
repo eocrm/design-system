@@ -15,6 +15,14 @@
   // carried this for the case it names; every PersonDisplay needs it.
   max-width: 100%;
 
+  // The other half of that clamp, for a PersonDisplay that is itself a FLEX
+  // ITEM (an activity row: IconTile + PersonDisplay + timestamp in a nowrap
+  // Cluster). A flex item's automatic minimum is its min-content width — the
+  // whole nowrap agent row — so `max-width` alone never got a chance: measured
+  // in Chromium at 360px, a long agent + member overflowed by 36px and crushed
+  // the IconTile to 0px. Intrinsic sizing like `max-width`, not placement.
+  min-width: 0;
+
   // Size-keyed gap — descriptive text doesn't need to crowd the avatar.
   // sm tightens; md and lg share the same outer gap.
   &[data-size='sm'] {
@@ -70,8 +78,8 @@
 // room on the block axis would need padding + a compensating negative
 // `margin`, which stylelint's property-disallowed-list bans in component
 // modules. A Name `href` is its own clip box, so its ring is outside the clip;
-// a Link in the member box sits at the clip's inline end, so that box pads
-// its end by the ring's extent.
+// a Link in the member box is flush with both clip edges, so that box pads
+// both inline ends by the ring's extent (see `.onBehalfOfMember`).
 .agentRow {
   display: flex;
   align-items: baseline;
@@ -98,14 +106,20 @@
 }
 
 // The floor sits on the element holding the text, so `ch` is the member
-// text's own; the ring padding is added on top so border-box can't eat it.
+// text's own; the ring padding (both ends) is added on top so border-box
+// can't eat it. A Link here is flush with both clip edges: measured in
+// Chromium, end-only padding clipped its whole 4px start band. With both ends
+// padded an untruncated Link keeps its full ring. A TRUNCATED Link still loses
+// its end band — the Link itself runs past the clip, so no padding can reach
+// its far edge; the start, top and bottom bands stay whole.
 .onBehalfOfMember {
   display: block;
   flex-shrink: 100;
   min-width: calc(
-    var(--person-display-on-behalf-of-member-min-width) + var(--ring-width) + var(--ring-offset)
+    var(--person-display-on-behalf-of-member-min-width) + 2 *
+      (var(--ring-width) + var(--ring-offset))
   );
-  padding-inline-end: calc(var(--ring-width) + var(--ring-offset));
+  padding-inline: calc(var(--ring-width) + var(--ring-offset));
   overflow: clip visible;
   text-overflow: ellipsis;
   white-space: nowrap;

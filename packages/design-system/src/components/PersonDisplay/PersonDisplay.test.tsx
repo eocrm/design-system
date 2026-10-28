@@ -260,6 +260,15 @@ describe('PersonDisplay stylesheet — self-containment (#527)', () => {
     expect(decl(rule('.root'), 'max-width')).toMatchObject({ value: '100%' });
   });
 
+  // As a flex-row item (an activity row: IconTile + PersonDisplay + timestamp)
+  // the root's automatic minimum is its min-content width — the whole nowrap
+  // agent row. Measured in Chromium at 360px with a long agent + member: the
+  // row overflowed by 36px and crushed the IconTile to 0px. `min-width: 0`
+  // lets the root shrink so its own truncation takes over.
+  it('the root can shrink below its min-content as a flex item', () => {
+    expect(decl(rule('.root'), 'min-width')).toMatchObject({ value: '0' });
+  });
+
   // The INLINE axis only, and the order matters: `overflow` is x-then-y, so
   // `visible clip` clips the block axis instead — verified in Chromium, where
   // it reports `overflow-x: visible`. #527 is a horizontal escape, and the
@@ -526,15 +535,18 @@ describe('PersonDisplay — AgentAvatar + OnBehalfOf (#717)', () => {
     );
 
     // The floor is set on the element holding the text (so `ch` is its font),
-    // and the ring padding is added on top so border-box can't eat it. A Link
-    // in the member box is flush with the clip's inline end; the padding
-    // keeps its trailing ring band painted.
-    it('the member box keeps a ch floor plus ring room at its inline end', () => {
+    // and the ring padding (both ends) is added on top so border-box can't eat
+    // it. A Link in the member box is flush with BOTH clip edges; measured in
+    // Chromium with end-only padding, the start band was clipped by its full
+    // 4px. Padding both inline ends keeps an untruncated Link's ring whole.
+    it('the member box keeps a ch floor plus ring room at both inline ends', () => {
       const ring = 'var(--ring-width) + var(--ring-offset)';
-      expect(decls('.onBehalfOfMember')).toMatchObject({
-        'min-width': `calc(var(--person-display-on-behalf-of-member-min-width) + ${ring})`,
-        'padding-inline-end': `calc(${ring})`,
+      const member = decls('.onBehalfOfMember');
+      expect(member).toMatchObject({
+        'min-width': `calc(var(--person-display-on-behalf-of-member-min-width) + 2 * (${ring}))`,
+        'padding-inline': `calc(${ring})`,
       });
+      expect(member['padding-inline-end']).toBeUndefined();
     });
 
     it('declares the row tokens', () => {
