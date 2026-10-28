@@ -6,8 +6,11 @@ import { Avatar, type AvatarSize } from './Avatar';
 import avatarStyles from './Avatar.module.scss';
 import styles from './AgentAvatar.module.scss';
 
+/** The member an agent acts for, shown as a badge on the tile. */
 export interface AgentAvatarMember {
+  /** Member's full name; drives the badge initials and the accessible name. */
   name: string;
+  /** Member's photo URL; initials are shown when omitted or it fails to load. */
   src?: string;
 }
 
@@ -17,7 +20,7 @@ export interface AgentAvatarProps extends HTMLAttributes<HTMLSpanElement> {
    * like `Avatar`). Unused when `decorative`.
    */
   name: string;
-  /** Agent mark, rendered monochrome in the tile. Defaults to a lucide `Bot`. */
+  /** Agent mark, inherits `currentColor` (a neutral foreground), so pass a glyph drawn with `fill`/`stroke="currentColor"`; marks with hard-coded fills keep their colours (the app's responsibility). Defaults to a lucide `Bot`. */
   mark?: ReactNode;
   /**
    * The member the agent acts for. Omit for an agent alone (no badge); `null`
@@ -63,7 +66,7 @@ export const AgentAvatar = forwardRef<HTMLSpanElement, AgentAvatarProps>(functio
 ) {
   const t = useTranslation();
   const agent = name.trim() === '' ? '?' : name.trim();
-  const memberName = member?.name.trim() ?? '';
+  const memberName = member?.name?.trim() ?? '';
   const erased = member === null || (member !== undefined && memberName === '');
 
   const label = erased

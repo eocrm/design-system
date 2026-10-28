@@ -146,13 +146,17 @@ function useAgentRow(): boolean {
 
 /**
  * Children as one plain string when they are text only: a string, a number,
- * or an array of them (JSX `{first} {last}`). Otherwise undefined.
+ * or an array of them (nullish and boolean entries ignored) (JSX `{first} {last}`). Otherwise undefined.
  */
 function plainText(children: ReactNode): string | undefined {
   const isText = (c: unknown): c is string | number =>
     typeof c === 'string' || typeof c === 'number';
   if (isText(children)) return String(children);
-  if (Array.isArray(children) && children.every(isText)) return children.join('');
+  if (Array.isArray(children)) {
+    // null, undefined and booleans render as nothing, so they do not make it non-text.
+    const parts = children.filter((c) => c != null && typeof c !== 'boolean');
+    if (parts.every(isText)) return parts.join('');
+  }
   return undefined;
 }
 
@@ -374,6 +378,9 @@ const PersonDisplayRoot = forwardRef<HTMLDivElement, PersonDisplayProps>(functio
   // Only with an OnBehalfOf: Name + OnBehalfOf share one row, first in the
   // column. Without one the column keeps its source order and no wrapper.
   if (agentRow) {
+    // Name always before OnBehalfOf, whatever the written order (stable sort).
+    const isOnBehalfOf = (c: ReactNode) => isValidElement(c) && c.type === PersonDisplayOnBehalfOf;
+    rowChildren.sort((a, b) => Number(isOnBehalfOf(a)) - Number(isOnBehalfOf(b)));
     columnChildren = [
       <div key="agent-row" className={styles.agentRow}>
         {rowChildren}

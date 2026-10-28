@@ -466,6 +466,38 @@ describe('PersonDisplay — AgentAvatar + OnBehalfOf (#717)', () => {
     expect(screen.getByTitle('for a former member')).toHaveTextContent('for a former member');
   });
 
+  it('nullish parts inside array children render as nothing: all missing is the former-member copy', () => {
+    render(
+      <PersonDisplay>
+        <PersonDisplay.Name>{AGENT}</PersonDisplay.Name>
+        <PersonDisplay.OnBehalfOf>{[undefined, ' ', undefined]}</PersonDisplay.OnBehalfOf>
+      </PersonDisplay>,
+    );
+    expect(screen.getByTitle('for a former member')).toHaveTextContent('for a former member');
+  });
+
+  it('one missing part still yields the title', () => {
+    render(
+      <PersonDisplay>
+        <PersonDisplay.Name>{AGENT}</PersonDisplay.Name>
+        <PersonDisplay.OnBehalfOf>{['Ada', ' ', null]}</PersonDisplay.OnBehalfOf>
+      </PersonDisplay>,
+    );
+    expect(screen.getByTitle('for Ada')).toBeInTheDocument();
+  });
+
+  it('Name renders before OnBehalfOf whatever the child order', () => {
+    const { container } = render(
+      <PersonDisplay>
+        <PersonDisplay.OnBehalfOf>Ada Scout</PersonDisplay.OnBehalfOf>
+        <PersonDisplay.Name>{AGENT}</PersonDisplay.Name>
+      </PersonDisplay>,
+    );
+    expect(container.querySelector('[class*="agentRow"]')?.textContent).toBe(
+      `${AGENT} for Ada Scout`,
+    );
+  });
+
   it('no title when children are not a string', () => {
     const { container } = render(
       <PersonDisplay>

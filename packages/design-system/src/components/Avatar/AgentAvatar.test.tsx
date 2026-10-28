@@ -59,6 +59,15 @@ describe('AgentAvatar', () => {
     expect(badge).toHaveTextContent('AL');
   });
 
+  it('a null name from untyped data is an erased member', () => {
+    render(
+      <AgentAvatar name="Claude Code" member={{ name: null } as unknown as { name: string }} />,
+    );
+    expect(
+      screen.getByRole('img', { name: 'Claude Code, on behalf of a former member' }),
+    ).toBeInTheDocument();
+  });
+
   it.each([null, { name: '' }, { name: '  ' }])('erased via %j', (member) => {
     const { container } = render(<AgentAvatar name="Claude Code" member={member} />);
     expect(container.querySelector(`${BADGE}[data-erased]`)).not.toBeNull();

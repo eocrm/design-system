@@ -1,9 +1,9 @@
 # `<AgentAvatar>` — AI agent tile with the acting member
 
-**TL;DR:** a monochrome tile with the agent's mark, plus a badge of the member it acts for. Use it where the agent is the actor and stands alone, such as a Thread or activity node. In a row with a name, use `PersonDisplay.AgentAvatar` instead (see [PersonDisplay](PersonDisplay.md)).
+**TL;DR:** a neutral tile with the agent's mark, plus a badge of the member it acts for. Use it where the agent is the actor and stands alone, such as a Thread or activity node. In a row with a name, use `PersonDisplay.AgentAvatar` instead (see [PersonDisplay](PersonDisplay.md)).
 
 ```tsx
-// Agent acting for a member: monochrome tile + the member's avatar as a badge
+// Agent acting for a member: neutral tile + the member's avatar as a badge
 <AgentAvatar name="Scout" member={{ name: 'Sarah Chen', src: '/avatars/sarah.png' }} />
 
 // Agent alone (no `member`): no badge
@@ -12,7 +12,7 @@
 // Erased member (`null` or an empty name): placeholder badge, "former member" label
 <AgentAvatar name="Scout" member={null} />
 
-// Custom mark; rendered monochrome in the tile
+// Custom mark; inherits currentColor in the tile
 <AgentAvatar name="Scout" mark={<ScoutLogo />} member={{ name: 'Sarah Chen' }} size="lg" />
 
 // Thread node beside a visible byline that already names both: decorative
@@ -33,7 +33,7 @@
 | Prop | Type | Required | Description |
 |---|---|---|---|
 | `name` | `string` | yes | Agent label; drives the accessible name (an empty label reads as "?", like `Avatar`). Unused when `decorative`. |
-| `mark` | `ReactNode` | no | Agent mark, rendered monochrome in the tile. Defaults to a lucide `Bot`. |
+| `mark` | `ReactNode` | no | Agent mark, inherits `currentColor` (a neutral foreground), so pass a glyph drawn with `fill`/`stroke="currentColor"`; marks with hard-coded fills keep their colours (the app's responsibility). Defaults to a lucide `Bot`. |
 | `member` | `AgentAvatarMember \| null` | no | The member the agent acts for. Omit for an agent alone (no badge); `null` or an empty name for an erased member (placeholder badge). |
 | `size` | `'inline' \| 'sm' \| 'md' \| 'lg' \| 'xl'` | no | Diameter, same scale as `Avatar`. The member badge is hidden at `inline`. |
 | `decorative` | `boolean` | no | Hide the avatar from assistive tech (`aria-hidden`, no role or label). Use when visible text next to it already names the agent and the member, e.g. a Thread node beside a "Scout for Sarah Chen" byline; otherwise both are announced. Without such text keep the default: a `role="img"` named "{agent}, on behalf of {member}". `PersonDisplay.AgentAvatar` always sets it. Defaults to `false`. |
@@ -54,5 +54,5 @@
 
 - ❌ Leaving the default `role="img"` beside a visible "Scout for Sarah Chen" byline. Screen readers announce the agent and member twice; pass `decorative`.
 - ❌ `decorative` with no visible text naming the agent. The avatar then says nothing at all.
-- ❌ Recolouring or tinting a brand `mark`. It renders monochrome on purpose; pass the plain glyph.
+- ❌ Passing a multi-colour brand `mark` and expecting it to be neutral. The tile only sets `currentColor`: inherits `currentColor` (a neutral foreground); pass a glyph drawn with `fill`/`stroke="currentColor"`. Marks with hard-coded fills keep their colours, which is the app's responsibility.
 - ❌ Deriving the brand `mark` from a client-chosen name. Pick the mark from a trusted, server-known agent identity, or an agent can impersonate another product.

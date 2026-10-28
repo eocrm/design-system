@@ -43,7 +43,7 @@
 | Prop | Type | Required | Description |
 |---|---|---|---|
 | `name` | `string` | yes | Agent label. Not announced here: the avatar is decorative, and the visible `PersonDisplay.Name` (pass the same label) names the agent. |
-| `mark` | `ReactNode` | no | Agent mark, rendered monochrome in the tile. Defaults to a lucide `Bot`. |
+| `mark` | `ReactNode` | no | Agent mark, inherits `currentColor` (a neutral foreground), so pass a glyph drawn with `fill`/`stroke="currentColor"`; marks with hard-coded fills keep their colours (the app's responsibility). Defaults to a lucide `Bot`. |
 | `member` | `AgentAvatarMember \| null` | no | The member the agent acts for. Omit for an agent alone (no badge); `null` or an empty name for an erased member (placeholder badge). |
 | …native | | | plus native HTML attributes |
 
@@ -85,9 +85,9 @@
 
 <!-- props:end -->
 
-- Compound: `<PersonDisplay>` + `<PersonDisplay.Avatar>` + `<PersonDisplay.Name>` + repeating `<PersonDisplay.Description>`.
+- Compound: `<PersonDisplay>` + `<PersonDisplay.Avatar>` (or `<PersonDisplay.AgentAvatar>`) + `<PersonDisplay.Name>` (+ `<PersonDisplay.OnBehalfOf>`) + repeating `<PersonDisplay.Description>`. Inside the agent row, Name always renders before OnBehalfOf whatever the child order.
 - `<PersonDisplay.Name href="...">` renders the name as a `<Link variant="subtle">` (real `<a>`) — `Link`'s `variant="subtle"` is **not** deprecated, unlike `Text`/`Title`'s `tone="subtle"`; do not "fix" it. Omit `href` for read-only displays (audit actor, activity timeline).
-- **A Description clips itself on the inline axis** (`overflow-x: clip`, `white-space: nowrap`), so a long unbroken value cannot paint outside a narrow container such as a DataTable stacked card. Put **interactive** content in `<PersonDisplay.Name href=…>`, which does not clip: a control flush with the Description line's left or right edge loses those bands of its focus ring, and that residual is recorded in `tests/focus-ring-geometry.baseline.json` rather than hidden. The block axis is deliberately left `visible`, so a ring is never clipped top or bottom.
+- **A Description clips itself on the inline axis** (`overflow-x: clip`, `white-space: nowrap`), so a long unbroken value cannot paint outside a narrow container such as a DataTable stacked card. Put **interactive** content in `<PersonDisplay.Name href=…>`, which does not clip (except inside the agent row, where the Name clips on the inline axis like the OnBehalfOf next to it): a control flush with the Description line's left or right edge loses those bands of its focus ring, and that residual is recorded in `tests/focus-ring-geometry.baseline.json` rather than hidden. The block axis is deliberately left `visible`, so a ring is never clipped top or bottom.
 - All Avatar props (`name`, `src`, `status`, `tooltip`) flow through `<PersonDisplay.Avatar>` except `size`.
 - **Use for the standard "person row" — Avatar + name + 0–2 muted lines.** Not for Avatar-only badges (use `<Avatar>`), avatar stacks (use `<AvatarGroup>`), or click-anywhere row interactions (wrap PersonDisplay in your own Link).
 
@@ -148,6 +148,6 @@
 **Agent anti-patterns**
 
 - ❌ Using the agent parts for a human. Agents only; a person is `PersonDisplay.Avatar`.
-- ❌ Recolouring or tinting a brand `mark`. It renders monochrome on purpose; pass the plain glyph.
+- ❌ Passing a multi-colour brand `mark` and expecting it to be neutral. The tile only sets `currentColor`: inherits `currentColor` (a neutral foreground); pass a glyph drawn with `fill`/`stroke="currentColor"`. Marks with hard-coded fills keep their colours, which is the app's responsibility.
 - ❌ Deriving the brand `mark` from a client-chosen name. Pick the mark from a trusted, server-known agent identity, or an agent can impersonate another product.
 - ❌ Adding a "bot" / "AI" kind chip next to the Name. The tile and "for {member}" already signal it.
