@@ -486,6 +486,26 @@ describe('PersonDisplay — AgentAvatar + OnBehalfOf (#717)', () => {
     expect(screen.getByTitle('for Ada')).toBeInTheDocument();
   });
 
+  it('a boolean child is the former-member copy, not a bare "for"', () => {
+    render(
+      <PersonDisplay>
+        <PersonDisplay.Name>{AGENT}</PersonDisplay.Name>
+        <PersonDisplay.OnBehalfOf>{true}</PersonDisplay.OnBehalfOf>
+      </PersonDisplay>,
+    );
+    expect(screen.getByTitle('for a former member')).toBeInTheDocument();
+  });
+
+  it('a Name whose text parts are all missing gets no blank title', () => {
+    const { container } = render(
+      <PersonDisplay>
+        <PersonDisplay.Name>{[undefined, ' ', null]}</PersonDisplay.Name>
+        <PersonDisplay.OnBehalfOf>Ada</PersonDisplay.OnBehalfOf>
+      </PersonDisplay>,
+    );
+    expect(container.querySelector('[title=" "]')).toBeNull();
+  });
+
   it('Name renders before OnBehalfOf whatever the child order', () => {
     const { container } = render(
       <PersonDisplay>

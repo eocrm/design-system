@@ -148,6 +148,6 @@
 **Agent anti-patterns**
 
 - ❌ Using the agent parts for a human. Agents only; a person is `PersonDisplay.Avatar`.
-- ❌ Passing a multi-colour brand `mark` and expecting it to be neutral. The tile only sets `currentColor`: inherits `currentColor` (a neutral foreground); pass a glyph drawn with `fill`/`stroke="currentColor"`. Marks with hard-coded fills keep their colours, which is the app's responsibility.
+- ❌ Passing a multi-colour brand `mark` and expecting it to come out neutral. The tile only sets `color` (a neutral foreground); draw the glyph with `fill`/`stroke="currentColor"`. Hard-coded fills keep their colours, which is the app's responsibility.
 - ❌ Deriving the brand `mark` from a client-chosen name. Pick the mark from a trusted, server-known agent identity, or an agent can impersonate another product.
 - ❌ Adding a "bot" / "AI" kind chip next to the Name. The tile and "for {member}" already signal it.

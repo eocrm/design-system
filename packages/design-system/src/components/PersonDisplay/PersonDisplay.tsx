@@ -146,7 +146,8 @@ function useAgentRow(): boolean {
 
 /**
  * Children as one plain string when they are text only: a string, a number,
- * or an array of them (nullish and boolean entries ignored) (JSX `{first} {last}`). Otherwise undefined.
+ * or an array of them such as JSX `{first} {last}` (nullish and boolean
+ * entries ignored). Otherwise undefined.
  */
 function plainText(children: ReactNode): string | undefined {
   const isText = (c: unknown): c is string | number =>
@@ -223,7 +224,8 @@ const PersonDisplayName = forwardRef<HTMLElement, PersonDisplayNameProps>(
   function PersonDisplayName({ href, className, children, ...rest }, ref) {
     const size = useSize();
     // In the agent row the Name may ellipsise, so plain text carries its full text.
-    const title = useAgentRow() ? plainText(children) : undefined;
+    const plain = useAgentRow() ? plainText(children) : undefined;
+    const title = plain?.trim() ? plain : undefined;
     // inline: bare text, so it inherits the row's size, weight and colour.
     const content =
       size === 'inline' ? (
@@ -276,7 +278,7 @@ const PersonDisplayOnBehalfOf = forwardRef<HTMLSpanElement, PersonDisplayOnBehal
     const t = useTranslation();
     const prefix = t('personDisplay.onBehalfOfPrefix');
     const plain = plainText(children);
-    const former = children == null || children === false || plain?.trim() === '';
+    const former = children == null || typeof children === 'boolean' || plain?.trim() === '';
     const text = former
       ? t('personDisplay.onBehalfOfFormer')
       : plain !== undefined

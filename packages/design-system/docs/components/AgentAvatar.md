@@ -54,5 +54,5 @@
 
 - ❌ Leaving the default `role="img"` beside a visible "Scout for Sarah Chen" byline. Screen readers announce the agent and member twice; pass `decorative`.
 - ❌ `decorative` with no visible text naming the agent. The avatar then says nothing at all.
-- ❌ Passing a multi-colour brand `mark` and expecting it to be neutral. The tile only sets `currentColor`: inherits `currentColor` (a neutral foreground); pass a glyph drawn with `fill`/`stroke="currentColor"`. Marks with hard-coded fills keep their colours, which is the app's responsibility.
+- ❌ Passing a multi-colour brand `mark` and expecting it to come out neutral. The tile only sets `color` (a neutral foreground); draw the glyph with `fill`/`stroke="currentColor"`. Hard-coded fills keep their colours, which is the app's responsibility.
 - ❌ Deriving the brand `mark` from a client-chosen name. Pick the mark from a trusted, server-known agent identity, or an agent can impersonate another product.
