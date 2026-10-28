@@ -42,7 +42,7 @@
 <!-- prettier-ignore -->
 | Prop | Type | Required | Description |
 |---|---|---|---|
-| `name` | `string` | yes | Agent label; drives the accessible name. |
+| `name` | `string` | yes | Agent label. Not announced here: the avatar is decorative, and the visible `PersonDisplay.Name` (pass the same label) names the agent. |
 | `mark` | `ReactNode` | no | Agent mark, rendered monochrome in the tile. Defaults to a lucide `Bot`. |
 | `member` | `AgentAvatarMember \| null` | no | The member the agent acts for. Omit for an agent alone (no badge); `null` or an empty name for an erased member (placeholder badge). |
 | …native | | | plus native HTML attributes |
@@ -80,7 +80,7 @@
 <!-- prettier-ignore -->
 | Prop | Type | Required | Description |
 |---|---|---|---|
-| `children` | `ReactNode` | no | The member the agent acts for, rendered after a muted "for" prefix. A plain name, or a `<Link>` to the member. Omit (or pass an empty string) when the member was erased: renders "for a former member". The root span is `display: contents` (its prefix and member join the Name's row), so box styles passed via `className`/`style` on it don't paint. |
+| `children` | `ReactNode` | no | The member the agent acts for, rendered after a muted "for" prefix. A plain name, or a `<Link>` to the member. Omit (or pass an empty string) when the member was erased: renders "for a former member". Plain-text children (a string, a number, or text-only nodes like `{first} {last}`) give the member box a hover `title` of the full "for {member}" text (the erased copy when erased), which shadows a consumer `title` on OnBehalfOf; a `<Link>` or other element child gets none. The root span is `display: contents` (its prefix and member join the Name's row), so box styles passed via `className`/`style` on it don't paint. |
 | …native | | | plus native `<span>` attributes |
 
 <!-- props:end -->
@@ -137,10 +137,12 @@
 ```
 
 - **Three member states** (pass the same state to `AgentAvatar.member` and `OnBehalfOf`): a member (`{ name, src? }` / name child) shows the badge and "for {member}"; `member` omitted = agent alone (no badge, no `OnBehalfOf`); `member={null}` or an empty name = erased, placeholder badge and "for a former member".
-- `PersonDisplay.AgentAvatar` takes the `AgentAvatar` props minus `size` (from the root) and `decorative`. It is **decorative** inside PersonDisplay (`aria-hidden`): the visible Name and `OnBehalfOf` already carry both identities, so nothing is announced twice. The standalone `AgentAvatar` is `role="img"` (see [Avatar](Avatar.md)).
+- `PersonDisplay.AgentAvatar` takes the `AgentAvatar` props minus `size` (from the root) and `decorative`. It is **decorative** inside PersonDisplay (`aria-hidden`): the visible Name and `OnBehalfOf` already carry both identities, so nothing is announced twice. The standalone `AgentAvatar` is `role="img"` unless you pass `decorative` (see [AgentAvatar](AgentAvatar.md)).
 - `OnBehalfOf` children: a plain name or a `<Link>` to the member. The "for" prefix is localized.
-- Name and `OnBehalfOf` share one truncating row: the prefix never shrinks, the member ellipsises down to roughly 4ch, then the Name ellipsises. Descriptions sit below.
-- `OnBehalfOf`'s root is `display: contents`, so box styles (background, border, padding) passed via `className` / `style` on it don't paint; style the child you pass. Its hover `title` is set to the member's name and overrides a consumer `title`.
+- Name and `OnBehalfOf` share one truncating row: the prefix never shrinks, the member ellipsises down to roughly 6ch, then the Name ellipsises. Descriptions sit below.
+- A `<Link>` in `OnBehalfOf` keeps its whole focus ring: the member box pads both inline ends by the ring's extent. Only a member Link that is itself truncated loses its trailing ring band, because the Link runs past the clip edge; its start, top and bottom bands stay.
+- As a flex item (e.g. an activity row `<Cluster wrap={false}>` of IconTile + PersonDisplay + timestamp) the root shrinks (`min-width: 0`) and truncates instead of overflowing. Its siblings shrink too unless you keep them whole: wrap them in `<Constrain flex="none">`.
+- `OnBehalfOf`'s root is `display: contents`, so box styles (background, border, padding) passed via `className` / `style` on it don't paint; style the child you pass. When its children are plain text (a string, a number, or text-only nodes like `{first} {last}`), or the member is erased, the member box gets a hover `title` with the full "for {member}" text (or the erased copy). Over the member box that shadows a consumer `title` passed to `OnBehalfOf`. A `<Link>` or other element child gets no `title`.
 - `inline` hides the member badge and keeps the agent on one text line.
 
 **Agent anti-patterns**
