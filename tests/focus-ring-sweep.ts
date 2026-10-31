@@ -202,6 +202,11 @@ export const sweepScript = (rootSelector: string | null = null) => `
     // Only real overflow ancestors clip. NOT the viewport: what is below the
     // fold is a scroll position, not a lost ring.
     let clip = { top: -Infinity, left: -Infinity, right: Infinity, bottom: Infinity };
+    // Which ancestor set each edge of the clip — the element that eats that
+    // band. It goes into the finding key (#720): a ring's own classes alone
+    // let two Links on one route share a key, so a fresh clip of one hid
+    // behind the other's baseline entry.
+    const clipper = { top: null, left: null, right: null, bottom: null };
     let revealUp = false;
     let revealDown = false;
     let revealLeft = false;
@@ -293,10 +298,12 @@ export const sweepScript = (rootSelector: string | null = null) => `
       // Exact, not a leniency: an inline-axis clip does not clip vertically.
       const clipsX = pcs.overflowX !== 'visible';
       const clipsY = pcs.overflowY !== 'visible';
-      if (clipsY && !revealUp) clip.top = Math.max(clip.top, r.top);
-      if (clipsY && !revealDown) clip.bottom = Math.min(clip.bottom, r.bottom);
-      if (clipsX && !revealLeft) clip.left = Math.max(clip.left, r.left);
-      if (clipsX && !revealRight) clip.right = Math.min(clip.right, r.right);
+      // Strict comparisons keep the INNERMOST ancestor on a tie, which is the
+      // one a reader goes to fix.
+      if (clipsY && !revealUp && r.top > clip.top) { clip.top = r.top; clipper.top = p; }
+      if (clipsY && !revealDown && r.bottom < clip.bottom) { clip.bottom = r.bottom; clipper.bottom = p; }
+      if (clipsX && !revealLeft && r.left > clip.left) { clip.left = r.left; clipper.left = p; }
+      if (clipsX && !revealRight && r.right < clip.right) { clip.right = r.right; clipper.right = p; }
     }
 
     // A focusable that is itself wholly outside its clip — inside a collapsed
@@ -319,7 +326,13 @@ export const sweepScript = (rootSelector: string | null = null) => `
       // A band with no area of its own is not a clip — skip it rather than
       // reporting every zero-height ring as lost.
       if (area(rect) === 0) continue;
-      if (area(intersect(rect, clip)) === 0) findings.set(stable(ring) + '|' + band, { key: stable(ring), band });
+      if (area(intersect(rect, clip)) !== 0) continue;
+      // A band is lost to the clip edge on its own side, except when the clip
+      // is pinched shut across it; then the opposite edge did it.
+      const opposite = { top: 'bottom', bottom: 'top', left: 'right', right: 'left' }[band];
+      const by = clipper[band] ?? clipper[opposite];
+      const key = stable(ring) + ' @ ' + (by ? mod(by) || by.tagName.toLowerCase() : '?');
+      findings.set(key + '|' + band, { key, band });
     }
   }
 

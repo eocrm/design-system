@@ -40,7 +40,7 @@
 - Native HTML attrs flow through (`name`, `value`, `required`, `form`, `autoFocus`, etc.). `FormData.getAll(name)` returns the array of checked values for same-`name` checkboxes.
 - forwardRef points at the native `<input>` so consumers can `.focus()` or programmatically set `.indeterminate`.
 
-- The native input owns all a11y (keyboard, screen reader, form submission); the custom paint owns the look. States: checked / unchecked / indeterminate / disabled / invalid.
+- The native input owns all a11y (keyboard, screen reader, form submission); the custom paint owns the look. States: checked / unchecked / indeterminate / disabled / invalid. `aria-disabled="true"` gets the disabled look and ignores clicks/Space but stays focusable — use it for a busy state (a write in flight) where real `disabled` would drop keyboard focus.
 
 #### When NOT to use
 

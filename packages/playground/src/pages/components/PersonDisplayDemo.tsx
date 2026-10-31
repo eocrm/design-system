@@ -504,11 +504,9 @@ export function Demo() {
 
       <Example
         title="Agent — activity row"
-        description="Event IconTile, an inline PersonDisplay and a muted timestamp on one line, the action below. With a long label and member in 360px, the PersonDisplay truncates between the IconTile and timestamp (each wrapped in a no-flex Constrain so it keeps its size)."
+        description="Event IconTile, an inline PersonDisplay and a muted timestamp on one line, the action below. With a long label and member in 360px, the PersonDisplay truncates between the IconTile (fixed-size, never shrinks) and the timestamp (wrapped in a no-flex Constrain so it keeps its size)."
         code={`<Cluster gap="sm" align="center" wrap={false}>
-  <Constrain flex="none">
-    <IconTile size="xs" icon={<CalendarPlus />} />
-  </Constrain>
+  <IconTile size="xs" icon={<CalendarPlus />} />
   <PersonDisplay size="inline">…</PersonDisplay>
   <Constrain flex="none">
     <Text size="sm" tone="muted">2h ago</Text>
@@ -524,10 +522,9 @@ export function Demo() {
             ].map(({ agent, member }) => (
               <Stack key={agent} gap="xs">
                 <Cluster gap="sm" align="center" wrap={false}>
-                  {/* flex="none": only the PersonDisplay gives way */}
-                  <Constrain flex="none">
-                    <IconTile size="xs" icon={<CalendarPlus />} />
-                  </Constrain>
+                  {/* IconTile never shrinks; the timestamp's flex="none" Constrain
+                      leaves the PersonDisplay as the only thing that gives way */}
+                  <IconTile size="xs" icon={<CalendarPlus />} />
                   <PersonDisplay size="inline">
                     <PersonDisplay.AgentAvatar
                       name={agent}

@@ -3,6 +3,8 @@
 .tile {
   display: inline-grid;
   place-items: center;
+  // Fixed-size tile: never squeezed by a nowrap flex row (#719), like Avatar.
+  flex-shrink: 0;
   background: var(--icon-tile-bg, transparent);
   color: var(--icon-tile-fg, currentColor);
 }

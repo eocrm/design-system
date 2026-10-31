@@ -279,6 +279,28 @@ export function Demo() {
       </Example>
 
       <Example
+        title="Busy (aria-disabled)"
+        description="While a write is in flight, set `aria-disabled` to `true` instead of `disabled`: the box mutes and ignores clicks and Space, but keeps keyboard focus (real `disabled` drops it)."
+        code={`import { Checkbox, Stack } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Stack gap="xs">
+      <Checkbox aria-disabled="true" checked label="Saving… (checked)" />
+      <Checkbox aria-disabled="true" checked={false} label="Saving… (unchecked)" />
+    </Stack>
+  );
+}`}
+      >
+        <InputExample>
+          <Stack gap="xs">
+            <Checkbox aria-disabled="true" checked label="Saving… (checked)" />
+            <Checkbox aria-disabled="true" checked={false} label="Saving… (unchecked)" />
+          </Stack>
+        </InputExample>
+      </Example>
+
+      <Example
         title="Invalid"
         description="`invalid` adds the danger border + sets `aria-invalid='true'`. Pair with a visible error message and `aria-describedby`."
         code={`import { Checkbox, Stack } from '@eocrm/design-system';
