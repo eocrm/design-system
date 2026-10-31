@@ -35,7 +35,10 @@ const composerRef = useRef<HTMLTextAreaElement>(null);
           maxRows={4}
           onKeyDown={(e) => {
             // Enter sends, Shift+Enter is a newline; never send mid-IME-composition.
-            if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) send(e);
+            if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+              e.preventDefault(); // no stray newline after the draft is cleared
+              send(e);
+            }
           }}
         />
       </Constrain>
@@ -80,6 +83,8 @@ const composerRef = useRef<HTMLTextAreaElement>(null);
 - **Focus.** Opening moves focus to `initialFocusRef` (point it at the composer), else to the panel; focus already inside is left alone. Escape (inside the panel or on the launcher) and the close button close it and return focus to the launcher. A programmatic close returns focus only if it was inside the chat. An Escape a child already handled (`event.preventDefault()`, e.g. a menu closing itself) is ignored.
 - The close button's name is the `chatLauncher.close` i18n key (no label prop). `label` names your assistant and is the launcher's accessible name.
 - `ref`, `className`, `id` and other native attributes go to the panel; `role`, `hidden`, `aria-labelledby` and `tabIndex` always win.
+- **Closed means silent.** While closed, the `role="log"` sits in a `hidden` subtree, so replies that arrive then are not announced (and there is no unread badge). They are in view, at the bottom, when the chat is reopened. If a reply must reach the user while the chat is closed, announce it yourself (e.g. a `toast`).
+- **Toasts share the corner.** `ToastViewport` defaults to `bottom-right`, above the launcher's layer, so toasts would cover the launcher and the open panel's composer. On a page with a ChatLauncher, use `<ToastViewport position="top-right" />` (or another top position).
 - Size: `--chat-launcher-panel-width` (380px) × `--chat-launcher-panel-height` (560px), capped to the viewport minus `--chat-launcher-inset`.
 
 **When NOT to use:** page-level dialogs or forms that must block the page (use `Modal` / `Drawer`); content anchored to a trigger in the page (use `Popover`); notifications (use `toast`); more than one launcher per page.

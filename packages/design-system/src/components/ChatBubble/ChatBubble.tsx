@@ -5,7 +5,7 @@ import { VisuallyHidden } from '../VisuallyHidden';
 import { ChatBubbleList } from './ChatBubbleList';
 import styles from './ChatBubble.module.scss';
 
-/** Who a bubble is from: `member` (the signed-in user, right-aligned) or `assistant` (left-aligned). */
+/** Who a bubble is from: `member` (the signed-in user, aligned to the inline end) or `assistant` (aligned to the inline start). */
 export type ChatBubbleFrom = 'member' | 'assistant';
 
 export interface ChatBubbleProps extends HTMLAttributes<HTMLDivElement> {

@@ -185,4 +185,12 @@ describe('Checkbox', () => {
     await userEvent.click(screen.getByRole('checkbox'));
     expect(handle).toHaveBeenCalledWith(true, expect.anything());
   });
+
+  it('aria-disabled="true" keeps an indeterminate box mixed after a click (#724)', async () => {
+    render(<Checkbox label="Held" aria-disabled="true" indeterminate checked={false} />);
+    const input = screen.getByRole<HTMLInputElement>('checkbox');
+    await userEvent.click(input);
+    expect(input.indeterminate).toBe(true);
+    expect(input).not.toBeChecked();
+  });
 });

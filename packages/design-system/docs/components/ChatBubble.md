@@ -50,6 +50,6 @@ import { Button, ChatBubble } from '@eocrm/design-system';
 **Anti-patterns**
 
 - A `ChatBubble.List` without `aria-label`.
-- Wrapping each bubble in your own `role="list"`/`listitem` or overriding `role` on the list: ignored, and would break the log contract.
+- Overriding `role` on `ChatBubble.List`: ignored — it is always `role="log"`. Don't wrap the bubbles in your own `role="list"`/`listitem` markup either: a list inside the log adds noise ("list, 3 items") to every announcement.
 - Setting `aria-busy` or building your own typing indicator: use `pending`.
 - Re-adding a "You:" / "Assistant:" prefix in `children`: it would be read twice.

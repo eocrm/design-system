@@ -1940,11 +1940,11 @@ export const SCHEMATICS: Record<string, ReactNode> = {
     <Dashed w={200} h={92} style={{ position: 'relative' }}>
       <Panel
         w={110}
-        h={52}
+        h={50}
         style={{
           position: 'absolute',
-          right: 40,
-          bottom: 8,
+          right: 8,
+          bottom: 36,
           display: 'flex',
           flexDirection: 'column',
           gap: 6,

@@ -132,7 +132,12 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
   const ariaDisabled = props['aria-disabled'] === true || props['aria-disabled'] === 'true';
 
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
-    if (ariaDisabled) return;
+    if (ariaDisabled) {
+      // The click already cleared the native `indeterminate`, and React's
+      // controlled restore only puts `checked` back: re-assert the dash.
+      event.target.indeterminate = indeterminate ?? false;
+      return;
+    }
     const next = event.target.checked;
     if (!isControlled) setInternalChecked(next);
     onChange?.(next, event);
