@@ -14,6 +14,8 @@ export type ComponentName =
   | 'ButtonGroup'
   | 'Calendar'
   | 'Card'
+  | 'ChatBubble'
+  | 'ChatLauncher'
   | 'Checkbox'
   | 'CircularProgress'
   | 'Cluster'
@@ -120,8 +122,6 @@ export type ComponentName =
   | 'Timeline'
   | 'Title'
   | 'Toast'
-  | 'ChatBubble'
-  | 'ChatLauncher'
   | 'Tooltip'
   | 'TopBar'
   | 'VisuallyHidden';

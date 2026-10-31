@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { MessageCircle, Send } from 'lucide-react';
-import { Button, ChatBubble, ChatLauncher, Cluster, Stack, Textarea } from '@eocrm/design-system';
+import { Button, ChatBubble, ChatLauncher, Cluster, Textarea } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -61,7 +61,13 @@ export function ChatLauncherDemo() {
         title="Live launcher"
         description="One live instance on this page (bottom-right). Send a message: a pending bubble appears, then a canned reply."
         code={`const [open, setOpen] = useState(false);
+const [draft, setDraft] = useState('');
+const [messages, setMessages] = useState<Msg[]>([]); // { id, from, text?, pending? }
 const composerRef = useRef<HTMLTextAreaElement>(null);
+
+// send(): append the member message + a pending assistant bubble,
+// clear the draft, then swap the pending bubble for the reply after ~1s.
+const send = (e?: FormEvent) => { /* … */ };
 
 <ChatLauncher
   label="Ask Scout"
@@ -73,15 +79,30 @@ const composerRef = useRef<HTMLTextAreaElement>(null);
   footer={
     <form onSubmit={send}>
       <Cluster gap="sm" align="end">
-        <Textarea ref={composerRef} aria-label="Message" minRows={1} maxRows={4} autoGrow value={draft} onChange={(e) => setDraft(e.target.value)} />
-        <Button type="submit" iconOnly aria-label="Send"><Send size={16} aria-hidden="true" /></Button>
+        <Textarea
+          ref={composerRef}
+          aria-label="Message"
+          minRows={1}
+          maxRows={4}
+          autoGrow
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) send(e);
+          }}
+        />
+        <Button type="submit" iconOnly aria-label="Send">
+          <Send size={16} aria-hidden="true" />
+        </Button>
       </Cluster>
     </form>
   }
 >
   <ChatBubble.List aria-label="Conversation with Scout">
     {messages.map((m) => (
-      <ChatBubble key={m.id} from={m.from} pending={m.pending}>{m.text}</ChatBubble>
+      <ChatBubble key={m.id} from={m.from} pending={m.pending}>
+        {m.text}
+      </ChatBubble>
     ))}
   </ChatBubble.List>
 </ChatLauncher>`}
@@ -89,19 +110,6 @@ const composerRef = useRef<HTMLTextAreaElement>(null);
         <Button variant="secondary" onClick={() => setOpen(true)}>
           Open chat
         </Button>
-      </Example>
-
-      <Example
-        title="Behaviour"
-        description="Non-modal: the page stays interactive. Escape or the close button closes it and returns focus to the launcher; the body stays mounted while closed and follows new messages only when scrolled to the bottom."
-        code={`<ChatLauncher label="Ask Scout" title="Scout" icon={icon} open={open} onOpenChange={setOpen}>
-  <ChatBubble.List aria-label="Conversation">…</ChatBubble.List>
-</ChatLauncher>`}
-      >
-        <Stack gap="xs">
-          <span>Required: label, title, icon, open, onOpenChange.</span>
-          <span>Optional: footer (composer), initialFocusRef.</span>
-        </Stack>
       </Example>
 
       <ChatLauncher
@@ -123,7 +131,7 @@ const composerRef = useRef<HTMLTextAreaElement>(null);
                 value={draft}
                 onChange={(e) => setDraft(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey) send(e);
+                  if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) send(e);
                 }}
               />
               <Button type="submit" iconOnly aria-label="Send">
