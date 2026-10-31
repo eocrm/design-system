@@ -503,6 +503,10 @@ export interface Messages {
     /** Visible text when the member was erased. */
     onBehalfOfFormer: string;
   };
+  chatLauncher: {
+    /** aria-label on the chat panel's header close (×) button. */
+    close: string;
+  };
   chatBubble: {
     /** Visually hidden prefix naming the speaker of a member bubble; a colon follows. */
     member: string;

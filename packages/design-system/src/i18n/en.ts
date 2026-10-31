@@ -236,6 +236,9 @@ export const en: Messages = {
     onBehalfOfPrefix: 'for',
     onBehalfOfFormer: 'for a former member',
   },
+  chatLauncher: {
+    close: 'Close chat',
+  },
   chatBubble: {
     member: 'You said',
     assistant: 'Assistant said',

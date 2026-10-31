@@ -1,0 +1,68 @@
+@use './ChatLauncher.tokens';
+
+// The component IS a viewport layer (like Toast's stack), so it owns its own
+// fixed corner. Panel stacks above the launcher, both flush to the end edge.
+.root {
+  // stylelint-disable-next-line declaration-property-value-disallowed-list -- viewport layer owns its own positioning, not a flow component (same as Toast)
+  position: fixed;
+  inset-inline-end: var(--chat-launcher-inset);
+  bottom: var(--chat-launcher-inset);
+  z-index: var(--z-chat-launcher);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: var(--chat-launcher-gap);
+}
+
+// Capped to the viewport so the float never spills off a narrow screen.
+.panel {
+  display: flex;
+  flex-direction: column;
+  width: min(var(--chat-launcher-panel-width), 100vw - 2 * var(--chat-launcher-inset));
+  height: min(var(--chat-launcher-panel-height), 100dvh - var(--chat-launcher-reserved-y));
+  overflow: hidden;
+  background: var(--chat-launcher-panel-bg);
+  border: var(--border-width) solid var(--chat-launcher-panel-border-color);
+  border-radius: var(--chat-launcher-panel-radius);
+  box-shadow: var(--chat-launcher-panel-shadow);
+}
+
+// `display: flex` above would beat the UA `[hidden]` rule.
+.panel[hidden] {
+  display: none;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--chat-launcher-header-gap);
+  padding: var(--chat-launcher-header-padding-y) var(--chat-launcher-header-padding-x);
+  border-bottom: var(--border-width) solid var(--chat-launcher-section-border-color);
+}
+
+.title {
+  // stylelint-disable-next-line property-disallowed-list -- reset h2 default margin; internal
+  margin: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--chat-launcher-title-font-size);
+  font-weight: var(--chat-launcher-title-font-weight);
+  color: var(--chat-launcher-title-fg);
+}
+
+// The scroll container; fills the panel's own column (internal, not consumer layout).
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--chat-launcher-body-padding);
+}
+
+.footer {
+  padding: var(--chat-launcher-footer-padding);
+  border-top: var(--border-width) solid var(--chat-launcher-section-border-color);
+}

@@ -127,6 +127,7 @@ const CLUSTERS = {
   Alert: 'Feedback',
   Banner: 'Feedback',
   ChatBubble: 'Feedback',
+  ChatLauncher: 'Feedback',
   Highlight: 'Feedback',
   Toast: 'Feedback',
 

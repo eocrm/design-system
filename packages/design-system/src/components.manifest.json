@@ -78,6 +78,7 @@
       "Banner",
       "ButtonGroup",
       "Calendar",
+      "ChatLauncher",
       "CodeBlock",
       "ConfirmationPopover",
       "DataTable",
@@ -155,6 +156,14 @@
     "cluster": "Feedback",
     "composes": [
       "VisuallyHidden"
+    ],
+    "composedBy": []
+  },
+  "ChatLauncher": {
+    "tier": "composition",
+    "cluster": "Feedback",
+    "composes": [
+      "Button"
     ],
     "composedBy": []
   },

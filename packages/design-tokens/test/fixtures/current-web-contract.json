@@ -316,6 +316,7 @@
     "--transition-fast": "100ms ease-out",
     "--transition-slow": "260ms ease-in-out",
     "--z-app-chrome": "500",
+    "--z-chat-launcher": "900",
     "--z-dropdown": "1000",
     "--z-flowcanvas-maximized": "1090",
     "--z-modal": "1100",
@@ -2498,6 +2499,12 @@
         }
       ],
       "--z-app-chrome": [
+        {
+          "source": "packages/design-tokens/generated/web/tokens.scss",
+          "selector": ":root"
+        }
+      ],
+      "--z-chat-launcher": [
         {
           "source": "packages/design-tokens/generated/web/tokens.scss",
           "selector": ":root"
