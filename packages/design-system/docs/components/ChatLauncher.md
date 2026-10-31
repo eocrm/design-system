@@ -5,7 +5,14 @@ A fixed bottom-end icon button that toggles a chat panel above it. The panel is 
 ```tsx
 import { useRef, useState } from 'react';
 import { Sparkles, Send } from 'lucide-react';
-import { Button, ChatBubble, ChatLauncher, Stack, Textarea } from '@eocrm/design-system';
+import {
+  Button,
+  ChatBubble,
+  ChatLauncher,
+  Cluster,
+  Constrain,
+  Textarea,
+} from '@eocrm/design-system';
 
 const [open, setOpen] = useState(false);
 const composerRef = useRef<HTMLTextAreaElement>(null);
@@ -18,12 +25,24 @@ const composerRef = useRef<HTMLTextAreaElement>(null);
   onOpenChange={setOpen}
   initialFocusRef={composerRef}
   footer={
-    <Stack gap="sm" align="end">
-      <Textarea ref={composerRef} aria-label="Message" minRows={1} maxRows={4} />
-      <Button variant="primary" onClick={send}>
-        <Send size={16} aria-hidden="true" /> Send
+    // One row: the Textarea grows (autoGrow, up to 4 rows), the send button keeps its size.
+    <Cluster wrap={false} gap="sm" align="end">
+      <Constrain flex="grow">
+        <Textarea
+          ref={composerRef}
+          aria-label="Message"
+          minRows={1}
+          maxRows={4}
+          onKeyDown={(e) => {
+            // Enter sends, Shift+Enter is a newline; never send mid-IME-composition.
+            if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) send(e);
+          }}
+        />
+      </Constrain>
+      <Button variant="primary" iconOnly aria-label="Send" onClick={send}>
+        <Send size={16} aria-hidden="true" />
       </Button>
-    </Stack>
+    </Cluster>
   }
 >
   <ChatBubble.List aria-label="Conversation with Scout">
