@@ -226,12 +226,21 @@ describe('computeLayout', () => {
   const ys = (d: string) =>
     (d.match(/-?[\d.]+(e-?\d+)?/g) ?? []).map(Number).filter((_, i) => i % 2);
 
-  it('smooths lines (the stacked-bar total included), rounding flat runs', () => {
+  it('smooths lines (the stacked-bar total included) without overshooting the data', () => {
     const values = [0, 10, 10, 0];
     const l = layout({ type: 'line', series: one(values) });
-    // Many short segments, not 3 straight ones; and it bulges between the two equal 10s.
+    // Many short segments, not 3 straight ones; and no bulge above the two equal 10s.
     expect(ys(l.marks[0].line!).length).toBeGreaterThan(values.length * 2);
-    expect(Math.min(...ys(l.marks[0].line!))).toBeLessThan(l.marks[0].points[1]!.y - 0.5);
+    expect(Math.min(...ys(l.marks[0].line!))).toBeCloseTo(l.marks[0].points[1]!.y, 6);
+    // A step between flat runs neither dips before it nor bumps after it.
+    const step = layout({
+      type: 'line',
+      categories: ['a', 'b', 'c', 'd', 'e', 'f'],
+      series: one([1, 1, 1, 2, 2, 2]),
+    });
+    const lineYs = ys(step.marks[0].line!);
+    expect(Math.max(...lineYs)).toBeCloseTo(step.marks[0].points[0]!.y, 6);
+    expect(Math.min(...lineYs)).toBeCloseTo(step.marks[0].points[5]!.y, 6);
     const stacked = layout({
       type: 'stacked-bar',
       series: resolveSeries('stacked-bar', [s('a', values), s('p', values, 'total')], 4).series,
@@ -239,7 +248,7 @@ describe('computeLayout', () => {
     expect(ys(stacked.marks.find((m) => m.kind === 'line')!.line!).length).toBeGreaterThan(8);
   });
 
-  it('keeps the overshoot inside the plot', () => {
+  it('keeps lines inside the plot', () => {
     for (const values of [
       [0, 10, 10, 0],
       [10, 0, 0, 10],
@@ -382,7 +391,7 @@ describe('computeLayout', () => {
   });
 
   it('a steep first step keeps its slope at the run end', () => {
-    // Capping the end tangent by the 0.2-range floor instead of its own slope would bow this start.
+    // The run end keeps half its own slope; a flatter end tangent would bow this start.
     const l = layout({ type: 'line', series: one([5, 60, 70, 80]) });
     const pts = l.marks[0]
       .line!.slice(1)
@@ -398,10 +407,10 @@ describe('computeLayout', () => {
     expect(dev).toBeLessThan(0.05 * l.plot.height);
   });
 
-  it('smooths stacked areas too: the top bulges between equal values', () => {
+  it('smooths stacked areas too, without bulging between equal values', () => {
     const l = layout({ type: 'area', series: one([0, 10, 10, 0]) });
     expect(ys(l.marks[0].line!).length).toBeGreaterThan(8);
-    expect(Math.min(...ys(l.marks[0].line!))).toBeLessThan(l.marks[0].points[1]!.y - 0.5);
+    expect(Math.min(...ys(l.marks[0].line!))).toBeCloseTo(l.marks[0].points[1]!.y, 6);
   });
 
   it('a climb from 0 at the start of a run is not bowed', () => {
@@ -413,17 +422,16 @@ describe('computeLayout', () => {
     const [x0, y0] = pts[0];
     const [x1, y1] = [l.categoryX[1], l.marks[0].points[1]!.y];
     for (const [x, y] of pts.filter(([x]) => x <= x1))
-      // ~3px of ordinary Catmull-Rom end easing; a flat start tangent bows it ~7px.
+      // ~3px of ordinary end easing; a flat start tangent bows it ~7px.
       expect(Math.abs(y - (y0 + ((y1 - y0) * (x - x0)) / (x1 - x0)))).toBeLessThan(5);
   });
 
   it('a sharp spike does not drag a flat neighbourhood far past its value', () => {
     const S = 12;
-    // Uncapped Catmull-Rom dips the flat 10s to ~2.6 before the spike; the cap keeps it within 5% of the range.
+    // Uncapped Catmull-Rom dips the flat 10s to ~2.6 before the spike; the monotone curve doesn't dip.
     const l = layout({ type: 'line', series: one([10, 10, 110, 10]) });
     const y10 = l.marks[0].points[0]!.y;
-    const pxPerUnit = (l.marks[0].points[0]!.y - l.marks[0].points[2]!.y) / 100;
-    for (const y of ys(l.marks[0].line!)) expect(y).toBeLessThanOrEqual(y10 + 5 * pxPerUnit);
+    for (const y of ys(l.marks[0].line!)) expect(y).toBeLessThanOrEqual(y10 + 0.01); // path coords round to 0.01px
     // In a stack, the steady layer under a one-off spike keeps most of its thickness.
     const tops = smoothStack(
       [
@@ -432,7 +440,7 @@ describe('computeLayout', () => {
       ],
       S,
     );
-    for (const k of tops[0][0]) expect(k).toBeGreaterThanOrEqual(5);
+    for (const k of tops[0][0]) expect(k).toBeCloseTo(10, 6);
   });
 
   it('eases into a 0 floor without a corner', () => {
@@ -461,9 +469,21 @@ describe('computeLayout', () => {
     for (const [x, y] of pts) expect(y).toBeCloseTo(y0 + ((y1 - y0) * (x - x0)) / (x1 - x0), 1);
   });
 
-  it('keeps area overshoot inside the plot', () => {
+  it('keeps areas inside the plot', () => {
     const l = layout({ type: 'area', series: one([0, 10, 10, 0]) });
     for (const y of ys(l.marks[0].line!)) expect(y).toBeGreaterThanOrEqual(l.plot.y - 1e-6);
+    // Layers trading places lift the stacked top past the largest real total; the axis covers it.
+    const traded = layout({
+      type: 'area',
+      categories: ['a', 'b', 'c', 'd', 'e'],
+      series: resolveSeries(
+        'area',
+        [s('a', [0, 0, 3, 17, 0]), s('b', [7, 4, 0, 0, 0]), s('c', [0, 0, 17, 3, 0])],
+        5,
+      ).series,
+    });
+    for (const m of traded.marks)
+      for (const y of ys(m.line!)) expect(y).toBeGreaterThanOrEqual(traded.plot.y - 1e-6);
   });
 
   it('breaks smoothed lines at gaps without NaN', () => {
