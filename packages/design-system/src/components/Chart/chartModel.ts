@@ -428,6 +428,9 @@ export function computeLayout(input: LayoutInput): ChartLayout {
           samples,
         )
       : null;
+  // Each layer stays within its own values, but layers trading places can lift the stacked top past
+  // the largest real total: keep that inside the plot.
+  for (const layer of areaStack ?? []) for (const seg of layer) seg.forEach(take);
   if (min === max) max = min + 1;
 
   const plotTop = PAD_TOP;
