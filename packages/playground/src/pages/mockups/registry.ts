@@ -120,6 +120,8 @@ export type ComponentName =
   | 'Timeline'
   | 'Title'
   | 'Toast'
+  | 'ChatBubble'
+  | 'ChatLauncher'
   | 'Tooltip'
   | 'TopBar'
   | 'VisuallyHidden';

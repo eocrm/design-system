@@ -647,6 +647,18 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['TimeField'],
   },
   {
+    to: '/components/chat-bubble',
+    name: 'ChatBubble',
+    description: 'Chat message bubble aligned by speaker, plus a role="log" list.',
+    preview: SCHEMATICS['ChatBubble'],
+  },
+  {
+    to: '/components/chat-launcher',
+    name: 'ChatLauncher',
+    description: 'Fixed launcher button toggling a non-modal chat panel.',
+    preview: SCHEMATICS['ChatLauncher'],
+  },
+  {
     to: '/components/toast',
     name: 'Toast',
     description: 'Imperative transient notifications.',

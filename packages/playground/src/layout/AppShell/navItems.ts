@@ -77,6 +77,8 @@ import {
   Activity,
   GitCommitVertical,
   MessagesSquare,
+  MessageCircle,
+  MessageSquareText,
   LogIn,
   LoaderCircle,
   UploadCloud,
@@ -317,6 +319,8 @@ export const componentGroups: { heading: string; items: NavItem[] }[] = [
     heading: 'Feedback',
     items: [
       { to: '/components/alert', label: 'Alert', icon: AlertCircle, end: false },
+      { to: '/components/chat-bubble', label: 'ChatBubble', icon: MessageSquareText, end: false },
+      { to: '/components/chat-launcher', label: 'ChatLauncher', icon: MessageCircle, end: false },
       { to: '/components/banner', label: 'Banner', icon: Flag, end: false },
       { to: '/components/highlight', label: 'Highlight', icon: Sparkles, end: false },
       { to: '/components/toast', label: 'Toast', icon: Bell, end: false },
