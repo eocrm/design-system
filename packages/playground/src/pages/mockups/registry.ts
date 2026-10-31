@@ -14,6 +14,8 @@ export type ComponentName =
   | 'ButtonGroup'
   | 'Calendar'
   | 'Card'
+  | 'ChatBubble'
+  | 'ChatLauncher'
   | 'Checkbox'
   | 'CircularProgress'
   | 'Cluster'

@@ -242,6 +242,14 @@ export const ru: Messages = {
     onBehalfOfPrefix: 'от имени:',
     onBehalfOfFormer: 'от имени бывшего участника',
   },
+  chatLauncher: {
+    close: 'Закрыть чат',
+  },
+  chatBubble: {
+    member: 'Вы написали',
+    assistant: 'Ассистент написал',
+    pending: 'Ассистент печатает…',
+  },
   avatarGroup: {
     overflow: (params) => `Ещё ${params.count}`,
   },

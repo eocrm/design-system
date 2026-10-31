@@ -1,0 +1,27 @@
+// ChatLauncher.tokens.scss — Component tokens for <ChatLauncher>. Default to primitives.
+// The panel surface reuses Card's visual language (bg, border, radius) with a raised shadow.
+:root {
+  --chat-launcher-inset: var(--space-4);
+  --chat-launcher-gap: var(--space-3);
+  --chat-launcher-button-size: var(--size-lg); // the launcher is Button size="lg"
+  --chat-launcher-panel-width: 380px;
+  --chat-launcher-panel-height: 560px;
+
+  // Vertical space the panel can never use: both insets, the launcher, the gap.
+  --chat-launcher-reserved-y: calc(
+    2 * var(--chat-launcher-inset) + var(--chat-launcher-button-size) + var(--chat-launcher-gap)
+  );
+  --chat-launcher-panel-bg: var(--color-bg);
+  --chat-launcher-panel-border-color: var(--color-border);
+  --chat-launcher-panel-radius: var(--radius-lg);
+  --chat-launcher-panel-shadow: var(--shadow-lg);
+  --chat-launcher-header-gap: var(--space-3);
+  --chat-launcher-header-padding-y: var(--space-3);
+  --chat-launcher-header-padding-x: var(--space-4);
+  --chat-launcher-title-font-size: var(--font-size-md);
+  --chat-launcher-title-font-weight: var(--font-weight-semibold);
+  --chat-launcher-title-fg: var(--color-fg);
+  --chat-launcher-body-padding: var(--space-4);
+  --chat-launcher-footer-padding: var(--space-3);
+  --chat-launcher-section-border-color: var(--color-border);
+}

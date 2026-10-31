@@ -125,7 +125,19 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
     }
   }, [indeterminate]);
 
+  // `aria-disabled="true"` (#724): looks and behaves disabled but keeps focus,
+  // for a busy state where real `disabled` would drop it. The input is always
+  // React-controlled (`checked={currentChecked}`), so skipping the state update
+  // and onChange is enough: React puts the DOM back after a click or Space.
+  const ariaDisabled = props['aria-disabled'] === true || props['aria-disabled'] === 'true';
+
   const handleChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (ariaDisabled) {
+      // The click already cleared the native `indeterminate`, and React's
+      // controlled restore only puts `checked` back: re-assert the dash.
+      event.target.indeterminate = indeterminate ?? false;
+      return;
+    }
     const next = event.target.checked;
     if (!isControlled) setInternalChecked(next);
     onChange?.(next, event);
@@ -143,7 +155,7 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(function Che
       className={clsx(
         styles.checkbox,
         styles[`size-${size}`],
-        disabled && styles.disabled,
+        (disabled || ariaDisabled) && styles.disabled,
         invalid && styles.invalid,
         className,
       )}

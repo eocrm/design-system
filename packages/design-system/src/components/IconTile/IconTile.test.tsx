@@ -1,5 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { parse } from 'postcss';
+import { compile } from 'sass';
 import { render } from '@testing-library/react';
 import { createRef } from 'react';
 import { IconTile } from './IconTile';
@@ -112,5 +114,13 @@ describe('IconTile', () => {
     expect(el.style.opacity).toBe('0.5');
     expect(el.style.getPropertyValue('--icon-tile-bg')).toBe('var(--color-palette-blue-bg)');
     expect(el).toHaveAttribute('data-foo', 'bar');
+  });
+
+  it('does not shrink in a nowrap flex row (#719)', () => {
+    let shrink: string | undefined;
+    parse(compile(resolve(__dirname, 'IconTile.module.scss')).css).walkDecls('flex-shrink', (d) => {
+      if ((d.parent as { selector?: string }).selector === '.tile') shrink = d.value;
+    });
+    expect(shrink).toBe('0');
   });
 });

@@ -1921,6 +1921,42 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       </Col>
     </Col>
   ),
+  ChatBubble: (
+    <Col gap={6} style={{ width: 150 }}>
+      <Panel w={90} h={24} style={{ display: 'flex', alignItems: 'center', padding: '0 8px' }}>
+        <Bar w={60} />
+      </Panel>
+      <Solid
+        w={100}
+        h={24}
+        style={{ alignSelf: 'flex-end', display: 'flex', alignItems: 'center', padding: '0 8px' }}
+      />
+      <Panel w={70} h={24} style={{ display: 'flex', alignItems: 'center', padding: '0 8px' }}>
+        <Bar w={40} />
+      </Panel>
+    </Col>
+  ),
+  ChatLauncher: (
+    <Dashed w={200} h={92} style={{ position: 'relative' }}>
+      <Panel
+        w={110}
+        h={50}
+        style={{
+          position: 'absolute',
+          right: 8,
+          bottom: 36,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 6,
+          padding: 8,
+        }}
+      >
+        <Bar w={60} />
+        <Bar w={84} />
+      </Panel>
+      <Dot solid size={22} style={{ position: 'absolute', right: 8, bottom: 8 }} />
+    </Dashed>
+  ),
   Toast: (
     <Dashed w={200} h={92} style={{ position: 'relative' }}>
       <Panel

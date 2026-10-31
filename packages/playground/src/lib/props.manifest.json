@@ -812,6 +812,98 @@
         }
       ]
     },
+    "ChatBubble": {
+      "props": [
+        {
+          "name": "from",
+          "type": "\"member\" | \"assistant\"",
+          "required": true,
+          "default": "",
+          "description": "Speaker. `member` = the user (accent tint, end side); `assistant` = the AI (neutral, start side)."
+        },
+        {
+          "name": "children",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Message content. Ignored while `pending`."
+        },
+        {
+          "name": "footer",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Slot below the coloured body, same side (feedback buttons, sources)."
+        },
+        {
+          "name": "pending",
+          "type": "boolean",
+          "required": false,
+          "default": "false",
+          "description": "Show a \"typing\" indicator instead of `children`; announced once when\ninserted into a `ChatBubble.List`. Intended for `from=\"assistant\"`."
+        }
+      ]
+    },
+    "ChatLauncher": {
+      "props": [
+        {
+          "name": "label",
+          "type": "string",
+          "required": true,
+          "default": "",
+          "description": "Accessible name of the launcher button — names the assistant (\"Ask Scout\")."
+        },
+        {
+          "name": "open",
+          "type": "boolean",
+          "required": true,
+          "default": "",
+          "description": "Whether the panel is open. Controlled only: pair with `onOpenChange`."
+        },
+        {
+          "name": "onOpenChange",
+          "type": "(open: boolean) => void",
+          "required": true,
+          "default": "",
+          "description": "Called with the requested state: launcher toggle, close button, Escape."
+        },
+        {
+          "name": "icon",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": true,
+          "default": "",
+          "description": "Launcher glyph (e.g. a lucide icon with `aria-hidden`)."
+        },
+        {
+          "name": "title",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": true,
+          "default": "",
+          "description": "Panel header text; also the dialog's accessible name."
+        },
+        {
+          "name": "children",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": true,
+          "default": "",
+          "description": "Scrolling body — usually a `<ChatBubble.List>`. Stays mounted while closed."
+        },
+        {
+          "name": "footer",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Pinned area below the body — the composer (`Textarea` + send `Button`)."
+        },
+        {
+          "name": "initialFocusRef",
+          "type": "RefObject<HTMLElement | null>",
+          "required": false,
+          "default": "",
+          "description": "Element focused when the panel opens (point it at the composer).\nDefault: the panel itself. Focus already inside the panel is not moved."
+        }
+      ]
+    },
     "Checkbox": {
       "props": [
         {

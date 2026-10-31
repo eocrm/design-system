@@ -78,6 +78,7 @@
       "Banner",
       "ButtonGroup",
       "Calendar",
+      "ChatLauncher",
       "CodeBlock",
       "ConfirmationPopover",
       "DataTable",
@@ -147,6 +148,22 @@
       "EmptyState",
       "LiveRegion",
       "VisuallyHidden"
+    ],
+    "composedBy": []
+  },
+  "ChatBubble": {
+    "tier": "composition",
+    "cluster": "Feedback",
+    "composes": [
+      "VisuallyHidden"
+    ],
+    "composedBy": []
+  },
+  "ChatLauncher": {
+    "tier": "composition",
+    "cluster": "Feedback",
+    "composes": [
+      "Button"
     ],
     "composedBy": []
   },
@@ -1102,6 +1119,7 @@
     "composedBy": [
       "Banner",
       "Chart",
+      "ChatBubble",
       "DashboardWidget",
       "DateStrip",
       "LiveRegion",

@@ -155,4 +155,47 @@ describe('Checkbox', () => {
     expect(input.checked).toBe(false);
     expect(input.indeterminate).toBe(false);
   });
+
+  it('aria-disabled="true" looks disabled, stays focusable and blocks toggling (#724)', async () => {
+    const user = userEvent.setup();
+    const handle = vi.fn();
+    const handleClick = vi.fn();
+    const { container } = render(
+      <Checkbox label="Held" aria-disabled="true" onChange={handle} onClick={handleClick} />,
+    );
+    const input = screen.getByRole('checkbox');
+    expect(container.firstChild).toHaveClass(/disabled/);
+    expect(input).not.toBeDisabled();
+    expect(input).toHaveAttribute('aria-disabled', 'true');
+
+    await user.tab();
+    expect(input).toHaveFocus();
+    await user.keyboard(' ');
+    await user.click(screen.getByText('Held'));
+    expect(input).not.toBeChecked();
+    expect(handle).not.toHaveBeenCalled();
+    expect(handleClick).toHaveBeenCalled();
+    expect(input).toHaveFocus();
+  });
+
+  it('aria-disabled="false" stays interactive', async () => {
+    const handle = vi.fn();
+    const { container } = render(<Checkbox label="Free" aria-disabled="false" onChange={handle} />);
+    expect(container.firstChild).not.toHaveClass(/disabled/);
+    await userEvent.click(screen.getByRole('checkbox'));
+    expect(handle).toHaveBeenCalledWith(true, expect.anything());
+  });
+
+  it('aria-disabled="true" keeps an indeterminate box mixed after a click (#724)', async () => {
+    render(<Checkbox label="Held" aria-disabled="true" indeterminate checked={false} />);
+    const input = screen.getByRole<HTMLInputElement>('checkbox');
+    await userEvent.click(input);
+    expect(input.indeterminate).toBe(true);
+    expect(input).not.toBeChecked();
+
+    await userEvent.keyboard(' ');
+    expect(input).toHaveFocus();
+    expect(input.indeterminate).toBe(true);
+    expect(input).not.toBeChecked();
+  });
 });

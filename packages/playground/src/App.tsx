@@ -136,6 +136,8 @@ import { MasonryDemo } from './pages/components/MasonryDemo';
 import { LinkDemo } from './pages/components/LinkDemo';
 import { LinkCardDemo } from './pages/components/LinkCardDemo';
 import { RailDemo } from './pages/components/RailDemo';
+import { ChatBubbleDemo } from './pages/components/ChatBubbleDemo';
+import { ChatLauncherDemo } from './pages/components/ChatLauncherDemo';
 import { ToastDemo } from './pages/components/ToastDemo';
 import { HighlightDemo } from './pages/components/HighlightDemo';
 import { TopBarDemo } from './pages/components/TopBarDemo';
@@ -290,6 +292,8 @@ export default function App() {
             <Route path="/components/timefield" element={<TimeFieldDemo />} />
             <Route path="/components/date-strip" element={<DateStripDemo />} />
             <Route path="/components/slot-grid" element={<SlotGridDemo />} />
+            <Route path="/components/chat-bubble" element={<ChatBubbleDemo />} />
+            <Route path="/components/chat-launcher" element={<ChatLauncherDemo />} />
             <Route path="/components/toast" element={<ToastDemo />} />
             <Route path="/components/highlight" element={<HighlightDemo />} />
           </Routes>

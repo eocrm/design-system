@@ -503,6 +503,18 @@ export interface Messages {
     /** Visible text when the member was erased. */
     onBehalfOfFormer: string;
   };
+  chatLauncher: {
+    /** aria-label on the chat panel's header close (×) button. */
+    close: string;
+  };
+  chatBubble: {
+    /** Visually hidden prefix naming the speaker of a member bubble; a colon follows. */
+    member: string;
+    /** Visually hidden prefix naming the speaker of an assistant bubble; a colon follows. */
+    assistant: string;
+    /** Visually hidden text of a pending (typing) bubble. */
+    pending: string;
+  };
   avatarGroup: {
     /** aria-label on the overflow chip: how many avatars are not shown. */
     overflow: (params: { count: number }) => string;

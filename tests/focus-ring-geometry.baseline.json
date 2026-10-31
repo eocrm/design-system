@@ -1,28 +1,28 @@
 [
   {
     "route": "/components/emoji-picker",
-    "key": "button.EmojiPicker-module__cell",
+    "key": "button.EmojiPicker-module__cell @ EmojiPicker-module__panel",
     "band": "left",
     "issue": 523,
     "reason": "EmojiPicker's grid cells sit flush against the panel's horizontal edges, so the outset ring's left band on the first column and right band on the last are eaten by a panel that does not scroll horizontally. Inherited from #523's original baseline and NOT re-investigated here: recorded as accepted state rather than as an argued exemption, so anyone closing it should measure it first."
   },
   {
     "route": "/components/emoji-picker",
-    "key": "button.EmojiPicker-module__cell",
+    "key": "button.EmojiPicker-module__cell @ EmojiPicker-module__panel",
     "band": "right",
     "issue": 523,
     "reason": "EmojiPicker's grid cells sit flush against the panel's horizontal edges, so the outset ring's left band on the first column and right band on the last are eaten by a panel that does not scroll horizontally. Inherited from #523's original baseline and NOT re-investigated here: recorded as accepted state rather than as an argued exemption, so anyone closing it should measure it first."
   },
   {
     "route": "/components/person-display",
-    "key": "a.Link-module__default.Link-module__link",
+    "key": "a.Link-module__default.Link-module__link @ PersonDisplay-module__description",
     "band": "left",
     "issue": 527,
     "reason": "A Link that fills PersonDisplay's Description exactly (nowrap + ellipsis) has both horizontal bands of its outset ring outside the description's `overflow: clip visible`, measured at box[984.6,1091.4] inside a container at L=984.6 R=1091.4. The supported place for a control is PersonDisplay.Name, which does not clip, and that is documented on the component and in docs/components/PersonDisplay.md (#527)."
   },
   {
     "route": "/components/person-display",
-    "key": "a.Link-module__default.Link-module__link",
+    "key": "a.Link-module__default.Link-module__link @ PersonDisplay-module__description",
     "band": "right",
     "issue": 527,
     "reason": "A Link that fills PersonDisplay's Description exactly (nowrap + ellipsis) has both horizontal bands of its outset ring outside the description's `overflow: clip visible`, measured at box[984.6,1091.4] inside a container at L=984.6 R=1091.4. The supported place for a control is PersonDisplay.Name, which does not clip, and that is documented on the component and in docs/components/PersonDisplay.md (#527)."
