@@ -192,5 +192,10 @@ describe('Checkbox', () => {
     await userEvent.click(input);
     expect(input.indeterminate).toBe(true);
     expect(input).not.toBeChecked();
+
+    await userEvent.keyboard(' ');
+    expect(input).toHaveFocus();
+    expect(input.indeterminate).toBe(true);
+    expect(input).not.toBeChecked();
   });
 });
