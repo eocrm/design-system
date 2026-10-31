@@ -76,9 +76,18 @@ export const ChatLauncher = forwardRef<HTMLDivElement, ChatLauncherProps>(functi
   // Scroll is tracked live: a `hidden` body reads 0 for every metric, so it
   // can't be measured at close time.
   const openRef = useRef(open);
-  const wasOpenRef = useRef(false);
+  // Seeded with `open`: mounting open is not a transition, so it scrolls but
+  // doesn't pull focus on page load.
+  const wasOpenRef = useRef(open);
+  const initialFocus = useRef(initialFocusRef);
   const openedOnceRef = useRef(false);
   const scrollRef = useRef({ top: 0, atBottom: true });
+
+  // Read via a ref so a new `initialFocusRef` identity never re-runs the
+  // focus move below (non-modal: focus outside the panel stays put).
+  useLayoutEffect(() => {
+    initialFocus.current = initialFocusRef;
+  });
 
   useLayoutEffect(() => {
     openRef.current = open;
@@ -94,8 +103,8 @@ export const ChatLauncher = forwardRef<HTMLDivElement, ChatLauncherProps>(functi
         }
       }
       openedOnceRef.current = true;
-      if (panel && !panel.contains(document.activeElement)) {
-        (initialFocusRef?.current ?? panel).focus({ preventScroll: true });
+      if (!wasOpenRef.current && panel && !panel.contains(document.activeElement)) {
+        (initialFocus.current?.current ?? panel).focus({ preventScroll: true });
       }
     } else if (wasOpenRef.current && rootRef.current?.contains(document.activeElement)) {
       // Escape / close button / programmatic close from inside: return focus.
@@ -103,18 +112,21 @@ export const ChatLauncher = forwardRef<HTMLDivElement, ChatLauncherProps>(functi
       launcherRef.current?.focus();
     }
     wasOpenRef.current = open;
-  }, [open, initialFocusRef]);
+  }, [open]);
 
-  // Follow new content only while the user is already at the bottom.
+  // Follow new content, or a shrinking body (composer grows, mobile keyboard),
+  // only while the user is already at the bottom.
   useEffect(() => {
     const content = contentRef.current;
-    if (!content || typeof ResizeObserver === 'undefined') return;
+    const bodyEl = bodyRef.current;
+    if (!content || !bodyEl || typeof ResizeObserver === 'undefined') return;
     const observer = new ResizeObserver(() => {
       const body = bodyRef.current;
       if (!openRef.current || !body || !scrollRef.current.atBottom) return;
       body.scrollTop = body.scrollHeight;
     });
     observer.observe(content);
+    observer.observe(bodyEl);
     return () => observer.disconnect();
   }, []);
 
@@ -128,11 +140,17 @@ export const ChatLauncher = forwardRef<HTMLDivElement, ChatLauncherProps>(functi
   };
 
   // Non-modal: Escape is scoped to the panel + launcher, never the document.
+  // React bubbles through portals, so a portaled descendant (a Modal opened
+  // from a bubble) is ignored by DOM containment.
   const onRootKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
     if (e.key !== 'Escape' || !open || e.defaultPrevented) return;
+    if (!rootRef.current?.contains(e.target as Node)) return;
     e.preventDefault();
     onOpenChange(false);
   };
+
+  // SSR: no document to portal into; the chat mounts on the client.
+  if (typeof document === 'undefined') return null;
 
   return createPortal(
     <div ref={rootRef} className={styles.root} onKeyDown={onRootKeyDown}>

@@ -4,6 +4,7 @@ import { compile } from 'sass';
 import { act, fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, type ReactNode, type RefObject } from 'react';
+import { createPortal } from 'react-dom';
 import { I18nProvider } from '../../i18n/I18nProvider';
 import { ChatLauncher, type ChatLauncherProps } from './ChatLauncher';
 
@@ -190,6 +191,32 @@ describe('ChatLauncher', () => {
       expect(screen.getByRole('button', { name: 'Закрыть чат' })).toBeInTheDocument();
     });
 
+    it('a new initialFocusRef identity while open does not pull focus back in', () => {
+      const outside = document.createElement('button');
+      document.body.appendChild(outside);
+      const a = createRef<HTMLElement>();
+      const { rerender } = setup({ open: true, initialFocusRef: a });
+      outside.focus();
+      rerender({ initialFocusRef: createRef<HTMLElement>() });
+      expect(outside).toHaveFocus();
+      outside.remove();
+    });
+
+    it('mounting open does not move focus into the panel', () => {
+      const { panel } = setup({ open: true });
+      expect(panel()).not.toHaveFocus();
+      expect(document.body).toHaveFocus();
+    });
+
+    it('ignores an Escape from a portaled descendant outside the chat DOM', () => {
+      const { onOpenChange } = setup({
+        open: true,
+        children: createPortal(<input aria-label="Portaled" />, document.body),
+      });
+      fireEvent.keyDown(screen.getByLabelText('Portaled'), { key: 'Escape' });
+      expect(onOpenChange).not.toHaveBeenCalled();
+    });
+
     it('programmatic close does not steal focus from outside the panel', () => {
       const outside = document.createElement('button');
       document.body.appendChild(outside);
@@ -249,6 +276,19 @@ describe('ChatLauncher', () => {
       expect(m.scrollTop).toBe(0);
       rerender({ open: true });
       expect(m.scrollTop).toBe(1600);
+    });
+    it('re-sticks to the bottom when the body itself shrinks', () => {
+      const ro = stubResizeObserver();
+      const { rerender, panel } = setup();
+      const el = body(panel());
+      const m = stubScroll(el, { scrollHeight: 1000, clientHeight: 400 });
+      rerender({ open: true });
+      fireEvent.scroll(el);
+      expect(m.scrollTop).toBe(600);
+      // Composer grows / mobile keyboard opens: the body gets shorter.
+      m.clientHeight = 300;
+      ro.resize(el);
+      expect(m.scrollTop).toBe(700);
     });
   });
 

@@ -1,6 +1,13 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { MessageCircle, Send } from 'lucide-react';
-import { Button, ChatBubble, ChatLauncher, Cluster, Textarea } from '@eocrm/design-system';
+import {
+  Button,
+  ChatBubble,
+  ChatLauncher,
+  Cluster,
+  Constrain,
+  Textarea,
+} from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -78,19 +85,21 @@ const send = (e?: FormEvent) => { /* … */ };
   initialFocusRef={composerRef}
   footer={
     <form onSubmit={send}>
-      <Cluster gap="sm" align="end">
-        <Textarea
-          ref={composerRef}
-          aria-label="Message"
-          minRows={1}
-          maxRows={4}
-          autoGrow
-          value={draft}
-          onChange={(e) => setDraft(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) send(e);
-          }}
-        />
+      <Cluster wrap={false} gap="sm" align="end">
+        <Constrain flex="grow">
+          <Textarea
+            ref={composerRef}
+            aria-label="Message"
+            minRows={1}
+            maxRows={4}
+            autoGrow
+            value={draft}
+            onChange={(e) => setDraft(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) send(e);
+            }}
+          />
+        </Constrain>
         <Button type="submit" iconOnly aria-label="Send">
           <Send size={16} aria-hidden="true" />
         </Button>
@@ -121,19 +130,21 @@ const send = (e?: FormEvent) => { /* … */ };
         initialFocusRef={composerRef}
         footer={
           <form onSubmit={send}>
-            <Cluster gap="sm" align="end">
-              <Textarea
-                ref={composerRef}
-                aria-label="Message"
-                minRows={1}
-                maxRows={4}
-                autoGrow
-                value={draft}
-                onChange={(e) => setDraft(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) send(e);
-                }}
-              />
+            <Cluster wrap={false} gap="sm" align="end">
+              <Constrain flex="grow">
+                <Textarea
+                  ref={composerRef}
+                  aria-label="Message"
+                  minRows={1}
+                  maxRows={4}
+                  autoGrow
+                  value={draft}
+                  onChange={(e) => setDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) send(e);
+                  }}
+                />
+              </Constrain>
               <Button type="submit" iconOnly aria-label="Send">
                 <Send size={16} aria-hidden="true" />
               </Button>
