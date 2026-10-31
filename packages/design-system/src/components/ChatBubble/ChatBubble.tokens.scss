@@ -1,0 +1,17 @@
+// ChatBubble.tokens.scss — Component tokens for <ChatBubble> and <ChatBubble.List>. Default to primitives.
+:root {
+  --chat-bubble-max-width: 80%;
+  --chat-bubble-radius: var(--radius-lg);
+  --chat-bubble-padding-y: var(--space-2);
+  --chat-bubble-padding-x: var(--space-3);
+  --chat-bubble-gap: var(--space-1);
+  --chat-bubble-fg: var(--color-fg);
+  --chat-bubble-member-bg: var(--color-accent-subtle-bg);
+  --chat-bubble-assistant-bg: var(--color-bg-muted);
+  --chat-bubble-dot-size: var(--space-2);
+  --chat-bubble-dot-gap: var(--space-1);
+  --chat-bubble-dot-color: var(--color-fg-muted);
+  --chat-bubble-dot-opacity-high: var(--opacity-visible);
+  --chat-bubble-dot-opacity-low: var(--opacity-subtle);
+  --chat-bubble-list-gap: var(--space-3);
+}

@@ -183,6 +183,8 @@ export type { PillMenuProps, PillMenuOption, PillMenuCategory } from './componen
 export { Timeline } from './components/Timeline';
 export type { TimelineProps, TimelineItemProps } from './components/Timeline';
 
+export { ChatBubble } from './components/ChatBubble';
+export type { ChatBubbleProps, ChatBubbleFrom, ChatBubbleListProps } from './components/ChatBubble';
 export { Thread } from './components/Thread';
 export type { ThreadProps, ThreadItemProps, ThreadNodeAlign } from './components/Thread';
 

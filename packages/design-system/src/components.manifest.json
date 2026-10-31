@@ -150,6 +150,14 @@
     ],
     "composedBy": []
   },
+  "ChatBubble": {
+    "tier": "composition",
+    "cluster": "Feedback",
+    "composes": [
+      "VisuallyHidden"
+    ],
+    "composedBy": []
+  },
   "Checkbox": {
     "tier": "primitive",
     "cluster": "Forms",
@@ -1102,6 +1110,7 @@
     "composedBy": [
       "Banner",
       "Chart",
+      "ChatBubble",
       "DashboardWidget",
       "DateStrip",
       "LiveRegion",

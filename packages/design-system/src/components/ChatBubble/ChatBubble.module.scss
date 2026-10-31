@@ -1,0 +1,93 @@
+@use './ChatBubble.tokens';
+
+// Full-width row; the member/assistant side is justify-content, not align-self
+// (Rule 4: the component never positions itself in its parent).
+.bubble {
+  display: flex;
+  width: 100%;
+}
+
+.member {
+  justify-content: flex-end;
+}
+
+.assistant {
+  justify-content: flex-start;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  gap: var(--chat-bubble-gap);
+  max-width: var(--chat-bubble-max-width);
+}
+
+.member .column {
+  align-items: flex-end;
+}
+
+.assistant .column {
+  align-items: flex-start;
+}
+
+.body {
+  padding: var(--chat-bubble-padding-y) var(--chat-bubble-padding-x);
+  border-radius: var(--chat-bubble-radius);
+  color: var(--chat-bubble-fg);
+  overflow-wrap: anywhere;
+}
+
+.member .body {
+  background: var(--chat-bubble-member-bg);
+}
+
+.assistant .body {
+  background: var(--chat-bubble-assistant-bg);
+}
+
+.dots {
+  display: inline-flex;
+  gap: var(--chat-bubble-dot-gap);
+  align-items: center;
+}
+
+.dot {
+  width: var(--chat-bubble-dot-size);
+  height: var(--chat-bubble-dot-size);
+  border-radius: var(--radius-full);
+  background: var(--chat-bubble-dot-color);
+  animation: chat-bubble-dot 1.2s ease-in-out infinite;
+
+  &:nth-child(2) {
+    animation-delay: 0.2s;
+  }
+
+  &:nth-child(3) {
+    animation-delay: 0.4s;
+  }
+}
+
+@keyframes chat-bubble-dot {
+  0%,
+  80%,
+  100% {
+    opacity: var(--chat-bubble-dot-opacity-low);
+  }
+
+  40% {
+    opacity: var(--chat-bubble-dot-opacity-high);
+  }
+}
+
+// Same specificity as .dot, later in source order: wins without !important.
+@media (prefers-reduced-motion: reduce) {
+  .dot {
+    animation: none;
+  }
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--chat-bubble-list-gap);
+}

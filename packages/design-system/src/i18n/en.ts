@@ -236,6 +236,11 @@ export const en: Messages = {
     onBehalfOfPrefix: 'for',
     onBehalfOfFormer: 'for a former member',
   },
+  chatBubble: {
+    member: 'You said',
+    assistant: 'Assistant said',
+    pending: 'Assistant is typing…',
+  },
   avatarGroup: {
     overflow: (params) => `${params.count} more avatars`,
   },
