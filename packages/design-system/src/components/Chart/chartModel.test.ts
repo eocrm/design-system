@@ -226,12 +226,17 @@ describe('computeLayout', () => {
   const ys = (d: string) =>
     (d.match(/-?[\d.]+(e-?\d+)?/g) ?? []).map(Number).filter((_, i) => i % 2);
 
-  it('smooths lines (the stacked-bar total included), rounding flat runs', () => {
+  it('smooths lines (the stacked-bar total included) without overshooting the data', () => {
     const values = [0, 10, 10, 0];
     const l = layout({ type: 'line', series: one(values) });
-    // Many short segments, not 3 straight ones; and it bulges between the two equal 10s.
+    // Many short segments, not 3 straight ones; and no bulge above the two equal 10s.
     expect(ys(l.marks[0].line!).length).toBeGreaterThan(values.length * 2);
-    expect(Math.min(...ys(l.marks[0].line!))).toBeLessThan(l.marks[0].points[1]!.y - 0.5);
+    expect(Math.min(...ys(l.marks[0].line!))).toBeCloseTo(l.marks[0].points[1]!.y, 6);
+    // A step between flat runs neither dips before it nor bumps after it.
+    const step = layout({ type: 'line', series: one([1, 1, 1, 2, 2, 2]) });
+    const lineYs = ys(step.marks[0].line!);
+    expect(Math.max(...lineYs)).toBeCloseTo(step.marks[0].points[0]!.y, 6);
+    expect(Math.min(...lineYs)).toBeCloseTo(step.marks[0].points[5]!.y, 6);
     const stacked = layout({
       type: 'stacked-bar',
       series: resolveSeries('stacked-bar', [s('a', values), s('p', values, 'total')], 4).series,
@@ -239,7 +244,7 @@ describe('computeLayout', () => {
     expect(ys(stacked.marks.find((m) => m.kind === 'line')!.line!).length).toBeGreaterThan(8);
   });
 
-  it('keeps the overshoot inside the plot', () => {
+  it('keeps lines inside the plot', () => {
     for (const values of [
       [0, 10, 10, 0],
       [10, 0, 0, 10],
@@ -398,10 +403,10 @@ describe('computeLayout', () => {
     expect(dev).toBeLessThan(0.05 * l.plot.height);
   });
 
-  it('smooths stacked areas too: the top bulges between equal values', () => {
+  it('smooths stacked areas too, without bulging between equal values', () => {
     const l = layout({ type: 'area', series: one([0, 10, 10, 0]) });
     expect(ys(l.marks[0].line!).length).toBeGreaterThan(8);
-    expect(Math.min(...ys(l.marks[0].line!))).toBeLessThan(l.marks[0].points[1]!.y - 0.5);
+    expect(Math.min(...ys(l.marks[0].line!))).toBeCloseTo(l.marks[0].points[1]!.y, 6);
   });
 
   it('a climb from 0 at the start of a run is not bowed', () => {
@@ -419,7 +424,7 @@ describe('computeLayout', () => {
 
   it('a sharp spike does not drag a flat neighbourhood far past its value', () => {
     const S = 12;
-    // Uncapped Catmull-Rom dips the flat 10s to ~2.6 before the spike; the cap keeps it within 5% of the range.
+    // Uncapped Catmull-Rom dips the flat 10s to ~2.6 before the spike; the monotone curve doesn't dip at all.
     const l = layout({ type: 'line', series: one([10, 10, 110, 10]) });
     const y10 = l.marks[0].points[0]!.y;
     const pxPerUnit = (l.marks[0].points[0]!.y - l.marks[0].points[2]!.y) / 100;
@@ -461,7 +466,7 @@ describe('computeLayout', () => {
     for (const [x, y] of pts) expect(y).toBeCloseTo(y0 + ((y1 - y0) * (x - x0)) / (x1 - x0), 1);
   });
 
-  it('keeps area overshoot inside the plot', () => {
+  it('keeps areas inside the plot', () => {
     const l = layout({ type: 'area', series: one([0, 10, 10, 0]) });
     for (const y of ys(l.marks[0].line!)) expect(y).toBeGreaterThanOrEqual(l.plot.y - 1e-6);
   });

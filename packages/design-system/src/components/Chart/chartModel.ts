@@ -414,7 +414,6 @@ export function computeLayout(input: LayoutInput): ChartLayout {
   else for (const p of primaries) p.values.forEach(take);
   for (const c of comparisons) c.values.forEach(take);
 
-  // Smoothed curves can overshoot between points: sample them first and keep the overshoot inside the plot.
   const samples = Math.max(2, Math.min(MAX_SAMPLES, Math.ceil(width / Math.max(1, n) / SAMPLE_PX)));
   const smoothed = new Map(
     (type === 'line' ? series : stacked ? comparisons : []).map((x) => [
@@ -429,8 +428,6 @@ export function computeLayout(input: LayoutInput): ChartLayout {
           samples,
         )
       : null;
-  for (const segs of smoothed.values()) for (const seg of segs) seg?.forEach(take);
-  for (const layer of areaStack ?? []) for (const seg of layer) seg.forEach(take);
   if (min === max) max = min + 1;
 
   const plotTop = PAD_TOP;
@@ -587,9 +584,6 @@ export function computeLayout(input: LayoutInput): ChartLayout {
 /** Pixels per straight sub-segment of a smoothed curve. */
 const SAMPLE_PX = 4;
 const MAX_SAMPLES = 32;
-/** Minimum tangent, as a share of the series' range: how far flat runs and gentle extremes may round. */
-const TANGENT_FLOOR = 0.2;
-
 const hermite = (y0: number, y1: number, m0: number, m1: number, t: number) => {
   const t2 = t * t;
   const t3 = t2 * t;
@@ -599,38 +593,34 @@ const hermite = (y0: number, y1: number, m0: number, m1: number, t: number) => {
 };
 
 /**
- * Uniform Catmull-Rom through `v`: `result[i][s]` is the value at sample s (0..samples) of the segment
- * between points i and i+1. Passes through every point; may overshoot between them, but never across 0
- * when both ends are on the same side (no negative counts, no inverted stack layers).
+ * Monotone cubic through `v`: `result[i][s]` is the value at sample s (0..samples) of the segment
+ * between points i and i+1. Passes through every point and never leaves the range of its two ends: no
+ * dip before a climb, no bump after it, no negative counts, no inverted stack layers.
  */
 function smoothRun(v: readonly number[], samples: number): number[][] {
   const n = v.length;
-  // Overshoot budget: a tangent may always reach this much, so gentle troughs and flat runs still round.
-  const floor = TANGENT_FLOOR * (Math.max(...v) - Math.min(...v));
   const m = v.map((x, i) => {
     // Two points: full slope at both ends, so the segment is straight rather than an S.
     if (n === 2) return v[1] - v[0];
-    const prev = v[Math.max(0, i - 1)];
-    const next = v[Math.min(n - 1, i + 1)];
-    // An interior 0 between same-signed (or zero) neighbours is a floor: ease into it flat instead of
-    // hitting the sign clamp below. Run ends keep (half) their slope, so a climb from 0 starts nearly straight.
-    if (x === 0 && i > 0 && i < n - 1 && prev * next >= 0) return 0;
-    // Run ends: half their one real slope, which no cap would bind.
-    if (i === 0 || i === n - 1) return (next - prev) / 2;
-    // Catmull-Rom, capped at 3x the gentler neighbouring slope (a Fritsch-Carlson-style bound) so a sharp spike
-    // doesn't drag the curve far past its flatter neighbours.
-    const cap = Math.max(3 * Math.min(Math.abs(x - prev), Math.abs(next - x)), floor);
-    return Math.max(-cap, Math.min(cap, (next - prev) / 2));
+    // Run ends: half their one real slope, so a climb from the edge starts nearly straight.
+    if (i === 0) return (v[1] - x) / 2;
+    if (i === n - 1) return (x - v[i - 1]) / 2;
+    const d0 = x - v[i - 1];
+    const d1 = v[i + 1] - x;
+    // Peaks, troughs and flat runs ease in flat.
+    if (d0 * d1 <= 0) return 0;
+    // Catmull-Rom, capped at 3x the gentler neighbouring slope (Fritsch-Carlson).
+    const cap = 3 * Math.min(Math.abs(d0), Math.abs(d1));
+    return Math.sign(d0) * Math.min(cap, Math.abs(d0 + d1) / 2);
   });
-  return Array.from({ length: Math.max(0, n - 1) }, (_, i) =>
-    Array.from({ length: samples + 1 }, (_, s) => {
-      const h = hermite(v[i], v[i + 1], m[i], m[i + 1], s / samples);
-      // Never across 0 between two values on the same side (no negative counts, no inverted layers).
-      if (v[i] >= 0 && v[i + 1] >= 0) return Math.max(0, h);
-      if (v[i] <= 0 && v[i + 1] <= 0) return Math.min(0, h);
-      return h;
-    }),
-  );
+  return Array.from({ length: Math.max(0, n - 1) }, (_, i) => {
+    const lo = Math.min(v[i], v[i + 1]);
+    const hi = Math.max(v[i], v[i + 1]);
+    // The cap leaves a sliver of overshoot possible next to a run end; clamp it away.
+    return Array.from({ length: samples + 1 }, (_, s) =>
+      Math.min(hi, Math.max(lo, hermite(v[i], v[i + 1], m[i], m[i + 1], s / samples))),
+    );
+  });
 }
 
 /** Smoothed segments of a series with gaps: each defined run is its own curve; `null` where a segment touches a gap. */
