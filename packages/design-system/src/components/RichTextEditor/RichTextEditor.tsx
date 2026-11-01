@@ -272,15 +272,14 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     const rootRef = useRef<HTMLDivElement | null>(null);
     const isComposingRef = useRef(false);
     // Selection to restore after the next model-driven re-render.
-    const pendingSelectionRef = useRef<Range | null>(null);
-    // A void block whose DOM caret goes AFTER its figure on the next caret-placing
-    // render (voidDelete's caretAfterVoid — a spot the model's single void point
-    // can't name). Set by commit / undo / redo, cleared by every commit, so a
-    // change the parent rejected can't leak into a later one. By block id, so it
-    // survives a parent that copies the doc in onChange.
-    const caretAfterVoidRef = useRef<string | null>(null);
+    // `afterVoid`: a void block whose DOM caret goes AFTER its figure (voidDelete's
+    // caretAfterVoid — a spot the model's single void point can't name). Bundled
+    // with the selection so every path that places a caret replaces both at once:
+    // a stale marker can never fire with someone else's selection. A block id, so
+    // it survives a parent that copies the doc in onChange.
+    const pendingSelectionRef = useRef<{ range: Range; afterVoid: string | null } | null>(null);
     // Which committed docs had their caret after a void — keyed by the exact doc
-    // object history keeps, so undo/redo can re-arm caretAfterVoidRef.
+    // object history keeps, so undo/redo restore the same side.
     const caretAfterVoidDocs = useRef(new WeakMap<RichDoc, string>());
     // Latest props for the native beforeinput listener (avoids stale closures).
     const latest = useRef({
@@ -482,7 +481,6 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         // return the SAME doc reference — skip so we don't fire onChange or leave a
         // stale pending selection that React would never consume (no re-render).
         if (result.doc === latest.current.value) return;
-        caretAfterVoidRef.current = options?.caretAfterVoid ?? null;
         if (options?.caretAfterVoid)
           caretAfterVoidDocs.current.set(result.doc, options.caretAfterVoid);
         historyRef.current = historyRecord(
@@ -492,7 +490,11 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           Date.now(),
         );
         syncHistoryFlags();
-        if (!options?.keepSelection) pendingSelectionRef.current = result.selection;
+        if (!options?.keepSelection)
+          pendingSelectionRef.current = {
+            range: result.selection,
+            afterVoid: options?.caretAfterVoid ?? null,
+          };
         liveDocRef.current = result.doc;
         latest.current.onChange(result.doc);
       },
@@ -533,7 +535,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       if (doc === latest.current.value) return;
       const root = rootRef.current;
       const sel = root ? readSelection(root) : null;
-      if (sel) pendingSelectionRef.current = sel;
+      if (sel) pendingSelectionRef.current = { range: sel, afterVoid: null };
       historyRef.current = {
         ...historyRef.current,
         present: { doc, selection: sel ?? historyRef.current.present.selection },
@@ -621,10 +623,12 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       if (!historyCanUndo(h)) return;
       const next = historyUndo(h);
       historyRef.current = next;
-      caretAfterVoidRef.current = caretAfterVoidDocs.current.get(next.present.doc) ?? null;
       syncHistoryFlags();
       clearPendingMarks();
-      pendingSelectionRef.current = next.present.selection;
+      pendingSelectionRef.current = next.present.selection && {
+        range: next.present.selection,
+        afterVoid: caretAfterVoidDocs.current.get(next.present.doc) ?? null,
+      };
       latest.current.onChange(next.present.doc);
     }, [syncHistoryFlags, clearPendingMarks]);
 
@@ -633,10 +637,12 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       if (!historyCanRedo(h)) return;
       const next = historyRedo(h);
       historyRef.current = next;
-      caretAfterVoidRef.current = caretAfterVoidDocs.current.get(next.present.doc) ?? null;
       syncHistoryFlags();
       clearPendingMarks();
-      pendingSelectionRef.current = next.present.selection;
+      pendingSelectionRef.current = next.present.selection && {
+        range: next.present.selection,
+        afterVoid: caretAfterVoidDocs.current.get(next.present.doc) ?? null,
+      };
       latest.current.onChange(next.present.doc);
     }, [syncHistoryFlags, clearPendingMarks]);
 
@@ -747,12 +753,11 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       const root = rootRef.current;
       const pending = pendingSelectionRef.current;
       if (root && pending) {
-        writeSelection(root, pending);
+        writeSelection(root, pending.range);
         pendingSelectionRef.current = null;
-        // Only on a render that just placed the caret (a commit / undo / redo) —
-        // never on an unrelated re-run (readOnly toggle, external value swap).
-        const afterVoid = caretAfterVoidRef.current;
-        caretAfterVoidRef.current = null;
+        // Only with the selection it was bundled with (a commit / undo / redo) —
+        // never on an unrelated re-run such as a readOnly toggle.
+        const afterVoid = pending.afterVoid;
         const fig = afterVoid
           ? root.querySelector(`[data-block-id="${CSS.escape(afterVoid)}"]`)
           : null;
