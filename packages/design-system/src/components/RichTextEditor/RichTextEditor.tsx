@@ -490,11 +490,12 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           Date.now(),
         );
         syncHistoryFlags();
-        if (!options?.keepSelection)
-          pendingSelectionRef.current = {
-            range: result.selection,
-            afterVoid: options?.caretAfterVoid ?? null,
-          };
+        // Every commit path writes pendingSelectionRef (null = "place no caret on
+        // this render"), so a pending selection left by a commit the parent
+        // rejected can never fire on a later, unrelated render.
+        pendingSelectionRef.current = options?.keepSelection
+          ? null
+          : { range: result.selection, afterVoid: options?.caretAfterVoid ?? null };
         liveDocRef.current = result.doc;
         latest.current.onChange(result.doc);
       },
@@ -512,6 +513,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     const commitResizeLive = useCallback(
       (doc: RichDoc) => {
         if (doc === liveDocRef.current) return;
+        pendingSelectionRef.current = null; // the slider/handle keeps focus
         historyRef.current = historyRecord(
           historyRef.current,
           { doc, selection: historyRef.current.present.selection },
@@ -535,7 +537,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       if (doc === latest.current.value) return;
       const root = rootRef.current;
       const sel = root ? readSelection(root) : null;
-      if (sel) pendingSelectionRef.current = { range: sel, afterVoid: null };
+      pendingSelectionRef.current = sel ? { range: sel, afterVoid: null } : null;
       historyRef.current = {
         ...historyRef.current,
         present: { doc, selection: sel ?? historyRef.current.present.selection },

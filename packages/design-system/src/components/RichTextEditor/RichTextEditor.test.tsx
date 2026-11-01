@@ -1977,62 +1977,70 @@ describe('upload', () => {
     await waitFor(() => expect(document.querySelector('figure[data-block-id]')).toBeTruthy());
   });
 
-  it('a rejected void delete never moves the caret when an upload later settles', async () => {
-    let settle!: (v: { url: string; mime: string }) => void;
-    const cfg = up({
-      onUpload: vi.fn(() => new Promise<{ url: string; mime: string }>((r) => (settle = r))),
-    });
-    let accept = true;
-    function Harness() {
-      const [doc, setDoc] = useState<RichDoc>({
-        blocks: [
-          { id: 't', type: 'paragraph', inlines: [{ text: 'ok', marks: [] }] },
-          { id: 'v', type: 'attachment', name: 'f.png', status: 'ready', inlines: [] },
-          { id: 'e', type: 'paragraph', inlines: [{ text: '', marks: [] }] },
-        ],
+  it.each(['in another paragraph', 'outside the editor'])(
+    'a rejected void delete never moves the caret when an upload later settles (%s)',
+    async (where) => {
+      let settle!: (v: { url: string; mime: string }) => void;
+      const cfg = up({
+        onUpload: vi.fn(() => new Promise<{ url: string; mime: string }>((r) => (settle = r))),
       });
-      return <RichTextEditor value={doc} onChange={(d) => accept && setDoc(d)} upload={cfg} />;
-    }
-    renderEditor(<Harness />);
-    const box = screen.getByRole('textbox');
-    // 1. Paste a file into "ok" — its upload stays in flight.
-    mockReadSelection.mockReturnValue({
-      anchor: { blockId: 't', offset: 2 },
-      focus: { blockId: 't', offset: 2 },
-    });
-    pasteFile(box, new File(['x'], 'p.png', { type: 'image/png' }));
-    await waitFor(() => expect(cfg.onUpload).toHaveBeenCalledTimes(1));
-    // 2. Delete after image v (removing the empty line) — the parent REJECTS it.
-    accept = false;
-    mockReadSelection.mockReturnValue({
-      anchor: { blockId: 'v', offset: 0 },
-      focus: { blockId: 'v', offset: 0 },
-    });
-    const r = document.createRange();
-    r.setStartAfter(box.querySelector('[data-block-id="v"]')!);
-    r.collapse(true);
-    document.getSelection()!.removeAllRanges();
-    document.getSelection()!.addRange(r);
-    const del = new Event('beforeinput', { bubbles: true, cancelable: true });
-    Object.defineProperty(del, 'inputType', { value: 'deleteContentForward' });
-    act(() => {
-      box.dispatchEvent(del);
-    });
-    // 3. The user clicks into "ok"; then the upload settles (a silent commit).
-    accept = true;
-    const okText = box.querySelector('[data-block-id="t"]')!.firstChild!;
-    document.getSelection()!.collapse(okText, 1);
-    mockReadSelection.mockReturnValue({
-      anchor: { blockId: 't', offset: 1 },
-      focus: { blockId: 't', offset: 1 },
-    });
-    await act(async () => {
-      settle({ url: 'http://u/p.png', mime: 'image/png' });
-    });
-    // The stale marker from the rejected delete must not pull the caret into v.
-    const v = box.querySelector('[data-block-id="v"]')!;
-    expect(v.contains(document.getSelection()!.anchorNode)).toBe(false);
-  });
+      let accept = true;
+      function Harness() {
+        const [doc, setDoc] = useState<RichDoc>({
+          blocks: [
+            { id: 't', type: 'paragraph', inlines: [{ text: 'ok', marks: [] }] },
+            { id: 'v', type: 'attachment', name: 'f.png', status: 'ready', inlines: [] },
+            { id: 'e', type: 'paragraph', inlines: [{ text: '', marks: [] }] },
+          ],
+        });
+        return <RichTextEditor value={doc} onChange={(d) => accept && setDoc(d)} upload={cfg} />;
+      }
+      renderEditor(<Harness />);
+      const box = screen.getByRole('textbox');
+      // 1. Paste a file into "ok" — its upload stays in flight.
+      mockReadSelection.mockReturnValue({
+        anchor: { blockId: 't', offset: 2 },
+        focus: { blockId: 't', offset: 2 },
+      });
+      pasteFile(box, new File(['x'], 'p.png', { type: 'image/png' }));
+      await waitFor(() => expect(cfg.onUpload).toHaveBeenCalledTimes(1));
+      // 2. Delete after image v (removing the empty line) — the parent REJECTS it.
+      accept = false;
+      mockReadSelection.mockReturnValue({
+        anchor: { blockId: 'v', offset: 0 },
+        focus: { blockId: 'v', offset: 0 },
+      });
+      const r = document.createRange();
+      r.setStartAfter(box.querySelector('[data-block-id="v"]')!);
+      r.collapse(true);
+      document.getSelection()!.removeAllRanges();
+      document.getSelection()!.addRange(r);
+      const del = new Event('beforeinput', { bubbles: true, cancelable: true });
+      Object.defineProperty(del, 'inputType', { value: 'deleteContentForward' });
+      act(() => {
+        box.dispatchEvent(del);
+      });
+      // 3. The user clicks into "ok" (or out of the editor); then the upload
+      //    settles (a silent commit).
+      accept = true;
+      if (where === 'outside the editor') {
+        document.getSelection()!.collapse(document.body, 0);
+        mockReadSelection.mockReturnValue(null);
+      } else {
+        document.getSelection()!.collapse(box.querySelector('[data-block-id="t"]')!.firstChild!, 1);
+        mockReadSelection.mockReturnValue({
+          anchor: { blockId: 't', offset: 1 },
+          focus: { blockId: 't', offset: 1 },
+        });
+      }
+      await act(async () => {
+        settle({ url: 'http://u/p.png', mime: 'image/png' });
+      });
+      // The stale marker from the rejected delete must not pull the caret into v.
+      const v = box.querySelector('[data-block-id="v"]')!;
+      expect(v.contains(document.getSelection()!.anchorNode)).toBe(false);
+    },
+  );
 
   it('announces a failed upload in a live region outside the textbox (#643)', async () => {
     const cfg: UploadConfig = {

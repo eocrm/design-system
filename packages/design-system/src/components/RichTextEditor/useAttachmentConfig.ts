@@ -87,8 +87,8 @@ export function useAttachmentConfig({
       // all owned by the injected `commitResizeLive`:
       //  • Coalescing 'resize' kind → the whole drag is ONE undo step (reverting
       //    to the pre-drag width), instead of one per pixel.
-      //  • No `pendingSelectionRef` write → the slider/handle keeps focus; a
-      //    `writeSelection` into the editable would yank focus mid-drag.
+      //  • `pendingSelectionRef` cleared (no caret placed) → the slider/handle
+      //    keeps focus; a `writeSelection` into the editable would yank it mid-drag.
       //  • Reads `liveDocRef` (the synchronously-latest doc) so rapid moves that
       //    fire before React re-renders still chain off each other.
       // Width only; clearing height lets the browser keep the aspect ratio.
