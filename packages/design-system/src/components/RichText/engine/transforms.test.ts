@@ -381,15 +381,26 @@ describe('void-aware merge/split', () => {
     expect(r.doc.blocks.map((b) => b.id)).toEqual(['p']);
     expect(r.selection.anchor).toEqual({ blockId: 'p', offset: 2 });
   });
-  it('splitBlock on a void is a no-op (same ref)', () => {
+  // A caret on a void (e.g. after a doc-final image) must still be able to
+  // continue the document: Enter / typing open a paragraph AFTER the void,
+  // mirroring insertFragment. The void itself is never touched.
+  it('splitBlock on a void inserts an empty paragraph after it, caret there', () => {
     const d: RichDoc = { blocks: [att('v')] };
-    expect(splitBlock(d, { blockId: 'v', offset: 0 }).doc).toBe(d);
+    const r = splitBlock(d, { blockId: 'v', offset: 0 });
+    expect(r.doc.blocks.map((b) => b.type)).toEqual(['attachment', 'paragraph']);
+    expect(r.doc.blocks[0]).toBe(d.blocks[0]);
+    expect(r.selection.anchor).toEqual({ blockId: r.doc.blocks[1].id, offset: 0 });
   });
-  it('insertText into a void block is a no-op (never corrupts it with text)', () => {
-    const d: RichDoc = { blocks: [att('v')] };
+  it('insertText on a void puts the text in a new paragraph after it (never corrupts the void)', () => {
+    const d: RichDoc = {
+      blocks: [att('v'), { id: 'p', type: 'paragraph', inlines: [{ text: 'next', marks: [] }] }],
+    };
     const r = insertText(d, { blockId: 'v', offset: 0 }, 'Z');
-    expect(r.doc).toBe(d);
-    expect(r.doc.blocks[0].inlines).toEqual([]);
+    expect(r.doc.blocks.map((b) => b.type)).toEqual(['attachment', 'paragraph', 'paragraph']);
+    expect(r.doc.blocks[0]).toBe(d.blocks[0]);
+    expect(runsText(r.doc.blocks[1].inlines)).toBe('Z');
+    expect(r.doc.blocks[2].id).toBe('p');
+    expect(r.selection.anchor).toEqual({ blockId: r.doc.blocks[1].id, offset: 1 });
   });
   it('deleteRange from a void into following text yields a TEXT survivor (no attachment-with-text)', () => {
     const d: RichDoc = {

@@ -5370,7 +5370,7 @@
           "type": "RichDoc",
           "required": true,
           "default": "",
-          "description": "Controlled document. Render the doc returned by `onChange` back into `value`."
+          "description": "Controlled document. Render the doc returned by `onChange` back into `value` as-is — a cloned/normalized copy reads as an outside replacement and resets undo history."
         },
         {
           "name": "invalid",

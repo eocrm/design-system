@@ -158,3 +158,16 @@ describe('linkAt — void blocks (issue #261)', () => {
     expect(linkAt(doc, at('a', 2))).toEqual({ href: '/home', range: span(at('a', 0), at('a', 4)) });
   });
 });
+
+describe('setLink beside a void block', () => {
+  it('inserts the linked href in a new paragraph after the void, selecting it', () => {
+    const doc: RichDoc = {
+      blocks: [{ id: 'v', type: 'attachment', name: 'f.png', status: 'ready', inlines: [] }],
+    };
+    const r = setLink(doc, span(at('v', 0), at('v', 0)), 'https://x.io');
+    expect(r.doc.blocks[0]).toBe(doc.blocks[0]);
+    const p = r.doc.blocks[1];
+    expect(p.inlines).toEqual([{ text: 'https://x.io', marks: [link('https://x.io')] }]);
+    expect(r.selection).toEqual(span(at(p.id, 0), at(p.id, 12)));
+  });
+});

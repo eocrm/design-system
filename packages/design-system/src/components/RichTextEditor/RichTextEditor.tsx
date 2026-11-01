@@ -38,8 +38,8 @@ import type { MentionItem, MentionsConfig } from './mentions';
 import { fromHtml } from '../RichText/engine/fromHtml';
 import { hasMark, withMark, withoutMark } from '../RichText/engine/marks';
 import { useTranslation } from '../../i18n';
-import { readSelection, writeSelection, rangeRect } from './selection';
-import { applyInput } from './input';
+import { readSelection, writeSelection, rangeRect, voidCaretSide, blockOwnText } from './selection';
+import { applyInput, voidDelete } from './input';
 import { matchBlockRule, applyBlockRule } from './inputRules';
 import { runsText } from '../RichText/engine/inlines';
 import { isLetterKey } from '../_internal/letterKey';
@@ -95,7 +95,7 @@ export interface RichTextEditorProps extends Omit<
   HTMLAttributes<HTMLDivElement>,
   'onChange' | 'children'
 > {
-  /** Controlled document. Render the doc returned by `onChange` back into `value`. */
+  /** Controlled document. Render the doc returned by `onChange` back into `value` as-is — a cloned/normalized copy reads as an outside replacement and resets undo history. */
   value: RichDoc;
   /** `aria-invalid` on the textbox. Field / SettingRow inject it (#568). @default false */
   invalid?: boolean;
@@ -221,6 +221,26 @@ function toggleInList(marks: Mark[], mark: Mark): Mark[] {
 }
 
 /**
+ * Insert `text` at `point` carrying exactly `marks` (staged pending marks). The
+ * span comes from the insert's resulting caret, not `point`: beside a void block
+ * the text lands in a NEW paragraph after it.
+ */
+function insertWithMarks(
+  doc: RichDoc,
+  point: Point,
+  text: string,
+  marks: Mark[],
+): { doc: RichDoc; selection: Range } {
+  const inserted = insertText(doc, point, text);
+  const end = inserted.selection.focus;
+  const span: Range = {
+    anchor: { blockId: end.blockId, offset: end.offset - text.length },
+    focus: end,
+  };
+  return { doc: applyExactMarks(inserted.doc, span, marks), selection: inserted.selection };
+}
+
+/**
  * Controlled rich-text editor: a contentEditable surface over the in-house engine with marks, lists, links, mentions, uploads and undo/redo.
  * @see docs/components/RichTextEditor.md
  */
@@ -252,7 +272,15 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     const rootRef = useRef<HTMLDivElement | null>(null);
     const isComposingRef = useRef(false);
     // Selection to restore after the next model-driven re-render.
-    const pendingSelectionRef = useRef<Range | null>(null);
+    // `afterVoid`: a void block whose DOM caret goes AFTER its figure (voidDelete's
+    // caretAfterVoid — a spot the model's single void point can't name). Bundled
+    // with the selection so every path that places a caret replaces both at once:
+    // a stale marker can never fire with someone else's selection. A block id, so
+    // it survives a parent that copies the doc in onChange.
+    const pendingSelectionRef = useRef<{ range: Range; afterVoid: string | null } | null>(null);
+    // Which committed docs had their caret after a void — keyed by the exact doc
+    // object history keeps, so undo/redo restore the same side.
+    const caretAfterVoidDocs = useRef(new WeakMap<RichDoc, string>());
     // Latest props for the native beforeinput listener (avoids stale closures).
     const latest = useRef({
       value,
@@ -445,12 +473,16 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
            * is still recorded in history so undo lands somewhere sensible.
            */
           keepSelection?: boolean;
+          /** Place the DOM caret AFTER this void block's figure on the re-render. */
+          caretAfterVoid?: string;
         },
       ) => {
         // No-op transforms (e.g. Backspace at the very start of the document)
         // return the SAME doc reference — skip so we don't fire onChange or leave a
         // stale pending selection that React would never consume (no re-render).
         if (result.doc === latest.current.value) return;
+        if (options?.caretAfterVoid)
+          caretAfterVoidDocs.current.set(result.doc, options.caretAfterVoid);
         historyRef.current = historyRecord(
           historyRef.current,
           { doc: result.doc, selection: result.selection },
@@ -458,7 +490,12 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           Date.now(),
         );
         syncHistoryFlags();
-        if (!options?.keepSelection) pendingSelectionRef.current = result.selection;
+        // Every commit path writes pendingSelectionRef (null = "place no caret on
+        // this render"), so a pending selection left by a commit the parent
+        // rejected can never fire on a later, unrelated render.
+        pendingSelectionRef.current = options?.keepSelection
+          ? null
+          : { range: result.selection, afterVoid: options?.caretAfterVoid ?? null };
         liveDocRef.current = result.doc;
         latest.current.onChange(result.doc);
       },
@@ -468,14 +505,15 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // Live-resize commit path for attachment width drags (used by
     // useAttachmentConfig's onConfigWidth and the image resizer). Records ONE
     // coalescing 'resize' history entry per drag (whole drag = one undo step),
-    // writes NO pending selection (the slider/handle keeps focus mid-drag — a
-    // writeSelection into the editable would yank focus), and chains off
+    // clears the pending selection so no caret is placed (the slider/handle keeps
+    // focus mid-drag — a writeSelection into the editable would yank it), and chains off
     // `liveDocRef` so rapid moves before a re-render stack on each other. The
     // no-op guard skips an unchanged doc (same width). This stays in the editor
     // so the history coupling is isolated from the hook.
     const commitResizeLive = useCallback(
       (doc: RichDoc) => {
         if (doc === liveDocRef.current) return;
+        pendingSelectionRef.current = null; // the slider/handle keeps focus
         historyRef.current = historyRecord(
           historyRef.current,
           { doc, selection: historyRef.current.present.selection },
@@ -491,7 +529,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
 
     // Like commit, but records NO history entry — used for async upload settles so
     // Undo never steps through an upload resolving. Preserves the caret across the
-    // model-driven re-render by re-pinning the current selection, and keeps the
+    // model-driven re-render by re-pinning the current selection (or placing none
+    // when the selection is outside the editor), and keeps the
     // history's `present` snapshot in sync with the new doc (without pushing a
     // past/future entry) so the layout effect's `value !== present.doc` external-
     // replacement heuristic doesn't mistake a settle for a doc swap and reset undo.
@@ -499,7 +538,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       if (doc === latest.current.value) return;
       const root = rootRef.current;
       const sel = root ? readSelection(root) : null;
-      if (sel) pendingSelectionRef.current = sel;
+      pendingSelectionRef.current = sel ? { range: sel, afterVoid: null } : null;
       historyRef.current = {
         ...historyRef.current,
         present: { doc, selection: sel ?? historyRef.current.present.selection },
@@ -547,8 +586,40 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // so a mark staged at the old caret must not bleed into the next typed text.
     const clearPendingMarks = useCallback(() => {
       setPendingMarks(null);
+      pendingMarksRef.current = null; // ahead of the re-render, for same-tick events
       pendingAtRef.current = null;
     }, []);
+
+    // Consume the staged pending marks if they were staged at `point`; marks staged
+    // anywhere else are dropped. The selectionchange cleanup runs only with a
+    // toolbar, so a keyboard-only editor relies on this to keep a ⌘B staged
+    // elsewhere from leaking into text typed here.
+    const takePendingAt = useCallback(
+      (point: Point): Mark[] | null => {
+        const pend = pendingMarksRef.current;
+        const at = pendingAtRef.current;
+        if (!pend) return null;
+        clearPendingMarks();
+        return at && at.blockId === point.blockId && at.offset === point.offset ? pend : null;
+      },
+      [clearPendingMarks],
+    );
+
+    // A voidDelete result that only moves the caret returns the SAME doc, which
+    // commit() skips as a no-op — apply its selection directly instead.
+    const applyVoidDelete = useCallback(
+      (result: ReturnType<typeof voidDelete>) => {
+        if (!result) return;
+        if (result.doc === latest.current.value) {
+          if (rootRef.current) writeSelection(rootRef.current, result.selection);
+          return;
+        }
+        commit(result, 'delete', {
+          caretAfterVoid: result.caretAfterVoid ? result.selection.anchor.blockId : undefined,
+        });
+      },
+      [commit],
+    );
 
     const onUndo = useCallback(() => {
       const h = historyRef.current;
@@ -557,7 +628,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       historyRef.current = next;
       syncHistoryFlags();
       clearPendingMarks();
-      pendingSelectionRef.current = next.present.selection;
+      pendingSelectionRef.current = next.present.selection && {
+        range: next.present.selection,
+        afterVoid: caretAfterVoidDocs.current.get(next.present.doc) ?? null,
+      };
       latest.current.onChange(next.present.doc);
     }, [syncHistoryFlags, clearPendingMarks]);
 
@@ -568,7 +642,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       historyRef.current = next;
       syncHistoryFlags();
       clearPendingMarks();
-      pendingSelectionRef.current = next.present.selection;
+      pendingSelectionRef.current = next.present.selection && {
+        range: next.present.selection,
+        afterVoid: caretAfterVoidDocs.current.get(next.present.doc) ?? null,
+      };
       latest.current.onChange(next.present.doc);
     }, [syncHistoryFlags, clearPendingMarks]);
 
@@ -679,8 +756,25 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       const root = rootRef.current;
       const pending = pendingSelectionRef.current;
       if (root && pending) {
-        writeSelection(root, pending);
+        writeSelection(root, pending.range);
         pendingSelectionRef.current = null;
+        // Only with the selection it was bundled with (a commit / undo / redo) —
+        // never on an unrelated re-run such as a readOnly toggle.
+        const afterVoid = pending.afterVoid;
+        const fig = afterVoid
+          ? root.querySelector(`[data-block-id="${CSS.escape(afterVoid)}"]`)
+          : null;
+        if (fig) {
+          // At the END of the figure's content — where Chrome's own Ctrl+End puts
+          // it. A root-level caret after a trailing contentEditable=false figure
+          // has no visible position: Chrome snaps it to the start of the editor.
+          const r = fig.ownerDocument.createRange();
+          r.setStart(fig, fig.childNodes.length);
+          r.collapse(true);
+          const sel = fig.ownerDocument.getSelection();
+          sel?.removeAllRanges();
+          sel?.addRange(r);
+        }
       }
     }, [value, syncHistoryFlags, mentionsEnabled, recomputeMention]);
 
@@ -726,8 +820,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
             const match = matchBlockRule(block.type, before, ' ');
             if (match) {
               e.preventDefault();
-              setPendingMarks(null);
-              pendingAtRef.current = null;
+              clearPendingMarks();
               commit(applyBlockRule(doc, block.id, match), 'other');
               return;
             }
@@ -746,8 +839,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           const linked = applyTypeAutolink(doc, range.anchor, e.data);
           if (linked) {
             e.preventDefault();
-            setPendingMarks(null);
-            pendingAtRef.current = null;
+            clearPendingMarks();
             commit(linked, 'type');
             return;
           }
@@ -767,30 +859,29 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           const delRange = atomicLinkDeleteRange(doc, range.anchor, dir, isResolved);
           if (delRange) {
             e.preventDefault();
-            setPendingMarks(null);
-            pendingAtRef.current = null;
+            clearPendingMarks();
             commit(deleteRange(doc, delRange), 'delete');
             return;
           }
         }
-        // Pending marks: a mark toggled at a collapsed caret applies to the next
-        // typed text, then clears. Handle insertText here before generic input.
-        const pend = pendingMarksRef.current;
-        if (pend && e.inputType === 'insertText' && isCollapsed(range)) {
-          const text = e.data ?? '';
-          if (text) {
+        // Delete/Backspace beside a void: the model has one position per void, so
+        // the DOM side decides (see voidDelete) — never delete it from the wrong side.
+        if (/^delete.*(Backward|Forward)$/.test(e.inputType) && isCollapsed(range)) {
+          const vside = voidCaretSide(root, range.anchor.blockId);
+          if (vside) {
             e.preventDefault();
-            const inserted = insertText(doc, range.anchor, text);
-            const span: Range = {
-              anchor: range.anchor,
-              focus: { blockId: range.anchor.blockId, offset: range.anchor.offset + text.length },
-            };
-            const marked = applyExactMarks(inserted.doc, span, pend);
-            setPendingMarks(null);
-            pendingAtRef.current = null;
-            commit({ doc: marked, selection: inserted.selection }, 'type');
+            const dir = /Backward$/.test(e.inputType) ? 'backward' : 'forward';
+            applyVoidDelete(voidDelete(doc, range.anchor.blockId, vside.side, dir));
             return;
           }
+        }
+        // Pending marks: a mark toggled at a collapsed caret applies to the next
+        // text typed at that same caret (takePendingAt drops it anywhere else).
+        const pend = takePendingAt(range.anchor);
+        if (pend && e.inputType === 'insertText' && isCollapsed(range) && e.data) {
+          e.preventDefault();
+          commit(insertWithMarks(doc, range.anchor, e.data, pend), 'type');
+          return;
         }
         const data = e.data ?? e.dataTransfer?.getData('text/plain') ?? null;
         const result = applyInput(doc, range, e.inputType, data);
@@ -813,7 +904,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       };
       root.addEventListener('beforeinput', onBeforeInput);
       return () => root.removeEventListener('beforeinput', onBeforeInput);
-    }, [commit, onUndo, onRedo]);
+    }, [commit, onUndo, onRedo, takePendingAt, clearPendingMarks, applyVoidDelete]);
 
     // Rich paste: when the clipboard carries HTML, parse it into the model and
     // splice it at the selection. No usable HTML → if autolink is on and the
@@ -901,8 +992,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
             sel.anchor.blockId === stagedAt.blockId &&
             sel.anchor.offset === stagedAt.offset;
           if (pend && !sameSpot) {
-            setPendingMarks(null);
-            pendingAtRef.current = null;
+            clearPendingMarks();
           }
         }
         if (controlsOn) {
@@ -920,7 +1010,15 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       };
       document.addEventListener('selectionchange', onSelChange);
       return () => document.removeEventListener('selectionchange', onSelChange);
-    }, [toolbar, readOnly, controlsOn, mentionsEnabled, blockIdFromNode, recomputeMention]);
+    }, [
+      toolbar,
+      readOnly,
+      controlsOn,
+      mentionsEnabled,
+      blockIdFromNode,
+      recomputeMention,
+      clearPendingMarks,
+    ]);
 
     // Initial mention computation: on mount, when mentions toggle on, or when the
     // trigger changes. The selectionchange listener above covers caret moves AND
@@ -1086,6 +1184,41 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
             return;
           }
         }
+        // Caret INSIDE a void block's contentEditable=false figure (e.g. after a
+        // doc-final image): browsers fire NO beforeinput there, only keydown, so
+        // route the editing keys ourselves. Only for keys aimed at the editable —
+        // an attachment's own Retry/Remove buttons keep theirs.
+        const vcaret =
+          e.target === root && isCollapsed(range) && !e.nativeEvent.isComposing
+            ? voidCaretSide(root, range.anchor.blockId)
+            : null;
+        if (vcaret?.inside) {
+          // A single character, not a shortcut. Ctrl+Alt is AltGr on Windows
+          // (e.g. "@" on a German layout), so that still counts as typing.
+          const printable = [...e.key].length === 1 && !e.metaKey && (!e.ctrlKey || e.altKey);
+          if (printable) {
+            e.preventDefault();
+            const pend = takePendingAt(range.anchor);
+            commit(
+              pend
+                ? insertWithMarks(value, range.anchor, e.key, pend)
+                : insertText(value, range.anchor, e.key),
+              'type',
+            );
+            return;
+          }
+          if (!mod && e.key === 'Enter') {
+            e.preventDefault();
+            commit(applyInput(value, range, 'insertParagraph', null)!, 'other');
+            return;
+          }
+          if (!mod && (e.key === 'Backspace' || e.key === 'Delete')) {
+            e.preventDefault();
+            const dir = e.key === 'Backspace' ? 'backward' : 'forward';
+            applyVoidDelete(voidDelete(value, range.anchor.blockId, vcaret.side, dir));
+            return;
+          }
+        }
         // Mention menu navigation takes priority over editor keys when open.
         if (mention.open && mention.items.length > 0) {
           if (e.key === 'ArrowDown') {
@@ -1160,29 +1293,67 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         onRedo,
         mention,
         controlsOn,
+        takePendingAt,
+        applyVoidDelete,
       ],
     );
 
+    // Snapshot at compositionstart — the last moment the DOM and the model agree:
+    // the selection, and the anchor block's own DOM text (in model offsets).
+    const compositionRef = useRef<{ range: Range; before: string } | null>(null);
     const onCompositionStart = useCallback(() => {
       isComposingRef.current = true;
+      const root = rootRef.current;
+      const range = root ? readSelection(root) : null;
+      const before = range && root ? blockOwnText(root, range.anchor.blockId) : null;
+      compositionRef.current = range && before != null ? { range, before } : null;
     }, []);
 
     const onCompositionEnd = useCallback(
       (e: React.CompositionEvent<HTMLDivElement>) => {
         isComposingRef.current = false;
+        const snap = compositionRef.current;
+        compositionRef.current = null;
         const root = rootRef.current;
-        if (readOnly || !root) return;
-        const text = e.data;
-        if (!text) return;
-        // The browser composed text into the DOM (diverged from the model). Read
-        // where the caret now is, map it back, and replace the composed span:
-        // delete the composed text length before the caret, then insert it into
-        // the model — then re-render snaps the DOM back to the model.
-        const range = readSelection(root);
-        if (!range) return;
-        const caret = range.focus;
-        const start = { blockId: caret.blockId, offset: Math.max(0, caret.offset - text.length) };
-        const result = applyInput(value, { anchor: start, focus: caret }, 'insertText', text);
+        if (readOnly || !root || !snap) return;
+        const { range, before } = snap;
+        // A selection across blocks: the browser merged them in the DOM, so a text
+        // diff of one block can't see it — replace the captured range instead.
+        if (range.anchor.blockId !== range.focus.blockId) {
+          const result = applyInput(value, range, 'insertText', e.data);
+          if (result) commit(result, 'type');
+          return;
+        }
+        // The browser composed into the DOM ahead of the model. Diff the block's
+        // own text before vs after (common prefix + suffix) to find exactly what
+        // changed — no caret math, so an IME that recomposes an existing word
+        // (Android Gboard), leaves the caret mid-word, or commits unchanged is
+        // handled. The re-render then snaps the DOM back to the model.
+        const blockId = range.anchor.blockId;
+        const after = blockOwnText(root, blockId);
+        if (after == null || after === before) return;
+        // Cap the prefix at the composition start: in a repeated run ("ab" + "b")
+        // the change can't begin after the caret it started from.
+        const startCap = Math.min(range.anchor.offset, range.focus.offset);
+        let pre = 0;
+        while (pre < startCap && pre < after.length && before[pre] === after[pre]) pre += 1;
+        // ...and the suffix at the end of the snapshot selection (it was replaced).
+        const endCap = before.length - Math.max(range.anchor.offset, range.focus.offset);
+        let suf = 0;
+        while (
+          suf < Math.min(endCap, before.length - pre) &&
+          suf < after.length - pre &&
+          before[before.length - 1 - suf] === after[after.length - 1 - suf]
+        )
+          suf += 1;
+        const replaced: Range = {
+          anchor: { blockId, offset: pre },
+          focus: { blockId, offset: before.length - suf },
+        };
+        const inserted = after.slice(pre, after.length - suf);
+        const result = inserted
+          ? applyInput(value, replaced, 'insertText', inserted)
+          : applyInput(value, replaced, 'deleteContentBackward', null);
         if (result) commit(result, 'type');
       },
       [value, readOnly, commit],
@@ -1240,18 +1411,20 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       (choice: BlockChoice) => {
         const root = rootRef.current;
         const range = (root ? readSelection(root) : null) ?? lastSelectionRef.current;
-        if (range) commit(runSetBlock(value, range, choice));
+        if (range) commit(runSetBlock(latest.current.value, range, choice));
       },
-      [value, commit],
+      [commit],
     );
     const onToolbarToggleList = useCallback(
       (listType: 'bullet_item' | 'ordered_item') => {
         const root = rootRef.current;
         const range = (root ? readSelection(root) : null) ?? lastSelectionRef.current;
-        if (range) commit(runToggleList(value, range, listType));
+        if (range) commit(runToggleList(latest.current.value, range, listType));
       },
-      [value, commit],
+      [commit],
     );
+
+    const onPickFiles = useCallback(() => uploadInputRef.current?.click(), []);
 
     const onBlockInsertBelow = useCallback(
       (id: string) => commit(insertEmptyBlockBelow(latest.current.value, id), 'other'),
@@ -1371,9 +1544,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       () => renderDoc(value, { editable: true, renderLink, renderMention }),
       [value, renderLink, renderMention],
     );
-    // Stable signature of block order — recomputed only when blocks change, not on
-    // every keystroke. Shared by the gutter (blockOrderKey) and the image resizer's
-    // layoutKey so their memoized shells stay stable while typing within a block.
+    // Signature of block order. `value.blocks` is a new array on every edit, so this
+    // recomputes per keystroke (a cheap join) — but the STRING is unchanged while
+    // typing within a block, so the gutter (blockOrderKey) and the image resizer's
+    // layoutKey keep their memoized shells stable.
     const blockOrderKey = useMemo(() => value.blocks.map((b) => b.id).join('|'), [value.blocks]);
 
     const editable = (
@@ -1605,7 +1779,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         canRedo={canRedo}
         onUndo={onUndo}
         onRedo={onRedo}
-        onPickFiles={uploadOn ? () => uploadInputRef.current?.click() : undefined}
+        onPickFiles={uploadOn ? onPickFiles : undefined}
         onOverlayOpenChange={autoToolbar ? setToolbarOverlayOpen : undefined}
         onInsertEmoji={onInsertEmoji}
       />

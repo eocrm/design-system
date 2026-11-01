@@ -21,6 +21,17 @@ import { readSelection } from './selection';
 
 const mockReadSelection = vi.mocked(readSelection);
 
+/** Put the native caret inside the editor's (single) attachment figure. */
+function caretInFigure(editor: HTMLElement, side: 'before' | 'after') {
+  const fig = editor.querySelector('figure')!;
+  const r = document.createRange();
+  r.setStart(fig, side === 'before' ? 0 : fig.childNodes.length);
+  r.collapse(true);
+  const sel = document.getSelection()!;
+  sel.removeAllRanges();
+  sel.addRange(r);
+}
+
 function renderEditor(ui: React.ReactElement) {
   return render(<I18nProvider locale="en">{ui}</I18nProvider>);
 }
@@ -363,6 +374,541 @@ describe('RichTextEditor toolbar', () => {
       expect(span?.textContent).toBe('hello');
       expect(span?.style.color).toBe('var(--color-danger)');
     });
+  });
+
+  // Chrome fires NO beforeinput while the caret sits inside a contentEditable=false
+  // figure (e.g. after an image that ends the doc) — only keydown. The editor must
+  // handle those keys itself or they are silently dropped.
+  it('typing, Enter and Backspace with the caret on an attachment are handled from keydown', () => {
+    const onChange = vi.fn();
+    const doc: RichDoc = {
+      blocks: [
+        { id: 'p', type: 'paragraph', inlines: [{ text: 'hi', marks: [] }] },
+        { id: 'v', type: 'attachment', name: 'f.png', status: 'ready', inlines: [] },
+      ],
+    };
+    renderEditor(<RichTextEditor value={doc} onChange={onChange} />);
+    const editor = screen.getByRole('textbox');
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'v', offset: 0 },
+      focus: { blockId: 'v', offset: 0 },
+    });
+    caretInFigure(editor, 'after');
+    expect(fireEvent.keyDown(editor, { key: 'x' })).toBe(false);
+    let next: RichDoc = onChange.mock.calls.at(-1)![0];
+    expect(next.blocks.map((b) => b.type)).toEqual(['paragraph', 'attachment', 'paragraph']);
+    expect(next.blocks[2].inlines).toEqual([{ text: 'x', marks: [] }]);
+
+    expect(fireEvent.keyDown(editor, { key: 'Enter' })).toBe(false);
+    next = onChange.mock.calls.at(-1)![0];
+    expect(next.blocks.map((b) => b.type)).toEqual(['paragraph', 'attachment', 'paragraph']);
+    expect(next.blocks[2].inlines).toEqual([{ text: '', marks: [] }]);
+
+    expect(fireEvent.keyDown(editor, { key: 'Backspace' })).toBe(false);
+    next = onChange.mock.calls.at(-1)![0];
+    expect(next.blocks.map((b) => b.id)).toEqual(['p']);
+
+    // Shortcuts still pass through (⌘C must not type a "c").
+    onChange.mockClear();
+    fireEvent.keyDown(editor, { key: 'c', ctrlKey: true });
+    expect(onChange).not.toHaveBeenCalled();
+    // AltGr (Ctrl+Alt) characters are typing, not shortcuts.
+    fireEvent.keyDown(editor, { key: '@', ctrlKey: true, altKey: true });
+    expect(onChange.mock.calls.at(-1)![0].blocks[2].inlines[0].text).toBe('@');
+    // Delete from AFTER the image would reach across into a neighbor: no-op.
+    onChange.mockClear();
+    expect(fireEvent.keyDown(editor, { key: 'Delete' })).toBe(false);
+    expect(onChange).not.toHaveBeenCalled();
+    // From BEFORE it, Backspace moves the caret into the previous block — no edit.
+    caretInFigure(editor, 'before');
+    expect(fireEvent.keyDown(editor, { key: 'Backspace' })).toBe(false);
+    expect(onChange).not.toHaveBeenCalled();
+    expect(editor.querySelector('p')!.contains(document.getSelection()!.anchorNode)).toBe(true);
+  });
+
+  it('a root-level caret after a mid-doc image: Delete edits the next block, never the image', () => {
+    const onChange = vi.fn();
+    const doc: RichDoc = {
+      blocks: [
+        { id: 'v', type: 'attachment', name: 'f.png', status: 'ready', inlines: [] },
+        { id: 'p', type: 'paragraph', inlines: [{ text: 'hi', marks: [] }] },
+      ],
+    };
+    renderEditor(<RichTextEditor value={doc} onChange={onChange} />);
+    const editor = screen.getByRole('textbox');
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'v', offset: 0 },
+      focus: { blockId: 'v', offset: 0 },
+    });
+    const del = (inputType: string, rootOffset: number) => {
+      const r = document.createRange();
+      r.setStart(editor, rootOffset);
+      r.collapse(true);
+      document.getSelection()!.removeAllRanges();
+      document.getSelection()!.addRange(r);
+      const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+      Object.defineProperty(evt, 'inputType', { value: inputType });
+      act(() => {
+        editor.dispatchEvent(evt);
+      });
+      expect(evt.defaultPrevented).toBe(true);
+      return onChange.mock.calls.at(-1)?.[0] as RichDoc | undefined;
+    };
+    // Caret after the figure (root offset 1): Delete moves into "hi" — no edit,
+    // and above all the image is NOT removed.
+    expect(del('deleteContentForward', 1)).toBeUndefined();
+    expect(editor.querySelector('p')!.contains(document.getSelection()!.anchorNode)).toBe(true);
+    // Caret after the figure: Backspace removes the image.
+    const next = del('deleteContentBackward', 1)!;
+    expect(next.blocks.map((b) => b.id)).toEqual(['p']);
+    // Caret before the figure, which is the first block: Backspace is a no-op.
+    onChange.mockClear();
+    expect(del('deleteContentBackward', 0)).toBeUndefined();
+  });
+
+  it('two Deletes after an image remove the empty line, then never the image', () => {
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [
+          { id: 'v', type: 'attachment', name: 'f.png', status: 'ready', inlines: [] },
+          { id: 'e', type: 'paragraph', inlines: [{ text: '', marks: [] }] },
+        ],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} />;
+    }
+    renderEditor(<Harness />);
+    const editor = screen.getByRole('textbox');
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'v', offset: 0 },
+      focus: { blockId: 'v', offset: 0 },
+    });
+    const pressDelete = () => {
+      const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+      Object.defineProperty(evt, 'inputType', { value: 'deleteContentForward' });
+      act(() => {
+        editor.dispatchEvent(evt);
+      });
+    };
+    const r = document.createRange();
+    r.setStartAfter(editor.querySelector('figure')!); // root-level caret after the image
+    r.collapse(true);
+    document.getSelection()!.removeAllRanges();
+    document.getSelection()!.addRange(r);
+    pressDelete(); // removes the empty paragraph
+    expect(editor.querySelectorAll('p')).toHaveLength(0);
+    // The DOM caret is still AFTER the image — at the end of the figure's content,
+    // where Chrome itself keeps a caret past a trailing figure — not before it...
+    const sel = document.getSelection()!;
+    const fig = editor.querySelector('figure')!;
+    expect(sel.anchorNode).toBe(fig);
+    expect(sel.anchorOffset).toBe(fig.childNodes.length);
+    pressDelete(); // ...so a second Delete has nothing ahead: the image stays.
+    expect(editor.querySelector('figure')).not.toBeNull();
+    // Undo restores the empty line; redo removes it again AND restores the caret
+    // after the image (history keeps the same doc object the map is keyed on).
+    fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true });
+    expect(editor.querySelectorAll('p')).toHaveLength(1);
+    fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true, shiftKey: true });
+    expect(editor.querySelectorAll('p')).toHaveLength(0);
+    const figAfterRedo = editor.querySelector('figure')!;
+    expect(document.getSelection()!.anchorNode).toBe(figAfterRedo);
+    expect(document.getSelection()!.anchorOffset).toBe(figAfterRedo.childNodes.length);
+  });
+
+  it('a re-render that places no caret (readOnly toggle) leaves the caret alone', () => {
+    function Harness({ ro }: { ro: boolean }) {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [
+          { id: 't', type: 'paragraph', inlines: [{ text: 'ok', marks: [] }] },
+          { id: 'v', type: 'attachment', name: 'f.png', status: 'ready', inlines: [] },
+          { id: 'e', type: 'paragraph', inlines: [{ text: '', marks: [] }] },
+        ],
+      });
+      return (
+        <RichTextEditor
+          value={doc}
+          onChange={setDoc}
+          readOnly={ro}
+          mentions={{ onQuery: async () => [] }}
+        />
+      );
+    }
+    const { rerender } = renderEditor(<Harness ro={false} />);
+    const editor = screen.getByRole('textbox');
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'v', offset: 0 },
+      focus: { blockId: 'v', offset: 0 },
+    });
+    const r = document.createRange();
+    r.setStartAfter(editor.querySelector('figure')!);
+    r.collapse(true);
+    document.getSelection()!.removeAllRanges();
+    document.getSelection()!.addRange(r);
+    const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(evt, 'inputType', { value: 'deleteContentForward' });
+    act(() => {
+      editor.dispatchEvent(evt);
+    }); // removes the empty line; caret after the image
+    // The user moves the caret into "ok", then the form disables + re-enables.
+    const textNode = editor.querySelector('p')!.firstChild!;
+    document.getSelection()!.collapse(textNode, 1);
+    rerender(
+      <I18nProvider locale="en">
+        <Harness ro />
+      </I18nProvider>,
+    );
+    rerender(
+      <I18nProvider locale="en">
+        <Harness ro={false} />
+      </I18nProvider>,
+    );
+    expect(document.getSelection()!.anchorNode).toBe(textNode);
+  });
+
+  it('a parent that copies the doc in onChange still keeps the image on a second Delete', () => {
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [
+          { id: 'v', type: 'attachment', name: 'f.png', status: 'ready', inlines: [] },
+          { id: 'e', type: 'paragraph', inlines: [{ text: '', marks: [] }] },
+        ],
+      });
+      return <RichTextEditor value={doc} onChange={(d) => setDoc(structuredClone(d))} />;
+    }
+    renderEditor(<Harness />);
+    const editor = screen.getByRole('textbox');
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'v', offset: 0 },
+      focus: { blockId: 'v', offset: 0 },
+    });
+    const pressDelete = () => {
+      const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+      Object.defineProperty(evt, 'inputType', { value: 'deleteContentForward' });
+      act(() => {
+        editor.dispatchEvent(evt);
+      });
+    };
+    const r = document.createRange();
+    r.setStartAfter(editor.querySelector('figure')!);
+    r.collapse(true);
+    document.getSelection()!.removeAllRanges();
+    document.getSelection()!.addRange(r);
+    pressDelete();
+    expect(document.getSelection()!.anchorNode).toBe(editor.querySelector('figure'));
+    pressDelete();
+    expect(editor.querySelector('figure')).not.toBeNull();
+  });
+
+  it('a void delete the parent rejects never moves the caret on a later render', () => {
+    let accept = false;
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [
+          { id: 't', type: 'paragraph', inlines: [{ text: 'ok', marks: [] }] },
+          { id: 'v', type: 'attachment', name: 'f.png', status: 'ready', inlines: [] },
+          { id: 'e', type: 'paragraph', inlines: [{ text: '', marks: [] }] },
+        ],
+      });
+      return <RichTextEditor value={doc} onChange={(d) => accept && setDoc(d)} />;
+    }
+    renderEditor(<Harness />);
+    const editor = screen.getByRole('textbox');
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'v', offset: 0 },
+      focus: { blockId: 'v', offset: 0 },
+    });
+    const r = document.createRange();
+    r.setStartAfter(editor.querySelector('figure')!);
+    r.collapse(true);
+    document.getSelection()!.removeAllRanges();
+    document.getSelection()!.addRange(r);
+    const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(evt, 'inputType', { value: 'deleteContentForward' });
+    act(() => {
+      editor.dispatchEvent(evt);
+    }); // rejected by the parent
+    // Now an accepted edit elsewhere: typing at the end of "ok".
+    accept = true;
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 't', offset: 2 },
+      focus: { blockId: 't', offset: 2 },
+    });
+    const type = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(type, 'inputType', { value: 'insertText' });
+    Object.defineProperty(type, 'data', { value: '!' });
+    act(() => {
+      editor.dispatchEvent(type);
+    });
+    expect(editor.textContent).toContain('ok!');
+    // The caret follows the typing — it did not jump into the figure.
+    expect(editor.querySelector('figure')!.contains(document.getSelection()!.anchorNode)).toBe(
+      false,
+    );
+  });
+
+  it('a non-directional delete beside a figure (deleteContent / deleteByCut) skips the void path', () => {
+    const onChange = vi.fn();
+    const doc: RichDoc = {
+      blocks: [
+        { id: 'v', type: 'attachment', name: 'f.png', status: 'ready', inlines: [] },
+        { id: 'p', type: 'paragraph', inlines: [{ text: 'hi', marks: [] }] },
+      ],
+    };
+    renderEditor(<RichTextEditor value={doc} onChange={onChange} />);
+    const editor = screen.getByRole('textbox');
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'v', offset: 0 },
+      focus: { blockId: 'v', offset: 0 },
+    });
+    const r = document.createRange();
+    // Root-level caret BEFORE the figure: as a "forward" delete, voidDelete would
+    // remove the image here — these inputTypes must not reach it.
+    r.setStart(editor, 0);
+    r.collapse(true);
+    document.getSelection()!.removeAllRanges();
+    document.getSelection()!.addRange(r);
+    for (const inputType of ['deleteContent', 'deleteByCut']) {
+      const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+      Object.defineProperty(evt, 'inputType', { value: inputType });
+      act(() => {
+        editor.dispatchEvent(evt);
+      });
+    }
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('a mark staged on an attachment caret applies to the text typed there', () => {
+    const onChange = vi.fn();
+    const doc: RichDoc = {
+      blocks: [{ id: 'v', type: 'attachment', name: 'f.png', status: 'ready', inlines: [] }],
+    };
+    renderEditor(<RichTextEditor value={doc} onChange={onChange} />);
+    const editor = screen.getByRole('textbox');
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'v', offset: 0 },
+      focus: { blockId: 'v', offset: 0 },
+    });
+    caretInFigure(editor, 'after');
+    fireEvent.keyDown(editor, { key: 'b', code: 'KeyB', ctrlKey: true });
+    fireEvent.keyDown(editor, { key: 'x' });
+    const next: RichDoc = onChange.mock.calls.at(-1)![0];
+    expect(next.blocks[1].inlines).toEqual([{ text: 'x', marks: [{ type: 'bold' }] }]);
+  });
+
+  it('Delete from before a mid-doc image removes it, keeping the next paragraph', () => {
+    const onChange = vi.fn();
+    const doc: RichDoc = {
+      blocks: [
+        { id: 'v', type: 'attachment', name: 'f.png', status: 'ready', inlines: [] },
+        { id: 'p', type: 'paragraph', inlines: [{ text: 'hi', marks: [] }] },
+      ],
+    };
+    renderEditor(<RichTextEditor value={doc} onChange={onChange} />);
+    const editor = screen.getByRole('textbox');
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'v', offset: 0 },
+      focus: { blockId: 'v', offset: 0 },
+    });
+    caretInFigure(editor, 'before');
+    fireEvent.keyDown(editor, { key: 'Delete' });
+    expect(onChange.mock.calls.at(-1)![0].blocks.map((b: { id: string }) => b.id)).toEqual(['p']);
+  });
+
+  it("keys on an attachment's own Retry button are not hijacked by the void keydown path", () => {
+    const onChange = vi.fn();
+    const doc: RichDoc = {
+      blocks: [{ id: 'v', type: 'attachment', name: 'f.png', status: 'error', inlines: [] }],
+    };
+    renderEditor(<RichTextEditor value={doc} onChange={onChange} />);
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'v', offset: 0 },
+      focus: { blockId: 'v', offset: 0 },
+    });
+    const retry = screen.getByRole('button', { name: /retry/i });
+    expect(fireEvent.keyDown(retry, { key: 'Enter' })).toBe(true);
+    expect(fireEvent.keyDown(retry, { key: ' ' })).toBe(true);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  describe('IME composition', () => {
+    // The browser writes the composition into the DOM ahead of the model; mirror
+    // that, then fire compositionend with the DOM caret at the composition's end.
+    function compose(model: string, dom: string, caret: number, data: string, blocks?: RichDoc) {
+      const onChange = vi.fn();
+      renderEditor(
+        <RichTextEditor
+          value={
+            blocks ?? {
+              blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: model, marks: [] }] }],
+            }
+          }
+          onChange={onChange}
+        />,
+      );
+      const editor = screen.getByRole('textbox');
+      const caretAt = { blockId: 'k', offset: caret };
+      mockReadSelection.mockReturnValue({ anchor: caretAt, focus: caretAt });
+      fireEvent.compositionStart(editor, { data: '' });
+      // The browser writes the composition into the block's own text node.
+      const el = editor.querySelector('[data-block-id="k"]')!;
+      const textNode = Array.from(el.childNodes).find((n) => n.nodeType === Node.TEXT_NODE)!;
+      textNode.textContent = dom;
+      fireEvent.compositionEnd(editor, { data });
+      const next: RichDoc | undefined = onChange.mock.calls.at(-1)?.[0];
+      const k = (next ?? blocks)?.blocks.find((b) => b.id === 'k');
+      return next ? k!.inlines.map((r) => r.text).join('') : '(no change)';
+    }
+
+    it('mid-text insert keeps the following text', () => {
+      expect(compose('Assign', 'Ass日本ign', 5, '日本')).toBe('Ass日本ign');
+    });
+    it('repeated characters: the change is placed at the composition start, not after the run', () => {
+      function Harness() {
+        const [doc, setDoc] = useState<RichDoc>({
+          blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'ab', marks: [] }] }],
+        });
+        return <RichTextEditor value={doc} onChange={setDoc} />;
+      }
+      renderEditor(<Harness />);
+      const editor = screen.getByRole('textbox');
+      mockReadSelection.mockReturnValue({
+        anchor: { blockId: 'k', offset: 1 },
+        focus: { blockId: 'k', offset: 1 },
+      });
+      fireEvent.compositionStart(editor, { data: '' });
+      editor.querySelector('p')!.firstChild!.textContent = 'abb';
+      fireEvent.compositionEnd(editor, { data: 'b' });
+      expect(editor.textContent).toBe('abb');
+      // Caret lands right after the composed "b" (offset 2), not at the run's end.
+      expect(document.getSelection()!.anchorOffset).toBe(2);
+    });
+    it('composing over a selection replaces exactly the selection', () => {
+      expect(compose('abcdef', 'abXef', 3, 'X')).toBe('abXef');
+    });
+    it('composing over a selection with text equal to what follows keeps the caret after it', () => {
+      // Select "cd" in "abcdef" and compose "d": the replaced span is exactly the
+      // selection, so the caret lands after the new "d" (offset 3), not at 2.
+      function Harness() {
+        const [doc, setDoc] = useState<RichDoc>({
+          blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'abcdef', marks: [] }] }],
+        });
+        return <RichTextEditor value={doc} onChange={setDoc} />;
+      }
+      renderEditor(<Harness />);
+      const editor = screen.getByRole('textbox');
+      mockReadSelection.mockReturnValue({
+        anchor: { blockId: 'k', offset: 2 },
+        focus: { blockId: 'k', offset: 4 },
+      });
+      fireEvent.compositionStart(editor, { data: '' });
+      editor.querySelector('p')!.firstChild!.textContent = 'abdef';
+      fireEvent.compositionEnd(editor, { data: 'd' });
+      expect(editor.textContent).toBe('abdef');
+      expect(document.getSelection()!.anchorOffset).toBe(3);
+    });
+    it('recomposing an existing word (Android Gboard) replaces the word, not duplicates it', () => {
+      expect(compose('Hel', 'Hello', 5, 'Hello')).toBe('Hello');
+    });
+    it('a composition committed unchanged with the caret mid-word is a no-op', () => {
+      // Gboard composes the tapped word "Hello" with the caret after "Hel".
+      expect(compose('Say Hello', 'Say Hello', 7, 'Hello')).toBe('(no change)');
+    });
+    it('an IME erasing a recomposed word (Gboard backspace) deletes it from the model', () => {
+      expect(compose('Hi Bob', 'Hi ', 3, '')).toBe('Hi ');
+    });
+    it('a parent list item ignores its nested child items when diffing', () => {
+      const doc: RichDoc = {
+        blocks: [
+          { id: 'k', type: 'bullet_item', depth: 0, inlines: [{ text: 'Hel', marks: [] }] },
+          { id: 'c', type: 'bullet_item', depth: 1, inlines: [{ text: 'child', marks: [] }] },
+        ],
+      };
+      expect(compose('Hel', 'Hello', 5, 'Hello', doc)).toBe('Hello');
+    });
+    it('an atomic widget in the block keeps model offsets aligned', () => {
+      const doc: RichDoc = {
+        blocks: [
+          {
+            id: 'k',
+            type: 'paragraph',
+            inlines: [
+              { text: 'https://t/1', marks: [{ type: 'link', href: 'https://t/1' }] },
+              { text: ' ab', marks: [] },
+            ],
+          },
+        ],
+      };
+      const onChange = vi.fn();
+      renderEditor(<RichTextEditor value={doc} onChange={onChange} renderLink={() => <b>#1</b>} />);
+      const editor = screen.getByRole('textbox');
+      const caretAt = { blockId: 'k', offset: 12 };
+      mockReadSelection.mockReturnValue({ anchor: caretAt, focus: caretAt });
+      fireEvent.compositionStart(editor, { data: '' });
+      const tail = editor.querySelector('p')!.lastChild!;
+      tail.textContent = ' a日b';
+      fireEvent.compositionEnd(editor, { data: '日' });
+      const next: RichDoc = onChange.mock.calls.at(-1)![0];
+      expect(next.blocks[0].inlines.map((r) => r.text).join('')).toBe('https://t/1 a日b');
+    });
+    it('composing over a selection spanning two blocks deletes the selection', () => {
+      const onChange = vi.fn();
+      renderEditor(
+        <RichTextEditor
+          value={{
+            blocks: [
+              { id: 'a', type: 'paragraph', inlines: [{ text: 'abcd', marks: [] }] },
+              { id: 'b', type: 'paragraph', inlines: [{ text: 'efgh', marks: [] }] },
+            ],
+          }}
+          onChange={onChange}
+        />,
+      );
+      const editor = screen.getByRole('textbox');
+      mockReadSelection.mockReturnValue({
+        anchor: { blockId: 'a', offset: 2 },
+        focus: { blockId: 'b', offset: 2 },
+      });
+      fireEvent.compositionStart(editor, { data: '' });
+      mockReadSelection.mockReturnValue({
+        anchor: { blockId: 'a', offset: 3 },
+        focus: { blockId: 'a', offset: 3 },
+      });
+      fireEvent.compositionEnd(editor, { data: 'X' });
+      const next: RichDoc = onChange.mock.calls.at(-1)![0];
+      expect(next.blocks.map((b) => b.inlines.map((r) => r.text).join(''))).toEqual(['abXgh']);
+    });
+  });
+
+  it('a mark staged with ⌘B does not leak to a different caret (no toolbar)', () => {
+    // Keyboard-only editor: no toolbar, so the selectionchange cleanup never runs —
+    // the typing path itself must drop marks staged at a different point.
+    const onChange = vi.fn();
+    const doc: RichDoc = {
+      blocks: [
+        { id: 'a', type: 'paragraph', inlines: [{ text: 'one', marks: [] }] },
+        { id: 'b', type: 'paragraph', inlines: [{ text: 'two', marks: [] }] },
+      ],
+    };
+    renderEditor(<RichTextEditor value={doc} onChange={onChange} />);
+    const editor = screen.getByRole('textbox');
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'a', offset: 3 },
+      focus: { blockId: 'a', offset: 3 },
+    });
+    fireEvent.keyDown(editor, { key: 'b', code: 'KeyB', ctrlKey: true });
+    // Caret moves to the end of the second block, then a character is typed.
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'b', offset: 3 },
+      focus: { blockId: 'b', offset: 3 },
+    });
+    const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(evt, 'inputType', { value: 'insertText' });
+    Object.defineProperty(evt, 'data', { value: 'x' });
+    act(() => {
+      editor.dispatchEvent(evt);
+    });
+    const next: RichDoc = onChange.mock.calls.at(-1)![0];
+    expect(next.blocks[1].inlines).toEqual([{ text: 'twox', marks: [] }]);
   });
 
   it('staging a color at a collapsed caret colors the next typed character', async () => {
@@ -1430,6 +1976,71 @@ describe('upload', () => {
     await waitFor(() => expect(cfg.onUpload).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(document.querySelector('figure[data-block-id]')).toBeTruthy());
   });
+
+  it.each(['in another paragraph', 'outside the editor'])(
+    'a rejected void delete never moves the caret when an upload later settles (%s)',
+    async (where) => {
+      let settle!: (v: { url: string; mime: string }) => void;
+      const cfg = up({
+        onUpload: vi.fn(() => new Promise<{ url: string; mime: string }>((r) => (settle = r))),
+      });
+      let accept = true;
+      function Harness() {
+        const [doc, setDoc] = useState<RichDoc>({
+          blocks: [
+            { id: 't', type: 'paragraph', inlines: [{ text: 'ok', marks: [] }] },
+            { id: 'v', type: 'attachment', name: 'f.png', status: 'ready', inlines: [] },
+            { id: 'e', type: 'paragraph', inlines: [{ text: '', marks: [] }] },
+          ],
+        });
+        return <RichTextEditor value={doc} onChange={(d) => accept && setDoc(d)} upload={cfg} />;
+      }
+      renderEditor(<Harness />);
+      const box = screen.getByRole('textbox');
+      // 1. Paste a file into "ok" — its upload stays in flight.
+      mockReadSelection.mockReturnValue({
+        anchor: { blockId: 't', offset: 2 },
+        focus: { blockId: 't', offset: 2 },
+      });
+      pasteFile(box, new File(['x'], 'p.png', { type: 'image/png' }));
+      await waitFor(() => expect(cfg.onUpload).toHaveBeenCalledTimes(1));
+      // 2. Delete after image v (removing the empty line) — the parent REJECTS it.
+      accept = false;
+      mockReadSelection.mockReturnValue({
+        anchor: { blockId: 'v', offset: 0 },
+        focus: { blockId: 'v', offset: 0 },
+      });
+      const r = document.createRange();
+      r.setStartAfter(box.querySelector('[data-block-id="v"]')!);
+      r.collapse(true);
+      document.getSelection()!.removeAllRanges();
+      document.getSelection()!.addRange(r);
+      const del = new Event('beforeinput', { bubbles: true, cancelable: true });
+      Object.defineProperty(del, 'inputType', { value: 'deleteContentForward' });
+      act(() => {
+        box.dispatchEvent(del);
+      });
+      // 3. The user clicks into "ok" (or out of the editor); then the upload
+      //    settles (a silent commit).
+      accept = true;
+      if (where === 'outside the editor') {
+        document.getSelection()!.collapse(document.body, 0);
+        mockReadSelection.mockReturnValue(null);
+      } else {
+        document.getSelection()!.collapse(box.querySelector('[data-block-id="t"]')!.firstChild!, 1);
+        mockReadSelection.mockReturnValue({
+          anchor: { blockId: 't', offset: 1 },
+          focus: { blockId: 't', offset: 1 },
+        });
+      }
+      await act(async () => {
+        settle({ url: 'http://u/p.png', mime: 'image/png' });
+      });
+      // The stale marker from the rejected delete must not pull the caret into v.
+      const v = box.querySelector('[data-block-id="v"]')!;
+      expect(v.contains(document.getSelection()!.anchorNode)).toBe(false);
+    },
+  );
 
   it('announces a failed upload in a live region outside the textbox (#643)', async () => {
     const cfg: UploadConfig = {
