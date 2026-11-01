@@ -505,8 +505,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // Live-resize commit path for attachment width drags (used by
     // useAttachmentConfig's onConfigWidth and the image resizer). Records ONE
     // coalescing 'resize' history entry per drag (whole drag = one undo step),
-    // writes NO pending selection (the slider/handle keeps focus mid-drag — a
-    // writeSelection into the editable would yank focus), and chains off
+    // clears the pending selection so no caret is placed (the slider/handle keeps
+    // focus mid-drag — a writeSelection into the editable would yank it), and chains off
     // `liveDocRef` so rapid moves before a re-render stack on each other. The
     // no-op guard skips an unchanged doc (same width). This stays in the editor
     // so the history coupling is isolated from the hook.
@@ -529,7 +529,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
 
     // Like commit, but records NO history entry — used for async upload settles so
     // Undo never steps through an upload resolving. Preserves the caret across the
-    // model-driven re-render by re-pinning the current selection, and keeps the
+    // model-driven re-render by re-pinning the current selection (or placing none
+    // when the selection is outside the editor), and keeps the
     // history's `present` snapshot in sync with the new doc (without pushing a
     // past/future entry) so the layout effect's `value !== present.doc` external-
     // replacement heuristic doesn't mistake a settle for a doc swap and reset undo.
