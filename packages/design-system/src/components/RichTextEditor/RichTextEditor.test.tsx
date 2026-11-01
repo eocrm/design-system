@@ -599,6 +599,49 @@ describe('RichTextEditor toolbar', () => {
     expect(editor.querySelector('figure')).not.toBeNull();
   });
 
+  it('a rejected void delete never moves the caret when the parent later pushes a new value', () => {
+    let push!: (d: RichDoc) => void;
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [
+          { id: 't', type: 'paragraph', inlines: [{ text: 'ok', marks: [] }] },
+          { id: 'v', type: 'attachment', name: 'f.png', status: 'ready', inlines: [] },
+          { id: 'e', type: 'paragraph', inlines: [{ text: '', marks: [] }] },
+        ],
+      });
+      push = setDoc;
+      return <RichTextEditor value={doc} onChange={() => {}} />; // rejects every edit
+    }
+    renderEditor(<Harness />);
+    const editor = screen.getByRole('textbox');
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'v', offset: 0 },
+      focus: { blockId: 'v', offset: 0 },
+    });
+    const r = document.createRange();
+    r.setStartAfter(editor.querySelector('figure')!);
+    r.collapse(true);
+    document.getSelection()!.removeAllRanges();
+    document.getSelection()!.addRange(r);
+    const del = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(del, 'inputType', { value: 'deleteContentForward' });
+    act(() => {
+      editor.dispatchEvent(del);
+    });
+    // The user moves out of the editor; then a refetch replaces the value.
+    document.getSelection()!.collapse(document.body, 0);
+    act(() =>
+      push({
+        blocks: [
+          { id: 't', type: 'paragraph', inlines: [{ text: 'refetched', marks: [] }] },
+          { id: 'v', type: 'attachment', name: 'f.png', status: 'ready', inlines: [] },
+          { id: 'e', type: 'paragraph', inlines: [{ text: '', marks: [] }] },
+        ],
+      }),
+    );
+    expect(editor.contains(document.getSelection()!.anchorNode)).toBe(false);
+  });
+
   it('a void delete the parent rejects never moves the caret on a later render', () => {
     let accept = false;
     function Harness() {
@@ -2036,9 +2079,11 @@ describe('upload', () => {
       await act(async () => {
         settle({ url: 'http://u/p.png', mime: 'image/png' });
       });
-      // The stale marker from the rejected delete must not pull the caret into v.
+      // The stale marker from the rejected delete must not pull the caret into v...
       const v = box.querySelector('[data-block-id="v"]')!;
       expect(v.contains(document.getSelection()!.anchorNode)).toBe(false);
+      // ...and the settle must not build on the rejected doc (empty line "e" stays).
+      expect(box.querySelector('[data-block-id="e"]')).not.toBeNull();
     },
   );
 

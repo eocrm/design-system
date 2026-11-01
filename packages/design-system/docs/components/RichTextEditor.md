@@ -18,7 +18,7 @@ const [doc, setDoc] = useState(emptyDoc());
 <!-- prettier-ignore -->
 | Prop | Type | Required | Description |
 |---|---|---|---|
-| `value` | `RichDoc` | yes | Controlled document. Render the doc returned by `onChange` back into `value` as-is — a cloned/normalized copy reads as an outside replacement and resets undo history. |
+| `value` | `RichDoc` | yes | Controlled document. Render the doc returned by `onChange` back into `value` as-is and synchronously — a cloned/normalized copy reads as an outside replacement and resets undo history; a deferred one is treated as a rejected edit. |
 | `invalid` | `boolean` | no | `aria-invalid` on the textbox. Field / SettingRow inject it. Default: `false`. |
 | `required` | `boolean` | no | `aria-required` on the textbox. Field / SettingRow inject it. Default: `false`. |
 | `onChange` | `(doc: RichDoc) => void` | yes | Fires with the new document after every edit. |
@@ -94,6 +94,7 @@ Read-only display of an existing document: `<RichTextEditor value={doc} onChange
 **Anti-patterns**
 
 - ❌ Treating it as uncontrolled — you MUST feed `onChange`'s doc back into `value`, or edits won't stick. Never mutate `value` in place.
+- ❌ Applying `onChange`'s doc asynchronously (debounced / `setTimeout` / after an `await`) — store it synchronously and debounce your SAVE instead. The editor treats an edit whose `value` doesn't change synchronously as rejected and rolls back its caret, undo entry and pending upload state for it.
 - ❌ Cloning or normalizing the doc in `onChange` before storing it (`setDoc(structuredClone(d))`, a re-parse, an immutable-library copy) — the editor detects an outside `value` replacement by object identity, so a copy wipes undo history on every keystroke. Store the exact object `onChange` gave you; transform only on save.
 - ❌ Implementing your own undo/redo stack — history is tracked internally (⌘/Ctrl+Z, ⌘/Ctrl+⇧Z or ⌘/Ctrl+Y, toolbar buttons).
 - ❌ Hand-rolling a link UI or a toolbar by reaching into the DOM — press ⌘/Ctrl+K or pass `toolbar`; both route through the controlled `value`/`onChange` round-trip.

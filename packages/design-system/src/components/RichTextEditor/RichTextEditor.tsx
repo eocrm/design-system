@@ -8,6 +8,7 @@ import {
   useState,
   type HTMLAttributes,
 } from 'react';
+import { flushSync } from 'react-dom';
 import clsx from 'clsx';
 import type { RichDoc, Range, Mark, MarkType, Point } from '../RichText/engine/model';
 import { nextId } from '../RichText/engine/model';
@@ -95,7 +96,7 @@ export interface RichTextEditorProps extends Omit<
   HTMLAttributes<HTMLDivElement>,
   'onChange' | 'children'
 > {
-  /** Controlled document. Render the doc returned by `onChange` back into `value` as-is — a cloned/normalized copy reads as an outside replacement and resets undo history. */
+  /** Controlled document. Render the doc returned by `onChange` back into `value` as-is and synchronously — a cloned/normalized copy reads as an outside replacement and resets undo history; a deferred one is treated as a rejected edit. */
   value: RichDoc;
   /** `aria-invalid` on the textbox. Field / SettingRow inject it (#568). @default false */
   invalid?: boolean;
@@ -460,6 +461,27 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       setCanRedo(historyCanRedo(historyRef.current));
     }, []);
 
+    // Hand a doc to the parent and learn — synchronously — whether it was taken.
+    // flushSync renders an accepting parent's update before onChange returns, so
+    // an unchanged `value` afterwards means the parent REJECTED it (or will set
+    // it asynchronously, outside the documented contract). Then nothing staged
+    // for that doc may outlive the call: the pending caret, the live doc that
+    // async upload settles chain off, and the history entry are all rolled back
+    // — otherwise they'd fire or resurface on some later, unrelated render.
+    const emit = useCallback(
+      (doc: RichDoc, prevHistory: History) => {
+        const before = latest.current.value;
+        liveDocRef.current = doc;
+        flushSync(() => latest.current.onChange(doc));
+        if (latest.current.value !== before) return; // accepted (possibly transformed)
+        pendingSelectionRef.current = null;
+        liveDocRef.current = before;
+        historyRef.current = prevHistory;
+        syncHistoryFlags();
+      },
+      [syncHistoryFlags],
+    );
+
     const commit = useCallback(
       (
         result: { doc: RichDoc; selection: Range },
@@ -483,6 +505,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         if (result.doc === latest.current.value) return;
         if (options?.caretAfterVoid)
           caretAfterVoidDocs.current.set(result.doc, options.caretAfterVoid);
+        const prevHistory = historyRef.current;
         historyRef.current = historyRecord(
           historyRef.current,
           { doc: result.doc, selection: result.selection },
@@ -496,10 +519,9 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         pendingSelectionRef.current = options?.keepSelection
           ? null
           : { range: result.selection, afterVoid: options?.caretAfterVoid ?? null };
-        liveDocRef.current = result.doc;
-        latest.current.onChange(result.doc);
+        emit(result.doc, prevHistory);
       },
-      [syncHistoryFlags],
+      [syncHistoryFlags, emit],
     );
 
     // Live-resize commit path for attachment width drags (used by
@@ -514,6 +536,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       (doc: RichDoc) => {
         if (doc === liveDocRef.current) return;
         pendingSelectionRef.current = null; // the slider/handle keeps focus
+        const prevHistory = historyRef.current;
         historyRef.current = historyRecord(
           historyRef.current,
           { doc, selection: historyRef.current.present.selection },
@@ -521,10 +544,9 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           Date.now(),
         );
         syncHistoryFlags();
-        liveDocRef.current = doc;
-        latest.current.onChange(doc);
+        emit(doc, prevHistory);
       },
-      [syncHistoryFlags],
+      [syncHistoryFlags, emit],
     );
 
     // Like commit, but records NO history entry — used for async upload settles so
@@ -534,18 +556,21 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // history's `present` snapshot in sync with the new doc (without pushing a
     // past/future entry) so the layout effect's `value !== present.doc` external-
     // replacement heuristic doesn't mistake a settle for a doc swap and reset undo.
-    const commitSilent = useCallback((doc: RichDoc) => {
-      if (doc === latest.current.value) return;
-      const root = rootRef.current;
-      const sel = root ? readSelection(root) : null;
-      pendingSelectionRef.current = sel ? { range: sel, afterVoid: null } : null;
-      historyRef.current = {
-        ...historyRef.current,
-        present: { doc, selection: sel ?? historyRef.current.present.selection },
-      };
-      liveDocRef.current = doc;
-      latest.current.onChange(doc);
-    }, []);
+    const commitSilent = useCallback(
+      (doc: RichDoc) => {
+        if (doc === latest.current.value) return;
+        const root = rootRef.current;
+        const sel = root ? readSelection(root) : null;
+        pendingSelectionRef.current = sel ? { range: sel, afterVoid: null } : null;
+        const prevHistory = historyRef.current;
+        historyRef.current = {
+          ...historyRef.current,
+          present: { doc, selection: sel ?? historyRef.current.present.selection },
+        };
+        emit(doc, prevHistory);
+      },
+      [emit],
+    );
 
     const uploadOn = !!upload && !readOnly;
     // A failure usually lands while the user keeps typing elsewhere in the doc,
@@ -632,8 +657,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         range: next.present.selection,
         afterVoid: caretAfterVoidDocs.current.get(next.present.doc) ?? null,
       };
-      latest.current.onChange(next.present.doc);
-    }, [syncHistoryFlags, clearPendingMarks]);
+      emit(next.present.doc, h);
+    }, [syncHistoryFlags, clearPendingMarks, emit]);
 
     const onRedo = useCallback(() => {
       const h = historyRef.current;
@@ -646,8 +671,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         range: next.present.selection,
         afterVoid: caretAfterVoidDocs.current.get(next.present.doc) ?? null,
       };
-      latest.current.onChange(next.present.doc);
-    }, [syncHistoryFlags, clearPendingMarks]);
+      emit(next.present.doc, h);
+    }, [syncHistoryFlags, clearPendingMarks, emit]);
 
     const insertMentionItem = useCallback(
       (
