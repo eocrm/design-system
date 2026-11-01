@@ -160,6 +160,16 @@ describe('voidDelete', () => {
     expect(texts(r)).toEqual(['ab', '[img]', 'd']);
     expect(r.selection.anchor).toEqual(at('q', 0));
   });
+  it('a void neighbor in that direction is removed (caret between two images)', () => {
+    const two: RichDoc = {
+      blocks: [d.blocks[1], { ...d.blocks[1], id: 'w' }, p('cd', 'q')],
+    };
+    // Caret between them resolves to {w, before}: Backspace removes v, keeps w.
+    expect(voidDelete(two, 'w', 'before', 'backward')!.doc.blocks.map((b) => b.id)).toEqual([
+      'w',
+      'q',
+    ]);
+  });
   it('no neighbor in that direction → null (no-op)', () => {
     const solo: RichDoc = { blocks: [d.blocks[1]] };
     expect(voidDelete(solo, 'v', 'after', 'forward')).toBeNull();

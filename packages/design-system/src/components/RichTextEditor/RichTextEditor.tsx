@@ -808,7 +808,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         }
         // Delete/Backspace beside a void: the model has one position per void, so
         // the DOM side decides (see voidDelete) — never delete it from the wrong side.
-        if (e.inputType.startsWith('delete') && isCollapsed(range)) {
+        if (/^delete.*(Backward|Forward)$/.test(e.inputType) && isCollapsed(range)) {
           const vside = voidCaretSide(root, range.anchor.blockId);
           if (vside) {
             e.preventDefault();
@@ -1275,8 +1275,11 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         const blockId = range.anchor.blockId;
         const after = blockOwnText(root, blockId);
         if (after == null || after === before) return;
+        // Cap the prefix at the composition start: in a repeated run ("ab" + "b")
+        // the change can't begin after the caret it started from.
+        const startCap = Math.min(range.anchor.offset, range.focus.offset);
         let pre = 0;
-        while (pre < before.length && pre < after.length && before[pre] === after[pre]) pre += 1;
+        while (pre < startCap && pre < after.length && before[pre] === after[pre]) pre += 1;
         let suf = 0;
         while (
           suf < before.length - pre &&

@@ -551,6 +551,26 @@ describe('RichTextEditor toolbar', () => {
     it('mid-text insert keeps the following text', () => {
       expect(compose('Assign', 'Ass日本ign', 5, '日本')).toBe('Ass日本ign');
     });
+    it('repeated characters: the change is placed at the composition start, not after the run', () => {
+      function Harness() {
+        const [doc, setDoc] = useState<RichDoc>({
+          blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'ab', marks: [] }] }],
+        });
+        return <RichTextEditor value={doc} onChange={setDoc} />;
+      }
+      renderEditor(<Harness />);
+      const editor = screen.getByRole('textbox');
+      mockReadSelection.mockReturnValue({
+        anchor: { blockId: 'k', offset: 1 },
+        focus: { blockId: 'k', offset: 1 },
+      });
+      fireEvent.compositionStart(editor, { data: '' });
+      editor.querySelector('p')!.firstChild!.textContent = 'abb';
+      fireEvent.compositionEnd(editor, { data: 'b' });
+      expect(editor.textContent).toBe('abb');
+      // Caret lands right after the composed "b" (offset 2), not at the run's end.
+      expect(document.getSelection()!.anchorOffset).toBe(2);
+    });
     it('composing over a selection replaces exactly the selection', () => {
       expect(compose('abcdef', 'abXef', 3, 'X')).toBe('abXef');
     });

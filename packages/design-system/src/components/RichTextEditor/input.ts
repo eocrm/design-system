@@ -130,7 +130,8 @@ export type VoidSide = 'before' | 'after';
  * - Backspace from AFTER, or Delete from BEFORE → remove the void.
  * - Backspace from BEFORE → delete backward from the end of the previous block.
  * - Delete from AFTER → delete forward from the start of the next block.
- * Returns null when there is no editable neighbor in that direction (no-op).
+ * A void neighbor in that direction is removed (caret between two images).
+ * Returns null when there is no neighbor in that direction (no-op).
  */
 export function voidDelete(
   doc: RichDoc,
@@ -142,7 +143,9 @@ export function voidDelete(
   if (idx === -1) return null;
   if ((dir === 'backward') === (side === 'after')) return removeBlockUnit(doc, voidId);
   const neighbor = doc.blocks[dir === 'backward' ? idx - 1 : idx + 1];
-  if (!neighbor || isVoidBlock(neighbor)) return null;
+  if (!neighbor) return null;
+  // Between two voids the caret resolves to one of them; the key removes the other.
+  if (isVoidBlock(neighbor)) return removeBlockUnit(doc, neighbor.id);
   return dir === 'backward'
     ? deleteBackward(doc, point(neighbor.id, blockLength(neighbor)))
     : deleteForward(doc, point(neighbor.id, 0));
