@@ -150,15 +150,26 @@ describe('voidDelete', () => {
     expect(texts(voidDelete(d, 'v', 'after', 'backward')!)).toEqual(['ab', 'cd']);
     expect(texts(voidDelete(d, 'v', 'before', 'forward')!)).toEqual(['ab', 'cd']);
   });
-  it('Backspace from before deletes from the end of the previous block', () => {
-    const r = voidDelete(d, 'v', 'before', 'backward')!;
-    expect(texts(r)).toEqual(['a', '[img]', 'cd']);
-    expect(r.selection.anchor).toEqual(at('p', 1));
+  it('Backspace from before / Delete from after just move the caret into the text neighbor', () => {
+    const back = voidDelete(d, 'v', 'before', 'backward')!;
+    expect(back.doc).toBe(d);
+    expect(back.selection.anchor).toEqual(at('p', 2));
+    const fwd = voidDelete(d, 'v', 'after', 'forward')!;
+    expect(fwd.doc).toBe(d);
+    expect(fwd.selection.anchor).toEqual(at('q', 0));
   });
-  it('Delete from after deletes from the start of the next block', () => {
-    const r = voidDelete(d, 'v', 'after', 'forward')!;
-    expect(texts(r)).toEqual(['ab', '[img]', 'd']);
-    expect(r.selection.anchor).toEqual(at('q', 0));
+  it('an EMPTY neighbor in that direction is removed (only that block)', () => {
+    const e: RichDoc = {
+      blocks: [
+        d.blocks[1],
+        { id: 'li', type: 'bullet_item', depth: 0, inlines: [{ text: '', marks: [] }] },
+        { id: 'kid', type: 'bullet_item', depth: 1, inlines: [{ text: 'x', marks: [] }] },
+      ],
+    };
+    expect(voidDelete(e, 'v', 'after', 'forward')!.doc.blocks.map((b) => b.id)).toEqual([
+      'v',
+      'kid',
+    ]);
   });
   it('a void neighbor in that direction is removed (caret between two images)', () => {
     const two: RichDoc = {

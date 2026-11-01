@@ -128,9 +128,10 @@ export type VoidSide = 'before' | 'after';
  * Backspace / Delete with the caret beside a void block. The model has ONE
  * position per void (`{voidId, 0}`), so the DOM side decides:
  * - Backspace from AFTER, or Delete from BEFORE → remove the void.
- * - Backspace from BEFORE → delete backward from the end of the previous block.
- * - Delete from AFTER → delete forward from the start of the next block.
- * A void neighbor in that direction is removed (caret between two images).
+ * - Backspace from BEFORE / Delete from AFTER → toward the neighboring block:
+ *   another void is removed (caret between two images), an EMPTY text block is
+ *   removed, otherwise the caret just moves into it (returns the SAME doc — the
+ *   caller applies only the selection; no character is deleted).
  * Returns null when there is no neighbor in that direction (no-op).
  */
 export function voidDelete(
@@ -144,9 +145,14 @@ export function voidDelete(
   if ((dir === 'backward') === (side === 'after')) return removeBlockUnit(doc, voidId);
   const neighbor = doc.blocks[dir === 'backward' ? idx - 1 : idx + 1];
   if (!neighbor) return null;
-  // Between two voids the caret resolves to one of them; the key removes the other.
-  if (isVoidBlock(neighbor)) return removeBlockUnit(doc, neighbor.id);
-  return dir === 'backward'
-    ? deleteBackward(doc, point(neighbor.id, blockLength(neighbor)))
-    : deleteForward(doc, point(neighbor.id, 0));
+  if (isVoidBlock(neighbor) || blockLength(neighbor) === 0) {
+    // Remove just that block (not removeBlockUnit: an empty list parent after
+    // the void would take its children with it).
+    return {
+      doc: { blocks: doc.blocks.filter((b) => b !== neighbor) },
+      selection: { anchor: point(voidId, 0), focus: point(voidId, 0) },
+    };
+  }
+  const at = point(neighbor.id, dir === 'backward' ? blockLength(neighbor) : 0);
+  return { doc, selection: { anchor: at, focus: at } };
 }

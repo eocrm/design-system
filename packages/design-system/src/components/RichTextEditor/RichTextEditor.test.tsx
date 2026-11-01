@@ -419,11 +419,11 @@ describe('RichTextEditor toolbar', () => {
     onChange.mockClear();
     expect(fireEvent.keyDown(editor, { key: 'Delete' })).toBe(false);
     expect(onChange).not.toHaveBeenCalled();
-    // From BEFORE it, Backspace edits the previous block instead ("hi" → "h").
+    // From BEFORE it, Backspace moves the caret into the previous block — no edit.
     caretInFigure(editor, 'before');
-    fireEvent.keyDown(editor, { key: 'Backspace' });
-    next = onChange.mock.calls.at(-1)![0];
-    expect(next.blocks.map((b) => b.inlines.map((r) => r.text).join(''))).toEqual(['h', '']);
+    expect(fireEvent.keyDown(editor, { key: 'Backspace' })).toBe(false);
+    expect(onChange).not.toHaveBeenCalled();
+    expect(editor.querySelector('p')!.contains(document.getSelection()!.anchorNode)).toBe(true);
   });
 
   it('a root-level caret after a mid-doc image: Delete edits the next block, never the image', () => {
@@ -454,12 +454,12 @@ describe('RichTextEditor toolbar', () => {
       expect(evt.defaultPrevented).toBe(true);
       return onChange.mock.calls.at(-1)?.[0] as RichDoc | undefined;
     };
-    // Caret after the figure (root offset 1): Delete removes "h", keeps the image.
-    let next = del('deleteContentForward', 1)!;
-    expect(next.blocks.map((b) => b.type)).toEqual(['attachment', 'paragraph']);
-    expect(next.blocks[1].inlines[0].text).toBe('i');
+    // Caret after the figure (root offset 1): Delete moves into "hi" — no edit,
+    // and above all the image is NOT removed.
+    expect(del('deleteContentForward', 1)).toBeUndefined();
+    expect(editor.querySelector('p')!.contains(document.getSelection()!.anchorNode)).toBe(true);
     // Caret after the figure: Backspace removes the image.
-    next = del('deleteContentBackward', 1)!;
+    const next = del('deleteContentBackward', 1)!;
     expect(next.blocks.map((b) => b.id)).toEqual(['p']);
     // Caret before the figure, which is the first block: Backspace is a no-op.
     onChange.mockClear();
@@ -573,6 +573,27 @@ describe('RichTextEditor toolbar', () => {
     });
     it('composing over a selection replaces exactly the selection', () => {
       expect(compose('abcdef', 'abXef', 3, 'X')).toBe('abXef');
+    });
+    it('composing over a selection with text equal to what follows keeps the caret after it', () => {
+      // Select "cd" in "abcdef" and compose "d": the replaced span is exactly the
+      // selection, so the caret lands after the new "d" (offset 3), not at 2.
+      function Harness() {
+        const [doc, setDoc] = useState<RichDoc>({
+          blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'abcdef', marks: [] }] }],
+        });
+        return <RichTextEditor value={doc} onChange={setDoc} />;
+      }
+      renderEditor(<Harness />);
+      const editor = screen.getByRole('textbox');
+      mockReadSelection.mockReturnValue({
+        anchor: { blockId: 'k', offset: 2 },
+        focus: { blockId: 'k', offset: 4 },
+      });
+      fireEvent.compositionStart(editor, { data: '' });
+      editor.querySelector('p')!.firstChild!.textContent = 'abdef';
+      fireEvent.compositionEnd(editor, { data: 'd' });
+      expect(editor.textContent).toBe('abdef');
+      expect(document.getSelection()!.anchorOffset).toBe(3);
     });
     it('recomposing an existing word (Android Gboard) replaces the word, not duplicates it', () => {
       expect(compose('Hel', 'Hello', 5, 'Hello')).toBe('Hello');

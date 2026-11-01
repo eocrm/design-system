@@ -586,6 +586,18 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       [clearPendingMarks],
     );
 
+    // A voidDelete result that only moves the caret returns the SAME doc, which
+    // commit() skips as a no-op — apply its selection directly instead.
+    const applyVoidDelete = useCallback(
+      (result: { doc: RichDoc; selection: Range } | null) => {
+        if (!result) return;
+        if (result.doc === latest.current.value) {
+          if (rootRef.current) writeSelection(rootRef.current, result.selection);
+        } else commit(result, 'delete');
+      },
+      [commit],
+    );
+
     const onUndo = useCallback(() => {
       const h = historyRef.current;
       if (!historyCanUndo(h)) return;
@@ -813,8 +825,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           if (vside) {
             e.preventDefault();
             const dir = /Backward$/.test(e.inputType) ? 'backward' : 'forward';
-            const result = voidDelete(doc, range.anchor.blockId, vside.side, dir);
-            if (result) commit(result, 'delete');
+            applyVoidDelete(voidDelete(doc, range.anchor.blockId, vside.side, dir));
             return;
           }
         }
@@ -847,7 +858,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       };
       root.addEventListener('beforeinput', onBeforeInput);
       return () => root.removeEventListener('beforeinput', onBeforeInput);
-    }, [commit, onUndo, onRedo, takePendingAt, clearPendingMarks]);
+    }, [commit, onUndo, onRedo, takePendingAt, clearPendingMarks, applyVoidDelete]);
 
     // Rich paste: when the clipboard carries HTML, parse it into the model and
     // splice it at the selection. No usable HTML → if autolink is on and the
@@ -1158,8 +1169,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           if (!mod && (e.key === 'Backspace' || e.key === 'Delete')) {
             e.preventDefault();
             const dir = e.key === 'Backspace' ? 'backward' : 'forward';
-            const result = voidDelete(value, range.anchor.blockId, vcaret.side, dir);
-            if (result) commit(result, 'delete');
+            applyVoidDelete(voidDelete(value, range.anchor.blockId, vcaret.side, dir));
             return;
           }
         }
@@ -1238,6 +1248,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         mention,
         controlsOn,
         takePendingAt,
+        applyVoidDelete,
       ],
     );
 
@@ -1280,9 +1291,11 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         const startCap = Math.min(range.anchor.offset, range.focus.offset);
         let pre = 0;
         while (pre < startCap && pre < after.length && before[pre] === after[pre]) pre += 1;
+        // ...and the suffix at the end of the snapshot selection (it was replaced).
+        const endCap = before.length - Math.max(range.anchor.offset, range.focus.offset);
         let suf = 0;
         while (
-          suf < before.length - pre &&
+          suf < Math.min(endCap, before.length - pre) &&
           suf < after.length - pre &&
           before[before.length - 1 - suf] === after[after.length - 1 - suf]
         )
