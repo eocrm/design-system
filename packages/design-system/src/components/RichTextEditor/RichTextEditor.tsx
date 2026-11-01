@@ -273,10 +273,14 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     const isComposingRef = useRef(false);
     // Selection to restore after the next model-driven re-render.
     const pendingSelectionRef = useRef<Range | null>(null);
-    // Docs whose caret belongs AFTER a void's figure (voidDelete's caretAfterVoid —
-    // a spot the model's single void point can't name), keyed by the exact doc
-    // object: history keeps these objects, so undo/redo restore the right side, and
-    // a doc the parent never accepted can't affect a later render.
+    // A void block whose DOM caret goes AFTER its figure on the next caret-placing
+    // render (voidDelete's caretAfterVoid — a spot the model's single void point
+    // can't name). Set by commit / undo / redo, cleared by every commit, so a
+    // change the parent rejected can't leak into a later one. By block id, so it
+    // survives a parent that copies the doc in onChange.
+    const caretAfterVoidRef = useRef<string | null>(null);
+    // Which committed docs had their caret after a void — keyed by the exact doc
+    // object history keeps, so undo/redo can re-arm caretAfterVoidRef.
     const caretAfterVoidDocs = useRef(new WeakMap<RichDoc, string>());
     // Latest props for the native beforeinput listener (avoids stale closures).
     const latest = useRef({
@@ -470,12 +474,17 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
            * is still recorded in history so undo lands somewhere sensible.
            */
           keepSelection?: boolean;
+          /** Place the DOM caret AFTER this void block's figure on the re-render. */
+          caretAfterVoid?: string;
         },
       ) => {
         // No-op transforms (e.g. Backspace at the very start of the document)
         // return the SAME doc reference — skip so we don't fire onChange or leave a
         // stale pending selection that React would never consume (no re-render).
         if (result.doc === latest.current.value) return;
+        caretAfterVoidRef.current = options?.caretAfterVoid ?? null;
+        if (options?.caretAfterVoid)
+          caretAfterVoidDocs.current.set(result.doc, options.caretAfterVoid);
         historyRef.current = historyRecord(
           historyRef.current,
           { doc: result.doc, selection: result.selection },
@@ -600,10 +609,9 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           if (rootRef.current) writeSelection(rootRef.current, result.selection);
           return;
         }
-        // The model can't say "after the void"; the layout effect places it.
-        if (result.caretAfterVoid)
-          caretAfterVoidDocs.current.set(result.doc, result.selection.anchor.blockId);
-        commit(result, 'delete');
+        commit(result, 'delete', {
+          caretAfterVoid: result.caretAfterVoid ? result.selection.anchor.blockId : undefined,
+        });
       },
       [commit],
     );
@@ -613,6 +621,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       if (!historyCanUndo(h)) return;
       const next = historyUndo(h);
       historyRef.current = next;
+      caretAfterVoidRef.current = caretAfterVoidDocs.current.get(next.present.doc) ?? null;
       syncHistoryFlags();
       clearPendingMarks();
       pendingSelectionRef.current = next.present.selection;
@@ -624,6 +633,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       if (!historyCanRedo(h)) return;
       const next = historyRedo(h);
       historyRef.current = next;
+      caretAfterVoidRef.current = caretAfterVoidDocs.current.get(next.present.doc) ?? null;
       syncHistoryFlags();
       clearPendingMarks();
       pendingSelectionRef.current = next.present.selection;
@@ -739,21 +749,24 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       if (root && pending) {
         writeSelection(root, pending);
         pendingSelectionRef.current = null;
-      }
-      const afterVoid = caretAfterVoidDocs.current.get(value);
-      const fig = afterVoid
-        ? root?.querySelector(`[data-block-id="${CSS.escape(afterVoid)}"]`)
-        : null;
-      if (fig) {
-        // At the END of the figure's content — where Chrome's own Ctrl+End puts it.
-        // A root-level caret after a trailing contentEditable=false figure has no
-        // visible position: Chrome snaps it to the start of the editor.
-        const r = fig.ownerDocument.createRange();
-        r.setStart(fig, fig.childNodes.length);
-        r.collapse(true);
-        const sel = fig.ownerDocument.getSelection();
-        sel?.removeAllRanges();
-        sel?.addRange(r);
+        // Only on a render that just placed the caret (a commit / undo / redo) —
+        // never on an unrelated re-run (readOnly toggle, external value swap).
+        const afterVoid = caretAfterVoidRef.current;
+        caretAfterVoidRef.current = null;
+        const fig = afterVoid
+          ? root.querySelector(`[data-block-id="${CSS.escape(afterVoid)}"]`)
+          : null;
+        if (fig) {
+          // At the END of the figure's content — where Chrome's own Ctrl+End puts
+          // it. A root-level caret after a trailing contentEditable=false figure
+          // has no visible position: Chrome snaps it to the start of the editor.
+          const r = fig.ownerDocument.createRange();
+          r.setStart(fig, fig.childNodes.length);
+          r.collapse(true);
+          const sel = fig.ownerDocument.getSelection();
+          sel?.removeAllRanges();
+          sel?.addRange(r);
+        }
       }
     }, [value, syncHistoryFlags, mentionsEnabled, recomputeMention]);
 

@@ -510,7 +510,93 @@ describe('RichTextEditor toolbar', () => {
     expect(editor.querySelectorAll('p')).toHaveLength(1);
     fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true, shiftKey: true });
     expect(editor.querySelectorAll('p')).toHaveLength(0);
+    const figAfterRedo = editor.querySelector('figure')!;
+    expect(document.getSelection()!.anchorNode).toBe(figAfterRedo);
+    expect(document.getSelection()!.anchorOffset).toBe(figAfterRedo.childNodes.length);
+  });
+
+  it('a re-render that places no caret (readOnly toggle) leaves the caret alone', () => {
+    function Harness({ ro }: { ro: boolean }) {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [
+          { id: 't', type: 'paragraph', inlines: [{ text: 'ok', marks: [] }] },
+          { id: 'v', type: 'attachment', name: 'f.png', status: 'ready', inlines: [] },
+          { id: 'e', type: 'paragraph', inlines: [{ text: '', marks: [] }] },
+        ],
+      });
+      return (
+        <RichTextEditor
+          value={doc}
+          onChange={setDoc}
+          readOnly={ro}
+          mentions={{ onQuery: async () => [] }}
+        />
+      );
+    }
+    const { rerender } = renderEditor(<Harness ro={false} />);
+    const editor = screen.getByRole('textbox');
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'v', offset: 0 },
+      focus: { blockId: 'v', offset: 0 },
+    });
+    const r = document.createRange();
+    r.setStartAfter(editor.querySelector('figure')!);
+    r.collapse(true);
+    document.getSelection()!.removeAllRanges();
+    document.getSelection()!.addRange(r);
+    const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(evt, 'inputType', { value: 'deleteContentForward' });
+    act(() => {
+      editor.dispatchEvent(evt);
+    }); // removes the empty line; caret after the image
+    // The user moves the caret into "ok", then the form disables + re-enables.
+    const textNode = editor.querySelector('p')!.firstChild!;
+    document.getSelection()!.collapse(textNode, 1);
+    rerender(
+      <I18nProvider locale="en">
+        <Harness ro />
+      </I18nProvider>,
+    );
+    rerender(
+      <I18nProvider locale="en">
+        <Harness ro={false} />
+      </I18nProvider>,
+    );
+    expect(document.getSelection()!.anchorNode).toBe(textNode);
+  });
+
+  it('a parent that copies the doc in onChange still keeps the image on a second Delete', () => {
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [
+          { id: 'v', type: 'attachment', name: 'f.png', status: 'ready', inlines: [] },
+          { id: 'e', type: 'paragraph', inlines: [{ text: '', marks: [] }] },
+        ],
+      });
+      return <RichTextEditor value={doc} onChange={(d) => setDoc(structuredClone(d))} />;
+    }
+    renderEditor(<Harness />);
+    const editor = screen.getByRole('textbox');
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'v', offset: 0 },
+      focus: { blockId: 'v', offset: 0 },
+    });
+    const pressDelete = () => {
+      const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+      Object.defineProperty(evt, 'inputType', { value: 'deleteContentForward' });
+      act(() => {
+        editor.dispatchEvent(evt);
+      });
+    };
+    const r = document.createRange();
+    r.setStartAfter(editor.querySelector('figure')!);
+    r.collapse(true);
+    document.getSelection()!.removeAllRanges();
+    document.getSelection()!.addRange(r);
+    pressDelete();
     expect(document.getSelection()!.anchorNode).toBe(editor.querySelector('figure'));
+    pressDelete();
+    expect(editor.querySelector('figure')).not.toBeNull();
   });
 
   it('a void delete the parent rejects never moves the caret on a later render', () => {
@@ -518,9 +604,9 @@ describe('RichTextEditor toolbar', () => {
     function Harness() {
       const [doc, setDoc] = useState<RichDoc>({
         blocks: [
+          { id: 't', type: 'paragraph', inlines: [{ text: 'ok', marks: [] }] },
           { id: 'v', type: 'attachment', name: 'f.png', status: 'ready', inlines: [] },
           { id: 'e', type: 'paragraph', inlines: [{ text: '', marks: [] }] },
-          { id: 't', type: 'paragraph', inlines: [{ text: 'ok', marks: [] }] },
         ],
       });
       return <RichTextEditor value={doc} onChange={(d) => accept && setDoc(d)} />;
