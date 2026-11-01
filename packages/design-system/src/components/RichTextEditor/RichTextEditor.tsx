@@ -273,9 +273,11 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     const isComposingRef = useRef(false);
     // Selection to restore after the next model-driven re-render.
     const pendingSelectionRef = useRef<Range | null>(null);
-    // A void block id whose DOM caret goes AFTER its figure on the next re-render
-    // (voidDelete's caretAfterVoid — a spot the model's single void point can't name).
-    const caretAfterVoidRef = useRef<string | null>(null);
+    // Docs whose caret belongs AFTER a void's figure (voidDelete's caretAfterVoid —
+    // a spot the model's single void point can't name), keyed by the exact doc
+    // object: history keeps these objects, so undo/redo restore the right side, and
+    // a doc the parent never accepted can't affect a later render.
+    const caretAfterVoidDocs = useRef(new WeakMap<RichDoc, string>());
     // Latest props for the native beforeinput listener (avoids stale closures).
     const latest = useRef({
       value,
@@ -598,9 +600,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           if (rootRef.current) writeSelection(rootRef.current, result.selection);
           return;
         }
-        commit(result, 'delete', { keepSelection: result.caretAfterVoid });
         // The model can't say "after the void"; the layout effect places it.
-        if (result.caretAfterVoid) caretAfterVoidRef.current = result.selection.anchor.blockId;
+        if (result.caretAfterVoid)
+          caretAfterVoidDocs.current.set(result.doc, result.selection.anchor.blockId);
+        commit(result, 'delete');
       },
       [commit],
     );
@@ -737,8 +740,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         writeSelection(root, pending);
         pendingSelectionRef.current = null;
       }
-      const afterVoid = caretAfterVoidRef.current;
-      caretAfterVoidRef.current = null;
+      const afterVoid = caretAfterVoidDocs.current.get(value);
       const fig = afterVoid
         ? root?.querySelector(`[data-block-id="${CSS.escape(afterVoid)}"]`)
         : null;

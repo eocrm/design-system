@@ -170,9 +170,15 @@ describe('voidDelete', () => {
     // depths gap-free via effectiveDepths.
     const r = voidDelete(e, 'v', 'after', 'forward')!;
     expect(r.doc.blocks.map((b) => b.id)).toEqual(['v', 'kid']);
-    // Deleting FORWARD keeps the caret moving forward: at the start of the next
-    // block, not back on the void (a second Delete there would remove the image).
-    expect(r.selection.anchor).toEqual(at('kid', 0));
+    // Removing a neighbor leaves the caret where it was: AFTER the void.
+    expect(r).toMatchObject({ selection: { anchor: at('v', 0) }, caretAfterVoid: true });
+  });
+  it('removing a neighbor never moves the caret past it (a 2nd Backspace must not eat text)', () => {
+    const e: RichDoc = { blocks: [p('ab', 'p'), p('', 'empty'), d.blocks[1]] };
+    const r = voidDelete(e, 'v', 'before', 'backward')!;
+    expect(r.doc.blocks.map((b) => b.id)).toEqual(['p', 'v']);
+    expect(r.selection.anchor).toEqual(at('v', 0));
+    expect(r.caretAfterVoid).toBeFalsy(); // still BEFORE the void
   });
   it('Backspace removing an empty previous block keeps the caret on the void', () => {
     const e: RichDoc = { blocks: [p('', 'empty'), d.blocks[1]] };

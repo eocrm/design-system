@@ -504,6 +504,60 @@ describe('RichTextEditor toolbar', () => {
     expect(sel.anchorOffset).toBe(fig.childNodes.length);
     pressDelete(); // ...so a second Delete has nothing ahead: the image stays.
     expect(editor.querySelector('figure')).not.toBeNull();
+    // Undo restores the empty line; redo removes it again AND restores the caret
+    // after the image (history keeps the same doc object the map is keyed on).
+    fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true });
+    expect(editor.querySelectorAll('p')).toHaveLength(1);
+    fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true, shiftKey: true });
+    expect(editor.querySelectorAll('p')).toHaveLength(0);
+    expect(document.getSelection()!.anchorNode).toBe(editor.querySelector('figure'));
+  });
+
+  it('a void delete the parent rejects never moves the caret on a later render', () => {
+    let accept = false;
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [
+          { id: 'v', type: 'attachment', name: 'f.png', status: 'ready', inlines: [] },
+          { id: 'e', type: 'paragraph', inlines: [{ text: '', marks: [] }] },
+          { id: 't', type: 'paragraph', inlines: [{ text: 'ok', marks: [] }] },
+        ],
+      });
+      return <RichTextEditor value={doc} onChange={(d) => accept && setDoc(d)} />;
+    }
+    renderEditor(<Harness />);
+    const editor = screen.getByRole('textbox');
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'v', offset: 0 },
+      focus: { blockId: 'v', offset: 0 },
+    });
+    const r = document.createRange();
+    r.setStartAfter(editor.querySelector('figure')!);
+    r.collapse(true);
+    document.getSelection()!.removeAllRanges();
+    document.getSelection()!.addRange(r);
+    const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(evt, 'inputType', { value: 'deleteContentForward' });
+    act(() => {
+      editor.dispatchEvent(evt);
+    }); // rejected by the parent
+    // Now an accepted edit elsewhere: typing at the end of "ok".
+    accept = true;
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 't', offset: 2 },
+      focus: { blockId: 't', offset: 2 },
+    });
+    const type = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(type, 'inputType', { value: 'insertText' });
+    Object.defineProperty(type, 'data', { value: '!' });
+    act(() => {
+      editor.dispatchEvent(type);
+    });
+    expect(editor.textContent).toContain('ok!');
+    // The caret follows the typing — it did not jump into the figure.
+    expect(editor.querySelector('figure')!.contains(document.getSelection()!.anchorNode)).toBe(
+      false,
+    );
   });
 
   it('a non-directional delete beside a figure (deleteContent / deleteByCut) skips the void path', () => {

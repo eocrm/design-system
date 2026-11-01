@@ -157,7 +157,8 @@ function removeAt(doc: RichDoc, idx: number, dir: 'backward' | 'forward'): VoidD
           [behind, 'end'],
           [ahead, 'start'],
         ];
-  const [target, edge] = order.find(([b]) => b) as [Block, 'start' | 'end'];
+  // blocks is non-empty, so `ahead` or `behind` exists.
+  const [target, edge] = order.find(([b]) => b)! as [Block, 'start' | 'end'];
   if (isVoidBlock(target)) {
     return {
       doc: { blocks },
@@ -176,9 +177,9 @@ function removeAt(doc: RichDoc, idx: number, dir: 'backward' | 'forward'): VoidD
  * position per void (`{voidId, 0}`), so the DOM side decides:
  * - Backspace from AFTER, or Delete from BEFORE → remove the void.
  * - Backspace from BEFORE / Delete from AFTER → toward the neighboring block:
- *   another void is removed (caret between two images), an EMPTY text block is
- *   removed, otherwise the caret just moves into it (returns the SAME doc — the
- *   caller applies only the selection; no character is deleted).
+ *   another void or an EMPTY text block is removed with the caret staying put,
+ *   otherwise the caret just moves into it (returns the SAME doc — the caller
+ *   applies only the selection; no character is deleted).
  * Returns null when there is no neighbor in that direction (no-op).
  */
 export function voidDelete(
@@ -193,7 +194,14 @@ export function voidDelete(
   const nIdx = dir === 'backward' ? idx - 1 : idx + 1;
   const neighbor = doc.blocks[nIdx];
   if (!neighbor) return null;
-  if (isVoidBlock(neighbor) || blockLength(neighbor) === 0) return removeAt(doc, nIdx, dir);
+  if (isVoidBlock(neighbor) || blockLength(neighbor) === 0) {
+    // Remove just the neighbor; the caret stays where it was, on its side of the void.
+    return {
+      doc: { blocks: doc.blocks.filter((_, i) => i !== nIdx) },
+      selection: collapsedAt(voidId, 0),
+      caretAfterVoid: side === 'after',
+    };
+  }
   return {
     doc,
     selection: collapsedAt(neighbor.id, dir === 'backward' ? blockLength(neighbor) : 0),
