@@ -96,7 +96,7 @@ export interface RichTextEditorProps extends Omit<
   HTMLAttributes<HTMLDivElement>,
   'onChange' | 'children'
 > {
-  /** Controlled document. Render the doc returned by `onChange` back into `value` as-is and synchronously — a cloned/normalized copy reads as an outside replacement and resets undo history; a deferred one is treated as a rejected edit. */
+  /** Controlled document. Render the doc returned by `onChange` back into `value` as-is, right away (a `startTransition` is fine) — a cloned/normalized copy reads as an outside replacement and resets undo history; one stored only after a later edit (debounced) is treated as rejected. */
   value: RichDoc;
   /** `aria-invalid` on the textbox. Field / SettingRow inject it (#568). @default false */
   invalid?: boolean;
@@ -461,26 +461,40 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       setCanRedo(historyCanRedo(historyRef.current));
     }, []);
 
-    // Hand a doc to the parent and learn — synchronously — whether it was taken.
-    // flushSync renders an accepting parent's update before onChange returns, so
-    // an unchanged `value` afterwards means the parent REJECTED it (or will set
-    // it asynchronously, outside the documented contract). Then nothing staged
-    // for that doc may outlive the call: the pending caret, the live doc that
-    // async upload settles chain off, and the history entry are all rolled back
-    // — otherwise they'd fire or resurface on some later, unrelated render.
-    const emit = useCallback(
-      (doc: RichDoc, prevHistory: History) => {
-        const before = latest.current.value;
-        liveDocRef.current = doc;
-        flushSync(() => latest.current.onChange(doc));
-        if (latest.current.value !== before) return; // accepted (possibly transformed)
-        pendingSelectionRef.current = null;
-        liveDocRef.current = before;
-        historyRef.current = prevHistory;
+    // The last doc handed to onChange that `value` hasn't become yet, with the
+    // history to restore if it never does. flushSync renders a synchronously-
+    // accepting parent before onChange returns, so most edits never land here;
+    // one that does was either REJECTED or is still on its way (a parent storing
+    // it in startTransition / useDeferredValue). Resolved by whichever comes
+    // first: that doc arriving as `value` (accepted late — keep everything), a
+    // different `value` arriving (rejected — the layout effect drops its pending
+    // caret), or the next edit / undo / settle (reconcile() rolls its history
+    // entry back). Meanwhile the live doc stays the SHOWN one, so async upload
+    // settles never build on an edit the parent may have refused.
+    const unconfirmedRef = useRef<{ doc: RichDoc; prevHistory: History } | null>(null);
+
+    const reconcile = useCallback(() => {
+      const u = unconfirmedRef.current;
+      unconfirmedRef.current = null;
+      if (u && latest.current.value !== u.doc) {
+        historyRef.current = u.prevHistory;
         syncHistoryFlags();
-      },
-      [syncHistoryFlags],
-    );
+      }
+    }, [syncHistoryFlags]);
+
+    const emit = useCallback((doc: RichDoc, prevHistory: History) => {
+      const before = latest.current.value;
+      liveDocRef.current = doc;
+      try {
+        flushSync(() => latest.current.onChange(doc));
+      } finally {
+        // `finally`: an onChange that throws counts as not (yet) accepted too.
+        if (latest.current.value === before) {
+          unconfirmedRef.current = { doc, prevHistory };
+          liveDocRef.current = before;
+        }
+      }
+    }, []);
 
     const commit = useCallback(
       (
@@ -505,6 +519,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         if (result.doc === latest.current.value) return;
         if (options?.caretAfterVoid)
           caretAfterVoidDocs.current.set(result.doc, options.caretAfterVoid);
+        reconcile();
         const prevHistory = historyRef.current;
         historyRef.current = historyRecord(
           historyRef.current,
@@ -521,7 +536,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           : { range: result.selection, afterVoid: options?.caretAfterVoid ?? null };
         emit(result.doc, prevHistory);
       },
-      [syncHistoryFlags, emit],
+      [syncHistoryFlags, emit, reconcile],
     );
 
     // Live-resize commit path for attachment width drags (used by
@@ -536,6 +551,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       (doc: RichDoc) => {
         if (doc === liveDocRef.current) return;
         pendingSelectionRef.current = null; // the slider/handle keeps focus
+        reconcile();
         const prevHistory = historyRef.current;
         historyRef.current = historyRecord(
           historyRef.current,
@@ -546,7 +562,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         syncHistoryFlags();
         emit(doc, prevHistory);
       },
-      [syncHistoryFlags, emit],
+      [syncHistoryFlags, emit, reconcile],
     );
 
     // Like commit, but records NO history entry — used for async upload settles so
@@ -562,6 +578,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         const root = rootRef.current;
         const sel = root ? readSelection(root) : null;
         pendingSelectionRef.current = sel ? { range: sel, afterVoid: null } : null;
+        reconcile();
         const prevHistory = historyRef.current;
         historyRef.current = {
           ...historyRef.current,
@@ -569,7 +586,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         };
         emit(doc, prevHistory);
       },
-      [emit],
+      [emit, reconcile],
     );
 
     const uploadOn = !!upload && !readOnly;
@@ -647,6 +664,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     );
 
     const onUndo = useCallback(() => {
+      reconcile();
       const h = historyRef.current;
       if (!historyCanUndo(h)) return;
       const next = historyUndo(h);
@@ -658,9 +676,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         afterVoid: caretAfterVoidDocs.current.get(next.present.doc) ?? null,
       };
       emit(next.present.doc, h);
-    }, [syncHistoryFlags, clearPendingMarks, emit]);
+    }, [syncHistoryFlags, clearPendingMarks, emit, reconcile]);
 
     const onRedo = useCallback(() => {
+      reconcile();
       const h = historyRef.current;
       if (!historyCanRedo(h)) return;
       const next = historyRedo(h);
@@ -672,7 +691,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         afterVoid: caretAfterVoidDocs.current.get(next.present.doc) ?? null,
       };
       emit(next.present.doc, h);
-    }, [syncHistoryFlags, clearPendingMarks, emit]);
+    }, [syncHistoryFlags, clearPendingMarks, emit, reconcile]);
 
     const insertMentionItem = useCallback(
       (
@@ -779,6 +798,13 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         }
       }
       const root = rootRef.current;
+      // A pending edit's doc arriving late = accepted (keep its caret); any OTHER
+      // value arriving first = it was rejected, so its caret must not fire here.
+      const unconfirmed = unconfirmedRef.current;
+      if (unconfirmed) {
+        if (value !== unconfirmed.doc) pendingSelectionRef.current = null;
+        unconfirmedRef.current = null;
+      }
       const pending = pendingSelectionRef.current;
       if (root && pending) {
         writeSelection(root, pending.range);

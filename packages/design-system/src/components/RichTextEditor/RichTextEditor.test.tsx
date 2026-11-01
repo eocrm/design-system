@@ -1,7 +1,7 @@
 import { Field } from '../Field';
 import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useState } from 'react';
+import { startTransition, useState } from 'react';
 import { vi } from 'vitest';
 import { RichTextEditor } from './RichTextEditor';
 import { docFromText, emptyDoc } from '../RichText/engine/model';
@@ -597,6 +597,52 @@ describe('RichTextEditor toolbar', () => {
     expect(document.getSelection()!.anchorNode).toBe(editor.querySelector('figure'));
     pressDelete();
     expect(editor.querySelector('figure')).not.toBeNull();
+  });
+
+  it('a parent storing the doc in startTransition (accepted late) keeps working undo', async () => {
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>(docFromText('ab'));
+      return <RichTextEditor value={doc} onChange={(d) => startTransition(() => setDoc(d))} />;
+    }
+    renderEditor(<Harness />);
+    const editor = screen.getByRole('textbox');
+    const id = editor.querySelector('[data-block-id]')!.getAttribute('data-block-id')!;
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: id, offset: 2 },
+      focus: { blockId: id, offset: 2 },
+    });
+    const type = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(type, 'inputType', { value: 'insertText' });
+    Object.defineProperty(type, 'data', { value: 'c' });
+    await act(async () => {
+      editor.dispatchEvent(type);
+    });
+    expect(editor.textContent).toBe('abc');
+    await act(async () => {
+      fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true });
+    });
+    expect(editor.textContent).toBe('ab'); // the edit is in history, not rolled back
+  });
+
+  it('an edit the parent rejects leaves no phantom undo step', () => {
+    const onChange = vi.fn();
+    renderEditor(<RichTextEditor value={docFromText('ab')} onChange={onChange} />);
+    const editor = screen.getByRole('textbox');
+    const id = editor.querySelector('[data-block-id]')!.getAttribute('data-block-id')!;
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: id, offset: 2 },
+      focus: { blockId: id, offset: 2 },
+    });
+    const type = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(type, 'inputType', { value: 'insertText' });
+    Object.defineProperty(type, 'data', { value: 'c' });
+    act(() => {
+      editor.dispatchEvent(type);
+    });
+    expect(onChange).toHaveBeenCalledTimes(1); // offered "abc", refused
+    fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true });
+    // Undo finds nothing to undo — it must not emit the pre-edit doc again.
+    expect(onChange).toHaveBeenCalledTimes(1);
   });
 
   it('a rejected void delete never moves the caret when the parent later pushes a new value', () => {
