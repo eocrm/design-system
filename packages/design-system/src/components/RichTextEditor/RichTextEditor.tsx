@@ -96,7 +96,7 @@ export interface RichTextEditorProps extends Omit<
   HTMLAttributes<HTMLDivElement>,
   'onChange' | 'children'
 > {
-  /** Controlled document. Render the doc returned by `onChange` back into `value` as-is, right away (a `startTransition` is fine) — a cloned/normalized copy reads as an outside replacement and resets undo history; one stored only after a later edit (debounced) is treated as rejected. */
+  /** Controlled document. Render the doc returned by `onChange` back into `value` as-is, right away — a cloned/normalized copy reads as an outside replacement and resets undo history; one stored only after a later edit (debounced, or a deferred render the next keystroke beats) is treated as rejected. Defer expensive consumers (preview, save), not `value`. */
   value: RichDoc;
   /** `aria-invalid` on the textbox. Field / SettingRow inject it (#568). @default false */
   invalid?: boolean;
@@ -299,11 +299,12 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       renderLink,
       upload,
     };
-    // The synchronous "live" doc — kept ahead of `value` between renders by the
-    // commit paths, so several async upload settles in the same tick chain off each
-    // other's result instead of all reading the stale last-rendered `value` (which
-    // would make the last settle clobber the earlier ones). Re-synced to `value`
-    // each render so external replacements flow in.
+    // The synchronous "live" doc — the doc the parent has taken, possibly ahead of
+    // the last render's `value`, so several async upload settles chain off each
+    // other's result instead of all reading a stale `value` (which would make the
+    // last settle clobber the earlier ones). Never an edit the parent hasn't taken
+    // yet (see unconfirmedRef). Re-synced to `value` each render so external
+    // replacements flow in.
     const liveDocRef = useRef(value);
     liveDocRef.current = value;
 
@@ -781,10 +782,17 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     });
 
     // Restore the caret/selection after a model-driven re-render.
+    // The `value` the layout effect last saw — it also re-runs on mentions/readOnly
+    // changes, which must not be mistaken for a new value arriving.
+    const seenValueRef = useRef(value);
     useLayoutEffect(() => {
+      const valueChanged = value !== seenValueRef.current;
+      seenValueRef.current = value;
       // External value replacement (parent sets a wholly different doc) — reset
-      // history so Undo can't travel back into the old document's timeline.
-      if (value !== historyRef.current.present.doc) {
+      // history so Undo can't travel back into the old document's timeline. Only
+      // when `value` actually changed: during a pending (unconfirmed) edit,
+      // present.doc runs ahead of an unchanged value.
+      if (valueChanged && value !== historyRef.current.present.doc) {
         historyRef.current = historyReset({ doc: value, selection: null });
         syncHistoryFlags();
         // A programmatic value swap fires no user `selectionchange`, so the
@@ -801,7 +809,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       // A pending edit's doc arriving late = accepted (keep its caret); any OTHER
       // value arriving first = it was rejected, so its caret must not fire here.
       const unconfirmed = unconfirmedRef.current;
-      if (unconfirmed) {
+      if (unconfirmed && valueChanged) {
         if (value !== unconfirmed.doc) pendingSelectionRef.current = null;
         unconfirmedRef.current = null;
       }

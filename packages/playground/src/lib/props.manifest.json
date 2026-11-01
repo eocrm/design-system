@@ -5370,7 +5370,7 @@
           "type": "RichDoc",
           "required": true,
           "default": "",
-          "description": "Controlled document. Render the doc returned by `onChange` back into `value` as-is, right away (a `startTransition` is fine) — a cloned/normalized copy reads as an outside replacement and resets undo history; one stored only after a later edit (debounced) is treated as rejected."
+          "description": "Controlled document. Render the doc returned by `onChange` back into `value` as-is, right away — a cloned/normalized copy reads as an outside replacement and resets undo history; one stored only after a later edit (debounced, or a deferred render the next keystroke beats) is treated as rejected. Defer expensive consumers (preview, save), not `value`."
         },
         {
           "name": "invalid",
