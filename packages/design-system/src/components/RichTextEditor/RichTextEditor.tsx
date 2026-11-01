@@ -466,7 +466,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // history to restore if it never does. flushSync renders a synchronously-
     // accepting parent before onChange returns, so most edits never land here;
     // one that does was either REJECTED or is still on its way (a parent storing
-    // it in startTransition / useDeferredValue). Resolved by whichever comes
+    // it in startTransition / useDeferredValue — tolerated for a single edit,
+    // discouraged; see the docs). Resolved by whichever comes
     // first: that doc arriving as `value` (accepted late — keep everything), a
     // different `value` arriving (rejected — the layout effect drops its pending
     // caret), or the next edit / undo / settle (reconcile() rolls its history
@@ -814,7 +815,9 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         unconfirmedRef.current = null;
       }
       const pending = pendingSelectionRef.current;
-      if (root && pending) {
+      // Not while an edit is still awaiting acceptance: its caret belongs to a doc
+      // the DOM doesn't show yet (written once that value arrives, or dropped).
+      if (root && pending && !unconfirmedRef.current) {
         writeSelection(root, pending.range);
         pendingSelectionRef.current = null;
         // Only with the selection it was bundled with (a commit / undo / redo) —

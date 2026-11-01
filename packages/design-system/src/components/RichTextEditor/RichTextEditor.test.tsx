@@ -624,36 +624,84 @@ describe('RichTextEditor toolbar', () => {
     expect(editor.textContent).toBe('ab'); // the edit is in history, not rolled back
   });
 
-  it('a rejected edit followed by a readOnly toggle still leaves no phantom undo step', () => {
-    const onChange = vi.fn();
+  it('a readOnly toggle (an unrelated re-render) neither wipes undo nor revives a rejected edit', () => {
+    let accept = true;
+    function Harness({ ro }: { ro: boolean }) {
+      const [doc, setDoc] = useState<RichDoc>(docFromText('ab'));
+      return (
+        <RichTextEditor
+          value={doc}
+          onChange={(d) => accept && setDoc(d)}
+          readOnly={ro}
+          mentions={{ onQuery: async () => [] }}
+        />
+      );
+    }
+    const { rerender } = renderEditor(<Harness ro={false} />);
+    const editor = screen.getByRole('textbox');
+    const id = editor.querySelector('[data-block-id]')!.getAttribute('data-block-id')!;
+    const typeAt = (offset: number, ch: string) => {
+      mockReadSelection.mockReturnValue({
+        anchor: { blockId: id, offset },
+        focus: { blockId: id, offset },
+      });
+      const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+      Object.defineProperty(evt, 'inputType', { value: 'insertText' });
+      Object.defineProperty(evt, 'data', { value: ch });
+      act(() => {
+        editor.dispatchEvent(evt);
+      });
+    };
+    typeAt(2, 'c'); // accepted → "abc"
+    accept = false;
+    typeAt(3, 'd'); // refused
+    accept = true;
+    // A save-in-progress flag toggles readOnly — the layout effect re-runs with
+    // the same value. That must not read as an outside replacement (wiping undo).
+    rerender(
+      <I18nProvider locale="en">
+        <Harness ro />
+      </I18nProvider>,
+    );
+    rerender(
+      <I18nProvider locale="en">
+        <Harness ro={false} />
+      </I18nProvider>,
+    );
+    fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true });
+    // Undo skips the refused "d" and reverts the accepted "c".
+    expect(editor.textContent).toBe('ab');
+  });
+
+  it('an unrelated re-render never writes the caret of an edit still awaiting acceptance', () => {
+    const doc0 = docFromText('abcdef');
+    const id = doc0.blocks[0].id;
     const ui = (ro: boolean) => (
       <I18nProvider locale="en">
         <RichTextEditor
           value={doc0}
-          onChange={onChange}
+          onChange={() => {}}
           readOnly={ro}
           mentions={{ onQuery: async () => [] }}
         />
       </I18nProvider>
     );
-    const doc0 = docFromText('ab');
     const { rerender } = render(ui(false));
     const editor = screen.getByRole('textbox');
-    const id = editor.querySelector('[data-block-id]')!.getAttribute('data-block-id')!;
     mockReadSelection.mockReturnValue({
-      anchor: { blockId: id, offset: 2 },
-      focus: { blockId: id, offset: 2 },
+      anchor: { blockId: id, offset: 1 },
+      focus: { blockId: id, offset: 1 },
     });
-    const type = new Event('beforeinput', { bubbles: true, cancelable: true });
-    Object.defineProperty(type, 'inputType', { value: 'insertText' });
-    Object.defineProperty(type, 'data', { value: 'c' });
+    const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(evt, 'inputType', { value: 'insertText' });
+    Object.defineProperty(evt, 'data', { value: 'X' });
     act(() => {
-      editor.dispatchEvent(type);
-    }); // refused
-    rerender(ui(true)); // e.g. a save-in-progress flag — re-runs the layout effect
-    rerender(ui(false));
-    fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true });
-    expect(onChange).toHaveBeenCalledTimes(1); // no spurious "undo" emission
+      editor.dispatchEvent(evt);
+    }); // refused — its caret (offset 2) stays pending
+    const text = editor.querySelector('p')!.firstChild!;
+    document.getSelection()!.collapse(text, 4); // the user's caret
+    rerender(ui(true));
+    expect(document.getSelection()!.anchorOffset).toBe(4);
   });
 
   it('an edit the parent rejects leaves no phantom undo step', () => {
