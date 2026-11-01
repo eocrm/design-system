@@ -38,14 +38,8 @@ import type { MentionItem, MentionsConfig } from './mentions';
 import { fromHtml } from '../RichText/engine/fromHtml';
 import { hasMark, withMark, withoutMark } from '../RichText/engine/marks';
 import { useTranslation } from '../../i18n';
-import {
-  readSelection,
-  writeSelection,
-  rangeRect,
-  caretSideInVoid,
-  domBlockLength,
-} from './selection';
-import { applyInput } from './input';
+import { readSelection, writeSelection, rangeRect, voidCaretSide, blockOwnText } from './selection';
+import { applyInput, voidDelete } from './input';
 import { matchBlockRule, applyBlockRule } from './inputRules';
 import { runsText } from '../RichText/engine/inlines';
 import { isLetterKey } from '../_internal/letterKey';
@@ -768,8 +762,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
             const match = matchBlockRule(block.type, before, ' ');
             if (match) {
               e.preventDefault();
-              setPendingMarks(null);
-              pendingAtRef.current = null;
+              clearPendingMarks();
               commit(applyBlockRule(doc, block.id, match), 'other');
               return;
             }
@@ -788,8 +781,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           const linked = applyTypeAutolink(doc, range.anchor, e.data);
           if (linked) {
             e.preventDefault();
-            setPendingMarks(null);
-            pendingAtRef.current = null;
+            clearPendingMarks();
             commit(linked, 'type');
             return;
           }
@@ -809,9 +801,20 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           const delRange = atomicLinkDeleteRange(doc, range.anchor, dir, isResolved);
           if (delRange) {
             e.preventDefault();
-            setPendingMarks(null);
-            pendingAtRef.current = null;
+            clearPendingMarks();
             commit(deleteRange(doc, delRange), 'delete');
+            return;
+          }
+        }
+        // Delete/Backspace beside a void: the model has one position per void, so
+        // the DOM side decides (see voidDelete) — never delete it from the wrong side.
+        if (e.inputType.startsWith('delete') && isCollapsed(range)) {
+          const vside = voidCaretSide(root, range.anchor.blockId);
+          if (vside) {
+            e.preventDefault();
+            const dir = /Backward$/.test(e.inputType) ? 'backward' : 'forward';
+            const result = voidDelete(doc, range.anchor.blockId, vside.side, dir);
+            if (result) commit(result, 'delete');
             return;
           }
         }
@@ -844,7 +847,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       };
       root.addEventListener('beforeinput', onBeforeInput);
       return () => root.removeEventListener('beforeinput', onBeforeInput);
-    }, [commit, onUndo, onRedo, takePendingAt]);
+    }, [commit, onUndo, onRedo, takePendingAt, clearPendingMarks]);
 
     // Rich paste: when the clipboard carries HTML, parse it into the model and
     // splice it at the selection. No usable HTML → if autolink is on and the
@@ -932,8 +935,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
             sel.anchor.blockId === stagedAt.blockId &&
             sel.anchor.offset === stagedAt.offset;
           if (pend && !sameSpot) {
-            setPendingMarks(null);
-            pendingAtRef.current = null;
+            clearPendingMarks();
           }
         }
         if (controlsOn) {
@@ -951,7 +953,15 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       };
       document.addEventListener('selectionchange', onSelChange);
       return () => document.removeEventListener('selectionchange', onSelChange);
-    }, [toolbar, readOnly, controlsOn, mentionsEnabled, blockIdFromNode, recomputeMention]);
+    }, [
+      toolbar,
+      readOnly,
+      controlsOn,
+      mentionsEnabled,
+      blockIdFromNode,
+      recomputeMention,
+      clearPendingMarks,
+    ]);
 
     // Initial mention computation: on mount, when mentions toggle on, or when the
     // trigger changes. The selectionchange listener above covers caret moves AND
@@ -1121,11 +1131,11 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         // doc-final image): browsers fire NO beforeinput there, only keydown, so
         // route the editing keys ourselves. Only for keys aimed at the editable —
         // an attachment's own Retry/Remove buttons keep theirs.
-        const voidSide =
+        const vcaret =
           e.target === root && isCollapsed(range) && !e.nativeEvent.isComposing
-            ? caretSideInVoid(root, range.anchor.blockId)
+            ? voidCaretSide(root, range.anchor.blockId)
             : null;
-        if (voidSide) {
+        if (vcaret?.inside) {
           // A single character, not a shortcut. Ctrl+Alt is AltGr on Windows
           // (e.g. "@" on a German layout), so that still counts as typing.
           const printable = [...e.key].length === 1 && !e.metaKey && (!e.ctrlKey || e.altKey);
@@ -1140,25 +1150,16 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
             );
             return;
           }
-          if (!mod && (e.key === 'Enter' || e.key === 'Backspace' || e.key === 'Delete')) {
+          if (!mod && e.key === 'Enter') {
             e.preventDefault();
-            if (e.key === 'Enter') {
-              commit(applyInput(value, range, 'insertParagraph', null)!, 'other');
-              return;
-            }
-            // Backspace removes the void only from AFTER it, Delete only from
-            // BEFORE it (the model can't tell the two sides apart) — the other
-            // side would delete across into a neighbor, so it's a no-op.
-            const back = e.key === 'Backspace';
-            if (back === (voidSide === 'after')) {
-              const result = applyInput(
-                value,
-                range,
-                back ? 'deleteContentBackward' : 'deleteContentForward',
-                null,
-              );
-              if (result) commit(result, 'delete');
-            }
+            commit(applyInput(value, range, 'insertParagraph', null)!, 'other');
+            return;
+          }
+          if (!mod && (e.key === 'Backspace' || e.key === 'Delete')) {
+            e.preventDefault();
+            const dir = e.key === 'Backspace' ? 'backward' : 'forward';
+            const result = voidDelete(value, range.anchor.blockId, vcaret.side, dir);
+            if (result) commit(result, 'delete');
             return;
           }
         }
@@ -1240,42 +1241,57 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       ],
     );
 
+    // Snapshot at compositionstart — the last moment the DOM and the model agree:
+    // the selection, and the anchor block's own DOM text (in model offsets).
+    const compositionRef = useRef<{ range: Range; before: string } | null>(null);
     const onCompositionStart = useCallback(() => {
       isComposingRef.current = true;
+      const root = rootRef.current;
+      const range = root ? readSelection(root) : null;
+      const before = range && root ? blockOwnText(root, range.anchor.blockId) : null;
+      compositionRef.current = range && before != null ? { range, before } : null;
     }, []);
 
     const onCompositionEnd = useCallback(
       (e: React.CompositionEvent<HTMLDivElement>) => {
         isComposingRef.current = false;
+        const snap = compositionRef.current;
+        compositionRef.current = null;
         const root = rootRef.current;
-        if (readOnly || !root) return;
-        const text = e.data;
-        if (!text) return;
-        // The browser composed `text` into the DOM ahead of the model, ending at the
-        // caret. Its start is caret − text.length (the prefix before it is shared),
-        // and the DOM grew by (dom length − model length) net, so the composition
-        // REPLACED text.length − growth model chars from that start: 0 for a plain
-        // mid-text insert, the selection for typing over one, and the existing word
-        // for an IME (e.g. Android Gboard) that recomposes it. Replace exactly that
-        // span — the re-render snaps the DOM back to the model.
-        const range = readSelection(root);
-        if (!range) return;
-        const caret = range.focus;
-        const block = value.blocks.find((b) => b.id === caret.blockId);
-        const domLen = domBlockLength(root, caret.blockId);
-        if (!block || domLen == null) return;
-        const growth = domLen - blockLength(block);
-        const start = Math.max(0, caret.offset - text.length);
-        const end = Math.min(blockLength(block), Math.max(start, start + text.length - growth));
-        const result = applyInput(
-          value,
-          {
-            anchor: { blockId: caret.blockId, offset: start },
-            focus: { blockId: caret.blockId, offset: end },
-          },
-          'insertText',
-          text,
-        );
+        if (readOnly || !root || !snap) return;
+        const { range, before } = snap;
+        // A selection across blocks: the browser merged them in the DOM, so a text
+        // diff of one block can't see it — replace the captured range instead.
+        if (range.anchor.blockId !== range.focus.blockId) {
+          const result = applyInput(value, range, 'insertText', e.data);
+          if (result) commit(result, 'type');
+          return;
+        }
+        // The browser composed into the DOM ahead of the model. Diff the block's
+        // own text before vs after (common prefix + suffix) to find exactly what
+        // changed — no caret math, so an IME that recomposes an existing word
+        // (Android Gboard), leaves the caret mid-word, or commits unchanged is
+        // handled. The re-render then snaps the DOM back to the model.
+        const blockId = range.anchor.blockId;
+        const after = blockOwnText(root, blockId);
+        if (after == null || after === before) return;
+        let pre = 0;
+        while (pre < before.length && pre < after.length && before[pre] === after[pre]) pre += 1;
+        let suf = 0;
+        while (
+          suf < before.length - pre &&
+          suf < after.length - pre &&
+          before[before.length - 1 - suf] === after[after.length - 1 - suf]
+        )
+          suf += 1;
+        const replaced: Range = {
+          anchor: { blockId, offset: pre },
+          focus: { blockId, offset: before.length - suf },
+        };
+        const inserted = after.slice(pre, after.length - suf);
+        const result = inserted
+          ? applyInput(value, replaced, 'insertText', inserted)
+          : applyInput(value, replaced, 'deleteContentBackward', null);
         if (result) commit(result, 'type');
       },
       [value, readOnly, commit],

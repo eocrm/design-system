@@ -364,28 +364,52 @@ export function rangeRect(root: HTMLElement, range: Range): Rect | null {
 }
 
 /**
- * Which side of a void block's figure the native caret sits on, when the caret is
- * INSIDE that `contentEditable=false` figure — where browsers fire no
- * `beforeinput`, so the editor handles keys itself. Null when the caret is
- * elsewhere (incl. a root-level caret beside the figure, which edits normally).
- * Offset 0 on the figure itself = before its content; anything else = after.
+ * Which side of a void block's figure the native caret sits on, or null when it
+ * isn't beside/inside that figure. `inside` = the caret is WITHIN the
+ * `contentEditable=false` figure, where browsers fire no `beforeinput` (the
+ * editor must handle keys itself); otherwise it's a container-level caret next
+ * to the figure (e.g. where writeSelection parks it), which edits normally.
  */
-export function caretSideInVoid(root: HTMLElement, blockId: string): 'before' | 'after' | null {
+export function voidCaretSide(
+  root: HTMLElement,
+  blockId: string,
+): { side: 'before' | 'after'; inside: boolean } | null {
   const sel = root.ownerDocument.getSelection();
   const fig = figureBlock(
     root.querySelector<HTMLElement>(`[data-block-id="${CSS.escape(blockId)}"]`),
   );
-  if (!sel?.anchorNode || !fig || !fig.contains(sel.anchorNode)) return null;
-  return sel.anchorNode === fig && sel.anchorOffset === 0 ? 'before' : 'after';
+  const node = sel?.anchorNode;
+  if (!sel || !node || !fig) return null;
+  if (fig.contains(node)) {
+    // "Before" only at the very start of the figure: offset 0 on a node that is
+    // the first descendant chain of the figure (no content precedes it).
+    let before = sel.anchorOffset === 0;
+    for (let n: Node | null = node; before && n && n !== fig; n = n.parentNode) {
+      if (n.previousSibling) before = false;
+    }
+    return { side: before ? 'before' : 'after', inside: true };
+  }
+  const kids = node.childNodes;
+  if (kids[sel.anchorOffset] === fig) return { side: 'before', inside: false };
+  if (kids[sel.anchorOffset - 1] === fig) return { side: 'after', inside: false };
+  return null;
 }
 
 /**
- * The MODEL-length of a block's current DOM content (atomic widgets counted by
- * `data-len`), or null when the block isn't rendered. During IME composition the
- * browser writes into the DOM ahead of the model, so `domBlockLength − model
- * length` is how many chars the composition added net.
+ * A block's OWN text as rendered in the DOM, in MODEL offsets: nested child
+ * blocks (a list item's sublist) are skipped and each atomic widget counts as
+ * `data-len` placeholder chars. Null when the block isn't rendered. Diffing two
+ * snapshots of it locates what an IME composition changed.
  */
-export function domBlockLength(root: HTMLElement, blockId: string): number | null {
+export function blockOwnText(root: HTMLElement, blockId: string): string | null {
   const el = root.querySelector<HTMLElement>(`[data-block-id="${CSS.escape(blockId)}"]`);
-  return el ? offsetWithinBlock(el, el, el.childNodes.length) : null;
+  if (!el) return null;
+  const walk = (n: Node): string => {
+    if (n.nodeType === Node.TEXT_NODE) return n.textContent ?? '';
+    if (!(n instanceof HTMLElement)) return '';
+    if (n !== el && n.hasAttribute('data-block-id')) return '';
+    if (isAtomicWidget(n)) return '\uFFFC'.repeat(widgetLen(n));
+    return Array.from(n.childNodes, walk).join('');
+  };
+  return walk(el);
 }

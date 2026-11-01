@@ -1,4 +1,4 @@
-import { applyInput } from './input';
+import { applyInput, voidDelete } from './input';
 import { createBlock } from '../RichText/engine/model';
 import { runsText } from '../RichText/engine/inlines';
 import type { RichDoc, Range } from '../RichText/engine/model';
@@ -131,5 +131,38 @@ describe('applyInput', () => {
     const r = span(at('a', 0), at('a', 1));
     expect(applyInput(d, r, 'formatBold', null)).toBeNull();
     expect(applyInput(d, r, 'historyUndo', null)).toBeNull();
+  });
+});
+
+describe('voidDelete', () => {
+  // [p "ab"] [image v] [q "cd"]
+  const d: RichDoc = {
+    blocks: [
+      p('ab', 'p'),
+      { id: 'v', type: 'attachment', name: 'f.png', status: 'ready', inlines: [] },
+      p('cd', 'q'),
+    ],
+  };
+  const texts = (r: { doc: RichDoc }) =>
+    r.doc.blocks.map((b) => (b.type === 'attachment' ? '[img]' : runsText(b.inlines)));
+
+  it('Backspace from after / Delete from before remove the image', () => {
+    expect(texts(voidDelete(d, 'v', 'after', 'backward')!)).toEqual(['ab', 'cd']);
+    expect(texts(voidDelete(d, 'v', 'before', 'forward')!)).toEqual(['ab', 'cd']);
+  });
+  it('Backspace from before deletes from the end of the previous block', () => {
+    const r = voidDelete(d, 'v', 'before', 'backward')!;
+    expect(texts(r)).toEqual(['a', '[img]', 'cd']);
+    expect(r.selection.anchor).toEqual(at('p', 1));
+  });
+  it('Delete from after deletes from the start of the next block', () => {
+    const r = voidDelete(d, 'v', 'after', 'forward')!;
+    expect(texts(r)).toEqual(['ab', '[img]', 'd']);
+    expect(r.selection.anchor).toEqual(at('q', 0));
+  });
+  it('no neighbor in that direction → null (no-op)', () => {
+    const solo: RichDoc = { blocks: [d.blocks[1]] };
+    expect(voidDelete(solo, 'v', 'after', 'forward')).toBeNull();
+    expect(voidDelete(solo, 'v', 'before', 'backward')).toBeNull();
   });
 });

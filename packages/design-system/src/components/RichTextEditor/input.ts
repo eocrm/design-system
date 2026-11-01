@@ -10,6 +10,8 @@ import {
 } from '../RichText/engine/transforms';
 import { isCollapsed, blockLength, findBlockIndex } from '../RichText/engine/position';
 import { runsText } from '../RichText/engine/inlines';
+import { isVoidBlock } from '../RichText/engine/attachment';
+import { removeBlockUnit } from '../RichText/engine/blockUnit';
 
 /** The new document + caret/selection after an input, or `null` when unsupported. */
 export type InputResult = { doc: RichDoc; selection: Range } | null;
@@ -117,4 +119,31 @@ export function applyInput(
     default:
       return null;
   }
+}
+
+/** Which side of a void block (attachment figure) the DOM caret sits on. */
+export type VoidSide = 'before' | 'after';
+
+/**
+ * Backspace / Delete with the caret beside a void block. The model has ONE
+ * position per void (`{voidId, 0}`), so the DOM side decides:
+ * - Backspace from AFTER, or Delete from BEFORE → remove the void.
+ * - Backspace from BEFORE → delete backward from the end of the previous block.
+ * - Delete from AFTER → delete forward from the start of the next block.
+ * Returns null when there is no editable neighbor in that direction (no-op).
+ */
+export function voidDelete(
+  doc: RichDoc,
+  voidId: string,
+  side: VoidSide,
+  dir: 'backward' | 'forward',
+): InputResult {
+  const idx = findBlockIndex(doc, voidId);
+  if (idx === -1) return null;
+  if ((dir === 'backward') === (side === 'after')) return removeBlockUnit(doc, voidId);
+  const neighbor = doc.blocks[dir === 'backward' ? idx - 1 : idx + 1];
+  if (!neighbor || isVoidBlock(neighbor)) return null;
+  return dir === 'backward'
+    ? deleteBackward(doc, point(neighbor.id, blockLength(neighbor)))
+    : deleteForward(doc, point(neighbor.id, 0));
 }

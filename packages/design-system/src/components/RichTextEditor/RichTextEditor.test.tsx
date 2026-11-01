@@ -419,10 +419,51 @@ describe('RichTextEditor toolbar', () => {
     onChange.mockClear();
     expect(fireEvent.keyDown(editor, { key: 'Delete' })).toBe(false);
     expect(onChange).not.toHaveBeenCalled();
-    // From BEFORE it, Delete removes the image and Backspace is the no-op.
+    // From BEFORE it, Backspace edits the previous block instead ("hi" → "h").
     caretInFigure(editor, 'before');
     fireEvent.keyDown(editor, { key: 'Backspace' });
-    expect(onChange).not.toHaveBeenCalled();
+    next = onChange.mock.calls.at(-1)![0];
+    expect(next.blocks.map((b) => b.inlines.map((r) => r.text).join(''))).toEqual(['h', '']);
+  });
+
+  it('a root-level caret after a mid-doc image: Delete edits the next block, never the image', () => {
+    const onChange = vi.fn();
+    const doc: RichDoc = {
+      blocks: [
+        { id: 'v', type: 'attachment', name: 'f.png', status: 'ready', inlines: [] },
+        { id: 'p', type: 'paragraph', inlines: [{ text: 'hi', marks: [] }] },
+      ],
+    };
+    renderEditor(<RichTextEditor value={doc} onChange={onChange} />);
+    const editor = screen.getByRole('textbox');
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'v', offset: 0 },
+      focus: { blockId: 'v', offset: 0 },
+    });
+    const del = (inputType: string, rootOffset: number) => {
+      const r = document.createRange();
+      r.setStart(editor, rootOffset);
+      r.collapse(true);
+      document.getSelection()!.removeAllRanges();
+      document.getSelection()!.addRange(r);
+      const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+      Object.defineProperty(evt, 'inputType', { value: inputType });
+      act(() => {
+        editor.dispatchEvent(evt);
+      });
+      expect(evt.defaultPrevented).toBe(true);
+      return onChange.mock.calls.at(-1)?.[0] as RichDoc | undefined;
+    };
+    // Caret after the figure (root offset 1): Delete removes "h", keeps the image.
+    let next = del('deleteContentForward', 1)!;
+    expect(next.blocks.map((b) => b.type)).toEqual(['attachment', 'paragraph']);
+    expect(next.blocks[1].inlines[0].text).toBe('i');
+    // Caret after the figure: Backspace removes the image.
+    next = del('deleteContentBackward', 1)!;
+    expect(next.blocks.map((b) => b.id)).toEqual(['p']);
+    // Caret before the figure, which is the first block: Backspace is a no-op.
+    onChange.mockClear();
+    expect(del('deleteContentBackward', 0)).toBeUndefined();
   });
 
   it('a mark staged on an attachment caret applies to the text typed there', () => {
@@ -481,26 +522,30 @@ describe('RichTextEditor toolbar', () => {
   describe('IME composition', () => {
     // The browser writes the composition into the DOM ahead of the model; mirror
     // that, then fire compositionend with the DOM caret at the composition's end.
-    function compose(model: string, dom: string, caret: number, data: string) {
+    function compose(model: string, dom: string, caret: number, data: string, blocks?: RichDoc) {
       const onChange = vi.fn();
       renderEditor(
         <RichTextEditor
-          value={{
-            blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: model, marks: [] }] }],
-          }}
+          value={
+            blocks ?? {
+              blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: model, marks: [] }] }],
+            }
+          }
           onChange={onChange}
         />,
       );
       const editor = screen.getByRole('textbox');
+      const caretAt = { blockId: 'k', offset: caret };
+      mockReadSelection.mockReturnValue({ anchor: caretAt, focus: caretAt });
       fireEvent.compositionStart(editor, { data: '' });
-      editor.querySelector('p')!.firstChild!.textContent = dom;
-      mockReadSelection.mockReturnValue({
-        anchor: { blockId: 'k', offset: caret },
-        focus: { blockId: 'k', offset: caret },
-      });
+      // The browser writes the composition into the block's own text node.
+      const el = editor.querySelector('[data-block-id="k"]')!;
+      const textNode = Array.from(el.childNodes).find((n) => n.nodeType === Node.TEXT_NODE)!;
+      textNode.textContent = dom;
       fireEvent.compositionEnd(editor, { data });
-      const next: RichDoc = onChange.mock.calls.at(-1)![0];
-      return next.blocks[0].inlines.map((r) => r.text).join('');
+      const next: RichDoc | undefined = onChange.mock.calls.at(-1)?.[0];
+      const k = (next ?? blocks)?.blocks.find((b) => b.id === 'k');
+      return next ? k!.inlines.map((r) => r.text).join('') : '(no change)';
     }
 
     it('mid-text insert keeps the following text', () => {
@@ -511,6 +556,74 @@ describe('RichTextEditor toolbar', () => {
     });
     it('recomposing an existing word (Android Gboard) replaces the word, not duplicates it', () => {
       expect(compose('Hel', 'Hello', 5, 'Hello')).toBe('Hello');
+    });
+    it('a composition committed unchanged with the caret mid-word is a no-op', () => {
+      // Gboard composes the tapped word "Hello" with the caret after "Hel".
+      expect(compose('Say Hello', 'Say Hello', 7, 'Hello')).toBe('(no change)');
+    });
+    it('an IME erasing a recomposed word (Gboard backspace) deletes it from the model', () => {
+      expect(compose('Hi Bob', 'Hi ', 3, '')).toBe('Hi ');
+    });
+    it('a parent list item ignores its nested child items when diffing', () => {
+      const doc: RichDoc = {
+        blocks: [
+          { id: 'k', type: 'bullet_item', depth: 0, inlines: [{ text: 'Hel', marks: [] }] },
+          { id: 'c', type: 'bullet_item', depth: 1, inlines: [{ text: 'child', marks: [] }] },
+        ],
+      };
+      expect(compose('Hel', 'Hello', 5, 'Hello', doc)).toBe('Hello');
+    });
+    it('an atomic widget in the block keeps model offsets aligned', () => {
+      const doc: RichDoc = {
+        blocks: [
+          {
+            id: 'k',
+            type: 'paragraph',
+            inlines: [
+              { text: 'https://t/1', marks: [{ type: 'link', href: 'https://t/1' }] },
+              { text: ' ab', marks: [] },
+            ],
+          },
+        ],
+      };
+      const onChange = vi.fn();
+      renderEditor(<RichTextEditor value={doc} onChange={onChange} renderLink={() => <b>#1</b>} />);
+      const editor = screen.getByRole('textbox');
+      const caretAt = { blockId: 'k', offset: 12 };
+      mockReadSelection.mockReturnValue({ anchor: caretAt, focus: caretAt });
+      fireEvent.compositionStart(editor, { data: '' });
+      const tail = editor.querySelector('p')!.lastChild!;
+      tail.textContent = ' a日b';
+      fireEvent.compositionEnd(editor, { data: '日' });
+      const next: RichDoc = onChange.mock.calls.at(-1)![0];
+      expect(next.blocks[0].inlines.map((r) => r.text).join('')).toBe('https://t/1 a日b');
+    });
+    it('composing over a selection spanning two blocks deletes the selection', () => {
+      const onChange = vi.fn();
+      renderEditor(
+        <RichTextEditor
+          value={{
+            blocks: [
+              { id: 'a', type: 'paragraph', inlines: [{ text: 'abcd', marks: [] }] },
+              { id: 'b', type: 'paragraph', inlines: [{ text: 'efgh', marks: [] }] },
+            ],
+          }}
+          onChange={onChange}
+        />,
+      );
+      const editor = screen.getByRole('textbox');
+      mockReadSelection.mockReturnValue({
+        anchor: { blockId: 'a', offset: 2 },
+        focus: { blockId: 'b', offset: 2 },
+      });
+      fireEvent.compositionStart(editor, { data: '' });
+      mockReadSelection.mockReturnValue({
+        anchor: { blockId: 'a', offset: 3 },
+        focus: { blockId: 'a', offset: 3 },
+      });
+      fireEvent.compositionEnd(editor, { data: 'X' });
+      const next: RichDoc = onChange.mock.calls.at(-1)![0];
+      expect(next.blocks.map((b) => b.inlines.map((r) => r.text).join(''))).toEqual(['abXgh']);
     });
   });
 
