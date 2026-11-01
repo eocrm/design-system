@@ -475,6 +475,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // settles never build on an edit the parent may have refused.
     const unconfirmedRef = useRef<{ doc: RichDoc; prevHistory: History } | null>(null);
 
+    // Every commit path calls this FIRST — before writing pendingSelectionRef —
+    // since a rollback also drops the refused edit's pending caret.
     const reconcile = useCallback(() => {
       const u = unconfirmedRef.current;
       unconfirmedRef.current = null;
@@ -555,8 +557,8 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     const commitResizeLive = useCallback(
       (doc: RichDoc) => {
         if (doc === liveDocRef.current) return;
-        pendingSelectionRef.current = null; // the slider/handle keeps focus
         reconcile();
+        pendingSelectionRef.current = null; // the slider/handle keeps focus
         const prevHistory = historyRef.current;
         historyRef.current = historyRecord(
           historyRef.current,
@@ -580,10 +582,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     const commitSilent = useCallback(
       (doc: RichDoc) => {
         if (doc === latest.current.value) return;
+        reconcile();
         const root = rootRef.current;
         const sel = root ? readSelection(root) : null;
         pendingSelectionRef.current = sel ? { range: sel, afterVoid: null } : null;
-        reconcile();
         const prevHistory = historyRef.current;
         historyRef.current = {
           ...historyRef.current,

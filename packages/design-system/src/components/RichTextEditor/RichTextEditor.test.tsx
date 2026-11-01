@@ -2228,7 +2228,9 @@ describe('upload', () => {
         document.getSelection()!.collapse(document.body, 0);
         mockReadSelection.mockReturnValue(null);
       } else {
-        document.getSelection()!.collapse(box.querySelector('[data-block-id="t"]')!.firstChild!, 1);
+        // DOM caret at 2 while readSelection reports 1: the settle re-pinning the
+        // caret it read (and not having it wiped by reconcile) shows as offset 1.
+        document.getSelection()!.collapse(box.querySelector('[data-block-id="t"]')!.firstChild!, 2);
         mockReadSelection.mockReturnValue({
           anchor: { blockId: 't', offset: 1 },
           focus: { blockId: 't', offset: 1 },
@@ -2242,6 +2244,7 @@ describe('upload', () => {
       expect(v.contains(document.getSelection()!.anchorNode)).toBe(false);
       // ...and the settle must not build on the rejected doc (empty line "e" stays).
       expect(box.querySelector('[data-block-id="e"]')).not.toBeNull();
+      if (where !== 'outside the editor') expect(document.getSelection()!.anchorOffset).toBe(1);
     },
   );
 
