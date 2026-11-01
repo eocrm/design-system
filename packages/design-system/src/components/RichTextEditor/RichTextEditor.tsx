@@ -38,7 +38,13 @@ import type { MentionItem, MentionsConfig } from './mentions';
 import { fromHtml } from '../RichText/engine/fromHtml';
 import { hasMark, withMark, withoutMark } from '../RichText/engine/marks';
 import { useTranslation } from '../../i18n';
-import { readSelection, writeSelection, rangeRect } from './selection';
+import {
+  readSelection,
+  writeSelection,
+  rangeRect,
+  caretSideInVoid,
+  domBlockLength,
+} from './selection';
 import { applyInput } from './input';
 import { matchBlockRule, applyBlockRule } from './inputRules';
 import { runsText } from '../RichText/engine/inlines';
@@ -69,7 +75,7 @@ import { RichTextImageResizer } from './RichTextImageResizer';
 import { LiveRegion } from '../LiveRegion';
 import { capWidthToHeight } from './imageSize';
 import { imageMaxHeightStyle } from '../RichText/imageMaxHeightStyle';
-import { attachmentIsImage, isAttachmentSettled, isVoidBlock } from '../RichText/engine/attachment';
+import { attachmentIsImage, isAttachmentSettled } from '../RichText/engine/attachment';
 import { safeHref } from '../RichText/engine/safeHref';
 import type { BlockAction } from './RichTextBlockMenu';
 import { useUpload, type UploadConfig } from './useUpload';
@@ -218,6 +224,26 @@ function isEmptyDoc(doc: RichDoc): boolean {
 /** Toggle `mark` within a `Mark[]` (used to fold a shortcut into pending marks). */
 function toggleInList(marks: Mark[], mark: Mark): Mark[] {
   return hasMark(marks, mark.type) ? withoutMark(marks, mark.type) : withMark(marks, mark);
+}
+
+/**
+ * Insert `text` at `point` carrying exactly `marks` (staged pending marks). The
+ * span comes from the insert's resulting caret, not `point`: beside a void block
+ * the text lands in a NEW paragraph after it.
+ */
+function insertWithMarks(
+  doc: RichDoc,
+  point: Point,
+  text: string,
+  marks: Mark[],
+): { doc: RichDoc; selection: Range } {
+  const inserted = insertText(doc, point, text);
+  const end = inserted.selection.focus;
+  const span: Range = {
+    anchor: { blockId: end.blockId, offset: end.offset - text.length },
+    focus: end,
+  };
+  return { doc: applyExactMarks(inserted.doc, span, marks), selection: inserted.selection };
 }
 
 /**
@@ -547,8 +573,24 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // so a mark staged at the old caret must not bleed into the next typed text.
     const clearPendingMarks = useCallback(() => {
       setPendingMarks(null);
+      pendingMarksRef.current = null; // ahead of the re-render, for same-tick events
       pendingAtRef.current = null;
     }, []);
+
+    // Consume the staged pending marks if they were staged at `point`; marks staged
+    // anywhere else are dropped. The selectionchange cleanup runs only with a
+    // toolbar, so a keyboard-only editor relies on this to keep a ⌘B staged
+    // elsewhere from leaking into text typed here.
+    const takePendingAt = useCallback(
+      (point: Point): Mark[] | null => {
+        const pend = pendingMarksRef.current;
+        const at = pendingAtRef.current;
+        if (!pend) return null;
+        clearPendingMarks();
+        return at && at.blockId === point.blockId && at.offset === point.offset ? pend : null;
+      },
+      [clearPendingMarks],
+    );
 
     const onUndo = useCallback(() => {
       const h = historyRef.current;
@@ -774,40 +816,12 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
           }
         }
         // Pending marks: a mark toggled at a collapsed caret applies to the next
-        // typed text, then clears. Handle insertText here before generic input.
-        // Marks apply only at the caret they were staged at. The selectionchange
-        // cleanup runs only with a toolbar, so a keyboard-only editor relies on this
-        // check to keep a ⌘B staged elsewhere from leaking into text typed here.
-        const stagedAt = pendingAtRef.current;
-        const pend =
-          pendingMarksRef.current &&
-          stagedAt &&
-          stagedAt.blockId === range.anchor.blockId &&
-          stagedAt.offset === range.anchor.offset
-            ? pendingMarksRef.current
-            : null;
-        if (!pend && pendingMarksRef.current) {
-          setPendingMarks(null);
-          pendingAtRef.current = null;
-        }
-        if (pend && e.inputType === 'insertText' && isCollapsed(range)) {
-          const text = e.data ?? '';
-          if (text) {
-            e.preventDefault();
-            const inserted = insertText(doc, range.anchor, text);
-            // Span from the insert's resulting caret, not range.anchor: beside a
-            // void block the text lands in a NEW paragraph after it.
-            const end = inserted.selection.focus;
-            const span: Range = {
-              anchor: { blockId: end.blockId, offset: end.offset - text.length },
-              focus: end,
-            };
-            const marked = applyExactMarks(inserted.doc, span, pend);
-            setPendingMarks(null);
-            pendingAtRef.current = null;
-            commit({ doc: marked, selection: inserted.selection }, 'type');
-            return;
-          }
+        // text typed at that same caret (takePendingAt drops it anywhere else).
+        const pend = takePendingAt(range.anchor);
+        if (pend && e.inputType === 'insertText' && isCollapsed(range) && e.data) {
+          e.preventDefault();
+          commit(insertWithMarks(doc, range.anchor, e.data, pend), 'type');
+          return;
         }
         const data = e.data ?? e.dataTransfer?.getData('text/plain') ?? null;
         const result = applyInput(doc, range, e.inputType, data);
@@ -830,7 +844,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       };
       root.addEventListener('beforeinput', onBeforeInput);
       return () => root.removeEventListener('beforeinput', onBeforeInput);
-    }, [commit, onUndo, onRedo]);
+    }, [commit, onUndo, onRedo, takePendingAt]);
 
     // Rich paste: when the clipboard carries HTML, parse it into the model and
     // splice it at the selection. No usable HTML → if autolink is on and the
@@ -1103,32 +1117,49 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
             return;
           }
         }
-        // Caret on a void block (inside its contentEditable=false figure, e.g. after
-        // a doc-final image): browsers fire NO beforeinput there, only keydown, so
-        // route the editing keys through the same applyInput path ourselves.
-        if (isCollapsed(range) && !e.nativeEvent.isComposing) {
-          const block = value.blocks.find((b) => b.id === range.anchor.blockId);
-          if (block && isVoidBlock(block)) {
-            // A single character, not a shortcut. Ctrl+Alt is AltGr on Windows
-            // (e.g. "@" on a German layout), so that still counts as typing.
-            const printable = [...e.key].length === 1 && !e.metaKey && (!e.ctrlKey || e.altKey);
-            const keyInput: Record<string, string> = {
-              Enter: 'insertParagraph',
-              Backspace: 'deleteContentBackward',
-              Delete: 'deleteContentForward',
-            };
-            const inputType = printable ? 'insertText' : mod ? undefined : keyInput[e.key];
-            if (inputType) {
-              e.preventDefault();
-              const result = applyInput(value, range, inputType, printable ? e.key : null);
-              const kind: EditKind = printable
-                ? 'type'
-                : inputType === 'insertParagraph'
-                  ? 'other'
-                  : 'delete';
-              if (result) commit(result, kind);
+        // Caret INSIDE a void block's contentEditable=false figure (e.g. after a
+        // doc-final image): browsers fire NO beforeinput there, only keydown, so
+        // route the editing keys ourselves. Only for keys aimed at the editable —
+        // an attachment's own Retry/Remove buttons keep theirs.
+        const voidSide =
+          e.target === root && isCollapsed(range) && !e.nativeEvent.isComposing
+            ? caretSideInVoid(root, range.anchor.blockId)
+            : null;
+        if (voidSide) {
+          // A single character, not a shortcut. Ctrl+Alt is AltGr on Windows
+          // (e.g. "@" on a German layout), so that still counts as typing.
+          const printable = [...e.key].length === 1 && !e.metaKey && (!e.ctrlKey || e.altKey);
+          if (printable) {
+            e.preventDefault();
+            const pend = takePendingAt(range.anchor);
+            commit(
+              pend
+                ? insertWithMarks(value, range.anchor, e.key, pend)
+                : insertText(value, range.anchor, e.key),
+              'type',
+            );
+            return;
+          }
+          if (!mod && (e.key === 'Enter' || e.key === 'Backspace' || e.key === 'Delete')) {
+            e.preventDefault();
+            if (e.key === 'Enter') {
+              commit(applyInput(value, range, 'insertParagraph', null)!, 'other');
               return;
             }
+            // Backspace removes the void only from AFTER it, Delete only from
+            // BEFORE it (the model can't tell the two sides apart) — the other
+            // side would delete across into a neighbor, so it's a no-op.
+            const back = e.key === 'Backspace';
+            if (back === (voidSide === 'after')) {
+              const result = applyInput(
+                value,
+                range,
+                back ? 'deleteContentBackward' : 'deleteContentForward',
+                null,
+              );
+              if (result) commit(result, 'delete');
+            }
+            return;
           }
         }
         // Mention menu navigation takes priority over editor keys when open.
@@ -1205,31 +1236,46 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         onRedo,
         mention,
         controlsOn,
+        takePendingAt,
       ],
     );
 
-    // The model range the composition replaces, captured at compositionstart —
-    // the last moment the DOM and the model agree.
-    const compositionRangeRef = useRef<Range | null>(null);
     const onCompositionStart = useCallback(() => {
       isComposingRef.current = true;
-      const root = rootRef.current;
-      compositionRangeRef.current = root ? readSelection(root) : null;
     }, []);
 
     const onCompositionEnd = useCallback(
       (e: React.CompositionEvent<HTMLDivElement>) => {
         isComposingRef.current = false;
-        const range = compositionRangeRef.current;
-        compositionRangeRef.current = null;
-        if (readOnly || !rootRef.current || !range) return;
+        const root = rootRef.current;
+        if (readOnly || !root) return;
         const text = e.data;
         if (!text) return;
-        // The browser composed text into the DOM (diverged from the model). The
-        // DOM caret now counts composed chars the model lacks, so it can't locate
-        // the insert. Replace the range captured at compositionstart (incl. a
-        // selection the composition typed over) — the re-render snaps the DOM back.
-        const result = applyInput(value, range, 'insertText', text);
+        // The browser composed `text` into the DOM ahead of the model, ending at the
+        // caret. Its start is caret − text.length (the prefix before it is shared),
+        // and the DOM grew by (dom length − model length) net, so the composition
+        // REPLACED text.length − growth model chars from that start: 0 for a plain
+        // mid-text insert, the selection for typing over one, and the existing word
+        // for an IME (e.g. Android Gboard) that recomposes it. Replace exactly that
+        // span — the re-render snaps the DOM back to the model.
+        const range = readSelection(root);
+        if (!range) return;
+        const caret = range.focus;
+        const block = value.blocks.find((b) => b.id === caret.blockId);
+        const domLen = domBlockLength(root, caret.blockId);
+        if (!block || domLen == null) return;
+        const growth = domLen - blockLength(block);
+        const start = Math.max(0, caret.offset - text.length);
+        const end = Math.min(blockLength(block), Math.max(start, start + text.length - growth));
+        const result = applyInput(
+          value,
+          {
+            anchor: { blockId: caret.blockId, offset: start },
+            focus: { blockId: caret.blockId, offset: end },
+          },
+          'insertText',
+          text,
+        );
         if (result) commit(result, 'type');
       },
       [value, readOnly, commit],

@@ -362,3 +362,30 @@ export function rangeRect(root: HTMLElement, range: Range): Rect | null {
   }
   return null;
 }
+
+/**
+ * Which side of a void block's figure the native caret sits on, when the caret is
+ * INSIDE that `contentEditable=false` figure — where browsers fire no
+ * `beforeinput`, so the editor handles keys itself. Null when the caret is
+ * elsewhere (incl. a root-level caret beside the figure, which edits normally).
+ * Offset 0 on the figure itself = before its content; anything else = after.
+ */
+export function caretSideInVoid(root: HTMLElement, blockId: string): 'before' | 'after' | null {
+  const sel = root.ownerDocument.getSelection();
+  const fig = figureBlock(
+    root.querySelector<HTMLElement>(`[data-block-id="${CSS.escape(blockId)}"]`),
+  );
+  if (!sel?.anchorNode || !fig || !fig.contains(sel.anchorNode)) return null;
+  return sel.anchorNode === fig && sel.anchorOffset === 0 ? 'before' : 'after';
+}
+
+/**
+ * The MODEL-length of a block's current DOM content (atomic widgets counted by
+ * `data-len`), or null when the block isn't rendered. During IME composition the
+ * browser writes into the DOM ahead of the model, so `domBlockLength − model
+ * length` is how many chars the composition added net.
+ */
+export function domBlockLength(root: HTMLElement, blockId: string): number | null {
+  const el = root.querySelector<HTMLElement>(`[data-block-id="${CSS.escape(blockId)}"]`);
+  return el ? offsetWithinBlock(el, el, el.childNodes.length) : null;
+}

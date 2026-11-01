@@ -21,6 +21,17 @@ import { readSelection } from './selection';
 
 const mockReadSelection = vi.mocked(readSelection);
 
+/** Put the native caret inside the editor's (single) attachment figure. */
+function caretInFigure(editor: HTMLElement, side: 'before' | 'after') {
+  const fig = editor.querySelector('figure')!;
+  const r = document.createRange();
+  r.setStart(fig, side === 'before' ? 0 : fig.childNodes.length);
+  r.collapse(true);
+  const sel = document.getSelection()!;
+  sel.removeAllRanges();
+  sel.addRange(r);
+}
+
 function renderEditor(ui: React.ReactElement) {
   return render(<I18nProvider locale="en">{ui}</I18nProvider>);
 }
@@ -382,6 +393,7 @@ describe('RichTextEditor toolbar', () => {
       anchor: { blockId: 'v', offset: 0 },
       focus: { blockId: 'v', offset: 0 },
     });
+    caretInFigure(editor, 'after');
     expect(fireEvent.keyDown(editor, { key: 'x' })).toBe(false);
     let next: RichDoc = onChange.mock.calls.at(-1)![0];
     expect(next.blocks.map((b) => b.type)).toEqual(['paragraph', 'attachment', 'paragraph']);
@@ -400,30 +412,106 @@ describe('RichTextEditor toolbar', () => {
     onChange.mockClear();
     fireEvent.keyDown(editor, { key: 'c', ctrlKey: true });
     expect(onChange).not.toHaveBeenCalled();
+    // AltGr (Ctrl+Alt) characters are typing, not shortcuts.
+    fireEvent.keyDown(editor, { key: '@', ctrlKey: true, altKey: true });
+    expect(onChange.mock.calls.at(-1)![0].blocks[2].inlines[0].text).toBe('@');
+    // Delete from AFTER the image would reach across into a neighbor: no-op.
+    onChange.mockClear();
+    expect(fireEvent.keyDown(editor, { key: 'Delete' })).toBe(false);
+    expect(onChange).not.toHaveBeenCalled();
+    // From BEFORE it, Delete removes the image and Backspace is the no-op.
+    caretInFigure(editor, 'before');
+    fireEvent.keyDown(editor, { key: 'Backspace' });
+    expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('IME composition mid-text inserts at the composition start without eating the following text', () => {
+  it('a mark staged on an attachment caret applies to the text typed there', () => {
     const onChange = vi.fn();
     const doc: RichDoc = {
-      blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'Assign', marks: [] }] }],
+      blocks: [{ id: 'v', type: 'attachment', name: 'f.png', status: 'ready', inlines: [] }],
     };
     renderEditor(<RichTextEditor value={doc} onChange={onChange} />);
     const editor = screen.getByRole('textbox');
-    // Composition starts with the caret after "Ass" (DOM and model agree).
     mockReadSelection.mockReturnValue({
-      anchor: { blockId: 'k', offset: 3 },
-      focus: { blockId: 'k', offset: 3 },
+      anchor: { blockId: 'v', offset: 0 },
+      focus: { blockId: 'v', offset: 0 },
     });
-    fireEvent.compositionStart(editor, { data: '' });
-    // The browser composed "日本" into the DOM: the DOM caret now reads offset 5,
-    // which counts composed text the model doesn't hold yet.
-    mockReadSelection.mockReturnValue({
-      anchor: { blockId: 'k', offset: 5 },
-      focus: { blockId: 'k', offset: 5 },
-    });
-    fireEvent.compositionEnd(editor, { data: '日本' });
+    caretInFigure(editor, 'after');
+    fireEvent.keyDown(editor, { key: 'b', code: 'KeyB', ctrlKey: true });
+    fireEvent.keyDown(editor, { key: 'x' });
     const next: RichDoc = onChange.mock.calls.at(-1)![0];
-    expect(next.blocks[0].inlines).toEqual([{ text: 'Ass日本ign', marks: [] }]);
+    expect(next.blocks[1].inlines).toEqual([{ text: 'x', marks: [{ type: 'bold' }] }]);
+  });
+
+  it('Delete from before a mid-doc image removes it, keeping the next paragraph', () => {
+    const onChange = vi.fn();
+    const doc: RichDoc = {
+      blocks: [
+        { id: 'v', type: 'attachment', name: 'f.png', status: 'ready', inlines: [] },
+        { id: 'p', type: 'paragraph', inlines: [{ text: 'hi', marks: [] }] },
+      ],
+    };
+    renderEditor(<RichTextEditor value={doc} onChange={onChange} />);
+    const editor = screen.getByRole('textbox');
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'v', offset: 0 },
+      focus: { blockId: 'v', offset: 0 },
+    });
+    caretInFigure(editor, 'before');
+    fireEvent.keyDown(editor, { key: 'Delete' });
+    expect(onChange.mock.calls.at(-1)![0].blocks.map((b: { id: string }) => b.id)).toEqual(['p']);
+  });
+
+  it("keys on an attachment's own Retry button are not hijacked by the void keydown path", () => {
+    const onChange = vi.fn();
+    const doc: RichDoc = {
+      blocks: [{ id: 'v', type: 'attachment', name: 'f.png', status: 'error', inlines: [] }],
+    };
+    renderEditor(<RichTextEditor value={doc} onChange={onChange} />);
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'v', offset: 0 },
+      focus: { blockId: 'v', offset: 0 },
+    });
+    const retry = screen.getByRole('button', { name: /retry/i });
+    expect(fireEvent.keyDown(retry, { key: 'Enter' })).toBe(true);
+    expect(fireEvent.keyDown(retry, { key: ' ' })).toBe(true);
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  describe('IME composition', () => {
+    // The browser writes the composition into the DOM ahead of the model; mirror
+    // that, then fire compositionend with the DOM caret at the composition's end.
+    function compose(model: string, dom: string, caret: number, data: string) {
+      const onChange = vi.fn();
+      renderEditor(
+        <RichTextEditor
+          value={{
+            blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: model, marks: [] }] }],
+          }}
+          onChange={onChange}
+        />,
+      );
+      const editor = screen.getByRole('textbox');
+      fireEvent.compositionStart(editor, { data: '' });
+      editor.querySelector('p')!.firstChild!.textContent = dom;
+      mockReadSelection.mockReturnValue({
+        anchor: { blockId: 'k', offset: caret },
+        focus: { blockId: 'k', offset: caret },
+      });
+      fireEvent.compositionEnd(editor, { data });
+      const next: RichDoc = onChange.mock.calls.at(-1)![0];
+      return next.blocks[0].inlines.map((r) => r.text).join('');
+    }
+
+    it('mid-text insert keeps the following text', () => {
+      expect(compose('Assign', 'Ass日本ign', 5, '日本')).toBe('Ass日本ign');
+    });
+    it('composing over a selection replaces exactly the selection', () => {
+      expect(compose('abcdef', 'abXef', 3, 'X')).toBe('abXef');
+    });
+    it('recomposing an existing word (Android Gboard) replaces the word, not duplicates it', () => {
+      expect(compose('Hel', 'Hello', 5, 'Hello')).toBe('Hello');
+    });
   });
 
   it('a mark staged with ⌘B does not leak to a different caret (no toolbar)', () => {
