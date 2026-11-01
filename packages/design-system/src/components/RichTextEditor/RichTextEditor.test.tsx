@@ -365,6 +365,99 @@ describe('RichTextEditor toolbar', () => {
     });
   });
 
+  // Chrome fires NO beforeinput while the caret sits inside a contentEditable=false
+  // figure (e.g. after an image that ends the doc) — only keydown. The editor must
+  // handle those keys itself or they are silently dropped.
+  it('typing, Enter and Backspace with the caret on an attachment are handled from keydown', () => {
+    const onChange = vi.fn();
+    const doc: RichDoc = {
+      blocks: [
+        { id: 'p', type: 'paragraph', inlines: [{ text: 'hi', marks: [] }] },
+        { id: 'v', type: 'attachment', name: 'f.png', status: 'ready', inlines: [] },
+      ],
+    };
+    renderEditor(<RichTextEditor value={doc} onChange={onChange} />);
+    const editor = screen.getByRole('textbox');
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'v', offset: 0 },
+      focus: { blockId: 'v', offset: 0 },
+    });
+    expect(fireEvent.keyDown(editor, { key: 'x' })).toBe(false);
+    let next: RichDoc = onChange.mock.calls.at(-1)![0];
+    expect(next.blocks.map((b) => b.type)).toEqual(['paragraph', 'attachment', 'paragraph']);
+    expect(next.blocks[2].inlines).toEqual([{ text: 'x', marks: [] }]);
+
+    expect(fireEvent.keyDown(editor, { key: 'Enter' })).toBe(false);
+    next = onChange.mock.calls.at(-1)![0];
+    expect(next.blocks.map((b) => b.type)).toEqual(['paragraph', 'attachment', 'paragraph']);
+    expect(next.blocks[2].inlines).toEqual([{ text: '', marks: [] }]);
+
+    expect(fireEvent.keyDown(editor, { key: 'Backspace' })).toBe(false);
+    next = onChange.mock.calls.at(-1)![0];
+    expect(next.blocks.map((b) => b.id)).toEqual(['p']);
+
+    // Shortcuts still pass through (⌘C must not type a "c").
+    onChange.mockClear();
+    fireEvent.keyDown(editor, { key: 'c', ctrlKey: true });
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('IME composition mid-text inserts at the composition start without eating the following text', () => {
+    const onChange = vi.fn();
+    const doc: RichDoc = {
+      blocks: [{ id: 'k', type: 'paragraph', inlines: [{ text: 'Assign', marks: [] }] }],
+    };
+    renderEditor(<RichTextEditor value={doc} onChange={onChange} />);
+    const editor = screen.getByRole('textbox');
+    // Composition starts with the caret after "Ass" (DOM and model agree).
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 3 },
+      focus: { blockId: 'k', offset: 3 },
+    });
+    fireEvent.compositionStart(editor, { data: '' });
+    // The browser composed "日本" into the DOM: the DOM caret now reads offset 5,
+    // which counts composed text the model doesn't hold yet.
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'k', offset: 5 },
+      focus: { blockId: 'k', offset: 5 },
+    });
+    fireEvent.compositionEnd(editor, { data: '日本' });
+    const next: RichDoc = onChange.mock.calls.at(-1)![0];
+    expect(next.blocks[0].inlines).toEqual([{ text: 'Ass日本ign', marks: [] }]);
+  });
+
+  it('a mark staged with ⌘B does not leak to a different caret (no toolbar)', () => {
+    // Keyboard-only editor: no toolbar, so the selectionchange cleanup never runs —
+    // the typing path itself must drop marks staged at a different point.
+    const onChange = vi.fn();
+    const doc: RichDoc = {
+      blocks: [
+        { id: 'a', type: 'paragraph', inlines: [{ text: 'one', marks: [] }] },
+        { id: 'b', type: 'paragraph', inlines: [{ text: 'two', marks: [] }] },
+      ],
+    };
+    renderEditor(<RichTextEditor value={doc} onChange={onChange} />);
+    const editor = screen.getByRole('textbox');
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'a', offset: 3 },
+      focus: { blockId: 'a', offset: 3 },
+    });
+    fireEvent.keyDown(editor, { key: 'b', code: 'KeyB', ctrlKey: true });
+    // Caret moves to the end of the second block, then a character is typed.
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'b', offset: 3 },
+      focus: { blockId: 'b', offset: 3 },
+    });
+    const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(evt, 'inputType', { value: 'insertText' });
+    Object.defineProperty(evt, 'data', { value: 'x' });
+    act(() => {
+      editor.dispatchEvent(evt);
+    });
+    const next: RichDoc = onChange.mock.calls.at(-1)![0];
+    expect(next.blocks[1].inlines).toEqual([{ text: 'twox', marks: [] }]);
+  });
+
   it('staging a color at a collapsed caret colors the next typed character', async () => {
     const user = userEvent.setup();
     // Collapsed caret at the end of 'hi ' (offset 3) — no selection, so the pick stages

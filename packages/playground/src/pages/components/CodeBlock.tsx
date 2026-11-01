@@ -1,5 +1,5 @@
 import './prismLangs'; // must run first — registers SCSS grammar on prism-react-renderer
-import { useState, useSyncExternalStore } from 'react';
+import { memo, useState, useSyncExternalStore } from 'react';
 import { Check, Copy } from 'lucide-react';
 import clsx from 'clsx';
 import { Highlight, themes } from 'prism-react-renderer';
@@ -44,7 +44,14 @@ function useIsDark(): boolean {
   );
 }
 
-export function CodeBlock({ code, language = 'tsx', filename, className }: CodeBlockProps) {
+// memo: props are plain strings, and re-highlighting a large source file on every
+// parent render (e.g. each keystroke in a demo editor) costs tens of ms.
+export const CodeBlock = memo(function CodeBlock({
+  code,
+  language = 'tsx',
+  filename,
+  className,
+}: CodeBlockProps) {
   const [copied, setCopied] = useState(false);
   const isDark = useIsDark();
 
@@ -87,4 +94,4 @@ export function CodeBlock({ code, language = 'tsx', filename, className }: CodeB
       </Highlight>
     </div>
   );
-}
+});

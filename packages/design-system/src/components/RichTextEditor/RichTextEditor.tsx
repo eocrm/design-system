@@ -69,7 +69,7 @@ import { RichTextImageResizer } from './RichTextImageResizer';
 import { LiveRegion } from '../LiveRegion';
 import { capWidthToHeight } from './imageSize';
 import { imageMaxHeightStyle } from '../RichText/imageMaxHeightStyle';
-import { attachmentIsImage, isAttachmentSettled } from '../RichText/engine/attachment';
+import { attachmentIsImage, isAttachmentSettled, isVoidBlock } from '../RichText/engine/attachment';
 import { safeHref } from '../RichText/engine/safeHref';
 import type { BlockAction } from './RichTextBlockMenu';
 import { useUpload, type UploadConfig } from './useUpload';
@@ -95,7 +95,7 @@ export interface RichTextEditorProps extends Omit<
   HTMLAttributes<HTMLDivElement>,
   'onChange' | 'children'
 > {
-  /** Controlled document. Render the doc returned by `onChange` back into `value`. */
+  /** Controlled document. Render the doc returned by `onChange` back into `value` as-is — a cloned/normalized copy reads as an outside replacement and resets undo history. */
   value: RichDoc;
   /** `aria-invalid` on the textbox. Field / SettingRow inject it (#568). @default false */
   invalid?: boolean;
@@ -775,15 +775,32 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         }
         // Pending marks: a mark toggled at a collapsed caret applies to the next
         // typed text, then clears. Handle insertText here before generic input.
-        const pend = pendingMarksRef.current;
+        // Marks apply only at the caret they were staged at. The selectionchange
+        // cleanup runs only with a toolbar, so a keyboard-only editor relies on this
+        // check to keep a ⌘B staged elsewhere from leaking into text typed here.
+        const stagedAt = pendingAtRef.current;
+        const pend =
+          pendingMarksRef.current &&
+          stagedAt &&
+          stagedAt.blockId === range.anchor.blockId &&
+          stagedAt.offset === range.anchor.offset
+            ? pendingMarksRef.current
+            : null;
+        if (!pend && pendingMarksRef.current) {
+          setPendingMarks(null);
+          pendingAtRef.current = null;
+        }
         if (pend && e.inputType === 'insertText' && isCollapsed(range)) {
           const text = e.data ?? '';
           if (text) {
             e.preventDefault();
             const inserted = insertText(doc, range.anchor, text);
+            // Span from the insert's resulting caret, not range.anchor: beside a
+            // void block the text lands in a NEW paragraph after it.
+            const end = inserted.selection.focus;
             const span: Range = {
-              anchor: range.anchor,
-              focus: { blockId: range.anchor.blockId, offset: range.anchor.offset + text.length },
+              anchor: { blockId: end.blockId, offset: end.offset - text.length },
+              focus: end,
             };
             const marked = applyExactMarks(inserted.doc, span, pend);
             setPendingMarks(null);
@@ -1086,6 +1103,34 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
             return;
           }
         }
+        // Caret on a void block (inside its contentEditable=false figure, e.g. after
+        // a doc-final image): browsers fire NO beforeinput there, only keydown, so
+        // route the editing keys through the same applyInput path ourselves.
+        if (isCollapsed(range) && !e.nativeEvent.isComposing) {
+          const block = value.blocks.find((b) => b.id === range.anchor.blockId);
+          if (block && isVoidBlock(block)) {
+            // A single character, not a shortcut. Ctrl+Alt is AltGr on Windows
+            // (e.g. "@" on a German layout), so that still counts as typing.
+            const printable = [...e.key].length === 1 && !e.metaKey && (!e.ctrlKey || e.altKey);
+            const keyInput: Record<string, string> = {
+              Enter: 'insertParagraph',
+              Backspace: 'deleteContentBackward',
+              Delete: 'deleteContentForward',
+            };
+            const inputType = printable ? 'insertText' : mod ? undefined : keyInput[e.key];
+            if (inputType) {
+              e.preventDefault();
+              const result = applyInput(value, range, inputType, printable ? e.key : null);
+              const kind: EditKind = printable
+                ? 'type'
+                : inputType === 'insertParagraph'
+                  ? 'other'
+                  : 'delete';
+              if (result) commit(result, kind);
+              return;
+            }
+          }
+        }
         // Mention menu navigation takes priority over editor keys when open.
         if (mention.open && mention.items.length > 0) {
           if (e.key === 'ArrowDown') {
@@ -1163,26 +1208,28 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       ],
     );
 
+    // The model range the composition replaces, captured at compositionstart —
+    // the last moment the DOM and the model agree.
+    const compositionRangeRef = useRef<Range | null>(null);
     const onCompositionStart = useCallback(() => {
       isComposingRef.current = true;
+      const root = rootRef.current;
+      compositionRangeRef.current = root ? readSelection(root) : null;
     }, []);
 
     const onCompositionEnd = useCallback(
       (e: React.CompositionEvent<HTMLDivElement>) => {
         isComposingRef.current = false;
-        const root = rootRef.current;
-        if (readOnly || !root) return;
+        const range = compositionRangeRef.current;
+        compositionRangeRef.current = null;
+        if (readOnly || !rootRef.current || !range) return;
         const text = e.data;
         if (!text) return;
-        // The browser composed text into the DOM (diverged from the model). Read
-        // where the caret now is, map it back, and replace the composed span:
-        // delete the composed text length before the caret, then insert it into
-        // the model — then re-render snaps the DOM back to the model.
-        const range = readSelection(root);
-        if (!range) return;
-        const caret = range.focus;
-        const start = { blockId: caret.blockId, offset: Math.max(0, caret.offset - text.length) };
-        const result = applyInput(value, { anchor: start, focus: caret }, 'insertText', text);
+        // The browser composed text into the DOM (diverged from the model). The
+        // DOM caret now counts composed chars the model lacks, so it can't locate
+        // the insert. Replace the range captured at compositionstart (incl. a
+        // selection the composition typed over) — the re-render snaps the DOM back.
+        const result = applyInput(value, range, 'insertText', text);
         if (result) commit(result, 'type');
       },
       [value, readOnly, commit],
@@ -1240,18 +1287,20 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       (choice: BlockChoice) => {
         const root = rootRef.current;
         const range = (root ? readSelection(root) : null) ?? lastSelectionRef.current;
-        if (range) commit(runSetBlock(value, range, choice));
+        if (range) commit(runSetBlock(latest.current.value, range, choice));
       },
-      [value, commit],
+      [commit],
     );
     const onToolbarToggleList = useCallback(
       (listType: 'bullet_item' | 'ordered_item') => {
         const root = rootRef.current;
         const range = (root ? readSelection(root) : null) ?? lastSelectionRef.current;
-        if (range) commit(runToggleList(value, range, listType));
+        if (range) commit(runToggleList(latest.current.value, range, listType));
       },
-      [value, commit],
+      [commit],
     );
+
+    const onPickFiles = useCallback(() => uploadInputRef.current?.click(), []);
 
     const onBlockInsertBelow = useCallback(
       (id: string) => commit(insertEmptyBlockBelow(latest.current.value, id), 'other'),
@@ -1371,9 +1420,10 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       () => renderDoc(value, { editable: true, renderLink, renderMention }),
       [value, renderLink, renderMention],
     );
-    // Stable signature of block order — recomputed only when blocks change, not on
-    // every keystroke. Shared by the gutter (blockOrderKey) and the image resizer's
-    // layoutKey so their memoized shells stay stable while typing within a block.
+    // Signature of block order. `value.blocks` is a new array on every edit, so this
+    // recomputes per keystroke (a cheap join) — but the STRING is unchanged while
+    // typing within a block, so the gutter (blockOrderKey) and the image resizer's
+    // layoutKey keep their memoized shells stable.
     const blockOrderKey = useMemo(() => value.blocks.map((b) => b.id).join('|'), [value.blocks]);
 
     const editable = (
@@ -1605,7 +1655,7 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
         canRedo={canRedo}
         onUndo={onUndo}
         onRedo={onRedo}
-        onPickFiles={uploadOn ? () => uploadInputRef.current?.click() : undefined}
+        onPickFiles={uploadOn ? onPickFiles : undefined}
         onOverlayOpenChange={autoToolbar ? setToolbarOverlayOpen : undefined}
         onInsertEmoji={onInsertEmoji}
       />

@@ -54,8 +54,9 @@ function snapEndOffset(block: Block, offset: number): number {
  * Pure/immutable. Insert `text` at `point`, inheriting the marks of the character
  * immediately before the cursor (see {@link marksForTypedText} for the `mention`
  * and `link` boundary exceptions). Returns `{ doc, selection }` with the caret
- * placed after the inserted text. No-op (returns input unchanged) when `text` is
- * empty or `point.blockId` does not exist in `doc`.
+ * placed after the inserted text. On a void block the text opens a new paragraph
+ * after the void. No-op (returns input unchanged) when `text` is empty or
+ * `point.blockId` does not exist in `doc`.
  */
 export function insertText(
   doc: RichDoc,
@@ -67,8 +68,15 @@ export function insertText(
   if (idx === -1) return { doc, selection: collapsed(point) };
   const block = doc.blocks[idx];
   // A void block (e.g. an attachment) holds no editable text — never splice the
-  // typed text into it (that would corrupt the block). No-op.
-  if (isVoidBlock(block)) return { doc, selection: collapsed(point) };
+  // typed text into it. The caret sits beside it (e.g. after a doc-final image),
+  // so the text opens a new paragraph AFTER the void, like insertFragment does.
+  // ponytail: a caret BEFORE a void maps to the same {void, 0} point, so it also
+  // lands after; distinguishing would need a second void offset in the model.
+  if (isVoidBlock(block)) {
+    const after = createBlock('paragraph', text);
+    const blocks = [...doc.blocks.slice(0, idx + 1), after, ...doc.blocks.slice(idx + 1)];
+    return { doc: { blocks }, selection: collapsed({ blockId: after.id, offset: text.length }) };
+  }
   const inlines = normalizeInlines([
     ...sliceInlines(block.inlines, 0, point.offset),
     { text, marks: marksForTypedText(doc, point) },
@@ -132,14 +140,20 @@ export function deleteRange(doc: RichDoc, range: Range): { doc: RichDoc; selecti
 
 /**
  * Pure/immutable. Split the block at `point` into two blocks of the same type,
- * placing the caret at offset 0 of the new (right) block. Returns `{ doc,
- * selection }`. No-op (returns input) when `point.blockId` is not found.
+ * placing the caret at offset 0 of the new (right) block. On a void block it
+ * inserts an empty paragraph after the void instead. Returns `{ doc, selection }`.
+ * No-op (returns input) when `point.blockId` is not found.
  */
 export function splitBlock(doc: RichDoc, point: Point): { doc: RichDoc; selection: Range } {
   const idx = findBlockIndex(doc, point.blockId);
   if (idx === -1) return { doc, selection: collapsed(point) };
   const block = doc.blocks[idx];
-  if (isVoidBlock(block)) return { doc, selection: collapsed(point) }; // can't split a void
+  if (isVoidBlock(block)) {
+    // Can't split a void — Enter beside it opens an empty paragraph after it.
+    const after = createBlock('paragraph');
+    const blocks = [...doc.blocks.slice(0, idx + 1), after, ...doc.blocks.slice(idx + 1)];
+    return { doc: { blocks }, selection: collapsed({ blockId: after.id, offset: 0 }) };
+  }
   const left: Block = {
     ...block,
     inlines: normalizeInlines(sliceInlines(block.inlines, 0, point.offset)),
