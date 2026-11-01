@@ -481,6 +481,9 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       if (u && latest.current.value !== u.doc) {
         historyRef.current = u.prevHistory;
         syncHistoryFlags();
+        // Its caret too — a caller that returns early (an empty undo/redo) would
+        // otherwise leave it for some unrelated re-render to write.
+        pendingSelectionRef.current = null;
       }
     }, [syncHistoryFlags]);
 

@@ -704,6 +704,38 @@ describe('RichTextEditor toolbar', () => {
     expect(document.getSelection()!.anchorOffset).toBe(4);
   });
 
+  it("a refused edit's caret is never written later, even after an empty undo", () => {
+    const doc0 = docFromText('abcdef');
+    const id = doc0.blocks[0].id;
+    const ui = (ro: boolean) => (
+      <I18nProvider locale="en">
+        <RichTextEditor
+          value={doc0}
+          onChange={() => {}}
+          readOnly={ro}
+          mentions={{ onQuery: async () => [] }}
+        />
+      </I18nProvider>
+    );
+    const { rerender } = render(ui(false));
+    const editor = screen.getByRole('textbox');
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: id, offset: 1 },
+      focus: { blockId: id, offset: 1 },
+    });
+    const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+    Object.defineProperty(evt, 'inputType', { value: 'insertText' });
+    Object.defineProperty(evt, 'data', { value: 'X' });
+    act(() => {
+      editor.dispatchEvent(evt);
+    }); // refused
+    fireEvent.keyDown(editor, { key: 'z', code: 'KeyZ', ctrlKey: true }); // nothing to undo
+    const text = editor.querySelector('p')!.firstChild!;
+    document.getSelection()!.collapse(text, 4); // the user's caret
+    rerender(ui(true));
+    expect(document.getSelection()!.anchorOffset).toBe(4);
+  });
+
   it('an edit the parent rejects leaves no phantom undo step', () => {
     const onChange = vi.fn();
     renderEditor(<RichTextEditor value={docFromText('ab')} onChange={onChange} />);
