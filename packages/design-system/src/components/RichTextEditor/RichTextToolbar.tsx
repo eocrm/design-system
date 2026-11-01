@@ -1,4 +1,4 @@
-import { useRef, type ReactElement } from 'react';
+import { memo, useRef, type ReactElement } from 'react';
 import type { BlockType, MarkType } from '../RichText/engine/model';
 import { Button } from '../Button';
 import { DropdownMenu } from '../DropdownMenu';
@@ -103,7 +103,7 @@ const MARKS: {
  *   onToggleList={(listType) => …}
  * />
  */
-export function RichTextToolbar({
+function RichTextToolbarImpl({
   activeMarks,
   colors,
   onSetColor,
@@ -358,3 +358,22 @@ export function RichTextToolbar({
     </div>
   );
 }
+
+// The editor re-derives `activeMarks` / `colors` / `block` on every keystroke, so
+// they arrive as fresh objects with identical content. Compare those three by
+// value and everything else by identity, so typing doesn't re-render the bar.
+function sameToolbarProps(a: RichTextToolbarProps, b: RichTextToolbarProps): boolean {
+  for (const key of Object.keys({ ...a, ...b }) as (keyof RichTextToolbarProps)[]) {
+    if (key === 'activeMarks') {
+      if (a.activeMarks.join() !== b.activeMarks.join()) return false;
+    } else if (key === 'colors') {
+      if (a.colors.textColor !== b.colors.textColor || a.colors.bgColor !== b.colors.bgColor)
+        return false;
+    } else if (key === 'block') {
+      if (a.block?.type !== b.block?.type || a.block?.level !== b.block?.level) return false;
+    } else if (a[key] !== b[key]) return false;
+  }
+  return true;
+}
+
+export const RichTextToolbar = memo(RichTextToolbarImpl, sameToolbarProps);

@@ -11,6 +11,7 @@ import {
   Text,
   Stack,
   type RichDoc,
+  type RichTextEditorProps,
   type RenderLink,
   type RenderMention,
 } from '@eocrm/design-system';
@@ -56,46 +57,37 @@ const renderMention: RenderMention = ({ id, label }) => (
   </Badge>
 );
 
+// Each example owns its doc state, so a keystroke re-renders only that example —
+// not the whole page (every editor, every code sample, the source view).
+type DemoEditorProps = Omit<RichTextEditorProps, 'value' | 'onChange'> & {
+  init: () => RichDoc;
+};
+function DemoEditor({ init, ...props }: DemoEditorProps) {
+  const [doc, setDoc] = useState<RichDoc>(init);
+  return <RichTextEditor value={doc} onChange={setDoc} {...props} />;
+}
+
+function ToolbarExample() {
+  const [doc, setDoc] = useState<RichDoc>(() =>
+    docFromText('Type here. Select a word and press ⌘B.'),
+  );
+  return (
+    <Stack gap="sm">
+      <RichTextEditor value={doc} onChange={setDoc} toolbar placeholder="Write a note…" />
+      <Text size="sm" tone="muted">
+        Toolbar + shortcuts: ⌘/Ctrl+B bold · I italic · U underline · ⇧X strike
+      </Text>
+      <Text size="sm" tone="muted">
+        HTML → <Code>{toHtml(doc)}</Code>
+      </Text>
+      <Text size="sm" tone="muted">
+        Markdown → <Code>{toMarkdown(doc).replace(/\n/g, '⏎')}</Code>
+      </Text>
+    </Stack>
+  );
+}
+
 export function RichTextEditorDemo() {
-  const [doc, setDoc] = useState<RichDoc>(docFromText('Type here. Select a word and press ⌘B.'));
-  const [autoDoc, setAutoDoc] = useState<RichDoc>(() => docFromText(''));
-  const [linkDoc, setLinkDoc] = useState<RichDoc>(docFromText('Read the docs and visit our site.'));
-  const [importDoc, setImportDoc] = useState<RichDoc>(() =>
-    // Seeded via fromHtml so it carries an embedded image — this editor has a toolbar
-    // but NO blockControls, demonstrating that a pasted/imported image is still
-    // resizable: hover it and drag the corner handle.
-    fromHtml(
-      '<h1>Imported</h1><p>This editor was <strong>seeded</strong> from HTML — paste rich HTML to import more. Hover the image and drag its corner to resize (no block controls needed).</p>' +
-        `<img src="${sampleEmbedSrc}" width="280" alt="Imported sample image" />`,
-    ),
-  );
-  const [blockDoc, setBlockDoc] = useState<RichDoc>(() =>
-    fromMarkdown(
-      '# Block controls\n\nHover a line for the ＋ / ⠿ gutter.\n\n- first item\n- second item\n\n> Drag the handle to reorder, or open the menu to turn into / duplicate / delete.',
-    ),
-  );
-  const [mentionDoc, setMentionDoc] = useState<RichDoc>(() => docFromText('Assign this to '));
-  const [mentionRenderDoc, setMentionRenderDoc] = useState<RichDoc>(() =>
-    docFromText('Assign this to '),
-  );
-  const [autolinkDoc, setAutolinkDoc] = useState<RichDoc>(() =>
-    docFromText('Type a task URL below to watch it autolink. '),
-  );
-  const [colorDoc, setColorDoc] = useState<RichDoc>(() =>
-    fromHtml(
-      '<p>Select a word and use the toolbar <strong>Text color</strong> or <strong>Highlight</strong> button to pick a color from the palette. Each color is a small named badge; choosing Default clears the color.</p>' +
-        '<p>With block controls, open the ⠿ menu → Text color / Highlight to color the whole block at once.</p>',
-    ),
-  );
-  const [uploadDoc, setUploadDoc] = useState<RichDoc>(() =>
-    // Seed an EMBEDDED image (real URL + explicit width) so its block-menu
-    // "Configure" exposes the width slider. Uploaded files below come in as object
-    // URLs (rendered as chips) with no dimensions, so they get no width control.
-    fromHtml(
-      '<p>Paste a screenshot, or use the toolbar button to attach a file.</p>' +
-        `<img src="${sampleEmbedSrc}" width="320" alt="Embedded sample image" />`,
-    ),
-  );
   // Mock uploader: resolve to a local object URL after a short delay (demo only).
   const mockUpload = (file: File) =>
     new Promise<{ url: string; mime: string; name: string }>((resolve) =>
@@ -155,18 +147,7 @@ export function Demo() {
   );
 }`}
       >
-        <Stack gap="sm">
-          <RichTextEditor value={doc} onChange={setDoc} toolbar placeholder="Write a note…" />
-          <Text size="sm" tone="muted">
-            Toolbar + shortcuts: ⌘/Ctrl+B bold · I italic · U underline · ⇧X strike
-          </Text>
-          <Text size="sm" tone="muted">
-            HTML → <Code>{toHtml(doc)}</Code>
-          </Text>
-          <Text size="sm" tone="muted">
-            Markdown → <Code>{toMarkdown(doc).replace(/\n/g, '⏎')}</Code>
-          </Text>
-        </Stack>
+        <ToolbarExample />
       </Example>
 
       <Example
@@ -187,9 +168,8 @@ export function Demo() {
   );
 }`}
       >
-        <RichTextEditor
-          value={autoDoc}
-          onChange={setAutoDoc}
+        <DemoEditor
+          init={() => docFromText('')}
           toolbar="auto"
           placeholder="Add a comment… (toolbar appears on focus)"
         />
@@ -212,9 +192,12 @@ export function Demo() {
   );
 }`}
       >
-        <RichTextEditor
-          value={blockDoc}
-          onChange={setBlockDoc}
+        <DemoEditor
+          init={() =>
+            fromMarkdown(
+              '# Block controls\n\nHover a line for the ＋ / ⠿ gutter.\n\n- first item\n- second item\n\n> Drag the handle to reorder, or open the menu to turn into / duplicate / delete.',
+            )
+          }
           blockControls
           placeholder="Write…"
         />
@@ -254,9 +237,16 @@ export function Demo() {
   );
 }`}
       >
-        <RichTextEditor
-          value={uploadDoc}
-          onChange={setUploadDoc}
+        <DemoEditor
+          init={() =>
+            // Seed an EMBEDDED image (real URL + explicit width) so its block-menu
+            // "Configure" exposes the width slider. Uploaded files below come in as object
+            // URLs (rendered as chips) with no dimensions, so they get no width control.
+            fromHtml(
+              '<p>Paste a screenshot, or use the toolbar button to attach a file.</p>' +
+                `<img src="${sampleEmbedSrc}" width="320" alt="Embedded sample image" />`,
+            )
+          }
           toolbar
           blockControls
           upload={{ onUpload: mockUpload, accept: 'image/*,.pdf' }}
@@ -282,9 +272,8 @@ export function Demo() {
   );
 }`}
       >
-        <RichTextEditor
-          value={linkDoc}
-          onChange={setLinkDoc}
+        <DemoEditor
+          init={() => docFromText('Read the docs and visit our site.')}
           toolbar
           placeholder="Select text, then ⌘K…"
         />
@@ -314,9 +303,13 @@ export function Demo() {
   );
 }`}
       >
-        <RichTextEditor
-          value={colorDoc}
-          onChange={setColorDoc}
+        <DemoEditor
+          init={() =>
+            fromHtml(
+              '<p>Select a word and use the toolbar <strong>Text color</strong> or <strong>Highlight</strong> button to pick a color from the palette. Each color is a small named badge; choosing Default clears the color.</p>' +
+                '<p>With block controls, open the ⠿ menu → Text color / Highlight to color the whole block at once.</p>',
+            )
+          }
           toolbar
           blockControls
           placeholder="Select text, then use the Text color / Highlight buttons…"
@@ -341,9 +334,16 @@ export function Demo() {
   );
 }`}
       >
-        <RichTextEditor
-          value={importDoc}
-          onChange={setImportDoc}
+        <DemoEditor
+          init={() =>
+            // Seeded via fromHtml so it carries an embedded image — this editor has a toolbar
+            // but NO blockControls, demonstrating that a pasted/imported image is still
+            // resizable: hover it and drag the corner handle.
+            fromHtml(
+              '<h1>Imported</h1><p>This editor was <strong>seeded</strong> from HTML — paste rich HTML to import more. Hover the image and drag its corner to resize (no block controls needed).</p>' +
+                `<img src="${sampleEmbedSrc}" width="280" alt="Imported sample image" />`,
+            )
+          }
           toolbar
           placeholder="Paste rich HTML here…"
         />
@@ -378,9 +378,8 @@ export function Demo() {
   );
 }`}
       >
-        <RichTextEditor
-          value={mentionDoc}
-          onChange={setMentionDoc}
+        <DemoEditor
+          init={() => docFromText('Assign this to ')}
           toolbar
           placeholder="Type @ to mention someone…"
           mentions={{ onQuery: queryTeam }}
@@ -445,9 +444,8 @@ export function Demo() {
   );
 }`}
       >
-        <RichTextEditor
-          value={mentionRenderDoc}
-          onChange={setMentionRenderDoc}
+        <DemoEditor
+          init={() => docFromText('Assign this to ')}
           toolbar
           placeholder="Type @ to mention someone…"
           mentions={{ onQuery: queryTeam }}
@@ -499,9 +497,8 @@ export function Demo() {
 }`}
       >
         <Stack gap="sm">
-          <RichTextEditor
-            value={autolinkDoc}
-            onChange={setAutolinkDoc}
+          <DemoEditor
+            init={() => docFromText('Type a task URL below to watch it autolink. ')}
             toolbar
             renderLink={renderLink}
             placeholder="Type https://app.eocrm/task/123 then a space…"

@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { useMemo, useState, type ReactNode } from 'react';
 import { ChevronDown, Code2 } from 'lucide-react';
 import { Card, Tabs } from '@eocrm/design-system';
 import { CodeBlock } from './CodeBlock';
@@ -23,6 +23,13 @@ export interface DemoBodyProps {
  */
 export function DemoBody({ files, componentName, apiName, children }: DemoBodyProps) {
   const [activeId, setActiveId] = useState(files[0]?.filename ?? '');
+  // `files` is usually rebuilt each render; key the tab items on the names so
+  // Tabs doesn't re-measure its indicator on every parent re-render.
+  const fileNames = files.map((f) => f.filename).join('\n');
+  const tabItems = useMemo(
+    () => fileNames.split('\n').map((name) => ({ id: name, label: name })),
+    [fileNames],
+  );
   const active = files.find((f) => f.filename === activeId) ?? files[0];
 
   return (
@@ -37,11 +44,7 @@ export function DemoBody({ files, componentName, apiName, children }: DemoBodyPr
             <ChevronDown size={14} className={styles.chevron} />
           </summary>
           <div className={styles.sourceBody}>
-            <Tabs
-              items={files.map((f) => ({ id: f.filename, label: f.filename }))}
-              activeId={activeId}
-              onChange={setActiveId}
-            />
+            <Tabs items={tabItems} activeId={activeId} onChange={setActiveId} />
             {active && (
               <div className={styles.sourceCode}>
                 <CodeBlock

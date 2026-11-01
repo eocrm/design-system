@@ -90,9 +90,12 @@ export function setLink(
 
   // Case 3 — caret elsewhere: insert the href, then link the inserted span.
   const inserted = insertText(doc, range.anchor, trimmed);
+  // Span from the insert's resulting caret, not range.anchor: beside a void block
+  // the text lands in a NEW paragraph after it.
+  const end = inserted.selection.focus;
   const linkedSpan: Range = {
-    anchor: range.anchor,
-    focus: { blockId: range.anchor.blockId, offset: range.anchor.offset + trimmed.length },
+    anchor: { blockId: end.blockId, offset: end.offset - trimmed.length },
+    focus: end,
   };
   // Select the inserted link text (not a collapsed caret after it) so the user
   // sees the link that was just created.
