@@ -466,6 +466,77 @@ describe('RichTextEditor toolbar', () => {
     expect(del('deleteContentBackward', 0)).toBeUndefined();
   });
 
+  it('two Deletes after an image remove the empty line, then never the image', () => {
+    function Harness() {
+      const [doc, setDoc] = useState<RichDoc>({
+        blocks: [
+          { id: 'v', type: 'attachment', name: 'f.png', status: 'ready', inlines: [] },
+          { id: 'e', type: 'paragraph', inlines: [{ text: '', marks: [] }] },
+        ],
+      });
+      return <RichTextEditor value={doc} onChange={setDoc} />;
+    }
+    renderEditor(<Harness />);
+    const editor = screen.getByRole('textbox');
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'v', offset: 0 },
+      focus: { blockId: 'v', offset: 0 },
+    });
+    const pressDelete = () => {
+      const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+      Object.defineProperty(evt, 'inputType', { value: 'deleteContentForward' });
+      act(() => {
+        editor.dispatchEvent(evt);
+      });
+    };
+    const r = document.createRange();
+    r.setStartAfter(editor.querySelector('figure')!); // root-level caret after the image
+    r.collapse(true);
+    document.getSelection()!.removeAllRanges();
+    document.getSelection()!.addRange(r);
+    pressDelete(); // removes the empty paragraph
+    expect(editor.querySelectorAll('p')).toHaveLength(0);
+    // The DOM caret is still AFTER the image — at the end of the figure's content,
+    // where Chrome itself keeps a caret past a trailing figure — not before it...
+    const sel = document.getSelection()!;
+    const fig = editor.querySelector('figure')!;
+    expect(sel.anchorNode).toBe(fig);
+    expect(sel.anchorOffset).toBe(fig.childNodes.length);
+    pressDelete(); // ...so a second Delete has nothing ahead: the image stays.
+    expect(editor.querySelector('figure')).not.toBeNull();
+  });
+
+  it('a non-directional delete beside a figure (deleteContent / deleteByCut) skips the void path', () => {
+    const onChange = vi.fn();
+    const doc: RichDoc = {
+      blocks: [
+        { id: 'v', type: 'attachment', name: 'f.png', status: 'ready', inlines: [] },
+        { id: 'p', type: 'paragraph', inlines: [{ text: 'hi', marks: [] }] },
+      ],
+    };
+    renderEditor(<RichTextEditor value={doc} onChange={onChange} />);
+    const editor = screen.getByRole('textbox');
+    mockReadSelection.mockReturnValue({
+      anchor: { blockId: 'v', offset: 0 },
+      focus: { blockId: 'v', offset: 0 },
+    });
+    const r = document.createRange();
+    // Root-level caret BEFORE the figure: as a "forward" delete, voidDelete would
+    // remove the image here — these inputTypes must not reach it.
+    r.setStart(editor, 0);
+    r.collapse(true);
+    document.getSelection()!.removeAllRanges();
+    document.getSelection()!.addRange(r);
+    for (const inputType of ['deleteContent', 'deleteByCut']) {
+      const evt = new Event('beforeinput', { bubbles: true, cancelable: true });
+      Object.defineProperty(evt, 'inputType', { value: inputType });
+      act(() => {
+        editor.dispatchEvent(evt);
+      });
+    }
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
   it('a mark staged on an attachment caret applies to the text typed there', () => {
     const onChange = vi.fn();
     const doc: RichDoc = {

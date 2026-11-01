@@ -1,7 +1,8 @@
 // input.ts — map a contentEditable `beforeinput` (inputType + data) at a model
 // Range to an engine transform. Pure: returns the new { doc, selection } or null
 // (null = unsupported; the caller still preventDefaults format* etc.).
-import type { RichDoc, Range, Point } from '../RichText/engine/model';
+import type { RichDoc, Range, Point, Block } from '../RichText/engine/model';
+import { emptyDoc } from '../RichText/engine/model';
 import {
   insertText,
   deleteRange,
@@ -11,13 +12,16 @@ import {
 import { isCollapsed, blockLength, findBlockIndex } from '../RichText/engine/position';
 import { runsText } from '../RichText/engine/inlines';
 import { isVoidBlock } from '../RichText/engine/attachment';
-import { removeBlockUnit } from '../RichText/engine/blockUnit';
 
 /** The new document + caret/selection after an input, or `null` when unsupported. */
 export type InputResult = { doc: RichDoc; selection: Range } | null;
 
 function point(blockId: string, offset: number): Point {
   return { blockId, offset };
+}
+
+function collapsedAt(blockId: string, offset: number): Range {
+  return { anchor: point(blockId, offset), focus: point(blockId, offset) };
 }
 
 function deleteBackward(doc: RichDoc, caret: Point): InputResult {
@@ -124,6 +128,49 @@ export function applyInput(
 /** Which side of a void block (attachment figure) the DOM caret sits on. */
 export type VoidSide = 'before' | 'after';
 
+/** voidDelete's result; `caretAfterVoid` = put the DOM caret AFTER the selection's
+ *  void (a spot the model's single `{voidId, 0}` point can't name). */
+export type VoidDeleteResult = (NonNullable<InputResult> & { caretAfterVoid?: boolean }) | null;
+
+/**
+ * Remove the block at `idx`, placing the caret where a `dir` delete continues:
+ * forward → start of what follows, backward → end of what precedes (falling back
+ * to the other side at a doc edge). A void target gets the caret before it when
+ * approached forward, after it (`caretAfterVoid`) when approached backward.
+ */
+function removeAt(doc: RichDoc, idx: number, dir: 'backward' | 'forward'): VoidDeleteResult {
+  const blocks = doc.blocks.filter((_, i) => i !== idx);
+  if (blocks.length === 0) {
+    const fresh = emptyDoc();
+    return { doc: fresh, selection: collapsedAt(fresh.blocks[0].id, 0) };
+  }
+  // Candidates in order: the continuing side first, then the other.
+  const ahead = blocks[idx];
+  const behind = blocks[idx - 1];
+  const order: [Block | undefined, 'start' | 'end'][] =
+    dir === 'forward'
+      ? [
+          [ahead, 'start'],
+          [behind, 'end'],
+        ]
+      : [
+          [behind, 'end'],
+          [ahead, 'start'],
+        ];
+  const [target, edge] = order.find(([b]) => b) as [Block, 'start' | 'end'];
+  if (isVoidBlock(target)) {
+    return {
+      doc: { blocks },
+      selection: collapsedAt(target.id, 0),
+      caretAfterVoid: edge === 'end',
+    };
+  }
+  return {
+    doc: { blocks },
+    selection: collapsedAt(target.id, edge === 'start' ? 0 : blockLength(target)),
+  };
+}
+
 /**
  * Backspace / Delete with the caret beside a void block. The model has ONE
  * position per void (`{voidId, 0}`), so the DOM side decides:
@@ -139,20 +186,16 @@ export function voidDelete(
   voidId: string,
   side: VoidSide,
   dir: 'backward' | 'forward',
-): InputResult {
+): VoidDeleteResult {
   const idx = findBlockIndex(doc, voidId);
   if (idx === -1) return null;
-  if ((dir === 'backward') === (side === 'after')) return removeBlockUnit(doc, voidId);
-  const neighbor = doc.blocks[dir === 'backward' ? idx - 1 : idx + 1];
+  if ((dir === 'backward') === (side === 'after')) return removeAt(doc, idx, dir);
+  const nIdx = dir === 'backward' ? idx - 1 : idx + 1;
+  const neighbor = doc.blocks[nIdx];
   if (!neighbor) return null;
-  if (isVoidBlock(neighbor) || blockLength(neighbor) === 0) {
-    // Remove just that block (not removeBlockUnit: an empty list parent after
-    // the void would take its children with it).
-    return {
-      doc: { blocks: doc.blocks.filter((b) => b !== neighbor) },
-      selection: { anchor: point(voidId, 0), focus: point(voidId, 0) },
-    };
-  }
-  const at = point(neighbor.id, dir === 'backward' ? blockLength(neighbor) : 0);
-  return { doc, selection: { anchor: at, focus: at } };
+  if (isVoidBlock(neighbor) || blockLength(neighbor) === 0) return removeAt(doc, nIdx, dir);
+  return {
+    doc,
+    selection: collapsedAt(neighbor.id, dir === 'backward' ? blockLength(neighbor) : 0),
+  };
 }

@@ -273,6 +273,9 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     const isComposingRef = useRef(false);
     // Selection to restore after the next model-driven re-render.
     const pendingSelectionRef = useRef<Range | null>(null);
+    // A void block id whose DOM caret goes AFTER its figure on the next re-render
+    // (voidDelete's caretAfterVoid — a spot the model's single void point can't name).
+    const caretAfterVoidRef = useRef<string | null>(null);
     // Latest props for the native beforeinput listener (avoids stale closures).
     const latest = useRef({
       value,
@@ -589,11 +592,15 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
     // A voidDelete result that only moves the caret returns the SAME doc, which
     // commit() skips as a no-op — apply its selection directly instead.
     const applyVoidDelete = useCallback(
-      (result: { doc: RichDoc; selection: Range } | null) => {
+      (result: ReturnType<typeof voidDelete>) => {
         if (!result) return;
         if (result.doc === latest.current.value) {
           if (rootRef.current) writeSelection(rootRef.current, result.selection);
-        } else commit(result, 'delete');
+          return;
+        }
+        commit(result, 'delete', { keepSelection: result.caretAfterVoid });
+        // The model can't say "after the void"; the layout effect places it.
+        if (result.caretAfterVoid) caretAfterVoidRef.current = result.selection.anchor.blockId;
       },
       [commit],
     );
@@ -729,6 +736,22 @@ export const RichTextEditor = forwardRef<HTMLDivElement, RichTextEditorProps>(
       if (root && pending) {
         writeSelection(root, pending);
         pendingSelectionRef.current = null;
+      }
+      const afterVoid = caretAfterVoidRef.current;
+      caretAfterVoidRef.current = null;
+      const fig = afterVoid
+        ? root?.querySelector(`[data-block-id="${CSS.escape(afterVoid)}"]`)
+        : null;
+      if (fig) {
+        // At the END of the figure's content — where Chrome's own Ctrl+End puts it.
+        // A root-level caret after a trailing contentEditable=false figure has no
+        // visible position: Chrome snaps it to the start of the editor.
+        const r = fig.ownerDocument.createRange();
+        r.setStart(fig, fig.childNodes.length);
+        r.collapse(true);
+        const sel = fig.ownerDocument.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(r);
       }
     }, [value, syncHistoryFlags, mentionsEnabled, recomputeMention]);
 

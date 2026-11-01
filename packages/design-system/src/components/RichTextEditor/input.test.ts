@@ -166,10 +166,19 @@ describe('voidDelete', () => {
         { id: 'kid', type: 'bullet_item', depth: 1, inlines: [{ text: 'x', marks: [] }] },
       ],
     };
-    expect(voidDelete(e, 'v', 'after', 'forward')!.doc.blocks.map((b) => b.id)).toEqual([
-      'v',
-      'kid',
-    ]);
+    // An orphaned depth-1 item is fine: renderDoc/toHtml/toMarkdown normalize
+    // depths gap-free via effectiveDepths.
+    const r = voidDelete(e, 'v', 'after', 'forward')!;
+    expect(r.doc.blocks.map((b) => b.id)).toEqual(['v', 'kid']);
+    // Deleting FORWARD keeps the caret moving forward: at the start of the next
+    // block, not back on the void (a second Delete there would remove the image).
+    expect(r.selection.anchor).toEqual(at('kid', 0));
+  });
+  it('Backspace removing an empty previous block keeps the caret on the void', () => {
+    const e: RichDoc = { blocks: [p('', 'empty'), d.blocks[1]] };
+    const r = voidDelete(e, 'v', 'before', 'backward')!;
+    expect(r.doc.blocks.map((b) => b.id)).toEqual(['v']);
+    expect(r.selection.anchor).toEqual(at('v', 0));
   });
   it('a void neighbor in that direction is removed (caret between two images)', () => {
     const two: RichDoc = {
@@ -180,6 +189,20 @@ describe('voidDelete', () => {
       'w',
       'q',
     ]);
+  });
+  it('the caret continues in the delete direction, never back onto the far side of an image', () => {
+    const img = (id: string) => ({ ...d.blocks[1], id });
+    // [v][w], caret between (resolves before w): Delete removes w → caret AFTER v.
+    const r1 = voidDelete({ blocks: [img('v'), img('w')] }, 'w', 'before', 'forward')!;
+    expect(r1.doc.blocks.map((b) => b.id)).toEqual(['v']);
+    expect(r1).toMatchObject({ selection: { anchor: at('v', 0) }, caretAfterVoid: true });
+    // ["ab"][v], caret after v: Backspace removes v → caret at the end of "ab".
+    const r2 = voidDelete({ blocks: [p('ab', 'p'), img('v')] }, 'v', 'after', 'backward')!;
+    expect(r2.selection.anchor).toEqual(at('p', 2));
+    expect(r2.caretAfterVoid).toBeFalsy();
+    // Lone image removed → an empty paragraph remains.
+    const r3 = voidDelete({ blocks: [img('v')] }, 'v', 'after', 'backward')!;
+    expect(r3.doc.blocks.map((b) => b.type)).toEqual(['paragraph']);
   });
   it('no neighbor in that direction → null (no-op)', () => {
     const solo: RichDoc = { blocks: [d.blocks[1]] };
