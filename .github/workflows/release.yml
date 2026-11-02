@@ -31,7 +31,7 @@ concurrency:
 
 permissions:
   contents: write # push the new git tag
-  packages: write # publish to GitHub Packages
+  packages: write # publish the Compose Maven artifact to GitHub Packages
   pages: write # forwarded to the chained deploy-playground job
   id-token: write # npm trusted publishing (npmjs) + the chained deploy-playground job
 
@@ -89,10 +89,6 @@ jobs:
         with:
           node-version: "24"
           cache: "npm"
-          # This writes .npmrc with the @eocrm scope pointed at GitHub Packages
-          # and wires NODE_AUTH_TOKEN for the publish step below.
-          registry-url: "https://npm.pkg.github.com"
-          scope: "@eocrm"
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -163,61 +159,25 @@ jobs:
       - name: Verify token contract
         run: npm run tokens:check
 
-      # Checked before the first publish: failing after GitHub Packages already
-      # holds this version would leave a half-published release (see the npmjs
-      # steps below).
+      # Checked before the first publish: failing after a registry already holds
+      # this version would leave a half-published release (see below).
       - name: Require npm with trusted publishing
         run: |
           set -euo pipefail
           node -e 'const [a, b, c] = process.argv[1].split(".").map(Number); if (a < 11 || (a === 11 && (b < 5 || (b === 5 && c < 1)))) { console.error(`::error::npm ${process.argv[1]} lacks trusted publishing (needs >= 11.5.1)`); process.exit(1); }' "$(npm --version)"
 
-      - name: Publish design tokens to GitHub Packages
-        working-directory: packages/design-tokens
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -uo pipefail
-          set +e
-          npm publish 2>&1 | tee token-publish.out
-          status=${PIPESTATUS[0]}
-          set -e
-          if [ "$status" -eq 0 ]; then
-            echo "Published @eocrm/design-tokens."
-          elif grep -qiE 'E409|cannot publish over existing version|cannot publish over the previously published versions|409 Conflict' token-publish.out; then
-            echo "::warning::@eocrm/design-tokens already has this exact version."
-          else
-            exit "$status"
-          fi
-
-      - name: Publish design system to GitHub Packages
-        working-directory: packages/design-system
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -uo pipefail
-          set +e
-          npm publish 2>&1 | tee design-system-publish.out
-          status=${PIPESTATUS[0]}
-          set -e
-          if [ "$status" -eq 0 ]; then
-            echo "Published @eocrm/design-system."
-          elif grep -qiE 'E409|cannot publish over existing version|cannot publish over the previously published versions|409 Conflict' design-system-publish.out; then
-            echo "::warning::@eocrm/design-system already has this exact version."
-          else
-            exit "$status"
-          fi
-
       # npmjs (public) via npm trusted publishing: the npm CLI swaps this job's
       # GitHub OIDC token (id-token: write) for a short-lived publish token, so
       # no npm secret exists. Both packages are registered on npmjs with this
-      # workflow file (release.yml) as their trusted publisher. The scope flag
-      # beats the @eocrm → GitHub Packages mapping setup-node wrote to .npmrc.
+      # workflow file (release.yml) as their trusted publisher. The explicit scope
+      # flag keeps any @eocrm registry mapping from redirecting the publish.
       # Tokens go first: the design system pins them at the exact version.
       #
-      # If an npmjs step fails, GitHub Packages already holds this version but
-      # no tag exists yet: RE-RUN THIS FAILED RUN before merging another library
-      # change. A newer merge would recompute the same version with different
-      # content and every release after it would fail verification.
+      # If a publish step fails after an earlier one succeeded, npmjs already
+      # holds part of this version but no tag exists yet: RE-RUN THIS FAILED RUN
+      # before merging another library change. A newer merge would recompute the
+      # same version with different content and every later release would fail
+      # verification.
       - name: Publish design tokens to npmjs
         working-directory: packages/design-tokens
         run: |
@@ -231,7 +191,7 @@ jobs:
           elif grep -qiE 'E409|cannot publish over existing version|cannot publish over the previously published versions|409 Conflict' token-npmjs-publish.out; then
             echo "::warning::@eocrm/design-tokens already has this exact version on npmjs."
           else
-            echo "::error::GitHub Packages already holds this version. Re-run this failed run before merging another library change."
+            echo "::error::Part of this version may already be published. Re-run this failed run before merging another library change."
             exit "$status"
           fi
 
@@ -248,7 +208,7 @@ jobs:
           elif grep -qiE 'E409|cannot publish over existing version|cannot publish over the previously published versions|409 Conflict' design-system-npmjs-publish.out; then
             echo "::warning::@eocrm/design-system already has this exact version on npmjs."
           else
-            echo "::error::GitHub Packages already holds this version. Re-run this failed run before merging another library change."
+            echo "::error::Part of this version may already be published. Re-run this failed run before merging another library change."
             exit "$status"
           fi
 
@@ -272,7 +232,6 @@ jobs:
         env:
           GITHUB_ACTOR: ${{ github.actor }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           node packages/design-tokens/scripts/verify-published-version.mjs \
             "${{ steps.version.outputs.value }}"
@@ -290,9 +249,8 @@ jobs:
           {
             echo "## Published"
             echo ""
-            echo "- GitHub Packages: \`@eocrm/design-tokens@${{ steps.version.outputs.value }}\`, \`@eocrm/design-system@${{ steps.version.outputs.value }}\`"
             echo "- npmjs: \`@eocrm/design-tokens@${{ steps.version.outputs.value }}\`, \`@eocrm/design-system@${{ steps.version.outputs.value }}\`"
-            echo "- Maven: \`com.eocrm.design:design-tokens-compose:${{ steps.version.outputs.value }}\`"
+            echo "- Maven (GitHub Packages): \`com.eocrm.design:design-tokens-compose:${{ steps.version.outputs.value }}\`"
             echo "- Version: \`${{ steps.version.outputs.value }}\`"
             echo "- Tag: \`v${{ steps.version.outputs.value }}\`"
           } >> "$GITHUB_STEP_SUMMARY"

@@ -17,11 +17,9 @@ Component contracts live in **[`docs/components/<Name>.md`](./docs/components)**
 ### 1. Registry
 
 `@eocrm/design-system` and `@eocrm/design-tokens` are public on npmjs, so no
-`.npmrc` or token is needed. Every release is also published, with identical
-tarballs, to GitHub Packages (`@eocrm:registry=https://npm.pkg.github.com` plus a
-`read:packages` token) for consumers that have not switched yet. Point the whole
-`@eocrm` scope at one registry — the design system pins `@eocrm/design-tokens` to
-its exact version.
+`.npmrc` or token is needed. If your `.npmrc` still maps `@eocrm` to another
+registry, remove that line — the design system pins `@eocrm/design-tokens` to its
+exact version, and both resolve from npmjs.
 
 ### 2. Install
 
@@ -231,7 +229,7 @@ Releases are **automatic**. Merging to `main` triggers the `Release` workflow (`
 1. Runs the quality gate (typecheck, test, lint, build, tarball-contents check).
 2. If the library actually changed, computes the next version from the latest `v*` git tag (patch bump by default) and refuses if that tag already exists.
 3. Synchronizes `@eocrm/design-tokens`, `@eocrm/design-system`, and the generated token contract to one version.
-4. Publishes the token npm package, then the design-system npm package, then `com.eocrm.design:design-tokens-compose`.
+4. Publishes the token npm package, then the design-system npm package, to npmjs (trusted publishing), then `com.eocrm.design:design-tokens-compose` to GitHub Packages (Maven).
 5. Verifies all three registry versions before creating and pushing the `v<version>` git tag.
 6. Re-deploys the playground (see below).
 

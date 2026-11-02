@@ -6,19 +6,18 @@
 [![compose tokens](https://img.shields.io/github/v/tag/eocrm/design-system?sort=semver&filter=v*&label=compose%20tokens)](https://github.com/eocrm/design-system/packages)
 [![Playground](https://img.shields.io/github/deployments/eocrm/design-system/github-pages?label=playground)](https://eocrm.github.io/design-system/)
 
-React 19 component library and shared web/Compose token contract for the EOCRM. Source-distributed via npmjs (public) and GitHub Packages, opinionated tokens, Atlassian-inspired aesthetic, **designed to be consumed primarily by AI coding agents**.
+React 19 component library and shared web/Compose token contract for the EOCRM. Source-distributed via npmjs (public), opinionated tokens, Atlassian-inspired aesthetic, **designed to be consumed primarily by AI coding agents**.
 
 - **Live playground**: <https://eocrm.github.io/design-system/>
-- **Package**: `@eocrm/design-system` on npmjs and GitHub Packages
-- **Shared tokens**: `@eocrm/design-tokens` (npm) and `com.eocrm.design:design-tokens-compose` (Maven)
+- **Package**: `@eocrm/design-system` on npmjs
+- **Shared tokens**: `@eocrm/design-tokens` (npm) and `com.eocrm.design:design-tokens-compose` (Maven, GitHub Packages)
 - **Source distribution**: consumers' bundlers compile `.tsx` and `.module.scss` directly — no build step in the package
 
 ---
 
 ## Quickstart (consuming the library)
 
-Install from npmjs (public; no `.npmrc` or token). Releases are mirrored to
-GitHub Packages for consumers that still use it:
+Install from npmjs (public; no `.npmrc` or token):
 
 ```bash
 npm install @eocrm/design-system
