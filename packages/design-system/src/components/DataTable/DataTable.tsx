@@ -5,6 +5,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type ReactNode,
   type Ref,
   type RefObject,
@@ -380,6 +381,13 @@ function DataTableInner<T>(
     [instance.leftPinnedColumns, instance.unpinnedColumns, instance.rightPinnedColumns],
   );
 
+  // Explicit table width = sum of the <col> widths. Under `table-layout:
+  // fixed` that keeps every column at its declared size (#733); an intrinsic
+  // width like `max-content` would be computed from cell content instead.
+  const tableWidthPx =
+    ((instance.enableRowSelection ? 1 : 0) + (instance.hasExpansion ? 1 : 0)) * AUTO_CELL_WIDTH +
+    renderColumns.reduce((sum, col) => sum + (instance.columnSizesPx[col.id] ?? 120), 0);
+
   const totalColCount =
     instance.visibleColumns.length +
     (instance.enableRowSelection ? 1 : 0) +
@@ -542,6 +550,7 @@ function DataTableInner<T>(
             aria-rowcount={instance.rowCount}
             className={clsx(styles.root, className)}
             {...rest}
+            style={{ '--data-table-width': `${tableWidthPx}px` } as CSSProperties}
             scroll={!responsiveEnabled}
           >
             {caption && <Table.Caption>{caption}</Table.Caption>}
