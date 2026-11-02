@@ -33,7 +33,7 @@ permissions:
   contents: write # push the new git tag
   packages: write # publish to GitHub Packages
   pages: write # forwarded to the chained deploy-playground job
-  id-token: write # forwarded to the chained deploy-playground job
+  id-token: write # npm trusted publishing (npmjs) + the chained deploy-playground job
 
 env:
   BUMP: patch
@@ -199,6 +199,44 @@ jobs:
             exit "$status"
           fi
 
+      # npmjs (public) via npm trusted publishing: the npm CLI swaps this job's
+      # GitHub OIDC token (id-token: write) for a short-lived publish token, so
+      # no npm secret exists. Both packages are registered on npmjs with this
+      # workflow file (release.yml) as their trusted publisher. The scope flag
+      # beats the @eocrm → GitHub Packages mapping setup-node wrote to .npmrc.
+      # Tokens go first: the design system pins them at the exact version.
+      - name: Publish design tokens to npmjs
+        working-directory: packages/design-tokens
+        run: |
+          set -uo pipefail
+          set +e
+          npm publish --@eocrm:registry=https://registry.npmjs.org --provenance --access public 2>&1 | tee token-npmjs-publish.out
+          status=${PIPESTATUS[0]}
+          set -e
+          if [ "$status" -eq 0 ]; then
+            echo "Published @eocrm/design-tokens to npmjs."
+          elif grep -qiE 'E409|cannot publish over existing version|cannot publish over the previously published versions|409 Conflict' token-npmjs-publish.out; then
+            echo "::warning::@eocrm/design-tokens already has this exact version on npmjs."
+          else
+            exit "$status"
+          fi
+
+      - name: Publish design system to npmjs
+        working-directory: packages/design-system
+        run: |
+          set -uo pipefail
+          set +e
+          npm publish --@eocrm:registry=https://registry.npmjs.org --provenance --access public 2>&1 | tee design-system-npmjs-publish.out
+          status=${PIPESTATUS[0]}
+          set -e
+          if [ "$status" -eq 0 ]; then
+            echo "Published @eocrm/design-system to npmjs."
+          elif grep -qiE 'E409|cannot publish over existing version|cannot publish over the previously published versions|409 Conflict' design-system-npmjs-publish.out; then
+            echo "::warning::@eocrm/design-system already has this exact version on npmjs."
+          else
+            exit "$status"
+          fi
+
       - name: Publish Compose tokens to GitHub Packages
         env:
           GITHUB_ACTOR: ${{ github.actor }}
@@ -239,6 +277,7 @@ jobs:
             echo ""
             echo "- npm: \`@eocrm/design-tokens@${{ steps.version.outputs.value }}\`"
             echo "- npm: \`@eocrm/design-system@${{ steps.version.outputs.value }}\`"
+            echo "- npmjs: \`@eocrm/design-tokens@${{ steps.version.outputs.value }}\`, \`@eocrm/design-system@${{ steps.version.outputs.value }}\`"
             echo "- Maven: \`com.eocrm.design:design-tokens-compose:${{ steps.version.outputs.value }}\`"
             echo "- Version: \`${{ steps.version.outputs.value }}\`"
             echo "- Tag: \`v${{ steps.version.outputs.value }}\`"

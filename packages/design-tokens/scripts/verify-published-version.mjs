@@ -6,11 +6,15 @@ import { promisify } from 'node:util';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const execFileAsync = promisify(execFile);
-const npmRegistry = 'https://npm.pkg.github.com';
+const githubNpmRegistry = 'https://npm.pkg.github.com';
+const npmjsRegistry = 'https://registry.npmjs.org';
+const npmjsPrefix = 'npmjs:';
 const defaultRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const coordinates = [
   '@eocrm/design-tokens',
   '@eocrm/design-system',
+  `${npmjsPrefix}@eocrm/design-tokens`,
+  `${npmjsPrefix}@eocrm/design-system`,
   'com.eocrm.design:design-tokens-compose',
 ];
 const mavenPublications = [
@@ -42,9 +46,11 @@ export async function verifyPublishedVersion(
   const publishedReader =
     readPublished ??
     ((coordinate) =>
-      coordinate.startsWith('@')
-        ? readNpmArtifact(coordinate, version, token)
-        : readMavenArtifact(repository, version, actor, token));
+      coordinate.startsWith(npmjsPrefix)
+        ? readNpmArtifact(coordinate.slice(npmjsPrefix.length), version, npmjsRegistry)
+        : coordinate.startsWith('@')
+          ? readNpmArtifact(coordinate, version, githubNpmRegistry, token)
+          : readMavenArtifact(repository, version, actor, token));
 
   let lastError;
   for (let attempt = 1; attempt <= attempts; attempt += 1) {
@@ -84,6 +90,8 @@ async function readLocalArtifacts(root) {
   return new Map([
     ['@eocrm/design-tokens', tokens],
     ['@eocrm/design-system', designSystem],
+    [`${npmjsPrefix}@eocrm/design-tokens`, tokens],
+    [`${npmjsPrefix}@eocrm/design-system`, designSystem],
     ['com.eocrm.design:design-tokens-compose', maven],
   ]);
 }
@@ -110,23 +118,20 @@ async function readNpmPackIntegrity(packageRoot) {
   return result[0].integrity;
 }
 
-async function readNpmArtifact(packageName, version, token) {
-  const options = { env: { ...process.env, NODE_AUTH_TOKEN: token } };
+async function readNpmArtifact(packageName, version, registry, token) {
+  const options = token ? { env: { ...process.env, NODE_AUTH_TOKEN: token } } : {};
+  // --@eocrm:registry, not --registry: setup-node's .npmrc maps the scope to
+  // GitHub Packages, and a scope mapping beats --registry.
+  const registryFlag = `--@eocrm:registry=${registry}`;
   const [versionResult, integrityResult] = await Promise.all([
     execFileAsync(
       'npm',
-      ['view', `${packageName}@${version}`, 'version', '--json', `--registry=${npmRegistry}`],
+      ['view', `${packageName}@${version}`, 'version', '--json', registryFlag],
       options,
     ),
     execFileAsync(
       'npm',
-      [
-        'view',
-        `${packageName}@${version}`,
-        'dist.integrity',
-        '--json',
-        `--registry=${npmRegistry}`,
-      ],
+      ['view', `${packageName}@${version}`, 'dist.integrity', '--json', registryFlag],
       options,
     ),
   ]);

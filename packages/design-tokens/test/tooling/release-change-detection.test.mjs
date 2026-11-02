@@ -291,6 +291,8 @@ test('recognizes the npm 11 duplicate-version error for resumable releases', asy
     await Promise.all([
       releaseStep('Publish design tokens to GitHub Packages'),
       releaseStep('Publish design system to GitHub Packages'),
+      releaseStep('Publish design tokens to npmjs'),
+      releaseStep('Publish design system to npmjs'),
     ])
   )
     .map((step) => step.run)
@@ -298,9 +300,40 @@ test('recognizes the npm 11 duplicate-version error for resumable releases', asy
 
   assert.equal(
     npmPublishRuns.match(/cannot publish over the previously published versions/g)?.length,
-    2,
+    4,
   );
-  assert.equal(npmPublishRuns.match(/set \+e/g)?.length, 2);
+  assert.equal(npmPublishRuns.match(/set \+e/g)?.length, 4);
+});
+
+test('publishes both packages to npmjs through trusted publishing, tokens first', async () => {
+  const workflow = parse(await readFile(workflowPath, 'utf8'));
+  const names = workflow.jobs.publish.steps.map((step) => step.name);
+  const tokensIndex = names.indexOf('Publish design tokens to npmjs');
+  const designSystemIndex = names.indexOf('Publish design system to npmjs');
+  assert.ok(tokensIndex !== -1 && tokensIndex < designSystemIndex);
+  assert.equal(workflow.permissions['id-token'], 'write');
+
+  for (const index of [tokensIndex, designSystemIndex]) {
+    const step = workflow.jobs.publish.steps[index];
+    // The scope flag, not --registry: setup-node maps @eocrm to GitHub Packages.
+    assert.match(step.run, /--@eocrm:registry=https:\/\/registry\.npmjs\.org/);
+    assert.match(step.run, /--provenance/);
+    // Trusted publishing only — no stored npm token.
+    assert.equal(step.env?.NODE_AUTH_TOKEN, undefined);
+  }
+});
+
+test('leaves the publish registry to the workflow, not package.json', async () => {
+  // publishConfig.registry beats every CLI registry flag, which would send the
+  // npmjs publish to GitHub Packages; provenance needs the repository field.
+  for (const name of ['design-tokens', 'design-system']) {
+    const manifest = JSON.parse(
+      await readFile(join(repositoryRoot, `packages/${name}/package.json`), 'utf8'),
+    );
+    assert.equal(manifest.publishConfig?.registry, undefined, name);
+    assert.equal(manifest.repository?.url, 'git+https://github.com/eocrm/design-system.git', name);
+    assert.equal(manifest.repository?.directory, `packages/${name}`, name);
+  }
 });
 
 test('deploys the playground only after publish succeeds or an intentional no-change skip', async () => {

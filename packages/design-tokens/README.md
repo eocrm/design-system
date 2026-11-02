@@ -7,12 +7,8 @@ strongly typed Compose API. Both are published with the same version as
 
 ## Web
 
-Configure npm for GitHub Packages, then install the package:
-
-```text
-@eocrm:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
-```
+The package is public on npmjs (no `.npmrc` or token needed) and mirrored to
+GitHub Packages:
 
 ```bash
 npm install @eocrm/design-tokens

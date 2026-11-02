@@ -39,7 +39,6 @@
     "!src/**/*.testutil.ts"
   ],
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com",
     "access": "public"
   },
   "peerDependencies": {
@@ -80,5 +79,10 @@
     "test:watch": "vitest",
     "build:manifest": "node scripts/generate-manifest.mjs",
     "build:docs": "node scripts/generate-component-docs.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eocrm/design-system.git",
+    "directory": "packages/design-system"
   }
 }

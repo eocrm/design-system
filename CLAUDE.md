@@ -5,7 +5,7 @@ Monorepo for the EOCRM design system. Three packages, managed by npm workspaces.
 ## Layout
 
 - `packages/design-tokens/` — validated token source plus generated Sass and Kotlin Multiplatform/Compose contracts.
-- `packages/design-system/` — `@eocrm/design-system`. The library that ships to the CRM via GitHub Packages.
+- `packages/design-system/` — `@eocrm/design-system`. The library that ships to the CRM via npmjs (public) and GitHub Packages.
 - `packages/playground/` — local dev gallery + demo pages. **Never published.** The most realistic preview of how the library behaves when consumed.
 
 Each package has its own `CLAUDE.md` with package-specific rules. Read them when working in that package.
@@ -85,6 +85,6 @@ If either fails, run `npm install` again — do not proceed with code changes un
 
 ## Publishing
 
-Releases are automatic. Merging to `main` triggers the `Release` workflow (`.github/workflows/release.yml`): it runs the quality gate, and **if the library changed** auto-increments from the latest `v*` tag (patch by default), refuses to overwrite existing tags, publishes to GitHub Packages, and pushes a `vX.Y.Z` tag. It then redeploys the playground whenever quality passes (even on playground-only changes). There is no manual workflow button — merge to release. Force a minor/major bump by editing `BUMP` in `release.yml` on a branch and merging.
+Releases are automatic. Merging to `main` triggers the `Release` workflow (`.github/workflows/release.yml`): it runs the quality gate, and **if the library changed** auto-increments from the latest `v*` tag (patch by default), refuses to overwrite existing tags, publishes to GitHub Packages and to npmjs (trusted publishing, no token), and pushes a `vX.Y.Z` tag. It then redeploys the playground whenever quality passes (even on playground-only changes). There is no manual workflow button — merge to release. Force a minor/major bump by editing `BUMP` in `release.yml` on a branch and merging.
 
 See `packages/design-system/README.md` for the consumer-side install instructions and `packages/design-system/AI-PRIMER.md` for the agent-facing component primer.

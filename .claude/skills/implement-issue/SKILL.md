@@ -20,7 +20,7 @@ component, a docs change.
 - **Issues** live in `eocrm/design-system` on GitHub and are the unit of work.
 - **Publishing is automatic on merge to `main`.** `.github/workflows/release.yml`
   runs only on a push to `main` touching `packages/**` or `.github/workflows/**`:
-  it patch-bumps from the newest `v*` git tag, `npm publish`es to GitHub Packages,
+  it patch-bumps from the newest `v*` git tag, `npm publish`es to GitHub Packages and npmjs,
   pushes the new tag, and redeploys the playground. **There is no manual publish
   step — merging the PR IS releasing.** The shipped version is the new `v*` tag.
   Two no-version-bump cases to expect: **(a)** the merge touched **neither**
