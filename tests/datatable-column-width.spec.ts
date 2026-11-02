@@ -44,6 +44,7 @@ test('DataTable column sizes stay authoritative over long cell content (#733)', 
   });
 
   expect(result.declared.length).toBeGreaterThan(1);
+  expect(result.narrow).toHaveLength(result.declared.length);
   result.narrow.forEach((w, i) => expect(w).toBeCloseTo(result.declared[i]!, 0));
   expect(result.wide.table).toBeLessThanOrEqual(result.wide.wrap + 1);
 });
