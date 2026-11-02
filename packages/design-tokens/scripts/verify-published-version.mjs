@@ -31,7 +31,9 @@ export async function verifyPublishedVersion(
     repository = process.env.GITHUB_REPOSITORY ?? 'eocrm/design-system',
     actor = process.env.GITHUB_ACTOR,
     token = process.env.GITHUB_TOKEN ?? process.env.NODE_AUTH_TOKEN,
-    attempts = 12,
+    // npmjs keeps a large tarball "being processed" for a few minutes after
+    // publish (1.3 MB design-system took >1 min), so allow ~10 min.
+    attempts = 120,
     retryDelayMs = 5_000,
     expected,
     readPublished,
