@@ -33,12 +33,12 @@ export const PACKAGES = [
 ];
 
 /**
- * Required paths: README.md, package.json, and every string target in `exports`
+ * Required paths: README.md, LICENSE, package.json, and every string target in `exports`
  * (conditional/nested objects are walked). Wildcard (`*`) targets are skipped:
  * they cannot be checked as a literal path.
  */
 export function requiredPaths(pkgJson) {
-  const targets = new Set(['README.md', 'package.json']);
+  const targets = new Set(['README.md', 'LICENSE', 'package.json']);
   const walk = (v) => {
     if (typeof v === 'string') {
       if (!v.includes('*')) targets.add(v.replace(/^\.\//, ''));

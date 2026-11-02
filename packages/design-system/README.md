@@ -8,20 +8,20 @@ to the token package.
 
 Component contracts live in **[`docs/components/<Name>.md`](./docs/components)** (props table, anti-patterns). AI agents consuming this package should read **[AI-PRIMER.md](./AI-PRIMER.md)** first.
 
+**Live playground** (every component, demoed against `main`): <https://eocrm.github.io/design-system/components>
+
 ---
 
 ## Install
 
-### 1. Configure npm to pull `@eocrm/*` from GitHub Packages
+### 1. Registry
 
-Create `.npmrc` at your consuming repo's root:
-
-```
-@eocrm:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
-```
-
-`GITHUB_TOKEN` must be a personal access token with `read:packages` scope. Set it in your shell (`export GITHUB_TOKEN=...`) or `.env`. **Never commit the token.**
+`@eocrm/design-system` and `@eocrm/design-tokens` are public on npmjs, so no
+`.npmrc` or token is needed. Every release is also published, with identical
+tarballs, to GitHub Packages (`@eocrm:registry=https://npm.pkg.github.com` plus a
+`read:packages` token) for consumers that have not switched yet. Point the whole
+`@eocrm` scope at one registry — the design system pins `@eocrm/design-tokens` to
+its exact version.
 
 ### 2. Install
 
@@ -261,3 +261,7 @@ The playground (live component gallery) deploys to GitHub Pages automatically as
 - **[AI-PRIMER.md](./AI-PRIMER.md)** — concise primer for AI coding agents. Token table and component index.
 - **`docs/components/<Name>.md`** — per-component contract: props table, examples, anti-patterns. Also `docs/setup.md`, `docs/theming.md`, `docs/transient-state.md`.
 - **[CLAUDE.md](./CLAUDE.md)** — rules for someone **modifying this library** (not for consumers).
+
+## License
+
+[Apache License 2.0](./LICENSE).

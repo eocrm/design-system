@@ -1,15 +1,15 @@
 # EOCRM Design System
 
 [![CI](https://img.shields.io/github/actions/workflow/status/eocrm/design-system/release.yml?branch=main&label=ci)](https://github.com/eocrm/design-system/actions/workflows/release.yml)
-[![design-system](https://img.shields.io/github/v/tag/eocrm/design-system?sort=semver&filter=v*&label=design-system)](https://github.com/eocrm/design-system/pkgs/npm/design-system)
-[![design-tokens](https://img.shields.io/github/v/tag/eocrm/design-system?sort=semver&filter=v*&label=design-tokens)](https://github.com/eocrm/design-system/pkgs/npm/design-tokens)
+[![design-system](https://img.shields.io/github/v/tag/eocrm/design-system?sort=semver&filter=v*&label=design-system)](https://www.npmjs.com/package/@eocrm/design-system)
+[![design-tokens](https://img.shields.io/github/v/tag/eocrm/design-system?sort=semver&filter=v*&label=design-tokens)](https://www.npmjs.com/package/@eocrm/design-tokens)
 [![compose tokens](https://img.shields.io/github/v/tag/eocrm/design-system?sort=semver&filter=v*&label=compose%20tokens)](https://github.com/eocrm/design-system/packages)
 [![Playground](https://img.shields.io/github/deployments/eocrm/design-system/github-pages?label=playground)](https://eocrm.github.io/design-system/)
 
-React 19 component library and shared web/Compose token contract for the EOCRM. Source-distributed via GitHub Packages, opinionated tokens, Atlassian-inspired aesthetic, **designed to be consumed primarily by AI coding agents**.
+React 19 component library and shared web/Compose token contract for the EOCRM. Source-distributed via npmjs (public) and GitHub Packages, opinionated tokens, Atlassian-inspired aesthetic, **designed to be consumed primarily by AI coding agents**.
 
 - **Live playground**: <https://eocrm.github.io/design-system/>
-- **Package**: `@eocrm/design-system` on GitHub Packages
+- **Package**: `@eocrm/design-system` on npmjs and GitHub Packages
 - **Shared tokens**: `@eocrm/design-tokens` (npm) and `com.eocrm.design:design-tokens-compose` (Maven)
 - **Source distribution**: consumers' bundlers compile `.tsx` and `.module.scss` directly — no build step in the package
 
@@ -17,14 +17,8 @@ React 19 component library and shared web/Compose token contract for the EOCRM. 
 
 ## Quickstart (consuming the library)
 
-In your CRM's repo root, create `.npmrc`:
-
-```
-@eocrm:registry=https://npm.pkg.github.com
-//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}
-```
-
-Install:
+Install from npmjs (public; no `.npmrc` or token). Releases are mirrored to
+GitHub Packages for consumers that still use it:
 
 ```bash
 npm install @eocrm/design-system
@@ -114,3 +108,7 @@ platform layers.
 70+ components and counting — buttons, the full form set (Input, Select, Checkbox, Radio, Switch, Slider, date/time pickers, …), layout primitives (Stack, Cluster, Grid, AppLayout), overlays (Modal, Drawer, Popover, Tooltip, Toast), and data display (Table, DataTable, Kanban). Each is unit-tested, documented in `docs/components/<Name>.md`, and demoed in the playground.
 
 The canonical, always-current roster lives in the **[live playground](https://eocrm.github.io/design-system/)** and **[`AI-PRIMER.md`](./packages/design-system/AI-PRIMER.md)** — refer to those rather than a hand-maintained list that drifts out of date.
+
+## License
+
+[Apache License 2.0](./LICENSE).

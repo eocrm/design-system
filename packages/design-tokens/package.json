@@ -14,7 +14,6 @@
     "./package.json": "./package.json"
   },
   "publishConfig": {
-    "registry": "https://npm.pkg.github.com",
     "access": "public"
   },
   "scripts": {
@@ -28,5 +27,11 @@
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "yaml": "^2.9.1"
-  }
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eocrm/design-system.git",
+    "directory": "packages/design-tokens"
+  },
+  "license": "Apache-2.0"
 }
