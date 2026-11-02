@@ -7,8 +7,8 @@ import { clampX, computeColumnShifts, shiftVarName, type DragRangeX } from './co
  * geometry of the header cells inside `root`.
  *
  * Declared widths (`columnSizingPx` / the `<col>` elements) cannot be used for
- * this. `DataTable.module.scss` sets `table-layout: fixed; width: max-content;
- * min-width: 100%`, so whenever the column sum is narrower than the scroll wrap
+ * this. `DataTable.module.scss` sets `table-layout: fixed; width:
+ * var(--data-table-width, 0); min-width: 100%`, so whenever the column sum is narrower than the scroll wrap
  * the table stretches and every rendered column is WIDER than declared. Summing
  * declared widths then under-reports the travel and makes the last slot
  * unreachable — the exact regression this replaced.

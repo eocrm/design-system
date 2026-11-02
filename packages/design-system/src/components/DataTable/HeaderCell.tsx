@@ -15,7 +15,7 @@ import type { TableSortDirection } from '../Table';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useResizeHandle } from './useResizeHandle';
 import type { ColumnDef, DataTableInstance } from './types';
-import { getPinStyle } from './pinStyle';
+import { DEFAULT_COL_WIDTH, getPinStyle } from './pinStyle';
 import { shiftVarName } from './columnShift';
 
 import styles from './HeaderCell.module.scss';
@@ -223,7 +223,7 @@ export function HeaderCell<T>({
   });
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = sortableResult;
 
-  const width = instance.columnSizesPx[column.id] ?? 120;
+  const width = instance.columnSizesPx[column.id] ?? DEFAULT_COL_WIDTH;
   const resize = useResizeHandle({
     initialWidth: width,
     minWidth: column.minSize ?? 40,
@@ -248,7 +248,7 @@ export function HeaderCell<T>({
     if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
       e.preventDefault();
       const step = (e.shiftKey ? 32 : 8) * (e.key === 'ArrowRight' ? 1 : -1);
-      const current = instance.columnSizesPx[column.id] ?? 120;
+      const current = instance.columnSizesPx[column.id] ?? DEFAULT_COL_WIDTH;
       const minW = column.minSize ?? 40;
       const maxW = column.maxSize;
       let next = current + step;

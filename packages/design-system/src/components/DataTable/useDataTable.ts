@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useControllableState } from '../_internal/useControllableState';
+import { DEFAULT_COL_WIDTH } from './pinStyle';
 import type {
   ColumnOrderState,
   ColumnPinningState,
@@ -156,8 +157,6 @@ export function useDataTable<T>(options: UseDataTableOptions<T>): DataTableInsta
     defaultValue: options.defaultSort ?? null,
     onChange: options.onSortChange,
   });
-
-  const DEFAULT_COL_WIDTH = 120;
 
   const columnsById = useMemo(() => {
     const m = new Map<string, (typeof columns)[number]>();

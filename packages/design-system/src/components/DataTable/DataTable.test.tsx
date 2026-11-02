@@ -2005,9 +2005,9 @@ describe('<DataTable> — column drag is clamped to the unpinned band (#381)', (
    * Render with header cells RENDERED 200px wide while their DECLARED size is
    * the 120px default.
    *
-   * That gap is the whole point. `table-layout: fixed; width:
-   * var(--data-table-width); min-width: 100%` makes the table stretch to fill its scroll wrap, so real
-   * columns are wider than the `<col>` elements claim. A clamp built on
+   * That gap is the whole point. `table-layout: fixed;
+   * width: var(--data-table-width, 0); min-width: 100%` makes the table
+   * stretch to fill its scroll wrap, so real columns are wider than the `<col>` elements claim. A clamp built on
    * declared widths stops the first column at 240px — short of the last slot,
    * which it can then never reach.
    */
