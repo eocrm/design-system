@@ -205,6 +205,16 @@ jobs:
       # workflow file (release.yml) as their trusted publisher. The scope flag
       # beats the @eocrm → GitHub Packages mapping setup-node wrote to .npmrc.
       # Tokens go first: the design system pins them at the exact version.
+      #
+      # If an npmjs step fails, GitHub Packages already holds this version but
+      # no tag exists yet: RE-RUN THIS FAILED RUN before merging another library
+      # change. A newer merge would recompute the same version with different
+      # content and every release after it would fail verification.
+      - name: Require npm with trusted publishing
+        run: |
+          set -euo pipefail
+          node -e 'const [a, b, c] = process.argv[1].split(".").map(Number); if (a < 11 || (a === 11 && (b < 5 || (b === 5 && c < 1)))) { console.error(`::error::npm ${process.argv[1]} lacks trusted publishing (needs >= 11.5.1)`); process.exit(1); }' "$(npm --version)"
+
       - name: Publish design tokens to npmjs
         working-directory: packages/design-tokens
         run: |
@@ -275,8 +285,7 @@ jobs:
           {
             echo "## Published"
             echo ""
-            echo "- npm: \`@eocrm/design-tokens@${{ steps.version.outputs.value }}\`"
-            echo "- npm: \`@eocrm/design-system@${{ steps.version.outputs.value }}\`"
+            echo "- GitHub Packages: \`@eocrm/design-tokens@${{ steps.version.outputs.value }}\`, \`@eocrm/design-system@${{ steps.version.outputs.value }}\`"
             echo "- npmjs: \`@eocrm/design-tokens@${{ steps.version.outputs.value }}\`, \`@eocrm/design-system@${{ steps.version.outputs.value }}\`"
             echo "- Maven: \`com.eocrm.design:design-tokens-compose:${{ steps.version.outputs.value }}\`"
             echo "- Version: \`${{ steps.version.outputs.value }}\`"

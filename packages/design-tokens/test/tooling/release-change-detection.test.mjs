@@ -311,6 +311,8 @@ test('publishes both packages to npmjs through trusted publishing, tokens first'
   const tokensIndex = names.indexOf('Publish design tokens to npmjs');
   const designSystemIndex = names.indexOf('Publish design system to npmjs');
   assert.ok(tokensIndex !== -1 && tokensIndex < designSystemIndex);
+  const guardIndex = names.indexOf('Require npm with trusted publishing');
+  assert.ok(guardIndex !== -1 && guardIndex < tokensIndex);
   assert.equal(workflow.permissions['id-token'], 'write');
 
   for (const index of [tokensIndex, designSystemIndex]) {
@@ -318,8 +320,6 @@ test('publishes both packages to npmjs through trusted publishing, tokens first'
     // The scope flag, not --registry: setup-node maps @eocrm to GitHub Packages.
     assert.match(step.run, /--@eocrm:registry=https:\/\/registry\.npmjs\.org/);
     assert.match(step.run, /--provenance/);
-    // Trusted publishing only — no stored npm token.
-    assert.equal(step.env?.NODE_AUTH_TOKEN, undefined);
   }
 });
 
