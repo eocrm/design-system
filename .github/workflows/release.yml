@@ -163,6 +163,14 @@ jobs:
       - name: Verify token contract
         run: npm run tokens:check
 
+      # Checked before the first publish: failing after GitHub Packages already
+      # holds this version would leave a half-published release (see the npmjs
+      # steps below).
+      - name: Require npm with trusted publishing
+        run: |
+          set -euo pipefail
+          node -e 'const [a, b, c] = process.argv[1].split(".").map(Number); if (a < 11 || (a === 11 && (b < 5 || (b === 5 && c < 1)))) { console.error(`::error::npm ${process.argv[1]} lacks trusted publishing (needs >= 11.5.1)`); process.exit(1); }' "$(npm --version)"
+
       - name: Publish design tokens to GitHub Packages
         working-directory: packages/design-tokens
         env:
@@ -210,11 +218,6 @@ jobs:
       # no tag exists yet: RE-RUN THIS FAILED RUN before merging another library
       # change. A newer merge would recompute the same version with different
       # content and every release after it would fail verification.
-      - name: Require npm with trusted publishing
-        run: |
-          set -euo pipefail
-          node -e 'const [a, b, c] = process.argv[1].split(".").map(Number); if (a < 11 || (a === 11 && (b < 5 || (b === 5 && c < 1)))) { console.error(`::error::npm ${process.argv[1]} lacks trusted publishing (needs >= 11.5.1)`); process.exit(1); }' "$(npm --version)"
-
       - name: Publish design tokens to npmjs
         working-directory: packages/design-tokens
         run: |
@@ -228,6 +231,7 @@ jobs:
           elif grep -qiE 'E409|cannot publish over existing version|cannot publish over the previously published versions|409 Conflict' token-npmjs-publish.out; then
             echo "::warning::@eocrm/design-tokens already has this exact version on npmjs."
           else
+            echo "::error::GitHub Packages already holds this version. Re-run this failed run before merging another library change."
             exit "$status"
           fi
 
@@ -244,6 +248,7 @@ jobs:
           elif grep -qiE 'E409|cannot publish over existing version|cannot publish over the previously published versions|409 Conflict' design-system-npmjs-publish.out; then
             echo "::warning::@eocrm/design-system already has this exact version on npmjs."
           else
+            echo "::error::GitHub Packages already holds this version. Re-run this failed run before merging another library change."
             exit "$status"
           fi
 

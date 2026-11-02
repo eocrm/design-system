@@ -306,13 +306,19 @@ test('recognizes the npm 11 duplicate-version error for resumable releases', asy
 });
 
 test('publishes both packages to npmjs through trusted publishing, tokens first', async () => {
-  const workflow = parse(await readFile(workflowPath, 'utf8'));
+  const source = await readFile(workflowPath, 'utf8');
+  // A stored npm token would silently bypass trusted publishing.
+  assert.doesNotMatch(source, /NPM_TOKEN/);
+  const workflow = parse(source);
   const names = workflow.jobs.publish.steps.map((step) => step.name);
   const tokensIndex = names.indexOf('Publish design tokens to npmjs');
   const designSystemIndex = names.indexOf('Publish design system to npmjs');
   assert.ok(tokensIndex !== -1 && tokensIndex < designSystemIndex);
   const guardIndex = names.indexOf('Require npm with trusted publishing');
-  assert.ok(guardIndex !== -1 && guardIndex < tokensIndex);
+  // Before the first publish of any registry, so an old npm can't half-publish.
+  assert.ok(
+    guardIndex !== -1 && guardIndex < names.indexOf('Publish design tokens to GitHub Packages'),
+  );
   assert.equal(workflow.permissions['id-token'], 'write');
 
   for (const index of [tokensIndex, designSystemIndex]) {
@@ -320,6 +326,8 @@ test('publishes both packages to npmjs through trusted publishing, tokens first'
     // The scope flag, not --registry: setup-node maps @eocrm to GitHub Packages.
     assert.match(step.run, /--@eocrm:registry=https:\/\/registry\.npmjs\.org/);
     assert.match(step.run, /--provenance/);
+    // Trusted publishing only — no stored npm token on the step.
+    assert.equal(step.env?.NODE_AUTH_TOKEN, undefined);
   }
 });
 
