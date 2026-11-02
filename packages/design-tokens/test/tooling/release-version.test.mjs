@@ -59,8 +59,6 @@ test('accepts already-published artifacts only when their content matches', asyn
   const coordinates = [
     '@eocrm/design-tokens',
     '@eocrm/design-system',
-    'npmjs:@eocrm/design-tokens',
-    'npmjs:@eocrm/design-system',
     'com.eocrm.design:design-tokens-compose',
   ];
   const seen = [];
@@ -75,28 +73,6 @@ test('accepts already-published artifacts only when their content matches', asyn
     },
   });
   assert.deepEqual(seen.sort(), [...coordinates].sort());
-});
-
-test('rejects an npmjs copy whose content differs from GitHub Packages', async () => {
-  const expected = new Map([
-    ['@eocrm/design-tokens', 'sha256:same'],
-    ['@eocrm/design-system', 'sha256:same'],
-    ['npmjs:@eocrm/design-tokens', 'sha256:same'],
-    ['npmjs:@eocrm/design-system', 'sha256:same'],
-    ['com.eocrm.design:design-tokens-compose', 'sha256:same'],
-  ]);
-
-  await assert.rejects(
-    verifyPublishedVersion('1.2.3', {
-      attempts: 1,
-      expected,
-      readPublished: async (coordinate) => ({
-        version: '1.2.3',
-        integrity: coordinate === 'npmjs:@eocrm/design-system' ? 'sha256:other' : 'sha256:same',
-      }),
-    }),
-    /npmjs:@eocrm\/design-system: expected integrity sha256:same, received sha256:other/,
-  );
 });
 
 test('rejects a same-version artifact whose content differs', async () => {

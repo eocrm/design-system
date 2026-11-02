@@ -9,8 +9,7 @@ strongly typed Compose API. Both are published with the same version as
 
 ## Web
 
-The package is public on npmjs (no `.npmrc` or token needed) and mirrored to
-GitHub Packages:
+The package is public on npmjs (no `.npmrc` or token needed):
 
 ```bash
 npm install @eocrm/design-tokens

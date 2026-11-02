@@ -289,8 +289,6 @@ test('stages Compose publications locally and repairs every Maven file', async (
 test('recognizes the npm 11 duplicate-version error for resumable releases', async () => {
   const npmPublishRuns = (
     await Promise.all([
-      releaseStep('Publish design tokens to GitHub Packages'),
-      releaseStep('Publish design system to GitHub Packages'),
       releaseStep('Publish design tokens to npmjs'),
       releaseStep('Publish design system to npmjs'),
     ])
@@ -300,9 +298,9 @@ test('recognizes the npm 11 duplicate-version error for resumable releases', asy
 
   assert.equal(
     npmPublishRuns.match(/cannot publish over the previously published versions/g)?.length,
-    4,
+    2,
   );
-  assert.equal(npmPublishRuns.match(/set \+e/g)?.length, 4);
+  assert.equal(npmPublishRuns.match(/set \+e/g)?.length, 2);
 });
 
 test('publishes both packages to npmjs through trusted publishing, tokens first', async () => {
@@ -315,15 +313,13 @@ test('publishes both packages to npmjs through trusted publishing, tokens first'
   const designSystemIndex = names.indexOf('Publish design system to npmjs');
   assert.ok(tokensIndex !== -1 && tokensIndex < designSystemIndex);
   const guardIndex = names.indexOf('Require npm with trusted publishing');
-  // Before the first publish of any registry, so an old npm can't half-publish.
-  assert.ok(
-    guardIndex !== -1 && guardIndex < names.indexOf('Publish design tokens to GitHub Packages'),
-  );
+  // Before the first publish, so an old npm can't half-publish.
+  assert.ok(guardIndex !== -1 && guardIndex < tokensIndex);
   assert.equal(workflow.permissions['id-token'], 'write');
 
   for (const index of [tokensIndex, designSystemIndex]) {
     const step = workflow.jobs.publish.steps[index];
-    // The scope flag, not --registry: setup-node maps @eocrm to GitHub Packages.
+    // The scope flag, not --registry: any @eocrm mapping in .npmrc beats --registry.
     assert.match(step.run, /--@eocrm:registry=https:\/\/registry\.npmjs\.org/);
     assert.match(step.run, /--provenance/);
     // Trusted publishing only — no stored npm token on the step.
@@ -332,8 +328,8 @@ test('publishes both packages to npmjs through trusted publishing, tokens first'
 });
 
 test('leaves the publish registry to the workflow, not package.json', async () => {
-  // publishConfig.registry beats every CLI registry flag, which would send the
-  // npmjs publish to GitHub Packages; provenance needs the repository field.
+  // publishConfig.registry beats every CLI registry flag, so it could redirect
+  // the npmjs publish; provenance needs the repository field.
   for (const name of ['design-tokens', 'design-system']) {
     const manifest = JSON.parse(
       await readFile(join(repositoryRoot, `packages/${name}/package.json`), 'utf8'),

@@ -2,7 +2,7 @@
 
 Local dev gallery + demo pages. **This package is private (`"private": true`) and never publishes.**
 
-The playground exists to be the most realistic possible preview of `@eocrm/design-system` as the CRM will see it — it imports the library through the workspace symlink exactly the way the CRM will import it from the registry (npmjs, mirrored to GitHub Packages).
+The playground exists to be the most realistic possible preview of `@eocrm/design-system` as the CRM will see it — it imports the library through the workspace symlink exactly the way the CRM will import it from npmjs.
 
 ## Mockups vs. components
 
