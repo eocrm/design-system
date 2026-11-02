@@ -85,6 +85,41 @@ function Harness(props: Partial<Parameters<typeof useDataTable<Row>>[0]>) {
   return <DataTable instance={instance} aria-label="Test" />;
 }
 
+describe('DataTable column widths are authoritative (#733)', () => {
+  it('sizes the table to the sum of its <col> widths, never from content', () => {
+    const rule = compiledRule(
+      parse(compile(resolve(__dirname, 'DataTable.module.scss'), { style: 'expanded' }).css),
+      '.root',
+    );
+    expect(compiledDeclaration(rule, 'table-layout')).toMatchObject({ value: 'fixed' });
+    expect(compiledDeclaration(rule, 'width')).toMatchObject({
+      value: 'var(--data-table-width, 0)',
+    });
+    expect(compiledDeclaration(rule, 'min-width')).toMatchObject({ value: '100%' });
+  });
+
+  it('publishes --data-table-width as auto columns + declared sizes', () => {
+    const sized: ColumnDef<Row>[] = [
+      { id: 'name', header: 'Name', cell: (r) => r.name.repeat(500), size: 260 },
+      { id: 'amount', header: 'Amount', cell: (r) => r.amount, size: 80 },
+      { id: 'other', header: 'Other', cell: () => '—' },
+    ];
+    function SizedHarness() {
+      const instance = useDataTable<Row>({
+        data: rows,
+        columns: sized,
+        getRowId,
+        enableRowSelection: true,
+      });
+      return <DataTable instance={instance} aria-label="Sized" />;
+    }
+    render(<SizedHarness />);
+    const table = screen.getByRole('table');
+    // 44 (selection) + 260 + 80 + 120 (default size)
+    expect(table.style.getPropertyValue('--data-table-width')).toBe('504px');
+  });
+});
+
 describe('DataTable responsive stylesheet', () => {
   const stylesheet = parse(
     compile(resolve(__dirname, 'DataTable.module.scss'), { style: 'expanded' }).css,
@@ -1970,11 +2005,11 @@ describe('<DataTable> — column drag is clamped to the unpinned band (#381)', (
    * Render with header cells RENDERED 200px wide while their DECLARED size is
    * the 120px default.
    *
-   * That gap is the whole point. `table-layout: fixed; width: max-content;
-   * min-width: 100%` makes the table stretch to fill its scroll wrap, so real
-   * columns are wider than the `<col>` elements claim. A clamp built on
-   * declared widths stops the first column at 240px — short of the last slot,
-   * which it can then never reach.
+   * That gap is the whole point. `table-layout: fixed;
+   * width: var(--data-table-width, 0); min-width: 100%` makes the table
+   * stretch to fill its scroll wrap, so real columns are wider than the
+   * `<col>` elements claim. A clamp built on declared widths stops the first
+   * column at 240px — short of the last slot, which it can then never reach.
    */
   function renderStretched(props: { dragWholeColumn?: boolean } = {}) {
     render(<ThreeHarness {...props} />);

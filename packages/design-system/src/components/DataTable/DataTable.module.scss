@@ -9,18 +9,18 @@
 // internal table-sizing properties (not consumer layout). Same precedent as the
 // Table primitive's `position: sticky` for the sticky-header band.
 .root {
-  // table-layout: fixed + width: max-content makes each <col>'s declared
-  // width AUTHORITATIVE for the cell. Default `table-layout: auto` plus the
-  // Table primitive's `min-width: 100%` would distribute columns
-  // proportionally within the parent's width, which causes pin offsets to
-  // misalign — the 44px auto-cell rendering at e.g. 40px because the table
-  // was capped at the wrap's width, then the left-pinned column at left:44
-  // leaves a 4px gap that exposes scroll content during horizontal scroll.
-  // `width: max-content` lets the table grow to its intrinsic column-sum
-  // width when that exceeds the wrap; Table primitive's scrollWrap then
-  // scrolls horizontally as designed.
+  // table-layout: fixed + an explicit width makes each <col>'s declared
+  // width AUTHORITATIVE for the cell. `--data-table-width` is the sum of the
+  // <col> widths, set inline by DataTable.tsx. Default `table-layout: auto`
+  // would distribute columns proportionally within the parent's width,
+  // misaligning pin offsets. Never use an intrinsic width (`max-content`)
+  // here: it is computed from cell content, so one long nowrap cell widens
+  // its column past `size` (#733). `min-width: 100%` still stretches the
+  // table to fill a wider wrap; a narrower wrap scrolls horizontally.
+  // Fallback `0` is still content-independent: a fixed-layout table is the
+  // greater of its `width` and the sum of its column widths.
   table-layout: fixed;
-  width: max-content;
+  width: var(--data-table-width, 0);
   min-width: 100%;
 }
 // stylelint-enable property-disallowed-list

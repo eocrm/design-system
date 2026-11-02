@@ -5,6 +5,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type CSSProperties,
   type ReactNode,
   type Ref,
   type RefObject,
@@ -41,7 +42,7 @@ import {
   useDragAccessibility,
   type DescribeDragTarget,
 } from '../_internal/dragAnnouncements';
-import { AUTO_CELL_WIDTH } from './pinStyle';
+import { AUTO_CELL_WIDTH, DEFAULT_COL_WIDTH } from './pinStyle';
 import type { DataTableInstance } from './types';
 import type { CollapseBreakpoint } from '../_internal/collapse';
 import { useTranslation } from '../../i18n/useTranslation';
@@ -380,6 +381,16 @@ function DataTableInner<T>(
     [instance.leftPinnedColumns, instance.unpinnedColumns, instance.rightPinnedColumns],
   );
 
+  // Explicit table width = sum of the <col> widths. Under `table-layout:
+  // fixed` that keeps every column at its declared size (#733); an intrinsic
+  // width like `max-content` would be computed from cell content instead.
+  const tableWidthPx =
+    ((instance.enableRowSelection ? 1 : 0) + (instance.hasExpansion ? 1 : 0)) * AUTO_CELL_WIDTH +
+    renderColumns.reduce(
+      (sum, col) => sum + (instance.columnSizesPx[col.id] ?? DEFAULT_COL_WIDTH),
+      0,
+    );
+
   const totalColCount =
     instance.visibleColumns.length +
     (instance.enableRowSelection ? 1 : 0) +
@@ -542,6 +553,7 @@ function DataTableInner<T>(
             aria-rowcount={instance.rowCount}
             className={clsx(styles.root, className)}
             {...rest}
+            style={{ '--data-table-width': `${tableWidthPx}px` } as CSSProperties}
             scroll={!responsiveEnabled}
           >
             {caption && <Table.Caption>{caption}</Table.Caption>}
@@ -550,7 +562,10 @@ function DataTableInner<T>(
               {instance.enableRowSelection && <col style={{ width: AUTO_CELL_WIDTH }} />}
               {instance.hasExpansion && <col style={{ width: AUTO_CELL_WIDTH }} />}
               {renderColumns.map((col) => (
-                <col key={col.id} style={{ width: instance.columnSizesPx[col.id] ?? 120 }} />
+                <col
+                  key={col.id}
+                  style={{ width: instance.columnSizesPx[col.id] ?? DEFAULT_COL_WIDTH }}
+                />
               ))}
             </colgroup>
 

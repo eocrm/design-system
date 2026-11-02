@@ -6,6 +6,9 @@ import type { DataTableInstance } from './types';
  */
 export const AUTO_CELL_WIDTH = 44;
 
+/** Width of a column with no `size` and no runtime sizing state. */
+export const DEFAULT_COL_WIDTH = 120;
+
 export interface PinStyle {
   position?: 'sticky';
   left?: number;

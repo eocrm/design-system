@@ -122,7 +122,7 @@ describe('measureDragRangeX', () => {
 
   it('reads RENDERED width, not the declared column size', () => {
     // The regression this function exists for: `table-layout: fixed;
-    // width: max-content; min-width: 100%` stretches columns past their
+    // width: var(--data-table-width, 0); min-width: 100%` stretches columns past their
     // declared `<col>` width, so a declared-width sum would have stopped 'a'
     // at 240 (2 x the 120px default) instead of the real 400 — leaving the
     // last slot unreachable.
