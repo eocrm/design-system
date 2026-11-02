@@ -8,7 +8,7 @@ to the token package.
 
 Component contracts live in **[`docs/components/<Name>.md`](./docs/components)** (props table, anti-patterns). AI agents consuming this package should read **[AI-PRIMER.md](./AI-PRIMER.md)** first.
 
-**Live playground** (every component, demoed against `main`): <https://eocrm.github.io/design-system/>
+**Live playground** (every component, demoed against `main`): <https://eocrm.github.io/design-system/components>
 
 ---
 
