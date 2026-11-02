@@ -2,7 +2,7 @@
   "name": "@eocrm/design-system",
   "version": "0.0.0",
   "description": "Design system for the EOCRM product — React 19 + SCSS modules + CSS custom properties.",
-  "license": "UNLICENSED",
+  "license": "Apache-2.0",
   "type": "module",
   "main": "./src/index.ts",
   "module": "./src/index.ts",

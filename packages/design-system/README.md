@@ -8,6 +8,8 @@ to the token package.
 
 Component contracts live in **[`docs/components/<Name>.md`](./docs/components)** (props table, anti-patterns). AI agents consuming this package should read **[AI-PRIMER.md](./AI-PRIMER.md)** first.
 
+**Live playground** (every component, demoed against `main`): <https://eocrm.github.io/design-system/>
+
 ---
 
 ## Install
@@ -259,3 +261,7 @@ The playground (live component gallery) deploys to GitHub Pages automatically as
 - **[AI-PRIMER.md](./AI-PRIMER.md)** — concise primer for AI coding agents. Token table and component index.
 - **`docs/components/<Name>.md`** — per-component contract: props table, examples, anti-patterns. Also `docs/setup.md`, `docs/theming.md`, `docs/transient-state.md`.
 - **[CLAUDE.md](./CLAUDE.md)** — rules for someone **modifying this library** (not for consumers).
+
+## License
+
+[Apache License 2.0](./LICENSE).

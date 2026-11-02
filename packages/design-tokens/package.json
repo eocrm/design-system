@@ -32,5 +32,6 @@
     "type": "git",
     "url": "git+https://github.com/eocrm/design-system.git",
     "directory": "packages/design-tokens"
-  }
+  },
+  "license": "Apache-2.0"
 }

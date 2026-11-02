@@ -5,6 +5,8 @@ package contains generated Sass; the Maven artifact contains a generated,
 strongly typed Compose API. Both are published with the same version as
 `@eocrm/design-system`.
 
+**Live playground** (tokens and components, rendered from `main`): <https://eocrm.github.io/design-system/>
+
 ## Web
 
 The package is public on npmjs (no `.npmrc` or token needed) and mirrored to
@@ -94,3 +96,7 @@ schema and semantic contract, runs tests, and fails on generated drift.
 See [Shared design ownership](../../docs/shared-design-boundary.md) for the
 boundary between neutral tokens, React components, Compose product UI, and
 native platform behavior.
+
+## License
+
+[Apache License 2.0](./LICENSE).
