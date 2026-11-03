@@ -20,10 +20,9 @@ try {
   const { version } = JSON.parse(await readFile(join(pkg, 'package.json'), 'utf8'));
 
   await rm(out, { recursive: true, force: true });
-  await mkdir(join(out, 'src'), { recursive: true });
+  await mkdir(out, { recursive: true });
   await cp(join(pkg, 'AI-PRIMER.md'), join(out, 'AI-PRIMER.md'));
   await cp(join(pkg, 'docs'), join(out, 'docs'), { recursive: true });
-  await cp(join(pkg, 'src/components.manifest.json'), join(out, 'src/components.manifest.json'));
   await writeFile(join(out, 'VERSION'), `${version}\n`);
 
   const files = [];

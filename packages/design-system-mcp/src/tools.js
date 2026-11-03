@@ -53,7 +53,7 @@ export function createTools(docSource, version, warn) {
     if (text == null) return null;
     try {
       const parsed = JSON.parse(text);
-      return Array.isArray(parsed) ? parsed : null;
+      return Array.isArray(parsed) ? parsed.filter((c) => typeof c?.name === 'string') : null;
     } catch {
       return null;
     }
@@ -70,7 +70,15 @@ export function createTools(docSource, version, warn) {
 
     async listComponents() {
       const idx = await index();
-      if (idx) return idx.map((c) => `- **${c.name}** — ${c.summary} (${c.cluster})`).join('\n');
+      if (idx) {
+        const str = (/** @type {unknown} */ v) => typeof v === 'string' && v !== '';
+        return idx
+          .map(
+            (c) =>
+              `- **${c.name}**${str(c.summary) ? ` — ${c.summary}` : ''}${str(c.cluster) ? ` (${c.cluster})` : ''}`,
+          )
+          .join('\n');
+      }
       const names = match(await list(), COMPONENT_MD);
       return [
         ...names.map((n) => `- **${n}**`),

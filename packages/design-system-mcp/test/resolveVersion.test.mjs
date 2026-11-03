@@ -34,3 +34,14 @@ for (const dir of ['no-ds', 'does-not-exist']) {
     assert.match(r.note, /no @eocrm\/design-system dependency found/);
   });
 }
+
+test('default packument fetch sends a timeout signal and the abbreviated Accept header', async (t) => {
+  let init;
+  t.mock.method(globalThis, 'fetch', async (_url, i) => {
+    init = i;
+    return { ok: true, json: async () => ({ 'dist-tags': { latest: '0.7.0' }, versions: {} }) };
+  });
+  assert.equal((await resolveVersion(fx('no-ds'))).version, '0.7.0');
+  assert.ok(init.signal instanceof AbortSignal);
+  assert.equal(init.headers.Accept, 'application/vnd.npm.install-v1+json');
+});

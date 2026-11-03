@@ -32,21 +32,20 @@ export function createServer({
   /** First `file://` client root that has a package.json, else cwd. */
   async function projectDir() {
     if (!server.server.getClientCapabilities()?.roots) return cwd;
+    let roots;
     try {
-      const { roots } = await server.server.listRoots(undefined, { timeout: ROOTS_TIMEOUT_MS });
-      for (const { uri } of roots) {
-        if (!uri.startsWith('file://')) continue;
-        const dir = fileURLToPath(uri);
-        if (
-          await access(join(dir, 'package.json')).then(
-            () => true,
-            () => false,
-          )
-        )
-          return dir;
-      }
+      ({ roots } = await server.server.listRoots(undefined, { timeout: ROOTS_TIMEOUT_MS }));
     } catch {
-      // client didn't answer in time: fall back to cwd
+      return cwd; // client didn't answer in time
+    }
+    for (const { uri } of roots) {
+      try {
+        const dir = fileURLToPath(uri); // throws on non-file or non-local URIs
+        await access(join(dir, 'package.json'));
+        return dir;
+      } catch {
+        // malformed, remote or no package.json: try the next root
+      }
     }
     return cwd;
   }

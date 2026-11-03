@@ -86,7 +86,10 @@ export async function resolveVersion(projectDir, { fetchPackument = defaultFetch
 }
 
 async function defaultFetch() {
-  const res = await fetch(PACKUMENT_URL);
+  const res = await fetch(PACKUMENT_URL, {
+    signal: AbortSignal.timeout(5000), // a timeout rejects; the server falls back to the snapshot
+    headers: { Accept: 'application/vnd.npm.install-v1+json' },
+  });
   if (!res.ok) throw new Error(`npm registry returned ${res.status} for ${NAME}`);
   return res.json();
 }

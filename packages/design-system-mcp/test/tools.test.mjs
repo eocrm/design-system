@@ -109,6 +109,22 @@ test('list_components uses index.json summaries', async () => {
   );
 });
 
+test('list_components tolerates malformed index entries', async () => {
+  const { call } = await connect({
+    files: {
+      ...NEW,
+      'docs/components/index.json': JSON.stringify([
+        { name: 'Button', cluster: 'actions' },
+        { summary: 'nameless' },
+        null,
+        { name: 'Dialog', summary: 'Modal' },
+      ]),
+    },
+  });
+  const body = (await call('list_components')).text.split('\n\n')[1];
+  assert.equal(body, '- **Button** (actions)\n- **Dialog** — Modal');
+});
+
 test('list_components on an old version without index.json', async () => {
   const { call } = await connect({ files: OLD });
   const { text } = await call('list_components');
@@ -167,7 +183,11 @@ test('resolveVersion failure with no snapshot is a tool error, not a crash', asy
 test('project dir: first file:// root with package.json, else cwd', async () => {
   const withRoots = await connect({
     roots: async () => ({
-      roots: [{ uri: 'file:///definitely/missing' }, { uri: `file://${npmFixture}` }],
+      roots: [
+        { uri: 'file://remote-host/share' }, // fileURLToPath throws: non-local host
+        { uri: 'file:///definitely/missing' },
+        { uri: `file://${npmFixture}` },
+      ],
     }),
   });
   await withRoots.call('get_primer');

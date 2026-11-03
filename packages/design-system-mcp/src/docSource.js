@@ -8,7 +8,7 @@ const NAME = '@eocrm/design-system';
 const TIMEOUT_MS = 5000;
 export const SNAPSHOT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'snapshot');
 // Same set bundle-snapshot.mjs extracts.
-const WANTED = /^(AI-PRIMER\.md|docs\/.*|src\/components\.manifest\.json)$/;
+const WANTED = /^(AI-PRIMER\.md|docs\/.*)$/;
 
 function defaultCacheDir() {
   const base =
@@ -64,18 +64,41 @@ export function createDocSource({
     return null;
   }
 
+  /** @type {Map<string, Promise<string[] | null>>} */
+  const listings = new Map();
+  /**
+   * jsDelivr flat file listing for a version, memoized per process. Null when the
+   * version is not on npmjs (404); throws on network/5xx (not memoized).
+   */
+  function listing(version) {
+    let p = listings.get(version);
+    if (!p) {
+      p = get(`https://data.jsdelivr.com/v1/packages/npm/${NAME}@${version}?structure=flat`).then(
+        (text) =>
+          text == null
+            ? null
+            : JSON.parse(text)
+                .files.map((f) => f.name.replace(/^\//, ''))
+                .filter((n) => WANTED.test(n)),
+      );
+      p.catch(() => listings.delete(version));
+      listings.set(version, p);
+    }
+    return p;
+  }
+
   /** @returns {Promise<{ snapVersion: string|null, warning?: string }>} */
-  async function snapshotMeta(version) {
+  async function snapshotMeta(version, reason = 'unavailable offline') {
     const snapVersion = (await readOrNull(join(snapshotDir, 'VERSION')))?.trim() ?? null;
     if (snapVersion === version) return { snapVersion };
     return {
       snapVersion,
-      warning: `using bundled ${snapVersion ?? 'unknown'} docs; requested ${version} unavailable offline`,
+      warning: `using bundled ${snapVersion ?? 'unknown'} docs; requested ${version} ${reason}`,
     };
   }
 
-  async function fromSnapshot(version, path) {
-    const { snapVersion, warning } = await snapshotMeta(version);
+  async function fromSnapshot(version, path, reason) {
+    const { snapVersion, warning } = await snapshotMeta(version, reason);
     const file = resolve(snapshotDir, path);
     const text = contains(snapshotDir, file) ? await readOrNull(file) : null;
     return { text, servedVersion: snapVersion ?? version, ...(warning && { warning }) };
@@ -98,7 +121,13 @@ export function createDocSource({
       } catch {
         return fromSnapshot(version, path);
       }
-      if (text == null) return { text: null, servedVersion: version };
+      if (text == null) {
+        // Both CDNs 404: a missing file, or a version not on npmjs at all.
+        const files = await listing(version).catch(() => []);
+        return files == null
+          ? fromSnapshot(version, path, 'is not on npmjs')
+          : { text: null, servedVersion: version };
+      }
 
       try {
         await mkdir(dirname(cached), { recursive: true });
@@ -112,21 +141,16 @@ export function createDocSource({
     },
 
     async listFiles(version) {
-      const fromSnap = async () => {
-        const { snapVersion, warning } = await snapshotMeta(version);
+      const fromSnap = async (reason) => {
+        const { snapVersion, warning } = await snapshotMeta(version, reason);
         const files = JSON.parse((await readOrNull(join(snapshotDir, 'files.json'))) ?? '[]');
         return { files, servedVersion: snapVersion ?? version, ...(warning && { warning }) };
       };
       if (!validVersion(version)) return { files: [], servedVersion: version };
       if (offline) return fromSnap();
       try {
-        const text = await get(
-          `https://data.jsdelivr.com/v1/packages/npm/${NAME}@${version}?structure=flat`,
-        );
-        if (text == null) return fromSnap();
-        const files = JSON.parse(text)
-          .files.map((f) => f.name.replace(/^\//, ''))
-          .filter((n) => WANTED.test(n));
+        const files = await listing(version);
+        if (files == null) return fromSnap('is not on npmjs');
         return { files, servedVersion: version };
       } catch {
         return fromSnap();

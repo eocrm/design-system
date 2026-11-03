@@ -72,7 +72,7 @@ test('listFiles 404 falls back to snapshot with warning', async () => {
   const { fetch } = setup(() => res(404));
   const r = await (await mk(fetch)).listFiles('0.6.17');
   assert.ok(r.files.includes(P));
-  assert.match(r.warning, /bundled 0\.6\.21/);
+  assert.match(r.warning, /bundled 0\.6\.21 docs; requested 0\.6\.17 is not on npmjs/);
 });
 
 test('unwritable cache still returns fetched text', async () => {
@@ -97,17 +97,37 @@ test('rejects bad version and path without fetching or reading', async () => {
   assert.equal(calls.length, 0);
 });
 
-test('404 gives null text, no snapshot fallback', async () => {
+test('file 404 on an existing version gives null text, listing memoized', async () => {
+  const { calls, fetch } = setup((u) =>
+    u.includes('data.jsdelivr') ? res(200, JSON.stringify({ files: [] })) : res(404),
+  );
+  const src = await mk(fetch);
+  const want = { text: null, servedVersion: '0.6.17' };
+  assert.deepEqual(await src.readFile('0.6.17', P), want);
+  assert.deepEqual(await src.readFile('0.6.17', 'docs/components/index.json'), want);
+  assert.equal(calls.filter((u) => u.includes('data.jsdelivr')).length, 1);
+});
+
+test('version not on npmjs serves snapshot with mismatch warning', async () => {
   const { fetch } = setup(() => res(404));
-  assert.deepEqual(await (await mk(fetch)).readFile('0.6.17', P), {
-    text: null,
-    servedVersion: '0.6.17',
-  });
+  const r = await (await mk(fetch)).readFile('0.6.17', P);
+  assert.equal(r.text, '# Button snapshot\n');
+  assert.equal(r.servedVersion, '0.6.21');
+  assert.match(r.warning, /using bundled 0\.6\.21 docs; requested 0\.6\.17 is not on npmjs/);
+});
+
+test('file 404 with listing network error stays null (no false fallback)', async () => {
+  const { fetch } = setup((u) => (u.includes('data.jsdelivr') ? new Error('down') : res(404)));
+  assert.equal((await (await mk(fetch)).readFile('0.6.17', P)).text, null);
 });
 
 test('listFiles parses jsDelivr flat listing', async () => {
   const body = JSON.stringify({
-    files: [{ name: '/docs/components/Button.md' }, { name: '/dist/index.js' }],
+    files: [
+      { name: '/docs/components/Button.md' },
+      { name: '/dist/index.js' },
+      { name: '/src/components.manifest.json' },
+    ],
   });
   const { calls, fetch } = setup(() => res(200, body));
   const r = await (await mk(fetch)).listFiles('0.6.17');
