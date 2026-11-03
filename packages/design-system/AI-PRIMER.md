@@ -2,7 +2,7 @@
 
 Primer for AI coding agents building UI on top of this package.
 
-Read this first. Each component's contract is its `docs/components/<Name>.md`; the props table there is generated from the types. This file is a quick reference + token table + anti-patterns list. See [README.md](./README.md) for installation, bundler notes, and publishing/deploy ops.
+Read this first. Each component's contract is `docs/components/<Name>.md`. Agents: install the MCP server so these docs match your installed version — see `@eocrm/design-system-mcp`.
 
 ---
 
@@ -45,7 +45,7 @@ Every user-facing string the library renders flows through `I18nProvider` (`'en'
 
 ## Components — TL;DR
 
-Each `<Name>` below is documented in `docs/components/<Name>.md`. The summaries below are for orientation only.
+Each `<Name>` below is documented in `docs/components/<Name>.md`.
 
 - `Title` — semantic heading (typography hard rule: `Text` doc)
 - `Text` — body / inline text; typography hard rule in its doc
@@ -53,7 +53,6 @@ Each `<Name>` below is documented in `docs/components/<Name>.md`. The summaries 
 - `CodeBlock` — multi-line, highlighted, copyable code
 - `HighlightedText` — `Text` with matched runs in `<mark>` (search excerpts)
 - `Kbd` — keyboard-shortcut chips
-
 - `RichText` — read-only rich-text renderer
 - `Button` — action triggers
 - `SocialButton` — provider sign-in button
@@ -155,7 +154,6 @@ Each `<Name>` below is documented in `docs/components/<Name>.md`. The summaries 
 - `IconTile` — palette-colored icon frame
 - `Progress` — linear progress bar; progress hard rule in its doc
 - `CircularProgress` — circular progress / spinner (progress hard rule: `Progress` doc)
-
 - `Skeleton` — loading placeholder
 - `Image` — image with loading + error states
 - `QrCode` — scannable QR code
