@@ -9,7 +9,7 @@
   // Ramp: stage i of n is ramp-color mixed (oklab) toward ramp-target by max-mix * i / (n - 1). Light:
   // target is the surface, 48% keeps the lightest step >= 2:1 against it. Dark (below): target is
   // --color-fg so later stages get paler, not muddier; 65% passes validate_palette.js --ordinal
-  // --mode dark for 3-4 stages (6 stages: ΔL ~0.04), palest 4-stage step #a6c5eb is still clearly blue.
+  // --mode dark for 3-4 stages (6 stages: ΔL ~0.04), palest 4-stage step still reads as the series-1 hue.
   // ponytail: from 5 stages on, adjacent steps fall under the 0.06 OKLCH ΔL ideal (~0.03 at 8); labels,
   // the vertical table and the tooltip carry identity. A wider ramp needs a darker first stage than series-1.
   --funnel-chart-ramp-color: var(--chart-series-1);
@@ -19,10 +19,11 @@
 
   // Hero: the first stage's value and label inside its band (horizontal). Paired with the band
   // (--funnel-chart-ramp-color, i.e. --chart-series-1), not the accent: the surface colour knocked out
-  // of the band, the same pair the chart series are gated on (3:1). It misses 4.5:1 (only near-black,
-  // no neutral token, clears that in light), so both lines are WCAG large text (24px; 20px bold), 3:1:
-  // @contrast --color-bg on --color-chart-series-1 = 4.42:1 light
-  // @contrast --color-bg on --color-chart-series-1 = 4.45:1 dark
+  // of the band, the same pair the chart series are gated on (3:1). Series 1 follows data-accent, and
+  // not every accent's lead hue (nor dark blue) clears 4.5:1, so both lines are WCAG large text
+  // (24px; 20px bold), 3:1 — gated per accent in contrast.test.ts. Base (blue) accent:
+  // @contrast --color-bg on --color-chart-series-1 = 5.68:1 light
+  // @contrast --color-bg on --color-chart-series-1 = 4.37:1 dark
   // Override --funnel-chart-ramp-color and this pair is yours to recheck; a stage-0 `color` slot hides the hero.
   --funnel-chart-hero-fg: var(--color-bg);
   --funnel-chart-hero-value-size: var(--font-size-2xl);

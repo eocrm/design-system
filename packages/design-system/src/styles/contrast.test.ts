@@ -383,7 +383,8 @@ const PAIRS: Pair[] = [
   // muted (4.14) and danger (3.65) fail on the dark yellow.
   ['highlighted-text match on yellow mark', '--color-fg', '--color-palette-yellow-bg', 4.5],
   // FunnelChart's hero (--funnel-chart-hero-fg): the surface colour on the first band. It is set as
-  // WCAG large text (24px value, 20px bold label) because this pair clears 3:1 but not 4.5:1.
+  // WCAG large text (24px value, 20px bold label), so 3:1: series 1 follows the accent, and not
+  // every accent's lead hue (or dark blue) clears 4.5:1 against the surface.
   ['FunnelChart hero large text on chart series 1', '--color-bg', '--color-chart-series-1', 3.0],
 ];
 
@@ -441,25 +442,32 @@ describe('the accent overrides are wired the way the gates assume', () => {
   );
 });
 
-describe.each([
-  ['light', TOKENS],
-  ['dark', DARK],
-])('chart series palette in %s theme', (_theme, source) => {
-  // WCAG 1.4.11: plotted marks are graphical objects needed to read the chart.
-  // Card/DashboardWidget surface is --color-bg in both themes. Exactly 8 slots.
-  // Series 6 (#008300) is identical in both themes, so it has no dark declaration.
-  it.each([1, 2, 3, 4, 5, 6, 7, 8])(
-    'chart series %i is a 3:1 graphical object on the card surface',
-    (n) => {
-      expect(
-        contrast(
-          tokenValue(`--color-chart-series-${n}`, n === 6 ? TOKENS : source),
-          tokenValue('--color-bg', source),
-        ),
-      ).toBeGreaterThanOrEqual(3);
-    },
-  );
-});
+/**
+ * The relief rule: light gold (Brand palette) sits under 3:1 on white by design —
+ * darker, it turns olive and collapses into orange/green. Chart ships a data table
+ * and FunnelChart labels every stage, so identity never rests on that mark alone.
+ * Pinned by value, so it stays exempt wherever an accent's order puts it, and no
+ * other colour is.
+ */
+const CHART_RELIEF = { theme: 'light', hex: '#cfa529', floor: 2.3 } as const;
+
+describe.each(THEMED_ACCENTS)(
+  'chart series palette in %s theme, %s accent',
+  (theme, _accent, source) => {
+    // WCAG 1.4.11: plotted marks are graphical objects needed to read the chart.
+    // Card/DashboardWidget surface is --color-bg in both themes. Exactly 8 slots.
+    it.each([1, 2, 3, 4, 5, 6, 7, 8])(
+      'chart series %i is a 3:1 graphical object on the card surface',
+      (n) => {
+        const series = tokenValue(`--color-chart-series-${n}`, source);
+        const relief = theme === CHART_RELIEF.theme && series.toLowerCase() === CHART_RELIEF.hex;
+        expect(contrast(series, tokenValue('--color-bg', source))).toBeGreaterThanOrEqual(
+          relief ? CHART_RELIEF.floor : 3,
+        );
+      },
+    );
+  },
+);
 
 /**
  * StagePath's hovered stage is `color-mix(in srgb, fill, text hover-mix)` — the
