@@ -456,9 +456,13 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
     // blocking arming outright (touch ids retire) (#363). Window CAPTURE
     // listeners see the physical release before any stopPropagation below;
     // clearing an UNMOVED press is behavior-preserving (unmoved presses
-    // commit nothing), and a moved drag is capture-owned — its own root
-    // handlers clear the ref before this check could matter.
-    const armPendingRelease = (drag: MoveDrag | SectionDrag) => {
+    // commit nothing). A resize or a moved drag is capture-owned, so its own
+    // root handlers normally clear (and commit) — this capture listener fires
+    // BEFORE them, so it only re-checks after the event's dispatch: still
+    // holding the gesture then means capture failed and the release landed
+    // outside the root — abandon it (no commit, like pointercancel) instead of
+    // leaving dragRef stale and the document selectstart guard on (#737).
+    const armRelease = (drag: DragState) => {
       const release = (event: PointerEvent) => {
         // Only the press's OWN pointer resolves it — a stray second pointer
         // (palm/touch) releasing elsewhere must neither clear a still-live
@@ -467,7 +471,16 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         if (event.pointerId !== drag.pointerId) return;
         window.removeEventListener('pointerup', release, true);
         window.removeEventListener('pointercancel', release, true);
-        if (dragRef.current === drag && !drag.moved) dragRef.current = null;
+        if (dragRef.current !== drag) return;
+        if (drag.kind !== 'resize' && !drag.moved) {
+          dragRef.current = null;
+          return;
+        }
+        setTimeout(() => {
+          if (dragRef.current !== drag) return;
+          dragRef.current = null;
+          setLive(null);
+        });
       };
       window.addEventListener('pointerup', release, true);
       window.addEventListener('pointercancel', release, true);
@@ -510,7 +523,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         preview: null,
       };
       dragRef.current = drag;
-      armPendingRelease(drag);
+      armRelease(drag);
       // No capture yet — capture retargets the eventual click to the root,
       // so it must wait until the drag arms (clicks pass through until then).
     };
@@ -527,7 +540,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       event.stopPropagation();
       // Handles have no click semantics — block the native selection start.
       event.preventDefault();
-      dragRef.current = {
+      const drag: ResizeDrag = {
         kind: 'resize',
         pointerId: event.pointerId,
         id: placement.id,
@@ -542,6 +555,8 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         lastH: placement.h,
         preview: null,
       };
+      dragRef.current = drag;
+      armRelease(drag);
       // Handles have no click semantics — capture immediately (on the root).
       capturePointer(rootRef.current, event.pointerId);
     };
@@ -570,7 +585,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         slot: fromIndex,
       };
       dragRef.current = drag;
-      armPendingRelease(drag);
+      armRelease(drag);
     };
 
     // --- pointer stream (root-level; capture retargeting still bubbles here) ---

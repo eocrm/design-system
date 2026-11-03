@@ -707,6 +707,37 @@ describe('DashboardCanvas gestures never leave a text selection (#737)', () => {
     );
   });
 
+  it('a resize released outside the canvas (capture lost) stops blocking selectstart (#737)', async () => {
+    const { container, root } = setup();
+    const se = container.querySelector('[data-dc-item="a"] [data-dc-resize="se"]') as HTMLElement;
+    fireEvent.pointerDown(se, down);
+    fireEvent.pointerMove(root, { ...down, clientX: 165, clientY: 151 });
+    // No capture in jsdom: the release lands outside the root, never on it.
+    fireEvent.pointerUp(document.body, { ...down });
+    await act(() => new Promise((r) => setTimeout(r)));
+    expect(fireEvent(root, new Event('selectstart', { bubbles: true, cancelable: true }))).toBe(
+      true,
+    );
+    expect(itemEl(container, 'a').style.getPropertyValue('--dc-col')).toBe('1 / span 2');
+  });
+
+  it('an armed section drag released outside the canvas stops blocking selectstart (#737)', async () => {
+    const { container, root } = setup();
+    fireEvent.pointerDown(sectionHandle(container, 's1'), {
+      clientX: 100,
+      clientY: 570,
+      pointerId: 1,
+      button: 0,
+    });
+    fireEvent.pointerMove(root, { clientX: 100, clientY: 900, pointerId: 1 });
+    fireEvent.pointerCancel(document.body, { pointerId: 1 });
+    await act(() => new Promise((r) => setTimeout(r)));
+    expect(fireEvent(root, new Event('selectstart', { bubbles: true, cancelable: true }))).toBe(
+      true,
+    );
+    expect(container.querySelector('[data-dc-band-indicator]')).not.toBeInTheDocument();
+  });
+
   it('clears the selection when a move drag arms and blocks selectstart meanwhile', () => {
     const { container, root } = setup();
     const spy = vi.spyOn(window, 'getSelection');
