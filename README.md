@@ -6,12 +6,12 @@
 [![compose tokens](https://img.shields.io/github/v/tag/eocrm/design-system?sort=semver&filter=v*&label=compose%20tokens)](https://github.com/eocrm/design-system/packages)
 [![Playground](https://img.shields.io/github/deployments/eocrm/design-system/github-pages?label=playground)](https://eocrm.github.io/design-system/)
 
-React 19 component library and shared web/Compose token contract for the EOCRM. Source-distributed via npmjs (public), opinionated tokens, Atlassian-inspired aesthetic, **designed to be consumed primarily by AI coding agents**.
+React 19 component library and shared web/Compose token contract for the EOCRM. Compiled ESM via npmjs (public), opinionated tokens, Atlassian-inspired aesthetic, **designed to be consumed primarily by AI coding agents**.
 
 - **Live playground**: <https://eocrm.github.io/design-system/>
 - **Package**: `@eocrm/design-system` on npmjs
 - **Shared tokens**: `@eocrm/design-tokens` (npm) and `com.eocrm.design:design-tokens-compose` (Maven, GitHub Packages)
-- **Source distribution**: consumers' bundlers compile `.tsx` and `.module.scss` directly — no build step in the package
+- **Compiled distribution**: ESM + `.d.ts` + plain CSS in `dist/` — no Sass or transpile setup for consumers
 
 ---
 

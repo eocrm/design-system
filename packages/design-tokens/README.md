@@ -22,9 +22,9 @@ Import the light/theme-neutral contract and dark-theme overrides:
 @use '@eocrm/design-tokens/styles/dark.scss';
 ```
 
-Existing `@eocrm/design-system/styles/*.scss` imports remain the recommended
-entry points for React consumers. They forward to this package, so applications
-do not need an import migration.
+React consumers import the compiled `@eocrm/design-system/styles/global.css`
+(or `tokens.css`) and do not need this package; install it for Sass variables
+or the contract directly.
 
 ## Kotlin Multiplatform and Compose
 

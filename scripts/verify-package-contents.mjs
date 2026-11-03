@@ -24,6 +24,7 @@ export const PACKAGES = [
     forbidden: [
       /\.test\.(?:t|j)sx?$/,
       /\.spec\./,
+      /(?:^|\/)src\//,
       /(?:^|\/)types\//,
       /CLAUDE\.md$/,
       /tsconfig/,
@@ -34,7 +35,7 @@ export const PACKAGES = [
 
 /**
  * Required paths: README.md, LICENSE, package.json, and every string target in `exports`
- * (conditional/nested objects are walked). Wildcard (`*`) targets are skipped:
+ * (conditional/nested objects are walked; `source` conditions are dev-only and skipped). Wildcard (`*`) targets are skipped:
  * they cannot be checked as a literal path.
  */
 export function requiredPaths(pkgJson) {
@@ -42,7 +43,9 @@ export function requiredPaths(pkgJson) {
   const walk = (v) => {
     if (typeof v === 'string') {
       if (!v.includes('*')) targets.add(v.replace(/^\.\//, ''));
-    } else if (v && typeof v === 'object') Object.values(v).forEach(walk);
+    } else if (v && typeof v === 'object') {
+      for (const [key, value] of Object.entries(v)) if (key !== 'source') walk(value);
+    }
   };
   walk(pkgJson.exports);
   return [...targets];
@@ -62,10 +65,20 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
   let failed = false;
   for (const pkg of PACKAGES) {
-    const out = execFileSync('npm', ['pack', '--dry-run', '--json', '--workspace', pkg.name], {
-      encoding: 'utf8',
+    // prepack builds dist/ and writes to stdout, which would corrupt --json: build explicitly
+    // (output to stderr), then pack with scripts off.
+    execFileSync('npm', ['run', 'prepack', '--workspace', pkg.name, '--if-present'], {
       cwd: repoRoot,
+      stdio: ['ignore', process.stderr, 'inherit'],
     });
+    const out = execFileSync(
+      'npm',
+      ['pack', '--dry-run', '--json', '--ignore-scripts', '--workspace', pkg.name],
+      {
+        encoding: 'utf8',
+        cwd: repoRoot,
+      },
+    );
     const [{ files }] = JSON.parse(out);
     const paths = files.map((f) => f.path);
     const pkgJson = JSON.parse(readFileSync(join(repoRoot, pkg.dir, 'package.json'), 'utf8'));

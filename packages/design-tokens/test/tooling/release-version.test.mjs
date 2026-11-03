@@ -32,7 +32,7 @@ test('synchronizes both npm packages, the dependency, and generated contract ver
 
     assert.equal(tokensPackage.version, '1.2.3');
     assert.equal(designSystemPackage.version, '1.2.3');
-    assert.equal(designSystemPackage.dependencies['@eocrm/design-tokens'], '1.2.3');
+    assert.equal(designSystemPackage.devDependencies['@eocrm/design-tokens'], '1.2.3');
     assert.equal(tokenSource.contractVersion, '1.2.3');
     assert.equal(manifest.contractVersion, '1.2.3');
   } finally {

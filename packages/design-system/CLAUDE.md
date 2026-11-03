@@ -1,8 +1,8 @@
 # CLAUDE.md — `@eocrm/design-system`
 
-The library that ships to the CRM. Source-distributed (no compile step) — consumers' bundlers process `.tsx` and `.module.scss` from `node_modules`.
+The library that ships to the CRM. Ships compiled ESM (`dist/`: JS, `.d.ts`, CSS) built by `npm run build`; `prepack` runs it. The playground resolves `src/` through the `source` export condition.
 
-`package.json` `files` field whitelists what gets published: `src`, `AI-PRIMER.md`, `docs`. `README.md` is auto-included by npm. Anything outside that won't reach the consumer.
+`package.json` `files` field whitelists what gets published: `dist`, `AI-PRIMER.md`, `docs`. `README.md` is auto-included by npm. Anything outside that won't reach the consumer.
 
 ## Hard rules
 
@@ -198,9 +198,9 @@ Before building or changing transient state UI, read `.claude/skills/transient-s
 - App-specific business logic — CRM code
 - `react-router`, `prismjs`, `@types/prismjs` — playground-only deps. **Never import them from a library file**, even casually. They're not in this package's `dependencies` and will fail in the consumer. (`prism-react-renderer` is the exception (e), used only by CodeBlock's tokenizer.)
 
-## Shipping TS source
+## Shipping compiled output
 
-The package ships TypeScript source (`types: ./src/index.ts`), so consumers type-check our files. `@types/*` for any runtime dependency must therefore live in `dependencies`, not `devDependencies` (otherwise consumer `tsc` fails with TS7016).
+The package ships `dist/` (`types: ./dist/index.d.ts`). Consumers type-check the emitted `.d.ts`, so `@types/*` belong in `dependencies` only when an emitted `.d.ts` references them (otherwise consumer `tsc` fails with TS7016); today none do (`@types/d3-*` are `devDependencies`). Check with `grep -r "d3-" dist --include='*.d.ts'` after a build whenever a public type starts exposing a third-party type.
 
 ## Changing shared tokens
 

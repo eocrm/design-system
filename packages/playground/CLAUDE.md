@@ -2,7 +2,7 @@
 
 Local dev gallery + demo pages. **This package is private (`"private": true`) and never publishes.**
 
-The playground exists to be the most realistic possible preview of `@eocrm/design-system` as the CRM will see it — it imports the library through the workspace symlink exactly the way the CRM will import it from npmjs.
+The playground exists to be the most realistic possible preview of `@eocrm/design-system` as the CRM will see it — it imports the library through the workspace symlink by the same specifiers the CRM uses from npmjs. Unlike the CRM, it resolves them to `src/` (the `source` export condition: instant HMR, no library build), not the compiled `dist/`.
 
 ## Mockups vs. components
 
@@ -30,7 +30,7 @@ Yes:
 
 ```ts
 import { Button } from '@eocrm/design-system';
-import '@eocrm/design-system/styles/global.scss';
+import '@eocrm/design-system/styles/global.css';
 ```
 
 No:

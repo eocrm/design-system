@@ -4,39 +4,31 @@
   "description": "Design system for the EOCRM product — React 19 + SCSS modules + CSS custom properties.",
   "license": "Apache-2.0",
   "type": "module",
-  "main": "./src/index.ts",
-  "module": "./src/index.ts",
-  "types": "./src/index.ts",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "sideEffects": [
     "**/*.scss",
     "**/*.css"
   ],
   "exports": {
     ".": {
-      "types": "./src/index.ts",
-      "import": "./src/index.ts",
-      "default": "./src/index.ts"
+      "source": "./src/index.ts",
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "default": "./dist/index.js"
     },
-    "./styles/global.scss": "./src/styles/global.scss",
-    "./styles/tokens.scss": "./src/styles/tokens.scss",
-    "./styles/reset.scss": "./src/styles/reset.scss",
-    "./styles/typography.scss": "./src/styles/typography.scss",
-    "./styles/mixins.scss": "./src/styles/mixins.scss",
+    "./styles/global.css": {
+      "source": "./src/styles/global.scss",
+      "default": "./dist/styles/global.css"
+    },
+    "./styles/tokens.css": "./dist/styles/tokens.css",
+    "./styles.css": "./dist/styles.css",
     "./package.json": "./package.json"
   },
   "files": [
-    "src",
+    "dist",
     "AI-PRIMER.md",
-    "docs",
-    "!src/**/*.test.ts",
-    "!src/**/*.test.tsx",
-    "!src/**/*.test.js",
-    "!src/**/*.test.jsx",
-    "!src/**/*.spec.ts",
-    "!src/**/*.spec.tsx",
-    "!src/**/*.spec.js",
-    "!src/**/*.spec.jsx",
-    "!src/**/*.testutil.ts"
+    "docs"
   ],
   "publishConfig": {
     "access": "public"
@@ -50,10 +42,7 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
-    "@eocrm/design-tokens": "0.0.0",
     "@floating-ui/react-dom": "^2.1.8",
-    "@types/d3-scale": "^4.0.9",
-    "@types/d3-shape": "^3.2.0",
     "clsx": "^2.1.1",
     "d3-scale": "^4.0.2",
     "d3-shape": "^3.2.0",
@@ -62,9 +51,12 @@
     "qrcode-generator": "^2.0.4"
   },
   "devDependencies": {
+    "@eocrm/design-tokens": "0.0.0",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
+    "@types/d3-scale": "^4.0.9",
+    "@types/d3-shape": "^3.2.0",
     "@types/node": "^26.6.6",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
@@ -76,6 +68,7 @@
     "vitest": "^4.1.7"
   },
   "scripts": {
+    "prepack": "npm run build",
     "typecheck": "tsc --noEmit",
     "build": "vite build -c vite.lib.config.ts && tsc -p tsconfig.build.json && node scripts/build-styles.mjs && node scripts/fix-dts-specifiers.mjs",
     "test": "vitest run",

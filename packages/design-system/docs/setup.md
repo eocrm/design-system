@@ -6,7 +6,7 @@ Two steps at your app root:
 
 ```tsx
 // 1. Import the stylesheet once (tokens, modern reset, base typography).
-import '@eocrm/design-system/styles/global.scss';
+import '@eocrm/design-system/styles/global.css';
 
 // 2. Wrap your tree in <AppProvider>.
 import { AppProvider } from '@eocrm/design-system';
@@ -55,4 +55,4 @@ const darkTokens = useMemo(() => ({ '--color-accent': '#a78bfa' }), []);
 </AppProvider>;
 ```
 
-`tokens` apply in light **and** dark; `darkTokens` refine the dark scope only. They're emitted as a single declarative `<style>` that layers over the [dark theme](theming.md#dark-theme) correctly, and they win over a `data-accent` preset's token blocks. One exception to "override the accent and everything follows": a preset may set the link colour apart from its accent (`tealpine`, `indigo` and `berry` do), so when rebranding the accent on top of a preset, also override `--color-link-fg` / `--color-link-fg-hover`. Any design token can be overridden — see the generated `@eocrm/design-tokens` Sass contract for the full CSS custom-property set. Contributors change shared values only in `packages/design-tokens/src/tokens.json`; `src/styles/tokens.scss` remains the stable consumer entry point.
+`tokens` apply in light **and** dark; `darkTokens` refine the dark scope only. They're emitted as a single declarative `<style>` that layers over the [dark theme](theming.md#dark-theme) correctly, and they win over a `data-accent` preset's token blocks. One exception to "override the accent and everything follows": a preset may set the link colour apart from its accent (`tealpine`, `indigo` and `berry` do), so when rebranding the accent on top of a preset, also override `--color-link-fg` / `--color-link-fg-hover`. Any design token can be overridden — see the generated `@eocrm/design-tokens` Sass contract for the full CSS custom-property set. Contributors change shared values only in `packages/design-tokens/src/tokens.json`; consumers import the compiled `@eocrm/design-system/styles/tokens.css`.
