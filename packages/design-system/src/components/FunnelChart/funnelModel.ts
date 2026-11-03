@@ -58,11 +58,6 @@ export function resolveStages(stages: readonly FunnelStage[]): ResolvedStage[] {
   }));
 }
 
-/** True when there are no stages or every sanitised value is 0. */
-export function isFunnelEmpty(stages: readonly FunnelStage[]): boolean {
-  return resolveStages(stages).every((s) => s.value === 0);
-}
-
 /** Horizontal while each stage gets at least `MIN_STAGE_WIDTH` px, otherwise vertical. */
 export function orientationFor(width: number, count: number): 'horizontal' | 'vertical' {
   return width / Math.max(count, 1) >= MIN_STAGE_WIDTH ? 'horizontal' : 'vertical';

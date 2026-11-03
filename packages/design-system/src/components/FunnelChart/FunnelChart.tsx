@@ -48,7 +48,8 @@ export interface FunnelChartProps extends Omit<HTMLAttributes<HTMLElement>, 'chi
   /** Formats a stage value for the footer, tooltip and data table (the app owns i18n and currency). Required. */
   formatValue: (n: number) => string;
   /**
-   * Silhouette between stages. Default `'eased'`.
+   * Silhouette between stages, in both layouts (vertical rows read as the same funnel turned on its
+   * side). Default `'eased'`.
    * - `'eased'` — each stage holds its height, then curves smoothly into the next one.
    * - `'sharp'` — straight trapezoids from one stage's height to the next.
    */
@@ -145,6 +146,16 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
         ? stageGeometry({ stages: resolved, width: size.width, height: size.height, shape })
         : null,
     [empty, vertical, resolved, size.width, size.height, shape],
+  );
+  // Vertical: the same outline in a 100-unit box per stage (flow x ∈ [100i, 100i+100], cross y ∈
+  // [0, 100]); each row's SVG views its slice with the axes swapped and stretches it to the row.
+  // MIN_THICKNESS (px in the horizontal strip) becomes 6% of the band track here.
+  const bands = useMemo(
+    () =>
+      !empty && vertical
+        ? stageGeometry({ stages: resolved, width: 100 * n, height: 100, shape })
+        : null,
+    [empty, vertical, resolved, n, shape],
   );
 
   const [active, setActive] = useState<number | null>(null);
@@ -265,17 +276,24 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
     return `${parts.join('. ')}.`;
   };
 
-  // One cell per stage (horizontal: footer column; vertical: a row with its band); a button when
+  // One cell per stage (horizontal: footer column; vertical: a row with its funnel slice); a button when
   // clickable. Spans, not divs, since the cell may be a <button>.
   const renderCell = (s: (typeof resolved)[number], i: number) => {
     const content = vertical ? (
       <>
-        <span className={styles.bandTrack}>
-          <span
-            className={styles.band}
-            data-band=""
-            style={{ inlineSize: `${s.heightRatio * 100}%` }}
-          />
+        <span className={styles.bandTrack} data-band="">
+          {bands && (
+            <svg
+              className={styles.svg}
+              viewBox={`0 ${100 * i} 100 100`}
+              preserveAspectRatio="none"
+              aria-hidden="true"
+              focusable="false"
+            >
+              {/* Swap x/y so the funnel flows top to bottom. */}
+              <path className={styles.shape} d={bands[i].d} transform="matrix(0 1 1 0 0 0)" />
+            </svg>
+          )}
         </span>
         <span className={styles.line}>
           <span className={styles.label}>{s.label}</span>

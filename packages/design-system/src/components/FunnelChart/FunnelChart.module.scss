@@ -128,8 +128,8 @@
   font-size: var(--funnel-chart-label-size);
 }
 
-// Vertical layout: the plot is a list of rows that scrolls as a last resort. `shape` has no
-// effect here; bands are rounded bars.
+// Vertical layout: the plot is a list of touching rows, each a slice of one funnel turned on its
+// side (same `shape`), with its text beside it; the rows scroll as a last resort.
 .root[data-orientation='vertical'] .plot {
   grid-template-rows: none;
   grid-auto-rows: min-content;
@@ -138,7 +138,9 @@
   // band widths stay proportional; the text column takes the widest row's text, wrapping when tight.
   grid-template-columns: minmax(var(--funnel-chart-row-track-min), 1fr) minmax(0, max-content);
   align-content: start;
-  gap: var(--funnel-chart-row-gap);
+
+  // No row gap: the slices join into one silhouette.
+  gap: 0 var(--funnel-chart-gap);
   overflow-y: auto;
 
   // Room for the stage buttons' focus rings, which the scroll container would clip.
@@ -151,32 +153,35 @@
   // stylelint-disable-next-line property-disallowed-list -- internal row spanning the plot's own columns (subgrid), not consumer layout
   grid-column: 1 / -1;
   grid-template-columns: subgrid;
-  align-items: center;
+  align-content: stretch;
+  align-items: stretch;
   justify-items: stretch;
-  gap: var(--space-2);
+  min-block-size: var(--funnel-chart-row-min-height);
   padding-inline: 0;
   text-align: start;
 }
 
+// The slice stretches to the row; size containment keeps the SVG's aspect ratio out of the row
+// height, which comes from the text (or the min height).
 .bandTrack {
-  display: flex;
-  justify-content: center;
-  block-size: var(--funnel-chart-row-band-height);
-}
-
-.band {
   display: block;
-  min-inline-size: var(--funnel-chart-row-band-min);
-  border-radius: var(--radius-full);
-  background: var(--chart-series-color, currentColor);
+  contain: size;
+
+  .svg {
+    inline-size: 100%;
+    block-size: 100%;
+  }
 }
 
+// Breathing room lives inside the text cell, so the band slices still touch.
 .line {
   display: flex;
   flex-wrap: wrap;
+  align-content: center;
   align-items: baseline;
   column-gap: var(--space-2);
   min-inline-size: 0;
+  padding-block: var(--space-1);
 }
 
 .root[data-orientation='vertical'] .value {

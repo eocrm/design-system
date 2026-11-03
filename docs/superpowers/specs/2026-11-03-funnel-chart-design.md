@@ -40,7 +40,7 @@ In the vertical layout:
 
 - stages stack top to bottom;
 - each stage's width is proportional to its value, centred;
-- **compact rows** (decided by the user): a thin band, with the label, value and pill on one line beside it, sized to fit the available height;
+- **connected funnel** (revised by the user, replacing thin separate bands): the horizontal funnel turned on its side, following `shape`, one touching row per stage, with the label, value and pill on one line beside it;
 - if the compact rows still don't fit the height, the chart **scrolls inside its own plot area**. `DashboardWidget`'s non-scrolling body contract is unchanged. This is a last resort for unusually small cells.
 
 Nothing is hidden or truncated away at narrow widths. Every label stays readable.

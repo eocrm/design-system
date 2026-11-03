@@ -1,7 +1,6 @@
 import {
   MIN_THICKNESS,
   formatPercent,
-  isFunnelEmpty,
   orientationFor,
   resolveStages,
   stageGeometry,
@@ -52,14 +51,6 @@ describe('resolveStages', () => {
     const r = resolveStages([st(10), st(20)]);
     expect(r.map((s) => s.heightRatio)).toEqual([0.5, 1]);
     expect(r[1].stepRatio).toBe(2);
-  });
-});
-
-describe('isFunnelEmpty', () => {
-  it('is true for no stages or all zeros only', () => {
-    expect(isFunnelEmpty([])).toBe(true);
-    expect(isFunnelEmpty([st(0), st(0)])).toBe(true);
-    expect(isFunnelEmpty(L)).toBe(false);
   });
 });
 

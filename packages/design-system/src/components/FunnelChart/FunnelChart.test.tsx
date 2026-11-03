@@ -411,14 +411,14 @@ describe('FunnelChart', () => {
     const NARROW = 5 * 96 - 1;
     const six = [...stages, { key: 'x', label: 'Extra', value: 10 }];
 
-    it('switches below the min width per stage: one row per stage, no shapes', () => {
+    it('switches below the min width per stage: one row per stage, each with its own band', () => {
       const layout = stubLayout(NARROW, 300);
       renderFunnel();
       layout.fire();
       expect(screen.getByRole('figure')).toHaveAttribute('data-orientation', 'vertical');
-      expect(document.querySelector('svg')).toBeNull();
       const rows = document.querySelectorAll('[data-stage-cell]');
       expect(rows).toHaveLength(5);
+      rows.forEach((row) => expect(row.querySelectorAll('[data-band] svg path')).toHaveLength(1));
       const won = rows[4];
       expect(won).toHaveTextContent('Won');
       expect(won).toHaveTextContent('50');
@@ -441,12 +441,34 @@ describe('FunnelChart', () => {
       expect(fig).toHaveAttribute('data-orientation', 'vertical');
     });
 
-    it('band width is the stage height ratio', () => {
+    const bandPaths = () =>
+      [...document.querySelectorAll('[data-stage-cell] [data-band] path')].map(
+        (p) => p.getAttribute('d')!,
+      );
+
+    it('rows are slices of one connected funnel, flowing top to bottom', () => {
       const layout = stubLayout(NARROW, 300);
       renderFunnel();
       layout.fire();
-      const band = document.querySelector<HTMLElement>('[data-stage-cell="q"] [data-band]')!;
-      expect(band.style.inlineSize).toBe('50%');
+      const bands = document.querySelectorAll('[data-stage-cell] [data-band] svg');
+      bands.forEach((svg, i) => {
+        expect(svg).toHaveAttribute('viewBox', `0 ${100 * i} 100 100`);
+        expect(svg).toHaveAttribute('preserveAspectRatio', 'none');
+      });
+      const d = bandPaths();
+      expect(d).toHaveLength(5);
+      // Eased by default: every stage but the last curves into the next one's width.
+      d.slice(0, -1).forEach((p) => expect(p).toContain('C'));
+      expect(d.at(-1)).not.toContain('C');
+    });
+
+    it('follows shape="sharp": straight trapezoids', () => {
+      const layout = stubLayout(NARROW, 300);
+      renderFunnel({ shape: 'sharp' });
+      layout.fire();
+      const d = bandPaths();
+      expect(d).toHaveLength(5);
+      d.forEach((p) => expect(p).not.toContain('C'));
     });
 
     it('read-only: ArrowDown/ArrowUp inspect stages; Escape dismisses', async () => {

@@ -70,7 +70,7 @@ export function FunnelChartDemo() {
 
       <Example
         title="Sharp shape"
-        description="Straight trapezoids between stages (horizontal layout only)."
+        description="Straight trapezoids between stages, in both the horizontal and the narrow vertical layout."
         code={`<FunnelChart label="Sales pipeline" stages={stages} formatValue={formatCount} shape="sharp" />`}
       >
         <Cell title="Sales pipeline">

@@ -18,14 +18,11 @@
   --funnel-chart-ring: var(--chart-ring);
   --funnel-chart-transition: var(--transition-slow);
 
-  // Vertical layout (narrow containers): compact rows of a thin band over one text line.
-  --funnel-chart-row-band-height: var(--space-2);
-  --funnel-chart-row-gap: var(--space-2);
+  // Vertical layout (narrow containers): rows of a funnel slice beside one text line. The min
+  // height keeps a short row's taper readable.
+  --funnel-chart-row-min-height: var(--space-10);
 
   // Narrowest the band track gets beside the text line, so the band never vanishes.
   --funnel-chart-row-track-min: var(--space-16);
-
-  // Matches MIN_THICKNESS (6px) in funnelModel.ts, so zero-value bands stay visible.
-  --funnel-chart-row-band-min: calc(var(--space-1) + var(--space-05));
   --funnel-chart-row-pill-bg: var(--color-bg-muted);
 }

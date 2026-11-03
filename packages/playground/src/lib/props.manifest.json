@@ -3212,7 +3212,7 @@
           "type": "FunnelShape",
           "required": false,
           "default": "",
-          "description": "Silhouette between stages. Default `'eased'`.\n- `'eased'` — each stage holds its height, then curves smoothly into the next one.\n- `'sharp'` — straight trapezoids from one stage's height to the next."
+          "description": "Silhouette between stages, in both layouts (vertical rows read as the same funnel turned on its\nside). Default `'eased'`.\n- `'eased'` — each stage holds its height, then curves smoothly into the next one.\n- `'sharp'` — straight trapezoids from one stage's height to the next."
         },
         {
           "name": "onStageClick",
