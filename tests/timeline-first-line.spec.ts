@@ -26,6 +26,8 @@ const measure = (page: import('@playwright/test').Page, id: string) =>
         lines: new Set([...rects].map((r) => Math.round(r.top))).size,
         // last item hides its connector (display:none → zero rect)
         connectorGap: getComputedStyle(connector).display === 'none' ? 0 : conn.top - node.bottom,
+        nodeTop: node.top,
+        connectorBottom: conn.bottom,
       };
     }),
   );
@@ -35,10 +37,16 @@ for (const id of ['timeline-default', 'timeline-compact', 'timeline-first-line']
     await page.goto('/components/timeline');
     const items = await measure(page, id);
     expect(items.length).toBeGreaterThan(1);
-    for (const it of items) {
+    for (const [k, it] of items.entries()) {
       expect(Math.abs(it.offset), `item ${it.i} node-vs-line-1 centre`).toBeLessThanOrEqual(1);
       // the connector meets the node: starts at its bottom, no gap and no overlap
       expect(Math.abs(it.connectorGap), `item ${it.i} connector gap`).toBeLessThanOrEqual(1);
+      // ...and the previous item's connector runs down to this node: no gap above a shifted node
+      if (k > 0)
+        expect(
+          Math.abs(it.nodeTop - items[k - 1].connectorBottom),
+          `item ${it.i} gap above node`,
+        ).toBeLessThanOrEqual(1);
     }
     if (id === 'timeline-first-line') expect(items[1].lines).toBeGreaterThan(1); // the wrapping header
   });

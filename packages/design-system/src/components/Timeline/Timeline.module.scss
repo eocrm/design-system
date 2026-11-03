@@ -36,7 +36,7 @@
   justify-content: center;
 
   &::before {
-    content: '\200b';
+    content: '\200b' / '';
     font-size: var(--timeline-first-line-font-size);
     line-height: var(--timeline-first-line-height);
   }
