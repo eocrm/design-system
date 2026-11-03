@@ -108,14 +108,15 @@ describe('stageGeometry', () => {
   });
 
   it('keeps zero-value stages at least MIN_THICKNESS tall', () => {
-    const [s] = stageGeometry({
-      stages: resolveStages([st(0), st(10)]),
+    // Last stage has no taper, so its extent is its own thickness.
+    const [, s] = stageGeometry({
+      stages: resolveStages([st(10), st(0)]),
       width: 200,
       height: 100,
       shape: 'sharp',
     });
     const ys = ysOf(s.d);
-    expect(Math.max(...ys) - Math.min(...ys)).toBeGreaterThanOrEqual(MIN_THICKNESS);
+    expect(Math.max(...ys) - Math.min(...ys)).toBe(MIN_THICKNESS);
   });
 });
 
