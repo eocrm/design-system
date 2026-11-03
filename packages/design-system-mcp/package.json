@@ -1,0 +1,36 @@
+{
+  "name": "@eocrm/design-system-mcp",
+  "version": "0.0.0",
+  "private": false,
+  "description": "MCP server that serves a project's pinned @eocrm/design-system docs to AI agents",
+  "license": "Apache-2.0",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/eocrm/design-system.git",
+    "directory": "packages/design-system-mcp"
+  },
+  "bin": {
+    "design-system-mcp": "src/cli.js"
+  },
+  "files": [
+    "src",
+    "skill",
+    "snapshot",
+    "README.md"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.32.2",
+    "semver": "7.8.6",
+    "zod": "4.6.7"
+  }
+}

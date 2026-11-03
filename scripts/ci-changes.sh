@@ -9,7 +9,7 @@ set -euo pipefail
 
 # Keys go to $GITHUB_OUTPUT, or stdout on a dry run; the decision log is stderr.
 emit() { if [ -n "${GITHUB_OUTPUT:-}" ]; then echo "$1" >> "$GITHUB_OUTPUT"; else echo "$1"; fi; }
-keys=(ds tokens compose playground package tooling)
+keys=(ds tokens compose playground package tooling mcp)
 
 if [ "${1:-}" = "--files" ]; then
   files=$(cat "$2")
@@ -51,6 +51,7 @@ for line in \
   "compose=$(has '^packages/design-tokens/')" \
   "playground=$(has '^packages/(design-system|design-tokens|playground)/')" \
   "package=$(has "$LIB|^scripts/verify-package-contents\.mjs\$")" \
-  "tooling=$(has "$TOOLING")"; do
+  "tooling=$(has "$TOOLING")" \
+  "mcp=$(has '^packages/design-system-mcp/')"; do
   emit "$line"; echo "$line" >&2
 done

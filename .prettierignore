@@ -33,3 +33,7 @@ package-lock.json
 # PARSED objects, which is blind to formatting; the byte comparison beside it
 # is what actually catches this.
 packages/design-system/src/components.manifest.json
+
+# Local git worktrees (other sessions/branches) — not part of this checkout
+.claude/worktrees/
+.worktrees/
