@@ -4,6 +4,7 @@ import { I18nProvider } from '../../i18n';
 import { ColumnVisibilityTrigger } from './ColumnVisibilityTrigger';
 import { useDataTable } from './useDataTable';
 import type { ColumnDef } from './types';
+import { ru } from '../../i18n/ru';
 
 type Row = { id: string };
 
@@ -98,7 +99,7 @@ describe('<ColumnVisibilityTrigger>', () => {
 
   it('renders the Russian default label under locale="ru"', () => {
     render(
-      <I18nProvider locale="ru">
+      <I18nProvider locale="ru" messages={ru}>
         <Harness />
       </I18nProvider>,
     );

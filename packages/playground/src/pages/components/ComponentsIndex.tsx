@@ -342,6 +342,13 @@ const items: { to: string; name: string; description: string; preview: React.Rea
     preview: SCHEMATICS['Chart'],
   },
   {
+    to: '/components/funnel-chart',
+    name: 'FunnelChart',
+    description:
+      'Stage funnel for pipeline or campaign conversion: height shows drop-off, a pill shows step conversion, optional stage click.',
+    preview: SCHEMATICS['FunnelChart'],
+  },
+  {
     to: '/components/sparkline',
     name: 'Sparkline',
     description:

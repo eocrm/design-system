@@ -24,7 +24,7 @@ Accent: blue by default; `<html data-accent="…">` switches to `tealpine`, `ind
 
 ## Localization (i18n)
 
-Every user-facing string the library renders flows through `I18nProvider` (`'en'` default, `'ru'`); pair it with `LocaleProvider` for `Intl` dates. There are NO `labels` / `cancelLabel` / `searchPlaceholder` props on any component. Overrides, adding a string, drag-and-drop announcements: see [docs/i18n.md](docs/i18n.md).
+Every user-facing string the library renders flows through `I18nProvider` (English built in; other locales via `messages`, e.g. `<I18nProvider locale="ru" messages={ru}>`); pair it with `LocaleProvider` for `Intl` dates. There are NO `labels` / `cancelLabel` / `searchPlaceholder` props on any component. Overrides, adding a string, drag-and-drop announcements: see [docs/i18n.md](docs/i18n.md).
 
 ---
 
@@ -89,6 +89,7 @@ Each `<Name>` below is documented in `docs/components/<Name>.md`.
 - `StatTile` — one KPI tile (label, value, trend, footnote, icon, sparkline, quota `progress`) inside a StatGroup (`filled` or `card` surface)
 - `Sparkline` — compact static line / area / bar trend for KPI cards (StatTile slot, kpi DashboardWidget child); no axes, summary in the accessible name
 - `Chart` — line / bar / stacked bar / area time-series chart for a chart DashboardWidget (smoothed lines, static markers, legend, tooltip, keyboard, data table, empty state)
+- `FunnelChart` — stage funnel for pipeline / campaign conversion: height = drop-off, pill = step conversion, one-hue ramp with a hero first stage; optional stage click drill-through, vertical slices plus a table when narrow
 - `TreeView` — lazily loaded hierarchy (WAI-ARIA tree) as a file-explorer list or a top-down org chart, with loading / error-retry / load-more rows
 - `LiquidEditor` — Liquid template editor
 - `RichTextEditor` — controlled rich-text editor (contentEditable)

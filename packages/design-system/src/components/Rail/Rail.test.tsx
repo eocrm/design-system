@@ -7,6 +7,7 @@ import { I18nProvider } from '../../i18n/I18nProvider';
 import { stubMatchMedia } from '../_internal/matchMediaStub.testutil';
 import { Rail, useRail } from './Rail';
 import { markTourTarget } from '../_internal/overlay/tourHold.testutil';
+import { ru } from '../../i18n/ru';
 
 describe('Rail', () => {
   it('renders a <nav> landmark with the default aria-label', () => {
@@ -84,7 +85,7 @@ describe('Rail', () => {
 
   it('uses ru locale for the default aria-label when I18nProvider locale="ru"', () => {
     render(
-      <I18nProvider locale="ru">
+      <I18nProvider locale="ru" messages={ru}>
         <Rail>
           <Rail.Section title="Main">
             <Rail.Item href="/">Dashboard</Rail.Item>
@@ -1043,7 +1044,7 @@ describe('Rail — linkable Group (#377)', () => {
 
   it('uses the ru locale for the chevron name', () => {
     render(
-      <I18nProvider locale="ru">
+      <I18nProvider locale="ru" messages={ru}>
         <Rail>
           <Rail.Section title="Main">
             <Rail.Group as="a" href="#/deals" icon={<span aria-hidden />} label="Deals">

@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { I18nProvider } from '../../i18n/I18nProvider';
 import { Field } from '../Field';
 import { RelativeDateInput, type RelativeDateInputProps } from './RelativeDateInput';
+import { ru } from '../../i18n/ru';
 
 type Props = Omit<RelativeDateInputProps, 'value' | 'onChange'> & {
   initial: string | null;
@@ -184,7 +185,7 @@ describe('RelativeDateInput — labels', () => {
     ['this:month:to_date', 'С начала месяца'],
   ])('ru: %s reads %j (gender agreement)', (value, label) => {
     render(
-      <I18nProvider locale="ru">
+      <I18nProvider locale="ru" messages={ru}>
         <Host mode="range" initial={value} />
       </I18nProvider>,
     );
@@ -203,7 +204,7 @@ describe('RelativeDateInput — labels', () => {
     ['21', 'день'],
   ])('ru units pluralise by the amount: %s %s', (n, word) => {
     render(
-      <I18nProvider locale="ru">
+      <I18nProvider locale="ru" messages={ru}>
         <Host mode="point" initial={`today+${n}d`} />
       </I18nProvider>,
     );
@@ -443,7 +444,7 @@ describe('RelativeDateInput — misc', () => {
 
   it('translates labels in ru', () => {
     render(
-      <I18nProvider locale="ru">
+      <I18nProvider locale="ru" messages={ru}>
         <Host mode="point" initial="today+7d" />
       </I18nProvider>,
     );

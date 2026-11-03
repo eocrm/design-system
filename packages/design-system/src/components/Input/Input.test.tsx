@@ -4,6 +4,7 @@ import { Profiler, createRef, useState, type FormEvent } from 'react';
 import { Input } from './Input';
 import { Modal } from '../Modal';
 import { I18nProvider } from '../../i18n/I18nProvider';
+import { ru } from '../../i18n/ru';
 
 describe('Input', () => {
   it('round-trips a controlled value via onChange', async () => {
@@ -358,7 +359,7 @@ describe('Input suggestions', () => {
   it('names the listbox in the active locale', async () => {
     const user = userEvent.setup();
     render(
-      <I18nProvider locale="ru">
+      <I18nProvider locale="ru" messages={ru}>
         <Uncontrolled />
       </I18nProvider>,
     );

@@ -3,5 +3,12 @@
   "compilerOptions": {
     "types": ["vitest/globals"]
   },
-  "include": ["src", "types", "vitest.config.ts", "vitest.setup.ts"]
+  "include": [
+    "src",
+    "types",
+    "vitest.config.ts",
+    "vitest.setup.ts",
+    "vite.lib.config.ts",
+    "vitest.dist.config.ts"
+  ]
 }

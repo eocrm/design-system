@@ -102,6 +102,7 @@ import { Chart, DashboardWidget, ErrorState } from '@eocrm/design-system';
 - ❌ One headline number → `DashboardWidget variant="kpi"` or `StatGroup`.
 - ❌ More than 8 groups at once → fold the tail into an "Other" series in the app (the DS can't know whether your metric is additive).
 - ❌ Two measures with different units → two charts. There is no dual axis.
+- ❌ Stage conversion (pipeline / campaign) → `FunnelChart`.
 - ❌ Non-time categorical comparisons that need sorting, pies, scatter or zoom — not supported.
 
 #### Anti-patterns

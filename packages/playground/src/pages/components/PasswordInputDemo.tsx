@@ -5,6 +5,7 @@ import {
   PasswordInput,
   PasswordStrengthMeter,
   Stack,
+  ru,
 } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
@@ -262,19 +263,19 @@ export function Demo() {
 
       <Example
         title="Localized labels (ru-RU)"
-        description="Wrap in <I18nProvider locale='ru'> to translate all aria-labels and live-region strings."
-        code={`import { I18nProvider, PasswordInput } from '@eocrm/design-system';
+        description="Wrap in <I18nProvider locale='ru' messages={ru}> to translate all aria-labels and live-region strings."
+        code={`import { I18nProvider, PasswordInput, ru } from '@eocrm/design-system';
 
 export function Demo() {
   return (
-    <I18nProvider locale="ru">
+    <I18nProvider locale="ru" messages={ru}>
       <PasswordInput capsLockWarning wrongLayoutWarning placeholder="Пароль" />
     </I18nProvider>
   );
 }`}
       >
         <InputExample>
-          <I18nProvider locale="ru">
+          <I18nProvider locale="ru" messages={ru}>
             <PasswordInput capsLockWarning wrongLayoutWarning placeholder="Пароль" />
           </I18nProvider>
         </InputExample>

@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import { I18nProvider } from '../../i18n/I18nProvider';
 import { createRef } from 'react';
 import { Progress, type ProgressSize, type ProgressTone } from './Progress';
+import { ru } from '../../i18n/ru';
 
 describe('Progress', () => {
   it('renders with role="progressbar"', () => {
@@ -151,7 +152,7 @@ describe('indeterminate aria-valuetext goes through the provider (#503)', () => 
     // thing a screen reader has — and it was hardcoded English in both
     // progress components, so a Russian consumer heard "Loading…".
     render(
-      <I18nProvider locale="ru">
+      <I18nProvider locale="ru" messages={ru}>
         <Progress />
       </I18nProvider>,
     );
@@ -160,7 +161,7 @@ describe('indeterminate aria-valuetext goes through the provider (#503)', () => 
 
   it('still prefers a consumer aria-label over the fallback', () => {
     render(
-      <I18nProvider locale="ru">
+      <I18nProvider locale="ru" messages={ru}>
         <Progress aria-label="Импорт" />
       </I18nProvider>,
     );

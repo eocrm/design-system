@@ -28,18 +28,20 @@ export async function setReleaseVersion(version, { root = repositoryRoot } = {})
   requireString(tokensPackage, 'version', paths.tokensPackage);
   requireString(designSystemPackage, 'version', paths.designSystemPackage);
   if (
-    !designSystemPackage.dependencies ||
-    typeof designSystemPackage.dependencies !== 'object' ||
-    typeof designSystemPackage.dependencies['@eocrm/design-tokens'] !== 'string'
+    !designSystemPackage.devDependencies ||
+    typeof designSystemPackage.devDependencies !== 'object' ||
+    typeof designSystemPackage.devDependencies['@eocrm/design-tokens'] !== 'string'
   ) {
-    throw new Error(`${paths.designSystemPackage}: missing dependencies["@eocrm/design-tokens"]`);
+    throw new Error(
+      `${paths.designSystemPackage}: missing devDependencies["@eocrm/design-tokens"]`,
+    );
   }
   requireString(tokenSource, 'contractVersion', paths.tokenSource);
   requireString(manifest, 'contractVersion', paths.manifest);
 
   tokensPackage.version = version;
   designSystemPackage.version = version;
-  designSystemPackage.dependencies['@eocrm/design-tokens'] = version;
+  designSystemPackage.devDependencies['@eocrm/design-tokens'] = version;
   tokenSource.contractVersion = version;
 
   await Promise.all([

@@ -1,4 +1,4 @@
-import { defineConfig, type Plugin } from 'vite';
+import { defaultClientConditions, defineConfig, type Plugin } from 'vite';
 import react from '@vitejs/plugin-react';
 import path from 'node:path';
 import { writeFileSync } from 'node:fs';
@@ -36,6 +36,8 @@ export default defineConfig({
   base,
   plugins: [propsManifestPlugin(), react()],
   resolve: {
+    // Resolve the library from src/ (HMR, no build step); consumers get dist/.
+    conditions: ['@eocrm/source', ...defaultClientConditions],
     alias: {
       // Sibling-workspace alias used only by demo pages for `?raw` source-display
       // imports. Keeps the library's `exports` field clean of internal subpaths.

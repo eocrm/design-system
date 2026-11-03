@@ -87,6 +87,18 @@ jobs:
       - name: Test
         run: npm test -w @eocrm/design-system
 
+      - name: Build dist
+        run: npm run build -w @eocrm/design-system
+
+      - name: Test dist
+        run: npm run test:dist -w @eocrm/design-system
+
+      - name: Bundle size budgets
+        run: npm run size -w @eocrm/design-system
+
+      - name: Size-guard unit test
+        run: node --test packages/design-system/scripts/size-guard.test.mjs
+
   tokens:
     needs: changes
     if: needs.changes.outputs.tokens == 'true'

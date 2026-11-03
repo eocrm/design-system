@@ -106,6 +106,7 @@ export type ComponentName =
   | 'DashboardWidget'
   | 'StatGroup'
   | 'Chart'
+  | 'FunnelChart'
   | 'Sparkline'
   | 'TreeView'
   | 'PillMenu'
