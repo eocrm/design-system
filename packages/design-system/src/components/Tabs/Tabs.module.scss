@@ -215,7 +215,7 @@
     justify-content: space-between; // .main left, .trailing pinned right
     padding: var(--tabs-vertical-tab-padding-y) var(--tabs-vertical-tab-padding-x);
     border-radius: var(--tabs-vertical-tab-radius);
-    text-align: left;
+    text-align: start;
     transition:
       color var(--transition-fast),
       background var(--transition-fast);
@@ -237,7 +237,7 @@
     justify-content: flex-start;
     padding: var(--tabs-vertical-tab-padding-y) var(--tabs-vertical-tab-padding-x);
     border-radius: var(--tabs-vertical-tab-radius);
-    text-align: left;
+    text-align: start;
     transition:
       color var(--transition-fast),
       background var(--transition-fast);

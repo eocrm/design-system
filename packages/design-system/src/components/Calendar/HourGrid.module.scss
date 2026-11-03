@@ -61,7 +61,7 @@
   padding: var(--calendar-hour-label-padding);
   font-size: var(--calendar-hour-label-font-size);
   color: var(--calendar-hour-label-fg);
-  text-align: right;
+  text-align: end;
   border-right: var(--border-width) solid var(--calendar-border-color);
   border-bottom: var(--border-width) solid var(--calendar-border-color);
   background: var(--calendar-hour-label-bg);

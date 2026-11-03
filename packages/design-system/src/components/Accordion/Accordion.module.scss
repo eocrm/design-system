@@ -110,7 +110,7 @@
   font-weight: inherit;
   color: var(--accordion-trigger-fg);
   cursor: pointer;
-  text-align: left;
+  text-align: start;
 
   // Hover background lives on `.header` (the full row) so it spans full width even
   // when an actions slot shortens this button. The trigger stays transparent.

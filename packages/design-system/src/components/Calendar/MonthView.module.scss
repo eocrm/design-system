@@ -25,7 +25,7 @@
   color: var(--calendar-weekday-fg);
   text-transform: uppercase;
   letter-spacing: var(--calendar-weekday-letter-spacing);
-  text-align: left;
+  text-align: start;
 }
 
 // No row-gap on `.week` — the dayColumn background spans implicit rows

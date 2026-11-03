@@ -1781,3 +1781,38 @@ describe("a stylesheet does not read another component's tokens without @use-ing
     ).toEqual([]);
   });
 });
+
+/**
+ * RTL: component SCSS aligns text with LOGICAL `start` / `end`, never the
+ * physical `left` / `right` that stays put when `dir="rtl"` flips the line.
+ * Every physical use left is named here WITH ITS REASON, and the staleness
+ * check makes a waiver that stops matching a failure.
+ */
+describe('component SCSS uses logical text-align (RTL)', () => {
+  const PHYSICAL_TEXT_ALIGN_WAIVERS: Record<string, string> = {
+    // `align="left" | "right"` are Text's explicit physical opt-ins, documented as wrong in RTL.
+    'Text/Text.module.scss': 'explicit physical align props',
+    // A figure the author aligned "right" stays on the right in any direction, like any editor.
+    'RichText/RichTextAttachment.module.scss': 'author-chosen physical image alignment',
+    // Line numbers for Liquid template code, which is always LTR.
+    'LiquidEditor/LiquidEditor.module.scss': 'gutter of always-LTR code',
+  };
+  const physical = /text-align:\s*(left|right)\b/;
+  const scss = allFilesUnder(componentsDir).filter((f) => f.label.endsWith('.scss'));
+
+  it('has no physical text-align outside the waivers', () => {
+    const offenders = scss
+      .filter((f) => !(f.label in PHYSICAL_TEXT_ALIGN_WAIVERS))
+      .filter((f) => physical.test(stripScssComments(f.code)))
+      .map((f) => f.label);
+    expect(offenders).toEqual([]);
+  });
+
+  it('every waiver still matches a physical text-align', () => {
+    const stale = Object.keys(PHYSICAL_TEXT_ALIGN_WAIVERS).filter((label) => {
+      const file = scss.find((f) => f.label === label);
+      return !file || !physical.test(stripScssComments(file.code));
+    });
+    expect(stale).toEqual([]);
+  });
+});
