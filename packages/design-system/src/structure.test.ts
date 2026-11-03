@@ -1785,34 +1785,52 @@ describe("a stylesheet does not read another component's tokens without @use-ing
 /**
  * RTL: component SCSS aligns text with LOGICAL `start` / `end`, never the
  * physical `left` / `right` that stays put when `dir="rtl"` flips the line.
- * Every physical use left is named here WITH ITS REASON, and the staleness
+ * Every physical use left is named here BY RULE, WITH ITS REASON, so a new
+ * physical declaration elsewhere in a waived file still fails; the staleness
  * check makes a waiver that stops matching a failure.
  */
 describe('component SCSS uses logical text-align (RTL)', () => {
-  const PHYSICAL_TEXT_ALIGN_WAIVERS: Record<string, string> = {
-    // `align="left" | "right"` are Text's explicit physical opt-ins, documented as wrong in RTL.
-    'Text/Text.module.scss': 'explicit physical align props',
-    // A figure the author aligned "right" stays on the right in any direction, like any editor.
-    'RichText/RichTextAttachment.module.scss': 'author-chosen physical image alignment',
-    // Line numbers for Liquid template code, which is always LTR.
-    'LiquidEditor/LiquidEditor.module.scss': 'gutter of always-LTR code',
-  };
-  const physical = /text-align:\s*(left|right)\b/;
-  const scss = allFilesUnder(componentsDir).filter((f) => f.label.endsWith('.scss'));
+  const PHYSICAL_TEXT_ALIGN_WAIVERS: { file: string; selector: string; reason: string }[] = [
+    {
+      file: 'Text/Text.module.scss',
+      selector: '.alignLeft',
+      reason: "Text's explicit physical align='left' prop, documented as wrong in RTL",
+    },
+    {
+      file: 'Text/Text.module.scss',
+      selector: '.alignRight',
+      reason: "Text's explicit physical align='right' prop, documented as wrong in RTL",
+    },
+    {
+      file: 'RichText/RichTextAttachment.module.scss',
+      selector: "figure[data-attachment][data-align='right']",
+      reason: 'the author chose a physical side for the image, as in any editor',
+    },
+  ];
+  const physical = /text-align:\s*(-webkit-)?(left|right)\b/i;
+  const physicalRules = allFilesUnder(componentsDir)
+    .filter((f) => f.label.endsWith('.scss'))
+    .flatMap((f) =>
+      scssRules(stripScssComments(f.code))
+        .filter(([, body]) => physical.test(body))
+        .map(([selector]) => ({ file: f.label, selector })),
+    );
+  const waived = (r: { file: string; selector: string }) =>
+    PHYSICAL_TEXT_ALIGN_WAIVERS.some((w) => w.file === r.file && w.selector === r.selector);
 
-  it('has no physical text-align outside the waivers', () => {
-    const offenders = scss
-      .filter((f) => !(f.label in PHYSICAL_TEXT_ALIGN_WAIVERS))
-      .filter((f) => physical.test(stripScssComments(f.code)))
-      .map((f) => f.label);
-    expect(offenders).toEqual([]);
+  it('the scan finds a physical text-align when one is present', () => {
+    const probe = scssRules(stripScssComments('.a { color: red; }\n.b { TEXT-ALIGN:left; }'));
+    expect(probe.filter(([, body]) => physical.test(body)).map(([sel]) => sel)).toEqual(['.b']);
   });
 
-  it('every waiver still matches a physical text-align', () => {
-    const stale = Object.keys(PHYSICAL_TEXT_ALIGN_WAIVERS).filter((label) => {
-      const file = scss.find((f) => f.label === label);
-      return !file || !physical.test(stripScssComments(file.code));
-    });
+  it('has no physical text-align outside the waivers', () => {
+    expect(physicalRules.filter((r) => !waived(r))).toEqual([]);
+  });
+
+  it('every waiver still matches a physical text-align rule', () => {
+    const stale = PHYSICAL_TEXT_ALIGN_WAIVERS.filter(
+      (w) => !physicalRules.some((r) => r.file === w.file && r.selector === w.selector),
+    );
     expect(stale).toEqual([]);
   });
 });
