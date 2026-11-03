@@ -24,7 +24,7 @@ Accent: blue by default; `<html data-accent="…">` switches to `tealpine`, `ind
 
 ## Localization (i18n)
 
-Every user-facing string the library renders flows through `I18nProvider` (`'en'` default, `'ru'`); pair it with `LocaleProvider` for `Intl` dates. There are NO `labels` / `cancelLabel` / `searchPlaceholder` props on any component. Overrides, adding a string, drag-and-drop announcements: see [docs/i18n.md](docs/i18n.md).
+Every user-facing string the library renders flows through `I18nProvider` (English built in; other locales via `messages`, e.g. `<I18nProvider locale="ru" messages={ru}>`); pair it with `LocaleProvider` for `Intl` dates. There are NO `labels` / `cancelLabel` / `searchPlaceholder` props on any component. Overrides, adding a string, drag-and-drop announcements: see [docs/i18n.md](docs/i18n.md).
 
 ---
 

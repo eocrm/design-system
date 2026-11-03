@@ -6,6 +6,7 @@ import { render, screen } from '@testing-library/react';
 import { createRef } from 'react';
 import { I18nProvider } from '../../i18n/I18nProvider';
 import { ChatBubble } from './ChatBubble';
+import { ru } from '../../i18n/ru';
 
 const body = (root: HTMLElement) => root.querySelector<HTMLElement>('[class*="body"]')!;
 
@@ -51,7 +52,7 @@ describe('ChatBubble', () => {
 
   it('translates the label (ru)', () => {
     render(
-      <I18nProvider locale="ru">
+      <I18nProvider locale="ru" messages={ru}>
         <ChatBubble from="member">привет</ChatBubble>
       </I18nProvider>,
     );

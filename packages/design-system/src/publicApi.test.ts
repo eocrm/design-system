@@ -18,7 +18,7 @@ const INTENTIONALLY_PRIVATE = new Set([
   'Sortable/SortableItemContext', // internal context shared by the compound parts
   'Sortable/SortableItemContextValue',
   // i18n internals; consumers use the providers/hooks
-  ...['LocaleContext', 'I18nContext', 'deepMerge', 'lookupKey', 'en', 'ru'].map((n) => `i18n/${n}`),
+  ...['LocaleContext', 'I18nContext', 'deepMerge', 'lookupKey', 'en'].map((n) => `i18n/${n}`),
 ]);
 // Util modules the barrel re-exports a named subset of: these names are deliberately NOT public.
 const PRIVATE_UTIL_NAMES: Record<string, string[]> = {

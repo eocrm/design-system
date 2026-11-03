@@ -6,6 +6,7 @@ import { compile } from 'sass';
 import { I18nProvider } from '../../i18n/I18nProvider';
 import { Link } from '../Link';
 import { PersonDisplay, type PersonDisplaySize } from './PersonDisplay';
+import { ru } from '../../i18n/ru';
 
 it('renders Avatar + Name + Description together', () => {
   render(
@@ -534,7 +535,7 @@ describe('PersonDisplay — AgentAvatar + OnBehalfOf (#717)', () => {
 
   it('ru prefix', () => {
     render(
-      <I18nProvider locale="ru">
+      <I18nProvider locale="ru" messages={ru}>
         <PersonDisplay>
           <PersonDisplay.Name>{AGENT}</PersonDisplay.Name>
           <PersonDisplay.OnBehalfOf>Ada Lovelace</PersonDisplay.OnBehalfOf>

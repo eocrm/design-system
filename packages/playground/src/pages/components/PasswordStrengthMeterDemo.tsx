@@ -5,6 +5,7 @@ import {
   PasswordStrengthMeter,
   Stack,
   type PasswordStrengthScore,
+  ru,
 } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
@@ -131,12 +132,12 @@ export function Demo() {
 
       <Example
         title="Localized labels (ru-RU)"
-        description="Wrap in <I18nProvider locale='ru'> to swap the labels. The default Russian translations come from the library; consumers may further override individual keys via `overrides`."
-        code={`import { I18nProvider, PasswordStrengthMeter, Stack } from '@eocrm/design-system';
+        description="Wrap in <I18nProvider locale='ru' messages={ru}> to swap the labels. The Russian catalog ships with the library (`import { ru }`); consumers may further override individual keys via `overrides`."
+        code={`import { I18nProvider, PasswordStrengthMeter, Stack, ru } from '@eocrm/design-system';
 
 export function Demo() {
   return (
-    <I18nProvider locale="ru">
+    <I18nProvider locale="ru" messages={ru}>
       <Stack gap="sm">
         <PasswordStrengthMeter value="" />
         <PasswordStrengthMeter value="abc" />
@@ -148,7 +149,7 @@ export function Demo() {
 }`}
       >
         <InputExample>
-          <I18nProvider locale="ru">
+          <I18nProvider locale="ru" messages={ru}>
             <Stack gap="sm">
               <PasswordStrengthMeter value="" />
               <PasswordStrengthMeter value="abc" />

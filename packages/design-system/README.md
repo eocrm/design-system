@@ -1,10 +1,10 @@
 # @eocrm/design-system
 
-React 19 design system for the EOCRM. Source-distributed (consumers' bundlers process `.tsx` and `.module.scss` directly — no compile step in this package).
+React 19 design system for the EOCRM. Ships compiled ESM (`dist/`: JavaScript, `.d.ts` types and plain CSS) — no Sass, TypeScript or transpile configuration needed in the consumer.
 
-Its web tokens are generated and versioned by `@eocrm/design-tokens`. Existing
-consumer imports remain unchanged: the design-system Sass entry points forward
-to the token package.
+Its web tokens are generated and versioned by `@eocrm/design-tokens`; the
+compiled token CSS is bundled into this package, so consumers install only
+`@eocrm/design-system`.
 
 Component contracts live in **[`docs/components/<Name>.md`](./docs/components)** (props table, anti-patterns). AI agents consuming this package should read **[AI-PRIMER.md](./AI-PRIMER.md)** first, ideally through the MCP server (see [AI agents](#ai-agents)).
 
@@ -16,10 +16,8 @@ Component contracts live in **[`docs/components/<Name>.md`](./docs/components)**
 
 ### 1. Registry
 
-`@eocrm/design-system` and `@eocrm/design-tokens` are public on npmjs, so no
-`.npmrc` or token is needed. If your `.npmrc` still maps `@eocrm` to another
-registry, remove that line — the design system pins `@eocrm/design-tokens` to its
-exact version, and both resolve from npmjs.
+`@eocrm/design-system` is public on npmjs, so no `.npmrc` or token is needed.
+If your `.npmrc` still maps `@eocrm` to another registry, remove that line.
 
 ### 2. Install
 
@@ -31,7 +29,7 @@ npm install @eocrm/design-system
 
 ```ts
 // Once, at the app's root (e.g. main.tsx):
-import '@eocrm/design-system/styles/global.scss';
+import '@eocrm/design-system/styles/global.css';
 
 // Anywhere:
 import {
@@ -49,15 +47,15 @@ import {
 
 ---
 
-## What `global.scss` does
+## What `global.css` does
 
-Importing `@eocrm/design-system/styles/global.scss` once at your app root applies three things:
+Importing `@eocrm/design-system/styles/global.css` once at your app root applies three things:
 
 1. **Tokens** — defines every `--color-*`, `--space-*`, `--radius-*`, `--font-*`, `--shadow-*` etc. on `:root`. Required.
 2. **Modern reset** — including `* { margin: 0 }`. **All default browser margins on every element are zeroed.** Headings, paragraphs, lists have no intrinsic vertical rhythm; space them via `Stack`/`Cluster` or with the parent's own margin in CSS. The document background uses `--document-background` (default `var(--color-bg-subtle)`) so route transitions between full-screen surfaces do not flash a different base color; override that token after the global import for a different application canvas. The reset also applies `scrollbar-width: thin` + a token-colored `scrollbar-color` to every element, so **every** scroll container — library components and your own — gets a thin themed scrollbar instead of the OS default. (One deliberate exception: a collapsed `<Rail>` hides its bar entirely, since a gutter is about a quarter of the 56px rail's inner width.) It's declared at specificity 0-0-0; opt a scroller out with its own `scrollbar-width: auto` / `scrollbar-color: auto`. Note that Chromium ignores `::-webkit-scrollbar` rules on any scroller where these standard properties are set — if you already style scrollbars that way, they'll stop applying.
 3. **Base typography** — `body` font + size, `h1`–`h4` sizes, link color. Global rules, not scoped.
 
-If you need only the tokens (you're providing your own reset), import `@eocrm/design-system/styles/tokens.scss` directly. Other available subpath imports: `./styles/reset.scss`, `./styles/typography.scss`, `./styles/mixins.scss`.
+If you need only the tokens (you're providing your own reset), import `@eocrm/design-system/styles/tokens.css` directly. Sass variables: `@eocrm/design-tokens`. `mixins.scss` was removed with no replacement.
 
 ---
 
@@ -80,7 +78,7 @@ The accent family defaults to blue. To switch the whole app to another accent, s
 | `ocean`       | Cyan-blue        | `EocrmOceanLightTokens` / `EocrmOceanDarkTokens`       |
 | `moss`        | Olive green      | `EocrmMossLightTokens` / `EocrmMossDarkTokens`         |
 
-Each accent swaps `--color-accent`, `-hover`, `-pressed`, `-fg`, `-bg-subtle`, `-subtle-bg` and `--ring-accent`, plus the default `Link` colour (`--color-link-fg` / `-hover`), in light, forced dark (`data-theme="dark"`) and OS dark. They ship in the existing `tokens.scss` / `dark.scss`, so there is no new import. `AppProvider`'s `tokens` / `darkTokens` overrides win over `data-accent` in every theme (see [docs/setup.md](docs/setup.md)). Info colours stay blue under any accent; DropdownMenu checked items, the OptionsPicker selected row and StagePath done states follow the accent. Chart colours (`--color-chart-series-1`…`8`, the Brand palette) keep the same eight hues but re-order so slot 1 matches the accent: blue and Slate lead with blue, Indigo and Grape with violet, Berry with magenta, Ocean and Teal pine with teal, Moss with green. The full orders are in [docs/components/Chart.md](docs/components/Chart.md); under Moss the first three slots separate less for deutan viewers, an accepted exception like the success-colour note below (so `Chart`'s first series and `FunnelChart`'s ramp follow the accent). In light theme, Teal pine's default `Link`s use a slightly brighter teal than the accent (`#007676`, AA on every grey surface) at medium weight (not inside headings, `<strong>` or `<th>`), because the accent alone sits too close to the navy body text to read as a link. Slate's default `Link`s are medium weight for the same reason. Indigo and Berry also set a slightly different link colour from their accent (`#4342c4`, `#a82c68`) to keep links at AA on every grey surface.
+Each accent swaps `--color-accent`, `-hover`, `-pressed`, `-fg`, `-bg-subtle`, `-subtle-bg` and `--ring-accent`, plus the default `Link` colour (`--color-link-fg` / `-hover`), in light, forced dark (`data-theme="dark"`) and OS dark. They ship in the existing `tokens.css` / `global.css`, so there is no new import. `AppProvider`'s `tokens` / `darkTokens` overrides win over `data-accent` in every theme (see [docs/setup.md](docs/setup.md)). Info colours stay blue under any accent; DropdownMenu checked items, the OptionsPicker selected row and StagePath done states follow the accent. Chart colours (`--color-chart-series-1`…`8`, the Brand palette) keep the same eight hues but re-order so slot 1 matches the accent, so `Chart`'s first series and `FunnelChart`'s ramp follow it: blue and Slate lead with blue, Indigo and Grape with violet, Berry with magenta, Ocean and Teal pine with teal, Moss with green. The full orders are in [docs/components/Chart.md](docs/components/Chart.md); under Moss the first three slots separate less for deutan viewers, an accepted exception like the success-colour note below. In light theme, Teal pine's default `Link`s use a slightly brighter teal than the accent (`#007676`, AA on every grey surface) at medium weight (not inside headings, `<strong>` or `<th>`), because the accent alone sits too close to the navy body text to read as a link. Slate's default `Link`s are medium weight for the same reason. Indigo and Berry also set a slightly different link colour from their accent (`#4342c4`, `#a82c68`) to keep links at AA on every grey surface.
 
 Compose: each accent's Light / Dark objects sit beside `EocrmLightTokens` / `EocrmDarkTokens`; only accent colours differ. The link colour and chart series tokens are web-only (Compose has no `Link` or `Chart`), so Compose links keep the accent colour.
 
@@ -92,29 +90,61 @@ There is deliberately no red, orange or yellow accent: a primary button in those
 
 ## Bundler notes
 
-The package ships **source files** (`.tsx`, `.module.scss`). Your bundler compiles them.
+The package ships **compiled ESM** (`dist/`) with `.d.ts` types and plain CSS. No Sass, TypeScript or transpile configuration is needed.
 
-- **Vite**: works out of the box.
-- **Next.js**: add `transpilePackages: ['@eocrm/design-system']` to `next.config.js`.
-- **Webpack 5**: ensure your TS/SCSS loaders don't `exclude: /node_modules/` for this package.
-- **Create React App (ejected)**: same as Webpack.
+- **CSS imports**: every component's JS chunk imports its own `.css`, so the bundler must handle CSS imports. Next.js, Vite, Rsbuild and CRA do out of the box; plain webpack 5 needs `css-loader` plus `style-loader` or `mini-css-extract-plugin`; Rollup needs a CSS plugin. Import `@eocrm/design-system/styles/global.css` once at the app root.
+- **One way to load component CSS**: use either `styles.css` (a single `<link>`, for setups whose CSS pipeline can't take imports from JS) or the JS imports, not both — loading both duplicates every rule. The JS itself always needs a bundler (it imports CSS and reads `process.env.NODE_ENV`).
+- **Next.js (app router)**: works as-is, no `transpilePackages`. Client-bound modules carry `'use client'`, so plain components (`Button`, `Select`, `Badge`, `Input`, …) can be rendered directly from Server Components. Three limits of the Server/Client boundary:
+  - **Providers**: the `ru` catalog contains functions, and functions cannot be passed from a Server Component to a Client Component. Mount `AppProvider` / `I18nProvider` from your own `'use client'` providers file that imports `ru` (example below), not from `app/layout.tsx` directly.
+  - **Compound parts** (`Breadcrumb.Item`, `Modal.Header`, `Accordion.Item`, `List.Item`, …) cannot be reached from a Server Component — a client module can't be dotted into on the server, so `X.Item` is `undefined` there and rendering fails. Render compound components from a `'use client'` file.
+  - **Controlled overlays** (`Modal`, `Drawer`) need state and a function `onOpenChange`, so render them from a client component.
+- Set `moduleResolution: "bundler"` (or `"node16"`) in your `tsconfig.json` if TypeScript can't resolve types. If `tsc` rejects the side-effect `import '…/styles/global.css'` (TS2882) and your framework doesn't declare CSS modules for you (Vite's `vite/client` and Next's `next-env.d.ts` do), add `declare module '*.css';` to a `.d.ts` file.
 
-If TypeScript can't resolve types, set `moduleResolution: "bundler"` (or `"node16"`) in your `tsconfig.json`.
+```tsx
+// app/providers.tsx
+'use client';
+import { AppProvider, ru } from '@eocrm/design-system';
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <AppProvider locale="ru" messages={ru}>
+      {children}
+    </AppProvider>
+  );
+}
 
-**Tests.** Vitest works out of the box. Jest (CommonJS) must transform this package (TSX source) and its ESM-only dependencies (`d3-*`, `internmap`, used by `Chart`), and map `.module.scss` imports:
+// app/layout.tsx (Server Component)
+import '@eocrm/design-system/styles/global.css';
+import { Providers } from './providers';
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="ru">
+      <body>
+        <Providers>{children}</Providers>
+      </body>
+    </html>
+  );
+}
+```
+
+**Tests.** Vitest externalizes `node_modules` and Node can't import the components' `.css` (`TypeError: Unknown file extension ".css"`), so inline this package (add `css: true` only if you assert on styles):
+
+```ts
+// vitest.config.ts
+test: { server: { deps: { inline: [/@eocrm\/design-system/] } } },
+```
+
+Jest (CommonJS) needs to transform this ESM package and its ESM-only dependencies (`d3-*`, `internmap`, used by `Chart`), and stub `.css` imports:
 
 ```js
 // jest.config.js — the pattern covers npm/yarn and pnpm (node_modules/.pnpm/<name>@<version>/…) layouts
 transformIgnorePatterns: [
   '/node_modules/(?!(\\.pnpm/)?(@eocrm[/+]design-system|d3-[^/@]+|internmap)[/@])',
 ],
-moduleNameMapper: { '\\.module\\.scss$': 'identity-obj-proxy' },
+moduleNameMapper: { '\\.css$': '<rootDir>/emptyModule.js' },
 ```
 
-- Install `identity-obj-proxy` as a dev dependency.
-- The transformer must compile TSX and convert ESM to CommonJS inside `node_modules`:
-  - `babel-jest`: a root `babel.config.js` (a `.babelrc` does not apply to `node_modules`) with `@babel/preset-env` (`targets: { node: 'current' }`, which converts `import`/`export`), `@babel/preset-react` (`runtime: 'automatic'`) and `@babel/preset-typescript`.
-  - `ts-jest`: `preset: 'ts-jest/presets/js-with-ts'` (so `.js` files are transformed too), with `allowJs: true`, `jsx: 'react-jsx'` and `module: 'commonjs'` in the tsconfig it uses, and `isolatedModules: true` (transpile only). The package does not ship a `*.module.scss` type declaration, so a type-checking ts-jest reports TS2307 on its style imports unless you declare `*.module.scss` yourself.
+- `emptyModule.js` is an empty file (`module.exports = {};`).
+- The transformer must convert ESM to CommonJS inside `node_modules`: `babel-jest` with a root `babel.config.js` (a `.babelrc` does not apply to `node_modules`) using `@babel/preset-env` (`targets: { node: 'current' }`), or `ts-jest` with `preset: 'ts-jest/presets/js-with-ts'`, `allowJs: true` and `module: 'commonjs'`.
 
 ---
 
@@ -235,6 +265,13 @@ Grouped for navigation. Per-component contracts are in `docs/components/<Name>.m
 
 ---
 
+## Migrating to 0.7
+
+- **Stylesheet:** `@eocrm/design-system/styles/global.scss` is now `@eocrm/design-system/styles/global.css`. `styles.css` bundles every component's CSS; per-component CSS is also imported automatically by the JS chunks — use one or the other, not both.
+- **Removed subpaths:** `styles/tokens.scss`, `styles/reset.scss`, `styles/typography.scss` and `styles/mixins.scss` are gone. Use `styles/tokens.css` for tokens only. Sass variables: `@eocrm/design-tokens` (`@use` it directly). `mixins.scss` was removed with no replacement.
+- **Compiled output:** the package no longer ships `src/`; drop `transpilePackages` and any Sass/TSX loader rules for it.
+- **i18n:** `I18nProvider` / `AppProvider` no longer bundle Russian. Pass the catalog: `<I18nProvider locale="ru" messages={ru}>` with `import { ru } from '@eocrm/design-system'`. A non-`en` locale without `messages` logs a `console.error` and renders English. In a Next.js app router, pass `ru` from a `'use client'` providers file (see [Bundler notes](#bundler-notes)) — a Server Component cannot pass its function leaves.
+
 ## Releasing a new version
 
 Releases are **automatic**. Merging to `main` triggers the `Release` workflow (`.github/workflows/release.yml`), which:
@@ -248,6 +285,8 @@ Releases are **automatic**. Merging to `main` triggers the `Release` workflow (`
 
 There is no manual "Run workflow" button — merging to `main` is the only way to release. Playground-only changes skip the publish step (no version bump for a demo tweak) but still redeploy the playground.
 
+**Bundle-size budgets**: `size-budgets.json` caps gzip JS/CSS per consumer scenario (`npm run size`, run by Quality `test-ds`); raise a budget deliberately in the PR that grows the bundle.
+
 **Forcing a minor/major bump**: edit `BUMP` (`patch` → `minor` / `major`) in `release.yml` on a branch and merge. There is no other override by design.
 
 **One-time repo setup**: Settings → Actions → General → Workflow permissions → "Read and write permissions".
@@ -260,7 +299,7 @@ The package name `@eocrm/design-system` must match an organization (or user) you
 
 The playground (live component gallery) deploys to GitHub Pages automatically as the final step of the `Release` workflow, so the live site at <https://eocrm.github.io/design-system/> always reflects `main`. It redeploys whenever the quality gate passes — even on playground-only changes, and even if a publish hiccups.
 
-**This repo and its Pages site are public.** The playground bakes the library's source into its bundle via `?raw` imports, so the source is world-readable — that's intentional for a source-distributed library.
+**This repo and its Pages site are public.** The playground bakes the library's source into its bundle via `?raw` imports, so the source is world-readable — that's intentional for an open-source library.
 
 **One-time setup**: Settings → Pages → Source = "GitHub Actions" (not "Deploy from a branch").
 

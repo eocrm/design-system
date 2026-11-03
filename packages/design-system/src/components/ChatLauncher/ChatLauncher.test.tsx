@@ -7,6 +7,7 @@ import { createRef, type ReactNode, type RefObject } from 'react';
 import { createPortal } from 'react-dom';
 import { I18nProvider } from '../../i18n/I18nProvider';
 import { ChatLauncher, type ChatLauncherProps } from './ChatLauncher';
+import { ru } from '../../i18n/ru';
 
 // Same shape as Tabs.test.tsx's harness: jsdom has no ResizeObserver, so
 // record callbacks per target and fire them by hand.
@@ -182,7 +183,7 @@ describe('ChatLauncher', () => {
 
     it('close button reads "Закрыть чат" in ru', () => {
       render(
-        <I18nProvider locale="ru">
+        <I18nProvider locale="ru" messages={ru}>
           <ChatLauncher label="Скаут" title="Скаут" icon="*" open onOpenChange={() => {}}>
             x
           </ChatLauncher>

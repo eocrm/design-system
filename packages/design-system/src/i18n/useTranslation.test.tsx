@@ -62,15 +62,27 @@ describe('useTranslation', () => {
     expect(screen.getByTestId('out')).toHaveTextContent('Hello');
   });
 
-  it('returns the ru default inside <I18nProvider locale="ru">', () => {
+  it('returns the ru default inside <I18nProvider locale="ru" messages={ru}>', () => {
     seed(en, { greeting: 'Hello' });
     seed(ru, { greeting: 'Привет' });
     render(
-      <I18nProvider locale="ru">
+      <I18nProvider locale="ru" messages={ru}>
         <Probe k="greeting" />
       </I18nProvider>,
     );
     expect(screen.getByTestId('out')).toHaveTextContent('Привет');
+  });
+
+  it('accepts a third-party locale code with its own catalog', () => {
+    seed(en, { greeting: 'Hello' });
+    // `locale="de"` must type-check: `Locale` is open to codes beyond en/ru.
+    const de = { ...en, greeting: 'Hallo' };
+    render(
+      <I18nProvider locale="de" messages={de}>
+        <Probe k="greeting" />
+      </I18nProvider>,
+    );
+    expect(screen.getByTestId('out')).toHaveTextContent('Hallo');
   });
 
   it('applies overrides on top of the locale defaults', () => {
@@ -120,5 +132,65 @@ describe('useTranslation', () => {
     });
     render(<Probe k="fn" />);
     expect(screen.getByTestId('out')).toHaveTextContent('count=0');
+  });
+
+  describe('non-en locale without messages', () => {
+    const expected = expect.stringContaining('messages={ru}');
+    function renderBare(locale: 'en' | 'ru', messages?: typeof ru) {
+      return render(
+        <I18nProvider locale={locale} messages={messages}>
+          <Probe k="greeting" />
+        </I18nProvider>,
+      );
+    }
+    let errorSpy: ReturnType<typeof vi.spyOn>;
+    beforeEach(() => {
+      errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    });
+    afterEach(() => {
+      errorSpy.mockRestore();
+      vi.unstubAllEnvs();
+    });
+
+    it('falls back to English and logs console.error', () => {
+      seed(en, { greeting: 'Hello' });
+      seed(ru, { greeting: 'Привет' });
+      renderBare('ru');
+      expect(screen.getByTestId('out')).toHaveTextContent('Hello');
+      expect(errorSpy).toHaveBeenCalledWith(expected);
+    });
+
+    it('logs console.error in production too', () => {
+      vi.stubEnv('NODE_ENV', 'production');
+      seed(en, { greeting: 'Hello' });
+      renderBare('ru');
+      expect(errorSpy).toHaveBeenCalledWith(expected);
+    });
+
+    it('does not log for locale="en" without messages', () => {
+      seed(en, { greeting: 'Hello' });
+      renderBare('en');
+      expect(errorSpy).not.toHaveBeenCalled();
+    });
+
+    it('does not log when messages are provided', () => {
+      seed(ru, { greeting: 'Привет' });
+      renderBare('ru', ru);
+      expect(errorSpy).not.toHaveBeenCalled();
+    });
+  });
+
+  it('applies overrides over provided messages without losing siblings', () => {
+    seed(ru, { greeting: 'Привет', nested: { dismiss: 'Закрыть' } });
+    render(
+      <I18nProvider locale="ru" messages={ru} overrides={{ nested: { dismiss: 'X' } }}>
+        <>
+          <Probe k="nested.dismiss" testId="dismiss" />
+          <Probe k="greeting" testId="greeting" />
+        </>
+      </I18nProvider>,
+    );
+    expect(screen.getByTestId('dismiss')).toHaveTextContent('X');
+    expect(screen.getByTestId('greeting')).toHaveTextContent('Привет');
   });
 });
