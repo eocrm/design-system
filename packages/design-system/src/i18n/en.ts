@@ -477,6 +477,15 @@ export const en: Messages = {
     noData: 'No data',
     markers: 'Markers',
   },
+  funnelChart: {
+    keyboardHint: 'Use arrow keys to inspect stages. All values are also in the data table.',
+    stage: 'Stage',
+    value: 'Value',
+    stepConversion: 'Conversion from previous stage',
+    shareOfFirst: 'Share of first stage',
+    ofStage: ({ percent, stage }) => `${percent as string} of ${stage as string}`,
+    noData: '—',
+  },
   treeView: {
     loading: 'Loading…',
     loadError: "Couldn't load",

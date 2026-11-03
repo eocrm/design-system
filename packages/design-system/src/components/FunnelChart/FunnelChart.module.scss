@@ -1,0 +1,116 @@
+@use './FunnelChart.tokens';
+@use '../../styles/mixins' as *;
+
+.root {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  gap: var(--funnel-chart-gap);
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.root[data-empty] {
+  place-items: center;
+}
+
+// The footnote takes its own row; the plot (or EmptyState) fills the rest.
+.root[data-footnote] {
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.footnote {
+  color: var(--chart-footnote-fg);
+  font-size: var(--chart-footnote-size);
+  line-height: var(--chart-footnote-line-height);
+}
+
+.plot {
+  display: grid;
+  grid-template-rows: minmax(var(--funnel-chart-min-height), 1fr) auto;
+  gap: var(--funnel-chart-gap);
+  min-height: 0;
+  border-radius: var(--chart-plot-radius);
+  outline: none;
+  touch-action: pan-y;
+
+  &:focus-visible {
+    @include focus-ring(var(--funnel-chart-ring));
+  }
+}
+
+.shapes {
+  min-height: 0;
+  overflow: hidden;
+}
+
+.svg {
+  display: block;
+}
+
+.stage {
+  transition: opacity var(--funnel-chart-transition);
+
+  &[data-dimmed] {
+    opacity: var(--funnel-chart-dim-opacity);
+  }
+}
+
+.shape {
+  fill: var(--chart-series-color, currentColor);
+
+  // ponytail: CSS `d` transitions don't animate in Safari (it snaps). Use a JS tween only if Safari users notice.
+  transition: d var(--funnel-chart-transition);
+}
+
+.pill {
+  fill: var(--funnel-chart-pill-bg);
+}
+
+.pillText {
+  fill: var(--funnel-chart-pill-fg);
+  font-size: var(--funnel-chart-pill-size);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+// One column per stage, aligned with the shapes above.
+.footer {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+}
+
+.cell {
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  padding-inline: var(--space-1);
+  text-align: center;
+  overflow-wrap: anywhere;
+  transition: opacity var(--funnel-chart-transition);
+
+  &[data-dimmed] {
+    opacity: var(--funnel-chart-dim-opacity);
+  }
+}
+
+.value {
+  font-size: var(--funnel-chart-value-size);
+  font-weight: var(--funnel-chart-value-weight);
+  font-variant-numeric: tabular-nums;
+}
+
+.label {
+  color: var(--funnel-chart-label-fg);
+  font-size: var(--funnel-chart-label-size);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage,
+  .shape,
+  .cell {
+    transition: none;
+  }
+}

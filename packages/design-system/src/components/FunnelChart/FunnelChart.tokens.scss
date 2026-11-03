@@ -1,0 +1,20 @@
+// FunnelChart.tokens.scss — component tokens for <FunnelChart>. Stage colours come from
+// Chart's --chart-series-N palette; everything else defaults to primitives or chart tokens.
+@use '../Chart/Chart.tokens';
+
+:root {
+  --funnel-chart-gap: var(--space-2);
+
+  // Intrinsic height of the shapes strip when the parent gives no height.
+  --funnel-chart-min-height: calc(var(--space-16) * 2);
+  --funnel-chart-pill-bg: var(--color-bg);
+  --funnel-chart-pill-fg: var(--color-fg);
+  --funnel-chart-pill-size: var(--font-size-xs);
+  --funnel-chart-value-size: var(--font-size-lg);
+  --funnel-chart-value-weight: var(--font-weight-semibold);
+  --funnel-chart-label-fg: var(--color-fg-muted);
+  --funnel-chart-label-size: var(--font-size-sm);
+  --funnel-chart-dim-opacity: var(--chart-dim-opacity);
+  --funnel-chart-ring: var(--chart-ring);
+  --funnel-chart-transition: var(--transition-slow);
+}

@@ -900,6 +900,22 @@ export interface Messages {
     /** Header of the data table's marker column (labels of the annotations covering each category). */
     markers: string;
   };
+  funnelChart: {
+    /** Accessible description of the focusable plot (its name is the chart label); says arrow keys inspect stages and that the data table lists every value. */
+    keyboardHint: string;
+    /** Header of the data table's stage column. */
+    stage: string;
+    /** Header of the data table's value column and the tooltip's value row label. */
+    value: string;
+    /** Header of the data table's step-conversion column (this stage / previous stage). */
+    stepConversion: string;
+    /** Header of the data table's share column (this stage / first stage). */
+    shareOfFirst: string;
+    /** A ratio relative to a named stage, e.g. "40% of Proposal" (tooltip, announcement). `percent` is already formatted. */
+    ofStage: (params: { percent: string; stage: string }) => string;
+    /** Data-table cell for an undefined ratio (first stage's step, or a previous stage of 0). */
+    noData: string;
+  };
   sparkline: {
     /** Accessible name of a Sparkline with data: label plus the series summary. */
     summary: (params: {
