@@ -127,6 +127,7 @@ const CLUSTERS: Record<string, string> = {
   DashboardWidget: 'Display',
   StatGroup: 'Display',
   Chart: 'Display',
+  FunnelChart: 'Display',
   Sparkline: 'Display',
   TreeView: 'Display',
   DataTable: 'Display',

@@ -484,6 +484,17 @@ export const ru: Messages = {
     noData: 'Нет данных',
     markers: 'Отметки',
   },
+  funnelChart: {
+    keyboardHint:
+      'Используйте стрелки для просмотра этапов. Все значения также есть в таблице данных.',
+    stage: 'Этап',
+    value: 'Значение',
+    stepConversion: 'Конверсия из предыдущего этапа',
+    shareOfFirst: 'Доля от первого этапа',
+    ofStage: ({ percent, stage }) => `${percent as string} от «${stage as string}»`,
+    noData: '—',
+    vsPrevious: 'к предыдущему',
+  },
   treeView: {
     loading: 'Загрузка…',
     loadError: 'Не удалось загрузить',

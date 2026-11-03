@@ -245,6 +245,11 @@
     "cluster": "Forms"
   },
   {
+    "name": "FunnelChart",
+    "summary": "stage funnel for pipeline and campaign conversion",
+    "cluster": "Display"
+  },
+  {
     "name": "Grid",
     "summary": "2D layout primitive",
     "cluster": "Layout"

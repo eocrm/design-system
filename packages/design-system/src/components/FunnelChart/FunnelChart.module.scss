@@ -1,0 +1,265 @@
+@use './FunnelChart.tokens';
+@use '../../styles/mixins' as *;
+
+.root {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+  gap: var(--funnel-chart-gap);
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.root[data-empty] {
+  place-items: center;
+}
+
+// The footnote takes its own row; the plot (or EmptyState) fills the rest.
+.root[data-footnote] {
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.footnote {
+  color: var(--chart-footnote-fg);
+  font-size: var(--chart-footnote-size);
+  line-height: var(--chart-footnote-line-height);
+}
+
+.plot {
+  display: grid;
+  grid-template-rows: minmax(var(--funnel-chart-min-height), 1fr) auto;
+  gap: var(--funnel-chart-gap);
+  min-height: 0;
+  border-radius: var(--chart-plot-radius);
+  outline: none;
+  touch-action: pan-y;
+
+  &:focus-visible {
+    @include focus-ring(var(--funnel-chart-ring));
+  }
+}
+
+.shapes {
+  min-height: 0;
+  overflow: hidden;
+
+  // The SVG's explicit height must not feed back into the row size, or the strip only ever grows
+  // in an auto-height parent. Size containment makes the row fall back to min-height / parent height.
+  contain: size;
+}
+
+.plot[data-clickable] .shapes {
+  cursor: pointer;
+}
+
+.svg {
+  display: block;
+}
+
+.stage {
+  transition: opacity var(--funnel-chart-transition);
+
+  &[data-dimmed] {
+    opacity: var(--funnel-chart-dim-opacity);
+  }
+}
+
+.shape {
+  fill: var(--chart-series-color, currentColor);
+
+  // ponytail: CSS `d` transitions don't animate in Safari (it snaps). Use a JS tween only if Safari users notice.
+  transition: d var(--funnel-chart-transition);
+}
+
+.pill {
+  fill: var(--funnel-chart-pill-bg);
+}
+
+.heroValue,
+.heroLabel {
+  fill: var(--funnel-chart-hero-fg);
+}
+
+.heroValue {
+  font-size: var(--funnel-chart-hero-value-size);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.heroLabel {
+  font-size: var(--funnel-chart-hero-label-size);
+  font-weight: var(--funnel-chart-hero-label-weight);
+}
+
+.pillText {
+  fill: var(--funnel-chart-pill-fg);
+  font-size: var(--funnel-chart-pill-size);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+// One column per stage, aligned with the shapes above; dashed rules between columns.
+.footer {
+  display: grid;
+  grid-auto-columns: minmax(0, 1fr);
+  grid-auto-flow: column;
+}
+
+.footer > .cell + .cell {
+  border-inline-start: var(--border-width) dashed var(--funnel-chart-separator);
+}
+
+.cell {
+  display: grid;
+  align-content: start;
+  justify-items: center;
+  padding-inline: var(--space-1);
+  text-align: center;
+  overflow-wrap: anywhere;
+  transition: opacity var(--funnel-chart-transition);
+
+  &[data-dimmed] {
+    opacity: var(--funnel-chart-dim-opacity);
+  }
+
+  // A focused stage hovered away from keeps its focus ring readable (WCAG 2.4.7).
+  &[data-dimmed]:focus-visible {
+    opacity: initial;
+  }
+
+  // Hero shown: the first cell keeps its value and label, invisible, so it is a normal footer-height
+  // box (and a full-size focus ring when it is a button) under the band that shows them.
+  &[data-hero-cell] > * {
+    visibility: hidden;
+  }
+
+  // Clickable stages render the cell as a <button> (reset.scss strips its chrome).
+  &:is(button) {
+    border-radius: var(--chart-plot-radius);
+    cursor: pointer;
+    outline: none;
+  }
+
+  &:is(button):focus-visible {
+    @include focus-ring(var(--funnel-chart-ring));
+  }
+}
+
+.value {
+  // Only labels break anywhere; numbers stay whole.
+  overflow-wrap: normal;
+  font-size: var(--funnel-chart-value-size);
+  font-weight: var(--funnel-chart-value-weight);
+  font-variant-numeric: tabular-nums;
+}
+
+.label {
+  color: var(--funnel-chart-label-fg);
+  font-size: var(--funnel-chart-label-size);
+}
+
+// Vertical layout: a slice of the funnel per row (same `shape`, turned on its side, thin gaps
+// between slices) beside a table-like grid; the rows scroll as a last resort.
+.root[data-orientation='vertical'] .plot {
+  grid-template-rows: none;
+  grid-auto-rows: min-content;
+
+  // One column template shared by the header and every row (subgrid): band track (flexible share, so
+  // band widths stay proportional), swatch, label (wraps when tight), value, step pill.
+  grid-template-columns:
+    minmax(var(--funnel-chart-row-track-min), 1fr) auto minmax(0, max-content)
+    max-content max-content;
+  align-content: start;
+  gap: var(--funnel-chart-slice-gap) var(--funnel-chart-gap);
+  overflow-y: auto;
+
+  // Room for the stage buttons' focus rings, which the scroll container would clip.
+  padding: calc(var(--ring-width) + var(--ring-offset));
+}
+
+// Header and rows span the plot's columns and inherit them (subgrid).
+.header,
+.root[data-orientation='vertical'] .cell {
+  // stylelint-disable-next-line property-disallowed-list -- internal row spanning the plot's own columns (subgrid), not consumer layout
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+}
+
+.header {
+  padding-block-end: var(--space-1);
+  color: var(--funnel-chart-header-fg);
+  font-size: var(--funnel-chart-header-size);
+}
+
+.headerValue {
+  text-align: end;
+}
+
+// Items stretch to the row (the band needs the full height); text items centre themselves.
+.root[data-orientation='vertical'] .cell {
+  align-content: stretch;
+  align-items: stretch;
+  justify-items: stretch;
+  min-block-size: var(--funnel-chart-row-min-height);
+  padding-inline: 0;
+  text-align: start;
+
+  .label,
+  .value,
+  .swatch,
+  .step {
+    display: grid;
+    align-content: center;
+  }
+
+  .value {
+    font-size: var(--funnel-chart-label-size);
+    text-align: end;
+  }
+}
+
+// The slice stretches to the row; size containment keeps the SVG's aspect ratio out of the row
+// height, which comes from the text (or the min height).
+.bandTrack {
+  display: block;
+  contain: size;
+
+  .svg {
+    inline-size: 100%;
+    block-size: 100%;
+  }
+}
+
+.swatch::before {
+  content: '';
+  inline-size: var(--chart-swatch);
+  block-size: var(--chart-swatch);
+  border-radius: var(--radius-sm);
+  background: var(--chart-series-color, currentColor);
+}
+
+.step {
+  justify-items: start;
+  color: var(--funnel-chart-label-fg);
+  font-size: var(--funnel-chart-pill-size);
+}
+
+.rowPill {
+  padding-inline: var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--funnel-chart-row-pill-bg);
+  color: var(--funnel-chart-pill-fg);
+  font-size: var(--funnel-chart-pill-size);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stage,
+  .shape,
+  .cell {
+    transition: none;
+  }
+}

@@ -3184,6 +3184,66 @@
         }
       ]
     },
+    "FunnelChart": {
+      "props": [
+        {
+          "name": "label",
+          "type": "string",
+          "required": true,
+          "default": "",
+          "description": "Accessible name of the figure and caption of its data table, e.g. \"Sales pipeline\". Required."
+        },
+        {
+          "name": "stages",
+          "type": "FunnelStage[]",
+          "required": true,
+          "default": "",
+          "description": "Stages, top of the funnel first. Heights are relative to the largest value. Colour is a one-hue ramp\nfrom `--chart-series-1` (first stage) toward the surface (paler toward the foreground in dark); a stage's `color` slot overrides it."
+        },
+        {
+          "name": "formatValue",
+          "type": "(n: number) => string",
+          "required": true,
+          "default": "",
+          "description": "Formats a stage value for the footer, tooltip and data table (the app owns i18n and currency). Required."
+        },
+        {
+          "name": "shape",
+          "type": "FunnelShape",
+          "required": false,
+          "default": "",
+          "description": "Silhouette between stages, in both layouts (vertical slices follow the same geometry turned on\nits side). Default `'taper'`.\n- `'taper'` — each stage holds its height for most of its column, then a short straight diagonal\n  leads into the next one's height.\n- `'sharp'` — full-column trapezoids from one stage's height to the next."
+        },
+        {
+          "name": "onStageClick",
+          "type": "((stage: FunnelStage, index: number) => void)",
+          "required": false,
+          "default": "",
+          "description": "Makes every stage a button that calls this with the consumer's original stage object and its index,\ne.g. to drill through to the deals in that stage. Omit for a read-only funnel."
+        },
+        {
+          "name": "onActiveStageChange",
+          "type": "((stage: FunnelStage | null) => void)",
+          "required": false,
+          "default": "",
+          "description": "Called with the hovered or focused stage (the consumer's original object), or `null` when none is\nactive, e.g. so a surrounding headline can follow along."
+        },
+        {
+          "name": "emptyMessage",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "EmptyState title when there are no stages or every value is 0. Default: translated \"No data for this period\"."
+        },
+        {
+          "name": "footnote",
+          "type": "string | number | bigint | boolean | ReactElement<unknown, string | JSXElementConstructor<any>> | Iterable<ReactNode> | ReactPortal | Promise<AwaitedReactNode> | null",
+          "required": false,
+          "default": "",
+          "description": "Short note under the funnel, e.g. \"Closed deals only\". Takes its own row (wraps, never truncates);\nalso describes the plot for screen readers. Shown in the empty state too."
+        }
+      ]
+    },
     "Grid": {
       "props": [
         {
@@ -7418,6 +7478,8 @@
     "DashboardWidgetVariant": "\"list\" | \"standard\" | \"kpi\" | \"chart\" | \"stats\"",
     "DashboardWidgetActionsReveal": "\"always\" | \"hover\"",
     "StatGroupVariant": "\"filled\" | \"card\"",
+    "FunnelShape": "\"taper\" | \"sharp\"",
+    "FunnelStage": "{ key: string; label: string; value: number; color?: FunnelSlot }",
     "SparklineType": "\"area\" | \"line\" | \"bar\"",
     "TreeViewChildren": "TreeViewNode[] | { error: true; }",
     "TreeViewOverflow": "{ label: string; onLoadMore?: (() => void); loading?: boolean }",
