@@ -1556,6 +1556,16 @@ export const SCHEMATICS: Record<string, ReactNode> = {
       </Row>
     </Col>
   ),
+  FunnelChart: (
+    <Col gap={6}>
+      <Bar w={28} />
+      <Row gap={3} style={{ alignItems: 'center' }}>
+        {[32, 26, 18, 10].map((h, i) =>
+          i === 1 ? <Solid key={i} w={16} h={h} /> : <Box key={i} w={16} h={h} />,
+        )}
+      </Row>
+    </Col>
+  ),
   Sparkline: (
     <Col gap={6}>
       <Bar w={28} />

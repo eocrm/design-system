@@ -51,3 +51,7 @@
 - ❌ Hand-rolled spinning `<svg>` per page. `<CircularProgress />` indeterminate is the same visual, accessible and reduced-motion-aware.
 - ❌ `<CircularProgress value={0}>` to render an empty circle. `value={0}` is determinate (0% done); the intent is usually indeterminate, so omit `value`.
 - ❌ `<CircularProgress size="sm" label>` expecting centered text in a 16px circle. The label is auto-suppressed at `sm` by design; use `md` or `lg`.
+
+## Progress hard rule
+
+No hand-rolled spinning `<svg>`, no `value={0}` for "not started yet": see [Progress.md](Progress.md#progress-hard-rule).

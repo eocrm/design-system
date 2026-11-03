@@ -24,6 +24,8 @@ on:
     paths:
       - "packages/**"
       - ".github/workflows/**"
+      # @eocrm/design-system-mcp releases on its own (release-mcp.yml).
+      - "!packages/design-system-mcp/**"
 
 concurrency:
   group: release-${{ github.repository }}

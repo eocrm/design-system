@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const PKG = resolve(__dirname, '../..');
@@ -125,5 +125,59 @@ describe('docs/components props tables', () => {
       '| …native | | | plus native `<th>` attributes |',
     );
     expect(after('### `TableCellProps`')).toBe('| …native | | | plus native `<td>` attributes |');
+  });
+});
+
+describe('docs/components/index.json', () => {
+  const index = JSON.parse(readFileSync(resolve(PKG, 'docs/components/index.json'), 'utf8')) as {
+    name: string;
+    summary: string;
+    cluster: string | null;
+  }[];
+  const manifest = JSON.parse(readFileSync(resolve(PKG, 'src/components.manifest.json'), 'utf8'));
+
+  it('lists every doc exactly once with a summary', () => {
+    const stems = readdirSync(resolve(PKG, 'docs/components'))
+      .filter((f) => f.endsWith('.md'))
+      .map((f) => f.slice(0, -3))
+      .sort();
+    expect(index.map((e) => e.name)).toEqual(stems);
+    for (const e of index) expect(e.summary).not.toBe('');
+  });
+
+  it('derives summary from the H1 and cluster from the manifest', () => {
+    expect(index.find((e) => e.name === 'Button')?.summary).toBe('action triggers');
+    for (const e of index) if (e.cluster) expect(e.cluster).toBe(manifest[e.name].cluster);
+  });
+});
+
+describe('AI-PRIMER.md', () => {
+  const primer = readFileSync(resolve(PKG, 'AI-PRIMER.md'), 'utf8');
+
+  const INDEX_HEADING = '## Components — TL;DR';
+  const start = primer.indexOf(INDEX_HEADING);
+  const end = primer.indexOf('\n## ', start + 1);
+  const index = start < 0 ? '' : primer.slice(start, end < 0 ? undefined : end + 1);
+
+  it('has the component index section', () => {
+    expect(start).toBeGreaterThanOrEqual(0);
+    expect(index.length).toBeGreaterThan(INDEX_HEADING.length);
+  });
+
+  // The component index grows with every component, so it is excluded. The prose
+  // remainder is ~6.0 KB today; 7 KB leaves ~1 KB of slack (long-form guidance lives in docs/).
+  it('keeps the primer prose (excluding the component index) at most 7 KB', () => {
+    expect(Buffer.byteLength(primer.replace(index, ''))).toBeLessThanOrEqual(7 * 1024);
+  });
+
+  it.each([
+    'docs/i18n.md',
+    'docs/accessible-names.md',
+    'docs/typescript.md',
+    'docs/theming.md',
+    'docs/transient-state.md',
+  ])('links to %s, which exists', (doc) => {
+    expect(primer).toContain(`](${doc}`);
+    expect(existsSync(resolve(PKG, doc))).toBe(true);
   });
 });

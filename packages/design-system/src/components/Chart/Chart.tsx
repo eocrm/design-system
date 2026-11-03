@@ -2,7 +2,6 @@ import {
   forwardRef,
   useEffect,
   useId,
-  useLayoutEffect,
   useMemo,
   useState,
   type CSSProperties,
@@ -16,6 +15,7 @@ import { EmptyState } from '../EmptyState';
 import { useTranslation } from '../../i18n/useTranslation';
 import { useControllableState } from '../_internal/useControllableState';
 import { mergeRefs } from '../_internal/refs';
+import { useSize } from '../_internal/useSize';
 import { ChartLegend } from './ChartLegend';
 import { ChartTable } from './ChartTable';
 import { ChartTooltip } from './ChartTooltip';
@@ -129,27 +129,6 @@ function useDevWarnings(dropped: string[], overflowCount: number, droppedMarkers
       );
     }
   }, [overflowCount]);
-}
-
-function useSize<T extends HTMLElement>() {
-  const [el, setEl] = useState<T | null>(null);
-  const [size, setSize] = useState({ width: 0, height: 0 });
-  useLayoutEffect(() => {
-    if (!el || typeof ResizeObserver === 'undefined') return;
-    const measure = () => {
-      const { width, height } = el.getBoundingClientRect();
-      setSize((prev) =>
-        prev.width === Math.floor(width) && prev.height === Math.floor(height)
-          ? prev
-          : { width: Math.floor(width), height: Math.floor(height) },
-      );
-    };
-    measure();
-    const ro = new ResizeObserver(measure);
-    ro.observe(el);
-    return () => ro.disconnect();
-  }, [el]);
-  return [setEl, size, el] as const;
 }
 
 /**

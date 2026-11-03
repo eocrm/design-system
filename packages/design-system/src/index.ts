@@ -894,6 +894,13 @@ export type {
   StatTrend,
 } from './components/StatGroup';
 export { Chart } from './components/Chart';
+export { FunnelChart } from './components/FunnelChart';
+export type {
+  FunnelChartProps,
+  FunnelShape,
+  FunnelSlot,
+  FunnelStage,
+} from './components/FunnelChart';
 export { Sparkline } from './components/Sparkline';
 export type { SparklineProps, SparklineType } from './components/Sparkline';
 export { TreeView } from './components/TreeView';

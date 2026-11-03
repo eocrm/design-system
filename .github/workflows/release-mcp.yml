@@ -1,0 +1,181 @@
+name: Release MCP
+
+# Independent release of @eocrm/design-system-mcp. It versions on its own
+# mcp-v<semver> tags (release.yml only reads v<semver> tags and ignores
+# packages/design-system-mcp/**), so an MCP-only merge never bumps the design
+# system and a design-system merge never republishes the MCP server.
+#
+# The bundled offline snapshot is built from @eocrm/design-system@latest as
+# published when the bundle step runs. If a merge touches both packages and the
+# DS release publishes between the bundle and verify steps, verify fails with a
+# version mismatch: re-run this run. To force a minor/major bump, edit BUMP below on a branch and merge.
+#
+# npmjs must list this workflow file (release-mcp.yml) as the package's trusted
+# publisher; the very first version had to be published by hand to create it, as 0.0.x
+# (0.0.1) because automation starts at 0.1.0 and a hand-published 0.1.0 would collide.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "packages/design-system-mcp/**"
+      - ".github/workflows/release-mcp.yml"
+
+concurrency:
+  group: release-mcp
+  cancel-in-progress: false
+
+permissions:
+  contents: write # push the mcp-v* tag
+  id-token: write # npm trusted publishing (npmjs)
+
+env:
+  BUMP: patch
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Need full history so we can read existing tags.
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+
+      - name: Install
+        run: npm ci
+
+      - name: Test
+        run: npm test -w @eocrm/design-system-mcp
+
+      - name: Determine next version
+        id: version
+        run: |
+          set -euo pipefail
+          LATEST=$(git tag --list 'mcp-v*' \
+            | grep -E '^mcp-v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$' \
+            | sort -V | tail -n 1 || true)
+          if [ -z "$LATEST" ]; then
+            NEW="0.1.0"
+            echo "No existing stable mcp-v* tag — starting at $NEW"
+          else
+            CURRENT="${LATEST#mcp-v}"
+            echo "Latest MCP tag: $LATEST (parsed as $CURRENT)"
+            IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+            case "$BUMP" in
+              major) NEW="$((MAJOR + 1)).0.0" ;;
+              minor) NEW="${MAJOR}.$((MINOR + 1)).0" ;;
+              patch) NEW="${MAJOR}.${MINOR}.$((PATCH + 1))" ;;
+              *) echo "::error::Unknown BUMP value: $BUMP"; exit 1 ;;
+            esac
+          fi
+
+          if git rev-parse "mcp-v$NEW" >/dev/null 2>&1; then
+            echo "::error::Tag mcp-v$NEW already exists; refusing to overwrite"
+            exit 1
+          fi
+
+          echo "Next version: $NEW"
+          echo "value=$NEW" >> "$GITHUB_OUTPUT"
+
+      - name: Set package version
+        working-directory: packages/design-system-mcp
+        run: npm version "${{ steps.version.outputs.value }}" --no-git-tag-version
+
+      - name: Bundle offline snapshot
+        working-directory: packages/design-system-mcp
+        run: node scripts/bundle-snapshot.mjs snapshot
+
+      # snapshot/ is gitignored; `files` must still ship it, and it must be
+      # the latest published design system.
+      - name: Verify tarball contains the snapshot
+        working-directory: packages/design-system-mcp
+        run: |
+          set -euo pipefail
+          latest=$(npm view @eocrm/design-system version --@eocrm:registry=https://registry.npmjs.org)
+          bundled=$(cat snapshot/VERSION)
+          if [ "$bundled" != "$latest" ]; then
+            echo "::error::snapshot/VERSION is $bundled, but @eocrm/design-system@latest is $latest"
+            exit 1
+          fi
+          npm pack --dry-run --json > pack.json
+          node -e 'const [p] = require("./pack.json"); if (!p.files.some((f) => f.path === "snapshot/VERSION")) { console.error("::error::snapshot/VERSION missing from the tarball"); process.exit(1); }'
+
+      - name: Require npm with trusted publishing
+        run: |
+          set -euo pipefail
+          node -e 'const [a, b, c] = process.argv[1].split(".").map(Number); if (a < 11 || (a === 11 && (b < 5 || (b === 5 && c < 1)))) { console.error(`::error::npm ${process.argv[1]} lacks trusted publishing (needs >= 11.5.1)`); process.exit(1); }' "$(npm --version)"
+
+      # Trusted publishing: the npm CLI swaps this job's GitHub OIDC token
+      # (id-token: write) for a short-lived publish token; no npm secret exists.
+      # The explicit scope flag keeps any @eocrm registry mapping from
+      # redirecting the publish. If a later step fails, re-run this failed run:
+      # the E409 branch lets it resume past an already-published version.
+      - name: Publish to npmjs
+        working-directory: packages/design-system-mcp
+        run: |
+          set -uo pipefail
+          set +e
+          npm publish --@eocrm:registry=https://registry.npmjs.org --provenance --access public 2>&1 | tee mcp-npmjs-publish.out
+          status=${PIPESTATUS[0]}
+          set -e
+          if [ "$status" -eq 0 ]; then
+            echo "Published @eocrm/design-system-mcp to npmjs."
+          elif grep -qiE 'E409|cannot publish over existing version|cannot publish over the previously published versions|409 Conflict' mcp-npmjs-publish.out; then
+            # Only a re-run of the commit that published it may skip ahead; a newer
+            # merge recomputing the same version would otherwise tag code npm never got.
+            head=$(npm view "@eocrm/design-system-mcp@${{ steps.version.outputs.value }}" gitHead \
+              --@eocrm:registry=https://registry.npmjs.org 2>/dev/null || true)
+            if [ "$head" != "$GITHUB_SHA" ]; then
+              echo "::error::@eocrm/design-system-mcp@${{ steps.version.outputs.value }} was published from ${head:-an unknown commit}, not $GITHUB_SHA. Re-run the original failed release-mcp run (or bump the version) instead."
+              exit 1
+            fi
+            echo "::warning::@eocrm/design-system-mcp already has this exact version on npmjs from this commit."
+          else
+            echo "::error::Publish failed."
+            exit "$status"
+          fi
+
+      - name: Verify published version
+        run: |
+          set -euo pipefail
+          VERSION="${{ steps.version.outputs.value }}"
+          # npmjs can take a few minutes to serve a new version; allow ~10 min.
+          for attempt in $(seq 1 60); do
+            published=$(npm view "@eocrm/design-system-mcp@$VERSION" version \
+              --@eocrm:registry=https://registry.npmjs.org 2>/dev/null || true)
+            if [ "$published" = "$VERSION" ]; then
+              echo "npmjs serves @eocrm/design-system-mcp@$VERSION."
+              exit 0
+            fi
+            echo "Attempt $attempt: not visible yet; retrying in 10s."
+            sleep 10
+          done
+          echo "::error::@eocrm/design-system-mcp@$VERSION not visible on npmjs after 10 minutes"
+          exit 1
+
+      - name: Tag and push
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email 'github-actions[bot]@users.noreply.github.com'
+          git tag -a "mcp-v${{ steps.version.outputs.value }}" -m "Release @eocrm/design-system-mcp ${{ steps.version.outputs.value }}"
+          git push origin "mcp-v${{ steps.version.outputs.value }}"
+
+      - name: Summary
+        run: |
+          {
+            echo "## Published"
+            echo ""
+            echo "- npmjs: \`@eocrm/design-system-mcp@${{ steps.version.outputs.value }}\`"
+            echo "- Tag: \`mcp-v${{ steps.version.outputs.value }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"

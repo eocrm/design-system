@@ -35,7 +35,7 @@ export interface I18nProviderProps {
 
 /**
  * Provides the message catalog (`locale` plus optional `overrides`) to descendants.
- * @see AI-PRIMER.md#localization-i18n
+ * @see docs/i18n.md
  */
 export function I18nProvider({
   locale,

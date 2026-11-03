@@ -3,7 +3,7 @@
 // docs/components/<Name>.md. `--check` writes nothing and exits 1 on drift
 // or on an issue reference in AI-PRIMER.md / docs/**.
 
-import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import ts from 'typescript';
@@ -227,6 +227,20 @@ for (const name of docNames) {
   if (next === current) continue;
   stale.push(file);
   if (!CHECK) writeFileSync(file, next);
+}
+
+const manifest = JSON.parse(readFileSync(join(PKG, 'src/components.manifest.json'), 'utf8'));
+const index = docNames.map((name) => {
+  const h1 = readFileSync(join(COMPONENT_DOCS, `${name}.md`), 'utf8').match(/^# .*$/m)?.[0] ?? '';
+  const summary = h1.split(' — ').slice(1).join(' — ').replace(/`/g, '').trim();
+  if (!summary) fail(`${name}.md: H1 needs a "— summary" (got: ${h1 || 'no H1'})`);
+  return { name, summary, cluster: manifest[name]?.cluster ?? null };
+});
+const indexFile = join(COMPONENT_DOCS, 'index.json');
+const indexText = JSON.stringify(index, null, 2) + '\n';
+if (!existsSync(indexFile) || readFileSync(indexFile, 'utf8') !== indexText) {
+  stale.push(indexFile);
+  if (!CHECK) writeFileSync(indexFile, indexText);
 }
 
 const ISSUE_REF = /\(#\d+\)|\([^()\n]*#\d{3,}\b[^()\n]*\)|(^|[^&\w])#[0-9]{3,5}\b/m;

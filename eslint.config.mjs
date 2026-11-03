@@ -50,6 +50,19 @@ export default [
     },
   },
   {
+    // design-system-mcp ships plain ESM JS (type-checked by its own `tsc --checkJs`).
+    files: ['packages/design-system-mcp/**/*.{js,mjs}'],
+    ignores: ['packages/design-system-mcp/snapshot/**', '**/fixtures/**'],
+    languageOptions: { parser: tseslint.parser, sourceType: 'module' },
+    plugins: { '@typescript-eslint': tseslint.plugin },
+    rules: {
+      ...tseslint.configs.recommended.reduce(
+        (rules, config) => ({ ...rules, ...config.rules }),
+        {},
+      ),
+    },
+  },
+  {
     files: ['packages/design-system/src/**/*.{ts,tsx}'],
     ignores: ['**/*.test.{ts,tsx}', '**/*.testutil.{ts,tsx}'],
     rules: {

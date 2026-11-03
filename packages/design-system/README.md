@@ -6,7 +6,7 @@ Its web tokens are generated and versioned by `@eocrm/design-tokens`; the
 compiled token CSS is bundled into this package, so consumers install only
 `@eocrm/design-system`.
 
-Component contracts live in **[`docs/components/<Name>.md`](./docs/components)** (props table, anti-patterns). AI agents consuming this package should read **[AI-PRIMER.md](./AI-PRIMER.md)** first.
+Component contracts live in **[`docs/components/<Name>.md`](./docs/components)** (props table, anti-patterns). AI agents consuming this package should read **[AI-PRIMER.md](./AI-PRIMER.md)** first, ideally through the MCP server (see [AI agents](#ai-agents)).
 
 **Live playground** (every component, demoed against `main`): <https://eocrm.github.io/design-system/components>
 
@@ -304,6 +304,16 @@ The playground (live component gallery) deploys to GitHub Pages automatically as
 **One-time setup**: Settings → Pages → Source = "GitHub Actions" (not "Deploy from a branch").
 
 ---
+
+## AI agents
+
+[`@eocrm/design-system-mcp`](../design-system-mcp/README.md) is an MCP server that serves the docs of the `@eocrm/design-system` version your project has installed. One-time, user-scope install for Claude Code:
+
+```bash
+claude mcp add --scope user eocrm-design-system -- npx -y @eocrm/design-system-mcp
+```
+
+Codex, Cursor, VS Code and generic setups, plus `npx -y @eocrm/design-system-mcp install-skill`: see its [README](../design-system-mcp/README.md).
 
 ## Where docs live (so you don't have to grep)
 

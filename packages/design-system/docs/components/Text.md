@@ -61,3 +61,11 @@ If you need a size or tone the primitive doesn't expose, that is a token-vocabul
 - `<Text as="h2">`: Text doesn't accept heading tags; use `<Title order={2}>`.
 - Wrapping a `<Title>` in `<Text>` for tone/weight tweaks: pass tone/weight to the `<Title>`. `size="inherit"` is for runs INSIDE a heading, not for wrapping it.
 - Nesting `<Text>` in another `<Text>` with the default `as="p"`: the inner `<p>` inside the outer `<p>` is invalid HTML and triggers React's DOM nesting warning. Use `<Text as="span" tone="...">` for an inline override inside a paragraph.
+
+## Typography hard rule
+
+- ❌ `style={{ fontSize: 'var(--font-size-sm)' }}` / `style={{ color: 'var(--color-fg-muted)' }}` — use `<Text size="sm" tone="muted">`.
+- ❌ Raw `<h1>` / `<h2>` / `<h3>` — use `<Title order={N}>`.
+- ❌ `<Text style={{ color: '#someHex' }}>` — pick a tone from the whitelist.
+- For semantic emphasis (the bold _is_ the meaning — e.g. a user's name in a notification, an error keyword), use `<strong>` or `<em>` inside `<Text>`. For visual-only weight changes (a medium-weight name in a list because hierarchy says so, not because the name is emphatic), use `<Text weight="medium">`. Pick the one that matches _why_ the text is heavy.
+- If the size / tone / weight you need isn't on `<Title>` or `<Text>`, **that's a token-vocabulary conversation, not a component-skipping conversation.**
