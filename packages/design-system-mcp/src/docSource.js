@@ -41,7 +41,11 @@ export function createDocSource({
   fetch: doFetch = globalThis.fetch,
   offline = false,
 } = {}) {
-  /** GET with timeout. Returns text, null (404), or throws (network/5xx). */
+  /**
+   * GET with timeout. Returns text, null (404), or throws (network/5xx).
+   * @param {string} url
+   * @returns {Promise<string | null>}
+   */
   async function get(url) {
     const res = await doFetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
     if (res.status === 404) return null;
@@ -49,7 +53,11 @@ export function createDocSource({
     return res.text();
   }
 
-  /** Try each url in order. Text on first 200; null only if every url 404'd; throws if none succeeded and any errored. */
+  /**
+   * Try each url in order. Text on first 200; null only if every url 404'd; throws if none succeeded and any errored.
+   * @param {string[]} urls
+   * @returns {Promise<string | null>}
+   */
   async function firstOf(urls) {
     let err;
     for (const url of urls) {
@@ -69,6 +77,8 @@ export function createDocSource({
   /**
    * jsDelivr flat file listing for a version, memoized per process. Null when the
    * version is not on npmjs (404); throws on network/5xx (not memoized).
+   * @param {string} version
+   * @returns {Promise<string[] | null>}
    */
   function listing(version) {
     let p = listings.get(version);
@@ -78,8 +88,8 @@ export function createDocSource({
           text == null
             ? null
             : JSON.parse(text)
-                .files.map((f) => f.name.replace(/^\//, ''))
-                .filter((n) => WANTED.test(n)),
+                .files.map((/** @type {{ name: string }} */ f) => f.name.replace(/^\//, ''))
+                .filter((/** @type {string} */ n) => WANTED.test(n)),
       );
       p.catch(() => listings.delete(version));
       listings.set(version, p);
@@ -87,7 +97,11 @@ export function createDocSource({
     return p;
   }
 
-  /** @returns {Promise<{ snapVersion: string|null, warning?: string }>} */
+  /**
+   * @param {string} version
+   * @param {string} [reason]
+   * @returns {Promise<{ snapVersion: string|null, warning?: string }>}
+   */
   async function snapshotMeta(version, reason = 'unavailable offline') {
     const snapVersion = (await readOrNull(join(snapshotDir, 'VERSION')))?.trim() ?? null;
     if (snapVersion === version) return { snapVersion };
@@ -97,6 +111,11 @@ export function createDocSource({
     };
   }
 
+  /**
+   * @param {string} version
+   * @param {string} path
+   * @param {string} [reason]
+   */
   async function fromSnapshot(version, path, reason) {
     const { snapVersion, warning } = await snapshotMeta(version, reason);
     const file = resolve(snapshotDir, path);
@@ -105,6 +124,11 @@ export function createDocSource({
   }
 
   return {
+    /**
+     * @param {string} version
+     * @param {string} path
+     * @returns {Promise<{ text: string | null, servedVersion: string, warning?: string }>}
+     */
     async readFile(version, path) {
       if (!validVersion(version) || !validPath(path)) return { text: null, servedVersion: version };
       if (offline) return fromSnapshot(version, path);
@@ -140,7 +164,12 @@ export function createDocSource({
       return { text, servedVersion: version };
     },
 
+    /**
+     * @param {string} version
+     * @returns {Promise<{ files: string[], servedVersion: string, warning?: string }>}
+     */
     async listFiles(version) {
+      /** @param {string} [reason] */
       const fromSnap = async (reason) => {
         const { snapVersion, warning } = await snapshotMeta(version, reason);
         const files = JSON.parse((await readOrNull(join(snapshotDir, 'files.json'))) ?? '[]');

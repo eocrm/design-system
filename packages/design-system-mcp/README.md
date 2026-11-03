@@ -9,7 +9,7 @@ Tools:
 - `get_primer` — the `AI-PRIMER.md` (read this first).
 - `list_components` — the component index.
 - `get_component_doc` — one component's contract (`docs/components/<Name>.md`).
-- `get_doc` — any other doc (`docs/setup.md`, `docs/theming.md`, …).
+- `get_doc` — any other doc (`docs/setup.md`, `docs/theming.md`, …), or topic `readme` for the design-system README (install, bundler notes).
 
 **Version matching.** The server resolves the `@eocrm/design-system` version from the project's lockfile (npm, pnpm, yarn, bun), falling back to the range in `package.json`, and serves that release's docs. If the project doesn't depend on it, it uses the latest published release; the response says which version and source was used. Docs are fetched once and cached.
 

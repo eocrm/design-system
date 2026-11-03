@@ -1,0 +1,10 @@
+lockfileVersion: 5.4
+specifiers:
+  "@eocrm/design-system": ^0.6.0
+dependencies:
+  "@eocrm/design-system": 0.6.19
+packages:
+  /@eocrm/design-system-mcp/0.9.9:
+    resolution: { integrity: sha512-y }
+  /@eocrm/design-system/0.6.19_react@19.2.0:
+    resolution: { integrity: sha512-x }

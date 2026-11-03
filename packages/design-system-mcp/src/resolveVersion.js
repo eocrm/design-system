@@ -31,7 +31,8 @@ const LOCKFILES = [
       return vs.sort(semver.rcompare)[0];
     },
   ],
-  ['pnpm-lock.yaml', (t) => highest(t, /@eocrm\/design-system@(\d[^:'"\s(]*)/g)],
+  // v6+: `@eocrm/design-system@0.6.20(peer…)`; v5: `/@eocrm/design-system/0.6.20_peer…`
+  ['pnpm-lock.yaml', (t) => highest(t, /@eocrm\/design-system[@/](\d[^:'"\s(_]*)/g)],
   // classic: `version "x"`; berry: `version: x`
   [
     'yarn.lock',

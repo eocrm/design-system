@@ -19,13 +19,16 @@ export const CLIENT_SKILL_DIRS = {
   '.copilot': '.copilot/skills',
 };
 
-const exists = (p) =>
+const exists = (/** @type {string} */ p) =>
   access(p).then(
     () => true,
     () => false,
   );
 
-/** @returns {Promise<string[]>} paths of the SKILL.md files written (or that would be, on dryRun) */
+/**
+ * @param {{ home?: string, dryRun?: boolean, log?: (path: string) => void }} [options]
+ * @returns {Promise<string[]>} paths of the SKILL.md files written (or that would be, on dryRun)
+ */
 export async function installSkill({ home = homedir(), dryRun = false, log = () => {} } = {}) {
   const written = [];
   for (const [root, dir] of Object.entries(CLIENT_SKILL_DIRS)) {
