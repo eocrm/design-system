@@ -15,7 +15,26 @@ import { attachmentIsImage } from './engine/attachment';
 import { AttachFileIcon } from './attachmentIcon';
 import styles from './RichTextAttachment.module.scss';
 
-export function RichTextAttachment({ block, editable }: { block: Block; editable?: boolean }) {
+/**
+ * Called when a reader activates an inline image (click, Enter or Space) in the
+ * read-only `<RichText>`. `src` is the sanitized URL; `alt` is the block's alt
+ * as stored (may be `''` or absent). `trigger` is the DS-owned button — return
+ * focus to it when your overlay (e.g. `Lightbox`) closes.
+ */
+export type RichTextImageActivateHandler = (
+  image: { src: string; alt?: string },
+  trigger: HTMLElement,
+) => void;
+
+export function RichTextAttachment({
+  block,
+  editable,
+  onImageActivate,
+}: {
+  block: Block;
+  editable?: boolean;
+  onImageActivate?: RichTextImageActivateHandler;
+}) {
   const t = useTranslation();
   const name = block.name ?? '';
   const errorId = useId();
@@ -86,7 +105,7 @@ export function RichTextAttachment({ block, editable }: { block: Block; editable
     // so the rendered size is decoupled from the width attr). Here the width attr +
     // `height: auto` give the configured display size at natural aspect, and the
     // `inline-block` lets the figure's `text-align` (data-align) position it.
-    return (
+    const img = (
       <img
         className={styles.attachmentImg}
         src={href}
@@ -95,7 +114,9 @@ export function RichTextAttachment({ block, editable }: { block: Block; editable
         // `block.alt` is a choice to honour, not an unset to fall back from.
         // Everywhere else in this library an empty label means unset; see
         // docs/accessible-names.md, which names this as the exception.
-        alt={block.alt ?? name}
+        // Inside the trigger the button carries the name, so the image is
+        // decorative there (`alt=""`) and the name isn't read twice.
+        alt={onImageActivate ? '' : (block.alt ?? name)}
         width={block.width}
         height={block.height}
         // Publish the natural aspect so the SCSS height cap (#644) can shrink the
@@ -111,6 +132,19 @@ export function RichTextAttachment({ block, editable }: { block: Block; editable
             );
         }}
       />
+    );
+    if (!onImageActivate) return img;
+    return (
+      <button
+        type="button"
+        className={styles.imageTrigger}
+        // `||` here (unlike the img alt above): this IS an accessible-name
+        // fallback, and a decorative `alt=""` must still yield a named button.
+        aria-label={t('richText.openImage', { name: block.alt || name })}
+        onClick={(e) => onImageActivate({ src: href, alt: block.alt }, e.currentTarget)}
+      >
+        {img}
+      </button>
     );
   }
   return (

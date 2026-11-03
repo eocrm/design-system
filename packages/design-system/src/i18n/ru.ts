@@ -536,6 +536,9 @@ export const ru: Messages = {
     suggestions: 'Подсказки',
     collectionTag: 'список',
   },
+  richText: {
+    openImage: ({ name }) => (name ? `Открыть изображение: ${name}` : 'Открыть изображение'),
+  },
   richTextEditor: {
     editorLabel: 'Редактор форматированного текста',
     toolbar: 'Форматирование',

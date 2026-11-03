@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   RichText,
+  Lightbox,
   createBlock,
   toggleMark,
   setBlockType,
@@ -10,10 +11,49 @@ import {
   type RichDoc,
   type RenderLink,
   type RenderMention,
+  type RichTextImageActivateHandler,
 } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
+
+const IMAGE_DOC: RichDoc = {
+  blocks: [
+    createBlock('paragraph', 'Site survey photo — click it, or Tab to it and press Enter:'),
+    {
+      id: 'img-1',
+      type: 'attachment',
+      inlines: [],
+      status: 'ready',
+      src: 'https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=1400&q=80',
+      mime: 'image/jpeg',
+      name: 'lake.jpg',
+      alt: 'Mountain lake at dawn',
+      width: 320,
+    },
+  ],
+};
+
+// Opens the activated image in a Lightbox. Focusing the trigger before opening
+// makes it the element the Lightbox returns focus to on close — a mouse click
+// doesn't focus a button in every browser (Safari).
+function ImageLightboxExample() {
+  const [image, setImage] = useState<{ src: string; alt?: string } | null>(null);
+  const onImageActivate = useCallback<RichTextImageActivateHandler>((img, trigger) => {
+    trigger.focus();
+    setImage(img);
+  }, []);
+  return (
+    <>
+      <RichText value={IMAGE_DOC} onImageActivate={onImageActivate} />
+      <Lightbox
+        open={image !== null}
+        onOpenChange={(o) => !o && setImage(null)}
+        items={image ? [{ src: image.src, alt: image.alt || 'Attached image' }] : []}
+      />
+    </>
+  );
+}
 
 // A consumer-supplied resolver: links pointing at an in-space task URL render as
 // a task chip; everything else falls back to a normal <a>.
@@ -362,6 +402,33 @@ export function Demo() {
 }`}
       >
         <RichText value={MENTION_DOC} renderMention={renderMention} />
+      </Example>
+
+      <Example
+        title="Inline images open a Lightbox (onImageActivate)"
+        description="With onImageActivate set, each inline image is a native button (Tab, Enter/Space, focus ring) named 'Open image: <alt>'. The handler gets { src, alt } and the button; focus it before opening so the Lightbox returns focus there on close. Unset, images are plain <img> — don't attach a delegated onClick instead (mouse-only, no focus return)."
+        code={`import { useCallback, useState } from 'react';
+import { RichText, Lightbox, type RichTextImageActivateHandler } from '@eocrm/design-system';
+
+export function Demo({ doc }) {
+  const [image, setImage] = useState<{ src: string; alt?: string } | null>(null);
+  const onImageActivate = useCallback<RichTextImageActivateHandler>((img, trigger) => {
+    trigger.focus(); // Lightbox restores focus to the element focused when it opened
+    setImage(img);
+  }, []);
+  return (
+    <>
+      <RichText value={doc} onImageActivate={onImageActivate} />
+      <Lightbox
+        open={image !== null}
+        onOpenChange={(o) => !o && setImage(null)}
+        items={image ? [{ src: image.src, alt: image.alt || 'Attached image' }] : []}
+      />
+    </>
+  );
+}`}
+      >
+        <ImageLightboxExample />
       </Example>
     </DemoLayout>
   );

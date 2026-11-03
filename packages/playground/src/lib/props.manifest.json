@@ -5360,6 +5360,13 @@
           "required": false,
           "default": "",
           "description": "Maximum DISPLAYED height of image attachments, in px. Default: the\n`--size-rich-text-image-max-height` token (480px). A taller image shrinks\n(width follows, aspect preserved) — render-time only; stored `width`/`height`\nare unchanged, so existing documents need no migration. There is no \"off\":\npass a large value to effectively remove the cap."
+        },
+        {
+          "name": "onImageActivate",
+          "type": "RichTextImageActivateHandler",
+          "required": false,
+          "default": "",
+          "description": "Make inline images keyboard-operable triggers (e.g. to open a `Lightbox`).\nWhen set, each ready image attachment renders inside a native\n`<button type=\"button\">` named \"Open image: <alt or file name>\"; click,\nEnter and Space call this with `{ src, alt }` and the button — return focus\nto it when your overlay closes. Unset: the plain `<img>`, unchanged.\nPass a stable reference (`useCallback`): a new function each render\nrebuilds every attachment block."
         }
       ]
     },
@@ -7379,6 +7386,7 @@
     "CodeBlockMaxHeight": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\"",
     "CodeBlockLanguage": "\"json\" | \"bash\" | \"javascript\" | \"typescript\" | \"python\" | \"go\" | \"kotlin\" | \"java\" | \"csharp\" | \"rust\"",
     "HighlightRange": "{ start: number; length: number }",
+    "RichTextImageActivateHandler": "(image: { src: string; alt?: string; }, trigger: HTMLElement) => void",
     "RichDoc": "{ blocks: Block[] }",
     "RenderLink": "(link: RichTextLink, defaultNode: ReactNode) => ReactNode",
     "RenderMention": "(mention: RichTextMention, defaultNode: ReactNode) => ReactNode",

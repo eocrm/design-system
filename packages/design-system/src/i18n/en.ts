@@ -529,6 +529,9 @@ export const en: Messages = {
     suggestions: 'Suggestions',
     collectionTag: 'list',
   },
+  richText: {
+    openImage: ({ name }) => (name ? `Open image: ${name}` : 'Open image'),
+  },
   richTextEditor: {
     editorLabel: 'Rich text editor',
     toolbar: 'Formatting',

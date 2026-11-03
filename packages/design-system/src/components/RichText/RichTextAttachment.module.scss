@@ -1,3 +1,5 @@
+@use '../../styles/mixins' as *;
+
 // Attachment body styles, moved out of RichTextEditor.module.scss (#509).
 // RichTextAttachment renders inside the READ-ONLY viewer as well as the editor
 // — renderDoc calls it — so it belongs to the lower of the two layers. Living in
@@ -79,4 +81,22 @@ figure[data-attachment][data-align='center'] {
 
 figure[data-attachment][data-align='right'] {
   text-align: right;
+}
+
+// The `onImageActivate` trigger (#739): a native button reset to just wrap the
+// image. `inline-block` keeps the figure's `text-align` (data-align) positioning
+// the image as it does the bare <img>.
+.imageTrigger {
+  display: inline-block;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: none;
+  font: inherit;
+  line-height: 0;
+  cursor: zoom-in;
+
+  &:focus-visible {
+    @include focus-ring;
+  }
 }
