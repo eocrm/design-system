@@ -15,15 +15,15 @@ pays only for what they import, and guard that in CI.**
 
 ## Baseline (measured 2026-11-03, scratch Vite consumer, gzip -9)
 
-| Import | JS gz | CSS gz |
-|---|---|---|
-| `Button` | 1.4 KB | 1.2 KB |
-| `Button, Stack, Input, Select, Modal, Tooltip` | 30.8 KB | 5.7 KB |
-| `DataTable` | 32.8 KB | 5.2 KB |
-| `RichTextEditor` | 71.9 KB | 9.0 KB |
-| `I18nProvider, Button` | 13.9 KB | — |
-| `import * as DS` (everything) | 315.9 KB | 69.5 KB |
-| `styles/global.scss` | — | 4.9 KB |
+| Import                                         | JS gz    | CSS gz  |
+| ---------------------------------------------- | -------- | ------- |
+| `Button`                                       | 1.4 KB   | 1.2 KB  |
+| `Button, Stack, Input, Select, Modal, Tooltip` | 30.8 KB  | 5.7 KB  |
+| `DataTable`                                    | 32.8 KB  | 5.2 KB  |
+| `RichTextEditor`                               | 71.9 KB  | 9.0 KB  |
+| `I18nProvider, Button`                         | 13.9 KB  | —       |
+| `import * as DS` (everything)                  | 315.9 KB | 69.5 KB |
+| `styles/global.scss`                           | —        | 4.9 KB  |
 
 Findings:
 
@@ -37,7 +37,7 @@ Findings:
 - Raw-source shipping breaks or burdens non-Vite consumers: Next.js/webpack don't
   transpile TS in `node_modules` by default; Sass is only a devDependency so
   consumers must install + configure it; `types` points at `.ts` source so the
-  consumer's `tsc` type-checks our code under *their* tsconfig (`skipLibCheck`
+  consumer's `tsc` type-checks our code under _their_ tsconfig (`skipLibCheck`
   does not cover `.ts` files).
 - `@eocrm/design-tokens` is only consumed via Sass `@forward` (in
   `src/styles/tokens.scss`, `src/styles/dark.scss`) — build-time only.
