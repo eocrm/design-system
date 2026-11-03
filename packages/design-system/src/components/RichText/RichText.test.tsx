@@ -3,6 +3,7 @@ import { resolve } from 'node:path';
 import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { I18nProvider } from '../../i18n';
+import { ru } from '../../i18n/ru';
 import { RichText } from './RichText';
 import { createBlock, docFromText } from './engine/model';
 import type { RichDoc } from './engine/model';
@@ -210,7 +211,7 @@ describe('onImageActivate (#739)', () => {
 
   it('ru locale provides the label', () => {
     render(
-      <I18nProvider locale="ru">
+      <I18nProvider locale="ru" messages={ru}>
         <RichText value={imageDoc()} onImageActivate={() => {}} />
       </I18nProvider>,
     );
