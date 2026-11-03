@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { mkdtemp } from 'node:fs/promises';
+import { mkdtemp, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { test } from 'node:test';
@@ -61,6 +61,40 @@ test('both fail, cache hit: cache, no warning', async () => {
   await src.readFile('0.6.17', P);
   fail = true;
   assert.deepEqual(await src.readFile('0.6.17', P), { text: 'remote', servedVersion: '0.6.17' });
+});
+
+test('jsDelivr 404 then unpkg 200 returns unpkg text', async () => {
+  const { fetch } = setup((u) => (u.includes('jsdelivr') ? res(404) : res(200, 'unpkg')));
+  assert.equal((await (await mk(fetch)).readFile('0.6.17', P)).text, 'unpkg');
+});
+
+test('listFiles 404 falls back to snapshot with warning', async () => {
+  const { fetch } = setup(() => res(404));
+  const r = await (await mk(fetch)).listFiles('0.6.17');
+  assert.ok(r.files.includes(P));
+  assert.match(r.warning, /bundled 0\.6\.21/);
+});
+
+test('unwritable cache still returns fetched text', async () => {
+  const { fetch } = setup(() => res(200, 'remote'));
+  const dir = await mkdtemp(join(tmpdir(), 'dsc-'));
+  const cacheDir = join(dir, 'file');
+  await writeFile(cacheDir, 'x');
+  const src = createDocSource({ cacheDir, snapshotDir, fetch });
+  assert.equal((await src.readFile('0.6.17', P)).text, 'remote');
+});
+
+test('rejects bad version and path without fetching or reading', async () => {
+  const { calls, fetch } = setup(() => res(200, 'remote'));
+  const src = await mk(fetch);
+  for (const off of [false, true]) {
+    const s = off ? await mk(fetch, { offline: true }) : src;
+    assert.equal((await s.readFile('../../etc', P)).text, null);
+    assert.deepEqual((await s.listFiles('../../etc')).files, []);
+    for (const p of ['../x', '/etc/passwd', 'docs\\..\\..\\x', 'docs/../../x'])
+      assert.equal((await s.readFile('0.6.17', p)).text, null, p);
+  }
+  assert.equal(calls.length, 0);
 });
 
 test('404 gives null text, no snapshot fallback', async () => {

@@ -1,6 +1,7 @@
 import { mkdir, readFile, rename, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
-import { dirname, join, normalize } from 'node:path';
+import { dirname, isAbsolute, join, resolve, sep } from 'node:path';
+import semver from 'semver';
 import { fileURLToPath } from 'node:url';
 
 const NAME = '@eocrm/design-system';
@@ -16,6 +17,17 @@ function defaultCacheDir() {
     join(homedir(), '.cache');
   return join(base, 'eocrm-design-system-mcp');
 }
+
+const validVersion = (/** @type {string} */ v) => typeof v === 'string' && semver.valid(v) === v;
+/** No absolute paths, backslashes or `..` segments. */
+const validPath = (/** @type {string} */ p) =>
+  typeof p === 'string' &&
+  p !== '' &&
+  !isAbsolute(p) &&
+  !p.includes('\\') &&
+  !p.split('/').includes('..');
+const contains = (/** @type {string} */ root, /** @type {string} */ file) =>
+  file.startsWith(resolve(root) + sep);
 
 /** @param {string} p */
 const readOrNull = (p) => readFile(p, 'utf8').catch(() => null);
@@ -37,17 +49,19 @@ export function createDocSource({
     return res.text();
   }
 
-  /** Try each url in order; a 404 is definitive, errors fall through. Throws if all error. */
+  /** Try each url in order. Text on first 200; null only if every url 404'd; throws if none succeeded and any errored. */
   async function firstOf(urls) {
     let err;
     for (const url of urls) {
       try {
-        return await get(url);
+        const text = await get(url);
+        if (text != null) return text;
       } catch (e) {
         err = e;
       }
     }
-    throw err;
+    if (err) throw err;
+    return null;
   }
 
   /** @returns {Promise<{ snapVersion: string|null, warning?: string }>} */
@@ -62,19 +76,18 @@ export function createDocSource({
 
   async function fromSnapshot(version, path) {
     const { snapVersion, warning } = await snapshotMeta(version);
-    const text = await readOrNull(join(snapshotDir, path));
+    const file = resolve(snapshotDir, path);
+    const text = contains(snapshotDir, file) ? await readOrNull(file) : null;
     return { text, servedVersion: snapVersion ?? version, ...(warning && { warning }) };
   }
 
   return {
     async readFile(version, path) {
-      // Reject traversal outside the package root.
-      if (normalize(path).startsWith('..') || normalize(path).startsWith('/')) {
-        return { text: null, servedVersion: version };
-      }
+      if (!validVersion(version) || !validPath(path)) return { text: null, servedVersion: version };
       if (offline) return fromSnapshot(version, path);
 
-      const cached = join(cacheDir, version, path);
+      const cached = resolve(cacheDir, version, path);
+      if (!contains(cacheDir, cached)) return { text: null, servedVersion: version };
       const hit = await readOrNull(cached);
       if (hit != null) return { text: hit, servedVersion: version };
 
@@ -87,10 +100,14 @@ export function createDocSource({
       }
       if (text == null) return { text: null, servedVersion: version };
 
-      await mkdir(dirname(cached), { recursive: true });
-      const tmp = `${cached}.${process.pid}.${Date.now()}.tmp`;
-      await writeFile(tmp, text);
-      await rename(tmp, cached);
+      try {
+        await mkdir(dirname(cached), { recursive: true });
+        const tmp = `${cached}.${process.pid}.${Date.now()}.tmp`;
+        await writeFile(tmp, text);
+        await rename(tmp, cached);
+      } catch {
+        // cache is best-effort; still serve the fetched text
+      }
       return { text, servedVersion: version };
     },
 
@@ -100,12 +117,13 @@ export function createDocSource({
         const files = JSON.parse((await readOrNull(join(snapshotDir, 'files.json'))) ?? '[]');
         return { files, servedVersion: snapVersion ?? version, ...(warning && { warning }) };
       };
+      if (!validVersion(version)) return { files: [], servedVersion: version };
       if (offline) return fromSnap();
       try {
         const text = await get(
           `https://data.jsdelivr.com/v1/packages/npm/${NAME}@${version}?structure=flat`,
         );
-        if (text == null) return { files: [], servedVersion: version };
+        if (text == null) return fromSnap();
         const files = JSON.parse(text)
           .files.map((f) => f.name.replace(/^\//, ''))
           .filter((n) => WANTED.test(n));
