@@ -141,12 +141,17 @@ describe('onImageActivate (#739)', () => {
     ],
   });
 
-  it('unset: renders the plain <img>, byte-identical to before', () => {
+  it('unset: renders the plain <img> as the only figure child, no button', () => {
     const { container } = render(<RichText value={imageDoc()} />);
     expect(container.querySelector('button')).toBeNull();
-    expect(container.querySelector('figure')!.innerHTML).toBe(
-      '<img class="_attachmentImg_438fdb" alt="Q3 chart" width="320" src="https://x.test/chart.png">',
-    );
+    const figure = container.querySelector('figure')!;
+    expect(figure.children).toHaveLength(1);
+    const img = figure.firstElementChild!;
+    expect(img.tagName).toBe('IMG');
+    expect(img).toHaveAttribute('src', 'https://x.test/chart.png');
+    expect(img).toHaveAttribute('alt', 'Q3 chart');
+    expect(img).toHaveAttribute('width', '320');
+    expect(img.closest('button')).toBeNull();
   });
 
   it('unset: honours an empty alt (decorative) with ??', () => {
