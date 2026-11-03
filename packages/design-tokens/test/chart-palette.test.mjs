@@ -3,15 +3,24 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 // The categorical chart palette (chart.series.N) is read in slot order: adjacent slots
-// are what a viewer has to tell apart in a legend or a stacked bar. Gate the base order
-// and every accent's re-order on hue separation for normal vision AND protan/deutan CVD.
+// are what a viewer has to tell apart in a legend or a stacked bar, and the first few
+// slots are what most charts use. Gate the base order and every accent's re-order on
+// hue separation for normal vision AND protan/deutan CVD.
 // Thresholds are the palette's validated design floors (DS-5).
 const document = JSON.parse(readFileSync(new URL('../src/tokens.json', import.meta.url), 'utf8'));
 
 const LIGHTNESS = { light: [0.43, 0.77], dark: [0.48, 0.67] };
 const MIN_CHROMA = 0.1;
-const MIN_ADJACENT_NORMAL = 15;
-const MIN_ADJACENT_CVD = 8;
+const MIN_NORMAL = 15;
+const MIN_CVD = 8;
+// Series-cap rule: a chart with up to this many series must have every pair distinct.
+const HEAD = 3;
+// Moss leads with green, and green collapses against every warm hue for deutans; the best
+// head (green, violet, magenta) reaches ~5.9 light / 6.2 dark. Accepted, like moss sitting
+// close to --color-success (README "Known issue"); this floor keeps it from getting worse.
+const HEAD_CVD_EXCEPTIONS = { moss: 5.5 };
+// A hue under 3:1 on the light surface (gold) must not be one of the slots most charts use.
+const FIRST_LOW_CONTRAST_SLOT = 6;
 
 // Machado, Oliveira & Fernandes (2009), severity 1.0, applied to linear sRGB.
 const CVD = {
@@ -58,53 +67,74 @@ function oklab([r, g, b]) {
 
 const deltaE = (a, b) => 100 * Math.hypot(a[0] - b[0], a[1] - b[1], a[2] - b[2]);
 
+// WCAG 2 contrast ratio.
+function contrast(a, b) {
+  const lum = (hex) => multiply([[0.2126, 0.7152, 0.0722]], toLinear(hex))[0];
+  const [lo, hi] = [lum(a), lum(b)].sort((x, y) => x - y);
+  return (hi + 0.05) / (lo + 0.05);
+}
+
+const tokenById = new Map(document.tokens.map((token) => [token.id, token]));
+const surface = tokenById.get('color.background').value;
+
 const seriesIds = document.tokens
   .map((token) => token.id)
   .filter((id) => /^chart\.series\.\d+$/.test(id))
   .sort((a, b) => Number(a.split('.')[2]) - Number(b.split('.')[2]));
 
-const base = Object.fromEntries(
-  document.tokens.filter((token) => seriesIds.includes(token.id)).map((t) => [t.id, t.value]),
-);
+const base = Object.fromEntries(seriesIds.map((id) => [id, tokenById.get(id).value]));
 
-function palettes() {
-  return [
-    ['base', base],
-    ...Object.entries(document.accents ?? {}).map(([accent, overrides]) => [
-      accent,
-      Object.fromEntries(seriesIds.map((id) => [id, overrides[id] ?? base[id]])),
-    ]),
-  ];
-}
+const palettes = [
+  ['base', base],
+  ...Object.entries(document.accents ?? {}).map(([accent, overrides]) => [
+    accent,
+    Object.fromEntries(seriesIds.map((id) => [id, overrides[id] ?? base[id]])),
+  ]),
+];
 
-function paletteIssues(hexes, theme) {
+/** Pairs of slot indexes that fall under the normal-vision or CVD floor. */
+function separationIssues(hexes, pairs, minCvd) {
+  const normal = hexes.map((hex) => oklab(toLinear(hex)));
+  const simulated = Object.entries(CVD).map(([kind, matrix]) => [
+    kind,
+    hexes.map((hex) => oklab(clamp01(multiply(matrix, toLinear(hex))))),
+  ]);
   const issues = [];
-  const labs = hexes.map((hex) => oklab(toLinear(hex)));
-  labs.forEach(([L, a, b], i) => {
-    const [min, max] = LIGHTNESS[theme];
-    if (L < min || L > max) issues.push(`slot ${i + 1} ${hexes[i]} OKLCH L ${L.toFixed(3)}`);
-    if (Math.hypot(a, b) < MIN_CHROMA) issues.push(`slot ${i + 1} ${hexes[i]} chroma too low`);
-  });
-  const simulated = Object.fromEntries(
-    Object.entries(CVD).map(([kind, matrix]) => [
-      kind,
-      hexes.map((hex) => oklab(clamp01(multiply(matrix, toLinear(hex))))),
-    ]),
-  );
-  for (let i = 1; i < hexes.length; i++) {
-    const pair = `slots ${i}/${i + 1} (${hexes[i - 1]}, ${hexes[i]})`;
-    const normal = deltaE(labs[i - 1], labs[i]);
-    if (normal < MIN_ADJACENT_NORMAL) issues.push(`${pair} normal ΔE ${normal.toFixed(1)}`);
-    for (const [kind, sim] of Object.entries(simulated)) {
-      const d = deltaE(sim[i - 1], sim[i]);
-      if (d < MIN_ADJACENT_CVD) issues.push(`${pair} ${kind} ΔE ${d.toFixed(1)}`);
+  for (const [i, j] of pairs) {
+    const pair = `slots ${i + 1}/${j + 1} (${hexes[i]}, ${hexes[j]})`;
+    const d = deltaE(normal[i], normal[j]);
+    if (d < MIN_NORMAL) issues.push(`${pair} normal ΔE ${d.toFixed(1)}`);
+    for (const [kind, labs] of simulated) {
+      const dc = deltaE(labs[i], labs[j]);
+      if (dc < minCvd) issues.push(`${pair} ${kind} ΔE ${dc.toFixed(1)}`);
     }
   }
   return issues;
 }
 
+function paletteIssues(name, hexes, theme) {
+  const issues = [];
+  hexes.forEach((hex, i) => {
+    const [L, a, b] = oklab(toLinear(hex));
+    const [min, max] = LIGHTNESS[theme];
+    if (L < min || L > max) issues.push(`slot ${i + 1} ${hex} OKLCH L ${L.toFixed(3)}`);
+    if (Math.hypot(a, b) < MIN_CHROMA) issues.push(`slot ${i + 1} ${hex} chroma too low`);
+    if (theme === 'light' && i + 1 < FIRST_LOW_CONTRAST_SLOT && contrast(hex, surface.light) < 3) {
+      issues.push(`slot ${i + 1} ${hex} is under 3:1 on the surface but before slot 6`);
+    }
+  });
+  const adjacent = hexes.slice(1).map((_, i) => [i, i + 1]);
+  issues.push(...separationIssues(hexes, adjacent, MIN_CVD));
+  const head = [];
+  for (let i = 0; i < HEAD; i++) for (let j = i + 1; j < HEAD; j++) head.push([i, j]);
+  issues.push(
+    ...separationIssues(hexes, head, HEAD_CVD_EXCEPTIONS[name] ?? MIN_CVD).map((s) => `head ${s}`),
+  );
+  return issues;
+}
+
 test('chart palette has slots to check, and every accent override names a real slot', () => {
-  assert.ok(seriesIds.length > 1);
+  assert.ok(seriesIds.length >= HEAD);
   for (const [accent, overrides] of Object.entries(document.accents ?? {})) {
     for (const id of Object.keys(overrides).filter((key) => key.startsWith('chart.'))) {
       assert.ok(seriesIds.includes(id), `${accent}: ${id}`);
@@ -112,11 +142,20 @@ test('chart palette has slots to check, and every accent override names a real s
   }
 });
 
-for (const [name, palette] of palettes()) {
+test('every accent re-orders the base colours, light and dark kept as pairs', () => {
+  const pairs = (palette) =>
+    seriesIds.map((id) => `${palette[id].light}/${palette[id].dark}`).sort();
+  for (const [name, palette] of palettes) {
+    assert.deepEqual(pairs(palette), pairs(base), name);
+  }
+});
+
+for (const [name, palette] of palettes) {
   for (const theme of ['light', 'dark']) {
-    test(`chart palette (${name}, ${theme}) separates adjacent slots for normal and CVD vision`, () => {
+    test(`chart palette (${name}, ${theme}) separates its slots for normal and CVD vision`, () => {
       assert.deepEqual(
         paletteIssues(
+          name,
           seriesIds.map((id) => palette[id][theme]),
           theme,
         ),
@@ -128,5 +167,5 @@ for (const [name, palette] of palettes()) {
 
 test('catches two close hues placed in adjacent slots', () => {
   // Brand blue next to brand violet: distinct for normal vision, near-identical for protans.
-  assert.notDeepEqual(paletteIssues(['#2062ce', '#624bbc'], 'light'), []);
+  assert.notDeepEqual(separationIssues(['#2062ce', '#624bbc'], [[0, 1]], MIN_CVD), []);
 });
