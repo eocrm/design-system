@@ -6,6 +6,11 @@
   --timeline-line-width: var(--border-width); // hairline connector
   --timeline-line-color: var(--color-border);
 
+  // The type of each item's first line — the node centres on it (#738). Set
+  // these to match when the first line is not `Text size="sm"`.
+  --timeline-first-line-font-size: var(--font-size-sm);
+  --timeline-first-line-height: var(--line-height-normal);
+
   --timeline-gutter-compact: var(--size-sm); // 24px
   --timeline-node-size-compact: var(--size-sm); // 24px
   --timeline-row-gap-compact: var(--space-2); // 8px

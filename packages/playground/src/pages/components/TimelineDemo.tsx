@@ -1,5 +1,15 @@
-import { Timeline, Avatar, Dot, Stack, Text, IconTile, Button } from '@eocrm/design-system';
-import { GitCommit, Mail, Plus } from 'lucide-react';
+import {
+  Timeline,
+  Avatar,
+  Dot,
+  Stack,
+  Text,
+  IconTile,
+  Button,
+  Cluster,
+  PersonDisplay,
+} from '@eocrm/design-system';
+import { GitCommit, Mail, Phone, Plus } from 'lucide-react';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -22,11 +32,9 @@ export function Demo() {
   return (
     <Timeline>
       <Timeline.Item node={<IconTile icon={<Plus size={16} />} color="blue" size="sm" />}>
-        <div style={{ display: 'flex', alignItems: 'center', minHeight: 'var(--size-md)' }}>
-          <Button variant="secondary" size="sm" onClick={() => {}}>
-            Add activity
-          </Button>
-        </div>
+        <Button variant="secondary" size="sm" onClick={() => {}}>
+          Add activity
+        </Button>
       </Timeline.Item>
       <Timeline.Item node={<Avatar name="Dana Reyes" size="sm" />}>
         <Stack gap="xs">
@@ -67,15 +75,13 @@ export function Demo() {
   );
 }`}
       >
-        <Timeline>
+        <Timeline data-testid="timeline-default">
           {/* Composer entry as the most-recent (top) node — its connector flows into the feed below.
-              The single button is centered to the node box (matches its height) so it lines up with the node. */}
+              The node centres on the button's text line like any other first line. */}
           <Timeline.Item node={<IconTile icon={<Plus size={16} />} color="blue" size="sm" />}>
-            <div style={{ display: 'flex', alignItems: 'center', minHeight: 'var(--size-md)' }}>
-              <Button variant="secondary" size="sm" onClick={() => {}}>
-                Add activity
-              </Button>
-            </div>
+            <Button variant="secondary" size="sm" onClick={() => {}}>
+              Add activity
+            </Button>
           </Timeline.Item>
           <Timeline.Item node={<Avatar name="Dana Reyes" size="sm" />}>
             <Stack gap="xs">
@@ -142,7 +148,7 @@ export function Demo() {
 }`}
       >
         <div style={{ maxWidth: 260 }}>
-          <Timeline compact>
+          <Timeline compact data-testid="timeline-compact">
             <Timeline.Item node={<Dot tone="info" />}>
               <Text size="sm">Renewal confirmed</Text>
               <Text size="xs" tone="muted">
@@ -159,6 +165,54 @@ export function Demo() {
               <Text size="sm">Proposal sent</Text>
               <Text size="xs" tone="muted">
                 yesterday
+              </Text>
+            </Timeline.Item>
+          </Timeline>
+        </div>
+      </Example>
+      <Example
+        title="First-line alignment (record activity header)"
+        description="The node centres on the item's first line, not on the content block — so a header that wraps to two lines still lines up on line 1. It assumes the first line is sm text; set --timeline-first-line-font-size / --timeline-first-line-height on the Timeline when it is not."
+        code={`import { Mail, Phone } from 'lucide-react';
+import { Cluster, IconTile, PersonDisplay, Text, Timeline } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <div style={{ maxWidth: 320 }}>
+      <Timeline>
+        <Timeline.Item node={<IconTile size="sm" icon={<Phone size={16} />} />}>
+          <Cluster gap="xs">
+            <Text size="sm">Call logged by</Text>
+            <PersonDisplay size="inline">
+              <PersonDisplay.Avatar name="Dana Reyes" />
+              <PersonDisplay.Name>Dana Reyes</PersonDisplay.Name>
+            </PersonDisplay>
+          </Cluster>
+        </Timeline.Item>
+        <Timeline.Item node={<IconTile size="sm" icon={<Mail size={16} />} />}>
+          <Text size="sm">
+            Proposal follow-up email sent to the whole buying committee · yesterday
+          </Text>
+        </Timeline.Item>
+      </Timeline>
+    </div>
+  );
+}`}
+      >
+        <div style={{ maxWidth: 320 }}>
+          <Timeline data-testid="timeline-first-line">
+            <Timeline.Item node={<IconTile size="sm" icon={<Phone size={16} />} />}>
+              <Cluster gap="xs">
+                <Text size="sm">Call logged by</Text>
+                <PersonDisplay size="inline">
+                  <PersonDisplay.Avatar name="Dana Reyes" />
+                  <PersonDisplay.Name>Dana Reyes</PersonDisplay.Name>
+                </PersonDisplay>
+              </Cluster>
+            </Timeline.Item>
+            <Timeline.Item node={<IconTile size="sm" icon={<Mail size={16} />} />}>
+              <Text size="sm">
+                Proposal follow-up email sent to the whole buying committee · yesterday
               </Text>
             </Timeline.Item>
           </Timeline>

@@ -10,29 +10,44 @@
   display: block;
 }
 
+// #738: the node centres on the item's FIRST LINE. The gutter is `display:
+// contents`, so the node box and the content share row 1 and align on their
+// first baselines; the node box's baseline comes from a zero-width strut set in
+// the first-line type (`--timeline-first-line-*`), centred in the box, so the
+// node lands centred on the content's first line whatever wraps it (a Cluster,
+// a two-line header). The connector fills row 2: from the node's bottom down.
 .item {
   display: grid;
   grid-template-columns: var(--timeline-gutter) 1fr;
+  grid-template-rows: auto 1fr;
   column-gap: var(--timeline-content-gap);
+  align-items: first baseline;
 }
 
 .gutter {
-  position: relative;
+  display: contents;
 }
 
 .nodeBox {
+  grid-area: 1 / 1;
   height: var(--timeline-node-size);
   display: flex;
   align-items: center;
   justify-content: center;
+
+  &::before {
+    content: '\200b';
+    font-size: var(--timeline-first-line-font-size);
+    line-height: var(--timeline-first-line-height);
+  }
 }
 
 .connector {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  top: var(--timeline-node-size);
-  bottom: 0;
+  grid-area: 2 / 1;
+  // stylelint-disable-next-line property-disallowed-list -- internal grid placement: the connector fills its row while the row aligns on baselines
+  align-self: stretch;
+  // stylelint-disable-next-line property-disallowed-list -- internal grid placement: centres the hairline in the gutter column
+  justify-self: center;
   width: var(--timeline-line-width);
   background: var(--timeline-line-color);
 }
@@ -42,6 +57,7 @@
 }
 
 .content {
+  grid-area: 1 / 2 / span 2;
   min-width: 0;
   padding-block-end: var(--timeline-row-gap);
 }
