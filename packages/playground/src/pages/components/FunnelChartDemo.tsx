@@ -15,7 +15,7 @@ const pipeline: FunnelStage[] = [
   { key: 'won', label: 'Won', value: 64 },
 ];
 const highlighted: FunnelStage[] = pipeline.map((s) =>
-  s.key === 'won' ? { ...s, color: 2 as const } : s,
+  s.key === 'proposal' ? { ...s, color: 2 as const } : s,
 );
 const longLabels: FunnelStage[] = [
   'Inbound enquiry from the website form',
@@ -88,11 +88,12 @@ export function FunnelChartDemo() {
 
       <Example
         title="Highlight a stage"
-        description="A stage's color names a palette slot and overrides the ramp. Slot hues follow the accent; slot 2 always contrasts with the ramp."
+        description="A stage's color names a palette slot and overrides the ramp. Slot hues follow the accent and carry no meaning, so pick for contrast: slot 2 always contrasts with the ramp."
         code={`const stages = [
   { key: 'leads', label: 'Leads', value: 1200 },
   // …
-  { key: 'won', label: 'Won', value: 64, color: 2 },
+  { key: 'proposal', label: 'Proposal', value: 210, color: 2 },
+  { key: 'won', label: 'Won', value: 64 },
 ];
 <FunnelChart label="Sales pipeline" stages={stages} formatValue={formatCount} />`}
       >
