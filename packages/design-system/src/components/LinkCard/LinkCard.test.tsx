@@ -1,9 +1,23 @@
-import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { parse, type Declaration } from 'postcss';
+import { compile } from 'sass';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, type AnchorHTMLAttributes, type ReactNode } from 'react';
 import { LinkCard } from './LinkCard';
+
+// jsdom computes no styles — assert the rules against the compiled sheet.
+const stylesheet = parse(compile(resolve(__dirname, './LinkCard.module.scss')).css);
+function declsOf(selector: string, prop: string): string[] {
+  const values: string[] = [];
+  stylesheet.walkRules((r) => {
+    if (!r.selectors.includes(selector)) return;
+    r.walkDecls(prop, (d: Declaration) => {
+      values.push(d.value);
+    });
+  });
+  return values;
+}
 
 // A stand-in for a router's <Link> — verifies polymorphic `as` + prop passthrough.
 function StubRouterLink({
@@ -110,10 +124,12 @@ describe('LinkCard', () => {
     expect(el).toHaveAttribute('data-foo', 'bar');
   });
 
-  it('SCSS: fills its container and starts text so as="button" matches the anchor form (#736)', () => {
-    const scss = readFileSync(resolve(__dirname, 'LinkCard.module.scss'), 'utf8');
-    const root = scss.match(/\.linkCard \{[\s\S]*?\n\}/)![0];
-    expect(root).toMatch(/width: 100%;/);
-    expect(root).toMatch(/text-align: start;/);
+  it('CSS: the button form fills its container; the anchor form keeps its intrinsic width (#736)', () => {
+    expect(declsOf('.linkCard:where(button)', 'width')).toEqual(['100%']);
+    expect(declsOf('.linkCard', 'width')).toEqual([]);
+  });
+
+  it('CSS: every form start-aligns text so as="button" matches the anchor form (#736)', () => {
+    expect(declsOf('.linkCard', 'text-align')).toEqual(['start']);
   });
 });

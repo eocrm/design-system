@@ -7,9 +7,8 @@
 
   display: block;
 
-  // #736: a UA <button> shrink-wraps and centres text even at display:block;
-  // pin both so as="button" fills and aligns like the <a> form.
-  width: 100%;
+  // #736: a UA <button> centres text even at display:block; start-align every
+  // form so as="button" aligns like the <a> form.
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- text-align keywords don't have tokens
   text-align: start;
   background: var(--card-bg);
@@ -21,6 +20,13 @@
   text-decoration: none;
   cursor: pointer;
   transition: var(--link-card-transition);
+
+  // #736: a UA <button> also shrink-wraps at display:block. Only the button
+  // form needs the fill — a block <a> already fills block/grid parents, and
+  // pinning it would break anchor cards laid out in a flex row (Cluster).
+  &:where(button) {
+    width: 100%;
+  }
 }
 
 .linkCard:hover {
