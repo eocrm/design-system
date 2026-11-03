@@ -117,12 +117,12 @@ Every tool response starts with a one-line header:
 
 ### Tools
 
-| Tool | Input | Returns |
-|---|---|---|
-| `get_primer` | — | slimmed `AI-PRIMER.md` |
-| `list_components` | — | every component: name, one-line summary, cluster — from the DS manifest |
-| `get_component_doc` | `name` (case-insensitive; unknown → closest names suggested) | `docs/components/<Name>.md` |
-| `get_doc` | `topic` (enum from the `docs/*.md` present in that version: setup, theming, tokens, i18n, …) | that doc |
+| Tool                | Input                                                                                        | Returns                                                                 |
+| ------------------- | -------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `get_primer`        | —                                                                                            | slimmed `AI-PRIMER.md`                                                  |
+| `list_components`   | —                                                                                            | every component: name, one-line summary, cluster — from the DS manifest |
+| `get_component_doc` | `name` (case-insensitive; unknown → closest names suggested)                                 | `docs/components/<Name>.md`                                             |
+| `get_doc`           | `topic` (enum from the `docs/*.md` present in that version: setup, theming, tokens, i18n, …) | that doc                                                                |
 
 `list_components` source (my call): a new generated
 `docs/components/index.json` (`[{ name, summary, cluster }]`) emitted by

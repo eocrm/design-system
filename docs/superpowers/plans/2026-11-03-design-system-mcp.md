@@ -36,12 +36,14 @@
 ### Task 1: Generated `docs/components/index.json`
 
 **Files:**
+
 - Modify: `packages/design-system/scripts/generate-component-docs.mjs`
 - Test: `packages/design-system/src/_meta/componentDocs.test.ts`
 - Create (generated): `packages/design-system/docs/components/index.json`
 
 **Interfaces:**
-- Produces: `docs/components/index.json`, shaped as `Array<{ name: string; summary: string; cluster: string | null }>` and sorted by name. `name` is the doc's file stem. `summary` is the H1 text after `— ` with backticks stripped (`# \`<Button>\` — action triggers` gives `action triggers`). `cluster` comes from `src/components.manifest.json[name].cluster`, or `null` for non-component docs such as hooks.
+
+- Produces: `docs/components/index.json`, shaped as `Array<{ name: string; summary: string; cluster: string | null }>` and sorted by name. `name` is the doc's file stem. `summary` is the H1 text after `— ` with backticks stripped (`# \`<Button>\` — action triggers`gives`action triggers`). `cluster`comes from`src/components.manifest.json[name].cluster`, or `null` for non-component docs such as hooks.
 
 - [ ] **Step 1: Write the failing test** in `componentDocs.test.ts`. `index.json` exists. Every `docs/components/*.md` stem appears exactly once. Every entry has a non-empty `summary`. `Button`'s summary is `action triggers`. Every non-null `cluster` matches the manifest.
 - [ ] **Step 2: Run** `cd packages/design-system && npx vitest run src/_meta/componentDocs.test.ts`. Expected: FAIL (file missing).
@@ -52,6 +54,7 @@
 ### Task 2: Slim `AI-PRIMER.md` to ≤ 14 KB
 
 **Files:**
+
 - Modify: `packages/design-system/AI-PRIMER.md`
 - Create: `packages/design-system/docs/i18n.md`, `docs/accessible-names.md` (the "empty label prop means unset" section), `docs/typescript.md`. Dark theme goes into the existing `docs/theming.md`, and transient state stays in `docs/transient-state.md`.
 - Modify: `docs/components/Text.md`, `Title.md` (typography hard rule), `Progress.md` (progress hard rule)
@@ -67,10 +70,12 @@
 ### Task 3: Package scaffold + version resolution
 
 **Files:**
+
 - Create: `packages/design-system-mcp/package.json`, `.gitignore` (`snapshot/`), `src/resolveVersion.js`
 - Test: `packages/design-system-mcp/test/resolveVersion.test.mjs`, `test/fixtures/{npm,npm-workspace,pnpm,yarn-classic,yarn-berry,bun,range-only,no-ds}/…`
 
 **Interfaces:**
+
 - Produces: `resolveVersion(projectDir: string, { fetchPackument?: (name) => Promise<object> }): Promise<{ version: string, source: 'package-lock.json'|'pnpm-lock.yaml'|'yarn.lock'|'bun.lock'|'package.json range'|'latest', note?: string }>`
 - `package.json`: `"type": "module"`, `"bin": { "design-system-mcp": "src/cli.js" }`, `"files": ["src", "skill", "snapshot", "README.md"]`, `"scripts": { "test": "node --test test/" }`, `publishConfig.access: public`, `license: Apache-2.0`, `engines.node >=20`.
 
@@ -90,10 +95,12 @@
 ### Task 4: Doc source (fetch → cache → bundled snapshot)
 
 **Files:**
+
 - Create: `packages/design-system-mcp/src/docSource.js`, `scripts/bundle-snapshot.mjs`
 - Test: `test/docSource.test.mjs`, `test/fixtures/snapshot/` (`VERSION` = `0.6.21`, `AI-PRIMER.md`, `docs/components/Button.md`)
 
 **Interfaces:**
+
 - Produces: `createDocSource({ cacheDir?, snapshotDir?, fetch? })` returns `{ readFile(version, path): Promise<{ text, servedVersion, warning? }>, listFiles(version): Promise<{ files: string[], servedVersion, warning? }> }`. `files` are paths relative to the package root (`docs/components/Button.md`).
 - `scripts/bundle-snapshot.mjs [outDir=snapshot]`: runs `npm pack @eocrm/design-system@latest`, extracts `AI-PRIMER.md`, `docs/**` and `src/components.manifest.json` into `outDir`, writes `outDir/VERSION`, and writes `outDir/files.json` (the listing).
 
@@ -112,10 +119,12 @@
 ### Task 5: MCP server, tools, instructions
 
 **Files:**
+
 - Create: `packages/design-system-mcp/src/server.js`, `src/tools.js`, `src/instructions.js`, `src/cli.js`
 - Test: `test/tools.test.mjs`, `test/e2e.test.mjs`
 
 **Interfaces:**
+
 - Consumes: `resolveVersion`, `createDocSource`.
 - Produces: `createServer({ docSource, resolveVersion, cwd })` returns an `McpServer`. Tools:
   - `get_primer()` returns `AI-PRIMER.md`.
@@ -146,11 +155,13 @@
 ### Task 6: Portable skill + `install-skill`
 
 **Files:**
+
 - Create: `packages/design-system-mcp/skill/eocrm-design-system/SKILL.md`, `src/installSkill.js`
 - Modify: `src/cli.js`
 - Test: `test/installSkill.test.mjs`
 
 **Interfaces:**
+
 - `installSkill({ home, dryRun, log }): Promise<string[]>` returns the paths written. It writes to `<home>/<dir>/eocrm-design-system/SKILL.md` for each client whose config root already exists under `home`. `CLIENT_SKILL_DIRS` maps client to dir. **Before coding, verify each client's current user-level skills path in its official docs.** The starting guesses to check: Claude Code `.claude/skills`, Codex `.codex/skills` or `.agents/skills`, Cursor `.cursor/skills`, VS Code/Copilot `.copilot/skills`. Record the doc URL beside each entry.
 - SKILL.md frontmatter is `name` + `description` only. The description triggers on "building or changing UI in a project that depends on @eocrm/design-system". The body is the same rules as `INSTRUCTIONS` plus "if the `eocrm-design-system` MCP server is connected use its tools; otherwise read `node_modules/@eocrm/design-system/AI-PRIMER.md`".
 
@@ -167,6 +178,7 @@
 ### Task 7: Install docs
 
 **Files:**
+
 - Create: `packages/design-system-mcp/README.md`
 - Modify: `packages/design-system/README.md` (agent section), `packages/design-system/AI-PRIMER.md` (first paragraph: "Agents: install the MCP server — see `@eocrm/design-system-mcp`")
 
@@ -187,11 +199,13 @@
 ### Task 8: CI + independent release
 
 **Files:**
+
 - Modify: `scripts/ci-changes.sh` (new key `mcp`: `^packages/design-system-mcp/`), `.github/workflows/quality.yml` (job `mcp`: `npm ci` then `npm test -w @eocrm/design-system-mcp`, gated on `needs.changes.outputs.mcp`, and added to `check.needs`), `packages/design-tokens/test/ci-changes-contract.test.mjs` (the new key)
 - Create: `.github/workflows/release-mcp.yml`, `packages/design-tokens/test/tooling/release-isolation.test.mjs`
 - Modify: `release.yml` `paths:`, adding `"!packages/design-system-mcp/**"` so MCP-only merges don't even start the DS Release
 
 **release-mcp.yml:**
+
 - Trigger: `push` to `main`, paths `packages/design-system-mcp/**` and `.github/workflows/release-mcp.yml`.
 - Permissions: `contents: write`, `id-token: write`. `concurrency: release-mcp`, no cancel. `env.BUMP: patch`.
 - Job:
@@ -217,6 +231,7 @@
 ### Before merge (human step, blocks merge)
 
 `release-mcp.yml` fails on the first merge unless the package already exists on npmjs with this workflow as its trusted publisher. File this as an eocrm human-work task blocking DS-1 (skill `eocrm:file-human-work`):
+
 1. Locally run `cd packages/design-system-mcp && node scripts/bundle-snapshot.mjs && npm version 0.0.1 --no-git-tag-version && npm publish --access public`, then revert the version bump.
 2. On npmjs, go to package settings, then Trusted publishing, and add `eocrm/design-system` with the workflow `release-mcp.yml`.
 
