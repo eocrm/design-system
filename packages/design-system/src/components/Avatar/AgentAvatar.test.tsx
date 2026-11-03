@@ -5,6 +5,7 @@ import { render, screen } from '@testing-library/react';
 import { createRef } from 'react';
 import { I18nProvider } from '../../i18n/I18nProvider';
 import { AgentAvatar } from './AgentAvatar';
+import { ru } from '../../i18n/ru';
 
 const stylesheet: Root = parse(compile(resolve(__dirname, './AgentAvatar.module.scss')).css);
 
@@ -143,7 +144,7 @@ describe('AgentAvatar', () => {
 
   it('ru copy', () => {
     render(
-      <I18nProvider locale="ru">
+      <I18nProvider locale="ru" messages={ru}>
         <AgentAvatar name="Claude Code" member={{ name: 'Ada Lovelace' }} />
       </I18nProvider>,
     );

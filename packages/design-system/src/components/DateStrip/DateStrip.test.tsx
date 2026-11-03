@@ -7,6 +7,7 @@ import userEvent from '@testing-library/user-event';
 import { I18nProvider } from '../../i18n/I18nProvider';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
 import { DateStrip, type DateStripDay, type DateStripProps } from './DateStrip';
+import { ru } from '../../i18n/ru';
 
 const WEEK: DateStripDay[] = [
   { date: '2026-10-05', free: 3 },
@@ -211,7 +212,7 @@ describe('<DateStrip>', () => {
 
   it('localizes (ru): month, names and plural counts', () => {
     render(
-      <I18nProvider locale="ru">
+      <I18nProvider locale="ru" messages={ru}>
         <LocaleProvider locale="ru-RU">
           <DateStrip
             days={WEEK}

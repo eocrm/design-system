@@ -6,6 +6,7 @@ import {
   type CircularProgressSize,
   type CircularProgressTone,
 } from './CircularProgress';
+import { ru } from '../../i18n/ru';
 
 describe('CircularProgress', () => {
   it('renders with role="progressbar"', () => {
@@ -161,7 +162,7 @@ describe('indeterminate aria-valuetext goes through the provider (#503)', () => 
     // thing a screen reader has — and it was hardcoded English in both
     // progress components, so a Russian consumer heard "Loading…".
     render(
-      <I18nProvider locale="ru">
+      <I18nProvider locale="ru" messages={ru}>
         <CircularProgress />
       </I18nProvider>,
     );
@@ -170,7 +171,7 @@ describe('indeterminate aria-valuetext goes through the provider (#503)', () => 
 
   it('still prefers a consumer aria-label over the fallback', () => {
     render(
-      <I18nProvider locale="ru">
+      <I18nProvider locale="ru" messages={ru}>
         <CircularProgress aria-label="Импорт" />
       </I18nProvider>,
     );

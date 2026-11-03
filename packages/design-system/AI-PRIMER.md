@@ -27,18 +27,21 @@ Accent: blue by default; `<html data-accent="…">` switches to `tealpine`, `ind
 Every user-facing string the library renders — visible text, aria-labels, placeholders, default empty/loading copy — flows through a single React Context. Wrap your app once; every component picks up the right copy. There are NO `labels` / `cancelLabel` / `searchPlaceholder` props on any component.
 
 ```tsx
-import { I18nProvider } from '@eocrm/design-system';
+import { I18nProvider, ru } from '@eocrm/design-system';
 
-<I18nProvider locale="ru">
+<I18nProvider locale="ru" messages={ru}>
   <App />
 </I18nProvider>;
 ```
+
+English is built in; every other locale is passed via `messages`. A non-`en` `locale` without `messages` logs a `console.error` and renders English.
 
 **Overrides** are a deep-partial of the messages tree:
 
 ```tsx
 <I18nProvider
   locale="ru"
+  messages={ru}
   overrides={{
     pagination: { next: 'Дальше' },
     badge: { modified: 'Изменено!' },
@@ -48,7 +51,7 @@ import { I18nProvider } from '@eocrm/design-system';
 </I18nProvider>
 ```
 
-- Missing override keys fall back to the locale defaults.
+- Missing override keys fall back to `messages` (or English when omitted).
 - Missing locale keys do NOT fall back to `en` — `I18nProvider` uses the one locale catalogue and `useTranslation` warns and returns the literal key string. The real guard is the type: `en` and `ru` are both annotated `: Messages` (total, not partial), so a missing key is a `tsc` error and cannot ship.
 - No provider at all = `en` defaults.
 
@@ -57,7 +60,7 @@ import { I18nProvider } from '@eocrm/design-system';
 **`I18nProvider` vs `LocaleProvider` — pair them.** `I18nProvider` carries the message catalog (translated strings). `LocaleProvider` carries the BCP-47 tag used by `Intl.*` formatters inside Calendar / DatePicker / DateRangePicker (month names, weekday order, date-range formatting). They are independent — a Russian app should wrap with BOTH so visible strings AND Intl-rendered dates speak the right language:
 
 ```tsx
-<I18nProvider locale="ru">
+<I18nProvider locale="ru" messages={ru}>
   <LocaleProvider locale="ru-RU">
     <App />
   </LocaleProvider>

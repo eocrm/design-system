@@ -8,6 +8,7 @@ import {
   type CalendarDropCandidate,
   type CalendarResource,
   type CalendarView,
+  ru,
 } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
@@ -533,7 +534,7 @@ const SAMPLE_EVENTS = [
 
 export function Demo() {
   return (
-    <I18nProvider locale="ru">
+    <I18nProvider locale="ru" messages={ru}>
       <Calendar
         defaultValue={new Date(2026, 4, 15)}
         events={SAMPLE_EVENTS}
@@ -543,7 +544,7 @@ export function Demo() {
   );
 }`}
       >
-        <I18nProvider locale="ru">
+        <I18nProvider locale="ru" messages={ru}>
           <Calendar defaultValue={TODAY} events={SAMPLE_EVENTS} locale="ru-RU" />
         </I18nProvider>
       </Example>

@@ -3,6 +3,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { useRef } from 'react';
 import { I18nProvider } from '../../i18n';
+import { ru } from '../../i18n/ru';
 import { RichTextBlockControls } from './RichTextBlockControls';
 
 function Harness({
@@ -11,7 +12,7 @@ function Harness({
 }: Partial<React.ComponentProps<typeof RichTextBlockControls>> & { locale?: 'en' | 'ru' }) {
   const rootRef = useRef<HTMLDivElement>(null);
   return (
-    <I18nProvider locale={locale}>
+    <I18nProvider locale={locale} messages={locale === 'ru' ? ru : undefined}>
       <div ref={rootRef} style={{ position: 'relative' }}>
         <p data-block-id="b1">hello</p>
         <RichTextBlockControls

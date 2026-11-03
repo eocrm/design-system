@@ -7,6 +7,7 @@ import { createRef } from 'react';
 import { PillMenu, type PillMenuOption } from './PillMenu';
 import { Field } from '../Field';
 import { I18nProvider } from '../../i18n/I18nProvider';
+import { ru } from '../../i18n/ru';
 
 beforeEach(() => {
   window.ResizeObserver = class ResizeObserverMock {
@@ -242,7 +243,7 @@ describe('PillMenu — general value menu (#572)', () => {
 
   it('label is localized through the template (ru)', () => {
     render(
-      <I18nProvider locale="ru">
+      <I18nProvider locale="ru" messages={ru}>
         <PillMenu label="тип" current={inProgress} options={options} />
       </I18nProvider>,
     );

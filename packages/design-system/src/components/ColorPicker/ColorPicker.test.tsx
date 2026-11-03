@@ -7,6 +7,7 @@ import { compile } from 'sass';
 import { ColorPicker, hexToHsv, hsvToHex } from './index';
 import { Field } from '../Field';
 import { I18nProvider } from '../../i18n';
+import { ru } from '../../i18n/ru';
 
 // jsdom doesn't implement setPointerCapture / releasePointerCapture; stub.
 function ensurePointerCaptureShim() {
@@ -327,7 +328,7 @@ describe('ColorPicker — popover', () => {
 
   it('localizes the complete default trigger accessible name in Russian', () => {
     render(
-      <I18nProvider locale="ru">
+      <I18nProvider locale="ru" messages={ru}>
         <ColorPicker value="#4F46E5" onChange={() => {}} />
       </I18nProvider>,
     );

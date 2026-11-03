@@ -235,6 +235,10 @@ Grouped for navigation. Per-component contracts are in `docs/components/<Name>.m
 
 ---
 
+## Migrating to 0.7
+
+- **i18n:** `I18nProvider` / `AppProvider` no longer bundle Russian. Pass the catalog: `<I18nProvider locale="ru" messages={ru}>` with `import { ru } from '@eocrm/design-system'`. A non-`en` locale without `messages` logs a `console.error` and renders English.
+
 ## Releasing a new version
 
 Releases are **automatic**. Merging to `main` triggers the `Release` workflow (`.github/workflows/release.yml`), which:

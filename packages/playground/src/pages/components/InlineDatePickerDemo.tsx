@@ -6,6 +6,7 @@ import {
   Stack,
   toDateKey,
   toIsoDateTime,
+  ru,
 } from '@eocrm/design-system';
 import { DemoBody } from './DemoBody';
 import { Example } from './Example';
@@ -251,14 +252,14 @@ export function FormDemo() {
 
 export function Demo() {
   return (
-    <I18nProvider locale="ru">
+    <I18nProvider locale="ru" messages={ru}>
       <InlineDatePicker defaultValue={new Date()} locale="ru-RU" aria-label="Дата" />
     </I18nProvider>
   );
 }`}
       >
         <InputExample width="auto">
-          <I18nProvider locale="ru">
+          <I18nProvider locale="ru" messages={ru}>
             <InlineDatePicker defaultValue={TODAY} locale="ru-RU" aria-label="Дата" />
           </I18nProvider>
         </InputExample>

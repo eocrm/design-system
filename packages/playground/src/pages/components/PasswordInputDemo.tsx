@@ -5,6 +5,7 @@ import {
   PasswordInput,
   PasswordStrengthMeter,
   Stack,
+  ru,
 } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
@@ -267,14 +268,14 @@ export function Demo() {
 
 export function Demo() {
   return (
-    <I18nProvider locale="ru">
+    <I18nProvider locale="ru" messages={ru}>
       <PasswordInput capsLockWarning wrongLayoutWarning placeholder="Пароль" />
     </I18nProvider>
   );
 }`}
       >
         <InputExample>
-          <I18nProvider locale="ru">
+          <I18nProvider locale="ru" messages={ru}>
             <PasswordInput capsLockWarning wrongLayoutWarning placeholder="Пароль" />
           </I18nProvider>
         </InputExample>

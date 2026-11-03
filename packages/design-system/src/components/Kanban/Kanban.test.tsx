@@ -10,6 +10,7 @@ import {
 import { SortableHandle } from '../Sortable/Sortable';
 import { I18nProvider } from '../../i18n';
 import { DropdownMenu } from '../DropdownMenu';
+import { ru } from '../../i18n/ru';
 
 describe('Kanban', () => {
   it('renders a board region with columns and cards (role="article" only when Handle is present)', () => {
@@ -888,9 +889,9 @@ describe('Kanban — drag announcements (#390)', () => {
     expect(live()).toBe('Move cancelled. Draft Q3 OKRs stayed where it was.');
   });
 
-  it('announces in Russian under <I18nProvider locale="ru">', () => {
+  it('announces in Russian under <I18nProvider locale="ru" messages={ru}>', () => {
     render(
-      <I18nProvider locale="ru">
+      <I18nProvider locale="ru" messages={ru}>
         <NamedBoard />
       </I18nProvider>,
     );
@@ -919,7 +920,7 @@ describe('Kanban — drag announcements (#390)', () => {
     expect(described()).toMatch(/^Press Space or Enter to pick up\./);
 
     rerender(
-      <I18nProvider locale="ru">
+      <I18nProvider locale="ru" messages={ru}>
         <NamedBoard />
       </I18nProvider>,
     );

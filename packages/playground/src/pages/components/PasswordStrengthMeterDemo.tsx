@@ -5,6 +5,7 @@ import {
   PasswordStrengthMeter,
   Stack,
   type PasswordStrengthScore,
+  ru,
 } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
@@ -136,7 +137,7 @@ export function Demo() {
 
 export function Demo() {
   return (
-    <I18nProvider locale="ru">
+    <I18nProvider locale="ru" messages={ru}>
       <Stack gap="sm">
         <PasswordStrengthMeter value="" />
         <PasswordStrengthMeter value="abc" />
@@ -148,7 +149,7 @@ export function Demo() {
 }`}
       >
         <InputExample>
-          <I18nProvider locale="ru">
+          <I18nProvider locale="ru" messages={ru}>
             <Stack gap="sm">
               <PasswordStrengthMeter value="" />
               <PasswordStrengthMeter value="abc" />

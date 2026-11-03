@@ -4,6 +4,7 @@ import { useLocale } from '../i18n/useLocale';
 import { useTranslation } from '../i18n/useTranslation';
 import { toast, _setViewportConfig } from '../components/Toast/api';
 import { store } from '../components/Toast/store';
+import { ru } from '../i18n/ru';
 
 function LocaleProbe() {
   return <span data-testid="locale">{useLocale()}</span>;
@@ -55,7 +56,7 @@ describe('AppProvider', () => {
 
   it('useLocale() falls back to locale when intlLocale is omitted', () => {
     render(
-      <AppProvider locale="ru">
+      <AppProvider locale="ru" messages={ru}>
         <LocaleProbe />
       </AppProvider>,
     );
@@ -70,11 +71,11 @@ describe('AppProvider', () => {
     );
     expect(screen.getByTestId('alert-dismiss')).toHaveTextContent('Dismiss');
     rerender(
-      <AppProvider locale="ru">
+      <AppProvider locale="ru" messages={ru}>
         <AlertDismiss />
       </AppProvider>,
     );
-    expect(screen.getByTestId('alert-dismiss')).toHaveTextContent('Закрыть');
+    expect(screen.getByTestId('alert-dismiss')).toHaveTextContent(ru.alert.dismiss);
   });
 
   it('translations overrides deep-merge over built-in messages', () => {

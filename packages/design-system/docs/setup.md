@@ -18,7 +18,8 @@ import { AppProvider } from '@eocrm/design-system';
 
 `<AppProvider>` bundles the app-level contexts so you don't wire them by hand:
 
-- `locale` (`'en' | 'ru'`) — selects the built-in UI-string bundle.
+- `locale` (`'en' | 'ru'`) — UI-string locale. English is built in; for any other locale pass `messages` (e.g. `import { ru } from '@eocrm/design-system'`). A non-`en` locale without `messages` logs an error and renders English.
+- `messages?` — the catalog for `locale`. Omitted ⇒ English.
 - `intlLocale?` (BCP-47, e.g. `'en-US'`) — locale for Intl formatting (Calendar, dates, numbers). Defaults to `locale`.
 - `translations?` — deep-partial overrides merged over the built-in strings (rebrand a few keys; memoize the object).
 - `toast?` — `<ToastViewport>` config, or `false` to mount it yourself. Omitted ⇒ mounted with defaults.
@@ -26,9 +27,15 @@ import { AppProvider } from '@eocrm/design-system';
 - `darkTokens?` — token overrides applied **only** in dark (forced + system), merged over `tokens` (e.g. a lighter accent on dark surfaces). Memoize it.
 
 ```tsx
+// import { ru } from '@eocrm/design-system'
 // Russian UI + a couple of rebranded strings + top-right toasts:
 const translations = useMemo(() => ({ alert: { dismiss: 'Скрыть' } }), []);
-<AppProvider locale="ru" translations={translations} toast={{ position: 'top-right' }}>
+<AppProvider
+  locale="ru"
+  messages={ru}
+  translations={translations}
+  toast={{ position: 'top-right' }}
+>
   <App />
 </AppProvider>;
 ```
