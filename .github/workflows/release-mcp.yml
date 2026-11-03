@@ -92,11 +92,18 @@ jobs:
         working-directory: packages/design-system-mcp
         run: node scripts/bundle-snapshot.mjs snapshot
 
-      # snapshot/ is gitignored; `files` must still ship it.
+      # snapshot/ is gitignored; `files` must still ship it, and it must be
+      # the latest published design system.
       - name: Verify tarball contains the snapshot
         working-directory: packages/design-system-mcp
         run: |
           set -euo pipefail
+          latest=$(npm view @eocrm/design-system version --@eocrm:registry=https://registry.npmjs.org)
+          bundled=$(cat snapshot/VERSION)
+          if [ "$bundled" != "$latest" ]; then
+            echo "::error::snapshot/VERSION is $bundled, but @eocrm/design-system@latest is $latest"
+            exit 1
+          fi
           npm pack --dry-run --json > pack.json
           node -e 'const [p] = require("./pack.json"); if (!p.files.some((f) => f.path === "snapshot/VERSION")) { console.error("::error::snapshot/VERSION missing from the tarball"); process.exit(1); }'
 
@@ -121,7 +128,15 @@ jobs:
           if [ "$status" -eq 0 ]; then
             echo "Published @eocrm/design-system-mcp to npmjs."
           elif grep -qiE 'E409|cannot publish over existing version|cannot publish over the previously published versions|409 Conflict' mcp-npmjs-publish.out; then
-            echo "::warning::@eocrm/design-system-mcp already has this exact version on npmjs."
+            # Only a re-run of the commit that published it may skip ahead; a newer
+            # merge recomputing the same version would otherwise tag code npm never got.
+            head=$(npm view "@eocrm/design-system-mcp@${{ steps.version.outputs.value }}" gitHead \
+              --@eocrm:registry=https://registry.npmjs.org 2>/dev/null || true)
+            if [ "$head" != "$GITHUB_SHA" ]; then
+              echo "::error::@eocrm/design-system-mcp@${{ steps.version.outputs.value }} was published from ${head:-an unknown commit}, not $GITHUB_SHA. Re-run the original failed release-mcp run (or bump the version) instead."
+              exit 1
+            fi
+            echo "::warning::@eocrm/design-system-mcp already has this exact version on npmjs from this commit."
           else
             echo "::error::Publish failed."
             exit "$status"
