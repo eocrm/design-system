@@ -727,6 +727,43 @@ describe('DashboardCanvas gestures never leave a text selection (#737)', () => {
     fireEvent.pointerUp(root, { clientX: 95, clientY: 60, pointerId: 1 });
   });
 
+  const selStart = (el: Element) =>
+    fireEvent(el, new Event('selectstart', { bubbles: true, cancelable: true }));
+
+  it('a pending (unarmed) move press does not block selectstart, nor does a plain click leave it blocked', () => {
+    const { container, root } = setup();
+    fireEvent.pointerDown(itemEl(container, 'b'), {
+      clientX: 10,
+      clientY: 10,
+      pointerId: 1,
+      button: 0,
+    });
+    expect(selStart(root)).toBe(true);
+    fireEvent.pointerMove(root, { clientX: 12, clientY: 11, pointerId: 1 });
+    expect(selStart(root)).toBe(true);
+    fireEvent.pointerUp(root, { clientX: 12, clientY: 11, pointerId: 1 });
+    expect(selStart(root)).toBe(true);
+  });
+
+  it('an armed section drag clears the selection and blocks selectstart', () => {
+    const { container, root } = setup();
+    const removeAllRanges = vi.fn();
+    vi.spyOn(window, 'getSelection').mockReturnValue({ removeAllRanges } as unknown as Selection);
+    fireEvent.pointerDown(sectionHandle(container, 's1'), {
+      clientX: 100,
+      clientY: 570,
+      pointerId: 1,
+      button: 0,
+    });
+    expect(selStart(root)).toBe(true);
+    expect(removeAllRanges).not.toHaveBeenCalled();
+    fireEvent.pointerMove(root, { clientX: 100, clientY: 900, pointerId: 1 });
+    expect(removeAllRanges).toHaveBeenCalled();
+    expect(selStart(root)).toBe(false);
+    fireEvent.pointerUp(root, { clientX: 100, clientY: 900, pointerId: 1 });
+    expect(selStart(root)).toBe(true);
+  });
+
   it('a plain click on a button inside a widget body still fires onClick in edit mode', async () => {
     const onClick = vi.fn();
     render(

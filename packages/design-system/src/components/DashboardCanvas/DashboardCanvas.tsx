@@ -482,9 +482,9 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       // One gesture at a time: a second pointer going down mid-drag must not
       // overwrite the state (FlowCanvas discipline), and a keyboard pick owns
       // the canvas until it drops or cancels. No preventDefault — clicks
-      // inside item bodies pass through until the drag arms (the selection
-      // is then cleared and blocked by a selection clear on arm + the selectstart
-      // guard instead).
+      // inside item bodies pass through until the drag arms. A pending press
+      // never touches selection (double-click, caret, shift-click all work);
+      // once the drag arms, the selection is cleared and selectstart is blocked.
       if (!editingEnabled || event.button !== 0 || dragRef.current || pick) return;
       if (isPortalEvent(event) || underOpenOverlay()) return;
       const el = event.currentTarget;
@@ -1046,13 +1046,16 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
     // (FlowCanvas #282). The pick's own Escape lands on the focused item.
     const dragging = live != null;
     useFloatingSurface(dragging || pick != null);
-    // No text selection may start while any gesture (pending press included)
-    // owns dragRef. One listener for the component's lifetime that reads the
+    // No text selection may start during an ACTIVE gesture: a resize, or a
+    // move/section drag that has armed. A pending (unarmed) press must not
+    // block it — double-click/caret/shift-click in widget bodies stay native.
+    // One listener for the component's lifetime that reads the
     // ref — every teardown path (pointerup, cancel, Escape, unmount) is
     // covered without per-gesture attach/detach bookkeeping.
     useEffect(() => {
       const onSelectStart = (event: Event) => {
-        if (dragRef.current) event.preventDefault();
+        const d = dragRef.current;
+        if (d && (d.kind === 'resize' || d.moved)) event.preventDefault();
       };
       document.addEventListener('selectstart', onSelectStart);
       return () => document.removeEventListener('selectstart', onSelectStart);
