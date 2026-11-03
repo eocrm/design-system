@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const NAME = '@eocrm/design-system';
 const TIMEOUT_MS = 5000;
-const SNAPSHOT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'snapshot');
+export const SNAPSHOT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'snapshot');
 // Same set bundle-snapshot.mjs extracts.
 const WANTED = /^(AI-PRIMER\.md|docs\/.*|src\/components\.manifest\.json)$/;
 
