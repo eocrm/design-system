@@ -43,32 +43,52 @@ Stage cells are `<button>`s when `onStageClick` is set. Otherwise the plot is a 
 ### Task 1: Funnel model (pure)
 
 **Files:**
+
 - Create: `packages/design-system/src/components/FunnelChart/funnelModel.ts`
 - Test: `packages/design-system/src/components/FunnelChart/funnelModel.test.ts`
 
 **Interfaces:**
+
 - Produces:
+
   ```ts
   export type FunnelSlot = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
   export type FunnelShape = 'eased' | 'sharp';
-  export interface FunnelStage { key: string; label: string; value: number; color?: FunnelSlot }
-  export interface ResolvedStage {
-    key: string; label: string;
-    value: number;            // sanitised: non-finite or negative → 0
-    slot: FunnelSlot;         // color ?? ((index % 8) + 1)
-    overflow: boolean;        // index >= 8 and no explicit color
-    heightRatio: number;      // value / max(values); 0 when max is 0
-    stepRatio: number | null; // value / previous value; null for the first stage or when previous <= 0
-    shareRatio: number | null;// value / first value; null when first <= 0
+  export interface FunnelStage {
+    key: string;
+    label: string;
+    value: number;
+    color?: FunnelSlot;
   }
-  export const MIN_STAGE_WIDTH = 96;   // px per stage below which the layout goes vertical
-  export const MIN_THICKNESS = 6;      // px, minimum drawn height of a stage (zero values stay hoverable)
-  export const EASE_FLAT = 0.55;       // eased shape: fraction of the column held flat before the curve
+  export interface ResolvedStage {
+    key: string;
+    label: string;
+    value: number; // sanitised: non-finite or negative → 0
+    slot: FunnelSlot; // color ?? ((index % 8) + 1)
+    overflow: boolean; // index >= 8 and no explicit color
+    heightRatio: number; // value / max(values); 0 when max is 0
+    stepRatio: number | null; // value / previous value; null for the first stage or when previous <= 0
+    shareRatio: number | null; // value / first value; null when first <= 0
+  }
+  export const MIN_STAGE_WIDTH = 96; // px per stage below which the layout goes vertical
+  export const MIN_THICKNESS = 6; // px, minimum drawn height of a stage (zero values stay hoverable)
+  export const EASE_FLAT = 0.55; // eased shape: fraction of the column held flat before the curve
   export function resolveStages(stages: readonly FunnelStage[]): ResolvedStage[];
   export function isFunnelEmpty(stages: readonly FunnelStage[]): boolean; // [] or every sanitised value is 0
   export function orientationFor(width: number, count: number): 'horizontal' | 'vertical';
-  export interface StageGeometry { d: string; cx: number; cy: number; x0: number; x1: number }
-  export function stageGeometry(args: { stages: readonly ResolvedStage[]; width: number; height: number; shape: FunnelShape }): StageGeometry[];
+  export interface StageGeometry {
+    d: string;
+    cx: number;
+    cy: number;
+    x0: number;
+    x1: number;
+  }
+  export function stageGeometry(args: {
+    stages: readonly ResolvedStage[];
+    width: number;
+    height: number;
+    shape: FunnelShape;
+  }): StageGeometry[];
   export function stageIndexAt(width: number, count: number, x: number): number | null; // null outside [0,width)
   export function formatPercent(ratio: number, locale: string): string;
   ```
@@ -117,6 +137,7 @@ Stage cells are `<button>`s when `onStageClick` is set. Otherwise the plot is a 
 ### Task 2: FunnelChart, horizontal, read-only (figure, keyboard inspection, tooltip, table, empty state)
 
 **Files:**
+
 - Create: `src/components/_internal/useSize.ts` (move `useSize` out of `Chart.tsx` verbatim, export it)
 - Modify: `src/components/Chart/Chart.tsx` (delete the local `useSize`, import from `../_internal/useSize`)
 - Create: `src/components/FunnelChart/FunnelChart.tsx`, `FunnelChart.module.scss`, `FunnelChart.tokens.scss`, `index.ts`
@@ -124,18 +145,24 @@ Stage cells are `<button>`s when `onStageClick` is set. Otherwise the plot is a 
 - Test: `src/components/FunnelChart/FunnelChart.test.tsx`
 
 **Interfaces:**
+
 - Consumes (Task 1): `resolveStages`, `isFunnelEmpty`, `orientationFor`, `stageGeometry`, `stageIndexAt`, `formatPercent`, `FunnelStage`, `FunnelShape`, `FunnelSlot`, `MIN_STAGE_WIDTH`.
 - Consumes (existing): `ChartTooltip` from `../Chart/ChartTooltip`, called as `anchor={plotEl}`, `point={{x: cx, y: top-of-shape}}` (memoised on `x`/`y`), `title={stage.label}`, `rows=[{key:'value', label:t('funnelChart.value'), slot, comparison:false, value: formatValue(v)}]` and `notes=[stepText, shareText]` (the first stage gets only `shareText`). Also `LiveRegion`, `VisuallyHidden`, `EmptyState`, `useTranslation`, `useLocale`, `mergeRefs`.
 - Produces:
   ```ts
   export interface FunnelChartProps extends Omit<HTMLAttributes<HTMLElement>, 'children'> {
-    label: string; stages: FunnelStage[]; formatValue: (n: number) => string;
-    shape?: FunnelShape;                       // default 'eased'
-    onStageClick?: (stage: FunnelStage, index: number) => void;      // Task 3
-    onActiveStageChange?: (stage: FunnelStage | null) => void;       // Task 3
-    emptyMessage?: ReactNode; footnote?: ReactNode;
+    label: string;
+    stages: FunnelStage[];
+    formatValue: (n: number) => string;
+    shape?: FunnelShape; // default 'eased'
+    onStageClick?: (stage: FunnelStage, index: number) => void; // Task 3
+    onActiveStageChange?: (stage: FunnelStage | null) => void; // Task 3
+    emptyMessage?: ReactNode;
+    footnote?: ReactNode;
   }
-  export const FunnelChart: ForwardRefExoticComponent<FunnelChartProps & RefAttributes<HTMLElement>>;
+  export const FunnelChart: ForwardRefExoticComponent<
+    FunnelChartProps & RefAttributes<HTMLElement>
+  >;
   ```
   The callbacks hand back the **consumer's original** `FunnelStage` object (`stages[index]`), not the resolved one.
 - i18n keys (`funnelChart.*`):
@@ -150,8 +177,9 @@ Stage cells are `<button>`s when `onStageClick` is set. Otherwise the plot is a 
   The empty title reuses `t('chart.empty')`. Provide Russian translations in `ru.ts`.
 
 DOM contract (the tests rely on it):
+
 - `<figure role="figure" aria-label={label}>` with `data-orientation="horizontal"|"vertical"`, `data-shape`, `data-footnote`, `data-empty`.
-- The plot is `role="group"`, `aria-label={label}`, `aria-describedby` set to the hint id (plus the footnote id), and `tabIndex={0}`, *only when not clickable*.
+- The plot is `role="group"`, `aria-label={label}`, `aria-describedby` set to the hint id (plus the footnote id), and `tabIndex={0}`, _only when not clickable_.
 - Horizontal: a measured `shapes` div containing an `aria-hidden` SVG, with one `<g data-stage={key} data-dimmed>` per stage holding a path, plus a pill (`rect` + `text`) except on the first stage. Under it, a footer grid with one cell per stage (`data-stage-cell={key}`) holding the value and then the label.
 - Stage colour: an inline `--chart-series-color: var(--chart-series-{slot})` on each stage `g` and cell (same pattern as `Chart`'s `seriesStyle`).
 - Data table: `VisuallyHidden` `<table>` with caption = `label`, columns Stage / Value / Conversion from previous stage / Share of first stage, and one row per stage. Undefined ratios show `t('funnelChart.noData')`.
@@ -188,10 +216,12 @@ DOM contract (the tests rely on it):
 ### Task 3: Clickable stages and `onActiveStageChange`
 
 **Files:**
+
 - Modify: `src/components/FunnelChart/FunnelChart.tsx`, `FunnelChart.module.scss`
 - Test: `src/components/FunnelChart/FunnelChart.test.tsx`
 
 **Interfaces:**
+
 - Consumes: Task 2's DOM contract and props.
 - Produces:
   - When `onStageClick` is set, each footer cell is `<button type="button" data-stage-cell>`. Its accessible name is `"{label}: {value}. {ofStage(step, prev)}. {ofStage(share, first)}."`. The first stage omits the step part, and undefined ratios are omitted.
@@ -224,10 +254,12 @@ DOM contract (the tests rely on it):
 ### Task 4: Vertical layout for narrow containers
 
 **Files:**
+
 - Modify: `src/components/FunnelChart/FunnelChart.tsx`, `FunnelChart.module.scss`, `FunnelChart.tokens.scss`
 - Test: `src/components/FunnelChart/FunnelChart.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `orientationFor`; Tasks 2 and 3 cells, callbacks and table.
 - Produces: with `data-orientation="vertical"`, the plot is a scrollable list of rows, one per stage. Each row is the same stage cell element as horizontal (button when clickable, `data-stage-cell`, `data-dimmed`). It contains:
   - a band: a `div` centred within a band track, with inline `inline-size: {heightRatio*100}%` (a data value, not a token) and a minimum of `MIN_THICKNESS` px through a token;
@@ -253,6 +285,7 @@ DOM contract (the tests rely on it):
 ### Task 5: Export, docs, manifest, playground demo
 
 **Files:**
+
 - Modify: `src/index.ts` (export `FunnelChart`; types `FunnelChartProps`, `FunnelStage`, `FunnelShape`, `FunnelSlot`)
 - Create: `docs/components/FunnelChart.md`
 - Modify: `AI-PRIMER.md` (an index line next to `Chart`)
@@ -262,6 +295,7 @@ DOM contract (the tests rely on it):
 - Modify: `packages/playground/src/App.tsx` (route `/components/funnel-chart`), `src/layout/AppShell/navItems.ts` (next to Chart, using the `Filter` or `ChartColumnDecreasing` lucide icon, whichever exists), `src/pages/components/ComponentsIndex.tsx`, `src/pages/components/overviewSchematics.tsx` (a small 4-stage eased schematic) and `src/pages/mockups/registry.ts` (`'FunnelChart'` in `ComponentName`)
 
 **Interfaces:**
+
 - Consumes: the public `FunnelChart` API from Tasks 2–4.
 
 - [ ] **Step 1: Export and docs.**
