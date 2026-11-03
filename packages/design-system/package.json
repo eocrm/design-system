@@ -71,11 +71,14 @@
     "postcss": "^8.5.25",
     "sass-embedded": "^1.100.0",
     "typescript": "^6.0.3",
+    "vite": "^8.3.5",
     "vitest": "^4.1.7"
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
+    "build": "vite build -c vite.lib.config.ts && tsc -p tsconfig.build.json && node scripts/build-styles.mjs",
     "test": "vitest run",
+    "test:dist": "vitest run -c vitest.dist.config.ts",
     "test:watch": "vitest",
     "build:manifest": "node scripts/generate-manifest.mjs",
     "build:docs": "node scripts/generate-component-docs.mjs"
