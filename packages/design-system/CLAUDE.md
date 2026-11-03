@@ -182,7 +182,7 @@ But if the WHOLE string is a fixed English phrase, it goes through `t()`.
 
 The `labels?: Foo` / `cancelLabel?: string` per-component prop pattern is DELETED. The provider is the single override surface — don't reintroduce per-component label props on new components. If a new component needs translation, add to `Messages` instead.
 
-See `AI-PRIMER.md` "Localization (i18n)" section for the consumer-facing API and how to add a new string.
+See `docs/i18n.md` for the consumer-facing API and how to add a new string.
 
 ### 10. Transient state must reach assistive tech — and the mechanism is not a coin flip
 

@@ -54,3 +54,10 @@ Use for per-file upload bars, wizard step indicators, form-completion meters and
 - ❌ A hand-rolled `<div style={{ width: `${n}%`, … }}>` bar — use the primitive.
 - ❌ `<Progress role="…">` — `role` is locked to `progressbar`; TypeScript rejects the override.
 - ❌ A separate consumer-rendered label element — the `label` slot already handles spacing, font size and tabular-nums for stable digit widths.
+
+## Progress hard rule
+
+- ❌ Hand-rolled `<div style={{ width: '${n}%', background: '#xxx' }}>` progress bars — use `<Progress value={n}>`.
+- ❌ Hand-rolled spinning `<svg>` per page (every Saving-state, every loader). Use `<CircularProgress />` indeterminate.
+- ❌ `<Progress tone="success" value={100}>` or `<Progress tone="success" />` to "celebrate" completion. Tones communicate STATE during progress (warning at 85%, danger at 95%), not success-on-done. A finished bar is just a finished bar — leave the default tone.
+- ❌ `<CircularProgress value={0}>` to render an empty circle for "not started yet." `value={0}` is determinate (0% done). The intent is usually indeterminate — omit `value` entirely.

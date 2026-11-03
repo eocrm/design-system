@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const PKG = resolve(__dirname, '../..');
@@ -148,5 +148,24 @@ describe('docs/components/index.json', () => {
   it('derives summary from the H1 and cluster from the manifest', () => {
     expect(index.find((e) => e.name === 'Button')?.summary).toBe('action triggers');
     for (const e of index) if (e.cluster) expect(e.cluster).toBe(manifest[e.name].cluster);
+  });
+});
+
+describe('AI-PRIMER.md', () => {
+  const primer = readFileSync(resolve(PKG, 'AI-PRIMER.md'), 'utf8');
+
+  it('stays at most 14 KB (long-form guidance lives in docs/)', () => {
+    expect(statSync(resolve(PKG, 'AI-PRIMER.md')).size).toBeLessThanOrEqual(14 * 1024);
+  });
+
+  it.each([
+    'docs/i18n.md',
+    'docs/accessible-names.md',
+    'docs/typescript.md',
+    'docs/theming.md',
+    'docs/transient-state.md',
+  ])('links to %s, which exists', (doc) => {
+    expect(primer).toContain(`](${doc}`);
+    expect(existsSync(resolve(PKG, doc))).toBe(true);
   });
 });

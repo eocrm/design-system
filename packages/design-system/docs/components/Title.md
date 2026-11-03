@@ -52,3 +52,7 @@
 - `<h2 className={styles.title}>`: use `<Title order={2}>`; consumer SCSS should never name a typography class.
 - `<Title order={1} size="xs">`: usually a sign the heading hierarchy is wrong. Bump the order up instead of shrinking a low-order heading.
 - Skipping heading levels (`order={1}` then `order={4}`) hurts screen-reader users; use sequential orders.
+
+## Typography hard rule
+
+No raw `<h1>` / `<h2>` / `<h3>`, no inline `style` font sizes or colours, `<strong>` / `<em>` vs `weight`: see [Text.md](Text.md#typography-hard-rule).
