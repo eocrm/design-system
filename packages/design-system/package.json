@@ -72,6 +72,7 @@
     "typecheck": "tsc --noEmit",
     "build": "vite build -c vite.lib.config.ts && tsc -p tsconfig.build.json && node scripts/build-styles.mjs && node scripts/fix-dts-specifiers.mjs",
     "test": "vitest run",
+    "size": "node scripts/size-guard.mjs",
     "test:dist": "vitest run -c vitest.dist.config.ts",
     "test:watch": "vitest",
     "build:manifest": "node scripts/generate-manifest.mjs",

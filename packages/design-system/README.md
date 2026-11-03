@@ -248,6 +248,8 @@ Releases are **automatic**. Merging to `main` triggers the `Release` workflow (`
 
 There is no manual "Run workflow" button — merging to `main` is the only way to release. Playground-only changes skip the publish step (no version bump for a demo tweak) but still redeploy the playground.
 
+**Bundle-size budgets**: `size-budgets.json` caps gzip JS/CSS per consumer scenario (`npm run size`, run by Quality `test-ds`); raise a budget deliberately in the PR that grows the bundle.
+
 **Forcing a minor/major bump**: edit `BUMP` (`patch` → `minor` / `major`) in `release.yml` on a branch and merge. There is no other override by design.
 
 **One-time repo setup**: Settings → Actions → General → Workflow permissions → "Read and write permissions".

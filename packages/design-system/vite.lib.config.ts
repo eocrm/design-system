@@ -79,7 +79,9 @@ export default defineConfig({
         preserveModules: true,
         preserveModulesRoot: 'src',
         entryFileNames: '[name].js',
-        assetFileNames: '[name][extname]',
+        // `.module.css` side-effect imports are tree-shaken by consumer Vite builds
+        // (CSS module with no used export); a plain `.css` name keeps the styles.
+        assetFileNames: (a) => `${(a.names[0] ?? 'asset').replace(/\.module\.css$/, '.css')}`,
       },
     },
   },
