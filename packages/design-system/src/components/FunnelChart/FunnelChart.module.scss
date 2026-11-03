@@ -43,6 +43,10 @@
 .shapes {
   min-height: 0;
   overflow: hidden;
+
+  // The SVG's explicit height must not feed back into the row size, or the strip only ever grows
+  // in an auto-height parent. Size containment makes the row fall back to min-height / parent height.
+  contain: size;
 }
 
 .plot[data-clickable] .shapes {
@@ -112,6 +116,8 @@
 }
 
 .value {
+  // Only labels break anywhere; numbers stay whole.
+  overflow-wrap: normal;
   font-size: var(--funnel-chart-value-size);
   font-weight: var(--funnel-chart-value-weight);
   font-variant-numeric: tabular-nums;
@@ -127,6 +133,10 @@
 .root[data-orientation='vertical'] .plot {
   grid-template-rows: none;
   grid-auto-rows: min-content;
+
+  // One column template shared by every row (subgrid), so all band tracks get the same width and
+  // band widths stay proportional; the text column takes the widest row's text, wrapping when tight.
+  grid-template-columns: minmax(var(--funnel-chart-row-track-min), 1fr) minmax(0, max-content);
   align-content: start;
   gap: var(--funnel-chart-row-gap);
   overflow-y: auto;
@@ -135,10 +145,12 @@
   padding: calc(var(--ring-width) + var(--ring-offset));
 }
 
-// Row: the band track takes the flexible share; the text line beside it keeps its intrinsic
-// width and wraps rather than truncating.
+// Row: spans the plot's columns and inherits them, so the band track is the flexible share and
+// the text line keeps its intrinsic width, wrapping rather than truncating.
 .root[data-orientation='vertical'] .cell {
-  grid-template-columns: minmax(var(--funnel-chart-row-track-min), 1fr) minmax(0, max-content);
+  // stylelint-disable-next-line property-disallowed-list -- internal row spanning the plot's own columns (subgrid), not consumer layout
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
   align-items: center;
   justify-items: stretch;
   gap: var(--space-2);

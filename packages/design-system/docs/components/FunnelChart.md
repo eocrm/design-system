@@ -3,7 +3,14 @@
 Ordered stages (e.g. Leads → Qualified → Proposal → Won) drawn as one connected silhouette: the height of each stage shows how much of the funnel is left, a pill between stages shows the step conversion. Fills a `DashboardWidget variant="chart"` body or sits inline on a page, and ships its own tooltip, keyboard inspection, data table and empty state. The app owns data, formatting, loading and errors.
 
 ```tsx
-import { FunnelChart, DashboardWidget, ErrorState } from '@eocrm/design-system';
+import { useState } from 'react';
+import {
+  FunnelChart,
+  DashboardWidget,
+  ErrorState,
+  Stack,
+  type FunnelStage,
+} from '@eocrm/design-system';
 
 const stages = [
   { key: 'leads', label: 'Leads', value: 1200 },
@@ -20,7 +27,7 @@ const stages = [
   )}
 </DashboardWidget>;
 
-// Inline on a page: the parent must give it a definite height
+// Inline on a page: a definite-height parent is filled; an auto-height one gets the default height
 <div style={{ height: 280 }}>
   <FunnelChart label="Campaign funnel" stages={stages} formatValue={formatCount} shape="sharp" />
 </div>;
@@ -69,7 +76,7 @@ const [active, setActive] = useState<FunnelStage | null>(null);
 - **Tooltip** follows hover, focus and tap, and tracks scroll and resize. **Screen readers** get a visually hidden data table (caption = `label`) with the exact values, conversion and share.
 - **Empty** (no stages, or every value 0) renders `EmptyState` with `emptyMessage` (default "No data for this period"). `footnote` stays visible there.
 - **Footnote** is a short muted note in its own row under the funnel (wraps, never truncates) and is the plot's accessible description.
-- **Sizing.** Fills its parent (`width/height: 100%`). The parent needs a definite height (a `DashboardWidget` chart body); in an auto-height parent the plot measures 0.
+- **Sizing.** Fills its parent (`width/height: 100%`). A definite-height parent (a `DashboardWidget` chart body, a `height` style) is filled; in an auto-height parent the shapes take an intrinsic default height (`--funnel-chart-min-height`).
 
 #### When NOT to use
 

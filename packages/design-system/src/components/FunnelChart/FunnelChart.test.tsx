@@ -394,6 +394,16 @@ describe('FunnelChart', () => {
       expect(onActiveStageChange).toHaveBeenCalledTimes(2);
       expect(tooltip()).toBeNull();
       expect(stageGroups().some((g) => g.hasAttribute('data-dimmed'))).toBe(false);
+
+      // Growing back must not revive the stale index without a user action.
+      rerender(
+        <LocaleProvider locale="en-GB">
+          <FunnelChart {...base} stages={stages} onActiveStageChange={onActiveStageChange} />
+        </LocaleProvider>,
+      );
+      expect(onActiveStageChange).toHaveBeenCalledTimes(2);
+      expect(tooltip()).toBeNull();
+      expect(stageGroups().some((g) => g.hasAttribute('data-dimmed'))).toBe(false);
     });
   });
 

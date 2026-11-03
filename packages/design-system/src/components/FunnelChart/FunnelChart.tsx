@@ -25,7 +25,6 @@ import { mergeRefs } from '../_internal/refs';
 import { useSize } from '../_internal/useSize';
 import {
   formatPercent,
-  isFunnelEmpty,
   MIN_THICKNESS,
   orientationFor,
   resolveStages,
@@ -117,7 +116,7 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
   const locale = useLocale();
   const resolved = useMemo(() => resolveStages(stages), [stages]);
   useDevWarnings(resolved.filter((s) => s.overflow).length);
-  const empty = isFunnelEmpty(stages);
+  const empty = resolved.every((s) => s.value === 0);
 
   const hintId = useId();
   const footnoteId = useId();
@@ -151,6 +150,12 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
   const [active, setActive] = useState<number | null>(null);
   // 'focus' = a stage button has focus; its accessible name already says what the live region would.
   const [activeSource, setActiveSource] = useState<'pointer' | 'keyboard' | 'focus' | null>(null);
+  // Stages shrank past the active index: drop it (during render, React's "adjust state on prop
+  // change" pattern), or regrowing would revive it with no user action.
+  if (active !== null && active >= n) {
+    setActive(null);
+    setActiveSource(null);
+  }
   const current = active !== null && active < n ? active : null;
   const clickable = onStageClick !== undefined;
 

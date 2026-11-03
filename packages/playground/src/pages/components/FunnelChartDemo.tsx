@@ -85,7 +85,7 @@ export function FunnelChartDemo() {
 
       <Example
         title="Inline on a page"
-        description="No widget: the parent just needs a definite height."
+        description="No widget: a definite-height parent is filled; in an auto-height parent the funnel takes its default height."
         code={`<div style={{ height: 260 }}>
   <FunnelChart label="Campaign funnel" stages={stages} formatValue={formatCount} />
 </div>`}
@@ -126,8 +126,8 @@ export function FunnelChartDemo() {
 
       <Example
         title="Eight stages, long labels"
-        description="Labels wrap; resize narrow to see the vertical rows."
-        code={`<FunnelChart label="Enterprise pipeline" stages={eightStages} formatValue={formatCount} />`}
+        description="Horizontal needs 96px per stage (768px for eight), so in this cell it renders as vertical rows; long labels wrap beside the bands, never truncate."
+        code={`<FunnelChart label="Enterprise pipeline" stages={longLabels} formatValue={formatCount} />`}
       >
         <Cell title="Enterprise pipeline" height={380}>
           <FunnelChart label="Enterprise pipeline" stages={longLabels} formatValue={formatCount} />
