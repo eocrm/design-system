@@ -12,7 +12,7 @@ export interface FunnelStage {
   label: string;
   /** Count for this stage. Non-finite or negative values are treated as 0. */
   value: number;
-  /** Palette slot to highlight this stage with (e.g. Won in green); omit to follow the one-hue ramp. */
+  /** Palette slot to highlight this stage with. Slot hues follow `data-accent` and carry no meaning, so choose for contrast: slot 2 always contrasts with the ramp. Omit to follow the one-hue ramp. */
   color?: FunnelSlot;
 }
 
