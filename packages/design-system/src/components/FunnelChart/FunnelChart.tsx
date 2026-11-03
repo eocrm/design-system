@@ -167,6 +167,8 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
   };
 
   const onKeyDown = (e: KeyboardEvent<HTMLDivElement>) => {
+    // Clickable: buttons are the tab stops and own their keys; only Escape (dismiss tooltip) applies.
+    if (clickable && e.key !== 'Escape') return;
     let next: number | null;
     switch (e.key) {
       case 'ArrowRight':
@@ -348,7 +350,7 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
         }
         tabIndex={clickable ? undefined : 0}
         data-clickable={clickable || undefined}
-        onKeyDown={clickable ? undefined : onKeyDown}
+        onKeyDown={onKeyDown}
         onPointerMove={onPointer}
         onPointerDown={onPointer}
         // Touch fires pointerleave right after pointerup; keep the tapped tooltip (an outside press clears it).

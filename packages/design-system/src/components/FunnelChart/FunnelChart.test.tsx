@@ -263,6 +263,23 @@ describe('FunnelChart', () => {
       expect(onStageClick).toHaveBeenNthCalledWith(2, stages[0], 0);
     });
 
+    it('Escape on a focused stage button dismisses the tooltip and keeps focus', async () => {
+      const layout = stubLayout();
+      const onActiveStageChange = vi.fn();
+      renderFunnel({ onStageClick: vi.fn(), onActiveStageChange });
+      layout.fire();
+      await userEvent.tab();
+      const first = screen.getAllByRole('button')[0];
+      expect(tooltip()).not.toBeNull();
+      expect(fireEvent.keyDown(first, { key: 'Escape' })).toBe(false); // handled: preventDefault
+      expect(tooltip()).toBeNull();
+      expect(stageGroups().some((g) => g.hasAttribute('data-dimmed'))).toBe(false);
+      expect(onActiveStageChange).toHaveBeenLastCalledWith(null);
+      expect(first).toHaveFocus();
+      // Nothing active: Escape is left for a surrounding dialog.
+      expect(fireEvent.keyDown(first, { key: 'Escape' })).toBe(true);
+    });
+
     it('a pointer click on the shapes strip clicks the stage under it', () => {
       const layout = stubLayout();
       const onStageClick = vi.fn();
