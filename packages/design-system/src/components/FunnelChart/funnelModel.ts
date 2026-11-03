@@ -1,8 +1,8 @@
 /** Chart-palette slot (`--chart-N`). */
 export type FunnelSlot = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
-/** Silhouette between stages: smooth S-curve or straight trapezoid. */
-export type FunnelShape = 'eased' | 'sharp';
+/** Silhouette between stages: hold then a short straight taper, or a full-column trapezoid. */
+export type FunnelShape = 'taper' | 'sharp';
 
 /** One funnel stage as supplied by the consumer. */
 export interface FunnelStage {
@@ -12,7 +12,7 @@ export interface FunnelStage {
   label: string;
   /** Count for this stage. Non-finite or negative values are treated as 0. */
   value: number;
-  /** Explicit palette slot; defaults to the stage's position (cycling 1..8). */
+  /** Palette slot to highlight this stage with (e.g. Won in green); omit to follow the one-hue ramp. */
   color?: FunnelSlot;
 }
 
@@ -22,10 +22,8 @@ export interface ResolvedStage {
   label: string;
   /** Sanitised: non-finite or negative becomes 0. */
   value: number;
-  /** `color ?? ((index % 8) + 1)`. */
-  slot: FunnelSlot;
-  /** True when the slot wrapped past 8 without an explicit colour (colours repeat). */
-  overflow: boolean;
+  /** The explicit `color` slot, or null for the ramp colour. */
+  slot: FunnelSlot | null;
   /** `value / max(values)`; 0 when the max is 0. */
   heightRatio: number;
   /** `value / previous value`; null for the first stage or when the previous is <= 0. */
@@ -38,10 +36,10 @@ export interface ResolvedStage {
 export const MIN_STAGE_WIDTH = 96;
 /** Minimum drawn height in px of a stage, so zero values stay hoverable. */
 export const MIN_THICKNESS = 6;
-/** Eased shape: fraction of the column held flat before the curve starts. */
-export const EASE_FLAT = 0.55;
+/** Taper shape: fraction of the column held at the stage's height before the diagonal starts. */
+export const TAPER_HOLD = 0.75;
 
-/** Sanitise values, assign colour slots and compute ratios. */
+/** Sanitise values and compute ratios. */
 export function resolveStages(stages: readonly FunnelStage[]): ResolvedStage[] {
   const values = stages.map((s) => (Number.isFinite(s.value) && s.value > 0 ? s.value : 0));
   const max = Math.max(0, ...values);
@@ -50,8 +48,7 @@ export function resolveStages(stages: readonly FunnelStage[]): ResolvedStage[] {
     key: s.key,
     label: s.label,
     value: values[i],
-    slot: s.color ?? (((i % 8) + 1) as FunnelSlot),
-    overflow: i >= 8 && s.color === undefined,
+    slot: s.color ?? null,
     heightRatio: max > 0 ? values[i] / max : 0,
     stepRatio: i > 0 && values[i - 1] > 0 ? values[i] / values[i - 1] : null,
     shareRatio: first > 0 ? values[i] / first : null,
@@ -103,11 +100,10 @@ export function stageGeometry(args: {
     if (shape === 'sharp' || last) {
       d = `M ${p(x0, t0)} L ${p(x1, t1)} L ${p(x1, b0)} L ${p(x0, b1)} Z`;
     } else {
-      const xf = x0 + colW * EASE_FLAT;
-      const xm = (xf + x1) / 2;
+      const xh = x0 + colW * TAPER_HOLD;
       d =
-        `M ${p(x0, t0)} L ${p(xf, t0)} C ${p(xm, t0)} ${p(xm, t1)} ${p(x1, t1)}` +
-        ` L ${p(x1, b0)} C ${p(xm, b0)} ${p(xm, b1)} ${p(xf, b1)} L ${p(x0, b1)} Z`;
+        `M ${p(x0, t0)} L ${p(xh, t0)} L ${p(x1, t1)}` +
+        ` L ${p(x1, b0)} L ${p(xh, b1)} L ${p(x0, b1)} Z`;
     }
     return { d, cx: r2(x0 + colW / 2), cy: mid, x0: r2(x0), x1: r2(x1) };
   });

@@ -85,12 +85,12 @@ describe('FunnelChart', () => {
     expect(fig.className).toMatch(/root/);
   });
 
-  it('defaults to a horizontal eased funnel; shape="sharp" is reflected', () => {
+  it('defaults to a horizontal taper funnel; shape="sharp" is reflected', () => {
     stubLayout();
     const { rerender } = renderFunnel();
     const fig = screen.getByRole('figure');
     expect(fig).toHaveAttribute('data-orientation', 'horizontal');
-    expect(fig).toHaveAttribute('data-shape', 'eased');
+    expect(fig).toHaveAttribute('data-shape', 'taper');
     rerender(
       <LocaleProvider locale="en-GB">
         <FunnelChart {...base} shape="sharp" />
@@ -113,7 +113,59 @@ describe('FunnelChart', () => {
     ]);
     const cell = document.querySelector('[data-stage-cell="w"]')!;
     expect(cell.textContent).toBe('50Won');
-    expect(cell).toHaveStyle({ '--chart-series-color': 'var(--chart-series-5)' });
+  });
+
+  it('colours stages with the one-hue ramp, first stage at full strength', () => {
+    const layout = stubLayout();
+    renderFunnel();
+    layout.fire();
+    const colorOf = (el: Element) =>
+      (el as HTMLElement | SVGElement).style.getPropertyValue('--chart-series-color');
+    const ramp = (t: number) =>
+      `color-mix(in oklab, var(--funnel-chart-ramp-color), var(--funnel-chart-surface) calc(var(--funnel-chart-ramp-max-mix) * ${t}))`;
+    expect(stageGroups().map(colorOf)).toEqual([0, 0.25, 0.5, 0.75, 1].map(ramp));
+    expect(colorOf(document.querySelector('[data-stage-cell="w"]')!)).toBe(ramp(1));
+  });
+
+  it('a stage `color` overrides the ramp with that palette slot, in the tooltip too', () => {
+    const layout = stubLayout();
+    renderFunnel({ stages: stages.map((s) => (s.key === 'w' ? { ...s, color: 3 as const } : s)) });
+    layout.fire();
+    const won = document.querySelector<SVGElement>('[data-stage="w"]')!;
+    expect(won.style.getPropertyValue('--chart-series-color')).toBe('var(--chart-series-3)');
+    fireEvent.pointerMove(screen.getByRole('group', { name: 'Pipeline' }), {
+      clientX: 450,
+      pointerType: 'mouse',
+    });
+    const swatch = tooltip()!.querySelector<HTMLElement>('[style]')!;
+    expect(swatch.style.getPropertyValue('--chart-series-color')).toBe('var(--chart-series-3)');
+  });
+
+  it('hero: the first band holds its value and label; its footer cell stays empty', () => {
+    const layout = stubLayout();
+    renderFunnel({ onStageClick: vi.fn() });
+    layout.fire();
+    const hero = document.querySelector('[data-stage="l"] [data-hero]')!;
+    expect(hero.textContent).toBe('1,240Leads');
+    const first = document.querySelector('[data-stage-cell="l"]')!;
+    expect(first.textContent).toBe('');
+    // Still a button with the full name.
+    expect(screen.getByRole('button', { name: /^Leads: 1,240\. 100% of Leads\.$/ })).toBe(first);
+  });
+
+  it('hero: falls back to the footer when the first band is too short', () => {
+    const layout = stubLayout(500, 40);
+    renderFunnel();
+    layout.fire();
+    expect(document.querySelector('[data-hero]')).toBeNull();
+    expect(document.querySelector('[data-stage-cell="l"]')!.textContent).toBe('1,240Leads');
+  });
+
+  it('hero: falls back to the footer when the value is too wide for the column', () => {
+    const layout = stubLayout();
+    renderFunnel({ formatValue: (n) => `${n.toLocaleString('en-GB')} opportunities` });
+    layout.fire();
+    expect(document.querySelector('[data-hero]')).toBeNull();
   });
 
   it('data table lists every stage with step conversion and share of first', () => {
@@ -136,7 +188,7 @@ describe('FunnelChart', () => {
     const layout = stubLayout();
     renderFunnel();
     layout.fire();
-    expect(document.querySelector('[data-stage="l"] text')).toBeNull();
+    expect(document.querySelector('[data-stage="l"] rect')).toBeNull();
     expect(document.querySelector('[data-stage="q"] rect')).not.toBeNull();
     expect(document.querySelector('[data-stage="q"] text')).toHaveTextContent('50%');
   });
@@ -207,13 +259,12 @@ describe('FunnelChart', () => {
     expect(screen.getByRole('figure')).toHaveAttribute('data-footnote');
   });
 
-  it('warns once in dev when stages overflow the palette', () => {
+  it('does not warn for more than 8 stages (the ramp never runs out)', () => {
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     renderFunnel({
       stages: Array.from({ length: 9 }, (_, i) => ({ key: `s${i}`, label: `S${i}`, value: 9 - i })),
     });
-    expect(warn).toHaveBeenCalledTimes(1);
-    expect(warn.mock.calls[0].join(' ')).toMatch(/FunnelChart/);
+    expect(warn).not.toHaveBeenCalled();
   });
   describe('clickable stages', () => {
     it('renders one named button per stage; clicking passes the original stage and index', async () => {
@@ -427,6 +478,25 @@ describe('FunnelChart', () => {
       expect(rows[0]).not.toHaveTextContent('%');
     });
 
+    it('is a table-like grid: aria-hidden header, then swatch, label, value and pill per row', () => {
+      const layout = stubLayout(NARROW, 300);
+      renderFunnel();
+      layout.fire();
+      const header = document.querySelector('[data-funnel-header]')!;
+      expect(header).toHaveAttribute('aria-hidden', 'true');
+      expect([...header.children].map((c) => c.textContent)).toEqual([
+        '',
+        '',
+        'Stage',
+        'Value',
+        'vs previous',
+      ]);
+      const rows = document.querySelectorAll('[data-stage-cell]');
+      rows.forEach((row) => expect(row.querySelector('[data-swatch]')).not.toBeNull());
+      expect(rows[0].textContent).toBe('Leads1,240—');
+      expect(rows[4].textContent).toBe('Won5040%');
+    });
+
     it('the switch follows the stage count', () => {
       const layout = stubLayout(5 * 96, 300);
       const { rerender } = renderFunnel();
@@ -446,7 +516,7 @@ describe('FunnelChart', () => {
         (p) => p.getAttribute('d')!,
       );
 
-    it('rows are slices of one connected funnel, flowing top to bottom', () => {
+    it('rows are slices of the funnel, flowing top to bottom', () => {
       const layout = stubLayout(NARROW, 300);
       renderFunnel();
       layout.fire();
@@ -457,9 +527,10 @@ describe('FunnelChart', () => {
       });
       const d = bandPaths();
       expect(d).toHaveLength(5);
-      // Eased by default: every stage but the last curves into the next one's width.
-      d.slice(0, -1).forEach((p) => expect(p).toContain('C'));
-      expect(d.at(-1)).not.toContain('C');
+      // Taper by default: every stage but the last holds, then narrows (a six-point outline).
+      const points = (p: string) => p.split(/[ML]/).filter((x) => x.trim()).length;
+      d.slice(0, -1).forEach((p) => expect(points(p)).toBe(6));
+      expect(points(d.at(-1)!)).toBe(4);
     });
 
     it('follows shape="sharp": straight trapezoids', () => {
@@ -468,7 +539,7 @@ describe('FunnelChart', () => {
       layout.fire();
       const d = bandPaths();
       expect(d).toHaveLength(5);
-      d.forEach((p) => expect(p).not.toContain('C'));
+      d.forEach((p) => expect(p.split(/[ML]/).filter((x) => x.trim())).toHaveLength(4));
     });
 
     it('read-only: ArrowDown/ArrowUp inspect stages; Escape dismisses', async () => {

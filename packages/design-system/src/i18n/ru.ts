@@ -493,6 +493,7 @@ export const ru: Messages = {
     shareOfFirst: 'Доля от первого этапа',
     ofStage: ({ percent, stage }) => `${percent as string} от «${stage as string}»`,
     noData: '—',
+    vsPrevious: 'к предыдущему',
   },
   treeView: {
     loading: 'Загрузка…',

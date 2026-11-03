@@ -9,12 +9,14 @@ export interface ChartTooltipRow {
   slot: number;
   comparison: boolean;
   value: string;
+  /** CSS colour for the swatch; overrides `slot` (FunnelChart's ramp colours). */
+  color?: string;
 }
 
-const swatchStyle = (slot: number) =>
+const swatchStyle = (slot: number, color?: string) =>
   ({
     '--chart-series-color':
-      slot === 0 ? 'var(--chart-total-comparison)' : `var(--chart-series-${slot})`,
+      color ?? (slot === 0 ? 'var(--chart-total-comparison)' : `var(--chart-series-${slot})`),
   }) as CSSProperties;
 
 /**
@@ -72,7 +74,7 @@ export function ChartTooltip({
         <div key={r.key} className={styles.tooltipRow} data-nested={r.comparison || undefined}>
           <span
             className={styles.swatch}
-            style={swatchStyle(r.slot)}
+            style={swatchStyle(r.slot, r.color)}
             data-comparison={r.comparison || undefined}
           />
           <span className={styles.tooltipLabel}>{r.label}</span>

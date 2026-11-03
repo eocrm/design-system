@@ -1,5 +1,6 @@
 import {
   MIN_THICKNESS,
+  TAPER_HOLD,
   formatPercent,
   orientationFor,
   resolveStages,
@@ -19,9 +20,9 @@ const st = (value: number) => ({ key: `k${value}`, label: 'x', value });
 const ysOf = (d: string) => (d.match(/,(-?[\d.]+)/g) ?? []).map((m) => Number(m.slice(1)));
 
 describe('resolveStages', () => {
-  it('assigns positional slots and ratios', () => {
+  it('leaves un-overridden stages on the ramp (slot null) and computes ratios', () => {
     const r = resolveStages(L);
-    expect(r.map((s) => s.slot)).toEqual([1, 2, 3, 4, 5]);
+    expect(r.map((s) => s.slot)).toEqual([null, null, null, null, null]);
     expect(r.map((s) => s.stepRatio)).toEqual([null, 0.5, 0.4, 0.5, 50 / 124]);
     expect(r[4].shareRatio).toBe(50 / 1240);
     expect(r[0].heightRatio).toBe(1);
@@ -29,14 +30,7 @@ describe('resolveStages', () => {
 
   it('honours an explicit colour without shifting the others', () => {
     const r = resolveStages(L.map((s, i) => (i === 1 ? { ...s, color: 7 as const } : s)));
-    expect(r.map((s) => s.slot)).toEqual([1, 7, 3, 4, 5]);
-  });
-
-  it('wraps slots past 8 and flags overflow', () => {
-    const r = resolveStages(Array.from({ length: 9 }, (_, i) => st(10 + i)));
-    expect(r[8].slot).toBe(1);
-    expect(r[8].overflow).toBe(true);
-    expect(r[7].overflow).toBe(false);
+    expect(r.map((s) => s.slot)).toEqual([null, 7, null, null, null]);
   });
 
   it('sanitises bad numbers', () => {
@@ -63,7 +57,7 @@ describe('orientationFor', () => {
 });
 
 describe('stageGeometry', () => {
-  describe.each<FunnelShape>(['eased', 'sharp'])('%s', (shape) => {
+  describe.each<FunnelShape>(['taper', 'sharp'])('%s', (shape) => {
     const g = stageGeometry({ stages: resolveStages(L), width: 500, height: 200, shape });
 
     it('lays stages out in equal columns', () => {
@@ -77,12 +71,27 @@ describe('stageGeometry', () => {
       });
     });
 
-    it('draws curves only where expected', () => {
+    it('draws straight lines only', () => {
+      g.forEach((s) => expect(s.d).not.toContain('C'));
+    });
+
+    it('holds for TAPER_HOLD of the column only when tapering, never on the last stage', () => {
       g.forEach((s, i) => {
-        const curved = shape === 'eased' && i < g.length - 1;
-        expect(s.d.includes('C')).toBe(curved);
+        const held = shape === 'taper' && i < g.length - 1;
+        expect(s.d.includes(`${s.x0 + 100 * TAPER_HOLD},`)).toBe(held);
       });
     });
+  });
+
+  it('taper: flat at the stage height, then straight to the next height', () => {
+    const [s] = stageGeometry({
+      stages: resolveStages(L),
+      width: 500,
+      height: 200,
+      shape: 'taper',
+    });
+    // Leads 200 tall (0..200), Qualified 100 tall (50..150).
+    expect(s.d).toBe('M 0,0 L 75,0 L 100,50 L 100,150 L 75,200 L 0,200 Z');
   });
 
   it('fills a single stage with no curve', () => {
@@ -90,7 +99,7 @@ describe('stageGeometry', () => {
       stages: resolveStages([st(3)]),
       width: 200,
       height: 100,
-      shape: 'eased',
+      shape: 'taper',
     });
     const ys = ysOf(s.d);
     expect(Math.min(...ys)).toBe(0);

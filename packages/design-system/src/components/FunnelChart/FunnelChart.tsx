@@ -30,8 +30,10 @@ import {
   resolveStages,
   stageGeometry,
   stageIndexAt,
+  TAPER_HOLD,
   type FunnelShape,
   type FunnelStage,
+  type ResolvedStage,
 } from './funnelModel';
 import styles from './FunnelChart.module.scss';
 
@@ -41,17 +43,18 @@ export interface FunnelChartProps extends Omit<HTMLAttributes<HTMLElement>, 'chi
   /** Accessible name of the figure and caption of its data table, e.g. "Sales pipeline". Required. */
   label: string;
   /**
-   * Stages, top of the funnel first. Heights are relative to the largest value; colour follows position
-   * (palette slots 1–8) unless `color` names a slot. More than 8 stages reuse colours, with a dev warning.
+   * Stages, top of the funnel first. Heights are relative to the largest value. Colour is a one-hue ramp
+   * from `--chart-series-1` (first stage) toward the surface; a stage's `color` slot overrides it.
    */
   stages: FunnelStage[];
   /** Formats a stage value for the footer, tooltip and data table (the app owns i18n and currency). Required. */
   formatValue: (n: number) => string;
   /**
-   * Silhouette between stages, in both layouts (vertical rows read as the same funnel turned on its
-   * side). Default `'eased'`.
-   * - `'eased'` — each stage holds its height, then curves smoothly into the next one.
-   * - `'sharp'` — straight trapezoids from one stage's height to the next.
+   * Silhouette between stages, in both layouts (vertical slices follow the same geometry turned on
+   * its side). Default `'taper'`.
+   * - `'taper'` — each stage holds its height for most of its column, then a short straight diagonal
+   *   leads into the next one's height.
+   * - `'sharp'` — full-column trapezoids from one stage's height to the next.
    */
   shape?: FunnelShape;
   /**
@@ -79,19 +82,19 @@ const PILL_PADDING_X = 8;
 // ponytail: per-character width estimate for the pill; measure with getBBox if wide glyphs overflow it.
 const PILL_CHAR_WIDTH = 7;
 
-const stageStyle = (slot: number) =>
-  ({ '--chart-series-color': `var(--chart-series-${slot})` }) as CSSProperties;
+/** Hero (first stage's value and label inside its band): px estimates, as for the pill. */
+const HERO_PADDING = 8;
+// ponytail: sizes mirror --funnel-chart-hero-*-size (24px / 14px) at line-height 1.2; measure with getBBox if those tokens change.
+const HERO_MIN_HEIGHT = 64;
+const HERO_VALUE_CHAR_WIDTH = 15;
+const HERO_LABEL_CHAR_WIDTH = 8;
 
-function useDevWarnings(overflowCount: number) {
-  useEffect(() => {
-    if (process.env.NODE_ENV === 'production') return;
-    if (overflowCount > 0) {
-      console.warn(
-        `[FunnelChart] ${overflowCount} stages beyond the 8-colour palette reuse colours. Fold the tail into an "Other" stage or set \`color\`.`,
-      );
-    }
-  }, [overflowCount]);
-}
+/** Stage colour: the `color` slot, else step `i` of `n` on the one-hue ramp (computed by CSS). */
+const stageColor = (s: ResolvedStage, i: number, n: number) =>
+  s.slot !== null
+    ? `var(--chart-series-${s.slot})`
+    : `color-mix(in oklab, var(--funnel-chart-ramp-color), var(--funnel-chart-surface) calc(var(--funnel-chart-ramp-max-mix) * ${n > 1 ? Math.round((i / (n - 1)) * 1000) / 1000 : 0}))`;
+const colorStyle = (color: string) => ({ '--chart-series-color': color }) as CSSProperties;
 
 /**
  * Stage funnel (pipeline, campaign) showing drop-off by height and step conversion by pill.
@@ -103,7 +106,7 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
     label,
     stages,
     formatValue,
-    shape = 'eased',
+    shape = 'taper',
     onStageClick,
     onActiveStageChange,
     emptyMessage,
@@ -116,7 +119,6 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
   const t = useTranslation();
   const locale = useLocale();
   const resolved = useMemo(() => resolveStages(stages), [stages]);
-  useDevWarnings(resolved.filter((s) => s.overflow).length);
   const empty = resolved.every((s) => s.value === 0);
 
   const hintId = useId();
@@ -147,6 +149,27 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
         : null,
     [empty, vertical, resolved, size.width, size.height, shape],
   );
+  // Hero: the first stage's value and label inside its band, centred in its column, when the band is
+  // tall enough at the text's right edge (the band narrows there) and the text fits the column.
+  const heroValue = n > 0 ? formatValue(resolved[0].value) : '';
+  const hero = (() => {
+    if (!geometry) return null;
+    const g = geometry[0];
+    const colW = g.x1 - g.x0;
+    const thick = (s: ResolvedStage) => Math.max(MIN_THICKNESS, s.heightRatio * size.height);
+    const a = thick(resolved[0]);
+    const b = n > 1 ? thick(resolved[1]) : a;
+    const hold = shape === 'taper' ? colW * TAPER_HOLD : 0;
+    const textW = Math.max(
+      heroValue.length * HERO_VALUE_CHAR_WIDTH,
+      resolved[0].label.length * HERO_LABEL_CHAR_WIDTH,
+    );
+    const edge = colW / 2 + textW / 2 + HERO_PADDING;
+    const f = Math.min(1, Math.max(0, (edge - hold) / (colW - hold || 1)));
+    const fits = textW + 2 * HERO_PADDING <= colW && a + (b - a) * f >= HERO_MIN_HEIGHT;
+    return fits ? { x: g.cx, y: g.cy } : null;
+  })();
+
   // Vertical: the same outline in a 100-unit box per stage (flow x ∈ [100i, 100i+100], cross y ∈
   // [0, 100]); each row's SVG views its slice with the axes swapped and stretches it to the row.
   // MIN_THICKNESS (px in the horizontal strip) becomes 6% of the band track here.
@@ -276,9 +299,10 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
     return `${parts.join('. ')}.`;
   };
 
-  // One cell per stage (horizontal: footer column; vertical: a row with its funnel slice); a button when
-  // clickable. Spans, not divs, since the cell may be a <button>.
-  const renderCell = (s: (typeof resolved)[number], i: number) => {
+  // One cell per stage (horizontal: footer column; vertical: a table-like row with its funnel slice); a
+  // button when clickable. Spans, not divs, since the cell may be a <button>. With the hero shown, the
+  // first footer cell stays (empty) for grid alignment, hover and the button.
+  const renderCell = (s: ResolvedStage, i: number) => {
     const content = vertical ? (
       <>
         <span className={styles.bandTrack} data-band="">
@@ -295,15 +319,18 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
             </svg>
           )}
         </span>
-        <span className={styles.line}>
-          <span className={styles.label}>{s.label}</span>
-          <span className={styles.value}>{formatValue(s.value)}</span>
-          {i > 0 && s.stepRatio !== null && (
+        <span className={styles.swatch} data-swatch="" />
+        <span className={styles.label}>{s.label}</span>
+        <span className={styles.value}>{formatValue(s.value)}</span>
+        <span className={styles.step}>
+          {i > 0 && s.stepRatio !== null ? (
             <span className={styles.rowPill}>{pct(s.stepRatio)}</span>
+          ) : (
+            t('funnelChart.noData')
           )}
         </span>
       </>
-    ) : (
+    ) : i === 0 && hero ? null : (
       <>
         <span className={styles.value}>{formatValue(s.value)}</span>
         <span className={styles.label}>{s.label}</span>
@@ -311,7 +338,7 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
     );
     const common = {
       className: styles.cell,
-      style: stageStyle(s.slot),
+      style: colorStyle(stageColor(s, i, n)),
       'data-stage-cell': s.key,
       'data-dimmed': dimmed(i),
       // Vertical rows are hit-tested per row; horizontal uses the plot's x position (stageIndexAt).
@@ -342,7 +369,8 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
         {
           key: 'value',
           label: t('funnelChart.value'),
-          slot: stage.slot,
+          slot: 0,
+          color: stageColor(stage, current!, n),
           comparison: false,
           value: formatValue(stage.value),
         },
@@ -446,7 +474,16 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
         onBlur={onBlur}
       >
         {vertical ? (
-          resolved.map(renderCell)
+          <>
+            <div className={styles.header} aria-hidden="true" data-funnel-header="">
+              <span />
+              <span />
+              <span>{t('funnelChart.stage')}</span>
+              <span className={styles.headerValue}>{t('funnelChart.value')}</span>
+              <span>{t('funnelChart.vsPrevious')}</span>
+            </div>
+            {resolved.map(renderCell)}
+          </>
         ) : (
           <>
             <div ref={setShapesEl} className={styles.shapes} onClick={onStripClick}>
@@ -466,11 +503,33 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
                       <g
                         key={s.key}
                         className={styles.stage}
-                        style={stageStyle(s.slot)}
+                        style={colorStyle(stageColor(s, i, n))}
                         data-stage={s.key}
                         data-dimmed={dimmed(i)}
                       >
                         <path className={styles.shape} d={g.d} />
+                        {i === 0 && hero && (
+                          <g data-hero="">
+                            <text
+                              className={styles.heroValue}
+                              x={hero.x}
+                              y={hero.y}
+                              dy="-0.15em"
+                              textAnchor="middle"
+                            >
+                              {heroValue}
+                            </text>
+                            <text
+                              className={styles.heroLabel}
+                              x={hero.x}
+                              y={hero.y}
+                              dy="1.1em"
+                              textAnchor="middle"
+                            >
+                              {s.label}
+                            </text>
+                          </g>
+                        )}
                         {pill && (
                           <>
                             <rect

@@ -1,9 +1,26 @@
-// FunnelChart.tokens.scss — component tokens for <FunnelChart>. Stage colours come from
-// Chart's --chart-series-N palette; everything else defaults to primitives or chart tokens.
+// FunnelChart.tokens.scss — component tokens for <FunnelChart>. Stages are a one-hue ramp from
+// --chart-series-1 toward the surface (a stage's `color` slot uses --chart-series-N instead);
+// everything else defaults to primitives or chart tokens.
 @use '../Chart/Chart.tokens';
 
 :root {
   --funnel-chart-gap: var(--space-2);
+
+  // Ramp: stage i of n is ramp-color mixed (oklab) toward surface by max-mix * i / (n - 1). 48% keeps
+  // the lightest step at >= 2:1 against the surface in both themes (validate_palette.js --ordinal).
+  // ponytail: from 5 stages on, adjacent steps fall under the 0.06 OKLCH ΔL ideal (~0.03 at 8); labels,
+  // the vertical table and the tooltip carry identity. A wider ramp needs a darker first stage than series-1.
+  --funnel-chart-ramp-color: var(--chart-series-1);
+  --funnel-chart-surface: var(--color-bg);
+  --funnel-chart-ramp-max-mix: 48%;
+
+  // Hero: the first stage's value and label inside its band (horizontal).
+  --funnel-chart-hero-fg: var(--color-accent-fg);
+  --funnel-chart-hero-value-size: var(--font-size-2xl);
+  --funnel-chart-hero-label-size: var(--font-size-md);
+
+  // Dashed rule between horizontal footer columns, from stage 2 on.
+  --funnel-chart-separator: var(--color-border);
 
   // Intrinsic height of the shapes strip when the parent gives no height.
   --funnel-chart-min-height: calc(var(--space-16) * 2);
@@ -18,11 +35,15 @@
   --funnel-chart-ring: var(--chart-ring);
   --funnel-chart-transition: var(--transition-slow);
 
-  // Vertical layout (narrow containers): rows of a funnel slice beside one text line. The min
-  // height keeps a short row's taper readable.
+  // Vertical layout (narrow containers): rows of a funnel slice beside a table-like grid (swatch,
+  // stage, value, step pill). The min height keeps a short row's taper readable; the slice gap
+  // separates the slices with a thin line of surface.
   --funnel-chart-row-min-height: var(--space-10);
+  --funnel-chart-slice-gap: var(--space-05);
+  --funnel-chart-header-fg: var(--color-fg-muted);
+  --funnel-chart-header-size: var(--font-size-xs);
 
-  // Narrowest the band track gets beside the text line, so the band never vanishes.
+  // Narrowest the band track gets beside the table, so the band never vanishes.
   --funnel-chart-row-track-min: var(--space-16);
   --funnel-chart-row-pill-bg: var(--color-bg-muted);
 }

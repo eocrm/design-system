@@ -76,6 +76,22 @@
   fill: var(--funnel-chart-pill-bg);
 }
 
+.heroValue,
+.heroLabel {
+  fill: var(--funnel-chart-hero-fg);
+}
+
+.heroValue {
+  font-size: var(--funnel-chart-hero-value-size);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
+.heroLabel {
+  font-size: var(--funnel-chart-hero-label-size);
+  font-weight: var(--font-weight-semibold);
+}
+
 .pillText {
   fill: var(--funnel-chart-pill-fg);
   font-size: var(--funnel-chart-pill-size);
@@ -83,11 +99,15 @@
   font-variant-numeric: tabular-nums;
 }
 
-// One column per stage, aligned with the shapes above.
+// One column per stage, aligned with the shapes above; dashed rules between columns.
 .footer {
   display: grid;
   grid-auto-columns: minmax(0, 1fr);
   grid-auto-flow: column;
+}
+
+.footer > .cell + .cell {
+  border-inline-start: var(--border-width) dashed var(--funnel-chart-separator);
 }
 
 .cell {
@@ -128,37 +148,65 @@
   font-size: var(--funnel-chart-label-size);
 }
 
-// Vertical layout: the plot is a list of touching rows, each a slice of one funnel turned on its
-// side (same `shape`), with its text beside it; the rows scroll as a last resort.
+// Vertical layout: a slice of the funnel per row (same `shape`, turned on its side, thin gaps
+// between slices) beside a table-like grid; the rows scroll as a last resort.
 .root[data-orientation='vertical'] .plot {
   grid-template-rows: none;
   grid-auto-rows: min-content;
 
-  // One column template shared by every row (subgrid), so all band tracks get the same width and
-  // band widths stay proportional; the text column takes the widest row's text, wrapping when tight.
-  grid-template-columns: minmax(var(--funnel-chart-row-track-min), 1fr) minmax(0, max-content);
+  // One column template shared by the header and every row (subgrid): band track (flexible share, so
+  // band widths stay proportional), swatch, label (wraps when tight), value, step pill.
+  grid-template-columns:
+    minmax(var(--funnel-chart-row-track-min), 1fr) auto minmax(0, max-content)
+    max-content max-content;
   align-content: start;
-
-  // No row gap: the slices join into one silhouette.
-  gap: 0 var(--funnel-chart-gap);
+  gap: var(--funnel-chart-slice-gap) var(--funnel-chart-gap);
   overflow-y: auto;
 
   // Room for the stage buttons' focus rings, which the scroll container would clip.
   padding: calc(var(--ring-width) + var(--ring-offset));
 }
 
-// Row: spans the plot's columns and inherits them, so the band track is the flexible share and
-// the text line keeps its intrinsic width, wrapping rather than truncating.
+// Header and rows span the plot's columns and inherit them (subgrid).
+.header,
 .root[data-orientation='vertical'] .cell {
   // stylelint-disable-next-line property-disallowed-list -- internal row spanning the plot's own columns (subgrid), not consumer layout
   grid-column: 1 / -1;
+  display: grid;
   grid-template-columns: subgrid;
+}
+
+.header {
+  padding-block-end: var(--space-1);
+  color: var(--funnel-chart-header-fg);
+  font-size: var(--funnel-chart-header-size);
+}
+
+.headerValue {
+  text-align: end;
+}
+
+// Items stretch to the row (the band needs the full height); text items centre themselves.
+.root[data-orientation='vertical'] .cell {
   align-content: stretch;
   align-items: stretch;
   justify-items: stretch;
   min-block-size: var(--funnel-chart-row-min-height);
   padding-inline: 0;
   text-align: start;
+
+  .label,
+  .value,
+  .swatch,
+  .step {
+    display: grid;
+    align-content: center;
+  }
+
+  .value {
+    font-size: var(--funnel-chart-label-size);
+    text-align: end;
+  }
 }
 
 // The slice stretches to the row; size containment keeps the SVG's aspect ratio out of the row
@@ -173,19 +221,18 @@
   }
 }
 
-// Breathing room lives inside the text cell, so the band slices still touch.
-.line {
-  display: flex;
-  flex-wrap: wrap;
-  align-content: center;
-  align-items: baseline;
-  column-gap: var(--space-2);
-  min-inline-size: 0;
-  padding-block: var(--space-1);
+.swatch::before {
+  content: '';
+  inline-size: var(--chart-swatch);
+  block-size: var(--chart-swatch);
+  border-radius: var(--radius-sm);
+  background: var(--chart-series-color, currentColor);
 }
 
-.root[data-orientation='vertical'] .value {
-  font-size: var(--funnel-chart-label-size);
+.step {
+  justify-items: start;
+  color: var(--funnel-chart-label-fg);
+  font-size: var(--funnel-chart-pill-size);
 }
 
 .rowPill {

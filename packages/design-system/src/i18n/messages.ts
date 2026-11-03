@@ -915,6 +915,8 @@ export interface Messages {
     ofStage: (params: { percent: string; stage: string }) => string;
     /** Data-table cell for an undefined ratio (first stage's step, or a previous stage of 0). */
     noData: string;
+    /** Header of the vertical layout's visible step-conversion column ("vs previous"). */
+    vsPrevious: string;
   };
   sparkline: {
     /** Accessible name of a Sparkline with data: label plus the series summary. */

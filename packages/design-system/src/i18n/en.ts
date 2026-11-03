@@ -485,6 +485,7 @@ export const en: Messages = {
     shareOfFirst: 'Share of first stage',
     ofStage: ({ percent, stage }) => `${percent as string} of ${stage as string}`,
     noData: '—',
+    vsPrevious: 'vs previous',
   },
   treeView: {
     loading: 'Loading…',
