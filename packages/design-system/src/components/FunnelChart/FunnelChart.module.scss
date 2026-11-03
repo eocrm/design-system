@@ -123,6 +123,11 @@
     opacity: var(--funnel-chart-dim-opacity);
   }
 
+  // A focused stage hovered away from keeps its focus ring readable (WCAG 2.4.7).
+  &[data-dimmed]:focus-visible {
+    opacity: initial;
+  }
+
   // Hero shown: the first cell keeps its value and label, invisible, so it is a normal footer-height
   // box (and a full-size focus ring when it is a button) under the band that shows them.
   &[data-hero-cell] > * {
