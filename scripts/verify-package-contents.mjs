@@ -35,7 +35,7 @@ export const PACKAGES = [
 
 /**
  * Required paths: README.md, LICENSE, package.json, and every string target in `exports`
- * (conditional/nested objects are walked; `source` conditions are dev-only and skipped). Wildcard (`*`) targets are skipped:
+ * (conditional/nested objects are walked; `@eocrm/source` conditions are dev-only and skipped). Wildcard (`*`) targets are skipped:
  * they cannot be checked as a literal path.
  */
 export function requiredPaths(pkgJson) {
@@ -44,7 +44,7 @@ export function requiredPaths(pkgJson) {
     if (typeof v === 'string') {
       if (!v.includes('*')) targets.add(v.replace(/^\.\//, ''));
     } else if (v && typeof v === 'object') {
-      for (const [key, value] of Object.entries(v)) if (key !== 'source') walk(value);
+      for (const [key, value] of Object.entries(v)) if (key !== '@eocrm/source') walk(value);
     }
   };
   walk(pkgJson.exports);

@@ -1,6 +1,6 @@
 # CLAUDE.md — `@eocrm/design-system`
 
-The library that ships to the CRM. Ships compiled ESM (`dist/`: JS, `.d.ts`, CSS) built by `npm run build`; `prepack` runs it. The playground resolves `src/` through the `source` export condition.
+The library that ships to the CRM. Ships compiled ESM (`dist/`: JS, `.d.ts`, CSS) built by `npm run build`; `prepack` runs it. The playground resolves `src/` through the `@eocrm/source` export condition.
 
 `package.json` `files` field whitelists what gets published: `dist`, `AI-PRIMER.md`, `docs`. `README.md` is auto-included by npm. Anything outside that won't reach the consumer.
 

@@ -1241,8 +1241,11 @@ export interface Messages {
   };
 }
 
-/** Supported locale codes. v1 ships English and Russian. */
-export type Locale = 'en' | 'ru';
+/**
+ * Locale code. The package ships `en` (built in) and `ru` (pass `messages={ru}`);
+ * any other code works with your own `Messages` catalog.
+ */
+export type Locale = 'en' | 'ru' | (string & {});
 
 /**
  * Recursive deep-partial. Preserves function leaves untouched (a partial

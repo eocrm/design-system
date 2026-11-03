@@ -73,6 +73,18 @@ describe('useTranslation', () => {
     expect(screen.getByTestId('out')).toHaveTextContent('Привет');
   });
 
+  it('accepts a third-party locale code with its own catalog', () => {
+    seed(en, { greeting: 'Hello' });
+    // `locale="de"` must type-check: `Locale` is open to codes beyond en/ru.
+    const de = { ...en, greeting: 'Hallo' };
+    render(
+      <I18nProvider locale="de" messages={de}>
+        <Probe k="greeting" />
+      </I18nProvider>,
+    );
+    expect(screen.getByTestId('out')).toHaveTextContent('Hallo');
+  });
+
   it('applies overrides on top of the locale defaults', () => {
     seed(en, { greeting: 'Hello', nested: { dismiss: 'Dismiss' } });
     render(

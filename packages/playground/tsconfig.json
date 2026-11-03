@@ -2,7 +2,7 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "types": ["vite/client", "node"],
-    "customConditions": ["source"],
+    "customConditions": ["@eocrm/source"],
     "paths": {
       "@lib-source/*": ["../design-system/src/*"]
     }

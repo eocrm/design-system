@@ -25,14 +25,14 @@ test('preserves the design-system package and TypeScript export surfaces', async
 
   assert.deepEqual(packageJson.exports, {
     '.': {
-      source: './src/index.ts',
+      '@eocrm/source': './src/index.ts',
       types: './dist/index.d.ts',
       import: './dist/index.js',
       // CommonJS resolvers (Jest) use require/default; without it the package does not resolve.
       default: './dist/index.js',
     },
     './styles/global.css': {
-      source: './src/styles/global.scss',
+      '@eocrm/source': './src/styles/global.scss',
       default: './dist/styles/global.css',
     },
     './styles/tokens.css': './dist/styles/tokens.css',
@@ -141,7 +141,7 @@ test('shared tarball verifier flags leaked paths and missing export targets', as
   const pkg = PACKAGES.find((p) => p.name === '@eocrm/design-system');
   const pkgJson = {
     exports: {
-      '.': { source: './src/index.ts', import: './dist/index.js' },
+      '.': { '@eocrm/source': './src/index.ts', import: './dist/index.js' },
       './x/*': './dist/x/*.css',
     },
   };

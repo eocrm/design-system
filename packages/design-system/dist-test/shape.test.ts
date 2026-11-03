@@ -196,6 +196,28 @@ test('global stylesheets exist and are non-empty', () => {
   expect(bundle).toContain(read(buttonCss!));
 });
 
+test('styles.css holds every component css once, in bundler import order', () => {
+  const bundle = read(join(dist, 'styles.css'));
+  const componentCss = walk(dist).filter(
+    (f) =>
+      f.endsWith('.css') && !f.startsWith(join(dist, 'styles')) && f !== join(dist, 'styles.css'),
+  );
+  expect(componentCss.map((f) => relative(dist, f))).toContain('components/Button/Button.css');
+  for (const file of componentCss) {
+    const css = read(file);
+    const at = bundle.indexOf(css);
+    expect(at, relative(dist, file)).toBeGreaterThan(-1);
+    expect(bundle.indexOf(css, at + 1), relative(dist, file)).toBe(-1);
+  }
+  // Alert imports Button and sorts before it: a bundler emits the child
+  // (Button) first, so Alert's rules win at equal specificity.
+  expect(specifiers(read(join(dist, 'components/Alert/Alert.js')))).toContain(
+    '../Button/Button.js',
+  );
+  const pos = (f: string) => bundle.indexOf(read(join(dist, 'components', f)));
+  expect(pos('Button/Button.css')).toBeLessThan(pos('Alert/Alert.css'));
+});
+
 // Consumer Vite builds tree-shake a bare `import "./X.module.css"` (a CSS module
 // with no used export), silently dropping component styles. Ship plain `.css`.
 it('ships no *.module.css file and imports none', () => {

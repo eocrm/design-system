@@ -37,7 +37,7 @@ export default defineConfig({
   plugins: [propsManifestPlugin(), react()],
   resolve: {
     // Resolve the library from src/ (HMR, no build step); consumers get dist/.
-    conditions: ['source', ...defaultClientConditions],
+    conditions: ['@eocrm/source', ...defaultClientConditions],
     alias: {
       // Sibling-workspace alias used only by demo pages for `?raw` source-display
       // imports. Keeps the library's `exports` field clean of internal subpaths.

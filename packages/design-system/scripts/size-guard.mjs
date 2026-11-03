@@ -1,5 +1,5 @@
 // Bundle-size guard: builds tiny consumer apps against dist/ (resolved via the
-// package name, no `source` condition) and compares gzip sizes to size-budgets.json.
+// package name, no `@eocrm/source` condition) and compares gzip sizes to size-budgets.json.
 import { mkdtempSync, mkdirSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
