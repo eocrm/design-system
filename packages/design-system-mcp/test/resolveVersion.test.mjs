@@ -16,6 +16,7 @@ for (const [dir, version, source] of [
   ['npm', '0.6.21', 'package-lock.json'],
   ['npm-workspace', '0.6.21', 'package-lock.json'],
   ['pnpm', '0.6.20', 'pnpm-lock.yaml'],
+  ['pnpm-v5', '0.6.19', 'pnpm-lock.yaml'],
   ['yarn-classic', '0.6.19', 'yarn.lock'],
   ['yarn-berry', '0.6.19', 'yarn.lock'],
   ['bun', '0.6.18', 'bun.lock'],

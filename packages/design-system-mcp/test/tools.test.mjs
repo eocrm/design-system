@@ -139,6 +139,7 @@ test('get_doc serves a top-level topic and lists topics on a miss', async () => 
   const { text } = await call('get_doc', { topic: 'nope' });
   assert.match(text, /setup/);
   assert.match(text, /theming/);
+  assert.match(text, /readme/);
 });
 
 test('get_doc serves the package README as topic readme', async () => {
