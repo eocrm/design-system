@@ -1,17 +1,22 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext } from 'react';
 
 export const ACCENT_KEY = 'eocrm-playground-accent';
 
-/** Every accent, in menu order. `blue` is the default (no `data-accent`). */
+/**
+ * Every accent, in menu order. `blue` is the default (no `data-accent`).
+ * `top` / `body` shade the eocrm chevron mark the way the Teal pine asset does:
+ * a light top chevron (the accent's dark-theme value) over the light-theme body.
+ * Blue keeps the original solid mark.
+ */
 export const ACCENTS = [
-  { value: 'blue', label: 'Blue' },
-  { value: 'tealpine', label: 'Teal pine' },
-  { value: 'indigo', label: 'Indigo' },
-  { value: 'grape', label: 'Grape' },
-  { value: 'berry', label: 'Berry' },
-  { value: 'slate', label: 'Slate' },
-  { value: 'ocean', label: 'Ocean' },
-  { value: 'moss', label: 'Moss' },
+  { value: 'blue', label: 'Blue', top: '#0052CC', body: '#0052CC' },
+  { value: 'tealpine', label: 'Teal pine', top: '#6DCFC4', body: '#17736D' },
+  { value: 'indigo', label: 'Indigo', top: '#A3A8FF', body: '#4C4BD1' },
+  { value: 'grape', label: 'Grape', top: '#C9A0F0', body: '#7B3FB3' },
+  { value: 'berry', label: 'Berry', top: '#F28CB8', body: '#B0306E' },
+  { value: 'slate', label: 'Slate', top: '#A9B8CA', body: '#3E4C5E' },
+  { value: 'ocean', label: 'Ocean', top: '#6CC4E6', body: '#0A6A8C' },
+  { value: 'moss', label: 'Moss', top: '#A6C96A', body: '#45601B' },
 ] as const;
 
 export type Accent = (typeof ACCENTS)[number]['value'];
@@ -23,55 +28,17 @@ export const AccentContext = createContext<Accent>('blue');
 
 export const useAccent = () => useContext(AccentContext);
 
-const MARK = (light: string, mid: string, outline: string) =>
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">` +
-  `<rect x="4" y="4" width="56" height="56" rx="16" fill="#111827"/>` +
-  `<rect x="15" y="15" width="15" height="15" rx="4" fill="${light}"/>` +
-  `<rect x="34" y="15" width="15" height="15" rx="4" fill="${mid}"/>` +
-  `<rect x="15" y="34" width="15" height="15" rx="4" fill="${mid}"/>` +
-  `<path d="M37 34h9a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-9a3 3 0 0 1-3-3v-9a3 3 0 0 1 3-3Z" stroke="${outline}" stroke-width="3"/>` +
-  `</svg>`;
+const MARKS = Object.fromEntries(
+  ACCENTS.map(({ value, top, body }) => {
+    const svg =
+      `<svg width="160" height="160" viewBox="0 -4 160 160" fill="none" xmlns="http://www.w3.org/2000/svg">` +
+      `<path d="M127.441 135.999L95.8134 152L80 144L64.1857 152L32.5579 136L80 112L127.441 135.999Z" fill="${body}"/>` +
+      `<path d="M160 96V119.529L143.256 127.999L80 96L16.7436 128L0 119.529V96L80 55.5294L160 96Z" fill="${body}"/>` +
+      `<path d="M160 40.4706V80L80 39.5294L0 80V40.4706L80 0L160 40.4706Z" fill="${top}"/>` +
+      `</svg>`;
+    return [value, `data:image/svg+xml,${encodeURIComponent(svg)}`];
+  }),
+) as Record<Accent, string>;
 
-/** Resolves `color-mix(var(--color-accent) pct%, white)` to a literal colour. */
-function accentTint(probe: HTMLElement, pct: number) {
-  probe.style.color = `color-mix(in oklab, var(--color-accent) ${pct}%, white)`;
-  return getComputedStyle(probe).color;
-}
-
-function buildMark() {
-  const probe = document.createElement('span');
-  probe.hidden = true;
-  document.body.append(probe);
-  try {
-    const svg = MARK(accentTint(probe, 60), accentTint(probe, 80), accentTint(probe, 40));
-    return `data:image/svg+xml,${encodeURIComponent(svg)}`;
-  } finally {
-    probe.remove();
-  }
-}
-
-/**
- * The design-system mark as a data URI whose squares are tints of the live
- * `--color-accent`; the dark tile stays fixed. `<Logo>` renders an `<img>`, which
- * can't read page CSS variables, so the tints are resolved here and re-resolved
- * whenever the accent or theme (attribute or OS preference) changes.
- */
-export function useAccentMark() {
-  const [src, setSrc] = useState(() => (typeof document === 'undefined' ? '' : buildMark()));
-  useEffect(() => {
-    const update = () => setSrc(buildMark());
-    const observer = new MutationObserver(update);
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['data-accent', 'data-theme'],
-    });
-    const media = window.matchMedia('(prefers-color-scheme: dark)');
-    media.addEventListener('change', update);
-    update();
-    return () => {
-      observer.disconnect();
-      media.removeEventListener('change', update);
-    };
-  }, []);
-  return src;
-}
+/** The eocrm chevron mark shaded for the current accent, as a data URI for `<Logo src>`. */
+export const useAccentMark = () => MARKS[useAccent()];
