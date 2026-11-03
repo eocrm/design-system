@@ -3198,7 +3198,7 @@
           "type": "FunnelStage[]",
           "required": true,
           "default": "",
-          "description": "Stages, top of the funnel first. Heights are relative to the largest value. Colour is a one-hue ramp\nfrom `--chart-series-1` (first stage) toward the surface; a stage's `color` slot overrides it."
+          "description": "Stages, top of the funnel first. Heights are relative to the largest value. Colour is a one-hue ramp\nfrom `--chart-series-1` (first stage) toward the surface (paler toward the foreground in dark); a stage's `color` slot overrides it."
         },
         {
           "name": "formatValue",
