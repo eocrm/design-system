@@ -5,6 +5,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { I18nProvider } from '../../i18n/I18nProvider';
 import { SlotGrid, type SlotGridGroup, type SlotGridProps } from './SlotGrid';
+import { ru } from '../../i18n/ru';
 
 const GROUPS: SlotGridGroup[] = [
   {
@@ -95,7 +96,7 @@ describe('<SlotGrid>', () => {
 
   it('localizes the default empty state (ru)', () => {
     render(
-      <I18nProvider locale="ru">
+      <I18nProvider locale="ru" messages={ru}>
         <SlotGrid groups={[]} value={null} onChange={vi.fn()} />
       </I18nProvider>,
     );

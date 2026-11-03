@@ -35,7 +35,7 @@ Pins its box to the top of the scroll container while the page scrolls past — 
 
 <!-- props:end -->
 
-- Sticky defaults are emitted by the global token entry, so a consumer `:root` override loaded after `@eocrm/design-system/styles/tokens.scss` wins predictably. Override `--sticky-top-topbar` to match custom application chrome.
+- Sticky defaults are emitted by the global token entry, so a consumer `:root` override loaded after `@eocrm/design-system/styles/tokens.css` wins predictably. Override `--sticky-top-topbar` to match custom application chrome.
 - Inside a `<Split>` aside, pair with `align="stretch"` (else the content-height aside track gives nowhere to pin).
 - As a `<Split collapseBelow>` aside, it automatically becomes a plain block (no pin, no `scroll` cap/inner scroll) while the Split is stacked — no consumer shim needed. Applies only when the `Sticky` is the `aside` itself.
 

@@ -707,7 +707,7 @@ export { LocaleProvider, useLocale } from './i18n';
 export type { LocaleProviderProps } from './i18n';
 
 // i18n — translated UI strings.
-export { I18nProvider, useTranslation, useTranslationArray, ruPlural } from './i18n';
+export { I18nProvider, useTranslation, useTranslationArray, ruPlural, ru } from './i18n';
 export type { I18nProviderProps, Locale, Messages, MessageKey, DeepPartial } from './i18n';
 
 // App root — bundles the locale + i18n + toast contexts for a consuming app.

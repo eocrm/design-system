@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { I18nProvider } from '../../i18n/I18nProvider';
 import { TopBar } from './TopBar';
+import { ru } from '../../i18n/ru';
 
 describe('TopBar', () => {
   it('renders as a <header> banner landmark by default with the default aria-label', () => {
@@ -26,7 +27,7 @@ describe('TopBar', () => {
 
   it('uses ru locale for the default aria-label when I18nProvider locale="ru"', () => {
     render(
-      <I18nProvider locale="ru">
+      <I18nProvider locale="ru" messages={ru}>
         <TopBar />
       </I18nProvider>,
     );

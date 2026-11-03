@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { Bell } from 'lucide-react';
 import { I18nProvider } from '../../i18n/I18nProvider';
 import { Banner } from './Banner';
+import { ru } from '../../i18n/ru';
 
 describe('<Banner>', () => {
   it('defaults to tone="info" and a static role="note"', () => {
@@ -115,7 +116,7 @@ describe('<Banner>', () => {
 
   it('speaks the tone prefix in the active locale (ru)', () => {
     render(
-      <I18nProvider locale="ru">
+      <I18nProvider locale="ru" messages={ru}>
         <Banner tone="warning">Текст</Banner>
       </I18nProvider>,
     );

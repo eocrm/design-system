@@ -6,6 +6,7 @@ import { Modal } from '../Modal';
 import { TopBar } from './TopBar';
 import { addTourLayer, markTourTarget } from '../_internal/overlay/tourHold.testutil';
 import type { TopBarSearchGroup, TopBarSearchItem } from './TopBarSearch';
+import { ru } from '../../i18n/ru';
 
 const GROUPS: TopBarSearchGroup[] = [
   {
@@ -351,7 +352,7 @@ describe('TopBar.Search combobox mode', () => {
 
   it('pluralises the count in Russian', async () => {
     render(
-      <I18nProvider locale="ru">
+      <I18nProvider locale="ru" messages={ru}>
         <TopBar.Search placeholder="Поиск" defaultValue="a" defaultOpen results={GROUPS} />
       </I18nProvider>,
     );

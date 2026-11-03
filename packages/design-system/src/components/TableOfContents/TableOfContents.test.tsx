@@ -4,6 +4,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event';
 import { I18nProvider } from '../../i18n/I18nProvider';
 import { TableOfContents, type TableOfContentsItem } from './index';
+import { ru } from '../../i18n/ru';
 
 const ITEMS: TableOfContentsItem[] = [
   { id: 'a', label: 'A', level: 2 },
@@ -276,7 +277,7 @@ describe('TableOfContents', () => {
 
   it('names the nav in Russian under the ru locale', () => {
     render(
-      <I18nProvider locale="ru">
+      <I18nProvider locale="ru" messages={ru}>
         <TableOfContents items={ITEMS} />
       </I18nProvider>,
     );

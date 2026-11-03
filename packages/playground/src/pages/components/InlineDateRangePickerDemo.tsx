@@ -7,6 +7,7 @@ import {
   toDateKey,
   toIsoDateTime,
   type DateRange,
+  ru,
 } from '@eocrm/design-system';
 import { DemoBody } from './DemoBody';
 import { Example } from './Example';
@@ -301,15 +302,15 @@ export function FormDemo() {
 
       <Example
         title="ru-RU locale"
-        description="Locale-aware labels. UI strings (chevron tooltips) come from <I18nProvider locale='ru'>."
-        code={`import { I18nProvider, InlineDateRangePicker } from '@eocrm/design-system';
+        description="Locale-aware labels. UI strings (chevron tooltips) come from <I18nProvider locale='ru' messages={ru}>."
+        code={`import { I18nProvider, InlineDateRangePicker, ru } from '@eocrm/design-system';
 
 const today = new Date();
 const in14 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 14);
 
 export function Demo() {
   return (
-    <I18nProvider locale="ru">
+    <I18nProvider locale="ru" messages={ru}>
       <InlineDateRangePicker
         defaultValue={{ start: today, end: in14 }}
         locale="ru-RU"
@@ -320,7 +321,7 @@ export function Demo() {
 }`}
       >
         <InputExample width="auto">
-          <I18nProvider locale="ru">
+          <I18nProvider locale="ru" messages={ru}>
             <InlineDateRangePicker
               defaultValue={{ start: TODAY, end: IN_14 }}
               locale="ru-RU"

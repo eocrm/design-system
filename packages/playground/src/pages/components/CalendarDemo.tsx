@@ -8,6 +8,7 @@ import {
   type CalendarDropCandidate,
   type CalendarResource,
   type CalendarView,
+  ru,
 } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
@@ -520,8 +521,8 @@ export function Demo() {
 
       <Example
         title="ru-RU locale"
-        description="Russian locale — Monday-start grid, Cyrillic month/weekday labels. UI strings (Today button, prev/next aria-labels, view-switcher) come from the i18n provider — wrap the Calendar in <I18nProvider locale='ru'> to use the built-in Russian translations."
-        code={`import { Calendar, I18nProvider } from '@eocrm/design-system';
+        description="Russian locale — Monday-start grid, Cyrillic month/weekday labels. UI strings (Today button, prev/next aria-labels, view-switcher) come from the i18n provider — wrap the Calendar in <I18nProvider locale='ru' messages={ru}> to use the library's Russian catalog (`import { ru } from '@eocrm/design-system'`)."
+        code={`import { Calendar, I18nProvider, ru } from '@eocrm/design-system';
 
 const SAMPLE_EVENTS = [
   { id: '1', title: 'Team standup', startsAt: new Date(2026, 4, 12, 9, 30), tone: 'accent' },
@@ -533,7 +534,7 @@ const SAMPLE_EVENTS = [
 
 export function Demo() {
   return (
-    <I18nProvider locale="ru">
+    <I18nProvider locale="ru" messages={ru}>
       <Calendar
         defaultValue={new Date(2026, 4, 15)}
         events={SAMPLE_EVENTS}
@@ -543,7 +544,7 @@ export function Demo() {
   );
 }`}
       >
-        <I18nProvider locale="ru">
+        <I18nProvider locale="ru" messages={ru}>
           <Calendar defaultValue={TODAY} events={SAMPLE_EVENTS} locale="ru-RU" />
         </I18nProvider>
       </Example>

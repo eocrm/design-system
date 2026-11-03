@@ -6,6 +6,7 @@ import { Select, type SelectOption } from './Select';
 import { Field } from '../Field';
 import { addTourLayer, markTourTarget } from '../_internal/overlay/tourHold.testutil';
 import styles from './Select.module.scss';
+import { ru } from '../../i18n/ru';
 
 const STATUSES: SelectOption[] = [
   { value: 'active', label: 'Active' },
@@ -1781,7 +1782,7 @@ describe('listbox state announces from one region, not three rows (#495)', () =>
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     const loadOptions = vi.fn(() => new Promise<SelectOption[]>(() => {}));
     render(
-      <I18nProvider locale="ru">
+      <I18nProvider locale="ru" messages={ru}>
         <Select searchable loadOptions={loadOptions} />
       </I18nProvider>,
     );
@@ -1798,7 +1799,7 @@ describe('listbox state announces from one region, not three rows (#495)', () =>
     const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime });
     const loadOptions = vi.fn(() => Promise.reject(new Error('boom')));
     render(
-      <I18nProvider locale="ru">
+      <I18nProvider locale="ru" messages={ru}>
         <Select searchable loadOptions={loadOptions} />
       </I18nProvider>,
     );

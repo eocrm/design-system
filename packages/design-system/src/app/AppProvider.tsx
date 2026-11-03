@@ -11,10 +11,12 @@ import { buildThemeTokenCss, type TokenMap } from './themeTokens';
 
 export interface AppProviderProps {
   /**
-   * UI-string locale — selects the built-in message bundle. v1 ships `'en'`
-   * and `'ru'`. Drives every design-system component's copy via `useTranslation`.
+   * UI-string locale. English is built in; every other locale needs its
+   * catalog passed via `messages`. Drives every component's copy via `useTranslation`.
    */
   locale: Locale;
+  /** Message catalog for `locale` (e.g. `ru`). Omitted ⇒ English. */
+  messages?: Messages;
   /**
    * BCP-47 locale for Intl-facing formatting (Calendar, dates, numbers), read
    * by components via `useLocale`. Optional — defaults to `locale` verbatim
@@ -23,7 +25,7 @@ export interface AppProviderProps {
    */
   intlLocale?: string;
   /**
-   * Deep-partial overrides deep-merged over the built-in messages for `locale`.
+   * Deep-partial overrides deep-merged over `messages` (or English).
    * Supply only the keys you rebrand/retext; the rest fall back to the shipped
    * defaults. Memoize this object — passing a fresh literal every render
    * rebuilds the merged messages each time.
@@ -58,6 +60,7 @@ export interface AppProviderProps {
  */
 export function AppProvider({
   locale,
+  messages,
   intlLocale,
   translations,
   toast,
@@ -68,7 +71,7 @@ export function AppProvider({
   const tokenCss = useMemo(() => buildThemeTokenCss(tokens, darkTokens), [tokens, darkTokens]);
   return (
     <LocaleProvider locale={intlLocale ?? locale}>
-      <I18nProvider locale={locale} overrides={translations}>
+      <I18nProvider locale={locale} messages={messages} overrides={translations}>
         {tokenCss && <style data-eocrm-tokens>{tokenCss}</style>}
         {children}
         {toast !== false && <ToastViewport {...(toast ?? {})} />}

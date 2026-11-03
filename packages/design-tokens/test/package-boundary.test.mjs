@@ -25,21 +25,23 @@ test('preserves the design-system package and TypeScript export surfaces', async
 
   assert.deepEqual(packageJson.exports, {
     '.': {
-      types: './src/index.ts',
-      import: './src/index.ts',
+      '@eocrm/source': './src/index.ts',
+      types: './dist/index.d.ts',
+      import: './dist/index.js',
       // CommonJS resolvers (Jest) use require/default; without it the package does not resolve.
-      default: './src/index.ts',
+      default: './dist/index.js',
     },
-    './styles/global.scss': './src/styles/global.scss',
-    './styles/tokens.scss': './src/styles/tokens.scss',
-    './styles/reset.scss': './src/styles/reset.scss',
-    './styles/typography.scss': './src/styles/typography.scss',
-    './styles/mixins.scss': './src/styles/mixins.scss',
+    './styles/global.css': {
+      '@eocrm/source': './src/styles/global.scss',
+      default: './dist/styles/global.css',
+    },
+    './styles/tokens.css': './dist/styles/tokens.css',
+    './styles.css': './dist/styles.css',
     './package.json': './package.json',
   });
 });
 
-test('packed Sass entry points resolve through the installed token package', async () => {
+test('packed CSS entry points build in a plain Vite consumer', async () => {
   const directory = await mkdtemp(join(tmpdir(), 'eocrm-package-boundary-'));
   const packDirectory = join(directory, 'packs');
   const fixture = join(directory, 'fixture');
@@ -49,14 +51,13 @@ test('packed Sass entry points resolve through the installed token package', asy
       mkdir(packDirectory, { recursive: true }),
       mkdir(fixture, { recursive: true }),
     ]);
-    const tokenTarball = await pack(tokenRoot, packDirectory);
     const designSystemTarball = await pack(designSystemRoot, packDirectory);
     const [designSystemPackage, tokenPackage] = await Promise.all([
       readFile(join(designSystemRoot, 'package.json'), 'utf8').then(JSON.parse),
       readFile(join(tokenRoot, 'package.json'), 'utf8').then(JSON.parse),
     ]);
 
-    assert.equal(designSystemPackage.dependencies['@eocrm/design-tokens'], tokenPackage.version);
+    assert.equal(designSystemPackage.devDependencies['@eocrm/design-tokens'], tokenPackage.version);
 
     await writeFile(
       join(fixture, 'package.json'),
@@ -65,7 +66,11 @@ test('packed Sass entry points resolve through the installed token package', asy
           name: 'eocrm-package-boundary-fixture',
           private: true,
           dependencies: {
-            '@eocrm/design-tokens': `file:${tokenTarball}`,
+            '@eocrm/design-system': `file:${designSystemTarball}`,
+            // peer dependencies (--legacy-peer-deps does not install them)
+            react: '^19.0.0',
+            'react-dom': '^19.0.0',
+            'lucide-react': '>=1.16.0 <2.0.0',
           },
         },
         null,
@@ -77,14 +82,6 @@ test('packed Sass entry points resolve through the installed token package', asy
       ['install', '--ignore-scripts', '--no-audit', '--no-fund', '--legacy-peer-deps'],
       fixture,
     );
-    const installedDesignSystem = join(fixture, 'node_modules/@eocrm/design-system');
-    await mkdir(installedDesignSystem, { recursive: true });
-    await run(
-      'tar',
-      ['-xzf', designSystemTarball, '--strip-components=1', '-C', installedDesignSystem],
-      fixture,
-    );
-
     await writeFile(
       join(fixture, 'index.html'),
       '<!doctype html><script type="module" src="/main.js"></script>\n',
@@ -92,9 +89,11 @@ test('packed Sass entry points resolve through the installed token package', asy
     await writeFile(
       join(fixture, 'main.js'),
       [
-        "import '@eocrm/design-system/styles/tokens.scss';",
-        "import './node_modules/@eocrm/design-system/src/styles/dark.scss';",
-        "import '@eocrm/design-system/styles/global.scss';",
+        "import '@eocrm/design-system/styles/tokens.css';",
+        "import '@eocrm/design-system/styles/global.css';",
+        "import '@eocrm/design-system/styles.css';",
+        "import { Button } from '@eocrm/design-system';",
+        'console.log(Button);',
         '',
       ].join('\n'),
     );
@@ -140,11 +139,16 @@ async function run(command, arguments_, cwd = repositoryRoot) {
 test('shared tarball verifier flags leaked paths and missing export targets', async () => {
   const { PACKAGES, verify } = await import('../../../scripts/verify-package-contents.mjs');
   const pkg = PACKAGES.find((p) => p.name === '@eocrm/design-system');
-  const pkgJson = { exports: { '.': { import: './src/index.ts' }, './x/*': './src/x/*.scss' } };
+  const pkgJson = {
+    exports: {
+      '.': { '@eocrm/source': './src/index.ts', import: './dist/index.js' },
+      './x/*': './dist/x/*.css',
+    },
+  };
   const problems = verify(pkg, ['README.md', 'LICENSE', 'package.json', 'src/x.test.tsx'], pkgJson);
 
   assert.deepEqual(problems, [
     '@eocrm/design-system tarball leaked: src/x.test.tsx',
-    '@eocrm/design-system tarball missing: src/index.ts',
+    '@eocrm/design-system tarball missing: dist/index.js',
   ]);
 });

@@ -6,6 +6,7 @@ import {
   Stack,
   toDateKey,
   toIsoDateTime,
+  ru,
 } from '@eocrm/design-system';
 import { DemoBody } from './DemoBody';
 import { Example } from './Example';
@@ -246,19 +247,19 @@ export function FormDemo() {
 
       <Example
         title="ru-RU locale"
-        description="Locale-aware month + weekday labels. UI labels (chevrons) come from <I18nProvider locale='ru'>."
-        code={`import { I18nProvider, InlineDatePicker } from '@eocrm/design-system';
+        description="Locale-aware month + weekday labels. UI labels (chevrons) come from <I18nProvider locale='ru' messages={ru}>."
+        code={`import { I18nProvider, InlineDatePicker, ru } from '@eocrm/design-system';
 
 export function Demo() {
   return (
-    <I18nProvider locale="ru">
+    <I18nProvider locale="ru" messages={ru}>
       <InlineDatePicker defaultValue={new Date()} locale="ru-RU" aria-label="Дата" />
     </I18nProvider>
   );
 }`}
       >
         <InputExample width="auto">
-          <I18nProvider locale="ru">
+          <I18nProvider locale="ru" messages={ru}>
             <InlineDatePicker defaultValue={TODAY} locale="ru-RU" aria-label="Дата" />
           </I18nProvider>
         </InputExample>
