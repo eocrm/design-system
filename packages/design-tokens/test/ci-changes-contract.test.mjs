@@ -3,6 +3,7 @@ import { readdirSync, readFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import test from 'node:test';
+import { parse } from 'yaml';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '../../..');
 const read = (p) => readFileSync(join(root, p), 'utf8');
@@ -60,4 +61,14 @@ test('quality.yml `check` job needs every other job', () => {
     .split(',')
     .map((s) => s.trim());
   assert.deepEqual([...needs].sort(), ids.filter((i) => i !== 'check').sort());
+});
+
+test('quality.yml `changes` job exposes every ci-changes.sh key', () => {
+  const keys = read('scripts/ci-changes.sh')
+    .match(/^keys=\(([^)]*)\)/m)[1]
+    .trim()
+    .split(/\s+/);
+  const outputs = parse(read('.github/workflows/quality.yml')).jobs.changes.outputs;
+  assert.ok(keys.includes('mcp'));
+  assert.deepEqual(Object.keys(outputs).sort(), [...keys].sort());
 });
