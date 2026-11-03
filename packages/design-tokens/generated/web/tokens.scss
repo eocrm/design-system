@@ -276,6 +276,78 @@
   --z-tour: 1150;
 }
 
+:root[data-accent='berry'] {
+  --color-accent: #b0306e;
+  --color-accent-bg-subtle: #fbe6ef;
+  --color-accent-fg: #ffffff;
+  --color-accent-hover: #92265b;
+  --color-accent-pressed: #741e48;
+  --color-accent-subtle-bg: #fbe6ef;
+  --color-link-fg: #a82c68;
+  --color-link-fg-hover: #8c2456;
+  --ring-accent: #b0306e;
+}
+
+:root[data-accent='grape'] {
+  --color-accent: #7b3fb3;
+  --color-accent-bg-subtle: #f1e8fa;
+  --color-accent-fg: #ffffff;
+  --color-accent-hover: #5c2e8c;
+  --color-accent-pressed: #48226e;
+  --color-accent-subtle-bg: #f1e8fa;
+  --color-link-fg: #7b3fb3;
+  --color-link-fg-hover: #5c2e8c;
+  --ring-accent: #7b3fb3;
+}
+
+:root[data-accent='indigo'] {
+  --color-accent: #4c4bd1;
+  --color-accent-bg-subtle: #e8e8fb;
+  --color-accent-fg: #ffffff;
+  --color-accent-hover: #3d3cb0;
+  --color-accent-pressed: #2f2e8c;
+  --color-accent-subtle-bg: #e8e8fb;
+  --color-link-fg: #4342c4;
+  --color-link-fg-hover: #3534a3;
+  --ring-accent: #4c4bd1;
+}
+
+:root[data-accent='moss'] {
+  --color-accent: #45601b;
+  --color-accent-bg-subtle: #ebf1df;
+  --color-accent-fg: #ffffff;
+  --color-accent-hover: #364c15;
+  --color-accent-pressed: #283a0f;
+  --color-accent-subtle-bg: #ebf1df;
+  --color-link-fg: #45601b;
+  --color-link-fg-hover: #364c15;
+  --ring-accent: #45601b;
+}
+
+:root[data-accent='ocean'] {
+  --color-accent: #0a6a8c;
+  --color-accent-bg-subtle: #ddeff6;
+  --color-accent-fg: #ffffff;
+  --color-accent-hover: #085673;
+  --color-accent-pressed: #06435a;
+  --color-accent-subtle-bg: #ddeff6;
+  --color-link-fg: #0a6a8c;
+  --color-link-fg-hover: #085673;
+  --ring-accent: #0a6a8c;
+}
+
+:root[data-accent='slate'] {
+  --color-accent: #3e4c5e;
+  --color-accent-bg-subtle: #e6eaef;
+  --color-accent-fg: #ffffff;
+  --color-accent-hover: #2f3a49;
+  --color-accent-pressed: #222b36;
+  --color-accent-subtle-bg: #e6eaef;
+  --color-link-fg: #3e4c5e;
+  --color-link-fg-hover: #2f3a49;
+  --ring-accent: #3e4c5e;
+}
+
 :root[data-accent='tealpine'] {
   --color-accent: #0b6d67;
   --color-accent-bg-subtle: #ddeeec;

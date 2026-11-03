@@ -798,3 +798,2367 @@ public object EocrmTealPineDarkTokens {
         ),
     )
 }
+
+public object EocrmIndigoLightTokens {
+    public val colors: EocrmColors = EocrmColors(
+        accent = Color(0xFF4C4BD1),
+        accentBackgroundSubtle = Color(0xFFE8E8FB),
+        accentForeground = Color(0xFFFFFFFF),
+        accentHover = Color(0xFF3D3CB0),
+        accentPressed = Color(0xFF2F2E8C),
+        accentSubtleBackground = Color(0xFFE8E8FB),
+        background = Color(0xFFFFFFFF),
+        backgroundDangerSubtle = Color(0xFFFFEBE6),
+        backgroundMuted = Color(0xFFF4F5F7),
+        backgroundSubtle = Color(0xFFFAFBFC),
+        backgroundSunken = Color(0xFFEBECF0),
+        border = Color(0xFFDFE1E6),
+        borderStrong = Color(0xFFC1C7D0),
+        danger = Color(0xFFC8300A),
+        dangerBackgroundSubtle = Color(0xFFFFEBE6),
+        dangerForeground = Color(0xFFFFFFFF),
+        dangerHover = Color(0xFFA72808),
+        foreground = Color(0xFF172B4D),
+        foregroundDisabled = Color(0xFFA5ADBA),
+        foregroundMuted = Color(0xFF5B6980),
+        foregroundSubtle = Color(0xFF687388),
+        info = Color(0xFF0052CC),
+        infoBackgroundSubtle = Color(0xFFEBF3FF),
+        success = Color(0xFF007E54),
+        successBackgroundSubtle = Color(0xFFE3FCEF),
+        successForeground = Color(0xFFFFFFFF),
+        successHover = Color(0xFF006644),
+        warning = Color(0xFFFF991F),
+        warningBackgroundSubtle = Color(0xFFFFF7ED),
+        warningForeground = Color(0xFF172B4D),
+        warningStrong = Color(0xFFA54800),
+    )
+    public val dimensions: EocrmDimensions = eocrmDimensions
+    public val typography: EocrmTypography = eocrmTypography
+    public val semanticTones: EocrmSemanticTones = EocrmSemanticTones(
+        danger = EocrmPaletteColor(
+            background = Color(0xFFFFEBE6),
+            foreground = Color(0xFFBF2600),
+        ),
+        info = EocrmPaletteColor(
+            background = Color(0xFFDEEBFF),
+            foreground = Color(0xFF0747A6),
+        ),
+        neutral = EocrmPaletteColor(
+            background = Color(0xFFF4F5F7),
+            foreground = Color(0xFF42526E),
+        ),
+        purple = EocrmPaletteColor(
+            background = Color(0xFFEAE6FF),
+            foreground = Color(0xFF403294),
+        ),
+        success = EocrmPaletteColor(
+            background = Color(0xFFE3FCEF),
+            foreground = Color(0xFF006644),
+        ),
+        warning = EocrmPaletteColor(
+            background = Color(0xFFFFFAE6),
+            foreground = Color(0xFF974F00),
+        ),
+    )
+    public val avatarPalette: EocrmAvatarPalette = EocrmAvatarPalette(
+        foreground = Color(0xFFFFFFFF),
+        colors = listOf(
+            Color(0xFF00758A),
+            Color(0xFF247653),
+            Color(0xFFA65A00),
+            Color(0xFF6554C0),
+            Color(0xFFDE350B),
+            Color(0xFF0052CC),
+        ),
+    )
+    public val categoricalPalette: List<EocrmPaletteColor> = listOf(
+        EocrmPaletteColor(
+            background = Color(0xFFFFF7D6),
+            foreground = Color(0xFF7A5300),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFDEEBFF),
+            foreground = Color(0xFF0747A6),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFF1E3D3),
+            foreground = Color(0xFF6B4A1F),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD8DADC),
+            foreground = Color(0xFF2E3338),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFE5DD),
+            foreground = Color(0xFF9E3A14),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFDFF5F9),
+            foreground = Color(0xFF00657A),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD2F0E1),
+            foreground = Color(0xFF00714D),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFBDEF5),
+            foreground = Color(0xFF7A1C70),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFF3C0),
+            foreground = Color(0xFF806100),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD4F5DD),
+            foreground = Color(0xFF006633),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE2E2F7),
+            foreground = Color(0xFF2C2D80),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFECE6FF),
+            foreground = Color(0xFF5D4BA6),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE8F7C8),
+            foreground = Color(0xFF3C6900),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFD9F0),
+            foreground = Color(0xFF8C195E),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD6F5EC),
+            foreground = Color(0xFF00755A),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD8E0F0),
+            foreground = Color(0xFF1A2E63),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFF0F3CC),
+            foreground = Color(0xFF4D5A00),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFF0DB),
+            foreground = Color(0xFF974F00),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFE0EB),
+            foreground = Color(0xFFA3174A),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFEFDDF0),
+            foreground = Color(0xFF6A2B6B),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFEAE6FF),
+            foreground = Color(0xFF403294),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFEBE6),
+            foreground = Color(0xFFBF2600),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFE1E1),
+            foreground = Color(0xFFA01A35),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFDCEEFB),
+            foreground = Color(0xFF1F5285),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE2E6ED),
+            foreground = Color(0xFF3D4B66),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE9E7E3),
+            foreground = Color(0xFF4D4944),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFECE5DB),
+            foreground = Color(0xFF5A4A3A),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD6F0F0),
+            foreground = Color(0xFF006970),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE3DEFF),
+            foreground = Color(0xFF4030A6),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFFACC),
+            foreground = Color(0xFF6B5F00),
+        ),
+    )
+}
+
+public object EocrmIndigoDarkTokens {
+    public val colors: EocrmColors = EocrmColors(
+        accent = Color(0xFFA3A8FF),
+        accentBackgroundSubtle = Color(0xFF2B2D5C),
+        accentForeground = Color(0xFF1D2125),
+        accentHover = Color(0xFFC2C5FF),
+        accentPressed = Color(0xFFDFE1FF),
+        accentSubtleBackground = Color(0xFF2B2D5C),
+        background = Color(0xFF1D2125),
+        backgroundDangerSubtle = Color(0xFF42201D),
+        backgroundMuted = Color(0xFF282E33),
+        backgroundSubtle = Color(0xFF22272B),
+        backgroundSunken = Color(0xFF161A1D),
+        border = Color(0xFF38414A),
+        borderStrong = Color(0xFF50585F),
+        danger = Color(0xFFF87168),
+        dangerBackgroundSubtle = Color(0xFF42201D),
+        dangerForeground = Color(0xFF1D2125),
+        dangerHover = Color(0xFFFF9C8F),
+        foreground = Color(0xFFDEE4EA),
+        foregroundDisabled = Color(0xFF5A6472),
+        foregroundMuted = Color(0xFF9AA7B5),
+        foregroundSubtle = Color(0xFF8591A0),
+        info = Color(0xFF579DFF),
+        infoBackgroundSubtle = Color(0xFF16324F),
+        success = Color(0xFF4BCE97),
+        successBackgroundSubtle = Color(0xFF1C3D31),
+        successForeground = Color(0xFF1D2125),
+        successHover = Color(0xFF7EE2B8),
+        warning = Color(0xFFF5CD47),
+        warningBackgroundSubtle = Color(0xFF3D3216),
+        warningForeground = Color(0xFF1D2125),
+        warningStrong = Color(0xFFF5CD47),
+    )
+    public val dimensions: EocrmDimensions = eocrmDimensions
+    public val typography: EocrmTypography = eocrmTypography
+    public val semanticTones: EocrmSemanticTones = EocrmSemanticTones(
+        danger = EocrmPaletteColor(
+            background = Color(0xFF42201D),
+            foreground = Color(0xFFFF9C8F),
+        ),
+        info = EocrmPaletteColor(
+            background = Color(0xFF16324F),
+            foreground = Color(0xFF9DC3FF),
+        ),
+        neutral = EocrmPaletteColor(
+            background = Color(0xFF2C333A),
+            foreground = Color(0xFFC7D1DB),
+        ),
+        purple = EocrmPaletteColor(
+            background = Color(0xFF2B2C4D),
+            foreground = Color(0xFFB8ACF6),
+        ),
+        success = EocrmPaletteColor(
+            background = Color(0xFF1C3D31),
+            foreground = Color(0xFF7EE2B8),
+        ),
+        warning = EocrmPaletteColor(
+            background = Color(0xFF3D3216),
+            foreground = Color(0xFFF5CD47),
+        ),
+    )
+    public val avatarPalette: EocrmAvatarPalette = EocrmAvatarPalette(
+        foreground = Color(0xFFFFFFFF),
+        colors = listOf(
+            Color(0xFF00758A),
+            Color(0xFF247653),
+            Color(0xFFA65A00),
+            Color(0xFF6554C0),
+            Color(0xFFDE350B),
+            Color(0xFF0052CC),
+        ),
+    )
+    public val categoricalPalette: List<EocrmPaletteColor> = listOf(
+        EocrmPaletteColor(
+            background = Color(0xFF483919),
+            foreground = Color(0xFFF9D994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF192C48),
+            foreground = Color(0xFF94BDF9),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF483419),
+            foreground = Color(0xFFE6CBA8),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF2C3035),
+            foreground = Color(0xFFC1C7CC),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF482619),
+            foreground = Color(0xFFF2B39B),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF194048),
+            foreground = Color(0xFF94E8F9),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF194839),
+            foreground = Color(0xFF94F9D9),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF481943),
+            foreground = Color(0xFFEAA4E3),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF483C19),
+            foreground = Color(0xFFF9E194),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF194830),
+            foreground = Color(0xFF94F9C7),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF191A48),
+            foreground = Color(0xFFACACE2),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF251E43),
+            foreground = Color(0xFFBAB2DC),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF344819),
+            foreground = Color(0xFFCEF994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF481935),
+            foreground = Color(0xFFEEA0CF),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF19483D),
+            foreground = Color(0xFF94F9E2),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF192648),
+            foreground = Color(0xFFA6B8E8),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF414819),
+            foreground = Color(0xFFEBF994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF483219),
+            foreground = Color(0xFFF9C994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF48192A),
+            foreground = Color(0xFFF19DBB),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF441C45),
+            foreground = Color(0xFFDEAFDF),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF201948),
+            foreground = Color(0xFFB3ABE3),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF482219),
+            foreground = Color(0xFFF9A994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF481923),
+            foreground = Color(0xFFEF9EAF),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF193048),
+            foreground = Color(0xFFA4C7EA),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF242D3D),
+            foreground = Color(0xFFB9C2D5),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF33312D),
+            foreground = Color(0xFFCAC7C3),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF3B3026),
+            foreground = Color(0xFFD3C7BB),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF194548),
+            foreground = Color(0xFF94F3F9),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF201948),
+            foreground = Color(0xFFB0A8E6),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF484219),
+            foreground = Color(0xFFF9EE94),
+        ),
+    )
+}
+
+public object EocrmGrapeLightTokens {
+    public val colors: EocrmColors = EocrmColors(
+        accent = Color(0xFF7B3FB3),
+        accentBackgroundSubtle = Color(0xFFF1E8FA),
+        accentForeground = Color(0xFFFFFFFF),
+        accentHover = Color(0xFF5C2E8C),
+        accentPressed = Color(0xFF48226E),
+        accentSubtleBackground = Color(0xFFF1E8FA),
+        background = Color(0xFFFFFFFF),
+        backgroundDangerSubtle = Color(0xFFFFEBE6),
+        backgroundMuted = Color(0xFFF4F5F7),
+        backgroundSubtle = Color(0xFFFAFBFC),
+        backgroundSunken = Color(0xFFEBECF0),
+        border = Color(0xFFDFE1E6),
+        borderStrong = Color(0xFFC1C7D0),
+        danger = Color(0xFFC8300A),
+        dangerBackgroundSubtle = Color(0xFFFFEBE6),
+        dangerForeground = Color(0xFFFFFFFF),
+        dangerHover = Color(0xFFA72808),
+        foreground = Color(0xFF172B4D),
+        foregroundDisabled = Color(0xFFA5ADBA),
+        foregroundMuted = Color(0xFF5B6980),
+        foregroundSubtle = Color(0xFF687388),
+        info = Color(0xFF0052CC),
+        infoBackgroundSubtle = Color(0xFFEBF3FF),
+        success = Color(0xFF007E54),
+        successBackgroundSubtle = Color(0xFFE3FCEF),
+        successForeground = Color(0xFFFFFFFF),
+        successHover = Color(0xFF006644),
+        warning = Color(0xFFFF991F),
+        warningBackgroundSubtle = Color(0xFFFFF7ED),
+        warningForeground = Color(0xFF172B4D),
+        warningStrong = Color(0xFFA54800),
+    )
+    public val dimensions: EocrmDimensions = eocrmDimensions
+    public val typography: EocrmTypography = eocrmTypography
+    public val semanticTones: EocrmSemanticTones = EocrmSemanticTones(
+        danger = EocrmPaletteColor(
+            background = Color(0xFFFFEBE6),
+            foreground = Color(0xFFBF2600),
+        ),
+        info = EocrmPaletteColor(
+            background = Color(0xFFDEEBFF),
+            foreground = Color(0xFF0747A6),
+        ),
+        neutral = EocrmPaletteColor(
+            background = Color(0xFFF4F5F7),
+            foreground = Color(0xFF42526E),
+        ),
+        purple = EocrmPaletteColor(
+            background = Color(0xFFEAE6FF),
+            foreground = Color(0xFF403294),
+        ),
+        success = EocrmPaletteColor(
+            background = Color(0xFFE3FCEF),
+            foreground = Color(0xFF006644),
+        ),
+        warning = EocrmPaletteColor(
+            background = Color(0xFFFFFAE6),
+            foreground = Color(0xFF974F00),
+        ),
+    )
+    public val avatarPalette: EocrmAvatarPalette = EocrmAvatarPalette(
+        foreground = Color(0xFFFFFFFF),
+        colors = listOf(
+            Color(0xFF00758A),
+            Color(0xFF247653),
+            Color(0xFFA65A00),
+            Color(0xFF6554C0),
+            Color(0xFFDE350B),
+            Color(0xFF0052CC),
+        ),
+    )
+    public val categoricalPalette: List<EocrmPaletteColor> = listOf(
+        EocrmPaletteColor(
+            background = Color(0xFFFFF7D6),
+            foreground = Color(0xFF7A5300),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFDEEBFF),
+            foreground = Color(0xFF0747A6),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFF1E3D3),
+            foreground = Color(0xFF6B4A1F),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD8DADC),
+            foreground = Color(0xFF2E3338),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFE5DD),
+            foreground = Color(0xFF9E3A14),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFDFF5F9),
+            foreground = Color(0xFF00657A),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD2F0E1),
+            foreground = Color(0xFF00714D),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFBDEF5),
+            foreground = Color(0xFF7A1C70),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFF3C0),
+            foreground = Color(0xFF806100),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD4F5DD),
+            foreground = Color(0xFF006633),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE2E2F7),
+            foreground = Color(0xFF2C2D80),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFECE6FF),
+            foreground = Color(0xFF5D4BA6),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE8F7C8),
+            foreground = Color(0xFF3C6900),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFD9F0),
+            foreground = Color(0xFF8C195E),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD6F5EC),
+            foreground = Color(0xFF00755A),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD8E0F0),
+            foreground = Color(0xFF1A2E63),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFF0F3CC),
+            foreground = Color(0xFF4D5A00),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFF0DB),
+            foreground = Color(0xFF974F00),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFE0EB),
+            foreground = Color(0xFFA3174A),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFEFDDF0),
+            foreground = Color(0xFF6A2B6B),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFEAE6FF),
+            foreground = Color(0xFF403294),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFEBE6),
+            foreground = Color(0xFFBF2600),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFE1E1),
+            foreground = Color(0xFFA01A35),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFDCEEFB),
+            foreground = Color(0xFF1F5285),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE2E6ED),
+            foreground = Color(0xFF3D4B66),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE9E7E3),
+            foreground = Color(0xFF4D4944),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFECE5DB),
+            foreground = Color(0xFF5A4A3A),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD6F0F0),
+            foreground = Color(0xFF006970),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE3DEFF),
+            foreground = Color(0xFF4030A6),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFFACC),
+            foreground = Color(0xFF6B5F00),
+        ),
+    )
+}
+
+public object EocrmGrapeDarkTokens {
+    public val colors: EocrmColors = EocrmColors(
+        accent = Color(0xFFC9A0F0),
+        accentBackgroundSubtle = Color(0xFF3B2752),
+        accentForeground = Color(0xFF1D2125),
+        accentHover = Color(0xFFDCC0F6),
+        accentPressed = Color(0xFFECDCFA),
+        accentSubtleBackground = Color(0xFF3B2752),
+        background = Color(0xFF1D2125),
+        backgroundDangerSubtle = Color(0xFF42201D),
+        backgroundMuted = Color(0xFF282E33),
+        backgroundSubtle = Color(0xFF22272B),
+        backgroundSunken = Color(0xFF161A1D),
+        border = Color(0xFF38414A),
+        borderStrong = Color(0xFF50585F),
+        danger = Color(0xFFF87168),
+        dangerBackgroundSubtle = Color(0xFF42201D),
+        dangerForeground = Color(0xFF1D2125),
+        dangerHover = Color(0xFFFF9C8F),
+        foreground = Color(0xFFDEE4EA),
+        foregroundDisabled = Color(0xFF5A6472),
+        foregroundMuted = Color(0xFF9AA7B5),
+        foregroundSubtle = Color(0xFF8591A0),
+        info = Color(0xFF579DFF),
+        infoBackgroundSubtle = Color(0xFF16324F),
+        success = Color(0xFF4BCE97),
+        successBackgroundSubtle = Color(0xFF1C3D31),
+        successForeground = Color(0xFF1D2125),
+        successHover = Color(0xFF7EE2B8),
+        warning = Color(0xFFF5CD47),
+        warningBackgroundSubtle = Color(0xFF3D3216),
+        warningForeground = Color(0xFF1D2125),
+        warningStrong = Color(0xFFF5CD47),
+    )
+    public val dimensions: EocrmDimensions = eocrmDimensions
+    public val typography: EocrmTypography = eocrmTypography
+    public val semanticTones: EocrmSemanticTones = EocrmSemanticTones(
+        danger = EocrmPaletteColor(
+            background = Color(0xFF42201D),
+            foreground = Color(0xFFFF9C8F),
+        ),
+        info = EocrmPaletteColor(
+            background = Color(0xFF16324F),
+            foreground = Color(0xFF9DC3FF),
+        ),
+        neutral = EocrmPaletteColor(
+            background = Color(0xFF2C333A),
+            foreground = Color(0xFFC7D1DB),
+        ),
+        purple = EocrmPaletteColor(
+            background = Color(0xFF2B2C4D),
+            foreground = Color(0xFFB8ACF6),
+        ),
+        success = EocrmPaletteColor(
+            background = Color(0xFF1C3D31),
+            foreground = Color(0xFF7EE2B8),
+        ),
+        warning = EocrmPaletteColor(
+            background = Color(0xFF3D3216),
+            foreground = Color(0xFFF5CD47),
+        ),
+    )
+    public val avatarPalette: EocrmAvatarPalette = EocrmAvatarPalette(
+        foreground = Color(0xFFFFFFFF),
+        colors = listOf(
+            Color(0xFF00758A),
+            Color(0xFF247653),
+            Color(0xFFA65A00),
+            Color(0xFF6554C0),
+            Color(0xFFDE350B),
+            Color(0xFF0052CC),
+        ),
+    )
+    public val categoricalPalette: List<EocrmPaletteColor> = listOf(
+        EocrmPaletteColor(
+            background = Color(0xFF483919),
+            foreground = Color(0xFFF9D994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF192C48),
+            foreground = Color(0xFF94BDF9),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF483419),
+            foreground = Color(0xFFE6CBA8),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF2C3035),
+            foreground = Color(0xFFC1C7CC),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF482619),
+            foreground = Color(0xFFF2B39B),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF194048),
+            foreground = Color(0xFF94E8F9),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF194839),
+            foreground = Color(0xFF94F9D9),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF481943),
+            foreground = Color(0xFFEAA4E3),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF483C19),
+            foreground = Color(0xFFF9E194),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF194830),
+            foreground = Color(0xFF94F9C7),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF191A48),
+            foreground = Color(0xFFACACE2),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF251E43),
+            foreground = Color(0xFFBAB2DC),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF344819),
+            foreground = Color(0xFFCEF994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF481935),
+            foreground = Color(0xFFEEA0CF),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF19483D),
+            foreground = Color(0xFF94F9E2),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF192648),
+            foreground = Color(0xFFA6B8E8),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF414819),
+            foreground = Color(0xFFEBF994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF483219),
+            foreground = Color(0xFFF9C994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF48192A),
+            foreground = Color(0xFFF19DBB),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF441C45),
+            foreground = Color(0xFFDEAFDF),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF201948),
+            foreground = Color(0xFFB3ABE3),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF482219),
+            foreground = Color(0xFFF9A994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF481923),
+            foreground = Color(0xFFEF9EAF),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF193048),
+            foreground = Color(0xFFA4C7EA),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF242D3D),
+            foreground = Color(0xFFB9C2D5),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF33312D),
+            foreground = Color(0xFFCAC7C3),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF3B3026),
+            foreground = Color(0xFFD3C7BB),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF194548),
+            foreground = Color(0xFF94F3F9),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF201948),
+            foreground = Color(0xFFB0A8E6),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF484219),
+            foreground = Color(0xFFF9EE94),
+        ),
+    )
+}
+
+public object EocrmBerryLightTokens {
+    public val colors: EocrmColors = EocrmColors(
+        accent = Color(0xFFB0306E),
+        accentBackgroundSubtle = Color(0xFFFBE6EF),
+        accentForeground = Color(0xFFFFFFFF),
+        accentHover = Color(0xFF92265B),
+        accentPressed = Color(0xFF741E48),
+        accentSubtleBackground = Color(0xFFFBE6EF),
+        background = Color(0xFFFFFFFF),
+        backgroundDangerSubtle = Color(0xFFFFEBE6),
+        backgroundMuted = Color(0xFFF4F5F7),
+        backgroundSubtle = Color(0xFFFAFBFC),
+        backgroundSunken = Color(0xFFEBECF0),
+        border = Color(0xFFDFE1E6),
+        borderStrong = Color(0xFFC1C7D0),
+        danger = Color(0xFFC8300A),
+        dangerBackgroundSubtle = Color(0xFFFFEBE6),
+        dangerForeground = Color(0xFFFFFFFF),
+        dangerHover = Color(0xFFA72808),
+        foreground = Color(0xFF172B4D),
+        foregroundDisabled = Color(0xFFA5ADBA),
+        foregroundMuted = Color(0xFF5B6980),
+        foregroundSubtle = Color(0xFF687388),
+        info = Color(0xFF0052CC),
+        infoBackgroundSubtle = Color(0xFFEBF3FF),
+        success = Color(0xFF007E54),
+        successBackgroundSubtle = Color(0xFFE3FCEF),
+        successForeground = Color(0xFFFFFFFF),
+        successHover = Color(0xFF006644),
+        warning = Color(0xFFFF991F),
+        warningBackgroundSubtle = Color(0xFFFFF7ED),
+        warningForeground = Color(0xFF172B4D),
+        warningStrong = Color(0xFFA54800),
+    )
+    public val dimensions: EocrmDimensions = eocrmDimensions
+    public val typography: EocrmTypography = eocrmTypography
+    public val semanticTones: EocrmSemanticTones = EocrmSemanticTones(
+        danger = EocrmPaletteColor(
+            background = Color(0xFFFFEBE6),
+            foreground = Color(0xFFBF2600),
+        ),
+        info = EocrmPaletteColor(
+            background = Color(0xFFDEEBFF),
+            foreground = Color(0xFF0747A6),
+        ),
+        neutral = EocrmPaletteColor(
+            background = Color(0xFFF4F5F7),
+            foreground = Color(0xFF42526E),
+        ),
+        purple = EocrmPaletteColor(
+            background = Color(0xFFEAE6FF),
+            foreground = Color(0xFF403294),
+        ),
+        success = EocrmPaletteColor(
+            background = Color(0xFFE3FCEF),
+            foreground = Color(0xFF006644),
+        ),
+        warning = EocrmPaletteColor(
+            background = Color(0xFFFFFAE6),
+            foreground = Color(0xFF974F00),
+        ),
+    )
+    public val avatarPalette: EocrmAvatarPalette = EocrmAvatarPalette(
+        foreground = Color(0xFFFFFFFF),
+        colors = listOf(
+            Color(0xFF00758A),
+            Color(0xFF247653),
+            Color(0xFFA65A00),
+            Color(0xFF6554C0),
+            Color(0xFFDE350B),
+            Color(0xFF0052CC),
+        ),
+    )
+    public val categoricalPalette: List<EocrmPaletteColor> = listOf(
+        EocrmPaletteColor(
+            background = Color(0xFFFFF7D6),
+            foreground = Color(0xFF7A5300),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFDEEBFF),
+            foreground = Color(0xFF0747A6),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFF1E3D3),
+            foreground = Color(0xFF6B4A1F),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD8DADC),
+            foreground = Color(0xFF2E3338),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFE5DD),
+            foreground = Color(0xFF9E3A14),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFDFF5F9),
+            foreground = Color(0xFF00657A),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD2F0E1),
+            foreground = Color(0xFF00714D),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFBDEF5),
+            foreground = Color(0xFF7A1C70),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFF3C0),
+            foreground = Color(0xFF806100),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD4F5DD),
+            foreground = Color(0xFF006633),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE2E2F7),
+            foreground = Color(0xFF2C2D80),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFECE6FF),
+            foreground = Color(0xFF5D4BA6),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE8F7C8),
+            foreground = Color(0xFF3C6900),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFD9F0),
+            foreground = Color(0xFF8C195E),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD6F5EC),
+            foreground = Color(0xFF00755A),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD8E0F0),
+            foreground = Color(0xFF1A2E63),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFF0F3CC),
+            foreground = Color(0xFF4D5A00),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFF0DB),
+            foreground = Color(0xFF974F00),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFE0EB),
+            foreground = Color(0xFFA3174A),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFEFDDF0),
+            foreground = Color(0xFF6A2B6B),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFEAE6FF),
+            foreground = Color(0xFF403294),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFEBE6),
+            foreground = Color(0xFFBF2600),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFE1E1),
+            foreground = Color(0xFFA01A35),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFDCEEFB),
+            foreground = Color(0xFF1F5285),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE2E6ED),
+            foreground = Color(0xFF3D4B66),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE9E7E3),
+            foreground = Color(0xFF4D4944),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFECE5DB),
+            foreground = Color(0xFF5A4A3A),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD6F0F0),
+            foreground = Color(0xFF006970),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE3DEFF),
+            foreground = Color(0xFF4030A6),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFFACC),
+            foreground = Color(0xFF6B5F00),
+        ),
+    )
+}
+
+public object EocrmBerryDarkTokens {
+    public val colors: EocrmColors = EocrmColors(
+        accent = Color(0xFFF28CB8),
+        accentBackgroundSubtle = Color(0xFF4D2236),
+        accentForeground = Color(0xFF1D2125),
+        accentHover = Color(0xFFF7B2D0),
+        accentPressed = Color(0xFFFBD3E4),
+        accentSubtleBackground = Color(0xFF4D2236),
+        background = Color(0xFF1D2125),
+        backgroundDangerSubtle = Color(0xFF42201D),
+        backgroundMuted = Color(0xFF282E33),
+        backgroundSubtle = Color(0xFF22272B),
+        backgroundSunken = Color(0xFF161A1D),
+        border = Color(0xFF38414A),
+        borderStrong = Color(0xFF50585F),
+        danger = Color(0xFFF87168),
+        dangerBackgroundSubtle = Color(0xFF42201D),
+        dangerForeground = Color(0xFF1D2125),
+        dangerHover = Color(0xFFFF9C8F),
+        foreground = Color(0xFFDEE4EA),
+        foregroundDisabled = Color(0xFF5A6472),
+        foregroundMuted = Color(0xFF9AA7B5),
+        foregroundSubtle = Color(0xFF8591A0),
+        info = Color(0xFF579DFF),
+        infoBackgroundSubtle = Color(0xFF16324F),
+        success = Color(0xFF4BCE97),
+        successBackgroundSubtle = Color(0xFF1C3D31),
+        successForeground = Color(0xFF1D2125),
+        successHover = Color(0xFF7EE2B8),
+        warning = Color(0xFFF5CD47),
+        warningBackgroundSubtle = Color(0xFF3D3216),
+        warningForeground = Color(0xFF1D2125),
+        warningStrong = Color(0xFFF5CD47),
+    )
+    public val dimensions: EocrmDimensions = eocrmDimensions
+    public val typography: EocrmTypography = eocrmTypography
+    public val semanticTones: EocrmSemanticTones = EocrmSemanticTones(
+        danger = EocrmPaletteColor(
+            background = Color(0xFF42201D),
+            foreground = Color(0xFFFF9C8F),
+        ),
+        info = EocrmPaletteColor(
+            background = Color(0xFF16324F),
+            foreground = Color(0xFF9DC3FF),
+        ),
+        neutral = EocrmPaletteColor(
+            background = Color(0xFF2C333A),
+            foreground = Color(0xFFC7D1DB),
+        ),
+        purple = EocrmPaletteColor(
+            background = Color(0xFF2B2C4D),
+            foreground = Color(0xFFB8ACF6),
+        ),
+        success = EocrmPaletteColor(
+            background = Color(0xFF1C3D31),
+            foreground = Color(0xFF7EE2B8),
+        ),
+        warning = EocrmPaletteColor(
+            background = Color(0xFF3D3216),
+            foreground = Color(0xFFF5CD47),
+        ),
+    )
+    public val avatarPalette: EocrmAvatarPalette = EocrmAvatarPalette(
+        foreground = Color(0xFFFFFFFF),
+        colors = listOf(
+            Color(0xFF00758A),
+            Color(0xFF247653),
+            Color(0xFFA65A00),
+            Color(0xFF6554C0),
+            Color(0xFFDE350B),
+            Color(0xFF0052CC),
+        ),
+    )
+    public val categoricalPalette: List<EocrmPaletteColor> = listOf(
+        EocrmPaletteColor(
+            background = Color(0xFF483919),
+            foreground = Color(0xFFF9D994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF192C48),
+            foreground = Color(0xFF94BDF9),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF483419),
+            foreground = Color(0xFFE6CBA8),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF2C3035),
+            foreground = Color(0xFFC1C7CC),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF482619),
+            foreground = Color(0xFFF2B39B),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF194048),
+            foreground = Color(0xFF94E8F9),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF194839),
+            foreground = Color(0xFF94F9D9),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF481943),
+            foreground = Color(0xFFEAA4E3),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF483C19),
+            foreground = Color(0xFFF9E194),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF194830),
+            foreground = Color(0xFF94F9C7),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF191A48),
+            foreground = Color(0xFFACACE2),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF251E43),
+            foreground = Color(0xFFBAB2DC),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF344819),
+            foreground = Color(0xFFCEF994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF481935),
+            foreground = Color(0xFFEEA0CF),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF19483D),
+            foreground = Color(0xFF94F9E2),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF192648),
+            foreground = Color(0xFFA6B8E8),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF414819),
+            foreground = Color(0xFFEBF994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF483219),
+            foreground = Color(0xFFF9C994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF48192A),
+            foreground = Color(0xFFF19DBB),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF441C45),
+            foreground = Color(0xFFDEAFDF),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF201948),
+            foreground = Color(0xFFB3ABE3),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF482219),
+            foreground = Color(0xFFF9A994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF481923),
+            foreground = Color(0xFFEF9EAF),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF193048),
+            foreground = Color(0xFFA4C7EA),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF242D3D),
+            foreground = Color(0xFFB9C2D5),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF33312D),
+            foreground = Color(0xFFCAC7C3),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF3B3026),
+            foreground = Color(0xFFD3C7BB),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF194548),
+            foreground = Color(0xFF94F3F9),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF201948),
+            foreground = Color(0xFFB0A8E6),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF484219),
+            foreground = Color(0xFFF9EE94),
+        ),
+    )
+}
+
+public object EocrmSlateLightTokens {
+    public val colors: EocrmColors = EocrmColors(
+        accent = Color(0xFF3E4C5E),
+        accentBackgroundSubtle = Color(0xFFE6EAEF),
+        accentForeground = Color(0xFFFFFFFF),
+        accentHover = Color(0xFF2F3A49),
+        accentPressed = Color(0xFF222B36),
+        accentSubtleBackground = Color(0xFFE6EAEF),
+        background = Color(0xFFFFFFFF),
+        backgroundDangerSubtle = Color(0xFFFFEBE6),
+        backgroundMuted = Color(0xFFF4F5F7),
+        backgroundSubtle = Color(0xFFFAFBFC),
+        backgroundSunken = Color(0xFFEBECF0),
+        border = Color(0xFFDFE1E6),
+        borderStrong = Color(0xFFC1C7D0),
+        danger = Color(0xFFC8300A),
+        dangerBackgroundSubtle = Color(0xFFFFEBE6),
+        dangerForeground = Color(0xFFFFFFFF),
+        dangerHover = Color(0xFFA72808),
+        foreground = Color(0xFF172B4D),
+        foregroundDisabled = Color(0xFFA5ADBA),
+        foregroundMuted = Color(0xFF5B6980),
+        foregroundSubtle = Color(0xFF687388),
+        info = Color(0xFF0052CC),
+        infoBackgroundSubtle = Color(0xFFEBF3FF),
+        success = Color(0xFF007E54),
+        successBackgroundSubtle = Color(0xFFE3FCEF),
+        successForeground = Color(0xFFFFFFFF),
+        successHover = Color(0xFF006644),
+        warning = Color(0xFFFF991F),
+        warningBackgroundSubtle = Color(0xFFFFF7ED),
+        warningForeground = Color(0xFF172B4D),
+        warningStrong = Color(0xFFA54800),
+    )
+    public val dimensions: EocrmDimensions = eocrmDimensions
+    public val typography: EocrmTypography = eocrmTypography
+    public val semanticTones: EocrmSemanticTones = EocrmSemanticTones(
+        danger = EocrmPaletteColor(
+            background = Color(0xFFFFEBE6),
+            foreground = Color(0xFFBF2600),
+        ),
+        info = EocrmPaletteColor(
+            background = Color(0xFFDEEBFF),
+            foreground = Color(0xFF0747A6),
+        ),
+        neutral = EocrmPaletteColor(
+            background = Color(0xFFF4F5F7),
+            foreground = Color(0xFF42526E),
+        ),
+        purple = EocrmPaletteColor(
+            background = Color(0xFFEAE6FF),
+            foreground = Color(0xFF403294),
+        ),
+        success = EocrmPaletteColor(
+            background = Color(0xFFE3FCEF),
+            foreground = Color(0xFF006644),
+        ),
+        warning = EocrmPaletteColor(
+            background = Color(0xFFFFFAE6),
+            foreground = Color(0xFF974F00),
+        ),
+    )
+    public val avatarPalette: EocrmAvatarPalette = EocrmAvatarPalette(
+        foreground = Color(0xFFFFFFFF),
+        colors = listOf(
+            Color(0xFF00758A),
+            Color(0xFF247653),
+            Color(0xFFA65A00),
+            Color(0xFF6554C0),
+            Color(0xFFDE350B),
+            Color(0xFF0052CC),
+        ),
+    )
+    public val categoricalPalette: List<EocrmPaletteColor> = listOf(
+        EocrmPaletteColor(
+            background = Color(0xFFFFF7D6),
+            foreground = Color(0xFF7A5300),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFDEEBFF),
+            foreground = Color(0xFF0747A6),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFF1E3D3),
+            foreground = Color(0xFF6B4A1F),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD8DADC),
+            foreground = Color(0xFF2E3338),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFE5DD),
+            foreground = Color(0xFF9E3A14),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFDFF5F9),
+            foreground = Color(0xFF00657A),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD2F0E1),
+            foreground = Color(0xFF00714D),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFBDEF5),
+            foreground = Color(0xFF7A1C70),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFF3C0),
+            foreground = Color(0xFF806100),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD4F5DD),
+            foreground = Color(0xFF006633),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE2E2F7),
+            foreground = Color(0xFF2C2D80),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFECE6FF),
+            foreground = Color(0xFF5D4BA6),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE8F7C8),
+            foreground = Color(0xFF3C6900),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFD9F0),
+            foreground = Color(0xFF8C195E),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD6F5EC),
+            foreground = Color(0xFF00755A),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD8E0F0),
+            foreground = Color(0xFF1A2E63),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFF0F3CC),
+            foreground = Color(0xFF4D5A00),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFF0DB),
+            foreground = Color(0xFF974F00),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFE0EB),
+            foreground = Color(0xFFA3174A),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFEFDDF0),
+            foreground = Color(0xFF6A2B6B),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFEAE6FF),
+            foreground = Color(0xFF403294),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFEBE6),
+            foreground = Color(0xFFBF2600),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFE1E1),
+            foreground = Color(0xFFA01A35),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFDCEEFB),
+            foreground = Color(0xFF1F5285),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE2E6ED),
+            foreground = Color(0xFF3D4B66),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE9E7E3),
+            foreground = Color(0xFF4D4944),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFECE5DB),
+            foreground = Color(0xFF5A4A3A),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD6F0F0),
+            foreground = Color(0xFF006970),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE3DEFF),
+            foreground = Color(0xFF4030A6),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFFACC),
+            foreground = Color(0xFF6B5F00),
+        ),
+    )
+}
+
+public object EocrmSlateDarkTokens {
+    public val colors: EocrmColors = EocrmColors(
+        accent = Color(0xFFA9B8CA),
+        accentBackgroundSubtle = Color(0xFF2C3540),
+        accentForeground = Color(0xFF1D2125),
+        accentHover = Color(0xFFC6D2DF),
+        accentPressed = Color(0xFFE0E7EF),
+        accentSubtleBackground = Color(0xFF2C3540),
+        background = Color(0xFF1D2125),
+        backgroundDangerSubtle = Color(0xFF42201D),
+        backgroundMuted = Color(0xFF282E33),
+        backgroundSubtle = Color(0xFF22272B),
+        backgroundSunken = Color(0xFF161A1D),
+        border = Color(0xFF38414A),
+        borderStrong = Color(0xFF50585F),
+        danger = Color(0xFFF87168),
+        dangerBackgroundSubtle = Color(0xFF42201D),
+        dangerForeground = Color(0xFF1D2125),
+        dangerHover = Color(0xFFFF9C8F),
+        foreground = Color(0xFFDEE4EA),
+        foregroundDisabled = Color(0xFF5A6472),
+        foregroundMuted = Color(0xFF9AA7B5),
+        foregroundSubtle = Color(0xFF8591A0),
+        info = Color(0xFF579DFF),
+        infoBackgroundSubtle = Color(0xFF16324F),
+        success = Color(0xFF4BCE97),
+        successBackgroundSubtle = Color(0xFF1C3D31),
+        successForeground = Color(0xFF1D2125),
+        successHover = Color(0xFF7EE2B8),
+        warning = Color(0xFFF5CD47),
+        warningBackgroundSubtle = Color(0xFF3D3216),
+        warningForeground = Color(0xFF1D2125),
+        warningStrong = Color(0xFFF5CD47),
+    )
+    public val dimensions: EocrmDimensions = eocrmDimensions
+    public val typography: EocrmTypography = eocrmTypography
+    public val semanticTones: EocrmSemanticTones = EocrmSemanticTones(
+        danger = EocrmPaletteColor(
+            background = Color(0xFF42201D),
+            foreground = Color(0xFFFF9C8F),
+        ),
+        info = EocrmPaletteColor(
+            background = Color(0xFF16324F),
+            foreground = Color(0xFF9DC3FF),
+        ),
+        neutral = EocrmPaletteColor(
+            background = Color(0xFF2C333A),
+            foreground = Color(0xFFC7D1DB),
+        ),
+        purple = EocrmPaletteColor(
+            background = Color(0xFF2B2C4D),
+            foreground = Color(0xFFB8ACF6),
+        ),
+        success = EocrmPaletteColor(
+            background = Color(0xFF1C3D31),
+            foreground = Color(0xFF7EE2B8),
+        ),
+        warning = EocrmPaletteColor(
+            background = Color(0xFF3D3216),
+            foreground = Color(0xFFF5CD47),
+        ),
+    )
+    public val avatarPalette: EocrmAvatarPalette = EocrmAvatarPalette(
+        foreground = Color(0xFFFFFFFF),
+        colors = listOf(
+            Color(0xFF00758A),
+            Color(0xFF247653),
+            Color(0xFFA65A00),
+            Color(0xFF6554C0),
+            Color(0xFFDE350B),
+            Color(0xFF0052CC),
+        ),
+    )
+    public val categoricalPalette: List<EocrmPaletteColor> = listOf(
+        EocrmPaletteColor(
+            background = Color(0xFF483919),
+            foreground = Color(0xFFF9D994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF192C48),
+            foreground = Color(0xFF94BDF9),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF483419),
+            foreground = Color(0xFFE6CBA8),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF2C3035),
+            foreground = Color(0xFFC1C7CC),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF482619),
+            foreground = Color(0xFFF2B39B),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF194048),
+            foreground = Color(0xFF94E8F9),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF194839),
+            foreground = Color(0xFF94F9D9),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF481943),
+            foreground = Color(0xFFEAA4E3),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF483C19),
+            foreground = Color(0xFFF9E194),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF194830),
+            foreground = Color(0xFF94F9C7),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF191A48),
+            foreground = Color(0xFFACACE2),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF251E43),
+            foreground = Color(0xFFBAB2DC),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF344819),
+            foreground = Color(0xFFCEF994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF481935),
+            foreground = Color(0xFFEEA0CF),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF19483D),
+            foreground = Color(0xFF94F9E2),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF192648),
+            foreground = Color(0xFFA6B8E8),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF414819),
+            foreground = Color(0xFFEBF994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF483219),
+            foreground = Color(0xFFF9C994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF48192A),
+            foreground = Color(0xFFF19DBB),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF441C45),
+            foreground = Color(0xFFDEAFDF),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF201948),
+            foreground = Color(0xFFB3ABE3),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF482219),
+            foreground = Color(0xFFF9A994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF481923),
+            foreground = Color(0xFFEF9EAF),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF193048),
+            foreground = Color(0xFFA4C7EA),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF242D3D),
+            foreground = Color(0xFFB9C2D5),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF33312D),
+            foreground = Color(0xFFCAC7C3),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF3B3026),
+            foreground = Color(0xFFD3C7BB),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF194548),
+            foreground = Color(0xFF94F3F9),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF201948),
+            foreground = Color(0xFFB0A8E6),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF484219),
+            foreground = Color(0xFFF9EE94),
+        ),
+    )
+}
+
+public object EocrmOceanLightTokens {
+    public val colors: EocrmColors = EocrmColors(
+        accent = Color(0xFF0A6A8C),
+        accentBackgroundSubtle = Color(0xFFDDEFF6),
+        accentForeground = Color(0xFFFFFFFF),
+        accentHover = Color(0xFF085673),
+        accentPressed = Color(0xFF06435A),
+        accentSubtleBackground = Color(0xFFDDEFF6),
+        background = Color(0xFFFFFFFF),
+        backgroundDangerSubtle = Color(0xFFFFEBE6),
+        backgroundMuted = Color(0xFFF4F5F7),
+        backgroundSubtle = Color(0xFFFAFBFC),
+        backgroundSunken = Color(0xFFEBECF0),
+        border = Color(0xFFDFE1E6),
+        borderStrong = Color(0xFFC1C7D0),
+        danger = Color(0xFFC8300A),
+        dangerBackgroundSubtle = Color(0xFFFFEBE6),
+        dangerForeground = Color(0xFFFFFFFF),
+        dangerHover = Color(0xFFA72808),
+        foreground = Color(0xFF172B4D),
+        foregroundDisabled = Color(0xFFA5ADBA),
+        foregroundMuted = Color(0xFF5B6980),
+        foregroundSubtle = Color(0xFF687388),
+        info = Color(0xFF0052CC),
+        infoBackgroundSubtle = Color(0xFFEBF3FF),
+        success = Color(0xFF007E54),
+        successBackgroundSubtle = Color(0xFFE3FCEF),
+        successForeground = Color(0xFFFFFFFF),
+        successHover = Color(0xFF006644),
+        warning = Color(0xFFFF991F),
+        warningBackgroundSubtle = Color(0xFFFFF7ED),
+        warningForeground = Color(0xFF172B4D),
+        warningStrong = Color(0xFFA54800),
+    )
+    public val dimensions: EocrmDimensions = eocrmDimensions
+    public val typography: EocrmTypography = eocrmTypography
+    public val semanticTones: EocrmSemanticTones = EocrmSemanticTones(
+        danger = EocrmPaletteColor(
+            background = Color(0xFFFFEBE6),
+            foreground = Color(0xFFBF2600),
+        ),
+        info = EocrmPaletteColor(
+            background = Color(0xFFDEEBFF),
+            foreground = Color(0xFF0747A6),
+        ),
+        neutral = EocrmPaletteColor(
+            background = Color(0xFFF4F5F7),
+            foreground = Color(0xFF42526E),
+        ),
+        purple = EocrmPaletteColor(
+            background = Color(0xFFEAE6FF),
+            foreground = Color(0xFF403294),
+        ),
+        success = EocrmPaletteColor(
+            background = Color(0xFFE3FCEF),
+            foreground = Color(0xFF006644),
+        ),
+        warning = EocrmPaletteColor(
+            background = Color(0xFFFFFAE6),
+            foreground = Color(0xFF974F00),
+        ),
+    )
+    public val avatarPalette: EocrmAvatarPalette = EocrmAvatarPalette(
+        foreground = Color(0xFFFFFFFF),
+        colors = listOf(
+            Color(0xFF00758A),
+            Color(0xFF247653),
+            Color(0xFFA65A00),
+            Color(0xFF6554C0),
+            Color(0xFFDE350B),
+            Color(0xFF0052CC),
+        ),
+    )
+    public val categoricalPalette: List<EocrmPaletteColor> = listOf(
+        EocrmPaletteColor(
+            background = Color(0xFFFFF7D6),
+            foreground = Color(0xFF7A5300),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFDEEBFF),
+            foreground = Color(0xFF0747A6),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFF1E3D3),
+            foreground = Color(0xFF6B4A1F),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD8DADC),
+            foreground = Color(0xFF2E3338),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFE5DD),
+            foreground = Color(0xFF9E3A14),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFDFF5F9),
+            foreground = Color(0xFF00657A),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD2F0E1),
+            foreground = Color(0xFF00714D),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFBDEF5),
+            foreground = Color(0xFF7A1C70),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFF3C0),
+            foreground = Color(0xFF806100),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD4F5DD),
+            foreground = Color(0xFF006633),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE2E2F7),
+            foreground = Color(0xFF2C2D80),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFECE6FF),
+            foreground = Color(0xFF5D4BA6),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE8F7C8),
+            foreground = Color(0xFF3C6900),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFD9F0),
+            foreground = Color(0xFF8C195E),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD6F5EC),
+            foreground = Color(0xFF00755A),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD8E0F0),
+            foreground = Color(0xFF1A2E63),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFF0F3CC),
+            foreground = Color(0xFF4D5A00),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFF0DB),
+            foreground = Color(0xFF974F00),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFE0EB),
+            foreground = Color(0xFFA3174A),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFEFDDF0),
+            foreground = Color(0xFF6A2B6B),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFEAE6FF),
+            foreground = Color(0xFF403294),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFEBE6),
+            foreground = Color(0xFFBF2600),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFE1E1),
+            foreground = Color(0xFFA01A35),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFDCEEFB),
+            foreground = Color(0xFF1F5285),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE2E6ED),
+            foreground = Color(0xFF3D4B66),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE9E7E3),
+            foreground = Color(0xFF4D4944),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFECE5DB),
+            foreground = Color(0xFF5A4A3A),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD6F0F0),
+            foreground = Color(0xFF006970),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE3DEFF),
+            foreground = Color(0xFF4030A6),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFFACC),
+            foreground = Color(0xFF6B5F00),
+        ),
+    )
+}
+
+public object EocrmOceanDarkTokens {
+    public val colors: EocrmColors = EocrmColors(
+        accent = Color(0xFF6CC4E6),
+        accentBackgroundSubtle = Color(0xFF163E4D),
+        accentForeground = Color(0xFF1D2125),
+        accentHover = Color(0xFF9DD8EF),
+        accentPressed = Color(0xFFC9EAF6),
+        accentSubtleBackground = Color(0xFF163E4D),
+        background = Color(0xFF1D2125),
+        backgroundDangerSubtle = Color(0xFF42201D),
+        backgroundMuted = Color(0xFF282E33),
+        backgroundSubtle = Color(0xFF22272B),
+        backgroundSunken = Color(0xFF161A1D),
+        border = Color(0xFF38414A),
+        borderStrong = Color(0xFF50585F),
+        danger = Color(0xFFF87168),
+        dangerBackgroundSubtle = Color(0xFF42201D),
+        dangerForeground = Color(0xFF1D2125),
+        dangerHover = Color(0xFFFF9C8F),
+        foreground = Color(0xFFDEE4EA),
+        foregroundDisabled = Color(0xFF5A6472),
+        foregroundMuted = Color(0xFF9AA7B5),
+        foregroundSubtle = Color(0xFF8591A0),
+        info = Color(0xFF579DFF),
+        infoBackgroundSubtle = Color(0xFF16324F),
+        success = Color(0xFF4BCE97),
+        successBackgroundSubtle = Color(0xFF1C3D31),
+        successForeground = Color(0xFF1D2125),
+        successHover = Color(0xFF7EE2B8),
+        warning = Color(0xFFF5CD47),
+        warningBackgroundSubtle = Color(0xFF3D3216),
+        warningForeground = Color(0xFF1D2125),
+        warningStrong = Color(0xFFF5CD47),
+    )
+    public val dimensions: EocrmDimensions = eocrmDimensions
+    public val typography: EocrmTypography = eocrmTypography
+    public val semanticTones: EocrmSemanticTones = EocrmSemanticTones(
+        danger = EocrmPaletteColor(
+            background = Color(0xFF42201D),
+            foreground = Color(0xFFFF9C8F),
+        ),
+        info = EocrmPaletteColor(
+            background = Color(0xFF16324F),
+            foreground = Color(0xFF9DC3FF),
+        ),
+        neutral = EocrmPaletteColor(
+            background = Color(0xFF2C333A),
+            foreground = Color(0xFFC7D1DB),
+        ),
+        purple = EocrmPaletteColor(
+            background = Color(0xFF2B2C4D),
+            foreground = Color(0xFFB8ACF6),
+        ),
+        success = EocrmPaletteColor(
+            background = Color(0xFF1C3D31),
+            foreground = Color(0xFF7EE2B8),
+        ),
+        warning = EocrmPaletteColor(
+            background = Color(0xFF3D3216),
+            foreground = Color(0xFFF5CD47),
+        ),
+    )
+    public val avatarPalette: EocrmAvatarPalette = EocrmAvatarPalette(
+        foreground = Color(0xFFFFFFFF),
+        colors = listOf(
+            Color(0xFF00758A),
+            Color(0xFF247653),
+            Color(0xFFA65A00),
+            Color(0xFF6554C0),
+            Color(0xFFDE350B),
+            Color(0xFF0052CC),
+        ),
+    )
+    public val categoricalPalette: List<EocrmPaletteColor> = listOf(
+        EocrmPaletteColor(
+            background = Color(0xFF483919),
+            foreground = Color(0xFFF9D994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF192C48),
+            foreground = Color(0xFF94BDF9),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF483419),
+            foreground = Color(0xFFE6CBA8),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF2C3035),
+            foreground = Color(0xFFC1C7CC),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF482619),
+            foreground = Color(0xFFF2B39B),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF194048),
+            foreground = Color(0xFF94E8F9),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF194839),
+            foreground = Color(0xFF94F9D9),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF481943),
+            foreground = Color(0xFFEAA4E3),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF483C19),
+            foreground = Color(0xFFF9E194),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF194830),
+            foreground = Color(0xFF94F9C7),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF191A48),
+            foreground = Color(0xFFACACE2),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF251E43),
+            foreground = Color(0xFFBAB2DC),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF344819),
+            foreground = Color(0xFFCEF994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF481935),
+            foreground = Color(0xFFEEA0CF),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF19483D),
+            foreground = Color(0xFF94F9E2),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF192648),
+            foreground = Color(0xFFA6B8E8),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF414819),
+            foreground = Color(0xFFEBF994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF483219),
+            foreground = Color(0xFFF9C994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF48192A),
+            foreground = Color(0xFFF19DBB),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF441C45),
+            foreground = Color(0xFFDEAFDF),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF201948),
+            foreground = Color(0xFFB3ABE3),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF482219),
+            foreground = Color(0xFFF9A994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF481923),
+            foreground = Color(0xFFEF9EAF),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF193048),
+            foreground = Color(0xFFA4C7EA),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF242D3D),
+            foreground = Color(0xFFB9C2D5),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF33312D),
+            foreground = Color(0xFFCAC7C3),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF3B3026),
+            foreground = Color(0xFFD3C7BB),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF194548),
+            foreground = Color(0xFF94F3F9),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF201948),
+            foreground = Color(0xFFB0A8E6),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF484219),
+            foreground = Color(0xFFF9EE94),
+        ),
+    )
+}
+
+public object EocrmMossLightTokens {
+    public val colors: EocrmColors = EocrmColors(
+        accent = Color(0xFF45601B),
+        accentBackgroundSubtle = Color(0xFFEBF1DF),
+        accentForeground = Color(0xFFFFFFFF),
+        accentHover = Color(0xFF364C15),
+        accentPressed = Color(0xFF283A0F),
+        accentSubtleBackground = Color(0xFFEBF1DF),
+        background = Color(0xFFFFFFFF),
+        backgroundDangerSubtle = Color(0xFFFFEBE6),
+        backgroundMuted = Color(0xFFF4F5F7),
+        backgroundSubtle = Color(0xFFFAFBFC),
+        backgroundSunken = Color(0xFFEBECF0),
+        border = Color(0xFFDFE1E6),
+        borderStrong = Color(0xFFC1C7D0),
+        danger = Color(0xFFC8300A),
+        dangerBackgroundSubtle = Color(0xFFFFEBE6),
+        dangerForeground = Color(0xFFFFFFFF),
+        dangerHover = Color(0xFFA72808),
+        foreground = Color(0xFF172B4D),
+        foregroundDisabled = Color(0xFFA5ADBA),
+        foregroundMuted = Color(0xFF5B6980),
+        foregroundSubtle = Color(0xFF687388),
+        info = Color(0xFF0052CC),
+        infoBackgroundSubtle = Color(0xFFEBF3FF),
+        success = Color(0xFF007E54),
+        successBackgroundSubtle = Color(0xFFE3FCEF),
+        successForeground = Color(0xFFFFFFFF),
+        successHover = Color(0xFF006644),
+        warning = Color(0xFFFF991F),
+        warningBackgroundSubtle = Color(0xFFFFF7ED),
+        warningForeground = Color(0xFF172B4D),
+        warningStrong = Color(0xFFA54800),
+    )
+    public val dimensions: EocrmDimensions = eocrmDimensions
+    public val typography: EocrmTypography = eocrmTypography
+    public val semanticTones: EocrmSemanticTones = EocrmSemanticTones(
+        danger = EocrmPaletteColor(
+            background = Color(0xFFFFEBE6),
+            foreground = Color(0xFFBF2600),
+        ),
+        info = EocrmPaletteColor(
+            background = Color(0xFFDEEBFF),
+            foreground = Color(0xFF0747A6),
+        ),
+        neutral = EocrmPaletteColor(
+            background = Color(0xFFF4F5F7),
+            foreground = Color(0xFF42526E),
+        ),
+        purple = EocrmPaletteColor(
+            background = Color(0xFFEAE6FF),
+            foreground = Color(0xFF403294),
+        ),
+        success = EocrmPaletteColor(
+            background = Color(0xFFE3FCEF),
+            foreground = Color(0xFF006644),
+        ),
+        warning = EocrmPaletteColor(
+            background = Color(0xFFFFFAE6),
+            foreground = Color(0xFF974F00),
+        ),
+    )
+    public val avatarPalette: EocrmAvatarPalette = EocrmAvatarPalette(
+        foreground = Color(0xFFFFFFFF),
+        colors = listOf(
+            Color(0xFF00758A),
+            Color(0xFF247653),
+            Color(0xFFA65A00),
+            Color(0xFF6554C0),
+            Color(0xFFDE350B),
+            Color(0xFF0052CC),
+        ),
+    )
+    public val categoricalPalette: List<EocrmPaletteColor> = listOf(
+        EocrmPaletteColor(
+            background = Color(0xFFFFF7D6),
+            foreground = Color(0xFF7A5300),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFDEEBFF),
+            foreground = Color(0xFF0747A6),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFF1E3D3),
+            foreground = Color(0xFF6B4A1F),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD8DADC),
+            foreground = Color(0xFF2E3338),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFE5DD),
+            foreground = Color(0xFF9E3A14),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFDFF5F9),
+            foreground = Color(0xFF00657A),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD2F0E1),
+            foreground = Color(0xFF00714D),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFBDEF5),
+            foreground = Color(0xFF7A1C70),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFF3C0),
+            foreground = Color(0xFF806100),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD4F5DD),
+            foreground = Color(0xFF006633),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE2E2F7),
+            foreground = Color(0xFF2C2D80),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFECE6FF),
+            foreground = Color(0xFF5D4BA6),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE8F7C8),
+            foreground = Color(0xFF3C6900),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFD9F0),
+            foreground = Color(0xFF8C195E),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD6F5EC),
+            foreground = Color(0xFF00755A),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD8E0F0),
+            foreground = Color(0xFF1A2E63),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFF0F3CC),
+            foreground = Color(0xFF4D5A00),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFF0DB),
+            foreground = Color(0xFF974F00),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFE0EB),
+            foreground = Color(0xFFA3174A),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFEFDDF0),
+            foreground = Color(0xFF6A2B6B),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFEAE6FF),
+            foreground = Color(0xFF403294),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFEBE6),
+            foreground = Color(0xFFBF2600),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFE1E1),
+            foreground = Color(0xFFA01A35),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFDCEEFB),
+            foreground = Color(0xFF1F5285),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE2E6ED),
+            foreground = Color(0xFF3D4B66),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE9E7E3),
+            foreground = Color(0xFF4D4944),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFECE5DB),
+            foreground = Color(0xFF5A4A3A),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFD6F0F0),
+            foreground = Color(0xFF006970),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFE3DEFF),
+            foreground = Color(0xFF4030A6),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFFFFFACC),
+            foreground = Color(0xFF6B5F00),
+        ),
+    )
+}
+
+public object EocrmMossDarkTokens {
+    public val colors: EocrmColors = EocrmColors(
+        accent = Color(0xFFA6C96A),
+        accentBackgroundSubtle = Color(0xFF2E3B1A),
+        accentForeground = Color(0xFF1D2125),
+        accentHover = Color(0xFFC2DC95),
+        accentPressed = Color(0xFFDCEBC0),
+        accentSubtleBackground = Color(0xFF2E3B1A),
+        background = Color(0xFF1D2125),
+        backgroundDangerSubtle = Color(0xFF42201D),
+        backgroundMuted = Color(0xFF282E33),
+        backgroundSubtle = Color(0xFF22272B),
+        backgroundSunken = Color(0xFF161A1D),
+        border = Color(0xFF38414A),
+        borderStrong = Color(0xFF50585F),
+        danger = Color(0xFFF87168),
+        dangerBackgroundSubtle = Color(0xFF42201D),
+        dangerForeground = Color(0xFF1D2125),
+        dangerHover = Color(0xFFFF9C8F),
+        foreground = Color(0xFFDEE4EA),
+        foregroundDisabled = Color(0xFF5A6472),
+        foregroundMuted = Color(0xFF9AA7B5),
+        foregroundSubtle = Color(0xFF8591A0),
+        info = Color(0xFF579DFF),
+        infoBackgroundSubtle = Color(0xFF16324F),
+        success = Color(0xFF4BCE97),
+        successBackgroundSubtle = Color(0xFF1C3D31),
+        successForeground = Color(0xFF1D2125),
+        successHover = Color(0xFF7EE2B8),
+        warning = Color(0xFFF5CD47),
+        warningBackgroundSubtle = Color(0xFF3D3216),
+        warningForeground = Color(0xFF1D2125),
+        warningStrong = Color(0xFFF5CD47),
+    )
+    public val dimensions: EocrmDimensions = eocrmDimensions
+    public val typography: EocrmTypography = eocrmTypography
+    public val semanticTones: EocrmSemanticTones = EocrmSemanticTones(
+        danger = EocrmPaletteColor(
+            background = Color(0xFF42201D),
+            foreground = Color(0xFFFF9C8F),
+        ),
+        info = EocrmPaletteColor(
+            background = Color(0xFF16324F),
+            foreground = Color(0xFF9DC3FF),
+        ),
+        neutral = EocrmPaletteColor(
+            background = Color(0xFF2C333A),
+            foreground = Color(0xFFC7D1DB),
+        ),
+        purple = EocrmPaletteColor(
+            background = Color(0xFF2B2C4D),
+            foreground = Color(0xFFB8ACF6),
+        ),
+        success = EocrmPaletteColor(
+            background = Color(0xFF1C3D31),
+            foreground = Color(0xFF7EE2B8),
+        ),
+        warning = EocrmPaletteColor(
+            background = Color(0xFF3D3216),
+            foreground = Color(0xFFF5CD47),
+        ),
+    )
+    public val avatarPalette: EocrmAvatarPalette = EocrmAvatarPalette(
+        foreground = Color(0xFFFFFFFF),
+        colors = listOf(
+            Color(0xFF00758A),
+            Color(0xFF247653),
+            Color(0xFFA65A00),
+            Color(0xFF6554C0),
+            Color(0xFFDE350B),
+            Color(0xFF0052CC),
+        ),
+    )
+    public val categoricalPalette: List<EocrmPaletteColor> = listOf(
+        EocrmPaletteColor(
+            background = Color(0xFF483919),
+            foreground = Color(0xFFF9D994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF192C48),
+            foreground = Color(0xFF94BDF9),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF483419),
+            foreground = Color(0xFFE6CBA8),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF2C3035),
+            foreground = Color(0xFFC1C7CC),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF482619),
+            foreground = Color(0xFFF2B39B),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF194048),
+            foreground = Color(0xFF94E8F9),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF194839),
+            foreground = Color(0xFF94F9D9),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF481943),
+            foreground = Color(0xFFEAA4E3),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF483C19),
+            foreground = Color(0xFFF9E194),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF194830),
+            foreground = Color(0xFF94F9C7),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF191A48),
+            foreground = Color(0xFFACACE2),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF251E43),
+            foreground = Color(0xFFBAB2DC),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF344819),
+            foreground = Color(0xFFCEF994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF481935),
+            foreground = Color(0xFFEEA0CF),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF19483D),
+            foreground = Color(0xFF94F9E2),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF192648),
+            foreground = Color(0xFFA6B8E8),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF414819),
+            foreground = Color(0xFFEBF994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF483219),
+            foreground = Color(0xFFF9C994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF48192A),
+            foreground = Color(0xFFF19DBB),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF441C45),
+            foreground = Color(0xFFDEAFDF),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF201948),
+            foreground = Color(0xFFB3ABE3),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF482219),
+            foreground = Color(0xFFF9A994),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF481923),
+            foreground = Color(0xFFEF9EAF),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF193048),
+            foreground = Color(0xFFA4C7EA),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF242D3D),
+            foreground = Color(0xFFB9C2D5),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF33312D),
+            foreground = Color(0xFFCAC7C3),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF3B3026),
+            foreground = Color(0xFFD3C7BB),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF194548),
+            foreground = Color(0xFF94F3F9),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF201948),
+            foreground = Color(0xFFB0A8E6),
+        ),
+        EocrmPaletteColor(
+            background = Color(0xFF484219),
+            foreground = Color(0xFFF9EE94),
+        ),
+    )
+}

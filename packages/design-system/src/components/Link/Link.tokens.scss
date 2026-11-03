@@ -21,8 +21,9 @@
   --link-fg-subtle-hover: var(--color-accent);
 }
 
-// Teal pine's accent sits close to the navy body text, so its default links
-// also step up in weight (the colour alone can't carry the difference).
-:root[data-accent='tealpine'] {
+// Teal pine's and Slate's accents sit close to the navy body text, so their
+// default links also step up in weight (the colour alone can't carry the difference).
+:root[data-accent='tealpine'],
+:root[data-accent='slate'] {
   --link-font-weight-default: var(--font-weight-medium);
 }

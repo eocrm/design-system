@@ -48,9 +48,7 @@ import {
   TopBar,
   type PaletteColor,
 } from '@eocrm/design-system';
-import eocrmLogo from '../../../assets/eocrm-logo.svg';
-import eocrmLogoTealPine from '../../../assets/eocrm-logo-tealpine.svg';
-import { useAccent } from '../../../layout/AppShell/accent';
+import { useAccentMark } from '../../../layout/AppShell/accent';
 
 // Public developer docs (docs.eocrm.io) — a standalone site, not a CRM screen,
 // so it renders outside the playground chrome (see SELF_CHROMED_PREFIX in AppShell).
@@ -721,7 +719,7 @@ const railItem = (to: string, label: string, icon?: ReactNode, badge?: ReactNode
 
 export function Docs() {
   const { pathname } = useLocation();
-  const accent = useAccent();
+  const logo = useAccentMark();
   const searchRef = useRef<HTMLInputElement>(null);
   const activeGroup = pathname.split('/')[4]; // /mockups/docs/api/<resource>/…
   const [openGroups, setOpenGroups] = useState<Set<string>>(() => new Set([activeGroup]));
@@ -760,12 +758,7 @@ export function Docs() {
       sidebar={
         <Rail aria-label="Documentation" collapseBelow="md">
           <Rail.Header>
-            <Logo
-              src={accent === 'tealpine' ? eocrmLogoTealPine : eocrmLogo}
-              text="eocrm"
-              subtext="Developers"
-              size="sm"
-            />
+            <Logo src={logo} text="eocrm" subtext="Developers" size="sm" />
           </Rail.Header>
           <Rail.Section>
             {railItem(BASE, 'Overview', <Home size={16} />)}
