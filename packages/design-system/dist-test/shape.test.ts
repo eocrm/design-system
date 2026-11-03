@@ -97,6 +97,37 @@ test('modules importing react/react-dom start with "use client"', () => {
   }
 });
 
+// A dist module with no code of its own: only imports and export lists.
+const isDistReexport = (code: string) =>
+  code
+    .replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '')
+    .replace(
+      /import\s[^;"]*?(?:from\s*)?"[^"]+";|export\s*(?:\*|\{[^}]*\})[^;"]*(?:"[^"]+")?;/g,
+      '',
+    )
+    .trim() === '';
+
+test('modules with own code that import a client module are client modules too', () => {
+  // Regression cases: compound components built with `Object.assign` onto a
+  // client root, which throws on a client reference in an RSC server graph.
+  for (const file of [
+    'Modal/Modal.js',
+    'Drawer/Drawer.js',
+    'DropdownMenu/DropdownMenu.js',
+    'Popover/Popover.js',
+  ]) {
+    expect(read(join(dist, 'components', file)).startsWith(DIRECTIVE), file).toBe(true);
+  }
+  const isClient = (file: string) => read(file).startsWith(DIRECTIVE);
+  for (const [file, specs] of distGraph()) {
+    if (isClient(file) || isDistReexport(read(file))) continue;
+    const clientDeps = specs
+      .filter((s) => s.startsWith('.') && s.endsWith('.js'))
+      .filter((s) => isClient(resolve(dirname(file), s)));
+    expect(clientDeps, relative(dist, file)).toEqual([]);
+  }
+});
+
 test('pure modules carry no directive', () => {
   const palette = readdirSync(join(dist, 'palette'))
     .filter((f) => f.endsWith('.js'))
@@ -134,6 +165,18 @@ test('every CSS-bearing module imports its css', () => {
 test('declarations exist for index and a component', () => {
   expect(existsSync(join(dist, 'index.d.ts'))).toBe(true);
   expect(existsSync(join(dist, 'components/Button/index.d.ts'))).toBe(true);
+});
+
+test('declaration specifiers are explicit (node16/nodenext-resolvable)', () => {
+  const RELATIVE = /(?:from\s+|import\(\s*|import\s+)(['"])(\.[^'"]*)\1/g;
+  const declarations = walk(dist).filter((f) => f.endsWith('.d.ts'));
+  expect(declarations.map((f) => relative(dist, f))).toContain('index.d.ts');
+  for (const file of declarations) {
+    for (const [, , spec] of read(file).matchAll(RELATIVE)) {
+      expect(spec, relative(dist, file)).toMatch(/\.js$/);
+      expect(existsSync(resolve(dirname(file), spec.replace(/\.js$/, '.d.ts'))), spec).toBe(true);
+    }
+  }
 });
 
 test('global stylesheets exist and are non-empty', () => {

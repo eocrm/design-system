@@ -65,6 +65,7 @@
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
+    "@types/node": "^26.6.6",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "jsdom": "^29.1.1",
@@ -76,7 +77,7 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "build": "vite build -c vite.lib.config.ts && tsc -p tsconfig.build.json && node scripts/build-styles.mjs",
+    "build": "vite build -c vite.lib.config.ts && tsc -p tsconfig.build.json && node scripts/build-styles.mjs && node scripts/fix-dts-specifiers.mjs",
     "test": "vitest run",
     "test:dist": "vitest run -c vitest.dist.config.ts",
     "test:watch": "vitest",

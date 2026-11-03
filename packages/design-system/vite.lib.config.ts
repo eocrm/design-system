@@ -13,21 +13,42 @@ const externals = [...Object.keys(pkg.dependencies), ...Object.keys(pkg.peerDepe
 
 const isReact = (id: string) => /^react(-dom)?(\/|$)/.test(id);
 
+// A chunk with no code of its own: only imports and `export { … }` lists.
+const isPureReexport = (code: string) =>
+  code
+    .replace(/\/\*[\s\S]*?\*\/|\/\/.*$/gm, '')
+    .replace(
+      /import\s[^;"]*?(?:from\s*)?"[^"]+";|export\s*(?:\*|\{[^}]*\})[^;"]*(?:"[^"]+")?;/g,
+      '',
+    )
+    .trim() === '';
+
 // Rolldown strips module-level directives and lib mode does not wire CSS into
-// JS, so both are added per chunk: `'use client'` on every module that touches
-// React (first statement), and an import of each CSS file the chunk owns.
+// JS, so both are added per chunk: `'use client'` (first statement) and an
+// import of each CSS file the chunk owns. A module is client-bound if it
+// imports React, or has code of its own and imports a client-bound chunk
+// (e.g. Modal's `Object.assign(ModalRoot, …)`, which would throw on a client
+// reference in an RSC server graph). Barrels like index.js stay directive-free.
 const useClientAndCss: Plugin = {
   name: 'eocrm-use-client-and-css',
   // generateBundle, not renderChunk: vite fills `importedCss` in its own
   // renderChunk, which runs after a plugin's.
   generateBundle(_, bundle) {
-    for (const chunk of Object.values(bundle)) {
-      if (chunk.type !== 'chunk') continue;
+    const chunks = Object.values(bundle).filter((c) => c.type === 'chunk');
+    const client = new Set(chunks.filter((c) => c.imports.some(isReact)).map((c) => c.fileName));
+    for (let changed = true; changed; ) {
+      changed = false;
+      for (const c of chunks) {
+        if (client.has(c.fileName) || isPureReexport(c.code)) continue;
+        if (c.imports.some((i) => client.has(i))) changed = !!client.add(c.fileName);
+      }
+    }
+    for (const chunk of chunks) {
       const css = [...(chunk.viteMetadata?.importedCss ?? [])].map((file) => {
         const spec = posix.relative(posix.dirname(chunk.fileName), file);
         return `import "${spec.startsWith('.') ? spec : `./${spec}`}";\n`;
       });
-      const directive = chunk.imports.some(isReact) ? "'use client';\n" : '';
+      const directive = client.has(chunk.fileName) ? "'use client';\n" : '';
       chunk.code = directive + css.join('') + chunk.code;
     }
   },
