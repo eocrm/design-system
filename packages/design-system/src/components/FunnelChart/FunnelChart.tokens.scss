@@ -6,12 +6,15 @@
 :root {
   --funnel-chart-gap: var(--space-2);
 
-  // Ramp: stage i of n is ramp-color mixed (oklab) toward surface by max-mix * i / (n - 1). 48% keeps
-  // the lightest step at >= 2:1 against the surface in both themes (validate_palette.js --ordinal).
+  // Ramp: stage i of n is ramp-color mixed (oklab) toward ramp-target by max-mix * i / (n - 1). Light:
+  // target is the surface, 48% keeps the lightest step >= 2:1 against it. Dark (below): target is
+  // --color-fg so later stages get paler, not muddier; 65% passes validate_palette.js --ordinal
+  // --mode dark for 3-4 stages (6 stages: ΔL ~0.04), palest 4-stage step #a6c5eb is still clearly blue.
   // ponytail: from 5 stages on, adjacent steps fall under the 0.06 OKLCH ΔL ideal (~0.03 at 8); labels,
   // the vertical table and the tooltip carry identity. A wider ramp needs a darker first stage than series-1.
   --funnel-chart-ramp-color: var(--chart-series-1);
   --funnel-chart-surface: var(--color-bg);
+  --funnel-chart-ramp-target: var(--funnel-chart-surface);
   --funnel-chart-ramp-max-mix: 48%;
 
   // Hero: the first stage's value and label inside its band (horizontal).
@@ -46,4 +49,17 @@
   // Narrowest the band track gets beside the table, so the band never vanishes.
   --funnel-chart-row-track-min: var(--space-16);
   --funnel-chart-row-pill-bg: var(--color-bg-muted);
+}
+
+// Dark ramp: same scopes as the generated dark.scss (forced dark, and OS dark unless forced light).
+:root[data-theme='dark'] {
+  --funnel-chart-ramp-target: var(--color-fg);
+  --funnel-chart-ramp-max-mix: 65%;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --funnel-chart-ramp-target: var(--color-fg);
+    --funnel-chart-ramp-max-mix: 65%;
+  }
 }

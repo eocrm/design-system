@@ -122,7 +122,7 @@ describe('FunnelChart', () => {
     const colorOf = (el: Element) =>
       (el as HTMLElement | SVGElement).style.getPropertyValue('--chart-series-color');
     const ramp = (t: number) =>
-      `color-mix(in oklab, var(--funnel-chart-ramp-color), var(--funnel-chart-surface) calc(var(--funnel-chart-ramp-max-mix) * ${t}))`;
+      `color-mix(in oklab, var(--funnel-chart-ramp-color), var(--funnel-chart-ramp-target) calc(var(--funnel-chart-ramp-max-mix) * ${t}))`;
     expect(stageGroups().map(colorOf)).toEqual([0, 0.25, 0.5, 0.75, 1].map(ramp));
     expect(colorOf(document.querySelector('[data-stage-cell="w"]')!)).toBe(ramp(1));
   });

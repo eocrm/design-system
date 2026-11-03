@@ -44,7 +44,7 @@ export interface FunnelChartProps extends Omit<HTMLAttributes<HTMLElement>, 'chi
   label: string;
   /**
    * Stages, top of the funnel first. Heights are relative to the largest value. Colour is a one-hue ramp
-   * from `--chart-series-1` (first stage) toward the surface; a stage's `color` slot overrides it.
+   * from `--chart-series-1` (first stage) toward the surface (paler toward the foreground in dark); a stage's `color` slot overrides it.
    */
   stages: FunnelStage[];
   /** Formats a stage value for the footer, tooltip and data table (the app owns i18n and currency). Required. */
@@ -93,7 +93,7 @@ const HERO_LABEL_CHAR_WIDTH = 8;
 const stageColor = (s: ResolvedStage, i: number, n: number) =>
   s.slot !== null
     ? `var(--chart-series-${s.slot})`
-    : `color-mix(in oklab, var(--funnel-chart-ramp-color), var(--funnel-chart-surface) calc(var(--funnel-chart-ramp-max-mix) * ${n > 1 ? Math.round((i / (n - 1)) * 1000) / 1000 : 0}))`;
+    : `color-mix(in oklab, var(--funnel-chart-ramp-color), var(--funnel-chart-ramp-target) calc(var(--funnel-chart-ramp-max-mix) * ${n > 1 ? Math.round((i / (n - 1)) * 1000) / 1000 : 0}))`;
 const colorStyle = (color: string) => ({ '--chart-series-color': color }) as CSSProperties;
 
 /**
