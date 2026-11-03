@@ -79,6 +79,8 @@ figure[data-attachment][data-align='center'] {
   text-align: center;
 }
 
+// Physical on purpose: the author picked a side. Unaligned figures inherit
+// `start`, so in RTL an unaligned figure and a right-aligned one look the same.
 figure[data-attachment][data-align='right'] {
   text-align: right;
 }

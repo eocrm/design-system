@@ -85,7 +85,7 @@
 // component boundary, so this is allowed.
 .counter {
   display: block;
-  text-align: right;
+  text-align: end;
   // stylelint-disable-next-line property-disallowed-list -- internal spacing between textarea and its counter child
   margin-top: var(--textarea-counter-margin-top);
   font-size: var(--textarea-counter-font-size);

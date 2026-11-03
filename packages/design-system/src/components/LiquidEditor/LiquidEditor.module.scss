@@ -77,10 +77,12 @@
 .gutter {
   flex: none;
   padding: var(--space-2);
-  text-align: right;
+
+  // Logical, so the numbers and the divider hug the code in either direction.
+  text-align: end;
   color: var(--liquid-editor-gutter-fg);
   background: var(--liquid-editor-gutter-bg);
-  border-right: var(--border-width) solid var(--liquid-editor-border);
+  border-inline-end: var(--border-width) solid var(--liquid-editor-border);
   user-select: none;
   overflow: hidden;
   white-space: pre;

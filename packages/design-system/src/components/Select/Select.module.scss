@@ -60,7 +60,7 @@
   // clearable). The chevron sits at `right: var(--space-3)`, the ✕ sits
   // at `right: var(--space-6)` — both inside the `.triggerWrap`'s padding.
   padding-right: var(--select-trigger-padding-right-reserved);
-  text-align: left;
+  text-align: start;
 
   // Multi-summary text can grow longer than the trigger width — clip with
   // an ellipsis rather than wrapping. The chips-mode trigger (Phase 6)

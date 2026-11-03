@@ -165,7 +165,7 @@ button.groupHeader {
   border: none;
   cursor: pointer;
   width: 100%;
-  text-align: left;
+  text-align: start;
 
   // Scoped to the BUTTON, and kept with the background it compensates for. In
   // single mode the header renders as a <div role="presentation"> with no hover
