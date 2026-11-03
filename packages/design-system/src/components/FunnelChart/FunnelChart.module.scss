@@ -92,13 +92,6 @@
   font-weight: var(--funnel-chart-hero-label-weight);
 }
 
-// Hero shown: the first footer button is empty, so its focus ring outlines the band instead (the
-// stroke's outer half is under the next stage or clipped, so double the width to show one ring width).
-.plot:has([data-hero-cell]:focus-visible) [data-hero-stage] .shape {
-  stroke: var(--funnel-chart-ring);
-  stroke-width: calc(var(--ring-width) * 2);
-}
-
 .pillText {
   fill: var(--funnel-chart-pill-fg);
   font-size: var(--funnel-chart-pill-size);
@@ -130,6 +123,12 @@
     opacity: var(--funnel-chart-dim-opacity);
   }
 
+  // Hero shown: the first cell keeps its value and label, invisible, so it is a normal footer-height
+  // box (and a full-size focus ring when it is a button) under the band that shows them.
+  &[data-hero-cell] > * {
+    visibility: hidden;
+  }
+
   // Clickable stages render the cell as a <button> (reset.scss strips its chrome).
   &:is(button) {
     border-radius: var(--chart-plot-radius);
@@ -137,7 +136,7 @@
     outline: none;
   }
 
-  &:is(button):focus-visible:not([data-hero-cell]) {
+  &:is(button):focus-visible {
     @include focus-ring(var(--funnel-chart-ring));
   }
 }

@@ -141,14 +141,17 @@ describe('FunnelChart', () => {
     expect(swatch.style.getPropertyValue('--chart-series-color')).toBe('var(--chart-series-3)');
   });
 
-  it('hero: the first band holds its value and label; its footer cell stays empty', () => {
+  it('hero: the first band holds its value and label; its footer cell keeps them, marked to hide', () => {
     const layout = stubLayout();
     renderFunnel({ onStageClick: vi.fn() });
     layout.fire();
     const hero = document.querySelector('[data-stage="l"] [data-hero]')!;
     expect(hero.textContent).toBe('1,240Leads');
     const first = document.querySelector('[data-stage-cell="l"]')!;
-    expect(first.textContent).toBe('');
+    // Kept (CSS hides it) so the cell, and its focus ring, are a normal footer-height box.
+    expect(first.textContent).toBe('1,240Leads');
+    expect(first).toHaveAttribute('data-hero-cell');
+    expect(document.querySelector('[data-stage-cell="q"]')).not.toHaveAttribute('data-hero-cell');
     // Still a button with the full name.
     expect(screen.getByRole('button', { name: /^Leads: 1,240\. 100% of Leads\.$/ })).toBe(first);
   });
@@ -167,15 +170,6 @@ describe('FunnelChart', () => {
     layout.fire();
     expect(document.querySelector('[data-hero]')).toBeNull();
     expect(document.querySelector('[data-stage-cell="l"]')!.textContent).toBe('1,240Leads');
-  });
-
-  it('hero: the empty first button moves its focus ring to the band', () => {
-    const layout = stubLayout();
-    renderFunnel({ onStageClick: vi.fn() });
-    layout.fire();
-    expect(document.querySelector('[data-stage-cell="l"]')).toHaveAttribute('data-hero-cell');
-    expect(document.querySelector('[data-stage="l"]')).toHaveAttribute('data-hero-stage');
-    expect(document.querySelector('[data-stage-cell="q"]')).not.toHaveAttribute('data-hero-cell');
   });
 
   it('hero: falls back to the footer when the value is too wide for the column', () => {

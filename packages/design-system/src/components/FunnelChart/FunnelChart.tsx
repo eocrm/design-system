@@ -302,8 +302,8 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
 
   // One cell per stage (horizontal: footer column; vertical: a table-like row with its funnel slice); a
   // button when clickable. Spans, not divs, since the cell may be a <button>. With the hero shown, the
-  // first footer cell stays (empty) for grid alignment, hover and the button (its focus ring moves to
-  // the band). Read-only cells are aria-hidden: the hidden data table is the screen reader's copy.
+  // first footer cell keeps its content invisibly (CSS) for alignment, hover and a normal-size focus
+  // ring. Read-only cells are aria-hidden: the hidden data table is the screen reader's copy.
   const renderCell = (s: ResolvedStage, i: number) => {
     const content = vertical ? (
       <>
@@ -332,7 +332,7 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
           )}
         </span>
       </>
-    ) : i === 0 && hero ? null : (
+    ) : (
       <>
         <span className={styles.value}>{formatValue(s.value)}</span>
         <span className={styles.label}>{s.label}</span>
@@ -515,7 +515,6 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
                         style={colorStyle(stageColor(s, i, n))}
                         data-stage={s.key}
                         data-dimmed={dimmed(i)}
-                        data-hero-stage={i === 0 && hero ? '' : undefined}
                       >
                         <path className={styles.shape} d={g.d} />
                         {i === 0 && hero && (
