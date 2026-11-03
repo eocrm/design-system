@@ -13,6 +13,8 @@
 <LinkCard as="button" type="button" onClick={openImporter}>Import contacts</LinkCard>
 ```
 
+The `as="button"` form fills its container and start-aligns text, exactly like the anchor form.
+
 <!-- props:start -->
 
 ## Props

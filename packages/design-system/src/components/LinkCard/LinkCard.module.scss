@@ -6,6 +6,12 @@
   --link-card-elevation: var(--link-card-shadow);
 
   display: block;
+
+  // #736: a UA <button> shrink-wraps and centres text even at display:block;
+  // pin both so as="button" fills and aligns like the <a> form.
+  width: 100%;
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- text-align keywords don't have tokens
+  text-align: start;
   background: var(--card-bg);
   border: var(--border-width) solid var(--card-border-color);
   border-radius: var(--card-radius);

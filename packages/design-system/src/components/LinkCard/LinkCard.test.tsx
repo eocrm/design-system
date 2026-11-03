@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, type AnchorHTMLAttributes, type ReactNode } from 'react';
@@ -106,5 +108,12 @@ describe('LinkCard', () => {
     expect(el.className).toMatch(/linkCard/);
     expect(el.className).toMatch(/my-cls/);
     expect(el).toHaveAttribute('data-foo', 'bar');
+  });
+
+  it('SCSS: fills its container and starts text so as="button" matches the anchor form (#736)', () => {
+    const scss = readFileSync(resolve(__dirname, 'LinkCard.module.scss'), 'utf8');
+    const root = scss.match(/\.linkCard \{[\s\S]*?\n\}/)![0];
+    expect(root).toMatch(/width: 100%;/);
+    expect(root).toMatch(/text-align: start;/);
   });
 });
