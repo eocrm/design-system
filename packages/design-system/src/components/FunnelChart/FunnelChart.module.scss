@@ -45,6 +45,10 @@
   overflow: hidden;
 }
 
+.plot[data-clickable] .shapes {
+  cursor: pointer;
+}
+
 .svg {
   display: block;
 }
@@ -93,6 +97,17 @@
 
   &[data-dimmed] {
     opacity: var(--funnel-chart-dim-opacity);
+  }
+
+  // Clickable stages render the cell as a <button> (reset.scss strips its chrome).
+  &:is(button) {
+    border-radius: var(--chart-plot-radius);
+    cursor: pointer;
+    outline: none;
+  }
+
+  &:is(button):focus-visible {
+    @include focus-ring(var(--funnel-chart-ring));
   }
 }
 

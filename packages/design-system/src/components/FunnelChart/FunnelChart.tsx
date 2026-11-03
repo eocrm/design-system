@@ -3,10 +3,13 @@ import {
   useEffect,
   useId,
   useMemo,
+  useRef,
   useState,
+  type FocusEvent,
   type CSSProperties,
   type HTMLAttributes,
   type KeyboardEvent,
+  type MouseEvent,
   type PointerEvent,
   type ReactNode,
 } from 'react';
@@ -100,7 +103,6 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
     stages,
     formatValue,
     shape = 'eased',
-    // Declared for the final API; wired in by clickable/active-stage support.
     onStageClick,
     onActiveStageChange,
     emptyMessage,
@@ -145,10 +147,21 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
   );
 
   const [active, setActive] = useState<number | null>(null);
-  const [activeSource, setActiveSource] = useState<'pointer' | 'keyboard' | null>(null);
+  // 'focus' = a stage button has focus; its accessible name already says what the live region would.
+  const [activeSource, setActiveSource] = useState<'pointer' | 'keyboard' | 'focus' | null>(null);
   const current = active !== null && active < n ? active : null;
+  const clickable = onStageClick !== undefined;
 
-  const inspect = (index: number | null, source: 'pointer' | 'keyboard' | null) => {
+  // Fire once per change of the active stage's key (not on mount, not for a new-but-equal stages array).
+  const activeKey = current === null ? null : resolved[current].key;
+  const lastKey = useRef<string | null>(null);
+  useEffect(() => {
+    if (activeKey === lastKey.current) return;
+    lastKey.current = activeKey;
+    onActiveStageChange?.(current === null ? null : stages[current]);
+  });
+
+  const inspect = (index: number | null, source: 'pointer' | 'keyboard' | 'focus' | null) => {
     setActive(index);
     setActiveSource(index === null ? null : source);
   };
@@ -200,19 +213,66 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
     inspect(stageIndexAt(size.width, n, e.clientX - rect.left), 'pointer');
   };
 
+  const onStripClick = (e: MouseEvent<HTMLDivElement>) => {
+    if (!onStageClick || !shapesEl) return;
+    const rect = shapesEl.getBoundingClientRect();
+    const i = stageIndexAt(size.width, n, e.clientX - rect.left);
+    if (i !== null) onStageClick(stages[i], i);
+  };
+
+  // Moving focus between stage buttons must not clear (and re-fire onActiveStageChange) in between.
+  const onBlur = (e: FocusEvent<HTMLDivElement>) => {
+    if (!(e.relatedTarget instanceof Node && plotEl?.contains(e.relatedTarget)))
+      inspect(null, null);
+  };
+
   const pct = (ratio: number | null) =>
     ratio === null ? t('funnelChart.noData') : formatPercent(ratio, locale);
-  const notesFor = (i: number) => {
-    const share = t('funnelChart.ofStage', {
-      percent: pct(resolved[i].shareRatio),
-      stage: resolved[0].label,
-    });
-    if (i === 0) return [share];
-    const step = t('funnelChart.ofStage', {
-      percent: pct(resolved[i].stepRatio),
-      stage: resolved[i - 1].label,
-    });
-    return [step, share];
+  const ofStage = (ratio: number | null, i: number) =>
+    t('funnelChart.ofStage', { percent: pct(ratio), stage: resolved[i].label });
+  const notesFor = (i: number) =>
+    i === 0
+      ? [ofStage(resolved[0].shareRatio, 0)]
+      : [ofStage(resolved[i].stepRatio, i - 1), ofStage(resolved[i].shareRatio, 0)];
+  // Button name: like the notes, but undefined ratios are left out rather than read as "—".
+  const buttonName = (i: number) => {
+    const s = resolved[i];
+    const parts = [`${s.label}: ${formatValue(s.value)}`];
+    if (i > 0 && s.stepRatio !== null) parts.push(ofStage(s.stepRatio, i - 1));
+    if (s.shareRatio !== null) parts.push(ofStage(s.shareRatio, 0));
+    return `${parts.join('. ')}.`;
+  };
+
+  // One footer cell per stage; a button when clickable. Shared by both orientations.
+  const renderCell = (s: (typeof resolved)[number], i: number) => {
+    const content = (
+      <>
+        <span className={styles.value}>{formatValue(s.value)}</span>
+        <span className={styles.label}>{s.label}</span>
+      </>
+    );
+    const common = {
+      className: styles.cell,
+      style: stageStyle(s.slot),
+      'data-stage-cell': s.key,
+      'data-dimmed': dimmed(i),
+    };
+    return onStageClick ? (
+      <button
+        key={s.key}
+        {...common}
+        type="button"
+        aria-label={buttonName(i)}
+        onFocus={() => inspect(i, 'focus')}
+        onClick={() => onStageClick(stages[i], i)}
+      >
+        {content}
+      </button>
+    ) : (
+      <div key={s.key} {...common}>
+        {content}
+      </div>
+    );
   };
 
   const stage = current === null ? null : resolved[current];
@@ -276,24 +336,28 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
       data-footnote={hasFootnote || undefined}
       className={clsx(styles.root, className)}
     >
-      <VisuallyHidden id={hintId}>{t('funnelChart.keyboardHint')}</VisuallyHidden>
+      {!clickable && <VisuallyHidden id={hintId}>{t('funnelChart.keyboardHint')}</VisuallyHidden>}
+      {/* Clickable: the stage buttons are the tab stops, so the plot isn't one and needs no hint. */}
       <div
         ref={setPlotEl}
         className={styles.plot}
         role="group"
         aria-label={label}
-        aria-describedby={hasFootnote ? `${hintId} ${footnoteId}` : hintId}
-        tabIndex={0}
-        onKeyDown={onKeyDown}
+        aria-describedby={
+          [!clickable && hintId, hasFootnote && footnoteId].filter(Boolean).join(' ') || undefined
+        }
+        tabIndex={clickable ? undefined : 0}
+        data-clickable={clickable || undefined}
+        onKeyDown={clickable ? undefined : onKeyDown}
         onPointerMove={onPointer}
         onPointerDown={onPointer}
         // Touch fires pointerleave right after pointerup; keep the tapped tooltip (an outside press clears it).
         onPointerLeave={(e) =>
           e.pointerType !== 'touch' && activeSource === 'pointer' && inspect(null, null)
         }
-        onBlur={() => inspect(null, null)}
+        onBlur={onBlur}
       >
-        <div ref={setShapesEl} className={styles.shapes}>
+        <div ref={setShapesEl} className={styles.shapes} onClick={onStripClick}>
           {geometry && (
             <svg
               className={styles.svg}
@@ -342,20 +406,7 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
             </svg>
           )}
         </div>
-        <div className={styles.footer}>
-          {resolved.map((s, i) => (
-            <div
-              key={s.key}
-              className={styles.cell}
-              style={stageStyle(s.slot)}
-              data-stage-cell={s.key}
-              data-dimmed={dimmed(i)}
-            >
-              <span className={styles.value}>{formatValue(s.value)}</span>
-              <span className={styles.label}>{s.label}</span>
-            </div>
-          ))}
-        </div>
+        <div className={styles.footer}>{resolved.map(renderCell)}</div>
       </div>
       {footnoteEl}
       <ChartTooltip

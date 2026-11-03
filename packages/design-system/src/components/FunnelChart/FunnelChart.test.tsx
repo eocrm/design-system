@@ -208,4 +208,168 @@ describe('FunnelChart', () => {
     expect(warn).toHaveBeenCalledTimes(1);
     expect(warn.mock.calls[0].join(' ')).toMatch(/FunnelChart/);
   });
+  describe('clickable stages', () => {
+    it('renders one named button per stage; clicking passes the original stage and index', async () => {
+      const layout = stubLayout();
+      const onStageClick = vi.fn();
+      renderFunnel({ onStageClick });
+      layout.fire();
+      const buttons = screen.getAllByRole('button');
+      expect(buttons).toHaveLength(5);
+      const won = screen.getByRole('button', {
+        name: /^Won: 50\. 40% of Negotiation\. 4% of Leads\.$/,
+      });
+      expect(won).toHaveAttribute('type', 'button');
+      expect(won).toHaveAttribute('data-stage-cell', 'w');
+      expect(screen.getByRole('button', { name: /^Leads: 1,240\. 100% of Leads\.$/ })).toBe(
+        buttons[0],
+      );
+      await userEvent.click(won);
+      expect(onStageClick).toHaveBeenCalledTimes(1);
+      expect(onStageClick.mock.calls[0][0]).toBe(stages[4]);
+      expect(onStageClick.mock.calls[0][1]).toBe(4);
+      const plot = screen.getByRole('group', { name: 'Pipeline' });
+      expect(plot).not.toHaveAttribute('tabindex');
+      expect(plot).not.toHaveAccessibleDescription();
+    });
+
+    it('omits undefined ratios from the button name', () => {
+      stubLayout();
+      renderFunnel({
+        onStageClick: vi.fn(),
+        stages: [
+          { key: 'a', label: 'A', value: 0 },
+          { key: 'b', label: 'B', value: 5 },
+        ],
+      });
+      expect(screen.getByRole('button', { name: /^A: 0\.$/ })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^B: 5\.$/ })).toBeInTheDocument();
+    });
+
+    it('Tab focuses the first button and activates its stage; Enter and Space click', async () => {
+      const layout = stubLayout();
+      const onStageClick = vi.fn();
+      renderFunnel({ onStageClick });
+      layout.fire();
+      await userEvent.tab();
+      expect(screen.getAllByRole('button')[0]).toHaveFocus();
+      expect(document.querySelector('[data-stage="l"]')).not.toHaveAttribute('data-dimmed');
+      expect(stageGroups().filter((g) => g.hasAttribute('data-dimmed'))).toHaveLength(4);
+      expect(tooltip()).toHaveTextContent('Leads');
+      await userEvent.keyboard('{Enter}');
+      await userEvent.keyboard(' ');
+      expect(onStageClick).toHaveBeenCalledTimes(2);
+      expect(onStageClick).toHaveBeenNthCalledWith(1, stages[0], 0);
+      expect(onStageClick).toHaveBeenNthCalledWith(2, stages[0], 0);
+    });
+
+    it('a pointer click on the shapes strip clicks the stage under it', () => {
+      const layout = stubLayout();
+      const onStageClick = vi.fn();
+      renderFunnel({ onStageClick });
+      layout.fire();
+      const strip = document.querySelector('svg')!.parentElement!;
+      fireEvent.click(strip, { clientX: 450 });
+      expect(onStageClick).toHaveBeenCalledTimes(1);
+      expect(onStageClick.mock.calls[0][0]).toBe(stages[4]);
+      expect(onStageClick.mock.calls[0][1]).toBe(4);
+    });
+
+    it('without onStageClick there are no buttons and cells are plain elements', () => {
+      stubLayout();
+      renderFunnel();
+      expect(screen.queryAllByRole('button')).toHaveLength(0);
+      expect(document.querySelector('[data-stage-cell="w"]')!.tagName).toBe('DIV');
+    });
+  });
+
+  describe('onActiveStageChange', () => {
+    it('fires with the original stage on hover, null on leave, once per change', () => {
+      const layout = stubLayout();
+      const onActiveStageChange = vi.fn();
+      renderFunnel({ onActiveStageChange });
+      layout.fire();
+      expect(onActiveStageChange).not.toHaveBeenCalled();
+      const plot = screen.getByRole('group', { name: 'Pipeline' });
+      fireEvent.pointerMove(plot, { clientX: 150, pointerType: 'mouse' });
+      expect(onActiveStageChange).toHaveBeenCalledTimes(1);
+      expect(onActiveStageChange.mock.calls[0][0]).toBe(stages[1]);
+      fireEvent.pointerMove(plot, { clientX: 160, pointerType: 'mouse' });
+      expect(onActiveStageChange).toHaveBeenCalledTimes(1);
+      fireEvent.pointerLeave(plot, { pointerType: 'mouse' });
+      expect(onActiveStageChange).toHaveBeenCalledTimes(2);
+      expect(onActiveStageChange).toHaveBeenLastCalledWith(null);
+    });
+
+    it('fires for keyboard inspection in read-only mode', async () => {
+      const layout = stubLayout();
+      const onActiveStageChange = vi.fn();
+      renderFunnel({ onActiveStageChange });
+      layout.fire();
+      screen.getByRole('group', { name: 'Pipeline' }).focus();
+      await userEvent.keyboard('{ArrowRight}');
+      expect(onActiveStageChange).toHaveBeenCalledTimes(1);
+      expect(onActiveStageChange.mock.calls[0][0]).toBe(stages[0]);
+    });
+
+    it('fires for button focus in clickable mode, without a null in between', async () => {
+      const layout = stubLayout();
+      const onActiveStageChange = vi.fn();
+      renderFunnel({ onActiveStageChange, onStageClick: vi.fn() });
+      layout.fire();
+      await userEvent.tab();
+      await userEvent.tab();
+      expect(onActiveStageChange.mock.calls.map((c) => c[0])).toEqual([stages[0], stages[1]]);
+      await userEvent.tab();
+      await userEvent.tab();
+      await userEvent.tab();
+      await userEvent.tab();
+      expect(onActiveStageChange).toHaveBeenLastCalledWith(null);
+    });
+
+    it('does not re-fire when rerendered with a new array holding the same data', () => {
+      const layout = stubLayout();
+      const onActiveStageChange = vi.fn();
+      const { rerender } = renderFunnel({ onActiveStageChange });
+      layout.fire();
+      fireEvent.pointerMove(screen.getByRole('group', { name: 'Pipeline' }), {
+        clientX: 150,
+        pointerType: 'mouse',
+      });
+      expect(onActiveStageChange).toHaveBeenCalledTimes(1);
+      rerender(
+        <LocaleProvider locale="en-GB">
+          <FunnelChart
+            {...base}
+            stages={stages.map((s) => ({ ...s }))}
+            onActiveStageChange={(s) => onActiveStageChange(s)}
+          />
+        </LocaleProvider>,
+      );
+      expect(onActiveStageChange).toHaveBeenCalledTimes(1);
+    });
+
+    it('clears when the active stage is removed', async () => {
+      const layout = stubLayout();
+      const onActiveStageChange = vi.fn();
+      const { rerender } = renderFunnel({ onActiveStageChange });
+      layout.fire();
+      screen.getByRole('group', { name: 'Pipeline' }).focus();
+      await userEvent.keyboard('{End}');
+      expect(onActiveStageChange).toHaveBeenLastCalledWith(stages[4]);
+      rerender(
+        <LocaleProvider locale="en-GB">
+          <FunnelChart
+            {...base}
+            stages={stages.slice(0, 3)}
+            onActiveStageChange={onActiveStageChange}
+          />
+        </LocaleProvider>,
+      );
+      expect(onActiveStageChange).toHaveBeenLastCalledWith(null);
+      expect(onActiveStageChange).toHaveBeenCalledTimes(2);
+      expect(tooltip()).toBeNull();
+      expect(stageGroups().some((g) => g.hasAttribute('data-dimmed'))).toBe(false);
+    });
+  });
 });
