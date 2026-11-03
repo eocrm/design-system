@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { I18nProvider } from '../../i18n';
 import { RichText } from './RichText';
@@ -181,6 +181,20 @@ describe('onImageActivate (#739)', () => {
     expect(onImageActivate).toHaveBeenCalledTimes(2);
     await user.keyboard(' ');
     expect(onImageActivate).toHaveBeenCalledTimes(3);
+  });
+
+  it('set: the trigger is focused when the handler runs (Safari: click does not focus)', () => {
+    let focusedInHandler: Element | null = null;
+    render(
+      <RichText
+        value={imageDoc()}
+        onImageActivate={() => (focusedInHandler = document.activeElement)}
+      />,
+    );
+    const btn = screen.getByRole('button');
+    // fireEvent.click (unlike user.click) does not move focus — the Safari case.
+    fireEvent.click(btn);
+    expect(focusedInHandler).toBe(btn);
   });
 
   it('set: a non-image attachment (file chip) gets no trigger', () => {

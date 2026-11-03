@@ -18,8 +18,8 @@ import styles from './RichTextAttachment.module.scss';
 /**
  * Called when a reader activates an inline image (click, Enter or Space) in the
  * read-only `<RichText>`. `src` is the sanitized URL; `alt` is the block's alt
- * as stored (may be `''` or absent). `trigger` is the DS-owned button — return
- * focus to it when your overlay (e.g. `Lightbox`) closes.
+ * as stored (may be `''` or absent). `trigger` is the DS-owned button, already
+ * focused when this runs, so an overlay that restores focus on close returns it there.
  */
 export type RichTextImageActivateHandler = (
   image: { src: string; alt?: string },
@@ -141,7 +141,13 @@ export function RichTextAttachment({
         // `||` here (unlike the img alt above): this IS an accessible-name
         // fallback, and a decorative `alt=""` must still yield a named button.
         aria-label={t('richText.openImage', { name: block.alt || name })}
-        onClick={(e) => onImageActivate({ src: href, alt: block.alt }, e.currentTarget)}
+        onClick={(e) => {
+          // Focus first: a mouse click doesn't focus a button in Safari, and an
+          // overlay (Lightbox) restores focus to whatever was focused on open.
+          const trigger = e.currentTarget;
+          trigger.focus();
+          onImageActivate({ src: href, alt: block.alt }, trigger);
+        }}
       >
         {img}
       </button>

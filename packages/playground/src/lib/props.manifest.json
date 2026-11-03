@@ -5366,7 +5366,7 @@
           "type": "RichTextImageActivateHandler",
           "required": false,
           "default": "",
-          "description": "Make inline images keyboard-operable triggers (e.g. to open a `Lightbox`).\nWhen set, each ready image attachment renders inside a native\n`<button type=\"button\">` named \"Open image: <alt or file name>\"; click,\nEnter and Space call this with `{ src, alt }` and the button — return focus\nto it when your overlay closes. Unset: the plain `<img>`, unchanged.\nPass a stable reference (`useCallback`): a new function each render\nrebuilds every attachment block."
+          "description": "Make inline images keyboard-operable triggers (e.g. to open a `Lightbox`).\nWhen set, each ready image attachment renders inside a native\n`<button type=\"button\">` named \"Open image: <alt or file name>\"; click,\nEnter and Space focus the button, then call this with `{ src, alt }` and\nit — so an overlay that restores focus on close (e.g. `Lightbox`) returns there. Unset: the plain `<img>`, unchanged.\nPass a stable reference (`useCallback`): a new function each render\nrebuilds every attachment block."
         }
       ]
     },

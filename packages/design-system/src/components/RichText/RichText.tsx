@@ -50,8 +50,8 @@ export interface RichTextProps extends HTMLAttributes<HTMLDivElement> {
    * Make inline images keyboard-operable triggers (e.g. to open a `Lightbox`).
    * When set, each ready image attachment renders inside a native
    * `<button type="button">` named "Open image: <alt or file name>"; click,
-   * Enter and Space call this with `{ src, alt }` and the button — return focus
-   * to it when your overlay closes. Unset: the plain `<img>`, unchanged.
+   * Enter and Space focus the button, then call this with `{ src, alt }` and
+   * it — so an overlay that restores focus on close (e.g. `Lightbox`) returns there. Unset: the plain `<img>`, unchanged.
    * Pass a stable reference (`useCallback`): a new function each render
    * rebuilds every attachment block.
    */
