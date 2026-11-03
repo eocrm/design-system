@@ -93,11 +93,12 @@ There is deliberately no red, orange or yellow accent: a primary button in those
 The package ships **compiled ESM** (`dist/`) with `.d.ts` types and plain CSS. No Sass, TypeScript or transpile configuration is needed.
 
 - **CSS imports**: every component's JS chunk imports its own `.css`, so the bundler must handle CSS imports. Next.js, Vite, Rsbuild and CRA do out of the box; plain webpack 5 needs `css-loader` plus `style-loader` or `mini-css-extract-plugin`; Rollup needs a CSS plugin. Import `@eocrm/design-system/styles/global.css` once at the app root.
-- **One way to load component CSS**: use either `styles.css` (one link, for hosts without a bundler) or the JS imports (bundler), not both — loading both duplicates every rule.
-- **Next.js (app router)**: works as-is, no `transpilePackages`. Client-bound modules carry `'use client'`, so components can be imported directly from Server Components. Two limits of the Server/Client boundary:
+- **One way to load component CSS**: use either `styles.css` (a single `<link>`, for setups whose CSS pipeline can't take imports from JS) or the JS imports, not both — loading both duplicates every rule. The JS itself always needs a bundler (it imports CSS and reads `process.env.NODE_ENV`).
+- **Next.js (app router)**: works as-is, no `transpilePackages`. Client-bound modules carry `'use client'`, so plain components (`Button`, `Select`, `Badge`, `Input`, …) can be rendered directly from Server Components. Three limits of the Server/Client boundary:
   - **Providers**: the `ru` catalog contains functions, and functions cannot be passed from a Server Component to a Client Component. Mount `AppProvider` / `I18nProvider` from your own `'use client'` providers file that imports `ru` (example below), not from `app/layout.tsx` directly.
-  - **Controlled overlays** (`Modal`, `Drawer`) need state and a function `onOpenChange`, so render them from a client component. Static and compound parts render from Server Components fine.
-- Set `moduleResolution: "bundler"` (or `"node16"`) in your `tsconfig.json` if TypeScript can't resolve types.
+  - **Compound parts** (`Breadcrumb.Item`, `Modal.Header`, `Accordion.Item`, `List.Item`, …) cannot be reached from a Server Component — a client module can't be dotted into on the server, so `X.Item` is `undefined` there and rendering fails. Render compound components from a `'use client'` file.
+  - **Controlled overlays** (`Modal`, `Drawer`) need state and a function `onOpenChange`, so render them from a client component.
+- Set `moduleResolution: "bundler"` (or `"node16"`) in your `tsconfig.json` if TypeScript can't resolve types. If `tsc` rejects the side-effect `import '…/styles/global.css'` (TS2882) and your framework doesn't declare CSS modules for you (Vite's `vite/client` and Next's `next-env.d.ts` do), add `declare module '*.css';` to a `.d.ts` file.
 
 ```tsx
 // app/providers.tsx
@@ -125,7 +126,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 ```
 
-**Tests.** Vitest works out of the box. Jest (CommonJS) needs to transform this ESM package and its ESM-only dependencies (`d3-*`, `internmap`, used by `Chart`), and stub `.css` imports:
+**Tests.** Vitest externalizes `node_modules` and Node can't import the components' `.css`, so inline this package (add `css: true` only if you assert on styles):
+
+```ts
+// vitest.config.ts
+test: { server: { deps: { inline: [/@eocrm\/design-system/] } } },
+```
+
+Jest (CommonJS) needs to transform this ESM package and its ESM-only dependencies (`d3-*`, `internmap`, used by `Chart`), and stub `.css` imports:
 
 ```js
 // jest.config.js — the pattern covers npm/yarn and pnpm (node_modules/.pnpm/<name>@<version>/…) layouts

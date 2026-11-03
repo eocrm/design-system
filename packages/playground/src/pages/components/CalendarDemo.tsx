@@ -521,7 +521,7 @@ export function Demo() {
 
       <Example
         title="ru-RU locale"
-        description="Russian locale — Monday-start grid, Cyrillic month/weekday labels. UI strings (Today button, prev/next aria-labels, view-switcher) come from the i18n provider — wrap the Calendar in <I18nProvider locale='ru'> to use the built-in Russian translations."
+        description="Russian locale — Monday-start grid, Cyrillic month/weekday labels. UI strings (Today button, prev/next aria-labels, view-switcher) come from the i18n provider — wrap the Calendar in <I18nProvider locale='ru' messages={ru}> to use the library's Russian catalog (`import { ru } from '@eocrm/design-system'`)."
         code={`import { Calendar, I18nProvider } from '@eocrm/design-system';
 
 const SAMPLE_EVENTS = [

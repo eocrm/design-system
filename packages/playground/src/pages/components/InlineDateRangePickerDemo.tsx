@@ -302,7 +302,7 @@ export function FormDemo() {
 
       <Example
         title="ru-RU locale"
-        description="Locale-aware labels. UI strings (chevron tooltips) come from <I18nProvider locale='ru'>."
+        description="Locale-aware labels. UI strings (chevron tooltips) come from <I18nProvider locale='ru' messages={ru}>."
         code={`import { I18nProvider, InlineDateRangePicker } from '@eocrm/design-system';
 
 const today = new Date();

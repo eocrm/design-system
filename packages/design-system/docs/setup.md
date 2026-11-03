@@ -59,7 +59,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
 // app/layout.tsx (Server Component): <body><Providers>{children}</Providers></body>
 ```
 
-Components themselves can be imported directly from Server Components. Controlled overlays (`Modal`, `Drawer`) need state and a function `onOpenChange`, so render them from a client component; static and compound parts render from Server Components fine.
+Plain components (`Button`, `Select`, `Badge`, …) can be rendered directly from Server Components. Compound parts (`Breadcrumb.Item`, `Modal.Header`, `Accordion.Item`, …) cannot — a client module can't be dotted into on the server, so `X.Item` is `undefined` there — so render compound components from a `'use client'` file. Controlled overlays (`Modal`, `Drawer`) also need state and a function `onOpenChange`, so they belong in a client component anyway.
 
 **When NOT to use:** for a per-subtree locale / i18n override, nest `LocaleProvider` / `I18nProvider` directly — `AppProvider` is the single app root, so don't nest a second one. For a tiny embed or isolated test that only needs strings, use `I18nProvider` alone (or pass `toast={false}`) to avoid the toast viewport.
 

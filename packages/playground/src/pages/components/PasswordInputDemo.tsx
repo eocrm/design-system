@@ -263,7 +263,7 @@ export function Demo() {
 
       <Example
         title="Localized labels (ru-RU)"
-        description="Wrap in <I18nProvider locale='ru'> to translate all aria-labels and live-region strings."
+        description="Wrap in <I18nProvider locale='ru' messages={ru}> to translate all aria-labels and live-region strings."
         code={`import { I18nProvider, PasswordInput } from '@eocrm/design-system';
 
 export function Demo() {

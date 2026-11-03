@@ -247,7 +247,7 @@ export function FormDemo() {
 
       <Example
         title="ru-RU locale"
-        description="Locale-aware month + weekday labels. UI labels (chevrons) come from <I18nProvider locale='ru'>."
+        description="Locale-aware month + weekday labels. UI labels (chevrons) come from <I18nProvider locale='ru' messages={ru}>."
         code={`import { I18nProvider, InlineDatePicker } from '@eocrm/design-system';
 
 export function Demo() {
