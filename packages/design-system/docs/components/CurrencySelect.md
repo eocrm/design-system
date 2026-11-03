@@ -1,4 +1,4 @@
-# `<CurrencySelect>`
+# `<CurrencySelect>` — ISO 4217 currency picker over Select
 
 Currency picker over the DS `Select`: you pass the ISO 4217 `currencies` to offer (required, in display order); it renders `CODE — Name` rows with localized names (`Intl.DisplayNames`). Single mode is controlled on `value: string | null` / `onChange(code | null)`; `multiple` switches to `string[]` (with `triggerDisplay` `"chips"` / `"summary"`). `currencyDisplay` sets how the SELECTED currency shows in the trigger: `"code"` (default, `EUR`), `"symbol"` (`€`) or `"both"` (`EUR €`). Search turns on automatically above 7 currencies (`searchable` overrides) and matches code, name and symbol. Invalid codes are dropped with a dev warning. `size`/`invalid`/`disabled`/`clearable`/`name` etc. pass through to `Select`.
 

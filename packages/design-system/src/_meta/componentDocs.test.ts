@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const PKG = resolve(__dirname, '../..');
@@ -125,5 +125,28 @@ describe('docs/components props tables', () => {
       '| …native | | | plus native `<th>` attributes |',
     );
     expect(after('### `TableCellProps`')).toBe('| …native | | | plus native `<td>` attributes |');
+  });
+});
+
+describe('docs/components/index.json', () => {
+  const index = JSON.parse(readFileSync(resolve(PKG, 'docs/components/index.json'), 'utf8')) as {
+    name: string;
+    summary: string;
+    cluster: string | null;
+  }[];
+  const manifest = JSON.parse(readFileSync(resolve(PKG, 'src/components.manifest.json'), 'utf8'));
+
+  it('lists every doc exactly once with a summary', () => {
+    const stems = readdirSync(resolve(PKG, 'docs/components'))
+      .filter((f) => f.endsWith('.md'))
+      .map((f) => f.slice(0, -3))
+      .sort();
+    expect(index.map((e) => e.name)).toEqual(stems);
+    for (const e of index) expect(e.summary).not.toBe('');
+  });
+
+  it('derives summary from the H1 and cluster from the manifest', () => {
+    expect(index.find((e) => e.name === 'Button')?.summary).toBe('action triggers');
+    for (const e of index) if (e.cluster) expect(e.cluster).toBe(manifest[e.name].cluster);
   });
 });

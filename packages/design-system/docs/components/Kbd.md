@@ -1,4 +1,4 @@
-# `Kbd`
+# `Kbd` — keyboard-shortcut chips
 
 Inline keyboard-shortcut display: one `<kbd>` chip per key, joined with a faint `+` separator. Use for shortcut hints in tooltips, command palettes, search inputs, and help/shortcut sheets.
 

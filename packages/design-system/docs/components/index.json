@@ -1,0 +1,652 @@
+[
+  {
+    "name": "Accordion",
+    "summary": "vertically-stacked collapsible panels",
+    "cluster": "Navigation"
+  },
+  {
+    "name": "AgentAvatar",
+    "summary": "AI agent tile with the acting member",
+    "cluster": null
+  },
+  {
+    "name": "Alert",
+    "summary": "persistent in-flow notification",
+    "cluster": "Feedback"
+  },
+  {
+    "name": "AppLayout",
+    "summary": "viewport-filling app shell",
+    "cluster": "Layout"
+  },
+  {
+    "name": "Avatar",
+    "summary": "profile circle",
+    "cluster": "Display"
+  },
+  {
+    "name": "AvatarGroup",
+    "summary": "Slack-style stacked row of avatars",
+    "cluster": null
+  },
+  {
+    "name": "Badge",
+    "summary": "status / category pill",
+    "cluster": "Display"
+  },
+  {
+    "name": "Banner",
+    "summary": "full-width system / app message bar",
+    "cluster": "Feedback"
+  },
+  {
+    "name": "BrandIcon",
+    "summary": "third-party brand marks",
+    "cluster": "Display"
+  },
+  {
+    "name": "Breadcrumb",
+    "summary": "navigation trail",
+    "cluster": "Navigation"
+  },
+  {
+    "name": "Button",
+    "summary": "action triggers",
+    "cluster": "Forms"
+  },
+  {
+    "name": "ButtonGroup",
+    "summary": "joined Buttons + segmented control",
+    "cluster": "Forms"
+  },
+  {
+    "name": "Calendar",
+    "summary": "month / week / day / agenda views",
+    "cluster": "Display"
+  },
+  {
+    "name": "Card",
+    "summary": "bordered container",
+    "cluster": "Layout"
+  },
+  {
+    "name": "CatalogPicker",
+    "summary": "searchable card picker for a catalog",
+    "cluster": "Forms"
+  },
+  {
+    "name": "Chart",
+    "summary": "time-series chart for a dashboard widget",
+    "cluster": "Display"
+  },
+  {
+    "name": "ChatBubble",
+    "summary": "one chat message, plus ChatBubble.List (the role=\"log\" container)",
+    "cluster": "Feedback"
+  },
+  {
+    "name": "ChatLauncher",
+    "summary": "floating launcher + non-modal chat panel",
+    "cluster": "Feedback"
+  },
+  {
+    "name": "Checkbox",
+    "summary": "checkbox with native input + custom paint",
+    "cluster": "Forms"
+  },
+  {
+    "name": "CircularProgress",
+    "summary": "circular progress / spinner",
+    "cluster": "Display"
+  },
+  {
+    "name": "Cluster",
+    "summary": "horizontal layout that wraps",
+    "cluster": "Layout"
+  },
+  {
+    "name": "Code",
+    "summary": "inline <code> chip",
+    "cluster": "Display"
+  },
+  {
+    "name": "CodeBlock",
+    "summary": "highlighted, copyable code sample",
+    "cluster": "Display"
+  },
+  {
+    "name": "ColorPicker",
+    "summary": "controlled HEX color picker (popover + inline)",
+    "cluster": "Forms"
+  },
+  {
+    "name": "ConfirmationPopover",
+    "summary": "opinionated \"Are you sure?\" preset",
+    "cluster": "Overlays"
+  },
+  {
+    "name": "Constrain",
+    "summary": "size / flex constraint",
+    "cluster": "Layout"
+  },
+  {
+    "name": "CurrencySelect",
+    "summary": "ISO 4217 currency picker over Select",
+    "cluster": "Forms"
+  },
+  {
+    "name": "CursorPagination",
+    "summary": "prev / next for streams without total",
+    "cluster": "Display"
+  },
+  {
+    "name": "DashboardCanvas",
+    "summary": "2D snap-grid dashboard",
+    "cluster": "Display"
+  },
+  {
+    "name": "DashboardWidget",
+    "summary": "card for a DashboardCanvas cell",
+    "cluster": "Display"
+  },
+  {
+    "name": "DataTable",
+    "summary": "server-driven data table with column features",
+    "cluster": "Display"
+  },
+  {
+    "name": "DatePicker",
+    "summary": "single-date input + popover",
+    "cluster": "Forms"
+  },
+  {
+    "name": "DateRangePicker",
+    "summary": "date-range input + two-month popover",
+    "cluster": "Forms"
+  },
+  {
+    "name": "DateStrip",
+    "summary": "week of selectable day tiles",
+    "cluster": "Forms"
+  },
+  {
+    "name": "DefinitionList",
+    "summary": "semantic key/value pairs (dl / dt / dd)",
+    "cluster": "Display"
+  },
+  {
+    "name": "Divider",
+    "summary": "separator primitive",
+    "cluster": "Layout"
+  },
+  {
+    "name": "Dot",
+    "summary": "bare palette/tone colored circle",
+    "cluster": "Display"
+  },
+  {
+    "name": "Drawer",
+    "summary": "edge-anchored slide-in panel",
+    "cluster": "Overlays"
+  },
+  {
+    "name": "DropdownMenu",
+    "summary": "action menus from a trigger",
+    "cluster": "Overlays"
+  },
+  {
+    "name": "EmojiPicker",
+    "summary": "searchable emoji grid (reactions + input)",
+    "cluster": "Forms"
+  },
+  {
+    "name": "EmptyState",
+    "summary": "\"nothing here\" container",
+    "cluster": "Display"
+  },
+  {
+    "name": "EntityChip",
+    "summary": "inline entity-link chip",
+    "cluster": "Display"
+  },
+  {
+    "name": "ErrorState",
+    "summary": "page-level status / result screen",
+    "cluster": "Display"
+  },
+  {
+    "name": "Field",
+    "summary": "labeled-control unit",
+    "cluster": "Forms"
+  },
+  {
+    "name": "FileUpload",
+    "summary": "controlled file picker with dropzone",
+    "cluster": "Forms"
+  },
+  {
+    "name": "FilterChip",
+    "summary": "dismissible \"active filter\" pill",
+    "cluster": "Display"
+  },
+  {
+    "name": "FlowCanvas",
+    "summary": "pan/zoom canvas for directed node-edge diagrams",
+    "cluster": "Display"
+  },
+  {
+    "name": "FormRow",
+    "summary": "fields side by side",
+    "cluster": "Forms"
+  },
+  {
+    "name": "FormSection",
+    "summary": "titled group of fields",
+    "cluster": "Forms"
+  },
+  {
+    "name": "Grid",
+    "summary": "2D layout primitive",
+    "cluster": "Layout"
+  },
+  {
+    "name": "Highlight",
+    "summary": "temporary attention ring on any block",
+    "cluster": "Feedback"
+  },
+  {
+    "name": "HighlightedText",
+    "summary": "Text with matched runs in <mark>",
+    "cluster": "Display"
+  },
+  {
+    "name": "IconPicker",
+    "summary": "choose one glyph from a consumer catalog",
+    "cluster": "Forms"
+  },
+  {
+    "name": "IconTile",
+    "summary": "palette-colored icon frame",
+    "cluster": "Display"
+  },
+  {
+    "name": "Image",
+    "summary": "image with loading + error states",
+    "cluster": "Display"
+  },
+  {
+    "name": "ImageCrop",
+    "summary": "controlled image cropper",
+    "cluster": "Forms"
+  },
+  {
+    "name": "Indent",
+    "summary": "indent nested content by depth",
+    "cluster": "Layout"
+  },
+  {
+    "name": "InlineDatePicker",
+    "summary": "single-date calendar in flow",
+    "cluster": null
+  },
+  {
+    "name": "InlineDateRangePicker",
+    "summary": "date-range calendar in flow",
+    "cluster": null
+  },
+  {
+    "name": "Input",
+    "summary": "single-line text",
+    "cluster": "Forms"
+  },
+  {
+    "name": "Kanban",
+    "summary": "multi-column board (drag-to-reorder + cross-column drag with live reflow)",
+    "cluster": "Forms"
+  },
+  {
+    "name": "Kbd",
+    "summary": "keyboard-shortcut chips",
+    "cluster": "Display"
+  },
+  {
+    "name": "Lightbox",
+    "summary": "full-screen image & document gallery overlay",
+    "cluster": "Overlays"
+  },
+  {
+    "name": "Link",
+    "summary": "polymorphic styled anchor",
+    "cluster": "Navigation"
+  },
+  {
+    "name": "LinkCard",
+    "summary": "clickable, full-surface Card",
+    "cluster": "Navigation"
+  },
+  {
+    "name": "LiquidEditor",
+    "summary": "Liquid template editor",
+    "cluster": "Forms"
+  },
+  {
+    "name": "List",
+    "summary": "bulleted / numbered prose lists (ul / ol)",
+    "cluster": "Display"
+  },
+  {
+    "name": "LiveRegion",
+    "summary": "announcement region for consumer-level outcomes",
+    "cluster": "Accessibility"
+  },
+  {
+    "name": "LocaleProvider",
+    "summary": "locale Context",
+    "cluster": null
+  },
+  {
+    "name": "Logo",
+    "summary": "brand logo lockup",
+    "cluster": "Display"
+  },
+  {
+    "name": "Masonry",
+    "summary": "height-balanced masonry layout",
+    "cluster": "Layout"
+  },
+  {
+    "name": "MediaTile",
+    "summary": "media tile with caption, revealed actions and selection",
+    "cluster": "Display"
+  },
+  {
+    "name": "Modal",
+    "summary": "focus-locked dialog",
+    "cluster": "Overlays"
+  },
+  {
+    "name": "MoneyInput",
+    "summary": "currency picker + formatted decimal-string amount",
+    "cluster": "Forms"
+  },
+  {
+    "name": "OptionsPicker",
+    "summary": "filter picker (multi/single, grouped, searchable)",
+    "cluster": "Forms"
+  },
+  {
+    "name": "OtpInput",
+    "summary": "one-time-code field",
+    "cluster": "Forms"
+  },
+  {
+    "name": "Page",
+    "summary": "page-root layout primitive",
+    "cluster": "Layout"
+  },
+  {
+    "name": "PageHeader",
+    "summary": "top-of-page heading area",
+    "cluster": "Layout"
+  },
+  {
+    "name": "Pagination",
+    "summary": "numbered nav with windowing",
+    "cluster": "Display"
+  },
+  {
+    "name": "Palette",
+    "summary": "categorical color set",
+    "cluster": null
+  },
+  {
+    "name": "PasswordInput",
+    "summary": "password field with eye toggle + optional warnings",
+    "cluster": "Forms"
+  },
+  {
+    "name": "PasswordStrengthMeter",
+    "summary": "4-segment strength visualization",
+    "cluster": "Forms"
+  },
+  {
+    "name": "PersonDisplay",
+    "summary": "Avatar + name (+ optional description lines)",
+    "cluster": "Display"
+  },
+  {
+    "name": "PhoneInput",
+    "summary": "E.164 phone field with country picker",
+    "cluster": "Forms"
+  },
+  {
+    "name": "PillMenu",
+    "summary": "coloured value menu (status, type, priority…)",
+    "cluster": "Forms"
+  },
+  {
+    "name": "Popover",
+    "summary": "non-modal floating panel for interactive content",
+    "cluster": "Overlays"
+  },
+  {
+    "name": "Progress",
+    "summary": "linear progress bar",
+    "cluster": "Display"
+  },
+  {
+    "name": "QrCode",
+    "summary": "scannable QR code",
+    "cluster": "Display"
+  },
+  {
+    "name": "Radio",
+    "summary": "single radio button",
+    "cluster": "Forms"
+  },
+  {
+    "name": "RadioGroup",
+    "summary": "fieldset wrapper for related radios",
+    "cluster": null
+  },
+  {
+    "name": "Rail",
+    "summary": "collapsible left-side navigation",
+    "cluster": "Navigation"
+  },
+  {
+    "name": "RelativeDateInput",
+    "summary": "editor for a relative date or date-range expression",
+    "cluster": "Forms"
+  },
+  {
+    "name": "RichText",
+    "summary": "read-only rich-text renderer",
+    "cluster": "Display"
+  },
+  {
+    "name": "RichTextEditor",
+    "summary": "controlled rich-text editor (contentEditable)",
+    "cluster": "Forms"
+  },
+  {
+    "name": "Screen",
+    "summary": "full-bleed / centered screen layout",
+    "cluster": "Layout"
+  },
+  {
+    "name": "ScrollArea",
+    "summary": "height-capped vertical scroll region",
+    "cluster": "Layout"
+  },
+  {
+    "name": "Select",
+    "summary": "value picker (single, multi, searchable, async, creatable)",
+    "cluster": "Forms"
+  },
+  {
+    "name": "SettingRow",
+    "summary": "one row of a settings screen",
+    "cluster": "Forms"
+  },
+  {
+    "name": "Skeleton",
+    "summary": "loading placeholder",
+    "cluster": "Display"
+  },
+  {
+    "name": "Slider",
+    "summary": "controlled slider (single + range, horizontal + vertical)",
+    "cluster": "Forms"
+  },
+  {
+    "name": "SlotGrid",
+    "summary": "grouped time-slot tiles",
+    "cluster": "Forms"
+  },
+  {
+    "name": "SocialButton",
+    "summary": "provider sign-in button",
+    "cluster": "Forms"
+  },
+  {
+    "name": "Sortable",
+    "summary": "drag-to-reorder list (single column)",
+    "cluster": "Forms"
+  },
+  {
+    "name": "SortableGroup",
+    "summary": "multi-container sortable (drag between lists)",
+    "cluster": "Forms"
+  },
+  {
+    "name": "Sparkline",
+    "summary": "compact trend graphic for KPI cards",
+    "cluster": "Display"
+  },
+  {
+    "name": "Split",
+    "summary": "master–detail two-pane layout",
+    "cluster": "Layout"
+  },
+  {
+    "name": "Stack",
+    "summary": "vertical layout",
+    "cluster": "Layout"
+  },
+  {
+    "name": "StagePath",
+    "summary": "chevron row of record stages",
+    "cluster": "Display"
+  },
+  {
+    "name": "StatGroup",
+    "summary": "responsive grid of KPI tiles",
+    "cluster": "Display"
+  },
+  {
+    "name": "StatTile",
+    "summary": "one KPI tile inside a StatGroup",
+    "cluster": null
+  },
+  {
+    "name": "Sticky",
+    "summary": "sticky-positioning primitive",
+    "cluster": "Layout"
+  },
+  {
+    "name": "Switch",
+    "summary": "binary toggle",
+    "cluster": "Forms"
+  },
+  {
+    "name": "Table",
+    "summary": "tabular data primitive",
+    "cluster": "Display"
+  },
+  {
+    "name": "TableOfContents",
+    "summary": "\"On this page\" navigation",
+    "cluster": "Navigation"
+  },
+  {
+    "name": "Tabs",
+    "summary": "tab strip (horizontal or vertical)",
+    "cluster": "Navigation"
+  },
+  {
+    "name": "Text",
+    "summary": "body / inline text",
+    "cluster": "Display"
+  },
+  {
+    "name": "Textarea",
+    "summary": "multi-line text",
+    "cluster": "Forms"
+  },
+  {
+    "name": "Thread",
+    "summary": "nested-reply threading primitive",
+    "cluster": "Display"
+  },
+  {
+    "name": "TimeField",
+    "summary": "standalone time-of-day input",
+    "cluster": "Forms"
+  },
+  {
+    "name": "Timeline",
+    "summary": "vertical activity-feed primitive",
+    "cluster": "Display"
+  },
+  {
+    "name": "Title",
+    "summary": "semantic heading",
+    "cluster": "Display"
+  },
+  {
+    "name": "ToastViewport",
+    "summary": "transient notifications",
+    "cluster": null
+  },
+  {
+    "name": "Tooltip",
+    "summary": "small floating label on hover / keyboard focus",
+    "cluster": "Overlays"
+  },
+  {
+    "name": "TopBar",
+    "summary": "sticky application top bar",
+    "cluster": "Navigation"
+  },
+  {
+    "name": "Tour",
+    "summary": "guided tour / onboarding walkthrough",
+    "cluster": "Overlays"
+  },
+  {
+    "name": "TreeView",
+    "summary": "lazily loaded hierarchy, as a file list or an org chart",
+    "cluster": "Display"
+  },
+  {
+    "name": "VisuallyHidden",
+    "summary": "content for assistive tech only",
+    "cluster": "Accessibility"
+  },
+  {
+    "name": "WidgetPreview",
+    "summary": "decorative miniature of a widget kind",
+    "cluster": "Display"
+  },
+  {
+    "name": "useBelowBreakpoint",
+    "summary": "viewport breakpoint hook",
+    "cluster": null
+  },
+  {
+    "name": "useMonth",
+    "summary": "useMonth, useWeek, useDay, useAgenda",
+    "cluster": null
+  }
+]
