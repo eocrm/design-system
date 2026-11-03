@@ -389,4 +389,91 @@ describe('FunnelChart', () => {
       expect(stageGroups().some((g) => g.hasAttribute('data-dimmed'))).toBe(false);
     });
   });
+
+  describe('vertical layout', () => {
+    const NARROW = 5 * 96 - 1;
+    const six = [...stages, { key: 'x', label: 'Extra', value: 10 }];
+
+    it('switches below the min width per stage: one row per stage, no shapes', () => {
+      const layout = stubLayout(NARROW, 300);
+      renderFunnel();
+      layout.fire();
+      expect(screen.getByRole('figure')).toHaveAttribute('data-orientation', 'vertical');
+      expect(document.querySelector('svg')).toBeNull();
+      const rows = document.querySelectorAll('[data-stage-cell]');
+      expect(rows).toHaveLength(5);
+      const won = rows[4];
+      expect(won).toHaveTextContent('Won');
+      expect(won).toHaveTextContent('50');
+      expect(won).toHaveTextContent('40%');
+      // No pill on the first stage.
+      expect(rows[0]).not.toHaveTextContent('%');
+    });
+
+    it('the switch follows the stage count', () => {
+      const layout = stubLayout(5 * 96, 300);
+      const { rerender } = renderFunnel();
+      layout.fire();
+      const fig = screen.getByRole('figure');
+      expect(fig).toHaveAttribute('data-orientation', 'horizontal');
+      rerender(
+        <LocaleProvider locale="en-GB">
+          <FunnelChart {...base} stages={six} />
+        </LocaleProvider>,
+      );
+      expect(fig).toHaveAttribute('data-orientation', 'vertical');
+    });
+
+    it('band width is the stage height ratio', () => {
+      const layout = stubLayout(NARROW, 300);
+      renderFunnel();
+      layout.fire();
+      const band = document.querySelector<HTMLElement>('[data-stage-cell="q"] [data-band]')!;
+      expect(band.style.inlineSize).toBe('50%');
+    });
+
+    it('read-only: ArrowDown/ArrowUp inspect stages; Escape dismisses', async () => {
+      const layout = stubLayout(NARROW, 300);
+      renderFunnel();
+      layout.fire();
+      const plot = screen.getByRole('group', { name: 'Pipeline' });
+      plot.focus();
+      await userEvent.keyboard('{ArrowDown}');
+      await act(async () => {
+        await new Promise((r) => setTimeout(r, PAST_ANNOUNCE_DELAY_MS));
+      });
+      expect(tooltip()).toHaveTextContent('Leads');
+      expect(document.querySelector('[aria-live="polite"]')).toHaveTextContent('Leads');
+      expect(document.querySelector('[data-stage-cell="q"]')).toHaveAttribute('data-dimmed');
+      await userEvent.keyboard('{ArrowDown}{ArrowDown}{ArrowUp}');
+      expect(tooltip()).toHaveTextContent('Qualified');
+      await userEvent.keyboard('{Escape}');
+      expect(tooltip()).toBeNull();
+    });
+
+    it('hovering a row activates its stage', () => {
+      const layout = stubLayout(NARROW, 300);
+      renderFunnel();
+      layout.fire();
+      fireEvent.pointerEnter(document.querySelector('[data-stage-cell="p"]')!, {
+        pointerType: 'mouse',
+      });
+      expect(tooltip()).toHaveTextContent('Proposal');
+      fireEvent.pointerLeave(screen.getByRole('group', { name: 'Pipeline' }), {
+        pointerType: 'mouse',
+      });
+      expect(tooltip()).toBeNull();
+    });
+
+    it('clickable: clicking the Proposal row calls onStageClick', async () => {
+      const layout = stubLayout(NARROW, 300);
+      const onStageClick = vi.fn();
+      renderFunnel({ onStageClick });
+      layout.fire();
+      await userEvent.click(screen.getByRole('button', { name: /^Proposal:/ }));
+      expect(onStageClick).toHaveBeenCalledTimes(1);
+      expect(onStageClick.mock.calls[0][0]).toBe(stages[2]);
+      expect(onStageClick.mock.calls[0][1]).toBe(2);
+    });
+  });
 });

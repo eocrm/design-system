@@ -2,6 +2,7 @@ import {
   forwardRef,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -137,13 +138,14 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
   const n = resolved.length;
   // Unmeasured (first paint, SSR): assume horizontal rather than flash the narrow layout.
   const orientation = rootSize.width > 0 ? orientationFor(rootSize.width, n) : 'horizontal';
+  const vertical = orientation === 'vertical';
 
   const geometry = useMemo(
     () =>
-      !empty && size.width > 0 && size.height > 0
+      !empty && !vertical && size.width > 0 && size.height > 0
         ? stageGeometry({ stages: resolved, width: size.width, height: size.height, shape })
         : null,
-    [empty, resolved, size.width, size.height, shape],
+    [empty, vertical, resolved, size.width, size.height, shape],
   );
 
   const [active, setActive] = useState<number | null>(null);
@@ -171,6 +173,19 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
     if (clickable && e.key !== 'Escape') return;
     let next: number | null;
     switch (e.key) {
+      case 'ArrowDown':
+      case 'ArrowUp':
+        // Horizontal: leave Up/Down to page scrolling.
+        if (!vertical) return;
+        next =
+          e.key === 'ArrowDown'
+            ? current === null
+              ? 0
+              : Math.min(n - 1, current + 1)
+            : current === null
+              ? n - 1
+              : Math.max(0, current - 1);
+        break;
       case 'ArrowRight':
         next = current === null ? 0 : Math.min(n - 1, current + 1);
         break;
@@ -245,9 +260,27 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
     return `${parts.join('. ')}.`;
   };
 
-  // One footer cell per stage; a button when clickable. Shared by both orientations.
+  // One cell per stage (horizontal: footer column; vertical: a row with its band); a button when
+  // clickable. Spans, not divs, since the cell may be a <button>.
   const renderCell = (s: (typeof resolved)[number], i: number) => {
-    const content = (
+    const content = vertical ? (
+      <>
+        <span className={styles.bandTrack}>
+          <span
+            className={styles.band}
+            data-band=""
+            style={{ inlineSize: `${s.heightRatio * 100}%` }}
+          />
+        </span>
+        <span className={styles.line}>
+          <span className={styles.label}>{s.label}</span>
+          <span className={styles.value}>{formatValue(s.value)}</span>
+          {i > 0 && s.stepRatio !== null && (
+            <span className={styles.rowPill}>{pct(s.stepRatio)}</span>
+          )}
+        </span>
+      </>
+    ) : (
       <>
         <span className={styles.value}>{formatValue(s.value)}</span>
         <span className={styles.label}>{s.label}</span>
@@ -258,6 +291,8 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
       style: stageStyle(s.slot),
       'data-stage-cell': s.key,
       'data-dimmed': dimmed(i),
+      // Vertical rows are hit-tested per row; horizontal uses the plot's x position (stageIndexAt).
+      onPointerEnter: vertical ? () => inspect(i, 'pointer') : undefined,
     };
     return onStageClick ? (
       <button
@@ -297,10 +332,32 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
     stage && geometry
       ? geometry[current!].cy - Math.max(MIN_THICKNESS / 2, (stage.heightRatio * size.height) / 2)
       : undefined;
-  const point = useMemo(
+  const horizontalPoint = useMemo(
     () => (anchorX === undefined || anchorY === undefined ? null : { x: anchorX, y: anchorY }),
     [anchorX, anchorY],
   );
+
+  // Vertical: rows scroll inside the plot, so read the active band's position from the DOM
+  // (bounding rects already include the scroll offset). Keyboard inspection scrolls the row in first.
+  const [verticalPoint, setVerticalPoint] = useState<{ x: number; y: number } | null>(null);
+  useLayoutEffect(() => {
+    const row =
+      vertical && activeKey !== null && plotEl
+        ? plotEl.querySelector<HTMLElement>(`[data-stage-cell="${CSS.escape(activeKey)}"]`)
+        : null;
+    const band = row?.querySelector<HTMLElement>('[data-band]');
+    if (!row || !band || !plotEl) {
+      setVerticalPoint(null);
+      return;
+    }
+    if (activeSource === 'keyboard') row.scrollIntoView?.({ block: 'nearest' });
+    const p = plotEl.getBoundingClientRect();
+    const b = band.getBoundingClientRect();
+    const x = b.left - p.left + b.width / 2;
+    const y = b.top - p.top;
+    setVerticalPoint((prev) => (prev && prev.x === x && prev.y === y ? prev : { x, y }));
+  }, [vertical, activeKey, activeSource, plotEl]);
+  const point = vertical ? verticalPoint : horizontalPoint;
 
   const liveText =
     activeSource === 'keyboard' && stage
@@ -359,56 +416,62 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
         }
         onBlur={onBlur}
       >
-        <div ref={setShapesEl} className={styles.shapes} onClick={onStripClick}>
-          {geometry && (
-            <svg
-              className={styles.svg}
-              width={size.width}
-              height={size.height}
-              aria-hidden="true"
-              focusable="false"
-            >
-              {resolved.map((s, i) => {
-                const g = geometry[i];
-                const pill = i > 0 && s.stepRatio !== null ? pct(s.stepRatio) : null;
-                const pillWidth = pill ? pill.length * PILL_CHAR_WIDTH + PILL_PADDING_X * 2 : 0;
-                return (
-                  <g
-                    key={s.key}
-                    className={styles.stage}
-                    style={stageStyle(s.slot)}
-                    data-stage={s.key}
-                    data-dimmed={dimmed(i)}
-                  >
-                    <path className={styles.shape} d={g.d} />
-                    {pill && (
-                      <>
-                        <rect
-                          className={styles.pill}
-                          x={g.cx - pillWidth / 2}
-                          y={g.cy - PILL_HEIGHT / 2}
-                          width={pillWidth}
-                          height={PILL_HEIGHT}
-                          rx={PILL_HEIGHT / 2}
-                        />
-                        <text
-                          className={styles.pillText}
-                          x={g.cx}
-                          y={g.cy}
-                          dy="0.35em"
-                          textAnchor="middle"
-                        >
-                          {pill}
-                        </text>
-                      </>
-                    )}
-                  </g>
-                );
-              })}
-            </svg>
-          )}
-        </div>
-        <div className={styles.footer}>{resolved.map(renderCell)}</div>
+        {vertical ? (
+          resolved.map(renderCell)
+        ) : (
+          <>
+            <div ref={setShapesEl} className={styles.shapes} onClick={onStripClick}>
+              {geometry && (
+                <svg
+                  className={styles.svg}
+                  width={size.width}
+                  height={size.height}
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  {resolved.map((s, i) => {
+                    const g = geometry[i];
+                    const pill = i > 0 && s.stepRatio !== null ? pct(s.stepRatio) : null;
+                    const pillWidth = pill ? pill.length * PILL_CHAR_WIDTH + PILL_PADDING_X * 2 : 0;
+                    return (
+                      <g
+                        key={s.key}
+                        className={styles.stage}
+                        style={stageStyle(s.slot)}
+                        data-stage={s.key}
+                        data-dimmed={dimmed(i)}
+                      >
+                        <path className={styles.shape} d={g.d} />
+                        {pill && (
+                          <>
+                            <rect
+                              className={styles.pill}
+                              x={g.cx - pillWidth / 2}
+                              y={g.cy - PILL_HEIGHT / 2}
+                              width={pillWidth}
+                              height={PILL_HEIGHT}
+                              rx={PILL_HEIGHT / 2}
+                            />
+                            <text
+                              className={styles.pillText}
+                              x={g.cx}
+                              y={g.cy}
+                              dy="0.35em"
+                              textAnchor="middle"
+                            >
+                              {pill}
+                            </text>
+                          </>
+                        )}
+                      </g>
+                    );
+                  })}
+                </svg>
+              )}
+            </div>
+            <div className={styles.footer}>{resolved.map(renderCell)}</div>
+          </>
+        )}
       </div>
       {footnoteEl}
       <ChartTooltip

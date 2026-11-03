@@ -122,6 +122,60 @@
   font-size: var(--funnel-chart-label-size);
 }
 
+// Vertical layout: the plot is a list of rows that scrolls as a last resort. `shape` has no
+// effect here; bands are rounded bars.
+.root[data-orientation='vertical'] .plot {
+  grid-template-rows: none;
+  grid-auto-rows: min-content;
+  align-content: start;
+  gap: var(--funnel-chart-row-gap);
+  overflow-y: auto;
+
+  // Room for the stage buttons' focus rings, which the scroll container would clip.
+  padding: calc(var(--ring-width) + var(--ring-offset));
+}
+
+.root[data-orientation='vertical'] .cell {
+  justify-items: stretch;
+  gap: var(--space-1);
+  padding-inline: 0;
+}
+
+.bandTrack {
+  display: flex;
+  justify-content: center;
+  block-size: var(--funnel-chart-row-band-height);
+}
+
+.band {
+  display: block;
+  min-inline-size: var(--funnel-chart-row-band-min);
+  border-radius: var(--radius-full);
+  background: var(--chart-series-color, currentColor);
+}
+
+.line {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: baseline;
+  gap: var(--space-2);
+}
+
+.root[data-orientation='vertical'] .value {
+  font-size: var(--funnel-chart-label-size);
+}
+
+.rowPill {
+  padding-inline: var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--funnel-chart-row-pill-bg);
+  color: var(--funnel-chart-pill-fg);
+  font-size: var(--funnel-chart-pill-size);
+  font-weight: var(--font-weight-semibold);
+  font-variant-numeric: tabular-nums;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .stage,
   .shape,
