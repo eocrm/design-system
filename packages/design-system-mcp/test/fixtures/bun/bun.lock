@@ -1,0 +1,6 @@
+{
+  "lockfileVersion": 1,
+  "packages": {
+    "@eocrm/design-system": ["@eocrm/design-system@0.6.18", "", {}, "sha512-x"],
+  }
+}
