@@ -3346,7 +3346,7 @@
           "type": "TextAlign",
           "required": false,
           "default": "",
-          "description": "Text alignment. Defaults to `'left'`."
+          "description": "Text alignment. No default — omitted, Text sets no `text-align` and\ninherits it from its container (e.g. a `Table.Cell align=\"end\"` keeps a\nText value at the end). Pass `align` only to override the container.\n- `start` — start of the line in the writing direction (left in LTR, right in RTL). Prefer over `left`.\n- `end` — end of the line in the writing direction (right in LTR, left in RTL). Prefer over `right`.\n- `center` — centred.\n- `left` — physical left in every direction; wrong in RTL, use `start`.\n- `right` — physical right in every direction; wrong in RTL, use `end`."
         },
         {
           "name": "truncate",
@@ -4091,14 +4091,14 @@
           "type": "ListSize",
           "required": false,
           "default": "",
-          "description": "Marker scale; use `'heading'` when each item starts with a `Title size=\"xl\"`. See `ListSize`. Default `'body'`."
+          "description": "Marker scale; no effect on `variant=\"plain\"`. Use `'heading'` when each item starts with a `Title size=\"xl\"`. See `ListSize`. Default `'body'`."
         },
         {
           "name": "numberStyle",
           "type": "ListNumberStyle",
           "required": false,
           "default": "",
-          "description": "Number look; only applies to `variant=\"number\"`. See `ListNumberStyle`. Default `'plain'`."
+          "description": "Number look; only applies to `variant=\"number\"` (not `'plain'`). See `ListNumberStyle`. Default `'plain'`."
         },
         {
           "name": "children",
@@ -6651,7 +6651,7 @@
           "type": "TextAlign",
           "required": false,
           "default": "",
-          "description": "Text alignment. Defaults to `'left'`."
+          "description": "Text alignment. No default — omitted, Text sets no `text-align` and\ninherits it from its container (e.g. a `Table.Cell align=\"end\"` keeps a\nText value at the end). Pass `align` only to override the container.\n- `start` — start of the line in the writing direction (left in LTR, right in RTL). Prefer over `left`.\n- `end` — end of the line in the writing direction (right in LTR, left in RTL). Prefer over `right`.\n- `center` — centred.\n- `left` — physical left in every direction; wrong in RTL, use `start`.\n- `right` — physical right in every direction; wrong in RTL, use `end`."
         },
         {
           "name": "truncate",
@@ -7357,7 +7357,7 @@
     "ImageCropAspectRatio": "number",
     "CropArea": "{ x: number; y: number; width: number; height: number }",
     "DataTableInstance": "DataTableInstance<T>",
-    "ListVariant": "\"number\" | \"bullet\"",
+    "ListVariant": "\"number\" | \"bullet\" | \"plain\"",
     "ListGap": "\"sm\" | \"md\" | \"xs\"",
     "ListSize": "\"body\" | \"heading\"",
     "ListNumberStyle": "\"plain\" | \"badge\"",
@@ -7386,7 +7386,7 @@
     "TextSize": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"inherit\"",
     "TextTone": "\"success\" | \"warning\" | \"danger\" | \"accent\" | \"default\" | \"muted\" | \"subtle\"",
     "TextWeight": "\"medium\" | \"semibold\" | \"regular\" | \"bold\"",
-    "TextAlign": "\"left\" | \"right\" | \"center\"",
+    "TextAlign": "\"left\" | \"right\" | \"start\" | \"end\" | \"center\"",
     "TitleOrder": "1 | 2 | 3 | 4 | 5 | 6",
     "TitleSize": "\"sm\" | \"md\" | \"lg\" | \"xl\" | \"xs\" | \"2xl\" | \"3xl\"",
     "TitleTone": "\"danger\" | \"accent\" | \"default\" | \"muted\" | \"subtle\"",
