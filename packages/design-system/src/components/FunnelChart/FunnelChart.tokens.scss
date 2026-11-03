@@ -7,15 +7,15 @@
   --funnel-chart-gap: var(--space-2);
 
   // Ramp: stage i of n is ramp-color mixed (oklab) toward ramp-target by max-mix * i / (n - 1). Light:
-  // target is the surface, 48% keeps the lightest step >= 2:1 against it. Dark (below): target is
-  // --color-fg so later stages get paler, not muddier; 65% passes validate_palette.js --ordinal
-  // --mode dark for 3-4 stages (6 stages: ΔL ~0.04), palest 4-stage step still reads as the series-1 hue.
-  // ponytail: from 5 stages on, adjacent steps fall under the 0.06 OKLCH ΔL ideal (~0.03 at 8); labels,
-  // the vertical table and the tooltip carry identity. A wider ramp needs a darker first stage than series-1.
+  // target is the surface; 38% keeps the palest step at least 2-to-1 against it for every accent's
+  // series 1 (teal, the lightest lead, is the binding case). Dark (below): target is --color-fg so later
+  // stages get paler, not muddier, and stay far above that floor. Both gated per accent in contrast.test.ts.
+  // ponytail: in light, from 4 stages on adjacent steps fall under the 0.06 OKLCH ΔL ideal (~0.02 at 8);
+  // labels, the vertical table and the tooltip carry identity. A wider ramp needs a darker first stage.
   --funnel-chart-ramp-color: var(--chart-series-1);
   --funnel-chart-surface: var(--color-bg);
   --funnel-chart-ramp-target: var(--funnel-chart-surface);
-  --funnel-chart-ramp-max-mix: 48%;
+  --funnel-chart-ramp-max-mix: 38%;
 
   // Hero: the first stage's value and label inside its band (horizontal). Paired with the band
   // (--funnel-chart-ramp-color, i.e. --chart-series-1), not the accent: the surface colour knocked out

@@ -451,21 +451,119 @@ describe('the accent overrides are wired the way the gates assume', () => {
  */
 const CHART_RELIEF = { theme: 'light', hex: '#cfa529', floor: 2.3 } as const;
 
+/** Every chart slot the generated tokens declare, read from the file rather than listed. */
+const CHART_SLOTS = [
+  ...new Set([...TOKENS.matchAll(/--color-chart-series-(\d+):/g)].map((m) => Number(m[1]))),
+];
+
 describe.each(THEMED_ACCENTS)(
   'chart series palette in %s theme, %s accent',
   (theme, _accent, source) => {
     // WCAG 1.4.11: plotted marks are graphical objects needed to read the chart.
-    // Card/DashboardWidget surface is --color-bg in both themes. Exactly 8 slots.
-    it.each([1, 2, 3, 4, 5, 6, 7, 8])(
-      'chart series %i is a 3:1 graphical object on the card surface',
-      (n) => {
-        const series = tokenValue(`--color-chart-series-${n}`, source);
-        const relief = theme === CHART_RELIEF.theme && series.toLowerCase() === CHART_RELIEF.hex;
-        expect(contrast(series, tokenValue('--color-bg', source))).toBeGreaterThanOrEqual(
-          relief ? CHART_RELIEF.floor : 3,
-        );
-      },
-    );
+    // Card/DashboardWidget surface is --color-bg in both themes.
+    it('declares chart slots to check', () => expect(CHART_SLOTS.length).toBeGreaterThan(1));
+    it.each(CHART_SLOTS)('chart series %i is a 3:1 graphical object on the card surface', (n) => {
+      const series = tokenValue(`--color-chart-series-${n}`, source);
+      const relief = theme === CHART_RELIEF.theme && series.toLowerCase() === CHART_RELIEF.hex;
+      expect(contrast(series, tokenValue('--color-bg', source))).toBeGreaterThanOrEqual(
+        relief ? CHART_RELIEF.floor : 3,
+      );
+    });
+  },
+);
+
+/** Hex -> OKLab (Ottosson), and back with sRGB gamut clipping — what `color-mix(in oklab)` does. */
+function toOklab(hex: string): number[] {
+  const lin = [0, 2, 4].map((i) => {
+    const c = parseInt(hex.slice(1 + i, 3 + i), 16) / 255;
+    return c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  });
+  const apply = (m: number[][], v: number[]) =>
+    m.map((row) => row.reduce((sum, k, i) => sum + k * v[i]!, 0));
+  const lms = apply(
+    [
+      [0.4122214708, 0.5363325363, 0.0514459929],
+      [0.2119034982, 0.6806995451, 0.1073969566],
+      [0.0883024619, 0.2817188376, 0.6299787005],
+    ],
+    lin,
+  ).map(Math.cbrt);
+  return apply(
+    [
+      [0.2104542553, 0.793617785, -0.0040720468],
+      [1.9779984951, -2.428592205, 0.4505937099],
+      [0.0259040371, 0.7827717662, -0.808675766],
+    ],
+    lms,
+  );
+}
+
+function fromOklab(lab: number[]): string {
+  const apply = (m: number[][], v: number[]) =>
+    m.map((row) => row.reduce((sum, k, i) => sum + k * v[i]!, 0));
+  const lms = apply(
+    [
+      [1, 0.3963377774, 0.2158037573],
+      [1, -0.1055613458, -0.0638541728],
+      [1, -0.0894841775, -1.291485548],
+    ],
+    lab,
+  ).map((c) => c ** 3);
+  const lin = apply(
+    [
+      [4.0767416621, -3.3077115913, 0.2309699292],
+      [-1.2684380046, 2.6097574011, -0.3413193965],
+      [-0.0041960863, -0.7034186147, 1.707614701],
+    ],
+    lms,
+  );
+  return `#${lin
+    .map((c) => {
+      const v = Math.min(1, Math.max(0, c));
+      const s = v <= 0.0031308 ? v * 12.92 : 1.055 * v ** (1 / 2.4) - 0.055;
+      return Math.round(s * 255)
+        .toString(16)
+        .padStart(2, '0');
+    })
+    .join('')}`;
+}
+
+/**
+ * FunnelChart's palest ramp step: `color-mix(in oklab, ramp-color, ramp-target max-mix)`
+ * (FunnelChart.tsx). Series 1 follows the accent, so every accent's lead hue must keep
+ * that step visible on the surface. The mix and target are read from the token files.
+ */
+describe.each(THEMED_ACCENTS)(
+  'FunnelChart palest ramp step in %s theme, %s accent',
+  (theme, _accent, source) => {
+    const read = (path: string) => readFileSync(resolve(__dirname, path), 'utf8');
+    const funnel = stripComments(read('../components/FunnelChart/FunnelChart.tokens.scss'));
+    const chart = stripComments(read('../components/Chart/Chart.tokens.scss'));
+    // The one block opened by exactly `selector {` (the files start with `@use`, which
+    // blockBody() would fold into the selector).
+    const body = (src: string, selector: string) => {
+      const parts = src.split(`${selector} {`);
+      if (parts.length !== 2) throw new Error(`${selector} has ${parts.length - 1} blocks`);
+      return parts[1]!.split('}')[0]!;
+    };
+    // Theme blocks first: tokenValue() takes the first declaration in scope.
+    const scope = [
+      ...(theme === 'dark' ? [body(funnel, ":root[data-theme='dark']")] : []),
+      body(funnel, ':root'),
+      body(chart, ':root'),
+      source,
+    ].join('\n');
+    it('stays >= 2:1 on the surface', () => {
+      const mix = parseFloat(scope.match(/--funnel-chart-ramp-max-mix:\s*([\d.]+)%/)![1]!) / 100;
+      const [from, to] = ['--funnel-chart-ramp-color', '--funnel-chart-ramp-target'].map((name) =>
+        toOklab(tokenValue(name, scope)),
+      );
+      const palest = fromOklab(from!.map((c, i) => c + (to![i]! - c) * mix));
+      expect(mix).toBeGreaterThan(0);
+      expect(contrast(palest, tokenValue('--funnel-chart-surface', scope))).toBeGreaterThanOrEqual(
+        2,
+      );
+    });
   },
 );
 
