@@ -53,7 +53,7 @@ Inline this in your app's `<head>` **before** your bundle loads. It applies the 
 
 ## Theming via component tokens
 
-Every component ships a `Component.tokens.scss` file alongside its `.module.scss`, defining `--<component>-<part>-<state>` CSS custom properties at `:root`. The `.module.scss` references those tokens instead of the global primitives. This lets consumers re-theme one component without affecting others.
+Every component defines `--<component>-<part>-<state>` CSS custom properties at `:root` (in the shipped CSS), and its styles reference those tokens instead of the global primitives. This lets consumers re-theme one component without affecting others.
 
 **Pattern:**
 
@@ -90,6 +90,6 @@ Every component ships a `Component.tokens.scss` file alongside its `.module.scss
 <Button style={{ '--button-bg': 'red' } as React.CSSProperties}>Delete</Button>
 ```
 
-The authoritative list of tokens per component lives in that component's `<Name>.tokens.scss` file. Read it to see what's available.
+The authoritative list of tokens per component is in that component's `docs/components/<Name>.md`; they are plain `--<component>-*` custom properties in the compiled CSS, inspectable in devtools.
 
 **Deprecated:** `--color-badge-<tone>-bg/-fg` tokens are aliased to the new `--badge-bg-<tone>` / `--badge-fg-<tone>` tokens. They still work but will be removed in a future major version.

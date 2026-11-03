@@ -27,7 +27,7 @@ Use:
 
 ```ts
 // app root, once
-import '@eocrm/design-system/styles/global.scss';
+import '@eocrm/design-system/styles/global.css';
 
 // anywhere
 import { Button, Stack, Cluster, Card, Input, Avatar, Badge, Tabs } from '@eocrm/design-system';

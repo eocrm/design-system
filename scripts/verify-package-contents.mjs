@@ -65,20 +65,10 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
   let failed = false;
   for (const pkg of PACKAGES) {
-    // prepack builds dist/ and writes to stdout, which would corrupt --json: build explicitly
-    // (output to stderr), then pack with scripts off.
-    execFileSync('npm', ['run', 'prepack', '--workspace', pkg.name, '--if-present'], {
+    const out = execFileSync('npm', ['pack', '--dry-run', '--json', '--workspace', pkg.name], {
+      encoding: 'utf8',
       cwd: repoRoot,
-      stdio: ['ignore', process.stderr, 'inherit'],
     });
-    const out = execFileSync(
-      'npm',
-      ['pack', '--dry-run', '--json', '--ignore-scripts', '--workspace', pkg.name],
-      {
-        encoding: 'utf8',
-        cwd: repoRoot,
-      },
-    );
     const [{ files }] = JSON.parse(out);
     const paths = files.map((f) => f.path);
     const pkgJson = JSON.parse(readFileSync(join(repoRoot, pkg.dir, 'package.json'), 'utf8'));

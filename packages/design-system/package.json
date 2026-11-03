@@ -1,7 +1,7 @@
 {
   "name": "@eocrm/design-system",
   "version": "0.0.0",
-  "description": "Design system for the EOCRM product — React 19 + SCSS modules + CSS custom properties.",
+  "description": "Design system for the EOCRM product — React 19 + CSS custom properties.",
   "license": "Apache-2.0",
   "type": "module",
   "main": "./dist/index.js",
@@ -68,7 +68,7 @@
     "vitest": "^4.1.7"
   },
   "scripts": {
-    "prepack": "npm run build",
+    "prepack": "npm run build 1>&2",
     "typecheck": "tsc --noEmit",
     "build": "vite build -c vite.lib.config.ts && tsc -p tsconfig.build.json && node scripts/build-styles.mjs && node scripts/fix-dts-specifiers.mjs",
     "test": "vitest run",
