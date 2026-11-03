@@ -55,7 +55,7 @@ English is built in; every other locale is passed via `messages`. A non-`en` `lo
 - Missing locale keys do NOT fall back to `en` — `I18nProvider` uses the one locale catalogue and `useTranslation` warns and returns the literal key string. The real guard is the type: `en` and `ru` are both annotated `: Messages` (total, not partial), so a missing key is a `tsc` error and cannot ship.
 - No provider at all = `en` defaults.
 
-**Available locales:** `'en'` (default), `'ru'`. v1.
+**Shipped catalogs:** `'en'` (default, built in), `'ru'` (`messages={ru}`). Any other locale code works with your own `Messages` catalog (`locale="de" messages={de}`). In a Next.js app router, mount the provider from a `'use client'` file — see [docs/setup.md](docs/setup.md).
 
 **`I18nProvider` vs `LocaleProvider` — pair them.** `I18nProvider` carries the message catalog (translated strings). `LocaleProvider` carries the BCP-47 tag used by `Intl.*` formatters inside Calendar / DatePicker / DateRangePicker (month names, weekday order, date-range formatting). They are independent — a Russian app should wrap with BOTH so visible strings AND Intl-rendered dates speak the right language:
 

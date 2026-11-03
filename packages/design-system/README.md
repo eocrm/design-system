@@ -55,7 +55,7 @@ Importing `@eocrm/design-system/styles/global.css` once at your app root applies
 2. **Modern reset** — including `* { margin: 0 }`. **All default browser margins on every element are zeroed.** Headings, paragraphs, lists have no intrinsic vertical rhythm; space them via `Stack`/`Cluster` or with the parent's own margin in CSS. The document background uses `--document-background` (default `var(--color-bg-subtle)`) so route transitions between full-screen surfaces do not flash a different base color; override that token after the global import for a different application canvas. The reset also applies `scrollbar-width: thin` + a token-colored `scrollbar-color` to every element, so **every** scroll container — library components and your own — gets a thin themed scrollbar instead of the OS default. (One deliberate exception: a collapsed `<Rail>` hides its bar entirely, since a gutter is about a quarter of the 56px rail's inner width.) It's declared at specificity 0-0-0; opt a scroller out with its own `scrollbar-width: auto` / `scrollbar-color: auto`. Note that Chromium ignores `::-webkit-scrollbar` rules on any scroller where these standard properties are set — if you already style scrollbars that way, they'll stop applying.
 3. **Base typography** — `body` font + size, `h1`–`h4` sizes, link color. Global rules, not scoped.
 
-If you need only the tokens (you're providing your own reset), import `@eocrm/design-system/styles/tokens.css` directly. Sass variables and mixins come from `@eocrm/design-tokens`.
+If you need only the tokens (you're providing your own reset), import `@eocrm/design-system/styles/tokens.css` directly. Sass variables: `@eocrm/design-tokens`. `mixins.scss` was removed with no replacement.
 
 ---
 
@@ -92,9 +92,38 @@ There is deliberately no red, orange or yellow accent: a primary button in those
 
 The package ships **compiled ESM** (`dist/`) with `.d.ts` types and plain CSS. No Sass, TypeScript or transpile configuration is needed.
 
-- **Vite / Webpack 5 / Rollup**: work out of the box. Import `@eocrm/design-system/styles/global.css` once at the app root.
-- **Next.js (app router)**: works as-is, no `transpilePackages`. Client-bound modules carry `'use client'`, so components can be imported directly from Server Components.
+- **CSS imports**: every component's JS chunk imports its own `.css`, so the bundler must handle CSS imports. Next.js, Vite, Rsbuild and CRA do out of the box; plain webpack 5 needs `css-loader` plus `style-loader` or `mini-css-extract-plugin`; Rollup needs a CSS plugin. Import `@eocrm/design-system/styles/global.css` once at the app root.
+- **One way to load component CSS**: use either `styles.css` (one link, for hosts without a bundler) or the JS imports (bundler), not both — loading both duplicates every rule.
+- **Next.js (app router)**: works as-is, no `transpilePackages`. Client-bound modules carry `'use client'`, so components can be imported directly from Server Components. Two limits of the Server/Client boundary:
+  - **Providers**: the `ru` catalog contains functions, and functions cannot be passed from a Server Component to a Client Component. Mount `AppProvider` / `I18nProvider` from your own `'use client'` providers file that imports `ru` (example below), not from `app/layout.tsx` directly.
+  - **Controlled overlays** (`Modal`, `Drawer`) need state and a function `onOpenChange`, so render them from a client component. Static and compound parts render from Server Components fine.
 - Set `moduleResolution: "bundler"` (or `"node16"`) in your `tsconfig.json` if TypeScript can't resolve types.
+
+```tsx
+// app/providers.tsx
+'use client';
+import { AppProvider, ru } from '@eocrm/design-system';
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <AppProvider locale="ru" messages={ru}>
+      {children}
+    </AppProvider>
+  );
+}
+
+// app/layout.tsx (Server Component)
+import '@eocrm/design-system/styles/global.css';
+import { Providers } from './providers';
+export default function RootLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <html lang="ru">
+      <body>
+        <Providers>{children}</Providers>
+      </body>
+    </html>
+  );
+}
+```
 
 **Tests.** Vitest works out of the box. Jest (CommonJS) needs to transform this ESM package and its ESM-only dependencies (`d3-*`, `internmap`, used by `Chart`), and stub `.css` imports:
 
@@ -230,10 +259,10 @@ Grouped for navigation. Per-component contracts are in `docs/components/<Name>.m
 
 ## Migrating to 0.7
 
-- **Stylesheet:** `@eocrm/design-system/styles/global.scss` is now `@eocrm/design-system/styles/global.css`. `styles.css` bundles every component's CSS; per-component CSS is also imported automatically by the JS chunks.
-- **Removed subpaths:** `styles/tokens.scss`, `styles/reset.scss`, `styles/typography.scss` and `styles/mixins.scss` are gone. Use `styles/tokens.css` for tokens only; for Sass variables/mixins install `@eocrm/design-tokens` and `@use` it directly.
+- **Stylesheet:** `@eocrm/design-system/styles/global.scss` is now `@eocrm/design-system/styles/global.css`. `styles.css` bundles every component's CSS; per-component CSS is also imported automatically by the JS chunks — use one or the other, not both.
+- **Removed subpaths:** `styles/tokens.scss`, `styles/reset.scss`, `styles/typography.scss` and `styles/mixins.scss` are gone. Use `styles/tokens.css` for tokens only. Sass variables: `@eocrm/design-tokens` (`@use` it directly). `mixins.scss` was removed with no replacement.
 - **Compiled output:** the package no longer ships `src/`; drop `transpilePackages` and any Sass/TSX loader rules for it.
-- **i18n:** `I18nProvider` / `AppProvider` no longer bundle Russian. Pass the catalog: `<I18nProvider locale="ru" messages={ru}>` with `import { ru } from '@eocrm/design-system'`. A non-`en` locale without `messages` logs a `console.error` and renders English.
+- **i18n:** `I18nProvider` / `AppProvider` no longer bundle Russian. Pass the catalog: `<I18nProvider locale="ru" messages={ru}>` with `import { ru } from '@eocrm/design-system'`. A non-`en` locale without `messages` logs a `console.error` and renders English. In a Next.js app router, pass `ru` from a `'use client'` providers file (see [Bundler notes](#bundler-notes)) — a Server Component cannot pass its function leaves.
 
 ## Releasing a new version
 

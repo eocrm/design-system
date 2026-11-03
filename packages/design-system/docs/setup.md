@@ -18,7 +18,7 @@ import { AppProvider } from '@eocrm/design-system';
 
 `<AppProvider>` bundles the app-level contexts so you don't wire them by hand:
 
-- `locale` (`'en' | 'ru'`) — UI-string locale. English is built in; for any other locale pass `messages` (e.g. `import { ru } from '@eocrm/design-system'`). A non-`en` locale without `messages` logs an error and renders English.
+- `locale` (`'en'`, `'ru'` or any other code) — UI-string locale. English is built in; for any other locale pass `messages` (`import { ru } from '@eocrm/design-system'`, or your own `Messages` catalog). A non-`en` locale without `messages` logs an error and renders English.
 - `messages?` — the catalog for `locale`. Omitted ⇒ English.
 - `intlLocale?` (BCP-47, e.g. `'en-US'`) — locale for Intl formatting (Calendar, dates, numbers). Defaults to `locale`.
 - `translations?` — deep-partial overrides merged over the built-in strings (rebrand a few keys; memoize the object).
@@ -41,6 +41,25 @@ const translations = useMemo(() => ({ alert: { dismiss: 'Скрыть' } }), [])
 ```
 
 It composes `LocaleProvider` + `I18nProvider` and mounts the toast viewport. **Routing is yours** (`<AppProvider>` ships no router), and the stylesheet import above is still required. The individual providers (`LocaleProvider`, `I18nProvider`, `ToastViewport`) remain exported for advanced cases like pinning a subtree to a different locale.
+
+**Next.js app router (React Server Components):** the `ru` catalog contains functions, which a Server Component cannot pass to a Client Component. Mount the provider from your own `'use client'` file and use that from `layout.tsx`:
+
+```tsx
+// app/providers.tsx
+'use client';
+import { AppProvider, ru } from '@eocrm/design-system';
+export function Providers({ children }: { children: React.ReactNode }) {
+  return (
+    <AppProvider locale="ru" messages={ru}>
+      {children}
+    </AppProvider>
+  );
+}
+
+// app/layout.tsx (Server Component): <body><Providers>{children}</Providers></body>
+```
+
+Components themselves can be imported directly from Server Components. Controlled overlays (`Modal`, `Drawer`) need state and a function `onOpenChange`, so render them from a client component; static and compound parts render from Server Components fine.
 
 **When NOT to use:** for a per-subtree locale / i18n override, nest `LocaleProvider` / `I18nProvider` directly — `AppProvider` is the single app root, so don't nest a second one. For a tiny embed or isolated test that only needs strings, use `I18nProvider` alone (or pass `toast={false}`) to avoid the toast viewport.
 

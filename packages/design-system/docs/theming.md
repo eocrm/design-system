@@ -90,6 +90,6 @@ Every component defines `--<component>-<part>-<state>` CSS custom properties at 
 <Button style={{ '--button-bg': 'red' } as React.CSSProperties}>Delete</Button>
 ```
 
-The authoritative list of tokens per component is in that component's `docs/components/<Name>.md`; they are plain `--<component>-*` custom properties in the compiled CSS, inspectable in devtools.
+A component's tokens are the `:root` block at the top of its shipped stylesheet, `dist/components/<Name>/<Name>.css` (e.g. `node_modules/@eocrm/design-system/dist/components/Button/Button.css`). They are plain `--<component>-*` custom properties, also inspectable in browser devtools on `:root`.
 
 **Deprecated:** `--color-badge-<tone>-bg/-fg` tokens are aliased to the new `--badge-bg-<tone>` / `--badge-fg-<tone>` tokens. They still work but will be removed in a future major version.
