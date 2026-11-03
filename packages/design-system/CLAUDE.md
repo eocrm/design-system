@@ -226,7 +226,7 @@ Then:
 
 - Update `src/index.ts` (rule 5)
 - Add the playground demo (rule 2)
-- Add `docs/components/<Name>.md` (TL;DR, canonical snippet, "when NOT to use" / anti-patterns) and its index line in `AI-PRIMER.md`; component JSDoc is a one-line summary + `@see docs/components/<Name>.md`; run `npm run build:docs`
+- Add `docs/components/<Name>.md` (TL;DR, canonical snippet, "when NOT to use" / anti-patterns) and its index line in `AI-PRIMER.md`; component JSDoc is a one-line summary + `@see docs/components/<Name>.md`; run `npm run build:docs` (the H1 must be `# \`<Name>\` — <summary>`; the summary feeds `docs/components/index.json`)
 
 ## Dependency policy & component gaps
 

@@ -5,11 +5,14 @@ name: Release MCP
 # packages/design-system-mcp/**), so an MCP-only merge never bumps the design
 # system and a design-system merge never republishes the MCP server.
 #
-# The bundled offline snapshot is built from @eocrm/design-system@latest at
-# publish time. To force a minor/major bump, edit BUMP below on a branch and merge.
+# The bundled offline snapshot is built from @eocrm/design-system@latest as
+# published when the bundle step runs. If a merge touches both packages and the
+# DS release publishes between the bundle and verify steps, verify fails with a
+# version mismatch: re-run this run. To force a minor/major bump, edit BUMP below on a branch and merge.
 #
 # npmjs must list this workflow file (release-mcp.yml) as the package's trusted
-# publisher; the very first version had to be published by hand to create it.
+# publisher; the very first version had to be published by hand to create it, as 0.0.x
+# (0.0.1) because automation starts at 0.1.0 and a hand-published 0.1.0 would collide.
 
 on:
   push:

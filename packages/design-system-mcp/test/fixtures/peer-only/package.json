@@ -1,0 +1,6 @@
+{
+  "name": "x",
+  "peerDependencies": {
+    "@eocrm/design-system": "^0.6.0"
+  }
+}

@@ -22,6 +22,7 @@ try {
   await rm(out, { recursive: true, force: true });
   await mkdir(out, { recursive: true });
   await cp(join(pkg, 'AI-PRIMER.md'), join(out, 'AI-PRIMER.md'));
+  await cp(join(pkg, 'README.md'), join(out, 'README.md'));
   await cp(join(pkg, 'docs'), join(out, 'docs'), { recursive: true });
   await writeFile(join(out, 'VERSION'), `${version}\n`);
 

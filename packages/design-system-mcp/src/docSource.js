@@ -8,7 +8,7 @@ const NAME = '@eocrm/design-system';
 const TIMEOUT_MS = 5000;
 export const SNAPSHOT_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'snapshot');
 // Same set bundle-snapshot.mjs extracts.
-const WANTED = /^(AI-PRIMER\.md|docs\/.*)$/;
+const WANTED = /^(AI-PRIMER\.md|README\.md|docs\/.*)$/;
 
 function defaultCacheDir() {
   const base =

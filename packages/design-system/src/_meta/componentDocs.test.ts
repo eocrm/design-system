@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const PKG = resolve(__dirname, '../..');
@@ -154,8 +154,20 @@ describe('docs/components/index.json', () => {
 describe('AI-PRIMER.md', () => {
   const primer = readFileSync(resolve(PKG, 'AI-PRIMER.md'), 'utf8');
 
-  it('stays at most 14 KB (long-form guidance lives in docs/)', () => {
-    expect(statSync(resolve(PKG, 'AI-PRIMER.md')).size).toBeLessThanOrEqual(14 * 1024);
+  const INDEX_HEADING = '## Components — TL;DR';
+  const start = primer.indexOf(INDEX_HEADING);
+  const end = primer.indexOf('\n## ', start + 1);
+  const index = start < 0 ? '' : primer.slice(start, end < 0 ? undefined : end + 1);
+
+  it('has the component index section', () => {
+    expect(start).toBeGreaterThanOrEqual(0);
+    expect(index.length).toBeGreaterThan(INDEX_HEADING.length);
+  });
+
+  // The component index grows with every component, so it is excluded. The prose
+  // remainder is ~6.0 KB today; 7 KB leaves ~1 KB of slack (long-form guidance lives in docs/).
+  it('keeps the primer prose (excluding the component index) at most 7 KB', () => {
+    expect(Buffer.byteLength(primer.replace(index, ''))).toBeLessThanOrEqual(7 * 1024);
   });
 
   it.each([

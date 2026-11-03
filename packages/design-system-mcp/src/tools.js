@@ -95,6 +95,8 @@ export function createTools(docSource, version, warn) {
     },
 
     async getDoc(/** @type {string} */ topic) {
+      if (topic.toLowerCase() === 'readme')
+        return (await read('README.md')) ?? 'README.md not found.';
       const topics = match(await list(), TOPIC_MD);
       const hit = findName(topics, topic);
       if (!hit) return `Unknown topic "${topic}". Available: ${topics.join(', ')}`;

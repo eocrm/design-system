@@ -12,6 +12,7 @@ const npmFixture = fileURLToPath(new URL('./fixtures/npm', import.meta.url));
 
 const NEW = {
   'AI-PRIMER.md': '# Primer',
+  'README.md': '# Readme',
   'docs/setup.md': '# Setup',
   'docs/theming.md': '# Theming',
   'docs/components/Button.md': '# Button doc',
@@ -138,6 +139,11 @@ test('get_doc serves a top-level topic and lists topics on a miss', async () => 
   const { text } = await call('get_doc', { topic: 'nope' });
   assert.match(text, /setup/);
   assert.match(text, /theming/);
+});
+
+test('get_doc serves the package README as topic readme', async () => {
+  const { call } = await connect();
+  assert.match((await call('get_doc', { topic: 'readme' })).text, /# Readme/);
 });
 
 test('docSource warning appears after the header', async () => {

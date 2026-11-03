@@ -135,7 +135,7 @@ export function createServer({
     'get_doc',
     {
       description:
-        'A topic guide from docs/ (e.g. "setup"). An unknown topic lists the available ones.',
+        'A topic guide from docs/ (e.g. "setup"), or "readme" for the package README. An unknown topic lists the available ones.',
       inputSchema: { topic: z.string().describe('Doc file stem, e.g. "setup"') },
     },
     handler((t, { topic }) => t.getDoc(topic)),

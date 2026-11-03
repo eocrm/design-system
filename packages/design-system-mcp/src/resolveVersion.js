@@ -63,7 +63,7 @@ export async function resolveVersion(projectDir, { fetchPackument = defaultFetch
   let range;
   try {
     const pkg = JSON.parse(pkgText ?? '{}');
-    range = pkg.dependencies?.[NAME] ?? pkg.devDependencies?.[NAME];
+    range = pkg.dependencies?.[NAME] ?? pkg.devDependencies?.[NAME] ?? pkg.peerDependencies?.[NAME];
   } catch {}
 
   const packument = async () => fetchPackument(NAME);

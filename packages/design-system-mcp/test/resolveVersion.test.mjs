@@ -20,6 +20,7 @@ for (const [dir, version, source] of [
   ['yarn-berry', '0.6.19', 'yarn.lock'],
   ['bun', '0.6.18', 'bun.lock'],
   ['range-only', '0.6.21', 'package.json range'],
+  ['peer-only', '0.6.21', 'package.json range'],
 ]) {
   test(`resolves ${dir}`, async () => {
     assert.deepEqual(await run(dir), { version, source });
