@@ -135,10 +135,15 @@
   padding: calc(var(--ring-width) + var(--ring-offset));
 }
 
+// Row: the band track takes the flexible share; the text line beside it keeps its intrinsic
+// width and wraps rather than truncating.
 .root[data-orientation='vertical'] .cell {
+  grid-template-columns: minmax(var(--funnel-chart-row-track-min), 1fr) minmax(0, max-content);
+  align-items: center;
   justify-items: stretch;
-  gap: var(--space-1);
+  gap: var(--space-2);
   padding-inline: 0;
+  text-align: start;
 }
 
 .bandTrack {
@@ -157,9 +162,9 @@
 .line {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
   align-items: baseline;
-  gap: var(--space-2);
+  column-gap: var(--space-2);
+  min-inline-size: 0;
 }
 
 .root[data-orientation='vertical'] .value {

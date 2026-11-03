@@ -338,7 +338,8 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
   );
 
   // Vertical: rows scroll inside the plot, so read the active band's position from the DOM
-  // (bounding rects already include the scroll offset). Keyboard inspection scrolls the row in first.
+  // (bounding rects already include the scroll offset), again on plot scroll and on resize.
+  // Keyboard inspection scrolls the row in first.
   const [verticalPoint, setVerticalPoint] = useState<{ x: number; y: number } | null>(null);
   useLayoutEffect(() => {
     const row =
@@ -350,13 +351,18 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
       setVerticalPoint(null);
       return;
     }
+    const measure = () => {
+      const p = plotEl.getBoundingClientRect();
+      const b = band.getBoundingClientRect();
+      const x = b.left - p.left + b.width / 2;
+      const y = b.top - p.top;
+      setVerticalPoint((prev) => (prev && prev.x === x && prev.y === y ? prev : { x, y }));
+    };
     if (activeSource === 'keyboard') row.scrollIntoView?.({ block: 'nearest' });
-    const p = plotEl.getBoundingClientRect();
-    const b = band.getBoundingClientRect();
-    const x = b.left - p.left + b.width / 2;
-    const y = b.top - p.top;
-    setVerticalPoint((prev) => (prev && prev.x === x && prev.y === y ? prev : { x, y }));
-  }, [vertical, activeKey, activeSource, plotEl]);
+    measure();
+    plotEl.addEventListener('scroll', measure, { passive: true });
+    return () => plotEl.removeEventListener('scroll', measure);
+  }, [vertical, activeKey, activeSource, plotEl, rootSize.width, rootSize.height]);
   const point = vertical ? verticalPoint : horizontalPoint;
 
   const liveText =

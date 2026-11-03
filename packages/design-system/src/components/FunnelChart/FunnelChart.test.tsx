@@ -2,7 +2,14 @@ import { createRef, type RefAttributes } from 'react';
 import { act, fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { LocaleProvider } from '../../i18n/LocaleProvider';
+import { ChartTooltip } from '../Chart/ChartTooltip';
 import { FunnelChart, type FunnelChartProps } from './FunnelChart';
+
+// Wrap the real tooltip so tests can read the `point` it was given.
+vi.mock('../Chart/ChartTooltip', async (importOriginal) => {
+  const mod = await importOriginal<typeof import('../Chart/ChartTooltip')>();
+  return { ...mod, ChartTooltip: vi.fn(mod.ChartTooltip) };
+});
 
 // LiveRegion writes after ANNOUNCE_DELAY_MS (50ms); wait past it or "empty" assertions pass vacuously.
 const PAST_ANNOUNCE_DELAY_MS = 120;
@@ -463,6 +470,58 @@ describe('FunnelChart', () => {
         pointerType: 'mouse',
       });
       expect(tooltip()).toBeNull();
+    });
+
+    it('anchors the tooltip at the band top centre, relative to the plot, and follows scroll', () => {
+      const layout = stubLayout(NARROW, 300);
+      renderFunnel();
+      layout.fire();
+      const plot = screen.getByRole('group', { name: 'Pipeline' });
+      let scrolled = 0;
+      const rect = (left: number, top: number, width: number, height: number) =>
+        ({
+          x: left,
+          y: top,
+          left,
+          top,
+          width,
+          height,
+          right: left + width,
+          bottom: top + height,
+        }) as DOMRect;
+      vi.mocked(HTMLElement.prototype.getBoundingClientRect).mockImplementation(function (
+        this: HTMLElement,
+      ) {
+        if (this === plot) return rect(10, 20, NARROW, 300);
+        if (this.hasAttribute('data-band')) return rect(30, 100 - scrolled, 40, 8);
+        return rect(0, 0, NARROW, 300);
+      });
+      const lastPoint = () => vi.mocked(ChartTooltip).mock.lastCall![0].point;
+      fireEvent.pointerEnter(document.querySelector('[data-stage-cell="q"]')!, {
+        pointerType: 'mouse',
+      });
+      expect(lastPoint()).toEqual({ x: 40, y: 80 });
+      scrolled = 30;
+      fireEvent.scroll(plot);
+      expect(lastPoint()).toEqual({ x: 40, y: 50 });
+    });
+
+    it('clickable: Escape on a focused row dismisses; ArrowDown/ArrowUp are not handled', async () => {
+      const layout = stubLayout(NARROW, 300);
+      const onActiveStageChange = vi.fn();
+      renderFunnel({ onStageClick: vi.fn(), onActiveStageChange });
+      layout.fire();
+      await userEvent.tab();
+      const first = screen.getAllByRole('button')[0];
+      expect(tooltip()).toHaveTextContent('Leads');
+      expect(fireEvent.keyDown(first, { key: 'ArrowDown' })).toBe(true); // not prevented
+      expect(fireEvent.keyDown(first, { key: 'ArrowUp' })).toBe(true);
+      expect(tooltip()).toHaveTextContent('Leads');
+      expect(onActiveStageChange).toHaveBeenCalledTimes(1);
+      expect(fireEvent.keyDown(first, { key: 'Escape' })).toBe(false);
+      expect(tooltip()).toBeNull();
+      expect(onActiveStageChange).toHaveBeenLastCalledWith(null);
+      expect(first).toHaveFocus();
     });
 
     it('clickable: clicking the Proposal row calls onStageClick', async () => {
