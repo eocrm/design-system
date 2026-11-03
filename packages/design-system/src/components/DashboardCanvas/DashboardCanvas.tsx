@@ -482,7 +482,9 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       // One gesture at a time: a second pointer going down mid-drag must not
       // overwrite the state (FlowCanvas discipline), and a keyboard pick owns
       // the canvas until it drops or cancels. No preventDefault — clicks
-      // inside item bodies pass through until the drag arms.
+      // inside item bodies pass through until the drag arms (the selection
+      // is then cleared and blocked by a selection clear on arm + the selectstart
+      // guard instead).
       if (!editingEnabled || event.button !== 0 || dragRef.current || pick) return;
       if (isPortalEvent(event) || underOpenOverlay()) return;
       const el = event.currentTarget;
@@ -523,6 +525,8 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       if (isPortalEvent(event) || underOpenOverlay()) return;
       // The handle sits inside the move-drag surface — never arm both.
       event.stopPropagation();
+      // Handles have no click semantics — block the native selection start.
+      event.preventDefault();
       dragRef.current = {
         kind: 'resize',
         pointerId: event.pointerId,
@@ -551,6 +555,8 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       // Called only from the section's dedicated grip handle (see
       // DashboardCanvasSection's remarks) — no target-based exclusion needed,
       // the toggle button and the renderSectionHeader extras never wire this.
+      // The grip has no click semantics — block the native selection start.
+      event.preventDefault();
       const fromIndex = value.sections.findIndex((section) => section.id === sectionId);
       if (fromIndex === -1) return;
       const drag: SectionDrag = {
@@ -587,6 +593,9 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
             return;
           }
           drag.moved = true;
+          // The press began on a widget body (not preventDefault'ed), so the
+          // browser may already have started a selection — drop it.
+          window.getSelection()?.removeAllRanges();
           capturePointer(rootRef.current, event.pointerId);
         }
         // Drop target = the registered container grid under the pointer.
@@ -707,6 +716,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
           return;
         }
         drag.moved = true;
+        window.getSelection()?.removeAllRanges();
         capturePointer(rootRef.current, event.pointerId);
       }
       // Insertion slot = how many band midpoints the pointer has passed.
@@ -1036,6 +1046,17 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
     // (FlowCanvas #282). The pick's own Escape lands on the focused item.
     const dragging = live != null;
     useFloatingSurface(dragging || pick != null);
+    // No text selection may start while any gesture (pending press included)
+    // owns dragRef. One listener for the component's lifetime that reads the
+    // ref — every teardown path (pointerup, cancel, Escape, unmount) is
+    // covered without per-gesture attach/detach bookkeeping.
+    useEffect(() => {
+      const onSelectStart = (event: Event) => {
+        if (dragRef.current) event.preventDefault();
+      };
+      document.addEventListener('selectstart', onSelectStart);
+      return () => document.removeEventListener('selectstart', onSelectStart);
+    }, []);
     // Window-level Escape: cancels a pointer drag wherever focus sits, and
     // is the belt-and-braces exit for a pick whose item lost focus (the
     // item-level handler consumes Escape first when focused).

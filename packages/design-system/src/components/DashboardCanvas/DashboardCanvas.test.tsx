@@ -658,6 +658,90 @@ describe('DashboardCanvas pointer gestures', () => {
   });
 });
 
+describe('DashboardCanvas gestures never leave a text selection (#737)', () => {
+  let restoreRects: () => void;
+  beforeEach(() => {
+    restoreRects = stubCanvasRects();
+  });
+  afterEach(() => {
+    restoreRects();
+    vi.restoreAllMocks();
+  });
+  const setup = () => {
+    const utils = render(
+      <DashboardCanvas
+        value={baseValue()}
+        onChange={vi.fn()}
+        renderItem={renderItem}
+        columns={12}
+      />,
+    );
+    const root = screen.getByRole('group', { name: 'Dashboard canvas' });
+    return { ...utils, root };
+  };
+  const down = { clientX: 80, clientY: 96, pointerId: 1, button: 0 };
+
+  it.each(['e', 's', 'se'])('pointerdown on the %s resize handle is default-prevented', (edge) => {
+    const { container } = setup();
+    const h = container.querySelector(
+      `[data-dc-item="a"] [data-dc-resize="${edge}"]`,
+    ) as HTMLElement;
+    expect(fireEvent.pointerDown(h, down)).toBe(false);
+  });
+
+  it('pointerdown on a section grip is default-prevented', () => {
+    const { container } = setup();
+    expect(fireEvent.pointerDown(sectionHandle(container, 's1'), down)).toBe(false);
+  });
+
+  it('blocks selectstart during a resize and releases it after pointerup', () => {
+    const { container, root } = setup();
+    const se = container.querySelector('[data-dc-item="a"] [data-dc-resize="se"]') as HTMLElement;
+    fireEvent.pointerDown(se, down);
+    expect(fireEvent(root, new Event('selectstart', { bubbles: true, cancelable: true }))).toBe(
+      false,
+    );
+    fireEvent.pointerUp(root, { ...down });
+    expect(fireEvent(root, new Event('selectstart', { bubbles: true, cancelable: true }))).toBe(
+      true,
+    );
+  });
+
+  it('clears the selection when a move drag arms and blocks selectstart meanwhile', () => {
+    const { container, root } = setup();
+    const spy = vi.spyOn(window, 'getSelection');
+    const removeAllRanges = vi.fn();
+    spy.mockReturnValue({ removeAllRanges } as unknown as Selection);
+    fireEvent.pointerDown(itemEl(container, 'b'), {
+      clientX: 10,
+      clientY: 10,
+      pointerId: 1,
+      button: 0,
+    });
+    expect(removeAllRanges).not.toHaveBeenCalled();
+    fireEvent.pointerMove(root, { clientX: 95, clientY: 60, pointerId: 1 });
+    expect(removeAllRanges).toHaveBeenCalled();
+    expect(fireEvent(root, new Event('selectstart', { bubbles: true, cancelable: true }))).toBe(
+      false,
+    );
+    fireEvent.pointerUp(root, { clientX: 95, clientY: 60, pointerId: 1 });
+  });
+
+  it('a plain click on a button inside a widget body still fires onClick in edit mode', async () => {
+    const onClick = vi.fn();
+    render(
+      <DashboardCanvas
+        value={baseValue()}
+        onChange={vi.fn()}
+        columns={12}
+        renderItem={(id) => <button onClick={onClick}>btn-{id}</button>}
+      />,
+    );
+    await userEvent.click(screen.getByText('btn-a'));
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('DashboardCanvas stacked drops, ghost clamp, trailing space (#694 #695 #696)', () => {
   let restoreRects: () => void;
   beforeEach(() => {
