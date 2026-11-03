@@ -1827,6 +1827,33 @@ describe('component SCSS uses logical text-align (RTL)', () => {
     expect(physicalRules.filter((r) => !waived(r))).toEqual([]);
   });
 
+  // `scssRules` only sees innermost blocks, so a declaration in a rule that
+  // also nests a block (`.x { text-align: left; &:hover { … } }`) escapes it.
+  // Backstop: every physical match in a file must be one the rule scan saw.
+  const physicalAll = new RegExp(physical.source, 'gi');
+  const escaped = (code: string) => {
+    const stripped = stripScssComments(code);
+    const inFile = stripped.match(physicalAll)?.length ?? 0;
+    const inRules = scssRules(stripped).reduce(
+      (n, [, body]) => n + (body.match(physicalAll)?.length ?? 0),
+      0,
+    );
+    return inFile - inRules;
+  };
+
+  it('the backstop catches a physical text-align beside a nested block', () => {
+    expect(escaped('.x { text-align: left; &:hover { color: red; } }')).toBe(1);
+    expect(escaped('.x { &:hover { color: red; } text-align: RIGHT; }')).toBe(1);
+    expect(escaped('.x { text-align: start; &:hover { color: red; } }')).toBe(0);
+  });
+
+  it('no physical text-align escapes the rule scan', () => {
+    const offenders = allFilesUnder(componentsDir)
+      .filter((f) => f.label.endsWith('.scss') && escaped(f.code) > 0)
+      .map((f) => f.label);
+    expect(offenders).toEqual([]);
+  });
+
   it('every waiver still matches a physical text-align rule', () => {
     const stale = PHYSICAL_TEXT_ALIGN_WAIVERS.filter(
       (w) => !physicalRules.some((r) => r.file === w.file && r.selector === w.selector),
