@@ -14,6 +14,9 @@ const pipeline: FunnelStage[] = [
   { key: 'proposal', label: 'Proposal', value: 210 },
   { key: 'won', label: 'Won', value: 64 },
 ];
+const highlighted: FunnelStage[] = pipeline.map((s) =>
+  s.key === 'won' ? { ...s, color: 3 as const } : s,
+);
 const longLabels: FunnelStage[] = [
   'Inbound enquiry from the website form',
   'First contact attempt by sales development',
@@ -53,12 +56,12 @@ export function FunnelChartDemo() {
     <DemoLayout
       name="FunnelChart"
       componentName="FunnelChart"
-      description="Stage funnel for pipeline or campaign conversion: height shows drop-off, a pill shows step conversion. Optional stage click, vertical layout when narrow, tooltip, keyboard and hidden data table."
+      description="Stage funnel for pipeline or campaign conversion: height shows drop-off, a pill shows step conversion, stages are a one-hue ramp. Optional stage click, vertical slices plus a table when narrow, tooltip, keyboard and hidden data table."
       files={getComponentFiles('FunnelChart')}
     >
       <Example
         title="In a dashboard widget"
-        description="Eased funnel. Drag the corner to resize: below 96px per stage it switches to vertical rows."
+        description="Taper funnel (the default): each stage holds, then a short diagonal into the next. The first stage shows its value inside the band when it fits. Drag the corner to resize: below 96px per stage it switches to vertical slices beside a table."
         code={`<DashboardWidget variant="chart" title="Sales pipeline">
   <FunnelChart label="Sales pipeline" stages={stages} formatValue={formatCount} />
 </DashboardWidget>`}
@@ -70,7 +73,7 @@ export function FunnelChartDemo() {
 
       <Example
         title="Sharp shape"
-        description="Straight trapezoids between stages, in both the horizontal and the narrow vertical layout."
+        description="Full-column trapezoids between stages, in both the horizontal and the narrow vertical layout."
         code={`<FunnelChart label="Sales pipeline" stages={stages} formatValue={formatCount} shape="sharp" />`}
       >
         <Cell title="Sales pipeline">
@@ -79,6 +82,25 @@ export function FunnelChartDemo() {
             stages={pipeline}
             formatValue={formatCount}
             shape="sharp"
+          />
+        </Cell>
+      </Example>
+
+      <Example
+        title="Highlight a stage"
+        description="A stage's color names a palette slot and overrides the ramp, e.g. Won in green."
+        code={`const stages = [
+  { key: 'leads', label: 'Leads', value: 1200 },
+  // …
+  { key: 'won', label: 'Won', value: 64, color: 3 },
+];
+<FunnelChart label="Sales pipeline" stages={stages} formatValue={formatCount} />`}
+      >
+        <Cell title="Sales pipeline">
+          <FunnelChart
+            label="Sales pipeline (highlighted)"
+            stages={highlighted}
+            formatValue={formatCount}
           />
         </Cell>
       </Example>
@@ -126,7 +148,7 @@ export function FunnelChartDemo() {
 
       <Example
         title="Eight stages, long labels"
-        description="Horizontal needs 96px per stage (768px for eight), so in this cell it renders as vertical rows; long labels wrap beside the bands, never truncate."
+        description="Horizontal needs 96px per stage (768px for eight), so in this cell it renders as vertical slices beside a table; long labels wrap, never truncate."
         code={`<FunnelChart label="Enterprise pipeline" stages={longLabels} formatValue={formatCount} />`}
       >
         <Cell title="Enterprise pipeline" height={380}>

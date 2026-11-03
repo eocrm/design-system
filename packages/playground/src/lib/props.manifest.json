@@ -3198,7 +3198,7 @@
           "type": "FunnelStage[]",
           "required": true,
           "default": "",
-          "description": "Stages, top of the funnel first. Heights are relative to the largest value; colour follows position\n(palette slots 1–8) unless `color` names a slot. More than 8 stages reuse colours, with a dev warning."
+          "description": "Stages, top of the funnel first. Heights are relative to the largest value. Colour is a one-hue ramp\nfrom `--chart-series-1` (first stage) toward the surface; a stage's `color` slot overrides it."
         },
         {
           "name": "formatValue",
@@ -3212,7 +3212,7 @@
           "type": "FunnelShape",
           "required": false,
           "default": "",
-          "description": "Silhouette between stages, in both layouts (vertical rows read as the same funnel turned on its\nside). Default `'eased'`.\n- `'eased'` — each stage holds its height, then curves smoothly into the next one.\n- `'sharp'` — straight trapezoids from one stage's height to the next."
+          "description": "Silhouette between stages, in both layouts (vertical slices follow the same geometry turned on\nits side). Default `'taper'`.\n- `'taper'` — each stage holds its height for most of its column, then a short straight diagonal\n  leads into the next one's height.\n- `'sharp'` — full-column trapezoids from one stage's height to the next."
         },
         {
           "name": "onStageClick",
@@ -7478,7 +7478,7 @@
     "DashboardWidgetVariant": "\"list\" | \"standard\" | \"kpi\" | \"chart\" | \"stats\"",
     "DashboardWidgetActionsReveal": "\"always\" | \"hover\"",
     "StatGroupVariant": "\"filled\" | \"card\"",
-    "FunnelShape": "\"eased\" | \"sharp\"",
+    "FunnelShape": "\"taper\" | \"sharp\"",
     "FunnelStage": "{ key: string; label: string; value: number; color?: FunnelSlot }",
     "SparklineType": "\"area\" | \"line\" | \"bar\"",
     "TreeViewChildren": "TreeViewNode[] | { error: true; }",

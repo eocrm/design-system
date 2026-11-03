@@ -1,6 +1,6 @@
 # `<FunnelChart>` — stage funnel for pipeline and campaign conversion
 
-Ordered stages (e.g. Leads → Qualified → Proposal → Won) drawn as one connected silhouette: the height of each stage shows how much of the funnel is left, a pill between stages shows the step conversion. Fills a `DashboardWidget variant="chart"` body or sits inline on a page, and ships its own tooltip, keyboard inspection, data table and empty state. The app owns data, formatting, loading and errors.
+Ordered stages (e.g. Leads → Qualified → Proposal → Won) drawn as one connected silhouette in a one-hue ramp: the height of each stage shows how much of the funnel is left, a pill in each later stage shows the step conversion, and the first stage carries its value and label inside its band. Fills a `DashboardWidget variant="chart"` body or sits inline on a page, and ships its own tooltip, keyboard inspection, data table and empty state. The app owns data, formatting, loading and errors.
 
 ```tsx
 import { useState } from 'react';
@@ -56,9 +56,9 @@ const [active, setActive] = useState<FunnelStage | null>(null);
 | Prop | Type | Required | Description |
 |---|---|---|---|
 | `label` | `string` | yes | Accessible name of the figure and caption of its data table, e.g. "Sales pipeline". Required. |
-| `stages` | `FunnelStage[]` | yes | Stages, top of the funnel first. Heights are relative to the largest value; colour follows position (palette slots 1–8) unless `color` names a slot. More than 8 stages reuse colours, with a dev warning. |
+| `stages` | `FunnelStage[]` | yes | Stages, top of the funnel first. Heights are relative to the largest value. Colour is a one-hue ramp from `--chart-series-1` (first stage) toward the surface; a stage's `color` slot overrides it. |
 | `formatValue` | `(n: number) => string` | yes | Formats a stage value for the footer, tooltip and data table (the app owns i18n and currency). Required. |
-| `shape` | `'eased' \| 'sharp'` | no | Silhouette between stages, in both layouts (vertical rows read as the same funnel turned on its side). Default `'eased'`. - `'eased'` — each stage holds its height, then curves smoothly into the next one. - `'sharp'` — straight trapezoids from one stage's height to the next. |
+| `shape` | `'taper' \| 'sharp'` | no | Silhouette between stages, in both layouts (vertical slices follow the same geometry turned on its side). Default `'taper'`. - `'taper'` — each stage holds its height for most of its column, then a short straight diagonal leads into the next one's height. - `'sharp'` — full-column trapezoids from one stage's height to the next. |
 | `onStageClick` | `((stage: FunnelStage, index: number) => void)` | no | Makes every stage a button that calls this with the consumer's original stage object and its index, e.g. to drill through to the deals in that stage. Omit for a read-only funnel. |
 | `onActiveStageChange` | `((stage: FunnelStage \| null) => void)` | no | Called with the hovered or focused stage (the consumer's original object), or `null` when none is active, e.g. so a surrounding headline can follow along. |
 | `emptyMessage` | `ReactNode` | no | EmptyState title when there are no stages or every value is 0. Default: translated "No data for this period". |
@@ -68,9 +68,11 @@ const [active, setActive] = useState<FunnelStage | null>(null);
 <!-- props:end -->
 
 - **Percent semantics.** The pill between two stages is the _step conversion_ (next value ÷ this value). The tooltip and data table add the _share of the first stage_. Both are computed by the component; pass raw counts.
-- **Heights** are relative to the largest value; stages are drawn top of funnel first, in the order given. Colour follows position (palette slots 1–8, light + dark) unless `color` names a slot. Keep the order stable so filtering never repaints survivors. More than 8 stages reuse colours with a dev warning: fold the tail into an "Other" stage or set `color`.
-- **Shape** (both layouts): `'eased'` (default) holds each stage's size, then curves smoothly into the next; `'sharp'` draws straight trapezoids.
-- **Layout.** Horizontal while every stage gets at least 96px of width. Narrower, it switches to vertical: the same connected funnel turned on its side, flowing top to bottom, one touching row per stage with its label, value and conversion pill on a line beside it (wrapping, never truncated). As a last resort the rows scroll inside the plot. Unmeasured (first paint, SSR) it assumes horizontal.
+- **Heights** are relative to the largest value; stages are drawn top of funnel first, in the order given.
+- **Colour** is a one-hue ramp, because stages are ordered: the first stage is `--chart-series-1` at full strength, each later stage a lighter tint mixed toward the surface (`--funnel-chart-ramp-color`, `--funnel-chart-surface`, `--funnel-chart-ramp-max-mix`), so it works in light and dark. The lightest stage stays clearly visible against the surface in both themes. With 5+ stages adjacent tints get close; the labels, table and tooltip carry identity. To highlight a stage (e.g. Won in green), give it `color` (a palette slot 1–8); it then uses `--chart-series-N` at full strength. There is no stage limit.
+- **Hero first stage** (horizontal): the first stage's value (large) and label sit inside its band, and its footer cell stays empty. When the band is too short or narrow for that text, the first stage falls back to the normal footer, so nothing is hidden. Later stages show the conversion pill in the band and value + label underneath, with dashed rules between footer columns.
+- **Shape** (both layouts): `'taper'` (default) holds each stage's size for most of its column, then a short straight diagonal leads into the next; `'sharp'` draws full-column trapezoids. The last stage has no neck.
+- **Layout.** Horizontal while every stage gets at least 96px of width. Narrower, it switches to vertical: one funnel slice per row (the same `shape`, turned on its side, thin gaps between slices) beside a table-like grid with a header (Stage, Value, vs previous) and per row a colour swatch, the label (wrapping, never truncated), the value and the step pill (the first row shows "—"). The visible header is hidden from screen readers; the hidden data table is their source. As a last resort the rows scroll inside the plot. Unmeasured (first paint, SSR) it assumes horizontal.
 - **Clickable stages.** `onStageClick(stage, index)` makes every stage cell a button (Tab, Enter / Space) and receives your original stage object. Omit it for a read-only funnel. Escape dismisses the active stage.
 - **`onActiveStageChange(stage | null)`** fires with the hovered or focused stage (your original object) and `null` when none is active. Use it for a headline outside the chart; do not put that headline in the widget body next to the chart.
 - **Tooltip** follows hover, focus and tap, and tracks scroll and resize. **Screen readers** get a visually hidden data table (caption = `label`) with the exact values, conversion and share.
@@ -83,7 +85,7 @@ const [active, setActive] = useState<FunnelStage | null>(null);
 - ❌ Values over time → `Chart`.
 - ❌ A single conversion ratio → `StatGroup` / `DashboardWidget variant="kpi"`.
 - ❌ Unordered categories, or stages that don't narrow → `Chart type="bar"`.
-- ❌ More than 8 stages → fold the tail into an "Other" stage in the app.
+- ❌ Many stages (beyond about 8) → fold the tail into an "Other" stage in the app; the ramp steps become hard to tell apart.
 
 #### Anti-patterns
 

@@ -181,7 +181,7 @@ Each component's contract is its `docs/components/<Name>.md`; the props table th
 - [`StatTile`](docs/components/StatTile.md) — one KPI tile (label, value, trend, footnote, icon, sparkline, quota `progress`) inside a StatGroup (`filled` or `card` surface)
 - [`Sparkline`](docs/components/Sparkline.md) — compact static line / area / bar trend for KPI cards (StatTile slot, kpi DashboardWidget child); no axes, summary in the accessible name
 - [`Chart`](docs/components/Chart.md) — line / bar / stacked bar / area time-series chart for a chart DashboardWidget (smoothed lines, static markers, legend, tooltip, keyboard, data table, empty state)
-- [`FunnelChart`](docs/components/FunnelChart.md) — stage funnel for pipeline / campaign conversion: height = drop-off, pill = step conversion; optional stage click drill-through, vertical layout when narrow
+- [`FunnelChart`](docs/components/FunnelChart.md) — stage funnel for pipeline / campaign conversion: height = drop-off, pill = step conversion, one-hue ramp with a hero first stage; optional stage click drill-through, vertical slices plus a table when narrow
 - [`TreeView`](docs/components/TreeView.md) — lazily loaded hierarchy (WAI-ARIA tree) as a file-explorer list or a top-down org chart, with loading / error-retry / load-more rows
 - [`LiquidEditor`](docs/components/LiquidEditor.md) — Liquid template editor
 - [`RichTextEditor`](docs/components/RichTextEditor.md) — controlled rich-text editor (contentEditable)
