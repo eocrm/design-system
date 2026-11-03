@@ -1,6 +1,9 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { I18nProvider } from '../../i18n';
+import { ru } from '../../i18n/ru';
 import { RichText } from './RichText';
 import { createBlock, docFromText } from './engine/model';
 import type { RichDoc } from './engine/model';
@@ -117,5 +120,108 @@ describe('prose link styling does not override styled links (#570)', () => {
     const a = container.querySelector('a');
     expect(a).not.toBeNull();
     expect(a).not.toHaveAttribute('class');
+  });
+});
+
+describe('onImageActivate (#739)', () => {
+  const imageDoc = (over: Partial<RichDoc['blocks'][number]> = {}): RichDoc => ({
+    blocks: [
+      {
+        id: 'img',
+        type: 'attachment',
+        inlines: [],
+        status: 'ready',
+        src: 'https://x.test/chart.png',
+        mime: 'image/png',
+        name: 'chart.png',
+        alt: 'Q3 chart',
+        width: 320,
+        ...over,
+      },
+    ],
+  });
+
+  it('unset: renders the plain <img> as the only figure child, no button', () => {
+    const { container } = render(<RichText value={imageDoc()} />);
+    expect(container.querySelector('button')).toBeNull();
+    const figure = container.querySelector('figure')!;
+    expect(figure.children).toHaveLength(1);
+    const img = figure.firstElementChild!;
+    expect(img.tagName).toBe('IMG');
+    expect(img).toHaveAttribute('src', 'https://x.test/chart.png');
+    expect(img).toHaveAttribute('alt', 'Q3 chart');
+    expect(img).toHaveAttribute('width', '320');
+    expect(img.closest('button')).toBeNull();
+  });
+
+  it('unset: honours an empty alt (decorative) with ??', () => {
+    const { container } = render(<RichText value={imageDoc({ alt: '' })} />);
+    expect(container.querySelector('img')).toHaveAttribute('alt', '');
+  });
+
+  it('set: wraps the image in a named native button; inner img has alt=""', () => {
+    render(<RichText value={imageDoc()} onImageActivate={() => {}} />);
+    const btn = screen.getByRole('button', { name: 'Open image: Q3 chart' });
+    expect(btn).toHaveAttribute('type', 'button');
+    expect(btn.querySelector('img')).toHaveAttribute('alt', '');
+  });
+
+  it('set: an empty alt falls back to the file name for the button name (||)', () => {
+    render(<RichText value={imageDoc({ alt: '' })} onImageActivate={() => {}} />);
+    expect(screen.getByRole('button', { name: 'Open image: chart.png' })).toBeInTheDocument();
+  });
+
+  it('set: click, Enter and Space each call the handler once with { src, alt } and the button', async () => {
+    const user = userEvent.setup();
+    const onImageActivate = vi.fn();
+    render(<RichText value={imageDoc()} onImageActivate={onImageActivate} />);
+    const btn = screen.getByRole('button');
+    await user.click(btn);
+    expect(onImageActivate).toHaveBeenCalledTimes(1);
+    expect(onImageActivate).toHaveBeenLastCalledWith(
+      { src: 'https://x.test/chart.png', alt: 'Q3 chart' },
+      btn,
+    );
+    btn.focus();
+    await user.keyboard('{Enter}');
+    expect(onImageActivate).toHaveBeenCalledTimes(2);
+    await user.keyboard(' ');
+    expect(onImageActivate).toHaveBeenCalledTimes(3);
+  });
+
+  it('set: the trigger is focused when the handler runs (Safari: click does not focus)', () => {
+    let focusedInHandler: Element | null = null;
+    render(
+      <RichText
+        value={imageDoc()}
+        onImageActivate={() => (focusedInHandler = document.activeElement)}
+      />,
+    );
+    const btn = screen.getByRole('button');
+    // fireEvent.click (unlike user.click) does not move focus — the Safari case.
+    fireEvent.click(btn);
+    expect(focusedInHandler).toBe(btn);
+  });
+
+  it('set: a non-image attachment (file chip) gets no trigger', () => {
+    render(
+      <RichText
+        value={imageDoc({ mime: 'application/pdf', src: 'https://x.test/d.pdf', name: 'd.pdf' })}
+        onImageActivate={() => {}}
+      />,
+    );
+    expect(screen.queryByRole('button')).toBeNull();
+    expect(screen.getByRole('link', { name: /d\.pdf/ })).toBeInTheDocument();
+  });
+
+  it('ru locale provides the label', () => {
+    render(
+      <I18nProvider locale="ru" messages={ru}>
+        <RichText value={imageDoc()} onImageActivate={() => {}} />
+      </I18nProvider>,
+    );
+    expect(
+      screen.getByRole('button', { name: 'Открыть изображение: Q3 chart' }),
+    ).toBeInTheDocument();
   });
 });

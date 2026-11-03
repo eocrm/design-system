@@ -658,6 +658,158 @@ describe('DashboardCanvas pointer gestures', () => {
   });
 });
 
+describe('DashboardCanvas gestures never leave a text selection (#737)', () => {
+  let restoreRects: () => void;
+  beforeEach(() => {
+    restoreRects = stubCanvasRects();
+  });
+  afterEach(() => {
+    restoreRects();
+    vi.restoreAllMocks();
+  });
+  const setup = () => {
+    const utils = render(
+      <DashboardCanvas
+        value={baseValue()}
+        onChange={vi.fn()}
+        renderItem={renderItem}
+        columns={12}
+      />,
+    );
+    const root = screen.getByRole('group', { name: 'Dashboard canvas' });
+    return { ...utils, root };
+  };
+  const down = { clientX: 80, clientY: 96, pointerId: 1, button: 0 };
+
+  it.each(['e', 's', 'se'])('pointerdown on the %s resize handle is default-prevented', (edge) => {
+    const { container } = setup();
+    const h = container.querySelector(
+      `[data-dc-item="a"] [data-dc-resize="${edge}"]`,
+    ) as HTMLElement;
+    expect(fireEvent.pointerDown(h, down)).toBe(false);
+  });
+
+  it('pointerdown on a section grip is default-prevented', () => {
+    const { container } = setup();
+    expect(fireEvent.pointerDown(sectionHandle(container, 's1'), down)).toBe(false);
+  });
+
+  it('blocks selectstart during a resize and releases it after pointerup', () => {
+    const { container, root } = setup();
+    const se = container.querySelector('[data-dc-item="a"] [data-dc-resize="se"]') as HTMLElement;
+    fireEvent.pointerDown(se, down);
+    expect(fireEvent(root, new Event('selectstart', { bubbles: true, cancelable: true }))).toBe(
+      false,
+    );
+    fireEvent.pointerUp(root, { ...down });
+    expect(fireEvent(root, new Event('selectstart', { bubbles: true, cancelable: true }))).toBe(
+      true,
+    );
+  });
+
+  it('a resize released outside the canvas (capture lost) stops blocking selectstart (#737)', async () => {
+    const { container, root } = setup();
+    const se = container.querySelector('[data-dc-item="a"] [data-dc-resize="se"]') as HTMLElement;
+    fireEvent.pointerDown(se, down);
+    fireEvent.pointerMove(root, { ...down, clientX: 165, clientY: 151 });
+    // No capture in jsdom: the release lands outside the root, never on it.
+    fireEvent.pointerUp(document.body, { ...down });
+    await act(() => new Promise((r) => setTimeout(r)));
+    expect(fireEvent(root, new Event('selectstart', { bubbles: true, cancelable: true }))).toBe(
+      true,
+    );
+    expect(itemEl(container, 'a').style.getPropertyValue('--dc-col')).toBe('1 / span 2');
+  });
+
+  it('an armed section drag released outside the canvas stops blocking selectstart (#737)', async () => {
+    const { container, root } = setup();
+    fireEvent.pointerDown(sectionHandle(container, 's1'), {
+      clientX: 100,
+      clientY: 570,
+      pointerId: 1,
+      button: 0,
+    });
+    fireEvent.pointerMove(root, { clientX: 100, clientY: 900, pointerId: 1 });
+    fireEvent.pointerCancel(document.body, { pointerId: 1 });
+    await act(() => new Promise((r) => setTimeout(r)));
+    expect(fireEvent(root, new Event('selectstart', { bubbles: true, cancelable: true }))).toBe(
+      true,
+    );
+    expect(container.querySelector('[data-dc-band-indicator]')).not.toBeInTheDocument();
+  });
+
+  it('clears the selection when a move drag arms and blocks selectstart meanwhile', () => {
+    const { container, root } = setup();
+    const spy = vi.spyOn(window, 'getSelection');
+    const removeAllRanges = vi.fn();
+    spy.mockReturnValue({ removeAllRanges } as unknown as Selection);
+    fireEvent.pointerDown(itemEl(container, 'b'), {
+      clientX: 10,
+      clientY: 10,
+      pointerId: 1,
+      button: 0,
+    });
+    expect(removeAllRanges).not.toHaveBeenCalled();
+    fireEvent.pointerMove(root, { clientX: 95, clientY: 60, pointerId: 1 });
+    expect(removeAllRanges).toHaveBeenCalled();
+    expect(fireEvent(root, new Event('selectstart', { bubbles: true, cancelable: true }))).toBe(
+      false,
+    );
+    fireEvent.pointerUp(root, { clientX: 95, clientY: 60, pointerId: 1 });
+  });
+
+  const selStart = (el: Element) =>
+    fireEvent(el, new Event('selectstart', { bubbles: true, cancelable: true }));
+
+  it('a pending (unarmed) move press does not block selectstart, nor does a plain click leave it blocked', () => {
+    const { container, root } = setup();
+    fireEvent.pointerDown(itemEl(container, 'b'), {
+      clientX: 10,
+      clientY: 10,
+      pointerId: 1,
+      button: 0,
+    });
+    expect(selStart(root)).toBe(true);
+    fireEvent.pointerMove(root, { clientX: 12, clientY: 11, pointerId: 1 });
+    expect(selStart(root)).toBe(true);
+    fireEvent.pointerUp(root, { clientX: 12, clientY: 11, pointerId: 1 });
+    expect(selStart(root)).toBe(true);
+  });
+
+  it('an armed section drag clears the selection and blocks selectstart', () => {
+    const { container, root } = setup();
+    const removeAllRanges = vi.fn();
+    vi.spyOn(window, 'getSelection').mockReturnValue({ removeAllRanges } as unknown as Selection);
+    fireEvent.pointerDown(sectionHandle(container, 's1'), {
+      clientX: 100,
+      clientY: 570,
+      pointerId: 1,
+      button: 0,
+    });
+    expect(selStart(root)).toBe(true);
+    expect(removeAllRanges).not.toHaveBeenCalled();
+    fireEvent.pointerMove(root, { clientX: 100, clientY: 900, pointerId: 1 });
+    expect(removeAllRanges).toHaveBeenCalled();
+    expect(selStart(root)).toBe(false);
+    fireEvent.pointerUp(root, { clientX: 100, clientY: 900, pointerId: 1 });
+    expect(selStart(root)).toBe(true);
+  });
+
+  it('a plain click on a button inside a widget body still fires onClick in edit mode', async () => {
+    const onClick = vi.fn();
+    render(
+      <DashboardCanvas
+        value={baseValue()}
+        onChange={vi.fn()}
+        columns={12}
+        renderItem={(id) => <button onClick={onClick}>btn-{id}</button>}
+      />,
+    );
+    await userEvent.click(screen.getByText('btn-a'));
+    expect(onClick).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('DashboardCanvas stacked drops, ghost clamp, trailing space (#694 #695 #696)', () => {
   let restoreRects: () => void;
   beforeEach(() => {

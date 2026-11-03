@@ -1,6 +1,6 @@
 # `<Lightbox>` — full-screen image & document gallery overlay
 
-`<Lightbox open onOpenChange items>` shows one large item at a time (an image, or a PDF in an `<iframe>`) with prev/next chevrons, ← → keys, a thumbnail strip, a position counter, and an optional caption. Controlled `open` like `<Modal>`; the current index is uncontrolled (`defaultIndex`) unless you pass `index` + `onIndexChange`. `loop` (default true) wraps at the ends. The consumer owns the trigger — typically a row of interactive `<Image>` thumbnails. For a single inline image use `<Image>`.
+`<Lightbox open onOpenChange items>` shows one large item at a time (an image, or a PDF in an `<iframe>`) with prev/next chevrons, ← → keys, a thumbnail strip, a position counter, and an optional caption. Controlled `open` like `<Modal>`; the current index is uncontrolled (`defaultIndex`) unless you pass `index` + `onIndexChange`. `loop` (default true) wraps at the ends. The consumer owns the trigger — typically a row of interactive `<Image>` thumbnails, or an inline image in `<RichText onImageActivate>`. For a single inline image use `<Image>`.
 
 ```tsx
 const [open, setOpen] = useState(false);

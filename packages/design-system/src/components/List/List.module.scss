@@ -48,6 +48,11 @@
   gap: var(--list-marker-gap);
 }
 
+// No marker: the item is a plain block so its row content (e.g. a Cluster) fills the width.
+.list[data-variant='plain'] > .item {
+  display: block;
+}
+
 // One line tall, so a marker centres on the FIRST text line of a multi-line item.
 .marker {
   display: flex;

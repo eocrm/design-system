@@ -660,6 +660,7 @@ export type { HighlightedTextProps, HighlightRange } from './components/Highligh
 export { RichText } from './components/RichText';
 export type {
   RichTextProps,
+  RichTextImageActivateHandler,
   RichDoc,
   RichBlock,
   RichBlockType,

@@ -96,7 +96,7 @@ Each `<Name>` below is documented in `docs/components/<Name>.md`.
 - `ImageCrop` — controlled image cropper
 - `Card` — bordered container
 - `DefinitionList` — semantic key/value pairs (dl / dt / dd)
-- `List` — bulleted / numbered prose lists (ul / ol), optional badge step numbers
+- `List` — bulleted / numbered / `plain` (marker-less, for interactive rows) lists (ul / ol), optional badge step numbers
 - `Stack` — vertical layout
 - `Page` — page-root layout primitive
 - `Cluster` — horizontal layout that wraps

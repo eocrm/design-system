@@ -456,9 +456,13 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
     // blocking arming outright (touch ids retire) (#363). Window CAPTURE
     // listeners see the physical release before any stopPropagation below;
     // clearing an UNMOVED press is behavior-preserving (unmoved presses
-    // commit nothing), and a moved drag is capture-owned — its own root
-    // handlers clear the ref before this check could matter.
-    const armPendingRelease = (drag: MoveDrag | SectionDrag) => {
+    // commit nothing). A resize or a moved drag is capture-owned, so its own
+    // root handlers normally clear (and commit) — this capture listener fires
+    // BEFORE them, so it only re-checks after the event's dispatch: still
+    // holding the gesture then means capture failed and the release landed
+    // outside the root — abandon it (no commit, like pointercancel) instead of
+    // leaving dragRef stale and the document selectstart guard on (#737).
+    const armRelease = (drag: DragState) => {
       const release = (event: PointerEvent) => {
         // Only the press's OWN pointer resolves it — a stray second pointer
         // (palm/touch) releasing elsewhere must neither clear a still-live
@@ -467,7 +471,16 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         if (event.pointerId !== drag.pointerId) return;
         window.removeEventListener('pointerup', release, true);
         window.removeEventListener('pointercancel', release, true);
-        if (dragRef.current === drag && !drag.moved) dragRef.current = null;
+        if (dragRef.current !== drag) return;
+        if (drag.kind !== 'resize' && !drag.moved) {
+          dragRef.current = null;
+          return;
+        }
+        setTimeout(() => {
+          if (dragRef.current !== drag) return;
+          dragRef.current = null;
+          setLive(null);
+        });
       };
       window.addEventListener('pointerup', release, true);
       window.addEventListener('pointercancel', release, true);
@@ -482,7 +495,9 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       // One gesture at a time: a second pointer going down mid-drag must not
       // overwrite the state (FlowCanvas discipline), and a keyboard pick owns
       // the canvas until it drops or cancels. No preventDefault — clicks
-      // inside item bodies pass through until the drag arms.
+      // inside item bodies pass through until the drag arms. A pending press
+      // never touches selection (double-click, caret, shift-click all work);
+      // once the drag arms, the selection is cleared and selectstart is blocked.
       if (!editingEnabled || event.button !== 0 || dragRef.current || pick) return;
       if (isPortalEvent(event) || underOpenOverlay()) return;
       const el = event.currentTarget;
@@ -508,7 +523,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         preview: null,
       };
       dragRef.current = drag;
-      armPendingRelease(drag);
+      armRelease(drag);
       // No capture yet — capture retargets the eventual click to the root,
       // so it must wait until the drag arms (clicks pass through until then).
     };
@@ -523,7 +538,9 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       if (isPortalEvent(event) || underOpenOverlay()) return;
       // The handle sits inside the move-drag surface — never arm both.
       event.stopPropagation();
-      dragRef.current = {
+      // Handles have no click semantics — block the native selection start.
+      event.preventDefault();
+      const drag: ResizeDrag = {
         kind: 'resize',
         pointerId: event.pointerId,
         id: placement.id,
@@ -538,6 +555,8 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         lastH: placement.h,
         preview: null,
       };
+      dragRef.current = drag;
+      armRelease(drag);
       // Handles have no click semantics — capture immediately (on the root).
       capturePointer(rootRef.current, event.pointerId);
     };
@@ -551,6 +570,8 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
       // Called only from the section's dedicated grip handle (see
       // DashboardCanvasSection's remarks) — no target-based exclusion needed,
       // the toggle button and the renderSectionHeader extras never wire this.
+      // The grip has no click semantics — block the native selection start.
+      event.preventDefault();
       const fromIndex = value.sections.findIndex((section) => section.id === sectionId);
       if (fromIndex === -1) return;
       const drag: SectionDrag = {
@@ -564,7 +585,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
         slot: fromIndex,
       };
       dragRef.current = drag;
-      armPendingRelease(drag);
+      armRelease(drag);
     };
 
     // --- pointer stream (root-level; capture retargeting still bubbles here) ---
@@ -587,6 +608,9 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
             return;
           }
           drag.moved = true;
+          // The press began on a widget body (not preventDefault'ed), so the
+          // browser may already have started a selection — drop it.
+          window.getSelection()?.removeAllRanges();
           capturePointer(rootRef.current, event.pointerId);
         }
         // Drop target = the registered container grid under the pointer.
@@ -707,6 +731,7 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
           return;
         }
         drag.moved = true;
+        window.getSelection()?.removeAllRanges();
         capturePointer(rootRef.current, event.pointerId);
       }
       // Insertion slot = how many band midpoints the pointer has passed.
@@ -1036,6 +1061,20 @@ export const DashboardCanvas = forwardRef<HTMLDivElement, DashboardCanvasProps>(
     // (FlowCanvas #282). The pick's own Escape lands on the focused item.
     const dragging = live != null;
     useFloatingSurface(dragging || pick != null);
+    // No text selection may start during an ACTIVE gesture: a resize, or a
+    // move/section drag that has armed. A pending (unarmed) press must not
+    // block it — double-click/caret/shift-click in widget bodies stay native.
+    // One listener for the component's lifetime that reads the
+    // ref — every teardown path (pointerup, cancel, Escape, unmount) is
+    // covered without per-gesture attach/detach bookkeeping.
+    useEffect(() => {
+      const onSelectStart = (event: Event) => {
+        const d = dragRef.current;
+        if (d && (d.kind === 'resize' || d.moved)) event.preventDefault();
+      };
+      document.addEventListener('selectstart', onSelectStart);
+      return () => document.removeEventListener('selectstart', onSelectStart);
+    }, []);
     // Window-level Escape: cancels a pointer drag wherever focus sits, and
     // is the belt-and-braces exit for a pick whose item lost focus (the
     // item-level handler consumes Escape first when focused).

@@ -9,7 +9,7 @@ import { isListItem, effectiveDepths } from './listDepths';
 import { MARK_ORDER, marksSignature } from './marks';
 import type { RenderLink } from './renderLink';
 import type { RenderMention } from './renderMention';
-import { RichTextAttachment } from '../RichTextAttachment';
+import { RichTextAttachment, type RichTextImageActivateHandler } from '../RichTextAttachment';
 
 export interface RenderDocOptions {
   /** Editable surface: add `data-block-id` anchors + render empty blocks with a `<br>`. */
@@ -31,6 +31,11 @@ export interface RenderDocOptions {
    * standard non-interactive mention span. Composes with `renderLink`.
    */
   renderMention?: RenderMention;
+  /**
+   * Make each ready image attachment a native `<button>` that calls this on
+   * activation (read-only viewer). Unset: the plain `<img>`, unchanged.
+   */
+  onImageActivate?: RichTextImageActivateHandler;
 }
 
 // Resolved options threaded through the render call chain (never module state).
@@ -38,6 +43,7 @@ interface ResolvedOptions {
   editable: boolean;
   renderLink?: RenderLink;
   renderMention?: RenderMention;
+  onImageActivate?: RichTextImageActivateHandler;
 }
 
 // Per-block element cache for CONTEXT-INDEPENDENT blocks only (paragraph, heading,
@@ -48,7 +54,7 @@ interface ResolvedOptions {
 //
 // Keyed in a WeakMap on the immutable Block object, so entries are GC'd with their
 // block — no leak, no manual invalidation. The render options are part of the
-// stored entry: a change to `editable`/`renderLink`/`renderMention` correctly
+// stored entry: a change to `editable`/`renderLink`/`renderMention`/`onImageActivate` correctly
 // misses the cache and rebuilds.
 //
 // LIST items (bullet_item/ordered_item) are NEVER cached here: their nested
@@ -59,28 +65,28 @@ type BlockCacheEntry = {
   editable: boolean;
   renderLink?: RenderLink;
   renderMention?: RenderMention;
+  onImageActivate?: RichTextImageActivateHandler;
   el: ReactElement;
 };
 const blockCache = new WeakMap<Block, BlockCacheEntry>();
 
 function cachedBlockEl(
   block: Block,
-  editable: boolean,
-  renderLink: RenderLink | undefined,
-  renderMention: RenderMention | undefined,
+  opts: ResolvedOptions,
   build: () => ReactElement,
 ): ReactElement {
   const hit = blockCache.get(block);
   if (
     hit &&
-    hit.editable === editable &&
-    hit.renderLink === renderLink &&
-    hit.renderMention === renderMention
+    hit.editable === opts.editable &&
+    hit.renderLink === opts.renderLink &&
+    hit.renderMention === opts.renderMention &&
+    hit.onImageActivate === opts.onImageActivate
   ) {
     return hit.el;
   }
   const el = build();
-  blockCache.set(block, { editable, renderLink, renderMention, el });
+  blockCache.set(block, { ...opts, el });
   return el;
 }
 
@@ -279,7 +285,11 @@ function buildBlock(block: Block, opts: ResolvedOptions): ReactElement {
           data-attachment=""
           data-align={block.align || undefined}
         >
-          <RichTextAttachment block={block} editable={opts.editable} />
+          <RichTextAttachment
+            block={block}
+            editable={opts.editable}
+            onImageActivate={opts.onImageActivate}
+          />
         </figure>
       );
     case 'paragraph':
@@ -295,9 +305,7 @@ function buildBlock(block: Block, opts: ResolvedOptions): ReactElement {
 // Cache wrapper for a non-list block: returns the cached element when the block
 // reference AND the relevant options are unchanged, otherwise builds + stores it.
 function renderBlock(block: Block, opts: ResolvedOptions): ReactElement {
-  return cachedBlockEl(block, opts.editable, opts.renderLink, opts.renderMention, () =>
-    buildBlock(block, opts),
-  );
+  return cachedBlockEl(block, opts, () => buildBlock(block, opts));
 }
 
 interface ListItemNode {
@@ -376,6 +384,7 @@ export function renderDoc(doc: RichDoc, options: RenderDocOptions = {}): ReactNo
     editable: options.editable ?? false,
     renderLink: options.renderLink,
     renderMention: options.renderMention,
+    onImageActivate: options.onImageActivate,
   };
   const eff = effectiveDepths(doc.blocks);
   const out: ReactNode[] = [];

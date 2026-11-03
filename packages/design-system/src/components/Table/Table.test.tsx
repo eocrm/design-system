@@ -4,6 +4,7 @@ import { compile } from 'sass';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { createRef, forwardRef, type ReactNode } from 'react';
+import { Text } from '../Text';
 import { Table } from './Table';
 
 // jsdom computes no styles, so CSS-only behaviour is asserted against the
@@ -170,6 +171,21 @@ describe('Table', () => {
       </Table>,
     );
     expect(container.querySelector('td')?.className).toMatch(/align-end/);
+  });
+
+  it('a Text inside Table.Cell align="end" carries no align class, so it inherits end (#727)', () => {
+    render(
+      <Table>
+        <Table.Body>
+          <Table.Row>
+            <Table.Cell align="end">
+              <Text>42</Text>
+            </Table.Cell>
+          </Table.Row>
+        </Table.Body>
+      </Table>,
+    );
+    expect(screen.getByText('42').className).not.toMatch(/align/);
   });
 
   it('Table.Cell truncate applies the truncate class', () => {

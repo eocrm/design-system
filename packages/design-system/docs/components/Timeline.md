@@ -42,6 +42,7 @@
 <!-- props:end -->
 
 - The last item's connector stops automatically (CSS `:last-child`); `compact` flows via CSS vars.
+- The node centres on the item's **first line**, not the content block — a header that wraps, or a `<Cluster>` holding `Text size="sm"` and an inline `<PersonDisplay>`, still lines up on line 1. It works by first-baseline alignment against a strut set in `Text size="sm"` type, so **start each item with a text line**: content that opens with an image or other baseline-less box aligns the node to that box's bottom edge. If the first line is not `sm` text, set `--timeline-first-line-font-size` / `--timeline-first-line-height` on the `<Timeline>` to its type.
 
 ```tsx
 // Compact sidebar widget with dot nodes:

@@ -35,10 +35,10 @@ TL;DR: `<List>` for bullets, `<List variant="number">` for ordered steps, `numbe
 <!-- prettier-ignore -->
 | Prop | Type | Required | Description |
 |---|---|---|---|
-| `variant` | `'bullet' \| 'number'` | no | Marker style. See `ListVariant`. Default `'bullet'`. |
+| `variant` | `'bullet' \| 'number' \| 'plain'` | no | Marker style. See `ListVariant`. Default `'bullet'`. |
 | `gap` | `'xs' \| 'sm' \| 'md'` | no | Space between items. See `ListGap`. Default `'sm'`. |
-| `size` | `'body' \| 'heading'` | no | Marker scale; use `'heading'` when each item starts with a `Title size="xl"`. See `ListSize`. Default `'body'`. |
-| `numberStyle` | `'plain' \| 'badge'` | no | Number look; only applies to `variant="number"`. See `ListNumberStyle`. Default `'plain'`. |
+| `size` | `'body' \| 'heading'` | no | Marker scale; no effect on `variant="plain"`. Use `'heading'` when each item starts with a `Title size="xl"`. See `ListSize`. Default `'body'`. |
+| `numberStyle` | `'plain' \| 'badge'` | no | Number look; only applies to `variant="number"` (not `'plain'`). See `ListNumberStyle`. Default `'plain'`. |
 | `children` | `ReactNode` | no | `List.Item` elements. A nested `List` goes inside a `List.Item`. |
 | …native | | | plus native HTML attributes |
 
@@ -58,10 +58,11 @@ TL;DR: `<List>` for bullets, `<List variant="number">` for ordered steps, `numbe
 - Nest by putting a `List` inside a `List.Item`; it indents one level. A nested `List` uses its own `size`, so a body list inside a `size="heading"` step keeps body markers.
 - On a `size="heading"` List, marker size, shape and font size come from the `--list-heading-*` tokens: overriding `--list-marker-height`/`-width`, `--list-bullet-size`, `--list-number-font-size` or `--list-badge-size`/`-radius`/`-font-size` has no effect there. Colour, weight and gap tokens (`--list-marker-fg`, `--list-badge-bg`/`-fg`, `--list-*-font-weight`, `--list-marker-gap`) apply to both sizes.
 - `numberStyle` has no effect on bullets.
+- `variant="plain"` renders a marker-less `<ul>` for rows of interactive items (title button, timestamp, icon button) that need list semantics; `numberStyle` and `size` do not apply. Put a `Cluster` in each `List.Item` for the row layout.
 - With `numberStyle="badge"` the numbers are visual only; screen readers announce the list position ("1 of 3") rather than the badge text.
 - `size="heading"` fits markers to a `Title size="xl"` first line; the badge turns into a rounded square.
 
-When NOT to use: key–value pairs → `DefinitionList`; rows of records → `Card.List` / `Table`; interactive or selectable rows → `Card.List`; custom markers or icons (unsupported).
+When NOT to use: key–value pairs → `DefinitionList`; rows of records → `Card.List` / `Table`; selectable rows → `Card.List`; interactive rows that only need list semantics → `variant="plain"`; custom markers or icons (unsupported).
 
 - ❌ Raw `<ul>` / `<ol>` or `Stack` + `Dot` composites for prose lists: use `List`.
 - ❌ Children other than `List.Item` (a `div`, text, a raw `li`): they get no marker and are not counted. Wrapper components are fine if they render `List.Item`.

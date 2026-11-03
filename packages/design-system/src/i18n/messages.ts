@@ -1030,6 +1030,11 @@ export interface Messages {
     /** Muted tag marking a collection (array) variable in menus. */
     collectionTag: string;
   };
+  richText: {
+    /** Function leaf — aria-label on an inline-image trigger (`onImageActivate`).
+     * `name` is the image's alt, else its file name; may be empty. */
+    openImage: (params: { name: string }) => string;
+  };
   richTextEditor: {
     /** Default aria-label for the editable region when none is supplied. */
     editorLabel: string;

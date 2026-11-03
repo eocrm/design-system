@@ -1,5 +1,6 @@
 export { RichText } from './RichText';
 export type { RichTextProps } from './RichText';
+export type { RichTextImageActivateHandler } from './RichTextAttachment';
 // Model types are exported with a `Rich` prefix so the package's flat namespace
 // doesn't claim generic names — `Block`/`Mark`/`Point`/`Inline` are likely future
 // collisions and `Range` shadows the DOM global. The engine keeps the short names

@@ -23,6 +23,7 @@ const doc = {
 | `renderLink` | `RenderLink` | no | Substitute how a link renders. Called per link with `{ href, text }` and the default `<a>` node; return your own node (e.g. a task/member chip) or the `defaultNode` to keep the standard anchor. Render-time only — the document model is unchanged, so serialization still emits a plain link. Prose link styling (accent colour + underline) applies to BARE anchors only: an `<a>` you return with any `className` — including a DS `<Link>` — keeps its own decoration and colour entirely. |
 | `renderMention` | `RenderMention` | no | Substitute how an `@`-mention renders. Called per mention with `{ id, label }` and the default mention span; return your own node (e.g. an interactive member chip / popover trigger) or the `defaultNode` to keep the standard non-interactive span. Render-time only — the document model is unchanged, so serialization still emits the mention mark. Composes with `renderLink`. |
 | `imageMaxHeight` | `number` | no | Maximum DISPLAYED height of image attachments, in px. Default: the `--size-rich-text-image-max-height` token (480px). A taller image shrinks (width follows, aspect preserved) — render-time only; stored `width`/`height` are unchanged, so existing documents need no migration. There is no "off": pass a large value to effectively remove the cap. |
+| `onImageActivate` | `RichTextImageActivateHandler` | no | Make inline images keyboard-operable triggers (e.g. to open a `Lightbox`). When set, each ready image attachment renders inside a native `<button type="button">` named "Open image: <alt or file name>"; click, Enter and Space focus the button, then call this with `{ src, alt }` and it — so an overlay that restores focus on close (e.g. `Lightbox`) returns there. Unset: the plain `<img>`, unchanged. Pass a stable reference (`useCallback`): a new function each render rebuilds every attachment block. |
 | …native | | | plus native `<div>` attributes |
 
 <!-- props:end -->
@@ -39,6 +40,16 @@ const renderLink: RenderLink = ({ href }, fallback) => {
 
 **`renderMention`** (optional) — `(mention: { id, label }, defaultNode) => ReactNode` — same contract as `renderLink` but for `@`-mention marks (render an interactive member chip/popover trigger), or return `defaultNode` for the standard non-interactive mention span. Composes with `renderLink`. Render-time only — `toHtml`/`toMarkdown` and the model still emit the mention mark. Works in both `<RichText>` and `<RichTextEditor>` (where a substituted mention becomes an atomic chip).
 
+**`onImageActivate`** (optional) — `(image: { src, alt? }, trigger) => void` — makes inline images keyboard-operable triggers, typically to open a `<Lightbox>`. When set, each ready image attachment renders inside a native `<button type="button">` (Tab-focusable, Enter/Space, library focus ring) named "Open image: <alt, else file name>"; the inner `<img>` gets `alt=""` so the name isn't read twice. File chips get no trigger. `trigger` is that button, already focused when the handler runs (the library focuses it, since a click doesn't in Safari), so an overlay that restores focus on close — `Lightbox` does — returns it there with no extra code. `alt` is the stored value (may be `''` or absent) — `LightboxItem.alt` is required, so supply your own fallback. Pass a stable reference (`useCallback`) — a new function each render rebuilds every attachment block. Unset, images render as the plain `<img>`, unchanged. Read-only `<RichText>` only.
+
+```tsx
+const [image, setImage] = useState<{ src: string; alt?: string } | null>(null);
+const onImageActivate = useCallback<RichTextImageActivateHandler>((img) => setImage(img), []);
+<RichText value={doc} onImageActivate={onImageActivate} />
+<Lightbox open={image !== null} onOpenChange={(o) => !o && setImage(null)} items={image ? [{ src: image.src, alt: image.alt || 'Attached image' }] : []} />;
+```
+
 When NOT to use: plain text → `Text`. For editing → `<RichTextEditor>`. The model is immutable; render the doc returned by a transform, never mutate in place.
 
 - ❌ Hand-writing HTML to display rich content — feed a `RichDoc` to `<RichText>`.
+- ❌ A delegated `onClick` on the `<RichText>` root to open images — mouse/touch only: the `<img>` isn't focusable, has no button role and leaves nothing to return focus to. Use `onImageActivate`.

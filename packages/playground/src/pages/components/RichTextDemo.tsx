@@ -1,19 +1,80 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
   RichText,
+  Lightbox,
   createBlock,
   toggleMark,
   setBlockType,
   Cluster,
+  Stack,
   Button,
   Badge,
   type RichDoc,
   type RenderLink,
   type RenderMention,
+  type RichTextImageActivateHandler,
 } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
+
+const IMAGE_DOC: RichDoc = {
+  blocks: [
+    createBlock('paragraph', 'Site survey photo — click it, or Tab to it and press Enter:'),
+    {
+      id: 'img-1',
+      type: 'attachment',
+      inlines: [],
+      status: 'ready',
+      src: `${import.meta.env.BASE_URL}sample-embed.svg`,
+      mime: 'image/svg+xml',
+      name: 'lake.svg',
+      alt: 'Mountain lake at dawn',
+      width: 320,
+    },
+  ],
+};
+
+// Local asset (480×240) so the layout spec doesn't depend on a CDN.
+const sampleSrc = `${import.meta.env.BASE_URL}sample-embed.svg`;
+const svgImage = (id: string, width: number, align?: 'center' | 'right') => ({
+  id,
+  type: 'attachment' as const,
+  inlines: [],
+  status: 'ready' as const,
+  src: sampleSrc,
+  mime: 'image/svg+xml',
+  name: `${id}.svg`,
+  alt: `Sample ${id}`,
+  width,
+  ...(align ? { align } : {}),
+});
+const ALIGN_DOC: RichDoc = {
+  blocks: [
+    svgImage('wide', 480),
+    createBlock('paragraph', 'Centred:'),
+    svgImage('centre', 160, 'center'),
+    createBlock('paragraph', 'Right:'),
+    svgImage('right', 160, 'right'),
+  ],
+};
+
+// Opens the activated image in a Lightbox. The DS focuses the trigger before
+// calling the handler, so the Lightbox returns focus there on close.
+function ImageLightboxExample({ doc, testId }: { doc: RichDoc; testId?: string }) {
+  const [image, setImage] = useState<{ src: string; alt?: string } | null>(null);
+  const onImageActivate = useCallback<RichTextImageActivateHandler>((img) => setImage(img), []);
+  return (
+    <>
+      <RichText value={doc} onImageActivate={onImageActivate} data-testid={testId} />
+      <Lightbox
+        open={image !== null}
+        onOpenChange={(o) => !o && setImage(null)}
+        items={image ? [{ src: image.src, alt: image.alt || 'Attached image' }] : []}
+      />
+    </>
+  );
+}
 
 // A consumer-supplied resolver: links pointing at an in-space task URL render as
 // a task chip; everything else falls back to a normal <a>.
@@ -362,6 +423,43 @@ export function Demo() {
 }`}
       >
         <RichText value={MENTION_DOC} renderMention={renderMention} />
+      </Example>
+
+      <Example
+        title="Inline images open a Lightbox (onImageActivate)"
+        description="With onImageActivate set, each inline image is a native button (Tab, Enter/Space, focus ring) named 'Open image: <alt>'. The handler gets { src, alt } and the (already focused) button, so the Lightbox returns focus there on close. Unset, images are plain <img> — don't attach a delegated onClick instead (mouse-only, no focus return)."
+        code={`import { useCallback, useState } from 'react';
+import { RichText, Lightbox, type RichTextImageActivateHandler } from '@eocrm/design-system';
+
+export function Demo({ doc }) {
+  const [image, setImage] = useState<{ src: string; alt?: string } | null>(null);
+  // The trigger is focused before this runs → Lightbox returns focus to it on close.
+  const onImageActivate = useCallback<RichTextImageActivateHandler>((img) => setImage(img), []);
+  return (
+    <>
+      <RichText value={doc} onImageActivate={onImageActivate} />
+      <Lightbox
+        open={image !== null}
+        onOpenChange={(o) => !o && setImage(null)}
+        items={image ? [{ src: image.src, alt: image.alt || 'Attached image' }] : []}
+      />
+    </>
+  );
+}`}
+      >
+        <ImageLightboxExample doc={IMAGE_DOC} />
+      </Example>
+
+      <Example
+        title="Image layout and alignment, with and without onImageActivate"
+        description="The trigger button is layout-neutral: a wide image still caps at the container width, and data-align centre/right position it exactly as the plain <img> (top: unset, bottom: onImageActivate set)."
+        code={`<RichText value={doc} />
+<RichText value={doc} onImageActivate={onImageActivate} />`}
+      >
+        <Stack gap="md">
+          <RichText value={ALIGN_DOC} data-testid="rt-images-plain" />
+          <ImageLightboxExample doc={ALIGN_DOC} testId="rt-images-trigger" />
+        </Stack>
       </Example>
     </DemoLayout>
   );

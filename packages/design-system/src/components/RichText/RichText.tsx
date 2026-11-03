@@ -4,6 +4,7 @@ import type { RichDoc } from './engine/model';
 import { renderDoc } from './engine/renderDoc';
 import type { RenderLink } from './engine/renderLink';
 import type { RenderMention } from './engine/renderMention';
+import type { RichTextImageActivateHandler } from './RichTextAttachment';
 import { imageMaxHeightStyle } from './imageMaxHeightStyle';
 import styles from './RichText.module.scss';
 
@@ -45,6 +46,16 @@ export interface RichTextProps extends HTMLAttributes<HTMLDivElement> {
    * pass a large value to effectively remove the cap.
    */
   imageMaxHeight?: number;
+  /**
+   * Make inline images keyboard-operable triggers (e.g. to open a `Lightbox`).
+   * When set, each ready image attachment renders inside a native
+   * `<button type="button">` named "Open image: <alt or file name>"; click,
+   * Enter and Space focus the button, then call this with `{ src, alt }` and
+   * it — so an overlay that restores focus on close (e.g. `Lightbox`) returns there. Unset: the plain `<img>`, unchanged.
+   * Pass a stable reference (`useCallback`): a new function each render
+   * rebuilds every attachment block.
+   */
+  onImageActivate?: RichTextImageActivateHandler;
 }
 
 /**
@@ -52,7 +63,7 @@ export interface RichTextProps extends HTMLAttributes<HTMLDivElement> {
  * @see docs/components/RichText.md
  */
 export const RichText = forwardRef<HTMLDivElement, RichTextProps>(function RichText(
-  { value, renderLink, renderMention, imageMaxHeight, className, style, ...props },
+  { value, renderLink, renderMention, onImageActivate, imageMaxHeight, className, style, ...props },
   ref,
 ) {
   // {...props} last so the consumer can override anything except the composed
@@ -64,7 +75,7 @@ export const RichText = forwardRef<HTMLDivElement, RichTextProps>(function RichT
       style={imageMaxHeightStyle(imageMaxHeight, style)}
       {...props}
     >
-      {renderDoc(value, { renderLink, renderMention })}
+      {renderDoc(value, { renderLink, renderMention, onImageActivate })}
     </div>
   );
 });

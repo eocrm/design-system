@@ -81,6 +81,16 @@
   color: var(--text-fg-warning);
 }
 
+.alignStart {
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- text-align keywords don't have tokens
+  text-align: start;
+}
+
+.alignEnd {
+  // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- text-align keywords don't have tokens
+  text-align: end;
+}
+
 .alignLeft {
   // stylelint-disable-next-line scale-unlimited/declaration-strict-value -- text-align keywords don't have tokens
   text-align: left;
