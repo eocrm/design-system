@@ -11,6 +11,21 @@ const items = (
 );
 
 describe('List', () => {
+  it('renders variant="plain" as a marker-less <ul> of <li>', () => {
+    const { container } = render(
+      <List variant="plain" gap="md" numberStyle="badge">
+        {items}
+      </List>,
+    );
+    const list = screen.getByRole('list');
+    expect(list.tagName).toBe('UL');
+    expect(list).toHaveAttribute('data-variant', 'plain');
+    expect(list).toHaveAttribute('data-gap', 'md');
+    expect(screen.getAllByRole('listitem')).toHaveLength(3);
+    expect(container.querySelectorAll('li > span')).toHaveLength(0);
+    expect(container.querySelector('li')).toHaveTextContent('One');
+  });
+
   it('renders a bulleted <ul role="list"> of <li> by default', () => {
     render(<List>{items}</List>);
     const list = screen.getByRole('list');

@@ -6,8 +6,9 @@ import styles from './List.module.scss';
  * Marker style.
  * - `'bullet'` (default) — a dot per item, rendered in a `<ul>`.
  * - `'number'` — 1, 2, 3 per item, rendered in an `<ol>`.
+ * - `'plain'` — no marker, rendered in a `<ul>`; for rows of interactive items (buttons, links) that still need list semantics. `numberStyle` and `size` do not apply.
  */
-export type ListVariant = 'bullet' | 'number';
+export type ListVariant = 'bullet' | 'number' | 'plain';
 
 /**
  * Space between items.
@@ -20,7 +21,7 @@ export type ListGap = 'xs' | 'sm' | 'md';
 /**
  * How `variant="number"` draws its numbers.
  * - `'plain'` (default) — a muted figure.
- * - `'badge'` — an accent badge for numbered steps: circular at body size, a rounded square at `size="heading"`. Ignored for bullets.
+ * - `'badge'` — an accent badge for numbered steps: circular at body size, a rounded square at `size="heading"`. Ignored for bullets and `'plain'`.
  */
 export type ListNumberStyle = 'plain' | 'badge';
 
@@ -36,9 +37,9 @@ export interface ListProps extends HTMLAttributes<HTMLElement> {
   variant?: ListVariant;
   /** Space between items. See `ListGap`. Default `'sm'`. */
   gap?: ListGap;
-  /** Marker scale; use `'heading'` when each item starts with a `Title size="xl"`. See `ListSize`. Default `'body'`. */
+  /** Marker scale; no effect on `variant="plain"`. Use `'heading'` when each item starts with a `Title size="xl"`. See `ListSize`. Default `'body'`. */
   size?: ListSize;
-  /** Number look; only applies to `variant="number"`. See `ListNumberStyle`. Default `'plain'`. */
+  /** Number look; only applies to `variant="number"` (not `'plain'`). See `ListNumberStyle`. Default `'plain'`. */
   numberStyle?: ListNumberStyle;
   /** `List.Item` elements. A nested `List` goes inside a `List.Item`. */
   children?: ReactNode;
@@ -103,6 +104,13 @@ export const ListItem = forwardRef<HTMLLIElement, ListItemProps>(function ListIt
   ref,
 ) {
   const { variant, numberStyle } = useContext(Ctx);
+  if (variant === 'plain') {
+    return (
+      <li ref={ref} className={clsx(styles.item, className)} {...rest}>
+        {children}
+      </li>
+    );
+  }
   const inner =
     variant === 'bullet' ? (
       <span className={styles.bullet} />

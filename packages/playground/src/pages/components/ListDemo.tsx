@@ -1,4 +1,15 @@
-import { Alert, Card, Constrain, List, Stack, Text, Title } from '@eocrm/design-system';
+import { Trash2 } from 'lucide-react';
+import {
+  Alert,
+  Button,
+  Card,
+  Cluster,
+  Constrain,
+  List,
+  Stack,
+  Text,
+  Title,
+} from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -61,6 +72,79 @@ export function Demo() {
             <List.Item>Open Settings and choose Integrations.</List.Item>
             <List.Item>Create a token and copy it; it is shown once.</List.Item>
             <List.Item>Paste the token into your client and save.</List.Item>
+          </List>
+        </Constrain>
+      </Example>
+
+      <Example
+        title="Plain (interactive rows)"
+        description="variant='plain' keeps list semantics without a marker, for rows of buttons or links. numberStyle and size do not apply."
+        code={`import { Trash2 } from 'lucide-react';
+import { Button, Cluster, List, Text } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <List variant="plain">
+      <List.Item>
+        <Cluster gap="sm" align="center" wrap={false}>
+          <Button variant="ghost" size="sm">Quarterly pipeline review</Button>
+          <Text tone="muted" size="sm">2h ago</Text>
+          <Button variant="ghost" size="xs" iconOnly aria-label="Delete Quarterly pipeline review">
+            <Trash2 size={12} />
+          </Button>
+        </Cluster>
+      </List.Item>
+      <List.Item>
+        <Cluster gap="sm" align="center" wrap={false}>
+          <Button variant="ghost" size="sm">Draft follow-up emails</Button>
+          <Text tone="muted" size="sm">Yesterday</Text>
+          <Button variant="ghost" size="xs" iconOnly aria-label="Delete Draft follow-up emails">
+            <Trash2 size={12} />
+          </Button>
+        </Cluster>
+      </List.Item>
+    </List>
+  );
+}`}
+      >
+        <Constrain width="sm">
+          <List variant="plain">
+            <List.Item>
+              <Cluster gap="sm" align="center" wrap={false}>
+                <Button variant="ghost" size="sm">
+                  Quarterly pipeline review
+                </Button>
+                <Text tone="muted" size="sm">
+                  2h ago
+                </Text>
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  iconOnly
+                  aria-label="Delete Quarterly pipeline review"
+                >
+                  <Trash2 size={12} />
+                </Button>
+              </Cluster>
+            </List.Item>
+            <List.Item>
+              <Cluster gap="sm" align="center" wrap={false}>
+                <Button variant="ghost" size="sm">
+                  Draft follow-up emails
+                </Button>
+                <Text tone="muted" size="sm">
+                  Yesterday
+                </Text>
+                <Button
+                  variant="ghost"
+                  size="xs"
+                  iconOnly
+                  aria-label="Delete Draft follow-up emails"
+                >
+                  <Trash2 size={12} />
+                </Button>
+              </Cluster>
+            </List.Item>
           </List>
         </Constrain>
       </Example>
