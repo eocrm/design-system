@@ -380,7 +380,7 @@ export function FormDemo() {
       <Example
         title="ru-RU locale"
         description="Input parses and formats as DD.MM.YYYY — DD.MM.YYYY. UI labels (button tooltips) come from <I18nProvider locale='ru' messages={ru}>."
-        code={`import { DateRangePicker, I18nProvider } from '@eocrm/design-system';
+        code={`import { DateRangePicker, I18nProvider, ru } from '@eocrm/design-system';
 
 const today = new Date();
 const in14 = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 14);

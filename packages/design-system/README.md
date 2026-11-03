@@ -126,7 +126,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 }
 ```
 
-**Tests.** Vitest externalizes `node_modules` and Node can't import the components' `.css`, so inline this package (add `css: true` only if you assert on styles):
+**Tests.** Vitest externalizes `node_modules` and Node can't import the components' `.css` (`TypeError: Unknown file extension ".css"`), so inline this package (add `css: true` only if you assert on styles):
 
 ```ts
 // vitest.config.ts
