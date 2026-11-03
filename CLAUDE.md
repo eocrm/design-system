@@ -1,11 +1,12 @@
 # CLAUDE.md — repo root
 
-Monorepo for the EOCRM design system. Three packages, managed by npm workspaces.
+Monorepo for the EOCRM design system. Four packages, managed by npm workspaces.
 
 ## Layout
 
 - `packages/design-tokens/` — validated token source plus generated Sass and Kotlin Multiplatform/Compose contracts.
 - `packages/design-system/` — `@eocrm/design-system`. The library that ships to the CRM via npmjs (public).
+- `packages/design-system-mcp/` — `@eocrm/design-system-mcp`. MCP server that serves a project's pinned design-system docs to AI agents; releases independently (see Publishing).
 - `packages/playground/` — local dev gallery + demo pages. **Never published.** The most realistic preview of how the library behaves when consumed.
 
 Each package has its own `CLAUDE.md` with package-specific rules. Read them when working in that package.
@@ -18,7 +19,7 @@ Adding a component to `@eocrm/design-system` is **not complete** until:
 2. A demo page exists in the playground (`packages/playground/src/pages/components/<Name>Demo.tsx`)
 3. The demo is wired into `packages/playground/src/App.tsx` (route), `src/layout/AppShell/navItems.ts` (sidebar nav — `componentGroups`; `AppShell.tsx` only consumes it), `src/pages/components/ComponentsIndex.tsx` (overview grid) and `src/pages/components/overviewSchematics.tsx` (its schematic preview), and — if the demo passes `componentName` to `DemoLayout`, as nearly all do — the component name is added to the `ComponentName` union in `src/pages/mockups/registry.ts`, which that prop is typed to (`componentName` is optional, so a demo may omit both)
 4. The component is re-exported from `packages/design-system/src/index.ts`
-5. `packages/design-system/docs/components/<Name>.md` is added (TL;DR, "When NOT to use" / anti-patterns, generated props table via `npm run build:docs`) plus its index line in `packages/design-system/AI-PRIMER.md`; the component's JSDoc stays a one-line summary + `@see docs/components/<Name>.md`
+5. `packages/design-system/docs/components/<Name>.md` is added (TL;DR, "When NOT to use" / anti-patterns, generated props table via `npm run build:docs`; the H1 must be `# \`<Name>\` — <summary>`, since the summary feeds `docs/components/index.json`) plus its index line in `packages/design-system/AI-PRIMER.md`; the component's JSDoc stays a one-line summary + `@see docs/components/<Name>.md`
 6. A `CLUSTERS` entry is added in **both** parallel maps — `packages/design-system/src/_meta/manifest.ts` and `packages/design-system/scripts/generate-manifest.mjs` (they are kept in sync) — then `npm run build:manifest` is run from `packages/design-system`. Editing only the `.mjs` leaves `manifest.ts` stale and fails the manifest drift test in `npm test`.
 
 Missing any of these = component does not exist as far as the design system is concerned. Don't merge half-built components.
@@ -86,5 +87,7 @@ If either fails, run `npm install` again — do not proceed with code changes un
 ## Publishing
 
 Releases are automatic. Merging to `main` triggers the `Release` workflow (`.github/workflows/release.yml`): it runs the quality gate, and **if the library changed** auto-increments from the latest `v*` tag (patch by default), refuses to overwrite existing tags, publishes both npm packages to npmjs (trusted publishing, no token) and the Compose Maven artifact to GitHub Packages, and pushes a `vX.Y.Z` tag. It then redeploys the playground whenever quality passes (even on playground-only changes). There is no manual workflow button — merge to release. Force a minor/major bump by editing `BUMP` in `release.yml` on a branch and merging. If a Release run fails after its first npmjs publish (a later npmjs, Compose, verify or tag step), re-run that failed run before merging another library change — a newer merge recomputes the same version and wedges every later release.
+
+`@eocrm/design-system-mcp` (`packages/design-system-mcp/`) releases independently. `release.yml` ignores that path and only reads `v*` tags. A merge that touches the package triggers `.github/workflows/release-mcp.yml` instead: it tests the package, patch-bumps from the latest `mcp-vX.Y.Z` tag (starting at `0.1.0`), bundles the offline snapshot from `@eocrm/design-system@latest` (as published when the bundle step runs), publishes to npmjs via trusted publishing and pushes an `mcp-vX.Y.Z` tag. Before that workflow can publish for the first time, a human must publish the package once by hand (with a `0.0.x` version, e.g. `0.0.1`, because automation starts at `0.1.0` and a hand-published `0.1.0` would collide) and register `release-mcp.yml` as its trusted publisher on npmjs. If a release-mcp run fails after publishing, re-run that failed run before merging another MCP change. A merge that touches both the design system and the MCP package runs both releases concurrently; if the design-system release publishes between the MCP bundle and verify steps, the MCP verify fails with a version mismatch, so re-run the MCP run.
 
 See `packages/design-system/README.md` for the consumer-side install instructions and `packages/design-system/AI-PRIMER.md` for the agent-facing component primer.

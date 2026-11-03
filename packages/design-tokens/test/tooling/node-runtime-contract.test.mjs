@@ -8,8 +8,9 @@ import { parse } from 'yaml';
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..');
 
 const runtimeFiles = new Map([
-  ['.github/workflows/quality.yml', 6],
+  ['.github/workflows/quality.yml', 7],
   ['.github/workflows/release.yml', 2],
+  ['.github/workflows/release-mcp.yml', 1],
   ['.github/workflows/deploy-playground.yml', 1],
 ]);
 
