@@ -1199,7 +1199,7 @@ public object EocrmGrapeLightTokens {
         accentBackgroundSubtle = Color(0xFFF1E8FA),
         accentForeground = Color(0xFFFFFFFF),
         accentHover = Color(0xFF5C2E8C),
-        accentPressed = Color(0xFF512A7A),
+        accentPressed = Color(0xFF48226E),
         accentSubtleBackground = Color(0xFFF1E8FA),
         background = Color(0xFFFFFFFF),
         backgroundDangerSubtle = Color(0xFFFFEBE6),

@@ -6,7 +6,9 @@ export const ACCENT_KEY = 'eocrm-playground-accent';
  * Every accent, in menu order. `blue` is the default (no `data-accent`).
  * `top` / `body` shade the eocrm chevron mark the way the Teal pine asset does:
  * a light top chevron (the accent's dark-theme value) over the light-theme body.
- * Blue keeps the original solid mark.
+ * Blue and Teal pine keep their original asset colours (Teal pine's body predates
+ * the current token). Hand-copied from tokens.json — retuning an accent there
+ * does not update its mark here.
  */
 export const ACCENTS = [
   { value: 'blue', label: 'Blue', top: '#0052CC', body: '#0052CC' },
