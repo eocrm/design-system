@@ -25,6 +25,7 @@ import { CommandSearch, type CommandSearchHandle } from './CommandSearch';
 import {
   AppLayout,
   Avatar,
+  DropdownMenu,
   Logo,
   Rail,
   TopBar,
@@ -33,9 +34,7 @@ import {
   useRail,
 } from '@eocrm/design-system';
 import styles from './AppShell.module.scss';
-import eocrmLogo from '../../assets/eocrm-logo.svg';
-import eocrmLogoTealPine from '../../assets/eocrm-logo-tealpine.svg';
-import { ACCENT_KEY, AccentContext, useAccent, type Accent } from './accent';
+import { ACCENTS, ACCENT_KEY, AccentContext, isAccent, useAccentMark, type Accent } from './accent';
 
 const SIDEBAR_COLLAPSED_KEY = 'eocrm-playground-sidebar-collapsed';
 
@@ -91,7 +90,7 @@ function GithubMark() {
     collapsed. Reads collapsed state from RailContext. */
 function BrandMark() {
   const { collapsed } = useRail();
-  const logo = useAccent() === 'tealpine' ? eocrmLogoTealPine : eocrmLogo;
+  const logo = useAccentMark();
   return (
     <div className={styles.brand} data-collapsed={collapsed || undefined}>
       {collapsed ? <Logo src={logo} size="md" /> : <Logo src={logo} size="md" text="eocrm" />}
@@ -143,22 +142,23 @@ export function AppShell({ children }: { children: ReactNode }) {
     setTheme((prev) => THEME_ORDER[(THEME_ORDER.indexOf(prev) + 1) % THEME_ORDER.length]);
   const ThemeIcon = THEME_META[theme].icon;
 
-  // Persisted accent: blue (default, no attribute) | tealpine (data-accent).
+  // Persisted accent: blue (default, no attribute) | any other ACCENTS value (data-accent).
   const [accent, setAccent] = useState<Accent>(() => {
     if (typeof window === 'undefined') return 'blue';
-    return window.localStorage.getItem(ACCENT_KEY) === 'tealpine' ? 'tealpine' : 'blue';
+    const stored = window.localStorage.getItem(ACCENT_KEY);
+    return isAccent(stored) ? stored : 'blue';
   });
   useEffect(() => {
     if (typeof window === 'undefined') return;
     window.localStorage.setItem(ACCENT_KEY, accent);
     const root = document.documentElement;
-    if (accent === 'tealpine') {
-      root.dataset.accent = accent;
-    } else {
+    if (accent === 'blue') {
       delete root.dataset.accent;
+    } else {
+      root.dataset.accent = accent;
     }
   }, [accent]);
-  const accentLabel = accent === 'tealpine' ? 'Accent: Teal pine' : 'Accent: Blue';
+  const accentLabel = `Accent: ${ACCENTS.find((a) => a.value === accent)?.label}`;
 
   // ⌘K / Ctrl+K focuses the component search (the TopBar hotkey hint, made real).
   const searchRef = useRef<CommandSearchHandle>(null);
@@ -274,14 +274,26 @@ export function AppShell({ children }: { children: ReactNode }) {
               <TopBar.IconButton aria-label="Notifications" indicator>
                 <Bell size={16} />
               </TopBar.IconButton>
-              <Tooltip content={accentLabel} side="bottom">
-                <TopBar.IconButton
-                  aria-label={accentLabel}
-                  onClick={() => setAccent((a) => (a === 'blue' ? 'tealpine' : 'blue'))}
-                >
-                  <Palette size={16} />
-                </TopBar.IconButton>
-              </Tooltip>
+              <DropdownMenu>
+                <DropdownMenu.Trigger>
+                  <TopBar.IconButton aria-label={accentLabel}>
+                    <Palette size={16} />
+                  </TopBar.IconButton>
+                </DropdownMenu.Trigger>
+                <DropdownMenu.Content align="end">
+                  <DropdownMenu.RadioGroup
+                    value={accent}
+                    onValueChange={(v) => isAccent(v) && setAccent(v)}
+                  >
+                    <DropdownMenu.Label>Accent</DropdownMenu.Label>
+                    {ACCENTS.map((a) => (
+                      <DropdownMenu.RadioItem key={a.value} value={a.value}>
+                        {a.label}
+                      </DropdownMenu.RadioItem>
+                    ))}
+                  </DropdownMenu.RadioGroup>
+                </DropdownMenu.Content>
+              </DropdownMenu>
               <Tooltip content={THEME_META[theme].label} side="bottom">
                 <TopBar.IconButton aria-label={THEME_META[theme].label} onClick={cycleTheme}>
                   <ThemeIcon size={16} />

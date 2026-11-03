@@ -63,17 +63,30 @@ If you need only the tokens (you're providing your own reset), import `@eocrm/de
 
 ## Accent
 
-The accent family defaults to blue. To switch the whole app to **Teal pine**, set `data-accent="tealpine"` on `<html>` (omit the attribute for blue):
+The accent family defaults to blue. To switch the whole app to another accent, set `data-accent` on `<html>` (omit the attribute for blue):
 
 ```html
 <html data-accent="tealpine" data-theme="dark"></html>
 ```
 
-It swaps `--color-accent`, `-hover`, `-pressed`, `-fg`, `-bg-subtle`, `-subtle-bg` and `--ring-accent`, plus the default `Link` colour (`--color-link-fg` / `-hover`), in light, forced dark (`data-theme="dark"`) and OS dark. It ships in the existing `tokens.scss` / `dark.scss`, so there is no new import. `AppProvider`'s `tokens` / `darkTokens` overrides win over `data-accent` in every theme (see [docs/setup.md](docs/setup.md)). Info colours stay blue under any accent; DropdownMenu checked items, the OptionsPicker selected row and StagePath done states follow the accent. In light theme, default `Link`s use a slightly brighter teal than the accent (`#007676`, AA on every grey surface) at medium weight (not inside headings, `<strong>` or `<th>`), because the accent alone sits too close to the navy body text to read as a link.
+| `data-accent` | Hue              | Compose objects                                        |
+| ------------- | ---------------- | ------------------------------------------------------ |
+| _(none)_      | Blue (default)   | `EocrmLightTokens` / `EocrmDarkTokens`                 |
+| `tealpine`    | Teal pine        | `EocrmTealPineLightTokens` / `EocrmTealPineDarkTokens` |
+| `indigo`      | Indigo           | `EocrmIndigoLightTokens` / `EocrmIndigoDarkTokens`     |
+| `grape`       | Purple           | `EocrmGrapeLightTokens` / `EocrmGrapeDarkTokens`       |
+| `berry`       | Magenta-pink     | `EocrmBerryLightTokens` / `EocrmBerryDarkTokens`       |
+| `slate`       | Neutral graphite | `EocrmSlateLightTokens` / `EocrmSlateDarkTokens`       |
+| `ocean`       | Cyan-blue        | `EocrmOceanLightTokens` / `EocrmOceanDarkTokens`       |
+| `moss`        | Olive green      | `EocrmMossLightTokens` / `EocrmMossDarkTokens`         |
 
-Compose: `EocrmTealPineLightTokens` / `EocrmTealPineDarkTokens` sit beside `EocrmLightTokens` / `EocrmDarkTokens`; only accent colours differ. The link colour tokens are web-only (Compose has no `Link`), so Compose links keep the accent colour.
+Each accent swaps `--color-accent`, `-hover`, `-pressed`, `-fg`, `-bg-subtle`, `-subtle-bg` and `--ring-accent`, plus the default `Link` colour (`--color-link-fg` / `-hover`), in light, forced dark (`data-theme="dark"`) and OS dark. They ship in the existing `tokens.scss` / `dark.scss`, so there is no new import. `AppProvider`'s `tokens` / `darkTokens` overrides win over `data-accent` in every theme (see [docs/setup.md](docs/setup.md)). Info colours stay blue under any accent; DropdownMenu checked items, the OptionsPicker selected row and StagePath done states follow the accent. In light theme, Teal pine's default `Link`s use a slightly brighter teal than the accent (`#007676`, AA on every grey surface) at medium weight (not inside headings, `<strong>` or `<th>`), because the accent alone sits too close to the navy body text to read as a link. Slate's default `Link`s are medium weight for the same reason.
 
-**Known issue:** in light theme, Teal pine and `--color-success` are close in hue (both green-teal). Review success/accent pairings visually before switching the CRM.
+Compose: each accent's Light / Dark objects sit beside `EocrmLightTokens` / `EocrmDarkTokens`; only accent colours differ. The link colour tokens are web-only (Compose has no `Link`), so Compose links keep the accent colour.
+
+There is deliberately no red, orange or yellow accent: a primary button in those hues reads as a danger or warning action.
+
+**Known issue:** in light theme, Teal pine and Moss sit close to `--color-success` in hue. Review success/accent pairings visually before switching the CRM to either.
 
 ---
 

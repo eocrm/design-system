@@ -20,7 +20,7 @@ Read this first. Each component's contract is its `docs/components/<Name>.md`; t
 
 See [docs/setup.md](docs/setup.md).
 
-Accent: blue by default; `<html data-accent="tealpine">` switches to Teal pine (see [README.md](./README.md#accent)).
+Accent: blue by default; `<html data-accent="…">` switches to `tealpine`, `indigo`, `grape`, `berry`, `slate`, `ocean` or `moss` (see [README.md](./README.md#accent)).
 
 ## Localization (i18n)
 

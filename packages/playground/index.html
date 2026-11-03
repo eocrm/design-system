@@ -30,17 +30,19 @@
     </script>
     <script>
       // No-flash theme + accent — applied before first paint so a forced
-      // light/dark choice or the Teal pine accent doesn't flash the default.
+      // light/dark choice or a non-blue accent doesn't flash the default.
       // 'system'/unset theme writes no attribute → the CSS prefers-color-scheme
       // media query decides; blue accent = no attribute (no flash either way).
+      // Keep the accent list in sync with ACCENTS in src/layout/AppShell/accent.ts.
       (function () {
         try {
           var t = localStorage.getItem('eocrm-playground-theme');
           if (t === 'light' || t === 'dark') {
             document.documentElement.dataset.theme = t;
           }
-          if (localStorage.getItem('eocrm-playground-accent') === 'tealpine') {
-            document.documentElement.dataset.accent = 'tealpine';
+          var a = localStorage.getItem('eocrm-playground-accent');
+          if (/^(tealpine|indigo|grape|berry|slate|ocean|moss)$/.test(a)) {
+            document.documentElement.dataset.accent = a;
           }
         } catch (e) {
           /* localStorage unavailable — fall back to system */
