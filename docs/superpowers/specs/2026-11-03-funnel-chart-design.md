@@ -150,7 +150,7 @@ The user checked the live demo and supplied a reference screenshot: a dark dashb
 ### Also taken from the reference (builder's call, not asked)
 
 - Dashed vertical separators between horizontal footer columns, starting at stage 2, using a border token.
-- The hero text colour comes from a component token defaulting to `--color-accent-foreground`, which contrasts with the full-strength first band in both themes.
+- The hero text colour comes from a component token (`--funnel-chart-hero-fg`) defaulting to `--color-bg` (the surface knocked out of the band; not the accent's `--color-accent-fg`, which follows the accent while the band does not). It measures 4.42:1 light / 4.45:1 dark on `--chart-series-1`, so the hero is set as WCAG large text (value 24px, label 20px bold) where 3:1 applies. A stage-0 `color` slot hides the hero (its colour is only checked against the ramp).
 
 ### Unchanged
 

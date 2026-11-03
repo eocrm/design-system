@@ -382,6 +382,9 @@ const PAIRS: Pair[] = [
   // HighlightedText's <mark>: matched runs force full-strength fg because
   // muted (4.14) and danger (3.65) fail on the dark yellow.
   ['highlighted-text match on yellow mark', '--color-fg', '--color-palette-yellow-bg', 4.5],
+  // FunnelChart's hero (--funnel-chart-hero-fg): the surface colour on the first band. It is set as
+  // WCAG large text (24px value, 20px bold label) because this pair clears 3:1 but not 4.5:1.
+  ['FunnelChart hero large text on chart series 1', '--color-bg', '--color-chart-series-1', 3.0],
 ];
 
 describe.each(THEMED_ACCENTS)(

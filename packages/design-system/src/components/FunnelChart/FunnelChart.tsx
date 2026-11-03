@@ -84,10 +84,10 @@ const PILL_CHAR_WIDTH = 7;
 
 /** Hero (first stage's value and label inside its band): px estimates, as for the pill. */
 const HERO_PADDING = 8;
-// ponytail: sizes mirror --funnel-chart-hero-*-size (24px / 14px) at line-height 1.2; measure with getBBox if those tokens change.
-const HERO_MIN_HEIGHT = 64;
+// ponytail: sizes mirror --funnel-chart-hero-*-size (24px / 20px bold) at line-height 1.2; measure with getBBox if those tokens change.
+const HERO_MIN_HEIGHT = 72;
 const HERO_VALUE_CHAR_WIDTH = 15;
-const HERO_LABEL_CHAR_WIDTH = 8;
+const HERO_LABEL_CHAR_WIDTH = 12;
 
 /** Stage colour: the `color` slot, else step `i` of `n` on the one-hue ramp (computed by CSS). */
 const stageColor = (s: ResolvedStage, i: number, n: number) =>
@@ -150,10 +150,11 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
     [empty, vertical, resolved, size.width, size.height, shape],
   );
   // Hero: the first stage's value and label inside its band, centred in its column, when the band is
-  // tall enough at the text's right edge (the band narrows there) and the text fits the column.
+  // tall enough at the text's right edge (the band narrows there) and the text fits the column. Not
+  // over a `color` slot: the hero colour is only checked against the ramp's first stage.
   const heroValue = n > 0 ? formatValue(resolved[0].value) : '';
   const hero = (() => {
-    if (!geometry) return null;
+    if (!geometry || resolved[0].slot !== null) return null;
     const g = geometry[0];
     const colW = g.x1 - g.x0;
     const thick = (s: ResolvedStage) => Math.max(MIN_THICKNESS, s.heightRatio * size.height);
@@ -301,7 +302,8 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
 
   // One cell per stage (horizontal: footer column; vertical: a table-like row with its funnel slice); a
   // button when clickable. Spans, not divs, since the cell may be a <button>. With the hero shown, the
-  // first footer cell stays (empty) for grid alignment, hover and the button.
+  // first footer cell stays (empty) for grid alignment, hover and the button (its focus ring moves to
+  // the band). Read-only cells are aria-hidden: the hidden data table is the screen reader's copy.
   const renderCell = (s: ResolvedStage, i: number) => {
     const content = vertical ? (
       <>
@@ -341,6 +343,7 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
       style: colorStyle(stageColor(s, i, n)),
       'data-stage-cell': s.key,
       'data-dimmed': dimmed(i),
+      'data-hero-cell': i === 0 && hero ? '' : undefined,
       // Vertical rows are hit-tested per row; horizontal uses the plot's x position (stageIndexAt).
       onPointerEnter: vertical ? () => inspect(i, 'pointer') : undefined,
     };
@@ -356,7 +359,7 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
         {content}
       </button>
     ) : (
-      <div key={s.key} {...common}>
+      <div key={s.key} {...common} aria-hidden="true">
         {content}
       </div>
     );
@@ -475,7 +478,13 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
       >
         {vertical ? (
           <>
-            <div className={styles.header} aria-hidden="true" data-funnel-header="">
+            {/* Entering the header leaves the rows: clear a hovered stage, as leaving the plot does. */}
+            <div
+              className={styles.header}
+              aria-hidden="true"
+              data-funnel-header=""
+              onPointerEnter={() => activeSource === 'pointer' && inspect(null, null)}
+            >
               <span />
               <span />
               <span>{t('funnelChart.stage')}</span>
@@ -506,6 +515,7 @@ export const FunnelChart = forwardRef<HTMLElement, FunnelChartProps>(function Fu
                         style={colorStyle(stageColor(s, i, n))}
                         data-stage={s.key}
                         data-dimmed={dimmed(i)}
+                        data-hero-stage={i === 0 && hero ? '' : undefined}
                       >
                         <path className={styles.shape} d={g.d} />
                         {i === 0 && hero && (

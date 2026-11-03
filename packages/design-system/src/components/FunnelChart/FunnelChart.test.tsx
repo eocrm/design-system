@@ -161,6 +161,23 @@ describe('FunnelChart', () => {
     expect(document.querySelector('[data-stage-cell="l"]')!.textContent).toBe('1,240Leads');
   });
 
+  it('hero: skipped when the first stage has a `color` slot (its contrast is only checked on the ramp)', () => {
+    const layout = stubLayout();
+    renderFunnel({ stages: stages.map((s, i) => (i === 0 ? { ...s, color: 3 as const } : s)) });
+    layout.fire();
+    expect(document.querySelector('[data-hero]')).toBeNull();
+    expect(document.querySelector('[data-stage-cell="l"]')!.textContent).toBe('1,240Leads');
+  });
+
+  it('hero: the empty first button moves its focus ring to the band', () => {
+    const layout = stubLayout();
+    renderFunnel({ onStageClick: vi.fn() });
+    layout.fire();
+    expect(document.querySelector('[data-stage-cell="l"]')).toHaveAttribute('data-hero-cell');
+    expect(document.querySelector('[data-stage="l"]')).toHaveAttribute('data-hero-stage');
+    expect(document.querySelector('[data-stage-cell="q"]')).not.toHaveAttribute('data-hero-cell');
+  });
+
   it('hero: falls back to the footer when the value is too wide for the column', () => {
     const layout = stubLayout();
     renderFunnel({ formatValue: (n) => `${n.toLocaleString('en-GB')} opportunities` });
@@ -355,6 +372,36 @@ describe('FunnelChart', () => {
       renderFunnel();
       expect(screen.queryAllByRole('button')).toHaveLength(0);
       expect(document.querySelector('[data-stage-cell="w"]')!.tagName).toBe('DIV');
+    });
+  });
+
+  // Read-only: the visible cells are aria-hidden, so screen readers get each stage once (the table).
+  describe.each([
+    ['horizontal', 500],
+    ['vertical', 5 * 96 - 1],
+  ])('%s: stage text is announced once', (_o, width) => {
+    const outsideTable = (text: string) =>
+      screen
+        .queryAllByText(text)
+        .filter((el) => !el.closest('table') && !el.closest('[aria-hidden="true"]'));
+
+    it('read-only: only the data table exposes stage labels and values', () => {
+      const layout = stubLayout(width, 240);
+      renderFunnel();
+      layout.fire();
+      for (const s of stages) {
+        expect(outsideTable(s.label)).toEqual([]);
+        expect(outsideTable(s.value.toLocaleString('en-GB'))).toEqual([]);
+      }
+      expect(screen.getByRole('rowheader', { name: 'Won' })).toBeInTheDocument();
+    });
+
+    it('clickable: cells stay named buttons, not hidden', () => {
+      const layout = stubLayout(width, 240);
+      renderFunnel({ onStageClick: vi.fn() });
+      layout.fire();
+      const won = screen.getByRole('button', { name: /^Won: 50\. / });
+      expect(won).not.toHaveAttribute('aria-hidden');
     });
   });
 
@@ -570,6 +617,20 @@ describe('FunnelChart', () => {
       });
       expect(tooltip()).toHaveTextContent('Proposal');
       fireEvent.pointerLeave(screen.getByRole('group', { name: 'Pipeline' }), {
+        pointerType: 'mouse',
+      });
+      expect(tooltip()).toBeNull();
+    });
+
+    it('moving from a row onto the header clears the active stage', () => {
+      const layout = stubLayout(NARROW, 300);
+      renderFunnel();
+      layout.fire();
+      fireEvent.pointerEnter(document.querySelector('[data-stage-cell="w"]')!, {
+        pointerType: 'mouse',
+      });
+      expect(tooltip()).toHaveTextContent('Won');
+      fireEvent.pointerEnter(document.querySelector('[data-funnel-header]')!, {
         pointerType: 'mouse',
       });
       expect(tooltip()).toBeNull();

@@ -17,10 +17,17 @@
   --funnel-chart-ramp-target: var(--funnel-chart-surface);
   --funnel-chart-ramp-max-mix: 48%;
 
-  // Hero: the first stage's value and label inside its band (horizontal).
-  --funnel-chart-hero-fg: var(--color-accent-fg);
+  // Hero: the first stage's value and label inside its band (horizontal). Paired with the band
+  // (--funnel-chart-ramp-color, i.e. --chart-series-1), not the accent: the surface colour knocked out
+  // of the band, the same pair the chart series are gated on (3:1). It misses 4.5:1 (only near-black,
+  // no neutral token, clears that in light), so both lines are WCAG large text (24px; 20px bold), 3:1:
+  // @contrast --color-bg on --color-chart-series-1 = 4.42:1 light
+  // @contrast --color-bg on --color-chart-series-1 = 4.45:1 dark
+  // Override --funnel-chart-ramp-color and this pair is yours to recheck; a stage-0 `color` slot hides the hero.
+  --funnel-chart-hero-fg: var(--color-bg);
   --funnel-chart-hero-value-size: var(--font-size-2xl);
-  --funnel-chart-hero-label-size: var(--font-size-md);
+  --funnel-chart-hero-label-size: var(--font-size-xl);
+  --funnel-chart-hero-label-weight: var(--font-weight-bold);
 
   // Dashed rule between horizontal footer columns, from stage 2 on.
   --funnel-chart-separator: var(--color-border);

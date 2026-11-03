@@ -89,7 +89,14 @@
 
 .heroLabel {
   font-size: var(--funnel-chart-hero-label-size);
-  font-weight: var(--font-weight-semibold);
+  font-weight: var(--funnel-chart-hero-label-weight);
+}
+
+// Hero shown: the first footer button is empty, so its focus ring outlines the band instead (the
+// stroke's outer half is under the next stage or clipped, so double the width to show one ring width).
+.plot:has([data-hero-cell]:focus-visible) [data-hero-stage] .shape {
+  stroke: var(--funnel-chart-ring);
+  stroke-width: calc(var(--ring-width) * 2);
 }
 
 .pillText {
@@ -130,7 +137,7 @@
     outline: none;
   }
 
-  &:is(button):focus-visible {
+  &:is(button):focus-visible:not([data-hero-cell]) {
     @include focus-ring(var(--funnel-chart-ring));
   }
 }

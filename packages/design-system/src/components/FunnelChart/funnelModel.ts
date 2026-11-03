@@ -1,4 +1,4 @@
-/** Chart-palette slot (`--chart-N`). */
+/** Chart-palette slot (`--chart-series-N`). */
 export type FunnelSlot = 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8;
 
 /** Silhouette between stages: hold then a short straight taper, or a full-column trapezoid. */
