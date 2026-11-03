@@ -1,3 +1,6 @@
+import { resolve } from 'node:path';
+import { parse, type Declaration } from 'postcss';
+import { compile } from 'sass';
 import { render, screen } from '@testing-library/react';
 import { createRef } from 'react';
 import {
@@ -8,6 +11,19 @@ import {
   type TextTone,
   type TextWeight,
 } from './Text';
+
+// jsdom computes no styles — assert the align rules against the compiled sheet.
+const stylesheet = parse(compile(resolve(__dirname, './Text.module.scss')).css);
+function textAlignOf(selector: string): string | undefined {
+  let value: string | undefined;
+  stylesheet.walkRules((r) => {
+    if (!r.selectors.includes(selector)) return;
+    r.walkDecls('text-align', (d: Declaration) => {
+      value = d.value;
+    });
+  });
+  return value;
+}
 
 describe('Text', () => {
   it('renders its children', () => {
@@ -79,18 +95,21 @@ describe('Text', () => {
     expect((container.firstChild as HTMLElement).className).toMatch(new RegExp(expectedClass));
   });
 
-  it('defaults to align="left" when no align prop is supplied', () => {
+  it('applies no align class when align is omitted, so alignment inherits (#727)', () => {
     const { container } = render(<Text>x</Text>);
-    expect((container.firstChild as HTMLElement).className).toMatch(/alignLeft/);
+    expect((container.firstChild as HTMLElement).className).not.toMatch(/align/);
   });
 
-  it.each<[TextAlign, string]>([
-    ['left', 'alignLeft'],
-    ['center', 'alignCenter'],
-    ['right', 'alignRight'],
-  ])('align="%s" applies class %s', (align, expectedClass) => {
+  it.each<[TextAlign, string, string]>([
+    ['start', 'alignStart', 'start'],
+    ['end', 'alignEnd', 'end'],
+    ['left', 'alignLeft', 'left'],
+    ['center', 'alignCenter', 'center'],
+    ['right', 'alignRight', 'right'],
+  ])('align="%s" applies class %s (text-align: %s)', (align, expectedClass, cssValue) => {
     const { container } = render(<Text align={align}>x</Text>);
     expect((container.firstChild as HTMLElement).className).toMatch(new RegExp(expectedClass));
+    expect(textAlignOf(`.${expectedClass}`)).toBe(cssValue);
   });
 
   it('truncate adds the truncate class', () => {

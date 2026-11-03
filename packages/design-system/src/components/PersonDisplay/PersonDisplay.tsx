@@ -310,7 +310,15 @@ const PersonDisplayOnBehalfOf = forwardRef<HTMLSpanElement, PersonDisplayOnBehal
             </Text>{' '}
           </>
         )}
-        <Text as="span" className={styles.onBehalfOfMember} title={text} {...textProps}>
+        {/* align="start": the member is a block with a 6ch min-width floor, so a
+            short name would drift inside it under an inherited end/center. */}
+        <Text
+          as="span"
+          align="start"
+          className={styles.onBehalfOfMember}
+          title={text}
+          {...textProps}
+        >
           {former ? text : (plain ?? children)}
         </Text>
       </span>

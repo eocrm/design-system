@@ -4,6 +4,7 @@ import { Stack } from '@eocrm/design-system';
 import { Cluster } from '@eocrm/design-system';
 import { Input } from '@eocrm/design-system';
 import { Title } from '@eocrm/design-system';
+import { Table } from '@eocrm/design-system';
 import { DemoLayout } from './DemoLayout';
 import { Example } from './Example';
 import { getComponentFiles } from '../../lib/componentFiles';
@@ -128,24 +129,72 @@ export function Demo() {
 
       <Example
         title="Alignment"
-        description="Text-align applied via class — left / center / right."
+        description="Omit align and Text inherits its container's text-align. Prefer logical start / end (they flip in RTL); left / right are physical."
         code={`import { Stack, Text } from '@eocrm/design-system';
 
 export function Demo() {
   return (
     <Stack gap="xs" style={{ width: 360 }}>
-      <Text align="left">left aligned</Text>
+      <Text align="start">start aligned</Text>
       <Text align="center">center aligned</Text>
-      <Text align="right">right aligned</Text>
+      <Text align="end">end aligned</Text>
+      <Text align="end" dir="rtl">end aligned, RTL (lands on the left)</Text>
     </Stack>
   );
 }`}
       >
         <Stack gap="xs" style={{ width: 360 }}>
-          <Text align="left">left aligned</Text>
+          <Text align="start">start aligned</Text>
           <Text align="center">center aligned</Text>
-          <Text align="right">right aligned</Text>
+          <Text align="end">end aligned</Text>
+          <Text align="end" dir="rtl">
+            end aligned, RTL (lands on the left)
+          </Text>
         </Stack>
+      </Example>
+
+      <Example
+        title="Inherited alignment"
+        description='No align prop: the value follows Table.Cell align="end", matching its header.'
+        code={`import { Table, Text } from '@eocrm/design-system';
+
+export function Demo() {
+  return (
+    <Table>
+      <Table.Header>
+        <Table.Row>
+          <Table.HeaderCell>Deal</Table.HeaderCell>
+          <Table.HeaderCell align="end">Value</Table.HeaderCell>
+        </Table.Row>
+      </Table.Header>
+      <Table.Body>
+        <Table.Row>
+          <Table.Cell>Acme renewal</Table.Cell>
+          <Table.Cell align="end">
+            <Text>€12,400</Text>
+          </Table.Cell>
+        </Table.Row>
+      </Table.Body>
+    </Table>
+  );
+}`}
+      >
+        <Table>
+          <Table.Header>
+            <Table.Row>
+              <Table.HeaderCell>Deal</Table.HeaderCell>
+              <Table.HeaderCell align="end">Value</Table.HeaderCell>
+            </Table.Row>
+          </Table.Header>
+          <Table.Body>
+            <Table.Row>
+              <Table.Cell>Acme renewal</Table.Cell>
+              <Table.Cell align="end">
+                <Text>€12,400</Text>
+              </Table.Cell>
+            </Table.Row>
+          </Table.Body>
+        </Table>
       </Example>
 
       <Example

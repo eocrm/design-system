@@ -27,8 +27,8 @@ export type TextTone =
 /** Font weight. */
 export type TextWeight = 'regular' | 'medium' | 'semibold' | 'bold';
 
-/** Text alignment. */
-export type TextAlign = 'left' | 'center' | 'right';
+/** Text alignment. Logical `start` / `end` follow writing direction; `left` / `right` are physical. */
+export type TextAlign = 'start' | 'end' | 'left' | 'center' | 'right';
 
 export interface TextProps extends HTMLAttributes<HTMLElement> {
   /**
@@ -80,7 +80,16 @@ export interface TextProps extends HTMLAttributes<HTMLElement> {
   tone?: TextTone;
   /** Font weight. Defaults to `'regular'`. */
   weight?: TextWeight;
-  /** Text alignment. Defaults to `'left'`. */
+  /**
+   * Text alignment. No default — omitted, Text sets no `text-align` and
+   * inherits it from its container (e.g. a `Table.Cell align="end"` keeps a
+   * Text value at the end). Pass `align` only to override the container.
+   * - `start` — start of the line in the writing direction (left in LTR, right in RTL). Prefer over `left`.
+   * - `end` — end of the line in the writing direction (right in LTR, left in RTL). Prefer over `right`.
+   * - `center` — centred.
+   * - `left` — physical left in every direction; wrong in RTL, use `start`.
+   * - `right` — physical right in every direction; wrong in RTL, use `end`.
+   */
   align?: TextAlign;
   /**
    * Truncate to a single line with ellipsis. Defaults to `false`. Use inside
@@ -129,6 +138,8 @@ const WEIGHT_CLASS: Record<TextWeight, string> = {
 };
 
 const ALIGN_CLASS: Record<TextAlign, string> = {
+  start: styles.alignStart,
+  end: styles.alignEnd,
   left: styles.alignLeft,
   center: styles.alignCenter,
   right: styles.alignRight,
@@ -144,7 +155,7 @@ export const Text = forwardRef<HTMLElement, TextProps>(function Text(
     size = 'md',
     tone = 'default',
     weight = 'regular',
-    align = 'left',
+    align,
     truncate = false,
     lineClamp,
     className,
@@ -183,7 +194,7 @@ export const Text = forwardRef<HTMLElement, TextProps>(function Text(
         SIZE_CLASS[size],
         TONE_CLASS[tone],
         WEIGHT_CLASS[weight],
-        ALIGN_CLASS[align],
+        align && ALIGN_CLASS[align],
         useTruncate && styles.truncate,
         useLineClamp && styles.lineClamp,
         className,
