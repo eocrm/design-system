@@ -131,3 +131,33 @@ Follow `Chart`'s conventions wherever a counterpart exists: the `{...rest}` spre
 - Whether the tooltip and table reuse `ChartTooltip` and `ChartTable` directly or need small generalisations.
 - How keyboard focus moves between stages (roving tabindex versus one tab stop per stage), as long as the interaction rules above hold.
 - Demo page contents: show both shapes, a narrow container, clickable stages driving an external headline via `onActiveStageChange`, and the empty state.
+
+## Amendment 1 (2026-11-03): visual redesign after the demo check
+
+The user checked the live demo and supplied a reference screenshot: a dark dashboard with a "Conversion funnel" card (horizontal) and an "Enterprise pipeline" card (vertical funnel next to a table). They chose to adopt all four of the following. Where this amendment conflicts with earlier sections, the amendment wins.
+
+### Decided by the user
+
+1. **One-hue ramp instead of per-stage palette colours.** Funnel stages are ordered, so they encode position with one hue, light to dark: the first stage is the full chart colour (`--chart-series-1`), and each later stage is a lighter tint of the same hue, mixed toward the chart surface so it works in dark mode. This replaces "stages take palette slots 1–8 by position". The per-stage `color` override (palette slot 1–8) stays, for deliberately highlighting a stage (for example, Won in green). The more-than-8-stages dev warning goes away, because a ramp never runs out.
+2. **Hero first stage (horizontal).** The first stage shows its formatted value (large) and its label _inside_ the band, like "1,200 / Leads". Later stages keep the pill inside the band, with the value and label underneath. The first stage has no pill anyway. If the band is too short to fit the hero text legibly, the first stage falls back to the normal footer, so information is never hidden.
+3. **Hold-then-taper shape becomes the default.** Each stage stays at its own height for most of its column (about 75%), then tapers in a short **straight** diagonal into the next stage's height. This replaces the curvy `'eased'` shape. `shape` becomes `'taper'` (default) | `'sharp'`. `'sharp'` is unchanged: a full-column trapezoid. The last stage has no neck.
+4. **Vertical layout: stepped slices plus a table.** Each stage is its own slice. Slices follow the same per-stage geometry as horizontal (rotated), so they respect `shape`, and they sit with a thin surface gap between them (2px, per the dataviz spacer rule) rather than touching. Beside the funnel is a visible table-like grid with:
+   - a header row: Stage, Value, and "vs previous";
+   - one row per stage: a colour swatch (the stage's ramp colour), the label, the formatted value, and the step-conversion pill. The first stage shows "—".
+
+   This replaces the compact "text beside the band" rows. The rows remain the stage cells, so they are still buttons when `onStageClick` is set, with the same keyboard and hover rules. The visible grid is presentational for screen readers (the header is `aria-hidden`), and the visually hidden data table stays the screen-reader source, so nothing is announced twice.
+
+### Also taken from the reference (builder's call, not asked)
+
+- Dashed vertical separators between horizontal footer columns, starting at stage 2, using a border token.
+- The hero text colour comes from a component token defaulting to `--color-accent-foreground`, which contrasts with the full-strength first band in both themes.
+
+### Unchanged
+
+- The orientation switch (vertical below 96px per stage), keyboard, tooltip, `onStageClick`, `onActiveStageChange`, the data table and the empty state.
+- The categorical chart palette (`--chart-series-1…8`) is **not** changed here. Rethinking it is a separate piece of work with its own PR. The funnel ramp follows whatever `--chart-series-1` is.
+
+### Ramp constraints (builder)
+
+- The lightest stage must still read as a mark: about 2:1 or more against the surface (dataviz ordinal rule). Validate 3–6 stage ramps in both themes with `validate_palette.js --ordinal`.
+- With 7–8 stages, adjacent steps may fall below the ideal lightness gap. That is acceptable, because labels, the vertical table and the tooltip carry identity. Mark it with a `ponytail:` comment.
