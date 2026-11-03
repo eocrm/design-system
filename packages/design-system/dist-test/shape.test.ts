@@ -195,3 +195,15 @@ test('global stylesheets exist and are non-empty', () => {
   expect(buttonCss).toBeDefined();
   expect(bundle).toContain(read(buttonCss!));
 });
+
+// Consumer Vite builds tree-shake a bare `import "./X.module.css"` (a CSS module
+// with no used export), silently dropping component styles. Ship plain `.css`.
+it('ships no *.module.css file and imports none', () => {
+  const files = walk(dist);
+  expect(files.filter((f) => f.endsWith('.module.css')).map((f) => relative(dist, f))).toEqual([]);
+  const offenders = files
+    .filter((f) => f.endsWith('.js'))
+    .filter((f) => specifiers(read(f)).some((s) => s.endsWith('.module.css')))
+    .map((f) => relative(dist, f));
+  expect(offenders).toEqual([]);
+});

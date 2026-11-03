@@ -17,6 +17,11 @@ export function compare(measured, budgets) {
     }
     for (const k of ['jsGzip', 'cssGzip'])
       if (m[k] > b[k]) out.push(`${name}: ${k} ${m[k]} B exceeds budget ${b[k]} B`);
+    // Floor catches "css dropped to ~0" (e.g. a bundler tree-shaking it) without flaking.
+    if (b.cssGzip && m.cssGzip < b.cssGzip * 0.5)
+      out.push(
+        `${name}: cssGzip ${m.cssGzip} B is below floor ${b.cssGzip * 0.5} B (50% of budget ${b.cssGzip} B)`,
+      );
     for (const s of b.mustNotContain ?? [])
       if (m.output.includes(s)) out.push(`${name}: output must not contain "${s}"`);
   }
