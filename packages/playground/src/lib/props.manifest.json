@@ -777,7 +777,7 @@
         },
         {
           "name": "curve",
-          "type": "\"smooth\" | \"linear\"",
+          "type": "ChartCurve",
           "required": false,
           "default": "'smooth'",
           "description": "Line/area interpolation. `'smooth'` (default) is a monotone curve; `'linear'` draws straight segments between points."
@@ -3926,7 +3926,7 @@
         },
         {
           "name": "hitArea",
-          "type": "\"text\" | \"touch\"",
+          "type": "LinkHitArea",
           "required": false,
           "default": "",
           "description": "Touch hit area. `'touch'` grows the tap target to ≥44px on coarse pointers without changing\nlayout; use for standalone links (list-row names, card or widget titles), leave unset for\nlinks inside running text. Default `'text'`."
@@ -4655,7 +4655,7 @@
           "type": "number",
           "required": false,
           "default": "",
-          "description": "Default 1. Also sets display precision (decimals of `step`). A `step` ≤ 0 falls back to 1 (dev warning)."
+          "description": "Default 1. Also sets the minimum display precision (decimals of `step`); a value with more\ndecimals shows them all (up to 10), so the field never hides the stored value. A `step` ≤ 0\nfalls back to 1 (dev warning)."
         },
         {
           "name": "size",
@@ -7515,6 +7515,7 @@
     "DefinitionListSpacing": "\"sm\" | \"md\" | \"lg\"",
     "LinkVariant": "\"default\" | \"muted\" | \"subtle\"",
     "LinkUnderline": "\"none\" | \"always\" | \"hover\"",
+    "LinkHitArea": "\"text\" | \"touch\"",
     "AccordionVariant": "\"bordered\" | \"borderless\"",
     "AccordionSize": "\"sm\" | \"md\" | \"lg\"",
     "AccordionGap": "\"sm\" | \"md\" | \"lg\"",
@@ -7575,6 +7576,7 @@
     "TreeViewChildren": "TreeViewNode[] | { error: true; }",
     "TreeViewOverflow": "{ label: string; onLoadMore?: (() => void); loading?: boolean }",
     "TreeViewView": "\"list\" | \"chart\"",
+    "ChartCurve": "\"smooth\" | \"linear\"",
     "ChartMarker": "(ChartMarkerBase & { at: string; from?: undefined; to?: undefined; }) | (ChartMarkerBase & { from: string; to: string; at?: undefined; })",
     "ChartSeries": "{ key: string; label: string; values: (number | null)[]; comparisonOf?: string }"
   }
