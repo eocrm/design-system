@@ -2011,9 +2011,17 @@ describe('Select touch tokens (DS-35)', () => {
   });
 });
 
-it('the chip remove button takes the touch-hit-area mixin, capped to its own width (DS-35)', () => {
+it('the chip remove button takes the touch-hit-area mixin and a touch min width (DS-35)', () => {
   const scss = readTouchTokens(resolveTouchTokens(__dirname, 'Select.module.scss'), 'utf8');
   expect(scss).toMatch(
-    /\.chipRemove \{[^}]*--touch-hit-inline-size:\s*100%;[^}]*@include touch-hit-area;/,
+    /\.chipRemove \{[^}]*min-inline-size:\s*var\(--select-chip-remove-min-inline-size\);[^}]*@include touch-hit-area;/,
+  );
+});
+
+it('re-points the chip remove min width to size-touch on coarse pointers (DS-35)', () => {
+  const t = readTouchTokens(resolveTouchTokens(__dirname, 'Select.tokens.scss'), 'utf8');
+  expect(t).toMatch(/--select-chip-remove-min-inline-size:\s*auto/);
+  expect(t).toMatch(
+    /@media \(pointer: coarse\)[\s\S]*--select-chip-remove-min-inline-size:\s*var\(--size-touch\)/,
   );
 });

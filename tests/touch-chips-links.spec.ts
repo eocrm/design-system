@@ -2,43 +2,45 @@ import { test, expect, type Locator } from '@playwright/test';
 
 /**
  * DS-35 / Task 4: chip x buttons and Link get an invisible hit area on a coarse
- * pointer (Pixel 7 project). The chip x area is 44px tall but only as wide as the
- * x itself (--touch-hit-inline-size: 100%), so it never covers the label.
+ * pointer (Pixel 7 project). The chip x grows to 44px wide on touch, so its
+ * hit area is 44x44 and the label (beside it) is not covered.
  */
 
 const hitArea = (el: Locator) =>
   el.evaluate((node) => {
     const cs = getComputedStyle(node, '::before');
-    return { width: parseFloat(cs.width), height: parseFloat(cs.height), hostW: node.clientWidth };
+    return { width: parseFloat(cs.width), height: parseFloat(cs.height) };
   });
 
-test('FilterChip x has a 44px-tall hit area no wider than the x', async ({ page }) => {
+test('FilterChip x has a 44x44 hit area', async ({ page }) => {
   await page.goto('/components/filter-chip');
-  const dismiss = page.getByRole('button', { name: 'Remove filter' }).first();
+  const dismiss = page.getByTestId('filter-chip-stateful').getByRole('button').first();
   const h = await hitArea(dismiss);
   expect(h.height).toBeGreaterThanOrEqual(44);
-  expect(h.width).toBeLessThanOrEqual(h.hostW + 1);
+  expect(h.width).toBeGreaterThanOrEqual(44);
   expect((await dismiss.boundingBox())!.height).toBeLessThan(44);
 });
 
-test('tapping the FilterChip label does not dismiss it, tapping the x does', async ({ page }) => {
+test('tapping the FilterChip label does not dismiss it; tapping the edge of the x hit area does', async ({
+  page,
+}) => {
   await page.goto('/components/filter-chip');
-  // The first example's chip is stateful (others are static): its removal drops the count.
-  const chips = page.getByRole('group').filter({ hasText: 'auth.* (3)' });
-  const before = await chips.count();
-  const chip = chips.first();
-  const box = (await chip.getByText('Event').boundingBox())!;
-  await page.touchscreen.tap(box.x + box.width / 2, box.y + box.height / 2);
-  await expect(chips).toHaveCount(before);
-  await chip.getByRole('button', { name: 'Remove filter' }).tap();
-  await expect(chips).toHaveCount(before - 1);
+  const chips = page.getByTestId('filter-chip-stateful').getByRole('group');
+  await expect(chips).toHaveCount(2);
+  const label = (await chips.first().getByText('Event').boundingBox())!;
+  await page.touchscreen.tap(label.x + label.width / 2, label.y + label.height / 2);
+  await expect(chips).toHaveCount(2);
+  const x = (await chips.first().getByRole('button').boundingBox())!;
+  await page.touchscreen.tap(x.x + x.width / 2, x.y + x.height / 2 - 18);
+  await expect(chips).toHaveCount(1);
 });
 
-test('Select chip remove has a 44px-tall hit area', async ({ page }) => {
+test('Select chip remove has a 44x44 hit area', async ({ page }) => {
   await page.goto('/components/select');
-  const remove = page.getByRole('button', { name: /shipping/i }).first();
+  const remove = page.getByTestId('select-tags-chips').getByRole('button', { name: /shipping/i });
   const h = await hitArea(remove);
   expect(h.height).toBeGreaterThanOrEqual(44);
+  expect(h.width).toBeGreaterThanOrEqual(44);
   expect((await remove.boundingBox())!.height).toBeLessThan(44);
 });
 

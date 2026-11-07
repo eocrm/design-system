@@ -1901,17 +1901,9 @@ describe('touch hit areas come from the mixin', () => {
     expect(before).toMatch(/position:\s*absolute/);
     expect(before).toMatch(/content:\s*""/);
     expect(before).toContain(`inset-block-start: ${centre}`);
+    expect(before).toContain(`inset-inline-start: ${centre}`);
+    expect(before).toContain(`inline-size: ${size}`);
     expect(before).toContain(`block-size: ${size}`);
     expect(out).not.toMatch(/transform|translate|\[dir/);
-  });
-
-  it('--touch-hit-inline-size caps the hit area width and defaults to the full minimum', () => {
-    const out = compileString(`@use 'mixins' as *;\n.host { @include touch-hit-area; }`, {
-      loadPaths: [join(__dirname, 'styles')],
-    }).css;
-    const w = 'var(--touch-hit-inline-size, max(100%, var(--size-touch)))';
-    const before = out.match(/\.host::before\s*\{([^}]*)\}/)?.[1] ?? '';
-    expect(before).toContain(`inline-size: ${w}`);
-    expect(before).toContain(`inset-inline-start: calc(50% - ${w} / 2)`);
   });
 });

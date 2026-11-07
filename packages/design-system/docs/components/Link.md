@@ -56,6 +56,7 @@ import { Link as RouterLink } from 'react-router-dom';
 
 - ❌ Action triggers (submit, open modal) → use `<Button>`.
 - ❌ Mutually-exclusive switchers → use `<Tabs>` or `<ButtonGroup>`.
+- ❌ `hitArea="touch"` on a wrapping title link. It is for single-line standalone links; a wrapping link should be `display: block` or `inline-flex` (via your `className`).
 - ❌ "Link styled as button" → use `<Button variant="ghost">`.
 
 #### Anti-patterns

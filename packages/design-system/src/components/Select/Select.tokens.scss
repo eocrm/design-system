@@ -111,6 +111,7 @@
   --select-chip-remove-radius: var(--radius-sm);
   --select-chip-remove-fg-hover: var(--color-danger);
   --select-chip-remove-bg-hover: var(--color-bg-danger-subtle);
+  --select-chip-remove-min-inline-size: auto;
   --select-chip-fg-disabled: var(--color-fg-disabled);
 
   // State rows (loading / error / empty)
@@ -151,5 +152,12 @@
     --select-trigger-font-size-md: var(--font-size-lg);
     --select-trigger-font-size-lg: var(--font-size-lg);
     --select-popover-search-font-size: var(--font-size-lg);
+  }
+}
+
+// Touch devices (DS-35): the chip x is 44px wide (its hit area is 44px tall).
+@media (pointer: coarse) {
+  :root {
+    --select-chip-remove-min-inline-size: var(--size-touch);
   }
 }

@@ -472,7 +472,9 @@ export function TagsExample() {
 }`}
       >
         <InputExample>
-          <TagsExample />
+          <div data-testid="select-tags-chips">
+            <TagsExample />
+          </div>
         </InputExample>
       </Example>
 

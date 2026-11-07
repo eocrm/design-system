@@ -1,4 +1,5 @@
 import { createRef, type ComponentProps, type ReactNode } from 'react';
+import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { render, screen } from '@testing-library/react';
 import { parse, type Rule } from 'postcss';
@@ -306,4 +307,9 @@ describe('<Link hitArea> (DS-13)', () => {
     expect(screen.getByText('x')).not.toHaveAttribute('hitArea');
     expect(screen.getByText('x')).not.toHaveAttribute('hitarea');
   });
+});
+
+it('.hitAreaTouch includes the touch-hit-area mixin (DS-13)', () => {
+  const scss = readFileSync(resolve(__dirname, 'Link.module.scss'), 'utf8');
+  expect(scss).toMatch(/\.hitAreaTouch \{\s*@include touch-hit-area;/);
 });

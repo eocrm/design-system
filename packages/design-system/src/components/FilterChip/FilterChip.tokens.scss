@@ -22,4 +22,12 @@
   --filter-chip-dismiss-fg: var(--color-fg-subtle);
   --filter-chip-dismiss-bg-hover: var(--color-bg-muted);
   --filter-chip-dismiss-fg-hover: var(--color-fg);
+  --filter-chip-dismiss-min-inline-size: auto;
+}
+
+// Touch devices (DS-35): the x is 44px wide (its hit area is 44px tall).
+@media (pointer: coarse) {
+  :root {
+    --filter-chip-dismiss-min-inline-size: var(--size-touch);
+  }
 }

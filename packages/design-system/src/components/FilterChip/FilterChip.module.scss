@@ -50,8 +50,8 @@
   cursor: pointer;
   color: var(--filter-chip-dismiss-fg);
 
-  // Hit area is 44px tall but only as wide as the x: wider would cover the label.
-  --touch-hit-inline-size: 100%;
+  // Coarse pointers: the x grows to --size-touch wide (token), the hit area matches it.
+  min-inline-size: var(--filter-chip-dismiss-min-inline-size);
 
   @include touch-hit-area;
 

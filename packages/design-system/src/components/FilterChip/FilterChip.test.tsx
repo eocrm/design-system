@@ -321,10 +321,18 @@ it('dismiss button falls back to the default name when dismissLabel is an empty 
   expect(screen.getByRole('button', { name: 'Remove filter' })).toBeInTheDocument();
 });
 
-it('the dismiss button takes the touch-hit-area mixin, capped to its own width (DS-35)', () => {
+it('the dismiss button takes the touch-hit-area mixin and a touch min width (DS-35)', () => {
   const scss = readFileSync(resolve(__dirname, 'FilterChip.module.scss'), 'utf8');
   // The cap keeps the 44px-tall area from covering the label beside the ×.
   expect(scss).toMatch(
-    /\.dismiss \{[^}]*--touch-hit-inline-size:\s*100%;[^}]*@include touch-hit-area;/,
+    /\.dismiss \{[^}]*min-inline-size:\s*var\(--filter-chip-dismiss-min-inline-size\);[^}]*@include touch-hit-area;/,
+  );
+});
+
+it('re-points the dismiss min width to size-touch on coarse pointers (DS-35)', () => {
+  const t = readFileSync(resolve(__dirname, 'FilterChip.tokens.scss'), 'utf8');
+  expect(t).toMatch(/--filter-chip-dismiss-min-inline-size:\s*auto/);
+  expect(t).toMatch(
+    /@media \(pointer: coarse\)[\s\S]*--filter-chip-dismiss-min-inline-size:\s*var\(--size-touch\)/,
   );
 });

@@ -63,3 +63,13 @@ test('truncated Table.CellLink still renders an ellipsis', async ({ page }) => {
   }));
   expect(m).toEqual({ display: 'block', overflow: 'ellipsis', over: true });
 });
+
+test('FilterChip x keeps its compact desktop width', async ({ page }) => {
+  await page.goto('/components/filter-chip');
+  const box = await page
+    .getByTestId('filter-chip-stateful')
+    .getByRole('button')
+    .first()
+    .boundingBox();
+  expect(box!.width).toBeLessThan(24);
+});
